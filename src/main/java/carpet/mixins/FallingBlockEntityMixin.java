@@ -33,9 +33,9 @@ public abstract class FallingBlockEntityMixin extends Entity
     }
 
     @Override
-    public void remove()
+    public void remove(Entity.RemovalReason arg) // reason
     {
-        super.remove();
+        super.remove(arg);
         if (LoggerRegistry.__fallingBlocks && logHelper != null)
             logHelper.onFinish();
     }

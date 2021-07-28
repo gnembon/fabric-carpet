@@ -996,7 +996,7 @@ indicating if the given seed has been used or not.
 
 returns a noise value from `0.0` to `1.0` (roughly) for 1, 2 or 3 dimensional coordinate. The default seed it samples 
 from is `0`, but seed can be specified as a 4th argument as well. In case you need 1D or 2D noise values with custom 
-seed, use `null` for `z`, or `y` and `z` arguments respectively.
+seed, use `null` for `y` and `z`, or `z` arguments respectively.
 
 Perlin noise is based on a square grid and generates rougher maps comparing to Simplex, which is creamier. 
 Querying for lower-dimensional result, rather than affixing unused dimensions to constants has a speed benefit,
@@ -1464,6 +1464,10 @@ but if symbols are used directly in the module body rather than functions, it ma
 Returns full list of available symbols that could be imported from this module, which can be used to debug import 
 issues, and list contents of libraries.
 
+You can load and import functions from dependencies in a remote app store's source specified in your config's `libraries` block, but make sure
+to place your config _before_ the import in order to allow the remote dependency to be downloaded (currently, app resources are only downloaded
+when using the `/carpet download` command).
+
 ### `call(function, ? args ...)`
 
 calls a user defined function with specified arguments. It is equivalent to calling `function(args...)` directly 
@@ -1680,8 +1684,7 @@ equivalent to `has(get(foo,a), b)` or `has(foo, a, b)`
 ### `delete(container, address, ...), delete(lvalue)`
 
 Removes specific entry from the container. For the lists - removes the element and shrinks it. For maps, it 
-removes the key from the map, and for nbt - removes content from a given path. For lists and maps returns previous 
-entry at the address, for nbt's - number of removed objects, with 0 indicating that the original value was unaffected.
+removes the key from the map, and for nbt - removes content from a given path.
 
 Like with the `get` and `has`, `delete` can accept chained addresses, as well as l-value container access, removing 
 the value from the leaf of the path provided, so `delete(foo, a, b)` is the 
@@ -1919,11 +1922,12 @@ These options affect directly how scarpet functions and can be triggered via `/c
  when loaded with the world (i.e. present in the world/scripts folder)
  - `scriptsAutoload`: when set to `false` will prevent apps loaded with the world to load automatically. You can still
  load them on demand via `/script load` command
- - `commandScriptACE`: command permission level that is used to trigger commands from scarpet scripts (regardless who triggeres
+ - `commandScriptACE`: command permission level that is used to trigger commands from scarpet scripts (regardless who triggers
  the code that calls the command). Defaults to `ops`, could be customized to any level via a numerical value (0, 1, 2, 3 or 4)
  - `scriptsOptimization`: when disabled, disables default app compile time optimizations. If your app behaves differently with
- and without optimizations, please file a bug report on the bug tracker and disable code optimizations
+ and without optimizations, please file a bug report on the bug tracker and disable code optimizations.
  - `scriptsDebugging`: Puts detailed information about apps loading, performance and runtime in system log.
+ - `scriptsAppStore`: location of the app store for downloadable scarpet apps - can be configured to point to other scarpet app store.
 
 ## App structure
 
@@ -2013,6 +2017,52 @@ predicate that is volatile and might change, the command might falsely do or do 
 however player will always be able to type it in and either succeed, or fail, based on their current permissions.
 Custom permission applies to legacy commands with `'legacy_command_type_support'` as well
 as for the custom commands defined with `'commands'`, see below.
+*  `'resources'` - list of all downloadable resources when installing the app from an app store. List of resources needs to be 
+in a list and contain of map-like resources descriptors, looking like
+   ```
+   'resources' -> [
+        {
+            'source' -> 'https://raw.githubusercontent.com/gnembon/fabric-carpet/master/src/main/resources/assets/carpet/icon.png',
+            'target' -> 'foo/photos.zip/foo/cm.png',
+        },
+        {
+            'source' -> '/survival/README.md',
+            'target' -> 'survival_readme.md',
+            'shared' -> true,
+        },
+        {
+            'source' -> 'circle.sc', // Relative path
+            'target' -> 'apps/circle.sc', // This won't install the app, use 'libraries' for that
+        },
+    ]
+   ```
+   `source` indicates resource location: either an arbitrary url (starting with `http://` or `https://`), 
+   absolute location of a file in the app store (starting with a slash `/`),
+or a relative location in the same folder as the app in question (the relative location directly). 
+`'target'` points to the path in app data, or shared app data folder. If not specified it will place the app into the main data folder with the name it has.
+if `'shared'` is specified and `true`. When re-downloading the app, all resources will be re-downloaded as well. 
+Currently, app resources are only downloaded when using `/carpet download` command.
+*   `libraries` - list of libraries or apps to be downloaded when installing the app from the app store. It needs to be a list of map-like resource
+descriptors, like the above `resources` field.
+   ```
+   'libraries' -> [
+        {
+            'source' -> '/tutorial/carpets.sc'
+        },
+        {
+            'source' -> '/fundamentals/heap.sc',
+            'target' -> 'heap-lib.sc'
+        }
+    ]
+   ```
+    `source` indicates resource location and must point to a scarpet app or library. It can be either an arbitrary url (starting with `http://` 
+    or `https://`), absolute location of a file in the app store (starting with a slash `/`), or a relative location in the same folder as the app
+    in question (the relative location directly). 
+    `target` is an optional field indicating the new name of the app. If not specified it will place the app into the main data folder with the name it has.
+If the app has relative resources dependencies, Carpet will use the app's path for relatives if the app was loaded from the same app store, or none if the 
+app was loaded from an external url.
+If you need to `import()` from dependencies indicated in this block, make sure to have the `__config()` map before any import that references your
+remote dependencies, in order to allow them to be downloaded and initialized before the import is executed.
 *   `'arguments'` - defines custom argument types for legacy commands with `'legacy_command_type_support'` as well
 as for the custom commands defined with `'commands'`, see below.
 *   `'commands'` - defines custom commands for the app to be executed with `/<app>` command, see below.
@@ -2067,7 +2117,7 @@ baz(entities) -> // same thing
  ```
 
 It works similarly to the auto command, but arguments get their inferred types based on the argument
-names, looking at the full name, or the suffix after the last `_` that indicates the variable type. For instance, variable named `float` will
+names, looking at the full name, or any suffix when splitting on `_` that indicates the variable type. For instance, variable named `float` will
 be parsed as a floating point number, but it can be named `'first_float'` or `'other_float'` as well. Any variable that is not
 supported, will be parsed as a `'string'` type. 
 
@@ -2119,7 +2169,7 @@ paths with functions to execute, and optionally, custom argument types. Commands
 the key (can be empty) consists of 
 the execution path with the command syntax, which consists of literals (as is) and arguments (wrapped with `<>`), with the name / suffix
 of the name of the attribute indicating its type, and the value represent function to call, either function values,
-defined function names, or functions with some default arguments. Values extracted from commands will be passed to the
+defined function names, or functions with some default arguments. Argument names need to be unique for each command. Values extracted from commands will be passed to the
 functions and executed. By default, command list will be checked for ambiguities (commands with the same path up to some point
 that further use different attributes), causing app loading error if that happens, however this can be suppressed by specifying
 `'allow_command_conflicts'`.
@@ -2132,8 +2182,14 @@ and less frequently used features, like forks and redirects, used pretty much on
 
 ### Command argument types
 
-There are several default argument types that can be used directly without specifying custom types. Each argument can be 
-customized in the `'arguments'` section of the app config, specifying its base type, via `'type'` that needs
+Argument types differ from actual argument names that the types are the suffixes of the used argument names, when separated with 
+`'_'` symbol. For example argument name `'from_pos'` will be interpreted as a built-in type `'int'` and provided to the command system
+as a name `'from_pos'`, however if you define a custom type `'from_pos'`, your custom type will be used instead. 
+Longer suffixes take priority over shorter prefixes, then user defined suffixes mask build-in prefixes.
+
+There are several default argument types that can be used directly without specifying custom types. 
+
+Each argument can be customized in the `'arguments'` section of the app config, specifying its base type, via `'type'` that needs
 to match any of the built-in types, with a series of optional modifiers. Shared modifiers include:
   * `suggest` - static list of suggestions to show above the command while typing
   * `suggester` - function taking one map argument, indicating current state of attributes in the parsed command
@@ -2187,6 +2243,7 @@ Here is a list of built-in types, with their return value formats, as well as a 
   * `'dimension'`: string representing a valid dimension in the world.
   * `'anchor'`: string of `feet` or `eyes`.
   * `'entitytype'`: string representing a type of entity 
+  * `'entities'`: entity selector, returns a list of entities directly. Can be configured with `'single'` to only accept a single entity (will return the entity instead of a singleton) and with `'players'` to only accept players.
   * `'floatrange'`: pair of two numbers where one is smaller than the other 
   * `'players'`: returning a list of valid player name string, logged in or not. If configured with `'single'` returns only one player or `null`.
   * `'intrange'`: same as `'floatrange'`, but requiring integers. 
@@ -2602,9 +2659,9 @@ With an optional feature, it returns value for the specified attribute for that 
 * `'water_fog_color'`: RGBA color value of water fog
 * `'humidity'`: value from 0 to 1 indicating how wet is the biome
 * `'precipitation'`: `'rain'` `'snot'`, or `'none'`... ok, maybe `'snow'`, but that means snots for sure as well.
-* `'depth'`: float value indicating how high or low the terrain should generate. Values > 0 indicate generation above sea level
+* `'depth'`: (1.17.1 and below) float value indicating how high or low the terrain should generate. Values > 0 indicate generation above sea level
 and values < 0, below sea level.
-* `'scale'`: float value indicating how flat is the terrain.
+* `'scale'`: (1.17 and below) float value indicating how flat is the terrain.
 * `'features'`: list of features that generate in the biome, grouped by generation steps
 * `'structures'`: list of structures that generate in the biome.
 
@@ -2705,7 +2762,14 @@ Boolean function, true if the block at position blocks movement.
 Returns the name of sound type made by the block at position. One of:
 
 `'wood'`, `'gravel'`, `'grass'`, `'stone'`, `'metal'`, `'glass'`, `'wool'`, `'sand'`, `'snow'`, 
-`'ladder'`, `'anvil'`, `'slime'`, `'sea_grass'`, `'coral'`
+`'ladder'`, `'anvil'`, `'slime'`, `'sea_grass'`, `'coral'`, `'bamboo'`', `'shoots'`', `'scaffolding'`', `'berry'`', `'crop'`',
+`'stem'`', `'wart'`', 
+`'lantern'`', `'fungi_stem'`', `'nylium'`', `'fungus'`', `'roots'`', `'shroomlight'`', `'weeping_vines'`', `'soul_sand'`',
+ `'soul_soil'`', `'basalt'`', 
+`'wart'`', `'netherrack'`', `'nether_bricks'`', `'nether_sprouts'`', `'nether_ore'`', `'bone'`', `'netherite'`', `'ancient_debris'`',
+`'lodestone'`', `'chain'`', `'nether_gold_ore'`', `'gilded_blackstone'`',
+`'candle'`', `'amethyst'`', `'amethyst_cluster'`', `'small_amethyst_bud'`', `'large_amethyst_bud'`', `'medium_amethyst_bud'`',
+`'tuff'`', `'calcite'`', `'copper'`'
 
 ### `material(pos)`
 
@@ -2715,7 +2779,7 @@ Returns the name of material of the block at position. very useful to target a g
 `'bubble_column'`, `'lava'`, `'snow_layer'`, `'fire'`, `'redstone_bits'`, `'cobweb'`, `'redstone_lamp'`, `'clay'`, 
 `'dirt'`, `'grass'`, `'packed_ice'`, `'sand'`, `'sponge'`, `'wood'`, `'wool'`, `'tnt'`, `'leaves'`, `'glass'`, 
 `'ice'`, `'cactus'`, `'stone'`, `'iron'`, `'snow'`, `'anvil'`, `'barrier'`, `'piston'`, `'coral'`, `'gourd'`, 
-`'dragon_egg'`, `'cake'`
+`'dragon_egg'`, `'cake'`, `'amethyst'`
 
 ### `map_colour(pos)`
 
@@ -2727,7 +2791,8 @@ Returns the map colour of a block at position. One of:
 '`, `'diamond'`, `'lapis'`, `'emerald'`, `'obsidian'`, `'netherrack'`, `'white_terracotta'`, `'orange_terracotta'`, 
 `'magenta_terracotta'`, `'light_blue_terracotta'`, `'yellow_terracotta'`, `'lime_terracotta'`, `'pink_terracotta'`, 
 `'gray_terracotta'`, `'light_gray_terracotta'`, `'cyan_terracotta'`, `'purple_terracotta'`, `'blue_terracotta'`, 
-`'brown_terracotta'`, `'green_terracotta'`, `'red_terracotta'`, `'black_terracotta'`
+`'brown_terracotta'`, `'green_terracotta'`, `'red_terracotta'`, `'black_terracotta'`,
+`'crimson_nylium'`, `'crimson_stem'`, `'crimson_hyphae'`, `'warped_nylium'`, `'warped_stem'`, `'warped_hyphae'`, `'warped_wart'`
 
 
 ### `loaded(pos)`
@@ -3929,7 +3994,10 @@ In case you want to pass an event handler that is not defined in your module, pl
 ### `entity_load_handler(descriptor / descriptors, function)`, `entity_load_handler(descriptor / descriptors, call_name, ... args?)`
 
 Attaches a callback to when any entity matching the following type / types is loaded in the game, allowing to grab a handle
-to an entity right when it is loaded to the world without querying them every tick. Callback expects one parameter - the entity.
+to an entity right when it is loaded to the world without querying them every tick. Callback expects two parameters - the entity,
+and a boolean indicating if the entity was newly created(`true`) or just loaded from disk. Single argument functions accepting
+only entities are allowed, but deprecated and will be removed at some point.
+
 If callback is `null`, then the current entity handler, if present, is removed. Consecutive calls to `entity_load_handler` will add / subtract
 of the currently targeted entity types pool.
 
@@ -3939,10 +4007,10 @@ that it is not clear which player to use run the load call.
 ```
 // veryfast method of getting rid of all the zombies. Callback is so early, its packets haven't reached yet the clients
 // so to save on log errors, removal of mobs needs to be scheduled for later.
-entity_load_handler('zombie', _(e) -> schedule(0, _(outer(e)) -> modify(e, 'remove')))
+entity_load_handler('zombie', _(e, new) -> schedule(0, _(outer(e)) -> modify(e, 'remove')))
 
 // making all zombies immediately faster and less susceptible to friction of any sort
-entity_load_handler('zombie', _(e) -> entity_event(e, 'on_tick', _(e) -> modify(e, 'motion', 1.2*e~'motion')))
+entity_load_handler('zombie', _(e, new) -> entity_event(e, 'on_tick', _(e) -> modify(e, 'motion', 1.2*e~'motion')))
 ```
 
 Word of caution: entities can be loaded with chunks in various states, for instance when a chunk is being generated, this means
@@ -3950,25 +4018,30 @@ that accessing world blocks would cause the game to freeze due to force generati
 sure to never assume the chunk is ready and use `entity_load_handler` to schedule actions around the loaded entity, 
 or manipulate entity directly.
 
+Also, it is possible that mobs that spawn with world generation, while being 'added' have their metadata serialized and cached
+internally (vanilla limitation), so some modifications to these entities may have no effect on them. This affects mobs created with
+world generation.
+
 For instance the following handler is safe, as it only accesses the entity directly. It makes all spawned pigmen jump
 ```
-/script run entity_load_handler('zombified_piglin', _(e) -> modify(e, 'motion', 0, 1, 0) )
+/script run entity_load_handler('zombified_piglin', _(e, new) -> if(new, modify(e, 'motion', 0, 1, 0)) )
 ```
 But the following handler, attempting to despawn pigmen that spawn in portals, will cause the game to freeze due to cascading access to blocks that would cause neighbouring chunks 
 to force generate, causing also error messages for all pigmen caused by packets send after entity is removed by script.
 ```
-/script run entity_load_handler('zombified_piglin', _(e) -> if(block(pos(e))=='nether_portal', modify(e, 'remove') ) )
+/script run entity_load_handler('zombified_piglin', _(e, new) -> if(new && block(pos(e))=='nether_portal', modify(e, 'remove') ) )
 ```
 Easiest method to circumvent these issues is delay the check, which may or may not cause cascade load to happen, but 
 will definitely break the infinite chain.
 ```
-/script run entity_load_handler('zombified_piglin', _(e) -> schedule(0, _(outer(e)) -> if(block(pos(e))=='nether_portal', modify(e, 'remove') ) ) )
+/script run entity_load_handler('zombified_piglin', _(e, new) -> if(new, schedule(0, _(outer(e)) -> if(block(pos(e))=='nether_portal', modify(e, 'remove') ) ) ) )
 ```
 But the best is to perform the check first time the entity will be ticked - giving the game all the time to ensure chunk 
-is fully loaded and entity processing, removing the tick handler 
+is fully loaded and entity processing, removing the tick handler: 
 ```
-/script run entity_load_handler('zombified_piglin', _(e) -> entity_event(e, 'on_tick', _(e) -> ( if(block(pos(e))=='nether_portal', modify(e, 'remove')); entity_event(e, 'on_tick', null) ) ) )
+/script run entity_load_handler('zombified_piglin', _(e, new) -> if(new, entity_event(e, 'on_tick', _(e) -> ( if(block(pos(e))=='nether_portal', modify(e, 'remove')); entity_event(e, 'on_tick', null) ) ) ) )
 ```
+Looks little convoluted, but that's the safest method to ensure your app won't crash.
 
 ### `entity_event(e, event, function)`, `entity_event(e, event, call_name, ... args?)`
 
@@ -4274,10 +4347,17 @@ Duplicate of `tick`, just automatically located in the nether. Use `__on_tick() 
 ### `__on_tick_ender()` (Deprecated)
 Duplicate of `tick`, just automatically located in the end. Use `__on_tick() -> in_dimension('end', ... ` instead.
 
-### `__on_chunk_generated(x,z)`
+### `__on_chunk_generated(x, z)`
 Called right after a chunk at a given coordinate is full generated. `x` and `z` correspond
-to the lowest x and z coords in the chunk. Event may (or may not) work with Optifine installed
-at the same time.
+to the lowest x and z coords in the chunk. Handling of this event is scheduled as an off-tick task happening after the 
+chunk is confirmed to be generated and loaded to the game, so 
+handling of this event is not technically guaranteed, if the game crashes while players are moving for example, and can
+be missed on the next start, if the game successfully saves it and fails to execute all remaining tasks. In normal operation
+this should not happen, but be warned.
+
+### `__on_chunk_loaded(x, z)`
+Called right after a chunk at a given coordinate is loaded. All newly generated chunks are loaded as well.
+ `x` and `z` correspond to the lowest x and z coordinates in the chunk.
 
 ### `__on_lightning(block, mode)`
 Triggered right after a lightning strikes. Lightning entity as well as potential horseman trap would 
@@ -5629,3 +5709,18 @@ This would slow down the computation of fib(40) from a minute to two, but allows
 and be responsive to commands, using about half of each tick to advance the computation. Obviously depending on the 
 problem, and available hardware, certain things can take more or less time to execute, so portioning of work with 
 calling `gametick` should be balanced in each case separately
+
+# `/script download` command
+
+`/script download <path>` command allows downloading and running apps directly from an online app store (it's all free), 
+by default the [scarpet app store](https://www.github.com/gnembon/scarpet).
+Downloaded apps will be placed in the world's scripts folder automatically. Location of the app store is controlled
+with a global carpet setting of `/carpet scriptsAppStore`. Apps, if required, will also download all the resources they need
+to run it. Consecutive downloads of the same app will re-download its content and its resources, but will not remove anything
+that has been removed or renamed.
+
+# `/script remove` command
+
+command allow to stop and remove apps installed in the worlds scripts folder. The app is unloaded and app 'sc' file is moved
+to the `/scripts/trash`. Removed apps can only be restored by manually moving it back from the trash folder,
+or by redownloading from the appstore.

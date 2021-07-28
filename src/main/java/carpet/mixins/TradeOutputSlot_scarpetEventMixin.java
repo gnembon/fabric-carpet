@@ -11,6 +11,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 
@@ -25,7 +26,7 @@ public abstract class TradeOutputSlot_scarpetEventMixin {
     @Inject(method = "onTakeItem", at = @At(value = "INVOKE",
             target = "Lnet/minecraft/village/Merchant;trade(Lnet/minecraft/village/TradeOffer;)V")
     )
-    private void onTrade(PlayerEntity player, ItemStack stack, CallbackInfoReturnable<ItemStack> cir) {
+    private void onTrade(PlayerEntity player, ItemStack stack, CallbackInfo ci) {
         if(PLAYER_TRADES.isNeeded() && !this.merchant.getMerchantWorld().isClient())
         {
             PLAYER_TRADES.onTrade((ServerPlayerEntity) player, merchant, merchantInventory.getTradeOffer());

@@ -8,11 +8,11 @@ import carpet.settings.ParsedRule;
 import carpet.settings.SettingsManager;
 import io.netty.buffer.Unpooled;
 import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.nbt.AbstractNumberTag;
-import net.minecraft.nbt.ByteTag;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.ListTag;
-import net.minecraft.nbt.Tag;
+import net.minecraft.nbt.AbstractNbtNumber;
+import net.minecraft.nbt.NbtByte;
+import net.minecraft.nbt.NbtCompound;
+import net.minecraft.nbt.NbtList;
+import net.minecraft.nbt.NbtElement;
 import net.minecraft.network.PacketByteBuf;
 import net.minecraft.network.packet.c2s.play.CustomPayloadC2SPacket;
 
@@ -22,14 +22,14 @@ import java.util.function.BiConsumer;
 
 public class ClientNetworkHandler
 {
-    private static final Map<String, BiConsumer<ClientPlayerEntity, Tag>> dataHandlers = new HashMap<String, BiConsumer<ClientPlayerEntity, Tag>>();
+    private static final Map<String, BiConsumer<ClientPlayerEntity, NbtElement>> dataHandlers = new HashMap<String, BiConsumer<ClientPlayerEntity, NbtElement>>();
     static
     {
         dataHandlers.put("Rules", (p, t) -> {
-            CompoundTag ruleset = (CompoundTag)t;
+            NbtCompound ruleset = (NbtCompound)t;
             for (String ruleKey: ruleset.getKeys())
             {
-                CompoundTag ruleNBT = (CompoundTag) ruleset.get(ruleKey);
+                NbtCompound ruleNBT = (NbtCompound) ruleset.get(ruleKey);
                 SettingsManager manager = null;
                 String ruleName;
                 if (ruleNBT.contains("Manager"))
@@ -65,22 +65,22 @@ public class ClientNetworkHandler
                 }
             }
         });
-        dataHandlers.put("TickRate", (p, t) -> TickSpeed.tickrate(((AbstractNumberTag)t).getFloat(), false));
+        dataHandlers.put("TickRate", (p, t) -> TickSpeed.tickrate(((AbstractNbtNumber)t).floatValue(), false));
         dataHandlers.put("TickingState", (p, t) -> {
-            CompoundTag tickingState = (CompoundTag)t;
+            NbtCompound tickingState = (NbtCompound)t;
             TickSpeed.setFrozenState(tickingState.getBoolean("is_paused"), tickingState.getBoolean("deepFreeze"));
         });
         dataHandlers.put("SuperHotState", (p, t) -> {
-            TickSpeed.is_superHot = ((ByteTag) t).equals(ByteTag.ONE);
+            TickSpeed.is_superHot = ((NbtByte) t).equals(NbtByte.ONE);
         });
-        dataHandlers.put("TickPlayerActiveTimeout", (p, t) -> TickSpeed.player_active_timeout = ((AbstractNumberTag)t).getInt());
+        dataHandlers.put("TickPlayerActiveTimeout", (p, t) -> TickSpeed.player_active_timeout = ((AbstractNbtNumber)t).intValue());
         dataHandlers.put("scShape", (p, t) -> { // deprecated // and unused // should remove for 1.17
             if (CarpetClient.shapes != null)
-                CarpetClient.shapes.addShape((CompoundTag)t);
+                CarpetClient.shapes.addShape((NbtCompound)t);
         });
         dataHandlers.put("scShapes", (p, t) -> {
             if (CarpetClient.shapes != null)
-                CarpetClient.shapes.addShapes((ListTag) t);
+                CarpetClient.shapes.addShapes((NbtList) t);
         });
         dataHandlers.put("clientCommand", (p, t) -> {
             CarpetClient.onClientCommand(t);
@@ -129,7 +129,7 @@ public class ClientNetworkHandler
 
     private static void onSyncData(PacketByteBuf data, ClientPlayerEntity player)
     {
-        CompoundTag compound = data.readCompoundTag();
+        NbtCompound compound = data.readNbt();
         if (compound == null) return;
         for (String key: compound.getKeys())
         {
@@ -149,14 +149,14 @@ public class ClientNetworkHandler
 
     public static void clientCommand(String command)
     {
-        CompoundTag tag = new CompoundTag();
+        NbtCompound tag = new NbtCompound();
         tag.putString("id", command);
         tag.putString("command", command);
-        CompoundTag outer = new CompoundTag();
+        NbtCompound outer = new NbtCompound();
         outer.put("clientCommand", tag);
         CarpetClient.getPlayer().networkHandler.sendPacket(new CustomPayloadC2SPacket(
                 CarpetClient.CARPET_CHANNEL,
-                (new PacketByteBuf(Unpooled.buffer())).writeVarInt(CarpetClient.DATA).writeCompoundTag(outer)
+                (new PacketByteBuf(Unpooled.buffer())).writeVarInt(CarpetClient.DATA).writeNbt(outer)
         ));
     }
 }

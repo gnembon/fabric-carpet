@@ -3,10 +3,10 @@ package carpet.script.value;
 import carpet.script.exception.InternalExpressionException;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonPrimitive;
-import net.minecraft.nbt.DoubleTag;
-import net.minecraft.nbt.IntTag;
-import net.minecraft.nbt.LongTag;
-import net.minecraft.nbt.Tag;
+import net.minecraft.nbt.NbtDouble;
+import net.minecraft.nbt.NbtInt;
+import net.minecraft.nbt.NbtLong;
+import net.minecraft.nbt.NbtElement;
 import org.apache.commons.lang3.StringUtils;
 
 import java.math.BigDecimal;
@@ -110,9 +110,8 @@ public class NumericValue extends Value
     @Override
     public Value add(Value v)
     {  // TODO test if definintn add(NumericVlaue) woud solve the casting
-        if (v instanceof NumericValue)
+        if (v instanceof NumericValue nv)
         {
-            NumericValue nv = (NumericValue)v;
             if (longValue != null && nv.longValue != null)
             {
                 return new NumericValue(longValue+nv.longValue);
@@ -122,9 +121,8 @@ public class NumericValue extends Value
         return super.add(v);
     }
     public Value subtract(Value v) {  // TODO test if definintn add(NumericVlaue) woud solve the casting
-        if (v instanceof NumericValue)
+        if (v instanceof NumericValue nv)
         {
-            NumericValue nv = (NumericValue)v;
             if (longValue != null && nv.longValue != null)
             {
                 return new NumericValue(longValue-nv.longValue);
@@ -135,9 +133,8 @@ public class NumericValue extends Value
     }
     public Value multiply(Value v)
     {
-        if (v instanceof NumericValue)
+        if (v instanceof NumericValue nv)
         {
-            NumericValue nv = (NumericValue)v;
             if (longValue != null && nv.longValue != null)
             {
                 return new NumericValue(longValue*nv.longValue);
@@ -173,9 +170,8 @@ public class NumericValue extends Value
         {
             return -o.compareTo(this);
         }
-        if (o instanceof NumericValue)
+        if (o instanceof NumericValue no)
         {
-            NumericValue no = (NumericValue)o;
             if (longValue != null && no.longValue != null)
                 return longValue.compareTo(no.longValue);
             return Double.compare(value, no.value);
@@ -189,9 +185,8 @@ public class NumericValue extends Value
         {
             return o.equals(this);
         }
-        if (o instanceof NumericValue)
+        if (o instanceof NumericValue no)
         {
-            NumericValue no = (NumericValue)o;
             if (longValue != null && no.longValue != null)
                 return longValue.equals(no.longValue);
             return !this.subtract(no).getBoolean();
@@ -278,20 +273,20 @@ public class NumericValue extends Value
     }
 
     @Override
-    public Tag toTag(boolean force)
+    public NbtElement toTag(boolean force)
     {
         if (longValue != null)
-            return LongTag.of(longValue);
+            return NbtLong.of(longValue);
         long lv = getLong();
         if (value == (double)lv)
         {
             if (abs(value) < Integer.MAX_VALUE-2)
-                return IntTag.of((int)lv);
-            return LongTag.of(getLong());
+                return NbtInt.of((int)lv);
+            return NbtLong.of(getLong());
         }
         else
         {
-            return DoubleTag.of(value);
+            return NbtDouble.of(value);
         }
     }
 

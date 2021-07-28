@@ -108,9 +108,13 @@ public class TickSpeed
         {
             tick_warp_callback = null;
             if (source != tick_warp_sender) tick_warp_sender = null;
-            finish_time_warp();
-            tick_warp_sender = null;
-            return Messenger.c("gi Warp interrupted");
+            if (time_bias > 0)
+            {
+                finish_time_warp();
+                tick_warp_sender = null;
+                return Messenger.c("gi Warp interrupted");
+            }
+            return Messenger.c("ri No warp in progress");
         }
         if (time_bias > 0)
         {
@@ -143,7 +147,7 @@ public class TickSpeed
         time_warp_start_time = 0;
         if (tick_warp_callback != null)
         {
-            CommandManager icommandmanager = tick_warp_sender.getMinecraftServer().getCommandManager();
+            CommandManager icommandmanager = tick_warp_sender.getServer().getCommandManager();
             try
             {
                 icommandmanager.execute(tick_warp_sender, tick_warp_callback);

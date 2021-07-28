@@ -2,7 +2,6 @@ package carpet.commands;
 
 import carpet.CarpetServer;
 import carpet.CarpetSettings;
-import carpet.script.CarpetScriptServer;
 import carpet.script.utils.AppStoreManager;
 import carpet.script.CarpetEventServer;
 import carpet.script.CarpetExpression;
@@ -22,7 +21,6 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
-import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import net.minecraft.block.Block;
@@ -110,22 +108,25 @@ public class ScriptCommand
     }
 
     /**
-     * A method to suggest the available scarpet scripts based off of the current player input and {@link AppStoreManager#appStoreRoot}
+     * A method to suggest the available scarpet scripts based off of the current player input and {@link AppStoreManager#APP_STORE_ROOT}
      * variable.
      */
     private static CompletableFuture<Suggestions> suggestDownloadableApps(
             CommandContext<ServerCommandSource> context,
             SuggestionsBuilder suggestionsBuilder
     ) throws CommandSyntaxException {
-        try {
-            String previous = suggestionsBuilder.getRemaining();
-            AppStoreManager.suggestionsFromPath(previous).forEach(suggestionsBuilder::suggest);
-            return suggestionsBuilder.buildFuture();
-        }
-        catch (IOException e)
-        {
-            throw new SimpleCommandExceptionType(Messenger.c("rb "+e.getMessage())).create();
-        }
+        
+        return CompletableFuture.supplyAsync(()->{
+             String previous = suggestionsBuilder.getRemaining();
+            try {
+                AppStoreManager.suggestionsFromPath(previous).forEach(suggestionsBuilder::suggest);
+            }
+            catch (IOException e)
+            {
+                CarpetSettings.LOG.warn("Exception when fetching app store structure", e);
+            }
+            return suggestionsBuilder.build();
+        });
     }
 
     public static void register(CommandDispatcher<ServerCommandSource> dispatcher)
@@ -461,6 +462,10 @@ public class ScriptCommand
         {
             host.handleErrorWithStack("Math doesn't compute", ae);
         }
+        catch (StackOverflowError soe)
+        {
+            host.handleErrorWithStack("Your thoughts are too deep", soe);
+        }
         return 0;
         //host.resetErrorSnooper();  // lets say no need to reset the snooper in case something happens on the way
     }
@@ -507,9 +512,9 @@ public class ScriptCommand
     {
         ServerCommandSource source = context.getSource();
         CarpetScriptHost host = getHost(context);
-        BlockBox area = new BlockBox(a, b);
+        BlockBox area = BlockBox.create(a, b);
         CarpetExpression cexpr = new CarpetExpression(host.main, expr, source, origin);
-        int int_1 = area.getBlockCountX() * area.getBlockCountY() * area.getBlockCountZ();
+        int int_1 = area.getBlockCountX() * area.getBlockCountY() * area.getBlockCountZ(); // X Y Z
         if (int_1 > CarpetSettings.fillLimit)
         {
             Messenger.m(source, "r too many blocks to evaluate: " + int_1);
@@ -519,11 +524,11 @@ public class ScriptCommand
         CarpetSettings.impendingFillSkipUpdates.set(!CarpetSettings.fillUpdates);
         try
         {
-            for (int x = area.minX; x <= area.maxX; x++)
+            for (int x = area.getMinX(); x <= area.getMaxX(); x++)
             {
-                for (int y = area.minY; y <= area.maxY; y++)
+                for (int y = area.getMinY(); y <= area.getMaxY(); y++)
                 {
-                    for (int z = area.minZ; z <= area.maxZ; z++)
+                    for (int z = area.getMinZ(); z <= area.getMaxZ(); z++)
                     {
                         try
                         {
@@ -556,7 +561,7 @@ public class ScriptCommand
     {
         ServerCommandSource source = context.getSource();
         CarpetScriptHost host = getHost(context);
-        BlockBox area = new BlockBox(a, b);
+        BlockBox area = BlockBox.create(a, b);
         CarpetExpression cexpr = new CarpetExpression(host.main, expr, source, origin);
         int int_1 = area.getBlockCountX() * area.getBlockCountY() * area.getBlockCountZ();
         if (int_1 > CarpetSettings.fillLimit)
@@ -565,22 +570,22 @@ public class ScriptCommand
             return 1;
         }
 
-        boolean[][][] volume = new boolean[area.getBlockCountX()][area.getBlockCountY()][area.getBlockCountZ()];
+        boolean[][][] volume = new boolean[area.getBlockCountX()][area.getBlockCountY()][area.getBlockCountZ()]; //X then Y then Z got messedup
 
         BlockPos.Mutable mbpos = origin.mutableCopy();
         ServerWorld world = source.getWorld();
 
-        for (int x = area.minX; x <= area.maxX; x++)
+        for (int x = area.getMinX(); x <= area.getMaxX(); x++)
         {
-            for (int y = area.minY; y <= area.maxY; y++)
+            for (int y = area.getMinY(); y <= area.getMaxY(); y++)
             {
-                for (int z = area.minZ; z <= area.maxZ; z++)
+                for (int z = area.getMinZ(); z <= area.getMaxZ(); z++)
                 {
                     try
                     {
                         if (cexpr.fillAndScanCommand(host, x, y, z))
                         {
-                            volume[x-area.minX][y-area.minY][z-area.minZ]=true;
+                            volume[x-area.getMinX()][y-area.getMinY()][z-area.getMinZ()]=true;
                         }
                     }
                     catch (CarpetExpressionException e)
@@ -635,7 +640,7 @@ public class ScriptCommand
                 {
                     if (volume[x][y][z])
                     {
-                        mbpos.set(x+area.minX, y+area.minY, z+area.minZ);
+                        mbpos.set(x+area.getMinX(), y+area.getMinY(), z+area.getMinZ());
                         if (replacement == null || replacement.test(
                                 new CachedBlockPosition( world, mbpos, true)))
                         {
@@ -663,7 +668,7 @@ public class ScriptCommand
                     {
                         if (volume[x][y][z])
                         {
-                            mbpos.set(x+area.minX, y+area.minY, z+area.minZ);
+                            mbpos.set(x+area.getMinX(), y+area.getMinY(), z+area.getMinZ());
                             Block blokc = world.getBlockState(mbpos).getBlock();
                             world.updateNeighbors(mbpos, blokc);
                         }

@@ -24,7 +24,7 @@ import net.minecraft.world.biome.source.BiomeAccess;
 import net.minecraft.world.gen.ChunkRandom;
 import net.minecraft.world.gen.chunk.ChunkGenerator;
 import net.minecraft.world.gen.chunk.StructureConfig;
-import net.minecraft.world.gen.tree.BeehiveTreeDecorator;
+import net.minecraft.world.gen.treedecorator.BeehiveTreeDecorator;
 import net.minecraft.world.gen.feature.ConfiguredFeature;
 import net.minecraft.world.gen.feature.ConfiguredFeatures;
 import net.minecraft.world.gen.feature.ConfiguredStructureFeature;
@@ -49,7 +49,7 @@ public class FeatureGenerator
             return custom.plop(world, pos);
         }
         Identifier id = new Identifier(featureName);
-        ConfiguredStructureFeature<?, ?> structureFeature = world.getRegistryManager().get(Registry.CONFIGURED_STRUCTURE_FEATURE_WORLDGEN).get(id);
+        ConfiguredStructureFeature<?, ?> structureFeature = world.getRegistryManager().get(Registry.CONFIGURED_STRUCTURE_FEATURE_KEY).get(id);
         if (structureFeature != null)
         {
             return ((StructureFeatureInterface)structureFeature.feature).plopAnywhere(
@@ -58,7 +58,7 @@ public class FeatureGenerator
 
         }
 
-        ConfiguredFeature<?, ?> feature = world.getRegistryManager().get(Registry.CONFIGURED_FEATURE_WORLDGEN).get(id);
+        ConfiguredFeature<?, ?> feature = world.getRegistryManager().get(Registry.CONFIGURED_FEATURE_KEY).get(id);
         if (feature != null)
         {
             CarpetSettings.skipGenerationChecks.set(true);
@@ -77,7 +77,7 @@ public class FeatureGenerator
     public static ConfiguredStructureFeature<?, ?> resolveConfiguredStructure(String name, ServerWorld world, BlockPos pos)
     {
         Identifier id = new Identifier(name);
-        ConfiguredStructureFeature<?, ?> configuredStructureFeature =  world.getRegistryManager().get(Registry.CONFIGURED_STRUCTURE_FEATURE_WORLDGEN).get(id);
+        ConfiguredStructureFeature<?, ?> configuredStructureFeature =  world.getRegistryManager().get(Registry.CONFIGURED_STRUCTURE_FEATURE_KEY).get(id);
         if (configuredStructureFeature != null) return configuredStructureFeature;
         StructureFeature<?> structureFeature = Registry.STRUCTURE_FEATURE.get(id);
         if (structureFeature == null) return null;
@@ -113,7 +113,7 @@ public class FeatureGenerator
 
     private static Thing simpleTree(TreeFeatureConfig config)
     {
-        config.ignoreFluidCheck();
+        //config.ignoreFluidCheck();
         return simplePlop(Feature.TREE.configure(config));
     }
 
@@ -137,7 +137,7 @@ public class FeatureGenerator
     {
         ConfiguredStructureFeature<?, ?> configuredFeature = world.getBiome(pos).getGenerationSettings().method_30978(structure.configure(null));
         if (configuredFeature.config != null || !tryHard) return configuredFeature;
-        return world.getRegistryManager().get(Registry.CONFIGURED_STRUCTURE_FEATURE_WORLDGEN).getEntries().stream().
+        return world.getRegistryManager().get(Registry.CONFIGURED_STRUCTURE_FEATURE_KEY).getEntries().stream().
                 filter(cS -> cS.getValue().feature == structure).
                 findFirst().map(Map.Entry::getValue).orElse(null);
     }
@@ -158,13 +158,15 @@ public class FeatureGenerator
         ConfiguredStructureFeature<?, ?> configuredFeature = biome.getGenerationSettings().method_30978(structure.configure(null));
         if (configuredFeature == null || configuredFeature.config == null) return null;
         ChunkPos chunkPos2 = structure.getStartChunk(params, seed, chunkRandom, chunkPos.x, chunkPos.z); //find some chunk I guess
-        if (chunkPos.x == chunkPos2.x && chunkPos.z == chunkPos2.z && ((StructureFeatureInterface)structure).shouldStartPublicAt(generator, generator.getBiomeSource(), seed, chunkRandom, chunkPos.x, chunkPos.z, biome, chunkPos, configuredFeature.config)) // should start at
+        // using here world for heightview, rather than chunk since we - unlike vanilla, want to avoid creating any chunks even on the
+        // structure starts level - lets see where would that take us.
+        if (chunkPos.x == chunkPos2.x && chunkPos.z == chunkPos2.z && ((StructureFeatureInterface)structure).shouldStartPublicAt(generator, generator.getBiomeSource(), seed, chunkRandom, chunkPos, biome, chunkPos, configuredFeature.config, world)) // should start at
         {
             if (!computeBox) return StructureStart.DEFAULT;
             StructureManager manager = world.getStructureManager();
-            StructureStart<T> structureStart3 = structure.getStructureStartFactory().create((StructureFeature<T>) configuredFeature.feature, chunkPos.x, chunkPos.z, BlockBox.empty(), 0, seed);
+            StructureStart<T> structureStart3 = structure.getStructureStartFactory().create((StructureFeature<T>) configuredFeature.feature, chunkPos, 0, seed);
             synchronized (boo) {
-                structureStart3.init(world.getRegistryManager(), generator, manager, chunkPos.x, chunkPos.z, biome, (T) configuredFeature.config);
+                structureStart3.init(world.getRegistryManager(), generator, manager, chunkPos, biome, (T) configuredFeature.config, world);
             }
             if (!structureStart3.hasChildren()) return null;
             return structureStart3;
@@ -190,7 +192,7 @@ public class FeatureGenerator
                         new Identifier("bastion/starts"),
                         new Identifier("empty"),
                         ImmutableList.of(
-                                Pair.of(StructurePoolElement.method_30435("bastion/units/air_base", StructureProcessorLists.BASTION_GENERIC_DEGRADATION), 1)
+                                Pair.of(StructurePoolElement.ofProcessedSingle("bastion/units/air_base", StructureProcessorLists.BASTION_GENERIC_DEGRADATION), 1)
                         ),
                         StructurePool.Projection.RIGID
                 ), 6),
@@ -202,7 +204,7 @@ public class FeatureGenerator
                         new Identifier("bastion/starts"),
                         new Identifier("empty"),
                         ImmutableList.of(
-                                Pair.of(StructurePoolElement.method_30435("bastion/hoglin_stable/air_base", StructureProcessorLists.BASTION_GENERIC_DEGRADATION), 1)
+                                Pair.of(StructurePoolElement.ofProcessedSingle("bastion/hoglin_stable/air_base", StructureProcessorLists.BASTION_GENERIC_DEGRADATION), 1)
                         ),
                         StructurePool.Projection.RIGID
                 ), 6),
@@ -214,7 +216,7 @@ public class FeatureGenerator
                         new Identifier("bastion/starts"),
                         new Identifier("empty"),
                         ImmutableList.of(
-                                Pair.of(StructurePoolElement.method_30435("bastion/treasure/big_air_full", StructureProcessorLists.BASTION_GENERIC_DEGRADATION), 1)
+                                Pair.of(StructurePoolElement.ofProcessedSingle("bastion/treasure/big_air_full", StructureProcessorLists.BASTION_GENERIC_DEGRADATION), 1)
                         ),
                         StructurePool.Projection.RIGID
                 ), 6),
@@ -226,7 +228,7 @@ public class FeatureGenerator
                         new Identifier("bastion/starts"),
                         new Identifier("empty"),
                         ImmutableList.of(
-                                Pair.of(StructurePoolElement.method_30435("bastion/bridge/starting_pieces/entrance_base", StructureProcessorLists.BASTION_GENERIC_DEGRADATION), 1)
+                                Pair.of(StructurePoolElement.ofProcessedSingle("bastion/bridge/starting_pieces/entrance_base", StructureProcessorLists.BASTION_GENERIC_DEGRADATION), 1)
                         ),
                         StructurePool.Projection.RIGID
                 ), 6),

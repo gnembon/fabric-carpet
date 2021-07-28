@@ -6,7 +6,7 @@ import java.lang.annotation.Target;
 import java.lang.reflect.AnnotatedType;
 import java.util.Iterator;
 
-import org.apache.commons.lang3.NotImplementedException;
+import com.google.common.collect.Lists;
 
 import carpet.script.CarpetContext;
 import carpet.script.Context;
@@ -26,9 +26,7 @@ import static java.lang.annotation.ElementType.TYPE_USE;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 /**
- * <p>Class that holds annotation for {@link Argument} locators to be used in Scarpet functions.</p>
- * 
- * <p>Note: Only {@link Block} locator is currently implemented.</p>
+ * <p>Class that holds the annotations for {@link Argument} locators, in order for them to be used in Scarpet functions.</p>
  */
 public interface Locator
 {
@@ -64,14 +62,11 @@ public interface Locator
     /**
      * <p>Represents that the annotated argument must be gotten by passing the arguments in there into a {@link Vector3Argument} locator.</p>
      * 
-     * <p>Must be used in either a {@link Vector3Argument} or a {@link Vec3d} parameter, though the latest may not get all the data.</p>
-     * 
-     * <p>Note: This locator has not been implemented yet (TODO)</p>
+     * <p>Must be used in either a {@link Vector3Argument} or a {@link net.minecraft.util.math.Vec3d Vec3d} parameter.</p>
      */
     @Documented
     @Retention(RUNTIME)
     @Target({ PARAMETER, TYPE_USE })
-    @Deprecated // Not implemented
     public @interface Vec3d
     {
         /**
@@ -95,14 +90,11 @@ public interface Locator
      * <p>Can be used in both {@link FunctionArgument} and {@link FunctionValue} types, but the last won't have access to arguments provided to the
      * function, even though they will still be consumed from the arguments the function was called with.</p>
      * 
-     * <p><b>This will consume any remaining parameters passed to the function, therefore any other parameters after this will throw.</b></p>
-     * 
-     * <p>Note: This locator has not been implemented yet (TODO)</p>
+     * <p><b>This will consume any remaining parameters passed to the function, therefore any other parameter after this will throw.</b></p>
      */
     @Documented
     @Retention(RUNTIME)
     @Target({ PARAMETER, TYPE_USE })
-    @Deprecated // Not implemented
     public @interface Function
     {
         /**
@@ -211,10 +203,10 @@ public interface Locator
             @Override
             public R checkAndConvert(Iterator<Value> valueIterator, Context context, Context.Type theLazyT)
             {
-                Vector3Argument locator = null;
-                // TODO Make the locator
-                // return (R) (returnVec3d ? locator.vec : locator);
-                throw new NotImplementedException("Locator.Vec3d still require adapting Vector3Argument to accept iterators!");
+                Vector3Argument locator = Vector3Argument.findIn(valueIterator, 0, optionalDirection, optionalEntity);
+                @SuppressWarnings("unchecked")
+                R ret = (R) (returnVec3d ? locator.vec : locator);
+                return ret;
             }
         }
 
@@ -228,8 +220,7 @@ public interface Locator
             {
                 this.returnFunctionValue = type == FunctionValue.class;
                 if (!returnFunctionValue && type != FunctionArgument.class)
-                    throw new IllegalArgumentException(
-                            "Params annotated with Locator.Function must be of either FunctionArgument or FunctionValue type");
+                    throw new IllegalArgumentException("Params annotated with Locator.Function must be of either FunctionArgument or FunctionValue type");
                 this.allowNone = annotation.allowNone();
                 this.checkArgs = annotation.checkArgs();
                 if (returnFunctionValue && allowNone)
@@ -240,11 +231,10 @@ public interface Locator
             public R checkAndConvert(Iterator<Value> valueIterator, Context context, Context.Type theLazyT)
             {
                 Module module = context.host.main;
-                FunctionArgument locator = null;
-                // TODO Make the locator
-                // return (R) (returnFunctionValue ? locator.function : locator);
-                throw new NotImplementedException("Locator.FunctionValue still requires adapting the annotation system to somehow get lv size"
-                        + "or FunctionArgument to not depend on it!");
+                FunctionArgument locator = FunctionArgument.findIn(context, module, Lists.newArrayList(valueIterator), 0, allowNone, checkArgs);
+                @SuppressWarnings("unchecked")
+                R ret = (R) (returnFunctionValue ? locator.function : locator);
+                return ret;
             }
 
             @Override

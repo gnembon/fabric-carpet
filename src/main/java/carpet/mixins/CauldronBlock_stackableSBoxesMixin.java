@@ -19,7 +19,7 @@ import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 
 @Mixin(CauldronBlock.class)
 public class CauldronBlock_stackableSBoxesMixin
-{
+{/*
     @Inject(method = "onUse", locals = LocalCapture.CAPTURE_FAILHARD, at = @At(
             value = "INVOKE",
             target = "Lnet/minecraft/item/ItemStack;hasTag()Z",
@@ -30,5 +30,5 @@ public class CauldronBlock_stackableSBoxesMixin
     {
         if (CarpetSettings.stackableShulkerBoxes)
             itemStack5.setCount(itemStack.getCount());
-    }
+    }*/
 }

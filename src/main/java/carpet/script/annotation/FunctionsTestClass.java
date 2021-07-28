@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
-
+/* There is no worse example to use for 1.17 compatibility
 import static net.minecraft.network.packet.s2c.play.TitleS2CPacket.Action;
 
 public class FunctionsTestClass {
@@ -42,13 +42,13 @@ public class FunctionsTestClass {
 	    }
 	    if (action == null) // Player list
 	    {
-	        Map<ServerPlayerEntity, BaseText> map = actionString.equals("player_list_header") ? HUDController.scarpet_headers : HUDController.scarpet_footers;
+	        Map<String, BaseText> map = actionString.equals("player_list_header") ? HUDController.scarpet_headers : HUDController.scarpet_footers;
 	        if (!content.isPresent()) // null
 	            for (ServerPlayerEntity p : targets)
-	                map.remove(p);
+	                map.remove(p.getEntityName());
 	        else
 	            for (ServerPlayerEntity p : targets)
-	                map.put(p, (BaseText) content.get());
+	                map.put(p.getEntityName(), (BaseText) content.get());
 	        return targets.size();
 	    }
 	    targets.forEach(p -> {
@@ -58,3 +58,4 @@ public class FunctionsTestClass {
 	    return targets.size();
 	}
 }
+*/

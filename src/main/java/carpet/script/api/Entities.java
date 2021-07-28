@@ -19,7 +19,7 @@ import net.minecraft.entity.EntityType;
 import net.minecraft.entity.SpawnReason;
 import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtCompound;
 import net.minecraft.predicate.entity.EntityPredicates;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
@@ -48,7 +48,7 @@ public class Entities {
                 CarpetContext cc = (CarpetContext)c;
                 if (cc.host.user != null)
                 {
-                    ServerPlayerEntity player = cc.s.getMinecraftServer().getPlayerManager().getPlayer(cc.host.user);
+                    ServerPlayerEntity player = cc.s.getServer().getPlayerManager().getPlayer(cc.host.user);
                     return EntityValue.of(player);
                 }
                 Entity callingEntity = cc.s.getEntity();
@@ -62,7 +62,7 @@ public class Entities {
             if ("all".equalsIgnoreCase(playerName))
             {
                 retval = ListValue.wrap(
-                        ((CarpetContext)c).s.getMinecraftServer().getPlayerManager().getPlayerList().
+                        ((CarpetContext)c).s.getServer().getPlayerManager().getPlayerList().
                                 stream().map(EntityValue::new).collect(Collectors.toList()));
             }
             else if ("*".equalsIgnoreCase(playerName))
@@ -97,7 +97,7 @@ public class Entities {
             }
             else
             {
-                ServerPlayerEntity player = ((CarpetContext) c).s.getMinecraftServer().getPlayerManager().getPlayer(playerName);
+                ServerPlayerEntity player = ((CarpetContext) c).s.getServer().getPlayerManager().getPlayer(playerName);
                 if (player != null)
                     retval = new EntityValue(player);
             }
@@ -126,7 +126,7 @@ public class Entities {
             Vector3Argument position = Vector3Argument.findIn(lv, 1);
             if (position.fromBlock)
                 position.vec = position.vec.subtract(0, 0.5, 0);
-            CompoundTag tag = new CompoundTag();
+            NbtCompound tag = new NbtCompound();
             boolean hasTag = false;
             if (lv.size() > position.offset)
             {
@@ -142,7 +142,7 @@ public class Entities {
 
             ServerWorld serverWorld = cc.s.getWorld();
             Entity entity_1 = EntityType.loadEntityWithPassengers(tag, serverWorld, (entity_1x) -> {
-                entity_1x.refreshPositionAndAngles(vec3d.x, vec3d.y, vec3d.z, entity_1x.yaw, entity_1x.pitch);
+                entity_1x.refreshPositionAndAngles(vec3d.x, vec3d.y, vec3d.z, entity_1x.getYaw(), entity_1x.getPitch());
                 return !serverWorld.tryLoadEntity(entity_1x) ? null : entity_1x;
             });
             if (entity_1 == null) {
@@ -167,8 +167,8 @@ public class Entities {
         {
             String who = lv.get(0).getString();
             ServerCommandSource source = ((CarpetContext)c).s;
-            EntityValue.EntityClassDescriptor eDesc = EntityValue.getEntityDescriptor(who, source.getMinecraftServer());
-            List<Entity> entityList = source.getWorld().getEntitiesByType(eDesc.directType, eDesc.filteringPredicate);
+            EntityValue.EntityClassDescriptor eDesc = EntityValue.getEntityDescriptor(who, source.getServer());
+            List<? extends Entity> entityList = source.getWorld().getEntitiesByType(eDesc.directType, eDesc.filteringPredicate);
             return ListValue.wrap(entityList.stream().map(EntityValue::new).collect(Collectors.toList()));
         });
 
@@ -195,7 +195,7 @@ public class Entities {
                 throw new InternalExpressionException("Range of 'entity_area' cannot come from a block argument");
             Vec3d range = rangeLocator.vec;
             Box area = centerBox.expand(range.x, range.y, range.z);
-            EntityValue.EntityClassDescriptor eDesc = EntityValue.getEntityDescriptor(who, cc.s.getMinecraftServer());
+            EntityValue.EntityClassDescriptor eDesc = EntityValue.getEntityDescriptor(who, cc.s.getServer());
             List<? extends Entity> entityList = cc.s.getWorld().getEntitiesByType(eDesc.directType, area,eDesc.filteringPredicate);
             return ListValue.wrap(entityList.stream().map(EntityValue::new).collect(Collectors.toList()));
         });
@@ -257,28 +257,38 @@ public class Entities {
         {
             if (lv.size() > 1) throw new InternalExpressionException("'entity_types' requires one or no arguments");
             String desc = (lv.size() == 1)?lv.get(0).getString():"*";
-            return EntityValue.getEntityDescriptor(desc, ((CarpetContext) c).s.getMinecraftServer()).listValue;
+            return EntityValue.getEntityDescriptor(desc, ((CarpetContext) c).s.getServer()).listValue;
         });
 
         expression.addContextFunction("entity_load_handler", -1, (c, t, lv) ->
         {
-            if (c.host.isPerUser()) throw new InternalExpressionException("'entity_load_handler' can only be called in apps with global scope");
             if (lv.size() < 2) throw new InternalExpressionException("'entity_load_handler' required the entity type, and a function to call");
             Value entityValue = lv.get(0);
             List<String> descriptors = (entityValue instanceof ListValue)
                     ? ((ListValue) entityValue).getItems().stream().map(Value::getString).collect(Collectors.toList())
                     : Collections.singletonList(entityValue.getString());
             Set<EntityType<? extends Entity>> types = new HashSet<>();
-            descriptors.forEach(s -> types.addAll(EntityValue.getEntityDescriptor(s, ((CarpetContext) c).s.getMinecraftServer()).typeList));
+            descriptors.forEach(s -> types.addAll(EntityValue.getEntityDescriptor(s, ((CarpetContext) c).s.getServer()).typeList));
             FunctionArgument funArg = FunctionArgument.findIn(c, expression.module, lv, 1, true, false);
             CarpetEventServer events = ((CarpetScriptHost)c.host).getScriptServer().events;
             if (funArg.function == null)
             {
                 types.forEach(et -> events.removeBuiltInEvent(CarpetEventServer.Event.getEntityLoadEventName(et), (CarpetScriptHost) c.host));
+                types.forEach(et -> events.removeBuiltInEvent(CarpetEventServer.Event.getEntityHandlerEventName(et), (CarpetScriptHost) c.host));
             }
             else
             {
-                types.forEach(et -> events.addBuiltInEvent(CarpetEventServer.Event.getEntityLoadEventName(et), c.host, funArg.function, funArg.args));
+                ///compat
+                int argno = funArg.function.getArguments().size() - funArg.args.size();
+                if (argno == 1)
+                {
+                    c.host.issueDeprecation("entity_load_handler() with single argument callback");
+                    types.forEach(et -> events.addBuiltInEvent(CarpetEventServer.Event.getEntityLoadEventName(et), c.host, funArg.function, funArg.args));
+                }
+                else
+                {
+                    types.forEach(et -> events.addBuiltInEvent(CarpetEventServer.Event.getEntityHandlerEventName(et), c.host, funArg.function, funArg.args));
+                }
             }
             return new NumericValue(types.size());
         });

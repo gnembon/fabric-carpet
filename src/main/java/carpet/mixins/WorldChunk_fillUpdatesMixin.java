@@ -31,7 +31,7 @@ public class WorldChunk_fillUpdatesMixin
     {
         if (CarpetSettings.impendingFillSkipUpdates.get()) // doing due dilligence from AbstractBlock onStateReplaced
         {
-            if (blockState.getBlock().hasBlockEntity() && !blockState.isOf(state.getBlock()))
+            if (blockState.hasBlockEntity() && !blockState.isOf(state.getBlock()))
             {
                 world.removeBlockEntity(pos);
             }

@@ -24,8 +24,8 @@ public class DistanceCalculator
         double dy = MathHelper.abs((float)pos1.y-(float)pos2.y);
         double dz = MathHelper.abs((float)pos1.z-(float)pos2.z);
         double manhattan = dx+dy+dz;
-        double spherical = MathHelper.sqrt(dx*dx + dy*dy + dz*dz);
-        double cylindrical = MathHelper.sqrt(dx*dx + dz*dz);
+        double spherical = Math.sqrt(dx*dx + dy*dy + dz*dz);
+        double cylindrical = Math.sqrt(dx*dx + dz*dz);
         List<BaseText> res = new ArrayList<>();
         res.add(Messenger.c("w Distance between ",
                 Messenger.tp("c",pos1),"w  and ",

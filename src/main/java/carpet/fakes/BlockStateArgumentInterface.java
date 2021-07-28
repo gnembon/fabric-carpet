@@ -1,8 +1,8 @@
 package carpet.fakes;
 
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtCompound;
 
 public interface BlockStateArgumentInterface
 {
-    CompoundTag getCMTag();
+    NbtCompound getCMTag();
 }

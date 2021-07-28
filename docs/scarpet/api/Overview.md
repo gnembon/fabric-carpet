@@ -110,30 +110,46 @@ in a list and contain of map-like resources descriptors, looking like
    'resources' -> [
         {
             'source' -> 'https://raw.githubusercontent.com/gnembon/fabric-carpet/master/src/main/resources/assets/carpet/icon.png',
-            'type' -> 'url',
             'target' -> 'foo/photos.zip/foo/cm.png',
         },
         {
-            'source' -> 'survival/README.md',
-            'type' -> 'store',
+            'source' -> '/survival/README.md',
             'target' -> 'survival_readme.md',
             'shared' -> true,
         },
         {
-            'source' -> 'carpets.sc',
-            'type' -> 'app',
-            'target' -> 'apps/flying_carpets.sc',
-            'shared' -> true,
+            'source' -> 'circle.sc', // Relative path
+            'target' -> 'apps/circle.sc', // This won't install the app, use 'libraries' for that
         },
     ]
    ```
-   `source` and `type` indicate resource location: either an arbitrary url (type `'url'`), 
-   absolute location of a file in the app store (type `'store'`),
-or a relative location in the same folder as the app in question (type `'app'`). 
-`'target'` points to the path in app data, or shared app data folder
+   `source` indicates resource location: either an arbitrary url (starting with `http://` or `https://`), 
+   absolute location of a file in the app store (starting with a slash `/`),
+or a relative location in the same folder as the app in question (the relative location directly). 
+`'target'` points to the path in app data, or shared app data folder. If not specified it will place the app into the main data folder with the name it has.
 if `'shared'` is specified and `true`. When re-downloading the app, all resources will be re-downloaded as well. 
-Currently, app resources
-are only downloaded when using `/carpet download` command.
+Currently, app resources are only downloaded when using `/carpet download` command.
+*   `libraries` - list of libraries or apps to be downloaded when installing the app from the app store. It needs to be a list of map-like resource
+descriptors, like the above `resources` field.
+   ```
+   'libraries' -> [
+        {
+            'source' -> '/tutorial/carpets.sc'
+        },
+        {
+            'source' -> '/fundamentals/heap.sc',
+            'target' -> 'heap-lib.sc'
+        }
+    ]
+   ```
+    `source` indicates resource location and must point to a scarpet app or library. It can be either an arbitrary url (starting with `http://` 
+    or `https://`), absolute location of a file in the app store (starting with a slash `/`), or a relative location in the same folder as the app
+    in question (the relative location directly). 
+    `target` is an optional field indicating the new name of the app. If not specified it will place the app into the main data folder with the name it has.
+If the app has relative resources dependencies, Carpet will use the app's path for relatives if the app was loaded from the same app store, or none if the 
+app was loaded from an external url.
+If you need to `import()` from dependencies indicated in this block, make sure to have the `__config()` map before any import that references your
+remote dependencies, in order to allow them to be downloaded and initialized before the import is executed.
 *   `'arguments'` - defines custom argument types for legacy commands with `'legacy_command_type_support'` as well
 as for the custom commands defined with `'commands'`, see below.
 *   `'commands'` - defines custom commands for the app to be executed with `/<app>` command, see below.
@@ -188,7 +204,7 @@ baz(entities) -> // same thing
  ```
 
 It works similarly to the auto command, but arguments get their inferred types based on the argument
-names, looking at the full name, or the suffix after the last `_` that indicates the variable type. For instance, variable named `float` will
+names, looking at the full name, or any suffix when splitting on `_` that indicates the variable type. For instance, variable named `float` will
 be parsed as a floating point number, but it can be named `'first_float'` or `'other_float'` as well. Any variable that is not
 supported, will be parsed as a `'string'` type. 
 
@@ -240,7 +256,7 @@ paths with functions to execute, and optionally, custom argument types. Commands
 the key (can be empty) consists of 
 the execution path with the command syntax, which consists of literals (as is) and arguments (wrapped with `<>`), with the name / suffix
 of the name of the attribute indicating its type, and the value represent function to call, either function values,
-defined function names, or functions with some default arguments. Values extracted from commands will be passed to the
+defined function names, or functions with some default arguments. Argument names need to be unique for each command. Values extracted from commands will be passed to the
 functions and executed. By default, command list will be checked for ambiguities (commands with the same path up to some point
 that further use different attributes), causing app loading error if that happens, however this can be suppressed by specifying
 `'allow_command_conflicts'`.
@@ -253,8 +269,14 @@ and less frequently used features, like forks and redirects, used pretty much on
 
 ### Command argument types
 
-There are several default argument types that can be used directly without specifying custom types. Each argument can be 
-customized in the `'arguments'` section of the app config, specifying its base type, via `'type'` that needs
+Argument types differ from actual argument names that the types are the suffixes of the used argument names, when separated with 
+`'_'` symbol. For example argument name `'from_pos'` will be interpreted as a built-in type `'int'` and provided to the command system
+as a name `'from_pos'`, however if you define a custom type `'from_pos'`, your custom type will be used instead. 
+Longer suffixes take priority over shorter prefixes, then user defined suffixes mask build-in prefixes.
+
+There are several default argument types that can be used directly without specifying custom types. 
+
+Each argument can be customized in the `'arguments'` section of the app config, specifying its base type, via `'type'` that needs
 to match any of the built-in types, with a series of optional modifiers. Shared modifiers include:
   * `suggest` - static list of suggestions to show above the command while typing
   * `suggester` - function taking one map argument, indicating current state of attributes in the parsed command
@@ -308,6 +330,7 @@ Here is a list of built-in types, with their return value formats, as well as a 
   * `'dimension'`: string representing a valid dimension in the world.
   * `'anchor'`: string of `feet` or `eyes`.
   * `'entitytype'`: string representing a type of entity 
+  * `'entities'`: entity selector, returns a list of entities directly. Can be configured with `'single'` to only accept a single entity (will return the entity instead of a singleton) and with `'players'` to only accept players.
   * `'floatrange'`: pair of two numbers where one is smaller than the other 
   * `'players'`: returning a list of valid player name string, logged in or not. If configured with `'single'` returns only one player or `null`.
   * `'intrange'`: same as `'floatrange'`, but requiring integers. 

@@ -3,7 +3,6 @@ package carpet.script.api;
 import carpet.CarpetServer;
 import carpet.fakes.MinecraftServerInterface;
 import carpet.fakes.ServerWorldInterface;
-import carpet.fakes.StatTypeInterface;
 import carpet.fakes.ThreadedAnvilChunkStorageInterface;
 import carpet.helpers.FeatureGenerator;
 import carpet.logging.HUDController;
@@ -50,14 +49,21 @@ import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.entity.decoration.ArmorStandEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtHelper;
 import net.minecraft.nbt.NbtOps;
-import net.minecraft.nbt.StringTag;
-import net.minecraft.nbt.Tag;
+import net.minecraft.nbt.NbtString;
+import net.minecraft.nbt.NbtElement;
+import net.minecraft.network.Packet;
+import net.minecraft.network.packet.s2c.play.ClearTitleS2CPacket;
+import net.minecraft.network.packet.s2c.play.OverlayMessageS2CPacket;
 import net.minecraft.network.packet.s2c.play.PlaySoundIdS2CPacket;
+import net.minecraft.network.packet.s2c.play.PlayerListHeaderS2CPacket;
+//import net.minecraft.network.packet.s2c.play.TitleS2CPacket;
+//import net.minecraft.network.packet.s2c.play.TitleS2CPacket.Action;
+import net.minecraft.network.packet.s2c.play.SubtitleS2CPacket;
+import net.minecraft.network.packet.s2c.play.TitleFadeS2CPacket;
 import net.minecraft.network.packet.s2c.play.TitleS2CPacket;
-import net.minecraft.network.packet.s2c.play.TitleS2CPacket.Action;
 import net.minecraft.particle.ParticleEffect;
 import net.minecraft.resource.DataPackSettings;
 import net.minecraft.resource.ReloadableResourceManagerImpl;
@@ -120,6 +126,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -154,7 +161,7 @@ public class Auxiliary {
                 return ListValue.wrap(Registry.SOUND_EVENT.getIds().stream().map(ValueConversions::of));
             }
             String rawString = lv.get(0).getString();
-            Identifier soundName = new Identifier(rawString);
+            Identifier soundName = InputValidator.identifierOf(rawString);
             Vector3Argument locator = Vector3Argument.findIn(lv, 1);
             if (Registry.SOUND_EVENT.get(soundName) == null)
                 throw new ThrowStatement(rawString, Throwables.UNKNOWN_SOUND);
@@ -190,7 +197,7 @@ public class Auxiliary {
         {
             CarpetContext cc = (CarpetContext)c;
             if (lv.size() == 0) return ListValue.wrap(Registry.PARTICLE_TYPE.getIds().stream().map(ValueConversions::of));
-            MinecraftServer ms = cc.s.getMinecraftServer();
+            MinecraftServer ms = cc.s.getServer();
             ServerWorld world = cc.s.getWorld();
             Vector3Argument locator = Vector3Argument.findIn(lv, 1);
             String particleName = lv.get(0).getString();
@@ -262,7 +269,7 @@ public class Auxiliary {
                     }
                     else
                     {
-                        player = cc.s.getMinecraftServer().getPlayerManager().getPlayer(playerValue.getString());
+                        player = cc.s.getServer().getPlayerManager().getPlayer(playerValue.getString());
                     }
                 }
             }
@@ -302,7 +309,7 @@ public class Auxiliary {
                     }
                     else
                     {
-                        player = cc.s.getMinecraftServer().getPlayerManager().getPlayer(playerValue.getString());
+                        player = cc.s.getServer().getPlayerManager().getPlayer(playerValue.getString());
                     }
                 }
             }
@@ -429,14 +436,14 @@ public class Auxiliary {
             for (Entity e : cc.s.getWorld().getEntitiesByType(EntityType.ARMOR_STAND, (as) -> as.getScoreboardTags().contains(markerName)))
             {
                 total ++;
-                e.remove();
+                e.discard(); // discard // remove();
             }
             return new NumericValue(total);
         });
 
         expression.addUnaryFunction("nbt", NBTSerializableValue::fromValue);
 
-        expression.addUnaryFunction("escape_nbt", v -> new StringValue(StringTag.escape(v.getString())));
+        expression.addUnaryFunction("escape_nbt", v -> new StringValue(NbtString.escape(v.getString())));
 
         expression.addUnaryFunction("parse_nbt", v -> {
             if (v instanceof NBTSerializableValue) return ((NBTSerializableValue) v).toValue();
@@ -450,8 +457,8 @@ public class Auxiliary {
             if (numParam != 2 && numParam != 3) throw new InternalExpressionException("'tag_matches' requires 2 or 3 arguments");
             if (lv.get(1).isNull()) return Value.TRUE;
             if (lv.get(0).isNull()) return Value.FALSE;
-            Tag source = ((NBTSerializableValue)(NBTSerializableValue.fromValue(lv.get(0)))).getTag();
-            Tag match = ((NBTSerializableValue)(NBTSerializableValue.fromValue(lv.get(1)))).getTag();
+            NbtElement source = ((NBTSerializableValue)(NBTSerializableValue.fromValue(lv.get(0)))).getTag();
+            NbtElement match = ((NBTSerializableValue)(NBTSerializableValue.fromValue(lv.get(1)))).getTag();
             return BooleanValue.of(NbtHelper.matches(match, source, numParam == 2 || lv.get(2).getBoolean()));
         });
 
@@ -460,7 +467,7 @@ public class Auxiliary {
             if (argSize==0 || argSize > 2) throw new InternalExpressionException("'encode_nbt' requires 1 or 2 parameters");
             Value v = lv.get(0);
             boolean force = (argSize > 1) && lv.get(1).getBoolean();
-            Tag tag;
+            NbtElement tag;
             try
             {
                 tag = v.toTag(force);
@@ -477,7 +484,7 @@ public class Auxiliary {
         {
             if (lv.size() == 0 || lv.size() > 2) throw new InternalExpressionException("'print' takes one or two arguments");
             ServerCommandSource s = ((CarpetContext)c).s;
-            MinecraftServer server = s.getMinecraftServer();
+            MinecraftServer server = s.getServer();
             Value res = lv.get(0);
             List<ServerPlayerEntity> targets = null;
             if (lv.size() == 2)
@@ -508,38 +515,51 @@ public class Auxiliary {
             if (lv.size() < 2) throw new InternalExpressionException("'display_title' needs at least a target, type and message, and optionally times");
             Value pVal = lv.get(0);
             if (!(pVal instanceof ListValue)) pVal = ListValue.of(pVal);
-            MinecraftServer server = ((CarpetContext)c).s.getMinecraftServer();
+            MinecraftServer server = ((CarpetContext)c).s.getServer();
             Stream<ServerPlayerEntity> targets = ((ListValue) pVal).getItems().stream().map(v ->
             {
                 ServerPlayerEntity player = EntityValue.getPlayerByValue(server, v);
                 if (player == null) throw new InternalExpressionException("'display_title' requires a valid online player or a list of players as first argument. "+v.getString()+" is not a player.");
                 return player;
             });
-            TitleS2CPacket.Action action;
+            Function<Text, Packet<?>> packetGetter = null;
+            //TitleS2CPacket.Action action;
             String actionString = lv.get(1).getString().toLowerCase(Locale.ROOT);
             switch (actionString)
             {
                 case "title":
-                    action = Action.TITLE;
+                    packetGetter = TitleS2CPacket::new;
+                    //action = Action.TITLE;
+                    if (lv.size() < 3)
+                        throw new InternalExpressionException("Third argument of 'display_title' must be present except for 'clear' type");
+
                     break;
                 case "subtitle":
-                    action = Action.SUBTITLE;
+                    packetGetter = SubtitleS2CPacket::new;
+                    if (lv.size() < 3)
+                        throw new InternalExpressionException("Third argument of 'display_title' must be present except for 'clear' type");
+
+                    //action = Action.SUBTITLE;
                     break;
                 case "actionbar":
-                    action = Action.ACTIONBAR;
+                    packetGetter = OverlayMessageS2CPacket::new;
+                    if (lv.size() < 3)
+                        throw new InternalExpressionException("Third argument of 'display_title' must be present except for 'clear' type");
+
+                    //action = Action.ACTIONBAR;
                     break;
                 case "clear":
-                    action = Action.CLEAR;
+                    packetGetter = (x) -> new ClearTitleS2CPacket(true); // resetting default fade
+                    //action = Action.CLEAR;
                     break;
                 case "player_list_header":
                 case "player_list_footer":
-                    action = null;
                     break;
                 default:
                     throw new InternalExpressionException("'display_title' requires 'title', 'subtitle', 'actionbar', 'player_list_header', 'player_list_footer' or 'clear' as second argument");
             }
-            if (action != Action.CLEAR && lv.size() < 3)
-                throw new InternalExpressionException("Third argument of 'display_title' must be present except for 'clear' type");
+            //if (action != Action.CLEAR && lv.size() < 3)
+            //    throw new InternalExpressionException("Third argument of 'display_title' must be present except for 'clear' type");
             Text title;
             boolean soundsTrue = false;
             if (lv.size() > 2)
@@ -549,41 +569,43 @@ public class Auxiliary {
                 soundsTrue = pVal.getBoolean();
             }
             else title = null; // Will never happen, just to make lambda happy
-            if (action == null)
+            if (packetGetter == null)
             {
-                Map<ServerPlayerEntity, BaseText> map;
+                Map<String, BaseText> map;
                 if (actionString.equals("player_list_header"))
                     map = HUDController.scarpet_headers;
                 else
                     map = HUDController.scarpet_footers;
-                
+
                 AtomicInteger total = new AtomicInteger(0);
                 List<ServerPlayerEntity> targetList = targets.collect(Collectors.toList());
                 if (!soundsTrue) // null or empty string
                     targetList.forEach(target -> {
-                        map.remove(target);
+                        map.remove(target.getEntityName());
                         total.getAndIncrement();
                     });
                 else
                     targetList.forEach(target -> {
-                        map.put(target, (BaseText) title);
+                        map.put(target.getEntityName(), (BaseText) title);
                         total.getAndIncrement();
                     });
-                HUDController.update_hud(((CarpetContext)c).s.getMinecraftServer(), targetList);
+                HUDController.update_hud(((CarpetContext)c).s.getServer(), targetList);
                 return NumericValue.of(total.get());
             }
-            TitleS2CPacket timesPacket;
+            TitleFadeS2CPacket timesPacket; // TimesPacket
             if (lv.size() > 3)
             {
                 if (lv.size() != 6) throw new InternalExpressionException("'display_title' needs all fade-in, stay and fade-out times");
                 int in = NumericValue.asNumber(lv.get(3),"fade in for display_title" ).getInt();
                 int stay = NumericValue.asNumber(lv.get(4),"stay for display_title" ).getInt();
                 int out = NumericValue.asNumber(lv.get(5),"fade out for display_title" ).getInt();
-                timesPacket = new TitleS2CPacket(Action.TIMES, null, in, stay, out);
+                timesPacket = new TitleFadeS2CPacket(in, stay, out);
+                //timesPacket = new TitleS2CPacket(Action.TIMES, null, in, stay, out);
             }
             else timesPacket = null;
 
-            TitleS2CPacket packet = new TitleS2CPacket(action, title);
+            Packet<?> packet = packetGetter.apply(title);
+            //TitleS2CPacket packet = new TitleS2CPacket(action, title);
             AtomicInteger total = new AtomicInteger(0);
             targets.forEach(p -> {
                 if (timesPacket != null) p.networkHandler.sendPacket(timesPacket);
@@ -607,7 +629,7 @@ public class Auxiliary {
             {
                 Text[] error = {null};
                 List<Text> output = new ArrayList<>();
-                Value retval = new NumericValue(s.getMinecraftServer().getCommandManager().execute(
+                Value retval = new NumericValue(s.getServer().getCommandManager().execute(
                         new SnoopyCommandSource(s, error, output),
                         lv.get(0).getString())
                 );
@@ -626,15 +648,15 @@ public class Auxiliary {
         expression.addContextFunction("save", 0, (c, t, lv) ->
         {
             ServerCommandSource s = ((CarpetContext)c).s;
-            s.getMinecraftServer().getPlayerManager().saveAllPlayerData();
-            s.getMinecraftServer().save(true,true,true);
+            s.getServer().getPlayerManager().saveAllPlayerData();
+            s.getServer().save(true,true,true);
             s.getWorld().getChunkManager().tick(() -> true);
             CarpetScriptServer.LOG.warn("Saved chunks");
             return Value.TRUE;
         });
 
         expression.addContextFunction("tick_time", 0, (c, t, lv) ->
-                new NumericValue(((CarpetContext) c).s.getMinecraftServer().getTicks()));
+                new NumericValue(((CarpetContext) c).s.getServer().getTicks()));
 
         expression.addContextFunction("world_time", 0, (c, t, lv) ->
                 new NumericValue(((CarpetContext) c).s.getWorld().getTime()));
@@ -655,9 +677,9 @@ public class Auxiliary {
         {
             //assuming we are in the tick world section
             // might be off one tick when run in the off tasks or asynchronously.
-            int currentReportedTick = ((CarpetContext) c).s.getMinecraftServer().getTicks()-1;
+            int currentReportedTick = ((CarpetContext) c).s.getServer().getTicks()-1;
             List<Value> ticks = new ArrayList<>(100);
-            final long[] tickArray = ((CarpetContext) c).s.getMinecraftServer().lastTickLengths;
+            final long[] tickArray = ((CarpetContext) c).s.getServer().lastTickLengths;
             for (int i=currentReportedTick+100; i > currentReportedTick; i--)
             {
                 ticks.add(new NumericValue(((double)tickArray[i % 100])/1000000.0));
@@ -669,12 +691,12 @@ public class Auxiliary {
         expression.addContextFunction("game_tick", -1, (c, t, lv) -> {
             CarpetContext cc = (CarpetContext)c;
             ServerCommandSource s = cc.s;
-            if (!s.getMinecraftServer().isOnThread()) throw new InternalExpressionException("Unable to run ticks from threads");
+            if (!s.getServer().isOnThread()) throw new InternalExpressionException("Unable to run ticks from threads");
             if (CarpetServer.scriptServer.tickDepth > 16) throw new InternalExpressionException("'game_tick' function caused other 'game_tick' functions to run. You should not allow that.");
             try
             {
                 CarpetServer.scriptServer.tickDepth ++;
-                ((MinecraftServerInterface) s.getMinecraftServer()).forceTick(() -> System.nanoTime() - CarpetServer.scriptServer.tickStart < 50000000L);
+                ((MinecraftServerInterface) s.getServer()).forceTick(() -> System.nanoTime() - CarpetServer.scriptServer.tickStart < 50000000L);
                 if (lv.size() > 0)
                 {
                     long ms_total = NumericValue.asNumber(lv.get(0)).getLong();
@@ -724,13 +746,13 @@ public class Auxiliary {
                 ValueConversions.of( ((CarpetContext)c).s.getWorld()));
 
         expression.addContextFunction("view_distance", 0, (c, t, lv) ->
-                new NumericValue(((CarpetContext)c).s.getMinecraftServer().getPlayerManager().getViewDistance()));
+                new NumericValue(((CarpetContext)c).s.getServer().getPlayerManager().getViewDistance()));
 
         // lazy due to passthrough and context changing ability
         expression.addLazyFunction("in_dimension", 2, (c, t, lv) -> {
             ServerCommandSource outerSource = ((CarpetContext)c).s;
             Value dimensionValue = lv.get(0).evalValue(c);
-            World world = ValueConversions.dimFromValue(dimensionValue, outerSource.getMinecraftServer());
+            World world = ValueConversions.dimFromValue(dimensionValue, outerSource.getServer());
             if (world == outerSource.getWorld()) return lv.get(1);
             ServerCommandSource innerSource = outerSource.withWorld((ServerWorld)world);
             Context newCtx = c.recreate();
@@ -753,13 +775,13 @@ public class Auxiliary {
                         ListValue.wrap(Registry.FEATURE.getIds().stream().sorted().map(ValueConversions::of).collect(Collectors.toList()))
                 );
                 plopData.put(StringValue.of("configured_features"),
-                        ListValue.wrap(registryManager.get(Registry.CONFIGURED_FEATURE_WORLDGEN).getIds().stream().sorted().map(ValueConversions::of).collect(Collectors.toList()))
+                        ListValue.wrap(registryManager.get(Registry.CONFIGURED_FEATURE_KEY).getIds().stream().sorted().map(ValueConversions::of).collect(Collectors.toList()))
                 );
                 plopData.put(StringValue.of("structures"),
                         ListValue.wrap(Registry.STRUCTURE_FEATURE.getIds().stream().sorted().map(ValueConversions::of).collect(Collectors.toList()))
                 );
                 plopData.put(StringValue.of("configured_structures"),
-                        ListValue.wrap(registryManager.get(Registry.CONFIGURED_STRUCTURE_FEATURE_WORLDGEN).getIds().stream().sorted().map(ValueConversions::of).collect(Collectors.toList()))
+                        ListValue.wrap(registryManager.get(Registry.CONFIGURED_STRUCTURE_FEATURE_KEY).getIds().stream().sorted().map(ValueConversions::of).collect(Collectors.toList()))
                 );
                 return MapValue.wrap(plopData);
             }
@@ -768,7 +790,7 @@ public class Auxiliary {
                 throw new InternalExpressionException("'plop' needs extra argument indicating what to plop");
             String what = lv.get(locator.offset).getString();
             Value [] result = new Value[]{Value.NULL};
-            ((CarpetContext)c).s.getMinecraftServer().submitAndJoin( () ->
+            ((CarpetContext)c).s.getServer().submitAndJoin( () ->
             {
                 Boolean res = FeatureGenerator.plop(what, ((CarpetContext) c).s.getWorld(), locator.block.getPos());
 
@@ -837,7 +859,7 @@ public class Auxiliary {
             Value retVal;
             if (fdesc.type == FileArgument.Type.NBT)
             {
-                Tag state = ((CarpetScriptHost) c.host).readFileTag(fdesc);
+                NbtElement state = ((CarpetScriptHost) c.host).readFileTag(fdesc);
                 if (state == null) return Value.NULL;
                 retVal = new NBTSerializableValue(state);
             }
@@ -874,7 +896,7 @@ public class Auxiliary {
                 NBTSerializableValue tagValue =  (val instanceof NBTSerializableValue)
                         ? (NBTSerializableValue) val
                         : new NBTSerializableValue(val.getString());
-                Tag tag = tagValue.getTag();
+                NbtElement tag = tagValue.getTag();
                 success = ((CarpetScriptHost) c.host).writeTagFile(tag, fdesc);
             }
             else if (fdesc.type == FileArgument.Type.JSON)
@@ -946,19 +968,12 @@ public class Auxiliary {
         expression.addContextFunction("statistic", 3, (c, t, lv) ->
         {
             CarpetContext cc = (CarpetContext)c;
-            ServerPlayerEntity player = EntityValue.getPlayerByValue(cc.s.getMinecraftServer(), lv.get(0));
+            ServerPlayerEntity player = EntityValue.getPlayerByValue(cc.s.getServer(), lv.get(0));
             if (player == null) return Value.NULL;
             Identifier category;
             Identifier statName;
-            try
-            {
-                category = new Identifier(lv.get(1).getString());
-                statName = new Identifier(lv.get(2).getString());
-            }
-            catch (InvalidIdentifierException e)
-            {
-                return Value.NULL;
-            }
+            category = InputValidator.identifierOf(lv.get(1).getString());
+            statName = InputValidator.identifierOf(lv.get(2).getString());
             StatType<?> type = Registry.STAT_TYPE.get(category);
             if (type == null) return Value.NULL;
             Stat<?> stat = getStat(type, statName);
@@ -1007,16 +1022,16 @@ public class Auxiliary {
         expression.addContextFunction("nbt_storage", -1, (c, t, lv) -> {
             if (lv.size() > 2) throw new InternalExpressionException("'nbt_storage' requires 0, 1 or 2 arguments.");
             CarpetContext cc = (CarpetContext) c;
-            DataCommandStorage storage = cc.s.getMinecraftServer().getDataCommandStorage();
+            DataCommandStorage storage = cc.s.getServer().getDataCommandStorage();
             if (lv.size() == 0)
                 return ListValue.wrap(storage.getIds().map(i -> new StringValue(nameFromRegistryId(i))).collect(Collectors.toList()));
             String key = lv.get(0).getString();
-            CompoundTag old_nbt = storage.get(new Identifier(key));
+            NbtCompound old_nbt = storage.get(InputValidator.identifierOf(key));
             if (lv.size() == 2) {
                 Value nbt = lv.get(1);
                 NBTSerializableValue new_nbt = (nbt instanceof NBTSerializableValue) ? (NBTSerializableValue) nbt
                         : NBTSerializableValue.parseString(nbt.getString(), true);
-                storage.set(new Identifier(key), new_nbt.getCompoundTag());
+                storage.set(InputValidator.identifierOf(key), new_nbt.getCompoundTag());
             }
             return NBTSerializableValue.of(old_nbt);
         });
@@ -1026,7 +1041,7 @@ public class Auxiliary {
             CarpetContext cc = (CarpetContext)c;
             String origName = lv.get(0).getString();
             String name = InputValidator.validateSimpleString(origName, true);
-            MinecraftServer server = cc.s.getMinecraftServer();
+            MinecraftServer server = cc.s.getServer();
             for (String dpName : server.getDataPackManager().getNames())
             {
                 if (dpName.equalsIgnoreCase("file/"+name+".zip") ||
@@ -1091,7 +1106,7 @@ public class Auxiliary {
         expression.addContextFunction("enable_hidden_dimensions", 0, (c, t, lv) -> {
             CarpetContext cc = (CarpetContext)c;
             // from minecraft.server.Main.main
-            MinecraftServer server = cc.s.getMinecraftServer();
+            MinecraftServer server = cc.s.getServer();
             LevelStorage.Session session = ((MinecraftServerInterface)server).getCMSession();
             DataPackSettings dataPackSettings = session.getDataPackSettings();
             ResourcePackManager resourcePackManager = server.getDataPackManager();
@@ -1106,7 +1121,7 @@ public class Auxiliary {
             //not sure its needed, but doesn't seem to have a negative effect and might be used in some custom shtuff
             serverRM.loadRegistryTags();
 
-            RegistryOps<Tag> registryOps = RegistryOps.of(NbtOps.INSTANCE, serverRM.getResourceManager(), (DynamicRegistryManager.Impl) server.getRegistryManager());
+            RegistryOps<NbtElement> registryOps = RegistryOps.of(NbtOps.INSTANCE, serverRM.getResourceManager(), (DynamicRegistryManager.Impl) server.getRegistryManager());
             SaveProperties saveProperties = session.readLevelProperties(registryOps, dataPackSettings2);
             if (saveProperties == null) return Value.NULL;
             //session.backupLevelDataFile(server.getRegistryManager(), saveProperties); // no need
@@ -1124,7 +1139,7 @@ public class Auxiliary {
                 if (!existing_worlds.containsKey(registryKey))
                 {
                     addeds.add(ValueConversions.of(registryKey.getValue()));
-                    RegistryKey<World> registryKey2 = RegistryKey.of(Registry.DIMENSION, registryKey.getValue());
+                    RegistryKey<World> registryKey2 = RegistryKey.of(Registry.WORLD_KEY, registryKey.getValue());
                     DimensionType dimensionType3 = entry.getValue().getDimensionType();
                     ChunkGenerator chunkGenerator3 = entry.getValue().getChunkGenerator();
                     UnmodifiableLevelProperties unmodifiableLevelProperties = new UnmodifiableLevelProperties(saveProperties, ((ServerWorldInterface) server.getOverworld()).getWorldPropertiesCM());
@@ -1193,7 +1208,7 @@ public class Auxiliary {
     private static <T> Stat<T> getStat(StatType<T> type, Identifier id)
     {
         T key = type.getRegistry().get(id);
-        if (key == null || !((StatTypeInterface)type).hasStatCreated(key))
+        if (key == null || !type.hasStat(key))
             return null;
         return type.getOrCreateStat(key);
     }

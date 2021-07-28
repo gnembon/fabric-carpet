@@ -20,7 +20,9 @@ import carpet.logging.logHelpers.TNTLogHelper;
 @Mixin(TntEntity.class)
 public abstract class TntEntityMixin extends Entity implements TntEntityInterface
 {
-    @Shadow private int fuseTimer;
+    //@Shadow private int fuseTimer;
+
+    @Shadow public abstract int getFuse();
 
     private TNTLogHelper logHelper;
     private boolean mergeBool = false;
@@ -93,14 +95,14 @@ public abstract class TntEntityMixin extends Entity implements TntEntityInterfac
             if(!world.isClient && mergeBool && velocity.x == 0 && velocity.y == 0 && velocity.z == 0){
                 mergeBool = false;
                 for(Entity entity : world.getOtherEntities(this, this.getBoundingBox())){
-                    if(entity instanceof TntEntity && !entity.removed){
+                    if(entity instanceof TntEntity && !entity.isRemoved()){
                         TntEntity entityTNTPrimed = (TntEntity)entity;
                         Vec3d tntVelocity = entityTNTPrimed.getVelocity();
                         if(tntVelocity.x == 0 && tntVelocity.y == 0 && tntVelocity.z == 0
                                 && this.getX() == entityTNTPrimed.getX() && this.getZ() == entityTNTPrimed.getZ() && this.getY() == entityTNTPrimed.getY()
-                                && this.fuseTimer == entityTNTPrimed.getFuseTimer()){
+                                && getFuse() == entityTNTPrimed.getFuse()){
                             mergedTNT += ((TntEntityInterface) entityTNTPrimed).getMergedTNT();
-                            entityTNTPrimed.remove();
+                            entityTNTPrimed.discard(); // discard remove();
                         }
                     }
                 }
@@ -108,9 +110,7 @@ public abstract class TntEntityMixin extends Entity implements TntEntityInterfac
         }
     }
 
-    @Inject(method = "tick", at = @At(value = "FIELD",
-                                        target = "Lnet/minecraft/entity/TntEntity;fuseTimer:I",
-                                        ordinal = 0))
+    @Inject(method = "tick", at = @At(value = "INVOKE", target = "Lnet/minecraft/entity/TntEntity;setFuse(I)V"))
     private void setMergeable(CallbackInfo ci)
     {
         // Merge code, merge only tnt that have had a chance to move CARPET-XCOM

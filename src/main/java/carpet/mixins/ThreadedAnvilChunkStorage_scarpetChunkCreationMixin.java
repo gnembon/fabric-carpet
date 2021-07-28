@@ -12,6 +12,12 @@ import java.util.concurrent.Future;
 import java.util.function.IntFunction;
 import java.util.stream.Collectors;
 
+import carpet.fakes.SimpleEntityLookupInterface;
+import carpet.fakes.ServerWorldInterface;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.ServerTask;
 import org.apache.commons.lang3.tuple.Pair;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -50,6 +56,7 @@ import net.minecraft.world.chunk.WorldChunk;
 import net.minecraft.world.storage.RegionFile;
 
 import static carpet.script.CarpetEventServer.Event.CHUNK_GENERATED;
+import static carpet.script.CarpetEventServer.Event.CHUNK_LOADED;
 
 @Mixin(ThreadedAnvilChunkStorage.class)
 public abstract class ThreadedAnvilChunkStorage_scarpetChunkCreationMixin implements ThreadedAnvilChunkStorageInterface
@@ -71,7 +78,7 @@ public abstract class ThreadedAnvilChunkStorage_scarpetChunkCreationMixin implem
 
     @Shadow
     @Final
-    private ServerLightingProvider serverLightingProvider;
+    private ServerLightingProvider lightingProvider;
 
     @Shadow
     @Final
@@ -98,21 +105,61 @@ public abstract class ThreadedAnvilChunkStorage_scarpetChunkCreationMixin implem
     @Shadow
     protected abstract Iterable<ChunkHolder> entryIterator();
 
-    //in method_20617
-    //method_19534(Lnet/minecraft/server/world/ChunkHolder;Lnet/minecraft/world/chunk/Chunk;)Ljava/util/concurrent/CompletableFuture;
-    // incmopatibility with optifine makes this mixin fail.
-    // lambda for convertToFullChunk
+
+    ThreadLocal<Boolean> generated = ThreadLocal.withInitial(() -> null);
+
+    // in convertToFullChunk
+    // fancier version of the one below, ensuring that the event is triggered when the chunk is actually loaded.
     @SuppressWarnings("UnresolvedMixinReference")
-    @Inject(method = "method_19534", require = 0, at = @At(
-        value = "INVOKE",
-        target = "Lnet/minecraft/server/world/ThreadedAnvilChunkStorage;convertToFullChunk(Lnet/minecraft/server/world/ChunkHolder;)Ljava/util/concurrent/CompletableFuture;",
-        shift = At.Shift.AFTER
-    ))
-    private void onChunkGenerated(final ChunkHolder chunkHolder, final Chunk chunk, final CallbackInfoReturnable<CompletableFuture> cir)
+    @Inject(method = "method_20460", at = @At("HEAD"))
+    private void onChunkGeneratedStart(ChunkHolder chunkHolder, Either<Chunk, Unloaded> chunk, CallbackInfoReturnable<CompletableFuture<Either<Chunk, Unloaded>>> cir)
     {
-        if (CHUNK_GENERATED.isNeeded())
-            this.world.getServer().execute(() -> CHUNK_GENERATED.onChunkGenerated(this.world, chunk));
+        if (CHUNK_GENERATED.isNeeded() || CHUNK_LOADED.isNeeded())
+        {
+            generated.set(chunkHolder.getCurrentChunk().getStatus() != ChunkStatus.FULL);
+        }
+        else
+        {
+            generated.set(null);
+        }
     }
+
+    @SuppressWarnings("UnresolvedMixinReference")
+    @Inject(method = "method_20460", at = @At("RETURN"))
+    private void onChunkGeneratedEnd(ChunkHolder chunkHolder, Either<Chunk, Unloaded> chunk, CallbackInfoReturnable<CompletableFuture<Either<Chunk, Unloaded>>> cir)
+    {
+        Boolean localGenerated= generated.get();
+        if (localGenerated != null)
+        {
+            MinecraftServer server =  this.world.getServer();
+            int ticks = server.getTicks();
+            ChunkPos chpos = chunkHolder.getPos();
+            // need to send these because if an app does something with that event, it may lock the thread
+            // so better be safe and schedule it for later, aSaP
+            if (CHUNK_GENERATED.isNeeded() && localGenerated)
+               server.send(new ServerTask(ticks, () -> CHUNK_GENERATED.onChunkEvent(this.world, chpos, true)));
+            if (CHUNK_LOADED.isNeeded())
+               server.send(new ServerTask(ticks, () -> CHUNK_LOADED.onChunkEvent(this.world, chpos, localGenerated)));
+        }
+    }
+
+    /* simple but a version that doesn't guarantee that the chunk is actually loaded
+    @Inject(method = "convertToFullChunk", at = @At("HEAD"))
+    private void onChunkGeneratedEnd(ChunkHolder chunkHolder, CallbackInfoReturnable<CompletableFuture<Either<Chunk, Unloaded>>> cir)
+    {
+        if (CHUNK_GENERATED.isNeeded() && chunkHolder.getCurrentChunk().getStatus() != ChunkStatus.FULL)
+        {
+            ChunkPos chpos = chunkHolder.getPos();
+            this.world.getServer().execute(() -> CHUNK_GENERATED.onChunkEvent(this.world, chpos, true));
+        }
+        if (CHUNK_LOADED.isNeeded())
+        {
+            boolean generated = chunkHolder.getCurrentChunk().getStatus() != ChunkStatus.FULL;
+            ChunkPos chpos = chunkHolder.getPos();
+            this.world.getServer().execute(() -> CHUNK_LOADED.onChunkEvent(this.world, chpos, generated));
+        }
+    }
+     */
 
     @Unique
     private void addTicket(final ChunkPos pos, final ChunkStatus status)
@@ -242,12 +289,12 @@ public abstract class ThreadedAnvilChunkStorage_scarpetChunkCreationMixin implem
                 this.currentChunkHolders.get(pos.toLong()).getChunkAt(ChunkStatus.EMPTY, (ThreadedAnvilChunkStorage) (Object) this);
         final Chunk chunk = this.getCurrentChunk(pos);
         if (!(chunk.getStatus().isAtLeast(ChunkStatus.LIGHT.getPrevious()))) return;
-        ((ServerLightingProviderInterface) this.serverLightingProvider).removeLightData(chunk);
+        ((ServerLightingProviderInterface) this.lightingProvider).removeLightData(chunk);
         this.addRelightTicket(pos);
         final CompletableFuture<?> lightFuture = this.getRegion (pos, 1, (pos_) -> ChunkStatus.LIGHT)
                 .thenCompose(
                     either -> either.map(
-                            list -> ((ServerLightingProviderInterface) this.serverLightingProvider).relight(chunk),
+                            list -> ((ServerLightingProviderInterface) this.lightingProvider).relight(chunk),
                             unloaded -> {
                                 this.releaseRelightTicket(pos);
                                 return CompletableFuture.completedFuture(null);
@@ -315,14 +362,20 @@ public abstract class ThreadedAnvilChunkStorage_scarpetChunkCreationMixin implem
         {
             final ChunkPos pos = chunk.getPos();
 
+            // remove entities
+            long longPos = pos.toLong();
+            if (this.loadedChunks.contains(longPos) && chunk instanceof WorldChunk)
+                ((SimpleEntityLookupInterface<Entity>)((ServerWorldInterface)world).getEntityLookupCMPublic()).getChunkEntities(pos).forEach(entity -> { if (!(entity instanceof PlayerEntity)) entity.discard();});
+
+
             if (chunk instanceof WorldChunk)
                 ((WorldChunk) chunk).setLoadedToWorld(false);
 
             if (this.loadedChunks.remove(pos.toLong()) && chunk instanceof WorldChunk)
-                this.world.unloadEntities((WorldChunk) chunk);
+                this.world.unloadEntities((WorldChunk) chunk); // block entities only
 
-            ((ServerLightingProviderInterface) this.serverLightingProvider).invokeUpdateChunkStatus(pos);
-            ((ServerLightingProviderInterface) this.serverLightingProvider).removeLightData(chunk);
+            ((ServerLightingProviderInterface) this.lightingProvider).invokeUpdateChunkStatus(pos);
+            ((ServerLightingProviderInterface) this.lightingProvider).removeLightData(chunk);
 
             this.worldGenerationProgressListener.setChunkStatus(pos, null);
         }
@@ -335,8 +388,8 @@ public abstract class ThreadedAnvilChunkStorage_scarpetChunkCreationMixin implem
             final long pos = cPos.toLong();
 
             final ChunkHolder oldHolder = this.currentChunkHolders.remove(pos);
-            final ChunkHolder newHolder = new ChunkHolder(cPos, oldHolder.getLevel(), this.serverLightingProvider, this.chunkTaskPrioritySystem, (ChunkHolder.PlayersWatchingChunkProvider) this);
-            ((ChunkHolderInterface) newHolder).setDefaultProtoChunk(cPos, this.mainThreadExecutor);
+            final ChunkHolder newHolder = new ChunkHolder(cPos, oldHolder.getLevel(), world, this.lightingProvider, this.chunkTaskPrioritySystem, (ChunkHolder.PlayersWatchingChunkProvider) this);
+            ((ChunkHolderInterface) newHolder).setDefaultProtoChunk(cPos, this.mainThreadExecutor, world);
             this.currentChunkHolders.put(pos, newHolder);
 
             ((ChunkTicketManagerInterface) this.ticketManager).replaceHolder(oldHolder, newHolder);
@@ -348,7 +401,7 @@ public abstract class ThreadedAnvilChunkStorage_scarpetChunkCreationMixin implem
         // Remove light for affected neighbors
 
         for (final Chunk chunk : affectedNeighbors)
-            ((ServerLightingProviderInterface) this.serverLightingProvider).removeLightData(chunk);
+            ((ServerLightingProviderInterface) this.lightingProvider).removeLightData(chunk);
 
         // Schedule relighting of neighbors
 
@@ -365,7 +418,7 @@ public abstract class ThreadedAnvilChunkStorage_scarpetChunkCreationMixin implem
 
             lightFutures.add(this.getRegion (pos, 1, (pos_) -> ChunkStatus.LIGHT).thenCompose(
                 either -> either.map(
-                    list -> ((ServerLightingProviderInterface) this.serverLightingProvider).relight(chunk),
+                    list -> ((ServerLightingProviderInterface) this.lightingProvider).relight(chunk),
                     unloaded -> {
                         this.releaseRelightTicket(pos);
                         return CompletableFuture.completedFuture(null);

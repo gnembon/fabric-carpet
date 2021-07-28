@@ -9,6 +9,7 @@ import net.minecraft.server.command.ServerCommandSource;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 
@@ -46,10 +47,17 @@ public class CommandToken implements Comparable<CommandToken>
         spec = spec.trim();
         if (spec.isEmpty()) return Collections.emptyList();
         List<CommandToken> elements = new ArrayList<>();
+        HashSet<String> seenArgs = new HashSet<>();
         for (String el: spec.split("\\s+"))
         {
             CommandToken tok = CommandToken.getToken(el, host);
             if (tok == null) throw CommandArgument.error("Unrecognized command token: "+ el);
+            if (tok.isArgument)
+            {
+                if (seenArgs.contains(tok.surface))
+                    throw CommandArgument.error("Repeated command argument: "+tok.surface+", for '"+spec+"'. Argument names have to be unique");
+                seenArgs.add(tok.surface);
+            }
             elements.add(tok);
         }
         return elements;

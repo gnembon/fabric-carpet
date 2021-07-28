@@ -2,7 +2,6 @@ package carpet.script.utils;
 
 import carpet.CarpetSettings;
 import com.mojang.brigadier.ResultConsumer;
-import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.minecraft.command.argument.EntityAnchorArgumentType;
 import net.minecraft.entity.Entity;
 import net.minecraft.server.MinecraftServer;
@@ -41,7 +40,7 @@ public class SnoopyCommandSource extends ServerCommandSource
     public SnoopyCommandSource(ServerCommandSource original, Text[] error, List<Text> chatOutput)
     {
         super(CommandOutput.DUMMY, original.getPosition(), original.getRotation(), original.getWorld(), CarpetSettings.runPermissionLevel,
-                original.getName(), original.getDisplayName(), original.getMinecraftServer(), original.getEntity(), false,
+                original.getName(), original.getDisplayName(), original.getServer(), original.getEntity(), false,
                 (ctx, succ, res) -> { }, EntityAnchorArgumentType.EntityAnchor.FEET);
         this.output = CommandOutput.DUMMY;
         this.position = original.getPosition();
@@ -49,7 +48,7 @@ public class SnoopyCommandSource extends ServerCommandSource
         this.level = CarpetSettings.runPermissionLevel;
         this.simpleName = original.getName();
         this.name = original.getDisplayName();
-        this.server = original.getMinecraftServer();
+        this.server = original.getServer();
         this.entity = original.getEntity();
         this.resultConsumer = (ctx, succ, res) -> { };
         this.entityAnchor = original.getEntityAnchor();
@@ -123,7 +122,8 @@ public class SnoopyCommandSource extends ServerCommandSource
         return new SnoopyCommandSource(output, position, rotation, world, level, simpleName, name, server, entity, consumer, entityAnchor, error, chatOutput);
     }
 
-    public ServerCommandSource mergeConsumers(ResultConsumer<ServerCommandSource> consumer, BinaryOperator<ResultConsumer<ServerCommandSource>> binaryOperator) {
+    public ServerCommandSource mergeConsumers(ResultConsumer<ServerCommandSource> consumer, BinaryOperator<ResultConsumer<ServerCommandSource>> binaryOperator)
+    {
         ResultConsumer<ServerCommandSource> resultConsumer = binaryOperator.apply(this.resultConsumer, consumer);
         return this.withConsumer(resultConsumer);
     }
@@ -153,18 +153,19 @@ public class SnoopyCommandSource extends ServerCommandSource
     @Override
     public ServerCommandSource withWorld(ServerWorld world)
     {
-        double d = DimensionType.method_31109(this.world.getDimension(), world.getDimension());
+        double d = DimensionType.getCoordinateScaleFactor(this.world.getDimension(), world.getDimension());
         Vec3d position = new Vec3d(this.position.x * d, this.position.y, this.position.z * d);
         return new SnoopyCommandSource(output, position, rotation, world, level, simpleName, name, server, entity, resultConsumer, entityAnchor, error, chatOutput);
     }
 
     @Override
-    public ServerCommandSource withLookingAt(Vec3d position) throws CommandSyntaxException {
+    public ServerCommandSource withLookingAt(Vec3d position)
+    {
         Vec3d vec3d = this.entityAnchor.positionAt(this);
         double d = position.x - vec3d.x;
         double e = position.y - vec3d.y;
         double f = position.z - vec3d.z;
-        double g = (double) MathHelper.sqrt(d * d + f * f);
+        double g = (double) Math.sqrt(d * d + f * f);
         float h = MathHelper.wrapDegrees((float)(-(MathHelper.atan2(e, g) * 57.2957763671875D)));
         float i = MathHelper.wrapDegrees((float)(MathHelper.atan2(f, d) * 57.2957763671875D) - 90.0F);
         return this.withRotation(new Vec2f(h, i));

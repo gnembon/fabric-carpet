@@ -1,6 +1,7 @@
 package carpet.script.argument;
 
 import carpet.CarpetServer;
+import carpet.script.CarpetScriptServer;
 import carpet.script.bundled.Module;
 import carpet.script.exception.InternalExpressionException;
 import carpet.script.exception.ThrowStatement;
@@ -13,11 +14,11 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonParser;
 import com.google.gson.stream.JsonReader;
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtIo;
-import net.minecraft.nbt.PositionTracker;
-import net.minecraft.nbt.Tag;
-import net.minecraft.nbt.TagReaders;
+import net.minecraft.nbt.NbtTagSizeTracker;
+import net.minecraft.nbt.NbtElement;
+import net.minecraft.nbt.NbtTypes;
 import net.minecraft.util.WorldSavePath;
 import net.minecraft.util.crash.CrashException;
 import org.apache.commons.io.FilenameUtils;
@@ -28,7 +29,6 @@ import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
-import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
@@ -193,8 +193,9 @@ public class FileArgument
                     if (!Files.exists(zipPath.getParent())) Files.createDirectories(zipPath.getParent());
                     zfs = FileSystems.newFileSystem(URI.create("jar:"+ zipPath.toUri().toString()), env);
                 }
-                catch (FileSystemNotFoundException | IOException fsnfe)
+                catch (FileSystemNotFoundException | IOException e)
                 {
+                    CarpetScriptServer.LOG.warn("Exception when opening zip file", e);
                     throw new ThrowStatement("Unable to open zip file: "+zipContainer, Throwables.IO_EXCEPTION);
                 }
             }
@@ -295,6 +296,7 @@ public class FileArgument
                     Files.createDirectories(file.getParent()) == null
             ) throw new IOException();
         } catch (IOException e) {
+            CarpetScriptServer.LOG.warn("IOException when creating paths", e);
             throw new ThrowStatement("Unable to create paths for "+file.toString(), Throwables.IO_EXCEPTION);
         }
 
@@ -319,6 +321,7 @@ public class FileArgument
         } }
         catch (IOException e)
         {
+            CarpetScriptServer.LOG.warn("IOException when appending to text file", e);
             throw new ThrowStatement("Error when writing to the file: "+e, Throwables.IO_EXCEPTION);
         }
         finally
@@ -328,7 +331,7 @@ public class FileArgument
         return true;
     }
 
-    public Tag getNbtData(Module module) // aka getData
+    public NbtElement getNbtData(Module module) // aka getData
     {
         try { synchronized (writeIOSync) {
             Path dataFile = toPath(module);
@@ -342,7 +345,7 @@ public class FileArgument
 
     //copied private method from net.minecraft.nbt.NbtIo.read()
     // to read non-compound tags - these won't be compressed
-    public static Tag readTag(Path path)
+    public static NbtElement readTag(Path path)
     {
         try
         {
@@ -372,11 +375,14 @@ public class FileArgument
                     else
                     {
                         dataInput_1.readUTF();
-                        return TagReaders.of(byte_1).read(dataInput_1, 0, PositionTracker.DEFAULT);
+                        return NbtTypes.byId(byte_1).read(dataInput_1, 0, NbtTagSizeTracker.EMPTY);
                     }
                 }
-                catch (IOException ignored)
+                catch (IOException secondIO)
                 {
+                    CarpetScriptServer.LOG.warn("IOException when trying to read nbt file, something may have gone wrong with the fs",e);
+                    CarpetScriptServer.LOG.catching(ioException);
+                    CarpetScriptServer.LOG.catching(secondIO);
                     throw new ThrowStatement("Not a valid NBT tag in "+path.toString(), Throwables.NBT_ERROR);
                 }
             }
@@ -387,7 +393,7 @@ public class FileArgument
         }
     }
 
-    public boolean saveNbtData(Module module, Tag tag) // aka saveData
+    public boolean saveNbtData(Module module, NbtElement tag) // aka saveData
     {
         try { synchronized (writeIOSync) {
             Path dataFile = toPath(module);
@@ -402,20 +408,20 @@ public class FileArgument
     }
 
     //copied private method from net.minecraft.nbt.NbtIo.write() and client method safe_write
-    public static boolean writeTagDisk(Tag tag_1, Path path, boolean zipped)
+    public static boolean writeTagDisk(NbtElement tag_1, Path path, boolean zipped)
     {
         Path original = path;
         try
         {
             if (!zipped)
             {
-                path = new File(path.toFile().getAbsolutePath() + "_tmp").toPath();
+                path = path.getParent().resolve(path.getFileName() + "_tmp");
                 Files.deleteIfExists(path);
             }
 
-            if (tag_1 instanceof CompoundTag)
+            if (tag_1 instanceof NbtCompound)
             {
-                NbtIo.writeCompressed((CompoundTag) tag_1, Files.newOutputStream(path));
+                NbtIo.writeCompressed((NbtCompound) tag_1, Files.newOutputStream(path));
             }
             else
             {
@@ -438,6 +444,7 @@ public class FileArgument
         }
         catch (IOException e)
         {
+            CarpetScriptServer.LOG.warn("IO Exception when writing nbt file", e);
             throw new ThrowStatement("Unable to write tag to "+original.toString(), Throwables.IO_EXCEPTION);
         }
     }
@@ -453,6 +460,7 @@ public class FileArgument
         } }
         catch (IOException e)
         {
+            CarpetScriptServer.LOG.warn("IOException when removing file", e);
             throw new ThrowStatement("Error while removing file: "+getDisplayPath(), Throwables.IO_EXCEPTION);
         }
         finally
@@ -488,6 +496,7 @@ public class FileArgument
         }
         catch (IOException e)
         {
+            CarpetScriptServer.LOG.warn("IOException when reading text file", e);
             throw new ThrowStatement("Failed to read text file "+filePath.toString(), Throwables.IO_EXCEPTION);
         }
     }
@@ -521,6 +530,7 @@ public class FileArgument
         }
         catch (IOException e)
         {
+            CarpetScriptServer.LOG.warn("IOException when reading JSON file", e);
             throw new ThrowStatement("Failed to read json file content "+filePath.toString(), Throwables.IO_EXCEPTION);
         }
     }

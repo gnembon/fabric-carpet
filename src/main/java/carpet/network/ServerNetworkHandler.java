@@ -7,10 +7,10 @@ import carpet.script.utils.SnoopyCommandSource;
 import carpet.settings.ParsedRule;
 import carpet.settings.SettingsManager;
 import io.netty.buffer.Unpooled;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.ListTag;
-import net.minecraft.nbt.StringTag;
-import net.minecraft.nbt.Tag;
+import net.minecraft.nbt.NbtCompound;
+import net.minecraft.nbt.NbtList;
+import net.minecraft.nbt.NbtString;
+import net.minecraft.nbt.NbtElement;
 import net.minecraft.network.PacketByteBuf;
 import net.minecraft.network.packet.s2c.play.CustomPayloadS2CPacket;
 import net.minecraft.server.network.ServerPlayerEntity;
@@ -31,9 +31,9 @@ public class ServerNetworkHandler
     private static Map<ServerPlayerEntity, String> remoteCarpetPlayers = new HashMap<>();
     private static Set<ServerPlayerEntity> validCarpetPlayers = new HashSet<>();
 
-    private static Map<String, BiConsumer<ServerPlayerEntity, Tag>> dataHandlers = new HashMap<String, BiConsumer<ServerPlayerEntity, Tag>>(){{
+    private static Map<String, BiConsumer<ServerPlayerEntity, NbtElement>> dataHandlers = new HashMap<String, BiConsumer<ServerPlayerEntity, NbtElement>>(){{
         put("clientCommand", (p, t) -> {
-            handleClientCommand(p, (CompoundTag)t);
+            handleClientCommand(p, (NbtCompound)t);
         });
     }};
 
@@ -88,7 +88,7 @@ public class ServerNetworkHandler
         playerEntity.networkHandler.sendPacket(new CustomPayloadS2CPacket(CarpetClient.CARPET_CHANNEL, data.build() ));
     }
 
-    private static void handleClientCommand(ServerPlayerEntity player, CompoundTag commandData)
+    private static void handleClientCommand(ServerPlayerEntity player, NbtCompound commandData)
     {
         String command = commandData.getString("command");
         String id = commandData.getString("id");
@@ -105,12 +105,12 @@ public class ServerNetworkHandler
                     new SnoopyCommandSource(player, error, output), command
             );
         }
-        CompoundTag result = new CompoundTag();
+        NbtCompound result = new NbtCompound();
         result.putString("id", id);
         result.putInt("code", resultCode);
         if (error[0] != null) result.putString("error", error[0].asString());
-        ListTag outputResult = new ListTag();
-        for (Text line: output) outputResult.add(StringTag.of(Text.Serializer.toJson(line)));
+        NbtList outputResult = new NbtList();
+        for (Text line: output) outputResult.add(NbtString.of(Text.Serializer.toJson(line)));
         if (!output.isEmpty()) result.put("output", outputResult);
         player.networkHandler.sendPacket(new CustomPayloadS2CPacket(
                 CarpetClient.CARPET_CHANNEL,
@@ -122,7 +122,7 @@ public class ServerNetworkHandler
 
     private static void onClientData(ServerPlayerEntity player, PacketByteBuf data)
     {
-        CompoundTag compound = data.readCompoundTag();
+        NbtCompound compound = data.readNbt();
         if (compound == null) return;
         for (String key: compound.getKeys())
         {
@@ -193,7 +193,7 @@ public class ServerNetworkHandler
         }
     }
 
-    public static void broadcastCustomCommand(String command, Tag data)
+    public static void broadcastCustomCommand(String command, NbtElement data)
     {
         if (CarpetSettings.superSecretSetting) return;
         for (ServerPlayerEntity player : validCarpetPlayers)
@@ -205,7 +205,7 @@ public class ServerNetworkHandler
         }
     }
 
-    public static void sendCustomCommand(ServerPlayerEntity player, String command, Tag data)
+    public static void sendCustomCommand(ServerPlayerEntity player, String command, NbtElement data)
     {
         if (isValidCarpetPlayer(player))
         {
@@ -246,14 +246,14 @@ public class ServerNetworkHandler
 
     private static class DataBuilder
     {
-        private CompoundTag tag;
+        private NbtCompound tag;
         private static DataBuilder create()
         {
             return new DataBuilder();
         }
         private DataBuilder()
         {
-            tag = new CompoundTag();
+            tag = new NbtCompound();
         }
         private DataBuilder withTickRate()
         {
@@ -262,7 +262,7 @@ public class ServerNetworkHandler
         }
         private DataBuilder withFrozenState()
         {
-            CompoundTag tickingState = new CompoundTag();
+            NbtCompound tickingState = new NbtCompound();
             tickingState.putBoolean("is_paused", TickSpeed.isPaused());
             tickingState.putBoolean("deepFreeze", TickSpeed.deeplyFrozen());
             tag.put("TickingState", tickingState);
@@ -280,16 +280,16 @@ public class ServerNetworkHandler
         }
         private DataBuilder withRule(ParsedRule<?> rule)
         {
-            CompoundTag rules = (CompoundTag) tag.get("Rules");
+            NbtCompound rules = (NbtCompound) tag.get("Rules");
             if (rules == null)
             {
-                rules = new CompoundTag();
+                rules = new NbtCompound();
                 tag.put("Rules", rules);
             }
             String identifier = rule.settingsManager.getIdentifier();
             String key = rule.name;
             while (rules.contains(key)) { key = key+"2";}
-            CompoundTag ruleNBT = new CompoundTag();
+            NbtCompound ruleNBT = new NbtCompound();
             ruleNBT.putString("Value", rule.getAsString());
             ruleNBT.putString("Manager",identifier);
             ruleNBT.putString("Rule",rule.name);
@@ -297,7 +297,7 @@ public class ServerNetworkHandler
             return this;
         }
 
-        public DataBuilder withCustomNbt(String key, Tag value)
+        public DataBuilder withCustomNbt(String key, NbtElement value)
         {
             tag.put(key, value);
             return this;
@@ -307,7 +307,7 @@ public class ServerNetworkHandler
         {
             PacketByteBuf packetBuf = new PacketByteBuf(Unpooled.buffer());
             packetBuf.writeVarInt(CarpetClient.DATA);
-            packetBuf.writeCompoundTag(tag);
+            packetBuf.writeNbt(tag);
             return packetBuf;
         }
 

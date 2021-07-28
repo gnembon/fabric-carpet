@@ -43,8 +43,7 @@ equivalent to `has(get(foo,a), b)` or `has(foo, a, b)`
 ### `delete(container, address, ...), delete(lvalue)`
 
 Removes specific entry from the container. For the lists - removes the element and shrinks it. For maps, it 
-removes the key from the map, and for nbt - removes content from a given path. For lists and maps returns previous 
-entry at the address, for nbt's - number of removed objects, with 0 indicating that the original value was unaffected.
+removes the key from the map, and for nbt - removes content from a given path.
 
 Like with the `get` and `has`, `delete` can accept chained addresses, as well as l-value container access, removing 
 the value from the leaf of the path provided, so `delete(foo, a, b)` is the 

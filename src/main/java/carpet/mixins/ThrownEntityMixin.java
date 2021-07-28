@@ -33,9 +33,9 @@ public abstract class ThrownEntityMixin extends Entity
     }
 
     @Override
-    public void remove()
+    public void remove(Entity.RemovalReason arg)
     {
-        super.remove();
+        super.remove(arg);
         if (LoggerRegistry.__projectiles && logHelper != null)
             logHelper.onFinish();
     }

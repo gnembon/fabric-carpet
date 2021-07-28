@@ -15,6 +15,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 
@@ -39,6 +40,8 @@ public abstract class Explosion_scarpetEventMixin
 
     @Shadow /*@Nullable*/ public abstract /*@Nullable*/ LivingEntity getCausingEntity();
 
+    @Shadow public static float getExposure(Vec3d source, Entity entity) {return 0.0f;}
+
     private List<Entity> affectedEntities;
 
     @Inject(method = "<init>(Lnet/minecraft/world/World;Lnet/minecraft/entity/Entity;Lnet/minecraft/entity/damage/DamageSource;Lnet/minecraft/world/explosion/ExplosionBehavior;DDDFZLnet/minecraft/world/explosion/Explosion$DestructionType;)V",
@@ -51,13 +54,17 @@ public abstract class Explosion_scarpetEventMixin
         }
     }
 
-    @Inject(method = "collectBlocksAndDamageEntities", locals= LocalCapture.CAPTURE_FAILHARD, at=@At(value = "INVOKE", target = "Lnet/minecraft/entity/Entity;damage(Lnet/minecraft/entity/damage/DamageSource;F)Z"))
-    private void onExplosion(CallbackInfo ci, Set<BlockPos> s1, float f1, int i1, int i2, int i3, int i4, int i5, int i6, List<Entity> l1, Vec3d v1, int i7, Entity entity)
+    @Redirect(method = "collectBlocksAndDamageEntities", at=@At(
+            value = "INVOKE",
+            target = "Lnet/minecraft/world/explosion/Explosion;getExposure(Lnet/minecraft/util/math/Vec3d;Lnet/minecraft/entity/Entity;)F")
+    )
+    private float onExplosion(Vec3d source, Entity entity)
     {
         if (affectedEntities != null)
         {
             affectedEntities.add(entity);
         }
+        return getExposure(source, entity);
     }
 
     @Inject(method = "affectWorld", at = @At("HEAD"))

@@ -8,7 +8,7 @@ import net.minecraft.block.Blocks;
 import net.minecraft.block.CoralBlock;
 import net.minecraft.block.CoralParentBlock;
 import net.minecraft.block.Fertilizable;
-import net.minecraft.block.MaterialColor;
+import net.minecraft.block.MapColor;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.tag.BlockTags;
 import net.minecraft.tag.FluidTags;
@@ -49,12 +49,12 @@ public abstract class CoralBlockMixin implements Fertilizable
         else
             coral = new CoralMushroomFeature(DefaultFeatureConfig.CODEC);
 
-        MaterialColor color = blockUnder.getTopMaterialColor(worldIn, pos);
+        MapColor color = blockUnder.getMapColor(worldIn, pos);
         BlockState proper_block = blockUnder;
         for (Block block: BlockTags.CORAL_BLOCKS.values())
         {
             proper_block = block.getDefaultState();
-            if (proper_block.getTopMaterialColor(worldIn,pos) == color)
+            if (proper_block.getMapColor(worldIn,pos) == color)
             {
                 break;
             }

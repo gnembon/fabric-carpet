@@ -10,6 +10,7 @@ import carpet.script.command.CommandArgument;
 import carpet.script.command.CommandToken;
 import carpet.script.exception.CarpetExpressionException;
 import carpet.script.exception.ExpressionException;
+import carpet.script.exception.IntegrityException;
 import carpet.script.exception.InternalExpressionException;
 import carpet.script.exception.InvalidCallbackException;
 import carpet.script.utils.AppStoreManager;
@@ -38,7 +39,7 @@ import net.fabricmc.loader.api.Version;
 import net.fabricmc.loader.api.VersionParsingException;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
-import net.minecraft.nbt.Tag;
+import net.minecraft.nbt.NbtElement;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
@@ -70,9 +71,9 @@ import static net.minecraft.server.command.CommandManager.literal;
 public class CarpetScriptHost extends ScriptHost
 {
     private final CarpetScriptServer scriptServer;
-    ServerCommandSource responsibleSource;
+    public ServerCommandSource responsibleSource;
 
-    private Tag globalState;
+    private NbtElement globalState;
     private int saveTimeout;
     public boolean persistenceRequired;
 
@@ -135,6 +136,10 @@ public class CarpetScriptHost extends ScriptHost
             {
                 host.handleErrorWithStack("Math doesn't compute", ae);
                 return null;
+            }
+            catch (StackOverflowError soe)
+            {
+                host.handleErrorWithStack("Your thoughts are too deep", soe);
             }
             finally
             {
@@ -324,6 +329,15 @@ public class CarpetScriptHost extends ScriptHost
                         AppStoreManager.addResource(this, storeSource, resource);
                     }
                 }
+                Value libraries = config.get(new StringValue("libraries"));
+                if (libraries != null)
+                {
+                    if (!(libraries instanceof ListValue)) throw new InternalExpressionException("App libraries not defined as a list");
+                    for (Value library : ((ListValue) libraries).getItems())
+                    {
+                        AppStoreManager.addLibrary(this, storeSource, library);
+                    }
+                }
             }
             appConfig = config;
         }
@@ -378,7 +392,7 @@ public class CarpetScriptHost extends ScriptHost
         }
         catch (CommandSyntaxException e)
         {
-            notifier.accept(Messenger.c("Error when handling of setting up custom argument types: "+e.getMessage()));
+            notifier.accept(Messenger.c("r Error when handling of setting up custom argument types: "+e.getMessage()));
             return false;
         }
         if (appConfig.get(StringValue.of("commands")) != null)
@@ -631,37 +645,19 @@ public class CarpetScriptHost extends ScriptHost
         }
     }
 
-    public List<CarpetScriptHost> retrieveForExecution(ServerCommandSource source, String optionalTarget)
+    public CarpetScriptHost retrieveForExecution(ServerCommandSource source, ServerPlayerEntity player)
     {
-        List<CarpetScriptHost> targets = new ArrayList<>();
-        if (perUser)
+        CarpetScriptHost target = null;
+        if (!perUser)
         {
-            if (optionalTarget == null)
-            {
-                for (ServerPlayerEntity player : source.getMinecraftServer().getPlayerManager().getPlayerList())
-                {
-                    CarpetScriptHost host = (CarpetScriptHost) retrieveForExecution(player.getEntityName());
-                    targets.add(host);
-                    if (host.errorSnooper == null) host.setChatErrorSnooper(player.getCommandSource());
-                }
-            }
-            else
-            {
-                ServerPlayerEntity player = source.getMinecraftServer().getPlayerManager().getPlayer(optionalTarget);
-                if (player != null)
-                {
-                    CarpetScriptHost host = (CarpetScriptHost) retrieveForExecution(player.getEntityName());
-                    targets.add(host);
-                    if (host.errorSnooper == null) host.setChatErrorSnooper(player.getCommandSource());
-                }
-            }
+            target = this;
         }
-        else
+        else if (player != null)
         {
-            targets.add(this);
-            if (this.errorSnooper == null) this.setChatErrorSnooper(source);
+            target = (CarpetScriptHost) retrieveForExecution(player.getEntityName());
         }
-        return targets;
+        if (target != null && target.errorSnooper == null) target.setChatErrorSnooper(source);
+        return target;
     }
 
     public CarpetScriptHost retrieveOwnForExecution(ServerCommandSource source) throws CommandSyntaxException
@@ -698,13 +694,16 @@ public class CarpetScriptHost extends ScriptHost
         catch (CarpetExpressionException exc)
         {
             handleErrorWithStack("Error while running custom command", exc);
-            return Value.NULL;
         }
         catch (ArithmeticException ae)
         {
             handleErrorWithStack("Math doesn't compute", ae);
-            return Value.NULL;
         }
+        catch (StackOverflowError soe)
+        {
+            handleErrorWithStack("Your thoughts are too deep", soe);
+        }
+        return Value.NULL;
     }
 
     public Value handleCommand(ServerCommandSource source, FunctionValue function, List<Value> args)
@@ -716,13 +715,16 @@ public class CarpetScriptHost extends ScriptHost
         catch (CarpetExpressionException exc)
         {
             handleErrorWithStack("Error while running custom command", exc);
-            return Value.NULL;
         }
         catch (ArithmeticException ae)
         {
             handleErrorWithStack("Math doesn't compute", ae);
-            return Value.NULL;
         }
+        catch (StackOverflowError soe)
+        {
+            handleErrorWithStack("Your thoughts are too deep", soe);
+        }
+        return Value.NULL;
     }
 
     public Value callLegacy(ServerCommandSource source, String call, List<Integer> coords, String arg)
@@ -743,11 +745,8 @@ public class CarpetScriptHost extends ScriptHost
             {
                 case VARIABLE:
                     LazyValue var = getGlobalVariable(tok.surface);
-                    if (var != null)
-                    {
-                        argv.add(var);
-                        break;
-                    }
+                    if (var != null) argv.add(var);
+                    break;
                 case STRINGPARAM:
                     argv.add((c, t) -> new StringValue(tok.surface));
                     sign = "";
@@ -814,6 +813,7 @@ public class CarpetScriptHost extends ScriptHost
         try
         {
             // TODO: this is just for now - invoke would be able to invoke other hosts scripts
+            assertAppIntegrity(function.getModule());
             Context context = new CarpetContext(this, source, BlockPos.ORIGIN);
             return function.getExpression().evalValue(
                     () -> function.lazyEval(context, Context.VOID, function.getExpression(), function.getToken(), argv),
@@ -844,7 +844,7 @@ public class CarpetScriptHost extends ScriptHost
         }
         try
         {
-            // TODO: this is just for now - invoke would be able to invoke other hosts scripts
+            assertAppIntegrity(function.getModule());
             Context context = new CarpetContext(this, source, BlockPos.ORIGIN);
             return function.getExpression().evalValue(
                     () -> function.execute(context, Context.VOID, function.getExpression(), function.getToken(), argv),
@@ -858,7 +858,7 @@ public class CarpetScriptHost extends ScriptHost
         }
     }
 
-    public Value callUDF(BlockPos pos, ServerCommandSource source, FunctionValue fun, List<Value> argv) throws InvalidCallbackException
+    public Value callUDF(BlockPos pos, ServerCommandSource source, FunctionValue fun, List<Value> argv) throws InvalidCallbackException, IntegrityException
     {
         if (CarpetServer.scriptServer.stopAll)
             return Value.NULL;
@@ -873,7 +873,7 @@ public class CarpetScriptHost extends ScriptHost
         }
         try
         {
-            // TODO: this is just for now - invoke would be able to invoke other hosts scripts
+            assertAppIntegrity(fun.getModule());
             Context context = new CarpetContext(this, source, pos);
             return fun.getExpression().evalValue(
                     () -> fun.execute(context, Context.VOID, fun.getExpression(), fun.getToken(), argv),
@@ -921,7 +921,7 @@ public class CarpetScriptHost extends ScriptHost
             {
                 for (Entity e : world.getEntitiesByType(EntityType.ARMOR_STAND, (as) -> as.getScoreboardTags().contains(markerName)))
                 {
-                    e.remove();
+                    e.discard();
                 }
             }
             if (this.saveTimeout > 0)
@@ -934,12 +934,12 @@ public class CarpetScriptHost extends ScriptHost
         Module.saveData(main, globalState);
     }
 
-    private Tag loadState()
+    private NbtElement loadState()
     {
         return Module.getData(main);
     }
 
-    public Tag readFileTag(FileArgument fdesc)
+    public NbtElement readFileTag(FileArgument fdesc)
     {
         if (getName() == null && !fdesc.isShared) return null;
         if (fdesc.resource != null)
@@ -949,7 +949,7 @@ public class CarpetScriptHost extends ScriptHost
         return ((CarpetScriptHost)parent).globalState;
     }
 
-    public boolean writeTagFile(Tag tag, FileArgument fdesc)
+    public boolean writeTagFile(NbtElement tag, FileArgument fdesc)
     {
         if (getName() == null && !fdesc.isShared) return false; // if belongs to an app, cannot be default host.
 
@@ -1071,13 +1071,13 @@ public class CarpetScriptHost extends ScriptHost
         super.resetErrorSnooper();
     }
 
-    public void handleErrorWithStack(String intro, Exception exception)
+    public void handleErrorWithStack(String intro, Throwable exception)
     {
         if (responsibleSource != null)
         {
             if (exception instanceof CarpetExpressionException) ((CarpetExpressionException) exception).printStack(responsibleSource);
             String message = exception.getMessage();
-            Messenger.m(responsibleSource, "r "+intro+(message.isEmpty()?"":": "+message));
+            Messenger.m(responsibleSource, "r "+intro+( (message == null || message.isEmpty())?"":": "+message));
         }
         else
         {

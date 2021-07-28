@@ -1,6 +1,5 @@
 package carpet;
 
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -33,12 +32,17 @@ import com.mojang.brigadier.CommandDispatcher;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.api.DedicatedServerModInitializer;
 import net.fabricmc.loader.api.FabricLoader;
+import net.minecraft.server.command.CommandManager;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.dedicated.command.PerfCommand;
 import net.minecraft.server.network.ServerPlayerEntity;
 
-public class CarpetServer implements ClientModInitializer,DedicatedServerModInitializer // static for now - easier to handle all around the code, its one anyways
+public class CarpetServer // static for now - easier to handle all around the code, its one anyways
 {
+    public static final ClientModInitializer CLIENT_INITIALIZER = CarpetServer::onGameStarted;
+    public static final DedicatedServerModInitializer SERVER_INITIALIZER = CarpetServer::onGameStarted;
+
     public static final Random rand = new Random();
     public static MinecraftServer minecraft_server;
     private static CommandDispatcher<ServerCommandSource> currentCommandDispatcher;
@@ -46,17 +50,6 @@ public class CarpetServer implements ClientModInitializer,DedicatedServerModInit
     public static SettingsManager settingsManager;
     public static final List<CarpetExtension> extensions = new ArrayList<>();
 
-    @Override
-    public void onInitializeClient()
-    {
-    	CarpetServer.onGameStarted();
-    }
-    @Override
-    public void onInitializeServer()
-    {
-    	CarpetServer.onGameStarted();
-    }
-    
     // Separate from onServerLoaded, because a server can be loaded multiple times in singleplayer
     /**
      * Registers a {@link CarpetExtension} to be managed by Carpet.<br>
@@ -114,7 +107,7 @@ public class CarpetServer implements ClientModInitializer,DedicatedServerModInit
     {
         TickSpeed.tick();
         HUDController.update_hud(server, null);
-        scriptServer.tick();
+        if (scriptServer != null) scriptServer.tick();
 
         //in case something happens
         CarpetSettings.impendingFillSkipUpdates.set(false);
@@ -122,7 +115,11 @@ public class CarpetServer implements ClientModInitializer,DedicatedServerModInit
         extensions.forEach(e -> e.onTick(server));
     }
 
-    public static void registerCarpetCommands(CommandDispatcher<ServerCommandSource> dispatcher)
+    @Deprecated
+    public static void registerCarpetCommands(CommandDispatcher<ServerCommandSource> dispatcher) {
+    }
+
+    public static void registerCarpetCommands(CommandDispatcher<ServerCommandSource> dispatcher, CommandManager.RegistrationEnvironment environment)
     {
         settingsManager.registerCommand(dispatcher);
         extensions.forEach(e -> {
@@ -146,6 +143,9 @@ public class CarpetServer implements ClientModInitializer,DedicatedServerModInit
         // for all other, they will have them registered when they add themselves
         extensions.forEach(e -> e.registerCommands(dispatcher));
         currentCommandDispatcher = dispatcher;
+
+        if (environment != CommandManager.RegistrationEnvironment.DEDICATED)
+            PerfCommand.register(dispatcher);
         
         if (FabricLoader.getInstance().isDevelopmentEnvironment())
             TestCommand.register(dispatcher);
@@ -168,6 +168,12 @@ public class CarpetServer implements ClientModInitializer,DedicatedServerModInit
         extensions.forEach(e -> e.onPlayerLoggedOut(player));
     }
 
+    public static void clientPreClosing()
+    {
+        if (scriptServer != null) scriptServer.onClose();
+        scriptServer = null;
+    }
+
     public static void onServerClosed(MinecraftServer server)
     {
         // this for whatever reason gets called multiple times even when joining on SP
@@ -175,6 +181,7 @@ public class CarpetServer implements ClientModInitializer,DedicatedServerModInit
         if (minecraft_server != null)
         {
             if (scriptServer != null) scriptServer.onClose();
+            scriptServer = null;
             ServerNetworkHandler.close();
             currentCommandDispatcher = null;
 

@@ -1,7 +1,6 @@
 
 package carpet.utils;
 
-import carpet.mixins.WeightedPickerEntryMixin;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2LongMap;
 import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
@@ -20,6 +19,7 @@ import net.minecraft.tag.BlockTags;
 import net.minecraft.text.BaseText;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.DyeColor;
+import net.minecraft.util.TypeFilter;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.registry.RegistryKey;
@@ -276,7 +276,7 @@ public class SpawnReporter
     {
         List<BaseText> lst = new ArrayList<>();
         lst.add( Messenger.s(String.format("Loaded entities for %s class:", get_type_string(cat))));
-        for (Entity entity : ((ServerWorld)worldIn).getEntitiesByType(null, (e) -> e.getType().getSpawnGroup()==cat))
+        for (Entity entity : ((ServerWorld)worldIn).getEntitiesByType(TypeFilter.instanceOf(Entity.class), (e) -> e.getType().getSpawnGroup()==cat))
         {
             boolean persistent = entity instanceof MobEntity && ( ((MobEntity) entity).isPersistent() || ((MobEntity) entity).cannotDespawn());
             if (!all && persistent)
@@ -399,28 +399,28 @@ public class SpawnReporter
     {
         if (entity.hasVehicle())
         {
-            entity.getVehicle().remove();
+            entity.getVehicle().discard();
         }
         if (entity.hasPassengers())
         {
             for (Entity e: entity.getPassengerList())
             {
-                e.remove();
+                e.discard();
             }
         }
         if (entity instanceof OcelotEntity)
         {
             for (Entity e: entity.getEntityWorld().getOtherEntities(entity, entity.getBoundingBox()))
             {
-                e.remove();
+                e.discard();
             }
         }
-        entity.remove();
+        entity.discard();
     }
 
     // yeeted from SpawnHelper - temporary fix
     private static List<SpawnSettings.SpawnEntry> method_29950(ServerWorld serverWorld, StructureAccessor structureAccessor, ChunkGenerator chunkGenerator, SpawnGroup spawnGroup, BlockPos blockPos, /*@Nullable*/ Biome biome) {
-        return spawnGroup == SpawnGroup.MONSTER && serverWorld.getBlockState(blockPos.down()).getBlock() == Blocks.NETHER_BRICKS && structureAccessor.getStructureAt(blockPos, false, StructureFeature.FORTRESS).hasChildren() ? StructureFeature.FORTRESS.getMonsterSpawns() : chunkGenerator.getEntitySpawnList(biome != null ? biome : serverWorld.getBiome(blockPos), structureAccessor, spawnGroup, blockPos);
+        return spawnGroup == SpawnGroup.MONSTER && serverWorld.getBlockState(blockPos.down()).getBlock() == Blocks.NETHER_BRICKS && structureAccessor.getStructureAt(blockPos, false, StructureFeature.FORTRESS).hasChildren() ? StructureFeature.FORTRESS.getMonsterSpawns().getEntries() : chunkGenerator.getEntitySpawnList(biome != null ? biome : serverWorld.getBiome(blockPos), structureAccessor, spawnGroup, blockPos).getEntries();
     }
 
     public static List<BaseText> report(BlockPos pos, ServerWorld worldIn)
@@ -520,7 +520,7 @@ public class SpawnReporter
                     
                     String creature_name = mob.getType().getName().getString();
                     String pack_size = String.format("%d", mob.getLimitPerChunk());//String.format("%d-%d", animal.minGroupCount, animal.maxGroupCount);
-                    int weight = ((WeightedPickerEntryMixin) spawnEntry).getWeight();
+                    int weight = spawnEntry.getWeight().getValue();
                     if (canspawn)
                     {
                         String c = (fits_true && will_spawn>0)?"e":"gi";

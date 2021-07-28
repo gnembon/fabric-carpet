@@ -12,7 +12,7 @@ import it.unimi.dsi.fastutil.objects.Object2LongMap;
 import net.minecraft.block.AbstractBannerBlock;
 import net.minecraft.block.Block;
 import net.minecraft.block.Blocks;
-import net.minecraft.block.MaterialColor;
+import net.minecraft.block.MapColor;
 import net.minecraft.block.Stainable;
 import net.minecraft.item.BlockItem;
 import net.minecraft.item.DyeItem;
@@ -100,7 +100,7 @@ public class HopperCounter
     {
         startTick = -1;
         this.color = color;
-        this.prettyColour = WoolTool.Material2DyeName.getOrDefault(color.getMaterialColor(),"w ") + color.getName();
+        this.prettyColour = WoolTool.Material2DyeName.getOrDefault(color.getMapColor(),"w ") + color.getName();
     }
 
     /**
@@ -229,7 +229,7 @@ public class HopperCounter
      */
     public static int appropriateColor(int color)
     {
-        if (color == 0) return MaterialColor.WHITE.color;
+        if (color == 0) return MapColor.WHITE.color;
         int r = (color >> 16 & 255);
         int g = (color >> 8 & 255);
         int b = (color & 255);
@@ -326,6 +326,8 @@ public class HopperCounter
             .put(Items.PHANTOM_MEMBRANE,Blocks.BONE_BLOCK)
             .put(Items.EGG,Blocks.BONE_BLOCK)
             //.put(Items.,Blocks.)
+            .put(Items.COPPER_INGOT,Blocks.COPPER_BLOCK)
+            .put(Items.AMETHYST_SHARD, Blocks.AMETHYST_BLOCK)
             .build();
 
     /**
@@ -333,8 +335,8 @@ public class HopperCounter
      */
     public static TextColor fromItem(Item item)
     {
-        if (DEFAULTS.containsKey(item)) return TextColor.fromRgb(appropriateColor(DEFAULTS.get(item).getDefaultMaterialColor().color));
-        if (item instanceof DyeItem) return TextColor.fromRgb(appropriateColor(((DyeItem) item).getColor().getMaterialColor().color));
+        if (DEFAULTS.containsKey(item)) return TextColor.fromRgb(appropriateColor(DEFAULTS.get(item).getDefaultMapColor().color));
+        if (item instanceof DyeItem) return TextColor.fromRgb(appropriateColor(((DyeItem) item).getColor().getMapColor().color));
         Block block = null;
         Identifier id = Registry.ITEM.getId(item);
         if (item instanceof BlockItem)
@@ -347,9 +349,9 @@ public class HopperCounter
         }
         if (block != null)
         {
-            if (block instanceof AbstractBannerBlock) return TextColor.fromRgb(appropriateColor(((AbstractBannerBlock) block).getColor().getMaterialColor().color));
-            if (block instanceof Stainable) return TextColor.fromRgb(appropriateColor( ((Stainable) block).getColor().getMaterialColor().color));
-            return TextColor.fromRgb(appropriateColor( block.getDefaultMaterialColor().color));
+            if (block instanceof AbstractBannerBlock) return TextColor.fromRgb(appropriateColor(((AbstractBannerBlock) block).getColor().getMapColor().color));
+            if (block instanceof Stainable) return TextColor.fromRgb(appropriateColor( ((Stainable) block).getColor().getMapColor().color));
+            return TextColor.fromRgb(appropriateColor( block.getDefaultMapColor().color));
         }
         return null;
     }
@@ -368,7 +370,7 @@ public class HopperCounter
         {
             for (Recipe<?> r: ((RecipeManagerInterface) CarpetServer.minecraft_server.getRecipeManager()).getAllMatching(type, id))
             {
-                for (Ingredient ingredient: r.getPreviewInputs())
+                for (Ingredient ingredient: r.getIngredients())
                 {
                     for (Collection<ItemStack> stacks : ((IngredientInterface) (Object) ingredient).getRecipeStacks())
                     {

@@ -82,7 +82,7 @@ public abstract class ServerPlayerEntity_scarpetEventMixin extends PlayerEntity 
         }
     }
 
-    @Redirect(method = "method_14218", at = @At(
+    @Redirect(method = "updateInput", at = @At(
             value = "INVOKE",
             target = "Lnet/minecraft/server/network/ServerPlayerEntity;setSneaking(Z)V"
     ))

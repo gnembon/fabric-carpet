@@ -13,7 +13,7 @@ import net.minecraft.entity.EntityType;
 import net.minecraft.entity.SpawnReason;
 import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtCompound;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.tag.BlockTags;
 import net.minecraft.util.math.BlockPos;
@@ -117,8 +117,8 @@ public class SpawnHelperMixin
                 BlockState state = world.getBlockState(blockpos);
                 Block block = state.getBlock();
                 if (
-                        block.isIn(BlockTags.FENCES) ||
-                        block.isIn(BlockTags.WALLS) ||
+                        state.isIn(BlockTags.FENCES) ||
+                        state.isIn(BlockTags.WALLS) ||
                         ((block instanceof FenceGateBlock) && !state.get(FenceGateBlock.OPEN))
                 )
                 {
@@ -175,9 +175,9 @@ public class SpawnHelperMixin
 
     @Redirect(method = "spawnEntitiesInChunk(Lnet/minecraft/entity/SpawnGroup;Lnet/minecraft/server/world/ServerWorld;Lnet/minecraft/world/chunk/Chunk;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/world/SpawnHelper$Checker;Lnet/minecraft/world/SpawnHelper$Runner;)V", at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/entity/mob/MobEntity;initialize(Lnet/minecraft/world/ServerWorldAccess;Lnet/minecraft/world/LocalDifficulty;Lnet/minecraft/entity/SpawnReason;Lnet/minecraft/entity/EntityData;Lnet/minecraft/nbt/CompoundTag;)Lnet/minecraft/entity/EntityData;"
+            target = "Lnet/minecraft/entity/mob/MobEntity;initialize(Lnet/minecraft/world/ServerWorldAccess;Lnet/minecraft/world/LocalDifficulty;Lnet/minecraft/entity/SpawnReason;Lnet/minecraft/entity/EntityData;Lnet/minecraft/nbt/NbtCompound;)Lnet/minecraft/entity/EntityData;"
     ))
-    private static EntityData spawnEntity(MobEntity mobEntity, ServerWorldAccess serverWorldAccess, LocalDifficulty difficulty, SpawnReason spawnReason, EntityData entityData, CompoundTag entityTag)
+    private static EntityData spawnEntity(MobEntity mobEntity, ServerWorldAccess serverWorldAccess, LocalDifficulty difficulty, SpawnReason spawnReason, EntityData entityData, NbtCompound entityTag)
     {
         if (!SpawnReporter.mock_spawns) // WorldAccess
             return mobEntity.initialize(serverWorldAccess, difficulty, spawnReason, entityData, entityTag);
@@ -279,7 +279,7 @@ public class SpawnHelperMixin
 
             for(int var8 = 0; var8 < var7; ++var8) {
                 SpawnGroup entityCategory = var6[var8];
-                if ((spawnAnimals || !entityCategory.isPeaceful()) && (spawnMonsters || entityCategory.isPeaceful()) && (shouldSpawnAnimals || !entityCategory.isAnimal()) )
+                if ((spawnAnimals || !entityCategory.isPeaceful()) && (spawnMonsters || entityCategory.isPeaceful()) && (shouldSpawnAnimals || !entityCategory.isRare()) )
                 {
                     RegistryKey<World> dim = world.getRegistryKey(); // getDimensionType;
                     int newCap = (int) ((double)entityCategory.getCapacity()*(Math.pow(2.0,(SpawnReporter.mobcap_exponent/4))));

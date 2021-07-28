@@ -134,14 +134,14 @@ public class OptimizedExplosion
             }
 
             if (!entity.isImmuneToExplosion()) {
-                double d12 = MathHelper.sqrt(entity.squaredDistanceTo(eAccess.getX(), eAccess.getY(), eAccess.getZ())) / (double) f3;
+                double d12 = Math.sqrt(entity.squaredDistanceTo(eAccess.getX(), eAccess.getY(), eAccess.getZ())) / (double) f3;
 
                 if (d12 <= 1.0D) {
                     double d5 = entity.getX() - eAccess.getX();
                     // Change in 1.16 snapshots to fix a bug with TNT jumping
                     double d7 = (entity instanceof TntEntity ? entity.getY() : entity.getEyeY()) - eAccess.getY();
                     double d9 = entity.getZ() - eAccess.getZ();
-                    double d13 = (double) MathHelper.sqrt(d5 * d5 + d7 * d7 + d9 * d9);
+                    double d13 = (double) Math.sqrt(d5 * d5 + d7 * d7 + d9 * d9);
 
                     if (d13 != 0.0D) {
                         d5 = d5 / d13;
@@ -180,11 +180,10 @@ public class OptimizedExplosion
 
                         entity.setVelocity(entity.getVelocity().add(d5 * d11, d7 * d11, d9 * d11));
 
-                        if (entity instanceof PlayerEntity) {
-                            PlayerEntity player = (PlayerEntity) entity;
+                        if (entity instanceof PlayerEntity player) {
 
                             if (!player.isSpectator()
-                                    && (!player.isCreative() || !player.abilities.flying)) {
+                                    && (!player.isCreative() || !player.getAbilities().flying)) {  //getAbilities
                                 e.getAffectedPlayers().put(player, new Vec3d(d5 * d10, d7 * d10, d9 * d10));
                             }
                         }
@@ -244,7 +243,7 @@ public class OptimizedExplosion
                 {
                     if (block.shouldDropItemsOnExplosion(e) && world instanceof ServerWorld)
                     {
-                        BlockEntity blockEntity = block.hasBlockEntity() ? world.getBlockEntity(blockpos) : null;
+                        BlockEntity blockEntity = state.hasBlockEntity() ? world.getBlockEntity(blockpos) : null;  //hasBlockEntity()
 
                         LootContext.Builder lootBuilder = (new LootContext.Builder((ServerWorld)eAccess.getWorld()))
                                 .random(eAccess.getWorld().random)

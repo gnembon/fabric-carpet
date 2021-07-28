@@ -10,15 +10,15 @@ import carpet.utils.Messenger;
 import carpet.utils.SpawnChunks;
 import net.minecraft.block.Block;
 import net.minecraft.block.Blocks;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.dedicated.DedicatedServer;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Box;
 import net.minecraft.util.math.ChunkPos;
-import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.registry.Registry;
 import net.minecraft.world.World;
 import org.apache.logging.log4j.LogManager;
@@ -43,7 +43,7 @@ import static carpet.settings.RuleCategory.CLIENT;
 @SuppressWarnings("CanBeFinal")
 public class CarpetSettings
 {
-    public static final String carpetVersion = "1.4.37+v210519";
+    public static final String carpetVersion = "1.4.44+v210714";
     public static final Logger LOG = LogManager.getLogger("carpet");
     public static ThreadLocal<Boolean> skipGenerationChecks = ThreadLocal.withInitial(() -> false);
     public static ThreadLocal<Boolean> impendingFillSkipUpdates = ThreadLocal.withInitial(() -> false);
@@ -184,15 +184,17 @@ public class CarpetSettings
     @Rule( desc = "Players absorb XP instantly, without delay", category = CREATIVE )
     public static boolean xpNoCooldown = false;
 
+
     @Rule( desc = "XP orbs combine with other into bigger orbs", category = FEATURE )
     public static boolean combineXPOrbs = false;
 
     @Rule(
             desc = "Empty shulker boxes can stack to 64 when dropped on the ground",
-            extra = "To move them around between inventories, use shift click to move entire stacks",
+            extra = ".. or when manipulated inside the inventories",
             category = {SURVIVAL, FEATURE}
     )
     public static boolean stackableShulkerBoxes = false;
+    public static final int SHULKER_STACK_SIZE = 64;
 
     @Rule( desc = "Explosions won't destroy blocks", category = {CREATIVE, TNT} )
     public static boolean explosionNoBlockDamage = false;
@@ -251,7 +253,7 @@ public class CarpetSettings
     @Rule( desc = "Merges stationary primed TNT entities", category = TNT )
     public static boolean mergeTNT = false;
 
-    /*@Rule(
+    @Rule(
             desc = "Lag optimizations for redstone dust",
             extra = {
                     "by Theosib",
@@ -260,7 +262,7 @@ public class CarpetSettings
             },
             category = {EXPERIMENTAL, OPTIMIZATION}
     )
-    public static boolean fastRedstoneDust = false;*/
+    public static boolean fastRedstoneDust = false;
 
     @Rule(desc = "Only husks spawn in desert temples", category = FEATURE)
     public static boolean huskSpawningInTemples = false;
@@ -314,6 +316,16 @@ public class CarpetSettings
     )
     public static boolean hopperCounters = false;
 
+    @Rule(
+            desc = "Allows Budding Amethyst blocks to be moved",
+            extra = {
+                    "Allow for them to be moved by pistons",
+                    "as well as adds extra drop when mining with silk touch pickaxe"
+            },
+            category = FEATURE
+    )
+    public static boolean movableAmethyst = false;
+
     @Rule( desc = "Guardians turn into Elder Guardian when struck by lightning", category = FEATURE )
     public static boolean renewableSponges = false;
 
@@ -363,6 +375,13 @@ public class CarpetSettings
             category = COMMAND
     )
     public static String commandProfile = "true";
+
+    @Rule(
+            desc = "Required permission level for /perf command",
+            options = {"2", "4"},
+            category = CREATIVE
+    )
+    public static int perfPermissionLevel = 4;
 
     @Rule(desc = "Enables /log command to monitor events via chat and overlays", category = COMMAND)
     public static String commandLog = "true";
@@ -432,6 +451,7 @@ public class CarpetSettings
                     "have when running commands with run()"
             },
             category = {SCARPET},
+            options = {"ops", "0", "1", "2", "3", "4"},
             validate = {Validator._COMMAND_LEVEL_VALIDATOR.class, ModulePermissionLevel.class}
     )
     public static String commandScriptACE = "ops";
@@ -463,6 +483,7 @@ public class CarpetSettings
                     "using <user>/<repo>/contents/<path...>"
             },
             category = SCARPET,
+            strict = false,
             validate= AppStoreManager.ScarpetAppStoreValidator.class
     )
     public static String scriptsAppStore = "gnembon/scarpet/contents/programs";
@@ -584,9 +605,6 @@ public class CarpetSettings
     public static boolean waterFlow = true;
     */
 
-    @Rule(desc = "One player is required on the server to cause night to pass", category = SURVIVAL)
-    public static boolean onePlayerSleeping = false;
-
     @Rule(
             desc = "Sets a different motd message on client trying to connect to the server",
             extra = "use '_' to use the startup setting from server.properties",
@@ -616,7 +634,7 @@ public class CarpetSettings
                 Messenger.m(source, "r view distance has to be between 0 and 32");
                 return null;
             }
-            MinecraftServer server = source.getMinecraftServer();
+            MinecraftServer server = source.getServer();
 
             if (server.isDedicated())
             {
@@ -750,6 +768,13 @@ public class CarpetSettings
     )
     public static boolean renewableBlackstone = false;
 
+    @Rule(
+            desc = "Lava and water generate deepslate and cobbled deepslate instead below Y16",
+            extra = "This rule may change Y value to 0 with 1.18",
+            category = FEATURE
+    )
+    public static boolean renewableDeepslate = false;
+
     @Rule(desc = "fixes block placement rotation issue when player rotates quickly while placing blocks", category = BUGFIX)
     public static boolean placementRotationFix = false;
 
@@ -803,6 +828,11 @@ public class CarpetSettings
             category = {CREATIVE, CLIENT}
     )
     public static boolean creativeNoClip = false;
+    public static boolean isCreativeFlying(Entity entity)
+    {
+        // #todo replace after merger to 1.17
+        return CarpetSettings.creativeNoClip && entity instanceof PlayerEntity && (((PlayerEntity) entity).isCreative()) && ((PlayerEntity) entity).getAbilities().flying;
+    }
 
 
     @Rule(
@@ -813,6 +843,7 @@ public class CarpetSettings
                     "but this also means it will work on vanilla servers as well"
             },
             category = {CREATIVE, CLIENT},
+            strict = false,
             validate = Validator.NONNEGATIVE_NUMBER.class
     )
     public static double creativeFlySpeed = 1.0;
@@ -828,6 +859,7 @@ public class CarpetSettings
                     "but this also means it will work on vanilla servers as well"
             },
             category = {CREATIVE, CLIENT},
+            strict = false,
             validate = Validator.PROBABILITY.class
     )
     public static double creativeFlyDrag = 0.09;
@@ -898,7 +930,7 @@ public class CarpetSettings
             strict = false,
             validate = Validator.NONNEGATIVE_NUMBER.class
     )
-    public static double structureBlockOutlineDistance = 96d;
+    public static int structureBlockOutlineDistance = 96;
 
     @Rule(
             desc = "Lightning kills the items that drop when lightning kills an entity",

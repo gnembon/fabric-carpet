@@ -1,8 +1,8 @@
 package carpet.mixins;
 
-import carpet.fakes.CustomPayloadC2SPacketInterface;
 import carpet.network.CarpetClient;
 import carpet.network.ServerNetworkHandler;
+import net.minecraft.network.PacketByteBuf;
 import net.minecraft.network.packet.c2s.play.CustomPayloadC2SPacket;
 import net.minecraft.server.network.ServerPlayNetworkHandler;
 import net.minecraft.server.network.ServerPlayerEntity;
@@ -21,10 +21,10 @@ public class ServerPlayNetworkHandlerMixin
     @Inject(method = "onCustomPayload", at = @At("HEAD"), cancellable = true)
     private void onCustomCarpetPayload(CustomPayloadC2SPacket packet, CallbackInfo ci)
     {
-        Identifier channel = ((CustomPayloadC2SPacketInterface) packet).getPacketChannel();
+        Identifier channel = packet.getChannel();
         if (CarpetClient.CARPET_CHANNEL.equals(channel))
         {
-            ServerNetworkHandler.handleData(((CustomPayloadC2SPacketInterface) packet).getPacketData(), player);
+            ServerNetworkHandler.handleData(new PacketByteBuf(packet.getData().copy()), player);
             ci.cancel();
         }
     }

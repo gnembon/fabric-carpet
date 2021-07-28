@@ -46,39 +46,39 @@ public abstract class World_tickMixin implements WorldInterface
     private void endBlockEntities(CallbackInfo ci) {
         CarpetProfiler.end_current_section(currentSection);
     }
-
+/*
     @Inject(method = "tickBlockEntities", locals = LocalCapture.CAPTURE_FAILHARD, at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/block/entity/BlockEntity;isRemoved()Z",
+            target = "Lnet/minecraft/class_5562;method_31704()Z",
             shift = At.Shift.BEFORE,
             ordinal = 0
     ))
-    private void startTileEntitySection(CallbackInfo ci, Profiler profiler_1, Iterator i, BlockEntity blockEntity_2)
+    private void startTileEntitySection(CallbackInfo ci, Profiler profiler_1, Iterator i, class_5562 lv)
     {
-        entitySection = CarpetProfiler.start_block_entity_section((World)(Object)this, blockEntity_2, CarpetProfiler.TYPE.TILEENTITY);
+        entitySection = CarpetProfiler.start_block_entity_section((World)(Object)this, (BlockEntity) lv, CarpetProfiler.TYPE.TILEENTITY);
     }
 
     @Redirect(method = "tickBlockEntities", at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/block/entity/BlockEntity;isRemoved()Z",
+            target = "Lnet/minecraft/class_5562;method_31704()Z",
             ordinal = 0
-    ))
-    private boolean checkProcessTEs(BlockEntity blockEntity)
+    ))   // isRemoved()
+    private boolean checkProcessTEs(class_5562 class_5562)
     {
-        return blockEntity.isRemoved() || !TickSpeed.process_entities; // blockEntity can be NULL? happened once with fake player
+        return class_5562.method_31704() || !TickSpeed.process_entities; // blockEntity can be NULL? happened once with fake player
     }
 
     @Inject(method = "tickBlockEntities", at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/block/entity/BlockEntity;isRemoved()Z",
-            shift = At.Shift.BEFORE,
-            ordinal = 1
+            target = "Lnet/minecraft/class_5562;method_31703()V",
+            shift = At.Shift.AFTER,
+            ordinal = 0
     ))
     private void endTileEntitySection(CallbackInfo ci)
     {
          CarpetProfiler.end_current_entity_section(entitySection);
     }
-
+*/
     @Inject(method = "tickEntity", at = @At("HEAD"), cancellable = true)
     private void startEntity(Consumer<Entity> consumer_1, Entity e, CallbackInfo ci)
     {

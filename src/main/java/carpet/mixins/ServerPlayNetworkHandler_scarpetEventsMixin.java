@@ -51,7 +51,7 @@ public class ServerPlayNetworkHandler_scarpetEventsMixin
 {
     @Shadow public ServerPlayerEntity player;
 
-    @Inject(method = "onPlayerInput", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/network/ServerPlayerEntity;method_14218(FFZZ)V"))
+    @Inject(method = "onPlayerInput", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/network/ServerPlayerEntity;updateInput(FFZZ)V"))
     private void checkMoves(PlayerInputC2SPacket p, CallbackInfo ci)
     {
         if (PLAYER_RIDES.isNeeded() && (p.getSideways() != 0.0F || p.getForward() != 0.0F || p.isJumping() || p.isSneaking()))
@@ -62,7 +62,7 @@ public class ServerPlayNetworkHandler_scarpetEventsMixin
 
     @Inject(method = "onPlayerAction", at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/server/network/ServerPlayerEntity;dropSelectedItem(Z)Z",
+            target = "Lnet/minecraft/server/network/ServerPlayerEntity;dropSelectedItem(Z)Z", // dropSelectedItem
             ordinal = 0,
             shift = At.Shift.BEFORE
     ))
@@ -84,7 +84,7 @@ public class ServerPlayNetworkHandler_scarpetEventsMixin
 
     @Inject(method = "onPlayerAction", at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/server/network/ServerPlayerEntity;dropSelectedItem(Z)Z",
+            target = "Lnet/minecraft/server/network/ServerPlayerEntity;dropSelectedItem(Z)Z", // dropSelectedItem
             ordinal = 1,
             shift = At.Shift.BEFORE
     ))
@@ -225,16 +225,16 @@ public class ServerPlayNetworkHandler_scarpetEventsMixin
         PLAYER_DEPLOYS_ELYTRA.onPlayerEvent(player);
     }
 
-    @Inject(method = "onPlayerInteractEntity", at = @At(
+    /*@Inject(method = "onPlayerInteractEntity", at = @At(
             value = "INVOKE",
             target = "Lnet/minecraft/server/network/ServerPlayerEntity;interact(Lnet/minecraft/entity/Entity;Lnet/minecraft/util/Hand;)Lnet/minecraft/util/ActionResult;"
     ))
     private void onEntityInteract(PlayerInteractEntityC2SPacket playerInteractEntityC2SPacket_1, CallbackInfo ci)
     {
         PLAYER_INTERACTS_WITH_ENTITY.onEntityHandAction(player, playerInteractEntityC2SPacket_1.getEntity(player.getServerWorld()), playerInteractEntityC2SPacket_1.getHand());
-    }
+    }*/
 
-    @Inject(method = "onPlayerInteractEntity", at = @At(
+    /*@Inject(method = "onPlayerInteractEntity", at = @At(
             value = "INVOKE",
             target = "Lnet/minecraft/server/network/ServerPlayerEntity;attack(Lnet/minecraft/entity/Entity;)V"
     ))
@@ -242,7 +242,7 @@ public class ServerPlayNetworkHandler_scarpetEventsMixin
     {
         //todo add hit and hand in the future
         PLAYER_ATTACKS_ENTITY.onEntityHandAction(player, playerInteractEntityC2SPacket_1.getEntity(player.getServerWorld()), null);
-    }
+    }*/
 
     @Inject(method = "onButtonClick", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/network/ServerPlayerEntity;updateLastActionTime()V"))
     private void onItemBeingPickedFromInventory(ButtonClickC2SPacket packet, CallbackInfo ci)
@@ -264,7 +264,7 @@ public class ServerPlayNetworkHandler_scarpetEventsMixin
     {
         if (PLAYER_SWITCHES_SLOT.isNeeded() && player.getServer() != null && player.getServer().isOnThread())
         {
-            PLAYER_SWITCHES_SLOT.onSlotSwitch(player, player.inventory.selectedSlot, packet.getSelectedSlot());
+            PLAYER_SWITCHES_SLOT.onSlotSwitch(player, player.getInventory().selectedSlot, packet.getSelectedSlot());
         }
     }
 

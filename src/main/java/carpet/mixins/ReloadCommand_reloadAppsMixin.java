@@ -18,6 +18,6 @@ public class ReloadCommand_reloadAppsMixin {
     private static void onReload(CommandContext<ServerCommandSource> context, CallbackInfoReturnable<Integer> cir)
     {
         // can't fetch here the reference to the server
-        CarpetServer.onReload(context.getSource().getMinecraftServer());
+        CarpetServer.onReload(context.getSource().getServer());
     }
 }

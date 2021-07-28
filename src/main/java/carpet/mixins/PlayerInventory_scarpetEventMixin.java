@@ -32,7 +32,7 @@ public abstract class PlayerInventory_scarpetEventMixin
         if (count != stack.getCount()) // res returns false for larger item adding to a almost full ineventory
         {
             ItemStack diffStack = new ItemStack(item, count - stack.getCount());
-            diffStack.setTag(stack.getTag());
+            diffStack.setNbt(stack.getNbt());
             PLAYER_PICKS_UP_ITEM.onItemAction((ServerPlayerEntity) player, null, diffStack);
         }
         return res;

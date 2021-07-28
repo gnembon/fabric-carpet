@@ -51,9 +51,8 @@ public class Sys {
 
         expression.addUnaryFunction("number", v ->
         {
-            if (v instanceof NumericValue)
+            if (v instanceof NumericValue num)
             {
-                NumericValue num = (NumericValue)v;
                 if (num.isInteger()) return new NumericValue(num.getLong());
                 return new NumericValue(num.getDouble());
             }

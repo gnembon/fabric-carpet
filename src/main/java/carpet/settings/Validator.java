@@ -16,6 +16,10 @@ public abstract class Validator<T>
      */
     public abstract T validate(ServerCommandSource source, ParsedRule<T> currentRule, T newValue, String string);
     public String description() {return null;}
+    public void notifyFailure(ServerCommandSource source, ParsedRule<T> currentRule, String providedValue)
+    {
+        Messenger.m(source, "r Wrong value for " + currentRule.name + ": " + providedValue);
+    }
 
     public static class _COMMAND<T> extends Validator<T>
     {

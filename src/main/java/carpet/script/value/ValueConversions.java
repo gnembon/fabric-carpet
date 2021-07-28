@@ -6,7 +6,7 @@ import carpet.script.exception.ThrowStatement;
 import carpet.script.exception.Throwables;
 import carpet.utils.BlockInfo;
 import net.minecraft.block.BlockState;
-import net.minecraft.block.MaterialColor;
+import net.minecraft.block.MapColor;
 import net.minecraft.block.pattern.CachedBlockPosition;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.ai.brain.LookTarget;
@@ -32,6 +32,7 @@ import net.minecraft.util.StringIdentifiable;
 import net.minecraft.util.dynamic.GlobalPos;
 import net.minecraft.util.math.BlockBox;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Box;
 import net.minecraft.util.math.ColumnPos;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.math.Vec3i;
@@ -74,7 +75,7 @@ public class ValueConversions
         return of(world.getRegistryKey().getValue());
     }
 
-    public static Value of(MaterialColor color) {return ListValue.of(StringValue.of(BlockInfo.mapColourName.get(color)), ofRGB(color.color));}
+    public static Value of(MapColor color) {return ListValue.of(StringValue.of(BlockInfo.mapColourName.get(color)), ofRGB(color.color));}
 
     public static <T extends Number> Value of(NumberRange<T> range) { return ListValue.of(NumericValue.of(range.getMin()), NumericValue.of(range.getMax()));}
 
@@ -122,9 +123,8 @@ public class ValueConversions
         {
             return ((EntityValue)dimensionValue).getEntity().getEntityWorld();
         }
-        else if (dimensionValue instanceof BlockValue)
+        else if (dimensionValue instanceof BlockValue bv)
         {
-            BlockValue bv = (BlockValue)dimensionValue;
             if (bv.getWorld() != null)
             {
                 return bv.getWorld();
@@ -206,7 +206,7 @@ public class ValueConversions
         {
             PathNode node = path.getNode(i);
             nodes.add( ListValue.of(
-                    new BlockValue(null, world, node.getPos()),
+                    new BlockValue(null, world, node.getBlockPos()),
                     new StringValue(node.type.name().toLowerCase(Locale.ROOT)),
                     new NumericValue(node.penalty),
                     BooleanValue.of(node.visited)
@@ -224,9 +224,8 @@ public class ValueConversions
 
     private static Value fromEntityMemory(Entity e, Object v)
     {
-        if (v instanceof GlobalPos)
+        if (v instanceof GlobalPos pos)
         {
-            GlobalPos pos = (GlobalPos)v;
             return of(pos);
         }
         if (v instanceof Entity)
@@ -249,9 +248,8 @@ public class ValueConversions
         {
             return ofUUID( (ServerWorld) e.getEntityWorld(), (UUID)v);
         }
-        if (v instanceof DamageSource)
+        if (v instanceof DamageSource source)
         {
-            DamageSource source = (DamageSource) v;
             return ListValue.of(
                     new StringValue(source.getName()),
                     source.getAttacker()==null?Value.NULL:new EntityValue(source.getAttacker())
@@ -277,9 +275,8 @@ public class ValueConversions
         {
             v = new ArrayList(((Set) v));
         }
-        if (v instanceof List)
+        if (v instanceof List l)
         {
-            List l = (List)v;
             if (l.isEmpty()) return ListValue.of();
             Object el = l.get(0);
             if (el instanceof Entity)
@@ -302,28 +299,39 @@ public class ValueConversions
                 new StringValue(uuid.toString())
         );
     }
+    public static Value of(Box box)
+    {
+        return ListValue.of(
+                ListValue.fromTriple(box.minX, box.minY, box.minZ),
+                ListValue.fromTriple(box.maxX, box.maxY, box.maxZ)
+        );
+    }
+    public static Value of(BlockBox box)
+    {
+        return ListValue.of(
+                ListValue.fromTriple(box.getMinX(), box.getMinY(), box.getMinZ()),
+                ListValue.fromTriple(box.getMaxX(), box.getMaxY(), box.getMaxZ())
+        );
+    }
 
     public static Value of(StructureStart<?> structure)
     {
         if (structure == null || structure == StructureStart.DEFAULT) return Value.NULL;
-        BlockBox boundingBox = structure.getBoundingBox();
-        if (boundingBox.maxX < boundingBox.minX || boundingBox.maxY < boundingBox.minY || boundingBox.maxZ < boundingBox.minZ) return Value.NULL;
+        BlockBox boundingBox = structure.setBoundingBoxFromChildren();
+        if (boundingBox.getMaxX() < boundingBox.getMinX() || boundingBox.getMaxY() < boundingBox.getMinY() || boundingBox.getMaxZ() < boundingBox.getMinZ()) return Value.NULL;
         Map<Value, Value> ret = new HashMap<>();
-        ret.put(new StringValue("box"), ListValue.of(
-                ListValue.fromTriple(boundingBox.minX, boundingBox.minY, boundingBox.minZ),
-                ListValue.fromTriple(boundingBox.maxX, boundingBox.maxY, boundingBox.maxZ)
-        ));
+        ret.put(new StringValue("box"), of(boundingBox));
         List<Value> pieces = new ArrayList<>();
         for (StructurePiece piece : structure.getChildren())
         {
             BlockBox box = piece.getBoundingBox();
-            if (box.maxX >= box.minX && box.maxY >= box.minY && box.maxZ >= box.minZ)
+            if (box.getMaxX() >= box.getMinX() && box.getMaxY() >= box.getMinY() && box.getMaxZ() >= box.getMinZ())
             {
                 pieces.add(ListValue.of(
                         new StringValue(NBTSerializableValue.nameFromRegistryId(Registry.STRUCTURE_PIECE.getId(piece.getType()))),
                         (piece.getFacing() == null) ? Value.NULL : new StringValue(piece.getFacing().getName()),
-                        ListValue.fromTriple(box.minX, box.minY, box.minZ),
-                        ListValue.fromTriple(box.maxX, box.maxY, box.maxZ)
+                        ListValue.fromTriple(box.getMinX(), box.getMinY(), box.getMinZ()),
+                        ListValue.fromTriple(box.getMaxX(), box.getMaxY(), box.getMaxZ())
                 ));
             }
         }
@@ -392,13 +400,15 @@ public class ValueConversions
         BlockPredicateInterface predicateData = (BlockPredicateInterface) blockPredicate;
         return ListValue.of(
                 predicateData.getCMBlockState()==null?Value.NULL:of(Registry.BLOCK.getId(predicateData.getCMBlockState().getBlock())),
-                predicateData.getCMBlockTag()==null?Value.NULL:of(tagManager.getBlocks().getTagId(predicateData.getCMBlockTag())),
+                predicateData.getCMBlockTag()==null?Value.NULL:of(tagManager.getOrCreateTagGroup(Registry.BLOCK_KEY).getUncheckedTagId(predicateData.getCMBlockTag())),
                 MapValue.wrap(predicateData.getCMProperties()),
                 predicateData.getCMDataTag() == null?Value.NULL:new NBTSerializableValue(predicateData.getCMDataTag())
         );
     }
 
     public static Value guess(ServerWorld serverWorld, Object o) {
+        if (o == null)
+            return Value.NULL;
         if (o instanceof List)
             return ListValue.wrap(((List<?>) o).stream().map(oo -> guess(serverWorld, oo)).collect(Collectors.toList()));
         if (o instanceof BlockPos)
@@ -409,6 +419,10 @@ public class ValueConversions
             return of((Vec3d)o);
         if (o instanceof Vec3i)
             return of(new BlockPos((Vec3i)o));
+        if (o instanceof Box)
+            return of((Box)o);
+        if (o instanceof BlockBox)
+            return of((BlockBox) o);
         if (o instanceof ItemStack)
             return of((ItemStack)o);
         if (o instanceof Boolean)
