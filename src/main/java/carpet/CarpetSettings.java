@@ -768,7 +768,7 @@ public class CarpetSettings
     }
     @Rule(
             desc = "Coral structures will grow with bonemeal from coral plants",
-            extra = "Expanded also allows growing from coral fans for easier farming",
+            extra = "Expanded also allows growing from coral fans for sustainable farming outside of warm oceans",
             category = FEATURE
     )
     public static RenewableCoralMode renewableCoral = RenewableCoralMode.FALSE;
