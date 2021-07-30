@@ -821,9 +821,13 @@ public abstract class CommandArgument
 
             if (max != null) {  //We have both max and min, so suggest min, (max + min)/2, max
                 suggestions[1] = (max + min) / 2;
-            } else if (min != null) { //Only have min, so suggest min, min+abs(min), min + 2 * abs(min)
-                suggestions[1] = min + Math.abs(min);
-                suggestions[2] = min + 2 * Math.abs(min);
+            } else if (min != null) { //Only have min, so suggest min, min+abs(min), min + 2 * abs(min) (unless it's 0 ofc)
+                if(min!=0){
+                    suggestions[1] = min + Math.abs(min);
+                    suggestions[2] = min + 2 * Math.abs(min);
+                } else {
+                    suggestions[1] = 123;//default suggestion
+                }
             }
 
             if (min != null) //overriding default suggestions
@@ -886,9 +890,13 @@ public abstract class CommandArgument
 
             if (max != null) {  //We have both max and min, so suggest min, (max + min)/2, max
                 suggestions[1] = (max + min) >> 1;
-            } else if (min != null) { //Only have min, so suggest min, min+abs(min), min + 2 * abs(min)
-                suggestions[1] = min + Math.abs(min);
-                suggestions[2] = min + 2 * Math.abs(min);
+            } else if (min != null) { //Only have min, so suggest min, min+abs(min), min + 2 * abs(min) (unless it's 0 ofc)
+                if(min!=0){
+                    suggestions[1] = min + Math.abs(min);
+                    suggestions[2] = min + 2 * Math.abs(min);
+                } else {
+                    suggestions[1] = 123;//default suggestion
+                }
             }
 
             if (min != null) //overriding default suggestions
