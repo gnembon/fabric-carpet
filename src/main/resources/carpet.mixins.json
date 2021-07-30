@@ -87,6 +87,7 @@
     "PoweredRailBlock_powerLimitMixin",
     "LivingEntity_maxCollisionsMixin",
     "CoralBlockMixin",
+    "CoralFanBlockMixin",
     "CoralFeatureMixin",
     "BuddingAmethystBlock_movableAmethystMixin",
     "FluidBlock_renewableBlackstoneMixin",

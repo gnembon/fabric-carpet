@@ -757,9 +757,18 @@ public class CarpetSettings
             validate = LightBatchValidator.class
     )
     public static int lightEngineMaxBatchSize = 5;
-    
-    @Rule(desc = "Coral structures will grow with bonemeal from coral plants", category = FEATURE)
-    public static boolean renewableCoral = false;
+
+    public enum RenewableCoralMode {
+        FALSE,
+        EXPANDED,
+        TRUE;
+    }
+    @Rule(
+            desc = "Coral structures will grow with bonemeal from coral plants",
+            extra = "Expanded also allows growing from coral fans for sustainable farming outside of warm oceans",
+            category = FEATURE
+    )
+    public static RenewableCoralMode renewableCoral = RenewableCoralMode.FALSE;
 
     @Rule(
             desc = "Nether basalt generator without soul sand below ",
