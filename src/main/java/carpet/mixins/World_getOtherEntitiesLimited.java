@@ -33,10 +33,8 @@ public abstract class World_getOtherEntitiesLimited implements WorldInterface {
 
             if (entity2 instanceof EnderDragonEntity) {
                 EnderDragonPart[] var4 = ((EnderDragonEntity) entity2).getBodyParts();
-                int var5 = var4.length;
 
-                for (int var6 = 0; var6 < var5; ++var6) {
-                    EnderDragonPart enderDragonPart = var4[var6];
+                for (EnderDragonPart enderDragonPart : var4) {
                     if (entity2 != except && predicate.test(enderDragonPart)) {
                         list.add(enderDragonPart);
                     }
