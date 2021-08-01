@@ -30,16 +30,20 @@ public abstract class LivingEntity_maxCollisionsMixin extends Entity
 
     @Inject(method = "tickCramming", cancellable = true, at = @At("HEAD"))
     private void tickPushingReplacement(CallbackInfo ci) {
-        List<Entity> entities = ((WorldInterface) this.world).getOtherEntitiesLimited(
-                this,
-                this.getBoundingBox(),
-                EntityPredicates.canBePushedBy(this),
-                CarpetSettings.maxEntityCollisions > 0 ? CarpetSettings.maxEntityCollisions : Integer.MAX_VALUE
-        );
+        List<Entity> entities;
+        if (CarpetSettings.maxEntityCollisions > 0)
+            entities = ((WorldInterface) this.world).getOtherEntitiesLimited(
+                    this,
+                    this.getBoundingBox(),
+                    EntityPredicates.canBePushedBy(this),
+                    CarpetSettings.maxEntityCollisions);
+        else
+            entities = this.world.getOtherEntities(this, this.getBoundingBox(), EntityPredicates.canBePushedBy(this));
+
         if (!entities.isEmpty()) {
             int maxEntityCramming = this.world.getGameRules().getInt(GameRules.MAX_ENTITY_CRAMMING);
             if (maxEntityCramming > 0 && entities.size() > maxEntityCramming - 1 && this.random.nextInt(4) == 0) {
-               int candidates = 0;
+                int candidates = 0;
 
                 for (Entity entity : entities) {
                     if (!entity.hasVehicle()) {

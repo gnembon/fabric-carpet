@@ -14,34 +14,44 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
 
 @Mixin(World.class)
 public abstract class World_getOtherEntitiesLimited implements WorldInterface {
 
+    private static final RuntimeException CONTROL_FLOW_EXCEPTION = new RuntimeException("Should be caught for control flow in World_getOtherEntitiesLimited!");
+
     @Override
     public List<Entity> getOtherEntitiesLimited(@Nullable Entity except, Box box, Predicate<? super Entity> predicate, int limit) {
         this.getProfiler().visit("getEntities");
+        AtomicInteger checkedEntities = new AtomicInteger();
         List<Entity> list = Lists.newArrayList();
-        this.getEntityLookup().forEachIntersects(box, (entity2) -> {
-            if (list.size() > limit)
-                return;
+        try {
+            this.getEntityLookup().forEachIntersects(box, (entity) -> {
+                if (checkedEntities.getAndIncrement() > limit) {
+                    throw CONTROL_FLOW_EXCEPTION;
+                }
 
-            if (entity2 != except && predicate.test(entity2)) {
-                list.add(entity2);
-            }
+                if (entity != except && predicate.test(entity)) {
+                    list.add(entity);
+                }
 
-            if (entity2 instanceof EnderDragonEntity) {
-                EnderDragonPart[] var4 = ((EnderDragonEntity) entity2).getBodyParts();
+                if (entity instanceof EnderDragonEntity) {
+                    EnderDragonPart[] var4 = ((EnderDragonEntity) entity).getBodyParts();
 
-                for (EnderDragonPart enderDragonPart : var4) {
-                    if (entity2 != except && predicate.test(enderDragonPart)) {
-                        list.add(enderDragonPart);
+                    for (EnderDragonPart enderDragonPart : var4) {
+                        if (entity != except && predicate.test(enderDragonPart)) {
+                            list.add(enderDragonPart);
+                        }
                     }
                 }
-            }
-
-        });
+            });
+        } catch (RuntimeException e) {
+            if (e != CONTROL_FLOW_EXCEPTION)
+                // If it wasn't the exception we were watching, rethrow it
+                throw e;
+        }
         return list;
     }
 
