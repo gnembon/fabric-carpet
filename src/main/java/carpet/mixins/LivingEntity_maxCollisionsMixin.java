@@ -1,6 +1,7 @@
 package carpet.mixins;
 
 import carpet.CarpetSettings;
+import carpet.fakes.WorldInterface;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.LivingEntity;
@@ -28,17 +29,21 @@ public abstract class LivingEntity_maxCollisionsMixin extends Entity
     @Shadow protected abstract void pushAway(Entity entity_1);
 
     @Inject(method = "tickCramming", cancellable = true, at = @At("HEAD"))
-    private void tickPushingReplacement(CallbackInfo ci)
-    {
-        List<Entity> list_1 = this.world.getOtherEntities(this, this.getBoundingBox(), EntityPredicates.canBePushedBy(this));
+    private void tickPushingReplacement(CallbackInfo ci) {
+        List<Entity> list_1 = ((WorldInterface) this.world).getOtherEntitiesLimited(
+                this,
+                this.getBoundingBox(),
+                EntityPredicates.canBePushedBy(this),
+                CarpetSettings.maxEntityCollisions > 0 ? CarpetSettings.maxEntityCollisions : Integer.MAX_VALUE
+        );
         if (!list_1.isEmpty()) {
             int int_1 = this.world.getGameRules().getInt(GameRules.MAX_ENTITY_CRAMMING);
             int int_2;
             if (int_1 > 0 && list_1.size() > int_1 - 1 && this.random.nextInt(4) == 0) {
                 int_2 = 0;
 
-                for(int int_3 = 0; int_3 < list_1.size(); ++int_3) {
-                    if (!((Entity)list_1.get(int_3)).hasVehicle()) {
+                for (int int_3 = 0; int_3 < list_1.size(); ++int_3) {
+                    if (!((Entity) list_1.get(int_3)).hasVehicle()) {
                         ++int_2;
                     }
                 }
@@ -48,12 +53,8 @@ public abstract class LivingEntity_maxCollisionsMixin extends Entity
                 }
             }
 
-            int limit = list_1.size();
-            if (CarpetSettings.maxEntityCollisions > 0)
-                limit = Math.min(limit, CarpetSettings.maxEntityCollisions);
-
-            for(int_2 = 0; int_2 < limit; ++int_2) {
-                Entity entity_1 = (Entity)list_1.get(int_2);
+            for (int_2 = 0; int_2 < list_1.size(); ++int_2) {
+                Entity entity_1 = (Entity) list_1.get(int_2);
                 this.pushAway(entity_1);
             }
         }
