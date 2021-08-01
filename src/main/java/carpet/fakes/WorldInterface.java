@@ -14,7 +14,7 @@ import java.util.function.Predicate;
 
 public interface WorldInterface
 {
-    Map<EntityType, Entity> getPrecookedMobs();
+    Map<EntityType<?>, Entity> getPrecookedMobs();
     
     boolean setBlockStateWithBlockEntity(BlockPos blockPos, BlockState blockState, BlockEntity newBlockEntity, int int1);
 

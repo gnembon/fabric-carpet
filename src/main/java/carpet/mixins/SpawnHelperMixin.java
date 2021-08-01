@@ -138,7 +138,7 @@ public class SpawnHelperMixin
     {
         if (CarpetSettings.lagFreeSpawning)
         {
-            Map<EntityType, Entity> precookedMobs = ((WorldInterface)world_1).getPrecookedMobs();
+            Map<EntityType<?>, Entity> precookedMobs = ((WorldInterface)world_1).getPrecookedMobs();
             if (precookedMobs.containsKey(entityType))
                 //this mob has been <init>'s but not used yet
                 return precookedMobs.get(entityType);
