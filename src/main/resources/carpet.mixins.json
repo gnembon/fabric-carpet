@@ -86,6 +86,7 @@
     "PistonHandler_pushLimitMixin",
     "PoweredRailBlock_powerLimitMixin",
     "LivingEntity_maxCollisionsMixin",
+    "World_getOtherEntitiesLimited",
     "CoralBlockMixin",
     "CoralFanBlockMixin",
     "CoralFeatureMixin",
