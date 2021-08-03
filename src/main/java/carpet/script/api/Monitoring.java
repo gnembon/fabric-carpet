@@ -3,7 +3,6 @@ package carpet.script.api;
 import carpet.fakes.SpawnHelperInnerInterface;
 import carpet.script.CarpetContext;
 import carpet.script.Expression;
-import carpet.script.LazyValue;
 import carpet.script.exception.InternalExpressionException;
 import carpet.script.utils.SystemInfo;
 import carpet.script.value.ListValue;

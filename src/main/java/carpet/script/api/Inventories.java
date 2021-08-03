@@ -181,7 +181,7 @@ public class Inventories {
             CarpetContext cc = (CarpetContext) c;
             NBTSerializableValue.InventoryLocator inventoryLocator = NBTSerializableValue.locateInventory(cc, lv, 0);
             if (inventoryLocator == null) return Value.NULL;
-            return new NumericValue(inventoryLocator.inventory.size());
+            return new NumericValue(inventoryLocator.inventory().size());
         });
 
         expression.addContextFunction("inventory_has_items", -1, (c, t, lv) ->
@@ -189,7 +189,7 @@ public class Inventories {
             CarpetContext cc = (CarpetContext) c;
             NBTSerializableValue.InventoryLocator inventoryLocator = NBTSerializableValue.locateInventory(cc, lv, 0);
             if (inventoryLocator == null) return Value.NULL;
-            return BooleanValue.of(!inventoryLocator.inventory.isEmpty());
+            return BooleanValue.of(!inventoryLocator.inventory().isEmpty());
         });
 
         //inventory_get(<b, e>, <n>) -> item_triple
@@ -198,17 +198,17 @@ public class Inventories {
             CarpetContext cc = (CarpetContext) c;
             NBTSerializableValue.InventoryLocator inventoryLocator = NBTSerializableValue.locateInventory(cc, lv, 0);
             if (inventoryLocator == null) return Value.NULL;
-            if (lv.size() == inventoryLocator.offset)
+            if (lv.size() == inventoryLocator.offset())
             {
                 List<Value> fullInventory = new ArrayList<>();
-                for (int i = 0, maxi = inventoryLocator.inventory.size(); i < maxi; i++)
-                    fullInventory.add(ValueConversions.of(inventoryLocator.inventory.getStack(i)));
+                for (int i = 0, maxi = inventoryLocator.inventory().size(); i < maxi; i++)
+                    fullInventory.add(ValueConversions.of(inventoryLocator.inventory().getStack(i)));
                 return ListValue.wrap(fullInventory);
             }
-            int slot = (int)NumericValue.asNumber(lv.get(inventoryLocator.offset)).getLong();
-            slot = NBTSerializableValue.validateSlot(slot, inventoryLocator.inventory);
-            if (slot == inventoryLocator.inventory.size()) return Value.NULL;
-            return ValueConversions.of(inventoryLocator.inventory.getStack(slot));
+            int slot = (int)NumericValue.asNumber(lv.get(inventoryLocator.offset())).getLong();
+            slot = NBTSerializableValue.validateSlot(slot, inventoryLocator.inventory());
+            if (slot == inventoryLocator.inventory().size()) return Value.NULL;
+            return ValueConversions.of(inventoryLocator.inventory().getStack(slot));
         });
 
         //inventory_set(<b,e>, <n>, <count>, <item>, <nbt>)
@@ -217,33 +217,33 @@ public class Inventories {
             CarpetContext cc = (CarpetContext) c;
             NBTSerializableValue.InventoryLocator inventoryLocator = NBTSerializableValue.locateInventory(cc, lv, 0);
             if (inventoryLocator == null) return Value.NULL;
-            if (lv.size() < inventoryLocator.offset+2)
+            if (lv.size() < inventoryLocator.offset()+2)
                 throw new InternalExpressionException("'inventory_set' requires at least slot number and new stack size, and optional new item");
-            int slot = (int) NumericValue.asNumber(lv.get(inventoryLocator.offset+0)).getLong();
-            slot = NBTSerializableValue.validateSlot(slot, inventoryLocator.inventory);
-            if (slot == inventoryLocator.inventory.size()) return Value.NULL;
-            int count = (int) NumericValue.asNumber(lv.get(inventoryLocator.offset+1)).getLong();
+            int slot = (int) NumericValue.asNumber(lv.get(inventoryLocator.offset()+0)).getLong();
+            slot = NBTSerializableValue.validateSlot(slot, inventoryLocator.inventory());
+            if (slot == inventoryLocator.inventory().size()) return Value.NULL;
+            int count = (int) NumericValue.asNumber(lv.get(inventoryLocator.offset()+1)).getLong();
             if (count == 0)
             {
                 // clear slot
-                ItemStack removedStack = inventoryLocator.inventory.removeStack(slot);
+                ItemStack removedStack = inventoryLocator.inventory().removeStack(slot);
                 syncPlayerInventory(inventoryLocator, slot);
                 //Value res = ListValue.fromItemStack(removedStack); // that tuple will be read only but cheaper if noone cares
                 return ValueConversions.of(removedStack);
             }
-            if (lv.size() < inventoryLocator.offset+3)
+            if (lv.size() < inventoryLocator.offset()+3)
             {
-                ItemStack previousStack = inventoryLocator.inventory.getStack(slot);
+                ItemStack previousStack = inventoryLocator.inventory().getStack(slot);
                 ItemStack newStack = previousStack.copy();
                 newStack.setCount(count);
-                inventoryLocator.inventory.setStack(slot, newStack);
+                inventoryLocator.inventory().setStack(slot, newStack);
                 syncPlayerInventory(inventoryLocator, slot);
                 return ValueConversions.of(previousStack);
             }
             NbtCompound nbt = null; // skipping one argument
-            if (lv.size() > inventoryLocator.offset+3)
+            if (lv.size() > inventoryLocator.offset()+3)
             {
-                Value nbtValue = lv.get(inventoryLocator.offset+3);
+                Value nbtValue = lv.get(inventoryLocator.offset()+3);
                 if (nbtValue instanceof NBTSerializableValue)
                     nbt = ((NBTSerializableValue)nbtValue).getCompoundTag();
                 else if (nbtValue instanceof NullValue)
@@ -251,11 +251,11 @@ public class Inventories {
                 else
                     nbt = new NBTSerializableValue(nbtValue.getString()).getCompoundTag();
             }
-            ItemStackArgument newitem = NBTSerializableValue.parseItem(lv.get(inventoryLocator.offset+2).getString(), nbt);
-            ItemStack previousStack = inventoryLocator.inventory.getStack(slot);
+            ItemStackArgument newitem = NBTSerializableValue.parseItem(lv.get(inventoryLocator.offset()+2).getString(), nbt);
+            ItemStack previousStack = inventoryLocator.inventory().getStack(slot);
             try
             {
-                inventoryLocator.inventory.setStack(slot, newitem.createStack(count, false));
+                inventoryLocator.inventory().setStack(slot, newitem.createStack(count, false));
                 syncPlayerInventory(inventoryLocator, slot);
             }
             catch (CommandSyntaxException e)
@@ -272,21 +272,21 @@ public class Inventories {
             NBTSerializableValue.InventoryLocator inventoryLocator = NBTSerializableValue.locateInventory(cc, lv, 0);
             if (inventoryLocator == null) return Value.NULL;
             ItemStackArgument itemArg = null;
-            if (lv.size() > inventoryLocator.offset)
+            if (lv.size() > inventoryLocator.offset())
             {
-                Value secondArg = lv.get(inventoryLocator.offset+0);
+                Value secondArg = lv.get(inventoryLocator.offset()+0);
                 if (!(secondArg instanceof NullValue))
                     itemArg = NBTSerializableValue.parseItem(secondArg.getString());
             }
             int startIndex = 0;
-            if (lv.size() > inventoryLocator.offset+1)
+            if (lv.size() > inventoryLocator.offset()+1)
             {
-                startIndex = (int) NumericValue.asNumber(lv.get(inventoryLocator.offset+1)).getLong();
+                startIndex = (int) NumericValue.asNumber(lv.get(inventoryLocator.offset()+1)).getLong();
             }
-            startIndex = NBTSerializableValue.validateSlot(startIndex, inventoryLocator.inventory);
-            for (int i = startIndex, maxi = inventoryLocator.inventory.size(); i < maxi; i++)
+            startIndex = NBTSerializableValue.validateSlot(startIndex, inventoryLocator.inventory());
+            for (int i = startIndex, maxi = inventoryLocator.inventory().size(); i < maxi; i++)
             {
-                ItemStack stack = inventoryLocator.inventory.getStack(i);
+                ItemStack stack = inventoryLocator.inventory().getStack(i);
                 if ( (itemArg == null && stack.isEmpty()) || (itemArg != null && itemArg.getItem().equals(stack.getItem())) )
                     return new NumericValue(i);
             }
@@ -299,18 +299,18 @@ public class Inventories {
             CarpetContext cc = (CarpetContext) c;
             NBTSerializableValue.InventoryLocator inventoryLocator = NBTSerializableValue.locateInventory(cc, lv, 0);
             if (inventoryLocator == null) return Value.NULL;
-            if (lv.size() <= inventoryLocator.offset)
+            if (lv.size() <= inventoryLocator.offset())
                 throw new InternalExpressionException("'inventory_remove' requires at least an item to be removed");
-            ItemStackArgument searchItem = NBTSerializableValue.parseItem(lv.get(inventoryLocator.offset).getString());
+            ItemStackArgument searchItem = NBTSerializableValue.parseItem(lv.get(inventoryLocator.offset()).getString());
             int amount = 1;
-            if (lv.size() > inventoryLocator.offset+1)
-                amount = (int)NumericValue.asNumber(lv.get(inventoryLocator.offset+1)).getLong();
+            if (lv.size() > inventoryLocator.offset()+1)
+                amount = (int)NumericValue.asNumber(lv.get(inventoryLocator.offset()+1)).getLong();
             // not enough
-            if (((amount == 1) && (!inventoryLocator.inventory.containsAny(Sets.newHashSet(searchItem.getItem()))))
-                    || (inventoryLocator.inventory.count(searchItem.getItem()) < amount)) return Value.FALSE;
-            for (int i = 0, maxi = inventoryLocator.inventory.size(); i < maxi; i++)
+            if (((amount == 1) && (!inventoryLocator.inventory().containsAny(Sets.newHashSet(searchItem.getItem()))))
+                    || (inventoryLocator.inventory().count(searchItem.getItem()) < amount)) return Value.FALSE;
+            for (int i = 0, maxi = inventoryLocator.inventory().size(); i < maxi; i++)
             {
-                ItemStack stack = inventoryLocator.inventory.getStack(i);
+                ItemStack stack = inventoryLocator.inventory().getStack(i);
                 if (stack.isEmpty())
                     continue;
                 if (!stack.getItem().equals(searchItem.getItem()))
@@ -319,13 +319,13 @@ public class Inventories {
                 if (left > 0)
                 {
                     stack.setCount(left);
-                    inventoryLocator.inventory.setStack(i, stack);
+                    inventoryLocator.inventory().setStack(i, stack);
                     syncPlayerInventory(inventoryLocator, i);
                     return Value.TRUE;
                 }
                 else
                 {
-                    inventoryLocator.inventory.removeStack(i);
+                    inventoryLocator.inventory().removeStack(i);
                     syncPlayerInventory(inventoryLocator, i);
                     amount -= stack.getCount();
                 }
@@ -341,22 +341,22 @@ public class Inventories {
             CarpetContext cc = (CarpetContext) c;
             NBTSerializableValue.InventoryLocator inventoryLocator = NBTSerializableValue.locateInventory(cc, lv, 0);
             if (inventoryLocator == null) return Value.NULL;
-            if (lv.size() == inventoryLocator.offset)
+            if (lv.size() == inventoryLocator.offset())
                 throw new InternalExpressionException("Slot number is required for inventory_drop");
-            int slot = (int)NumericValue.asNumber(lv.get(inventoryLocator.offset)).getLong();
-            slot = NBTSerializableValue.validateSlot(slot, inventoryLocator.inventory);
-            if (slot == inventoryLocator.inventory.size()) return Value.NULL;
+            int slot = (int)NumericValue.asNumber(lv.get(inventoryLocator.offset())).getLong();
+            slot = NBTSerializableValue.validateSlot(slot, inventoryLocator.inventory());
+            if (slot == inventoryLocator.inventory().size()) return Value.NULL;
             int amount = 0;
-            if (lv.size() > inventoryLocator.offset+1)
-                amount = (int)NumericValue.asNumber(lv.get(inventoryLocator.offset+1)).getLong();
+            if (lv.size() > inventoryLocator.offset()+1)
+                amount = (int)NumericValue.asNumber(lv.get(inventoryLocator.offset()+1)).getLong();
             if (amount < 0)
                 throw new InternalExpressionException("Cannot throw negative number of items");
-            ItemStack stack = inventoryLocator.inventory.getStack(slot);
+            ItemStack stack = inventoryLocator.inventory().getStack(slot);
             if (stack == null || stack.isEmpty()) return Value.ZERO;
             if (amount == 0) amount = stack.getCount();
-            ItemStack droppedStack = inventoryLocator.inventory.removeStack(slot, amount);
+            ItemStack droppedStack = inventoryLocator.inventory().removeStack(slot, amount);
             if (droppedStack.isEmpty()) return Value.ZERO;
-            Object owner = inventoryLocator.owner;
+            Object owner = inventoryLocator.owner();
             ItemEntity item;
             if (owner instanceof PlayerEntity)
             {
@@ -374,7 +374,7 @@ public class Inventories {
             }
             else
             {
-                Vec3d point = Vec3d.ofCenter(inventoryLocator.position); //pos+0.5v
+                Vec3d point = Vec3d.ofCenter(inventoryLocator.position()); //pos+0.5v
                 item = new ItemEntity(cc.s.getWorld(), point.x, point.y, point.z, droppedStack);
                 item.setToDefaultPickupDelay();
                 cc.s.getWorld().spawnEntity(item);
@@ -385,12 +385,12 @@ public class Inventories {
 
     private static void syncPlayerInventory(NBTSerializableValue.InventoryLocator inventory, int int_1)
     {
-        if (inventory.owner instanceof ServerPlayerEntity player && !inventory.isEnder)
+        if (inventory.owner() instanceof ServerPlayerEntity player && !inventory.isEnder())
         {
             player.networkHandler.sendPacket(new ScreenHandlerSlotUpdateS2CPacket(
                     -2, 0, // resolve mystery argument
                     int_1,
-                    inventory.inventory.getStack(int_1)
+                    inventory.inventory().getStack(int_1)
             ));
         }
     }
