@@ -377,7 +377,7 @@ public class Expression
         if (exc instanceof ResolvedException)
             return exc;
         // unexpected really - should be caught earlier and converted to InternalExpressionException
-        exc.printStackTrace();
+        CarpetSettings.LOG.error("Unexpected exception while running Scarpet code", exc);
         return new ExpressionException(c, e, token, "Error while evaluating expression: "+exc);
     }
 

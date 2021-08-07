@@ -315,8 +315,7 @@ public class SettingsManager
         }
         catch (IOException e)
         {
-            e.printStackTrace();
-            CarpetSettings.LOG.error("[CM]: failed write "+identifier+".conf config file");
+            CarpetSettings.LOG.error("[CM]: failed write "+identifier+".conf config file", e);
         }
         ///todo is it really needed? resendCommandTree();
     }
@@ -474,7 +473,7 @@ public class SettingsManager
         }
         catch (IOException e)
         {
-            e.printStackTrace();
+            CarpetSettings.LOG.error("Exception while loading Carpet rules from config", e);
             return new ConfigReadResult(new HashMap<>(), false);
         }
     }
