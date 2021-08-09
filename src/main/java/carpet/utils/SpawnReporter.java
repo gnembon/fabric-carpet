@@ -1,5 +1,6 @@
 package carpet.utils;
 
+import carpet.CarpetSettings;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2LongMap;
 import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
@@ -85,6 +86,11 @@ public class SpawnReporter
         long count = spawn_stats.get(key).getOrDefault(mob.getType(), 0L);
         spawn_stats.get(key).put(mob.getType(), count + 1);
         spawned_mobs.get(key).put(Pair.of(mob.getType(), pos));
+        if (!local_spawns.containsKey(cat))
+        {
+            CarpetSettings.LOG.error("Rogue spawn detected for category "+cat.getName()+" for mob "+mob.getType().getName().getString()+". If you see this message let carpet peeps know about it on github issues.");
+            local_spawns.put(cat, 0L);
+        }
         local_spawns.put(cat, local_spawns.get(cat)+1);
     }
 
