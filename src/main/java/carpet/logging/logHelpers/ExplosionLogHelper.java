@@ -92,34 +92,11 @@ public class ExplosionLogHelper
     }
 
 
-    public static class EntityChangedStatusWithCount
+    public static record EntityChangedStatusWithCount(Vec3d pos, EntityType type, Vec3d accel)
     {
-        public final Vec3d pos;
-        public final EntityType type;
-        public final Vec3d accel;
-
         public EntityChangedStatusWithCount(Entity e, Vec3d accel)
         {
-            this.pos = e.getPos();
-            this.type = e.getType();
-            this.accel = accel;
-        }
-
-        @Override
-        public boolean equals(Object obj)
-        {
-            if (obj instanceof EntityChangedStatusWithCount)
-            {
-                EntityChangedStatusWithCount other = (EntityChangedStatusWithCount) obj;
-                return other.pos.equals(pos) && other.accel.equals(accel) && other.type.equals(type);
-            }
-            return super.equals(obj);
-        }
-
-        @Override
-        public int hashCode()
-        {
-            return pos.hashCode()+ type.hashCode()+accel.hashCode();
+            this(e.getPos(), e.getType(), accel);
         }
     }
 }

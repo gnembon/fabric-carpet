@@ -10,7 +10,6 @@
     "CommandManagerMixin",
 
     "ServerPlayNetworkHandlerMixin",
-    "CustomPayloadC2SPacketMixin",
 
     "PerfCommand_permissionMixin",
     "FillCommandMixin",
@@ -75,7 +74,6 @@
     "ServerPlayNetworkHandler_tickMixin",
     "MinecraftServer_scarpetMixin",
     "PlayerListHeaderS2CPacketMixin",
-    "WeightedPickerEntryMixin",
     "ExperienceOrbEntityMixin",
     "PlayerActionC2SPacketMixin",
     "ServerPlayerEntityMixin",
@@ -88,8 +86,9 @@
     "PistonHandler_pushLimitMixin",
     "PoweredRailBlock_powerLimitMixin",
     "LivingEntity_maxCollisionsMixin",
-    "ServerWorld_onePlayerSleepingMixin",
+    "World_getOtherEntitiesLimited",
     "CoralBlockMixin",
+    "CoralFanBlockMixin",
     "CoralFeatureMixin",
     "BuddingAmethystBlock_movableAmethystMixin",
     "FluidBlock_renewableBlackstoneMixin",
@@ -188,11 +187,9 @@
 
     "BiomeEffects_scarpetMixin",
     "ChunkTicketManager_scarpetMixin",
-    "StatType_scarpetMixin",
     "PointOfInterest_scarpetMixin",
     "ServerWorld_scarpetMixin",
     "ServerEntityManager_scarpetMixin",
-    "HungerManagerMixin_scarpetEventsMixin",
     "ReloadCommand_reloadAppsMixin",
     "CrashReport_addScarpetAppsMixin",
 

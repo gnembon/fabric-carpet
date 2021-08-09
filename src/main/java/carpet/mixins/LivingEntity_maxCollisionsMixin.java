@@ -1,6 +1,7 @@
 package carpet.mixins;
 
 import carpet.CarpetSettings;
+import carpet.fakes.WorldInterface;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.LivingEntity;
@@ -28,33 +29,35 @@ public abstract class LivingEntity_maxCollisionsMixin extends Entity
     @Shadow protected abstract void pushAway(Entity entity_1);
 
     @Inject(method = "tickCramming", cancellable = true, at = @At("HEAD"))
-    private void tickPushingReplacement(CallbackInfo ci)
-    {
-        List<Entity> list_1 = this.world.getOtherEntities(this, this.getBoundingBox(), EntityPredicates.canBePushedBy(this));
-        if (!list_1.isEmpty()) {
-            int int_1 = this.world.getGameRules().getInt(GameRules.MAX_ENTITY_CRAMMING);
-            int int_2;
-            if (int_1 > 0 && list_1.size() > int_1 - 1 && this.random.nextInt(4) == 0) {
-                int_2 = 0;
+    private void tickPushingReplacement(CallbackInfo ci) {
+        List<Entity> entities;
+        if (CarpetSettings.maxEntityCollisions > 0)
+            entities = ((WorldInterface) this.world).getOtherEntitiesLimited(
+                    this,
+                    this.getBoundingBox(),
+                    EntityPredicates.canBePushedBy(this),
+                    CarpetSettings.maxEntityCollisions);
+        else
+            entities = this.world.getOtherEntities(this, this.getBoundingBox(), EntityPredicates.canBePushedBy(this));
 
-                for(int int_3 = 0; int_3 < list_1.size(); ++int_3) {
-                    if (!((Entity)list_1.get(int_3)).hasVehicle()) {
-                        ++int_2;
+        if (!entities.isEmpty()) {
+            int maxEntityCramming = this.world.getGameRules().getInt(GameRules.MAX_ENTITY_CRAMMING);
+            if (maxEntityCramming > 0 && entities.size() > maxEntityCramming - 1 && this.random.nextInt(4) == 0) {
+                int candidates = 0;
+
+                for (Entity entity : entities) {
+                    if (!entity.hasVehicle()) {
+                        ++candidates;
                     }
                 }
 
-                if (int_2 > int_1 - 1) {
+                if (candidates > maxEntityCramming - 1) {
                     this.damage(DamageSource.CRAMMING, 6.0F);
                 }
             }
 
-            int limit = list_1.size();
-            if (CarpetSettings.maxEntityCollisions > 0)
-                limit = Math.min(limit, CarpetSettings.maxEntityCollisions);
-
-            for(int_2 = 0; int_2 < limit; ++int_2) {
-                Entity entity_1 = (Entity)list_1.get(int_2);
-                this.pushAway(entity_1);
+            for (Entity entity : entities) {
+                this.pushAway(entity);
             }
         }
         ci.cancel();

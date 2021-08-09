@@ -4,7 +4,6 @@ import carpet.CarpetServer;
 import carpet.fakes.BlockStateArgumentInterface;
 import carpet.script.CarpetScriptHost;
 import carpet.script.argument.FunctionArgument;
-import carpet.script.exception.InternalExpressionException;
 import carpet.script.value.BlockValue;
 import carpet.script.value.BooleanValue;
 import carpet.script.value.EntityValue;
@@ -17,6 +16,9 @@ import carpet.script.value.StringValue;
 import carpet.script.value.Value;
 import carpet.script.value.ValueConversions;
 import carpet.utils.CarpetProfiler;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
+
 import com.google.common.collect.Lists;
 import com.mojang.authlib.GameProfile;
 import com.mojang.brigadier.arguments.ArgumentType;
@@ -84,7 +86,6 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Vec2f;
 import net.minecraft.util.registry.Registry;
-import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -101,7 +102,6 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import static net.minecraft.server.command.CommandManager.argument;
-
 
 public abstract class CommandArgument
 {
@@ -878,49 +878,50 @@ public abstract class CommandArgument
     }
     private static class SlotArgument extends CommandArgument
     {
+        private static record ContainerIds(IntSet numericalIds, Set<String> commandIds) {}
         private String restrict;
-        private static final Map<String, Pair<Set<Integer>, Set<String>>> RESTRICTED_CONTAINERS = new HashMap<String, Pair<Set<Integer>, Set<String>>>(){{
+        private static final Map<String, ContainerIds> RESTRICTED_CONTAINERS = new HashMap<String, ContainerIds>(){{
             int i;
             for (String source : Arrays.asList("player", "enderchest", "equipment", "armor", "weapon", "container", "villager", "horse"))
-                put(source, Pair.of(new HashSet<>(), new HashSet<>()));
-            for (i = 0; i < 41; i++) get("player").getLeft().add(i);
-            for(i = 0; i < 41; i++) get("player").getRight().add("container." + i);
-            for(i = 0; i < 9; i++) get("player").getRight().add("hotbar." + i);
-            for(i = 0; i < 27; i++) get("player").getRight().add("inventory." + i);
+                put(source, new ContainerIds(new IntOpenHashSet(), new HashSet<>()));
+            for (i = 0; i < 41; i++) get("player").numericalIds().add(i);
+            for(i = 0; i < 41; i++) get("player").commandIds().add("container." + i);
+            for(i = 0; i < 9; i++) get("player").commandIds().add("hotbar." + i);
+            for(i = 0; i < 27; i++) get("player").commandIds().add("inventory." + i);
             for (String place : Arrays.asList("weapon", "weapon.mainhand", "weapon.offhand"))
             {
-                get("player").getRight().add(place);
-                get("equipment").getRight().add(place);
-                get("weapon").getRight().add(place);
+                get("player").commandIds().add(place);
+                get("equipment").commandIds().add(place);
+                get("weapon").commandIds().add(place);
             }
             for (String place : Arrays.asList("armor.feet","armor.legs", "armor.chest","armor.head"))
             {
-                get("player").getRight().add(place);
-                get("equipment").getRight().add(place);
-                get("armor").getRight().add(place);
+                get("player").commandIds().add(place);
+                get("equipment").commandIds().add(place);
+                get("armor").commandIds().add(place);
             }
 
-            for (i = 0; i < 27; i++) get("enderchest").getLeft().add(200+i);
-            for(i = 0; i < 27; i++) get("enderchest").getRight().add("enderchest." + i);
+            for (i = 0; i < 27; i++) get("enderchest").numericalIds().add(200+i);
+            for(i = 0; i < 27; i++) get("enderchest").commandIds().add("enderchest." + i);
 
-            for (i = 0; i < 6; i++) get("equipment").getLeft().add(98+i);
+            for (i = 0; i < 6; i++) get("equipment").numericalIds().add(98+i);
 
-            for (i = 0; i < 4; i++) get("armor").getLeft().add(100+i);
+            for (i = 0; i < 4; i++) get("armor").numericalIds().add(100+i);
 
-            for (i = 0; i < 2; i++) get("weapon").getLeft().add(98+i);
+            for (i = 0; i < 2; i++) get("weapon").numericalIds().add(98+i);
 
-            for (i = 0; i < 54; i++) get("container").getLeft().add(i);
-            for(i = 0; i < 41; i++) get("container").getRight().add("container." + i);
+            for (i = 0; i < 54; i++) get("container").numericalIds().add(i);
+            for(i = 0; i < 41; i++) get("container").commandIds().add("container." + i);
 
-            for (i = 0; i < 8; i++) get("villager").getLeft().add(i);
-            for(i = 0; i < 8; i++) get("villager").getRight().add("villager." + i);
+            for (i = 0; i < 8; i++) get("villager").numericalIds().add(i);
+            for(i = 0; i < 8; i++) get("villager").commandIds().add("villager." + i);
 
-            for (i = 0; i < 15; i++) get("horse").getLeft().add(500+i);
-            for(i = 0; i < 15; i++) get("horse").getRight().add("horse." + i);
-            get("horse").getLeft().add(400);
-            get("horse").getRight().add("horse.saddle");
-            get("horse").getLeft().add(401);
-            get("horse").getRight().add("horse.armor");
+            for (i = 0; i < 15; i++) get("horse").numericalIds().add(500+i);
+            for(i = 0; i < 15; i++) get("horse").commandIds().add("horse." + i);
+            get("horse").numericalIds().add(400);
+            get("horse").commandIds().add("horse.saddle");
+            get("horse").numericalIds().add(401);
+            get("horse").commandIds().add("horse.armor");
         }};
 
         protected SlotArgument()
@@ -938,7 +939,7 @@ public abstract class CommandArgument
         protected Value getValueFromContext(CommandContext<ServerCommandSource> context, String param) throws CommandSyntaxException
         {
             int slot = ItemSlotArgumentType.getItemSlot(context, param);
-            if (restrict != null && !RESTRICTED_CONTAINERS.get(restrict).getLeft().contains(slot))
+            if (restrict != null && !RESTRICTED_CONTAINERS.get(restrict).numericalIds().contains(slot))
             {
                 throw new SimpleCommandExceptionType(new LiteralText("Incorrect slot restricted to "+restrict+" for custom type "+suffix)).create();
             }
@@ -961,7 +962,7 @@ public abstract class CommandArgument
         @Override
         protected Collection<String> getOptions(CommandContext<ServerCommandSource> context, CarpetScriptHost host) throws CommandSyntaxException
         {
-            return restrict==null?super.getOptions(context, host):RESTRICTED_CONTAINERS.get(restrict).getRight();
+            return restrict==null?super.getOptions(context, host):RESTRICTED_CONTAINERS.get(restrict).commandIds();
         }
 
         @Override

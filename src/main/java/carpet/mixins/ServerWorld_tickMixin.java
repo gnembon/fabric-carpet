@@ -79,18 +79,27 @@ public abstract class ServerWorld_tickMixin extends World
             currentSection = CarpetProfiler.start_section((World) (Object) this, "Village", CarpetProfiler.TYPE.GENERAL);
         }
     }
+    @Inject(method = "tick", at = @At(
+            value = "CONSTANT",
+            args = "stringValue=chunkSource"
+    ))
+    private void stopVillageSection(BooleanSupplier booleanSupplier_1, CallbackInfo ci)
+    {
+        if (currentSection != null)
+        {
+            CarpetProfiler.end_current_section(currentSection);
+            currentSection = null;
+        }
+    }
+
 
     @Inject(method = "tick", at = @At(
             value = "CONSTANT",
             args = "stringValue=blockEvents"
     ))
-    private void stopVillageStartBlockAgainSection(BooleanSupplier booleanSupplier_1, CallbackInfo ci)
+    private void startBlockAgainSection(BooleanSupplier booleanSupplier_1, CallbackInfo ci)
     {
-        if (currentSection != null)
-        {
-            CarpetProfiler.end_current_section(currentSection);
-            currentSection = CarpetProfiler.start_section((World) (Object) this, "Blocks", CarpetProfiler.TYPE.GENERAL);
-        }
+        currentSection = CarpetProfiler.start_section((World) (Object) this, "Blocks", CarpetProfiler.TYPE.GENERAL);
     }
 
     @Inject(method = "tick", at = @At(

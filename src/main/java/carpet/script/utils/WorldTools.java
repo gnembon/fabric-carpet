@@ -1,7 +1,6 @@
 package carpet.script.utils;
 
 import carpet.fakes.MinecraftServerInterface;
-import com.google.common.collect.ImmutableList;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.network.packet.s2c.play.ChunkDataS2CPacket;
@@ -93,7 +92,7 @@ public class WorldTools
         boolean bl = generatorOptions.isDebugWorld();
         long l = generatorOptions.getSeed();
         long m = BiomeAccess.hashSeed(l);
-        List<Spawner> list = ImmutableList.of();
+        List<Spawner> list = List.of();
         SimpleRegistry<DimensionOptions> simpleRegistry = generatorOptions.getDimensions();
         DimensionOptions dimensionOptions = simpleRegistry.get(DimensionOptions.OVERWORLD);
         ChunkGenerator chunkGenerator2;

@@ -18,9 +18,7 @@ import net.minecraft.server.dedicated.DedicatedServer;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Box;
 import net.minecraft.util.math.ChunkPos;
-import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.registry.Registry;
 import net.minecraft.world.World;
 import org.apache.logging.log4j.LogManager;
@@ -607,9 +605,6 @@ public class CarpetSettings
     public static boolean waterFlow = true;
     */
 
-    //@Rule(desc = "One player is required on the server to cause night to pass", category = SURVIVAL)
-    //public static boolean onePlayerSleeping = false;
-
     @Rule(
             desc = "Sets a different motd message on client trying to connect to the server",
             extra = "use '_' to use the startup setting from server.properties",
@@ -762,9 +757,18 @@ public class CarpetSettings
             validate = LightBatchValidator.class
     )
     public static int lightEngineMaxBatchSize = 5;
-    
-    @Rule(desc = "Coral structures will grow with bonemeal from coral plants", category = FEATURE)
-    public static boolean renewableCoral = false;
+
+    public enum RenewableCoralMode {
+        FALSE,
+        EXPANDED,
+        TRUE;
+    }
+    @Rule(
+            desc = "Coral structures will grow with bonemeal from coral plants",
+            extra = "Expanded also allows growing from coral fans for sustainable farming outside of warm oceans",
+            category = FEATURE
+    )
+    public static RenewableCoralMode renewableCoral = RenewableCoralMode.FALSE;
 
     @Rule(
             desc = "Nether basalt generator without soul sand below ",

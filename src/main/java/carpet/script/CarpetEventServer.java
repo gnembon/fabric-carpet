@@ -3,7 +3,9 @@ package carpet.script;
 import carpet.CarpetServer;
 import carpet.CarpetSettings;
 import carpet.helpers.TickSpeed;
+import carpet.script.exception.IntegrityException;
 import carpet.script.exception.InternalExpressionException;
+import carpet.script.exception.InvalidCallbackException;
 import carpet.script.value.BlockValue;
 import carpet.script.value.BooleanValue;
 import carpet.script.value.EntityValue;
@@ -25,7 +27,6 @@ import net.minecraft.entity.TntEntity;
 import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.entity.passive.MerchantEntity;
 import net.minecraft.entity.projectile.ProjectileEntity;
-import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.entity.Entity;
 import net.minecraft.server.network.ServerPlayerEntity;
@@ -46,7 +47,6 @@ import net.minecraft.village.Merchant;
 import net.minecraft.village.TradeOffer;
 import net.minecraft.world.World;
 import net.minecraft.world.explosion.Explosion;
-import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -70,9 +70,16 @@ import java.util.stream.Collectors;
 public class CarpetEventServer
 {
     public final List<ScheduledCall> scheduledCalls = new LinkedList<>();
-    public final MinecraftServer server;
+    public final CarpetScriptServer scriptServer;
     private static final List<Value> NOARGS = Collections.emptyList();
     public final Map<String, Event> customEvents = new HashMap<>();
+
+
+
+    public enum CallbackResult
+    {
+        SUCCESS, PASS, FAIL
+    }
 
     public static class Callback
     {
@@ -80,7 +87,6 @@ public class CarpetEventServer
         public final String optionalTarget;
         public final FunctionValue function;
         public final List<Value> parametrizedArgs;
-
 
         public Callback(String host, String target, FunctionValue function, List<Value> parametrizedArgs)
         {
@@ -95,18 +101,17 @@ public class CarpetEventServer
          * @param sender - entity command source
          * @param runtimeArgs = options
          */
-        public boolean execute(ServerCommandSource sender, List<Value> runtimeArgs)
+        public CallbackResult execute(ServerCommandSource sender, List<Value> runtimeArgs)
         {
             if (!this.parametrizedArgs.isEmpty())
             {
                 runtimeArgs = new ArrayList<>(runtimeArgs);
                 runtimeArgs.addAll(this.parametrizedArgs);
             }
-            if (CarpetServer.scriptServer == null) return false; // already stopped
-            return CarpetServer.scriptServer.runEventCall(
+            if (CarpetServer.scriptServer == null) return CallbackResult.FAIL; // already stopped
+            return CarpetServer.scriptServer.events.runEventCall(
                     sender.withLevel(CarpetSettings.runPermissionLevel),
-                    host, optionalTarget, function, runtimeArgs
-            );
+                    host, optionalTarget, function, runtimeArgs);
         }
 
         /**
@@ -115,18 +120,12 @@ public class CarpetEventServer
          * @param optionalRecipient - optional target player argument
          * @param runtimeArgs = options
          */
-        public int signal(ServerCommandSource sender, ServerPlayerEntity optionalRecipient, List<Value> runtimeArgs)
+        public CallbackResult signal(ServerCommandSource sender, ServerPlayerEntity optionalRecipient, List<Value> runtimeArgs)
         {
             // recipent of the call doesn't match the handlingHost
             if (optionalRecipient != null && !optionalRecipient.getEntityName().equals(optionalTarget))
-                return 0;
-            List<Value> args = runtimeArgs;
-            if (!this.parametrizedArgs.isEmpty())
-            {
-                args = new ArrayList<>(runtimeArgs);
-                args.addAll(this.parametrizedArgs);
-            }
-            return CarpetServer.scriptServer.signal(sender, optionalRecipient, host, function, args, false);
+                return CallbackResult.FAIL;
+            return execute(sender, runtimeArgs);
         }
 
 
@@ -135,18 +134,8 @@ public class CarpetEventServer
         {
             return function.getString()+((host==null)?"":"(from "+host+(optionalTarget == null?"":"/"+optionalTarget)+")");
         }
-        public static class Signature
-        {
-            String function;
-            String host;
-            String target;
-            public Signature(String fun, String h, String t)
-            {
-                function = fun;
-                host = h;
-                target = t;
-            }
-        }
+        public static record Signature(String function, String host, String target) {}
+        
         public static Signature fromString(String str)
         {
             Pattern find = Pattern.compile("(\\w+)(?:\\(from (\\w+)(?:/(\\w+))?\\))?");
@@ -178,10 +167,8 @@ public class CarpetEventServer
          */
         public void execute()
         {
-            CarpetServer.scriptServer.runScheduledCall(ctx.origin, ctx.s, host, (CarpetScriptHost) ctx.host, function, parametrizedArgs);
+            CarpetServer.scriptServer.events.runScheduledCall(ctx.origin, ctx.s, host, (CarpetScriptHost) ctx.host, function, parametrizedArgs);
         }
-
-
     }
 
     public static class CallbackList
@@ -190,7 +177,6 @@ public class CarpetEventServer
         public final List<Callback> callList;
         public final int reqArgs;
         final boolean isSystem;
-        final boolean isGlobalOnly;
         final boolean perPlayerDistribution;
 
         public CallbackList(int reqArgs, boolean isSystem, boolean isGlobalOnly)
@@ -198,7 +184,6 @@ public class CarpetEventServer
             this.callList = new ArrayList<>();
             this.reqArgs = reqArgs;
             this.isSystem = isSystem;
-            this.isGlobalOnly = isGlobalOnly;
             perPlayerDistribution = isSystem && !isGlobalOnly;
         }
 
@@ -230,7 +215,7 @@ public class CarpetEventServer
                     // supressing calls where target player hosts simply don't match
                     // handling global hosts with player targets is left to when the host is resolved (few calls deeper).
                     if (nameCheck != null && call.optionalTarget != null && !nameCheck.equals(call.optionalTarget)) continue;
-                    if (!call.execute(source, argv)) fails.add(call);
+                    if (call.execute(source, argv) == CallbackResult.FAIL) fails.add(call);
                 }
                 for (Callback call : fails) callList.remove(call);
                 CarpetProfiler.end_current_section(currentSection);
@@ -245,7 +230,9 @@ public class CarpetEventServer
             int successes = 0;
             for (Callback call: callList)
             {
-                successes +=  Math.max(0, call.signal(sender, optinoalReceipient, callArg));
+                //successes +=  Math.max(0, call.signal(sender, optinoalReceipient, callArg));
+                if (call.signal(sender, optinoalReceipient, callArg) == CallbackResult.SUCCESS) successes ++;
+
             }
             //for (Callback call : fails) callList.remove(call);
             return successes;
@@ -253,7 +240,7 @@ public class CarpetEventServer
 
         public boolean addFromExternal(ServerCommandSource source, String hostName, String funName, Consumer<ScriptHost> hostOnEventHandler)
         {
-            ScriptHost host = CarpetServer.scriptServer.getHostByName(hostName);
+            ScriptHost host = CarpetServer.scriptServer.getAppHostByName(hostName);
             if (host == null)
             {
                 // impossible call to add
@@ -991,8 +978,6 @@ public class CarpetEventServer
         public final String name;
 
         public final CallbackList handler;
-        @Deprecated
-        public final boolean globalOnly;
         public final boolean isPublic; // public events can be targetted with __on_<event> defs
         public Event(String name, int reqArgs, boolean isGlobalOnly)
         {
@@ -1002,7 +987,6 @@ public class CarpetEventServer
         {
             this.name = name;
             this.handler = new CallbackList(reqArgs, true, isGlobalOnly);
-            this.globalOnly = isGlobalOnly;
             this.isPublic = isPublic;
             byName.put(name, this);
         }
@@ -1050,7 +1034,6 @@ public class CarpetEventServer
         {
             this.name = name;
             this.handler = new CallbackList(1, false, false);
-            this.globalOnly = false;
             this.isPublic = true;
             server.events.customEvents.put(name, this);
         }
@@ -1122,9 +1105,9 @@ public class CarpetEventServer
     }
 
 
-    public CarpetEventServer(MinecraftServer server)
+    public CarpetEventServer(CarpetScriptServer scriptServer)
     {
-        this.server = server;
+        this.scriptServer = scriptServer;
         Event.clearAllBuiltinEvents();
     }
 
@@ -1155,6 +1138,45 @@ public class CarpetEventServer
         scheduledCalls.add(new ScheduledCall(context, function, args, due));
     }
 
+    public void runScheduledCall(BlockPos origin, ServerCommandSource source, String hostname, CarpetScriptHost host, FunctionValue udf, List<Value> argv)
+    {
+        if (hostname != null && !scriptServer.modules.containsKey(hostname)) // well - scheduled call app got unloaded
+            return;
+        try
+        {
+            host.callUDF(origin, source, udf, argv);
+        }
+        catch (NullPointerException | InvalidCallbackException | IntegrityException ignored) { }
+    }
+
+    public CallbackResult runEventCall(ServerCommandSource sender, String hostname, String optionalTarget, FunctionValue udf, List<Value> argv)
+    {
+        CarpetScriptHost appHost = scriptServer.getAppHostByName(hostname);
+        // no such app
+        if (appHost == null) return CallbackResult.FAIL;
+        // dummy call for player apps that reside on the global copy - do not run them, but report as passes.
+        if (appHost.isPerUser() && optionalTarget==null) return CallbackResult.PASS;
+        ServerPlayerEntity target = null;
+        if (optionalTarget != null)
+        {
+            target = sender.getServer().getPlayerManager().getPlayer(optionalTarget);
+            if (target == null) return CallbackResult.FAIL;
+        }
+        ServerCommandSource source = sender.withLevel(CarpetSettings.runPermissionLevel);
+        CarpetScriptHost executingHost = appHost.retrieveForExecution(sender, target);
+        if (executingHost == null) return CallbackResult.FAIL;
+        try
+        {
+            executingHost.callUDF(BlockPos.ORIGIN, source.withLevel(CarpetSettings.runPermissionLevel), udf, argv);
+            return CallbackResult.SUCCESS;
+        }
+        catch (NullPointerException | InvalidCallbackException | IntegrityException error)
+        {
+            CarpetScriptServer.LOG.error("Got exception: "+error.getMessage());
+            return CallbackResult.FAIL;
+        }
+    }
+
     public boolean addEventFromCommand(ServerCommandSource source, String event, String host, String funName)
     {
         Event ev = Event.getEvent(event, CarpetServer.scriptServer);
@@ -1178,7 +1200,7 @@ public class CarpetEventServer
 
     public boolean handleCustomEvent(String event, CarpetScriptHost host, FunctionValue function, List<Value> args)
     {
-        Event ev = Event.getOrCreateCustom(event, host.getScriptServer());
+        Event ev = Event.getOrCreateCustom(event, scriptServer);
         onEventAddedToHost(ev, host);
         return ev.handler.addEventCallInternal(host, function, args==null?NOARGS:args);
     }
@@ -1232,16 +1254,5 @@ public class CarpetEventServer
             for (ScriptHost child: host.userHosts.values()) Event.removeAllHostEvents((CarpetScriptHost) child);
         // remove scheduled calls
         scheduledCalls.removeIf(sc -> sc.host != null && sc.host.equals(host.getName()));
-    }
-
-    private Pair<String,String> decodeCallback(String funName)
-    {
-        Pattern find = Pattern.compile("(\\w+)\\(from (\\w+)\\)");
-        Matcher matcher = find.matcher(funName);
-        if(matcher.matches())
-        {
-            return Pair.of(matcher.group(2), matcher.group(1));
-        }
-        return Pair.of(null, funName);
     }
 }

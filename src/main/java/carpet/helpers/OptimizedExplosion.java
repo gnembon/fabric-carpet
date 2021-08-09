@@ -180,8 +180,7 @@ public class OptimizedExplosion
 
                         entity.setVelocity(entity.getVelocity().add(d5 * d11, d7 * d11, d9 * d11));
 
-                        if (entity instanceof PlayerEntity) {
-                            PlayerEntity player = (PlayerEntity) entity;
+                        if (entity instanceof PlayerEntity player) {
 
                             if (!player.isSpectator()
                                     && (!player.isCreative() || !player.getAbilities().flying)) {  //getAbilities

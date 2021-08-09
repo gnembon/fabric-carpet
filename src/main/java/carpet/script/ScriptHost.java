@@ -305,6 +305,11 @@ public abstract class ScriptHost
         return data;
     }
 
+    protected void assertAppIntegrity(Module module)
+    {
+        getModuleData(module);
+    }
+
     public void addUserDefinedFunction(Context ctx, Module module, String name, FunctionValue fun)
     {
         getModuleData(module).globalFunctions.put(name, fun);

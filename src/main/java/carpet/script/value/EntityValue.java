@@ -6,7 +6,6 @@ import carpet.fakes.ItemEntityInterface;
 import carpet.fakes.LivingEntityInterface;
 import carpet.fakes.MemoryInterface;
 import carpet.fakes.MobEntityInterface;
-import carpet.fakes.HungerManagerInterface;
 import carpet.fakes.ServerPlayerEntityInterface;
 import carpet.fakes.ServerPlayerInteractionManagerInterface;
 import carpet.helpers.Tracer;
@@ -413,14 +412,14 @@ public class EntityValue extends Value
             throw new InternalExpressionException("Cannot fetch '"+what+"' with these arguments");
         }
     }
-    private static final Map<String, EquipmentSlot> inventorySlots = new HashMap<String, EquipmentSlot>(){{
-        put("mainhand", EquipmentSlot.MAINHAND);
-        put("offhand", EquipmentSlot.OFFHAND);
-        put("head", EquipmentSlot.HEAD);
-        put("chest", EquipmentSlot.CHEST);
-        put("legs", EquipmentSlot.LEGS);
-        put("feet", EquipmentSlot.FEET);
-    }};
+    private static final Map<String, EquipmentSlot> inventorySlots = Map.of(
+        "mainhand", EquipmentSlot.MAINHAND,
+        "offhand", EquipmentSlot.OFFHAND,
+        "head", EquipmentSlot.HEAD,
+        "chest", EquipmentSlot.CHEST,
+        "legs", EquipmentSlot.LEGS,
+        "feet", EquipmentSlot.FEET
+    );
 
     private static final Map<String, BiFunction<Entity, Value, Value>> featureAccessors = new HashMap<String, BiFunction<Entity, Value, Value>>() {{
         //put("test", (e, a) -> a == null ? Value.NULL : new StringValue(a.getString()));
@@ -530,9 +529,8 @@ public class EntityValue extends Value
             return Value.NULL;
         });
         put("spawn_point", (e, a) -> {
-            if (e instanceof ServerPlayerEntity)
+            if (e instanceof ServerPlayerEntity spe)
             {
-                ServerPlayerEntity spe = (ServerPlayerEntity)e;
                 if (spe.getSpawnPointPosition() == null) return Value.FALSE;
                 return ListValue.of(
                         ValueConversions.of(spe.getSpawnPointPosition()),
@@ -573,7 +571,7 @@ public class EntityValue extends Value
         });
 
         put("exhaustion",(e, a)->{
-            if(e instanceof PlayerEntity) return new NumericValue(((HungerManagerInterface)((PlayerEntity) e).getHungerManager()).getExhaustionCM());
+            if(e instanceof PlayerEntity) return new NumericValue(((PlayerEntity) e).getHungerManager().getExhaustion());
             return Value.NULL;
         });
 
@@ -631,9 +629,8 @@ public class EntityValue extends Value
             String module = a.getString();
             MemoryModuleType<?> moduleType = Registry.MEMORY_MODULE_TYPE.get(InputValidator.identifierOf(module));
             if (moduleType == MemoryModuleType.DUMMY) return Value.NULL;
-            if (e instanceof LivingEntity)
+            if (e instanceof LivingEntity livingEntity)
             {
-                LivingEntity livingEntity = (LivingEntity)e;
                 Brain<?> brain = livingEntity.getBrain();
                 Map<MemoryModuleType<?>, Optional<? extends Memory<?>>> memories = ((BrainInterface)brain).getMobMemories();
                 Optional<? extends Memory<?>> optmemory = memories.get(moduleType);
@@ -652,9 +649,8 @@ public class EntityValue extends Value
         });
 
         put("permission_level", (e, a) -> {
-            if (e instanceof  ServerPlayerEntity)
+            if (e instanceof  ServerPlayerEntity spe)
             {
-                ServerPlayerEntity spe = (ServerPlayerEntity) e;
                 for (int i=4; i>=0; i--)
                 {
                     if (spe.hasPermissionLevel(i))
@@ -667,10 +663,9 @@ public class EntityValue extends Value
         });
 
         put("player_type", (e, a) -> {
-            if (e instanceof PlayerEntity)
+            if (e instanceof PlayerEntity p)
             {
                 if (e instanceof EntityPlayerMPFake) return new StringValue(((EntityPlayerMPFake) e).isAShadow?"shadow":"fake");
-                PlayerEntity p = (PlayerEntity)e;
                 MinecraftServer server = p.getEntityWorld().getServer();
                 if (server.isDedicated()) return new StringValue("multiplayer");
                 boolean runningLan = server.isRemote();
@@ -927,9 +922,8 @@ public class EntityValue extends Value
             e.refreshPositionAndAngles(x, y, z, yaw, pitch);
             // we were sending to players for not-living entites, that were untracked. Living entities should be tracked.
             //((ServerWorld) e.getEntityWorld()).getChunkManager().sendToNearbyPlayers(e, new EntityS2CPacket.(e));
-            if (e instanceof LivingEntity)
+            if (e instanceof LivingEntity le)
             {
-                LivingEntity le = (LivingEntity)e;
                 le.prevBodyYaw = le.prevYaw = yaw;
                 le.prevHeadYaw = le.headYaw = yaw;
                 // seems universal for:
@@ -956,9 +950,8 @@ public class EntityValue extends Value
         put("age", (e, v) -> e.age = Math.abs((int)NumericValue.asNumber(v).getLong()) );
         put("health", (e, v) -> {
             float health = (float) NumericValue.asNumber(v).getDouble();
-            if (health <= 0f && e instanceof ServerPlayerEntity)
+            if (health <= 0f && e instanceof ServerPlayerEntity player)
             {
-                ServerPlayerEntity player = (ServerPlayerEntity) e;
                 if (player.currentScreenHandler != null)
                 {
                     // if player dies with open container, then that causes NPE on the client side
@@ -1273,8 +1266,7 @@ public class EntityValue extends Value
         }); //requires mixing
 
         put("spawn_point", (e, a) -> {
-            if (!(e instanceof ServerPlayerEntity)) return;
-            ServerPlayerEntity spe = (ServerPlayerEntity)e;
+            if (!(e instanceof ServerPlayerEntity spe)) return;
             if (a == null)
             {
                 spe.setSpawnPoint(null, null, 0, false, false);
@@ -1302,9 +1294,8 @@ public class EntityValue extends Value
                 }
                 spe.setSpawnPoint(world, pos, angle, forced, false);
             }
-            else if (a instanceof BlockValue)
+            else if (a instanceof BlockValue bv)
             {
-                BlockValue bv= (BlockValue)a;
                 if (bv.getPos()==null || bv.getWorld() == null)
                     throw new InternalExpressionException("block for spawn modification should be localised in the world");
                 spe.setSpawnPoint(bv.getWorld().getRegistryKey(), bv.getPos(), e.getYaw(), true, false); // yaw
@@ -1367,8 +1358,7 @@ public class EntityValue extends Value
         });
         put("effect", (e, v) ->
         {
-            if (!(e instanceof LivingEntity)) return;
-            LivingEntity le = (LivingEntity)e;
+            if (!(e instanceof LivingEntity le)) return;
             if (v == null)
             {
                 le.clearStatusEffects();
@@ -1473,7 +1463,7 @@ public class EntityValue extends Value
         });
 
         put("exhaustion", (e, v)-> {
-            if(e instanceof PlayerEntity) ((HungerManagerInterface) ((PlayerEntity) e).getHungerManager()).setExhaustionCM(NumericValue.asNumber(v).getFloat());
+            if(e instanceof PlayerEntity) ((PlayerEntity) e).getHungerManager().setExhaustion(NumericValue.asNumber(v).getFloat());
         });
 
         put("add_exhaustion", (e, v)-> {
@@ -1506,7 +1496,7 @@ public class EntityValue extends Value
         });
 
         put("saturation", (e, v)-> {
-            if(e instanceof PlayerEntity) ((HungerManagerInterface) ((PlayerEntity) e).getHungerManager()).setSaturationCM(NumericValue.asNumber(v, "saturation").getFloat());
+            if(e instanceof PlayerEntity) ((PlayerEntity) e).getHungerManager().setSaturationLevel(NumericValue.asNumber(v, "saturation").getFloat());
         });
 
         put("air", (e, v) -> e.setAir(NumericValue.asNumber(v, "air").getInt()));

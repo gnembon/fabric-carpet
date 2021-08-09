@@ -33,8 +33,6 @@ import carpet.script.value.FunctionValue;
 import carpet.script.value.NumericValue;
 import carpet.script.value.StringValue;
 import carpet.script.value.Value;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 
 import java.math.BigInteger;
@@ -98,7 +96,7 @@ public class Expression
         functionalEquivalence.put(operator, function);
     }
 
-    private final Map<String, Value> constants = ImmutableMap.of(
+    private final Map<String, Value> constants = Map.of(
             "euler", Arithmetic.euler,
             "pi", Arithmetic.PI,
             "null", Value.NULL,
@@ -972,7 +970,7 @@ public class Expression
                     final ExpressionNode v1 = nodeStack.pop();
                     final ExpressionNode v2 = nodeStack.pop();
                     LazyValue result = (c,t) -> operators.get(token.surface).lazyEval(c, t,this, token, v2.op, v1.op).evalValue(c, t);
-                    nodeStack.push(new ExpressionNode(result, ImmutableList.of(v2, v1), token ));
+                    nodeStack.push(new ExpressionNode(result, List.of(v2, v1), token ));
                     break;
                 case VARIABLE:
                     Value constant = getConstantFor(token.surface);

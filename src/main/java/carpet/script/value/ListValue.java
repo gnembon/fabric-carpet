@@ -149,6 +149,8 @@ public class ListValue extends AbstractListValue implements ContainerValueInterf
     {
         items.add(v);
     }
+
+    @Override
     public Value subtract(Value other)
     {
         ListValue output = new ListValue();
@@ -182,6 +184,7 @@ public class ListValue extends AbstractListValue implements ContainerValueInterf
     }
 
 
+    @Override
     public Value multiply(Value other)
     {
         ListValue output = new ListValue();
@@ -209,6 +212,8 @@ public class ListValue extends AbstractListValue implements ContainerValueInterf
         }
         return output;
     }
+
+    @Override
     public Value divide(Value other)
     {
         ListValue output = new ListValue();
@@ -272,8 +277,10 @@ public class ListValue extends AbstractListValue implements ContainerValueInterf
         return items;
     }
 
+    @Override
     public Iterator<Value> iterator() { return new ArrayList<>(items).iterator(); } // should be thread safe
 
+    @Override
     public List<Value> unpack()
     {
         return new ArrayList<>(items);
