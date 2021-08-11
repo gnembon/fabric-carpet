@@ -136,6 +136,7 @@
     "CauldronBlock_stackableSBoxesMixin",
     "AbstractCauldronBlock_stackableSBoxesMixin",
     "Slot_stackableSBoxesMixin",
+    "ScreenHandler_stackableSBoxesMixin",
     "ItemEntityMixin",
     "TntBlockMixin",
     "ExplosionMixin",
