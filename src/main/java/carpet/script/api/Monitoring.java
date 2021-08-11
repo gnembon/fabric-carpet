@@ -52,7 +52,7 @@ public class Monitoring {
                 Map<Value, Value> retDict = new HashMap<>();
                 for (SpawnGroup category: mobcounts.keySet())
                 {
-                    int currentCap = (int)(category.getCapacity() * chunks / SpawnReporter.currentMagicNumber()); // MAGIC_NUMBER
+                    int currentCap = (int)(category.getCapacity() * chunks / SpawnReporter.MAGIC_NUMBER);
                     retDict.put(
                             new StringValue(category.asString().toLowerCase(Locale.ROOT)),
                             ListValue.of(
@@ -67,7 +67,7 @@ public class Monitoring {
             if (cat == null) throw new InternalExpressionException("Unreconized mob category: "+catString);
             return ListValue.of(
                     new NumericValue(mobcounts.getInt(cat)),
-                    new NumericValue((int)(cat.getCapacity() * chunks / SpawnReporter.currentMagicNumber()))
+                    new NumericValue((int)(cat.getCapacity() * chunks / SpawnReporter.MAGIC_NUMBER))
             );
         });
     }

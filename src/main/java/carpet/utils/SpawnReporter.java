@@ -95,10 +95,10 @@ public class SpawnReporter
     }
 
     public static final int MAGIC_NUMBER = (int)Math.pow(17.0D, 2.0D);
-    public static double currentMagicNumber()
+    /*public static double currentMagicNumber()
     {
         return MAGIC_NUMBER / (Math.pow(2.0,(SpawnReporter.mobcap_exponent/4)));
-    }
+    }*/
 
     public static List<BaseText> printMobcapsForDimension(ServerWorld world, boolean multiline)
     {
@@ -120,7 +120,7 @@ public class SpawnReporter
         for (SpawnGroup enumcreaturetype : SpawnGroup.values())
         {
             int cur = dimCounts.getOrDefault(enumcreaturetype, -1);
-            int max = (int)(chunkcount * ((double)enumcreaturetype.getCapacity() / currentMagicNumber())); // from ServerChunkManager.CHUNKS_ELIGIBLE_FOR_SPAWNING
+            int max = (int)(chunkcount * ((double)enumcreaturetype.getCapacity() / MAGIC_NUMBER)); // from ServerChunkManager.CHUNKS_ELIGIBLE_FOR_SPAWNING
             String color = Messenger.heatmap_color(cur, max);
             String mobColor = Messenger.creatureTypeColor(enumcreaturetype);
             if (multiline)

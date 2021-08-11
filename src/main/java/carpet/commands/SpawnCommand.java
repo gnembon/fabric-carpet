@@ -1,6 +1,7 @@
 package carpet.commands;
 
 import carpet.CarpetSettings;
+import carpet.fakes.SpawnGroupInterface;
 import carpet.helpers.HopperCounter;
 import carpet.helpers.TickSpeed;
 import carpet.settings.SettingsManager;
@@ -251,7 +252,7 @@ public class SpawnCommand
 
     private static int setMobcaps(ServerCommandSource source, int hostile_cap)
     {
-        double desired_ratio = (double)hostile_cap/ SpawnGroup.MONSTER.getCapacity();
+        double desired_ratio = (double)hostile_cap/ ((SpawnGroupInterface)(Object)SpawnGroup.MONSTER).getInitialSpawnCap();
         SpawnReporter.mobcap_exponent = 4.0*Math.log(desired_ratio)/Math.log(2.0);
         Messenger.m(source, String.format("gi Mobcaps for hostile mobs changed to %d, other groups will follow", hostile_cap));
         return 1;

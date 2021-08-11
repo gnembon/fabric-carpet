@@ -10,8 +10,8 @@ archivesBaseName = project.archives_base_name
 version = project.minecraft_version+'-'+project.mod_version+'+v'+new Date().format('yyMMdd')
 group = project.maven_group
 
-minecraft {
-	accessWidener "src/main/resources/carpet.accesswidener"
+loom {
+	accessWidenerPath = file("src/main/resources/carpet.accesswidener")
 }
 
 dependencies {

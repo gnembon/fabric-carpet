@@ -282,7 +282,7 @@ public class SpawnHelperMixin
                 if ((spawnAnimals || !entityCategory.isPeaceful()) && (spawnMonsters || entityCategory.isPeaceful()) && (shouldSpawnAnimals || !entityCategory.isRare()) )
                 {
                     RegistryKey<World> dim = world.getRegistryKey(); // getDimensionType;
-                    int newCap = (int) ((double)entityCategory.getCapacity()*(Math.pow(2.0,(SpawnReporter.mobcap_exponent/4))));
+                    int newCap = entityCategory.getCapacity();  //(int) ((double)entityCategory.getCapacity()*(Math.pow(2.0,(SpawnReporter.mobcap_exponent/4))));
                     int int_2 = SpawnReporter.chunkCounts.get(dim); // eligible chunks for spawning
                     int int_3 = newCap * int_2 / CHUNK_AREA; //current spawning limits
                     int mobCount = info.getGroupToCount().getInt(entityCategory);
@@ -303,7 +303,7 @@ public class SpawnHelperMixin
                                 SpawnReporter.spawn_cap_count.get(key) + mobCount);
                     }
 
-                    if (mobCount <= int_3 || SpawnReporter.mock_spawns)
+                    if (mobCount <= int_3 || SpawnReporter.mock_spawns) //TODO this will not float with player based mobcaps
                     {
                         //place 0 to indicate there were spawn attempts for a category
                         //if (entityCategory != EntityCategory.CREATURE || world.getServer().getTicks() % 400 == 0)
