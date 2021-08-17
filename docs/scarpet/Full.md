@@ -3993,21 +3993,24 @@ In case you want to pass an event handler that is not defined in your module, pl
 
 ### `entity_load_handler(descriptor / descriptors, function)`, `entity_load_handler(descriptor / descriptors, call_name, ... args?)`
 
-Attaches a callback to when any entity matching the following type / types is loaded in the game, allowing to grab a handle
+Attaches a callback to trigger when any entity matching the following type / types is loaded in the game, allowing to grab a handle
 to an entity right when it is loaded to the world without querying them every tick. Callback expects two parameters - the entity,
-and a boolean indicating if the entity was newly created(`true`) or just loaded from disk. Single argument functions accepting
+and a boolean value indicating if the entity was newly created(`true`) or just loaded from disk. Single argument functions accepting
 only entities are allowed, but deprecated and will be removed at some point.
 
 If callback is `null`, then the current entity handler, if present, is removed. Consecutive calls to `entity_load_handler` will add / subtract
 of the currently targeted entity types pool.
 
-Like other global events, calls to `entity_load_handler` can only be attached in apps with global scope. Player scope makes so
-that it is not clear which player to use run the load call.
+Like other global events, calls to `entity_load_handler` should only be attached in apps with global scope. For player scope apps,
+it will be called multiple times, once for each player. That's likely not what you want to do.
 
 ```
 // veryfast method of getting rid of all the zombies. Callback is so early, its packets haven't reached yet the clients
 // so to save on log errors, removal of mobs needs to be scheduled for later.
 entity_load_handler('zombie', _(e, new) -> schedule(0, _(outer(e)) -> modify(e, 'remove')))
+
+// another way to do it is to remove the entity when it starts ticking
+entity_load_handler('zombie', _(e, new) -> entity_event(e, 'on_tick', _(e) -> modify(e, 'remove')))
 
 // making all zombies immediately faster and less susceptible to friction of any sort
 entity_load_handler('zombie', _(e, new) -> entity_event(e, 'on_tick', _(e) -> modify(e, 'motion', 1.2*e~'motion')))
@@ -4283,11 +4286,14 @@ events occur, but app designers can create their own events and trigger them acr
 
 When loading the app, each function that starts 
 with `__on_<event>` and has the required arguments, will be bound automatically to a corresponding built-in event. '`undef`'ying
-of such function would result in unbinding the app from this event.
+of such function would result in unbinding the app from this event. Defining event hanlder via `__on_<event>(... args) -> expr` is
+equivalent of defining it via `handle_event('<event>', _(... args) -> expr)`
 
 In case of `player` scoped apps, 
 all player action events will be directed to the appropriate player hosts. Global events, like `'tick'`, that don't have a specific
-player target will be executed multiple times, once for each player, and once in `'global'` scoped apps.
+player target will be executed multiple times, once for each player app instance. While each player app instance is independent,
+statically defined event handlers will be copied to each players app, but if you want to apply them in more controlled way, 
+defining event handlers for each player in `__on_start()` function is preferred.
 
 Most built-in events strive to report right before they take an effect in the game. The purpose of that is that this give a choice
 for the programmer to handle them right away (as it happens, potentially affect the course of action by changing the
@@ -4298,24 +4304,43 @@ more control over these events.
 
 Programmers can also define their own events and signal other events, including built-in events, and across all loaded apps.
 
-## Event list
+## App scopes and event distribution
 
-Here is a list of events that are handled by default in scarpet. This list includes prefixes for function names, allowing apps
-to autoload them, but you can always add any function to any event (using `/script event` command)
-if it accepts required number of parameters.
+Events triggered in an app can result in zero, one, or multiple executions, depending on the type of the event, and the app scope.
+ * player targeted events (like `player_breaks_block`) target each app once:
+   * for global scoped apps - targets a single app instance and provides `player` as the first argument.
+   * for player scoped apps - targets only a given player instance, providing player argument for API consistency, 
+     since active player in player scoped apps can always be retrived using `player()`. 
+ * global events could be handled by multiple players multiple times (like `explosion`, or `tick`):
+   * for global scoped apps - triggered once for the single app instance.
+   * for player scoped apps - triggered N times for each player separately, so they can do something with that information
+ * custom player targeted events (using `signal_event(<event>, <player>, data)`):
+   * for global scoped apps - doesn't trigger at all, since there is no way to pass the required player. 
+     To target global apps with player information, use `null` for player target, and add player information to the `data`
+   * for player scoped apps - triggers once for the specified player and its app instance
+ * custom general events (using `signal_event(<event>, null, data)`) behave same like built-in global events:
+   * for global scoped apps - triggers once for the only global instance
+   * for player scoped apps - triggers N times, once for each player app instance
+
+## Built-in events
+
+Here is the list of events that are handled by default in scarpet. This list includes prefixes for function names, allowing apps
+to register them when the app starts, but you can always add any handler function to any event using `/script event` command,
+if it accepts the required number of parameters for the event.
 
 ## Meta-events
 
 These events are not controlled / triggered by the game per se, but are important for the flow of the apps, however for all 
-intent and purpose can be treated as regular events. Unlike regular events, they cannot be hooked up to with 'handle_event',
-but the apps themselves need to have them defined as distinct function definitions, same they cannot be signalled.
+intent and purpose can be treated as regular events. Unlike regular events, they cannot be hooked up to with `handle_event()`,
+and the apps themselves need to have them defined as distinct function definitions. They also cannot be triggered via `signal_event()`.
 
 ### `__on_start()`
 Called once per app in its logical execution run. For `'global'` scope apps its executed right after the app is loaded. For
 `'player'` scope apps, it is triggered once per player before the app can be used by that player. Since each player app acts
 independently from other player apps, this is probably the best location to include some player specific initializations. Static
 code (i.e. code typed directly in the app code that executes immediately, outside of function definitions), will only execute once
-per app, regardless of scope, `'__on_start()'` allows to reliably call player specific initializations.
+per app, regardless of scope, `'__on_start()'` allows to reliably call player specific initializations. However, most event handlers
+defined in the static body of the app will be copied over to each player scoped instance when they join. 
 
 ### `__on_close()`
 
@@ -4327,8 +4352,7 @@ the system is closing down exceptionally.
 ## Built-in global events
 
 Global events will be handled once per app that is with `'global'` scope. With `player` scoped apps, each player instance
- is responsible independently from handling their events, so a global event may be executed multiple times for each player.
-
+ will be triggerd once for each player, so a global event may be executed multiple times for such apps.
 
 ### `__on_server_starts()`
 Event triggers after world is loaded and after all startup apps have started. It won't be triggered with `/reload`.
@@ -4350,13 +4374,13 @@ Duplicate of `tick`, just automatically located in the end. Use `__on_tick() -> 
 ### `__on_chunk_generated(x, z)`
 Called right after a chunk at a given coordinate is full generated. `x` and `z` correspond
 to the lowest x and z coords in the chunk. Handling of this event is scheduled as an off-tick task happening after the 
-chunk is confirmed to be generated and loaded to the game, so 
-handling of this event is not technically guaranteed, if the game crashes while players are moving for example, and can
-be missed on the next start, if the game successfully saves it and fails to execute all remaining tasks. In normal operation
-this should not happen, but be warned.
+chunk is confirmed to be generated and loaded to the game, due to the off-thread chunk loading in the game. So 
+handling of this event is not technically guaranteed if the game crashes while players are moving for example, and the game 
+decides to shut down after chunk is fully loaded and before its handler is processed in between ticks. In normal operation
+this should not happen, but let you be warned.
 
 ### `__on_chunk_loaded(x, z)`
-Called right after a chunk at a given coordinate is loaded. All newly generated chunks are loaded as well.
+Called right after a chunk at a given coordinate is loaded. All newly generated chunks are considered loaded as well.
  `x` and `z` correspond to the lowest x and z coordinates in the chunk.
 
 ### `__on_lightning(block, mode)`
@@ -4380,7 +4404,7 @@ The parameter `entities` contains the list of entities that have been affected b
 Triggered when a carpet mod rule is changed. It includes extension rules, not using default `/carpet` command, 
 which will then be namespaced as `namespace:rule`.
 
-### entity load event -> check `entity_load_handler()`
+### Entity load event -> check in details on `entity_load_handler()`
 
 These will trigger every time an entity of a given type is loaded into the game: spawned, added with a chunks, 
 spawned from commands, anything really. Check `entity_load_handler()` in the entity section for details.
