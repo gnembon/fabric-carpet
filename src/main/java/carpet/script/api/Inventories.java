@@ -93,7 +93,7 @@ public class Inventories {
             CarpetContext cc = (CarpetContext)c;
             if (lv.size() < 1) throw new InternalExpressionException("'recipe_data' requires at least one argument");
             String recipeName = lv.get(0).getString();
-            RecipeType type = RecipeType.CRAFTING;
+            RecipeType<?> type = RecipeType.CRAFTING;
             if (lv.size() > 1)
             {
                 String recipeType = lv.get(1).getString();
