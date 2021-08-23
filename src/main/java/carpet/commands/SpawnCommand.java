@@ -21,6 +21,7 @@ import net.minecraft.util.DyeColor;
 import net.minecraft.util.math.BlockPos;
 
 import java.util.Arrays;
+import java.util.Locale;
 import java.util.stream.Collectors;
 
 import static com.mojang.brigadier.arguments.IntegerArgumentType.getInteger;
@@ -110,7 +111,7 @@ public class SpawnCommand
         {
             throw new SimpleCommandExceptionType(Messenger.c("r Wrong mob type: "+string+" should be "+ Arrays.stream(SpawnGroup.values()).map(SpawnGroup::getName).collect(Collectors.joining(", ")))).create();
         }
-        return SpawnGroup.valueOf(string.toUpperCase());
+        return SpawnGroup.byName(string.toLowerCase(Locale.ROOT));
     }
 
 
