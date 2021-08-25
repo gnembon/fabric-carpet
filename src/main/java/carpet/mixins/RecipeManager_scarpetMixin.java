@@ -22,9 +22,11 @@ public class RecipeManager_scarpetMixin implements RecipeManagerInterface
     @Shadow private Map<RecipeType<?>, Map<Identifier, Recipe<?>>> recipes;
 
     @Override
-    public List<Recipe<?>> getAllMatching(RecipeType type, Identifier output)
+    public List<Recipe<?>> getAllMatching(RecipeType<?> type, Identifier output)
     {
         Map<Identifier, Recipe<?>> typeRecipes = recipes.get(type);
+        // happens when mods add recipe to the registry without updating recipe manager
+        if (typeRecipes == null) return Collections.emptyList();
         if (typeRecipes.containsKey(output)) return Collections.singletonList(typeRecipes.get(output));
         return Lists.newArrayList(typeRecipes.values().stream().filter(
                 r -> Registry.ITEM.getId(r.getOutput().getItem()).equals(output)).collect(Collectors.toList()));

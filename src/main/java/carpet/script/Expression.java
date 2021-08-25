@@ -1162,20 +1162,28 @@ public class Expression
         for (Map.Entry<String, String> pair : functionalEquivalence.entrySet()) {
             String operator = pair.getKey();
             String function = pair.getValue();
-            if (symbol.equals(operator) || symbol.equals(function)) {
-                List<ExpressionNode> newargs = new ArrayList<>();
-                boolean contracted = false;
-                for (ExpressionNode arg : node.args) {
-                    String argsymbol = arg.token.surface; // child is unoptimized and also same class
-                    if ((argsymbol.equals(operator) || argsymbol.equals(function)) && (!(arg.op instanceof LazyValue.ContextFreeLazyValue))) {
-                        newargs.addAll(arg.args);
-                        contracted = true;
-                    } else {
-                        newargs.add(arg);
-                    }
-                }
-                if (contracted) {
+            if ((symbol.equals(operator) || symbol.equals(function)) && node.args.size() > 0)
+            {
+                boolean leftOptimizable = operators.get(operator).isLeftAssoc();
+                ExpressionNode optimizedChild = node.args.get(leftOptimizable?0:(node.args.size()-1));
+                String type = optimizedChild.token.surface;
+                if ((type.equals(operator) || type.equals(function)) && (!(optimizedChild.op instanceof LazyValue.ContextFreeLazyValue)))
+                {
                     optimized = true;
+                    List<ExpressionNode> newargs = new ArrayList<>();
+                    if (leftOptimizable)
+                    {
+                        newargs.addAll(optimizedChild.args);
+                        for (int i = 1; i < node.args.size(); i++)
+                            newargs.add(node.args.get(i));
+                    }
+                    else
+                    {
+                        for (int i = 0; i < node.args.size()-1; i++)
+                            newargs.add(node.args.get(i));
+                        newargs.addAll(optimizedChild.args);
+                    }
+
                     if (CarpetSettings.scriptsDebugging)
                         CarpetScriptServer.LOG.info(" - " + symbol + "(" + node.args.size() + ") => " + function + "(" + newargs.size() + ") at line " + (node.token.lineno + 1) + ", node depth " + indent);
                     node.token.morph(Tokenizer.Token.TokenType.FUNCTION, function);
