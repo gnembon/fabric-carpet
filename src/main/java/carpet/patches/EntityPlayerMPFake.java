@@ -140,8 +140,12 @@ public class EntityPlayerMPFake extends ServerPlayerEntity
             super.tick();
             this.playerTick();
         }
-        catch (NullPointerException ignored) { } // happens with that paper port thingy - not sure what that would fix, but hey
-        // the game not gonna crash violently.
+        catch (NullPointerException ignored)
+        {
+            // happens with that paper port thingy - not sure what that would fix, but hey
+            // the game not gonna crash violently.
+        }
+
 
     }
 
