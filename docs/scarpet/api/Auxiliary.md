@@ -666,6 +666,7 @@ Available options in the scarpet app space:
   * `world_carpet_rules` - returns all Carpet rules in a map form (`rule`->`value`). Note that the values are always returned as strings, so you can't do boolean comparisons directly. Includes rules from extensions with their namespace (`namespace:rule`->`value`). You can later listen to rule changes with the `on_carpet_rule_changes(rule, newValue)` event.
   * `world_gamerules` - returns all gamerules in a map form (`rule`->`value`). Like carpet rules, values are returned as strings, so you can use appropriate value conversions using `bool()` or `number()` to convert them to other values. Gamerules are read-only to discourage app programmers to mess up with the settings intentionally applied by server admins. Isn't that just super annoying when a datapack messes up with your gamerule settings? It is still possible to change them though using `run('gamerule ...`.
   * `world_spawn_point` - world spawn point
+  * `world_time` - Returns dimension-specific tick counter.
 
  Relevant gameplay related properties
   * `game_difficulty` - current difficulty of the game: `'peaceful'`, `'easy'`, `'normal'`, or `'hard'`
@@ -693,6 +694,11 @@ Available options in the scarpet app space:
  * `server_banned_ips` - list of banned IP addresses
  * `server_dev_environment` - boolean indicating whether this server is in a development environment.
  * `server_mods` - map with all loaded mods mapped to their versions as strings
+ * `server_last_tick_times` - Returns a 100-long array of recent tick times, in milliseconds. First item on the list is the most recent tick
+If called outside of the main tick (either throgh scheduled tasks, or async execution), then the first item on the
+list may refer to the previous tick performance. In this case the last entry (tick 100) would refer to the most current
+tick. For all intent and purpose, `system_info('last_tick_times'):0` should be used as last tick execution time, but
+individual tick times may vary greatly, and these need to be taken with the little grain of averaging.
  
  System related properties
  * `java_max_memory` - maximum allowed memory accessible by JVM
