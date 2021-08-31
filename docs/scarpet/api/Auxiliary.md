@@ -540,6 +540,8 @@ Returns server tick counter. Can be used to run certain operations every n-th ti
 
 ### `world_time()`
 
+_**Deprecated**. Use `system_info('world_time')` instead._
+
 Returns dimension-specific tick counter.
 
 ### `day_time(new_time?)`
@@ -548,6 +550,8 @@ Returns current daytime clock value. If `new_time` is specified, sets a new cloc
 to that value. Daytime clocks are shared between all dimensions.
 
 ### `last_tick_times()`
+
+_**Deprecated**. Use `system_info('server_last_tick_times')` instead._
 
 Returns a 100-long array of recent tick times, in milliseconds. First item on the list is the most recent tick
 If called outside of the main tick (either throgh scheduled tasks, or async execution), then the first item on the
@@ -600,6 +604,9 @@ world-localized block, so not `block('stone')`, or a string representing a dimen
 Throws `unknown_dimension` if provided dimension can't be found.
  
 ### `view_distance()`
+
+_**Deprecated**. Use `system_info('server_view_distance')` instead._
+
 Returns the view distance of the server.
 
 ### `get_mob_counts()`, `get_mob_counts(category)` 1.16+
