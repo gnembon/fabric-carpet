@@ -43,6 +43,7 @@ import net.minecraft.nbt.NbtElement;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
+import net.minecraft.text.BaseText;
 import net.minecraft.text.LiteralText;
 import net.minecraft.text.Text;
 import net.minecraft.util.math.BlockPos;
@@ -58,6 +59,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.TreeMap;
 import java.util.function.BiPredicate;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
@@ -1020,7 +1022,7 @@ public class CarpetScriptHost extends ScriptHost
     public void setChatErrorSnooper(ServerCommandSource source)
     {
         responsibleSource = source;
-        errorSnooper = (expr, /*Nullable*/ token, message) ->
+        errorSnooper = (expr, /*Nullable*/ token, ctx, message) ->
         {
             try
             {
@@ -1047,13 +1049,13 @@ public class CarpetScriptHost extends ScriptHost
                 Messenger.m(source, "r " + shebang);
                 if (lines.length > 1 && token.lineno > 0)
                 {
-                    Messenger.m(source, "l " + lines[token.lineno - 1]);
+                    Messenger.m(source, withLocals("l", lines[token.lineno - 1], ctx));
                 }
-                Messenger.m(source, "l " + lines[token.lineno].substring(0, token.linepos), "r  HERE>> ", "l " +
-                        lines[token.lineno].substring(token.linepos));
+                Messenger.m(source, withLocals("l", lines[token.lineno].substring(0, token.linepos), ctx), "r  HERE>> ", 
+                        withLocals("l", lines[token.lineno].substring(token.linepos), ctx));
                 if (lines.length > 1 && token.lineno < lines.length - 1)
                 {
-                    Messenger.m(source, "l " + lines[token.lineno + 1]);
+                    Messenger.m(source, withLocals("l", lines[token.lineno + 1], ctx));
                 }
             }
             else
@@ -1062,6 +1064,53 @@ public class CarpetScriptHost extends ScriptHost
             }
             return new ArrayList<>();
         };
+    }
+
+    /**
+     * <p>Creates a {@link BaseText} using {@link Messenger} that has the locals in the {@code line} snippet with a hover over
+     * tooltip with the value of the local at that location</p> 
+     * @param line The line to find references to locals on
+     * @param context The {@link Context} to extract the locals from
+     * @param format The format to apply to each part of the line, without the trailing space
+     * @return A BaseText of the given line with the given format, that is visibly the same as passing those to Messenger, but with references to the
+     *            locals in the {@link Context} with a hover over tooltip text
+     * @implNote The implementation of this method is far from perfect, and won't detect actual references to variables, but try to find the strings
+     *              and add the hover effect to anything that equals to any variable name, so short variable names may appear on random positions
+     */
+    private static BaseText withLocals(String format, String line, Context context)
+    {
+        format += " ";
+        List<String> stringsToFormat = new ArrayList<>();
+        TreeMap<Integer, String> posToLocal = new TreeMap<>(); //Holds whether a local variable name is found at a specific index
+        for (String local: context.variables.keySet())
+        {
+            int pos = line.indexOf(local);
+            while (pos != -1)
+            {
+                posToLocal.merge(pos, local, (existingLocal, newLocal) ->
+                {
+                    if (newLocal.length() > existingLocal.length()) // Prefer longer variable names at the same position, since else single chars everywhere
+                        return local;
+                    else
+                        return existingLocal;
+                });
+                pos = line.indexOf(local, pos + 1);
+            }
+        }
+        int lastPos = 0;
+        for (Entry<Integer, String> foundLocal : posToLocal.entrySet())
+        {
+            if (foundLocal.getKey() < lastPos) // system isn't perfect: part of another local
+                continue;
+            stringsToFormat.add(format + line.substring(lastPos, foundLocal.getKey()));
+            stringsToFormat.add(format + foundLocal.getValue());
+            stringsToFormat.add("^ Value of '" + foundLocal.getValue() + "' at position: \n"
+                        + context.variables.get(foundLocal.getValue()).evalValue(context).getPrettyString()); // can this throw? Should this have a catch?
+            lastPos = foundLocal.getKey() + foundLocal.getValue().length();
+        }
+        if (line.length() != lastPos)
+            stringsToFormat.add(format + line.substring(lastPos, line.length()));
+        return Messenger.c(stringsToFormat.toArray());
     }
 
     @Override
