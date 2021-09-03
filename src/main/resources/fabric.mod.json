@@ -24,6 +24,9 @@
     ],
     "server": [
       "carpet.CarpetServer::SERVER_INITIALIZER"
+    ],
+    "preLaunch": [ 
+      "carpet.compat.CarpetMixinErrorHandler"
     ]
   },
   "mixins": [

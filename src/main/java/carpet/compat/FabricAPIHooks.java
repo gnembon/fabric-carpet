@@ -1,4 +1,4 @@
-package carpet.utils;
+package carpet.compat;
 
 import carpet.network.CarpetClient;
 import com.mojang.blaze3d.systems.RenderSystem;

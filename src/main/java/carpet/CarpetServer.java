@@ -17,6 +17,8 @@ import carpet.commands.ScriptCommand;
 import carpet.commands.SpawnCommand;
 import carpet.commands.TestCommand;
 import carpet.commands.TickCommand;
+import carpet.compat.CarpetMixinErrorHandler;
+import carpet.compat.FabricAPIHooks;
 import carpet.network.ServerNetworkHandler;
 import carpet.helpers.HopperCounter;
 import carpet.helpers.TickSpeed;
@@ -24,7 +26,6 @@ import carpet.logging.LoggerRegistry;
 import carpet.script.CarpetScriptServer;
 import carpet.settings.SettingsManager;
 import carpet.logging.HUDController;
-import carpet.utils.FabricAPIHooks;
 import carpet.utils.MobAI;
 import carpet.utils.SpawnReporter;
 import com.mojang.brigadier.CommandDispatcher;
@@ -75,6 +76,7 @@ public class CarpetServer // static for now - easier to handle all around the co
         settingsManager.parseSettingsClass(CarpetSettings.class);
         extensions.forEach(CarpetExtension::onGameStarted);
         FabricAPIHooks.initialize();
+        CarpetMixinErrorHandler.setGameReady();
         CarpetScriptServer.parseFunctionClasses();
     }
 
