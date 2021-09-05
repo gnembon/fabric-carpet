@@ -29,12 +29,16 @@ public class Operators {
         put("multiplication*/%", 30);
         put("addition+-", 20);
         put("compare>=><=<", 10);
-        put("equal==!=", 7);
-        put("and&&", 5);
-        put("or||", 4);
-        put("assign=<>", 3);
-        put("def->", 2);
-        put("nextop;", 1);
+        put("shift<<>>", 9);
+        put("equal==!=", 8);
+        put("bit-and&", 7);
+        //put("bit-xor^", 6);//todo figure this one out (but priority wise, it sits here)
+        put("bit-or|", 5);
+        put("and&&", 4);
+        put("or||", 3);
+        put("assign=<>", 2);
+        put("def->", 1);
+        put("nextop;", 0);
     }};
 
     public static void apply(Expression expression)
@@ -83,6 +87,39 @@ public class Operators {
                 NumericValue.asNumber(v1).mod(NumericValue.asNumber(v2)));
         expression.addBinaryOperator("^", precedence.get("exponent^"), false, (v1, v2) ->
                 new NumericValue(java.lang.Math.pow(NumericValue.asNumber(v1).getDouble(), NumericValue.asNumber(v2).getDouble())));
+
+        expression.addBinaryOperator("|", precedence.get("bit-and&"), true, (v1, v2)-> {
+            return new NumericValue(NumericValue.asNumber(v1).getLong() & NumericValue.asNumber(v2).getLong());
+        });
+        expression.addFunction("bitwise_and", lv -> {
+            int size = lv.size();
+            if (size == 0) return Value.NULL;
+            long accumulator = NumericValue.asNumber(lv.get(0)).getLong();
+            for (Value v: lv.subList(1, size)) accumulator = accumulator & NumericValue.asNumber(v2).getLong();
+            return new NumericValue(accumulator);
+        });
+        expression.addFunctionalEquivalence("&", "bitwise_and");
+
+        expression.addFunction("bitwise_xor", lv -> {
+            int size = lv.size();
+            if (size == 0) return Value.NULL;
+            long accumulator = NumericValue.asNumber(lv.get(0)).getLong();
+            for (Value v: lv.subList(1, size)) accumulator = accumulator | NumericValue.asNumber(v2).getLong();
+            return new NumericValue(accumulator);
+        });
+        //expression.addFunctionalEquivalence("^", "bitwise_xor");
+
+        expression.addBinaryOperator("|", precedence.get("bit-or|"), true, (v1, v2)-> {
+            return new NumericValue(NumericValue.asNumber(v1).getLong() | NumericValue.asNumber(v2).getLong());
+        });
+        expression.addFunction("bitwise_or", lv -> {
+            int size = lv.size();
+            if (size == 0) return Value.NULL;
+            long accumulator = NumericValue.asNumber(lv.get(0)).getLong();
+            for (Value v: lv.subList(1, size)) accumulator = accumulator | NumericValue.asNumber(v2).getLong();
+            return new NumericValue(accumulator);
+        });
+        expression.addFunctionalEquivalence("|", "bitwise_or");
 
         // lazy cause RHS is only conditional
         expression.addLazyBinaryOperator("&&", precedence.get("and&&"), false, true, t -> Context.Type.BOOLEAN, (c, t, lv1, lv2) ->
@@ -201,6 +238,30 @@ public class Operators {
             return Value.TRUE;
         });
         expression.addFunctionalEquivalence("<=", "nondecreasing");
+
+        expression.addBinaryOperator("<<", precedence.get("shift<<>>"), true, (v1, v2)-> {
+            return new NumericValue(NumericValue.asNumber(v1).getLong() << NumericValue.asNumber(v2).getLong());
+        });
+        expression.addFunction("shift_left", lv -> {
+            int size = lv.size();
+            if (size == 0) return Value.NULL;
+            long accumulator = NumericValue.asNumber(lv.get(0)).getLong();
+            for (Value v: lv.subList(1, size)) accumulator = accumulator << NumericValue.asNumber(v2).getLong();
+            return new NumericValue(accumulator);
+        });
+        expression.addFunctionalEquivalence("<<", "shift_left");
+
+        expression.addBinaryOperator(">>", precedence.get("shift<<>>"), true, (v1, v2)-> {
+            return new NumericValue(NumericValue.asNumber(v1).getLong() >> NumericValue.asNumber(v2).getLong());
+        });
+        expression.addFunction("shift_right", lv -> {
+            int size = lv.size();
+            if (size == 0) return Value.NULL;
+            long accumulator = NumericValue.asNumber(lv.get(0)).getLong();
+            for (Value v: lv.subList(1, size)) accumulator = accumulator >> NumericValue.asNumber(v2).getLong();
+            return new NumericValue(accumulator);
+        });
+        expression.addFunctionalEquivalence(">>", "shift_right");
 
         expression.addBinaryOperator("==", precedence.get("equal==!="), false, (v1, v2) ->
                 v1.equals(v2) ? Value.TRUE : Value.FALSE);
