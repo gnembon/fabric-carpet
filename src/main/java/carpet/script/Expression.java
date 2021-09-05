@@ -1216,6 +1216,7 @@ public class Expression
             if (arg.op instanceof LazyValue.ContextFreeLazyValue) continue;
             return optimized;
         }
+        // a few exceptions which we don't implement in the framework for simplicity for now
         if (!operation.pure())
         {
             if (symbol.equals("->") && expectedType == Context.Type.MAPDEF)
@@ -1224,6 +1225,14 @@ public class Expression
             }
             else {
                 return optimized;
+            }
+        }
+        if (operation.pure())
+        {
+            // element access with constant elements will always resolve the same way.
+            if (symbol.equals(":") && expectedType == Context.Type.LVALUE)
+            {
+                expectedType = Context.Type.NONE;
             }
         }
         List<LazyValue> args = new ArrayList<>(node.args.size());
