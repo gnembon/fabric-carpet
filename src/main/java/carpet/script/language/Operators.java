@@ -95,7 +95,7 @@ public class Operators {
             int size = lv.size();
             if (size == 0) return Value.NULL;
             long accumulator = NumericValue.asNumber(lv.get(0)).getLong();
-            for (Value v: lv.subList(1, size)) accumulator = accumulator & NumericValue.asNumber(v2).getLong();
+            for (Value v: lv.subList(1, size)) accumulator = accumulator & NumericValue.asNumber(v).getLong();
             return new NumericValue(accumulator);
         });
         expression.addFunctionalEquivalence("&", "bitwise_and");
@@ -104,7 +104,7 @@ public class Operators {
             int size = lv.size();
             if (size == 0) return Value.NULL;
             long accumulator = NumericValue.asNumber(lv.get(0)).getLong();
-            for (Value v: lv.subList(1, size)) accumulator = accumulator | NumericValue.asNumber(v2).getLong();
+            for (Value v: lv.subList(1, size)) accumulator = accumulator | NumericValue.asNumber(v).getLong();
             return new NumericValue(accumulator);
         });
         //expression.addFunctionalEquivalence("^", "bitwise_xor");
@@ -116,7 +116,7 @@ public class Operators {
             int size = lv.size();
             if (size == 0) return Value.NULL;
             long accumulator = NumericValue.asNumber(lv.get(0)).getLong();
-            for (Value v: lv.subList(1, size)) accumulator = accumulator | NumericValue.asNumber(v2).getLong();
+            for (Value v: lv.subList(1, size)) accumulator = accumulator | NumericValue.asNumber(v).getLong();
             return new NumericValue(accumulator);
         });
         expression.addFunctionalEquivalence("|", "bitwise_or");
@@ -246,7 +246,7 @@ public class Operators {
             int size = lv.size();
             if (size == 0) return Value.NULL;
             long accumulator = NumericValue.asNumber(lv.get(0)).getLong();
-            for (Value v: lv.subList(1, size)) accumulator = accumulator << NumericValue.asNumber(v2).getLong();
+            for (Value v: lv.subList(1, size)) accumulator = accumulator << NumericValue.asNumber(v).getLong();
             return new NumericValue(accumulator);
         });
         expression.addFunctionalEquivalence("<<", "shift_left");
@@ -258,10 +258,61 @@ public class Operators {
             int size = lv.size();
             if (size == 0) return Value.NULL;
             long accumulator = NumericValue.asNumber(lv.get(0)).getLong();
-            for (Value v: lv.subList(1, size)) accumulator = accumulator >> NumericValue.asNumber(v2).getLong();
+            for (Value v: lv.subList(1, size)) accumulator = accumulator >> NumericValue.asNumber(v).getLong();
             return new NumericValue(accumulator);
         });
         expression.addFunctionalEquivalence(">>", "shift_right");
+        expression.addBinaryOperator("<<<", precedence.get("shift<<>>"), true, (v1, v2)-> {
+            long num = NumericValue.asNumber(v1).getLong();
+            long amount = NumericValue.asNumber(v2).getLong();
+
+            long amountToRoll = 64 - amount;
+            long rolledBits = (0xFFFFFFFFFFFFFFFF >> amountToRoll) << amountToRoll;
+            long rolledAmount = (num & rolledBits) >> amountToRoll;
+            return new NumericValue(num << amount | rolledAmount);
+        });
+        expression.addFunction("roll_left", lv -> {
+            int size = lv.size();
+            if (size == 0) return Value.NULL;
+            long accumulator = NumericValue.asNumber(lv.get(0)).getLong();
+            for (Value v: lv.subList(1, size)) {
+                long num = accumulator;
+                long amount = NumericValue.asNumber(v).getLong();
+
+                long amountToRoll = 64 - amount;
+                long rolledBits = (0xFFFFFFFFFFFFFFFF >> amountToRoll) << amountToRoll;
+                long rolledAmount = (num & rolledBits) >> amountToRoll;
+                accumulator = num << amount | rolledAmount;
+            }
+            return new NumericValue(accumulator);
+        });
+        expression.addFunctionalEquivalence("<<<", "roll_left");
+        expression.addBinaryOperator(">>>", precedence.get("shift<<>>"), true, (v1, v2)-> {
+            long num = NumericValue.asNumber(v1).getLong();
+            long amount = NumericValue.asNumber(v2).getLong();
+
+            long amountToRoll = 64 - amount;
+            long rolledBits = (0xFFFFFFFFFFFFFFFF << amountToRoll) >> amountToRoll;
+            long rolledAmount = (num & rolledBits) << amountToRoll;
+            return new NumericValue(num >> amount | rolledAmount);
+        });
+        expression.addFunction("roll_right", lv -> {
+            int size = lv.size();
+            if (size == 0) return Value.NULL;
+            long accumulator = NumericValue.asNumber(lv.get(0)).getLong();
+            for (Value v: lv.subList(1, size)) {
+                long num = accumulator;
+                long amount = NumericValue.asNumber(v).getLong();
+
+                long amountToRoll = 64 - amount;
+                long rolledBits = (0xFFFFFFFFFFFFFFFF << amountToRoll) >> amountToRoll;
+                long rolledAmount = (num & rolledBits) << amountToRoll;
+                accumulator = num >> amount | rolledAmount;
+            }
+            return new NumericValue(accumulator);
+        });
+        expression.addFunctionalEquivalence(">>>", "roll_right");
+
 
         expression.addBinaryOperator("==", precedence.get("equal==!="), false, (v1, v2) ->
                 v1.equals(v2) ? Value.TRUE : Value.FALSE);
