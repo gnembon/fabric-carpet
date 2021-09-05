@@ -267,7 +267,7 @@ public class Operators {
             long amount = NumericValue.asNumber(v2).getLong();
 
             long amountToRoll = 64 - amount;
-            long rolledBits = (0xFFFFFFFFFFFFFFFF >> amountToRoll) << amountToRoll;
+            long rolledBits = ((-1L) >> amountToRoll) << amountToRoll;
             long rolledAmount = (num & rolledBits) >> amountToRoll;
             return new NumericValue(num << amount | rolledAmount);
         });
@@ -280,7 +280,7 @@ public class Operators {
                 long amount = NumericValue.asNumber(v).getLong();
 
                 long amountToRoll = 64 - amount;
-                long rolledBits = (0xFFFFFFFFFFFFFFFF >> amountToRoll) << amountToRoll;
+                long rolledBits = ((-1L) >> amountToRoll) << amountToRoll;
                 long rolledAmount = (num & rolledBits) >> amountToRoll;
                 accumulator = num << amount | rolledAmount;
             }
@@ -292,7 +292,7 @@ public class Operators {
             long amount = NumericValue.asNumber(v2).getLong();
 
             long amountToRoll = 64 - amount;
-            long rolledBits = (0xFFFFFFFFFFFFFFFF << amountToRoll) >> amountToRoll;
+            long rolledBits = ((-1L) << amountToRoll) >> amountToRoll;
             long rolledAmount = (num & rolledBits) << amountToRoll;
             return new NumericValue(num >> amount | rolledAmount);
         });
@@ -305,7 +305,7 @@ public class Operators {
                 long amount = NumericValue.asNumber(v).getLong();
 
                 long amountToRoll = 64 - amount;
-                long rolledBits = (0xFFFFFFFFFFFFFFFF << amountToRoll) >> amountToRoll;
+                long rolledBits = ((-1L) << amountToRoll) >> amountToRoll;
                 long rolledAmount = (num & rolledBits) << amountToRoll;
                 accumulator = num >> amount | rolledAmount;
             }
