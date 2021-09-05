@@ -264,7 +264,7 @@ public class Operators {
         expression.addFunctionalEquivalence(">>", "shift_right");
         expression.addBinaryOperator("<<<", precedence.get("shift<<>>"), true, (v1, v2)-> {
             long num = NumericValue.asNumber(v1).getLong();
-            long amount = NumericValue.asNumber(v2).getLong();
+            long amount = NumericValue.asNumber(v2).getLong() % 64;
 
             long amountToRoll = 64 - amount;
             long rolledBits = ((-1L) >> amountToRoll) << amountToRoll;
@@ -277,7 +277,7 @@ public class Operators {
             long accumulator = NumericValue.asNumber(lv.get(0)).getLong();
             for (Value v: lv.subList(1, size)) {
                 long num = accumulator;
-                long amount = NumericValue.asNumber(v).getLong();
+                long amount = NumericValue.asNumber(v).getLong() % 64;
 
                 long amountToRoll = 64 - amount;
                 long rolledBits = ((-1L) >> amountToRoll) << amountToRoll;
@@ -289,7 +289,7 @@ public class Operators {
         expression.addFunctionalEquivalence("<<<", "roll_left");
         expression.addBinaryOperator(">>>", precedence.get("shift<<>>"), true, (v1, v2)-> {
             long num = NumericValue.asNumber(v1).getLong();
-            long amount = NumericValue.asNumber(v2).getLong();
+            long amount = NumericValue.asNumber(v2).getLong() % 64;
 
             long amountToRoll = 64 - amount;
             long rolledBits = ((-1L) << amountToRoll) >> amountToRoll;
@@ -302,7 +302,7 @@ public class Operators {
             long accumulator = NumericValue.asNumber(lv.get(0)).getLong();
             for (Value v: lv.subList(1, size)) {
                 long num = accumulator;
-                long amount = NumericValue.asNumber(v).getLong();
+                long amount = NumericValue.asNumber(v).getLong() % 64;
 
                 long amountToRoll = 64 - amount;
                 long rolledBits = ((-1L) << amountToRoll) >> amountToRoll;
