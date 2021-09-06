@@ -255,13 +255,10 @@ public class Operators {
             return num >> amount | rolledAmount;
         });
         expression.addMathematicalUnaryIntFunction("bitwise_not", d -> {
-            long num = (long) d;
+            long num = d.longValue();
             return num ^ (-1L);
         });
-        expression.addMathematicalUnaryIntFunction("bitwise_popcount", d -> {
-            long num = (long) d;
-            return Long.bitCount(num);
-        });
+        expression.addMathematicalUnaryIntFunction("bitwise_popcount", d -> Long.bitCount(d.longValue()));
 
 
         expression.addBinaryOperator("==", precedence.get("equal==!="), false, (v1, v2) ->
