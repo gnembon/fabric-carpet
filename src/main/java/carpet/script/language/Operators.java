@@ -226,37 +226,37 @@ public class Operators {
         });
         expression.addFunctionalEquivalence("<=", "nondecreasing");
 
-        expression.addMathematicalBinaryFunction("bitwise_shift_left", (d1, d2) -> {
-            long num = (long) d1;
-            long amount = (long) d2;
-            return (double) (num << amount);
+        expression.addMathematicalBinaryIntFunction("bitwise_shift_left", (l1, l2) -> {
+            long num = (long) l1;
+            long amount = (long) l2;
+            return num << amount;
         });
-        expression.addMathematicalBinaryFunction("bitwise_shift_right", (d1, d2) -> {
-            long num = (long) d1;
-            long amount = (long) d2;
-            return (double) (num >> amount);
+        expression.addMathematicalBinaryIntFunction("bitwise_shift_right", (l1, l2) -> {
+            long num = l1;
+            long amount = l2;
+            return num >> amount;
         });
-        expression.addMathematicalBinaryFunction("bitwise_roll_left", (d1, d2) -> {
-            long num = (long) d1;
-            long amount = (long) d2 % 64;
+        expression.addMathematicalBinaryIntFunction("bitwise_roll_left", (l1, l2) -> {
+            long num = l1;
+            long amount = l2 % 64;
 
             long amountToRoll = 64 - amount;
             long rolledBits = ((-1L) >> amountToRoll) << amountToRoll;
             long rolledAmount = (num & rolledBits) >> amountToRoll;
-            return (double) (num << amount | rolledAmount);
+            return num << amount | rolledAmount;
         });
-        expression.addMathematicalBinaryFunction("bitwise_roll_right", (d1, d2) -> {
-            long num = (long) d1;
-            long amount = (long) d2 % 64;
+        expression.addMathematicalBinaryIntFunction("bitwise_roll_right", (l1, l2) -> {
+            long num = l1;
+            long amount = l2 % 64;
 
             long amountToRoll = 64 - amount;
             long rolledBits = ((-1L) << amountToRoll) >> amountToRoll;
             long rolledAmount = (num & rolledBits) << amountToRoll;
-            return (double) (num >> amount | rolledAmount);
+            return num >> amount | rolledAmount;
         });
-        expression.addMathematicalUnaryFunction("bitwise_not", d -> {
+        expression.addMathematicalUnaryIntFunction("bitwise_not", d -> {
             long num = (long) d;
-            return (double) (num ^ (-1L));
+            return num ^ (-1L);
         });
 
 
