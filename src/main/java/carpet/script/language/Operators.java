@@ -226,49 +226,37 @@ public class Operators {
         });
         expression.addFunctionalEquivalence("<=", "nondecreasing");
 
-        expression.addFunction("bitwise_shift_left", lv -> {
-            int size = lv.size();
-            if (size == 0) return Value.NULL;
-            long accumulator = NumericValue.asNumber(lv.get(0)).getLong();
-            for (Value v: lv.subList(1, size)) accumulator = accumulator << NumericValue.asNumber(v).getLong();
-            return new NumericValue(accumulator);
+        expression.addMathematicalBinaryFunction("bitwise_shift_left", (d1, d2) -> {
+            long num = (long) d1;
+            long amount = (long) d2;
+            return (double) (num << amount);
         });
-        expression.addFunction("bitwise_shift_right", lv -> {
-            int size = lv.size();
-            if (size == 0) return Value.NULL;
-            long accumulator = NumericValue.asNumber(lv.get(0)).getLong();
-            for (Value v: lv.subList(1, size)) accumulator = accumulator >> NumericValue.asNumber(v).getLong();
-            return new NumericValue(accumulator);
+        expression.addMathematicalBinaryFunction("bitwise_shift_right", (d1, d2) -> {
+            long num = (long) d1;
+            long amount = (long) d2;
+            return (double) (num >> amount);
         });
-        expression.addFunction("bitwise_roll_left", lv -> {
-            int size = lv.size();
-            if (size == 0) return Value.NULL;
-            long accumulator = NumericValue.asNumber(lv.get(0)).getLong();
-            for (Value v: lv.subList(1, size)) {
-                long num = accumulator;
-                long amount = NumericValue.asNumber(v).getLong() % 64;
+        expression.addMathematicalBinaryFunction("bitwise_roll_left", (d1, d2) -> {
+            long num = (long) d1;
+            long amount = (long) d2 % 64;
 
-                long amountToRoll = 64 - amount;
-                long rolledBits = ((-1L) >> amountToRoll) << amountToRoll;
-                long rolledAmount = (num & rolledBits) >> amountToRoll;
-                accumulator = num << amount | rolledAmount;
-            }
-            return new NumericValue(accumulator);
+            long amountToRoll = 64 - amount;
+            long rolledBits = ((-1L) >> amountToRoll) << amountToRoll;
+            long rolledAmount = (num & rolledBits) >> amountToRoll;
+            return (double) (num << amount | rolledAmount);
         });
-        expression.addFunction("bitwise_roll_right", lv -> {
-            int size = lv.size();
-            if (size == 0) return Value.NULL;
-            long accumulator = NumericValue.asNumber(lv.get(0)).getLong();
-            for (Value v: lv.subList(1, size)) {
-                long num = accumulator;
-                long amount = NumericValue.asNumber(v).getLong() % 64;
+        expression.addMathematicalBinaryFunction("bitwise_roll_right", (d1, d2) -> {
+            long num = (long) d1;
+            long amount = (long) d2 % 64;
 
-                long amountToRoll = 64 - amount;
-                long rolledBits = ((-1L) << amountToRoll) >> amountToRoll;
-                long rolledAmount = (num & rolledBits) << amountToRoll;
-                accumulator = num >> amount | rolledAmount;
-            }
-            return new NumericValue(accumulator);
+            long amountToRoll = 64 - amount;
+            long rolledBits = ((-1L) << amountToRoll) >> amountToRoll;
+            long rolledAmount = (num & rolledBits) << amountToRoll;
+            return (double) (num >> amount | rolledAmount);
+        });
+        expression.addMathematicalUnaryFunction("bitwise_not", d -> {
+            long num = (long) d;
+            return (double) (num ^ (-1L));
         });
 
 
