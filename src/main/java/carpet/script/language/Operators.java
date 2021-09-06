@@ -261,8 +261,8 @@ public class Operators {
         expression.addMathematicalUnaryIntFunction("bitwise_popcount", d -> Long.valueOf(Long.bitCount(d.longValue())));
 		
         expression.addMathematicalUnaryIntFunction("double_to_long_bits", Double::doubleToLongBits);
-        expression.addUnaryFunction("long_to_double_bits", l -> {
-			return new NumericValue(Double.longBitsToDouble(l));
+        expression.addUnaryFunction("long_to_double_bits", v -> {
+			return new NumericValue(Double.longBitsToDouble(NumericValue.asNumber(v).getLong()));
 		});
 
 
