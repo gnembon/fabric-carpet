@@ -258,6 +258,10 @@ public class Operators {
             long num = (long) d;
             return num ^ (-1L);
         });
+        expression.addMathematicalUnaryIntFunction("bitwise_popcount", d -> {
+            long num = (long) d;
+            return Long.bitCount(num);
+        });
 
 
         expression.addBinaryOperator("==", precedence.get("equal==!="), false, (v1, v2) ->
