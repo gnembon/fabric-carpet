@@ -298,8 +298,8 @@ and all loop functions (`while`, `loop`, `map`, `filter`, `first`, `all`, `c_for
 ### `Binary (bitwise) operations`
 
 These are a bunch of operators that work exclusively on numbers, more specifically their binary representations. Some of these
-work on multiple numbers, some on only 2, and others on only 1. Note that all these numbers take integer values, so if the input
-has a decimal part, it will be discarded.
+work on multiple numbers, some on only 2, and others on only 1. Note that most of these functions (all but `double_to_long_bits`)
+only take integer values, so if the input has a decimal part, it will be discarded.
 
  - `bitwise_and(...)` -> Does the bitwise AND operation on each number in order. Note that with larger ranges of numbers this will
 	tend to 0.
@@ -317,4 +317,6 @@ has a decimal part, it will be discarded.
 	all ones.
  - `bitwise_popcount(num)` -> Returns the number of ones in the binary representation of the number. For the number of zeroes, just
 	do 64 minus this number.
- 
+ - `double_to_long_bits` -> Returns a representation of the specified floating-point value according to the IEEE 754 floating-point
+	"double format" bit layout.
+ - `long_to_double_bits` -> Returns the double value corresponding to a given bit representation.

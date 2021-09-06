@@ -259,6 +259,11 @@ public class Operators {
             return num ^ (-1L);
         });
         expression.addMathematicalUnaryIntFunction("bitwise_popcount", d -> Long.valueOf(Long.bitCount(d.longValue())));
+		
+        expression.addMathematicalUnaryIntFunction("double_to_long_bits", Double::doubleToLongBits);
+        expression.addUnaryFunction("long_to_double_bits", l -> {
+			return new NumericValue(Double.longBitsToDouble(l));
+		});
 
 
         expression.addBinaryOperator("==", precedence.get("equal==!="), false, (v1, v2) ->
