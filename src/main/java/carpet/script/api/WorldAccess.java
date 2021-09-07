@@ -219,46 +219,6 @@ public class WorldAccess {
         return bs;
     }
 
-    private static boolean tryBreakBlock_copy_from_ServerPlayerInteractionManager(ServerPlayerEntity player, BlockPos blockPos_1)
-    {
-        //this could be done little better, by hooking up event handling not in try_break_block but wherever its called
-        // so we can safely call it here
-        // but that would do for now.
-        BlockState blockState_1 = player.world.getBlockState(blockPos_1);
-        if (!player.getMainHandStack().getItem().canMine(blockState_1, player.world, blockPos_1, player)) {
-            return false;
-        } else {
-            BlockEntity blockEntity_1 = player.world.getBlockEntity(blockPos_1);
-            Block block_1 = blockState_1.getBlock();
-            if ((block_1 instanceof CommandBlock || block_1 instanceof StructureBlock || block_1 instanceof JigsawBlock) && !player.isCreativeLevelTwoOp()) {
-                player.world.updateListeners(blockPos_1, blockState_1, blockState_1, 3);
-                return false;
-            } else if (player.isBlockBreakingRestricted(player.world, blockPos_1, player.interactionManager.getGameMode())) {
-                return false;
-            } else {
-                block_1.onBreak(player.world, blockPos_1, blockState_1, player);
-                boolean boolean_1 = player.world.removeBlock(blockPos_1, false);
-                if (boolean_1) {
-                    block_1.onBroken(player.world, blockPos_1, blockState_1);
-                }
-
-                if (player.isCreative()) {
-                    return true;
-                } else {
-                    ItemStack itemStack_1 = player.getMainHandStack();
-                    boolean boolean_2 = player.canHarvest(blockState_1);
-                    itemStack_1.postMine(player.world, blockState_1, blockPos_1, player);
-                    if (boolean_1 && boolean_2) {
-                        ItemStack itemStack_2 = itemStack_1.isEmpty() ? ItemStack.EMPTY : itemStack_1.copy();
-                        block_1.afterBreak(player.world, player, blockPos_1, blockState_1, blockEntity_1, itemStack_2);
-                    }
-
-                    return true;
-                }
-            }
-        }
-    }
-
     private static void BooYah(ChunkGenerator generator)
     {
         synchronized (generator)
@@ -928,7 +888,7 @@ public class WorldAccess {
             Block block = state.getBlock();
             boolean success = false;
             if (!((block == Blocks.BEDROCK || block == Blocks.BARRIER) && player.interactionManager.isSurvivalLike()))
-                success = tryBreakBlock_copy_from_ServerPlayerInteractionManager(player, where);
+                success = player.interactionManager.tryBreakBlock(where);
             if (success)
                 world.syncWorldEvent(null, 2001, where, Block.getRawIdFromState(state));
             return BooleanValue.of(success);
