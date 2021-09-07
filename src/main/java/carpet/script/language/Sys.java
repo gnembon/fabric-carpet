@@ -423,7 +423,7 @@ public class Sys {
         });
 
         // lazy cause default expression may not be executed if not needed
-        expression.addLazyFunction("system_variable_get", -1, (c, t, lv) ->
+        expression.addLazyFunction("system_variable_get", (c, t, lv) ->
         {
             if (lv.size() == 0) throw new InternalExpressionException("'system_variable_get' expects at least a key to be fetched");
             Value key = lv.get(0).evalValue(c);
