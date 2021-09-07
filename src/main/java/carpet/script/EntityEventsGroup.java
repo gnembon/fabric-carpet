@@ -4,6 +4,7 @@ import carpet.CarpetServer;
 import carpet.script.exception.InternalExpressionException;
 import carpet.script.value.EntityValue;
 import carpet.script.value.FunctionValue;
+import carpet.script.value.ListValue;
 import carpet.script.value.NumericValue;
 import carpet.script.value.StringValue;
 import carpet.script.value.Value;
@@ -105,6 +106,25 @@ public class EntityEventsGroup
                         new NumericValue(amount),
                         new StringValue(source.getName()),
                         source.getAttacker()==null?Value.NULL:new EntityValue(source.getAttacker())
+                );
+            }
+        };
+        public static final Event ON_MOVE = new Event("on_move", 3)
+        {
+            @Override
+            public List<Value> makeArgs(Entity entity, Object... providedArgs)
+            {
+                return Arrays.asList(
+                        new EntityValue(entity),
+                        ListValue.fromTriple((Double) providedArgs[0],
+                        (Double) providedArgs[1],
+                        (Double) providedArgs[2]),
+                        ListValue.fromTriple((Double) providedArgs[3],
+                        (Double) providedArgs[4],
+                        (Double) providedArgs[5]),
+                        ListValue.fromTriple((Double) providedArgs[6],
+                        (Double) providedArgs[7],
+                        (Double) providedArgs[8])
                 );
             }
         };
