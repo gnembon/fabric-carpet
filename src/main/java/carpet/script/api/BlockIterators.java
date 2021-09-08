@@ -32,7 +32,7 @@ public class BlockIterators {
     public static void apply(Expression expression)
     {
         // lazy cause of lazy expression
-        expression.addLazyFunction("scan", -1, (c, t, llv) ->
+        expression.addLazyFunction("scan", (c, t, llv) ->
         {
             if (llv.size() < 3) throw new InternalExpressionException("'scan' needs many more arguments");
             List<Value> lv = Fluff.AbstractFunction.unpackLazy(llv.subList(0, llv.size()-1), c, Context.NONE);
@@ -140,7 +140,7 @@ public class BlockIterators {
         });
 
         // must be lazy
-        expression.addLazyFunction("volume", -1, (c, t, llv) ->
+        expression.addLazyFunction("volume", (c, t, llv) ->
         {
             CarpetContext cc = (CarpetContext)c;
             if (llv.size() < 3) throw new InternalExpressionException("'volume' needs many more arguments");

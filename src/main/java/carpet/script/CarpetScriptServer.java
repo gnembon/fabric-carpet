@@ -375,7 +375,7 @@ public class CarpetScriptServer
     {
         CarpetProfiler.ProfilerToken token;
         token = CarpetProfiler.start_section(null, "Scarpet schedule", CarpetProfiler.TYPE.GENERAL);
-        events.tick();
+        events.handleEvents.getWhileDisabled( () -> {events.tick(); return null;});
         CarpetProfiler.end_current_section(token);
         token = CarpetProfiler.start_section(null, "Scarpet app data", CarpetProfiler.TYPE.GENERAL);
         for (CarpetScriptHost host : modules.values())

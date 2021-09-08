@@ -1088,7 +1088,7 @@ public class EntityValue extends Value
             }
             List<Value> coords = ((ListValue) v).getItems();
             double dx = NumericValue.asNumber(coords.get(0)).getDouble();
-            double dy = NumericValue.asNumber(coords.get(0)).getDouble();
+            double dy = NumericValue.asNumber(coords.get(1)).getDouble();
             double dz = NumericValue.asNumber(coords.get(2)).getDouble();
             e.setVelocity(dx, dy, dz);
             updateVelocity(e, MathHelper.absMax(MathHelper.absMax(dx, dy), dz));

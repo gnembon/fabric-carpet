@@ -493,6 +493,39 @@ public class Expression
             public LazyValue lazyEval(Context c, Context.Type i, Expression e, Tokenizer.Token t, List<LazyValue> lazyParams)
             {
                 ILazyFunction.checkInterrupts();
+                if (num_params >= 0 && lazyParams.size() != num_params)
+                    throw new InternalExpressionException("'"+name+"' requires "+num_params+" parameters, "+lazyParams.size()+" provided.");
+
+                try
+                {
+                    return fun.apply(c, i, lazyParams);
+                }
+                catch (RuntimeException exc)
+                {
+                    throw handleCodeException(c, exc, e, t);
+                }
+            }
+        });
+    }
+
+    public void addLazyFunction(String name, TriFunction<Context, Context.Type, List<LazyValue>, LazyValue> fun)
+    {
+        functions.put(name, new AbstractLazyFunction(-1, name)
+        {
+            @Override
+            public boolean pure() {
+                return false;
+            }
+
+            @Override
+            public boolean transitive() {
+                return false;
+            }
+
+            @Override
+            public LazyValue lazyEval(Context c, Context.Type i, Expression e, Tokenizer.Token t, List<LazyValue> lazyParams)
+            {
+                ILazyFunction.checkInterrupts();
                 try
                 {
                     return fun.apply(c, i, lazyParams);
@@ -1216,6 +1249,7 @@ public class Expression
             if (arg.op instanceof LazyValue.ContextFreeLazyValue) continue;
             return optimized;
         }
+        // a few exceptions which we don't implement in the framework for simplicity for now
         if (!operation.pure())
         {
             if (symbol.equals("->") && expectedType == Context.Type.MAPDEF)
@@ -1224,6 +1258,14 @@ public class Expression
             }
             else {
                 return optimized;
+            }
+        }
+        if (operation.pure())
+        {
+            // element access with constant elements will always resolve the same way.
+            if (symbol.equals(":") && expectedType == Context.Type.LVALUE)
+            {
+                expectedType = Context.Type.NONE;
             }
         }
         List<LazyValue> args = new ArrayList<>(node.args.size());

@@ -104,7 +104,7 @@ public class DataStructures {
         });
 
         // needs lazy cause sort function is reused
-        expression.addLazyFunction("sort_key", -1, (c, t, lv) ->  //get working with iterators
+        expression.addLazyFunction("sort_key", (c, t, lv) ->  //get working with iterators
         {
             if (lv.size() == 0)
                 throw new InternalExpressionException("First argument for 'sort_key' should be a List");
@@ -207,7 +207,7 @@ public class DataStructures {
         });
 
         // lazy cause conditional typing - questionable
-        expression.addLazyFunction("get", -1, (c, t, lv) ->
+        expression.addLazyFunction("get", (c, t, lv) ->
         {
             if (lv.size() == 0)
                 throw new InternalExpressionException("'get' requires parameters");
@@ -235,7 +235,7 @@ public class DataStructures {
         });
 
         // same as `get`
-        expression.addLazyFunction("has", -1, (c, t, lv) ->
+        expression.addLazyFunction("has", (c, t, lv) ->
         {
             if (lv.size() == 0)
                 throw new InternalExpressionException("'has' requires parameters");
@@ -263,7 +263,7 @@ public class DataStructures {
         });
 
         // same as `get`
-        expression.addLazyFunction("put", -1, (c, t, lv) ->
+        expression.addLazyFunction("put", (c, t, lv) ->
         {
             if(lv.size()<2)
             {
@@ -302,7 +302,7 @@ public class DataStructures {
         });
 
         // same as `get`
-        expression.addLazyFunction("delete", -1, (c, t, lv) ->
+        expression.addLazyFunction("delete", (c, t, lv) ->
         {
             if (lv.size() == 0)
                 throw new InternalExpressionException("'delete' requires parameters");

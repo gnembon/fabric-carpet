@@ -2,7 +2,6 @@ package carpet.script.value;
 
 import carpet.fakes.InventoryBearerInterface;
 import carpet.script.CarpetContext;
-import carpet.script.LazyValue;
 import carpet.script.exception.InternalExpressionException;
 import carpet.script.exception.ThrowStatement;
 import carpet.script.exception.Throwables;
@@ -21,16 +20,16 @@ import net.minecraft.command.argument.NbtPathArgumentType;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.InventoryOwner;
 import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.mob.MobEntity;
-import net.minecraft.entity.passive.MerchantEntity;
-import net.minecraft.entity.passive.VillagerEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.inventory.Inventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.AbstractNbtList;
 import net.minecraft.nbt.AbstractNbtNumber;
 import net.minecraft.nbt.NbtCompound;
+import net.minecraft.nbt.NbtInt;
 import net.minecraft.nbt.NbtList;
+import net.minecraft.nbt.NbtLong;
+import net.minecraft.nbt.NbtNull;
 import net.minecraft.nbt.StringNbtReader;
 import net.minecraft.nbt.NbtString;
 import net.minecraft.nbt.NbtElement;
@@ -326,30 +325,31 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
         return slot;
     }
 
+    private static Value decodeSimpleTag(NbtElement t)
+    {
+        if (t instanceof AbstractNbtNumber)
+        {
+            if (t instanceof NbtLong || t instanceof NbtInt) // short and byte will never exceed float's precision, even int won't
+            {
+                return NumericValue.of(((AbstractNbtNumber) t).longValue());
+            }
+            return NumericValue.of(((AbstractNbtNumber) t).numberValue());
+        }
+        if (t instanceof NbtString)
+            return StringValue.of(t.asString());
+        if (t instanceof NbtNull)
+            return Value.NULL;
+
+        throw new InternalExpressionException("How did we get here: Unknown nbt element class: "+t.getNbtType().getCrashReportName());
+
+    }
+
     private static Value decodeTag(NbtElement t)
     {
-        if (t instanceof NbtCompound)
+        if (t instanceof NbtCompound || t instanceof AbstractNbtList)
             return new NBTSerializableValue(() -> t);
-        if (t instanceof AbstractNbtNumber)
-            return new NumericValue(((AbstractNbtNumber) t).doubleValue());
-        // more can be done here
-        return new StringValue(t.asString());
+        return decodeSimpleTag(t);
     }
-
-    public Value toValue()
-    {
-        return decodeTagDeep(this.getTag());
-    }
-
-    public static Value fromValue(Value v)
-    {
-        if (v instanceof NBTSerializableValue)
-            return v;
-        if (v instanceof NullValue)
-            return Value.NULL;
-        return NBTSerializableValue.parseString(v.getString(), true);
-    }
-
 
     private static Value decodeTagDeep(NbtElement t)
     {
@@ -373,10 +373,21 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
             }
             return ListValue.wrap(elems);
         }
-        if (t instanceof AbstractNbtNumber)
-            return new NumericValue(((AbstractNbtNumber) t).doubleValue());
-        // more can be done here
-        return new StringValue(t.asString());
+        return decodeSimpleTag(t);
+    }
+
+    public Value toValue()
+    {
+        return decodeTagDeep(this.getTag());
+    }
+
+    public static Value fromValue(Value v)
+    {
+        if (v instanceof NBTSerializableValue)
+            return v;
+        if (v instanceof NullValue)
+            return Value.NULL;
+        return NBTSerializableValue.parseString(v.getString(), true);
     }
 
     public NbtElement getTag()

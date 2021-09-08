@@ -67,7 +67,7 @@ public class Threading
         });
 
         // lazy cause expr is evaluated in the same type
-        expression.addLazyFunction("synchronize", -1, (c, t, lv) ->
+        expression.addLazyFunction("synchronize", (c, t, lv) ->
         {
             if (lv.size() == 0) throw new InternalExpressionException("'synchronize' require at least an expression to synchronize");
             Value lockValue = Value.NULL;
@@ -85,7 +85,7 @@ public class Threading
         });
 
         // lazy since exception expression is very conditional
-        expression.addLazyFunction("sleep", -1, (c, t, lv) ->
+        expression.addLazyFunction("sleep", (c, t, lv) ->
         {
             long time = lv.isEmpty()?0L:NumericValue.asNumber(lv.get(0).evalValue(c)).getLong();
             boolean interrupted = false;
