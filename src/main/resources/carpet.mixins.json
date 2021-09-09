@@ -58,6 +58,8 @@
     "ChunkTicketManager_spawnChunksMixin",
     "ServerWorld_spawnChunksMixin",
 
+    "LivingEntityMixin",
+
     "MobEntityMixin",
     "EntityTrackerEntry_leashFixMixin",
 
@@ -86,7 +88,9 @@
     "PistonHandler_pushLimitMixin",
     "PoweredRailBlock_powerLimitMixin",
     "LivingEntity_maxCollisionsMixin",
+    "World_getOtherEntitiesLimited",
     "CoralBlockMixin",
+    "CoralFanBlockMixin",
     "CoralFeatureMixin",
     "BuddingAmethystBlock_movableAmethystMixin",
     "FluidBlock_renewableBlackstoneMixin",
@@ -134,6 +138,7 @@
     "CauldronBlock_stackableSBoxesMixin",
     "AbstractCauldronBlock_stackableSBoxesMixin",
     "Slot_stackableSBoxesMixin",
+    "ScreenHandler_stackableSBoxesMixin",
     "ItemEntityMixin",
     "TntBlockMixin",
     "ExplosionMixin",

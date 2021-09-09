@@ -135,8 +135,18 @@ public class EntityPlayerMPFake extends ServerPlayerEntity
             this.getServerWorld().getChunkManager().updatePosition(this);
             onTeleportationDone(); //<- causes hard crash but would need to be done to enable portals // not as of 1.17
         }
-        super.tick();
-        this.playerTick();
+        try
+        {
+            super.tick();
+            this.playerTick();
+        }
+        catch (NullPointerException ignored)
+        {
+            // happens with that paper port thingy - not sure what that would fix, but hey
+            // the game not gonna crash violently.
+        }
+
+
     }
 
     private void shakeOff()

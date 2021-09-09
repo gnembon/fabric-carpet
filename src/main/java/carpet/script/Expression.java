@@ -33,8 +33,6 @@ import carpet.script.value.FunctionValue;
 import carpet.script.value.NumericValue;
 import carpet.script.value.StringValue;
 import carpet.script.value.Value;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 
 import java.math.BigInteger;
@@ -98,7 +96,7 @@ public class Expression
         functionalEquivalence.put(operator, function);
     }
 
-    private final Map<String, Value> constants = ImmutableMap.of(
+    private final Map<String, Value> constants = Map.of(
             "euler", Arithmetic.euler,
             "pi", Arithmetic.PI,
             "null", Value.NULL,
@@ -480,6 +478,39 @@ public class Expression
     public void addLazyFunction(String name, int num_params, TriFunction<Context, Context.Type, List<LazyValue>, LazyValue> fun)
     {
         functions.put(name, new AbstractLazyFunction(num_params, name)
+        {
+            @Override
+            public boolean pure() {
+                return false;
+            }
+
+            @Override
+            public boolean transitive() {
+                return false;
+            }
+
+            @Override
+            public LazyValue lazyEval(Context c, Context.Type i, Expression e, Tokenizer.Token t, List<LazyValue> lazyParams)
+            {
+                ILazyFunction.checkInterrupts();
+                if (num_params >= 0 && lazyParams.size() != num_params)
+                    throw new InternalExpressionException("'"+name+"' requires "+num_params+" parameters, "+lazyParams.size()+" provided.");
+
+                try
+                {
+                    return fun.apply(c, i, lazyParams);
+                }
+                catch (RuntimeException exc)
+                {
+                    throw handleCodeException(c, exc, e, t);
+                }
+            }
+        });
+    }
+
+    public void addLazyFunction(String name, TriFunction<Context, Context.Type, List<LazyValue>, LazyValue> fun)
+    {
+        functions.put(name, new AbstractLazyFunction(-1, name)
         {
             @Override
             public boolean pure() {
@@ -972,7 +1003,7 @@ public class Expression
                     final ExpressionNode v1 = nodeStack.pop();
                     final ExpressionNode v2 = nodeStack.pop();
                     LazyValue result = (c,t) -> operators.get(token.surface).lazyEval(c, t,this, token, v2.op, v1.op).evalValue(c, t);
-                    nodeStack.push(new ExpressionNode(result, ImmutableList.of(v2, v1), token ));
+                    nodeStack.push(new ExpressionNode(result, List.of(v2, v1), token ));
                     break;
                 case VARIABLE:
                     Value constant = getConstantFor(token.surface);
@@ -1164,20 +1195,28 @@ public class Expression
         for (Map.Entry<String, String> pair : functionalEquivalence.entrySet()) {
             String operator = pair.getKey();
             String function = pair.getValue();
-            if (symbol.equals(operator) || symbol.equals(function)) {
-                List<ExpressionNode> newargs = new ArrayList<>();
-                boolean contracted = false;
-                for (ExpressionNode arg : node.args) {
-                    String argsymbol = arg.token.surface; // child is unoptimized and also same class
-                    if ((argsymbol.equals(operator) || argsymbol.equals(function)) && (!(arg.op instanceof LazyValue.ContextFreeLazyValue))) {
-                        newargs.addAll(arg.args);
-                        contracted = true;
-                    } else {
-                        newargs.add(arg);
-                    }
-                }
-                if (contracted) {
+            if ((symbol.equals(operator) || symbol.equals(function)) && node.args.size() > 0)
+            {
+                boolean leftOptimizable = operators.get(operator).isLeftAssoc();
+                ExpressionNode optimizedChild = node.args.get(leftOptimizable?0:(node.args.size()-1));
+                String type = optimizedChild.token.surface;
+                if ((type.equals(operator) || type.equals(function)) && (!(optimizedChild.op instanceof LazyValue.ContextFreeLazyValue)))
+                {
                     optimized = true;
+                    List<ExpressionNode> newargs = new ArrayList<>();
+                    if (leftOptimizable)
+                    {
+                        newargs.addAll(optimizedChild.args);
+                        for (int i = 1; i < node.args.size(); i++)
+                            newargs.add(node.args.get(i));
+                    }
+                    else
+                    {
+                        for (int i = 0; i < node.args.size()-1; i++)
+                            newargs.add(node.args.get(i));
+                        newargs.addAll(optimizedChild.args);
+                    }
+
                     if (CarpetSettings.scriptsDebugging)
                         CarpetScriptServer.LOG.info(" - " + symbol + "(" + node.args.size() + ") => " + function + "(" + newargs.size() + ") at line " + (node.token.lineno + 1) + ", node depth " + indent);
                     node.token.morph(Tokenizer.Token.TokenType.FUNCTION, function);
@@ -1210,6 +1249,7 @@ public class Expression
             if (arg.op instanceof LazyValue.ContextFreeLazyValue) continue;
             return optimized;
         }
+        // a few exceptions which we don't implement in the framework for simplicity for now
         if (!operation.pure())
         {
             if (symbol.equals("->") && expectedType == Context.Type.MAPDEF)
@@ -1218,6 +1258,14 @@ public class Expression
             }
             else {
                 return optimized;
+            }
+        }
+        if (operation.pure())
+        {
+            // element access with constant elements will always resolve the same way.
+            if (symbol.equals(":") && expectedType == Context.Type.LVALUE)
+            {
+                expectedType = Context.Type.NONE;
             }
         }
         List<LazyValue> args = new ArrayList<>(node.args.size());

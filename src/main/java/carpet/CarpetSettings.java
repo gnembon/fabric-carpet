@@ -43,7 +43,7 @@ import static carpet.settings.RuleCategory.CLIENT;
 @SuppressWarnings("CanBeFinal")
 public class CarpetSettings
 {
-    public static final String carpetVersion = "1.4.44+v210714";
+    public static final String carpetVersion = "1.4.45+v210811";
     public static final Logger LOG = LogManager.getLogger("carpet");
     public static ThreadLocal<Boolean> skipGenerationChecks = ThreadLocal.withInitial(() -> false);
     public static ThreadLocal<Boolean> impendingFillSkipUpdates = ThreadLocal.withInitial(() -> false);
@@ -757,9 +757,18 @@ public class CarpetSettings
             validate = LightBatchValidator.class
     )
     public static int lightEngineMaxBatchSize = 5;
-    
-    @Rule(desc = "Coral structures will grow with bonemeal from coral plants", category = FEATURE)
-    public static boolean renewableCoral = false;
+
+    public enum RenewableCoralMode {
+        FALSE,
+        EXPANDED,
+        TRUE;
+    }
+    @Rule(
+            desc = "Coral structures will grow with bonemeal from coral plants",
+            extra = "Expanded also allows growing from coral fans for sustainable farming outside of warm oceans",
+            category = FEATURE
+    )
+    public static RenewableCoralMode renewableCoral = RenewableCoralMode.FALSE;
 
     @Rule(
             desc = "Nether basalt generator without soul sand below ",

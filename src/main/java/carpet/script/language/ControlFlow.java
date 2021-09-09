@@ -13,8 +13,8 @@ import carpet.script.value.MapValue;
 import carpet.script.value.NumericValue;
 import carpet.script.value.StringValue;
 import carpet.script.value.Value;
-import com.google.common.collect.ImmutableMap;
 
+import java.util.Map;
 import java.util.stream.Collectors;
 
 public class ControlFlow {
@@ -38,7 +38,7 @@ public class ControlFlow {
 
 
         // obvious lazy due to conditional evaluation of arguments
-        expression.addLazyFunction("if", -1, (c, t, lv) ->
+        expression.addLazyFunction("if", (c, t, lv) ->
         {
             if ( lv.size() < 2 )
                 throw new InternalExpressionException("'if' statement needs to have at least one condition and one case");
@@ -79,7 +79,7 @@ public class ControlFlow {
         });
 
         // needs to be lazy since execution of parameters but first one are conditional
-        expression.addLazyFunction("try", -1, (c, t, lv) ->
+        expression.addLazyFunction("try", (c, t, lv) ->
         {
             if (lv.size()==0)
                 throw new InternalExpressionException("'try' needs at least an expression block, and either a catch_epr, or a number of pairs of filters and catch_expr");
@@ -106,7 +106,7 @@ public class ControlFlow {
                 LazyValue __ = c.getVariable("_");
                 c.setVariable("_", (__c, __t) -> ret.data.reboundedTo("_"));
                 LazyValue _trace = c.getVariable("_trace");
-                c.setVariable("_trace", (__c, __t) -> MapValue.wrap(ImmutableMap.of(
+                c.setVariable("_trace", (__c, __t) -> MapValue.wrap(Map.of(
                         StringValue.of("stack"), ListValue.wrap(ret.stack.stream().map(f -> ListValue.of(
                                 StringValue.of(f.getModule().getName()),
                                 StringValue.of(f.getString()),

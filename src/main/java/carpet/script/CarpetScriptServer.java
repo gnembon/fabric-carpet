@@ -90,7 +90,7 @@ public class CarpetScriptServer
      * @param app The {@link BundledModule} of the app.
      */
     public static void registerSettingsApp(BundledModule app) {
-    	ruleModuleData.add(app);
+        ruleModuleData.add(app);
     }
 
     static
@@ -375,7 +375,7 @@ public class CarpetScriptServer
     {
         CarpetProfiler.ProfilerToken token;
         token = CarpetProfiler.start_section(null, "Scarpet schedule", CarpetProfiler.TYPE.GENERAL);
-        events.tick();
+        events.handleEvents.getWhileDisabled( () -> {events.tick(); return null;});
         CarpetProfiler.end_current_section(token);
         token = CarpetProfiler.start_section(null, "Scarpet app data", CarpetProfiler.TYPE.GENERAL);
         for (CarpetScriptHost host : modules.values())
@@ -412,16 +412,11 @@ public class CarpetScriptServer
         });
     }
 
-    static class TransferData
+    private static record TransferData(boolean perUser, Predicate<ServerCommandSource> commandValidator, boolean isRuleApp)
     {
-        boolean perUser;
-        Predicate<ServerCommandSource> commandValidator;
-        boolean isRuleApp;
         private TransferData(CarpetScriptHost host)
         {
-            perUser = host.perUser;
-            commandValidator = host.commandValidator;
-            isRuleApp = host.isRuleApp;
+            this(host.perUser, host.commandValidator, host.isRuleApp);
         }
     }
 

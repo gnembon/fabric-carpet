@@ -101,10 +101,12 @@ public abstract class Fluff
             return name;
         }
 
+        @Override
         public int getNumParams() {
             return numParams;
         }
 
+        @Override
         public boolean numParamsVaries() {
             return numParams < 0;
         }
@@ -162,6 +164,7 @@ public abstract class Fluff
             return new LazyValue()
             { // eager evaluation always ignores the required type and evals params by none default
                 private List<Value> params;
+                @Override
                 public Value evalValue(Context c, Context.Type type)
                 {
                     ILazyFunction.checkInterrupts();
@@ -202,10 +205,12 @@ public abstract class Fluff
             this.leftAssoc = leftAssoc;
         }
 
+        @Override
         public int getPrecedence() {
             return precedence;
         }
 
+        @Override
         public boolean isLeftAssoc() {
             return leftAssoc;
         }

@@ -13,5 +13,5 @@ public interface RecipeManagerInterface
      * Gets all the recipes for a given item. Also used for {@link carpet.helpers.HopperCounter#guessColor} to guess the
      * colour of an item to display it prettily
      */
-    List<Recipe<?>> getAllMatching(RecipeType type, Identifier output);
+    List<Recipe<?>> getAllMatching(RecipeType<?> type, Identifier output);
 }

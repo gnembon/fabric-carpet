@@ -20,12 +20,23 @@ public class Arithmetic {
         expression.addUnaryFunction("fact", (v) ->
         {
             long number = NumericValue.asNumber(v).getLong();
-            long factorial = 1;
+            if (number < 21)
+            {
+                long factorial = 1;
+                for (int i = 1; i <= number; i++)
+                {
+                    factorial = factorial * i;
+                }
+                return new NumericValue(factorial);
+            }
+            // values over 21 will exceed long limits
+            double factorial = 1.0;
             for (int i = 1; i <= number; i++)
             {
                 factorial = factorial * i;
             }
             return new NumericValue(factorial);
+
         });
         expression.addMathematicalUnaryFunction("sin",    (d) -> Math.sin(Math.toRadians(d)));
         expression.addMathematicalUnaryFunction("cos",    (d) -> Math.cos(Math.toRadians(d)));

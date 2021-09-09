@@ -9,7 +9,6 @@ import carpet.script.exception.Throwables;
 import carpet.script.value.MapValue;
 import carpet.script.value.StringValue;
 import carpet.script.value.Value;
-import com.google.common.collect.ImmutableMap;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonParser;
@@ -523,7 +522,7 @@ public class FileArgument
             Throwable exc = e;
             if(e.getCause() != null)
                 exc = e.getCause();
-            throw new ThrowStatement(MapValue.wrap(ImmutableMap.of(
+            throw new ThrowStatement(MapValue.wrap(Map.of(
                     StringValue.of("error"), StringValue.of(exc.getMessage()),
                     StringValue.of("path"), StringValue.of(filePath.toString())
             )), Throwables.JSON_ERROR);

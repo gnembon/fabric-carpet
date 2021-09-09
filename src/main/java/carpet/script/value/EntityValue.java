@@ -412,14 +412,14 @@ public class EntityValue extends Value
             throw new InternalExpressionException("Cannot fetch '"+what+"' with these arguments");
         }
     }
-    private static final Map<String, EquipmentSlot> inventorySlots = new HashMap<String, EquipmentSlot>(){{
-        put("mainhand", EquipmentSlot.MAINHAND);
-        put("offhand", EquipmentSlot.OFFHAND);
-        put("head", EquipmentSlot.HEAD);
-        put("chest", EquipmentSlot.CHEST);
-        put("legs", EquipmentSlot.LEGS);
-        put("feet", EquipmentSlot.FEET);
-    }};
+    private static final Map<String, EquipmentSlot> inventorySlots = Map.of(
+        "mainhand", EquipmentSlot.MAINHAND,
+        "offhand", EquipmentSlot.OFFHAND,
+        "head", EquipmentSlot.HEAD,
+        "chest", EquipmentSlot.CHEST,
+        "legs", EquipmentSlot.LEGS,
+        "feet", EquipmentSlot.FEET
+    );
 
     private static final Map<String, BiFunction<Entity, Value, Value>> featureAccessors = new HashMap<String, BiFunction<Entity, Value, Value>>() {{
         //put("test", (e, a) -> a == null ? Value.NULL : new StringValue(a.getString()));
@@ -1088,7 +1088,7 @@ public class EntityValue extends Value
             }
             List<Value> coords = ((ListValue) v).getItems();
             double dx = NumericValue.asNumber(coords.get(0)).getDouble();
-            double dy = NumericValue.asNumber(coords.get(0)).getDouble();
+            double dy = NumericValue.asNumber(coords.get(1)).getDouble();
             double dz = NumericValue.asNumber(coords.get(2)).getDouble();
             e.setVelocity(dx, dy, dz);
             updateVelocity(e, MathHelper.absMax(MathHelper.absMax(dx, dy), dz));
