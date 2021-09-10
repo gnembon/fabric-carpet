@@ -56,10 +56,10 @@ public class Sys {
                 if (num.isInteger()) return new NumericValue(num.getLong());
                 return new NumericValue(num.getDouble());
             }
-			if (v instanceof ListValue listVal)
-			{
-				return new NumericValue(listVal.length());
-			}
+            if (v instanceof ListValue listVal)
+            {
+                return new NumericValue(listVal.length());
+            }
             try
             {
                 return new NumericValue(v.getString());
