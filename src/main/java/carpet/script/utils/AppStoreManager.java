@@ -7,7 +7,7 @@ import carpet.script.exception.InternalExpressionException;
 import carpet.script.value.MapValue;
 import carpet.script.value.StringValue;
 import carpet.script.value.Value;
-import carpet.settings.ParsedRule;
+import carpet.settings.CarpetRule;
 import carpet.settings.Validator;
 import carpet.utils.Messenger;
 import com.google.gson.JsonArray;
@@ -58,7 +58,7 @@ public class AppStoreManager
 
     public static class ScarpetAppStoreValidator extends Validator<String>
     {
-        @Override public String validate(ServerCommandSource source, ParsedRule<String> currentRule, String newValue, String string)
+        @Override public String validate(ServerCommandSource source, CarpetRule<String> currentRule, String newValue, String string)
         {
             APP_STORE_ROOT.sealed = false;
             APP_STORE_ROOT.children = new HashMap<>();

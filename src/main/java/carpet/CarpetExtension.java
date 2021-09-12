@@ -7,6 +7,7 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
 
+import java.util.Collections;
 import java.util.Map;
 
 public interface CarpetExtension
@@ -115,10 +116,10 @@ public interface CarpetExtension
      * 
      * @param lang A {@link String} being the language id selected by the user
      * @return A {@link Map<String, String>} containing the string key with it's 
-     *         respective translation {@link String} or {@link null} if not available
+     *         respective translation {@link String} or an empty map if not available
      * 
      */
-    default Map<String, String> canHasTranslations(String lang) { return null;}
+    default Map<String, String> canHasTranslations(String lang) { return Collections.emptyMap();}
 
     /**
      * Handles each call that creates / parses the scarpet expression.

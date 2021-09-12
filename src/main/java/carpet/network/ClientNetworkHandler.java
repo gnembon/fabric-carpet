@@ -4,7 +4,8 @@ import carpet.CarpetServer;
 import carpet.CarpetExtension;
 import carpet.CarpetSettings;
 import carpet.helpers.TickSpeed;
-import carpet.settings.ParsedRule;
+import carpet.settings.CarpetRule;
+import carpet.settings.InvalidRuleValueException;
 import carpet.settings.SettingsManager;
 import io.netty.buffer.Unpooled;
 import net.minecraft.client.network.ClientPlayerEntity;
@@ -22,7 +23,7 @@ import java.util.function.BiConsumer;
 
 public class ClientNetworkHandler
 {
-    private static final Map<String, BiConsumer<ClientPlayerEntity, NbtElement>> dataHandlers = new HashMap<String, BiConsumer<ClientPlayerEntity, NbtElement>>();
+    private static final Map<String, BiConsumer<ClientPlayerEntity, NbtElement>> dataHandlers = new HashMap<>();
     static
     {
         dataHandlers.put("Rules", (p, t) -> {
@@ -57,11 +58,11 @@ public class ClientNetworkHandler
                     manager = CarpetServer.settingsManager;
                     ruleName = ruleKey;
                 }
-                ParsedRule<?> rule = (manager != null) ? manager.getRule(ruleName) : null;
+                CarpetRule<?> rule = (manager != null) ? manager.getCarpetRule(ruleName) : null;
                 if (rule != null)
                 {
                     String value = ruleNBT.getString("Value");
-                    try { rule.set(null, value); } catch (Exception ignored) { }
+                    try { rule.set(null, value); } catch (InvalidRuleValueException ignored) { }
                 }
             }
         });

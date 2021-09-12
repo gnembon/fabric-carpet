@@ -115,10 +115,6 @@ public class CarpetServer // static for now - easier to handle all around the co
         extensions.forEach(e -> e.onTick(server));
     }
 
-    @Deprecated
-    public static void registerCarpetCommands(CommandDispatcher<ServerCommandSource> dispatcher) {
-    }
-
     public static void registerCarpetCommands(CommandDispatcher<ServerCommandSource> dispatcher, CommandManager.RegistrationEnvironment environment)
     {
         settingsManager.registerCommand(dispatcher);

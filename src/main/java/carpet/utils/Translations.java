@@ -11,32 +11,33 @@ import org.apache.commons.io.IOUtils;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
 public class Translations
 {
-    private static Map<String, String> translationMap;
+    private static Map<String, String> translationMap = Map.of();
 
     public static String tr(String key)
     {
-        return translationMap == null ? key : translationMap.getOrDefault(key, key);
+        return translationMap.getOrDefault(key, key);
     }
 
     public static String tr(String key, String str)
     {
-        return translationMap == null ? str : translationMap.getOrDefault(key, str);
+        return translationMap.getOrDefault(key, str);
     }
 
     public static boolean hasTranslations()
     {
-        return translationMap != null;
+        return !translationMap.isEmpty();
     }
 
     public static boolean hasTranslation(String key)
     {
-        return translationMap != null && translationMap.containsKey(key);
+        return translationMap.containsKey(key);
     }
 
     public static Map<String, String> getTranslationFromResourcePath(String path)
@@ -59,7 +60,7 @@ public class Translations
     {
         if (CarpetSettings.language.equalsIgnoreCase("none"))
         {
-            translationMap = null;
+            translationMap = Collections.emptyMap();
             return;
         }
         Map<String, String> translations = new HashMap<>();
@@ -69,18 +70,15 @@ public class Translations
         for (CarpetExtension ext : CarpetServer.extensions)
         {
             Map<String, String> extMappings = ext.canHasTranslations(CarpetSettings.language);
-            if (extMappings != null)
+            extMappings.forEach((key, value) ->
             {
-                extMappings.forEach((key, value) ->
-                {
-                    if (!translations.containsKey(key)) translations.put(key, value);
-                });
-            }
+                if (!translations.containsKey(key)) translations.put(key, value);
+            });
         }
         translations.entrySet().removeIf(e -> e.getKey().startsWith("//"));
         if (translations.isEmpty())
         {
-            translationMap = null;
+            translationMap = Collections.emptyMap();
             return;
         }
         translationMap = translations;

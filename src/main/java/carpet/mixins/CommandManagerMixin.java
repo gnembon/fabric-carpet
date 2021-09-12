@@ -25,9 +25,8 @@ public abstract class CommandManagerMixin
     private CommandDispatcher<ServerCommandSource> dispatcher;
 
     @Inject(method = "<init>", at = @At("RETURN"))
-    private void onRegister(CommandManager.RegistrationEnvironment arg, CallbackInfo ci) {
-        CarpetServer.registerCarpetCommands(this.dispatcher);
-        CarpetServer.registerCarpetCommands(this.dispatcher, arg);
+    private void onRegister(CommandManager.RegistrationEnvironment env, CallbackInfo ci) {
+        CarpetServer.registerCarpetCommands(this.dispatcher, env);
     }
 
     @Inject(method = "execute", at = @At("HEAD"))

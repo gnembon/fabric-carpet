@@ -15,14 +15,12 @@ import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
 
 import net.fabricmc.api.EnvType;
 import net.fabricmc.loader.api.FabricLoader;
-import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.ServerTask;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.BaseText;
 import net.minecraft.util.WorldSavePath;
-import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.util.TriConsumer;
 
 import java.io.BufferedReader;
@@ -36,13 +34,14 @@ import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import static carpet.utils.Translations.tr;
@@ -58,20 +57,37 @@ import static net.minecraft.server.command.CommandManager.literal;
  */
 public class SettingsManager
 {
-    private Map<String, ParsedRule<?>> rules = new HashMap<>();
+    private final Map<String, CarpetRule<?>> rules = new HashMap<>();
     /**
-     * Whether or not this {@link SettingsManager} is locked. That is specified
-     * by writing "locked" at the beginning of the settings file. May not
-     * correctly react to changes.
+     * @deprecated Use {@link #locked()} instead
      */
+    @Deprecated(forRemoval = true) //to private (or protected?)
     public boolean locked;
     private final String version;
     private final String identifier;
     private final String fancyName;
     private MinecraftServer server;
-    private List<TriConsumer<ServerCommandSource, ParsedRule<?>, String>> observers = new ArrayList<>();
-    private static List<TriConsumer<ServerCommandSource, ParsedRule<?>, String>> staticObservers = new ArrayList<>();
-    static record ConfigReadResult(Map<String, String> ruleMap, boolean locked) {}
+    private final List<RuleObserver> observers = new ArrayList<>();
+    private static final List<RuleObserver> staticObservers = new ArrayList<>();
+    static record ConfigFileData(Map<String, String> ruleMap, boolean locked, List<String> comments) {}
+    
+    /**
+     * <p>Defines a class that can be notified about a {@link CarpetRule} changing.</p>
+     * 
+     * @see #ruleChanged(ServerCommandSource, CarpetRule)
+     * @see SettingsManager#addRuleObserver(RuleObserver)
+     * @see SettingsManager#addGlobalRuleObserver(RuleObserver)
+     */
+    @FunctionalInterface
+    public static interface RuleObserver {
+        /**
+         * @param source The {@link ServerCommandSource} that likely originated this change, and should be the notified source for further
+         *               messages. Can be {@code null} if there was none and the operation shouldn't send feedback.
+         * @param changedRule The {@link CarpetRule} that changed. Use {@link CarpetRule#value() changedRule.value()} to get the rule's value,
+         *                    and pass it to {@link RuleHelper#toRuleString(Object)} to get the {@link String} version of it
+         */
+        void ruleChanged(ServerCommandSource source, CarpetRule<?> changedRule); //TODO should this get value? If so need to change smth for addObserver
+    }
 
     /**
      * Creates a new {@link SettingsManager} without a fancy name.
@@ -82,14 +98,11 @@ public class SettingsManager
      */
     public SettingsManager(String version, String identifier)
     {
-        this.version = version;
-        this.identifier = identifier;
-        this.fancyName = identifier;
+        this(version, identifier, identifier);
     }
 
     /**
      * Creates a new {@link SettingsManager} with a fancy name
-     * @see #SettingsManager(String, String)
      * 
      * @param version A {@link String} with the mod's version
      * @param identifier A {@link String} with the mod's id, will be the command name
@@ -100,6 +113,58 @@ public class SettingsManager
         this.version = version;
         this.identifier = identifier;
         this.fancyName = fancyName;
+    }
+    
+    /**
+     * <p>Adds a custom rule observer to changes in rules from 
+     * <b>this specific</b> {@link SettingsManager} instance.</p>
+     * 
+     * @see SettingsManager#addGlobalRuleObserver(RuleObserver)
+     * 
+     * @param observer A {@link RuleObserver} that will be called with
+     *                 the used {@link ServerCommandSource} and the changed
+     *                 {@link CarpetRule}.
+     */
+    public void addRuleObserver(RuleObserver observer)
+    {
+        observers.add(observer);
+    }
+    
+    /**
+     * Adds a custom rule observer to changes in rules from 
+     * <b>any</b> {@link SettingsManager} instance (unless their implementation disallows it).
+     * @see SettingsManager#addRuleObserver(TriConsumer)
+     * 
+     * @param observer A {@link RuleObserver} that will be called with
+     *                 the used {@link ServerCommandSource}, and the changed
+     *                 {@link CarpetRule}.
+     */
+    public static void addGlobalRuleObserver(RuleObserver observer)
+    {
+        staticObservers.add(observer);
+    }
+
+    /**
+     * <p>Adds a custom rule observer to changes in rules from 
+     * <b>this specific</b> {@link SettingsManager} instance.</p>
+     * 
+     * <p>This <b>outdated</b> method may not be able to listen to all {@link CarpetRule} implementations</p>
+     * 
+     * @see SettingsManager#addGlobalRuleObserver(RuleObserver)
+     * 
+     * @param observer A {@link TriConsumer} that will be called with
+     *                 the used {@link ServerCommandSource}, the changed
+     *                 {@link ParsedRule} and a {@link String} being the
+     *                 value that the user typed.
+     * @deprecated Use {@link SettingsManager#addRuleObserver(RuleObserver)} instead.
+     */
+    @Deprecated(forRemoval = true) //to remove
+    public void addRuleObserver(TriConsumer<ServerCommandSource, ParsedRule<?>, String> observer)
+    {
+        observers.add((source, rule) -> {
+            if (rule instanceof ParsedRule<?> pr)
+                observer.accept(source, pr, RuleHelper.toRuleString(rule.value()));
+        });
     }
 
     /**
@@ -123,12 +188,12 @@ public class SettingsManager
 
     /**
      * Detaches the {@link MinecraftServer} of this {@link SettingsManager} and
-     * resets its {@link ParsedRule}s to their default values.<br>
+     * resets its {@link CarpetRule}s to their default values.<br>
      * This is handled automatically by Carpet
      */
     public void detachServer()
     {
-        for (ParsedRule<?> rule : rules.values()) rule.resetToDefault(null);
+        for (CarpetRule<?> rule : rules.values()) RuleHelper.resetToDefault(rule, null);
         server = null;
     }
 
@@ -137,77 +202,46 @@ public class SettingsManager
      * to this {@link SettingsManager} in order to handle them. 
      * @param settingsClass The class that will be analyzed
      */
-    public void parseSettingsClass(Class settingsClass)
+    public void parseSettingsClass(Class<?> settingsClass)
     {
-        rule: for (Field f : settingsClass.getDeclaredFields())
+        nextRule: for (Field field : settingsClass.getDeclaredFields())
         {
-            Rule rule = f.getAnnotation(Rule.class);
-            if (rule == null) continue;
-            ParsedRule<?> parsed = new ParsedRule<>(f, rule, this);
-            for (Class<? extends Condition> condition : rule.condition()) {
+            Rule annotation = field.getAnnotation(Rule.class);
+            if (annotation == null) continue;
+            CarpetRule<?> parsed = ParsedRule.of(field, annotation, this);
+            for (Class<? extends Condition> condition : annotation.condition()) { //Should this be moved to ParsedRule.of?
                 try
                 {
-                    Constructor<?> constr = condition.getDeclaredConstructor();
+                    Constructor<? extends Condition> constr = condition.getDeclaredConstructor();
                     constr.setAccessible(true);
-                    if (!((Condition) constr.newInstance()).isTrue())
-                        continue rule;
+                    if (!(constr.newInstance()).isTrue())
+                        continue nextRule;
                 }
                 catch (ReflectiveOperationException e)
                 {
-                    throw new RuntimeException(e);
+                    throw new IllegalArgumentException(e);
                 }
             }
-            rules.put(parsed.name, parsed);
+            rules.put(parsed.name(), parsed);
         }
     }
 
-    /**
-     * Adds a custom rule observer to changes in rules from 
-     * <b>this specific</b> {@link SettingsManager} instance.
-     * @see SettingsManager#addGlobalRuleObserver(TriConsumer)
-     * 
-     * @param observer A {@link TriConsumer} that will be called with
-     *                 the used {@link ServerCommandSource}, the changed
-     *                 {@link ParsedRule} and a {@link String} being the
-     *                 value that the user typed.
-     */
-    public void addRuleObserver(TriConsumer<ServerCommandSource, ParsedRule<?>, String> observer)
+    public void notifyRuleChanged(ServerCommandSource source, CarpetRule<?> rule) //TODO should this take a string? Or a T of new value? Or like this?
     {
-        observers.add(observer);
-    }
-    
-    /**
-     * Adds a custom rule observer to changes in rules from 
-     * <b>any</b> registered {@link SettingsManager} instance.
-     * @see SettingsManager#addRuleObserver(TriConsumer)
-     * 
-     * @param observer A {@link TriConsumer} that will be called with
-     *                 the used {@link ServerCommandSource}, the changed
-     *                 {@link ParsedRule} and a {@link String} being the
-     *                 value that the user typed.
-     */
-    public static void addGlobalRuleObserver(TriConsumer<ServerCommandSource, ParsedRule<?>, String> observer)
-    {
-        staticObservers.add(observer);
-    }
-
-
-    void notifyRuleChanged(ServerCommandSource source, ParsedRule<?> rule, String userTypedValue)
-    {
-        observers.forEach(observer -> observer.accept(source, rule, userTypedValue));
-        staticObservers.forEach(observer -> observer.accept(source, rule, userTypedValue));
+        observers.forEach(observer -> observer.ruleChanged(source, rule));
+        staticObservers.forEach(observer -> observer.ruleChanged(source, rule));
         ServerNetworkHandler.updateRuleWithConnectedClients(rule);
-        switchScarpetRuleIfNeeded(source, rule);
+        switchScarpetRuleIfNeeded(source, rule); //TODO move into rule
         if (CARPET_RULE_CHANGES.isNeeded()) CARPET_RULE_CHANGES.onCarpetRuleChanges(rule, source);
     }
     
-    private void switchScarpetRuleIfNeeded(ServerCommandSource source, ParsedRule<?> rule)
+    private void switchScarpetRuleIfNeeded(ServerCommandSource source, CarpetRule<?> carpetRule) //TODO remove. This should be handled by the rule
     {
-        if (!rule.scarpetApp.isEmpty())
+        if (carpetRule instanceof ParsedRule<?> rule && !rule.scarpetApp.isEmpty())
         {
-            if (rule.getBoolValue() || (rule.type == String.class && !rule.get().equals("false")))
+            if (RuleHelper.getBooleanValue(rule) || (rule.type() == String.class && !rule.value().equals("false")))
             {
-                CarpetServer.scriptServer.addScriptHost(source, rule.scarpetApp, s -> canUseCommand(s, rule.get()), false, false, true, null);
+                CarpetServer.scriptServer.addScriptHost(source, rule.scarpetApp, s -> canUseCommand(s, rule.value()), false, false, true, null);
             } else {
                 CarpetServer.scriptServer.removeScriptHost(source, rule.scarpetApp, false, true);
             }
@@ -215,101 +249,133 @@ public class SettingsManager
     }
     
     /**
-     * Initializes Scarpet rules in this {@link SettingsManager}, if any.<br>
-     * This is handled automatically by Carpet.
+     * <p>Initializes Scarpet rules in this {@link SettingsManager}, if any.</p>
+     * <p>This is handled automatically by Carpet.</p>
+     * @deprecated This has never been public API and will SoonTM be handled by the rules themselves
      */
-    public void initializeScarpetRules() {
-        for (ParsedRule<?> rule : rules.values())
+    @Deprecated(forRemoval = true)
+    public void initializeScarpetRules() { //TODO try remove
+        for (CarpetRule<?> rule : rules.values())
         {
-            if (!rule.scarpetApp.isEmpty()) {
-                switchScarpetRuleIfNeeded(server.getCommandSource(), rule);
+            if (rule instanceof ParsedRule<?> pr && !pr.scarpetApp.isEmpty()) {
+                switchScarpetRuleIfNeeded(server.getCommandSource(), pr);
             }
         }
     }
 
     /**
-     * @return An {@link Iterable} list of all categories
-     *         from rules in this {@link SettingsManager}
+     * @return An {@link Iterable} with all categories
+     *         that the rules in this {@link SettingsManager} have.
+     * @implNote This method doesn't cache the result, so each call loops through all rules and finds all present categories
      */
     public Iterable<String> getCategories()
     {
-        Set<String> categories = new HashSet<>();
-        getRules().stream().map(r -> r.categories).forEach(categories::addAll);
-        return categories;
+        return getCarpetRules().stream().map(CarpetRule::categories).<String>mapMulti(Collection::forEach).collect(Collectors.toSet());
     }
 
-
     /**
-     * Gets a registered rule in this {@link SettingsManager} by its name.
-     * @param name The rule name
-     * @return The {@link ParsedRule} with that name
+     * <p>Gets a registered rule in this {@link SettingsManager}.</p>
+     * 
+     * @param name The name of the rule to get
+     * @return A {@link CarpetRule} with the provided name or {@code null} if none in this {@link SettingsManager} matches
      */
-    public ParsedRule<?> getRule(String name)
+    public CarpetRule<?> getCarpetRule(String name)
     {
         return rules.get(name);
     }
+    
+    /**
+     * @return An unmodifiable {@link Collection} of the registered rules in this {@link SettingsManager}.
+     */
+    public Collection<CarpetRule<?>> getCarpetRules()
+    {
+        return Collections.unmodifiableCollection(rules.values());
+    }
 
     /**
-     * @return A {@link Collection} of the registered rules in this
-     *         {@link SettingsManager}.
+     * <p>Adds a {@link CarpetRule} to this {@link SettingsManager}.</p>
+     * 
+     * <p>Useful when having different {@link CarpetRule} implementations instead of a class of {@code static},
+     * annotated fields.</p>
+     * 
+     * @param rule The {@link CarpetRule} to add
+     * @throws UnsupportedOperationException If a rule with that name is already present in this {@link SettingsManager}
      */
-    public Collection<ParsedRule<?>> getRules()
+    public void addCarpetRule(CarpetRule<?> rule) {
+        if (rules.containsKey(rule.name()))
+            throw new UnsupportedOperationException(fancyName + " settings manager already contains a rule with that name!");
+        rules.put(rule.name(), rule);
+    }
+
+    private Path getFile()
+    {
+        return server.getSavePath(WorldSavePath.ROOT).resolve(identifier + ".conf");
+    }
+    
+    private Collection<CarpetRule<?>> getRulesSorted()
     {
         return rules.values().stream().sorted().collect(Collectors.toList());
     }
 
     /**
-     * @return A {@link Collection} of {@link ParsedRule}s that have defaults
-     *         for this world different than the rule's default value.
+     * <p>Gets a registered {@link ParsedRule} in this {@link SettingsManager} by its name.</p>
+     * @param name The rule name
+     * @return The {@link ParsedRule} with that name
+     * @deprecated Use {@link #getCarpetRule(String)} instead. This method is not able to return rules not implemented by {@link ParsedRule}
      */
-    public Collection<ParsedRule<?>> findStartupOverrides()
+    @Deprecated(forRemoval = true)
+    public ParsedRule<?> getRule(String name)
     {
-        Set<String> defaults = readSettingsFromConf(getFile()).ruleMap().keySet();
-        return rules.values().stream().filter(r -> defaults.contains(r.name)).
-                sorted().collect(Collectors.toList());
+        return rules.get(name) instanceof ParsedRule<?> pr ? pr : null;
     }
 
     /**
-     * @return A collection of {@link ParsedRule} that are not in 
-     *         their default value
+     * @return A {@link Collection} of the registered {@link ParsedRule}s in this {@link SettingsManager}.
+     * @deprecated Use {@link #getCarpetRules()} instead. This method won't be able to return rules not implemented by {@link ParsedRule}
      */
-    public Collection<ParsedRule<?>> getNonDefault()
+    @Deprecated(forRemoval = true)
+    public Collection<ParsedRule<?>> getRules()
     {
-        return rules.values().stream().filter(r -> !r.isDefault()).sorted().collect(Collectors.toList());
+        var parsedRuleClass = ParsedRule.class;
+        return rules.values().stream().filter(parsedRuleClass::isInstance).map(parsedRuleClass::cast).collect(Collectors.toUnmodifiableList());
     }
 
-    private Path getFile()
-    {
-        return server.getSavePath(WorldSavePath.ROOT).resolve(identifier+".conf");
-    }
 
     /**
-     * Disables all {@link ParsedRule} with the {@link RuleCategory#COMMAND} category,
+     * Disables all {@link CarpetRule}s with the {@link RuleCategory#COMMAND} category,
      * called when the {@link SettingsManager} is {@link #locked}.
      */
-    public void disableBooleanCommands()
+    private void disableBooleanCommands()
     {
-        for (ParsedRule<?> rule : rules.values())
+        for (CarpetRule<?> rule : rules.values())
         {
-            if (!rule.categories.contains(RuleCategory.COMMAND))
+            if (!rule.categories().contains(RuleCategory.COMMAND))
                 continue;
-            if (rule.type == boolean.class)
-                ((ParsedRule<Boolean>) rule).set(server.getCommandSource(), false, "false");
-            if (rule.type == String.class && rule.options.contains("false"))
-                ((ParsedRule<String>) rule).set(server.getCommandSource(), "false", "false");
+            try {
+                if (rule.suggestions().contains("false"))
+                    rule.set(server.getCommandSource(), "false");
+                else
+                    CarpetSettings.LOG.warn("Couldn't disable command rule "+ rule.name() + ": it doesn't suggest false as a valid option");
+            } catch (InvalidRuleValueException e) {
+                throw new IllegalStateException(e); // contract of CarpetRule.suggestions()
+            }
         }
     }
 
-
-    private void writeSettingsToConf(Map<String, String> values)
+    private void writeSettingsToConf(ConfigFileData data)
     {
         if (locked)
             return;
         try (BufferedWriter fw = Files.newBufferedWriter(getFile()))
         {
-            for (String key: values.keySet())
+            for (String comment : data.comments())
             {
-                fw.write(key+" "+values.get(key));
+                fw.write(comment);
+                fw.newLine();
+            }
+            for (String key: data.ruleMap().keySet())
+            {
+                fw.write(key + " " + data.ruleMap().get(key));
                 fw.newLine();
             }
         }
@@ -318,13 +384,12 @@ public class SettingsManager
             e.printStackTrace();
             CarpetSettings.LOG.error("[CM]: failed write "+identifier+".conf config file");
         }
-        ///todo is it really needed? resendCommandTree();
     }
 
     /**
      * Notifies all players that the commands changed by resending the command tree.
      */
-    public void notifyPlayersCommandsChanged()
+    public void notifyPlayersCommandsChanged() //TODO move
     {
         if (server == null || server.getPlayerManager() == null)
         {
@@ -342,7 +407,7 @@ public class SettingsManager
     }
 
     /**
-     * Returns whether the the {@link ServerCommandSource} can execute
+     * Returns whether the {@link ServerCommandSource} can execute
      * a command given the required permission level, according to
      * Carpet's standard for permissions.
      * @param source The origin {@link ServerCommandSource}
@@ -350,7 +415,7 @@ public class SettingsManager
      *                     {@link boolean} value or "ops".
      * @return Whether or not the {@link ServerCommandSource} meets the required level
      */
-    public static boolean canUseCommand(ServerCommandSource source, Object commandLevel)
+    public static boolean canUseCommand(ServerCommandSource source, Object commandLevel) //TODO fix docs
     {
         if (commandLevel instanceof Boolean) return (Boolean) commandLevel;
         String commandLevelString = commandLevel.toString();
@@ -392,11 +457,31 @@ public class SettingsManager
         return 0;
     }
 
+    /**
+     * <p>Returns whether or not this {@link SettingsManager} is locked, and any rules in it should therefore not be
+     * toggleable.</p>
+     * @return {@code true} if this {@link SettingsManager} is locked
+     */
+    public boolean locked() {
+        return locked;
+    }
+
+    private Collection<CarpetRule<?>> findStartupOverrides()
+    {
+        Set<String> defaults = readSettingsFromConf(getFile()).ruleMap().keySet();
+        return rules.values().stream().filter(r -> defaults.contains(r.name())).
+                sorted().collect(Collectors.toList());
+    }
+
+    private Collection<CarpetRule<?>> getNonDefault()
+    {
+        return rules.values().stream().filter(Predicate.not(RuleHelper::isInDefaultValue)).sorted().collect(Collectors.toList());
+    }
 
     private void loadConfigurationFromConf()
     {
-        for (ParsedRule<?> rule : rules.values()) rule.resetToDefault(server.getCommandSource());
-        ConfigReadResult conf = readSettingsFromConf(getFile());
+        for (CarpetRule<?> rule : rules.values()) RuleHelper.resetToDefault(rule, server.getCommandSource());
+        ConfigFileData conf = readSettingsFromConf(getFile());
         locked = false;
         if (conf.locked())
         {
@@ -407,25 +492,26 @@ public class SettingsManager
         {
             try
             {
-                if (rules.get(key).set(server.getCommandSource(), conf.ruleMap().get(key)) != null)
-                    CarpetSettings.LOG.info("[CM]: loaded setting " + key + " as " + conf.ruleMap().get(key) + " from " + identifier + ".conf");
+                rules.get(key).set(server.getCommandSource(), conf.ruleMap().get(key));
+                CarpetSettings.LOG.info("[CM]: loaded setting " + key + " as " + conf.ruleMap().get(key) + " from " + identifier + ".conf");
             }
-            catch (Exception exc)
+            catch (InvalidRuleValueException exc)
             {
-                CarpetSettings.LOG.error("[CM Error]: Failed to load setting: "+key+", "+exc);
+                CarpetSettings.LOG.error("[CM Error]: Failed to load setting: "+key+", " + exc.getMessage());
             }
         }
         locked = conf.locked();
     }
 
 
-    private ConfigReadResult readSettingsFromConf(Path path)
+    private ConfigFileData readSettingsFromConf(Path path)
     {
         try (BufferedReader reader = Files.newBufferedReader(path))
         {
             String line = "";
             boolean confLocked = false;
-            Map<String,String> result = new HashMap<String, String>();
+            Map<String, String> result = new HashMap<String, String>();
+            List<String> comments = new ArrayList<>();
             while ((line = reader.readLine()) != null)
             {
                 line = line.replaceAll("[\\r\\n]", "");
@@ -434,25 +520,24 @@ public class SettingsManager
                     confLocked = true;
                 }
                 String[] fields = line.split("\\s+",2);
+                boolean saveComments = path.equals(getFile());
                 if (fields.length > 1)
                 {
-                    if (!rules.containsKey(fields[0]))
+                    if (result.isEmpty() && fields[0].startsWith("#") || fields[1].startsWith("#"))
                     {
-                        CarpetSettings.LOG.error("[CM]: "+fancyName+" Setting " + fields[0] + " is not a valid - ignoring...");
+                        if (saveComments)
+                            comments.add(line); // Don't copy default config comments
                         continue;
                     }
-                    ParsedRule rule = rules.get(fields[0]);
-
-                    if (!(rule.options.contains(fields[1])) && rule.isStrict)
+                    if (!rules.containsKey(fields[0]))
                     {
-                        CarpetSettings.LOG.error("[CM]: The value of " + fields[1] + " for " + fields[0] + "("+fancyName+") is not valid - ignoring...");
+                        CarpetSettings.LOG.error("[CM]: "+fancyName+" Setting " + fields[0] + " is not a valid rule - ignoring...");
                         continue;
                     }
                     result.put(fields[0],fields[1]);
-
                 }
             }
-            return new ConfigReadResult(result, confLocked);
+            return new ConfigFileData(result, confLocked, comments);
         }
         catch (NoSuchFileException e)
         {
@@ -464,28 +549,36 @@ public class SettingsManager
                     {
                         Files.createDirectories(defaultsPath.getParent());
                         Files.createFile(defaultsPath);
+                        try (BufferedWriter fw = Files.newBufferedWriter(defaultsPath))
+                        {
+                            fw.write("# This is " + fancyName + "'s default configuration file");
+                            fw.newLine();
+                            fw.write("# Settings specified here will be used when a world doesn't have a config file, but they will be completely "
+                                    + "ignored once the world has one.");
+                            fw.newLine();
+                        }
                     }
                     return readSettingsFromConf(defaultsPath);
                 } catch (IOException e2) {
                     CarpetSettings.LOG.error("Exception when loading fallback default config: ", e2);
                 }
             }
-            return new ConfigReadResult(new HashMap<>(), false);
+            return new ConfigFileData(new HashMap<>(), false, List.of());
         }
         catch (IOException e)
         {
             e.printStackTrace();
-            return new ConfigReadResult(new HashMap<>(), false);
+            return new ConfigFileData(new HashMap<>(), false, List.of());
         }
     }
 
-    private Collection<ParsedRule<?>> getRulesMatching(String search) {
+    private Collection<CarpetRule<?>> getRulesMatching(String search) {
         String lcSearch = search.toLowerCase(Locale.ROOT);
         return rules.values().stream().filter(rule ->
         {
-            if (rule.name.toLowerCase(Locale.ROOT).contains(lcSearch)) return true; // substring match, case insensitive
-            for (String c : rule.categories) if (c.equals(search)) return true; // category exactly, case sensitive
-            return Sets.newHashSet(rule.description.toLowerCase(Locale.ROOT).split("\\W+")).contains(lcSearch); // contains full term in description, but case insensitive
+            if (rule.name().toLowerCase(Locale.ROOT).contains(lcSearch)) return true; // substring match, case insensitive
+            for (String c : rule.categories()) if (c.equals(search)) return true; // category exactly, case sensitive
+            return Sets.newHashSet(rule.description().toLowerCase(Locale.ROOT).split("\\W+")).contains(lcSearch); // contains full term in description, but case insensitive
         }).sorted().collect(Collectors.toUnmodifiableList());
     }
 
@@ -496,37 +589,39 @@ public class SettingsManager
      * values, and the descriptions of their validators.
      * @param category A {@link String} being the category to print, {@link null} to print
      *                 all registered rules.
-     * @return {@link int} 1 if things didn't fail, and all the info to System.out
+     * @return actually nothing, the int is just there for brigadier
      */
     public int printAllRulesToLog(String category)
     {
         PrintStream ps = System.out;
         ps.println("# "+fancyName+" Settings");
-        for (Map.Entry<String, ParsedRule<?>> e : new TreeMap<>(rules).entrySet())
+        for (CarpetRule<?> rule : new TreeMap<>(rules).values())
         {
-            ParsedRule<?> rule = e.getValue();
-            if (category != null && !rule.categories.contains(category))
+            if (category != null && !rule.categories().contains(category))
                 continue;
-            ps.println("## " + rule.name);
-            ps.println(rule.description+"  ");
-            for (String extra : rule.extraInfo)
+            ps.println("## " + rule.name());
+            ps.println(rule.description()+"  ");
+            for (String extra : rule.extraInfo())
                 ps.println(extra + "  ");
-            ps.println("* Type: `" + rule.type.getSimpleName() + "`  ");
-            ps.println("* Default value: `" + rule.defaultAsString + "`  ");
-            String optionString = rule.options.stream().map(s -> "`" + s + "`").collect(Collectors.joining(", "));
-            if (!optionString.isEmpty()) ps.println((rule.isStrict?"* Required":"* Suggested")+" options: " + optionString + "  ");
-            ps.println("* Categories: " + rule.categories.stream().map(s -> "`" + s.toUpperCase(Locale.ROOT) + "`").collect(Collectors.joining(", ")) + "  ");
-            boolean preamble = false;
-            for (Validator<?> validator : rule.validators)
+            ps.println("* Type: `" + rule.type().getSimpleName() + "`  ");
+            ps.println("* Default value: `" + RuleHelper.toRuleString(rule.defaultValue()) + "`  ");
+            String optionString = rule.suggestions().stream().map(s -> "`" + s + "`").collect(Collectors.joining(", "));
+            if (!optionString.isEmpty()) ps.println((rule instanceof ParsedRule<?> pr && pr.isStrict?"* Required":"* Suggested")+" options: " + optionString + "  ");
+            ps.println("* Categories: " + rule.categories().stream().map(s -> "`" + s.toUpperCase(Locale.ROOT) + "`").collect(Collectors.joining(", ")) + "  ");
+            if (rule instanceof ParsedRule<?>)
             {
-                if(validator.description() != null)
+                boolean preamble = false;
+                for (Validator<?> validator : ((ParsedRule<?>) rule).validators)
                 {
-                    if (!preamble)
+                    if (validator.description() != null)
                     {
-                        ps.println("* Additional notes:  ");
-                        preamble = true;
+                        if (!preamble)
+                        {
+                            ps.println("* Additional notes:  ");
+                            preamble = true;
+                        }
+                        ps.println("  * "+validator.description()+"  ");
                     }
-                    ps.println("  * "+validator.description()+"  ");
                 }
             }
             ps.println("  ");
@@ -535,10 +630,10 @@ public class SettingsManager
     }
 
 
-    private ParsedRule<?> contextRule(CommandContext<ServerCommandSource> ctx) throws CommandSyntaxException
+    private CarpetRule<?> contextRule(CommandContext<ServerCommandSource> ctx) throws CommandSyntaxException
     {
         String ruleName = StringArgumentType.getString(ctx, "rule");
-        ParsedRule<?> rule = getRule(ruleName);
+        CarpetRule<?> rule = getCarpetRule(ruleName);
         if (rule == null)
             throw new SimpleCommandExceptionType(Messenger.c("rb "+ tr("ui.unknown_rule","Unknown rule")+": "+ruleName)).create();
         return rule;
@@ -558,12 +653,12 @@ public class SettingsManager
         }
 
         LiteralArgumentBuilder<ServerCommandSource> literalargumentbuilder = literal(identifier).requires((player) ->
-                player.hasPermissionLevel(2) && !locked);
+                player.hasPermissionLevel(2) && !locked());
 
         literalargumentbuilder.executes((context)-> listAllSettings(context.getSource())).
                 then(literal("list").
                         executes( (c) -> listSettings(c.getSource(), String.format(tr("ui.all_%(mod)s_settings","All %s Settings"), fancyName),
-                                getRules())).
+                                getRulesSorted())).
                         then(literal("defaults").
                                 executes( (c)-> listSettings(c.getSource(),
                                         String.format(tr("ui.current_%(mod)s_startup_settings_from_%(conf)s","Current %s Startup Settings from %s"), fancyName, (identifier+".conf")),
@@ -574,54 +669,53 @@ public class SettingsManager
                                         String.format(tr("ui.%(mod)s_settings_matching_'%(query)s'","%s Settings matching \"%s\""), fancyName, tr("category." + StringArgumentType.getString(c, "tag"),StringArgumentType.getString(c, "tag"))),
                                         getRulesMatching(StringArgumentType.getString(c, "tag")))))).
                 then(literal("removeDefault").
-                        requires(s -> !locked).
+                        requires(s -> !locked()).
                         then(argument("rule", StringArgumentType.word()).
-                                suggests( (c, b) -> suggestMatching(getRules().stream().map(r -> r.name), b)).
+                                suggests( (c, b) -> suggestMatching(getRulesSorted().stream().map(r -> r.name()), b)).
                                 executes((c) -> removeDefault(c.getSource(), contextRule(c))))).
                 then(literal("setDefault").
-                        requires(s -> !locked).
+                        requires(s -> !locked()).
                         then(argument("rule", StringArgumentType.word()).
-                                suggests( (c, b) -> suggestMatching(getRules().stream().map(r -> r.name), b)).
+                                suggests( (c, b) -> suggestMatching(getRulesSorted().stream().map(r -> r.name()), b)).
                                 then(argument("value", StringArgumentType.greedyString()).
-                                        suggests((c, b)-> suggestMatching(contextRule(c).options, b)).
+                                        suggests((c, b)-> suggestMatching(contextRule(c).suggestions(), b)).
                                         executes((c) -> setDefault(c.getSource(), contextRule(c), StringArgumentType.getString(c, "value")))))).
                 then(argument("rule", StringArgumentType.word()).
-                        suggests( (c, b) -> suggestMatching(getRules().stream().map(r -> r.name), b)).
-                        requires(s -> !locked ).
+                        suggests( (c, b) -> suggestMatching(getRulesSorted().stream().map(r -> r.name()), b)).
+                        requires(s -> !locked() ).
                         executes( (c) -> displayRuleMenu(c.getSource(), contextRule(c))).
                         then(argument("value", StringArgumentType.greedyString()).
-                                suggests((c, b)-> suggestMatching(contextRule(c).options,b)).
+                                suggests((c, b)-> suggestMatching(contextRule(c).suggestions(),b)).
                                 executes((c) -> setRule(c.getSource(), contextRule(c), StringArgumentType.getString(c, "value")))));
 
         dispatcher.register(literalargumentbuilder);
     }
 
-    private int displayRuleMenu(ServerCommandSource source, ParsedRule<?> rule)
+    private int displayRuleMenu(ServerCommandSource source, CarpetRule<?> rule) //TODO check if there's dupe code around options buttons
     {
-        PlayerEntity player;
-        String displayName = rule.translatedName();
+        String displayName = RuleHelper.translatedName(rule);
 
         Messenger.m(source, "");
-        Messenger.m(source, "wb "+ displayName ,"!/"+identifier+" "+rule.name,"^g refresh");
-        Messenger.m(source, "w "+ rule.translatedDescription());
+        Messenger.m(source, "wb "+ displayName ,"!/"+identifier+" "+rule.name(),"^g refresh");
+        Messenger.m(source, "w "+ RuleHelper.translatedDescription(rule));
 
-        rule.translatedExtras().forEach(s -> Messenger.m(source, "g  "+s));
+        RuleHelper.translatedExtras(rule).forEach(s -> Messenger.m(source, "g  "+s));
 
         List<BaseText> tags = new ArrayList<>();
         tags.add(Messenger.c("w "+ tr("ui.tags", "Tags")+": "));
-        for (String t: rule.categories)
+        for (String t: rule.categories())
         {
             String translated = tr("category." + t, t);
             tags.add(Messenger.c("c ["+ translated +"]", "^g "+ String.format(tr("list_all_%s_settings","list all %s settings"), translated),"!/"+identifier+" list "+t));
             tags.add(Messenger.c("w , "));
         }
-        tags.remove(tags.size()-1);
+        tags.remove(tags.size() - 1);
         Messenger.m(source, tags.toArray(new Object[0]));
 
-        Messenger.m(source, "w "+ tr("ui.current_value", "Current value")+": ",String.format("%s %s (%s value)",rule.getBoolValue()?"lb":"nb", rule.getAsString(),rule.isDefault()?"default":"modified"));
+        Messenger.m(source, "w "+ tr("ui.current_value", "Current value")+": ",String.format("%s %s (%s value)", RuleHelper.getBooleanValue(rule) ? "lb" : "nb", RuleHelper.toRuleString(rule.value()), RuleHelper.isInDefaultValue(rule) ? "default" : "modified"));
         List<BaseText> options = new ArrayList<>();
         options.add(Messenger.c("w Options: ", "y [ "));
-        for (String o: rule.options)
+        for (String o: rule.suggestions()) //TODO the todo is from around here
         {
             options.add(makeSetRuleButton(rule, o, false));
             options.add(Messenger.c("w  "));
@@ -633,94 +727,102 @@ public class SettingsManager
         return 1;
     }
 
-    private int setRule(ServerCommandSource source, ParsedRule<?> rule, String newValue)
+    private int setRule(ServerCommandSource source, CarpetRule<?> rule, String newValue)
     {
-        if (rule.set(source, newValue) != null)
+        try {
+            rule.set(source, newValue);
             Messenger.m(source, "w "+rule.toString()+", ", "c ["+ tr("ui.change_permanently","change permanently")+"?]",
                     "^w "+String.format(tr("ui.click_to_keep_the_settings_in_%(conf)s_to_save_across_restarts","Click to keep the settings in %s to save across restarts"), identifier+".conf"),
-                    "?/"+identifier+" setDefault "+rule.name+" "+rule.getAsString());
+                    "?/"+identifier+" setDefault "+rule.name()+" "+ RuleHelper.toRuleString(rule.value()));
+        } catch (InvalidRuleValueException e) {
+            e.notifySource(source);
+        }
         return 1;
     }
 
     // stores different defaults in the file
-    private int setDefault(ServerCommandSource source, ParsedRule<?> rule, String stringValue)
+    private int setDefault(ServerCommandSource source, CarpetRule<?> rule, String stringValue)
     {
-        if (locked) return 0;
-        if (!rules.containsKey(rule.name)) return 0;
-        ConfigReadResult conf = readSettingsFromConf(getFile());
-        conf.ruleMap().put(rule.name, stringValue);
-        writeSettingsToConf(conf.ruleMap()); // this may feels weird, but if conf
+        if (locked()) return 0;
+        if (!rules.containsKey(rule.name())) return 0;
+        ConfigFileData conf = readSettingsFromConf(getFile());
+        conf.ruleMap().put(rule.name(), stringValue);
+        writeSettingsToConf(conf); // this may feels weird, but if conf
         // is locked, it will never reach this point.
-        rule.set(source,stringValue);
-        Messenger.m(source ,"gi "+String.format(tr("ui.rule_%(rule)s_will_now_default_to_%(value)s","Rule %s will now default to %s"), rule.translatedName(), stringValue));
+        try {
+            rule.set(source, stringValue);
+            Messenger.m(source ,"gi "+String.format(tr("ui.rule_%(rule)s_will_now_default_to_%(value)s","Rule %s will now default to %s"), RuleHelper.translatedName(rule), stringValue));
+        } catch (InvalidRuleValueException e) {
+            e.notifySource(source);
+        }
         return 1;
     }
     // removes overrides of the default values in the file
-    private int removeDefault(ServerCommandSource source, ParsedRule<?> rule)
+    private int removeDefault(ServerCommandSource source, CarpetRule<?> rule)
     {
         if (locked) return 0;
-        if (!rules.containsKey(rule.name)) return 0;
-        ConfigReadResult conf = readSettingsFromConf(getFile());
-        conf.ruleMap().remove(rule.name);
-        writeSettingsToConf(conf.ruleMap());
-        rules.get(rule.name).resetToDefault(source);
-        Messenger.m(source ,"gi "+String.format(tr("ui.rule_%(rule)s_not_set_restart","Rule %s will now not be set on restart"), rule.translatedName()));
+        if (!rules.containsKey(rule.name())) return 0;
+        ConfigFileData conf = readSettingsFromConf(getFile());
+        conf.ruleMap().remove(rule.name());
+        writeSettingsToConf(conf);
+        RuleHelper.resetToDefault(rules.get(rule.name()), source);
+        Messenger.m(source ,"gi "+String.format(tr("ui.rule_%(rule)s_not_set_restart","Rule %s will now not be set on restart"), RuleHelper.translatedName(rule)));
         return 1;
     }
 
-    private BaseText displayInteractiveSetting(ParsedRule<?> rule)
+    private BaseText displayInteractiveSetting(CarpetRule<?> rule)
     {
-        String displayName = rule.translatedName();
+        String displayName = RuleHelper.translatedName(rule);
         List<Object> args = new ArrayList<>();
         args.add("w - "+ displayName +" ");
-        args.add("!/"+identifier+" "+rule.name);
-        args.add("^y "+rule.translatedDescription());
-        for (String option: rule.options)
+        args.add("!/"+identifier+" "+rule.name());
+        args.add("^y "+RuleHelper.translatedDescription(rule));
+        for (String option: rule.suggestions())
         {
             args.add(makeSetRuleButton(rule, option, true));
             args.add("w  ");
         }
-        if (!rule.options.contains(rule.getAsString()))
+        if (!rule.suggestions().contains(RuleHelper.toRuleString(rule.value())))
         {
-            args.add(makeSetRuleButton(rule, rule.getAsString(), true));
+            args.add(makeSetRuleButton(rule, RuleHelper.toRuleString(rule.value()), true));
             args.add("w  ");
         }
         args.remove(args.size()-1);
         return Messenger.c(args.toArray(new Object[0]));
     }
 
-    private BaseText makeSetRuleButton(ParsedRule<?> rule, String option, boolean brackets)
+    private BaseText makeSetRuleButton(CarpetRule<?> rule, String option, boolean brackets)
     {
-        String style = rule.isDefault()?"g":(option.equalsIgnoreCase(rule.defaultAsString)?"e":"y");
-        if (option.equalsIgnoreCase(rule.getAsString()))
+        String style = RuleHelper.isInDefaultValue(rule)?"g":(option.equalsIgnoreCase(RuleHelper.toRuleString(rule.defaultValue()))?"e":"y");
+        if (option.equalsIgnoreCase(RuleHelper.toRuleString(rule.value())))
         {
             style = style + "u";
-            if (option.equalsIgnoreCase(rule.defaultAsString))
+            if (option.equalsIgnoreCase(RuleHelper.toRuleString(rule.defaultValue())))
                 style = style + "b";
         }
         String baseText = style + (brackets ? " [" : " ") + option + (brackets ? "]" : "");
-        if (locked)
+        if (locked())
             return Messenger.c(baseText, "^g "+fancyName+" " + tr("ui.settings_are_locked","settings are locked"));
-        if (option.equalsIgnoreCase(rule.getAsString()))
+        if (option.equalsIgnoreCase(RuleHelper.toRuleString(rule.value())))
             return Messenger.c(baseText);
-        return Messenger.c(baseText, "^g "+ tr("ui.switch_to","Switch to") +" " + option+(option.equalsIgnoreCase(rule.defaultAsString)?" (default)":""), "?/"+identifier+" " + rule.name + " " + option);
+        return Messenger.c(baseText, "^g "+ tr("ui.switch_to","Switch to") +" " + option+(option.equalsIgnoreCase(RuleHelper.toRuleString(rule.defaultValue()))?" (default)":""), "?/"+identifier+" " + rule.name() + " " + option);
     }
 
-    private int listSettings(ServerCommandSource source, String title, Collection<ParsedRule<?>> settings_list)
+    private int listSettings(ServerCommandSource source, String title, Collection<CarpetRule<?>> settings_list)
     {
 
         Messenger.m(source,String.format("wb %s:",title));
-        settings_list.forEach(e -> Messenger.m(source,displayInteractiveSetting(e)));
+        settings_list.forEach(e -> Messenger.m(source, displayInteractiveSetting(e)));
         return settings_list.size();
     }
     private int listAllSettings(ServerCommandSource source)
     {
-        int count = listSettings(source, String.format(tr("ui.current_%(mod)s_settings","Current %s Settings"), fancyName), getNonDefault());
+        int count = listSettings(source, String.format(tr("ui.current_%(mod)s_settings", "Current %s Settings"), fancyName), getNonDefault());
 
         if (version != null)
             Messenger.m(source, "g "+fancyName+" "+ tr("ui.version",  "version") + ": "+ version);
 
-        List<Object> tags = new ArrayList<>();
+        List<String> tags = new ArrayList<>();
         tags.add("w " + tr("ui.browse_categories", "Browse Categories")  + ":\n");
         for (String t : getCategories())
         {
@@ -740,16 +842,20 @@ public class SettingsManager
 
     public void inspectClientsideCommand(ServerCommandSource source, String string)
     {
-        if (string.startsWith("/"+identifier+" "))
+        if (string.startsWith("/" + identifier + " "))
         {
             String[] res = string.split("\\s+", 3);
             if (res.length == 3)
             {
                 String setting = res[1];
                 String strOption = res[2];
-                if (rules.containsKey(setting) && rules.get(setting).isClient)
+                if (rules.containsKey(setting) && rules.get(setting).canBeToggledClientSide())
                 {
-                    rules.get(setting).set(source, strOption);
+                    try {
+                        rules.get(setting).set(source, strOption);
+                    } catch (InvalidRuleValueException e) {
+                        e.notifySource(source);
+                    }
                 }
             }
         }
