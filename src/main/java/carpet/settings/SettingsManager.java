@@ -433,9 +433,11 @@ public class SettingsManager
                 {
                     confLocked = true;
                 }
-                String[] fields = line.split("\\s+",2);
+                String[] fields = line.split("\\s+", 3);
                 if (fields.length > 1)
                 {
+                    if(fields[1].startsWith("#")) continue; //This is a comment, no need to waste time evaluating it
+                    else if(fields.length == 3) fields[1] = fields[1] + " " + fields[2];//if there was no comment, then we may have split smth important
                     if (!rules.containsKey(fields[0]))
                     {
                         CarpetSettings.LOG.error("[CM]: "+fancyName+" Setting " + fields[0] + " is not a valid - ignoring...");
