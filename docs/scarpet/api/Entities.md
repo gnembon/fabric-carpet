@@ -801,6 +801,7 @@ defining the callback with `entity_event`.
 The following events can be handled by entities:
 
 *   `'on_tick'`: executes every tick right before the entity is ticked in the game. Required arguments: `entity`
+*   `'on_move'`: executes every time an entity changes position, at the end of the `setPos()` method. Required arguments: `entity, velocity, pos1, pos2`
 *   `'on_death'`: executes once when a living entity dies. Required arguments: `entity, reason`
 *   `'on_removed'`: execute once when an entity is removed. Required arguments: `entity`
 *   `'on_damaged'`: executed every time a living entity is about to receive damage.
