@@ -117,14 +117,14 @@ public class EntityEventsGroup
                 return Arrays.asList(
                         new EntityValue(entity),
                         ListValue.fromTriple((Double) providedArgs[0],
-                        (Double) providedArgs[1],
-                        (Double) providedArgs[2]),
+                            (Double) providedArgs[1],
+                            (Double) providedArgs[2]),
                         ListValue.fromTriple((Double) providedArgs[3],
-                        (Double) providedArgs[4],
-                        (Double) providedArgs[5]),
+                            (Double) providedArgs[4],
+                            (Double) providedArgs[5]),
                         ListValue.fromTriple((Double) providedArgs[6],
-                        (Double) providedArgs[7],
-                        (Double) providedArgs[8])
+                            (Double) providedArgs[7],
+                            (Double) providedArgs[8])
                 );
             }
         };
