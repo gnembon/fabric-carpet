@@ -59,6 +59,8 @@
     "ChunkTicketManager_spawnChunksMixin",
     "ServerWorld_spawnChunksMixin",
 
+    "LivingEntityMixin",
+
     "MobEntityMixin",
     "EntityTrackerEntry_leashFixMixin",
 
