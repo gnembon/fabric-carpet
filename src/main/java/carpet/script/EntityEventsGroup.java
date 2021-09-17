@@ -4,12 +4,13 @@ import carpet.CarpetServer;
 import carpet.script.exception.InternalExpressionException;
 import carpet.script.value.EntityValue;
 import carpet.script.value.FunctionValue;
-import carpet.script.value.ListValue;
 import carpet.script.value.NumericValue;
 import carpet.script.value.StringValue;
 import carpet.script.value.Value;
+import carpet.script.value.ValueConversions;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.damage.DamageSource;
+import net.minecraft.util.math.Vec3d;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -116,15 +117,9 @@ public class EntityEventsGroup
             {
                 return Arrays.asList(
                         new EntityValue(entity),
-                        ListValue.fromTriple((Double) providedArgs[0],
-                            (Double) providedArgs[1],
-                            (Double) providedArgs[2]),
-                        ListValue.fromTriple((Double) providedArgs[3],
-                            (Double) providedArgs[4],
-                            (Double) providedArgs[5]),
-                        ListValue.fromTriple((Double) providedArgs[6],
-                            (Double) providedArgs[7],
-                            (Double) providedArgs[8])
+                        ValueConversions.of((Vec3d) providedArgs[0]),
+                        ValueConversions.of((Vec3d) providedArgs[1]),
+                        ValueConversions.of((Vec3d) providedArgs[2])
                 );
             }
         };
