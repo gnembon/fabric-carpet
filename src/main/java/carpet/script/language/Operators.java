@@ -29,12 +29,12 @@ public class Operators {
         put("multiplication*/%", 30);
         put("addition+-", 20);
         put("compare>=><=<", 10);
-        put("equal==!=", 8);
-        put("and&&", 4);
-        put("or||", 3);
-        put("assign=<>", 2);
-        put("def->", 1);
-        put("nextop;", 0);
+        put("equal==!=", 7);
+        put("and&&", 5);
+        put("or||", 4);
+        put("assign=<>", 3);
+        put("def->", 2);
+        put("nextop;", 1);
     }};
 
     public static void apply(Expression expression)
