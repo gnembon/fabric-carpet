@@ -317,6 +317,6 @@ only take integer values, so if the input has a decimal part, it will be discard
 	all ones.
  - `bitwise_popcount(num)` -> Returns the number of ones in the binary representation of the number. For the number of zeroes, just
 	do 64 minus this number.
- - `double_to_long_bits` -> Returns a representation of the specified floating-point value according to the IEEE 754 floating-point
+ - `double_to_long_bits(num)` -> Returns a representation of the specified floating-point value according to the IEEE 754 floating-point
 	"double format" bit layout.
- - `long_to_double_bits` -> Returns the double value corresponding to a given bit representation.
+ - `long_to_double_bits(num)` -> Returns the double value corresponding to a given bit representation.
