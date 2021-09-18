@@ -20,6 +20,7 @@ import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.util.registry.Registry;
+import net.minecraft.world.GameMode;
 import net.minecraft.world.World;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -957,6 +958,12 @@ public class CarpetSettings
             validate = updateSuppressionBlockModes.class
     )
     public static String updateSuppressionBlock = "false";
+
+    @Rule(
+            desc = "Define the default game mode of /player spawn players when Carpet fails to obtain the current game mode of the calling player.",
+            category = COMMAND
+    )
+    public static GameMode playerCommandDefaultGameMode = GameMode.CREATIVE;
 
     public static int getInteger(String s) {
         try {

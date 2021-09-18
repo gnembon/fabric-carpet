@@ -264,7 +264,7 @@ public class PlayerCommand
                 () -> DimensionArgumentType.getDimensionArgument(context, "dimension").getRegistryKey(),
                 () -> source.getWorld().getRegistryKey() // dimension.getType()
         );
-        GameMode mode = GameMode.CREATIVE;
+        GameMode mode = CarpetSettings.playerCommandDefaultGameMode;
         boolean flying = false;
         try
         {
