@@ -118,13 +118,12 @@ public class BlockValue extends Value
         if (world != null && pos != null)
         {
             BlockEntity be = getBlockEntity(world, pos);
-            NbtCompound tag = new NbtCompound();
             if (be == null)
             {
-                data = tag;
+                data = new NbtCompound();
                 return null;
             }
-            data = be.writeNbt(tag);
+            data = be.method_38244(); // toNBT
             return data;
         }
         return null;

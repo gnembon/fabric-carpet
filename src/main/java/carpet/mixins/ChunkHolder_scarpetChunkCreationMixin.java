@@ -5,6 +5,7 @@ import com.mojang.datafixers.util.Either;
 import net.minecraft.server.world.ChunkHolder;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.ChunkPos;
+import net.minecraft.util.registry.Registry;
 import net.minecraft.util.thread.ThreadExecutor;
 import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.chunk.ChunkStatus;
@@ -29,7 +30,7 @@ public abstract class ChunkHolder_scarpetChunkCreationMixin implements ChunkHold
     {
         int i = ChunkStatus.EMPTY.getIndex();
         CompletableFuture<Either<Chunk, ChunkHolder.Unloaded>> completableFuture2 = CompletableFuture.supplyAsync(
-                () -> Either.left(new ProtoChunk(chpos, UpgradeData.NO_UPGRADE_DATA, world)),
+                () -> Either.left(new ProtoChunk(chpos, UpgradeData.NO_UPGRADE_DATA, world,  world.getRegistryManager().get(Registry.BIOME_KEY))),
                 executor
         );
         combineSavingFuture(completableFuture2, "unfull"); // possible debug data

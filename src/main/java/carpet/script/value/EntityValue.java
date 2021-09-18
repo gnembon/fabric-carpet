@@ -763,7 +763,7 @@ public class EntityValue extends Value
                 ServerPlayerInteractionManagerInterface manager = (ServerPlayerInteractionManagerInterface) (((ServerPlayerEntity) e).interactionManager);
                 BlockPos pos = manager.getCurrentBreakingBlock();
                 if (pos == null) return Value.NULL;
-                return new BlockValue(null, ((ServerPlayerEntity) e).getServerWorld(), pos);
+                return new BlockValue(null, (ServerWorld) e.world, pos);
             }
             return Value.NULL;
         });

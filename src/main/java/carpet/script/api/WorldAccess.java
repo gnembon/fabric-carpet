@@ -84,6 +84,7 @@ import net.minecraft.util.math.BlockBox;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.util.math.Direction;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.registry.Registry;
 import net.minecraft.world.Heightmap;
@@ -91,6 +92,7 @@ import net.minecraft.world.LightType;
 import net.minecraft.world.SpawnHelper;
 import net.minecraft.world.World;
 import net.minecraft.world.biome.Biome;
+import net.minecraft.world.biome.source.BiomeCoords;
 import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.chunk.ChunkStatus;
 import net.minecraft.world.chunk.WorldChunk;
@@ -1176,7 +1178,19 @@ public class WorldAccess {
             ServerWorld world = cc.s.getWorld();
             BlockPos pos = locator.block.getPos();
             Chunk chunk = world.getChunk(pos.getX() >> 4, pos.getZ() >> 4, ChunkStatus.BIOMES);
-            ((BiomeArrayInterface)chunk.getBiomeArray()).setBiomeAtIndex(pos, world,  biome);
+            if (chunk instanceof WorldChunk) return Value.FALSE; // questinoalble, but it makes sense
+            int biomeX = BiomeCoords.fromBlock(pos.getX());
+            int biomeY = BiomeCoords.fromBlock(pos.getY());
+            int biomeZ = BiomeCoords.fromBlock(pos.getZ());
+            try {
+                int i = BiomeCoords.fromBlock(chunk.getBottomY());
+                int j = i + BiomeCoords.fromBlock(chunk.getHeight()) - 1;
+                int k = MathHelper.clamp(biomeY, i, j);
+                int l = chunk.getSectionIndex(BiomeCoords.toBlock(k));
+                chunk.getSection(l).method_38294().setSync(biomeX & 3, k & 3, biomeZ & 3, biome);
+            } catch (Throwable var8) {
+                return Value.FALSE;
+            }
             if (doImmediateUpdate) WorldTools.forceChunkUpdate(pos, world);
             return Value.TRUE;
         });

@@ -142,12 +142,12 @@ public abstract class PistonBlockEntity_movableTEMixin extends BlockEntity imple
     }
     
     @Inject(method = "writeNbt", at = @At(value = "RETURN", shift = At.Shift.BEFORE))
-    private void onToTag(NbtCompound NbtCompound_1, CallbackInfoReturnable<NbtCompound> cir)
+    private void onToTag(NbtCompound NbtCompound_1, CallbackInfo ci)
     {
         if (CarpetSettings.movableBlockEntities && this.carriedBlockEntity != null)
         {
             //Leave name "carriedTileEntityCM" instead of "carriedBlockEntityCM" for upgrade compatibility with 1.13.2 movable TE
-            NbtCompound_1.put("carriedTileEntityCM", this.carriedBlockEntity.writeNbt(new NbtCompound()));
+            NbtCompound_1.put("carriedTileEntityCM", this.carriedBlockEntity.method_38244()); // toNBT
         }
     }
 }

@@ -135,8 +135,13 @@ public class FeatureGenerator
 
     private static ConfiguredStructureFeature<?, ?> getDefaultFeature(StructureFeature<?> structure, ServerWorld world, BlockPos pos, boolean tryHard)
     {
-        ConfiguredStructureFeature<?, ?> configuredFeature = world.getBiome(pos).getGenerationSettings().method_30978(structure.configure(null));
-        if (configuredFeature.config != null || !tryHard) return configuredFeature;
+        var definedStructures = world.getServer().getSaveProperties().getGeneratorOptions().getChunkGenerator().getStructuresConfig().method_38424(structure);
+        var optinalBiome = world.getRegistryManager().get(Registry.BIOME_KEY).getKey(world.getBiome(pos));
+        if (optinalBiome.isPresent())
+            for (var configureStructure: definedStructures.inverse().get(optinalBiome.get()))
+                if (configureStructure.feature == structure)
+                    return configureStructure;
+        if (!tryHard) return null;
         return world.getRegistryManager().get(Registry.CONFIGURED_STRUCTURE_FEATURE_KEY).getEntries().stream().
                 filter(cS -> cS.getValue().feature == structure).
                 findFirst().map(Map.Entry::getValue).orElse(null);
@@ -147,26 +152,21 @@ public class FeatureGenerator
         long seed = world.getSeed();
         ChunkGenerator generator = world.getChunkManager().getChunkGenerator();
         StructureConfig params = generator.getStructuresConfig().getForType(structure);
-        synchronized(boo) {
-            if (!generator.getBiomeSource().hasStructureFeature(structure))
-                return null;
-        }
-        BiomeAccess biomeAccess = world.getBiomeAccess().withSource(generator.getBiomeSource());
         ChunkRandom chunkRandom = new ChunkRandom();
         ChunkPos chunkPos = new ChunkPos(pos);
-        Biome biome = biomeAccess.getBiome(new BlockPos(chunkPos.getStartX() + 9, 0, chunkPos.getStartZ() + 9));
-        ConfiguredStructureFeature<?, ?> configuredFeature = biome.getGenerationSettings().method_30978(structure.configure(null));
+        Biome biome = world.getBiome(new BlockPos(chunkPos.getStartX() + 9, 0, chunkPos.getStartZ() + 9));
+        ConfiguredStructureFeature<?, ?> configuredFeature = getDefaultFeature(structure, world, pos, false);
         if (configuredFeature == null || configuredFeature.config == null) return null;
         ChunkPos chunkPos2 = structure.getStartChunk(params, seed, chunkRandom, chunkPos.x, chunkPos.z); //find some chunk I guess
         // using here world for heightview, rather than chunk since we - unlike vanilla, want to avoid creating any chunks even on the
         // structure starts level - lets see where would that take us.
-        if (chunkPos.x == chunkPos2.x && chunkPos.z == chunkPos2.z && ((StructureFeatureInterface)structure).shouldStartPublicAt(generator, generator.getBiomeSource(), seed, chunkRandom, chunkPos, biome, chunkPos, configuredFeature.config, world)) // should start at
+        if (chunkPos.x == chunkPos2.x && chunkPos.z == chunkPos2.z && ((StructureFeatureInterface)structure).shouldStartPublicAt(generator, generator.getBiomeSource(), seed, chunkRandom, chunkPos, chunkPos, configuredFeature.config, world)) // should start at
         {
             if (!computeBox) return StructureStart.DEFAULT;
             StructureManager manager = world.getStructureManager();
             StructureStart<T> structureStart3 = structure.getStructureStartFactory().create((StructureFeature<T>) configuredFeature.feature, chunkPos, 0, seed);
             synchronized (boo) {
-                structureStart3.init(world.getRegistryManager(), generator, manager, chunkPos, biome, (T) configuredFeature.config, world);
+                structureStart3.init(world.getRegistryManager(), generator, manager, chunkPos, (T) configuredFeature.config, world, (b) -> b == biome);
             }
             if (!structureStart3.hasChildren()) return null;
             return structureStart3;

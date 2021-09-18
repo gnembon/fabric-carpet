@@ -5,16 +5,16 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.World;
 import net.minecraft.world.biome.Biome;
-import net.minecraft.world.biome.source.BiomeArray;
+//import net.minecraft.world.biome.source.BiomeArray;
 import net.minecraft.world.biome.source.BiomeCoords;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 
-@Mixin(BiomeArray.class)
-public class BiomeArray_getBiomeArrayMixin implements BiomeArrayInterface
+//@Mixin(BiomeArray.class)
+public class BiomeArray_getBiomeArrayMixin //implements BiomeArrayInterface
 {
-
+/*
     @Shadow @Final private static int HORIZONTAL_SECTION_COUNT;
 
     @Shadow @Final public static int HORIZONTAL_BIT_MASK;
@@ -35,4 +35,6 @@ public class BiomeArray_getBiomeArrayMixin implements BiomeArrayInterface
         int int_6 = BiomeCoords.fromBlock(pos.getZ()) & HORIZONTAL_BIT_MASK;
         data[(int_5 << (HORIZONTAL_SECTION_COUNT + HORIZONTAL_SECTION_COUNT)) | (int_6 << HORIZONTAL_SECTION_COUNT) | int_4] = what;
     }
+
+ */
 }

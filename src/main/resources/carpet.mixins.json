@@ -110,8 +110,6 @@
     "FlatChunkGeneratorMixin",
     "ChunkGenerator_scarpetMixin",
 
-    "BiomeArray_getBiomeArrayMixin",
-
     "GuardianEntityMixin",
     "DesertPyramidFeatureMixin",
     "HuskEntityMixin",
@@ -237,7 +235,6 @@
     "DebugRenderer_scarpetRenderMixin",
     "WorldRenderer_scarpetRenderMixin",
 
-    "BiomeArray_cleanLogsMixin",
     "SoundEngineInt_cleanLogsMixin",
     "SoundSystem_cleanLogsMixin"
   ],

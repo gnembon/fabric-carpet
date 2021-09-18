@@ -494,7 +494,7 @@ public class CarpetEventServer
                 {
                     return Arrays.asList(
                             new EntityValue(player),
-                            new BlockValue(null, player.getServerWorld(), blockpos),
+                            new BlockValue(null, player.method_37908(), blockpos),
                             StringValue.of(facing.getName())
                     );
                 }, player::getCommandSource);
@@ -515,7 +515,7 @@ public class CarpetEventServer
                             new EntityValue(player),
                             ValueConversions.of(itemstack),
                             StringValue.of(enumhand == Hand.MAIN_HAND ? "mainhand" : "offhand"),
-                            new BlockValue(null, player.getServerWorld(), blockpos),
+                            new BlockValue(null, player.method_37908(), blockpos),
                             StringValue.of(enumfacing.getName()),
                             ListValue.of(
                                     new NumericValue(vec3d.x),
@@ -539,7 +539,7 @@ public class CarpetEventServer
                     return Arrays.asList(
                             new EntityValue(player),
                             StringValue.of(enumhand == Hand.MAIN_HAND ? "mainhand" : "offhand"),
-                            new BlockValue(null, player.getServerWorld(), blockpos),
+                            new BlockValue(null, player.method_37908(), blockpos),
                             StringValue.of(enumfacing.getName()),
                             ListValue.of(
                                     new NumericValue(vec3d.x),
@@ -559,7 +559,7 @@ public class CarpetEventServer
                         new EntityValue(player),
                         ValueConversions.of(itemstack),
                         StringValue.of(enumhand == Hand.MAIN_HAND ? "mainhand" : "offhand"),
-                        new BlockValue(null, player.getServerWorld(), pos)
+                        new BlockValue(null, player.method_37908(), pos)
                 ), player::getCommandSource);
             }
         };
@@ -569,7 +569,7 @@ public class CarpetEventServer
             public void onBlockBroken(ServerPlayerEntity player, BlockPos pos, BlockState previousBS)
             {
                 handler.call(
-                        () -> Arrays.asList(new EntityValue(player), new BlockValue(previousBS, player.getServerWorld(), pos)),
+                        () -> Arrays.asList(new EntityValue(player), new BlockValue(previousBS, player.method_37908(), pos)),
                         player::getCommandSource
                 );
             }
@@ -1083,7 +1083,7 @@ public class CarpetEventServer
                         valArgs.add(EntityValue.of(player));
                         for (Object o: args)
                         {
-                            valArgs.add(ValueConversions.guess(player.getServerWorld(), o));
+                            valArgs.add(ValueConversions.guess(player.method_37908(), o));
                         }
                         return valArgs;
                     }, player::getCommandSource

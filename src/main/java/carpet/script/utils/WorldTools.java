@@ -110,7 +110,11 @@ public class WorldTools
         //chunkGenerator2 = GeneratorOptions.createOverworldGenerator(server.getRegistryManager().get(Registry.BIOME_KEY), server.getRegistryManager().get(Registry.NOISE_SETTINGS_WORLDGEN), (seed==null)?l:seed);
 
         // from world/gen/GeneratorOptions
-        chunkGenerator2 = new NoiseChunkGenerator(MultiNoiseBiomeSource.createVanillaSource(server.getRegistryManager().get(Registry.BIOME_KEY), seed), seed, () -> {
+        //chunkGenerator2 = new NoiseChunkGenerator(MultiNoiseBiomeSource.createVanillaSource(server.getRegistryManager().get(Registry.BIOME_KEY), seed), seed, () -> {
+        //    return server.getRegistryManager().get(Registry.CHUNK_GENERATOR_SETTINGS_KEY).getOrThrow(ChunkGeneratorSettings.OVERWORLD);
+        //});
+
+        chunkGenerator2 = new NoiseChunkGenerator(MultiNoiseBiomeSource.Preset.OVERWORLD.getBiomeSource(server.getRegistryManager().get(Registry.BIOME_KEY)), seed, () -> {
             return server.getRegistryManager().get(Registry.CHUNK_GENERATOR_SETTINGS_KEY).getOrThrow(ChunkGeneratorSettings.OVERWORLD);
         });
 
@@ -142,7 +146,7 @@ public class WorldTools
             List<ServerPlayerEntity> nearbyPlayers = world.getPlayers(p -> pos.getSquaredDistance(p.getX(), pos.getY(), p.getZ(), true) < vvd);
             if (!nearbyPlayers.isEmpty())
             {
-                ChunkDataS2CPacket packet = new ChunkDataS2CPacket(worldChunk);
+                ChunkDataS2CPacket packet = new ChunkDataS2CPacket(worldChunk, world.getLightingProvider(), null, null, false); // false seems to update neighbours as well.
                 ChunkPos chpos = new ChunkPos(pos);
                 nearbyPlayers.forEach(p -> p.networkHandler.sendPacket(packet));
             }

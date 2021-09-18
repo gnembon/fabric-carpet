@@ -231,7 +231,7 @@ public class ServerPlayNetworkHandler_scarpetEventsMixin
     ))
     private void onEntityInteract(PlayerInteractEntityC2SPacket playerInteractEntityC2SPacket_1, CallbackInfo ci)
     {
-        PLAYER_INTERACTS_WITH_ENTITY.onEntityHandAction(player, playerInteractEntityC2SPacket_1.getEntity(player.getServerWorld()), playerInteractEntityC2SPacket_1.getHand());
+        PLAYER_INTERACTS_WITH_ENTITY.onEntityHandAction(player, playerInteractEntityC2SPacket_1.getEntity(player.method_37908()), playerInteractEntityC2SPacket_1.getHand());
     }*/
 
     /*@Inject(method = "onPlayerInteractEntity", at = @At(
@@ -241,7 +241,7 @@ public class ServerPlayNetworkHandler_scarpetEventsMixin
     private void onEntityAttack(PlayerInteractEntityC2SPacket playerInteractEntityC2SPacket_1, CallbackInfo ci)
     {
         //todo add hit and hand in the future
-        PLAYER_ATTACKS_ENTITY.onEntityHandAction(player, playerInteractEntityC2SPacket_1.getEntity(player.getServerWorld()), null);
+        PLAYER_ATTACKS_ENTITY.onEntityHandAction(player, playerInteractEntityC2SPacket_1.getEntity(player.method_37908()), null);
     }*/
 
     @Inject(method = "onButtonClick", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/network/ServerPlayerEntity;updateLastActionTime()V"))

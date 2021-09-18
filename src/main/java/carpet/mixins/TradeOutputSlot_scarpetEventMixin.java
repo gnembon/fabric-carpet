@@ -27,7 +27,7 @@ public abstract class TradeOutputSlot_scarpetEventMixin {
             target = "Lnet/minecraft/village/Merchant;trade(Lnet/minecraft/village/TradeOffer;)V")
     )
     private void onTrade(PlayerEntity player, ItemStack stack, CallbackInfo ci) {
-        if(PLAYER_TRADES.isNeeded() && !this.merchant.getMerchantWorld().isClient())
+        if(PLAYER_TRADES.isNeeded() && !player.world.isClient())
         {
             PLAYER_TRADES.onTrade((ServerPlayerEntity) player, merchant, merchantInventory.getTradeOffer());
         }
