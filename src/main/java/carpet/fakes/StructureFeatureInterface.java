@@ -6,7 +6,7 @@ import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.HeightLimitView;
 import net.minecraft.world.biome.Biome;
 import net.minecraft.world.biome.source.BiomeSource;
-import net.minecraft.world.gen.ChunkRandom;
+import net.minecraft.world.gen.random.ChunkRandom;
 import net.minecraft.world.gen.chunk.ChunkGenerator;
 import net.minecraft.world.gen.feature.FeatureConfig;
 

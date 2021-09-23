@@ -18,7 +18,7 @@ import net.minecraft.world.biome.Biome;
 import net.minecraft.world.biome.BiomeKeys;
 import net.minecraft.world.biome.BuiltinBiomes;
 import net.minecraft.world.biome.source.BiomeAccess;
-import net.minecraft.world.gen.ChunkRandom;
+import net.minecraft.world.gen.random.ChunkRandom;
 import net.minecraft.world.gen.chunk.ChunkGenerator;
 import net.minecraft.world.gen.chunk.StructureConfig;
 import net.minecraft.world.gen.treedecorator.BeehiveTreeDecorator;
@@ -161,7 +161,7 @@ public class FeatureGenerator
 
     private static ConfiguredStructureFeature<?, ?> getDefaultFeature(StructureFeature<?> structure, ServerWorld world, BlockPos pos, boolean tryHard)
     {
-        var definedStructures = world.getServer().getSaveProperties().getGeneratorOptions().getChunkGenerator().getStructuresConfig().method_38424(structure);
+        var definedStructures = world.getServer().getSaveProperties().getGeneratorOptions().getChunkGenerator().getStructuresConfig().getConfiguredStructureFeature(structure);
         var optinalBiome = world.getRegistryManager().get(Registry.BIOME_KEY).getKey(world.getBiome(pos));
         if (optinalBiome.isPresent())
             for (var configureStructure: definedStructures.inverse().get(optinalBiome.get()))

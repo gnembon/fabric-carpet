@@ -80,7 +80,7 @@ public class EntityPlayerMPFake extends ServerPlayerEntity
     {
         player.getServer().getPlayerManager().remove(player);
         player.networkHandler.disconnect(new TranslatableText("multiplayer.disconnect.duplicate_login"));
-        ServerWorld worldIn = player.method_37908();//.getWorld(player.dimension);
+        ServerWorld worldIn = player.getWorld();//.getWorld(player.dimension);
         GameProfile gameprofile = player.getGameProfile();
         EntityPlayerMPFake playerShadow = new EntityPlayerMPFake(server, worldIn, gameprofile, true);
         server.getPlayerManager().onPlayerConnect(new NetworkManagerFake(NetworkSide.SERVERBOUND), playerShadow);

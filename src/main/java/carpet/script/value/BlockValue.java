@@ -123,7 +123,7 @@ public class BlockValue extends Value
                 data = new NbtCompound();
                 return null;
             }
-            data = be.method_38244(); // toNBT
+            data = be.createNbt();
             return data;
         }
         return null;

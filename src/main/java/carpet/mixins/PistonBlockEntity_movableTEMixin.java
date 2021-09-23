@@ -147,7 +147,7 @@ public abstract class PistonBlockEntity_movableTEMixin extends BlockEntity imple
         if (CarpetSettings.movableBlockEntities && this.carriedBlockEntity != null)
         {
             //Leave name "carriedTileEntityCM" instead of "carriedBlockEntityCM" for upgrade compatibility with 1.13.2 movable TE
-            NbtCompound_1.put("carriedTileEntityCM", this.carriedBlockEntity.method_38244()); // toNBT
+            NbtCompound_1.put("carriedTileEntityCM", this.carriedBlockEntity.createNbt());
         }
     }
 }

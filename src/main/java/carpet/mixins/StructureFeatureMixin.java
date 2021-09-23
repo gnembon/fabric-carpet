@@ -16,7 +16,7 @@ import net.minecraft.world.biome.source.BiomeCoords;
 import net.minecraft.world.biome.source.BiomeSource;
 import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.chunk.ChunkStatus;
-import net.minecraft.world.gen.ChunkRandom;
+import net.minecraft.world.gen.random.ChunkRandom;
 import net.minecraft.world.gen.chunk.ChunkGenerator;
 import net.minecraft.world.gen.feature.ConfiguredStructureFeature;
 import net.minecraft.world.gen.feature.DefaultFeatureConfig;
@@ -70,7 +70,7 @@ public abstract class StructureFeatureMixin<C extends FeatureConfig> implements 
                     Objects.requireNonNull(thiss);
                     return registry3.getKey(thiss).map(Object::toString).orElseGet(thiss::toString);
                 });
-                ImmutableMultimap<ConfiguredStructureFeature<?, ?>, RegistryKey<Biome>> immutableMultimap = generator.getStructuresConfig().method_38424((StructureFeature) (Object)this);
+                ImmutableMultimap<ConfiguredStructureFeature<?, ?>, RegistryKey<Biome>> immutableMultimap = generator.getStructuresConfig().getConfiguredStructureFeature((StructureFeature) (Object)this);
 
                 Predicate<Biome> predicate = (b) -> {
                     Objects.requireNonNull(immutableMultimap);
