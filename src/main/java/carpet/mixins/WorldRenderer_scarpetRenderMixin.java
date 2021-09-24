@@ -2,6 +2,7 @@ package carpet.mixins;
 
 import carpet.network.CarpetClient;
 import carpet.script.utils.ShapesRenderer;
+import carpet.utils.FabricAPIHooks;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.render.BufferBuilderStorage;
 import net.minecraft.client.render.Camera;
@@ -38,8 +39,7 @@ public class WorldRenderer_scarpetRenderMixin
     {
         // in normal circumstances we want to render shapes at the very end so it appears correctly behind stuff.
         // we might actually not need to play with render hooks here.
-        //if (!FabricAPIHooks.WORLD_RENDER_EVENTS && CarpetClient.shapes != null )
-        if (CarpetClient.shapes != null)
+        if (!FabricAPIHooks.WORLD_RENDER_EVENTS && CarpetClient.shapes != null )
         {
             CarpetClient.shapes.render(matrices, camera, tickDelta);
         }

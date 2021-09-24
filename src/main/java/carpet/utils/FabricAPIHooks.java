@@ -17,8 +17,8 @@ public class FabricAPIHooks {
 
     public static void initialize() {
         if (WORLD_RENDER_EVENTS) {
-            WorldRenderEvents.BEFORE_DEBUG_RENDER.register(context -> {
-                if (false) {//(CarpetClient.shapes != null) { // likely won't need it.
+            WorldRenderEvents.AFTER_ENTITIES.register(context -> {
+                if (CarpetClient.shapes != null) {
                     CarpetClient.shapes.render(context.matrixStack(), context.camera(), context.tickDelta());
                 }
             });
