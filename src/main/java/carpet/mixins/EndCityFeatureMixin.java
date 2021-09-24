@@ -15,8 +15,9 @@ import java.util.Collections;
 import java.util.List;
 
 @Mixin(EndCityFeature.class)
-public abstract class EndCityFeatureMixin extends StructureFeature<DefaultFeatureConfig>
+public abstract class EndCityFeatureMixin //extends StructureFeature<DefaultFeatureConfig>
 {
+    /*
     private static final Pool<SpawnSettings.SpawnEntry> spawnList = Pool.of(new SpawnSettings.SpawnEntry(EntityType.SHULKER, 10, 4, 4));
 
     public EndCityFeatureMixin(Codec<DefaultFeatureConfig> codec)
@@ -31,4 +32,5 @@ public abstract class EndCityFeatureMixin extends StructureFeature<DefaultFeatur
             return spawnList;
         return  SpawnSettings.EMPTY_ENTRY_POOL;
     }
+     */
 }

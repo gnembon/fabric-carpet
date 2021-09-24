@@ -15,8 +15,9 @@ import java.util.Collections;
 import java.util.List;
 
 @Mixin(DesertPyramidFeature.class)
-public abstract class DesertPyramidFeatureMixin extends StructureFeature<DefaultFeatureConfig>
+public abstract class DesertPyramidFeatureMixin
 {
+    /*
     private static final Pool<SpawnSettings.SpawnEntry> MONSTER_SPAWNS;
     
     static
@@ -39,5 +40,7 @@ public abstract class DesertPyramidFeatureMixin extends StructureFeature<Default
         }
         return  SpawnSettings.EMPTY_ENTRY_POOL;
     }
+
+     */
 }
 

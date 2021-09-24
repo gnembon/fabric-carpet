@@ -10,8 +10,8 @@ import net.minecraft.world.gen.random.ChunkRandom;
 import net.minecraft.world.gen.chunk.ChunkGenerator;
 import net.minecraft.world.gen.feature.FeatureConfig;
 
-public interface StructureFeatureInterface<C>
+public interface StructureFeatureInterface<C extends FeatureConfig>
 {
-    boolean plopAnywhere(ServerWorld world, BlockPos pos, ChunkGenerator generator, boolean wireOnly,Biome biome, FeatureConfig config);
+    boolean plopAnywhere(ServerWorld world, BlockPos pos, ChunkGenerator generator, boolean wireOnly,Biome biome, C config);
     boolean shouldStartPublicAt(ChunkGenerator chunkGenerator, BiomeSource biomeSource, long l, ChunkRandom chunkRandom, ChunkPos chpos, ChunkPos chunkPos, C featureConfig, HeightLimitView heightLimitView);
 }
