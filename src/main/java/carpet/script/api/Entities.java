@@ -10,8 +10,10 @@ import carpet.script.exception.InternalExpressionException;
 import carpet.script.value.EntityValue;
 import carpet.script.value.ListValue;
 import carpet.script.value.NBTSerializableValue;
+import carpet.script.value.BooleanValue;
 import carpet.script.value.NumericValue;
 import carpet.script.value.Value;
+import carpet.utils.PerimeterDiagnostics;
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.minecraft.entity.Entity;
@@ -25,6 +27,7 @@ import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.Identifier;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.registry.Registry;
@@ -152,6 +155,42 @@ public class Entities {
                     ((MobEntity)entity_1).initialize(serverWorld, serverWorld.getLocalDifficulty(entity_1.getBlockPos()), SpawnReason.COMMAND, null, null);
                 }
                 return new EntityValue(entity_1);
+            }
+        });
+
+        expression.addContextFunction("can_spawn", -1, (c, t, lv) -> {
+            CarpetContext cc = (CarpetContext)c;
+            if (lv.size() < 2)
+                throw new InternalExpressionException("'can_spawn' function takes mob name, and position to test for spawning conditions");
+            String entityString = lv.get(0).getString();
+            Identifier entityId;
+            try {
+                entityId = Identifier.fromCommandInput(new StringReader(entityString));
+                EntityType<? extends Entity> type = Registry.ENTITY_TYPE.getOrEmpty(entityId).orElse(null);
+                if (type == null || !type.isSummonable())
+                    return Value.FALSE;
+            }
+            catch (CommandSyntaxException exception) {
+                 return Value.FALSE;
+            }
+
+            Vector3Argument position = Vector3Argument.findIn(lv, 1);
+            if (position.fromBlock)
+                position.vec = position.vec.subtract(0, 0.5, 0);
+            Vec3d vec3d = position.vec;
+            ServerWorld serverWorld = cc.s.getWorld();
+            Messenger.m(cc.s, "gi Pos: "+vec3d.toString());
+            Entity entity_1 = EntityType.loadEntityWithPassengers(new NbtCompound(), serverWorld, (entity_1x) -> {
+                entity_1x.refreshPositionAndAngles(vec3d.x, vec3d.y, vec3d.z, entity_1x.getYaw(), entity_1x.getPitch());
+                return !serverWorld.tryLoadEntity(entity_1x) ? null : entity_1x;
+            });
+            if (entity_1 == null) {
+                return Value.FALSE;
+            } else {
+                ((MobEntity)entity_1).initialize(serverWorld, serverWorld.getLocalDifficulty(entity_1.getBlockPos()), SpawnReason.COMMAND, null, null);
+                Value retValue = BooleanValue.of(PerimeterDiagnostics.checkEntitySpawn(serverWorld, new BlockPos(vec3d), (MobEntity) entity_1));
+                entity_1.discard();
+                return retValue;
             }
         });
 
