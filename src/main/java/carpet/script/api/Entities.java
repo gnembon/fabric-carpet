@@ -13,7 +13,6 @@ import carpet.script.value.NBTSerializableValue;
 import carpet.script.value.BooleanValue;
 import carpet.script.value.NumericValue;
 import carpet.script.value.Value;
-import carpet.utils.Messenger;
 import carpet.utils.PerimeterDiagnostics;
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
