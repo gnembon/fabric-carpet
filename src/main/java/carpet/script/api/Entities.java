@@ -13,6 +13,7 @@ import carpet.script.value.NBTSerializableValue;
 import carpet.script.value.BooleanValue;
 import carpet.script.value.NumericValue;
 import carpet.script.value.Value;
+import carpet.utils.Messenger;
 import carpet.utils.PerimeterDiagnostics;
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
@@ -157,40 +158,43 @@ public class Entities {
                 return new EntityValue(entity_1);
             }
         });
-
         expression.addContextFunction("can_spawn", -1, (c, t, lv) -> {
             CarpetContext cc = (CarpetContext)c;
             if (lv.size() < 2)
-                throw new InternalExpressionException("'can_spawn' function takes mob name, and position to test for spawning conditions");
-            String entityString = lv.get(0).getString();
+                throw new InternalExpressionException("'can_spawn' function takes mob name, and position to check for spawning conditions");
+            String entityString = lv.get(0).getString();//todo remove test func : /script run can_spawn('cow',0,1,0)
             Identifier entityId;
             try {
                 entityId = Identifier.fromCommandInput(new StringReader(entityString));
                 EntityType<? extends Entity> type = Registry.ENTITY_TYPE.getOrEmpty(entityId).orElse(null);
                 if (type == null || !type.isSummonable())
-                    return Value.FALSE;
+                    return Value.NULL;
             }
             catch (CommandSyntaxException exception) {
-                 return Value.FALSE;
+                 return Value.NULL;
             }
 
             Vector3Argument position = Vector3Argument.findIn(lv, 1);
             if (position.fromBlock)
                 position.vec = position.vec.subtract(0, 0.5, 0);
+            NbtCompound tag = new NbtCompound();
+            tag.putString("id", entityId.toString());
             Vec3d vec3d = position.vec;
+
             ServerWorld serverWorld = cc.s.getWorld();
-            Messenger.m(cc.s, "gi Pos: "+vec3d.toString());
-            Entity entity_1 = EntityType.loadEntityWithPassengers(new NbtCompound(), serverWorld, (entity_1x) -> {
+            Entity entity_1 = EntityType.loadEntityWithPassengers(tag, serverWorld, (entity_1x) -> {
                 entity_1x.refreshPositionAndAngles(vec3d.x, vec3d.y, vec3d.z, entity_1x.getYaw(), entity_1x.getPitch());
                 return !serverWorld.tryLoadEntity(entity_1x) ? null : entity_1x;
             });
             if (entity_1 == null) {
                 return Value.FALSE;
-            } else {
+            } else if (entity_1 instanceof MobEntity) {
                 ((MobEntity)entity_1).initialize(serverWorld, serverWorld.getLocalDifficulty(entity_1.getBlockPos()), SpawnReason.COMMAND, null, null);
-                Value retValue = BooleanValue.of(PerimeterDiagnostics.checkEntitySpawn(serverWorld, new BlockPos(vec3d), (MobEntity) entity_1));
+                boolean canSpawn = PerimeterDiagnostics.checkEntitySpawn(serverWorld, new BlockPos(vec3d), (MobEntity)entity_1);
                 entity_1.discard();
-                return retValue;
+                return BooleanValue.of(canSpawn);
+            } else {
+                throw new InternalExpressionException("Invalid entity type '" + entityString + "' to check spawning conditions for.");
             }
         });
 
