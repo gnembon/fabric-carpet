@@ -24,7 +24,9 @@ import net.minecraft.world.World;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 
@@ -331,7 +333,34 @@ public class CarpetSettings
 
     @Rule( desc = "Pistons can push block entities, like hoppers, chests etc.", category = {EXPERIMENTAL, FEATURE} )
     public static boolean movableBlockEntities = false;
-
+    
+    @Rule(
+    		desc = "Changes the blocks in the Non Movable Block List",
+    		options = {"minecraft:chest", "minecraft:hopper", "minecraft:dropper", "minecraft:dispenser", "minecraft:grindstone"},
+    		category = CREATIVE,
+    		validate = NonMovableBlockValidator.class,
+    		strict = false
+    )
+	public static String nonMovableBlocks = "minecraft:ender_chest,minecraft:enchanting_table,minecraft:end_gateway,minecraft:end_portal,minecraft:moving_piston,minecraft:spawner";
+	public static List<Block> nonMovableBlocksList = new ArrayList<>();
+	
+	public static class NonMovableBlockValidator extends Validator<String> {
+		@Override
+		public String validate(ServerCommandSource source, ParsedRule<String> currentRule, String newValue,
+				String string) {
+			nonMovableBlocksList.clear();
+			String[] stringList = newValue.split(",");
+			for(String s : stringList) {
+				Optional<Block> block = Registry.BLOCK.getOrEmpty(Identifier.tryParse(s.trim()));
+				if (!block.isPresent()) {
+					Messenger.m(source, "r Unknown block '" + s.trim() + "'.");
+				} else {
+					nonMovableBlocksList.add(block.get());
+				}
+			}
+			return newValue;
+		}
+	}
 
     private static class ChainStoneSetting extends Validator<String> {
         @Override public String validate(ServerCommandSource source, ParsedRule<String> currentRule, String newValue, String string) {

@@ -42,14 +42,6 @@ public abstract class PistonBlock_movableTEMixin extends FacingBlock
         }
     }
     
-    private static boolean isPushableBlockEntity(Block block)
-    {
-        //Making PISTON_EXTENSION (BlockPistonMoving) pushable would not work as its createNewTileEntity()-method returns null
-        return block != Blocks.ENDER_CHEST && block != Blocks.ENCHANTING_TABLE &&
-                       block != Blocks.END_GATEWAY && block != Blocks.END_PORTAL && block != Blocks.MOVING_PISTON  &&
-                       block != Blocks.SPAWNER;
-    }
-    
     @Redirect(method = "isMovable", at = @At(value = "INVOKE", target = "Lnet/minecraft/block/BlockState;hasBlockEntity()Z"))
     private static boolean ifHasBlockEntity(BlockState blockState)
     {
@@ -59,7 +51,7 @@ public abstract class PistonBlock_movableTEMixin extends FacingBlock
         }
         else
         {
-            return !(CarpetSettings.movableBlockEntities && isPushableBlockEntity(blockState.getBlock()));
+            return !(CarpetSettings.movableBlockEntities && !CarpetSettings.nonMovableBlocksList.contains(blockState.getBlock()));
         }
     }
 
@@ -69,7 +61,7 @@ public abstract class PistonBlock_movableTEMixin extends FacingBlock
     ))
     private static PistonBehavior moveGrindstones(BlockState blockState)
     {
-        if (CarpetSettings.movableBlockEntities && blockState.getBlock() == Blocks.GRINDSTONE) return PistonBehavior.NORMAL;
+        if (CarpetSettings.movableBlockEntities && blockState.getBlock() == Blocks.GRINDSTONE && !CarpetSettings.nonMovableBlocksList.contains(blockState.getBlock())) return PistonBehavior.NORMAL;
         return blockState.getPistonBehavior();
     }
 
