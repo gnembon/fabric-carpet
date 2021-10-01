@@ -13,6 +13,8 @@ import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
 
+import com.mojang.brigadier.suggestion.Suggestions;
+import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.entity.player.PlayerEntity;
@@ -34,16 +36,10 @@ import java.lang.reflect.Field;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeMap;
+import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static carpet.utils.Translations.tr;
 import static carpet.script.CarpetEventServer.Event.CARPET_RULE_CHANGES;
@@ -544,6 +540,14 @@ public class SettingsManager
         return rule;
     }
 
+    static CompletableFuture<Suggestions> suggestMatchingContains(Stream<String> stream, SuggestionsBuilder suggestionsBuilder) {
+        String string = suggestionsBuilder.getRemaining().toLowerCase(Locale.ROOT);
+        Stream var10000 = stream.filter((string2) -> string2.toLowerCase(Locale.ROOT).contains(string));
+        Objects.requireNonNull(suggestionsBuilder);
+        var10000.forEach(msg -> suggestionsBuilder.suggest((String)msg));
+        return suggestionsBuilder.buildFuture();
+    }
+
     /**
      * Registers the the settings command for this {@link SettingsManager}.<br>
      * It is handled automatically by Carpet.
@@ -576,17 +580,17 @@ public class SettingsManager
                 then(literal("removeDefault").
                         requires(s -> !locked).
                         then(argument("rule", StringArgumentType.word()).
-                                suggests( (c, b) -> suggestMatching(getRules().stream().map(r -> r.name), b)).
+                                suggests( (c, b) -> suggestMatchingContains(getRules().stream().map(r -> r.name), b)).
                                 executes((c) -> removeDefault(c.getSource(), contextRule(c))))).
                 then(literal("setDefault").
                         requires(s -> !locked).
                         then(argument("rule", StringArgumentType.word()).
-                                suggests( (c, b) -> suggestMatching(getRules().stream().map(r -> r.name), b)).
+                                suggests( (c, b) -> suggestMatchingContains(getRules().stream().map(r -> r.name), b)).
                                 then(argument("value", StringArgumentType.greedyString()).
                                         suggests((c, b)-> suggestMatching(contextRule(c).options, b)).
                                         executes((c) -> setDefault(c.getSource(), contextRule(c), StringArgumentType.getString(c, "value")))))).
                 then(argument("rule", StringArgumentType.word()).
-                        suggests( (c, b) -> suggestMatching(getRules().stream().map(r -> r.name), b)).
+                        suggests( (c, b) -> suggestMatchingContains(getRules().stream().map(r -> r.name), b)).
                         requires(s -> !locked ).
                         executes( (c) -> displayRuleMenu(c.getSource(), contextRule(c))).
                         then(argument("value", StringArgumentType.greedyString()).
