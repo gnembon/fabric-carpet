@@ -337,7 +337,7 @@ public class SettingsManager
     public Collection<ParsedRule<?>> getRules()
     {
         var parsedRuleClass = ParsedRule.class;
-        return rules.values().stream().filter(parsedRuleClass::isInstance).map(parsedRuleClass::cast).collect(Collectors.toUnmodifiableList());
+        return List.of(rules.values().stream().filter(parsedRuleClass::isInstance).map(parsedRuleClass::cast).toArray(ParsedRule[]::new));
     }
 
 
