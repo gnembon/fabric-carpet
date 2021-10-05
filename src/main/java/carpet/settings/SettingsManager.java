@@ -541,10 +541,15 @@ public class SettingsManager
     }
 
     static CompletableFuture<Suggestions> suggestMatchingContains(Stream<String> stream, SuggestionsBuilder suggestionsBuilder) {
-        String string = suggestionsBuilder.getRemaining().toLowerCase(Locale.ROOT);
-        Stream var10000 = stream.filter((string2) -> string2.toLowerCase(Locale.ROOT).contains(string));
+        String title = suggestionsBuilder.getRemaining().toLowerCase(Locale.ROOT);
+        Stream filteredSuggestionList = stream.filter((listItem) -> { //Regex camelCase Search
+            String name = listItem.toLowerCase(Locale.ROOT);
+            return name.startsWith(title) || Arrays.stream(name.split("(?<!^)(?=[A-Z])")).anyMatch((piece) -> {
+                return piece.contains(title);
+            });
+        });
         Objects.requireNonNull(suggestionsBuilder);
-        var10000.forEach(msg -> suggestionsBuilder.suggest((String)msg));
+        filteredSuggestionList.forEach(msg -> suggestionsBuilder.suggest((String)msg));
         return suggestionsBuilder.buildFuture();
     }
 
