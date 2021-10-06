@@ -991,4 +991,32 @@ public class CarpetSettings
             return "Cannot be negative, can be true, false, or # > 0";
         }
     }
+
+    private static class LocalServerEntityIdFixValidator extends Validator<Boolean>
+    {
+        @Override public Boolean validate(ServerCommandSource source, ParsedRule<Boolean> currentRule, Boolean newValue, String string)
+        {
+            if (currentRule.get().equals(newValue) || source == null)
+            {
+                return newValue;
+            }
+            MinecraftServer server = source.getServer();
+            if (!server.isDedicated())
+            {
+                return newValue;
+            }
+            else
+            {
+                Messenger.m(source, "r the local server entity id fix can only be enabled on a local server.");
+                return currentRule.get();
+            }
+        }
+    }
+    @Rule(
+            desc = "Fix client rendering incrementing local server entity id counter.",
+            extra = {"Fixes [MC-238384](https://bugs.mojang.com/browse/MC-238384)."},
+            category = {BUGFIX},
+            validate = LocalServerEntityIdFixValidator.class
+    )
+    public static boolean localServerEntityIdFix = false;
 }
