@@ -13,11 +13,7 @@ import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.command.CommandManager;
 import net.minecraft.entity.player.PlayerEntity;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static com.mojang.brigadier.arguments.StringArgumentType.getString;
 import static net.minecraft.command.CommandSource.suggestMatching;
@@ -201,15 +197,19 @@ public class LogCommand
             Messenger.m(source, "r Unknown logger: ","rb "+logname);
             return 0;
         }
+        if (!Arrays.asList(LoggerRegistry.getLogger(logname).getOptions()).contains(option)) {
+            Messenger.m(source, "r Unknown option: ","rb "+option);
+            return 0;
+        }
         LoggerRegistry.subscribePlayer(player_name, logname, option);
-        if (option!=null)
-        {
-            Messenger.m(source, "gi Subscribed to " + logname + "(" + option + ")");
-        }
-        else
-        {
-            Messenger.m(source, "gi Subscribed to " + logname);
-        }
-            return 1;
+            if (option != null)
+            {
+                Messenger.m(source, "gi Subscribed to " + logname + "(" + option + ")");
+            }
+            else
+            {
+                Messenger.m(source, "gi Subscribed to " + logname);
+            }
+        return 1;
     }
 }
