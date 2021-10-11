@@ -10,6 +10,7 @@ import carpet.script.utils.SimplexNoiseSampler;
 import carpet.script.value.BooleanValue;
 import carpet.script.value.FunctionValue;
 import carpet.script.value.ListValue;
+import carpet.script.value.MapValue;
 import carpet.script.value.NullValue;
 import carpet.script.value.NumericValue;
 import carpet.script.value.StringValue;
@@ -56,9 +57,9 @@ public class Sys {
                 if (num.isInteger()) return new NumericValue(num.getLong());
                 return new NumericValue(num.getDouble());
             }
-            if (v instanceof ListValue listVal)
+            if (v instanceof ListValue || v instanceof MapValue)
             {
-                return new NumericValue(listVal.length());
+                return new NumericValue(v.length());
             }
             try
             {
