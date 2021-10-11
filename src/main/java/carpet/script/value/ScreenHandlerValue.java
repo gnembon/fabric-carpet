@@ -100,7 +100,7 @@ public class ScreenHandlerValue extends Value {
 
     public ScreenHandlerValue(Value type, Text name, FunctionValue callback, Context c) {
         this.name = name;
-        callback.checkArgs(5);
+        if(callback != null) callback.checkArgs(5);
         this.context = c;
         this.callback = callback;
         this.screenHandlerFactory = this.createScreenHandlerFactoryFromValue(type);
