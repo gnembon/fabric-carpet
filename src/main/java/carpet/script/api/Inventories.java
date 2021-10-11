@@ -406,19 +406,33 @@ public class Inventories {
         {
             Value targets = lv.get(0);
             if (!(targets instanceof ListValue)) targets = ListValue.of(targets);
-            MinecraftServer server = ((CarpetContext) c).s.getMinecraftServer();
+            MinecraftServer server = ((CarpetContext) c).s.getServer();
             Stream<ServerPlayerEntity> players = ((ListValue) targets).getItems().stream().map(target -> {
                 ServerPlayerEntity player = EntityValue.getPlayerByValue(server, target);
                 if (player == null) throw new InternalExpressionException("'open_screen' requires a valid online player or a list of players as first argument. "+target.getString()+" is not a player.");
                 return player;
             });
-            if(lv.get(1) instanceof ScreenHandlerValue) {
-                ScreenHandlerValue screenHandlerValue = (ScreenHandlerValue) lv.get(1);
+            if(lv.get(1) instanceof ScreenHandlerValue screenHandlerValue) {
                 players.forEach(screenHandlerValue::showScreen);
             } else if(lv.get(1).isNull()) {
                 players.forEach(ServerPlayerEntity::closeHandledScreen);
             }
             return Value.TRUE;
+        });
+
+        expression.addContextFunction("screen_property",-1, (c, t, lv) ->
+        {
+            if(lv.size()<2) throw new InternalExpressionException("'screen_property' requires at least a screen and a property name");
+            if(!(lv.get(0) instanceof ScreenHandlerValue screenHandlerValue)) throw new InternalExpressionException("'screen_property' requires a screen handler value as the first argument");
+            String propertyName = lv.get(1).getString();
+            if(lv.size()==3)
+            {
+                return screenHandlerValue.setProperty(propertyName,lv.subList(2,lv.size()));
+            }
+            else
+            {
+                return screenHandlerValue.getProperty(propertyName);
+            }
         });
     }
 
