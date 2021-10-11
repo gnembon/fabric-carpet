@@ -36,7 +36,17 @@ import java.lang.reflect.Field;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.TreeMap;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -541,15 +551,16 @@ public class SettingsManager
     }
 
     static CompletableFuture<Suggestions> suggestMatchingContains(Stream<String> stream, SuggestionsBuilder suggestionsBuilder) {
-        String title = suggestionsBuilder.getRemaining().toLowerCase(Locale.ROOT);
-        Stream filteredSuggestionList = stream.filter((listItem) -> { //Regex camelCase Search
-            String name = listItem.toLowerCase(Locale.ROOT);
-            return name.startsWith(title) || Arrays.stream(name.split("(?<!^)(?=[A-Z])")).anyMatch((piece) -> {
-                return piece.contains(title);
-            });
+        String query = suggestionsBuilder.getRemaining().toLowerCase(Locale.ROOT);
+        var filteredSuggestionList = stream.filter((listItem) -> { //Regex camelCase Search
+            var words = Arrays.stream(listItem.split("(?<!^)(?=[A-Z])")).map(s -> s.toLowerCase(Locale.ROOT)).collect(Collectors.toList());
+            var prefixes = new ArrayList<String>(words.size());
+            for (int i = 0; i < words.size(); i++)
+                prefixes.add(String.join("",words.subList(i, words.size())));
+            return prefixes.stream().anyMatch(s -> s.startsWith(query));
         });
         Objects.requireNonNull(suggestionsBuilder);
-        filteredSuggestionList.forEach(msg -> suggestionsBuilder.suggest((String)msg));
+        filteredSuggestionList.forEach(suggestionsBuilder::suggest);
         return suggestionsBuilder.buildFuture();
     }
 
