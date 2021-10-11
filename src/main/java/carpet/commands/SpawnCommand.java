@@ -62,7 +62,7 @@ public class SpawnCommand
                                 executes( (c) -> recentSpawnsForType(c.getSource(), getString(c, "type"))))).
                 then(literal("test").
                         executes( (c)-> runTest(c.getSource(), 72000, null)).
-                        then(argument("ticks", integer(10,720000)).
+                        then(argument("ticks", integer(10)).
                                 executes( (c)-> runTest(
                                         c.getSource(),
                                         getInteger(c, "ticks"),
