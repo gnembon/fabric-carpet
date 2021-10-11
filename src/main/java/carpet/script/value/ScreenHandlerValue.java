@@ -102,8 +102,9 @@ public class ScreenHandlerValue extends Value {
         this.name = name;
         callback.checkArgs(5);
         this.context = c;
-        this.screenHandler = this.createScreenHandlerFactoryFromValue(type);
-        if(this.screenHandler == null) throw new InternalExpressionException("Invalid screen handler type: " + type.getString());
+        this.callback = callback;
+        this.screenHandlerFactory = this.createScreenHandlerFactoryFromValue(type);
+        if(this.screenHandlerFactory == null) throw new ThrowStatement(type, Throwables.UNKNOWN_SCREEN);
     }
 
     public void showScreen(PlayerEntity player) {
