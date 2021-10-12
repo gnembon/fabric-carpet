@@ -23,9 +23,11 @@ import net.minecraft.world.WorldProperties;
 
 import java.lang.management.ManagementFactory;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.Function;
@@ -58,6 +60,7 @@ public class SystemInfo {
             WorldProperties prop = c.s.getServer().getOverworld().getLevelProperties();
             return ListValue.of(NumericValue.of(prop.getSpawnX()), NumericValue.of(prop.getSpawnY()), NumericValue.of(prop.getSpawnZ()));
         });
+        put("world_time", c -> new NumericValue(c.s.getWorld().getTime()));
 
         put("game_difficulty", c -> StringValue.of(c.s.getServer().getSaveProperties().getDifficulty().getName()));
         put("game_hardcore", c -> BooleanValue.of(c.s.getServer().getSaveProperties().isHardcore()));
@@ -113,6 +116,18 @@ public class SystemInfo {
             for (ModContainer mod : FabricLoader.getInstance().getAllMods())
                 ret.put(new StringValue(mod.getMetadata().getName()), new StringValue(mod.getMetadata().getVersion().getFriendlyString()));
             return MapValue.wrap(ret);
+        });
+        put("server_last_tick_times", c -> {
+        	//assuming we are in the tick world section
+            // might be off one tick when run in the off tasks or asynchronously.
+            int currentReportedTick = c.s.getServer().getTicks()-1;
+            List<Value> ticks = new ArrayList<>(100);
+            final long[] tickArray = c.s.getServer().lastTickLengths;
+            for (int i=currentReportedTick+100; i > currentReportedTick; i--)
+            {
+                ticks.add(new NumericValue(((double)tickArray[i % 100])/1000000.0));
+            }
+            return ListValue.wrap(ticks);
         });
 
         put("java_max_memory", c -> new NumericValue(Runtime.getRuntime().maxMemory()));

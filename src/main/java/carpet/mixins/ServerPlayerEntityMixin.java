@@ -6,9 +6,9 @@ import carpet.helpers.EntityPlayerActionPack;
 import com.mojang.authlib.GameProfile;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.network.ServerPlayerInteractionManager;
 import net.minecraft.server.world.ServerWorld;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
@@ -16,7 +16,9 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(ServerPlayerEntity.class)
 public abstract class ServerPlayerEntityMixin implements ServerPlayerEntityInterface
 {
+    @Unique
     public EntityPlayerActionPack actionPack;
+    @Override
     public EntityPlayerActionPack getActionPack()
     {
         return actionPack;
@@ -41,15 +43,11 @@ public abstract class ServerPlayerEntityMixin implements ServerPlayerEntityInter
         }
         catch (StackOverflowError soe)
         {
-            CarpetSettings.LOG.fatal("Caused stack overflow when performing player action");
+            CarpetSettings.LOG.fatal("Caused stack overflow when performing player action", soe);
         }
         catch (Throwable exc)
         {
-            CarpetSettings.LOG.fatal("Error executing player tasks "+ exc.getMessage());
-            exc.printStackTrace();
+            CarpetSettings.LOG.fatal("Error executing player tasks", exc);
         }
     }
-
-
-
 }

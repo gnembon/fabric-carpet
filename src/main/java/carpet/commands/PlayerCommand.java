@@ -35,6 +35,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Set;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 import static net.minecraft.server.command.CommandManager.argument;
 import static net.minecraft.server.command.CommandManager.literal;
@@ -46,6 +47,10 @@ public class PlayerCommand
     // TODO: allow any order like execute
     public static void register(CommandDispatcher<ServerCommandSource> dispatcher)
     {
+        final String[] gamemodeStrings = Arrays.stream(GameMode.values())
+                .map(GameMode::getName)
+                .collect(Collectors.toList())
+                .toArray(new String[]{});
         LiteralArgumentBuilder<ServerCommandSource> literalargumentbuilder = literal("player")
                 .requires((player) -> SettingsManager.canUseCommand(player, CarpetSettings.commandPlayer))
                 .then(argument("player", StringArgumentType.word())
@@ -93,10 +98,18 @@ public class PlayerCommand
                                 .then(literal("left").executes(c -> manipulate(c, ap -> ap.setStrafing(1))))
                                 .then(literal("right").executes(c -> manipulate(c, ap -> ap.setStrafing(-1))))
                         ).then(literal("spawn").executes(PlayerCommand::spawn)
+                                .then(literal("in").requires((player) -> player.hasPermissionLevel(2))
+                                        .then(argument("gamemode", StringArgumentType.word())
+                                                .suggests( (c, b) -> suggestMatching(gamemodeStrings, b))
+                                        .executes(PlayerCommand::spawn)))
                                 .then(literal("at").then(argument("position", Vec3ArgumentType.vec3()).executes(PlayerCommand::spawn)
                                         .then(literal("facing").then(argument("direction", RotationArgumentType.rotation()).executes(PlayerCommand::spawn)
-                                                .then(literal("in").then(argument("dimension", DimensionArgumentType.dimension()).executes(PlayerCommand::spawn)))
-                                        ))
+                                                .then(literal("in").then(argument("dimension", DimensionArgumentType.dimension()).executes(PlayerCommand::spawn)
+                                                        .then(literal("in").requires((player) -> player.hasPermissionLevel(2))
+                                                                .then(argument("gamemode", StringArgumentType.word()).suggests( (c, b) -> suggestMatching(gamemodeStrings, b))
+                                                                .executes(PlayerCommand::spawn)
+                                                        )))
+                                        )))
                                 ))
                         )
                 );
@@ -273,6 +286,20 @@ public class PlayerCommand
             flying = player.getAbilities().flying;
         }
         catch (CommandSyntaxException ignored) {}
+        try {
+            String opGameMode = StringArgumentType.getString(context, "gamemode");
+            mode = GameMode.byName(opGameMode, null);
+            if(mode == null)
+            {
+                Messenger.m(context.getSource(), "rb Invalid game mode: "+opGameMode+".");
+                return 0;
+            }
+        } catch (IllegalArgumentException ignored) {}
+        if(mode == GameMode.SPECTATOR)
+        {
+            // Force override flying to true for spectator players, or they will fell out of the world.
+            flying = true;
+        }
         String playerName = StringArgumentType.getString(context, "player");
         if (playerName.length()>maxPlayerLength(source.getServer()))
         {

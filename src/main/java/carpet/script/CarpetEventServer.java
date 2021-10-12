@@ -1174,7 +1174,7 @@ public class CarpetEventServer
         }
         catch (NullPointerException | InvalidCallbackException | IntegrityException error)
         {
-            CarpetScriptServer.LOG.error("Got exception: "+error.getMessage());
+            CarpetScriptServer.LOG.error("Got exception when running event call ", error);
             return CallbackResult.FAIL;
         }
     }
