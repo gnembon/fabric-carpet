@@ -96,7 +96,7 @@ public class Operators {
             int size = lv.size();
             if (size == 0) return Value.NULL;
             long accumulator = NumericValue.asNumber(lv.get(0)).getLong();
-            for (Value v: lv.subList(1, size)) accumulator = accumulator | NumericValue.asNumber(v).getLong();
+            for (Value v: lv.subList(1, size)) accumulator = accumulator ^ NumericValue.asNumber(v).getLong();
             return new NumericValue(accumulator);
         });
 
@@ -226,28 +226,24 @@ public class Operators {
         });
         expression.addFunctionalEquivalence("<=", "nondecreasing");
 
-        expression.addMathematicalBinaryIntFunction("bitwise_shift_left", (l1, l2) -> {
-            long num = (long) l1;
-            long amount = (long) l2;
+        expression.addMathematicalBinaryIntFunction("bitwise_shift_left", (num, amount) -> {
             return num << amount;
         });
-        expression.addMathematicalBinaryIntFunction("bitwise_shift_right", (l1, l2) -> {
-            long num = l1;
-            long amount = l2;
+        expression.addMathematicalBinaryIntFunction("bitwise_shift_right", (num, amount) -> {
             return num >> amount;
         });
-        expression.addMathematicalBinaryIntFunction("bitwise_roll_left", (l1, l2) -> {
-            long num = l1;
-            long amount = l2 % 64;
+        expression.addMathematicalBinaryIntFunction("bitwise_roll_left", (num, num2) -> {
+            long num = num;
+            long amount = num2 % 64;
 
             long amountToRoll = 64 - amount;
             long rolledBits = ((-1L) >> amountToRoll) << amountToRoll;
             long rolledAmount = (num & rolledBits) >> amountToRoll;
             return num << amount | rolledAmount;
         });
-        expression.addMathematicalBinaryIntFunction("bitwise_roll_right", (l1, l2) -> {
-            long num = l1;
-            long amount = l2 % 64;
+        expression.addMathematicalBinaryIntFunction("bitwise_roll_right", (num, num2) -> {
+            long num = num;
+            long amount = num2 % 64;
 
             long amountToRoll = 64 - amount;
             long rolledBits = ((-1L) << amountToRoll) >> amountToRoll;
