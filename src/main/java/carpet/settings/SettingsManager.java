@@ -13,6 +13,8 @@ import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
 
+import com.mojang.brigadier.suggestion.Suggestions;
+import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.server.MinecraftServer;
@@ -33,16 +35,20 @@ import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.function.Predicate;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static carpet.utils.Translations.tr;
 import static carpet.script.CarpetEventServer.Event.CARPET_RULE_CHANGES;
@@ -381,8 +387,7 @@ public class SettingsManager
         }
         catch (IOException e)
         {
-            e.printStackTrace();
-            CarpetSettings.LOG.error("[CM]: failed write "+identifier+".conf config file");
+            CarpetSettings.LOG.error("[CM]: failed write "+identifier+".conf config file", e);
         }
     }
 
@@ -567,8 +572,8 @@ public class SettingsManager
         }
         catch (IOException e)
         {
-            e.printStackTrace();
-            return new ConfigFileData(new HashMap<>(), false, List.of());
+            CarpetSettings.LOG.error("Exception while loading Carpet rules from config", e);
+            return new ConfigReadResult(new HashMap<>(), false, List.of());
         }
     }
 
@@ -639,6 +644,20 @@ public class SettingsManager
         return rule;
     }
 
+    static CompletableFuture<Suggestions> suggestMatchingContains(Stream<String> stream, SuggestionsBuilder suggestionsBuilder) {
+        String query = suggestionsBuilder.getRemaining().toLowerCase(Locale.ROOT);
+        var filteredSuggestionList = stream.filter((listItem) -> { //Regex camelCase Search
+            var words = Arrays.stream(listItem.split("(?<!^)(?=[A-Z])")).map(s -> s.toLowerCase(Locale.ROOT)).collect(Collectors.toList());
+            var prefixes = new ArrayList<String>(words.size());
+            for (int i = 0; i < words.size(); i++)
+                prefixes.add(String.join("",words.subList(i, words.size())));
+            return prefixes.stream().anyMatch(s -> s.startsWith(query));
+        });
+        Objects.requireNonNull(suggestionsBuilder);
+        filteredSuggestionList.forEach(suggestionsBuilder::suggest);
+        return suggestionsBuilder.buildFuture();
+    }
+
     /**
      * Registers the the settings command for this {@link SettingsManager}.<br>
      * It is handled automatically by Carpet.
@@ -671,17 +690,17 @@ public class SettingsManager
                 then(literal("removeDefault").
                         requires(s -> !locked()).
                         then(argument("rule", StringArgumentType.word()).
-                                suggests( (c, b) -> suggestMatching(getRulesSorted().stream().map(r -> r.name()), b)).
+                                suggests( (c, b) -> suggestMatchingContains(getRulesSorted().stream().map(r -> r.name()), b)).
                                 executes((c) -> removeDefault(c.getSource(), contextRule(c))))).
                 then(literal("setDefault").
                         requires(s -> !locked()).
                         then(argument("rule", StringArgumentType.word()).
-                                suggests( (c, b) -> suggestMatching(getRulesSorted().stream().map(r -> r.name()), b)).
+                                suggests( (c, b) -> suggestMatchingContains(getRulesSorted().stream().map(r -> r.name()), b)).
                                 then(argument("value", StringArgumentType.greedyString()).
                                         suggests((c, b)-> suggestMatching(contextRule(c).suggestions(), b)).
                                         executes((c) -> setDefault(c.getSource(), contextRule(c), StringArgumentType.getString(c, "value")))))).
                 then(argument("rule", StringArgumentType.word()).
-                        suggests( (c, b) -> suggestMatching(getRulesSorted().stream().map(r -> r.name()), b)).
+                        suggests( (c, b) -> suggestMatchingContains(getRulesSorted().stream().map(r -> r.name()), b)).
                         requires(s -> !locked() ).
                         executes( (c) -> displayRuleMenu(c.getSource(), contextRule(c))).
                         then(argument("value", StringArgumentType.greedyString()).

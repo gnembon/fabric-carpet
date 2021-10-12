@@ -358,7 +358,7 @@ With an optional feature, it returns value for the specified attribute for that 
 * `'category'`: the parent biome this biome is derived from. Possible values include:
 `'none'`, `'taiga'`, `'extreme_hills'`, `'jungle'`, `'mesa'`, `'plains'`, `'savanna'`,
 `'icy'`, `'the_end'`, `'beach'`, `'forest'`, `'ocean'`, `'desert'`, `'river'`,
-`'swamp'`, `'mushroom'` and  `'nether'`.
+`'swamp'`, `'mushroom'` , `'nether'`, `'underground'` (1.18+) and `'mountain'` (1.18+).
 * `'temperature'`: temperature from 0 to 1
 * `'fog_color'`: RGBA color value of fog 
 * `'foliage_color'`: RGBA color value of foliage
@@ -367,11 +367,11 @@ With an optional feature, it returns value for the specified attribute for that 
 * `'water_fog_color'`: RGBA color value of water fog
 * `'humidity'`: value from 0 to 1 indicating how wet is the biome
 * `'precipitation'`: `'rain'` `'snot'`, or `'none'`... ok, maybe `'snow'`, but that means snots for sure as well.
-* `'depth'`: (1.17.1 and below) float value indicating how high or low the terrain should generate. Values > 0 indicate generation above sea level
+* `'depth'`: (1.17.1 and below only) float value indicating how high or low the terrain should generate. Values > 0 indicate generation above sea level
 and values < 0, below sea level.
-* `'scale'`: (1.17 and below) float value indicating how flat is the terrain.
+* `'scale'`: (1.17.1 and below only) float value indicating how flat is the terrain.
 * `'features'`: list of features that generate in the biome, grouped by generation steps
-* `'structures'`: list of structures that generate in the biome.
+* `'structures'`: (1.17.1 and below only) list of structures that generate in the biome.
 
 ### `solid(pos)`
 

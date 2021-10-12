@@ -6,6 +6,7 @@ import carpet.helpers.TickSpeed;
 import carpet.script.exception.IntegrityException;
 import carpet.script.exception.InternalExpressionException;
 import carpet.script.exception.InvalidCallbackException;
+import carpet.script.utils.GlocalFlag;
 import carpet.script.value.BlockValue;
 import carpet.script.value.BooleanValue;
 import carpet.script.value.EntityValue;
@@ -74,8 +75,7 @@ public class CarpetEventServer
     public final CarpetScriptServer scriptServer;
     private static final List<Value> NOARGS = Collections.emptyList();
     public final Map<String, Event> customEvents = new HashMap<>();
-
-
+    public GlocalFlag handleEvents = new GlocalFlag(true);
 
     public enum CallbackResult
     {
@@ -195,31 +195,33 @@ public class CarpetEventServer
          */
         public void call(Supplier<List<Value>> argumentSupplier, Supplier<ServerCommandSource> cmdSourceSupplier)
         {
-            if (callList.size() > 0)
+            if (callList.size() > 0 && CarpetServer.scriptServer != null)
             {
-                CarpetProfiler.ProfilerToken currentSection = CarpetProfiler.start_section(null, "Scarpet events", CarpetProfiler.TYPE.GENERAL);
-                List<Value> argv = argumentSupplier.get(); // empty for onTickDone
-                ServerCommandSource source;
-                try
-                {
-                     source = cmdSourceSupplier.get();
-                }
-                catch (NullPointerException noReference) // todo figure out what happens when closing.
-                {
-                    return;
-                }
-                String nameCheck = perPlayerDistribution?source.getName():null;
-                assert argv.size() == reqArgs;
-                List<Callback> fails = new ArrayList<>();
-                for (Callback call: callList)
-                {
-                    // supressing calls where target player hosts simply don't match
-                    // handling global hosts with player targets is left to when the host is resolved (few calls deeper).
-                    if (nameCheck != null && call.optionalTarget != null && !nameCheck.equals(call.optionalTarget)) continue;
-                    if (call.execute(source, argv) == CallbackResult.FAIL) fails.add(call);
-                }
-                for (Callback call : fails) callList.remove(call);
-                CarpetProfiler.end_current_section(currentSection);
+                CarpetServer.scriptServer.events.handleEvents.runIfEnabled( () -> {
+                    CarpetProfiler.ProfilerToken currentSection = CarpetProfiler.start_section(null, "Scarpet events", CarpetProfiler.TYPE.GENERAL);
+                    List<Value> argv = argumentSupplier.get(); // empty for onTickDone
+                    ServerCommandSource source;
+                    try
+                    {
+                        source = cmdSourceSupplier.get();
+                    }
+                    catch (NullPointerException noReference) // todo figure out what happens when closing.
+                    {
+                        return;
+                    }
+                    String nameCheck = perPlayerDistribution ? source.getName() : null;
+                    assert argv.size() == reqArgs;
+                    List<Callback> fails = new ArrayList<>();
+                    for (Callback call : callList)
+                    {
+                        // supressing calls where target player hosts simply don't match
+                        // handling global hosts with player targets is left to when the host is resolved (few calls deeper).
+                        if (nameCheck != null && call.optionalTarget != null && !nameCheck.equals(call.optionalTarget)) continue;
+                        if (call.execute(source, argv) == CallbackResult.FAIL) fails.add(call);
+                    }
+                    for (Callback call : fails) callList.remove(call);
+                    CarpetProfiler.end_current_section(currentSection);
+                });
             }
         }
 
@@ -1173,7 +1175,7 @@ public class CarpetEventServer
         }
         catch (NullPointerException | InvalidCallbackException | IntegrityException error)
         {
-            CarpetScriptServer.LOG.error("Got exception: "+error.getMessage());
+            CarpetScriptServer.LOG.error("Got exception when running event call ", error);
             return CallbackResult.FAIL;
         }
     }

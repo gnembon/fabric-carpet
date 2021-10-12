@@ -710,7 +710,7 @@ public class CarpetScriptHost extends ScriptHost
     {
         try
         {
-            return call(source, function, args);
+            return scriptServer.events.handleEvents.getWhileDisabled(() -> call(source, function, args));
         }
         catch (CarpetExpressionException exc)
         {
@@ -815,11 +815,11 @@ public class CarpetScriptHost extends ScriptHost
             // TODO: this is just for now - invoke would be able to invoke other hosts scripts
             assertAppIntegrity(function.getModule());
             Context context = new CarpetContext(this, source, BlockPos.ORIGIN);
-            return function.getExpression().evalValue(
+            return scriptServer.events.handleEvents.getWhileDisabled(() -> function.getExpression().evalValue(
                     () -> function.lazyEval(context, Context.VOID, function.getExpression(), function.getToken(), argv),
                     context,
                     Context.VOID
-            );
+            ));
         }
         catch (ExpressionException e)
         {
@@ -891,6 +891,7 @@ public class CarpetScriptHost extends ScriptHost
     {
         ServerPlayerEntity player = (user==null)?null:scriptServer.server.getPlayerManager().getPlayer(user);
         ServerCommandSource source = (player != null)?player.getCommandSource():scriptServer.server.getCommandSource();
+        return scriptServer.events.handleEvents.getWhileDisabled(()->{
         try
         {
             return callUDF(BlockPos.ORIGIN, source, fun, arguments);
@@ -899,6 +900,7 @@ public class CarpetScriptHost extends ScriptHost
         {
             return Value.NULL;
         }
+        });
     }
 
 
