@@ -233,7 +233,6 @@ public class Operators {
             return num >> amount;
         });
         expression.addMathematicalBinaryIntFunction("bitwise_roll_left", (num, num2) -> {
-            long num = num;
             long amount = num2 % 64;
 
             long amountToRoll = 64 - amount;
@@ -242,7 +241,6 @@ public class Operators {
             return num << amount | rolledAmount;
         });
         expression.addMathematicalBinaryIntFunction("bitwise_roll_right", (num, num2) -> {
-            long num = num;
             long amount = num2 % 64;
 
             long amountToRoll = 64 - amount;
