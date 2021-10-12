@@ -573,7 +573,7 @@ public class SettingsManager
         catch (IOException e)
         {
             CarpetSettings.LOG.error("Exception while loading Carpet rules from config", e);
-            return new ConfigReadResult(new HashMap<>(), false, List.of());
+            return new ConfigFileData(new HashMap<>(), false, List.of());
         }
     }
 
@@ -690,17 +690,17 @@ public class SettingsManager
                 then(literal("removeDefault").
                         requires(s -> !locked()).
                         then(argument("rule", StringArgumentType.word()).
-                                suggests( (c, b) -> suggestMatchingContains(getRulesSorted().stream().map(r -> r.name()), b)).
+                                suggests( (c, b) -> suggestMatchingContains(getRulesSorted().stream().map(CarpetRule::name), b)).
                                 executes((c) -> removeDefault(c.getSource(), contextRule(c))))).
                 then(literal("setDefault").
                         requires(s -> !locked()).
                         then(argument("rule", StringArgumentType.word()).
-                                suggests( (c, b) -> suggestMatchingContains(getRulesSorted().stream().map(r -> r.name()), b)).
+                                suggests( (c, b) -> suggestMatchingContains(getRulesSorted().stream().map(CarpetRule::name), b)).
                                 then(argument("value", StringArgumentType.greedyString()).
                                         suggests((c, b)-> suggestMatching(contextRule(c).suggestions(), b)).
                                         executes((c) -> setDefault(c.getSource(), contextRule(c), StringArgumentType.getString(c, "value")))))).
                 then(argument("rule", StringArgumentType.word()).
-                        suggests( (c, b) -> suggestMatchingContains(getRulesSorted().stream().map(r -> r.name()), b)).
+                        suggests( (c, b) -> suggestMatchingContains(getRulesSorted().stream().map(CarpetRule::name), b)).
                         requires(s -> !locked() ).
                         executes( (c) -> displayRuleMenu(c.getSource(), contextRule(c))).
                         then(argument("value", StringArgumentType.greedyString()).
