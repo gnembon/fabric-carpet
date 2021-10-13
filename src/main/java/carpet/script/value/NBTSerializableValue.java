@@ -420,7 +420,7 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
         if (tag instanceof NbtCompound)
             return !((NbtCompound) tag).isEmpty();
         if (tag instanceof AbstractNbtList)
-            return !((AbstractNbtList) tag).isEmpty();
+            return !((AbstractNbtList<?>) tag).isEmpty();
         if (tag instanceof AbstractNbtNumber)
             return ((AbstractNbtNumber) tag).doubleValue()!=0.0;
         if (tag instanceof NbtString)
