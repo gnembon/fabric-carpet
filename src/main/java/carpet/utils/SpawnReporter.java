@@ -36,6 +36,8 @@ import net.minecraft.world.gen.feature.StructureFeature;
 import org.apache.commons.lang3.tuple.Pair;
 import org.jetbrains.annotations.Nullable;
 
+import carpet.CarpetSettings;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -462,7 +464,7 @@ public class SpawnReporter
                     }
                     catch (Exception exception)
                     {
-                        exception.printStackTrace();
+                        CarpetSettings.LOG.warn("Exception while creating mob for spawn reporter", exception);
                         return rep;
                     }
                     
@@ -519,7 +521,7 @@ public class SpawnReporter
                             }
                             catch (Exception exception)
                             {
-                                exception.printStackTrace();
+                                CarpetSettings.LOG.warn("Exception while creating mob for spawn reporter", exception);
                                 return rep;
                             }
                         }

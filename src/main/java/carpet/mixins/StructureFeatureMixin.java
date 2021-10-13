@@ -96,8 +96,7 @@ public abstract class StructureFeatureMixin<C extends FeatureConfig> implements 
         }
         catch (Exception booboo)
         {
-            CarpetSettings.LOG.error("Unknown Exception while plopping structure: "+booboo);
-            booboo.printStackTrace();
+            CarpetSettings.LOG.error("Unknown Exception while plopping structure: "+booboo, booboo);
             return false;
         }
         finally

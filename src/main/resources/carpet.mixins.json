@@ -26,6 +26,8 @@
     "Structure_fillUpdatesMixin",
     "ServerPlayNetworkHandler_interactionUpdatesMixin",
 
+    "FlowableFluid_liquidDamageDisabledMixin",
+
     "ServerMetadata_motdMixin",
     "MinecraftServer_pingPlayerSampleLimit",
 
