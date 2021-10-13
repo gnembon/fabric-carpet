@@ -22,8 +22,8 @@ import java.util.function.BiFunction;
 public class BiomeInfo
 {
     public final static Map<String, BiFunction<ServerWorld, Biome, Value>> biomeFeatures = new HashMap<String, BiFunction<ServerWorld, Biome, Value>>(){{
-        put("top_material", (w, b) -> new BlockValue( b.getGenerationSettings().getSurfaceConfig().getTopMaterial(), null, null));
-        put("under_material", (w, b) -> new BlockValue( b.getGenerationSettings().getSurfaceConfig().getUnderMaterial(), null, null));
+        //put("top_material", (w, b) -> new BlockValue( b.getGenerationSettings(). getSurfaceConfig().getTopMaterial(), null, null));
+        //put("under_material", (w, b) -> new BlockValue( b.getGenerationSettings().getSurfaceConfig().getUnderMaterial(), null, null));
         put("category", (w, b) -> StringValue.of(b.getCategory().getName()));
         put("temperature", (w, b) -> NumericValue.of(b.getTemperature()));
         put("fog_color", (w, b) -> ValueConversions.ofRGB(((BiomeEffectsInterface)b.getEffects()).getCMFogColor()));
