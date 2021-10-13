@@ -305,7 +305,7 @@ only take integer values, so if the input has a decimal part, it will be discard
 	tend to 0.
  - `bitwise_xor(...)` -> Does the bitwise XOR operation on each number in order.
  - `bitwise_or(...)` -> Does the bitwise AND operation on each number in order. Note that with larger ranges of numbers this will
-	tend to 1.
+	tend to -1.
  - `bitwise_shift_left(num, amount)` -> Shifts all the bits of the first number `amount` spots to the left. Note that shifting more
 	than 63 positions will result in a 0 (cos you shift out all the bits of the number)
  - `bitwise_shift_right(num, amount)` -> Shifts all the bits of the first number `amount` spots to the right. Like with the above,
