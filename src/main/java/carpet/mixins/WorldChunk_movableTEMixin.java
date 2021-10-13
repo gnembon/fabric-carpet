@@ -99,10 +99,10 @@ public abstract class WorldChunk_movableTEMixin extends Chunk implements WorldCh
         {
             Block newBlock = newBlockState.getBlock();
             Block oldBlock = oldBlockState.getBlock();
-            ((Heightmap) this.field_34541.get(Heightmap.Type.MOTION_BLOCKING)).trackUpdate(x, y, z, newBlockState);
-            ((Heightmap) this.field_34541.get(Heightmap.Type.MOTION_BLOCKING_NO_LEAVES)).trackUpdate(x, y, z, newBlockState);
-            ((Heightmap) this.field_34541.get(Heightmap.Type.OCEAN_FLOOR)).trackUpdate(x, y, z, newBlockState);
-            ((Heightmap) this.field_34541.get(Heightmap.Type.WORLD_SURFACE)).trackUpdate(x, y, z, newBlockState);
+            ((Heightmap) this.heightmaps.get(Heightmap.Type.MOTION_BLOCKING)).trackUpdate(x, y, z, newBlockState);
+            ((Heightmap) this.heightmaps.get(Heightmap.Type.MOTION_BLOCKING_NO_LEAVES)).trackUpdate(x, y, z, newBlockState);
+            ((Heightmap) this.heightmaps.get(Heightmap.Type.OCEAN_FLOOR)).trackUpdate(x, y, z, newBlockState);
+            ((Heightmap) this.heightmaps.get(Heightmap.Type.WORLD_SURFACE)).trackUpdate(x, y, z, newBlockState);
             boolean boolean_3 = chunkSection.isEmpty();
             if (boolean_2 != boolean_3)
             {
@@ -156,7 +156,7 @@ public abstract class WorldChunk_movableTEMixin extends Chunk implements WorldCh
                     newBlockState.onBlockAdded(this.world, blockPos_1, oldBlockState, boolean_1); //This can call setblockstate! (e.g. hopper does)
                 }
                 
-                this.field_34537 = true; // shouldSave
+                this.needsSaving = true; // shouldSave
                 return oldBlockState;
             }
         }

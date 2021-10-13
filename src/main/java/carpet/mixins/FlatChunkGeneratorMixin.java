@@ -36,7 +36,7 @@ public abstract class FlatChunkGeneratorMixin extends ChunkGenerator
         if (!CarpetSettings.flatWorldStructureSpawning) return super.getEntitySpawnList(biome, accessor, group, pos);
 
         // vanila noise one
-        if (accessor.getStructureAt(pos, true, StructureFeature.SWAMP_HUT).hasChildren()) {
+        if (accessor.getStructureAt(pos, StructureFeature.SWAMP_HUT).hasChildren()) {
             if (group == SpawnGroup.MONSTER) {
                 return SwampHutFeature.MONSTER_SPAWNS;
             }
@@ -47,15 +47,15 @@ public abstract class FlatChunkGeneratorMixin extends ChunkGenerator
         }
 
         if (group == SpawnGroup.MONSTER) {
-            if (accessor.getStructureAt(pos, false, StructureFeature.PILLAGER_OUTPOST).hasChildren()) {
+            if (accessor.getStructureAt(pos, StructureFeature.PILLAGER_OUTPOST).hasChildren()) {
                 return PillagerOutpostFeature.MONSTER_SPAWNS;
             }
 
-            if (accessor.getStructureAt(pos, false, StructureFeature.MONUMENT).hasChildren()) {
+            if (accessor.getStructureAt(pos, StructureFeature.MONUMENT).hasChildren()) {
                 return OceanMonumentFeature.MONSTER_SPAWNS;
             }
 
-            if (accessor.getStructureAt(pos, true, StructureFeature.FORTRESS).hasChildren()) {
+            if (accessor.getStructureAt(pos, StructureFeature.FORTRESS).hasChildren()) {
                 return NetherFortressFeature.MONSTER_SPAWNS;
             }
         }
@@ -66,27 +66,27 @@ public abstract class FlatChunkGeneratorMixin extends ChunkGenerator
         {
             if (CarpetSettings.huskSpawningInTemples)
             {
-                if (accessor.getStructureAt(pos, true, StructureFeature.DESERT_PYRAMID).hasChildren())
+                if (accessor.getStructureAt(pos, StructureFeature.DESERT_PYRAMID).hasChildren())
                 {
                     return CustomSpawnLists.PYRAMID_SPAWNS;
                 }
             }
             if (CarpetSettings.shulkerSpawningInEndCities)
             {
-                if (accessor.getStructureAt(pos, true, StructureFeature.END_CITY).hasChildren())
+                if (accessor.getStructureAt(pos, StructureFeature.END_CITY).hasChildren())
                 {
                     return CustomSpawnLists.SHULKER_SPAWNS;
                 }
             }
             if (CarpetSettings.piglinsSpawningInBastions)
             {
-                if (accessor.getStructureAt(pos, true, StructureFeature.BASTION_REMNANT).hasChildren())
+                if (accessor.getStructureAt(pos, StructureFeature.BASTION_REMNANT).hasChildren())
                 {
                     return CustomSpawnLists.BASTION_SPAWNS;
                 }
             }
         }
-        return (group == SpawnGroup.UNDERGROUND_WATER_CREATURE || group == SpawnGroup.AXOLOTLS) && accessor.getStructureAt(pos, false, StructureFeature.MONUMENT).hasChildren() ? SpawnSettings.EMPTY_ENTRY_POOL : super.getEntitySpawnList(biome, accessor, group, pos);
+        return (group == SpawnGroup.UNDERGROUND_WATER_CREATURE || group == SpawnGroup.AXOLOTLS) && accessor.getStructureAt(pos, StructureFeature.MONUMENT).hasChildren() ? SpawnSettings.EMPTY_ENTRY_POOL : super.getEntitySpawnList(biome, accessor, group, pos);
 
 
     }

@@ -37,7 +37,7 @@ public abstract class NoiseChunkGenerator_husksSpawnMixin extends ChunkGenerator
         {
             if (CarpetSettings.huskSpawningInTemples)
             {
-                if (accessor.getStructureAt(pos, true, StructureFeature.DESERT_PYRAMID).hasChildren())
+                if (accessor.getStructureAt(pos, StructureFeature.DESERT_PYRAMID).hasChildren())
                 {
                     cir.setReturnValue(CustomSpawnLists.PYRAMID_SPAWNS);
                     return;
@@ -45,7 +45,7 @@ public abstract class NoiseChunkGenerator_husksSpawnMixin extends ChunkGenerator
             }
             if (CarpetSettings.shulkerSpawningInEndCities)
             {
-                if (accessor.getStructureAt(pos, true, StructureFeature.END_CITY).hasChildren())
+                if (accessor.getStructureAt(pos, StructureFeature.END_CITY).hasChildren())
                 {
                     cir.setReturnValue(CustomSpawnLists.SHULKER_SPAWNS);
                     return;
@@ -53,7 +53,7 @@ public abstract class NoiseChunkGenerator_husksSpawnMixin extends ChunkGenerator
             }
             if (CarpetSettings.piglinsSpawningInBastions)
             {
-                if (accessor.getStructureAt(pos, true, StructureFeature.BASTION_REMNANT).hasChildren())
+                if (accessor.getStructureAt(pos, StructureFeature.BASTION_REMNANT).hasChildren())
                 {
                     cir.setReturnValue(CustomSpawnLists.BASTION_SPAWNS);
                 }
