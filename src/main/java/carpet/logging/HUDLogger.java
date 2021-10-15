@@ -30,6 +30,11 @@ public class HUDLogger extends Logger
         super(field, logName, def, options, strictOptions);
     }
 
+    @Deprecated
+    public HUDLogger(Field field, String logName, String def, String[] options) {
+        super(field, logName, def, options, false);
+    }
+
     @Override
     public void removePlayer(String playerName)
     {

@@ -51,6 +51,11 @@ public class Logger
         }
     }
 
+    @Deprecated
+    public Logger(Field acceleratorField, String logName, String def, String [] options) {
+        this(acceleratorField, logName, def, options, false);
+    }
+
     public Logger(Field acceleratorField, String logName, String def, String [] options, boolean strictOptions)
     {
         subscribedOnlinePlayers = new HashMap<>();
