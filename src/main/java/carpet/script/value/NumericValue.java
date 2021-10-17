@@ -271,7 +271,11 @@ public class NumericValue extends Value
     public NbtElement toTag(boolean force)
     {
         if (longValue != null)
+        {
+            if (abs(longValue) < Integer.MAX_VALUE-2)
+                return NbtInt.of((int)(long)longValue);
             return NbtLong.of(longValue);
+        }
         long lv = getLong();
         if (value == (double)lv)
         {
