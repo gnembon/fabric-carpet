@@ -962,7 +962,7 @@ public class CarpetSettings
     public static String updateSuppressionBlock = "false";
 
     @Rule(
-            desc = "Fixes updates suppression causing server crashes.",
+            desc = "Fixes update suppression causing server crashes.",
             category = {BUGFIX}
     )
     public static boolean updateSuppressionCrashFix = false;
