@@ -17,7 +17,15 @@ import java.util.function.BooleanSupplier;
 
 @Mixin(MinecraftServer.class)
 public class MinecraftServer_updateSuppressionCrashFixMixin {
-    @Redirect(method = "tickWorlds", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/world/ServerWorld;tick(Ljava/util/function/BooleanSupplier;)V"))
+
+    @Redirect(
+            method = "tickWorlds",
+            at = @At(
+                    value = "INVOKE",
+                    target = "Lnet/minecraft/server/world/ServerWorld;tick(Ljava/util/function/BooleanSupplier;)V"
+            ),
+            require = 0
+    )
     private void fixUpdateSuppressionCrashTick(ServerWorld serverWorld, BooleanSupplier shouldKeepTicking){
         if (!CarpetSettings.updateSuppressionCrashFix) {
             serverWorld.tick(shouldKeepTicking);

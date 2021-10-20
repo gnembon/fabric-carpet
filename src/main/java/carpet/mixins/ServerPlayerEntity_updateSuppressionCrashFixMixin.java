@@ -15,7 +15,15 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 
 @Mixin(ServerPlayerEntity.class)
 public class ServerPlayerEntity_updateSuppressionCrashFixMixin {
-    @Redirect(method = "playerTick()V", at = @At(value = "INVOKE", target = "Lnet/minecraft/entity/player/PlayerEntity;tick()V"))
+
+    @Redirect(
+            method = "playerTick()V",
+            at = @At(
+                    value = "INVOKE",
+                    target = "Lnet/minecraft/entity/player/PlayerEntity;tick()V"
+            ),
+            require = 0
+    )
     private void fixUpdateSuppressionCrashPlayerTick(PlayerEntity playerEntity){
         if (!CarpetSettings.updateSuppressionCrashFix) {
             playerEntity.tick();
