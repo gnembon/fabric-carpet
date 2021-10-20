@@ -35,7 +35,15 @@ public class MinecraftServer_updateSuppressionCrashFixMixin {
 
 
     private void logUpdateSuppression(BlockPos pos) {
-        if(LoggerRegistry.__updateSuppressedCrashes)
-            LoggerRegistry.getLogger("updateSuppressedCrashes").log(() -> {return new BaseText[]{Messenger.c("w Server crash prevented in: ","m world tick ","w - at: ","g [ "+pos.toShortString()+" ]")};});
+        if(LoggerRegistry.__updateSuppressedCrashes) {
+            LoggerRegistry.getLogger("updateSuppressedCrashes").log(() -> {
+                return new BaseText[]{Messenger.c(
+                        "w Server crash prevented in: ",
+                        "m world tick ",
+                        "w - at: ",
+                        "g [ " + pos.toShortString() + " ]"
+                )};
+            });
+        }
     }
 }

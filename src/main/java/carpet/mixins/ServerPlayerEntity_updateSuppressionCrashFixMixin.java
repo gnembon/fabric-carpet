@@ -33,7 +33,15 @@ public class ServerPlayerEntity_updateSuppressionCrashFixMixin {
 
 
     private void logUpdateSuppressionPlayer(BlockPos pos) {
-        if(LoggerRegistry.__updateSuppressedCrashes)
-            LoggerRegistry.getLogger("updateSuppressedCrashes").log(() -> {return new BaseText[]{Messenger.c("w Server crash prevented in: ","m player tick ","w - at: ","g [ "+pos.toShortString()+" ]")};});
+        if(LoggerRegistry.__updateSuppressedCrashes) {
+            LoggerRegistry.getLogger("updateSuppressedCrashes").log(() -> {
+                return new BaseText[]{Messenger.c(
+                        "w Server crash prevented in: ",
+                        "m player tick ",
+                        "w - at: ",
+                        "g [ " + pos.toShortString() + " ]"
+                )};
+            });
+        }
     }
 }
