@@ -21,6 +21,7 @@ import carpet.script.exception.InternalExpressionException;
 import carpet.script.exception.ThrowStatement;
 import carpet.script.exception.Throwables;
 import carpet.script.utils.SnoopyCommandSource;
+import carpet.script.utils.SystemInfo;
 import carpet.script.utils.InputValidator;
 import carpet.script.utils.ScarpetJsonDeserializer;
 import carpet.script.utils.ShapeDispatcher;
@@ -655,8 +656,10 @@ public class Auxiliary {
         expression.addContextFunction("tick_time", 0, (c, t, lv) ->
                 new NumericValue(((CarpetContext) c).s.getServer().getTicks()));
 
-        expression.addContextFunction("world_time", 0, (c, t, lv) ->
-                new NumericValue(((CarpetContext) c).s.getWorld().getTime()));
+        expression.addContextFunction("world_time", 0, (c, t, lv) -> {
+            c.host.issueDeprecation("world_time()");
+            return new NumericValue(((CarpetContext) c).s.getWorld().getTime());
+        });
 
         expression.addContextFunction("day_time", -1, (c, t, lv) ->
         {
@@ -672,16 +675,8 @@ public class Auxiliary {
 
         expression.addContextFunction("last_tick_times", -1, (c, t, lv) ->
         {
-            //assuming we are in the tick world section
-            // might be off one tick when run in the off tasks or asynchronously.
-            int currentReportedTick = ((CarpetContext) c).s.getServer().getTicks()-1;
-            List<Value> ticks = new ArrayList<>(100);
-            final long[] tickArray = ((CarpetContext) c).s.getServer().lastTickLengths;
-            for (int i=currentReportedTick+100; i > currentReportedTick; i--)
-            {
-                ticks.add(new NumericValue(((double)tickArray[i % 100])/1000000.0));
-            }
-            return ListValue.wrap(ticks);
+            c.host.issueDeprecation("last_tick_times()");
+            return SystemInfo.get("last_tick_times", (CarpetContext)c);
         });
 
 
@@ -742,8 +737,10 @@ public class Auxiliary {
         expression.addContextFunction("current_dimension", 0, (c, t, lv) ->
                 ValueConversions.of( ((CarpetContext)c).s.getWorld()));
 
-        expression.addContextFunction("view_distance", 0, (c, t, lv) ->
-                new NumericValue(((CarpetContext)c).s.getServer().getPlayerManager().getViewDistance()));
+        expression.addContextFunction("view_distance", 0, (c, t, lv) -> {
+            c.host.issueDeprecation("view_distance()");
+            return new NumericValue(((CarpetContext)c).s.getServer().getPlayerManager().getViewDistance());
+        });
 
         // lazy due to passthrough and context changing ability
         expression.addLazyFunction("in_dimension", 2, (c, t, lv) -> {
