@@ -961,6 +961,12 @@ public class CarpetSettings
     )
     public static String updateSuppressionBlock = "false";
 
+    @Rule(
+            desc = "Fixes updates suppression causing server crashes.",
+            category = {BUGFIX}
+    )
+    public static boolean updateSuppressionCrashFix = false;
+
     public static int getInteger(String s) {
         try {
             return Integer.parseInt(s);
