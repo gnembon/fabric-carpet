@@ -28,7 +28,6 @@ public class ExplosionLogHelper
 
     private static long lastGametime = 0;
     private static int explosionCountInCurretGT = 0;
-    private static boolean newTick;
 
     public ExplosionLogHelper(Entity entity, double x, double y, double z, float power, boolean createFire, Explosion.DestructionType blockDestructionType) {
         this.entity = entity;
@@ -45,16 +44,14 @@ public class ExplosionLogHelper
 
     public void onExplosionDone(long gametime)
     {
-        newTick = false;
+        List<BaseText> messages = new ArrayList<>();
         if (!(lastGametime == gametime)){
             explosionCountInCurretGT = 0;
             lastGametime = gametime;
-            newTick = true;
+            messages.add(c("wb tick : ", "d " + gametime));
         }
         explosionCountInCurretGT++;
         LoggerRegistry.getLogger("explosions").log( (option) -> {
-            List<BaseText> messages = new ArrayList<>();
-            if(newTick) messages.add(c("wb tick : ", "d " + gametime));
             if ("brief".equals(option))
             {
                 messages.add( c("d #" + explosionCountInCurretGT,"gb ->",
