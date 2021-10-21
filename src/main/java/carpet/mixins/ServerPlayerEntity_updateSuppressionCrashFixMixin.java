@@ -16,7 +16,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
 @Mixin(ServerPlayerEntity.class)
-public class ServerPlayerEntity_updateSuppressionCrashFixMixin extends PlayerEntity {
+public abstract class ServerPlayerEntity_updateSuppressionCrashFixMixin extends PlayerEntity {
 
     public ServerPlayerEntity_updateSuppressionCrashFixMixin(World world, BlockPos pos, float yaw, GameProfile profile) {
         super(world, pos, yaw, profile);
@@ -57,22 +57,5 @@ public class ServerPlayerEntity_updateSuppressionCrashFixMixin extends PlayerEnt
                 )};
             });
         }
-    }
-
-    // make mixin happy
-
-    @Override
-    public boolean isSpectator() {
-        return false;
-    }
-
-    @Override
-    public boolean isCreative() {
-        return false;
-    }
-
-    @Override
-    public boolean cannotBeSilenced() {
-        return super.cannotBeSilenced();
     }
 }
