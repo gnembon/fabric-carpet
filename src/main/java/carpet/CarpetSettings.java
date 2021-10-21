@@ -43,7 +43,7 @@ import static carpet.settings.RuleCategory.CLIENT;
 @SuppressWarnings("CanBeFinal")
 public class CarpetSettings
 {
-    public static final String carpetVersion = "1.4.47+v210924";
+    public static final String carpetVersion = "1.4.48+v211013";
     public static final Logger LOG = LogManager.getLogger("carpet");
     public static ThreadLocal<Boolean> skipGenerationChecks = ThreadLocal.withInitial(() -> false);
     public static ThreadLocal<Boolean> impendingFillSkipUpdates = ThreadLocal.withInitial(() -> false);
@@ -513,6 +513,9 @@ public class CarpetSettings
     @Rule(desc = "placing blocks cause block updates", category = CREATIVE)
     public static boolean interactionUpdates = true;
 
+    @Rule(desc = "Disables breaking of blocks caused by flowing liquids", category = CREATIVE)
+    public static boolean liquidDamageDisabled = false;
+
     @Rule(
             desc = "smooth client animations with low tps settings",
             extra = "works only in SP, and will slow down players",
@@ -957,6 +960,12 @@ public class CarpetSettings
             validate = updateSuppressionBlockModes.class
     )
     public static String updateSuppressionBlock = "false";
+
+    @Rule(
+            desc = "Fixes update suppression causing server crashes.",
+            category = {BUGFIX}
+    )
+    public static boolean updateSuppressionCrashFix = false;
 
     public static int getInteger(String s) {
         try {

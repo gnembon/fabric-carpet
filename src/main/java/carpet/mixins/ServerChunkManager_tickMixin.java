@@ -62,7 +62,7 @@ public abstract class ServerChunkManager_tickMixin
             // simplified chunk tick iteration assuming world is frozen otherwise as suggested by Hadron67
             // to be kept in sync with the original injection source
             if (!debug){
-                List<ChunkHolder> holders = Lists.newArrayList(((ThreadedAnvilChunkStorageInterface)threadedAnvilChunkStorage).getChunks());
+                List<ChunkHolder> holders = Lists.newArrayList(((ThreadedAnvilChunkStorageInterface)threadedAnvilChunkStorage).getChunksCM());
                 Collections.shuffle(holders);
                 for (ChunkHolder holder: holders){
                     Optional<WorldChunk> optional = holder.getTickingFuture().getNow(ChunkHolder.UNLOADED_WORLD_CHUNK).left();

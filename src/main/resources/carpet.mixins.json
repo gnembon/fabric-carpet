@@ -25,6 +25,8 @@
     "Structure_fillUpdatesMixin",
     "ServerPlayNetworkHandler_interactionUpdatesMixin",
 
+    "FlowableFluid_liquidDamageDisabledMixin",
+
     "ServerMetadata_motdMixin",
     "MinecraftServer_pingPlayerSampleLimit",
 
@@ -218,7 +220,11 @@
     "LivingEntity_creativeFlyMixin",
 
     "VeryBiasedToBottomHeightProvider_cleanLogsMixin",
-    "TrapezoidHeightProvider_cleanLogsMixin"
+    "TrapezoidHeightProvider_cleanLogsMixin",
+
+    "World_updateSuppressionCrashFixMixin",
+    "MinecraftServer_updateSuppressionCrashFixMixin",
+    "ServerPlayerEntity_updateSuppressionCrashFixMixin"
   ],
   "client": [
     "RenderTickCounter_tickSpeedMixin",
