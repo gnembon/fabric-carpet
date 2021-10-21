@@ -545,7 +545,7 @@ public class WorldAccess {
         {
             c.host.issueDeprecation("loaded_ep(...)");
             BlockPos pos = BlockArgument.findIn((CarpetContext)c, lv, 0).block.getPos();
-            return BooleanValue.of(((CarpetContext)c).s.getWorld().method_37118(pos));// 1.17pre1 getChunkManager().shouldTickChunk(new ChunkPos(pos)));
+            return BooleanValue.of(((CarpetContext)c).s.getWorld().shouldTickEntity(pos));// 1.17pre1 getChunkManager().shouldTickChunk(new ChunkPos(pos)));
         });
 
         expression.addContextFunction("loaded_status", -1, (c, t, lv) ->
@@ -1187,7 +1187,7 @@ public class WorldAccess {
                 int j = i + BiomeCoords.fromBlock(chunk.getHeight()) - 1;
                 int k = MathHelper.clamp(biomeY, i, j);
                 int l = chunk.getSectionIndex(BiomeCoords.toBlock(k));
-                chunk.getSection(l).method_38294().set(biomeX & 3, k & 3, biomeZ & 3, biome);
+                chunk.getSection(l).getBiomeContainer().set(biomeX & 3, k & 3, biomeZ & 3, biome);
             } catch (Throwable var8) {
                 return Value.FALSE;
             }

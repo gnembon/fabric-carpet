@@ -536,7 +536,7 @@ public class EntityValue extends Value
                         ValueConversions.of(spe.getSpawnPointPosition()),
                         ValueConversions.of(spe.getSpawnPointDimension()),
                         new NumericValue(spe.getSpawnAngle()),
-                        BooleanValue.of(spe.isSpawnPointSet())
+                        BooleanValue.of(spe.isSpawnForced())
                         );
             }
             return Value.NULL;
