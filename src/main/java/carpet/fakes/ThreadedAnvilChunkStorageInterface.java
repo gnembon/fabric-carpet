@@ -14,5 +14,5 @@ public interface ThreadedAnvilChunkStorageInterface
 
     void releaseRelightTicket(ChunkPos pos);
 
-    Iterable<ChunkHolder> getChunks();
+    Iterable<ChunkHolder> getChunksCM();
 }

@@ -219,7 +219,11 @@
     "LivingEntity_creativeFlyMixin",
 
     "VeryBiasedToBottomHeightProvider_cleanLogsMixin",
-    "TrapezoidHeightProvider_cleanLogsMixin"
+    "TrapezoidHeightProvider_cleanLogsMixin",
+
+    "World_updateSuppressionCrashFixMixin",
+    "MinecraftServer_updateSuppressionCrashFixMixin",
+    "ServerPlayerEntity_updateSuppressionCrashFixMixin"
   ],
   "client": [
     "RenderTickCounter_tickSpeedMixin",
