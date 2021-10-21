@@ -4,17 +4,23 @@ import carpet.CarpetSettings;
 import carpet.helpers.ThrowableSuppression;
 import carpet.logging.LoggerRegistry;
 import carpet.utils.Messenger;
+import com.mojang.authlib.GameProfile;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.BaseText;
 import net.minecraft.util.crash.CrashException;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.World;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
 @Mixin(ServerPlayerEntity.class)
-public class ServerPlayerEntity_updateSuppressionCrashFixMixin {
+public abstract class ServerPlayerEntity_updateSuppressionCrashFixMixin extends PlayerEntity {
+
+    public ServerPlayerEntity_updateSuppressionCrashFixMixin(World world, BlockPos pos, float yaw, GameProfile profile) {
+        super(world, pos, yaw, profile);
+    }
 
     @Redirect(
             method = "playerTick()V",
@@ -26,11 +32,11 @@ public class ServerPlayerEntity_updateSuppressionCrashFixMixin {
     )
     private void fixUpdateSuppressionCrashPlayerTick(PlayerEntity playerEntity){
         if (!CarpetSettings.updateSuppressionCrashFix) {
-            playerEntity.tick();
+            super.tick();
             return;
         }
         try {
-            playerEntity.tick();
+            super.tick();
         } catch (CrashException e) {
             if (!(e.getCause() instanceof ThrowableSuppression throwableSuppression)) throw e;
             logUpdateSuppressionPlayer(throwableSuppression.pos);
