@@ -9,10 +9,15 @@ public class HUDLogger extends Logger
 {
     static Logger stardardHUDLogger(String logName, String def, String [] options)
     {
+        return stardardHUDLogger(logName, def, options, false);
+    }
+
+    static Logger stardardHUDLogger(String logName, String def, String [] options, boolean strictOptions)
+    {
         // should convert to factory method if more than 2 classes are here
         try
         {
-            return new HUDLogger(LoggerRegistry.class.getField("__"+logName), logName, def, options);
+            return new HUDLogger(LoggerRegistry.class.getField("__"+logName), logName, def, options, strictOptions);
         }
         catch (NoSuchFieldException e)
         {
@@ -20,9 +25,14 @@ public class HUDLogger extends Logger
         }
     }
 
-    public HUDLogger(Field field, String logName, String def, String[] options)
+    public HUDLogger(Field field, String logName, String def, String[] options, boolean strictOptions)
     {
-        super(field, logName, def, options);
+        super(field, logName, def, options, strictOptions);
+    }
+
+    @Deprecated
+    public HUDLogger(Field field, String logName, String def, String[] options) {
+        super(field, logName, def, options, false);
     }
 
     @Override
