@@ -5,6 +5,7 @@ import carpet.fakes.MemoryInterface;
 import carpet.helpers.ParticleDisplay;
 import carpet.utils.Messenger;
 import carpet.utils.MobAI;
+import net.minecraft.block.Blocks;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.ai.brain.Activity;
 import net.minecraft.entity.ai.brain.Memory;
@@ -16,6 +17,7 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.BedItem;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
+import net.minecraft.particle.BlockStateParticleEffect;
 import net.minecraft.particle.ParticleTypes;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
@@ -125,7 +127,7 @@ public abstract class VillagerEntity_aiMixin extends MerchantEntity
                 if (bedPos == null || bedPos.getDimension() != world.getRegistryKey()) // get Dimension
                 {
                     sayNo();
-                    ((ServerWorld) getEntityWorld()).spawnParticles(ParticleTypes.BARRIER, getX(), getY() + getStandingEyeHeight() + 1, getZ(), 1, 0.1, 0.1, 0.1, 0.0);
+                    ((ServerWorld) getEntityWorld()).spawnParticles(new BlockStateParticleEffect(ParticleTypes.BLOCK_MARKER, Blocks.BARRIER.getDefaultState()), getX(), getY() + getStandingEyeHeight() + 1, getZ(), 1, 0.1, 0.1, 0.1, 0.0);
                 }
                 else
                 {
@@ -158,7 +160,7 @@ public abstract class VillagerEntity_aiMixin extends MerchantEntity
                                 pv.x, pv.y+1, pv.z,
                                 50, 0.1, 0.3, 0.1, 0.0);
                     else
-                        ((ServerWorld) getEntityWorld()).spawnParticles(ParticleTypes.BARRIER,
+                        ((ServerWorld) getEntityWorld()).spawnParticles(new BlockStateParticleEffect(ParticleTypes.BLOCK_MARKER, Blocks.BARRIER.getDefaultState()),
                                 pv.x, pv.y+1, pv.z,
                                 1, 0.1, 0.1, 0.1, 0.0);
                 }
@@ -184,7 +186,7 @@ public abstract class VillagerEntity_aiMixin extends MerchantEntity
     {
         if (MobAI.isTracking(this, MobAI.TrackingType.IRON_GOLEM_SPAWNING))
         {
-            ((ServerWorld) getEntityWorld()).spawnParticles(ParticleTypes.BARRIER, getX(), getY()+3, getZ(), 1, 0.1, 0.1, 0.1, 0.0);
+            ((ServerWorld) getEntityWorld()).spawnParticles(new BlockStateParticleEffect(ParticleTypes.BLOCK_MARKER, Blocks.BARRIER.getDefaultState()), getX(), getY()+3, getZ(), 1, 0.1, 0.1, 0.1, 0.0);
         }
     }
 

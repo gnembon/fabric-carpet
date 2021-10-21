@@ -99,7 +99,7 @@ public class WorldTools
         DimensionType dimensionType2;
         if (dimensionOptions == null) {
             dimensionType2 = server.getRegistryManager().getMutable(Registry.DIMENSION_TYPE_KEY).getOrThrow(DimensionType.OVERWORLD_REGISTRY_KEY);
-            chunkGenerator2 = GeneratorOptions.createOverworldGenerator(server.getRegistryManager().get(Registry.BIOME_KEY), server.getRegistryManager().get(Registry.CHUNK_GENERATOR_SETTINGS_KEY), (new Random()).nextLong());
+            chunkGenerator2 = GeneratorOptions.createOverworldGenerator(server.getRegistryManager(), (new Random()).nextLong());
         } else {
             dimensionType2 = dimensionOptions.getDimensionType();
             chunkGenerator2 = dimensionOptions.getChunkGenerator();
@@ -114,7 +114,7 @@ public class WorldTools
         //    return server.getRegistryManager().get(Registry.CHUNK_GENERATOR_SETTINGS_KEY).getOrThrow(ChunkGeneratorSettings.OVERWORLD);
         //});
 
-        chunkGenerator2 = new NoiseChunkGenerator(MultiNoiseBiomeSource.Preset.OVERWORLD.getBiomeSource(server.getRegistryManager().get(Registry.BIOME_KEY)), seed, () -> {
+        chunkGenerator2 = new NoiseChunkGenerator(server.getRegistryManager().get(Registry.NOISE_WORLDGEN), MultiNoiseBiomeSource.Preset.OVERWORLD.getBiomeSource(server.getRegistryManager().get(Registry.BIOME_KEY)), seed, () -> {
             return server.getRegistryManager().get(Registry.CHUNK_GENERATOR_SETTINGS_KEY).getOrThrow(ChunkGeneratorSettings.OVERWORLD);
         });
 

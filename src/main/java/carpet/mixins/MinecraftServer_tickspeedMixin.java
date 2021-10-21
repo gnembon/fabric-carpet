@@ -193,7 +193,7 @@ public abstract class MinecraftServer_tickspeedMixin extends ReentrantThreadExec
 
     @Inject(method = "tick", at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/server/PlayerManager;saveAllPlayerData()V",
+            target = "Lnet/minecraft/server/MinecraftServer;method_39218(ZZZ)Z", // save
             shift = At.Shift.BEFORE
     ))
     private void startAutosave(BooleanSupplier booleanSupplier_1, CallbackInfo ci)
@@ -203,7 +203,7 @@ public abstract class MinecraftServer_tickspeedMixin extends ReentrantThreadExec
 
     @Inject(method = "tick", at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/server/MinecraftServer;save(ZZZ)Z",
+            target = "Lnet/minecraft/server/MinecraftServer;method_39218(ZZZ)Z",
             shift = At.Shift.AFTER
     ))
     private void finishAutosave(BooleanSupplier booleanSupplier_1, CallbackInfo ci)
