@@ -76,7 +76,7 @@ public class ScreenHandlerValue extends Value {
 
         screenHandlerFactories.put(HOPPER,(HopperScreenHandler::new));
         screenHandlerFactories.put(ANVIL,(syncId, playerInventory, inventory1) -> new AnvilScreenHandler(syncId,playerInventory));
-        screenHandlerFactories.put(LECTERN,(syncId, playerInventory, inventory1) -> new LecternScreenHandler(syncId,inventory1,new ArrayPropertyDelegate(1)));
+        screenHandlerFactories.put(LECTERN,(syncId, playerInventory, inventory1) -> new LecternScreenHandler(syncId,new SimpleInventory(1),new ArrayPropertyDelegate(1)));
         screenHandlerFactories.put(FURNACE,(syncId, playerInventory, inventory1) -> new FurnaceScreenHandler(syncId,playerInventory));
 
 
@@ -90,7 +90,7 @@ public class ScreenHandlerValue extends Value {
         inventorySizes.put(GENERIC_9X6,54);
         inventorySizes.put(GENERIC_3X3,9);
         inventorySizes.put(HOPPER,5);
-        inventorySizes.put(LECTERN,1);
+        //inventorySizes.put(LECTERN,1);
 
     }
 
@@ -285,6 +285,11 @@ public class ScreenHandlerValue extends Value {
                     return NumericValue.of(anvilScreenHandler.getLevelCost());
                 }
                 break;
+            case "page":
+                if(this.screenHandler instanceof LecternScreenHandler lecternScreenHandler) {
+                    return NumericValue.of(lecternScreenHandler.getPage());
+                }
+                break;
         }
 
         return Value.NULL;
@@ -314,6 +319,13 @@ public class ScreenHandlerValue extends Value {
                 if(this.screenHandler instanceof AnvilScreenHandler anvilScreenHandler) {
                     int cost = NumericValue.asNumber(value.get(0)).getInt();
                     ((ScreenHandlerInterface) anvilScreenHandler).setAndUpdateProperty(0,cost);
+                    return Value.TRUE;
+                }
+                break;
+            case "page":
+                if(this.screenHandler instanceof LecternScreenHandler lecternScreenHandler) {
+                    int page = NumericValue.asNumber(value.get(0)).getInt();
+                    ((ScreenHandlerInterface) lecternScreenHandler).setAndUpdateProperty(0,page);
                     return Value.TRUE;
                 }
                 break;
