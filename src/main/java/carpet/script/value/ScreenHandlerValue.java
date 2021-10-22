@@ -1,24 +1,26 @@
 package carpet.script.value;
 
 import carpet.fakes.ScreenHandlerInterface;
-import carpet.mixins.ScreenHandler_scarpetMixin;
-import carpet.script.CarpetContext;
+import carpet.fakes.ScreenHandlerSyncHandlerInterface;
+
 import carpet.script.Context;
 import carpet.script.LazyValue;
 import carpet.script.exception.InternalExpressionException;
 import carpet.script.exception.ThrowStatement;
 import carpet.script.exception.Throwables;
+import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import net.minecraft.command.argument.ItemStackArgument;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.inventory.Inventory;
 import net.minecraft.inventory.SimpleInventory;
 import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtElement;
 import net.minecraft.nbt.NbtString;
 import net.minecraft.screen.AbstractFurnaceScreenHandler;
 import net.minecraft.screen.AnvilScreenHandler;
 import net.minecraft.screen.ArrayPropertyDelegate;
-import net.minecraft.screen.ForgingScreenHandler;
 import net.minecraft.screen.FurnaceScreenHandler;
 import net.minecraft.screen.GenericContainerScreenHandler;
 import net.minecraft.screen.HopperScreenHandler;
@@ -29,17 +31,19 @@ import net.minecraft.screen.ScreenHandlerFactory;
 import net.minecraft.screen.ScreenHandlerListener;
 import net.minecraft.screen.ScreenHandlerType;
 import net.minecraft.screen.SimpleNamedScreenHandlerFactory;
+import net.minecraft.screen.slot.Slot;
 import net.minecraft.screen.slot.SlotActionType;
+import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.registry.Registry;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.OptionalInt;
-import java.util.Random;
 
 import static net.minecraft.screen.ScreenHandlerType.*;
 
@@ -125,6 +129,18 @@ public class ScreenHandlerValue extends Value {
         return inventory != null;
     }
 
+    public boolean isOpened() {
+        if(screenHandler == null) {
+            return false;
+        }
+        ServerPlayerEntity player = ((ScreenHandlerSyncHandlerInterface) ((ScreenHandlerInterface) this.screenHandler).getSyncHandler()).getPlayer();
+        if(player.currentScreenHandler.equals(this.screenHandler)) {
+            return true;
+        }
+        screenHandler = null;
+        return false;
+    }
+
     public ScreenHandlerFactory createScreenHandlerFactoryFromValue(Value v) {
         String type = (v instanceof NumericValue)?"generic_9x" + ((NumericValue) v).getInt():v.getString();
         Identifier screenHandlerTypeIdentifier = Identifier.tryParse(type);
@@ -165,10 +181,95 @@ public class ScreenHandlerValue extends Value {
         });
     }
 
+    // variant of inventory_* functions but for a list of slots
+
+    public Value inventorySizeSlots()
+    {
+        if(!isOpened()) return Value.NULL;
+        return NumericValue.of(screenHandler.slots.size());
+    }
+
+    public Value inventoryHasItemsSlots()
+    {
+        if(!isOpened()) return Value.NULL;
+        for(Slot slot : screenHandler.slots)
+            if(slot.hasStack() && !slot.getStack().isEmpty()) return Value.TRUE;
+        return Value.FALSE;
+    }
+
+    public Value inventoryGetSlots(List<Value> lv)
+    {
+        if(!isOpened()) return Value.NULL;
+        int slotsSize = screenHandler.slots.size();
+        if (lv.size() == 0)
+        {
+            List<Value> fullInventory = new ArrayList<>();
+            for (int i = 0, maxi = slotsSize; i < maxi; i++)
+                fullInventory.add(ValueConversions.of(screenHandler.slots.get(i).getStack()));
+            return ListValue.wrap(fullInventory);
+        }
+        int slot = (int)NumericValue.asNumber(lv.get(0)).getLong();
+        if(slot < 0 || slot >= slotsSize) return Value.NULL;
+        return ValueConversions.of(screenHandler.slots.get(slot).getStack());
+    }
+
+    public Value inventorySetSlots(List<Value> lv)
+    {
+        if(!isOpened()) return Value.NULL;
+        if (lv.size() < 2)
+            throw new InternalExpressionException("'inventory_set' requires at least slot number and new stack size, and optional new item");
+        int slotIndex = (int) NumericValue.asNumber(lv.get(0)).getLong();
+        int slotsSize = screenHandler.slots.size();
+        if(slotIndex < 0 || slotIndex >= slotsSize) return Value.NULL;
+        Slot slot = screenHandler.getSlot(slotIndex);
+        int count = (int) NumericValue.asNumber(lv.get(1)).getLong();
+        if (count == 0)
+        {
+            // clear slot
+            ItemStack removedStack = slot.inventory.removeStack(slot.getIndex());
+            screenHandler.syncState();
+            return ValueConversions.of(removedStack);
+        }
+        if (lv.size() < 3)
+        {
+            ItemStack previousStack = slot.getStack();
+            ItemStack newStack = previousStack.copy();
+            newStack.setCount(count);
+            slot.setStack(newStack);
+            screenHandler.syncState();
+            return ValueConversions.of(previousStack);
+        }
+        NbtCompound nbt = null; // skipping one argument
+        if (lv.size() > 3)
+        {
+            Value nbtValue = lv.get(3);
+            if (nbtValue instanceof NBTSerializableValue)
+                nbt = ((NBTSerializableValue)nbtValue).getCompoundTag();
+            else if (nbtValue instanceof NullValue)
+                nbt = null;
+            else
+                nbt = new NBTSerializableValue(nbtValue.getString()).getCompoundTag();
+        }
+        ItemStackArgument newitem = NBTSerializableValue.parseItem(lv.get(2).getString(), nbt);
+        ItemStack previousStack = slot.getStack();
+        try
+        {
+            slot.setStack(newitem.createStack(count, false));
+            screenHandler.syncState();
+        }
+        catch (CommandSyntaxException e)
+        {
+            throw new InternalExpressionException(e.getMessage());
+        }
+        return ValueConversions.of(previousStack);
+    }
+
     public Value getProperty(String property) {
         switch (property) {
             case "name":
                 return FormattedTextValue.of(this.name);
+            case "opened":
+                return BooleanValue.of(isOpened());
             case "fuel_progress":
                 if(this.screenHandler instanceof AbstractFurnaceScreenHandler furnaceScreenHandler) {
                     return NumericValue.of(furnaceScreenHandler.getFuelProgress());

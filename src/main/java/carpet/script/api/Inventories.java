@@ -30,7 +30,6 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemGroup;
 import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.network.packet.s2c.play.ScreenHandlerSlotUpdateS2CPacket;
 import net.minecraft.recipe.AbstractCookingRecipe;
@@ -42,11 +41,9 @@ import net.minecraft.recipe.ShapelessRecipe;
 import net.minecraft.recipe.SpecialCraftingRecipe;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.tag.Tag;
 import net.minecraft.tag.TagManager;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
-import net.minecraft.util.InvalidIdentifierException;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.registry.Registry;
 
@@ -186,6 +183,8 @@ public class Inventories {
 
         expression.addContextFunction("inventory_size", -1, (c, t, lv) ->
         {
+            if(lv.size() != 0 && lv.get(0) instanceof ScreenHandlerValue screenHandlerValue && !screenHandlerValue.hasInventory())
+                return screenHandlerValue.inventorySizeSlots();
             CarpetContext cc = (CarpetContext) c;
             NBTSerializableValue.InventoryLocator inventoryLocator = NBTSerializableValue.locateInventory(cc, lv, 0);
             if (inventoryLocator == null) return Value.NULL;
@@ -194,6 +193,8 @@ public class Inventories {
 
         expression.addContextFunction("inventory_has_items", -1, (c, t, lv) ->
         {
+            if(lv.size() != 0 && lv.get(0) instanceof ScreenHandlerValue screenHandlerValue && !screenHandlerValue.hasInventory())
+                return screenHandlerValue.inventoryHasItemsSlots();
             CarpetContext cc = (CarpetContext) c;
             NBTSerializableValue.InventoryLocator inventoryLocator = NBTSerializableValue.locateInventory(cc, lv, 0);
             if (inventoryLocator == null) return Value.NULL;
@@ -203,6 +204,8 @@ public class Inventories {
         //inventory_get(<b, e>, <n>) -> item_triple
         expression.addContextFunction("inventory_get", -1, (c, t, lv) ->
         {
+            if(lv.size() != 0 && lv.get(0) instanceof ScreenHandlerValue screenHandlerValue && !screenHandlerValue.hasInventory())
+                return screenHandlerValue.inventoryGetSlots(lv.subList(1,lv.size()));
             CarpetContext cc = (CarpetContext) c;
             NBTSerializableValue.InventoryLocator inventoryLocator = NBTSerializableValue.locateInventory(cc, lv, 0);
             if (inventoryLocator == null) return Value.NULL;
@@ -222,6 +225,8 @@ public class Inventories {
         //inventory_set(<b,e>, <n>, <count>, <item>, <nbt>)
         expression.addContextFunction("inventory_set", -1, (c, t, lv) ->
         {
+            if(lv.size() != 0 && lv.get(0) instanceof ScreenHandlerValue screenHandlerValue && !screenHandlerValue.hasInventory())
+                return screenHandlerValue.inventorySetSlots(lv.subList(1,lv.size()));
             CarpetContext cc = (CarpetContext) c;
             NBTSerializableValue.InventoryLocator inventoryLocator = NBTSerializableValue.locateInventory(cc, lv, 0);
             if (inventoryLocator == null) return Value.NULL;
@@ -276,6 +281,8 @@ public class Inventories {
         //inventory_find(<b, e>, <item> or null (first empty slot), <start_from=0> ) -> <N> or null
         expression.addContextFunction("inventory_find", -1, (c, t, lv) ->
         {
+            if(lv.size() != 0 && lv.get(0) instanceof ScreenHandlerValue)
+                throw new InternalExpressionException("'inventory_find' is not supported for screen handlers");
             CarpetContext cc = (CarpetContext) c;
             NBTSerializableValue.InventoryLocator inventoryLocator = NBTSerializableValue.locateInventory(cc, lv, 0);
             if (inventoryLocator == null) return Value.NULL;
@@ -304,6 +311,8 @@ public class Inventories {
         //inventory_remove(<b, e>, <item>, <amount=1>) -> bool
         expression.addContextFunction("inventory_remove", -1, (c, t, lv) ->
         {
+            if(lv.size() != 0 && lv.get(0) instanceof ScreenHandlerValue)
+                throw new InternalExpressionException("'inventory_remove' is not supported for screen handlers");
             CarpetContext cc = (CarpetContext) c;
             NBTSerializableValue.InventoryLocator inventoryLocator = NBTSerializableValue.locateInventory(cc, lv, 0);
             if (inventoryLocator == null) return Value.NULL;
