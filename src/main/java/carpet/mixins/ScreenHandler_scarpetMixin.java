@@ -35,17 +35,17 @@ public abstract class ScreenHandler_scarpetMixin implements ScreenHandlerInterfa
     @Inject(method = "internalOnSlotClick", at = @At(value = "HEAD"), cancellable = true)
     private void triggerClickListener(int slotIndex, int button, SlotActionType actionType, PlayerEntity player, CallbackInfo ci)
     {
-        this.listeners.forEach(screenHandlerListener ->
+        for(ScreenHandlerListener screenHandlerListener : listeners)
         {
-            if(screenHandlerListener instanceof ScreenHandlerValue.ScarpetScreenHandlerListener)
+            if(screenHandlerListener instanceof ScreenHandlerValue.ScarpetScreenHandlerListener scarpetScreenHandlerListener)
             {
-                if(((ScreenHandlerValue.ScarpetScreenHandlerListener) screenHandlerListener).onSlotClick(slotIndex,button,actionType,player))
+                if(scarpetScreenHandlerListener.onSlotClick(slotIndex,button,actionType,player))
                 {
                     ci.cancel();
                     syncState();
                 }
             }
-        });
+        }
     }
 
     @Override
@@ -59,5 +59,18 @@ public abstract class ScreenHandler_scarpetMixin implements ScreenHandlerInterfa
     @Override
     public ScreenHandlerSyncHandler getSyncHandler() {
         return this.syncHandler;
+    }
+
+    @Override
+    public boolean triggerButtonClickCallback(int button, PlayerEntity player) {
+        for(ScreenHandlerListener screenHandlerListener : listeners)
+        {
+            if(screenHandlerListener instanceof ScreenHandlerValue.ScarpetScreenHandlerListener scarpetScreenHandlerListener)
+            {
+                if(scarpetScreenHandlerListener.onButtonClick(button, player))
+                    return true;
+            }
+        }
+        return false;
     }
 }

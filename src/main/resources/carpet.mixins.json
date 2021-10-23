@@ -188,6 +188,7 @@
     "Team_scarpetMixin",
     "TradeOutputSlot_scarpetEventMixin",
     "ScreenHandler_scarpetMixin",
+    "ScreenHandlerSubclasses_scarpetMixin",
     "ScreenHandlerSyncHandler_scarpetMixin",
 
 
