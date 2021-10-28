@@ -7,13 +7,14 @@ import net.minecraft.block.BlockEntityProvider;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.PistonExtensionBlock;
 import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.fluid.Fluid;
+import net.minecraft.class_6752;
+//import net.minecraft.fluid.Fluid;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.util.registry.Registry;
 import net.minecraft.world.HeightLimitView;
 import net.minecraft.world.Heightmap;
-import net.minecraft.world.TickScheduler;
+//import net.minecraft.world.TickScheduler;
 import net.minecraft.world.World;
 import net.minecraft.world.biome.Biome;
 import net.minecraft.world.chunk.Chunk;
@@ -34,9 +35,9 @@ public abstract class WorldChunk_movableTEMixin extends Chunk implements WorldCh
     @Final
     World world;
 
-    public WorldChunk_movableTEMixin(ChunkPos chunkPos, UpgradeData upgradeData, HeightLimitView heightLimitView, Registry<Biome> registry, long l, @Nullable ChunkSection[] chunkSections, TickScheduler<Block> tickScheduler, TickScheduler<Fluid> tickScheduler2)
+    public WorldChunk_movableTEMixin(ChunkPos chunkPos, UpgradeData upgradeData, HeightLimitView heightLimitView, Registry<Biome> registry, long l, @Nullable ChunkSection[] chunkSections, @Nullable class_6752 arg)
     {
-        super(chunkPos, upgradeData, heightLimitView, registry, l, chunkSections, tickScheduler, tickScheduler2);
+        super(chunkPos, upgradeData, heightLimitView, registry, l, chunkSections, arg);
     }
 
     @Shadow

@@ -30,7 +30,7 @@ public abstract class ChunkHolder_scarpetChunkCreationMixin implements ChunkHold
     {
         int i = ChunkStatus.EMPTY.getIndex();
         CompletableFuture<Either<Chunk, ChunkHolder.Unloaded>> completableFuture2 = CompletableFuture.supplyAsync(
-                () -> Either.left(new ProtoChunk(chpos, UpgradeData.NO_UPGRADE_DATA, world,  world.getRegistryManager().get(Registry.BIOME_KEY))),
+                () -> Either.left(new ProtoChunk(chpos, UpgradeData.NO_UPGRADE_DATA, world,  world.getRegistryManager().get(Registry.BIOME_KEY), null)), // todo figure out what that does - maybe add an option to reset with blending enabled..?
                 executor
         );
         combineSavingFuture(completableFuture2, "unfull"); // possible debug data

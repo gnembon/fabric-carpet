@@ -1394,7 +1394,7 @@ public class WorldAccess {
             return Value.TRUE;
         });
 
-
+        // todo maybe enable chunk blending?
         expression.addContextFunction("reset_chunk", -1, (c, t, lv) ->
         {
             CarpetContext cc = (CarpetContext)c;

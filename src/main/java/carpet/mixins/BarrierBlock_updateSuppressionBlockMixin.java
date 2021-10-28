@@ -33,7 +33,7 @@ public class BarrierBlock_updateSuppressionBlockMixin extends Block {
                 BlockState stateAbove = world.getBlockState(fromPos);
                 if (stateAbove.isOf(Blocks.ACTIVATOR_RAIL) && !stateAbove.get(PoweredRailBlock.POWERED)) {
                     if (CarpetSettings.updateSuppressionBlockSetting > 0) {
-                        world.getBlockTickScheduler().schedule(pos, this, CarpetSettings.updateSuppressionBlockSetting);
+                        world.method_39279(pos, this, CarpetSettings.updateSuppressionBlockSetting);// schedule tick
                     }
                     throw new StackOverflowError("updateSuppressionBlock");
                 }
