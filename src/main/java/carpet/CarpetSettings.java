@@ -332,9 +332,9 @@ public class CarpetSettings
 
     public static enum ChainStoneSetting {
         TRUE, FALSE, STICK_TO_ALL;
-    	public boolean doChainStone() {
-    		return this != FALSE;
-    	}
+        public boolean doChainStone() {
+            return this != FALSE;
+        }
     }
 
     @Rule(
