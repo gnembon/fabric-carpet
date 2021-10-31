@@ -161,7 +161,7 @@ public class Entities {
             CarpetContext cc = (CarpetContext)c;
             if (lv.size() < 2)
                 throw new InternalExpressionException("'can_spawn' function takes mob name, and position to check for spawning conditions");
-            String entityString = lv.get(0).getString();//todo remove test func : /script run can_spawn('cow',0,1,0)
+            String entityString = lv.get(0).getString();
             Identifier entityId;
             try {
                 entityId = Identifier.fromCommandInput(new StringReader(entityString));
