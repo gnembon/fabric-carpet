@@ -96,7 +96,7 @@ public class PerimeterDiagnostics
                 {
                     continue;
                 }
-                for (int y= 0; y < 256; ++y)
+                for (int y= worldserver.getBottomY(); y < worldserver.getLogicalHeight(); ++y)
                 {
                     if ((Math.abs(y-eY)>128) )
                     {
