@@ -52,5 +52,5 @@ draw(what, args, block, replacement)->(//custom setter cos it's easier
             affected += bool(set(existing,block))
         )
     );
-    print(player(),format('gi Filled ' + affected + ' blocks'));
+    print(format('gi Filled ' + affected + ' blocks'));
 );
