@@ -105,6 +105,7 @@ public class CarpetScriptServer
         registerBuiltInScript(BundledModule.carpetNative("draw_beta", false));
         registerBuiltInScript(BundledModule.carpetNative("shapes", true));
         registerBuiltInScript(BundledModule.carpetNative("distance_beta", false));
+        registerBuiltInScript(BundledModule.carpetNative("perimeter_info_beta", false));
     }
 
     public CarpetScriptServer(MinecraftServer server)
