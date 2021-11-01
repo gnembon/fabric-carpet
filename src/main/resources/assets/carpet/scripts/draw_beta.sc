@@ -44,7 +44,7 @@ _block_matches(existing, block_predicate) ->
 draw(what, args, block, replacement)->(//custom setter cos it's easier
     positions = call(what,args); //returning blocks to be set
 
-    affected = 0
+    affected = 0;
 
     for(positions,
         existing = block(_);
