@@ -12,7 +12,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
 @Mixin(value = ServerPlayerInteractionManager.class, priority = 69420) // not that important for carpet
-public class ServerPlayerInteractionManager_antiCheatMixin
+public class ServerPlayerInteractionManager_antiCheatDisabledMixin
 {
     /*
     @ModifyConstant(method = "processBlockBreakingAction", require = 0,

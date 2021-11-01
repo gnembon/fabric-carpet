@@ -185,8 +185,17 @@ public class CarpetSettings
     public static boolean xpNoCooldown = false;
 
 
-    @Rule( desc = "XP orbs combine with other into bigger orbs", category = FEATURE )
-    public static boolean combineXPOrbs = false;
+    @Rule(
+            desc = "Configure the method of XP orb merging",
+            extra = {
+                    "'vanilla' for vanilla merging",
+                    "'carpet' for carpet's merge implementation",
+                    "'none' to disable any type of merging"
+            },
+            category = FEATURE,
+            options = {"vanilla", "carpet", "none"}
+    )
+    public static String combineXPOrbs = "vanilla";
 
     @Rule(
             desc = "Empty shulker boxes can stack to 64 when dropped on the ground",

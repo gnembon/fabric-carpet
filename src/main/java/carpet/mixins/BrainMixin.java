@@ -12,7 +12,7 @@ import java.util.Map;
 import java.util.Optional;
 
 @Mixin(Brain.class)
-public class Brain_Mixin implements BrainInterface
+public class BrainMixin implements BrainInterface
 {
 
     @Shadow @Final private Map<MemoryModuleType<?>, Optional<? extends Memory<?>>> memories;

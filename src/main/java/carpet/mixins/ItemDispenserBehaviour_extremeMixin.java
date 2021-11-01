@@ -9,7 +9,7 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 import java.util.Random;
 
 @Mixin(ItemDispenserBehavior.class)
-public class ItemDispenserBehaviour_extremeBehavioursMixin
+public class ItemDispenserBehaviour_extremeMixin
 {
     @Redirect(method = "spawnItem", expect = 3, at = @At(
             value = "INVOKE",

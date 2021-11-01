@@ -9,7 +9,7 @@ import org.spongepowered.asm.mixin.Mutable;
 import org.spongepowered.asm.mixin.Shadow;
 
 @Mixin(BlockEntity.class)
-public abstract class BlockEntity_movableBEMixin implements BlockEntityInterface
+public abstract class BlockEntity_movableTEMixin implements BlockEntityInterface
 {
     @Mutable
     @Shadow @Final protected BlockPos pos;
