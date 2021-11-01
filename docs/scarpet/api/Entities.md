@@ -91,6 +91,19 @@ Spawns and places an entity in world, like `/summon` vanilla command. Requires a
 extra nbt data to merge with the entity. What makes it different from calling `run('summon ...')`, is the fact that 
 you get the entity back as a return value, which is swell.
 
+### `can_spawn(name, pos), can_spawn(entity, pos)`
+
+Returns a boolean value of whether or not an entity (either as a string or as an entity passed as an argument) cand spawn
+in that spot. The reason you might want to use a pre-existing entity is that if you just pass in a string, it will spawn
+in that entity and then kill it instantaneously, and if you are doing multiple of these calls on the same entity type, it
+could get rather slow after a while.
+
+### `perimeter_info(name, pos)`
+
+Returns a tuple of `[water_count, land_count, entity_count, samples]`. These are the number of water spawning spaces, the
+number of land spawning spaces, the number of spawning spaces for the mob itself (if defined, if not just pass in `''`),
+and the first 10 spawning spaces for that mob (again, if defined).
+
 ## Entity Manipulation
 
 Unlike with blocks, that use a plethora of vastly different querying functions, entities are queried with the `query` 

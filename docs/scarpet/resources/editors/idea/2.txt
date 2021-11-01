@@ -14,6 +14,7 @@ blocks_daylight
 blocks_movement
 bossbar
 brightness
+can_spawn
 chunk_tickets
 convert_date
 crafting_remaining_item
@@ -76,6 +77,7 @@ parse_nbt
 particle
 particle_line
 particle_rect
+perimeter_info
 place_item
 player
 plop

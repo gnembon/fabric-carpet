@@ -71,7 +71,7 @@
 
                 bossbar
 
-                player spawn entity_id entity_list entity_area entity_selector query modify entity_event entity_load_handler entity_types
+                player spawn can_spawn perimeter_info entity_id entity_list entity_area entity_selector query modify entity_event entity_load_handler entity_types
 
                 item_list item_tags stack_limit item_category recipe_data crafting_remaining_item
 
