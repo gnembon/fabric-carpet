@@ -3,7 +3,6 @@ package carpet.mixins;
 import carpet.CarpetSettings;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
-import org.spongepowered.asm.mixin.Debug;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
@@ -11,7 +10,6 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 
 import java.util.List;
 
-@Debug(export = true)
 @Mixin(PlayerEntity.class)
 public abstract class PlayerEntity_xpNoCooldownMixin {
 
