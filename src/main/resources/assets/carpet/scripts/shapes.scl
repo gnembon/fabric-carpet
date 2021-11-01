@@ -54,7 +54,7 @@ draw_filled_diamond(args)->(
 );
 
 draw_pyramid(args)->(
-    [pos, radius, height, pointing, orientation, fill_type, is_square] = args;//todo change to hollow boolean arg
+    [pos, radius, height, pointing, orientation, fill_type, is_square] = args;
     positions = {};
     hollow = fill_type=='hollow';
     pointup = pointing=='up';
@@ -66,7 +66,7 @@ draw_pyramid(args)->(
 );
 
 draw_prism(args)->(
-    [pos, rad, height, orientation, fill_type, is_square]=args;//todo change to hollow boolean arg
+    [pos, rad, height, orientation, fill_type, is_square]=args;
     positions = {};
     hollow = fill_type =='hollow';
     radius = rad+0.5;
