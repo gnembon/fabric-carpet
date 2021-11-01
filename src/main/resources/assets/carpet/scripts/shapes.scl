@@ -54,19 +54,19 @@ draw_filled_diamond(args)->(
 );
 
 draw_pyramid(args)->(
-    [pos, radius, height, pointing, orientation, fill_type, is_square] = args;//todo change to hollow boolean arg
+    [pos, radius, height, pointing, orientation, fill_type, is_square] = args;
     positions = {};
     hollow = fill_type=='hollow';
     pointup = pointing=='up';
     for(range(height),
         r = if(pointup, radius * ( 1- _ / height) -1, radius * _ / height);
-        positions += fill_flat(pos, _, r, is_square, orientation, !((pointup&&_==0)||(!pointup && _==height-1)) && hollow)//Always close bottom off
+        positions = positions + fill_flat(pos, _, r, is_square, orientation, !((pointup&&_==0)||(!pointup && _==height-1)) && hollow)//Always close bottom off
     );
     positions
 );
 
 draw_prism(args)->(
-    [pos, rad, height, orientation, fill_type, is_square]=args;//todo change to hollow boolean arg
+    [pos, rad, height, orientation, fill_type, is_square]=args;
     positions = {};
     hollow = fill_type =='hollow';
     radius = rad+0.5;
@@ -86,7 +86,7 @@ draw_prism(args)->(
                 positions+= _ + offset_vector * offset
             )
         ),
-        
+
         for(range(height),
             offset = _;
             for(filled_circle_points,
@@ -111,7 +111,10 @@ fill_flat_circle(pos, offset, dr, orientation, hollow) ->( //Bresenham circle al
 
     positions = {};
 
-    positions += fill_flat_circle_points(pos, orientation, offset, hollow, a, b);
+    //special case for radius 0 or it messes up weirdly
+
+
+    positions = positions + fill_flat_circle_points(pos, orientation, offset, hollow, a, b);
 
     while(a<=b, 10^10,
         if(d<=0,
@@ -120,7 +123,7 @@ fill_flat_circle(pos, offset, dr, orientation, hollow) ->( //Bresenham circle al
             b=b-1
         );
         a+=1;
-        positions += fill_flat_circle_points(pos, orientation, offset, hollow, a, b)
+        positions = positions + fill_flat_circle_points(pos, orientation, offset, hollow, a, b)
     );
     positions
 );
