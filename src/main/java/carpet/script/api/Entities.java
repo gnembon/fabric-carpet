@@ -13,6 +13,8 @@ import carpet.script.value.NBTSerializableValue;
 import carpet.script.value.BooleanValue;
 import carpet.script.value.NumericValue;
 import carpet.script.value.Value;
+import carpet.script.value.ValueConversions;
+import carpet.utils.Messenger;
 import carpet.utils.PerimeterDiagnostics;
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
@@ -208,8 +210,43 @@ public class Entities {
                 if(!startedWithEntity) entity_1.discard();
                 return BooleanValue.of(canSpawn);
             } else {
-                throw new InternalExpressionException("Invalid entity type '" + entityString + "' to check spawning conditions for.");
+                throw new InternalExpressionException("Invalid entity type '" + entityString + "' to check spawning conditions for, 'can_spawn' requires a mob entity");
             }
+        });
+
+        expression.addContextFunction("perimeter_info", -1, (c, t, lv) -> {
+            CarpetContext cc = (CarpetContext)c;
+            if (lv.size() < 2)
+                throw new InternalExpressionException("'perimeter_info' function takes mob name, and position to check for spawning conditions");
+
+            String entityString = lv.get(0).getString();
+
+            Vector3Argument position = Vector3Argument.findIn(lv, 1);
+            if (position.fromBlock)
+                position.vec = position.vec.subtract(0, 0.5, 0);
+
+            NbtCompound nbttagcompound = new NbtCompound();
+            MobEntity entityliving = null;
+            if (!entityString.equals("null")) {
+                nbttagcompound.putString("id", entityString);
+                Entity baseEntity = EntityType.loadEntityWithPassengers(nbttagcompound, cc.s.getWorld(), (entity_1x) -> {
+                    entity_1x.refreshPositionAndAngles(new BlockPos(position.vec.getX(), -10, position.vec.getZ()), entity_1x.getYaw(), entity_1x. getPitch());
+                    return !cc.s.getWorld().tryLoadEntity(entity_1x) ? null : entity_1x;
+                });
+                if (!(baseEntity instanceof  MobEntity)) {
+                    if (baseEntity != null) baseEntity.discard();
+                    throw new InternalExpressionException("'perimeter_info' function requires a mob entity to test against");
+                }
+                entityliving = (MobEntity) baseEntity;
+            }
+            PerimeterDiagnostics.Result res = PerimeterDiagnostics.countSpots(cc.s.getWorld(), new BlockPos(position.vec), entityliving);
+
+            return ListValue.of(
+                    new NumericValue(res.ground),
+                    new NumericValue(res.liquid),
+                    new NumericValue(res.specific),
+                    new ListValue(res.samples.stream().map(ValueConversions::of).collect(Collectors.toList()))
+            );
         });
 
         expression.addContextFunction("entity_id", 1, (c, t, lv) ->
