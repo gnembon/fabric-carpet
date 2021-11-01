@@ -1,5 +1,3 @@
-import('shapes', 'draw_sphere');
-
 __config() -> {
     'commands' -> {
         '' -> ['_check_spawn', null, ''],
