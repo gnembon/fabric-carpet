@@ -27,7 +27,8 @@ __config() -> {
         'orientation'->{'type'->'term', 'suggest'->['x','y','z']},
         'pointing'->{'type'->'term','suggest'->['up','down']},
         'hollow'->{'type'->'term','suggest'->['hollow','solid']},
-    }
+    },
+    'scope'->'global
 };
 
 _block_matches(existing, block_predicate) ->
@@ -51,5 +52,5 @@ draw(what, args, block, replacement)->(//custom setter cos it's easier
             affected += bool(set(existing,block))
         )
     );
-    print(player,format('gi Filled ' + affected + ' blocks'));
+    print(player(),format('gi Filled ' + affected + ' blocks'));
 );
