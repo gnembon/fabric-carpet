@@ -27,8 +27,7 @@ __config() -> {
         'orientation'->{'type'->'term', 'suggest'->['x','y','z']},
         'pointing'->{'type'->'term','suggest'->['up','down']},
         'hollow'->{'type'->'term','suggest'->['hollow','solid']},
-    },
-    'scope'->'global'//todo decide whether it rly needs to be global or not...
+    }
 };
 
 _block_matches(existing, block_predicate) ->
