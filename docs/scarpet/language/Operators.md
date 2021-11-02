@@ -311,7 +311,8 @@ only take integer values, so if the input has a decimal part, it will be discard
  - `bitwise_shift_right(num, amount)` -> Shifts all the bits of the first number `amount` spots to the right. Like with the above,
 	shifting more than 63 bits results in a 0.
  - `bitwise_roll_left(num, amount)` -> Rolls the bits of the first number `amount` bits to the left. This is basically where you
-	shift out the first `amount` bits and then add them on at the back, essentially 'rolling' the number.
+	shift out the first `amount` bits and then add them on at the back, essentially 'rolling' the number. Note that unlike with
+        shifting, you can roll more than 63 bits at a time, as it just makes the number roll over more times, which isn't an issue
  - `bitwise_roll_right(num, amount)` -> Same as above, just rolling in the other direction
  - `bitwise_not(num)` -> Flips all the bits of the number. This is simply done by performing xor operation with -1, which in binary is
 	all ones.
