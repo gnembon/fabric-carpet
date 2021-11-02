@@ -112,7 +112,10 @@ fill_flat_circle(pos, offset, dr, orientation, hollow) ->( //Bresenham circle al
     positions = {};
 
     //special case for radius 0 or it messes up weirdly
-
+    if(r == 0,
+        offset_vector = if(orientation=='x', [1,0,0], orientation=='y', [0,1,0],[0,0,1]);
+        return({pos + offset_vector*offset})
+    );
 
     positions = positions + fill_flat_circle_points(pos, orientation, offset, hollow, a, b);
 
