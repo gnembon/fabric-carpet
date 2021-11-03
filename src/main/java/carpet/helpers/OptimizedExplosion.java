@@ -68,7 +68,7 @@ public class OptimizedExplosion
     private static BlockPos blastChanceLocation;
 
     // Creating entity list for scarpet event
-    private static List<Entity> entityList = new ArrayList<>();
+    public static List<Entity> entityList = new ArrayList<>();
 
     public static void doExplosionA(Explosion e, ExplosionLogHelper eLogger) {
         ExplosionAccessor eAccess = (ExplosionAccessor) e;

@@ -5,11 +5,19 @@ import carpet.CarpetSettings;
 import carpet.logging.LoggerRegistry;
 import carpet.logging.logHelpers.ExplosionLogHelper;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.block.BaseFireBlock;
+import net.minecraft.world.level.chunk.LevelChunk;
+import org.objectweb.asm.Opcodes;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
@@ -23,6 +31,8 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 
+import java.util.Iterator;
+
 @Mixin(value = Explosion.class)
 public abstract class Explosion_optimizedTntMixin
 {
@@ -30,9 +40,21 @@ public abstract class Explosion_optimizedTntMixin
     @Final
     private ObjectArrayList<BlockPos> toBlow;
 
-    @Shadow @Final private Level level;
+    @Shadow
+    @Final
+    private Level level;
 
+    @Unique
     private ExplosionLogHelper eLogger;
+
+    @Unique
+    private boolean shouldPlaySoundAndParticles = false;
+
+    @Unique
+    private LevelChunk chunkCache = null;
+
+    @Unique
+    private BlockPos blockBelowAffected = null;
 
     @Inject(method = "explode", at = @At("HEAD"),
             cancellable = true)
@@ -45,8 +67,7 @@ public abstract class Explosion_optimizedTntMixin
         }
     }
 
-    @Inject(method = "finalizeExplosion", at = @At("HEAD"),
-            cancellable = true)
+    @Inject(method = "finalizeExplosion", at = @At("HEAD"))
     private void onExplosionB(boolean spawnParticles, CallbackInfo ci)
     {
         if (eLogger != null)
@@ -58,12 +79,124 @@ public abstract class Explosion_optimizedTntMixin
         {
             toBlow.clear();
         }
-        if (CarpetSettings.optimizedTNT)
-        {
-            OptimizedExplosion.doExplosionB((Explosion) (Object) this, spawnParticles);
-            ci.cancel();
+    }
+
+    /*
+    doExplosionB mixin rework starts
+    =====================================================================================
+     */
+
+    @Redirect(
+            method = "finalizeExplosion",
+            at = @At(
+                    value = "FIELD",
+                    opcode = Opcodes.GETFIELD,
+                    target = "Lnet/minecraft/world/level/Level;isClientSide:Z"
+            )
+    )
+    private boolean shouldPlaySound(Level level) {
+        if (CarpetSettings.optimizedTNT) {
+            shouldPlaySoundAndParticles = OptimizedExplosion.explosionSound < 100 || OptimizedExplosion.explosionSound % 100 == 0;
+            return shouldPlaySoundAndParticles;
+        }
+        return level.isClientSide;
+    }
+
+    @Redirect(
+            method = "finalizeExplosion",
+            at = @At(
+                    value = "INVOKE",
+                    target = "Lnet/minecraft/world/level/Level;playLocalSound(DDDLnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundSource;FFZ)V"
+            )
+    )
+    private void playSound(Level level, double x, double y, double z, SoundEvent sound, SoundSource source, float volume, float pitch, boolean bl) {
+        if (CarpetSettings.optimizedTNT){
+            level.playSound(null, x, y, z, sound, source, volume, pitch);
+        } else {
+            level.playLocalSound(x, y, z, sound, source, volume, pitch, bl);
         }
     }
+
+    @ModifyVariable(
+            method = "finalizeExplosion",
+            at = @At(
+                    value = "LOAD",
+                    opcode = Opcodes.ILOAD
+            ),
+            ordinal = 0
+    )
+    private boolean shouldPlayParticles(boolean particles) {
+        if (CarpetSettings.optimizedTNT){
+            return shouldPlaySoundAndParticles;
+        }
+        return particles;
+    }
+
+    @Redirect(
+            method = "finalizeExplosion",
+            at = @At(
+                    value = "INVOKE",
+                    target = "java/util/Iterator.next()Ljava/lang/Object;",
+                    ordinal = 2
+            )
+    )
+    private <E> E cacheChunkAndBlock(Iterator<E> iterator) {
+        E affectedCache = iterator.next();
+        if (CarpetSettings.optimizedTNT) {
+            blockBelowAffected = ((BlockPos) affectedCache).below();
+            chunkCache = level.getChunk(blockBelowAffected.getX() >> 4, blockBelowAffected.getZ() >> 4);
+        }
+        return affectedCache;
+    }
+
+    @Redirect(
+            method = "finalizeExplosion",
+            at = @At(
+                    value = "INVOKE",
+                    target = "Lnet/minecraft/world/level/Level;getBlockState(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/block/state/BlockState;",
+                    ordinal = 1
+            )
+    )
+    private BlockState useChunkCache(Level level, BlockPos pos) {
+        if (CarpetSettings.optimizedTNT) {
+            return chunkCache.getBlockState(pos);
+        }
+        return level.getBlockState(pos);
+    }
+
+    @Redirect(
+            method = "finalizeExplosion",
+            at = @At(
+                    value = "INVOKE",
+                    target = "Lnet/minecraft/core/BlockPos;below()Lnet/minecraft/core/BlockPos;"
+            )
+    )
+    private BlockPos useBlockBelowCache(BlockPos blockPos) {
+        if (CarpetSettings.optimizedTNT) {
+            return blockBelowAffected;
+        }
+        return blockPos;
+    }
+
+    @Redirect(
+            method = "finalizeExplosion",
+            at = @At(
+                    value = "INVOKE",
+                    target = "Lnet/minecraft/world/level/block/BaseFireBlock;getState(Lnet/minecraft/world/level/BlockGetter;Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/block/state/BlockState;"
+            )
+    )
+    private BlockState useDefaultFireState(BlockGetter level, BlockPos pos) {
+        if (CarpetSettings.optimizedTNT) {
+            return Blocks.FIRE.defaultBlockState();
+        }
+        return BaseFireBlock.getState(level, pos);
+    }
+
+    /*
+    doExplosionB mixin rework ends
+    =====================================================================================
+     */
+
     //optional due to Overwrite in Lithium
     //should kill most checks if no block damage is requested
     @Redirect(method = "explode", require = 0, at = @At(value = "INVOKE",
