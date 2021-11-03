@@ -90,7 +90,7 @@ public class ShapesRenderer
             );
             MatrixStack matrixStack = RenderSystem.getModelViewStack();
             matrixStack.push();
-            matrixStack.method_34425(matrices.peek().getPositionMatrix());
+            matrixStack.multiplyPositionMatrix(matrices.peek().getPositionMatrix());
             RenderSystem.applyModelViewMatrix();
 
             // lines

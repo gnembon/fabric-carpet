@@ -24,7 +24,7 @@ public abstract class World_getOtherEntitiesLimited implements WorldInterface {
 
     @Override
     public List<Entity> getOtherEntitiesLimited(@Nullable Entity except, Box box, Predicate<? super Entity> predicate, int limit) {
-        this.getProfiler().method_39278("getEntities"); // visit
+        this.getProfiler().visit("getEntities"); // visit
         AtomicInteger checkedEntities = new AtomicInteger();
         List<Entity> list = Lists.newArrayList();
         try {

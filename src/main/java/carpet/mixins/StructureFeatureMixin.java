@@ -73,7 +73,7 @@ public abstract class StructureFeatureMixin<C extends FeatureConfig> implements 
             if (!wireOnly)
             {
                 Registry<StructureFeature<?>> registry3 = world.getRegistryManager().get(Registry.STRUCTURE_FEATURE_KEY);
-                world.method_36972(() -> {
+                world.setCurrentlyGeneratingStructureName(() -> {
                     Objects.requireNonNull(thiss);
                     return registry3.getKey(thiss).map(Object::toString).orElseGet(thiss::toString);
                 });

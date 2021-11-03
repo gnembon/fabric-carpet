@@ -138,6 +138,6 @@ public abstract class ServerPlayerEntity_scarpetEventMixin extends PlayerEntity 
 
     @Inject(method = "setClientSettings", at = @At("HEAD"))
     public void setClientSettings(ClientSettingsC2SPacket packet, CallbackInfo ci){
-        this.language = ((ClientSettingsC2SPacketInterface) packet).getLanguage();
+        this.language = packet.language();
     }
 }
