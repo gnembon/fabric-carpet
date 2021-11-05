@@ -465,10 +465,10 @@ public class OptimizedExplosion
             {
                 posImmutable = posMutable.toImmutable();
                 BlockState state = world.getBlockState(posImmutable);
-                FluidState fluid = world.getFluidState(posImmutable);
                 Float resistance = null;
-                if (state.getMaterial() != Material.AIR)
+                if (!state.isAir())
                 {
+                    FluidState fluid = world.getFluidState(posImmutable);
                     resistance = Math.max(state.getBlock().getBlastResistance(), fluid.getBlastResistance());
                     if (eAccess.getEntity() != null)
                     {
