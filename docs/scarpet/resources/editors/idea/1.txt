@@ -35,6 +35,7 @@ decreasing
 deg
 delete
 difference
+double_to_long_bits
 equal
 exit
 fact
@@ -55,6 +56,7 @@ length
 log
 log10
 log1p
+long_bits_to_double
 loop
 lower
 m
