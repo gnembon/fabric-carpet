@@ -24,7 +24,7 @@ public abstract class ScreenHandlerSubclasses_scarpetMixin extends ScreenHandler
 
     @Inject(method = "onButtonClick", at = @At("HEAD"), cancellable = true)
     private void buttonClickCallback(PlayerEntity player, int id, CallbackInfoReturnable<Boolean> cir) {
-        if(((ScreenHandlerInterface) this).triggerButtonClickCallback(id,player))
+        if(((ScreenHandlerInterface) this).callButtonClickListener(id,player))
             cir.cancel();
     }
 }

@@ -6,5 +6,5 @@ import net.minecraft.screen.ScreenHandlerSyncHandler;
 public interface ScreenHandlerInterface {
     void setAndUpdateProperty(int index, int value);
     ScreenHandlerSyncHandler getSyncHandler();
-    boolean triggerButtonClickCallback(int button, PlayerEntity player);
+    boolean callButtonClickListener(int button, PlayerEntity player);
 }

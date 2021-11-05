@@ -55,7 +55,7 @@ public class ScreenHandlerValue extends Value {
     private Text name;
     private String typestring;
     private final FunctionValue callback;
-    private final Context context;
+    private final Context callbackContext;
 
 
     public static Map<ScreenHandlerType<?>,ScarpetScreenHandlerFactory> screenHandlerFactories;
@@ -105,7 +105,7 @@ public class ScreenHandlerValue extends Value {
     public ScreenHandlerValue(Value type, Text name, FunctionValue callback, Context c) {
         this.name = name;
         if(callback != null) callback.checkArgs(5);
-        this.context = c;
+        this.callbackContext = c.duplicate();
         this.callback = callback;
         this.screenHandlerFactory = this.createScreenHandlerFactoryFromValue(type);
         if(this.screenHandlerFactory == null) throw new ThrowStatement(type, Throwables.UNKNOWN_SCREEN);
@@ -154,35 +154,39 @@ public class ScreenHandlerValue extends Value {
 
         return new SimpleNamedScreenHandlerFactory((i, playerInventory, playerEntity) -> {
             ScreenHandler screenHandler1 = screenHandlerFactories.get(screenHandlerType).create(i,playerInventory,inventory);
-            addClickListener(screenHandler1);
+            addListenerCallback(screenHandler1);
             ScreenHandlerValue.this.screenHandler = screenHandler1;
             return screenHandler1;
         }, this.name);
     }
 
-    private void addClickListener(ScreenHandler screenHandler) {
+
+    private boolean callListener(PlayerEntity player, String action, int index, int button) {
+        Value playerValue = EntityValue.of(player);
+        Value actionValue = StringValue.of(action);
+        Value indexValue = NumericValue.of(index);
+        Value buttonValue = NumericValue.of(button);
+        List<Value> args = Arrays.asList(this,playerValue,actionValue,indexValue,buttonValue);
+        LazyValue cancel = this.callback.callInContext(callbackContext, Context.VOID, args);
+        Value cancelValue = cancel.evalValue(ScreenHandlerValue.this.callbackContext);
+        return cancelValue.getString().equals("cancel");
+    }
+
+    private void addListenerCallback(ScreenHandler screenHandler) {
         if(this.callback == null) return;
 
         screenHandler.addListener(new ScarpetScreenHandlerListener() {
             @Override
-            public boolean onSlotClick(int slot, int button, SlotActionType actionType, PlayerEntity player) {
-                Value slotValue = NumericValue.of(slot);
-                Value buttonValue = NumericValue.of(button);
-                Value actionValue = StringValue.of(actionTypeToString(actionType));
-                Value playerValue = EntityValue.of(player);
-                LazyValue cancel = ScreenHandlerValue.this.callback.callInContext(ScreenHandlerValue.this.context, Context.VOID, Arrays.asList(ScreenHandlerValue.this,slotValue,buttonValue,actionValue,playerValue));
-                Value cancelValue = cancel.evalValue(ScreenHandlerValue.this.context);
-                return cancelValue.getString().equals("cancel");
+            public boolean onSlotClick(PlayerEntity player, SlotActionType actionType, int slot, int button) {
+                return ScreenHandlerValue.this.callListener(player,actionTypeToString(actionType),slot,button);
             }
             @Override
-            public boolean onButtonClick(int button, PlayerEntity player) {
-                Value slotValue = NumericValue.of(-1);
-                Value buttonValue = NumericValue.of(button);
-                Value actionValue = StringValue.of("BUTTON");
-                Value playerValue = EntityValue.of(player);
-                LazyValue cancel = ScreenHandlerValue.this.callback.callInContext(ScreenHandlerValue.this.context, Context.VOID, Arrays.asList(ScreenHandlerValue.this,slotValue,buttonValue,actionValue,playerValue));
-                Value cancelValue = cancel.evalValue(ScreenHandlerValue.this.context);
-                return cancelValue.getString().equals("cancel");
+            public boolean onButtonClick(PlayerEntity player, int button) {
+                return ScreenHandlerValue.this.callListener(player,"button",button,0);
+            }
+            @Override
+            public void onClose(PlayerEntity player) {
+                ScreenHandlerValue.this.callListener(player,"close",0,0);
             }
             @Override
             public void onSlotUpdate(ScreenHandler handler, int slotId, ItemStack stack) {}
@@ -368,8 +372,9 @@ public class ScreenHandlerValue extends Value {
 
 
     public interface ScarpetScreenHandlerListener extends ScreenHandlerListener {
-        boolean onSlotClick(int slot, int button, SlotActionType actionType, PlayerEntity player);
-        boolean onButtonClick(int button, PlayerEntity player);
+        boolean onSlotClick(PlayerEntity player, SlotActionType actionType, int slot, int button);
+        boolean onButtonClick(PlayerEntity player, int button);
+        void onClose(PlayerEntity player);
     }
 
     private static String actionTypeToString(SlotActionType actionType) {

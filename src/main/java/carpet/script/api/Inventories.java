@@ -424,7 +424,12 @@ public class Inventories {
             if(lv.get(1) instanceof ScreenHandlerValue screenHandlerValue) {
                 players.forEach(screenHandlerValue::showScreen);
             } else if(lv.get(1).isNull()) {
-                players.forEach(ServerPlayerEntity::closeHandledScreen);
+                players.filter(player -> player.currentScreenHandler != player.playerScreenHandler)
+                        .forEach(player -> {
+                            //prevent recursion when closing screen in closing screen callback by doing this before triggering event
+                            player.currentScreenHandler = player.playerScreenHandler;
+                            player.closeHandledScreen();
+                        });
             }
             return Value.TRUE;
         });

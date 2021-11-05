@@ -32,18 +32,29 @@ public abstract class ScreenHandler_scarpetMixin implements ScreenHandlerInterfa
 
     @Shadow public abstract void syncState();
 
-    @Inject(method = "internalOnSlotClick", at = @At(value = "HEAD"), cancellable = true)
-    private void triggerClickListener(int slotIndex, int button, SlotActionType actionType, PlayerEntity player, CallbackInfo ci)
+    @Inject(method = "internalOnSlotClick", at = @At("HEAD"), cancellable = true)
+    private void callSlotClickListener(int slotIndex, int button, SlotActionType actionType, PlayerEntity player, CallbackInfo ci)
     {
         for(ScreenHandlerListener screenHandlerListener : listeners)
         {
             if(screenHandlerListener instanceof ScreenHandlerValue.ScarpetScreenHandlerListener scarpetScreenHandlerListener)
             {
-                if(scarpetScreenHandlerListener.onSlotClick(slotIndex,button,actionType,player))
+                if(scarpetScreenHandlerListener.onSlotClick(player, actionType, slotIndex, button))
                 {
                     ci.cancel();
                     syncState();
                 }
+            }
+        }
+    }
+
+    @Inject(method = "close", at = @At("HEAD"), cancellable = true)
+    private void callCloseListener(PlayerEntity player, CallbackInfo ci) {
+        for(ScreenHandlerListener screenHandlerListener : listeners)
+        {
+            if(screenHandlerListener instanceof ScreenHandlerValue.ScarpetScreenHandlerListener scarpetScreenHandlerListener)
+            {
+                scarpetScreenHandlerListener.onClose(player);
             }
         }
     }
@@ -62,12 +73,12 @@ public abstract class ScreenHandler_scarpetMixin implements ScreenHandlerInterfa
     }
 
     @Override
-    public boolean triggerButtonClickCallback(int button, PlayerEntity player) {
+    public boolean callButtonClickListener(int button, PlayerEntity player) {
         for(ScreenHandlerListener screenHandlerListener : listeners)
         {
             if(screenHandlerListener instanceof ScreenHandlerValue.ScarpetScreenHandlerListener scarpetScreenHandlerListener)
             {
-                if(scarpetScreenHandlerListener.onButtonClick(button, player))
+                if(scarpetScreenHandlerListener.onButtonClick(player, button))
                     return true;
             }
         }
