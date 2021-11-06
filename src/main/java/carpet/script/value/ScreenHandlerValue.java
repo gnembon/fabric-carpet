@@ -23,6 +23,7 @@ import net.minecraft.screen.AnvilScreenHandler;
 import net.minecraft.screen.ArrayPropertyDelegate;
 import net.minecraft.screen.BeaconScreenHandler;
 import net.minecraft.screen.BrewingStandScreenHandler;
+import net.minecraft.screen.CartographyTableScreenHandler;
 import net.minecraft.screen.FurnaceScreenHandler;
 import net.minecraft.screen.GenericContainerScreenHandler;
 import net.minecraft.screen.HopperScreenHandler;
@@ -72,6 +73,8 @@ public class ScreenHandlerValue extends Value {
         screenHandlerFactories.put(BEACON,(syncId, playerInventory, inventory1) -> new BeaconScreenHandler(syncId,playerInventory));
 
         screenHandlerFactories.put(BREWING_STAND,(syncId, playerInventory, inventory1) -> new BrewingStandScreenHandler(syncId,playerInventory,new SimpleInventory(5),new ArrayPropertyDelegate(2)));
+
+        screenHandlerFactories.put(CARTOGRAPHY_TABLE,(syncId, playerInventory, inventory1) -> new CartographyTableScreenHandler(syncId,playerInventory));
 
         screenHandlerFactories.put(GENERIC_9X1,((syncId, playerInventory, inventory1) -> new GenericContainerScreenHandler(GENERIC_9X1,syncId,playerInventory,inventory1,1)));
         screenHandlerFactories.put(GENERIC_9X2,((syncId, playerInventory, inventory1) -> new GenericContainerScreenHandler(GENERIC_9X2,syncId,playerInventory,inventory1,2)));
