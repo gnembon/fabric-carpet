@@ -25,6 +25,7 @@ import net.minecraft.screen.BeaconScreenHandler;
 import net.minecraft.screen.BrewingStandScreenHandler;
 import net.minecraft.screen.CartographyTableScreenHandler;
 import net.minecraft.screen.CraftingScreenHandler;
+import net.minecraft.screen.EnchantmentScreenHandler;
 import net.minecraft.screen.FurnaceScreenHandler;
 import net.minecraft.screen.GenericContainerScreenHandler;
 import net.minecraft.screen.HopperScreenHandler;
@@ -78,6 +79,8 @@ public class ScreenHandlerValue extends Value {
         screenHandlerFactories.put(CARTOGRAPHY_TABLE,(syncId, playerInventory, inventory1) -> new CartographyTableScreenHandler(syncId,playerInventory));
 
         screenHandlerFactories.put(CRAFTING,(syncId, playerInventory, inventory1) -> new CraftingScreenHandler(syncId,playerInventory));
+
+        screenHandlerFactories.put(ENCHANTMENT,(syncId, playerInventory, inventory1) -> new EnchantmentScreenHandler(syncId,playerInventory));
 
         screenHandlerFactories.put(GENERIC_9X1,((syncId, playerInventory, inventory1) -> new GenericContainerScreenHandler(GENERIC_9X1,syncId,playerInventory,inventory1,1)));
         screenHandlerFactories.put(GENERIC_9X2,((syncId, playerInventory, inventory1) -> new GenericContainerScreenHandler(GENERIC_9X2,syncId,playerInventory,inventory1,2)));
@@ -159,7 +162,7 @@ public class ScreenHandlerValue extends Value {
         Identifier screenHandlerTypeIdentifier = Identifier.tryParse(type);
         if(screenHandlerTypeIdentifier == null) return null;
         ScreenHandlerType<? extends ScreenHandler> screenHandlerType = Registry.SCREEN_HANDLER.get(screenHandlerTypeIdentifier);
-        if(screenHandlerType == null) return null;
+        if(screenHandlerType == null || !screenHandlerFactories.containsKey(screenHandlerType)) return null;
         this.typestring = screenHandlerTypeIdentifier.toString();
         if(inventorySizes.containsKey(screenHandlerType)) {
             this.inventory = new SimpleInventory(inventorySizes.get(screenHandlerType));
@@ -337,6 +340,38 @@ public class ScreenHandlerValue extends Value {
                     return NumericValue.of(brewingStandScreenHandler.getFuel());
                 }
                 break;
+            case "enchantment_1":
+                if(this.screenHandler instanceof EnchantmentScreenHandler enchantmentScreenHandler) {
+                    return ListValue.of(
+                            NumericValue.of(((ScreenHandlerInterface) enchantmentScreenHandler).getProperty(0)),
+                            NumericValue.of(((ScreenHandlerInterface) enchantmentScreenHandler).getProperty(4)),
+                            NumericValue.of(((ScreenHandlerInterface) enchantmentScreenHandler).getProperty(7))
+                    );
+                }
+                break;
+            case "enchantment_2":
+                if(this.screenHandler instanceof EnchantmentScreenHandler enchantmentScreenHandler) {
+                    return ListValue.of(
+                            NumericValue.of(((ScreenHandlerInterface) enchantmentScreenHandler).getProperty(1)),
+                            NumericValue.of(((ScreenHandlerInterface) enchantmentScreenHandler).getProperty(5)),
+                            NumericValue.of(((ScreenHandlerInterface) enchantmentScreenHandler).getProperty(8))
+                    );
+                }
+                break;
+            case "enchantment_3":
+                if(this.screenHandler instanceof EnchantmentScreenHandler enchantmentScreenHandler) {
+                    return ListValue.of(
+                            NumericValue.of(((ScreenHandlerInterface) enchantmentScreenHandler).getProperty(2)),
+                            NumericValue.of(((ScreenHandlerInterface) enchantmentScreenHandler).getProperty(6)),
+                            NumericValue.of(((ScreenHandlerInterface) enchantmentScreenHandler).getProperty(9))
+                    );
+                }
+                break;
+            case "enchantment_seed":
+                if(this.screenHandler instanceof EnchantmentScreenHandler enchantmentScreenHandler) {
+                    return NumericValue.of(enchantmentScreenHandler.getSeed());
+                }
+                break;
         }
 
         return Value.NULL;
@@ -408,6 +443,43 @@ public class ScreenHandlerValue extends Value {
                 if(this.screenHandler instanceof BrewingStandScreenHandler brewingStandScreenHandler) {
                     int fuel = NumericValue.asNumber(value.get(0)).getInt();
                     ((ScreenHandlerInterface) brewingStandScreenHandler).setAndUpdateProperty(1,fuel);
+                    return Value.TRUE;
+                }
+                break;
+            case "enchantment_1":
+                if(this.screenHandler instanceof EnchantmentScreenHandler enchantmentScreenHandler) {
+                    if(!(value.get(0) instanceof ListValue listValue && listValue.length() == 3)) throw new InternalExpressionException("Screen handler property " + property + " expected a list with three values.");
+                    List<Value> values = listValue.getItems();
+                    ((ScreenHandlerInterface) enchantmentScreenHandler).setAndUpdateProperty(0,NumericValue.asNumber(values.get(0)).getInt());
+                    ((ScreenHandlerInterface) enchantmentScreenHandler).setAndUpdateProperty(4,NumericValue.asNumber(values.get(1)).getInt());
+                    ((ScreenHandlerInterface) enchantmentScreenHandler).setAndUpdateProperty(7,NumericValue.asNumber(values.get(2)).getInt());
+                    return Value.TRUE;
+                }
+                break;
+            case "enchantment_2":
+                if(this.screenHandler instanceof EnchantmentScreenHandler enchantmentScreenHandler) {
+                    if(!(value.get(0) instanceof ListValue listValue && listValue.length() == 3)) throw new InternalExpressionException("Screen handler property " + property + " expected a list with three values.");
+                    List<Value> values = listValue.getItems();
+                    ((ScreenHandlerInterface) enchantmentScreenHandler).setAndUpdateProperty(1,NumericValue.asNumber(values.get(0)).getInt());
+                    ((ScreenHandlerInterface) enchantmentScreenHandler).setAndUpdateProperty(5,NumericValue.asNumber(values.get(1)).getInt());
+                    ((ScreenHandlerInterface) enchantmentScreenHandler).setAndUpdateProperty(8,NumericValue.asNumber(values.get(2)).getInt());
+                    return Value.TRUE;
+                }
+                break;
+            case "enchantment_3":
+                if(this.screenHandler instanceof EnchantmentScreenHandler enchantmentScreenHandler) {
+                    if(!(value.get(0) instanceof ListValue listValue && listValue.length() == 3)) throw new InternalExpressionException("Screen handler property " + property + " expected a list with three values.");
+                    List<Value> values = listValue.getItems();
+                    ((ScreenHandlerInterface) enchantmentScreenHandler).setAndUpdateProperty(2,NumericValue.asNumber(values.get(0)).getInt());
+                    ((ScreenHandlerInterface) enchantmentScreenHandler).setAndUpdateProperty(6,NumericValue.asNumber(values.get(1)).getInt());
+                    ((ScreenHandlerInterface) enchantmentScreenHandler).setAndUpdateProperty(9,NumericValue.asNumber(values.get(2)).getInt());
+                    return Value.TRUE;
+                }
+                break;
+            case "enchantment_seed":
+                if(this.screenHandler instanceof EnchantmentScreenHandler enchantmentScreenHandler) {
+                    int seed = NumericValue.asNumber(value.get(0)).getInt();
+                    ((ScreenHandlerInterface) enchantmentScreenHandler).setAndUpdateProperty(3,seed);
                     return Value.TRUE;
                 }
                 break;
