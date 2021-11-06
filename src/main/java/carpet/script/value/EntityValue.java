@@ -28,6 +28,7 @@ import net.minecraft.entity.ai.brain.MemoryModuleType;
 import net.minecraft.entity.ai.pathing.Path;
 import net.minecraft.entity.attribute.AttributeContainer;
 import net.minecraft.entity.attribute.EntityAttribute;
+import net.minecraft.entity.player.PlayerAbilities;
 import net.minecraft.entity.projectile.ProjectileEntity;
 import net.minecraft.entity.vehicle.AbstractMinecartEntity;
 import net.minecraft.nbt.NbtString;
@@ -963,6 +964,38 @@ public class EntityValue extends Value
             }
             if (e instanceof LivingEntity) ((LivingEntity) e).setHealth(health);
         });
+
+        put("mayfly", (e, v) -> {
+            if (v == null) {
+                throw new InternalExpressionException("'mayfly' requires parameters");
+            }
+
+            boolean mayfly = v.getBoolean();
+
+            if (e instanceof ServerPlayerEntity player) {
+                player.getAbilities().allowFlying = mayfly;
+                if (!mayfly && player.getAbilities().flying) {
+                    player.getAbilities().flying = false;
+                }
+                player.sendAbilitiesUpdate();
+            }
+        });
+
+        put("fly_speed", (e, v) -> {
+            Float flySpeed;
+
+            if (v == null) {
+                flySpeed = 0.05F;
+            } else {
+                flySpeed = NumericValue.asNumber(v).getFloat();
+            }
+
+            if (e instanceof ServerPlayerEntity player) {
+                player.getAbilities().setFlySpeed(flySpeed);
+                player.sendAbilitiesUpdate();
+            }
+        });
+
         // todo add handling of the source for extra effects
         /*put("damage", (e, v) -> {
             float dmgPoints;
