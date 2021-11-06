@@ -21,6 +21,8 @@ import net.minecraft.nbt.NbtString;
 import net.minecraft.screen.AbstractFurnaceScreenHandler;
 import net.minecraft.screen.AnvilScreenHandler;
 import net.minecraft.screen.ArrayPropertyDelegate;
+import net.minecraft.screen.BeaconScreenHandler;
+import net.minecraft.screen.BrewingStandScreenHandler;
 import net.minecraft.screen.FurnaceScreenHandler;
 import net.minecraft.screen.GenericContainerScreenHandler;
 import net.minecraft.screen.HopperScreenHandler;
@@ -65,6 +67,12 @@ public class ScreenHandlerValue extends Value {
     {
         screenHandlerFactories = new HashMap<>();
 
+        screenHandlerFactories.put(ANVIL,(syncId, playerInventory, inventory1) -> new AnvilScreenHandler(syncId,playerInventory));
+
+        screenHandlerFactories.put(BEACON,(syncId, playerInventory, inventory1) -> new BeaconScreenHandler(syncId,playerInventory));
+
+        screenHandlerFactories.put(BREWING_STAND,(syncId, playerInventory, inventory1) -> new BrewingStandScreenHandler(syncId,playerInventory,new SimpleInventory(5),new ArrayPropertyDelegate(2)));
+
         screenHandlerFactories.put(GENERIC_9X1,((syncId, playerInventory, inventory1) -> new GenericContainerScreenHandler(GENERIC_9X1,syncId,playerInventory,inventory1,1)));
         screenHandlerFactories.put(GENERIC_9X2,((syncId, playerInventory, inventory1) -> new GenericContainerScreenHandler(GENERIC_9X2,syncId,playerInventory,inventory1,2)));
         screenHandlerFactories.put(GENERIC_9X3,((syncId, playerInventory, inventory1) -> new GenericContainerScreenHandler(GENERIC_9X3,syncId,playerInventory,inventory1,3)));
@@ -75,8 +83,7 @@ public class ScreenHandlerValue extends Value {
         screenHandlerFactories.put(GENERIC_3X3,((syncId, playerInventory, inventory1) -> new GenericContainerScreenHandler(GENERIC_3X3,syncId,playerInventory,inventory1,1)));
 
         screenHandlerFactories.put(HOPPER,(HopperScreenHandler::new));
-        screenHandlerFactories.put(ANVIL,(syncId, playerInventory, inventory1) -> new AnvilScreenHandler(syncId,playerInventory));
-        screenHandlerFactories.put(LECTERN,(syncId, playerInventory, inventory1) -> new LecternScreenHandler(syncId,new SimpleInventory(1),new ArrayPropertyDelegate(1)));
+        screenHandlerFactories.put(LECTERN,(syncId, playerInventory, inventory1) -> new LecternScreenHandler(syncId,inventory1,new ArrayPropertyDelegate(1)));
         screenHandlerFactories.put(FURNACE,(syncId, playerInventory, inventory1) -> new FurnaceScreenHandler(syncId,playerInventory));
 
 
@@ -90,7 +97,7 @@ public class ScreenHandlerValue extends Value {
         inventorySizes.put(GENERIC_9X6,54);
         inventorySizes.put(GENERIC_3X3,9);
         inventorySizes.put(HOPPER,5);
-        //inventorySizes.put(LECTERN,1);
+        inventorySizes.put(LECTERN,1);
 
     }
 
@@ -304,6 +311,26 @@ public class ScreenHandlerValue extends Value {
                     return NumericValue.of(lecternScreenHandler.getPage());
                 }
                 break;
+            case "beacon_level":
+                if(this.screenHandler instanceof BeaconScreenHandler beaconScreenHandler) {
+                    return NumericValue.of(((ScreenHandlerInterface) beaconScreenHandler).getProperty(0));
+                }
+                break;
+            case "primary_effect":
+                if(this.screenHandler instanceof BeaconScreenHandler beaconScreenHandler) {
+                    return NumericValue.of(((ScreenHandlerInterface) beaconScreenHandler).getProperty(1));
+                }
+                break;
+            case "brew_time":
+                if(this.screenHandler instanceof BrewingStandScreenHandler brewingStandScreenHandler) {
+                    return NumericValue.of(brewingStandScreenHandler.getBrewTime());
+                }
+                break;
+            case "brewing_fuel":
+                if(this.screenHandler instanceof BrewingStandScreenHandler brewingStandScreenHandler) {
+                    return NumericValue.of(brewingStandScreenHandler.getFuel());
+                }
+                break;
         }
 
         return Value.NULL;
@@ -340,6 +367,41 @@ public class ScreenHandlerValue extends Value {
                 if(this.screenHandler instanceof LecternScreenHandler lecternScreenHandler) {
                     int page = NumericValue.asNumber(value.get(0)).getInt();
                     ((ScreenHandlerInterface) lecternScreenHandler).setAndUpdateProperty(0,page);
+                    return Value.TRUE;
+                }
+                break;
+            case "beacon_level":
+                if(this.screenHandler instanceof BeaconScreenHandler beaconScreenHandler) {
+                    int effect = NumericValue.asNumber(value.get(0)).getInt();
+                    ((ScreenHandlerInterface) beaconScreenHandler).setAndUpdateProperty(0,effect);
+                    return Value.TRUE;
+                }
+                break;
+            case "primary_effect":
+                if(this.screenHandler instanceof BeaconScreenHandler beaconScreenHandler) {
+                    int effect = NumericValue.asNumber(value.get(0)).getInt();
+                    ((ScreenHandlerInterface) beaconScreenHandler).setAndUpdateProperty(1,effect);
+                    return Value.TRUE;
+                }
+                break;
+            case "secondary_effect":
+                if(this.screenHandler instanceof BeaconScreenHandler beaconScreenHandler) {
+                    int effect = NumericValue.asNumber(value.get(0)).getInt();
+                    ((ScreenHandlerInterface) beaconScreenHandler).setAndUpdateProperty(2,effect);
+                    return Value.TRUE;
+                }
+                break;
+            case "brew_time":
+                if(this.screenHandler instanceof BrewingStandScreenHandler brewingStandScreenHandler) {
+                    int time = NumericValue.asNumber(value.get(0)).getInt();
+                    ((ScreenHandlerInterface) brewingStandScreenHandler).setAndUpdateProperty(0,time);
+                    return Value.TRUE;
+                }
+                break;
+            case "brewing_fuel":
+                if(this.screenHandler instanceof BrewingStandScreenHandler brewingStandScreenHandler) {
+                    int fuel = NumericValue.asNumber(value.get(0)).getInt();
+                    ((ScreenHandlerInterface) brewingStandScreenHandler).setAndUpdateProperty(1,fuel);
                     return Value.TRUE;
                 }
                 break;

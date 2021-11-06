@@ -5,6 +5,7 @@ import carpet.fakes.ScreenHandlerInterface;
 import carpet.fakes.ScreenHandlerSyncHandlerInterface;
 import carpet.script.value.ScreenHandlerValue;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.screen.Property;
 import net.minecraft.screen.ScreenHandler;
 import net.minecraft.screen.ScreenHandlerListener;
 import net.minecraft.screen.ScreenHandlerSyncHandler;
@@ -31,6 +32,8 @@ public abstract class ScreenHandler_scarpetMixin implements ScreenHandlerInterfa
     @Shadow @Nullable private ScreenHandlerSyncHandler syncHandler;
 
     @Shadow public abstract void syncState();
+
+    @Shadow @Final private List<Property> properties;
 
     @Inject(method = "internalOnSlotClick", at = @At("HEAD"), cancellable = true)
     private void callSlotClickListener(int slotIndex, int button, SlotActionType actionType, PlayerEntity player, CallbackInfo ci)
@@ -65,6 +68,11 @@ public abstract class ScreenHandler_scarpetMixin implements ScreenHandlerInterfa
         this.notifyPropertyUpdate(index,value);
         if(this.syncHandler == null) return;
         ((ScreenHandlerSyncHandlerInterface) this.syncHandler).callSendPropertyUpdate((ScreenHandler) (Object) this,index,value);
+    }
+
+    @Override
+    public int getProperty(int index) {
+        return this.properties.get(index).get();
     }
 
     @Override

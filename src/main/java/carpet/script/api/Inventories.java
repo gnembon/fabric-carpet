@@ -415,13 +415,18 @@ public class Inventories {
         {
             Value targets = lv.get(0);
             if (!(targets instanceof ListValue)) targets = ListValue.of(targets);
+            List<Value> playerValueList = ((ListValue) targets).getItems();
             MinecraftServer server = ((CarpetContext) c).s.getServer();
-            Stream<ServerPlayerEntity> players = ((ListValue) targets).getItems().stream().map(target -> {
+            if(playerValueList.size()==0) throw new InternalExpressionException("'open_screen' requires a valid online player or a list of players as first argument. "+targets.getString()+" is not a player.");
+            Stream<ServerPlayerEntity> players = playerValueList.stream().map(target -> {
                 ServerPlayerEntity player = EntityValue.getPlayerByValue(server, target);
                 if (player == null) throw new InternalExpressionException("'open_screen' requires a valid online player or a list of players as first argument. "+target.getString()+" is not a player.");
                 return player;
             });
             if(lv.get(1) instanceof ScreenHandlerValue screenHandlerValue) {
+                if(!screenHandlerValue.hasInventory() && playerValueList.size() != 1) {
+                    throw new InternalExpressionException("screen handler type '" + screenHandlerValue.getString() + "' does not support multiple players.");
+                }
                 players.forEach(screenHandlerValue::showScreen);
             } else if(lv.get(1).isNull()) {
                 players.filter(player -> player.currentScreenHandler != player.playerScreenHandler)
