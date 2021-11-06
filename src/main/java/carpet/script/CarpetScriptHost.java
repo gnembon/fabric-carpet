@@ -1104,8 +1104,14 @@ public class CarpetScriptHost extends ScriptHost
                 continue;
             stringsToFormat.add(format + line.substring(lastPos, foundLocal.getKey()));
             stringsToFormat.add(format + foundLocal.getValue());
+            String value;
+            try {
+                value = context.variables.get(foundLocal.getValue()).evalValue(context).getPrettyString();
+            } catch (StackOverflowError e) {
+                value = "Exception while rendering variable, there seems to be a recursive reference in there";
+            }
             stringsToFormat.add("^ Value of '" + foundLocal.getValue() + "' at position: \n"
-                        + context.variables.get(foundLocal.getValue()).evalValue(context).getPrettyString()); // can this throw? Should this have a catch?
+                        + value);
             lastPos = foundLocal.getKey() + foundLocal.getValue().length();
         }
         if (line.length() != lastPos)
