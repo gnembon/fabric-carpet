@@ -468,6 +468,12 @@ public class Expression
         addUnaryFunction(name, (v) -> new NumericValue(fun.apply(NumericValue.asNumber(v).getDouble())));
     }
 
+    public void addMathematicalBinaryIntFunction(String name, BiFunction<Long, Long, Long> fun)
+    {
+        addBinaryFunction(name, (w, v) ->
+                new NumericValue(fun.apply(NumericValue.asNumber(w).getLong(), NumericValue.asNumber(v).getLong())));
+    }
+	
     public void addMathematicalBinaryFunction(String name, BiFunction<Double, Double, Double> fun)
     {
         addBinaryFunction(name, (w, v) ->
