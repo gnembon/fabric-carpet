@@ -32,11 +32,13 @@ import net.minecraft.screen.GrindstoneScreenHandler;
 import net.minecraft.screen.HopperScreenHandler;
 import net.minecraft.screen.LecternScreenHandler;
 import net.minecraft.screen.LoomScreenHandler;
+import net.minecraft.screen.MerchantScreenHandler;
 import net.minecraft.screen.NamedScreenHandlerFactory;
 import net.minecraft.screen.ScreenHandler;
 import net.minecraft.screen.ScreenHandlerFactory;
 import net.minecraft.screen.ScreenHandlerListener;
 import net.minecraft.screen.ScreenHandlerType;
+import net.minecraft.screen.ShulkerBoxScreenHandler;
 import net.minecraft.screen.SimpleNamedScreenHandlerFactory;
 import net.minecraft.screen.slot.Slot;
 import net.minecraft.screen.slot.SlotActionType;
@@ -89,6 +91,7 @@ public class ScreenHandlerValue extends Value {
         screenHandlerFactories.put(GENERIC_9X6,((syncId, playerInventory, inventory1) -> new GenericContainerScreenHandler(GENERIC_9X6,syncId,playerInventory,inventory1,6)));
         screenHandlerFactories.put(GRINDSTONE,(syncId, playerInventory, inventory1) -> new GrindstoneScreenHandler(syncId,playerInventory));
         screenHandlerFactories.put(LOOM,(syncId, playerInventory, inventory1) -> new LoomScreenHandler(syncId,playerInventory));
+        screenHandlerFactories.put(MERCHANT,(syncId, playerInventory, inventory1) -> new MerchantScreenHandler(syncId,playerInventory));
         screenHandlerFactories.put(HOPPER,(HopperScreenHandler::new));
         screenHandlerFactories.put(LECTERN,(syncId, playerInventory, inventory1) -> new LecternScreenHandler(syncId,inventory1,new ArrayPropertyDelegate(1)));
 
