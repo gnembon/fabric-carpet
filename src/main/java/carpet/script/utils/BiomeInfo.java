@@ -1,6 +1,7 @@
 package carpet.script.utils;
 
 import carpet.fakes.BiomeEffectsInterface;
+import carpet.fakes.PlacedFeatureInterface;
 import carpet.script.value.BlockValue;
 import carpet.script.value.ListValue;
 import carpet.script.value.NumericValue;
@@ -41,7 +42,7 @@ public class BiomeInfo
             return ListValue.wrap(
                     b.getGenerationSettings().getFeatures().stream().map(step ->
                             ListValue.wrap(step.stream().map(cfp ->
-                                    ValueConversions.of(registry.getId(cfp.get()))
+                                    ValueConversions.of(registry.getId(((PlacedFeatureInterface)cfp.get()).getRawFeature()))
                             ))
                     )
             );

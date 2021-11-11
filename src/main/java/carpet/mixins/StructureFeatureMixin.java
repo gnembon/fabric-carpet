@@ -44,9 +44,11 @@ public abstract class StructureFeatureMixin<C extends FeatureConfig> implements 
 
     //@Shadow protected abstract boolean shouldStartAt(ChunkGenerator chunkGenerator, BiomeSource biomeSource, long worldSeed, ChunkRandom random, ChunkPos chunkPos, Biome biome, ChunkPos chunkPos2, C featureConfig, HeightLimitView heightLimitView);
 
-    @Shadow protected abstract boolean shouldStartAt(ChunkGenerator chunkGenerator, BiomeSource biomeSource, long worldSeed, ChunkRandom random, ChunkPos pos, ChunkPos chunkPos, C featureConfig, HeightLimitView heightLimitView);
+    //@Shadow protected abstract boolean shouldStartAt(ChunkGenerator chunkGenerator, BiomeSource biomeSource, long worldSeed, ChunkRandom random, ChunkPos pos, ChunkPos chunkPos, C featureConfig, HeightLimitView heightLimitView);
+      @Shadow protected abstract boolean shouldStartAt(ChunkGenerator chunkGenerator, BiomeSource biomeSource, long worldSeed, ChunkPos chunkPos, C featureConfig, HeightLimitView heightLimitView);
 
     @Shadow @Final private class_6622<C> field_34929;
+
 
     @Override
     public boolean plopAnywhere(ServerWorld world, BlockPos pos, ChunkGenerator generator, boolean wireOnly, Biome biome, C config)
@@ -157,8 +159,8 @@ public abstract class StructureFeatureMixin<C extends FeatureConfig> implements 
     }
 
     @Override
-    public boolean shouldStartPublicAt(ChunkGenerator chunkGenerator, BiomeSource biomeSource, long l, ChunkRandom chunkRandom, ChunkPos chpos, ChunkPos chunkPos, C featureConfig, HeightLimitView heightLimitView)
+    public boolean shouldStartPublicAt(ChunkGenerator chunkGenerator, BiomeSource biomeSource, long l, ChunkPos chunkPos, C featureConfig, HeightLimitView heightLimitView)
     {
-        return shouldStartAt(chunkGenerator, biomeSource, l, chunkRandom, chpos, chunkPos, featureConfig, heightLimitView);
+        return shouldStartAt(chunkGenerator, biomeSource, l, chunkPos, featureConfig, heightLimitView);
     }
 }
