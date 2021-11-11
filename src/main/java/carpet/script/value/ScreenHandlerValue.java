@@ -41,6 +41,7 @@ import net.minecraft.screen.ScreenHandlerType;
 import net.minecraft.screen.ShulkerBoxScreenHandler;
 import net.minecraft.screen.SimpleNamedScreenHandlerFactory;
 import net.minecraft.screen.SmithingScreenHandler;
+import net.minecraft.screen.StonecutterScreenHandler;
 import net.minecraft.screen.slot.Slot;
 import net.minecraft.screen.slot.SlotActionType;
 import net.minecraft.server.network.ServerPlayerEntity;
@@ -83,7 +84,6 @@ public class ScreenHandlerValue extends Value {
         screenHandlerFactories.put(ENCHANTMENT,(syncId, playerInventory, inventory1) -> new EnchantmentScreenHandler(syncId,playerInventory));
         screenHandlerFactories.put(FURNACE,(syncId, playerInventory, inventory1) -> new FurnaceScreenHandler(syncId,playerInventory));
         screenHandlerFactories.put(GENERIC_3X3,((syncId, playerInventory, inventory1) -> new GenericContainerScreenHandler(GENERIC_3X3,syncId,playerInventory,inventory1,1)));
-
         screenHandlerFactories.put(GENERIC_9X1,((syncId, playerInventory, inventory1) -> new GenericContainerScreenHandler(GENERIC_9X1,syncId,playerInventory,inventory1,1)));
         screenHandlerFactories.put(GENERIC_9X2,((syncId, playerInventory, inventory1) -> new GenericContainerScreenHandler(GENERIC_9X2,syncId,playerInventory,inventory1,2)));
         screenHandlerFactories.put(GENERIC_9X3,((syncId, playerInventory, inventory1) -> new GenericContainerScreenHandler(GENERIC_9X3,syncId,playerInventory,inventory1,3)));
@@ -91,12 +91,13 @@ public class ScreenHandlerValue extends Value {
         screenHandlerFactories.put(GENERIC_9X5,((syncId, playerInventory, inventory1) -> new GenericContainerScreenHandler(GENERIC_9X5,syncId,playerInventory,inventory1,5)));
         screenHandlerFactories.put(GENERIC_9X6,((syncId, playerInventory, inventory1) -> new GenericContainerScreenHandler(GENERIC_9X6,syncId,playerInventory,inventory1,6)));
         screenHandlerFactories.put(GRINDSTONE,(syncId, playerInventory, inventory1) -> new GrindstoneScreenHandler(syncId,playerInventory));
+        screenHandlerFactories.put(HOPPER,(syncId, playerInventory, inventory1) -> new HopperScreenHandler(syncId,playerInventory));
+        screenHandlerFactories.put(LECTERN,(syncId, playerInventory, inventory1) -> new LecternScreenHandler(syncId,inventory1,new ArrayPropertyDelegate(1)));
         screenHandlerFactories.put(LOOM,(syncId, playerInventory, inventory1) -> new LoomScreenHandler(syncId,playerInventory));
         screenHandlerFactories.put(MERCHANT,(syncId, playerInventory, inventory1) -> new MerchantScreenHandler(syncId,playerInventory));
         screenHandlerFactories.put(SHULKER_BOX,(syncId, playerInventory, inventory1) -> new ShulkerBoxScreenHandler(syncId,playerInventory,inventory1));
         screenHandlerFactories.put(SMITHING,(syncId, playerInventory, inventory1) -> new SmithingScreenHandler(syncId,playerInventory));
-        screenHandlerFactories.put(HOPPER,(HopperScreenHandler::new));
-        screenHandlerFactories.put(LECTERN,(syncId, playerInventory, inventory1) -> new LecternScreenHandler(syncId,inventory1,new ArrayPropertyDelegate(1)));
+        screenHandlerFactories.put(STONECUTTER,(syncId, playerInventory, inventory1) -> new StonecutterScreenHandler(syncId,playerInventory));
 
 
         inventorySizes = new HashMap<>();
@@ -380,6 +381,11 @@ public class ScreenHandlerValue extends Value {
                     return NumericValue.of(loomScreenHandler.getSelectedPattern());
                 }
                 break;
+            case "stonecutter_recipe":
+                if(this.screenHandler instanceof StonecutterScreenHandler stonecutterScreenHandler) {
+                    return NumericValue.of(stonecutterScreenHandler.getSelectedRecipe());
+                }
+                break;
         }
 
         return Value.NULL;
@@ -495,6 +501,13 @@ public class ScreenHandlerValue extends Value {
                 if(this.screenHandler instanceof LoomScreenHandler loomScreenHandler) {
                     int pattern = NumericValue.asNumber(value.get(0)).getInt();
                     ((ScreenHandlerInterface) loomScreenHandler).setAndUpdateProperty(0,pattern);
+                    return Value.TRUE;
+                }
+                break;
+            case "stonecutter_recipe":
+                if(this.screenHandler instanceof StonecutterScreenHandler stonecutterScreenHandler) {
+                    int recipe = NumericValue.asNumber(value.get(0)).getInt();
+                    ((ScreenHandlerInterface) stonecutterScreenHandler).setAndUpdateProperty(0,recipe);
                     return Value.TRUE;
                 }
                 break;
