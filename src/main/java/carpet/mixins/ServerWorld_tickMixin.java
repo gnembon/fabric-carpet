@@ -136,13 +136,10 @@ public abstract class ServerWorld_tickMixin extends World
         if (TickSpeed.process_entities) worldBorder.tick();
     }
 
-    @Redirect(method = "tick", at = @At(
-            value = "INVOKE",
-            target = "Lnet/minecraft/world/dimension/DimensionType;hasSkyLight()Z"
-    ))
-    private boolean tickWorldBorder(DimensionType dimension)
+    @Inject(method = "method_39501", cancellable = true, at = @At("HEAD"))
+    private void tickWorldBorder(CallbackInfo ci)
     {
-        return TickSpeed.process_entities && dimension.hasSkyLight();
+        if (!TickSpeed.process_entities) ci.cancel();
     }
 
     @Redirect(method = "tick", at = @At(

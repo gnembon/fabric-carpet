@@ -1,10 +1,13 @@
 package carpet.helpers;
 
 import carpet.CarpetSettings;
+import carpet.fakes.PlacedFeatureInterface;
 import carpet.fakes.StructureFeatureInterface;
 import com.mojang.datafixers.util.Pair;
 import net.minecraft.block.Block;
 import net.minecraft.block.Blocks;
+import net.minecraft.class_6796;
+import net.minecraft.class_6797;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.structure.StructureManager;
 import net.minecraft.structure.StructureStart;
@@ -185,11 +188,11 @@ public class FeatureGenerator
 
     private static ConfiguredFeature<?, ?> getDefaultFeature(Feature<?> feature, ServerWorld world, BlockPos pos, boolean tryHard)
     {
-        List<List<Supplier<ConfiguredFeature<?, ?>>>> configuredStepFeatures = world.getBiome(pos).getGenerationSettings().getFeatures();
-        for (List<Supplier<ConfiguredFeature<?, ?>>> step: configuredStepFeatures)
-            for (Supplier<ConfiguredFeature<?, ?>> provider: step)
+        List<List<Supplier<class_6796>>> configuredStepFeatures = world.getBiome(pos).getGenerationSettings().getFeatures();
+        for (List<Supplier<class_6796>> step: configuredStepFeatures)
+            for (Supplier<class_6796> provider: step)
             {
-                ConfiguredFeature<?, ?> configuredFeature = provider.get();
+                ConfiguredFeature<?, ?> configuredFeature = ((PlacedFeatureInterface)provider.get()).getRawFeature();
                 if (configuredFeature.feature == feature)
                     return configuredFeature;
             }
@@ -258,9 +261,9 @@ public class FeatureGenerator
         put("coral_claw", simplePlop(Feature.CORAL_CLAW.configure(FeatureConfig.DEFAULT)));
         put("coral_mushroom", simplePlop(Feature.CORAL_MUSHROOM.configure(FeatureConfig.DEFAULT)));
         put("coral", simplePlop(Feature.SIMPLE_RANDOM_SELECTOR.configure(new SimpleRandomFeatureConfig(List.of(
-                () -> Feature.CORAL_TREE.configure(FeatureConfig.DEFAULT),
-                () -> Feature.CORAL_CLAW.configure(FeatureConfig.DEFAULT),
-                () -> Feature.CORAL_MUSHROOM.configure(FeatureConfig.DEFAULT)
+                () -> Feature.CORAL_TREE.configure(FeatureConfig.DEFAULT).method_39594(new class_6797[0]),
+                () -> Feature.CORAL_CLAW.configure(FeatureConfig.DEFAULT).method_39594(new class_6797[0]),
+                () -> Feature.CORAL_MUSHROOM.configure(FeatureConfig.DEFAULT).method_39594(new class_6797[0])
         )))));
         put("bastion_remnant_units", spawnCustomStructure(
                 StructureFeature.BASTION_REMNANT,
