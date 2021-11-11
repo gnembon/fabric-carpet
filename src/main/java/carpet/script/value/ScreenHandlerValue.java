@@ -31,6 +31,7 @@ import net.minecraft.screen.GenericContainerScreenHandler;
 import net.minecraft.screen.GrindstoneScreenHandler;
 import net.minecraft.screen.HopperScreenHandler;
 import net.minecraft.screen.LecternScreenHandler;
+import net.minecraft.screen.LoomScreenHandler;
 import net.minecraft.screen.NamedScreenHandlerFactory;
 import net.minecraft.screen.ScreenHandler;
 import net.minecraft.screen.ScreenHandlerFactory;
@@ -87,6 +88,7 @@ public class ScreenHandlerValue extends Value {
         screenHandlerFactories.put(GENERIC_9X5,((syncId, playerInventory, inventory1) -> new GenericContainerScreenHandler(GENERIC_9X5,syncId,playerInventory,inventory1,5)));
         screenHandlerFactories.put(GENERIC_9X6,((syncId, playerInventory, inventory1) -> new GenericContainerScreenHandler(GENERIC_9X6,syncId,playerInventory,inventory1,6)));
         screenHandlerFactories.put(GRINDSTONE,(syncId, playerInventory, inventory1) -> new GrindstoneScreenHandler(syncId,playerInventory));
+        screenHandlerFactories.put(LOOM,(syncId, playerInventory, inventory1) -> new LoomScreenHandler(syncId,playerInventory));
         screenHandlerFactories.put(HOPPER,(HopperScreenHandler::new));
         screenHandlerFactories.put(LECTERN,(syncId, playerInventory, inventory1) -> new LecternScreenHandler(syncId,inventory1,new ArrayPropertyDelegate(1)));
 
@@ -367,6 +369,11 @@ public class ScreenHandlerValue extends Value {
                     return NumericValue.of(enchantmentScreenHandler.getSeed());
                 }
                 break;
+            case "banner_pattern":
+                if(this.screenHandler instanceof LoomScreenHandler loomScreenHandler) {
+                    return NumericValue.of(loomScreenHandler.getSelectedPattern());
+                }
+                break;
         }
 
         return Value.NULL;
@@ -475,6 +482,13 @@ public class ScreenHandlerValue extends Value {
                 if(this.screenHandler instanceof EnchantmentScreenHandler enchantmentScreenHandler) {
                     int seed = NumericValue.asNumber(value.get(0)).getInt();
                     ((ScreenHandlerInterface) enchantmentScreenHandler).setAndUpdateProperty(3,seed);
+                    return Value.TRUE;
+                }
+                break;
+            case "banner_pattern":
+                if(this.screenHandler instanceof LoomScreenHandler loomScreenHandler) {
+                    int pattern = NumericValue.asNumber(value.get(0)).getInt();
+                    ((ScreenHandlerInterface) loomScreenHandler).setAndUpdateProperty(0,pattern);
                     return Value.TRUE;
                 }
                 break;
