@@ -28,6 +28,7 @@ import net.minecraft.screen.CraftingScreenHandler;
 import net.minecraft.screen.EnchantmentScreenHandler;
 import net.minecraft.screen.FurnaceScreenHandler;
 import net.minecraft.screen.GenericContainerScreenHandler;
+import net.minecraft.screen.GrindstoneScreenHandler;
 import net.minecraft.screen.HopperScreenHandler;
 import net.minecraft.screen.LecternScreenHandler;
 import net.minecraft.screen.NamedScreenHandlerFactory;
@@ -71,16 +72,13 @@ public class ScreenHandlerValue extends Value {
         screenHandlerFactories = new HashMap<>();
 
         screenHandlerFactories.put(ANVIL,(syncId, playerInventory, inventory1) -> new AnvilScreenHandler(syncId,playerInventory));
-
         screenHandlerFactories.put(BEACON,(syncId, playerInventory, inventory1) -> new BeaconScreenHandler(syncId,playerInventory));
-
         screenHandlerFactories.put(BREWING_STAND,(syncId, playerInventory, inventory1) -> new BrewingStandScreenHandler(syncId,playerInventory,new SimpleInventory(5),new ArrayPropertyDelegate(2)));
-
         screenHandlerFactories.put(CARTOGRAPHY_TABLE,(syncId, playerInventory, inventory1) -> new CartographyTableScreenHandler(syncId,playerInventory));
-
         screenHandlerFactories.put(CRAFTING,(syncId, playerInventory, inventory1) -> new CraftingScreenHandler(syncId,playerInventory));
-
         screenHandlerFactories.put(ENCHANTMENT,(syncId, playerInventory, inventory1) -> new EnchantmentScreenHandler(syncId,playerInventory));
+        screenHandlerFactories.put(FURNACE,(syncId, playerInventory, inventory1) -> new FurnaceScreenHandler(syncId,playerInventory));
+        screenHandlerFactories.put(GENERIC_3X3,((syncId, playerInventory, inventory1) -> new GenericContainerScreenHandler(GENERIC_3X3,syncId,playerInventory,inventory1,1)));
 
         screenHandlerFactories.put(GENERIC_9X1,((syncId, playerInventory, inventory1) -> new GenericContainerScreenHandler(GENERIC_9X1,syncId,playerInventory,inventory1,1)));
         screenHandlerFactories.put(GENERIC_9X2,((syncId, playerInventory, inventory1) -> new GenericContainerScreenHandler(GENERIC_9X2,syncId,playerInventory,inventory1,2)));
@@ -88,12 +86,9 @@ public class ScreenHandlerValue extends Value {
         screenHandlerFactories.put(GENERIC_9X4,((syncId, playerInventory, inventory1) -> new GenericContainerScreenHandler(GENERIC_9X4,syncId,playerInventory,inventory1,4)));
         screenHandlerFactories.put(GENERIC_9X5,((syncId, playerInventory, inventory1) -> new GenericContainerScreenHandler(GENERIC_9X5,syncId,playerInventory,inventory1,5)));
         screenHandlerFactories.put(GENERIC_9X6,((syncId, playerInventory, inventory1) -> new GenericContainerScreenHandler(GENERIC_9X6,syncId,playerInventory,inventory1,6)));
-
-        screenHandlerFactories.put(GENERIC_3X3,((syncId, playerInventory, inventory1) -> new GenericContainerScreenHandler(GENERIC_3X3,syncId,playerInventory,inventory1,1)));
-
+        screenHandlerFactories.put(GRINDSTONE,(syncId, playerInventory, inventory1) -> new GrindstoneScreenHandler(syncId,playerInventory));
         screenHandlerFactories.put(HOPPER,(HopperScreenHandler::new));
         screenHandlerFactories.put(LECTERN,(syncId, playerInventory, inventory1) -> new LecternScreenHandler(syncId,inventory1,new ArrayPropertyDelegate(1)));
-        screenHandlerFactories.put(FURNACE,(syncId, playerInventory, inventory1) -> new FurnaceScreenHandler(syncId,playerInventory));
 
 
         inventorySizes = new HashMap<>();
