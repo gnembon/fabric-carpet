@@ -40,6 +40,7 @@ import net.minecraft.screen.ScreenHandlerListener;
 import net.minecraft.screen.ScreenHandlerType;
 import net.minecraft.screen.ShulkerBoxScreenHandler;
 import net.minecraft.screen.SimpleNamedScreenHandlerFactory;
+import net.minecraft.screen.SmithingScreenHandler;
 import net.minecraft.screen.slot.Slot;
 import net.minecraft.screen.slot.SlotActionType;
 import net.minecraft.server.network.ServerPlayerEntity;
@@ -93,6 +94,7 @@ public class ScreenHandlerValue extends Value {
         screenHandlerFactories.put(LOOM,(syncId, playerInventory, inventory1) -> new LoomScreenHandler(syncId,playerInventory));
         screenHandlerFactories.put(MERCHANT,(syncId, playerInventory, inventory1) -> new MerchantScreenHandler(syncId,playerInventory));
         screenHandlerFactories.put(SHULKER_BOX,(syncId, playerInventory, inventory1) -> new ShulkerBoxScreenHandler(syncId,playerInventory,inventory1));
+        screenHandlerFactories.put(SMITHING,(syncId, playerInventory, inventory1) -> new SmithingScreenHandler(syncId,playerInventory));
         screenHandlerFactories.put(HOPPER,(HopperScreenHandler::new));
         screenHandlerFactories.put(LECTERN,(syncId, playerInventory, inventory1) -> new LecternScreenHandler(syncId,inventory1,new ArrayPropertyDelegate(1)));
 
