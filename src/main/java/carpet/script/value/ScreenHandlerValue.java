@@ -92,6 +92,7 @@ public class ScreenHandlerValue extends Value {
         screenHandlerFactories.put(GRINDSTONE,(syncId, playerInventory, inventory1) -> new GrindstoneScreenHandler(syncId,playerInventory));
         screenHandlerFactories.put(LOOM,(syncId, playerInventory, inventory1) -> new LoomScreenHandler(syncId,playerInventory));
         screenHandlerFactories.put(MERCHANT,(syncId, playerInventory, inventory1) -> new MerchantScreenHandler(syncId,playerInventory));
+        screenHandlerFactories.put(SHULKER_BOX,(syncId, playerInventory, inventory1) -> new ShulkerBoxScreenHandler(syncId,playerInventory,inventory1));
         screenHandlerFactories.put(HOPPER,(HopperScreenHandler::new));
         screenHandlerFactories.put(LECTERN,(syncId, playerInventory, inventory1) -> new LecternScreenHandler(syncId,inventory1,new ArrayPropertyDelegate(1)));
 
