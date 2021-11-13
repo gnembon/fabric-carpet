@@ -40,6 +40,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 public class SpawnReporter
 {
@@ -428,19 +429,16 @@ public class SpawnReporter
         return spawnGroup == SpawnGroup.MONSTER && serverWorld.getBlockState(blockPos.down()).getBlock() == Blocks.NETHER_BRICKS && structureAccessor.getStructureAt(blockPos, false, StructureFeature.FORTRESS).hasChildren() ? StructureFeature.FORTRESS.getMonsterSpawns().getEntries() : chunkGenerator.getEntitySpawnList(biome != null ? biome : serverWorld.getBiome(blockPos), structureAccessor, spawnGroup, blockPos).getEntries();
     }
 
-    public static List<BaseText> report(BlockPos pos, ServerWorld worldIn)
+    public static Map<SpawnGroup,List<SpawnReport>> spawnReport(BlockPos pos, ServerWorld worldIn)
     {
-        List<BaseText> rep = new ArrayList<>();
+        Map<SpawnGroup,List<SpawnReport>> repMap = new HashMap<>();
+        List<SpawnReport> rep = new ArrayList<>();
         int x = pos.getX(); int y = pos.getY(); int z = pos.getZ();
         Chunk chunk = worldIn.getChunk(pos);
         int lc = chunk.sampleHeightmap(Heightmap.Type.WORLD_SURFACE, x, z) + 1;
-        String where = String.format((y >= lc) ? "%d blocks above it." : "%d blocks below it.",  MathHelper.abs(y-lc));
-        if (y == lc) where = "right at it.";
-        rep.add(Messenger.s(String.format("Maximum spawn Y value for (%+d, %+d) is %d. You are "+where, x, z, lc )));
-        rep.add(Messenger.s("Spawns:"));
+
         for (SpawnGroup enumcreaturetype : SpawnGroup.values())
         {
-            String type_code = String.format("%s", enumcreaturetype).substring(0, 3);
             List<SpawnSettings.SpawnEntry> lst = method_29950(worldIn, worldIn.getStructureAccessor(), worldIn.getChunkManager().getChunkGenerator(), enumcreaturetype, pos, worldIn.getBiome(pos) );//  ((ChunkGenerator)worldIn.getChunkManager().getChunkGenerator()).getEntitySpawnList(, worldIn.getStructureAccessor(), enumcreaturetype, pos);
             if (lst != null && !lst.isEmpty())
             {
@@ -461,7 +459,8 @@ public class SpawnReporter
                     catch (Exception exception)
                     {
                         exception.printStackTrace();
-                        return rep;
+                        repMap.put(enumcreaturetype, rep); //putting in what we got of current report if it went oops
+                        return repMap;
                     }
                     
                     boolean fits_true = false;
@@ -518,34 +517,83 @@ public class SpawnReporter
                             catch (Exception exception)
                             {
                                 exception.printStackTrace();
-                                return rep;
+                                repMap.put(enumcreaturetype, rep); //putting in what we got of current report if it went oops
+                                return repMap;
                             }
                         }
                     }
-                    
-                    String creature_name = mob.getType().getName().getString();
-                    String pack_size = String.format("%d", mob.getLimitPerChunk());//String.format("%d-%d", animal.minGroupCount, animal.maxGroupCount);
-                    int weight = spawnEntry.getWeight().getValue();
-                    if (canspawn)
-                    {
-                        String c = (fits_true && will_spawn>0)?"e":"gi";
-                        rep.add(Messenger.c(
-                                String.format("%s %s: %s (%d:%d-%d/%d), can: ",c,type_code,creature_name,weight,spawnEntry.minGroupSize, spawnEntry.maxGroupSize,  mob.getLimitPerChunk()),
-                                "l YES",
-                                c+" , fit: ",
-                                ((fits_true && fits_false)?"y YES and NO":(fits_true?"l YES":"r NO")),
-                                c+" , will: ",
-                                ((will_spawn>0)?"l ":"r ")+Math.round((double)will_spawn)/10+"%"
-                        ));
-                    }
-                    else
-                    {
-                        rep.add(Messenger.c(String.format("gi %s: %s (%d:%d-%d/%d), can: ",type_code,creature_name,weight,spawnEntry.minGroupSize, spawnEntry.maxGroupSize, mob.getLimitPerChunk()), "n NO"));
-                    }
-                    killEntity(mob);
+
+                    SpawnReport sp = new SpawnReport();
+                    sp.entityType = mob != null ? mob.getType() : null;
+                    sp.spawnEntry = spawnEntry;
+                    sp.chunkSpawnLimit = mob != null ? mob.getLimitPerChunk() : 0;
+                    sp.fitsTrue = fits_true;
+                    sp.fitsFalse = fits_false;
+                    sp.canSpawn = canspawn;
+                    sp.willSpawn = Math.round((double)will_spawn)/10;
+
+                    rep.add(sp);
+
+                    if(mob != null)
+                        killEntity(mob);
+                }
+                repMap.put(enumcreaturetype, rep);
+                rep.clear();
+            }
+        }
+        return repMap;
+    }
+
+    public static List<BaseText> report(BlockPos pos, ServerWorld worldIn)
+    {
+        List<BaseText> rep = new ArrayList<>();
+        Map<SpawnGroup, List<SpawnReport>> spawnReport = spawnReport(pos, worldIn);
+        List<SpawnReport> groupReport;
+        int x = pos.getX(); int y = pos.getY(); int z = pos.getZ();
+        Chunk chunk = worldIn.getChunk(pos);
+        int lc = chunk.sampleHeightmap(Heightmap.Type.WORLD_SURFACE, x, z) + 1;
+        String where = String.format((y >= lc) ? "%d blocks above it." : "%d blocks below it.",  MathHelper.abs(y-lc));
+        if (y == lc) where = "right at it.";
+        rep.add(Messenger.s(String.format("Maximum spawn Y value for (%+d, %+d) is %d. You are "+where, x, z, lc )));
+        rep.add(Messenger.s("Spawns:"));
+        for (SpawnGroup enumcreaturetype : SpawnGroup.values())
+        {
+            String type_code = String.format("%s", enumcreaturetype).substring(0, 3);
+            groupReport = spawnReport.get(enumcreaturetype);
+            for(SpawnReport report : groupReport){
+                String creature_name = report.entityType.getName().getString();
+                SpawnSettings.SpawnEntry spawnEntry = report.spawnEntry;
+                int weight = spawnEntry.getWeight().getValue();
+                int limitPerChunk = report.chunkSpawnLimit;
+
+                if (report.canSpawn)
+                {
+                    String c = (report.fitsTrue && report.willSpawn>0)?"e":"gi";
+                    rep.add(Messenger.c(
+                            String.format("%s %s: %s (%d:%d-%d/%d), can: ",c,type_code,creature_name,weight,spawnEntry.minGroupSize, spawnEntry.maxGroupSize,  limitPerChunk),
+                            "l YES",
+                            c+" , fit: ",
+                            ((report.fitsTrue && report.fitsFalse)?"y YES and NO":(report.fitsTrue?"l YES":"r NO")),
+                            c+" , will: ",
+                            ((report.willSpawn>0)?"l ":"r ")+report.willSpawn+"%"
+                    ));
+                }
+                else
+                {
+                    rep.add(Messenger.c(String.format("gi %s: %s (%d:%d-%d/%d), can: ",type_code,creature_name,weight,spawnEntry.minGroupSize, spawnEntry.maxGroupSize, limitPerChunk), "n NO"));
                 }
             }
         }
         return rep;
+    }
+
+    public static class SpawnReport {
+        public boolean canSpawn;
+        public long willSpawn;
+        public boolean fitsTrue;
+        public boolean fitsFalse;
+        public int chunkSpawnLimit;
+        public SpawnSettings.SpawnEntry spawnEntry;
+        public EntityType entityType;
     }
 }

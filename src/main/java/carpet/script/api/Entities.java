@@ -9,17 +9,20 @@ import carpet.script.argument.Vector3Argument;
 import carpet.script.exception.InternalExpressionException;
 import carpet.script.value.EntityValue;
 import carpet.script.value.ListValue;
+import carpet.script.value.MapValue;
 import carpet.script.value.NBTSerializableValue;
 import carpet.script.value.BooleanValue;
 import carpet.script.value.NumericValue;
+import carpet.script.value.StringValue;
 import carpet.script.value.Value;
 import carpet.script.value.ValueConversions;
-import carpet.utils.Messenger;
 import carpet.utils.PerimeterDiagnostics;
+import carpet.utils.SpawnReporter.SpawnReport;
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
+import net.minecraft.entity.SpawnGroup;
 import net.minecraft.entity.SpawnReason;
 import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.entity.player.PlayerEntity;
@@ -36,12 +39,16 @@ import net.minecraft.util.registry.Registry;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
+
+import static carpet.utils.SpawnReporter.spawnReport;
 
 public class Entities {
     public static void apply(Expression expression)
@@ -247,6 +254,36 @@ public class Entities {
                     new NumericValue(res.specific),
                     new ListValue(res.samples.stream().map(ValueConversions::of).collect(Collectors.toList()))
             );
+        }); //todo decide whether or not to remove this
+
+        expression.addContextFunction("mob_spawns", -1, (c, t, lv)->{
+            CarpetContext cc = (CarpetContext)c;
+            if (lv.size() < 1)
+                throw new InternalExpressionException("'mob_spawns' function takes position to check spawns");
+
+            Vector3Argument position = Vector3Argument.findIn(lv, 0);
+
+            Map<SpawnGroup,List<SpawnReport>> spawnReport = spawnReport(new BlockPos(position.vec), cc.s.getWorld());
+
+            Map<Value, Value> finalReport = new HashMap<>();
+            List<Value> groupReport = new ArrayList<>();
+
+            for (Map.Entry<SpawnGroup, List<SpawnReport>> spawnGroupListEntry : spawnReport.entrySet()) {
+                groupReport.clear();
+                for (SpawnReport report : spawnGroupListEntry.getValue()) {
+                    groupReport.add(ListValue.of(
+                        BooleanValue.of(report.canSpawn),//boolean can spawn
+                        BooleanValue.of(report.fitsTrue),//boolean can fit
+                        BooleanValue.of(report.fitsFalse),//boolean can not fit (slimes)
+                        new NumericValue(report.willSpawn),//integer percentage will spawn
+                        new NumericValue(report.chunkSpawnLimit),//max spawns per chunk
+                        new NumericValue(report.spawnEntry.getWeight().getValue())//spawn weight
+                    ));
+                }
+                finalReport.put(StringValue.of(spawnGroupListEntry.getKey().getName()), ListValue.wrap(groupReport));
+            }
+            
+            return MapValue.wrap(finalReport);
         });
 
         expression.addContextFunction("entity_id", 1, (c, t, lv) ->
