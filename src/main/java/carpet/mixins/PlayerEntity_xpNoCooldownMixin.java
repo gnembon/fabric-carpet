@@ -24,10 +24,12 @@ public abstract class PlayerEntity_xpNoCooldownMixin {
             )
     )
     public boolean processXpOrbCollisions(List<Entity> instance, Object e) {
-        if (CarpetSettings.xpNoCooldown) {
-            this.collideWithEntity((Entity) e);
+        Entity entity = (Entity) e;
+        // 431 and 17 have no special meaning, just random numbers
+        if (CarpetSettings.xpNoCooldown && (entity.getId() % 17 == 0 || entity.age % 431 == 0)) {
+            this.collideWithEntity(entity);
             return true;
         }
-        return instance.add((Entity) e);
+        return instance.add(entity);
     }
 }
