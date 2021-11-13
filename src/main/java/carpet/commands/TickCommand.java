@@ -45,7 +45,11 @@ public class TickCommand
                                                 getInteger(c,"ticks"),
                                                 getString(c, "tail command")))))).
                 then(literal("freeze").executes( (c)-> toggleFreeze(c.getSource(), false)).
-                        then(literal("deep").executes( (c)-> toggleFreeze(c.getSource(), true)))).
+                        then(literal("status").executes( (c) -> freezeStatus(c.getSource()))).
+                        then(literal("deep").executes( (c) -> toggleFreeze(c.getSource(), true))).
+                        then(literal("on").executes( (c) -> setFreeze(c.getSource(), false, true)).
+                            then(literal("deep").executes( (c)-> setFreeze(c.getSource(), true, true)))).
+                        then(literal("off").executes( (c) -> setFreeze(c.getSource(), false, false)))).
                 then(literal("step").
                         executes((c) -> step(1)).
                         then(argument("ticks", integer(1,72000)).
@@ -94,9 +98,22 @@ public class TickCommand
         return 1;
     }
 
-    private static int toggleFreeze(ServerCommandSource source, boolean isDeep)
+    private static int freezeStatus(ServerCommandSource source)
     {
-        TickSpeed.setFrozenState(!TickSpeed.isPaused(), isDeep);
+        if(TickSpeed.isPaused())
+        {
+            Messenger.m(source, "gi Freeze Status: Game is "+(TickSpeed.deeplyFrozen()?"deeply ":"")+"frozen");
+        }
+        else
+        {
+            Messenger.m(source, "gi Freeze Status: Game runs normally");
+        }
+        return 1;
+    }
+
+    private static int setFreeze(ServerCommandSource source, boolean isDeep, boolean freeze)
+    {
+        TickSpeed.setFrozenState(freeze, isDeep);
         if (TickSpeed.isPaused())
         {
             Messenger.m(source, "gi Game is "+(isDeep?"deeply ":"")+"frozen");
@@ -106,6 +123,11 @@ public class TickCommand
             Messenger.m(source, "gi Game runs normally");
         }
         return 1;
+    }
+
+    private static int toggleFreeze(ServerCommandSource source, boolean isDeep)
+    {
+        return setFreeze(source, isDeep, !TickSpeed.isPaused());
     }
 
     private static int step(int advance)
