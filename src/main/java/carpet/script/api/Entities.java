@@ -301,7 +301,7 @@ public class Entities {
                 }
 
                 if(!startedWithEntity) entity_1.discard();
-                return NumericValue.of(will_spawn);
+                return NumericValue.of(will_spawn*100/num_tries);
             } else {
                 throw new InternalExpressionException("Invalid entity type '" + entityString + "' to check spawning conditions for, 'can_spawn' requires a mob entity");
             }
