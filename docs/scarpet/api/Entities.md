@@ -400,6 +400,30 @@ query(p,'effect','resistance')  => null
 
 Number indicating remaining entity health, or `null` if not applicable.
 
+### `query(e, 'may_fly')`
+
+Boolean. Returns the value of player's `mayFly` ability.
+
+### `query(e, 'flying')`
+
+Boolean. Returns the value of player's `flying` ability.
+
+### `query(e, 'may_build')`
+
+Boolean. Returns the value of player's `mayBuild` ability.
+
+### `query(e, 'insta_build')`
+
+Boolean. Returns the value of player's `creativeMode` ability.
+
+### `query(e, 'fly_speed')`
+
+Float. Returns the value of player's `flySpeed` ability.
+
+### `query(e, 'walk_speed')`
+
+Float. Returns the value of player's `walkSpeed` ability.
+
 ### `query(e, 'hunger')`
 ### `query(e, 'saturation')`
 ### `query(e, 'exhaustion')`
@@ -692,6 +716,34 @@ players, since they are controlled client side.
 Applies status effect to the living entity. Takes several optional parameters, which default to `0`, `true`, 
 `true` and `false`. If no duration is specified, or if it's null or 0, the effect is removed. If name is not specified,
 it clears all effects.
+
+### `modify(e, 'may_fly', boolean)`
+
+Sets the value of the player's `mayfly` (The ability of the player to fly) ability to the given boolean value.
+
+### `modify(e, 'flying', boolean)`
+
+Sets the value of the player's `flying` (If the player is flying or not) ability to the given boolean value.
+
+### `modify(e, 'may_build', boolean)`
+
+Sets the value of the player's `mayBuild` (The ability of the player to place blocks) ability to the given boolean value.
+
+### `modify(e, 'insta_build', boolean)`
+
+Sets the value of the player's `instabuild` (The ability of the player to place blocks without reducing their count in the inventory and shoot with a bow without arrows) ability to the given boolean value.
+
+### `modify(e, 'fly_speed', float)`
+
+Sets the value of the player's `flySpeed` (The speed at which the player moves while flying) ability to the given float value.
+
+### `modify(e, 'walk_speed', float)`
+
+Sets the value of the player's `walkSpeed` (The speed at which the player moves while walking) ability to the given float value.
+
+### `modify(e, 'selected_slot', int)`
+
+Sets player's selected slot to the one expressed by the `int` value. The `int` must be a number between 0 (first slot of the hotbar) and 8 (last slot of the hotbar).
 
 ### `modify(e, 'home', null), modify(e, 'home', block, distance?), modify(e, 'home', x, y, z, distance?)`
 

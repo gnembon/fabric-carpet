@@ -1,6 +1,13 @@
 package carpet.script.value;
 
-import carpet.fakes.*;
+import carpet.fakes.BrainInterface;
+import carpet.fakes.EntityInterface;
+import carpet.fakes.ItemEntityInterface;
+import carpet.fakes.LivingEntityInterface;
+import carpet.fakes.MemoryInterface;
+import carpet.fakes.MobEntityInterface;
+import carpet.fakes.ServerPlayerEntityInterface;
+import carpet.fakes.ServerPlayerInteractionManagerInterface;
 import carpet.helpers.Tracer;
 import carpet.network.ServerNetworkHandler;
 import carpet.patches.EntityPlayerMPFake;
@@ -15,7 +22,14 @@ import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.minecraft.command.EntitySelector;
 import net.minecraft.command.EntitySelectorReader;
-import net.minecraft.entity.*;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.EntityGroup;
+import net.minecraft.entity.EntityPose;
+import net.minecraft.entity.EntityType;
+import net.minecraft.entity.EquipmentSlot;
+import net.minecraft.entity.ItemEntity;
+import net.minecraft.entity.LivingEntity;
+import net.minecraft.entity.SpawnGroup;
 import net.minecraft.entity.ai.brain.Brain;
 import net.minecraft.entity.ai.brain.Memory;
 import net.minecraft.entity.ai.brain.MemoryModuleType;
@@ -24,6 +38,7 @@ import net.minecraft.entity.ai.goal.Goal;
 import net.minecraft.entity.ai.pathing.Path;
 import net.minecraft.entity.attribute.AttributeContainer;
 import net.minecraft.entity.attribute.EntityAttribute;
+import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.entity.effect.StatusEffect;
 import net.minecraft.entity.effect.StatusEffectInstance;
 import net.minecraft.entity.mob.MobEntity;
@@ -39,6 +54,7 @@ import net.minecraft.network.packet.s2c.play.EntityPassengersSetS2CPacket;
 import net.minecraft.network.packet.s2c.play.EntityPositionS2CPacket;
 import net.minecraft.network.packet.s2c.play.ExperienceBarUpdateS2CPacket;
 import net.minecraft.network.packet.s2c.play.PlayerPositionLookS2CPacket;
+import net.minecraft.network.packet.s2c.play.UpdateSelectedSlotS2CPacket;
 import net.minecraft.predicate.entity.EntityPredicates;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.command.ServerCommandSource;
@@ -60,7 +76,16 @@ import net.minecraft.util.registry.RegistryKey;
 import net.minecraft.world.GameMode;
 import net.minecraft.world.World;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Predicate;
@@ -717,6 +742,49 @@ public class EntityValue extends Value
             //}
             return Value.NULL;
         });
+
+        put("may_fly", (e, a) -> {
+            if (e instanceof ServerPlayerEntity player) {
+                return BooleanValue.of(player.getAbilities().allowFlying);
+            }
+            return Value.NULL;
+        });
+
+        put("flying", (e, v) -> {
+            if (e instanceof ServerPlayerEntity player) {
+                return BooleanValue.of(player.getAbilities().flying);
+            }
+            return Value.NULL;
+        });
+
+        put("may_build", (e, v) -> {
+            if (e instanceof ServerPlayerEntity player) {
+                return BooleanValue.of(player.getAbilities().allowModifyWorld);
+            }
+            return Value.NULL;
+        });
+
+        put("insta_build", (e, v) -> {
+            if (e instanceof ServerPlayerEntity player) {
+                return BooleanValue.of(player.getAbilities().creativeMode);
+            }
+            return Value.NULL;
+        });
+
+        put("fly_speed", (e, v) -> {
+            if (e instanceof ServerPlayerEntity player) {
+                return BooleanValue.of(player.getAbilities().getFlySpeed());
+            }
+            return Value.NULL;
+        });
+
+        put("walk_speed", (e, v) -> {
+            if (e instanceof ServerPlayerEntity player) {
+                return BooleanValue.of(player.getAbilities().getWalkSpeed());
+            }
+            return Value.NULL;
+        });
+
         put("holds", (e, a) -> {
             EquipmentSlot where = EquipmentSlot.MAINHAND;
             if (a != null)
@@ -941,34 +1009,61 @@ public class EntityValue extends Value
             if (e instanceof LivingEntity) ((LivingEntity) e).setHealth(health);
         });
 
-        put("mayfly", (e, v) -> {
-            if (v == null) {
-                throw new InternalExpressionException("'mayfly' requires parameters");
-            }
-
-            boolean mayfly = v.getBoolean();
-
+        put("may_fly", (e, v) -> {
+            boolean may_fly = v.getBoolean();
             if (e instanceof ServerPlayerEntity player) {
-                player.getAbilities().allowFlying = mayfly;
-                if (!mayfly && player.getAbilities().flying) {
+                player.getAbilities().allowFlying = may_fly;
+                if (!may_fly && player.getAbilities().flying) {
                     player.getAbilities().flying = false;
                 }
                 player.sendAbilitiesUpdate();
             }
         });
 
-        put("fly_speed", (e, v) -> {
-            Float flySpeed;
-
-            if (v == null) {
-                flySpeed = 0.05F;
-            } else {
-                flySpeed = NumericValue.asNumber(v).getFloat();
-            }
-
+        put("flying", (e, v) -> {
+            boolean flying = v.getBoolean();
             if (e instanceof ServerPlayerEntity player) {
-                player.getAbilities().setFlySpeed(flySpeed);
+                player.getAbilities().flying = flying;
                 player.sendAbilitiesUpdate();
+            }
+        });
+
+        put("may_build", (e, v) -> {
+            boolean may_build = v.getBoolean();
+            if (e instanceof ServerPlayerEntity player) {
+                player.getAbilities().allowModifyWorld = may_build;
+                player.sendAbilitiesUpdate();
+            }
+        });
+
+        put("insta_build", (e, v) -> {
+            boolean insta_build = v.getBoolean();
+            if (e instanceof ServerPlayerEntity player) {
+                player.getAbilities().creativeMode = insta_build;
+                player.sendAbilitiesUpdate();
+            }
+        });
+
+        put("fly_speed", (e, v) -> {
+            Float fly_speed = NumericValue.asNumber(v).getFloat();
+            if (e instanceof ServerPlayerEntity player) {
+                player.getAbilities().setFlySpeed(fly_speed);
+                player.sendAbilitiesUpdate();
+            }
+        });
+
+        put("walk_speed", (e, v) -> {
+            Float walk_speed = NumericValue.asNumber(v).getFloat();
+            if (e instanceof ServerPlayerEntity player) {
+                player.getAbilities().setWalkSpeed(walk_speed);
+                player.sendAbilitiesUpdate();
+            }
+        });
+
+        put("selected_slot", (e, v) -> {
+            if (e instanceof ServerPlayerEntity player) {
+                int slot = NumericValue.asNumber(v).getInt();
+                player.networkHandler.sendPacket(new UpdateSelectedSlotS2CPacket(slot));
             }
         });
 
@@ -1462,7 +1557,15 @@ public class EntityValue extends Value
 
         put("gravity",(e,v)-> e.setNoGravity(!v.getBoolean()));
 
-        put("invulnerable",(e,v)-> e.setInvulnerable(v.getBoolean()));
+        put("invulnerable",(e,v)-> {
+            boolean invulnerable = v.getBoolean();
+            if (e instanceof ServerPlayerEntity player) {
+                player.getAbilities().invulnerable = invulnerable;
+                player.sendAbilitiesUpdate();
+            } else {
+                e.setInvulnerable(invulnerable);
+            }
+        });
 
         put("fire",(e,v)-> e.setFireTicks((int)NumericValue.asNumber(v).getLong()));
         put("frost",(e,v)-> e.setFrozenTicks((int)NumericValue.asNumber(v).getLong()));
