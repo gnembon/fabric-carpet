@@ -484,7 +484,7 @@ public abstract class ThreadedAnvilChunkStorage_scarpetChunkCreationMixin implem
     }
 
     @Override
-    public Iterable<ChunkHolder> getChunks() {
+    public Iterable<ChunkHolder> getChunksCM() {
         return entryIterator();
     }
 }

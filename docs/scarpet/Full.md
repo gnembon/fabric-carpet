@@ -621,7 +621,33 @@ so some caution (prior testing) is advised. Some of these multi-argument built-i
  `if`, `try`, `sort_key`, `system_variable_get`, `synchronize`, `sleep`, `in_dimension`, 
 all container functions (`get`, `has`, `put`, `delete`), 
 and all loop functions (`while`, `loop`, `map`, `filter`, `first`, `all`, `c_for`, `for` and`reduce`).
- 
+
+### `Binary (bitwise) operations`
+
+These are a bunch of operators that work exclusively on numbers, more specifically their binary representations. Some of these
+work on multiple numbers, some on only 2, and others on only 1. Note that most of these functions (all but `double_to_long_bits`)
+only take integer values, so if the input has a decimal part, it will be discarded.
+
+ - `bitwise_and(...)` -> Does the bitwise AND operation on each number in order. Note that with larger ranges of numbers this will
+	tend to 0.
+ - `bitwise_xor(...)` -> Does the bitwise XOR operation on each number in order.
+ - `bitwise_or(...)` -> Does the bitwise AND operation on each number in order. Note that with larger ranges of numbers this will
+	tend to -1.
+ - `bitwise_shift_left(num, amount)` -> Shifts all the bits of the first number `amount` spots to the left. Note that shifting more
+	than 63 positions will result in a 0 (cos you shift out all the bits of the number)
+ - `bitwise_shift_right(num, amount)` -> Shifts all the bits of the first number `amount` spots to the right. Like with the above,
+	shifting more than 63 bits results in a 0.
+ - `bitwise_roll_left(num, amount)` -> Rolls the bits of the first number `amount` bits to the left. This is basically where you
+	shift out the first `amount` bits and then add them on at the back, essentially 'rolling' the number. Note that unlike with
+        shifting, you can roll more than 63 bits at a time, as it just makes the number roll over more times, which isn't an issue
+ - `bitwise_roll_right(num, amount)` -> Same as above, just rolling in the other direction
+ - `bitwise_not(num)` -> Flips all the bits of the number. This is simply done by performing xor operation with -1, which in binary is
+	all ones.
+ - `bitwise_popcount(num)` -> Returns the number of ones in the binary representation of the number. For the number of zeroes, just
+	do 64 minus this number.
+ - `double_to_long_bits(num)` -> Returns a representation of the specified floating-point value according to the IEEE 754 floating-point
+	"double format" bit layout.
+ - `long_to_double_bits(num)` -> Returns the double value corresponding to a given bit representation.
 # Arithmetic operations
 
 ## Basic Arithmetic Functions
@@ -630,11 +656,12 @@ There is bunch of them - they require a number and spit out a number, doing what
 
 ### `fact(n)`
 
-Factorial of a number, a.k.a `n!`, just not in `scarpet`. Gets big... quick...
+Factorial of a number, a.k.a `n!`, just not in `scarpet`. Gets big... quick... Therefore, values larger 
+than `fact(20)` will not return the exact value, but a value with 'double-float' precision.
 
 ### `sqrt(n)`
 
-Square root. For other fancy roots, use `^`, math and yo noggin. Imagine square roots on a tree...
+Square root (not 'a squirt') of a number. For other fancy roots, use `^`, math and yo noggin. Imagine square roots on a tree...
 
 ### `abs(n)`
 
@@ -2650,7 +2677,7 @@ With an optional feature, it returns value for the specified attribute for that 
 * `'category'`: the parent biome this biome is derived from. Possible values include:
 `'none'`, `'taiga'`, `'extreme_hills'`, `'jungle'`, `'mesa'`, `'plains'`, `'savanna'`,
 `'icy'`, `'the_end'`, `'beach'`, `'forest'`, `'ocean'`, `'desert'`, `'river'`,
-`'swamp'`, `'mushroom'` and  `'nether'`.
+`'swamp'`, `'mushroom'` , `'nether'`, `'underground'` (1.18+) and `'mountain'` (1.18+).
 * `'temperature'`: temperature from 0 to 1
 * `'fog_color'`: RGBA color value of fog 
 * `'foliage_color'`: RGBA color value of foliage
@@ -2659,11 +2686,11 @@ With an optional feature, it returns value for the specified attribute for that 
 * `'water_fog_color'`: RGBA color value of water fog
 * `'humidity'`: value from 0 to 1 indicating how wet is the biome
 * `'precipitation'`: `'rain'` `'snot'`, or `'none'`... ok, maybe `'snow'`, but that means snots for sure as well.
-* `'depth'`: (1.17.1 and below) float value indicating how high or low the terrain should generate. Values > 0 indicate generation above sea level
+* `'depth'`: (1.17.1 and below only) float value indicating how high or low the terrain should generate. Values > 0 indicate generation above sea level
 and values < 0, below sea level.
-* `'scale'`: (1.17 and below) float value indicating how flat is the terrain.
+* `'scale'`: (1.17.1 and below only) float value indicating how flat is the terrain.
 * `'features'`: list of features that generate in the biome, grouped by generation steps
-* `'structures'`: list of structures that generate in the biome.
+* `'structures'`: (1.17.1 and below only) list of structures that generate in the biome.
 
 ### `solid(pos)`
 
@@ -5399,6 +5426,8 @@ Returns server tick counter. Can be used to run certain operations every n-th ti
 
 ### `world_time()`
 
+_**Deprecated**. Use `system_info('world_time')` instead._
+
 Returns dimension-specific tick counter.
 
 ### `day_time(new_time?)`
@@ -5407,6 +5436,8 @@ Returns current daytime clock value. If `new_time` is specified, sets a new cloc
 to that value. Daytime clocks are shared between all dimensions.
 
 ### `last_tick_times()`
+
+_**Deprecated**. Use `system_info('server_last_tick_times')` instead._
 
 Returns a 100-long array of recent tick times, in milliseconds. First item on the list is the most recent tick
 If called outside of the main tick (either throgh scheduled tasks, or async execution), then the first item on the
@@ -5459,6 +5490,9 @@ world-localized block, so not `block('stone')`, or a string representing a dimen
 Throws `unknown_dimension` if provided dimension can't be found.
  
 ### `view_distance()`
+
+_**Deprecated**. Use `system_info('server_view_distance')` instead._
+
 Returns the view distance of the server.
 
 ### `get_mob_counts()`, `get_mob_counts(category)` 1.16+
@@ -5518,6 +5552,7 @@ Available options in the scarpet app space:
   * `world_carpet_rules` - returns all Carpet rules in a map form (`rule`->`value`). Note that the values are always returned as strings, so you can't do boolean comparisons directly. Includes rules from extensions with their namespace (`namespace:rule`->`value`). You can later listen to rule changes with the `on_carpet_rule_changes(rule, newValue)` event.
   * `world_gamerules` - returns all gamerules in a map form (`rule`->`value`). Like carpet rules, values are returned as strings, so you can use appropriate value conversions using `bool()` or `number()` to convert them to other values. Gamerules are read-only to discourage app programmers to mess up with the settings intentionally applied by server admins. Isn't that just super annoying when a datapack messes up with your gamerule settings? It is still possible to change them though using `run('gamerule ...`.
   * `world_spawn_point` - world spawn point
+  * `world_time` - Returns dimension-specific tick counter.
 
  Relevant gameplay related properties
   * `game_difficulty` - current difficulty of the game: `'peaceful'`, `'easy'`, `'normal'`, or `'hard'`
@@ -5545,6 +5580,11 @@ Available options in the scarpet app space:
  * `server_banned_ips` - list of banned IP addresses
  * `server_dev_environment` - boolean indicating whether this server is in a development environment.
  * `server_mods` - map with all loaded mods mapped to their versions as strings
+ * `server_last_tick_times` - Returns a 100-long array of recent tick times, in milliseconds. First item on the list is the most recent tick
+If called outside of the main tick (either throgh scheduled tasks, or async execution), then the first item on the
+list may refer to the previous tick performance. In this case the last entry (tick 100) would refer to the most current
+tick. For all intent and purpose, `system_info('last_tick_times'):0` should be used as last tick execution time, but
+individual tick times may vary greatly, and these need to be taken with the little grain of averaging.
  
  System related properties
  * `java_max_memory` - maximum allowed memory accessible by JVM

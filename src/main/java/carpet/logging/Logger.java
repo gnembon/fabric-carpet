@@ -32,11 +32,18 @@ public class Logger
 
     private Field acceleratorField;
 
+    private boolean strictOptions;
+
     static Logger stardardLogger(String logName, String def, String [] options)
+    {
+        return stardardLogger(logName, def, options, false);
+    }
+
+    static Logger stardardLogger(String logName, String def, String [] options, boolean strictOptions)
     {
         try
         {
-            return new Logger(LoggerRegistry.class.getField("__"+logName), logName, def, options);
+            return new Logger(LoggerRegistry.class.getField("__"+logName), logName, def, options, strictOptions);
         }
         catch (NoSuchFieldException e)
         {
@@ -44,7 +51,12 @@ public class Logger
         }
     }
 
-    public Logger(Field acceleratorField, String logName, String def, String [] options)
+    @Deprecated
+    public Logger(Field acceleratorField, String logName, String def, String [] options) {
+        this(acceleratorField, logName, def, options, false);
+    }
+
+    public Logger(Field acceleratorField, String logName, String def, String [] options, boolean strictOptions)
     {
         subscribedOnlinePlayers = new HashMap<>();
         subscribedOfflinePlayers = new HashMap<>();
@@ -52,6 +64,7 @@ public class Logger
         this.logName = logName;
         this.default_option = def;
         this.options = options;
+        this.strictOptions = strictOptions;
         if (acceleratorField == null)
             CarpetSettings.LOG.error("[CM] Logger "+getLogName()+" is missing a specified accelerator");
     }
@@ -231,5 +244,13 @@ public class Logger
     {
         if (options != null && Arrays.asList(options).contains(arg)) return arg;
         return null;
+    }
+
+    public boolean isOptionValid(String option) {
+        if (strictOptions)
+        {
+            return Arrays.asList(this.options).contains(option);
+        }
+        return true;
     }
 }

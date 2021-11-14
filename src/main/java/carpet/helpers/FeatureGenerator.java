@@ -10,10 +10,8 @@ import net.minecraft.structure.pool.StructurePool;
 import net.minecraft.structure.pool.StructurePoolElement;
 import net.minecraft.structure.processor.StructureProcessorLists;
 import net.minecraft.util.Identifier;
-import net.minecraft.util.math.BlockBox;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
-import net.minecraft.util.registry.BuiltinRegistries;
 import net.minecraft.util.registry.Registry;
 import net.minecraft.util.registry.RegistryKey;
 import net.minecraft.world.biome.Biome;
@@ -37,6 +35,7 @@ import net.minecraft.world.gen.feature.TreeFeatureConfig;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Supplier;
 
 public class FeatureGenerator
 {
@@ -58,17 +57,44 @@ public class FeatureGenerator
 
         }
 
-        ConfiguredFeature<?, ?> feature = world.getRegistryManager().get(Registry.CONFIGURED_FEATURE_KEY).get(id);
-        if (feature != null)
+        ConfiguredFeature<?, ?> configuredFeature = world.getRegistryManager().get(Registry.CONFIGURED_FEATURE_KEY).get(id);
+        if (configuredFeature != null)
         {
             CarpetSettings.skipGenerationChecks.set(true);
             try
             {
-                return feature.generate(world, world.getChunkManager().getChunkGenerator(), world.random, pos);
+                return configuredFeature.generate(world, world.getChunkManager().getChunkGenerator(), world.random, pos);
             }
             finally
             {
                 CarpetSettings.skipGenerationChecks.set(false);
+            }
+        }
+        StructureFeature<?> structure = Registry.STRUCTURE_FEATURE.get(id);
+        if (structure != null)
+        {
+            ConfiguredStructureFeature<?,?> configuredStandard = getDefaultFeature(structure, world, pos, true);
+            if (configuredStandard != null)
+                return ((StructureFeatureInterface)configuredStandard.feature).plopAnywhere(
+                        world, pos, world.getChunkManager().getChunkGenerator(),
+                        false, world.getRegistryManager().get(Registry.BIOME_KEY).get(BiomeKeys.PLAINS), configuredStandard.config);
+
+        }
+        Feature<?> feature = Registry.FEATURE.get(id);
+        if (feature != null)
+        {
+            ConfiguredFeature<?,?> configuredStandard = getDefaultFeature(feature, world, pos, true);
+            if (configuredStandard != null)
+            {
+                CarpetSettings.skipGenerationChecks.set(true);
+                try
+                {
+                    return configuredStandard.generate(world, world.getChunkManager().getChunkGenerator(), world.random, pos);
+                }
+                finally
+                {
+                    CarpetSettings.skipGenerationChecks.set(false);
+                }
             }
         }
         return null;
@@ -139,6 +165,22 @@ public class FeatureGenerator
         if (configuredFeature.config != null || !tryHard) return configuredFeature;
         return world.getRegistryManager().get(Registry.CONFIGURED_STRUCTURE_FEATURE_KEY).getEntries().stream().
                 filter(cS -> cS.getValue().feature == structure).
+                findFirst().map(Map.Entry::getValue).orElse(null);
+    }
+
+    private static ConfiguredFeature<?, ?> getDefaultFeature(Feature<?> feature, ServerWorld world, BlockPos pos, boolean tryHard)
+    {
+        List<List<Supplier<ConfiguredFeature<?, ?>>>> configuredStepFeatures = world.getBiome(pos).getGenerationSettings().getFeatures();
+        for (List<Supplier<ConfiguredFeature<?, ?>>> step: configuredStepFeatures)
+            for (Supplier<ConfiguredFeature<?, ?>> provider: step)
+            {
+                ConfiguredFeature<?, ?> configuredFeature = provider.get();
+                if (configuredFeature.feature == feature)
+                    return configuredFeature;
+            }
+        if (!tryHard) return null;
+        return world.getRegistryManager().get(Registry.CONFIGURED_FEATURE_KEY).getEntries().stream().
+                filter(cS -> cS.getValue().feature == feature).
                 findFirst().map(Map.Entry::getValue).orElse(null);
     }
 

@@ -34,6 +34,8 @@ import net.minecraft.world.gen.chunk.ChunkGenerator;
 import net.minecraft.world.gen.feature.StructureFeature;
 import org.apache.commons.lang3.tuple.Pair;
 
+import carpet.CarpetSettings;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -458,9 +460,9 @@ public class SpawnReporter
                     }
                     catch (Exception exception)
                     {
-                        exception.printStackTrace();
                         repMap.put(enumcreaturetype, rep); //putting in what we got of current report if it went oops
-                        return repMap;
+                        CarpetSettings.LOG.warn("Exception while creating mob for spawn reporter", exception);
+                        return rep;
                     }
                     
                     boolean fits_true = false;
@@ -516,9 +518,9 @@ public class SpawnReporter
                             }
                             catch (Exception exception)
                             {
-                                exception.printStackTrace();
                                 repMap.put(enumcreaturetype, rep); //putting in what we got of current report if it went oops
-                                return repMap;
+                                CarpetSettings.LOG.warn("Exception while creating mob for spawn reporter", exception);
+                                return rep;
                             }
                         }
                     }

@@ -84,6 +84,30 @@ public class Operators {
         expression.addBinaryOperator("^", precedence.get("exponent^"), false, (v1, v2) ->
                 new NumericValue(java.lang.Math.pow(NumericValue.asNumber(v1).getDouble(), NumericValue.asNumber(v2).getDouble())));
 
+        expression.addFunction("bitwise_and", lv -> {
+            int size = lv.size();
+            if (size == 0) return Value.NULL;
+            long accumulator = NumericValue.asNumber(lv.get(0)).getLong();
+            for (Value v: lv.subList(1, size)) accumulator = accumulator & NumericValue.asNumber(v).getLong();
+            return new NumericValue(accumulator);
+        });
+
+        expression.addFunction("bitwise_xor", lv -> {
+            int size = lv.size();
+            if (size == 0) return Value.NULL;
+            long accumulator = NumericValue.asNumber(lv.get(0)).getLong();
+            for (Value v: lv.subList(1, size)) accumulator = accumulator ^ NumericValue.asNumber(v).getLong();
+            return new NumericValue(accumulator);
+        });
+
+        expression.addFunction("bitwise_or", lv -> {
+            int size = lv.size();
+            if (size == 0) return Value.NULL;
+            long accumulator = NumericValue.asNumber(lv.get(0)).getLong();
+            for (Value v: lv.subList(1, size)) accumulator = accumulator | NumericValue.asNumber(v).getLong();
+            return new NumericValue(accumulator);
+        });
+
         // lazy cause RHS is only conditional
         expression.addLazyBinaryOperator("&&", precedence.get("and&&"), false, true, t -> Context.Type.BOOLEAN, (c, t, lv1, lv2) ->
         { // todo check how is optimizations going
@@ -201,6 +225,40 @@ public class Operators {
             return Value.TRUE;
         });
         expression.addFunctionalEquivalence("<=", "nondecreasing");
+
+        expression.addMathematicalBinaryIntFunction("bitwise_shift_left", (num, amount) -> {
+            return num << amount;
+        });
+        expression.addMathematicalBinaryIntFunction("bitwise_shift_right", (num, amount) -> {
+            return num >> amount;
+        });
+        expression.addMathematicalBinaryIntFunction("bitwise_roll_left", (num, num2) -> {
+            long amount = num2 % 64;
+
+            long amountToRoll = 64 - amount;
+            long rolledBits = ((-1L) >> amountToRoll) << amountToRoll;
+            long rolledAmount = (num & rolledBits) >> amountToRoll;
+            return num << amount | rolledAmount;
+        });
+        expression.addMathematicalBinaryIntFunction("bitwise_roll_right", (num, num2) -> {
+            long amount = num2 % 64;
+
+            long amountToRoll = 64 - amount;
+            long rolledBits = ((-1L) << amountToRoll) >> amountToRoll;
+            long rolledAmount = (num & rolledBits) << amountToRoll;
+            return num >> amount | rolledAmount;
+        });
+        expression.addMathematicalUnaryIntFunction("bitwise_not", d -> {
+            long num = d.longValue();
+            return num ^ (-1L);
+        });
+        expression.addMathematicalUnaryIntFunction("bitwise_popcount", d -> Long.valueOf(Long.bitCount(d.longValue())));
+		
+        expression.addMathematicalUnaryIntFunction("double_to_long_bits", Double::doubleToLongBits);
+        expression.addUnaryFunction("long_to_double_bits", v -> {
+			return new NumericValue(Double.longBitsToDouble(NumericValue.asNumber(v).getLong()));
+		});
+
 
         expression.addBinaryOperator("==", precedence.get("equal==!="), false, (v1, v2) ->
                 v1.equals(v2) ? Value.TRUE : Value.FALSE);

@@ -32,6 +32,8 @@
                 sqrt
                 max min abs round floor ceil
                 then sum difference product quotient equal unique increasing decreasing nonincreasing nondecreasing or and
+                bitwise_or bitwise_and bitwise_xor bitwise_shift_left bitwise_shift_right bitwise_roll_left bitwise_roll_right bitwise_not bitwise_popcount
+                double_to_long_bits long_bits_to_double
                 mandelbrot relu
                 perlin simplex
 
