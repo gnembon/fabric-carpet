@@ -462,7 +462,7 @@ public class SpawnReporter
                     {
                         repMap.put(enumcreaturetype, rep); //putting in what we got of current report if it went oops
                         CarpetSettings.LOG.warn("Exception while creating mob for spawn reporter", exception);
-                        return rep;
+                        return repMap;
                     }
                     
                     boolean fits_true = false;
@@ -520,7 +520,7 @@ public class SpawnReporter
                             {
                                 repMap.put(enumcreaturetype, rep); //putting in what we got of current report if it went oops
                                 CarpetSettings.LOG.warn("Exception while creating mob for spawn reporter", exception);
-                                return rep;
+                                return repMap;
                             }
                         }
                     }
