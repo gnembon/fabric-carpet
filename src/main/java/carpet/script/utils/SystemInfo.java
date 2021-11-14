@@ -18,7 +18,9 @@ import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.loader.api.ModContainer;
 import net.minecraft.SharedConstants;
 import net.minecraft.util.WorldSavePath;
+import net.minecraft.util.registry.RegistryKey;
 import net.minecraft.world.GameRules;
+import net.minecraft.world.World;
 import net.minecraft.world.WorldProperties;
 
 import java.lang.management.ManagementFactory;
@@ -60,6 +62,9 @@ public class SystemInfo {
             WorldProperties prop = c.s.getServer().getOverworld().getLevelProperties();
             return ListValue.of(NumericValue.of(prop.getSpawnX()), NumericValue.of(prop.getSpawnY()), NumericValue.of(prop.getSpawnZ()));
         });
+        put("world_min_height", c-> new NumericValue(c.s.getWorld().getBottomY()));
+        put("world_max_height", c-> new NumericValue(c.s.getWorld().getLogicalHeight()));
+
         put("world_time", c -> new NumericValue(c.s.getWorld().getTime()));
 
         put("game_difficulty", c -> StringValue.of(c.s.getServer().getSaveProperties().getDifficulty().getName()));
