@@ -669,6 +669,7 @@ Available options in the scarpet app space:
   * `world_time` - Returns dimension-specific tick counter.
   * `world_max_y` - Returns all dimension's maximum y-values in a map form (`dimension` -> `max_y`). Values are numeric
   * `world_min_y` - Same as above, returning minimum y-values instead.
+  * `world_border_info` - Returns all dimension's world border info in a map form (`dimension` -> `[[centre_pos], radius]`). Note that the y-value of `centre_pos` is always 0.
 
  Relevant gameplay related properties
   * `game_difficulty` - current difficulty of the game: `'peaceful'`, `'easy'`, `'normal'`, or `'hard'`

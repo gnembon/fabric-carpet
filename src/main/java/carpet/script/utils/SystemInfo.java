@@ -23,6 +23,7 @@ import net.minecraft.util.registry.RegistryKey;
 import net.minecraft.world.GameRules;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldProperties;
+import net.minecraft.world.border.WorldBorder;
 
 import java.lang.management.ManagementFactory;
 import java.nio.file.Path;
@@ -76,6 +77,21 @@ public class SystemInfo {
             Map<Value, Value> dimMap = new HashMap<>();
             for (ServerWorld world : c.s.getServer().getWorlds()) {
                 dimMap.put(ValueConversions.of(world.getRegistryKey().getValue()), new NumericValue(world.getLogicalHeight()));
+            }
+            return MapValue.wrap(dimMap);
+        });
+
+        put("world_border_info", c-> {
+            Map<Value, Value> dimMap = new HashMap<>();
+            for (ServerWorld world : c.s.getServer().getWorlds()) {
+                WorldBorder worldBorder = world.getWorldBorder();
+                dimMap.put(
+                    ValueConversions.of(world.getRegistryKey().getValue()),
+                    ListValue.of(
+                        ListValue.fromTriple(worldBorder.getCenterX(), 0, worldBorder.getCenterZ()),
+                        new NumericValue(worldBorder.getMaxRadius())
+                    )
+                );
             }
             return MapValue.wrap(dimMap);
         });
