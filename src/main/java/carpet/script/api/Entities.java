@@ -24,6 +24,7 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.SpawnGroup;
 import net.minecraft.entity.SpawnReason;
+import net.minecraft.entity.SpawnRestriction;
 import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.nbt.NbtCompound;
@@ -36,6 +37,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.registry.Registry;
+import net.minecraft.world.SpawnHelper;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -213,7 +215,7 @@ public class Entities {
             if (entity_1 == null) {
                 return Value.FALSE;
             } else if (entity_1 instanceof MobEntity) {
-                boolean canSpawn = PerimeterDiagnostics.checkEntitySpawn(serverWorld, new BlockPos(vec3d), (MobEntity)entity_1);
+                boolean canSpawn = SpawnHelper.canSpawn(SpawnRestriction.Location.ON_GROUND, serverWorld, new BlockPos(vec3d), entity_1.getType());
                 if(!startedWithEntity) entity_1.discard();
                 return BooleanValue.of(canSpawn);
             } else {
@@ -282,7 +284,7 @@ public class Entities {
                 }
                 finalReport.put(StringValue.of(spawnGroupListEntry.getKey().getName()), ListValue.wrap(groupReport));
             }
-            
+
             return MapValue.wrap(finalReport);
         });
 
