@@ -941,7 +941,7 @@ public class EntityValue extends Value
     {
         e.velocityModified = true;
         if (Math.abs(scale) > 10000)
-            CarpetScriptServer.LOG.warn("Moved entity "+e.getEntityName()+" "+e.getName()+" at " +e.getPos()+" extremly fast: "+e.getVelocity());
+            CarpetScriptServer.LOG.warn("Moved entity "+e.getEntityName()+" "+e.getName()+" at " +e.getPos()+" extremely fast: "+e.getVelocity());
         //((ServerWorld)e.getEntityWorld()).method_14178().sendToNearbyPlayers(e, new EntityVelocityUpdateS2CPacket(e));
     }
 
