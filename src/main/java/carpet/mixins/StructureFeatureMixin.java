@@ -3,9 +3,9 @@ package carpet.mixins;
 import carpet.CarpetSettings;
 import carpet.fakes.StructureFeatureInterface;
 import com.google.common.collect.ImmutableMultimap;
-import net.minecraft.class_6622;
-import net.minecraft.class_6626;
 import net.minecraft.server.world.ServerWorld;
+import net.minecraft.structure.StructurePiecesCollector;
+import net.minecraft.structure.StructurePiecesGenerator;
 import net.minecraft.structure.StructureStart;
 import net.minecraft.util.Util;
 import net.minecraft.util.math.BlockPos;
@@ -47,8 +47,10 @@ public abstract class StructureFeatureMixin<C extends FeatureConfig> implements 
     //@Shadow protected abstract boolean shouldStartAt(ChunkGenerator chunkGenerator, BiomeSource biomeSource, long worldSeed, ChunkRandom random, ChunkPos pos, ChunkPos chunkPos, C featureConfig, HeightLimitView heightLimitView);
       @Shadow protected abstract boolean shouldStartAt(ChunkGenerator chunkGenerator, BiomeSource biomeSource, long worldSeed, ChunkPos chunkPos, C featureConfig, HeightLimitView heightLimitView);
 
-    @Shadow @Final private class_6622<C> field_34929;
+    //@Shadow @Final private class_6622<C> field_34929;
 
+
+    @Shadow @Final private StructurePiecesGenerator<C> piecesGenerator;
 
     @Override
     public boolean plopAnywhere(ServerWorld world, BlockPos pos, ChunkGenerator generator, boolean wireOnly, Biome biome, C config)
@@ -70,7 +72,7 @@ public abstract class StructureFeatureMixin<C extends FeatureConfig> implements 
             StructureFeature<C> thiss = (StructureFeature<C>) (Object)this;
             world.getChunk(j, k).addStructureReference(thiss, chId);
 
-            BlockBox box = structurestart.setBoundingBoxFromChildren();  // getBB
+            BlockBox box = structurestart.getBoundingBox();
 
             if (!wireOnly)
             {
@@ -79,7 +81,7 @@ public abstract class StructureFeatureMixin<C extends FeatureConfig> implements 
                     Objects.requireNonNull(thiss);
                     return registry3.getKey(thiss).map(Object::toString).orElseGet(thiss::toString);
                 });
-                structurestart.generateStructure(world, world.getStructureAccessor(), generator, rand, box, new ChunkPos(j, k));
+                structurestart.place(world, world.getStructureAccessor(), generator, rand, box, new ChunkPos(j, k));
             }
             //structurestart.notifyPostProcessAt(new ChunkPos(j, k));
             int i = Math.max(box.getBlockCountX(),box.getBlockCountZ())/16+1;
@@ -137,11 +139,11 @@ public abstract class StructureFeatureMixin<C extends FeatureConfig> implements 
         //if (config == null)
         //    config = (C) new DefaultFeatureConfig();
 
-        class_6626 lv = new class_6626();
-        field_34929.generatePieces(lv, config, new class_6622.class_6623(worldIn.getRegistryManager(), generator, worldIn.getStructureManager(), chunkpos, b -> true, worldIn, Util.make(new ChunkRandom(new AtomicSimpleRandom(RandomSeed.getSeed())), (chunkRandomx) -> {
+        StructurePiecesCollector lv = new StructurePiecesCollector();
+        piecesGenerator.generatePieces(lv, config, new StructurePiecesGenerator.Context(worldIn.getRegistryManager(), generator, worldIn.getStructureManager(), chunkpos, b -> true, worldIn, Util.make(new ChunkRandom(new AtomicSimpleRandom(RandomSeed.getSeed())), (chunkRandomx) -> {
             chunkRandomx.setCarverSeed(worldIn.getSeed(), chunkpos.x, chunkpos.z);
         }), worldIn.getSeed()));
-        StructureStart<C> structurestart1 = new StructureStart<>(thiss, chunkpos, 0, lv.method_38714());
+        StructureStart<C> structurestart1 = new StructureStart<>(thiss, chunkpos, 0, lv.toList());
 
 
         //StructureStart structurestart1 =  getStructureStartFactory().create((StructureFeature)(Object)this, chunkpos,0,worldIn.getSeed());

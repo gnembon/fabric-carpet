@@ -6,8 +6,6 @@ import carpet.fakes.StructureFeatureInterface;
 import com.mojang.datafixers.util.Pair;
 import net.minecraft.block.Block;
 import net.minecraft.block.Blocks;
-import net.minecraft.class_6796;
-import net.minecraft.class_6797;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.structure.StructureManager;
 import net.minecraft.structure.StructureStart;
@@ -23,6 +21,8 @@ import net.minecraft.util.registry.RegistryKey;
 import net.minecraft.world.biome.Biome;
 import net.minecraft.world.biome.BiomeKeys;
 import net.minecraft.world.biome.BuiltinBiomes;
+import net.minecraft.world.gen.decorator.PlacementModifier;
+import net.minecraft.world.gen.feature.PlacedFeature;
 import net.minecraft.world.gen.feature.size.TwoLayersFeatureSize;
 import net.minecraft.world.gen.foliage.BlobFoliagePlacer;
 import net.minecraft.world.gen.foliage.LargeOakFoliagePlacer;
@@ -188,9 +188,9 @@ public class FeatureGenerator
 
     private static ConfiguredFeature<?, ?> getDefaultFeature(Feature<?> feature, ServerWorld world, BlockPos pos, boolean tryHard)
     {
-        List<List<Supplier<class_6796>>> configuredStepFeatures = world.getBiome(pos).getGenerationSettings().getFeatures();
-        for (List<Supplier<class_6796>> step: configuredStepFeatures)
-            for (Supplier<class_6796> provider: step)
+        List<List<Supplier<PlacedFeature>>> configuredStepFeatures = world.getBiome(pos).getGenerationSettings().getFeatures();
+        for (List<Supplier<PlacedFeature>> step: configuredStepFeatures)
+            for (Supplier<PlacedFeature> provider: step)
             {
                 ConfiguredFeature<?, ?> configuredFeature = ((PlacedFeatureInterface)provider.get()).getRawFeature();
                 if (configuredFeature.feature == feature)
@@ -261,9 +261,9 @@ public class FeatureGenerator
         put("coral_claw", simplePlop(Feature.CORAL_CLAW.configure(FeatureConfig.DEFAULT)));
         put("coral_mushroom", simplePlop(Feature.CORAL_MUSHROOM.configure(FeatureConfig.DEFAULT)));
         put("coral", simplePlop(Feature.SIMPLE_RANDOM_SELECTOR.configure(new SimpleRandomFeatureConfig(List.of(
-                () -> Feature.CORAL_TREE.configure(FeatureConfig.DEFAULT).method_39594(new class_6797[0]),
-                () -> Feature.CORAL_CLAW.configure(FeatureConfig.DEFAULT).method_39594(new class_6797[0]),
-                () -> Feature.CORAL_MUSHROOM.configure(FeatureConfig.DEFAULT).method_39594(new class_6797[0])
+                () -> Feature.CORAL_TREE.configure(FeatureConfig.DEFAULT).withPlacement(),
+                () -> Feature.CORAL_CLAW.configure(FeatureConfig.DEFAULT).withPlacement(),
+                () -> Feature.CORAL_MUSHROOM.configure(FeatureConfig.DEFAULT).withPlacement()
         )))));
         put("bastion_remnant_units", spawnCustomStructure(
                 StructureFeature.BASTION_REMNANT,

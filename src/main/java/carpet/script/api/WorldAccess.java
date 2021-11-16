@@ -1298,7 +1298,7 @@ public class WorldAccess {
                     StructureStart<?> start = entry.getValue();
                     if (start == StructureStart.DEFAULT)
                         continue;
-                    BlockBox box = start.setBoundingBoxFromChildren();
+                    BlockBox box = start.getBoundingBox();
                     structureList.put(
                             new StringValue(NBTSerializableValue.nameFromRegistryId(Registry.STRUCTURE_FEATURE.getId(entry.getKey()))),
                             ListValue.of(ListValue.fromTriple(box.getMinX(), box.getMinY(), box.getMinZ()), ListValue.fromTriple(box.getMaxX(), box.getMaxY(), box.getMaxZ()))
@@ -1347,7 +1347,7 @@ public class WorldAccess {
                     }
                     StructureStart<?> start = structures.get(structure);
                     ChunkPos structureChunkPos = start.getPos(); //   new ChunkPos(start.getChunkX(), start.getChunkZ());
-                    BlockBox box = start.setBoundingBoxFromChildren();
+                    BlockBox box = start.getBoundingBox();
                     for (int chx = box.getMinX() / 16; chx <= box.getMaxX() / 16; chx++)  // minx maxx
                     {
                         for (int chz = box.getMinZ() / 16; chz <= box.getMaxZ() / 16; chz++) //minZ maxZ

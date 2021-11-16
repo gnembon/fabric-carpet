@@ -136,8 +136,8 @@ public abstract class ServerWorld_tickMixin extends World
         if (TickSpeed.process_entities) worldBorder.tick();
     }
 
-    @Inject(method = "method_39501", cancellable = true, at = @At("HEAD"))
-    private void tickWorldBorder(CallbackInfo ci)
+    @Inject(method = "tickWeather", cancellable = true, at = @At("HEAD"))
+    private void tickWeather(CallbackInfo ci)
     {
         if (!TickSpeed.process_entities) ci.cancel();
     }
