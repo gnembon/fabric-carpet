@@ -108,7 +108,7 @@ public abstract class ScriptHost
     @FunctionalInterface
     public interface ErrorSnooper
     {
-        List<String> apply(Expression expression, Tokenizer.Token token, String message);
+        List<String> apply(Expression expression, Tokenizer.Token token, Context context, String message);
     }
     public ErrorSnooper errorSnooper = null;
 

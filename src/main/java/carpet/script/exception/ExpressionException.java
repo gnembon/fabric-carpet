@@ -74,8 +74,8 @@ public class ExpressionException extends RuntimeException implements ResolvedExc
     {
         if (c.getErrorSnooper() != null)
         {
-            List<String> alternative = c.getErrorSnooper().apply(e, t, message);
-            if (alternative!= null)
+            List<String> alternative = c.getErrorSnooper().apply(e, t, c, message);
+            if (alternative != null)
             {
                 return String.join("\n", alternative);
             }
