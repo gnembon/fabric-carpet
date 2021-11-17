@@ -3,6 +3,7 @@ package carpet.mixins;
 import carpet.CarpetSettings;
 import carpet.fakes.StructureFeatureInterface;
 import com.google.common.collect.ImmutableMultimap;
+import net.minecraft.class_6834;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.structure.StructurePiecesCollector;
 import net.minecraft.structure.StructurePiecesGenerator;
@@ -32,6 +33,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Random;
 import java.util.function.Predicate;
 
@@ -45,12 +47,14 @@ public abstract class StructureFeatureMixin<C extends FeatureConfig> implements 
     //@Shadow protected abstract boolean shouldStartAt(ChunkGenerator chunkGenerator, BiomeSource biomeSource, long worldSeed, ChunkRandom random, ChunkPos chunkPos, Biome biome, ChunkPos chunkPos2, C featureConfig, HeightLimitView heightLimitView);
 
     //@Shadow protected abstract boolean shouldStartAt(ChunkGenerator chunkGenerator, BiomeSource biomeSource, long worldSeed, ChunkRandom random, ChunkPos pos, ChunkPos chunkPos, C featureConfig, HeightLimitView heightLimitView);
-      @Shadow protected abstract boolean shouldStartAt(ChunkGenerator chunkGenerator, BiomeSource biomeSource, long worldSeed, ChunkPos chunkPos, C featureConfig, HeightLimitView heightLimitView);
+    //@Shadow protected abstract boolean shouldStartAt(ChunkGenerator chunkGenerator, BiomeSource biomeSource, long worldSeed, ChunkPos chunkPos, C featureConfig, HeightLimitView heightLimitView);
 
     //@Shadow @Final private class_6622<C> field_34929;
 
 
-    @Shadow @Final private StructurePiecesGenerator<C> piecesGenerator;
+    //@Shadow @Final private StructurePiecesGenerator<C> piecesGenerator;
+
+    @Shadow @Final private class_6834<C> piecesGenerator;
 
     @Override
     public boolean plopAnywhere(ServerWorld world, BlockPos pos, ChunkGenerator generator, boolean wireOnly, Biome biome, C config)
@@ -138,9 +142,10 @@ public abstract class StructureFeatureMixin<C extends FeatureConfig> implements 
 
         //if (config == null)
         //    config = (C) new DefaultFeatureConfig();
-
+        Optional<StructurePiecesGenerator<C>> optional = piecesGenerator.createGenerator(new class_6834.class_6835<C>(generator, generator.getBiomeSource(), worldIn.getSeed(), chunkpos, config, worldIn, b -> true, worldIn.getStructureManager(), worldIn.getRegistryManager()));
+        if (optional.isEmpty()) return (StructureStart<C>) StructureStart.DEFAULT;
         StructurePiecesCollector lv = new StructurePiecesCollector();
-        piecesGenerator.generatePieces(lv, config, new StructurePiecesGenerator.Context(worldIn.getRegistryManager(), generator, worldIn.getStructureManager(), chunkpos, b -> true, worldIn, Util.make(new ChunkRandom(new AtomicSimpleRandom(RandomSeed.getSeed())), (chunkRandomx) -> {
+        optional.get().generatePieces(lv, new StructurePiecesGenerator.Context<C>(config, generator, worldIn.getStructureManager(), chunkpos, worldIn, Util.make(new ChunkRandom(new AtomicSimpleRandom(RandomSeed.getSeed())), (chunkRandomx) -> {
             chunkRandomx.setCarverSeed(worldIn.getSeed(), chunkpos.x, chunkpos.z);
         }), worldIn.getSeed()));
         StructureStart<C> structurestart1 = new StructureStart<>(thiss, chunkpos, 0, lv.toList());
@@ -158,11 +163,5 @@ public abstract class StructureFeatureMixin<C extends FeatureConfig> implements 
 
         //long2objectmap.put(packedChunkPos, structurestart);
         return structurestart1;
-    }
-
-    @Override
-    public boolean shouldStartPublicAt(ChunkGenerator chunkGenerator, BiomeSource biomeSource, long l, ChunkPos chunkPos, C featureConfig, HeightLimitView heightLimitView)
-    {
-        return shouldStartAt(chunkGenerator, biomeSource, l, chunkPos, featureConfig, heightLimitView);
     }
 }

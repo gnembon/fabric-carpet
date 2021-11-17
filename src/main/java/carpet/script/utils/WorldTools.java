@@ -54,7 +54,7 @@ public class WorldTools
             if (region == null) return false;
             return region.hasChunk(chpos);
         }
-        Path regionPath = new File(((MinecraftServerInterface )world.getServer()).getCMSession().getWorldDirectory(world.getRegistryKey()), "region").toPath();
+        Path regionPath = new File(((MinecraftServerInterface )world.getServer()).getCMSession().getWorldDirectory(world.getRegistryKey()).toFile(), "region").toPath();
         Path regionFilePath = regionPath.resolve(currentRegionName);
         File regionFile = regionFilePath.toFile();
         if (!regionFile.exists())
@@ -65,7 +65,7 @@ public class WorldTools
         if (!deepcheck) return true; // not using cache in this case.
         try
         {
-            RegionFile region = new RegionFile(regionFile, regionPath.toFile(), true);
+            RegionFile region = new RegionFile(regionFile.toPath(), regionPath, true);
             if (regionCache != null) regionCache.put(currentRegionName, region);
             return region.hasChunk(chpos);
         }
