@@ -128,7 +128,7 @@ in a list and contain of map-like resources descriptors, looking like
 or a relative location in the same folder as the app in question (the relative location directly). 
 `'target'` points to the path in app data, or shared app data folder. If not specified it will place the app into the main data folder with the name it has.
 if `'shared'` is specified and `true`. When re-downloading the app, all resources will be re-downloaded as well. 
-Currently, app resources are only downloaded when using `/carpet download` command.
+Currently, app resources are only downloaded when using `/script download` command.
 *   `libraries` - list of libraries or apps to be downloaded when installing the app from the app store. It needs to be a list of map-like resource
 descriptors, like the above `resources` field.
    ```
