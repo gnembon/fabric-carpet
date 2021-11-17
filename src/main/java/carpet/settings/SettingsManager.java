@@ -564,7 +564,7 @@ public class SettingsManager
                 smartSuggestionList.add(listItem);
             }
             // Regular prefix matching, reference: CommandSource.suggestMatching
-            if (CommandSource.shouldSuggest(query, listItem.toLowerCase())) {
+            if (CommandSource.shouldSuggest(query, listItem.toLowerCase(Locale.ROOT))) {
                 regularSuggestionList.add(listItem);
             }
         });
