@@ -45,7 +45,7 @@ tasks.withType(JavaCompile).configureEach {
 	it.options.encoding = "UTF-8"
 
 	// Minecraft 1.18 upwards uses Java 17.
-	it.options.release = 16
+	it.options.release = 17
 }
 
 java {
