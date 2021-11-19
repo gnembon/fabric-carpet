@@ -1515,6 +1515,9 @@ public class WorldAccess {
 
     @ScarpetFunction(maxParams = -1)
     public Value query_noise(Context c, int x, int y, int z, String... noiseQueries) {
+        int mappedX = BiomeCoords.fromBlock(x);
+        int mappedY = BiomeCoords.fromBlock(y);
+        int mappedZ = BiomeCoords.fromBlock(z);
         MultiNoiseUtil.MultiNoiseSampler mns = ((CarpetContext)c).s.getWorld().getChunkManager().getChunkGenerator().getMultiNoiseSampler();
         Map<Value, Value> ret = new HashMap<>();
 
@@ -1523,7 +1526,7 @@ public class WorldAccess {
         }
 
         for (String noise : noiseQueries) {
-            double noiseValue = ((NoiseColumnSamplerInterface) mns).getNoiseSample(noise, x, y, z);
+            double noiseValue = ((NoiseColumnSamplerInterface) mns).getNoiseSample(noise, mappedX, mappedY, mappedZ);
             ret.put(new StringValue(noise), new NumericValue(noiseValue));
         }
         return MapValue.wrap(ret);
