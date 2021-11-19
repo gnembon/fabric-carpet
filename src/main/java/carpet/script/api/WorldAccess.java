@@ -2,7 +2,6 @@ package carpet.script.api;
 
 import carpet.CarpetServer;
 import carpet.CarpetSettings;
-import carpet.fakes.BiomeArrayInterface;
 import carpet.fakes.ChunkGeneratorInterface;
 import carpet.fakes.ChunkTicketManagerInterface;
 import carpet.fakes.ServerChunkManagerInterface;
@@ -15,7 +14,7 @@ import carpet.script.CarpetContext;
 import carpet.script.Context;
 import carpet.script.Expression;
 import carpet.script.Fluff;
-import carpet.script.LazyValue;
+import carpet.script.annotation.ScarpetFunction;
 import carpet.script.argument.BlockArgument;
 import carpet.script.argument.Vector3Argument;
 import carpet.script.exception.InternalExpressionException;
@@ -42,9 +41,6 @@ import it.unimi.dsi.fastutil.longs.LongSet;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
-import net.minecraft.block.CommandBlock;
-import net.minecraft.block.JigsawBlock;
-import net.minecraft.block.StructureBlock;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.command.argument.ItemStackArgument;
 import net.minecraft.enchantment.EnchantmentHelper;
@@ -93,20 +89,24 @@ import net.minecraft.world.SpawnHelper;
 import net.minecraft.world.World;
 import net.minecraft.world.biome.Biome;
 import net.minecraft.world.biome.source.BiomeCoords;
+import net.minecraft.world.biome.source.util.MultiNoiseUtil;
 import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.chunk.ChunkStatus;
 import net.minecraft.world.chunk.WorldChunk;
 import net.minecraft.world.explosion.Explosion;
-import net.minecraft.world.gen.random.ChunkRandom;
+import net.minecraft.world.gen.NoiseColumnSampler;
 import net.minecraft.world.gen.chunk.ChunkGenerator;
 import net.minecraft.world.gen.feature.ConfiguredStructureFeature;
 import net.minecraft.world.gen.feature.StructureFeature;
+import net.minecraft.world.gen.random.ChunkRandom;
 import net.minecraft.world.level.ServerWorldProperties;
 import net.minecraft.world.poi.PointOfInterest;
 import net.minecraft.world.poi.PointOfInterestStorage;
 import net.minecraft.world.poi.PointOfInterestType;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -126,19 +126,22 @@ import static carpet.script.utils.WorldTools.canHasChunk;
 
 public class WorldAccess {
     private static final Map<String, Direction> DIRECTION_MAP = Arrays.stream(Direction.values()).collect(Collectors.toMap(Direction::getName, (direction) -> direction));
+
     static {
         DIRECTION_MAP.put("y", Direction.UP);
         DIRECTION_MAP.put("z", Direction.SOUTH);
         DIRECTION_MAP.put("x", Direction.EAST);
-
     }
+
     private final static Map<String, ChunkTicketType<?>> ticketTypes = new HashMap<String, ChunkTicketType<?>>(){{
         put("portal", ChunkTicketType.PORTAL);
         put("teleport", ChunkTicketType.POST_TELEPORT);
         put("unknown", ChunkTicketType.UNKNOWN);  // unknown
     }};
+
     // dummy entity for dummy requirements in the loot tables (see snowball)
     private static FallingBlockEntity DUMMY_ENTITY = null;
+
     private static Value booleanStateTest(
             Context c,
             String name,
@@ -1510,6 +1513,27 @@ public class WorldAccess {
                 cc.s.getWorld().getChunkManager().addTicket(ChunkTicketType.UNKNOWN, target, radius, target);
             return new NumericValue(ticket.getExpiryTicks());
         });
+    }
 
+    @ScarpetFunction(maxParams = -1)
+    public Value query_noise(Context c, int x, int y, int z, String... noiseQueries) {
+        MultiNoiseUtil.MultiNoiseSampler mns = ((CarpetContext)c).s.getWorld().getChunkManager().getChunkGenerator().getMultiNoiseSampler();
+        NoiseColumnSampler sampler = (NoiseColumnSampler) mns;
+
+        Map<Value, Value> ret = new HashMap<>();
+
+        if (noiseQueries.length == 0) {
+            noiseQueries = new String[]{"continentalness", "erosion", "weirdness", "temperature", "humidity", "depth"};
+        }
+
+        for (String noise : noiseQueries) {
+            try {
+                Method m = NoiseColumnSampler.class.getDeclaredMethod("queryNoiseSample$" + noise + "Noise", int.class, int.class, int.class);
+                ret.put(new StringValue(noise), new NumericValue((double) m.invoke(sampler, x, y, z)));
+            } catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
+                throw new InternalExpressionException("Unknown noise query: " + noise);
+            }
+        }
+        return MapValue.wrap(ret);
     }
 }

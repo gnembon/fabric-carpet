@@ -203,6 +203,8 @@
     "StatePredicate_scarpetMixin",
     "TagPredicate_scarpetMixin",
     "HorseBaseEntity_scarpetMixin",
+    "NoiseColumnSamplerMixin_scarpetMixin",
+    "CaveScalerMixin_scarpetMixin",
 
     "BlockEntity_movableBEMixin",
     "PistonBlock_movableTEMixin",

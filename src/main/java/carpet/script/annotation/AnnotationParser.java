@@ -1,5 +1,17 @@
 package carpet.script.annotation;
 
+import carpet.CarpetExtension;
+import carpet.script.Context;
+import carpet.script.Expression;
+import carpet.script.Fluff.AbstractLazyFunction;
+import carpet.script.Fluff.TriFunction;
+import carpet.script.LazyValue;
+import carpet.script.exception.InternalExpressionException;
+import carpet.script.value.Value;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.ClassUtils;
+
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Array;
@@ -12,19 +24,6 @@ import java.util.ListIterator;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
-
-import org.apache.commons.lang3.ArrayUtils;
-import org.apache.commons.lang3.ClassUtils;
-
-import carpet.CarpetExtension;
-import carpet.script.Context;
-import carpet.script.Expression;
-import carpet.script.Fluff.AbstractLazyFunction;
-import carpet.script.Fluff.TriFunction;
-import carpet.script.exception.InternalExpressionException;
-import carpet.script.LazyValue;
-import carpet.script.value.Value;
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
 /**
  * <p>This class parses methods annotated with the {@link ScarpetFunction} annotation in a given {@link Class}, generating
@@ -189,11 +188,11 @@ public final class AnnotationParser
                 if (maxParams == -2)
                     throw new IllegalArgumentException("No maximum number of params specified for " + name + ", use -1 for unlimited. "
                             + "Provided in " + instance.getClass());
+                if (maxParams == -1)
+                    maxParams = Integer.MAX_VALUE;
                 if (maxParams < this.minParams)
                     throw new IllegalArgumentException("Provided maximum number of params for " + name + " is smaller than method's param count."
                             + "Provided in " + instance.getClass());
-                if (maxParams == -1)
-                    maxParams = Integer.MAX_VALUE;
             }
             this.maxParams = maxParams;
 
