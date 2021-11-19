@@ -17,6 +17,7 @@ import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.loader.api.FabricLoader;
+import net.minecraft.command.CommandSource;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.ServerTask;
@@ -550,14 +551,24 @@ public class SettingsManager
     }
 
     static CompletableFuture<Suggestions> suggestMatchingContains(Stream<String> stream, SuggestionsBuilder suggestionsBuilder) {
+        List<String> regularSuggestionList = new ArrayList<>();
+        List<String> smartSuggestionList = new ArrayList<>();
         String query = suggestionsBuilder.getRemaining().toLowerCase(Locale.ROOT);
-        var filteredSuggestionList = stream.filter((listItem) -> { //Regex camelCase Search
+        stream.forEach((listItem) -> {
+            // Regex camelCase Search
             var words = Arrays.stream(listItem.split("(?<!^)(?=[A-Z])")).map(s -> s.toLowerCase(Locale.ROOT)).collect(Collectors.toList());
             var prefixes = new ArrayList<String>(words.size());
             for (int i = 0; i < words.size(); i++)
                 prefixes.add(String.join("",words.subList(i, words.size())));
-            return prefixes.stream().anyMatch(s -> s.startsWith(query));
+            if (prefixes.stream().anyMatch(s -> s.startsWith(query))) {
+                smartSuggestionList.add(listItem);
+            }
+            // Regular prefix matching, reference: CommandSource.suggestMatching
+            if (CommandSource.method_27136(query, listItem.toLowerCase(Locale.ROOT))) {
+                regularSuggestionList.add(listItem);
+            }
         });
+        var filteredSuggestionList = regularSuggestionList.isEmpty() ? smartSuggestionList : regularSuggestionList;
         Objects.requireNonNull(suggestionsBuilder);
         filteredSuggestionList.forEach(suggestionsBuilder::suggest);
         return suggestionsBuilder.buildFuture();

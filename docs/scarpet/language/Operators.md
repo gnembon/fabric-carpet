@@ -294,4 +294,30 @@ so some caution (prior testing) is advised. Some of these multi-argument built-i
  `if`, `try`, `sort_key`, `system_variable_get`, `synchronize`, `sleep`, `in_dimension`, 
 all container functions (`get`, `has`, `put`, `delete`), 
 and all loop functions (`while`, `loop`, `map`, `filter`, `first`, `all`, `c_for`, `for` and`reduce`).
- 
+
+### `Binary (bitwise) operations`
+
+These are a bunch of operators that work exclusively on numbers, more specifically their binary representations. Some of these
+work on multiple numbers, some on only 2, and others on only 1. Note that most of these functions (all but `double_to_long_bits`)
+only take integer values, so if the input has a decimal part, it will be discarded.
+
+ - `bitwise_and(...)` -> Does the bitwise AND operation on each number in order. Note that with larger ranges of numbers this will
+	tend to 0.
+ - `bitwise_xor(...)` -> Does the bitwise XOR operation on each number in order.
+ - `bitwise_or(...)` -> Does the bitwise AND operation on each number in order. Note that with larger ranges of numbers this will
+	tend to -1.
+ - `bitwise_shift_left(num, amount)` -> Shifts all the bits of the first number `amount` spots to the left. Note that shifting more
+	than 63 positions will result in a 0 (cos you shift out all the bits of the number)
+ - `bitwise_shift_right(num, amount)` -> Shifts all the bits of the first number `amount` spots to the right. Like with the above,
+	shifting more than 63 bits results in a 0.
+ - `bitwise_roll_left(num, amount)` -> Rolls the bits of the first number `amount` bits to the left. This is basically where you
+	shift out the first `amount` bits and then add them on at the back, essentially 'rolling' the number. Note that unlike with
+        shifting, you can roll more than 63 bits at a time, as it just makes the number roll over more times, which isn't an issue
+ - `bitwise_roll_right(num, amount)` -> Same as above, just rolling in the other direction
+ - `bitwise_not(num)` -> Flips all the bits of the number. This is simply done by performing xor operation with -1, which in binary is
+	all ones.
+ - `bitwise_popcount(num)` -> Returns the number of ones in the binary representation of the number. For the number of zeroes, just
+	do 64 minus this number.
+ - `double_to_long_bits(num)` -> Returns a representation of the specified floating-point value according to the IEEE 754 floating-point
+	"double format" bit layout.
+ - `long_to_double_bits(num)` -> Returns the double value corresponding to a given bit representation.
