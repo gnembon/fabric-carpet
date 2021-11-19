@@ -20,41 +20,40 @@ import carpet.script.utils.InputValidator;
 import com.google.common.collect.Sets;
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import net.minecraft.entity.SpawnGroup;
+import net.minecraft.entity.ai.brain.Brain;
+import net.minecraft.entity.ai.brain.Memory;
+import net.minecraft.entity.EntityGroup;
+import net.minecraft.entity.ai.brain.MemoryModuleType;
+import net.minecraft.entity.ai.pathing.Path;
+import net.minecraft.entity.attribute.AttributeContainer;
+import net.minecraft.entity.attribute.EntityAttribute;
+import net.minecraft.entity.projectile.ProjectileEntity;
+import net.minecraft.entity.vehicle.AbstractMinecartEntity;
+import net.minecraft.nbt.NbtString;
+import net.minecraft.nbt.NbtElement;
+import net.minecraft.network.packet.s2c.play.EntityPassengersSetS2CPacket;
+import net.minecraft.network.packet.s2c.play.EntityPositionS2CPacket;
+import net.minecraft.network.packet.s2c.play.ExperienceBarUpdateS2CPacket;
+import net.minecraft.network.packet.s2c.play.PlayerPositionLookS2CPacket;
+import net.minecraft.network.packet.s2c.play.UpdateSelectedSlotS2CPacket;
 import net.minecraft.command.EntitySelector;
 import net.minecraft.command.EntitySelectorReader;
 import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityGroup;
 import net.minecraft.entity.EntityPose;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.entity.ItemEntity;
 import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.SpawnGroup;
-import net.minecraft.entity.ai.brain.Brain;
-import net.minecraft.entity.ai.brain.Memory;
-import net.minecraft.entity.ai.brain.MemoryModuleType;
 import net.minecraft.entity.ai.goal.GoToWalkTargetGoal;
 import net.minecraft.entity.ai.goal.Goal;
-import net.minecraft.entity.ai.pathing.Path;
-import net.minecraft.entity.attribute.AttributeContainer;
-import net.minecraft.entity.attribute.EntityAttribute;
-import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.entity.effect.StatusEffect;
 import net.minecraft.entity.effect.StatusEffectInstance;
 import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.entity.mob.PathAwareEntity;
 import net.minecraft.entity.passive.PassiveEntity;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.entity.projectile.ProjectileEntity;
-import net.minecraft.entity.vehicle.AbstractMinecartEntity;
 import net.minecraft.nbt.NbtCompound;
-import net.minecraft.nbt.NbtElement;
-import net.minecraft.nbt.NbtString;
-import net.minecraft.network.packet.s2c.play.EntityPassengersSetS2CPacket;
-import net.minecraft.network.packet.s2c.play.EntityPositionS2CPacket;
-import net.minecraft.network.packet.s2c.play.ExperienceBarUpdateS2CPacket;
-import net.minecraft.network.packet.s2c.play.PlayerPositionLookS2CPacket;
-import net.minecraft.network.packet.s2c.play.UpdateSelectedSlotS2CPacket;
 import net.minecraft.predicate.entity.EntityPredicates;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.command.ServerCommandSource;
@@ -773,14 +772,14 @@ public class EntityValue extends Value
 
         put("fly_speed", (e, v) -> {
             if (e instanceof ServerPlayerEntity player) {
-                return BooleanValue.of(player.getAbilities().getFlySpeed());
+                return NumericValue.of(player.getAbilities().getFlySpeed());
             }
             return Value.NULL;
         });
 
         put("walk_speed", (e, v) -> {
             if (e instanceof ServerPlayerEntity player) {
-                return BooleanValue.of(player.getAbilities().getWalkSpeed());
+                return NumericValue.of(player.getAbilities().getWalkSpeed());
             }
             return Value.NULL;
         });
@@ -992,7 +991,7 @@ public class EntityValue extends Value
 
     private static final Map<String, BiConsumer<Entity, Value>> featureModifiers = new HashMap<String, BiConsumer<Entity, Value>>() {{
         put("remove", (entity, value) -> entity.discard()); // using discard here - will see other options if valid
-        put("age", (e, v) -> e.age = Math.abs((int)NumericValue.asNumber(v).getLong()) );
+        put("age", (e, v) -> e.age = Math.abs((int)NumericValue.asNumber(v).getLong()));
         put("health", (e, v) -> {
             float health = (float) NumericValue.asNumber(v).getDouble();
             if (health <= 0f && e instanceof ServerPlayerEntity player)
@@ -1010,10 +1009,10 @@ public class EntityValue extends Value
         });
 
         put("may_fly", (e, v) -> {
-            boolean may_fly = v.getBoolean();
+            boolean mayFly = v.getBoolean();
             if (e instanceof ServerPlayerEntity player) {
-                player.getAbilities().allowFlying = may_fly;
-                if (!may_fly && player.getAbilities().flying) {
+                player.getAbilities().allowFlying = mayFly;
+                if (!mayFly && player.getAbilities().flying) {
                     player.getAbilities().flying = false;
                 }
                 player.sendAbilitiesUpdate();
@@ -1029,39 +1028,41 @@ public class EntityValue extends Value
         });
 
         put("may_build", (e, v) -> {
-            boolean may_build = v.getBoolean();
+            boolean mayBuild = v.getBoolean();
             if (e instanceof ServerPlayerEntity player) {
-                player.getAbilities().allowModifyWorld = may_build;
+                player.getAbilities().allowModifyWorld = mayBuild;
                 player.sendAbilitiesUpdate();
             }
         });
 
         put("insta_build", (e, v) -> {
-            boolean insta_build = v.getBoolean();
+            boolean instaBuild = v.getBoolean();
             if (e instanceof ServerPlayerEntity player) {
-                player.getAbilities().creativeMode = insta_build;
+                player.getAbilities().creativeMode = instaBuild;
                 player.sendAbilitiesUpdate();
             }
         });
 
         put("fly_speed", (e, v) -> {
-            Float fly_speed = NumericValue.asNumber(v).getFloat();
+            Float flySpeed = NumericValue.asNumber(v).getFloat();
             if (e instanceof ServerPlayerEntity player) {
-                player.getAbilities().setFlySpeed(fly_speed);
+                player.getAbilities().setFlySpeed(flySpeed);
                 player.sendAbilitiesUpdate();
             }
         });
 
         put("walk_speed", (e, v) -> {
-            Float walk_speed = NumericValue.asNumber(v).getFloat();
+            Float walkSpeed = NumericValue.asNumber(v).getFloat();
             if (e instanceof ServerPlayerEntity player) {
-                player.getAbilities().setWalkSpeed(walk_speed);
+                player.getAbilities().setWalkSpeed(walkSpeed);
                 player.sendAbilitiesUpdate();
             }
         });
 
-        put("selected_slot", (e, v) -> {
-            if (e instanceof ServerPlayerEntity player) {
+        put("selected_slot", (e, v) ->
+        {
+            if (e instanceof ServerPlayerEntity player)
+            {
                 int slot = NumericValue.asNumber(v).getInt();
                 player.networkHandler.sendPacket(new UpdateSelectedSlotS2CPacket(slot));
             }
