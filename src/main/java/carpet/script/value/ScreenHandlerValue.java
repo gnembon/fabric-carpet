@@ -37,7 +37,6 @@ import net.minecraft.screen.NamedScreenHandlerFactory;
 import net.minecraft.screen.ScreenHandler;
 import net.minecraft.screen.ScreenHandlerFactory;
 import net.minecraft.screen.ScreenHandlerListener;
-import net.minecraft.screen.ScreenHandlerType;
 import net.minecraft.screen.ShulkerBoxScreenHandler;
 import net.minecraft.screen.SimpleNamedScreenHandlerFactory;
 import net.minecraft.screen.SmithingScreenHandler;
@@ -46,8 +45,6 @@ import net.minecraft.screen.slot.Slot;
 import net.minecraft.screen.slot.SlotActionType;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.registry.Registry;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -69,48 +66,48 @@ public class ScreenHandlerValue extends Value {
     private final Context callbackContext;
 
 
-    public static Map<ScreenHandlerType<?>,ScarpetScreenHandlerFactory> screenHandlerFactories;
-    public static Map<ScreenHandlerType<?>,Integer> inventorySizes;
+    public static Map<String,ScarpetScreenHandlerFactory> screenHandlerFactories;
+    public static Map<String,Integer> inventorySizes;
 
     static
     {
         screenHandlerFactories = new HashMap<>();
 
-        screenHandlerFactories.put(ANVIL,(syncId, playerInventory, inventory1) -> new AnvilScreenHandler(syncId,playerInventory));
-        screenHandlerFactories.put(BEACON,(syncId, playerInventory, inventory1) -> new BeaconScreenHandler(syncId,playerInventory));
-        screenHandlerFactories.put(BREWING_STAND,(syncId, playerInventory, inventory1) -> new BrewingStandScreenHandler(syncId,playerInventory,new SimpleInventory(5),new ArrayPropertyDelegate(2)));
-        screenHandlerFactories.put(CARTOGRAPHY_TABLE,(syncId, playerInventory, inventory1) -> new CartographyTableScreenHandler(syncId,playerInventory));
-        screenHandlerFactories.put(CRAFTING,(syncId, playerInventory, inventory1) -> new CraftingScreenHandler(syncId,playerInventory));
-        screenHandlerFactories.put(ENCHANTMENT,(syncId, playerInventory, inventory1) -> new EnchantmentScreenHandler(syncId,playerInventory));
-        screenHandlerFactories.put(FURNACE,(syncId, playerInventory, inventory1) -> new FurnaceScreenHandler(syncId,playerInventory));
-        screenHandlerFactories.put(GENERIC_3X3,((syncId, playerInventory, inventory1) -> new GenericContainerScreenHandler(GENERIC_3X3,syncId,playerInventory,inventory1,1)));
-        screenHandlerFactories.put(GENERIC_9X1,((syncId, playerInventory, inventory1) -> new GenericContainerScreenHandler(GENERIC_9X1,syncId,playerInventory,inventory1,1)));
-        screenHandlerFactories.put(GENERIC_9X2,((syncId, playerInventory, inventory1) -> new GenericContainerScreenHandler(GENERIC_9X2,syncId,playerInventory,inventory1,2)));
-        screenHandlerFactories.put(GENERIC_9X3,((syncId, playerInventory, inventory1) -> new GenericContainerScreenHandler(GENERIC_9X3,syncId,playerInventory,inventory1,3)));
-        screenHandlerFactories.put(GENERIC_9X4,((syncId, playerInventory, inventory1) -> new GenericContainerScreenHandler(GENERIC_9X4,syncId,playerInventory,inventory1,4)));
-        screenHandlerFactories.put(GENERIC_9X5,((syncId, playerInventory, inventory1) -> new GenericContainerScreenHandler(GENERIC_9X5,syncId,playerInventory,inventory1,5)));
-        screenHandlerFactories.put(GENERIC_9X6,((syncId, playerInventory, inventory1) -> new GenericContainerScreenHandler(GENERIC_9X6,syncId,playerInventory,inventory1,6)));
-        screenHandlerFactories.put(GRINDSTONE,(syncId, playerInventory, inventory1) -> new GrindstoneScreenHandler(syncId,playerInventory));
-        screenHandlerFactories.put(HOPPER,(syncId, playerInventory, inventory1) -> new HopperScreenHandler(syncId,playerInventory));
-        screenHandlerFactories.put(LECTERN,(syncId, playerInventory, inventory1) -> new LecternScreenHandler(syncId,inventory1,new ArrayPropertyDelegate(1)));
-        screenHandlerFactories.put(LOOM,(syncId, playerInventory, inventory1) -> new LoomScreenHandler(syncId,playerInventory));
-        screenHandlerFactories.put(MERCHANT,(syncId, playerInventory, inventory1) -> new MerchantScreenHandler(syncId,playerInventory));
-        screenHandlerFactories.put(SHULKER_BOX,(syncId, playerInventory, inventory1) -> new ShulkerBoxScreenHandler(syncId,playerInventory,inventory1));
-        screenHandlerFactories.put(SMITHING,(syncId, playerInventory, inventory1) -> new SmithingScreenHandler(syncId,playerInventory));
-        screenHandlerFactories.put(STONECUTTER,(syncId, playerInventory, inventory1) -> new StonecutterScreenHandler(syncId,playerInventory));
+        screenHandlerFactories.put("anvil",(syncId, playerInventory, inventory1) -> new AnvilScreenHandler(syncId,playerInventory));
+        screenHandlerFactories.put("beacon",(syncId, playerInventory, inventory1) -> new BeaconScreenHandler(syncId,playerInventory));
+        screenHandlerFactories.put("brewing_stand",(syncId, playerInventory, inventory1) -> new BrewingStandScreenHandler(syncId,playerInventory,new SimpleInventory(5),new ArrayPropertyDelegate(2)));
+        screenHandlerFactories.put("cartography_table",(syncId, playerInventory, inventory1) -> new CartographyTableScreenHandler(syncId,playerInventory));
+        screenHandlerFactories.put("crafting",(syncId, playerInventory, inventory1) -> new CraftingScreenHandler(syncId,playerInventory));
+        screenHandlerFactories.put("enchantment",(syncId, playerInventory, inventory1) -> new EnchantmentScreenHandler(syncId,playerInventory));
+        screenHandlerFactories.put("furnace",(syncId, playerInventory, inventory1) -> new FurnaceScreenHandler(syncId,playerInventory));
+        screenHandlerFactories.put("generic_3x3",((syncId, playerInventory, inventory1) -> new GenericContainerScreenHandler(GENERIC_3X3,syncId,playerInventory,inventory1,1)));
+        screenHandlerFactories.put("generic_9x1",((syncId, playerInventory, inventory1) -> new GenericContainerScreenHandler(GENERIC_9X1,syncId,playerInventory,inventory1,1)));
+        screenHandlerFactories.put("generic_9x2",((syncId, playerInventory, inventory1) -> new GenericContainerScreenHandler(GENERIC_9X2,syncId,playerInventory,inventory1,2)));
+        screenHandlerFactories.put("generic_9x3",((syncId, playerInventory, inventory1) -> new GenericContainerScreenHandler(GENERIC_9X3,syncId,playerInventory,inventory1,3)));
+        screenHandlerFactories.put("generic_9x4",((syncId, playerInventory, inventory1) -> new GenericContainerScreenHandler(GENERIC_9X4,syncId,playerInventory,inventory1,4)));
+        screenHandlerFactories.put("generic_9x5",((syncId, playerInventory, inventory1) -> new GenericContainerScreenHandler(GENERIC_9X5,syncId,playerInventory,inventory1,5)));
+        screenHandlerFactories.put("generic_9x6",((syncId, playerInventory, inventory1) -> new GenericContainerScreenHandler(GENERIC_9X6,syncId,playerInventory,inventory1,6)));
+        screenHandlerFactories.put("grindstone",(syncId, playerInventory, inventory1) -> new GrindstoneScreenHandler(syncId,playerInventory));
+        screenHandlerFactories.put("hopper",(syncId, playerInventory, inventory1) -> new HopperScreenHandler(syncId,playerInventory));
+        screenHandlerFactories.put("lectern",(syncId, playerInventory, inventory1) -> new LecternScreenHandler(syncId,inventory1,new ArrayPropertyDelegate(1)));
+        screenHandlerFactories.put("loom",(syncId, playerInventory, inventory1) -> new LoomScreenHandler(syncId,playerInventory));
+        screenHandlerFactories.put("merchant",(syncId, playerInventory, inventory1) -> new MerchantScreenHandler(syncId,playerInventory));
+        screenHandlerFactories.put("shulker_box",(syncId, playerInventory, inventory1) -> new ShulkerBoxScreenHandler(syncId,playerInventory,inventory1));
+        screenHandlerFactories.put("smithing",(syncId, playerInventory, inventory1) -> new SmithingScreenHandler(syncId,playerInventory));
+        screenHandlerFactories.put("stonecutter",(syncId, playerInventory, inventory1) -> new StonecutterScreenHandler(syncId,playerInventory));
 
 
         inventorySizes = new HashMap<>();
 
-        inventorySizes.put(GENERIC_9X1,9);
-        inventorySizes.put(GENERIC_9X2,18);
-        inventorySizes.put(GENERIC_9X3,27);
-        inventorySizes.put(GENERIC_9X4,36);
-        inventorySizes.put(GENERIC_9X5,45);
-        inventorySizes.put(GENERIC_9X6,54);
-        inventorySizes.put(GENERIC_3X3,9);
-        inventorySizes.put(HOPPER,5);
-        inventorySizes.put(LECTERN,1);
+        inventorySizes.put("generic_9x1",9);
+        inventorySizes.put("generic_9x2",18);
+        inventorySizes.put("generic_9x3",27);
+        inventorySizes.put("generic_9x4",36);
+        inventorySizes.put("generic_9x5",45);
+        inventorySizes.put("generic_9x6",54);
+        inventorySizes.put("generic_3x3",9);
+        inventorySizes.put("hopper",5);
+        inventorySizes.put("lectern",1);
 
     }
 
@@ -162,21 +159,16 @@ public class ScreenHandlerValue extends Value {
     }
 
     public ScreenHandlerFactory createScreenHandlerFactoryFromValue(Value v) {
-        String type = (v instanceof NumericValue)?"generic_9x" + ((NumericValue) v).getInt():v.getString();
-        Identifier screenHandlerTypeIdentifier = Identifier.tryParse(type);
-        if(screenHandlerTypeIdentifier == null) return null;
-        ScreenHandlerType<? extends ScreenHandler> screenHandlerType = Registry.SCREEN_HANDLER.get(screenHandlerTypeIdentifier);
-        if(screenHandlerType == null || !screenHandlerFactories.containsKey(screenHandlerType)) return null;
-        this.typestring = screenHandlerTypeIdentifier.toString();
-        if(inventorySizes.containsKey(screenHandlerType)) {
-            this.inventory = new SimpleInventory(inventorySizes.get(screenHandlerType));
+        this.typestring = v.getString().toLowerCase();
+        if(inventorySizes.containsKey(this.typestring)) {
+            this.inventory = new SimpleInventory(inventorySizes.get(this.typestring));
         }
 
         return new SimpleNamedScreenHandlerFactory((i, playerInventory, playerEntity) -> {
-            ScreenHandler screenHandler1 = screenHandlerFactories.get(screenHandlerType).create(i,playerInventory,inventory);
-            addListenerCallback(screenHandler1);
-            ScreenHandlerValue.this.screenHandler = screenHandler1;
-            return screenHandler1;
+            ScreenHandler screen = screenHandlerFactories.get(ScreenHandlerValue.this.typestring).create(i,playerInventory,ScreenHandlerValue.this.inventory);
+            ScreenHandlerValue.this.addListenerCallback(screen);
+            ScreenHandlerValue.this.screenHandler = screen;
+            return screen;
         }, this.name);
     }
 
@@ -188,7 +180,7 @@ public class ScreenHandlerValue extends Value {
         Value buttonValue = NumericValue.of(button);
         List<Value> args = Arrays.asList(this,playerValue,actionValue,indexValue,buttonValue);
         LazyValue cancel = this.callback.callInContext(callbackContext, Context.VOID, args);
-        Value cancelValue = cancel.evalValue(ScreenHandlerValue.this.callbackContext);
+        Value cancelValue = cancel.evalValue(this.callbackContext);
         return cancelValue.getString().equals("cancel");
     }
 
