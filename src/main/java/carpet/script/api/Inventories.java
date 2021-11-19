@@ -183,7 +183,7 @@ public class Inventories {
 
         expression.addContextFunction("inventory_size", -1, (c, t, lv) ->
         {
-            if(lv.size() != 0 && lv.get(0) instanceof ScreenHandlerValue screenHandlerValue && !screenHandlerValue.hasInventory())
+            if(lv.size() != 0 && lv.get(0) instanceof ScreenHandlerValue screenHandlerValue)
                 return screenHandlerValue.inventorySizeSlots();
             CarpetContext cc = (CarpetContext) c;
             NBTSerializableValue.InventoryLocator inventoryLocator = NBTSerializableValue.locateInventory(cc, lv, 0);
@@ -193,7 +193,7 @@ public class Inventories {
 
         expression.addContextFunction("inventory_has_items", -1, (c, t, lv) ->
         {
-            if(lv.size() != 0 && lv.get(0) instanceof ScreenHandlerValue screenHandlerValue && !screenHandlerValue.hasInventory())
+            if(lv.size() != 0 && lv.get(0) instanceof ScreenHandlerValue screenHandlerValue)
                 return screenHandlerValue.inventoryHasItemsSlots();
             CarpetContext cc = (CarpetContext) c;
             NBTSerializableValue.InventoryLocator inventoryLocator = NBTSerializableValue.locateInventory(cc, lv, 0);
@@ -204,7 +204,7 @@ public class Inventories {
         //inventory_get(<b, e>, <n>) -> item_triple
         expression.addContextFunction("inventory_get", -1, (c, t, lv) ->
         {
-            if(lv.size() != 0 && lv.get(0) instanceof ScreenHandlerValue screenHandlerValue && !screenHandlerValue.hasInventory())
+            if(lv.size() != 0 && lv.get(0) instanceof ScreenHandlerValue screenHandlerValue)
                 return screenHandlerValue.inventoryGetSlots(lv.subList(1,lv.size()));
             CarpetContext cc = (CarpetContext) c;
             NBTSerializableValue.InventoryLocator inventoryLocator = NBTSerializableValue.locateInventory(cc, lv, 0);
@@ -225,7 +225,7 @@ public class Inventories {
         //inventory_set(<b,e>, <n>, <count>, <item>, <nbt>)
         expression.addContextFunction("inventory_set", -1, (c, t, lv) ->
         {
-            if(lv.size() != 0 && lv.get(0) instanceof ScreenHandlerValue screenHandlerValue && !screenHandlerValue.hasInventory())
+            if(lv.size() != 0 && lv.get(0) instanceof ScreenHandlerValue screenHandlerValue)
                 return screenHandlerValue.inventorySetSlots(lv.subList(1,lv.size()));
             CarpetContext cc = (CarpetContext) c;
             NBTSerializableValue.InventoryLocator inventoryLocator = NBTSerializableValue.locateInventory(cc, lv, 0);
@@ -424,7 +424,7 @@ public class Inventories {
                 return player;
             });
             if(lv.get(1) instanceof ScreenHandlerValue screenHandlerValue) {
-                if(!screenHandlerValue.hasInventory() && playerValueList.size() != 1) {
+                if(playerValueList.size() != 1) {
                     throw new InternalExpressionException("screen handler type '" + screenHandlerValue.getString() + "' does not support multiple players.");
                 }
                 players.forEach(screenHandlerValue::showScreen);
