@@ -4,6 +4,7 @@ import carpet.CarpetServer;
 import carpet.CarpetSettings;
 import carpet.fakes.ChunkGeneratorInterface;
 import carpet.fakes.ChunkTicketManagerInterface;
+import carpet.fakes.NoiseColumnSamplerInterface;
 import carpet.fakes.ServerChunkManagerInterface;
 import carpet.fakes.ServerWorldInterface;
 import carpet.fakes.SpawnHelperInnerInterface;
@@ -94,7 +95,6 @@ import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.chunk.ChunkStatus;
 import net.minecraft.world.chunk.WorldChunk;
 import net.minecraft.world.explosion.Explosion;
-import net.minecraft.world.gen.NoiseColumnSampler;
 import net.minecraft.world.gen.chunk.ChunkGenerator;
 import net.minecraft.world.gen.feature.ConfiguredStructureFeature;
 import net.minecraft.world.gen.feature.StructureFeature;
@@ -105,8 +105,6 @@ import net.minecraft.world.poi.PointOfInterestStorage;
 import net.minecraft.world.poi.PointOfInterestType;
 import org.jetbrains.annotations.Nullable;
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -1518,8 +1516,6 @@ public class WorldAccess {
     @ScarpetFunction(maxParams = -1)
     public Value query_noise(Context c, int x, int y, int z, String... noiseQueries) {
         MultiNoiseUtil.MultiNoiseSampler mns = ((CarpetContext)c).s.getWorld().getChunkManager().getChunkGenerator().getMultiNoiseSampler();
-        NoiseColumnSampler sampler = (NoiseColumnSampler) mns;
-
         Map<Value, Value> ret = new HashMap<>();
 
         if (noiseQueries.length == 0) {
@@ -1527,12 +1523,8 @@ public class WorldAccess {
         }
 
         for (String noise : noiseQueries) {
-            try {
-                Method m = NoiseColumnSampler.class.getDeclaredMethod("queryNoiseSample$" + noise + "Noise", int.class, int.class, int.class);
-                ret.put(new StringValue(noise), new NumericValue((double) m.invoke(sampler, x, y, z)));
-            } catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
-                throw new InternalExpressionException("Unknown noise query: " + noise);
-            }
+            double noiseValue = ((NoiseColumnSamplerInterface) mns).getNoiseSample(noise, x, y, z);
+            ret.put(new StringValue(noise), new NumericValue(noiseValue));
         }
         return MapValue.wrap(ret);
     }

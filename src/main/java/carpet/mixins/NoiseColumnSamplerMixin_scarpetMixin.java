@@ -1,5 +1,7 @@
 package carpet.mixins;
 
+import carpet.fakes.NoiseColumnSamplerInterface;
+import carpet.script.exception.InternalExpressionException;
 import net.minecraft.util.math.noise.DoublePerlinNoiseSampler;
 import net.minecraft.util.math.noise.InterpolatedNoiseSampler;
 import net.minecraft.util.math.noise.SimplexNoiseSampler;
@@ -13,7 +15,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 
 @Mixin(NoiseColumnSampler.class)
-public abstract class NoiseColumnSamplerMixin_scarpetMixin {
+public abstract class NoiseColumnSamplerMixin_scarpetMixin implements NoiseColumnSamplerInterface {
 
     @Shadow @Final
     private InterpolatedNoiseSampler terrainNoise;
@@ -118,135 +120,110 @@ public abstract class NoiseColumnSamplerMixin_scarpetMixin {
 
     @Shadow public abstract MultiNoiseUtil.NoiseValuePoint sample(int i, int j, int k);
 
-    public double queryNoiseSample$terrainNoise(int x, int y, int z) {
-        return this.terrainNoise.calculateNoise(x, y, z);
-    }
-
-    public double queryNoiseSample$islandNoise(int x, int y, int z) {
-        return this.islandNoise == null ? 0 : this.islandNoise.sample(x, y, z);
-    }
-
-    public double queryNoiseSample$jaggedNoise(int x, int y, int z) {
-        return this.method_38409(x, y, z);
-    }
-
-    public double queryNoiseSample$aquiferBarrierNoise(int x, int y, int z) {
-        return this.aquiferBarrierNoise.sample(x, y, z);
-    }
-
-    public double queryNoiseSample$aquiferFluidLevelFloodednessNoise(int x, int y, int z) {
-        return this.aquiferFluidLevelFloodednessNoise.sample(x, y, z);
-    }
-
-    public double queryNoiseSample$aquiferFluidLevelSpreadNoise(int x, int y, int z) {
-        return this.aquiferFluidLevelSpreadNoise.sample(x, y, z);
-    }
-
-    public double queryNoiseSample$aquiferLavaNoise(int x, int y, int z) {
-        return this.aquiferLavaNoise.sample(x, y, z);
-    }
-
-    public double queryNoiseSample$caveLayerNoise(int x, int y, int z) {
-        return this.sampleCaveLayerNoise(x, y, z);
-    }
-
-    public double queryNoiseSample$pillarNoise(int x, int y, int z) {
-        return this.samplePillarNoise(x, y, z);
-    }
-
-    public double queryNoiseSample$pillarRarenessNoise(int x, int y, int z) {
-        return NoiseHelper.lerpFromProgress(this.pillarRarenessNoise, x, y, z, 0.0D, 2.0D);
-    }
-
-    public double queryNoiseSample$pillarThicknessNoise(int x, int y, int z) {
-        return NoiseHelper.lerpFromProgress(this.pillarThicknessNoise, x, y, z, 0.0D, 1.1D);
-    }
-
-    public double queryNoiseSample$spaghetti2dNoise(int x, int y, int z) {
-        return this.sampleSpaghetti2dNoise(x, y, z);
-    }
-
-    public double queryNoiseSample$spaghetti2dElevationNoise(int x, int y, int z) {
-        return NoiseHelper.lerpFromProgress(this.spaghetti2dElevationNoise, (double) x, 0.0, (double) z, (double) this.config.method_39548(), 8.0);
-    }
-
-    public double queryNoiseSample$spaghetti2dModulatorNoise(int x, int y, int z) {
-        return this.spaghetti2dModulatorNoise.sample((double) (x * 2), (double) y, (double) (z * 2));
-    }
-
-    public double queryNoiseSample$spaghetti2dThicknessNoise(int x, int y, int z) {
-        return NoiseHelper.lerpFromProgress(this.spaghetti2dThicknessNoise, (double) (x * 2), (double) y, (double) (z * 2), 0.6, 1.3);
-    }
-
-    public double queryNoiseSample$spaghetti3dNoise(int x, int y, int z) {
-        return this.sampleSpaghetti3dNoise(x, y, z);
-    }
-
-    public double queryNoiseSample$spaghetti3dFirstNoise(int x, int y, int z) {
-        double d = this.spaghetti3dRarityNoise.sample(x * 2, y, z * 2);
-        double e = CaveScalerMixin_scarpetMixin.invokeScaleTunnels(d);
-        return sample(this.spaghetti3dFirstNoise, x, y, z, e);
-    }
-
-    public double queryNoiseSample$spaghetti3dSecondNoise(int x, int y, int z) {
-        double d = this.spaghetti3dRarityNoise.sample(x * 2, y, z * 2);
-        double e = CaveScalerMixin_scarpetMixin.invokeScaleTunnels(d);
-        return sample(this.spaghetti3dSecondNoise, x, y, z, e);
-    }
-
-    public double queryNoiseSample$spaghetti3dRarityNoise(int x, int y, int z) {
-        return this.spaghetti3dRarityNoise.sample(x * 2, y, z * 2);
-    }
-
-    public double queryNoiseSample$spaghetti3dThicknessNoise(int x, int y, int z) {
-        return NoiseHelper.lerpFromProgress(this.spaghetti3dThicknessNoise, x, y, z, 0.065, 0.088);
-    }
-
-    public double queryNoiseSample$spaghettiRoughnessNoise(int x, int y, int z) {
-        return this.sampleSpaghettiRoughnessNoise(x, y, z);
-    }
-
-    public double queryNoiseSample$spaghettiRoughnessModulatorNoise(int x, int y, int z) {
-        return NoiseHelper.lerpFromProgress(this.spaghettiRoughnessModulatorNoise, x, y, z, 0.0, 0.1);
-    }
-
-    public double queryNoiseSample$caveEntranceNoise(int x, int y, int z) {
-        return this.sampleCaveEntranceNoise(x, y, z);
-    }
-
-    public double queryNoiseSample$caveCheeseNoise(int x, int y, int z) {
-        return this.caveCheeseNoise.sample(x, y / 1.5, z);
-    }
-
-    public double queryNoiseSample$temperatureNoise(int x, int y, int z) {
-        return this.sampleTemperatureNoise(x, y, z);
-    }
-
-    public double queryNoiseSample$humidityNoise(int x, int y, int z) {
-        return this.sampleHumidityNoise(x, y, z);
-    }
-
-    public double queryNoiseSample$continentalnessNoise(int x, int y, int z) {
-        return this.sampleContinentalnessNoise(x, y, z);
-    }
-
-    public double queryNoiseSample$erosionNoise(int x, int y, int z) {
-        return this.sampleErosionNoise(x, y, z);
-    }
-
-    public double queryNoiseSample$weirdnessNoise(int x, int y, int z) {
-        return this.sampleWeirdnessNoise(x, y, z);
-    }
-
-    public double queryNoiseSample$depthNoise(int x, int y, int z) {
-        return this.sample(x, y, z).depth();
-    }
-
-    public double queryNoiseSample$shiftNoise(int x, int y, int z) {
-        return this.sampleShiftNoise(x, y, z);
-    }
-
-    public double queryNoiseSample$oreGapNoise(int x, int y, int z) {
-        return this.oreGapNoise.sample(x, y, z);
+    @Override
+    public double getNoiseSample(String name, int x, int y, int z) {
+        switch (name) {
+            case "terrain" -> {
+                return this.terrainNoise.calculateNoise(x, y, z);
+            }
+            case "island" -> {
+                return this.islandNoise == null ? 0 : this.islandNoise.sample(x, y, z);
+            }
+            case "jagged" -> {
+                return this.method_38409(x, y, z);
+            }
+            case "aquiferBarrier" -> {
+                return this.aquiferBarrierNoise.sample(x, y, z);
+            }
+            case "aquiferFluidLevelFloodedness" -> {
+                return this.aquiferFluidLevelFloodednessNoise.sample(x, y, z);
+            }
+            case "aquiferFluidLevelSpread" -> {
+                return this.aquiferFluidLevelSpreadNoise.sample(x, y, z);
+            }
+            case "aquiferLava" -> {
+                return this.aquiferLavaNoise.sample(x, y, z);
+            }
+            case "caveLayer" -> {
+                return this.sampleCaveLayerNoise(x, y, z);
+            }
+            case "pillar" -> {
+                return this.samplePillarNoise(x, y, z);
+            }
+            case "pillarRareness" -> {
+                return NoiseHelper.lerpFromProgress(this.pillarRarenessNoise, x, y, z, 0.0D, 2.0D);
+            }
+            case "pillarThickness" -> {
+                return NoiseHelper.lerpFromProgress(this.pillarThicknessNoise, x, y, z, 0.0D, 1.1D);
+            }
+            case "spaghetti2d" -> {
+                return this.sampleSpaghetti2dNoise(x, y, z);
+            }
+            case "spaghetti2dElevation" -> {
+                return NoiseHelper.lerpFromProgress(this.spaghetti2dElevationNoise, x, 0.0, z, this.config.method_39548(), 8.0);
+            }
+            case "spaghetti2dModulator" -> {
+                return this.spaghetti2dModulatorNoise.sample(x * 2, y, z * 2);
+            }
+            case "spaghetti2dThickness" -> {
+                return NoiseHelper.lerpFromProgress(this.spaghetti2dThicknessNoise, (double) (x * 2), (double) y, (double) (z * 2), 0.6, 1.3);
+            }
+            case "spaghetti3d" -> {
+                return this.sampleSpaghetti3dNoise(x, y, z);
+            }
+            case "spaghetti3dFirst" -> {
+                double d = this.spaghetti3dRarityNoise.sample(x * 2, y, z * 2);
+                double e = CaveScalerMixin_scarpetMixin.invokeScaleTunnels(d);
+                return sample(this.spaghetti3dFirstNoise, x, y, z, e);
+            }
+            case "spaghetti3dSecond" -> {
+                double d = this.spaghetti3dRarityNoise.sample(x * 2, y, z * 2);
+                double e = CaveScalerMixin_scarpetMixin.invokeScaleTunnels(d);
+                return sample(this.spaghetti3dSecondNoise, x, y, z, e);
+            }
+            case "spaghetti3dRarity" -> {
+                return this.spaghetti3dRarityNoise.sample(x * 2, y, z * 2);
+            }
+            case "spaghetti3dThickness" -> {
+                return NoiseHelper.lerpFromProgress(this.spaghetti3dThicknessNoise, x, y, z, 0.065, 0.088);
+            }
+            case "spaghettiRoughness" -> {
+                return this.sampleSpaghettiRoughnessNoise(x, y, z);
+            }
+            case "spaghettiRoughnessModulator" -> {
+                return NoiseHelper.lerpFromProgress(this.spaghettiRoughnessModulatorNoise, x, y, z, 0.0, 0.1);
+            }
+            case "caveEntrance" -> {
+                return this.sampleCaveEntranceNoise(x, y, z);
+            }
+            case "caveCheese" -> {
+                return this.caveCheeseNoise.sample(x, y / 1.5, z);
+            }
+            case "temperature" -> {
+                return this.sampleTemperatureNoise(x, y, z);
+            }
+            case "humidity" -> {
+                return this.sampleHumidityNoise(x, y, z);
+            }
+            case "continentalness" -> {
+                return this.sampleContinentalnessNoise(x, y, z);
+            }
+            case "erosion" -> {
+                return this.sampleErosionNoise(x, y, z);
+            }
+            case "weirdness" -> {
+                return this.sampleWeirdnessNoise(x, y, z);
+            }
+            case "depth" -> {
+                return this.sample(x, y, z).depth() / 10000.0F;
+            }
+            case "shift" -> {
+                return this.sampleShiftNoise(x, y, z);
+            }
+            case "oreGap" -> {
+                return this.oreGapNoise.sample(x, y, z);
+            }
+        }
+        throw new InternalExpressionException("Unknown noise type: " + name);
     }
 }
