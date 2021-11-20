@@ -96,21 +96,6 @@ public abstract class NoiseColumnSamplerMixin_scarpetMixin implements NoiseColum
     protected abstract double sampleCaveEntranceNoise(int x, int y, int z);
 
     @Shadow
-    protected abstract double sampleTemperatureNoise(double x, double y, double z);
-
-    @Shadow
-    protected abstract double sampleHumidityNoise(double x, double y, double z);
-
-    @Shadow
-    public abstract double sampleContinentalnessNoise(double x, double y, double z);
-
-    @Shadow
-    public abstract double sampleErosionNoise(double x, double y, double z);
-
-    @Shadow
-    public abstract double sampleWeirdnessNoise(double x, double y, double z);
-
-    @Shadow
     public abstract double sampleShiftNoise(int x, int y, int z);
 
     @Shadow
@@ -122,7 +107,35 @@ public abstract class NoiseColumnSamplerMixin_scarpetMixin implements NoiseColum
 
     @Override
     public double getNoiseSample(String name, int x, int y, int z) {
+        MultiNoiseUtil.NoiseValuePoint noiseValuePoint = this.sample(x, y, z);
         switch (name) {
+            case "temperature" -> {
+                return MultiNoiseUtil.method_38666(noiseValuePoint.temperatureNoise());
+            }
+            case "humidity" -> {
+                return MultiNoiseUtil.method_38666(noiseValuePoint.humidityNoise());
+            }
+            case "continentalness" -> {
+                return MultiNoiseUtil.method_38666(noiseValuePoint.continentalnessNoise());
+            }
+            case "erosion" -> {
+                return MultiNoiseUtil.method_38666(noiseValuePoint.erosionNoise());
+            }
+            case "weirdness" -> {
+                return MultiNoiseUtil.method_38666(noiseValuePoint.weirdnessNoise());
+            }
+            case "depth" -> {
+                return MultiNoiseUtil.method_38666(noiseValuePoint.depth());
+            }
+            case "shiftX" -> {
+                return x + this.sampleShiftNoise(x, 0, z);
+            }
+            case "shiftY" -> {
+                return y + this.sampleShiftNoise(y, z, x);
+            }
+            case "shiftZ" -> {
+                return z + this.sampleShiftNoise(z, x, 0);
+            }
             case "terrain" -> {
                 return this.terrainNoise.calculateNoise(x, y, z);
             }
@@ -198,27 +211,6 @@ public abstract class NoiseColumnSamplerMixin_scarpetMixin implements NoiseColum
             }
             case "caveCheese" -> {
                 return this.caveCheeseNoise.sample(x, y / 1.5, z);
-            }
-            case "temperature" -> {
-                return this.sampleTemperatureNoise(x, y, z);
-            }
-            case "humidity" -> {
-                return this.sampleHumidityNoise(x, y, z);
-            }
-            case "continentalness" -> {
-                return this.sampleContinentalnessNoise(x, y, z);
-            }
-            case "erosion" -> {
-                return this.sampleErosionNoise(x, y, z);
-            }
-            case "weirdness" -> {
-                return this.sampleWeirdnessNoise(x, y, z);
-            }
-            case "depth" -> {
-                return this.sample(x, y, z).depth() / 10000.0F;
-            }
-            case "shift" -> {
-                return this.sampleShiftNoise(x, y, z);
             }
             case "oreGap" -> {
                 return this.oreGapNoise.sample(x, y, z);
