@@ -6,8 +6,10 @@ import net.minecraft.util.math.noise.DoublePerlinNoiseSampler;
 import net.minecraft.util.math.noise.InterpolatedNoiseSampler;
 import net.minecraft.util.math.noise.SimplexNoiseSampler;
 import net.minecraft.world.biome.source.util.MultiNoiseUtil;
+import net.minecraft.world.biome.source.util.TerrainNoisePoint;
 import net.minecraft.world.gen.NoiseColumnSampler;
 import net.minecraft.world.gen.NoiseHelper;
+import net.minecraft.world.gen.chunk.Blender;
 import net.minecraft.world.gen.chunk.GenerationShapeConfig;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Final;
@@ -103,7 +105,11 @@ public abstract class NoiseColumnSamplerMixin_scarpetMixin implements NoiseColum
         throw new AssertionError();
     }
 
-    @Shadow public abstract MultiNoiseUtil.NoiseValuePoint sample(int i, int j, int k);
+    @Shadow
+    public abstract MultiNoiseUtil.NoiseValuePoint sample(int i, int j, int k);
+
+    @Shadow
+    public abstract TerrainNoisePoint createTerrainNoisePoint(int x, int z, float continentalness, float weirdness, float erosion, Blender blender);
 
     @Override
     public double getNoiseSample(String name, int x, int y, int z) {
@@ -143,7 +149,15 @@ public abstract class NoiseColumnSamplerMixin_scarpetMixin implements NoiseColum
                 return this.islandNoise == null ? 0 : this.islandNoise.sample(x, y, z);
             }
             case "jagged" -> {
-                return this.method_38409(x, y, z);
+                TerrainNoisePoint point = createTerrainNoisePoint(
+                        x,
+                        z,
+                        MultiNoiseUtil.method_38666(noiseValuePoint.continentalnessNoise()),
+                        MultiNoiseUtil.method_38666(noiseValuePoint.weirdnessNoise()),
+                        MultiNoiseUtil.method_38666(noiseValuePoint.erosionNoise()),
+                        Blender.getNoBlending()
+                );
+                return this.method_38409(point.peaks(), x, z);
             }
             case "aquiferBarrier" -> {
                 return this.aquiferBarrierNoise.sample(x, y, z);
@@ -179,7 +193,7 @@ public abstract class NoiseColumnSamplerMixin_scarpetMixin implements NoiseColum
                 return this.spaghetti2dModulatorNoise.sample(x * 2, y, z * 2);
             }
             case "spaghetti2dThickness" -> {
-                return NoiseHelper.lerpFromProgress(this.spaghetti2dThicknessNoise, (double) (x * 2), (double) y, (double) (z * 2), 0.6, 1.3);
+                return NoiseHelper.lerpFromProgress(this.spaghetti2dThicknessNoise, x * 2, y, z * 2, 0.6, 1.3);
             }
             case "spaghetti3d" -> {
                 return this.sampleSpaghetti3dNoise(x, y, z);
