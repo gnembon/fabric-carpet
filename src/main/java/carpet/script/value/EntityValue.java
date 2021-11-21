@@ -1044,7 +1044,7 @@ public class EntityValue extends Value
         });
 
         put("fly_speed", (e, v) -> {
-            Float flySpeed = NumericValue.asNumber(v).getFloat();
+            float flySpeed = NumericValue.asNumber(v).getFloat();
             if (e instanceof ServerPlayerEntity player) {
                 player.getAbilities().setFlySpeed(flySpeed);
                 player.sendAbilitiesUpdate();
@@ -1052,7 +1052,7 @@ public class EntityValue extends Value
         });
 
         put("walk_speed", (e, v) -> {
-            Float walkSpeed = NumericValue.asNumber(v).getFloat();
+            float walkSpeed = NumericValue.asNumber(v).getFloat();
             if (e instanceof ServerPlayerEntity player) {
                 player.getAbilities().setWalkSpeed(walkSpeed);
                 player.sendAbilitiesUpdate();
