@@ -402,27 +402,27 @@ Number indicating remaining entity health, or `null` if not applicable.
 
 ### `query(e, 'may_fly')`
 
-Boolean. Returns the value of player's `mayFly` ability.
+Returns a boolean indicating if the player can fly.
 
 ### `query(e, 'flying')`
 
-Boolean. Returns the value of player's `flying` ability.
+Returns a boolean indicating if the player is flying.
 
 ### `query(e, 'may_build')`
 
-Boolean. Returns the value of player's `mayBuild` ability.
+Returns a boolean indicating if the player is allowed to place blocks.
 
 ### `query(e, 'insta_build')`
 
-Boolean. Returns the value of player's `creativeMode` ability.
+Returns a boolean indicating if the player can place blocks without consuming the item and if the player can shoot arrows without having them in the inventory.
 
 ### `query(e, 'fly_speed')`
 
-Float. Returns the value of player's `flySpeed` ability.
+Returns a number indicating the speed at which the player moves while flying.
 
 ### `query(e, 'walk_speed')`
 
-Float. Returns the value of player's `walkSpeed` ability.
+Returns a number indicating the speed at which the player moves while walking.
 
 ### `query(e, 'hunger')`
 ### `query(e, 'saturation')`
@@ -432,7 +432,7 @@ Retrieves player hunger related information. For non-players, returns `null`.
 
 ### `query(e, 'absorption')`
 
-Gets the absorption of the player (yellow hearts, e.g when having a golden apple.)
+Gets the absorption of the player (yellow hearts, e.g. when having a golden apple.)
 
 ### `query(e,'xp')`
 ### `query(e,'xp_level')`
@@ -444,7 +444,7 @@ Numbers related to player's xp. `xp` is the overall xp player has, `xp_level` is
 
 ### `query(e, 'air')`
 
-Number indicating remaining entity health, or `null` if not applicable.
+Number indicating remaining entity air, or `null` if not applicable.
 
 ### `query(e, 'language')`
 
@@ -719,31 +719,31 @@ it clears all effects.
 
 ### `modify(e, 'may_fly', boolean)`
 
-Sets the value of the player's `mayfly` (The ability of the player to fly) ability to the given boolean value.
+Allows or denies the player the ability to fly. If the player is flying and the ability is removed, the player will stop flying.
 
 ### `modify(e, 'flying', boolean)`
 
-Sets the value of the player's `flying` (If the player is flying or not) ability to the given boolean value.
+Changes the flight status of the player (if it is flying or not).
 
 ### `modify(e, 'may_build', boolean)`
 
-Sets the value of the player's `mayBuild` (The ability of the player to place blocks) ability to the given boolean value.
+Allows or denies the player the ability to place blocks.
 
 ### `modify(e, 'insta_build', boolean)`
 
-Sets the value of the player's `instabuild` (The ability of the player to place blocks without reducing their count in the inventory and shoot with a bow without arrows) ability to the given boolean value.
+Allows or denies the player to place blocks without reducing the item count of the used stack and to shoot arrows without having them in the inventory.
 
 ### `modify(e, 'fly_speed', float)`
 
-Sets the value of the player's `flySpeed` (The speed at which the player moves while flying) ability to the given float value.
+Modifies the value of the speed at which the player moves while flying.
 
 ### `modify(e, 'walk_speed', float)`
 
-Sets the value of the player's `walkSpeed` (The speed at which the player moves while walking) ability to the given float value.
+Modifies the value of the speed at which the player moves while walking.
 
 ### `modify(e, 'selected_slot', int)`
 
-Sets player's selected slot to the one expressed by the `int` value. The `int` must be a number between 0 (first slot of the hotbar) and 8 (last slot of the hotbar).
+Changes player's selected slot.
 
 ### `modify(e, 'home', null), modify(e, 'home', block, distance?), modify(e, 'home', x, y, z, distance?)`
 
