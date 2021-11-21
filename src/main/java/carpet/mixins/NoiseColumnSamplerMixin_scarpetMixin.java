@@ -5,6 +5,7 @@ import carpet.script.exception.InternalExpressionException;
 import net.minecraft.util.math.noise.DoublePerlinNoiseSampler;
 import net.minecraft.util.math.noise.InterpolatedNoiseSampler;
 import net.minecraft.util.math.noise.SimplexNoiseSampler;
+import net.minecraft.world.biome.source.BiomeCoords;
 import net.minecraft.world.biome.source.util.MultiNoiseUtil;
 import net.minecraft.world.biome.source.util.TerrainNoisePoint;
 import net.minecraft.world.gen.NoiseColumnSampler;
@@ -171,9 +172,6 @@ public abstract class NoiseColumnSamplerMixin_scarpetMixin implements NoiseColum
             case "aquiferLava" -> {
                 return this.aquiferLavaNoise.sample(x, y, z);
             }
-            case "caveLayer" -> {
-                return this.sampleCaveLayerNoise(x, y, z);
-            }
             case "pillar" -> {
                 return this.samplePillarNoise(x, y, z);
             }
@@ -223,8 +221,20 @@ public abstract class NoiseColumnSamplerMixin_scarpetMixin implements NoiseColum
             case "caveEntrance" -> {
                 return this.sampleCaveEntranceNoise(x, y, z);
             }
+            case "caveLayer" -> {
+                return this.sampleCaveLayerNoise(
+                        BiomeCoords.toBlock(x),
+                        BiomeCoords.toBlock(y),
+                        BiomeCoords.toBlock(z)
+                );
+            }
             case "caveCheese" -> {
-                return this.caveCheeseNoise.sample(x, y / 1.5, z);
+                // scaling them by 4 because its sampled in normal coords (?)
+                return this.caveCheeseNoise.sample(
+                        BiomeCoords.toBlock(x),
+                        BiomeCoords.toBlock(y) / 1.5,
+                        BiomeCoords.toBlock(z)
+                );
             }
             case "oreGap" -> {
                 return this.oreGapNoise.sample(x, y, z);
