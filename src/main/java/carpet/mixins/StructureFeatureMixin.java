@@ -3,8 +3,9 @@ package carpet.mixins;
 import carpet.CarpetSettings;
 import carpet.fakes.StructureFeatureInterface;
 import com.google.common.collect.ImmutableMultimap;
-import net.minecraft.class_6834;
+//import net.minecraft.class_6834;
 import net.minecraft.server.world.ServerWorld;
+import net.minecraft.structure.StructureGeneratorFactory;
 import net.minecraft.structure.StructurePiecesCollector;
 import net.minecraft.structure.StructurePiecesGenerator;
 import net.minecraft.structure.StructureStart;
@@ -54,7 +55,9 @@ public abstract class StructureFeatureMixin<C extends FeatureConfig> implements 
 
     //@Shadow @Final private StructurePiecesGenerator<C> piecesGenerator;
 
-    @Shadow @Final private class_6834<C> piecesGenerator;
+    //@Shadow @Final private class_6834<C> piecesGenerator;
+
+    @Shadow @Final private StructureGeneratorFactory<C> piecesGenerator;
 
     @Override
     public boolean plopAnywhere(ServerWorld world, BlockPos pos, ChunkGenerator generator, boolean wireOnly, Biome biome, C config)
@@ -142,7 +145,7 @@ public abstract class StructureFeatureMixin<C extends FeatureConfig> implements 
 
         //if (config == null)
         //    config = (C) new DefaultFeatureConfig();
-        Optional<StructurePiecesGenerator<C>> optional = piecesGenerator.createGenerator(new class_6834.class_6835<C>(generator, generator.getBiomeSource(), worldIn.getSeed(), chunkpos, config, worldIn, b -> true, worldIn.getStructureManager(), worldIn.getRegistryManager()));
+        Optional<StructurePiecesGenerator<C>> optional = piecesGenerator.createGenerator(new StructureGeneratorFactory.Context<>(generator, generator.getBiomeSource(), worldIn.getSeed(), chunkpos, config, worldIn, b -> true, worldIn.getStructureManager(), worldIn.getRegistryManager()));
         if (optional.isEmpty()) return (StructureStart<C>) StructureStart.DEFAULT;
         StructurePiecesCollector lv = new StructurePiecesCollector();
         optional.get().generatePieces(lv, new StructurePiecesGenerator.Context<C>(config, generator, worldIn.getStructureManager(), chunkpos, worldIn, Util.make(new ChunkRandom(new AtomicSimpleRandom(RandomSeed.getSeed())), (chunkRandomx) -> {
