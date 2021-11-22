@@ -185,7 +185,7 @@ public abstract class NoiseColumnSamplerMixin_scarpetMixin implements NoiseColum
                 return this.sampleSpaghetti2dNoise(x, y, z);
             }
             case "spaghetti2dElevation" -> {
-                return NoiseHelper.lerpFromProgress(this.spaghetti2dElevationNoise, x, 0.0, z, this.config.method_39548(), 8.0);
+                return NoiseHelper.lerpFromProgress(this.spaghetti2dElevationNoise, x, 0.0, z, this.config.minimumBlockY(), 8.0);
             }
             case "spaghetti2dModulator" -> {
                 return this.spaghetti2dModulatorNoise.sample(x * 2, y, z * 2);
