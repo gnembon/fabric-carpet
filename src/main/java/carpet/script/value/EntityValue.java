@@ -991,7 +991,7 @@ public class EntityValue extends Value
 
     private static final Map<String, BiConsumer<Entity, Value>> featureModifiers = new HashMap<String, BiConsumer<Entity, Value>>() {{
         put("remove", (entity, value) -> entity.discard()); // using discard here - will see other options if valid
-        put("age", (e, v) -> e.age = Math.abs((int)NumericValue.asNumber(v).getLong()));
+        put("age", (e, v) -> e.age = Math.abs((int)NumericValue.asNumber(v).getLong()) );
         put("health", (e, v) -> {
             float health = (float) NumericValue.asNumber(v).getDouble();
             if (health <= 0f && e instanceof ServerPlayerEntity player)
