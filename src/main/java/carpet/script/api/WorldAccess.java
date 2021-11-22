@@ -362,7 +362,7 @@ public class WorldAccess {
             }
             String poiTypeString = poi.getString().toLowerCase(Locale.ROOT);
             PointOfInterestType type =  Registry.POINT_OF_INTEREST_TYPE.getOrEmpty(InputValidator.identifierOf(poiTypeString))
-                    .orElseThrow(() -> new ThrowStatement(poiTypeString, Throwables.UNKNOWN_POI));
+                        .orElseThrow(() -> new ThrowStatement(poiTypeString, Throwables.UNKNOWN_POI));
             int occupancy = 0;
             if (locator.offset + 1 < lv.size())
             {
@@ -497,6 +497,7 @@ public class WorldAccess {
 
         /*this.expr.addContextFunction("opacity", -1, (c, t, lv) ->
                 genericStateTest(c, "opacity", lv, (s, p, w) -> new NumericValue(s.getOpacity(w, p))));
+
         this.expr.addContextFunction("blocks_daylight", -1, (c, t, lv) ->
                 genericStateTest(c, "blocks_daylight", lv, (s, p, w) -> new NumericValue(s.propagatesSkylightDown(w, p))));*/ // investigate
 
@@ -1192,15 +1193,19 @@ public class WorldAccess {
 
             BlockArgument locator = BlockArgument.findIn(cc, lv, 0, false, false, true);
 
-            if (locator.replacement != null) {
+            if (locator.replacement != null)
+            {
                 biome = world.getRegistryManager().get(Registry.BIOME_KEY).get(InputValidator.identifierOf(locator.replacement));
                 if (biome == null) throw new ThrowStatement(locator.replacement, Throwables.UNKNOWN_BIOME);
-            } else {
+            }
+            else
+            {
                 BlockPos pos = locator.block.getPos();
                 biome = world.getBiome(pos);
             }
             // in locatebiome
-            if (locator.offset == lv.size()) {
+            if (locator.offset == lv.size())
+            {
                 Identifier biomeId = cc.s.getServer().getRegistryManager().get(Registry.BIOME_KEY).getId(biome);
                 return new StringValue(NBTSerializableValue.nameFromRegistryId(biomeId));
             }
@@ -1220,7 +1225,7 @@ public class WorldAccess {
             String biomeName = lv.get(locator.offset+0).getString();
             // from locatebiome command code
             Biome biome = cc.s.getServer().getRegistryManager().get(Registry.BIOME_KEY).getOrEmpty(InputValidator.identifierOf(biomeName))
-                    .orElseThrow(() -> new ThrowStatement(biomeName, Throwables.UNKNOWN_BIOME));
+                .orElseThrow(() -> new ThrowStatement(biomeName, Throwables.UNKNOWN_BIOME));
             boolean doImmediateUpdate = true;
             if (lv.size() > locator.offset+1)
             {
