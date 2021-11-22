@@ -132,6 +132,7 @@
 
     "ServerPlayNetworkHandler_antiCheatDisabledMixin",
     "PlayerEntity_antiCheatDisabled",
+
     "ServerPlayerInteractionManager_antiCheatMixin",
 
     "HopperBlockEntityMixin",
@@ -163,6 +164,7 @@
     "DispenserBlock_qcMixin",
 
     "PickaxeItem_missingToolsMixin",
+
     "ItemDispenserBehaviour_extremeBehavioursMixin",
     "ItemScatterer_extremeMixin",
     "FishingBobberEntity_extremeMixin",
@@ -203,6 +205,7 @@
     "StatePredicate_scarpetMixin",
     "TagPredicate_scarpetMixin",
     "HorseBaseEntity_scarpetMixin",
+
     "BlockEntity_movableBEMixin",
     "PistonBlock_movableTEMixin",
     "PistonBlockEntity_movableTEMixin",
