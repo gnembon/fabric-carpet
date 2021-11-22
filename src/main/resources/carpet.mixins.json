@@ -66,7 +66,7 @@
     "EntityTrackerEntry_leashFixMixin",
 
     "VillagerEntity_aiMixin",
-    "BrainMixin",
+    "Brain_Mixin",
     "Memory_scarpetMixin",
 
     "PlayerEntity_fakePlayersMixin",
@@ -132,7 +132,7 @@
 
     "ServerPlayNetworkHandler_antiCheatDisabledMixin",
     "PlayerEntity_antiCheatDisabled",
-    "ServerPlayerInteractionManager_antiCheatDisabledMixin",
+    "ServerPlayerInteractionManager_antiCheatMixin",
 
     "HopperBlockEntityMixin",
     "ContainerMixin",
@@ -163,8 +163,7 @@
     "DispenserBlock_qcMixin",
 
     "PickaxeItem_missingToolsMixin",
-
-    "ItemDispenserBehaviour_extremeMixin",
+    "ItemDispenserBehaviour_extremeBehavioursMixin",
     "ItemScatterer_extremeMixin",
     "FishingBobberEntity_extremeMixin",
     "SkeletonHorseTrapTriggerGoal_extremeMixin",
@@ -204,8 +203,7 @@
     "StatePredicate_scarpetMixin",
     "TagPredicate_scarpetMixin",
     "HorseBaseEntity_scarpetMixin",
-
-    "BlockEntity_movableTEMixin",
+    "BlockEntity_movableBEMixin",
     "PistonBlock_movableTEMixin",
     "PistonBlockEntity_movableTEMixin",
     "World_movableTEMixin",
@@ -234,7 +232,7 @@
     "InGameHudMixin",
     "PlayerListHudMixin",
     "PistonBlockEntityRenderer_movableTEMixin",
-    "StructureBlockBlockEntityRendererMixin",
+    "StructureBlockBlockEntityRenderer_mixin",
     "ClientPlayerEntity_clientCommandMixin",
     "WorldRenderer_fogOffMixin",
     "WorldRenderer_creativeNoClipMixin",
