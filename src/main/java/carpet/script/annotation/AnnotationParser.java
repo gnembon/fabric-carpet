@@ -1,17 +1,5 @@
 package carpet.script.annotation;
 
-import carpet.CarpetExtension;
-import carpet.script.Context;
-import carpet.script.Expression;
-import carpet.script.Fluff.AbstractLazyFunction;
-import carpet.script.Fluff.TriFunction;
-import carpet.script.LazyValue;
-import carpet.script.exception.InternalExpressionException;
-import carpet.script.value.Value;
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import org.apache.commons.lang3.ArrayUtils;
-import org.apache.commons.lang3.ClassUtils;
-
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Array;
@@ -24,6 +12,19 @@ import java.util.ListIterator;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
+
+import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.ClassUtils;
+
+import carpet.CarpetExtension;
+import carpet.script.Context;
+import carpet.script.Expression;
+import carpet.script.Fluff.AbstractLazyFunction;
+import carpet.script.Fluff.TriFunction;
+import carpet.script.exception.InternalExpressionException;
+import carpet.script.LazyValue;
+import carpet.script.value.Value;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
 /**
  * <p>This class parses methods annotated with the {@link ScarpetFunction} annotation in a given {@link Class}, generating

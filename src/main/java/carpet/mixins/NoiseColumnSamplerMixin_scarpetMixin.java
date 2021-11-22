@@ -115,6 +115,14 @@ public abstract class NoiseColumnSamplerMixin_scarpetMixin implements NoiseColum
     @Override
     public double getNoiseSample(String name, int x, int y, int z) {
         MultiNoiseUtil.NoiseValuePoint noiseValuePoint = this.sample(x, y, z);
+        TerrainNoisePoint terrainNoisePoint = createTerrainNoisePoint(
+                x,
+                z,
+                MultiNoiseUtil.method_38666(noiseValuePoint.continentalnessNoise()),
+                MultiNoiseUtil.method_38666(noiseValuePoint.weirdnessNoise()),
+                MultiNoiseUtil.method_38666(noiseValuePoint.erosionNoise()),
+                Blender.getNoBlending()
+        );
         switch (name) {
             case "temperature" -> {
                 return MultiNoiseUtil.method_38666(noiseValuePoint.temperatureNoise());
@@ -150,15 +158,7 @@ public abstract class NoiseColumnSamplerMixin_scarpetMixin implements NoiseColum
                 return this.islandNoise == null ? 0 : this.islandNoise.sample(x, y, z);
             }
             case "jagged" -> {
-                TerrainNoisePoint point = createTerrainNoisePoint(
-                        x,
-                        z,
-                        MultiNoiseUtil.method_38666(noiseValuePoint.continentalnessNoise()),
-                        MultiNoiseUtil.method_38666(noiseValuePoint.weirdnessNoise()),
-                        MultiNoiseUtil.method_38666(noiseValuePoint.erosionNoise()),
-                        Blender.getNoBlending()
-                );
-                return this.method_38409(point.peaks(), x, z);
+                return this.method_38409(terrainNoisePoint.peaks(), x, z);
             }
             case "aquiferBarrier" -> {
                 return this.aquiferBarrierNoise.sample(x, y, z);
@@ -235,6 +235,15 @@ public abstract class NoiseColumnSamplerMixin_scarpetMixin implements NoiseColum
                         BiomeCoords.toBlock(y) / 1.5,
                         BiomeCoords.toBlock(z)
                 );
+            }
+            case "terrainPeaks" -> {
+                return terrainNoisePoint.peaks();
+            }
+            case "terrainOffset" -> {
+                return terrainNoisePoint.offset();
+            }
+            case "terrainFactor" -> {
+                return terrainNoisePoint.factor();
             }
             case "oreGap" -> {
                 return this.oreGapNoise.sample(x, y, z);
