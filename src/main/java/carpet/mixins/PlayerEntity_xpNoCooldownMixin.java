@@ -16,17 +16,10 @@ public abstract class PlayerEntity_xpNoCooldownMixin {
     @Shadow
     protected abstract void collideWithEntity(Entity entity);
 
-    @Redirect(
-            method = "tickMovement",
-            at = @At(
-                    value = "INVOKE",
-                    target = "java/util/List.add(Ljava/lang/Object;)Z"
-            )
-    )
+    @Redirect(method = "tickMovement",at = @At(value = "INVOKE", target = "java/util/List.add(Ljava/lang/Object;)Z"))
     public boolean processXpOrbCollisions(List<Entity> instance, Object e) {
         Entity entity = (Entity) e;
-        // 431 and 17 have no special meaning, just random numbers
-        if (CarpetSettings.xpNoCooldown && (entity.getId() % 17 == 0 || entity.age % 431 == 0)) {
+        if (CarpetSettings.xpNoCooldown) {
             this.collideWithEntity(entity);
             return true;
         }
