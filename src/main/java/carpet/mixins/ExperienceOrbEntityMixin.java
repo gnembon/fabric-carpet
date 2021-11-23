@@ -31,7 +31,7 @@ public abstract class ExperienceOrbEntityMixin {
                     target = "net/minecraft/entity/ExperienceOrbEntity.pickingCount:I"
             )
     )
-    void addXP(PlayerEntity player, CallbackInfo ci) {
+    private void addXP(PlayerEntity player, CallbackInfo ci) {
         if (CarpetSettings.xpNoCooldown) {
             int remainder;
             while (this.pickingCount > 0) {
