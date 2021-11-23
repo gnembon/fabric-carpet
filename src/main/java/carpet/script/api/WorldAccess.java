@@ -17,6 +17,7 @@ import carpet.script.Context;
 import carpet.script.Expression;
 import carpet.script.Fluff;
 import carpet.script.LazyValue;
+import carpet.script.annotation.Locator;
 import carpet.script.annotation.ScarpetFunction;
 import carpet.script.argument.BlockArgument;
 import carpet.script.argument.Vector3Argument;
@@ -1570,10 +1571,10 @@ public class WorldAccess {
     }
 
     @ScarpetFunction(maxParams = -1)
-    public Value query_noise(Context c, int x, int y, int z, String... noiseQueries) {
-        int mappedX = BiomeCoords.fromBlock(x);
-        int mappedY = BiomeCoords.fromBlock(y);
-        int mappedZ = BiomeCoords.fromBlock(z);
+    public Value query_noise(Context c, @Locator.Block BlockPos pos, String... noiseQueries) {
+        int mappedX = BiomeCoords.fromBlock(pos.getX());
+        int mappedY = BiomeCoords.fromBlock(pos.getY());
+        int mappedZ = BiomeCoords.fromBlock(pos.getZ());
         MultiNoiseUtil.MultiNoiseSampler mns = ((CarpetContext) c).s.getWorld().getChunkManager().getChunkGenerator().getMultiNoiseSampler();
         Map<Value, Value> ret = new HashMap<>();
 
