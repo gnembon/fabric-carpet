@@ -400,6 +400,30 @@ query(p,'effect','resistance')  => null
 
 Number indicating remaining entity health, or `null` if not applicable.
 
+### `query(e, 'may_fly')`
+
+Returns a boolean indicating if the player can fly.
+
+### `query(e, 'flying')`
+
+Returns a boolean indicating if the player is flying.
+
+### `query(e, 'may_build')`
+
+Returns a boolean indicating if the player is allowed to place blocks.
+
+### `query(e, 'insta_build')`
+
+Returns a boolean indicating if the player can place blocks without consuming the item and if the player can shoot arrows without having them in the inventory.
+
+### `query(e, 'fly_speed')`
+
+Returns a number indicating the speed at which the player moves while flying.
+
+### `query(e, 'walk_speed')`
+
+Returns a number indicating the speed at which the player moves while walking.
+
 ### `query(e, 'hunger')`
 ### `query(e, 'saturation')`
 ### `query(e, 'exhaustion')`
@@ -408,7 +432,7 @@ Retrieves player hunger related information. For non-players, returns `null`.
 
 ### `query(e, 'absorption')`
 
-Gets the absorption of the player (yellow hearts, e.g when having a golden apple.)
+Gets the absorption of the player (yellow hearts, e.g. when having a golden apple.)
 
 ### `query(e,'xp')`
 ### `query(e,'xp_level')`
@@ -420,7 +444,7 @@ Numbers related to player's xp. `xp` is the overall xp player has, `xp_level` is
 
 ### `query(e, 'air')`
 
-Number indicating remaining entity health, or `null` if not applicable.
+Number indicating remaining entity air, or `null` if not applicable.
 
 ### `query(e, 'language')`
 
@@ -692,6 +716,34 @@ players, since they are controlled client side.
 Applies status effect to the living entity. Takes several optional parameters, which default to `0`, `true`, 
 `true` and `false`. If no duration is specified, or if it's null or 0, the effect is removed. If name is not specified,
 it clears all effects.
+
+### `modify(e, 'may_fly', boolean)`
+
+Allows or denies the player the ability to fly. If the player is flying and the ability is removed, the player will stop flying.
+
+### `modify(e, 'flying', boolean)`
+
+Changes the flight status of the player (if it is flying or not).
+
+### `modify(e, 'may_build', boolean)`
+
+Allows or denies the player the ability to place blocks.
+
+### `modify(e, 'insta_build', boolean)`
+
+Allows or denies the player to place blocks without reducing the item count of the used stack and to shoot arrows without having them in the inventory.
+
+### `modify(e, 'fly_speed', float)`
+
+Modifies the value of the speed at which the player moves while flying.
+
+### `modify(e, 'walk_speed', float)`
+
+Modifies the value of the speed at which the player moves while walking.
+
+### `modify(e, 'selected_slot', int)`
+
+Changes player's selected slot.
 
 ### `modify(e, 'home', null), modify(e, 'home', block, distance?), modify(e, 'home', x, y, z, distance?)`
 

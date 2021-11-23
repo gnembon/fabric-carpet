@@ -28,7 +28,7 @@ __config() -> {
         'pointing'->{'type'->'term','suggest'->['up','down']},
         'hollow'->{'type'->'term','suggest'->['hollow','solid']},
     },
-    'scope'->'global'//todo decide whether it rly needs to be global or not...
+    'scope'->'global
 };
 
 _block_matches(existing, block_predicate) ->
@@ -44,7 +44,7 @@ _block_matches(existing, block_predicate) ->
 draw(what, args, block, replacement)->(//custom setter cos it's easier
     positions = call(what,args); //returning blocks to be set
 
-    affected = 0
+    affected = 0;
 
     for(positions,
         existing = block(_);
@@ -52,5 +52,5 @@ draw(what, args, block, replacement)->(//custom setter cos it's easier
             affected += bool(set(existing,block))
         )
     );
-    print(player,format('gi Filled ' + affected + ' blocks'));
+    print(format('gi Filled ' + affected + ' blocks'));
 );
