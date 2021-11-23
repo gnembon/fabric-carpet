@@ -5,7 +5,6 @@ import java.math.RoundingMode;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 
 import carpet.logging.logHelpers.ExplosionLogHelper;
@@ -13,6 +12,7 @@ import carpet.mixins.ExplosionAccessor;
 import carpet.CarpetSettings;
 import carpet.utils.Messenger;
 import it.unimi.dsi.fastutil.objects.Object2DoubleOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import net.minecraft.block.BlockState;
@@ -58,8 +58,8 @@ public class OptimizedExplosion
     // masa's optimizations
     private static Object2DoubleOpenHashMap<Pair<Vec3d, Box>> densityCache = new Object2DoubleOpenHashMap<>();
     private static MutablePair<Vec3d, Box> pairMutable = new MutablePair<>();
-    private static HashMap<BlockPos.Mutable, Float> blastResCache = new HashMap<>();
-    private static HashMap<BlockPos.Mutable, BlockState> blockStateCache = new HashMap<>();
+    private static Object2ObjectOpenHashMap<BlockPos, BlockState> stateCache = new Object2ObjectOpenHashMap<>();
+    private static Object2ObjectOpenHashMap<BlockPos, FluidState> fluidCache = new Object2ObjectOpenHashMap<>();
     private static BlockPos.Mutable posMutable = new BlockPos.Mutable(0, 0, 0);
     private static ObjectOpenHashSet<BlockPos> affectedBlockPositionsSet = new ObjectOpenHashSet<>();
     private static boolean firstRay;
@@ -86,8 +86,8 @@ public class OptimizedExplosion
             getAffectedPositionsOnPlaneX(e, 15,  1, 14,  0, 15); // east
             getAffectedPositionsOnPlaneZ(e,  0,  1, 14,  1, 14); // north
             getAffectedPositionsOnPlaneZ(e, 15,  1, 14,  1, 14); // south
-            blastResCache.clear();
-            blockStateCache.clear();
+            stateCache.clear();
+            fluidCache.clear();
 
             e.getAffectedBlocks().addAll(affectedBlockPositionsSet);
             affectedBlockPositionsSet.clear();
@@ -446,7 +446,6 @@ public class OptimizedExplosion
         double xInc = (xRel / len) * 0.3;
         double yInc = (yRel / len) * 0.3;
         double zInc = (zRel / len) * 0.3;
-        World world = eAccess.getWorld();
         float rand = eAccess.getWorld().random.nextFloat();
         float sizeRand = (CarpetSettings.tntRandomRange >= 0 ? (float) CarpetSettings.tntRandomRange : rand);
         float size = eAccess.getPower() * (0.7F + sizeRand * 0.6F);
@@ -458,44 +457,38 @@ public class OptimizedExplosion
         {
             posMutable.set(posX, posY, posZ);
 
+            // Don't query already cached positions again from the world
+            BlockState state = stateCache.get(posMutable);
+            FluidState fluid = fluidCache.get(posMutable);
             BlockPos posImmutable = null;
 
-            // Don't query already cached positions again from the world
-            if (!blastResCache.containsKey(posMutable))
+            if (state == null)
             {
                 posImmutable = posMutable.toImmutable();
-                BlockState state = world.getBlockState(posImmutable);
-                Float resistance = null;
-                if (!state.isAir())
-                {
-                    FluidState fluid = world.getFluidState(posImmutable);
-                    resistance = Math.max(state.getBlock().getBlastResistance(), fluid.getBlastResistance());
-                    if (eAccess.getEntity() != null)
-                    {
-                        resistance = eAccess.getEntity().getEffectiveExplosionResistance(e, world, posMutable, state, fluid, resistance);
-                    }
-                }
-                blockStateCache.put(posMutable, state);
-                blastResCache.put(posMutable, resistance);
+                state = eAccess.getWorld().getBlockState(posImmutable);
+                stateCache.put(posImmutable, state);
+                fluid = eAccess.getWorld().getFluidState(posImmutable);
+                fluidCache.put(posImmutable, fluid);
             }
 
-            Float blastRes = blastResCache.get(posMutable);
-            BlockState state = blockStateCache.get(posMutable);
-
-            if(blastRes != null)
+            if (state.getMaterial() != Material.AIR)
             {
-                size -= (blastRes + 0.3F) * 0.3F;
-                if (size > 0.0F)
+                float resistance = Math.max(state.getBlock().getBlastResistance(), fluid.getBlastResistance());
+
+                if (eAccess.getEntity() != null)
                 {
-                    if ((eAccess.getEntity() == null || eAccess.getEntity().canExplosionDestroyBlock(e, eAccess.getWorld(), posMutable, state, size)))
-                    {
-                        affectedBlockPositionsSet.add(posImmutable != null ? posImmutable : posMutable.toImmutable());
-                        blastResCache.put(posMutable, null);
-                        blockStateCache.remove(posMutable);
-                    }
+                    resistance = eAccess.getEntity().getEffectiveExplosionResistance(e, eAccess.getWorld(), posMutable, state, fluid, resistance);
                 }
+
+                size -= (resistance + 0.3F) * 0.3F;
             }
-            if (firstRay)
+
+            if (size > 0.0F)
+            {
+                if ((eAccess.getEntity() == null || eAccess.getEntity().canExplosionDestroyBlock(e, eAccess.getWorld(), posMutable, state, size)))
+                    affectedBlockPositionsSet.add(posImmutable != null ? posImmutable : posMutable.toImmutable());
+            }
+            else if (firstRay)
             {
                 rayCalcDone = true;
                 return true;
