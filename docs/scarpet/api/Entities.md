@@ -584,8 +584,7 @@ type objects via `get, put, has, delete`, so try to use API calls first for that
 
 ## Entity Modification
 
-Like with entity querying, entity modifications happen through one function. Most position and movements modifications 
-don't work currently on players as their position is controlled by clients. 
+Like with entity querying, entity modifications happen through one function.
 
 ### `modify(e, 'remove')`
 
