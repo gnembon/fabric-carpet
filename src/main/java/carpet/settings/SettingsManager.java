@@ -72,6 +72,7 @@ public class SettingsManager
      * correctly react to changes.
      */
     public boolean locked;
+    private String carpetCommandPermissionLevel = "ops";
     private final String version;
     private final String identifier;
     private final String fancyName;
@@ -442,6 +443,12 @@ public class SettingsManager
                 String[] fields = line.split("\\s+",2);
                 if (fields.length > 1)
                 {
+                    if (fields[0].equals("carpetCommandPermissionLevel"))
+                    {
+                        carpetCommandPermissionLevel = fields[1];
+                        continue;
+                    }
+
                     if (!rules.containsKey(fields[0]))
                     {
                         CarpetSettings.LOG.error("[CM]: "+fancyName+" Setting " + fields[0] + " is not a valid - ignoring...");
@@ -588,7 +595,7 @@ public class SettingsManager
         }
 
         LiteralArgumentBuilder<ServerCommandSource> literalargumentbuilder = literal(identifier).requires((player) ->
-                player.hasPermissionLevel(2) && !locked);
+                canUseCommand(player, carpetCommandPermissionLevel) && !locked);
 
         literalargumentbuilder.executes((context)-> listAllSettings(context.getSource())).
                 then(literal("list").
