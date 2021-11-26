@@ -420,7 +420,7 @@ Numbers related to player's xp. `xp` is the overall xp player has, `xp_level` is
 
 ### `query(e, 'air')`
 
-Number indicating remaining entity health, or `null` if not applicable.
+Number indicating remaining entity air, or `null` if not applicable.
 
 ### `query(e, 'language')`
 
