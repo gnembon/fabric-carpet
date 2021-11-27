@@ -683,6 +683,7 @@ public class Auxiliary {
         expression.addContextFunction("game_tick", -1, (c, t, lv) -> {
             CarpetContext cc = (CarpetContext)c;
             ServerCommandSource s = cc.s;
+            if (CarpetServer.scriptServer == null) return Value.NULL;
             if (!s.getServer().isOnThread()) throw new InternalExpressionException("Unable to run ticks from threads");
             if (CarpetServer.scriptServer.tickDepth > 16) throw new InternalExpressionException("'game_tick' function caused other 'game_tick' functions to run. You should not allow that.");
             try
@@ -710,9 +711,10 @@ public class Auxiliary {
             }
             finally
             {
-                CarpetServer.scriptServer.tickDepth --;
+                if (CarpetServer.scriptServer != null)
+                    CarpetServer.scriptServer.tickDepth --;
             }
-            if(CarpetServer.scriptServer.stopAll)
+            if(CarpetServer.scriptServer != null && CarpetServer.scriptServer.stopAll)
                 throw new ExitStatement(Value.NULL);
             return Value.TRUE;
         });
