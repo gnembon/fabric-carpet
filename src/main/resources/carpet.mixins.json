@@ -70,7 +70,6 @@
     "Memory_scarpetMixin",
 
     "PlayerEntity_fakePlayersMixin",
-    "ServerWorld_fakePlayersMixin",
     "ThrownEnderpearlEntity_fakePlayersMixin",
 
     "ServerPlayNetworkHandler_coreMixin",
@@ -81,7 +80,6 @@
     "ExperienceOrbEntityMixin",
     "PlayerActionC2SPacketMixin",
     "ServerPlayerEntityMixin",
-    "ClientSettingsC2SPacket_scarpetMixin",
     "PlayerManager_coreMixin",
     "PlayerManager_fakePlayersMixin",
     "RedstoneWireBlockMixin",
