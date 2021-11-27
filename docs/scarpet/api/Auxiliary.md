@@ -605,7 +605,7 @@ Throws `unknown_dimension` if provided dimension can't be found.
  
 ### `view_distance()`
 
-_**Deprecated**. Use `system_info('server_view_distance')` instead._
+_**Deprecated**. Use `system_info('game_view_distance')` instead._
 
 Returns the view distance of the server.
 
