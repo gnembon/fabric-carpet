@@ -202,11 +202,13 @@ List of entities riding the entity.
 
 Entity that `e` rides.
 
-###  `query(e, 'scoreboard_tags')`, `query(e, 'tags')`(deprecated)
+### `query(e, 'scoreboard_tags')` and 
+### `query(e, 'tags')`(deprecated)
 
 List of entity's scoreboard tags.
 
-### `query(e, 'has_scoreboard_tag',tag)`, `query(e, 'has_tag',tag)`(deprecated)
+### `query(e, 'has_scoreboard_tag',tag)` and
+### `query(e, 'has_tag',tag)`(deprecated)
 
 Boolean, true if the entity is marked with a `tag` scoreboad tag.
 
