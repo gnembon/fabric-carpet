@@ -22,24 +22,16 @@ public abstract class ExperienceOrbEntityMixin {
     @Shadow
     protected abstract int repairPlayerGears(PlayerEntity player, int amount);
 
-    @Inject(
-            method = "onPlayerCollision",
-            at = @At(
-                    value = "FIELD",
-                    opcode = Opcodes.PUTFIELD,
-                    shift = At.Shift.AFTER,
-                    target = "net/minecraft/entity/ExperienceOrbEntity.pickingCount:I"
-            )
-    )
+    @Inject(method = "onPlayerCollision", at = @At("HEAD"))
     private void addXP(PlayerEntity player, CallbackInfo ci) {
         if (CarpetSettings.xpNoCooldown) {
-            int remainder;
-            while (this.pickingCount > 0) {
-                remainder = this.repairPlayerGears(player, this.amount);
+            player.experiencePickUpDelay = 0;
+            // reducing to 1 and leaving vanilla to deal with it
+            while (this.pickingCount > 1) {
+                int remainder = this.repairPlayerGears(player, this.amount);
                 if (remainder > 0) {
                     player.addExperience(remainder);
                 }
-                player.experiencePickUpDelay = 0;
                 this.pickingCount--;
             }
         }
