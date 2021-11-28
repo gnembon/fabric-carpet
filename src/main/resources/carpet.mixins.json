@@ -102,6 +102,7 @@
     "ChunkRegion_scarpetPlopMixin",
     "StructurePiece_scarpetPlopMixin",
     "PlacedFeature_scarpetMixin",
+    "StructureGeneratorFactory_plopMixin",
 
     "ServerPlayNetworkHandler_scarpetEventsMixin",
     "ServerPlayerInteractionManager_scarpetEventsMixin",
