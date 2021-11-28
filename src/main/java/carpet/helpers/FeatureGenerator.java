@@ -18,9 +18,12 @@ import net.minecraft.util.math.ChunkPos;
 import net.minecraft.util.math.intprovider.ConstantIntProvider;
 import net.minecraft.util.registry.Registry;
 import net.minecraft.util.registry.RegistryKey;
+import net.minecraft.world.StructurePresence;
 import net.minecraft.world.biome.Biome;
 import net.minecraft.world.biome.BiomeKeys;
 import net.minecraft.world.biome.BuiltinBiomes;
+import net.minecraft.world.gen.StructureAccessor;
+import net.minecraft.world.gen.chunk.StructuresConfig;
 import net.minecraft.world.gen.decorator.PlacementModifier;
 import net.minecraft.world.gen.feature.PlacedFeature;
 import net.minecraft.world.gen.feature.size.TwoLayersFeatureSize;
@@ -206,44 +209,44 @@ public class FeatureGenerator
     {
         long seed = world.getSeed();
         ChunkGenerator generator = world.getChunkManager().getChunkGenerator();
-        StructureConfig params = generator.getStructuresConfig().getForType(structure);
-        ChunkRandom chunkRandom = new ChunkRandom(new AtomicSimpleRandom(RandomSeed.getSeed()));
+        StructuresConfig settings = generator.getStructuresConfig();
+        StructureConfig structureConfig = generator.getStructuresConfig().getForType(structure);
+        var structures = settings.getConfiguredStructureFeature(structure);
+        if (structureConfig == null || structures.isEmpty()) {
+            return null;
+        }
         ChunkPos chunkPos = new ChunkPos(pos);
-        Biome biome = world.getBiome(new BlockPos(chunkPos.getStartX() + 9, 0, chunkPos.getStartZ() + 9));
+        Biome biome = world.getBiome(pos);
+        var biomeRegistry = world.getRegistryManager().get(Registry.BIOME_KEY);
+        if (structures.values().stream().noneMatch(biomeKey -> biomeRegistry.get(biomeKey) == biome))
+        {
+            return null;
+        }
+        ChunkPos chunkPos1 = structure.getStartChunk(structureConfig, seed, chunkPos.x, chunkPos.z);
+        if (!chunkPos1.equals(chunkPos))
+        {
+            return null;
+        }
+        StructureAccessor structureManager = world.getStructureAccessor();
+        StructurePresence isThere =  structureManager.getStructurePresence(chunkPos, structure, false);
+        if (isThere == StructurePresence.START_NOT_PRESENT)
+        {
+            return null;
+        }
+        // gen - we want to avoig, right?
+        //Chunk chunk = world.getChunk(chunkPos.x, chunkPos.z, ChunkStatus.STRUCTURE_STARTS);
+        //StructureStart<?> start =  structureManager.getStructureStart(ChunkSectionPos.from(chunk), structure, chunk);
+        //if (start != null && start.hasChildren())
+        //{
+        if (!computeBox) return StructureStart.DEFAULT;
         ConfiguredStructureFeature<?, ?> configuredFeature = getDefaultFeature(structure, world, pos, false);
         if (configuredFeature == null || configuredFeature.config == null) return null;
-        var definedStructures = generator.getStructuresConfig().getConfiguredStructureFeature(structure);
-        var biomeConfig = definedStructures.get(configuredFeature);
-        var biomeRegistry = world.getRegistryManager().get(Registry.BIOME_KEY);
-        StructureConfig structureConfig = generator.getStructuresConfig().getForType(StructureFeature.STRONGHOLD);
-        synchronized (boo)
-        {
-            StructureStart start = configuredFeature.tryPlaceStart(world.getRegistryManager(), generator, generator.getBiomeSource(),
-                    world.getStructureManager(), world.getSeed(), chunkPos, 0, structureConfig, world, (b) -> biomeRegistry.getKey(b).filter(biomeConfig::contains).isPresent());
-            if (start != null && start.hasChildren())
-                return start;
-        }
-
-        /*ChunkPos chunkPos2 = structure.getStartChunk(params, seed, chunkRandom, chunkPos.x, chunkPos.z); //find some chunk I guess
-        // using here world for heightview, rather than chunk since we - unlike vanilla, want to avoid creating any chunks even on the
-        // structure starts level - lets see where would that take us.
-        if (chunkPos.x == chunkPos2.x && chunkPos.z == chunkPos2.z && ((StructureFeatureInterface)structure).shouldStartPublicAt(generator, generator.getBiomeSource(), seed, chunkRandom, chunkPos, chunkPos, configuredFeature.config, world)) // should start at
-        {
-            if (!computeBox) return StructureStart.DEFAULT;
-            StructureManager manager = world.getStructureManager();
-            class_6626 lv = new class_6626();
-             field_34929.generatePieces(lv, config, new class_6622.class_6623(worldIn.getRegistryManager(), generator, worldIn.getStructureManager(), chunkpos, b -> true, worldIn, Util.make(new ChunkRandom(), (chunkRandomx) -> {
-                chunkRandomx.setCarverSeed(worldIn.getSeed(), chunkpos.x, chunkpos.z);
-            }), worldIn.getSeed()));
-            StructureStart<C> structurestart1 = new StructureStart<>(thiss, chunkpos, 0, lv.method_38714());
-
-            StructureStart<T> structureStart3 = structure.getStructureStartFactory().create((StructureFeature<T>) configuredFeature.feature, chunkPos, 0, seed);
-            synchronized (boo) {
-                structureStart3.init(world.getRegistryManager(), generator, manager, chunkPos, (T) configuredFeature.config, world, (b) -> b == biome);
-            }
-            if (!structureStart3.hasChildren()) return null;
-            return structureStart3;
-        }*/
+        var biomeConfig = structures.get(configuredFeature);
+        StructureStart<?> filledStructure = configuredFeature.tryPlaceStart(world.getRegistryManager(), generator, generator.getBiomeSource(),
+                world.getStructureManager(), seed, chunkPos, 0, structureConfig, world, (b) -> biomeRegistry.getKey(b).filter(biomeConfig::contains).isPresent());
+        if (filledStructure != null && filledStructure.hasChildren())
+            return filledStructure;
+        //}
         return null;
     }
 
