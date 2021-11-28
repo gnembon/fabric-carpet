@@ -1,13 +1,13 @@
 package carpet.helpers;
 
 import carpet.CarpetSettings;
+import carpet.fakes.ChunkGeneratorInterface;
 import carpet.fakes.PlacedFeatureInterface;
 import carpet.fakes.StructureFeatureInterface;
 import com.mojang.datafixers.util.Pair;
 import net.minecraft.block.Block;
 import net.minecraft.block.Blocks;
 import net.minecraft.server.world.ServerWorld;
-import net.minecraft.structure.StructureManager;
 import net.minecraft.structure.StructureStart;
 import net.minecraft.structure.pool.StructurePool;
 import net.minecraft.structure.pool.StructurePoolElement;
@@ -19,18 +19,17 @@ import net.minecraft.util.math.intprovider.ConstantIntProvider;
 import net.minecraft.util.registry.Registry;
 import net.minecraft.util.registry.RegistryKey;
 import net.minecraft.world.StructurePresence;
+import net.minecraft.world.World;
 import net.minecraft.world.biome.Biome;
 import net.minecraft.world.biome.BiomeKeys;
 import net.minecraft.world.biome.BuiltinBiomes;
 import net.minecraft.world.gen.StructureAccessor;
 import net.minecraft.world.gen.chunk.StructuresConfig;
-import net.minecraft.world.gen.decorator.PlacementModifier;
+import net.minecraft.world.gen.feature.ConfiguredStructureFeatures;
 import net.minecraft.world.gen.feature.PlacedFeature;
 import net.minecraft.world.gen.feature.size.TwoLayersFeatureSize;
 import net.minecraft.world.gen.foliage.BlobFoliagePlacer;
 import net.minecraft.world.gen.foliage.LargeOakFoliagePlacer;
-import net.minecraft.world.gen.random.AtomicSimpleRandom;
-import net.minecraft.world.gen.random.ChunkRandom;
 import net.minecraft.world.gen.chunk.ChunkGenerator;
 import net.minecraft.world.gen.chunk.StructureConfig;
 import net.minecraft.world.gen.feature.ConfiguredFeature;
@@ -41,7 +40,6 @@ import net.minecraft.world.gen.feature.SimpleRandomFeatureConfig;
 import net.minecraft.world.gen.feature.StructureFeature;
 import net.minecraft.world.gen.feature.StructurePoolFeatureConfig;
 import net.minecraft.world.gen.feature.TreeFeatureConfig;
-import net.minecraft.world.gen.random.RandomSeed;
 import net.minecraft.world.gen.stateprovider.BlockStateProvider;
 import net.minecraft.world.gen.treedecorator.BeehiveTreeDecorator;
 import net.minecraft.world.gen.trunk.LargeOakTrunkPlacer;
@@ -207,10 +205,12 @@ public class FeatureGenerator
 
     public static <T extends FeatureConfig> StructureStart shouldStructureStartAt(ServerWorld world, BlockPos pos, StructureFeature<T> structure, boolean computeBox)
     {
+        if (structure == StructureFeature.STRONGHOLD)
+            return shouldStrongholdStartAt(world, pos, computeBox);
         long seed = world.getSeed();
         ChunkGenerator generator = world.getChunkManager().getChunkGenerator();
         StructuresConfig settings = generator.getStructuresConfig();
-        StructureConfig structureConfig = generator.getStructuresConfig().getForType(structure);
+        StructureConfig structureConfig = settings.getForType(structure);
         var structures = settings.getConfiguredStructureFeature(structure);
         if (structureConfig == null || structures.isEmpty()) {
             return null;
@@ -246,7 +246,24 @@ public class FeatureGenerator
                 world.getStructureManager(), seed, chunkPos, 0, structureConfig, world, (b) -> biomeRegistry.getKey(b).filter(biomeConfig::contains).isPresent());
         if (filledStructure != null && filledStructure.hasChildren())
             return filledStructure;
-        //}
+        return null;
+    }
+
+    public static StructureStart<?> shouldStrongholdStartAt(ServerWorld world, BlockPos pos, boolean computeBox)
+    {
+        ChunkGenerator generator = world.getChunkManager().getChunkGenerator();
+        if (world.getRegistryKey() != World.OVERWORLD || !generator.isStrongholdStartingChunk(new ChunkPos(pos))) return null;
+        if (!computeBox) return StructureStart.DEFAULT;
+        StructuresConfig settings = generator.getStructuresConfig();
+        StructureConfig structureConfig = settings.getForType(StructureFeature.STRONGHOLD);
+        if (structureConfig != null) {
+            StructureStart<?> filledStructure = ConfiguredStructureFeatures.STRONGHOLD.tryPlaceStart(world.getRegistryManager(), generator, generator.getBiomeSource(),
+                    world.getStructureManager(), world.getSeed(), new ChunkPos(pos), 0,
+                    structureConfig, world, ((ChunkGeneratorInterface)generator)::canPlaceStrongholdInBiomeCM
+            );
+            if (filledStructure != null && filledStructure.hasChildren())
+                return filledStructure;
+        }
         return null;
     }
 
