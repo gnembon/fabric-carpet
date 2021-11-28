@@ -435,7 +435,7 @@ Reloading of datapacks that define new dimensions is not implemented in vanilla.
 dimension information on server start. `create_datapack` is therefore a direct replacement of manually ploping of the specified 
 file structure in a datapack file and calling `/datapack enable` on the new datapack with all its quirks and sideeffects
 (like no worldgen changes, reloading all other datapacks, etc.). To enable newly added custom dimensions, call much more
-experimental `check_hidden_dimensions()` after adding a datapack if needed.
+experimental `enable_hidden_dimensions()` after adding a datapack if needed.
 
 Synopsis:
 <pre>
@@ -453,6 +453,7 @@ script run create_datapack('foo',
 
 Custom dimension example:
 <pre>
+// 1.17
 script run create_datapack('funky_world',  {
     'data' -> { 'minecraft' -> { 'dimension' -> { 'custom_ow.json' -> { 
         'type' -> 'minecraft:the_end',
@@ -467,7 +468,36 @@ script run create_datapack('funky_world',  {
             'type' -> 'minecraft:noise'
     } } } } }
 });
-check_hidden_dimensions();  => ['funky_world']
+
+// 1.18
+script run a() -> create_datapack('funky_world',  {
+   'data' -> { 'minecraft' -> { 'dimension' -> { 'custom_ow.json' -> { 
+      'type' -> 'minecraft:overworld',
+         'generator' -> {
+            'biome_source' -> {
+               'biomes' -> [
+                  {
+                     'parameters' -> {                        
+                        'erosion' -> [-1.0,1.0], 
+                        'depth' -> 0.0, 
+                        'weirdness' -> [-1.0,1.0],
+                        'offset' -> 0.0,
+                        'temperature' -> [-1.0,1.0],
+                        'humidity' -> [-1.0,1.0],
+                        'continentalness' -> [ -1.2,-1.05]
+                     },
+                     'biome' -> 'minecraft:mushroom_fields'
+                  }
+               ],
+               'type' -> 'minecraft:multi_noise'
+            },
+            'seed' -> 0,
+            'settings' -> 'minecraft:overworld',
+            'type' -> 'minecraft:noise'
+         }
+     } } } }
+});
+enable_hidden_dimensions();  => ['funky_world']
 </pre>
 
 Loot table example:
