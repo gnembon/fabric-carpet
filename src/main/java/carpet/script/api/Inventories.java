@@ -39,7 +39,6 @@ import net.minecraft.recipe.RecipeType;
 import net.minecraft.recipe.ShapedRecipe;
 import net.minecraft.recipe.ShapelessRecipe;
 import net.minecraft.recipe.SpecialCraftingRecipe;
-import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.tag.TagManager;
 import net.minecraft.text.Text;
@@ -51,7 +50,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class Inventories {
     public static void apply(Expression expression)
@@ -401,41 +399,25 @@ public class Inventories {
 
         expression.addContextFunction("create_screen",-1, (c, t, lv) ->
         {
-            if(lv.size() < 2) throw new InternalExpressionException("'create_screen' expected at least two arguments");
-            Value type = lv.get(0);
-            Text name = FormattedTextValue.getTextByValue(lv.get(1));
+            if(lv.size() < 3) throw new InternalExpressionException("'create_screen' expected at least three arguments");
+            Value playerValue = lv.get(0);
+            ServerPlayerEntity player = EntityValue.getPlayerByValue(((CarpetContext) c).s.getServer(), playerValue);
+            if(player == null) throw new InternalExpressionException("'create_screen' requires a valid online player as first argument.");
+            String type = lv.get(1).getString();
+            Text name = FormattedTextValue.getTextByValue(lv.get(2));
             FunctionValue function = null;
-            if(lv.size() > 2)
-                function = FunctionArgument.findIn(c, expression.module, lv, 2, true, false).function;
+            if(lv.size() > 3)
+                function = FunctionArgument.findIn(c, expression.module, lv, 3, true, false).function;
 
-            return new ScreenHandlerValue(type,name,function,c);
+            return new ScreenHandlerValue(player,type,name,function,c);
         });
 
-        expression.addContextFunction("open_screen",2, (c, t, lv) ->
+        expression.addContextFunction("close_screen",1, (c, t, lv) ->
         {
-            Value targets = lv.get(0);
-            if (!(targets instanceof ListValue)) targets = ListValue.of(targets);
-            List<Value> playerValueList = ((ListValue) targets).getItems();
-            MinecraftServer server = ((CarpetContext) c).s.getServer();
-            if(playerValueList.size()==0) throw new InternalExpressionException("'open_screen' requires a valid online player or a list of players as first argument. "+targets.getString()+" is not a player.");
-            Stream<ServerPlayerEntity> players = playerValueList.stream().map(target -> {
-                ServerPlayerEntity player = EntityValue.getPlayerByValue(server, target);
-                if (player == null) throw new InternalExpressionException("'open_screen' requires a valid online player or a list of players as first argument. "+target.getString()+" is not a player.");
-                return player;
-            });
-            if(lv.get(1) instanceof ScreenHandlerValue screenHandlerValue) {
-                if(playerValueList.size() != 1) {
-                    throw new InternalExpressionException("screen handler type '" + screenHandlerValue.getString() + "' does not support multiple players.");
-                }
-                players.forEach(screenHandlerValue::showScreen);
-            } else if(lv.get(1).isNull()) {
-                players.filter(player -> player.currentScreenHandler != player.playerScreenHandler)
-                        .forEach(player -> {
-                            //prevent recursion when closing screen in closing screen callback by doing this before triggering event
-                            player.currentScreenHandler = player.playerScreenHandler;
-                            player.closeHandledScreen();
-                        });
-            }
+            Value value = lv.get(0);
+            if(!(value instanceof ScreenHandlerValue screenHandlerValue)) throw new InternalExpressionException("'close_screem' requires a screen handler as first argument.");
+            if(!screenHandlerValue.isOpen()) return Value.FALSE;
+            screenHandlerValue.close();
             return Value.TRUE;
         });
 
@@ -446,11 +428,11 @@ public class Inventories {
             String propertyName = lv.get(1).getString();
             if(lv.size()==3)
             {
-                return screenHandlerValue.setProperty(propertyName,lv.subList(2,lv.size()));
+                return screenHandlerValue.modifyProperty(propertyName,lv.get(2));
             }
             else
             {
-                return screenHandlerValue.getProperty(propertyName);
+                return screenHandlerValue.queryProperty(propertyName);
             }
         });
     }

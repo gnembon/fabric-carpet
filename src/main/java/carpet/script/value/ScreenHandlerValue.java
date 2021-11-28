@@ -33,8 +33,8 @@ import net.minecraft.screen.LecternScreenHandler;
 import net.minecraft.screen.LoomScreenHandler;
 import net.minecraft.screen.MerchantScreenHandler;
 import net.minecraft.screen.NamedScreenHandlerFactory;
+import net.minecraft.screen.Property;
 import net.minecraft.screen.ScreenHandler;
-import net.minecraft.screen.ScreenHandlerFactory;
 import net.minecraft.screen.ScreenHandlerListener;
 import net.minecraft.screen.ShulkerBoxScreenHandler;
 import net.minecraft.screen.SimpleNamedScreenHandlerFactory;
@@ -55,13 +55,13 @@ import java.util.OptionalInt;
 import static net.minecraft.screen.ScreenHandlerType.*;
 
 public class ScreenHandlerValue extends Value {
-    private final ScreenHandlerFactory screenHandlerFactory;
     private ScreenHandler screenHandler;
 
-    private Text name;
-    private String typestring;
+    private final Text name;
+    private final String typestring;
     private final FunctionValue callback;
     private final Context callbackContext;
+    private final ServerPlayerEntity player;
 
 
     public static Map<String,ScarpetScreenHandlerFactory> screenHandlerFactories;
@@ -95,25 +95,26 @@ public class ScreenHandlerValue extends Value {
     }
 
 
-    public interface ScarpetScreenHandlerFactory {
+    protected interface ScarpetScreenHandlerFactory {
         ScreenHandler create(int syncId, PlayerInventory playerInventory);
     }
 
 
 
 
-    public ScreenHandlerValue(Value type, Text name, FunctionValue callback, Context c) {
+    public ScreenHandlerValue(ServerPlayerEntity player, String type, Text name, FunctionValue callback, Context c) {
         this.name = name;
+        this.typestring = type.toLowerCase();
         if(callback != null) callback.checkArgs(5);
-        this.callbackContext = c.duplicate();
         this.callback = callback;
-        this.screenHandlerFactory = this.createScreenHandlerFactoryFromValue(type);
-        if(this.screenHandlerFactory == null) throw new ThrowStatement(type, Throwables.UNKNOWN_SCREEN);
+        this.callbackContext = c.duplicate();
+        this.player = player;
+        NamedScreenHandlerFactory factory = this.createScreenHandlerFactory();
+        if(factory == null) throw new ThrowStatement(type, Throwables.UNKNOWN_SCREEN);
+        this.openScreen(factory);
     }
 
-    public ScreenHandlerFactory createScreenHandlerFactoryFromValue(Value v) {
-        this.typestring = v.getString().toLowerCase();
-
+    private NamedScreenHandlerFactory createScreenHandlerFactory() {
         if(!screenHandlerFactories.containsKey(this.typestring)) {
             return null;
         }
@@ -126,17 +127,24 @@ public class ScreenHandlerValue extends Value {
         }, this.name);
     }
 
-    public void showScreen(PlayerEntity player) {
-        if(player == null) return;
-        if(screenHandlerFactory instanceof NamedScreenHandlerFactory) {
-            OptionalInt optionalSyncId = player.openHandledScreen((NamedScreenHandlerFactory) screenHandlerFactory);
-            if(optionalSyncId.isPresent() && player.currentScreenHandler.syncId == optionalSyncId.getAsInt()) {
-                this.screenHandler = player.currentScreenHandler;
-            }
+    private void openScreen(NamedScreenHandlerFactory factory) {
+        if(this.player == null) return;
+        OptionalInt optionalSyncId = player.openHandledScreen(factory);
+        if(optionalSyncId.isPresent() && player.currentScreenHandler.syncId == optionalSyncId.getAsInt()) {
+            this.screenHandler = player.currentScreenHandler;
         }
     }
 
-    public boolean isOpened() {
+    public void close() {
+        if(player.currentScreenHandler != player.playerScreenHandler) {
+            //prevent recursion when closing screen in closing screen callback by doing this before triggering event
+            player.currentScreenHandler = player.playerScreenHandler;
+            player.closeHandledScreen();
+            screenHandler = null;
+        }
+    }
+
+    public boolean isOpen() {
         if(screenHandler == null) {
             return false;
         }
@@ -183,17 +191,17 @@ public class ScreenHandlerValue extends Value {
         });
     }
 
-    // variant of inventory_* functions but for a list of slots
+    // copied from inventory_* functions, but modified for a list of slots
 
     public Value inventorySizeSlots()
     {
-        if(!isOpened()) return Value.NULL;
+        if(!isOpen()) return Value.NULL;
         return NumericValue.of(screenHandler.slots.size());
     }
 
     public Value inventoryHasItemsSlots()
     {
-        if(!isOpened()) return Value.NULL;
+        if(!isOpen()) return Value.NULL;
         for(Slot slot : screenHandler.slots)
             if(slot.hasStack() && !slot.getStack().isEmpty()) return Value.TRUE;
         return Value.FALSE;
@@ -201,7 +209,7 @@ public class ScreenHandlerValue extends Value {
 
     public Value inventoryGetSlots(List<Value> lv)
     {
-        if(!isOpened()) return Value.NULL;
+        if(!isOpen()) return Value.NULL;
         int slotsSize = screenHandler.slots.size();
         if (lv.size() == 0)
         {
@@ -217,7 +225,7 @@ public class ScreenHandlerValue extends Value {
 
     public Value inventorySetSlots(List<Value> lv)
     {
-        if(!isOpened()) return Value.NULL;
+        if(!isOpen()) return Value.NULL;
         if (lv.size() < 2)
             throw new InternalExpressionException("'inventory_set' requires at least slot number and new stack size, and optional new item");
         int slotIndex = (int) NumericValue.asNumber(lv.get(0)).getLong();
@@ -266,227 +274,72 @@ public class ScreenHandlerValue extends Value {
         return ValueConversions.of(previousStack);
     }
 
-    public Value getProperty(String property) {
-        switch (property) {
-            case "name":
-                return FormattedTextValue.of(this.name);
-            case "opened":
-                return BooleanValue.of(isOpened());
-            case "fuel_progress":
-                if(this.screenHandler instanceof AbstractFurnaceScreenHandler furnaceScreenHandler) {
-                    return NumericValue.of(furnaceScreenHandler.getFuelProgress());
-                }
-                break;
-            case "cook_progress":
-                if(this.screenHandler instanceof AbstractFurnaceScreenHandler furnaceScreenHandler) {
-                    return NumericValue.of(furnaceScreenHandler.getCookProgress());
-                }
-                break;
-            case "level_cost":
-                if(this.screenHandler instanceof AnvilScreenHandler anvilScreenHandler) {
-                    return NumericValue.of(anvilScreenHandler.getLevelCost());
-                }
-                break;
-            case "page":
-                if(this.screenHandler instanceof LecternScreenHandler lecternScreenHandler) {
-                    return NumericValue.of(lecternScreenHandler.getPage());
-                }
-                break;
-            case "beacon_level":
-                if(this.screenHandler instanceof BeaconScreenHandler beaconScreenHandler) {
-                    return NumericValue.of(((ScreenHandlerInterface) beaconScreenHandler).getProperty(0));
-                }
-                break;
-            case "primary_effect":
-                if(this.screenHandler instanceof BeaconScreenHandler beaconScreenHandler) {
-                    return NumericValue.of(((ScreenHandlerInterface) beaconScreenHandler).getProperty(1));
-                }
-                break;
-            case "brew_time":
-                if(this.screenHandler instanceof BrewingStandScreenHandler brewingStandScreenHandler) {
-                    return NumericValue.of(brewingStandScreenHandler.getBrewTime());
-                }
-                break;
-            case "brewing_fuel":
-                if(this.screenHandler instanceof BrewingStandScreenHandler brewingStandScreenHandler) {
-                    return NumericValue.of(brewingStandScreenHandler.getFuel());
-                }
-                break;
-            case "enchantment_1":
-                if(this.screenHandler instanceof EnchantmentScreenHandler enchantmentScreenHandler) {
-                    return ListValue.of(
-                            NumericValue.of(((ScreenHandlerInterface) enchantmentScreenHandler).getProperty(0)),
-                            NumericValue.of(((ScreenHandlerInterface) enchantmentScreenHandler).getProperty(4)),
-                            NumericValue.of(((ScreenHandlerInterface) enchantmentScreenHandler).getProperty(7))
-                    );
-                }
-                break;
-            case "enchantment_2":
-                if(this.screenHandler instanceof EnchantmentScreenHandler enchantmentScreenHandler) {
-                    return ListValue.of(
-                            NumericValue.of(((ScreenHandlerInterface) enchantmentScreenHandler).getProperty(1)),
-                            NumericValue.of(((ScreenHandlerInterface) enchantmentScreenHandler).getProperty(5)),
-                            NumericValue.of(((ScreenHandlerInterface) enchantmentScreenHandler).getProperty(8))
-                    );
-                }
-                break;
-            case "enchantment_3":
-                if(this.screenHandler instanceof EnchantmentScreenHandler enchantmentScreenHandler) {
-                    return ListValue.of(
-                            NumericValue.of(((ScreenHandlerInterface) enchantmentScreenHandler).getProperty(2)),
-                            NumericValue.of(((ScreenHandlerInterface) enchantmentScreenHandler).getProperty(6)),
-                            NumericValue.of(((ScreenHandlerInterface) enchantmentScreenHandler).getProperty(9))
-                    );
-                }
-                break;
-            case "enchantment_seed":
-                if(this.screenHandler instanceof EnchantmentScreenHandler enchantmentScreenHandler) {
-                    return NumericValue.of(enchantmentScreenHandler.getSeed());
-                }
-                break;
-            case "banner_pattern":
-                if(this.screenHandler instanceof LoomScreenHandler loomScreenHandler) {
-                    return NumericValue.of(loomScreenHandler.getSelectedPattern());
-                }
-                break;
-            case "stonecutter_recipe":
-                if(this.screenHandler instanceof StonecutterScreenHandler stonecutterScreenHandler) {
-                    return NumericValue.of(stonecutterScreenHandler.getSelectedRecipe());
-                }
-                break;
+    private Property getPropertyForType(Class<? extends ScreenHandler> screenHandlerClass, String requiredType, int propertyIndex, String propertyName) {
+        if(screenHandlerClass.isInstance(this.screenHandler)) {
+            return ((ScreenHandlerInterface) this.screenHandler).getProperty(propertyIndex);
         }
-
-        return Value.NULL;
+        if(!this.isOpen()) {
+            throw new InternalExpressionException("Screen handler property cannot be accessed, because the screen is already closed");
+        }
+        throw new InternalExpressionException("Screen handler property " + propertyName + " expected a " + requiredType + " screen handler.");
     }
 
-    public Value setProperty(String property, List<Value> value) {
-        switch (property) {
-            case "name":
-                this.name = FormattedTextValue.getTextByValue(value.get(0));
-            case "fuel_progress":
-                if(this.screenHandler instanceof AbstractFurnaceScreenHandler furnaceScreenHandler) {
-                    int fuel = NumericValue.asNumber(value.get(0)).getInt();
-                    ((ScreenHandlerInterface) furnaceScreenHandler).setAndUpdateProperty(0,fuel);
-                    ((ScreenHandlerInterface) furnaceScreenHandler).setAndUpdateProperty(1,13);
-                    return Value.TRUE;
-                }
-                break;
-            case "cook_progress":
-                if(this.screenHandler instanceof AbstractFurnaceScreenHandler furnaceScreenHandler) {
-                    int cook = NumericValue.asNumber(value.get(0)).getInt();
-                    ((ScreenHandlerInterface) furnaceScreenHandler).setAndUpdateProperty(2,cook);
-                    ((ScreenHandlerInterface) furnaceScreenHandler).setAndUpdateProperty(3,24);
-                    return Value.TRUE;
-                }
-                break;
-            case "level_cost":
-                if(this.screenHandler instanceof AnvilScreenHandler anvilScreenHandler) {
-                    int cost = NumericValue.asNumber(value.get(0)).getInt();
-                    ((ScreenHandlerInterface) anvilScreenHandler).setAndUpdateProperty(0,cost);
-                    return Value.TRUE;
-                }
-                break;
-            case "page":
-                if(this.screenHandler instanceof LecternScreenHandler lecternScreenHandler) {
-                    int page = NumericValue.asNumber(value.get(0)).getInt();
-                    ((ScreenHandlerInterface) lecternScreenHandler).setAndUpdateProperty(0,page);
-                    return Value.TRUE;
-                }
-                break;
-            case "beacon_level":
-                if(this.screenHandler instanceof BeaconScreenHandler beaconScreenHandler) {
-                    int effect = NumericValue.asNumber(value.get(0)).getInt();
-                    ((ScreenHandlerInterface) beaconScreenHandler).setAndUpdateProperty(0,effect);
-                    return Value.TRUE;
-                }
-                break;
-            case "primary_effect":
-                if(this.screenHandler instanceof BeaconScreenHandler beaconScreenHandler) {
-                    int effect = NumericValue.asNumber(value.get(0)).getInt();
-                    ((ScreenHandlerInterface) beaconScreenHandler).setAndUpdateProperty(1,effect);
-                    return Value.TRUE;
-                }
-                break;
-            case "secondary_effect":
-                if(this.screenHandler instanceof BeaconScreenHandler beaconScreenHandler) {
-                    int effect = NumericValue.asNumber(value.get(0)).getInt();
-                    ((ScreenHandlerInterface) beaconScreenHandler).setAndUpdateProperty(2,effect);
-                    return Value.TRUE;
-                }
-                break;
-            case "brew_time":
-                if(this.screenHandler instanceof BrewingStandScreenHandler brewingStandScreenHandler) {
-                    int time = NumericValue.asNumber(value.get(0)).getInt();
-                    ((ScreenHandlerInterface) brewingStandScreenHandler).setAndUpdateProperty(0,time);
-                    return Value.TRUE;
-                }
-                break;
-            case "brewing_fuel":
-                if(this.screenHandler instanceof BrewingStandScreenHandler brewingStandScreenHandler) {
-                    int fuel = NumericValue.asNumber(value.get(0)).getInt();
-                    ((ScreenHandlerInterface) brewingStandScreenHandler).setAndUpdateProperty(1,fuel);
-                    return Value.TRUE;
-                }
-                break;
-            case "enchantment_1":
-                if(this.screenHandler instanceof EnchantmentScreenHandler enchantmentScreenHandler) {
-                    if(!(value.get(0) instanceof ListValue listValue && listValue.length() == 3)) throw new InternalExpressionException("Screen handler property " + property + " expected a list with three values.");
-                    List<Value> values = listValue.getItems();
-                    ((ScreenHandlerInterface) enchantmentScreenHandler).setAndUpdateProperty(0,NumericValue.asNumber(values.get(0)).getInt());
-                    ((ScreenHandlerInterface) enchantmentScreenHandler).setAndUpdateProperty(4,NumericValue.asNumber(values.get(1)).getInt());
-                    ((ScreenHandlerInterface) enchantmentScreenHandler).setAndUpdateProperty(7,NumericValue.asNumber(values.get(2)).getInt());
-                    return Value.TRUE;
-                }
-                break;
-            case "enchantment_2":
-                if(this.screenHandler instanceof EnchantmentScreenHandler enchantmentScreenHandler) {
-                    if(!(value.get(0) instanceof ListValue listValue && listValue.length() == 3)) throw new InternalExpressionException("Screen handler property " + property + " expected a list with three values.");
-                    List<Value> values = listValue.getItems();
-                    ((ScreenHandlerInterface) enchantmentScreenHandler).setAndUpdateProperty(1,NumericValue.asNumber(values.get(0)).getInt());
-                    ((ScreenHandlerInterface) enchantmentScreenHandler).setAndUpdateProperty(5,NumericValue.asNumber(values.get(1)).getInt());
-                    ((ScreenHandlerInterface) enchantmentScreenHandler).setAndUpdateProperty(8,NumericValue.asNumber(values.get(2)).getInt());
-                    return Value.TRUE;
-                }
-                break;
-            case "enchantment_3":
-                if(this.screenHandler instanceof EnchantmentScreenHandler enchantmentScreenHandler) {
-                    if(!(value.get(0) instanceof ListValue listValue && listValue.length() == 3)) throw new InternalExpressionException("Screen handler property " + property + " expected a list with three values.");
-                    List<Value> values = listValue.getItems();
-                    ((ScreenHandlerInterface) enchantmentScreenHandler).setAndUpdateProperty(2,NumericValue.asNumber(values.get(0)).getInt());
-                    ((ScreenHandlerInterface) enchantmentScreenHandler).setAndUpdateProperty(6,NumericValue.asNumber(values.get(1)).getInt());
-                    ((ScreenHandlerInterface) enchantmentScreenHandler).setAndUpdateProperty(9,NumericValue.asNumber(values.get(2)).getInt());
-                    return Value.TRUE;
-                }
-                break;
-            case "enchantment_seed":
-                if(this.screenHandler instanceof EnchantmentScreenHandler enchantmentScreenHandler) {
-                    int seed = NumericValue.asNumber(value.get(0)).getInt();
-                    ((ScreenHandlerInterface) enchantmentScreenHandler).setAndUpdateProperty(3,seed);
-                    return Value.TRUE;
-                }
-                break;
-            case "banner_pattern":
-                if(this.screenHandler instanceof LoomScreenHandler loomScreenHandler) {
-                    int pattern = NumericValue.asNumber(value.get(0)).getInt();
-                    ((ScreenHandlerInterface) loomScreenHandler).setAndUpdateProperty(0,pattern);
-                    return Value.TRUE;
-                }
-                break;
-            case "stonecutter_recipe":
-                if(this.screenHandler instanceof StonecutterScreenHandler stonecutterScreenHandler) {
-                    int recipe = NumericValue.asNumber(value.get(0)).getInt();
-                    ((ScreenHandlerInterface) stonecutterScreenHandler).setAndUpdateProperty(0,recipe);
-                    return Value.TRUE;
-                }
-                break;
-        }
-        return Value.FALSE;
+    private Property getProperty(String propertyName) {
+        return switch (propertyName) {
+            case "fuel_progress" -> getPropertyForType(AbstractFurnaceScreenHandler.class, "furnace", 0, propertyName);
+            case "max_fuel_progress" -> getPropertyForType(AbstractFurnaceScreenHandler.class, "furnace", 1, propertyName);
+            case "cook_progress" -> getPropertyForType(AbstractFurnaceScreenHandler.class, "furnace", 2, propertyName);
+            case "max_cook_progress" -> getPropertyForType(AbstractFurnaceScreenHandler.class, "furnace", 3, propertyName);
+
+            case "level_cost" -> getPropertyForType(AnvilScreenHandler.class, "anvil", 0, propertyName);
+
+            case "page" -> getPropertyForType(LecternScreenHandler.class, "lectern", 0, propertyName);
+
+            case "beacon_level" -> getPropertyForType(BeaconScreenHandler.class, "beacon", 0, propertyName);
+            case "primary_effect" -> getPropertyForType(BeaconScreenHandler.class, "beacon", 1, propertyName);
+            case "secondary_effect" -> getPropertyForType(BeaconScreenHandler.class, "beacon", 2, propertyName);
+
+            case "brew_time" -> getPropertyForType(BrewingStandScreenHandler.class, "brewing_stand", 0, propertyName);
+            case "brewing_fuel" -> getPropertyForType(BrewingStandScreenHandler.class, "brewing_stand", 1, propertyName);
+
+            case "enchantment_power_1" -> getPropertyForType(EnchantmentScreenHandler.class, "enchantment", 0, propertyName);
+            case "enchantment_power_2" -> getPropertyForType(EnchantmentScreenHandler.class, "enchantment", 1, propertyName);
+            case "enchantment_power_3" -> getPropertyForType(EnchantmentScreenHandler.class, "enchantment", 2, propertyName);
+            case "enchantment_seed" -> getPropertyForType(EnchantmentScreenHandler.class, "enchantment", 3, propertyName);
+            case "enchantment_id_1" -> getPropertyForType(EnchantmentScreenHandler.class, "enchantment", 4, propertyName);
+            case "enchantment_id_2" -> getPropertyForType(EnchantmentScreenHandler.class, "enchantment", 5, propertyName);
+            case "enchantment_id_3" -> getPropertyForType(EnchantmentScreenHandler.class, "enchantment", 6, propertyName);
+            case "enchantment_level_1" -> getPropertyForType(EnchantmentScreenHandler.class, "enchantment", 7, propertyName);
+            case "enchantment_level_2" -> getPropertyForType(EnchantmentScreenHandler.class, "enchantment", 8, propertyName);
+            case "enchantment_level_3" -> getPropertyForType(EnchantmentScreenHandler.class, "enchantment", 9, propertyName);
+
+            case "banner_pattern" -> getPropertyForType(LoomScreenHandler.class, "loom", 0, propertyName);
+
+            case "stonecutter_recipe" -> getPropertyForType(StonecutterScreenHandler.class, "stonecutter", 0, propertyName);
+
+            default -> throw new InternalExpressionException("Invalid screen handler property: " + propertyName);
+        };
+
     }
 
+    public Value queryProperty(String propertyName) {
+        if(propertyName.equals("name")) return FormattedTextValue.of(this.name);
+        if(propertyName.equals("open")) return BooleanValue.of(this.isOpen());
+        Property property = getProperty(propertyName);
+        return NumericValue.of(property.get());
+    }
+
+    public Value modifyProperty(String propertyName, Value value) {
+        Property property = getProperty(propertyName);
+        int intValue = NumericValue.asNumber(value).getInt();
+        property.set(intValue);
+        this.screenHandler.syncState();
+        return Value.TRUE;
+    }
 
     @Override
     public String getString() {
-        return this.typestring;
+        return this.typestring + "_screen_handler";
     }
 
     @Override

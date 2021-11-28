@@ -2,7 +2,6 @@ package carpet.mixins;
 
 
 import carpet.fakes.ScreenHandlerInterface;
-import carpet.fakes.ScreenHandlerSyncHandlerInterface;
 import carpet.script.value.ScreenHandlerValue;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.screen.Property;
@@ -24,10 +23,6 @@ import java.util.List;
 public abstract class ScreenHandler_scarpetMixin implements ScreenHandlerInterface
 {
     @Shadow @Final private List<ScreenHandlerListener> listeners;
-
-    @Shadow public abstract void setProperty(int id, int value);
-
-    @Shadow protected abstract void notifyPropertyUpdate(int index, int value);
 
     @Shadow @Nullable private ScreenHandlerSyncHandler syncHandler;
 
@@ -63,19 +58,12 @@ public abstract class ScreenHandler_scarpetMixin implements ScreenHandlerInterfa
     }
 
     @Override
-    public void setAndUpdateProperty(int index, int value) {
-        this.setProperty(index,value);
-        this.notifyPropertyUpdate(index,value);
-        if(this.syncHandler == null) return;
-        ((ScreenHandlerSyncHandlerInterface) this.syncHandler).callSendPropertyUpdate((ScreenHandler) (Object) this,index,value);
+    public Property getProperty(int index) {
+        return this.properties.get(index);
     }
 
     @Override
-    public int getProperty(int index) {
-        return this.properties.get(index).get();
-    }
-
-    @Override
+    @Nullable
     public ScreenHandlerSyncHandler getSyncHandler() {
         return this.syncHandler;
     }
