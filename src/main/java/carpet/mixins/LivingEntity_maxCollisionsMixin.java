@@ -31,17 +31,23 @@ public abstract class LivingEntity_maxCollisionsMixin extends Entity
     @Inject(method = "tickCramming", cancellable = true, at = @At("HEAD"))
     private void tickPushingReplacement(CallbackInfo ci) {
         List<Entity> entities;
+        int maxEntityCramming =-1;
         if (CarpetSettings.maxEntityCollisions > 0)
+        {
+            maxEntityCramming = this.world.getGameRules().getInt(GameRules.MAX_ENTITY_CRAMMING);
             entities = ((WorldInterface) this.world).getOtherEntitiesLimited(
                     this,
                     this.getBoundingBox(),
                     EntityPredicates.canBePushedBy(this),
-                    CarpetSettings.maxEntityCollisions);
+                    Math.max(CarpetSettings.maxEntityCollisions, maxEntityCramming));
+        }
         else
+        {
             entities = this.world.getOtherEntities(this, this.getBoundingBox(), EntityPredicates.canBePushedBy(this));
+        }
 
         if (!entities.isEmpty()) {
-            int maxEntityCramming = this.world.getGameRules().getInt(GameRules.MAX_ENTITY_CRAMMING);
+            if (maxEntityCramming < 0) maxEntityCramming = this.world.getGameRules().getInt(GameRules.MAX_ENTITY_CRAMMING);
             if (maxEntityCramming > 0 && entities.size() > maxEntityCramming - 1 && this.random.nextInt(4) == 0) {
                 int candidates = 0;
 
@@ -55,9 +61,19 @@ public abstract class LivingEntity_maxCollisionsMixin extends Entity
                     this.damage(DamageSource.CRAMMING, 6.0F);
                 }
             }
-
-            for (Entity entity : entities) {
-                this.pushAway(entity);
+            if (CarpetSettings.maxEntityCollisions > 0 && entities.size() > CarpetSettings.maxEntityCollisions)
+            {
+                for (Entity entity : entities.subList(0, CarpetSettings.maxEntityCollisions))
+                {
+                    this.pushAway(entity);
+                }
+            }
+            else
+            {
+                for (Entity entity : entities)
+                {
+                    this.pushAway(entity);
+                }
             }
         }
         ci.cancel();

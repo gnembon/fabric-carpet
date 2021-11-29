@@ -202,11 +202,13 @@ List of entities riding the entity.
 
 Entity that `e` rides.
 
-###  `query(e, 'scoreboard_tags')`, `query(e, 'tags')`(deprecated)
+### `query(e, 'scoreboard_tags')` and 
+### `query(e, 'tags')`(deprecated)
 
 List of entity's scoreboard tags.
 
-### `query(e, 'has_scoreboard_tag',tag)`, `query(e, 'has_tag',tag)`(deprecated)
+### `query(e, 'has_scoreboard_tag',tag)` and
+### `query(e, 'has_tag',tag)`(deprecated)
 
 Boolean, true if the entity is marked with a `tag` scoreboad tag.
 
@@ -584,10 +586,7 @@ type objects via `get, put, has, delete`, so try to use API calls first for that
 
 ## Entity Modification
 
-Like with entity querying, entity modifications happen through one function. Most position and movements modifications 
-don't work currently on players as their position is controlled by clients.
-
-Currently there is no ability to modify NBT directly, but you could always use `run('data modify entity ...')`.
+Like with entity querying, entity modifications happen through one function.
 
 ### `modify(e, 'remove')`
 

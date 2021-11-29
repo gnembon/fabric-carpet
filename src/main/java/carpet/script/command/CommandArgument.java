@@ -469,7 +469,7 @@ public abstract class CommandArgument
         }
 
         @Override
-        protected Supplier<CommandArgument> factory() { return WordArgument::new; }
+        protected Supplier<CommandArgument> factory() { return StringArgument::new; }
     }
 
     private static class WordArgument extends StringArgument

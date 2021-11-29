@@ -71,7 +71,6 @@
     "Memory_scarpetMixin",
 
     "PlayerEntity_fakePlayersMixin",
-    "ServerWorld_fakePlayersMixin",
     "ThrownEnderpearlEntity_fakePlayersMixin",
 
     "ServerPlayNetworkHandler_coreMixin",
@@ -80,6 +79,7 @@
     "MinecraftServer_scarpetMixin",
     "PlayerListHeaderS2CPacketMixin",
     "ExperienceOrbEntityMixin",
+    "PlayerEntity_xpNoCooldownMixin",
     "PlayerActionC2SPacketMixin",
     "ServerPlayerEntityMixin",
     "PlayerManager_coreMixin",
@@ -103,6 +103,7 @@
     "ChunkRegion_scarpetPlopMixin",
     "StructurePiece_scarpetPlopMixin",
     "PlacedFeature_scarpetMixin",
+    "StructureGeneratorFactory_plopMixin",
 
     "ServerPlayNetworkHandler_scarpetEventsMixin",
     "ServerPlayerInteractionManager_scarpetEventsMixin",

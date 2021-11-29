@@ -101,11 +101,6 @@ public class WoolTool
                 if (!"false".equals(CarpetSettings.commandInfo))
                     Messenger.send(placer, BlockInfo.blockInfo(pos.down(), worldIn));
                 break;
-            case YELLOW:
-                if (!"false".equals(CarpetSettings.commandInfo))
-                    Messenger.m(placer, "r This used to show entity info around the player. Use data get entity command, sorry");
-                    //EntityInfo.issue_entity_info(placer);
-                break;
 			case GREEN:
                 if (CarpetSettings.hopperCounters)
                 {
