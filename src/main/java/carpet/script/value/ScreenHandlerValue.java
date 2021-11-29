@@ -1,7 +1,6 @@
 package carpet.script.value;
 
 import carpet.fakes.ScreenHandlerInterface;
-import carpet.fakes.ScreenHandlerSyncHandlerInterface;
 
 import carpet.script.Context;
 import carpet.script.LazyValue;
@@ -195,13 +194,13 @@ public class ScreenHandlerValue extends Value {
     public Value inventorySizeSlots()
     {
         if(!isOpen()) return Value.NULL;
-        return NumericValue.of(screenHandler.slots.size());
+        return NumericValue.of(this.screenHandler.slots.size());
     }
 
     public Value inventoryHasItemsSlots()
     {
         if(!isOpen()) return Value.NULL;
-        for(Slot slot : screenHandler.slots)
+        for(Slot slot : this.screenHandler.slots)
             if(slot.hasStack() && !slot.getStack().isEmpty()) return Value.TRUE;
         return Value.FALSE;
     }
@@ -209,17 +208,17 @@ public class ScreenHandlerValue extends Value {
     public Value inventoryGetSlots(List<Value> lv)
     {
         if(!isOpen()) return Value.NULL;
-        int slotsSize = screenHandler.slots.size();
+        int slotsSize = this.screenHandler.slots.size();
         if (lv.size() == 0)
         {
             List<Value> fullInventory = new ArrayList<>();
             for (int i = 0, maxi = slotsSize; i < maxi; i++)
-                fullInventory.add(ValueConversions.of(screenHandler.slots.get(i).getStack()));
+                fullInventory.add(ValueConversions.of(this.screenHandler.slots.get(i).getStack()));
             return ListValue.wrap(fullInventory);
         }
         int slot = (int)NumericValue.asNumber(lv.get(0)).getLong();
         if(slot < -1 || slot >= slotsSize) return Value.NULL;
-        return ValueConversions.of(slot == -1 ? screenHandler.getCursorStack() : screenHandler.slots.get(slot).getStack());
+        return ValueConversions.of(slot == -1 ? this.screenHandler.getCursorStack() : this.screenHandler.slots.get(slot).getStack());
     }
 
     public Value inventorySetSlots(List<Value> lv)
@@ -228,16 +227,16 @@ public class ScreenHandlerValue extends Value {
         if (lv.size() < 2)
             throw new InternalExpressionException("'inventory_set' requires at least slot number and new stack size, and optional new item");
         int slotIndex = (int) NumericValue.asNumber(lv.get(0)).getLong();
-        int slotsSize = screenHandler.slots.size();
+        int slotsSize = this.screenHandler.slots.size();
         if(slotIndex < -1 || slotIndex >= slotsSize) return Value.NULL;
-        Slot slot = slotIndex == -1 ? null : screenHandler.getSlot(slotIndex);
+        Slot slot = slotIndex == -1 ? null : this.screenHandler.getSlot(slotIndex);
         int count = (int) NumericValue.asNumber(lv.get(1)).getLong();
         if (count == 0)
         {
             // clear slot
-            ItemStack removedStack = slot == null ? screenHandler.getCursorStack() : slot.inventory.removeStack(slot.getIndex());
-            if(slot == null) screenHandler.setCursorStack(ItemStack.EMPTY);
-            screenHandler.syncState();
+            ItemStack removedStack = slot == null ? this.screenHandler.getCursorStack() : slot.inventory.removeStack(slot.getIndex());
+            if(slot == null) this.screenHandler.setCursorStack(ItemStack.EMPTY);
+            this.screenHandler.syncState();
             return ValueConversions.of(removedStack);
         }
         if (lv.size() < 3)
@@ -245,8 +244,8 @@ public class ScreenHandlerValue extends Value {
             ItemStack previousStack = slot == null ? screenHandler.getCursorStack() : slot.getStack();
             ItemStack newStack = previousStack.copy();
             newStack.setCount(count);
-            if(slot == null) screenHandler.setCursorStack(newStack); else slot.setStack(newStack);
-            screenHandler.syncState();
+            if(slot == null) this.screenHandler.setCursorStack(newStack); else slot.setStack(newStack);
+            this.screenHandler.syncState();
             return ValueConversions.of(previousStack);
         }
         NbtCompound nbt = null; // skipping one argument
@@ -261,12 +260,12 @@ public class ScreenHandlerValue extends Value {
                 nbt = new NBTSerializableValue(nbtValue.getString()).getCompoundTag();
         }
         ItemStackArgument newitem = NBTSerializableValue.parseItem(lv.get(2).getString(), nbt);
-        ItemStack previousStack = slot == null ? screenHandler.getCursorStack() : slot.getStack();
+        ItemStack previousStack = slot == null ? this.screenHandler.getCursorStack() : slot.getStack();
         try
         {
             ItemStack newStack = newitem.createStack(count, false);
-            if(slot == null) screenHandler.setCursorStack(newStack); else slot.setStack(newStack);
-            screenHandler.syncState();
+            if(slot == null) this.screenHandler.setCursorStack(newStack); else slot.setStack(newStack);
+            this.screenHandler.syncState();
         }
         catch (CommandSyntaxException e)
         {

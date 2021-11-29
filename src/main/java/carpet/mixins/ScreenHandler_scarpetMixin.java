@@ -7,9 +7,7 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.screen.Property;
 import net.minecraft.screen.ScreenHandler;
 import net.minecraft.screen.ScreenHandlerListener;
-import net.minecraft.screen.ScreenHandlerSyncHandler;
 import net.minecraft.screen.slot.SlotActionType;
-import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -23,22 +21,14 @@ import java.util.List;
 public abstract class ScreenHandler_scarpetMixin implements ScreenHandlerInterface
 {
     @Shadow @Final private List<ScreenHandlerListener> listeners;
-
-    @Shadow @Nullable private ScreenHandlerSyncHandler syncHandler;
-
     @Shadow public abstract void syncState();
-
     @Shadow @Final private List<Property> properties;
 
     @Inject(method = "internalOnSlotClick", at = @At("HEAD"), cancellable = true)
-    private void callSlotClickListener(int slotIndex, int button, SlotActionType actionType, PlayerEntity player, CallbackInfo ci)
-    {
-        for(ScreenHandlerListener screenHandlerListener : listeners)
-        {
-            if(screenHandlerListener instanceof ScreenHandlerValue.ScarpetScreenHandlerListener scarpetScreenHandlerListener)
-            {
-                if(scarpetScreenHandlerListener.onSlotClick(player, actionType, slotIndex, button))
-                {
+    private void callSlotClickListener(int slotIndex, int button, SlotActionType actionType, PlayerEntity player, CallbackInfo ci) {
+        for(ScreenHandlerListener screenHandlerListener : this.listeners) {
+            if(screenHandlerListener instanceof ScreenHandlerValue.ScarpetScreenHandlerListener scarpetScreenHandlerListener) {
+                if(scarpetScreenHandlerListener.onSlotClick(player, actionType, slotIndex, button)) {
                     ci.cancel();
                     syncState();
                 }
@@ -48,36 +38,26 @@ public abstract class ScreenHandler_scarpetMixin implements ScreenHandlerInterfa
 
     @Inject(method = "close", at = @At("HEAD"), cancellable = true)
     private void callCloseListener(PlayerEntity player, CallbackInfo ci) {
-        for(ScreenHandlerListener screenHandlerListener : listeners)
-        {
-            if(screenHandlerListener instanceof ScreenHandlerValue.ScarpetScreenHandlerListener scarpetScreenHandlerListener)
-            {
+        for(ScreenHandlerListener screenHandlerListener : this.listeners) {
+            if(screenHandlerListener instanceof ScreenHandlerValue.ScarpetScreenHandlerListener scarpetScreenHandlerListener) {
                 scarpetScreenHandlerListener.onClose(player);
             }
         }
     }
 
     @Override
-    public Property getProperty(int index) {
-        return this.properties.get(index);
-    }
-
-    @Override
-    @Nullable
-    public ScreenHandlerSyncHandler getSyncHandler() {
-        return this.syncHandler;
-    }
-
-    @Override
     public boolean callButtonClickListener(int button, PlayerEntity player) {
-        for(ScreenHandlerListener screenHandlerListener : listeners)
-        {
-            if(screenHandlerListener instanceof ScreenHandlerValue.ScarpetScreenHandlerListener scarpetScreenHandlerListener)
-            {
+        for(ScreenHandlerListener screenHandlerListener : listeners) {
+            if(screenHandlerListener instanceof ScreenHandlerValue.ScarpetScreenHandlerListener scarpetScreenHandlerListener) {
                 if(scarpetScreenHandlerListener.onButtonClick(player, button))
                     return true;
             }
         }
         return false;
+    }
+
+    @Override
+    public Property getProperty(int index) {
+        return this.properties.get(index);
     }
 }

@@ -189,7 +189,6 @@
     "TradeOutputSlot_scarpetEventMixin",
     "ScreenHandler_scarpetMixin",
     "ScreenHandlerSubclasses_scarpetMixin",
-    "ScreenHandlerSyncHandler_scarpetMixin",
 
 
     "BiomeEffects_scarpetMixin",
