@@ -346,11 +346,14 @@ poi(x,y,z,5) => []  // nothing around
 poi(x,y,z,5) => [['nether_portal',0,[7,8,9]],['nether_portal',0,[7,9,9]]] // two portal blocks in the range
 </pre>
 
-### `biome()` `biome(name)` `biome(block)` `biome(block/name, feature)`
+### `biome()` `biome(name)` `biome(block)` `biome(block/name, feature)`, `biome(noise_map)`
 
 Without arguments, returns the list of biomes in the world.
 
 With block, or name, returns the name of the biome in that position, or throws `'unknown_biome'` if provided biome or block are not valid. 
+
+if passed a map of `continentalness`, `depth`, `erosion`, `humidity`, `temperature`, `weirdness`, returns the biome that exists at those noise values.  
+Note: Have to pass all 6 of the mentioned noise types and only these noise types for it to evaluate a biome.
 
 With an optional feature, it returns value for the specified attribute for that biome. Available and queryable features include:
 * `'top_material'`: unlocalized block representing the top surface material
