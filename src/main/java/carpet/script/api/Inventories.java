@@ -426,9 +426,9 @@ public class Inventories {
             if(lv.size()<2) throw new InternalExpressionException("'screen_property' requires at least a screen and a property name");
             if(!(lv.get(0) instanceof ScreenHandlerValue screenHandlerValue)) throw new InternalExpressionException("'screen_property' requires a screen handler value as the first argument");
             String propertyName = lv.get(1).getString();
-            if(lv.size()==3)
+            if(lv.size()>=3)
             {
-                return screenHandlerValue.modifyProperty(propertyName,lv.get(2));
+                return screenHandlerValue.modifyProperty(propertyName,lv.subList(2,lv.size()));
             }
             else
             {

@@ -129,30 +129,29 @@ public class ScreenHandlerValue extends Value {
 
     private void openScreen(NamedScreenHandlerFactory factory) {
         if(this.player == null) return;
-        OptionalInt optionalSyncId = player.openHandledScreen(factory);
-        if(optionalSyncId.isPresent() && player.currentScreenHandler.syncId == optionalSyncId.getAsInt()) {
-            this.screenHandler = player.currentScreenHandler;
+        OptionalInt optionalSyncId = this.player.openHandledScreen(factory);
+        if(optionalSyncId.isPresent() && this.player.currentScreenHandler.syncId == optionalSyncId.getAsInt()) {
+            this.screenHandler = this.player.currentScreenHandler;
         }
     }
 
     public void close() {
-        if(player.currentScreenHandler != player.playerScreenHandler) {
+        if(this.player.currentScreenHandler != this.player.playerScreenHandler) {
             //prevent recursion when closing screen in closing screen callback by doing this before triggering event
-            player.currentScreenHandler = player.playerScreenHandler;
-            player.closeHandledScreen();
+            this.player.currentScreenHandler = this.player.playerScreenHandler;
+            this.player.closeHandledScreen();
             screenHandler = null;
         }
     }
 
     public boolean isOpen() {
-        if(screenHandler == null) {
+        if(this.screenHandler == null) {
             return false;
         }
-        ServerPlayerEntity player = ((ScreenHandlerSyncHandlerInterface) ((ScreenHandlerInterface) this.screenHandler).getSyncHandler()).getPlayer();
-        if(player.currentScreenHandler.equals(this.screenHandler)) {
+        if(this.player.currentScreenHandler.equals(this.screenHandler)) {
             return true;
         }
-        screenHandler = null;
+        this.screenHandler = null;
         return false;
     }
 
@@ -163,7 +162,7 @@ public class ScreenHandlerValue extends Value {
         Value indexValue = NumericValue.of(index);
         Value buttonValue = NumericValue.of(button);
         List<Value> args = Arrays.asList(this,playerValue,actionValue,indexValue,buttonValue);
-        LazyValue cancel = this.callback.callInContext(callbackContext, Context.VOID, args);
+        LazyValue cancel = this.callback.callInContext(this.callbackContext, Context.VOID, args);
         Value cancelValue = cancel.evalValue(this.callbackContext);
         return cancelValue.getString().equals("cancel");
     }
@@ -219,8 +218,8 @@ public class ScreenHandlerValue extends Value {
             return ListValue.wrap(fullInventory);
         }
         int slot = (int)NumericValue.asNumber(lv.get(0)).getLong();
-        if(slot < 0 || slot >= slotsSize) return Value.NULL;
-        return ValueConversions.of(screenHandler.slots.get(slot).getStack());
+        if(slot < -1 || slot >= slotsSize) return Value.NULL;
+        return ValueConversions.of(slot == -1 ? screenHandler.getCursorStack() : screenHandler.slots.get(slot).getStack());
     }
 
     public Value inventorySetSlots(List<Value> lv)
@@ -230,22 +229,23 @@ public class ScreenHandlerValue extends Value {
             throw new InternalExpressionException("'inventory_set' requires at least slot number and new stack size, and optional new item");
         int slotIndex = (int) NumericValue.asNumber(lv.get(0)).getLong();
         int slotsSize = screenHandler.slots.size();
-        if(slotIndex < 0 || slotIndex >= slotsSize) return Value.NULL;
-        Slot slot = screenHandler.getSlot(slotIndex);
+        if(slotIndex < -1 || slotIndex >= slotsSize) return Value.NULL;
+        Slot slot = slotIndex == -1 ? null : screenHandler.getSlot(slotIndex);
         int count = (int) NumericValue.asNumber(lv.get(1)).getLong();
         if (count == 0)
         {
             // clear slot
-            ItemStack removedStack = slot.inventory.removeStack(slot.getIndex());
+            ItemStack removedStack = slot == null ? screenHandler.getCursorStack() : slot.inventory.removeStack(slot.getIndex());
+            if(slot == null) screenHandler.setCursorStack(ItemStack.EMPTY);
             screenHandler.syncState();
             return ValueConversions.of(removedStack);
         }
         if (lv.size() < 3)
         {
-            ItemStack previousStack = slot.getStack();
+            ItemStack previousStack = slot == null ? screenHandler.getCursorStack() : slot.getStack();
             ItemStack newStack = previousStack.copy();
             newStack.setCount(count);
-            slot.setStack(newStack);
+            if(slot == null) screenHandler.setCursorStack(newStack); else slot.setStack(newStack);
             screenHandler.syncState();
             return ValueConversions.of(previousStack);
         }
@@ -261,10 +261,11 @@ public class ScreenHandlerValue extends Value {
                 nbt = new NBTSerializableValue(nbtValue.getString()).getCompoundTag();
         }
         ItemStackArgument newitem = NBTSerializableValue.parseItem(lv.get(2).getString(), nbt);
-        ItemStack previousStack = slot.getStack();
+        ItemStack previousStack = slot == null ? screenHandler.getCursorStack() : slot.getStack();
         try
         {
-            slot.setStack(newitem.createStack(count, false));
+            ItemStack newStack = newitem.createStack(count, false);
+            if(slot == null) screenHandler.setCursorStack(newStack); else slot.setStack(newStack);
             screenHandler.syncState();
         }
         catch (CommandSyntaxException e)
@@ -329,9 +330,9 @@ public class ScreenHandlerValue extends Value {
         return NumericValue.of(property.get());
     }
 
-    public Value modifyProperty(String propertyName, Value value) {
+    public Value modifyProperty(String propertyName, List<Value> lv) {
         Property property = getProperty(propertyName);
-        int intValue = NumericValue.asNumber(value).getInt();
+        int intValue = NumericValue.asNumber(lv.get(0)).getInt();
         property.set(intValue);
         this.screenHandler.syncState();
         return Value.TRUE;
