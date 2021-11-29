@@ -588,7 +588,7 @@ public class SettingsManager
         }
 
         LiteralArgumentBuilder<ServerCommandSource> literalargumentbuilder = literal(identifier).requires((player) ->
-                player.hasPermissionLevel(2) && !locked);
+                canUseCommand(player, CarpetSettings.carpetCommandPermissionLevel) && !locked);
 
         literalargumentbuilder.executes((context)-> listAllSettings(context.getSource())).
                 then(literal("list").
