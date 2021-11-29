@@ -222,6 +222,7 @@ public abstract class NoiseColumnSamplerMixin_scarpetMixin implements NoiseColum
                 return this.sampleCaveEntranceNoise(x, y, z);
             }
             case "caveLayer" -> {
+                // scaling them by 4 because it's sampled in normal coords
                 return this.sampleCaveLayerNoise(
                         BiomeCoords.toBlock(x),
                         BiomeCoords.toBlock(y),
@@ -229,7 +230,7 @@ public abstract class NoiseColumnSamplerMixin_scarpetMixin implements NoiseColum
                 );
             }
             case "caveCheese" -> {
-                // scaling them by 4 because its sampled in normal coords (?)
+                // same reason as above
                 return this.caveCheeseNoise.sample(
                         BiomeCoords.toBlock(x),
                         BiomeCoords.toBlock(y) / 1.5,
