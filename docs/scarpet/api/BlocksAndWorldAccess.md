@@ -505,19 +505,19 @@ Returns the map colour of a block at position. One of:
 `'brown_terracotta'`, `'green_terracotta'`, `'red_terracotta'`, `'black_terracotta'`,
 `'crimson_nylium'`, `'crimson_stem'`, `'crimson_hyphae'`, `'warped_nylium'`, `'warped_stem'`, `'warped_hyphae'`, `'warped_wart'`
 
-### `query_noise(pos, ...type?)`
+### `sample_noise(pos, ...type?)`
 
-Queries the multi noise value(s) on the given position.  
+Samples the multi noise value(s) on the given position.  
 If no type is passed, returns a map of `continentalness`, `depth`, `erosion`, `humidity`, `temperature`, `weirdness`.  
 Otherwise, returns the map of that specific noise. 
 
 <pre>
 // without type
-query_noise(pos) => {continentalness: 0.445300012827, erosion: 0.395399987698, temperature: 0.165399998426, ...}
+sample_noise(pos) => {continentalness: 0.445300012827, erosion: 0.395399987698, temperature: 0.165399998426, ...}
 // passing type as multiple arguments
-query_noise(pos, 'pillarRareness', 'aquiferBarrier') => {aquiferBarrier: -0.205013844481, pillarRareness: 1.04772473438}
+sample_noise(pos, 'pillarRareness', 'aquiferBarrier') => {aquiferBarrier: -0.205013844481, pillarRareness: 1.04772473438}
 // passing types as a list with unpacking operator
-query_noise(pos, ...['spaghetti3dFirst', 'spaghetti3dSecond']) => {spaghetti3dFirst: -0.186052125186, spaghetti3dSecond: 0.211626790923}
+sample_noise(pos, ...['spaghetti3dFirst', 'spaghetti3dSecond']) => {spaghetti3dFirst: -0.186052125186, spaghetti3dSecond: 0.211626790923}
 </pre>
 
 Available types:

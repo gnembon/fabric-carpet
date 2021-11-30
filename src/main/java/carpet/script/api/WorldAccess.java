@@ -1571,7 +1571,7 @@ public class WorldAccess {
     }
 
     @ScarpetFunction(maxParams = -1)
-    public Value query_noise(Context c, @Locator.Block BlockPos pos, String... noiseQueries) {
+    public Value sample_noise(Context c, @Locator.Block BlockPos pos, String... noiseQueries) {
         int mappedX = BiomeCoords.fromBlock(pos.getX());
         int mappedY = BiomeCoords.fromBlock(pos.getY());
         int mappedZ = BiomeCoords.fromBlock(pos.getZ());
