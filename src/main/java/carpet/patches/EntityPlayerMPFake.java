@@ -132,7 +132,7 @@ public class EntityPlayerMPFake extends ServerPlayerEntity
         if (this.getServer().getTicks() % 10 == 0)
         {
             this.networkHandler.syncWithPlayerPosition();
-            //this.world.getChunkManager().updatePosition(this);
+            this.getWorld().getChunkManager().updatePosition(this);
             onTeleportationDone(); //<- causes hard crash but would need to be done to enable portals // not as of 1.17
         }
         try
