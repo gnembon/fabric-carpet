@@ -695,8 +695,11 @@ Available options in the scarpet app space:
   * `world_folder` - name of the direct folder in the saves that holds world files
   * `world_carpet_rules` - returns all Carpet rules in a map form (`rule`->`value`). Note that the values are always returned as strings, so you can't do boolean comparisons directly. Includes rules from extensions with their namespace (`namespace:rule`->`value`). You can later listen to rule changes with the `on_carpet_rule_changes(rule, newValue)` event.
   * `world_gamerules` - returns all gamerules in a map form (`rule`->`value`). Like carpet rules, values are returned as strings, so you can use appropriate value conversions using `bool()` or `number()` to convert them to other values. Gamerules are read-only to discourage app programmers to mess up with the settings intentionally applied by server admins. Isn't that just super annoying when a datapack messes up with your gamerule settings? It is still possible to change them though using `run('gamerule ...`.
-  * `world_spawn_point` - world spawn point
+  * `world_spawn_point` - world spawn point in the overworld dimension
   * `world_time` - Returns dimension-specific tick counter.
+  * `world_max_y` - Returns all dimension's maximum y-values in a map form (`dimension` -> `max_y`). Values are numeric
+  * `world_min_y` - Same as above, returning minimum y-values instead.
+  * `world_border_info` - Returns all dimension's world border info in a map form (`dimension` -> `[[centre_pos], radius]`). Note that the y-value of `centre_pos` is always 0.
 
  Relevant gameplay related properties
   * `game_difficulty` - current difficulty of the game: `'peaceful'`, `'easy'`, `'normal'`, or `'hard'`
