@@ -28,7 +28,7 @@ __config() -> {
         'pointing'->{'type'->'term','suggest'->['up','down']},
         'hollow'->{'type'->'term','suggest'->['hollow','solid']},
     },
-    'scope'->'global
+    'scope'->'global'
 };
 
 _block_matches(existing, block_predicate) ->
