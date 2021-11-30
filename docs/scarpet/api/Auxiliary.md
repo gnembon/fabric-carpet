@@ -697,10 +697,11 @@ Available options in the scarpet app space:
   * `world_gamerules` - returns all gamerules in a map form (`rule`->`value`). Like carpet rules, values are returned as strings, so you can use appropriate value conversions using `bool()` or `number()` to convert them to other values. Gamerules are read-only to discourage app programmers to mess up with the settings intentionally applied by server admins. Isn't that just super annoying when a datapack messes up with your gamerule settings? It is still possible to change them though using `run('gamerule ...`.
   * `world_spawn_point` - world spawn point in the overworld dimension
   * `world_time` - Returns dimension-specific tick counter.
-  * `world_max_y` - Returns all dimension's maximum y-values in a map form (`dimension` -> `max_y`). Values are numeric
-  * `world_min_y` - Same as above, returning minimum y-values instead.
-  * `world_border_info` - Returns all dimension's world border info in a map form (`dimension` -> `[[centre_pos], radius]`). Note that the y-value of `centre_pos` is always 0.
-
+  * `world_top` - Returns current dimensions' topmost Y value where one can place blocks.
+  * `world_bottom` - Returns current dimensions' bottommost Y value where one can place blocks.
+  * `world_center` - Returns coordinates of the center of the world with respect of the world border
+  * `world_size` - Returns size of the world where at this distance from `world_center` world border appears.
+  * 
  Relevant gameplay related properties
   * `game_difficulty` - current difficulty of the game: `'peaceful'`, `'easy'`, `'normal'`, or `'hard'`
   * `game_hardcore` - boolean whether the game is in hardcore mode

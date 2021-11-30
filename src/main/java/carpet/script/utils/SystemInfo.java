@@ -65,36 +65,16 @@ public class SystemInfo {
             return ListValue.of(NumericValue.of(prop.getSpawnX()), NumericValue.of(prop.getSpawnY()), NumericValue.of(prop.getSpawnZ()));
         });
 
-        put("world_min_height", c-> {
-            Map<Value, Value> dimMap = new HashMap<>();
-            for (ServerWorld world : c.s.getServer().getWorlds()) {
-                dimMap.put(ValueConversions.of(world.getRegistryKey().getValue()), new NumericValue(world.getBottomY()));
-            }
-            return MapValue.wrap(dimMap);
+        put("world_bottom", c-> new NumericValue(c.s.getWorld().getBottomY()));
+
+        put("world_top", c-> new NumericValue(c.s.getWorld().getTopY()));
+
+        put("world_center", c-> {
+            WorldBorder worldBorder = c.s.getWorld().getWorldBorder();
+            return ListValue.fromTriple(worldBorder.getCenterX(), 0, worldBorder.getCenterZ());
         });
 
-        put("world_max_height", c-> {
-            Map<Value, Value> dimMap = new HashMap<>();
-            for (ServerWorld world : c.s.getServer().getWorlds()) {
-                dimMap.put(ValueConversions.of(world.getRegistryKey().getValue()), new NumericValue(world.getLogicalHeight()));
-            }
-            return MapValue.wrap(dimMap);
-        });
-
-        put("world_border_info", c-> {
-            Map<Value, Value> dimMap = new HashMap<>();
-            for (ServerWorld world : c.s.getServer().getWorlds()) {
-                WorldBorder worldBorder = world.getWorldBorder();
-                dimMap.put(
-                    ValueConversions.of(world.getRegistryKey().getValue()),
-                    ListValue.of(
-                        ListValue.fromTriple(worldBorder.getCenterX(), 0, worldBorder.getCenterZ()),
-                        new NumericValue(worldBorder.getMaxRadius())
-                    )
-                );
-            }
-            return MapValue.wrap(dimMap);
-        });
+        put("world_size", c-> new NumericValue( c.s.getWorld().getWorldBorder().getMaxRadius()));
 
         put("world_time", c -> new NumericValue(c.s.getWorld().getTime()));
 
