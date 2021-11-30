@@ -43,7 +43,7 @@ import static carpet.settings.RuleCategory.CLIENT;
 @SuppressWarnings("CanBeFinal")
 public class CarpetSettings
 {
-    public static final String carpetVersion = "1.4.55+v211130";
+    public static final String carpetVersion = "1.4.56+v211130";
     public static final Logger LOG = LogManager.getLogger("carpet");
     public static ThreadLocal<Boolean> skipGenerationChecks = ThreadLocal.withInitial(() -> false);
     public static ThreadLocal<Boolean> impendingFillSkipUpdates = ThreadLocal.withInitial(() -> false);
@@ -129,7 +129,7 @@ public class CarpetSettings
 
     private static class CarpetPermissionLevel extends Validator<String> {
         @Override public String validate(ServerCommandSource source, ParsedRule<String> currentRule, String newValue, String string) {
-            if (source.hasPermissionLevel(4))
+            if (source == null || source.hasPermissionLevel(4))
                 return newValue;
             return null;
         }

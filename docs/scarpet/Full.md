@@ -2665,11 +2665,14 @@ poi(x,y,z,5) => []  // nothing around
 poi(x,y,z,5) => [['nether_portal',0,[7,8,9]],['nether_portal',0,[7,9,9]]] // two portal blocks in the range
 </pre>
 
-### `biome()` `biome(name)` `biome(block)` `biome(block/name, feature)`
+### `biome()` `biome(name)` `biome(block)` `biome(block/name, feature)`, `biome(noise_map)`
 
 Without arguments, returns the list of biomes in the world.
 
-With block, or name, returns the name of the biome in that position, or throws `'unknown_biome'` if provided biome or block are not valid. 
+With block, or name, returns the name of the biome in that position, or throws `'unknown_biome'` if provided biome or block are not valid.
+
+(1.18+) if passed a map of `continentalness`, `depth`, `erosion`, `humidity`, `temperature`, `weirdness`, returns the biome that exists at those noise values.  
+Note: Have to pass all 6 of the mentioned noise types and only these noise types for it to evaluate a biome.
 
 With an optional feature, it returns value for the specified attribute for that biome. Available and queryable features include:
 * `'top_material'`: unlocalized block representing the top surface material
@@ -2820,6 +2823,30 @@ Returns the map colour of a block at position. One of:
 `'gray_terracotta'`, `'light_gray_terracotta'`, `'cyan_terracotta'`, `'purple_terracotta'`, `'blue_terracotta'`, 
 `'brown_terracotta'`, `'green_terracotta'`, `'red_terracotta'`, `'black_terracotta'`,
 `'crimson_nylium'`, `'crimson_stem'`, `'crimson_hyphae'`, `'warped_nylium'`, `'warped_stem'`, `'warped_hyphae'`, `'warped_wart'`
+
+### `sample_noise(pos, ...type?)` 1.18+ only
+
+ Samples the multi noise value(s) on the given position.  
+If no type is passed, returns a map of `continentalness`, `depth`, `erosion`, `humidity`, `temperature`, `weirdness`.  
+Otherwise, returns the map of that specific noise.
+
+<pre>
+// without type
+sample_noise(pos) => {continentalness: 0.445300012827, erosion: 0.395399987698, temperature: 0.165399998426, ...}
+// passing type as multiple arguments
+sample_noise(pos, 'pillarRareness', 'aquiferBarrier') => {aquiferBarrier: -0.205013844481, pillarRareness: 1.04772473438}
+// passing types as a list with unpacking operator
+sample_noise(pos, ...['spaghetti3dFirst', 'spaghetti3dSecond']) => {spaghetti3dFirst: -0.186052125186, spaghetti3dSecond: 0.211626790923}
+</pre>
+
+Available types:
+
+`aquiferBarrier`, `aquiferFluidLevelFloodedness`, `aquiferFluidLevelSpread`, `aquiferLava`, `caveCheese`,
+`caveEntrance`, `caveLayer`, `continentalness`, `depth`, `erosion`, `humidity`, `island`, `jagged`, `oreGap`,
+`pillar`, `pillarRareness`, `pillarThickness`, `shiftX`, `shiftY`, `shiftZ`, `spaghetti2d`, `spaghetti2dElevation`,
+`spaghetti2dModulator`, `spaghetti2dThickness`, `spaghetti3d`, `spaghetti3dFirst`, `spaghetti3dRarity`,
+`spaghetti3dSecond`, `spaghetti3dThickness`, `spaghettiRoughness`, `spaghettiRoughnessModulator`, `temperature`,
+`terrain`, `terrainFactor`, `terrainOffset`, `terrainPeaks`, `weirdness`
 
 
 ### `loaded(pos)`
@@ -3407,11 +3434,13 @@ List of entities riding the entity.
 
 Entity that `e` rides.
 
-###  `query(e, 'scoreboard_tags')`, `query(e, 'tags')`(deprecated)
+### `query(e, 'scoreboard_tags')` and 
+### `query(e, 'tags')`(deprecated)
 
 List of entity's scoreboard tags.
 
-### `query(e, 'has_scoreboard_tag',tag)`, `query(e, 'has_tag',tag)`(deprecated)
+### `query(e, 'has_scoreboard_tag',tag)` and
+### `query(e, 'has_tag',tag)`(deprecated)
 
 Boolean, true if the entity is marked with a `tag` scoreboad tag.
 
@@ -3605,6 +3634,30 @@ query(p,'effect','resistance')  => null
 
 Number indicating remaining entity health, or `null` if not applicable.
 
+### `query(e, 'may_fly')`
+
+Returns a boolean indicating if the player can fly.
+
+### `query(e, 'flying')`
+
+Returns a boolean indicating if the player is flying.
+
+### `query(e, 'may_build')`
+
+Returns a boolean indicating if the player is allowed to place blocks.
+
+### `query(e, 'insta_build')`
+
+Returns a boolean indicating if the player can place blocks without consuming the item and if the player can shoot arrows without having them in the inventory.
+
+### `query(e, 'fly_speed')`
+
+Returns a number indicating the speed at which the player moves while flying.
+
+### `query(e, 'walk_speed')`
+
+Returns a number indicating the speed at which the player moves while walking.
+
 ### `query(e, 'hunger')`
 ### `query(e, 'saturation')`
 ### `query(e, 'exhaustion')`
@@ -3613,7 +3666,7 @@ Retrieves player hunger related information. For non-players, returns `null`.
 
 ### `query(e, 'absorption')`
 
-Gets the absorption of the player (yellow hearts, e.g when having a golden apple.)
+Gets the absorption of the player (yellow hearts, e.g. when having a golden apple.)
 
 ### `query(e,'xp')`
 ### `query(e,'xp_level')`
@@ -3625,7 +3678,7 @@ Numbers related to player's xp. `xp` is the overall xp player has, `xp_level` is
 
 ### `query(e, 'air')`
 
-Number indicating remaining entity health, or `null` if not applicable.
+Number indicating remaining entity air, or `null` if not applicable.
 
 ### `query(e, 'language')`
 
@@ -3765,10 +3818,7 @@ type objects via `get, put, has, delete`, so try to use API calls first for that
 
 ## Entity Modification
 
-Like with entity querying, entity modifications happen through one function. Most position and movements modifications 
-don't work currently on players as their position is controlled by clients.
-
-Currently there is no ability to modify NBT directly, but you could always use `run('data modify entity ...')`.
+Like with entity querying, entity modifications happen through one function.
 
 ### `modify(e, 'remove')`
 
@@ -3897,6 +3947,34 @@ players, since they are controlled client side.
 Applies status effect to the living entity. Takes several optional parameters, which default to `0`, `true`, 
 `true` and `false`. If no duration is specified, or if it's null or 0, the effect is removed. If name is not specified,
 it clears all effects.
+
+### `modify(e, 'may_fly', boolean)`
+
+Allows or denies the player the ability to fly. If the player is flying and the ability is removed, the player will stop flying.
+
+### `modify(e, 'flying', boolean)`
+
+Changes the flight status of the player (if it is flying or not).
+
+### `modify(e, 'may_build', boolean)`
+
+Allows or denies the player the ability to place blocks.
+
+### `modify(e, 'insta_build', boolean)`
+
+Allows or denies the player to place blocks without reducing the item count of the used stack and to shoot arrows without having them in the inventory.
+
+### `modify(e, 'fly_speed', float)`
+
+Modifies the value of the speed at which the player moves while flying.
+
+### `modify(e, 'walk_speed', float)`
+
+Modifies the value of the speed at which the player moves while walking.
+
+### `modify(e, 'selected_slot', int)`
+
+Changes player's selected slot.
 
 ### `modify(e, 'home', null), modify(e, 'home', block, distance?), modify(e, 'home', x, y, z, distance?)`
 
@@ -5321,7 +5399,7 @@ Reloading of datapacks that define new dimensions is not implemented in vanilla.
 dimension information on server start. `create_datapack` is therefore a direct replacement of manually ploping of the specified 
 file structure in a datapack file and calling `/datapack enable` on the new datapack with all its quirks and sideeffects
 (like no worldgen changes, reloading all other datapacks, etc.). To enable newly added custom dimensions, call much more
-experimental `check_hidden_dimensions()` after adding a datapack if needed.
+experimental `enable_hidden_dimensions()` after adding a datapack if needed.
 
 Synopsis:
 <pre>
@@ -5339,6 +5417,7 @@ script run create_datapack('foo',
 
 Custom dimension example:
 <pre>
+// 1.17
 script run create_datapack('funky_world',  {
     'data' -> { 'minecraft' -> { 'dimension' -> { 'custom_ow.json' -> { 
         'type' -> 'minecraft:the_end',
@@ -5353,7 +5432,36 @@ script run create_datapack('funky_world',  {
             'type' -> 'minecraft:noise'
     } } } } }
 });
-check_hidden_dimensions();  => ['funky_world']
+
+// 1.18
+script run a() -> create_datapack('funky_world',  {
+   'data' -> { 'minecraft' -> { 'dimension' -> { 'custom_ow.json' -> { 
+      'type' -> 'minecraft:overworld',
+         'generator' -> {
+            'biome_source' -> {
+               'biomes' -> [
+                  {
+                     'parameters' -> {                        
+                        'erosion' -> [-1.0,1.0], 
+                        'depth' -> 0.0, 
+                        'weirdness' -> [-1.0,1.0],
+                        'offset' -> 0.0,
+                        'temperature' -> [-1.0,1.0],
+                        'humidity' -> [-1.0,1.0],
+                        'continentalness' -> [ -1.2,-1.05]
+                     },
+                     'biome' -> 'minecraft:mushroom_fields'
+                  }
+               ],
+               'type' -> 'minecraft:multi_noise'
+            },
+            'seed' -> 0,
+            'settings' -> 'minecraft:overworld',
+            'type' -> 'minecraft:noise'
+         }
+     } } } }
+});
+enable_hidden_dimensions();  => ['funky_world']
 </pre>
 
 Loot table example:
@@ -5491,7 +5599,7 @@ Throws `unknown_dimension` if provided dimension can't be found.
  
 ### `view_distance()`
 
-_**Deprecated**. Use `system_info('server_view_distance')` instead._
+_**Deprecated**. Use `system_info('game_view_distance')` instead._
 
 Returns the view distance of the server.
 
@@ -5551,9 +5659,13 @@ Available options in the scarpet app space:
   * `world_folder` - name of the direct folder in the saves that holds world files
   * `world_carpet_rules` - returns all Carpet rules in a map form (`rule`->`value`). Note that the values are always returned as strings, so you can't do boolean comparisons directly. Includes rules from extensions with their namespace (`namespace:rule`->`value`). You can later listen to rule changes with the `on_carpet_rule_changes(rule, newValue)` event.
   * `world_gamerules` - returns all gamerules in a map form (`rule`->`value`). Like carpet rules, values are returned as strings, so you can use appropriate value conversions using `bool()` or `number()` to convert them to other values. Gamerules are read-only to discourage app programmers to mess up with the settings intentionally applied by server admins. Isn't that just super annoying when a datapack messes up with your gamerule settings? It is still possible to change them though using `run('gamerule ...`.
-  * `world_spawn_point` - world spawn point
+  * `world_spawn_point` - world spawn point in the overworld dimension
   * `world_time` - Returns dimension-specific tick counter.
-
+  * `world_top` - Returns current dimensions' topmost Y value where one can place blocks.
+  * `world_bottom` - Returns current dimensions' bottommost Y value where one can place blocks.
+  * `world_center` - Returns coordinates of the center of the world with respect of the world border
+  * `world_size` - Returns size of the world where at this distance from `world_center` world border appears.
+  * 
  Relevant gameplay related properties
   * `game_difficulty` - current difficulty of the game: `'peaceful'`, `'easy'`, `'normal'`, or `'hard'`
   * `game_hardcore` - boolean whether the game is in hardcore mode
