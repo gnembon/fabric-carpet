@@ -129,7 +129,7 @@ public class CarpetSettings
 
     private static class CarpetPermissionLevel extends Validator<String> {
         @Override public String validate(ServerCommandSource source, ParsedRule<String> currentRule, String newValue, String string) {
-            if (source.hasPermissionLevel(4))
+            if (source == null || source.hasPermissionLevel(4))
                 return newValue;
             return null;
         }
