@@ -206,3 +206,138 @@ Returns size of the actual dropped items.
 inventory_drop(player(), 0, 1) => 1 // Q's one item on the ground
 inventory_drop(x,y,z, 0) => 64 // removed and spawned in the world a full stack of items
 </pre>
+
+## Screen handlers
+
+A screen handler is a value type used to open screens to a player and interact with them.
+For example, this includes the chest inventory gui, the crafting table gui and many more.
+
+### `create_screen(player, type, name, callback?)`
+
+Creates and opens a screen to a `player`.
+
+Available `type`s:
+
+* `anvil`
+* `beacon`
+* `brewing_stand`
+* `cartography_table`
+* `crafting`
+* `enchantment`
+* `furnace`
+* `generic_3x3`
+* `generic_9x1`
+* `generic_9x2`
+* `generic_9x3`
+* `generic_9x4`
+* `generic_9x5`
+* `generic_9x6`
+* `grindstone`
+* `hopper`
+* `lectern`
+* `loom`
+* `merchant`
+* `shulker_box`
+* `smithing`
+* `stonecutter`
+
+The `name` parameter can be a formatted text and will be displayed at the top of the screen.
+Some screens like the lectern or beacon screen don't show it.
+
+Optionally, a `callback` function can be passed as a fourth argument.
+This functions needs to have five parameters:
+`_(screen, player, action, index, button) -> ...`
+
+The `screen` parameter is the screen handler value of the screen itself.
+`player` is the player who interacted with the screen.
+`action` is a string corresponding to the interaction type.
+Can be one of:
+
+Slot interactions:
+* `pickup`
+* `quick_move`
+* `swap`
+* `clone`
+* `throw`
+* `quick_craft`
+* `pickup_all`
+
+Other interactions:
+* `button` Pressing a button in certain screens that have then (enchantment table, lectern, loom and stonecutter)
+* `close` Triggers when the screen gets closed.
+
+`index` is the slot index of the slot interaction.
+If clicked outside the screen (where it would drop held items), this value is -999.
+In the case of a button interaction, this is the button index.
+Note that for lecterns, this index can be certain a value above 100, for jumping to a certain page.
+This can come from formatted text inside the book, with a `change_page` click event action.
+
+`button` corresponds to the mouse button used for the slot click event.
+This only works for slot click interactions, for `button` and `close` type, this value is 0.
+
+0 -> left click
+1 -> right click
+2 -> middle click
+3, 4 -> extra mouse buttons (don't work reliably, only if holding an item in the cursor slot)
+
+By returning a string `'cancel'` in the callback function,
+the screen interaction can be cancelled.
+This doesn't work for the `close` action.
+
+The `create_screen` function returns a `screen_handler` value,
+which can be used in `inventory_size()`, `inventory_has_items()`,
+`inventory_get()` and `inventory_set()` to access the screens slots.
+In addition to that, when using `inventory_get()` or `inventory_set()`,
+when using `-1` as the slot, the cursor stack will be accessed. 
+
+Example usage:
+```py
+global_screen = create_screen(player,'generic_9x6',format('db Test'),_(screen, player, action, index, button) -> (
+    print(player('all'),str('%s\n%s\n%d\n%d',player,action,index,button)); //for testing
+    if(action=='pickup',
+        inventory_set(screen,index,1,if(inventory_get(screen,index),'air','red_stained_glass_pane'));
+    );
+    'cancel'
+));
+```
+
+
+### `close_screen(screen)`
+
+Closes the screen of the given screen handler value.
+Returns `true` if the screen was closed.
+If the screen is already closed, returns `false`.
+
+### `screen_property(screen, property)`
+
+### `screen_property(screen, property, value)`
+
+Queries or modifies a certain `property` of a `screen`.
+The `property` is a string with the name of the property.
+When called with `screen` and `property` parameter, returns the current value of the property.
+When specifying a `value`,
+the property will be assigned the new `value` and synced with the client.
+
+**Options for `property` string:**
+
+| `property` | Required screen type | Type | Description |
+|---|---|---|---|
+| `name` | **All** | text | The name of the screen, as specified in  `create_screen()` function. Can only be queried. |
+| `open` | **All** | boolean | Returns `true` if the screen is open, `false` otherwise. Can only be queried. |
+| `fuel_progress` | furnace | number | Current value of the fuel indicator. |
+| `max_fuel_progress` | furnace | number | Maximum value for the full fuel indicator. |
+| `cook_progress` | furnace | number | Cooking progress indicator value. |
+| `max_cook_progress` | furnace | number | Maximum value for the cooking progress indicator. |
+| `level_cost` | anvil | number | Displayed level cost for the anvil. |
+| `page` | lectern | number | Opened page in the lectern screen. |
+| `beacon_level` | beacon | number | The power level of the beacon screen. This affects how many effects under primary power are grayed out. Should be a value between 0-5. |
+| `primary_effect` | beacon | number | The effect id of the primary effect. This changes the effect icon on the button on the secondary power side next to the regeneration effect. |
+| `secondary_effect` | beacon | number | The effect id of the secondary effect. This seems to change nothing, but it exists. |
+| `brew_time` | brewing_stand | number | The brewing time indicator value. This goes from 0 to 400. |
+| `brewing_fuel` | brewing_stand | number | The fuel indicator progress. Values range between 0 to 20. |
+| `enchantment_power_x` | enchantment | number | The level cost of the shown enchantment. Replace `x` with 1, 2 or 3 (e.g. `enchantment_power_2`) to target the first, second or third enchantment. |
+| `enchantment_id_x` | enchantment | number | The id of the enchantment shown (replace `x` with the enchantment slot 1/2/3). |
+| `enchantment_level_x` | enchantment | number | The enchantment level of the enchantment. |
+| `enchantment_seed` | enchantment | number | The seed of the enchanting screen. This affects the text shown in the standard Galactic alphabet. |
+| `banner_pattern` | loom | number | The selected banner pattern inside the loom. |
+| `stonecutter_recipe` | stonecutter | number | The selected recipe in the stonecutter. |
