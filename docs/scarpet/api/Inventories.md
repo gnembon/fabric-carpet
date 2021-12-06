@@ -288,19 +288,7 @@ The `create_screen` function returns a `screen_handler` value,
 which can be used in `inventory_size()`, `inventory_has_items()`,
 `inventory_get()` and `inventory_set()` to access the screens slots.
 In addition to that, when using `inventory_get()` or `inventory_set()`,
-when using `-1` as the slot, the cursor stack will be accessed. 
-
-Example usage:
-```py
-global_screen = create_screen(player,'generic_9x6',format('db Test'),_(screen, player, action, index, button) -> (
-    print(player('all'),str('%s\n%s\n%d\n%d',player,action,index,button)); //for testing
-    if(action=='pickup',
-        inventory_set(screen,index,1,if(inventory_get(screen,index),'air','red_stained_glass_pane'));
-    );
-    'cancel'
-));
-```
-
+when using `-1` as the slot, the cursor stack will be accessed.
 
 ### `close_screen(screen)`
 
@@ -341,3 +329,136 @@ the property will be assigned the new `value` and synced with the client.
 | `enchantment_seed` | enchantment | number | The seed of the enchanting screen. This affects the text shown in the standard Galactic alphabet. |
 | `banner_pattern` | loom | number | The selected banner pattern inside the loom. |
 | `stonecutter_recipe` | stonecutter | number | The selected recipe in the stonecutter. |
+
+### Screen example scripts
+
+<details>
+<summary>Chest click event</summary>
+
+```py
+__command() -> (
+    create_screen(player(),'generic_9x6',format('db Test'),_(screen, player, action, index, button) -> (
+        print(player('all'),str('%s\n%s\n%d\n%d',player,action,index,button)); //for testing
+        if(action=='pickup',
+            inventory_set(screen,index,1,if(inventory_get(screen,index),'air','red_stained_glass_pane'));
+        );
+        'cancel'
+    ));
+);
+```
+</details>
+
+<details>
+<summary>Anvil text prompt</summary>
+
+```py
+// anvil text prompt gui
+__command() -> (
+    global_screen = create_screen(player(),'anvil',format('r Enter a text'),_(screen, player, action, index, button)->(
+        if(action == 'pickup' && index == 2,
+            renamed_item = inventory_get(screen,2);
+            nbt = renamed_item:2;
+            name = parse_nbt(nbt:'display':'Name'):'text';
+            if(!name, return('cancel')); //don't accept empty string
+            print(player,'Text: ' + name);
+            close_screen(screen);
+        );
+        'cancel'
+    ));
+    inventory_set(global_screen,0,1,'paper','{display:{Name:\'{"text":""}\'}}');
+);
+
+```
+</details>
+
+<details>
+<summary>Lectern flip book</summary>
+
+```py
+// flip book lectern
+
+global_fac = 256/60;
+curve(v) -> (
+    v = v%360;
+    if(v<60,v*global_fac,v<180,255,v<240,255-(v-180)*global_fac,0);
+);
+
+hex_from_hue(hue) -> str('#%02X%02X%02X',curve(hue+120),curve(hue),curve(hue+240));
+
+make_char(hue) -> str('{"text":"▉","color":"%s"}',hex_from_hue(hue));
+
+make_page(hue) -> (
+    page = '[';
+    loop(15, //row
+        y = _;
+        loop(14, //col
+            x = _;
+            page += make_char(hue+x*4+y*4) + ',';
+        );
+    );
+    return(slice(page,0,-2)+']');
+);
+
+
+__command() -> (
+    screen = create_screen(player(),'lectern','Lectern example (this text is not visible)',_(screen, player, action, index, button)->(
+        if(action=='BUTTON',
+            print(player,'Button: ' + index);
+        );
+        'cancel'
+    ));
+
+    page_count = 60;
+    pages = [];
+
+    loop(page_count,
+        hue = _/page_count*360;
+        pages += make_page(hue);
+    );
+
+    nbt = encode_nbt({
+        'pages'-> pages,
+        'author'->'-',
+        'title'->'-',
+        'resolved'->1
+    });
+
+    inventory_set(screen,0,1,'written_book',nbt);
+
+    task(_(outer(screen),outer(page_count))->(
+        while(screen != null && screen_property(screen,'open'),100000,
+            p = (p+1)%page_count;
+            screen_property(screen,'page',p);
+            sleep(50);
+        );
+    ));
+);
+
+```
+</details>
+
+<details>
+<summary>generic_3x3 cursor stack</summary>
+
+```py
+__command() -> (
+    screen = create_screen(player(),'generic_3x3','Title',_(screen, player, action, index, button) -> (
+        if(action=='pickup',
+            // set slot to the cursor stack item
+            inventory_set(screen,index,1,inventory_get(screen,-1):0);
+        );
+        'cancel'
+    ));
+
+    task(_(outer(screen))->(
+        // keep the cursor stack item blinking
+        while(screen_property(screen,'open'),100000,
+            inventory_set(screen,-1,1,'red_concrete');
+            sleep(500);
+            inventory_set(screen,-1,1,'lime_concrete');
+            sleep(500);
+        );
+    ));
+);
+```
+</details>
