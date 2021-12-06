@@ -277,7 +277,7 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
         }
         catch (IndexOutOfBoundsException e)
         {
-            throw new InternalExpressionException("Inventory should be defined either by three coordinates, a block value, an entity or a screen handler");
+            throw new InternalExpressionException("Inventory should be defined either by three coordinates, a block value, an entity or a screen");
         }
     }
 

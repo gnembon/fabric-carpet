@@ -17,7 +17,7 @@ import carpet.script.value.ListValue;
 import carpet.script.value.NBTSerializableValue;
 import carpet.script.value.NullValue;
 import carpet.script.value.NumericValue;
-import carpet.script.value.ScreenHandlerValue;
+import carpet.script.value.ScreenValue;
 import carpet.script.value.StringValue;
 import carpet.script.value.Value;
 import carpet.script.value.ValueConversions;
@@ -181,8 +181,8 @@ public class Inventories {
 
         expression.addContextFunction("inventory_size", -1, (c, t, lv) ->
         {
-            if(lv.size() != 0 && lv.get(0) instanceof ScreenHandlerValue screenHandlerValue)
-                return screenHandlerValue.inventorySizeSlots();
+            if(lv.size() != 0 && lv.get(0) instanceof ScreenValue screenValue)
+                return screenValue.inventorySizeSlots();
             CarpetContext cc = (CarpetContext) c;
             NBTSerializableValue.InventoryLocator inventoryLocator = NBTSerializableValue.locateInventory(cc, lv, 0);
             if (inventoryLocator == null) return Value.NULL;
@@ -191,8 +191,8 @@ public class Inventories {
 
         expression.addContextFunction("inventory_has_items", -1, (c, t, lv) ->
         {
-            if(lv.size() != 0 && lv.get(0) instanceof ScreenHandlerValue screenHandlerValue)
-                return screenHandlerValue.inventoryHasItemsSlots();
+            if(lv.size() != 0 && lv.get(0) instanceof ScreenValue screenValue)
+                return screenValue.inventoryHasItemsSlots();
             CarpetContext cc = (CarpetContext) c;
             NBTSerializableValue.InventoryLocator inventoryLocator = NBTSerializableValue.locateInventory(cc, lv, 0);
             if (inventoryLocator == null) return Value.NULL;
@@ -202,8 +202,8 @@ public class Inventories {
         //inventory_get(<b, e>, <n>) -> item_triple
         expression.addContextFunction("inventory_get", -1, (c, t, lv) ->
         {
-            if(lv.size() != 0 && lv.get(0) instanceof ScreenHandlerValue screenHandlerValue)
-                return screenHandlerValue.inventoryGetSlots(lv.subList(1,lv.size()));
+            if(lv.size() != 0 && lv.get(0) instanceof ScreenValue screenValue)
+                return screenValue.inventoryGetSlots(lv.subList(1,lv.size()));
             CarpetContext cc = (CarpetContext) c;
             NBTSerializableValue.InventoryLocator inventoryLocator = NBTSerializableValue.locateInventory(cc, lv, 0);
             if (inventoryLocator == null) return Value.NULL;
@@ -223,8 +223,8 @@ public class Inventories {
         //inventory_set(<b,e>, <n>, <count>, <item>, <nbt>)
         expression.addContextFunction("inventory_set", -1, (c, t, lv) ->
         {
-            if(lv.size() != 0 && lv.get(0) instanceof ScreenHandlerValue screenHandlerValue)
-                return screenHandlerValue.inventorySetSlots(lv.subList(1,lv.size()));
+            if(lv.size() != 0 && lv.get(0) instanceof ScreenValue screenValue)
+                return screenValue.inventorySetSlots(lv.subList(1,lv.size()));
             CarpetContext cc = (CarpetContext) c;
             NBTSerializableValue.InventoryLocator inventoryLocator = NBTSerializableValue.locateInventory(cc, lv, 0);
             if (inventoryLocator == null) return Value.NULL;
@@ -279,8 +279,8 @@ public class Inventories {
         //inventory_find(<b, e>, <item> or null (first empty slot), <start_from=0> ) -> <N> or null
         expression.addContextFunction("inventory_find", -1, (c, t, lv) ->
         {
-            if(lv.size() != 0 && lv.get(0) instanceof ScreenHandlerValue)
-                throw new InternalExpressionException("'inventory_find' is not supported for screen handlers");
+            if(lv.size() != 0 && lv.get(0) instanceof ScreenValue)
+                throw new InternalExpressionException("'inventory_find' is not supported for screens");
             CarpetContext cc = (CarpetContext) c;
             NBTSerializableValue.InventoryLocator inventoryLocator = NBTSerializableValue.locateInventory(cc, lv, 0);
             if (inventoryLocator == null) return Value.NULL;
@@ -309,8 +309,8 @@ public class Inventories {
         //inventory_remove(<b, e>, <item>, <amount=1>) -> bool
         expression.addContextFunction("inventory_remove", -1, (c, t, lv) ->
         {
-            if(lv.size() != 0 && lv.get(0) instanceof ScreenHandlerValue)
-                throw new InternalExpressionException("'inventory_remove' is not supported for screen handlers");
+            if(lv.size() != 0 && lv.get(0) instanceof ScreenValue)
+                throw new InternalExpressionException("'inventory_remove' is not supported for screens");
             CarpetContext cc = (CarpetContext) c;
             NBTSerializableValue.InventoryLocator inventoryLocator = NBTSerializableValue.locateInventory(cc, lv, 0);
             if (inventoryLocator == null) return Value.NULL;
@@ -409,30 +409,30 @@ public class Inventories {
             if(lv.size() > 3)
                 function = FunctionArgument.findIn(c, expression.module, lv, 3, true, false).function;
 
-            return new ScreenHandlerValue(player,type,name,function,c);
+            return new ScreenValue(player,type,name,function,c);
         });
 
         expression.addContextFunction("close_screen",1, (c, t, lv) ->
         {
             Value value = lv.get(0);
-            if(!(value instanceof ScreenHandlerValue screenHandlerValue)) throw new InternalExpressionException("'close_screem' requires a screen handler as first argument.");
-            if(!screenHandlerValue.isOpen()) return Value.FALSE;
-            screenHandlerValue.close();
+            if(!(value instanceof ScreenValue screenValue)) throw new InternalExpressionException("'close_screem' requires a screen value as first argument.");
+            if(!screenValue.isOpen()) return Value.FALSE;
+            screenValue.close();
             return Value.TRUE;
         });
 
         expression.addContextFunction("screen_property",-1, (c, t, lv) ->
         {
             if(lv.size()<2) throw new InternalExpressionException("'screen_property' requires at least a screen and a property name");
-            if(!(lv.get(0) instanceof ScreenHandlerValue screenHandlerValue)) throw new InternalExpressionException("'screen_property' requires a screen handler value as the first argument");
+            if(!(lv.get(0) instanceof ScreenValue screenValue)) throw new InternalExpressionException("'screen_property' requires a screen value as the first argument");
             String propertyName = lv.get(1).getString();
             if(lv.size()>=3)
             {
-                return screenHandlerValue.modifyProperty(propertyName,lv.subList(2,lv.size()));
+                return screenValue.modifyProperty(propertyName,lv.subList(2,lv.size()));
             }
             else
             {
-                return screenHandlerValue.queryProperty(propertyName);
+                return screenValue.queryProperty(propertyName);
             }
         });
     }

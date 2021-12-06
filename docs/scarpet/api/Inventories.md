@@ -207,9 +207,9 @@ inventory_drop(player(), 0, 1) => 1 // Q's one item on the ground
 inventory_drop(x,y,z, 0) => 64 // removed and spawned in the world a full stack of items
 </pre>
 
-## Screen handlers
+## Screens
 
-A screen handler is a value type used to open screens to a player and interact with them.
+A screen is a value type used to open screens to a player and interact with them.
 For example, this includes the chest inventory gui, the crafting table gui and many more.
 
 ### `create_screen(player, type, name, callback?)`
@@ -248,7 +248,7 @@ Optionally, a `callback` function can be passed as a fourth argument.
 This functions needs to have five parameters:
 `_(screen, player, action, index, button) -> ...`
 
-The `screen` parameter is the screen handler value of the screen itself.
+The `screen` parameter is the screen value of the screen itself.
 `player` is the player who interacted with the screen.
 `action` is a string corresponding to the interaction type.
 Can be one of:
@@ -284,7 +284,7 @@ By returning a string `'cancel'` in the callback function,
 the screen interaction can be cancelled.
 This doesn't work for the `close` action.
 
-The `create_screen` function returns a `screen_handler` value,
+The `create_screen` function returns a `screen` value,
 which can be used in `inventory_size()`, `inventory_has_items()`,
 `inventory_get()` and `inventory_set()` to access the screens slots.
 In addition to that, when using `inventory_get()` or `inventory_set()`,
@@ -292,7 +292,7 @@ when using `-1` as the slot, the cursor stack will be accessed.
 
 ### `close_screen(screen)`
 
-Closes the screen of the given screen handler value.
+Closes the screen of the given screen value.
 Returns `true` if the screen was closed.
 If the screen is already closed, returns `false`.
 

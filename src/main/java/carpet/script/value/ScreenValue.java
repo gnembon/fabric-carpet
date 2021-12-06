@@ -53,7 +53,7 @@ import java.util.OptionalInt;
 
 import static net.minecraft.screen.ScreenHandlerType.*;
 
-public class ScreenHandlerValue extends Value {
+public class ScreenValue extends Value {
     private ScreenHandler screenHandler;
 
     private final Text name;
@@ -101,7 +101,7 @@ public class ScreenHandlerValue extends Value {
 
 
 
-    public ScreenHandlerValue(ServerPlayerEntity player, String type, Text name, FunctionValue callback, Context c) {
+    public ScreenValue(ServerPlayerEntity player, String type, Text name, FunctionValue callback, Context c) {
         this.name = name;
         this.typestring = type.toLowerCase();
         if(callback != null) callback.checkArgs(5);
@@ -119,9 +119,9 @@ public class ScreenHandlerValue extends Value {
         }
 
         return new SimpleNamedScreenHandlerFactory((i, playerInventory, playerEntity) -> {
-            ScreenHandler screen = screenHandlerFactories.get(ScreenHandlerValue.this.typestring).create(i,playerInventory);
-            ScreenHandlerValue.this.addListenerCallback(screen);
-            ScreenHandlerValue.this.screenHandler = screen;
+            ScreenHandler screen = screenHandlerFactories.get(ScreenValue.this.typestring).create(i,playerInventory);
+            ScreenValue.this.addListenerCallback(screen);
+            ScreenValue.this.screenHandler = screen;
             return screen;
         }, this.name);
     }
@@ -139,7 +139,7 @@ public class ScreenHandlerValue extends Value {
             //prevent recursion when closing screen in closing screen callback by doing this before triggering event
             this.player.currentScreenHandler = this.player.playerScreenHandler;
             this.player.closeHandledScreen();
-            screenHandler = null;
+            this.screenHandler = null;
         }
     }
 
@@ -172,15 +172,15 @@ public class ScreenHandlerValue extends Value {
         screenHandler.addListener(new ScarpetScreenHandlerListener() {
             @Override
             public boolean onSlotClick(PlayerEntity player, SlotActionType actionType, int slot, int button) {
-                return ScreenHandlerValue.this.callListener(player,actionTypeToString(actionType),slot,button);
+                return ScreenValue.this.callListener(player,actionTypeToString(actionType),slot,button);
             }
             @Override
             public boolean onButtonClick(PlayerEntity player, int button) {
-                return ScreenHandlerValue.this.callListener(player,"button",button,0);
+                return ScreenValue.this.callListener(player,"button",button,0);
             }
             @Override
             public void onClose(PlayerEntity player) {
-                ScreenHandlerValue.this.callListener(player,"close",0,0);
+                ScreenValue.this.callListener(player,"close",0,0);
             }
             @Override
             public void onSlotUpdate(ScreenHandler handler, int slotId, ItemStack stack) {}
@@ -279,9 +279,9 @@ public class ScreenHandlerValue extends Value {
             return ((ScreenHandlerInterface) this.screenHandler).getProperty(propertyIndex);
         }
         if(!this.isOpen()) {
-            throw new InternalExpressionException("Screen handler property cannot be accessed, because the screen is already closed");
+            throw new InternalExpressionException("Screen property cannot be accessed, because the screen is already closed");
         }
-        throw new InternalExpressionException("Screen handler property " + propertyName + " expected a " + requiredType + " screen handler.");
+        throw new InternalExpressionException("Screen property " + propertyName + " expected a " + requiredType + " screen.");
     }
 
     private Property getProperty(String propertyName) {
@@ -317,7 +317,7 @@ public class ScreenHandlerValue extends Value {
 
             case "stonecutter_recipe" -> getPropertyForType(StonecutterScreenHandler.class, "stonecutter", 0, propertyName);
 
-            default -> throw new InternalExpressionException("Invalid screen handler property: " + propertyName);
+            default -> throw new InternalExpressionException("Invalid screen property: " + propertyName);
         };
 
     }
@@ -339,7 +339,7 @@ public class ScreenHandlerValue extends Value {
 
     @Override
     public String getString() {
-        return this.typestring + "_screen_handler";
+        return this.typestring + "_screen";
     }
 
     @Override
@@ -350,7 +350,7 @@ public class ScreenHandlerValue extends Value {
     @Override
     public String getTypeString()
     {
-        return "screen_handler";
+        return "screen";
     }
 
     @Override
