@@ -11,10 +11,12 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.minecraft.command.argument.ItemStackArgument;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
+import net.minecraft.inventory.Inventory;
 import net.minecraft.inventory.SimpleInventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtElement;
+import net.minecraft.nbt.NbtList;
 import net.minecraft.nbt.NbtString;
 import net.minecraft.screen.AbstractFurnaceScreenHandler;
 import net.minecraft.screen.AnvilScreenHandler;
@@ -359,8 +361,16 @@ public class ScreenValue extends Value {
 
     @Override
     public NbtElement toTag(boolean force) {
-        if (!force) throw new NBTSerializableValue.IncompatibleTypeException(this);
-        return NbtString.of(getString());
+        if(this.screenHandler == null) {
+            return new NbtList();
+        }
+
+        NbtList nbtList = new NbtList();
+        for(int i = 0; i < this.screenHandler.slots.size(); i++) {
+            ItemStack itemStack = this.screenHandler.getSlot(i).getStack();
+            nbtList.add(itemStack.writeNbt(new NbtCompound()));
+        }
+        return nbtList;
     }
 
 
