@@ -20,6 +20,7 @@ import net.minecraft.screen.AbstractFurnaceScreenHandler;
 import net.minecraft.screen.AnvilScreenHandler;
 import net.minecraft.screen.ArrayPropertyDelegate;
 import net.minecraft.screen.BeaconScreenHandler;
+import net.minecraft.screen.BlastFurnaceScreenHandler;
 import net.minecraft.screen.BrewingStandScreenHandler;
 import net.minecraft.screen.CartographyTableScreenHandler;
 import net.minecraft.screen.CraftingScreenHandler;
@@ -38,6 +39,7 @@ import net.minecraft.screen.ScreenHandlerListener;
 import net.minecraft.screen.ShulkerBoxScreenHandler;
 import net.minecraft.screen.SimpleNamedScreenHandlerFactory;
 import net.minecraft.screen.SmithingScreenHandler;
+import net.minecraft.screen.SmokerScreenHandler;
 import net.minecraft.screen.StonecutterScreenHandler;
 import net.minecraft.screen.slot.Slot;
 import net.minecraft.screen.slot.SlotActionType;
@@ -71,6 +73,7 @@ public class ScreenValue extends Value {
 
         screenHandlerFactories.put("anvil",(syncId, playerInventory) -> new AnvilScreenHandler(syncId,playerInventory));
         screenHandlerFactories.put("beacon",(syncId, playerInventory) -> new BeaconScreenHandler(syncId,playerInventory));
+        screenHandlerFactories.put("blast_furnace",(syncId, playerInventory) -> new BlastFurnaceScreenHandler(syncId,playerInventory));
         screenHandlerFactories.put("brewing_stand",(syncId, playerInventory) -> new BrewingStandScreenHandler(syncId,playerInventory,new SimpleInventory(5),new ArrayPropertyDelegate(2)));
         screenHandlerFactories.put("cartography_table",(syncId, playerInventory) -> new CartographyTableScreenHandler(syncId,playerInventory));
         screenHandlerFactories.put("crafting",(syncId, playerInventory) -> new CraftingScreenHandler(syncId,playerInventory));
@@ -90,6 +93,7 @@ public class ScreenValue extends Value {
         screenHandlerFactories.put("merchant",(syncId, playerInventory) -> new MerchantScreenHandler(syncId,playerInventory));
         screenHandlerFactories.put("shulker_box",(syncId, playerInventory) -> new ShulkerBoxScreenHandler(syncId,playerInventory,new SimpleInventory(9*3)));
         screenHandlerFactories.put("smithing",(syncId, playerInventory) -> new SmithingScreenHandler(syncId,playerInventory));
+        screenHandlerFactories.put("smoker",(syncId, playerInventory) -> new SmokerScreenHandler(syncId,playerInventory));
         screenHandlerFactories.put("stonecutter",(syncId, playerInventory) -> new StonecutterScreenHandler(syncId,playerInventory));
     }
 

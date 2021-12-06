@@ -220,6 +220,7 @@ Available `type`s:
 
 * `anvil`
 * `beacon`
+* `blast_furnace`
 * `brewing_stand`
 * `cartography_table`
 * `crafting`
@@ -239,6 +240,7 @@ Available `type`s:
 * `merchant`
 * `shulker_box`
 * `smithing`
+* `smoker`
 * `stonecutter`
 
 The `name` parameter can be a formatted text and will be displayed at the top of the screen.
@@ -312,10 +314,10 @@ the property will be assigned the new `value` and synced with the client.
 |---|---|---|---|
 | `name` | **All** | text | The name of the screen, as specified in  `create_screen()` function. Can only be queried. |
 | `open` | **All** | boolean | Returns `true` if the screen is open, `false` otherwise. Can only be queried. |
-| `fuel_progress` | furnace | number | Current value of the fuel indicator. |
-| `max_fuel_progress` | furnace | number | Maximum value for the full fuel indicator. |
-| `cook_progress` | furnace | number | Cooking progress indicator value. |
-| `max_cook_progress` | furnace | number | Maximum value for the cooking progress indicator. |
+| `fuel_progress` | furnace/smoker/blast_furnace | number | Current value of the fuel indicator. |
+| `max_fuel_progress` | furnace/smoker/blast_furnace | number | Maximum value for the full fuel indicator. |
+| `cook_progress` | furnace/smoker/blast_furnace | number | Cooking progress indicator value. |
+| `max_cook_progress` | furnace/smoker/blast_furnace | number | Maximum value for the cooking progress indicator. |
 | `level_cost` | anvil | number | Displayed level cost for the anvil. |
 | `page` | lectern | number | Opened page in the lectern screen. |
 | `beacon_level` | beacon | number | The power level of the beacon screen. This affects how many effects under primary power are grayed out. Should be a value between 0-5. |
