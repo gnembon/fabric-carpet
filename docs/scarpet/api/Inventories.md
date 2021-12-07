@@ -209,12 +209,12 @@ inventory_drop(x,y,z, 0) => 64 // removed and spawned in the world a full stack 
 
 ## Screens
 
-A screen is a value type used to open screens to a player and interact with them.
+A screen is a value type used to open screens for a player and interact with them.
 For example, this includes the chest inventory gui, the crafting table gui and many more.
 
 ### `create_screen(player, type, name, callback?)`
 
-Creates and opens a screen to a `player`.
+Creates and opens a screen for a `player`.
 
 Available `type`s:
 
@@ -246,14 +246,14 @@ Available `type`s:
 The `name` parameter can be a formatted text and will be displayed at the top of the screen.
 Some screens like the lectern or beacon screen don't show it.
 
-Optionally, a `callback` function can be passed as a fourth argument.
+Optionally, a `callback` function can be passed as the fourth argument.
 This functions needs to have five parameters:
 `_(screen, player, action, index, button) -> ...`
 
 The `screen` parameter is the screen value of the screen itself.
 `player` is the player who interacted with the screen.
 `action` is a string corresponding to the interaction type.
-Can be one of:
+Can be any of the following:
 
 Slot interactions:
 * `pickup`
@@ -316,7 +316,7 @@ the property will be assigned the new `value` and synced with the client.
 
 | `property` | Required screen type | Type | Description |
 |---|---|---|---|
-| `name` | **All** | text | The name of the screen, as specified in  `create_screen()` function. Can only be queried. |
+| `name` | **All** | text | The name of the screen, as specified in the `create_screen()` function. Can only be queried. |
 | `open` | **All** | boolean | Returns `true` if the screen is open, `false` otherwise. Can only be queried. |
 | `fuel_progress` | furnace/smoker/blast_furnace | number | Current value of the fuel indicator. |
 | `max_fuel_progress` | furnace/smoker/blast_furnace | number | Maximum value for the full fuel indicator. |

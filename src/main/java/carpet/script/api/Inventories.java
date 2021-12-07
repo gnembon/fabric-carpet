@@ -399,10 +399,10 @@ public class Inventories {
 
         expression.addContextFunction("create_screen",-1, (c, t, lv) ->
         {
-            if(lv.size() < 3) throw new InternalExpressionException("'create_screen' expected at least three arguments");
+            if(lv.size() < 3) throw new InternalExpressionException("'create_screen' requires at least three arguments");
             Value playerValue = lv.get(0);
             ServerPlayerEntity player = EntityValue.getPlayerByValue(((CarpetContext) c).s.getServer(), playerValue);
-            if(player == null) throw new InternalExpressionException("'create_screen' requires a valid online player as first argument.");
+            if(player == null) throw new InternalExpressionException("'create_screen' requires a valid online player as the first argument.");
             String type = lv.get(1).getString();
             Text name = FormattedTextValue.getTextByValue(lv.get(2));
             FunctionValue function = null;
@@ -415,7 +415,7 @@ public class Inventories {
         expression.addContextFunction("close_screen",1, (c, t, lv) ->
         {
             Value value = lv.get(0);
-            if(!(value instanceof ScreenValue screenValue)) throw new InternalExpressionException("'close_screem' requires a screen value as first argument.");
+            if(!(value instanceof ScreenValue screenValue)) throw new InternalExpressionException("'close_screem' requires a screen value as the first argument.");
             if(!screenValue.isOpen()) return Value.FALSE;
             screenValue.close();
             return Value.TRUE;
