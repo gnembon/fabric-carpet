@@ -275,12 +275,16 @@ Note that for lecterns, this index can be certain a value above 100, for jumping
 This can come from formatted text inside the book, with a `change_page` click event action.
 
 `button` corresponds to the mouse button used for the slot click event.
-This only works for slot click interactions, for `button` and `close` type, this value is 0.
 
-0 -> left click
-1 -> right click
-2 -> middle click
-3, 4 -> extra mouse buttons (don't work reliably, only if holding an item in the cursor slot)
+For the `swap` action, this is the number key 0-8 for a certain hotbar slot.
+
+For the `quick_craft` action, the number consists of the quick crafting stage,
+which is either 0 (beginning of quick crafting), 1 (adding item to slot) or 2 (end of quick crafting)
+and stored in the first two bits of the number. You can get to it using `bitwise_and(button,3)`.
+The next two bits correspond to the button used for quick crafting,
+use `bitwise_and(bitwise_shift_right(button,2),3)` here.
+
+This only works for slot click interactions, for `button` and `close` type, this value is 0.
 
 By returning a string `'cancel'` in the callback function,
 the screen interaction can be cancelled.
