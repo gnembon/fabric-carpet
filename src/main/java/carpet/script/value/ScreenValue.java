@@ -1,23 +1,25 @@
 package carpet.script.value;
 
+import carpet.CarpetServer;
+import carpet.CarpetSettings;
 import carpet.fakes.ScreenHandlerInterface;
 
+import carpet.script.CarpetScriptHost;
+import carpet.script.CarpetScriptServer;
 import carpet.script.Context;
-import carpet.script.LazyValue;
+import carpet.script.exception.IntegrityException;
 import carpet.script.exception.InternalExpressionException;
+import carpet.script.exception.InvalidCallbackException;
 import carpet.script.exception.ThrowStatement;
 import carpet.script.exception.Throwables;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.minecraft.command.argument.ItemStackArgument;
-import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
-import net.minecraft.inventory.Inventory;
 import net.minecraft.inventory.SimpleInventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtElement;
 import net.minecraft.nbt.NbtList;
-import net.minecraft.nbt.NbtString;
 import net.minecraft.screen.AbstractFurnaceScreenHandler;
 import net.minecraft.screen.AnvilScreenHandler;
 import net.minecraft.screen.ArrayPropertyDelegate;
@@ -45,6 +47,7 @@ import net.minecraft.screen.SmokerScreenHandler;
 import net.minecraft.screen.StonecutterScreenHandler;
 import net.minecraft.screen.slot.Slot;
 import net.minecraft.screen.slot.SlotActionType;
+import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.Text;
 
@@ -63,7 +66,7 @@ public class ScreenValue extends Value {
     private final Text name;
     private final String typestring;
     private final FunctionValue callback;
-    private final Context callbackContext;
+    private final String hostname;
     private final ServerPlayerEntity player;
 
 
@@ -112,7 +115,7 @@ public class ScreenValue extends Value {
         this.typestring = type.toLowerCase();
         if(callback != null) callback.checkArgs(5);
         this.callback = callback;
-        this.callbackContext = c.duplicate();
+        this.hostname = c.host.getName();
         this.player = player;
         NamedScreenHandlerFactory factory = this.createScreenHandlerFactory();
         if(factory == null) throw new ThrowStatement(type, Throwables.UNKNOWN_SCREEN);
@@ -161,15 +164,30 @@ public class ScreenValue extends Value {
     }
 
 
-    private boolean callListener(PlayerEntity player, String action, int index, int button) {
+    private boolean callListener(ServerPlayerEntity player, String action, int index, int button) {
         Value playerValue = EntityValue.of(player);
         Value actionValue = StringValue.of(action);
         Value indexValue = NumericValue.of(index);
         Value buttonValue = NumericValue.of(button);
         List<Value> args = Arrays.asList(this,playerValue,actionValue,indexValue,buttonValue);
-        LazyValue cancel = this.callback.callInContext(this.callbackContext, Context.VOID, args);
-        Value cancelValue = cancel.evalValue(this.callbackContext);
-        return cancelValue.getString().equals("cancel");
+        CarpetScriptHost appHost = CarpetServer.scriptServer.getAppHostByName(this.hostname);
+        if(appHost == null) {
+            this.close();
+            this.screenHandler = null;
+            return false;
+        }
+        ServerCommandSource source = player.getCommandSource().withLevel(CarpetSettings.runPermissionLevel);
+        CarpetScriptHost executingHost = appHost.retrieveForExecution(source,player);
+        try
+        {
+            Value cancelValue = executingHost.callUDF(player.getBlockPos(), source.withLevel(CarpetSettings.runPermissionLevel), callback, args);
+            return cancelValue.getString().equals("cancel");
+        }
+        catch (NullPointerException | InvalidCallbackException | IntegrityException error)
+        {
+            CarpetScriptServer.LOG.error("Got exception when running screen event call ", error);
+            return false;
+        }
     }
 
     private void addListenerCallback(ScreenHandler screenHandler) {
@@ -177,15 +195,15 @@ public class ScreenValue extends Value {
 
         screenHandler.addListener(new ScarpetScreenHandlerListener() {
             @Override
-            public boolean onSlotClick(PlayerEntity player, SlotActionType actionType, int slot, int button) {
+            public boolean onSlotClick(ServerPlayerEntity player, SlotActionType actionType, int slot, int button) {
                 return ScreenValue.this.callListener(player,actionTypeToString(actionType),slot,button);
             }
             @Override
-            public boolean onButtonClick(PlayerEntity player, int button) {
+            public boolean onButtonClick(ServerPlayerEntity player, int button) {
                 return ScreenValue.this.callListener(player,"button",button,0);
             }
             @Override
-            public void onClose(PlayerEntity player) {
+            public void onClose(ServerPlayerEntity player) {
                 ScreenValue.this.callListener(player,"close",0,0);
             }
             @Override
@@ -375,9 +393,9 @@ public class ScreenValue extends Value {
 
 
     public interface ScarpetScreenHandlerListener extends ScreenHandlerListener {
-        boolean onSlotClick(PlayerEntity player, SlotActionType actionType, int slot, int button);
-        boolean onButtonClick(PlayerEntity player, int button);
-        void onClose(PlayerEntity player);
+        boolean onSlotClick(ServerPlayerEntity player, SlotActionType actionType, int slot, int button);
+        boolean onButtonClick(ServerPlayerEntity player, int button);
+        void onClose(ServerPlayerEntity player);
     }
 
     private static String actionTypeToString(SlotActionType actionType) {

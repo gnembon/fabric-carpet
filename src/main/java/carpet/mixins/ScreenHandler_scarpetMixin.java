@@ -8,6 +8,7 @@ import net.minecraft.screen.Property;
 import net.minecraft.screen.ScreenHandler;
 import net.minecraft.screen.ScreenHandlerListener;
 import net.minecraft.screen.slot.SlotActionType;
+import net.minecraft.server.network.ServerPlayerEntity;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -26,9 +27,10 @@ public abstract class ScreenHandler_scarpetMixin implements ScreenHandlerInterfa
 
     @Inject(method = "internalOnSlotClick", at = @At("HEAD"), cancellable = true)
     private void callSlotClickListener(int slotIndex, int button, SlotActionType actionType, PlayerEntity player, CallbackInfo ci) {
+        if(!(player instanceof ServerPlayerEntity serverPlayerEntity)) return;
         for(ScreenHandlerListener screenHandlerListener : this.listeners) {
             if(screenHandlerListener instanceof ScreenValue.ScarpetScreenHandlerListener scarpetScreenHandlerListener) {
-                if(scarpetScreenHandlerListener.onSlotClick(player, actionType, slotIndex, button)) {
+                if(scarpetScreenHandlerListener.onSlotClick(serverPlayerEntity, actionType, slotIndex, button)) {
                     ci.cancel();
                     syncState();
                 }
@@ -38,18 +40,20 @@ public abstract class ScreenHandler_scarpetMixin implements ScreenHandlerInterfa
 
     @Inject(method = "close", at = @At("HEAD"), cancellable = true)
     private void callCloseListener(PlayerEntity player, CallbackInfo ci) {
+        if(!(player instanceof ServerPlayerEntity serverPlayerEntity)) return;
         for(ScreenHandlerListener screenHandlerListener : this.listeners) {
             if(screenHandlerListener instanceof ScreenValue.ScarpetScreenHandlerListener scarpetScreenHandlerListener) {
-                scarpetScreenHandlerListener.onClose(player);
+                scarpetScreenHandlerListener.onClose(serverPlayerEntity);
             }
         }
     }
 
     @Override
     public boolean callButtonClickListener(int button, PlayerEntity player) {
+        if(!(player instanceof ServerPlayerEntity serverPlayerEntity)) return false;
         for(ScreenHandlerListener screenHandlerListener : listeners) {
             if(screenHandlerListener instanceof ScreenValue.ScarpetScreenHandlerListener scarpetScreenHandlerListener) {
-                if(scarpetScreenHandlerListener.onButtonClick(player, button))
+                if(scarpetScreenHandlerListener.onButtonClick(serverPlayerEntity, button))
                     return true;
             }
         }
