@@ -147,7 +147,10 @@ public class ListValue extends AbstractListValue implements ContainerValueInterf
     @Override
     public void append(Value v)
     {
-        items.add(v);
+        if(v instanceof AbstractListValue)
+            items.addAll(((AbstractListValue) v).unpack())
+        else
+            items.add(v);
     }
 
     @Override
