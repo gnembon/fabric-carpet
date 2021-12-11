@@ -269,7 +269,7 @@ Other interactions:
 * `close` Triggers when the screen gets closed.
 
 `index` is the slot index of the slot interaction.
-If clicked outside the screen (where it would drop held items), this value is -1.
+If clicked outside the screen (where it would drop held items), this value is -999.
 In the case of a button interaction, this is the button index.
 Note that for lecterns, this index can be certain a value above 100, for jumping to a certain page.
 This can come from formatted text inside the book, with a `change_page` click event action.
