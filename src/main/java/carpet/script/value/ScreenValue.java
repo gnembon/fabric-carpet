@@ -198,7 +198,7 @@ public class ScreenValue extends Value {
         screenHandler.addListener(new ScarpetScreenHandlerListener() {
             @Override
             public boolean onSlotClick(ServerPlayerEntity player, SlotActionType actionType, int slot, int button) {
-                return ScreenValue.this.callListener(player,actionTypeToString(actionType),slot,button);
+                return ScreenValue.this.callListener(player,actionTypeToString(actionType),slot==-999 ? -1 : slot,button);
             }
             @Override
             public boolean onButtonClick(ServerPlayerEntity player, int button) {
