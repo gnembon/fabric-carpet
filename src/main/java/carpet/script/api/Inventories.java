@@ -181,8 +181,6 @@ public class Inventories {
 
         expression.addContextFunction("inventory_size", -1, (c, t, lv) ->
         {
-            if(lv.size() != 0 && lv.get(0) instanceof ScreenValue screenValue)
-                return screenValue.inventorySizeSlots();
             CarpetContext cc = (CarpetContext) c;
             NBTSerializableValue.InventoryLocator inventoryLocator = NBTSerializableValue.locateInventory(cc, lv, 0);
             if (inventoryLocator == null) return Value.NULL;
@@ -191,8 +189,6 @@ public class Inventories {
 
         expression.addContextFunction("inventory_has_items", -1, (c, t, lv) ->
         {
-            if(lv.size() != 0 && lv.get(0) instanceof ScreenValue screenValue)
-                return screenValue.inventoryHasItemsSlots();
             CarpetContext cc = (CarpetContext) c;
             NBTSerializableValue.InventoryLocator inventoryLocator = NBTSerializableValue.locateInventory(cc, lv, 0);
             if (inventoryLocator == null) return Value.NULL;
@@ -202,8 +198,6 @@ public class Inventories {
         //inventory_get(<b, e>, <n>) -> item_triple
         expression.addContextFunction("inventory_get", -1, (c, t, lv) ->
         {
-            if(lv.size() != 0 && lv.get(0) instanceof ScreenValue screenValue)
-                return screenValue.inventoryGetSlots(lv.subList(1,lv.size()));
             CarpetContext cc = (CarpetContext) c;
             NBTSerializableValue.InventoryLocator inventoryLocator = NBTSerializableValue.locateInventory(cc, lv, 0);
             if (inventoryLocator == null) return Value.NULL;
@@ -223,8 +217,6 @@ public class Inventories {
         //inventory_set(<b,e>, <n>, <count>, <item>, <nbt>)
         expression.addContextFunction("inventory_set", -1, (c, t, lv) ->
         {
-            if(lv.size() != 0 && lv.get(0) instanceof ScreenValue screenValue)
-                return screenValue.inventorySetSlots(lv.subList(1,lv.size()));
             CarpetContext cc = (CarpetContext) c;
             NBTSerializableValue.InventoryLocator inventoryLocator = NBTSerializableValue.locateInventory(cc, lv, 0);
             if (inventoryLocator == null) return Value.NULL;
@@ -279,8 +271,6 @@ public class Inventories {
         //inventory_find(<b, e>, <item> or null (first empty slot), <start_from=0> ) -> <N> or null
         expression.addContextFunction("inventory_find", -1, (c, t, lv) ->
         {
-            if(lv.size() != 0 && lv.get(0) instanceof ScreenValue)
-                throw new InternalExpressionException("'inventory_find' is not supported for screens");
             CarpetContext cc = (CarpetContext) c;
             NBTSerializableValue.InventoryLocator inventoryLocator = NBTSerializableValue.locateInventory(cc, lv, 0);
             if (inventoryLocator == null) return Value.NULL;
@@ -309,8 +299,6 @@ public class Inventories {
         //inventory_remove(<b, e>, <item>, <amount=1>) -> bool
         expression.addContextFunction("inventory_remove", -1, (c, t, lv) ->
         {
-            if(lv.size() != 0 && lv.get(0) instanceof ScreenValue)
-                throw new InternalExpressionException("'inventory_remove' is not supported for screens");
             CarpetContext cc = (CarpetContext) c;
             NBTSerializableValue.InventoryLocator inventoryLocator = NBTSerializableValue.locateInventory(cc, lv, 0);
             if (inventoryLocator == null) return Value.NULL;

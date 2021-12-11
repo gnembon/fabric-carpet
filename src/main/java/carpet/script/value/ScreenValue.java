@@ -12,9 +12,9 @@ import carpet.script.exception.InternalExpressionException;
 import carpet.script.exception.InvalidCallbackException;
 import carpet.script.exception.ThrowStatement;
 import carpet.script.exception.Throwables;
-import com.mojang.brigadier.exceptions.CommandSyntaxException;
-import net.minecraft.command.argument.ItemStackArgument;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
+import net.minecraft.inventory.Inventory;
 import net.minecraft.inventory.SimpleInventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
@@ -51,7 +51,6 @@ import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.Text;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -62,6 +61,7 @@ import static net.minecraft.screen.ScreenHandlerType.*;
 
 public class ScreenValue extends Value {
     private ScreenHandler screenHandler;
+    private ScreenHandlerInventory inventory;
 
     private final Text name;
     private final String typestring;
@@ -120,6 +120,7 @@ public class ScreenValue extends Value {
         NamedScreenHandlerFactory factory = this.createScreenHandlerFactory();
         if(factory == null) throw new ThrowStatement(type, Throwables.UNKNOWN_SCREEN);
         this.openScreen(factory);
+        this.inventory = new ScreenHandlerInventory(this.screenHandler);
     }
 
     private NamedScreenHandlerFactory createScreenHandlerFactory() {
@@ -146,6 +147,7 @@ public class ScreenValue extends Value {
     public void close() {
         if(this.player.currentScreenHandler != this.player.playerScreenHandler) {
             //prevent recursion when closing screen in closing screen callback by doing this before triggering event
+            this.inventory = null;
             this.player.currentScreenHandler = this.player.playerScreenHandler;
             this.player.closeHandledScreen();
             this.screenHandler = null;
@@ -213,91 +215,6 @@ public class ScreenValue extends Value {
         });
     }
 
-    // copied from inventory_* functions, but modified for a list of slots
-
-    public Value inventorySizeSlots()
-    {
-        if(!isOpen()) return Value.NULL;
-        return NumericValue.of(this.screenHandler.slots.size());
-    }
-
-    public Value inventoryHasItemsSlots()
-    {
-        if(!isOpen()) return Value.NULL;
-        for(Slot slot : this.screenHandler.slots)
-            if(slot.hasStack() && !slot.getStack().isEmpty()) return Value.TRUE;
-        return Value.FALSE;
-    }
-
-    public Value inventoryGetSlots(List<Value> lv)
-    {
-        if(!isOpen()) return Value.NULL;
-        int slotsSize = this.screenHandler.slots.size();
-        if (lv.size() == 0)
-        {
-            List<Value> fullInventory = new ArrayList<>();
-            for (int i = 0, maxi = slotsSize; i < maxi; i++)
-                fullInventory.add(ValueConversions.of(this.screenHandler.slots.get(i).getStack()));
-            return ListValue.wrap(fullInventory);
-        }
-        int slot = (int)NumericValue.asNumber(lv.get(0)).getLong();
-        if(slot < -1 || slot >= slotsSize) return Value.NULL;
-        return ValueConversions.of(slot == -1 ? this.screenHandler.getCursorStack() : this.screenHandler.slots.get(slot).getStack());
-    }
-
-    public Value inventorySetSlots(List<Value> lv)
-    {
-        if(!isOpen()) return Value.NULL;
-        if (lv.size() < 2)
-            throw new InternalExpressionException("'inventory_set' requires at least slot number and new stack size, and optional new item");
-        int slotIndex = (int) NumericValue.asNumber(lv.get(0)).getLong();
-        int slotsSize = this.screenHandler.slots.size();
-        if(slotIndex < -1 || slotIndex >= slotsSize) return Value.NULL;
-        Slot slot = slotIndex == -1 ? null : this.screenHandler.getSlot(slotIndex);
-        int count = (int) NumericValue.asNumber(lv.get(1)).getLong();
-        if (count == 0)
-        {
-            // clear slot
-            ItemStack removedStack = slot == null ? this.screenHandler.getCursorStack() : slot.inventory.removeStack(slot.getIndex());
-            if(slot == null) this.screenHandler.setCursorStack(ItemStack.EMPTY);
-            this.screenHandler.syncState();
-            return ValueConversions.of(removedStack);
-        }
-        if (lv.size() < 3)
-        {
-            ItemStack previousStack = slot == null ? screenHandler.getCursorStack() : slot.getStack();
-            ItemStack newStack = previousStack.copy();
-            newStack.setCount(count);
-            if(slot == null) this.screenHandler.setCursorStack(newStack); else slot.setStack(newStack);
-            this.screenHandler.syncState();
-            return ValueConversions.of(previousStack);
-        }
-        NbtCompound nbt = null; // skipping one argument
-        if (lv.size() > 3)
-        {
-            Value nbtValue = lv.get(3);
-            if (nbtValue instanceof NBTSerializableValue)
-                nbt = ((NBTSerializableValue)nbtValue).getCompoundTag();
-            else if (nbtValue instanceof NullValue)
-                nbt = null;
-            else
-                nbt = new NBTSerializableValue(nbtValue.getString()).getCompoundTag();
-        }
-        ItemStackArgument newitem = NBTSerializableValue.parseItem(lv.get(2).getString(), nbt);
-        ItemStack previousStack = slot == null ? this.screenHandler.getCursorStack() : slot.getStack();
-        try
-        {
-            ItemStack newStack = newitem.createStack(count, false);
-            if(slot == null) this.screenHandler.setCursorStack(newStack); else slot.setStack(newStack);
-            this.screenHandler.syncState();
-        }
-        catch (CommandSyntaxException e)
-        {
-            throw new InternalExpressionException(e.getMessage());
-        }
-        return ValueConversions.of(previousStack);
-    }
-
     private Property getPropertyForType(Class<? extends ScreenHandler> screenHandlerClass, String requiredType, int propertyIndex, String propertyName) {
         if(screenHandlerClass.isInstance(this.screenHandler)) {
             return ((ScreenHandlerInterface) this.screenHandler).getProperty(propertyIndex);
@@ -361,6 +278,18 @@ public class ScreenValue extends Value {
         return Value.TRUE;
     }
 
+    public ScreenHandler getScreenHandler() {
+        return this.screenHandler;
+    }
+
+    public ServerPlayerEntity getPlayer() {
+        return this.player;
+    }
+
+    public Inventory getInventory() {
+        return this.inventory;
+    }
+
     @Override
     public String getString() {
         return this.typestring + "_screen";
@@ -396,6 +325,102 @@ public class ScreenValue extends Value {
         boolean onSlotClick(ServerPlayerEntity player, SlotActionType actionType, int slot, int button);
         boolean onButtonClick(ServerPlayerEntity player, int button);
         void onClose(ServerPlayerEntity player);
+    }
+
+    public static class ScreenHandlerInventory implements Inventory {
+
+        protected ScreenHandler screenHandler;
+
+        public ScreenHandlerInventory(ScreenHandler screenHandler) {
+            this.screenHandler = screenHandler;
+        }
+
+        @Override
+        public int size() {
+            return this.screenHandler.slots.size() + 1;
+        }
+
+        @Override
+        public boolean isEmpty() {
+            for(Slot slot : this.screenHandler.slots) {
+                if(slot.hasStack() && !slot.getStack().isEmpty()) return false;
+            }
+            return this.screenHandler.getCursorStack().isEmpty();
+        }
+
+        @Override
+        public ItemStack getStack(int slot) {
+            if(slot == this.size()-1) return this.screenHandler.getCursorStack();
+            return slot >= -1 && slot < this.size() ? this.screenHandler.slots.get(slot).getStack() : ItemStack.EMPTY;
+        }
+
+        @Override
+        public ItemStack removeStack(int slot, int amount) {
+            ItemStack itemStack;
+            if(slot == this.size()-1)
+                itemStack = this.screenHandler.getCursorStack().split(amount);
+            else
+                itemStack = ScreenHandlerInventory.splitStack(this.screenHandler.slots, slot, amount);
+            if (!itemStack.isEmpty()) {
+                this.markDirty();
+            }
+            return itemStack;
+        }
+
+        @Override
+        public ItemStack removeStack(int slot) {
+            ItemStack itemStack;
+            if(slot == this.size()-1)
+                itemStack = this.screenHandler.getCursorStack();
+            else
+                itemStack = this.screenHandler.slots.get(slot).getStack();
+            if (itemStack.isEmpty()) {
+                return ItemStack.EMPTY;
+            } else {
+                if(slot == this.size()-1)
+                    this.screenHandler.setCursorStack(ItemStack.EMPTY);
+                else
+                    this.screenHandler.slots.get(slot).setStack(ItemStack.EMPTY);
+                return itemStack;
+            }
+        }
+
+        @Override
+        public void setStack(int slot, ItemStack stack) {
+            if(slot == this.size()-1)
+                this.screenHandler.setCursorStack(stack);
+            else
+                this.screenHandler.slots.get(slot).setStack(stack);
+            if (!stack.isEmpty() && stack.getCount() > this.getMaxCountPerStack()) {
+                stack.setCount(this.getMaxCountPerStack());
+            }
+
+            this.markDirty();
+        }
+
+        @Override
+        public void markDirty() {
+
+        }
+
+        @Override
+        public boolean canPlayerUse(PlayerEntity player) {
+            return true;
+        }
+
+        @Override
+        public void clear() {
+            for(Slot slot : this.screenHandler.slots) {
+                slot.setStack(ItemStack.EMPTY);
+            }
+            this.screenHandler.setCursorStack(ItemStack.EMPTY);
+            this.markDirty();
+        }
+
+
+        public static ItemStack splitStack(List<Slot> slots, int slot, int amount) {
+            return slot >= 0 && slot < slots.size() && !slots.get(slot).getStack().isEmpty() && amount > 0 ? slots.get(slot).getStack().split(amount) : ItemStack.EMPTY;
+        }
     }
 
     private static String actionTypeToString(SlotActionType actionType) {

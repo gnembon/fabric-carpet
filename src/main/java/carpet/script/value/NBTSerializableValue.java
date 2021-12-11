@@ -266,6 +266,11 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
                     return null;
                 return new InventoryLocator(pos, pos, inv, offset+1);
             }
+            if (v1 instanceof ScreenValue screenValue)
+            {
+                if(!screenValue.isOpen()) return null;
+                return new InventoryLocator(screenValue.getScreenHandler(), screenValue.getPlayer().getBlockPos(), screenValue.getInventory(), offset+1);
+            }
             BlockPos pos = new BlockPos(
                     NumericValue.asNumber(v1).getDouble(),
                     NumericValue.asNumber(params.get(1 + offset)).getDouble(),
