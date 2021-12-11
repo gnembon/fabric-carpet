@@ -20,6 +20,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtElement;
 import net.minecraft.nbt.NbtList;
+import net.minecraft.recipe.Recipe;
 import net.minecraft.screen.AbstractFurnaceScreenHandler;
 import net.minecraft.screen.AnvilScreenHandler;
 import net.minecraft.screen.ArrayPropertyDelegate;
@@ -113,7 +114,7 @@ public class ScreenValue extends Value {
     public ScreenValue(ServerPlayerEntity player, String type, Text name, FunctionValue callback, Context c) {
         this.name = name;
         this.typestring = type.toLowerCase();
-        if(callback != null) callback.checkArgs(5);
+        if(callback != null) callback.checkArgs(4);
         this.callback = callback;
         this.hostname = c.host.getName();
         this.player = player;
@@ -166,12 +167,11 @@ public class ScreenValue extends Value {
     }
 
 
-    private boolean callListener(ServerPlayerEntity player, String action, int index, int button) {
+    private boolean callListener(ServerPlayerEntity player, String action, Map<Value,Value> data) {
         Value playerValue = EntityValue.of(player);
         Value actionValue = StringValue.of(action);
-        Value indexValue = NumericValue.of(index);
-        Value buttonValue = NumericValue.of(button);
-        List<Value> args = Arrays.asList(this,playerValue,actionValue,indexValue,buttonValue);
+        Value dataValue = MapValue.wrap(data);
+        List<Value> args = Arrays.asList(this,playerValue,actionValue,dataValue);
         CarpetScriptHost appHost = CarpetServer.scriptServer.getAppHostByName(this.hostname);
         if(appHost == null) {
             this.close();
@@ -198,15 +198,32 @@ public class ScreenValue extends Value {
         screenHandler.addListener(new ScarpetScreenHandlerListener() {
             @Override
             public boolean onSlotClick(ServerPlayerEntity player, SlotActionType actionType, int slot, int button) {
-                return ScreenValue.this.callListener(player,actionTypeToString(actionType),slot,button);
+                Map<Value,Value> data = new HashMap<>();
+                data.put(StringValue.of("slot"),NumericValue.of(slot));
+                if(actionType == SlotActionType.QUICK_CRAFT) {
+                    data.put(StringValue.of("quick_craft_stage"),NumericValue.of(ScreenHandler.unpackQuickCraftStage(button)));
+                    button = ScreenHandler.unpackQuickCraftButton(button);
+                }
+                data.put(StringValue.of("button"),NumericValue.of(button));
+                return ScreenValue.this.callListener(player,actionTypeToString(actionType),data);
             }
             @Override
             public boolean onButtonClick(ServerPlayerEntity player, int button) {
-                return ScreenValue.this.callListener(player,"button",button,0);
+                Map<Value,Value> data = new HashMap<>();
+                data.put(StringValue.of("button"),NumericValue.of(button));
+                return ScreenValue.this.callListener(player,"button",data);
             }
             @Override
             public void onClose(ServerPlayerEntity player) {
-                ScreenValue.this.callListener(player,"close",0,0);
+                Map<Value,Value> data = new HashMap<>();
+                ScreenValue.this.callListener(player,"close",data);
+            }
+            @Override
+            public boolean onSelectRecipe(ServerPlayerEntity player, Recipe<?> recipe, boolean craftAll) {
+                Map<Value,Value> data = new HashMap<>();
+                data.put(StringValue.of("recipe"),StringValue.of(recipe.getId().toString()));
+                data.put(StringValue.of("craft_all"),BooleanValue.of(craftAll));
+                return ScreenValue.this.callListener(player,"select_recipe",data);
             }
             @Override
             public void onSlotUpdate(ScreenHandler handler, int slotId, ItemStack stack) {}
@@ -325,6 +342,7 @@ public class ScreenValue extends Value {
         boolean onSlotClick(ServerPlayerEntity player, SlotActionType actionType, int slot, int button);
         boolean onButtonClick(ServerPlayerEntity player, int button);
         void onClose(ServerPlayerEntity player);
+        boolean onSelectRecipe(ServerPlayerEntity player, Recipe<?> recipe, boolean craftAll);
     }
 
     public static class ScreenHandlerInventory implements Inventory {

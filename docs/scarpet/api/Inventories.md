@@ -247,8 +247,8 @@ The `name` parameter can be a formatted text and will be displayed at the top of
 Some screens like the lectern or beacon screen don't show it.
 
 Optionally, a `callback` function can be passed as the fourth argument.
-This functions needs to have five parameters:
-`_(screen, player, action, index, button) -> ...`
+This functions needs to have four parameters:
+`_(screen, player, action, data) -> ...`
 
 The `screen` parameter is the screen value of the screen itself.
 `player` is the player who interacted with the screen.
@@ -256,6 +256,7 @@ The `screen` parameter is the screen value of the screen itself.
 Can be any of the following:
 
 Slot interactions:
+
 * `pickup`
 * `quick_move`
 * `swap`
@@ -264,27 +265,31 @@ Slot interactions:
 * `quick_craft`
 * `pickup_all`
 
-Other interactions:
-* `button` Pressing a button in certain screens that have then (enchantment table, lectern, loom and stonecutter)
-* `close` Triggers when the screen gets closed.
-
-`index` is the slot index of the slot interaction.
+The `data` for this interaction is a map, with a `slot` and `button` value.
+`slot` is the slot index of the slot that was clicked.
+When holding an item in the cursor stack and clicking inside the screen,
+but not in a slot, this is -1.
 If clicked outside the screen (where it would drop held items), this value is -999.
-In the case of a button interaction, this is the button index.
+The `button` is the mouse button used to click the slot.
+
+For the `swap` action, the `button` is the number key 0-8 for a certain hotbar slot.
+
+For the `quick_craft` action, the `data` also contains the `quick_craft_stage`,
+which is either 0 (beginning of quick crafting), 1 (adding item to slot) or 2 (end of quick crafting).
+
+Other interactions:
+
+* `button` Pressing a button in certain screens that have button elements (enchantment table, lectern, loom and stonecutter)
+The `data` provides a `button`, which is the index of the button that was pressed.
 Note that for lecterns, this index can be certain a value above 100, for jumping to a certain page.
 This can come from formatted text inside the book, with a `change_page` click event action.
 
-`button` corresponds to the mouse button used for the slot click event.
+* `close` Triggers when the screen gets closed. No `data` provided.
 
-For the `swap` action, this is the number key 0-8 for a certain hotbar slot.
-
-For the `quick_craft` action, the number consists of the quick crafting stage,
-which is either 0 (beginning of quick crafting), 1 (adding item to slot) or 2 (end of quick crafting)
-and stored in the first two bits of the number. You can get to it using `bitwise_and(button,3)`.
-The next two bits correspond to the button used for quick crafting,
-use `bitwise_and(bitwise_shift_right(button,2),3)` here.
-
-This only works for slot click interactions, for `button` and `close` type, this value is 0.
+* `select_recipe` When clicking on a recipe in the recipe book.
+`data` contains a `recipe`, which is the identifier of the clicked recipe,
+as well as `craft_all`, which is a boolean specifying whether
+shift was pressed when selecting the recipe.
 
 By returning a string `'cancel'` in the callback function,
 the screen interaction can be cancelled.
@@ -294,7 +299,7 @@ The `create_screen` function returns a `screen` value,
 which can be used in all `inventory_***` functions to access the screens slots.
 The screen inventory covers all slots in the screen and the player inventory.
 The last slot is the cursor stack of the screen,
-meaning that using `-1` can be used to modify the stack the players cursor is holding.
+meaning that using `-1` can be used to modify the stack the players' cursor is holding.
 
 ### `close_screen(screen)`
 
@@ -343,10 +348,10 @@ the property will be assigned the new `value` and synced with the client.
 
 ```py
 __command() -> (
-    create_screen(player(),'generic_9x6',format('db Test'),_(screen, player, action, index, button) -> (
-        print(player('all'),str('%s\n%s\n%d\n%d',player,action,index,button)); //for testing
+    create_screen(player(),'generic_9x6',format('db Test'),_(screen, player, action, data) -> (
+        print(player('all'),str('%s\n%s\n%s',player,action,data)); //for testing
         if(action=='pickup',
-            inventory_set(screen,index,1,if(inventory_get(screen,index),'air','red_stained_glass_pane'));
+            inventory_set(screen,data:'slot',1,if(inventory_get(screen,data:'slot'),'air','red_stained_glass_pane'));
         );
         'cancel'
     ));
@@ -360,8 +365,8 @@ __command() -> (
 ```py
 // anvil text prompt gui
 __command() -> (
-    global_screen = create_screen(player(),'anvil',format('r Enter a text'),_(screen, player, action, index, button)->(
-        if(action == 'pickup' && index == 2,
+    global_screen = create_screen(player(),'anvil',format('r Enter a text'),_(screen, player, action, data)->(
+        if(action == 'pickup' && data:'slot' == 2,
             renamed_item = inventory_get(screen,2);
             nbt = renamed_item:2;
             name = parse_nbt(nbt:'display':'Name'):'text';
@@ -407,9 +412,9 @@ make_page(hue) -> (
 
 
 __command() -> (
-    screen = create_screen(player(),'lectern','Lectern example (this text is not visible)',_(screen, player, action, index, button)->(
-        if(action=='BUTTON',
-            print(player,'Button: ' + index);
+    screen = create_screen(player(),'lectern','Lectern example (this text is not visible)',_(screen, player, action, data)->(
+        if(action=='button',
+            print(player,'Button: ' + data:'button');
         );
         'cancel'
     ));
@@ -448,10 +453,10 @@ __command() -> (
 
 ```py
 __command() -> (
-    screen = create_screen(player(),'generic_3x3','Title',_(screen, player, action, index, button) -> (
+    screen = create_screen(player(),'generic_3x3','Title',_(screen, player, action, data) -> (
         if(action=='pickup',
             // set slot to the cursor stack item
-            inventory_set(screen,index,1,inventory_get(screen,-1):0);
+            inventory_set(screen,data:'slot',1,inventory_get(screen,-1):0);
         );
         'cancel'
     ));

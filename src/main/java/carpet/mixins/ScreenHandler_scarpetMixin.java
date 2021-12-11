@@ -4,6 +4,7 @@ package carpet.mixins;
 import carpet.fakes.ScreenHandlerInterface;
 import carpet.script.value.ScreenValue;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.recipe.Recipe;
 import net.minecraft.screen.Property;
 import net.minecraft.screen.ScreenHandler;
 import net.minecraft.screen.ScreenHandlerListener;
@@ -54,6 +55,17 @@ public abstract class ScreenHandler_scarpetMixin implements ScreenHandlerInterfa
         for(ScreenHandlerListener screenHandlerListener : listeners) {
             if(screenHandlerListener instanceof ScreenValue.ScarpetScreenHandlerListener scarpetScreenHandlerListener) {
                 if(scarpetScreenHandlerListener.onButtonClick(serverPlayerEntity, button))
+                    return true;
+            }
+        }
+        return false;
+    }
+
+    @Override
+    public boolean callSelectRecipeListener(ServerPlayerEntity player, Recipe<?> recipe, boolean craftAll) {
+        for(ScreenHandlerListener screenHandlerListener : listeners) {
+            if(screenHandlerListener instanceof ScreenValue.ScarpetScreenHandlerListener scarpetScreenHandlerListener) {
+                if(scarpetScreenHandlerListener.onSelectRecipe(player, recipe, craftAll))
                     return true;
             }
         }
