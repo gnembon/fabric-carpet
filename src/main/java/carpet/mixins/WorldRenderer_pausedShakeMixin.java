@@ -10,7 +10,7 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 
-@Mixin(WorldRenderer.class)
+@Mixin(value = WorldRenderer.class, priority = 69420)
 public class WorldRenderer_pausedShakeMixin
 {
     @Shadow @Final private MinecraftClient client;

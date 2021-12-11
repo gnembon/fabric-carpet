@@ -174,7 +174,10 @@ public class CarpetEventServer
     public static class CallbackList
     {
 
-        public final List<Callback> callList;
+        private List<Callback> callList;
+        private final List<Callback> removedCalls;
+        private boolean inCall;
+        private boolean inSignal;
         public final int reqArgs;
         final boolean isSystem;
         final boolean perPlayerDistribution;
@@ -182,9 +185,32 @@ public class CarpetEventServer
         public CallbackList(int reqArgs, boolean isSystem, boolean isGlobalOnly)
         {
             this.callList = new ArrayList<>();
+            this.removedCalls = new ArrayList<>();
+            this.inCall = false;
+            this.inSignal = false;
             this.reqArgs = reqArgs;
             this.isSystem = isSystem;
             perPlayerDistribution = isSystem && !isGlobalOnly;
+        }
+
+        public List<Callback> inspectCurrentCalls()
+        {
+            return new ArrayList<>(callList);
+        }
+
+        private void removeCallsIf(Predicate<Callback> when)
+        {
+            if (!inCall && !inSignal)
+            {
+                callList.removeIf(when);
+                return;
+            }
+            // we are ok with list growing in the meantime and parallel access, we are only scanning.
+            for (int i = 0; i < callList.size(); i++)
+            {
+                Callback call = callList.get(i);
+                if (when.test(call)) removedCalls.add(call);
+            }
         }
 
         /**
@@ -210,15 +236,26 @@ public class CarpetEventServer
                     }
                     String nameCheck = perPlayerDistribution ? source.getName() : null;
                     assert argv.size() == reqArgs;
-                    List<Callback> fails = new ArrayList<>();
-                    for (Callback call : callList)
+                    try
                     {
-                        // supressing calls where target player hosts simply don't match
-                        // handling global hosts with player targets is left to when the host is resolved (few calls deeper).
-                        if (nameCheck != null && call.optionalTarget != null && !nameCheck.equals(call.optionalTarget)) continue;
-                        if (call.execute(source, argv) == CallbackResult.FAIL) fails.add(call);
+                        // we are ok with list growing in the meantime
+                        // which might happen during inCall or inSignal
+                        inCall = true;
+                        for (int i = 0; i < callList.size(); i++)
+                        {
+                            Callback call = callList.get(i);
+                            // supressing calls where target player hosts simply don't match
+                            // handling global hosts with player targets is left to when the host is resolved (few calls deeper).
+                            if (nameCheck != null && call.optionalTarget != null && !nameCheck.equals(call.optionalTarget)) continue;
+                            if (call.execute(source, argv) == CallbackResult.FAIL) removedCalls.add(call);
+                        }
                     }
-                    for (Callback call : fails) callList.remove(call);
+                    finally
+                    {
+                        inCall = false;
+                    }
+                    for (Callback call : removedCalls) callList.remove(call);
+                    removedCalls.clear();
                     CarpetProfiler.end_current_section(currentSection);
                 });
             }
@@ -227,16 +264,20 @@ public class CarpetEventServer
         public int signal(ServerCommandSource sender, ServerPlayerEntity optinoalReceipient, List<Value> callArg)
         {
             if (callList.isEmpty()) return 0;
-            //List<Callback> fails = new ArrayList<>();
-            // skipping fails on purpose - its a player induced call.
             int successes = 0;
-            for (Callback call: callList)
+            try
             {
-                //successes +=  Math.max(0, call.signal(sender, optinoalReceipient, callArg));
-                if (call.signal(sender, optinoalReceipient, callArg) == CallbackResult.SUCCESS) successes ++;
-
+                inSignal = true;
+                for (int i = 0; i < callList.size(); i++)
+                {
+                    // skipping tracking of fails, its explicit call
+                    if (callList.get(i).signal(sender, optinoalReceipient, callArg) == CallbackResult.SUCCESS) successes++;
+                }
             }
-            //for (Callback call : fails) callList.remove(call);
+            finally
+            {
+                inSignal = false;
+            }
             return successes;
         }
 
@@ -283,8 +324,7 @@ public class CarpetEventServer
             {
                 return false;
             }
-            //all clear
-            //remove duplicates
+            //removing duplicates
             removeEventCall(host.getName(), host.user, function.getString());
             callList.add(new Callback(host.getName(), host.user, function, args));
             return true;
@@ -292,7 +332,7 @@ public class CarpetEventServer
 
         public void removeEventCall(String hostName, String target, String funName)
         {
-            callList.removeIf((c)->  c.function.getString().equals(funName)
+            removeCallsIf((c)->  c.function.getString().equals(funName)
                     && (Objects.equals(c.host, hostName))
                     && (Objects.equals(c.optionalTarget, target))
             );
@@ -300,7 +340,7 @@ public class CarpetEventServer
 
         public void removeAllCalls(CarpetScriptHost host)
         {
-            callList.removeIf((c)-> (Objects.equals(c.host, host.getName()))
+            removeCallsIf((c)-> (Objects.equals(c.host, host.getName()))
                     && (Objects.equals(c.optionalTarget, host.user)));
         }
 
@@ -320,6 +360,8 @@ public class CarpetEventServer
 
         public void clearEverything()
         {
+            // when some moron puts /reload in an event call.
+            if (inSignal || inCall) callList = new ArrayList<>();
             callList.clear();
         }
     }
