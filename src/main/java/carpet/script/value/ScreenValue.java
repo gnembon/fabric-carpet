@@ -297,7 +297,7 @@ public class ScreenValue extends Value {
 
     @Override
     public boolean getBoolean() {
-        return true;
+        return this.isOpen();
     }
 
     @Override
