@@ -296,7 +296,7 @@ the screen interaction can be cancelled.
 This doesn't work for the `close` action.
 
 The `create_screen` function returns a `screen` value,
-which can be used in all `inventory_***` functions to access the screens slots.
+which can be used in all inventory related functions to access the screens' slots.
 The screen inventory covers all slots in the screen and the player inventory.
 The last slot is the cursor stack of the screen,
 meaning that using `-1` can be used to modify the stack the players' cursor is holding.

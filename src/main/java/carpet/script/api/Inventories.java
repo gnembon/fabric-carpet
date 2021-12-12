@@ -427,7 +427,7 @@ public class Inventories {
 
     private static void syncPlayerInventory(NBTSerializableValue.InventoryLocator inventory, int int_1)
     {
-        if (inventory.owner() instanceof ServerPlayerEntity player && !inventory.isEnder())
+        if (inventory.owner() instanceof ServerPlayerEntity player && !inventory.isEnder() && !(inventory.inventory() instanceof ScreenValue.ScreenHandlerInventory))
         {
             player.networkHandler.sendPacket(new ScreenHandlerSlotUpdateS2CPacket(
                     -2, 0, // resolve mystery argument
