@@ -19,15 +19,15 @@ public class ThreadValue extends Value
     private final long id;
     private static long sequence = 0L;
 
-    protected ThreadValue(CompletableFuture<Value> taskFuture, long id)
+    protected ThreadValue(CompletableFuture<Value> taskFuture)
     {
         this.taskFuture = taskFuture;
-        this.id = id;
+        this.id = sequence++;
     }
 
     public ThreadValue(Value pool, FunctionValue function, Expression expr, Tokenizer.Token token, Context ctx, List<Value> args)
     {
-        this(getCompletableFutureFromFunction(pool, function, expr, token, ctx, args), sequence++);
+        this(getCompletableFutureFromFunction(pool, function, expr, token, ctx, args));
         Thread.yield();
     }
 
