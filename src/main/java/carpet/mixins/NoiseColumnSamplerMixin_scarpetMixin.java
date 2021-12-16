@@ -59,7 +59,7 @@ public abstract class NoiseColumnSamplerMixin_scarpetMixin implements NoiseColum
     @Shadow @Final
     private DoublePerlinNoiseSampler spaghetti3dSecondNoise;
 
-    @Shadow @Finalav
+    @Shadow @Final
     private DoublePerlinNoiseSampler spaghetti3dRarityNoise;
 
     @Shadow @Final
