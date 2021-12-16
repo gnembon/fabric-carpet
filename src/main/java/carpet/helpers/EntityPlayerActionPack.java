@@ -1,6 +1,7 @@
 package carpet.helpers;
 
 import carpet.fakes.ServerPlayerEntityInterface;
+import carpet.script.CarpetEventServer;
 import net.minecraft.block.BlockState;
 import net.minecraft.command.argument.EntityAnchorArgumentType;
 import net.minecraft.entity.Entity;
@@ -279,8 +280,10 @@ public class EntityPlayerActionPack
 
     public void setSlot(int slot)
     {
-        player.getInventory().selectedSlot = slot-1;
-        player.networkHandler.sendPacket(new UpdateSelectedSlotS2CPacket(slot-1));
+        int previousSlot = player.getInventory().selectedSlot;
+        player.getInventory().selectedSlot = slot - 1;
+        player.networkHandler.sendPacket(new UpdateSelectedSlotS2CPacket(slot - 1));
+        CarpetEventServer.Event.PLAYER_SWITCHES_SLOT.onSlotSwitch(player, previousSlot, slot - 1);
     }
 
     public enum ActionType
