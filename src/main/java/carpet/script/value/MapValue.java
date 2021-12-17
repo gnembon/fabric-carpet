@@ -162,7 +162,13 @@ public class MapValue extends AbstractListValue implements ContainerValueInterfa
     @Override
     public void append(Value v)
     {
-        map.put(v, Value.NULL);
+        if (v instanceof MapValue)
+            map.putAll(((MapValue) v).getMap());
+        else if (v instanceof AbstractListValue)
+            for (Value value : ((AbstractListValue) v))
+                map.put(value, Value.NULL);
+        else
+            map.put(v, Value.NULL);
     }
 
     @Override
