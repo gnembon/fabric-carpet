@@ -202,7 +202,7 @@ List of entities riding the entity.
 
 Entity that `e` rides.
 
-### `query(e, 'tags')`(deprecated)
+### `(deprecated) query(e, 'tags')`
 
 Deprecated by `query(e, 'scoreboard_tags')`
 
@@ -210,7 +210,7 @@ Deprecated by `query(e, 'scoreboard_tags')`
 
 List of entity's scoreboard tags.
 
-### `query(e, 'has_tag',tag)`(deprecated)
+### `(deprecated) query(e, 'has_tag',tag)`
 
 Deprecated by `query(e, 'has_scoreboard_tag',tag)`
 
