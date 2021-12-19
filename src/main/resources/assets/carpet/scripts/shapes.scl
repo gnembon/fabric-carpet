@@ -68,7 +68,7 @@ draw_pyramid(args)->(
     hollow = fill_type=='hollow';
     pointup = pointing=='up';
     for(range(height),
-        r = if(pointup, radius * ( 1- _ / height) -1, radius * _ / height);
+        r = if(pointup, radius * ( 1 - _ / height), radius * _ / height);
         positions = positions + fill_flat(pos, _, r, is_square, orientation, !((pointup&&_==0)||(!pointup && _==height-1)) && hollow)//Always close bottom off
     );
     positions
@@ -220,42 +220,41 @@ fill_flat_circle_points(pos, orientation, offset, hollow, a, b) ->(
 
 fill_flat_rectangle(pos, offset, dr, orientation, hollow) -> (
     r = floor(dr);
-    drsq = dr^2;
 	[x, y, z] = pos;
     positions = {};
     if(orientation == 'x',
         c_for(a = -r, a <=r, a +=1,
             if(hollow,
-                positions += [r + offset+x, a+y, r+z];
-                positions += [r + offset+x, a+y,-r+z];
-                positions += [r + offset+x, r+y, a+z];
-                positions += [r + offset+x,-r+y, a+z],
+                positions += [offset+x, a+y, r+z];
+                positions += [offset+x, a+y,-r+z];
+                positions += [offset+x, r+y, a+z];
+                positions += [offset+x,-r+y, a+z],
                 c_for(b = -r, b <=r, b +=1,
-                    positions += [r + offset+x, a+y, b+z]
+                    positions += [offset+x,a+y,b+z]
                 )
             )
         ),
         orientation == 'y',
         c_for(a = -r, a <=r, a +=1,
             if(hollow,
-                positions += [ r+x, r + offset+y,a+z];
-                positions += [-r+x, r + offset+y,a+z];
-                positions += [a+x, r + offset+y, r+z];
-                positions += [a+x, r + offset+y,-r+z],
+                positions += [ r+x,offset+y,a+z];
+                positions += [-r+x,offset+y,a+z];
+                positions += [a+x,offset+y, r+z];
+                positions += [a+x,offset+y,-r+z],
                 c_for(b = -r, b <=r, b +=1,
-                    positions += [a+x, r + offset+y, b+z]
+                    positions += [a+x,offset+y,b+z]
                 )
             )
         ),
         orientation == 'z',
         c_for(a = -r, a <=r, a +=1,
              if(hollow,
-                positions += [ r+x, a+y,r + offset+z];
-                positions += [-r+x, a+y,r + offset+z];
-                positions += [a+x, r+y, r + offset+z];
-                positions += [a+x,-r+y, r + offset+z],
+                positions += [ r+x,a+y,offset+z];
+                positions += [-r+x,a+y,offset+z];
+                positions += [a+x, r+y,offset+z];
+                positions += [a+x,-r+y,offset+z],
                 c_for(b = -r, b <=r, b +=1,
-                    positions += [b+x, a+y, r + offset+z]
+                    positions += [b+x,a+y,offset+z]
                 )
             )
         ),
