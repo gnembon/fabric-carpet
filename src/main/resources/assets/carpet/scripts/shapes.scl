@@ -100,7 +100,7 @@ draw_prism(args)->(
 fill_flat(pos, offset, dr, rectangle, orientation, hollow)->
     if(rectangle,
         fill_flat_rectangle(pos, offset, dr, orientation, hollow),
-        fill_flat_circle(pos, offset, dr, orientation, hollow)
+        fill_flat_circle(pos, offset, dr, orientation, hollow, true)
     );
 
 //Bresenham circle algorithm to be super efficient
@@ -108,7 +108,13 @@ fill_flat(pos, offset, dr, rectangle, orientation, hollow)->
 //That paper goes into a lot more detail on how to make it faster, but in scarpet it changes nothing
 //Cos the optimizations are essentially to only use integer maths which is faster,
 //but scarpet uses floating point maths anyways.
-fill_flat_circle(pos, offset, dr, orientation, hollow) ->(
+//But there is room for less calculation, by avoiding to recalculate (x+1)^2+(y-1/2)^2 ever time
+//Also, the original algorithm generates a thin circle,
+//which means that cones and spheres have gaps between the layers.
+//To solve, I plot an extra point if we're moving diagonally downwards, and that solves the issue entirely.
+//But this caused issues, so I added the 'thick' parameter to choose between the two options.
+//And obviously that thin-ness only comes into play with a hollow circle.
+fill_flat_circle(pos, offset, dr, orientation, hollow, thick) ->(
 
     r = floor(dr);
 
@@ -129,7 +135,7 @@ fill_flat_circle(pos, offset, dr, orientation, hollow) ->(
         if(d > 0,
 			d+=2*a-2*b+5;
 			b=b-1;
-			if(hollow, //to make circles slightly thicker
+			if(hollow && thick, //to make circles slightly thicker
 				positions = positions + fill_flat_circle_points(pos, orientation, offset, hollow, a, b)
 			),
 			d+=2*a+3
