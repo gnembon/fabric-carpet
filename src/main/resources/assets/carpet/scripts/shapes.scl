@@ -6,25 +6,30 @@
 //This way, you can efficiently iterate over the positions once having generated them. See draw_beta.sc for an example. todo change to draw once renamed
 
 
+//Basically using Bresenham circle algorithm to draw the sphere as a bunch of circles.
+//This still has some issues, but it works better than the previous solution
+//todo update this when I figure out how to properly generalize Bresenham circle logic to 3D
 draw_sphere(args)->(
     [centre, radius, hollow] = args;
     positions = {};
     [cx,cy,cz]=centre;
-    for(range(-90, 90, 45/radius),
-        cpitch = cos(_);
-        spitch = sin(_);
-        for(range(0, 180, 45/radius),
-            cyaw = cos(_)*cpitch*radius;
-            syaw = sin(_)*cpitch*radius;
-            if(hollow,
-                positions += [cx+cyaw,cy+spitch*radius,cz+syaw];
-                positions += [cx+cos(_+180)*cpitch*radius,cy+spitch*radius,cz+sin(_+180)*cpitch*radius],
-                for(range(-syaw,syaw+1),
-                    positions += [cx+cyaw*cpitch,cy+spitch*radius,cz+_]
-                )
-            )
-        )
-    );
+	r = floor(radius);
+	x=0;
+	z=r;
+	d = 1.25-r;
+	while(x<=z, r,
+		positions = positions + fill_flat_circle(centre, x, z, 'y', hollow, true);
+		positions = positions + fill_flat_circle(centre,-x, z, 'y', hollow, true);
+		positions = positions + fill_flat_circle(centre, z, x, 'y', hollow, true);
+		positions = positions + fill_flat_circle(centre,-z, x, 'y', hollow, true);
+		if(d>0,
+			d+=2*x-2*z+5;
+			z=z-1,
+			d+=2*x+3
+		);
+		x+=1;
+	);
+
     positions
 );
 
@@ -129,7 +134,7 @@ fill_flat_circle(pos, offset, dr, orientation, hollow, thick) ->(
     b=r;
 	d = 1.25-r;
 
-    while(a<=b, r, //technically the limit is r*sqrt(2) but whatevs
+    while(a<=b, r, //technically the limit is r/sqrt(2) but whatevs
 		positions = positions + fill_flat_circle_points(pos, orientation, offset, hollow, a, b);
         if(d > 0,
 			d+=2*a-2*b+5;
