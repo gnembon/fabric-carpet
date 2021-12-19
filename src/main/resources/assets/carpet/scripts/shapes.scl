@@ -207,40 +207,41 @@ fill_flat_circle_points(pos, orientation, offset, hollow, a, b) ->(
 fill_flat_rectangle(pos, offset, dr, orientation, hollow) -> (
     r = floor(dr);
     drsq = dr^2;
+	[x, y, z] = pos;
     positions = {};
     if(orientation == 'x',
         c_for(a = -r, a <=r, a +=1,
             if(hollow,
-                positions += [r + offset, a, r];
-                positions += [r + offset, a,-r];
-                positions += [r + offset, r, a];
-                positions += [r + offset,-r, a],
+                positions += [r + offset+x, a+y, r+z];
+                positions += [r + offset+x, a+y,-r+z];
+                positions += [r + offset+x, r+y, a+z];
+                positions += [r + offset+x,-r+y, a+z],
                 c_for(b = -r, b <=r, b +=1,
-                    positions += [r + offset, a, b]
+                    positions += [r + offset+x, a+y, b+z]
                 )
             )
         ),
         orientation == 'y',
         c_for(a = -r, a <=r, a +=1,
             if(hollow,
-                positions += [ r, r + offset,a];
-                positions += [-r, r + offset,a];
-                positions += [a, r + offset, r];
-                positions += [a, r + offset,-r],
+                positions += [ r+x, r + offset+y,a+z];
+                positions += [-r+x, r + offset+y,a+z];
+                positions += [a+x, r + offset+y, r+z];
+                positions += [a+x, r + offset+y,-r+z],
                 c_for(b = -r, b <=r, b +=1,
-                    positions += [a, r + offset, b]
+                    positions += [a+x, r + offset+y, b+z]
                 )
             )
         ),
         orientation == 'z',
         c_for(a = -r, a <=r, a +=1,
              if(hollow,
-                positions += [ r, a,r + offset];
-                positions += [-r, a,r + offset];
-                positions += [a, r, r + offset];
-                positions += [a,-r, r + offset],
+                positions += [ r+x, a+y,r + offset+z];
+                positions += [-r+x, a+y,r + offset+z];
+                positions += [a+x, r+y, r + offset+z];
+                positions += [a+x,-r+y, r + offset+z],
                 c_for(b = -r, b <=r, b +=1,
-                    positions += [b, a, r + offset]
+                    positions += [b+x, a+y, r + offset+z]
                 )
             )
         ),
