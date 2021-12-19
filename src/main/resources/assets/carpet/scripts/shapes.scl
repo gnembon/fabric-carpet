@@ -103,30 +103,38 @@ fill_flat(pos, offset, dr, rectangle, orientation, hollow)->
         fill_flat_circle(pos, offset, dr, orientation, hollow)
     );
 
-fill_flat_circle(pos, offset, dr, orientation, hollow) ->( //Bresenham circle algorithm to be super efficient
+//Bresenham circle algorithm to be super efficient
+//This is a modified verison from here: https://weber.itn.liu.se/~stegu76/circle/circlealgorithm.pdf
+//That paper goes into a lot more detail on how to make it faster, but in scarpet it changes nothing
+//Cos the optimizations are essentially to only use integer maths which is faster,
+//but scarpet uses floating point maths anyways.
+fill_flat_circle(pos, offset, dr, orientation, hollow) ->(
+
     r = floor(dr);
-    a=0;
-    b=r;
-    d=3-(2*r);
 
-    positions = {};
+	positions = {};
 
-    //special case for radius 0 or it messes up weirdly
     if(r == 0,
         offset_vector = if(orientation=='x', [1,0,0], orientation=='y', [0,1,0],[0,0,1]);
-        return({pos + offset_vector*offset})
+        positions += pos + offset_vector*offset;
+        return(positions)
     );
 
-    positions = positions + fill_flat_circle_points(pos, orientation, offset, hollow, a, b);
+    a=0;
+    b=r;
+	d = 1.25-r;
 
-    while(a<=b, 10^10,
-        if(d<=0,
-            d += (4*a)+6,
-            d += (4*a)-(4*b)+10;
-            b=b-1
+    while(a<=b, r, //technically the limit is r*sqrt(2) but whatevs
+		positions = positions + fill_flat_circle_points(pos, orientation, offset, hollow, a, b);
+        if(d > 0,
+			d+=2*a-2*b+5;
+			b=b-1;
+			if(hollow, //to make circles slightly thicker
+				positions = positions + fill_flat_circle_points(pos, orientation, offset, hollow, a, b)
+			),
+			d+=2*a+3
         );
         a+=1;
-        positions = positions + fill_flat_circle_points(pos, orientation, offset, hollow, a, b)
     );
     positions
 );
@@ -138,12 +146,12 @@ fill_flat_circle_points(pos, orientation, offset, hollow, a, b) ->(
         if(hollow,
             positions += [x + offset, a+y, b+z];
             positions += [x + offset, a+y,-b+z];
-            positions += [x + offset,-a+y,-b+z];
             positions += [x + offset,-a+y, b+z];
+            positions += [x + offset,-a+y,-b+z];
             positions += [x + offset, b+y, a+z];
             positions += [x + offset, b+y,-a+z];
-            positions += [x + offset,-b+y,-a+z];
-            positions += [x + offset,-b+y, a+z],
+            positions += [x + offset,-b+y, a+z];
+            positions += [x + offset,-b+y,-a+z],
             c_for(c = -a, c<=a, c+=1,
                 positions += [x + offset,c+y, b + z];
                 positions += [x + offset,c+y,-b + z]
@@ -157,41 +165,43 @@ fill_flat_circle_points(pos, orientation, offset, hollow, a, b) ->(
         if(hollow,
             positions += [ a+x, y + offset, b+z];
             positions += [ a+x, y + offset,-b+z];
-            positions += [-a+x, y + offset,-b+z];
             positions += [-a+x, y + offset, b+z];
+            positions += [-a+x, y + offset,-b+z];
             positions += [ b+x, y + offset, a+z];
             positions += [ b+x, y + offset,-a+z];
+            positions += [-b+x, y + offset, a+z];
             positions += [-b+x, y + offset,-a+z];
-            positions += [-b+x, y + offset, a+z],
-            c_for(c = -a, c<=a, c+=1,
-                positions += [c+x,y + offset, b + z];
-                positions += [c+x,y + offset,-b + z]
+			,
+            for(range(-b, b+1),
+                positions += [ a+x,y + offset,_ + z];
+                positions += [-a+x,y + offset,_ + z]
             );
-            c_for(c = -b, c<=b, c+=1,
-                positions += [ a+x,y + offset,c + z];
-                positions += [-a+x,y + offset,c + z]
+            for(range(-a, a+1),
+                positions += [ b+x,y + offset,_ + z];
+                positions += [-b+x,y + offset,_ + z]
             )
         ),
         orientation=='z',
         if(hollow,
             positions += [ a+x, b+y, z + offset];
             positions += [ a+x,-b+y, z + offset];
-            positions += [-a+x,-b+y, z + offset];
             positions += [-a+x, b+y, z + offset];
+            positions += [-a+x,-b+y, z + offset];
             positions += [ b+x, a+y, z + offset];
             positions += [ b+x,-a+y, z + offset];
-            positions += [-b+x,-a+y, z + offset];
-            positions += [-b+x, a+y, z + offset],
+            positions += [-b+x, a+y, z + offset];
+            positions += [-b+x,-a+y, z + offset],
             c_for(c = -a, c<=a, c+=1,
                 positions += [c+x, b + y,z + offset];
                 positions += [c+x,-b + y,z + offset]
             );
             c_for(c = -b, c<=b, c+=1,
-                positions += [ a+x,c + y,z + offset];
-                positions += [-a+x,c + y,z + offset]
+                positions += [ a+x, c + y, z + offset];
+                positions += [-a+x, c + y, z + offset]
             )
         )
-    )
+    );
+    positions
 );
 
 fill_flat_rectangle(pos, offset, dr, orientation, hollow) -> (
