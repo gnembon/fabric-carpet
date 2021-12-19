@@ -63,6 +63,8 @@ draw_filled_diamond(args)->(
     positions
 );
 
+//Draws a bunch of circles or squares of decreasing or increasing radii based on where it's pointing.
+//Circles are drawn using fill_flat_circle
 draw_pyramid(args)->(
     [pos, radius, height, pointing, orientation, fill_type, is_square] = args;
     positions = {};
@@ -70,20 +72,24 @@ draw_pyramid(args)->(
     pointup = pointing=='up';
     for(range(height),
         r = if(pointup, radius * ( 1 - _ / height), radius * _ / height);
-        positions = positions + fill_flat(pos, _, r, is_square, orientation, !((pointup&&_==0)||(!pointup && _==height-1)) && hollow)//Always close bottom off
+        positions = positions + fill_flat(pos, _, r, is_square, orientation, !((pointup&&_==0)||(!pointup && _==height-1)) && hollow, true)//Always close bottom off
     );
     positions
 );
 
+//Draws a column of squares/circles (circles using fill_flat_circle)
+//Only thing special to note is that here we pre-generate the points
+//and then use that with an offset to make the rest of the prism.
+//This avoid re-running algorithms for generating the shapes, which tend to be costly
 draw_prism(args)->(
     [pos, rad, height, orientation, fill_type, is_square]=args;
     positions = {};
     hollow = fill_type =='hollow';
     radius = rad+0.5;
-    filled_circle_points = fill_flat(pos, 0, radius, is_square, orientation, false); //I dont actually need to generate all the points lol
+    filled_circle_points = fill_flat(pos, 0, radius, is_square, orientation, false, false); //I dont actually need to generate all the points lol
     offset_vector = if(orientation=='x', [1,0,0], orientation=='y', [0,1,0],[0,0,1]);
     if(hollow,
-        hollow_circle_points = fill_flat(pos, 0, radius, is_square, orientation, true);
+        hollow_circle_points = fill_flat(pos, 0, radius, is_square, orientation, true, false);
 
         for(filled_circle_points,//Always close ends off
             positions+=_;
@@ -107,10 +113,14 @@ draw_prism(args)->(
     positions
 );
 
-fill_flat(pos, offset, dr, rectangle, orientation, hollow)->
+//Allows to fill a rectangle or circle
+//'pyramid' parameter is cos this function is called by draw_prism and draw_pyramid
+//Now in pyramids, I want circles to be ever so slightly thicker,
+//whereas in prisms I don't, hence the parameter.
+fill_flat(pos, offset, dr, rectangle, orientation, hollow, pyramid)->
     if(rectangle,
         fill_flat_rectangle(pos, offset, dr, orientation, hollow),
-        fill_flat_circle(pos, offset, dr, orientation, hollow, true)
+        fill_flat_circle(pos, offset, dr, orientation, hollow, pyramid)
     );
 
 //Bresenham circle algorithm to be super efficient
@@ -154,6 +164,9 @@ fill_flat_circle(pos, offset, dr, orientation, hollow, thick) ->(
     positions
 );
 
+//Method used to fill points in 8 octants.
+//Used by Bresenham midpoint algorithm to use least code,
+//exploiting the symmetricity of the circle.
 fill_flat_circle_points(pos, orientation, offset, hollow, a, b) ->(
     [x, y, z] = pos;
     positions = {};
@@ -219,6 +232,7 @@ fill_flat_circle_points(pos, orientation, offset, hollow, a, b) ->(
     positions
 );
 
+//Fills a square
 fill_flat_rectangle(pos, offset, dr, orientation, hollow) -> (
     r = floor(dr);
 	[x, y, z] = pos;
