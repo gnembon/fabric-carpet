@@ -52,7 +52,8 @@ draw_diamond(args)->(
 );
 
 //Draws a filled diamond by drawing a bunch of hollow diamonds within
-//todo test whether this is the best way to do this
+//While the code looks dodgy, it's equivalent to the filling algorithm
+//which fills between the endpoints as opposed to just plotting them
 draw_filled_diamond(args)->(
     [pos, radius] = args;
     positions = {};
