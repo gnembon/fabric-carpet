@@ -13,22 +13,22 @@ draw_sphere(args)->(
     [centre, radius, hollow] = args;
     positions = {};
     [cx,cy,cz]=centre;
-	r = floor(radius);
-	x=0;
-	z=r;
-	d = 1.25-r;
-	while(x<=z, r,
-		positions = positions + fill_flat_circle(centre, x, z, 'y', hollow, true);
-		positions = positions + fill_flat_circle(centre,-x, z, 'y', hollow, true);
-		positions = positions + fill_flat_circle(centre, z, x, 'y', hollow, true);
-		positions = positions + fill_flat_circle(centre,-z, x, 'y', hollow, true);
-		if(d>0,
-			d+=2*x-2*z+5;
-			z=z-1,
-			d+=2*x+3
-		);
-		x+=1;
-	);
+    r = floor(radius);
+    x=0;
+    z=r;
+    d = 1.25-r;
+    while(x<=z, r,
+        positions = positions + fill_flat_circle(centre, x, z, 'y', hollow, true);
+        positions = positions + fill_flat_circle(centre,-x, z, 'y', hollow, true);
+        positions = positions + fill_flat_circle(centre, z, x, 'y', hollow, true);
+        positions = positions + fill_flat_circle(centre,-z, x, 'y', hollow, true);
+        if(d>0,
+    	    d+=2*x-2*z+5;
+    	    z=z-1,
+    	    d+=2*x+3
+        );
+        x+=1;
+    );
 
     positions
 );
@@ -137,7 +137,7 @@ fill_flat_circle(pos, offset, dr, orientation, hollow, thick) ->(
 
     r = floor(dr);
 
-	positions = {};
+    positions = {};
 
     if(r == 0,
         offset_vector = if(orientation=='x', [1,0,0], orientation=='y', [0,1,0],[0,0,1]);
@@ -147,17 +147,17 @@ fill_flat_circle(pos, offset, dr, orientation, hollow, thick) ->(
 
     a=0;
     b=r;
-	d = 1.25-r;
+    d = 1.25-r;
 
     while(a<=b, r, //technically the limit is r/sqrt(2) but whatevs
-		positions = positions + fill_flat_circle_points(pos, orientation, offset, hollow, a, b);
+        positions = positions + fill_flat_circle_points(pos, orientation, offset, hollow, a, b);
         if(d > 0,
-			d+=2*a-2*b+5;
-			b=b-1;
-			if(hollow && thick, //to make circles slightly thicker
-				positions = positions + fill_flat_circle_points(pos, orientation, offset, hollow, a, b)
-			),
-			d+=2*a+3
+	    d+=2*a-2*b+5;
+	    b=b-1;
+	    if(hollow && thick, //to make circles slightly thicker
+	    	positions = positions + fill_flat_circle_points(pos, orientation, offset, hollow, a, b)
+	    ),
+	    d+=2*a+3
         );
         a+=1;
     );
@@ -235,7 +235,7 @@ fill_flat_circle_points(pos, orientation, offset, hollow, a, b) ->(
 //Fills a square
 fill_flat_rectangle(pos, offset, dr, orientation, hollow) -> (
     r = floor(dr);
-	[x, y, z] = pos;
+    [x, y, z] = pos;
     positions = {};
     if(orientation == 'x',
         c_for(a = -r, a <=r, a +=1,
