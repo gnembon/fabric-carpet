@@ -435,7 +435,7 @@ Reloading of datapacks that define new dimensions is not implemented in vanilla.
 dimension information on server start. `create_datapack` is therefore a direct replacement of manually ploping of the specified 
 file structure in a datapack file and calling `/datapack enable` on the new datapack with all its quirks and sideeffects
 (like no worldgen changes, reloading all other datapacks, etc.). To enable newly added custom dimensions, call much more
-experimental `check_hidden_dimensions()` after adding a datapack if needed.
+experimental `enable_hidden_dimensions()` after adding a datapack if needed.
 
 Synopsis:
 <pre>
@@ -453,6 +453,7 @@ script run create_datapack('foo',
 
 Custom dimension example:
 <pre>
+// 1.17
 script run create_datapack('funky_world',  {
     'data' -> { 'minecraft' -> { 'dimension' -> { 'custom_ow.json' -> { 
         'type' -> 'minecraft:the_end',
@@ -467,7 +468,36 @@ script run create_datapack('funky_world',  {
             'type' -> 'minecraft:noise'
     } } } } }
 });
-check_hidden_dimensions();  => ['funky_world']
+
+// 1.18
+script run a() -> create_datapack('funky_world',  {
+   'data' -> { 'minecraft' -> { 'dimension' -> { 'custom_ow.json' -> { 
+      'type' -> 'minecraft:overworld',
+         'generator' -> {
+            'biome_source' -> {
+               'biomes' -> [
+                  {
+                     'parameters' -> {                        
+                        'erosion' -> [-1.0,1.0], 
+                        'depth' -> 0.0, 
+                        'weirdness' -> [-1.0,1.0],
+                        'offset' -> 0.0,
+                        'temperature' -> [-1.0,1.0],
+                        'humidity' -> [-1.0,1.0],
+                        'continentalness' -> [ -1.2,-1.05]
+                     },
+                     'biome' -> 'minecraft:mushroom_fields'
+                  }
+               ],
+               'type' -> 'minecraft:multi_noise'
+            },
+            'seed' -> 0,
+            'settings' -> 'minecraft:overworld',
+            'type' -> 'minecraft:noise'
+         }
+     } } } }
+});
+enable_hidden_dimensions();  => ['funky_world']
 </pre>
 
 Loot table example:
@@ -605,7 +635,7 @@ Throws `unknown_dimension` if provided dimension can't be found.
  
 ### `view_distance()`
 
-_**Deprecated**. Use `system_info('server_view_distance')` instead._
+_**Deprecated**. Use `system_info('game_view_distance')` instead._
 
 Returns the view distance of the server.
 
@@ -665,9 +695,13 @@ Available options in the scarpet app space:
   * `world_folder` - name of the direct folder in the saves that holds world files
   * `world_carpet_rules` - returns all Carpet rules in a map form (`rule`->`value`). Note that the values are always returned as strings, so you can't do boolean comparisons directly. Includes rules from extensions with their namespace (`namespace:rule`->`value`). You can later listen to rule changes with the `on_carpet_rule_changes(rule, newValue)` event.
   * `world_gamerules` - returns all gamerules in a map form (`rule`->`value`). Like carpet rules, values are returned as strings, so you can use appropriate value conversions using `bool()` or `number()` to convert them to other values. Gamerules are read-only to discourage app programmers to mess up with the settings intentionally applied by server admins. Isn't that just super annoying when a datapack messes up with your gamerule settings? It is still possible to change them though using `run('gamerule ...`.
-  * `world_spawn_point` - world spawn point
+  * `world_spawn_point` - world spawn point in the overworld dimension
   * `world_time` - Returns dimension-specific tick counter.
-
+  * `world_top` - Returns current dimensions' topmost Y value where one can place blocks.
+  * `world_bottom` - Returns current dimensions' bottommost Y value where one can place blocks.
+  * `world_center` - Returns coordinates of the center of the world with respect of the world border
+  * `world_size` - Returns size of the world where at this distance from `world_center` world border appears.
+  * 
  Relevant gameplay related properties
   * `game_difficulty` - current difficulty of the game: `'peaceful'`, `'easy'`, `'normal'`, or `'hard'`
   * `game_hardcore` - boolean whether the game is in hardcore mode
