@@ -1,4 +1,4 @@
-import('shapes','draw_sphere', 'draw_diamond', 'draw_filled_diamond', 'draw_pyramid', 'draw_prism'); //importing all the shape funcs from the other app
+import('shapes','draw_sphere', 'draw_diamond', 'draw_filled_diamond', 'draw_pyramid', 'draw_prism'); //importing all the shape funcs from shapes.scl
 
 __config() -> {
     'commands'->{
@@ -21,14 +21,13 @@ __config() -> {
     },
     'arguments'->{
         'center'->{'type'->'pos', 'loaded'->'true'},
-        'radius'->{'type'->'int', 'suggest'->[], 'min'->0},//to avoid default suggestions
+        'radius'->{'type'->'int', 'min'->0},
         'replacement'->{'type'->'blockpredicate'},
-        'height'->{'type'->'int', 'suggest'->[],'min'->0},
+        'height'->{'type'->'int', 'min'->0},
         'orientation'->{'type'->'term', 'suggest'->['x','y','z']},
         'pointing'->{'type'->'term','suggest'->['up','down']},
         'hollow'->{'type'->'term','suggest'->['hollow','solid']},
-    },
-    'scope'->'global'//todo decide whether it rly needs to be global or not...
+    }
 };
 
 _block_matches(existing, block_predicate) ->
@@ -41,10 +40,11 @@ _block_matches(existing, block_predicate) ->
     (!tag || tag_matches(block_data(existing), tag))
 );
 
-draw(what, args, block, replacement)->(//custom setter cos it's easier
-    positions = call(what,args); //returning blocks to be set
+//This setter function basically just sets the blocks using the shapes.scl library
+draw(what, args, block, replacement)->(
+    positions = call(what,args); //Getting the blocks we need to set
 
-    affected = 0
+    affected = 0;
 
     for(positions,
         existing = block(_);
@@ -52,5 +52,5 @@ draw(what, args, block, replacement)->(//custom setter cos it's easier
             affected += bool(set(existing,block))
         )
     );
-    print(player,format('gi Filled ' + affected + ' blocks'));
+    print(player(),format('gi Filled ' + affected + ' blocks'));
 );
