@@ -319,7 +319,7 @@ public class ScriptCommand
                         then(argument("event", StringArgumentType.word()).
                                 suggests( (cc, bb) -> suggestMatching(CarpetEventServer.Event.publicEvents(CarpetServer.scriptServer).stream().filter(CarpetEventServer.Event::isNeeded).map(ev -> ev.name).collect(Collectors.toList()) ,bb)).
                                 then(argument("call", StringArgumentType.greedyString()).
-                                        suggests( (cc, bb) -> suggestMatching(CarpetEventServer.Event.getEvent(StringArgumentType.getString(cc, "event"), CarpetServer.scriptServer).handler.callList.stream().map(CarpetEventServer.Callback::toString), bb)).
+                                        suggests( (cc, bb) -> suggestMatching(CarpetEventServer.Event.getEvent(StringArgumentType.getString(cc, "event"), CarpetServer.scriptServer).handler.inspectCurrentCalls().stream().map(CarpetEventServer.Callback::toString), bb)).
                                         executes( (cc) -> CarpetServer.scriptServer.events.removeEventFromCommand(
                                                 cc.getSource(),
                                                 StringArgumentType.getString(cc, "event"),
@@ -376,7 +376,7 @@ public class ScriptCommand
         for (CarpetEventServer.Event event: CarpetEventServer.Event.getAllEvents(CarpetServer.scriptServer, null))
         {
             boolean shownEvent = false;
-            for (CarpetEventServer.Callback c: event.handler.callList)
+            for (CarpetEventServer.Callback c: event.handler.inspectCurrentCalls())
             {
                 if (!shownEvent)
                 {

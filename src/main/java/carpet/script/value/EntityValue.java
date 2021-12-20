@@ -36,6 +36,7 @@ import net.minecraft.network.packet.s2c.play.EntityPassengersSetS2CPacket;
 import net.minecraft.network.packet.s2c.play.EntityPositionS2CPacket;
 import net.minecraft.network.packet.s2c.play.ExperienceBarUpdateS2CPacket;
 import net.minecraft.network.packet.s2c.play.PlayerPositionLookS2CPacket;
+import net.minecraft.network.packet.s2c.play.UpdateSelectedSlotS2CPacket;
 import net.minecraft.command.EntitySelector;
 import net.minecraft.command.EntitySelectorReader;
 import net.minecraft.entity.Entity;
@@ -740,6 +741,49 @@ public class EntityValue extends Value
             //}
             return Value.NULL;
         });
+
+        put("may_fly", (e, a) -> {
+            if (e instanceof ServerPlayerEntity player) {
+                return BooleanValue.of(player.getAbilities().allowFlying);
+            }
+            return Value.NULL;
+        });
+
+        put("flying", (e, v) -> {
+            if (e instanceof ServerPlayerEntity player) {
+                return BooleanValue.of(player.getAbilities().flying);
+            }
+            return Value.NULL;
+        });
+
+        put("may_build", (e, v) -> {
+            if (e instanceof ServerPlayerEntity player) {
+                return BooleanValue.of(player.getAbilities().allowModifyWorld);
+            }
+            return Value.NULL;
+        });
+
+        put("insta_build", (e, v) -> {
+            if (e instanceof ServerPlayerEntity player) {
+                return BooleanValue.of(player.getAbilities().creativeMode);
+            }
+            return Value.NULL;
+        });
+
+        put("fly_speed", (e, v) -> {
+            if (e instanceof ServerPlayerEntity player) {
+                return NumericValue.of(player.getAbilities().getFlySpeed());
+            }
+            return Value.NULL;
+        });
+
+        put("walk_speed", (e, v) -> {
+            if (e instanceof ServerPlayerEntity player) {
+                return NumericValue.of(player.getAbilities().getWalkSpeed());
+            }
+            return Value.NULL;
+        });
+
         put("holds", (e, a) -> {
             EquipmentSlot where = EquipmentSlot.MAINHAND;
             if (a != null)
@@ -963,6 +1007,67 @@ public class EntityValue extends Value
             }
             if (e instanceof LivingEntity) ((LivingEntity) e).setHealth(health);
         });
+
+        put("may_fly", (e, v) -> {
+            boolean mayFly = v.getBoolean();
+            if (e instanceof ServerPlayerEntity player) {
+                player.getAbilities().allowFlying = mayFly;
+                if (!mayFly && player.getAbilities().flying) {
+                    player.getAbilities().flying = false;
+                }
+                player.sendAbilitiesUpdate();
+            }
+        });
+
+        put("flying", (e, v) -> {
+            boolean flying = v.getBoolean();
+            if (e instanceof ServerPlayerEntity player) {
+                player.getAbilities().flying = flying;
+                player.sendAbilitiesUpdate();
+            }
+        });
+
+        put("may_build", (e, v) -> {
+            boolean mayBuild = v.getBoolean();
+            if (e instanceof ServerPlayerEntity player) {
+                player.getAbilities().allowModifyWorld = mayBuild;
+                player.sendAbilitiesUpdate();
+            }
+        });
+
+        put("insta_build", (e, v) -> {
+            boolean instaBuild = v.getBoolean();
+            if (e instanceof ServerPlayerEntity player) {
+                player.getAbilities().creativeMode = instaBuild;
+                player.sendAbilitiesUpdate();
+            }
+        });
+
+        put("fly_speed", (e, v) -> {
+            float flySpeed = NumericValue.asNumber(v).getFloat();
+            if (e instanceof ServerPlayerEntity player) {
+                player.getAbilities().setFlySpeed(flySpeed);
+                player.sendAbilitiesUpdate();
+            }
+        });
+
+        put("walk_speed", (e, v) -> {
+            float walkSpeed = NumericValue.asNumber(v).getFloat();
+            if (e instanceof ServerPlayerEntity player) {
+                player.getAbilities().setWalkSpeed(walkSpeed);
+                player.sendAbilitiesUpdate();
+            }
+        });
+
+        put("selected_slot", (e, v) ->
+        {
+            if (e instanceof ServerPlayerEntity player)
+            {
+                int slot = NumericValue.asNumber(v).getInt();
+                player.networkHandler.sendPacket(new UpdateSelectedSlotS2CPacket(slot));
+            }
+        });
+
         // todo add handling of the source for extra effects
         /*put("damage", (e, v) -> {
             float dmgPoints;
@@ -1453,7 +1558,15 @@ public class EntityValue extends Value
 
         put("gravity",(e,v)-> e.setNoGravity(!v.getBoolean()));
 
-        put("invulnerable",(e,v)-> e.setInvulnerable(v.getBoolean()));
+        put("invulnerable",(e,v)-> {
+            boolean invulnerable = v.getBoolean();
+            if (e instanceof ServerPlayerEntity player) {
+                player.getAbilities().invulnerable = invulnerable;
+                player.sendAbilitiesUpdate();
+            } else {
+                e.setInvulnerable(invulnerable);
+            }
+        });
 
         put("fire",(e,v)-> e.setFireTicks((int)NumericValue.asNumber(v).getLong()));
         put("frost",(e,v)-> e.setFrozenTicks((int)NumericValue.asNumber(v).getLong()));

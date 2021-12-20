@@ -5,6 +5,7 @@ import carpet.script.Expression;
 import carpet.script.Fluff;
 import carpet.script.Tokenizer;
 import carpet.script.value.FunctionValue;
+import carpet.utils.Messenger;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -19,6 +20,9 @@ public class ExpressionException extends RuntimeException implements ResolvedExc
     public final List<FunctionValue> stack = new ArrayList<>();
     private final Supplier<String> lazyMessage;
     private String cachedMessage = null;
+    public static void prepareForDoom(){
+        Messenger.c("foo bar");
+    }
 
     public ExpressionException(Context c, Expression e, String message)
     {
@@ -74,8 +78,8 @@ public class ExpressionException extends RuntimeException implements ResolvedExc
     {
         if (c.getErrorSnooper() != null)
         {
-            List<String> alternative = c.getErrorSnooper().apply(e, t, message);
-            if (alternative!= null)
+            List<String> alternative = c.getErrorSnooper().apply(e, t, c, message);
+            if (alternative != null)
             {
                 return String.join("\n", alternative);
             }

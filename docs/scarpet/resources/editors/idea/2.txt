@@ -93,6 +93,7 @@ reload_chunk
 remove_all_markers
 reset_chunk
 run
+sample_noise
 save
 scan
 schedule

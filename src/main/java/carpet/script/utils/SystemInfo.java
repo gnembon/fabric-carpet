@@ -17,9 +17,13 @@ import com.sun.management.OperatingSystemMXBean;
 import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.loader.api.ModContainer;
 import net.minecraft.SharedConstants;
+import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.WorldSavePath;
+import net.minecraft.util.registry.RegistryKey;
 import net.minecraft.world.GameRules;
+import net.minecraft.world.World;
 import net.minecraft.world.WorldProperties;
+import net.minecraft.world.border.WorldBorder;
 
 import java.lang.management.ManagementFactory;
 import java.nio.file.Path;
@@ -60,6 +64,18 @@ public class SystemInfo {
             WorldProperties prop = c.s.getServer().getOverworld().getLevelProperties();
             return ListValue.of(NumericValue.of(prop.getSpawnX()), NumericValue.of(prop.getSpawnY()), NumericValue.of(prop.getSpawnZ()));
         });
+
+        put("world_bottom", c-> new NumericValue(c.s.getWorld().getBottomY()));
+
+        put("world_top", c-> new NumericValue(c.s.getWorld().getTopY()));
+
+        put("world_center", c-> {
+            WorldBorder worldBorder = c.s.getWorld().getWorldBorder();
+            return ListValue.fromTriple(worldBorder.getCenterX(), 0, worldBorder.getCenterZ());
+        });
+
+        put("world_size", c-> new NumericValue( c.s.getWorld().getWorldBorder().getMaxRadius()));
+
         put("world_time", c -> new NumericValue(c.s.getWorld().getTime()));
 
         put("game_difficulty", c -> StringValue.of(c.s.getServer().getSaveProperties().getDifficulty().getName()));

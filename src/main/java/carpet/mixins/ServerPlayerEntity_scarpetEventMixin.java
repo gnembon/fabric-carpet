@@ -1,6 +1,5 @@
 package carpet.mixins;
 
-import carpet.fakes.ClientSettingsC2SPacketInterface;
 import carpet.fakes.EntityInterface;
 import carpet.fakes.ServerPlayerEntityInterface;
 import carpet.script.EntityEventsGroup;
@@ -19,6 +18,7 @@ import net.minecraft.util.registry.RegistryKey;
 import net.minecraft.world.World;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
@@ -35,6 +35,7 @@ public abstract class ServerPlayerEntity_scarpetEventMixin extends PlayerEntity 
 {
     // to denote if the player reference is valid
 
+    @Unique
     private boolean isInvalidReference = false;
 
     public ServerPlayerEntity_scarpetEventMixin(World world, BlockPos blockPos, float f, GameProfile gameProfile)
@@ -130,14 +131,18 @@ public abstract class ServerPlayerEntity_scarpetEventMixin extends PlayerEntity 
     }
 
     //getting player language
+    @Unique
     private String language;
 
-    public String getLanguage(){
+    @Override
+    public String getLanguage()
+    {
         return this.language;
     }
 
     @Inject(method = "setClientSettings", at = @At("HEAD"))
-    public void setClientSettings(ClientSettingsC2SPacket packet, CallbackInfo ci){
-        this.language = ((ClientSettingsC2SPacketInterface) packet).getLanguage();
+    public void setLanguage(ClientSettingsC2SPacket packet, CallbackInfo ci)
+    {
+        this.language = packet.getLanguage();
     }
 }

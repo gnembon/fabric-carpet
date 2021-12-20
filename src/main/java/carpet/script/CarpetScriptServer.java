@@ -12,6 +12,7 @@ import carpet.script.bundled.BundledModule;
 import carpet.CarpetServer;
 import carpet.script.bundled.FileModule;
 import carpet.script.bundled.Module;
+import carpet.script.exception.ExpressionException;
 import carpet.script.language.Arithmetic;
 import carpet.script.language.ControlFlow;
 import carpet.script.language.DataStructures;
@@ -438,6 +439,7 @@ public class CarpetScriptServer
     
     public static void parseFunctionClasses()
     {
+        ExpressionException.prepareForDoom(); // see fc-#1172
         // Language
         AnnotationParser.parseFunctionClass(Arithmetic.class);
         AnnotationParser.parseFunctionClass(ControlFlow.class);
