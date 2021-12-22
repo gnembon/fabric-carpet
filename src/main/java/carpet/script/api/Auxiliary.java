@@ -50,6 +50,7 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtHelper;
+import net.minecraft.nbt.NbtIo;
 import net.minecraft.nbt.NbtOps;
 import net.minecraft.nbt.NbtString;
 import net.minecraft.nbt.NbtElement;
@@ -1179,6 +1180,57 @@ public class Auxiliary {
             }
         }
     }
+    private static void zipValueToText(Path path, Value output) throws IOException
+    {
+        
+        String string = output.getString();
+        Files.createDirectories(path.getParent());
+        BufferedWriter bufferedWriter = Files.newBufferedWriter(path);
+        Throwable incident = null;
+        try
+        {
+            bufferedWriter.write(string);
+        }
+        catch (Throwable shitHappened)
+        {
+            incident = shitHappened;
+            throw shitHappened;
+        }
+        finally
+        {
+            if (incident != null) {
+                try {
+                    bufferedWriter.close();
+                } catch (Throwable otherShitHappened) {
+                    incident.addSuppressed(otherShitHappened);
+                }
+            } else {
+                bufferedWriter.close();
+            }
+        }
+    }
+
+    private static void zipValueToNBT(Path path, Value output) throws IOException
+    {
+        
+        
+        NBTSerializableValue tagValue =  (output instanceof NBTSerializableValue)
+                        ? (NBTSerializableValue) output
+                        : new NBTSerializableValue(output.getString());
+        NbtElement tag = tagValue.getTag();
+        Files.createDirectories(path.getParent());
+        
+        
+        try
+        {
+            if (tag instanceof NbtCompound)
+                NbtIo.writeCompressed((NbtCompound) tag, Files.newOutputStream(path));
+        }
+        catch (Throwable shitHappened)
+        {
+            throw shitHappened;
+        }
+    }
 
     private static void walkTheDPMap(MapValue node, Path path) throws IOException
     {
@@ -1192,7 +1244,13 @@ public class Auxiliary {
             {
                 zipValueToJson(child, val);
             }
-            else
+            else if (strkey.endsWith(".mcfunction")|strkey.endsWith(".txt")|strkey.endsWith(".mcmeta"))
+            {
+                zipValueToText(child, val);
+            }else if (strkey.endsWith(".nbt"))
+            {
+                zipValueToNBT(child, val);
+            }else
             {
                 if (!(val instanceof MapValue)) throw new InternalExpressionException("Value of "+strkey+" should be a map");
                 Files.createDirectory(child);
