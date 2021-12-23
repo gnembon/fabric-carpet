@@ -37,7 +37,7 @@ public class Monitoring {
         if (category.isPresent())
         {
             SpawnGroup group = SpawnGroup.byName(category.get().toLowerCase(Locale.ROOT));
-            if (group == null) throw new InternalExpressionException("Unreconized mob category: " + category.get());
+            if (group == null) throw new InternalExpressionException("Unrecognized mob category: " + category.get());
             return ListValue.of(
                     new NumericValue(mobcounts.getInt(group)),
                     new NumericValue((int)(group.getCapacity() * chunks / SpawnReporter.currentMagicNumber()))
