@@ -5,6 +5,7 @@ import carpet.CarpetSettings;
 import carpet.script.CarpetContext;
 import carpet.script.CarpetScriptHost;
 import carpet.script.value.BooleanValue;
+import carpet.script.value.EntityValue;
 import carpet.script.value.ListValue;
 import carpet.script.value.MapValue;
 import carpet.script.value.NumericValue;
@@ -17,11 +18,9 @@ import com.sun.management.OperatingSystemMXBean;
 import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.loader.api.ModContainer;
 import net.minecraft.SharedConstants;
-import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.WorldSavePath;
-import net.minecraft.util.registry.RegistryKey;
+import net.minecraft.util.math.Vec2f;
 import net.minecraft.world.GameRules;
-import net.minecraft.world.World;
 import net.minecraft.world.WorldProperties;
 import net.minecraft.world.border.WorldBorder;
 
@@ -199,6 +198,15 @@ public class SystemInfo {
             });
             return MapValue.wrap(rules);
         });
+
+        put("source_entity", c -> EntityValue.of(c.s.getEntity()));
+        put("source_position", c -> ValueConversions.of(c.s.getPosition()));
+        put("source_dimension", c -> ValueConversions.of(c.s.getWorld()));
+        put("source_rotation", c -> {
+            Vec2f rotation = c.s.getRotation();
+            return ListValue.of(new NumericValue(rotation.x), new NumericValue(rotation.y));
+        });
+        
         put("scarpet_version", c -> StringValue.of(CarpetSettings.carpetVersion));
 
     }};

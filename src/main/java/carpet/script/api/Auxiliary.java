@@ -736,6 +736,7 @@ public class Auxiliary {
             return Value.TRUE;
         });
 
+        // Should this be deprecated for system_info('source_dimension')?
         expression.addContextFunction("current_dimension", 0, (c, t, lv) ->
                 ValueConversions.of( ((CarpetContext)c).s.getWorld()));
 
