@@ -202,13 +202,16 @@ public class SystemInfo {
         put("scarpet_version", c -> StringValue.of(CarpetSettings.carpetVersion));
 
     }};
-    public static Value get(String what, CarpetContext cc)
+
+    /**
+     * Computes the value for the given {@code system_info} property
+     * @param property The property to search
+     * @param context The {@link CarpetContext} for the current execution
+     * @return The {@link Value} of the requested property, or {@code null} if it doesn't exist
+     */
+    public static Value get(String property, CarpetContext context)
     {
-        return options.getOrDefault(what, c -> null).apply(cc);
-    }
-    public static Value getAll(CarpetContext cc)
-    {
-        return MapValue.wrap(options.entrySet().stream().collect(Collectors.toMap(e -> new StringValue(e.getKey()), e -> e.getValue().apply(cc))));
+        return options.getOrDefault(property, c -> null).apply(context);
     }
 
 }

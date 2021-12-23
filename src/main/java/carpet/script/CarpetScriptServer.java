@@ -6,6 +6,7 @@ import carpet.script.api.Auxiliary;
 import carpet.script.api.BlockIterators;
 import carpet.script.api.Entities;
 import carpet.script.api.Inventories;
+import carpet.script.api.Monitoring;
 import carpet.script.api.Scoreboards;
 import carpet.script.api.WorldAccess;
 import carpet.script.bundled.BundledModule;
@@ -456,5 +457,6 @@ public class CarpetScriptServer
         AnnotationParser.parseFunctionClass(Scoreboards.class);
         AnnotationParser.parseFunctionClass(carpet.script.language.Threading.class);
         AnnotationParser.parseFunctionClass(WorldAccess.class);
+        AnnotationParser.parseFunctionClass(Monitoring.class);
     }
 }

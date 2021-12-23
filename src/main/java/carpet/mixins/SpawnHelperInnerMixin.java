@@ -30,18 +30,10 @@ public class SpawnHelperInnerMixin implements SpawnHelperInnerInterface
         cir.setReturnValue(groupToCount.getInt(entityCategory) < i);
     }
 
-
-
     @Override
     public GravityField getPotentialCalculator()
     {
         return densityField;
     }
-
-    @Override
-    public int cmGetChunkCount() {
-        return spawningChunkCount;
-    }
-
 
 }
