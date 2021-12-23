@@ -91,7 +91,7 @@ public class CarpetExpression
     public Value scriptRunCommand(ScriptHost host, BlockPos pos)
     {
         if (CarpetServer.scriptServer.stopAll)
-            throw new CarpetExpressionException("SCRIPTING PAUSED", null);
+            throw new CarpetExpressionException("SCRIPTING PAUSED (unpause with /script resume)", null);
         try
         {
             Context context = new CarpetContext(host, source, origin).
