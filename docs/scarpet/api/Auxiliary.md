@@ -676,8 +676,8 @@ Scarpet will not affect the entries of the statistics, even if it is just creati
 it could either mean your input is wrong, or statistic effectively has a value of `0`.
 
 
-### `system_info()`, `system_info(property)`
-Fetches the value of a system property or returns all inforation as a map when called without any arguments. It can be used to 
+### `system_info(property)`
+Fetches the value of one of the following system properties. It can be used to 
 fetch various information, mostly not changing, or only available via low level
 system calls. In all circumstances, these are only provided as read-only.
 
