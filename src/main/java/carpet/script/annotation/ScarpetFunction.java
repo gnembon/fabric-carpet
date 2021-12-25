@@ -52,6 +52,11 @@ import carpet.script.value.Value;
 public @interface ScarpetFunction
 {
     /**
+     * <p>Used to define that this {@link ScarpetFunction} can accept an unlimited number of parameters</p>
+     */
+    public static final int UNLIMITED_PARAMS = -1;
+
+    /**
      * <p>If the function can accept a variable number of parameters, either by declaring its last parameter as a varargs parameter or by having one
      * of their parameters use a converter that consumes a variable number of arguments, this must define the maximum number of parameters this
      * function can take.</p>
@@ -65,11 +70,11 @@ public @interface ScarpetFunction
      * consider that those can take either a single triple of values or 3 independent values, that would be counted in the maximum number of
      * parameters.</p>
      * 
-     * <p>Use -1 to specify an unlimited number of parameters.</p>
+     * <p>Use {@link ScarpetFunction#UNLIMITED_PARAMS} to allow an unlimited number of parameters.</p>
      * 
      * @return The maximum number of parameters this function can accept
      */
-    int maxParams() default -2;
+    int maxParams() default AnnotationParser.UNDEFINED_PARAMS;
 
     /**
      * <p>Defines the Context Type that will be used when evaluating arguments to annotated methods.</p>
