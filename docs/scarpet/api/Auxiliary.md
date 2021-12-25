@@ -252,6 +252,8 @@ Decorators (listed as extra argument after the component they would affect):
  * `'^<format> <text>'` - hover over tooltip text, appearing when hovering with your mouse over the text below.
  * `'?<suggestion>` - command suggestion - a message that will be pasted to chat when text below it is clicked.
  * `'!<message>'` - a chat message that will be executed when the text below it is clicked.
+ * `'@<url>'` - an url will be opened when the text below it is clicked.
+ * `'&<text>'` - a text will be copied to clipboard when the text below it is clicked.
  
 Both suggestions and messages can contain a command, which will be executed as a player that clicks it.
 
