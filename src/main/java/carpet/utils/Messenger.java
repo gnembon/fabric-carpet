@@ -103,23 +103,18 @@ public class Messenger
     }
     public static String creatureTypeColor(SpawnGroup type)
     {
-        switch (type)
+        return switch (type)
         {
-            case MONSTER:
-                return "n";
-            case CREATURE:
-                return "e";
-            case AMBIENT:
-                return "f";
-            case WATER_CREATURE:
-                return "v";
-            case WATER_AMBIENT:
-                return "q";
-        }
-        return "w";
+            case MONSTER -> "n";
+            case CREATURE -> "e";
+            case AMBIENT -> "f";
+            case WATER_CREATURE -> "v";
+            case WATER_AMBIENT -> "q";
+            default -> "w"; // missing MISC and UNDERGROUND_WATER_CREATURE
+        };
     }
 
-    private static BaseText _getChatComponentFromDesc(String message, BaseText previous_message)
+    private static BaseText getChatComponentFromDesc(String message, BaseText previousMessage)
     {
         if (message.equalsIgnoreCase(""))
         {
@@ -127,7 +122,7 @@ public class Messenger
         }
         if (Character.isWhitespace(message.charAt(0)))
         {
-            message = "w"+message;
+            message = "w" + message;
         }
         int limit = message.indexOf(' ');
         String desc = message;
@@ -137,52 +132,37 @@ public class Messenger
             desc = message.substring(0, limit);
             str = message.substring(limit+1);
         }
-        if (desc.charAt(0) == '/') // deprecated
-        {
-            if (previous_message != null)
-                previous_message.setStyle(
-                        previous_message.getStyle().withClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, message))
-                );
-            return previous_message;
+        if (previousMessage == null) {
+            BaseText text = new LiteralText(str);
+            text.setStyle(parseStyle(desc));
+            return text;
         }
-        if (desc.charAt(0) == '?')
-        {
-            if (previous_message != null)
-                previous_message.setStyle(
-                        previous_message.getStyle().withClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, message.substring(1)))
-                );
-            return previous_message;
-        }
-        if (desc.charAt(0) == '!')
-        {
-            if (previous_message != null)
-                previous_message.setStyle(
-                        previous_message.getStyle().withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, message.substring(1)))
-                );
-            return previous_message;
-        }
-        if (desc.charAt(0) == '^')
-        {
-            if (previous_message != null)
-                previous_message.setStyle(
-                        previous_message.getStyle().withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, c(message.substring(1))))
-                );
-            return previous_message;
-        }
-        BaseText txt = new LiteralText(str);
-        txt.setStyle(parseStyle(desc));
-        return txt;
+        Style previousStyle = previousMessage.getStyle();
+        BaseText ret = previousMessage;
+        previousMessage.setStyle(switch (desc.charAt(0)) {
+            case '?' -> previousStyle.withClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, message.substring(1)));
+            case '!' -> previousStyle.withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, message.substring(1)));
+            case '^' -> previousStyle.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, c(message.substring(1))));
+            case '@' -> previousStyle.withClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, message.substring(1)));
+            case '&' -> previousStyle.withClickEvent(new ClickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD, message.substring(1)));
+            default  -> { // Create a new component
+                ret = new LiteralText(str);
+                ret.setStyle(parseStyle(desc));
+                yield previousStyle; // no op for the previous style
+            }
+        });
+        return ret;
     }
     public static BaseText tp(String desc, Vec3d pos) { return tp(desc, pos.x, pos.y, pos.z); }
     public static BaseText tp(String desc, BlockPos pos) { return tp(desc, pos.getX(), pos.getY(), pos.getZ()); }
     public static BaseText tp(String desc, double x, double y, double z) { return tp(desc, (float)x, (float)y, (float)z);}
     public static BaseText tp(String desc, float x, float y, float z)
     {
-        return _getCoordsTextComponent(desc, x, y, z, false);
+        return getCoordsTextComponent(desc, x, y, z, false);
     }
     public static BaseText tp(String desc, int x, int y, int z)
     {
-        return _getCoordsTextComponent(desc, (float)x, (float)y, (float)z, true);
+        return getCoordsTextComponent(desc, (float)x, (float)y, (float)z, true);
     }
 
     /// to be continued
@@ -232,7 +212,7 @@ public class Messenger
         return c(components.toArray(new Object[0]));
     }
 
-    private static BaseText _getCoordsTextComponent(String style, float x, float y, float z, boolean isInt)
+    private static BaseText getCoordsTextComponent(String style, float x, float y, float z, boolean isInt)
     {
         String text;
         String command;
@@ -266,19 +246,19 @@ public class Messenger
     public static BaseText c(Object ... fields)
     {
         BaseText message = new LiteralText("");
-        BaseText previous_component = null;
+        BaseText previousComponent = null;
         for (Object o: fields)
         {
             if (o instanceof BaseText)
             {
                 message.append((BaseText)o);
-                previous_component = (BaseText)o;
+                previousComponent = (BaseText)o;
                 continue;
             }
             String txt = o.toString();
-            BaseText comp = _getChatComponentFromDesc(txt,previous_component);
-            if (comp != previous_component) message.append(comp);
-            previous_component = comp;
+            BaseText comp = getChatComponentFromDesc(txt, previousComponent);
+            if (comp != previousComponent) message.append(comp);
+            previousComponent = comp;
         }
         return message;
     }
