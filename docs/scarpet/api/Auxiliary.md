@@ -655,7 +655,7 @@ Available options in the scarpet app space:
   * `app_name` - current app name or `null` if its a default app
   * `app_list` - list of all loaded apps excluding default commandline app
   * `app_scope` - scope of the global variables and function. Available options is `player` and `global`
-  * `app_player` - returns a player list that have app run under them. For `global` apps, the list is always empty
+  * `app_players` - returns a player list that have app run under them. For `global` apps, the list is always empty
  
  Relevant world related properties
   * `world_name` - name of the world
