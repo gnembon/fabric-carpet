@@ -9,10 +9,10 @@
 
 //Basically using Bresenham circle algorithm to draw the sphere as a bunch of circles.
 //This still has some issues, but it works better & faster than the previous solution
+//If anyone wants to improve this, please feel free, just don't show it to Ghoulboy or he'll get PTSD of his weeks working on this.
 //Algorithmic efficiency:
 //  O(n^2) for hollow spheres cos 2d surface
 //  O(n^3) for filled spheres cos 3d volume
-//todo update this when I figure out how to properly generalize Bresenham circle logic to 3D
 draw_sphere(args)->(
     [centre, radius, hollow] = args;
     positions = {};
@@ -172,12 +172,12 @@ fill_flat_circle(pos, offset, dr, orientation, hollow, thick) ->(
     while(a<=b, r, //technically the limit is r/sqrt(2) but whatevs
         positions = positions + fill_flat_circle_points(pos, orientation, offset, hollow, a, b);
         if(d > 0,
-	    d+=2*a-2*b+5;
-	    b=b-1;
-	    if(hollow && thick, //to make circles slightly thicker
-	    	positions = positions + fill_flat_circle_points(pos, orientation, offset, hollow, a, b)
-	    ),
-	    d+=2*a+3
+	        d+=2*a-2*b+5;
+	        b=b-1;
+	        if(hollow && thick, //to make circles slightly thicker
+	            positions = positions + fill_flat_circle_points(pos, orientation, offset, hollow, a, b)
+	        ),
+	        d+=2*a+3
         );
         a+=1;
     );
@@ -195,60 +195,60 @@ fill_flat_circle_points(pos, orientation, offset, hollow, a, b) ->(
     positions = {};
     if(orientation == 'x',
         if(hollow,
-            positions += [x + offset, a+y, b+z];
-            positions += [x + offset, a+y,-b+z];
-            positions += [x + offset,-a+y, b+z];
-            positions += [x + offset,-a+y,-b+z];
-            positions += [x + offset, b+y, a+z];
-            positions += [x + offset, b+y,-a+z];
-            positions += [x + offset,-b+y, a+z];
-            positions += [x + offset,-b+y,-a+z],
+            positions += [x + offset,y+a,z+b];
+            positions += [x + offset,y+a,z-b];
+            positions += [x + offset,y-a,z+b];
+            positions += [x + offset,y-a,z-b];
+            positions += [x + offset,y+b,z+a];
+            positions += [x + offset,y+b,z-a];
+            positions += [x + offset,y-b,z+a];
+            positions += [x + offset,y-b,z-a],
             c_for(c = -a, c<=a, c+=1,
-                positions += [x + offset,c+y, b + z];
-                positions += [x + offset,c+y,-b + z]
+                positions += [x + offset,c+y,z+b];
+                positions += [x + offset,c+y,z-b]
             );
             c_for(c = -b, c<=b, c+=1,
-                positions += [x + offset, a+y,c + z];
-                positions += [x + offset,-a+y,c + z]
+                positions += [x + offset,y+a,c + z];
+                positions += [x + offset,y-a,c + z]
             )
         ),
         orientation=='y',
         if(hollow,
-            positions += [ a+x, y + offset, b+z];
-            positions += [ a+x, y + offset,-b+z];
-            positions += [-a+x, y + offset, b+z];
-            positions += [-a+x, y + offset,-b+z];
-            positions += [ b+x, y + offset, a+z];
-            positions += [ b+x, y + offset,-a+z];
-            positions += [-b+x, y + offset, a+z];
-            positions += [-b+x, y + offset,-a+z];
+            positions += [x+a, y + offset,z+b];
+            positions += [x+a, y + offset,z-b];
+            positions += [x-a, y + offset,z+b];
+            positions += [x-a, y + offset,z-b];
+            positions += [x+b, y + offset,z+a];
+            positions += [x+b, y + offset,z-a];
+            positions += [x-b, y + offset,z+a];
+            positions += [x-b, y + offset,z-a];
 			,
             for(range(-b, b+1),
-                positions += [ a+x,y + offset,_ + z];
-                positions += [-a+x,y + offset,_ + z]
+                positions += [x+a,y + offset,_ + z];
+                positions += [x-a,y + offset,_ + z]
             );
             for(range(-a, a+1),
-                positions += [ b+x,y + offset,_ + z];
-                positions += [-b+x,y + offset,_ + z]
+                positions += [x+b,y + offset,_ + z];
+                positions += [x-b,y + offset,_ + z]
             )
         ),
         orientation=='z',
         if(hollow,
-            positions += [ a+x, b+y, z + offset];
-            positions += [ a+x,-b+y, z + offset];
-            positions += [-a+x, b+y, z + offset];
-            positions += [-a+x,-b+y, z + offset];
-            positions += [ b+x, a+y, z + offset];
-            positions += [ b+x,-a+y, z + offset];
-            positions += [-b+x, a+y, z + offset];
-            positions += [-b+x,-a+y, z + offset],
+            positions += [x+a,y+b, z + offset];
+            positions += [x+a,y-b, z + offset];
+            positions += [x-a,y+b, z + offset];
+            positions += [x-a,y-b, z + offset];
+            positions += [x+b,y+a, z + offset];
+            positions += [x+b,y-a, z + offset];
+            positions += [x-b,y+a, z + offset];
+            positions += [x-b,y-a, z + offset],
             c_for(c = -a, c<=a, c+=1,
-                positions += [c+x, b + y,z + offset];
-                positions += [c+x,-b + y,z + offset]
+                positions += [c+x,y+b,z + offset];
+                positions += [c+x,y-b,z + offset]
             );
             c_for(c = -b, c<=b, c+=1,
-                positions += [ a+x, c + y, z + offset];
-                positions += [-a+x, c + y, z + offset]
+                positions += [x+a,c+y,z + offset];
+                positions += [x-a,c+y,z + offset]
             )
         )
     );
