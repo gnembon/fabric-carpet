@@ -206,12 +206,13 @@ public class CarpetSettings
     public static boolean xpNoCooldown = false;
 
     @Rule(
-            desc = "Empty shulker boxes can stack to 64 when dropped on the ground",
+            desc = "Controls the amount of empty shulker boxes that can be stacked together when dropped on the ground",
             extra = ".. or when manipulated inside the inventories",
+            options = {"1", "8", "16", "64"},
+            strict = false,
             category = {SURVIVAL, FEATURE}
     )
-    public static boolean stackableShulkerBoxes = false;
-    public static final int SHULKER_STACK_SIZE = 64;
+    public static int shulkerBoxStackSize = 1;
 
     @Rule( desc = "Explosions won't destroy blocks", category = {CREATIVE, TNT} )
     public static boolean explosionNoBlockDamage = false;

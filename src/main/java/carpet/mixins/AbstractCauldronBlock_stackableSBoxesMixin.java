@@ -23,7 +23,7 @@ public class AbstractCauldronBlock_stackableSBoxesMixin
     private ActionResult wrapInteractor(CauldronBehavior cauldronBehavior, BlockState blockState, World world, BlockPos blockPos, PlayerEntity playerEntity, Hand hand, ItemStack itemStack)
     {
         int count = -1;
-        if (CarpetSettings.stackableShulkerBoxes && itemStack.getItem() instanceof BlockItem && ((BlockItem)itemStack.getItem()).getBlock() instanceof ShulkerBoxBlock)
+        if (CarpetSettings.shulkerBoxStackSize > 1 && itemStack.getItem() instanceof BlockItem && ((BlockItem)itemStack.getItem()).getBlock() instanceof ShulkerBoxBlock)
             count = itemStack.getCount();
         ActionResult result = cauldronBehavior.interact(blockState, world, blockPos, playerEntity, hand, itemStack);
         if (count > 0 && result.isAccepted())
