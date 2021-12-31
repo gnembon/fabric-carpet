@@ -205,11 +205,22 @@ public class CarpetSettings
     @Rule( desc = "Players absorb XP instantly, without delay", category = CREATIVE )
     public static boolean xpNoCooldown = false;
 
+    public static class ShulkerBoxStackSizeValidator extends Validator<Integer>
+    {
+        @Override
+        public Integer validate(ServerCommandSource source, ParsedRule<Integer> currentRule, Integer newValue, String string) {
+            return (newValue>=1&&newValue<=64) ? newValue : null;
+        }
+        @Override
+        public String description() {return "Must choose value between 1 and 64";}
+     }
+
     @Rule(
             desc = "Controls the amount of empty shulker boxes that can be stacked together when dropped on the ground",
             extra = ".. or when manipulated inside the inventories",
             options = {"1", "8", "16", "64"},
             strict = false,
+            validate = ShulkerBoxStackSizeValidator.class,
             category = {SURVIVAL, FEATURE}
     )
     public static int shulkerBoxStackSize = 1;
