@@ -19,7 +19,7 @@ public class ThreadValue extends Value
     private final long id;
     private static long sequence = 0L;
 
-    protected ThreadValue(CompletableFuture<Value> taskFuture)
+    public ThreadValue(CompletableFuture<Value> taskFuture)
     {
         this.taskFuture = taskFuture;
         this.id = sequence++;
