@@ -14,9 +14,9 @@ __config() -> {
         'pyramid <center> <radius> <height> <pointing> <orientation> <block> <hollow> replace <replacement>'->_(c,r,h,p,o,b,ho,rp)->draw('draw_pyramid', [c,r,h,p,o,ho,true],b,rp),
         'cone <center> <radius> <height> <pointing> <orientation> <block> <hollow>'->_(c,r,h,p,o,b,ho)->draw('draw_pyramid',[c,r,h,p,o,ho, false],b,null),
         'cone <center> <radius> <height> <pointing> <orientation> <block> <hollow> replace <replacement>'->_(c,r,h,p,o,b,ho,rp)->draw('draw_pyramid', [c,r,h,p,o,ho,false],b,rp),
-        'cuboid <center> <radius> <height> <orientation> <block> <hollow>'->_(c,r,h,o,b,ho)->draw('draw_prism',[c,r,h,p,o,ho, true],b,null),
+        'cuboid <center> <radius> <height> <orientation> <block> <hollow>'->_(c,r,h,o,b,ho)->draw('draw_prism',[c,r,h,o,ho, true],b,null),
         'cuboid <center> <radius> <height> <orientation> <block> <hollow> replace <replacement>'->_(c,r,h,o,b,ho,rp)->draw('draw_prism', [c,r,h,o,ho,true],b,rp),
-        'cylinder <center> <radius> <height> <orientation> <block> <hollow>'->_(c,r,h,o,b,ho)->draw('draw_prism',[c,r,h,p,o,ho, false],b,null),
+        'cylinder <center> <radius> <height> <orientation> <block> <hollow>'->_(c,r,h,o,b,ho)->draw('draw_prism',[c,r,h,o,ho, false],b,null),
         'cylinder <center> <radius> <height> <orientation> <block> <hollow> replace <replacement>'->_(c,r,h,o,b,ho,rp)->draw('draw_prism', [c,r,h,o,ho,false],b,rp),
     },
     'arguments'->{
