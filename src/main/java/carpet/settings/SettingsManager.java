@@ -432,6 +432,7 @@ public class SettingsManager
             String line = "";
             boolean confLocked = false;
             Map<String,String> result = new HashMap<String, String>();
+            boolean doShulkerMigration = false;
             while ((line = reader.readLine()) != null)
             {
                 line = line.replaceAll("[\\r\\n]", "");
@@ -444,6 +445,16 @@ public class SettingsManager
                 {
                     if (!rules.containsKey(fields[0]))
                     {
+                        if (fields[0].equals("stackableShulkerBoxes")) //Shulker rule conversion logic
+                        {
+                            if (fields[1].equals("true")) {
+                                doShulkerMigration = true;
+
+                            } else {
+                                CarpetSettings.LOG.info("[CM]: Old shulker box rule present but set to false, redundant");
+                            }
+                            continue;
+                        }
                         CarpetSettings.LOG.error("[CM]: "+fancyName+" Setting " + fields[0] + " is not a valid - ignoring...");
                         continue;
                     }
@@ -454,9 +465,18 @@ public class SettingsManager
                         CarpetSettings.LOG.error("[CM]: The value of " + fields[1] + " for " + fields[0] + "("+fancyName+") is not valid - ignoring...");
                         continue;
                     }
+                    if (fields[0].equals("shulkerBoxStackSize")) { //In case both rules are present for whatever reason, this prevents the stack size rule from getting overridden
+                        doShulkerMigration = false;
+                    }
+
                     result.put(fields[0],fields[1]);
 
                 }
+            }
+            if (doShulkerMigration)
+            {
+                CarpetSettings.LOG.info("[CM]: Stackable shulker box rule detected, setting shulker stack size rule to 64");
+                result.put("shulkerBoxStackSize", "64");
             }
             return new ConfigReadResult(result, confLocked);
         }
