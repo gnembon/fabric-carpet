@@ -159,7 +159,7 @@ public class ScreenValue extends Value {
         if(this.screenHandler == null) {
             return false;
         }
-        if(this.player.currentScreenHandler.equals(this.screenHandler)) {
+        if(this.player.currentScreenHandler.syncId == this.screenHandler.syncId) {
             return true;
         }
         this.screenHandler = null;
