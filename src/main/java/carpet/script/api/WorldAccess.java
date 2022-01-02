@@ -698,17 +698,18 @@ public class WorldAccess {
                 return Value.NULL;
             }
             lv6 = lv3.getStructureOrBlank(struident);
-
+            
+            BlockArgument start = BlockArgument.findIn((CarpetContext)c, lv, 1);
+            BlockArgument ignoredblock = BlockArgument.findIn((CarpetContext)c, lv, start.offset+4,true,true,false);
             // name,start,dimensions, ignoreEntities, ignoredBlock,~~author~~,disk
             lv6.saveFromWorld(lv2,
-                    new BlockPos(((NumericValue) lv.get(1)).getInt(), ((NumericValue) lv.get(2)).getInt(),
-                            ((NumericValue) lv.get(3)).getInt()),
-                    new Vec3i((int) lv.get(4).readInteger(), (int) lv.get(5).readInteger(),
-                            (int) lv.get(6).readInteger()),
-                    !lv.get(7).getBoolean(),
-                    lv.get(8).isNull() ? null : ((BlockValue) lv.get(8)).getBlockState().getBlock());
+                    start.block.getPos(),
+                    new Vec3i((int) lv.get(start.offset).readInteger(), (int) lv.get(start.offset+1).readInteger(),
+                            (int) lv.get(start.offset+2).readInteger()),
+                    !lv.get(start.offset+3).getBoolean(),
+                    ignoredblock.block==null?null:ignoredblock.block.getBlockState().getBlock());
             // lv6.setAuthor(lv.get(9).getString());//MC-140821
-            if (lv.get(9).getBoolean()) {
+            if (lv.get(ignoredblock.offset).getBoolean()) {
                 return BooleanValue.of(lv3.saveStructure(struident));
             }
 
@@ -733,31 +734,30 @@ public class WorldAccess {
             if (!optional.isPresent()) {
                 return Value.FALSE;
             }
-
+            BlockArgument start = BlockArgument.findIn((CarpetContext)c, lv, 1);
             // name,pos,
             // ignoreEntities,integrity,awake,noupdate,fluid,gravity,rotation,mirror
             StructurePlacementData lv4 = new StructurePlacementData();
             lv4.clearProcessors();
 
-            lv4.setIgnoreEntities(lv.get(4).getBoolean())
-                    .method_27264(lv.get(6).getBoolean())
-                    .setUpdateNeighbors(lv.get(7).getBoolean())
-                    .setPlaceFluids(lv.get(8).getBoolean())
-                    .setMirror(lv.get(11).getString().equalsIgnoreCase("Z") ? BlockMirror.LEFT_RIGHT
-                            : lv.get(11).getString().equalsIgnoreCase("X") ? BlockMirror.FRONT_BACK : BlockMirror.NONE)
-                    .setRotation(BlockRotation.values()[(((NumericValue) lv.get(10)).getInt() % 4 + 4) % 4]);
+            lv4.setIgnoreEntities(lv.get(start.offset).getBoolean())
+                    .method_27264(lv.get(start.offset+2).getBoolean())
+                    .setUpdateNeighbors(lv.get(start.offset+3).getBoolean())
+                    .setPlaceFluids(lv.get(start.offset+4).getBoolean())
+                    .setMirror(lv.get(start.offset+7).getString().equalsIgnoreCase("Z") ? BlockMirror.LEFT_RIGHT
+                            : lv.get(start.offset+7).getString().equalsIgnoreCase("X") ? BlockMirror.FRONT_BACK : BlockMirror.NONE)
+                    .setRotation(BlockRotation.values()[(((NumericValue) lv.get(start.offset+6)).getInt() % 4 + 4) % 4]);
 
-            if (!lv.get(9).isNull()) {
+            if (!lv.get(start.offset+5).isNull()) {
                 lv4.addProcessor(new GravityStructureProcessor(Heightmap.Type.WORLD_SURFACE,
-                        ((NumericValue) lv.get(9)).getInt()));
+                        ((NumericValue) lv.get(start.offset+5)).getInt()));
             }
-            if (!lv.get(5).isNull()) {
+            if (!lv.get(start.offset+1).isNull()) {
                 lv4.addProcessor(new BlockRotStructureProcessor(
-                        MathHelper.clamp(((NumericValue) lv.get(5)).getFloat(), 0.0f, 1.0f)));
+                        MathHelper.clamp(((NumericValue) lv.get(start.offset+1)).getFloat(), 0.0f, 1.0f)));
             }
 
-            BlockPos lv5 = new BlockPos(((NumericValue) lv.get(1)).getInt(), ((NumericValue) lv.get(2)).getInt(),
-                    ((NumericValue) lv.get(3)).getInt());
+            BlockPos lv5 = start.block.getPos();
             optional.get().place(world, lv5, lv5, lv4, new Random(), Block.NOTIFY_LISTENERS);
             return Value.TRUE;
         });
