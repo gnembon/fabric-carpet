@@ -694,7 +694,7 @@ public class WorldAccess {
 
             name = lv.get(0).getString();
             Identifier struident = Identifier.tryParse(name);
-            if (struident == null) {
+            if (name.isEmpty()||name.endsWith(":")||struident == null) {
                 return Value.NULL;
             }
             lv6 = lv3.getStructureOrBlank(struident);
@@ -726,7 +726,7 @@ public class WorldAccess {
             Optional<Structure> optional;
 
             Identifier struident = Identifier.tryParse(name);
-            if (struident == null) {
+            if (name.isEmpty()||name.endsWith(":")||struident == null) {
                 return Value.NULL;
             }
             optional = sm.getStructure(struident);
