@@ -73,10 +73,17 @@ import net.minecraft.sound.BlockSoundGroup;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.state.StateManager;
 import net.minecraft.state.property.Property;
+import net.minecraft.structure.Structure;
+import net.minecraft.structure.StructureManager;
+import net.minecraft.structure.StructurePlacementData;
 import net.minecraft.structure.StructureStart;
+import net.minecraft.structure.processor.BlockRotStructureProcessor;
+import net.minecraft.structure.processor.GravityStructureProcessor;
 import net.minecraft.tag.Tag;
 import net.minecraft.tag.TagManager;
 import net.minecraft.util.ActionResult;
+import net.minecraft.util.BlockMirror;
+import net.minecraft.util.BlockRotation;
 import net.minecraft.util.Clearable;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.collection.SortedArraySet;
@@ -84,7 +91,9 @@ import net.minecraft.util.math.BlockBox;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.util.math.Direction;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
+import net.minecraft.util.math.Vec3i;
 import net.minecraft.util.registry.Registry;
 import net.minecraft.world.Heightmap;
 import net.minecraft.world.LightType;
@@ -114,6 +123,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Random;
 import java.util.function.BiFunction;
 import java.util.function.BiPredicate;
 import java.util.function.Predicate;
@@ -673,7 +683,104 @@ public class WorldAccess {
             });
             return (cc, tt) -> result[0];
         });
+        // =======================================
+        expression.addContextFunction("structure_block_save", -1, (c, t, lv) -> {
+            CarpetContext cc = (CarpetContext) c;
+            ServerWorld lv2 = cc.s.getWorld();
 
+            StructureManager lv3 = lv2.getStructureManager();
+            Structure lv6;
+            String name;
+
+            name = lv.get(0).getString();
+            Identifier struident = Identifier.tryParse(name);
+            if (struident == null) {
+                return Value.NULL;
+            }
+            lv6 = lv3.getStructureOrBlank(struident);
+
+            // name,start,dimensions, ignoreEntities, ignoredBlock,~~author~~,disk
+            lv6.saveFromWorld(lv2,
+                    new BlockPos(((NumericValue) lv.get(1)).getInt(), ((NumericValue) lv.get(2)).getInt(),
+                            ((NumericValue) lv.get(3)).getInt()),
+                    new Vec3i((int) lv.get(4).readInteger(), (int) lv.get(5).readInteger(),
+                            (int) lv.get(6).readInteger()),
+                    !lv.get(7).getBoolean(),
+                    lv.get(8).isNull() ? null : ((BlockValue) lv.get(8)).getBlockState().getBlock());
+            // lv6.setAuthor(lv.get(9).getString());//MC-140821
+            if (lv.get(9).getBoolean()) {
+                return BooleanValue.of(lv3.saveStructure(struident));
+            }
+
+            return Value.TRUE;
+        });
+
+        // =====================================
+        // =======================================
+        expression.addContextFunction("structure_block_load", -1, (c, t, lv) -> {
+            CarpetContext cc = (CarpetContext) c;
+            ServerWorld world = cc.s.getWorld();
+            String name = lv.get(0).getString();
+
+            StructureManager sm = world.getStructureManager();
+            Optional<Structure> optional;
+
+            Identifier struident = Identifier.tryParse(name);
+            if (struident == null) {
+                return Value.NULL;
+            }
+            optional = sm.getStructure(struident);
+            if (!optional.isPresent()) {
+                return Value.FALSE;
+            }
+
+            // name,pos,
+            // ignoreEntities,integrity,awake,noupdate,fluid,gravity,rotation,mirror
+            StructurePlacementData lv4 = new StructurePlacementData();
+            lv4.clearProcessors();
+
+            lv4.setIgnoreEntities(lv.get(4).getBoolean())
+                    .method_27264(lv.get(6).getBoolean())
+                    .setUpdateNeighbors(lv.get(7).getBoolean())
+                    .setPlaceFluids(lv.get(8).getBoolean())
+                    .setMirror(lv.get(11).getString().equalsIgnoreCase("Z") ? BlockMirror.LEFT_RIGHT
+                            : lv.get(11).getString().equalsIgnoreCase("X") ? BlockMirror.FRONT_BACK : BlockMirror.NONE)
+                    .setRotation(BlockRotation.values()[(((NumericValue) lv.get(10)).getInt() % 4 + 4) % 4]);
+
+            if (!lv.get(9).isNull()) {
+                lv4.addProcessor(new GravityStructureProcessor(Heightmap.Type.WORLD_SURFACE,
+                        ((NumericValue) lv.get(9)).getInt()));
+            }
+            if (!lv.get(5).isNull()) {
+                lv4.addProcessor(new BlockRotStructureProcessor(
+                        MathHelper.clamp(((NumericValue) lv.get(5)).getFloat(), 0.0f, 1.0f)));
+            }
+
+            BlockPos lv5 = new BlockPos(((NumericValue) lv.get(1)).getInt(), ((NumericValue) lv.get(2)).getInt(),
+                    ((NumericValue) lv.get(3)).getInt());
+            optional.get().place(world, lv5, lv5, lv4, new Random(), Block.NOTIFY_LISTENERS);
+            return Value.TRUE;
+        });
+
+        // =====================================
+        // =======================================
+        expression.addContextFunction("structure_block_unload", -1, (c, t, lv) -> {
+            CarpetContext cc = (CarpetContext) c;
+            ServerWorld world = cc.s.getWorld();
+            String name = lv.get(0).getString();
+
+            StructureManager sm = world.getStructureManager();
+
+            Identifier struident = Identifier.tryParse(name);
+            if (struident == null) {
+                return Value.NULL;
+            }
+            sm.unloadStructure(struident);
+            return Value.NULL;
+
+        });
+
+        // =====================================
         expression.addContextFunction("set", -1, (c, t, lv) ->
         {
             CarpetContext cc = (CarpetContext)c;
