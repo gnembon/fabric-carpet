@@ -857,3 +857,28 @@ with the game and assumed not changing.
 
 `custom_dimension` is experimental and considered a WIP. More customization options besides the seed will be added in
 the future.
+
+## `Structure Block API`
+
+### `structure_block_save(name,start_x,start_y,start_z,dimensions_x,dimensions_y,dimensions_z,ignoreEntities,ignoredBlock,disk)`
+
+Save part of the world into a structure.
+`ignoredBlock` may be null or a BlockValue (eg: `block('air')`).if not null, that kind of block will not be saved.
+If `disk` is true, the structure will saved in disk. Or it will only exist temporarily.
+Return True if saved successfully. Return a falsy value if not.
+
+### `structure_block_load(name,start_x,start_y,start_z,ignoreEntities,integrity,awake,noupdate,fluid,gravity,rotation,mirror)`
+
+Place a saved structure into the world.
+If `integrity` is not null, it will be the probability of each block's not disappearing.
+If `noupdate` is true, it will not update blocks near them.
+If `gravity` is not null, the structure will fall (or fly) to the ground. And the value of `gravity` will be the Yoffset. (Newton will be happy about it.)
+Structure will rotate 90°*`rotation` before placed.
+`mirror` could be `'x'` or `'z'`.If `mirror` is neither x nor z, it will not be mirrored.
+Return True if works successfully. Return a falsy value if not.
+
+### `structure_block_unload(name)`
+
+Unload a structure.
+Will delete a temporary structure, or force a refresh of the stored structure.
+Return null.
