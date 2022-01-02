@@ -226,7 +226,12 @@ public class ScreenValue extends Value {
                 return ScreenValue.this.callListener(player,"select_recipe",data);
             }
             @Override
-            public void onSlotUpdate(ScreenHandler handler, int slotId, ItemStack stack) {}
+            public void onSlotUpdate(ScreenHandler handler, int slotId, ItemStack stack) {
+                Map<Value,Value> data = new HashMap<>();
+                data.put(StringValue.of("slot"),NumericValue.of(slotId));
+                data.put(StringValue.of("stack"),ValueConversions.of(stack));
+                ScreenValue.this.callListener(ScreenValue.this.player,"slot_update",data);
+            }
             @Override
             public void onPropertyUpdate(ScreenHandler handler, int property, int value) {}
         });

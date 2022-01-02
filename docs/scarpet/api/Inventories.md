@@ -291,6 +291,8 @@ This can come from formatted text inside the book, with a `change_page` click ev
 as well as `craft_all`, which is a boolean specifying whether
 shift was pressed when selecting the recipe.
 
+* `slot_update` Gets called **after** a slot has changed contents. `data` provides a `slot` and `stack`.
+
 By returning a string `'cancel'` in the callback function,
 the screen interaction can be cancelled.
 This doesn't work for the `close` action.
