@@ -676,7 +676,7 @@ public class Auxiliary {
         expression.addContextFunction("last_tick_times", -1, (c, t, lv) ->
         {
             c.host.issueDeprecation("last_tick_times()");
-            return SystemInfo.get("last_tick_times", (CarpetContext)c);
+            return SystemInfo.get("server_last_tick_times", (CarpetContext)c);
         });
 
 
