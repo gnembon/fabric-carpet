@@ -732,10 +732,10 @@ public class CarpetScriptHost extends ScriptHost
     public Value callLegacy(ServerCommandSource source, String call, List<Integer> coords, String arg)
     {
         if (CarpetServer.scriptServer.stopAll)
-            throw new CarpetExpressionException("SCARPET PAUSED", null);
+            throw new CarpetExpressionException("SCARPET PAUSED (unpause with /script resume)", null);
         FunctionValue function = getFunction(call);
         if (function == null)
-            throw new CarpetExpressionException("UNDEFINED", null);
+            throw new CarpetExpressionException("Couldn't find function '" + call + "' in app '" + this.getName() + "'", null);
         List<LazyValue> argv = new ArrayList<>();
         if (coords != null)
             for (Integer i: coords)
@@ -832,7 +832,7 @@ public class CarpetScriptHost extends ScriptHost
     public Value call(ServerCommandSource source, FunctionValue function, List<Value> argv)
     {
         if (CarpetServer.scriptServer.stopAll)
-            throw new CarpetExpressionException("SCARPET PAUSED", null);
+            throw new CarpetExpressionException("SCARPET PAUSED (unpause with /script resume)", null);
 
         List<String> args = function.getArguments();
         if (argv.size() != args.size())
