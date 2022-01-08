@@ -687,7 +687,7 @@ system calls. In all circumstances, these are only provided as read-only.
   * `app_name` - current app name or `null` if its a default app
   * `app_list` - list of all loaded apps excluding default commandline app
   * `app_scope` - scope of the global variables and function. Available options is `player` and `global`
-  * `app_player` - returns a player list that have app run under them. For `global` apps, the list is always empty
+  * `app_players` - returns a player list that have app run under them. For `global` apps, the list is always empty
  
 ##### Relevant world related properties
   * `world_name` - name of the world
@@ -715,7 +715,7 @@ system calls. In all circumstances, these are only provided as read-only.
   * `game_version` - base version of the game
   * `game_target` - target release version
   * `game_major_target` - major release target. For 1.12.2, that would be 12
-  * `game_minor_reease` - minor release target. For 1.12.2, that woudl be 2
+  * `game_minor_release` - minor release target. For 1.12.2, that would be 2
   * `game_protocol` - protocol version number
   * `game_pack_version` - datapack version number
   * `game_data_version` - data version of the game. Returns an integer, so it can be compared.
