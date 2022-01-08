@@ -219,7 +219,11 @@ public abstract class NoiseColumnSamplerMixin_scarpetMixin implements NoiseColum
                 return NoiseHelper.lerpFromProgress(this.spaghettiRoughnessModulatorNoise, x, y, z, 0.0, 0.1);
             }
             case "caveEntrance" -> {
-                return this.sampleCaveEntranceNoise(x, y, z);
+                return this.sampleCaveEntranceNoise(
+                        BiomeCoords.toBlock(x),
+                        BiomeCoords.toBlock(y),
+                        BiomeCoords.toBlock(z)
+                );
             }
             case "caveLayer" -> {
                 // scaling them by 4 because it's sampled in normal coords
