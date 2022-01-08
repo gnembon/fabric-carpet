@@ -19,18 +19,29 @@ public class ThreadValue extends Value
     private final long id;
     private static long sequence = 0L;
 
+    public ThreadValue(CompletableFuture<Value> taskFuture)
+    {
+        this.taskFuture = taskFuture;
+        this.id = sequence++;
+    }
+
     public ThreadValue(Value pool, FunctionValue function, Expression expr, Tokenizer.Token token, Context ctx, List<Value> args)
     {
-        id = sequence++;
+        this(getCompletableFutureFromFunction(pool, function, expr, token, ctx, args));
+        Thread.yield();
+    }
+
+    public static CompletableFuture<Value> getCompletableFutureFromFunction(Value pool, FunctionValue function, Expression expr, Tokenizer.Token token, Context ctx, List<Value> args)
+    {
         ExecutorService executor = ctx.host.getExecutor(pool);
         if (executor == null)
         {
             // app is shutting down - no more threads can be spawned.
-            taskFuture = CompletableFuture.completedFuture(Value.NULL);
+            return CompletableFuture.completedFuture(Value.NULL);
         }
         else
         {
-            taskFuture = CompletableFuture.supplyAsync(
+            return CompletableFuture.supplyAsync(
                     () ->
                     {
                         try
@@ -52,7 +63,6 @@ public class ThreadValue extends Value
                     ctx.host.getExecutor(pool)
             );
         }
-        Thread.yield();
     }
 
     @Override
