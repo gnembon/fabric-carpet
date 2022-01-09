@@ -65,16 +65,18 @@ public class SystemInfo {
             return ListValue.of(NumericValue.of(prop.getSpawnX()), NumericValue.of(prop.getSpawnY()), NumericValue.of(prop.getSpawnZ()));
         });
 
-        put("dimension_min_height", c-> new NumericValue(c.s.getWorld().getBottomY()));
+        put("world_min_height", c-> new NumericValue(c.s.getWorld().getBottomY()));
 
-        put("dimension_max_height", c-> new NumericValue(c.s.getWorld().getTopY()));
+        put("world_max_height", c-> new NumericValue(c.s.getWorld().getTopY()));
 
-        put("dimension_center", c-> {
+        put("world_center", c-> {
             WorldBorder worldBorder = c.s.getWorld().getWorldBorder();
             return ListValue.fromTriple(worldBorder.getCenterX(), 0, worldBorder.getCenterZ());
         });
 
-        put("dimension_border_radius", c-> new NumericValue( c.s.getWorld().getWorldBorder().getSize()));
+        put("world_size", c -> new NumericValue(c.s.getWorld().getWorldBorder().getSize() / 2));
+
+        put("world_max_size", c-> new NumericValue( c.s.getWorld().getWorldBorder().getMaxRadius()));
 
         put("world_time", c -> new NumericValue(c.s.getWorld().getTime()));
 
