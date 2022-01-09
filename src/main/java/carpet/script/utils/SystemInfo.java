@@ -5,7 +5,11 @@ import carpet.CarpetSettings;
 import carpet.script.CarpetContext;
 import carpet.script.CarpetScriptHost;
 import carpet.script.value.BooleanValue;
+
 import carpet.script.value.BlockValue;
+
+import carpet.script.value.EntityValue;
+
 import carpet.script.value.ListValue;
 import carpet.script.value.MapValue;
 import carpet.script.value.NBTSerializableValue;
@@ -24,9 +28,8 @@ import net.minecraft.nbt.NbtElement;
 import net.minecraft.nbt.NbtOps;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.WorldSavePath;
-import net.minecraft.util.registry.RegistryKey;
+import net.minecraft.util.math.Vec2f;
 import net.minecraft.world.GameRules;
-import net.minecraft.world.World;
 import net.minecraft.world.WorldProperties;
 import net.minecraft.world.border.WorldBorder;
 import net.minecraft.world.gen.GeneratorOptions;
@@ -34,7 +37,6 @@ import net.minecraft.world.gen.chunk.ChunkGenerator;
 import net.minecraft.world.gen.chunk.DebugChunkGenerator;
 import net.minecraft.world.gen.chunk.FlatChunkGenerator;
 import net.minecraft.world.gen.chunk.NoiseChunkGenerator;
-
 import java.lang.management.ManagementFactory;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -211,6 +213,15 @@ public class SystemInfo {
             });
             return MapValue.wrap(rules);
         });
+
+        put("source_entity", c -> EntityValue.of(c.s.getEntity()));
+        put("source_position", c -> ValueConversions.of(c.s.getPosition()));
+        put("source_dimension", c -> ValueConversions.of(c.s.getWorld()));
+        put("source_rotation", c -> {
+            Vec2f rotation = c.s.getRotation();
+            return ListValue.of(new NumericValue(rotation.x), new NumericValue(rotation.y));
+        });
+        
         put("scarpet_version", c -> StringValue.of(CarpetSettings.carpetVersion));
         put("super_flat_layers", c-> {
             GeneratorOptions generatorOptions=c.s.getServer().getSaveProperties().getGeneratorOptions();

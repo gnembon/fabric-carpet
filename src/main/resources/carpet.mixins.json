@@ -66,8 +66,6 @@
     "EntityTrackerEntry_leashFixMixin",
 
     "VillagerEntity_aiMixin",
-    "Brain_Mixin",
-    "Memory_scarpetMixin",
 
     "PlayerEntity_fakePlayersMixin",
     "ThrownEnderpearlEntity_fakePlayersMixin",
@@ -189,7 +187,6 @@
     "Team_scarpetMixin",
     "TradeOutputSlot_scarpetEventMixin",
 
-    "BiomeEffects_scarpetMixin",
     "ChunkTicketManager_scarpetMixin",
     "PointOfInterest_scarpetMixin",
     "ServerWorld_scarpetMixin",

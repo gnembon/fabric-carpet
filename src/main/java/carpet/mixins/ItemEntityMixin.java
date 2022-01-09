@@ -43,11 +43,6 @@ public abstract class ItemEntityMixin extends Entity implements ItemEntityInterf
     }
 
     @Override
-    public int getAgeCM() {
-        return this.itemAge;
-    }
-
-    @Override
     public int getPickupDelayCM() {
         return this.pickupDelay;
     }
@@ -105,7 +100,7 @@ public abstract class ItemEntityMixin extends Entity implements ItemEntityInterf
             self.setStack(selfStack);
 
             this.pickupDelay = Math.max(((ItemEntityInterface)other).getPickupDelayCM(), this.pickupDelay);
-            this.itemAge = Math.min(((ItemEntityInterface)other).getAgeCM(), this.itemAge);
+            this.itemAge = Math.min(other.getItemAge(), this.itemAge);
 
             otherStack.decrement(amount);
             if (otherStack.isEmpty())

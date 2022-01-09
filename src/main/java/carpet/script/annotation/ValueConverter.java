@@ -162,13 +162,13 @@ public interface ValueConverter<R>
      *           constraints as {@link #convert(Value)}</p>
      * @param valueIterator An {@link Iterator} holding the {@link Value} to convert in next position
      * @param context       The {@link Context} this function has been called with. This was used when this passed lazy values instead in order to
-     *                      evaluate, now it's used to get the context. It is now ignored by the default implementation
-     * @param theLazyT      The {@code t} that the original function was called with. It is ignored by the default implementation.
+     *                      evaluate, now it's used to get the context
+     * @param contextType   The {@link Context.Type} that the original function was called with
      * @return The next {@link Value} (s) converted to the type {@code <R>} of this {@link ValueConverter}
      * @implNote This method's default implementation runs the {@link #convert(Value)} function in the next {@link Value} ignoring {@link Context} and
      *           {@code theLazyT}.
      */
-    default public R checkAndConvert(Iterator<Value> valueIterator, Context context, Context.Type theLazyT)
+    default public R checkAndConvert(Iterator<Value> valueIterator, Context context, Context.Type contextType)
     {
         if (!valueIterator.hasNext())
             return null;

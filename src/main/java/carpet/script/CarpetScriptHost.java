@@ -13,6 +13,7 @@ import carpet.script.exception.ExpressionException;
 import carpet.script.exception.IntegrityException;
 import carpet.script.exception.InternalExpressionException;
 import carpet.script.exception.InvalidCallbackException;
+import carpet.script.exception.LoadException;
 import carpet.script.utils.AppStoreManager;
 import carpet.script.value.EntityValue;
 import carpet.script.value.FunctionValue;
@@ -37,6 +38,7 @@ import net.fabricmc.loader.api.ModContainer;
 import net.fabricmc.loader.api.SemanticVersion;
 import net.fabricmc.loader.api.Version;
 import net.fabricmc.loader.api.VersionParsingException;
+import net.fabricmc.loader.api.metadata.version.VersionPredicate;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.nbt.NbtElement;
@@ -60,7 +62,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.TreeMap;
-import java.util.function.BiPredicate;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -119,8 +120,7 @@ public class CarpetScriptHost extends ScriptHost
                 String code = module.getCode();
                 if (code == null)
                 {
-                    Messenger.m(source, "r Unable to load "+module.getName()+" app - code not found");
-                    return null;
+                    throw new LoadException("Code not found");
                 }
                 host.setChatErrorSnooper(source);
                 CarpetExpression ex = new CarpetExpression(host.main, code, source, new BlockPos(0, 0, 0));
@@ -131,13 +131,12 @@ public class CarpetScriptHost extends ScriptHost
             catch (CarpetExpressionException e)
             {
                 host.handleErrorWithStack("Error while evaluating expression", e);
-                host.resetErrorSnooper();
-                return null;
+                throw new LoadException();
             }
-            catch (ArithmeticException ae)
+            catch (ArithmeticException ae) // is this branch ever reached? Seems like arithmetic exceptions are converted to CEEs earlier
             {
                 host.handleErrorWithStack("Math doesn't compute", ae);
-                return null;
+                throw new LoadException();
             }
             catch (StackOverflowError soe)
             {
@@ -314,7 +313,7 @@ public class CarpetScriptHost extends ScriptHost
             {
                 Value reqResult = callNow((FunctionValue) loadRequirements, Collections.emptyList());
                 if (reqResult.getBoolean()) // != false or null
-                    throw new InternalExpressionException(reqResult.getString());
+                    throw new LoadException(reqResult.getString());
             }
             else
             {
@@ -422,20 +421,6 @@ public class CarpetScriptHost extends ScriptHost
         return addLegacyCommand(notifier);
     }
     
-    // Prefixes based on FLoader's SemanticVersionPredicateParser's class prefixes under Apache 2.0, since that's not public API
-    private static final Map<String, BiPredicate<SemanticVersion, SemanticVersion>> VERSION_PREFIXES = new HashMap<String, BiPredicate<SemanticVersion, SemanticVersion>>() {{
-            put(">=", (target, source) -> source.compareTo(target) >= 0);
-            put("<=", (target, source) -> source.compareTo(target) <= 0);
-            put(">", (target, source) -> source.compareTo(target) > 0);
-            put("<", (target, source) -> source.compareTo(target) < 0);
-            put("=", (target, source) -> source.compareTo(target) == 0);
-            put("~", (target, source) -> source.compareTo(target) >= 0
-                    && source.getVersionComponent(0) == target.getVersionComponent(0)
-                    && source.getVersionComponent(1) == target.getVersionComponent(1));
-            put("^", (target, source) -> source.compareTo(target) >= 0
-                    && source.getVersionComponent(0) == target.getVersionComponent(0));
-    }};
-    
     public void checkModVersionRequirements(Value reqs) {
         if (reqs == null)
             return;
@@ -446,58 +431,25 @@ public class CarpetScriptHost extends ScriptHost
         Map<Value, Value> requirements = ((MapValue)reqs).getMap();
         for (Entry<Value, Value> requirement : requirements.entrySet())
         {
-            boolean successful = false;
             String requiredModId = requirement.getKey().getString();
-            String requirementString = requirement.getValue().getString();
-            
+            String stringPredicate = requirement.getValue().getString();
+            VersionPredicate predicate;
+            try {
+                predicate = VersionPredicate.parse(stringPredicate);
+            } catch (VersionParsingException e) {
+                throw new InternalExpressionException("Failed to parse version conditions for '" + requiredModId + "' in 'requires': " + e.getMessage());
+            }
+
             ModContainer mod = FabricLoader.getInstance().getModContainer(requiredModId).orElse(null);
             if (mod != null)
             {
-                if (requirementString.equals("*"))
-                    continue;
                 Version presentVersion = mod.getMetadata().getVersion();
-                BiPredicate<SemanticVersion, SemanticVersion> tester = null;
-                String remainingRequirementString = requirementString;
-                for (Entry<String, BiPredicate<SemanticVersion, SemanticVersion>> s : VERSION_PREFIXES.entrySet())
-                {
-                    if (requirementString.startsWith(s.getKey()))
-                    {
-                        tester = s.getValue();
-                        remainingRequirementString = requirementString.substring(s.getKey().length());
-                    }
-                }
-                if (tester == null)
-                    tester = VERSION_PREFIXES.get("=");
-                if (presentVersion instanceof SemanticVersion)
-                {
-                    SemanticVersion requiredVersion = null;
-                    try {
-                        requiredVersion = SemanticVersion.parse(remainingRequirementString);
-                    }
-                    catch (VersionParsingException e)
-                    {
-                        throw new InternalExpressionException("Failed to parse semantic version for '" + requiredModId + "' in 'requires': " + e.getMessage());
-                    }
-                    if (tester.test(requiredVersion, (SemanticVersion) presentVersion))
-                        successful = true;
-                }
-                else
-                {
-                    if (FabricLoader.getInstance().isDevelopmentEnvironment())
-                        successful = true; // Autoversioning breaks semver in dev (loads as ${version})
-                    else
-                    {
-                        if (!(tester == VERSION_PREFIXES.get("=")))
-                            throw new InternalExpressionException("Mod '"+requiredModId+"' doesn't use semversion, thus can only check version equality");
-                        if (presentVersion.getFriendlyString().equals(remainingRequirementString))
-                            successful = true;
-                    }
+                if (predicate.test(presentVersion) || (FabricLoader.getInstance().isDevelopmentEnvironment() && !(presentVersion instanceof SemanticVersion)))
+                { // in a dev env, mod version is usually replaced with ${version}, and that isn't semantic
+                    continue;
                 }
             }
-            if (!successful)
-            {
-                throw new InternalExpressionException(getName()+" requires " + requiredModId + " version " + requirementString + " in order to load");
-            }
+            throw new LoadException(String.format("%s requires a version of mod '%s' matching '%s', which is missing!", getName(), requiredModId, stringPredicate));
         }
     }
 
@@ -732,10 +684,10 @@ public class CarpetScriptHost extends ScriptHost
     public Value callLegacy(ServerCommandSource source, String call, List<Integer> coords, String arg)
     {
         if (CarpetServer.scriptServer.stopAll)
-            throw new CarpetExpressionException("SCARPET PAUSED", null);
+            throw new CarpetExpressionException("SCARPET PAUSED (unpause with /script resume)", null);
         FunctionValue function = getFunction(call);
         if (function == null)
-            throw new CarpetExpressionException("UNDEFINED", null);
+            throw new CarpetExpressionException("Couldn't find function '" + call + "' in app '" + this.getName() + "'", null);
         List<LazyValue> argv = new ArrayList<>();
         if (coords != null)
             for (Integer i: coords)
@@ -832,7 +784,7 @@ public class CarpetScriptHost extends ScriptHost
     public Value call(ServerCommandSource source, FunctionValue function, List<Value> argv)
     {
         if (CarpetServer.scriptServer.stopAll)
-            throw new CarpetExpressionException("SCARPET PAUSED", null);
+            throw new CarpetExpressionException("SCARPET PAUSED (unpause with /script resume)", null);
 
         List<String> args = function.getArguments();
         if (argv.size() != args.size())
