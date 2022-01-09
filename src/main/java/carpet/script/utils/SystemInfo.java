@@ -212,7 +212,7 @@ public class SystemInfo {
             return MapValue.wrap(rules);
         });
         put("scarpet_version", c -> StringValue.of(CarpetSettings.carpetVersion));
-        put("layers_of_super_flat_world", c-> {
+        put("super_flat_layers", c-> {
             GeneratorOptions generatorOptions=c.s.getServer().getSaveProperties().getGeneratorOptions();
             Stream<Value> s = generatorOptions.getDimensions().getEntries().stream().map(
                     x->{
