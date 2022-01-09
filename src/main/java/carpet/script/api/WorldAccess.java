@@ -692,13 +692,19 @@ public class WorldAccess {
             Structure lv6;
             String name;
 
-            name = lv.get(0).getString();
-            Identifier struident = Identifier.tryParse(name);
-            if (name.isEmpty()||name.endsWith(":")||struident == null) {
-                return Value.NULL;
+            boolean returnnbt=lv.get(0).isNull();
+            Identifier struident=null;
+            if (!returnnbt){
+                name = lv.get(0).getString();
+                struident = Identifier.tryParse(name);
+                if (name.isEmpty()||name.endsWith(":")||struident == null) {
+                    return Value.NULL;
+                }
+                lv6 = lv3.getStructureOrBlank(struident);
             }
-            lv6 = lv3.getStructureOrBlank(struident);
-            
+            else{
+                lv6= new Structure();
+            }
             BlockArgument start = BlockArgument.findIn((CarpetContext)c, lv, 1);
             BlockArgument ignoredblock = BlockArgument.findIn((CarpetContext)c, lv, start.offset+4,true,true,false);
             // name,start,dimensions, ignoreEntities, ignoredBlock,~~author~~,disk
@@ -709,8 +715,13 @@ public class WorldAccess {
                     !lv.get(start.offset+3).getBoolean(),
                     ignoredblock.block==null?null:ignoredblock.block.getBlockState().getBlock());
             // lv6.setAuthor(lv.get(9).getString());//MC-140821
-            if (lv.get(ignoredblock.offset).getBoolean()) {
-                return BooleanValue.of(lv3.saveStructure(struident));
+            if (!returnnbt){
+                if (lv.get(ignoredblock.offset).getBoolean()) {
+                    return BooleanValue.of(lv3.saveStructure(struident));
+                }
+            }
+            else{
+                return new NBTSerializableValue(lv6.writeNbt(new NbtCompound()));
             }
 
             return Value.TRUE;
@@ -721,18 +732,25 @@ public class WorldAccess {
         expression.addContextFunction("structure_block_load", -1, (c, t, lv) -> {
             CarpetContext cc = (CarpetContext) c;
             ServerWorld world = cc.s.getWorld();
-            String name = lv.get(0).getString();
+            boolean recievnbt=lv.get(0).getTypeString().equals("nbt");
+            Structure thestr;
+            if(!recievnbt){
+                String name = lv.get(0).getString();
 
-            StructureManager sm = world.getStructureManager();
-            Optional<Structure> optional;
+                StructureManager sm = world.getStructureManager();
+                Optional<Structure> optional;
 
-            Identifier struident = Identifier.tryParse(name);
-            if (name.isEmpty()||name.endsWith(":")||struident == null) {
-                return Value.NULL;
-            }
-            optional = sm.getStructure(struident);
-            if (!optional.isPresent()) {
-                return Value.FALSE;
+                Identifier struident = Identifier.tryParse(name);
+                if (name.isEmpty()||name.endsWith(":")||struident == null) {
+                    return Value.NULL;
+                }
+                optional = sm.getStructure(struident);
+                if (!optional.isPresent()) {
+                    return Value.FALSE;
+                }
+                thestr=optional.get();
+            }else{
+                thestr=world.getStructureManager().createStructure((NbtCompound)((NBTSerializableValue)lv.get(0)).getTag());
             }
             BlockArgument start = BlockArgument.findIn((CarpetContext)c, lv, 1);
             // name,pos,
@@ -758,7 +776,7 @@ public class WorldAccess {
             }
 
             BlockPos lv5 = start.block.getPos();
-            optional.get().place(world, lv5, lv5, lv4, new Random(), Block.NOTIFY_LISTENERS);
+            thestr.place(world, lv5, lv5, lv4, new Random(), Block.NOTIFY_LISTENERS);
             return Value.TRUE;
         });
 
