@@ -157,15 +157,9 @@ Throws `unknown_poi` if the provided point of interest doesn't exist
 ### `set_biome(pos, biome_name, update=true)`
 
 Changes the biome at that block position. if update is specified and false, then chunk will not be refreshed
-on the clients. Biome changes can only be send to clients with the entire data from the chunk.
+on the clients. Biome changes can only be sent to clients with the entire data from the chunk.
 
-Setting a biome is now (as of 1.16) dimension specific. In the overworld and the end changing the biome
-is only effective if you set it at y=0, and affects the entire column of. In the nether - you have to use the
-specific Y coordinate of the biome you want to change, and it affects roughly 4x4x4 area (give or take some random
-noise).
-
-This changed again in 1.18. The overworld behaves like the nether now, the biome must be set
-for individual y coordinates.
+Be aware that depending on the MC version and dimension settings biome can be set either in a 1x1x256 column or 4x4x4 hyperblock, so for some versions Y will be ignored and for some precision of biome setting is less than 1x1x1 block.
 
 Throws `unknown_biome` if the `biome_name` doesn't exist.
 
