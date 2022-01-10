@@ -546,6 +546,10 @@ script run create_datapack('craftable_cobwebs', {
 });
 </pre>
 
+Function example:
+<pre>
+ create_datapack('example',{'data/test/functions/talk.mcfunction'->'say 1\nsay 2'})
+</pre>
 ### `enable_hidden_dimensions()`
 
 The function reads current datapack settings detecting new dimensions defined by these datapacks that have not yet been added
