@@ -403,7 +403,7 @@ public class Inventories {
         expression.addContextFunction("close_screen",1, (c, t, lv) ->
         {
             Value value = lv.get(0);
-            if(!(value instanceof ScreenValue screenValue)) throw new InternalExpressionException("'close_screem' requires a screen value as the first argument.");
+            if(!(value instanceof ScreenValue screenValue)) throw new InternalExpressionException("'close_screen' requires a screen value as the first argument.");
             if(!screenValue.isOpen()) return Value.FALSE;
             screenValue.close();
             return Value.TRUE;
