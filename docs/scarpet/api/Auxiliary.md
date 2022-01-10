@@ -548,7 +548,7 @@ script run create_datapack('craftable_cobwebs', {
 
 Function example:
 <pre>
- create_datapack('example',{'data/test/functions/talk.mcfunction'->'say 1\nsay 2'})
+ script run create_datapack('example',{'data/test/functions/talk.mcfunction'->'say 1\nsay 2'})
 </pre>
 ### `enable_hidden_dimensions()`
 
