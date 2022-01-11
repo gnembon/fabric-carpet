@@ -286,14 +286,14 @@ public class ScreenValue extends Value {
 
     }
 
-    public Value queryProperty(Context c, String propertyName) {
+    public Value queryProperty(String propertyName) {
         if(propertyName.equals("name")) return FormattedTextValue.of(this.name);
         if(propertyName.equals("open")) return BooleanValue.of(this.isOpen());
         Property property = getProperty(propertyName);
         return NumericValue.of(property.get());
     }
 
-    public Value modifyProperty(Context c, String propertyName, List<Value> lv) {
+    public Value modifyProperty(String propertyName, List<Value> lv) {
         Property property = getProperty(propertyName);
         int intValue = NumericValue.asNumber(lv.get(0)).getInt();
         property.set(intValue);
