@@ -67,7 +67,7 @@ public class SystemInfo {
 
         put("world_bottom", c-> new NumericValue(c.s.getWorld().getBottomY()));
 
-        put("world_max_height", c-> new NumericValue(c.s.getWorld().getTopY()));
+        put("world_top", c-> new NumericValue(c.s.getWorld().getTopY()));
 
         put("world_center", c-> {
             WorldBorder worldBorder = c.s.getWorld().getWorldBorder();
