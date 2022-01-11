@@ -732,7 +732,7 @@ public class WorldAccess {
         expression.addContextFunction("structure_block_load", -1, (c, t, lv) -> {
             CarpetContext cc = (CarpetContext) c;
             ServerWorld world = cc.s.getWorld();
-            boolean recievnbt=lv.get(0).getTypeString().equals("nbt");
+            boolean recievnbt=(lv.get(0) instanceof NBTSerializableValue) && (((NBTSerializableValue)lv.get(0)).getTag() instanceof NbtCompound);
             Structure thestr;
             if(!recievnbt){
                 String name = lv.get(0).getString();
