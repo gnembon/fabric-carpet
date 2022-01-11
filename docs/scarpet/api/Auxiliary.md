@@ -702,7 +702,8 @@ system calls. In all circumstances, these are only provided as read-only.
   * `world_top` - Returns current dimensions' topmost Y value where one can place blocks.
   * `world_bottom` - Returns current dimensions' bottommost Y value where one can place blocks.
   * `world_center` - Returns coordinates of the center of the world with respect of the world border
-  * `world_size` - Returns size of the world where at this distance from `world_center` world border appears.
+  * `world_size` - Returns radius of world border for current dimension.
+  * `world_max_size` - Returns maximum possible radius of world border for current dimension.
   * 
 ##### Relevant gameplay related properties
   * `game_difficulty` - current difficulty of the game: `'peaceful'`, `'easy'`, `'normal'`, or `'hard'`

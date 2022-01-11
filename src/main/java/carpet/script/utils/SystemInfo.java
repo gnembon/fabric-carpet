@@ -73,7 +73,9 @@ public class SystemInfo {
             return ListValue.fromTriple(worldBorder.getCenterX(), 0, worldBorder.getCenterZ());
         });
 
-        put("world_size", c-> new NumericValue( c.s.getWorld().getWorldBorder().getMaxRadius()));
+        put("world_size", c -> new NumericValue(c.s.getWorld().getWorldBorder().getSize() / 2));
+
+        put("world_max_size", c-> new NumericValue( c.s.getWorld().getWorldBorder().getMaxRadius()));
 
         put("world_time", c -> new NumericValue(c.s.getWorld().getTime()));
 
