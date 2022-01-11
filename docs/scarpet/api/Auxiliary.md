@@ -698,7 +698,7 @@ Available options in the scarpet app space:
   * `world_spawn_point` - world spawn point in the overworld dimension
   * `world_time` - Returns dimension-specific tick counter.
   * `world_top` - Returns current dimensions' topmost Y value where one can place blocks.
-  * `world_min_height` - Returns current dimensions' bottommost Y value where one can place blocks.
+  * `world_bottom` - Returns current dimensions' bottommost Y value where one can place blocks.
   * `world_center` - Returns coordinates of the center of the world with respect of the world border
   * `world_size` - Returns radius of world border for current dimension.
   * `world_max_size` - Returns maximum possible radius of world border for current dimension.
