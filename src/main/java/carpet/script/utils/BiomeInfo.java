@@ -8,9 +8,7 @@ import carpet.script.value.NumericValue;
 import carpet.script.value.StringValue;
 import carpet.script.value.Value;
 import carpet.script.value.ValueConversions;
-import net.minecraft.client.color.world.FoliageColors;
 import net.minecraft.server.world.ServerWorld;
-import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.registry.Registry;
 import net.minecraft.world.biome.Biome;
 import net.minecraft.world.gen.feature.ConfiguredFeature;
@@ -27,11 +25,11 @@ public class BiomeInfo
         //put("under_material", (w, b) -> new BlockValue( b.getGenerationSettings().getSurfaceConfig().getUnderMaterial(), null, null));
         put("category", (w, b) -> StringValue.of(b.getCategory().getName()));
         put("temperature", (w, b) -> NumericValue.of(b.getTemperature()));
-        put("fog_color", (w, b) -> ValueConversions.ofRGB(((BiomeEffectsInterface)b.getEffects()).getCMFogColor()));
-        put("foliage_color", (w, b) -> ValueConversions.ofRGB(((BiomeEffectsInterface)b.getEffects()).getCMFoliageColor().orElse(4764952))); // client Biome.getDefaultFoliageColor
-        put("sky_color", (w, b) -> ValueConversions.ofRGB(((BiomeEffectsInterface)b.getEffects()).getCMSkyColor()));
-        put("water_color", (w, b) -> ValueConversions.ofRGB(((BiomeEffectsInterface)b.getEffects()).getCMWaterColor()));
-        put("water_fog_color", (w, b) -> ValueConversions.ofRGB(((BiomeEffectsInterface)b.getEffects()).getCMWaterFogColor()));
+        put("fog_color", (w, b) -> ValueConversions.ofRGB(b.getEffects().getFogColor()));
+        put("foliage_color", (w, b) -> ValueConversions.ofRGB(b.getEffects().getFoliageColor().orElse(4764952))); // client Biome.getDefaultFoliageColor
+        put("sky_color", (w, b) -> ValueConversions.ofRGB(b.getEffects().getSkyColor()));
+        put("water_color", (w, b) -> ValueConversions.ofRGB(b.getEffects().getWaterColor()));
+        put("water_fog_color", (w, b) -> ValueConversions.ofRGB(b.getEffects().getWaterFogColor()));
         put("humidity", (w, b) -> NumericValue.of(b.getDownfall()));
         put("precipitation", (w, b) -> StringValue.of(b.getPrecipitation().getName()));
         //put("depth", (w, b) -> NumericValue.of(b.getDepth()));

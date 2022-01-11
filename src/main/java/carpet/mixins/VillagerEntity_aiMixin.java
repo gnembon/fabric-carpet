@@ -1,7 +1,5 @@
 package carpet.mixins;
 
-import carpet.fakes.BrainInterface;
-import carpet.fakes.MemoryInterface;
 import carpet.helpers.ParticleDisplay;
 import carpet.utils.Messenger;
 import carpet.utils.MobAI;
@@ -65,14 +63,14 @@ public abstract class VillagerEntity_aiMixin extends MerchantEntity
         if (MobAI.isTracking(this, MobAI.TrackingType.IRON_GOLEM_SPAWNING))
         {
             long time;
-            Optional<? extends Memory<?>> last_seen = ((BrainInterface)this.brain).getMobMemories().get(MemoryModuleType.GOLEM_DETECTED_RECENTLY);
+            Optional<? extends Memory<?>> last_seen = this.brain.getMemories().get(MemoryModuleType.GOLEM_DETECTED_RECENTLY);
             if (!last_seen.isPresent())
             {
                 time = 0;
             }
             else
             {
-                time = ((MemoryInterface)last_seen.get()).getScarpetExpiry();
+                time = last_seen.get().getExpiry();
             }
             boolean recentlySeen = time > 0;
             Optional<Long> optional_11 = this.brain.getOptionalMemory(MemoryModuleType.LAST_SLEPT);

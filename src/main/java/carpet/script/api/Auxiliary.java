@@ -676,7 +676,7 @@ public class Auxiliary {
         expression.addContextFunction("last_tick_times", -1, (c, t, lv) ->
         {
             c.host.issueDeprecation("last_tick_times()");
-            return SystemInfo.get("last_tick_times", (CarpetContext)c);
+            return SystemInfo.get("server_last_tick_times", (CarpetContext)c);
         });
 
 
@@ -736,6 +736,7 @@ public class Auxiliary {
             return Value.TRUE;
         });
 
+        // Should this be deprecated for system_info('source_dimension')?
         expression.addContextFunction("current_dimension", 0, (c, t, lv) ->
                 ValueConversions.of( ((CarpetContext)c).s.getWorld()));
 

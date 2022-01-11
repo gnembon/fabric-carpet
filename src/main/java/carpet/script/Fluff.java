@@ -30,6 +30,8 @@ public abstract class Fluff
     @FunctionalInterface
     public interface SexFunction<A, B, C, D, E, F, R> { R apply(A a, B b, C c, D d, E e, F f);}
 
+    public interface UsageProvider { String getUsage();}
+
     public interface EvalNode
     {
         /**

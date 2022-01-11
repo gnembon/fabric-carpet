@@ -110,7 +110,7 @@ Or an example to find if a player has specific enchantment on a held axe (either
 
 <pre>
 global_get_enchantment(p, ench) -> (
-$   for(['main','offhand'],
+$   for(['mainhand','offhand'],
 $      holds = query(p, 'holds', _);
 $      if( holds,
 $         [what, count, nbt] = holds;
