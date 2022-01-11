@@ -1,6 +1,5 @@
 package carpet.script.utils;
 
-import carpet.fakes.BiomeEffectsInterface;
 import carpet.fakes.PlacedFeatureInterface;
 import carpet.script.value.BlockValue;
 import carpet.script.value.ListValue;
