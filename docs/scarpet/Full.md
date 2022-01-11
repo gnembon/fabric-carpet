@@ -2483,6 +2483,9 @@ is only effective if you set it at y=0, and affects the entire column of. In the
 specific Y coordinate of the biome you want to change, and it affects roughly 4x4x4 area (give or take some random
 noise).
 
+This changed again in 1.18. The overworld behaves like the nether now, the biome must be set
+for individual y coordinates.
+
 Throws `unknown_biome` if the `biome_name` doesn't exist.
 
 ### `update(pos)`
@@ -2675,8 +2678,8 @@ With block, or name, returns the name of the biome in that position, or throws `
 Note: Have to pass all 6 of the mentioned noise types and only these noise types for it to evaluate a biome.
 
 With an optional feature, it returns value for the specified attribute for that biome. Available and queryable features include:
-* `'top_material'`: unlocalized block representing the top surface material
-* `'under_material'`: unlocalized block representing what sits below topsoil
+* `'top_material'`: unlocalized block representing the top surface material (1.17.1 and below only)
+* `'under_material'`: unlocalized block representing what sits below topsoil (1.17.1 and below only)
 * `'category'`: the parent biome this biome is derived from. Possible values include:
 `'none'`, `'taiga'`, `'extreme_hills'`, `'jungle'`, `'mesa'`, `'plains'`, `'savanna'`,
 `'icy'`, `'the_end'`, `'beach'`, `'forest'`, `'ocean'`, `'desert'`, `'river'`,
