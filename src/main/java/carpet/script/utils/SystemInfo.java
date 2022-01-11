@@ -65,7 +65,7 @@ public class SystemInfo {
             return ListValue.of(NumericValue.of(prop.getSpawnX()), NumericValue.of(prop.getSpawnY()), NumericValue.of(prop.getSpawnZ()));
         });
 
-        put("world_min_height", c-> new NumericValue(c.s.getWorld().getBottomY()));
+        put("world_bottom", c-> new NumericValue(c.s.getWorld().getBottomY()));
 
         put("world_max_height", c-> new NumericValue(c.s.getWorld().getTopY()));
 
