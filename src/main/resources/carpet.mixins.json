@@ -187,6 +187,10 @@
     "Scoreboard_scarpetMixin",
     "Team_scarpetMixin",
     "TradeOutputSlot_scarpetEventMixin",
+    "ScreenHandler_scarpetMixin",
+    "ScreenHandlerSubclasses_scarpetMixin",
+    "AbstractRecipeScreenHandler_scarpetMixin",
+
 
     "ChunkTicketManager_scarpetMixin",
     "PointOfInterest_scarpetMixin",

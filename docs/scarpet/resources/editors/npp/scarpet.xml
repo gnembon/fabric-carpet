@@ -71,6 +71,8 @@
 
                 team_add team_list team_remove team_leave team_property
 
+                create_screen close_screen screen_property
+
                 bossbar
 
                 player spawn entity_id entity_list entity_area entity_selector query modify entity_event entity_load_handler entity_types

@@ -24,6 +24,7 @@ public class Throwables {
     public static final Throwables UNKNOWN_DIMENSION     = register("unknown_dimension", VALUE_EXCEPTION);
     public static final Throwables UNKNOWN_STRUCTURE     = register("unknown_structure", VALUE_EXCEPTION);
     public static final Throwables UNKNOWN_CRITERION     = register("unknown_criterion", VALUE_EXCEPTION);
+    public static final Throwables UNKNOWN_SCREEN        = register("unknown_screen", VALUE_EXCEPTION);
     public static final Throwables IO_EXCEPTION          = register("io_exception", THROWN_EXCEPTION_TYPE);
     public static final Throwables NBT_ERROR             = register("nbt_error", IO_EXCEPTION);
     public static final Throwables JSON_ERROR            = register("json_error", IO_EXCEPTION);
