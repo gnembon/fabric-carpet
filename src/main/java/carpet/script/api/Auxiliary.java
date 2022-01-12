@@ -29,6 +29,7 @@ import carpet.script.utils.WorldTools;
 import carpet.script.value.BooleanValue;
 import carpet.script.value.EntityValue;
 import carpet.script.value.FormattedTextValue;
+import carpet.script.value.LazyListValue;
 import carpet.script.value.ListValue;
 import carpet.script.value.MapValue;
 import carpet.script.value.NBTSerializableValue;
@@ -1182,8 +1183,26 @@ public class Auxiliary {
     }
     private static void zipValueToText(Path path, Value output) throws IOException
     {
+        List<Value> toJoin;
+        String string;
+        String delimiter=System.lineSeparator();
+        // i dont know it shoule be \n or System.lineSeparator
+        if (output instanceof LazyListValue)
+        {
+            toJoin = ((LazyListValue) output).unroll();
+            string = toJoin.stream().map(Value::getString).collect(Collectors.joining(delimiter));
+        }
+        else if (output instanceof ListValue)
+        {
+            toJoin = ((ListValue) output).getItems();
+            string = toJoin.stream().map(Value::getString).collect(Collectors.joining(delimiter));
+        }
+        else
+        {
+            string = output.getString();
+        }
         
-        String string = output.getString();
+        
         Files.createDirectories(path.getParent());
         BufferedWriter bufferedWriter = Files.newBufferedWriter(path);
         Throwable incident = null;
