@@ -485,7 +485,6 @@ public class SettingsManager
         }
     }
 
-
     private Collection<ParsedRule<?>> getRulesMatching(String search) {
         String lcSearch = search.toLowerCase(Locale.ROOT);
         return rules.values().stream().filter(rule ->
