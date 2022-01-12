@@ -200,7 +200,7 @@ public class ScreenValue extends Value {
             @Override
             public boolean onSlotClick(ServerPlayerEntity player, SlotActionType actionType, int slot, int button) {
                 Map<Value,Value> data = new HashMap<>();
-                data.put(StringValue.of("slot"),NumericValue.of(slot));
+                data.put(StringValue.of("slot"),slot == ScreenHandler.EMPTY_SPACE_SLOT_INDEX ? Value.NULL : NumericValue.of(slot));
                 if(actionType == SlotActionType.QUICK_CRAFT) {
                     data.put(StringValue.of("quick_craft_stage"),NumericValue.of(ScreenHandler.unpackQuickCraftStage(button)));
                     button = ScreenHandler.unpackQuickCraftButton(button);

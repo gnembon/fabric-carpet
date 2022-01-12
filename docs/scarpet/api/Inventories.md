@@ -269,7 +269,7 @@ The `data` for this interaction is a map, with a `slot` and `button` value.
 `slot` is the slot index of the slot that was clicked.
 When holding an item in the cursor stack and clicking inside the screen,
 but not in a slot, this is -1.
-If clicked outside the screen (where it would drop held items), this value is -999.
+If clicked outside the screen (where it would drop held items), this value is null.
 The `button` is the mouse button used to click the slot.
 
 For the `swap` action, the `button` is the number key 0-8 for a certain hotbar slot.
