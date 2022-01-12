@@ -205,7 +205,7 @@ public class CarpetSettings
     @Rule( desc = "Players absorb XP instantly, without delay", category = CREATIVE )
     public static boolean xpNoCooldown = false;
 
-    public static class StackableShulkerBoxValidator extends Validator<String> //Doing the logic here avoids doing the logic several times over in the relevant mixin classes.
+    public static class StackableShulkerBoxValidator extends Validator<String> 
     {
         @Override
         public String validate(ServerCommandSource source, ParsedRule<String> currentRule, String newValue, String string)
