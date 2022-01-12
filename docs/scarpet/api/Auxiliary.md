@@ -431,7 +431,7 @@ Returns `true` if creation and loading of the datapack was successful. Loading o
 reloading of all other datapacks (vanilla restrictions, identical to /datapack enable), however unlike with `/reload` 
 command, scarpet apps will not be reloaded by adding a datapack using `create_datapack`.
 
-Currently, only json files are supported in the packs. `'pack.mcmeta'` file is added automatically.
+Currently, only json/nbt/mcfunction files are supported in the packs. `'pack.mcmeta'` file is added automatically.
 
 Reloading of datapacks that define new dimensions is not implemented in vanilla. Vanilla game only loads 
 dimension information on server start. `create_datapack` is therefore a direct replacement of manually ploping of the specified 
@@ -548,6 +548,10 @@ script run create_datapack('craftable_cobwebs', {
 });
 </pre>
 
+Function example:
+<pre>
+ script run create_datapack('example',{'data/test/functions/talk.mcfunction'->'say 1\nsay 2'})
+</pre>
 ### `enable_hidden_dimensions()`
 
 The function reads current datapack settings detecting new dimensions defined by these datapacks that have not yet been added
