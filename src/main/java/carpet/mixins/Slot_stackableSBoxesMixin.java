@@ -18,13 +18,13 @@ public class Slot_stackableSBoxesMixin {
     ))
     private int getMaxCountForSboxesInSlot(Slot slot, ItemStack stack)
     {
-        if (CarpetSettings.stackableShulkerBoxes &&
+        if (CarpetSettings.shulkerBoxStackSize > 1 &&
                 stack.getItem() instanceof BlockItem &&
                 ((BlockItem)stack.getItem()).getBlock() instanceof ShulkerBoxBlock &&
                 !InventoryHelper.shulkerBoxHasItems(stack)
         )
         {
-            return CarpetSettings.SHULKER_STACK_SIZE;
+            return CarpetSettings.shulkerBoxStackSize;
         }
         return slot.getMaxItemCount(stack);
     }
