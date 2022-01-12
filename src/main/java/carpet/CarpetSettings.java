@@ -236,7 +236,8 @@ public class CarpetSettings
     }
 
     @Rule(
-            desc = "Empty shulker boxes can stack to 64 or a custom value.",
+            desc = "Empty shulker boxes can stack to 64 or a custom value when thrown on the ground.",
+            extra = ".. or when manipulated inside the inventories",
             validate = StackableShulkerBoxValidator.class,
             options = {"false", "true", "16"},
             strict = false,
