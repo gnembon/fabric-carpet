@@ -217,11 +217,11 @@ public class CarpetSettings
                     return newValue;
                 }
             }
-            if (newValue.equals("false")) {
+            if (newValue.equalsIgnoreCase("false")) {
                 shulkerBoxStackSize = 1;
                 return newValue;
             }
-            if (newValue.equals("true")) {
+            if (newValue.equalsIgnoreCase("true")) {
                 shulkerBoxStackSize = 64;
                 return newValue;
             }
@@ -236,7 +236,7 @@ public class CarpetSettings
     }
 
     @Rule(
-            desc = "Empty shulker boxes can stack to 64 or a custom value when thrown on the ground.",
+            desc = "Empty shulker boxes can stack when thrown on the ground.",
             extra = ".. or when manipulated inside the inventories",
             validate = StackableShulkerBoxValidator.class,
             options = {"false", "true", "16"},
