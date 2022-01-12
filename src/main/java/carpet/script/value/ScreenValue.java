@@ -332,7 +332,7 @@ public class ScreenValue extends Value {
     @Override
     public NbtElement toTag(boolean force) {
         if(this.screenHandler == null) {
-            return new NbtList();
+            return Value.NULL.toTag(true);
         }
 
         NbtList nbtList = new NbtList();
