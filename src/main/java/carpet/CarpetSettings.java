@@ -205,24 +205,44 @@ public class CarpetSettings
     @Rule( desc = "Players absorb XP instantly, without delay", category = CREATIVE )
     public static boolean xpNoCooldown = false;
 
-    public static class ShulkerBoxStackSizeValidator extends Validator<Integer>
+    public static class StackableShulkerBoxValidator extends Validator<String> //Doing the logic here avoids doing the logic several times over in the relevant mixin classes.
     {
         @Override
-        public Integer validate(ServerCommandSource source, ParsedRule<Integer> currentRule, Integer newValue, String string) {
-            return (newValue>=1&&newValue<=64) ? newValue : null;
+        public String validate(ServerCommandSource source, ParsedRule<String> currentRule, String newValue, String string)
+        {
+            if (newValue.matches("^[0-9]+$")) {
+                int value = Integer.parseInt(newValue);
+                if (value <= 64 && value >= 2) {
+                    shulkerBoxStackSize = value;
+                    return newValue;
+                }
+            }
+            if (newValue.equals("false")) {
+                shulkerBoxStackSize = 1;
+                return newValue;
+            }
+            if (newValue.equals("true")) {
+                shulkerBoxStackSize = 64;
+                return newValue;
+            }
+            return null;
         }
+
         @Override
-        public String description() {return "Must choose value between 1 and 64";}
-     }
+        public String description()
+        {
+            return "Value must either be true, false, or a number between 2-64";
+        }
+    }
 
     @Rule(
-            desc = "Controls the amount of empty shulker boxes that can be stacked together when dropped on the ground",
-            extra = ".. or when manipulated inside the inventories",
-            options = {"1", "8", "16", "64"},
+            desc = "Empty shulker boxes can stack to 64 or a custom value.",
+            validate = StackableShulkerBoxValidator.class,
+            options = {"false", "true", "16"},
             strict = false,
-            validate = ShulkerBoxStackSizeValidator.class,
             category = {SURVIVAL, FEATURE}
     )
+    public static String stackableShulkerBoxes = "false";
     public static int shulkerBoxStackSize = 1;
 
     @Rule( desc = "Explosions won't destroy blocks", category = {CREATIVE, TNT} )
