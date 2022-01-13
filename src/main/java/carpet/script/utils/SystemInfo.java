@@ -227,6 +227,28 @@ public class SystemInfo {
         
         put("scarpet_version", c -> StringValue.of(CarpetSettings.carpetVersion));
         put("super_flat_layers", c-> {
+            String cdimname =  c.s.getWorld().getRegistryKey().getValue().toString();//!!!!!!todo
+            GeneratorOptions generatorOptions=c.s.getServer().getSaveProperties().getGeneratorOptions();
+            Stream<Value> s = generatorOptions.getDimensions().getEntries().stream().map(
+                    x->{
+                        String dimname = x.getKey().getValue().toString();
+                        if (!dimname.equals(cdimname)){
+                            return null;
+                        }
+                        ChunkGenerator cg = x.getValue().getChunkGenerator();
+                        Value dimdata;
+                        if (cg instanceof FlatChunkGenerator){
+                            Stream<Value> layers = ((FlatChunkGenerator)cg).getConfig().getLayers().stream().map(lay->ListValue.of(new NumericValue((long)lay.getThickness()),new BlockValue(lay.getBlockState(),null,null)));
+                            dimdata =ListValue.wrap(layers);
+                        }else{
+                            return null;
+                        }
+                        return dimdata;
+                    }
+                );
+            return s.filter(x->x!=null).findFirst().orElse(Value.NULL);
+        });
+        put("world_config_type", c-> {
             GeneratorOptions generatorOptions=c.s.getServer().getSaveProperties().getGeneratorOptions();
             Stream<Value> s = generatorOptions.getDimensions().getEntries().stream().map(
                     x->{
@@ -238,8 +260,7 @@ public class SystemInfo {
                         }else if (cg instanceof NoiseChunkGenerator){
                             dimdata =StringValue.of("noise");
                         }else if (cg instanceof FlatChunkGenerator){
-                            Stream<Value> layers = ((FlatChunkGenerator)cg).getConfig().getLayers().stream().map(lay->ListValue.of(new NumericValue((long)lay.getThickness()),new BlockValue(lay.getBlockState(),null,null)));
-                            dimdata =ListValue.wrap(layers);
+                            dimdata =StringValue.of("super_flat");
                         }else{
                             dimdata =StringValue.of("???");
                         }
@@ -251,6 +272,7 @@ public class SystemInfo {
         put("world_gen_settings", c-> {
             GeneratorOptions generatorOptions=c.s.getServer().getSaveProperties().getGeneratorOptions();
             Optional<NbtElement> x = GeneratorOptions.CODEC.encodeStart(NbtOps.INSTANCE, generatorOptions).result();
+            //System.out.println(x);
             if(x.isPresent()){
                 return new NBTSerializableValue(x.get());
             }else{
