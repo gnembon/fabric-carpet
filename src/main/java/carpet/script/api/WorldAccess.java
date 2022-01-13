@@ -706,13 +706,25 @@ public class WorldAccess {
                 lv6= new Structure();
             }
             BlockArgument start = BlockArgument.findIn((CarpetContext)c, lv, 1);
-            BlockArgument ignoredblock = BlockArgument.findIn((CarpetContext)c, lv, start.offset+4,true,true,false);
+            BlockArgument end = BlockArgument.findIn((CarpetContext)c, lv, start.offset);
+            BlockArgument ignoredblock = BlockArgument.findIn((CarpetContext)c, lv, end.offset+1,true,true,false);
+            
+            BlockPos startBlockPos = new BlockPos(
+                Math.min(start.block.getPos().getX(), end.block.getPos().getX()),
+                Math.min(start.block.getPos().getY(), end.block.getPos().getY()),
+                Math.min(start.block.getPos().getZ(), end.block.getPos().getZ())
+            );
+            BlockPos endBlockPos = new BlockPos(
+                Math.max(start.block.getPos().getX(), end.block.getPos().getX()),
+                Math.max(start.block.getPos().getY(), end.block.getPos().getY()),
+                Math.max(start.block.getPos().getZ(), end.block.getPos().getZ())
+            );
+            BlockPos size = endBlockPos.subtract(startBlockPos).add(1,1,1);
             // name,start,dimensions, ignoreEntities, ignoredBlock,~~author~~,disk
             lv6.saveFromWorld(lv2,
-                    start.block.getPos(),
-                    new Vec3i((int) lv.get(start.offset).readInteger(), (int) lv.get(start.offset+1).readInteger(),
-                            (int) lv.get(start.offset+2).readInteger()),
-                    !lv.get(start.offset+3).getBoolean(),
+                    startBlockPos,
+                    size,
+                    !lv.get(end.offset).getBoolean(),
                     ignoredblock.block==null?null:ignoredblock.block.getBlockState().getBlock());
             // lv6.setAuthor(lv.get(9).getString());//MC-140821
             if (!returnnbt){
