@@ -860,18 +860,21 @@ the future.
 
 ## `Structure Block API`
 
-### `structure_block_save(name,start_x,start_y,start_z,dimensions_x,dimensions_y,dimensions_z,ignoreEntities,ignoredBlock,disk)`
+### `structure_block_save(name,start_corner,end_corner,ignoreEntities,ignoredBlock,disk)`
 
 Save part of the world into a structure.
+*   `name` is the same as in a real structure block. If it is `null`, the function will return the NBT of the structure file.
 *   `ignoredBlock` may be null or a BlockValue (eg: `block('air')`).if not null, that kind of block will not be saved.
 *   If `disk` is true, the structure will saved in disk. Or it will only exist temporarily.
 
-Return True if saved successfully. Return a falsy value if not.
+Return True if saved successfully. Return a falsy value if not. Unless `name` is null.
 
-### `structure_block_load(name,start_x,start_y,start_z,ignoreEntities,integrity,awake,noupdate,fluid,gravity,rotation,mirror)`
+### `structure_block_load(name,start_corner,ignoreEntities,integrity,awake,noupdate,fluid,gravity,rotation,mirror)`
 
 Place a saved structure into the world.
+*   `name` is the same as in a real structure block. And it can also be a NBT tag that will be viewed as the structure file to load.
 *   If `integrity` is not null, it will be the probability, a number between 1 and 0, of each block's not disappearing.
+*   `awake` is a bool.
 *   If `noupdate` is true, it will not update blocks near them. You may still want to wrap this whole function with `without_updates`, even if this value is already true.
 *   If `gravity` is not null, the structure will fall (or fly) to the ground. And the value of `gravity` will be the Yoffset. (Newton must be happy about it.)
 *   `rotation` should be a integer.Structure will rotate `rotation`×90° before placed.
