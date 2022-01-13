@@ -684,7 +684,7 @@ public class WorldAccess {
             return (cc, tt) -> result[0];
         });
         // =======================================
-        expression.addContextFunction("structure_block_save", -1, (c, t, lv) -> {
+        expression.addContextFunction("save_structure_template", -1, (c, t, lv) -> {
             CarpetContext cc = (CarpetContext) c;
             ServerWorld lv2 = cc.s.getWorld();
 
@@ -699,7 +699,7 @@ public class WorldAccess {
                 struident = Identifier.tryParse(name);
                 if (name.isEmpty()||name.endsWith(":")||struident == null) {
                     return Value.NULL;
-                }
+                }if(lv.size()==2&&lv.get(1).isNull()){lv3.unloadStructure(struident);return Value.NULL;}
                 lv6 = lv3.getStructureOrBlank(struident);
             }
             else{
@@ -720,7 +720,7 @@ public class WorldAccess {
                 Math.max(start.block.getPos().getZ(), end.block.getPos().getZ())
             );
             BlockPos size = endBlockPos.subtract(startBlockPos).add(1,1,1);
-            // name,start,dimensions, ignoreEntities, ignoredBlock,~~author~~,disk
+            // name,start,end, ignoreEntities, ignoredBlock,~~author~~,disk
             lv6.saveFromWorld(lv2,
                     startBlockPos,
                     size,
@@ -741,7 +741,7 @@ public class WorldAccess {
 
         // =====================================
         // =======================================
-        expression.addContextFunction("structure_block_load", -1, (c, t, lv) -> {
+        expression.addContextFunction("load_structure_template", -1, (c, t, lv) -> {
             CarpetContext cc = (CarpetContext) c;
             ServerWorld world = cc.s.getWorld();
             boolean recievnbt=(lv.get(0) instanceof NBTSerializableValue) && (((NBTSerializableValue)lv.get(0)).getTag() instanceof NbtCompound);
@@ -794,7 +794,7 @@ public class WorldAccess {
 
         // =====================================
         // =======================================
-        expression.addContextFunction("structure_block_unload", -1, (c, t, lv) -> {
+        expression.addContextFunction("unload_structure_template", -1, (c, t, lv) -> {
             CarpetContext cc = (CarpetContext) c;
             ServerWorld world = cc.s.getWorld();
             String name = lv.get(0).getString();
