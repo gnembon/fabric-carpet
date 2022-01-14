@@ -7,6 +7,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Parameter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Objects;
@@ -25,7 +26,6 @@ import carpet.script.Fluff.UsageProvider;
 import carpet.script.exception.InternalExpressionException;
 import carpet.script.LazyValue;
 import carpet.script.value.Value;
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
 /**
  * <p>This class parses methods annotated with the {@link ScarpetFunction} annotation in a given {@link Class}, generating
@@ -148,7 +148,7 @@ public final class AnnotationParser
         private final String name;
         private final boolean isMethodVarArgs;
         private final int methodParamCount;
-        private final List<ValueConverter<?>> valueConverters;
+        private final ValueConverter<?>[] valueConverters;
         private final Class<?> varArgsType;
         private final boolean primitiveVarArgs;
         private final ValueConverter<?> varArgsConverter;
@@ -167,12 +167,12 @@ public final class AnnotationParser
             this.methodParamCount = method.getParameterCount();
 
             Parameter[] methodParameters = method.getParameters();
-            this.valueConverters = new ObjectArrayList<>();
+            this.valueConverters = new ValueConverter[isMethodVarArgs ? methodParamCount - 1 : methodParamCount];
             for (int i = 0; i < this.methodParamCount; i++)
             {
                 Parameter param = methodParameters[i];
                 if (!isMethodVarArgs || i != this.methodParamCount - 1) // Varargs converter is separate
-                    this.valueConverters.add(ValueConverter.fromAnnotatedType(param.getAnnotatedType()));
+                    this.valueConverters[i] = ValueConverter.fromAnnotatedType(param.getAnnotatedType());
             }
             Class<?> originalVarArgsType = isMethodVarArgs ? methodParameters[methodParamCount - 1].getType().getComponentType() : null;
             this.varArgsType = ClassUtils.primitiveToWrapper(originalVarArgsType); // Primitive array cannot be cast to Obj[]
@@ -182,8 +182,8 @@ public final class AnnotationParser
             OutputConverter<Object> converter = OutputConverter.get((Class<Object>) method.getReturnType());
             this.outputConverter = converter;
 
-            this.isEffectivelyVarArgs = isMethodVarArgs ? true : valueConverters.stream().anyMatch(ValueConverter::consumesVariableArgs);
-            this.minParams = valueConverters.stream().mapToInt(ValueConverter::valueConsumption).sum(); // Note: In !varargs, this is params
+            this.isEffectivelyVarArgs = isMethodVarArgs || Arrays.stream(valueConverters).anyMatch(ValueConverter::consumesVariableArgs);
+            this.minParams = Arrays.stream(valueConverters).mapToInt(ValueConverter::valueConsumption).sum(); // Note: In !varargs, this is params
             int maxParams = this.minParams; // Unlimited == Integer.MAX_VALUE
             if (this.isEffectivelyVarArgs)
             {
@@ -234,10 +234,6 @@ public final class AnnotationParser
                 if (lv.size() > maxParams)
                     throw new InternalExpressionException("Function '" + name + " expected up to " + maxParams + " arguments, got " + lv.size() + ". " 
                             + getUsage());
-            } else
-            {
-                if (lv.size() != minParams) // min == max if not varargs. We do this cause we don't use function's arg checking to be able to return lazy
-                    throw new InternalExpressionException("Function '" + name + "' expected " + minParams + " arguments, got " + lv.size() +". " + getUsage());
             }
             Object[] params = getMethodParams(lv, context, t);
             try
@@ -261,7 +257,7 @@ public final class AnnotationParser
             int regularArgs = isMethodVarArgs ? methodParamCount - 1 : methodParamCount;
             for (int i = 0; i < regularArgs; i++)
             {
-                params[i] = valueConverters.get(i).checkAndConvert(lvIterator, context, theLazyT);
+                params[i] = valueConverters[i].checkAndConvert(lvIterator, context, theLazyT);
                 if (params[i] == null)
                     throw new InternalExpressionException("Incorrect argument passsed to '" + name + "' function.\n" + getUsage());
             }
@@ -271,7 +267,7 @@ public final class AnnotationParser
                 Object[] varArgs;
                 if (varArgsConverter.consumesVariableArgs())
                 {
-                    List<Object> varArgsList = new ArrayList<>();
+                    List<Object> varArgsList = new ArrayList<>(); // fastutil's is extremely slow in toArray, and we use that
                     while (lvIterator.hasNext())
                     {
                         Object obj = varArgsConverter.checkAndConvert(lvIterator, context, theLazyT);
@@ -279,7 +275,7 @@ public final class AnnotationParser
                             throw new InternalExpressionException("Incorrect argument passsed to '" + name + "' function.\n" + getUsage());
                         varArgsList.add(obj);
                     }
-                    varArgs = varArgsList.toArray();
+                    varArgs = varArgsList.toArray((Object[])Array.newInstance(varArgsType, 0));
                 } else
                 {
                     varArgs = (Object[]) Array.newInstance(varArgsType, remaining / varArgsConverter.valueConsumption());
@@ -302,7 +298,7 @@ public final class AnnotationParser
             StringBuilder builder = new StringBuilder("Usage: '");
             builder.append(name);
             builder.append('(');
-            builder.append(valueConverters.stream().map(ValueConverter::getTypeName).filter(Objects::nonNull).collect(Collectors.joining(", ")));
+            builder.append(Arrays.stream(valueConverters).map(ValueConverter::getTypeName).filter(Objects::nonNull).collect(Collectors.joining(", ")));
             if (varArgsConverter != null)
             {
                 builder.append(", ");
