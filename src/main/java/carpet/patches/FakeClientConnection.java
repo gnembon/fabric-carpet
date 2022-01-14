@@ -11,6 +11,7 @@ public class FakeClientConnection extends ClientConnection
     {
         super(p);
         // compat with adventure-platform-fabric. This does NOT trigger other vanilla handlers for establishing a channel
+        // also makes #isOpen return true, allowing enderpearls to teleport fake players
         ((ClientConnectionInterface)this).setChannel(new EmbeddedChannel());
     }
 

@@ -68,7 +68,6 @@
     "VillagerEntity_aiMixin",
 
     "PlayerEntity_fakePlayersMixin",
-    "ThrownEnderpearlEntity_fakePlayersMixin",
 
     "ServerPlayNetworkHandler_coreMixin",
 
