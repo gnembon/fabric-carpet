@@ -4,15 +4,20 @@ import carpet.fakes.IngredientInterface;
 import carpet.fakes.RecipeManagerInterface;
 import carpet.script.CarpetContext;
 import carpet.script.Expression;
+import carpet.script.argument.FunctionArgument;
 import carpet.script.exception.InternalExpressionException;
 import carpet.script.exception.ThrowStatement;
 import carpet.script.exception.Throwables;
 import carpet.script.utils.InputValidator;
 import carpet.script.value.BooleanValue;
+import carpet.script.value.EntityValue;
+import carpet.script.value.FormattedTextValue;
+import carpet.script.value.FunctionValue;
 import carpet.script.value.ListValue;
 import carpet.script.value.NBTSerializableValue;
 import carpet.script.value.NullValue;
 import carpet.script.value.NumericValue;
+import carpet.script.value.ScreenValue;
 import carpet.script.value.StringValue;
 import carpet.script.value.Value;
 import carpet.script.value.ValueConversions;
@@ -25,7 +30,6 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemGroup;
 import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.network.packet.s2c.play.ScreenHandlerSlotUpdateS2CPacket;
 import net.minecraft.recipe.AbstractCookingRecipe;
@@ -36,10 +40,9 @@ import net.minecraft.recipe.ShapedRecipe;
 import net.minecraft.recipe.ShapelessRecipe;
 import net.minecraft.recipe.SpecialCraftingRecipe;
 import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.tag.Tag;
 import net.minecraft.tag.TagManager;
+import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
-import net.minecraft.util.InvalidIdentifierException;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.registry.Registry;
 
@@ -381,11 +384,50 @@ public class Inventories {
             }
             return new NumericValue(item.getStack().getCount());
         });
+
+        expression.addContextFunction("create_screen",-1, (c, t, lv) ->
+        {
+            if(lv.size() < 3) throw new InternalExpressionException("'create_screen' requires at least three arguments");
+            Value playerValue = lv.get(0);
+            ServerPlayerEntity player = EntityValue.getPlayerByValue(((CarpetContext) c).s.getServer(), playerValue);
+            if(player == null) throw new InternalExpressionException("'create_screen' requires a valid online player as the first argument.");
+            String type = lv.get(1).getString();
+            Text name = FormattedTextValue.getTextByValue(lv.get(2));
+            FunctionValue function = null;
+            if(lv.size() > 3)
+                function = FunctionArgument.findIn(c, expression.module, lv, 3, true, false).function;
+
+            return new ScreenValue(player,type,name,function,c);
+        });
+
+        expression.addContextFunction("close_screen",1, (c, t, lv) ->
+        {
+            Value value = lv.get(0);
+            if(!(value instanceof ScreenValue screenValue)) throw new InternalExpressionException("'close_screen' requires a screen value as the first argument.");
+            if(!screenValue.isOpen()) return Value.FALSE;
+            screenValue.close();
+            return Value.TRUE;
+        });
+
+        expression.addContextFunction("screen_property",-1, (c, t, lv) ->
+        {
+            if(lv.size()<2) throw new InternalExpressionException("'screen_property' requires at least a screen and a property name");
+            if(!(lv.get(0) instanceof ScreenValue screenValue)) throw new InternalExpressionException("'screen_property' requires a screen value as the first argument");
+            String propertyName = lv.get(1).getString();
+            if(lv.size()>=3)
+            {
+                return screenValue.modifyProperty(propertyName,lv.subList(2,lv.size()));
+            }
+            else
+            {
+                return screenValue.queryProperty(propertyName);
+            }
+        });
     }
 
     private static void syncPlayerInventory(NBTSerializableValue.InventoryLocator inventory, int int_1)
     {
-        if (inventory.owner() instanceof ServerPlayerEntity player && !inventory.isEnder())
+        if (inventory.owner() instanceof ServerPlayerEntity player && !inventory.isEnder() && !(inventory.inventory() instanceof ScreenValue.ScreenHandlerInventory))
         {
             player.networkHandler.sendPacket(new ScreenHandlerSlotUpdateS2CPacket(
                     -2, 0, // resolve mystery argument

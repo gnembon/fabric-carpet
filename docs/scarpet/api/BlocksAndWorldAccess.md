@@ -157,12 +157,11 @@ Throws `unknown_poi` if the provided point of interest doesn't exist
 ### `set_biome(pos, biome_name, update=true)`
 
 Changes the biome at that block position. if update is specified and false, then chunk will not be refreshed
-on the clients. Biome changes can only be send to clients with the entire data from the chunk.
+on the clients. Biome changes can only be sent to clients with the entire data from the chunk.
 
-Setting a biome is now (as of 1.16) dimension specific. In the overworld and the end changing the biome
-is only effective if you set it at y=0, and affects the entire column of. In the nether - you have to use the
-specific Y coordinate of the biome you want to change, and it affects roughly 4x4x4 area (give or take some random
-noise).
+Be aware that depending on the MC version and dimension settings biome can be set either in a 1x1x256
+column or 4x4x4 hyperblock, so for some versions Y will be ignored and for some precision of biome
+setting is less than 1x1x1 block.
 
 Throws `unknown_biome` if the `biome_name` doesn't exist.
 
@@ -356,8 +355,8 @@ With block, or name, returns the name of the biome in that position, or throws `
 Note: Have to pass all 6 of the mentioned noise types and only these noise types for it to evaluate a biome.
 
 With an optional feature, it returns value for the specified attribute for that biome. Available and queryable features include:
-* `'top_material'`: unlocalized block representing the top surface material
-* `'under_material'`: unlocalized block representing what sits below topsoil
+* `'top_material'`: unlocalized block representing the top surface material (1.17.1 and below only)
+* `'under_material'`: unlocalized block representing what sits below topsoil (1.17.1 and below only)
 * `'category'`: the parent biome this biome is derived from. Possible values include:
 `'none'`, `'taiga'`, `'extreme_hills'`, `'jungle'`, `'mesa'`, `'plains'`, `'savanna'`,
 `'icy'`, `'the_end'`, `'beach'`, `'forest'`, `'ocean'`, `'desert'`, `'river'`,

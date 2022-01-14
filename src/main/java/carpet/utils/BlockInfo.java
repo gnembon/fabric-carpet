@@ -31,15 +31,18 @@ public class BlockInfo
         put(BlockSoundGroup.WOOD,   "wood"  );
         put(BlockSoundGroup.GRAVEL, "gravel");
         put(BlockSoundGroup.GRASS,  "grass" );
+        put(BlockSoundGroup.LILY_PAD, "lily_pad");
         put(BlockSoundGroup.STONE,  "stone" );
         put(BlockSoundGroup.METAL,  "metal" );
         put(BlockSoundGroup.GLASS , "glass" );
         put(BlockSoundGroup.WOOL  , "wool"  );
         put(BlockSoundGroup.SAND  , "sand"  );
         put(BlockSoundGroup.SNOW  , "snow"  );
+        put(BlockSoundGroup.POWDER_SNOW  , "powder_snow"  );
         put(BlockSoundGroup.LADDER, "ladder");
         put(BlockSoundGroup.ANVIL , "anvil" );
-        put(BlockSoundGroup.SLIME , "slime" );
+        put(BlockSoundGroup.SLIME  , "slime"  );
+        put(BlockSoundGroup.HONEY  , "honey"  );
         put(BlockSoundGroup.WET_GRASS , "sea_grass" );
         put(BlockSoundGroup.CORAL , "coral" );
         put(BlockSoundGroup.BAMBOO , "bamboo" );
@@ -48,6 +51,7 @@ public class BlockInfo
         put(BlockSoundGroup.SWEET_BERRY_BUSH , "berry" );
         put(BlockSoundGroup.CROP , "crop" );
         put(BlockSoundGroup.STEM , "stem" );
+        put(BlockSoundGroup.VINE , "vine" );
         put(BlockSoundGroup.NETHER_WART , "wart" );
         put(BlockSoundGroup.LANTERN , "lantern" );
         put(BlockSoundGroup.NETHER_STEM, "fungi_stem");
@@ -55,7 +59,8 @@ public class BlockInfo
         put(BlockSoundGroup.FUNGUS, "fungus");
         put(BlockSoundGroup.ROOTS, "roots");
         put(BlockSoundGroup.SHROOMLIGHT, "shroomlight");
-        put(BlockSoundGroup.WEEPING_VINES, "weeping_vines");
+        put(BlockSoundGroup.WEEPING_VINES, "weeping_vine");
+        put(BlockSoundGroup.WEEPING_VINES_LOW_PITCH, "twisting_vine");
         put(BlockSoundGroup.SOUL_SAND, "soul_sand");
         put(BlockSoundGroup.SOUL_SOIL, "soul_soil");
         put(BlockSoundGroup.BASALT, "basalt");
@@ -75,11 +80,31 @@ public class BlockInfo
         put(BlockSoundGroup.AMETHYST_BLOCK, "amethyst");
         put(BlockSoundGroup.AMETHYST_CLUSTER, "amethyst_cluster");
         put(BlockSoundGroup.SMALL_AMETHYST_BUD, "small_amethyst_bud");
-        put(BlockSoundGroup.LARGE_AMETHYST_BUD, "large_amethyst_bud");
         put(BlockSoundGroup.MEDIUM_AMETHYST_BUD, "medium_amethyst_bud");
+        put(BlockSoundGroup.LARGE_AMETHYST_BUD, "large_amethyst_bud");
+
         put(BlockSoundGroup.TUFF, "tuff");
         put(BlockSoundGroup.CALCITE, "calcite");
+        put(BlockSoundGroup.DRIPSTONE_BLOCK, "dripstone");
+        put(BlockSoundGroup.POINTED_DRIPSTONE, "pointed_dripstone");
         put(BlockSoundGroup.COPPER, "copper");
+        put(BlockSoundGroup.CAVE_VINES, "cave_vine");
+        put(BlockSoundGroup.SPORE_BLOSSOM, "spore_blossom");
+        put(BlockSoundGroup.AZALEA, "azalea");
+        put(BlockSoundGroup.FLOWERING_AZALEA, "flowering_azalea");
+        put(BlockSoundGroup.MOSS_CARPET, "moss_carpet");
+        put(BlockSoundGroup.MOSS_BLOCK, "moss");
+        put(BlockSoundGroup.BIG_DRIPLEAF, "big_dripleaf");
+        put(BlockSoundGroup.SMALL_DRIPLEAF, "small_dripleaf");
+        put(BlockSoundGroup.ROOTED_DIRT, "rooted_dirt");
+        put(BlockSoundGroup.HANGING_ROOTS, "hanging_roots");
+        put(BlockSoundGroup.AZALEA_LEAVES, "azalea_leaves");
+        put(BlockSoundGroup.SCULK_SENSOR, "sculk_sensor");
+        put(BlockSoundGroup.GLOW_LICHEN, "glow_lichen");
+        put(BlockSoundGroup.DEEPSLATE, "deepslate");
+        put(BlockSoundGroup.DEEPSLATE_BRICKS, "deepslate_bricks");
+        put(BlockSoundGroup.DEEPSLATE_TILES, "deepslate_tiles");
+        put(BlockSoundGroup.POLISHED_DEEPSLATE, "polished_deepslate");
     }};
 
     public static final Map<MapColor, String> mapColourName = new HashMap<MapColor, String>() {{
@@ -142,6 +167,10 @@ public class BlockInfo
         put(MapColor.DARK_AQUA           , "warped_stem"           );
         put(MapColor.DARK_DULL_PINK         , "warped_hyphae"         );
         put(MapColor.BRIGHT_TEAL           , "warped_wart"           );
+        put(MapColor.DEEPSLATE_GRAY           , "deepslate"           );
+        put(MapColor.RAW_IRON_PINK           , "raw_iron"           );
+        put(MapColor.LICHEN_GREEN           , "glow_lichen"           );
+
     }};
 
     public static final Map<Material, String> materialName = new HashMap<Material, String>() {{
@@ -152,6 +181,7 @@ public class BlockInfo
         put(Material.PLANT          , "plant"        );
         put(Material.UNDERWATER_PLANT, "water_plant" );
         put(Material.REPLACEABLE_PLANT, "vegetation"       );
+        put(Material.NETHER_SHOOTS, "nether_shoots"    );
         put(Material.REPLACEABLE_UNDERWATER_PLANT, "sea_grass"    );
         put(Material.WATER          , "water"        );
         put(Material.BUBBLE_COLUMN  , "bubble_column");
@@ -160,6 +190,7 @@ public class BlockInfo
         put(Material.FIRE           , "fire"         );
         put(Material.DECORATION      , "decoration"   );
         put(Material.COBWEB         , "cobweb"       );
+        put(Material.SCULK         , "sculk"       );
         put(Material.REDSTONE_LAMP  , "redstone_lamp");
         put(Material.ORGANIC_PRODUCT, "clay"         );
         put(Material.SOIL           , "dirt"         );
@@ -189,6 +220,7 @@ public class BlockInfo
         put(Material.EGG            , "dragon_egg"   );
         put(Material.CAKE           , "cake"         );
         put(Material.AMETHYST       , "amethyst"     );
+        put(Material.POWDER_SNOW    , "powder_snow");
     }};
 
     public static List<BaseText> blockInfo(BlockPos pos, ServerWorld world)
