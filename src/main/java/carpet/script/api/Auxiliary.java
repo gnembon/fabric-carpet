@@ -650,7 +650,10 @@ public class Auxiliary {
             ServerCommandSource s = ((CarpetContext)c).s;
             s.getServer().getPlayerManager().saveAllPlayerData();
             s.getServer().save(true,true,true);
-            s.getWorld().getChunkManager().tick(() -> true);
+            for (ServerWorld world : s.getServer().getWorlds())
+            {
+                world.getChunkManager().tick(() -> true, false);
+            }
             CarpetScriptServer.LOG.warn("Saved chunks");
             return Value.TRUE;
         });
