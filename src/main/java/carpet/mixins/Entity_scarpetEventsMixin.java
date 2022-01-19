@@ -3,6 +3,7 @@ package carpet.mixins;
 import carpet.fakes.EntityInterface;
 import carpet.script.EntityEventsGroup;
 import net.minecraft.entity.Entity;
+import net.minecraft.util.math.Vec3d;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
@@ -19,9 +20,13 @@ public abstract class Entity_scarpetEventsMixin implements EntityInterface
 
     @Shadow public abstract boolean isRemoved();
 
+    @Shadow private Vec3d pos, velocity;
+
     private boolean permanentVehicle;
 
     private final EntityEventsGroup events = new EntityEventsGroup((Entity) (Object)this);
+
+    private Vec3d pos1, motion;
 
     @Override
     public EntityEventsGroup getEventContainer()
@@ -79,4 +84,16 @@ public abstract class Entity_scarpetEventsMixin implements EntityInterface
     }
 
 
+    @Inject(method = "setPos", at = @At("HEAD"))
+    private void firstPos(CallbackInfo ci)
+    {
+        pos1 = this.pos;
+        motion = this.velocity;
+    }
+
+    @Inject(method = "setPos", at = @At("TAIL"))
+    private void secondPos(CallbackInfo ci)
+    {
+        events.onEvent(EntityEventsGroup.Event.ON_MOVE, motion, pos1, this.pos);
+    }
 }

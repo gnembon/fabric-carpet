@@ -7,8 +7,10 @@ import carpet.script.value.FunctionValue;
 import carpet.script.value.NumericValue;
 import carpet.script.value.StringValue;
 import carpet.script.value.Value;
+import carpet.script.value.ValueConversions;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.damage.DamageSource;
+import net.minecraft.util.math.Vec3d;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -105,6 +107,19 @@ public class EntityEventsGroup
                         new NumericValue(amount),
                         new StringValue(source.getName()),
                         source.getAttacker()==null?Value.NULL:new EntityValue(source.getAttacker())
+                );
+            }
+        };
+        public static final Event ON_MOVE = new Event("on_move", 3)
+        {
+            @Override
+            public List<Value> makeArgs(Entity entity, Object... providedArgs)
+            {
+                return Arrays.asList(
+                        new EntityValue(entity),
+                        ValueConversions.of((Vec3d) providedArgs[0]),
+                        ValueConversions.of((Vec3d) providedArgs[1]),
+                        ValueConversions.of((Vec3d) providedArgs[2])
                 );
             }
         };

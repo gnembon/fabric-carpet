@@ -4,13 +4,12 @@ import net.minecraft.network.ClientConnection;
 import net.minecraft.network.Packet;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayNetworkHandler;
-import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.Text;
 import net.minecraft.text.TranslatableText;
 
 public class NetHandlerPlayServerFake extends ServerPlayNetworkHandler
 {
-    public NetHandlerPlayServerFake(MinecraftServer server, ClientConnection cc, ServerPlayerEntity playerIn)
+    public NetHandlerPlayServerFake(MinecraftServer server, ClientConnection cc, EntityPlayerMPFake playerIn)
     {
         super(server, cc, playerIn);
     }
@@ -23,9 +22,9 @@ public class NetHandlerPlayServerFake extends ServerPlayNetworkHandler
     @Override
     public void disconnect(Text message)
     {
-        if (player instanceof EntityPlayerMPFake && message instanceof TranslatableText && ((TranslatableText) message).getKey().equals("multiplayer.disconnect.idling"))
+        if (message instanceof TranslatableText text && (text.getKey().equals("multiplayer.disconnect.idling") || text.getKey().equals("multiplayer.disconnect.duplicate_login")))
         {
-            ((EntityPlayerMPFake) player).kill(new TranslatableText(((TranslatableText) message).getKey()));
+            ((EntityPlayerMPFake) player).kill(message);
         }
     }
 }
