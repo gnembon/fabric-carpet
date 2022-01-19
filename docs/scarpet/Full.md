@@ -437,7 +437,7 @@ Or an example to find if a player has specific enchantment on a held axe (either
 
 <pre>
 global_get_enchantment(p, ench) -> (
-$   for(['main','offhand'],
+$   for(['mainhand','offhand'],
 $      holds = query(p, 'holds', _);
 $      if( holds,
 $         [what, count, nbt] = holds;
@@ -2068,7 +2068,7 @@ in a list and contain of map-like resources descriptors, looking like
 or a relative location in the same folder as the app in question (the relative location directly). 
 `'target'` points to the path in app data, or shared app data folder. If not specified it will place the app into the main data folder with the name it has.
 if `'shared'` is specified and `true`. When re-downloading the app, all resources will be re-downloaded as well. 
-Currently, app resources are only downloaded when using `/carpet download` command.
+Currently, app resources are only downloaded when using `/script download` command.
 *   `libraries` - list of libraries or apps to be downloaded when installing the app from the app store. It needs to be a list of map-like resource
 descriptors, like the above `resources` field.
    ```
@@ -2476,15 +2476,11 @@ Throws `unknown_poi` if the provided point of interest doesn't exist
 ### `set_biome(pos, biome_name, update=true)`
 
 Changes the biome at that block position. if update is specified and false, then chunk will not be refreshed
-on the clients. Biome changes can only be send to clients with the entire data from the chunk.
+on the clients. Biome changes can only be sent to clients with the entire data from the chunk.
 
-Setting a biome is now (as of 1.16) dimension specific. In the overworld and the end changing the biome
-is only effective if you set it at y=0, and affects the entire column of. In the nether - you have to use the
-specific Y coordinate of the biome you want to change, and it affects roughly 4x4x4 area (give or take some random
-noise).
-
-This changed again in 1.18. The overworld behaves like the nether now, the biome must be set
-for individual y coordinates.
+Be aware that depending on the MC version and dimension settings biome can be set either in a 1x1x256
+column or 4x4x4 hyperblock, so for some versions Y will be ignored and for some precision of biome
+setting is less than 1x1x1 block.
 
 Throws `unknown_biome` if the `biome_name` doesn't exist.
 
@@ -3437,13 +3433,19 @@ List of entities riding the entity.
 
 Entity that `e` rides.
 
-### `query(e, 'scoreboard_tags')` and 
-### `query(e, 'tags')`(deprecated)
+### `(deprecated) query(e, 'tags')`
+
+Deprecated by `query(e, 'scoreboard_tags')`
+
+### `query(e, 'scoreboard_tags')`
 
 List of entity's scoreboard tags.
 
-### `query(e, 'has_scoreboard_tag',tag)` and
-### `query(e, 'has_tag',tag)`(deprecated)
+### `(deprecated) query(e, 'has_tag',tag)`
+
+Deprecated by `query(e, 'has_scoreboard_tag',tag)`
+
+### `query(e, 'has_scoreboard_tag',tag)`
 
 Boolean, true if the entity is marked with a `tag` scoreboad tag.
 
@@ -4087,6 +4089,7 @@ defining the callback with `entity_event`.
 The following events can be handled by entities:
 
 *   `'on_tick'`: executes every tick right before the entity is ticked in the game. Required arguments: `entity`
+*   `'on_move'`: executes every time an entity changes position, invoked just after it has been moved to the new position. Required arguments: `entity, velocity, pos1, pos2`
 *   `'on_death'`: executes once when a living entity dies. Required arguments: `entity, reason`
 *   `'on_removed'`: execute once when an entity is removed. Required arguments: `entity`
 *   `'on_damaged'`: executed every time a living entity is about to receive damage.
@@ -4386,7 +4389,275 @@ Returns size of the actual dropped items.
 inventory_drop(player(), 0, 1) => 1 // Q's one item on the ground
 inventory_drop(x,y,z, 0) => 64 // removed and spawned in the world a full stack of items
 </pre>
-# Scarpet events system
+
+## Screens
+
+A screen is a value type used to open screens for a player and interact with them.
+For example, this includes the chest inventory gui, the crafting table gui and many more.
+
+### `create_screen(player, type, name, callback?)`
+
+Creates and opens a screen for a `player`.
+
+Available `type`s:
+
+* `anvil`
+* `beacon`
+* `blast_furnace`
+* `brewing_stand`
+* `cartography_table`
+* `crafting`
+* `enchantment`
+* `furnace`
+* `generic_3x3`
+* `generic_9x1`
+* `generic_9x2`
+* `generic_9x3`
+* `generic_9x4`
+* `generic_9x5`
+* `generic_9x6`
+* `grindstone`
+* `hopper`
+* `lectern`
+* `loom`
+* `merchant`
+* `shulker_box`
+* `smithing`
+* `smoker`
+* `stonecutter`
+
+The `name` parameter can be a formatted text and will be displayed at the top of the screen.
+Some screens like the lectern or beacon screen don't show it.
+
+Optionally, a `callback` function can be passed as the fourth argument.
+This functions needs to have four parameters:
+`_(screen, player, action, data) -> ...`
+
+The `screen` parameter is the screen value of the screen itself.
+`player` is the player who interacted with the screen.
+`action` is a string corresponding to the interaction type.
+Can be any of the following:
+
+Slot interactions:
+
+* `pickup`
+* `quick_move`
+* `swap`
+* `clone`
+* `throw`
+* `quick_craft`
+* `pickup_all`
+
+The `data` for this interaction is a map, with a `slot` and `button` value.
+`slot` is the slot index of the slot that was clicked.
+When holding an item in the cursor stack and clicking inside the screen,
+but not in a slot, this is -1.
+If clicked outside the screen (where it would drop held items), this value is null.
+The `button` is the mouse button used to click the slot.
+
+For the `swap` action, the `button` is the number key 0-8 for a certain hotbar slot.
+
+For the `quick_craft` action, the `data` also contains the `quick_craft_stage`,
+which is either 0 (beginning of quick crafting), 1 (adding item to slot) or 2 (end of quick crafting).
+
+Other interactions:
+
+* `button` Pressing a button in certain screens that have button elements (enchantment table, lectern, loom and stonecutter)
+The `data` provides a `button`, which is the index of the button that was pressed.
+Note that for lecterns, this index can be certain a value above 100, for jumping to a certain page.
+This can come from formatted text inside the book, with a `change_page` click event action.
+
+* `close` Triggers when the screen gets closed. No `data` provided.
+
+* `select_recipe` When clicking on a recipe in the recipe book.
+`data` contains a `recipe`, which is the identifier of the clicked recipe,
+as well as `craft_all`, which is a boolean specifying whether
+shift was pressed when selecting the recipe.
+
+* `slot_update` Gets called **after** a slot has changed contents. `data` provides a `slot` and `stack`.
+
+By returning a string `'cancel'` in the callback function,
+the screen interaction can be cancelled.
+This doesn't work for the `close` action.
+
+The `create_screen` function returns a `screen` value,
+which can be used in all inventory related functions to access the screens' slots.
+The screen inventory covers all slots in the screen and the player inventory.
+The last slot is the cursor stack of the screen,
+meaning that using `-1` can be used to modify the stack the players' cursor is holding.
+
+### `close_screen(screen)`
+
+Closes the screen of the given screen value.
+Returns `true` if the screen was closed.
+If the screen is already closed, returns `false`.
+
+### `screen_property(screen, property)`
+
+### `screen_property(screen, property, value)`
+
+Queries or modifies a certain `property` of a `screen`.
+The `property` is a string with the name of the property.
+When called with `screen` and `property` parameter, returns the current value of the property.
+When specifying a `value`,
+the property will be assigned the new `value` and synced with the client.
+
+**Options for `property` string:**
+
+| `property` | Required screen type | Type | Description |
+|---|---|---|---|
+| `name` | **All** | text | The name of the screen, as specified in the `create_screen()` function. Can only be queried. |
+| `open` | **All** | boolean | Returns `true` if the screen is open, `false` otherwise. Can only be queried. |
+| `fuel_progress` | furnace/smoker/blast_furnace | number | Current value of the fuel indicator. |
+| `max_fuel_progress` | furnace/smoker/blast_furnace | number | Maximum value for the full fuel indicator. |
+| `cook_progress` | furnace/smoker/blast_furnace | number | Cooking progress indicator value. |
+| `max_cook_progress` | furnace/smoker/blast_furnace | number | Maximum value for the cooking progress indicator. |
+| `level_cost` | anvil | number | Displayed level cost for the anvil. |
+| `page` | lectern | number | Opened page in the lectern screen. |
+| `beacon_level` | beacon | number | The power level of the beacon screen. This affects how many effects under primary power are grayed out. Should be a value between 0-5. |
+| `primary_effect` | beacon | number | The effect id of the primary effect. This changes the effect icon on the button on the secondary power side next to the regeneration effect. |
+| `secondary_effect` | beacon | number | The effect id of the secondary effect. This seems to change nothing, but it exists. |
+| `brew_time` | brewing_stand | number | The brewing time indicator value. This goes from 0 to 400. |
+| `brewing_fuel` | brewing_stand | number | The fuel indicator progress. Values range between 0 to 20. |
+| `enchantment_power_x` | enchantment | number | The level cost of the shown enchantment. Replace `x` with 1, 2 or 3 (e.g. `enchantment_power_2`) to target the first, second or third enchantment. |
+| `enchantment_id_x` | enchantment | number | The id of the enchantment shown (replace `x` with the enchantment slot 1/2/3). |
+| `enchantment_level_x` | enchantment | number | The enchantment level of the enchantment. |
+| `enchantment_seed` | enchantment | number | The seed of the enchanting screen. This affects the text shown in the standard Galactic alphabet. |
+| `banner_pattern` | loom | number | The selected banner pattern inside the loom. |
+| `stonecutter_recipe` | stonecutter | number | The selected recipe in the stonecutter. |
+
+### Screen example scripts
+
+<details>
+<summary>Chest click event</summary>
+
+```py
+__command() -> (
+    create_screen(player(),'generic_9x6',format('db Test'),_(screen, player, action, data) -> (
+        print(player('all'),str('%s\n%s\n%s',player,action,data)); //for testing
+        if(action=='pickup',
+            inventory_set(screen,data:'slot',1,if(inventory_get(screen,data:'slot'),'air','red_stained_glass_pane'));
+        );
+        'cancel'
+    ));
+);
+```
+</details>
+
+<details>
+<summary>Anvil text prompt</summary>
+
+```py
+// anvil text prompt gui
+__command() -> (
+    global_screen = create_screen(player(),'anvil',format('r Enter a text'),_(screen, player, action, data)->(
+        if(action == 'pickup' && data:'slot' == 2,
+            renamed_item = inventory_get(screen,2);
+            nbt = renamed_item:2;
+            name = parse_nbt(nbt:'display':'Name'):'text';
+            if(!name, return('cancel')); //don't accept empty string
+            print(player,'Text: ' + name);
+            close_screen(screen);
+        );
+        'cancel'
+    ));
+    inventory_set(global_screen,0,1,'paper','{display:{Name:\'{"text":""}\'}}');
+);
+
+```
+</details>
+
+<details>
+<summary>Lectern flip book</summary>
+
+```py
+// flip book lectern
+
+global_fac = 256/60;
+curve(v) -> (
+    v = v%360;
+    if(v<60,v*global_fac,v<180,255,v<240,255-(v-180)*global_fac,0);
+);
+
+hex_from_hue(hue) -> str('#%02X%02X%02X',curve(hue+120),curve(hue),curve(hue+240));
+
+make_char(hue) -> str('{"text":"▉","color":"%s"}',hex_from_hue(hue));
+
+make_page(hue) -> (
+    page = '[';
+    loop(15, //row
+        y = _;
+        loop(14, //col
+            x = _;
+            page += make_char(hue+x*4+y*4) + ',';
+        );
+    );
+    return(slice(page,0,-2)+']');
+);
+
+
+__command() -> (
+    screen = create_screen(player(),'lectern','Lectern example (this text is not visible)',_(screen, player, action, data)->(
+        if(action=='button',
+            print(player,'Button: ' + data:'button');
+        );
+        'cancel'
+    ));
+
+    page_count = 60;
+    pages = [];
+
+    loop(page_count,
+        hue = _/page_count*360;
+        pages += make_page(hue);
+    );
+
+    nbt = encode_nbt({
+        'pages'-> pages,
+        'author'->'-',
+        'title'->'-',
+        'resolved'->1
+    });
+
+    inventory_set(screen,0,1,'written_book',nbt);
+
+    task(_(outer(screen),outer(page_count))->(
+        while(screen != null && screen_property(screen,'open'),100000,
+            p = (p+1)%page_count;
+            screen_property(screen,'page',p);
+            sleep(50);
+        );
+    ));
+);
+
+```
+</details>
+
+<details>
+<summary>generic_3x3 cursor stack</summary>
+
+```py
+__command() -> (
+    screen = create_screen(player(),'generic_3x3','Title',_(screen, player, action, data) -> (
+        if(action=='pickup',
+            // set slot to the cursor stack item
+            inventory_set(screen,data:'slot',1,inventory_get(screen,-1):0);
+        );
+        'cancel'
+    ));
+
+    task(_(outer(screen))->(
+        // keep the cursor stack item blinking
+        while(screen_property(screen,'open'),100000,
+            inventory_set(screen,-1,1,'red_concrete');
+            sleep(500);
+            inventory_set(screen,-1,1,'lime_concrete');
+            sleep(500);
+        );
+    ));
+);
+```
+</details># Scarpet events system
 
 Scarpet provides the ability to execute specific function whenever an event occurs. The functions to be subscribed for an event 
 need to conform with the arguments to the event specification. There are several built-in events triggered when certain in-game
@@ -5219,6 +5490,8 @@ Decorators (listed as extra argument after the component they would affect):
  * `'^<format> <text>'` - hover over tooltip text, appearing when hovering with your mouse over the text below.
  * `'?<suggestion>` - command suggestion - a message that will be pasted to chat when text below it is clicked.
  * `'!<message>'` - a chat message that will be executed when the text below it is clicked.
+ * `'@<url>'` - a URL that will be opened when the text below it is clicked.
+ * `'&<text>'` - a text that will be copied to clipboard when the text below it is clicked.
  
 Both suggestions and messages can contain a command, which will be executed as a player that clicks it.
 
@@ -5396,7 +5669,7 @@ Returns `true` if creation and loading of the datapack was successful. Loading o
 reloading of all other datapacks (vanilla restrictions, identical to /datapack enable), however unlike with `/reload` 
 command, scarpet apps will not be reloaded by adding a datapack using `create_datapack`.
 
-Currently, only json files are supported in the packs. `'pack.mcmeta'` file is added automatically.
+Currently, only json/nbt/mcfunction files are supported in the packs. `'pack.mcmeta'` file is added automatically.
 
 Reloading of datapacks that define new dimensions is not implemented in vanilla. Vanilla game only loads 
 dimension information on server start. `create_datapack` is therefore a direct replacement of manually ploping of the specified 
@@ -5513,6 +5786,10 @@ script run create_datapack('craftable_cobwebs', {
 });
 </pre>
 
+Function example:
+<pre>
+ script run create_datapack('example',{'data/test/functions/talk.mcfunction'->'say 1\nsay 2'})
+</pre>
 ### `enable_hidden_dimensions()`
 
 The function reads current datapack settings detecting new dimensions defined by these datapacks that have not yet been added
@@ -5648,13 +5925,13 @@ Fetches the value of a system property or returns all inforation as a map when c
 fetch various information, mostly not changing, or only available via low level
 system calls. In all circumstances, these are only provided as read-only.
 
-Available options in the scarpet app space:
+##### Available options in the scarpet app space:
   * `app_name` - current app name or `null` if its a default app
   * `app_list` - list of all loaded apps excluding default commandline app
   * `app_scope` - scope of the global variables and function. Available options is `player` and `global`
-  * `app_player` - returns a player list that have app run under them. For `global` apps, the list is always empty
+  * `app_players` - returns a player list that have app run under them. For `global` apps, the list is always empty
  
- Relevant world related properties
+##### Relevant world related properties
   * `world_name` - name of the world
   * `world_seed` - a numeric seed of the world
   * `world_dimensions` - a list of dimensions in the world
@@ -5667,9 +5944,10 @@ Available options in the scarpet app space:
   * `world_top` - Returns current dimensions' topmost Y value where one can place blocks.
   * `world_bottom` - Returns current dimensions' bottommost Y value where one can place blocks.
   * `world_center` - Returns coordinates of the center of the world with respect of the world border
-  * `world_size` - Returns size of the world where at this distance from `world_center` world border appears.
+  * `world_size` - Returns radius of world border for current dimension.
+  * `world_max_size` - Returns maximum possible radius of world border for current dimension.
   * 
- Relevant gameplay related properties
+##### Relevant gameplay related properties
   * `game_difficulty` - current difficulty of the game: `'peaceful'`, `'easy'`, `'normal'`, or `'hard'`
   * `game_hardcore` - boolean whether the game is in hardcore mode
   * `game_storage_format` - format of the world save files, either `'McRegion'` or `'Anvil'`
@@ -5680,13 +5958,13 @@ Available options in the scarpet app space:
   * `game_version` - base version of the game
   * `game_target` - target release version
   * `game_major_target` - major release target. For 1.12.2, that would be 12
-  * `game_minor_reease` - minor release target. For 1.12.2, that woudl be 2
+  * `game_minor_release` - minor release target. For 1.12.2, that would be 2
   * `game_protocol` - protocol version number
   * `game_pack_version` - datapack version number
   * `game_data_version` - data version of the game. Returns an integer, so it can be compared.
   * `game_stable` - indicating if its a production release or a snapshot
   
- Server related properties
+##### Server related properties
  * `server_motd` - the motd of the server visible when joining
  * `server_ip` - IP adress of the game hosted
  * `server_whitelisted` - boolean indicating whether the access to the server is only for whitelisted players
@@ -5701,7 +5979,21 @@ list may refer to the previous tick performance. In this case the last entry (ti
 tick. For all intent and purpose, `system_info('last_tick_times'):0` should be used as last tick execution time, but
 individual tick times may vary greatly, and these need to be taken with the little grain of averaging.
  
- System related properties
+##### Source related properties
+ 
+ The source is what is the cause of the code running, with Carpet using it same way as Minecraft commands use to run. Those are used in
+ some API functions that interact with the game or with commands, and can be manipulated if the execution is caused by an `execute` command, modified
+ by some functions or ran in non-standard ways. This section provides useful information from these cases (like running from a command
+ block, right clicking a sign, etc)
+ * `source_entity` - The entity associated with the execution. This is usually a player (in which case `player()` would get the entity from this),
+                         but it may also be a different entity or `null` if the execution comes from the server console or a command block.
+ * `source_position` - The position associated with the execution. This is usually the position of the entity, but it may have been manipulated or
+                           it could come from a command block (no entity then). If this call comes from the server console, it will be the world spawn.
+ * `source_dimension` - The dimension associated with the execution. Execution from the server console provides `overworld` as the dimension.
+                            This can be manipulated by running code inside `in_dimension()`.
+ * `source_rotation` - The rotation associated with the execution. Usually `[0, 0]` in non-standard situations, the rotation of the entity otherwise.
+ 
+##### System related properties
  * `java_max_memory` - maximum allowed memory accessible by JVM
  * `java_allocated_memory` - currently allocated memory by JVM
  * `java_used_memory` - currently used memory by JVM
@@ -5711,7 +6003,7 @@ individual tick times may vary greatly, and these need to be taken with the litt
  * `java_system_cpu_load` - current percentage of CPU used by the system
  * `java_process_cpu_load` - current percentage of CPU used by JVM
  
- Scarpet related properties
+##### Scarpet related properties
  * `scarpet_version` - returns the version of the carpet your scarpet comes with.
 
 ## NBT Storage
