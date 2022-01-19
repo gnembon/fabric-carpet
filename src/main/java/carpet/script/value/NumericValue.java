@@ -56,7 +56,7 @@ public class NumericValue extends Value
         }
         try
         {
-            if (Double.isInfinite(value)) return (value>0)?"+INFINITY":"-INFINITY";
+            if (Double.isInfinite(value)) return (value>0)?"INFINITY":"-INFINITY";
             if (Double.isNaN(value)) return "NaN";
             if (abs(value) < epsilon) return (signum(value) < 0)?"-0":"0"; //zero rounding fails with big decimals
             // dobules have 16 point precision, 12 is plenty to display
