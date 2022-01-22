@@ -26,8 +26,15 @@ global_renderers = m(
         'tasks' -> {}
     }
 );
-
+structure_list = plop():'structures';
+__preprocess_suggestion(iterable)->(
+	retVal = {};
+	for(iterable, retVal += (get(split(':',_),-1)));
+	retVal
+);
+global_parsed_structures = __preprocess_suggestion(structure_list);
 global_shapes = {'sphere' -> [], 'box' -> []};
+
 
 __config() ->
 {
@@ -44,7 +51,9 @@ __config() ->
         'clear' -> 'clear',
     },
     'arguments' -> {
-        'structure' -> {'type' -> 'term', 'suggest' -> plop():'structures' },
+        'structure' -> {'type' -> 'term', 
+	'options' -> keys(global_parsed_structures)
+	},
         'radius' -> {'type' -> 'int', 'min' -> 0, 'max' -> 1024, 'suggest' -> [128, 24, 32]},
         'shape' -> {'type' -> 'term', 'options' -> keys(global_shapes) },
         'color' -> {'type' -> 'teamcolor'}
@@ -96,6 +105,7 @@ __toggle(feature, renderer) ->
 (
     p = player();
     config = global_renderers:renderer;
+    feature = __validify(feature, renderer);
     if( has(config:'tasks':feature),
         delete(config:'tasks':feature);
         print(p, format('gi disabled '+feature+' overlays'));
@@ -105,7 +115,15 @@ __toggle(feature, renderer) ->
         print(p, format('gi enabled '+feature+' overlays'));
     )
 );
-
+__validify(feature, renderer)->
+(
+	if(renderer == 'structures',
+		return(first(plop():renderer,
+			_~feature
+			));
+		,return(feature);
+	)
+);
 __should_run(renderer, player_name) ->
 (
     config = global_renderers:renderer;
