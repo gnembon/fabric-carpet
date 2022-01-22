@@ -13,6 +13,7 @@ import carpet.CarpetServer;
 import carpet.script.bundled.FileModule;
 import carpet.script.bundled.Module;
 import carpet.script.exception.ExpressionException;
+import carpet.script.exception.LoadException;
 import carpet.script.language.Arithmetic;
 import carpet.script.language.ControlFlow;
 import carpet.script.language.DataStructures;
@@ -257,10 +258,14 @@ public class CarpetScriptServer
             Messenger.m(source, "r Failed to add "+name+" app");
             return false;
         }
-        CarpetScriptHost newHost = CarpetScriptHost.create(this, module, perPlayer, source, commandValidator, isRuleApp, installer);
-        if (newHost == null)
+        CarpetScriptHost newHost;
+        try
         {
-            Messenger.m(source, "r Failed to add "+name+" app");
+            newHost = CarpetScriptHost.create(this, module, perPlayer, source, commandValidator, isRuleApp, installer);
+        }
+        catch (LoadException e)
+        {
+            Messenger.m(source, "r Failed to add " + name + " app" + (e.getMessage() == null ? "" : ": " + e.getMessage()));
             return false;
         }
         // config needs to be read as we load the app since some events use that info

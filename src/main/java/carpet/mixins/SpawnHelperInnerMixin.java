@@ -20,15 +20,15 @@ public class SpawnHelperInnerMixin implements SpawnHelperInnerInterface
 
     @Shadow @Final private GravityField densityField;
 
-    @Shadow @Final private Object2IntOpenHashMap<SpawnGroup> groupToCount;
+    //@Shadow @Final private Object2IntOpenHashMap<SpawnGroup> groupToCount;
 
-    @Inject(method = "isBelowCap", at = @At("HEAD"), cancellable = true)
+    /*@Inject(method = "isBelowCap", at = @At("HEAD"), cancellable = true)
     private void changeMobCaps(SpawnGroup entityCategory, CallbackInfoReturnable<Boolean> cir)
     {
         int newCap = (int) ((double)entityCategory.getCapacity()*(Math.pow(2.0,(SpawnReporter.mobcap_exponent/4))));
         int i = newCap * spawningChunkCount / SpawnReporter.MAGIC_NUMBER;
         cir.setReturnValue(groupToCount.getInt(entityCategory) < i);
-    }
+    }*/
 
 
 

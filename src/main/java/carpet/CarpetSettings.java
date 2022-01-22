@@ -43,7 +43,7 @@ import static carpet.settings.RuleCategory.CLIENT;
 @SuppressWarnings("CanBeFinal")
 public class CarpetSettings
 {
-    public static final String carpetVersion = "1.4.56+v211130";
+    public static final String carpetVersion = "1.4.58+v220120";
     public static final Logger LOG = LogManager.getLogger("carpet");
     public static ThreadLocal<Boolean> skipGenerationChecks = ThreadLocal.withInitial(() -> false);
     public static ThreadLocal<Boolean> impendingFillSkipUpdates = ThreadLocal.withInitial(() -> false);
@@ -205,13 +205,46 @@ public class CarpetSettings
     @Rule( desc = "Players absorb XP instantly, without delay", category = CREATIVE )
     public static boolean xpNoCooldown = false;
 
+    public static class StackableShulkerBoxValidator extends Validator<String> 
+    {
+        @Override
+        public String validate(ServerCommandSource source, ParsedRule<String> currentRule, String newValue, String string)
+        {
+            if (newValue.matches("^[0-9]+$")) {
+                int value = Integer.parseInt(newValue);
+                if (value <= 64 && value >= 2) {
+                    shulkerBoxStackSize = value;
+                    return newValue;
+                }
+            }
+            if (newValue.equalsIgnoreCase("false")) {
+                shulkerBoxStackSize = 1;
+                return newValue;
+            }
+            if (newValue.equalsIgnoreCase("true")) {
+                shulkerBoxStackSize = 64;
+                return newValue;
+            }
+            return null;
+        }
+
+        @Override
+        public String description()
+        {
+            return "Value must either be true, false, or a number between 2-64";
+        }
+    }
+
     @Rule(
-            desc = "Empty shulker boxes can stack to 64 when dropped on the ground",
+            desc = "Empty shulker boxes can stack when thrown on the ground.",
             extra = ".. or when manipulated inside the inventories",
+            validate = StackableShulkerBoxValidator.class,
+            options = {"false", "true", "16"},
+            strict = false,
             category = {SURVIVAL, FEATURE}
     )
-    public static boolean stackableShulkerBoxes = false;
-    public static final int SHULKER_STACK_SIZE = 64;
+    public static String stackableShulkerBoxes = "false";
+    public static int shulkerBoxStackSize = 1;
 
     @Rule( desc = "Explosions won't destroy blocks", category = {CREATIVE, TNT} )
     public static boolean explosionNoBlockDamage = false;

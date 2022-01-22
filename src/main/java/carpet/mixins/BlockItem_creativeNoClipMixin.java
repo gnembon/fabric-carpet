@@ -28,7 +28,7 @@ public class BlockItem_creativeNoClipMixin
         {
             // copy from canPlace
             VoxelShape voxelShape = state.getCollisionShape(world, pos, context);
-            return voxelShape.isEmpty() || world.intersectsEntities(player, voxelShape.offset(pos.getX(), pos.getY(), pos.getZ()));
+            return voxelShape.isEmpty() || world.doesNotIntersectEntities(player, voxelShape.offset(pos.getX(), pos.getY(), pos.getZ()));
 
         }
         return world.canPlace(state, pos, context);

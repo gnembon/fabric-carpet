@@ -389,7 +389,7 @@ public abstract class ThreadedAnvilChunkStorage_scarpetChunkCreationMixin implem
 
             final ChunkHolder oldHolder = this.currentChunkHolders.remove(pos);
             final ChunkHolder newHolder = new ChunkHolder(cPos, oldHolder.getLevel(), world, this.lightingProvider, this.chunkTaskPrioritySystem, (ChunkHolder.PlayersWatchingChunkProvider) this);
-            ((ChunkHolderInterface) newHolder).setDefaultProtoChunk(cPos, this.mainThreadExecutor, world);
+            ((ChunkHolderInterface) newHolder).setDefaultProtoChunk(cPos, this.mainThreadExecutor, world); // enable chunk blending?
             this.currentChunkHolders.put(pos, newHolder);
 
             ((ChunkTicketManagerInterface) this.ticketManager).replaceHolder(oldHolder, newHolder);

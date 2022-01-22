@@ -90,7 +90,7 @@ public class ShapesRenderer
             );
             MatrixStack matrixStack = RenderSystem.getModelViewStack();
             matrixStack.push();
-            matrixStack.method_34425(matrices.peek().getModel());
+            matrixStack.multiplyPositionMatrix(matrices.peek().getPositionMatrix());
             RenderSystem.applyModelViewMatrix();
 
             // lines
@@ -303,7 +303,7 @@ public class ShapesRenderer
                 text_x = (float)(-textRenderer.getWidth(shape.value.getString()));
             }
             VertexConsumerProvider.Immediate immediate = VertexConsumerProvider.immediate(builder);
-            textRenderer.draw(shape.value, text_x, 0.0F, shape.textcolor, false, matrices.peek().getModel(), immediate, false, shape.textbck, 15728880);
+            textRenderer.draw(shape.value, text_x, 0.0F, shape.textcolor, false, matrices.peek().getPositionMatrix(), immediate, false, shape.textbck, 15728880);
             immediate.draw();
             matrices.pop();
             RenderSystem.enableCull();

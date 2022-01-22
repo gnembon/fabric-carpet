@@ -215,13 +215,19 @@ List of entities riding the entity.
 
 Entity that `e` rides.
 
-### `query(e, 'scoreboard_tags')` and 
-### `query(e, 'tags')`(deprecated)
+### `(deprecated) query(e, 'tags')`
+
+Deprecated by `query(e, 'scoreboard_tags')`
+
+### `query(e, 'scoreboard_tags')`
 
 List of entity's scoreboard tags.
 
-### `query(e, 'has_scoreboard_tag',tag)` and
-### `query(e, 'has_tag',tag)`(deprecated)
+### `(deprecated) query(e, 'has_tag',tag)`
+
+Deprecated by `query(e, 'has_scoreboard_tag',tag)`
+
+### `query(e, 'has_scoreboard_tag',tag)`
 
 Boolean, true if the entity is marked with a `tag` scoreboad tag.
 
@@ -865,6 +871,7 @@ defining the callback with `entity_event`.
 The following events can be handled by entities:
 
 *   `'on_tick'`: executes every tick right before the entity is ticked in the game. Required arguments: `entity`
+*   `'on_move'`: executes every time an entity changes position, invoked just after it has been moved to the new position. Required arguments: `entity, velocity, pos1, pos2`
 *   `'on_death'`: executes once when a living entity dies. Required arguments: `entity, reason`
 *   `'on_removed'`: execute once when an entity is removed. Required arguments: `entity`
 *   `'on_damaged'`: executed every time a living entity is about to receive damage.

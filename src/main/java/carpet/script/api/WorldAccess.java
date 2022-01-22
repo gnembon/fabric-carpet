@@ -5,6 +5,7 @@ import carpet.CarpetSettings;
 import carpet.fakes.BiomeArrayInterface;
 import carpet.fakes.ChunkGeneratorInterface;
 import carpet.fakes.ChunkTicketManagerInterface;
+import carpet.fakes.NoiseColumnSamplerInterface;
 import carpet.fakes.ServerChunkManagerInterface;
 import carpet.fakes.ServerWorldInterface;
 import carpet.fakes.SpawnHelperInnerInterface;
@@ -16,6 +17,8 @@ import carpet.script.Context;
 import carpet.script.Expression;
 import carpet.script.Fluff;
 import carpet.script.LazyValue;
+import carpet.script.annotation.Locator;
+import carpet.script.annotation.ScarpetFunction;
 import carpet.script.argument.BlockArgument;
 import carpet.script.argument.Vector3Argument;
 import carpet.script.exception.InternalExpressionException;
@@ -84,6 +87,7 @@ import net.minecraft.util.math.BlockBox;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.util.math.Direction;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.registry.Registry;
 import net.minecraft.world.Heightmap;
@@ -91,11 +95,15 @@ import net.minecraft.world.LightType;
 import net.minecraft.world.SpawnHelper;
 import net.minecraft.world.World;
 import net.minecraft.world.biome.Biome;
+import net.minecraft.world.biome.source.BiomeCoords;
+import net.minecraft.world.biome.source.BiomeSource;
+import net.minecraft.world.biome.source.MultiNoiseBiomeSource;
+import net.minecraft.world.biome.source.util.MultiNoiseUtil;
 import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.chunk.ChunkStatus;
 import net.minecraft.world.chunk.WorldChunk;
 import net.minecraft.world.explosion.Explosion;
-import net.minecraft.world.gen.ChunkRandom;
+import net.minecraft.world.gen.random.ChunkRandom;
 import net.minecraft.world.gen.chunk.ChunkGenerator;
 import net.minecraft.world.gen.feature.ConfiguredStructureFeature;
 import net.minecraft.world.gen.feature.StructureFeature;
@@ -217,6 +225,20 @@ public class WorldAccess {
             throw new InternalExpressionException(value + " is not a valid value for property " + name);
         }
         return bs;
+    }
+
+    private static void nullCheck(Value v, String name) {
+        if (v.isNull()) {
+            throw new IllegalArgumentException(name + " cannot be null");
+        }
+    }
+
+    private static float numberGetOrThrow(Value v) {
+        double num = v.readDoubleNumber();
+        if (Double.isNaN(num)) {
+            throw new IllegalArgumentException(v.getString() + " needs to be a numeric value");
+        }
+        return (float) num;
     }
 
     private static void BooYah(ChunkGenerator generator)
@@ -341,7 +363,7 @@ public class WorldAccess {
             }
             String poiTypeString = poi.getString().toLowerCase(Locale.ROOT);
             PointOfInterestType type =  Registry.POINT_OF_INTEREST_TYPE.getOrEmpty(InputValidator.identifierOf(poiTypeString))
-            		.orElseThrow(() -> new ThrowStatement(poiTypeString, Throwables.UNKNOWN_POI));
+                    .orElseThrow(() -> new ThrowStatement(poiTypeString, Throwables.UNKNOWN_POI));
             int occupancy = 0;
             if (locator.offset + 1 < lv.size())
             {
@@ -543,7 +565,7 @@ public class WorldAccess {
         {
             c.host.issueDeprecation("loaded_ep(...)");
             BlockPos pos = BlockArgument.findIn((CarpetContext)c, lv, 0).block.getPos();
-            return BooleanValue.of(((CarpetContext)c).s.getWorld().method_37118(pos));// 1.17pre1 getChunkManager().shouldTickChunk(new ChunkPos(pos)));
+            return BooleanValue.of(((CarpetContext)c).s.getWorld().shouldTickEntity(pos));// 1.17pre1 getChunkManager().shouldTickChunk(new ChunkPos(pos)));
         });
 
         expression.addContextFunction("loaded_status", -1, (c, t, lv) ->
@@ -1127,19 +1149,55 @@ public class WorldAccess {
             return BooleanValue.of(blockLocator.block.getBlockState().isIn(blockTag));
         });
 
-
         expression.addContextFunction("biome", -1, (c, t, lv) -> {
-            CarpetContext cc = (CarpetContext)c;
+            CarpetContext cc = (CarpetContext) c;
             ServerWorld world = cc.s.getWorld();
             if (lv.size() == 0)
                 return ListValue.wrap(world.getRegistryManager().get(Registry.BIOME_KEY).getIds().stream().map(ValueConversions::of));
-            BlockArgument locator = BlockArgument.findIn(cc, lv, 0, false, false, true);
 
             Biome biome;
+            BiomeSource biomeSource = world.getChunkManager().getChunkGenerator().getBiomeSource();
+            if (   lv.size() == 1
+                && lv.get(0) instanceof MapValue map
+                && biomeSource instanceof MultiNoiseBiomeSource mnbs
+            ) {
+                Value temperature = map.get(new StringValue("temperature"));
+                nullCheck(temperature, "temperature");
+
+                Value humidity = map.get(new StringValue("humidity"));
+                nullCheck(humidity, "humidity");
+
+                Value continentalness = map.get(new StringValue("continentalness"));
+                nullCheck(continentalness, "continentalness");
+
+                Value erosion = map.get(new StringValue("erosion"));
+                nullCheck(erosion, "erosion");
+
+                Value depth = map.get(new StringValue("depth"));
+                nullCheck(depth, "depth");
+
+                Value weirdness = map.get(new StringValue("weirdness"));
+                nullCheck(weirdness, "weirdness");
+
+                MultiNoiseUtil.NoiseValuePoint point = new MultiNoiseUtil.NoiseValuePoint(
+                        MultiNoiseUtil.method_38665(numberGetOrThrow(temperature)),
+                        MultiNoiseUtil.method_38665(numberGetOrThrow(humidity)),
+                        MultiNoiseUtil.method_38665(numberGetOrThrow(continentalness)),
+                        MultiNoiseUtil.method_38665(numberGetOrThrow(erosion)),
+                        MultiNoiseUtil.method_38665(numberGetOrThrow(depth)),
+                        MultiNoiseUtil.method_38665(numberGetOrThrow(weirdness))
+                );
+                biome = mnbs.getBiomeAtPoint(point);
+                Identifier biomeId = cc.s.getServer().getRegistryManager().get(Registry.BIOME_KEY).getId(biome);
+                return new StringValue(NBTSerializableValue.nameFromRegistryId(biomeId));
+            }
+
+            BlockArgument locator = BlockArgument.findIn(cc, lv, 0, false, false, true);
+
             if (locator.replacement != null)
             {
                 biome = world.getRegistryManager().get(Registry.BIOME_KEY).get(InputValidator.identifierOf(locator.replacement));
-                if (biome == null) throw new ThrowStatement(locator.replacement, Throwables.UNKNOWN_BIOME) ;
+                if (biome == null) throw new ThrowStatement(locator.replacement, Throwables.UNKNOWN_BIOME);
             }
             else
             {
@@ -1154,7 +1212,8 @@ public class WorldAccess {
             }
             String biomeFeature = lv.get(locator.offset).getString();
             BiFunction<ServerWorld, Biome, Value> featureProvider = BiomeInfo.biomeFeatures.get(biomeFeature);
-            if (featureProvider == null) throw new InternalExpressionException("Unknown biome feature: "+biomeFeature);
+            if (featureProvider == null)
+                throw new InternalExpressionException("Unknown biome feature: " + biomeFeature);
             return featureProvider.apply(world, biome);
         });
 
@@ -1176,7 +1235,19 @@ public class WorldAccess {
             ServerWorld world = cc.s.getWorld();
             BlockPos pos = locator.block.getPos();
             Chunk chunk = world.getChunk(pos.getX() >> 4, pos.getZ() >> 4, ChunkStatus.BIOMES);
-            ((BiomeArrayInterface)chunk.getBiomeArray()).setBiomeAtIndex(pos, world,  biome);
+            if (chunk instanceof WorldChunk) return Value.FALSE; // questinoalble, but it makes sense
+            int biomeX = BiomeCoords.fromBlock(pos.getX());
+            int biomeY = BiomeCoords.fromBlock(pos.getY());
+            int biomeZ = BiomeCoords.fromBlock(pos.getZ());
+            try {
+                int i = BiomeCoords.fromBlock(chunk.getBottomY());
+                int j = i + BiomeCoords.fromBlock(chunk.getHeight()) - 1;
+                int k = MathHelper.clamp(biomeY, i, j);
+                int l = chunk.getSectionIndex(BiomeCoords.toBlock(k));
+                chunk.getSection(l).getBiomeContainer().set(biomeX & 3, k & 3, biomeZ & 3, biome);
+            } catch (Throwable var8) {
+                return Value.FALSE;
+            }
             if (doImmediateUpdate) WorldTools.forceChunkUpdate(pos, world);
             return Value.TRUE;
         });
@@ -1284,7 +1355,7 @@ public class WorldAccess {
                     StructureStart<?> start = entry.getValue();
                     if (start == StructureStart.DEFAULT)
                         continue;
-                    BlockBox box = start.setBoundingBoxFromChildren();
+                    BlockBox box = start.getBoundingBox();
                     structureList.put(
                             new StringValue(NBTSerializableValue.nameFromRegistryId(Registry.STRUCTURE_FEATURE.getId(entry.getKey()))),
                             ListValue.of(ListValue.fromTriple(box.getMinX(), box.getMinY(), box.getMinZ()), ListValue.fromTriple(box.getMaxX(), box.getMaxY(), box.getMaxZ()))
@@ -1333,7 +1404,7 @@ public class WorldAccess {
                     }
                     StructureStart<?> start = structures.get(structure);
                     ChunkPos structureChunkPos = start.getPos(); //   new ChunkPos(start.getChunkX(), start.getChunkZ());
-                    BlockBox box = start.setBoundingBoxFromChildren();
+                    BlockBox box = start.getBoundingBox();
                     for (int chx = box.getMinX() / 16; chx <= box.getMaxX() / 16; chx++)  // minx maxx
                     {
                         for (int chz = box.getMinZ() / 16; chz <= box.getMaxZ() / 16; chz++) //minZ maxZ
@@ -1380,7 +1451,7 @@ public class WorldAccess {
             return Value.TRUE;
         });
 
-
+        // todo maybe enable chunk blending?
         expression.addContextFunction("reset_chunk", -1, (c, t, lv) ->
         {
             CarpetContext cc = (CarpetContext)c;
@@ -1497,5 +1568,24 @@ public class WorldAccess {
             return new NumericValue(ticket.getExpiryTicks());
         });
 
+    }
+
+    @ScarpetFunction(maxParams = -1)
+    public Value sample_noise(Context c, @Locator.Block BlockPos pos, String... noiseQueries) {
+        int mappedX = BiomeCoords.fromBlock(pos.getX());
+        int mappedY = BiomeCoords.fromBlock(pos.getY());
+        int mappedZ = BiomeCoords.fromBlock(pos.getZ());
+        MultiNoiseUtil.MultiNoiseSampler mns = ((CarpetContext) c).s.getWorld().getChunkManager().getChunkGenerator().getMultiNoiseSampler();
+        Map<Value, Value> ret = new HashMap<>();
+
+        if (noiseQueries.length == 0) {
+            noiseQueries = new String[]{"continentalness", "erosion", "weirdness", "temperature", "humidity", "depth"};
+        }
+
+        for (String noise : noiseQueries) {
+            double noiseValue = ((NoiseColumnSamplerInterface) mns).getNoiseSample(noise, mappedX, mappedY, mappedZ);
+            ret.put(new StringValue(noise), new NumericValue(noiseValue));
+        }
+        return MapValue.wrap(ret);
     }
 }

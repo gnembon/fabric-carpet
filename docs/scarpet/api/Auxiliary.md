@@ -252,6 +252,8 @@ Decorators (listed as extra argument after the component they would affect):
  * `'^<format> <text>'` - hover over tooltip text, appearing when hovering with your mouse over the text below.
  * `'?<suggestion>` - command suggestion - a message that will be pasted to chat when text below it is clicked.
  * `'!<message>'` - a chat message that will be executed when the text below it is clicked.
+ * `'@<url>'` - a URL that will be opened when the text below it is clicked.
+ * `'&<text>'` - a text that will be copied to clipboard when the text below it is clicked.
  
 Both suggestions and messages can contain a command, which will be executed as a player that clicks it.
 
@@ -429,7 +431,7 @@ Returns `true` if creation and loading of the datapack was successful. Loading o
 reloading of all other datapacks (vanilla restrictions, identical to /datapack enable), however unlike with `/reload` 
 command, scarpet apps will not be reloaded by adding a datapack using `create_datapack`.
 
-Currently, only json files are supported in the packs. `'pack.mcmeta'` file is added automatically.
+Currently, only json/nbt/mcfunction files are supported in the packs. `'pack.mcmeta'` file is added automatically.
 
 Reloading of datapacks that define new dimensions is not implemented in vanilla. Vanilla game only loads 
 dimension information on server start. `create_datapack` is therefore a direct replacement of manually ploping of the specified 
@@ -546,6 +548,10 @@ script run create_datapack('craftable_cobwebs', {
 });
 </pre>
 
+Function example:
+<pre>
+ script run create_datapack('example',{'data/test/functions/talk.mcfunction'->'say 1\nsay 2'})
+</pre>
 ### `enable_hidden_dimensions()`
 
 The function reads current datapack settings detecting new dimensions defined by these datapacks that have not yet been added
@@ -681,13 +687,13 @@ Fetches the value of a system property or returns all inforation as a map when c
 fetch various information, mostly not changing, or only available via low level
 system calls. In all circumstances, these are only provided as read-only.
 
-Available options in the scarpet app space:
+##### Available options in the scarpet app space:
   * `app_name` - current app name or `null` if its a default app
   * `app_list` - list of all loaded apps excluding default commandline app
   * `app_scope` - scope of the global variables and function. Available options is `player` and `global`
-  * `app_player` - returns a player list that have app run under them. For `global` apps, the list is always empty
+  * `app_players` - returns a player list that have app run under them. For `global` apps, the list is always empty
  
- Relevant world related properties
+##### Relevant world related properties
   * `world_name` - name of the world
   * `world_seed` - a numeric seed of the world
   * `world_dimensions` - a list of dimensions in the world
@@ -700,9 +706,10 @@ Available options in the scarpet app space:
   * `world_top` - Returns current dimensions' topmost Y value where one can place blocks.
   * `world_bottom` - Returns current dimensions' bottommost Y value where one can place blocks.
   * `world_center` - Returns coordinates of the center of the world with respect of the world border
-  * `world_size` - Returns size of the world where at this distance from `world_center` world border appears.
+  * `world_size` - Returns radius of world border for current dimension.
+  * `world_max_size` - Returns maximum possible radius of world border for current dimension.
   * 
- Relevant gameplay related properties
+##### Relevant gameplay related properties
   * `game_difficulty` - current difficulty of the game: `'peaceful'`, `'easy'`, `'normal'`, or `'hard'`
   * `game_hardcore` - boolean whether the game is in hardcore mode
   * `game_storage_format` - format of the world save files, either `'McRegion'` or `'Anvil'`
@@ -713,13 +720,13 @@ Available options in the scarpet app space:
   * `game_version` - base version of the game
   * `game_target` - target release version
   * `game_major_target` - major release target. For 1.12.2, that would be 12
-  * `game_minor_reease` - minor release target. For 1.12.2, that woudl be 2
+  * `game_minor_release` - minor release target. For 1.12.2, that would be 2
   * `game_protocol` - protocol version number
   * `game_pack_version` - datapack version number
   * `game_data_version` - data version of the game. Returns an integer, so it can be compared.
   * `game_stable` - indicating if its a production release or a snapshot
   
- Server related properties
+##### Server related properties
  * `server_motd` - the motd of the server visible when joining
  * `server_ip` - IP adress of the game hosted
  * `server_whitelisted` - boolean indicating whether the access to the server is only for whitelisted players
@@ -734,7 +741,21 @@ list may refer to the previous tick performance. In this case the last entry (ti
 tick. For all intent and purpose, `system_info('last_tick_times'):0` should be used as last tick execution time, but
 individual tick times may vary greatly, and these need to be taken with the little grain of averaging.
  
- System related properties
+##### Source related properties
+ 
+ The source is what is the cause of the code running, with Carpet using it same way as Minecraft commands use to run. Those are used in
+ some API functions that interact with the game or with commands, and can be manipulated if the execution is caused by an `execute` command, modified
+ by some functions or ran in non-standard ways. This section provides useful information from these cases (like running from a command
+ block, right clicking a sign, etc)
+ * `source_entity` - The entity associated with the execution. This is usually a player (in which case `player()` would get the entity from this),
+                         but it may also be a different entity or `null` if the execution comes from the server console or a command block.
+ * `source_position` - The position associated with the execution. This is usually the position of the entity, but it may have been manipulated or
+                           it could come from a command block (no entity then). If this call comes from the server console, it will be the world spawn.
+ * `source_dimension` - The dimension associated with the execution. Execution from the server console provides `overworld` as the dimension.
+                            This can be manipulated by running code inside `in_dimension()`.
+ * `source_rotation` - The rotation associated with the execution. Usually `[0, 0]` in non-standard situations, the rotation of the entity otherwise.
+ 
+##### System related properties
  * `java_max_memory` - maximum allowed memory accessible by JVM
  * `java_allocated_memory` - currently allocated memory by JVM
  * `java_used_memory` - currently used memory by JVM
@@ -744,7 +765,7 @@ individual tick times may vary greatly, and these need to be taken with the litt
  * `java_system_cpu_load` - current percentage of CPU used by the system
  * `java_process_cpu_load` - current percentage of CPU used by JVM
  
- Scarpet related properties
+##### Scarpet related properties
  * `scarpet_version` - returns the version of the carpet your scarpet comes with.
 
 ## NBT Storage

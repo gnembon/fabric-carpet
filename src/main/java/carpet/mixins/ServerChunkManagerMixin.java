@@ -36,12 +36,12 @@ public abstract class ServerChunkManagerMixin implements ServerChunkManagerInter
 
     @Redirect(method = "tickChunks", at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/server/world/ChunkTicketManager;getSpawningChunkCount()I"
+            target = "Lnet/minecraft/server/world/ChunkTicketManager;getTickedChunkCount()I"
     ))
     //this runs once per world spawning cycle. Allows to grab mob counts and count spawn ticks
     private int setupTracking(ChunkTicketManager chunkTicketManager)
     {
-        int j = chunkTicketManager.getSpawningChunkCount();
+        int j = chunkTicketManager.getTickedChunkCount();
         RegistryKey<World> dim = this.world.getRegistryKey(); // getDimensionType;
         //((WorldInterface)world).getPrecookedMobs().clear(); not needed because mobs are compared with predefined BBs
         SpawnReporter.chunkCounts.put(dim, j);

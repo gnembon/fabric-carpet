@@ -1,10 +1,8 @@
 package carpet.script.value;
 
-import carpet.fakes.BrainInterface;
 import carpet.fakes.EntityInterface;
 import carpet.fakes.ItemEntityInterface;
 import carpet.fakes.LivingEntityInterface;
-import carpet.fakes.MemoryInterface;
 import carpet.fakes.MobEntityInterface;
 import carpet.fakes.ServerPlayerEntityInterface;
 import carpet.fakes.ServerPlayerInteractionManagerInterface;
@@ -537,7 +535,7 @@ public class EntityValue extends Value
                         ValueConversions.of(spe.getSpawnPointPosition()),
                         ValueConversions.of(spe.getSpawnPointDimension()),
                         new NumericValue(spe.getSpawnAngle()),
-                        BooleanValue.of(spe.isSpawnPointSet())
+                        BooleanValue.of(spe.isSpawnForced())
                         );
             }
             return Value.NULL;
@@ -633,11 +631,11 @@ public class EntityValue extends Value
             if (e instanceof LivingEntity livingEntity)
             {
                 Brain<?> brain = livingEntity.getBrain();
-                Map<MemoryModuleType<?>, Optional<? extends Memory<?>>> memories = ((BrainInterface)brain).getMobMemories();
+                Map<MemoryModuleType<?>, Optional<? extends Memory<?>>> memories = brain.getMemories();
                 Optional<? extends Memory<?>> optmemory = memories.get(moduleType);
                 if (optmemory==null || !optmemory.isPresent()) return Value.NULL;
                 Memory<?> memory = optmemory.get();
-                return ValueConversions.fromTimedMemory(e, ((MemoryInterface)memory).getScarpetExpiry(), memory.getValue());
+                return ValueConversions.fromTimedMemory(e, memory.getExpiry(), memory.getValue());
             }
             return Value.NULL;
         });
@@ -807,7 +805,7 @@ public class EntityValue extends Value
                 ServerPlayerInteractionManagerInterface manager = (ServerPlayerInteractionManagerInterface) (((ServerPlayerEntity) e).interactionManager);
                 BlockPos pos = manager.getCurrentBreakingBlock();
                 if (pos == null) return Value.NULL;
-                return new BlockValue(null, ((ServerPlayerEntity) e).getServerWorld(), pos);
+                return new BlockValue(null, (ServerWorld) e.world, pos);
             }
             return Value.NULL;
         });
@@ -1584,7 +1582,7 @@ public class EntityValue extends Value
         });
 
         put("absorption", (e, v) -> {
-            if (e instanceof PlayerEntity) ((PlayerEntity) e).setAbsorptionAmount((float) NumericValue.asNumber(v, "absorbtion").getLong());
+            if (e instanceof PlayerEntity) ((PlayerEntity) e).setAbsorptionAmount(NumericValue.asNumber(v, "absorbtion").getFloat());
         });
 
         put("add_xp", (e, v) -> {

@@ -1,6 +1,7 @@
 package carpet.mixins;
 
 import carpet.CarpetSettings;
+import carpet.helpers.CustomSpawnLists;
 import net.minecraft.entity.SpawnGroup;
 import net.minecraft.util.collection.Pool;
 import net.minecraft.util.math.BlockPos;
@@ -32,18 +33,30 @@ public abstract class NoiseChunkGenerator_husksSpawnMixin extends ChunkGenerator
     @Inject(method = "getEntitySpawnList", at = @At("HEAD"), cancellable = true)
     private void isInsidePyramid(Biome biome, StructureAccessor accessor, SpawnGroup group, BlockPos pos, CallbackInfoReturnable<Pool<SpawnSettings.SpawnEntry>> cir)
     {
-        if (CarpetSettings.huskSpawningInTemples && group == SpawnGroup.MONSTER)
+        if (group == SpawnGroup.MONSTER)
         {
-            if (accessor.getStructureAt(pos, true, StructureFeature.DESERT_PYRAMID).hasChildren())
+            if (CarpetSettings.huskSpawningInTemples)
             {
-                cir.setReturnValue(StructureFeature.DESERT_PYRAMID.getMonsterSpawns());
+                if (accessor.getStructureAt(pos, StructureFeature.DESERT_PYRAMID).hasChildren())
+                {
+                    cir.setReturnValue(CustomSpawnLists.PYRAMID_SPAWNS);
+                    return;
+                }
             }
-        }
-        if (CarpetSettings.shulkerSpawningInEndCities && SpawnGroup.MONSTER == group)
-        {
-            if (accessor.getStructureAt(pos, true, StructureFeature.END_CITY).hasChildren())
+            if (CarpetSettings.shulkerSpawningInEndCities)
             {
-                cir.setReturnValue(StructureFeature.END_CITY.getMonsterSpawns());
+                if (accessor.getStructureAt(pos, StructureFeature.END_CITY).hasChildren())
+                {
+                    cir.setReturnValue(CustomSpawnLists.SHULKER_SPAWNS);
+                    return;
+                }
+            }
+            if (CarpetSettings.piglinsSpawningInBastions)
+            {
+                if (accessor.getStructureAt(pos, StructureFeature.BASTION_REMNANT).hasChildren())
+                {
+                    cir.setReturnValue(CustomSpawnLists.BASTION_SPAWNS);
+                }
             }
         }
     }

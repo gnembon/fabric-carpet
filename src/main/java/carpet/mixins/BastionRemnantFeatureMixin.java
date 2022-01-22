@@ -18,8 +18,9 @@ import java.util.Collections;
 import java.util.List;
 
 @Mixin(BastionRemnantFeature.class)
-public abstract class BastionRemnantFeatureMixin extends JigsawFeature
+public abstract class BastionRemnantFeatureMixin //extends JigsawFeature
 {
+    /*
     private static final Pool<SpawnSettings.SpawnEntry> spawnList = Pool.of(
             new SpawnSettings.SpawnEntry(EntityType.PIGLIN_BRUTE, 5, 1, 2),
             new SpawnSettings.SpawnEntry(EntityType.PIGLIN, 10, 2, 4),
@@ -38,4 +39,5 @@ public abstract class BastionRemnantFeatureMixin extends JigsawFeature
             return spawnList;
         return SpawnSettings.EMPTY_ENTRY_POOL;
     }
+     */
 }

@@ -17,6 +17,6 @@ public class HuskEntityMixin
     private static boolean isSkylightOrTempleVisible(ServerWorldAccess serverWorldAccess, BlockPos pos)
     {
         return serverWorldAccess.isSkyVisible(pos) ||
-                (CarpetSettings.huskSpawningInTemples && (((ServerWorld)serverWorldAccess).getStructureAccessor().getStructureAt(pos, false, StructureFeature.DESERT_PYRAMID).hasChildren()));
+                (CarpetSettings.huskSpawningInTemples && (((ServerWorld)serverWorldAccess).getStructureAccessor().getStructureAt(pos, StructureFeature.DESERT_PYRAMID).hasChildren()));
     }
 }

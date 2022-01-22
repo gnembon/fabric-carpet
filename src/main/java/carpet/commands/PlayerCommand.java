@@ -299,6 +299,9 @@ public class PlayerCommand
         {
             // Force override flying to true for spectator players, or they will fell out of the world.
             flying = true;
+        } else if(mode.isSurvivalLike()){
+            // Force override flying to false for survival-like players, or they will fly too
+            flying = false;
         }
         String playerName = StringArgumentType.getString(context, "player");
         if (playerName.length()>maxPlayerLength(source.getServer()))

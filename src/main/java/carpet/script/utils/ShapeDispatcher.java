@@ -582,8 +582,8 @@ public class ShapeDispatcher
                             Collections.singletonList(p),
                             particle,
                             density,
-                            relativiseRender(p.getServerWorld(), from, 0),
-                            relativiseRender(p.getServerWorld(), to, 0)
+                            relativiseRender(p.world, from, 0),
+                            relativiseRender(p.world, to, 0)
                     );
                 }
             };
@@ -661,8 +661,8 @@ public class ShapeDispatcher
                 if (p.world.getRegistryKey() == shapeDimension) drawParticleLine(
                         Collections.singletonList(p),
                         particle,
-                        relativiseRender(p.getServerWorld(), from, 0),
-                        relativiseRender(p.getServerWorld(), to, 0),
+                        relativiseRender(p.world, from, 0),
+                        relativiseRender(p.world, to, 0),
                         density
                 );
             };
@@ -718,7 +718,7 @@ public class ShapeDispatcher
             ParticleEffect particle = replacementParticle();
             int partno = Math.min(1000,20*subdivisions);
             Random rand = p.world.getRandom();
-            ServerWorld world = p.getServerWorld();
+            ServerWorld world = p.getWorld();
 
             Vec3d ccenter = relativiseRender(world, center, 0 );
 
@@ -796,7 +796,7 @@ public class ShapeDispatcher
             ParticleEffect particle = replacementParticle();
             int partno = (int)Math.min(1000,Math.sqrt(20*subdivisions*(1+height)));
             Random rand = p.world.getRandom();
-            ServerWorld world = p.getServerWorld();
+            ServerWorld world = p.getWorld();
 
             Vec3d ccenter = relativiseRender(world, center, 0 );
 
@@ -1275,7 +1275,7 @@ public class ShapeDispatcher
         int parts = 0;
         for (ServerPlayerEntity player : playerList)
         {
-            ServerWorld world = player.getServerWorld();
+            ServerWorld world = player.getWorld();
             world.spawnParticles(player, particle, true,
                     (towards.x)/2+from.x, (towards.y)/2+from.y, (towards.z)/2+from.z, particles/3,
                     towards.x/6, towards.y/6, towards.z/6, 0.0);
@@ -1292,7 +1292,7 @@ public class ShapeDispatcher
             int dev = 2*divider;
             for (ServerPlayerEntity player : playerList)
             {
-                ServerWorld world = player.getServerWorld();
+                ServerWorld world = player.getWorld();
                 world.spawnParticles(player, particle, true,
                         (towards.x)/center+from.x, (towards.y)/center+from.y, (towards.z)/center+from.z, particles/divider,
                         towards.x/dev, towards.y/dev, towards.z/dev, 0.0);
@@ -1313,7 +1313,7 @@ public class ShapeDispatcher
         int pcount = 0;
         if (distance < 100)
         {
-            Random rand = players.get(0).getServerWorld().random;
+            Random rand = players.get(0).world.random;
             int particles = (int)(distance/density)+1;
             Vec3d towards = to.subtract(from);
             for (int i = 0; i < particles; i++)
@@ -1321,7 +1321,7 @@ public class ShapeDispatcher
                 Vec3d at = from.add(towards.multiply( rand.nextDouble()));
                 for (ServerPlayerEntity player : players)
                 {
-                    player.getServerWorld().spawnParticles(player, particle, true,
+                    player.getWorld().spawnParticles(player, particle, true,
                             at.x, at.y, at.z, 1,
                             0.0, 0.0, 0.0, 0.0);
                     pcount ++;
@@ -1339,7 +1339,7 @@ public class ShapeDispatcher
         {
             for (ServerPlayerEntity player : players)
             {
-                player.getServerWorld().spawnParticles(player, particle, true,
+                player.getWorld().spawnParticles(player, particle, true,
                         delta.x+from.x, delta.y+from.y, delta.z+from.z, 1,
                         0.0, 0.0, 0.0, 0.0);
                 pcount ++;

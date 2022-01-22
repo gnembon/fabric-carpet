@@ -4,6 +4,7 @@ import carpet.CarpetSettings;
 import carpet.fakes.ServerWorldInterface;
 import carpet.script.CarpetEventServer;
 import net.minecraft.entity.Entity;
+import net.minecraft.world.LocalDifficulty;
 import net.minecraft.world.entity.EntityLike;
 import net.minecraft.entity.LightningEntity;
 import net.minecraft.entity.damage.DamageSource;
@@ -41,7 +42,7 @@ public class ServerWorld_scarpetMixin implements ServerWorldInterface
     ))
     private void onNaturalLightinig(WorldChunk chunk, int randomTickSpeed, CallbackInfo ci,
                                     //ChunkPos chunkPos, boolean bl, int i, int j, Profiler profiler, BlockPos blockPos, boolean bl2)
-                                    ChunkPos chunkPos, boolean bl, int i, int j, Profiler profiler, BlockPos blockPos, boolean bl2, LightningEntity lightningEntity)
+                                    ChunkPos chunkPos, boolean bl, int i, int j, Profiler profiler, BlockPos blockPos, LocalDifficulty localDifficulty, boolean bl2, LightningEntity lightningEntity)
     {
         if (LIGHTNING.isNeeded()) LIGHTNING.onWorldEventFlag((ServerWorld) (Object)this, blockPos, bl2?1:0);
     }

@@ -4,3 +4,4 @@ accessible class net/minecraft/server/world/ThreadedAnvilChunkStorage$TicketMana
 accessible class net/minecraft/server/world/ServerLightingProvider$Stage
 accessible class net/minecraft/recipe/Ingredient$Entry
 accessible class net/minecraft/world/chunk/light/BlockLightStorage$Data
+accessible class net/minecraft/world/gen/NoiseColumnSampler$CaveScaler

@@ -40,7 +40,7 @@ public class EntityPlayerMPFake extends ServerPlayerEntity
         UserCache.setUseRemote(false);
         GameProfile gameprofile;
         try {
-            gameprofile = server.getUserCache().findByName(username).orElse(null);
+            gameprofile = server.getUserCache().findByName(username).orElse(null); //findByName  .orElse(null)
         }
         finally {
             UserCache.setUseRemote(server.isDedicated() && server.isOnlineMode());
@@ -62,7 +62,7 @@ public class EntityPlayerMPFake extends ServerPlayerEntity
         }
         EntityPlayerMPFake instance = new EntityPlayerMPFake(server, worldIn, gameprofile, false);
         instance.fixStartingPosition = () -> instance.refreshPositionAndAngles(d0, d1, d2, (float) yaw, (float) pitch);
-        server.getPlayerManager().onPlayerConnect(new NetworkManagerFake(NetworkSide.SERVERBOUND), instance);
+        server.getPlayerManager().onPlayerConnect(new FakeClientConnection(NetworkSide.SERVERBOUND), instance);
         instance.teleport(worldIn, d0, d1, d2, (float)yaw, (float)pitch);
         instance.setHealth(20.0F);
         instance.unsetRemoved();
@@ -70,7 +70,7 @@ public class EntityPlayerMPFake extends ServerPlayerEntity
         instance.interactionManager.changeGameMode(gamemode);
         server.getPlayerManager().sendToDimension(new EntitySetHeadYawS2CPacket(instance, (byte) (instance.headYaw * 256 / 360)), dimensionId);//instance.dimension);
         server.getPlayerManager().sendToDimension(new EntityPositionS2CPacket(instance), dimensionId);//instance.dimension);
-        instance.getServerWorld().getChunkManager().updatePosition(instance);
+        //instance.world.getChunkManager(). updatePosition(instance);
         instance.dataTracker.set(PLAYER_MODEL_PARTS, (byte) 0x7f); // show all model layers (incl. capes)
         instance.getAbilities().flying = flying;
         return instance;
@@ -80,10 +80,10 @@ public class EntityPlayerMPFake extends ServerPlayerEntity
     {
         player.getServer().getPlayerManager().remove(player);
         player.networkHandler.disconnect(new TranslatableText("multiplayer.disconnect.duplicate_login"));
-        ServerWorld worldIn = player.getServerWorld();//.getWorld(player.dimension);
+        ServerWorld worldIn = player.getWorld();//.getWorld(player.dimension);
         GameProfile gameprofile = player.getGameProfile();
         EntityPlayerMPFake playerShadow = new EntityPlayerMPFake(server, worldIn, gameprofile, true);
-        server.getPlayerManager().onPlayerConnect(new NetworkManagerFake(NetworkSide.SERVERBOUND), playerShadow);
+        server.getPlayerManager().onPlayerConnect(new FakeClientConnection(NetworkSide.SERVERBOUND), playerShadow);
 
         playerShadow.setHealth(player.getHealth());
         playerShadow.networkHandler.requestTeleport(player.getX(), player.getY(), player.getZ(), player.getYaw(), player.getPitch());
@@ -95,7 +95,7 @@ public class EntityPlayerMPFake extends ServerPlayerEntity
 
         server.getPlayerManager().sendToDimension(new EntitySetHeadYawS2CPacket(playerShadow, (byte) (player.headYaw * 256 / 360)), playerShadow.world.getRegistryKey());
         server.getPlayerManager().sendToAll(new PlayerListS2CPacket(PlayerListS2CPacket.Action.ADD_PLAYER, playerShadow));
-        player.getServerWorld().getChunkManager().updatePosition(playerShadow);
+        //player.world.getChunkManager().updatePosition(playerShadow);
         playerShadow.getAbilities().flying = player.getAbilities().flying;
         return playerShadow;
     }
@@ -132,7 +132,7 @@ public class EntityPlayerMPFake extends ServerPlayerEntity
         if (this.getServer().getTicks() % 10 == 0)
         {
             this.networkHandler.syncWithPlayerPosition();
-            this.getServerWorld().getChunkManager().updatePosition(this);
+            this.getWorld().getChunkManager().updatePosition(this);
             onTeleportationDone(); //<- causes hard crash but would need to be done to enable portals // not as of 1.17
         }
         try

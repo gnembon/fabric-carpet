@@ -17,7 +17,7 @@ import net.minecraft.util.registry.RegistryKey;
 import net.minecraft.util.registry.SimpleRegistry;
 import net.minecraft.world.World;
 import net.minecraft.world.biome.source.BiomeAccess;
-import net.minecraft.world.biome.source.VanillaLayeredBiomeSource;
+import net.minecraft.world.biome.source.MultiNoiseBiomeSource;
 import net.minecraft.world.border.WorldBorderListener;
 import net.minecraft.world.chunk.ChunkStatus;
 import net.minecraft.world.chunk.WorldChunk;
@@ -54,7 +54,7 @@ public class WorldTools
             if (region == null) return false;
             return region.hasChunk(chpos);
         }
-        Path regionPath = new File(((MinecraftServerInterface )world.getServer()).getCMSession().getWorldDirectory(world.getRegistryKey()), "region").toPath();
+        Path regionPath = new File(((MinecraftServerInterface )world.getServer()).getCMSession().getWorldDirectory(world.getRegistryKey()).toFile(), "region").toPath();
         Path regionFilePath = regionPath.resolve(currentRegionName);
         File regionFile = regionFilePath.toFile();
         if (!regionFile.exists())
@@ -65,7 +65,7 @@ public class WorldTools
         if (!deepcheck) return true; // not using cache in this case.
         try
         {
-            RegionFile region = new RegionFile(regionFile, regionPath.toFile(), true);
+            RegionFile region = new RegionFile(regionFile.toPath(), regionPath, true);
             if (regionCache != null) regionCache.put(currentRegionName, region);
             return region.hasChunk(chpos);
         }
@@ -99,7 +99,7 @@ public class WorldTools
         DimensionType dimensionType2;
         if (dimensionOptions == null) {
             dimensionType2 = server.getRegistryManager().getMutable(Registry.DIMENSION_TYPE_KEY).getOrThrow(DimensionType.OVERWORLD_REGISTRY_KEY);
-            chunkGenerator2 = GeneratorOptions.createOverworldGenerator(server.getRegistryManager().get(Registry.BIOME_KEY), server.getRegistryManager().get(Registry.CHUNK_GENERATOR_SETTINGS_KEY), (new Random()).nextLong());
+            chunkGenerator2 = GeneratorOptions.createOverworldGenerator(server.getRegistryManager(), (new Random()).nextLong());
         } else {
             dimensionType2 = dimensionOptions.getDimensionType();
             chunkGenerator2 = dimensionOptions.getChunkGenerator();
@@ -109,11 +109,14 @@ public class WorldTools
 
         //chunkGenerator2 = GeneratorOptions.createOverworldGenerator(server.getRegistryManager().get(Registry.BIOME_KEY), server.getRegistryManager().get(Registry.NOISE_SETTINGS_WORLDGEN), (seed==null)?l:seed);
 
-        chunkGenerator2 = new NoiseChunkGenerator(
-                new VanillaLayeredBiomeSource((seed==null)?l:seed, false, false, server.getRegistryManager().get(Registry.BIOME_KEY)),
-                (seed==null)?l:seed,
-                () -> server.getRegistryManager().get(Registry.CHUNK_GENERATOR_SETTINGS_KEY).getOrThrow(ChunkGeneratorSettings.OVERWORLD)
-        );
+        // from world/gen/GeneratorOptions
+        //chunkGenerator2 = new NoiseChunkGenerator(MultiNoiseBiomeSource.createVanillaSource(server.getRegistryManager().get(Registry.BIOME_KEY), seed), seed, () -> {
+        //    return server.getRegistryManager().get(Registry.CHUNK_GENERATOR_SETTINGS_KEY).getOrThrow(ChunkGeneratorSettings.OVERWORLD);
+        //});
+
+        chunkGenerator2 = new NoiseChunkGenerator(server.getRegistryManager().get(Registry.NOISE_WORLDGEN), MultiNoiseBiomeSource.Preset.OVERWORLD.getBiomeSource(server.getRegistryManager().get(Registry.BIOME_KEY)), seed, () -> {
+            return server.getRegistryManager().get(Registry.CHUNK_GENERATOR_SETTINGS_KEY).getOrThrow(ChunkGeneratorSettings.OVERWORLD);
+        });
 
         ServerWorld serverWorld = new ServerWorld(
                 server,
@@ -143,7 +146,7 @@ public class WorldTools
             List<ServerPlayerEntity> nearbyPlayers = world.getPlayers(p -> pos.getSquaredDistance(p.getX(), pos.getY(), p.getZ(), true) < vvd);
             if (!nearbyPlayers.isEmpty())
             {
-                ChunkDataS2CPacket packet = new ChunkDataS2CPacket(worldChunk);
+                ChunkDataS2CPacket packet = new ChunkDataS2CPacket(worldChunk, world.getLightingProvider(), null, null, false); // false seems to update neighbours as well.
                 ChunkPos chpos = new ChunkPos(pos);
                 nearbyPlayers.forEach(p -> p.networkHandler.sendPacket(packet));
             }

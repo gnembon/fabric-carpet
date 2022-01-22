@@ -30,7 +30,7 @@ public class WallStandingBlockItem_creativeNoClipMixin
         {
             // copy from canPlace
             VoxelShape voxelShape = state.getCollisionShape(worldView, pos, context);
-            return voxelShape.isEmpty() || worldView.intersectsEntities(player, voxelShape.offset(pos.getX(), pos.getY(), pos.getZ()));
+            return voxelShape.isEmpty() || worldView.doesNotIntersectEntities(player, voxelShape.offset(pos.getX(), pos.getY(), pos.getZ()));
 
         }
         return worldView.canPlace(state, pos, context);

@@ -31,8 +31,10 @@ import net.minecraft.world.biome.SpawnSettings;
 import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.gen.StructureAccessor;
 import net.minecraft.world.gen.chunk.ChunkGenerator;
+import net.minecraft.world.gen.feature.NetherFortressFeature;
 import net.minecraft.world.gen.feature.StructureFeature;
 import org.apache.commons.lang3.tuple.Pair;
+import org.jetbrains.annotations.Nullable;
 
 import carpet.CarpetSettings;
 
@@ -98,10 +100,10 @@ public class SpawnReporter
     }
 
     public static final int MAGIC_NUMBER = (int)Math.pow(17.0D, 2.0D);
-    public static double currentMagicNumber()
+    /*public static double currentMagicNumber()
     {
         return MAGIC_NUMBER / (Math.pow(2.0,(SpawnReporter.mobcap_exponent/4)));
-    }
+    }*/
 
     public static List<BaseText> printMobcapsForDimension(ServerWorld world, boolean multiline)
     {
@@ -123,7 +125,7 @@ public class SpawnReporter
         for (SpawnGroup enumcreaturetype : SpawnGroup.values())
         {
             int cur = dimCounts.getOrDefault(enumcreaturetype, -1);
-            int max = (int)(chunkcount * ((double)enumcreaturetype.getCapacity() / currentMagicNumber())); // from ServerChunkManager.CHUNKS_ELIGIBLE_FOR_SPAWNING
+            int max = (int)(chunkcount * ((double)enumcreaturetype.getCapacity() / MAGIC_NUMBER)); // from ServerChunkManager.CHUNKS_ELIGIBLE_FOR_SPAWNING
             String color = Messenger.heatmap_color(cur, max);
             String mobColor = Messenger.creatureTypeColor(enumcreaturetype);
             if (multiline)
@@ -427,8 +429,8 @@ public class SpawnReporter
     }
 
     // yeeted from SpawnHelper - temporary fix
-    private static List<SpawnSettings.SpawnEntry> method_29950(ServerWorld serverWorld, StructureAccessor structureAccessor, ChunkGenerator chunkGenerator, SpawnGroup spawnGroup, BlockPos blockPos, /*@Nullable*/ Biome biome) {
-        return spawnGroup == SpawnGroup.MONSTER && serverWorld.getBlockState(blockPos.down()).getBlock() == Blocks.NETHER_BRICKS && structureAccessor.getStructureAt(blockPos, false, StructureFeature.FORTRESS).hasChildren() ? StructureFeature.FORTRESS.getMonsterSpawns().getEntries() : chunkGenerator.getEntitySpawnList(biome != null ? biome : serverWorld.getBiome(blockPos), structureAccessor, spawnGroup, blockPos).getEntries();
+    private static List<SpawnSettings.SpawnEntry> getSpawnEntries(ServerWorld world, StructureAccessor structureAccessor, ChunkGenerator chunkGenerator, SpawnGroup spawnGroup, BlockPos pos, @Nullable Biome biome) {
+        return SpawnHelper.shouldUseNetherFortressSpawns(pos, world, spawnGroup, structureAccessor) ? NetherFortressFeature.MONSTER_SPAWNS.getEntries() : chunkGenerator.getEntitySpawnList(biome != null ? biome : world.getBiome(pos), structureAccessor, spawnGroup, pos).getEntries();
     }
 
     public static Map<SpawnGroup,List<SpawnReport>> spawnReport(BlockPos pos, ServerWorld worldIn)
@@ -441,7 +443,9 @@ public class SpawnReporter
 
         for (SpawnGroup enumcreaturetype : SpawnGroup.values())
         {
-            List<SpawnSettings.SpawnEntry> lst = method_29950(worldIn, worldIn.getStructureAccessor(), worldIn.getChunkManager().getChunkGenerator(), enumcreaturetype, pos, worldIn.getBiome(pos) );//  ((ChunkGenerator)worldIn.getChunkManager().getChunkGenerator()).getEntitySpawnList(, worldIn.getStructureAccessor(), enumcreaturetype, pos);
+            String type_code = String.format("%s", enumcreaturetype).substring(0, 3);
+            List<SpawnSettings.SpawnEntry> lst = getSpawnEntries(worldIn, worldIn.getStructureAccessor(), worldIn.getChunkManager().getChunkGenerator(), enumcreaturetype, pos, worldIn.getBiome(pos) );//  ((ChunkGenerator)worldIn.getChunkManager().getChunkGenerator()).getEntitySpawnList(, worldIn.getStructureAccessor(), enumcreaturetype, pos);
+
             if (lst != null && !lst.isEmpty())
             {
                 for (SpawnSettings.SpawnEntry spawnEntry : lst)

@@ -317,7 +317,7 @@ public class ValueConversions
     public static Value of(StructureStart<?> structure)
     {
         if (structure == null || structure == StructureStart.DEFAULT) return Value.NULL;
-        BlockBox boundingBox = structure.setBoundingBoxFromChildren();
+        BlockBox boundingBox = structure.getBoundingBox();
         if (boundingBox.getMaxX() < boundingBox.getMinX() || boundingBox.getMaxY() < boundingBox.getMinY() || boundingBox.getMaxZ() < boundingBox.getMinZ()) return Value.NULL;
         Map<Value, Value> ret = new HashMap<>();
         ret.put(new StringValue("box"), of(boundingBox));

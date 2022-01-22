@@ -3,6 +3,7 @@ package carpet.script.api;
 import carpet.script.CarpetContext;
 import carpet.script.CarpetEventServer;
 import carpet.script.CarpetScriptHost;
+import carpet.script.Context;
 import carpet.script.Expression;
 import carpet.script.argument.FunctionArgument;
 import carpet.script.argument.Vector3Argument;
@@ -51,11 +52,22 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import static carpet.utils.SpawnReporter.spawnReport;
 
 public class Entities {
+    private static ListValue getPlayersFromWorldMatching(Context c, Predicate<ServerPlayerEntity> condition) {
+        List<Value> ret = new ArrayList<>();
+        for (ServerPlayerEntity player: ((CarpetContext) c).s.getWorld().getPlayers()) {
+            if (condition.test(player)) {
+                ret.add(new EntityValue(player));
+            }
+        }
+        return ListValue.wrap(ret);
+    }
+
     public static void apply(Expression expression)
     {
         expression.addContextFunction("player", -1, (c, t, lv) ->
@@ -75,50 +87,26 @@ public class Entities {
                 return EntityValue.of(closestPlayer);
             }
             String playerName = lv.get(0).getString();
-            Value retval = Value.NULL;
-            if ("all".equalsIgnoreCase(playerName))
-            {
-                retval = ListValue.wrap(
-                        ((CarpetContext)c).s.getServer().getPlayerManager().getPlayerList().
-                                stream().map(EntityValue::new).collect(Collectors.toList()));
-            }
-            else if ("*".equalsIgnoreCase(playerName))
-            {
-                retval = ListValue.wrap(
-                        ((CarpetContext)c).s.getWorld().getPlayers().
-                                stream().map(EntityValue::new).collect(Collectors.toList()));
-            }
-            else if ("survival".equalsIgnoreCase(playerName))
-            {
-                retval =  ListValue.wrap(
-                        ((CarpetContext)c).s.getWorld().getPlayers((p) -> p.interactionManager.isSurvivalLike()).
-                                stream().map(EntityValue::new).collect(Collectors.toList()));
-            }
-            else if ("creative".equalsIgnoreCase(playerName))
-            {
-                retval = ListValue.wrap(
-                        ((CarpetContext)c).s.getWorld().getPlayers(PlayerEntity::isCreative).
-                                stream().map(EntityValue::new).collect(Collectors.toList()));
-            }
-            else if ("spectating".equalsIgnoreCase(playerName))
-            {
-                retval = ListValue.wrap(
-                        ((CarpetContext)c).s.getWorld().getPlayers(PlayerEntity::isSpectator).
-                                stream().map(EntityValue::new).collect(Collectors.toList()));
-            }
-            else if ("!spectating".equalsIgnoreCase(playerName))
-            {
-                retval = ListValue.wrap(
-                        ((CarpetContext)c).s.getWorld().getPlayers((p) -> !p.isSpectator()).
-                                stream().map(EntityValue::new).collect(Collectors.toList()));
-            }
-            else
-            {
-                ServerPlayerEntity player = ((CarpetContext) c).s.getServer().getPlayerManager().getPlayer(playerName);
-                if (player != null)
-                    retval = new EntityValue(player);
-            }
-            return retval;
+            return switch (playerName) {
+                case "all" -> {
+                    List<Value> ret = new ArrayList<>();
+                    for (ServerPlayerEntity player: ((CarpetContext)c).s.getServer().getPlayerManager().getPlayerList())
+                        ret.add(new EntityValue(player));
+                    yield ListValue.wrap(ret);
+                }
+                case "*" -> getPlayersFromWorldMatching(c, p -> true);
+                case "survival" -> getPlayersFromWorldMatching(c, p -> p.interactionManager.isSurvivalLike());
+                case "creative" -> getPlayersFromWorldMatching(c, PlayerEntity::isCreative);
+                case "spectating" -> getPlayersFromWorldMatching(c, PlayerEntity::isSpectator);
+                case "!spectating" -> getPlayersFromWorldMatching(c, p -> !p.isSpectator());
+                default -> {
+                    ServerPlayerEntity player = ((CarpetContext) c).s.getServer().getPlayerManager().getPlayer(playerName);
+                    if (player != null) {
+                        yield new EntityValue(player);
+                    }
+                    yield Value.NULL;
+                }
+            };
         });
 
         expression.addContextFunction("spawn", -1, (c, t, lv) ->

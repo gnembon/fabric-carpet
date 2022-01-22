@@ -26,10 +26,10 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.AbstractNbtList;
 import net.minecraft.nbt.AbstractNbtNumber;
 import net.minecraft.nbt.NbtCompound;
+import net.minecraft.nbt.NbtEnd;
 import net.minecraft.nbt.NbtInt;
 import net.minecraft.nbt.NbtList;
 import net.minecraft.nbt.NbtLong;
-import net.minecraft.nbt.NbtNull;
 import net.minecraft.nbt.StringNbtReader;
 import net.minecraft.nbt.NbtString;
 import net.minecraft.nbt.NbtElement;
@@ -266,6 +266,11 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
                     return null;
                 return new InventoryLocator(pos, pos, inv, offset+1);
             }
+            if (v1 instanceof ScreenValue screenValue)
+            {
+                if(!screenValue.isOpen()) return null;
+                return new InventoryLocator(screenValue.getPlayer(), screenValue.getPlayer().getBlockPos(), screenValue.getInventory(), offset+1);
+            }
             BlockPos pos = new BlockPos(
                     NumericValue.asNumber(v1).getDouble(),
                     NumericValue.asNumber(params.get(1 + offset)).getDouble(),
@@ -277,7 +282,7 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
         }
         catch (IndexOutOfBoundsException e)
         {
-            throw new InternalExpressionException("Inventory should be defined either by three coordinates, a block value, or an entity");
+            throw new InternalExpressionException("Inventory should be defined either by three coordinates, a block value, an entity, or a screen");
         }
     }
 
@@ -337,7 +342,7 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
         }
         if (t instanceof NbtString)
             return StringValue.of(t.asString());
-        if (t instanceof NbtNull)
+        if (t instanceof NbtEnd)
             return Value.NULL;
 
         throw new InternalExpressionException("How did we get here: Unknown nbt element class: "+t.getNbtType().getCrashReportName());
