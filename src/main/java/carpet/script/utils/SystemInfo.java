@@ -5,9 +5,15 @@ import carpet.CarpetSettings;
 import carpet.script.CarpetContext;
 import carpet.script.CarpetScriptHost;
 import carpet.script.value.BooleanValue;
+
+import carpet.script.value.BlockValue;
+
 import carpet.script.value.EntityValue;
+
 import carpet.script.value.ListValue;
 import carpet.script.value.MapValue;
+import carpet.script.value.NBTSerializableValue;
+import carpet.script.value.NullValue;
 import carpet.script.value.NumericValue;
 import carpet.script.value.StringValue;
 import carpet.script.value.Value;
@@ -18,12 +24,22 @@ import com.sun.management.OperatingSystemMXBean;
 import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.loader.api.ModContainer;
 import net.minecraft.SharedConstants;
+import net.minecraft.nbt.NbtElement;
+import net.minecraft.nbt.NbtOps;
+import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.WorldSavePath;
 import net.minecraft.util.math.Vec2f;
+import net.minecraft.util.registry.RegistryKey;
 import net.minecraft.world.GameRules;
+import net.minecraft.world.World;
 import net.minecraft.world.WorldProperties;
 import net.minecraft.world.border.WorldBorder;
 
+import net.minecraft.world.gen.GeneratorOptions;
+import net.minecraft.world.gen.chunk.ChunkGenerator;
+import net.minecraft.world.gen.chunk.DebugChunkGenerator;
+import net.minecraft.world.gen.chunk.FlatChunkGenerator;
+import net.minecraft.world.gen.chunk.NoiseChunkGenerator;
 import java.lang.management.ManagementFactory;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -33,8 +49,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class SystemInfo {
     private static final Map<String, Function<CarpetContext,Value>> options = new HashMap<String, Function<CarpetContext,Value>>(){{
@@ -210,6 +228,59 @@ public class SystemInfo {
         });
         
         put("scarpet_version", c -> StringValue.of(CarpetSettings.carpetVersion));
+        put("super_flat_layers", c-> {
+            String cdimname =  c.s.getWorld().getRegistryKey().getValue().toString();//!!!!!!todo
+            GeneratorOptions generatorOptions=c.s.getServer().getSaveProperties().getGeneratorOptions();
+            Stream<Value> s = generatorOptions.getDimensions().getEntries().stream().map(
+                    x->{
+                        String dimname = x.getKey().getValue().toString();
+                        if (!dimname.equals(cdimname)){
+                            return null;
+                        }
+                        ChunkGenerator cg = x.getValue().getChunkGenerator();
+                        Value dimdata;
+                        if (cg instanceof FlatChunkGenerator){
+                            Stream<Value> layers = ((FlatChunkGenerator)cg).getConfig().getLayers().stream().map(lay->ListValue.of(new NumericValue((long)lay.getThickness()),new BlockValue(lay.getBlockState(),null,null)));
+                            dimdata =ListValue.wrap(layers);
+                        }else{
+                            return null;
+                        }
+                        return dimdata;
+                    }
+                );
+            return s.filter(x->x!=null).findFirst().orElse(Value.NULL);
+        });
+        put("world_config_type", c-> {
+            GeneratorOptions generatorOptions=c.s.getServer().getSaveProperties().getGeneratorOptions();
+            Stream<Value> s = generatorOptions.getDimensions().getEntries().stream().map(
+                    x->{
+                        Value dimname = StringValue.of(x.getKey().getValue().toString());
+                        ChunkGenerator cg = x.getValue().getChunkGenerator();
+                        Value dimdata;
+                        if (cg instanceof DebugChunkGenerator){
+                            dimdata =StringValue.of("debug");
+                        }else if (cg instanceof NoiseChunkGenerator){
+                            dimdata =StringValue.of("noise");
+                        }else if (cg instanceof FlatChunkGenerator){
+                            dimdata =StringValue.of("super_flat");
+                        }else{
+                            dimdata =StringValue.of("???");
+                        }
+                        return ListValue.of(dimname,dimdata);
+                    }
+                );
+            return new MapValue(s.collect(Collectors.toList()));
+        });
+        put("world_gen_settings", c-> {
+            GeneratorOptions generatorOptions=c.s.getServer().getSaveProperties().getGeneratorOptions();
+            Optional<NbtElement> x = GeneratorOptions.CODEC.encodeStart(NbtOps.INSTANCE, generatorOptions).result();
+            //System.out.println(x);
+            if(x.isPresent()){
+                return new NBTSerializableValue(x.get());
+            }else{
+                return NullValue.NULL;
+            }
+        });
 
     }};
     public static Value get(String what, CarpetContext cc)
