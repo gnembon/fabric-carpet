@@ -1,22 +1,21 @@
 package carpet.utils;
 
 import net.minecraft.block.Block;
+import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.Material;
-import net.minecraft.block.BlockState;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.SpawnGroup;
-import net.minecraft.entity.SpawnRestriction;
 import net.minecraft.entity.SpawnReason;
-import net.minecraft.entity.mob.WaterCreatureEntity;
+import net.minecraft.entity.SpawnRestriction;
 import net.minecraft.entity.mob.AmbientEntity;
 import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.entity.mob.Monster;
+import net.minecraft.entity.mob.WaterCreatureEntity;
 import net.minecraft.entity.passive.PassiveEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.SpawnHelper;
-import net.minecraft.world.biome.Biome;
 import net.minecraft.world.biome.SpawnSettings;
 
 import java.util.ArrayList;
@@ -99,7 +98,7 @@ public class PerimeterDiagnostics
                 {
                     continue;
                 }
-                for (int y= minY; y < maxY; ++y)
+                for (int y= worldserver.getBottomY(); y < worldserver.getLogicalHeight(); ++y)
                 {
                     if ((Math.abs(y-eY)>128) )
                     {
@@ -186,6 +185,29 @@ public class PerimeterDiagnostics
             return el.canSpawn(worldServer) && el.canSpawn(worldServer, SpawnReason.NATURAL) &&
                     SpawnRestriction.canSpawn(el.getType(),(ServerWorld)el.getEntityWorld(), SpawnReason.NATURAL, el.getBlockPos(), el.getEntityWorld().random) &&
                     worldServer.isSpaceEmpty(el); // check collision rules once they stop fiddling with them after 1.14.1
+        }
+        return false;
+    }
+
+    public static boolean checkEntitySpawn(ServerWorld worldServer, BlockPos pos, MobEntity mob) {
+        SpawnSettings.SpawnEntry spawnEntry = null;
+        for (SpawnSettings.SpawnEntry sle: worldServer.getChunkManager().getChunkGenerator().getEntitySpawnList(worldServer.getBiome(pos), worldServer.getStructureAccessor(), mob.getType().getSpawnGroup(), pos).getEntries()) {
+            if (mob.getType() == sle.type) {
+                spawnEntry = sle;
+                break;
+            }
+        }
+        if (spawnEntry == null || !worldServer.getChunkManager().getChunkGenerator().getEntitySpawnList(worldServer.getBiome(pos), worldServer.getStructureAccessor(), mob.getType().getSpawnGroup(), pos).getEntries().contains(spawnEntry)) {
+            return false;
+        }
+
+        SpawnRestriction.Location spt = SpawnRestriction.getLocation(spawnEntry.type);
+
+        if (SpawnHelper.canSpawn(spt, worldServer, pos, spawnEntry.type)) {
+            mob.refreshPositionAndAngles((float)pos.getX() + 0.5F, (float)pos.getY(), (float)pos.getZ()+0.5F, 0.0F, 0.0F);
+            return mob.canSpawn(worldServer) && mob.canSpawn(worldServer, SpawnReason.NATURAL) &&
+                    SpawnRestriction.canSpawn(mob.getType(),(ServerWorld)mob.getEntityWorld(), SpawnReason.NATURAL, pos, mob.getEntityWorld().random) &&
+                    worldServer.isSpaceEmpty(mob); // check collision rules once they stop fiddling with them after 1.14.1
         }
         return false;
     }

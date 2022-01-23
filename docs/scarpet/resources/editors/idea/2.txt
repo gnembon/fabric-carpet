@@ -14,6 +14,7 @@ blocks_daylight
 blocks_movement
 bossbar
 brightness
+can_spawn
 chunk_tickets
 close_screen
 convert_date
@@ -78,6 +79,7 @@ parse_nbt
 particle
 particle_line
 particle_rect
+perimeter_info
 place_item
 player
 plop

@@ -10,14 +10,24 @@ import carpet.script.argument.Vector3Argument;
 import carpet.script.exception.InternalExpressionException;
 import carpet.script.value.EntityValue;
 import carpet.script.value.ListValue;
+import carpet.script.value.MapValue;
 import carpet.script.value.NBTSerializableValue;
+import carpet.script.value.BooleanValue;
 import carpet.script.value.NumericValue;
+import carpet.script.value.StringValue;
 import carpet.script.value.Value;
+import carpet.script.value.ValueConversions;
+import carpet.utils.PerimeterDiagnostics;
+import carpet.utils.SpawnReporter.SpawnReport;
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import net.minecraft.block.BlockState;
+import net.minecraft.block.Blocks;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
+import net.minecraft.entity.SpawnGroup;
 import net.minecraft.entity.SpawnReason;
+import net.minecraft.entity.SpawnRestriction;
 import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.nbt.NbtCompound;
@@ -25,20 +35,27 @@ import net.minecraft.predicate.entity.EntityPredicates;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
+import net.minecraft.tag.BlockTags;
 import net.minecraft.util.Identifier;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.registry.Registry;
+import net.minecraft.world.SpawnHelper;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+
+import static carpet.utils.SpawnReporter.spawnReport;
 
 public class Entities {
     private static ListValue getPlayersFromWorldMatching(Context c, Predicate<ServerPlayerEntity> condition) {
@@ -141,6 +158,206 @@ public class Entities {
                 }
                 return new EntityValue(entity_1);
             }
+        });
+        expression.addContextFunction("can_spawn", -1, (c, t, lv) -> {
+            CarpetContext cc = (CarpetContext)c;
+            if (lv.size() < 2)
+                throw new InternalExpressionException("'can_spawn' function takes mob name, and position to check for spawning conditions");
+
+            Value entity = lv.get(0);
+            if(entity == Value.NULL) return Value.FALSE;
+            Entity entity_1;
+            String entityString;
+            ServerWorld serverWorld = cc.s.getWorld();
+
+            Vector3Argument position = Vector3Argument.findIn(lv, 1);
+            if (position.fromBlock)
+                position.vec = position.vec.subtract(0, 0.5, 0);
+            Vec3d vec3d = position.vec;
+
+            boolean startedWithEntity = entity instanceof EntityValue;
+
+            if(startedWithEntity){
+                entity_1 = ((EntityValue) entity).getEntity();
+                entityString = entity_1.getEntityName();
+            } else {
+                entityString = lv.get(0).getString();
+                Identifier entityId;
+                try {
+                    entityId = Identifier.fromCommandInput(new StringReader(entityString));
+                    EntityType<? extends Entity> type = Registry.ENTITY_TYPE.getOrEmpty(entityId).orElse(null);
+                    if (type == null || !type.isSummonable())
+                        return Value.NULL;
+                } catch (CommandSyntaxException exception) {
+                    return Value.NULL;
+                }
+
+                NbtCompound tag = new NbtCompound();
+                tag.putString("id", entityId.toString());
+
+                entity_1 = EntityType.loadEntityWithPassengers(tag, serverWorld, (entity_1x) -> {
+                    entity_1x.refreshPositionAndAngles(vec3d.x, vec3d.y, vec3d.z, entity_1x.getYaw(), entity_1x.getPitch());
+                    return !serverWorld.tryLoadEntity(entity_1x) ? null : entity_1x;
+                });
+                if(entity_1 instanceof MobEntity)
+                    ((MobEntity)entity_1).initialize(serverWorld, serverWorld.getLocalDifficulty(entity_1.getBlockPos()), SpawnReason.COMMAND, null, null);
+
+            }
+            if (entity_1 == null) {
+                return Value.FALSE;
+            } else if (entity_1 instanceof MobEntity) {
+                boolean canSpawn = SpawnHelper.canSpawn(SpawnRestriction.Location.ON_GROUND, serverWorld, new BlockPos(vec3d), entity_1.getType());
+                if(!startedWithEntity) entity_1.discard();
+                return BooleanValue.of(canSpawn);
+            } else {
+                throw new InternalExpressionException("Invalid entity type '" + entityString + "' to check spawning conditions for, 'can_spawn' requires a mob entity");
+            }
+        });
+
+        expression.addContextFunction("will_spawn", -1, (c, t, lv) -> {
+            CarpetContext cc = (CarpetContext)c;
+            if (lv.size() < 2)
+                throw new InternalExpressionException("'will_spawn' function takes mob name, and position to check for spawning conditions");
+
+            Value entity = lv.get(0);
+            if(entity == Value.NULL) return Value.FALSE;
+            Entity entity_1;
+            String entityString;
+            ServerWorld serverWorld = cc.s.getWorld();
+
+            Vector3Argument position = Vector3Argument.findIn(lv, 1);
+            if (position.fromBlock)
+                position.vec = position.vec.subtract(0, 0.5, 0);
+            Vec3d vec3d = position.vec;
+
+            boolean startedWithEntity = entity instanceof EntityValue;
+
+            if(startedWithEntity){
+                entity_1 = ((EntityValue) entity).getEntity();
+                entityString = entity_1.getEntityName();
+            } else {
+                entityString = lv.get(0).getString();
+                Identifier entityId;
+                try {
+                    entityId = Identifier.fromCommandInput(new StringReader(entityString));
+                    EntityType<? extends Entity> type = Registry.ENTITY_TYPE.getOrEmpty(entityId).orElse(null);
+                    if (type == null || !type.isSummonable())
+                        return Value.NULL;
+                } catch (CommandSyntaxException exception) {
+                    return Value.NULL;
+                }
+
+                NbtCompound tag = new NbtCompound();
+                tag.putString("id", entityId.toString());
+
+                entity_1 = EntityType.loadEntityWithPassengers(tag, serverWorld, (entity_1x) -> {
+                    entity_1x.refreshPositionAndAngles(vec3d.x, vec3d.y, vec3d.z, entity_1x.getYaw(), entity_1x.getPitch());
+                    return !serverWorld.tryLoadEntity(entity_1x) ? null : entity_1x;
+                });
+                if(entity_1 instanceof MobEntity)
+                    ((MobEntity)entity_1).initialize(serverWorld, serverWorld.getLocalDifficulty(entity_1.getBlockPos()), SpawnReason.COMMAND, null, null);
+
+            }
+
+            int num_tries = position.offset==lv.size()? 20 : (int) lv.get(position.offset).readInteger();
+
+            if (entity_1 == null) {
+                return Value.FALSE;
+            } else if (entity_1 instanceof MobEntity) {
+                int will_spawn = 0;
+
+                BlockPos pos = new BlockPos(vec3d);
+
+                for (int i = 0; i < num_tries; ++i)
+                {
+                    if (
+                            SpawnRestriction.canSpawn(entity_1.getType(),serverWorld, SpawnReason.NATURAL, pos, serverWorld.random) &&
+                                    SpawnHelper.canSpawn(SpawnRestriction.getLocation(entity_1.getType()), serverWorld, pos, entity_1.getType()) &&
+                                    ((MobEntity) entity_1).canSpawn(serverWorld, SpawnReason.NATURAL)
+                        // && mob.canSpawn(worldIn) // entity collisions // mostly - except ocelots
+                    )
+                    {
+                        if (entity_1.getType() == EntityType.OCELOT)
+                        {
+                            BlockState blockState = serverWorld.getBlockState(pos.down());
+                            if ((pos.getY() < serverWorld.getSeaLevel()) || !(blockState.isOf(Blocks.GRASS_BLOCK) || blockState.isIn(BlockTags.LEAVES))) {
+                                continue;
+                            }
+                        }
+                        will_spawn += 1;
+                    }
+                }
+
+                if(!startedWithEntity) entity_1.discard();
+                return NumericValue.of(will_spawn*100/num_tries);
+            } else {
+                throw new InternalExpressionException("Invalid entity type '" + entityString + "' to check spawning conditions for, 'can_spawn' requires a mob entity");
+            }
+        });
+
+        expression.addContextFunction("perimeter_info", -1, (c, t, lv) -> {
+            CarpetContext cc = (CarpetContext)c;
+            if (lv.size() < 2)
+                throw new InternalExpressionException("'perimeter_info' function takes mob name, and position to check for spawning conditions");
+
+            String entityString = lv.get(0).getString();
+
+            Vector3Argument position = Vector3Argument.findIn(lv, 1);
+            if (position.fromBlock)
+                position.vec = position.vec.subtract(0, 0.5, 0);
+
+            NbtCompound nbttagcompound = new NbtCompound();
+            MobEntity entityliving = null;
+            if (!entityString.equals("null")) {
+                nbttagcompound.putString("id", entityString);
+                Entity baseEntity = EntityType.loadEntityWithPassengers(nbttagcompound, cc.s.getWorld(), (entity_1x) -> {
+                    entity_1x.refreshPositionAndAngles(new BlockPos(position.vec.getX(), -10, position.vec.getZ()), entity_1x.getYaw(), entity_1x. getPitch());
+                    return !cc.s.getWorld().tryLoadEntity(entity_1x) ? null : entity_1x;
+                });
+                if (!(baseEntity instanceof  MobEntity)) {
+                    if (baseEntity != null) baseEntity.discard();
+                    throw new InternalExpressionException("'perimeter_info' function requires a mob entity to test against");
+                }
+                entityliving = (MobEntity) baseEntity;
+            }
+            PerimeterDiagnostics.Result res = PerimeterDiagnostics.countSpots(cc.s.getWorld(), new BlockPos(position.vec), entityliving);
+
+            return ListValue.of(
+                    new NumericValue(res.ground),
+                    new NumericValue(res.liquid),
+                    new NumericValue(res.specific),
+                    new ListValue(res.samples.stream().map(ValueConversions::of).collect(Collectors.toList()))
+            );
+        }); //todo decide whether or not to remove this
+
+        expression.addContextFunction("mob_spawns", -1, (c, t, lv)->{
+            CarpetContext cc = (CarpetContext)c;
+            if (lv.size() < 1)
+                throw new InternalExpressionException("'mob_spawns' function takes position to check spawns");
+
+            Vector3Argument position = Vector3Argument.findIn(lv, 0);
+
+            Map<SpawnGroup,List<SpawnReport>> spawnReport = spawnReport(new BlockPos(position.vec), cc.s.getWorld());
+
+            Map<Value, Value> finalReport = new HashMap<>();
+            List<Value> groupReport = new ArrayList<>();
+
+            for (Map.Entry<SpawnGroup, List<SpawnReport>> spawnGroupListEntry : spawnReport.entrySet()) {
+                groupReport.clear();
+                for (SpawnReport report : spawnGroupListEntry.getValue()) {
+                    groupReport.add(ListValue.of(
+                        BooleanValue.of(report.canSpawn),//boolean can spawn
+                        BooleanValue.of(report.fitsTrue),//boolean can fit
+                        BooleanValue.of(report.fitsFalse),//boolean can not fit (slimes)
+                        new NumericValue(report.willSpawn),//integer percentage will spawn
+                        new NumericValue(report.chunkSpawnLimit),//max spawns per chunk
+                        new NumericValue(report.spawnEntry.getWeight().getValue())//spawn weight
+                    ));
+                }
+                finalReport.put(StringValue.of(spawnGroupListEntry.getKey().getName()), ListValue.wrap(groupReport));
+            }
+
+            return MapValue.wrap(finalReport);
         });
 
         expression.addContextFunction("entity_id", 1, (c, t, lv) ->
