@@ -94,6 +94,7 @@ public abstract class Entity_scarpetEventsMixin implements EntityInterface
     @Inject(method = "setPos", at = @At("TAIL"))
     private void secondPos(CallbackInfo ci)
     {
-        events.onEvent(EntityEventsGroup.Event.ON_MOVE, motion, pos1, this.pos);
+        if(pos1!=this.pos)
+            events.onEvent(EntityEventsGroup.Event.ON_MOVE, motion, pos1, this.pos);
     }
 }
