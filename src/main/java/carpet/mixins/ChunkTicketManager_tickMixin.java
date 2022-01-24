@@ -1,23 +1,23 @@
 package carpet.mixins;
 
 import carpet.helpers.TickSpeed;
-import net.minecraft.server.world.ChunkTicketManager;
+import net.minecraft.server.level.DistanceManager;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-@Mixin(ChunkTicketManager.class)
+@Mixin(DistanceManager.class)
 public class ChunkTicketManager_tickMixin
 {
-    @Shadow private long age;
+    @Shadow private long ticketTickCounter;
 
-    @Inject(method = "purge", at = @At("HEAD"), cancellable = true)
+    @Inject(method = "purgeStaleTickets", at = @At("HEAD"), cancellable = true)
     private void pauseTicketSystem(CallbackInfo ci)
     {
         // pausing expiry of tickets
         // that will prevent also chunks from unloading, so require a deep frozen state
-        if (!TickSpeed.process_entities && TickSpeed.deeplyFrozen()) age--;
+        if (!TickSpeed.process_entities && TickSpeed.deeplyFrozen()) ticketTickCounter--;
     }
 }

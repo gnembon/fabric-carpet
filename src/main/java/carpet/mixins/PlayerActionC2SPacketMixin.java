@@ -1,12 +1,12 @@
 package carpet.mixins;
 
-import net.minecraft.network.packet.c2s.play.PlayerActionC2SPacket;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.network.protocol.game.ServerboundPlayerActionPacket;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Accessor;
 
-@Mixin(PlayerActionC2SPacket.class)
+@Mixin(ServerboundPlayerActionPacket.class)
 public interface PlayerActionC2SPacketMixin
 {
     @Accessor("pos")
@@ -16,5 +16,5 @@ public interface PlayerActionC2SPacketMixin
     void setDirection(Direction direction);
 
     @Accessor("action")
-    void setAction(PlayerActionC2SPacket.Action action);
+    void setAction(ServerboundPlayerActionPacket.Action action);
 }

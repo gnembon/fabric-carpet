@@ -2,11 +2,6 @@ package carpet.mixins;
 
 import carpet.logging.LoggerRegistry;
 import carpet.logging.logHelpers.PathfindingVisualizer;
-import net.minecraft.entity.ai.pathing.EntityNavigation;
-import net.minecraft.entity.ai.pathing.Path;
-import net.minecraft.entity.mob.MobEntity;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Vec3d;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -15,45 +10,50 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
 import java.util.Set;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.ai.navigation.PathNavigation;
+import net.minecraft.world.level.pathfinder.Path;
+import net.minecraft.world.phys.Vec3;
 
-@Mixin(EntityNavigation.class)
+@Mixin(PathNavigation.class)
 public abstract class EntityNavigation_pathfindingMixin
 {
 
-    @Shadow @Final protected MobEntity entity;
+    @Shadow @Final protected Mob mob;
 
 
-    @Shadow protected @Nullable abstract Path findPathTo(Set<BlockPos> set, int i, boolean bl, int j);
+    @Shadow protected @Nullable abstract Path createPath(Set<BlockPos> set, int i, boolean bl, int j);
 
-    @Redirect(method =  "findPathTo(Lnet/minecraft/util/math/BlockPos;I)Lnet/minecraft/entity/ai/pathing/Path;", at = @At(
+    @Redirect(method =  "createPath(Lnet/minecraft/core/BlockPos;I)Lnet/minecraft/world/level/pathfinder/Path;", at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/entity/ai/pathing/EntityNavigation;findPathTo(Ljava/util/Set;IZI)Lnet/minecraft/entity/ai/pathing/Path;"
+            target = "Lnet/minecraft/world/entity/ai/navigation/PathNavigation;createPath(Ljava/util/Set;IZI)Lnet/minecraft/world/level/pathfinder/Path;"
     ))
-    private Path pathToBlock(EntityNavigation entityNavigation, Set<BlockPos> set_1, int int_1, boolean boolean_1, int int_2)
+    private Path pathToBlock(PathNavigation entityNavigation, Set<BlockPos> set_1, int int_1, boolean boolean_1, int int_2)
     {
         if (!LoggerRegistry.__pathfinding)
-            return findPathTo(set_1, int_1, boolean_1, int_2);
+            return createPath(set_1, int_1, boolean_1, int_2);
         long start = System.nanoTime();
-        Path path = findPathTo(set_1, int_1, boolean_1, int_2);
+        Path path = createPath(set_1, int_1, boolean_1, int_2);
         long finish = System.nanoTime();
         float duration = (1.0F*((finish - start)/1000))/1000;
-        set_1.forEach(b -> PathfindingVisualizer.slowPath(entity, Vec3d.ofBottomCenter(b), duration, path != null)); // ground centered position
+        set_1.forEach(b -> PathfindingVisualizer.slowPath(mob, Vec3.atBottomCenterOf(b), duration, path != null)); // ground centered position
         return path;
     }
 
-    @Redirect(method =  "findPathTo(Lnet/minecraft/entity/Entity;I)Lnet/minecraft/entity/ai/pathing/Path;", at = @At(
+    @Redirect(method =  "createPath(Lnet/minecraft/world/entity/Entity;I)Lnet/minecraft/world/level/pathfinder/Path;", at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/entity/ai/pathing/EntityNavigation;findPathTo(Ljava/util/Set;IZI)Lnet/minecraft/entity/ai/pathing/Path;"
+            target = "Lnet/minecraft/world/entity/ai/navigation/PathNavigation;createPath(Ljava/util/Set;IZI)Lnet/minecraft/world/level/pathfinder/Path;"
     ))
-    private Path pathToEntity(EntityNavigation entityNavigation, Set<BlockPos> set_1, int int_1, boolean boolean_1, int int_2)
+    private Path pathToEntity(PathNavigation entityNavigation, Set<BlockPos> set_1, int int_1, boolean boolean_1, int int_2)
     {
         if (!LoggerRegistry.__pathfinding)
-            return findPathTo(set_1, int_1, boolean_1, int_2);
+            return createPath(set_1, int_1, boolean_1, int_2);
         long start = System.nanoTime();
-        Path path = findPathTo(set_1, int_1, boolean_1, int_2);
+        Path path = createPath(set_1, int_1, boolean_1, int_2);
         long finish = System.nanoTime();
         float duration = (1.0F*((finish - start)/1000))/1000;
-        set_1.forEach(b -> PathfindingVisualizer.slowPath(entity, Vec3d.ofBottomCenter(b), duration, path != null));
+        set_1.forEach(b -> PathfindingVisualizer.slowPath(mob, Vec3.atBottomCenterOf(b), duration, path != null));
         return path;
     }
 }

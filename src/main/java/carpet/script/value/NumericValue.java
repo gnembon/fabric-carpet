@@ -3,16 +3,16 @@ package carpet.script.value;
 import carpet.script.exception.InternalExpressionException;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonPrimitive;
-import net.minecraft.nbt.NbtDouble;
-import net.minecraft.nbt.NbtInt;
-import net.minecraft.nbt.NbtLong;
-import net.minecraft.nbt.NbtElement;
 import org.apache.commons.lang3.StringUtils;
 
 import java.math.BigDecimal;
 import java.math.MathContext;
 import java.math.RoundingMode;
 import java.util.Locale;
+import net.minecraft.nbt.DoubleTag;
+import net.minecraft.nbt.IntTag;
+import net.minecraft.nbt.LongTag;
+import net.minecraft.nbt.Tag;
 
 import static java.lang.Math.abs;
 import static java.lang.Math.signum;
@@ -268,24 +268,24 @@ public class NumericValue extends Value
     }
 
     @Override
-    public NbtElement toTag(boolean force)
+    public Tag toTag(boolean force)
     {
         if (longValue != null)
         {
             if (abs(longValue) < Integer.MAX_VALUE-2)
-                return NbtInt.of((int)(long)longValue);
-            return NbtLong.of(longValue);
+                return IntTag.valueOf((int)(long)longValue);
+            return LongTag.valueOf(longValue);
         }
         long lv = getLong();
         if (value == (double)lv)
         {
             if (abs(value) < Integer.MAX_VALUE-2)
-                return NbtInt.of((int)lv);
-            return NbtLong.of(getLong());
+                return IntTag.valueOf((int)lv);
+            return LongTag.valueOf(getLong());
         }
         else
         {
-            return NbtDouble.of(value);
+            return DoubleTag.valueOf(value);
         }
     }
 

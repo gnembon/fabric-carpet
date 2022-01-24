@@ -1,18 +1,18 @@
 package carpet.mixins;
 
 import carpet.utils.RandomTools;
-import net.minecraft.entity.projectile.PersistentProjectileEntity;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
 import java.util.Random;
+import net.minecraft.world.entity.projectile.AbstractArrow;
 
-@Mixin(PersistentProjectileEntity.class)
+@Mixin(AbstractArrow.class)
 public class ProjectileEntity_extremeMixin
 {
     // calculates damage
-    @Redirect(method = "applyEnchantmentEffects", expect = 1, at = @At(
+    @Redirect(method = "setEnchantmentEffectsFromEntity", expect = 1, at = @At(
             value = "INVOKE",
             target = "Ljava/util/Random;nextGaussian()D"
     ))

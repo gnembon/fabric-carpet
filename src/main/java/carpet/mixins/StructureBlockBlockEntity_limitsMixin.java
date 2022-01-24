@@ -3,19 +3,19 @@ package carpet.mixins;
 import carpet.CarpetSettings;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.block.Block;
-import net.minecraft.block.entity.StructureBlockBlockEntity;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.entity.StructureBlockEntity;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Constant;
 import org.spongepowered.asm.mixin.injection.ModifyArg;
 import org.spongepowered.asm.mixin.injection.ModifyConstant;
 
-@Mixin(StructureBlockBlockEntity.class)
+@Mixin(StructureBlockEntity.class)
 public abstract class StructureBlockBlockEntity_limitsMixin
 {
     @ModifyConstant(
-            method = "readNbt",
+            method = "load",
             constant = @Constant(intValue = 48)
     )
     private int positiveLimit(int original) {
@@ -23,7 +23,7 @@ public abstract class StructureBlockBlockEntity_limitsMixin
     }
 
     @ModifyConstant(
-            method = "readNbt",
+            method = "load",
             constant = @Constant(intValue = -48)
     )
     private int negativeLimit(int original) {
@@ -34,7 +34,7 @@ public abstract class StructureBlockBlockEntity_limitsMixin
             method = "saveStructure(Z)Z",
             at = @At(
                     value = "INVOKE",
-                    target = "Lnet/minecraft/structure/Structure;saveFromWorld(Lnet/minecraft/world/World;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/util/math/Vec3i;ZLnet/minecraft/block/Block;)V"
+                    target = "Lnet/minecraft/world/level/levelgen/structure/templatesystem/StructureTemplate;fillFromWorld(Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/core/Vec3i;ZLnet/minecraft/world/level/block/Block;)V"
             ),
             index = 4
     )

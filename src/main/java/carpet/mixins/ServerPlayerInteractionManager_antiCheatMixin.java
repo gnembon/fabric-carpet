@@ -1,17 +1,17 @@
 package carpet.mixins;
 
 import carpet.CarpetSettings;
-import net.minecraft.network.packet.c2s.play.PlayerActionC2SPacket;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.network.ServerPlayerInteractionManager;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
-import net.minecraft.util.math.Vec3d;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.network.protocol.game.ServerboundPlayerActionPacket;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.level.ServerPlayerGameMode;
+import net.minecraft.world.phys.Vec3;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
-@Mixin(value = ServerPlayerInteractionManager.class, priority = 69420) // not that important for carpet
+@Mixin(value = ServerPlayerGameMode.class, priority = 69420) // not that important for carpet
 public class ServerPlayerInteractionManager_antiCheatMixin
 {
     /*
@@ -27,41 +27,41 @@ public class ServerPlayerInteractionManager_antiCheatMixin
     // that shoudn't've been a constant at the first place
     // resolves problems with mobs using reach entity attributes.
 
-    @Redirect(method = "processBlockBreakingAction", at = @At(
+    @Redirect(method = "handleBlockBreakAction", at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/server/network/ServerPlayerEntity;getX()D"
+            target = "Lnet/minecraft/server/level/ServerPlayer;getX()D"
             ))
-    private double getXX(ServerPlayerEntity player,
-                         BlockPos pos, PlayerActionC2SPacket.Action action, Direction direction, int worldHeight)
+    private double getXX(ServerPlayer player,
+                         BlockPos pos, ServerboundPlayerActionPacket.Action action, Direction direction, int worldHeight)
     {
         if (CarpetSettings.antiCheatDisabled &&
-                player.getPos().add(0, 1.5, 0).squaredDistanceTo(Vec3d.ofCenter(pos)) < 1024
+                player.position().add(0, 1.5, 0).distanceToSqr(Vec3.atCenterOf(pos)) < 1024
         ) return pos.getX()+0.5;
         return player.getX();
     }
 
-    @Redirect(method = "processBlockBreakingAction", at = @At(
+    @Redirect(method = "handleBlockBreakAction", at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/server/network/ServerPlayerEntity;getY()D"
+            target = "Lnet/minecraft/server/level/ServerPlayer;getY()D"
     ))
-    private double getYY(ServerPlayerEntity player,
-                         BlockPos pos, PlayerActionC2SPacket.Action action, Direction direction, int worldHeight)
+    private double getYY(ServerPlayer player,
+                         BlockPos pos, ServerboundPlayerActionPacket.Action action, Direction direction, int worldHeight)
     {
         if (CarpetSettings.antiCheatDisabled &&
-                player.getPos().add(0, 1.5, 0).squaredDistanceTo(Vec3d.ofCenter(pos)) < 1024
+                player.position().add(0, 1.5, 0).distanceToSqr(Vec3.atCenterOf(pos)) < 1024
         ) return pos.getY()-1.0;
         return player.getY();
     }
 
-    @Redirect(method = "processBlockBreakingAction", at = @At(
+    @Redirect(method = "handleBlockBreakAction", at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/server/network/ServerPlayerEntity;getZ()D"
+            target = "Lnet/minecraft/server/level/ServerPlayer;getZ()D"
     ))
-    private double getZZ(ServerPlayerEntity player,
-                         BlockPos pos, PlayerActionC2SPacket.Action action, Direction direction, int worldHeight)
+    private double getZZ(ServerPlayer player,
+                         BlockPos pos, ServerboundPlayerActionPacket.Action action, Direction direction, int worldHeight)
     {
         if (CarpetSettings.antiCheatDisabled &&
-                player.getPos().add(0, 1.5, 0).squaredDistanceTo(Vec3d.ofCenter(pos)) < 1024
+                player.position().add(0, 1.5, 0).distanceToSqr(Vec3.atCenterOf(pos)) < 1024
         ) return pos.getZ()+0.5;
         return player.getZ();
     }

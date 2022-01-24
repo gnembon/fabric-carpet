@@ -1,55 +1,55 @@
 package carpet.helpers;
 
 import carpet.fakes.PistonBlockInterface;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.BlockSource;
+import net.minecraft.core.Direction;
+import net.minecraft.core.dispenser.DispenseItemBehavior;
+import net.minecraft.core.dispenser.OptionalDispenseItemBehavior;
+import net.minecraft.util.Mth;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.context.BlockPlaceContext;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.BaseRailBlock;
+import net.minecraft.world.level.block.BedBlock;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.ComparatorBlock;
+import net.minecraft.world.level.block.DiodeBlock;
+import net.minecraft.world.level.block.DirectionalBlock;
+import net.minecraft.world.level.block.DispenserBlock;
+import net.minecraft.world.level.block.EndRodBlock;
+import net.minecraft.world.level.block.FenceGateBlock;
+import net.minecraft.world.level.block.GlazedTerracottaBlock;
+import net.minecraft.world.level.block.HopperBlock;
+import net.minecraft.world.level.block.HorizontalDirectionalBlock;
+import net.minecraft.world.level.block.LeverBlock;
+import net.minecraft.world.level.block.ObserverBlock;
+import net.minecraft.world.level.block.RepeaterBlock;
+import net.minecraft.world.level.block.RotatedPillarBlock;
+import net.minecraft.world.level.block.Rotation;
+import net.minecraft.world.level.block.SlabBlock;
+import net.minecraft.world.level.block.StairBlock;
+import net.minecraft.world.level.block.TrapDoorBlock;
+import net.minecraft.world.level.block.piston.PistonBaseBlock;
+import net.minecraft.world.level.block.piston.PistonStructureResolver;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.ComparatorMode;
+import net.minecraft.world.level.block.state.properties.Half;
+import net.minecraft.world.level.block.state.properties.SlabType;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.Vec3;
 import carpet.CarpetSettings;
-import net.minecraft.block.AbstractRailBlock;
-import net.minecraft.block.AbstractRedstoneGateBlock;
-import net.minecraft.block.BedBlock;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.Blocks;
-import net.minecraft.block.ComparatorBlock;
-import net.minecraft.block.DispenserBlock;
-import net.minecraft.block.EndRodBlock;
-import net.minecraft.block.FacingBlock;
-import net.minecraft.block.FenceGateBlock;
-import net.minecraft.block.GlazedTerracottaBlock;
-import net.minecraft.block.HopperBlock;
-import net.minecraft.block.HorizontalFacingBlock;
-import net.minecraft.block.LeverBlock;
-import net.minecraft.block.ObserverBlock;
-import net.minecraft.block.PillarBlock;
-import net.minecraft.block.PistonBlock;
-import net.minecraft.block.RepeaterBlock;
-import net.minecraft.block.SlabBlock;
-import net.minecraft.block.StairsBlock;
-import net.minecraft.block.TrapdoorBlock;
-import net.minecraft.block.dispenser.DispenserBehavior;
-import net.minecraft.block.dispenser.FallibleItemDispenserBehavior;
-import net.minecraft.block.enums.BlockHalf;
-import net.minecraft.block.enums.ComparatorMode;
-import net.minecraft.block.enums.SlabType;
-import net.minecraft.block.piston.PistonHandler;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.BlockItem;
-import net.minecraft.item.ItemPlacementContext;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.BlockRotation;
-import net.minecraft.util.Hand;
-import net.minecraft.util.hit.BlockHitResult;
-import net.minecraft.util.math.BlockPointer;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.World;
 
 public class BlockRotator
 {
-    public static boolean flipBlockWithCactus(BlockState state, World world, PlayerEntity player, Hand hand, BlockHitResult hit)
+    public static boolean flipBlockWithCactus(BlockState state, Level world, Player player, InteractionHand hand, BlockHitResult hit)
     {               //getAbilities()
-        if (!player.getAbilities().allowModifyWorld || !CarpetSettings.flippinCactus || !player_holds_cactus_mainhand(player))
+        if (!player.getAbilities().mayBuild || !CarpetSettings.flippinCactus || !player_holds_cactus_mainhand(player))
         {
             return false;
         }
@@ -59,14 +59,14 @@ public class BlockRotator
         return retval;
     }
 
-    public static BlockState alternativeBlockPlacement(Block block,  ItemPlacementContext context)//World worldIn, BlockPos pos, EnumFacing facing, float hitX, float hitY, float hitZ, int meta, EntityLivingBase placer)
+    public static BlockState alternativeBlockPlacement(Block block,  BlockPlaceContext context)//World worldIn, BlockPos pos, EnumFacing facing, float hitX, float hitY, float hitZ, int meta, EntityLivingBase placer)
     {
         //actual alternative block placement code
         //
         if (true) throw new UnsupportedOperationException("Alternative Block Placement / client controlled / is not implemnted");
 
         Direction facing;
-        Vec3d vec3d = context.getHitPos();
+        Vec3 vec3d = context.getClickLocation();
         float hitX = (float) vec3d.x;
 
         if (hitX<2) // vanilla
@@ -76,75 +76,75 @@ public class BlockRotator
         // now it would be great if hitX was adjusted in context to original range from 0.0 to 1.0
         // since its actually using it. Its private - maybe with Reflections?
         //
-        PlayerEntity placer = context.getPlayer();
-        BlockPos pos = context.getBlockPos();
-        World world = context.getWorld();
+        Player placer = context.getPlayer();
+        BlockPos pos = context.getClickedPos();
+        Level world = context.getLevel();
 
         if (block instanceof GlazedTerracottaBlock)
         {
-            facing = Direction.byId(code);
+            facing = Direction.from3DDataValue(code);
             if(facing == Direction.UP || facing == Direction.DOWN)
             {
-                facing = placer.getHorizontalFacing().getOpposite();
+                facing = placer.getDirection().getOpposite();
             }
-            return block.getDefaultState().with(HorizontalFacingBlock.FACING, facing);
+            return block.defaultBlockState().setValue(HorizontalDirectionalBlock.FACING, facing);
         }
         else if (block instanceof ObserverBlock)
         {
-            return block.getDefaultState()
-                    .with(FacingBlock.FACING, Direction.byId(code))
-                    .with(ObserverBlock.POWERED, true);
+            return block.defaultBlockState()
+                    .setValue(DirectionalBlock.FACING, Direction.from3DDataValue(code))
+                    .setValue(ObserverBlock.POWERED, true);
         }
         else if (block instanceof RepeaterBlock)
         {
-            facing = Direction.byId(code % 16);
+            facing = Direction.from3DDataValue(code % 16);
             if(facing == Direction.UP || facing == Direction.DOWN)
             {
-                facing = placer.getHorizontalFacing().getOpposite();
+                facing = placer.getDirection().getOpposite();
             }
-            return block.getDefaultState()
-                    .with(HorizontalFacingBlock.FACING, facing)
-                    .with(RepeaterBlock.DELAY, MathHelper.clamp(code / 16, 1, 4))
-                    .with(RepeaterBlock.LOCKED, Boolean.FALSE);
+            return block.defaultBlockState()
+                    .setValue(HorizontalDirectionalBlock.FACING, facing)
+                    .setValue(RepeaterBlock.DELAY, Mth.clamp(code / 16, 1, 4))
+                    .setValue(RepeaterBlock.LOCKED, Boolean.FALSE);
         }
-        else if (block instanceof TrapdoorBlock)
+        else if (block instanceof TrapDoorBlock)
         {
-            return block.getDefaultState()
-                    .with(TrapdoorBlock.FACING, Direction.byId(code % 16))
-                    .with(TrapdoorBlock.OPEN, Boolean.FALSE)
-                    .with(TrapdoorBlock.HALF, (code >= 16) ? BlockHalf.TOP : BlockHalf.BOTTOM)
-                    .with(TrapdoorBlock.OPEN, world.isReceivingRedstonePower(pos));
+            return block.defaultBlockState()
+                    .setValue(TrapDoorBlock.FACING, Direction.from3DDataValue(code % 16))
+                    .setValue(TrapDoorBlock.OPEN, Boolean.FALSE)
+                    .setValue(TrapDoorBlock.HALF, (code >= 16) ? Half.TOP : Half.BOTTOM)
+                    .setValue(TrapDoorBlock.OPEN, world.hasNeighborSignal(pos));
         }
         else if (block instanceof ComparatorBlock)
         {
-            facing = Direction.byId(code % 16);
+            facing = Direction.from3DDataValue(code % 16);
             if((facing == Direction.UP) || (facing == Direction.DOWN))
             {
-                facing = placer.getHorizontalFacing().getOpposite();
+                facing = placer.getDirection().getOpposite();
             }
             ComparatorMode m = (hitX >= 16)?ComparatorMode.SUBTRACT: ComparatorMode.COMPARE;
-            return block.getDefaultState()
-                    .with(HorizontalFacingBlock.FACING, facing)
-                    .with(ComparatorBlock.POWERED, Boolean.FALSE)
-                    .with(ComparatorBlock.MODE, m);
+            return block.defaultBlockState()
+                    .setValue(HorizontalDirectionalBlock.FACING, facing)
+                    .setValue(ComparatorBlock.POWERED, Boolean.FALSE)
+                    .setValue(ComparatorBlock.MODE, m);
         }
         else if (block instanceof DispenserBlock)
         {
-            return block.getDefaultState()
-                    .with(DispenserBlock.FACING, Direction.byId(code))
-                    .with(DispenserBlock.TRIGGERED, Boolean.FALSE);
+            return block.defaultBlockState()
+                    .setValue(DispenserBlock.FACING, Direction.from3DDataValue(code))
+                    .setValue(DispenserBlock.TRIGGERED, Boolean.FALSE);
         }
-        else if (block instanceof PistonBlock)
+        else if (block instanceof PistonBaseBlock)
         {
-            return block.getDefaultState()
-                    .with(FacingBlock.FACING, Direction.byId(code))
-                    .with(PistonBlock.EXTENDED, Boolean.FALSE);
+            return block.defaultBlockState()
+                    .setValue(DirectionalBlock.FACING, Direction.from3DDataValue(code))
+                    .setValue(PistonBaseBlock.EXTENDED, Boolean.FALSE);
         }
-        else if (block instanceof StairsBlock)
+        else if (block instanceof StairBlock)
         {
-            return block.getPlacementState(context)//worldIn, pos, facing, hitX, hitY, hitZ, meta, placer)
-                    .with(StairsBlock.FACING, Direction.byId(code % 16))
-                    .with(StairsBlock.HALF, ( hitX >= 16)?BlockHalf.TOP : BlockHalf.BOTTOM);
+            return block.getStateForPlacement(context)//worldIn, pos, facing, hitX, hitY, hitZ, meta, placer)
+                    .setValue(StairBlock.FACING, Direction.from3DDataValue(code % 16))
+                    .setValue(StairBlock.HALF, ( hitX >= 16)?Half.TOP : Half.BOTTOM);
         }
         return null;
     }
@@ -222,109 +222,109 @@ public class BlockRotator
         }
     }
 
-    public static ItemStack dispenserRotate(BlockPointer source, ItemStack stack)
+    public static ItemStack dispenserRotate(BlockSource source, ItemStack stack)
     {
-        Direction sourceFace = source.getBlockState().get(DispenserBlock.FACING);
-        World world = source.getWorld();
-        BlockPos blockpos = source.getPos().offset(sourceFace); // offset
+        Direction sourceFace = source.getBlockState().getValue(DispenserBlock.FACING);
+        Level world = source.getLevel();
+        BlockPos blockpos = source.getPos().relative(sourceFace); // offset
         BlockState iblockstate = world.getBlockState(blockpos);
         Block block = iblockstate.getBlock();
 
         // Block rotation for blocks that can be placed in all 6 or 4 rotations.
-        if(block instanceof FacingBlock || block instanceof DispenserBlock)
+        if(block instanceof DirectionalBlock || block instanceof DispenserBlock)
         {
-            Direction face = iblockstate.get(FacingBlock.FACING);
-            if (block instanceof PistonBlock && (
-                    iblockstate.get(PistonBlock.EXTENDED)
-                    || ( ((PistonBlockInterface)block).publicShouldExtend(world, blockpos, face) && (new PistonHandler(world, blockpos, face, true)).calculatePush() )
+            Direction face = iblockstate.getValue(DirectionalBlock.FACING);
+            if (block instanceof PistonBaseBlock && (
+                    iblockstate.getValue(PistonBaseBlock.EXTENDED)
+                    || ( ((PistonBlockInterface)block).publicShouldExtend(world, blockpos, face) && (new PistonStructureResolver(world, blockpos, face, true)).resolve() )
                     )
             )
                 return stack;
 
             Direction rotated_face = rotateClockwise(face, sourceFace.getAxis());
-            if(sourceFace.getId() % 2 == 0 || rotated_face == face)
+            if(sourceFace.get3DDataValue() % 2 == 0 || rotated_face == face)
             {   // Flip to make blocks always rotate clockwise relative to the dispenser
                 // when index is equal to zero. when index is equal to zero the dispenser is in the opposite direction.
                 rotated_face = rotated_face.getOpposite();
             }
-            world.setBlockState(blockpos, iblockstate.with(FacingBlock.FACING, rotated_face), 3);
+            world.setBlock(blockpos, iblockstate.setValue(DirectionalBlock.FACING, rotated_face), 3);
 
 
         }
-        else if(block instanceof HorizontalFacingBlock) // Block rotation for blocks that can be placed in only 4 horizontal rotations.
+        else if(block instanceof HorizontalDirectionalBlock) // Block rotation for blocks that can be placed in only 4 horizontal rotations.
         {
             if (block instanceof BedBlock)
                 return stack;
-            Direction face = iblockstate.get(HorizontalFacingBlock.FACING);
+            Direction face = iblockstate.getValue(HorizontalDirectionalBlock.FACING);
             face = rotateClockwise(face, Direction.Axis.Y);
 
             if(sourceFace == Direction.DOWN)
             { // same as above.
                 face = face.getOpposite();
             }
-            world.setBlockState(blockpos, iblockstate.with(HorizontalFacingBlock.FACING, face), 3);
+            world.setBlock(blockpos, iblockstate.setValue(HorizontalDirectionalBlock.FACING, face), 3);
         }
         else if(block == Blocks.HOPPER )
         {
-            Direction face = iblockstate.get(HopperBlock.FACING);
+            Direction face = iblockstate.getValue(HopperBlock.FACING);
             if (face != Direction.DOWN)
             {
                 face = rotateClockwise(face, Direction.Axis.Y);
-                world.setBlockState(blockpos, iblockstate.with(HopperBlock.FACING, face), 3);
+                world.setBlock(blockpos, iblockstate.setValue(HopperBlock.FACING, face), 3);
             }
         }
         // Send block update to the block that just have been rotated.
-        world.updateNeighbor(blockpos, block, source.getPos());
+        world.neighborChanged(blockpos, block, source.getPos());
 
         return stack;
     }
 
 
-    public static boolean flip_block(BlockState state, World world, PlayerEntity player, Hand hand, BlockHitResult hit)
+    public static boolean flip_block(BlockState state, Level world, Player player, InteractionHand hand, BlockHitResult hit)
     {
         Block block = state.getBlock();
         BlockPos pos = hit.getBlockPos();
-        Vec3d hitVec = hit.getPos().subtract(pos.getX(), pos.getY(), pos.getZ());
-        Direction facing = hit.getSide();
+        Vec3 hitVec = hit.getLocation().subtract(pos.getX(), pos.getY(), pos.getZ());
+        Direction facing = hit.getDirection();
         BlockState newState = null;
-        if ( (block instanceof GlazedTerracottaBlock) || (block instanceof AbstractRedstoneGateBlock) || (block instanceof AbstractRailBlock) ||
-             (block instanceof TrapdoorBlock)         || (block instanceof LeverBlock)         || (block instanceof FenceGateBlock))
+        if ( (block instanceof GlazedTerracottaBlock) || (block instanceof DiodeBlock) || (block instanceof BaseRailBlock) ||
+             (block instanceof TrapDoorBlock)         || (block instanceof LeverBlock)         || (block instanceof FenceGateBlock))
         {
-            newState = state.rotate(BlockRotation.CLOCKWISE_90);
+            newState = state.rotate(Rotation.CLOCKWISE_90);
         }
         else if ((block instanceof ObserverBlock) || (block instanceof EndRodBlock))
         {
-            newState = state.with(FacingBlock.FACING, state.get(FacingBlock.FACING).getOpposite());
+            newState = state.setValue(DirectionalBlock.FACING, state.getValue(DirectionalBlock.FACING).getOpposite());
         }
         else if (block instanceof DispenserBlock)
         {
-            newState = state.with(DispenserBlock.FACING, state.get(DispenserBlock.FACING).getOpposite());
+            newState = state.setValue(DispenserBlock.FACING, state.getValue(DispenserBlock.FACING).getOpposite());
         }
-        else if (block instanceof PistonBlock)
+        else if (block instanceof PistonBaseBlock)
         {
-            if (!(state.get(PistonBlock.EXTENDED)))
-                newState = state.with(FacingBlock.FACING, state.get(FacingBlock.FACING).getOpposite());
+            if (!(state.getValue(PistonBaseBlock.EXTENDED)))
+                newState = state.setValue(DirectionalBlock.FACING, state.getValue(DirectionalBlock.FACING).getOpposite());
         }
         else if (block instanceof SlabBlock)
         {
-            if (((SlabBlock) block).hasSidedTransparency(state))
+            if (((SlabBlock) block).useShapeForLightOcclusion(state))
             {
-                newState =  state.with(SlabBlock.TYPE, state.get(SlabBlock.TYPE) == SlabType.TOP ? SlabType.BOTTOM : SlabType.TOP);
+                newState =  state.setValue(SlabBlock.TYPE, state.getValue(SlabBlock.TYPE) == SlabType.TOP ? SlabType.BOTTOM : SlabType.TOP);
             }
         }
         else if (block instanceof HopperBlock)
         {
-            if (state.get(HopperBlock.FACING) != Direction.DOWN)
+            if (state.getValue(HopperBlock.FACING) != Direction.DOWN)
             {
-                newState =  state.with(HopperBlock.FACING, state.get(HopperBlock.FACING).rotateYClockwise());
+                newState =  state.setValue(HopperBlock.FACING, state.getValue(HopperBlock.FACING).getClockWise());
             }
         }
-        else if (block instanceof StairsBlock)
+        else if (block instanceof StairBlock)
         {
             //LOG.error(String.format("hit with facing: %s, at side %.1fX, X %.1fY, Y %.1fZ",facing, hitX, hitY, hitZ));
             if ((facing == Direction.UP && hitVec.y == 1.0f) || (facing == Direction.DOWN && hitVec.y == 0.0f))
             {
-                newState =  state.with(StairsBlock.HALF, state.get(StairsBlock.HALF) == BlockHalf.TOP ? BlockHalf.BOTTOM : BlockHalf.TOP );
+                newState =  state.setValue(StairBlock.HALF, state.getValue(StairBlock.HALF) == Half.TOP ? Half.BOTTOM : Half.TOP );
             }
             else
             {
@@ -351,25 +351,25 @@ public class BlockRotator
                 }
                 if (turn_right)
                 {
-                    newState = state.rotate(BlockRotation.COUNTERCLOCKWISE_90);
+                    newState = state.rotate(Rotation.COUNTERCLOCKWISE_90);
                 }
                 else
                 {
-                    newState = state.rotate(BlockRotation.CLOCKWISE_90);
+                    newState = state.rotate(Rotation.CLOCKWISE_90);
                 }
             }
         }
-        else if (block instanceof PillarBlock) 
+        else if (block instanceof RotatedPillarBlock) 
         {
-            switch((Direction.Axis)state.get(PillarBlock.AXIS)) {
+            switch((Direction.Axis)state.getValue(RotatedPillarBlock.AXIS)) {
                 case X:
-                    newState = (BlockState)state.with(PillarBlock.AXIS, Direction.Axis.Z);
+                    newState = (BlockState)state.setValue(RotatedPillarBlock.AXIS, Direction.Axis.Z);
                     break;
                 case Z:
-                    newState = (BlockState)state.with(PillarBlock.AXIS, Direction.Axis.Y);
+                    newState = (BlockState)state.setValue(RotatedPillarBlock.AXIS, Direction.Axis.Y);
                     break;
                 case Y:
-                    newState = (BlockState)state.with(PillarBlock.AXIS, Direction.Axis.X);
+                    newState = (BlockState)state.setValue(RotatedPillarBlock.AXIS, Direction.Axis.X);
                     break;
             }
         }
@@ -379,34 +379,34 @@ public class BlockRotator
         }
         if (newState != null)
         {
-            world.setBlockState(pos, newState, 2 | 1024);
-            world.scheduleBlockRerenderIfNeeded(pos, state, newState);
+            world.setBlock(pos, newState, 2 | 1024);
+            world.setBlocksDirty(pos, state, newState);
             return true;
         }
         return false;
     }
-    private static boolean player_holds_cactus_mainhand(PlayerEntity playerIn)
+    private static boolean player_holds_cactus_mainhand(Player playerIn)
     {
-        return (!playerIn.getMainHandStack().isEmpty()
-                && playerIn.getMainHandStack().getItem() instanceof BlockItem &&
-                ((BlockItem) (playerIn.getMainHandStack().getItem())).getBlock() == Blocks.CACTUS);
+        return (!playerIn.getMainHandItem().isEmpty()
+                && playerIn.getMainHandItem().getItem() instanceof BlockItem &&
+                ((BlockItem) (playerIn.getMainHandItem().getItem())).getBlock() == Blocks.CACTUS);
     }
     public static boolean flippinEligibility(Entity entity)
     {
-        if (CarpetSettings.flippinCactus && (entity instanceof PlayerEntity))
+        if (CarpetSettings.flippinCactus && (entity instanceof Player))
         {
-            PlayerEntity player = (PlayerEntity)entity;
-            return (!player.getOffHandStack().isEmpty()
-                    && player.getOffHandStack().getItem() instanceof BlockItem &&
-                    ((BlockItem) (player.getOffHandStack().getItem())).getBlock() == Blocks.CACTUS);
+            Player player = (Player)entity;
+            return (!player.getOffhandItem().isEmpty()
+                    && player.getOffhandItem().getItem() instanceof BlockItem &&
+                    ((BlockItem) (player.getOffhandItem().getItem())).getBlock() == Blocks.CACTUS);
         }
         return false;
     }
 
-    public static class CactusDispenserBehaviour extends FallibleItemDispenserBehavior implements DispenserBehavior
+    public static class CactusDispenserBehaviour extends OptionalDispenseItemBehavior implements DispenseItemBehavior
     {
         @Override
-        protected ItemStack dispenseSilently(BlockPointer source, ItemStack stack)
+        protected ItemStack execute(BlockSource source, ItemStack stack)
         {
             if (CarpetSettings.rotatorBlock)
             {
@@ -414,7 +414,7 @@ public class BlockRotator
             }
             else
             {
-                return super.dispenseSilently(source, stack);
+                return super.execute(source, stack);
             }
         }
     }

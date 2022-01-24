@@ -1,7 +1,11 @@
 package carpet.mixins;
 
 import java.util.Arrays;
-
+import net.minecraft.core.SectionPos;
+import net.minecraft.world.level.chunk.DataLayer;
+import net.minecraft.world.level.lighting.DataLayerStorageMap;
+import net.minecraft.world.level.lighting.LayerLightEngine;
+import net.minecraft.world.level.lighting.LayerLightSectionStorage;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -14,36 +18,31 @@ import carpet.fakes.LightStorageInterface;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import it.unimi.dsi.fastutil.longs.LongSet;
-import net.minecraft.util.math.ChunkSectionPos;
-import net.minecraft.world.chunk.ChunkNibbleArray;
-import net.minecraft.world.chunk.ChunkToNibbleArrayMap;
-import net.minecraft.world.chunk.light.ChunkLightProvider;
-import net.minecraft.world.chunk.light.LightStorage;
 
-@Mixin(LightStorage.class)
+@Mixin(LayerLightSectionStorage.class)
 public abstract class LightStorage_scarpetChunkCreationMixin implements LightStorageInterface
 {
     @Shadow
-    protected abstract ChunkNibbleArray getLightSection(final long sectionPos, final boolean cached);
+    protected abstract DataLayer getDataLayer(final long sectionPos, final boolean cached);
 
     @Shadow
-    protected abstract void removeSection(final ChunkLightProvider<?, ?> storage, final long blockChunkPos);
-
-    @Shadow
-    @Final
-    protected LongSet dirtySections;
+    protected abstract void clearQueuedSectionBlocks(final LayerLightEngine<?, ?> storage, final long blockChunkPos);
 
     @Shadow
     @Final
-    protected ChunkToNibbleArrayMap<?> storage;
-
-    @Shadow protected abstract boolean hasSection(final long sectionPos);
+    protected LongSet changedSections;
 
     @Shadow
     @Final
-    protected Long2ObjectMap<ChunkNibbleArray> queuedSections;
+    protected DataLayerStorageMap<?> updatingSectionData;
 
-    @Shadow protected abstract void setColumnEnabled(final long l, final boolean bl);
+    @Shadow protected abstract boolean storingLightForSection(final long sectionPos);
+
+    @Shadow
+    @Final
+    protected Long2ObjectMap<DataLayer> queuedSections;
+
+    @Shadow protected abstract void enableLightSources(final long l, final boolean bl);
 
     @Unique
     private final LongSet removedChunks = new LongOpenHashSet();
@@ -64,10 +63,10 @@ public abstract class LightStorage_scarpetChunkCreationMixin implements LightSto
     }
 
     @Inject(
-        method = "updateLight(Lnet/minecraft/world/chunk/light/ChunkLightProvider;ZZ)V",
+        method = "markNewInconsistencies(Lnet/minecraft/world/level/lighting/LayerLightEngine;ZZ)V",
         at = @At("HEAD")
     )
-    private void processData(final ChunkLightProvider<?, ?> lightProvider, final boolean doSkylight, final boolean skipEdgeLightPropagation, final CallbackInfo ci)
+    private void processData(final LayerLightEngine<?, ?> lightProvider, final boolean doSkylight, final boolean skipEdgeLightPropagation, final CallbackInfo ci)
     {
         // Process light removal
 
@@ -75,18 +74,18 @@ public abstract class LightStorage_scarpetChunkCreationMixin implements LightSto
         {
             for (int y = -1; y < 17; ++y)
             {
-                final long sectionPos = ChunkSectionPos.asLong(ChunkSectionPos.unpackX(cPos), y, ChunkSectionPos.unpackZ(cPos));
+                final long sectionPos = SectionPos.asLong(SectionPos.x(cPos), y, SectionPos.z(cPos));
 
                 this.queuedSections.remove(sectionPos);
 
-                if (this.hasSection(sectionPos))
+                if (this.storingLightForSection(sectionPos))
                 {
-                    this.removeSection(lightProvider, sectionPos);
+                    this.clearQueuedSectionBlocks(lightProvider, sectionPos);
 
-                    if (this.dirtySections.add(sectionPos))
-                        this.storage.replaceWithCopy(sectionPos);
+                    if (this.changedSections.add(sectionPos))
+                        this.updatingSectionData.copyDataLayer(sectionPos);
 
-                    Arrays.fill(this.getLightSection(sectionPos, true).asByteArray(), (byte) 0);
+                    Arrays.fill(this.getDataLayer(sectionPos, true).getData(), (byte) 0);
                 }
             }
 
@@ -109,7 +108,7 @@ public abstract class LightStorage_scarpetChunkCreationMixin implements LightSto
     }
 
     @Override
-    public void processRelight(final ChunkLightProvider<?, ?> lightProvider, final long pos)
+    public void processRelight(final LayerLightEngine<?, ?> lightProvider, final long pos)
     {
     }
 }

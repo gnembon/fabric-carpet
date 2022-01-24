@@ -2,10 +2,6 @@ package carpet.mixins;
 
 import carpet.CarpetServer;
 import carpet.script.api.Auxiliary;
-import net.minecraft.entity.EntityType;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.decoration.ArmorStandEntity;
-import net.minecraft.world.World;
 import org.apache.commons.lang3.StringUtils;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -13,11 +9,15 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.util.Optional;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.decoration.ArmorStand;
+import net.minecraft.world.level.Level;
 
-@Mixin(ArmorStandEntity.class)
+@Mixin(ArmorStand.class)
 public abstract class ArmorStandEntity_scarpetMarkerMixin extends LivingEntity
 {
-    protected ArmorStandEntity_scarpetMarkerMixin(EntityType<? extends LivingEntity> entityType_1, World world_1)
+    protected ArmorStandEntity_scarpetMarkerMixin(EntityType<? extends LivingEntity> entityType_1, Level world_1)
     {
         super(entityType_1, world_1);
     }
@@ -26,15 +26,15 @@ public abstract class ArmorStandEntity_scarpetMarkerMixin extends LivingEntity
      * Remove all markers that do not belong to any script host and not part of the global one when loaded
      * @param ci
      */
-    @Inject(method = "readCustomDataFromNbt", at = @At("HEAD"))
+    @Inject(method = "readAdditionalSaveData", at = @At("HEAD"))
     private void checkScarpetMarkerUnloaded(CallbackInfo ci)
     {
-        if (!world.isClient)
+        if (!level.isClientSide)
         {
-            if (getScoreboardTags().contains(Auxiliary.MARKER_STRING))
+            if (getTags().contains(Auxiliary.MARKER_STRING))
             {
                 String prefix = Auxiliary.MARKER_STRING+"_";
-                Optional<String> owner = getScoreboardTags().stream().filter(s -> s.startsWith(prefix)).findFirst();
+                Optional<String> owner = getTags().stream().filter(s -> s.startsWith(prefix)).findFirst();
                 if (owner.isPresent())
                 {
                     String hostName = StringUtils.removeStart(owner.get(),prefix);

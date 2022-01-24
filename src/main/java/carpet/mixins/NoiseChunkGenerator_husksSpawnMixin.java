@@ -2,42 +2,41 @@ package carpet.mixins;
 
 import carpet.CarpetSettings;
 import carpet.helpers.CustomSpawnLists;
-import net.minecraft.entity.SpawnGroup;
-import net.minecraft.util.collection.Pool;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.biome.Biome;
-import net.minecraft.world.biome.SpawnSettings;
-import net.minecraft.world.biome.source.BiomeSource;
-import net.minecraft.world.gen.StructureAccessor;
-import net.minecraft.world.gen.chunk.ChunkGenerator;
-import net.minecraft.world.gen.chunk.NoiseChunkGenerator;
-import net.minecraft.world.gen.chunk.StructuresConfig;
-//import net.minecraft.world.gen.feature.Feature;
-import net.minecraft.world.gen.feature.StructureFeature;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import java.util.List;
+import net.minecraft.core.BlockPos;
+import net.minecraft.util.random.WeightedRandomList;
+import net.minecraft.world.entity.MobCategory;
+import net.minecraft.world.level.StructureFeatureManager;
+import net.minecraft.world.level.biome.Biome;
+import net.minecraft.world.level.biome.BiomeSource;
+import net.minecraft.world.level.biome.MobSpawnSettings;
+import net.minecraft.world.level.chunk.ChunkGenerator;
+import net.minecraft.world.level.levelgen.NoiseBasedChunkGenerator;
+import net.minecraft.world.level.levelgen.StructureSettings;
+import net.minecraft.world.level.levelgen.feature.StructureFeature;
 
-@Mixin(NoiseChunkGenerator.class)
+@Mixin(NoiseBasedChunkGenerator.class)
 // todo rename mixin after 1.15 is gone
 public abstract class NoiseChunkGenerator_husksSpawnMixin extends ChunkGenerator
 {
-    public NoiseChunkGenerator_husksSpawnMixin(BiomeSource biomeSource, StructuresConfig structuresConfig)
+    public NoiseChunkGenerator_husksSpawnMixin(BiomeSource biomeSource, StructureSettings structuresConfig)
     {
         super(biomeSource, structuresConfig);
     }
 
-    @Inject(method = "getEntitySpawnList", at = @At("HEAD"), cancellable = true)
-    private void isInsidePyramid(Biome biome, StructureAccessor accessor, SpawnGroup group, BlockPos pos, CallbackInfoReturnable<Pool<SpawnSettings.SpawnEntry>> cir)
+    @Inject(method = "getMobsAt", at = @At("HEAD"), cancellable = true)
+    private void isInsidePyramid(Biome biome, StructureFeatureManager accessor, MobCategory group, BlockPos pos, CallbackInfoReturnable<WeightedRandomList<MobSpawnSettings.SpawnerData>> cir)
     {
-        if (group == SpawnGroup.MONSTER)
+        if (group == MobCategory.MONSTER)
         {
             if (CarpetSettings.huskSpawningInTemples)
             {
-                if (accessor.getStructureAt(pos, StructureFeature.DESERT_PYRAMID).hasChildren())
+                if (accessor.getStructureAt(pos, StructureFeature.DESERT_PYRAMID).isValid())
                 {
                     cir.setReturnValue(CustomSpawnLists.PYRAMID_SPAWNS);
                     return;
@@ -45,7 +44,7 @@ public abstract class NoiseChunkGenerator_husksSpawnMixin extends ChunkGenerator
             }
             if (CarpetSettings.shulkerSpawningInEndCities)
             {
-                if (accessor.getStructureAt(pos, StructureFeature.END_CITY).hasChildren())
+                if (accessor.getStructureAt(pos, StructureFeature.END_CITY).isValid())
                 {
                     cir.setReturnValue(CustomSpawnLists.SHULKER_SPAWNS);
                     return;
@@ -53,7 +52,7 @@ public abstract class NoiseChunkGenerator_husksSpawnMixin extends ChunkGenerator
             }
             if (CarpetSettings.piglinsSpawningInBastions)
             {
-                if (accessor.getStructureAt(pos, StructureFeature.BASTION_REMNANT).hasChildren())
+                if (accessor.getStructureAt(pos, StructureFeature.BASTION_REMNANT).isValid())
                 {
                     cir.setReturnValue(CustomSpawnLists.BASTION_SPAWNS);
                 }

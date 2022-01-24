@@ -4,20 +4,13 @@ import carpet.CarpetSettings;
 
 import com.google.common.collect.Lists;
 import com.mojang.serialization.Codec;
-import net.minecraft.entity.EntityType;
-import net.minecraft.util.collection.Pool;
-import net.minecraft.world.MobSpawnerLogic;
-import net.minecraft.world.biome.SpawnSettings;
-import net.minecraft.world.gen.feature.BastionRemnantFeature;
-
-import net.minecraft.world.gen.feature.JigsawFeature;
-import net.minecraft.world.gen.feature.StructurePoolFeatureConfig;
 import org.spongepowered.asm.mixin.Mixin;
 
 import java.util.Collections;
 import java.util.List;
+import net.minecraft.world.level.levelgen.feature.BastionFeature;
 
-@Mixin(BastionRemnantFeature.class)
+@Mixin(BastionFeature.class)
 public abstract class BastionRemnantFeatureMixin //extends JigsawFeature
 {
     /*

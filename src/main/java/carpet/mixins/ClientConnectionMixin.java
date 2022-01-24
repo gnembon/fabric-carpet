@@ -6,15 +6,15 @@ import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.GenericFutureListener;
-import net.minecraft.network.ClientConnection;
-import net.minecraft.network.Packet;
+import net.minecraft.network.Connection;
+import net.minecraft.network.protocol.Packet;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Accessor;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-@Mixin(ClientConnection.class)
+@Mixin(Connection.class)
 public abstract class ClientConnectionMixin implements ClientConnectionInterface
 {
     // Add to the packet counter whenever a packet is received.
@@ -25,7 +25,7 @@ public abstract class ClientConnectionMixin implements ClientConnectionInterface
     }
     
     // Add to the packet counter whenever a packet is sent.
-    @Inject(method = "sendImmediately", at = @At("HEAD"))
+    @Inject(method = "sendPacket", at = @At("HEAD"))
     private void packetOutCount(Packet<?> packet_1,
             GenericFutureListener<? extends Future<? super Void>> genericFutureListener_1, CallbackInfo ci)
     {

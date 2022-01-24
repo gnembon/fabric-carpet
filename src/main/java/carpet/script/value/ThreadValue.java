@@ -6,12 +6,11 @@ import carpet.script.Tokenizer;
 import carpet.script.exception.ExitStatement;
 import carpet.script.exception.ExpressionException;
 import carpet.script.exception.InternalExpressionException;
-import net.minecraft.nbt.NbtElement;
-
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
+import net.minecraft.nbt.Tag;
 
 public class ThreadValue extends Value
 {
@@ -127,7 +126,7 @@ public class ThreadValue extends Value
     }
 
     @Override
-    public NbtElement toTag(boolean force)
+    public Tag toTag(boolean force)
     {
         if (!force) throw new NBTSerializableValue.IncompatibleTypeException(this);
         return getValue().toTag(true);

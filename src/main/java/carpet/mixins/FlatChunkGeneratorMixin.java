@@ -2,91 +2,91 @@ package carpet.mixins;
 
 import carpet.CarpetSettings;
 import carpet.helpers.CustomSpawnLists;
-import net.minecraft.entity.SpawnGroup;
-import net.minecraft.util.collection.Pool;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.biome.Biome;
-import net.minecraft.world.biome.SpawnSettings;
-import net.minecraft.world.biome.source.BiomeSource;
-import net.minecraft.world.gen.StructureAccessor;
-import net.minecraft.world.gen.chunk.ChunkGenerator;
-import net.minecraft.world.gen.chunk.FlatChunkGenerator;
-import net.minecraft.world.gen.chunk.StructuresConfig;
-import net.minecraft.world.gen.feature.NetherFortressFeature;
-import net.minecraft.world.gen.feature.OceanMonumentFeature;
-import net.minecraft.world.gen.feature.PillagerOutpostFeature;
-import net.minecraft.world.gen.feature.StructureFeature;
-import net.minecraft.world.gen.feature.SwampHutFeature;
 import org.spongepowered.asm.mixin.Mixin;
 
 import java.util.List;
+import net.minecraft.core.BlockPos;
+import net.minecraft.util.random.WeightedRandomList;
+import net.minecraft.world.entity.MobCategory;
+import net.minecraft.world.level.StructureFeatureManager;
+import net.minecraft.world.level.biome.Biome;
+import net.minecraft.world.level.biome.BiomeSource;
+import net.minecraft.world.level.biome.MobSpawnSettings;
+import net.minecraft.world.level.chunk.ChunkGenerator;
+import net.minecraft.world.level.levelgen.FlatLevelSource;
+import net.minecraft.world.level.levelgen.StructureSettings;
+import net.minecraft.world.level.levelgen.feature.NetherFortressFeature;
+import net.minecraft.world.level.levelgen.feature.OceanMonumentFeature;
+import net.minecraft.world.level.levelgen.feature.PillagerOutpostFeature;
+import net.minecraft.world.level.levelgen.feature.StructureFeature;
+import net.minecraft.world.level.levelgen.feature.SwamplandHutFeature;
 
-@Mixin(FlatChunkGenerator.class)
+@Mixin(FlatLevelSource.class)
 public abstract class FlatChunkGeneratorMixin extends ChunkGenerator
 {
 
-    public FlatChunkGeneratorMixin(BiomeSource biomeSource, StructuresConfig structuresConfig)
+    public FlatChunkGeneratorMixin(BiomeSource biomeSource, StructureSettings structuresConfig)
     {
         super(biomeSource, structuresConfig);
     }
 
     @Override
-    public Pool<SpawnSettings.SpawnEntry> getEntitySpawnList(Biome biome, StructureAccessor accessor, SpawnGroup group, BlockPos pos)
+    public WeightedRandomList<MobSpawnSettings.SpawnerData> getMobsAt(Biome biome, StructureFeatureManager accessor, MobCategory group, BlockPos pos)
     {
-        if (!CarpetSettings.flatWorldStructureSpawning) return super.getEntitySpawnList(biome, accessor, group, pos);
+        if (!CarpetSettings.flatWorldStructureSpawning) return super.getMobsAt(biome, accessor, group, pos);
 
         // vanila noise one
-        if (accessor.getStructureAt(pos, StructureFeature.SWAMP_HUT).hasChildren()) {
-            if (group == SpawnGroup.MONSTER) {
-                return SwampHutFeature.MONSTER_SPAWNS;
+        if (accessor.getStructureAt(pos, StructureFeature.SWAMP_HUT).isValid()) {
+            if (group == MobCategory.MONSTER) {
+                return SwamplandHutFeature.SWAMPHUT_ENEMIES;
             }
 
-            if (group == SpawnGroup.CREATURE) {
-                return SwampHutFeature.CREATURE_SPAWNS;
+            if (group == MobCategory.CREATURE) {
+                return SwamplandHutFeature.SWAMPHUT_ANIMALS;
             }
         }
 
-        if (group == SpawnGroup.MONSTER) {
-            if (accessor.getStructureAt(pos, StructureFeature.PILLAGER_OUTPOST).hasChildren()) {
-                return PillagerOutpostFeature.MONSTER_SPAWNS;
+        if (group == MobCategory.MONSTER) {
+            if (accessor.getStructureAt(pos, StructureFeature.PILLAGER_OUTPOST).isValid()) {
+                return PillagerOutpostFeature.OUTPOST_ENEMIES;
             }
 
-            if (accessor.getStructureAt(pos, StructureFeature.MONUMENT).hasChildren()) {
-                return OceanMonumentFeature.MONSTER_SPAWNS;
+            if (accessor.getStructureAt(pos, StructureFeature.OCEAN_MONUMENT).isValid()) {
+                return OceanMonumentFeature.MONUMENT_ENEMIES;
             }
 
-            if (accessor.getStructureAt(pos, StructureFeature.FORTRESS).hasChildren()) {
-                return NetherFortressFeature.MONSTER_SPAWNS;
+            if (accessor.getStructureAt(pos, StructureFeature.NETHER_BRIDGE).isValid()) {
+                return NetherFortressFeature.FORTRESS_ENEMIES;
             }
         }
 
 
         // carpet spawns
-        if (group == SpawnGroup.MONSTER)
+        if (group == MobCategory.MONSTER)
         {
             if (CarpetSettings.huskSpawningInTemples)
             {
-                if (accessor.getStructureAt(pos, StructureFeature.DESERT_PYRAMID).hasChildren())
+                if (accessor.getStructureAt(pos, StructureFeature.DESERT_PYRAMID).isValid())
                 {
                     return CustomSpawnLists.PYRAMID_SPAWNS;
                 }
             }
             if (CarpetSettings.shulkerSpawningInEndCities)
             {
-                if (accessor.getStructureAt(pos, StructureFeature.END_CITY).hasChildren())
+                if (accessor.getStructureAt(pos, StructureFeature.END_CITY).isValid())
                 {
                     return CustomSpawnLists.SHULKER_SPAWNS;
                 }
             }
             if (CarpetSettings.piglinsSpawningInBastions)
             {
-                if (accessor.getStructureAt(pos, StructureFeature.BASTION_REMNANT).hasChildren())
+                if (accessor.getStructureAt(pos, StructureFeature.BASTION_REMNANT).isValid())
                 {
                     return CustomSpawnLists.BASTION_SPAWNS;
                 }
             }
         }
-        return (group == SpawnGroup.UNDERGROUND_WATER_CREATURE || group == SpawnGroup.AXOLOTLS) && accessor.getStructureAt(pos, StructureFeature.MONUMENT).hasChildren() ? SpawnSettings.EMPTY_ENTRY_POOL : super.getEntitySpawnList(biome, accessor, group, pos);
+        return (group == MobCategory.UNDERGROUND_WATER_CREATURE || group == MobCategory.AXOLOTLS) && accessor.getStructureAt(pos, StructureFeature.OCEAN_MONUMENT).isValid() ? MobSpawnSettings.EMPTY_MOB_LIST : super.getMobsAt(biome, accessor, group, pos);
 
 
     }

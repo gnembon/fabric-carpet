@@ -1,18 +1,18 @@
 package carpet.mixins;
 
 import carpet.utils.RandomTools;
-import net.minecraft.entity.mob.BlazeEntity;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
 import java.util.Random;
+import net.minecraft.world.entity.monster.Blaze;
 
-@Mixin(BlazeEntity.class)
+@Mixin(Blaze.class)
 public class BlazeEntity_extremeMixin
 {
     // unused actually
-    @Redirect(method = "mobTick", expect = 1, at = @At(
+    @Redirect(method = "customServerAiStep", expect = 1, at = @At(
             value = "INVOKE",
             target = "Ljava/util/Random;nextGaussian()D"
     ))

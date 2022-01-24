@@ -9,9 +9,9 @@ import carpet.utils.Messenger;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.text.BaseText;
-import net.minecraft.server.command.ServerCommandSource;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.network.chat.BaseComponent;
+import net.minecraft.server.level.ServerPlayer;
 
 import static com.mojang.brigadier.arguments.FloatArgumentType.floatArg;
 import static com.mojang.brigadier.arguments.FloatArgumentType.getFloat;
@@ -19,25 +19,25 @@ import static com.mojang.brigadier.arguments.IntegerArgumentType.getInteger;
 import static com.mojang.brigadier.arguments.IntegerArgumentType.integer;
 import static com.mojang.brigadier.arguments.StringArgumentType.getString;
 import static com.mojang.brigadier.arguments.StringArgumentType.greedyString;
-import static net.minecraft.server.command.CommandManager.argument;
-import static net.minecraft.server.command.CommandManager.literal;
-import static net.minecraft.command.CommandSource.suggestMatching;
+import static net.minecraft.commands.Commands.argument;
+import static net.minecraft.commands.Commands.literal;
+import static net.minecraft.commands.SharedSuggestionProvider.suggest;
 
 public class TickCommand
 {
-    public static void register(CommandDispatcher<ServerCommandSource> dispatcher)
+    public static void register(CommandDispatcher<CommandSourceStack> dispatcher)
     {
-        LiteralArgumentBuilder<ServerCommandSource> literalargumentbuilder = literal("tick").
+        LiteralArgumentBuilder<CommandSourceStack> literalargumentbuilder = literal("tick").
                 requires((player) -> SettingsManager.canUseCommand(player, CarpetSettings.commandTick)).
                 then(literal("rate").
                         executes((c) -> queryTps(c.getSource())).
                         then(argument("rate", floatArg(0.1F, 500.0F)).
-                                suggests( (c, b) -> suggestMatching(new String[]{"20.0"},b)).
+                                suggests( (c, b) -> suggest(new String[]{"20.0"},b)).
                                 executes((c) -> setTps(c.getSource(), getFloat(c, "rate"))))).
                 then(literal("warp").
                         executes( (c)-> setWarp(c.getSource(), 0, null)).
                         then(argument("ticks", integer(0)).
-                                suggests( (c, b) -> suggestMatching(new String[]{"3600","72000"},b)).
+                                suggests( (c, b) -> suggest(new String[]{"3600","72000"},b)).
                                 executes((c) -> setWarp(c.getSource(), getInteger(c,"ticks"), null)).
                                 then(argument("tail command", greedyString()).
                                         executes( (c) -> setWarp(
@@ -53,7 +53,7 @@ public class TickCommand
                 then(literal("step").
                         executes((c) -> step(c.getSource(), 1)).
                         then(argument("ticks", integer(1,72000)).
-                                suggests( (c, b) -> suggestMatching(new String[]{"20"},b)).
+                                suggests( (c, b) -> suggest(new String[]{"20"},b)).
                                 executes((c) -> step(c.getSource(), getInteger(c,"ticks"))))).
                 then(literal("superHot").executes( (c)-> toggleSuperHot(c.getSource()))).
                 then(literal("health").
@@ -70,35 +70,35 @@ public class TickCommand
     }
 
 
-    private static int setTps(ServerCommandSource source, float tps)
+    private static int setTps(CommandSourceStack source, float tps)
     {
         TickSpeed.tickrate(tps, true);
         queryTps(source);
         return (int)tps;
     }
 
-    private static int queryTps(ServerCommandSource source)
+    private static int queryTps(CommandSourceStack source)
     {
         Messenger.m(source, "w Current tps is: ",String.format("wb %.1f", TickSpeed.tickrate));
         return (int)TickSpeed.tickrate;
     }
 
-    private static int setWarp(ServerCommandSource source, int advance, String tail_command)
+    private static int setWarp(CommandSourceStack source, int advance, String tail_command)
     {
-        ServerPlayerEntity player = null;
+        ServerPlayer player = null;
         try
         {
-            player = source.getPlayer();
+            player = source.getPlayerOrException();
         }
         catch (CommandSyntaxException ignored)
         {
         }
-        BaseText message = TickSpeed.tickrate_advance(player, advance, tail_command, source);
-        source.sendFeedback(message, false);
+        BaseComponent message = TickSpeed.tickrate_advance(player, advance, tail_command, source);
+        source.sendSuccess(message, false);
         return 1;
     }
 
-    private static int freezeStatus(ServerCommandSource source)
+    private static int freezeStatus(CommandSourceStack source)
     {
         if(TickSpeed.isPaused())
         {
@@ -111,7 +111,7 @@ public class TickCommand
         return 1;
     }
 
-    private static int setFreeze(ServerCommandSource source, boolean isDeep, boolean freeze)
+    private static int setFreeze(CommandSourceStack source, boolean isDeep, boolean freeze)
     {
         TickSpeed.setFrozenState(freeze, isDeep);
         if (TickSpeed.isPaused())
@@ -125,19 +125,19 @@ public class TickCommand
         return 1;
     }
 
-    private static int toggleFreeze(ServerCommandSource source, boolean isDeep)
+    private static int toggleFreeze(CommandSourceStack source, boolean isDeep)
     {
         return setFreeze(source, isDeep, !TickSpeed.isPaused());
     }
 
-    private static int step(ServerCommandSource source, int advance)
+    private static int step(CommandSourceStack source, int advance)
     {
         TickSpeed.add_ticks_to_run_in_pause(advance);
         Messenger.m(source, "gi Stepping " + advance + " tick" + (advance != 1 ? "s" : ""));
         return 1;
     }
 
-    private static int toggleSuperHot(ServerCommandSource source)
+    private static int toggleSuperHot(CommandSourceStack source)
     {
         TickSpeed.is_superHot = !TickSpeed.is_superHot;
         ServerNetworkHandler.updateSuperHotStateToConnectedPlayers();
@@ -152,13 +152,13 @@ public class TickCommand
         return 1;
     }
 
-    public static int healthReport(ServerCommandSource source, int ticks)
+    public static int healthReport(CommandSourceStack source, int ticks)
     {
         CarpetProfiler.prepare_tick_report(source, ticks);
         return 1;
     }
 
-    public static int healthEntities(ServerCommandSource source, int ticks)
+    public static int healthEntities(CommandSourceStack source, int ticks)
     {
         CarpetProfiler.prepare_entity_report(source, ticks);
         return 1;

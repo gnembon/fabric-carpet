@@ -2,13 +2,6 @@ package carpet.mixins;
 
 import carpet.fakes.ServerChunkManagerInterface;
 import carpet.utils.SpawnReporter;
-import net.minecraft.entity.SpawnGroup;
-import net.minecraft.server.world.ChunkTicketManager;
-import net.minecraft.server.world.ServerChunkManager;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.util.registry.RegistryKey;
-import net.minecraft.world.World;
-import net.minecraft.world.WorldProperties;
 import org.apache.commons.lang3.tuple.Pair;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -20,29 +13,36 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.util.HashMap;
 import java.util.HashSet;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.server.level.DistanceManager;
+import net.minecraft.server.level.ServerChunkCache;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.MobCategory;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.storage.LevelData;
 
-@Mixin(ServerChunkManager.class)
+@Mixin(ServerChunkCache.class)
 public abstract class ServerChunkManagerMixin implements ServerChunkManagerInterface
 {
-    @Shadow @Final private ServerWorld world;
+    @Shadow @Final private ServerLevel level;
 
-    @Shadow @Final private ChunkTicketManager ticketManager;
+    @Shadow @Final private DistanceManager distanceManager;
 
     @Override // shared between scarpet and spawnChunks setting
-    public ChunkTicketManager getCMTicketManager()
+    public DistanceManager getCMTicketManager()
     {
-        return ticketManager;
+        return distanceManager;
     }
 
     @Redirect(method = "tickChunks", at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/server/world/ChunkTicketManager;getTickedChunkCount()I"
+            target = "Lnet/minecraft/server/level/DistanceManager;getNaturalSpawnChunkCount()I"
     ))
     //this runs once per world spawning cycle. Allows to grab mob counts and count spawn ticks
-    private int setupTracking(ChunkTicketManager chunkTicketManager)
+    private int setupTracking(DistanceManager chunkTicketManager)
     {
-        int j = chunkTicketManager.getTickedChunkCount();
-        RegistryKey<World> dim = this.world.getRegistryKey(); // getDimensionType;
+        int j = chunkTicketManager.getNaturalSpawnChunkCount();
+        ResourceKey<Level> dim = this.level.dimension(); // getDimensionType;
         //((WorldInterface)world).getPrecookedMobs().clear(); not needed because mobs are compared with predefined BBs
         SpawnReporter.chunkCounts.put(dim, j);
 
@@ -51,7 +51,7 @@ public abstract class ServerChunkManagerMixin implements ServerChunkManagerInter
             //local spawns now need to be tracked globally cause each calll is just for chunk
             SpawnReporter.local_spawns = new HashMap<>();
             SpawnReporter.first_chunk_marker = new HashSet<>();
-            for (SpawnGroup cat : SpawnGroup.values())
+            for (MobCategory cat : MobCategory.values())
             {
                 Pair key = Pair.of(dim, cat);
                 SpawnReporter.overall_spawn_ticks.put(key,
@@ -66,18 +66,18 @@ public abstract class ServerChunkManagerMixin implements ServerChunkManagerInter
     @Inject(method = "tickChunks", at = @At("RETURN"))
     private void onFinishSpawnWorldCycle(CallbackInfo ci)
     {
-        WorldProperties levelProperties_1 = this.world.getLevelProperties(); // levelProperies class
-        boolean boolean_3 = levelProperties_1.getTime() % 400L == 0L;
+        LevelData levelProperties_1 = this.level.getLevelData(); // levelProperies class
+        boolean boolean_3 = levelProperties_1.getGameTime() % 400L == 0L;
         if (SpawnReporter.track_spawns > 0L && SpawnReporter.local_spawns != null)
         {
-            for (SpawnGroup cat: SpawnGroup.values())
+            for (MobCategory cat: MobCategory.values())
             {
-                RegistryKey<World> dim = world.getRegistryKey(); // getDimensionType;
+                ResourceKey<Level> dim = level.dimension(); // getDimensionType;
                 Pair key = Pair.of(dim, cat);
                 int spawnTries = SpawnReporter.spawn_tries.get(cat);
                 if (!SpawnReporter.local_spawns.containsKey(cat))
                 {
-                    if (!cat.isRare() || boolean_3) // isAnimal
+                    if (!cat.isPersistent() || boolean_3) // isAnimal
                     {
                         // fill mobcaps for that category so spawn got cancelled
                         SpawnReporter.spawn_ticks_full.put(key,

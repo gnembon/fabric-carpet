@@ -1,35 +1,35 @@
 package carpet.mixins;
 
 import carpet.CarpetSettings;
-import net.minecraft.entity.EntityData;
-import net.minecraft.entity.EntityType;
-import net.minecraft.entity.LightningEntity;
-import net.minecraft.entity.SpawnReason;
-import net.minecraft.entity.mob.ElderGuardianEntity;
-import net.minecraft.entity.mob.GuardianEntity;
-import net.minecraft.entity.mob.HostileEntity;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.world.World;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LightningBolt;
+import net.minecraft.world.entity.MobSpawnType;
+import net.minecraft.world.entity.SpawnGroupData;
+import net.minecraft.world.entity.monster.ElderGuardian;
+import net.minecraft.world.entity.monster.Guardian;
+import net.minecraft.world.entity.monster.Monster;
+import net.minecraft.world.level.Level;
 import org.spongepowered.asm.mixin.Mixin;
 
-@Mixin(GuardianEntity.class)
-public abstract class GuardianEntityMixin extends HostileEntity
+@Mixin(Guardian.class)
+public abstract class GuardianEntityMixin extends Monster
 {
-    protected GuardianEntityMixin(EntityType<? extends HostileEntity> entityType_1, World world_1)
+    protected GuardianEntityMixin(EntityType<? extends Monster> entityType_1, Level world_1)
     {
         super(entityType_1, world_1);
     }
 
     @Override
-    public void onStruckByLightning(ServerWorld serverWorld, LightningEntity lightningEntity)
+    public void thunderHit(ServerLevel serverWorld, LightningBolt lightningEntity)
     {                                // isRemoved()
-        if (!this.world.isClient && !this.isRemoved() && CarpetSettings.renewableSponges && !((Object)this instanceof ElderGuardianEntity))
+        if (!this.level.isClientSide && !this.isRemoved() && CarpetSettings.renewableSponges && !((Object)this instanceof ElderGuardian))
         {
-            ElderGuardianEntity elderGuardian = new ElderGuardianEntity(EntityType.ELDER_GUARDIAN ,this.world);
-            elderGuardian.refreshPositionAndAngles(this.getX(), this.getY(), this.getZ(), this.getYaw(), this.getPitch());
-            elderGuardian.initialize(serverWorld ,this.world.getLocalDifficulty(elderGuardian.getBlockPos()), SpawnReason.CONVERSION, (EntityData)null, (NbtCompound)null);
-            elderGuardian.setAiDisabled(this.isAiDisabled());
+            ElderGuardian elderGuardian = new ElderGuardian(EntityType.ELDER_GUARDIAN ,this.level);
+            elderGuardian.moveTo(this.getX(), this.getY(), this.getZ(), this.getYRot(), this.getXRot());
+            elderGuardian.finalizeSpawn(serverWorld ,this.level.getCurrentDifficultyAt(elderGuardian.blockPosition()), MobSpawnType.CONVERSION, (SpawnGroupData)null, (CompoundTag)null);
+            elderGuardian.setNoAi(this.isNoAi());
             
             if (this.hasCustomName())
             {
@@ -37,12 +37,12 @@ public abstract class GuardianEntityMixin extends HostileEntity
                 elderGuardian.setCustomNameVisible(this.isCustomNameVisible());
             }
             
-            this.world.spawnEntity(elderGuardian);
+            this.level.addFreshEntity(elderGuardian);
             this.discard(); // discard remove();
         }
         else
         {
-            super.onStruckByLightning(serverWorld, lightningEntity);
+            super.thunderHit(serverWorld, lightningEntity);
         }
     }
 }

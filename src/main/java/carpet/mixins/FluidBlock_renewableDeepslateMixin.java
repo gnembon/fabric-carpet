@@ -1,30 +1,30 @@
 package carpet.mixins;
 
 import carpet.CarpetSettings;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.Blocks;
-import net.minecraft.block.FluidBlock;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
-import net.minecraft.world.WorldAccess;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.LiquidBlock;
+import net.minecraft.world.level.block.state.BlockState;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-@Mixin(FluidBlock.class)
+@Mixin(LiquidBlock.class)
 public abstract class FluidBlock_renewableDeepslateMixin {
 
-    @Shadow protected abstract void playExtinguishSound(WorldAccess world, BlockPos pos);
+    @Shadow protected abstract void fizz(LevelAccessor world, BlockPos pos);
 
-    @Inject(method = "receiveNeighborFluids", at = @At(value = "INVOKE",target = "Lnet/minecraft/fluid/FluidState;isStill()Z"), cancellable = true)
-    private void receiveFluidToDeepslate(World world, BlockPos pos, BlockState state, CallbackInfoReturnable<Boolean> cir)
+    @Inject(method = "shouldSpreadLiquid", at = @At(value = "INVOKE",target = "Lnet/minecraft/world/level/material/FluidState;isSource()Z"), cancellable = true)
+    private void receiveFluidToDeepslate(Level world, BlockPos pos, BlockState state, CallbackInfoReturnable<Boolean> cir)
     {
-        if(CarpetSettings.renewableDeepslate && !world.getFluidState(pos).isStill() && world.getRegistryKey() == World.OVERWORLD && pos.getY() < 16)
+        if(CarpetSettings.renewableDeepslate && !world.getFluidState(pos).isSource() && world.dimension() == Level.OVERWORLD && pos.getY() < 16)
         {
-            world.setBlockState(pos, Blocks.COBBLED_DEEPSLATE.getDefaultState());
-            this.playExtinguishSound(world, pos);
+            world.setBlockAndUpdate(pos, Blocks.COBBLED_DEEPSLATE.defaultBlockState());
+            this.fizz(world, pos);
             cir.setReturnValue(false);
             cir.cancel();
         }

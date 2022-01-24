@@ -2,38 +2,38 @@ package carpet.mixins;
 
 import carpet.fakes.MinecraftClientInferface;
 import carpet.helpers.TickSpeed;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.render.WorldRenderer;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.LevelRenderer;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 
-@Mixin(value = WorldRenderer.class, priority = 69420)
+@Mixin(value = LevelRenderer.class, priority = 69420)
 public class WorldRenderer_pausedShakeMixin
 {
-    @Shadow @Final private MinecraftClient client;
+    @Shadow @Final private Minecraft minecraft;
 
     float initial = -1234.0f;
 
     // require 0 is for optifine being a bitch as it usually is.
-    @ModifyVariable(method = "render", argsOnly = true, require = 0, ordinal = 0, at = @At(
+    @ModifyVariable(method = "renderLevel", argsOnly = true, require = 0, ordinal = 0, at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/client/world/ClientWorld;getEntities()Ljava/lang/Iterable;"
+            target = "Lnet/minecraft/client/multiplayer/ClientLevel;entitiesForRendering()Ljava/lang/Iterable;"
     ))
     private float changeTickPhase(float previous)
     {
         initial = previous;
         if (!TickSpeed.process_entities)
-            return ((MinecraftClientInferface)client).getPausedTickDelta();
+            return ((MinecraftClientInferface)minecraft).getPausedTickDelta();
         return previous;
     }
 
     // require 0 is for optifine being a bitch as it usually is.
-    @ModifyVariable(method = "render", argsOnly = true, require = 0, ordinal = 0 ,at = @At(
+    @ModifyVariable(method = "renderLevel", argsOnly = true, require = 0, ordinal = 0 ,at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/client/particle/ParticleManager;renderParticles(Lnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/VertexConsumerProvider$Immediate;Lnet/minecraft/client/render/LightmapTextureManager;Lnet/minecraft/client/render/Camera;F)V",
+            target = "Lnet/minecraft/client/particle/ParticleEngine;render(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource$BufferSource;Lnet/minecraft/client/renderer/LightTexture;Lnet/minecraft/client/Camera;F)V",
             shift = At.Shift.BEFORE
     ))
     private float changeTickPhaseBack(float previous)

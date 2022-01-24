@@ -3,11 +3,6 @@ package carpet.script.annotation;
 import carpet.logging.HUDController;
 import carpet.script.annotation.Param.AllowSingleton;
 import carpet.script.exception.InternalExpressionException;
-import net.minecraft.network.packet.s2c.play.TitleS2CPacket;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.text.BaseText;
-import net.minecraft.text.Text;
-
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;

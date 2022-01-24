@@ -5,15 +5,14 @@ import carpet.script.value.FunctionValue;
 import com.google.common.collect.Lists;
 import com.mojang.brigadier.builder.ArgumentBuilder;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
-import net.minecraft.server.command.ServerCommandSource;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import net.minecraft.commands.CommandSourceStack;
 
-import static net.minecraft.server.command.CommandManager.literal;
+import static net.minecraft.commands.Commands.literal;
 
 public class CommandToken implements Comparable<CommandToken>
 {
@@ -71,7 +70,7 @@ public class CommandToken implements Comparable<CommandToken>
     }
 
 
-    public ArgumentBuilder<ServerCommandSource, ?> getCommandNode(CarpetScriptHost host) throws CommandSyntaxException
+    public ArgumentBuilder<CommandSourceStack, ?> getCommandNode(CarpetScriptHost host) throws CommandSyntaxException
     {
         if (isArgument)
             return CommandArgument.argumentNode(surface, host);

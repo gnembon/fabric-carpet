@@ -6,7 +6,6 @@ import carpet.CarpetSettings;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
-import net.minecraft.server.command.ServerCommandSource;
 import org.apache.commons.io.IOUtils;
 
 import java.io.IOException;
@@ -14,6 +13,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import net.minecraft.commands.CommandSourceStack;
 
 public class Translations
 {
@@ -55,7 +55,7 @@ public class Translations
     }
 
 
-    public static void updateLanguage(ServerCommandSource source)
+    public static void updateLanguage(CommandSourceStack source)
     {
         if (CarpetSettings.language.equalsIgnoreCase("none"))
         {

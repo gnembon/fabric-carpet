@@ -2,21 +2,21 @@ package carpet.mixins;
 
 import carpet.CarpetSettings;
 import carpet.helpers.InventoryHelper;
-import net.minecraft.block.ShulkerBoxBlock;
-import net.minecraft.item.BlockItem;
-import net.minecraft.item.ItemStack;
-import net.minecraft.screen.ScreenHandler;
-import net.minecraft.screen.slot.Slot;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.Slot;
+import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.ShulkerBoxBlock;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
-@Mixin(ScreenHandler.class)
+@Mixin(AbstractContainerMenu.class)
 public class ScreenHandler_stackableSBoxesMixin
 {
-    @Redirect(method = "internalOnSlotClick", at = @At(
+    @Redirect(method = "doClick", at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/screen/slot/Slot;getMaxItemCount(Lnet/minecraft/item/ItemStack;)I"
+            target = "Lnet/minecraft/world/inventory/Slot;getMaxStackSize(Lnet/minecraft/world/item/ItemStack;)I"
     ))
     private int getMaxCountForSboxesInScreenHander(Slot slot, ItemStack stack)
     {
@@ -28,6 +28,6 @@ public class ScreenHandler_stackableSBoxesMixin
         {
             return CarpetSettings.shulkerBoxStackSize;
         }
-        return slot.getMaxItemCount(stack);
+        return slot.getMaxStackSize(stack);
     }
 }

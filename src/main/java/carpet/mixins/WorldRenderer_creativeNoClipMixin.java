@@ -1,17 +1,17 @@
 package carpet.mixins;
 
 import carpet.CarpetSettings;
-import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.client.render.WorldRenderer;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.client.renderer.LevelRenderer;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
-@Mixin(WorldRenderer.class)
+@Mixin(LevelRenderer.class)
 public class WorldRenderer_creativeNoClipMixin
 {
-    @Redirect(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/network/ClientPlayerEntity;isSpectator()Z"))
-    private boolean canSeeWorld(ClientPlayerEntity clientPlayerEntity)
+    @Redirect(method = "renderLevel", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/player/LocalPlayer;isSpectator()Z"))
+    private boolean canSeeWorld(LocalPlayer clientPlayerEntity)
     {
         return clientPlayerEntity.isSpectator() || (CarpetSettings.creativeNoClip && clientPlayerEntity.isCreative());
     }

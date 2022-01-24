@@ -3,16 +3,11 @@ package carpet.mixins;
 import carpet.CarpetSettings;
 import com.google.common.collect.Lists;
 import com.mojang.serialization.Codec;
-import net.minecraft.entity.EntityType;
-import net.minecraft.util.collection.Pool;
-import net.minecraft.world.biome.SpawnSettings;
-import net.minecraft.world.gen.feature.DefaultFeatureConfig;
-import net.minecraft.world.gen.feature.DesertPyramidFeature;
-import net.minecraft.world.gen.feature.StructureFeature;
 import org.spongepowered.asm.mixin.Mixin;
 
 import java.util.Collections;
 import java.util.List;
+import net.minecraft.world.level.levelgen.feature.DesertPyramidFeature;
 
 @Mixin(DesertPyramidFeature.class)
 public abstract class DesertPyramidFeatureMixin

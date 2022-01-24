@@ -7,30 +7,30 @@ import org.spongepowered.asm.mixin.gen.Invoker;
 
 import carpet.fakes.ChunkLightProviderInterface;
 import carpet.fakes.Lighting_scarpetChunkCreationInterface;
-import net.minecraft.world.chunk.ChunkNibbleArray;
-import net.minecraft.world.chunk.light.ChunkLightProvider;
-import net.minecraft.world.chunk.light.LightStorage;
+import net.minecraft.world.level.chunk.DataLayer;
+import net.minecraft.world.level.lighting.LayerLightEngine;
+import net.minecraft.world.level.lighting.LayerLightSectionStorage;
 
-@Mixin(ChunkLightProvider.class)
+@Mixin(LayerLightEngine.class)
 public abstract class ChunkLightProvider_scarpetChunkCreationMixin implements Lighting_scarpetChunkCreationInterface, ChunkLightProviderInterface
 {
     @Shadow
     @Final
-    protected LightStorage<?> lightStorage;
+    protected LayerLightSectionStorage<?> storage;
 
     @Override
     public void removeLightData(final long pos)
     {
-        ((Lighting_scarpetChunkCreationInterface) this.lightStorage).removeLightData(pos);
+        ((Lighting_scarpetChunkCreationInterface) this.storage).removeLightData(pos);
     }
 
     @Override
     public void relight(final long pos)
     {
-        ((Lighting_scarpetChunkCreationInterface) this.lightStorage).relight(pos);
+        ((Lighting_scarpetChunkCreationInterface) this.storage).relight(pos);
     }
 
     @Override
-    @Invoker("getCurrentLevelFromSection")
-    public abstract int callGetCurrentLevelFromSection(ChunkNibbleArray array, long blockPos);
+    @Invoker("getLevel")
+    public abstract int callGetCurrentLevelFromSection(DataLayer array, long blockPos);
 }

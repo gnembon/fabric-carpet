@@ -2,12 +2,12 @@ package carpet.patches;
 
 import carpet.fakes.ClientConnectionInterface;
 import io.netty.channel.embedded.EmbeddedChannel;
-import net.minecraft.network.ClientConnection;
-import net.minecraft.network.NetworkSide;
+import net.minecraft.network.Connection;
+import net.minecraft.network.protocol.PacketFlow;
 
-public class FakeClientConnection extends ClientConnection
+public class FakeClientConnection extends Connection
 {
-    public FakeClientConnection(NetworkSide p)
+    public FakeClientConnection(PacketFlow p)
     {
         super(p);
         // compat with adventure-platform-fabric. This does NOT trigger other vanilla handlers for establishing a channel
@@ -16,7 +16,7 @@ public class FakeClientConnection extends ClientConnection
     }
 
     @Override
-    public void disableAutoRead()
+    public void setReadOnly()
     {
     }
 

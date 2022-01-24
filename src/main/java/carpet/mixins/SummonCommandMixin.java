@@ -1,15 +1,15 @@
 package carpet.mixins;
 
 import carpet.CarpetSettings;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityType;
-import net.minecraft.entity.LightningEntity;
-import net.minecraft.entity.mob.SkeletonHorseEntity;
-import net.minecraft.server.command.SummonCommand;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.GameRules;
-import net.minecraft.world.LocalDifficulty;
+import net.minecraft.core.BlockPos;
+import net.minecraft.server.commands.SummonCommand;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.DifficultyInstance;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LightningBolt;
+import net.minecraft.world.entity.animal.horse.SkeletonHorse;
+import net.minecraft.world.level.GameRules;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
@@ -17,28 +17,28 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 @Mixin(SummonCommand.class)
 public class SummonCommandMixin
 {
-    @Redirect(method = "execute", at = @At(
+    @Redirect(method = "spawnEntity", at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/entity/Entity;getBlockPos()Lnet/minecraft/util/math/BlockPos;"
+            target = "Lnet/minecraft/world/entity/Entity;blockPosition()Lnet/minecraft/core/BlockPos;"
     ))
     private static BlockPos addRiders(Entity entity)
     {
         // [CM] SummonNaturalLightning - if statement around
-        if (CarpetSettings.summonNaturalLightning && entity instanceof LightningEntity && !entity.getEntityWorld().isClient)
+        if (CarpetSettings.summonNaturalLightning && entity instanceof LightningBolt && !entity.getCommandSenderWorld().isClientSide)
         {
-            ServerWorld world = (ServerWorld) entity.getEntityWorld();
-            BlockPos at = entity.getBlockPos();
-            LocalDifficulty localDifficulty_1 =  world.getLocalDifficulty(at);
-            boolean boolean_2 = world.getGameRules().getBoolean(GameRules.DO_MOB_SPAWNING) && world.random.nextDouble() < (double)localDifficulty_1.getLocalDifficulty() * 0.01D;
+            ServerLevel world = (ServerLevel) entity.getCommandSenderWorld();
+            BlockPos at = entity.blockPosition();
+            DifficultyInstance localDifficulty_1 =  world.getCurrentDifficultyAt(at);
+            boolean boolean_2 = world.getGameRules().getBoolean(GameRules.RULE_DOMOBSPAWNING) && world.random.nextDouble() < (double)localDifficulty_1.getEffectiveDifficulty() * 0.01D;
             if (boolean_2) {
-                SkeletonHorseEntity skeletonHorseEntity_1 = EntityType.SKELETON_HORSE.create(world);
-                skeletonHorseEntity_1.setTrapped(true);
-                skeletonHorseEntity_1.setBreedingAge(0);
-                skeletonHorseEntity_1.setPosition(entity.getX(), entity.getY(), entity.getZ());
-                world.spawnEntity(skeletonHorseEntity_1);
+                SkeletonHorse skeletonHorseEntity_1 = EntityType.SKELETON_HORSE.create(world);
+                skeletonHorseEntity_1.setTrap(true);
+                skeletonHorseEntity_1.setAge(0);
+                skeletonHorseEntity_1.setPos(entity.getX(), entity.getY(), entity.getZ());
+                world.addFreshEntity(skeletonHorseEntity_1);
             }
         }
-        return entity.getBlockPos();
+        return entity.blockPosition();
     }
 
 }

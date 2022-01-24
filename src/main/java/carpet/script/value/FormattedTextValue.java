@@ -1,36 +1,36 @@
 package carpet.script.value;
 
-import net.minecraft.nbt.NbtString;
-import net.minecraft.nbt.NbtElement;
-import net.minecraft.text.BaseText;
-import net.minecraft.text.LiteralText;
-import net.minecraft.text.Text;
+import net.minecraft.nbt.StringTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.network.chat.BaseComponent;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.TextComponent;
 
 public class FormattedTextValue extends StringValue
 {
-    Text text;
-    public FormattedTextValue(Text text)
+    Component text;
+    public FormattedTextValue(Component text)
     {
         super(null);
         this.text = text;
     }
 
     public static Value combine(Value left, Value right) {
-        BaseText text;
+        BaseComponent text;
         if (left instanceof FormattedTextValue)
         {
-            text = (BaseText) ((FormattedTextValue) left).getText().shallowCopy();
+            text = (BaseComponent) ((FormattedTextValue) left).getText().copy();
         }
         else
         {
             if (left instanceof NullValue)
                 return right;
-            text = new LiteralText(left.getString());
+            text = new TextComponent(left.getString());
         }
         
         if (right instanceof FormattedTextValue)
         {
-            text.append(((FormattedTextValue) right).getText().shallowCopy());
+            text.append(((FormattedTextValue) right).getText().copy());
             return new FormattedTextValue(text);
         }
         else
@@ -42,7 +42,7 @@ public class FormattedTextValue extends StringValue
         }
     }
 
-    public static Value of(Text text) {
+    public static Value of(Component text) {
         if (text == null) return Value.NULL;
         return new FormattedTextValue(text);
     }
@@ -69,16 +69,16 @@ public class FormattedTextValue extends StringValue
         return "text";
     }
 
-    public Text getText()
+    public Component getText()
     {
         return text;
     }
 
     @Override
-    public NbtElement toTag(boolean force)
+    public Tag toTag(boolean force)
     {
         if (!force) throw new NBTSerializableValue.IncompatibleTypeException(this);
-        return NbtString.of(Text.Serializer.toJson(text));
+        return StringTag.valueOf(Component.Serializer.toJson(text));
     }
 
     @Override
@@ -88,16 +88,16 @@ public class FormattedTextValue extends StringValue
 
     public String serialize()
     {
-        return Text.Serializer.toJson(text);
+        return Component.Serializer.toJson(text);
     }
 
     public static FormattedTextValue deserialize(String serialized)
     {
-        return new FormattedTextValue(Text.Serializer.fromJson(serialized));
+        return new FormattedTextValue(Component.Serializer.fromJson(serialized));
     }
 
-    public static Text getTextByValue(Value value) {
-        return (value instanceof FormattedTextValue) ? ((FormattedTextValue) value).getText() : new LiteralText(value.getString());
+    public static Component getTextByValue(Value value) {
+        return (value instanceof FormattedTextValue) ? ((FormattedTextValue) value).getText() : new TextComponent(value.getString());
     }
 
 }

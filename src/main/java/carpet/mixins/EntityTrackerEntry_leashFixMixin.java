@@ -1,11 +1,6 @@
 package carpet.mixins;
 
 import carpet.CarpetSettings;
-import net.minecraft.network.packet.s2c.play.EntityAttachS2CPacket;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.mob.MobEntity;
-import net.minecraft.network.Packet;
-import net.minecraft.server.network.EntityTrackerEntry;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -14,20 +9,25 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.util.function.Consumer;
+import net.minecraft.network.protocol.Packet;
+import net.minecraft.network.protocol.game.ClientboundSetEntityLinkPacket;
+import net.minecraft.server.level.ServerEntity;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.Mob;
 
-@Mixin(EntityTrackerEntry.class)
+@Mixin(ServerEntity.class)
 public class EntityTrackerEntry_leashFixMixin
 {
     @Shadow @Final private Entity entity;
 
-    @Inject(method = "sendPackets", at = @At("RETURN"))
+    @Inject(method = "sendPairingData", at = @At("RETURN"))
     private void sendLeashPackets(Consumer<Packet<?>> consumer_1, CallbackInfo ci)
     {
         if (CarpetSettings.leadFix)
         {
-            if (entity instanceof MobEntity)
+            if (entity instanceof Mob)
             {
-                consumer_1.accept( new EntityAttachS2CPacket(entity, ((MobEntity) entity).getHoldingEntity()));
+                consumer_1.accept( new ClientboundSetEntityLinkPacket(entity, ((Mob) entity).getLeashHolder()));
             }
         }
     }

@@ -3,31 +3,6 @@ package carpet.mixins;
 import carpet.CarpetSettings;
 import carpet.fakes.WorldInterface;
 import carpet.utils.SpawnReporter;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.FenceGateBlock;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.SpawnGroup;
-import net.minecraft.entity.EntityData;
-import net.minecraft.entity.EntityType;
-import net.minecraft.entity.SpawnReason;
-import net.minecraft.entity.mob.MobEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.tag.BlockTags;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Box;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.registry.RegistryKey;
-import net.minecraft.util.shape.VoxelShape;
-import net.minecraft.util.shape.VoxelShapes;
-import net.minecraft.world.ServerWorldAccess;
-import net.minecraft.world.LocalDifficulty;
-import net.minecraft.world.SpawnHelper;
-import net.minecraft.world.World;
-import net.minecraft.world.chunk.Chunk;
-import net.minecraft.world.chunk.WorldChunk;
 import org.apache.commons.lang3.tuple.Pair;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -38,19 +13,44 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.util.Map;
+import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.tags.BlockTags;
+import net.minecraft.util.Mth;
+import net.minecraft.world.DifficultyInstance;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.MobCategory;
+import net.minecraft.world.entity.MobSpawnType;
+import net.minecraft.world.entity.SpawnGroupData;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.NaturalSpawner;
+import net.minecraft.world.level.ServerLevelAccessor;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.FenceGateBlock;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.chunk.ChunkAccess;
+import net.minecraft.world.level.chunk.LevelChunk;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.shapes.Shapes;
+import net.minecraft.world.phys.shapes.VoxelShape;
 
-@Mixin(SpawnHelper.class)
+@Mixin(NaturalSpawner.class)
 public class SpawnHelperMixin
 {
-    @Shadow @Final private static int CHUNK_AREA;
+    @Shadow @Final private static int MAGIC_NUMBER;
 
-    @Shadow @Final private static SpawnGroup[] SPAWNABLE_GROUPS;
+    @Shadow @Final private static MobCategory[] SPAWNING_CATEGORIES;
 
-    @Redirect(method = "canSpawn(Lnet/minecraft/server/world/ServerWorld;Lnet/minecraft/entity/SpawnGroup;Lnet/minecraft/world/gen/StructureAccessor;Lnet/minecraft/world/gen/chunk/ChunkGenerator;Lnet/minecraft/world/biome/SpawnSettings$SpawnEntry;Lnet/minecraft/util/math/BlockPos$Mutable;D)Z", at = @At(
+    @Redirect(method = "isValidSpawnPostitionForType(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/entity/MobCategory;Lnet/minecraft/world/level/StructureFeatureManager;Lnet/minecraft/world/level/chunk/ChunkGenerator;Lnet/minecraft/world/level/biome/MobSpawnSettings$SpawnerData;Lnet/minecraft/core/BlockPos$MutableBlockPos;D)Z", at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/server/world/ServerWorld;isSpaceEmpty(Lnet/minecraft/util/math/Box;)Z"
+            target = "Lnet/minecraft/server/level/ServerLevel;noCollision(Lnet/minecraft/world/phys/AABB;)Z"
     ))
-    private static boolean doesNotCollide(ServerWorld world, Box bb)
+    private static boolean doesNotCollide(ServerLevel world, AABB bb)
     {
         //.doesNotCollide is VERY expensive. On the other side - most worlds are not made of trapdoors in
         // various configurations, but solid and 'passable' blocks, like air, water grass, etc.
@@ -58,51 +58,51 @@ public class SpawnHelperMixin
         // in case something more complex happens - we default to full block collision check
         if (!CarpetSettings.lagFreeSpawning)
         {
-            return world.isSpaceEmpty(bb);
+            return world.noCollision(bb);
         }
-        int minX = MathHelper.floor(bb.minX);
-        int minY = MathHelper.floor(bb.minY);
-        int minZ = MathHelper.floor(bb.minZ);
-        int maxY = MathHelper.ceil(bb.maxY)-1;
-        BlockPos.Mutable blockpos = new BlockPos.Mutable();
-        if (bb.getXLength() <= 1) // small mobs
+        int minX = Mth.floor(bb.minX);
+        int minY = Mth.floor(bb.minY);
+        int minZ = Mth.floor(bb.minZ);
+        int maxY = Mth.ceil(bb.maxY)-1;
+        BlockPos.MutableBlockPos blockpos = new BlockPos.MutableBlockPos();
+        if (bb.getXsize() <= 1) // small mobs
         {
             for (int y=minY; y <= maxY; y++)
             {
                 blockpos.set(minX,y,minZ);
                 VoxelShape box = world.getBlockState(blockpos).getCollisionShape(world, blockpos);
-                if (box != VoxelShapes.empty())
+                if (box != Shapes.empty())
                 {
-                    if (box == VoxelShapes.fullCube())
+                    if (box == Shapes.block())
                     {
                         return false;
                     }
                     else
                     {
-                        return world.isSpaceEmpty(bb);
+                        return world.noCollision(bb);
                     }
                 }
             }
             return true;
         }
         // this code is only applied for mobs larger than 1 block in footprint
-        int maxX = MathHelper.ceil(bb.maxX)-1;
-        int maxZ = MathHelper.ceil(bb.maxZ)-1;
+        int maxX = Mth.ceil(bb.maxX)-1;
+        int maxZ = Mth.ceil(bb.maxZ)-1;
         for (int y = minY; y <= maxY; y++)
             for (int x = minX; x <= maxX; x++)
                 for (int z = minZ; z <= maxZ; z++)
                 {
                     blockpos.set(x, y, z);
                     VoxelShape box = world.getBlockState(blockpos).getCollisionShape(world, blockpos);
-                    if (box != VoxelShapes.empty())
+                    if (box != Shapes.empty())
                     {
-                        if (box == VoxelShapes.fullCube())
+                        if (box == Shapes.block())
                         {
                             return false;
                         }
                         else
                         {
-                            return world.isSpaceEmpty(bb);
+                            return world.noCollision(bb);
                         }
                     }
                 }
@@ -117,12 +117,12 @@ public class SpawnHelperMixin
                 BlockState state = world.getBlockState(blockpos);
                 Block block = state.getBlock();
                 if (
-                        state.isIn(BlockTags.FENCES) ||
-                        state.isIn(BlockTags.WALLS) ||
-                        ((block instanceof FenceGateBlock) && !state.get(FenceGateBlock.OPEN))
+                        state.is(BlockTags.FENCES) ||
+                        state.is(BlockTags.WALLS) ||
+                        ((block instanceof FenceGateBlock) && !state.getValue(FenceGateBlock.OPEN))
                 )
                 {
-                    if (x == minX || x == maxX || z == minZ || z == maxZ) return world.isSpaceEmpty(bb);
+                    if (x == minX || x == maxX || z == minZ || z == maxZ) return world.noCollision(bb);
                     return false;
                 }
             }
@@ -130,11 +130,11 @@ public class SpawnHelperMixin
         return true;
     }
 
-    @Redirect(method = "createMob", at = @At(
+    @Redirect(method = "getMobForSpawn", at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/entity/EntityType;create(Lnet/minecraft/world/World;)Lnet/minecraft/entity/Entity;"
+            target = "Lnet/minecraft/world/entity/EntityType;create(Lnet/minecraft/world/level/Level;)Lnet/minecraft/world/entity/Entity;"
     ))
-    private static Entity create(EntityType<?> entityType, World world_1)
+    private static Entity create(EntityType<?> entityType, Level world_1)
     {
         if (CarpetSettings.lagFreeSpawning)
         {
@@ -149,12 +149,12 @@ public class SpawnHelperMixin
         return entityType.create(world_1);
     }
 
-    @Redirect(method = "spawnEntitiesInChunk(Lnet/minecraft/entity/SpawnGroup;Lnet/minecraft/server/world/ServerWorld;Lnet/minecraft/world/chunk/Chunk;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/world/SpawnHelper$Checker;Lnet/minecraft/world/SpawnHelper$Runner;)V", at = @At(
+    @Redirect(method = "spawnCategoryForPosition(Lnet/minecraft/world/entity/MobCategory;Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/level/chunk/ChunkAccess;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/NaturalSpawner$SpawnPredicate;Lnet/minecraft/world/level/NaturalSpawner$AfterSpawnCallback;)V", at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/server/world/ServerWorld;spawnEntityAndPassengers(Lnet/minecraft/entity/Entity;)V"
+            target = "Lnet/minecraft/server/level/ServerLevel;addFreshEntityWithPassengers(Lnet/minecraft/world/entity/Entity;)V"
     ))
-    private static void spawnEntity(ServerWorld world, Entity entity_1,
-                                    SpawnGroup group, ServerWorld world2, Chunk chunk, BlockPos pos, SpawnHelper.Checker checker, SpawnHelper.Runner runner)
+    private static void spawnEntity(ServerLevel world, Entity entity_1,
+                                    MobCategory group, ServerLevel world2, ChunkAccess chunk, BlockPos pos, NaturalSpawner.SpawnPredicate checker, NaturalSpawner.AfterSpawnCallback runner)
     {
         if (CarpetSettings.lagFreeSpawning)
             // we used the mob - next time we will create a new one when needed
@@ -164,35 +164,35 @@ public class SpawnHelperMixin
         {
             SpawnReporter.registerSpawn(
                     //world.method_27983(), // getDimensionType //dimension.getType(), // getDimensionType
-                    (MobEntity) entity_1,
+                    (Mob) entity_1,
                     group, //entity_1.getType().getSpawnGroup(),
-                    entity_1.getBlockPos());
+                    entity_1.blockPosition());
         }
         if (!SpawnReporter.mock_spawns)
-            world.spawnEntityAndPassengers(entity_1);
+            world.addFreshEntityWithPassengers(entity_1);
             //world.spawnEntity(entity_1);
     }
 
-    @Redirect(method = "spawnEntitiesInChunk(Lnet/minecraft/entity/SpawnGroup;Lnet/minecraft/server/world/ServerWorld;Lnet/minecraft/world/chunk/Chunk;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/world/SpawnHelper$Checker;Lnet/minecraft/world/SpawnHelper$Runner;)V", at = @At(
+    @Redirect(method = "spawnCategoryForPosition(Lnet/minecraft/world/entity/MobCategory;Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/level/chunk/ChunkAccess;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/NaturalSpawner$SpawnPredicate;Lnet/minecraft/world/level/NaturalSpawner$AfterSpawnCallback;)V", at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/entity/mob/MobEntity;initialize(Lnet/minecraft/world/ServerWorldAccess;Lnet/minecraft/world/LocalDifficulty;Lnet/minecraft/entity/SpawnReason;Lnet/minecraft/entity/EntityData;Lnet/minecraft/nbt/NbtCompound;)Lnet/minecraft/entity/EntityData;"
+            target = "Lnet/minecraft/world/entity/Mob;finalizeSpawn(Lnet/minecraft/world/level/ServerLevelAccessor;Lnet/minecraft/world/DifficultyInstance;Lnet/minecraft/world/entity/MobSpawnType;Lnet/minecraft/world/entity/SpawnGroupData;Lnet/minecraft/nbt/CompoundTag;)Lnet/minecraft/world/entity/SpawnGroupData;"
     ))
-    private static EntityData spawnEntity(MobEntity mobEntity, ServerWorldAccess serverWorldAccess, LocalDifficulty difficulty, SpawnReason spawnReason, EntityData entityData, NbtCompound entityTag)
+    private static SpawnGroupData spawnEntity(Mob mobEntity, ServerLevelAccessor serverWorldAccess, DifficultyInstance difficulty, MobSpawnType spawnReason, SpawnGroupData entityData, CompoundTag entityTag)
     {
         if (!SpawnReporter.mock_spawns) // WorldAccess
-            return mobEntity.initialize(serverWorldAccess, difficulty, spawnReason, entityData, entityTag);
+            return mobEntity.finalizeSpawn(serverWorldAccess, difficulty, spawnReason, entityData, entityTag);
         return null;
     }
 
-    @Redirect(method = "spawnEntitiesInChunk(Lnet/minecraft/entity/SpawnGroup;Lnet/minecraft/server/world/ServerWorld;Lnet/minecraft/world/chunk/Chunk;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/world/SpawnHelper$Checker;Lnet/minecraft/world/SpawnHelper$Runner;)V", at = @At(
+    @Redirect(method = "spawnCategoryForPosition(Lnet/minecraft/world/entity/MobCategory;Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/level/chunk/ChunkAccess;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/NaturalSpawner$SpawnPredicate;Lnet/minecraft/world/level/NaturalSpawner$AfterSpawnCallback;)V", at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/entity/player/PlayerEntity;squaredDistanceTo(DDD)D"
+            target = "Lnet/minecraft/world/entity/player/Player;distanceToSqr(DDD)D"
     ))
-    private static double getSqDistanceTo(PlayerEntity playerEntity, double double_1, double double_2, double double_3,
-                                          SpawnGroup entityCategory, ServerWorld serverWorld, Chunk chunk, BlockPos blockPos)
+    private static double getSqDistanceTo(Player playerEntity, double double_1, double double_2, double double_3,
+                                          MobCategory entityCategory, ServerLevel serverWorld, ChunkAccess chunk, BlockPos blockPos)
     {
-        double distanceTo = playerEntity.squaredDistanceTo(double_1, double_2, double_3);
-        if (CarpetSettings.lagFreeSpawning && distanceTo > 16384.0D && entityCategory != SpawnGroup.CREATURE)
+        double distanceTo = playerEntity.distanceToSqr(double_1, double_2, double_3);
+        if (CarpetSettings.lagFreeSpawning && distanceTo > 16384.0D && entityCategory != MobCategory.CREATURE)
             return 0.0;
         return distanceTo;
     }
@@ -201,16 +201,16 @@ public class SpawnHelperMixin
 
     ////
 
-    @Redirect(method = "spawn", at = @At(
+    @Redirect(method = "spawnForChunk", at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/world/SpawnHelper;spawnEntitiesInChunk(Lnet/minecraft/entity/SpawnGroup;Lnet/minecraft/server/world/ServerWorld;Lnet/minecraft/world/chunk/WorldChunk;Lnet/minecraft/world/SpawnHelper$Checker;Lnet/minecraft/world/SpawnHelper$Runner;)V"
+            target = "Lnet/minecraft/world/level/NaturalSpawner;spawnCategoryForChunk(Lnet/minecraft/world/entity/MobCategory;Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/level/chunk/LevelChunk;Lnet/minecraft/world/level/NaturalSpawner$SpawnPredicate;Lnet/minecraft/world/level/NaturalSpawner$AfterSpawnCallback;)V"
     ))
     // inject our repeat of spawns if more spawn ticks per tick are chosen.
-    private static void spawnMultipleTimes(SpawnGroup category, ServerWorld world, WorldChunk chunk, SpawnHelper.Checker checker, SpawnHelper.Runner runner)
+    private static void spawnMultipleTimes(MobCategory category, ServerLevel world, LevelChunk chunk, NaturalSpawner.SpawnPredicate checker, NaturalSpawner.AfterSpawnCallback runner)
     {
         for (int i = 0; i < SpawnReporter.spawn_tries.get(category); i++)
         {
-            SpawnHelper.spawnEntitiesInChunk(category, world, chunk, checker, runner);
+            NaturalSpawner.spawnCategoryForChunk(category, world, chunk, checker, runner);
         }
     }
 
@@ -267,25 +267,25 @@ public class SpawnHelperMixin
 */
     //temporary mixin until naming gets fixed
 
-    @Inject(method = "spawn", at = @At("HEAD"))
+    @Inject(method = "spawnForChunk", at = @At("HEAD"))
     // allows to change mobcaps and captures each category try per dimension before it fails due to full mobcaps.
-    private static void checkSpawns(ServerWorld world, WorldChunk chunk, SpawnHelper.Info info,
+    private static void checkSpawns(ServerLevel world, LevelChunk chunk, NaturalSpawner.SpawnState info,
                                     boolean spawnAnimals, boolean spawnMonsters, boolean shouldSpawnAnimals, CallbackInfo ci)
     {
         if (SpawnReporter.track_spawns > 0L)
         {
-            SpawnGroup[] var6 = SPAWNABLE_GROUPS;
+            MobCategory[] var6 = SPAWNING_CATEGORIES;
             int var7 = var6.length;
 
             for(int var8 = 0; var8 < var7; ++var8) {
-                SpawnGroup entityCategory = var6[var8];
-                if ((spawnAnimals || !entityCategory.isPeaceful()) && (spawnMonsters || entityCategory.isPeaceful()) && (shouldSpawnAnimals || !entityCategory.isRare()) )
+                MobCategory entityCategory = var6[var8];
+                if ((spawnAnimals || !entityCategory.isFriendly()) && (spawnMonsters || entityCategory.isFriendly()) && (shouldSpawnAnimals || !entityCategory.isPersistent()) )
                 {
-                    RegistryKey<World> dim = world.getRegistryKey(); // getDimensionType;
-                    int newCap = entityCategory.getCapacity();  //(int) ((double)entityCategory.getCapacity()*(Math.pow(2.0,(SpawnReporter.mobcap_exponent/4))));
+                    ResourceKey<Level> dim = world.dimension(); // getDimensionType;
+                    int newCap = entityCategory.getMaxInstancesPerChunk();  //(int) ((double)entityCategory.getCapacity()*(Math.pow(2.0,(SpawnReporter.mobcap_exponent/4))));
                     int int_2 = SpawnReporter.chunkCounts.get(dim); // eligible chunks for spawning
-                    int int_3 = newCap * int_2 / CHUNK_AREA; //current spawning limits
-                    int mobCount = info.getGroupToCount().getInt(entityCategory);
+                    int int_3 = newCap * int_2 / MAGIC_NUMBER; //current spawning limits
+                    int mobCount = info.getMobCategoryCounts().getInt(entityCategory);
 
                     if (SpawnReporter.track_spawns > 0L && !SpawnReporter.first_chunk_marker.contains(entityCategory))
                     {

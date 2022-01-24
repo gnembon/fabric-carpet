@@ -1,9 +1,9 @@
 package carpet.mixins;
 
 import carpet.CarpetSettings;
-import net.minecraft.structure.StructurePiece;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.chunk.Chunk;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.chunk.ChunkAccess;
+import net.minecraft.world.level.levelgen.structure.StructurePiece;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
@@ -11,12 +11,12 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 @Mixin(StructurePiece.class)
 public class StructurePiece_scarpetPlopMixin
 {
-    @Redirect(method = "addBlock", at = @At(
+    @Redirect(method = "placeBlock", at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/world/chunk/Chunk;markBlockForPostProcessing(Lnet/minecraft/util/math/BlockPos;)V"
+            target = "Lnet/minecraft/world/level/chunk/ChunkAccess;markPosForPostprocessing(Lnet/minecraft/core/BlockPos;)V"
     ))
-    private void markOrNot(Chunk chunk, BlockPos pos)
+    private void markOrNot(ChunkAccess chunk, BlockPos pos)
     {
-        if (!CarpetSettings.skipGenerationChecks.get()) chunk.markBlockForPostProcessing(pos);
+        if (!CarpetSettings.skipGenerationChecks.get()) chunk.markPosForPostprocessing(pos);
     }
 }

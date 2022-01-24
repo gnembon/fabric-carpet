@@ -30,10 +30,10 @@ import com.mojang.brigadier.tree.CommandNode;
 
 import net.fabricmc.api.EnvType;
 import net.fabricmc.loader.api.FabricLoader;
+import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.command.ServerCommandSource;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.util.WorldSavePath;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.level.storage.LevelResource;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -123,7 +123,7 @@ public class CarpetScriptServer
         unloadableModules = new HashSet<>();
         tickStart = 0L;
         stopAll = false;
-        holyMoly = server.getCommandManager().getDispatcher().getRoot().getChildren().stream().map(CommandNode::getName).collect(Collectors.toSet());
+        holyMoly = server.getCommands().getDispatcher().getRoot().getChildren().stream().map(CommandNode::getName).collect(Collectors.toSet());
         globalHost = CarpetScriptHost.create(this, null, false, null, p -> true, false, null);
     }
 
@@ -139,7 +139,7 @@ public class CarpetScriptServer
         {
             for (String moduleName: listAvailableModules(false))
             {
-                addScriptHost(server.getCommandSource(), moduleName, null, true, true, false, null);
+                addScriptHost(server.createCommandSourceStack(), moduleName, null, true, true, false, null);
             }
         }
         CarpetEventServer.Event.START.onTick();
@@ -148,7 +148,7 @@ public class CarpetScriptServer
     public Module getModule(String name, boolean allowLibraries)
     {
         try {
-            Path folder = server.getSavePath(WorldSavePath.ROOT).resolve("scripts");
+            Path folder = server.getWorldPath(LevelResource.ROOT).resolve("scripts");
             if (!Files.exists(folder)) 
                 Files.createDirectories(folder);
             Optional<Path>
@@ -208,7 +208,7 @@ public class CarpetScriptServer
             }
         }
         try {
-            Path worldScripts = server.getSavePath(WorldSavePath.ROOT).resolve("scripts");
+            Path worldScripts = server.getWorldPath(LevelResource.ROOT).resolve("scripts");
             if (!Files.exists(worldScripts)) 
                 Files.createDirectories(worldScripts);
             Files.list(worldScripts)
@@ -237,7 +237,7 @@ public class CarpetScriptServer
         return modules.get(name);
     }
 
-    public boolean addScriptHost(ServerCommandSource source, String name, Predicate<ServerCommandSource> commandValidator,
+    public boolean addScriptHost(CommandSourceStack source, String name, Predicate<CommandSourceStack> commandValidator,
                                  boolean perPlayer, boolean autoload, boolean isRuleApp, AppStoreManager.StoreNode installer)
     {
         CarpetProfiler.ProfilerToken currentSection = CarpetProfiler.start_section(null, "Scarpet load", CarpetProfiler.TYPE.GENERAL);
@@ -312,9 +312,9 @@ public class CarpetScriptServer
         if (newHost.isPerUser())
         {
             // that will provide player hosts right at the startup
-            for (ServerPlayerEntity player : source.getServer().getPlayerManager().getPlayerList())
+            for (ServerPlayer player : source.getServer().getPlayerList().getPlayers())
             {
-                newHost.retrieveForExecution(player.getCommandSource(), player);
+                newHost.retrieveForExecution(player.createCommandSourceStack(), player);
             }
         }
         else
@@ -335,7 +335,7 @@ public class CarpetScriptServer
     }
 
 
-    public boolean removeScriptHost(ServerCommandSource source, String name, boolean notifySource, boolean isRuleApp)
+    public boolean removeScriptHost(CommandSourceStack source, String name, boolean notifySource, boolean isRuleApp)
     {
         name = name.toLowerCase(Locale.ROOT);
         if (!modules.containsKey(name) || (!isRuleApp && !unloadableModules.contains(name)))
@@ -353,12 +353,12 @@ public class CarpetScriptServer
         return true;
     }
 
-    public boolean uninstallApp(ServerCommandSource source, String name)
+    public boolean uninstallApp(CommandSourceStack source, String name)
     {
         try
         {
             name = name.toLowerCase(Locale.ROOT);
-            Path folder = server.getSavePath(WorldSavePath.ROOT).resolve("scripts/trash");
+            Path folder = server.getWorldPath(LevelResource.ROOT).resolve("scripts/trash");
             if (!Files.exists(folder)) Files.createDirectories(folder);
             if (!Files.exists(folder.getParent().resolve(name+".sc")))
             {
@@ -401,7 +401,7 @@ public class CarpetScriptServer
         }
     }
 
-    public void onPlayerJoin(ServerPlayerEntity player)
+    public void onPlayerJoin(ServerPlayer player)
     {
         modules.values().forEach(h ->
         {
@@ -409,7 +409,7 @@ public class CarpetScriptServer
             {
                 try
                 {
-                    h.retrieveOwnForExecution(player.getCommandSource());
+                    h.retrieveOwnForExecution(player.createCommandSourceStack());
                 }
                 catch (CommandSyntaxException ignored)
                 {
@@ -418,7 +418,7 @@ public class CarpetScriptServer
         });
     }
 
-    private static record TransferData(boolean perUser, Predicate<ServerCommandSource> commandValidator, boolean isRuleApp)
+    private static record TransferData(boolean perUser, Predicate<CommandSourceStack> commandValidator, boolean isRuleApp)
     {
         private TransferData(CarpetScriptHost host)
         {
@@ -430,10 +430,10 @@ public class CarpetScriptServer
     {
         Map<String, TransferData> apps = new HashMap<>();
         modules.forEach((s, h) -> apps.put(s, new TransferData(h)));
-        apps.keySet().forEach(s -> removeScriptHost(server.getCommandSource(), s, false, false));
+        apps.keySet().forEach(s -> removeScriptHost(server.createCommandSourceStack(), s, false, false));
         CarpetEventServer.Event.clearAllBuiltinEvents();
         init();
-        apps.forEach((s, data) -> addScriptHost(server.getCommandSource(), s,data.commandValidator, data.perUser,false, data.isRuleApp, null));
+        apps.forEach((s, data) -> addScriptHost(server.createCommandSourceStack(), s,data.commandValidator, data.perUser,false, data.isRuleApp, null));
     }
 
     public void reAddCommands()

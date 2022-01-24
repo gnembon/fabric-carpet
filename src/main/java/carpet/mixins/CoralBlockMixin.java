@@ -2,80 +2,80 @@ package carpet.mixins;
 
 import carpet.CarpetSettings;
 import carpet.fakes.CoralFeatureInterface;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.Blocks;
-import net.minecraft.block.CoralBlock;
-import net.minecraft.block.CoralParentBlock;
-import net.minecraft.block.Fertilizable;
-import net.minecraft.block.MapColor;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.tag.BlockTags;
-import net.minecraft.tag.FluidTags;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.BlockView;
-import net.minecraft.world.World;
-import net.minecraft.world.gen.feature.CoralClawFeature;
-import net.minecraft.world.gen.feature.CoralFeature;
-import net.minecraft.world.gen.feature.CoralMushroomFeature;
-import net.minecraft.world.gen.feature.CoralTreeFeature;
-import net.minecraft.world.gen.feature.DefaultFeatureConfig;
 import org.spongepowered.asm.mixin.Mixin;
 
 import java.util.Random;
+import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.tags.BlockTags;
+import net.minecraft.tags.FluidTags;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.BaseCoralPlantTypeBlock;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.BonemealableBlock;
+import net.minecraft.world.level.block.CoralPlantBlock;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.levelgen.feature.CoralClawFeature;
+import net.minecraft.world.level.levelgen.feature.CoralFeature;
+import net.minecraft.world.level.levelgen.feature.CoralMushroomFeature;
+import net.minecraft.world.level.levelgen.feature.CoralTreeFeature;
+import net.minecraft.world.level.levelgen.feature.configurations.NoneFeatureConfiguration;
+import net.minecraft.world.level.material.MaterialColor;
 
-@Mixin(CoralBlock.class)
-public abstract class CoralBlockMixin implements Fertilizable
+@Mixin(CoralPlantBlock.class)
+public abstract class CoralBlockMixin implements BonemealableBlock
 {
-    public boolean isFertilizable(BlockView var1, BlockPos var2, BlockState var3, boolean var4)
+    public boolean isValidBonemealTarget(BlockGetter var1, BlockPos var2, BlockState var3, boolean var4)
     {
         return CarpetSettings.renewableCoral == CarpetSettings.RenewableCoralMode.EXPANDED
                 || CarpetSettings.renewableCoral == CarpetSettings.RenewableCoralMode.TRUE
-                && var3.get(CoralParentBlock.WATERLOGGED)
-                && var1.getFluidState(var2.up()).isIn(FluidTags.WATER);
+                && var3.getValue(BaseCoralPlantTypeBlock.WATERLOGGED)
+                && var1.getFluidState(var2.above()).is(FluidTags.WATER);
     }
 
-    public boolean canGrow(World var1, Random var2, BlockPos var3, BlockState var4)
+    public boolean isBonemealSuccess(Level var1, Random var2, BlockPos var3, BlockState var4)
     {
         return (double)var1.random.nextFloat() < 0.15D;
     }
 
-    public void grow(ServerWorld worldIn, Random random, BlockPos pos, BlockState blockUnder)
+    public void performBonemeal(ServerLevel worldIn, Random random, BlockPos pos, BlockState blockUnder)
     {
 
         CoralFeature coral;
         int variant = random.nextInt(3);
         if (variant == 0)
-            coral = new CoralClawFeature(DefaultFeatureConfig.CODEC);
+            coral = new CoralClawFeature(NoneFeatureConfiguration.CODEC);
         else if (variant == 1)
-            coral = new CoralTreeFeature(DefaultFeatureConfig.CODEC);
+            coral = new CoralTreeFeature(NoneFeatureConfiguration.CODEC);
         else
-            coral = new CoralMushroomFeature(DefaultFeatureConfig.CODEC);
+            coral = new CoralMushroomFeature(NoneFeatureConfiguration.CODEC);
 
-        MapColor color = blockUnder.getMapColor(worldIn, pos);
+        MaterialColor color = blockUnder.getMapColor(worldIn, pos);
         BlockState proper_block = blockUnder;
-        for (Block block: BlockTags.CORAL_BLOCKS.values())
+        for (Block block: BlockTags.CORAL_BLOCKS.getValues())
         {
-            proper_block = block.getDefaultState();
+            proper_block = block.defaultBlockState();
             if (proper_block.getMapColor(worldIn,pos) == color)
             {
                 break;
             }
         }
-        worldIn.setBlockState(pos, Blocks.WATER.getDefaultState(), 4);
+        worldIn.setBlock(pos, Blocks.WATER.defaultBlockState(), 4);
 
         if (!((CoralFeatureInterface)coral).growSpecific(worldIn, random, pos, proper_block))
         {
-            worldIn.setBlockState(pos, blockUnder, 3);
+            worldIn.setBlock(pos, blockUnder, 3);
         }
         else
         {
             if (worldIn.random.nextInt(10)==0)
             {
-                BlockPos randomPos = pos.add(worldIn.random.nextInt(16)-8,worldIn.random.nextInt(8),worldIn.random.nextInt(16)-8  );
+                BlockPos randomPos = pos.offset(worldIn.random.nextInt(16)-8,worldIn.random.nextInt(8),worldIn.random.nextInt(16)-8  );
                 if (BlockTags.CORAL_BLOCKS.contains(worldIn.getBlockState(randomPos).getBlock()))
                 {
-                    worldIn.setBlockState(randomPos, Blocks.WET_SPONGE.getDefaultState(), 3);
+                    worldIn.setBlock(randomPos, Blocks.WET_SPONGE.defaultBlockState(), 3);
                 }
             }
         }

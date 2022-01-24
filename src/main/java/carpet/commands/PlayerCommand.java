@@ -15,46 +15,45 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
-import net.minecraft.command.argument.DimensionArgumentType;
-import net.minecraft.command.argument.RotationArgumentType;
-import net.minecraft.command.argument.Vec3ArgumentType;
-import net.minecraft.server.PlayerManager;
-import net.minecraft.server.command.ServerCommandSource;
-import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.commands.arguments.DimensionArgument;
+import net.minecraft.commands.arguments.coordinates.RotationArgument;
+import net.minecraft.commands.arguments.coordinates.Vec3Argument;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
-import net.minecraft.util.math.Vec2f;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.util.registry.RegistryKey;
-import net.minecraft.world.GameMode;
-import net.minecraft.world.World;
-
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.players.PlayerList;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.GameType;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.Vec2;
+import net.minecraft.world.phys.Vec3;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-import static net.minecraft.server.command.CommandManager.argument;
-import static net.minecraft.server.command.CommandManager.literal;
-import static net.minecraft.command.CommandSource.suggestMatching;
+import static net.minecraft.commands.Commands.argument;
+import static net.minecraft.commands.Commands.literal;
+import static net.minecraft.commands.SharedSuggestionProvider.suggest;
 
 public class PlayerCommand
 {
 
     // TODO: allow any order like execute
-    public static void register(CommandDispatcher<ServerCommandSource> dispatcher)
+    public static void register(CommandDispatcher<CommandSourceStack> dispatcher)
     {
-        final String[] gamemodeStrings = Arrays.stream(GameMode.values())
-                .map(GameMode::getName)
+        final String[] gamemodeStrings = Arrays.stream(GameType.values())
+                .map(GameType::getName)
                 .collect(Collectors.toList())
                 .toArray(new String[]{});
-        LiteralArgumentBuilder<ServerCommandSource> literalargumentbuilder = literal("player")
+        LiteralArgumentBuilder<CommandSourceStack> literalargumentbuilder = literal("player")
                 .requires((player) -> SettingsManager.canUseCommand(player, CarpetSettings.commandPlayer))
                 .then(argument("player", StringArgumentType.word())
-                        .suggests( (c, b) -> suggestMatching(getPlayers(c.getSource()), b))
+                        .suggests( (c, b) -> suggest(getPlayers(c.getSource()), b))
                         .then(literal("stop").executes(PlayerCommand::stop))
                         .then(makeActionCommand("use", EntityPlayerActionPack.ActionType.USE))
                         .then(makeActionCommand("jump", EntityPlayerActionPack.ActionType.JUMP))
@@ -83,30 +82,30 @@ public class PlayerCommand
                                 .then(literal("west").executes(manipulation(ap -> ap.look(Direction.WEST))))
                                 .then(literal("up").executes(manipulation(ap -> ap.look(Direction.UP))))
                                 .then(literal("down").executes(manipulation(ap -> ap.look(Direction.DOWN))))
-                                .then(literal("at").then(argument("position", Vec3ArgumentType.vec3()).executes(PlayerCommand::lookAt)))
-                                .then(argument("direction", RotationArgumentType.rotation())
-                                        .executes(c -> manipulate(c, ap -> ap.look(RotationArgumentType.getRotation(c, "direction").toAbsoluteRotation(c.getSource())))))
+                                .then(literal("at").then(argument("position", Vec3Argument.vec3()).executes(PlayerCommand::lookAt)))
+                                .then(argument("direction", RotationArgument.rotation())
+                                        .executes(c -> manipulate(c, ap -> ap.look(RotationArgument.getRotation(c, "direction").getRotation(c.getSource())))))
                         ).then(literal("turn")
                                 .then(literal("left").executes(c -> manipulate(c, ap -> ap.turn(-90, 0))))
                                 .then(literal("right").executes(c -> manipulate(c, ap -> ap.turn(90, 0))))
                                 .then(literal("back").executes(c -> manipulate(c, ap -> ap.turn(180, 0))))
-                                .then(argument("rotation", RotationArgumentType.rotation())
-                                        .executes(c -> manipulate(c, ap -> ap.turn(RotationArgumentType.getRotation(c, "rotation").toAbsoluteRotation(c.getSource())))))
+                                .then(argument("rotation", RotationArgument.rotation())
+                                        .executes(c -> manipulate(c, ap -> ap.turn(RotationArgument.getRotation(c, "rotation").getRotation(c.getSource())))))
                         ).then(literal("move").executes(c -> manipulate(c, EntityPlayerActionPack::stopMovement))
                                 .then(literal("forward").executes(c -> manipulate(c, ap -> ap.setForward(1))))
                                 .then(literal("backward").executes(c -> manipulate(c, ap -> ap.setForward(-1))))
                                 .then(literal("left").executes(c -> manipulate(c, ap -> ap.setStrafing(1))))
                                 .then(literal("right").executes(c -> manipulate(c, ap -> ap.setStrafing(-1))))
                         ).then(literal("spawn").executes(PlayerCommand::spawn)
-                                .then(literal("in").requires((player) -> player.hasPermissionLevel(2))
+                                .then(literal("in").requires((player) -> player.hasPermission(2))
                                         .then(argument("gamemode", StringArgumentType.word())
-                                                .suggests( (c, b) -> suggestMatching(gamemodeStrings, b))
+                                                .suggests( (c, b) -> suggest(gamemodeStrings, b))
                                         .executes(PlayerCommand::spawn)))
-                                .then(literal("at").then(argument("position", Vec3ArgumentType.vec3()).executes(PlayerCommand::spawn)
-                                        .then(literal("facing").then(argument("direction", RotationArgumentType.rotation()).executes(PlayerCommand::spawn)
-                                                .then(literal("in").then(argument("dimension", DimensionArgumentType.dimension()).executes(PlayerCommand::spawn)
-                                                        .then(literal("in").requires((player) -> player.hasPermissionLevel(2))
-                                                                .then(argument("gamemode", StringArgumentType.word()).suggests( (c, b) -> suggestMatching(gamemodeStrings, b))
+                                .then(literal("at").then(argument("position", Vec3Argument.vec3()).executes(PlayerCommand::spawn)
+                                        .then(literal("facing").then(argument("direction", RotationArgument.rotation()).executes(PlayerCommand::spawn)
+                                                .then(literal("in").then(argument("dimension", DimensionArgument.dimension()).executes(PlayerCommand::spawn)
+                                                        .then(literal("in").requires((player) -> player.hasPermission(2))
+                                                                .then(argument("gamemode", StringArgumentType.word()).suggests( (c, b) -> suggest(gamemodeStrings, b))
                                                                 .executes(PlayerCommand::spawn)
                                                         )))
                                         )))
@@ -116,7 +115,7 @@ public class PlayerCommand
         dispatcher.register(literalargumentbuilder);
     }
 
-    private static LiteralArgumentBuilder<ServerCommandSource> makeActionCommand(String actionName, EntityPlayerActionPack.ActionType type)
+    private static LiteralArgumentBuilder<CommandSourceStack> makeActionCommand(String actionName, EntityPlayerActionPack.ActionType type)
     {
         return literal(actionName)
                 .executes(c -> action(c, type, EntityPlayerActionPack.Action.once()))
@@ -126,7 +125,7 @@ public class PlayerCommand
                         .executes(c -> action(c, type, EntityPlayerActionPack.Action.interval(IntegerArgumentType.getInteger(c, "ticks"))))));
     }
 
-    private static LiteralArgumentBuilder<ServerCommandSource> makeDropCommand(String actionName, boolean dropAll)
+    private static LiteralArgumentBuilder<CommandSourceStack> makeDropCommand(String actionName, boolean dropAll)
     {
         return literal(actionName)
                 .then(literal("all").executes(c ->manipulate(c, ap -> ap.drop(-2,dropAll))))
@@ -139,39 +138,39 @@ public class PlayerCommand
                         ))));
     }
 
-    private static Collection<String> getPlayers(ServerCommandSource source)
+    private static Collection<String> getPlayers(CommandSourceStack source)
     {
         Set<String> players = Sets.newLinkedHashSet(Arrays.asList("Steve", "Alex"));
-        players.addAll(source.getPlayerNames());
+        players.addAll(source.getOnlinePlayerNames());
         return players;
     }
 
-    private static ServerPlayerEntity getPlayer(CommandContext<ServerCommandSource> context)
+    private static ServerPlayer getPlayer(CommandContext<CommandSourceStack> context)
     {
         String playerName = StringArgumentType.getString(context, "player");
         MinecraftServer server = context.getSource().getServer();
-        return server.getPlayerManager().getPlayer(playerName);
+        return server.getPlayerList().getPlayerByName(playerName);
     }
 
-    private static boolean cantManipulate(CommandContext<ServerCommandSource> context)
+    private static boolean cantManipulate(CommandContext<CommandSourceStack> context)
     {
-        PlayerEntity player = getPlayer(context);
+        Player player = getPlayer(context);
         if (player == null)
         {
             Messenger.m(context.getSource(), "r Can only manipulate existing players");
             return true;
         }
-        PlayerEntity sendingPlayer;
+        Player sendingPlayer;
         try
         {
-            sendingPlayer = context.getSource().getPlayer();
+            sendingPlayer = context.getSource().getPlayerOrException();
         }
         catch (CommandSyntaxException e)
         {
             return false;
         }
 
-        if (!context.getSource().getServer().getPlayerManager().isOperator(sendingPlayer.getGameProfile()))
+        if (!context.getSource().getServer().getPlayerList().isOp(sendingPlayer.getGameProfile()))
         {
             if (sendingPlayer != player && !(player instanceof EntityPlayerMPFake))
             {
@@ -182,27 +181,27 @@ public class PlayerCommand
         return false;
     }
 
-    private static boolean cantReMove(CommandContext<ServerCommandSource> context)
+    private static boolean cantReMove(CommandContext<CommandSourceStack> context)
     {
         if (cantManipulate(context)) return true;
-        PlayerEntity player = getPlayer(context);
+        Player player = getPlayer(context);
         if (player instanceof EntityPlayerMPFake) return false;
         Messenger.m(context.getSource(), "r Only fake players can be moved or killed");
         return true;
     }
 
-    private static boolean cantSpawn(CommandContext<ServerCommandSource> context)
+    private static boolean cantSpawn(CommandContext<CommandSourceStack> context)
     {
         String playerName = StringArgumentType.getString(context, "player");
         MinecraftServer server = context.getSource().getServer();
-        PlayerManager manager = server.getPlayerManager();
-        PlayerEntity player = manager.getPlayer(playerName);
+        PlayerList manager = server.getPlayerList();
+        Player player = manager.getPlayerByName(playerName);
         if (player != null)
         {
             Messenger.m(context.getSource(), "r Player ", "rb " + playerName, "r  is already logged on");
             return true;
         }
-        GameProfile profile = server.getUserCache().findByName(playerName).orElse(null);
+        GameProfile profile = server.getProfileCache().get(playerName).orElse(null);
         if (profile == null)
         {
             if (!CarpetSettings.allowSpawningOfflinePlayers)
@@ -211,15 +210,15 @@ public class PlayerCommand
                         "Banned players can only be summoned in Singleplayer and in servers in off-line mode.");
                 return true;
             } else {
-                profile = new GameProfile(PlayerEntity.getOfflinePlayerUuid(playerName), playerName);
+                profile = new GameProfile(Player.createPlayerUUID(playerName), playerName);
             }
         }
-        if (manager.getUserBanList().contains(profile))
+        if (manager.getBans().isBanned(profile))
         {
             Messenger.m(context.getSource(), "r Player ", "rb " + playerName, "r  is banned on this server");
             return true;
         }
-        if (manager.isWhitelistEnabled() && manager.isWhitelisted(profile) && !context.getSource().hasPermissionLevel(2))
+        if (manager.isUsingWhitelist() && manager.isWhiteListed(profile) && !context.getSource().hasPermission(2))
         {
             Messenger.m(context.getSource(), "r Whitelisted players can only be spawned by operators");
             return true;
@@ -227,18 +226,18 @@ public class PlayerCommand
         return false;
     }
 
-    private static int kill(CommandContext<ServerCommandSource> context)
+    private static int kill(CommandContext<CommandSourceStack> context)
     {
         if (cantReMove(context)) return 0;
         getPlayer(context).kill();
         return 1;
     }
 
-    private static int lookAt(CommandContext<ServerCommandSource> context)
+    private static int lookAt(CommandContext<CommandSourceStack> context)
     {
         return manipulate(context, ap -> {
             //try {
-                ap.lookAt(Vec3ArgumentType.getVec3(context, "position"));
+                ap.lookAt(Vec3Argument.getVec3(context, "position"));
             //} catch (CommandSyntaxException ignored) {}
         });
     }
@@ -261,45 +260,45 @@ public class PlayerCommand
         }
     }
 
-    private static int spawn(CommandContext<ServerCommandSource> context) throws CommandSyntaxException
+    private static int spawn(CommandContext<CommandSourceStack> context) throws CommandSyntaxException
     {
         if (cantSpawn(context)) return 0;
-        ServerCommandSource source = context.getSource();
-        Vec3d pos = tryGetArg(
-                () -> Vec3ArgumentType.getVec3(context, "position"),
+        CommandSourceStack source = context.getSource();
+        Vec3 pos = tryGetArg(
+                () -> Vec3Argument.getVec3(context, "position"),
                 source::getPosition
         );
-        Vec2f facing = tryGetArg(
-                () -> RotationArgumentType.getRotation(context, "direction").toAbsoluteRotation(context.getSource()),
+        Vec2 facing = tryGetArg(
+                () -> RotationArgument.getRotation(context, "direction").getRotation(context.getSource()),
                 source::getRotation
         );
-        RegistryKey<World> dimType = tryGetArg(
-                () -> DimensionArgumentType.getDimensionArgument(context, "dimension").getRegistryKey(),
-                () -> source.getWorld().getRegistryKey() // dimension.getType()
+        ResourceKey<Level> dimType = tryGetArg(
+                () -> DimensionArgument.getDimension(context, "dimension").dimension(),
+                () -> source.getLevel().dimension() // dimension.getType()
         );
-        GameMode mode = GameMode.CREATIVE;
+        GameType mode = GameType.CREATIVE;
         boolean flying = false;
         try
         {
-            ServerPlayerEntity player = context.getSource().getPlayer();
-            mode = player.interactionManager.getGameMode();
+            ServerPlayer player = context.getSource().getPlayerOrException();
+            mode = player.gameMode.getGameModeForPlayer();
             flying = player.getAbilities().flying;
         }
         catch (CommandSyntaxException ignored) {}
         try {
             String opGameMode = StringArgumentType.getString(context, "gamemode");
-            mode = GameMode.byName(opGameMode, null);
+            mode = GameType.byName(opGameMode, null);
             if(mode == null)
             {
                 Messenger.m(context.getSource(), "rb Invalid game mode: "+opGameMode+".");
                 return 0;
             }
         } catch (IllegalArgumentException ignored) {}
-        if(mode == GameMode.SPECTATOR)
+        if(mode == GameType.SPECTATOR)
         {
             // Force override flying to true for spectator players, or they will fell out of the world.
             flying = true;
-        } else if(mode.isSurvivalLike()){
+        } else if(mode.isSurvival()){
             // Force override flying to false for survival-like players, or they will fly too
             flying = false;
         }
@@ -311,12 +310,12 @@ public class PlayerCommand
         }
 
         MinecraftServer server = source.getServer();
-        if (!World.isValid(new BlockPos(pos.x, pos.y, pos.z)))
+        if (!Level.isInSpawnableBounds(new BlockPos(pos.x, pos.y, pos.z)))
         {
             Messenger.m(context.getSource(), "rb Player "+playerName+" cannot be placed outside of the world");
             return 0;
         }
-        PlayerEntity player = EntityPlayerMPFake.createFake(playerName, server, pos.x, pos.y, pos.z, facing.y, facing.x, dimType, mode, flying);
+        Player player = EntityPlayerMPFake.createFake(playerName, server, pos.x, pos.y, pos.z, facing.y, facing.x, dimType, mode, flying);
         if (player == null)
         {
             Messenger.m(context.getSource(), "rb Player " + StringArgumentType.getString(context, "player") + " doesn't exist " +
@@ -328,47 +327,47 @@ public class PlayerCommand
 
     private static int maxPlayerLength(MinecraftServer server)
     {
-        return server.getServerPort() >= 0 ? 16 : 40;
+        return server.getPort() >= 0 ? 16 : 40;
     }
 
-    private static int stop(CommandContext<ServerCommandSource> context)
+    private static int stop(CommandContext<CommandSourceStack> context)
     {
         if (cantManipulate(context)) return 0;
-        ServerPlayerEntity player = getPlayer(context);
+        ServerPlayer player = getPlayer(context);
         ((ServerPlayerEntityInterface) player).getActionPack().stopAll();
         return 1;
     }
 
-    private static int manipulate(CommandContext<ServerCommandSource> context, Consumer<EntityPlayerActionPack> action)
+    private static int manipulate(CommandContext<CommandSourceStack> context, Consumer<EntityPlayerActionPack> action)
     {
         if (cantManipulate(context)) return 0;
-        ServerPlayerEntity player = getPlayer(context);
+        ServerPlayer player = getPlayer(context);
         action.accept(((ServerPlayerEntityInterface) player).getActionPack());
         return 1;
     }
 
-    private static Command<ServerCommandSource> manipulation(Consumer<EntityPlayerActionPack> action)
+    private static Command<CommandSourceStack> manipulation(Consumer<EntityPlayerActionPack> action)
     {
         return c -> manipulate(c, action);
     }
 
-    private static int action(CommandContext<ServerCommandSource> context, EntityPlayerActionPack.ActionType type, EntityPlayerActionPack.Action action)
+    private static int action(CommandContext<CommandSourceStack> context, EntityPlayerActionPack.ActionType type, EntityPlayerActionPack.Action action)
     {
         return manipulate(context, ap -> ap.start(type, action));
     }
 
-    private static int shadow(CommandContext<ServerCommandSource> context)
+    private static int shadow(CommandContext<CommandSourceStack> context)
     {
-        ServerPlayerEntity player = getPlayer(context);
+        ServerPlayer player = getPlayer(context);
         if (player instanceof EntityPlayerMPFake)
         {
             Messenger.m(context.getSource(), "r Cannot shadow fake players");
             return 0;
         }
-        ServerPlayerEntity sendingPlayer = null;
+        ServerPlayer sendingPlayer = null;
         try
         {
-            sendingPlayer = context.getSource().getPlayer();
+            sendingPlayer = context.getSource().getPlayerOrException();
         }
         catch (CommandSyntaxException ignored) { }
 

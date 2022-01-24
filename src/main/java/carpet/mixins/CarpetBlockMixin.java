@@ -1,28 +1,28 @@
 package carpet.mixins;
 
 import carpet.utils.WoolTool;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.DyedCarpetBlock;
-import net.minecraft.item.ItemPlacementContext;
-import net.minecraft.server.world.ServerWorld;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.item.context.BlockPlaceContext;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.WoolCarpetBlock;
+import net.minecraft.world.level.block.state.BlockState;
 import org.spongepowered.asm.mixin.Mixin;
 
-@Mixin(DyedCarpetBlock.class) // WoolCarpetBlock
+@Mixin(WoolCarpetBlock.class) // WoolCarpetBlock
 public abstract class CarpetBlockMixin extends Block
 {
 
-    public CarpetBlockMixin(Settings block$Settings_1)
+    public CarpetBlockMixin(Properties block$Settings_1)
     {
         super(block$Settings_1);
     }
 
-    public BlockState getPlacementState(ItemPlacementContext context)
+    public BlockState getStateForPlacement(BlockPlaceContext context)
     {
-        BlockState state = super.getPlacementState(context);
-        if (context.getPlayer() != null && !context.getWorld().isClient)
+        BlockState state = super.getStateForPlacement(context);
+        if (context.getPlayer() != null && !context.getLevel().isClientSide)
         { // getColor()
-            WoolTool.carpetPlacedAction(((DyedCarpetBlock)(Object)this).getDyeColor(), context.getPlayer(), context.getBlockPos(), (ServerWorld) context.getWorld());
+            WoolTool.carpetPlacedAction(((WoolCarpetBlock)(Object)this).getColor(), context.getPlayer(), context.getClickedPos(), (ServerLevel) context.getLevel());
         }
         return state;
     }

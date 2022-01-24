@@ -1,30 +1,30 @@
 package carpet.mixins;
 
 import carpet.fakes.ServerLightingProviderInterface;
-import net.minecraft.server.world.ServerLightingProvider;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.ChunkPos;
-import net.minecraft.util.math.ChunkSectionPos;
-import net.minecraft.world.LightType;
-import net.minecraft.world.chunk.Chunk;
-import net.minecraft.world.chunk.ChunkNibbleArray;
-import net.minecraft.world.chunk.ChunkProvider;
-import net.minecraft.world.chunk.light.LightingProvider;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.SectionPos;
+import net.minecraft.server.level.ThreadedLevelLightEngine;
+import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.level.LightLayer;
+import net.minecraft.world.level.chunk.ChunkAccess;
+import net.minecraft.world.level.chunk.DataLayer;
+import net.minecraft.world.level.chunk.LightChunkGetter;
+import net.minecraft.world.level.lighting.LevelLightEngine;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 
-@Mixin(ServerLightingProvider.class)
-public abstract class ServerLightingProvider_scarpetMixin extends LightingProvider implements ServerLightingProviderInterface
+@Mixin(ThreadedLevelLightEngine.class)
+public abstract class ServerLightingProvider_scarpetMixin extends LevelLightEngine implements ServerLightingProviderInterface
 {
     @Shadow public abstract void checkBlock(BlockPos pos);
 
-    public ServerLightingProvider_scarpetMixin(ChunkProvider chunkProvider, boolean hasBlockLight, boolean hasSkyLight)
+    public ServerLightingProvider_scarpetMixin(LightChunkGetter chunkProvider, boolean hasBlockLight, boolean hasSkyLight)
     {
         super(chunkProvider, hasBlockLight, hasSkyLight);
     }
 
     @Override
-    public void resetLight(Chunk chunk, ChunkPos pos)
+    public void resetLight(ChunkAccess chunk, ChunkPos pos)
     {
         //super.setRetainData(pos, false);
         //super.setLightEnabled(pos, false);
@@ -34,17 +34,17 @@ public abstract class ServerLightingProvider_scarpetMixin extends LightingProvid
                 //ChunkPos pos = new ChunkPos(x, z);
                 int j;
                 for(j = -1; j < 17; ++j) {                                                                 // skip some recomp
-                    super.enqueueSectionData(LightType.BLOCK, ChunkSectionPos.from(pos, j), new ChunkNibbleArray(), false);
-                    super.enqueueSectionData(LightType.SKY, ChunkSectionPos.from(pos, j), new ChunkNibbleArray(), false);
+                    super.queueSectionData(LightLayer.BLOCK, SectionPos.of(pos, j), new DataLayer(), false);
+                    super.queueSectionData(LightLayer.SKY, SectionPos.of(pos, j), new DataLayer(), false);
                 }
                 for(j = 0; j < 16; ++j) {
-                    super.setSectionStatus(ChunkSectionPos.from(pos, j), true);
+                    super.updateSectionStatus(SectionPos.of(pos, j), true);
                 }
 
-                super.setColumnEnabled(pos, true);
+                super.enableLightSources(pos, true);
 
-                    chunk.getLightSourcesStream().forEach((blockPos) -> {
-                        super.addLightSource(blockPos, chunk.getLuminance(blockPos));
+                    chunk.getLights().forEach((blockPos) -> {
+                        super.onBlockEmissionIncrease(blockPos, chunk.getLightEmission(blockPos));
                     });
 
             }

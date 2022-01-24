@@ -2,21 +2,20 @@ package carpet.utils;
 
 import carpet.CarpetSettings;
 import carpet.helpers.HopperCounter;
-import net.minecraft.block.Material;
-import net.minecraft.block.MapColor;
-import net.minecraft.block.BlockState;
-import net.minecraft.server.command.ServerCommandSource;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.util.DyeColor;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.text.BaseText;
-import net.minecraft.world.World;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.BaseComponent;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.DyeColor;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.material.Material;
+import net.minecraft.world.level.material.MaterialColor;
+import net.minecraft.world.phys.Vec3;
 
 /**
  * A series of utility functions and variables for dealing predominantly with hopper counters and determining which counter
@@ -28,36 +27,36 @@ public class WoolTool
      * A map of the {@link MaterialColor} to the {@link DyeColor} which is used in {@link WoolTool#getWoolColorAtPosition}
      * to get the colour of wool at a position.
      */
-    private static final HashMap<MapColor,DyeColor> Material2Dye = new HashMap<>();
+    private static final HashMap<MaterialColor,DyeColor> Material2Dye = new HashMap<>();
 
     /**
      * A map of all the wool colours to their respective colours in the {@link Messenger#m} format so the name of the counter
      * gets printed in colour.
      */
 
-    public static final HashMap<MapColor,String> Material2DyeName = new HashMap<MapColor, String>(){{
-        put(MapColor.WHITE, "w ");
-        put(MapColor.ORANGE, "#F9801D ");
-        put(MapColor.MAGENTA, "m ");
-        put(MapColor.LIGHT_BLUE, "t ");
-        put(MapColor.YELLOW, "y ");
-        put(MapColor.LIME, "l ");
-        put(MapColor.PINK, "#FFACCB ");
-        put(MapColor.GRAY, "f ");
-        put(MapColor.LIGHT_GRAY, "g ");
-        put(MapColor.CYAN, "c ");
-        put(MapColor.PURPLE, "p ");
-        put(MapColor.BLUE, "v ");
-        put(MapColor.BROWN, "#835432 ");
-        put(MapColor.GREEN, "e ");
-        put(MapColor.RED, "r ");
-        put(MapColor.BLACK, "k ");
+    public static final HashMap<MaterialColor,String> Material2DyeName = new HashMap<MaterialColor, String>(){{
+        put(MaterialColor.SNOW, "w ");
+        put(MaterialColor.COLOR_ORANGE, "#F9801D ");
+        put(MaterialColor.COLOR_MAGENTA, "m ");
+        put(MaterialColor.COLOR_LIGHT_BLUE, "t ");
+        put(MaterialColor.COLOR_YELLOW, "y ");
+        put(MaterialColor.COLOR_LIGHT_GREEN, "l ");
+        put(MaterialColor.COLOR_PINK, "#FFACCB ");
+        put(MaterialColor.COLOR_GRAY, "f ");
+        put(MaterialColor.COLOR_LIGHT_GRAY, "g ");
+        put(MaterialColor.COLOR_CYAN, "c ");
+        put(MaterialColor.COLOR_PURPLE, "p ");
+        put(MaterialColor.COLOR_BLUE, "v ");
+        put(MaterialColor.COLOR_BROWN, "#835432 ");
+        put(MaterialColor.COLOR_GREEN, "e ");
+        put(MaterialColor.COLOR_RED, "r ");
+        put(MaterialColor.COLOR_BLACK, "k ");
     }};
     static
     {
         for (DyeColor color: DyeColor.values())
         {
-            Material2Dye.put(color.getMapColor(),color);
+            Material2Dye.put(color.getMaterialColor(),color);
         }
     }
 
@@ -68,7 +67,7 @@ public class WoolTool
      *     <li>Green - Prints the contents of the counter of the colour of wool underneath the carpet</li>
      * </ul>
      */
-    public static void carpetPlacedAction(DyeColor color, PlayerEntity placer, BlockPos pos, ServerWorld worldIn)
+    public static void carpetPlacedAction(DyeColor color, Player placer, BlockPos pos, ServerLevel worldIn)
     {
 		if (!CarpetSettings.carpets)
 		{
@@ -88,23 +87,23 @@ public class WoolTool
             case BROWN:
                 if (!"false".equals(CarpetSettings.commandDistance))
                 {
-                    ServerCommandSource source = placer.getCommandSource();
-                    if (!DistanceCalculator.hasStartingPoint(source) || placer.isSneaking()) {
-                        DistanceCalculator.setStart(source, Vec3d.of(pos) ); // zero padded pos
+                    CommandSourceStack source = placer.createCommandSourceStack();
+                    if (!DistanceCalculator.hasStartingPoint(source) || placer.isShiftKeyDown()) {
+                        DistanceCalculator.setStart(source, Vec3.atLowerCornerOf(pos) ); // zero padded pos
                     }
                     else {
-                        DistanceCalculator.setEnd(source, Vec3d.of(pos));
+                        DistanceCalculator.setEnd(source, Vec3.atLowerCornerOf(pos));
                     }
                 }
                 break;
             case GRAY:
                 if (!"false".equals(CarpetSettings.commandInfo))
-                    Messenger.send(placer, BlockInfo.blockInfo(pos.down(), worldIn));
+                    Messenger.send(placer, BlockInfo.blockInfo(pos.below(), worldIn));
                 break;
 			case GREEN:
                 if (CarpetSettings.hopperCounters)
                 {
-                    DyeColor under = getWoolColorAtPosition(worldIn, pos.down());
+                    DyeColor under = getWoolColorAtPosition(worldIn, pos.below());
                     if (under == null) return;
                     HopperCounter counter = HopperCounter.getCounter(under.toString());
                     if (counter != null)
@@ -114,12 +113,12 @@ public class WoolTool
 			case RED:
                 if (CarpetSettings.hopperCounters)
                 {
-                    DyeColor under = getWoolColorAtPosition(worldIn, pos.down());
+                    DyeColor under = getWoolColorAtPosition(worldIn, pos.below());
                     if (under == null) return;
                     HopperCounter counter = HopperCounter.getCounter(under.toString());
                     if (counter == null) return;
                     counter.reset(placer.getServer());
-                    List<BaseText> res = new ArrayList<>();
+                    List<BaseComponent> res = new ArrayList<>();
                     res.add(Messenger.s(String.format("%s counter reset",under.toString())));
                     Messenger.send(placer, res);
                 }
@@ -130,10 +129,10 @@ public class WoolTool
     /**
      * Gets the colour of wool at the position, for hoppers to be able to decide whether to add their items to the global counter.
      */
-    public static DyeColor getWoolColorAtPosition(World worldIn, BlockPos pos)
+    public static DyeColor getWoolColorAtPosition(Level worldIn, BlockPos pos)
     {
         BlockState state = worldIn.getBlockState(pos);
-        if (state.getMaterial() != Material.WOOL || !state.isSolidBlock(worldIn, pos)) //isSimpleFullBlock
+        if (state.getMaterial() != Material.WOOL || !state.isRedstoneConductor(worldIn, pos)) //isSimpleFullBlock
             return null;
         return Material2Dye.get(state.getMapColor(worldIn, pos));
     }

@@ -1,13 +1,13 @@
 package carpet.mixins;
 
 import carpet.fakes.ScreenHandlerInterface;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.screen.EnchantmentScreenHandler;
-import net.minecraft.screen.LecternScreenHandler;
-import net.minecraft.screen.LoomScreenHandler;
-import net.minecraft.screen.ScreenHandler;
-import net.minecraft.screen.ScreenHandlerType;
-import net.minecraft.screen.StonecutterScreenHandler;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.EnchantmentMenu;
+import net.minecraft.world.inventory.LecternMenu;
+import net.minecraft.world.inventory.LoomMenu;
+import net.minecraft.world.inventory.MenuType;
+import net.minecraft.world.inventory.StonecutterMenu;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -15,14 +15,14 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 
 //classes that override onButtonClick
-@Mixin({EnchantmentScreenHandler.class, LecternScreenHandler.class, LoomScreenHandler.class, StonecutterScreenHandler.class})
-public abstract class ScreenHandlerSubclasses_scarpetMixin extends ScreenHandler {
-    protected ScreenHandlerSubclasses_scarpetMixin(ScreenHandlerType<?> type, int syncId) {
+@Mixin({EnchantmentMenu.class, LecternMenu.class, LoomMenu.class, StonecutterMenu.class})
+public abstract class ScreenHandlerSubclasses_scarpetMixin extends AbstractContainerMenu {
+    protected ScreenHandlerSubclasses_scarpetMixin(MenuType<?> type, int syncId) {
         super(type, syncId);
     }
 
-    @Inject(method = "onButtonClick", at = @At("HEAD"), cancellable = true)
-    private void buttonClickCallback(PlayerEntity player, int id, CallbackInfoReturnable<Boolean> cir) {
+    @Inject(method = "clickMenuButton", at = @At("HEAD"), cancellable = true)
+    private void buttonClickCallback(Player player, int id, CallbackInfoReturnable<Boolean> cir) {
         if(((ScreenHandlerInterface) this).callButtonClickListener(id,player))
             cir.cancel();
     }
