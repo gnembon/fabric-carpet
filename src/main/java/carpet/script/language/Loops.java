@@ -7,6 +7,7 @@ import carpet.script.exception.BreakStatement;
 import carpet.script.exception.ContinueStatement;
 import carpet.script.exception.InternalExpressionException;
 import carpet.script.value.AbstractListValue;
+import carpet.script.value.LazyListValue;
 import carpet.script.value.ListValue;
 import carpet.script.value.NumericValue;
 import carpet.script.value.Value;
@@ -14,6 +15,8 @@ import carpet.script.value.Value;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.stream.Collectors;
+
 
 public class Loops {
     public static void apply(Expression expression)
@@ -140,7 +143,45 @@ public class Loops {
             c.setVariable("_i", _iter);
             return (cc, tt) ->  ret;
         });
+//=========
+        expression.addFunction("zip", (lv) ->
+        {
+            if (lv.stream().allMatch(v->(v instanceof AbstractListValue))){
+                return new LazyListValue(){
+                    List<AbstractListValue> b=lv.stream().map(v->(AbstractListValue)v).collect(Collectors.toList());
+                    List<Iterator<Value>> a=lv.stream().map(v->((AbstractListValue)v).iterator()).collect(Collectors.toList());
+                    
 
+                    @Override
+                    public boolean hasNext() {
+                        return a.stream().allMatch(Iterator::hasNext);
+                    }
+
+                    @Override
+                    public Value next() {
+                        return ListValue.wrap(a.stream().map(Iterator::next));
+                    }
+
+                    @Override
+                    public void reset() {
+                        b.stream().forEach(v->{
+                            if (v instanceof LazyListValue){
+                                ((LazyListValue) v).reset();
+                            }
+                        });
+                        this.b=lv.stream().map(v->(AbstractListValue)v).collect(Collectors.toList());
+                        this.a=lv.stream().map(v->((AbstractListValue)v).iterator()).collect(Collectors.toList());
+                    }
+                    
+                };
+            }
+            else{
+                throw new InternalExpressionException("All argument of 'zip' function should be a list or iterator");
+            }
+            
+        });
+
+//=========*/
         // grep(list or num, expr) => list
         // receives bounded variable '_' with the expression, and "_i" with index
         // produces list of values for which the expression is true
