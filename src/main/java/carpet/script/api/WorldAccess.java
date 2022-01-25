@@ -771,7 +771,7 @@ public class WorldAccess {
             lv4.clearProcessors();
 
             lv4.setIgnoreEntities(lv.get(start.offset).getBoolean())
-                    .method_27264(lv.get(start.offset+2).getBoolean())
+                    .setInitializeMobs(lv.get(start.offset+2).getBoolean())
                     .setUpdateNeighbors(lv.get(start.offset+3).getBoolean())
                     .setPlaceFluids(lv.get(start.offset+4).getBoolean())
                     .setMirror(lv.get(start.offset+7).getString().equalsIgnoreCase("Z") ? BlockMirror.LEFT_RIGHT
