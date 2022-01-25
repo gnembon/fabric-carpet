@@ -860,7 +860,7 @@ the future.
 
 ## `Structure Block API`
 
-### `structure_block_save(name,start_corner,end_corner,ignoreEntities,ignoredBlock,disk)`
+### `save_structure_template(name,start_corner,end_corner,ignoreEntities,ignoredBlock,disk)`
 
 Save part of the world into a structure.
 *   `name` is the same as in a real structure block. If it is `null`, the function will return the NBT of the structure file.
@@ -869,7 +869,7 @@ Save part of the world into a structure.
 
 Return True if saved successfully. Return a falsy value if not. Unless `name` is null.
 
-### `structure_block_load(name,start_corner,ignoreEntities,integrity,awake,noupdate,fluid,gravity,rotation,mirror)`
+### `load_structure_template(name,start_corner,ignoreEntities,integrity,awake,noupdate,fluid,gravity,rotation,mirror)`
 
 Place a saved structure into the world.
 *   `name` is the same as in a real structure block. And it can also be a NBT tag that will be viewed as the structure file to load.
@@ -882,8 +882,12 @@ Place a saved structure into the world.
 
 Return True if works successfully. Return a falsy value if not.
 
-### `structure_block_unload(name)`
+### `unload_structure_template(name)`
 
 Unload a structure.
+
 Will delete a temporary structure, or force a refresh of the stored structure.
+
+Useful after the stored structure changes (via datapack or NBT Editor).
+
 Return null.
