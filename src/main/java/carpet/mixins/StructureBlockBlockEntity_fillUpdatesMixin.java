@@ -3,12 +3,10 @@ package carpet.mixins;
 import carpet.CarpetSettings;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Desc;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
 import java.util.Random;
 import net.minecraft.core.BlockPos;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraft.world.level.block.entity.StructureBlockEntity;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructurePlaceSettings;
@@ -17,9 +15,9 @@ import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemp
 @Mixin(StructureBlockEntity.class)
 public abstract class StructureBlockBlockEntity_fillUpdatesMixin
 {
-    @Redirect(target = @Desc(args = {ServerLevel.class, boolean.class, StructureTemplate.class}, value = "loadStructure", ret = boolean.class, owner = StructureBlockEntity.class), at = @At(
+    @Redirect(method = "Lnet/minecraft/world/level/block/entity/StructureBlockEntity;loadStructure(Lnet/minecraft/server/level/ServerLevel;ZLnet/minecraft/world/level/levelgen/structure/templatesystem/StructureTemplate;)Z", at = @At(
             value = "INVOKE",
-            desc = @Desc(owner = StructureTemplate.class, value = "placeInWorld", args = {ServerLevelAccessor.class, BlockPos.class, BlockPos.class, StructurePlaceSettings.class, Random.class, int.class}, ret = boolean.class)
+            target = "Lnet/minecraft/world/level/levelgen/structure/templatesystem/StructureTemplate;placeInWorld(Lnet/minecraft/world/level/ServerLevelAccessor;Lnet/minecraft/core/BlockPos;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/levelgen/structure/templatesystem/StructurePlaceSettings;Ljava/util/Random;I)Z"
     ))
     private boolean onStructurePlacen(StructureTemplate structure, ServerLevelAccessor serverWorldAccess, BlockPos pos, BlockPos blockPos, StructurePlaceSettings placementData, Random random, int i)
     {
