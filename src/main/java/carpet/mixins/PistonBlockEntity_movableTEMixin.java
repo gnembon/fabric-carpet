@@ -23,7 +23,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(PistonMovingBlockEntity.class)
-public abstract class PistonBlockEntity_movableBEMixin extends BlockEntity implements PistonBlockEntityInterface
+public abstract class PistonBlockEntity_movableTEMixin extends BlockEntity implements PistonBlockEntityInterface
 {
     @Shadow
     private boolean isSourcePiston;
@@ -34,7 +34,7 @@ public abstract class PistonBlockEntity_movableBEMixin extends BlockEntity imple
     private boolean renderCarriedBlockEntity = false;
     private boolean renderSet = false;
 
-    public PistonBlockEntity_movableBEMixin(BlockEntityType<?> blockEntityType, BlockPos blockPos, BlockState blockState) {
+    public PistonBlockEntity_movableTEMixin(BlockEntityType<?> blockEntityType, BlockPos blockPos, BlockState blockState) {
         super(blockEntityType, blockPos, blockState);
     }
 
