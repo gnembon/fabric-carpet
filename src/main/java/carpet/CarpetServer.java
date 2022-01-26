@@ -1,6 +1,5 @@
 package carpet;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -28,9 +27,6 @@ import carpet.logging.HUDController;
 import carpet.utils.FabricAPIHooks;
 import carpet.utils.MobAI;
 import carpet.utils.SpawnReporter;
-
-import com.google.common.reflect.ClassPath;
-import com.google.common.reflect.ClassPath.ClassInfo;
 import com.mojang.brigadier.CommandDispatcher;
 
 import net.fabricmc.api.ClientModInitializer;
