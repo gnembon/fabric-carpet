@@ -4,7 +4,6 @@ import carpet.CarpetServer;
 import carpet.helpers.HopperCounter;
 import carpet.helpers.TickSpeed;
 import carpet.logging.logHelpers.PacketCounter;
-import carpet.mixins.PlayerListHeaderS2CPacketMixin;
 import carpet.utils.Messenger;
 import carpet.utils.SpawnReporter;
 import io.netty.buffer.Unpooled;
