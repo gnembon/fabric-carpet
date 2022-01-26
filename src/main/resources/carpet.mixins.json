@@ -207,7 +207,7 @@
     "NoiseColumnSamplerMixin_scarpetMixin",
     "CaveScalerMixin_scarpetMixin",
 
-    "BlockEntity_movableTEMixin",
+    "BlockEntity_movableBEMixin",
     "PistonBlock_movableTEMixin",
     "PistonBlockEntity_movableTEMixin",
     "World_movableTEMixin",
