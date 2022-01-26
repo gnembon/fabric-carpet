@@ -2,7 +2,6 @@ package carpet.script.api;
 
 import carpet.CarpetServer;
 import carpet.CarpetSettings;
-import carpet.fakes.BiomeArrayInterface;
 import carpet.fakes.ChunkGeneratorInterface;
 import carpet.fakes.ChunkTicketManagerInterface;
 import carpet.fakes.NoiseColumnSamplerInterface;
@@ -11,12 +10,11 @@ import carpet.fakes.ServerWorldInterface;
 import carpet.fakes.SpawnHelperInnerInterface;
 import carpet.fakes.ThreadedAnvilChunkStorageInterface;
 import carpet.helpers.FeatureGenerator;
-import carpet.mixins.PointOfInterest_scarpetMixin;
+import carpet.mixins.PoiRecord_scarpetMixin;
 import carpet.script.CarpetContext;
 import carpet.script.Context;
 import carpet.script.Expression;
 import carpet.script.Fluff;
-import carpet.script.LazyValue;
 import carpet.script.annotation.Locator;
 import carpet.script.annotation.ScarpetFunction;
 import carpet.script.argument.BlockArgument;
@@ -295,7 +293,7 @@ public class WorldAccess {
                     return Value.NULL;
                 return ListValue.of(
                         new StringValue(poi.getPoiType().toString()),
-                        new NumericValue(poiType.getMaxTickets() - ((PointOfInterest_scarpetMixin)poi).getFreeTickets())
+                        new NumericValue(poiType.getMaxTickets() - ((PoiRecord_scarpetMixin)poi).getFreeTickets())
                 );
             }
             int radius = NumericValue.asNumber(lv.get(locator.offset+0)).getInt();
@@ -335,7 +333,7 @@ public class WorldAccess {
             return ListValue.wrap(pois.sorted(Comparator.comparingDouble(p -> p.getPos().distSqr(pos))).map(p ->
                     ListValue.of(
                             new StringValue(p.getPoiType().toString()),
-                            new NumericValue(p.getPoiType().getMaxTickets() - ((PointOfInterest_scarpetMixin)p).getFreeTickets()),
+                            new NumericValue(p.getPoiType().getMaxTickets() - ((PoiRecord_scarpetMixin)p).getFreeTickets()),
                             ListValue.of(new NumericValue(p.getPos().getX()), new NumericValue(p.getPos().getY()), new NumericValue(p.getPos().getZ()))
                     )
             ).collect(Collectors.toList()));
@@ -375,7 +373,7 @@ public class WorldAccess {
                 int finalO = occupancy;
                 store.getInSquare((tt) -> tt==type, pos, 1, PoiManager.Occupancy.ANY
                 ).filter(p -> p.getPos().equals(pos)).findFirst().ifPresent(p -> {
-                    for (int i=0; i < finalO; i++) ((PointOfInterest_scarpetMixin)p).callAcquireTicket();
+                    for (int i=0; i < finalO; i++) ((PoiRecord_scarpetMixin)p).callAcquireTicket();
                 });
             }
             return Value.TRUE;

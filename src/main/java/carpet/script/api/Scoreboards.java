@@ -1,11 +1,10 @@
 package carpet.script.api;
 
-import carpet.mixins.ScoreboardObjective_scarpetMixin;
+import carpet.mixins.Objective_scarpetMixin;
 import carpet.mixins.Scoreboard_scarpetMixin;
-import carpet.mixins.Team_scarpetMixin;
+import carpet.mixins.PlayerTeam_scarpetMixin;
 import carpet.script.CarpetContext;
 import carpet.script.Expression;
-import carpet.script.LazyValue;
 import carpet.script.exception.InternalExpressionException;
 import carpet.script.exception.ThrowStatement;
 import carpet.script.exception.Throwables;
@@ -148,7 +147,7 @@ public class Scoreboards {
                 if(lv.size() == 1) return StringValue.of(objective.getCriteria().getName());
                 if(objective.getCriteria().equals(criterion) || lv.size() == 1) return Value.NULL;
                 ((Scoreboard_scarpetMixin)scoreboard).getObjectivesByCriterion().get(objective.getCriteria()).remove(objective);
-                ((ScoreboardObjective_scarpetMixin) objective).setCriterion(criterion);
+                ((Objective_scarpetMixin) objective).setCriterion(criterion);
                 (((Scoreboard_scarpetMixin)scoreboard).getObjectivesByCriterion().computeIfAbsent(criterion, (criterion1) -> Lists.newArrayList())).add(objective);
                 scoreboard.onObjectiveAdded(objective);
                 return Value.FALSE;
@@ -179,7 +178,7 @@ public class Scoreboards {
                         if (criterion==null) throw new InternalExpressionException("Unknown scoreboard criterion: "+ setValue.getString());
                         if(objective.getCriteria().equals(criterion) || lv.size() == 1) return Value.FALSE;
                         ((Scoreboard_scarpetMixin)scoreboard).getObjectivesByCriterion().get(objective.getCriteria()).remove(objective);
-                        ((ScoreboardObjective_scarpetMixin) objective).setCriterion(criterion);
+                        ((Objective_scarpetMixin) objective).setCriterion(criterion);
                         (((Scoreboard_scarpetMixin)scoreboard).getObjectivesByCriterion().computeIfAbsent(criterion, (criterion1) -> Lists.newArrayList())).add(objective);
                         scoreboard.onObjectiveAdded(objective);
                         return Value.TRUE;
@@ -337,7 +336,7 @@ public class Scoreboards {
                     team.setCollisionRule(collisionRule);
                     break;
                 case "color":
-                    if(!modifying) return new StringValue(((Team_scarpetMixin) team).getColor().getName());
+                    if(!modifying) return new StringValue(((PlayerTeam_scarpetMixin) team).getColor().getName());
                     if(!(settingVal instanceof StringValue)) throw new InternalExpressionException("'team_property' requires a string as the third argument for the property " + propertyVal.getString());
                     ChatFormatting color = ChatFormatting.getByName(settingVal.getString().toUpperCase());
                     if(color == null || !color.isColor()) throw new InternalExpressionException("Unknown value for property " + propertyVal.getString() + ": " + settingVal.getString());
