@@ -12,7 +12,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public class PerfCommand_permissionMixin
 {
     @SuppressWarnings("UnresolvedMixinReference")
-    @Inject(method = "lambda$register$0(Lnet/minecraft/commands/CommandSourceStack;)Z", at = @At("HEAD"), cancellable = true)
+    @Inject(method = "method_37340", at = @At("HEAD"), cancellable = true)
     private static void canRun(CommandSourceStack source, CallbackInfoReturnable<Boolean> cir)
     {
         cir.setReturnValue(source.hasPermission(CarpetSettings.perfPermissionLevel));

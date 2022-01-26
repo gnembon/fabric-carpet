@@ -12,7 +12,7 @@ import net.minecraft.world.level.levelgen.structure.pieces.PieceGeneratorSupplie
 public interface PieceGeneratorSupplier_plopMixin
 {
     @SuppressWarnings("UnresolvedMixinReference")
-    @Redirect(method = "lambda$simple$0(Ljava/util/function/Predicate;Ljava/util/Optional;Lnet/minecraft/world/level/levelgen/structure/pieces/PieceGeneratorSupplier$Context;)Ljava/util/Optional;", at = @At(
+    @Redirect(method = "method_39845", at = @At(
             value = "INVOKE",
             target = "java/util/function/Predicate.test(Ljava/lang/Object;)Z"
     ))

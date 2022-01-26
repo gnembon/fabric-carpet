@@ -108,10 +108,10 @@ public abstract class ChunkMap_scarpetChunkCreationMixin implements ThreadedAnvi
 
     ThreadLocal<Boolean> generated = ThreadLocal.withInitial(() -> null);
 
-    // in convertToFullChunk
+    // in protoChunkToFullChunk
     // fancier version of the one below, ensuring that the event is triggered when the chunk is actually loaded.
     @SuppressWarnings("UnresolvedMixinReference")
-    @Inject(method = "lambda$protoChunkToFullChunk$28", at = @At("HEAD"))
+    @Inject(method = "method_20460", at = @At("HEAD"))
     private void onChunkGeneratedStart(ChunkHolder chunkHolder, Either<ChunkAccess, ChunkLoadingFailure> chunk, CallbackInfoReturnable<CompletableFuture<Either<ChunkAccess, ChunkLoadingFailure>>> cir)
     {
         if (CHUNK_GENERATED.isNeeded() || CHUNK_LOADED.isNeeded())
@@ -125,7 +125,7 @@ public abstract class ChunkMap_scarpetChunkCreationMixin implements ThreadedAnvi
     }
 
     @SuppressWarnings("UnresolvedMixinReference")
-    @Inject(method = "lambda$protoChunkToFullChunk$28", at = @At("RETURN"))
+    @Inject(method = "method_20460", at = @At("RETURN"))
     private void onChunkGeneratedEnd(ChunkHolder chunkHolder, Either<ChunkAccess, ChunkLoadingFailure> chunk, CallbackInfoReturnable<CompletableFuture<Either<ChunkAccess, ChunkLoadingFailure>>> cir)
     {
         Boolean localGenerated= generated.get();
