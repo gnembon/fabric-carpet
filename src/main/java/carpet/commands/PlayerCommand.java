@@ -23,6 +23,7 @@ import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.util.UserCache;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Vec2f;
@@ -111,7 +112,7 @@ public class PlayerCommand
                                                         )))
                                         )))
                                 ))
-                        )
+                        ).then(literal("respawn").executes(PlayerCommand::respawn))
                 );
         dispatcher.register(literalargumentbuilder);
     }
@@ -259,6 +260,26 @@ public class PlayerCommand
         {
             return b.get();
         }
+    }
+
+    private static int respawn(CommandContext<ServerCommandSource> context)
+    {
+        ServerCommandSource source = context.getSource();
+        String playerName = StringArgumentType.getString(context, "player");
+        if (playerName.length()>maxPlayerLength(source.getServer()))
+        {
+            Messenger.m(context.getSource(), "rb Player name: "+playerName+" is too long");
+            return 0;
+        }
+        MinecraftServer server = source.getServer();
+        PlayerEntity player = EntityPlayerMPFake.respawnFake(playerName, server);
+        if (player == null)
+        {
+            Messenger.m(context.getSource(), "rb Player " + playerName + " doesn't exist " +
+                    "and cannot spawn in online mode. Turn the server offline to spawn non-existing players");
+            return 0;
+        }
+        return 1;
     }
 
     private static int spawn(CommandContext<ServerCommandSource> context) throws CommandSyntaxException

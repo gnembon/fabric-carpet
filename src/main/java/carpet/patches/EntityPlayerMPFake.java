@@ -2,10 +2,14 @@ package carpet.patches;
 
 import carpet.CarpetSettings;
 import com.mojang.authlib.GameProfile;
+import com.mojang.serialization.DataResult;
+import com.mojang.serialization.Dynamic;
 import net.minecraft.block.entity.SkullBlockEntity;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.NbtCompound;
+import net.minecraft.nbt.NbtOps;
 import net.minecraft.network.packet.s2c.play.EntityPositionS2CPacket;
 import net.minecraft.network.packet.s2c.play.EntitySetHeadYawS2CPacket;
 import net.minecraft.network.packet.s2c.play.PlayerListS2CPacket;
@@ -24,6 +28,7 @@ import net.minecraft.world.GameMode;
 import net.minecraft.world.World;
 import carpet.fakes.ServerPlayerEntityInterface;
 import carpet.utils.Messenger;
+import net.minecraft.world.dimension.DimensionType;
 
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -73,6 +78,42 @@ public class EntityPlayerMPFake extends ServerPlayerEntity
         //instance.world.getChunkManager(). updatePosition(instance);
         instance.dataTracker.set(PLAYER_MODEL_PARTS, (byte) 0x7f); // show all model layers (incl. capes)
         instance.getAbilities().flying = flying;
+        return instance;
+    }
+
+    public static EntityPlayerMPFake respawnFake(String username, MinecraftServer server) {
+        //prolly half of that crap is not necessary, but it works
+        UserCache.setUseRemote(false);
+        GameProfile gameprofile;
+        try {
+            gameprofile = server.getUserCache().findByName(username).orElse(null);
+        }
+        finally {
+            UserCache.setUseRemote(server.isDedicated() && server.isOnlineMode());
+        }
+        if (gameprofile == null) {
+            if (!CarpetSettings.allowSpawningOfflinePlayers) return null;
+            gameprofile = new GameProfile(PlayerEntity.getOfflinePlayerUuid(username), username);
+        }
+        if (gameprofile.getProperties().containsKey("textures")) {
+            AtomicReference<GameProfile> result = new AtomicReference<>();
+            SkullBlockEntity.loadProperties(gameprofile, result::set);
+            gameprofile = result.get();
+        }
+        EntityPlayerMPFake instance = new EntityPlayerMPFake(server, server.getWorld(World.OVERWORLD), gameprofile, false);
+        NbtCompound nbtCompound = server.getPlayerManager().loadPlayerData(instance);
+        RegistryKey<World> registryKey = World.OVERWORLD;
+        if (nbtCompound != null) {
+            DataResult data = DimensionType.worldFromDimensionNbt(new Dynamic(NbtOps.INSTANCE, nbtCompound.get("Dimension")));
+            registryKey = (RegistryKey)data.resultOrPartial(CarpetSettings.LOG::error).orElse(World.OVERWORLD);
+        }
+        ServerWorld serverWorld = server.getWorld(registryKey);
+        instance.setWorld(serverWorld);
+        server.getPlayerManager().onPlayerConnect(new NetworkManagerFake(NetworkSide.SERVERBOUND), instance);
+        instance.unsetRemoved();
+        instance.stepHeight = 0.6F;
+        instance.getServerWorld().getChunkManager().updatePosition(instance);
+        instance.dataTracker.set(PLAYER_MODEL_PARTS, (byte) 0x7f); // show all model layers (incl. capes)
         return instance;
     }
 
