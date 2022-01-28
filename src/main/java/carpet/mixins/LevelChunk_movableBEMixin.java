@@ -27,13 +27,13 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
 @Mixin(LevelChunk.class)
-public abstract class WorldChunk_movableTEMixin extends ChunkAccess implements WorldChunkInterface
+public abstract class LevelChunk_movableBEMixin extends ChunkAccess implements WorldChunkInterface
 {
     @Shadow
     @Final
     Level level;
 
-    public WorldChunk_movableTEMixin(ChunkPos pos, UpgradeData upgradeData, LevelHeightAccessor heightLimitView, Registry<Biome> biome, long inhabitedTime, @Nullable LevelChunkSection[] sectionArrayInitializer, @Nullable BlendingData blendingData) {
+    public LevelChunk_movableBEMixin(ChunkPos pos, UpgradeData upgradeData, LevelHeightAccessor heightLimitView, Registry<Biome> biome, long inhabitedTime, @Nullable LevelChunkSection[] sectionArrayInitializer, @Nullable BlendingData blendingData) {
         super(pos, upgradeData, heightLimitView, biome, inhabitedTime, sectionArrayInitializer, blendingData);
     }
 

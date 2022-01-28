@@ -27,9 +27,9 @@ import java.util.List;
 import java.util.Map;
 
 @Mixin(PistonBaseBlock.class)
-public abstract class PistonBlock_movableTEMixin extends DirectionalBlock
+public abstract class PistonBaseBlock_movableBEMixin extends DirectionalBlock
 {
-    protected PistonBlock_movableTEMixin(Properties block$Settings_1)
+    protected PistonBaseBlock_movableBEMixin(Properties block$Settings_1)
     {
         super(block$Settings_1);
     }

@@ -17,7 +17,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 
 @Mixin(PistonHeadRenderer.class)
-public abstract class PistonBlockEntityRenderer_movableTEMixin implements BlockEntityRenderer<PistonMovingBlockEntity>
+public abstract class PistonHeadRenderer_movableBEMixin implements BlockEntityRenderer<PistonMovingBlockEntity>
 {
     BlockEntityRenderDispatcher dispatcher;
     @Inject(method = "<init>", at = @At("TAIL"))
