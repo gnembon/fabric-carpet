@@ -2,7 +2,15 @@ package carpet.mixins;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.function.IntSupplier;
-
+import net.minecraft.Util;
+import net.minecraft.core.SectionPos;
+import net.minecraft.server.level.ChunkMap;
+import net.minecraft.server.level.ThreadedLevelLightEngine;
+import net.minecraft.server.level.ThreadedLevelLightEngine.TaskType;
+import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.level.chunk.ChunkAccess;
+import net.minecraft.world.level.chunk.LightChunkGetter;
+import net.minecraft.world.level.lighting.LevelLightEngine;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -11,74 +19,65 @@ import org.spongepowered.asm.mixin.gen.Invoker;
 import carpet.fakes.Lighting_scarpetChunkCreationInterface;
 import carpet.fakes.ServerLightingProviderInterface;
 import carpet.fakes.ThreadedAnvilChunkStorageInterface;
-import net.minecraft.server.world.ServerLightingProvider;
-import net.minecraft.server.world.ServerLightingProvider.Stage;
-import net.minecraft.server.world.ThreadedAnvilChunkStorage;
-import net.minecraft.util.Util;
-import net.minecraft.util.math.ChunkPos;
-import net.minecraft.util.math.ChunkSectionPos;
-import net.minecraft.world.chunk.Chunk;
-import net.minecraft.world.chunk.ChunkProvider;
-import net.minecraft.world.chunk.light.LightingProvider;
 
-@Mixin(ServerLightingProvider.class)
-public abstract class ServerLightingProvider_scarpetChunkCreationMixin extends LightingProvider implements ServerLightingProviderInterface
+@Mixin(ThreadedLevelLightEngine.class)
+public abstract class ServerLightingProvider_scarpetChunkCreationMixin extends LevelLightEngine implements ServerLightingProviderInterface
 {
-    private ServerLightingProvider_scarpetChunkCreationMixin(final ChunkProvider chunkProvider, final boolean hasBlockLight, final boolean hasSkyLight)
+    private ServerLightingProvider_scarpetChunkCreationMixin(final LightChunkGetter chunkProvider, final boolean hasBlockLight, final boolean hasSkyLight)
     {
         super(chunkProvider, hasBlockLight, hasSkyLight);
     }
 
     @Shadow
-    protected abstract void enqueue(final int x, final int z, final IntSupplier completedLevelSupplier, final Stage stage, final Runnable task);
+    protected abstract void addTask(final int x, final int z, final IntSupplier completedLevelSupplier, final TaskType stage, final Runnable task);
 
     @Shadow
     @Final
-    private ThreadedAnvilChunkStorage chunkStorage;
+    private ChunkMap chunkMap;
 
     @Override
     @Invoker("updateChunkStatus")
     public abstract void invokeUpdateChunkStatus(ChunkPos pos);
 
     @Override
-    public void removeLightData(final Chunk chunk)
+    public void removeLightData(final ChunkAccess chunk)
     {
         final ChunkPos pos = chunk.getPos();
-        chunk.setLightOn(false);
+        chunk.setLightCorrect(false);
 
-        this.enqueue(pos.x, pos.z, () -> 0, ServerLightingProvider.Stage.PRE_UPDATE, Util.debugRunnable(() -> {
-                super.setColumnEnabled(pos, false);
-                ((Lighting_scarpetChunkCreationInterface) this).removeLightData(ChunkSectionPos.withZeroY(ChunkSectionPos.asLong(pos.x, 0, pos.z)));
+        this.addTask(pos.x, pos.z, () -> 0, ThreadedLevelLightEngine.TaskType.PRE_UPDATE, Util.name(() -> {
+                super.enableLightSources(pos, false);
+                ((Lighting_scarpetChunkCreationInterface) this).removeLightData(SectionPos.getZeroNode(SectionPos.asLong(pos.x, 0, pos.z)));
             },
             () -> "Remove light data " + pos
         ));
     }
 
     @Override
-    public CompletableFuture<Void> relight(final Chunk chunk)
+    public CompletableFuture<Void> relight(final ChunkAccess chunk)
     {
         final ChunkPos pos = chunk.getPos();
 
-        this.enqueue(pos.x, pos.z, () -> 0, ServerLightingProvider.Stage.PRE_UPDATE, Util.debugRunnable(() -> {
-                super.setColumnEnabled(pos, true);
+        this.addTask(pos.x, pos.z, () -> 0, ThreadedLevelLightEngine.TaskType.PRE_UPDATE, Util.name(() -> {
+                super.enableLightSources(pos, true);
 
-                chunk.getLightSourcesStream().forEach(
-                    blockPos -> super.addLightSource(blockPos, chunk.getLuminance(blockPos))
+                chunk.getLights().forEach(
+                    blockPos -> super.onBlockEmissionIncrease(blockPos, chunk.getLightEmission(blockPos))
                 );
 
-                ((Lighting_scarpetChunkCreationInterface) this).relight(ChunkSectionPos.withZeroY(ChunkSectionPos.asLong(pos.x, 0, pos.z)));
+                ((Lighting_scarpetChunkCreationInterface) this).relight(SectionPos.getZeroNode(SectionPos.asLong(pos.x, 0, pos.z)));
             },
             () -> "Relight chunk " + pos
         ));
 
         return CompletableFuture.runAsync(
-            Util.debugRunnable(() -> {
-                    chunk.setLightOn(true);
-                    ((ThreadedAnvilChunkStorageInterface) this.chunkStorage).releaseRelightTicket(pos);
+            Util.name(() -> {
+                    chunk.setLightCorrect(true);
+                    ((ThreadedAnvilChunkStorageInterface) this.chunkMap).releaseRelightTicket(pos);
                 },
                 () -> "Release relight ticket " + pos
             ),
-            runnable -> this.enqueue(pos.x, pos.z, () -> 0, ServerLightingProvider.Stage.POST_UPDATE, runnable)
+            runnable -> this.addTask(pos.x, pos.z, () -> 0, ThreadedLevelLightEngine.TaskType.POST_UPDATE, runnable)
         );
     }
 }

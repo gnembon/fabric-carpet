@@ -2,83 +2,83 @@ package carpet.script.utils;
 
 import carpet.CarpetSettings;
 import com.mojang.brigadier.ResultConsumer;
-import net.minecraft.command.argument.EntityAnchorArgumentType;
-import net.minecraft.entity.Entity;
+import net.minecraft.commands.CommandSource;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.commands.arguments.EntityAnchorArgument;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.command.CommandOutput;
-import net.minecraft.server.command.ServerCommandSource;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.text.Text;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.Vec2f;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.dimension.DimensionType;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.Mth;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.level.dimension.DimensionType;
+import net.minecraft.world.phys.Vec2;
+import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.function.BinaryOperator;
 
-public class SnoopyCommandSource extends ServerCommandSource
+public class SnoopyCommandSource extends CommandSourceStack
 {
-    private final CommandOutput output;
-    private final Vec3d position;
-    private final ServerWorld world;
+    private final CommandSource output;
+    private final Vec3 position;
+    private final ServerLevel world;
     private final int level;
     private final String simpleName;
-    private final Text name;
+    private final Component name;
     private final MinecraftServer server;
     // skipping silent since snooper is never silent
     private final Entity entity;
-    private final ResultConsumer<ServerCommandSource> resultConsumer;
-    private final EntityAnchorArgumentType.EntityAnchor entityAnchor;
-    private final Vec2f rotation;
+    private final ResultConsumer<CommandSourceStack> resultConsumer;
+    private final EntityAnchorArgument.Anchor entityAnchor;
+    private final Vec2 rotation;
     // good stuff
-    private final Text[] error;
-    private final List<Text> chatOutput;
+    private final Component[] error;
+    private final List<Component> chatOutput;
 
-    public SnoopyCommandSource(ServerCommandSource original, Text[] error, List<Text> chatOutput)
+    public SnoopyCommandSource(CommandSourceStack original, Component[] error, List<Component> chatOutput)
     {
-        super(CommandOutput.DUMMY, original.getPosition(), original.getRotation(), original.getWorld(), CarpetSettings.runPermissionLevel,
-                original.getName(), original.getDisplayName(), original.getServer(), original.getEntity(), false,
-                (ctx, succ, res) -> { }, EntityAnchorArgumentType.EntityAnchor.FEET);
-        this.output = CommandOutput.DUMMY;
+        super(CommandSource.NULL, original.getPosition(), original.getRotation(), original.getLevel(), CarpetSettings.runPermissionLevel,
+                original.getTextName(), original.getDisplayName(), original.getServer(), original.getEntity(), false,
+                (ctx, succ, res) -> { }, EntityAnchorArgument.Anchor.FEET);
+        this.output = CommandSource.NULL;
         this.position = original.getPosition();
-        this.world = original.getWorld();
+        this.world = original.getLevel();
         this.level = CarpetSettings.runPermissionLevel;
-        this.simpleName = original.getName();
+        this.simpleName = original.getTextName();
         this.name = original.getDisplayName();
         this.server = original.getServer();
         this.entity = original.getEntity();
         this.resultConsumer = (ctx, succ, res) -> { };
-        this.entityAnchor = original.getEntityAnchor();
+        this.entityAnchor = original.getAnchor();
         this.rotation = original.getRotation();
         this.error = error;
         this.chatOutput = chatOutput;
     }
 
-    public SnoopyCommandSource(ServerPlayerEntity player, Text[] error, List<Text> output) {
-        super(player, player.getPos(), player.getRotationClient(),
-                player.world instanceof ServerWorld ? (ServerWorld) player.world : null,
-                player.server.getPermissionLevel(player.getGameProfile()), player.getName().getString(), player.getDisplayName(),
-                player.world.getServer(), player);
+    public SnoopyCommandSource(ServerPlayer player, Component[] error, List<Component> output) {
+        super(player, player.position(), player.getRotationVector(),
+                player.level instanceof ServerLevel ? (ServerLevel) player.level : null,
+                player.server.getProfilePermissions(player.getGameProfile()), player.getName().getString(), player.getDisplayName(),
+                player.level.getServer(), player);
         this.output = player;
-        this.position = player.getPos();
-        this.world = player.world instanceof ServerWorld ? (ServerWorld) player.world : null;
-        this.level = player.server.getPermissionLevel(player.getGameProfile());
+        this.position = player.position();
+        this.world = player.level instanceof ServerLevel ? (ServerLevel) player.level : null;
+        this.level = player.server.getProfilePermissions(player.getGameProfile());
         this.simpleName = player.getName().getString();
         this.name = player.getDisplayName();
-        this.server = player.world.getServer();
+        this.server = player.level.getServer();
         this.entity = player;
         this.resultConsumer = (ctx, succ, res) -> { };
-        this.entityAnchor = EntityAnchorArgumentType.EntityAnchor.FEET;
-        this.rotation = player.getRotationClient(); // not a client call really
+        this.entityAnchor = EntityAnchorArgument.Anchor.FEET;
+        this.rotation = player.getRotationVector(); // not a client call really
         this.error = error;
         this.chatOutput = output;
     }
 
-    private SnoopyCommandSource(CommandOutput output, Vec3d pos, Vec2f rot, ServerWorld world, int level, String simpleName, Text name, MinecraftServer server, @Nullable Entity entity, ResultConsumer<ServerCommandSource> consumer, EntityAnchorArgumentType.EntityAnchor entityAnchor,
-             Text[] error, List<Text> chatOutput
+    private SnoopyCommandSource(CommandSource output, Vec3 pos, Vec2 rot, ServerLevel world, int level, String simpleName, Component name, MinecraftServer server, @Nullable Entity entity, ResultConsumer<CommandSourceStack> consumer, EntityAnchorArgument.Anchor entityAnchor,
+             Component[] error, List<Component> chatOutput
     ) {
         super(output, pos, rot, world, level,
                 simpleName, name, server, entity, false,
@@ -99,34 +99,34 @@ public class SnoopyCommandSource extends ServerCommandSource
     }
 
     @Override
-    public ServerCommandSource withEntity(Entity entity)
+    public CommandSourceStack withEntity(Entity entity)
     {
         return new SnoopyCommandSource(output, position, rotation, world, level, entity.getName().getString(), entity.getDisplayName(), server, entity, resultConsumer, entityAnchor, error, chatOutput);
     }
 
     @Override
-    public ServerCommandSource withPosition(Vec3d position)
+    public CommandSourceStack withPosition(Vec3 position)
     {
         return new SnoopyCommandSource(output, position, rotation, world, level, simpleName, name, server, entity, resultConsumer, entityAnchor, error, chatOutput);
     }
 
     @Override
-    public ServerCommandSource withRotation(Vec2f rotation)
+    public CommandSourceStack withRotation(Vec2 rotation)
     {
         return new SnoopyCommandSource(output, position, rotation, world, level, simpleName, name, server, entity, resultConsumer, entityAnchor, error, chatOutput);
     }
 
     @Override
-    public ServerCommandSource withConsumer(ResultConsumer<ServerCommandSource> consumer)
+    public CommandSourceStack withCallback(ResultConsumer<CommandSourceStack> consumer)
     {
         return new SnoopyCommandSource(output, position, rotation, world, level, simpleName, name, server, entity, consumer, entityAnchor, error, chatOutput);
     }
 
     @Override
-    public ServerCommandSource mergeConsumers(ResultConsumer<ServerCommandSource> consumer, BinaryOperator<ResultConsumer<ServerCommandSource>> binaryOperator)
+    public CommandSourceStack withCallback(ResultConsumer<CommandSourceStack> consumer, BinaryOperator<ResultConsumer<CommandSourceStack>> binaryOperator)
     {
-        ResultConsumer<ServerCommandSource> resultConsumer = binaryOperator.apply(this.resultConsumer, consumer);
-        return this.withConsumer(resultConsumer);
+        ResultConsumer<CommandSourceStack> resultConsumer = binaryOperator.apply(this.resultConsumer, consumer);
+        return this.withCallback(resultConsumer);
     }
 
     //@Override // only used in fuctions and we really don't care to track these actually, besides the basic output
@@ -134,51 +134,51 @@ public class SnoopyCommandSource extends ServerCommandSource
     //public ServerCommandSource withSilent() { return this; }
 
     @Override
-    public ServerCommandSource withLevel(int level)
+    public CommandSourceStack withPermission(int level)
     {
         return this;
     }
 
     @Override
-    public ServerCommandSource withMaxLevel(int level)
+    public CommandSourceStack withMaximumPermission(int level)
     {
         return this;
     }
 
     @Override
-    public ServerCommandSource withEntityAnchor(EntityAnchorArgumentType.EntityAnchor anchor)
+    public CommandSourceStack withAnchor(EntityAnchorArgument.Anchor anchor)
     {
         return new SnoopyCommandSource(output, position, rotation, world, level, simpleName, name, server, entity, resultConsumer, anchor, error, chatOutput);
     }
 
     @Override
-    public ServerCommandSource withWorld(ServerWorld world)
+    public CommandSourceStack withLevel(ServerLevel world)
     {
-        double d = DimensionType.getCoordinateScaleFactor(this.world.getDimension(), world.getDimension());
-        Vec3d position = new Vec3d(this.position.x * d, this.position.y, this.position.z * d);
+        double d = DimensionType.getTeleportationScale(this.world.dimensionType(), world.dimensionType());
+        Vec3 position = new Vec3(this.position.x * d, this.position.y, this.position.z * d);
         return new SnoopyCommandSource(output, position, rotation, world, level, simpleName, name, server, entity, resultConsumer, entityAnchor, error, chatOutput);
     }
 
     @Override
-    public ServerCommandSource withLookingAt(Vec3d position)
+    public CommandSourceStack facing(Vec3 position)
     {
-        Vec3d vec3d = this.entityAnchor.positionAt(this);
+        Vec3 vec3d = this.entityAnchor.apply(this);
         double d = position.x - vec3d.x;
         double e = position.y - vec3d.y;
         double f = position.z - vec3d.z;
         double g = (double) Math.sqrt(d * d + f * f);
-        float h = MathHelper.wrapDegrees((float)(-(MathHelper.atan2(e, g) * 57.2957763671875D)));
-        float i = MathHelper.wrapDegrees((float)(MathHelper.atan2(f, d) * 57.2957763671875D) - 90.0F);
-        return this.withRotation(new Vec2f(h, i));
+        float h = Mth.wrapDegrees((float)(-(Mth.atan2(e, g) * 57.2957763671875D)));
+        float i = Mth.wrapDegrees((float)(Mth.atan2(f, d) * 57.2957763671875D) - 90.0F);
+        return this.withRotation(new Vec2(h, i));
     }
 
     @Override
-    public void sendError(Text message)
+    public void sendFailure(Component message)
     {
         error[0] = message;
     }
     @Override
-    public void sendFeedback(Text message, boolean broadcastToOps)
+    public void sendSuccess(Component message, boolean broadcastToOps)
     {
         chatOutput.add(message);
     }

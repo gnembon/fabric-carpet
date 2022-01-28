@@ -4,15 +4,6 @@ import carpet.script.LazyValue;
 import carpet.script.exception.InternalExpressionException;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
-import net.minecraft.nbt.AbstractNbtNumber;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.nbt.NbtDouble;
-import net.minecraft.nbt.NbtInt;
-import net.minecraft.nbt.NbtList;
-import net.minecraft.nbt.NbtLong;
-import net.minecraft.nbt.NbtString;
-import net.minecraft.nbt.NbtElement;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -23,6 +14,14 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.DoubleTag;
+import net.minecraft.nbt.IntTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.LongTag;
+import net.minecraft.nbt.NumericTag;
+import net.minecraft.nbt.StringTag;
+import net.minecraft.nbt.Tag;
 
 import static java.lang.Math.abs;
 
@@ -484,31 +483,31 @@ public class ListValue extends AbstractListValue implements ContainerValueInterf
         LIST,
         MAP,
         STRING;
-        private static TagTypeCompat getType(NbtElement tag)
+        private static TagTypeCompat getType(Tag tag)
         {
-            if (tag instanceof NbtInt) return INT;
-            if (tag instanceof NbtLong) return LONG;
-            if (tag instanceof NbtDouble) return DBL;
-            if (tag instanceof NbtList) return LIST;
-            if (tag instanceof NbtCompound) return MAP;
+            if (tag instanceof IntTag) return INT;
+            if (tag instanceof LongTag) return LONG;
+            if (tag instanceof DoubleTag) return DBL;
+            if (tag instanceof ListTag) return LIST;
+            if (tag instanceof CompoundTag) return MAP;
             return STRING;
         }
     }
 
 
     @Override
-    public NbtElement toTag(boolean force)
+    public Tag toTag(boolean force)
     {
         int argSize = items.size();
-        if (argSize == 0) return new NbtList();
-        NbtList tag = new NbtList();
+        if (argSize == 0) return new ListTag();
+        ListTag tag = new ListTag();
         if (argSize ==1)
         {
             tag.add(items.get(0).toTag(force));
             return tag;
         }
         // figuring out the types
-        List<NbtElement> tags= new ArrayList<>();
+        List<Tag> tags= new ArrayList<>();
         items.forEach(v -> tags.add(v.toTag(force)));
         Set<TagTypeCompat> cases = EnumSet.noneOf(TagTypeCompat.class);
         tags.forEach(t -> cases.add(TagTypeCompat.getType(t)));
@@ -522,17 +521,17 @@ public class ListValue extends AbstractListValue implements ContainerValueInterf
                 || cases.contains(TagTypeCompat.STRING)) // incompatible types
         {
             if (!force) throw new NBTSerializableValue.IncompatibleTypeException(this);
-            tags.forEach(t -> tag.add(NbtString.of(t.asString())));
+            tags.forEach(t -> tag.add(StringTag.valueOf(t.getAsString())));
             return tag;
         }
         // only numbers / mixed types
         if (cases.contains(TagTypeCompat.DBL))
         {
-            tags.forEach(t -> tag.add(NbtDouble.of(((AbstractNbtNumber)t).doubleValue())));
+            tags.forEach(t -> tag.add(DoubleTag.valueOf(((NumericTag)t).getAsDouble())));
         }
         else
         {
-            tags.forEach(t -> tag.add(NbtLong.of(((AbstractNbtNumber)t).longValue())));
+            tags.forEach(t -> tag.add(LongTag.valueOf(((NumericTag)t).getAsLong())));
         }
         return tag;
     }

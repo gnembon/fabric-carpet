@@ -1,19 +1,19 @@
 package carpet.mixins;
 
 import carpet.fakes.ServerPlayerInteractionManagerInterface;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.network.ServerPlayerInteractionManager;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.util.ActionResult;
-import net.minecraft.util.Hand;
-import net.minecraft.util.hit.BlockHitResult;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.world.World;
+import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.level.ServerPlayerGameMode;
+import net.minecraft.util.Mth;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.BlockHitResult;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
@@ -25,22 +25,22 @@ import static carpet.script.CarpetEventServer.Event.PLAYER_BREAK_BLOCK;
 import static carpet.script.CarpetEventServer.Event.PLAYER_INTERACTS_WITH_BLOCK;
 
 
-@Mixin(ServerPlayerInteractionManager.class)
+@Mixin(ServerPlayerGameMode.class)
 public class ServerPlayerInteractionManager_scarpetEventsMixin implements ServerPlayerInteractionManagerInterface
 {
-    @Shadow public ServerPlayerEntity player;
+    @Shadow public ServerPlayer player;
 
-    @Shadow private boolean mining;
+    @Shadow private boolean isDestroyingBlock;
 
-    @Shadow private BlockPos miningPos;
+    @Shadow private BlockPos destroyPos;
 
-    @Shadow private int blockBreakingProgress;
+    @Shadow private int lastSentState;
 
-    @Shadow public ServerWorld world;
+    @Shadow public ServerLevel level;
 
-    @Inject(method = "tryBreakBlock", locals = LocalCapture.CAPTURE_FAILHARD, at = @At(
+    @Inject(method = "destroyBlock", locals = LocalCapture.CAPTURE_FAILHARD, at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/block/Block;onBreak(Lnet/minecraft/world/World;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/block/BlockState;Lnet/minecraft/entity/player/PlayerEntity;)V",
+            target = "Lnet/minecraft/world/level/block/Block;playerWillDestroy(Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/entity/player/Player;)V",
             shift = At.Shift.BEFORE
     ))
     private void onBlockBroken(BlockPos blockPos_1, CallbackInfoReturnable<Boolean> cir, BlockState blockState_1, BlockEntity be, Block b)
@@ -48,11 +48,11 @@ public class ServerPlayerInteractionManager_scarpetEventsMixin implements Server
         PLAYER_BREAK_BLOCK.onBlockBroken(player, blockPos_1, blockState_1);
     }
 
-    @Inject(method = "interactBlock", at = @At(
+    @Inject(method = "useItemOn", at = @At(
             value = "RETURN",
             ordinal = 2
     ))
-    private void onBlockActivated(ServerPlayerEntity serverPlayerEntity, World world, ItemStack stack, Hand hand, BlockHitResult hitResult, CallbackInfoReturnable<ActionResult> cir)
+    private void onBlockActivated(ServerPlayer serverPlayerEntity, Level world, ItemStack stack, InteractionHand hand, BlockHitResult hitResult, CallbackInfoReturnable<InteractionResult> cir)
     {
         PLAYER_INTERACTS_WITH_BLOCK.onBlockHit(player, hand, hitResult);
     }
@@ -60,21 +60,21 @@ public class ServerPlayerInteractionManager_scarpetEventsMixin implements Server
     @Override
     public BlockPos getCurrentBreakingBlock()
     {
-        if (!mining) return null;
-        return miningPos;
+        if (!isDestroyingBlock) return null;
+        return destroyPos;
     }
 
     @Override
     public int getCurrentBlockBreakingProgress()
     {
-        if (!mining) return -1;
-        return blockBreakingProgress;
+        if (!isDestroyingBlock) return -1;
+        return lastSentState;
     }
 
     @Override
     public void setBlockBreakingProgress(int progress)
     {
-        blockBreakingProgress = MathHelper.clamp(progress, -1, 10);
-        world.setBlockBreakingInfo(-1*this.player.getId(), miningPos, blockBreakingProgress);
+        lastSentState = Mth.clamp(progress, -1, 10);
+        level.destroyBlockProgress(-1*this.player.getId(), destroyPos, lastSentState);
     }
 }

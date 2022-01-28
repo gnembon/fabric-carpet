@@ -7,103 +7,103 @@ import org.spongepowered.asm.mixin.Shadow;
 import carpet.fakes.ChunkLightProviderInterface;
 import carpet.fakes.LightStorageInterface;
 import it.unimi.dsi.fastutil.longs.LongSet;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.ChunkSectionPos;
-import net.minecraft.util.math.Direction;
-import net.minecraft.world.LightType;
-import net.minecraft.world.chunk.ChunkNibbleArray;
-import net.minecraft.world.chunk.ChunkProvider;
-import net.minecraft.world.chunk.light.BlockLightStorage.Data;
-import net.minecraft.world.chunk.light.ChunkLightProvider;
-import net.minecraft.world.chunk.light.LightStorage;
-import net.minecraft.world.chunk.light.SkyLightStorage;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.core.SectionPos;
+import net.minecraft.world.level.LightLayer;
+import net.minecraft.world.level.chunk.DataLayer;
+import net.minecraft.world.level.chunk.LightChunkGetter;
+import net.minecraft.world.level.lighting.BlockLightSectionStorage.BlockDataLayerStorageMap;
+import net.minecraft.world.level.lighting.LayerLightEngine;
+import net.minecraft.world.level.lighting.LayerLightSectionStorage;
+import net.minecraft.world.level.lighting.SkyLightSectionStorage;
 
-@Mixin(SkyLightStorage.class)
-public abstract class SkyLightStorage_scarpetChunkCreationMixin extends LightStorage<Data> implements LightStorageInterface
+@Mixin(SkyLightSectionStorage.class)
+public abstract class SkyLightStorage_scarpetChunkCreationMixin extends LayerLightSectionStorage<BlockDataLayerStorageMap> implements LightStorageInterface
 {
-    protected SkyLightStorage_scarpetChunkCreationMixin(final LightType lightType, final ChunkProvider chunkProvider, final Data lightData)
+    protected SkyLightStorage_scarpetChunkCreationMixin(final LightLayer lightType, final LightChunkGetter chunkProvider, final BlockDataLayerStorageMap lightData)
     {
         super(lightType, chunkProvider, lightData);
     }
 
     @Shadow
     @Final
-    private LongSet sectionsToUpdate;
+    private LongSet sectionsToAddSourcesTo;
 
     @Shadow
     @Final
-    private LongSet sectionsToRemove;
+    private LongSet sectionsToRemoveSourcesFrom;
 
     @Shadow
     @Final
-    private LongSet field_15820;
+    private LongSet sectionsWithSources;
 
-    @Shadow protected abstract boolean isAtOrAboveTopmostSection(final long pos);
+    @Shadow protected abstract boolean isAboveData(final long pos);
 
-    @Shadow protected abstract boolean isSectionEnabled(final long sectionPos);
+    @Shadow protected abstract boolean lightOnInSection(final long sectionPos);
 
     @Override
     public void processRemoveLightData(final long cPos)
     {
         for (int y = -1; y < 17; ++y)
         {
-            final long sectionPos = ChunkSectionPos.asLong(ChunkSectionPos.unpackX(cPos), y, ChunkSectionPos.unpackZ(cPos));
+            final long sectionPos = SectionPos.asLong(SectionPos.x(cPos), y, SectionPos.z(cPos));
 
-            this.sectionsToUpdate.remove(sectionPos);
-            this.sectionsToRemove.remove(sectionPos);
+            this.sectionsToAddSourcesTo.remove(sectionPos);
+            this.sectionsToRemoveSourcesFrom.remove(sectionPos);
 
-            this.field_15820.remove(sectionPos);
+            this.sectionsWithSources.remove(sectionPos);
         }
     }
 
     @Override
-    public void processRelight(final ChunkLightProvider<?, ?> lightProvider, final long cPos)
+    public void processRelight(final LayerLightEngine<?, ?> lightProvider, final long cPos)
     {
         final LevelPropagator_resetChunkInterface levelPropagator = (LevelPropagator_resetChunkInterface) lightProvider;
 
         for (int y = -1; y < 17; ++y)
         {
-            final long sectionPos = ChunkSectionPos.asLong(ChunkSectionPos.unpackX(cPos), y, ChunkSectionPos.unpackZ(cPos));
-            final long pos = BlockPos.asLong(ChunkSectionPos.getBlockCoord(ChunkSectionPos.unpackX(sectionPos)), ChunkSectionPos.getBlockCoord(y), ChunkSectionPos.getBlockCoord(ChunkSectionPos.unpackZ(sectionPos)));
+            final long sectionPos = SectionPos.asLong(SectionPos.x(cPos), y, SectionPos.z(cPos));
+            final long pos = BlockPos.asLong(SectionPos.sectionToBlockCoord(SectionPos.x(sectionPos)), SectionPos.sectionToBlockCoord(y), SectionPos.sectionToBlockCoord(SectionPos.z(sectionPos)));
 
-            if (!this.hasSection(sectionPos))
+            if (!this.storingLightForSection(sectionPos))
                 continue;
 
-            for (final Direction dir : Direction.Type.HORIZONTAL)
+            for (final Direction dir : Direction.Plane.HORIZONTAL)
             {
-                long neighborCeilingSectionPos = ChunkSectionPos.offset(sectionPos, dir);
-                final ChunkNibbleArray neighborLightArray = this.getLightSection(neighborCeilingSectionPos);
+                long neighborCeilingSectionPos = SectionPos.offset(sectionPos, dir);
+                final DataLayer neighborLightArray = this.getDataLayerData(neighborCeilingSectionPos);
 
-                ChunkNibbleArray neighborCeilingLightArray = neighborLightArray;
+                DataLayer neighborCeilingLightArray = neighborLightArray;
 
-                while (neighborCeilingLightArray == null && !this.isAtOrAboveTopmostSection(neighborCeilingSectionPos))
+                while (neighborCeilingLightArray == null && !this.isAboveData(neighborCeilingSectionPos))
                 {
-                    neighborCeilingSectionPos = ChunkSectionPos.offset(neighborCeilingSectionPos, Direction.UP);
-                    neighborCeilingLightArray = this.getLightSection(neighborCeilingSectionPos);
+                    neighborCeilingSectionPos = SectionPos.offset(neighborCeilingSectionPos, Direction.UP);
+                    neighborCeilingLightArray = this.getDataLayerData(neighborCeilingSectionPos);
                 }
 
-                final int ox = 15 * Math.max(dir.getOffsetX(), 0);
-                final int oz = 15 * Math.max(dir.getOffsetZ(), 0);
+                final int ox = 15 * Math.max(dir.getStepX(), 0);
+                final int oz = 15 * Math.max(dir.getStepZ(), 0);
 
-                final int dx = Math.abs(dir.getOffsetZ());
-                final int dz = Math.abs(dir.getOffsetX());
+                final int dx = Math.abs(dir.getStepZ());
+                final int dz = Math.abs(dir.getStepX());
 
                 int emptyLightLevel = (neighborCeilingLightArray == null)
-                    ? (this.isSectionEnabled(ChunkSectionPos.withZeroY(neighborCeilingSectionPos)) ? 0 : 15)
+                    ? (this.lightOnInSection(SectionPos.getZeroNode(neighborCeilingSectionPos)) ? 0 : 15)
                     : 0;
                 int neighbourY = (neighborLightArray == null)
-                    ? ChunkSectionPos.getBlockCoord(ChunkSectionPos.unpackY(neighborCeilingSectionPos))
+                    ? SectionPos.sectionToBlockCoord(SectionPos.y(neighborCeilingSectionPos))
                     : 0;
 
                 for (int t = 0; t < 16; ++t)
                     for (int dy = 0; dy < 16; ++dy)
                     {
-                        final long dst = BlockPos.add(pos, ox + t * dx, dy, oz + t * dz);
+                        final long dst = BlockPos.offset(pos, ox + t * dx, dy, oz + t * dz);
                         long src = BlockPos.offset(dst, dir);
 
                         long adj_src = (neighborLightArray != null)
                             ? src
-                            : BlockPos.asLong(BlockPos.unpackLongX(src), neighbourY, BlockPos.unpackLongZ(src));
+                            : BlockPos.asLong(BlockPos.getX(src), neighbourY, BlockPos.getZ(src));
 
                         final int srcLevel = neighborCeilingLightArray != null
                             ? ((ChunkLightProviderInterface) lightProvider).callGetCurrentLevelFromSection(neighborCeilingLightArray, adj_src)

@@ -6,28 +6,27 @@ import carpet.script.value.EntityValue;
 import carpet.script.value.ListValue;
 import carpet.script.value.NumericValue;
 import carpet.script.value.Value;
-import net.minecraft.entity.Entity;
-import net.minecraft.util.math.Vec3d;
-
 import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.phys.Vec3;
 
 public class Vector3Argument extends Argument
 {
-    public Vec3d vec;
+    public Vec3 vec;
     public final double yaw;
     public final double pitch;
     public boolean fromBlock = false;
     public Entity entity = null;
-    private Vector3Argument(Vec3d v, int o)
+    private Vector3Argument(Vec3 v, int o)
     {
         super(o);
         this.vec = v;
         this.yaw = 0.0D;
         this.pitch = 0.0D;
     }
-    private Vector3Argument(Vec3d v, int o, double y, double p)
+    private Vector3Argument(Vec3 v, int o, double y, double p)
     {
         super(o);
         this.vec = v;
@@ -63,17 +62,17 @@ public class Vector3Argument extends Argument
             Value v1 = params.next();
             if (v1 instanceof BlockValue)
             {
-                return (new Vector3Argument(Vec3d.ofCenter(((BlockValue) v1).getPos()), 1+offset)).fromBlock();
+                return (new Vector3Argument(Vec3.atCenterOf(((BlockValue) v1).getPos()), 1+offset)).fromBlock();
             }
             if (optionalEntity && v1 instanceof EntityValue)
             {
                 Entity e = ((EntityValue) v1).getEntity();
-                return new Vector3Argument(e.getPos(), 1+offset).withEntity(e);
+                return new Vector3Argument(e.position(), 1+offset).withEntity(e);
             }
             if (v1 instanceof ListValue)
             {
                 List<Value> args = ((ListValue) v1).getItems();
-                Vec3d pos = new Vec3d(
+                Vec3 pos = new Vec3(
                         NumericValue.asNumber(args.get(0)).getDouble(),
                         NumericValue.asNumber(args.get(1)).getDouble(),
                         NumericValue.asNumber(args.get(2)).getDouble());
@@ -86,7 +85,7 @@ public class Vector3Argument extends Argument
                 }
                 return new Vector3Argument(pos,offset+1, yaw, pitch);
             }
-            Vec3d pos = new Vec3d(
+            Vec3 pos = new Vec3(
                     NumericValue.asNumber(v1).getDouble(),
                     NumericValue.asNumber(params.next()).getDouble(),
                     NumericValue.asNumber(params.next()).getDouble());

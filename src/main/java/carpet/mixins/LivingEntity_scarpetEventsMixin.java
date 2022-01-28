@@ -3,12 +3,12 @@ package carpet.mixins;
 import carpet.fakes.EntityInterface;
 import carpet.fakes.LivingEntityInterface;
 import carpet.script.EntityEventsGroup;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityType;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.damage.DamageSource;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.world.World;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.level.Level;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
@@ -22,24 +22,24 @@ import static carpet.script.CarpetEventServer.Event.PLAYER_DEALS_DAMAGE;
 public abstract class LivingEntity_scarpetEventsMixin extends Entity implements LivingEntityInterface
 {
 
-    @Shadow protected abstract void jump();
+    @Shadow protected abstract void jumpFromGround();
 
     @Shadow protected boolean jumping;
 
-    public LivingEntity_scarpetEventsMixin(EntityType<?> type, World world)
+    public LivingEntity_scarpetEventsMixin(EntityType<?> type, Level world)
     {
         super(type, world);
     }
 
-    @Inject(method = "onDeath", at = @At("HEAD"))
+    @Inject(method = "die", at = @At("HEAD"))
     private void onDeathCall(DamageSource damageSource_1, CallbackInfo ci)
     {
-        ((EntityInterface)this).getEventContainer().onEvent(EntityEventsGroup.Event.ON_DEATH, damageSource_1.name);
+        ((EntityInterface)this).getEventContainer().onEvent(EntityEventsGroup.Event.ON_DEATH, damageSource_1.msgId);
     }
 
-    @Inject(method = "applyDamage", locals = LocalCapture.CAPTURE_FAILHARD, at = @At(
+    @Inject(method = "actuallyHurt", locals = LocalCapture.CAPTURE_FAILHARD, at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/entity/LivingEntity;applyArmorToDamage(Lnet/minecraft/entity/damage/DamageSource;F)F",
+            target = "Lnet/minecraft/world/entity/LivingEntity;getDamageAfterArmorAbsorb(Lnet/minecraft/world/damagesource/DamageSource;F)F",
             shift = At.Shift.BEFORE
     ))
     private void entityTakingDamage(DamageSource source, float amount, CallbackInfo ci)
@@ -50,7 +50,7 @@ public abstract class LivingEntity_scarpetEventsMixin extends Entity implements 
         //{
         //    PLAYER_TAKES_DAMAGE.onDamage(entity, float_2, damageSource_1);
         //}
-        if (source.getAttacker() instanceof ServerPlayerEntity && PLAYER_DEALS_DAMAGE.isNeeded())
+        if (source.getEntity() instanceof ServerPlayer && PLAYER_DEALS_DAMAGE.isNeeded())
         {
             PLAYER_DEALS_DAMAGE.onDamage(this, amount, source);
         }
@@ -59,7 +59,7 @@ public abstract class LivingEntity_scarpetEventsMixin extends Entity implements 
     @Override
     public void doJumpCM()
     {
-        jump();
+        jumpFromGround();
     }
 
     @Override

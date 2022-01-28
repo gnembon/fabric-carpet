@@ -3,31 +3,6 @@ package carpet.mixins;
 import carpet.helpers.ParticleDisplay;
 import carpet.utils.Messenger;
 import carpet.utils.MobAI;
-import net.minecraft.block.Blocks;
-import net.minecraft.entity.EntityType;
-import net.minecraft.entity.ai.brain.Activity;
-import net.minecraft.entity.ai.brain.Memory;
-import net.minecraft.entity.ai.brain.MemoryModuleType;
-import net.minecraft.entity.ai.pathing.Path;
-import net.minecraft.entity.passive.MerchantEntity;
-import net.minecraft.entity.passive.VillagerEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.BedItem;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
-import net.minecraft.particle.BlockStateParticleEffect;
-import net.minecraft.particle.ParticleTypes;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.util.ActionResult;
-import net.minecraft.util.dynamic.GlobalPos;
-import net.minecraft.util.Hand;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.poi.PointOfInterest;
-import net.minecraft.world.poi.PointOfInterestStorage;
-import net.minecraft.world.poi.PointOfInterestType;
-import net.minecraft.world.World;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
@@ -38,21 +13,46 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.GlobalPos;
+import net.minecraft.core.particles.BlockParticleOption;
+import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.ai.memory.ExpirableValue;
+import net.minecraft.world.entity.ai.memory.MemoryModuleType;
+import net.minecraft.world.entity.ai.village.poi.PoiManager;
+import net.minecraft.world.entity.ai.village.poi.PoiRecord;
+import net.minecraft.world.entity.ai.village.poi.PoiType;
+import net.minecraft.world.entity.npc.AbstractVillager;
+import net.minecraft.world.entity.npc.Villager;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.schedule.Activity;
+import net.minecraft.world.item.BedItem;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.pathfinder.Path;
+import net.minecraft.world.phys.Vec3;
 
-@Mixin(VillagerEntity.class)
-public abstract class VillagerEntity_aiMixin extends MerchantEntity
+@Mixin(Villager.class)
+public abstract class VillagerEntity_aiMixin extends AbstractVillager
 {
-    @Shadow protected abstract void sayNo();
+    @Shadow protected abstract void setUnhappy();
 
-    @Shadow protected abstract int getAvailableFood();
+    @Shadow protected abstract int countFoodPointsInInventory();
 
-    @Shadow public abstract void eatForBreeding();
+    @Shadow public abstract void eatAndDigestFood();
 
     int totalFood;
     boolean hasBed;
     int displayAge;
 
-    public VillagerEntity_aiMixin(EntityType<? extends MerchantEntity> entityType_1, World world_1)
+    public VillagerEntity_aiMixin(EntityType<? extends AbstractVillager> entityType_1, Level world_1)
     {
         super(entityType_1, world_1);
     }
@@ -63,22 +63,22 @@ public abstract class VillagerEntity_aiMixin extends MerchantEntity
         if (MobAI.isTracking(this, MobAI.TrackingType.IRON_GOLEM_SPAWNING))
         {
             long time;
-            Optional<? extends Memory<?>> last_seen = this.brain.getMemories().get(MemoryModuleType.GOLEM_DETECTED_RECENTLY);
+            Optional<? extends ExpirableValue<?>> last_seen = this.brain.getMemories().get(MemoryModuleType.GOLEM_DETECTED_RECENTLY);
             if (!last_seen.isPresent())
             {
                 time = 0;
             }
             else
             {
-                time = last_seen.get().getExpiry();
+                time = last_seen.get().getTimeToLive();
             }
             boolean recentlySeen = time > 0;
-            Optional<Long> optional_11 = this.brain.getOptionalMemory(MemoryModuleType.LAST_SLEPT);
+            Optional<Long> optional_11 = this.brain.getMemory(MemoryModuleType.LAST_SLEPT);
             //Optional<Timestamp> optional_22 = this.brain.getOptionalMemory(MemoryModuleType.LAST_WORKED_AT_POI);
             //boolean work = false;
             boolean sleep = false;
-            boolean panic = this.brain.hasActivity(Activity.PANIC);
-            long currentTime = this.world.getTime();
+            boolean panic = this.brain.isActive(Activity.PANIC);
+            long currentTime = this.level.getGameTime();
             if (optional_11.isPresent()) {
                 sleep = (currentTime - optional_11.get()) < 24000L;
             }
@@ -95,14 +95,14 @@ public abstract class VillagerEntity_aiMixin extends MerchantEntity
         }
         else if (MobAI.isTracking(this, MobAI.TrackingType.VILLAGER_BREEDING))
         {
-            if (age % 50 == 0 || age < 20)
+            if (tickCount % 50 == 0 || tickCount < 20)
             {
-                totalFood = getAvailableFood() / 12;
-                hasBed = this.brain.getOptionalMemory(MemoryModuleType.HOME).isPresent();
-                displayAge = getBreedingAge();
+                totalFood = countFoodPointsInInventory() / 12;
+                hasBed = this.brain.getMemory(MemoryModuleType.HOME).isPresent();
+                displayAge = getAge();
 
             }
-            if (Math.abs(displayAge) < 100 && displayAge !=0) displayAge = getBreedingAge();
+            if (Math.abs(displayAge) < 100 && displayAge !=0) displayAge = getAge();
 
             this.setCustomName(Messenger.c(
                     (hasBed?"eb ":"fb ")+"\u2616 ",//"\u263d ",
@@ -113,78 +113,78 @@ public abstract class VillagerEntity_aiMixin extends MerchantEntity
         }
     }
 
-    @Inject(method = "interactMob", at = @At("HEAD"), cancellable = true)
-    private void onInteract(PlayerEntity playerEntity_1, Hand hand_1, CallbackInfoReturnable<ActionResult> cir)
+    @Inject(method = "mobInteract", at = @At("HEAD"), cancellable = true)
+    private void onInteract(Player playerEntity_1, InteractionHand hand_1, CallbackInfoReturnable<InteractionResult> cir)
     {
         if (MobAI.isTracking(this, MobAI.TrackingType.VILLAGER_BREEDING))
         {
-            ItemStack itemStack_1 = playerEntity_1.getStackInHand(hand_1);
+            ItemStack itemStack_1 = playerEntity_1.getItemInHand(hand_1);
             if (itemStack_1.getItem() == Items.EMERALD)
             {
-                GlobalPos bedPos = this.brain.getOptionalMemory(MemoryModuleType.HOME).orElse(null);
-                if (bedPos == null || bedPos.getDimension() != world.getRegistryKey()) // get Dimension
+                GlobalPos bedPos = this.brain.getMemory(MemoryModuleType.HOME).orElse(null);
+                if (bedPos == null || bedPos.dimension() != level.dimension()) // get Dimension
                 {
-                    sayNo();
-                    ((ServerWorld) getEntityWorld()).spawnParticles(new BlockStateParticleEffect(ParticleTypes.BLOCK_MARKER, Blocks.BARRIER.getDefaultState()), getX(), getY() + getStandingEyeHeight() + 1, getZ(), 1, 0.1, 0.1, 0.1, 0.0);
+                    setUnhappy();
+                    ((ServerLevel) getCommandSenderWorld()).sendParticles(new BlockParticleOption(ParticleTypes.BLOCK_MARKER, Blocks.BARRIER.defaultBlockState()), getX(), getY() + getEyeHeight() + 1, getZ(), 1, 0.1, 0.1, 0.1, 0.0);
                 }
                 else
                 {
 
-                    ParticleDisplay.drawParticleLine((ServerPlayerEntity) playerEntity_1, getPos(), Vec3d.ofCenter(bedPos.getPos()), "dust 0 0 0 1", "happy_villager", 100, 0.2); // pos+0.5v
+                    ParticleDisplay.drawParticleLine((ServerPlayer) playerEntity_1, position(), Vec3.atCenterOf(bedPos.pos()), "dust 0 0 0 1", "happy_villager", 100, 0.2); // pos+0.5v
                 }
             }
             else if (itemStack_1.getItem() == Items.ROTTEN_FLESH)
             {
-                while(getAvailableFood() >= 12) eatForBreeding();
+                while(countFoodPointsInInventory() >= 12) eatAndDigestFood();
 
             }
             else if (itemStack_1.getItem() instanceof BedItem)
             {
-                List<PointOfInterest> list_1 = ((ServerWorld) getEntityWorld()).getPointOfInterestStorage().getInCircle(
-                        type -> type == PointOfInterestType.HOME,
-                        getBlockPos(),
-                        48, PointOfInterestStorage.OccupationStatus.ANY).collect(Collectors.toList());
-                for (PointOfInterest poi : list_1)
+                List<PoiRecord> list_1 = ((ServerLevel) getCommandSenderWorld()).getPoiManager().getInRange(
+                        type -> type == PoiType.HOME,
+                        blockPosition(),
+                        48, PoiManager.Occupancy.ANY).collect(Collectors.toList());
+                for (PoiRecord poi : list_1)
                 {
-                    Vec3d pv = Vec3d.ofCenter(poi.getPos());
+                    Vec3 pv = Vec3.atCenterOf(poi.getPos());
                     if (!poi.hasSpace())
                     {
-                        ((ServerWorld) getEntityWorld()).spawnParticles(ParticleTypes.HAPPY_VILLAGER,
+                        ((ServerLevel) getCommandSenderWorld()).sendParticles(ParticleTypes.HAPPY_VILLAGER,
                                 pv.x, pv.y+1.5, pv.z,
                                 50, 0.1, 0.3, 0.1, 0.0);
                     }
-                    else if (canReachHome((VillagerEntity)(Object)this, poi.getPos()))
-                        ((ServerWorld) getEntityWorld()).spawnParticles(ParticleTypes.END_ROD,
+                    else if (canReachHome((Villager)(Object)this, poi.getPos()))
+                        ((ServerLevel) getCommandSenderWorld()).sendParticles(ParticleTypes.END_ROD,
                                 pv.x, pv.y+1, pv.z,
                                 50, 0.1, 0.3, 0.1, 0.0);
                     else
-                        ((ServerWorld) getEntityWorld()).spawnParticles(new BlockStateParticleEffect(ParticleTypes.BLOCK_MARKER, Blocks.BARRIER.getDefaultState()),
+                        ((ServerLevel) getCommandSenderWorld()).sendParticles(new BlockParticleOption(ParticleTypes.BLOCK_MARKER, Blocks.BARRIER.defaultBlockState()),
                                 pv.x, pv.y+1, pv.z,
                                 1, 0.1, 0.1, 0.1, 0.0);
                 }
             }
-            cir.setReturnValue(ActionResult.FAIL);
+            cir.setReturnValue(InteractionResult.FAIL);
             cir.cancel();
         }
     }
 
     // stolen from VillagerBreedTask
-    private boolean canReachHome(VillagerEntity villager, BlockPos pos) {
-        Path path = villager.getNavigation().findPathTo(pos, PointOfInterestType.HOME.getSearchDistance());
-        return path != null && path.reachesTarget();
+    private boolean canReachHome(Villager villager, BlockPos pos) {
+        Path path = villager.getNavigation().createPath(pos, PoiType.HOME.getValidRange());
+        return path != null && path.canReach();
     }
 
 
-    @Inject(method = "summonGolem", at = @At(
+    @Inject(method = "spawnGolemIfNeeded", at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/util/math/Box;expand(DDD)Lnet/minecraft/util/math/Box;",
+            target = "Lnet/minecraft/world/phys/AABB;inflate(DDD)Lnet/minecraft/world/phys/AABB;",
             shift = At.Shift.AFTER
     ))
-    private void particleIt(ServerWorld serverWorld, long l, int i, CallbackInfo ci)
+    private void particleIt(ServerLevel serverWorld, long l, int i, CallbackInfo ci)
     {
         if (MobAI.isTracking(this, MobAI.TrackingType.IRON_GOLEM_SPAWNING))
         {
-            ((ServerWorld) getEntityWorld()).spawnParticles(new BlockStateParticleEffect(ParticleTypes.BLOCK_MARKER, Blocks.BARRIER.getDefaultState()), getX(), getY()+3, getZ(), 1, 0.1, 0.1, 0.1, 0.0);
+            ((ServerLevel) getCommandSenderWorld()).sendParticles(new BlockParticleOption(ParticleTypes.BLOCK_MARKER, Blocks.BARRIER.defaultBlockState()), getX(), getY()+3, getZ(), 1, 0.1, 0.1, 0.1, 0.0);
         }
     }
 

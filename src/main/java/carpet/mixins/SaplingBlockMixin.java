@@ -2,30 +2,30 @@ package carpet.mixins;
 
 import carpet.CarpetSettings;
 import carpet.helpers.BlockSaplingHelper;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.Blocks;
-import net.minecraft.block.SaplingBlock;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.biome.Biome;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.util.Random;
+import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.biome.Biome;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.SaplingBlock;
+import net.minecraft.world.level.block.state.BlockState;
 
 @Mixin(SaplingBlock.class)
 public abstract class SaplingBlockMixin
 {
-    @Inject(method = "generate", at = @At(value = "INVOKE", shift = At.Shift.BEFORE,
-            target = "Lnet/minecraft/block/sapling/SaplingGenerator;generate(Lnet/minecraft/server/world/ServerWorld;Lnet/minecraft/world/gen/chunk/ChunkGenerator;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/block/BlockState;Ljava/util/Random;)Z"),
+    @Inject(method = "advanceTree", at = @At(value = "INVOKE", shift = At.Shift.BEFORE,
+            target = "Lnet/minecraft/world/level/block/grower/AbstractTreeGrower;growTree(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/level/chunk/ChunkGenerator;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;Ljava/util/Random;)Z"),
             cancellable = true)
-    private void onGenerate(ServerWorld serverWorld_1, BlockPos blockPos_1, BlockState blockState_1, Random random_1, CallbackInfo ci)
+    private void onGenerate(ServerLevel serverWorld_1, BlockPos blockPos_1, BlockState blockState_1, Random random_1, CallbackInfo ci)
     {
-        if(CarpetSettings.desertShrubs && serverWorld_1.getBiome(blockPos_1).getCategory() == Biome.Category.DESERT && !BlockSaplingHelper.hasWater(serverWorld_1, blockPos_1))
+        if(CarpetSettings.desertShrubs && serverWorld_1.getBiome(blockPos_1).getBiomeCategory() == Biome.BiomeCategory.DESERT && !BlockSaplingHelper.hasWater(serverWorld_1, blockPos_1))
         {
-            serverWorld_1.setBlockState(blockPos_1, Blocks.DEAD_BUSH.getDefaultState(), 3);
+            serverWorld_1.setBlock(blockPos_1, Blocks.DEAD_BUSH.defaultBlockState(), 3);
             ci.cancel();
         }
     }

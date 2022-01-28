@@ -3,9 +3,8 @@ package carpet.mixins;
 import carpet.fakes.SpawnHelperInnerInterface;
 import carpet.utils.SpawnReporter;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
-import net.minecraft.entity.SpawnGroup;
-import net.minecraft.util.math.GravityField;
-import net.minecraft.world.SpawnHelper;
+import net.minecraft.world.level.NaturalSpawner;
+import net.minecraft.world.level.PotentialCalculator;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -13,12 +12,12 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-@Mixin(SpawnHelper.Info.class)
+@Mixin(NaturalSpawner.SpawnState.class)
 public class SpawnHelperInnerMixin implements SpawnHelperInnerInterface
 {
-    @Shadow @Final private int spawningChunkCount;
+    @Shadow @Final private int spawnableChunkCount;
 
-    @Shadow @Final private GravityField densityField;
+    @Shadow @Final private PotentialCalculator spawnPotential;
 
     //@Shadow @Final private Object2IntOpenHashMap<SpawnGroup> groupToCount;
 
@@ -33,14 +32,14 @@ public class SpawnHelperInnerMixin implements SpawnHelperInnerInterface
 
 
     @Override
-    public GravityField getPotentialCalculator()
+    public PotentialCalculator getPotentialCalculator()
     {
-        return densityField;
+        return spawnPotential;
     }
 
     @Override
     public int cmGetChunkCount() {
-        return spawningChunkCount;
+        return spawnableChunkCount;
     }
 
 

@@ -1,16 +1,16 @@
 package carpet.mixins;
 
-import net.minecraft.network.packet.s2c.play.PlayerListHeaderS2CPacket;
-import net.minecraft.text.Text;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.protocol.game.ClientboundTabListPacket;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Accessor;
 
-@Mixin(PlayerListHeaderS2CPacket.class)
+@Mixin(ClientboundTabListPacket.class)
 public interface PlayerListHeaderS2CPacketMixin
 {
     @Accessor("header")
-    void setHeader(Text header);
+    void setHeader(Component header);
 
     @Accessor("footer")
-    void setFooter(Text footer);
+    void setFooter(Component footer);
 }

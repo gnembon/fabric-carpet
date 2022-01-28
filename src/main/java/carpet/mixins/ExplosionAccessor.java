@@ -1,24 +1,24 @@
 package carpet.mixins;
 
-import net.minecraft.entity.Entity;
-import net.minecraft.world.World;
-import net.minecraft.world.explosion.Explosion;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Accessor;
 
 import java.util.Random;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.level.Explosion;
+import net.minecraft.world.level.Level;
 
 @Mixin(Explosion.class)
 public interface ExplosionAccessor {
 
     @Accessor
-    boolean isCreateFire();
+    boolean isFire();
 
     @Accessor
-    Explosion.DestructionType getDestructionType();
+    Explosion.BlockInteraction getBlockInteraction();
 
     @Accessor
-    World getWorld();
+    Level getLevel();
 
     @Accessor
     Random getRandom();
@@ -33,9 +33,9 @@ public interface ExplosionAccessor {
     double getZ();
 
     @Accessor
-    float getPower();
+    float getRadius();
 
     @Accessor
-    Entity getEntity();
+    Entity getSource();
 
 }

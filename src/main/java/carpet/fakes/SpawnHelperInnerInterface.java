@@ -1,10 +1,10 @@
 package carpet.fakes;
 
-import net.minecraft.util.math.GravityField;
+import net.minecraft.world.level.PotentialCalculator;
 
 public interface SpawnHelperInnerInterface
 {
-    GravityField getPotentialCalculator();
+    PotentialCalculator getPotentialCalculator();
 
     int cmGetChunkCount();
 }

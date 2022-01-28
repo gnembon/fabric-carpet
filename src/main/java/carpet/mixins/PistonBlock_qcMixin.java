@@ -1,23 +1,23 @@
 package carpet.mixins;
 
 import carpet.CarpetSettings;
-import net.minecraft.block.PistonBlock;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
-import net.minecraft.world.World;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.piston.PistonBaseBlock;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-@Mixin(PistonBlock.class)
+@Mixin(PistonBaseBlock.class)
 public class PistonBlock_qcMixin
 {
-    @Inject(method = "shouldExtend", cancellable = true, at = @At(
+    @Inject(method = "getNeighborSignal", cancellable = true, at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/util/math/BlockPos;up()Lnet/minecraft/util/math/BlockPos;" // up
+            target = "Lnet/minecraft/core/BlockPos;above()Lnet/minecraft/core/BlockPos;"
     ))
-    private void cancelUpCheck(World world_1, BlockPos blockPos_1, Direction direction_1, CallbackInfoReturnable<Boolean> cir)
+    private void cancelUpCheck(Level world_1, BlockPos blockPos_1, Direction direction_1, CallbackInfoReturnable<Boolean> cir)
     {
         if (!CarpetSettings.quasiConnectivity)
         {

@@ -18,31 +18,30 @@ import carpet.script.value.Value;
 import com.google.common.collect.Sets;
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
-import net.minecraft.command.argument.ParticleEffectArgumentType;
-import net.minecraft.entity.Entity;
-import net.minecraft.nbt.NbtByte;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.nbt.NbtDouble;
-import net.minecraft.nbt.NbtFloat;
-import net.minecraft.nbt.NbtInt;
-import net.minecraft.nbt.NbtList;
-import net.minecraft.nbt.NbtString;
-import net.minecraft.nbt.NbtElement;
-import net.minecraft.particle.ParticleEffect;
+import net.minecraft.commands.arguments.ParticleArgument;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.core.Registry;
+import net.minecraft.core.particles.ParticleOptions;
+import net.minecraft.nbt.ByteTag;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.DoubleTag;
+import net.minecraft.nbt.FloatTag;
+import net.minecraft.nbt.IntTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.StringTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.TextComponent;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.text.LiteralText;
-import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.util.registry.Registry;
-import net.minecraft.world.World;
-import net.minecraft.util.registry.RegistryKey;
-
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.Mth;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.Vec3;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -60,13 +59,13 @@ import static java.util.Map.entry;
 
 public class ShapeDispatcher
 {
-    private static final Map<String, ParticleEffect> particleCache = new HashMap<>();
+    private static final Map<String, ParticleOptions> particleCache = new HashMap<>();
     public static record ShapeWithConfig(ExpiringShape shape, Map<String, Value> config) {}
 
     public static ShapeWithConfig fromFunctionArgs(
-            MinecraftServer server, ServerWorld world,
+            MinecraftServer server, ServerLevel world,
             List<Value> lv,
-            Set<ServerPlayerEntity> playerSet
+            Set<ServerPlayer> playerSet
     )
     {
         if (lv.size() < 3) throw new InternalExpressionException("'draw_shape' takes at least three parameters, shape name, duration, and its params");
@@ -93,7 +92,7 @@ public class ShapeDispatcher
             for (int i=2; i < lv.size(); i++) paramList.add(lv.get(i));
             params = ShapeDispatcher.parseParams(paramList);
         }
-        params.putIfAbsent("dim", new StringValue(world.getRegistryKey().getValue().toString()));
+        params.putIfAbsent("dim", new StringValue(world.dimension().location().toString()));
         params.putIfAbsent("duration", duration);
 
         if (params.containsKey("player"))
@@ -106,7 +105,7 @@ public class ShapeDispatcher
                 playerVals = Collections.singletonList(players);
             for (Value pVal : playerVals)
             {
-                ServerPlayerEntity player = EntityValue.getPlayerByValue(server, pVal);
+                ServerPlayer player = EntityValue.getPlayerByValue(server, pVal);
                 if (player == null)
                     throw new InternalExpressionException("'player' parameter needs to represent an existing player, not "+pVal.getString());
                 playerSet.add(player);
@@ -116,11 +115,11 @@ public class ShapeDispatcher
         return new ShapeWithConfig(ShapeDispatcher.create(server, shapeType, params), params);
     }
 
-    public static void sendShape(Collection<ServerPlayerEntity> players, List<ShapeWithConfig> shapes)
+    public static void sendShape(Collection<ServerPlayer> players, List<ShapeWithConfig> shapes)
     {
-        List<ServerPlayerEntity> clientPlayers = new ArrayList<>();
-        List<ServerPlayerEntity> alternativePlayers = new ArrayList<>();
-        for (ServerPlayerEntity player : players)
+        List<ServerPlayer> clientPlayers = new ArrayList<>();
+        List<ServerPlayer> alternativePlayers = new ArrayList<>();
+        for (ServerPlayer player : players)
         {
             if (ServerNetworkHandler.isValidCarpetPlayer(player))
             {
@@ -134,7 +133,7 @@ public class ShapeDispatcher
         if (!clientPlayers.isEmpty())
         {
 
-            NbtList tag = new NbtList();
+            ListTag tag = new ListTag();
             int tagcount = 0;
             for (ShapeWithConfig s : shapes)
             {
@@ -142,30 +141,30 @@ public class ShapeDispatcher
                 if (tagcount++>1000)
                 {
                     tagcount = 0;
-                    NbtElement finalTag = tag;
+                    Tag finalTag = tag;
                     clientPlayers.forEach( p -> ServerNetworkHandler.sendCustomCommand(p, "scShapes", finalTag));
-                    tag = new NbtList();
+                    tag = new ListTag();
                 }
             }
-            NbtElement finalTag = tag;
+            Tag finalTag = tag;
             if (tag.size() > 0) clientPlayers.forEach( p -> ServerNetworkHandler.sendCustomCommand(p, "scShapes", finalTag));
         }
         if (!alternativePlayers.isEmpty())
         {
-            List<Consumer<ServerPlayerEntity>> alternatives = new ArrayList<>();
+            List<Consumer<ServerPlayer>> alternatives = new ArrayList<>();
             shapes.forEach(s -> alternatives.add(s.shape().alternative()));
             alternativePlayers.forEach(p -> alternatives.forEach( a -> a.accept(p)));
         }
     }
 
-    public static ParticleEffect getParticleData(String name)
+    public static ParticleOptions getParticleData(String name)
     {
-        ParticleEffect particle = particleCache.get(name);
+        ParticleOptions particle = particleCache.get(name);
         if (particle != null)
             return particle;
         try
         {
-            particle = ParticleEffectArgumentType.readParameters(new StringReader(name));
+            particle = ParticleArgument.readParticle(new StringReader(name));
         }
         catch (CommandSyntaxException e)
         {
@@ -205,10 +204,10 @@ public class ShapeDispatcher
     }
 
     // client
-    public static ExpiringShape fromTag(NbtCompound tag)
+    public static ExpiringShape fromTag(CompoundTag tag)
     {
         Map<String, Value> options = new HashMap<>();
-        for (String key : tag.getKeys())
+        for (String key : tag.getAllKeys())
         {
             Param decoder = Param.of.get(key);
             if (decoder==null)
@@ -222,7 +221,7 @@ public class ShapeDispatcher
         Value shapeValue = options.get("shape");
         if (shapeValue == null)
         {
-            CarpetSettings.LOG.info("Shape id missing in "+ String.join(", ", tag.getKeys()));
+            CarpetSettings.LOG.info("Shape id missing in "+ String.join(", ", tag.getAllKeys()));
             return null;
         }
         Function<Map<String, Value>,ExpiringShape> factory = ExpiringShape.shapeProviders.get(shapeValue.getString());
@@ -271,16 +270,16 @@ public class ShapeDispatcher
         protected String snapTo;
         protected boolean snapX, snapY, snapZ;
         protected boolean discreteX, discreteY, discreteZ;
-        protected RegistryKey<World> shapeDimension;
+        protected ResourceKey<Level> shapeDimension;
 
 
         protected ExpiringShape() { }
 
-        public static NbtCompound toTag(Map<String, Value> params)
+        public static CompoundTag toTag(Map<String, Value> params)
         {
-            NbtCompound tag = new NbtCompound();
+            CompoundTag tag = new CompoundTag();
             params.forEach((k, v) -> {
-                NbtElement valTag = Param.of.get(k).toTag(v);
+                Tag valTag = Param.of.get(k).toTag(v);
                 if (valTag != null) tag.put(k, valTag);
             });
             return tag;
@@ -325,7 +324,7 @@ public class ShapeDispatcher
 
             key = 0;
             followEntity = -1;
-            shapeDimension = RegistryKey.of(Registry.WORLD_KEY, new Identifier(options.get("dim").getString()));
+            shapeDimension = ResourceKey.create(Registry.DIMENSION_REGISTRY, new ResourceLocation(options.get("dim").getString()));
             if (options.containsKey("follow"))
             {
                 followEntity = NumericValue.asNumber(options.getOrDefault("follow", optional.get("follow"))).getInt();
@@ -339,33 +338,33 @@ public class ShapeDispatcher
             }
         }
         public int getExpiry() { return duration; }
-        public Vec3d toAbsolute(Entity e, Vec3d vec, float partialTick)
+        public Vec3 toAbsolute(Entity e, Vec3 vec, float partialTick)
         {
             return vec.add(
-                    snapX?(discreteX ?MathHelper.floor(e.getX()):MathHelper.lerp(partialTick, e.prevX, e.getX())):0.0,
-                    snapY?(discreteY ?MathHelper.floor(e.getY()):MathHelper.lerp(partialTick, e.prevY, e.getY())):0.0,
-                    snapZ?(discreteZ ?MathHelper.floor(e.getZ()):MathHelper.lerp(partialTick, e.prevZ, e.getZ())):0.0
+                    snapX?(discreteX ?Mth.floor(e.getX()):Mth.lerp(partialTick, e.xo, e.getX())):0.0,
+                    snapY?(discreteY ?Mth.floor(e.getY()):Mth.lerp(partialTick, e.yo, e.getY())):0.0,
+                    snapZ?(discreteZ ?Mth.floor(e.getZ()):Mth.lerp(partialTick, e.zo, e.getZ())):0.0
             );
         }
-        public Vec3d relativiseRender(World world, Vec3d vec, float partialTick)
+        public Vec3 relativiseRender(Level world, Vec3 vec, float partialTick)
         {
             if (followEntity < 0) return vec;
-            Entity e = world.getEntityById(followEntity);
+            Entity e = world.getEntity(followEntity);
             if (e == null) return vec;
             return toAbsolute(e, vec, partialTick);
         }
 
-        public Vec3d vecFromValue(Value value)
+        public Vec3 vecFromValue(Value value)
         {
             if (!(value instanceof ListValue)) throw new InternalExpressionException("decoded value of "+value.getPrettyString()+" is not a triple");
             List<Value> elements = ((ListValue) value).getItems();
-            return new Vec3d(
+            return new Vec3(
                     NumericValue.asNumber( elements.get(0)).getDouble(),
                     NumericValue.asNumber( elements.get(1)).getDouble(),
                     NumericValue.asNumber( elements.get(2)).getDouble()
             );
         }
-        protected ParticleEffect replacementParticle()
+        protected ParticleOptions replacementParticle()
         {
             String particleName = fa ==0 ?
                     String.format(Locale.ROOT , "dust %.1f %.1f %.1f 1.0", r, g, b):
@@ -374,7 +373,7 @@ public class ShapeDispatcher
         }
 
 
-        public abstract Consumer<ServerPlayerEntity> alternative();
+        public abstract Consumer<ServerPlayer> alternative();
         public long key()
         {
             if (key!=0) return key;
@@ -398,7 +397,7 @@ public class ShapeDispatcher
         private static final double xdif = new Random().nextDouble();
         private static final double ydif = new Random().nextDouble();
         private static final double zdif = new Random().nextDouble();
-        int vec3dhash(Vec3d vec)
+        int vec3dhash(Vec3 vec)
         {
             return vec.add(xdif, ydif, zdif).hashCode();
         }
@@ -443,7 +442,7 @@ public class ShapeDispatcher
         protected Set<String> optionalParams() { return Sets.union(super.optionalParams(), optional.keySet()); }
         public DisplayedText() { }
 
-        Vec3d pos;
+        Vec3 pos;
         String text;
         int textcolor;
         int textbck;
@@ -457,7 +456,7 @@ public class ShapeDispatcher
         float indent;
         int align;
         float height;
-        Text value;
+        Component value;
         boolean doublesided;
 
         @Override
@@ -520,7 +519,7 @@ public class ShapeDispatcher
 
 
         @Override
-        public Consumer<ServerPlayerEntity> alternative()
+        public Consumer<ServerPlayer> alternative()
         {
             return s -> {};
         }
@@ -558,8 +557,8 @@ public class ShapeDispatcher
         protected Set<String> optionalParams() { return Sets.union(super.optionalParams(), optional.keySet()); }
         public Box() { }
 
-        Vec3d from;
-        Vec3d to;
+        Vec3 from;
+        Vec3 to;
 
         @Override
         protected void init(Map<String, Value> options)
@@ -570,20 +569,20 @@ public class ShapeDispatcher
         }
 
         @Override
-        public Consumer<ServerPlayerEntity> alternative()
+        public Consumer<ServerPlayer> alternative()
         {
-            ParticleEffect particle = replacementParticle();
+            ParticleOptions particle = replacementParticle();
             double density = Math.max(2.0, from.distanceTo(to) /50/ (a+0.1)) ;
             return p ->
             {
-                if (p.world.getRegistryKey() == shapeDimension)
+                if (p.level.dimension() == shapeDimension)
                 {
                     particleMesh(
                             Collections.singletonList(p),
                             particle,
                             density,
-                            relativiseRender(p.world, from, 0),
-                            relativiseRender(p.world, to, 0)
+                            relativiseRender(p.level, from, 0),
+                            relativiseRender(p.level, to, 0)
                     );
                 }
             };
@@ -599,8 +598,8 @@ public class ShapeDispatcher
             return hash;
         }
 
-        public static int particleMesh(List<ServerPlayerEntity> playerList, ParticleEffect particle, double density,
-                                       Vec3d from, Vec3d to)
+        public static int particleMesh(List<ServerPlayer> playerList, ParticleOptions particle, double density,
+                                       Vec3 from, Vec3 to)
         {
             double x1 = from.x;
             double y1 = from.y;
@@ -609,20 +608,20 @@ public class ShapeDispatcher
             double y2 = to.y;
             double z2 = to.z;
             return
-            drawParticleLine(playerList, particle, new Vec3d(x1, y1, z1), new Vec3d(x1, y2, z1), density)+
-            drawParticleLine(playerList, particle, new Vec3d(x1, y2, z1), new Vec3d(x2, y2, z1), density)+
-            drawParticleLine(playerList, particle, new Vec3d(x2, y2, z1), new Vec3d(x2, y1, z1), density)+
-            drawParticleLine(playerList, particle, new Vec3d(x2, y1, z1), new Vec3d(x1, y1, z1), density)+
+            drawParticleLine(playerList, particle, new Vec3(x1, y1, z1), new Vec3(x1, y2, z1), density)+
+            drawParticleLine(playerList, particle, new Vec3(x1, y2, z1), new Vec3(x2, y2, z1), density)+
+            drawParticleLine(playerList, particle, new Vec3(x2, y2, z1), new Vec3(x2, y1, z1), density)+
+            drawParticleLine(playerList, particle, new Vec3(x2, y1, z1), new Vec3(x1, y1, z1), density)+
 
-            drawParticleLine(playerList, particle, new Vec3d(x1, y1, z2), new Vec3d(x1, y2, z2), density)+
-            drawParticleLine(playerList, particle, new Vec3d(x1, y2, z2), new Vec3d(x2, y2, z2), density)+
-            drawParticleLine(playerList, particle, new Vec3d(x2, y2, z2), new Vec3d(x2, y1, z2), density)+
-            drawParticleLine(playerList, particle, new Vec3d(x2, y1, z2), new Vec3d(x1, y1, z2), density)+
+            drawParticleLine(playerList, particle, new Vec3(x1, y1, z2), new Vec3(x1, y2, z2), density)+
+            drawParticleLine(playerList, particle, new Vec3(x1, y2, z2), new Vec3(x2, y2, z2), density)+
+            drawParticleLine(playerList, particle, new Vec3(x2, y2, z2), new Vec3(x2, y1, z2), density)+
+            drawParticleLine(playerList, particle, new Vec3(x2, y1, z2), new Vec3(x1, y1, z2), density)+
 
-            drawParticleLine(playerList, particle, new Vec3d(x1, y1, z1), new Vec3d(x1, y1, z2), density)+
-            drawParticleLine(playerList, particle, new Vec3d(x1, y2, z1), new Vec3d(x1, y2, z2), density)+
-            drawParticleLine(playerList, particle, new Vec3d(x2, y2, z1), new Vec3d(x2, y2, z2), density)+
-            drawParticleLine(playerList, particle, new Vec3d(x2, y1, z1), new Vec3d(x2, y1, z2), density);
+            drawParticleLine(playerList, particle, new Vec3(x1, y1, z1), new Vec3(x1, y1, z2), density)+
+            drawParticleLine(playerList, particle, new Vec3(x1, y2, z1), new Vec3(x1, y2, z2), density)+
+            drawParticleLine(playerList, particle, new Vec3(x2, y2, z1), new Vec3(x2, y2, z2), density)+
+            drawParticleLine(playerList, particle, new Vec3(x2, y1, z1), new Vec3(x2, y1, z2), density);
         }
     }
 
@@ -640,8 +639,8 @@ public class ShapeDispatcher
             super();
         }
 
-        Vec3d from;
-        Vec3d to;
+        Vec3 from;
+        Vec3 to;
 
         @Override
         protected void init(Map<String, Value> options)
@@ -652,17 +651,17 @@ public class ShapeDispatcher
         }
 
         @Override
-        public Consumer<ServerPlayerEntity> alternative()
+        public Consumer<ServerPlayer> alternative()
         {
-            ParticleEffect particle = replacementParticle();
+            ParticleOptions particle = replacementParticle();
             double density = Math.max(2.0, from.distanceTo(to) /50) / (a+0.1);
             return p ->
             {
-                if (p.world.getRegistryKey() == shapeDimension) drawParticleLine(
+                if (p.level.dimension() == shapeDimension) drawParticleLine(
                         Collections.singletonList(p),
                         particle,
-                        relativiseRender(p.world, from, 0),
-                        relativiseRender(p.world, to, 0),
+                        relativiseRender(p.level, from, 0),
+                        relativiseRender(p.level, to, 0),
                         density
                 );
             };
@@ -693,7 +692,7 @@ public class ShapeDispatcher
             super();
         }
 
-        Vec3d center;
+        Vec3 center;
         float radius;
         int level;
         int subdivisions;
@@ -713,14 +712,14 @@ public class ShapeDispatcher
         }
 
         @Override
-        public Consumer<ServerPlayerEntity> alternative() { return p ->
+        public Consumer<ServerPlayer> alternative() { return p ->
         {
-            ParticleEffect particle = replacementParticle();
+            ParticleOptions particle = replacementParticle();
             int partno = Math.min(1000,20*subdivisions);
-            Random rand = p.world.getRandom();
-            ServerWorld world = p.getWorld();
+            Random rand = p.level.getRandom();
+            ServerLevel world = p.getLevel();
 
-            Vec3d ccenter = relativiseRender(world, center, 0 );
+            Vec3 ccenter = relativiseRender(world, center, 0 );
 
             double ccx = ccenter.x;
             double ccy = ccenter.y;
@@ -731,10 +730,10 @@ public class ShapeDispatcher
                 float theta = (float)Math.asin(rand.nextDouble()*2.0-1.0);
                 float phi = (float)(2*Math.PI*rand.nextDouble());
 
-                double x = radius * MathHelper.cos(theta) * MathHelper.cos(phi);
-                double y = radius * MathHelper.cos(theta) * MathHelper.sin(phi);
-                double z = radius * MathHelper.sin(theta);
-                world.spawnParticles(p, particle, true,
+                double x = radius * Mth.cos(theta) * Mth.cos(phi);
+                double y = radius * Mth.cos(theta) * Mth.sin(phi);
+                double z = radius * Mth.sin(theta);
+                world.sendParticles(p, particle, true,
                         x+ccx, y+ccy, z+ccz, 1,
                         0.0, 0.0, 0.0, 0.0);
             }
@@ -764,7 +763,7 @@ public class ShapeDispatcher
         @Override
         protected Set<String> optionalParams() { return Sets.union(super.optionalParams(), optional.keySet()); }
 
-        Vec3d center;
+        Vec3 center;
         float height;
         float radius;
         int level;
@@ -786,19 +785,19 @@ public class ShapeDispatcher
                 subdivisions = Math.max(10, (int)(10*Math.sqrt(radius)));
             }
             height = NumericValue.asNumber(options.getOrDefault("height", optional.get("height"))).getFloat();
-            axis = Direction.Axis.fromName(options.getOrDefault("axis", optional.get("axis")).getString());
+            axis = Direction.Axis.byName(options.getOrDefault("axis", optional.get("axis")).getString());
         }
 
 
         @Override
-        public Consumer<ServerPlayerEntity> alternative() { return p ->
+        public Consumer<ServerPlayer> alternative() { return p ->
         {
-            ParticleEffect particle = replacementParticle();
+            ParticleOptions particle = replacementParticle();
             int partno = (int)Math.min(1000,Math.sqrt(20*subdivisions*(1+height)));
-            Random rand = p.world.getRandom();
-            ServerWorld world = p.getWorld();
+            Random rand = p.level.getRandom();
+            ServerLevel world = p.getLevel();
 
-            Vec3d ccenter = relativiseRender(world, center, 0 );
+            Vec3 ccenter = relativiseRender(world, center, 0 );
 
             double ccx = ccenter.x;
             double ccy = ccenter.y;
@@ -810,10 +809,10 @@ public class ShapeDispatcher
                 {
                     float d = rand.nextFloat()*height;
                     float phi = (float)(2*Math.PI*rand.nextDouble());
-                    double x = radius * MathHelper.cos(phi);
+                    double x = radius * Mth.cos(phi);
                     double y = d;
-                    double z = radius * MathHelper.sin(phi);
-                    world.spawnParticles(p, particle, true, x+ccx, y+ccy, z+ccz, 1, 0.0, 0.0, 0.0, 0.0);
+                    double z = radius * Mth.sin(phi);
+                    world.sendParticles(p, particle, true, x+ccx, y+ccy, z+ccz, 1, 0.0, 0.0, 0.0, 0.0);
                 }
             }
             else if (axis== Direction.Axis.X)
@@ -823,9 +822,9 @@ public class ShapeDispatcher
                     float d = rand.nextFloat()*height;
                     float phi = (float)(2*Math.PI*rand.nextDouble());
                     double x = d;
-                    double y = radius * MathHelper.cos(phi);
-                    double z = radius * MathHelper.sin(phi);
-                    world.spawnParticles(p, particle, true, x+ccx, y+ccy, z+ccz, 1, 0.0, 0.0, 0.0, 0.0);
+                    double y = radius * Mth.cos(phi);
+                    double z = radius * Mth.sin(phi);
+                    world.sendParticles(p, particle, true, x+ccx, y+ccy, z+ccz, 1, 0.0, 0.0, 0.0, 0.0);
                 }
             }
             else  // Z
@@ -834,10 +833,10 @@ public class ShapeDispatcher
                 {
                     float d = rand.nextFloat()*height;
                     float phi = (float)(2*Math.PI*rand.nextDouble());
-                    double x = radius * MathHelper.sin(phi);
-                    double y = radius * MathHelper.cos(phi);
+                    double x = radius * Mth.sin(phi);
+                    double y = radius * Mth.cos(phi);
                     double z = d;
-                    world.spawnParticles(p, particle, true, x+ccx, y+ccy, z+ccz, 1, 0.0, 0.0, 0.0, 0.0);
+                    world.sendParticles(p, particle, true, x+ccx, y+ccy, z+ccz, 1, 0.0, 0.0, 0.0, 0.0);
                 }
             }
         };}
@@ -900,9 +899,9 @@ public class ShapeDispatcher
             this.id = id;
         }
 
-        public abstract NbtElement toTag(Value value); //validates value, returning null if not necessary to keep it and serialize
+        public abstract Tag toTag(Value value); //validates value, returning null if not necessary to keep it and serialize
         public abstract Value validate(Map<String, Value> options, MinecraftServer server, Value value); // makes sure the value is proper
-        public abstract Value decode(NbtElement tag);
+        public abstract Value decode(Tag tag);
     }
 
     public abstract static class StringParam extends Param
@@ -910,9 +909,9 @@ public class ShapeDispatcher
         protected StringParam(String id) { super(id); }
 
         @Override
-        public NbtElement toTag(Value value) { return NbtString.of(value.getString()); }
+        public Tag toTag(Value value) { return StringTag.valueOf(value.getString()); }
         @Override
-        public Value decode(NbtElement tag) { return new StringValue(tag.asString()); }
+        public Value decode(Tag tag) { return new StringValue(tag.getAsString()); }
     }
     public static class TextParam extends StringParam
     {
@@ -937,22 +936,22 @@ public class ShapeDispatcher
         public Value validate(Map<String, Value> options, MinecraftServer server, Value value)
         {
             if (!(value instanceof FormattedTextValue))
-                value = new FormattedTextValue(new LiteralText(value.getString()));
+                value = new FormattedTextValue(new TextComponent(value.getString()));
             return value;
         }
 
         @Override
-        public NbtElement toTag(Value value)
+        public Tag toTag(Value value)
         {
             if (!(value instanceof FormattedTextValue))
-                value = new FormattedTextValue(new LiteralText(value.getString()));
-            return NbtString.of(((FormattedTextValue)value).serialize());
+                value = new FormattedTextValue(new TextComponent(value.getString()));
+            return StringTag.valueOf(((FormattedTextValue)value).serialize());
         }
 
         @Override
-        public Value decode(NbtElement tag)
+        public Value decode(Tag tag)
         {
-            return FormattedTextValue.deserialize(tag.asString());
+            return FormattedTextValue.deserialize(tag.getAsString());
         }
     }
 
@@ -1015,24 +1014,24 @@ public class ShapeDispatcher
         }
 
         @Override
-        public NbtElement toTag(Value value)
+        public Tag toTag(Value value)
         {
-            return NbtByte.of(value.getBoolean());
+            return ByteTag.valueOf(value.getBoolean());
         }
 
         @Override
-        public Value decode(NbtElement tag)
+        public Value decode(Tag tag)
         {
-            return BooleanValue.of(((NbtByte) tag).byteValue() > 0);
+            return BooleanValue.of(((ByteTag) tag).getAsByte() > 0);
         }
     }
     public static class FloatParam extends NumericParam
     {
         protected FloatParam(String id) { super(id); }
         @Override
-        public Value decode(NbtElement tag) { return new NumericValue(((NbtFloat)tag).floatValue()); }
+        public Value decode(Tag tag) { return new NumericValue(((FloatTag)tag).getAsFloat()); }
         @Override
-        public NbtElement toTag(Value value) { return NbtFloat.of(NumericValue.asNumber(value, id).getFloat()); }
+        public Tag toTag(Value value) { return FloatTag.valueOf(NumericValue.asNumber(value, id).getFloat()); }
     }
 
     public static abstract class PositiveParam extends NumericParam
@@ -1049,27 +1048,27 @@ public class ShapeDispatcher
     {
         protected PositiveFloatParam(String id) { super(id); }
         @Override
-        public Value decode(NbtElement tag) { return new NumericValue(((NbtFloat)tag).floatValue()); }
+        public Value decode(Tag tag) { return new NumericValue(((FloatTag)tag).getAsFloat()); }
         @Override
-        public NbtElement toTag(Value value) { return NbtFloat.of(NumericValue.asNumber(value, id).getFloat()); }
+        public Tag toTag(Value value) { return FloatTag.valueOf(NumericValue.asNumber(value, id).getFloat()); }
 
     }
     public static class PositiveIntParam extends PositiveParam
     {
         protected PositiveIntParam(String id) { super(id); }
         @Override
-        public Value decode(NbtElement tag) { return new NumericValue(((NbtInt)tag).intValue()); }
+        public Value decode(Tag tag) { return new NumericValue(((IntTag)tag).getAsInt()); }
         @Override
-        public NbtElement toTag(Value value) { return NbtInt.of(NumericValue.asNumber(value, id).getInt()); }
+        public Tag toTag(Value value) { return IntTag.valueOf(NumericValue.asNumber(value, id).getInt()); }
 
     }
     public static class NonNegativeIntParam extends NumericParam
     {
         protected NonNegativeIntParam(String id) { super(id); }
         @Override
-        public Value decode(NbtElement tag) { return new NumericValue(((NbtInt)tag).intValue()); }
+        public Value decode(Tag tag) { return new NumericValue(((IntTag)tag).getAsInt()); }
         @Override
-        public NbtElement toTag(Value value) { return NbtInt.of(NumericValue.asNumber(value, id).getInt()); }
+        public Tag toTag(Value value) { return IntTag.valueOf(NumericValue.asNumber(value, id).getInt()); }
         @Override public Value validate(Map<String, Value> options, MinecraftServer server, Value value)
         {
             Value ret = super.validate(options, server, value);
@@ -1081,9 +1080,9 @@ public class ShapeDispatcher
     {
         protected NonNegativeFloatParam(String id) { super(id); }
         @Override
-        public Value decode(NbtElement tag) { return new NumericValue(((NbtFloat)tag).floatValue()); }
+        public Value decode(Tag tag) { return new NumericValue(((FloatTag)tag).getAsFloat()); }
         @Override
-        public NbtElement toTag(Value value) { return NbtFloat.of(NumericValue.asNumber(value, id).getFloat()); }
+        public Tag toTag(Value value) { return FloatTag.valueOf(NumericValue.asNumber(value, id).getFloat()); }
         @Override public Value validate(Map<String, Value> options, MinecraftServer server, Value value)
         {
             Value ret = super.validate(options, server, value);
@@ -1149,9 +1148,9 @@ public class ShapeDispatcher
         }
 
         @Override
-        public Value decode(NbtElement tag)
+        public Value decode(Tag tag)
         {
-            NbtList ctag = (NbtList)tag;
+            ListTag ctag = (ListTag)tag;
             return ListValue.of(
                     new NumericValue(ctag.getDouble(0)),
                     new NumericValue(ctag.getDouble(1)),
@@ -1159,13 +1158,13 @@ public class ShapeDispatcher
             );
         }
         @Override
-        public NbtElement toTag(Value value)
+        public Tag toTag(Value value)
         {
             List<Value> lv = ((ListValue)value).getItems();
-            NbtList tag = new NbtList();
-            tag.add(NbtDouble.of(NumericValue.asNumber(lv.get(0), "x").getDouble()));
-            tag.add(NbtDouble.of(NumericValue.asNumber(lv.get(1), "y").getDouble()));
-            tag.add(NbtDouble.of(NumericValue.asNumber(lv.get(2), "z").getDouble()));
+            ListTag tag = new ListTag();
+            tag.add(DoubleTag.valueOf(NumericValue.asNumber(lv.get(0), "x").getDouble()));
+            tag.add(DoubleTag.valueOf(NumericValue.asNumber(lv.get(1), "y").getDouble()));
+            tag.add(DoubleTag.valueOf(NumericValue.asNumber(lv.get(2), "z").getDouble()));
             return tag;
         }
     }
@@ -1188,13 +1187,13 @@ public class ShapeDispatcher
         }
 
         @Override
-        public Value decode(NbtElement tag)
+        public Value decode(Tag tag)
         {
-            NbtList ltag = (NbtList)tag;
+            ListTag ltag = (ListTag)tag;
             List<Value> points = new ArrayList<>();
             for (int i=0, ll = ltag.size(); i<ll; i++)
             {
-                NbtList ptag = ltag.getList(i);
+                ListTag ptag = ltag.getList(i);
                 points.add(ListValue.of(
                         new NumericValue(ptag.getDouble(0)),
                         new NumericValue(ptag.getDouble(1)),
@@ -1204,17 +1203,17 @@ public class ShapeDispatcher
             return ListValue.wrap(points);
         }
         @Override
-        public NbtElement toTag(Value pointsValue)
+        public Tag toTag(Value pointsValue)
         {
             List<Value> lv = ((ListValue)pointsValue).getItems();
-            NbtList ltag = new NbtList();
+            ListTag ltag = new ListTag();
             for (Value value : lv)
             {
                 List<Value> coords = ((ListValue)value).getItems();
-                NbtList tag = new NbtList();
-                tag.add(NbtDouble.of(NumericValue.asNumber(lv.get(0), "x").getDouble()));
-                tag.add(NbtDouble.of(NumericValue.asNumber(lv.get(1), "y").getDouble()));
-                tag.add(NbtDouble.of(NumericValue.asNumber(lv.get(2), "z").getDouble()));
+                ListTag tag = new ListTag();
+                tag.add(DoubleTag.valueOf(NumericValue.asNumber(lv.get(0), "x").getDouble()));
+                tag.add(DoubleTag.valueOf(NumericValue.asNumber(lv.get(1), "y").getDouble()));
+                tag.add(DoubleTag.valueOf(NumericValue.asNumber(lv.get(2), "z").getDouble()));
                 ltag.add(tag);
             }
             return ltag;
@@ -1230,9 +1229,9 @@ public class ShapeDispatcher
         }
 
         @Override
-        public Value decode(NbtElement tag) { return new NumericValue(((NbtInt)tag).intValue()); }
+        public Value decode(Tag tag) { return new NumericValue(((IntTag)tag).getAsInt()); }
         @Override
-        public NbtElement toTag(Value value) { return NbtInt.of(NumericValue.asNumber(value, id).getInt()); }
+        public Tag toTag(Value value) { return IntTag.valueOf(NumericValue.asNumber(value, id).getInt()); }
     }
 
     public static class EntityParam extends Param
@@ -1241,47 +1240,47 @@ public class ShapeDispatcher
         protected EntityParam(String id) { super(id); }
 
         @Override
-        public NbtElement toTag(Value value)
+        public Tag toTag(Value value)
         {
-            return NbtInt.of(NumericValue.asNumber(value, id).getInt());
+            return IntTag.valueOf(NumericValue.asNumber(value, id).getInt());
         }
 
         @Override
         public Value validate(Map<String, Value> options, MinecraftServer server, Value value)
         {
             if (value instanceof EntityValue) return new NumericValue(((EntityValue) value).getEntity().getId());
-            ServerPlayerEntity player = EntityValue.getPlayerByValue(server, value);
+            ServerPlayer player = EntityValue.getPlayerByValue(server, value);
             if (player == null)
                 throw new InternalExpressionException(id+" parameter needs to represent an entity or player");
             return new NumericValue(player.getId());
         }
 
         @Override
-        public Value decode(NbtElement tag) { return new NumericValue(((NbtInt)tag).intValue()); }
+        public Value decode(Tag tag) { return new NumericValue(((IntTag)tag).getAsInt()); }
     }
 
-    private static boolean isStraight(Vec3d from, Vec3d to, double density)
+    private static boolean isStraight(Vec3 from, Vec3 to, double density)
     {
         if ( (from.x == to.x && from.y == to.y) || (from.x == to.x && from.z == to.z) || (from.y == to.y && from.z == to.z))
             return from.distanceTo(to) / density > 20;
         return false;
     }
 
-    private static int drawOptimizedParticleLine(List<ServerPlayerEntity> playerList, ParticleEffect particle, Vec3d from, Vec3d to, double density)
+    private static int drawOptimizedParticleLine(List<ServerPlayer> playerList, ParticleOptions particle, Vec3 from, Vec3 to, double density)
     {
         double distance = from.distanceTo(to);
         int particles = (int)(distance/density);
-        Vec3d towards = to.subtract(from);
+        Vec3 towards = to.subtract(from);
         int parts = 0;
-        for (ServerPlayerEntity player : playerList)
+        for (ServerPlayer player : playerList)
         {
-            ServerWorld world = player.getWorld();
-            world.spawnParticles(player, particle, true,
+            ServerLevel world = player.getLevel();
+            world.sendParticles(player, particle, true,
                     (towards.x)/2+from.x, (towards.y)/2+from.y, (towards.z)/2+from.z, particles/3,
                     towards.x/6, towards.y/6, towards.z/6, 0.0);
-            world.spawnParticles(player, particle, true,
+            world.sendParticles(player, particle, true,
                     from.x, from.y, from.z,1,0.0,0.0,0.0,0.0);
-            world.spawnParticles(player, particle, true,
+            world.sendParticles(player, particle, true,
                     to.x, to.y, to.z,1,0.0,0.0,0.0,0.0);
             parts += particles/3+2;
         }
@@ -1290,13 +1289,13 @@ public class ShapeDispatcher
         {
             int center = (divider*2)/3;
             int dev = 2*divider;
-            for (ServerPlayerEntity player : playerList)
+            for (ServerPlayer player : playerList)
             {
-                ServerWorld world = player.getWorld();
-                world.spawnParticles(player, particle, true,
+                ServerLevel world = player.getLevel();
+                world.sendParticles(player, particle, true,
                         (towards.x)/center+from.x, (towards.y)/center+from.y, (towards.z)/center+from.z, particles/divider,
                         towards.x/dev, towards.y/dev, towards.z/dev, 0.0);
-                world.spawnParticles(player, particle, true,
+                world.sendParticles(player, particle, true,
                         (towards.x)*(1.0-1.0/center)+from.x, (towards.y)*(1.0-1.0/center)+from.y, (towards.z)*(1.0-1.0/center)+from.z, particles/divider,
                         towards.x/dev, towards.y/dev, towards.z/dev, 0.0);
             }
@@ -1306,22 +1305,22 @@ public class ShapeDispatcher
         return parts;
     }
 
-    public static int drawParticleLine(List<ServerPlayerEntity> players, ParticleEffect particle, Vec3d from, Vec3d to, double density)
+    public static int drawParticleLine(List<ServerPlayer> players, ParticleOptions particle, Vec3 from, Vec3 to, double density)
     {
-        double distance = from.squaredDistanceTo(to);
+        double distance = from.distanceToSqr(to);
         if (distance == 0) return 0;
         int pcount = 0;
         if (distance < 100)
         {
-            Random rand = players.get(0).world.random;
+            Random rand = players.get(0).level.random;
             int particles = (int)(distance/density)+1;
-            Vec3d towards = to.subtract(from);
+            Vec3 towards = to.subtract(from);
             for (int i = 0; i < particles; i++)
             {
-                Vec3d at = from.add(towards.multiply( rand.nextDouble()));
-                for (ServerPlayerEntity player : players)
+                Vec3 at = from.add(towards.scale( rand.nextDouble()));
+                for (ServerPlayer player : players)
                 {
-                    player.getWorld().spawnParticles(player, particle, true,
+                    player.getLevel().sendParticles(player, particle, true,
                             at.x, at.y, at.z, 1,
                             0.0, 0.0, 0.0, 0.0);
                     pcount ++;
@@ -1331,15 +1330,15 @@ public class ShapeDispatcher
         }
 
         if (isStraight(from, to, density)) return drawOptimizedParticleLine(players, particle, from, to, density);
-        Vec3d incvec = to.subtract(from).multiply(2*density/Math.sqrt(distance));
+        Vec3 incvec = to.subtract(from).scale(2*density/Math.sqrt(distance));
 
-        for (Vec3d delta = new Vec3d(0.0,0.0,0.0);
-             delta.lengthSquared()<distance;
-             delta = delta.add(incvec.multiply(Sys.randomizer.nextFloat())))
+        for (Vec3 delta = new Vec3(0.0,0.0,0.0);
+             delta.lengthSqr()<distance;
+             delta = delta.add(incvec.scale(Sys.randomizer.nextFloat())))
         {
-            for (ServerPlayerEntity player : players)
+            for (ServerPlayer player : players)
             {
-                player.getWorld().spawnParticles(player, particle, true,
+                player.getLevel().sendParticles(player, particle, true,
                         delta.x+from.x, delta.y+from.y, delta.z+from.z, 1,
                         0.0, 0.0, 0.0, 0.0);
                 pcount ++;

@@ -2,17 +2,17 @@ package carpet.mixins;
 
 
 import carpet.CarpetSettings;
-import net.minecraft.entity.boss.WitherEntity;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
 import java.util.Random;
+import net.minecraft.world.entity.boss.wither.WitherBoss;
 
-@Mixin(WitherEntity.class)
+@Mixin(WitherBoss.class)
 public class WitherEntity_extremeMixin
 {
-    @Redirect(method = "shootSkullAt(ILnet/minecraft/entity/LivingEntity;)V", at = @At(
+    @Redirect(method = "performRangedAttack(ILnet/minecraft/world/entity/LivingEntity;)V", at = @At(
             value = "INVOKE",
             target = "Ljava/util/Random;nextFloat()F")
     )

@@ -6,7 +6,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
-@Mixin(targets="net.minecraft.client.sound.SoundEngine$SourceSetImpl", priority = 69420)
+@Mixin(targets="com.mojang.blaze3d.audio.Library$CountingChannelPool", priority = 69420)
 public class SoundEngineInt_cleanLogsMixin
 {
     // createSource //  method_19666, remap = false,

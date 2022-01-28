@@ -1,38 +1,38 @@
 package carpet.mixins;
 
 import carpet.CarpetSettings;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.ShapeContext;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.ItemPlacementContext;
-import net.minecraft.item.WallStandingBlockItem;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.shape.VoxelShape;
-import net.minecraft.world.WorldView;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.StandingAndWallBlockItem;
+import net.minecraft.world.item.context.BlockPlaceContext;
+import net.minecraft.world.level.LevelReader;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.shapes.CollisionContext;
+import net.minecraft.world.phys.shapes.VoxelShape;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
-@Mixin(WallStandingBlockItem.class)
+@Mixin(StandingAndWallBlockItem.class)
 public class WallStandingBlockItem_creativeNoClipMixin
 {
     @Redirect(method = "getPlacementState", at = @At(
                 value = "INVOKE",
-                target = "Lnet/minecraft/world/WorldView;canPlace(Lnet/minecraft/block/BlockState;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/block/ShapeContext;)Z"
+                target = "Lnet/minecraft/world/level/LevelReader;isUnobstructed(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/phys/shapes/CollisionContext;)Z"
     ))
     private boolean canCreativePlayerPlace(
-            WorldView worldView, BlockState state, BlockPos pos, ShapeContext context,
-            ItemPlacementContext itemcontext
+            LevelReader worldView, BlockState state, BlockPos pos, CollisionContext context,
+            BlockPlaceContext itemcontext
     )
     {
-        PlayerEntity player = itemcontext.getPlayer();
+        Player player = itemcontext.getPlayer();
         if (CarpetSettings.creativeNoClip && player != null && player.isCreative() && player.getAbilities().flying)
         {
             // copy from canPlace
             VoxelShape voxelShape = state.getCollisionShape(worldView, pos, context);
-            return voxelShape.isEmpty() || worldView.doesNotIntersectEntities(player, voxelShape.offset(pos.getX(), pos.getY(), pos.getZ()));
+            return voxelShape.isEmpty() || worldView.isUnobstructed(player, voxelShape.move(pos.getX(), pos.getY(), pos.getZ()));
 
         }
-        return worldView.canPlace(state, pos, context);
+        return worldView.isUnobstructed(state, pos, context);
     }
 }

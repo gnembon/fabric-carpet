@@ -1,9 +1,9 @@
 package carpet.mixins;
 
 import carpet.CarpetServer;
-import net.minecraft.server.network.ServerPlayNetworkHandler;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.text.Text;
+import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.network.ServerGamePacketListenerImpl;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
@@ -12,14 +12,14 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import static carpet.script.CarpetEventServer.Event.PLAYER_DISCONNECTS;
 
-@Mixin(ServerPlayNetworkHandler.class)
+@Mixin(ServerGamePacketListenerImpl.class)
 public class ServerPlayNetworkHandler_coreMixin {
     @Shadow
-    public ServerPlayerEntity player;
+    public ServerPlayer player;
 
-    @Inject(method = "onDisconnected", at = @At("HEAD"))
-    private void onPlayerDisconnect(Text reason, CallbackInfo ci) {
+    @Inject(method = "onDisconnect", at = @At("HEAD"))
+    private void onPlayerDisconnect(Component reason, CallbackInfo ci) {
         CarpetServer.onPlayerLoggedOut(this.player);
-        if (PLAYER_DISCONNECTS.isNeeded()) PLAYER_DISCONNECTS.onPlayerMessage(player, reason.asString());
+        if (PLAYER_DISCONNECTS.isNeeded()) PLAYER_DISCONNECTS.onPlayerMessage(player, reason.getContents());
     }
 }

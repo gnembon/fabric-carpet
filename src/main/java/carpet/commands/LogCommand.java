@@ -9,54 +9,53 @@ import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
-import net.minecraft.server.command.ServerCommandSource;
-import net.minecraft.server.command.CommandManager;
-import net.minecraft.entity.player.PlayerEntity;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.commands.Commands;
+import net.minecraft.world.entity.player.Player;
 import java.util.Arrays;
 
 import static com.mojang.brigadier.arguments.StringArgumentType.getString;
-import static net.minecraft.command.CommandSource.suggestMatching;
+import static net.minecraft.commands.SharedSuggestionProvider.suggest;
 
 public class LogCommand
 {
-    public static void register(CommandDispatcher<ServerCommandSource> dispatcher)
+    public static void register(CommandDispatcher<CommandSourceStack> dispatcher)
     {
-        LiteralArgumentBuilder<ServerCommandSource> literalargumentbuilder = CommandManager.literal("log").
+        LiteralArgumentBuilder<CommandSourceStack> literalargumentbuilder = Commands.literal("log").
                 requires((player) -> SettingsManager.canUseCommand(player, CarpetSettings.commandLog)).
                 executes((context) -> listLogs(context.getSource())).
-                then(CommandManager.literal("clear").
-                        executes( (c) -> unsubFromAll(c.getSource(), c.getSource().getName())).
-                        then(CommandManager.argument("player", StringArgumentType.word()).
-                                suggests( (c, b)-> suggestMatching(c.getSource().getPlayerNames(),b)).
+                then(Commands.literal("clear").
+                        executes( (c) -> unsubFromAll(c.getSource(), c.getSource().getTextName())).
+                        then(Commands.argument("player", StringArgumentType.word()).
+                                suggests( (c, b)-> suggest(c.getSource().getOnlinePlayerNames(),b)).
                                 executes( (c) -> unsubFromAll(c.getSource(), getString(c, "player")))));
 
-        literalargumentbuilder.then(CommandManager.argument("log name",StringArgumentType.word()).
-                suggests( (c, b)-> suggestMatching(LoggerRegistry.getLoggerNames(),b)).
-                executes( (c)-> toggleSubscription(c.getSource(), c.getSource().getName(), getString(c, "log name"))).
-                then(CommandManager.literal("clear").
+        literalargumentbuilder.then(Commands.argument("log name",StringArgumentType.word()).
+                suggests( (c, b)-> suggest(LoggerRegistry.getLoggerNames(),b)).
+                executes( (c)-> toggleSubscription(c.getSource(), c.getSource().getTextName(), getString(c, "log name"))).
+                then(Commands.literal("clear").
                         executes( (c) -> unsubFromLogger(
                                 c.getSource(),
-                                c.getSource().getName(),
+                                c.getSource().getTextName(),
                                 getString(c, "log name")))).
-                then(CommandManager.argument("option", StringArgumentType.string()).
-                        suggests( (c, b) -> suggestMatching(
+                then(Commands.argument("option", StringArgumentType.string()).
+                        suggests( (c, b) -> suggest(
                                 (LoggerRegistry.getLogger(getString(c, "log name"))==null
                                         ?new String[]{}
                                         :LoggerRegistry.getLogger(getString(c, "log name")).getOptions()),
                                 b)).
                         executes( (c) -> subscribePlayer(
                                 c.getSource(),
-                                c.getSource().getName(),
+                                c.getSource().getTextName(),
                                 getString(c, "log name"),
                                 getString(c, "option"))).
-                        then(CommandManager.argument("player", StringArgumentType.word()).
-                                suggests( (c, b) -> suggestMatching(c.getSource().getPlayerNames(),b)).
+                        then(Commands.argument("player", StringArgumentType.word()).
+                                suggests( (c, b) -> suggest(c.getSource().getOnlinePlayerNames(),b)).
                                 executes( (c) -> subscribePlayer(
                                         c.getSource(),
                                         getString(c, "player"),
@@ -65,19 +64,19 @@ public class LogCommand
 
         dispatcher.register(literalargumentbuilder);
     }
-    private static int listLogs(ServerCommandSource source)
+    private static int listLogs(CommandSourceStack source)
     {
-        PlayerEntity player;
+        Player player;
         try
         {
-            player = source.getPlayer();
+            player = source.getPlayerOrException();
         }
         catch (CommandSyntaxException e)
         {
             Messenger.m(source, "For players only");
             return 0;
         }
-        Map<String,String> subs = LoggerRegistry.getPlayerSubscriptions(source.getName());
+        Map<String,String> subs = LoggerRegistry.getPlayerSubscriptions(source.getTextName());
         if (subs == null)
         {
             subs = new HashMap<>();
@@ -132,9 +131,9 @@ public class LogCommand
         }
         return 1;
     }
-    private static int unsubFromAll(ServerCommandSource source, String player_name)
+    private static int unsubFromAll(CommandSourceStack source, String player_name)
     {
-        PlayerEntity player = source.getServer().getPlayerManager().getPlayer(player_name);
+        Player player = source.getServer().getPlayerList().getPlayerByName(player_name);
         if (player == null)
         {
             Messenger.m(source, "r No player specified");
@@ -147,9 +146,9 @@ public class LogCommand
         Messenger.m(source, "gi Unsubscribed from all logs");
         return 1;
     }
-    private static int unsubFromLogger(ServerCommandSource source, String player_name, String logname)
+    private static int unsubFromLogger(CommandSourceStack source, String player_name, String logname)
     {
-        PlayerEntity player = source.getServer().getPlayerManager().getPlayer(player_name);
+        Player player = source.getServer().getPlayerList().getPlayerByName(player_name);
         if (player == null)
         {
             Messenger.m(source, "r No player specified");
@@ -165,9 +164,9 @@ public class LogCommand
         return 1;
     }
 
-    private static int toggleSubscription(ServerCommandSource source, String player_name, String logName)
+    private static int toggleSubscription(CommandSourceStack source, String player_name, String logName)
     {
-        PlayerEntity player = source.getServer().getPlayerManager().getPlayer(player_name);
+        Player player = source.getServer().getPlayerList().getPlayerByName(player_name);
         if (player == null)
         {
             Messenger.m(source, "r No player specified");
@@ -189,9 +188,9 @@ public class LogCommand
         }
         return 1;
     }
-    private static int subscribePlayer(ServerCommandSource source, String player_name, String logname, String option)
+    private static int subscribePlayer(CommandSourceStack source, String player_name, String logname, String option)
     {
-        PlayerEntity player = source.getServer().getPlayerManager().getPlayer(player_name);
+        Player player = source.getServer().getPlayerList().getPlayerByName(player_name);
         if (player == null)
         {
             Messenger.m(source, "r No player specified");

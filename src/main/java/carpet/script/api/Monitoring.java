@@ -12,13 +12,12 @@ import carpet.script.value.StringValue;
 import carpet.script.value.Value;
 import carpet.utils.SpawnReporter;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
-import net.minecraft.entity.SpawnGroup;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.world.SpawnHelper;
-
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.MobCategory;
+import net.minecraft.world.level.NaturalSpawner;
 
 public class Monitoring {
 
@@ -42,19 +41,19 @@ public class Monitoring {
         expression.addContextFunction("get_mob_counts", -1, (c, t, lv) ->
         {
             CarpetContext cc = (CarpetContext)c;
-            ServerWorld world = cc.s.getWorld();
-            SpawnHelper.Info info = world.getChunkManager().getSpawnInfo();
+            ServerLevel world = cc.s.getLevel();
+            NaturalSpawner.SpawnState info = world.getChunkSource().getLastSpawnState();
             if (info == null) return Value.NULL;
-            Object2IntMap<SpawnGroup> mobcounts = info.getGroupToCount();
+            Object2IntMap<MobCategory> mobcounts = info.getMobCategoryCounts();
             int chunks = ((SpawnHelperInnerInterface)info).cmGetChunkCount();
             if (lv.size() == 0)
             {
                 Map<Value, Value> retDict = new HashMap<>();
-                for (SpawnGroup category: mobcounts.keySet())
+                for (MobCategory category: mobcounts.keySet())
                 {
-                    int currentCap = (int)(category.getCapacity() * chunks / SpawnReporter.MAGIC_NUMBER);
+                    int currentCap = (int)(category.getMaxInstancesPerChunk() * chunks / SpawnReporter.MAGIC_NUMBER);
                     retDict.put(
-                            new StringValue(category.asString().toLowerCase(Locale.ROOT)),
+                            new StringValue(category.getSerializedName().toLowerCase(Locale.ROOT)),
                             ListValue.of(
                                     new NumericValue(mobcounts.getInt(category)),
                                     new NumericValue(currentCap))
@@ -63,11 +62,11 @@ public class Monitoring {
                 return MapValue.wrap(retDict);
             }
             String catString = lv.get(0).getString();
-            SpawnGroup cat = SpawnGroup.byName(catString.toLowerCase(Locale.ROOT));
+            MobCategory cat = MobCategory.byName(catString.toLowerCase(Locale.ROOT));
             if (cat == null) throw new InternalExpressionException("Unreconized mob category: "+catString);
             return ListValue.of(
                     new NumericValue(mobcounts.getInt(cat)),
-                    new NumericValue((int)(cat.getCapacity() * chunks / SpawnReporter.MAGIC_NUMBER))
+                    new NumericValue((int)(cat.getMaxInstancesPerChunk() * chunks / SpawnReporter.MAGIC_NUMBER))
             );
         });
     }

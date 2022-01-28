@@ -1,13 +1,13 @@
 package carpet.mixins;
 
 import carpet.patches.EntityPlayerMPFake;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.player.Player;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
-@Mixin(PlayerEntity.class)
+@Mixin(Player.class)
 public abstract class PlayerEntity_fakePlayersMixin
 {
     /**
@@ -17,12 +17,12 @@ public abstract class PlayerEntity_fakePlayersMixin
             method = "attack",
             at = @At(
                     value = "FIELD",
-                    target = "Lnet/minecraft/entity/Entity;velocityModified:Z",
+                    target = "Lnet/minecraft/world/entity/Entity;hurtMarked:Z",
                     ordinal = 0
             )
     )
     private boolean velocityModifiedAndNotCarpetFakePlayer(Entity target)
     {
-        return target.velocityModified && !(target instanceof EntityPlayerMPFake);
+        return target.hurtMarked && !(target instanceof EntityPlayerMPFake);
     }
 }

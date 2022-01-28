@@ -1,16 +1,16 @@
 package carpet.mixins;
 
-import net.minecraft.world.poi.PointOfInterest;
+import net.minecraft.world.entity.ai.village.poi.PoiRecord;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Accessor;
 import org.spongepowered.asm.mixin.gen.Invoker;
 
-@Mixin(PointOfInterest.class)
+@Mixin(PoiRecord.class)
 public interface PointOfInterest_scarpetMixin
 {
     @Accessor("freeTickets")
     int getFreeTickets();
 
     @Invoker
-    boolean callReserveTicket();
+    boolean callAcquireTicket();
 }

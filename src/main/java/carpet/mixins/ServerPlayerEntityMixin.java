@@ -5,15 +5,15 @@ import carpet.fakes.ServerPlayerEntityInterface;
 import carpet.helpers.EntityPlayerActionPack;
 import com.mojang.authlib.GameProfile;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ServerWorld;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-@Mixin(ServerPlayerEntity.class)
+@Mixin(ServerPlayer.class)
 public abstract class ServerPlayerEntityMixin implements ServerPlayerEntityInterface
 {
     @Unique
@@ -27,11 +27,11 @@ public abstract class ServerPlayerEntityMixin implements ServerPlayerEntityInter
     @Inject(method = "<init>", at = @At(value = "RETURN"))
     private void onServerPlayerEntityContructor(
             MinecraftServer minecraftServer_1,
-            ServerWorld serverWorld_1,
+            ServerLevel serverWorld_1,
             GameProfile gameProfile_1,
             CallbackInfo ci)
     {
-        this.actionPack = new EntityPlayerActionPack((ServerPlayerEntity) (Object) this);
+        this.actionPack = new EntityPlayerActionPack((ServerPlayer) (Object) this);
     }
 
     @Inject(method = "tick", at = @At(value = "HEAD"))

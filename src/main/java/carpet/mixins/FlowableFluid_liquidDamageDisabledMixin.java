@@ -1,29 +1,29 @@
 package carpet.mixins;
 
 import carpet.CarpetSettings;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.Material;
-import net.minecraft.fluid.FlowableFluid;
-import net.minecraft.fluid.Fluid;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.BlockView;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.material.FlowingFluid;
+import net.minecraft.world.level.material.Fluid;
+import net.minecraft.world.level.material.Material;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-@Mixin(FlowableFluid.class)
+@Mixin(FlowingFluid.class)
 public class FlowableFluid_liquidDamageDisabledMixin
 {
     @Inject(
-            method = "canFill",
+            method = "canHoldFluid",
             at = @At(
                     value = "INVOKE",
-                    target = "Lnet/minecraft/block/Material;blocksMovement()Z"
+                    target = "Lnet/minecraft/world/level/material/Material;blocksMotion()Z"
             ),
             cancellable = true
     )
-    private void stopBreakingBlock(BlockView world, BlockPos pos, BlockState state, Fluid fluid, CallbackInfoReturnable<Boolean> cir)
+    private void stopBreakingBlock(BlockGetter world, BlockPos pos, BlockState state, Fluid fluid, CallbackInfoReturnable<Boolean> cir)
     {
         if (CarpetSettings.liquidDamageDisabled)
         {

@@ -12,54 +12,53 @@ import com.mojang.brigadier.arguments.BoolArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
-import net.minecraft.command.argument.BlockPosArgumentType;
-import net.minecraft.command.argument.DimensionArgumentType;
-import net.minecraft.entity.SpawnGroup;
-import net.minecraft.server.command.ServerCommandSource;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.util.DyeColor;
-import net.minecraft.util.math.BlockPos;
-
 import java.util.Arrays;
 import java.util.Locale;
 import java.util.stream.Collectors;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.commands.arguments.DimensionArgument;
+import net.minecraft.commands.arguments.coordinates.BlockPosArgument;
+import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.MobCategory;
+import net.minecraft.world.item.DyeColor;
 
 import static com.mojang.brigadier.arguments.IntegerArgumentType.getInteger;
 import static com.mojang.brigadier.arguments.IntegerArgumentType.integer;
 import static com.mojang.brigadier.arguments.StringArgumentType.getString;
 import static com.mojang.brigadier.arguments.StringArgumentType.string;
 import static com.mojang.brigadier.arguments.StringArgumentType.word;
-import static net.minecraft.server.command.CommandManager.argument;
-import static net.minecraft.server.command.CommandManager.literal;
-import static net.minecraft.command.CommandSource.suggestMatching;
+import static net.minecraft.commands.Commands.argument;
+import static net.minecraft.commands.Commands.literal;
+import static net.minecraft.commands.SharedSuggestionProvider.suggest;
 
 
 public class SpawnCommand
 {
-    public static void register(CommandDispatcher<ServerCommandSource> dispatcher)
+    public static void register(CommandDispatcher<CommandSourceStack> dispatcher)
     {
-        LiteralArgumentBuilder<ServerCommandSource> literalargumentbuilder = literal("spawn").
+        LiteralArgumentBuilder<CommandSourceStack> literalargumentbuilder = literal("spawn").
                 requires((player) -> SettingsManager.canUseCommand(player, CarpetSettings.commandSpawn));
 
         literalargumentbuilder.
                 then(literal("list").
-                        then(argument("pos", BlockPosArgumentType.blockPos()).
-                                executes( (c) -> listSpawns(c.getSource(), BlockPosArgumentType.getBlockPos(c, "pos"))))).
+                        then(argument("pos", BlockPosArgument.blockPos()).
+                                executes( (c) -> listSpawns(c.getSource(), BlockPosArgument.getSpawnablePos(c, "pos"))))).
                 then(literal("tracking").
                         executes( (c) -> printTrackingReport(c.getSource())).
                         then(literal("start").
                                 executes( (c) -> startTracking(c.getSource(), null, null)).
-                                then(argument("from", BlockPosArgumentType.blockPos()).
-                                        then(argument("to", BlockPosArgumentType.blockPos()).
+                                then(argument("from", BlockPosArgument.blockPos()).
+                                        then(argument("to", BlockPosArgument.blockPos()).
                                                 executes( (c) -> startTracking(
                                                         c.getSource(),
-                                                        BlockPosArgumentType.getBlockPos(c, "from"),
-                                                        BlockPosArgumentType.getBlockPos(c, "to")))))).
+                                                        BlockPosArgument.getSpawnablePos(c, "from"),
+                                                        BlockPosArgument.getSpawnablePos(c, "to")))))).
                         then(literal("stop").
                                 executes( (c) -> stopTracking(c.getSource()))).
                         then(argument("type", word()).
-                                suggests( (c, b) -> suggestMatching(Arrays.stream(SpawnGroup.values()).map(SpawnGroup::getName),b)).
+                                suggests( (c, b) -> suggest(Arrays.stream(MobCategory.values()).map(MobCategory::getName),b)).
                                 executes( (c) -> recentSpawnsForType(c.getSource(), getString(c, "type"))))).
                 then(literal("test").
                         executes( (c)-> runTest(c.getSource(), 72000, null)).
@@ -69,7 +68,7 @@ public class SpawnCommand
                                         getInteger(c, "ticks"),
                                         null)).
                                 then(argument("counter", word()).
-                                        suggests( (c, b) -> suggestMatching(Arrays.stream(DyeColor.values()).map(DyeColor::toString),b)).
+                                        suggests( (c, b) -> suggest(Arrays.stream(DyeColor.values()).map(DyeColor::toString),b)).
                                         executes((c)-> runTest(
                                                 c.getSource(),
                                                 getInteger(c, "ticks"),
@@ -82,9 +81,9 @@ public class SpawnCommand
                         then(literal("reset").
                                 executes( (c) -> resetSpawnRates(c.getSource()))).
                         then(argument("type", word()).
-                                suggests( (c, b) -> suggestMatching(Arrays.stream(SpawnGroup.values()).map(SpawnGroup::getName),b)).
+                                suggests( (c, b) -> suggest(Arrays.stream(MobCategory.values()).map(MobCategory::getName),b)).
                                 then(argument("rounds", integer(0)).
-                                        suggests( (c, b) -> suggestMatching(new String[]{"1"},b)).
+                                        suggests( (c, b) -> suggest(new String[]{"1"},b)).
                                         executes( (c) -> setSpawnRates(
                                                 c.getSource(),
                                                 getString(c, "type"),
@@ -94,41 +93,41 @@ public class SpawnCommand
                         then(literal("set").
                                 then(argument("cap (hostile)", integer(1,1400)).
                                         executes( (c) -> setMobcaps(c.getSource(), getInteger(c, "cap (hostile)"))))).
-                        then(argument("dimension", DimensionArgumentType.dimension()).
-                                executes( (c)-> mobcapsForDimension(c.getSource(), DimensionArgumentType.getDimensionArgument(c, "dimension"))))).
+                        then(argument("dimension", DimensionArgument.dimension()).
+                                executes( (c)-> mobcapsForDimension(c.getSource(), DimensionArgument.getDimension(c, "dimension"))))).
                 then(literal("entities").
                         executes( (c) -> generalMobcaps(c.getSource()) ).
                         then(argument("type", string()).
-                                suggests( (c, b)->suggestMatching(Arrays.stream(SpawnGroup.values()).map(SpawnGroup::getName), b)).
+                                suggests( (c, b)->suggest(Arrays.stream(MobCategory.values()).map(MobCategory::getName), b)).
                                 executes( (c) -> listEntitiesOfType(c.getSource(), getString(c, "type"), false)).
                                 then(literal("all").executes( (c) -> listEntitiesOfType(c.getSource(), getString(c, "type"), true)))));
 
         dispatcher.register(literalargumentbuilder);
     }
 
-    private static SpawnGroup getCategory(String string) throws CommandSyntaxException
+    private static MobCategory getCategory(String string) throws CommandSyntaxException
     {
-        if (!Arrays.stream(SpawnGroup.values()).map(SpawnGroup::getName).collect(Collectors.toSet()).contains(string))
+        if (!Arrays.stream(MobCategory.values()).map(MobCategory::getName).collect(Collectors.toSet()).contains(string))
         {
-            throw new SimpleCommandExceptionType(Messenger.c("r Wrong mob type: "+string+" should be "+ Arrays.stream(SpawnGroup.values()).map(SpawnGroup::getName).collect(Collectors.joining(", ")))).create();
+            throw new SimpleCommandExceptionType(Messenger.c("r Wrong mob type: "+string+" should be "+ Arrays.stream(MobCategory.values()).map(MobCategory::getName).collect(Collectors.joining(", ")))).create();
         }
-        return SpawnGroup.byName(string.toLowerCase(Locale.ROOT));
+        return MobCategory.byName(string.toLowerCase(Locale.ROOT));
     }
 
 
-    private static int listSpawns(ServerCommandSource source, BlockPos pos)
+    private static int listSpawns(CommandSourceStack source, BlockPos pos)
     {
-        Messenger.send(source, SpawnReporter.report(pos, source.getWorld()));
+        Messenger.send(source, SpawnReporter.report(pos, source.getLevel()));
         return 1;
     }
 
-    private static int printTrackingReport(ServerCommandSource source)
+    private static int printTrackingReport(CommandSourceStack source)
     {
-        Messenger.send(source, SpawnReporter.tracking_report(source.getWorld()));
+        Messenger.send(source, SpawnReporter.tracking_report(source.getLevel()));
         return 1;
     }
 
-    private static int startTracking(ServerCommandSource source, BlockPos a, BlockPos b)
+    private static int startTracking(CommandSourceStack source, BlockPos a, BlockPos b)
     {
         if (SpawnReporter.track_spawns != 0L)
         {
@@ -149,16 +148,16 @@ public class SpawnCommand
                     Math.max(a.getZ(), b.getZ()) );
         }
         SpawnReporter.reset_spawn_stats(source.getServer(), false);
-        SpawnReporter.track_spawns = (long) source.getServer().getTicks();
+        SpawnReporter.track_spawns = (long) source.getServer().getTickCount();
         SpawnReporter.lower_spawning_limit = lsl;
         SpawnReporter.upper_spawning_limit = usl;
         Messenger.m(source, "gi Spawning tracking started.");
         return 1;
     }
 
-    private static int stopTracking(ServerCommandSource source)
+    private static int stopTracking(CommandSourceStack source)
     {
-        Messenger.send(source, SpawnReporter.tracking_report(source.getWorld()));
+        Messenger.send(source, SpawnReporter.tracking_report(source.getLevel()));
         SpawnReporter.reset_spawn_stats(source.getServer(),false);
         SpawnReporter.track_spawns = 0L;
         SpawnReporter.lower_spawning_limit = null;
@@ -167,19 +166,19 @@ public class SpawnCommand
         return 1;
     }
 
-    private static int recentSpawnsForType(ServerCommandSource source, String mob_type) throws CommandSyntaxException
+    private static int recentSpawnsForType(CommandSourceStack source, String mob_type) throws CommandSyntaxException
     {
-        SpawnGroup cat = getCategory(mob_type);
-        Messenger.send(source, SpawnReporter.recent_spawns(source.getWorld(), cat));
+        MobCategory cat = getCategory(mob_type);
+        Messenger.send(source, SpawnReporter.recent_spawns(source.getLevel(), cat));
         return 1;
     }
 
-    private static int runTest(ServerCommandSource source, int ticks, String counter)
+    private static int runTest(CommandSourceStack source, int ticks, String counter)
     {
         //stop tracking
         SpawnReporter.reset_spawn_stats(source.getServer(),false);
         //start tracking
-        SpawnReporter.track_spawns = (long) source.getServer().getTicks();
+        SpawnReporter.track_spawns = (long) source.getServer().getTickCount();
         //counter reset
         if (counter == null)
         {
@@ -196,11 +195,11 @@ public class SpawnCommand
         // tick warp 0
         TickSpeed.tickrate_advance(null, 0, null, null);
         // tick warp given player
-        ServerCommandSource csource = null;
-        ServerPlayerEntity player = null;
+        CommandSourceStack csource = null;
+        ServerPlayer player = null;
         try
         {
-            player = source.getPlayer();
+            player = source.getPlayerOrException();
             csource = source;
         }
         catch (CommandSyntaxException ignored)
@@ -211,7 +210,7 @@ public class SpawnCommand
         return 1;
     }
 
-    private static int toggleMocking(ServerCommandSource source, boolean domock)
+    private static int toggleMocking(CommandSourceStack source, boolean domock)
     {
         if (domock)
         {
@@ -226,15 +225,15 @@ public class SpawnCommand
         return 1;
     }
 
-    private static int generalMobcaps(ServerCommandSource source)
+    private static int generalMobcaps(CommandSourceStack source)
     {
-        Messenger.send(source, SpawnReporter.printMobcapsForDimension(source.getWorld(), true));
+        Messenger.send(source, SpawnReporter.printMobcapsForDimension(source.getLevel(), true));
         return 1;
     }
 
-    private static int resetSpawnRates(ServerCommandSource source)
+    private static int resetSpawnRates(CommandSourceStack source)
     {
-        for (SpawnGroup s: SpawnReporter.spawn_tries.keySet())
+        for (MobCategory s: SpawnReporter.spawn_tries.keySet())
         {
             SpawnReporter.spawn_tries.put(s,1);
         }
@@ -243,32 +242,32 @@ public class SpawnCommand
         return 1;
     }
 
-    private static int setSpawnRates(ServerCommandSource source, String mobtype, int rounds) throws CommandSyntaxException
+    private static int setSpawnRates(CommandSourceStack source, String mobtype, int rounds) throws CommandSyntaxException
     {
-        SpawnGroup cat = getCategory(mobtype);
+        MobCategory cat = getCategory(mobtype);
         SpawnReporter.spawn_tries.put(cat, rounds);
         Messenger.m(source, "gi "+mobtype+" mobs will now spawn "+rounds+" times per tick");
         return 1;
     }
 
-    private static int setMobcaps(ServerCommandSource source, int hostile_cap)
+    private static int setMobcaps(CommandSourceStack source, int hostile_cap)
     {
-        double desired_ratio = (double)hostile_cap/ ((SpawnGroupInterface)(Object)SpawnGroup.MONSTER).getInitialSpawnCap();
+        double desired_ratio = (double)hostile_cap/ ((SpawnGroupInterface)(Object)MobCategory.MONSTER).getInitialSpawnCap();
         SpawnReporter.mobcap_exponent = 4.0*Math.log(desired_ratio)/Math.log(2.0);
         Messenger.m(source, String.format("gi Mobcaps for hostile mobs changed to %d, other groups will follow", hostile_cap));
         return 1;
     }
 
-    private static int mobcapsForDimension(ServerCommandSource source, ServerWorld world)
+    private static int mobcapsForDimension(CommandSourceStack source, ServerLevel world)
     {
         Messenger.send(source, SpawnReporter.printMobcapsForDimension(world, true));
         return 1;
     }
 
-    private static int listEntitiesOfType(ServerCommandSource source, String mobtype, boolean all) throws CommandSyntaxException
+    private static int listEntitiesOfType(CommandSourceStack source, String mobtype, boolean all) throws CommandSyntaxException
     {
-        SpawnGroup cat = getCategory(mobtype);
-        Messenger.send(source, SpawnReporter.printEntitiesByType(cat, source.getWorld(), all));
+        MobCategory cat = getCategory(mobtype);
+        Messenger.send(source, SpawnReporter.printEntitiesByType(cat, source.getLevel(), all));
         return 1;
     }
 }

@@ -1,16 +1,15 @@
 package carpet.mixins;
 
+import net.minecraft.world.level.lighting.DynamicGraphMinFixedPoint;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Invoker;
 
-import net.minecraft.world.chunk.light.LevelPropagator;
-
-@Mixin(LevelPropagator.class)
+@Mixin(DynamicGraphMinFixedPoint.class)
 public interface LevelPropagator_resetChunkInterface
 {
-    @Invoker("updateLevel")
+    @Invoker("checkEdge")
     void cmInvokeUpdateLevel(long sourceId, long id, int level, boolean decrease);
 
-    @Invoker("getPropagatedLevel")
+    @Invoker("computeLevelFromNeighbor")
     int cmCallGetPropagatedLevel(long sourceId, long targetId, int level);
 }

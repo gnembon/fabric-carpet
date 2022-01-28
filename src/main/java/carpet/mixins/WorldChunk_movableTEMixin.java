@@ -2,25 +2,23 @@ package carpet.mixins;
 
 import carpet.CarpetSettings;
 import carpet.fakes.WorldChunkInterface;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockEntityProvider;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.PistonExtensionBlock;
-import net.minecraft.block.entity.BlockEntity;
-//import net.minecraft.fluid.Fluid;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.ChunkPos;
-import net.minecraft.util.registry.Registry;
-import net.minecraft.world.HeightLimitView;
-import net.minecraft.world.Heightmap;
-//import net.minecraft.world.TickScheduler;
-import net.minecraft.world.World;
-import net.minecraft.world.biome.Biome;
-import net.minecraft.world.chunk.Chunk;
-import net.minecraft.world.chunk.ChunkSection;
-import net.minecraft.world.chunk.UpgradeData;
-import net.minecraft.world.chunk.WorldChunk;
-import net.minecraft.world.gen.chunk.BlendingData;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Registry;
+import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelHeightAccessor;
+import net.minecraft.world.level.biome.Biome;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.EntityBlock;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.piston.MovingPistonBlock;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.chunk.ChunkAccess;
+import net.minecraft.world.level.chunk.LevelChunk;
+import net.minecraft.world.level.chunk.LevelChunkSection;
+import net.minecraft.world.level.chunk.UpgradeData;
+import net.minecraft.world.level.levelgen.Heightmap;
+import net.minecraft.world.level.levelgen.blending.BlendingData;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -28,40 +26,40 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
-@Mixin(WorldChunk.class)
-public abstract class WorldChunk_movableTEMixin extends Chunk implements WorldChunkInterface
+@Mixin(LevelChunk.class)
+public abstract class WorldChunk_movableTEMixin extends ChunkAccess implements WorldChunkInterface
 {
     @Shadow
     @Final
-    World world;
+    Level level;
 
-    public WorldChunk_movableTEMixin(ChunkPos pos, UpgradeData upgradeData, HeightLimitView heightLimitView, Registry<Biome> biome, long inhabitedTime, @Nullable ChunkSection[] sectionArrayInitializer, @Nullable BlendingData blendingData) {
+    public WorldChunk_movableTEMixin(ChunkPos pos, UpgradeData upgradeData, LevelHeightAccessor heightLimitView, Registry<Biome> biome, long inhabitedTime, @Nullable LevelChunkSection[] sectionArrayInitializer, @Nullable BlendingData blendingData) {
         super(pos, upgradeData, heightLimitView, biome, inhabitedTime, sectionArrayInitializer, blendingData);
     }
 
     @Shadow
     /* @Nullable */
-    public abstract BlockEntity getBlockEntity(BlockPos blockPos_1, WorldChunk.CreationType worldChunk$CreationType_1);
+    public abstract BlockEntity getBlockEntity(BlockPos blockPos_1, LevelChunk.EntityCreationType worldChunk$CreationType_1);
 
-    @Shadow protected abstract <T extends BlockEntity> void updateTicker(T blockEntity);
+    @Shadow protected abstract <T extends BlockEntity> void updateBlockEntityTicker(T blockEntity);
 
-    @Shadow public abstract void addBlockEntity(BlockEntity blockEntity);
+    @Shadow public abstract void addAndRegisterBlockEntity(BlockEntity blockEntity);
 
     // Fix Failure: If a moving BlockEntity is placed while BlockEntities are ticking, this will not find it and then replace it with a new TileEntity!
     // blockEntity_2 = this.getBlockEntity(blockPos_1, WorldChunk.CreationType.CHECK);
     // question is - with the changes in the BE handling this might not be a case anymore
     @Redirect(method = "setBlockState", at = @At(value = "INVOKE", ordinal = 0,
-            target = "Lnet/minecraft/world/chunk/WorldChunk;getBlockEntity(Lnet/minecraft/util/math/BlockPos;" + "Lnet/minecraft/world/chunk/WorldChunk$CreationType;)" + "Lnet/minecraft/block/entity/BlockEntity;"))
-    private BlockEntity ifGetBlockEntity(WorldChunk worldChunk, BlockPos blockPos_1,
-            WorldChunk.CreationType worldChunk$CreationType_1)
+            target = "Lnet/minecraft/world/level/chunk/LevelChunk;getBlockEntity(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/chunk/LevelChunk$EntityCreationType;)Lnet/minecraft/world/level/block/entity/BlockEntity;"))
+    private BlockEntity ifGetBlockEntity(LevelChunk worldChunk, BlockPos blockPos_1,
+            LevelChunk.EntityCreationType worldChunk$CreationType_1)
     {
         if (!CarpetSettings.movableBlockEntities)
         {
-            return this.getBlockEntity(blockPos_1, WorldChunk.CreationType.CHECK);
+            return this.getBlockEntity(blockPos_1, LevelChunk.EntityCreationType.CHECK);
         }
         else
         {
-            return this.world.getBlockEntity(blockPos_1);
+            return this.level.getBlockEntity(blockPos_1);
         }
     }
     
@@ -80,8 +78,8 @@ public abstract class WorldChunk_movableTEMixin extends Chunk implements WorldCh
         int x = blockPos_1.getX() & 15;
         int y = blockPos_1.getY();
         int z = blockPos_1.getZ() & 15;
-        ChunkSection chunkSection = this.getSection(this.getSectionIndex(y));
-        if (chunkSection.isEmpty())
+        LevelChunkSection chunkSection = this.getSection(this.getSectionIndex(y));
+        if (chunkSection.hasOnlyAir())
         {
             if (newBlockState.isAir())
             {
@@ -89,7 +87,7 @@ public abstract class WorldChunk_movableTEMixin extends Chunk implements WorldCh
             }
         }
         
-        boolean boolean_2 = chunkSection.isEmpty();
+        boolean boolean_2 = chunkSection.hasOnlyAir();
         BlockState oldBlockState = chunkSection.setBlockState(x, y & 15, z, newBlockState);
         if (oldBlockState == newBlockState)
         {
@@ -99,24 +97,24 @@ public abstract class WorldChunk_movableTEMixin extends Chunk implements WorldCh
         {
             Block newBlock = newBlockState.getBlock();
             Block oldBlock = oldBlockState.getBlock();
-            ((Heightmap) this.heightmaps.get(Heightmap.Type.MOTION_BLOCKING)).trackUpdate(x, y, z, newBlockState);
-            ((Heightmap) this.heightmaps.get(Heightmap.Type.MOTION_BLOCKING_NO_LEAVES)).trackUpdate(x, y, z, newBlockState);
-            ((Heightmap) this.heightmaps.get(Heightmap.Type.OCEAN_FLOOR)).trackUpdate(x, y, z, newBlockState);
-            ((Heightmap) this.heightmaps.get(Heightmap.Type.WORLD_SURFACE)).trackUpdate(x, y, z, newBlockState);
-            boolean boolean_3 = chunkSection.isEmpty();
+            ((Heightmap) this.heightmaps.get(Heightmap.Types.MOTION_BLOCKING)).update(x, y, z, newBlockState);
+            ((Heightmap) this.heightmaps.get(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES)).update(x, y, z, newBlockState);
+            ((Heightmap) this.heightmaps.get(Heightmap.Types.OCEAN_FLOOR)).update(x, y, z, newBlockState);
+            ((Heightmap) this.heightmaps.get(Heightmap.Types.WORLD_SURFACE)).update(x, y, z, newBlockState);
+            boolean boolean_3 = chunkSection.hasOnlyAir();
             if (boolean_2 != boolean_3)
             {
-                this.world.getChunkManager().getLightingProvider().setSectionStatus(blockPos_1, boolean_3);
+                this.level.getChunkSource().getLightEngine().updateSectionStatus(blockPos_1, boolean_3);
             }
             
-            if (!this.world.isClient)
+            if (!this.level.isClientSide)
             {
-                if (!(oldBlock instanceof PistonExtensionBlock))//this is a movableTE special case, if condition wasn't there it would remove the blockentity that was carried for some reason
-                    oldBlockState.onStateReplaced(this.world, blockPos_1, newBlockState, boolean_1);//this kills it
+                if (!(oldBlock instanceof MovingPistonBlock))//this is a movableTE special case, if condition wasn't there it would remove the blockentity that was carried for some reason
+                    oldBlockState.onRemove(this.level, blockPos_1, newBlockState, boolean_1);//this kills it
             }
-            else if (oldBlock != newBlock && oldBlock instanceof BlockEntityProvider)
+            else if (oldBlock != newBlock && oldBlock instanceof EntityBlock)
             {
-                this.world.removeBlockEntity(blockPos_1);
+                this.level.removeBlockEntity(blockPos_1);
             }
             
             if (chunkSection.getBlockState(x, y & 15, z).getBlock() != newBlock)
@@ -128,11 +126,11 @@ public abstract class WorldChunk_movableTEMixin extends Chunk implements WorldCh
                 BlockEntity oldBlockEntity = null;
                 if (oldBlockState.hasBlockEntity())
                 {
-                    oldBlockEntity = this.getBlockEntity(blockPos_1, WorldChunk.CreationType.CHECK);
+                    oldBlockEntity = this.getBlockEntity(blockPos_1, LevelChunk.EntityCreationType.CHECK);
                     if (oldBlockEntity != null)
                     {
-                        oldBlockEntity.setCachedState(oldBlockState);
-                        updateTicker(oldBlockEntity);
+                        oldBlockEntity.setBlockState(oldBlockState);
+                        updateBlockEntityTicker(oldBlockEntity);
                     }
                 }
 
@@ -140,23 +138,23 @@ public abstract class WorldChunk_movableTEMixin extends Chunk implements WorldCh
                 {
                     if (newBlockEntity == null)
                     {
-                        newBlockEntity = ((BlockEntityProvider) newBlock).createBlockEntity(blockPos_1, newBlockState);
+                        newBlockEntity = ((EntityBlock) newBlock).newBlockEntity(blockPos_1, newBlockState);
                     }
                     if (newBlockEntity != oldBlockEntity && newBlockEntity != null)
                     {
-                        newBlockEntity.cancelRemoval();
-                        this.world.addBlockEntity(newBlockEntity);
-                        newBlockEntity.setCachedState(newBlockState);
-                        updateTicker(newBlockEntity);
+                        newBlockEntity.clearRemoved();
+                        this.level.setBlockEntity(newBlockEntity);
+                        newBlockEntity.setBlockState(newBlockState);
+                        updateBlockEntityTicker(newBlockEntity);
                     }
                 }
 
-                if (!this.world.isClient)
+                if (!this.level.isClientSide)
                 {
-                    newBlockState.onBlockAdded(this.world, blockPos_1, oldBlockState, boolean_1); //This can call setblockstate! (e.g. hopper does)
+                    newBlockState.onPlace(this.level, blockPos_1, oldBlockState, boolean_1); //This can call setblockstate! (e.g. hopper does)
                 }
                 
-                this.needsSaving = true; // shouldSave
+                this.unsaved = true; // shouldSave
                 return oldBlockState;
             }
         }

@@ -4,55 +4,55 @@ import org.spongepowered.asm.mixin.Mixin;
 
 import carpet.fakes.ChunkLightProviderInterface;
 import carpet.fakes.LightStorageInterface;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.ChunkSectionPos;
-import net.minecraft.util.math.Direction;
-import net.minecraft.world.LightType;
-import net.minecraft.world.chunk.ChunkNibbleArray;
-import net.minecraft.world.chunk.ChunkProvider;
-import net.minecraft.world.chunk.light.BlockLightStorage;
-import net.minecraft.world.chunk.light.BlockLightStorage.Data;
-import net.minecraft.world.chunk.light.ChunkLightProvider;
-import net.minecraft.world.chunk.light.LightStorage;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.core.SectionPos;
+import net.minecraft.world.level.LightLayer;
+import net.minecraft.world.level.chunk.DataLayer;
+import net.minecraft.world.level.chunk.LightChunkGetter;
+import net.minecraft.world.level.lighting.BlockLightSectionStorage;
+import net.minecraft.world.level.lighting.BlockLightSectionStorage.BlockDataLayerStorageMap;
+import net.minecraft.world.level.lighting.LayerLightEngine;
+import net.minecraft.world.level.lighting.LayerLightSectionStorage;
 
-@Mixin(BlockLightStorage.class)
-public abstract class BlockLightStorage_scarpetChunkCreationMixin extends LightStorage<Data> implements LightStorageInterface
+@Mixin(BlockLightSectionStorage.class)
+public abstract class BlockLightStorage_scarpetChunkCreationMixin extends LayerLightSectionStorage<BlockDataLayerStorageMap> implements LightStorageInterface
 {
-    private BlockLightStorage_scarpetChunkCreationMixin(final LightType lightType, final ChunkProvider chunkProvider, final Data lightData)
+    private BlockLightStorage_scarpetChunkCreationMixin(final LightLayer lightType, final LightChunkGetter chunkProvider, final BlockDataLayerStorageMap lightData)
     {
         super(lightType, chunkProvider, lightData);
     }
 
     @Override
-    public void processRelight(final ChunkLightProvider<?, ?> lightProvider, final long cPos)
+    public void processRelight(final LayerLightEngine<?, ?> lightProvider, final long cPos)
     {
         final LevelPropagator_resetChunkInterface levelPropagator = (LevelPropagator_resetChunkInterface) lightProvider;
 
         for (int y = -1; y < 17; ++y)
         {
-            final long sectionPos = ChunkSectionPos.asLong(ChunkSectionPos.unpackX(cPos), y, ChunkSectionPos.unpackZ(cPos));
-            final long pos = BlockPos.asLong(ChunkSectionPos.getBlockCoord(ChunkSectionPos.unpackX(sectionPos)), ChunkSectionPos.getBlockCoord(y), ChunkSectionPos.getBlockCoord(ChunkSectionPos.unpackZ(sectionPos)));
+            final long sectionPos = SectionPos.asLong(SectionPos.x(cPos), y, SectionPos.z(cPos));
+            final long pos = BlockPos.asLong(SectionPos.sectionToBlockCoord(SectionPos.x(sectionPos)), SectionPos.sectionToBlockCoord(y), SectionPos.sectionToBlockCoord(SectionPos.z(sectionPos)));
 
-            if (!this.hasSection(sectionPos))
+            if (!this.storingLightForSection(sectionPos))
                 continue;
 
-            for (final Direction dir : Direction.Type.HORIZONTAL)
+            for (final Direction dir : Direction.Plane.HORIZONTAL)
             {
-                final ChunkNibbleArray neighborLightArray = this.getLightSection(ChunkSectionPos.offset(sectionPos, dir));
+                final DataLayer neighborLightArray = this.getDataLayerData(SectionPos.offset(sectionPos, dir));
 
                 if (neighborLightArray == null)
                     continue;
 
-                final int ox = 15 * Math.max(dir.getOffsetX(), 0);
-                final int oz = 15 * Math.max(dir.getOffsetZ(), 0);
+                final int ox = 15 * Math.max(dir.getStepX(), 0);
+                final int oz = 15 * Math.max(dir.getStepZ(), 0);
 
-                final int dx = Math.abs(dir.getOffsetZ());
-                final int dz = Math.abs(dir.getOffsetX());
+                final int dx = Math.abs(dir.getStepZ());
+                final int dz = Math.abs(dir.getStepX());
 
                 for (int t = 0; t < 16; ++t)
                     for (int dy = 0; dy < 16; ++dy)
                     {
-                        final long dst = BlockPos.add(pos, ox + t * dx, dy, oz + t * dz);
+                        final long dst = BlockPos.offset(pos, ox + t * dx, dy, oz + t * dz);
                         final long src = BlockPos.offset(dst, dir);
 
                         final int srcLevel = ((ChunkLightProviderInterface) lightProvider).callGetCurrentLevelFromSection(neighborLightArray, src);

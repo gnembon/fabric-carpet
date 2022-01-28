@@ -1,18 +1,18 @@
 package carpet.mixins;
 
 import carpet.CarpetSettings;
-import net.minecraft.block.entity.StructureBlockBlockEntity;
-import net.minecraft.client.render.block.entity.BlockEntityRenderer;
-import net.minecraft.client.render.block.entity.StructureBlockBlockEntityRenderer;
+import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
+import net.minecraft.client.renderer.blockentity.StructureBlockRenderer;
+import net.minecraft.world.level.block.entity.StructureBlockEntity;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-@Mixin(StructureBlockBlockEntityRenderer.class)
-public abstract class StructureBlockBlockEntityRenderer_mixin implements BlockEntityRenderer<StructureBlockBlockEntity>
+@Mixin(StructureBlockRenderer.class)
+public abstract class StructureBlockBlockEntityRenderer_mixin implements BlockEntityRenderer<StructureBlockEntity>
 {
-    @Inject(method = "getRenderDistance", at = @At("HEAD"), cancellable = true)
+    @Inject(method = "getViewDistance", at = @At("HEAD"), cancellable = true)
     void newLimit(CallbackInfoReturnable<Integer> cir)
     {
         if (CarpetSettings.structureBlockOutlineDistance != 96)

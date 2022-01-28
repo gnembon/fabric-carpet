@@ -1,21 +1,5 @@
 package carpet.mixins;
 
-import net.minecraft.item.ItemStack;
-import net.minecraft.network.packet.c2s.play.ButtonClickC2SPacket;
-import net.minecraft.network.packet.c2s.play.CraftRequestC2SPacket;
-import net.minecraft.network.packet.c2s.play.HandSwingC2SPacket;
-import net.minecraft.network.packet.c2s.play.UpdateSelectedSlotC2SPacket;
-import net.minecraft.server.network.ServerPlayNetworkHandler;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.network.packet.c2s.play.ClientCommandC2SPacket;
-import net.minecraft.network.packet.c2s.play.PlayerActionC2SPacket;
-import net.minecraft.network.packet.c2s.play.PlayerInputC2SPacket;
-import net.minecraft.network.packet.c2s.play.PlayerInteractBlockC2SPacket;
-import net.minecraft.network.packet.c2s.play.PlayerInteractEntityC2SPacket;
-import net.minecraft.network.packet.c2s.play.PlayerInteractItemC2SPacket;
-import net.minecraft.network.packet.c2s.play.PlayerMoveC2SPacket;
-import net.minecraft.util.Hand;
-import net.minecraft.util.hit.BlockHitResult;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
@@ -45,167 +29,183 @@ import static carpet.script.CarpetEventServer.Event.PLAYER_SWITCHES_SLOT;
 import static carpet.script.CarpetEventServer.Event.PLAYER_USES_ITEM;
 import static carpet.script.CarpetEventServer.Event.PLAYER_WAKES_UP;
 
+import net.minecraft.network.protocol.game.ServerboundContainerButtonClickPacket;
+import net.minecraft.network.protocol.game.ServerboundMovePlayerPacket;
+import net.minecraft.network.protocol.game.ServerboundPlaceRecipePacket;
+import net.minecraft.network.protocol.game.ServerboundPlayerActionPacket;
+import net.minecraft.network.protocol.game.ServerboundPlayerCommandPacket;
+import net.minecraft.network.protocol.game.ServerboundPlayerInputPacket;
+import net.minecraft.network.protocol.game.ServerboundSetCarriedItemPacket;
+import net.minecraft.network.protocol.game.ServerboundSwingPacket;
+import net.minecraft.network.protocol.game.ServerboundUseItemOnPacket;
+import net.minecraft.network.protocol.game.ServerboundUseItemPacket;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.network.ServerGamePacketListenerImpl;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.phys.BlockHitResult;
 
-@Mixin(ServerPlayNetworkHandler.class)
+
+@Mixin(ServerGamePacketListenerImpl.class)
 public class ServerPlayNetworkHandler_scarpetEventsMixin
 {
-    @Shadow public ServerPlayerEntity player;
+    @Shadow public ServerPlayer player;
 
-    @Inject(method = "onPlayerInput", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/network/ServerPlayerEntity;updateInput(FFZZ)V"))
-    private void checkMoves(PlayerInputC2SPacket p, CallbackInfo ci)
+    @Inject(method = "handlePlayerInput", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/level/ServerPlayer;setPlayerInput(FFZZ)V"))
+    private void checkMoves(ServerboundPlayerInputPacket p, CallbackInfo ci)
     {
-        if (PLAYER_RIDES.isNeeded() && (p.getSideways() != 0.0F || p.getForward() != 0.0F || p.isJumping() || p.isSneaking()))
+        if (PLAYER_RIDES.isNeeded() && (p.getXxa() != 0.0F || p.getZza() != 0.0F || p.isJumping() || p.isShiftKeyDown()))
         {
-            PLAYER_RIDES.onMountControls(player, p.getSideways(), p.getForward(), p.isJumping(), p.isSneaking());
+            PLAYER_RIDES.onMountControls(player, p.getXxa(), p.getZza(), p.isJumping(), p.isShiftKeyDown());
         }
     }
 
-    @Inject(method = "onPlayerAction", at = @At(
+    @Inject(method = "handlePlayerAction", at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/server/network/ServerPlayerEntity;dropSelectedItem(Z)Z", // dropSelectedItem
+            target = "Lnet/minecraft/server/level/ServerPlayer;drop(Z)Z", // dropSelectedItem
             ordinal = 0,
             shift = At.Shift.BEFORE
     ))
-    private void onQItem(PlayerActionC2SPacket playerActionC2SPacket_1, CallbackInfo ci)
+    private void onQItem(ServerboundPlayerActionPacket playerActionC2SPacket_1, CallbackInfo ci)
     {
         PLAYER_DROPS_ITEM.onPlayerEvent(player);
     }
 
-    @Inject(method = "onPlayerAction", at = @At(
+    @Inject(method = "handlePlayerAction", at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/server/network/ServerPlayerEntity;getStackInHand(Lnet/minecraft/util/Hand;)Lnet/minecraft/item/ItemStack;",
+            target = "Lnet/minecraft/server/level/ServerPlayer;getItemInHand(Lnet/minecraft/world/InteractionHand;)Lnet/minecraft/world/item/ItemStack;",
             ordinal = 0,
             shift = At.Shift.BEFORE
     ))
-    private void onHandSwap(PlayerActionC2SPacket playerActionC2SPacket_1, CallbackInfo ci)
+    private void onHandSwap(ServerboundPlayerActionPacket playerActionC2SPacket_1, CallbackInfo ci)
     {
         PLAYER_SWAPS_HANDS.onPlayerEvent(player);
     }
 
-    @Inject(method = "onPlayerAction", at = @At(
+    @Inject(method = "handlePlayerAction", at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/server/network/ServerPlayerEntity;dropSelectedItem(Z)Z", // dropSelectedItem
+            target = "Lnet/minecraft/server/level/ServerPlayer;drop(Z)Z", // dropSelectedItem
             ordinal = 1,
             shift = At.Shift.BEFORE
     ))
-    private void onCtrlQItem(PlayerActionC2SPacket playerActionC2SPacket_1, CallbackInfo ci)
+    private void onCtrlQItem(ServerboundPlayerActionPacket playerActionC2SPacket_1, CallbackInfo ci)
     {
         PLAYER_DROPS_STACK.onPlayerEvent(player);
     }
 
 
-    @Inject(method = "onPlayerMove", at = @At(
+    @Inject(method = "handleMovePlayer", at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/server/network/ServerPlayerEntity;jump()V"
+            target = "Lnet/minecraft/server/level/ServerPlayer;jumpFromGround()V"
     ))
-    private void onJump(PlayerMoveC2SPacket playerMoveC2SPacket_1, CallbackInfo ci)
+    private void onJump(ServerboundMovePlayerPacket playerMoveC2SPacket_1, CallbackInfo ci)
     {
         PLAYER_JUMPS.onPlayerEvent(player);
     }
 
-    @Inject(method = "onPlayerAction", at = @At(
+    @Inject(method = "handlePlayerAction", at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/server/network/ServerPlayerInteractionManager;processBlockBreakingAction(Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/network/packet/c2s/play/PlayerActionC2SPacket$Action;Lnet/minecraft/util/math/Direction;I)V",
+            target = "Lnet/minecraft/server/level/ServerPlayerGameMode;handleBlockBreakAction(Lnet/minecraft/core/BlockPos;Lnet/minecraft/network/protocol/game/ServerboundPlayerActionPacket$Action;Lnet/minecraft/core/Direction;I)V",
             shift = At.Shift.BEFORE
     ))
-    private void onClicked(PlayerActionC2SPacket packet, CallbackInfo ci)
+    private void onClicked(ServerboundPlayerActionPacket packet, CallbackInfo ci)
     {
-        if (packet.getAction() == PlayerActionC2SPacket.Action.START_DESTROY_BLOCK)
+        if (packet.getAction() == ServerboundPlayerActionPacket.Action.START_DESTROY_BLOCK)
             PLAYER_CLICKS_BLOCK.onBlockAction(player, packet.getPos(), packet.getDirection());
     }
 
-    @Redirect(method = "onPlayerAction", at = @At(
+    @Redirect(method = "handlePlayerAction", at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/server/network/ServerPlayerEntity;stopUsingItem()V"
+            target = "Lnet/minecraft/server/level/ServerPlayer;releaseUsingItem()V"
     ))
-    private void onStopUsing(ServerPlayerEntity serverPlayerEntity)
+    private void onStopUsing(ServerPlayer serverPlayerEntity)
     {
         if (PLAYER_RELEASED_ITEM.isNeeded())
         {
-            Hand hand = serverPlayerEntity.getActiveHand();
-            ItemStack stack = serverPlayerEntity.getActiveItem().copy();
-            serverPlayerEntity.stopUsingItem();
+            InteractionHand hand = serverPlayerEntity.getUsedItemHand();
+            ItemStack stack = serverPlayerEntity.getUseItem().copy();
+            serverPlayerEntity.releaseUsingItem();
             PLAYER_RELEASED_ITEM.onItemAction(player, hand, stack);
         }
         else
         {
-            serverPlayerEntity.stopUsingItem();
+            serverPlayerEntity.releaseUsingItem();
         }
     }
 
-    @Inject(method = "onPlayerInteractBlock", at = @At(
+    @Inject(method = "handleUseItemOn", at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/server/network/ServerPlayerInteractionManager;interactBlock(Lnet/minecraft/server/network/ServerPlayerEntity;Lnet/minecraft/world/World;Lnet/minecraft/item/ItemStack;Lnet/minecraft/util/Hand;Lnet/minecraft/util/hit/BlockHitResult;)Lnet/minecraft/util/ActionResult;"
+            target = "Lnet/minecraft/server/level/ServerPlayerGameMode;useItemOn(Lnet/minecraft/server/level/ServerPlayer;Lnet/minecraft/world/level/Level;Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/InteractionHand;Lnet/minecraft/world/phys/BlockHitResult;)Lnet/minecraft/world/InteractionResult;"
     ))
-    private void onBlockInteracted(PlayerInteractBlockC2SPacket playerInteractBlockC2SPacket_1, CallbackInfo ci)
+    private void onBlockInteracted(ServerboundUseItemOnPacket playerInteractBlockC2SPacket_1, CallbackInfo ci)
     {
         if (PLAYER_RIGHT_CLICKS_BLOCK.isNeeded())
         {
-            Hand hand = playerInteractBlockC2SPacket_1.getHand();
-            BlockHitResult hitRes = playerInteractBlockC2SPacket_1.getBlockHitResult();
+            InteractionHand hand = playerInteractBlockC2SPacket_1.getHand();
+            BlockHitResult hitRes = playerInteractBlockC2SPacket_1.getHitResult();
             PLAYER_RIGHT_CLICKS_BLOCK.onBlockHit(player, hand, hitRes);
         }
     }
 
-    @Inject(method = "onPlayerInteractItem", at = @At(
+    @Inject(method = "handleUseItem", at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/server/network/ServerPlayerEntity;updateLastActionTime()V"
+            target = "Lnet/minecraft/server/level/ServerPlayer;resetLastActionTime()V"
     ))
-    private void onItemClicked(PlayerInteractItemC2SPacket playerInteractItemC2SPacket_1, CallbackInfo ci)
+    private void onItemClicked(ServerboundUseItemPacket playerInteractItemC2SPacket_1, CallbackInfo ci)
     {
         if (PLAYER_USES_ITEM.isNeeded())
         {
-            Hand hand = playerInteractItemC2SPacket_1.getHand();
-            PLAYER_USES_ITEM.onItemAction(player, hand, player.getStackInHand(hand).copy());
+            InteractionHand hand = playerInteractItemC2SPacket_1.getHand();
+            PLAYER_USES_ITEM.onItemAction(player, hand, player.getItemInHand(hand).copy());
         }
     }
 
-    @Inject(method = "onClientCommand", at = @At(
+    @Inject(method = "handlePlayerCommand", at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/server/network/ServerPlayerEntity;setSneaking(Z)V",
+            target = "Lnet/minecraft/server/level/ServerPlayer;setShiftKeyDown(Z)V",
             ordinal = 0
     ))
-    private void onStartSneaking(ClientCommandC2SPacket clientCommandC2SPacket_1, CallbackInfo ci)
+    private void onStartSneaking(ServerboundPlayerCommandPacket clientCommandC2SPacket_1, CallbackInfo ci)
     {
         PLAYER_STARTS_SNEAKING.onPlayerEvent(player);
     }
 
-    @Inject(method = "onClientCommand", at = @At(
+    @Inject(method = "handlePlayerCommand", at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/server/network/ServerPlayerEntity;setSneaking(Z)V",
+            target = "Lnet/minecraft/server/level/ServerPlayer;setShiftKeyDown(Z)V",
             ordinal = 1
     ))
-    private void onStopSneaking(ClientCommandC2SPacket clientCommandC2SPacket_1, CallbackInfo ci)
+    private void onStopSneaking(ServerboundPlayerCommandPacket clientCommandC2SPacket_1, CallbackInfo ci)
     {
         PLAYER_STOPS_SNEAKING.onPlayerEvent(player);
     }
 
-    @Inject(method = "onClientCommand", at = @At(
+    @Inject(method = "handlePlayerCommand", at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/server/network/ServerPlayerEntity;setSprinting(Z)V",
+            target = "Lnet/minecraft/server/level/ServerPlayer;setSprinting(Z)V",
             ordinal = 0
     ))
-    private void onStartSprinting(ClientCommandC2SPacket clientCommandC2SPacket_1, CallbackInfo ci)
+    private void onStartSprinting(ServerboundPlayerCommandPacket clientCommandC2SPacket_1, CallbackInfo ci)
     {
         PLAYER_STARTS_SPRINTING.onPlayerEvent(player);
     }
 
-    @Inject(method = "onClientCommand", at = @At(
+    @Inject(method = "handlePlayerCommand", at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/server/network/ServerPlayerEntity;setSprinting(Z)V",
+            target = "Lnet/minecraft/server/level/ServerPlayer;setSprinting(Z)V",
             ordinal = 1
     ))
-    private void onStopSprinting(ClientCommandC2SPacket clientCommandC2SPacket_1, CallbackInfo ci)
+    private void onStopSprinting(ServerboundPlayerCommandPacket clientCommandC2SPacket_1, CallbackInfo ci)
     {
         PLAYER_STOPS_SPRINTING.onPlayerEvent(player);
     }
 
-    @Inject(method = "onClientCommand", at = @At(
+    @Inject(method = "handlePlayerCommand", at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/server/network/ServerPlayerEntity;isSleeping()Z",
+            target = "Lnet/minecraft/server/level/ServerPlayer;isSleeping()Z",
             shift = At.Shift.BEFORE
     ))
-    private void onWakeUp(ClientCommandC2SPacket clientCommandC2SPacket_1, CallbackInfo ci)
+    private void onWakeUp(ServerboundPlayerCommandPacket clientCommandC2SPacket_1, CallbackInfo ci)
     {
         //weird one - doesn't seem to work, maybe MP
         if (player.isSleeping())
@@ -215,12 +215,12 @@ public class ServerPlayNetworkHandler_scarpetEventsMixin
 
     }
 
-    @Inject(method = "onClientCommand", at = @At(
+    @Inject(method = "handlePlayerCommand", at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/server/network/ServerPlayerEntity;checkFallFlying()Z",
+            target = "Lnet/minecraft/server/level/ServerPlayer;tryToStartFallFlying()Z",
             shift = At.Shift.BEFORE
     ))
-    private void onElytraEngage(ClientCommandC2SPacket clientCommandC2SPacket_1, CallbackInfo ci)
+    private void onElytraEngage(ServerboundPlayerCommandPacket clientCommandC2SPacket_1, CallbackInfo ci)
     {
         PLAYER_DEPLOYS_ELYTRA.onPlayerEvent(player);
     }
@@ -244,38 +244,38 @@ public class ServerPlayNetworkHandler_scarpetEventsMixin
         PLAYER_ATTACKS_ENTITY.onEntityHandAction(player, playerInteractEntityC2SPacket_1.getEntity(player.getWorld()), null);
     }*/
 
-    @Inject(method = "onButtonClick", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/network/ServerPlayerEntity;updateLastActionTime()V"))
-    private void onItemBeingPickedFromInventory(ButtonClickC2SPacket packet, CallbackInfo ci)
+    @Inject(method = "handleContainerButtonClick", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/level/ServerPlayer;resetLastActionTime()V"))
+    private void onItemBeingPickedFromInventory(ServerboundContainerButtonClickPacket packet, CallbackInfo ci)
     {
         // crafts not int the crafting window
         //CarpetSettings.LOG.error("Player clicks button "+packet.getButtonId());
     }
-    @Inject(method = "onCraftRequest", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/network/ServerPlayerEntity;updateLastActionTime()V"))
-    private void onRecipeSelectedInRecipeManager(CraftRequestC2SPacket packet, CallbackInfo ci)
+    @Inject(method = "handlePlaceRecipe", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/level/ServerPlayer;resetLastActionTime()V"))
+    private void onRecipeSelectedInRecipeManager(ServerboundPlaceRecipePacket packet, CallbackInfo ci)
     {
         if (PLAYER_CHOOSES_RECIPE.isNeeded())
         {
-            PLAYER_CHOOSES_RECIPE.onRecipeSelected(player, packet.getRecipe(), packet.shouldCraftAll());
+            PLAYER_CHOOSES_RECIPE.onRecipeSelected(player, packet.getRecipe(), packet.isShiftDown());
         }
     }
 
-    @Inject(method = "onUpdateSelectedSlot", at = @At("HEAD"))
-    private void onUpdatedSelectedSLot(UpdateSelectedSlotC2SPacket packet, CallbackInfo ci)
+    @Inject(method = "handleSetCarriedItem", at = @At("HEAD"))
+    private void onUpdatedSelectedSLot(ServerboundSetCarriedItemPacket packet, CallbackInfo ci)
     {
-        if (PLAYER_SWITCHES_SLOT.isNeeded() && player.getServer() != null && player.getServer().isOnThread())
+        if (PLAYER_SWITCHES_SLOT.isNeeded() && player.getServer() != null && player.getServer().isSameThread())
         {
-            PLAYER_SWITCHES_SLOT.onSlotSwitch(player, player.getInventory().selectedSlot, packet.getSelectedSlot());
+            PLAYER_SWITCHES_SLOT.onSlotSwitch(player, player.getInventory().selected, packet.getSlot());
         }
     }
 
-    @Inject(method = "onHandSwing", at = @At(
+    @Inject(method = "handleAnimate", at = @At(
             value = "INVOKE", target =
-            "Lnet/minecraft/server/network/ServerPlayerEntity;updateLastActionTime()V",
+            "Lnet/minecraft/server/level/ServerPlayer;resetLastActionTime()V",
             shift = At.Shift.BEFORE)
     )
-    private void onSwing(HandSwingC2SPacket packet, CallbackInfo ci)
+    private void onSwing(ServerboundSwingPacket packet, CallbackInfo ci)
     {
-        if (PLAYER_SWINGS_HAND.isNeeded() && !player.handSwinging)
+        if (PLAYER_SWINGS_HAND.isNeeded() && !player.swinging)
         {
             PLAYER_SWINGS_HAND.onHandAction(player, packet.getHand());
         }

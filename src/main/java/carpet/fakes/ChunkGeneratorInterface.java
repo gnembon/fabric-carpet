@@ -1,6 +1,6 @@
 package carpet.fakes;
 
-import net.minecraft.world.biome.Biome;
+import net.minecraft.world.level.biome.Biome;
 
 public interface ChunkGeneratorInterface
 {

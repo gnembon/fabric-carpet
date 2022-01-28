@@ -1,22 +1,22 @@
 package carpet.mixins;
 
 import carpet.CarpetSettings;
-import net.minecraft.entity.mob.HuskEntity;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.ServerWorldAccess;
-import net.minecraft.world.gen.feature.StructureFeature;
+import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.monster.Husk;
+import net.minecraft.world.level.ServerLevelAccessor;
+import net.minecraft.world.level.levelgen.feature.StructureFeature;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
-@Mixin(HuskEntity.class)
+@Mixin(Husk.class)
 public class HuskEntityMixin
 {
-    @Redirect(method = "canSpawn", at = @At(value = "INVOKE", target="Lnet/minecraft/world/ServerWorldAccess;isSkyVisible(Lnet/minecraft/util/math/BlockPos;)Z"))
-    private static boolean isSkylightOrTempleVisible(ServerWorldAccess serverWorldAccess, BlockPos pos)
+    @Redirect(method = "checkHuskSpawnRules", at = @At(value = "INVOKE", target="Lnet/minecraft/world/level/ServerLevelAccessor;canSeeSky(Lnet/minecraft/core/BlockPos;)Z"))
+    private static boolean isSkylightOrTempleVisible(ServerLevelAccessor serverWorldAccess, BlockPos pos)
     {
-        return serverWorldAccess.isSkyVisible(pos) ||
-                (CarpetSettings.huskSpawningInTemples && (((ServerWorld)serverWorldAccess).getStructureAccessor().getStructureAt(pos, StructureFeature.DESERT_PYRAMID).hasChildren()));
+        return serverWorldAccess.canSeeSky(pos) ||
+                (CarpetSettings.huskSpawningInTemples && (((ServerLevel)serverWorldAccess).structureFeatureManager().getStructureAt(pos, StructureFeature.DESERT_PYRAMID).isValid()));
     }
 }

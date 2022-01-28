@@ -2,14 +2,6 @@ package carpet.mixins;
 
 import carpet.helpers.TickSpeed;
 import carpet.utils.CarpetProfiler;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.util.profiler.Profiler;
-import net.minecraft.util.registry.RegistryKey;
-import net.minecraft.village.raid.RaidManager;
-import net.minecraft.world.MutableWorldProperties;
-import net.minecraft.world.World;
-import net.minecraft.world.border.WorldBorder;
-import net.minecraft.world.dimension.DimensionType;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
@@ -19,16 +11,24 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.profiling.ProfilerFiller;
+import net.minecraft.world.entity.raid.Raids;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.border.WorldBorder;
+import net.minecraft.world.level.dimension.DimensionType;
+import net.minecraft.world.level.storage.WritableLevelData;
 
-@Mixin(ServerWorld.class)
-public abstract class ServerWorld_tickMixin extends World
+@Mixin(ServerLevel.class)
+public abstract class ServerWorld_tickMixin extends Level
 {
-    protected ServerWorld_tickMixin(MutableWorldProperties properties, RegistryKey<World> registryKey, DimensionType dimensionType, Supplier<Profiler> supplier, boolean bl, boolean bl2, long l)
+    protected ServerWorld_tickMixin(WritableLevelData properties, ResourceKey<Level> registryKey, DimensionType dimensionType, Supplier<ProfilerFiller> supplier, boolean bl, boolean bl2, long l)
     {
         super(properties, registryKey, dimensionType, supplier, bl, bl2, l);
     }
 
-    @Shadow protected abstract void processSyncedBlockEvents();
+    @Shadow protected abstract void runBlockEvents();
 
     @Shadow protected abstract void tickTime();
 
@@ -40,7 +40,7 @@ public abstract class ServerWorld_tickMixin extends World
     ))
     private void startWeatherSection(BooleanSupplier booleanSupplier_1, CallbackInfo ci)
     {
-        currentSection = CarpetProfiler.start_section((World)(Object)this, "Environment", CarpetProfiler.TYPE.GENERAL);
+        currentSection = CarpetProfiler.start_section((Level)(Object)this, "Environment", CarpetProfiler.TYPE.GENERAL);
     }
     @Inject(method = "tick", at = @At(
             value = "CONSTANT",
@@ -63,7 +63,7 @@ public abstract class ServerWorld_tickMixin extends World
         if (currentSection != null)
         {
             // out of chunk
-            currentSection = CarpetProfiler.start_section((World) (Object) this, "Blocks", CarpetProfiler.TYPE.GENERAL);
+            currentSection = CarpetProfiler.start_section((Level) (Object) this, "Blocks", CarpetProfiler.TYPE.GENERAL);
         }
     }
 
@@ -76,7 +76,7 @@ public abstract class ServerWorld_tickMixin extends World
         if (currentSection != null)
         {
             CarpetProfiler.end_current_section(currentSection);
-            currentSection = CarpetProfiler.start_section((World) (Object) this, "Village", CarpetProfiler.TYPE.GENERAL);
+            currentSection = CarpetProfiler.start_section((Level) (Object) this, "Village", CarpetProfiler.TYPE.GENERAL);
         }
     }
     @Inject(method = "tick", at = @At(
@@ -99,7 +99,7 @@ public abstract class ServerWorld_tickMixin extends World
     ))
     private void startBlockAgainSection(BooleanSupplier booleanSupplier_1, CallbackInfo ci)
     {
-        currentSection = CarpetProfiler.start_section((World) (Object) this, "Blocks", CarpetProfiler.TYPE.GENERAL);
+        currentSection = CarpetProfiler.start_section((Level) (Object) this, "Blocks", CarpetProfiler.TYPE.GENERAL);
     }
 
     @Inject(method = "tick", at = @At(
@@ -111,13 +111,13 @@ public abstract class ServerWorld_tickMixin extends World
         if (currentSection != null)
         {
             CarpetProfiler.end_current_section(currentSection);
-            currentSection = CarpetProfiler.start_section((World) (Object) this, "Entities", CarpetProfiler.TYPE.GENERAL);
+            currentSection = CarpetProfiler.start_section((Level) (Object) this, "Entities", CarpetProfiler.TYPE.GENERAL);
         }
     }
 
     @Inject(method = "tick", at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/server/world/ServerWorld;tickBlockEntities()V",
+            target = "Lnet/minecraft/server/level/ServerLevel;tickBlockEntities()V",
             shift = At.Shift.BEFORE
     ))
     private void endEntitySection(BooleanSupplier booleanSupplier_1, CallbackInfo ci)
@@ -129,14 +129,14 @@ public abstract class ServerWorld_tickMixin extends World
 
     @Redirect(method = "tick", at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/world/border/WorldBorder;tick()V"
+            target = "Lnet/minecraft/world/level/border/WorldBorder;tick()V"
     ))
     private void tickWorldBorder(WorldBorder worldBorder)
     {
         if (TickSpeed.process_entities) worldBorder.tick();
     }
 
-    @Inject(method = "tickWeather", cancellable = true, at = @At("HEAD"))
+    @Inject(method = "advanceWeatherCycle", cancellable = true, at = @At("HEAD"))
     private void tickWeather(CallbackInfo ci)
     {
         if (!TickSpeed.process_entities) ci.cancel();
@@ -144,40 +144,39 @@ public abstract class ServerWorld_tickMixin extends World
 
     @Redirect(method = "tick", at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/server/world/ServerWorld;tickTime()V" // right before chunk source
+            target = "Lnet/minecraft/server/level/ServerLevel;tickTime()V"
     ))
-    private void tickTimeConditionally(ServerWorld serverWorld)
+    private void tickTimeConditionally(ServerLevel serverWorld)
     {
         if (TickSpeed.process_entities) tickTime();
     }
 
     @Redirect(method = "tick", at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/server/world/ServerWorld;isDebugWorld()Z" // isDebug
-            //target = "Lnet/minecraft/world/level/LevelProperties;getGeneratorType()Lnet/minecraft/world/level/LevelGeneratorType;"
+            target = "Lnet/minecraft/server/level/ServerLevel;isDebug()Z"
     ))
-    private boolean tickPendingBlocks(ServerWorld serverWorld)
+    private boolean tickPendingBlocks(ServerLevel serverWorld)
     {
         if (!TickSpeed.process_entities) return true;
-        return serverWorld.isDebugWorld(); // isDebug()
+        return serverWorld.isDebug(); // isDebug()
     }
 
     @Redirect(method = "tick", at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/village/raid/RaidManager;tick()V"
+            target = "Lnet/minecraft/world/entity/raid/Raids;tick()V"
     ))
-    private void tickConditionally(RaidManager raidManager)
+    private void tickConditionally(Raids raidManager)
     {
         if (TickSpeed.process_entities) raidManager.tick();
     }
 
     @Redirect(method = "tick", at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/server/world/ServerWorld;processSyncedBlockEvents()V" // aka sendBlockActions
+            target = "Lnet/minecraft/server/level/ServerLevel;runBlockEvents()V"
     ))
-    private void tickConditionally(ServerWorld serverWorld)
+    private void tickConditionally(ServerLevel serverWorld)
     {
-        if (TickSpeed.process_entities) processSyncedBlockEvents();
+        if (TickSpeed.process_entities) runBlockEvents();
     }
 
 

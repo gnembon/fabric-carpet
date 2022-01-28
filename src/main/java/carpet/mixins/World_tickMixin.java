@@ -3,10 +3,6 @@ package carpet.mixins;
 import carpet.fakes.WorldInterface;
 import carpet.helpers.TickSpeed;
 import carpet.utils.CarpetProfiler;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityType;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.world.World;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -17,11 +13,15 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Consumer;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.Level;
 
-@Mixin(World.class)
+@Mixin(Level.class)
 public abstract class World_tickMixin implements WorldInterface
 {
-    @Shadow @Final public boolean isClient;
+    @Shadow @Final public boolean isClientSide;
     CarpetProfiler.ProfilerToken currentSection;
     CarpetProfiler.ProfilerToken entitySection;
 
@@ -34,7 +34,7 @@ public abstract class World_tickMixin implements WorldInterface
 
     @Inject(method = "tickBlockEntities", at = @At("HEAD"))
     private void startBlockEntities(CallbackInfo ci) {
-        currentSection = CarpetProfiler.start_section((World) (Object) this, "Block Entities", CarpetProfiler.TYPE.GENERAL);
+        currentSection = CarpetProfiler.start_section((Level) (Object) this, "Block Entities", CarpetProfiler.TYPE.GENERAL);
     }
 
     @Inject(method = "tickBlockEntities", at = @At("TAIL"))
@@ -74,15 +74,15 @@ public abstract class World_tickMixin implements WorldInterface
          CarpetProfiler.end_current_entity_section(entitySection);
     }
 */
-    @Inject(method = "tickEntity", at = @At("HEAD"), cancellable = true)
+    @Inject(method = "guardEntityTick", at = @At("HEAD"), cancellable = true)
     private void startEntity(Consumer<Entity> consumer_1, Entity e, CallbackInfo ci)
     {
-        if (!(TickSpeed.process_entities || (e instanceof PlayerEntity) || (TickSpeed.is_superHot && isClient && e.getPrimaryPassenger() instanceof PlayerEntity)))
+        if (!(TickSpeed.process_entities || (e instanceof Player) || (TickSpeed.is_superHot && isClientSide && e.getControllingPassenger() instanceof Player)))
             ci.cancel();
-        entitySection =  CarpetProfiler.start_entity_section((World) (Object) this, e, CarpetProfiler.TYPE.ENTITY);
+        entitySection =  CarpetProfiler.start_entity_section((Level) (Object) this, e, CarpetProfiler.TYPE.ENTITY);
     }
 
-    @Inject(method = "tickEntity", at = @At("TAIL"))
+    @Inject(method = "guardEntityTick", at = @At("TAIL"))
     private void endEntity(Consumer<Entity> call, Entity e, CallbackInfo ci) {
         CarpetProfiler.end_current_entity_section(entitySection);
     }

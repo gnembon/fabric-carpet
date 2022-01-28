@@ -3,21 +3,20 @@ package carpet.mixins;
 import carpet.CarpetSettings;
 import carpet.fakes.ServerWorldInterface;
 import carpet.script.CarpetEventServer;
-import net.minecraft.entity.Entity;
-import net.minecraft.world.LocalDifficulty;
-import net.minecraft.world.entity.EntityLike;
-import net.minecraft.entity.LightningEntity;
-import net.minecraft.entity.damage.DamageSource;
-import net.minecraft.server.world.ServerEntityManager;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.ChunkPos;
-import net.minecraft.util.profiler.Profiler;
-import net.minecraft.world.chunk.WorldChunk;
-import net.minecraft.world.entity.EntityLookup;
-import net.minecraft.world.explosion.Explosion;
-import net.minecraft.world.explosion.ExplosionBehavior;
-import net.minecraft.world.level.ServerWorldProperties;
+import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.profiling.ProfilerFiller;
+import net.minecraft.world.DifficultyInstance;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LightningBolt;
+import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.level.Explosion;
+import net.minecraft.world.level.ExplosionDamageCalculator;
+import net.minecraft.world.level.chunk.LevelChunk;
+import net.minecraft.world.level.entity.LevelEntityGetter;
+import net.minecraft.world.level.entity.PersistentEntitySectionManager;
+import net.minecraft.world.level.storage.ServerLevelData;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -31,20 +30,20 @@ import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 import static carpet.script.CarpetEventServer.Event.EXPLOSION;
 import static carpet.script.CarpetEventServer.Event.LIGHTNING;
 
-@Mixin(ServerWorld.class)
+@Mixin(ServerLevel.class)
 public class ServerWorld_scarpetMixin implements ServerWorldInterface
 {
     @Inject(method = "tickChunk", locals = LocalCapture.CAPTURE_FAILHARD, at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/server/world/ServerWorld;spawnEntity(Lnet/minecraft/entity/Entity;)Z",
+            target = "Lnet/minecraft/server/level/ServerLevel;addFreshEntity(Lnet/minecraft/world/entity/Entity;)Z",
             shift = At.Shift.BEFORE,
             ordinal = 1
     ))
-    private void onNaturalLightinig(WorldChunk chunk, int randomTickSpeed, CallbackInfo ci,
+    private void onNaturalLightinig(LevelChunk chunk, int randomTickSpeed, CallbackInfo ci,
                                     //ChunkPos chunkPos, boolean bl, int i, int j, Profiler profiler, BlockPos blockPos, boolean bl2)
-                                    ChunkPos chunkPos, boolean bl, int i, int j, Profiler profiler, BlockPos blockPos, LocalDifficulty localDifficulty, boolean bl2, LightningEntity lightningEntity)
+                                    ChunkPos chunkPos, boolean bl, int i, int j, ProfilerFiller profiler, BlockPos blockPos, DifficultyInstance localDifficulty, boolean bl2, LightningBolt lightningEntity)
     {
-        if (LIGHTNING.isNeeded()) LIGHTNING.onWorldEventFlag((ServerWorld) (Object)this, blockPos, bl2?1:0);
+        if (LIGHTNING.isNeeded()) LIGHTNING.onWorldEventFlag((ServerLevel) (Object)this, blockPos, bl2?1:0);
     }
 
     /*
@@ -71,24 +70,24 @@ public class ServerWorld_scarpetMixin implements ServerWorldInterface
     }
     */
 
-    @Inject(method = "createExplosion", at = @At("HEAD"))
-    private void handleExplosion(/*@Nullable*/ Entity entity, /*@Nullable*/ DamageSource damageSource, /*@Nullable*/ ExplosionBehavior explosionBehavior, double d, double e, double f, float g, boolean bl, Explosion.DestructionType destructionType, CallbackInfoReturnable<Explosion> cir)
+    @Inject(method = "explode", at = @At("HEAD"))
+    private void handleExplosion(/*@Nullable*/ Entity entity, /*@Nullable*/ DamageSource damageSource, /*@Nullable*/ ExplosionDamageCalculator explosionBehavior, double d, double e, double f, float g, boolean bl, Explosion.BlockInteraction destructionType, CallbackInfoReturnable<Explosion> cir)
     {
         if (EXPLOSION.isNeeded())
-            EXPLOSION.onExplosion((ServerWorld) (Object)this, entity, null, d, e, f, g, bl, null, null, destructionType);
+            EXPLOSION.onExplosion((ServerLevel) (Object)this, entity, null, d, e, f, g, bl, null, null, destructionType);
     }
 
     @Final
     @Shadow
-    private ServerWorldProperties worldProperties;
-    @Shadow @Final private ServerEntityManager<Entity> entityManager;
+    private ServerLevelData serverLevelData;
+    @Shadow @Final private PersistentEntitySectionManager<Entity> entityManager;
 
-    public ServerWorldProperties getWorldPropertiesCM(){
-        return worldProperties;
+    public ServerLevelData getWorldPropertiesCM(){
+        return serverLevelData;
     }
 
     @Override
-    public EntityLookup<Entity> getEntityLookupCMPublic() {
-        return entityManager.getLookup();
+    public LevelEntityGetter<Entity> getEntityLookupCMPublic() {
+        return entityManager.getEntityGetter();
     }
 }

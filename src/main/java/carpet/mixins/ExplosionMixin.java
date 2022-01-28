@@ -4,15 +4,6 @@ import carpet.helpers.OptimizedExplosion;
 import carpet.CarpetSettings;
 import carpet.logging.LoggerRegistry;
 import carpet.logging.logHelpers.ExplosionLogHelper;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.Blocks;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.damage.DamageSource;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.World;
-import net.minecraft.world.explosion.Explosion;
-import net.minecraft.world.explosion.ExplosionBehavior;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -22,19 +13,28 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.util.List;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.level.Explosion;
+import net.minecraft.world.level.ExplosionDamageCalculator;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.Vec3;
 
 @Mixin(value = Explosion.class)
 public abstract class ExplosionMixin
 {
     @Shadow
     @Final
-    private List<BlockPos> affectedBlocks;
+    private List<BlockPos> toBlow;
 
-    @Shadow @Final private World world;
+    @Shadow @Final private Level level;
 
     private ExplosionLogHelper eLogger;
 
-    @Inject(method = "collectBlocksAndDamageEntities", at = @At("HEAD"),
+    @Inject(method = "explode", at = @At("HEAD"),
             cancellable = true)
     private void onExplosionA(CallbackInfo ci)
     {
@@ -45,18 +45,18 @@ public abstract class ExplosionMixin
         }
     }
 
-    @Inject(method = "affectWorld", at = @At("HEAD"),
+    @Inject(method = "finalizeExplosion", at = @At("HEAD"),
             cancellable = true)
     private void onExplosionB(boolean spawnParticles, CallbackInfo ci)
     {
         if (eLogger != null)
         {
-            eLogger.setAffectBlocks( ! affectedBlocks.isEmpty());
-            eLogger.onExplosionDone(this.world.getTime());
+            eLogger.setAffectBlocks( ! toBlow.isEmpty());
+            eLogger.onExplosionDone(this.level.getGameTime());
         }
         if (CarpetSettings.explosionNoBlockDamage)
         {
-            affectedBlocks.clear();
+            toBlow.clear();
         }
         if (CarpetSettings.optimizedTNT)
         {
@@ -66,31 +66,31 @@ public abstract class ExplosionMixin
     }
     //optional due to Overwrite in Lithium
     //should kill most checks if no block damage is requested
-    @Redirect(method = "collectBlocksAndDamageEntities", require = 0, at = @At(value = "INVOKE",
-            target ="Lnet/minecraft/world/World;getBlockState(Lnet/minecraft/util/math/BlockPos;)Lnet/minecraft/block/BlockState;"))
-    private BlockState noBlockCalcsWithNoBLockDamage(World world, BlockPos pos)
+    @Redirect(method = "explode", require = 0, at = @At(value = "INVOKE",
+            target ="Lnet/minecraft/world/level/Level;getBlockState(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/block/state/BlockState;"))
+    private BlockState noBlockCalcsWithNoBLockDamage(Level world, BlockPos pos)
     {
-        if (CarpetSettings.explosionNoBlockDamage) return Blocks.BEDROCK.getDefaultState();
+        if (CarpetSettings.explosionNoBlockDamage) return Blocks.BEDROCK.defaultBlockState();
         return world.getBlockState(pos);
     }
 
-    @Inject(method = "<init>(Lnet/minecraft/world/World;Lnet/minecraft/entity/Entity;Lnet/minecraft/entity/damage/DamageSource;Lnet/minecraft/world/explosion/ExplosionBehavior;DDDFZLnet/minecraft/world/explosion/Explosion$DestructionType;)V",
+    @Inject(method = "<init>(Lnet/minecraft/world/level/Level;Lnet/minecraft/world/entity/Entity;Lnet/minecraft/world/damagesource/DamageSource;Lnet/minecraft/world/level/ExplosionDamageCalculator;DDDFZLnet/minecraft/world/level/Explosion$BlockInteraction;)V",
             at = @At(value = "RETURN"))
-    private void onExplosionCreated(World world, Entity entity, DamageSource damageSource, ExplosionBehavior explosionBehavior, double x, double y, double z, float power, boolean createFire, Explosion.DestructionType destructionType, CallbackInfo ci)
+    private void onExplosionCreated(Level world, Entity entity, DamageSource damageSource, ExplosionDamageCalculator explosionBehavior, double x, double y, double z, float power, boolean createFire, Explosion.BlockInteraction destructionType, CallbackInfo ci)
     {
-        if (LoggerRegistry.__explosions && ! world.isClient)
+        if (LoggerRegistry.__explosions && ! world.isClientSide)
         {
             eLogger = new ExplosionLogHelper(entity, x, y, z, power, createFire, destructionType);
         }
     }
 
-    @Redirect(method = "collectBlocksAndDamageEntities",
-            at = @At(value = "INVOKE", target = "Lnet/minecraft/entity/Entity;setVelocity(Lnet/minecraft/util/math/Vec3d;)V"))
-    private void setVelocityAndUpdateLogging(Entity entity, Vec3d velocity)
+    @Redirect(method = "explode",
+            at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/Entity;setDeltaMovement(Lnet/minecraft/world/phys/Vec3;)V"))
+    private void setVelocityAndUpdateLogging(Entity entity, Vec3 velocity)
     {
         if (eLogger != null) {
-            eLogger.onEntityImpacted(entity, velocity.subtract(entity.getVelocity()));
+            eLogger.onEntityImpacted(entity, velocity.subtract(entity.getDeltaMovement()));
         }
-        entity.setVelocity(velocity);
+        entity.setDeltaMovement(velocity);
     }
 }

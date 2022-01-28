@@ -2,11 +2,11 @@ package carpet.mixins;
 
 import carpet.helpers.TickSpeed;
 import carpet.utils.CarpetProfiler;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.block.entity.BlockEntityTicker;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.BlockEntityTicker;
+import net.minecraft.world.level.block.state.BlockState;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -15,7 +15,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-@Mixin(targets = "net.minecraft.world.chunk.WorldChunk$DirectBlockEntityTickInvoker")
+@Mixin(targets = "net.minecraft.world.level.chunk.LevelChunk$BoundTickingBlockEntity")
 public class  WorldChunkBEList_tickMixin<T extends BlockEntity>
 {
     @Shadow @Final private T blockEntity;
@@ -25,14 +25,14 @@ public class  WorldChunkBEList_tickMixin<T extends BlockEntity>
     @Inject(method = "tick()V", at = @At("HEAD"))
     private void startTileEntitySection(CallbackInfo ci)
     {
-        entitySection = CarpetProfiler.start_block_entity_section(blockEntity.getWorld(), blockEntity, CarpetProfiler.TYPE.TILEENTITY);
+        entitySection = CarpetProfiler.start_block_entity_section(blockEntity.getLevel(), blockEntity, CarpetProfiler.TYPE.TILEENTITY);
     }
 
     @Redirect(method = "tick()V", at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/block/entity/BlockEntityTicker;tick(Lnet/minecraft/world/World;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/block/BlockState;Lnet/minecraft/block/entity/BlockEntity;)V"
+            target = "Lnet/minecraft/world/level/block/entity/BlockEntityTicker;tick(Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/block/entity/BlockEntity;)V"
     ))
-    private void checkProcessTEs(BlockEntityTicker blockEntityTicker, World world, BlockPos pos, BlockState state, T blockEntity)
+    private void checkProcessTEs(BlockEntityTicker blockEntityTicker, Level world, BlockPos pos, BlockState state, T blockEntity)
     {
         if (TickSpeed.process_entities) blockEntityTicker.tick(world, pos, state, blockEntity);
     }

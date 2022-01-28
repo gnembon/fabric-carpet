@@ -5,7 +5,8 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 import java.lang.reflect.AnnotatedType;
 import java.util.Iterator;
-
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.block.state.BlockState;
 import com.google.common.collect.Lists;
 
 import carpet.script.CarpetContext;
@@ -18,8 +19,6 @@ import carpet.script.bundled.Module;
 import carpet.script.value.BlockValue;
 import carpet.script.value.FunctionValue;
 import carpet.script.value.Value;
-import net.minecraft.block.BlockState;
-import net.minecraft.util.math.BlockPos;
 
 import static java.lang.annotation.ElementType.PARAMETER;
 import static java.lang.annotation.ElementType.TYPE_USE;
@@ -62,7 +61,7 @@ public interface Locator
     /**
      * <p>Represents that the annotated argument must be gotten by passing the arguments in there into a {@link Vector3Argument} locator.</p>
      * 
-     * <p>Must be used in either a {@link Vector3Argument} or a {@link net.minecraft.util.math.Vec3d Vec3d} parameter.</p>
+     * <p>Must be used in either a {@link Vector3Argument} or a {@link net.minecraft.world.phys.Vec3 Vec3d} parameter.</p>
      */
     @Documented
     @Retention(RUNTIME)
@@ -71,7 +70,7 @@ public interface Locator
     {
         /**
          * <p>Whether or not should the {@link Vector3Argument} locator accept an optional direction aside from the
-         * {@link net.minecraft.util.math.Vec3d}</p> <p>This parameter can only be used in a {@link Vector3Argument} type, since else there is no way
+         * {@link net.minecraft.world.phys.Vec3}</p> <p>This parameter can only be used in a {@link Vector3Argument} type, since else there is no way
          * to get the direction too.</p>
          */
         boolean optionalDirection() default false;
@@ -187,7 +186,7 @@ public interface Locator
             {
                 this.optionalDirection = annotation.optionalDirection();
                 this.optionalEntity = annotation.optionalEntity();
-                this.returnVec3d = type == net.minecraft.util.math.Vec3d.class; // Because of the locator
+                this.returnVec3d = type == net.minecraft.world.phys.Vec3.class; // Because of the locator
                 if (returnVec3d && optionalDirection)
                     throw new IllegalArgumentException("optionalDirection Locator.Vec3d cannot be used for Vec3d type, use Vector3Argument instead");
                 if (!returnVec3d && type != Vector3Argument.class)
