@@ -47,7 +47,7 @@ public class AppStoreManager
     /** A local copy of the scarpet repo's file structure, to avoid multiple queries to github.com while typing out the
      * {@code /script download} command and getting the suggestions.
      */
-    public static final StoreNode APP_STORE_ROOT = StoreNode.folder(null, "");
+    private static StoreNode APP_STORE_ROOT = StoreNode.folder(null, "");
 
     /** This is the base link to the scarpet app repo from the github api.
      */
@@ -59,8 +59,7 @@ public class AppStoreManager
     {
         @Override public String validate(CommandSourceStack source, ParsedRule<String> currentRule, String newValue, String string)
         {
-            APP_STORE_ROOT.sealed = false;
-            APP_STORE_ROOT.children = new HashMap<>();
+            APP_STORE_ROOT = StoreNode.folder(null, "");
             if (newValue.equalsIgnoreCase("none"))
             {
                 scarpetRepoLink = null;
