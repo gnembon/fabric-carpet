@@ -5,7 +5,7 @@
   "compatibilityLevel": "JAVA_16",
   "mixins": [
     "BarrierBlock_updateSuppressionBlockMixin",
-    "SpawnStateMixin",
+    "SpawnState_scarpetMixin",
     "MobCategory_spawnMixin",
     "Commands_customCommandsMixin",
     "ServerGamePacketListenerImplMixin",
@@ -61,7 +61,6 @@
     "ServerGamePacketListenerImpl_coreMixin",
     "ServerGamePacketListenerImpl_tickMixin",
     "MinecraftServer_scarpetMixin",
-    "ClientboundTabListPacketMixin",
     "ExperienceOrb_xpNoCooldownMixin",
     "Player_xpNoCooldownMixin",
     "ServerboundPlayerActionPacketMixin",
@@ -96,7 +95,6 @@
     "FlatLevelSource_structuresMixin",
     "ChunkGenerator_scarpetMixin",
     "Guardian_renewableSpongesMixin",
-    "DesertPyramidFeatureMixin",
     "Husk_templesMixin",
     "NoiseBasedChunkGenerator_husksSpawnMixin",
     "ServerChunkCacheMixin",
@@ -114,7 +112,6 @@
     "HopperBlockEntity_counterMixin",
     "AbstractContainerMenu_ctrlQCraftingMixin",
     "Connection_packetCounterMixin",
-    "CauldronBlock_stackableSBoxesMixin",
     "AbstractCauldronBlock_stackableSBoxesMixin",
     "Slot_stackableSBoxesMixin",
     "AbstractContainerMenu_stackableSBoxesMixin",
@@ -129,8 +126,6 @@
     "ThrowableProjectileMixin",
     "PathNavigation_pathfindingMixin",
 
-    "EndCityFeatureMixin",
-    "BastionFeatureMixin",
     "InfestedBlock_gravelMixin",
     "Player_portalDelayMixin",
     "PistonBaseBlock_qcMixin",
@@ -211,10 +206,7 @@
     "LevelRenderer_creativeNoClipMixin",
     "ClientPacketListener_customPacketsMixin",
     "DebugRenderer_scarpetRenderMixin",
-    "LevelRenderer_scarpetRenderMixin",
-
-    "SoundEngineInt_cleanLogsMixin",
-    "SoundEngine_cleanLogsMixin"
+    "LevelRenderer_scarpetRenderMixin"
   ],
   "server": [
   ],

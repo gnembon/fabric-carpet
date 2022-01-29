@@ -39,15 +39,4 @@ public abstract class StructureBlockEntity_limitsMixin
     private Block ignoredBlock(Block original) {
         return CarpetSettings.structureBlockIgnoredBlock;
     }
-/*
-    @Environment(EnvType.CLIENT)
-    @ModifyConstant(
-            method = "getSquaredRenderDistance",
-            constant = @Constant(doubleValue = 96d)
-    )
-    private double outlineRenderDistanceLimit(double original) {
-        return CarpetSettings.structureBlockOutlineDistance;
-    }
-
- */
 }

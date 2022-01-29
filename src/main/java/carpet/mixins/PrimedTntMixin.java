@@ -20,8 +20,6 @@ import net.minecraft.world.phys.Vec3;
 @Mixin(PrimedTnt.class)
 public abstract class PrimedTntMixin extends Entity implements TntEntityInterface
 {
-    //@Shadow private int fuseTimer;
-
     @Shadow public abstract int getFuse();
 
     private TNTLogHelper logHelper;

@@ -43,30 +43,6 @@ public class ServerLevel_scarpetMixin implements ServerWorldInterface
         if (LIGHTNING.isNeeded()) LIGHTNING.onWorldEventFlag((ServerLevel) (Object)this, blockPos, bl2?1:0);
     }
 
-    /*
-    moved to ServerEntityManager_scarpetMixin in 1.17
-    @Redirect(method = "addEntity", at = @At(
-            value = "INVOKE",
-            target = "Lnet/minecraft/server/world/ServerEntityManager;addEntity(Lnet/minecraft/world/entity/EntityLike;)Z"
-    ))
-    private boolean onEntityAddedToWorld(ServerEntityManager serverEntityManager, EntityLike entityLike)
-    {
-        Entity entity = (Entity)entityLike;
-        boolean success = serverEntityManager.addEntity(entity);
-        if (success) {
-            CarpetEventServer.Event event = ENTITY_LOAD.get(entity.getType());
-            if (event != null) {
-                if (event.isNeeded()) {
-                    event.onEntityAction(entity);
-                }
-            } else {
-                CarpetSettings.LOG.error("Failed to handle entity " + entity.getType().getTranslationKey());
-            }
-        };
-        return success;
-    }
-    */
-
     @Inject(method = "explode", at = @At("HEAD"))
     private void handleExplosion(/*@Nullable*/ Entity entity, /*@Nullable*/ DamageSource damageSource, /*@Nullable*/ ExplosionDamageCalculator explosionBehavior, double d, double e, double f, float g, boolean bl, Explosion.BlockInteraction destructionType, CallbackInfoReturnable<Explosion> cir)
     {

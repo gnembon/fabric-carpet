@@ -14,6 +14,7 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 @Mixin(value = ServerPlayerGameMode.class, priority = 69420) // not that important for carpet
 public class ServerPlayerGameMode_antiCheatMixin
 {
+    // this is how it should be done
     /*
     @ModifyConstant(method = "processBlockBreakingAction", require = 0,
             constant = @Constant(doubleValue = 36D))

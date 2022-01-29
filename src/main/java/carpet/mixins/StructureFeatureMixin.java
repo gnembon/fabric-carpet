@@ -35,22 +35,6 @@ import net.minecraft.world.level.levelgen.structure.pieces.StructurePiecesBuilde
 @Mixin(StructureFeature.class)
 public abstract class StructureFeatureMixin<C extends FeatureConfiguration> implements StructureFeatureInterface<C>
 {
-    @Shadow public abstract String getFeatureName();
-
-    //@Shadow public abstract StructureFeature.StructureStartFactory getStructureStartFactory();
-
-    //@Shadow protected abstract boolean shouldStartAt(ChunkGenerator chunkGenerator, BiomeSource biomeSource, long worldSeed, ChunkRandom random, ChunkPos chunkPos, Biome biome, ChunkPos chunkPos2, C featureConfig, HeightLimitView heightLimitView);
-
-    //@Shadow protected abstract boolean shouldStartAt(ChunkGenerator chunkGenerator, BiomeSource biomeSource, long worldSeed, ChunkRandom random, ChunkPos pos, ChunkPos chunkPos, C featureConfig, HeightLimitView heightLimitView);
-    //@Shadow protected abstract boolean shouldStartAt(ChunkGenerator chunkGenerator, BiomeSource biomeSource, long worldSeed, ChunkPos chunkPos, C featureConfig, HeightLimitView heightLimitView);
-
-    //@Shadow @Final private class_6622<C> field_34929;
-
-
-    //@Shadow @Final private StructurePiecesGenerator<C> piecesGenerator;
-
-    //@Shadow @Final private class_6834<C> piecesGenerator;
-
     @Shadow @Final private PieceGeneratorSupplier<C> pieceGenerator;
 
     @Override
@@ -116,8 +100,6 @@ public abstract class StructureFeatureMixin<C extends FeatureConfiguration> impl
     private StructureStart<C> forceStructureStart(ServerLevel worldIn, ChunkGenerator generator, Random rand, long packedChunkPos, Biome biome, C config)
     {
         ChunkPos chunkpos = new ChunkPos(packedChunkPos);
-        BlockPos centerpos = chunkpos.getBlockAt(9, 0, 9);
-        StructureStart<C> structurestart;
         StructureFeature<C> thiss= (StructureFeature<C>)(Object)this;
 
         ChunkAccess ichunk = worldIn.getChunk(chunkpos.x, chunkpos.z, ChunkStatus.STRUCTURE_STARTS, false);
@@ -131,14 +113,6 @@ public abstract class StructureFeatureMixin<C extends FeatureConfiguration> impl
                 return (StructureStart<C>) structurestartt;
             }
         }
-        Biome biome_1 = biome;
-        if (biome == null)
-            biome_1 = generator.getNoiseBiome(QuartPos.fromBlock(centerpos.getX()),
-                    QuartPos.fromBlock(centerpos.getY()), QuartPos.fromBlock(centerpos.getZ()));
-
-
-        //if (config == null)
-        //    config = (C) new DefaultFeatureConfig();
         Optional<PieceGenerator<C>> optional = pieceGenerator.createGenerator(new PieceGeneratorSupplier.Context<>(generator, generator.getBiomeSource(), worldIn.getSeed(), chunkpos, config, worldIn, b -> true, worldIn.getStructureManager(), worldIn.registryAccess()));
         if (optional.isEmpty()) return (StructureStart<C>) StructureStart.INVALID_START;
         StructurePiecesBuilder lv = new StructurePiecesBuilder();
@@ -147,18 +121,10 @@ public abstract class StructureFeatureMixin<C extends FeatureConfiguration> impl
         }), worldIn.getSeed()));
         StructureStart<C> structurestart1 = new StructureStart<>(thiss, chunkpos, 0, lv.build());
 
-
-        //StructureStart structurestart1 =  getStructureStartFactory().create((StructureFeature)(Object)this, chunkpos,0,worldIn.getSeed());
-
-        //structurestart1.init(worldIn.getRegistryManager(), generator, worldIn.getStructureManager() , chunkpos, config, ichunk, b -> true);
-        //structurestart = structurestart1.hasChildren() ? structurestart1 : (StructureStart<C>) StructureStart.DEFAULT;
-
         if (structurestart1.isValid())
         {
             worldIn.getChunk(chunkpos.x, chunkpos.z).setStartForFeature(thiss, structurestart1);
         }
-
-        //long2objectmap.put(packedChunkPos, structurestart);
         return structurestart1;
     }
 }
