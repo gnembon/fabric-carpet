@@ -95,7 +95,6 @@ public class CarpetScriptHost extends ScriptHost
         persistenceRequired = true;
         if (parent == null && code != null) // app, not a global host
         {
-            persistenceRequired = false;
             globalState = loadState();
         }
         else if (parent != null)
