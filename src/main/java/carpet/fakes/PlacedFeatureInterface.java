@@ -1,8 +1,6 @@
 package carpet.fakes;
 
-import net.minecraft.world.gen.feature.ConfiguredFeature;
-import net.minecraft.world.gen.feature.Feature;
-import net.minecraft.world.gen.feature.FeatureConfig;
+import net.minecraft.world.level.levelgen.feature.ConfiguredFeature;
 
 public interface PlacedFeatureInterface {
     ConfiguredFeature<?, ?> getRawFeature();

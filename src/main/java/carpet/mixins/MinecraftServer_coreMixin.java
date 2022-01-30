@@ -4,7 +4,7 @@ import carpet.CarpetServer;
 import carpet.CarpetSettings;
 import carpet.utils.CarpetProfiler;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.WorldGenerationProgressListener;
+import net.minecraft.server.level.progress.ChunkProgressListener;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -18,10 +18,10 @@ public abstract class MinecraftServer_coreMixin
     //to inject right before
     // this.tickWorlds(booleanSupplier_1);
     @Inject(
-            method = "tick",
+            method = "tickServer",
             at = @At(
                     value = "INVOKE",
-                    target = "Lnet/minecraft/server/MinecraftServer;tickWorlds(Ljava/util/function/BooleanSupplier;)V",
+                    target = "Lnet/minecraft/server/MinecraftServer;tickChildren(Ljava/util/function/BooleanSupplier;)V",
                     shift = At.Shift.BEFORE,
                     ordinal = 0
             )
@@ -32,32 +32,32 @@ public abstract class MinecraftServer_coreMixin
         CarpetProfiler.end_current_section(token);
     }
 
-    @Inject(method = "loadWorld", at = @At("HEAD"))
+    @Inject(method = "loadLevel", at = @At("HEAD"))
     private void serverLoaded(CallbackInfo ci)
     {
         CarpetServer.onServerLoaded((MinecraftServer) (Object) this);
     }
 
-    @Inject(method = "loadWorld", at = @At("RETURN"))
+    @Inject(method = "loadLevel", at = @At("RETURN"))
     private void serverLoadedWorlds(CallbackInfo ci)
     {
         CarpetServer.onServerLoadedWorlds((MinecraftServer) (Object) this);
     }
 
-    @Inject(method = "shutdown", at = @At("HEAD"))
+    @Inject(method = "stopServer", at = @At("HEAD"))
     private void serverClosed(CallbackInfo ci)
     {
         CarpetServer.onServerClosed((MinecraftServer) (Object) this);
     }
 
-    @Inject(method = "shutdown", at = @At("TAIL"))
+    @Inject(method = "stopServer", at = @At("TAIL"))
     private void serverDoneClosed(CallbackInfo ci)
     {
         CarpetServer.onServerDoneClosing((MinecraftServer) (Object) this);
     }
 
-    @Inject(method = "prepareStartRegion", at = @At("RETURN"))
-    private void afterSpawnCreated(WorldGenerationProgressListener worldGenerationProgressListener, CallbackInfo ci)
+    @Inject(method = "prepareLevels", at = @At("RETURN"))
+    private void afterSpawnCreated(ChunkProgressListener worldGenerationProgressListener, CallbackInfo ci)
     {
         if (CarpetSettings.spawnChunksSize != 11)
             CarpetSettings.ChangeSpawnChunksValidator.changeSpawnSize(CarpetSettings.spawnChunksSize);

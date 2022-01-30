@@ -2,15 +2,15 @@ package carpet.utils;
 
 import carpet.fakes.ChunkTicketManagerInterface;
 import carpet.fakes.ServerChunkManagerInterface;
-import net.minecraft.server.world.ChunkTicketManager;
-import net.minecraft.server.world.ServerChunkManager;
-import net.minecraft.util.math.ChunkPos;
+import net.minecraft.server.level.DistanceManager;
+import net.minecraft.server.level.ServerChunkCache;
+import net.minecraft.world.level.ChunkPos;
 
 public class SpawnChunks
 {
-    public static void changeSpawnChunks(ServerChunkManager chunkManager, ChunkPos pos, int size)
+    public static void changeSpawnChunks(ServerChunkCache chunkManager, ChunkPos pos, int size)
     {
-        ChunkTicketManager ticketManager = ((ServerChunkManagerInterface)chunkManager).getCMTicketManager();
+        DistanceManager ticketManager = ((ServerChunkManagerInterface)chunkManager).getCMTicketManager();
         ((ChunkTicketManagerInterface)ticketManager).changeSpawnChunks(pos, size);
     }
 }

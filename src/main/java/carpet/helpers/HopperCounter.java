@@ -7,30 +7,29 @@ import carpet.utils.WoolTool;
 import carpet.utils.Messenger;
 import it.unimi.dsi.fastutil.objects.Object2LongLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2LongMap;
-import net.minecraft.block.AbstractBannerBlock;
-import net.minecraft.block.Block;
-import net.minecraft.block.Blocks;
-import net.minecraft.block.MapColor;
-import net.minecraft.block.Stainable;
-import net.minecraft.item.BlockItem;
-import net.minecraft.item.DyeItem;
-import net.minecraft.item.Items;
-import net.minecraft.recipe.Ingredient;
-import net.minecraft.recipe.Recipe;
-import net.minecraft.recipe.RecipeType;
-import net.minecraft.text.Style;
-import net.minecraft.text.TextColor;
-import net.minecraft.util.DyeColor;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.text.BaseText;
-import net.minecraft.text.TranslatableText;
+import net.minecraft.ChatFormatting;
+import net.minecraft.core.Registry;
+import net.minecraft.network.chat.BaseComponent;
+import net.minecraft.network.chat.Style;
+import net.minecraft.network.chat.TextColor;
+import net.minecraft.network.chat.TranslatableComponent;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.util.Formatting;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.registry.Registry;
-import net.minecraft.world.World;
-
+import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.item.DyeColor;
+import net.minecraft.world.item.DyeItem;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.item.crafting.Ingredient;
+import net.minecraft.world.item.crafting.Recipe;
+import net.minecraft.world.item.crafting.RecipeType;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.AbstractBannerBlock;
+import net.minecraft.world.level.block.BeaconBeamBlock;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.material.MaterialColor;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -58,7 +57,7 @@ public class HopperCounter
      * The default display colour of each item, which makes them look nicer when printing the counter contents to the chat
      */
 
-    public static final TextColor WHITE = TextColor.fromFormatting(Formatting.WHITE);
+    public static final TextColor WHITE = TextColor.fromLegacyFormat(ChatFormatting.WHITE);
 
     static
     {
@@ -100,7 +99,7 @@ public class HopperCounter
     {
         startTick = -1;
         this.color = color;
-        this.prettyColour = WoolTool.Material2DyeName.getOrDefault(color.getMapColor(),"w ") + color.getName();
+        this.prettyColour = WoolTool.Material2DyeName.getOrDefault(color.getMaterialColor(),"w ") + color.getName();
     }
 
     /**
@@ -112,7 +111,7 @@ public class HopperCounter
     {
         if (startTick < 0)
         {
-            startTick = server.getWorld(World.OVERWORLD).getTime();  //OW
+            startTick = server.getLevel(Level.OVERWORLD).getGameTime();  //OW
             startMillis = System.currentTimeMillis();
         }
         Item item = stack.getItem();
@@ -126,7 +125,7 @@ public class HopperCounter
     public void reset(MinecraftServer server)
     {
         counter.clear();
-        startTick = server.getWorld(World.OVERWORLD).getTime();  //OW
+        startTick = server.getLevel(Level.OVERWORLD).getGameTime();  //OW
         startMillis = System.currentTimeMillis();
         // pubSubProvider.publish();
     }
@@ -147,13 +146,13 @@ public class HopperCounter
     /**
      * Prints all the counters to chat, nicely formatted, and you can choose whether to diplay in in game time or IRL time
      */
-    public static List<BaseText> formatAll(MinecraftServer server, boolean realtime)
+    public static List<BaseComponent> formatAll(MinecraftServer server, boolean realtime)
     {
-        List<BaseText> text = new ArrayList<>();
+        List<BaseComponent> text = new ArrayList<>();
 
         for (HopperCounter counter : COUNTERS.values())
         {
-            List<BaseText> temp = counter.format(server, realtime, false);
+            List<BaseComponent> temp = counter.format(server, realtime, false);
             if (temp.size() > 1)
             {
                 if (!text.isEmpty()) text.add(Messenger.s(""));
@@ -171,9 +170,9 @@ public class HopperCounter
      * Prints a single counter's contents and timings to chat, with the option to keep it short (so no item breakdown,
      * only rates). Again, realtime displays IRL time as opposed to in game time.
      */
-    public List<BaseText> format(MinecraftServer server, boolean realTime, boolean brief)
+    public List<BaseComponent> format(MinecraftServer server, boolean realTime, boolean brief)
     {
-        long ticks = Math.max(realTime ? (System.currentTimeMillis() - startMillis) / 50 : server.getWorld(World.OVERWORLD).getTime() - startTick, 1);  //OW
+        long ticks = Math.max(realTime ? (System.currentTimeMillis() - startMillis) / 50 : server.getLevel(Level.OVERWORLD).getGameTime() - startTick, 1);  //OW
         if (startTick < 0 || ticks == 0)
         {
             if (brief)
@@ -201,7 +200,7 @@ public class HopperCounter
                     String.format("wb %.1f ", ticks / (20.0 * 60.0)), "w min"
             ));
         }
-        List<BaseText> items = new ArrayList<>();
+        List<BaseComponent> items = new ArrayList<>();
         items.add(Messenger.c("w Items for ", prettyColour,
                 "w  (",String.format("wb %.2f", ticks*1.0/(20*60)), "w  min"+(realTime?" - real time":"")+"), ",
                 "w total: ", "wb "+total, "w , (",String.format("wb %.1f",total*1.0*(20*60*60)/ticks),"w /h):",
@@ -210,7 +209,7 @@ public class HopperCounter
         items.addAll(counter.object2LongEntrySet().stream().sorted((e, f) -> Long.compare(f.getLongValue(), e.getLongValue())).map(e ->
         {
             Item item = e.getKey();
-            BaseText itemName = new TranslatableText(item.getTranslationKey());
+            BaseComponent itemName = new TranslatableComponent(item.getDescriptionId());
             Style itemStyle = itemName.getStyle();
             TextColor color = guessColor(item);
             itemName.setStyle((color != null) ? itemStyle.withColor(color) : itemStyle.withItalic(true));
@@ -229,7 +228,7 @@ public class HopperCounter
      */
     public static int appropriateColor(int color)
     {
-        if (color == 0) return MapColor.WHITE.color;
+        if (color == 0) return MaterialColor.SNOW.col;
         int r = (color >> 16 & 255);
         int g = (color >> 8 & 255);
         int b = (color & 255);
@@ -334,23 +333,23 @@ public class HopperCounter
      */
     public static TextColor fromItem(Item item)
     {
-        if (DEFAULTS.containsKey(item)) return TextColor.fromRgb(appropriateColor(DEFAULTS.get(item).getDefaultMapColor().color));
-        if (item instanceof DyeItem) return TextColor.fromRgb(appropriateColor(((DyeItem) item).getColor().getMapColor().color));
+        if (DEFAULTS.containsKey(item)) return TextColor.fromRgb(appropriateColor(DEFAULTS.get(item).defaultMaterialColor().col));
+        if (item instanceof DyeItem) return TextColor.fromRgb(appropriateColor(((DyeItem) item).getDyeColor().getMaterialColor().col));
         Block block = null;
-        Identifier id = Registry.ITEM.getId(item);
+        ResourceLocation id = Registry.ITEM.getKey(item);
         if (item instanceof BlockItem)
         {
             block = ((BlockItem) item).getBlock();
         }
-        else if (Registry.BLOCK.getOrEmpty(id).isPresent())
+        else if (Registry.BLOCK.getOptional(id).isPresent())
         {
             block = Registry.BLOCK.get(id);
         }
         if (block != null)
         {
-            if (block instanceof AbstractBannerBlock) return TextColor.fromRgb(appropriateColor(((AbstractBannerBlock) block).getColor().getMapColor().color));
-            if (block instanceof Stainable) return TextColor.fromRgb(appropriateColor( ((Stainable) block).getColor().getMapColor().color));
-            return TextColor.fromRgb(appropriateColor( block.getDefaultMapColor().color));
+            if (block instanceof AbstractBannerBlock) return TextColor.fromRgb(appropriateColor(((AbstractBannerBlock) block).getColor().getMaterialColor().col));
+            if (block instanceof BeaconBeamBlock) return TextColor.fromRgb(appropriateColor( ((BeaconBeamBlock) block).getColor().getMaterialColor().col));
+            return TextColor.fromRgb(appropriateColor( block.defaultMaterialColor().col));
         }
         return null;
     }
@@ -364,7 +363,7 @@ public class HopperCounter
         TextColor direct = fromItem(item);
         if (direct != null) return direct;
         if (CarpetServer.minecraft_server == null) return WHITE;
-        Identifier id = Registry.ITEM.getId(item);
+        ResourceLocation id = Registry.ITEM.getKey(item);
         for (RecipeType<?> type: Registry.RECIPE_TYPE)
         {
             for (Recipe<?> r: ((RecipeManagerInterface) CarpetServer.minecraft_server.getRecipeManager()).getAllMatching(type, id))

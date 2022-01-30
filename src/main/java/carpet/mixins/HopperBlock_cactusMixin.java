@@ -1,9 +1,9 @@
 package carpet.mixins;
 
 import carpet.helpers.BlockRotator;
-import net.minecraft.block.HopperBlock;
-import net.minecraft.item.ItemPlacementContext;
-import net.minecraft.util.math.Direction;
+import net.minecraft.core.Direction;
+import net.minecraft.world.item.context.BlockPlaceContext;
+import net.minecraft.world.level.block.HopperBlock;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
@@ -11,16 +11,16 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 @Mixin(HopperBlock.class)
 public class HopperBlock_cactusMixin
 {
-    @Redirect(method = "getPlacementState", at = @At(
+    @Redirect(method = "getStateForPlacement", at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/item/ItemPlacementContext;getSide()Lnet/minecraft/util/math/Direction;"
+            target = "Lnet/minecraft/world/item/context/BlockPlaceContext;getClickedFace()Lnet/minecraft/core/Direction;"
     ))
-    private Direction getOppositeOpposite(ItemPlacementContext context)
+    private Direction getOppositeOpposite(BlockPlaceContext context)
     {
         if (BlockRotator.flippinEligibility(context.getPlayer()))
         {
-            return context.getSide().getOpposite();
+            return context.getClickedFace().getOpposite();
         }
-        return context.getSide();
+        return context.getClickedFace();
     }
 }

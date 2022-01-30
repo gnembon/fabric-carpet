@@ -4,16 +4,16 @@ import carpet.CarpetServer;
 import carpet.utils.Messenger;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.context.CommandContext;
-import net.minecraft.server.command.ServerCommandSource;
+import net.minecraft.commands.CommandSourceStack;
 
 import static com.mojang.brigadier.arguments.StringArgumentType.getString;
 import static com.mojang.brigadier.arguments.StringArgumentType.word;
-import static net.minecraft.server.command.CommandManager.argument;
-import static net.minecraft.server.command.CommandManager.literal;
+import static net.minecraft.commands.Commands.argument;
+import static net.minecraft.commands.Commands.literal;
 
 public class TestCommand
 {
-    public static void register(CommandDispatcher<ServerCommandSource> dispatcher)
+    public static void register(CommandDispatcher<CommandSourceStack> dispatcher)
     {
         dispatcher.register(literal("testcarpet").
                 then(literal("dump").
@@ -26,7 +26,7 @@ public class TestCommand
                         executes( (c)-> test(c, getString(c, "second")+" 2"))));
     }
 
-    private static int test(CommandContext<ServerCommandSource> c, String term)
+    private static int test(CommandContext<CommandSourceStack> c, String term)
     {
         Messenger.m(c.getSource(),term.substring(0,1)+" "+term+": how did you get here?");
         return 1;

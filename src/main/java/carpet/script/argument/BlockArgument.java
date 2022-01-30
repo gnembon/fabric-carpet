@@ -8,11 +8,10 @@ import carpet.script.value.NullValue;
 import carpet.script.value.NumericValue;
 import carpet.script.value.StringValue;
 import carpet.script.value.Value;
-import net.minecraft.util.math.BlockPos;
-
 import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
+import net.minecraft.core.BlockPos;
 
 public class BlockArgument extends Argument
 {
@@ -77,7 +76,7 @@ public class BlockArgument extends Argument
                 return new BlockArgument(
                         new BlockValue(
                                 null,
-                                c.s.getWorld(),
+                                c.s.getLevel(),
                                 new BlockPos(c.origin.getX() + xpos, c.origin.getY() + ypos, c.origin.getZ() + zpos)
                         ),
                         1 + offset);
@@ -88,7 +87,7 @@ public class BlockArgument extends Argument
             return new BlockArgument(
                     new BlockValue(
                             null,
-                            c.s.getWorld(),
+                            c.s.getLevel(),
                             new BlockPos(c.origin.getX() + xpos, c.origin.getY() + ypos, c.origin.getZ() + zpos)
                     ),
                     3 + offset
@@ -127,7 +126,7 @@ public class BlockArgument extends Argument
                 return new BlockArgument(
                         new BlockValue(
                                 null,
-                                c.s.getWorld(),
+                                c.s.getLevel(),
                                 new BlockPos(c.origin.getX() + xpos, c.origin.getY() + ypos, c.origin.getZ() + zpos)
                         ),
                         1+offset);
@@ -138,7 +137,7 @@ public class BlockArgument extends Argument
             return new BlockArgument(
                     new BlockValue(
                             null,
-                            c.s.getWorld(),
+                            c.s.getLevel(),
                             new BlockPos(c.origin.getX() + xpos, c.origin.getY() + ypos, c.origin.getZ() + zpos)
                     ),
                     3+offset

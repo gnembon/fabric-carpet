@@ -3,35 +3,34 @@ package carpet.script.utils;
 import carpet.fakes.MinecraftServerInterface;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.network.packet.s2c.play.ChunkDataS2CPacket;
+import net.minecraft.Util;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.MappedRegistry;
+import net.minecraft.core.Registry;
+import net.minecraft.network.protocol.game.ClientboundLevelChunkWithLightPacket;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.WorldGenerationProgressListener;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.Util;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.ChunkPos;
-import net.minecraft.util.registry.Registry;
-import net.minecraft.util.registry.RegistryKey;
-import net.minecraft.util.registry.SimpleRegistry;
-import net.minecraft.world.World;
-import net.minecraft.world.biome.source.BiomeAccess;
-import net.minecraft.world.biome.source.MultiNoiseBiomeSource;
-import net.minecraft.world.border.WorldBorderListener;
-import net.minecraft.world.chunk.ChunkStatus;
-import net.minecraft.world.chunk.WorldChunk;
-import net.minecraft.world.dimension.DimensionOptions;
-import net.minecraft.world.dimension.DimensionType;
-import net.minecraft.world.gen.GeneratorOptions;
-import net.minecraft.world.gen.Spawner;
-import net.minecraft.world.gen.chunk.ChunkGenerator;
-import net.minecraft.world.gen.chunk.ChunkGeneratorSettings;
-import net.minecraft.world.gen.chunk.NoiseChunkGenerator;
-import net.minecraft.world.level.ServerWorldProperties;
-import net.minecraft.world.level.UnmodifiableLevelProperties;
-import net.minecraft.world.storage.RegionFile;
-
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.level.progress.ChunkProgressListener;
+import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.level.CustomSpawner;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.biome.BiomeManager;
+import net.minecraft.world.level.biome.MultiNoiseBiomeSource;
+import net.minecraft.world.level.border.BorderChangeListener;
+import net.minecraft.world.level.chunk.ChunkGenerator;
+import net.minecraft.world.level.chunk.ChunkStatus;
+import net.minecraft.world.level.chunk.LevelChunk;
+import net.minecraft.world.level.chunk.storage.RegionFile;
+import net.minecraft.world.level.dimension.DimensionType;
+import net.minecraft.world.level.dimension.LevelStem;
+import net.minecraft.world.level.levelgen.NoiseBasedChunkGenerator;
+import net.minecraft.world.level.levelgen.NoiseGeneratorSettings;
+import net.minecraft.world.level.levelgen.WorldGenSettings;
+import net.minecraft.world.level.storage.DerivedLevelData;
+import net.minecraft.world.level.storage.ServerLevelData;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -43,7 +42,7 @@ import java.util.Set;
 public class WorldTools
 {
 
-    public static boolean canHasChunk(ServerWorld world, ChunkPos chpos, Map<String, RegionFile> regionCache, boolean deepcheck)
+    public static boolean canHasChunk(ServerLevel world, ChunkPos chpos, Map<String, RegionFile> regionCache, boolean deepcheck)
     {
         if (world.getChunk(chpos.x, chpos.z, ChunkStatus.STRUCTURE_STARTS, false) != null)
             return true;
@@ -54,7 +53,7 @@ public class WorldTools
             if (region == null) return false;
             return region.hasChunk(chpos);
         }
-        Path regionPath = new File(((MinecraftServerInterface )world.getServer()).getCMSession().getWorldDirectory(world.getRegistryKey()).toFile(), "region").toPath();
+        Path regionPath = new File(((MinecraftServerInterface )world.getServer()).getCMSession().getDimensionPath(world.dimension()).toFile(), "region").toPath();
         Path regionFilePath = regionPath.resolve(currentRegionName);
         File regionFile = regionFilePath.toFile();
         if (!regionFile.exists())
@@ -75,37 +74,37 @@ public class WorldTools
 
     public static boolean createWorld(MinecraftServer server, String worldKey, Long seed)
     {
-        Identifier worldId = new Identifier(worldKey);
-        ServerWorld overWorld = server.getOverworld();
+        ResourceLocation worldId = new ResourceLocation(worldKey);
+        ServerLevel overWorld = server.overworld();
 
-        Set<RegistryKey<World>> worldKeys = server.getWorldRegistryKeys();
-        for (RegistryKey<World> worldRegistryKey : worldKeys)
+        Set<ResourceKey<Level>> worldKeys = server.levelKeys();
+        for (ResourceKey<Level> worldRegistryKey : worldKeys)
         {
-            if (worldRegistryKey.getValue().equals(worldId))
+            if (worldRegistryKey.location().equals(worldId))
             {
                 // world with this id already exists
                 return false;
             }
         }
-        ServerWorldProperties serverWorldProperties = server.getSaveProperties().getMainWorldProperties();
-        GeneratorOptions generatorOptions = server.getSaveProperties().getGeneratorOptions();
-        boolean bl = generatorOptions.isDebugWorld();
-        long l = generatorOptions.getSeed();
-        long m = BiomeAccess.hashSeed(l);
-        List<Spawner> list = List.of();
-        SimpleRegistry<DimensionOptions> simpleRegistry = generatorOptions.getDimensions();
-        DimensionOptions dimensionOptions = simpleRegistry.get(DimensionOptions.OVERWORLD);
+        ServerLevelData serverWorldProperties = server.getWorldData().overworldData();
+        WorldGenSettings generatorOptions = server.getWorldData().worldGenSettings();
+        boolean bl = generatorOptions.isDebug();
+        long l = generatorOptions.seed();
+        long m = BiomeManager.obfuscateSeed(l);
+        List<CustomSpawner> list = List.of();
+        MappedRegistry<LevelStem> simpleRegistry = generatorOptions.dimensions();
+        LevelStem dimensionOptions = simpleRegistry.get(LevelStem.OVERWORLD);
         ChunkGenerator chunkGenerator2;
         DimensionType dimensionType2;
         if (dimensionOptions == null) {
-            dimensionType2 = server.getRegistryManager().getMutable(Registry.DIMENSION_TYPE_KEY).getOrThrow(DimensionType.OVERWORLD_REGISTRY_KEY);
-            chunkGenerator2 = GeneratorOptions.createOverworldGenerator(server.getRegistryManager(), (new Random()).nextLong());
+            dimensionType2 = server.registryAccess().ownedRegistryOrThrow(Registry.DIMENSION_TYPE_REGISTRY).getOrThrow(DimensionType.OVERWORLD_LOCATION);
+            chunkGenerator2 = WorldGenSettings.makeDefaultOverworld(server.registryAccess(), (new Random()).nextLong());
         } else {
-            dimensionType2 = dimensionOptions.getDimensionType();
-            chunkGenerator2 = dimensionOptions.getChunkGenerator();
+            dimensionType2 = dimensionOptions.type();
+            chunkGenerator2 = dimensionOptions.generator();
         }
 
-        RegistryKey<World> customWorld = RegistryKey.of(Registry.WORLD_KEY, worldId);
+        ResourceKey<Level> customWorld = ResourceKey.create(Registry.DIMENSION_REGISTRY, worldId);
 
         //chunkGenerator2 = GeneratorOptions.createOverworldGenerator(server.getRegistryManager().get(Registry.BIOME_KEY), server.getRegistryManager().get(Registry.NOISE_SETTINGS_WORLDGEN), (seed==null)?l:seed);
 
@@ -114,15 +113,15 @@ public class WorldTools
         //    return server.getRegistryManager().get(Registry.CHUNK_GENERATOR_SETTINGS_KEY).getOrThrow(ChunkGeneratorSettings.OVERWORLD);
         //});
 
-        chunkGenerator2 = new NoiseChunkGenerator(server.getRegistryManager().get(Registry.NOISE_WORLDGEN), MultiNoiseBiomeSource.Preset.OVERWORLD.getBiomeSource(server.getRegistryManager().get(Registry.BIOME_KEY)), seed, () -> {
-            return server.getRegistryManager().get(Registry.CHUNK_GENERATOR_SETTINGS_KEY).getOrThrow(ChunkGeneratorSettings.OVERWORLD);
+        chunkGenerator2 = new NoiseBasedChunkGenerator(server.registryAccess().registryOrThrow(Registry.NOISE_REGISTRY), MultiNoiseBiomeSource.Preset.OVERWORLD.biomeSource(server.registryAccess().registryOrThrow(Registry.BIOME_REGISTRY)), seed, () -> {
+            return server.registryAccess().registryOrThrow(Registry.NOISE_GENERATOR_SETTINGS_REGISTRY).getOrThrow(NoiseGeneratorSettings.OVERWORLD);
         });
 
-        ServerWorld serverWorld = new ServerWorld(
+        ServerLevel serverWorld = new ServerLevel(
                 server,
-                Util.getMainWorkerExecutor(),
+                Util.backgroundExecutor(),
                 ((MinecraftServerInterface) server).getCMSession(),
-                new UnmodifiableLevelProperties(server.getSaveProperties(), serverWorldProperties),
+                new DerivedLevelData(server.getWorldData(), serverWorldProperties),
                 customWorld,
                 dimensionType2,
                 NOOP_LISTENER,
@@ -131,37 +130,37 @@ public class WorldTools
                 (seed==null)?l:seed,
                 list,
                 false);
-        overWorld.getWorldBorder().addListener(new WorldBorderListener.WorldBorderSyncer(serverWorld.getWorldBorder()));
+        overWorld.getWorldBorder().addListener(new BorderChangeListener.DelegateBorderChangeListener(serverWorld.getWorldBorder()));
         ((MinecraftServerInterface) server).getCMWorlds().put(customWorld, serverWorld);
         return true;
     }
 
-    public static void forceChunkUpdate(BlockPos pos, ServerWorld world)
+    public static void forceChunkUpdate(BlockPos pos, ServerLevel world)
     {
-        WorldChunk worldChunk = world.getChunkManager().getWorldChunk(pos.getX()>>4, pos.getZ()>>4, false);
+        LevelChunk worldChunk = world.getChunkSource().getChunk(pos.getX()>>4, pos.getZ()>>4, false);
         if (worldChunk != null)
         {
-            int vd = world.getServer().getPlayerManager().getViewDistance() * 16;
+            int vd = world.getServer().getPlayerList().getViewDistance() * 16;
             int vvd = vd * vd;
-            List<ServerPlayerEntity> nearbyPlayers = world.getPlayers(p -> pos.getSquaredDistance(p.getX(), pos.getY(), p.getZ(), true) < vvd);
+            List<ServerPlayer> nearbyPlayers = world.getPlayers(p -> pos.distSqr(p.getX(), pos.getY(), p.getZ(), true) < vvd);
             if (!nearbyPlayers.isEmpty())
             {
-                ChunkDataS2CPacket packet = new ChunkDataS2CPacket(worldChunk, world.getLightingProvider(), null, null, false); // false seems to update neighbours as well.
+                ClientboundLevelChunkWithLightPacket packet = new ClientboundLevelChunkWithLightPacket(worldChunk, world.getLightEngine(), null, null, false); // false seems to update neighbours as well.
                 ChunkPos chpos = new ChunkPos(pos);
-                nearbyPlayers.forEach(p -> p.networkHandler.sendPacket(packet));
+                nearbyPlayers.forEach(p -> p.connection.send(packet));
             }
         }
     }
 
 
-    private static class NoopWorldGenerationProgressListener implements WorldGenerationProgressListener
+    private static class NoopWorldGenerationProgressListener implements ChunkProgressListener
     {
-        @Override public void start(ChunkPos spawnPos) { }
-        @Override public void setChunkStatus(ChunkPos pos, ChunkStatus status) { }
+        @Override public void updateSpawnPos(ChunkPos spawnPos) { }
+        @Override public void onStatusChange(ChunkPos pos, ChunkStatus status) { }
         @Environment(EnvType.CLIENT)
         @Override public void start() { }
         @Override public void stop() { }
     }
 
-    public static final WorldGenerationProgressListener NOOP_LISTENER = new NoopWorldGenerationProgressListener();
+    public static final ChunkProgressListener NOOP_LISTENER = new NoopWorldGenerationProgressListener();
 }

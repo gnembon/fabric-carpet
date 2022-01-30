@@ -1,26 +1,24 @@
 package carpet.utils;
 
-import net.minecraft.block.Block;
-import net.minecraft.block.Blocks;
-import net.minecraft.block.Material;
-import net.minecraft.block.BlockState;
-import net.minecraft.entity.EntityType;
-import net.minecraft.entity.SpawnGroup;
-import net.minecraft.entity.SpawnRestriction;
-import net.minecraft.entity.SpawnReason;
-import net.minecraft.entity.mob.WaterCreatureEntity;
-import net.minecraft.entity.mob.AmbientEntity;
-import net.minecraft.entity.mob.MobEntity;
-import net.minecraft.entity.mob.Monster;
-import net.minecraft.entity.passive.PassiveEntity;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.SpawnHelper;
-import net.minecraft.world.biome.Biome;
-import net.minecraft.world.biome.SpawnSettings;
-
 import java.util.ArrayList;
 import java.util.List;
+import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.AgeableMob;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.MobCategory;
+import net.minecraft.world.entity.MobSpawnType;
+import net.minecraft.world.entity.SpawnPlacements;
+import net.minecraft.world.entity.ambient.AmbientCreature;
+import net.minecraft.world.entity.animal.WaterAnimal;
+import net.minecraft.world.entity.monster.Enemy;
+import net.minecraft.world.level.NaturalSpawner;
+import net.minecraft.world.level.biome.MobSpawnSettings;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.material.Material;
 
 public class PerimeterDiagnostics
 {
@@ -35,11 +33,11 @@ public class PerimeterDiagnostics
             samples = new ArrayList<>();
         }
     }
-    private SpawnSettings.SpawnEntry sle;
-    private ServerWorld worldServer;
-    private SpawnGroup ctype;
-    private MobEntity el;
-    private PerimeterDiagnostics(ServerWorld server, SpawnGroup ctype, MobEntity el)
+    private MobSpawnSettings.SpawnerData sle;
+    private ServerLevel worldServer;
+    private MobCategory ctype;
+    private Mob el;
+    private PerimeterDiagnostics(ServerLevel server, MobCategory ctype, Mob el)
     {
         this.sle = null;
         this.worldServer = server;
@@ -47,7 +45,7 @@ public class PerimeterDiagnostics
         this.el = el;
     }
 
-    public static Result countSpots(ServerWorld worldserver, BlockPos epos, MobEntity el)
+    public static Result countSpots(ServerLevel worldserver, BlockPos epos, Mob el)
     {
         BlockPos pos;
         //List<BlockPos> samples = new ArrayList<BlockPos>();
@@ -62,35 +60,35 @@ public class PerimeterDiagnostics
         //int specific_spawns = 0;
         boolean add_water = false;
         boolean add_ground = false;
-        SpawnGroup ctype = null;
+        MobCategory ctype = null;
 
         if (el != null)
         {
-            if (el instanceof WaterCreatureEntity)
+            if (el instanceof WaterAnimal)
             {
                 add_water = true;
-                ctype = SpawnGroup.WATER_CREATURE;
+                ctype = MobCategory.WATER_CREATURE;
             }
-            else if (el instanceof PassiveEntity)
+            else if (el instanceof AgeableMob)
             {
                 add_ground = true;
-                ctype = SpawnGroup.CREATURE;
+                ctype = MobCategory.CREATURE;
             }
-            else if (el instanceof Monster)
+            else if (el instanceof Enemy)
             {
                 add_ground = true;
-                ctype = SpawnGroup.MONSTER;
+                ctype = MobCategory.MONSTER;
             }
-            else if (el instanceof AmbientEntity)
+            else if (el instanceof AmbientCreature)
             {
-                ctype = SpawnGroup.AMBIENT;
+                ctype = MobCategory.AMBIENT;
             }
         }
         PerimeterDiagnostics diagnostic = new PerimeterDiagnostics(worldserver,ctype,el);
         EntityType type = EntityType.ZOMBIE;
         if (el != null) type = el.getType();
-        int minY = worldserver.getBottomY();
-        int maxY = worldserver.getTopY();
+        int minY = worldserver.getMinBuildHeight();
+        int maxY = worldserver.getMaxBuildHeight();
         for (int x = -128; x <= 128; ++x)
         {
             for (int z = -128; z <= 128; ++z)
@@ -113,10 +111,10 @@ public class PerimeterDiagnostics
                     pos = new BlockPos(eX+x, y, eZ+z);
 
                     BlockState iblockstate = worldserver.getBlockState(pos);
-                    BlockState iblockstate_down = worldserver.getBlockState(pos.down());
-                    BlockState iblockstate_up = worldserver.getBlockState(pos.up());
+                    BlockState iblockstate_down = worldserver.getBlockState(pos.below());
+                    BlockState iblockstate_up = worldserver.getBlockState(pos.above());
 
-                    if ( iblockstate.getMaterial() == Material.WATER && iblockstate_down.getMaterial() == Material.WATER && !iblockstate_up.isSolidBlock(worldserver, pos)) // isSimpleFUllBLock
+                    if ( iblockstate.getMaterial() == Material.WATER && iblockstate_down.getMaterial() == Material.WATER && !iblockstate_up.isRedstoneConductor(worldserver, pos)) // isSimpleFUllBLock
                     {
                         result.liquid++;
                         if (add_water && diagnostic.check_entity_spawn(pos))
@@ -130,11 +128,11 @@ public class PerimeterDiagnostics
                     }
                     else
                     {
-                        if (iblockstate_down.isSolidBlock(worldserver, pos)) // isSimpleFUllBLock
+                        if (iblockstate_down.isRedstoneConductor(worldserver, pos)) // isSimpleFUllBLock
                         {
                             Block block = iblockstate_down.getBlock();
                             boolean flag = block != Blocks.BEDROCK && block != Blocks.BARRIER;
-                            if( flag && SpawnHelper.isClearForSpawn(worldserver, pos, iblockstate, iblockstate.getFluidState(), type) && SpawnHelper.isClearForSpawn(worldserver, pos.up(), iblockstate_up, iblockstate_up.getFluidState(), type))
+                            if( flag && NaturalSpawner.isValidEmptySpawnBlock(worldserver, pos, iblockstate, iblockstate.getFluidState(), type) && NaturalSpawner.isValidEmptySpawnBlock(worldserver, pos.above(), iblockstate_up, iblockstate_up.getFluidState(), type))
                             {
                                 result.ground ++;
                                 if (add_ground && diagnostic.check_entity_spawn(pos))
@@ -161,10 +159,10 @@ public class PerimeterDiagnostics
 
     private boolean check_entity_spawn(BlockPos pos)
     {
-        if (sle == null || !worldServer.getChunkManager().getChunkGenerator().getEntitySpawnList(worldServer.getBiome(pos), worldServer.getStructureAccessor(), ctype, pos).getEntries().contains(sle))
+        if (sle == null || !worldServer.getChunkSource().getGenerator().getMobsAt(worldServer.getBiome(pos), worldServer.structureFeatureManager(), ctype, pos).unwrap().contains(sle))
         {
             sle = null;
-            for (SpawnSettings.SpawnEntry sle: worldServer.getChunkManager().getChunkGenerator().getEntitySpawnList(worldServer.getBiome(pos), worldServer.getStructureAccessor(), ctype, pos).getEntries())
+            for (MobSpawnSettings.SpawnerData sle: worldServer.getChunkSource().getGenerator().getMobsAt(worldServer.getBiome(pos), worldServer.structureFeatureManager(), ctype, pos).unwrap())
             {
                 if (el.getType() == sle.type)
                 {
@@ -172,20 +170,20 @@ public class PerimeterDiagnostics
                     break;
                 }
             }
-            if (sle == null || !worldServer.getChunkManager().getChunkGenerator().getEntitySpawnList(worldServer.getBiome(pos), worldServer.getStructureAccessor(), ctype, pos).getEntries().contains(sle))
+            if (sle == null || !worldServer.getChunkSource().getGenerator().getMobsAt(worldServer.getBiome(pos), worldServer.structureFeatureManager(), ctype, pos).unwrap().contains(sle))
             {
                 return false;
             }
         }
 
-        SpawnRestriction.Location  spt = SpawnRestriction.getLocation(sle.type);
+        SpawnPlacements.Type  spt = SpawnPlacements.getPlacementType(sle.type);
 
-        if (SpawnHelper.canSpawn(spt, worldServer, pos, sle.type))
+        if (NaturalSpawner.isSpawnPositionOk(spt, worldServer, pos, sle.type))
         {
-            el.refreshPositionAndAngles((float)pos.getX() + 0.5F, (float)pos.getY(), (float)pos.getZ()+0.5F, 0.0F, 0.0F);
-            return el.canSpawn(worldServer) && el.canSpawn(worldServer, SpawnReason.NATURAL) &&
-                    SpawnRestriction.canSpawn(el.getType(),(ServerWorld)el.getEntityWorld(), SpawnReason.NATURAL, el.getBlockPos(), el.getEntityWorld().random) &&
-                    worldServer.isSpaceEmpty(el); // check collision rules once they stop fiddling with them after 1.14.1
+            el.moveTo((float)pos.getX() + 0.5F, (float)pos.getY(), (float)pos.getZ()+0.5F, 0.0F, 0.0F);
+            return el.checkSpawnObstruction(worldServer) && el.checkSpawnRules(worldServer, MobSpawnType.NATURAL) &&
+                    SpawnPlacements.checkSpawnRules(el.getType(),(ServerLevel)el.getCommandSenderWorld(), MobSpawnType.NATURAL, el.blockPosition(), el.getCommandSenderWorld().random) &&
+                    worldServer.noCollision(el); // check collision rules once they stop fiddling with them after 1.14.1
         }
         return false;
     }
