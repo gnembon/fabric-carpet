@@ -715,6 +715,47 @@ public class CarpetSettings
     )
     public static int viewDistance = 0;
 
+    private static class SimulationDistanceValidator extends Validator<Integer>
+    {
+        @Override public Integer validate(ServerCommandSource source, ParsedRule<Integer> currentRule, Integer newValue, String string)
+        {
+            if (currentRule.get().equals(newValue) || source == null)
+            {
+                return newValue;
+            }
+            if (newValue < 0 || newValue > 32)
+            {
+                Messenger.m(source, "r simulation distance has to be between 0 and 32");
+                return null;
+            }
+            MinecraftServer server = source.getServer();
+
+            if (server.isDedicated())
+            {
+                int vd = (newValue >= 2)?newValue:((DedicatedServer) server).getProperties().simulationDistance;
+                if (vd != server.getPlayerManager().getSimulationDistance())
+                    server.getPlayerManager().setSimulationDistance(vd);
+                return newValue;
+            }
+            else
+            {
+                Messenger.m(source, "r simulation distance can only be changed on a server");
+                return 0;
+            }
+        }
+        @Override
+        public String description() { return "You must choose a value from 0 (use server settings) to 32";}
+    }
+    @Rule(
+            desc = "Changes the simulation distance of the server.",
+            extra = "Set to 0 to not override the value in server settings.",
+            options = {"0", "12", "16", "32"},
+            category = CREATIVE,
+            strict = false,
+            validate = SimulationDistanceValidator.class
+    )
+    public static int simulationDistance = 0;
+
     public static class ChangeSpawnChunksValidator extends Validator<Integer> {
         public static void changeSpawnSize(int size)
         {
