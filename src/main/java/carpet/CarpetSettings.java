@@ -14,6 +14,7 @@ import net.minecraft.core.Registry;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.ServerInterface;
+import net.minecraft.server.dedicated.DedicatedServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
@@ -717,7 +718,7 @@ public class CarpetSettings
 
     private static class SimulationDistanceValidator extends Validator<Integer>
     {
-        @Override public Integer validate(ServerCommandSource source, ParsedRule<Integer> currentRule, Integer newValue, String string)
+        @Override public Integer validate(CommandSourceStack source, ParsedRule<Integer> currentRule, Integer newValue, String string)
         {
             if (currentRule.get().equals(newValue) || source == null)
             {
@@ -730,11 +731,11 @@ public class CarpetSettings
             }
             MinecraftServer server = source.getServer();
 
-            if (server.isDedicated())
+            if (server.isDedicatedServer())
             {
                 int vd = (newValue >= 2)?newValue:((DedicatedServer) server).getProperties().simulationDistance;
-                if (vd != server.getPlayerManager().getSimulationDistance())
-                    server.getPlayerManager().setSimulationDistance(vd);
+                if (vd != server.getPlayerList().getSimulationDistance())
+                    server.getPlayerList().setSimulationDistance(vd);
                 return newValue;
             }
             else
