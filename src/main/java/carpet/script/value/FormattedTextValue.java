@@ -1,5 +1,6 @@
 package carpet.script.value;
 
+import com.google.gson.JsonElement;
 import net.minecraft.nbt.StringTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.BaseComponent;
@@ -79,6 +80,11 @@ public class FormattedTextValue extends StringValue
     {
         if (!force) throw new NBTSerializableValue.IncompatibleTypeException(this);
         return StringTag.valueOf(Component.Serializer.toJson(text));
+    }
+
+    @Override
+    public JsonElement toJson() {
+        return Component.Serializer.toJsonTree(text);
     }
 
     @Override
