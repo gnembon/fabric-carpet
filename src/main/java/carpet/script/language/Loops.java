@@ -10,13 +10,17 @@ import carpet.script.value.AbstractListValue;
 import carpet.script.value.LazyListValue;
 import carpet.script.value.ListValue;
 import carpet.script.value.NumericValue;
+import carpet.script.value.StringValue;
 import carpet.script.value.Value;
 
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.LongStream;
+import java.util.stream.Stream;
 
+import com.google.common.collect.Lists;
 
 public class Loops {
     public static void apply(Expression expression)
@@ -144,33 +148,116 @@ public class Loops {
             return (cc, tt) ->  ret;
         });
 //=========
-        expression.addFunction("zip", (lv) ->
+        //Someone commented that the limitations of zip are too strong and suggested
+        // to be able to construct arbitrary generators in one step straightforwardly
+        //and then implement zip with a .sc module.
+        expression.addLazyFunction("generator", 2, (c, t, lv) ->
         {
-            if (lv.stream().allMatch(v->(v instanceof AbstractListValue))){
+            
+            return (cc,tt)->new LazyListValue() {
+                Value State= Value.NULL;
+                LazyValue nextexpr = lv.get(0);
+                LazyValue hasNextexpr =lv.get(1);
+
+                @Override
+                public boolean hasNext() {
+                    LazyValue _val = c.getVariable("_");
+                    String var = State.boundVariable;
+                    State.bindTo("_");
+                    c.setVariable("_", (cc, tt) -> State);
+                    Value result=hasNextexpr.evalValue(c, t);
+                    State.boundVariable = var;
+                    c.setVariable("_", _val);
+                    return result.getBoolean();
+                }
+
+                @Override
+                public Value next() {
+                    LazyValue _val = c.getVariable("_");
+                    String var = State.boundVariable;
+                    State.bindTo("_");
+                    c.setVariable("_", (cc, tt) -> State);
+                    Value result=nextexpr.evalValue(c, t);
+                    State.boundVariable = var;
+                    c.setVariable("_", _val);
+                    State=((ListValue)result).getItems().get(1);
+                    return ((ListValue)result).getItems().get(0);
+                }
+
+                @Override
+                public void reset() {
+                    State= Value.NULL;
+                }
+                
+            };
+        });
+        //some said that it is better to be a .sc module.
+        //so i write it in sc again.
+        
+        //script run cart_product(...iters)->(res=[[]];for(iters,iter=_;newres=[];for(res,ent=_;for(iter,put(newres,null,[...ent,_]);));res=newres;);return (res);); 
+        //  cart_product([1,2,3,4],[5,6,7],[8])
+        expression.addFunction("cartesian_product", list_of_iterable_values->{
+            
+            ArrayList<ArrayList<Value>> res = new ArrayList<ArrayList<Value>>();
+            res.add(new ArrayList<Value>());
+
+            for (Value a_iterable:list_of_iterable_values){
+                ArrayList<ArrayList<Value>> nres = new ArrayList<ArrayList<Value>>();
+                for (ArrayList<Value>eres:res){
+                    ArrayList<Value> _eres=null;
+                    for(Value a:((AbstractListValue)a_iterable).unpack()){
+                        _eres = new ArrayList<>();
+                        _eres.addAll(eres);
+                        _eres.add(a);
+                        nres.add(_eres);
+                    }
+                }
+                res=nres;
+            }
+            return ListValue.wrap(res.stream().map(ListValue::wrap));
+        });
+        expression.addFunction("zip", (list_of_iterable_values) ->
+        {   
+            if(list_of_iterable_values.size()<1){
+                throw new InternalExpressionException("There is no arguments of 'zip' function");
+            }
+            if (list_of_iterable_values.stream().allMatch(v->(v instanceof AbstractListValue||v instanceof NumericValue||v instanceof StringValue))){
                 return new LazyListValue(){
-                    List<AbstractListValue> b=lv.stream().map(v->(AbstractListValue)v).collect(Collectors.toList());
-                    List<Iterator<Value>> a=lv.stream().map(v->((AbstractListValue)v).iterator()).collect(Collectors.toList());
+                    Iterator<? extends Value> fromValuetoIterator(Value v){
+                        if(v instanceof AbstractListValue){
+                            return ((AbstractListValue)v).iterator();
+                        }else
+                        if(v instanceof NumericValue){
+                            return LongStream.range(0,NumericValue.asNumber(v).getLong()).mapToObj(NumericValue::new).iterator();
+                        }else
+                        if(v instanceof StringValue){
+                            return Lists.charactersOf(((StringValue)v).getString()).
+                            stream().
+                            map(String::valueOf).
+                            map(StringValue::new).
+                            iterator();
+                        }else
+                        return null;     
+                    }
+                    //List<AbstractListValue> iterator_value_list=list_of_iterable_values.stream().map(v->(AbstractListValue)v).collect(Collectors.toList());
+                    List<Iterator<? extends Value>> iterator_list=list_of_iterable_values.stream().map(v->fromValuetoIterator(v)).collect(Collectors.toList());
                     
 
                     @Override
                     public boolean hasNext() {
-                        return a.stream().allMatch(Iterator::hasNext);
+                        return iterator_list.stream().anyMatch(Iterator::hasNext);
                     }
 
                     @Override
                     public Value next() {
-                        return ListValue.wrap(a.stream().map(Iterator::next));
+                        return ListValue.wrap(iterator_list.stream().map((v)->v.hasNext()?v.next():Value.NULL));
                     }
 
                     @Override
                     public void reset() {
-                        b.stream().forEach(v->{
-                            if (v instanceof LazyListValue){
-                                ((LazyListValue) v).reset();
-                            }
-                        });
-                        this.b=lv.stream().map(v->(AbstractListValue)v).collect(Collectors.toList());
-                        this.a=lv.stream().map(v->((AbstractListValue)v).iterator()).collect(Collectors.toList());
+                        list_of_iterable_values.stream().filter(v->v instanceof LazyListValue).forEach(v->((LazyListValue)v).reset());
+                        //this.iterator_value_list=list_of_iterable_values.stream().map(v->(AbstractListValue)v).collect(Collectors.toList());
+                        this.iterator_list=list_of_iterable_values.stream().map(v->fromValuetoIterator(v)).collect(Collectors.toList());
                     }
                     
                 };
