@@ -30,6 +30,10 @@ public abstract class LivingEntity_maxCollisionsMixin extends Entity
 
     @Inject(method = "pushEntities", cancellable = true, at = @At("HEAD"))
     private void tickPushingReplacement(CallbackInfo ci) {
+        if (CarpetSettings.maxEntityCollisions == 0)
+        {
+            return;
+        }
         List<Entity> entities;
         int maxEntityCramming =-1;
         if (CarpetSettings.maxEntityCollisions > 0)
