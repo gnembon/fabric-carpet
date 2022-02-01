@@ -32,7 +32,7 @@ public class NullValue extends NumericValue // TODO check nonsingleton code
     {
         return new NullValue();
     }
-    private NullValue() {super(0);}
+    protected NullValue() {super(0);}
 
     @Override
     public boolean equals(final Object o)
