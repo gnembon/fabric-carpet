@@ -36,6 +36,7 @@ public abstract class ScriptHost
     private final Map<Value, ThreadPoolExecutor> executorServices = new HashMap<>();
     private final Map<Value, Object> locks = new ConcurrentHashMap<>();
     protected boolean inTermination = false;
+    public boolean strict;
 
     private final Set<String> deprecations = new HashSet<>();
 
@@ -118,6 +119,7 @@ public abstract class ScriptHost
         this.main = code;
         this.perUser = perUser;
         this.user = null;
+        this.strict = false;
         ModuleData moduleData = new ModuleData(code);
         initializeModuleGlobals(moduleData);
         this.moduleData.put(code, moduleData);

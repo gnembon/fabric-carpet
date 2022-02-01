@@ -100,6 +100,7 @@ public class CarpetScriptHost extends ScriptHost
         else if (parent != null)
         {
             persistenceRequired = ((CarpetScriptHost)parent).persistenceRequired;
+            strict = parent.strict;
         }
         appConfig = config;
         appArgTypes = argTypes;
@@ -306,6 +307,7 @@ public class CarpetScriptHost extends ScriptHost
             Map<Value, Value> config = ((MapValue) ret).getMap();
             setPerPlayer(config.getOrDefault(new StringValue("scope"), new StringValue("player")).getString().equalsIgnoreCase("player"));
             persistenceRequired = config.getOrDefault(new StringValue("stay_loaded"), Value.TRUE).getBoolean();
+            strict = config.getOrDefault(StringValue.of("strict"), Value.FALSE).getBoolean();
             // check requires
             Value loadRequirements = config.get(new StringValue("requires"));
             if (loadRequirements instanceof FunctionValue)

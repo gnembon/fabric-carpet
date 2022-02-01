@@ -21,6 +21,7 @@ public abstract class Value implements Comparable<Value>, Cloneable
     public static NumericValue ONE = new NumericValue(1);
 
     public static NullValue NULL = NullValue.NULL;
+    public static UndefValue UNDEF = UndefValue.UNDEF;
 
     public String boundVariable;
 
