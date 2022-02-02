@@ -142,7 +142,7 @@ public class WorldTools
         {
             int vd = world.getServer().getPlayerList().getViewDistance() * 16;
             int vvd = vd * vd;
-            List<ServerPlayer> nearbyPlayers = world.getPlayers(p -> pos.distSqr(p.getX(), pos.getY(), p.getZ(), true) < vvd);
+            List<ServerPlayer> nearbyPlayers = world.getPlayers(p -> pos.distToCenterSqr(p.getX(), pos.getY(), p.getZ()) < vvd);
             if (!nearbyPlayers.isEmpty())
             {
                 ClientboundLevelChunkWithLightPacket packet = new ClientboundLevelChunkWithLightPacket(worldChunk, world.getLightEngine(), null, null, false); // false seems to update neighbours as well.

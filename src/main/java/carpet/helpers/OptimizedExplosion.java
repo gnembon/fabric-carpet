@@ -508,7 +508,7 @@ public class OptimizedExplosion
 
     private static void blastCalc(Explosion e){
         ExplosionAccessor eAccess = (ExplosionAccessor) e;
-        if(blastChanceLocation == null || blastChanceLocation.distSqr(eAccess.getX(), eAccess.getY(), eAccess.getZ(), false) > 200) return;
+        if(blastChanceLocation == null || blastChanceLocation.distToLowCornerSqr(eAccess.getX(), eAccess.getY(), eAccess.getZ()) > 200) return;
         chances.clear();
         for (int j = 0; j < 16; ++j) {
             for (int k = 0; k < 16; ++k) {
