@@ -8,7 +8,8 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Constant;
 import org.spongepowered.asm.mixin.injection.ModifyConstant;
-import org.spongepowered.asm.mixin.injection.Redirect;
+
+import com.llamalad7.mixinextras.injector.WrapWithCondition;
 
 @Mixin(Level.class)
 public abstract class Level_fillUpdatesMixin
@@ -21,13 +22,13 @@ public abstract class Level_fillUpdatesMixin
         return original;
     }
 
-    @Redirect(method = "setBlock(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;II)Z", at = @At( //setBlockState main
+    @WrapWithCondition(method = "setBlock(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;II)Z", at = @At( //setBlockState main
             value = "INVOKE",
             target = "Lnet/minecraft/world/level/Level;blockUpdated(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/Block;)V"
     ))
-    private void updateNeighborsMaybe(Level world, BlockPos blockPos, Block block)
+    private boolean shouldUpdateNeighbors(Level world, BlockPos blockPos, Block block)
     {
-        if (!CarpetSettings.impendingFillSkipUpdates.get()) world.blockUpdated(blockPos, block);
+        return !CarpetSettings.impendingFillSkipUpdates.get();
     }
 
 }

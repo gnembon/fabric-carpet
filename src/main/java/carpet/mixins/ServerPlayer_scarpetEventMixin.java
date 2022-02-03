@@ -3,6 +3,8 @@ package carpet.mixins;
 import carpet.fakes.EntityInterface;
 import carpet.fakes.ServerPlayerEntityInterface;
 import carpet.script.EntityEventsGroup;
+
+import com.llamalad7.mixinextras.injector.WrapWithCondition;
 import com.mojang.authlib.GameProfile;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.protocol.game.ServerboundClientInformationPacket;
@@ -83,14 +85,13 @@ public abstract class ServerPlayer_scarpetEventMixin extends Player implements S
         }
     }
 
-    @Redirect(method = "setPlayerInput", at = @At(
+    @WrapWithCondition(method = "setPlayerInput", at = @At(
             value = "INVOKE",
             target = "Lnet/minecraft/server/level/ServerPlayer;setShiftKeyDown(Z)V"
     ))
-    private void setSneakingConditionally(ServerPlayer serverPlayerEntity, boolean sneaking)
+    private boolean setSneakingConditionally(ServerPlayer serverPlayerEntity, boolean sneaking)
     {
-        if (!((EntityInterface)serverPlayerEntity.getVehicle()).isPermanentVehicle()) // won't since that method makes sure its not null
-            serverPlayerEntity.setShiftKeyDown(sneaking);
+        return !((EntityInterface)serverPlayerEntity.getVehicle()).isPermanentVehicle();
     }
 
     private Vec3 previousLocation;

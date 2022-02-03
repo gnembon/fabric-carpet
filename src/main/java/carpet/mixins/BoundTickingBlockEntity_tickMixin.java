@@ -12,8 +12,9 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+
+import com.llamalad7.mixinextras.injector.WrapWithCondition;
 
 @Mixin(targets = "net.minecraft.world.level.chunk.LevelChunk$BoundTickingBlockEntity")
 public class BoundTickingBlockEntity_tickMixin<T extends BlockEntity>
@@ -28,13 +29,13 @@ public class BoundTickingBlockEntity_tickMixin<T extends BlockEntity>
         entitySection = CarpetProfiler.start_block_entity_section(blockEntity.getLevel(), blockEntity, CarpetProfiler.TYPE.TILEENTITY);
     }
 
-    @Redirect(method = "tick()V", at = @At(
+    @WrapWithCondition(method = "tick()V", at = @At(
             value = "INVOKE",
             target = "Lnet/minecraft/world/level/block/entity/BlockEntityTicker;tick(Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/block/entity/BlockEntity;)V"
     ))
-    private void checkProcessTEs(BlockEntityTicker blockEntityTicker, Level world, BlockPos pos, BlockState state, T blockEntity)
+    private boolean shouldTickBE(BlockEntityTicker<T> blockEntityTicker, Level world, BlockPos pos, BlockState state, T blockEntity)
     {
-        if (TickSpeed.process_entities) blockEntityTicker.tick(world, pos, state, blockEntity);
+        return TickSpeed.process_entities;
     }
 
     @Inject(method = "tick()V", at = @At("RETURN"))

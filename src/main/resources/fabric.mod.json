@@ -24,6 +24,9 @@
     ],
     "server": [
       "carpet.CarpetServer::SERVER_INITIALIZER"
+    ],
+    "preLaunch": [
+      "com.llamalad7.mixinextras.MixinExtrasBootstrap::init"
     ]
   },
   "mixins": [

@@ -9,8 +9,8 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Constant;
 import org.spongepowered.asm.mixin.injection.ModifyConstant;
-import org.spongepowered.asm.mixin.injection.Redirect;
 
+import com.llamalad7.mixinextras.injector.WrapWithCondition;
 
 @Mixin(CloneCommands.class)
 public abstract class CloneCommands_fillUpdatesMixin
@@ -20,12 +20,12 @@ public abstract class CloneCommands_fillUpdatesMixin
         return CarpetSettings.fillLimit;
     }
 
-    @Redirect(method = "clone", at = @At(
+    @WrapWithCondition(method = "clone", at = @At(
             value = "INVOKE",
             target = "Lnet/minecraft/server/level/ServerLevel;blockUpdated(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/Block;)V"
     ))
-    private static void conditionalUpdating(ServerLevel serverWorld, BlockPos blockPos_1, Block block_1)
+    private static boolean conditionalUpdating(ServerLevel serverWorld, BlockPos blockPos_1, Block block_1)
     {
-        if (CarpetSettings.fillUpdates) serverWorld.blockUpdated(blockPos_1, block_1);
+        return CarpetSettings.fillUpdates;
     }
 }

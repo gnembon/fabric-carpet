@@ -1,14 +1,14 @@
 package carpet.mixins;
 
 import carpet.CarpetSettings;
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.network.ServerGamePacketListenerImpl;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+
+import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 
 @Mixin(ServerGamePacketListenerImpl.class)
 public abstract class ServerGamePacketListenerImpl_antiCheatDisabledMixin
@@ -30,21 +30,21 @@ public abstract class ServerGamePacketListenerImpl_antiCheatDisabledMixin
 
     }
 
-    @Redirect(method = "handleMoveVehicle", at = @At(
+    @ModifyExpressionValue(method = "handleMoveVehicle", at = @At(
             value = "INVOKE",
             target = "Lnet/minecraft/server/network/ServerGamePacketListenerImpl;isSingleplayerOwner()Z"
     ))
-    private boolean isServerTrusting(ServerGamePacketListenerImpl serverPlayNetworkHandler)
+    private boolean isServerTrusting(boolean original)
     {
-        return isSingleplayerOwner() || CarpetSettings.antiCheatDisabled;
+        return original || CarpetSettings.antiCheatDisabled;
     }
 
-    @Redirect(method = "handleMovePlayer", require = 0, // don't crash with immersive portals,
+    @ModifyExpressionValue(method = "handleMovePlayer",
              at = @At(
             value = "INVOKE",
             target = "Lnet/minecraft/server/level/ServerPlayer;isChangingDimension()Z"))
-    private boolean relaxMoveRestrictions(ServerPlayer serverPlayerEntity)
+    private boolean relaxMoveRestrictions(boolean original)
     {
-        return CarpetSettings.antiCheatDisabled || serverPlayerEntity.isChangingDimension();
+        return original || CarpetSettings.antiCheatDisabled;
     }
 }

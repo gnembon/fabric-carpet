@@ -2,19 +2,18 @@ package carpet.mixins;
 
 import carpet.CarpetServer;
 import carpet.CarpetSettings;
+
+import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.mojang.brigadier.CommandDispatcher;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
-import org.slf4j.Logger;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
-
 
 @Mixin(Commands.class)
 public abstract class Commands_customCommandsMixin
@@ -43,17 +42,13 @@ public abstract class Commands_customCommandsMixin
         CarpetSettings.impendingFillSkipUpdates.set(false);
     }
 
-    @SuppressWarnings("UnresolvedMixinReference")
-    @Redirect(method = "performCommand", at = @At(
+    @ModifyExpressionValue(method = "performCommand", at = @At(
                 value = "INVOKE",
-                target = "Lorg/slf4j/Logger;isDebugEnabled()Z"
-            ),
-        require = 0
-    )
-    private boolean doesOutputCommandStackTrace(Logger logger)
+                target = "Lorg/slf4j/Logger;isDebugEnabled()Z",
+                remap = false
+    ))
+    private boolean doesOutputCommandStackTrace(boolean original)
     {
-        if (CarpetSettings.superSecretSetting)
-            return true;
-        return logger.isDebugEnabled();
+        return original || CarpetSettings.superSecretSetting;
     }
 }

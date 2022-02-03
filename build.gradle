@@ -15,6 +15,16 @@ loom {
 	accessWidenerPath = file("src/main/resources/carpet.accesswidener")
 }
 
+repositories {
+	maven {
+		name 'JitPack'
+		url 'https://jitpack.io'
+		content {
+			includeGroup "com.github.LlamaLad7"
+		}
+	}
+}
+
 dependencies {
 	// To change the versions see the gradle.properties file
 	minecraft "com.mojang:minecraft:${project.minecraft_version}"
@@ -24,6 +34,12 @@ dependencies {
 	// Fabric API. This is technically optional, but you probably want it anyway.
 	//modImplementation "net.fabricmc:fabric:${project.fabric_version}"
 	modCompileOnly fabricApi.module("fabric-rendering-v1", project.fabric_version)
+	
+	// Mixin Extras. Provides new injectors that replace redirects and can be chained with other mods
+	// https://github.com/LlamaLad7/MixinExtras
+	include "com.github.LlamaLad7:MixinExtras:0.0.3"
+	implementation "com.github.LlamaLad7:MixinExtras:0.0.3"
+	annotationProcessor "com.github.LlamaLad7:MixinExtras:0.0.3"
 
 	// PSA: Some older mods, compiled on Loom 0.2.1, might have outdated Maven POMs.
 	// You may need to force-disable transitiveness on them.

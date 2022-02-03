@@ -6,8 +6,10 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+
+import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
+import com.llamalad7.mixinextras.injector.WrapWithCondition;
 
 import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
@@ -92,7 +94,6 @@ public abstract class ServerLevel_tickMixin extends Level
         }
     }
 
-
     @Inject(method = "tick", at = @At(
             value = "CONSTANT",
             args = "stringValue=blockEvents"
@@ -127,13 +128,13 @@ public abstract class ServerLevel_tickMixin extends Level
 
     //// freeze
 
-    @Redirect(method = "tick", at = @At(
+    @WrapWithCondition(method = "tick", at = @At(
             value = "INVOKE",
             target = "Lnet/minecraft/world/level/border/WorldBorder;tick()V"
     ))
-    private void tickWorldBorder(WorldBorder worldBorder)
+    private boolean shouldTickWorldBorder(WorldBorder worldBorder)
     {
-        if (TickSpeed.process_entities) worldBorder.tick();
+        return TickSpeed.process_entities;
     }
 
     @Inject(method = "advanceWeatherCycle", cancellable = true, at = @At("HEAD"))
@@ -142,42 +143,39 @@ public abstract class ServerLevel_tickMixin extends Level
         if (!TickSpeed.process_entities) ci.cancel();
     }
 
-    @Redirect(method = "tick", at = @At(
+    @WrapWithCondition(method = "tick", at = @At(
             value = "INVOKE",
             target = "Lnet/minecraft/server/level/ServerLevel;tickTime()V"
     ))
-    private void tickTimeConditionally(ServerLevel serverWorld)
+    private boolean shouldTickTime(ServerLevel level)
     {
-        if (TickSpeed.process_entities) tickTime();
+        return TickSpeed.process_entities;
     }
 
-    @Redirect(method = "tick", at = @At(
+    @ModifyExpressionValue(method = "tick", at = @At(
             value = "INVOKE",
             target = "Lnet/minecraft/server/level/ServerLevel;isDebug()Z"
     ))
-    private boolean tickPendingBlocks(ServerLevel serverWorld)
+    private boolean shouldNOTtickPendingBlocks(boolean original)
     {
-        if (!TickSpeed.process_entities) return true;
-        return serverWorld.isDebug(); // isDebug()
+        return original || !TickSpeed.process_entities;
     }
 
-    @Redirect(method = "tick", at = @At(
+    @WrapWithCondition(method = "tick", at = @At(
             value = "INVOKE",
             target = "Lnet/minecraft/world/entity/raid/Raids;tick()V"
     ))
-    private void tickConditionally(Raids raidManager)
+    private boolean shouldTickRaids(Raids raidManager)
     {
-        if (TickSpeed.process_entities) raidManager.tick();
+        return TickSpeed.process_entities;
     }
 
-    @Redirect(method = "tick", at = @At(
+    @WrapWithCondition(method = "tick", at = @At(
             value = "INVOKE",
             target = "Lnet/minecraft/server/level/ServerLevel;runBlockEvents()V"
     ))
-    private void tickConditionally(ServerLevel serverWorld)
+    private boolean shouldTickBlockEvents(ServerLevel serverWorld)
     {
-        if (TickSpeed.process_entities) runBlockEvents();
+        return TickSpeed.process_entities;
     }
-
-
 }
