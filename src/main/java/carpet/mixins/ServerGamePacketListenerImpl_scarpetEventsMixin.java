@@ -1,5 +1,6 @@
 package carpet.mixins;
 
+import net.minecraft.server.network.TextFilter;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
@@ -24,6 +25,7 @@ import static carpet.script.CarpetEventServer.Event.PLAYER_STOPS_SPRINTING;
 import static carpet.script.CarpetEventServer.Event.PLAYER_SWAPS_HANDS;
 import static carpet.script.CarpetEventServer.Event.PLAYER_SWINGS_HAND;
 import static carpet.script.CarpetEventServer.Event.PLAYER_SWITCHES_SLOT;
+import static carpet.script.CarpetEventServer.Event.PLAYER_SENDS_MESSAGE;
 import static carpet.script.CarpetEventServer.Event.PLAYER_USES_ITEM;
 import static carpet.script.CarpetEventServer.Event.PLAYER_WAKES_UP;
 
@@ -42,6 +44,7 @@ import net.minecraft.server.network.ServerGamePacketListenerImpl;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.BlockHitResult;
+import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 
 
 @Mixin(ServerGamePacketListenerImpl.class)
@@ -276,6 +279,17 @@ public class ServerGamePacketListenerImpl_scarpetEventsMixin
         if (PLAYER_SWINGS_HAND.isNeeded() && !player.swinging)
         {
             PLAYER_SWINGS_HAND.onHandAction(player, packet.getHand());
+        }
+    }
+
+    @Inject(method = "handleChat(Lnet/minecraft/server/network/TextFilter$FilteredText;)V",
+            at = @At(value = "INVOKE", target = "Ljava/lang/String;startsWith(Ljava/lang/String;)Z"),
+            locals = LocalCapture.CAPTURE_FAILHARD
+    )
+    private void onChatMessage(TextFilter.FilteredText filteredText, CallbackInfo ci, String string) {
+        if (PLAYER_SENDS_MESSAGE.isNeeded())
+        {
+            PLAYER_SENDS_MESSAGE.onPlayerMessage(player,string);
         }
     }
 }
