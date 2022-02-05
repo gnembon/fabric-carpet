@@ -190,7 +190,8 @@
     "LivingEntity_creativeFlyMixin",
     "Level_updateSuppressionCrashFixMixin",
     "MinecraftServer_updateSuppressionCrashFixMixin",
-    "ServerPlayer_updateSuppressionCrashFixMixin"
+    "ServerPlayer_updateSuppressionCrashFixMixin",
+    "ChunkMap_creativePlayersLoadChunksMixin"
   ],
   "client": [
     "Timer_tickSpeedMixin",

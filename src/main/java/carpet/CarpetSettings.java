@@ -1092,4 +1092,13 @@ public class CarpetSettings
             return "Cannot be negative, can be true, false, or # > 0";
         }
     }
+
+    @Rule(
+            desc = "Creative players load chunks, or they don't! Just like spectators!",
+            extra = {"Toggling behaves exactly as if the player is in spectator mode and toggling the gamerule spectatorsGenerateChunks."
+            },
+            category = {CREATIVE, FEATURE}
+    )
+    public static boolean creativePlayersLoadChunks = true;
+
 }
