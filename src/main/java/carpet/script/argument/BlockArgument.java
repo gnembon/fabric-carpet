@@ -51,7 +51,7 @@ public class BlockArgument extends Argument
         {
             Value v1 = params.next();
             //add conditional from string name
-            if (optional && v1 instanceof NullValue)
+            if (optional && v1.isNull())
             {
                 return new BlockArgument(null, 1 + offset);
             }
@@ -105,7 +105,7 @@ public class BlockArgument extends Argument
         {
             Value v1 = params.get(0 + offset);
             //add conditional from string name
-            if (optional && v1 instanceof NullValue)
+            if (optional && v1.isNull())
             {
                 return new BlockArgument(null, 1+offset);
             }

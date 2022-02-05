@@ -1231,7 +1231,7 @@ public class EntityValue extends Value
 
         });
         put("custom_name", (e, v) -> {
-            if (v instanceof NullValue)
+            if (v.isNull())
             {
                 e.setCustomNameVisible(false);
                 e.setCustomName(null);
@@ -1326,7 +1326,7 @@ public class EntityValue extends Value
             PathfinderMob ec = (PathfinderMob)e;
             if (v == null)
                 throw new InternalExpressionException("'home' requires at least one position argument, and optional distance, or null to cancel");
-            if (v instanceof NullValue)
+            if (v.isNull())
             {
                 ec.restrictTo(BlockPos.ZERO, -1);
                 Map<String,Goal> tasks = ((MobEntityInterface)ec).getTemporaryTasks();

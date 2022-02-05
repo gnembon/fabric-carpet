@@ -248,7 +248,7 @@ public class Inventories {
                 Value nbtValue = lv.get(inventoryLocator.offset()+3);
                 if (nbtValue instanceof NBTSerializableValue)
                     nbt = ((NBTSerializableValue)nbtValue).getCompoundTag();
-                else if (nbtValue instanceof NullValue)
+                else if (nbtValue.isNull())
                     nbt = null;
                 else
                     nbt = new NBTSerializableValue(nbtValue.getString()).getCompoundTag();
@@ -277,7 +277,7 @@ public class Inventories {
             if (lv.size() > inventoryLocator.offset())
             {
                 Value secondArg = lv.get(inventoryLocator.offset()+0);
-                if (!(secondArg instanceof NullValue))
+                if (!secondArg.isNull())
                     itemArg = NBTSerializableValue.parseItem(secondArg.getString());
             }
             int startIndex = 0;

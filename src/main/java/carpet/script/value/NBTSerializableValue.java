@@ -389,7 +389,7 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
     {
         if (v instanceof NBTSerializableValue)
             return v;
-        if (v instanceof NullValue)
+        if (v.isNull())
             return Value.NULL;
         return NBTSerializableValue.parseString(v.getString(), true);
     }

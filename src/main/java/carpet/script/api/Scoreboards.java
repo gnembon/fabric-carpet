@@ -231,7 +231,7 @@ public class Scoreboards {
             int slot = Scoreboard.getDisplaySlotByName(location);
             if (slot < 0) throw new InternalExpressionException("Invalid objective slot: "+location);
             Value target = lv.get(1);
-            if (target instanceof NullValue)
+            if (target.isNull())
             {
                 scoreboard.setDisplayObjective(slot, null);
                 return new NumericValue(slot);

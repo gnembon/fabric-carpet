@@ -820,7 +820,7 @@ public class WorldAccess {
             {
                 if (!playerBreak) throw new InternalExpressionException("tag is not necessary with 'destroy' with no item");
                 Value tagValue = lv.get(locator.offset+1);
-                if (tagValue instanceof NullValue)
+                if (tagValue.isNull())
                     tag = null;
                 else if (tagValue instanceof NBTSerializableValue)
                     tag = ((NBTSerializableValue) tagValue).getCompoundTag();
@@ -1294,7 +1294,7 @@ public class WorldAccess {
             if (lv.size() > locator.offset)
             {
                 Value requested = lv.get(locator.offset+0);
-                if (!(requested instanceof NullValue))
+                if (!requested.isNull())
                 {
                     String reqString = requested.getString();
                     structure = Registry.STRUCTURE_FEATURE.getOptional(InputValidator.identifierOf(reqString))
@@ -1389,7 +1389,7 @@ public class WorldAccess {
                     return;
                 }
                 Value newValue = lv.get(locator.offset+1);
-                if (newValue instanceof NullValue) // remove structure
+                if (newValue.isNull()) // remove structure
                 {
                     StructureFeature<?> structure = configuredStructure.feature;
                     if (!structures.containsKey(structure))

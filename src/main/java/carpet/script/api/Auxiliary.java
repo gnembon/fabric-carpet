@@ -361,7 +361,7 @@ public class Auxiliary {
             try
             {
                 Value nameValue = lv.get(0);
-                name = nameValue instanceof NullValue ? "" : nameValue.getString();
+                name = nameValue.isNull() ? "" : nameValue.getString();
                 pointLocator = Vector3Argument.findIn(lv, 1, true, false);
                 if (lv.size()>pointLocator.offset)
                 {
