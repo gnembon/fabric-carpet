@@ -737,7 +737,7 @@ public class Expression
         }
         var = c.host.getGlobalVariable(module, name);
         if (var != null) return var;
-        var = (_c, _t ) -> _c.host.strict ? Value.UNDEF.reboundedTo(name) : Value.NULL.reboundedTo(name);
+        var = new LazyValue.VariableLazyValue((cc, tt) -> c.host.strict ? Value.UNDEF.reboundedTo(name) : Value.NULL.reboundedTo(name), name);
         setAnyVariable(c, name, var);
         return var;
     }
@@ -1344,7 +1344,7 @@ public class Expression
                 return (c, t) -> op.lazyEval(c, t, this, token, arg, arh).evalValue(c, t);
             }
             case VARIABLE:
-                return (c, t) -> getOrSetAnyVariable(c, token.surface).evalValue(c, t);
+                return new LazyValue.VariableLazyValue((c, t) -> getOrSetAnyVariable(c, token.surface).evalValue(c, t), token.surface);
             case FUNCTION: {
                 ILazyFunction f = functions.get(token.surface);
                 Context.Type requestedType = f.staticType(expectedType);

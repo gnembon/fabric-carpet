@@ -113,7 +113,7 @@ public class Loops {
             for (int i=0; iterator.hasNext(); i++)
             {
                 Value next = iterator.next();
-                String var = next.boundVariable;
+                String var = next.getVariable();
                 next.bindTo("_");
                 int doYouReally = i;
                 c.setVariable("_", (cc, tt) -> next);
@@ -127,11 +127,11 @@ public class Loops {
                     if (stmt.retval != null) result.add(stmt.retval);
                     if (stmt instanceof BreakStatement)
                     {
-                        next.boundVariable = var;
+                        next.bindTo(var);
                         break;
                     }
                 }
-                next.boundVariable = var;
+                next.bindTo(var);
             }
             ((AbstractListValue) rval).fatality();
             Value ret = ListValue.wrap(result);
@@ -159,7 +159,7 @@ public class Loops {
             for (int i=0; iterator.hasNext(); i++)
             {
                 Value next = iterator.next();
-                String var = next.boundVariable;
+                String var = next.getVariable();
                 next.bindTo("_");
                 int seriously = i;
                 c.setVariable("_", (cc, tt) -> next);
@@ -174,11 +174,11 @@ public class Loops {
                     if (stmt.retval != null && stmt.retval.getBoolean()) result.add(next);
                     if (stmt instanceof BreakStatement)
                     {
-                        next.boundVariable = var;
+                        next.bindTo(var);
                         break;
                     }
                 }
-                next.boundVariable = var;
+                next.bindTo(var);
             }
             ((AbstractListValue) rval).fatality();
             Value ret = ListValue.wrap(result);
@@ -207,7 +207,7 @@ public class Loops {
             for (int i=0; iterator.hasNext(); i++)
             {
                 Value next = iterator.next();
-                String var = next.boundVariable;
+                String var = next.getVariable();
                 next.bindTo("_");
                 int seriously = i;
                 c.setVariable("_", (cc, tt) -> next);
@@ -217,21 +217,21 @@ public class Loops {
                     if(expr.evalValue(c, Context.BOOLEAN).getBoolean())
                     {
                         result = next;
-                        next.boundVariable = var;
+                        next.bindTo(var);
                         break;
                     }
                 }
                 catch (BreakStatement  stmt)
                 {
                     result = stmt.retval == null? next : stmt.retval;
-                    next.boundVariable = var;
+                    next.bindTo(var);
                     break;
                 }
                 catch (ContinueStatement ignored)
                 {
                     throw new InternalExpressionException("'continue' inside 'first' function has no sense");
                 }
-                next.boundVariable = var;
+                next.bindTo(var);
             }
             //revering scope
             ((AbstractListValue) rval).fatality();
@@ -259,7 +259,7 @@ public class Loops {
             for (int i=0; iterator.hasNext(); i++)
             {
                 Value next = iterator.next();
-                String var = next.boundVariable;
+                String var = next.getVariable();
                 next.bindTo("_");
                 int seriously = i;
                 c.setVariable("_", (cc, tt) -> next);
@@ -267,10 +267,10 @@ public class Loops {
                 if(!expr.evalValue(c, Context.BOOLEAN).getBoolean())
                 {
                     result = LazyValue.FALSE;
-                    next.boundVariable = var;
+                    next.bindTo(var);
                     break;
                 }
-                next.boundVariable = var;
+                next.bindTo(var);
             }
             //revering scope
             ((AbstractListValue) rval).fatality();
@@ -324,7 +324,7 @@ public class Loops {
             for (int i=0; iterator.hasNext(); i++)
             {
                 Value next = iterator.next();
-                String var = next.boundVariable;
+                String var = next.getVariable();
                 next.bindTo("_");
                 int seriously = i;
                 c.setVariable("_", (cc, tt) -> next);
@@ -339,13 +339,13 @@ public class Loops {
                     if (stmt.retval != null) result = stmt.retval;
                     if (stmt instanceof BreakStatement)
                     {
-                        next.boundVariable = var;
+                        next.bindTo(var);
                         break;
                     }
                 }
                 if(t != Context.VOID && result.getBoolean())
                     successCount++;
-                next.boundVariable = var;
+                next.bindTo(var);
             }
             //revering scope
             ((AbstractListValue) rval).fatality();
@@ -385,7 +385,7 @@ public class Loops {
             for (int i=0; iterator.hasNext(); i++)
             {
                 Value next = iterator.next();
-                String var = next.boundVariable;
+                String var = next.getVariable();
                 next.bindTo("_");
                 Value promiseWontChangeYou = acc;
                 int seriously = i;
@@ -401,11 +401,11 @@ public class Loops {
                     if (stmt.retval != null) acc = stmt.retval;
                     if (stmt instanceof BreakStatement)
                     {
-                        next.boundVariable = var;
+                        next.bindTo(var);
                         break;
                     }
                 }
-                next.boundVariable = var;
+                next.bindTo(var);
             }
             //reverting scope
             ((AbstractListValue) rval).fatality();

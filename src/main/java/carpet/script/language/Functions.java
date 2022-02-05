@@ -69,18 +69,18 @@ public class Functions {
                     {
                         if (((FunctionAnnotationValue) v).type == FunctionAnnotationValue.Type.GLOBAL)
                         {
-                            globals.add(v.boundVariable);
+                            globals.add(v.getVariable());
                         }
                         else
                         {
                             if (varArgs != null)
-                                throw new InternalExpressionException("Variable argument identifier is already defined as "+varArgs+", trying to overwrite with "+v.boundVariable);
-                            varArgs = v.boundVariable;
+                                throw new InternalExpressionException("Variable argument identifier is already defined as "+varArgs+", trying to overwrite with "+v.getVariable());
+                            varArgs = v.getVariable();
                         }
                     }
                     else
                     {
-                        args.add(v.boundVariable);
+                        args.add(v.getVariable());
                     }
                 }
                 Value retval = new FunctionSignatureValue(name, args, varArgs, globals);

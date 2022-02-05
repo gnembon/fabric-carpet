@@ -3,6 +3,7 @@ package carpet.script.language;
 import carpet.script.Context;
 import carpet.script.Expression;
 import carpet.script.LazyValue;
+import carpet.script.LazyValue.VariableLazyValue;
 import carpet.script.exception.InternalExpressionException;
 import carpet.script.value.AbstractListValue;
 import carpet.script.value.BooleanValue;
@@ -325,6 +326,9 @@ public class Operators {
                 return (cc, tt) -> v2;
             }
             v1.assertAssignable();
+            if (!(lv1 instanceof VariableLazyValue vlv) || !vlv.evalValue(c, Context.LVALUE).getVariable().equals(v1.getVariable())) {
+            	throw new AssertionError();
+            }
             String varname = v1.getVariable();
             Value copy = v2.reboundedTo(varname);
             LazyValue boundedLHS = (cc, tt) -> copy;
@@ -377,6 +381,9 @@ public class Operators {
                 }
             }
             v1.assertAssignable();
+            if (!(lv1 instanceof VariableLazyValue vlv) || !vlv.evalValue(c, Context.LVALUE).getVariable().equals(v1.getVariable())) {
+            	throw new AssertionError();
+            }
             String varname = v1.getVariable();
             LazyValue boundedLHS;
             if (v1 instanceof ListValue || v1 instanceof MapValue)

@@ -12,16 +12,16 @@ public class FunctionAnnotationValue extends Value
     public Type type;
     public FunctionAnnotationValue(Value variable, Type type)
     {
-        if (variable.boundVariable == null)
+        if (variable.getVariable() == null)
             throw new InternalExpressionException("You can only borrow variables from the outer scope");
-        this.boundVariable = variable.boundVariable;
+        this.bindTo(variable.getVariable());
         this.type = type;
     }
 
     @Override
     public String getString()
     {
-        return boundVariable;
+        return getVariable();
     }
 
     @Override

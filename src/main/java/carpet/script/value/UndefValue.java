@@ -8,7 +8,7 @@ public class UndefValue extends NullValue {
     public static final UndefValue UNDEF = new UndefValue();
 
     private RuntimeException getError() {
-        return new InternalExpressionException("variable "+boundVariable+" was used before initialization under 'strict' app config");
+        return new InternalExpressionException("variable "+getVariable()+" was used before initialization under 'strict' app config");
     }
 
 

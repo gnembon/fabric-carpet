@@ -1,5 +1,6 @@
 package carpet.script;
 
+import carpet.script.Context.Type;
 import carpet.script.value.Value;
 
 /** LazyNumber interface created for lazily evaluated functions */
@@ -31,6 +32,14 @@ public interface LazyValue
         default Value evalValue(Context c, Context.Type type) {
             return evalType(type);
         }
+    }
+    
+    public record VariableLazyValue(LazyValue lv, String name) implements LazyValue {
+
+		@Override
+		public Value evalValue(Context c, Type type) {
+			return lv.evalValue(c, type);
+		}
     }
 
 
