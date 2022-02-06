@@ -25,7 +25,7 @@ import static carpet.script.CarpetEventServer.Event.PLAYER_STOPS_SPRINTING;
 import static carpet.script.CarpetEventServer.Event.PLAYER_SWAPS_HANDS;
 import static carpet.script.CarpetEventServer.Event.PLAYER_SWINGS_HAND;
 import static carpet.script.CarpetEventServer.Event.PLAYER_SWITCHES_SLOT;
-import static carpet.script.CarpetEventServer.Event.PLAYER_SENDS_MESSAGE;
+import static carpet.script.CarpetEventServer.Event.PLAYER_MESSAGE;
 import static carpet.script.CarpetEventServer.Event.PLAYER_USES_ITEM;
 import static carpet.script.CarpetEventServer.Event.PLAYER_WAKES_UP;
 
@@ -287,9 +287,9 @@ public class ServerGamePacketListenerImpl_scarpetEventsMixin
             locals = LocalCapture.CAPTURE_FAILHARD
     )
     private void onChatMessage(TextFilter.FilteredText filteredText, CallbackInfo ci, String string) {
-        if (PLAYER_SENDS_MESSAGE.isNeeded())
+        if (PLAYER_MESSAGE.isNeeded())
         {
-            PLAYER_SENDS_MESSAGE.onPlayerMessage(player,string);
+            PLAYER_MESSAGE.onPlayerMessage(player,string);
         }
     }
 }
