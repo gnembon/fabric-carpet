@@ -57,7 +57,6 @@ import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.BaseComponent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.TextComponent;
-import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientboundClearTitlesPacket;
 import net.minecraft.network.protocol.game.ClientboundCustomSoundPacket;
@@ -621,6 +620,7 @@ public class Auxiliary {
         });
         expression.addFunction("transformat", values -> {
             if (values.size() == 0 ) throw new InternalExpressionException("'transformat' requires at least one component");
+            BaseComponent p = Messenger.getChatComponentFromDesc_but_with_translation(values.get(0).getString(),null,null);
             Object[] arg = values.stream().skip(1).map(v->{
                 if (v instanceof FormattedTextValue){
                     return ((FormattedTextValue)v).getText();
@@ -646,9 +646,11 @@ public class Auxiliary {
                         } catch (CommandSyntaxException e) {}
                     }
                 }
-                return new TextComponent(v.getString());
-            }).toArray();
-            return new FormattedTextValue(new TranslatableComponent(values.get(0).getString(), arg));
+                return Messenger.getChatComponentFromDesc_but_with_translation(v.getString(), p,null);
+            }).filter(x->x!=null).toArray();
+            BaseComponent res = (Messenger.getChatComponentFromDesc_but_with_translation(values.get(0).getString(),null, arg));
+            res.setStyle(p.getStyle());
+            return new FormattedTextValue(res);
         });
         expression.addContextFunction("run", 1, (c, t, lv) ->
         {
