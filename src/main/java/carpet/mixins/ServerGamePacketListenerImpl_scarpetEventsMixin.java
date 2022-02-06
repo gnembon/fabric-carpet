@@ -101,7 +101,7 @@ public class ServerGamePacketListenerImpl_scarpetEventsMixin
         PLAYER_JUMPS.onPlayerEvent(player);
     }
 
-    @Inject(method = "handlePlayerAction", at = @At(
+    @Inject(method = "handlePlayerAction", cancellable = true, at = @At(
             value = "INVOKE",
             target = "Lnet/minecraft/server/level/ServerPlayerGameMode;handleBlockBreakAction(Lnet/minecraft/core/BlockPos;Lnet/minecraft/network/protocol/game/ServerboundPlayerActionPacket$Action;Lnet/minecraft/core/Direction;I)V",
             shift = At.Shift.BEFORE
@@ -109,7 +109,9 @@ public class ServerGamePacketListenerImpl_scarpetEventsMixin
     private void onClicked(ServerboundPlayerActionPacket packet, CallbackInfo ci)
     {
         if (packet.getAction() == ServerboundPlayerActionPacket.Action.START_DESTROY_BLOCK)
-            PLAYER_CLICKS_BLOCK.onBlockAction(player, packet.getPos(), packet.getDirection());
+            if(PLAYER_CLICKS_BLOCK.onBlockAction(player, packet.getPos(), packet.getDirection())) {
+                ci.cancel();
+            }
     }
 
     @Redirect(method = "handlePlayerAction", at = @At(
@@ -131,7 +133,7 @@ public class ServerGamePacketListenerImpl_scarpetEventsMixin
         }
     }
 
-    @Inject(method = "handleUseItemOn", at = @At(
+    @Inject(method = "handleUseItemOn", cancellable = true, at = @At(
             value = "INVOKE",
             target = "Lnet/minecraft/server/level/ServerPlayerGameMode;useItemOn(Lnet/minecraft/server/level/ServerPlayer;Lnet/minecraft/world/level/Level;Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/InteractionHand;Lnet/minecraft/world/phys/BlockHitResult;)Lnet/minecraft/world/InteractionResult;"
     ))
@@ -141,11 +143,13 @@ public class ServerGamePacketListenerImpl_scarpetEventsMixin
         {
             InteractionHand hand = playerInteractBlockC2SPacket_1.getHand();
             BlockHitResult hitRes = playerInteractBlockC2SPacket_1.getHitResult();
-            PLAYER_RIGHT_CLICKS_BLOCK.onBlockHit(player, hand, hitRes);
+            if(PLAYER_RIGHT_CLICKS_BLOCK.onBlockHit(player, hand, hitRes)) {
+                ci.cancel();
+            }
         }
     }
 
-    @Inject(method = "handleUseItem", at = @At(
+    @Inject(method = "handleUseItem", cancellable = true, at = @At(
             value = "INVOKE",
             target = "Lnet/minecraft/server/level/ServerPlayer;resetLastActionTime()V"
     ))
@@ -154,7 +158,9 @@ public class ServerGamePacketListenerImpl_scarpetEventsMixin
         if (PLAYER_USES_ITEM.isNeeded())
         {
             InteractionHand hand = playerInteractItemC2SPacket_1.getHand();
-            PLAYER_USES_ITEM.onItemAction(player, hand, player.getItemInHand(hand).copy());
+            if(PLAYER_USES_ITEM.onItemAction(player, hand, player.getItemInHand(hand).copy())) {
+                ci.cancel();
+            }
         }
     }
 
