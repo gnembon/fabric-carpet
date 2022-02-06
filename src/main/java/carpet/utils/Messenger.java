@@ -10,6 +10,7 @@ import net.minecraft.network.chat.HoverEvent;
 import net.minecraft.network.chat.Style;
 import net.minecraft.network.chat.TextColor;
 import net.minecraft.network.chat.TextComponent;
+import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.entity.player.Player;
@@ -112,6 +113,45 @@ public class Messenger
             case WATER_AMBIENT -> "q";
             default -> "w"; // missing MISC and UNDERGROUND_WATER_CREATURE
         };
+    }
+    public static BaseComponent getChatComponentFromDesc_but_with_translation(String message, BaseComponent previousMessage, Object ... arg)
+    {
+        if (message.equalsIgnoreCase(""))
+        {
+            return new TextComponent("");
+        }
+        if (Character.isWhitespace(message.charAt(0)))
+        {
+            message = "w" + message;
+        }
+        int limit = message.indexOf(' ');
+        String desc = message;
+        String str = "";
+        if (limit >= 0)
+        {
+            desc = message.substring(0, limit);
+            str = message.substring(limit+1);
+        }
+        if (previousMessage == null) {
+            BaseComponent text = new TranslatableComponent(str, arg);
+            text.setStyle(parseStyle(desc));
+            return text;
+        }
+        Style previousStyle = previousMessage.getStyle();
+        BaseComponent ret = null;
+        previousMessage.setStyle(switch (desc.charAt(0)) {
+            case '?' -> previousStyle.withClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, message.substring(1)));
+            case '!' -> previousStyle.withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, message.substring(1)));
+            case '^' -> previousStyle.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, c(message.substring(1))));
+            case '@' -> previousStyle.withClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, message.substring(1)));
+            case '&' -> previousStyle.withClickEvent(new ClickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD, message.substring(1)));
+            default  -> { // Create a new component
+                ret = new TextComponent(str);
+                ret.setStyle(parseStyle(desc));
+                yield previousStyle; // no op for the previous style
+            }
+        });
+        return ret;
     }
 
     private static BaseComponent getChatComponentFromDesc(String message, BaseComponent previousMessage)
