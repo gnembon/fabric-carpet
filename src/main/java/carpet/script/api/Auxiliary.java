@@ -57,6 +57,7 @@ import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.BaseComponent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.TextComponent;
+import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientboundClearTitlesPacket;
 import net.minecraft.network.protocol.game.ClientboundCustomSoundPacket;
@@ -104,6 +105,7 @@ import org.apache.commons.io.FileUtils;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
+import com.mojang.brigadier.exceptions.CommandSyntaxException;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -617,7 +619,37 @@ public class Auxiliary {
                 values = ((ListValue) values.get(0)).getItems();
             return new FormattedTextValue(Messenger.c(values.stream().map(Value::getString).toArray()));
         });
-
+        expression.addFunction("transformat", values -> {
+            if (values.size() == 0 ) throw new InternalExpressionException("'transformat' requires at least one component");
+            Object[] arg = values.stream().skip(1).map(v->{
+                if (v instanceof FormattedTextValue){
+                    return ((FormattedTextValue)v).getText();
+                }
+                if (v instanceof EntityValue){
+                    return ((EntityValue)v).getEntity().getDisplayName();
+                }
+                if (v instanceof ListValue _v){//item
+                    
+                    if (_v.length()==3){
+                        String id=_v.getItems().get(0).getString();
+                        int count = (int) NumericValue.asNumber(_v.getItems().get(1)).getLong();
+                        Value nbtValue = _v.getItems().get(2);
+                        CompoundTag nbt;
+                        if (nbtValue instanceof NBTSerializableValue)
+                            nbt = ((NBTSerializableValue)nbtValue).getCompoundTag();
+                        else if (nbtValue instanceof NullValue)
+                            nbt = null;
+                        else
+                            nbt = new NBTSerializableValue(nbtValue.getString()).getCompoundTag();
+                        try {
+                            return NBTSerializableValue.parseItem(id, nbt).createItemStack(count, false).getDisplayName();
+                        } catch (CommandSyntaxException e) {}
+                    }
+                }
+                return new TextComponent(v.getString());
+            }).toArray();
+            return new FormattedTextValue(new TranslatableComponent(values.get(0).getString(), arg));
+        });
         expression.addContextFunction("run", 1, (c, t, lv) ->
         {
             CommandSourceStack s = ((CarpetContext)c).s;
