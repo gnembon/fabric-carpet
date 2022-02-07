@@ -147,3 +147,19 @@ reduce([1,2,3,4],_a+_,0)  => 10
 reduce([1,2,3,4],_a*_,1)  => 24
 </pre>
 
+### `zip(...list_like_values)`
+
+Make an iterator that aggregates elements from each of the iterables.
+
+Returns an iterator of lists, where the i-th list contains the i-th element from each of the argument sequences or iterables. 
+
+If the iterables are of uneven length, missing values are filled-in with `null`.
+
+If a argument is a number, it will be viewed as `range(it)`.
+
+If a argument is a string, it will be viewed as `split(it)`.
+
+<pre>
+[...zip(3,'abc',[11,12])]   =>[[0,'a',11],[1,'b',12],[2,'c',null]]
+days=range(1,32); calendar=zip(days,days,days,days,days,days,days) // make a calendar
+</pre>
