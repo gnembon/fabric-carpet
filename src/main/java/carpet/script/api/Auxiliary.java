@@ -618,12 +618,14 @@ public class Auxiliary {
                 values = ((ListValue) values.get(0)).getItems();
             return new FormattedTextValue(Messenger.c(values.stream().map(Value::getString).toArray()));
         });
+
         expression.addFunction("transformat", values -> {
             if (values.size() == 0 ) throw new InternalExpressionException("'transformat' requires at least one component");
-            BaseComponent p = Messenger.getChatComponentFromDesc_but_with_translation(values.get(0).getString(),null,null);
+            BaseComponent[] p = {Messenger.getChatComponentFromDesc_but_with_translation(values.get(0).getString(),null,(Object[])null)};
+            BaseComponent q=p[0];
             Object[] arg = values.stream().skip(1).map(v->{
                 if (v instanceof FormattedTextValue){
-                    return ((FormattedTextValue)v).getText();
+                    return ((FormattedTextValue)v).getText().copy();
                 }
                 if (v instanceof EntityValue){
                     return ((EntityValue)v).getEntity().getDisplayName();
@@ -646,10 +648,10 @@ public class Auxiliary {
                         } catch (CommandSyntaxException e) {}
                     }
                 }
-                return Messenger.getChatComponentFromDesc_but_with_translation(v.getString(), p,null);
-            }).filter(x->x!=null).toArray();
+                return Messenger.getChatComponentFromDesc_but_with_translation(v.getString(), p[0],(Object[])null);
+            }).filter(x->x!=null).peek(v->{p[0]=(BaseComponent) v;}).toArray();
             BaseComponent res = (Messenger.getChatComponentFromDesc_but_with_translation(values.get(0).getString(),null, arg));
-            res.setStyle(p.getStyle());
+            res.setStyle(q.getStyle());
             return new FormattedTextValue(res);
         });
         expression.addContextFunction("run", 1, (c, t, lv) ->
