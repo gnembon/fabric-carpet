@@ -18,7 +18,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.LongStream;
-import java.util.stream.Stream;
+
 
 import com.google.common.collect.Lists;
 
@@ -151,7 +151,7 @@ public class Loops {
         //Someone commented that the limitations of zip are too strong and suggested
         // to be able to construct arbitrary generators in one step straightforwardly
         //and then implement zip with a .sc module.
-        expression.addLazyFunction("generator", 2, (c, t, lv) ->
+        expression.addLazyFunction("generator", -1, (c, t, lv) ->
         {
             
             return (cc,tt)->new LazyListValue() {
@@ -186,6 +186,15 @@ public class Loops {
 
                 @Override
                 public void reset() {
+                    if(lv.size()>2){
+                        LazyValue _val = c.getVariable("_");
+                        String var = State.boundVariable;
+                        State.bindTo("_");
+                        c.setVariable("_", (cc, tt) -> State);
+                        lv.get(2).evalValue(c, t);
+                        State.boundVariable = var;
+                        c.setVariable("_", _val);
+                    }
                     State= Value.NULL;
                 }
                 
@@ -218,9 +227,9 @@ public class Loops {
         });
         expression.addFunction("zip", (list_of_iterable_values) ->
         {   
-            if(list_of_iterable_values.size()<1){
+            /*if(list_of_iterable_values.size()<1){
                 throw new InternalExpressionException("There is no arguments of 'zip' function");
-            }
+            }*/
             if (list_of_iterable_values.stream().allMatch(v->(v instanceof AbstractListValue||v instanceof NumericValue||v instanceof StringValue))){
                 return new LazyListValue(){
                     Iterator<? extends Value> fromValuetoIterator(Value v){
