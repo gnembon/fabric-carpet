@@ -268,7 +268,15 @@ public class Loops {
                         //this.iterator_value_list=list_of_iterable_values.stream().map(v->(AbstractListValue)v).collect(Collectors.toList());
                         this.iterator_list=list_of_iterable_values.stream().map(v->fromValuetoIterator(v)).collect(Collectors.toList());
                     }
-                    
+                    @Override
+                    public String getString()
+                    {
+                        return list_of_iterable_values.stream().map(x->{
+                            if(x.isBound())
+                            return x.getVariable();
+                            return "♾";//use a special inf symble to stand for a iterator
+                        }).collect(Collectors.joining(", ","zip(",")"));
+                    }
                 };
             }
             else{
