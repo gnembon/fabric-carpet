@@ -67,7 +67,6 @@ public class CarpetSettings
                 return null;
             }
             CarpetSettings.language = newValue;
-            Translations.updateLanguage(source);
             return newValue;
         }
     }

@@ -1,7 +1,11 @@
 package carpet.settings;
 
-import carpet.utils.Translations;
 import carpet.utils.Messenger;
+import carpet.utils.Translations;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.network.chat.BaseComponent;
+import org.apache.commons.lang3.ClassUtils;
+
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
@@ -9,10 +13,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.stream.Collectors;
-import net.minecraft.commands.CommandSourceStack;
-import org.apache.commons.lang3.ClassUtils;
-
-import static carpet.utils.Translations.tr;
 
 /**
  * A parsed Carpet rule, with its field, name, value, and other useful stuff.
@@ -38,6 +38,7 @@ public final class ParsedRule<T> implements Comparable<ParsedRule> {
     public final String defaultAsString;
     public final SettingsManager settingsManager;
 
+    @SuppressWarnings("deprecation")
     ParsedRule(Field field, Rule rule, SettingsManager settingsManager)
     {
         this.field = field;
@@ -102,6 +103,7 @@ public final class ParsedRule<T> implements Comparable<ParsedRule> {
                 this.validators.add(callConstructor(Validator._STRICT.class));
             }
         }
+        this.registerDefaultTranslations();
     }
 
     private <T> T callConstructor(Class<T> cls)
@@ -264,44 +266,41 @@ public final class ParsedRule<T> implements Comparable<ParsedRule> {
         return this.name + ": " + getAsString();
     }
 
-    private String translationKey()
+    public BaseComponent getNameText()
     {
-        return String.format("rule.%s.name", name);
-    }
-
-    /**
-     * @return A {@link String} being the translated {@link ParsedRule#name} of this rule,
-     *                          in Carpet's configured language.
-     */
-    public String translatedName(){
-        String key = translationKey();
-        return Translations.hasTranslation(key) ? tr(key) + String.format(" (%s)", name): name;
-    }
-
-    /**
-     * @return A {@link String} being the translated {@link ParsedRule#description} of this rule,
-     *                          in Carpet's configured language.
-     */
-    public String translatedDescription()
-    {
-        return tr(String.format("rule.%s.desc", (name)), description);
-    }
-
-    /**
-     * @return A {@link String} being the translated {@link ParsedRule#extraInfo} of this 
-     * 	                        {@link ParsedRule}, in Carpet's configured language.
-     */
-    public List<String> translatedExtras()
-    {
-        if (!Translations.hasTranslations()) return extraInfo;
-        String keyBase = String.format("rule.%s.extra.", name);
-        List<String> extras = new ArrayList<>();
-        int i = 0;
-        while (Translations.hasTranslation(keyBase+i))
+        BaseComponent nameText = Messenger.tr("rule.%s.name".formatted(name));
+        if (!nameText.getString().equals(name))
         {
-            extras.add(Translations.tr(keyBase+i));
+            nameText.append(Messenger.s(" (%s)".formatted(name)));
+        }
+        return nameText;
+    }
+
+    public BaseComponent getDescriptionText()
+    {
+        return Messenger.tr("rule.%s.desc".formatted(name));
+    }
+
+    public List<BaseComponent> getExtrasText(CommandSourceStack source)
+    {
+        String keyBase = "rule.%s.extra.".formatted(name);
+        List<BaseComponent> extras = new ArrayList<>();
+        int i = 0;
+        while (Translations.hasTranslation(keyBase + i, source))
+        {
+            extras.add(Messenger.tr(keyBase+i));
             i++;
         }
-        return (extras.isEmpty()) ? extraInfo : extras;
+        return extras;
+    }
+
+    private void registerDefaultTranslations()
+    {
+        Translations.addEntry(Translations.DEFAULT_LANGUAGE, "rule.%s.name".formatted(name), name, false);
+        Translations.addEntry(Translations.DEFAULT_LANGUAGE, "rule.%s.desc".formatted(name), description, false);
+        for (int i = 0; i < extraInfo.size(); i++)
+        {
+            Translations.addEntry(Translations.DEFAULT_LANGUAGE, "rule.%s.extra.%s".formatted(name, i), extraInfo.get(i), false);
+        }
     }
 }

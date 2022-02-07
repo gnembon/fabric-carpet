@@ -191,7 +191,11 @@
     "Level_updateSuppressionCrashFixMixin",
     "MinecraftServer_updateSuppressionCrashFixMixin",
     "ServerPlayer_updateSuppressionCrashFixMixin",
-    "ChunkMap_creativePlayersLoadChunksMixin"
+    "ChunkMap_creativePlayersLoadChunksMixin",
+
+    "TranslatableComponent_translationInterface",
+    "TranslatableComponent_translationMixin",
+    "Style_translationMixin"
   ],
   "client": [
     "Timer_tickSpeedMixin",

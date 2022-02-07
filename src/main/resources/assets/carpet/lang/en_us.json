@@ -1,20 +1,12 @@
-// This file isn't necessary at all, because the language module would use the strings coded in the source if language "none" is selected.
-// So en_us is the default language and probably no change will be made after loading this file.
-// But it could be a good example for writing the language file for other languages.
-
 {
   "// Rules:": "",
   "rule.portalSuffocationFix.name": "",
-  "// the key is genetated as:" : "String.format('rule.%s.name', rule.name)",
-
 
   "rule.portalSuffocationFix.desc": "",
-  "// the key is genetated as:" : "String.format('rule.%s.desc', rule.name)",
 
 
   "rule.portalSuffocationFix.extra.0": "",
   "rule.portalSuffocationFix.extra.1": "",
-  "// the key is genetated as:" : "String.format('rule.%s.extra.%i', rule.name, index)",
 
 
   "// Categories:": "",
@@ -30,25 +22,31 @@
   "category.dispenser": "dispenser",
   "category.scarpet": "scarpet",
   "category.client": "client",
+  "category.extras": "extras",
 
   "// Settings command UI elements": "",
 
   "ui.browse_categories": "Browse categories",
-  "ui.list_all_%(cat)s_settings": "list all %s settings",
+  "ui.refresh": "refresh",
+  "ui.list_all_settings": "list all %1$s settings",
   "ui.version": "Version",
-  "ui.current_%(mod)s_settings": "Current %s settings",
+  "ui.current_settings": "Current %1$s settings",
   "ui.switch_to": "Switch to",
   "ui.settings_are_locked": "settings are locked",
   "ui.is_set_to": "is set to",
   "ui.unknown_rule": "Unknown rule",
-  "ui.current_%(mod)s_startup_settings_from_%(conf)s": "Current %s Startup Settings from %s",
-  "ui.%(mod)s_settings_matching_'%(query)s'": "%s settings matching \"%s\" ",
-  "ui.all_%(mod)s_settings": "All %s settings",
+  "ui.current_startup_settings": "Current %1$s Startup Settings from %2$s",
+  "ui.settings_matching": "%1$s settings matching \"%2$s\" ",
+  "ui.all_settings": "All %1$s settings",
   "ui.tags": "Tags",
-  "ui.change_permanently": "Change permanently",
-  "ui.click_to_keep_the_settings_in_%(conf)s_to_save_across_restarts": "click to keep the settings in %s to save across restarts",
-  "ui.rule_%(rule)s_will_now_default_to_%(value)s": "Rule %s will now default to %s",
-  "ui.rule_%(rule)s_not_set_restart": "Rule %s will now not be set on restart",
-  "ui.current_value": "current value"
+  "ui.change_permanently": "Change permanently?",
+  "ui.click_to_save_the_setting": "Click to keep the settings in %1$s to save across restarts",
+  "ui.set_default": "Rule %1$s will now default to %2$s",
+  "ui.remove_default": "Rule %1$s will now not be set on restart",
+  "ui.current_value": "Current value",
+  "ui.default_value": "default value",
+  "ui.modified_value": "modified value",
+  "ui.options": "Options",
+  "ui.default": "default"
 
 }
