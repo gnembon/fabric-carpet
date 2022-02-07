@@ -7,6 +7,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.BaseComponent;
 import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.HoverEvent;
+import net.minecraft.network.chat.KeybindComponent;
 import net.minecraft.network.chat.Style;
 import net.minecraft.network.chat.TextColor;
 import net.minecraft.network.chat.TextComponent;
@@ -146,7 +147,7 @@ public class Messenger
             case '@' -> previousStyle.withClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, message.substring(1)));
             case '&' -> previousStyle.withClickEvent(new ClickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD, message.substring(1)));
             default  -> { // Create a new component
-                ret = new TextComponent(str);
+                ret = desc.indexOf('_')<0 ? new TextComponent(str):new KeybindComponent(str);
                 ret.setStyle(parseStyle(desc));
                 yield previousStyle; // no op for the previous style
             }
@@ -173,7 +174,7 @@ public class Messenger
             str = message.substring(limit+1);
         }
         if (previousMessage == null) {
-            BaseComponent text = new TextComponent(str);
+            BaseComponent text =desc.indexOf('_')<0 ? new TextComponent(str):new KeybindComponent(str);
             text.setStyle(parseStyle(desc));
             return text;
         }
@@ -186,7 +187,7 @@ public class Messenger
             case '@' -> previousStyle.withClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, message.substring(1)));
             case '&' -> previousStyle.withClickEvent(new ClickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD, message.substring(1)));
             default  -> { // Create a new component
-                ret = new TextComponent(str);
+                ret = desc.indexOf('_')<0 ? new TextComponent(str):new KeybindComponent(str);
                 ret.setStyle(parseStyle(desc));
                 yield previousStyle; // no op for the previous style
             }
