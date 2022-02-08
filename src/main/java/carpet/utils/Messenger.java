@@ -7,11 +7,9 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.BaseComponent;
 import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.HoverEvent;
-import net.minecraft.network.chat.KeybindComponent;
 import net.minecraft.network.chat.Style;
 import net.minecraft.network.chat.TextColor;
 import net.minecraft.network.chat.TextComponent;
-import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.entity.player.Player;
@@ -115,7 +113,8 @@ public class Messenger
             default -> "w"; // missing MISC and UNDERGROUND_WATER_CREATURE
         };
     }
-    public static BaseComponent getChatComponentFromDesc(boolean for_translation,String message, BaseComponent previousMessage, Object ... arg)
+
+    private static BaseComponent getChatComponentFromDesc(String message, BaseComponent previousMessage)
     {
         if (message.equalsIgnoreCase(""))
         {
@@ -134,12 +133,12 @@ public class Messenger
             str = message.substring(limit+1);
         }
         if (previousMessage == null) {
-            BaseComponent text = for_translation? new TranslatableComponent(str, arg):!desc.startsWith("_") ? new TextComponent(str):new KeybindComponent(str);
+            BaseComponent text = new TextComponent(str);
             text.setStyle(parseStyle(desc));
             return text;
         }
         Style previousStyle = previousMessage.getStyle();
-        BaseComponent ret = null;
+        BaseComponent ret = previousMessage;
         previousMessage.setStyle(switch (desc.charAt(0)) {
             case '?' -> previousStyle.withClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, message.substring(1)));
             case '!' -> previousStyle.withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, message.substring(1)));
@@ -147,17 +146,12 @@ public class Messenger
             case '@' -> previousStyle.withClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, message.substring(1)));
             case '&' -> previousStyle.withClickEvent(new ClickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD, message.substring(1)));
             default  -> { // Create a new component
-                ret = !desc.startsWith("_") ? new TextComponent(str):new KeybindComponent(str);
+                ret = new TextComponent(str);
                 ret.setStyle(parseStyle(desc));
                 yield previousStyle; // no op for the previous style
             }
         });
         return ret;
-    }
-
-    private static BaseComponent getChatComponentFromDesc(String message, BaseComponent previousMessage)
-    {
-        return getChatComponentFromDesc(false, message,  previousMessage);
     }
     public static BaseComponent tp(String desc, Vec3 pos) { return tp(desc, pos.x, pos.y, pos.z); }
     public static BaseComponent tp(String desc, BlockPos pos) { return tp(desc, pos.getX(), pos.getY(), pos.getZ()); }
@@ -263,8 +257,8 @@ public class Messenger
             }
             String txt = o.toString();
             BaseComponent comp = getChatComponentFromDesc(txt, previousComponent);
-            if (comp != null){ message.append(comp);
-            previousComponent = comp;}
+            if (comp != previousComponent) message.append(comp);
+            previousComponent = comp;
         }
         return message;
     }
