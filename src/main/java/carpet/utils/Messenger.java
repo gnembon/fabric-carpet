@@ -115,7 +115,7 @@ public class Messenger
             default -> "w"; // missing MISC and UNDERGROUND_WATER_CREATURE
         };
     }
-    public static BaseComponent getChatComponentFromDesc_but_with_translation(String message, BaseComponent previousMessage, Object ... arg)
+    public static BaseComponent getChatComponentFromDesc(boolean for_translation,String message, BaseComponent previousMessage, Object ... arg)
     {
         if (message.equalsIgnoreCase(""))
         {
@@ -134,7 +134,7 @@ public class Messenger
             str = message.substring(limit+1);
         }
         if (previousMessage == null) {
-            BaseComponent text = new TranslatableComponent(str, arg);
+            BaseComponent text = for_translation? new TranslatableComponent(str, arg):!desc.startsWith("_") ? new TextComponent(str):new KeybindComponent(str);
             text.setStyle(parseStyle(desc));
             return text;
         }
@@ -147,7 +147,7 @@ public class Messenger
             case '@' -> previousStyle.withClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, message.substring(1)));
             case '&' -> previousStyle.withClickEvent(new ClickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD, message.substring(1)));
             default  -> { // Create a new component
-                ret = desc.indexOf('_')<0 ? new TextComponent(str):new KeybindComponent(str);
+                ret = !desc.startsWith("_") ? new TextComponent(str):new KeybindComponent(str);
                 ret.setStyle(parseStyle(desc));
                 yield previousStyle; // no op for the previous style
             }
@@ -157,42 +157,7 @@ public class Messenger
 
     private static BaseComponent getChatComponentFromDesc(String message, BaseComponent previousMessage)
     {
-        if (message.equalsIgnoreCase(""))
-        {
-            return new TextComponent("");
-        }
-        if (Character.isWhitespace(message.charAt(0)))
-        {
-            message = "w" + message;
-        }
-        int limit = message.indexOf(' ');
-        String desc = message;
-        String str = "";
-        if (limit >= 0)
-        {
-            desc = message.substring(0, limit);
-            str = message.substring(limit+1);
-        }
-        if (previousMessage == null) {
-            BaseComponent text =desc.indexOf('_')<0 ? new TextComponent(str):new KeybindComponent(str);
-            text.setStyle(parseStyle(desc));
-            return text;
-        }
-        Style previousStyle = previousMessage.getStyle();
-        BaseComponent ret = previousMessage;
-        previousMessage.setStyle(switch (desc.charAt(0)) {
-            case '?' -> previousStyle.withClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, message.substring(1)));
-            case '!' -> previousStyle.withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, message.substring(1)));
-            case '^' -> previousStyle.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, c(message.substring(1))));
-            case '@' -> previousStyle.withClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, message.substring(1)));
-            case '&' -> previousStyle.withClickEvent(new ClickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD, message.substring(1)));
-            default  -> { // Create a new component
-                ret = desc.indexOf('_')<0 ? new TextComponent(str):new KeybindComponent(str);
-                ret.setStyle(parseStyle(desc));
-                yield previousStyle; // no op for the previous style
-            }
-        });
-        return ret;
+        return getChatComponentFromDesc(false, message,  previousMessage);
     }
     public static BaseComponent tp(String desc, Vec3 pos) { return tp(desc, pos.x, pos.y, pos.z); }
     public static BaseComponent tp(String desc, BlockPos pos) { return tp(desc, pos.getX(), pos.getY(), pos.getZ()); }
@@ -298,8 +263,8 @@ public class Messenger
             }
             String txt = o.toString();
             BaseComponent comp = getChatComponentFromDesc(txt, previousComponent);
-            if (comp != previousComponent) message.append(comp);
-            previousComponent = comp;
+            if (comp != null){ message.append(comp);
+            previousComponent = comp;}
         }
         return message;
     }
