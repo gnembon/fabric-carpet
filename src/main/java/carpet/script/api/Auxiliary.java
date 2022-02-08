@@ -621,7 +621,7 @@ public class Auxiliary {
 
         expression.addFunction("transformat", values -> {
             if (values.size() == 0 ) throw new InternalExpressionException("'transformat' requires at least one component");
-            BaseComponent[] p = {Messenger.getChatComponentFromDesc_but_with_translation(values.get(0).getString(),null,(Object[])null)};
+            BaseComponent[] p = {Messenger.getChatComponentFromDesc(true,values.get(0).getString(),null,(Object[])null)};
             BaseComponent q=p[0];
             Object[] arg = values.stream().skip(1).map(v->{
                 if (v instanceof FormattedTextValue){
@@ -648,9 +648,9 @@ public class Auxiliary {
                         } catch (CommandSyntaxException e) {}
                     }
                 }
-                return Messenger.getChatComponentFromDesc_but_with_translation(v.getString(), p[0],(Object[])null);
+                return Messenger.getChatComponentFromDesc(true,v.getString(), p[0],(Object[])null);
             }).filter(x->x!=null).peek(v->{p[0]=(BaseComponent) v;}).toArray();
-            BaseComponent res = (Messenger.getChatComponentFromDesc_but_with_translation(values.get(0).getString(),null, arg));
+            BaseComponent res = (Messenger.getChatComponentFromDesc(true,values.get(0).getString(),null, arg));
             res.setStyle(q.getStyle());
             return new FormattedTextValue(res);
         });
