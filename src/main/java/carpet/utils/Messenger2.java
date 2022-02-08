@@ -104,11 +104,13 @@ public class Messenger2 {
      * composes single line, multicomponent message, and returns as one chat
      * messagge
      */
-
-    public Component getSomeComponents() {
+    public Component getSomeComponents(){
+        return getSomeComponents("|");
+    }
+    public Component getSomeComponents(String str) {
         TextComponent message = new TextComponent("");
         while (true) {
-            if (isEnd()) {
+            if (isEnd(str)) {
                 return message;
             }
             Component com = getAComponent();
@@ -172,7 +174,12 @@ public class Messenger2 {
         }
         if (now() instanceof String message) {
             if (message.equalsIgnoreCase("")) {
+                c+=1;
                 return new TextComponent("");
+            }
+            if (message.equals("[")){
+                c+=1;
+                return getSomeComponents("]");
             }
             if (message.charAt(0)==' ') {
                 message = "w" + message;
@@ -203,17 +210,19 @@ public class Messenger2 {
         // TO DO
     }
 
-    private boolean isEnd() {
+    private boolean isEnd(String s) {
         if (c >= size)
             return true;
-        if ("|".equals(now())) {
+        if (s.equals(now())) {
             c += 1;
             return true;
         }
         ;
         return false;
     }
-
+    private boolean isEnd() {
+        return isEnd("|");
+    }
 
 
     private Object now() {
