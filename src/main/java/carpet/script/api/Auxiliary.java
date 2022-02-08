@@ -619,16 +619,13 @@ public class Auxiliary {
             return new FormattedTextValue(Messenger.c(values.stream().map(Value::getString).toArray()));
         });
 
-        expression.addFunction("transformat", values -> {
-            if (values.size() == 0 ) throw new InternalExpressionException("'transformat' requires at least one component");
-            BaseComponent[] p = {Messenger.getChatComponentFromDesc(true,values.get(0).getString(),null,(Object[])null)};
-            BaseComponent q=p[0];
-            Object[] arg = values.stream().skip(1).map(v->{
+        expression.addFunction("newformat", values -> {
+            Object[] args = values.stream().map(v->{
                 if (v instanceof FormattedTextValue){
                     return ((FormattedTextValue)v).getText().copy();
                 }
                 if (v instanceof EntityValue){
-                    return ((EntityValue)v).getEntity().getDisplayName();
+                    return ((EntityValue)v).getEntity();
                 }
                 if (v instanceof ListValue _v){//item
                     
@@ -644,16 +641,17 @@ public class Auxiliary {
                         else
                             nbt = new NBTSerializableValue(nbtValue.getString()).getCompoundTag();
                         try {
-                            return NBTSerializableValue.parseItem(id, nbt).createItemStack(count, false).getDisplayName();
+                            return NBTSerializableValue.parseItem(id, nbt).createItemStack(count, false);
                         } catch (CommandSyntaxException e) {}
                     }
                 }
-                return Messenger.getChatComponentFromDesc(true,v.getString(), p[0],(Object[])null);
-            }).filter(x->x!=null).peek(v->{p[0]=(BaseComponent) v;}).toArray();
-            BaseComponent res = (Messenger.getChatComponentFromDesc(true,values.get(0).getString(),null, arg));
-            res.setStyle(q.getStyle());
-            return new FormattedTextValue(res);
+                return v.getString();
+            }).toArray();
+            
+            
+            return new FormattedTextValue(Messenger2.c(args));
         });
+
         expression.addContextFunction("run", 1, (c, t, lv) ->
         {
             CommandSourceStack s = ((CarpetContext)c).s;
