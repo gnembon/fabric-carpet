@@ -118,7 +118,8 @@ public class Messenger2 {
     private Component getAComponent() {
         BaseComponent base = (BaseComponent) getARawComponent();
         while (isModifier(now())) {
-            base = (BaseComponent) getModifier(((String) now()).charAt(0)).apply(base, (String) now());
+            Object now = now();
+            base = (BaseComponent) getModifier(((String) now()).charAt(0)).apply(base, (String) now);
         }
         return base;
     }
