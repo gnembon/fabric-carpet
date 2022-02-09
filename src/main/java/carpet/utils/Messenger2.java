@@ -100,10 +100,7 @@ public class Messenger2 {
         c = 0;
     }
 
-    /*
-     * composes single line, multicomponent message, and returns as one chat
-     * messagge
-     */
+
     public Component getSomeComponents(){
         return getSomeComponents("|");
     }
@@ -136,7 +133,7 @@ public class Messenger2 {
                 case '!' -> previousStyle
                         .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, message.substring(1)));
                 case '^' -> previousStyle
-                        .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, getSomeComponents()));
+                        .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, message.equals("^")?getARawComponent():c(message.substring(1))));
                 case '@' -> previousStyle
                         .withClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, message.substring(1)));
                 case '&' -> previousStyle
@@ -242,6 +239,6 @@ public class Messenger2 {
         }
     }
 
-    // simple text
+
 
 }
