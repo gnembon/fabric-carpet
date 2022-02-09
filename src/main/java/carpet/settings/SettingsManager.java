@@ -65,19 +65,19 @@ import static net.minecraft.commands.Commands.literal;
  */
 public class SettingsManager
 {
-    private Map<String, ParsedRule<?>> rules = new HashMap<>();
+    protected Map<String, ParsedRule<?>> rules = new HashMap<>();
     /**
      * Whether or not this {@link SettingsManager} is locked. That is specified
      * by writing "locked" at the beginning of the settings file. May not
      * correctly react to changes.
      */
     public boolean locked;
-    private final String version;
-    private final String identifier;
-    private final String fancyName;
-    private MinecraftServer server;
-    private List<TriConsumer<CommandSourceStack, ParsedRule<?>, String>> observers = new ArrayList<>();
-    private static List<TriConsumer<CommandSourceStack, ParsedRule<?>, String>> staticObservers = new ArrayList<>();
+    protected final String version;
+    protected final String identifier;
+    protected final String fancyName;
+    protected MinecraftServer server;
+    protected List<TriConsumer<CommandSourceStack, ParsedRule<?>, String>> observers = new ArrayList<>();
+    protected static List<TriConsumer<CommandSourceStack, ParsedRule<?>, String>> staticObservers = new ArrayList<>();
     static record ConfigReadResult(Map<String, String> ruleMap, boolean locked) {}
 
     /**
@@ -115,6 +115,14 @@ public class SettingsManager
      */
     public String getIdentifier() {
         return identifier;
+    }
+
+    /**
+     * @return A {@link String} being this {@link SettingsManager}'s
+     *         fancyName, which is also the display name
+     */
+    public String getFancyName() {
+        return fancyName;
     }
     
     /**
@@ -626,7 +634,7 @@ public class SettingsManager
         dispatcher.register(literalargumentbuilder);
     }
 
-    private int displayRuleMenu(CommandSourceStack source, ParsedRule<?> rule)
+    protected int displayRuleMenu(CommandSourceStack source, ParsedRule<?> rule)
     {
         Player player;
         String displayName = rule.translatedName();
@@ -663,7 +671,7 @@ public class SettingsManager
         return 1;
     }
 
-    private int setRule(CommandSourceStack source, ParsedRule<?> rule, String newValue)
+    protected int setRule(CommandSourceStack source, ParsedRule<?> rule, String newValue)
     {
         if (rule.set(source, newValue) != null)
             Messenger.m(source, "w "+rule.toString()+", ", "c ["+ tr("ui.change_permanently","change permanently")+"?]",
@@ -673,7 +681,7 @@ public class SettingsManager
     }
 
     // stores different defaults in the file
-    private int setDefault(CommandSourceStack source, ParsedRule<?> rule, String stringValue)
+    protected int setDefault(CommandSourceStack source, ParsedRule<?> rule, String stringValue)
     {
         if (locked) return 0;
         if (!rules.containsKey(rule.name)) return 0;
@@ -686,7 +694,7 @@ public class SettingsManager
         return 1;
     }
     // removes overrides of the default values in the file
-    private int removeDefault(CommandSourceStack source, ParsedRule<?> rule)
+    protected int removeDefault(CommandSourceStack source, ParsedRule<?> rule)
     {
         if (locked) return 0;
         if (!rules.containsKey(rule.name)) return 0;
@@ -698,7 +706,7 @@ public class SettingsManager
         return 1;
     }
 
-    private BaseComponent displayInteractiveSetting(ParsedRule<?> rule)
+    protected BaseComponent displayInteractiveSetting(ParsedRule<?> rule)
     {
         String displayName = rule.translatedName();
         List<Object> args = new ArrayList<>();
@@ -719,7 +727,7 @@ public class SettingsManager
         return Messenger.c(args.toArray(new Object[0]));
     }
 
-    private BaseComponent makeSetRuleButton(ParsedRule<?> rule, String option, boolean brackets)
+    protected BaseComponent makeSetRuleButton(ParsedRule<?> rule, String option, boolean brackets)
     {
         String style = rule.isDefault()?"g":(option.equalsIgnoreCase(rule.defaultAsString)?"e":"y");
         if (option.equalsIgnoreCase(rule.getAsString()))
