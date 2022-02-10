@@ -856,3 +856,37 @@ with the game and assumed not changing.
 
 `custom_dimension` is experimental and considered a WIP. More customization options besides the seed will be added in
 the future.
+
+## `Structure Block API`
+
+### `save_structure_template(name,start_corner,end_corner,ignoreEntities,ignoredBlock,disk)`
+
+Save part of the world into a structure.
+*   `name` is the same as in a real structure block. If it is `null`, the function will return the NBT of the structure file.
+*   `ignoredBlock` may be null or a BlockValue (eg: `block('air')`).if not null, that kind of block will not be saved.
+*   If `disk` is true, the structure will saved in disk. Or it will only exist temporarily.
+
+Return True if saved successfully. Return a falsy value if not. Unless `name` is null.
+
+### `load_structure_template(name,start_corner,ignoreEntities,integrity,awake,noupdate,fluid,gravity,rotation,mirror)`
+
+Place a saved structure into the world.
+*   `name` is the same as in a real structure block. And it can also be a NBT tag that will be viewed as the structure file to load.
+*   If `integrity` is not null, it will be the probability, a number between 1 and 0, of each block's not disappearing.
+*   `awake` is a bool.
+*   If `noupdate` is true, it will not update blocks near them. You may still want to wrap this whole function with `without_updates`, even if this value is already true.
+*   If `gravity` is not null, the structure will fall (or fly) to the ground. And the value of `gravity` will be the Yoffset. (Newton must be happy about it.)
+*   `rotation` should be a integer.Structure will rotate `rotation`×90° before placed.
+*   `mirror` could be `'x'` or `'z'`.If `mirror` is neither x nor z, it will not be mirrored.
+
+Return True if works successfully. Return a falsy value if not.
+
+### `unload_structure_template(name)`
+
+Unload a structure.
+
+Will delete a temporary structure, or force a refresh of the stored structure.
+
+Useful after the stored structure changes (via datapack or NBT Editor).
+
+Return null.
