@@ -890,3 +890,15 @@ Will delete a temporary structure, or force a refresh of the stored structure.
 Useful after the stored structure changes (via datapack or NBT Editor).
 
 Return null.
+
+<pre>
+/script run save_structure_template('test1',9,-59,-3,[8,-59,-2],0,null,1)                    //Save this cubic area with the filename test1
+/script run without_updates(load_structure_template('test1',x,y,z,0,null,true,1,0,null,0,0)) //Load the structure you just saved into the world without triggering an update.
+
+//*replace the area with iron blocks*
+
+/script run save_structure_template('test1',9,-59,-3,[8,-59,-2],0,null,0)                    //Save the area again.But this time disk=false.
+/script run without_updates(load_structure_template('test1',x,y,z,0,null,true,1,0,null,0,0)) //Loaded out a bunch of iron blocks.
+/script run unload_structure_template('test1')                                               //Clear the cache.
+/script run without_updates(load_structure_template('test1',x,y,z,0,null,true,1,0,null,0,0)) //Because the cache is cleared, the function therefore re-reads the disk. The original structure is loaded out.
+</pre>
