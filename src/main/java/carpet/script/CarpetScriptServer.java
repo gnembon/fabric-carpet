@@ -34,8 +34,8 @@ import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.storage.LevelResource;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.file.FileVisitOption;
@@ -57,7 +57,7 @@ import java.util.stream.Collectors;
 public class CarpetScriptServer
 {
     //make static for now, but will change that later:
-    public static final Logger LOG = LogManager.getLogger("scarpet");
+    public static final Logger LOG = LoggerFactory.getLogger("Scarpet");
     public final MinecraftServer server;
     public  CarpetScriptHost globalHost;
     public  Map<String, CarpetScriptHost> modules;
