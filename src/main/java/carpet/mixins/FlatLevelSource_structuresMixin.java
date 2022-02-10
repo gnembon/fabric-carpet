@@ -2,6 +2,7 @@ package carpet.mixins;
 
 import carpet.CarpetSettings;
 import carpet.helpers.CustomSpawnLists;
+import net.minecraft.core.Holder;
 import org.spongepowered.asm.mixin.Mixin;
 
 import net.minecraft.core.BlockPos;
@@ -30,7 +31,7 @@ public abstract class FlatLevelSource_structuresMixin extends ChunkGenerator
     }
 
     @Override
-    public WeightedRandomList<MobSpawnSettings.SpawnerData> getMobsAt(Biome biome, StructureFeatureManager accessor, MobCategory group, BlockPos pos)
+    public WeightedRandomList<MobSpawnSettings.SpawnerData> getMobsAt(Holder<Biome> biome, StructureFeatureManager accessor, MobCategory group, BlockPos pos)
     {
         if (!CarpetSettings.flatWorldStructureSpawning) return super.getMobsAt(biome, accessor, group, pos);
 

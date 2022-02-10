@@ -40,6 +40,14 @@ import carpet.utils.BlockInfo;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.longs.LongSet;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.core.Holder;
+import net.minecraft.core.HolderSet;
+import net.minecraft.core.QuartPos;
+import net.minecraft.core.Registry;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.tags.TagKey;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -56,11 +64,8 @@ import java.util.function.BiPredicate;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
 import net.minecraft.commands.arguments.item.ItemInput;
-import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
-import net.minecraft.core.QuartPos;
-import net.minecraft.core.Registry;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.protocol.game.ClientboundExplodePacket;
@@ -70,7 +75,6 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.level.Ticket;
 import net.minecraft.server.level.TicketType;
 import net.minecraft.sounds.SoundSource;
-import net.minecraft.tags.TagContainer;
 import net.minecraft.util.Mth;
 import net.minecraft.util.SortedArraySet;
 import net.minecraft.world.Clearable;
@@ -237,10 +241,10 @@ public class WorldAccess {
 
     private static void BooYah(ChunkGenerator generator)
     {
-        synchronized (generator)
-        {
-            ((ChunkGeneratorInterface)generator).initStrongholds();
-        }
+        //synchronized (generator)
+        //{
+        //    ((ChunkGeneratorInterface)generator).initStrongholds();
+        //}
     }
 
     public static void apply(Expression expression)
@@ -1118,16 +1122,33 @@ public class WorldAccess {
             if (lv.size() == 0)
                 return ListValue.wrap(Registry.BLOCK.keySet().stream().map(ValueConversions::of).collect(Collectors.toList()));
             CarpetContext cc = (CarpetContext)c;
-            TagContainer tagManager = cc.s.getServer().getTags();
-            String tag = lv.get(0).getString();
-            net.minecraft.tags.Tag<Block> blockTag = tagManager.getOrEmpty(Registry.BLOCK_REGISTRY).getTag(InputValidator.identifierOf(tag));
-            if (blockTag == null) return Value.NULL;
-            return ListValue.wrap(blockTag.getValues().stream().map(b -> ValueConversions.of(Registry.BLOCK.getKey(b))).collect(Collectors.toList()));
+            ResourceLocation tag = InputValidator.identifierOf(lv.get(0).getString());
+
+            Registry<Block> blocks = cc.s.getServer().registryAccess().registryOrThrow(Registry.BLOCK_REGISTRY);
+            Optional<HolderSet.Named<Block>> tagset = blocks.getTag(TagKey.create(Registry.BLOCK_REGISTRY, tag));
+            if (tagset.isEmpty()) return Value.NULL;
+            return ListValue.wrap(tagset.get().stream().map(b -> ValueConversions.of(blocks.getKey(b.value()))).collect(Collectors.toList()));
         });
 
         expression.addContextFunction("block_tags", -1, (c, t, lv) ->
         {
             CarpetContext cc = (CarpetContext)c;
+            Registry<Block> blocks = cc.s.getServer().registryAccess().registryOrThrow(Registry.BLOCK_REGISTRY);
+            if (lv.size() == 0)
+                return ListValue.wrap(blocks.getTagNames().map(ValueConversions::of).collect(Collectors.toList()));
+            BlockArgument blockLocator = BlockArgument.findIn(cc, lv, 0, true);
+            if (blockLocator.offset == lv.size())
+            {
+                Block target = blockLocator.block.getBlockState().getBlock();
+                return ListValue.wrap( blocks.getTags().filter(e -> e.getSecond().stream().anyMatch(h -> (h.value() == target))).map(e -> ValueConversions.of(e.getFirst())).collect(Collectors.toList()));
+            }
+            String tag = lv.get(blockLocator.offset).getString();
+            Optional<HolderSet.Named<Block>> tagSet = blocks.getTag(TagKey.create(Registry.BLOCK_REGISTRY, InputValidator.identifierOf(tag)));
+            if (tagSet.isEmpty()) return Value.NULL;
+            return BooleanValue.of(blockLocator.block.getBlockState().is(tagSet.get()));
+
+
+            /* before
             TagContainer tagManager = cc.s.getServer().getTags();
             if (lv.size() == 0)
                 return ListValue.wrap(tagManager.getOrEmpty(Registry.BLOCK_REGISTRY).getAvailableTags().stream().map(ValueConversions::of).collect(Collectors.toList()));
@@ -1141,6 +1162,7 @@ public class WorldAccess {
             net.minecraft.tags.Tag<Block> blockTag = tagManager.getOrEmpty(Registry.BLOCK_REGISTRY).getTag(InputValidator.identifierOf(tag));
             if (blockTag == null) return Value.NULL;
             return BooleanValue.of(blockLocator.block.getBlockState().is(blockTag));
+            */
         });
 
         expression.addContextFunction("biome", -1, (c, t, lv) -> {
@@ -1181,7 +1203,7 @@ public class WorldAccess {
                         Climate.quantizeCoord(numberGetOrThrow(depth)),
                         Climate.quantizeCoord(numberGetOrThrow(weirdness))
                 );
-                biome = mnbs.getNoiseBiome(point);
+                biome = mnbs.getNoiseBiome(point).value();
                 ResourceLocation biomeId = cc.s.getServer().registryAccess().registryOrThrow(Registry.BIOME_REGISTRY).getKey(biome);
                 return new StringValue(NBTSerializableValue.nameFromRegistryId(biomeId));
             }
@@ -1196,7 +1218,7 @@ public class WorldAccess {
             else
             {
                 BlockPos pos = locator.block.getPos();
-                biome = world.getBiome(pos);
+                biome = world.getBiome(pos).value();
             }
             // in locatebiome
             if (locator.offset == lv.size())
@@ -1219,8 +1241,10 @@ public class WorldAccess {
                 throw new InternalExpressionException("'set_biome' needs a biome name as an argument");
             String biomeName = lv.get(locator.offset+0).getString();
             // from locatebiome command code
-            Biome biome = cc.s.getServer().registryAccess().registryOrThrow(Registry.BIOME_REGISTRY).getOptional(InputValidator.identifierOf(biomeName))
+            Holder<Biome> biome = cc.s.getServer().registryAccess().registryOrThrow(Registry.BIOME_REGISTRY).getHolder(ResourceKey.create(Registry.BIOME_REGISTRY, InputValidator.identifierOf(biomeName)))
                 .orElseThrow(() -> new ThrowStatement(biomeName, Throwables.UNKNOWN_BIOME));
+
+
             boolean doImmediateUpdate = true;
             if (lv.size() > locator.offset+1)
             {

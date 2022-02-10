@@ -4,6 +4,7 @@ import carpet.fakes.IngredientInterface;
 import carpet.fakes.RecipeManagerInterface;
 import carpet.script.CarpetContext;
 import carpet.script.Expression;
+import carpet.script.argument.BlockArgument;
 import carpet.script.argument.FunctionArgument;
 import carpet.script.exception.InternalExpressionException;
 import carpet.script.exception.ThrowStatement;
@@ -26,15 +27,17 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import net.minecraft.commands.arguments.item.ItemInput;
+import net.minecraft.core.HolderSet;
 import net.minecraft.core.Registry;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundContainerSetSlotPacket;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.tags.TagContainer;
+import net.minecraft.tags.TagKey;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
@@ -48,6 +51,7 @@ import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.item.crafting.ShapedRecipe;
 import net.minecraft.world.item.crafting.ShapelessRecipe;
 import net.minecraft.world.item.crafting.SingleItemRecipe;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.phys.Vec3;
 
 public class Inventories {
@@ -68,16 +72,40 @@ public class Inventories {
             if (lv.size() == 0)
                 return ListValue.wrap(Registry.ITEM.keySet().stream().map(ValueConversions::of).collect(Collectors.toList()));
             CarpetContext cc = (CarpetContext)c;
-            TagContainer tagManager = cc.s.getServer().getTags();
+            Registry<Item> items = cc.s.getServer().registryAccess().registryOrThrow(Registry.ITEM_REGISTRY);
+            String tag = lv.get(0).getString();
+            Optional<HolderSet.Named<Item>> itemTag = items.getTag(TagKey.create(Registry.ITEM_REGISTRY, InputValidator.identifierOf(tag)));
+            if (itemTag.isEmpty()) return Value.NULL;
+            return ListValue.wrap(itemTag.get().stream().map(b -> ValueConversions.of(items.getKey(b.value()))).collect(Collectors.toList()));
+            /*
+            TagContainer tagManager = cc.s.getServer(). getTags();
             String tag = lv.get(0).getString();
             net.minecraft.tags.Tag<Item> itemTag = tagManager.getOrEmpty(Registry.ITEM_REGISTRY).getTag(InputValidator.identifierOf(tag));
             if (itemTag == null) return Value.NULL;
             return ListValue.wrap(itemTag.getValues().stream().map(b -> ValueConversions.of(Registry.ITEM.getKey(b))).collect(Collectors.toList()));
+            */
         });
 
         expression.addContextFunction("item_tags", -1, (c, t, lv) ->
         {
             CarpetContext cc = (CarpetContext)c;
+
+            Registry<Item> blocks = cc.s.getServer().registryAccess().registryOrThrow(Registry.ITEM_REGISTRY);
+            if (lv.size() == 0)
+                return ListValue.wrap(blocks.getTagNames().map(ValueConversions::of).collect(Collectors.toList()));
+            Item item = NBTSerializableValue.parseItem(lv.get(0).getString()).getItem();
+            if (lv.size() == 1)
+            {
+                return ListValue.wrap( blocks.getTags().filter(e -> e.getSecond().stream().anyMatch(h -> (h.value() == item))).map(e -> ValueConversions.of(e.getFirst())).collect(Collectors.toList()));
+            }
+            String tag = lv.get(1).getString();
+            Optional<HolderSet.Named<Item>> tagSet = blocks.getTag(TagKey.create(Registry.ITEM_REGISTRY, InputValidator.identifierOf(tag)));
+            if (tagSet.isEmpty()) return Value.NULL;
+
+            //return BooleanValue.of(tagSet.get().contains(item.builtInRegistryHolder()));
+            return BooleanValue.of(tagSet.get().stream().anyMatch(h -> h.value() == item));
+
+            /*
             TagContainer tagManager = cc.s.getServer().getTags();
             if (lv.size() == 0)
                 return ListValue.wrap(tagManager.getOrEmpty(Registry.ITEM_REGISTRY).getAvailableTags().stream().map(ValueConversions::of).collect(Collectors.toList()));
@@ -88,6 +116,7 @@ public class Inventories {
             net.minecraft.tags.Tag<Item> itemTag = tagManager.getOrEmpty(Registry.ITEM_REGISTRY).getTag(InputValidator.identifierOf(tag));
             if (itemTag == null) return Value.NULL;
             return BooleanValue.of(itemTag.contains(item));
+            */
         });
 
         expression.addContextFunction("recipe_data", -1, (c, t, lv) ->
