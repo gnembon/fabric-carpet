@@ -58,7 +58,7 @@ public class ServerGamePacketListenerImpl_scarpetEventsMixin
         }
     }
 
-    @Inject(method = "handlePlayerAction", at = @At(
+    @Inject(method = "handlePlayerAction", cancellable = true, at = @At(
             value = "INVOKE",
             target = "Lnet/minecraft/server/level/ServerPlayer;drop(Z)Z", // dropSelectedItem
             ordinal = 0,
@@ -66,7 +66,9 @@ public class ServerGamePacketListenerImpl_scarpetEventsMixin
     ))
     private void onQItem(ServerboundPlayerActionPacket playerActionC2SPacket_1, CallbackInfo ci)
     {
-        PLAYER_DROPS_ITEM.onPlayerEvent(player);
+        if(PLAYER_DROPS_ITEM.onPlayerEvent(player)) {
+            ci.cancel();
+        }
     }
 
     @Inject(method = "handlePlayerAction", at = @At(
@@ -80,7 +82,7 @@ public class ServerGamePacketListenerImpl_scarpetEventsMixin
         PLAYER_SWAPS_HANDS.onPlayerEvent(player);
     }
 
-    @Inject(method = "handlePlayerAction", at = @At(
+    @Inject(method = "handlePlayerAction", cancellable = true, at = @At(
             value = "INVOKE",
             target = "Lnet/minecraft/server/level/ServerPlayer;drop(Z)Z", // dropSelectedItem
             ordinal = 1,
@@ -88,7 +90,9 @@ public class ServerGamePacketListenerImpl_scarpetEventsMixin
     ))
     private void onCtrlQItem(ServerboundPlayerActionPacket playerActionC2SPacket_1, CallbackInfo ci)
     {
-        PLAYER_DROPS_STACK.onPlayerEvent(player);
+        if(PLAYER_DROPS_STACK.onPlayerEvent(player)) {
+            ci.cancel();
+        }
     }
 
 
