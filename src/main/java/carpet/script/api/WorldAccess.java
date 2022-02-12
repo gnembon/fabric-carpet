@@ -1006,9 +1006,13 @@ public class WorldAccess {
             Vector3Argument locator = Vector3Argument.findIn(lv, 1);
             ItemInput stackArg = NBTSerializableValue.parseItem(itemString);
             BlockPos where = new BlockPos(locator.vec);
-            String facing = "up";
-            if (lv.size() > locator.offset)
+            String facing;
+            if (lv.size() > locator.offset) {
                 facing = lv.get(locator.offset).getString();
+            } else {
+                // Paintings throw an exception if their direction is vertical, therefore we change the default here
+                facing = stackArg.getItem() != Items.PAINTING ? "up" : "north";
+            }
             boolean sneakPlace = false;
             if (lv.size() > locator.offset+1)
                 sneakPlace = lv.get(locator.offset+1).getBoolean();
