@@ -403,7 +403,7 @@ public class ShapesRenderer
                     default -> throw new IllegalArgumentException("Unexpected value: " + shape.mode);}, DefaultVertexFormat.POSITION_COLOR);
                 for(int i=0;i<shape.vertex_list.size();i++){
                     Vec3 vec=shape.vertex_list.get(i);
-                    if(shape.going.get(i)){
+                    if(shape.relative.get(i)){
                         vec=shape.relativiseRender(client.level, vec, partialTick);
                     }
                     bufferBuilder.vertex(vec.x()-cx, vec.y()-cy, vec.z()-cz).color(shape.fr, shape.fg, shape.fb, shape.fa).endVertex();
