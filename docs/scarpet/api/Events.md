@@ -275,7 +275,7 @@ Triggered when the player has successfully logged in and was placed in the game.
 ### `__on_player_disconnects(player, reason)`
 Triggered when a player sends a disconnect package or is forcefully disconnected from the server.
 
-### `__on_player_sends_message(player, message)`
+### `__on_player_message(player, message)`
 Triggered when a player sends a chat message or runs a command.
 
 ### `__on_statistic(player, category, event, value)`
