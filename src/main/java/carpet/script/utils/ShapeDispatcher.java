@@ -635,13 +635,14 @@ public class ShapeDispatcher
         public long calcKey(){
             long hash = super.calcKey();
             hash ^= 2;                     hash *= 1099511628211L;
-            hash ^= mode.hashCode();       hash *= 1099511628211L;
+            hash ^= Byte.hashCode(mode);   hash *= 1099511628211L;
             hash ^= going.hashCode();      hash *= 1099511628211L;
             for (Vec3 i :vertex_list){
                 hash ^= vec3dhash(i);
                 hash *= 1099511628211L;
             }
             hash ^= vertex_list.size();    hash *= 1099511628211L;
+            hash ^=(vertex_list.size()+37)*(vertex_list.size()+3721)*4224696537L+30692*vertex_list.size();
             return hash;
         }
         @Override
@@ -658,7 +659,7 @@ public class ShapeDispatcher
         @Override
         protected Set<String> optionalParams() { return Sets.union(super.optionalParams(), optional.keySet()); }
         ArrayList<Vec3> vertex_list=new ArrayList<>();
-        String mode;
+        byte mode;
         ArrayList<Boolean> going=new ArrayList<>();
         @Override
         protected void init(Map<String, Value> options)
@@ -668,7 +669,14 @@ public class ShapeDispatcher
             if (options.get("vertex") instanceof AbstractListValue abl){
                 abl.forEach(x->vertex_list.add(vecFromValue(x)));
             }
-            mode=options.getOrDefault("mode",optional.get("mode")).getString();
+            String _mode = options.getOrDefault("mode",optional.get("mode")).getString();
+            if("polygon".equals(_mode)){
+                mode=0;
+            }else if("strip".equals(_mode)){
+                mode=1;
+            }else if("triangles".equals(_mode)){
+                mode=2;
+            }
             if (options.getOrDefault("going",optional.get("going")) instanceof AbstractListValue abl){
                 Iterator<Value> it = abl.iterator();
                 for(long i=0L;i<vertex_list.size();i++){
@@ -942,7 +950,7 @@ public class ShapeDispatcher
                         return value;
                     }
             });
-            put("mode",new TextParam("mode"));
+            put("mode",new StringChoiceParam("mode","polygon","strip","triangles"));
             put("going",new MaybeListofboolParam("going"));
             put("shape", new ShapeParam());
             put("dim", new DimensionParam());
