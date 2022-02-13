@@ -1,91 +1,190 @@
 package carpet.settings;
 
-import carpet.utils.Translations;
-import carpet.utils.Messenger;
+import carpet.utils.TypedField;
+import net.minecraft.commands.CommandSourceStack;
+
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
-import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+import java.util.function.Function;
 import java.util.stream.Collectors;
-import net.minecraft.commands.CommandSourceStack;
-import org.apache.commons.lang3.ClassUtils;
-
-import static carpet.utils.Translations.tr;
+import java.util.stream.Stream;
 
 /**
- * A parsed Carpet rule, with its field, name, value, and other useful stuff.
+ * A Carpet rule parsed from a field, with its name, value, and other useful stuff.
  * 
- * It is generated from the fields with the {@link Rule} annotation
+ * It is used for the fields with the {@link Rule} annotation
  * when being parsed by {@link SettingsManager#parseSettingsClass(Class)}.
  *
- * @param <T> The field's type
+ * @param <T> The field's (and rule's) type
+ * @deprecated Use the type {@link CarpetRule} instead, since it's not implementation specific
  */
-public final class ParsedRule<T> implements Comparable<ParsedRule> {
+@Deprecated(forRemoval = true) // to package private
+public final class ParsedRule<T> implements CarpetRule<T> {
+    private static final Map<Class<?>, FromStringConverter<?>> CONVERTER_MAP = Map.ofEntries(
+            Map.entry(String.class, str -> str),
+            Map.entry(Boolean.class, str -> {
+                return switch (str) {
+                    case "true" -> true;
+                    case "false" -> false;
+                    default -> throw new InvalidRuleValueException("Invalid boolean value");
+                };
+            }),
+            numericalConverter(Integer.class, Integer::parseInt),
+            numericalConverter(Double.class, Double::parseDouble),
+            numericalConverter(Long.class, Long::parseLong),
+            numericalConverter(Float.class, Float::parseFloat)
+        );
+    /**
+     * @deprecated No replacement for this, since a {@link CarpetRule} may not always use a {@link Field}.
+     *             Use {@link #value()} to access the rule's value
+     */
+    @Deprecated(forRemoval = true) // to remove
     public final Field field;
+    /**
+     * @deprecated Use {@link CarpetRule#name()}
+     */
+    @Deprecated(forRemoval = true) // to private
     public final String name;
+    /**
+     * @deprecated Use {@link CarpetRule#description}
+     */
+    @Deprecated(forRemoval = true) // to private
     public final String description;
-    public final String scarpetApp;
+    /**
+     * @deprecated Use {@link CarpetRule#extraInfo()}
+     */
+    @Deprecated(forRemoval = true) // to private
     public final List<String> extraInfo;
+    /**
+     * @deprecated Use {@link CarpetRule#categories()}
+     */
+    @Deprecated(forRemoval = true) // to private
     public final List<String> categories;
+    /**
+     * @deprecated Use {@link CarpetRule#suggestions()} instead
+     */
+    @Deprecated(forRemoval = true) // to private (and rename?)
     public final List<String> options;
+    /**
+     * @deprecated No replacement for this
+     */
+    @Deprecated(forRemoval = true) // to pckg private (for printRulesToLog, or get a different way)
     public boolean isStrict;
+    /**
+     * @deprecated Use {@link CarpetRule#canBeToggledClientSide()}
+     */
+    @Deprecated(forRemoval = true) // to private (and maybe rename?)
     public boolean isClient;
+    /**
+     * @deprecated Use {@link CarpetRule#type()}
+     */
+    @Deprecated(forRemoval = true) // to private (or remove and delegate to typedfield?)
     public final Class<T> type;
-    public final List<Validator<T>> validators;
+    /**
+     * @deprecated Use {@link CarpetRule#defaultValue()}
+     */
+    @Deprecated(forRemoval = true) // to private
     public final T defaultValue;
-    public final String defaultAsString;
+    /**
+     * @deprecated Use {@link CarpetRule#settingsManager()}
+     */
+    @Deprecated(forRemoval = true) // to private
     public final SettingsManager settingsManager;
+    /**
+     * @deprecated No replacement for this. A Carpet rule may not use {@link Validator}
+     */
+    @Deprecated(forRemoval = true) // to pckg private (for printRulesToLog)
+    public final List<Validator<T>> validators;
+    /**
+     * @deprecated Use {@link CarpetRule#defaultValue()} and pass it to {@link RuleHelper#toRuleString(Object)}
+     */
+    @Deprecated(forRemoval = true) // to remove
+    public final String defaultAsString;
+    /**
+     * @deprecated No replacement for this, Scarpet Rules should be managed by the rule implementation 
+     */
+    @Deprecated(forRemoval = true) // to private/subclass
+    public final String scarpetApp;
+    private final FromStringConverter<T> converter;
+    private final TypedField<T> typedField; // to rename to field
+    
+    @FunctionalInterface
+    interface FromStringConverter<T> {
+        T convert(String value) throws InvalidRuleValueException;
+    }
 
-    ParsedRule(Field field, Rule rule, SettingsManager settingsManager)
+    // More flexible than a constructor, since it can return subclasses (doesn't do that yet) and null
+    static <T> ParsedRule<T> of(Field field, Rule rule, SettingsManager settingsManager) {
+        return new ParsedRule<>(field, rule, settingsManager);
+    }
+
+    private ParsedRule(Field field, Rule rule, SettingsManager settingsManager)
     {
-        this.field = field;
         this.name = rule.name().isEmpty() ? field.getName() : rule.name();
-        this.type = (Class<T>) field.getType();
+        try {
+            this.typedField = new TypedField<>(field);
+        } catch (IllegalAccessException e) {
+            throw new IllegalArgumentException("Couldn't access given field", e);
+        }
+        this.type = typedField.type();
         this.description = rule.desc();
         this.isStrict = rule.strict();
         this.extraInfo = List.of(rule.extra());
         this.categories = List.of(rule.category());
         this.scarpetApp = rule.appSource();
         this.settingsManager = settingsManager;
-        this.validators = new ArrayList<>();
-        for (Class v : rule.validate())
-            this.validators.add((Validator<T>) callConstructor(v));
+        this.validators = Stream.of(rule.validate()).map(this::instantiateValidator).collect(Collectors.toList());
+        this.defaultValue = value();
+        FromStringConverter<T> converter0 = null;
+        
         if (categories.contains(RuleCategory.COMMAND))
         {
-            this.validators.add(callConstructor(Validator._COMMAND.class));
+            this.validators.add(new Validator._COMMAND<T>());
             if (this.type == String.class)
             {
-                this.isStrict = false;
-                this.validators.add((Validator<T>) callConstructor(Validator._COMMAND_LEVEL_VALIDATOR.class));
+                this.validators.add(instantiateValidator(Validator._COMMAND_LEVEL_VALIDATOR.class));
             }
         }
-        if (!scarpetApp.isEmpty())
-        {
-            this.validators.add((Validator<T>) callConstructor(Validator._SCARPET.class));
-        }
+        
         this.isClient = categories.contains(RuleCategory.CLIENT);
         if (this.isClient)
         {
-            this.validators.add(callConstructor(Validator._CLIENT.class));
+            this.validators.add(new Validator._CLIENT<>());
         }
-        this.defaultValue = get();
-        this.defaultAsString = convertToString(this.defaultValue);
+        
+        if (!scarpetApp.isEmpty())
+        {
+            this.validators.add(new Validator._SCARPET<>());
+        }
+        
         if (rule.options().length > 0)
         {
             this.options = List.of(rule.options());
         }
-        else if (this.type == boolean.class){
-            this.options = List.of("true","false");
+        else if (this.type == Boolean.class) {
+            this.options = List.of("true", "false");
         }
-        else if(this.type == String.class && categories.contains(RuleCategory.COMMAND))
+        else if (this.type == String.class && categories.contains(RuleCategory.COMMAND))
         {
-            this.options = List.of("true", "false", "ops");
+            this.options = Validator._COMMAND_LEVEL_VALIDATOR.OPTIONS;
         }
         else if (this.type.isEnum())
         {
-            this.options = Arrays.stream(this.type.getEnumConstants()).map(e -> ((Enum) e).name().toLowerCase(Locale.ROOT)).collect(Collectors.toUnmodifiableList());
+            this.options = Arrays.stream(this.type.getEnumConstants()).map(e -> ((Enum<?>) e).name().toLowerCase(Locale.ROOT)).collect(Collectors.toUnmodifiableList());
+            converter0 = str -> {
+                try {
+                    @SuppressWarnings({"unchecked", "rawtypes"}) // Raw necessary because of signature. Unchecked because compiler doesn't know T extends Enum
+                    T ret = (T)Enum.valueOf((Class<? extends Enum>) type, str.toUpperCase(Locale.ROOT));
+                    return ret;
+                } catch (IllegalArgumentException e) {
+                    throw new InvalidRuleValueException("Invalid value for rule. Valid ones are: " + this.options);
+                }
+            };
         }
         else
         {
@@ -93,157 +192,63 @@ public final class ParsedRule<T> implements Comparable<ParsedRule> {
         }
         if (isStrict && !this.options.isEmpty())
         {
-            if (this.type == boolean.class || this.type == int.class || this.type == double.class || this.type == float.class)
-            {
-                this.validators.add(callConstructor(Validator._STRICT_IGNORECASE.class));
-            }
-            else
-            {
-                this.validators.add(callConstructor(Validator._STRICT.class));
-            }
+            this.validators.add(new Validator._STRICT<>());
         }
+        if (converter0 == null) {
+            @SuppressWarnings("unchecked")
+            FromStringConverter<T> converterFromMap = (FromStringConverter<T>)CONVERTER_MAP.get(type);
+            if (converterFromMap == null) throw new UnsupportedOperationException("Unsupported type for ParsedRule" + type);
+            converter0 = converterFromMap;
+        }
+        this.converter = converter0;
+        
+        // to remove
+        this.defaultAsString = RuleHelper.toRuleString(this.defaultValue);
+        this.field = field;
     }
 
-    private <T> T callConstructor(Class<T> cls)
+    @SuppressWarnings({"unchecked", "rawtypes"}) // Needed because of the annotation
+    private Validator<T> instantiateValidator(Class<? extends Validator> cls)
     {
         try
         {
-            Constructor<T> constr = cls.getDeclaredConstructor();
+            Constructor<? extends Validator> constr = cls.getDeclaredConstructor();
             constr.setAccessible(true);
             return constr.newInstance();
         }
         catch (ReflectiveOperationException e)
         {
-            throw new RuntimeException(e);
+            throw new IllegalArgumentException(e);
         }
     }
 
-    public ParsedRule<T> set(CommandSourceStack source, String value)
+    public void set(CommandSourceStack source, String value) throws InvalidRuleValueException
     {
-        if (settingsManager != null && settingsManager.locked)
-            return null;
-        if (type == String.class)
-        {
-            return set(source, (T) value, value);
-        }
-        else if (type == boolean.class)
-        {
-            return set(source, (T) (Object) Boolean.parseBoolean(value), value);
-        }
-        else if (type == int.class)
-        {
-            return set(source, (T) (Object) Integer.parseInt(value), value);
-        }
-        else if (type == double.class)
-        {
-            return set(source, (T) (Object) Double.parseDouble(value), value);
-        }
-        else if (type.isEnum())
-        {
-            String ucValue = value.toUpperCase(Locale.ROOT);
-            return set(source, (T) (Object) Enum.valueOf((Class<? extends Enum>) type, ucValue), value);
-        }
-        else
-        {
-            Messenger.m(source, "r Unknown type " + type.getSimpleName());
-            return null;
-        }
+        set(source, converter.convert(value), value);
     }
 
-    ParsedRule<T> set(CommandSourceStack source, T value, String stringValue)
+    private void set(CommandSourceStack source, T value, String stringValue) throws InvalidRuleValueException
     {
-        try
+        for (Validator<T> validator : this.validators)
         {
-            for (Validator<T> validator : this.validators)
-            {
-                value = validator.validate(source, this, value, stringValue);
-                if (value == null)
-                {
-                    if (source != null)
-                    {
-                        validator.notifyFailure(source, this, stringValue);
-                        if (validator.description() != null)
-                            Messenger.m(source, "r " + validator.description());
-                    }
-                    return null;
-                }
-            }
-            if (!value.equals(get()) || source == null)
-            {
-                this.field.set(null, value);
-                if (source != null) settingsManager.notifyRuleChanged(source, this, stringValue);
+            stringValue = RuleHelper.toRuleString(value);
+            value = validator.validate(source, (CarpetRule<T>)this, value, stringValue);
+            if (value == null) {
+                if (source != null) validator.notifyFailure(source, this, stringValue);
+                throw new InvalidRuleValueException();
             }
         }
-        catch (IllegalAccessException e)
+        if (!value.equals(value()) || source == null)
         {
-            Messenger.m(source, "r Unable to access setting for  "+name);
-            return null;
+            this.typedField.setStatic(value);
+            if (source != null) settingsManager.notifyRuleChanged(source, this);
         }
-        return this;
-    }
-
-    /**
-     * @return The value of this {@link ParsedRule}, in its type
-     */
-    public T get()
-    {
-        try
-        {
-            return (T) this.field.get(null);
-        }
-        catch (IllegalAccessException e)
-        {
-            throw new IllegalStateException(e);
-        }
-    }
-
-    /**
-     * @return The value of this {@link ParsedRule}, as a {@link String}
-     */
-    public String getAsString()
-    {
-        return convertToString(get());
-    }
-
-    /**
-     * @return The value of this {@link ParsedRule}, converted to a {@link boolean}.
-     *         It will only return {@link true} if it's a true {@link boolean} or
-     *         a number greater than zero.
-     */
-    public boolean getBoolValue()
-    {
-        if (type == boolean.class) return (Boolean) get();
-        if (ClassUtils.primitiveToWrapper(type).isAssignableFrom(Number.class)) return ((Number) get()).doubleValue() > 0;
-        return false;
-    }
-
-    /**
-     * @return Wether or not this {@link ParsedRule} is in its default value
-     */
-    public boolean isDefault()
-    {
-        return defaultValue.equals(get());
-    }
-
-    /**
-     * Resets this rule to its default value
-     */
-    public void resetToDefault(CommandSourceStack source)
-    {
-        set(source, defaultValue, defaultAsString);
-    }
-
-
-    private static String convertToString(Object value)
-    {
-        if (value instanceof Enum) return ((Enum) value).name().toLowerCase(Locale.ROOT);
-        return value.toString();
     }
 
     @Override
     public boolean equals(Object obj)
     {
-        return obj.getClass() == ParsedRule.class && ((ParsedRule) obj).name.equals(this.name);
+        return obj instanceof ParsedRule && ((ParsedRule<?>) obj).name.equals(this.name);
     }
 
     @Override
@@ -253,55 +258,155 @@ public final class ParsedRule<T> implements Comparable<ParsedRule> {
     }
 
     @Override
-    public int compareTo(ParsedRule o)
+    public String toString()
     {
-        return this.name.compareTo(o.name);
+        return this.name + ": " + RuleHelper.toRuleString(value());
     }
 
     @Override
-    public String toString()
-    {
-        return this.name + ": " + getAsString();
+    public String name() {
+        return name;
     }
 
-    private String translationKey()
+    @Override
+    public String description() {
+        return description;
+    }
+
+    @Override
+    public List<String> extraInfo() {
+        return extraInfo;
+    }
+
+    @Override
+    public Collection<String> categories() {
+        return categories;
+    }
+
+    @Override
+    public Collection<String> suggestions() {
+        return options;
+    }
+    
+    @Override
+    public SettingsManager settingsManager() {
+        return settingsManager;
+    }
+
+    @Override
+    public T value() {
+        return typedField.getStatic();
+    }
+
+    @Override
+    public boolean canBeToggledClientSide() {
+        return isClient;
+    }
+
+    @Override
+    public Class<T> type() {
+        return type;
+    }
+
+    @Override
+    public T defaultValue() {
+        return defaultValue;
+    }
+
+    @Override
+    public void set(CommandSourceStack source, T value) throws InvalidRuleValueException {
+        set(source, value, RuleHelper.toRuleString(value));
+    }
+
+    private static <T> Map.Entry<Class<T>, FromStringConverter<T>> numericalConverter(Class<T> outputClass, Function<String, T> converter) {
+        return Map.entry(outputClass, str -> {
+            try {
+                return converter.apply(str);
+            } catch (NumberFormatException e) {
+                throw new InvalidRuleValueException("Invalid number for rule");
+            }
+        });
+    }
+    
+    //TO REMOVE
+    
+    /**
+     * @deprecated Use {@link CarpetRule#value()} instead
+     */
+    @Deprecated(forRemoval = true)
+    public T get()
     {
-        return String.format("rule.%s.name", name);
+        return value();
+    }
+
+    /**
+     * @deprecated Use {@link RuleHelper#toRuleString(Object) RuleHelper.convertToRuleString(rule.value())}
+     */
+    @Deprecated(forRemoval = true)
+    public String getAsString()
+    {
+        return RuleHelper.toRuleString(value());
+    }
+
+    /**
+     * @return The value of this {@link ParsedRule}, converted to a {@link boolean}.
+     *         It will only return {@link true} if it's a true {@link boolean} or
+     *         a number greater than zero.
+     * @deprecated Use {@link RuleHelper#getBooleanValue(CarpetRule)}
+     */
+    @Deprecated(forRemoval = true)
+    public boolean getBoolValue()
+    {
+        return RuleHelper.getBooleanValue(this);
+    }
+
+    /**
+     * @deprecated Use {@link RuleHelper#isInDefaultValue(CarpetRule)}
+     */
+    @Deprecated(forRemoval = true)
+    public boolean isDefault()
+    {
+        return RuleHelper.isInDefaultValue(this);
+    }
+
+    /**
+     * @deprecated Use {@link RuleHelper#resetToDefault(CarpetRule, CommandSourceStack)}
+     */
+    @Deprecated(forRemoval = true)
+    public void resetToDefault(CommandSourceStack source)
+    {
+        RuleHelper.resetToDefault(this, source);
     }
 
     /**
      * @return A {@link String} being the translated {@link ParsedRule#name} of this rule,
      *                          in Carpet's configured language.
+     * @deprecated Use {@link RuleHelper#translatedName(CarpetRule)} instead
      */
-    public String translatedName(){
-        String key = translationKey();
-        return Translations.hasTranslation(key) ? tr(key) + String.format(" (%s)", name): name;
+    @Deprecated(forRemoval = true)
+    public String translatedName() {
+        return RuleHelper.translatedName(this);
     }
 
     /**
-     * @return A {@link String} being the translated {@link ParsedRule#description} of this rule,
+     * @return A {@link String} being the translated {@link ParsedRule#description description} of this rule,
      *                          in Carpet's configured language.
+     * @deprecated Use {@link RuleHelper#translatedDescription(CarpetRule)} instead
      */
+    @Deprecated(forRemoval = true)
     public String translatedDescription()
     {
-        return tr(String.format("rule.%s.desc", (name)), description);
+        return RuleHelper.translatedDescription(this);
     }
 
     /**
-     * @return A {@link String} being the translated {@link ParsedRule#extraInfo} of this 
-     * 	                        {@link ParsedRule}, in Carpet's configured language.
+     * @return A {@link String} being the translated {@link ParsedRule#extraInfo extraInfo} of this 
+     *                             {@link ParsedRule}, in Carpet's configured language.
+     * @deprecated Use {@link RuleHelper#translatedExtras(CarpetRule)} instead
      */
+    @Deprecated(forRemoval = true)
     public List<String> translatedExtras()
     {
-        if (!Translations.hasTranslations()) return extraInfo;
-        String keyBase = String.format("rule.%s.extra.", name);
-        List<String> extras = new ArrayList<>();
-        int i = 0;
-        while (Translations.hasTranslation(keyBase+i))
-        {
-            extras.add(Translations.tr(keyBase+i));
-            i++;
-        }
-        return (extras.isEmpty()) ? extraInfo : extras;
+        return RuleHelper.translatedExtras(this);
     }
 }

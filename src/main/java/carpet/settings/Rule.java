@@ -12,6 +12,8 @@ import java.lang.annotation.Target;
  * - int
  * - double
  * - String
+ * - long
+ * - float
  * - a subclass of Enum
  * The default value of the rule will be the initial value of the field.
  */
@@ -22,7 +24,7 @@ public @interface Rule
     /**
      * The rule name, by default the same as the field name
      */
-    String name() default ""; // default same as field name
+    String name() default "";
 
     /**
      * A description of the rule
@@ -55,8 +57,6 @@ public @interface Rule
     /**
      * If specified, the rule will automatically enable or disable 
      * a builtin Scarpet Rule App with this name.
-     * Consider telling the rule name so users can edit globals
-     * (in case there are relevant globals to edit ofc)
      */
     String appSource() default "";
 
@@ -66,7 +66,8 @@ public @interface Rule
     Class<? extends Validator>[] validate() default {};
 
     /**
-     * The class of the condition checked when the rule is parsed.
+     * The class of the condition checked when the rule is parsed, before being added
+     * to the Settings Manager.
      */
     Class<? extends Condition>[] condition() default {};
 }

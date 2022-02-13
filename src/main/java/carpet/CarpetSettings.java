@@ -1,7 +1,7 @@
 package carpet;
 
 import carpet.script.utils.AppStoreManager;
-import carpet.settings.ParsedRule;
+import carpet.settings.CarpetRule;
 import carpet.settings.Rule;
 import carpet.settings.SettingsManager;
 import carpet.settings.Validator;
@@ -56,8 +56,8 @@ public class CarpetSettings
     public static int updateSuppressionBlockSetting = -1;
 
     private static class LanguageValidator extends Validator<String> {
-        @Override public String validate(CommandSourceStack source, ParsedRule<String> currentRule, String newValue, String string) {
-            if (currentRule.get().equals(newValue) || source == null)
+        @Override public String validate(CommandSourceStack source, CarpetRule<String> currentRule, String newValue, String string) {
+            if (currentRule.value().equals(newValue) || source == null)
             {
                 return newValue;
             }
@@ -129,7 +129,7 @@ public class CarpetSettings
     */
 
     private static class CarpetPermissionLevel extends Validator<String> {
-        @Override public String validate(CommandSourceStack source, ParsedRule<String> currentRule, String newValue, String string) {
+        @Override public String validate(CommandSourceStack source, CarpetRule<String> currentRule, String newValue, String string) {
             if (source == null || source.hasPermission(4))
                 return newValue;
             return null;
@@ -174,7 +174,7 @@ public class CarpetSettings
 
 
     private static class OneHourMaxDelayLimit extends Validator<Integer> {
-        @Override public Integer validate(CommandSourceStack source, ParsedRule<Integer> currentRule, Integer newValue, String string) {
+        @Override public Integer validate(CommandSourceStack source, CarpetRule<Integer> currentRule, Integer newValue, String string) {
             return (newValue > 0 && newValue <= 72000) ? newValue : null;
         }
         @Override
@@ -209,7 +209,7 @@ public class CarpetSettings
     public static class StackableShulkerBoxValidator extends Validator<String> 
     {
         @Override
-        public String validate(CommandSourceStack source, ParsedRule<String> currentRule, String newValue, String string)
+        public String validate(CommandSourceStack source, CarpetRule<String> currentRule, String newValue, String string)
         {
             if (newValue.matches("^[0-9]+$")) {
                 int value = Integer.parseInt(newValue);
@@ -259,8 +259,8 @@ public class CarpetSettings
     private static class CheckOptimizedTntEnabledValidator<T> extends Validator<T>
     {
         @Override
-        public T validate(CommandSourceStack source, ParsedRule<T> currentRule, T newValue, String string) {
-            return optimizedTNT || currentRule.defaultValue.equals(newValue) ? newValue : null;
+        public T validate(CommandSourceStack source, CarpetRule<T> currentRule, T newValue, String string) {
+            return optimizedTNT || currentRule.defaultValue().equals(newValue) ? newValue : null;
         }
 
         @Override
@@ -275,7 +275,7 @@ public class CarpetSettings
 
     private static class TNTRandomRangeValidator extends Validator<Double> {
         @Override
-        public Double validate(CommandSourceStack source, ParsedRule<Double> currentRule, Double newValue, String string) {
+        public Double validate(CommandSourceStack source, CarpetRule<Double> currentRule, Double newValue, String string) {
             return newValue == -1 || newValue >= 0 ? newValue : null;
         }
 
@@ -291,7 +291,7 @@ public class CarpetSettings
 
     private static class TNTAngleValidator extends Validator<Double> {
         @Override
-        public Double validate(CommandSourceStack source, ParsedRule<Double> currentRule, Double newValue, String string) {
+        public Double validate(CommandSourceStack source, CarpetRule<Double> currentRule, Double newValue, String string) {
             return (newValue >= 0 && newValue < Math.PI * 2) || newValue == -1 ? newValue : null;
         }
 
@@ -385,7 +385,7 @@ public class CarpetSettings
 
 
     private static class ChainStoneSetting extends Validator<String> {
-        @Override public String validate(CommandSourceStack source, ParsedRule<String> currentRule, String newValue, String string) {
+        @Override public String validate(CommandSourceStack source, CarpetRule<String> currentRule, String newValue, String string) {
             CarpetSettings.doChainStone = !newValue.toLowerCase(Locale.ROOT).equals("false");
             CarpetSettings.chainStoneStickToAll = newValue.toLowerCase(Locale.ROOT).equals("stick_to_all");
 
@@ -482,7 +482,7 @@ public class CarpetSettings
     public static String commandScript = "true";
 
     private static class ModulePermissionLevel extends Validator<String> {
-        @Override public String validate(CommandSourceStack source, ParsedRule<String> currentRule, String newValue, String string) {
+        @Override public String validate(CommandSourceStack source, CarpetRule<String> currentRule, String newValue, String string) {
             int permissionLevel = SettingsManager.getCommandLevel(newValue);
             if (source != null && !source.hasPermission(permissionLevel))
                 return null;
@@ -582,7 +582,7 @@ public class CarpetSettings
     //public static boolean miningGhostBlockFix = false;
 
     private static class PushLimitLimits extends Validator<Integer> {
-        @Override public Integer validate(CommandSourceStack source, ParsedRule<Integer> currentRule, Integer newValue, String string) {
+        @Override public Integer validate(CommandSourceStack source, CarpetRule<Integer> currentRule, Integer newValue, String string) {
             return (newValue>0 && newValue <= 1024) ? newValue : null;
         }
         @Override
@@ -607,7 +607,7 @@ public class CarpetSettings
     public static int railPowerLimit = 9;
 
     private static class FillLimitLimits extends Validator<Integer> {
-        @Override public Integer validate(CommandSourceStack source, ParsedRule<Integer> currentRule, Integer newValue, String string) {
+        @Override public Integer validate(CommandSourceStack source, CarpetRule<Integer> currentRule, Integer newValue, String string) {
             return (newValue>0 && newValue <= 20000000) ? newValue : null;
         }
         @Override
@@ -677,9 +677,9 @@ public class CarpetSettings
 
     private static class ViewDistanceValidator extends Validator<Integer>
     {
-        @Override public Integer validate(CommandSourceStack source, ParsedRule<Integer> currentRule, Integer newValue, String string)
+        @Override public Integer validate(CommandSourceStack source, CarpetRule<Integer> currentRule, Integer newValue, String string)
         {
-            if (currentRule.get().equals(newValue) || source == null)
+            if (currentRule.value().equals(newValue) || source == null)
             {
                 return newValue;
             }
@@ -718,9 +718,9 @@ public class CarpetSettings
 
     private static class SimulationDistanceValidator extends Validator<Integer>
     {
-        @Override public Integer validate(CommandSourceStack source, ParsedRule<Integer> currentRule, Integer newValue, String string)
+        @Override public Integer validate(CommandSourceStack source, CarpetRule<Integer> currentRule, Integer newValue, String string)
         {
-            if (currentRule.get().equals(newValue) || source == null)
+            if (currentRule.value().equals(newValue) || source == null)
             {
                 return newValue;
             }
@@ -770,14 +770,14 @@ public class CarpetSettings
                 SpawnChunks.changeSpawnChunks(overworld.getChunkSource(), centerChunk, size);
             }
         }
-        @Override public Integer validate(CommandSourceStack source, ParsedRule<Integer> currentRule, Integer newValue, String string) {
+        @Override public Integer validate(CommandSourceStack source, CarpetRule<Integer> currentRule, Integer newValue, String string) {
             if (source == null) return newValue;
             if (newValue < 0 || newValue > 32)
             {
                 Messenger.m(source, "r spawn chunk size has to be between 0 and 32");
                 return null;
             }
-            if (currentRule.get().intValue() == newValue.intValue())
+            if (currentRule.value().intValue() == newValue.intValue())
             {
                 //must been some startup thing
                 return newValue;
@@ -802,42 +802,31 @@ public class CarpetSettings
     public static int spawnChunksSize = 11;
 
     public static class LightBatchValidator extends Validator<Integer> {
-        public static void applyLightBatchSizes()
+        public static void applyLightBatchSizes(int maxBatchSize)
         {
             Iterator<ServerLevel> iterator = CarpetServer.minecraft_server.getAllLevels().iterator();
             
             while (iterator.hasNext()) 
             {
                 ServerLevel serverWorld = iterator.next();
-                serverWorld.getChunkSource().getLightEngine().setTaskPerBatch(lightEngineMaxBatchSize);
+                serverWorld.getChunkSource().getLightEngine().setTaskPerBatch(maxBatchSize);
             }
         }
-        @Override public Integer validate(CommandSourceStack source, ParsedRule<Integer> currentRule, Integer newValue, String string) {
+        @Override public Integer validate(CommandSourceStack source, CarpetRule<Integer> currentRule, Integer newValue, String string) {
             if (source == null) return newValue;
             if (newValue < 0)
             {
                 Messenger.m(source, "r light batch size has to be at least 0");
                 return null;
             }
-            if (currentRule.get().intValue() == newValue.intValue())
+            if (currentRule.value().intValue() == newValue.intValue())
             {
                 //must been some startup thing
                 return newValue;
             }
             if (CarpetServer.minecraft_server == null) return newValue;
-          
-            // Set the field before we apply.
-            try
-            {
-                currentRule.field.set(null, newValue.intValue());
-            }
-            catch (IllegalAccessException e)
-            {
-                Messenger.m(source, "r Unable to access setting for  "+currentRule.name);
-                return null;
-            }
             
-            applyLightBatchSizes(); // Apply new settings
+            applyLightBatchSizes(newValue); // Apply new settings
             
             return newValue;
         }
@@ -980,7 +969,7 @@ public class CarpetSettings
 
     public static class StructureBlockLimitValidator extends Validator<Integer> {
 
-        @Override public Integer validate(CommandSourceStack source, ParsedRule<Integer> currentRule, Integer newValue, String string) {
+        @Override public Integer validate(CommandSourceStack source, CarpetRule<Integer> currentRule, Integer newValue, String string) {
             return (newValue >= vanillaStructureBlockLimit) ? newValue : null;
         }
 
@@ -1007,7 +996,7 @@ public class CarpetSettings
     public static class StructureBlockIgnoredValidator extends Validator<String> {
 
         @Override
-        public String validate(CommandSourceStack source, ParsedRule<String> currentRule, String newValue, String string) {
+        public String validate(CommandSourceStack source, CarpetRule<String> currentRule, String newValue, String string) {
             Optional<Block> ignoredBlock = Registry.BLOCK.getOptional(ResourceLocation.tryParse(newValue));
             if (!ignoredBlock.isPresent()) {
                 Messenger.m(source, "r Unknown block '" + newValue + "'.");
@@ -1069,8 +1058,8 @@ public class CarpetSettings
 
     private static class updateSuppressionBlockModes extends Validator<String> {
         @Override
-        public String validate(CommandSourceStack source, ParsedRule<String> currentRule, String newValue, String string) {
-            if (!currentRule.get().equals(newValue)) {
+        public String validate(CommandSourceStack source, CarpetRule<String> currentRule, String newValue, String string) {
+            if (!currentRule.value().equals(newValue)) {
                 if (newValue.equalsIgnoreCase("false")) {
                     updateSuppressionBlockSetting = -1;
                 } else if (newValue.equalsIgnoreCase("true")) {
@@ -1078,8 +1067,7 @@ public class CarpetSettings
                 } else {
                     int parsedInt = getInteger(newValue);
                     if (parsedInt <= 0) {
-                        updateSuppressionBlockSetting = -1;
-                        return "false";
+                        return null;
                     } else {
                         updateSuppressionBlockSetting = parsedInt;
                     }
@@ -1089,7 +1077,7 @@ public class CarpetSettings
         }
         @Override
         public String description() {
-            return "Cannot be negative, can be true, false, or # > 0";
+            return "Cannot be negative, can be true, false, or number greater than 0";
         }
     }
 

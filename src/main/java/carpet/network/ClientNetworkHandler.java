@@ -4,7 +4,8 @@ import carpet.CarpetServer;
 import carpet.CarpetExtension;
 import carpet.CarpetSettings;
 import carpet.helpers.TickSpeed;
-import carpet.settings.ParsedRule;
+import carpet.settings.CarpetRule;
+import carpet.settings.InvalidRuleValueException;
 import carpet.settings.SettingsManager;
 import io.netty.buffer.Unpooled;
 import java.util.HashMap;
@@ -56,11 +57,11 @@ public class ClientNetworkHandler
                     manager = CarpetServer.settingsManager;
                     ruleName = ruleKey;
                 }
-                ParsedRule<?> rule = (manager != null) ? manager.getRule(ruleName) : null;
+                CarpetRule<?> rule = (manager != null) ? manager.getCarpetRule(ruleName) : null;
                 if (rule != null)
                 {
                     String value = ruleNBT.getString("Value");
-                    try { rule.set(null, value); } catch (Exception ignored) { }
+                    try { rule.set(null, value); } catch (InvalidRuleValueException ignored) { }
                 }
             }
         });
