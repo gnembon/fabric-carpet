@@ -634,9 +634,9 @@ public class ShapeDispatcher
         @Override
         public long calcKey(){
             long hash = super.calcKey();
-            hash ^= 2;                     hash *= 1099511628211L;
+            hash ^= 6;                     hash *= 1099511628211L;
             hash ^= Byte.hashCode(mode);   hash *= 1099511628211L;
-            hash ^= going.hashCode();      hash *= 1099511628211L;
+            hash ^= relative.hashCode();      hash *= 1099511628211L;
             for (Vec3 i :vertex_list){
                 hash ^= vec3dhash(i);
                 hash *= 1099511628211L;
@@ -648,9 +648,9 @@ public class ShapeDispatcher
         public Consumer<ServerPlayer> alternative() {
             return p->{};
         }
-        private final Set<String> required = Set.of("vertex");
+        private final Set<String> required = Set.of("points");
         private final Map<String, Value> optional = Map.ofEntries(
-            entry("going",Value.NULL),
+            entry("relative",Value.NULL),
             entry("mode", new StringValue("polygon"))
         );
         @Override
@@ -659,13 +659,13 @@ public class ShapeDispatcher
         protected Set<String> optionalParams() { return Sets.union(super.optionalParams(), optional.keySet()); }
         ArrayList<Vec3> vertex_list=new ArrayList<>();
         byte mode;
-        ArrayList<Boolean> going=new ArrayList<>();
+        ArrayList<Boolean> relative=new ArrayList<>();
         @Override
         protected void init(Map<String, Value> options)
         {
             super.init(options);
             
-            if (options.get("vertex") instanceof AbstractListValue abl){
+            if (options.get("points") instanceof AbstractListValue abl){
                 abl.forEach(x->vertex_list.add(vecFromValue(x)));
             }
             String _mode = options.getOrDefault("mode",optional.get("mode")).getString();
@@ -676,15 +676,15 @@ public class ShapeDispatcher
             }else if("triangles".equals(_mode)){
                 mode=2;
             }
-            if (options.getOrDefault("going",optional.get("going")) instanceof AbstractListValue abl){
+            if (options.getOrDefault("relative",optional.get("relative")) instanceof AbstractListValue abl){
                 Iterator<Value> it = abl.iterator();
                 for(long i=0L;i<vertex_list.size();i++){
-                    going.add(it.hasNext()?it.next().getBoolean():false);
+                    relative.add(it.hasNext()?it.next().getBoolean():false);//if part of it got defined.
                 }
             }
             else{
                 for(long i=0L;i<vertex_list.size();i++){
-                    going.add(false);
+                    relative.add(true);//if there is nothing defined at all.
                 }
             }
             
@@ -924,7 +924,7 @@ public class ShapeDispatcher
     public static abstract class Param
     {
         public static Map<String, Param> of = new HashMap<String, Param>(){{
-            put("vertex", new PointsParam("vertex"){
+            /*put("vertex", new PointsParam("vertex"){
                 public Value decode(Tag tag)
                 {
                     ListTag ltag = (ListTag)tag;
@@ -948,9 +948,9 @@ public class ShapeDispatcher
                     {
                         return value;
                     }
-            });
+            });*/
             put("mode",new StringChoiceParam("mode","polygon","strip","triangles"));
-            put("going",new MaybeListofboolParam("going"));
+            put("relative",new OptionalBoolListParam("relative"));
             put("shape", new ShapeParam());
             put("dim", new DimensionParam());
             put("duration", new NonNegativeIntParam("duration"));
@@ -996,9 +996,9 @@ public class ShapeDispatcher
         public abstract Value validate(Map<String, Value> options, MinecraftServer server, Value value); // makes sure the value is proper
         public abstract Value decode(Tag tag);
     }
-    public static class MaybeListofboolParam extends Param
+    public static class OptionalBoolListParam extends Param
     {
-        public MaybeListofboolParam(String id) { super(id); }
+        public OptionalBoolListParam(String id) { super(id); }
 
         @Override
         public Tag toTag(Value value) { return value.toTag(true);}
@@ -1322,9 +1322,9 @@ public class ShapeDispatcher
             {
                 List<Value> coords = ((ListValue)value).getItems();
                 ListTag tag = new ListTag();
-                tag.add(DoubleTag.valueOf(NumericValue.asNumber(lv.get(0), "x").getDouble()));
-                tag.add(DoubleTag.valueOf(NumericValue.asNumber(lv.get(1), "y").getDouble()));
-                tag.add(DoubleTag.valueOf(NumericValue.asNumber(lv.get(2), "z").getDouble()));
+                tag.add(DoubleTag.valueOf(NumericValue.asNumber(coords.get(0), "x").getDouble()));
+                tag.add(DoubleTag.valueOf(NumericValue.asNumber(coords.get(1), "y").getDouble()));
+                tag.add(DoubleTag.valueOf(NumericValue.asNumber(coords.get(2), "z").getDouble()));
                 ltag.add(tag);
             }
             return ltag;
