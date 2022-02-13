@@ -6,6 +6,7 @@ import carpet.script.exception.InternalExpressionException;
 import carpet.script.exception.ThrowStatement;
 import carpet.script.exception.Throwables;
 import carpet.script.language.Sys;
+import carpet.script.value.AbstractListValue;
 import carpet.script.value.BlockValue;
 import carpet.script.value.BooleanValue;
 import carpet.script.value.EntityValue;
@@ -31,6 +32,7 @@ import net.minecraft.nbt.IntTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.StringTag;
 import net.minecraft.nbt.Tag;
+import net.minecraft.nbt.NumericTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.TextComponent;
 import net.minecraft.resources.ResourceKey;
@@ -46,6 +48,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -249,6 +252,7 @@ public class ShapeDispatcher
             put("sphere", creator(Sphere::new));
             put("cylinder", creator(Cylinder::new));
             put("label", creator(DisplayedText::new));
+            put("poly",creator(Polyface::new));
         }};
         private static Function<Map<String, Value>,ExpiringShape> creator(Supplier<ExpiringShape> shapeFactory)
         {
@@ -625,6 +629,61 @@ public class ShapeDispatcher
         }
     }
 
+    public static class Polyface extends ExpiringShape
+    {
+        @Override
+        public long calcKey(){
+            long hash = super.calcKey();
+            hash ^= 2;                     hash *= 1099511628211L;
+            hash ^= mode.hashCode();       hash *= 1099511628211L;
+            hash ^= going.hashCode();      hash *= 1099511628211L;
+            for (Vec3 i :vertex_list){
+                hash ^= vec3dhash(i);
+                hash *= 1099511628211L;
+            }
+            hash ^= vertex_list.size();    hash *= 1099511628211L;
+            return hash;
+        }
+        @Override
+        public Consumer<ServerPlayer> alternative() {
+            return p->{};
+        }
+        private final Set<String> required = Set.of("vertex");
+        private final Map<String, Value> optional = Map.ofEntries(
+            entry("going",Value.NULL),
+            entry("mode", new StringValue("polygon"))
+        );
+        @Override
+        protected Set<String> requiredParams() { return Sets.union(super.requiredParams(), required); }
+        @Override
+        protected Set<String> optionalParams() { return Sets.union(super.optionalParams(), optional.keySet()); }
+        ArrayList<Vec3> vertex_list=new ArrayList<>();
+        String mode;
+        ArrayList<Boolean> going=new ArrayList<>();
+        @Override
+        protected void init(Map<String, Value> options)
+        {
+            super.init(options);
+            
+            if (options.get("vertex") instanceof AbstractListValue abl){
+                abl.forEach(x->vertex_list.add(vecFromValue(x)));
+            }
+            mode=options.getOrDefault("mode",optional.get("mode")).getString();
+            if (options.getOrDefault("going",optional.get("going")) instanceof AbstractListValue abl){
+                Iterator<Value> it = abl.iterator();
+                for(long i=0L;i<vertex_list.size();i++){
+                    going.add(it.hasNext()?it.next().getBoolean():false);
+                }
+            }
+            else{
+                for(long i=0L;i<vertex_list.size();i++){
+                    going.add(false);
+                }
+            }
+            
+        }
+    }
+
     public static class Line extends ExpiringShape
     {
         private final Set<String> required = Set.of("from", "to");
@@ -858,6 +917,33 @@ public class ShapeDispatcher
     public static abstract class Param
     {
         public static Map<String, Param> of = new HashMap<String, Param>(){{
+            put("vertex", new PointsParam("vertex"){
+                public Value decode(Tag tag)
+                {
+                    ListTag ltag = (ListTag)tag;
+                    List<Value> points = new ArrayList<>();
+                    for (int i=0, ll = ltag.size(); i<ll; i++)
+                    {
+                        ListTag ptag = ltag.getList(i);
+                        points.add(ListValue.of(
+                                new NumericValue(((NumericTag)ptag.get(0)).getAsDouble()),
+                                new NumericValue(((NumericTag)ptag.get(1)).getAsDouble()),
+                                new NumericValue(((NumericTag)ptag.get(2)).getAsDouble())
+                        ));
+                    }
+                    return ListValue.wrap(points);
+                }
+                public Tag toTag(Value pointsValue){
+                    return pointsValue.toTag(true);
+                
+                }
+                public Value validate(Map<String, Value> options, MinecraftServer server, Value value)
+                    {
+                        return value;
+                    }
+            });
+            put("mode",new TextParam("mode"));
+            put("going",new MaybeListofboolParam("going"));
             put("shape", new ShapeParam());
             put("dim", new DimensionParam());
             put("duration", new NonNegativeIntParam("duration"));
@@ -903,7 +989,25 @@ public class ShapeDispatcher
         public abstract Value validate(Map<String, Value> options, MinecraftServer server, Value value); // makes sure the value is proper
         public abstract Value decode(Tag tag);
     }
+    public static class MaybeListofboolParam extends Param
+    {
+        public MaybeListofboolParam(String id) { super(id); }
 
+        @Override
+        public Tag toTag(Value value) { return value.toTag(true);}
+        @Override
+        public Value decode(Tag tag) {
+            if(tag instanceof ListTag){
+                return ListValue.wrap(((ListTag)tag).stream().map(x->BooleanValue.of(((NumericTag)x).getAsNumber().doubleValue()!=0)));
+            }
+            return Value.NULL;
+        }
+
+        @Override
+        public Value validate(Map<String, Value> options, MinecraftServer server, Value value) {
+            return decode(toTag(value));
+        }
+    }
     public abstract static class StringParam extends Param
     {
         protected StringParam(String id) { super(id); }
