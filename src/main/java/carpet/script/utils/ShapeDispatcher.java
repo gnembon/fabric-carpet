@@ -642,7 +642,6 @@ public class ShapeDispatcher
                 hash *= 1099511628211L;
             }
             hash ^= vertex_list.size();    hash *= 1099511628211L;
-            hash ^=(vertex_list.size()+37)*(vertex_list.size()+3721)*4224696537L+30692*vertex_list.size();
             return hash;
         }
         @Override
