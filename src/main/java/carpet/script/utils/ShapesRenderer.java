@@ -41,6 +41,7 @@ public class ShapesRenderer
         put("sphere", RenderedSphere::new);
         put("cylinder", RenderedCylinder::new);
         put("label", RenderedText::new);
+        put("poly",RenderedPolyface::new);
     }};
 
     public ShapesRenderer(Minecraft minecraftClient)
@@ -386,7 +387,33 @@ public class ShapesRenderer
             );
         }
     }
-
+    public static class RenderedPolyface extends RenderedShape<ShapeDispatcher.Polyface>
+    {
+        public RenderedPolyface(Minecraft client, ShapeDispatcher.ExpiringShape shape)
+        {
+            super(client, (ShapeDispatcher.Polyface)shape);
+        }
+        @Override
+        public void renderFaces(Tesselator tessellator, BufferBuilder bufferBuilder, double cx, double cy, double cz, float partialTick)
+        {
+            System.out.println(shape.vertex_list);
+            System.out.println(shape.a);
+            System.out.println(shape.mode);
+            System.out.println(shape.going);
+            bufferBuilder.begin("polygon".equalsIgnoreCase(shape.mode)?VertexFormat.Mode.TRIANGLE_FAN:"STRIP".equalsIgnoreCase(shape.mode)?VertexFormat.Mode.TRIANGLE_STRIP:VertexFormat.Mode.TRIANGLES, DefaultVertexFormat.POSITION_COLOR);
+            for(int i=0;i<shape.vertex_list.size();i++){
+                Vec3 vec=shape.vertex_list.get(i);
+                if(shape.going.get(i)){
+                    vec=shape.relativiseRender(client.level, vec, partialTick);
+                }
+                bufferBuilder.vertex(vec.x()-cx, vec.y()-cy, vec.z()-cz).color(shape.fr, shape.fg, shape.fb, shape.fa).endVertex();
+            }
+            tessellator.end();
+        }
+        @Override
+        public void renderLines(PoseStack matrices, Tesselator tessellator, BufferBuilder builder, double cx, double cy,
+                double cz, float partialTick) {}
+    }
     public static class RenderedSphere extends RenderedShape<ShapeDispatcher.Sphere>
     {
         public RenderedSphere(Minecraft client, ShapeDispatcher.ExpiringShape shape)
