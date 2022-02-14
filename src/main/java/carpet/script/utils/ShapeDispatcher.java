@@ -648,7 +648,7 @@ public class ShapeDispatcher
             return hash;
         }
         ArrayList<Vec3> alter_point=null;
-        Random random=new Random();
+        final Random random=new Random();
         ArrayList<Vec3> alter_point(ServerPlayer p){
             if (alter_point!=null){
                 return alter_point;
@@ -738,10 +738,11 @@ public class ShapeDispatcher
         }
         @Override
         public Consumer<ServerPlayer> alternative() {
+            final ParticleOptions locparticledata = getParticleData(String.format(Locale.ROOT ,"dust %.1f %.1f %.1f %.1f", fr, fg, fb, fa));
             return p->{
+                if(p.level.dimension() != this.shapeDimension){return;}
                 for(Vec3 v : alter_point(p)){
-                    if(p.level.dimension() != this.shapeDimension){continue;}
-                    p.getLevel().sendParticles(p, getParticleData(String.format(Locale.ROOT ,"dust %.1f %.1f %.1f %.1f", fr, fg, fb, fa)), true,
+                    p.getLevel().sendParticles(p,locparticledata , true,
                     v.x, v.y, v.z, 1,
                     0.0, 0.0, 0.0, 0.0);
                 }
@@ -773,6 +774,8 @@ public class ShapeDispatcher
             inneredges = options.getOrDefault("inneredges",optional.get("inneredges")).getBoolean();
             if(vertex_list.size()<3){
                 throw new IllegalArgumentException("Unexpected vertex list size: " + vertex_list.size());
+            }else if(vertex_list.size()<4){
+                inneredges=false;
             }
             if("polygon".equals(_mode)){
                 mode=VertexFormat.Mode.TRIANGLE_FAN;
