@@ -647,9 +647,105 @@ public class ShapeDispatcher
             hash ^= Boolean.hashCode(inneredges);    hash *= 1099511628211L;
             return hash;
         }
+        ArrayList<Vec3> alter_point=null;
+        Random random=new Random();
+        ArrayList<Vec3> alter_point(ServerPlayer p){
+            if (alter_point!=null){
+                return alter_point;
+            }
+            alter_point=new ArrayList<>();
+            switch (mode) {
+                case TRIANGLES:
+                    for (int i=0;i<vertex_list.size();i++){
+                        Vec3 vecA=vertex_list.get(i);
+                        if(relative.get(i)){
+                            vecA=relativiseRender(p.level, vecA, 0);
+                        }
+                        i++;
+                        Vec3 vecB=vertex_list.get(i);
+                        if(relative.get(i)){
+                            vecB=relativiseRender(p.level, vecB, 0);
+                        }
+                        i++;
+                        Vec3 vecC=vertex_list.get(i);
+                        if(relative.get(i)){
+                            vecC=relativiseRender(p.level, vecC, 0);
+                        }
+                        alter_draw_triangles(vecA, vecB, vecC);
+                    }
+                    break;
+                case TRIANGLE_FAN:
+                    Vec3 vec0=vertex_list.get(0);
+                    if(relative.get(0)){
+                        vec0=relativiseRender(p.level, vec0, 0);
+                    }
+                    Vec3 vec1=vertex_list.get(1);
+                    if(relative.get(1)){
+                        vec1=relativiseRender(p.level, vec1, 0);
+                    }
+                    for(int i=2;i<vertex_list.size();i++){
+                        Vec3 vec=vertex_list.get(i);
+                        if(relative.get(i)){
+                            vec=relativiseRender(p.level, vec, 0);
+                        }
+                        alter_draw_triangles(vec0,vec1,vec);
+                        vec1=vec;
+                    }
+                    break;
+                case TRIANGLE_STRIP:
+                    Vec3 vecA=vertex_list.get(0);
+                    if(relative.get(0)){
+                        vecA=relativiseRender(p.level, vecA, 0);
+                    }
+                    Vec3 vecB=vertex_list.get(1);
+                    if(relative.get(1)){
+                        vecB=relativiseRender(p.level, vecB, 0);
+                    }
+                    //ArrayList<Vec3> last = new ArrayList<Vec3>();
+                    //last.add(vecA);last.add(vecB);
+                    for(int i=2;i<vertex_list.size();i++){
+                        Vec3 vec=vertex_list.get(i);
+                        if(relative.get(i)){
+                            vec=relativiseRender(p.level, vec, 0);
+                        }
+                        //alter_draw_triangles(last.get(0),last.get(1),vec);
+                        //last.remove(0);last.add(vec);
+                        alter_draw_triangles(vecA,vecB,vec);
+                        vecA=vecB;vecB=vec;
+                    }
+                    break;
+                default:
+                    break;
+            }
+            
+            return alter_point;
+        }
+        void alter_draw_triangles(Vec3 a,Vec3 b,Vec3 c){
+            
+            
+            Vec3 B = b.subtract(a);Vec3 C = c.subtract(a);
+            for(int i=0;i/8<B.cross(C).length();i++){
+                double x = random.nextDouble();double y = random.nextDouble();
+                alter_point.add(a.add(B.scale(x/2)).add(C.scale(y/2)));
+                if(x+y<1){
+                    alter_point.add(a.add(B.scale((x+1)/2)).add(C.scale(y/2)));
+                }else{
+                    x=1-x;y=1-y;
+                    alter_point.add(a.add(B.scale(x/2)).add(C.scale((y+1)/2)));
+                }
+            }
+            
+        }
         @Override
         public Consumer<ServerPlayer> alternative() {
-            return p->{};
+            return p->{
+                for(Vec3 v : alter_point(p)){
+                    if(p.level.dimension() != this.shapeDimension){continue;}
+                    p.getLevel().sendParticles(p, getParticleData(String.format(Locale.ROOT ,"dust %.1f %.1f %.1f %.1f", fr, fg, fb, fa)), true,
+                    v.x, v.y, v.z, 1,
+                    0.0, 0.0, 0.0, 0.0);
+                }
+            };
         }
         private final Set<String> required = Set.of("points");
         private final Map<String, Value> optional = Map.ofEntries(
