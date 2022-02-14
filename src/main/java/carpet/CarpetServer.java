@@ -66,6 +66,8 @@ public class CarpetServer // static for now - easier to handle all around the co
         if (currentCommandDispatcher != null)
         {
             extension.registerCommands(currentCommandDispatcher);
+            CarpetSettings.LOG.warn(extension.getClass().getSimpleName() + " extension registered too late!");
+            CarpetSettings.LOG.warn("This won't be supported in later Carpet versions and may crash the game!");
         }
     }
 
