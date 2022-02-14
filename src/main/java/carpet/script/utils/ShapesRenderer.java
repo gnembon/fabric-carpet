@@ -426,7 +426,7 @@ public class ShapesRenderer
                         }
                         builder.vertex(vec0.x()-cx, vec0.y()-cy, vec0.z()-cz).color(shape.r, shape.g, shape.b, shape.a).endVertex();
                         tessellator.end();
-                        if(shape.inneredges&&shape.vertex_list.size()>3){
+                        if(shape.inneredges){
                             builder.begin(VertexFormat.Mode.DEBUG_LINES, DefaultVertexFormat.POSITION_COLOR);
                             for(int i=1;i<shape.vertex_list.size()-1;i++){
                                 Vec3 vec = shape.vertex_list.get(i);
@@ -466,7 +466,7 @@ public class ShapesRenderer
                             }
                             builder.vertex(vec.x()-cx, vec.y()-cy, vec.z()-cz).color(shape.r, shape.g, shape.b, shape.a).endVertex();
                         }
-                        if(shape.inneredges&&shape.vertex_list.size()>3){
+                        if(shape.inneredges){
                             for(i=2;i<shape.vertex_list.size()-1;i++){
                                 vec=shape.vertex_list.get(i);
                                 if(shape.relative.get(i)){
