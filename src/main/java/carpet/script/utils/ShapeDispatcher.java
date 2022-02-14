@@ -17,6 +17,8 @@ import carpet.script.value.NumericValue;
 import carpet.script.value.StringValue;
 import carpet.script.value.Value;
 import com.google.common.collect.Sets;
+import com.mojang.blaze3d.vertex.VertexFormat;
+import com.mojang.blaze3d.vertex.VertexFormat.Mode;
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.minecraft.commands.arguments.ParticleArgument;
@@ -635,13 +637,14 @@ public class ShapeDispatcher
         public long calcKey(){
             long hash = super.calcKey();
             hash ^= 6;                     hash *= 1099511628211L;
-            hash ^= Byte.hashCode(mode);   hash *= 1099511628211L;
+            hash ^= mode.hashCode();   hash *= 1099511628211L;
             hash ^= relative.hashCode();      hash *= 1099511628211L;
             for (Vec3 i :vertex_list){
                 hash ^= vec3dhash(i);
                 hash *= 1099511628211L;
             }
-            hash ^= vertex_list.size();    hash *= 1099511628211L;
+            hash ^= Integer.hashCode(vertex_list.size());    hash *= 1099511628211L;
+            hash ^= Boolean.hashCode(inneredges);    hash *= 1099511628211L;
             return hash;
         }
         @Override
@@ -651,15 +654,17 @@ public class ShapeDispatcher
         private final Set<String> required = Set.of("points");
         private final Map<String, Value> optional = Map.ofEntries(
             entry("relative",Value.NULL),
-            entry("mode", new StringValue("polygon"))
+            entry("mode", new StringValue("polygon")),
+            entry("inneredges", Value.TRUE)
         );
         @Override
         protected Set<String> requiredParams() { return Sets.union(super.requiredParams(), required); }
         @Override
         protected Set<String> optionalParams() { return Sets.union(super.optionalParams(), optional.keySet()); }
         ArrayList<Vec3> vertex_list=new ArrayList<>();
-        byte mode;
+        Mode mode;
         ArrayList<Boolean> relative=new ArrayList<>();
+        boolean inneredges;
         @Override
         protected void init(Map<String, Value> options)
         {
@@ -669,12 +674,19 @@ public class ShapeDispatcher
                 abl.forEach(x->vertex_list.add(vecFromValue(x)));
             }
             String _mode = options.getOrDefault("mode",optional.get("mode")).getString();
+            inneredges = options.getOrDefault("inneredges",optional.get("inneredges")).getBoolean();
+            if(vertex_list.size()<3){
+                throw new IllegalArgumentException("Unexpected vertex list size: " + vertex_list.size());
+            }
             if("polygon".equals(_mode)){
-                mode=0;
+                mode=VertexFormat.Mode.TRIANGLE_FAN;
             }else if("strip".equals(_mode)){
-                mode=1;
+                mode=VertexFormat.Mode.TRIANGLE_STRIP;
             }else if("triangles".equals(_mode)){
-                mode=2;
+                mode=VertexFormat.Mode.TRIANGLES;
+                if(vertex_list.size()%3!=0){
+                    throw new IllegalArgumentException("Unexpected vertex list size: " + vertex_list.size());
+                }
             }
             if (options.getOrDefault("relative",optional.get("relative")) instanceof AbstractListValue abl){
                 Iterator<Value> it = abl.iterator();
@@ -951,6 +963,7 @@ public class ShapeDispatcher
             });*/
             put("mode",new StringChoiceParam("mode","polygon","strip","triangles"));
             put("relative",new OptionalBoolListParam("relative"));
+            put("inneredges", new BoolParam("inneredges"));
             put("shape", new ShapeParam());
             put("dim", new DimensionParam());
             put("duration", new NonNegativeIntParam("duration"));
