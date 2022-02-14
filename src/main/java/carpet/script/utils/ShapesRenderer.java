@@ -8,6 +8,7 @@ import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.Tesselator;
 import com.mojang.blaze3d.vertex.VertexFormat;
+import com.mojang.blaze3d.vertex.VertexFormat.Mode;
 import com.mojang.math.Vector3f;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import java.util.HashMap;
@@ -395,12 +396,9 @@ public class ShapesRenderer
         }
         @Override
         public void renderFaces(Tesselator tessellator, BufferBuilder bufferBuilder, double cx, double cy, double cz, float partialTick)
-        {
-                bufferBuilder.begin(switch(shape.mode){
-                    case 0->VertexFormat.Mode.TRIANGLE_FAN;
-                    case 1->VertexFormat.Mode.TRIANGLE_STRIP;
-                    case 2->VertexFormat.Mode.TRIANGLES;
-                    default -> throw new IllegalArgumentException("Unexpected value: " + shape.mode);}, DefaultVertexFormat.POSITION_COLOR);
+        {       
+            if(shape.fa==0){return;}
+                bufferBuilder.begin(shape.mode, DefaultVertexFormat.POSITION_COLOR);
                 for(int i=0;i<shape.vertex_list.size();i++){
                     Vec3 vec=shape.vertex_list.get(i);
                     if(shape.relative.get(i)){
@@ -413,7 +411,103 @@ public class ShapesRenderer
         }
         @Override
         public void renderLines(PoseStack matrices, Tesselator tessellator, BufferBuilder builder, double cx, double cy,
-                double cz, float partialTick) {}
+                double cz, float partialTick) {
+                    if(shape.a==0){return;}
+                    if (shape.mode==Mode.TRIANGLE_FAN){
+                        builder.begin(VertexFormat.Mode.DEBUG_LINE_STRIP, DefaultVertexFormat.POSITION_COLOR);
+                        Vec3 vec0=null;
+                        for(int i=0;i<shape.vertex_list.size();i++){
+                            Vec3 vec=shape.vertex_list.get(i);
+                            if(shape.relative.get(i)){
+                                vec=shape.relativiseRender(client.level, vec, partialTick);
+                            }
+                            if(i==0)vec0=vec;
+                            builder.vertex(vec.x()-cx, vec.y()-cy, vec.z()-cz).color(shape.r, shape.g, shape.b, shape.a).endVertex();
+                        }
+                        builder.vertex(vec0.x()-cx, vec0.y()-cy, vec0.z()-cz).color(shape.r, shape.g, shape.b, shape.a).endVertex();
+                        tessellator.end();
+                        if(shape.inneredges&&shape.vertex_list.size()>3){
+                            builder.begin(VertexFormat.Mode.DEBUG_LINES, DefaultVertexFormat.POSITION_COLOR);
+                            for(int i=1;i<shape.vertex_list.size()-1;i++){
+                                Vec3 vec = shape.vertex_list.get(i);
+                                if(shape.relative.get(i)){
+                                    vec=shape.relativiseRender(client.level, vec, partialTick);
+                                }
+                                
+                                builder.vertex(vec.x()-cx, vec.y()-cy, vec.z()-cz).color(shape.r, shape.g, shape.b, shape.a).endVertex();
+                                builder.vertex(vec0.x()-cx, vec0.y()-cy, vec0.z()-cz).color(shape.r, shape.g, shape.b, shape.a).endVertex();
+                            }
+                            tessellator.end();
+                        }
+                        return;
+                    }
+                    if (shape.mode==Mode.TRIANGLE_STRIP){
+                        //02468
+                        //1357*
+                        builder.begin(VertexFormat.Mode.DEBUG_LINE_STRIP, DefaultVertexFormat.POSITION_COLOR);
+                        Vec3 vec=shape.vertex_list.get(1);
+                        if(shape.relative.get(1)){
+                            vec=shape.relativiseRender(client.level, vec, partialTick);
+                        }
+                        builder.vertex(vec.x()-cx, vec.y()-cy, vec.z()-cz).color(shape.r, shape.g, shape.b, shape.a).endVertex();
+                        int i;
+                        for(i=0;i<shape.vertex_list.size();i+=2){
+                            vec=shape.vertex_list.get(i);
+                            if(shape.relative.get(i)){
+                                vec=shape.relativiseRender(client.level, vec, partialTick);
+                            }
+                            builder.vertex(vec.x()-cx, vec.y()-cy, vec.z()-cz).color(shape.r, shape.g, shape.b, shape.a).endVertex();
+                        }
+                        i=shape.vertex_list.size()-1;
+                        for(i-=1-i%2;i>0;i-=2){
+                            vec=shape.vertex_list.get(i);
+                            if(shape.relative.get(i)){
+                                vec=shape.relativiseRender(client.level, vec, partialTick);
+                            }
+                            builder.vertex(vec.x()-cx, vec.y()-cy, vec.z()-cz).color(shape.r, shape.g, shape.b, shape.a).endVertex();
+                        }
+                        if(shape.inneredges&&shape.vertex_list.size()>3){
+                            for(i=2;i<shape.vertex_list.size()-1;i++){
+                                vec=shape.vertex_list.get(i);
+                                if(shape.relative.get(i)){
+                                    vec=shape.relativiseRender(client.level, vec, partialTick);
+                                }
+                                builder.vertex(vec.x()-cx, vec.y()-cy, vec.z()-cz).color(shape.r, shape.g, shape.b, shape.a).endVertex();
+                            }
+                        }
+                        tessellator.end();
+                        return;
+                    }
+                    if (shape.mode==Mode.TRIANGLES){
+                        builder.begin(VertexFormat.Mode.DEBUG_LINES, DefaultVertexFormat.POSITION_COLOR);
+                        for (int i=0;i<shape.vertex_list.size();i++){
+                            Vec3 vecA=shape.vertex_list.get(i);
+                            if(shape.relative.get(i)){
+                                vecA=shape.relativiseRender(client.level, vecA, partialTick);
+                            }
+                            i++;
+                            Vec3 vecB=shape.vertex_list.get(i);
+                            if(shape.relative.get(i)){
+                                vecB=shape.relativiseRender(client.level, vecB, partialTick);
+                            }
+                            i++;
+                            Vec3 vecC=shape.vertex_list.get(i);
+                            if(shape.relative.get(i)){
+                                vecC=shape.relativiseRender(client.level, vecC, partialTick);
+                            }
+                            builder.vertex(vecA.x()-cx, vecA.y()-cy, vecA.z()-cz).color(shape.r, shape.g, shape.b, shape.a).endVertex();
+                            builder.vertex(vecB.x()-cx, vecB.y()-cy, vecB.z()-cz).color(shape.r, shape.g, shape.b, shape.a).endVertex();
+
+                            builder.vertex(vecB.x()-cx, vecB.y()-cy, vecB.z()-cz).color(shape.r, shape.g, shape.b, shape.a).endVertex();
+                            builder.vertex(vecC.x()-cx, vecC.y()-cy, vecC.z()-cz).color(shape.r, shape.g, shape.b, shape.a).endVertex();
+
+                            builder.vertex(vecC.x()-cx, vecC.y()-cy, vecC.z()-cz).color(shape.r, shape.g, shape.b, shape.a).endVertex();
+                            builder.vertex(vecA.x()-cx, vecA.y()-cy, vecA.z()-cz).color(shape.r, shape.g, shape.b, shape.a).endVertex();
+                        }
+                        tessellator.end();
+                        return;
+                    }
+                }
     }
     public static class RenderedSphere extends RenderedShape<ShapeDispatcher.Sphere>
     {
