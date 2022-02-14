@@ -653,6 +653,48 @@ public class Auxiliary {
             return new FormattedTextValue(Messenger2.c(args));
         });
 
+        expression.addFunction("translate", values -> {
+            if (values.size() == 0 ) throw new InternalExpressionException("'translate' requires at least one component");
+            ArrayList<Object> arguments=new ArrayList<>();
+            String key=values.get(0).getString();
+            if (key.indexOf(' ')<0){
+                key="j "+key;
+            }
+            else
+            {
+                key="j"+key;
+            }
+            arguments.add(key);
+            values.stream().skip(1).map(v->{
+                if (v instanceof FormattedTextValue){
+                    return ((FormattedTextValue)v).getText().copy();
+                }
+                if (v instanceof EntityValue){
+                    return ((EntityValue)v).getEntity();
+                }
+                if (v instanceof ListValue _v){//item
+                    
+                    if (_v.length()==3){
+                        String id=_v.getItems().get(0).getString();
+                        int count = (int) NumericValue.asNumber(_v.getItems().get(1)).getLong();
+                        Value nbtValue = _v.getItems().get(2);
+                        CompoundTag nbt;
+                        if (nbtValue instanceof NBTSerializableValue)
+                            nbt = ((NBTSerializableValue)nbtValue).getCompoundTag();
+                        else if (nbtValue instanceof NullValue)
+                            nbt = null;
+                        else
+                            nbt = new NBTSerializableValue(nbtValue.getString()).getCompoundTag();
+                        try {
+                            return NBTSerializableValue.parseItem(id, nbt).createItemStack(count, false);
+                        } catch (CommandSyntaxException e) {}
+                    }
+                }
+                return v.getString();
+            }).forEach(x->arguments.add(x));;
+            
+            return new FormattedTextValue(Messenger2.c(arguments.toArray()));
+        });
         expression.addContextFunction("run", 1, (c, t, lv) ->
         {
             CommandSourceStack s = ((CarpetContext)c).s;
