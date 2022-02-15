@@ -1,7 +1,9 @@
 package carpet.script.utils;
 
+import carpet.CarpetServer;
 import carpet.CarpetSettings;
 import carpet.network.ServerNetworkHandler;
+import carpet.script.CarpetEventServer.ScheduledCall;
 import carpet.script.exception.InternalExpressionException;
 import carpet.script.exception.ThrowStatement;
 import carpet.script.exception.Throwables;
@@ -16,6 +18,7 @@ import carpet.script.value.MapValue;
 import carpet.script.value.NumericValue;
 import carpet.script.value.StringValue;
 import carpet.script.value.Value;
+
 import com.google.common.collect.Sets;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import com.mojang.blaze3d.vertex.VertexFormat.Mode;
@@ -37,12 +40,16 @@ import net.minecraft.nbt.Tag;
 import net.minecraft.nbt.NumericTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.TextComponent;
+import net.minecraft.network.protocol.game.ClientboundAddEntityPacket;
+import net.minecraft.network.protocol.game.ClientboundRemoveEntitiesPacket;
+import net.minecraft.network.protocol.game.ClientboundSetEntityDataPacket;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
+import net.minecraft.world.entity.AreaEffectCloud;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
@@ -126,7 +133,7 @@ public class ShapeDispatcher
         List<ServerPlayer> alternativePlayers = new ArrayList<>();
         for (ServerPlayer player : players)
         {
-            if (ServerNetworkHandler.isValidCarpetPlayer(player))
+            if (ServerNetworkHandler.isValidCarpetPlayer(player)&&!CarpetSettings.superSecretSetting)//for debug
             {
                 clientPlayers.add(player);
             }
@@ -527,7 +534,21 @@ public class ShapeDispatcher
         @Override
         public Consumer<ServerPlayer> alternative()
         {
-            return s -> {};
+            return s -> {
+                AreaEffectCloud e = new AreaEffectCloud(s.level, this.pos.x,this.pos.y-(0.75+0.025),this.pos.z);
+                e.setParticle(getParticleData("dust 0.0 0.0 0.0 0.0"));
+                e.setCustomNameVisible(true);
+                e.setCustomName(value);
+                e.setRadius(0.0f);
+                s.connection.send(new ClientboundAddEntityPacket(e));
+                s.connection.send(new ClientboundSetEntityDataPacket(e.getId(), e.getEntityData(), true));
+                CarpetServer.scriptServer.events.scheduledCalls.add(new ScheduledCall(null, null, null, duration){
+                    public void execute()
+                    {
+                        s.connection.send(new ClientboundRemoveEntitiesPacket(e.getId()));
+                    }
+                });
+            };
         }
 
         @Override
