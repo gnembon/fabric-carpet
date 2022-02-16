@@ -126,7 +126,7 @@ public class ShapeDispatcher
         List<ServerPlayer> alternativePlayers = new ArrayList<>();
         for (ServerPlayer player : players)
         {
-            if (ServerNetworkHandler.isValidCarpetPlayer(player))
+            if (ServerNetworkHandler.isValidCarpetPlayer(player)&&!CarpetSettings.superSecretSetting)//for debug
             {
                 clientPlayers.add(player);
             }
@@ -741,6 +741,7 @@ public class ShapeDispatcher
             final ParticleOptions locparticledata = getParticleData(String.format(Locale.ROOT ,"dust %.1f %.1f %.1f %.1f", fr, fg, fb, fa));
             return p->{
                 if(p.level.dimension() != this.shapeDimension){return;}
+                if(!(fa>0.0f)){return;}
                 for(Vec3 v : alter_point(p)){
                     p.getLevel().sendParticles(p,locparticledata , true,
                     v.x, v.y, v.z, 1,
