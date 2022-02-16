@@ -1594,6 +1594,8 @@ public class WorldAccess {
 
     @ScarpetFunction(maxParams = -1)
     public Value sample_noise(Context c, @Locator.Block BlockPos pos, String... noiseQueries) {
+        return Value.NULL;
+        /*
         int mappedX = QuartPos.fromBlock(pos.getX());
         int mappedY = QuartPos.fromBlock(pos.getY());
         int mappedZ = QuartPos.fromBlock(pos.getZ());
@@ -1608,6 +1610,6 @@ public class WorldAccess {
             double noiseValue = ((NoiseColumnSamplerInterface) mns).getNoiseSample(noise, mappedX, mappedY, mappedZ);
             ret.put(new StringValue(noise), new NumericValue(noiseValue));
         }
-        return MapValue.wrap(ret);
+        return MapValue.wrap(ret);*/
     }
 }

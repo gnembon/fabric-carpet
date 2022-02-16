@@ -3,6 +3,13 @@ package carpet.mixins;
 import carpet.CarpetSettings;
 import carpet.helpers.CustomSpawnLists;
 import net.minecraft.core.Holder;
+import net.minecraft.core.Registry;
+import net.minecraft.world.level.levelgen.feature.ConfiguredStructureFeature;
+import net.minecraft.world.level.levelgen.feature.NetherFortressFeature;
+import net.minecraft.world.level.levelgen.feature.OceanMonumentFeature;
+import net.minecraft.world.level.levelgen.feature.PillagerOutpostFeature;
+import net.minecraft.world.level.levelgen.feature.StructureFeature;
+import net.minecraft.world.level.levelgen.feature.SwamplandHutFeature;
 import org.spongepowered.asm.mixin.Mixin;
 
 import net.minecraft.core.BlockPos;
@@ -15,19 +22,13 @@ import net.minecraft.world.level.biome.MobSpawnSettings;
 import net.minecraft.world.level.chunk.ChunkGenerator;
 import net.minecraft.world.level.levelgen.FlatLevelSource;
 import net.minecraft.world.level.levelgen.StructureSettings;
-import net.minecraft.world.level.levelgen.feature.NetherFortressFeature;
-import net.minecraft.world.level.levelgen.feature.OceanMonumentFeature;
-import net.minecraft.world.level.levelgen.feature.PillagerOutpostFeature;
-import net.minecraft.world.level.levelgen.feature.StructureFeature;
-import net.minecraft.world.level.levelgen.feature.SwamplandHutFeature;
 
 @Mixin(FlatLevelSource.class)
 public abstract class FlatLevelSource_structuresMixin extends ChunkGenerator
 {
-
-    public FlatLevelSource_structuresMixin(BiomeSource biomeSource, StructureSettings structuresConfig)
+    public FlatLevelSource_structuresMixin(Registry<ConfiguredStructureFeature<?, ?>> registry, BiomeSource biomeSource, StructureSettings structureSettings)
     {
-        super(biomeSource, structuresConfig);
+        super(registry, biomeSource, structureSettings);
     }
 
     @Override
