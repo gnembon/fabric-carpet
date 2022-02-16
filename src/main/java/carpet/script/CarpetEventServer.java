@@ -156,7 +156,7 @@ public class CarpetEventServer
         public ScheduledCall(CarpetContext context, FunctionValue function, List<Value> args, long dueTime)
         {
             // ignoring target as we will be always calling self
-            super(context==null?null:context.host.getName(), null, function, args);
+            super(context.host.getName(), null, function, args);
             this.ctx = context;
             this.dueTime = dueTime;
         }
