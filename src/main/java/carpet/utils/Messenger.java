@@ -146,8 +146,17 @@ public class Messenger
     private static BaseComponent processChatComponentFromDesc(BaseComponent message, String desc, BaseComponent previousMessage)
     {
         message = (BaseComponent) message.copy();
-        message.setStyle(parseStyle(desc));
-        if (previousMessage != null && desc.charAt(0) == '^')
+        boolean hover = false;
+        if (!desc.isEmpty() && desc.charAt(0) == '^')
+        {
+            desc = desc.substring(1);
+            hover = true;
+        }
+        if (!desc.isEmpty())
+        {
+            message.setStyle(parseStyle(desc));
+        }
+        if (previousMessage != null && hover)
         {
             previousMessage.setStyle(previousMessage.getStyle().withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, message)));
             return previousMessage;
@@ -261,7 +270,10 @@ public class Messenger
                 String txt = o.toString();
                 if (txt.indexOf(' ') == -1)  // no space in txt, it's a descriptor for the next BaseComponent
                 {
-                    desc = txt;
+                    if (!txt.isEmpty())
+                    {
+                        desc = txt;
+                    }
                     continue;
                 }
                 comp = getChatComponentFromDesc(txt, previousComponent);
