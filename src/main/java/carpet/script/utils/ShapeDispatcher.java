@@ -643,12 +643,14 @@ public class ShapeDispatcher
                 hash ^= vec3dhash(i);
                 hash *= 1099511628211L;
             }
+            hash ^= Boolean.hashCode(doublesided);    hash *= 1099511628211L;
             hash ^= Integer.hashCode(vertex_list.size());    hash *= 1099511628211L;
             hash ^= Boolean.hashCode(inneredges);    hash *= 1099511628211L;
             return hash;
         }
         ArrayList<Vec3> alter_point=null;
         final Random random=new Random();
+        boolean doublesided;
         ArrayList<Vec3> alter_point(ServerPlayer p){
             if (alter_point!=null){
                 return alter_point;
@@ -753,7 +755,8 @@ public class ShapeDispatcher
         private final Map<String, Value> optional = Map.ofEntries(
             entry("relative",Value.NULL),
             entry("mode", new StringValue("polygon")),
-            entry("inneredges", Value.TRUE)
+            entry("inneredges", Value.TRUE),
+            entry("doublesided", Value.TRUE)
         );
         @Override
         protected Set<String> requiredParams() { return Sets.union(super.requiredParams(), required); }
@@ -767,6 +770,8 @@ public class ShapeDispatcher
         protected void init(Map<String, Value> options)
         {
             super.init(options);
+
+            doublesided=options.getOrDefault("doublesided",optional.get("doublesided")).getBoolean();
             
             if (options.get("points") instanceof AbstractListValue abl){
                 abl.forEach(x->vertex_list.add(vecFromValue(x)));
