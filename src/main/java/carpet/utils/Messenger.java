@@ -143,7 +143,7 @@ public class Messenger
         });
         return ret;
     }
-    private static BaseComponent getChatComponentFromDesc(BaseComponent message, String desc, BaseComponent previousMessage)
+    private static BaseComponent processChatComponentFromDesc(BaseComponent message, String desc, BaseComponent previousMessage)
     {
         message = (BaseComponent) message.copy();
         message.setStyle(parseStyle(desc));
@@ -255,10 +255,6 @@ public class Messenger
             if (o instanceof BaseComponent baseComponent)
             {
                 comp = baseComponent;
-                if (desc != null)
-                {
-                    comp = getChatComponentFromDesc(comp, desc, previousComponent);
-                }
             }
             else
             {
@@ -269,6 +265,11 @@ public class Messenger
                     continue;
                 }
                 comp = getChatComponentFromDesc(txt, previousComponent);
+            }
+
+            if (desc != null)
+            {
+                comp = processChatComponentFromDesc(comp, desc, previousComponent);
             }
 
             desc = null;
