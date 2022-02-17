@@ -12,7 +12,7 @@ import net.minecraft.util.profiling.ProfileResults;
 import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraft.util.thread.ReentrantBlockableEventLoop;
 import org.apache.commons.lang3.tuple.Pair;
-import org.slf4j.Logger;
+import org.apache.logging.log4j.Logger;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
