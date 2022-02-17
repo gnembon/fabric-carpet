@@ -4,6 +4,12 @@ plugins {
 	id 'maven-publish'
 }
 
+repositories {
+	maven {
+		url 'https://www.jitpack.io'
+	}
+}
+
 sourceCompatibility = JavaVersion.VERSION_17
 targetCompatibility = JavaVersion.VERSION_17
 
@@ -24,6 +30,9 @@ dependencies {
 	// Fabric API. This is technically optional, but you probably want it anyway.
 	//modImplementation "net.fabricmc:fabric:${project.fabric_version}"
 	modCompileOnly fabricApi.module("fabric-rendering-v1", project.fabric_version)
+
+	// runtime mods
+	modRuntimeOnly "com.github.astei:lazydfu:0.1.2"  // faster startup
 
 	// PSA: Some older mods, compiled on Loom 0.2.1, might have outdated Maven POMs.
 	// You may need to force-disable transitiveness on them.
