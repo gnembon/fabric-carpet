@@ -51,11 +51,17 @@ public class Translations
      */
     public static String getPreferredLanguage(Player player)
     {
+        String lang = null;
         if (player instanceof ServerPlayer serverPlayer)
         {
-            return ((ServerPlayerEntityInterface) serverPlayer).getLanguage();
+            // might be null if the client hasn't sent the setting packet
+            lang = ((ServerPlayerEntityInterface) serverPlayer).getLanguage();
         }
-        return getServerLanguage();
+        if (lang == null)
+        {
+            lang = getServerLanguage();
+        }
+        return lang;
     }
 
     /**
