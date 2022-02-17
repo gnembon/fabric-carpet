@@ -398,6 +398,11 @@ public class ShapesRenderer
         public void renderFaces(Tesselator tessellator, BufferBuilder bufferBuilder, double cx, double cy, double cz, float partialTick)
         {       
             if(shape.fa==0){return;}
+            if (shape.doublesided)
+                RenderSystem.disableCull();
+            else
+                RenderSystem.enableCull();
+            RenderSystem.depthMask(shape.fa>0.75);//wishing that that could have better result....(result:still cannot say thay is good)
                 bufferBuilder.begin(shape.mode, DefaultVertexFormat.POSITION_COLOR);
                 for(int i=0;i<shape.vertex_list.size();i++){
                     Vec3 vec=shape.vertex_list.get(i);
@@ -407,6 +412,8 @@ public class ShapesRenderer
                     bufferBuilder.vertex(vec.x()-cx, vec.y()-cy, vec.z()-cz).color(shape.fr, shape.fg, shape.fb, shape.fa).endVertex();
                 }
                 tessellator.end();
+            RenderSystem.disableCull();
+            RenderSystem.depthMask(false);
                 
         }
         @Override
