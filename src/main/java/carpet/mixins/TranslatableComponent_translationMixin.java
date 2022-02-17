@@ -21,12 +21,12 @@ public abstract class TranslatableComponent_translationMixin
             method = "decompose",
             at = @At(
                     value = "INVOKE",
-                    target = "Lnet/minecraft/network/chat/TranslatableComponent;decomposeTemplate(Ljava/lang/String;Ljava/util/function/Consumer;)V"
+                    target = "Lcom/google/common/collect/ImmutableList;builder()Lcom/google/common/collect/ImmutableList$Builder;"
             )
     )
     private String applyCarpetTranslation(String vanillaTranslationString)
     {
-        if (vanillaTranslationString.equals(this.key))
+        if (vanillaTranslationString.equals(this.key))  // vanilla failed to translate the key
         {
             Optional<String> optional = Translations.key2Translation(Translations.getServerLanguage(), this.key);
             if (optional.isPresent())
