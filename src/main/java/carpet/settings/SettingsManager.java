@@ -4,7 +4,6 @@ import carpet.CarpetServer;
 import carpet.CarpetSettings;
 import carpet.network.ServerNetworkHandler;
 import carpet.utils.Messenger;
-import carpet.utils.Translations;
 import com.google.common.collect.Sets;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
@@ -532,7 +531,7 @@ public class SettingsManager
         String ruleName = StringArgumentType.getString(ctx, "rule");
         ParsedRule<?> rule = getRule(ruleName);
         if (rule == null)
-            throw new SimpleCommandExceptionType(Messenger.c("rb", Messenger.tr("ui.unknown_rule"), "rb : " + ruleName)).create();
+            throw new SimpleCommandExceptionType(Messenger.c("rb", Messenger.tr("carpet.command.carpet.unknown_rule"), "rb : " + ruleName)).create();
         return rule;
     }
 
@@ -578,16 +577,16 @@ public class SettingsManager
 
         literalargumentbuilder.executes((context)-> listAllSettings(context.getSource())).
                 then(literal("list").
-                        executes( (c) -> listSettings(c.getSource(), Messenger.tr("ui.all_settings", fancyName),
+                        executes( (c) -> listSettings(c.getSource(), Messenger.tr("carpet.command.carpet.all_settings", fancyName),
                                 getRules())).
                         then(literal("defaults").
                                 executes( (c)-> listSettings(c.getSource(),
-                                        Messenger.tr("ui.current_startup_settings", fancyName, (identifier+".conf")),
+                                        Messenger.tr("carpet.command.carpet.current_startup_settings", fancyName, (identifier+".conf")),
                                         findStartupOverrides()))).
                         then(argument("tag",StringArgumentType.word()).
                                 suggests( (c, b)->suggest(getCategories(), b)).
                                 executes( (c) -> listSettings(c.getSource(),
-                                        Messenger.tr("ui.settings_matching", fancyName, Messenger.tr("category." + StringArgumentType.getString(c, "tag"))),
+                                        Messenger.tr("carpet.command.carpet.settings_matching", fancyName, Messenger.tr("category." + StringArgumentType.getString(c, "tag"))),
                                         getRulesMatching(StringArgumentType.getString(c, "tag")))))).
                 then(literal("removeDefault").
                         requires(s -> !locked).
@@ -615,18 +614,18 @@ public class SettingsManager
     private int displayRuleMenu(CommandSourceStack source, ParsedRule<?> rule)
     {
         Messenger.m(source, "");
-        Messenger.m(source, "wb", rule.getNameText(), "!/%s %s".formatted(identifier, rule.name), "^g", Messenger.tr("ui.refresh"));
+        Messenger.m(source, "wb", rule.getNameText(), "!/%s %s".formatted(identifier, rule.name), "^g", Messenger.tr("carpet.command.carpet.refresh"));
         Messenger.m(source, Messenger.tr("rule.%s.desc".formatted(rule.name)));
 
         rule.getExtrasText(source).forEach(extra -> Messenger.m(source, "g", extra));
 
         List<Object> tags = new ArrayList<>();
-        tags.add(Messenger.c(Messenger.tr("ui.tags"), "w : "));
+        tags.add(Messenger.c(Messenger.tr("carpet.command.carpet.tags"), "w : "));
         for (String category : rule.categories)
         {
             BaseComponent translated = Messenger.tr("category." + category);
             tags.add(Messenger.c("c [", "c", translated, "c ]"));
-            tags.add("^g"); tags.add(Messenger.tr("ui.list_all_settings", translated));
+            tags.add("^g"); tags.add(Messenger.tr("carpet.command.carpet.list_all_settings", translated));
             tags.add("!/%s list %s".formatted(identifier, category));
             tags.add(Messenger.c("w , "));
         }
@@ -634,13 +633,13 @@ public class SettingsManager
         Messenger.m(source, tags.toArray(new Object[0]));
 
         Messenger.m(source,
-                Messenger.tr("ui.current_value"),
+                Messenger.tr("carpet.command.carpet.current_value"),
                 "w : ",
                 rule.getBoolValue() ? "lb" : "nb",
-                Messenger.c(" " + rule.getAsString() + " (", Messenger.tr(rule.isDefault() ? "ui.default_value" : "ui.modified_value"), " )")
+                Messenger.c(" " + rule.getAsString() + " (", Messenger.tr(rule.isDefault() ? "carpet.command.carpet.default_value" : "carpet.command.carpet.modified_value"), " )")
         );
         List<BaseComponent> options = new ArrayList<>();
-        options.add(Messenger.c(Messenger.tr("ui.options"), "w : ", "y [ "));
+        options.add(Messenger.c(Messenger.tr("carpet.command.carpet.options"), "w : ", "y [ "));
         for (String o: rule.options)
         {
             options.add(makeSetRuleButton(rule, o, false));
@@ -657,8 +656,8 @@ public class SettingsManager
     {
         if (rule.set(source, newValue) != null)
             Messenger.m(source,
-                    "w "+rule+", ", Messenger.c("c [", "c", Messenger.tr("ui.change_permanently"), "c ]"),
-                    "^", Messenger.tr("ui.click_to_save_the_setting", identifier+".conf"),
+                    "w "+rule+", ", Messenger.c("c [", "c", Messenger.tr("carpet.command.carpet.change_permanently"), "c ]"),
+                    "^", Messenger.tr("carpet.command.carpet.click_to_save_the_setting", identifier+".conf"),
                     "?/%s setDefault %s %s".formatted(identifier, rule.name, rule.getAsString())
             );
         return 1;
@@ -674,7 +673,7 @@ public class SettingsManager
         writeSettingsToConf(conf.ruleMap()); // this may feels weird, but if conf
         // is locked, it will never reach this point.
         rule.set(source,stringValue);
-        Messenger.m(source ,"gi", Messenger.tr("ui.set_default", rule.getNameText(), stringValue));
+        Messenger.m(source ,"gi", Messenger.tr("carpet.command.carpet.set_default", rule.getNameText(), stringValue));
         return 1;
     }
     // removes overrides of the default values in the file
@@ -686,7 +685,7 @@ public class SettingsManager
         conf.ruleMap().remove(rule.name);
         writeSettingsToConf(conf.ruleMap());
         rules.get(rule.name).resetToDefault(source);
-        Messenger.m(source ,"gi", Messenger.tr("ui.remove_default", rule.getNameText()));
+        Messenger.m(source ,"gi", Messenger.tr("carpet.command.carpet.remove_default", rule.getNameText()));
         return 1;
     }
 
@@ -721,11 +720,11 @@ public class SettingsManager
         }
         String baseText = style + (brackets ? " [" : " ") + option + (brackets ? "]" : "");
         if (locked)
-            return Messenger.c(baseText, "^g", Messenger.c("g " + fancyName + " ", Messenger.tr("ui.settings_are_locked")));
+            return Messenger.c(baseText, "^g", Messenger.c("g " + fancyName + " ", Messenger.tr("carpet.command.carpet.settings_are_locked")));
         if (option.equalsIgnoreCase(rule.getAsString()))
             return Messenger.c(baseText);
         return Messenger.c(baseText,
-                "^g", Messenger.c("g", Messenger.tr("ui.switch_to"), "g " + option, option.equalsIgnoreCase(rule.defaultAsString) ? Messenger.c("g  (", "g", Messenger.tr("ui.default"), "g )"): Messenger.s("")),
+                "^g", Messenger.c("g", Messenger.tr("carpet.command.carpet.switch_to"), "g " + option, option.equalsIgnoreCase(rule.defaultAsString) ? Messenger.c("g  (", "g", Messenger.tr("carpet.command.carpet.default"), "g )"): Messenger.s("")),
                 "?/%s %s %s".formatted(identifier, rule.name, option)
         );
     }
@@ -738,13 +737,13 @@ public class SettingsManager
     }
     private int listAllSettings(CommandSourceStack source)
     {
-        int count = listSettings(source, Messenger.tr("ui.current_settings", fancyName), getNonDefault());
+        int count = listSettings(source, Messenger.tr("carpet.command.carpet.current_settings", fancyName), getNonDefault());
 
         if (version != null)
-            Messenger.m(source, "g " + fancyName + " ", "g", Messenger.tr("ui.version"), "g : "+ version);
+            Messenger.m(source, "g " + fancyName + " ", "g", Messenger.tr("carpet.command.carpet.version"), "g : "+ version);
 
         List<Object> tags = new ArrayList<>();
-        tags.add(Messenger.tr("ui.browse_categories"));
+        tags.add(Messenger.tr("carpet.command.carpet.browse_categories"));
         tags.add("w :\n");
         for (String category : getCategories())
         {
@@ -752,7 +751,7 @@ public class SettingsManager
             BaseComponent translated = Messenger.tr(catKey);
             BaseComponent translatedPlus = !translated.getString().equals(category) ? Messenger.c(translated, " (" + category + ")") : translated;
             tags.add(Messenger.c("c [", "c", translated, "c ]"));
-            tags.add("^g"); tags.add(Messenger.tr("ui.list_all_settings", translatedPlus));
+            tags.add("^g"); tags.add(Messenger.tr("carpet.command.carpet.list_all_settings", translatedPlus));
             tags.add("!/%s list %s".formatted(identifier, category));
             tags.add("w  ");
         }
