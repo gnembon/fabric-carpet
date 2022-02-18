@@ -3,6 +3,8 @@ package carpet.mixins;
 import carpet.CarpetSettings;
 import carpet.helpers.CustomSpawnLists;
 import net.minecraft.core.Holder;
+import net.minecraft.core.Registry;
+import net.minecraft.world.level.levelgen.feature.ConfiguredStructureFeature;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -23,9 +25,9 @@ import net.minecraft.world.level.levelgen.feature.StructureFeature;
 @Mixin(NoiseBasedChunkGenerator.class)
 public abstract class NoiseBasedChunkGenerator_husksSpawnMixin extends ChunkGenerator
 {
-    public NoiseBasedChunkGenerator_husksSpawnMixin(BiomeSource biomeSource, StructureSettings structuresConfig)
-    {
-        super(biomeSource, structuresConfig);
+
+    public NoiseBasedChunkGenerator_husksSpawnMixin(Registry<ConfiguredStructureFeature<?, ?>> registry, BiomeSource biomeSource, StructureSettings structureSettings) {
+        super(registry, biomeSource, structureSettings);
     }
 
     @Inject(method = "getMobsAt", at = @At("HEAD"), cancellable = true)

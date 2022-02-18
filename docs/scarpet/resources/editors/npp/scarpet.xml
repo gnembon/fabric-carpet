@@ -147,6 +147,7 @@
                 __on_player_respawns
                 __on_player_disconnects
                 __on_player_connects
+                __on_player_message
                 __on_explosion
                 __on_explosion_outcome
             </Keywords>

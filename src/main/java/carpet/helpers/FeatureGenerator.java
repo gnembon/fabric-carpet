@@ -7,11 +7,12 @@ import carpet.fakes.StructureFeatureInterface;
 import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableMultimap;
 import com.mojang.datafixers.util.Pair;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.OptionalInt;
+import java.util.Set;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -50,8 +51,8 @@ import net.minecraft.world.level.levelgen.feature.featuresize.TwoLayersFeatureSi
 import net.minecraft.world.level.levelgen.feature.foliageplacers.BlobFoliagePlacer;
 import net.minecraft.world.level.levelgen.feature.foliageplacers.FancyFoliagePlacer;
 import net.minecraft.world.level.levelgen.feature.stateproviders.BlockStateProvider;
-import net.minecraft.world.level.levelgen.feature.structures.StructurePoolElement;
-import net.minecraft.world.level.levelgen.feature.structures.StructureTemplatePool;
+import net.minecraft.world.level.levelgen.structure.pools.StructurePoolElement;
+import net.minecraft.world.level.levelgen.structure.pools.StructureTemplatePool;
 import net.minecraft.world.level.levelgen.feature.treedecorators.BeehiveDecorator;
 import net.minecraft.world.level.levelgen.feature.trunkplacers.FancyTrunkPlacer;
 import net.minecraft.world.level.levelgen.feature.trunkplacers.StraightTrunkPlacer;
@@ -195,15 +196,15 @@ public class FeatureGenerator
 
     private static ConfiguredStructureFeature<?, ?> getDefaultFeature(StructureFeature<?> structure, ServerLevel world, BlockPos pos, boolean tryHard)
     {
-        var definedStructures = world.getChunkSource().getGenerator().getSettings().structures(structure);
-        var optinalBiome = world.registryAccess().registryOrThrow(Registry.BIOME_REGISTRY).getResourceKey(world.getBiome(pos).value());
-        if (optinalBiome.isPresent())
-            for (ResourceKey<ConfiguredStructureFeature<?, ?>> configureStructureKey: definedStructures.inverse().get(optinalBiome.get()))
-            {
-                var configureStructure = world.registryAccess().registryOrThrow(Registry.CONFIGURED_STRUCTURE_FEATURE_REGISTRY).get(configureStructureKey);
-                if (configureStructure.feature == structure)
-                    return configureStructure;
+        var definedStructures = world.getChunkSource().getGenerator().getAllConfigurationsFor(structure);
+        Holder<Biome> existingBiome = world.getBiome(pos);
+
+        for (final Holder.Reference<ConfiguredStructureFeature<?, ?>> featureConfig : definedStructures) {
+            final HolderSet<Biome> biomeAllowedForStructure = featureConfig.value().biomes();
+            if (biomeAllowedForStructure.contains(existingBiome)) {
+                return featureConfig.value();
             }
+        }
         if (!tryHard) return null;
         return world.registryAccess().registryOrThrow(Registry.CONFIGURED_STRUCTURE_FEATURE_REGISTRY).entrySet().stream().
                 filter(cS -> cS.getValue().feature == structure).
@@ -233,47 +234,44 @@ public class FeatureGenerator
         ChunkGenerator generator = world.getChunkSource().getGenerator();
         StructureSettings settings = generator.getSettings();
         StructurePlacement structureConfig = settings.getConfig(structure);
+
         if (structureConfig instanceof ConcentricRingsStructurePlacement rings)
         {
             return shouldStrongholdStartAt(generator, rings, world, pos, computeBox);
         }
-        var structures = settings.structures(structure);
-        if (structureConfig == null || structures.isEmpty()) {
+
+        if (structureConfig == null)
+        {
             return null;
         }
         ChunkPos chunkPos = new ChunkPos(pos);
-        Holder<Biome> biome = world.getBiome(pos);
-        Registry<Biome> biomeRegistry = world.registryAccess().registryOrThrow(Registry.BIOME_REGISTRY);
-        if (structures.values().stream().noneMatch(biomeKey -> biomeRegistry.getHolderOrThrow(biomeKey) == biome))
-        {
-            return null;
-        }
-        if (!structureConfig.isFeatureChunk(generator, chunkPos.x, chunkPos.z))
-        //ChunkPos chunkPos1 = structure.getPotentialFeatureChunk(structureConfig, seed, chunkPos.x, chunkPos.z);
-        //if (!chunkPos1.equals(chunkPos))
-        {
-            return null;
-        }
+
         StructureFeatureManager structureManager = world.structureFeatureManager();
         StructureCheckResult isThere =  structureManager.checkStructurePresence(chunkPos, structure, false);
         if (isThere == StructureCheckResult.START_NOT_PRESENT)
         {
             return null;
         }
-        // gen - we want to avoig, right?
-        //Chunk chunk = world.getChunk(chunkPos.x, chunkPos.z, ChunkStatus.STRUCTURE_STARTS);
-        //StructureStart<?> start =  structureManager.getStructureStart(ChunkSectionPos.from(chunk), structure, chunk);
-        //if (start != null && start.hasChildren())
-        //{
-        if (!computeBox) return StructureStart.INVALID_START;
-        ConfiguredStructureFeature<?, ?> configuredFeature = getDefaultFeature(structure, world, pos, false);
-        if (configuredFeature == null || configuredFeature.config == null) return null;
 
-        var biomeConfig = structures.get(ResourceKey.create(Registry.CONFIGURED_STRUCTURE_FEATURE_REGISTRY, world.registryAccess().registryOrThrow(Registry.CONFIGURED_STRUCTURE_FEATURE_REGISTRY).getKey(configuredFeature)));
-        StructureStart<?> filledStructure = configuredFeature.generate(world.registryAccess(), generator, generator.getBiomeSource(),
-                world.getStructureManager(), seed, chunkPos, 0, world, b -> biomeRegistry.getResourceKey(b.value()).filter(biomeConfig::contains).isPresent());
-        if (filledStructure != null && filledStructure.isValid())
-            return filledStructure;
+        if (!structureConfig.isFeatureChunk(generator, chunkPos.x, chunkPos.z)) {
+            return null;
+        };
+        for (final Holder.Reference<ConfiguredStructureFeature<?, ?>> featureConfig : generator.getAllConfigurationsFor(structure)) {
+            final HolderSet<Biome> biomeAllowedForStructure = featureConfig.value().biomes();
+            if (!computeBox) {
+                if (biomeAllowedForStructure.contains(world.getBiome(pos))) {
+                    return StructureStart.INVALID_START;
+                }
+            }
+            else {
+                final StructureStart<?> filledStructure = featureConfig.value().generate(
+                        world.registryAccess(), generator, generator.getBiomeSource(), world.getStructureManager(),
+                        seed, chunkPos, 0, world, biomeAllowedForStructure::contains);
+                if (filledStructure != null && filledStructure.isValid()) {
+                    return filledStructure;
+                }
+            }
+        }
         return null;
     }
 
@@ -285,10 +283,10 @@ public class FeatureGenerator
         StructureSettings settings = generator.getSettings();
         StructurePlacement structureConfig = settings.getConfig(StructureFeature.STRONGHOLD);
         if (structureConfig != null) {
-            final Predicate<ResourceKey<Biome>> biomeCheck = settings.structures(StructureFeature.STRONGHOLD).values().stream().collect(Collectors.toUnmodifiableSet())::contains;
-            final Predicate<Holder<Biome>> holderCheck = b -> b.is(biomeCheck);
+            final List<Holder.Reference<ConfiguredStructureFeature<?, ?>>> configurations = generator.getAllConfigurationsFor(StructureFeature.STRONGHOLD);
+            final Set<Holder<Biome>> allowedBiomes = configurations.stream().flatMap(s -> s.value().biomes().stream()).distinct().collect(Collectors.toSet());
             StructureStart<?> filledStructure = StructureFeature.STRONGHOLD.generate(world.registryAccess(), generator, generator.getBiomeSource(),
-                    world.getStructureManager(), world.getSeed(), new ChunkPos(pos), 0, NoneFeatureConfiguration.INSTANCE, world, holderCheck
+                    world.getStructureManager(), world.getSeed(), new ChunkPos(pos), 0, NoneFeatureConfiguration.INSTANCE, world, allowedBiomes::contains
             );
             if (filledStructure != null && filledStructure.isValid())
                 return filledStructure;

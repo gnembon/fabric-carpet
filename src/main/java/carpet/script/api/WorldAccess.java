@@ -1006,9 +1006,13 @@ public class WorldAccess {
             Vector3Argument locator = Vector3Argument.findIn(lv, 1);
             ItemInput stackArg = NBTSerializableValue.parseItem(itemString);
             BlockPos where = new BlockPos(locator.vec);
-            String facing = "up";
-            if (lv.size() > locator.offset)
+            String facing;
+            if (lv.size() > locator.offset) {
                 facing = lv.get(locator.offset).getString();
+            } else {
+                // Paintings throw an exception if their direction is vertical, therefore we change the default here
+                facing = stackArg.getItem() != Items.PAINTING ? "up" : "north";
+            }
             boolean sneakPlace = false;
             if (lv.size() > locator.offset+1)
                 sneakPlace = lv.get(locator.offset+1).getBoolean();
@@ -1590,6 +1594,8 @@ public class WorldAccess {
 
     @ScarpetFunction(maxParams = -1)
     public Value sample_noise(Context c, @Locator.Block BlockPos pos, String... noiseQueries) {
+        return Value.NULL;
+        /*
         int mappedX = QuartPos.fromBlock(pos.getX());
         int mappedY = QuartPos.fromBlock(pos.getY());
         int mappedZ = QuartPos.fromBlock(pos.getZ());
@@ -1604,6 +1610,6 @@ public class WorldAccess {
             double noiseValue = ((NoiseColumnSamplerInterface) mns).getNoiseSample(noise, mappedX, mappedY, mappedZ);
             ret.put(new StringValue(noise), new NumericValue(noiseValue));
         }
-        return MapValue.wrap(ret);
+        return MapValue.wrap(ret);*/
     }
 }

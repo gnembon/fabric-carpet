@@ -4,9 +4,11 @@ import carpet.fakes.NoiseColumnSamplerInterface;
 import carpet.script.exception.InternalExpressionException;
 import net.minecraft.core.QuartPos;
 import net.minecraft.world.level.biome.Climate;
-import net.minecraft.world.level.levelgen.NoiseSampler;
+import net.minecraft.world.level.levelgen.NoiseRouter;
+import net.minecraft.world.level.levelgen.NoiseRouterData;
+//import net.minecraft.world.level.levelgen.NoiseSampler;
 import net.minecraft.world.level.levelgen.NoiseSettings;
-import net.minecraft.world.level.levelgen.TerrainInfo;
+//import net.minecraft.world.level.levelgen.TerrainInfo;
 import net.minecraft.world.level.levelgen.blending.Blender;
 import net.minecraft.world.level.levelgen.synth.BlendedNoise;
 import net.minecraft.world.level.levelgen.synth.NoiseUtils;
@@ -17,8 +19,12 @@ import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 
-@Mixin(NoiseSampler.class)
+@Mixin(NoiseRouterData.class)
 public abstract class NoiseSampler_scarpetMixin implements NoiseColumnSamplerInterface {
+
+    /*
+    @Shadow @Final
+    private NoiseRouter router;
 
     @Shadow @Final
     private BlendedNoise blendedNoise;
@@ -255,5 +261,5 @@ public abstract class NoiseSampler_scarpetMixin implements NoiseColumnSamplerInt
             }
         }
         throw new InternalExpressionException("Unknown noise type: " + name);
-    }
+    }*/
 }
