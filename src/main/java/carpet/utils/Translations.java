@@ -6,6 +6,7 @@ import carpet.CarpetSettings;
 import carpet.fakes.ServerPlayerEntityInterface;
 import carpet.mixins.Style_translationMixin;
 import carpet.mixins.TranslatableComponent_translationInterface;
+import carpet.settings.ParsedRule;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonParseException;
@@ -202,7 +203,7 @@ public class Translations
      */
     public static boolean isValidLanguage(String newLanguage)
     {
-        return !getTranslations(getRealLanguage(newLanguage)).isEmpty();
+        return !getTranslations(newLanguage).isEmpty();
     }
 
     /**
@@ -231,7 +232,7 @@ public class Translations
      */
     private static Map<String, String> getTranslations(String lang)
     {
-        return translationStorage.computeIfAbsent(lang.toLowerCase(), l ->
+        return translationStorage.computeIfAbsent(getRealLanguage(lang.toLowerCase()), l ->
         {
             Map<String, String> translations = new LinkedHashMap<>();
             Map<String, String> carpetTranslations = getTranslationFromResourcePath(String.format("assets/carpet/lang/%s.json", l));
@@ -354,5 +355,14 @@ public class Translations
             siblings.set(i, translateText((BaseComponent) siblings.get(i), lang));
         }
         return text;
+    }
+
+    public static void loadTranslations()
+    {
+        ParsedRule<?> languageRule = CarpetServer.settingsManager.getRule("language");
+        if (languageRule != null)
+        {
+            languageRule.options.forEach(Translations::getTranslations);
+        }
     }
 }
