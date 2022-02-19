@@ -98,6 +98,8 @@ public interface CarpetRule<T> extends Comparable<CarpetRule<?>> {
      * and the {@link CarpetEventServer.Event#CARPET_RULE_CHANGES#onCarpetRuleChanges(CarpetRule, CommandSourceStack)} Scarpet event
      * in case the value of the rule was changed because of the invocation.</p>
      * 
+     * <p>This method must not throw any exception other than the documented {@link InvalidRuleValueException}.</p>
+     * 
      * @param source The {@link CommandSourceStack} to notify about the result of this rule change or {@code null} in order to not notify
      * @param value The new value for this rule as a {@link String}
      * @throws InvalidRuleValueException if the value passed to the method was not valid as a value to this rule, either because of incompatible type,
@@ -109,7 +111,7 @@ public interface CarpetRule<T> extends Comparable<CarpetRule<?>> {
      * <p>This method follows the same contract as {@link #set(CommandSourceStack, String)}, but accepts a value already parsed (though not verified).</p>
      * @see #set(CommandSourceStack, String)
      */
-    void set(CommandSourceStack source, T value) throws InvalidRuleValueException; //TODO doesn't work with T = String smh
+    void set(CommandSourceStack source, T value) throws InvalidRuleValueException;
     
     /**
      * <p>Compares this {@link CarpetRule} against another one, without taking the current value into account.</p>
