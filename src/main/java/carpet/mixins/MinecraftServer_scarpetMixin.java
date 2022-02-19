@@ -5,7 +5,6 @@ import carpet.helpers.TickSpeed;
 import net.minecraft.Util;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.ServerResources;
 import net.minecraft.server.TickTask;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.thread.ReentrantBlockableEventLoop;
@@ -45,7 +44,7 @@ public abstract class MinecraftServer_scarpetMixin extends ReentrantBlockableEve
 
     @Shadow @Final private Map<ResourceKey<Level>, ServerLevel> levels;
 
-    @Shadow private ServerResources resources;
+    //@Shadow private ServerResources resources;
 
     @Override
     public void forceTick(BooleanSupplier isAhead)
@@ -61,10 +60,10 @@ public abstract class MinecraftServer_scarpetMixin extends ReentrantBlockableEve
         return storageSource;
     }
 
-    @Override
-    public ServerResources getResourceManager() {
-        return resources;
-    }
+    //@Override
+    //public ServerResources getResourceManager() {
+    //    return resources;
+    //}
 
     @Override
     public Map<ResourceKey<Level>, ServerLevel> getCMWorlds()

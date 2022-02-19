@@ -10,13 +10,13 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.stream.Collectors;
 import net.minecraft.commands.arguments.blocks.BlockStateParser;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.Direction.Axis;
 import net.minecraft.core.GlobalPos;
 import net.minecraft.core.Registry;
 import net.minecraft.nbt.CompoundTag;
@@ -312,6 +312,11 @@ public class BlockValue extends Value
         @Override
         public Direction getHorizontalDirection() {
             return this.facing.getAxis() == Direction.Axis.Y ? Direction.NORTH : this.facing;
+        }
+
+        @Override
+        public Direction getNearestLookingVerticalDirection() {
+            return facing.getAxis() == Axis.Y ? facing : Direction.UP;
         }
 
         @Override

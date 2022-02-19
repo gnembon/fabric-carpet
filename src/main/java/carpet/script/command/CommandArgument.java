@@ -128,7 +128,7 @@ public abstract class CommandArgument
                     false
             ),
             new VanillaUnconfigurableArgument( "blockpredicate", BlockPredicateArgument::blockPredicate,
-                    (c, p) -> ValueConversions.ofBlockPredicate(c.getSource().getServer().getTags(), BlockPredicateArgument.getBlockPredicate(c, p)), false
+                    (c, p) -> ValueConversions.ofBlockPredicate(c.getSource().getServer().registryAccess(), BlockPredicateArgument.getBlockPredicate(c, p)), false
             ),
             new VanillaUnconfigurableArgument("teamcolor", ColorArgument::color,
                     (c, p) -> {

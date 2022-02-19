@@ -9,17 +9,17 @@ import org.spongepowered.asm.mixin.Shadow;
 @Mixin(ChunkGenerator.class)
 public abstract class ChunkGenerator_scarpetMixin implements ChunkGeneratorInterface
 {
-    @Shadow protected abstract void generateStrongholds();
-    @Shadow private static boolean validStrongholdBiome(Biome biome) { return true;}
+    //@Shadow protected abstract void generateStrongholds(); // postInit
+    //@Shadow private static boolean validStrongholdBiome(Biome biome) { return true;}
 
-        @Override
-    public void initStrongholds()
-    {
-        generateStrongholds();
-    }
+    //    @Override
+    //public void initStrongholds()
+    //{
+    //    generateStrongholds();
+    //}
 
-    @Override
-    public boolean canPlaceStrongholdInBiomeCM(Biome biome) {
-        return validStrongholdBiome(biome);
-    }
+    //@Override
+    //public boolean canPlaceStrongholdInBiomeCM(Biome biome) {
+    //    return validStrongholdBiome(biome);
+    //}
 }

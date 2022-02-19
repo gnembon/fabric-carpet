@@ -12,10 +12,4 @@ import net.minecraft.world.level.levelgen.placement.PlacedFeature;
 @Mixin(PlacedFeature.class)
 public class PlacedFeature_scarpetMixin implements PlacedFeatureInterface {
 
-    @Shadow @Final private Supplier<ConfiguredFeature<?, ?>> feature;
-
-    @Override
-    public ConfiguredFeature<?, ?> getRawFeature() {
-        return feature.get();
-    }
 }

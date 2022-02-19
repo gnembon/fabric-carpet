@@ -2,6 +2,9 @@ package carpet.mixins;
 
 import carpet.CarpetSettings;
 import carpet.helpers.CustomSpawnLists;
+import net.minecraft.core.Holder;
+import net.minecraft.core.Registry;
+import net.minecraft.world.level.levelgen.feature.ConfiguredStructureFeature;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -22,19 +25,19 @@ import net.minecraft.world.level.levelgen.feature.StructureFeature;
 @Mixin(NoiseBasedChunkGenerator.class)
 public abstract class NoiseBasedChunkGenerator_husksSpawnMixin extends ChunkGenerator
 {
-    public NoiseBasedChunkGenerator_husksSpawnMixin(BiomeSource biomeSource, StructureSettings structuresConfig)
-    {
-        super(biomeSource, structuresConfig);
+
+    public NoiseBasedChunkGenerator_husksSpawnMixin(Registry<ConfiguredStructureFeature<?, ?>> registry, BiomeSource biomeSource, StructureSettings structureSettings) {
+        super(registry, biomeSource, structureSettings);
     }
 
     @Inject(method = "getMobsAt", at = @At("HEAD"), cancellable = true)
-    private void isInsidePyramid(Biome biome, StructureFeatureManager accessor, MobCategory group, BlockPos pos, CallbackInfoReturnable<WeightedRandomList<MobSpawnSettings.SpawnerData>> cir)
+    private void isInsidePyramid(Holder<Biome> holder, StructureFeatureManager structureFeatureManager, MobCategory mobCategory, BlockPos blockPos, CallbackInfoReturnable<WeightedRandomList<MobSpawnSettings.SpawnerData>> cir)
     {
-        if (group == MobCategory.MONSTER)
+        if (mobCategory == MobCategory.MONSTER)
         {
             if (CarpetSettings.huskSpawningInTemples)
             {
-                if (accessor.getStructureAt(pos, StructureFeature.DESERT_PYRAMID).isValid())
+                if (structureFeatureManager.getStructureAt(blockPos, StructureFeature.DESERT_PYRAMID).isValid())
                 {
                     cir.setReturnValue(CustomSpawnLists.PYRAMID_SPAWNS);
                     return;
@@ -42,7 +45,7 @@ public abstract class NoiseBasedChunkGenerator_husksSpawnMixin extends ChunkGene
             }
             if (CarpetSettings.shulkerSpawningInEndCities)
             {
-                if (accessor.getStructureAt(pos, StructureFeature.END_CITY).isValid())
+                if (structureFeatureManager.getStructureAt(blockPos, StructureFeature.END_CITY).isValid())
                 {
                     cir.setReturnValue(CustomSpawnLists.SHULKER_SPAWNS);
                     return;
@@ -50,7 +53,7 @@ public abstract class NoiseBasedChunkGenerator_husksSpawnMixin extends ChunkGene
             }
             if (CarpetSettings.piglinsSpawningInBastions)
             {
-                if (accessor.getStructureAt(pos, StructureFeature.BASTION_REMNANT).isValid())
+                if (structureFeatureManager.getStructureAt(blockPos, StructureFeature.BASTION_REMNANT).isValid())
                 {
                     cir.setReturnValue(CustomSpawnLists.BASTION_SPAWNS);
                 }

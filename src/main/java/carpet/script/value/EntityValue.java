@@ -23,6 +23,8 @@ import net.minecraft.commands.arguments.selector.EntitySelector;
 import net.minecraft.commands.arguments.selector.EntitySelectorParser;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.Holder;
+import net.minecraft.core.HolderSet;
 import net.minecraft.core.Registry;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.StringTag;
@@ -37,6 +39,7 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.tags.Tag;
+import net.minecraft.tags.TagKey;
 import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.effect.MobEffect;
@@ -247,11 +250,15 @@ public class EntityValue extends Value
                 positive = false;
                 who = who.substring(1);
             }
-            Tag<EntityType<?>> eTag = server.getTags().getOrEmpty(Registry.ENTITY_TYPE_REGISTRY).getTag(InputValidator.identifierOf(who));
-            if (eTag == null) throw new InternalExpressionException(who+" is not a valid entity descriptor");
+            String booWho = who;
+            HolderSet.Named<EntityType<?>> eTagValue = server.registryAccess().registryOrThrow(Registry.ENTITY_TYPE_REGISTRY)
+                    .getTag(TagKey.create(Registry.ENTITY_TYPE_REGISTRY, InputValidator.identifierOf(who)))
+                    .orElseThrow( () -> new InternalExpressionException(booWho+" is not a valid entity descriptor"));
+            Set<EntityType<?>> eTag = eTagValue.stream().map(Holder::value).collect(Collectors.toUnmodifiableSet());
+            //Tag<EntityType<?>> eTag = server.getTags().getOrEmpty(Registry.ENTITY_TYPE_REGISTRY).getTag(InputValidator.identifierOf(who));
             if (positive)
             {
-                return new EntityClassDescriptor(null, e -> eTag.contains(e.getType()) && e.isAlive(), eTag.getValues().stream());
+                return new EntityClassDescriptor(null, e -> eTag.contains(e.getType()) && e.isAlive(), eTag.stream());
             }
             else
             {
@@ -450,15 +457,22 @@ public class EntityValue extends Value
         put("tags", (e, a) -> ListValue.wrap(e.getTags().stream().map(StringValue::new).collect(Collectors.toList())));
 
         put("scoreboard_tags", (e, a) -> ListValue.wrap(e.getTags().stream().map(StringValue::new).collect(Collectors.toList())));
-        put("entity_tags", (e, a) -> ListValue.wrap(e.getServer().getTags().getOrEmpty(Registry.ENTITY_TYPE_REGISTRY).getAllTags().entrySet().stream().filter(entry -> entry.getValue().contains(e.getType())).map(entry -> ValueConversions.of(entry.getKey())).collect(Collectors.toList())));
+        put("entity_tags", (e, a) -> {
+            EntityType<?> type = e.getType();
+            return ListValue.wrap(e.getServer().registryAccess().registryOrThrow(Registry.ENTITY_TYPE_REGISTRY).getTags().filter(entry -> entry.getSecond().stream().anyMatch(h -> h.value()==type)).map(entry -> ValueConversions.of(entry.getFirst())).collect(Collectors.toList()));
+        });
         // deprecated
         put("has_tag", (e, a) -> BooleanValue.of(e.getTags().contains(a.getString())));
 
         put("has_scoreboard_tag", (e, a) -> BooleanValue.of(e.getTags().contains(a.getString())));
         put("has_entity_tag", (e, a) -> {
-            Tag<EntityType<?>> tag = e.getServer().getTags().getOrEmpty(Registry.ENTITY_TYPE_REGISTRY).getTag(InputValidator.identifierOf(a.getString()));
-            if (tag == null) return Value.NULL;
-            return BooleanValue.of(e.getType().is(tag));
+            Optional<HolderSet.Named<EntityType<?>>> tag = e.getServer().registryAccess().registryOrThrow(Registry.ENTITY_TYPE_REGISTRY).getTag(TagKey.create(Registry.ENTITY_TYPE_REGISTRY, InputValidator.identifierOf(a.getString())));
+            if (tag.isEmpty()) return Value.NULL;
+            //Tag<EntityType<?>> tag = e.getServer().getTags().getOrEmpty(Registry.ENTITY_TYPE_REGISTRY).getTag(InputValidator.identifierOf(a.getString()));
+            //if (tag == null) return Value.NULL;
+            //return BooleanValue.of(e.getType().is(tag));
+            EntityType<?> type = e.getType();
+            return BooleanValue.of(tag.get().stream().anyMatch(h -> h.value() == type));
         });
 
         put("yaw", (e, a)-> new NumericValue(e.getYRot()));

@@ -7,16 +7,23 @@ import carpet.fakes.StructureFeatureInterface;
 import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableMultimap;
 import com.mojang.datafixers.util.Pair;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.OptionalInt;
+import java.util.Set;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
+
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Holder;
+import net.minecraft.core.HolderSet;
 import net.minecraft.core.Registry;
 import net.minecraft.data.worldgen.ProcessorLists;
 import net.minecraft.data.worldgen.StructureFeatures;
+import net.minecraft.data.worldgen.placement.PlacementUtils;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -34,23 +41,26 @@ import net.minecraft.world.level.levelgen.feature.ConfiguredFeature;
 import net.minecraft.world.level.levelgen.feature.ConfiguredStructureFeature;
 import net.minecraft.world.level.levelgen.feature.Feature;
 import net.minecraft.world.level.levelgen.feature.StructureFeature;
+//import net.minecraft.world.level.levelgen.feature.configurations.StructureFeatureConfiguration;
 import net.minecraft.world.level.levelgen.feature.configurations.FeatureConfiguration;
 import net.minecraft.world.level.levelgen.feature.configurations.JigsawConfiguration;
+import net.minecraft.world.level.levelgen.feature.configurations.NoneFeatureConfiguration;
 import net.minecraft.world.level.levelgen.feature.configurations.SimpleRandomFeatureConfiguration;
-import net.minecraft.world.level.levelgen.feature.configurations.StructureFeatureConfiguration;
 import net.minecraft.world.level.levelgen.feature.configurations.TreeConfiguration;
 import net.minecraft.world.level.levelgen.feature.featuresize.TwoLayersFeatureSize;
 import net.minecraft.world.level.levelgen.feature.foliageplacers.BlobFoliagePlacer;
 import net.minecraft.world.level.levelgen.feature.foliageplacers.FancyFoliagePlacer;
 import net.minecraft.world.level.levelgen.feature.stateproviders.BlockStateProvider;
-import net.minecraft.world.level.levelgen.feature.structures.StructurePoolElement;
-import net.minecraft.world.level.levelgen.feature.structures.StructureTemplatePool;
+import net.minecraft.world.level.levelgen.structure.pools.StructurePoolElement;
+import net.minecraft.world.level.levelgen.structure.pools.StructureTemplatePool;
 import net.minecraft.world.level.levelgen.feature.treedecorators.BeehiveDecorator;
 import net.minecraft.world.level.levelgen.feature.trunkplacers.FancyTrunkPlacer;
 import net.minecraft.world.level.levelgen.feature.trunkplacers.StraightTrunkPlacer;
 import net.minecraft.world.level.levelgen.placement.PlacedFeature;
 import net.minecraft.world.level.levelgen.structure.StructureCheckResult;
 import net.minecraft.world.level.levelgen.structure.StructureStart;
+import net.minecraft.world.level.levelgen.structure.placement.ConcentricRingsStructurePlacement;
+import net.minecraft.world.level.levelgen.structure.placement.StructurePlacement;
 
 public class FeatureGenerator
 {
@@ -129,7 +139,7 @@ public class FeatureGenerator
     {
         return ((StructureFeatureInterface)structureFeature.feature).plopAnywhere(
                     world, pos, world.getChunkSource().getGenerator(),
-                    true, net.minecraft.data.worldgen.biome.Biomes.PLAINS, structureFeature.config);
+                    true, world.getServer().registryAccess().registryOrThrow(Registry.BIOME_REGISTRY).get(net.minecraft.world.level.biome.Biomes.PLAINS), structureFeature.config);
     }
 
     @FunctionalInterface
@@ -137,7 +147,7 @@ public class FeatureGenerator
     {
         Boolean plop(ServerLevel world, BlockPos pos);
     }
-    private static Thing simplePlop(ConfiguredFeature feature)
+    private static Thing simplePlop(ConfiguredFeature<?,?> feature)
     {
         return (w, p) -> {
             CarpetSettings.skipGenerationChecks.set(true);
@@ -152,10 +162,20 @@ public class FeatureGenerator
         };
     }
 
+    private static <FC extends FeatureConfiguration, F extends Feature<FC>> Thing simplePlop(F feature, FC config)
+    {
+        return simplePlop(new ConfiguredFeature<>(feature, config));
+    }
+
+    private static Thing simplePlop(Holder<PlacedFeature> hpf)
+    {
+        return simplePlop(hpf.value().feature().value());
+    }
+
     private static Thing simpleTree(TreeConfiguration config)
     {
         //config.ignoreFluidCheck();
-        return simplePlop(Feature.TREE.configured(config));
+        return simplePlop(new ConfiguredFeature(Feature.TREE, config));
     }
 
     private static Thing spawnCustomStructure(StructureFeature structure, FeatureConfiguration conf, ResourceKey<Biome> biome)
@@ -176,12 +196,15 @@ public class FeatureGenerator
 
     private static ConfiguredStructureFeature<?, ?> getDefaultFeature(StructureFeature<?> structure, ServerLevel world, BlockPos pos, boolean tryHard)
     {
-        var definedStructures = world.getChunkSource().getGenerator().getSettings().structures(structure);
-        var optinalBiome = world.registryAccess().registryOrThrow(Registry.BIOME_REGISTRY).getResourceKey(world.getBiome(pos));
-        if (optinalBiome.isPresent())
-            for (var configureStructure: definedStructures.inverse().get(optinalBiome.get()))
-                if (configureStructure.feature == structure)
-                    return configureStructure;
+        var definedStructures = world.getChunkSource().getGenerator().getAllConfigurationsFor(structure);
+        Holder<Biome> existingBiome = world.getBiome(pos);
+
+        for (final Holder.Reference<ConfiguredStructureFeature<?, ?>> featureConfig : definedStructures) {
+            final HolderSet<Biome> biomeAllowedForStructure = featureConfig.value().biomes();
+            if (biomeAllowedForStructure.contains(existingBiome)) {
+                return featureConfig.value();
+            }
+        }
         if (!tryHard) return null;
         return world.registryAccess().registryOrThrow(Registry.CONFIGURED_STRUCTURE_FEATURE_REGISTRY).entrySet().stream().
                 filter(cS -> cS.getValue().feature == structure).
@@ -190,77 +213,80 @@ public class FeatureGenerator
 
     private static ConfiguredFeature<?, ?> getDefaultFeature(Feature<?> feature, ServerLevel world, BlockPos pos, boolean tryHard)
     {
-        List<List<Supplier<PlacedFeature>>> configuredStepFeatures = world.getBiome(pos).getGenerationSettings().features();
-        for (List<Supplier<PlacedFeature>> step: configuredStepFeatures)
-            for (Supplier<PlacedFeature> provider: step)
+        List<HolderSet<PlacedFeature>> configuredStepFeatures = world.getBiome(pos).value().getGenerationSettings().features();
+        for (HolderSet<PlacedFeature> step: configuredStepFeatures)
+            for (Holder<PlacedFeature> provider: step)
             {
-                ConfiguredFeature<?, ?> configuredFeature = ((PlacedFeatureInterface)provider.get()).getRawFeature();
-                if (configuredFeature.feature == feature)
-                    return configuredFeature;
+                if (provider.value().feature().value().feature() == feature)
+                    return provider.value().feature().value();
             }
         if (!tryHard) return null;
         return world.registryAccess().registryOrThrow(Registry.CONFIGURED_FEATURE_REGISTRY).entrySet().stream().
-                filter(cS -> cS.getValue().feature == feature).
+                filter(cS -> cS.getValue().feature() == feature).
                 findFirst().map(Map.Entry::getValue).orElse(null);
     }
 
     public static <T extends FeatureConfiguration> StructureStart shouldStructureStartAt(ServerLevel world, BlockPos pos, StructureFeature<T> structure, boolean computeBox)
     {
-        if (structure == StructureFeature.STRONGHOLD)
-            return shouldStrongholdStartAt(world, pos, computeBox);
+        //if (structure == StructureFeature.STRONGHOLD)
+        //    return shouldStrongholdStartAt(world, pos, computeBox);
         long seed = world.getSeed();
         ChunkGenerator generator = world.getChunkSource().getGenerator();
         StructureSettings settings = generator.getSettings();
-        StructureFeatureConfiguration structureConfig = settings.getConfig(structure);
-        var structures = settings.structures(structure);
-        if (structureConfig == null || structures.isEmpty()) {
+        StructurePlacement structureConfig = settings.getConfig(structure);
+
+        if (structureConfig instanceof ConcentricRingsStructurePlacement rings)
+        {
+            return shouldStrongholdStartAt(generator, rings, world, pos, computeBox);
+        }
+
+        if (structureConfig == null)
+        {
             return null;
         }
         ChunkPos chunkPos = new ChunkPos(pos);
-        Biome biome = world.getBiome(pos);
-        var biomeRegistry = world.registryAccess().registryOrThrow(Registry.BIOME_REGISTRY);
-        if (structures.values().stream().noneMatch(biomeKey -> biomeRegistry.get(biomeKey) == biome))
-        {
-            return null;
-        }
-        ChunkPos chunkPos1 = structure.getPotentialFeatureChunk(structureConfig, seed, chunkPos.x, chunkPos.z);
-        if (!chunkPos1.equals(chunkPos))
-        {
-            return null;
-        }
+
         StructureFeatureManager structureManager = world.structureFeatureManager();
         StructureCheckResult isThere =  structureManager.checkStructurePresence(chunkPos, structure, false);
         if (isThere == StructureCheckResult.START_NOT_PRESENT)
         {
             return null;
         }
-        // gen - we want to avoig, right?
-        //Chunk chunk = world.getChunk(chunkPos.x, chunkPos.z, ChunkStatus.STRUCTURE_STARTS);
-        //StructureStart<?> start =  structureManager.getStructureStart(ChunkSectionPos.from(chunk), structure, chunk);
-        //if (start != null && start.hasChildren())
-        //{
-        if (!computeBox) return StructureStart.INVALID_START;
-        ConfiguredStructureFeature<?, ?> configuredFeature = getDefaultFeature(structure, world, pos, false);
-        if (configuredFeature == null || configuredFeature.config == null) return null;
-        var biomeConfig = structures.get(configuredFeature);
-        StructureStart<?> filledStructure = configuredFeature.generate(world.registryAccess(), generator, generator.getBiomeSource(),
-                world.getStructureManager(), seed, chunkPos, 0, structureConfig, world, (b) -> biomeRegistry.getResourceKey(b).filter(biomeConfig::contains).isPresent());
-        if (filledStructure != null && filledStructure.isValid())
-            return filledStructure;
+
+        if (!structureConfig.isFeatureChunk(generator, chunkPos.x, chunkPos.z)) {
+            return null;
+        };
+        for (final Holder.Reference<ConfiguredStructureFeature<?, ?>> featureConfig : generator.getAllConfigurationsFor(structure)) {
+            final HolderSet<Biome> biomeAllowedForStructure = featureConfig.value().biomes();
+            if (!computeBox) {
+                if (biomeAllowedForStructure.contains(world.getBiome(pos))) {
+                    return StructureStart.INVALID_START;
+                }
+            }
+            else {
+                final StructureStart<?> filledStructure = featureConfig.value().generate(
+                        world.registryAccess(), generator, generator.getBiomeSource(), world.getStructureManager(),
+                        seed, chunkPos, 0, world, biomeAllowedForStructure::contains);
+                if (filledStructure != null && filledStructure.isValid()) {
+                    return filledStructure;
+                }
+            }
+        }
         return null;
     }
 
-    public static StructureStart<?> shouldStrongholdStartAt(ServerLevel world, BlockPos pos, boolean computeBox)
+    public static StructureStart<?> shouldStrongholdStartAt(ChunkGenerator generator, ConcentricRingsStructurePlacement rings, ServerLevel world, BlockPos pos, boolean computeBox)
     {
-        ChunkGenerator generator = world.getChunkSource().getGenerator();
-        if (world.dimension() != Level.OVERWORLD || !generator.hasStronghold(new ChunkPos(pos))) return null;
+        final List<ChunkPos> positions = generator.getRingPositionsFor(rings);
+        if (world.dimension() != Level.OVERWORLD || !positions.contains(new ChunkPos(pos))) return null;
         if (!computeBox) return StructureStart.INVALID_START;
         StructureSettings settings = generator.getSettings();
-        StructureFeatureConfiguration structureConfig = settings.getConfig(StructureFeature.STRONGHOLD);
+        StructurePlacement structureConfig = settings.getConfig(StructureFeature.STRONGHOLD);
         if (structureConfig != null) {
-            StructureStart<?> filledStructure = StructureFeatures.STRONGHOLD.generate(world.registryAccess(), generator, generator.getBiomeSource(),
-                    world.getStructureManager(), world.getSeed(), new ChunkPos(pos), 0,
-                    structureConfig, world, ((ChunkGeneratorInterface)generator)::canPlaceStrongholdInBiomeCM
+            final List<Holder.Reference<ConfiguredStructureFeature<?, ?>>> configurations = generator.getAllConfigurationsFor(StructureFeature.STRONGHOLD);
+            final Set<Holder<Biome>> allowedBiomes = configurations.stream().flatMap(s -> s.value().biomes().stream()).distinct().collect(Collectors.toSet());
+            StructureStart<?> filledStructure = StructureFeature.STRONGHOLD.generate(world.registryAccess(), generator, generator.getBiomeSource(),
+                    world.getStructureManager(), world.getSeed(), new ChunkPos(pos), 0, NoneFeatureConfiguration.INSTANCE, world, allowedBiomes::contains
             );
             if (filledStructure != null && filledStructure.isValid())
                 return filledStructure;
@@ -278,60 +304,62 @@ public class FeatureGenerator
         put("fancy_oak_bees", simpleTree( (new TreeConfiguration.TreeConfigurationBuilder(BlockStateProvider.simple(Blocks.OAK_LOG), new FancyTrunkPlacer(3, 11, 0), BlockStateProvider.simple(Blocks.OAK_LEAVES), new FancyFoliagePlacer(ConstantInt.of(2), ConstantInt.of(4), 4), new TwoLayersFeatureSize(0, 0, 0, OptionalInt.of(4)))).ignoreVines().decorators(List.of(new BeehiveDecorator(1.00F))).build()));
         put("birch_bees", simpleTree( createTree(Blocks.BIRCH_LOG, Blocks.BIRCH_LEAVES, 5, 2, 0, 2).ignoreVines().decorators(List.of(new BeehiveDecorator(1.00F))).build()));
 
-        put("coral_tree", simplePlop(Feature.CORAL_TREE.configured(FeatureConfiguration.NONE)));
-        put("coral_claw", simplePlop(Feature.CORAL_CLAW.configured(FeatureConfiguration.NONE)));
-        put("coral_mushroom", simplePlop(Feature.CORAL_MUSHROOM.configured(FeatureConfiguration.NONE)));
-        put("coral", simplePlop(Feature.SIMPLE_RANDOM_SELECTOR.configured(new SimpleRandomFeatureConfiguration(List.of(
-                () -> Feature.CORAL_TREE.configured(FeatureConfiguration.NONE).placed(),
-                () -> Feature.CORAL_CLAW.configured(FeatureConfiguration.NONE).placed(),
-                () -> Feature.CORAL_MUSHROOM.configured(FeatureConfiguration.NONE).placed()
-        )))));
+        //put("coral_tree", simplePlop(Feature.CORAL_TREE.configured(FeatureConfiguration.NONE)));
+        put("coral_tree", simplePlop(Feature.CORAL_TREE, FeatureConfiguration.NONE));
+
+        put("coral_claw", simplePlop(Feature.CORAL_CLAW, FeatureConfiguration.NONE));
+        put("coral_mushroom", simplePlop(Feature.CORAL_MUSHROOM, FeatureConfiguration.NONE));
+        put("coral", simplePlop(Feature.SIMPLE_RANDOM_SELECTOR, new SimpleRandomFeatureConfiguration(HolderSet.direct(
+                PlacementUtils.inlinePlaced(Feature.CORAL_TREE, FeatureConfiguration.NONE),
+                PlacementUtils.inlinePlaced(Feature.CORAL_CLAW, FeatureConfiguration.NONE),
+                PlacementUtils.inlinePlaced(Feature.CORAL_MUSHROOM, FeatureConfiguration.NONE)
+        ))));
         put("bastion_remnant_units", spawnCustomStructure(
                 StructureFeature.BASTION_REMNANT,
-                new JigsawConfiguration(() -> new StructureTemplatePool(
+                new JigsawConfiguration(Holder.direct(new StructureTemplatePool(
                         new ResourceLocation("bastion/starts"),
                         new ResourceLocation("empty"),
                         List.of(
                                 Pair.of(StructurePoolElement.single("bastion/units/air_base", ProcessorLists.BASTION_GENERIC_DEGRADATION), 1)
                         ),
                         StructureTemplatePool.Projection.RIGID
-                ), 6),
+                )), 6),
                 Biomes.NETHER_WASTES
         ));
         put("bastion_remnant_hoglin_stable", spawnCustomStructure(
                 StructureFeature.BASTION_REMNANT,
-                new JigsawConfiguration(() -> new StructureTemplatePool(
+                new JigsawConfiguration(Holder.direct(new StructureTemplatePool(
                         new ResourceLocation("bastion/starts"),
                         new ResourceLocation("empty"),
                         List.of(
                                 Pair.of(StructurePoolElement.single("bastion/hoglin_stable/air_base", ProcessorLists.BASTION_GENERIC_DEGRADATION), 1)
                         ),
                         StructureTemplatePool.Projection.RIGID
-                ), 6),
+                )), 6),
                 Biomes.NETHER_WASTES
         ));
         put("bastion_remnant_treasure", spawnCustomStructure(
                 StructureFeature.BASTION_REMNANT,
-                new JigsawConfiguration(() -> new StructureTemplatePool(
+                new JigsawConfiguration(Holder.direct(new StructureTemplatePool(
                         new ResourceLocation("bastion/starts"),
                         new ResourceLocation("empty"),
                         List.of(
                                 Pair.of(StructurePoolElement.single("bastion/treasure/big_air_full", ProcessorLists.BASTION_GENERIC_DEGRADATION), 1)
                         ),
                         StructureTemplatePool.Projection.RIGID
-                ), 6),
+                )), 6),
                 Biomes.NETHER_WASTES
         ));
         put("bastion_remnant_bridge", spawnCustomStructure(
                 StructureFeature.BASTION_REMNANT,
-                new JigsawConfiguration(() -> new StructureTemplatePool(
+                new JigsawConfiguration(Holder.direct(new StructureTemplatePool(
                         new ResourceLocation("bastion/starts"),
                         new ResourceLocation("empty"),
                         List.of(
                                 Pair.of(StructurePoolElement.single("bastion/bridge/starting_pieces/entrance_base", ProcessorLists.BASTION_GENERIC_DEGRADATION), 1)
                         ),
                         StructureTemplatePool.Projection.RIGID
-                ), 6),
+                )), 6),
                 Biomes.NETHER_WASTES
         ));
     }};

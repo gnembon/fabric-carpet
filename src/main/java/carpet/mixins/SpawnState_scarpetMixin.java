@@ -10,8 +10,6 @@ import org.spongepowered.asm.mixin.Shadow;
 @Mixin(NaturalSpawner.SpawnState.class)
 public class SpawnState_scarpetMixin implements SpawnHelperInnerInterface
 {
-    @Shadow @Final private int spawnableChunkCount;
-
     @Shadow @Final private PotentialCalculator spawnPotential;
 
     @Override
@@ -19,11 +17,4 @@ public class SpawnState_scarpetMixin implements SpawnHelperInnerInterface
     {
         return spawnPotential;
     }
-
-    @Override
-    public int cmGetChunkCount() {
-        return spawnableChunkCount;
-    }
-
-
 }
