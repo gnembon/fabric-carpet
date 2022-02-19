@@ -510,7 +510,6 @@ public class SettingsManager {
      *                 all registered rules.
      * @return actually nothing, the int is just there for brigadier
      */
-    @SuppressWarnings({"deprecation", "removal"}) // accesses ParsedRule internals to print more information
     public int printAllRulesToLog(String category)
     {
         PrintStream ps = System.out;
@@ -609,7 +608,7 @@ public class SettingsManager {
                         then(argument("tag",StringArgumentType.word()).
                                 suggests( (c, b)->suggest(getCategories(), b)).
                                 executes( (c) -> listSettings(c.getSource(),
-                                        String.format(tr(TranslationKeys.MOD_SETTINGS_MATCHING), fancyName, RuleHelper.translatedCategory(StringArgumentType.getString(c, "tag"))),
+                                        String.format(tr(TranslationKeys.MOD_SETTINGS_MATCHING), fancyName, RuleHelper.translatedCategory(identifier(),StringArgumentType.getString(c, "tag"))),
                                         getRulesMatching(StringArgumentType.getString(c, "tag")))))).
                 then(literal("removeDefault").
                         requires(s -> !locked()).
@@ -648,7 +647,7 @@ public class SettingsManager {
         tags.add(Messenger.c("w "+ tr(TranslationKeys.TAGS)+": "));
         for (String t: rule.categories())
         {
-            String translated = RuleHelper.translatedCategory(t);
+            String translated = RuleHelper.translatedCategory(identifier(), t);
             tags.add(Messenger.c("c ["+ translated +"]", "^g "+ String.format(tr(TranslationKeys.LIST_ALL_CATEGORY), translated),"!/"+identifier+" list "+t));
             tags.add(Messenger.c("w , "));
         }
@@ -767,7 +766,7 @@ public class SettingsManager {
         tags.add("w " + tr(TranslationKeys.BROWSE_CATEGORIES)  + ":\n");
         for (String t : getCategories())
         {
-            String translated = RuleHelper.translatedCategory(t);
+            String translated = RuleHelper.translatedCategory(identifier(), t);
             String translatedPlus = !translated.equals(t) ? "%s (%s)".formatted(translated, t) : t;
             tags.add("c [" + translated +"]");
             tags.add("^g " + String.format(tr(TranslationKeys.LIST_ALL_CATEGORY), translatedPlus));

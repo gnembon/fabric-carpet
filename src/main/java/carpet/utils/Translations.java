@@ -74,10 +74,10 @@ public class Translations
                 // Migrate the old format
                 if (!key.startsWith("carpet.")) {
                     if (key.startsWith("rule.")) {
-                        // default to carpet's settings manager. Custom managers are really uncommon and don't provide translations anyway
-                        key = TranslationKeys.BASE_RULE_NAMESPACE + "carpet." + key.substring(5);
+                        // default to carpet's settings manager. Custom managers are really uncommon and the known ones don't provide translations anyway
+                        key = TranslationKeys.BASE_RULE_NAMESPACE.formatted("carpet") + key.substring(5);
                     } else if (key.startsWith("category.")) {
-                        key = TranslationKeys.CATEGORY_PATTERN.formatted(key.substring(9));
+                        key = TranslationKeys.CATEGORY_PATTERN.formatted("carpet", key.substring(9));
                     }
                     if (!warned && key != entry.getKey()) {
                         CarpetSettings.LOG.warn("""

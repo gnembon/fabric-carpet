@@ -99,13 +99,14 @@ public final class RuleHelper {
     }
     
     /**
+     * @param manager A settings manager identifier
      * @param category A category identifier
      * @return The translated name of the category
      * 
      * @apiNote This method isn't stable API yet and may change or be removed in binary incompatible ways in later Carpet versions
      */
     @ApiStatus.Experimental
-    public static String translatedCategory(String category) {
-        return Translations.tr(TranslationKeys.CATEGORY_PATTERN.formatted(category), category);
+    public static String translatedCategory(String manager, String category) {
+        return Translations.tr(TranslationKeys.CATEGORY_PATTERN.formatted(manager, category), category);
     }
 }
