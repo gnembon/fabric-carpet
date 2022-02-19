@@ -471,13 +471,13 @@ public class SettingsManager
         }
     }
 
-    private Collection<ParsedRule<?>> getRulesMatching(String search) {
+    private Collection<ParsedRule<?>> getRulesMatching(CommandSourceStack source, String search) {
         String lcSearch = search.toLowerCase(Locale.ROOT);
         return rules.values().stream().filter(rule ->
         {
             if (rule.name.toLowerCase(Locale.ROOT).contains(lcSearch)) return true; // substring match, case insensitive
             for (String c : rule.categories) if (c.equals(search)) return true; // category exactly, case sensitive
-            return Sets.newHashSet(rule.description.toLowerCase(Locale.ROOT).split("\\W+")).contains(lcSearch); // contains full term in description, but case insensitive
+            return Sets.newHashSet(Translations.translate(rule.getDescriptionText(), source).getString().toLowerCase(Locale.ROOT).split("\\W+")).contains(lcSearch); // contains full term in description, but case insensitive
         }).sorted().collect(Collectors.toUnmodifiableList());
     }
 
@@ -500,9 +500,9 @@ public class SettingsManager
             if (category != null && !rule.categories.contains(category))
                 continue;
             ps.println("## " + rule.name);
-            ps.println(rule.description+"  ");
-            for (String extra : rule.extraInfo)
-                ps.println(extra + "  ");
+            ps.println(rule.getDescriptionText().getString()+"  ");
+            for (BaseComponent extra : rule.getExtrasText())
+                ps.println(extra.getString() + "  ");
             ps.println("* Type: `" + rule.type.getSimpleName() + "`  ");
             ps.println("* Default value: `" + rule.defaultAsString + "`  ");
             String optionString = rule.options.stream().map(s -> "`" + s + "`").collect(Collectors.joining(", "));
@@ -588,7 +588,7 @@ public class SettingsManager
                                 suggests( (c, b)->suggest(getCategories(), b)).
                                 executes( (c) -> listSettings(c.getSource(),
                                         Messenger.tr("carpet.command.carpet.settings_matching", fancyName, Messenger.tr(identifier + ".category." + StringArgumentType.getString(c, "tag"))),
-                                        getRulesMatching(StringArgumentType.getString(c, "tag")))))).
+                                        getRulesMatching(c.getSource(), StringArgumentType.getString(c, "tag")))))).
                 then(literal("removeDefault").
                         requires(s -> !locked).
                         then(argument("rule", StringArgumentType.word()).

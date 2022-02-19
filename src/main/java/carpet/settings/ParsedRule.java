@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 /**
@@ -25,8 +26,10 @@ import java.util.stream.Collectors;
 public final class ParsedRule<T> implements Comparable<ParsedRule> {
     public final Field field;
     public final String name;
+    @Deprecated
     public final String description;
     public final String scarpetApp;
+    @Deprecated
     public final List<String> extraInfo;
     public final List<String> categories;
     public final List<String> options;
@@ -287,17 +290,27 @@ public final class ParsedRule<T> implements Comparable<ParsedRule> {
         return Messenger.tr("%s.rule.%s.desc".formatted(settingsManager.getIdentifier(), name));
     }
 
-    public List<BaseComponent> getExtrasText(CommandSourceStack source)
+    private List<BaseComponent> getExtrasText(Predicate<String> indexValidator)
     {
         String keyBase = "%s.rule.%s.extra.".formatted(settingsManager.getIdentifier(), name);
         List<BaseComponent> extras = new ArrayList<>();
         int i = 0;
-        while (Translations.hasTranslation(keyBase + i, source))
+        while (indexValidator.test(keyBase + i))
         {
             extras.add(Messenger.tr(keyBase+i));
             i++;
         }
         return extras;
+    }
+
+    public List<BaseComponent> getExtrasText(CommandSourceStack source)
+    {
+        return getExtrasText(key -> Translations.hasTranslation(key, source));
+    }
+
+    public List<BaseComponent> getExtrasText()
+    {
+        return getExtrasText(Translations::hasTranslation);
     }
 
     private void registerDefaultTranslations()

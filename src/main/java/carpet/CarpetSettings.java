@@ -369,7 +369,6 @@ public class CarpetSettings
     public static String commandProfile = "true";
 
     @Rule(
-            desc = "Required permission level for /perf command",
             options = {"2", "4"},
             category = CREATIVE
     )
