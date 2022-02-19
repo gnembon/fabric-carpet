@@ -231,48 +231,49 @@ public class BlockInfo
         {
             metastring += ", "+iproperty.getName() + '='+state.getValue(iproperty);
         }
+        String keyPrefix = "carpet.command.info.block.";
         List<BaseComponent> lst = new ArrayList<>();
         lst.add(Messenger.s(""));
         lst.add(Messenger.s("====================================="));
-        lst.add(Messenger.s(String.format("Block info for %s%s (id %d%s):",Registry.BLOCK.getKey(block),metastring, Registry.BLOCK.getId(block), metastring )));
-        lst.add(Messenger.s(String.format(" - Material: %s", materialName.get(material))));
-        lst.add(Messenger.s(String.format(" - Map colour: %s", mapColourName.get(state.getMapColor(world, pos)))));
-        lst.add(Messenger.s(String.format(" - Sound type: %s", soundName.get(block.getSoundType(state)))));
+        lst.add(Messenger.tr(keyPrefix + "header", Registry.BLOCK.getKey(block),metastring, Registry.BLOCK.getId(block)));
+        lst.add(Messenger.c("  - ", Messenger.tr(keyPrefix + "material", materialName.get(material))));
+        lst.add(Messenger.c("  - ", Messenger.tr(keyPrefix + "map_colour", mapColourName.get(state.getMapColor(world, pos)))));
+        lst.add(Messenger.c("  - ", Messenger.tr(keyPrefix + "sound_type", soundName.get(block.getSoundType(state)))));
         lst.add(Messenger.s(""));
-        lst.add(Messenger.s(String.format(" - Full block: %s", state.isCollisionShapeFullBlock(world, pos)))); //  isFullCube() )));
-        lst.add(Messenger.s(String.format(" - Normal cube: %s", state.isRedstoneConductor(world, pos)))); //isNormalCube()))); isSimpleFullBlock
-        lst.add(Messenger.s(String.format(" - Is liquid: %s", material.isLiquid())));
+        lst.add(Messenger.c("  - ", Messenger.tr(keyPrefix + "full_block", state.isCollisionShapeFullBlock(world, pos)))); //  isFullCube() )));
+        lst.add(Messenger.c("  - ", Messenger.tr(keyPrefix + "normal_cube", state.isRedstoneConductor(world, pos)))); //isNormalCube()))); isSimpleFullBlock
+        lst.add(Messenger.c("  - ", Messenger.tr(keyPrefix + "is_liquid", material.isLiquid())));
         lst.add(Messenger.s(""));
-        lst.add(Messenger.s(String.format(" - Light in: %d, above: %d",
+        lst.add(Messenger.c("  - ", Messenger.tr(keyPrefix + "light",
                 Math.max(world.getBrightness(LightLayer.BLOCK, pos),world.getBrightness(LightLayer.SKY, pos)) ,
                 Math.max(world.getBrightness(LightLayer.BLOCK, pos.above()),world.getBrightness(LightLayer.SKY, pos.above())))));
-        lst.add(Messenger.s(String.format(" - Brightness in: %.2f, above: %.2f", world.getBrightness(pos), world.getBrightness(pos.above()))));
-        lst.add(Messenger.s(String.format(" - Is opaque: %s", material.isSolid() )));
+        lst.add(Messenger.c("  - ", Messenger.tr(keyPrefix + "brightness", String.format("%.2f", world.getBrightness(pos)), String.format("%.2f", world.getBrightness(pos.above())))));
+        lst.add(Messenger.c("  - ", Messenger.tr(keyPrefix + "is_opaque", material.isSolid() )));
         //lst.add(Messenger.s(String.format(" - Light opacity: %d", state.getOpacity(world,pos))));
-        lst.add(Messenger.s(String.format(" - Blocks light: %s", state.getMaterial().isSolidBlocking())));
+        lst.add(Messenger.c("  - ", Messenger.tr(keyPrefix + "blocks_light", state.getMaterial().isSolidBlocking())));
         //lst.add(Messenger.s(String.format(" - Emitted light: %d", state.getLightValue())));
         //lst.add(Messenger.s(String.format(" - Picks neighbour light value: %s", state.useNeighborBrightness(world, pos))));
         lst.add(Messenger.s(""));
-        lst.add(Messenger.s(String.format(" - Causes suffocation: %s", state.isSuffocating(world, pos)))); //canSuffocate
-        lst.add(Messenger.s(String.format(" - Blocks movement on land: %s", !state.isPathfindable(world,pos, PathComputationType.LAND))));
-        lst.add(Messenger.s(String.format(" - Blocks movement in air: %s", !state.isPathfindable(world,pos, PathComputationType.AIR))));
-        lst.add(Messenger.s(String.format(" - Blocks movement in liquids: %s", !state.isPathfindable(world,pos, PathComputationType.WATER))));
-        lst.add(Messenger.s(String.format(" - Can burn: %s", material.isFlammable())));
-        lst.add(Messenger.s(String.format(" - Requires a tool: %s", !material.isReplaceable()))); //?maybe
-        lst.add(Messenger.s(String.format(" - Hardness: %.2f", state.getDestroySpeed(world, pos))));
-        lst.add(Messenger.s(String.format(" - Blast resistance: %.2f", block.getExplosionResistance())));
-        lst.add(Messenger.s(String.format(" - Ticks randomly: %s", block.isRandomlyTicking(state))));
+        lst.add(Messenger.c("  - ", Messenger.tr(keyPrefix + "causes_suffocation", state.isSuffocating(world, pos)))); //canSuffocate
+        lst.add(Messenger.c("  - ", Messenger.tr(keyPrefix + "blocks_movement_land", !state.isPathfindable(world,pos, PathComputationType.LAND))));
+        lst.add(Messenger.c("  - ", Messenger.tr(keyPrefix + "blocks_movement_air", !state.isPathfindable(world,pos, PathComputationType.AIR))));
+        lst.add(Messenger.c("  - ", Messenger.tr(keyPrefix + "blocks_movement_liquids", !state.isPathfindable(world,pos, PathComputationType.WATER))));
+        lst.add(Messenger.c("  - ", Messenger.tr(keyPrefix + "can_burn", material.isFlammable())));
+        lst.add(Messenger.c("  - ", Messenger.tr(keyPrefix + "tool_required", !material.isReplaceable()))); //?maybe
+        lst.add(Messenger.c("  - ", Messenger.tr(keyPrefix + "hardness", String.format("%.2f", state.getDestroySpeed(world, pos)))));
+        lst.add(Messenger.c("  - ", Messenger.tr(keyPrefix + "blast_resistance", String.format("%.2f", block.getExplosionResistance()))));
+        lst.add(Messenger.c("  - ", Messenger.tr(keyPrefix + "ticks_randomly", block.isRandomlyTicking(state))));
         lst.add(Messenger.s(""));
-        lst.add(Messenger.s(String.format(" - Can provide power: %s", state.isSignalSource())));
-        lst.add(Messenger.s(String.format(" - Strong power level: %d", world.getDirectSignalTo(pos))));
-        lst.add(Messenger.s(String.format(" - Redstone power level: %d", world.getBestNeighborSignal(pos))));
+        lst.add(Messenger.c("  - ", Messenger.tr(keyPrefix + "can_provide_power", state.isSignalSource())));
+        lst.add(Messenger.c("  - ", Messenger.tr(keyPrefix + "strong_power_level", world.getDirectSignalTo(pos))));
+        lst.add(Messenger.c("  - ", Messenger.tr(keyPrefix + "redstone_power_level", world.getBestNeighborSignal(pos))));
         lst.add(Messenger.s(""));
-        lst.add(wander_chances(pos.above(), world));
+        lst.addAll(wander_chances(pos.above(), world));
 
         return lst;
     }
 
-    private static BaseComponent wander_chances(BlockPos pos, ServerLevel worldIn)
+    private static List<BaseComponent> wander_chances(BlockPos pos, ServerLevel worldIn)
     {
         PathfinderMob creature = new ZombifiedPiglin(EntityType.ZOMBIFIED_PIGLIN, worldIn);
         creature.finalizeSpawn(worldIn, worldIn.getCurrentDifficultyAt(pos), MobSpawnType.NATURAL, null, null);
@@ -304,9 +305,9 @@ public class BlockInfo
         }
         creature.discard(); // discarded // remove(Entity.RemovalReason.field_26999); // 2nd option - DISCARDED
         long total_time = (total_ticks)/1000/20;
-        return Messenger.s(String.format(" - Wander chance above: %.1f%%\n - Average standby above: %s",
-                (100.0F*success)/1000,
-                ((total_time>5000)?"INFINITY":(total_time +" s"))
-        ));
+        return List.of(
+                Messenger.c("  - ", Messenger.tr("carpet.command.info.block.wander_chance", String.format("%.1f", (100.0F*success)/1000))),
+                Messenger.c("  - ", Messenger.tr("carpet.command.info.block.standby_time", ((total_time>5000)?"INFINITY":(total_time +" s"))))
+        );
     }
 }
