@@ -29,6 +29,10 @@ public abstract class TranslatableComponent_translationMixin
         if (vanillaTranslationString.equals(this.key))  // vanilla failed to translate the key
         {
             Optional<String> optional = Translations.key2Translation(Translations.getServerLanguage(), this.key);
+            if (optional.isEmpty())
+            {
+                optional = Translations.key2Translation(Translations.DEFAULT_LANGUAGE, this.key);
+            }
             if (optional.isPresent())
             {
                 return optional.get();
