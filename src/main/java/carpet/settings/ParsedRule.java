@@ -266,10 +266,16 @@ public final class ParsedRule<T> implements Comparable<ParsedRule> {
         return this.name + ": " + getAsString();
     }
 
-    public BaseComponent getNameText()
+    public BaseComponent getPlainNameText()
     {
-        BaseComponent nameText = Messenger.tr("rule.%s.name".formatted(name));
-        if (!nameText.getString().equals(name))
+        return Messenger.tr("%s.rule.%s.name".formatted(settingsManager.getIdentifier(), name));
+    }
+
+    // source is necessary since we want to dynamically adding a " (name)" prefix if there's translation
+    public BaseComponent getNameText(CommandSourceStack source)
+    {
+        BaseComponent nameText = this.getPlainNameText();
+        if (!Translations.translate(nameText, source).getString().equals(name))
         {
             nameText.append(Messenger.s(" (%s)".formatted(name)));
         }
@@ -278,12 +284,12 @@ public final class ParsedRule<T> implements Comparable<ParsedRule> {
 
     public BaseComponent getDescriptionText()
     {
-        return Messenger.tr("rule.%s.desc".formatted(name));
+        return Messenger.tr("%s.rule.%s.desc".formatted(settingsManager.getIdentifier(), name));
     }
 
     public List<BaseComponent> getExtrasText(CommandSourceStack source)
     {
-        String keyBase = "rule.%s.extra.".formatted(name);
+        String keyBase = "%s.rule.%s.extra.".formatted(settingsManager.getIdentifier(), name);
         List<BaseComponent> extras = new ArrayList<>();
         int i = 0;
         while (Translations.hasTranslation(keyBase + i, source))
@@ -296,11 +302,12 @@ public final class ParsedRule<T> implements Comparable<ParsedRule> {
 
     private void registerDefaultTranslations()
     {
-        Translations.addEntry(Translations.DEFAULT_LANGUAGE, "rule.%s.name".formatted(name), name, false);
-        Translations.addEntry(Translations.DEFAULT_LANGUAGE, "rule.%s.desc".formatted(name), description, false);
+        String sid = settingsManager.getIdentifier();
+        Translations.addEntry(Translations.DEFAULT_LANGUAGE, "%s.rule.%s.name".formatted(sid, name), name, false);
+        Translations.addEntry(Translations.DEFAULT_LANGUAGE, "%s.rule.%s.desc".formatted(sid, name), description, false);
         for (int i = 0; i < extraInfo.size(); i++)
         {
-            Translations.addEntry(Translations.DEFAULT_LANGUAGE, "rule.%s.extra.%s".formatted(name, i), extraInfo.get(i), false);
+            Translations.addEntry(Translations.DEFAULT_LANGUAGE, "%s.rule.%s.extra.%s".formatted(sid, name, i), extraInfo.get(i), false);
         }
     }
 }
