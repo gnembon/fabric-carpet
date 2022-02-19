@@ -108,10 +108,9 @@ public class SpawnReporter
     public static List<BaseComponent> printMobcapsForDimension(ServerLevel world, boolean multiline)
     {
         ResourceKey<Level> dim = world.dimension();
-        String name = dim.location().getPath();
         List<BaseComponent> lst = new ArrayList<>();
         if (multiline)
-            lst.add(Messenger.tr("carpet.command.spawn.mobcap.header", name));
+            lst.add(Messenger.tr("carpet.command.spawn.mobcap.header", Messenger.dim(dim)));
         NaturalSpawner.SpawnState lastSpawner = world.getChunkSource().getLastSpawnState();
         Object2IntMap<MobCategory> dimCounts = lastSpawner.getMobCategoryCounts();
         int chunkcount = chunkCounts.getOrDefault(dim, -1);
@@ -310,12 +309,12 @@ public class SpawnReporter
         track_spawns = 0L;
     }
 
-    private static String getWorldCode(ResourceKey<Level> world)
+    private static BaseComponent getWorldCode(ResourceKey<Level> world)
     {
-        if (world == Level.OVERWORLD) return "";
-        return "("+world.location().getPath().toUpperCase(Locale.ROOT).replace("THE_","").charAt(0)+")";
+        if (world == Level.OVERWORLD) return Messenger.s("");
+        return Messenger.c(" (", Messenger.dim(world), " )");
     }
-    
+
     public static List<BaseComponent> tracking_report(Level worldIn)
     {
 
@@ -345,8 +344,8 @@ public class SpawnReporter
                     double hours = overall_spawn_ticks.get(code)/72000.0;
                     report.add(Messenger.c(
                             Messenger.s(" > "), getTypeName(enumcreaturetype),
-                            Messenger.s(String.format("%s (%.1f min), %.1f m/t, %%{%.1fF %.1f- %.1f+}; %.2f s/att",
-                                getWorldCode(dim),
+                            getWorldCode(dim),
+                            Messenger.s(String.format(" (%.1f min), %.1f m/t, %%{%.1fF %.1f- %.1f+}; %.2f s/att",
                                 60*hours,
                                 (1.0D*spawn_cap_count.get(code))/ spawn_attempts.get(code),
                                 (100.0D*spawn_ticks_full.get(code))/ spawn_attempts.get(code),
