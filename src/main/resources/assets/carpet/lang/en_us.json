@@ -324,6 +324,9 @@
   "carpet.command.distance.set_start": "Initial point set to: %1$s",
   "carpet.command.distance.no_start": "There was no initial point for %1$s",
 
+  "carpet.command.draw.missing_argument": "Missing %1$s",
+  "carpet.command.draw.block_filled": "Filled %1$s blocks",
+
   "// Common words": "=====================================",
 
   "carpet.common.color.white": "white",

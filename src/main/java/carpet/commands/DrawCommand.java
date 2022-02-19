@@ -118,7 +118,7 @@ public class DrawCommand
         catch (IllegalArgumentException e)
         {
             if (optional) return null;
-            Messenger.m(ctx.getSource(), "rb Missing "+hwat);
+            Messenger.m(ctx.getSource(), "rb", Messenger.tr("carpet.command.draw.missing_argument", hwat));
             throw new ErrorHandled();
         }
         return arg;
@@ -245,7 +245,7 @@ public class DrawCommand
         {
             list.forEach(blockpos1 -> world.blockUpdated(blockpos1, world.getBlockState(blockpos1).getBlock()));
         }
-        Messenger.m(ctx.getSource(), "gi Filled " + affected + " blocks");
+        Messenger.m(ctx.getSource(), "gi", Messenger.tr("carpet.command.draw.block_filled", affected));
         return affected;
     }
 
@@ -296,7 +296,7 @@ public class DrawCommand
             list.forEach(p -> world.blockUpdated(p, world.getBlockState(p).getBlock()));
         }
 
-        Messenger.m(source, "gi Filled " + affected + " blocks");
+        Messenger.m(ctx.getSource(), "gi", Messenger.tr("carpet.command.draw.block_filled", affected));
 
         return affected;
     }
@@ -396,7 +396,7 @@ public class DrawCommand
             }
         }
 
-        Messenger.m(source, "gi Filled " + affected + " blocks");
+        Messenger.m(ctx.getSource(), "gi", Messenger.tr("carpet.command.draw.block_filled", affected));
 
         return affected;
     }
@@ -447,7 +447,7 @@ public class DrawCommand
             }
         }
 
-        Messenger.m(source, "gi Filled " + affected + " blocks");
+        Messenger.m(ctx.getSource(), "gi", Messenger.tr("carpet.command.draw.block_filled", affected));
 
         return affected;
     }

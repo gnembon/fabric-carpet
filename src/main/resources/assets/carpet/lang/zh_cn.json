@@ -232,6 +232,9 @@
   "carpet.command.distance.set_start": "第一个点已设置为: %1$s",
   "carpet.command.distance.no_start": "未设置%1$s的第一个点",
 
+  "carpet.command.draw.missing_argument": "缺少参数 %1$s",
+  "carpet.command.draw.block_filled": "已填充%1$s个方块",
+
   "// Common words": "=====================================",
 
   "carpet.common.color.white": "白色",
