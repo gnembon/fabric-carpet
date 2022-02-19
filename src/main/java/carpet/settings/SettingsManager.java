@@ -511,14 +511,15 @@ public class SettingsManager
             boolean preamble = false;
             for (Validator<?> validator : rule.validators)
             {
-                if(validator.description() != null)
+                BaseComponent description = validator.descriptionText();
+                if(description != null)
                 {
                     if (!preamble)
                     {
                         ps.println("* Additional notes:  ");
                         preamble = true;
                     }
-                    ps.println("  * "+validator.description()+"  ");
+                    ps.println("  * "+description.getString()+"  ");
                 }
             }
             ps.println("  ");

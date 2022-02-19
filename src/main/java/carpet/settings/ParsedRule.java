@@ -167,8 +167,9 @@ public final class ParsedRule<T> implements Comparable<ParsedRule> {
                     if (source != null)
                     {
                         validator.notifyFailure(source, this, stringValue);
-                        if (validator.description() != null)
-                            Messenger.m(source, "r " + validator.description());
+                        BaseComponent description = validator.descriptionText();
+                        if (description != null)
+                            Messenger.m(source, "r", description);
                     }
                     return null;
                 }
