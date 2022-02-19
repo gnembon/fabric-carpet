@@ -13,6 +13,8 @@ import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.network.chat.BaseComponent;
 import net.minecraft.server.level.ServerPlayer;
 
+import java.util.Collections;
+
 import static com.mojang.brigadier.arguments.FloatArgumentType.floatArg;
 import static com.mojang.brigadier.arguments.FloatArgumentType.getFloat;
 import static com.mojang.brigadier.arguments.IntegerArgumentType.getInteger;
@@ -79,7 +81,7 @@ public class TickCommand
 
     private static int queryTps(CommandSourceStack source)
     {
-        Messenger.m(source, "w Current tps is: ",String.format("wb %.1f", TickSpeed.tickrate));
+        Messenger.m(source, Messenger.tr("carpet.command.tick.query_tps", String.format("wb %.1f", TickSpeed.tickrate)));
         return (int)TickSpeed.tickrate;
     }
 
@@ -94,34 +96,34 @@ public class TickCommand
         {
         }
         BaseComponent message = TickSpeed.tickrate_advance(player, advance, tail_command, source);
-        source.sendSuccess(message, false);
+        Messenger.send(source, Collections.singleton(message));
         return 1;
+    }
+
+    private static BaseComponent gameStatus()
+    {
+        String statusKey;
+        if(TickSpeed.isPaused())
+        {
+            statusKey = TickSpeed.deeplyFrozen() ? "carpet.command.tick.query_freeze.frozen" : "carpet.command.tick.query_freeze.deeply_frozen";
+        }
+        else
+        {
+            statusKey = "carpet.command.tick.query_freeze.no_freeze";
+        }
+        return Messenger.tr(statusKey);
     }
 
     private static int freezeStatus(CommandSourceStack source)
     {
-        if(TickSpeed.isPaused())
-        {
-            Messenger.m(source, "gi Freeze Status: Game is "+(TickSpeed.deeplyFrozen()?"deeply ":"")+"frozen");
-        }
-        else
-        {
-            Messenger.m(source, "gi Freeze Status: Game runs normally");
-        }
+        Messenger.m(source, "gi", Messenger.tr("carpet.command.tick.query_freeze.reply", gameStatus()));
         return 1;
     }
 
     private static int setFreeze(CommandSourceStack source, boolean isDeep, boolean freeze)
     {
         TickSpeed.setFrozenState(freeze, isDeep);
-        if (TickSpeed.isPaused())
-        {
-            Messenger.m(source, "gi Game is "+(isDeep?"deeply ":"")+"frozen");
-        }
-        else
-        {
-            Messenger.m(source, "gi Game runs normally");
-        }
+        Messenger.m(source, "gi", gameStatus());
         return 1;
     }
 
@@ -133,7 +135,7 @@ public class TickCommand
     private static int step(CommandSourceStack source, int advance)
     {
         TickSpeed.add_ticks_to_run_in_pause(advance);
-        Messenger.m(source, "gi Stepping " + advance + " tick" + (advance != 1 ? "s" : ""));
+        Messenger.m(source, "gi", Messenger.tr("carpet.command.tick.step" + (advance != 1 ? ".pl" : ""), advance));
         return 1;
     }
 
@@ -143,11 +145,11 @@ public class TickCommand
         ServerNetworkHandler.updateSuperHotStateToConnectedPlayers();
         if (TickSpeed.is_superHot)
         {
-            Messenger.m(source, "gi Superhot enabled");
+            Messenger.m(source, "gi", Messenger.tr("carpet.command.tick.super_hot.enabled"));
         }
         else
         {
-            Messenger.m(source, "gi Superhot disabled");
+            Messenger.m(source, "gi", Messenger.tr("carpet.command.tick.super_hot.disabled"));
         }
         return 1;
     }
