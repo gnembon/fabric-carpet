@@ -380,6 +380,9 @@
   "carpet.logger.explosion.affected_entities": "受影响的实体",
   "carpet.logger.explosion.none": "无",
 
+  "carpet.logger.trajectory.pos": "位置",
+  "carpet.logger.trajectory.motion": "速度",
+
   "// Common things": "=====================================",
 
   "carpet.common.color.white": "白色",

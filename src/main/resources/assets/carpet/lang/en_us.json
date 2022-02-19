@@ -472,6 +472,9 @@
   "carpet.logger.explosion.affected_entities": "affected entities",
   "carpet.logger.explosion.none": "None",
 
+  "carpet.logger.trajectory.pos": "pos",
+  "carpet.logger.trajectory.motion": "mot",
+
   "// Common things": "=====================================",
 
   "carpet.common.color.white": "white",

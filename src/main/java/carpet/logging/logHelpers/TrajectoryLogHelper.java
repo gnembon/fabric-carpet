@@ -66,8 +66,10 @@ public class TrajectoryLogHelper
                         Vec3 pos = positions.get(i);
                         Vec3 mot = motions.get(i);
                         comp.add(Messenger.c(
-                                String.format("w tick: %3d pos",i),Messenger.dblt("w",pos.x, pos.y, pos.z),
-                                "w   mot",Messenger.dblt("w",mot.x, mot.y, mot.z)));
+                                String.format("w tick: %3d ",i),
+                                Messenger.tr("carpet.logger.trajectory.pos"), Messenger.dblt("w",pos.x, pos.y, pos.z),
+                                "w   ",
+                                Messenger.tr("carpet.logger.trajectory.motion"), Messenger.dblt("w",mot.x, mot.y, mot.z)));
                     }
                     break;
             }
