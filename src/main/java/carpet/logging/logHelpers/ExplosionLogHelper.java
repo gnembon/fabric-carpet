@@ -57,28 +57,28 @@ public class ExplosionLogHelper
             if ("brief".equals(option))
             {
                 messages.add( c("d #" + explosionCountInCurretGT,"gb ->",
-                        Messenger.dblt("l", pos.x, pos.y, pos.z), (affectBlocks)?"m  (affects blocks)":"m  (doesn't affect blocks)" ));
+                        Messenger.dblt("l", pos.x, pos.y, pos.z), "m", c("  (", Messenger.tr("carpet.logger.explosion.affects_blocks." + affectBlocks) , " )")));
             }
             if ("full".equals(option))
             {
-                messages.add( c("d #" + explosionCountInCurretGT,"gb ->", Messenger.dblt("l", pos.x, pos.y, pos.z) ));
-                messages.add(c("w   affects blocks: ", "m " + this.affectBlocks));
-                messages.add(c("w   creates fire: ", "m " + this.createFire));
-                messages.add(c("w   power: ", "c " + this.power));
-                messages.add(c( "w   destruction: ",   "c " + this.blockDestructionType.name()));
+                messages.add(c("d #" + explosionCountInCurretGT,"gb ->", Messenger.dblt("l", pos.x, pos.y, pos.z) ));
+                messages.add(c("w   ", Messenger.tr("carpet.logger.explosion.affects_blocks"), "w : ", "m " + this.affectBlocks));
+                messages.add(c("w   ", Messenger.tr("carpet.logger.explosion.creates_fire"), "w : ", "m " + this.createFire));
+                messages.add(c("w   ", Messenger.tr("carpet.logger.explosion.power"), "w : ", "c " + this.power));
+                messages.add(c("w   ", Messenger.tr("carpet.logger.explosion.destruction"), "w : ", "c " + this.blockDestructionType.name()));
                 if (impactedEntities.isEmpty())
                 {
-                    messages.add(c("w   affected entities: ", "m None"));
+                    messages.add(c("w   ", Messenger.tr("carpet.logger.explosion.affected_entities"), "w : ", "m", Messenger.tr("carpet.logger.explosion.none")));
                 }
                 else
                 {
-                    messages.add(c("w   affected entities:"));
+                    messages.add(c("w   ", Messenger.tr("carpet.logger.explosion.affected_entities"), "w :"));
                     impactedEntities.forEach((k, v) ->
                     {
                         messages.add(c((k.pos.equals(pos))?"r   - TNT":"w   - ",
                                 Messenger.dblt((k.pos.equals(pos))?"r":"y", k.pos.x, k.pos.y, k.pos.z), "w  dV",
                                 Messenger.dblt("d", k.accel.x, k.accel.y, k.accel.z),
-                                "w  "+Registry.ENTITY_TYPE.getKey(k.type).getPath(), (v>1)?"l ("+v+")":""
+                                "w  ", k.type.getDescription(), (v>1)?"l ("+v+")":""
                         ));
                     });
                 }

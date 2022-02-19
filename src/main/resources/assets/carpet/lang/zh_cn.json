@@ -369,7 +369,18 @@
   "carpet.command.tick.warp.callback_failed": "指令回调失败 - 位置的错误: %1$s",
   "carpet.command.tick.warp.finished": "... 时间跃迁结束，tps为%1$s，mspt为%2$s",
 
-  "// Common words": "=====================================",
+  "// Logger": "=====================================",
+
+  "carpet.logger.explosion.affects_blocks.true": "破坏方块",
+  "carpet.logger.explosion.affects_blocks.false": "不破坏方块",
+  "carpet.logger.explosion.affects_blocks": "破坏方块",
+  "carpet.logger.explosion.creates_fire": "创造火焰",
+  "carpet.logger.explosion.power": "爆炸威力",
+  "carpet.logger.explosion.destruction": "方块破坏策略",
+  "carpet.logger.explosion.affected_entities": "受影响的实体",
+  "carpet.logger.explosion.none": "无",
+
+  "// Common things": "=====================================",
 
   "carpet.common.color.white": "白色",
   "carpet.common.color.orange": "橙色",

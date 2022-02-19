@@ -461,7 +461,18 @@
   "carpet.command.tick.warp.callback_failed": "Command Callback failed - unknown error: %1$s",
   "carpet.command.tick.warp.finished": "... Time warp completed with %1$s tps, or %2$s mspt",
 
-  "// Common words": "=====================================",
+  "// Logger": "=====================================",
+
+  "carpet.logger.explosion.affects_blocks.true": "affects blocks",
+  "carpet.logger.explosion.affects_blocks.false": "doesn't affect blocks",
+  "carpet.logger.explosion.affects_blocks": "affects blocks",
+  "carpet.logger.explosion.creates_fire": "creates fire",
+  "carpet.logger.explosion.power": "power",
+  "carpet.logger.explosion.destruction": "destruction",
+  "carpet.logger.explosion.affected_entities": "affected entities",
+  "carpet.logger.explosion.none": "None",
+
+  "// Common things": "=====================================",
 
   "carpet.common.color.white": "white",
   "carpet.common.color.orange": "orange",
