@@ -20,7 +20,11 @@ public abstract class Validator<T>
     /**
      * <p>Validates whether the value passed to the given {@link CarpetRule} is valid as a new value for it.</p>
      * 
-     * <p>Validators can also change the value that the rule is going to be set to </p>
+     * <p>Validators can also change the value that the rule is going to be set to by returning a value different to the
+     * one that has been passed to them</p>
+     * 
+     * <p>This method must not throw any exceptions.</p>
+     * 
      * @param source The {@link CommandSourceStack} that originated this change, and should be further notified
      *        about it. May be {@code null} during rule synchronization.
      * @param changingRule The {@link CarpetRule} that is being changed

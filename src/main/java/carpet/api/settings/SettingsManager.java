@@ -68,6 +68,7 @@ import static net.minecraft.commands.SharedSuggestionProvider.suggest;
  * by using {@link #SettingsManager(String, String, String)} and returning it in your {@link CarpetExtension}'s
  * {@link CarpetExtension#extensionSettingsManager()} method.</p>
  */
+@SuppressWarnings({"deprecation", "removal"}) // remove after removing old system
 public class SettingsManager {
     private final Map<String, CarpetRule<?>> rules = new HashMap<>();
     private final String version;
