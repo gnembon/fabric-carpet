@@ -154,7 +154,9 @@ public class Messenger
         }
         if (!desc.isEmpty())
         {
-            message.setStyle(parseStyle(desc));
+            Style style = message.getStyle();
+            for (CarpetFormatting cf: CarpetFormatting.values()) style = cf.apply(desc, style);
+            message.setStyle(style);
         }
         if (previousMessage != null && hover)
         {
