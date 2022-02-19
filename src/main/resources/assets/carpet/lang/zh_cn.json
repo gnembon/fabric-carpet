@@ -225,6 +225,13 @@
   "carpet.command.counter.reset": "重置%1$s漏斗计数器",
   "carpet.command.counter.summary": "%1$s漏斗计数器的物品统计 (%2$s min%3$s), 总计: %4$s, (%5$s/h):",
 
+  "carpet.command.distance.header_line": "%1$s 与 %2$s 间的距离:",
+  "carpet.command.distance.spherical": "直线距离: %1$s",
+  "carpet.command.distance.cylindrical": "水平距离: %1$s",
+  "carpet.command.distance.manhattan": "曼哈顿距离: %1$s",
+  "carpet.command.distance.set_start": "第一个点已设置为: %1$s",
+  "carpet.command.distance.no_start": "未设置%1$s的第一个点",
+
   "// Common words": "=====================================",
 
   "carpet.common.color.white": "白色",

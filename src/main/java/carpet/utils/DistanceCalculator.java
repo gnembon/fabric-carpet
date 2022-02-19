@@ -26,12 +26,10 @@ public class DistanceCalculator
         double spherical = Math.sqrt(dx*dx + dy*dy + dz*dz);
         double cylindrical = Math.sqrt(dx*dx + dz*dz);
         List<BaseComponent> res = new ArrayList<>();
-        res.add(Messenger.c("w Distance between ",
-                Messenger.tp("c",pos1),"w  and ",
-                Messenger.tp("c",pos2),"w :"));
-        res.add(Messenger.c("w  - Spherical: ", String.format("wb %.2f", spherical)));
-        res.add(Messenger.c("w  - Cylindrical: ", String.format("wb %.2f", cylindrical)));
-        res.add(Messenger.c("w  - Manhattan: ", String.format("wb %.1f", manhattan)));
+        res.add(Messenger.tr("carpet.command.distance.header_line", Messenger.tp("c",pos1), Messenger.tp("c",pos2)));
+        res.add(Messenger.c("w  - ", Messenger.tr("carpet.command.distance.spherical", Messenger.c(String.format("wb %.2f", spherical)))));
+        res.add(Messenger.c("w  - ", Messenger.tr("carpet.command.distance.cylindrical", Messenger.c(String.format("wb %.2f", cylindrical)))));
+        res.add(Messenger.c("w  - ", Messenger.tr("carpet.command.distance.manhattan", Messenger.c(String.format("wb %.1f", manhattan)))));
         return res;
     }
 
@@ -44,7 +42,7 @@ public class DistanceCalculator
     public static int setStart(CommandSourceStack source, Vec3 pos)
     {
         START_POINT_STORAGE.put(source.getTextName(), pos);
-        Messenger.m(source,"gi Initial point set to: ", Messenger.tp("g",pos));
+        Messenger.m(source,"gi", Messenger.tr("carpet.command.distance.set_start", Messenger.tp("g",pos)));
         return 1;
     }
 
@@ -53,8 +51,8 @@ public class DistanceCalculator
         if ( !hasStartingPoint(source) )
         {
             START_POINT_STORAGE.put(source.getTextName(), pos);
-            Messenger.m(source,"gi There was no initial point for "+source.getTextName());
-            Messenger.m(source,"gi Initial point set to: ", Messenger.tp("g",pos));
+            Messenger.m(source,"gi", Messenger.tr("carpet.command.distance.no_start", source.getTextName()));
+            Messenger.m(source,"gi", Messenger.tr("carpet.command.distance.set_start", Messenger.tp("g",pos)));
             return 0;
         }
         Messenger.send(source, findDistanceBetweenTwoPoints( START_POINT_STORAGE.get(source.getTextName()), pos));

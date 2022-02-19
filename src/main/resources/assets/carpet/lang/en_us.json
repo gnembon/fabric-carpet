@@ -317,6 +317,13 @@
   "carpet.command.counter.reset": "Reset %1$s",
   "carpet.command.counter.summary": "Items for %1$s (%2$s min%3$s), total: %4$s, (%5$s/h):",
 
+  "carpet.command.distance.header_line": "Distance between %1$s and %2$s:",
+  "carpet.command.distance.spherical": "Spherical: %1$s",
+  "carpet.command.distance.cylindrical": "Cylindrical: %1$s",
+  "carpet.command.distance.manhattan": "Manhattan: %1$s",
+  "carpet.command.distance.set_start": "Initial point set to: %1$s",
+  "carpet.command.distance.no_start": "There was no initial point for %1$s",
+
   "// Common words": "=====================================",
 
   "carpet.common.color.white": "white",
