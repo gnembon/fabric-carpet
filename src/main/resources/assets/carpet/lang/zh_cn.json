@@ -283,6 +283,19 @@
   "carpet.command.perimeterinfo.result.liquid": "流体中: %1$s",
   "carpet.command.perimeterinfo.result.ground": "方块上表面: %1$s",
 
+  "carpet.command.player.existed_only": "只能操控已存在的玩家",
+  "carpet.command.player.not_enough_permission": "非OP玩家不能操控其他真实玩家",
+  "carpet.command.player.cannot_remove": "只有假人可接受kill指令",
+  "carpet.command.player.already_logged_on": "玩家 %1$s 已在游戏中",
+  "carpet.command.player.invalid_profile": "无法连接至Mojang认证服务器，或者玩家 %1$s 已被Mojang封禁。\n被封禁的玩家仅能在单人游戏或正版验证关闭的服务器中召唤。",
+  "carpet.command.player.banned": "玩家 %1$s 已被本服务器封禁",
+  "carpet.command.player.whitelist_protection": "处于白名单中的玩家只能被OP召唤",
+  "carpet.command.player.invalid_game_mode": "非法的游戏模式: %1$s",
+  "carpet.command.player.name_too_long": "玩家名 %1$s 过长",
+  "carpet.command.player.spawn_outside_world": "不能在世界外召唤玩家 %1$s",
+  "carpet.command.player.player_not_existed": "玩家 %1$s 不存在，无法在开启正版验证的服务器中召唤。关闭服务器的正版验证以召唤不存在的玩家。",
+  "carpet.command.player.cannot_shadow_fake": "不能对假人执行shadow指令",
+
   "// Common words": "=====================================",
 
   "carpet.common.color.white": "白色",
