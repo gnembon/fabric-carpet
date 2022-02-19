@@ -370,6 +370,11 @@
   "carpet.command.log.subscribed_to": "Subscribed to %1$s",
   "carpet.command.log.subscribed_to_with_option": "Subscribed to %1$s (%2$s)",
 
+  "carpet.command.perimeterinfo.not_mob_entity": "/perimeterinfo requires a mob entity to test agains.",
+  "carpet.command.perimeterinfo.result.header": "Spawning spaces around %1$s:",
+  "carpet.command.perimeterinfo.result.liquid": "potential in-liquid: %1$s",
+  "carpet.command.perimeterinfo.result.ground": "potential on-ground: %1$s",
+
   "// Common words": "=====================================",
 
   "carpet.common.color.white": "white",

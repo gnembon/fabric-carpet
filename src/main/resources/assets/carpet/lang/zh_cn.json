@@ -278,6 +278,11 @@
   "carpet.command.log.subscribed_to": "订阅了监视器 %1$s",
   "carpet.command.log.subscribed_to_with_option": "订阅了监视器 %1$s (%2$s)",
 
+  "carpet.command.perimeterinfo.not_mob_entity": "/perimeterinfo 要求待测试的实体是一个生物 (MobEntity)",
+  "carpet.command.perimeterinfo.result.header": "坐标 %1$s 附近可刷怪的预估面积:",
+  "carpet.command.perimeterinfo.result.liquid": "流体中: %1$s",
+  "carpet.command.perimeterinfo.result.ground": "方块上表面: %1$s",
+
   "// Common words": "=====================================",
 
   "carpet.common.color.white": "白色",
