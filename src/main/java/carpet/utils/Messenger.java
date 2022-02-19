@@ -1,10 +1,12 @@
 package carpet.utils;
 
+import com.google.common.collect.ImmutableMap;
 import net.minecraft.ChatFormatting;
 import net.minecraft.Util;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.*;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.MobCategory;
@@ -239,6 +241,16 @@ public class Messenger
             command = String.format("!/tp %.3f %.3f %.3f",x, y, z);
         }
         return c(text, command);
+    }
+
+    private static final ImmutableMap<ResourceKey<Level>, BaseComponent> DIMENSION_NAMES = ImmutableMap.of(
+            Level.OVERWORLD, new TranslatableComponent("createWorld.customize.preset.overworld"),
+            Level.NETHER, new TranslatableComponent("advancements.nether.root.title"),
+            Level.END, new TranslatableComponent("advancements.end.root.title")
+    );
+    public static BaseComponent dim(ResourceKey<Level> dimType)
+    {
+        return (BaseComponent)DIMENSION_NAMES.getOrDefault(dimType, s(dimType.location().toString())).copy();
     }
 
     //message source
