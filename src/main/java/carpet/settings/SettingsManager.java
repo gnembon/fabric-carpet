@@ -9,9 +9,7 @@ import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.server.MinecraftServer;
 import org.apache.logging.log4j.util.TriConsumer;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Manages and parses Carpet rules with their own command.
@@ -20,7 +18,6 @@ import java.util.Map;
 @Deprecated(forRemoval = true)
 public class SettingsManager extends carpet.api.settings.SettingsManager
 {
-    private final Map<String, CarpetRule<?>> rules = new HashMap<>();
     /**
      * @deprecated Use {@link #locked()} instead
      */
@@ -126,7 +123,7 @@ public class SettingsManager extends carpet.api.settings.SettingsManager
     @Deprecated(forRemoval = true)
     public ParsedRule<?> getRule(String name)
     {
-        return rules.get(name) instanceof ParsedRule<?> pr ? pr : null;
+        return getCarpetRule(name) instanceof ParsedRule<?> pr ? pr : null;
     }
 
     /**
@@ -137,7 +134,7 @@ public class SettingsManager extends carpet.api.settings.SettingsManager
     public Collection<ParsedRule<?>> getRules()
     {
         var parsedRuleClass = ParsedRule.class;
-        return List.of(rules.values().stream().filter(parsedRuleClass::isInstance).map(parsedRuleClass::cast).toArray(ParsedRule[]::new));
+        return List.of(getCarpetRules().stream().filter(parsedRuleClass::isInstance).map(parsedRuleClass::cast).toArray(ParsedRule[]::new));
     }
 
     /**
