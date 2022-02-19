@@ -282,7 +282,9 @@ public class Messenger
             else
             {
                 String txt = o.toString();
-                if (txt.indexOf(' ') == -1)  // no space in txt, it's a descriptor for the next BaseComponent
+                boolean noSpace = txt.indexOf(' ') == -1;
+                boolean notSpecialDesc = txt.isEmpty() || "?!@&".indexOf(txt.charAt(0)) == -1;
+                if (noSpace && notSpecialDesc)  // it's a descriptor for the next BaseComponent
                 {
                     if (!txt.isEmpty())
                     {
