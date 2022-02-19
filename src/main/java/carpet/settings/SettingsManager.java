@@ -561,6 +561,17 @@ public class SettingsManager
         return suggestionsBuilder.buildFuture();
     }
 
+    private BaseComponent categoryName(String category)
+    {
+        String key = identifier + ".category." + category;
+        // if the category does not have translation, use itself as displayed name
+        if (Translations.key2Translation(Translations.DEFAULT_LANGUAGE, key).isEmpty())
+        {
+            return Messenger.s(category);
+        }
+        return Messenger.tr(key);
+    }
+
     /**
      * Registers the the settings command for this {@link SettingsManager}.<br>
      * It is handled automatically by Carpet.
@@ -588,7 +599,7 @@ public class SettingsManager
                         then(argument("tag",StringArgumentType.word()).
                                 suggests( (c, b)->suggest(getCategories(), b)).
                                 executes( (c) -> listSettings(c.getSource(),
-                                        Messenger.tr("carpet.command.carpet.settings_matching", fancyName, Messenger.tr(identifier + ".category." + StringArgumentType.getString(c, "tag"))),
+                                        Messenger.tr("carpet.command.carpet.settings_matching", fancyName, categoryName(StringArgumentType.getString(c, "tag"))),
                                         getRulesMatching(c.getSource(), StringArgumentType.getString(c, "tag")))))).
                 then(literal("removeDefault").
                         requires(s -> !locked).
@@ -625,7 +636,7 @@ public class SettingsManager
         tags.add(Messenger.c(Messenger.tr("carpet.command.carpet.tags"), "w : "));
         for (String category : rule.categories)
         {
-            BaseComponent translated = Messenger.tr("%s.category.%s".formatted(identifier, category));
+            BaseComponent translated = categoryName(category);
             tags.add(Messenger.c("c [", "c", translated, "c ]"));
             tags.add("^g"); tags.add(Messenger.tr("carpet.command.carpet.list_all_settings", translated));
             tags.add("!/%s list %s".formatted(identifier, category));
@@ -749,9 +760,8 @@ public class SettingsManager
         tags.add("w :\n");
         for (String category : getCategories())
         {
-            String catKey = "%s.category.%s".formatted(identifier, category);
-            BaseComponent translated = Messenger.tr(catKey);
-            BaseComponent translatedPlus = !Translations.tr(catKey, source).equals(category) ? Messenger.c(translated, "  (" + category + ")") : translated;
+            BaseComponent translated = categoryName(category);
+            BaseComponent translatedPlus = !Translations.translate(translated, source).getString().equals(category) ? Messenger.c(translated, "  (" + category + ")") : translated;
             tags.add(Messenger.c("c [", "c", translated, "c ]"));
             tags.add("^g"); tags.add(Messenger.tr("carpet.command.carpet.list_all_settings", translatedPlus));
             tags.add("!/%s list %s".formatted(identifier, category));

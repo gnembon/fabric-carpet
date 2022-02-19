@@ -270,10 +270,22 @@ public class Translations
                 Map<String, String> extMappings = ext.canHasTranslations(l);
                 if (extMappings != null)
                 {
-                    extMappings.forEach((key, value) ->
+                    boolean warned = false;
+                    for (Map.Entry<String, String> entry : extMappings.entrySet())
                     {
+                        String key = entry.getKey();
+                        String value = entry.getValue();
+                        if (key.startsWith("rule.") || key.startsWith("category."))
+                        {
+                            if (!warned)
+                            {
+                                warned = true;
+                                CarpetSettings.LOG.warn("Extension {} is using legacy translation key without namespace prefix: {}", ext.version(), key);
+                            }
+                            key = "carpet." + key;
+                        }
                         if (!translations.containsKey(key)) translations.put(key, value);
-                    });
+                    }
                 }
             }
 
