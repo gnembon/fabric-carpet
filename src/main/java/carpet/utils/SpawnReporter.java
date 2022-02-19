@@ -35,10 +35,7 @@ import net.minecraft.world.level.levelgen.feature.NetherFortressFeature;
 import org.apache.commons.lang3.tuple.Pair;
 import org.jetbrains.annotations.Nullable;
 
-import carpet.CarpetSettings;
-
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -71,6 +68,11 @@ public class SpawnReporter
 
     static {
         reset_spawn_stats(null, true);
+    }
+
+    private static BaseComponent getTypeName(MobCategory category)
+    {
+        return Messenger.tr("carpet.common.mob_category." + category.getName());
     }
 
     public static void registerSpawn(Mob mob, MobCategory cat, BlockPos pos)
@@ -109,13 +111,13 @@ public class SpawnReporter
         String name = dim.location().getPath();
         List<BaseComponent> lst = new ArrayList<>();
         if (multiline)
-            lst.add(Messenger.s(String.format("Mobcaps for %s:",name)));
+            lst.add(Messenger.tr("carpet.command.spawn.mobcap.header", name));
         NaturalSpawner.SpawnState lastSpawner = world.getChunkSource().getLastSpawnState();
         Object2IntMap<MobCategory> dimCounts = lastSpawner.getMobCategoryCounts();
         int chunkcount = chunkCounts.getOrDefault(dim, -1);
         if (dimCounts == null || chunkcount < 0)
         {
-            lst.add(Messenger.c("g   --UNAVAILABLE--"));
+            lst.add(Messenger.c("g   --", Messenger.tr("carpet.command.spawn.mobcap.unavailable"), "g --"));
             return lst;
         }
 
@@ -129,9 +131,10 @@ public class SpawnReporter
             if (multiline)
             {
                 int rounds = spawn_tries.get(enumcreaturetype);
-                lst.add(Messenger.c(String.format("w   %s: ", enumcreaturetype.getName()),
+                lst.add(Messenger.c(
+                        "w   ", getTypeName(enumcreaturetype), "w : ",
                         (cur < 0) ? "g -" : (color + " " + cur), "g  / ", mobColor + " " + max,
-                        (rounds == 1) ? "w " : String.format("gi  (%d rounds/tick)", spawn_tries.get(enumcreaturetype))
+                        (rounds == 1) ? Messenger.s("") : Messenger.c("gi  (", "gi", Messenger.tr("carpet.command.spawn.mobcap.round_per_tick", spawn_tries.get(enumcreaturetype)), "gi )")
                 ));
             }
             else
@@ -151,7 +154,7 @@ public class SpawnReporter
             }
             else
             {
-                lst.add(Messenger.c("g   --UNAVAILABLE--"));
+                lst.add(Messenger.c("g   --", Messenger.tr("carpet.command.spawn.mobcap.unavailable"), "g --"));
             }
 
         }
@@ -163,24 +166,24 @@ public class SpawnReporter
         List<BaseComponent> lst = new ArrayList<>();
         if ((track_spawns == 0L))
         {
-            lst.add(Messenger.s("Spawn tracking not started"));
+            lst.add(Messenger.tr("carpet.command.spawn.recent_spawns.tracking_not_started"));
             return lst;
         }
-        String type_code = creature_type.getName();
         
-        lst.add(Messenger.s(String.format("Recent %s spawns:",type_code)));
+        lst.add(Messenger.tr("carpet.command.spawn.recent_spawns.header", getTypeName(creature_type)));
         for (Pair<EntityType, BlockPos> pair : spawned_mobs.get(Pair.of(world.dimension(), creature_type)).keySet()) // getDImTYpe
         {
             lst.add( Messenger.c(
                     "w  - ",
                     Messenger.tp("wb",pair.getRight()),
-                    String.format("w : %s", pair.getLeft().getDescription().getString())
+                    "w : ",
+                    pair.getLeft().getDescription()
                     ));
         }
         
         if (lst.size()==1)
         {
-            lst.add(Messenger.s(" - Nothing spawned yet, sorry."));
+            lst.add(Messenger.c(Messenger.s(" - "), Messenger.tr("carpet.command.spawn.recent_spawns.nothing")));
         }
         return lst;
 
@@ -244,46 +247,10 @@ public class SpawnReporter
         }
     }
     
-    public static MobCategory get_creature_type_from_code(String type_code)
-    {
-        if ("hostile".equalsIgnoreCase(type_code))
-        {
-            return MobCategory.MONSTER;
-        }
-        else if ("passive".equalsIgnoreCase(type_code))
-        {
-            return MobCategory.CREATURE;
-        }
-        else if ("water".equalsIgnoreCase(type_code))
-        {
-            return MobCategory.WATER_CREATURE;
-        }
-        else if ("fish".equalsIgnoreCase(type_code))
-        {
-            return MobCategory.WATER_AMBIENT;
-        }
-        else if ("ambient".equalsIgnoreCase(type_code))
-        {
-            return MobCategory.AMBIENT;
-        }
-        return null;
-    }
-    
-    
-    public static String get_type_string(MobCategory type)
-    {
-        return String.format("%s", type);
-    }
-    
-    public static String get_creature_code_from_string(String str)
-    {
-        return get_type_string(get_creature_type_from_code(str));
-    }
-    
     public static List<BaseComponent> printEntitiesByType(MobCategory cat, Level worldIn, boolean all) //Class<?> entityType)
     {
         List<BaseComponent> lst = new ArrayList<>();
-        lst.add( Messenger.s(String.format("Loaded entities for %s class:", get_type_string(cat))));
+        lst.add( Messenger.tr("carpet.command.spawn.print_entities.header", getTypeName(cat)) );
         for (Entity entity : ((ServerLevel)worldIn).getEntities(EntityTypeTest.forClass(Entity.class), (e) -> e.getType().getCategory()==cat))
         {
             boolean persistent = entity instanceof Mob && ( ((Mob) entity).isPersistenceRequired() || ((Mob) entity).requiresCustomPersistence());
@@ -295,13 +262,13 @@ public class SpawnReporter
             lst.add( Messenger.c(
                     "w  - ",
                     Messenger.tp(persistent?"gb":"wb",pos),
-                    String.format(persistent?"g : %s":"w : %s", type.getDescription().getString())
+                    persistent ? "g" : "w", Messenger.c("  : ", type.getDescription())
             ));
 
         }
         if (lst.size()==1)
         {
-            lst.add(Messenger.s(" - Empty."));
+            lst.add(Messenger.c(Messenger.s(" - "), Messenger.tr("carpet.command.spawn.print_entities.empty")));
         }
         return lst;
     }
@@ -355,19 +322,16 @@ public class SpawnReporter
         List<BaseComponent> report = new ArrayList<>();
         if (track_spawns == 0L)
         {
-            report.add(Messenger.c(
-                    "w Spawn tracking disabled, type '",
-                    "wi /spawn tracking start","/spawn tracking start",
-                    "w ' to enable"));
+            report.add(Messenger.tr("carpet.command.spawn.tracking.disabled", Messenger.c("wi /spawn tracking start")));
             return report;
         }
         long duration = (long) worldIn.getServer().getTickCount() - track_spawns;
         report.add(Messenger.c("bw --------------------"));
-        String simulated = mock_spawns?"[SIMULATED] ":"";
-        String location = (lower_spawning_limit != null)?String.format("[in (%d, %d, %d)x(%d, %d, %d)]",
+        BaseComponent simulated = mock_spawns? Messenger.c(" [", Messenger.tr("carpet.command.spawn.tracking.simulated"), " ] "): Messenger.s("");
+        String location = (lower_spawning_limit != null)?String.format(" [in (%d, %d, %d)x(%d, %d, %d)]",
                 lower_spawning_limit.getX(),lower_spawning_limit.getY(),lower_spawning_limit.getZ(),
                 upper_spawning_limit.getX(),upper_spawning_limit.getY(),upper_spawning_limit.getZ() ):"";
-        report.add(Messenger.s(String.format("%sSpawn statistics %s: for %.1f min", simulated, location, (duration/72000.0)*60)));
+        report.add(Messenger.tr("carpet.command.spawn.tracking.header", simulated, location, String.format("%.1f", (duration/72000.0)*60)));
         for (MobCategory enumcreaturetype : MobCategory.values())
         {
             //String type_code = String.format("%s", enumcreaturetype);
@@ -379,21 +343,28 @@ public class SpawnReporter
                 {
                     there_are_mobs_to_list = true;
                     double hours = overall_spawn_ticks.get(code)/72000.0;
-                    report.add(Messenger.s(String.format(" > %s%s (%.1f min), %.1f m/t, %%{%.1fF %.1f- %.1f+}; %.2f s/att",
-                        enumcreaturetype.getName().substring(0,3), getWorldCode(dim),
-                        60*hours,
-                        (1.0D*spawn_cap_count.get(code))/ spawn_attempts.get(code),
-                        (100.0D*spawn_ticks_full.get(code))/ spawn_attempts.get(code),
-                        (100.0D*spawn_ticks_fail.get(code))/ spawn_attempts.get(code),
-                        (100.0D*spawn_ticks_succ.get(code))/ spawn_attempts.get(code),
-                        (1.0D*spawn_ticks_spawns.get(code))/(spawn_ticks_fail.get(code)+spawn_ticks_succ.get(code))
-                    )));
+                    report.add(Messenger.c(
+                            Messenger.s(" > "), getTypeName(enumcreaturetype),
+                            Messenger.s(String.format("%s (%.1f min), %.1f m/t, %%{%.1fF %.1f- %.1f+}; %.2f s/att",
+                                getWorldCode(dim),
+                                60*hours,
+                                (1.0D*spawn_cap_count.get(code))/ spawn_attempts.get(code),
+                                (100.0D*spawn_ticks_full.get(code))/ spawn_attempts.get(code),
+                                (100.0D*spawn_ticks_fail.get(code))/ spawn_attempts.get(code),
+                                (100.0D*spawn_ticks_succ.get(code))/ spawn_attempts.get(code),
+                                (1.0D*spawn_ticks_spawns.get(code))/(spawn_ticks_fail.get(code)+spawn_ticks_succ.get(code))
+                            ))
+                    ));
                     for (EntityType type: spawn_stats.get(code).keySet())
                     {
-                        report.add(Messenger.s(String.format("   - %s: %d spawns, %d per hour",
-                                type.getDescription().getString(),
-                                spawn_stats.get(code).getLong(type),
-                                (72000 * spawn_stats.get(code).getLong(type)/duration ))));
+                        report.add(Messenger.c(
+                                Messenger.s("   - "),
+                                Messenger.tr("carpet.command.spawn.tracking.entity_stat",
+                                        type.getDescription(),
+                                        spawn_stats.get(code).getLong(type),
+                                        (72000 * spawn_stats.get(code).getLong(type)/duration )
+                                )
+                        ));
                     }
                 }
             }
@@ -437,13 +408,13 @@ public class SpawnReporter
         int x = pos.getX(); int y = pos.getY(); int z = pos.getZ();
         ChunkAccess chunk = worldIn.getChunk(pos);
         int lc = chunk.getHeight(Heightmap.Types.WORLD_SURFACE, x, z) + 1;
-        String where = String.format((y >= lc) ? "%d blocks above it." : "%d blocks below it.",  Mth.abs(y-lc));
-        if (y == lc) where = "right at it.";
-        rep.add(Messenger.s(String.format("Maximum spawn Y value for (%+d, %+d) is %d. You are "+where, x, z, lc )));
-        rep.add(Messenger.s("Spawns:"));
+        BaseComponent where = Messenger.tr((y >= lc) ? "carpet.command.spawn.report.blocks_above" : "carpet.command.spawn.report.blocks_below",  Mth.abs(y-lc));
+        if (y == lc) where = Messenger.tr("carpet.command.spawn.report.blocks_right_at");
+        rep.add(Messenger.tr("carpet.command.spawn.report.max_y", String.format("%+d", x), String.format("%+d", z), lc, where));
+        rep.add(Messenger.tr("carpet.command.spawn.report.spawns_header"));
         for (MobCategory enumcreaturetype : MobCategory.values())
         {
-            String type_code = String.format("%s", enumcreaturetype).substring(0, 3);
+            String type_code = enumcreaturetype.getName().substring(0, 3);
             List<MobSpawnSettings.SpawnerData> lst = getSpawnEntries(worldIn, worldIn.structureFeatureManager(), worldIn.getChunkSource().getGenerator(), enumcreaturetype, pos, worldIn.getBiome(pos) );//  ((ChunkGenerator)worldIn.getChunkManager().getChunkGenerator()).getEntitySpawnList(, worldIn.getStructureAccessor(), enumcreaturetype, pos);
             if (lst != null && !lst.isEmpty())
             {
