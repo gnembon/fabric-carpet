@@ -3,10 +3,10 @@ package carpet.network;
 import carpet.CarpetServer;
 import carpet.CarpetExtension;
 import carpet.CarpetSettings;
+import carpet.api.settings.CarpetRule;
+import carpet.api.settings.InvalidRuleValueException;
 import carpet.helpers.TickSpeed;
-import carpet.settings.CarpetRule;
-import carpet.settings.InvalidRuleValueException;
-import carpet.settings.SettingsManager;
+import carpet.api.settings.SettingsManager;
 import io.netty.buffer.Unpooled;
 import java.util.HashMap;
 import java.util.Map;
@@ -43,8 +43,8 @@ public class ClientNetworkHandler
                     else
                     {
                         for (CarpetExtension extension: CarpetServer.extensions) {
-                            SettingsManager eManager = extension.customSettingsManager();
-                            if (eManager != null && managerName.equals(eManager.getIdentifier()))
+                            SettingsManager eManager = extension.extensionSettingsManager();
+                            if (eManager != null && managerName.equals(eManager.identifier()))
                             {
                                 manager = eManager;
                                 break;

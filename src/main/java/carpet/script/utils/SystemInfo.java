@@ -2,6 +2,8 @@ package carpet.script.utils;
 
 import carpet.CarpetServer;
 import carpet.CarpetSettings;
+import carpet.api.settings.CarpetRule;
+import carpet.api.settings.RuleHelper;
 import carpet.script.CarpetContext;
 import carpet.script.CarpetScriptHost;
 import carpet.script.value.BooleanValue;
@@ -12,9 +14,7 @@ import carpet.script.value.NumericValue;
 import carpet.script.value.StringValue;
 import carpet.script.value.Value;
 import carpet.script.value.ValueConversions;
-import carpet.settings.CarpetRule;
-import carpet.settings.RuleHelper;
-import carpet.settings.SettingsManager;
+import carpet.api.settings.SettingsManager;
 import com.sun.management.OperatingSystemMXBean;
 import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.loader.api.ModContainer;
@@ -179,12 +179,12 @@ public class SystemInfo {
                 carpetRules.put(new StringValue(rule.name()), new StringValue(RuleHelper.toRuleString(rule.value())));
             });
             CarpetServer.extensions.forEach(e -> {
-                SettingsManager manager = e.customSettingsManager();
+                SettingsManager manager = e.extensionSettingsManager();
                 if (manager == null) return;
 
                 Collection<CarpetRule<?>> extensionRules = manager.getCarpetRules();
                 extensionRules.forEach(rule -> {
-                    carpetRules.put(new StringValue(manager.getIdentifier()+":"+rule.name()), new StringValue(RuleHelper.toRuleString(rule.value())));
+                    carpetRules.put(new StringValue(manager.identifier()+":"+rule.name()), new StringValue(RuleHelper.toRuleString(rule.value())));
                 });
             });
             return carpetRules;

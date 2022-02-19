@@ -2,11 +2,11 @@ package carpet.network;
 
 import carpet.CarpetServer;
 import carpet.CarpetSettings;
+import carpet.api.settings.CarpetRule;
+import carpet.api.settings.RuleHelper;
 import carpet.helpers.TickSpeed;
 import carpet.script.utils.SnoopyCommandSource;
-import carpet.settings.CarpetRule;
-import carpet.settings.RuleHelper;
-import carpet.settings.SettingsManager;
+import carpet.api.settings.SettingsManager;
 import io.netty.buffer.Unpooled;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -79,7 +79,7 @@ public class ServerNetworkHandler
         DataBuilder data = DataBuilder.create().withTickRate().withFrozenState().withTickPlayerActiveTimeout(); // .withSuperHotState()
         CarpetServer.settingsManager.getCarpetRules().forEach(data::withRule);
         CarpetServer.extensions.forEach(e -> {
-            SettingsManager eManager = e.customSettingsManager();
+            SettingsManager eManager = e.extensionSettingsManager();
             if (eManager != null) {
                 eManager.getCarpetRules().forEach(data::withRule);
             }
@@ -285,7 +285,7 @@ public class ServerNetworkHandler
                 rules = new CompoundTag();
                 tag.put("Rules", rules);
             }
-            String identifier = rule.settingsManager().getIdentifier();
+            String identifier = rule.settingsManager().identifier();
             String key = rule.name();
             while (rules.contains(key)) { key = key+"2";}
             CompoundTag ruleNBT = new CompoundTag();

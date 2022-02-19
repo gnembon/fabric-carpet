@@ -1,7 +1,7 @@
 package carpet;
 
 import carpet.script.CarpetExpression;
-import carpet.settings.SettingsManager;
+import carpet.api.settings.SettingsManager;
 import com.mojang.brigadier.CommandDispatcher;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.server.MinecraftServer;
@@ -54,13 +54,30 @@ public interface CarpetExtension
     default void registerCommands(CommandDispatcher<CommandSourceStack> dispatcher) {}
 
     /**
-     * Provide your own custom settings manager managed in the same way as base /carpet
+     * @deprecated Implement {@link #extensionSettingsManager()} instead
+     */
+    @Deprecated(forRemoval = true)
+    default carpet.settings.SettingsManager customSettingsManager() {return null;}
+
+    /**
+     * Provides a custom {@link SettingsManager} for it to be managed in the same way as base /carpet
      * command, but separated to its own command as defined in SettingsManager.
      * 
      * @return Your custom {@link SettingsManager} instance to be managed by Carpet
      * 
      */
-    default SettingsManager customSettingsManager() {return null;}
+    default SettingsManager extensionSettingsManager() {
+        // Warn extensions overriding the other (deprecated) method, go ahead and override this if you want to provide a custom SettingsManager
+        SettingsManager deprecatedManager = customSettingsManager();
+        if (deprecatedManager != null) {
+            // Extension is providing a manager via the old method and hasn't overriden this
+            CarpetSettings.LOG.warn("""
+                    %s is providing a SettingsManager from an outdated method in CarpetExtension!
+                    This behaviour will not work in later Carpet versions and the manager won't be registered!
+                    """.formatted(this.getClass().getName()));
+        }
+        return customSettingsManager();
+    }
 
     /**
      * Event that gets called when a player logs in

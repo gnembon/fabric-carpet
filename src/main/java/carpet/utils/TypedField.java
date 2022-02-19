@@ -11,7 +11,7 @@ import org.apache.commons.lang3.ClassUtils;
 /**
  * <p>A wrapper around a {@link Field} that uses a {@link VarHandle} and {@link MethodHandle}s to retrieve and set the contents of the field</p>
  * 
- * <p>It keeps the memory semantics of {@code volatile} if the field had that modifier.</p><!-- TODO is this needed? -->
+ * <p>It keeps the memory semantics of {@code volatile} if the field had that modifier.</p>
  *
  * @param <T> The {@link Field}'s type
  */
@@ -30,7 +30,8 @@ public final class TypedField<T> {
 		this.returnType = (Class<T>) ClassUtils.primitiveToWrapper(field.getType());
 		this.handle = MethodHandles.lookup().unreflectVarHandle(field);
 		this.isVolatile = Modifier.isVolatile(field.getModifiers());
-		// TODO Use MethodHandles.varHandleExactInvoker? Would remove the isVolatile boolean (would be at constr), but would force a try catch in get/set methods
+		// TODO Use MethodHandles.varHandleExactInvoker?
+		// Would remove the isVolatile boolean (would be at constr), but would force a try catch in get/set methods unless lamdaified
 	}
 	
 	/**

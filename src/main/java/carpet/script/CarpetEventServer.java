@@ -2,6 +2,8 @@ package carpet.script;
 
 import carpet.CarpetServer;
 import carpet.CarpetSettings;
+import carpet.api.settings.CarpetRule;
+import carpet.api.settings.RuleHelper;
 import carpet.helpers.TickSpeed;
 import carpet.script.exception.IntegrityException;
 import carpet.script.exception.InternalExpressionException;
@@ -17,8 +19,6 @@ import carpet.script.value.NumericValue;
 import carpet.script.value.StringValue;
 import carpet.script.value.Value;
 import carpet.script.value.ValueConversions;
-import carpet.settings.CarpetRule;
-import carpet.settings.RuleHelper;
 import carpet.utils.CarpetProfiler;
 import carpet.utils.Messenger;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
@@ -901,7 +901,7 @@ public class CarpetEventServer
             @Override
             public void onCarpetRuleChanges(CarpetRule<?> rule, CommandSourceStack source)
             {
-                String identifier = rule.settingsManager().getIdentifier();
+                String identifier = rule.settingsManager().identifier();
                 final String namespace;
                 if (!identifier.equals("carpet")) 
                 {

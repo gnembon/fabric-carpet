@@ -47,7 +47,7 @@ public class CarpetServer // static for now - easier to handle all around the co
     public static MinecraftServer minecraft_server;
     private static CommandDispatcher<CommandSourceStack> currentCommandDispatcher;
     public static CarpetScriptServer scriptServer;
-    public static SettingsManager settingsManager;
+    public static SettingsManager settingsManager; // to change type to api type, can't change right now because of binary compat, but it is source compat
     public static final List<CarpetExtension> extensions = new ArrayList<>();
 
     // Separate from onServerLoaded, because a server can be loaded multiple times in singleplayer
@@ -86,7 +86,7 @@ public class CarpetServer // static for now - easier to handle all around the co
 
         settingsManager.attachServer(server);
         extensions.forEach(e -> {
-            SettingsManager sm = e.customSettingsManager();
+            var sm = e.extensionSettingsManager();
             if (sm != null) sm.attachServer(server);
             e.onServerLoaded(server);
         });
@@ -123,7 +123,7 @@ public class CarpetServer // static for now - easier to handle all around the co
     {
         settingsManager.registerCommand(dispatcher);
         extensions.forEach(e -> {
-            SettingsManager sm = e.customSettingsManager();
+            var sm = e.extensionSettingsManager();
             if (sm != null) sm.registerCommand(dispatcher);
         });
         TickCommand.register(dispatcher);
@@ -197,6 +197,10 @@ public class CarpetServer // static for now - easier to handle all around the co
     public static void onServerDoneClosing(MinecraftServer server)
     {
         settingsManager.detachServer();
+        extensions.forEach(e -> {
+            var manager = e.extensionSettingsManager();
+            if (manager != null) manager.detachServer();
+        });
     }
 
     public static void registerExtensionLoggers()

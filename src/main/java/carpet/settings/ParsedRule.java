@@ -1,15 +1,26 @@
 package carpet.settings;
 
+import carpet.api.settings.CarpetRule;
+import carpet.api.settings.InvalidRuleValueException;
+import carpet.api.settings.RuleHelper;
+import carpet.api.settings.SettingsManager;
+import carpet.api.settings.StandardValidators;
+import carpet.utils.Messenger;
+import carpet.utils.TranslationKeys;
+import carpet.utils.Translations;
 import carpet.utils.TypedField;
 import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.network.chat.BaseComponent;
 
-import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -21,9 +32,9 @@ import java.util.stream.Stream;
  * when being parsed by {@link SettingsManager#parseSettingsClass(Class)}.
  *
  * @param <T> The field's (and rule's) type
- * @deprecated Use the type {@link CarpetRule} instead, since it's not implementation specific
+ * @deprecated Use the type {@link CarpetRule} instead
  */
-@Deprecated(forRemoval = true) // to package private
+@Deprecated(forRemoval = true) // to move to api.settings package and visibility to package private
 public final class ParsedRule<T> implements CarpetRule<T> {
     private static final Map<Class<?>, FromStringConverter<?>> CONVERTER_MAP = Map.ofEntries(
             Map.entry(String.class, str -> str),
@@ -46,22 +57,22 @@ public final class ParsedRule<T> implements CarpetRule<T> {
     @Deprecated(forRemoval = true) // to remove
     public final Field field;
     /**
-     * @deprecated Use {@link CarpetRule#name()}
+     * @deprecated Use {@link CarpetRule#name()} instead
      */
     @Deprecated(forRemoval = true) // to private
     public final String name;
     /**
-     * @deprecated Use {@link CarpetRule#description}
+     * @deprecated Use {@link RuleHelper#translatedDescription(CarpetRule)}, or get it from the translation system
      */
-    @Deprecated(forRemoval = true) // to private
+    @Deprecated(forRemoval = true) // to remove
     public final String description;
     /**
-     * @deprecated Use {@link CarpetRule#extraInfo()}
+     * @deprecated Use {@link CarpetRule#extraInfo()} instead
      */
-    @Deprecated(forRemoval = true) // to private
+    @Deprecated(forRemoval = true) // to remove
     public final List<String> extraInfo;
     /**
-     * @deprecated Use {@link CarpetRule#categories()}
+     * @deprecated Use {@link CarpetRule#categories()} instead
      */
     @Deprecated(forRemoval = true) // to private
     public final List<String> categories;
@@ -76,32 +87,33 @@ public final class ParsedRule<T> implements CarpetRule<T> {
     @Deprecated(forRemoval = true) // to pckg private (for printRulesToLog, or get a different way)
     public boolean isStrict;
     /**
-     * @deprecated Use {@link CarpetRule#canBeToggledClientSide()}
+     * @deprecated Use {@link CarpetRule#canBeToggledClientSide()} instead
      */
     @Deprecated(forRemoval = true) // to private (and maybe rename?)
     public boolean isClient;
     /**
-     * @deprecated Use {@link CarpetRule#type()}
+     * @deprecated Use {@link CarpetRule#type()} instead
      */
     @Deprecated(forRemoval = true) // to private (or remove and delegate to typedfield?)
     public final Class<T> type;
     /**
-     * @deprecated Use {@link CarpetRule#defaultValue()}
+     * @deprecated Use {@link CarpetRule#defaultValue()} instead
      */
     @Deprecated(forRemoval = true) // to private
     public final T defaultValue;
     /**
-     * @deprecated Use {@link CarpetRule#settingsManager()}
+     * @deprecated Use {@link CarpetRule#settingsManager()} instead.
+     *             This field may be {@code null} if the settings manager isn't an instance of the old type
      */
-    @Deprecated(forRemoval = true) // to private
-    public final SettingsManager settingsManager;
+    @Deprecated(forRemoval = true) // to remove in favour of realSettingsManager
+    public final carpet.settings.SettingsManager settingsManager;
     /**
      * @deprecated No replacement for this. A Carpet rule may not use {@link Validator}
      */
-    @Deprecated(forRemoval = true) // to pckg private (for printRulesToLog)
+    @Deprecated(forRemoval = true) // to remove (in favour of realValidators)
     public final List<Validator<T>> validators;
     /**
-     * @deprecated Use {@link CarpetRule#defaultValue()} and pass it to {@link RuleHelper#toRuleString(Object)}
+     * @deprecated Use {@link CarpetRule#defaultValue()} and pass it to {@link RuleHelper#toRuleString(Object)} instead
      */
     @Deprecated(forRemoval = true) // to remove
     public final String defaultAsString;
@@ -112,54 +124,83 @@ public final class ParsedRule<T> implements CarpetRule<T> {
     public final String scarpetApp;
     private final FromStringConverter<T> converter;
     private final TypedField<T> typedField; // to rename to field
+    private final SettingsManager realSettingsManager; // to rename to settingsManager
+    /**
+     * If you reference this field I'll steal your kneecaps
+     */
+    @Deprecated(forRemoval = true)
+    public final List<carpet.api.settings.Validator<T>> realValidators; // to rename to validators and to package private for printRulesToLog
+    private final boolean isLegacy; // to remove, only used for fallbacks
     
     @FunctionalInterface
     interface FromStringConverter<T> {
         T convert(String value) throws InvalidRuleValueException;
     }
+    
+    record RuleAnnotation(boolean isLegacy, String name, String desc, String[] extra, String[] category, String[] options, boolean strict, String appSource, Class<? extends carpet.api.settings.Validator>[] validators) {
+    }
 
-    // More flexible than a constructor, since it can return subclasses (doesn't do that yet) and null
-    static <T> ParsedRule<T> of(Field field, Rule rule, SettingsManager settingsManager) {
+    /**
+     * If you call this method I'll steal your kneecaps
+     */
+    @Deprecated(forRemoval = true)
+    public static <T> ParsedRule<T> of(Field field, SettingsManager settingsManager) {
+        RuleAnnotation rule;
+        if (settingsManager instanceof carpet.settings.SettingsManager && field.isAnnotationPresent(Rule.class)) { // Legacy path
+            Rule a = field.getAnnotation(Rule.class);
+            rule = new RuleAnnotation(true, a.name(), a.desc(), a.extra(), a.category(), a.options(), a.strict(), a.appSource(), a.validate());
+        } else if (field.isAnnotationPresent(carpet.api.settings.Rule.class)) {
+            carpet.api.settings.Rule a = field.getAnnotation(carpet.api.settings.Rule.class);
+            rule = new RuleAnnotation(false, null, null, null, a.categories(), a.options(), a.strict(), a.appSource(), a.validators());
+        } else {
+            // Don't allow to use old rule types in custom AND migrated settings manager
+            throw new IllegalArgumentException("Old rule annotation is only supported in legacy SettngsManager!");
+        }
         return new ParsedRule<>(field, rule, settingsManager);
     }
 
-    private ParsedRule(Field field, Rule rule, SettingsManager settingsManager)
+    private ParsedRule(Field field, RuleAnnotation rule, SettingsManager settingsManager)
     {
-        this.name = rule.name().isEmpty() ? field.getName() : rule.name();
+        this.isLegacy = rule.isLegacy();
+        this.name = !isLegacy || rule.name().isEmpty() ? field.getName() : rule.name();
         try {
             this.typedField = new TypedField<>(field);
         } catch (IllegalAccessException e) {
             throw new IllegalArgumentException("Couldn't access given field", e);
         }
         this.type = typedField.type();
-        this.description = rule.desc();
         this.isStrict = rule.strict();
-        this.extraInfo = List.of(rule.extra());
         this.categories = List.of(rule.category());
         this.scarpetApp = rule.appSource();
-        this.settingsManager = settingsManager;
-        this.validators = Stream.of(rule.validate()).map(this::instantiateValidator).collect(Collectors.toList());
+        this.realSettingsManager = settingsManager;
+        if (settingsManager instanceof carpet.settings.SettingsManager) {
+            // this is awkward...
+            this.settingsManager = null;
+        } else {
+            this.settingsManager = (carpet.settings.SettingsManager) settingsManager;
+        }
+        this.realValidators = Stream.of(rule.validators()).map(this::instantiateValidator).collect(Collectors.toList());
         this.defaultValue = value();
         FromStringConverter<T> converter0 = null;
         
         if (categories.contains(RuleCategory.COMMAND))
         {
-            this.validators.add(new Validator._COMMAND<T>());
+            this.realValidators.add(new Validator._COMMAND<T>());
             if (this.type == String.class)
             {
-                this.validators.add(instantiateValidator(Validator._COMMAND_LEVEL_VALIDATOR.class));
+                this.realValidators.add(instantiateValidator(StandardValidators.CommandLevelValidator.class));
             }
         }
         
         this.isClient = categories.contains(RuleCategory.CLIENT);
         if (this.isClient)
         {
-            this.validators.add(new Validator._CLIENT<>());
+            this.realValidators.add(new Validator._CLIENT<>());
         }
         
         if (!scarpetApp.isEmpty())
         {
-            this.validators.add(new Validator._SCARPET<>());
+            this.realValidators.add(new Validator.ScarpetValidator<>());
         }
         
         if (rule.options().length > 0)
@@ -192,7 +233,7 @@ public final class ParsedRule<T> implements CarpetRule<T> {
         }
         if (isStrict && !this.options.isEmpty())
         {
-            this.validators.add(new Validator._STRICT<>());
+            this.realValidators.add(0, new Validator.StrictValidator<>()); // at 0 prevents validators with side effects from running when invalid
         }
         if (converter0 == null) {
             @SuppressWarnings("unchecked")
@@ -202,17 +243,34 @@ public final class ParsedRule<T> implements CarpetRule<T> {
         }
         this.converter = converter0;
         
+        // Language "constants"
+        String nameKey = TranslationKeys.RULE_NAME_PATTERN.formatted(settingsManager().identifier(), name());
+        String descKey = TranslationKeys.RULE_DESC_PATTERN.formatted(settingsManager().identifier(), name());
+        String extraPrefix = TranslationKeys.RULE_EXTRA_PREFIX_PATTERN.formatted(settingsManager().identifier(), name());
+        
         // to remove
+        this.description = isLegacy ? rule.desc() : Objects.requireNonNull(Translations.trOrNull(descKey), "No language key provided for " + descKey);
+        this.extraInfo = isLegacy ? List.of(rule.extra()) : getTranslationArray(extraPrefix);
         this.defaultAsString = RuleHelper.toRuleString(this.defaultValue);
         this.field = field;
+        this.validators = realValidators.stream().filter(Validator.class::isInstance).map(v -> (Validator<T>) v).toList();
+        if (!isLegacy && validators.size() != realValidators.size()) throw new IllegalArgumentException("Can't use legacy validators with new rules!");
+
+        // Language fallbacks - Also asserts the strings will be available in non-english languages, given current system has no fallback
+        if (isLegacy && !rule.name().isEmpty()) Translations.registerFallbackTranslation(nameKey, name);
+        Translations.registerFallbackTranslation(descKey, description);
+        Iterator<String> infoIterator = extraInfo.iterator();
+        for (int i = 0; infoIterator.hasNext(); i++) {
+            Translations.registerFallbackTranslation(extraPrefix + i, infoIterator.next());
+        }
     }
 
     @SuppressWarnings({"unchecked", "rawtypes"}) // Needed because of the annotation
-    private Validator<T> instantiateValidator(Class<? extends Validator> cls)
+    private carpet.api.settings.Validator<T> instantiateValidator(Class<? extends carpet.api.settings.Validator> cls)
     {
         try
         {
-            Constructor<? extends Validator> constr = cls.getDeclaredConstructor();
+            var constr = cls.getDeclaredConstructor();
             constr.setAccessible(true);
             return constr.newInstance();
         }
@@ -229,10 +287,10 @@ public final class ParsedRule<T> implements CarpetRule<T> {
 
     private void set(CommandSourceStack source, T value, String stringValue) throws InvalidRuleValueException
     {
-        for (Validator<T> validator : this.validators)
+        for (var validator : this.realValidators)
         {
             stringValue = RuleHelper.toRuleString(value);
-            value = validator.validate(source, (CarpetRule<T>)this, value, stringValue);
+            value = validator.validate(source, this, value, stringValue);
             if (value == null) {
                 if (source != null) validator.notifyFailure(source, this, stringValue);
                 throw new InvalidRuleValueException();
@@ -241,7 +299,7 @@ public final class ParsedRule<T> implements CarpetRule<T> {
         if (!value.equals(value()) || source == null)
         {
             this.typedField.setStatic(value);
-            if (source != null) settingsManager.notifyRuleChanged(source, this);
+            if (source != null) settingsManager().notifyRuleChanged(source, this);
         }
     }
 
@@ -269,13 +327,19 @@ public final class ParsedRule<T> implements CarpetRule<T> {
     }
 
     @Override
-    public String description() {
-        return description;
+    public List<BaseComponent> extraInfo() {
+        return getTranslationArray(TranslationKeys.RULE_EXTRA_PREFIX_PATTERN.formatted(settingsManager().identifier(), name()))
+                .stream()
+                .map(str -> Messenger.c("g " + str))
+                .toList();
     }
-
-    @Override
-    public List<String> extraInfo() {
-        return extraInfo;
+    
+    private List<String> getTranslationArray(String prefix) {
+        List<String> ret = new ArrayList<>();
+        for (int i = 0; Translations.hasTranslation(prefix + i); i++) {
+            ret.add(Translations.tr(prefix + i));
+        }
+        return ret;
     }
 
     @Override
@@ -290,7 +354,7 @@ public final class ParsedRule<T> implements CarpetRule<T> {
     
     @Override
     public SettingsManager settingsManager() {
-        return settingsManager;
+        return realSettingsManager;
     }
 
     @Override
@@ -402,11 +466,11 @@ public final class ParsedRule<T> implements CarpetRule<T> {
     /**
      * @return A {@link String} being the translated {@link ParsedRule#extraInfo extraInfo} of this 
      *                             {@link ParsedRule}, in Carpet's configured language.
-     * @deprecated Use {@link RuleHelper#translatedExtras(CarpetRule)} instead
+     * @deprecated Use {@link CarpetRule#extraInfo()} instead
      */
     @Deprecated(forRemoval = true)
     public List<String> translatedExtras()
     {
-        return RuleHelper.translatedExtras(this);
+        return extraInfo().stream().map(BaseComponent::getString).toList();
     }
 }

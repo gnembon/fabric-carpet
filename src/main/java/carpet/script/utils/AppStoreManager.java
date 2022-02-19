@@ -1,14 +1,14 @@
 package carpet.script.utils;
 
 import carpet.CarpetServer;
+import carpet.api.settings.CarpetRule;
+import carpet.api.settings.Validator;
 import carpet.script.CarpetScriptHost;
 import carpet.script.CarpetScriptServer;
 import carpet.script.exception.InternalExpressionException;
 import carpet.script.value.MapValue;
 import carpet.script.value.StringValue;
 import carpet.script.value.Value;
-import carpet.settings.CarpetRule;
-import carpet.settings.Validator;
 import carpet.utils.Messenger;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;

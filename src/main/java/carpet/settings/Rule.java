@@ -12,11 +12,12 @@ import java.lang.annotation.Target;
  * - int
  * - double
  * - String
- * - long
- * - float
  * - a subclass of Enum
  * The default value of the rule will be the initial value of the field.
+ * 
+ * @deprecated Use {@link carpet.api.settings.Rule} instead
  */
+@Deprecated(forRemoval = true)
 @Target(ElementType.FIELD)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Rule
@@ -24,7 +25,7 @@ public @interface Rule
     /**
      * The rule name, by default the same as the field name
      */
-    String name() default "";
+    String name() default ""; // default same as field name
 
     /**
      * A description of the rule
@@ -63,11 +64,12 @@ public @interface Rule
     /**
      * The class of the validator checked when the rule is changed.
      */
-    Class<? extends Validator>[] validate() default {};
+    @SuppressWarnings("rawtypes")
+    Class<? extends carpet.api.settings.Validator>[] validate() default {};
 
     /**
      * The class of the condition checked when the rule is parsed, before being added
      * to the Settings Manager.
      */
-    Class<? extends Condition>[] condition() default {};
+    Class<? extends carpet.api.settings.Rule.Condition>[] condition() default {};
 }

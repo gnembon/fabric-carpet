@@ -1,7 +1,7 @@
 package carpet.commands;
 
 import carpet.CarpetSettings;
-import carpet.settings.SettingsManager;
+import carpet.utils.CommandHelper;
 import carpet.utils.Messenger;
 import carpet.utils.PerimeterDiagnostics;
 import com.mojang.brigadier.CommandDispatcher;
@@ -24,7 +24,7 @@ public class PerimeterInfoCommand
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher)
     {
         LiteralArgumentBuilder<CommandSourceStack> command = literal("perimeterinfo").
-                requires((player) -> SettingsManager.canUseCommand(player, CarpetSettings.commandPerimeterInfo)).
+                requires((player) -> CommandHelper.canUseCommand(player, CarpetSettings.commandPerimeterInfo)).
                 executes( (c) -> perimeterDiagnose(
                         c.getSource(),
                         new BlockPos(c.getSource().getPosition()),
