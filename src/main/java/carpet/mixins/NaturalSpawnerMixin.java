@@ -291,7 +291,7 @@ public class NaturalSpawnerMixin
                     {
                         SpawnReporter.first_chunk_marker.add(entityCategory);
                         //first chunk with spawn eligibility for that category
-                        Pair key = Pair.of(dim, entityCategory);
+                        var key = Pair.of(dim, entityCategory);
 
 
                         int spawnTries = SpawnReporter.spawn_tries.get(entityCategory);

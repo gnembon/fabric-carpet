@@ -229,7 +229,7 @@ public class OptimizedExplosion
 
         if (damagesTerrain)
         {
-            ObjectArrayList<Pair<ItemStack, BlockPos>> objectArrayList = new ObjectArrayList();
+            ObjectArrayList<Pair<ItemStack, BlockPos>> objectArrayList = new ObjectArrayList<>();
             Collections.shuffle(e.getToBlow(), world.random);
 
             for (BlockPos blockpos : e.getToBlow())
@@ -291,7 +291,7 @@ public class OptimizedExplosion
         int i = objectArrayList.size();
 
         for(int j = 0; j < i; ++j) {
-            Pair<ItemStack, BlockPos> pair = (Pair)objectArrayList.get(j);
+            Pair<ItemStack, BlockPos> pair = objectArrayList.get(j);
             ItemStack itemStack2 = pair.getLeft();
             if (ItemEntity.areMergable(itemStack2, itemStack)) {
                 ItemStack itemStack3 = ItemEntity.merge(itemStack2, itemStack, 16);

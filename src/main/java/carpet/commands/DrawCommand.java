@@ -4,6 +4,7 @@ import carpet.CarpetSettings;
 import carpet.settings.SettingsManager;
 import carpet.utils.Messenger;
 import com.google.common.collect.Lists;
+import com.mojang.brigadier.Command;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
@@ -80,25 +81,19 @@ public class DrawCommand
     }
 
     @FunctionalInterface
-    private interface OptionalBlockSelector
-    {
-        Integer apply(final CommandContext<CommandSourceStack> ctx) throws CommandSyntaxException;
-    }
-
-    @FunctionalInterface
     private interface ArgumentExtractor<T>
     {
         T apply(final CommandContext<CommandSourceStack> ctx, final String argName) throws CommandSyntaxException;
     }
 
     private static RequiredArgumentBuilder<CommandSourceStack, BlockInput>
-    drawShape(OptionalBlockSelector drawer)
+    drawShape(Command<CommandSourceStack> drawer)
     {
         return argument("block", BlockStateArgument.block()).
-                executes(drawer::apply)
+                executes(drawer)
                 .then(literal("replace")
                         .then(argument("filter", BlockPredicateArgument.blockPredicate())
-                                .executes(drawer::apply)));
+                                .executes(drawer)));
     }
 
     private static class ErrorHandled extends RuntimeException {}
