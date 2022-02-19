@@ -73,7 +73,7 @@ public class LogCommand
         }
         catch (CommandSyntaxException e)
         {
-            Messenger.m(source, "For players only");
+            Messenger.m(source, Messenger.tr("carpet.command.log.player_only"));
             return 0;
         }
         Map<String,String> subs = LoggerRegistry.getPlayerSubscriptions(source.getTextName());
@@ -84,7 +84,7 @@ public class LogCommand
         List<String> all_logs = new ArrayList<>(LoggerRegistry.getLoggerNames());
         Collections.sort(all_logs);
         Messenger.m(player, "w _____________________");
-        Messenger.m(player, "w Available logging options:");
+        Messenger.m(player, Messenger.tr("carpet.command.log.listing_header"));
         for (String lname: all_logs)
         {
             List<Object> comp = new ArrayList<>();
@@ -96,14 +96,18 @@ public class LogCommand
             {
                 if (subs.containsKey(lname))
                 {
-                    comp.add("l Subscribed ");
+                    comp.add("l ");
+                    comp.add(Messenger.tr("carpet.command.log.subscribed_state"));
                 }
                 else
                 {
-                    comp.add(color + " [Subscribe] ");
-                    comp.add("^w subscribe to " + lname);
+                    comp.add(color);
+                    comp.add(Messenger.c(" [", Messenger.tr("carpet.command.log.subscribe_button"), " ]"));
+                    comp.add("^w");
+                    comp.add(Messenger.tr("carpet.command.log.subscribe_hint", lname));
                     comp.add("!/log " + lname);
                 }
+                comp.add(Messenger.s(" "));
             }
             else
             {
@@ -115,7 +119,8 @@ public class LogCommand
                     } else
                     {
                         comp.add(color + " [" + option + "] ");
-                        comp.add("^w subscribe to " + lname + " " + option);
+                        comp.add("^w");
+                        comp.add(Messenger.tr("carpet.command.log.subscribe_hint_with_option", lname, option));
                         comp.add("!/log " + lname + " " + option);
                     }
 
@@ -124,96 +129,86 @@ public class LogCommand
             if (subs.containsKey(lname))
             {
                 comp.add("nb [X]");
-                comp.add("^w Click to unsubscribe");
+                comp.add("^w");
+                comp.add(Messenger.tr("carpet.command.log.unsubscribe_hint", lname));
                 comp.add("!/log "+lname);
             }
             Messenger.m(player,comp.toArray(new Object[0]));
         }
         return 1;
     }
-    private static int unsubFromAll(CommandSourceStack source, String player_name)
+
+    private static boolean checkPlayer(CommandSourceStack source, String player_name)
     {
         Player player = source.getServer().getPlayerList().getPlayerByName(player_name);
         if (player == null)
         {
-            Messenger.m(source, "r No player specified");
-            return 0;
+            Messenger.m(source, "r", Messenger.tr("carpet.command.log.no_player_specified", player_name));
+            return false;
         }
+        return true;
+    }
+    private static boolean checkLogger(CommandSourceStack source, String logName)
+    {
+        if (LoggerRegistry.getLogger(logName) == null)
+        {
+            Messenger.m(source, "r", Messenger.tr("carpet.command.log.unknown_logger", Messenger.c("rb " + logName)));
+            return false;
+        }
+        return true;
+    }
+
+    private static int unsubFromAll(CommandSourceStack source, String player_name)
+    {
+        if (!checkPlayer(source, player_name)) return 0;
         for (String logname : LoggerRegistry.getLoggerNames())
         {
             LoggerRegistry.unsubscribePlayer(player_name, logname);
         }
-        Messenger.m(source, "gi Unsubscribed from all logs");
+        Messenger.m(source, "gi", Messenger.tr("carpet.command.log.unsubscribed_all"));
         return 1;
     }
     private static int unsubFromLogger(CommandSourceStack source, String player_name, String logname)
     {
-        Player player = source.getServer().getPlayerList().getPlayerByName(player_name);
-        if (player == null)
-        {
-            Messenger.m(source, "r No player specified");
-            return 0;
-        }
-        if (LoggerRegistry.getLogger(logname) == null)
-        {
-            Messenger.m(source, "r Unknown logger: ","rb "+logname);
-            return 0;
-        }
+        if (!checkPlayer(source, player_name)) return 0;
+        if (!checkLogger(source, logname)) return 0;
         LoggerRegistry.unsubscribePlayer(player_name, logname);
-        Messenger.m(source, "gi Unsubscribed from "+logname);
+        Messenger.m(source, "gi", Messenger.tr("carpet.command.log.unsubscribed_single", logname));
         return 1;
     }
 
     private static int toggleSubscription(CommandSourceStack source, String player_name, String logName)
     {
-        Player player = source.getServer().getPlayerList().getPlayerByName(player_name);
-        if (player == null)
-        {
-            Messenger.m(source, "r No player specified");
-            return 0;
-        }
-        if (LoggerRegistry.getLogger(logName) == null)
-        {
-            Messenger.m(source, "r Unknown logger: ","rb "+logName);
-            return 0;
-        }
+        if (!checkPlayer(source, player_name)) return 0;
+        if (!checkLogger(source, logName)) return 0;
         boolean subscribed = LoggerRegistry.togglePlayerSubscription(player_name, logName);
         if (subscribed)
         {
-            Messenger.m(source, "gi "+player_name+" subscribed to " + logName + ".");
+            Messenger.m(source, "gi", Messenger.tr("carpet.command.log.toggle_subscribe", player_name, logName));
         }
         else
         {
-            Messenger.m(source, "gi "+player_name+" unsubscribed from " + logName + ".");
+            Messenger.m(source, "gi", Messenger.tr("carpet.command.log.toggle_unsubscribe", player_name, logName));
         }
         return 1;
     }
     private static int subscribePlayer(CommandSourceStack source, String player_name, String logname, String option)
     {
-        Player player = source.getServer().getPlayerList().getPlayerByName(player_name);
-        if (player == null)
-        {
-            Messenger.m(source, "r No player specified");
-            return 0;
-        }
-        if (LoggerRegistry.getLogger(logname) == null)
-        {
-            Messenger.m(source, "r Unknown logger: ","rb "+logname);
-            return 0;
-        }
+        if (!checkPlayer(source, player_name)) return 0;
+        if (!checkLogger(source, logname)) return 0;
         if (!LoggerRegistry.getLogger(logname).isOptionValid(option))
         {
-            Messenger.m(source, "r Invalid option: ", "rb "+option);
+            Messenger.m(source, "r", Messenger.tr("carpet.command.log.invalid_option", Messenger.c("rb "+option)));
             return 0;
         }
         LoggerRegistry.subscribePlayer(player_name, logname, option);
         if (option != null)
         {
-            Messenger.m(source, "gi Subscribed to " + logname + "(" + option + ")");
+            Messenger.m(source, "gi", Messenger.tr("carpet.command.log.subscribed_to_with_option", logname, option));
         }
         else
         {
-            Messenger.m(source, "gi Subscribed to " + logname);
+            Messenger.m(source, "gi", Messenger.tr("carpet.command.log.subscribed_to", logname));
         }
         return 1;
     }

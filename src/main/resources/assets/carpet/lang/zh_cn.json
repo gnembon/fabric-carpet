@@ -261,6 +261,23 @@
   "carpet.command.info.block.wander_chance": "其上方寻路游走概率: %1$s%%",
   "carpet.command.info.block.standby_time": "其上方平均寻路静止时间: %1$s",
 
+  "carpet.command.log.player_only": "仅玩家可使用",
+  "carpet.command.log.listing_header": "可用的监视器列表:",
+  "carpet.command.log.subscribed_state": "已订阅",
+  "carpet.command.log.subscribe_button": "订阅",
+  "carpet.command.log.subscribe_hint": "订阅监视器 %1$s",
+  "carpet.command.log.subscribe_hint_with_option": "订阅监视器 %1$s %2$s",
+  "carpet.command.log.unsubscribe_hint": "点击以退订监视器 %1$s",
+  "carpet.command.log.no_player_specified": "无法找到玩家 %1$s",
+  "carpet.command.log.unknown_logger": "未知监视器: %1$s",
+  "carpet.command.log.unsubscribed_all": "退订了所有的监视器",
+  "carpet.command.log.unsubscribed_single": "退订了 %1$s 监视器",
+  "carpet.command.log.toggle_unsubscribe": "%1$s 退订了监视器 %2$s",
+  "carpet.command.log.toggle_subscribe": "%1$s 订阅了监视器 %2$s",
+  "carpet.command.log.invalid_option": "无效的监视器选项: %1$s",
+  "carpet.command.log.subscribed_to": "订阅了监视器 %1$s",
+  "carpet.command.log.subscribed_to_with_option": "订阅了监视器 %1$s (%2$s)",
+
   "// Common words": "=====================================",
 
   "carpet.common.color.white": "白色",

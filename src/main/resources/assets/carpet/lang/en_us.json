@@ -353,6 +353,23 @@
   "carpet.command.info.block.wander_chance": "Wander chance above: %1$s%%",
   "carpet.command.info.block.standby_time": "Average standby above: %1$s",
 
+  "carpet.command.log.player_only": "For players only",
+  "carpet.command.log.listing_header": "Available logging options:",
+  "carpet.command.log.subscribed_state": "Subscribed",
+  "carpet.command.log.subscribe_button": "Subscribe",
+  "carpet.command.log.subscribe_hint": "Subscribe to %1$s",
+  "carpet.command.log.subscribe_hint_with_option": "Subscribe to %1$s %2$s",
+  "carpet.command.log.unsubscribe_hint": "Click to unsubscribe %1$s",
+  "carpet.command.log.no_player_specified": "No player specified",
+  "carpet.command.log.unknown_logger": "Unknown logger: %1$s",
+  "carpet.command.log.unsubscribed_all": "Unsubscribed from all logs",
+  "carpet.command.log.unsubscribed_single": "Unsubscribed from %1$s",
+  "carpet.command.log.toggle_unsubscribe": "%1$s unsubscribed from %2$s.",
+  "carpet.command.log.toggle_subscribe": "%1$s subscribed to %2$s.",
+  "carpet.command.log.invalid_option": "Invalid option: %1$s",
+  "carpet.command.log.subscribed_to": "Subscribed to %1$s",
+  "carpet.command.log.subscribed_to_with_option": "Subscribed to %1$s (%2$s)",
+
   "// Common words": "=====================================",
 
   "carpet.common.color.white": "white",
