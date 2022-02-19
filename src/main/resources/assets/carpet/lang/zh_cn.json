@@ -213,5 +213,34 @@
   "carpet.command.carpet.switch_to": "切换至",
   "carpet.command.carpet.tags": "分类",
   "carpet.command.carpet.unknown_rule": "未知的规则选项",
-  "carpet.command.carpet.version": "版本"
+  "carpet.command.carpet.version": "版本",
+
+  "carpet.command.counter.unknown_wool_color": "未知的羊毛颜色: %1$s",
+  "carpet.command.counter.restarted_all": "所有漏斗计数器已重启",
+  "carpet.command.counter.restarted_single": "%1$s漏斗计数器已重启",
+  "carpet.command.counter.no_item_at_all": "还没有物品被统计",
+  "carpet.command.counter.has_not_started": "%1$s漏斗计数器无统计数据",
+  "carpet.command.counter.no_item": "1$s漏斗计数器无统计数据 (%2$s min%3$s)",
+  "carpet.command.counter.realtime": "现实时间",
+  "carpet.command.counter.reset": "重置%1$s漏斗计数器",
+  "carpet.command.counter.summary": "%1$s漏斗计数器的物品统计 (%2$s min%3$s), 总计: %4$s, (%5$s/h):",
+
+  "// Common words": "=====================================",
+
+  "carpet.common.color.white": "白色",
+  "carpet.common.color.orange": "橙色",
+  "carpet.common.color.magenta": "品红色",
+  "carpet.common.color.light_blue": "淡蓝色",
+  "carpet.common.color.yellow": "黄色",
+  "carpet.common.color.lime": "黄绿色",
+  "carpet.common.color.pink": "粉红色",
+  "carpet.common.color.gray": "灰色",
+  "carpet.common.color.light_gray": "淡灰色",
+  "carpet.common.color.cyan": "青色",
+  "carpet.common.color.purple": "紫色",
+  "carpet.common.color.blue": "蓝色",
+  "carpet.common.color.brown": "棕色",
+  "carpet.common.color.green": "绿色",
+  "carpet.common.color.red": "红色",
+  "carpet.common.color.black": "黑色"
 }

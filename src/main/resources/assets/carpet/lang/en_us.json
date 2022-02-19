@@ -305,5 +305,34 @@
   "carpet.command.carpet.switch_to": "Switch to",
   "carpet.command.carpet.tags": "Tags",
   "carpet.command.carpet.unknown_rule": "Unknown rule",
-  "carpet.command.carpet.version": "Version"
+  "carpet.command.carpet.version": "Version",
+
+  "carpet.command.counter.unknown_wool_color": "Unknown wool color: %1$s",
+  "carpet.command.counter.restarted_all": "Restarted all counters",
+  "carpet.command.counter.restarted_single": "Restarted %1$s counter",
+  "carpet.command.counter.no_item_at_all": "No items have been counted yet.",
+  "carpet.command.counter.has_not_started": "%1$s hasn't started counting yet",
+  "carpet.command.counter.no_item": "No items for %1$s yet (%2$s min%3$s)",
+  "carpet.command.counter.realtime": "real time",
+  "carpet.command.counter.reset": "Reset %1$s",
+  "carpet.command.counter.summary": "Items for %1$s (%2$s min%3$s), total: %4$s, (%5$s/h):",
+
+  "// Common words": "=====================================",
+
+  "carpet.common.color.white": "white",
+  "carpet.common.color.orange": "orange",
+  "carpet.common.color.magenta": "magenta",
+  "carpet.common.color.light_blue": "light blue",
+  "carpet.common.color.yellow": "yellow",
+  "carpet.common.color.lime": "lime",
+  "carpet.common.color.pink": "pink",
+  "carpet.common.color.gray": "gray",
+  "carpet.common.color.light_gray": "light gray",
+  "carpet.common.color.cyan": "cyan",
+  "carpet.common.color.purple": "purple",
+  "carpet.common.color.blue": "blue",
+  "carpet.common.color.brown": "brown",
+  "carpet.common.color.green": "green",
+  "carpet.common.color.red": "red",
+  "carpet.common.color.black": "black"
 }
