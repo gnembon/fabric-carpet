@@ -493,21 +493,21 @@ public class SettingsManager
     public int printAllRulesToLog(String category)
     {
         PrintStream ps = System.out;
-        ps.println("# "+fancyName+" Settings");
+        ps.println("# " + Messenger.tr("carpet.misc.rule_printer.header", fancyName).getString());
         for (Map.Entry<String, ParsedRule<?>> e : new TreeMap<>(rules).entrySet())
         {
             ParsedRule<?> rule = e.getValue();
             if (category != null && !rule.categories.contains(category))
                 continue;
-            ps.println("## " + rule.name);
+            ps.println("## " + rule.getNameText().getString());
             ps.println(rule.getDescriptionText().getString()+"  ");
             for (BaseComponent extra : rule.getExtrasText())
                 ps.println(extra.getString() + "  ");
-            ps.println("* Type: `" + rule.type.getSimpleName() + "`  ");
-            ps.println("* Default value: `" + rule.defaultAsString + "`  ");
+            ps.println("* " + Messenger.tr("carpet.misc.rule_printer.type").getString() + ": `" + rule.type.getSimpleName() + "`  ");
+            ps.println("* " + Messenger.tr("carpet.misc.rule_printer.default_value").getString() + ": `" + rule.defaultAsString + "`  ");
             String optionString = rule.options.stream().map(s -> "`" + s + "`").collect(Collectors.joining(", "));
-            if (!optionString.isEmpty()) ps.println((rule.isStrict?"* Required":"* Suggested")+" options: " + optionString + "  ");
-            ps.println("* Categories: " + rule.categories.stream().map(s -> "`" + s.toUpperCase(Locale.ROOT) + "`").collect(Collectors.joining(", ")) + "  ");
+            if (!optionString.isEmpty()) ps.println("* " + Messenger.tr("carpet.misc.rule_printer." + (rule.isStrict?"required_options":"suggested_options")).getString() + ": " + optionString + "  ");
+            ps.println("* " + Messenger.tr("carpet.misc.rule_printer.categories").getString() + ": " + rule.categories.stream().map(s -> "`" + s.toUpperCase(Locale.ROOT) + "`").collect(Collectors.joining(", ")) + "  ");
             boolean preamble = false;
             for (Validator<?> validator : rule.validators)
             {
@@ -516,7 +516,7 @@ public class SettingsManager
                 {
                     if (!preamble)
                     {
-                        ps.println("* Additional notes:  ");
+                        ps.println("* " + Messenger.tr("carpet.misc.rule_printer.additional_notes").getString() + ":  ");
                         preamble = true;
                     }
                     ps.println("  * "+description.getString()+"  ");

@@ -539,5 +539,15 @@
   "carpet.common.mob_category.underground_water_creature": "underground water creature",
   "carpet.common.mob_category.water_creature": "water creature",
   "carpet.common.mob_category.water_ambient": "water ambient",
-  "carpet.common.mob_category.misc": "misc"
+  "carpet.common.mob_category.misc": "misc",
+
+  "// Misc": "=====================================",
+
+  "carpet.misc.rule_printer.header": "%1$s Setting",
+  "carpet.misc.rule_printer.type": "Type",
+  "carpet.misc.rule_printer.default_value": "Default value",
+  "carpet.misc.rule_printer.required_options": "Required options",
+  "carpet.misc.rule_printer.suggested_options": "Suggested options",
+  "carpet.misc.rule_printer.categories": "Categories",
+  "carpet.misc.rule_printer.additional_notes": "Additional notes"
 }

@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -270,20 +271,25 @@ public final class ParsedRule<T> implements Comparable<ParsedRule> {
         return this.name + ": " + getAsString();
     }
 
-    public BaseComponent getPlainNameText()
+    private BaseComponent getNameText(Function<BaseComponent, BaseComponent> translator)
     {
-        return Messenger.tr("%s.rule.%s.name".formatted(settingsManager.getIdentifier(), name));
-    }
-
-    // source is necessary since we want to dynamically adding a " (name)" prefix if there's translation
-    public BaseComponent getNameText(CommandSourceStack source)
-    {
-        BaseComponent nameText = this.getPlainNameText();
-        if (!Translations.translate(nameText, source).getString().equals(name))
+        BaseComponent nameText = Messenger.tr("%s.rule.%s.name".formatted(settingsManager.getIdentifier(), name));
+        if (!translator.apply(nameText).getString().equals(name))
         {
             nameText.append(Messenger.s(" (%s)".formatted(name)));
         }
         return nameText;
+    }
+
+    // source is required here since we want to dynamically adding a " (name)" prefix if there's translation
+    public BaseComponent getNameText(CommandSourceStack source)
+    {
+        return getNameText(nameText -> Translations.translate(nameText, source));
+    }
+
+    public BaseComponent getNameText()
+    {
+        return getNameText(Translations::translate);
     }
 
     public BaseComponent getDescriptionText()
