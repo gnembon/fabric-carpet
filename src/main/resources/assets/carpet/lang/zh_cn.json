@@ -404,7 +404,7 @@
   "carpet.command.tick.warp.another_player": "其他玩家",
   "carpet.command.tick.warp.already_warping": "%1$s目前正在跃迁时间，请稍后再试或询问他们",
   "carpet.command.tick.warp.warp_triggered": "时间跃迁中 ....",
-  "carpet.command.tick.warp.callback_failed": "指令回调失败 - 位置的错误: %1$s",
+  "carpet.command.tick.warp.callback_failed": "指令回调失败 - 未知的错误: %1$s",
   "carpet.command.tick.warp.finished": "... 时间跃迁结束，tps为%1$s，mspt为%2$s",
 
   "// Logger": "=====================================",
