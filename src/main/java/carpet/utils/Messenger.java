@@ -243,11 +243,11 @@ public class Messenger
     public static void m(CommandSourceStack source, Object ... fields)
     {
         if (source != null)
-            source.sendSuccess(Translations.tr(Messenger.c(fields), source),source.getServer() != null && source.getServer().getLevel(Level.OVERWORLD) != null); //OW
+            source.sendSuccess(Translations.translate(Messenger.c(fields), source),source.getServer() != null && source.getServer().getLevel(Level.OVERWORLD) != null); //OW
     }
     public static void m(Player player, Object ... fields)
     {
-        player.sendMessage(Translations.tr(Messenger.c(fields), player), Util.NIL_UUID);
+        player.sendMessage(Translations.translate(Messenger.c(fields), player), Util.NIL_UUID);
     }
 
     /*
@@ -317,11 +317,11 @@ public class Messenger
 
     public static void send(Player player, Collection<BaseComponent> lines)
     {
-        lines.forEach(message -> player.sendMessage(Translations.tr(message, player), Util.NIL_UUID));
+        lines.forEach(message -> player.sendMessage(Translations.translate(message, player), Util.NIL_UUID));
     }
     public static void send(CommandSourceStack source, Collection<BaseComponent> lines)
     {
-        lines.forEach(message -> source.sendSuccess(Translations.tr(message, source), false));
+        lines.forEach(message -> source.sendSuccess(Translations.translate(message, source), false));
     }
 
 
@@ -336,10 +336,10 @@ public class Messenger
             LOG.error("Message not delivered since server is null: " + message);
             return;
         }
-        server.sendMessage(Translations.tr(message), Util.NIL_UUID);
+        server.sendMessage(Translations.translate(message), Util.NIL_UUID);
         for (ServerPlayer entityplayer : server.getPlayerList().getPlayers())
         {
-            entityplayer.sendMessage(Translations.tr(message, entityplayer), Util.NIL_UUID);
+            entityplayer.sendMessage(Translations.translate(message, entityplayer), Util.NIL_UUID);
         }
     }
 }

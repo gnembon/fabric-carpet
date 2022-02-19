@@ -33,6 +33,9 @@ public class Translations
     //          API          //
     ///////////////////////////
 
+    // tr: key (+ context) -> String
+    // translate: text (+ context) -> translated text
+
     /**
      * Return the preferred language of a CommandSourceStack if it's a player, otherwise return server's language.
      * See also {@link Translations#getPreferredLanguage(net.minecraft.world.entity.player.Player)}
@@ -85,7 +88,31 @@ public class Translations
      */
     public static String tr(String key, String fallback)
     {
-		return key2Translation(getServerLanguage(), key).orElse(fallback);
+        return hasTranslation(key) ? translate(Messenger.tr(key)).getString() : fallback;
+    }
+
+    /**
+     * Translate the given translation key into a string.
+     * The given player's client setting language is used as the target language.
+     * @param key the translation key
+     * @param player The player that indicates the target language
+     * @return the translated text. If the translation entry doesn't exist, the fallback text will be returned.
+     */
+    public static String tr(String key, Player player)
+    {
+        return translate(Messenger.tr(key), player).getString();
+    }
+
+    /**
+     * Translate the given translation key into a string.
+     * The given CommandSourceStack's client setting language is used as the target language, if it's a player
+     * @param key the translation key
+     * @param source The CommandSourceStack that indicates the target language
+     * @return the translated text. If the translation entry doesn't exist, the fallback text will be returned.
+     */
+    public static String tr(String key, CommandSourceStack source)
+    {
+		return translate(Messenger.tr(key), source).getString();
     }
 
     /**
@@ -95,7 +122,7 @@ public class Translations
      * @param text The text to translate. A copy of the text will be made
      * @return A translated text component
      */
-    public static BaseComponent tr(BaseComponent text)
+    public static BaseComponent translate(BaseComponent text)
     {
         return translate(text, getServerLanguage());
     }
@@ -108,7 +135,7 @@ public class Translations
      * @param player The player that indicates the target language
      * @return A translated text component
      */
-    public static BaseComponent tr(BaseComponent text, Player player)
+    public static BaseComponent translate(BaseComponent text, Player player)
     {
         return translate(text, getPreferredLanguage(player));
     }
@@ -121,7 +148,7 @@ public class Translations
      * @param source The CommandSourceStack that indicates the target language
      * @return A translated text component
      */
-    public static BaseComponent tr(BaseComponent text, CommandSourceStack source)
+    public static BaseComponent translate(BaseComponent text, CommandSourceStack source)
     {
         return translate(text, getPreferredLanguage(source));
     }
