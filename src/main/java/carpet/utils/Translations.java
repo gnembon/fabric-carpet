@@ -325,20 +325,21 @@ public class Translations
     {
         if (text instanceof TranslatableComponent translatableComponent)
         {
-            Optional<String> optionalString = key2Translation(lang, translatableComponent.getKey());
+            String key = translatableComponent.getKey();
+            Optional<String> optionalString = key2Translation(lang, key);
             if (optionalString.isEmpty() && !lang.equals(DEFAULT_LANGUAGE))
             {
-                optionalString = key2Translation(DEFAULT_LANGUAGE, translatableComponent.getKey());
+                optionalString = key2Translation(DEFAULT_LANGUAGE, key);
             }
             if (optionalString.isPresent())
             {
                 BaseComponent origin = text;
 				String translated = optionalString.get();
-                TranslatableComponent customTranslatableComponent = new TranslatableComponent(translated, translatableComponent.getArgs());
+                TranslatableComponent dummy = new TranslatableComponent(translated, translatableComponent.getArgs());
                 try
                 {
                     List<FormattedText> elements = new ArrayList<>();
-                    ((TranslatableComponent_translationInterface) customTranslatableComponent).invokeDecomposeTemplate(translated, elements::add);
+                    ((TranslatableComponent_translationInterface) dummy).invokeDecomposeTemplate(translated, elements::add);
                     text = Messenger.c(elements.stream().map(stringVisitable ->
                     {
                         if (stringVisitable instanceof BaseComponent)
@@ -358,9 +359,9 @@ public class Translations
                 text.getSiblings().addAll(origin.getSiblings());
                 text.setStyle(origin.getStyle());
             }
-            else
+            else if (key.startsWith("carpet."))
             {
-                CarpetSettings.LOG.warn("[CM] Unknown translation key {}", translatableComponent.getKey());
+                CarpetSettings.LOG.warn("[CM] Unknown translation key {}", key);
             }
         }
 
