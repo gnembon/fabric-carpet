@@ -1600,10 +1600,10 @@ public class WorldAccess {
         // =======================================
         expression.addContextFunction("save_structure_template", -1, (c, t, lv) -> {
             CarpetContext cc = (CarpetContext) c;
-            ServerLevel lv2 = cc.s.getLevel();
+            ServerLevel world = cc.s.getLevel();
 
-            StructureManager lv3 = lv2.getStructureManager();
-            StructureTemplate lv6;
+            StructureManager structureManager = world.getStructureManager();
+            StructureTemplate theStructure;
             String name;
 
             boolean returnnbt = lv.get(0).isNull();
@@ -1615,9 +1615,9 @@ public class WorldAccess {
                     return Value.NULL;
                 } // if(lv.size()==2&&lv.get(1).isNull()){lv3.remove(struident);return
                   // Value.NULL;}
-                lv6 = lv3.getOrCreate(struident);
+                  theStructure = structureManager.getOrCreate(struident);
             } else {
-                lv6 = new StructureTemplate();
+                theStructure = new StructureTemplate();
             }
             BlockArgument start = BlockArgument.findIn((CarpetContext) c, lv, 1);
             BlockArgument end = BlockArgument.findIn((CarpetContext) c, lv, start.offset);
@@ -1633,7 +1633,7 @@ public class WorldAccess {
                     Math.max(start.block.getPos().getZ(), end.block.getPos().getZ()));
             BlockPos size = endBlockPos.subtract(startBlockPos).offset(1, 1, 1);
             // name,start,end, ignoreEntities, ignoredBlock,~~author~~,disk
-            lv6.fillFromWorld(lv2,
+            theStructure.fillFromWorld(world,
                     startBlockPos,
                     size,
                     !lv.get(end.offset).getBoolean(),
@@ -1641,10 +1641,10 @@ public class WorldAccess {
             // lv6.setAuthor(lv.get(9).getString());//MC-140821
             if (!returnnbt) {
                 if (lv.get(ignoredblock.offset).getBoolean()) {
-                    return BooleanValue.of(lv3.save(struident));
+                    return BooleanValue.of(structureManager.save(struident));
                 }
             } else {
-                return new NBTSerializableValue(lv6.save(new CompoundTag()));
+                return new NBTSerializableValue(theStructure.save(new CompoundTag()));
             }
 
             return Value.TRUE;
