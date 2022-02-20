@@ -314,7 +314,7 @@ public class ValueConversions
         );
     }
 
-    public static Value of(StructureStart<?> structure)
+    public static Value of(StructureStart structure)
     {
         if (structure == null || structure == StructureStart.INVALID_START) return Value.NULL;
         BoundingBox boundingBox = structure.getBoundingBox();

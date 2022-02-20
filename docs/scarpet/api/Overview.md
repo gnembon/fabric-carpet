@@ -357,7 +357,7 @@ Here is a list of built-in types, with their return value formats, as well as a 
   * `'loottable'`: name of a loot table source
   * `'attribute'`: an attribute name
   * `'boss'`: a bossbar name
-  * `'biome'`: a biome name 
+  * `'biome'`: a biome name. or biome tag
   * `'sound'`: name of a sound 
   * `'storekey'`: string of a valid current data store key.
   * `'identifier'`: any valid identifier. 'minecraft:' prefix is stripped off as a default.
