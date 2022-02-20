@@ -1621,7 +1621,7 @@ public class WorldAccess {
             }
             BlockArgument start = BlockArgument.findIn((CarpetContext) c, lv, 1);
             BlockArgument end = BlockArgument.findIn((CarpetContext) c, lv, start.offset);
-            BlockArgument ignoredblock = BlockArgument.findIn((CarpetContext) c, lv, end.offset + 1, true, true, false);
+            BlockArgument ignoredblock = end.offset + 1<lv.size()?BlockArgument.findIn((CarpetContext) c, lv, end.offset + 1, true, true, false):null;
 
             BlockPos startBlockPos = new BlockPos(
                     Math.min(start.block.getPos().getX(), end.block.getPos().getX()),
@@ -1640,7 +1640,7 @@ public class WorldAccess {
                     ignoredblock.block == null ? null : ignoredblock.block.getBlockState().getBlock());
             // lv6.setAuthor(lv.get(9).getString());//MC-140821
             if (!returnnbt) {
-                if (lv.get(ignoredblock.offset).getBoolean()) {
+                if (ignoredblock.offset<lv.size()?lv.get(ignoredblock.offset).getBoolean():false) {
                     return BooleanValue.of(structureManager.save(struident));
                 }
             } else {
@@ -1683,20 +1683,20 @@ public class WorldAccess {
             StructurePlaceSettings lv4 = new StructurePlaceSettings();
             lv4.clearProcessors();
 
-            lv4.setIgnoreEntities(lv.get(start.offset).getBoolean())
-                    .setFinalizeEntities(lv.get(start.offset + 2).getBoolean())
-                    .setKnownShape(lv.get(start.offset + 3).getBoolean())
-                    .setKeepLiquids(lv.get(start.offset + 4).getBoolean())
-                    .setMirror(lv.get(start.offset + 7).getString().equalsIgnoreCase("Z") ? Mirror.LEFT_RIGHT
+            lv4.setIgnoreEntities(start.offset <lv.size()?lv.get(start.offset).getBoolean():false)
+                    .setFinalizeEntities(start.offset + 2<lv.size()?lv.get(start.offset + 2).getBoolean():false)
+                    .setKnownShape(start.offset + 3<lv.size()?lv.get(start.offset + 3).getBoolean():true)
+                    .setKeepLiquids(start.offset + 4<lv.size()?lv.get(start.offset + 4).getBoolean():false)
+                    .setMirror(start.offset + 7>=lv.size()?Mirror.NONE:lv.get(start.offset + 7).getString().equalsIgnoreCase("Z") ? Mirror.LEFT_RIGHT
                             : lv.get(start.offset + 7).getString().equalsIgnoreCase("X") ? Mirror.FRONT_BACK
                                     : Mirror.NONE)
-                    .setRotation(Rotation.values()[(((NumericValue) lv.get(start.offset + 6)).getInt() % 4 + 4) % 4]);
+                    .setRotation(start.offset + 6>=lv.size()?Rotation.NONE:Rotation.values()[(((NumericValue) lv.get(start.offset + 6)).getInt() % 4 + 4) % 4]);
 
-            if (!lv.get(start.offset + 5).isNull()) {
+            if (start.offset + 5<lv.size()&&!lv.get(start.offset + 5).isNull()) {
                 lv4.addProcessor(new GravityProcessor(Heightmap.Types.WORLD_SURFACE,
                         ((NumericValue) lv.get(start.offset + 5)).getInt()));
             }
-            if (!lv.get(start.offset + 1).isNull()) {
+            if (start.offset + 1<lv.size()&&!lv.get(start.offset + 1).isNull()) {
                 lv4.addProcessor(new BlockRotProcessor(
                         Mth.clamp(((NumericValue) lv.get(start.offset + 1)).getFloat(), 0.0f, 1.0f)));
             }
