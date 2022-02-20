@@ -794,7 +794,7 @@ public class Auxiliary {
 
                 if (res == null)
                     return;
-                if (what.equalsIgnoreCase("boulder"))  // there might be more of those
+                if (what.equalsIgnoreCase("forest_rock"))  // there might be more of those
                     WorldTools.forceChunkUpdate(locator.block.getPos(), ((CarpetContext) c).s.getLevel());
                 result[0] = BooleanValue.of(res);
             });
