@@ -4,7 +4,6 @@ import carpet.CarpetServer;
 import carpet.CarpetSettings;
 import carpet.fakes.ScreenHandlerInterface;
 
-import carpet.script.CarpetContext;
 import carpet.script.CarpetScriptHost;
 import carpet.script.CarpetScriptServer;
 import carpet.script.Context;

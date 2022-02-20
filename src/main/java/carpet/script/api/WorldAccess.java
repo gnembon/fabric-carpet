@@ -607,7 +607,7 @@ public class WorldAccess {
                 for (long key : levelTickets.keySet())
                 {
                     ChunkPos chpos = new ChunkPos(key);
-                    for (Ticket ticket : levelTickets.get(key))
+                    for (Ticket<?> ticket : levelTickets.get(key))
                     {
                         res.add(ListValue.of(
                                 new StringValue(ticket.getType().toString()),
@@ -625,7 +625,7 @@ public class WorldAccess {
                 SortedArraySet<Ticket<?>> tickets = levelTickets.get(new ChunkPos(pos).toLong());
                 if (tickets != null)
                 {
-                    for (Ticket ticket : tickets)
+                    for (Ticket<?> ticket : tickets)
                     {
                         res.add(ListValue.of(
                                 new StringValue(ticket.getType().toString()),
@@ -1297,7 +1297,7 @@ public class WorldAccess {
             if (structureName == null) return Value.NULL;
             LongSet structureReferences = references.get(structureName);
             if (structureReferences == null || structureReferences.isEmpty()) return ListValue.of();
-            return ListValue.wrap(structureReferences.stream().map(l -> ListValue.of(
+            return ListValue.wrap(structureReferences.longStream().mapToObj(l -> ListValue.of(
                     new NumericValue(16*ChunkPos.getX(l)),
                     Value.ZERO,
                     new NumericValue(16*ChunkPos.getZ(l)))).collect(Collectors.toList()));
@@ -1509,7 +1509,6 @@ public class WorldAccess {
                 if (first instanceof ListValue)
                 {
                     List<Value> listVal = ((ListValue) first).getItems();
-                    int offset = 0;
                     BlockArgument locator = BlockArgument.findIn(cc, listVal, 0);
                     requestedChunks.add(new ChunkPos(locator.block.getPos()));
                     while (listVal.size() > locator.offset)
@@ -1561,8 +1560,8 @@ public class WorldAccess {
                     }
                 }*/
                 result[0] = MapValue.wrap(report.entrySet().stream().collect(Collectors.toMap(
-                        e -> new StringValue((String)((Map.Entry) e).getKey()),
-                        e ->  new NumericValue((Integer)((Map.Entry) e).getValue())
+                        e -> new StringValue(e.getKey()),
+                        e ->  new NumericValue(e.getValue())
                 )));
             });
             return result[0];
@@ -1599,7 +1598,7 @@ public class WorldAccess {
             BlockPos pos = locator.block.getPos();
             if (lv.size() != locator.offset+2) throw new InternalExpressionException("'add_chunk_ticket' requires block position, ticket type and radius");
             String type = lv.get(locator.offset).getString();
-            TicketType ticket = ticketTypes.get(type.toLowerCase(Locale.ROOT));
+            TicketType<?> ticket = ticketTypes.get(type.toLowerCase(Locale.ROOT));
             if (ticket == null) throw new InternalExpressionException("Unknown ticket type: "+type);
             int radius = NumericValue.asNumber(lv.get(locator.offset+1)).getInt();
             if (radius < 1 || radius > 32) throw new InternalExpressionException("Ticket radius should be between 1 and 32 chunks");

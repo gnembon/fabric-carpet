@@ -18,7 +18,7 @@ import net.minecraft.world.phys.Vec3;
 
 public class MobAI
 {
-    private static Map<EntityType,Set<TrackingType>> aiTrackers = new HashMap<>();
+    private static Map<EntityType<?>, Set<TrackingType>> aiTrackers = new HashMap<>();
 
     public static void resetTrackers()
     {
@@ -48,7 +48,7 @@ public class MobAI
         }
     }
 
-    public static void startTracking(EntityType e, TrackingType type)
+    public static void startTracking(EntityType<?> e, TrackingType type)
     {
         aiTrackers.putIfAbsent(e,Sets.newHashSet());
         aiTrackers.get(e).add(type);
@@ -56,7 +56,7 @@ public class MobAI
 
     public static List<String> availbleTypes()
     {
-        Set<EntityType> types = new HashSet<>();
+        Set<EntityType<?>> types = new HashSet<>();
         for (TrackingType type: TrackingType.values())
         {
             types.addAll(type.types);
@@ -68,7 +68,7 @@ public class MobAI
     {
         Set<TrackingType> availableOptions = new HashSet<>();
         for (TrackingType type: TrackingType.values())
-            for (EntityType etype: type.types)
+            for (EntityType<?> etype: type.types)
                 if (etype == entityType)
                     availableOptions.add(type);
         return availableOptions.stream().map(t -> t.name).collect(Collectors.toList());
@@ -78,9 +78,9 @@ public class MobAI
     {
         IRON_GOLEM_SPAWNING("iron_golem_spawning", Sets.newHashSet(EntityType.VILLAGER)),
         VILLAGER_BREEDING("breeding", Sets.newHashSet(EntityType.VILLAGER));
-        public Set<EntityType> types;
-        public String name;
-        TrackingType(String name, Set<EntityType> applicableTypes)
+        public final Set<EntityType<?>> types;
+        public final String name;
+        TrackingType(String name, Set<EntityType<?>> applicableTypes)
         {
             this.name = name;
             types = applicableTypes;

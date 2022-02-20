@@ -11,7 +11,6 @@ import carpet.script.value.BooleanValue;
 import carpet.script.value.FunctionValue;
 import carpet.script.value.ListValue;
 import carpet.script.value.MapValue;
-import carpet.script.value.NullValue;
 import carpet.script.value.NumericValue;
 import carpet.script.value.StringValue;
 import carpet.script.value.Value;
