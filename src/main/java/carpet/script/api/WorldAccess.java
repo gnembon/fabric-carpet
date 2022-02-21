@@ -1610,10 +1610,8 @@ public class WorldAccess {
             ResourceLocation struident = null;
             if (!returnnbt) {
                 name = lv.get(0).getString();
-                struident = ResourceLocation.tryParse(name);
-                if (name.isEmpty() || name.endsWith(":") || struident == null) {
-                    return Value.NULL;
-                } // if(lv.size()==2&&lv.get(1).isNull()){lv3.remove(struident);return
+                struident = InputValidator.identifierOf(name);
+                 // if(lv.size()==2&&lv.get(1).isNull()){lv3.remove(struident);return
                   // Value.NULL;}
                   theStructure = structureManager.getOrCreate(struident);
             } else {
@@ -1664,10 +1662,8 @@ public class WorldAccess {
                 StructureManager sm = world.getStructureManager();
                 Optional<StructureTemplate> optional;
 
-                ResourceLocation struident = ResourceLocation.tryParse(name);
-                if (name.isEmpty() || name.endsWith(":") || struident == null) {
-                    return Value.NULL;
-                }
+                ResourceLocation struident = InputValidator.identifierOf(name);
+                
                 optional = sm.get(struident);
                 if (!optional.isPresent()) {
                     return Value.FALSE;
@@ -1715,10 +1711,8 @@ public class WorldAccess {
 
             StructureManager sm = world.getStructureManager();
 
-            ResourceLocation struident = ResourceLocation.tryParse(name);
-            if (struident == null) {
-                return Value.NULL;
-            }
+            ResourceLocation struident = InputValidator.identifierOf(name);
+            
             sm.remove(struident);
             return Value.NULL;
 
