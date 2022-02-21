@@ -112,7 +112,7 @@ public class Translations
      */
     public static String tr(String key, CommandSourceStack source)
     {
-		return translate(Messenger.tr(key), source).getString();
+        return translate(Messenger.tr(key), source).getString();
     }
 
     /**
@@ -160,7 +160,7 @@ public class Translations
      */
     public static boolean hasTranslation(String key)
     {
-		return key2Translation(getServerLanguage(), key).isPresent();
+        return key2Translation(getServerLanguage(), key).isPresent();
     }
 
     /**
@@ -171,7 +171,7 @@ public class Translations
      */
     public static boolean hasTranslation(String key, Player player)
     {
-		return key2Translation(getPreferredLanguage(player), key).isPresent();
+        return key2Translation(getPreferredLanguage(player), key).isPresent();
     }
 
     /**
@@ -182,7 +182,7 @@ public class Translations
      */
     public static boolean hasTranslation(String key, CommandSourceStack source)
     {
-		return key2Translation(getPreferredLanguage(source), key).isPresent();
+        return key2Translation(getPreferredLanguage(source), key).isPresent();
     }
 
     /**
@@ -259,7 +259,7 @@ public class Translations
      */
     private static Map<String, String> getTranslations(String lang)
     {
-        return translationStorage.computeIfAbsent(getRealLanguage(lang.toLowerCase()), l ->
+        return translationStorage.computeIfAbsent(getRealLanguage(lang), l ->
         {
             Map<String, String> translations = new LinkedHashMap<>();
             Map<String, String> carpetTranslations = getTranslationFromResourcePath(String.format("assets/carpet/lang/%s.json", l));
@@ -290,7 +290,7 @@ public class Translations
             }
 
             translations.entrySet().removeIf(e -> e.getKey().startsWith("//"));
-			return translations;
+            return translations;
         });
     }
 
@@ -310,10 +310,10 @@ public class Translations
      * Maps "none" to "en_us" (default language)
      * Used as an adaptor of the carpet rule language since its default value is "none" and that means "en_us"
      */
-	private static String getRealLanguage(String lang)
-	{
-		return (lang.equalsIgnoreCase("none") ? DEFAULT_LANGUAGE : lang).toLowerCase();
-	}
+    private static String getRealLanguage(String lang)
+    {
+        return (lang.equalsIgnoreCase("none") ? DEFAULT_LANGUAGE : lang).toLowerCase();
+    }
 
     /**
      * key -> translated text
@@ -321,7 +321,7 @@ public class Translations
      */
     public static Optional<String> key2Translation(String lang, String key)
     {
-        return Optional.ofNullable(getTranslations(lang.toLowerCase()).get(key));
+        return Optional.ofNullable(getTranslations(lang).get(key));
     }
 
     /**
@@ -346,7 +346,7 @@ public class Translations
             if (optionalString.isPresent())
             {
                 BaseComponent origin = text;
-				String translated = optionalString.get();
+                String translated = optionalString.get();
                 TranslatableComponent dummy = new TranslatableComponent(translated, translatableComponent.getArgs());
                 try
                 {
