@@ -254,7 +254,7 @@ public class Translations
     ///////////////////////////
 
     /**
-     * Return a translation map of the given language
+     * Return a translation map (translation key -> translated text) of the given language
      * If it's the first time to access this language, load it from file and extensions
      */
     private static Map<String, String> getTranslations(String lang)
@@ -397,6 +397,10 @@ public class Translations
         return text;
     }
 
+    /**
+     * Load all suggested language in carpet rule "language"
+     * Usually only used during carpet initialization for preloading all commonly used translations
+     */
     public static void loadTranslations()
     {
         ParsedRule<?> languageRule = CarpetServer.settingsManager.getRule("language");
