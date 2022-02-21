@@ -1635,7 +1635,7 @@ public class WorldAccess {
                     startBlockPos,
                     size,
                     !(end.offset<lv.size()?lv.get(end.offset).getBoolean():false),
-                    ignoredblock.block == null ? null : ignoredblock.block.getBlockState().getBlock());
+                    ignoredblock == null ? null : ignoredblock.block == null ? null : ignoredblock.block.getBlockState().getBlock());
             // lv6.setAuthor(lv.get(9).getString());//MC-140821
             if (!returnnbt) {
                 if (ignoredblock.offset<lv.size()?lv.get(ignoredblock.offset).getBoolean():false) {
