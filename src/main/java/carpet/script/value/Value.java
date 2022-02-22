@@ -43,7 +43,7 @@ public abstract class Value implements Comparable<Value>, Cloneable
         catch (CloneNotSupportedException e)
         {
             // should not happen
-            CarpetSettings.LOG.catching(e);
+            CarpetSettings.LOG.error("Failed to clone variable", e);
             throw new InternalExpressionException("Variable of type "+getTypeString()+" is not cloneable. Tell gnembon about it, this shoudn't happen");
         }
         copy.boundVariable = var;

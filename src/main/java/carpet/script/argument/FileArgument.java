@@ -379,9 +379,9 @@ public class FileArgument
                 }
                 catch (IOException secondIO)
                 {
-                    CarpetScriptServer.LOG.warn("IOException when trying to read nbt file, something may have gone wrong with the fs",e);
-                    CarpetScriptServer.LOG.catching(ioException);
-                    CarpetScriptServer.LOG.catching(secondIO);
+                    CarpetScriptServer.LOG.warn("IOException when trying to read nbt file, something may have gone wrong with the fs", e);
+                    CarpetScriptServer.LOG.warn("", ioException);
+                    CarpetScriptServer.LOG.warn("", secondIO);
                     throw new ThrowStatement("Not a valid NBT tag in "+path.toString(), Throwables.NBT_ERROR);
                 }
             }
