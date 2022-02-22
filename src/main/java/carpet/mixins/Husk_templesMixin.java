@@ -1,6 +1,7 @@
 package carpet.mixins;
 
 import carpet.CarpetSettings;
+import carpet.utils.SpawnOverrides;
 import net.minecraft.core.BlockPos;
 import net.minecraft.data.worldgen.StructureFeatures;
 import net.minecraft.server.level.ServerLevel;
@@ -17,6 +18,6 @@ public class Husk_templesMixin
     private static boolean isSkylightOrTempleVisible(ServerLevelAccessor serverWorldAccess, BlockPos pos)
     {
         return serverWorldAccess.canSeeSky(pos) ||
-                (CarpetSettings.huskSpawningInTemples && (((ServerLevel)serverWorldAccess).structureFeatureManager().getStructureAt(pos, StructureFeatures.DESERT_PYRAMID.value()).isValid()));
+                (CarpetSettings.huskSpawningInTemples && SpawnOverrides.isStructureAtPosition((ServerLevel)serverWorldAccess, StructureFeatures.DESERT_PYRAMID.value().feature, pos));
     }
 }
