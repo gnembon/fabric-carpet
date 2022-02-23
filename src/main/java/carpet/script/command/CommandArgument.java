@@ -72,6 +72,7 @@ import net.minecraft.commands.arguments.ObjectiveArgument;
 import net.minecraft.commands.arguments.ObjectiveCriteriaArgument;
 import net.minecraft.commands.arguments.ParticleArgument;
 import net.minecraft.commands.arguments.RangeArgument;
+import net.minecraft.commands.arguments.ResourceKeyArgument;
 import net.minecraft.commands.arguments.ResourceLocationArgument;
 import net.minecraft.commands.arguments.ResourceOrTagLocationArgument;
 import net.minecraft.commands.arguments.ScoreHolderArgument;
@@ -209,7 +210,7 @@ public abstract class CommandArgument
                     (c, p) -> ValueConversions.of( ResourceLocationArgument.getId(c, p)), (ctx, builder) -> SharedSuggestionProvider.suggestResource(ctx.getSource().getServer().getLootTables().getIds(), builder)
             ),
             new VanillaUnconfigurableArgument("attribute", ResourceLocationArgument::id,
-                    (c, p) -> ValueConversions.of( Registry.ATTRIBUTE.getKey(ResourceLocationArgument.getAttribute(c, p))), (ctx, builder) -> SharedSuggestionProvider.suggestResource(Registry.ATTRIBUTE.keySet(), builder)
+                    (c, p) -> ValueConversions.of( Registry.ATTRIBUTE.getKey(ResourceKeyArgument.getAttribute(c, p))), (ctx, builder) -> SharedSuggestionProvider.suggestResource(Registry.ATTRIBUTE.keySet(), builder)
             ),
             new VanillaUnconfigurableArgument("boss", ResourceLocationArgument::id,
                     (c, p) -> ValueConversions.of( ResourceLocationArgument.getId(c, p)), BossBarCommands.SUGGEST_BOSS_BAR

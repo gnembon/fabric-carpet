@@ -1,12 +1,13 @@
 package carpet.utils;
 
 import carpet.CarpetSettings;
-import com.google.common.collect.ImmutableList;
 import it.unimi.dsi.fastutil.longs.LongSet;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
+import net.minecraft.core.Registry;
 import net.minecraft.core.SectionPos;
 import net.minecraft.data.worldgen.StructureFeatures;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.random.WeightedRandomList;
 import net.minecraft.world.entity.EntityType;
@@ -18,10 +19,12 @@ import net.minecraft.world.level.levelgen.feature.ConfiguredStructureFeature;
 import net.minecraft.world.level.levelgen.feature.StructureFeature;
 import net.minecraft.world.level.levelgen.structure.StructureSpawnOverride;
 import net.minecraft.world.level.levelgen.structure.StructureStart;
-import net.minecraft.world.level.levelgen.structure.templatesystem.StructureManager;
 import org.apache.commons.lang3.tuple.Pair;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.function.BooleanSupplier;
 
 public class SpawnOverrides {
@@ -69,7 +72,16 @@ public class SpawnOverrides {
         return null;
     }
 
-    public static boolean isStructureAtPosition(ServerLevel level, StructureFeature structure, BlockPos pos)
+    public static boolean isStructureAtPosition(ServerLevel level, ResourceKey<ConfiguredStructureFeature<?, ?>> structureKey, BlockPos pos)
+    {
+        final ConfiguredStructureFeature<?, ?> fortressFeature = level.registryAccess().registryOrThrow(Registry.CONFIGURED_STRUCTURE_FEATURE_REGISTRY).get(structureKey);
+        if (fortressFeature == null) {
+            return false;
+        }
+        return level.structureFeatureManager().getStructureAt(pos, fortressFeature).isValid();
+    }
+
+    public static boolean isStructureAtPosition(ServerLevel level, StructureFeature<?> structure, BlockPos pos)
     {
         for(StructureStart structureStart : startsForFeature(level, SectionPos.of(pos), structure)) {
             if (structureStart.getBoundingBox().isInside(pos) && structureStart.isValid()) {

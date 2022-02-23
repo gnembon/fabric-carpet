@@ -206,7 +206,7 @@ public class FeatureGenerator
         ChunkGeneratorInterface cgi = (ChunkGeneratorInterface) generator;
         List<StructurePlacement> structureConfig = cgi.getPlacementsForFeatureCM(structure);
         ChunkPos chunkPos = new ChunkPos(pos);
-        boolean couldPlace = structureConfig.stream().anyMatch(p -> p.isFeatureChunk(generator, chunkPos.x, chunkPos.z));
+        boolean couldPlace = structureConfig.stream().anyMatch(p -> p.isFeatureChunk(generator, world.getSeed(),  chunkPos.x, chunkPos.z));
         if (!couldPlace) return null;
 
         final HolderSet<Biome> structureBiomes = structure.biomes();
