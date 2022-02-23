@@ -239,6 +239,8 @@ public class EntityValue extends Value
         return getEntity().hashCode();
     }
 
+    public static final EntityTypeTest<Entity, ?> ANY = EntityTypeTest.forClass(Entity.class);
+
     public static EntityClassDescriptor getEntityDescriptor(String who, MinecraftServer server)
     {
         EntityClassDescriptor eDesc = EntityClassDescriptor.byName.get(who);
@@ -255,14 +257,21 @@ public class EntityValue extends Value
                     .getTag(TagKey.create(Registry.ENTITY_TYPE_REGISTRY, InputValidator.identifierOf(who)))
                     .orElseThrow( () -> new InternalExpressionException(booWho+" is not a valid entity descriptor"));
             Set<EntityType<?>> eTag = eTagValue.stream().map(Holder::value).collect(Collectors.toUnmodifiableSet());
-            //Tag<EntityType<?>> eTag = server.getTags().getOrEmpty(Registry.ENTITY_TYPE_REGISTRY).getTag(InputValidator.identifierOf(who));
             if (positive)
             {
-                return new EntityClassDescriptor(null, e -> eTag.contains(e.getType()) && e.isAlive(), eTag.stream());
+                if (eTag.size() == 1)
+                {
+                    EntityType<?> type = eTag.iterator().next();
+                    return new EntityClassDescriptor(type, Entity::isAlive, eTag.stream());
+                }
+                else
+                {
+                    return new EntityClassDescriptor(ANY, e -> eTag.contains(e.getType()) && e.isAlive(), eTag.stream());
+                }
             }
             else
             {
-                return new EntityClassDescriptor(null, e -> !eTag.contains(e.getType()) && e.isAlive(), Registry.ENTITY_TYPE.stream().filter(et -> !eTag.contains(et)));
+                return new EntityClassDescriptor(ANY, e -> !eTag.contains(e.getType()) && e.isAlive(), Registry.ENTITY_TYPE.stream().filter(et -> !eTag.contains(et)));
             }
         }
         return eDesc;
@@ -355,18 +364,18 @@ public class EntityValue extends Value
             ).collect(Collectors.toSet());
 
 
-            put("*", new EntityClassDescriptor(EntityTypeTest.forClass(Entity.class), e -> true, allTypes) );
-            put("valid", new EntityClassDescriptor(EntityTypeTest.forClass(Entity.class), net.minecraft.world.entity.EntitySelector.ENTITY_STILL_ALIVE, allTypes));
-            put("!valid", new EntityClassDescriptor(EntityTypeTest.forClass(Entity.class), e -> !e.isAlive(), allTypes));
+            put("*", new EntityClassDescriptor(ANY, e -> true, allTypes) );
+            put("valid", new EntityClassDescriptor(ANY, net.minecraft.world.entity.EntitySelector.ENTITY_STILL_ALIVE, allTypes));
+            put("!valid", new EntityClassDescriptor(ANY, e -> !e.isAlive(), allTypes));
 
             put("living",  new EntityClassDescriptor(EntityTypeTest.forClass(LivingEntity.class), net.minecraft.world.entity.EntitySelector.ENTITY_STILL_ALIVE, allTypes.stream().filter(living::contains)));
-            put("!living",  new EntityClassDescriptor(EntityTypeTest.forClass(Entity.class), (e) -> (!(e instanceof LivingEntity) && e.isAlive()), allTypes.stream().filter(et -> !living.contains(et))));
+            put("!living",  new EntityClassDescriptor(ANY, (e) -> (!(e instanceof LivingEntity) && e.isAlive()), allTypes.stream().filter(et -> !living.contains(et))));
 
             put("projectile", new EntityClassDescriptor(EntityTypeTest.forClass(Projectile.class), net.minecraft.world.entity.EntitySelector.ENTITY_STILL_ALIVE, allTypes.stream().filter(projectiles::contains)));
-            put("!projectile", new EntityClassDescriptor(EntityTypeTest.forClass(Entity.class), (e) -> (!(e instanceof Projectile) && e.isAlive()), allTypes.stream().filter(et -> !projectiles.contains(et) && !living.contains(et))));
+            put("!projectile", new EntityClassDescriptor(ANY, (e) -> (!(e instanceof Projectile) && e.isAlive()), allTypes.stream().filter(et -> !projectiles.contains(et) && !living.contains(et))));
 
             put("minecarts", new EntityClassDescriptor(EntityTypeTest.forClass(AbstractMinecart.class), net.minecraft.world.entity.EntitySelector.ENTITY_STILL_ALIVE, allTypes.stream().filter(minecarts::contains)));
-            put("!minecarts", new EntityClassDescriptor(EntityTypeTest.forClass(Entity.class), (e) -> (!(e instanceof AbstractMinecart) && e.isAlive()), allTypes.stream().filter(et -> !minecarts.contains(et) && !living.contains(et))));
+            put("!minecarts", new EntityClassDescriptor(ANY, (e) -> (!(e instanceof AbstractMinecart) && e.isAlive()), allTypes.stream().filter(et -> !minecarts.contains(et) && !living.contains(et))));
 
 
             // combat groups
@@ -391,13 +400,13 @@ public class EntityValue extends Value
                 EntityType<?> type  = Registry.ENTITY_TYPE.get(typeId);
                 String mobType = ValueConversions.simplify(typeId);
                 put(    mobType, new EntityClassDescriptor(type, net.minecraft.world.entity.EntitySelector.ENTITY_STILL_ALIVE, Stream.of(type)));
-                put("!"+mobType, new EntityClassDescriptor(EntityTypeTest.forClass(Entity.class), (e) -> e.getType() != type  && e.isAlive(), allTypes.stream().filter(et -> et != type)));
+                put("!"+mobType, new EntityClassDescriptor(ANY, (e) -> e.getType() != type  && e.isAlive(), allTypes.stream().filter(et -> et != type)));
             }
             for (MobCategory catId : MobCategory.values())
             {
                 String catStr = catId.getName();
-                put(    catStr, new EntityClassDescriptor(EntityTypeTest.forClass(Entity.class), e -> ((e.getType().getCategory() == catId) && e.isAlive()), allTypes.stream().filter(et -> et.getCategory() == catId)));
-                put("!"+catStr, new EntityClassDescriptor(EntityTypeTest.forClass(Entity.class), e -> ((e.getType().getCategory() != catId) && e.isAlive()), allTypes.stream().filter(et -> et.getCategory() != catId)));
+                put(    catStr, new EntityClassDescriptor(ANY, e -> ((e.getType().getCategory() == catId) && e.isAlive()), allTypes.stream().filter(et -> et.getCategory() == catId)));
+                put("!"+catStr, new EntityClassDescriptor(ANY, e -> ((e.getType().getCategory() != catId) && e.isAlive()), allTypes.stream().filter(et -> et.getCategory() != catId)));
             }
         }};
     }
