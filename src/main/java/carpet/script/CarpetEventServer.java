@@ -24,6 +24,7 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -371,6 +372,10 @@ public class CarpetEventServer
             // when some moron puts /reload in an event call.
             if (inSignal || inCall) callList = new ArrayList<>();
             callList.clear();
+        }
+
+        public void sortByPriority(CarpetScriptServer scriptServer) {
+            callList.sort(Comparator.comparingDouble(c -> -scriptServer.getAppHostByName(c.host).eventPriority));
         }
     }
 
@@ -1284,6 +1289,7 @@ public class CarpetEventServer
     private void onEventAddedToHost(Event event, ScriptHost host)
     {
         if (event.deprecated()) host.issueDeprecation(event.name+" event");
+        event.handler.sortByPriority(this.scriptServer);
         //return !(event.globalOnly && (host.perUser || host.parent != null));
     }
 
