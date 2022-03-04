@@ -40,9 +40,13 @@ apps `__on_close()` will execute once per app, and with `'player'` scoped apps, 
 ### App config via `__config()` function
 
 If an app defines `__config` method, and that method returns a map, it will be used to apply custom settings 
-for this app. Currently the following options are supported:
+for this app. Currently, the following options are supported:
 
-*   `'scope'`: default scope for global variables for the app, Default is `'player'`, which means that globals and defined 
+* `'strict'` : if `true`, any use of an uninitialized variable will result in program failure. Defaults to `false` if 
+not specified. With `'strict'`you have to assign an initial value to any variable before using it. It is very useful 
+to use this setting for app debugging and for beginner programmers. Explicit initialization is not required for your 
+code to work, but mistakes may result from improper assumptions about initial variable values of `null`.
+* `'scope'`: default scope for global variables for the app, Default is `'player'`, which means that globals and defined 
 functions will be unique for each player so that apps for each player will run in isolation. This is useful in 
 tool-like applications, where behaviour of things is always from a player's perspective. With player scope the initial run 
 of the app creates is initial state: defined functions, global variables, config and event handlers, which is then copied for 
@@ -128,7 +132,7 @@ in a list and contain of map-like resources descriptors, looking like
 or a relative location in the same folder as the app in question (the relative location directly). 
 `'target'` points to the path in app data, or shared app data folder. If not specified it will place the app into the main data folder with the name it has.
 if `'shared'` is specified and `true`. When re-downloading the app, all resources will be re-downloaded as well. 
-Currently, app resources are only downloaded when using `/carpet download` command.
+Currently, app resources are only downloaded when using `/script download` command.
 *   `libraries` - list of libraries or apps to be downloaded when installing the app from the app store. It needs to be a list of map-like resource
 descriptors, like the above `resources` field.
    ```
@@ -353,7 +357,7 @@ Here is a list of built-in types, with their return value formats, as well as a 
   * `'loottable'`: name of a loot table source
   * `'attribute'`: an attribute name
   * `'boss'`: a bossbar name
-  * `'biome'`: a biome name 
+  * `'biome'`: a biome name. or biome tag
   * `'sound'`: name of a sound 
   * `'storekey'`: string of a valid current data store key.
   * `'identifier'`: any valid identifier. 'minecraft:' prefix is stripped off as a default.

@@ -1,11 +1,10 @@
 package carpet.fakes;
 
-import net.minecraft.util.math.ChunkPos;
-import net.minecraft.world.entity.EntityLike;
-
 import java.util.List;
+import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.level.entity.EntityAccess;
 
-public interface SimpleEntityLookupInterface<T extends EntityLike>
+public interface SimpleEntityLookupInterface<T extends EntityAccess>
 {
     List<T> getChunkEntities(ChunkPos chpos);
 }

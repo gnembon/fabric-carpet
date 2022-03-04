@@ -7,6 +7,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Parameter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Objects;
@@ -21,10 +22,10 @@ import carpet.script.Context;
 import carpet.script.Expression;
 import carpet.script.Fluff.AbstractLazyFunction;
 import carpet.script.Fluff.TriFunction;
+import carpet.script.Fluff.UsageProvider;
 import carpet.script.exception.InternalExpressionException;
 import carpet.script.LazyValue;
 import carpet.script.value.Value;
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
 /**
  * <p>This class parses methods annotated with the {@link ScarpetFunction} annotation in a given {@link Class}, generating
@@ -73,6 +74,7 @@ import it.unimi.dsi.fastutil.objects.ObjectArrayList;
  */
 public final class AnnotationParser
 {
+    static final int UNDEFINED_PARAMS = -2;
     private static final List<ParsedFunction> functionList = new ArrayList<>();
 
     /**
@@ -90,8 +92,8 @@ public final class AnnotationParser
      * {@link InternalExpressionException}).
      * Basically, it's fine as long as you don't add a {@code throws} declaration to your methods.</li>
      * <li>Varargs (or effectively varargs) annotated methods must explicitly declare a maximum number of parameters to ingest in the {@link ScarpetFunction} 
-     * annotation. They can still declare an unlimited amount by setting that maximum to {@code -1}. "Effectively varargs" means a function that has 
-     * a parameter using/requiring a {@link ValueConverter} that has declared {@link ValueConverter#consumesVariableArgs()}.</li>
+     * annotation. They can still declare an unlimited amount by setting that maximum to {@link ScarpetFunction#UNLIMITED_PARAMS}. "Effectively varargs"
+     * means a function that has at least a parameter requiring a {@link ValueConverter} that has declared {@link ValueConverter#consumesVariableArgs()}.</li>
      * <li>Annotated methods must not have a parameter with generics as the varargs parameter. This is just because it was painful for me (altrisi) and 
      * didn't want to support it. Those will crash with a {@code ClassCastException}</li>
      * </ul>
@@ -141,12 +143,12 @@ public final class AnnotationParser
             expr.addLazyFunction(function.name, function.scarpetParamCount, function);
     }
 
-    private static class ParsedFunction implements TriFunction<Context, Context.Type, List<LazyValue>, LazyValue>
+    private static class ParsedFunction implements TriFunction<Context, Context.Type, List<LazyValue>, LazyValue>, UsageProvider
     {
         private final String name;
         private final boolean isMethodVarArgs;
         private final int methodParamCount;
-        private final List<ValueConverter<?>> valueConverters;
+        private final ValueConverter<?>[] valueConverters;
         private final Class<?> varArgsType;
         private final boolean primitiveVarArgs;
         private final ValueConverter<?> varArgsConverter;
@@ -165,12 +167,12 @@ public final class AnnotationParser
             this.methodParamCount = method.getParameterCount();
 
             Parameter[] methodParameters = method.getParameters();
-            this.valueConverters = new ObjectArrayList<>();
+            this.valueConverters = new ValueConverter[isMethodVarArgs ? methodParamCount - 1 : methodParamCount];
             for (int i = 0; i < this.methodParamCount; i++)
             {
                 Parameter param = methodParameters[i];
                 if (!isMethodVarArgs || i != this.methodParamCount - 1) // Varargs converter is separate
-                    this.valueConverters.add(ValueConverter.fromAnnotatedType(param.getAnnotatedType()));
+                    this.valueConverters[i] = ValueConverter.fromAnnotatedType(param.getAnnotatedType());
             }
             Class<?> originalVarArgsType = isMethodVarArgs ? methodParameters[methodParamCount - 1].getType().getComponentType() : null;
             this.varArgsType = ClassUtils.primitiveToWrapper(originalVarArgsType); // Primitive array cannot be cast to Obj[]
@@ -180,20 +182,20 @@ public final class AnnotationParser
             OutputConverter<Object> converter = OutputConverter.get((Class<Object>) method.getReturnType());
             this.outputConverter = converter;
 
-            this.isEffectivelyVarArgs = isMethodVarArgs ? true : valueConverters.stream().anyMatch(ValueConverter::consumesVariableArgs);
-            this.minParams = valueConverters.stream().mapToInt(ValueConverter::valueConsumption).sum(); // Note: In !varargs, this is params
+            this.isEffectivelyVarArgs = isMethodVarArgs || Arrays.stream(valueConverters).anyMatch(ValueConverter::consumesVariableArgs);
+            this.minParams = Arrays.stream(valueConverters).mapToInt(ValueConverter::valueConsumption).sum(); // Note: In !varargs, this is params
             int maxParams = this.minParams; // Unlimited == Integer.MAX_VALUE
             if (this.isEffectivelyVarArgs)
             {
                 maxParams = method.getAnnotation(ScarpetFunction.class).maxParams();
-                if (maxParams == -2)
-                    throw new IllegalArgumentException("No maximum number of params specified for " + name + ", use -1 for unlimited. "
+                if (maxParams == UNDEFINED_PARAMS)
+                    throw new IllegalArgumentException("No maximum number of params specified for " + name + ", use ScarpetFunction.UNLIMITED_PARAMS for unlimited. "
                             + "Provided in " + instance.getClass());
+                if (maxParams == ScarpetFunction.UNLIMITED_PARAMS)
+                    maxParams = Integer.MAX_VALUE;
                 if (maxParams < this.minParams)
                     throw new IllegalArgumentException("Provided maximum number of params for " + name + " is smaller than method's param count."
                             + "Provided in " + instance.getClass());
-                if (maxParams == -1)
-                    maxParams = Integer.MAX_VALUE;
             }
             this.maxParams = maxParams;
 
@@ -232,10 +234,6 @@ public final class AnnotationParser
                 if (lv.size() > maxParams)
                     throw new InternalExpressionException("Function '" + name + " expected up to " + maxParams + " arguments, got " + lv.size() + ". " 
                             + getUsage());
-            } else
-            {
-                if (lv.size() != minParams) // min == max if not varargs. We do this cause we don't use function's arg checking to be able to return lazy
-                    throw new InternalExpressionException("Function '" + name + "' expected " + minParams + " arguments, got " + lv.size() +". " + getUsage());
             }
             Object[] params = getMethodParams(lv, context, t);
             try
@@ -259,7 +257,7 @@ public final class AnnotationParser
             int regularArgs = isMethodVarArgs ? methodParamCount - 1 : methodParamCount;
             for (int i = 0; i < regularArgs; i++)
             {
-                params[i] = valueConverters.get(i).checkAndConvert(lvIterator, context, theLazyT);
+                params[i] = valueConverters[i].checkAndConvert(lvIterator, context, theLazyT);
                 if (params[i] == null)
                     throw new InternalExpressionException("Incorrect argument passsed to '" + name + "' function.\n" + getUsage());
             }
@@ -269,7 +267,7 @@ public final class AnnotationParser
                 Object[] varArgs;
                 if (varArgsConverter.consumesVariableArgs())
                 {
-                    List<Object> varArgsList = new ArrayList<>();
+                    List<Object> varArgsList = new ArrayList<>(); // fastutil's is extremely slow in toArray, and we use that
                     while (lvIterator.hasNext())
                     {
                         Object obj = varArgsConverter.checkAndConvert(lvIterator, context, theLazyT);
@@ -277,7 +275,7 @@ public final class AnnotationParser
                             throw new InternalExpressionException("Incorrect argument passsed to '" + name + "' function.\n" + getUsage());
                         varArgsList.add(obj);
                     }
-                    varArgs = varArgsList.toArray();
+                    varArgs = varArgsList.toArray((Object[])Array.newInstance(varArgsType, 0));
                 } else
                 {
                     varArgs = (Object[]) Array.newInstance(varArgsType, remaining / varArgsConverter.valueConsumption());
@@ -293,13 +291,14 @@ public final class AnnotationParser
             return params;
         }
 
-        private String getUsage()
+        @Override
+        public String getUsage()
         {
             // Possibility: More descriptive messages using param.getName()? Would need changing gradle setup to keep those
             StringBuilder builder = new StringBuilder("Usage: '");
             builder.append(name);
             builder.append('(');
-            builder.append(valueConverters.stream().map(ValueConverter::getTypeName).filter(Objects::nonNull).collect(Collectors.joining(", ")));
+            builder.append(Arrays.stream(valueConverters).map(ValueConverter::getTypeName).filter(Objects::nonNull).collect(Collectors.joining(", ")));
             if (varArgsConverter != null)
             {
                 builder.append(", ");

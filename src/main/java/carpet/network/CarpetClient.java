@@ -3,12 +3,12 @@ package carpet.network;
 import carpet.CarpetServer;
 import carpet.CarpetSettings;
 import carpet.script.utils.ShapesRenderer;
-import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.nbt.NbtList;
-import net.minecraft.nbt.NbtElement;
-import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 
 public class CarpetClient
 {
@@ -18,12 +18,12 @@ public class CarpetClient
     public static final int DATA = 1;
     public static ShapesRenderer shapes = null;
 
-    private static ClientPlayerEntity clientPlayer = null;
+    private static LocalPlayer clientPlayer = null;
     private static boolean isServerCarpet = false;
     public static String serverCarpetVersion;
-    public static final Identifier CARPET_CHANNEL = new Identifier("carpet:hello");
+    public static final ResourceLocation CARPET_CHANNEL = new ResourceLocation("carpet:hello");
 
-    public static void gameJoined(ClientPlayerEntity player)
+    public static void gameJoined(LocalPlayer player)
     {
         synchronized (sync)
         {
@@ -55,7 +55,7 @@ public class CarpetClient
         isServerCarpet = true;
     }
 
-    public static ClientPlayerEntity getPlayer()
+    public static LocalPlayer getPlayer()
     {
         return clientPlayer;
     }
@@ -72,18 +72,18 @@ public class CarpetClient
         return true;
     }
 
-    public static void onClientCommand(NbtElement t)
+    public static void onClientCommand(Tag t)
     {
         CarpetSettings.LOG.info("Server Response:");
-        NbtCompound tag = (NbtCompound)t;
+        CompoundTag tag = (CompoundTag)t;
         CarpetSettings.LOG.info(" - id: "+tag.getString("id"));
         CarpetSettings.LOG.info(" - code: "+tag.getInt("code"));
         if (tag.contains("error")) CarpetSettings.LOG.warn(" - error: "+tag.getString("error"));
         if (tag.contains("output"))
         {
-            NbtList outputTag = (NbtList) tag.get("output");
+            ListTag outputTag = (ListTag) tag.get("output");
             for (int i = 0; i < outputTag.size(); i++)
-                CarpetSettings.LOG.info(" - response: " + Text.Serializer.fromJson(outputTag.getString(i)).getString());
+                CarpetSettings.LOG.info(" - response: " + Component.Serializer.fromJson(outputTag.getString(i)).getString());
         }
     }
 }

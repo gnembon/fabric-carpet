@@ -1,10 +1,8 @@
 package carpet.script.value;
 
-import carpet.fakes.BrainInterface;
 import carpet.fakes.EntityInterface;
 import carpet.fakes.ItemEntityInterface;
 import carpet.fakes.LivingEntityInterface;
-import carpet.fakes.MemoryInterface;
 import carpet.fakes.MobEntityInterface;
 import carpet.fakes.ServerPlayerEntityInterface;
 import carpet.fakes.ServerPlayerInteractionManagerInterface;
@@ -20,60 +18,61 @@ import carpet.script.utils.InputValidator;
 import com.google.common.collect.Sets;
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
-import net.minecraft.entity.SpawnGroup;
-import net.minecraft.entity.ai.brain.Brain;
-import net.minecraft.entity.ai.brain.Memory;
-import net.minecraft.entity.EntityGroup;
-import net.minecraft.entity.ai.brain.MemoryModuleType;
-import net.minecraft.entity.ai.pathing.Path;
-import net.minecraft.entity.attribute.AttributeContainer;
-import net.minecraft.entity.attribute.EntityAttribute;
-import net.minecraft.entity.projectile.ProjectileEntity;
-import net.minecraft.entity.vehicle.AbstractMinecartEntity;
-import net.minecraft.nbt.NbtString;
-import net.minecraft.nbt.NbtElement;
-import net.minecraft.network.packet.s2c.play.EntityPassengersSetS2CPacket;
-import net.minecraft.network.packet.s2c.play.EntityPositionS2CPacket;
-import net.minecraft.network.packet.s2c.play.ExperienceBarUpdateS2CPacket;
-import net.minecraft.network.packet.s2c.play.PlayerPositionLookS2CPacket;
-import net.minecraft.command.EntitySelector;
-import net.minecraft.command.EntitySelectorReader;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityPose;
-import net.minecraft.entity.EntityType;
-import net.minecraft.entity.EquipmentSlot;
-import net.minecraft.entity.ItemEntity;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.ai.goal.GoToWalkTargetGoal;
-import net.minecraft.entity.ai.goal.Goal;
-import net.minecraft.entity.effect.StatusEffect;
-import net.minecraft.entity.effect.StatusEffectInstance;
-import net.minecraft.entity.mob.MobEntity;
-import net.minecraft.entity.mob.PathAwareEntity;
-import net.minecraft.entity.passive.PassiveEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.predicate.entity.EntityPredicates;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.commands.arguments.selector.EntitySelector;
+import net.minecraft.commands.arguments.selector.EntitySelectorParser;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.core.Holder;
+import net.minecraft.core.HolderSet;
+import net.minecraft.core.Registry;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.StringTag;
+import net.minecraft.network.protocol.game.ClientboundPlayerPositionPacket;
+import net.minecraft.network.protocol.game.ClientboundSetCarriedItemPacket;
+import net.minecraft.network.protocol.game.ClientboundSetExperiencePacket;
+import net.minecraft.network.protocol.game.ClientboundSetPassengersPacket;
+import net.minecraft.network.protocol.game.ClientboundTeleportEntityPacket;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.command.ServerCommandSource;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.tag.Tag;
-import net.minecraft.util.Hand;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.TypeFilter;
-import net.minecraft.util.hit.BlockHitResult;
-import net.minecraft.util.hit.EntityHitResult;
-import net.minecraft.util.hit.HitResult;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.util.registry.Registry;
-import net.minecraft.util.registry.RegistryKey;
-import net.minecraft.world.GameMode;
-import net.minecraft.world.World;
-
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.tags.Tag;
+import net.minecraft.tags.TagKey;
+import net.minecraft.util.Mth;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.effect.MobEffect;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.entity.AgeableMob;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.MobCategory;
+import net.minecraft.world.entity.MobType;
+import net.minecraft.world.entity.PathfinderMob;
+import net.minecraft.world.entity.Pose;
+import net.minecraft.world.entity.ai.Brain;
+import net.minecraft.world.entity.ai.attributes.Attribute;
+import net.minecraft.world.entity.ai.attributes.AttributeMap;
+import net.minecraft.world.entity.ai.goal.Goal;
+import net.minecraft.world.entity.ai.goal.MoveTowardsRestrictionGoal;
+import net.minecraft.world.entity.ai.memory.ExpirableValue;
+import net.minecraft.world.entity.ai.memory.MemoryModuleType;
+import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.projectile.Projectile;
+import net.minecraft.world.entity.vehicle.AbstractMinecart;
+import net.minecraft.world.level.GameType;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.entity.EntityTypeTest;
+import net.minecraft.world.level.pathfinder.Path;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.EntityHitResult;
+import net.minecraft.world.phys.HitResult;
+import net.minecraft.world.phys.Vec3;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.EnumSet;
@@ -110,18 +109,18 @@ public class EntityValue extends Value
     }
 
     private static final Map<String, EntitySelector> selectorCache = new HashMap<>();
-    public static Collection<? extends Entity > getEntitiesFromSelector(ServerCommandSource source, String selector)
+    public static Collection<? extends Entity > getEntitiesFromSelector(CommandSourceStack source, String selector)
     {
         try
         {
             EntitySelector entitySelector = selectorCache.get(selector);
             if (entitySelector != null)
             {
-                return entitySelector.getEntities(source.withMaxLevel(4));
+                return entitySelector.findEntities(source.withMaximumPermission(4));
             }
-            entitySelector = new EntitySelectorReader(new StringReader(selector), true).read();
+            entitySelector = new EntitySelectorParser(new StringReader(selector), true).parse();
             selectorCache.put(selector, entitySelector);
-            return entitySelector.getEntities(source.withMaxLevel(4));
+            return entitySelector.findEntities(source.withMaximumPermission(4));
         }
         catch (CommandSyntaxException e)
         {
@@ -131,23 +130,23 @@ public class EntityValue extends Value
 
     public Entity getEntity()
     {
-        if (entity instanceof ServerPlayerEntity && ((ServerPlayerEntityInterface)entity).isInvalidEntityObject())
+        if (entity instanceof ServerPlayer && ((ServerPlayerEntityInterface)entity).isInvalidEntityObject())
         {
-            ServerPlayerEntity newPlayer = entity.getServer().getPlayerManager().getPlayer(entity.getUuid());
+            ServerPlayer newPlayer = entity.getServer().getPlayerList().getPlayer(entity.getUUID());
             if (newPlayer != null) entity = newPlayer;
         }
         return entity;
     }
 
-    public static ServerPlayerEntity getPlayerByValue(MinecraftServer server, Value value)
+    public static ServerPlayer getPlayerByValue(MinecraftServer server, Value value)
     {
-        ServerPlayerEntity player = null;
+        ServerPlayer player = null;
         if (value instanceof EntityValue)
         {
             Entity e = ((EntityValue) value).getEntity();
-            if (e instanceof ServerPlayerEntity)
+            if (e instanceof ServerPlayer)
             {
-                player = (ServerPlayerEntity) e;
+                player = (ServerPlayer) e;
             }
         }
         else if (value.isNull())
@@ -157,7 +156,7 @@ public class EntityValue extends Value
         else
         {
             String playerName = value.getString();
-            player = server.getPlayerManager().getPlayer(playerName);
+            player = server.getPlayerList().getPlayerByName(playerName);
         }
         return player;
     }
@@ -168,9 +167,9 @@ public class EntityValue extends Value
         if (value instanceof EntityValue)
         {
             Entity e = ((EntityValue) value).getEntity();
-            if (e instanceof ServerPlayerEntity)
+            if (e instanceof ServerPlayer)
             {
-                playerName = e.getEntityName();
+                playerName = e.getScoreboardName();
             }
         }
         else if (value.isNull())
@@ -240,6 +239,8 @@ public class EntityValue extends Value
         return getEntity().hashCode();
     }
 
+    public static final EntityTypeTest<Entity, ?> ANY = EntityTypeTest.forClass(Entity.class);
+
     public static EntityClassDescriptor getEntityDescriptor(String who, MinecraftServer server)
     {
         EntityClassDescriptor eDesc = EntityClassDescriptor.byName.get(who);
@@ -251,15 +252,26 @@ public class EntityValue extends Value
                 positive = false;
                 who = who.substring(1);
             }
-            Tag<EntityType<?>> eTag = server.getTagManager().getOrCreateTagGroup(Registry.ENTITY_TYPE_KEY).getTag(InputValidator.identifierOf(who));
-            if (eTag == null) throw new InternalExpressionException(who+" is not a valid entity descriptor");
+            String booWho = who;
+            HolderSet.Named<EntityType<?>> eTagValue = server.registryAccess().registryOrThrow(Registry.ENTITY_TYPE_REGISTRY)
+                    .getTag(TagKey.create(Registry.ENTITY_TYPE_REGISTRY, InputValidator.identifierOf(who)))
+                    .orElseThrow( () -> new InternalExpressionException(booWho+" is not a valid entity descriptor"));
+            Set<EntityType<?>> eTag = eTagValue.stream().map(Holder::value).collect(Collectors.toUnmodifiableSet());
             if (positive)
             {
-                return new EntityClassDescriptor(null, e -> eTag.contains(e.getType()) && e.isAlive(), eTag.values().stream());
+                if (eTag.size() == 1)
+                {
+                    EntityType<?> type = eTag.iterator().next();
+                    return new EntityClassDescriptor(type, Entity::isAlive, eTag.stream());
+                }
+                else
+                {
+                    return new EntityClassDescriptor(ANY, e -> eTag.contains(e.getType()) && e.isAlive(), eTag.stream());
+                }
             }
             else
             {
-                return new EntityClassDescriptor(null, e -> !eTag.contains(e.getType()) && e.isAlive(), Registry.ENTITY_TYPE.stream().filter(et -> !eTag.contains(et)));
+                return new EntityClassDescriptor(ANY, e -> !eTag.contains(e.getType()) && e.isAlive(), Registry.ENTITY_TYPE.stream().filter(et -> !eTag.contains(et)));
             }
         }
         return eDesc;
@@ -269,7 +281,7 @@ public class EntityValue extends Value
 
     public static class EntityClassDescriptor
     {
-        public TypeFilter<Entity, ? extends Entity> directType; // interface of EntityType
+        public EntityTypeTest<Entity, ? extends Entity> directType; // interface of EntityType
         public Predicate<? super Entity> filteringPredicate;
         public List<EntityType<? extends  Entity>> typeList;
         public Value listValue;
@@ -278,15 +290,15 @@ public class EntityValue extends Value
             directType = type;
             filteringPredicate = predicate;
             typeList = types;
-            listValue = (types==null)?Value.NULL:ListValue.wrap(types.stream().map(et -> StringValue.of(nameFromRegistryId(Registry.ENTITY_TYPE.getId(et)))).collect(Collectors.toList()));
+            listValue = (types==null)?Value.NULL:ListValue.wrap(types.stream().map(et -> StringValue.of(nameFromRegistryId(Registry.ENTITY_TYPE.getKey(et)))).collect(Collectors.toList()));
         }
 
-        EntityClassDescriptor( TypeFilter<Entity, ?> type, Predicate<? super Entity> predicate, List<EntityType<?>> types)
+        EntityClassDescriptor( EntityTypeTest<Entity, ?> type, Predicate<? super Entity> predicate, List<EntityType<?>> types)
         {
             directType = type;
             filteringPredicate = predicate;
             typeList = types;
-            listValue = (types==null)?Value.NULL:ListValue.wrap(types.stream().map(et -> StringValue.of(nameFromRegistryId(Registry.ENTITY_TYPE.getId(et)))).collect(Collectors.toList()));
+            listValue = (types==null)?Value.NULL:ListValue.wrap(types.stream().map(et -> StringValue.of(nameFromRegistryId(Registry.ENTITY_TYPE.getKey(et)))).collect(Collectors.toList()));
         }
 
         EntityClassDescriptor(EntityType<?> type, Predicate<? super Entity> predicate, Stream<EntityType<?>> types)
@@ -294,7 +306,7 @@ public class EntityValue extends Value
             this(type, predicate, types.collect(Collectors.toList()));
         }
 
-        EntityClassDescriptor(TypeFilter<Entity, ?> type, Predicate<? super Entity> predicate, Stream<EntityType<?>> types)
+        EntityClassDescriptor(EntityTypeTest<Entity, ?> type, Predicate<? super Entity> predicate, Stream<EntityType<?>> types)
         {
             this(type, predicate, types.collect(Collectors.toList()));
         }
@@ -352,49 +364,49 @@ public class EntityValue extends Value
             ).collect(Collectors.toSet());
 
 
-            put("*", new EntityClassDescriptor(TypeFilter.instanceOf(Entity.class), e -> true, allTypes) );
-            put("valid", new EntityClassDescriptor(TypeFilter.instanceOf(Entity.class), EntityPredicates.VALID_ENTITY, allTypes));
-            put("!valid", new EntityClassDescriptor(TypeFilter.instanceOf(Entity.class), e -> !e.isAlive(), allTypes));
+            put("*", new EntityClassDescriptor(ANY, e -> true, allTypes) );
+            put("valid", new EntityClassDescriptor(ANY, net.minecraft.world.entity.EntitySelector.ENTITY_STILL_ALIVE, allTypes));
+            put("!valid", new EntityClassDescriptor(ANY, e -> !e.isAlive(), allTypes));
 
-            put("living",  new EntityClassDescriptor(TypeFilter.instanceOf(LivingEntity.class), EntityPredicates.VALID_ENTITY, allTypes.stream().filter(living::contains)));
-            put("!living",  new EntityClassDescriptor(TypeFilter.instanceOf(Entity.class), (e) -> (!(e instanceof LivingEntity) && e.isAlive()), allTypes.stream().filter(et -> !living.contains(et))));
+            put("living",  new EntityClassDescriptor(EntityTypeTest.forClass(LivingEntity.class), net.minecraft.world.entity.EntitySelector.ENTITY_STILL_ALIVE, allTypes.stream().filter(living::contains)));
+            put("!living",  new EntityClassDescriptor(ANY, (e) -> (!(e instanceof LivingEntity) && e.isAlive()), allTypes.stream().filter(et -> !living.contains(et))));
 
-            put("projectile", new EntityClassDescriptor(TypeFilter.instanceOf(ProjectileEntity.class), EntityPredicates.VALID_ENTITY, allTypes.stream().filter(projectiles::contains)));
-            put("!projectile", new EntityClassDescriptor(TypeFilter.instanceOf(Entity.class), (e) -> (!(e instanceof ProjectileEntity) && e.isAlive()), allTypes.stream().filter(et -> !projectiles.contains(et) && !living.contains(et))));
+            put("projectile", new EntityClassDescriptor(EntityTypeTest.forClass(Projectile.class), net.minecraft.world.entity.EntitySelector.ENTITY_STILL_ALIVE, allTypes.stream().filter(projectiles::contains)));
+            put("!projectile", new EntityClassDescriptor(ANY, (e) -> (!(e instanceof Projectile) && e.isAlive()), allTypes.stream().filter(et -> !projectiles.contains(et) && !living.contains(et))));
 
-            put("minecarts", new EntityClassDescriptor(TypeFilter.instanceOf(AbstractMinecartEntity.class), EntityPredicates.VALID_ENTITY, allTypes.stream().filter(minecarts::contains)));
-            put("!minecarts", new EntityClassDescriptor(TypeFilter.instanceOf(Entity.class), (e) -> (!(e instanceof AbstractMinecartEntity) && e.isAlive()), allTypes.stream().filter(et -> !minecarts.contains(et) && !living.contains(et))));
+            put("minecarts", new EntityClassDescriptor(EntityTypeTest.forClass(AbstractMinecart.class), net.minecraft.world.entity.EntitySelector.ENTITY_STILL_ALIVE, allTypes.stream().filter(minecarts::contains)));
+            put("!minecarts", new EntityClassDescriptor(ANY, (e) -> (!(e instanceof AbstractMinecart) && e.isAlive()), allTypes.stream().filter(et -> !minecarts.contains(et) && !living.contains(et))));
 
 
             // combat groups
 
-            put("arthropod", new EntityClassDescriptor(TypeFilter.instanceOf(LivingEntity.class), e -> (((LivingEntity) e).getGroup() == EntityGroup.ARTHROPOD && e.isAlive()), allTypes.stream().filter(arthropods::contains)));
-            put("!arthropod", new EntityClassDescriptor(TypeFilter.instanceOf(LivingEntity.class), e -> (((LivingEntity) e).getGroup() != EntityGroup.ARTHROPOD && e.isAlive()), allTypes.stream().filter(et -> !arthropods.contains(et) && living.contains(et))));
+            put("arthropod", new EntityClassDescriptor(EntityTypeTest.forClass(LivingEntity.class), e -> (((LivingEntity) e).getMobType() == MobType.ARTHROPOD && e.isAlive()), allTypes.stream().filter(arthropods::contains)));
+            put("!arthropod", new EntityClassDescriptor(EntityTypeTest.forClass(LivingEntity.class), e -> (((LivingEntity) e).getMobType() != MobType.ARTHROPOD && e.isAlive()), allTypes.stream().filter(et -> !arthropods.contains(et) && living.contains(et))));
 
-            put("undead", new EntityClassDescriptor(TypeFilter.instanceOf(LivingEntity.class), e -> (((LivingEntity) e).getGroup() == EntityGroup.UNDEAD && e.isAlive()), allTypes.stream().filter(undeads::contains)));
-            put("!undead", new EntityClassDescriptor(TypeFilter.instanceOf(LivingEntity.class), e -> (((LivingEntity) e).getGroup() != EntityGroup.UNDEAD && e.isAlive()), allTypes.stream().filter(et -> !undeads.contains(et) && living.contains(et))));
+            put("undead", new EntityClassDescriptor(EntityTypeTest.forClass(LivingEntity.class), e -> (((LivingEntity) e).getMobType() == MobType.UNDEAD && e.isAlive()), allTypes.stream().filter(undeads::contains)));
+            put("!undead", new EntityClassDescriptor(EntityTypeTest.forClass(LivingEntity.class), e -> (((LivingEntity) e).getMobType() != MobType.UNDEAD && e.isAlive()), allTypes.stream().filter(et -> !undeads.contains(et) && living.contains(et))));
 
-            put("aquatic", new EntityClassDescriptor(TypeFilter.instanceOf(LivingEntity.class), e -> (((LivingEntity) e).getGroup() == EntityGroup.AQUATIC && e.isAlive()), allTypes.stream().filter(aquatique::contains)));
-            put("!aquatic", new EntityClassDescriptor(TypeFilter.instanceOf(LivingEntity.class), e -> (((LivingEntity) e).getGroup() != EntityGroup.AQUATIC && e.isAlive()), allTypes.stream().filter(et -> !aquatique.contains(et) && living.contains(et))));
+            put("aquatic", new EntityClassDescriptor(EntityTypeTest.forClass(LivingEntity.class), e -> (((LivingEntity) e).getMobType() == MobType.WATER && e.isAlive()), allTypes.stream().filter(aquatique::contains)));
+            put("!aquatic", new EntityClassDescriptor(EntityTypeTest.forClass(LivingEntity.class), e -> (((LivingEntity) e).getMobType() != MobType.WATER && e.isAlive()), allTypes.stream().filter(et -> !aquatique.contains(et) && living.contains(et))));
 
-            put("illager", new EntityClassDescriptor(TypeFilter.instanceOf(LivingEntity.class), e -> (((LivingEntity) e).getGroup() == EntityGroup.ILLAGER && e.isAlive()), allTypes.stream().filter(illagers::contains)));
-            put("!illager", new EntityClassDescriptor(TypeFilter.instanceOf(LivingEntity.class), e -> (((LivingEntity) e).getGroup() != EntityGroup.ILLAGER && e.isAlive()), allTypes.stream().filter(et -> !illagers.contains(et) && living.contains(et))));
+            put("illager", new EntityClassDescriptor(EntityTypeTest.forClass(LivingEntity.class), e -> (((LivingEntity) e).getMobType() == MobType.ILLAGER && e.isAlive()), allTypes.stream().filter(illagers::contains)));
+            put("!illager", new EntityClassDescriptor(EntityTypeTest.forClass(LivingEntity.class), e -> (((LivingEntity) e).getMobType() != MobType.ILLAGER && e.isAlive()), allTypes.stream().filter(et -> !illagers.contains(et) && living.contains(et))));
 
-            put("regular", new EntityClassDescriptor(TypeFilter.instanceOf(LivingEntity.class), e -> (((LivingEntity) e).getGroup() == EntityGroup.DEFAULT && e.isAlive()), allTypes.stream().filter(regular::contains)));
-            put("!regular", new EntityClassDescriptor(TypeFilter.instanceOf(LivingEntity.class), e -> (((LivingEntity) e).getGroup() != EntityGroup.DEFAULT && e.isAlive()), allTypes.stream().filter(et -> !regular.contains(et) && living.contains(et))));
+            put("regular", new EntityClassDescriptor(EntityTypeTest.forClass(LivingEntity.class), e -> (((LivingEntity) e).getMobType() == MobType.UNDEFINED && e.isAlive()), allTypes.stream().filter(regular::contains)));
+            put("!regular", new EntityClassDescriptor(EntityTypeTest.forClass(LivingEntity.class), e -> (((LivingEntity) e).getMobType() != MobType.UNDEFINED && e.isAlive()), allTypes.stream().filter(et -> !regular.contains(et) && living.contains(et))));
 
-            for (Identifier typeId : Registry.ENTITY_TYPE.getIds())
+            for (ResourceLocation typeId : Registry.ENTITY_TYPE.keySet())
             {
                 EntityType<?> type  = Registry.ENTITY_TYPE.get(typeId);
                 String mobType = ValueConversions.simplify(typeId);
-                put(    mobType, new EntityClassDescriptor(type, EntityPredicates.VALID_ENTITY, Stream.of(type)));
-                put("!"+mobType, new EntityClassDescriptor(TypeFilter.instanceOf(Entity.class), (e) -> e.getType() != type  && e.isAlive(), allTypes.stream().filter(et -> et != type)));
+                put(    mobType, new EntityClassDescriptor(type, net.minecraft.world.entity.EntitySelector.ENTITY_STILL_ALIVE, Stream.of(type)));
+                put("!"+mobType, new EntityClassDescriptor(ANY, (e) -> e.getType() != type  && e.isAlive(), allTypes.stream().filter(et -> et != type)));
             }
-            for (SpawnGroup catId : SpawnGroup.values())
+            for (MobCategory catId : MobCategory.values())
             {
                 String catStr = catId.getName();
-                put(    catStr, new EntityClassDescriptor(TypeFilter.instanceOf(Entity.class), e -> ((e.getType().getSpawnGroup() == catId) && e.isAlive()), allTypes.stream().filter(et -> et.getSpawnGroup() == catId)));
-                put("!"+catStr, new EntityClassDescriptor(TypeFilter.instanceOf(Entity.class), e -> ((e.getType().getSpawnGroup() != catId) && e.isAlive()), allTypes.stream().filter(et -> et.getSpawnGroup() != catId)));
+                put(    catStr, new EntityClassDescriptor(ANY, e -> ((e.getType().getCategory() == catId) && e.isAlive()), allTypes.stream().filter(et -> et.getCategory() == catId)));
+                put("!"+catStr, new EntityClassDescriptor(ANY, e -> ((e.getType().getCategory() != catId) && e.isAlive()), allTypes.stream().filter(et -> et.getCategory() != catId)));
             }
         }};
     }
@@ -424,96 +436,103 @@ public class EntityValue extends Value
     private static final Map<String, BiFunction<Entity, Value, Value>> featureAccessors = new HashMap<String, BiFunction<Entity, Value, Value>>() {{
         //put("test", (e, a) -> a == null ? Value.NULL : new StringValue(a.getString()));
         put("removed", (entity, arg) -> BooleanValue.of(entity.isRemoved()));
-        put("uuid",(e, a) -> new StringValue(e.getUuidAsString()));
+        put("uuid",(e, a) -> new StringValue(e.getStringUUID()));
         put("id",(e, a) -> new NumericValue(e.getId()));
         put("pos", (e, a) -> ListValue.of(new NumericValue(e.getX()), new NumericValue(e.getY()), new NumericValue(e.getZ())));
-        put("location", (e, a) -> ListValue.of(new NumericValue(e.getX()), new NumericValue(e.getY()), new NumericValue(e.getZ()), new NumericValue(e.getYaw()), new NumericValue(e.getPitch())));
+        put("location", (e, a) -> ListValue.of(new NumericValue(e.getX()), new NumericValue(e.getY()), new NumericValue(e.getZ()), new NumericValue(e.getYRot()), new NumericValue(e.getXRot())));
         put("x", (e, a) -> new NumericValue(e.getX()));
         put("y", (e, a) -> new NumericValue(e.getY()));
         put("z", (e, a) -> new NumericValue(e.getZ()));
         put("motion", (e, a) ->
         {
-            Vec3d velocity = e.getVelocity();
+            Vec3 velocity = e.getDeltaMovement();
             return ListValue.of(new NumericValue(velocity.x), new NumericValue(velocity.y), new NumericValue(velocity.z));
         });
-        put("motion_x", (e, a) -> new NumericValue(e.getVelocity().x));
-        put("motion_y", (e, a) -> new NumericValue(e.getVelocity().y));
-        put("motion_z", (e, a) -> new NumericValue(e.getVelocity().z));
+        put("motion_x", (e, a) -> new NumericValue(e.getDeltaMovement().x));
+        put("motion_y", (e, a) -> new NumericValue(e.getDeltaMovement().y));
+        put("motion_z", (e, a) -> new NumericValue(e.getDeltaMovement().z));
         put("on_ground", (e, a) -> BooleanValue.of(e.isOnGround()));
         put("name", (e, a) -> new StringValue(e.getName().getString()));
         put("display_name", (e, a) -> new FormattedTextValue(e.getDisplayName()));
-        put("command_name", (e, a) -> new StringValue(e.getEntityName()));
+        put("command_name", (e, a) -> new StringValue(e.getScoreboardName()));
         put("custom_name", (e, a) -> e.hasCustomName()?new StringValue(e.getCustomName().getString()):Value.NULL);
-        put("type", (e, a) -> new StringValue(nameFromRegistryId(Registry.ENTITY_TYPE.getId(e.getType()))));
-        put("is_riding", (e, a) -> BooleanValue.of(e.hasVehicle()));
-        put("is_ridden", (e, a) -> BooleanValue.of(e.hasPassengers()));
-        put("passengers", (e, a) -> ListValue.wrap(e.getPassengerList().stream().map(EntityValue::new).collect(Collectors.toList())));
+        put("type", (e, a) -> new StringValue(nameFromRegistryId(Registry.ENTITY_TYPE.getKey(e.getType()))));
+        put("is_riding", (e, a) -> BooleanValue.of(e.isPassenger()));
+        put("is_ridden", (e, a) -> BooleanValue.of(e.isVehicle()));
+        put("passengers", (e, a) -> ListValue.wrap(e.getPassengers().stream().map(EntityValue::new).collect(Collectors.toList())));
         put("mount", (e, a) -> (e.getVehicle()!=null)?new EntityValue(e.getVehicle()):Value.NULL);
         put("unmountable", (e, a) -> BooleanValue.of(((EntityInterface)e).isPermanentVehicle()));
         // deprecated
-        put("tags", (e, a) -> ListValue.wrap(e.getScoreboardTags().stream().map(StringValue::new).collect(Collectors.toList())));
+        put("tags", (e, a) -> ListValue.wrap(e.getTags().stream().map(StringValue::new).collect(Collectors.toList())));
 
-        put("scoreboard_tags", (e, a) -> ListValue.wrap(e.getScoreboardTags().stream().map(StringValue::new).collect(Collectors.toList())));
-        put("entity_tags", (e, a) -> ListValue.wrap(e.getServer().getTagManager().getOrCreateTagGroup(Registry.ENTITY_TYPE_KEY).getTags().entrySet().stream().filter(entry -> entry.getValue().contains(e.getType())).map(entry -> ValueConversions.of(entry.getKey())).collect(Collectors.toList())));
+        put("scoreboard_tags", (e, a) -> ListValue.wrap(e.getTags().stream().map(StringValue::new).collect(Collectors.toList())));
+        put("entity_tags", (e, a) -> {
+            EntityType<?> type = e.getType();
+            return ListValue.wrap(e.getServer().registryAccess().registryOrThrow(Registry.ENTITY_TYPE_REGISTRY).getTags().filter(entry -> entry.getSecond().stream().anyMatch(h -> h.value()==type)).map(entry -> ValueConversions.of(entry.getFirst())).collect(Collectors.toList()));
+        });
         // deprecated
-        put("has_tag", (e, a) -> BooleanValue.of(e.getScoreboardTags().contains(a.getString())));
+        put("has_tag", (e, a) -> BooleanValue.of(e.getTags().contains(a.getString())));
 
-        put("has_scoreboard_tag", (e, a) -> BooleanValue.of(e.getScoreboardTags().contains(a.getString())));
+        put("has_scoreboard_tag", (e, a) -> BooleanValue.of(e.getTags().contains(a.getString())));
         put("has_entity_tag", (e, a) -> {
-            Tag<EntityType<?>> tag = e.getServer().getTagManager().getOrCreateTagGroup(Registry.ENTITY_TYPE_KEY).getTag(InputValidator.identifierOf(a.getString()));
-            if (tag == null) return Value.NULL;
-            return BooleanValue.of(e.getType().isIn(tag));
+            Optional<HolderSet.Named<EntityType<?>>> tag = e.getServer().registryAccess().registryOrThrow(Registry.ENTITY_TYPE_REGISTRY).getTag(TagKey.create(Registry.ENTITY_TYPE_REGISTRY, InputValidator.identifierOf(a.getString())));
+            if (tag.isEmpty()) return Value.NULL;
+            //Tag<EntityType<?>> tag = e.getServer().getTags().getOrEmpty(Registry.ENTITY_TYPE_REGISTRY).getTag(InputValidator.identifierOf(a.getString()));
+            //if (tag == null) return Value.NULL;
+            //return BooleanValue.of(e.getType().is(tag));
+            EntityType<?> type = e.getType();
+            return BooleanValue.of(tag.get().stream().anyMatch(h -> h.value() == type));
         });
 
-        put("yaw", (e, a)-> new NumericValue(e.getYaw()));
+        put("yaw", (e, a)-> new NumericValue(e.getYRot()));
         put("head_yaw", (e, a)-> {
             if (e instanceof LivingEntity)
             {
-                return  new NumericValue(e.getHeadYaw());
+                return  new NumericValue(e.getYHeadRot());
             }
             return Value.NULL;
         });
         put("body_yaw", (e, a)-> {
             if (e instanceof LivingEntity)
             {
-                return  new NumericValue(((LivingEntity) e).bodyYaw);
+                return  new NumericValue(((LivingEntity) e).yBodyRot);
             }
             return Value.NULL;
         });
 
-        put("pitch", (e, a)-> new NumericValue(e.getPitch()));
+        put("pitch", (e, a)-> new NumericValue(e.getXRot()));
         put("look", (e, a) -> {
-            Vec3d look = e.getRotationVector();
+            Vec3 look = e.getLookAngle();
             return ListValue.of(new NumericValue(look.x),new NumericValue(look.y),new NumericValue(look.z));
         });
         put("is_burning", (e, a) -> BooleanValue.of(e.isOnFire()));
-        put("fire", (e, a) -> new NumericValue(e.getFireTicks()));
-        put("is_freezing", (e, a) -> BooleanValue.of(e.isFreezing()));
-        put("frost", (e, a) -> new NumericValue(e.getFrozenTicks()));
+        put("fire", (e, a) -> new NumericValue(e.getRemainingFireTicks()));
+        put("is_freezing", (e, a) -> BooleanValue.of(e.isFullyFrozen()));
+        put("frost", (e, a) -> new NumericValue(e.getTicksFrozen()));
         put("silent", (e, a)-> BooleanValue.of(e.isSilent()));
-        put("gravity", (e, a) -> BooleanValue.of(!e.hasNoGravity()));
-        put("immune_to_fire", (e, a) -> BooleanValue.of(e.isFireImmune()));
+        put("gravity", (e, a) -> BooleanValue.of(!e.isNoGravity()));
+        put("immune_to_fire", (e, a) -> BooleanValue.of(e.fireImmune()));
         put("immune_to_frost", (e, a) -> BooleanValue.of(!e.canFreeze()));
 
         put("invulnerable", (e, a) -> BooleanValue.of(e.isInvulnerable()));
-        put("dimension", (e, a) -> new StringValue(nameFromRegistryId(e.world.getRegistryKey().getValue()))); // getDimId
-        put("height", (e, a) -> new NumericValue(e.getDimensions(EntityPose.STANDING).height));
-        put("width", (e, a) -> new NumericValue(e.getDimensions(EntityPose.STANDING).width));
-        put("eye_height", (e, a) -> new NumericValue(e.getStandingEyeHeight()));
-        put("age", (e, a) -> new NumericValue(e.age));
-        put("breeding_age", (e, a) -> e instanceof PassiveEntity?new NumericValue(((PassiveEntity) e).getBreedingAge()):Value.NULL);
-        put("despawn_timer", (e, a) -> e instanceof LivingEntity?new NumericValue(((LivingEntity) e).getDespawnCounter()):Value.NULL);
-        put("item", (e, a) -> (e instanceof ItemEntity)?ValueConversions.of(((ItemEntity) e).getStack()):Value.NULL);
-        put("count", (e, a) -> (e instanceof ItemEntity)?new NumericValue(((ItemEntity) e).getStack().getCount()):Value.NULL);
+        put("dimension", (e, a) -> new StringValue(nameFromRegistryId(e.level.dimension().location()))); // getDimId
+        put("height", (e, a) -> new NumericValue(e.getDimensions(Pose.STANDING).height));
+        put("width", (e, a) -> new NumericValue(e.getDimensions(Pose.STANDING).width));
+        put("eye_height", (e, a) -> new NumericValue(e.getEyeHeight()));
+        put("age", (e, a) -> new NumericValue(e.tickCount));
+        put("breeding_age", (e, a) -> e instanceof AgeableMob?new NumericValue(((AgeableMob) e).getAge()):Value.NULL);
+        put("despawn_timer", (e, a) -> e instanceof LivingEntity?new NumericValue(((LivingEntity) e).getNoActionTime()):Value.NULL);
+        put("item", (e, a) -> (e instanceof ItemEntity)?ValueConversions.of(((ItemEntity) e).getItem()):Value.NULL);
+        put("count", (e, a) -> (e instanceof ItemEntity)?new NumericValue(((ItemEntity) e).getItem().getCount()):Value.NULL);
         put("pickup_delay", (e, a) -> (e instanceof ItemEntity)?new NumericValue(((ItemEntityInterface) e).getPickupDelayCM()):Value.NULL);
         put("portal_cooldown", (e , a) ->new NumericValue(((EntityInterface)e).getPortalTimer()));
         put("portal_timer", (e , a) ->new NumericValue(((EntityInterface)e).getPublicNetherPortalCooldown()));
         // ItemEntity -> despawn timer via ssGetAge
         put("is_baby", (e, a) -> (e instanceof LivingEntity)?BooleanValue.of(((LivingEntity) e).isBaby()):Value.NULL);
         put("target", (e, a) -> {
-            if (e instanceof MobEntity)
+            if (e instanceof Mob)
             {
-                LivingEntity target = ((MobEntity) e).getTarget(); // there is also getAttacking in living....
+                LivingEntity target = ((Mob) e).getTarget(); // there is also getAttacking in living....
                 if (target != null)
                 {
                     return new EntityValue(target);
@@ -522,81 +541,81 @@ public class EntityValue extends Value
             return Value.NULL;
         });
         put("home", (e, a) -> {
-            if (e instanceof MobEntity)
+            if (e instanceof Mob)
             {
-                return (((MobEntity) e).getPositionTargetRange () > 0)?new BlockValue(null, (ServerWorld) e.getEntityWorld(), ((PathAwareEntity) e).getPositionTarget()):Value.FALSE;
+                return (((Mob) e).getRestrictRadius () > 0)?new BlockValue(null, (ServerLevel) e.getCommandSenderWorld(), ((PathfinderMob) e).getRestrictCenter()):Value.FALSE;
             }
             return Value.NULL;
         });
         put("spawn_point", (e, a) -> {
-            if (e instanceof ServerPlayerEntity spe)
+            if (e instanceof ServerPlayer spe)
             {
-                if (spe.getSpawnPointPosition() == null) return Value.FALSE;
+                if (spe.getRespawnPosition() == null) return Value.FALSE;
                 return ListValue.of(
-                        ValueConversions.of(spe.getSpawnPointPosition()),
-                        ValueConversions.of(spe.getSpawnPointDimension()),
-                        new NumericValue(spe.getSpawnAngle()),
-                        BooleanValue.of(spe.isSpawnPointSet())
+                        ValueConversions.of(spe.getRespawnPosition()),
+                        ValueConversions.of(spe.getRespawnDimension()),
+                        new NumericValue(spe.getRespawnAngle()),
+                        BooleanValue.of(spe.isRespawnForced())
                         );
             }
             return Value.NULL;
         });
         put("pose", (e, a) -> new StringValue(e.getPose().name().toLowerCase(Locale.ROOT)));
-        put("sneaking", (e, a) -> e.isSneaking()?Value.TRUE:Value.FALSE);
+        put("sneaking", (e, a) -> e.isShiftKeyDown()?Value.TRUE:Value.FALSE);
         put("sprinting", (e, a) -> e.isSprinting()?Value.TRUE:Value.FALSE);
         put("swimming", (e, a) -> e.isSwimming()?Value.TRUE:Value.FALSE);
         put("swinging", (e, a) -> {
-            if (e instanceof LivingEntity) return BooleanValue.of(((LivingEntity) e).handSwinging);
+            if (e instanceof LivingEntity) return BooleanValue.of(((LivingEntity) e).swinging);
             return Value.NULL;
         });
 
-        put("air", (e, a) -> new NumericValue(e.getAir()));
+        put("air", (e, a) -> new NumericValue(e.getAirSupply()));
         put("language", (e, a)->{
-            if(!(e instanceof ServerPlayerEntity))
+            if(!(e instanceof ServerPlayer))
                 return NULL;
             String lang = ((ServerPlayerEntityInterface) e).getLanguage();
             return StringValue.of(lang);
         });
         put("persistence", (e, a) -> {
-            if (e instanceof MobEntity) return BooleanValue.of(((MobEntity) e).isPersistent());
+            if (e instanceof Mob) return BooleanValue.of(((Mob) e).isPersistenceRequired());
             return Value.NULL;
         });
         put("hunger", (e, a) -> {
-            if(e instanceof PlayerEntity) return new NumericValue(((PlayerEntity) e).getHungerManager().getFoodLevel());
+            if(e instanceof Player) return new NumericValue(((Player) e).getFoodData().getFoodLevel());
             return Value.NULL;
         });
         put("saturation", (e, a) -> {
-            if(e instanceof PlayerEntity) return new NumericValue(((PlayerEntity) e).getHungerManager().getSaturationLevel());
+            if(e instanceof Player) return new NumericValue(((Player) e).getFoodData().getSaturationLevel());
             return Value.NULL;
         });
 
         put("exhaustion",(e, a)->{
-            if(e instanceof PlayerEntity) return new NumericValue(((PlayerEntity) e).getHungerManager().getExhaustion());
+            if(e instanceof Player) return new NumericValue(((Player) e).getFoodData().getExhaustionLevel());
             return Value.NULL;
         });
 
         put("absorption",(e, a)->{
-            if(e instanceof PlayerEntity) return new NumericValue(((PlayerEntity) e).getAbsorptionAmount());
+            if(e instanceof Player) return new NumericValue(((Player) e).getAbsorptionAmount());
             return Value.NULL;
         });
 
         put("xp",(e, a)->{
-            if(e instanceof PlayerEntity) return new NumericValue(((PlayerEntity) e).totalExperience);
+            if(e instanceof Player) return new NumericValue(((Player) e).totalExperience);
             return Value.NULL;
         });
 
         put("xp_level", (e, a)->{
-            if(e instanceof PlayerEntity) return new NumericValue(((PlayerEntity) e).experienceLevel);
+            if(e instanceof Player) return new NumericValue(((Player) e).experienceLevel);
             return Value.NULL;
         });
 
         put("xp_progress", (e, a)->{
-            if(e instanceof PlayerEntity) return new NumericValue(((PlayerEntity) e).experienceProgress);
+            if(e instanceof Player) return new NumericValue(((Player) e).experienceProgress);
             return Value.NULL;
         });
 
         put("score", (e, a)->{
-            if(e instanceof PlayerEntity) return new NumericValue(((PlayerEntity) e).getScore());
+            if(e instanceof Player) return new NumericValue(((Player) e).getScore());
             return Value.NULL;
         });
 
@@ -608,19 +627,19 @@ public class EntityValue extends Value
             return Value.NULL;
         });
         put("gamemode", (e, a) -> {
-            if (e instanceof  ServerPlayerEntity)
+            if (e instanceof  ServerPlayer)
             {
-                return new StringValue(((ServerPlayerEntity) e).interactionManager.getGameMode().getName());
+                return new StringValue(((ServerPlayer) e).gameMode.getGameModeForPlayer().getName());
             }
             return Value.NULL;
         });
 
         put("path", (e, a) -> {
-            if (e instanceof MobEntity)
+            if (e instanceof Mob)
             {
-                Path path = ((MobEntity)e).getNavigation().getCurrentPath();
+                Path path = ((Mob)e).getNavigation().getPath();
                 if (path == null) return Value.NULL;
-                return ValueConversions.fromPath((ServerWorld)e.getEntityWorld(), path);
+                return ValueConversions.fromPath((ServerLevel)e.getCommandSenderWorld(), path);
             }
             return Value.NULL;
         });
@@ -632,28 +651,28 @@ public class EntityValue extends Value
             if (e instanceof LivingEntity livingEntity)
             {
                 Brain<?> brain = livingEntity.getBrain();
-                Map<MemoryModuleType<?>, Optional<? extends Memory<?>>> memories = ((BrainInterface)brain).getMobMemories();
-                Optional<? extends Memory<?>> optmemory = memories.get(moduleType);
+                Map<MemoryModuleType<?>, Optional<? extends ExpirableValue<?>>> memories = brain.getMemories();
+                Optional<? extends ExpirableValue<?>> optmemory = memories.get(moduleType);
                 if (optmemory==null || !optmemory.isPresent()) return Value.NULL;
-                Memory<?> memory = optmemory.get();
-                return ValueConversions.fromTimedMemory(e, ((MemoryInterface)memory).getScarpetExpiry(), memory.getValue());
+                ExpirableValue<?> memory = optmemory.get();
+                return ValueConversions.fromTimedMemory(e, memory.getTimeToLive(), memory.getValue());
             }
             return Value.NULL;
         });
         put("gamemode_id", (e, a) -> {
-            if (e instanceof  ServerPlayerEntity)
+            if (e instanceof  ServerPlayer)
             {
-                return new NumericValue(((ServerPlayerEntity) e).interactionManager.getGameMode().getId());
+                return new NumericValue(((ServerPlayer) e).gameMode.getGameModeForPlayer().getId());
             }
             return Value.NULL;
         });
 
         put("permission_level", (e, a) -> {
-            if (e instanceof  ServerPlayerEntity spe)
+            if (e instanceof  ServerPlayer spe)
             {
                 for (int i=4; i>=0; i--)
                 {
-                    if (spe.hasPermissionLevel(i))
+                    if (spe.hasPermissions(i))
                         return new NumericValue(i);
 
                 }
@@ -663,14 +682,14 @@ public class EntityValue extends Value
         });
 
         put("player_type", (e, a) -> {
-            if (e instanceof PlayerEntity p)
+            if (e instanceof Player p)
             {
                 if (e instanceof EntityPlayerMPFake) return new StringValue(((EntityPlayerMPFake) e).isAShadow?"shadow":"fake");
-                MinecraftServer server = p.getEntityWorld().getServer();
-                if (server.isDedicated()) return new StringValue("multiplayer");
-                boolean runningLan = server.isRemote();
+                MinecraftServer server = p.getCommandSenderWorld().getServer();
+                if (server.isDedicatedServer()) return new StringValue("multiplayer");
+                boolean runningLan = server.isPublished();
                 if (!runningLan) return new StringValue("singleplayer");
-                boolean isowner = server.isHost(p.getGameProfile());
+                boolean isowner = server.isSingleplayerOwner(p.getGameProfile());
                 if (isowner) return new StringValue("lan_host");
                 return new StringValue("lan player");
                 // realms?
@@ -679,20 +698,20 @@ public class EntityValue extends Value
         });
 
         put("client_brand", (e, a) -> {
-            if (e instanceof ServerPlayerEntity)
+            if (e instanceof ServerPlayer)
             {
-                return StringValue.of(ServerNetworkHandler.getPlayerStatus((ServerPlayerEntity) e));
+                return StringValue.of(ServerNetworkHandler.getPlayerStatus((ServerPlayer) e));
             }
             return Value.NULL;
         });
 
-        put("team", (e, a) -> e.getScoreboardTeam()==null?Value.NULL:new StringValue(e.getScoreboardTeam().getName()));
+        put("team", (e, a) -> e.getTeam()==null?Value.NULL:new StringValue(e.getTeam().getName()));
 
         put("ping", (e, a) -> {
-            if (e instanceof  ServerPlayerEntity)
+            if (e instanceof  ServerPlayer)
             {
-                ServerPlayerEntity spe = (ServerPlayerEntity) e;
-                return new NumericValue(spe.pingMilliseconds);
+                ServerPlayer spe = (ServerPlayer) e;
+                return new NumericValue(spe.latency);
             }
             return Value.NULL;
         });
@@ -708,10 +727,10 @@ public class EntityValue extends Value
             if (a == null)
             {
                 List<Value> effects = new ArrayList<>();
-                for (StatusEffectInstance p : ((LivingEntity) e).getStatusEffects())
+                for (MobEffectInstance p : ((LivingEntity) e).getActiveEffects())
                 {
                     effects.add(ListValue.of(
-                        new StringValue(p.getTranslationKey().replaceFirst("^effect\\.minecraft\\.", "")),
+                        new StringValue(p.getDescriptionId().replaceFirst("^effect\\.minecraft\\.", "")),
                         new NumericValue(p.getAmplifier()),
                         new NumericValue(p.getDuration())
                     ));
@@ -719,12 +738,12 @@ public class EntityValue extends Value
                 return ListValue.wrap(effects);
             }
             String effectName = a.getString();
-            StatusEffect potion = Registry.STATUS_EFFECT.get(InputValidator.identifierOf(effectName));
+            MobEffect potion = Registry.MOB_EFFECT.get(InputValidator.identifierOf(effectName));
             if (potion == null)
                 throw new InternalExpressionException("No such an effect: "+effectName);
-            if (!((LivingEntity) e).hasStatusEffect(potion))
+            if (!((LivingEntity) e).hasEffect(potion))
                 return Value.NULL;
-            StatusEffectInstance pe = ((LivingEntity) e).getStatusEffect(potion);
+            MobEffectInstance pe = ((LivingEntity) e).getEffect(potion);
             return ListValue.of( new NumericValue(pe.getAmplifier()), new NumericValue(pe.getDuration()) );
         });
 
@@ -740,6 +759,49 @@ public class EntityValue extends Value
             //}
             return Value.NULL;
         });
+
+        put("may_fly", (e, a) -> {
+            if (e instanceof ServerPlayer player) {
+                return BooleanValue.of(player.getAbilities().mayfly);
+            }
+            return Value.NULL;
+        });
+
+        put("flying", (e, v) -> {
+            if (e instanceof ServerPlayer player) {
+                return BooleanValue.of(player.getAbilities().flying);
+            }
+            return Value.NULL;
+        });
+
+        put("may_build", (e, v) -> {
+            if (e instanceof ServerPlayer player) {
+                return BooleanValue.of(player.getAbilities().mayBuild);
+            }
+            return Value.NULL;
+        });
+
+        put("insta_build", (e, v) -> {
+            if (e instanceof ServerPlayer player) {
+                return BooleanValue.of(player.getAbilities().instabuild);
+            }
+            return Value.NULL;
+        });
+
+        put("fly_speed", (e, v) -> {
+            if (e instanceof ServerPlayer player) {
+                return NumericValue.of(player.getAbilities().getFlyingSpeed());
+            }
+            return Value.NULL;
+        });
+
+        put("walk_speed", (e, v) -> {
+            if (e instanceof ServerPlayer player) {
+                return NumericValue.of(player.getAbilities().getWalkingSpeed());
+            }
+            return Value.NULL;
+        });
+
         put("holds", (e, a) -> {
             EquipmentSlot where = EquipmentSlot.MAINHAND;
             if (a != null)
@@ -747,31 +809,31 @@ public class EntityValue extends Value
             if (where == null)
                 throw new InternalExpressionException("Unknown inventory slot: "+a.getString());
             if (e instanceof LivingEntity)
-                return ValueConversions.of(((LivingEntity)e).getEquippedStack(where));
+                return ValueConversions.of(((LivingEntity)e).getItemBySlot(where));
             return Value.NULL;
         });
 
         put("selected_slot", (e, a) -> {
-           if (e instanceof PlayerEntity)
-               return new NumericValue(((PlayerEntity) e).getInventory().selectedSlot); //getInventory
+           if (e instanceof Player)
+               return new NumericValue(((Player) e).getInventory().selected); //getInventory
            return Value.NULL;
         });
 
         put("active_block", (e, a) -> {
-            if (e instanceof ServerPlayerEntity)
+            if (e instanceof ServerPlayer)
             {
-                ServerPlayerInteractionManagerInterface manager = (ServerPlayerInteractionManagerInterface) (((ServerPlayerEntity) e).interactionManager);
+                ServerPlayerInteractionManagerInterface manager = (ServerPlayerInteractionManagerInterface) (((ServerPlayer) e).gameMode);
                 BlockPos pos = manager.getCurrentBreakingBlock();
                 if (pos == null) return Value.NULL;
-                return new BlockValue(null, ((ServerPlayerEntity) e).getServerWorld(), pos);
+                return new BlockValue(null, (ServerLevel) e.level, pos);
             }
             return Value.NULL;
         });
 
         put("breaking_progress", (e, a) -> {
-            if (e instanceof ServerPlayerEntity)
+            if (e instanceof ServerPlayer)
             {
-                ServerPlayerInteractionManagerInterface manager = (ServerPlayerInteractionManagerInterface) (((ServerPlayerEntity) e).interactionManager);
+                ServerPlayerInteractionManagerInterface manager = (ServerPlayerInteractionManagerInterface) (((ServerPlayer) e).gameMode);
                 int progress = manager.getCurrentBlockBreakingProgress();
                 if (progress < 0) return Value.NULL;
                 return new NumericValue(progress);
@@ -787,7 +849,7 @@ public class EntityValue extends Value
             if (index < 0 || index > 5)
                 throw new InternalExpressionException("Facing order should be between -6 and 5");
 
-            return new StringValue(Direction.getEntityFacingOrder(e)[index].asString());
+            return new StringValue(Direction.orderedByNearest(e)[index].getSerializedName());
         });
 
         put("trace", (e, a) ->
@@ -831,7 +893,7 @@ public class EntityValue extends Value
                     }
                 }
             }
-            else if (e instanceof ServerPlayerEntity && ((ServerPlayerEntity) e).interactionManager.isCreative())
+            else if (e instanceof ServerPlayer && ((ServerPlayer) e).gameMode.isCreative())
             {
                 reach = 5.0f;
             }
@@ -845,11 +907,11 @@ public class EntityValue extends Value
                 hitres = Tracer.rayTraceBlocks(e, 1, reach, liquids);
 
             if (hitres == null) return Value.NULL;
-            if (exact && hitres.getType() != HitResult.Type.MISS) return ValueConversions.of(hitres.getPos());
+            if (exact && hitres.getType() != HitResult.Type.MISS) return ValueConversions.of(hitres.getLocation());
             switch (hitres.getType())
             {
                 case MISS: return Value.NULL;
-                case BLOCK: return new BlockValue(null, (ServerWorld) e.getEntityWorld(), ((BlockHitResult)hitres).getBlockPos() );
+                case BLOCK: return new BlockValue(null, (ServerLevel) e.getCommandSenderWorld(), ((BlockHitResult)hitres).getBlockPos() );
                 case ENTITY: return new EntityValue(((EntityHitResult)hitres).getEntity());
             }
             return Value.NULL;
@@ -860,11 +922,11 @@ public class EntityValue extends Value
             LivingEntity el = (LivingEntity)e;
             if (a == null)
             {
-                AttributeContainer container = el.getAttributes();
-                return MapValue.wrap(Registry.ATTRIBUTE.stream().filter(container::hasAttribute).collect(Collectors.toMap(aa -> ValueConversions.of(Registry.ATTRIBUTE.getId(aa)), aa -> NumericValue.of(container.getValue(aa)))));
+                AttributeMap container = el.getAttributes();
+                return MapValue.wrap(Registry.ATTRIBUTE.stream().filter(container::hasAttribute).collect(Collectors.toMap(aa -> ValueConversions.of(Registry.ATTRIBUTE.getKey(aa)), aa -> NumericValue.of(container.getValue(aa)))));
             }
-            Identifier id =  InputValidator.identifierOf(a.getString());
-            EntityAttribute attrib = Registry.ATTRIBUTE.getOrEmpty(id).orElseThrow(
+            ResourceLocation id =  InputValidator.identifierOf(a.getString());
+            Attribute attrib = Registry.ATTRIBUTE.getOptional(id).orElseThrow(
                     () -> new InternalExpressionException("Unknown attribute: "+a.getString())
             );
             if (!el.getAttributes().hasAttribute(attrib)) return Value.NULL;
@@ -872,13 +934,13 @@ public class EntityValue extends Value
         });
 
         put("nbt",(e, a) -> {
-            NbtCompound nbttagcompound = e.writeNbt((new NbtCompound()));
+            CompoundTag nbttagcompound = e.saveWithoutId((new CompoundTag()));
             if (a==null)
                 return new NBTSerializableValue(nbttagcompound);
             return new NBTSerializableValue(nbttagcompound).get(a);
         });
 
-        put("category",(e,a)->{return new StringValue(e.getType().getSpawnGroup().toString().toLowerCase(Locale.ROOT));});
+        put("category",(e,a)->{return new StringValue(e.getType().getCategory().toString().toLowerCase(Locale.ROOT));});
     }};
 
     public void set(String what, Value toWhat)
@@ -909,60 +971,121 @@ public class EntityValue extends Value
                 !Float.isFinite(pitch) || Float.isNaN(pitch)
         )
             return;
-        if (e instanceof ServerPlayerEntity)
+        if (e instanceof ServerPlayer)
         {
             // this forces position but doesn't angles for some reason. Need both in the API in the future.
-            EnumSet<PlayerPositionLookS2CPacket.Flag> set  = EnumSet.noneOf(PlayerPositionLookS2CPacket.Flag.class);
-            set.add(PlayerPositionLookS2CPacket.Flag.X_ROT);
-            set.add(PlayerPositionLookS2CPacket.Flag.Y_ROT);
-            ((ServerPlayerEntity)e).networkHandler.requestTeleport(x, y, z, yaw, pitch, set );
+            EnumSet<ClientboundPlayerPositionPacket.RelativeArgument> set  = EnumSet.noneOf(ClientboundPlayerPositionPacket.RelativeArgument.class);
+            set.add(ClientboundPlayerPositionPacket.RelativeArgument.X_ROT);
+            set.add(ClientboundPlayerPositionPacket.RelativeArgument.Y_ROT);
+            ((ServerPlayer)e).connection.teleport(x, y, z, yaw, pitch, set );
         }
         else
         {
-            e.refreshPositionAndAngles(x, y, z, yaw, pitch);
+            e.moveTo(x, y, z, yaw, pitch);
             // we were sending to players for not-living entites, that were untracked. Living entities should be tracked.
             //((ServerWorld) e.getEntityWorld()).getChunkManager().sendToNearbyPlayers(e, new EntityS2CPacket.(e));
             if (e instanceof LivingEntity le)
             {
-                le.prevBodyYaw = le.prevYaw = yaw;
-                le.prevHeadYaw = le.headYaw = yaw;
+                le.yBodyRotO = le.yRotO = yaw;
+                le.yHeadRotO = le.yHeadRot = yaw;
                 // seems universal for:
                 //e.setHeadYaw(yaw);
                 //e.setYaw(yaw);
             }
             else
             {
-                ((ServerWorld) e.getEntityWorld()).getChunkManager().sendToNearbyPlayers(e, new EntityPositionS2CPacket(e));
+                ((ServerLevel) e.getCommandSenderWorld()).getChunkSource().broadcastAndSend(e, new ClientboundTeleportEntityPacket(e));
             }
         }
     }
 
     private static void updateVelocity(Entity e, double scale)
     {
-        e.velocityModified = true;
+        e.hurtMarked = true;
         if (Math.abs(scale) > 10000)
-            CarpetScriptServer.LOG.warn("Moved entity "+e.getEntityName()+" "+e.getName()+" at " +e.getPos()+" extremly fast: "+e.getVelocity());
+            CarpetScriptServer.LOG.warn("Moved entity "+e.getScoreboardName()+" "+e.getName()+" at " +e.position()+" extremely fast: "+e.getDeltaMovement());
         //((ServerWorld)e.getEntityWorld()).method_14178().sendToNearbyPlayers(e, new EntityVelocityUpdateS2CPacket(e));
     }
 
     private static final Map<String, BiConsumer<Entity, Value>> featureModifiers = new HashMap<String, BiConsumer<Entity, Value>>() {{
         put("remove", (entity, value) -> entity.discard()); // using discard here - will see other options if valid
-        put("age", (e, v) -> e.age = Math.abs((int)NumericValue.asNumber(v).getLong()) );
+        put("age", (e, v) -> e.tickCount = Math.abs((int)NumericValue.asNumber(v).getLong()) );
         put("health", (e, v) -> {
             float health = (float) NumericValue.asNumber(v).getDouble();
-            if (health <= 0f && e instanceof ServerPlayerEntity player)
+            if (health <= 0f && e instanceof ServerPlayer player)
             {
-                if (player.currentScreenHandler != null)
+                if (player.containerMenu != null)
                 {
                     // if player dies with open container, then that causes NPE on the client side
                     // its a client side bug that may never surface unless vanilla gets into scripting at some point
                     // bug: #228
-                    player.closeHandledScreen();
+                    player.closeContainer();
                 }
                 ((LivingEntity) e).setHealth(health);
             }
             if (e instanceof LivingEntity) ((LivingEntity) e).setHealth(health);
         });
+
+        put("may_fly", (e, v) -> {
+            boolean mayFly = v.getBoolean();
+            if (e instanceof ServerPlayer player) {
+                player.getAbilities().mayfly = mayFly;
+                if (!mayFly && player.getAbilities().flying) {
+                    player.getAbilities().flying = false;
+                }
+                player.onUpdateAbilities();
+            }
+        });
+
+        put("flying", (e, v) -> {
+            boolean flying = v.getBoolean();
+            if (e instanceof ServerPlayer player) {
+                player.getAbilities().flying = flying;
+                player.onUpdateAbilities();
+            }
+        });
+
+        put("may_build", (e, v) -> {
+            boolean mayBuild = v.getBoolean();
+            if (e instanceof ServerPlayer player) {
+                player.getAbilities().mayBuild = mayBuild;
+                player.onUpdateAbilities();
+            }
+        });
+
+        put("insta_build", (e, v) -> {
+            boolean instaBuild = v.getBoolean();
+            if (e instanceof ServerPlayer player) {
+                player.getAbilities().instabuild = instaBuild;
+                player.onUpdateAbilities();
+            }
+        });
+
+        put("fly_speed", (e, v) -> {
+            float flySpeed = NumericValue.asNumber(v).getFloat();
+            if (e instanceof ServerPlayer player) {
+                player.getAbilities().setFlyingSpeed(flySpeed);
+                player.onUpdateAbilities();
+            }
+        });
+
+        put("walk_speed", (e, v) -> {
+            float walkSpeed = NumericValue.asNumber(v).getFloat();
+            if (e instanceof ServerPlayer player) {
+                player.getAbilities().setWalkingSpeed(walkSpeed);
+                player.onUpdateAbilities();
+            }
+        });
+
+        put("selected_slot", (e, v) ->
+        {
+            if (e instanceof ServerPlayer player)
+            {
+                int slot = NumericValue.asNumber(v).getInt();
+                player.connection.send(new ClientboundSetCarriedItemPacket(slot));
+            }
+        });
+
         // todo add handling of the source for extra effects
         /*put("damage", (e, v) -> {
             float dmgPoints;
@@ -1005,44 +1128,44 @@ public class EntityValue extends Value
                     NumericValue.asNumber(coords.get(0)).getDouble(),
                     NumericValue.asNumber(coords.get(1)).getDouble(),
                     NumericValue.asNumber(coords.get(2)).getDouble(),
-                    e.getYaw(),
-                    e.getPitch()
+                    e.getYRot(),
+                    e.getXRot()
             );
         });
         put("x", (e, v) ->
         {
-            updatePosition(e, NumericValue.asNumber(v).getDouble(), e.getY(), e.getZ(), e.getYaw(), e.getPitch());
+            updatePosition(e, NumericValue.asNumber(v).getDouble(), e.getY(), e.getZ(), e.getYRot(), e.getXRot());
         });
         put("y", (e, v) ->
         {
-            updatePosition(e, e.getX(), NumericValue.asNumber(v).getDouble(), e.getZ(), e.getYaw(), e.getPitch());
+            updatePosition(e, e.getX(), NumericValue.asNumber(v).getDouble(), e.getZ(), e.getYRot(), e.getXRot());
         });
         put("z", (e, v) ->
         {
-            updatePosition(e, e.getX(), e.getY(), NumericValue.asNumber(v).getDouble(), e.getYaw(), e.getPitch());
+            updatePosition(e, e.getX(), e.getY(), NumericValue.asNumber(v).getDouble(), e.getYRot(), e.getXRot());
         });
         put("yaw", (e, v) ->
         {
-            updatePosition(e, e.getX(), e.getY(), e.getZ(), ((float)NumericValue.asNumber(v).getDouble()) % 360, e.getPitch());
+            updatePosition(e, e.getX(), e.getY(), e.getZ(), ((float)NumericValue.asNumber(v).getDouble()) % 360, e.getXRot());
         });
         put("head_yaw", (e, v) ->
         {
             if (e instanceof LivingEntity)
             {
-                e.setHeadYaw((float)NumericValue.asNumber(v).getDouble() % 360);
+                e.setYHeadRot((float)NumericValue.asNumber(v).getDouble() % 360);
             }
         });
         put("body_yaw", (e, v) ->
         {
             if (e instanceof LivingEntity)
             {
-                e.setYaw((float)NumericValue.asNumber(v).getDouble() % 360);
+                e.setYRot((float)NumericValue.asNumber(v).getDouble() % 360);
             }
         });
 
         put("pitch", (e, v) ->
         {
-            updatePosition(e, e.getX(), e.getY(), e.getZ(), e.getYaw(), MathHelper.clamp((float)NumericValue.asNumber(v).getDouble(), -90, 90));
+            updatePosition(e, e.getX(), e.getY(), e.getZ(), e.getYRot(), Mth.clamp((float)NumericValue.asNumber(v).getDouble(), -90, 90));
         });
 
         put("look", (e, v) -> {
@@ -1051,13 +1174,13 @@ public class EntityValue extends Value
             float x = NumericValue.asNumber(vec.get(0)).getFloat();
             float y = NumericValue.asNumber(vec.get(1)).getFloat();
             float z = NumericValue.asNumber(vec.get(2)).getFloat();
-            float l = MathHelper.sqrt(x*x + y*y + z*z);
+            float l = Mth.sqrt(x*x + y*y + z*z);
             if(l==0) return;
             x /= l;
             y /= l;
             z /= l;
             float pitch = (float) -Math.asin(y) / 0.017453292F;
-            float yaw = (float) (x==0 && z==0 ? e.getYaw() : MathHelper.atan2(-x,z) / 0.017453292F);
+            float yaw = (float) (x==0 && z==0 ? e.getYRot() : Mth.atan2(-x,z) / 0.017453292F);
             updatePosition(e, e.getX(), e.getY(), e.getZ(), yaw, pitch);
         });
 
@@ -1075,8 +1198,8 @@ public class EntityValue extends Value
                     e.getX() + NumericValue.asNumber(coords.get(0)).getDouble(),
                     e.getY() + NumericValue.asNumber(coords.get(1)).getDouble(),
                     e.getZ() + NumericValue.asNumber(coords.get(2)).getDouble(),
-                    e.getYaw(),
-                    e.getPitch()
+                    e.getYRot(),
+                    e.getXRot()
             );
         });
 
@@ -1090,28 +1213,28 @@ public class EntityValue extends Value
             double dx = NumericValue.asNumber(coords.get(0)).getDouble();
             double dy = NumericValue.asNumber(coords.get(1)).getDouble();
             double dz = NumericValue.asNumber(coords.get(2)).getDouble();
-            e.setVelocity(dx, dy, dz);
-            updateVelocity(e, MathHelper.absMax(MathHelper.absMax(dx, dy), dz));
+            e.setDeltaMovement(dx, dy, dz);
+            updateVelocity(e, Mth.absMax(Mth.absMax(dx, dy), dz));
         });
         put("motion_x", (e, v) ->
         {
-            Vec3d velocity = e.getVelocity();
+            Vec3 velocity = e.getDeltaMovement();
             double dv = NumericValue.asNumber(v).getDouble();
-            e.setVelocity(dv, velocity.y, velocity.z);
+            e.setDeltaMovement(dv, velocity.y, velocity.z);
             updateVelocity(e, dv);
         });
         put("motion_y", (e, v) ->
         {
-            Vec3d velocity = e.getVelocity();
+            Vec3 velocity = e.getDeltaMovement();
             double dv = NumericValue.asNumber(v).getDouble();
-            e.setVelocity(velocity.x, dv, velocity.z);
+            e.setDeltaMovement(velocity.x, dv, velocity.z);
             updateVelocity(e, dv);
         });
         put("motion_z", (e, v) ->
         {
-            Vec3d velocity = e.getVelocity();
+            Vec3 velocity = e.getDeltaMovement();
             double dv = NumericValue.asNumber(v).getDouble();
-            e.setVelocity(velocity.x, velocity.y, dv);
+            e.setDeltaMovement(velocity.x, velocity.y, dv);
             updateVelocity(e, dv);
         });
 
@@ -1122,16 +1245,16 @@ public class EntityValue extends Value
                 throw new InternalExpressionException("Expected a list of 3 parameters as a second argument");
             }
             List<Value> coords = ((ListValue) v).getItems();
-            e.addVelocity(
+            e.push(
                     NumericValue.asNumber(coords.get(0)).getDouble(),
                     NumericValue.asNumber(coords.get(1)).getDouble(),
                     NumericValue.asNumber(coords.get(2)).getDouble()
             );
-            updateVelocity(e, e.getVelocity().length());
+            updateVelocity(e, e.getDeltaMovement().length());
 
         });
         put("custom_name", (e, v) -> {
-            if (v instanceof NullValue)
+            if (v.isNull())
             {
                 e.setCustomNameVisible(false);
                 e.setCustomName(null);
@@ -1149,7 +1272,7 @@ public class EntityValue extends Value
 
         put("persistence", (e, v) ->
         {
-            if (!(e instanceof MobEntity)) return;
+            if (!(e instanceof Mob)) return;
             if (v == null) v = Value.TRUE;
             ((MobEntityInterface)e).setPersistence(v.getBoolean());
         });
@@ -1160,9 +1283,9 @@ public class EntityValue extends Value
             {
                 e.startRiding(((EntityValue) v).getEntity(),true);
             }
-            if (e instanceof ServerPlayerEntity)
+            if (e instanceof ServerPlayer)
             {
-                ((ServerPlayerEntity)e).networkHandler.sendPacket(new EntityPassengersSetS2CPacket(e));
+                ((ServerPlayer)e).connection.send(new ClientboundSetPassengersPacket(e));
                 //...
             }
         });
@@ -1171,7 +1294,7 @@ public class EntityValue extends Value
                 v = Value.TRUE;
             ((EntityInterface)e).setPermanentVehicle(v.getBoolean());
         });
-        put("drop_passengers", (e, v) -> e.removeAllPassengers());
+        put("drop_passengers", (e, v) -> e.ejectPassengers());
         put("mount_passengers", (e, v) -> {
             if (v==null)
                 throw new InternalExpressionException("'mount_passengers' needs entities to ride");
@@ -1186,17 +1309,17 @@ public class EntityValue extends Value
             if (v==null)
                 throw new InternalExpressionException("'tag' requires parameters");
             if (v instanceof ListValue)
-                for (Value element : ((ListValue) v).getItems()) e.addScoreboardTag(element.getString());
+                for (Value element : ((ListValue) v).getItems()) e.addTag(element.getString());
             else
-                e.addScoreboardTag(v.getString());
+                e.addTag(v.getString());
         });
         put("clear_tag", (e, v) -> {
             if (v==null)
                 throw new InternalExpressionException("'clear_tag' requires parameters");
             if (v instanceof ListValue)
-                for (Value element : ((ListValue) v).getItems()) e.removeScoreboardTag(element.getString());
+                for (Value element : ((ListValue) v).getItems()) e.removeTag(element.getString());
             else
-                e.removeScoreboardTag(v.getString());
+                e.removeTag(v.getString());
         });
         //put("target", (e, v) -> {
         //    // attacks indefinitely - might need to do it through tasks
@@ -1208,29 +1331,29 @@ public class EntityValue extends Value
         //});
         put("breeding_age", (e, v) ->
         {
-            if (e instanceof PassiveEntity)
+            if (e instanceof AgeableMob)
             {
-                ((PassiveEntity) e).setBreedingAge((int)NumericValue.asNumber(v).getLong());
+                ((AgeableMob) e).setAge((int)NumericValue.asNumber(v).getLong());
             }
         });
         put("talk", (e, v) -> {
             // attacks indefinitely
-            if (e instanceof MobEntity)
+            if (e instanceof Mob)
             {
-                ((MobEntity) e).playAmbientSound();
+                ((Mob) e).playAmbientSound();
             }
         });
         put("home", (e, v) -> {
-            if (!(e instanceof PathAwareEntity))
+            if (!(e instanceof PathfinderMob))
                 return;
-            PathAwareEntity ec = (PathAwareEntity)e;
+            PathfinderMob ec = (PathfinderMob)e;
             if (v == null)
                 throw new InternalExpressionException("'home' requires at least one position argument, and optional distance, or null to cancel");
-            if (v instanceof NullValue)
+            if (v.isNull())
             {
-                ec.setPositionTarget(BlockPos.ORIGIN, -1);
+                ec.restrictTo(BlockPos.ZERO, -1);
                 Map<String,Goal> tasks = ((MobEntityInterface)ec).getTemporaryTasks();
-                ((MobEntityInterface)ec).getAI(false).remove(tasks.get("home"));
+                ((MobEntityInterface)ec).getAI(false).removeGoal(tasks.get("home"));
                 tasks.remove("home");
                 return;
             }
@@ -1255,34 +1378,34 @@ public class EntityValue extends Value
             }
             else throw new InternalExpressionException("'home' requires at least one position argument, and optional distance");
 
-            ec.setPositionTarget(pos, distance);
+            ec.restrictTo(pos, distance);
             Map<String,Goal> tasks = ((MobEntityInterface)ec).getTemporaryTasks();
             if (!tasks.containsKey("home"))
             {
-                Goal task = new GoToWalkTargetGoal(ec, 1.0D);
+                Goal task = new MoveTowardsRestrictionGoal(ec, 1.0D);
                 tasks.put("home", task);
-                ((MobEntityInterface)ec).getAI(false).add(10, task);
+                ((MobEntityInterface)ec).getAI(false).addGoal(10, task);
             }
         }); //requires mixing
 
         put("spawn_point", (e, a) -> {
-            if (!(e instanceof ServerPlayerEntity spe)) return;
+            if (!(e instanceof ServerPlayer spe)) return;
             if (a == null)
             {
-                spe.setSpawnPoint(null, null, 0, false, false);
+                spe.setRespawnPosition(null, null, 0, false, false);
             }
             else if (a instanceof ListValue)
             {
                 List<Value> params= ((ListValue) a).getItems();
                 Vector3Argument blockLocator = Vector3Argument.findIn(params, 0, false, false);
                 BlockPos pos = new BlockPos(blockLocator.vec);
-                RegistryKey<World> world = spe.getEntityWorld().getRegistryKey();
-                float angle = spe.getHeadYaw();
+                ResourceKey<Level> world = spe.getCommandSenderWorld().dimension();
+                float angle = spe.getYHeadRot();
                 boolean forced = false;
                 if (params.size() > blockLocator.offset)
                 {
                     Value worldValue = params.get(blockLocator.offset+0);
-                    world = ValueConversions.dimFromValue(worldValue, spe.getServer()).getRegistryKey();
+                    world = ValueConversions.dimFromValue(worldValue, spe.getServer()).dimension();
                     if (params.size() > blockLocator.offset+1)
                     {
                         angle = NumericValue.asNumber(params.get(blockLocator.offset+1), "angle").getFloat();
@@ -1292,17 +1415,17 @@ public class EntityValue extends Value
                         }
                     }
                 }
-                spe.setSpawnPoint(world, pos, angle, forced, false);
+                spe.setRespawnPosition(world, pos, angle, forced, false);
             }
             else if (a instanceof BlockValue bv)
             {
                 if (bv.getPos()==null || bv.getWorld() == null)
                     throw new InternalExpressionException("block for spawn modification should be localised in the world");
-                spe.setSpawnPoint(bv.getWorld().getRegistryKey(), bv.getPos(), e.getYaw(), true, false); // yaw
+                spe.setRespawnPosition(bv.getWorld().dimension(), bv.getPos(), e.getYRot(), true, false); // yaw
             }
             else if (a.isNull())
             {
-                spe.setSpawnPoint(null, null, 0, false, false);
+                spe.setRespawnPosition(null, null, 0, false, false);
             }
             else
             {
@@ -1315,7 +1438,7 @@ public class EntityValue extends Value
         {
             if (e instanceof ItemEntity)
             {
-                ((ItemEntity) e).setPickupDelay((int)NumericValue.asNumber(v).getLong());
+                ((ItemEntity) e).setPickUpDelay((int)NumericValue.asNumber(v).getLong());
             }
         });
 
@@ -1323,7 +1446,7 @@ public class EntityValue extends Value
         {
             if (e instanceof LivingEntity)
             {
-                ((LivingEntity) e).setDespawnCounter((int)NumericValue.asNumber(v).getLong());
+                ((LivingEntity) e).setNoActionTime((int)NumericValue.asNumber(v).getLong());
             }
         });
 
@@ -1343,25 +1466,25 @@ public class EntityValue extends Value
 
         put("ai", (e, v) ->
         {
-            if (e instanceof MobEntity)
+            if (e instanceof Mob)
             {
-                ((MobEntity) e).setAiDisabled(!v.getBoolean());
+                ((Mob) e).setNoAi(!v.getBoolean());
             }
         });
 
         put("no_clip", (e, v) ->
         {
             if (v == null)
-                e.noClip = true;
+                e.noPhysics = true;
             else
-                e.noClip = v.getBoolean();
+                e.noPhysics = v.getBoolean();
         });
         put("effect", (e, v) ->
         {
             if (!(e instanceof LivingEntity le)) return;
             if (v == null)
             {
-                le.clearStatusEffects();
+                le.removeAllEffects();
                 return;
             }
             else if (v instanceof ListValue)
@@ -1370,18 +1493,18 @@ public class EntityValue extends Value
                 if (lv.size() >= 1 && lv.size() <= 6)
                 {
                     String effectName = lv.get(0).getString();
-                    StatusEffect effect = Registry.STATUS_EFFECT.get(InputValidator.identifierOf(effectName));
+                    MobEffect effect = Registry.MOB_EFFECT.get(InputValidator.identifierOf(effectName));
                     if (effect == null)
                         throw new InternalExpressionException("Wrong effect name: "+effectName);
                     if (lv.size() == 1)
                     {
-                        le.removeStatusEffect(effect);
+                        le.removeEffect(effect);
                         return;
                     }
                     int duration = (int)NumericValue.asNumber(lv.get(1)).getLong();
                     if (duration <= 0)
                     {
-                        le.removeStatusEffect(effect);
+                        le.removeEffect(effect);
                         return;
                     }
                     int amplifier = 0;
@@ -1396,28 +1519,28 @@ public class EntityValue extends Value
                     boolean ambient = false;
                     if (lv.size() > 5)
                         showIcon = lv.get(5).getBoolean();
-                    le.addStatusEffect(new StatusEffectInstance(effect, duration, amplifier, ambient, showParticles, showIcon));
+                    le.addEffect(new MobEffectInstance(effect, duration, amplifier, ambient, showParticles, showIcon));
                     return;
                 }
             }
             else
             {
                 String effectName = v.getString();
-                StatusEffect effect = Registry.STATUS_EFFECT.get(InputValidator.identifierOf(effectName));
+                MobEffect effect = Registry.MOB_EFFECT.get(InputValidator.identifierOf(effectName));
                 if (effect == null)
                     throw new InternalExpressionException("Wrong effect name: "+effectName);
-                le.removeStatusEffect(effect);
+                le.removeEffect(effect);
                 return;
             }
             throw new InternalExpressionException("'effect' needs either no arguments (clear) or effect name, duration, and optional amplifier, show particles, show icon and ambient");
         });
 
         put("gamemode", (e,v)->{
-            if(!(e instanceof ServerPlayerEntity)) return;
-            GameMode toSet = v instanceof NumericValue ?
-                    GameMode.byId(((NumericValue) v).getInt(), null) :
-                    GameMode.byName(v.getString().toLowerCase(Locale.ROOT), null);
-            if (toSet != null) ((ServerPlayerEntity) e).changeGameMode(toSet);
+            if(!(e instanceof ServerPlayer)) return;
+            GameType toSet = v instanceof NumericValue ?
+                    GameType.byId(((NumericValue) v).getInt(), null) :
+                    GameType.byName(v.getString().toLowerCase(Locale.ROOT), null);
+            if (toSet != null) ((ServerPlayer) e).setGameMode(toSet);
         });
 
         put("jumping",(e,v)->{
@@ -1439,13 +1562,13 @@ public class EntityValue extends Value
         put("swing", (e, v) -> {
             if (e instanceof LivingEntity)
             {
-                Hand hand = Hand.MAIN_HAND;
+                InteractionHand hand = InteractionHand.MAIN_HAND;
                 if (v != null)
                 {
                     String handString = v.getString().toLowerCase(Locale.ROOT);
-                    if (handString.equals("offhand") || handString.equals("off_hand")) hand = Hand.OFF_HAND;
+                    if (handString.equals("offhand") || handString.equals("off_hand")) hand = InteractionHand.OFF_HAND;
                 }
-                ((LivingEntity)e).swingHand(hand, true);
+                ((LivingEntity)e).swing(hand, true);
             }
         });
 
@@ -1453,86 +1576,94 @@ public class EntityValue extends Value
 
         put("gravity",(e,v)-> e.setNoGravity(!v.getBoolean()));
 
-        put("invulnerable",(e,v)-> e.setInvulnerable(v.getBoolean()));
+        put("invulnerable",(e,v)-> {
+            boolean invulnerable = v.getBoolean();
+            if (e instanceof ServerPlayer player) {
+                player.getAbilities().invulnerable = invulnerable;
+                player.onUpdateAbilities();
+            } else {
+                e.setInvulnerable(invulnerable);
+            }
+        });
 
-        put("fire",(e,v)-> e.setFireTicks((int)NumericValue.asNumber(v).getLong()));
-        put("frost",(e,v)-> e.setFrozenTicks((int)NumericValue.asNumber(v).getLong()));
+        put("fire",(e,v)-> e.setRemainingFireTicks((int)NumericValue.asNumber(v).getLong()));
+        put("frost",(e,v)-> e.setTicksFrozen((int)NumericValue.asNumber(v).getLong()));
 
         put("hunger", (e, v)-> {
-            if(e instanceof PlayerEntity) ((PlayerEntity) e).getHungerManager().setFoodLevel((int) NumericValue.asNumber(v).getLong());
+            if(e instanceof Player) ((Player) e).getFoodData().setFoodLevel((int) NumericValue.asNumber(v).getLong());
         });
 
         put("exhaustion", (e, v)-> {
-            if(e instanceof PlayerEntity) ((PlayerEntity) e).getHungerManager().setExhaustion(NumericValue.asNumber(v).getFloat());
+            if(e instanceof Player) ((Player) e).getFoodData().setExhaustion(NumericValue.asNumber(v).getFloat());
         });
 
         put("add_exhaustion", (e, v)-> {
-            if (e instanceof PlayerEntity) ((PlayerEntity) e).getHungerManager().addExhaustion(NumericValue.asNumber(v).getFloat());
+            if (e instanceof Player) ((Player) e).getFoodData().addExhaustion(NumericValue.asNumber(v).getFloat());
         });
 
         put("absorption", (e, v) -> {
-            if (e instanceof PlayerEntity) ((PlayerEntity) e).setAbsorptionAmount((float) NumericValue.asNumber(v, "absorbtion").getLong());
+            if (e instanceof Player) ((Player) e).setAbsorptionAmount(NumericValue.asNumber(v, "absorbtion").getFloat());
         });
 
         put("add_xp", (e, v) -> {
-            if (e instanceof PlayerEntity) ((PlayerEntity) e).addExperience(NumericValue.asNumber(v, "add_xp").getInt());
+            if (e instanceof Player) ((Player) e).giveExperiencePoints(NumericValue.asNumber(v, "add_xp").getInt());
         });
 
         put("xp_level", (e, v) -> {
-            if (e instanceof PlayerEntity) ((PlayerEntity) e).addExperienceLevels(NumericValue.asNumber(v, "xp_level").getInt()-((PlayerEntity) e).experienceLevel);
+            if (e instanceof Player) ((Player) e).giveExperienceLevels(NumericValue.asNumber(v, "xp_level").getInt()-((Player) e).experienceLevel);
         });
 
         put("xp_progress", (e, v) -> {
-            if (e instanceof ServerPlayerEntity)
+            if (e instanceof ServerPlayer)
             {
-                ServerPlayerEntity p = (ServerPlayerEntity) e;
+                ServerPlayer p = (ServerPlayer) e;
                 p.experienceProgress = NumericValue.asNumber(v, "xp_progress").getFloat();
-                p.networkHandler.sendPacket(new ExperienceBarUpdateS2CPacket(p.experienceProgress, p.totalExperience, p.experienceLevel));
+                p.connection.send(new ClientboundSetExperiencePacket(p.experienceProgress, p.totalExperience, p.experienceLevel));
             }
         });
 
         put("xp_score", (e, v) -> {
-            if (e instanceof PlayerEntity) ((PlayerEntity) e).setScore(NumericValue.asNumber(v, "xp_score").getInt());
+            if (e instanceof Player) ((Player) e).setScore(NumericValue.asNumber(v, "xp_score").getInt());
         });
 
         put("saturation", (e, v)-> {
-            if(e instanceof PlayerEntity) ((PlayerEntity) e).getHungerManager().setSaturationLevel(NumericValue.asNumber(v, "saturation").getFloat());
+            if(e instanceof Player) ((Player) e).getFoodData().setSaturation(NumericValue.asNumber(v, "saturation").getFloat());
         });
 
-        put("air", (e, v) -> e.setAir(NumericValue.asNumber(v, "air").getInt()));
+        put("air", (e, v) -> e.setAirSupply(NumericValue.asNumber(v, "air").getInt()));
 
         put("breaking_progress", (e, a) -> {
-            if (e instanceof ServerPlayerEntity)
+            if (e instanceof ServerPlayer)
             {
                 int progress = (a == null || a.isNull())?-1:NumericValue.asNumber(a).getInt();
-                ServerPlayerInteractionManagerInterface manager = (ServerPlayerInteractionManagerInterface) (((ServerPlayerEntity) e).interactionManager);
+                ServerPlayerInteractionManagerInterface manager = (ServerPlayerInteractionManagerInterface) (((ServerPlayer) e).gameMode);
                 manager.setBlockBreakingProgress(progress);
             }
         });
 
         put("nbt", (e, v) -> {
-            if (!(e instanceof PlayerEntity))
+            if (!(e instanceof Player))
             {
-                UUID uUID = e.getUuid();
+                UUID uUID = e.getUUID();
                 Value tagValue = NBTSerializableValue.fromValue(v);
                 if (tagValue instanceof NBTSerializableValue)
                 {
-                    e.readNbt(((NBTSerializableValue) tagValue).getCompoundTag());
-                    e.setUuid(uUID);
+                    e.load(((NBTSerializableValue) tagValue).getCompoundTag());
+                    e.setUUID(uUID);
                 }
             }
         });
         put("nbt_merge", (e, v) -> {
-            if (!(e instanceof PlayerEntity))
+            if (!(e instanceof Player))
             {
-                UUID uUID = e.getUuid();
+                UUID uUID = e.getUUID();
                 Value tagValue = NBTSerializableValue.fromValue(v);
                 if (tagValue instanceof NBTSerializableValue)
                 {
-                    NbtCompound nbttagcompound = e.writeNbt((new NbtCompound()));
-                    nbttagcompound.copyFrom(((NBTSerializableValue) tagValue).getCompoundTag());
-                    e.readNbt(nbttagcompound);
-                    e.setUuid(uUID);
+                    CompoundTag nbttagcompound = e.saveWithoutId((new CompoundTag()));
+                    nbttagcompound.merge(((NBTSerializableValue) tagValue).getCompoundTag());
+                    e.load(nbttagcompound);
+                    e.setUUID(uUID);
                 }
             }
         });
@@ -1552,12 +1683,12 @@ public class EntityValue extends Value
     }
 
     @Override
-    public NbtElement toTag(boolean force)
+    public net.minecraft.nbt.Tag toTag(boolean force)
     {
         if (!force) throw new NBTSerializableValue.IncompatibleTypeException(this);
-        NbtCompound tag = new NbtCompound();
-        tag.put("Data", getEntity().writeNbt( new NbtCompound()));
-        tag.put("Name", NbtString.of(Registry.ENTITY_TYPE.getId(getEntity().getType()).toString()));
+        CompoundTag tag = new CompoundTag();
+        tag.put("Data", getEntity().saveWithoutId( new CompoundTag()));
+        tag.put("Name", StringTag.valueOf(Registry.ENTITY_TYPE.getKey(getEntity().getType()).toString()));
         return tag;
     }
 }

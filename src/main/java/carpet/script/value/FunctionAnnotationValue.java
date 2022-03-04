@@ -1,7 +1,7 @@
 package carpet.script.value;
 
 import carpet.script.exception.InternalExpressionException;
-import net.minecraft.nbt.NbtElement;
+import net.minecraft.nbt.Tag;
 
 public class FunctionAnnotationValue extends Value
 {
@@ -37,7 +37,7 @@ public class FunctionAnnotationValue extends Value
     }
 
     @Override
-    public NbtElement toTag(boolean force)
+    public Tag toTag(boolean force)
     {
         throw new UnsupportedOperationException("Global value cannot be serialized to the tag");
     }

@@ -2,8 +2,8 @@ package carpet.logging.logHelpers;
 
 import carpet.logging.LoggerRegistry;
 import carpet.utils.Messenger;
-import net.minecraft.text.BaseText;
-import net.minecraft.util.math.Vec3d;
+import net.minecraft.network.chat.BaseComponent;
+import net.minecraft.world.phys.Vec3;
 
 public class TNTLogHelper
 {
@@ -11,11 +11,11 @@ public class TNTLogHelper
     private double primedX, primedY, primedZ;
     private static long lastGametime = 0;
     private static int tntCount = 0;
-    private Vec3d primedAngle;
+    private Vec3 primedAngle;
     /**
      * Runs when the TNT is primed. Expects the position and motion angle of the TNT.
      */
-    public void onPrimed(double x, double y, double z, Vec3d motion)
+    public void onPrimed(double x, double y, double z, Vec3 motion)
     {
         primedX = x;
         primedY = y;
@@ -37,12 +37,12 @@ public class TNTLogHelper
             switch (option)
             {
                 case "brief":
-                    return new BaseText[]{Messenger.c(
+                    return new BaseComponent[]{Messenger.c(
                             "l P ",Messenger.dblt("l",primedX,primedY,primedZ),
                             "w  ",Messenger.dblt("l", primedAngle.x, primedAngle.y, primedAngle.z),
                             "r  E ",Messenger.dblt("r",x, y, z))};
                 case "full":
-                    return new BaseText[]{Messenger.c(
+                    return new BaseComponent[]{Messenger.c(
                             "r #" + tntCount,
                             "m @" + gametime,
                             "g : ",

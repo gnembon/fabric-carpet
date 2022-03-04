@@ -251,6 +251,13 @@ __on_player_disconnects(player, reason) ->
     print('Player '+player+' disconnects because: '+reason)
 );
 
+__on_player_message(player, message) ->
+(
+    print('');
+    print('__on_player_message(player, message)');
+    print('Player '+player+' sent message: '+message)
+);
+
 __on_player_chooses_recipe(player, recipe, full_stack) ->
 (
     print('');

@@ -6,12 +6,11 @@ import carpet.script.Tokenizer;
 import carpet.script.exception.ExitStatement;
 import carpet.script.exception.ExpressionException;
 import carpet.script.exception.InternalExpressionException;
-import net.minecraft.nbt.NbtElement;
-
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
+import net.minecraft.nbt.Tag;
 
 public class ThreadValue extends Value
 {
@@ -19,18 +18,29 @@ public class ThreadValue extends Value
     private final long id;
     private static long sequence = 0L;
 
+    public ThreadValue(CompletableFuture<Value> taskFuture)
+    {
+        this.taskFuture = taskFuture;
+        this.id = sequence++;
+    }
+
     public ThreadValue(Value pool, FunctionValue function, Expression expr, Tokenizer.Token token, Context ctx, List<Value> args)
     {
-        id = sequence++;
+        this(getCompletableFutureFromFunction(pool, function, expr, token, ctx, args));
+        Thread.yield();
+    }
+
+    public static CompletableFuture<Value> getCompletableFutureFromFunction(Value pool, FunctionValue function, Expression expr, Tokenizer.Token token, Context ctx, List<Value> args)
+    {
         ExecutorService executor = ctx.host.getExecutor(pool);
         if (executor == null)
         {
             // app is shutting down - no more threads can be spawned.
-            taskFuture = CompletableFuture.completedFuture(Value.NULL);
+            return CompletableFuture.completedFuture(Value.NULL);
         }
         else
         {
-            taskFuture = CompletableFuture.supplyAsync(
+            return CompletableFuture.supplyAsync(
                     () ->
                     {
                         try
@@ -52,7 +62,6 @@ public class ThreadValue extends Value
                     ctx.host.getExecutor(pool)
             );
         }
-        Thread.yield();
     }
 
     @Override
@@ -117,7 +126,7 @@ public class ThreadValue extends Value
     }
 
     @Override
-    public NbtElement toTag(boolean force)
+    public Tag toTag(boolean force)
     {
         if (!force) throw new NBTSerializableValue.IncompatibleTypeException(this);
         return getValue().toTag(true);

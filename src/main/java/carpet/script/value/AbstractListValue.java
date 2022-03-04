@@ -9,7 +9,12 @@ import java.util.List;
 public abstract class AbstractListValue extends Value implements Iterable<Value>
 {
     @Override public abstract Iterator<Value> iterator();
-    public List<Value> unpack() { return Lists.newArrayList(iterator()); }
+    public List<Value> unpack()
+    {
+        List<Value> retVal = Lists.newArrayList(iterator());
+        fatality();
+        return retVal;
+    }
     public void fatality() { }
     public void append(Value v)
     {

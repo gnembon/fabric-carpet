@@ -4,11 +4,11 @@ import carpet.CarpetSettings;
 import carpet.helpers.ThrowableSuppression;
 import carpet.logging.LoggerRegistry;
 import carpet.utils.Messenger;
+import net.minecraft.ReportedException;
+import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.BaseComponent;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.text.BaseText;
-import net.minecraft.util.crash.CrashException;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.server.level.ServerLevel;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
@@ -19,21 +19,21 @@ import java.util.function.BooleanSupplier;
 public class MinecraftServer_updateSuppressionCrashFixMixin {
 
     @Redirect(
-            method = "tickWorlds",
+            method = "tickChildren",
             at = @At(
                     value = "INVOKE",
-                    target = "Lnet/minecraft/server/world/ServerWorld;tick(Ljava/util/function/BooleanSupplier;)V"
+                    target = "Lnet/minecraft/server/level/ServerLevel;tick(Ljava/util/function/BooleanSupplier;)V"
             ),
             require = 0
     )
-    private void fixUpdateSuppressionCrashTick(ServerWorld serverWorld, BooleanSupplier shouldKeepTicking){
+    private void fixUpdateSuppressionCrashTick(ServerLevel serverWorld, BooleanSupplier shouldKeepTicking){
         if (!CarpetSettings.updateSuppressionCrashFix) {
             serverWorld.tick(shouldKeepTicking);
             return;
         }
         try {
             serverWorld.tick(shouldKeepTicking);
-        } catch (CrashException e) {
+        } catch (ReportedException e) {
             if (!(e.getCause() instanceof ThrowableSuppression throwableSuppression)) throw e;
             logUpdateSuppression(throwableSuppression.pos);
         } catch (ThrowableSuppression e) {
@@ -45,7 +45,7 @@ public class MinecraftServer_updateSuppressionCrashFixMixin {
     private void logUpdateSuppression(BlockPos pos) {
         if(LoggerRegistry.__updateSuppressedCrashes) {
             LoggerRegistry.getLogger("updateSuppressedCrashes").log(() -> {
-                return new BaseText[]{Messenger.c(
+                return new BaseComponent[]{Messenger.c(
                         "w Server crash prevented in: ",
                         "m world tick ",
                         "w - at: ",

@@ -1,12 +1,11 @@
 package carpet.fakes;
 
-import net.minecraft.block.BlockState;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
-
 import java.util.Random;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.state.BlockState;
 
 public interface CoralFeatureInterface
 {
-    boolean growSpecific(World worldIn, Random random, BlockPos pos, BlockState blockUnder);
+    boolean growSpecific(Level worldIn, Random random, BlockPos pos, BlockState blockUnder);
 }

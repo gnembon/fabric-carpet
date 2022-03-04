@@ -468,6 +468,12 @@ public class Expression
         addUnaryFunction(name, (v) -> new NumericValue(fun.apply(NumericValue.asNumber(v).getDouble())));
     }
 
+    public void addMathematicalBinaryIntFunction(String name, BiFunction<Long, Long, Long> fun)
+    {
+        addBinaryFunction(name, (w, v) ->
+                new NumericValue(fun.apply(NumericValue.asNumber(w).getLong(), NumericValue.asNumber(v).getLong())));
+    }
+	
     public void addMathematicalBinaryFunction(String name, BiFunction<Double, Double, Double> fun)
     {
         addBinaryFunction(name, (w, v) ->
@@ -475,9 +481,9 @@ public class Expression
     }
 
 
-    public void addLazyFunction(String name, int num_params, TriFunction<Context, Context.Type, List<LazyValue>, LazyValue> fun)
+    public void addLazyFunction(String name, int numParams, TriFunction<Context, Context.Type, List<LazyValue>, LazyValue> fun)
     {
-        functions.put(name, new AbstractLazyFunction(num_params, name)
+        functions.put(name, new AbstractLazyFunction(numParams, name)
         {
             @Override
             public boolean pure() {
@@ -493,8 +499,11 @@ public class Expression
             public LazyValue lazyEval(Context c, Context.Type i, Expression e, Tokenizer.Token t, List<LazyValue> lazyParams)
             {
                 ILazyFunction.checkInterrupts();
-                if (num_params >= 0 && lazyParams.size() != num_params)
-                    throw new InternalExpressionException("'"+name+"' requires "+num_params+" parameters, "+lazyParams.size()+" provided.");
+                if (numParams >= 0 && lazyParams.size() != numParams)
+                {
+                    String error = "Function '"+name+"' requires "+numParams+" arguments, got "+lazyParams.size()+". ";
+                    throw new InternalExpressionException(error + (fun instanceof Fluff.UsageProvider up ? up.getUsage() : ""));
+                }
 
                 try
                 {
@@ -729,7 +738,7 @@ public class Expression
         }
         var = c.host.getGlobalVariable(module, name);
         if (var != null) return var;
-        var = (_c, _t ) -> Value.ZERO.reboundedTo(name);
+        var = (_c, _t ) -> _c.host.strict ? Value.UNDEF.reboundedTo(name) : Value.NULL.reboundedTo(name);
         setAnyVariable(c, name, var);
         return var;
     }
