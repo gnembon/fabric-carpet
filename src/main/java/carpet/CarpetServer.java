@@ -123,6 +123,10 @@ public class CarpetServer // static for now - easier to handle all around the co
 
     public static void registerCarpetCommands(CommandDispatcher<CommandSourceStack> dispatcher, Commands.CommandSelection environment)
     {
+        if (settingsManager == null) // bootstrap dev initialization check
+        {
+            return;
+        }
         settingsManager.registerCommand(dispatcher);
         extensions.forEach(e -> {
             SettingsManager sm = e.customSettingsManager();
