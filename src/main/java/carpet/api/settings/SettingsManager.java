@@ -505,14 +505,19 @@ public class SettingsManager {
      * A method to pretty print in markdown (useful for Github wiki/readme) the current
      * registered rules for a category to the log. Contains the name, description,
      * categories, type, defaults, whether or not they are strict, their suggested
-     * values, and the descriptions of their validators.
+     * values, etc.
+     * 
+     * @param ps A {@link PrintStream} to dump the rules to, such as {@link System#out}
      * @param category A {@link String} being the category to print, {@link null} to print
      *                 all registered rules.
      * @return actually nothing, the int is just there for brigadier
+     * 
+     * @apiNote While extensions are expected to be able to call this method, binary compatibility isn't
+     *          guaranteed, but this shouldn't be an issue given this is only intended to be ran for doc 
+     *          generation (where version is controlled) and it's not expected to be referenced in production anyway
      */
-    public int printAllRulesToLog(String category)
+    public int dumpAllRulesToStream(PrintStream ps, String category)
     {
-        PrintStream ps = System.out;
         ps.println("# "+fancyName+" Settings");
         for (CarpetRule<?> rule : new TreeMap<>(rules).values())
         {

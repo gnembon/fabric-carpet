@@ -138,6 +138,14 @@ public class SettingsManager extends carpet.api.settings.SettingsManager
     }
 
     /**
+     * @deprecated Use {@link #dumpAllRulesToStream(java.io.PrintStream, String)} instead
+     */
+    @Deprecated(forRemoval = true)
+    public int printAllRulesToLog(String category) {
+        return dumpAllRulesToStream(System.out, category);
+    }
+
+    /**
      * Notifies all players that the commands changed by resending the command tree.
      * @deprecated While there's not an API replacement for this (at least yet),
      *             you can use {@link CommandHelper#notifyPlayersCommandsChanged(MinecraftServer)} instead
