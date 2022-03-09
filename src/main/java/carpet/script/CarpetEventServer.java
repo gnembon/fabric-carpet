@@ -856,19 +856,27 @@ public class CarpetEventServer
                 handler.call( () -> Arrays.asList(new EntityValue(player), new StringValue(message)), player::createCommandSourceStack);
             }
         };
+
+        public static final Event PLAYER_MESSAGE = new Event("player_message", 2, false) {
+            @Override
+            public void onPlayerMessage(ServerPlayer player, String message) {
+                handler.call( () -> Arrays.asList(new EntityValue(player), new StringValue(message)), player::createCommandSourceStack);
+            }
+        };
+
         public static final Event STATISTICS = new Event("statistic", 4, false)
         {
             private <T> ResourceLocation getStatId(Stat<T> stat)
             {
                 return stat.getType().getRegistry().getKey(stat.getValue());
             }
-            private final Set<ResourceLocation> skippedStats = new HashSet<ResourceLocation>(){{
-                add(Stats.TIME_SINCE_DEATH);
-                add(Stats.TIME_SINCE_REST);
-                //add(Stats.PLAY_ONE_MINUTE);
-                add(Stats.PLAY_TIME);
-                add(Stats.TOTAL_WORLD_TIME);
-            }};
+            private final Set<ResourceLocation> skippedStats = Set.of(
+                Stats.TIME_SINCE_DEATH,
+                Stats.TIME_SINCE_REST,
+                //Stats.PLAY_ONE_MINUTE,
+                Stats.PLAY_TIME,
+                Stats.TOTAL_WORLD_TIME
+            );
             @Override
             public void onPlayerStatistic(ServerPlayer player, Stat<?> stat, int amount)
             {

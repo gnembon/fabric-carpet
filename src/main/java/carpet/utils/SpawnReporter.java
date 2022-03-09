@@ -5,6 +5,7 @@ import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2LongMap;
 import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Holder;
 import net.minecraft.network.chat.BaseComponent;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
@@ -33,12 +34,8 @@ import net.minecraft.world.level.entity.EntityTypeTest;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.levelgen.feature.NetherFortressFeature;
 import org.apache.commons.lang3.tuple.Pair;
-import org.jetbrains.annotations.Nullable;
-
-import carpet.CarpetSettings;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -371,13 +368,11 @@ public class SpawnReporter
         for (MobCategory enumcreaturetype : MobCategory.values())
         {
             //String type_code = String.format("%s", enumcreaturetype);
-            boolean there_are_mobs_to_list = false;
             for (ResourceKey<Level> dim : worldIn.getServer().levelKeys()) //String world_code: new String[] {"", " (N)", " (E)"})
             {
                 Pair<ResourceKey<Level>, MobCategory> code = Pair.of(dim, enumcreaturetype);
                 if (spawn_ticks_spawns.get(code) > 0L)
                 {
-                    there_are_mobs_to_list = true;
                     double hours = overall_spawn_ticks.get(code)/72000.0;
                     report.add(Messenger.s(String.format(" > %s%s (%.1f min), %.1f m/t, %%{%.1fF %.1f- %.1f+}; %.2f s/att",
                         enumcreaturetype.getName().substring(0,3), getWorldCode(dim),
@@ -426,9 +421,12 @@ public class SpawnReporter
         entity.discard();
     }
 
-    // yeeted from SpawnHelper - temporary fix
-    private static List<MobSpawnSettings.SpawnerData> getSpawnEntries(ServerLevel world, StructureFeatureManager structureAccessor, ChunkGenerator chunkGenerator, MobCategory spawnGroup, BlockPos pos, @Nullable Biome biome) {
-        return NaturalSpawner.isInNetherFortressBounds(pos, world, spawnGroup, structureAccessor) ? NetherFortressFeature.FORTRESS_ENEMIES.unwrap() : chunkGenerator.getMobsAt(biome != null ? biome : world.getBiome(pos), structureAccessor, spawnGroup, pos).unwrap();
+    // yeeted from NaturalSpawner - temporary access fix
+    private static List<MobSpawnSettings.SpawnerData> getSpawnEntries(final ServerLevel level, final StructureFeatureManager structureFeatureManager, final ChunkGenerator generator, final MobCategory mobCategory, final BlockPos pos, final Holder<Biome> biome) {
+        if (NaturalSpawner.isInNetherFortressBounds (pos, level, mobCategory, structureFeatureManager)) {
+            return NetherFortressFeature.FORTRESS_ENEMIES.unwrap();
+        }
+        return generator.getMobsAt(biome != null ? biome : level.getBiome(pos), structureFeatureManager, mobCategory, pos).unwrap();
     }
 
     public static List<BaseComponent> report(BlockPos pos, ServerLevel worldIn)
@@ -479,7 +477,7 @@ public class SpawnReporter
                             float f1 = (float)z + 0.5F;
                             mob.moveTo((double)f, (double)y, (double)f1, worldIn.random.nextFloat() * 360.0F, 0.0F);
                             fits1 = worldIn.noCollision(mob);
-                            EntityType etype = mob.getType();
+                            EntityType<?> etype = mob.getType();
 
                             for (int i = 0; i < 20; ++i)
                             {

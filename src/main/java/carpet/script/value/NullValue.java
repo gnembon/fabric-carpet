@@ -37,7 +37,11 @@ public class NullValue extends NumericValue // TODO check nonsingleton code
     @Override
     public boolean equals(final Object o)
     {
-        return o instanceof NullValue;
+        if (o instanceof Value value)
+        {
+            return value.isNull();
+        }
+        return false;
     }
 
     @Override
@@ -58,7 +62,7 @@ public class NullValue extends NumericValue // TODO check nonsingleton code
     @Override
     public int compareTo(Value o)
     {
-        return  o instanceof NullValue ? 0 : -1;
+        return  o.isNull() ? 0 : -1;
     }
 
     @Override

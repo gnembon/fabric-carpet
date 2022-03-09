@@ -5,6 +5,4 @@ import net.minecraft.world.level.PotentialCalculator;
 public interface SpawnHelperInnerInterface
 {
     PotentialCalculator getPotentialCalculator();
-
-    int cmGetChunkCount();
 }

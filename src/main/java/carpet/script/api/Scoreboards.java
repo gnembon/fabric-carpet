@@ -12,7 +12,6 @@ import carpet.script.utils.InputValidator;
 import carpet.script.value.BooleanValue;
 import carpet.script.value.EntityValue;
 import carpet.script.value.ListValue;
-import carpet.script.value.NullValue;
 import carpet.script.value.NumericValue;
 import carpet.script.value.StringValue;
 import carpet.script.value.FormattedTextValue;
@@ -231,7 +230,7 @@ public class Scoreboards {
             int slot = Scoreboard.getDisplaySlotByName(location);
             if (slot < 0) throw new InternalExpressionException("Invalid objective slot: "+location);
             Value target = lv.get(1);
-            if (target instanceof NullValue)
+            if (target.isNull())
             {
                 scoreboard.setDisplayObjective(slot, null);
                 return new NumericValue(slot);

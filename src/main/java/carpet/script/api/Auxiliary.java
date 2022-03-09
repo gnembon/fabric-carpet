@@ -64,16 +64,16 @@ import net.minecraft.network.protocol.game.ClientboundSetActionBarTextPacket;
 import net.minecraft.network.protocol.game.ClientboundSetSubtitleTextPacket;
 import net.minecraft.network.protocol.game.ClientboundSetTitleTextPacket;
 import net.minecraft.network.protocol.game.ClientboundSetTitlesAnimationPacket;
-import net.minecraft.resources.RegistryReadOps;
+//import net.minecraft.resources.RegistryReadOps;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.ServerResources;
+//import net.minecraft.server.ServerResources;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.packs.repository.Pack;
 import net.minecraft.server.packs.repository.PackRepository;
-import net.minecraft.server.packs.resources.SimpleReloadableResourceManager;
+//import net.minecraft.server.packs.resources.SimpleReloadableResourceManager;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.stats.Stat;
 import net.minecraft.stats.StatType;
@@ -361,7 +361,7 @@ public class Auxiliary {
             try
             {
                 Value nameValue = lv.get(0);
-                name = nameValue instanceof NullValue ? "" : nameValue.getString();
+                name = nameValue.isNull() ? "" : nameValue.getString();
                 pointLocator = Vector3Argument.findIn(lv, 1, true, false);
                 if (lv.size()>pointLocator.offset)
                 {
@@ -794,7 +794,7 @@ public class Auxiliary {
 
                 if (res == null)
                     return;
-                if (what.equalsIgnoreCase("boulder"))  // there might be more of those
+                if (what.equalsIgnoreCase("forest_rock"))  // there might be more of those
                     WorldTools.forceChunkUpdate(locator.block.getPos(), ((CarpetContext) c).s.getLevel());
                 result[0] = BooleanValue.of(res);
             });
@@ -830,11 +830,14 @@ public class Auxiliary {
                 String level = lv.get(0).getString().toLowerCase(Locale.ROOT);
                 res = lv.get(1);
                 switch(level){
-                    case "error": CarpetScriptServer.LOG.error(res.getString()); break;
-                    case "warn":  CarpetScriptServer.LOG.warn(res.getString());  break;
                     case "debug": CarpetScriptServer.LOG.debug(res.getString()); break;
-                    case "fatal": CarpetScriptServer.LOG.fatal(res.getString()); break;
+                    case "warn":  CarpetScriptServer.LOG.warn(res.getString());  break;
                     case "info":  CarpetScriptServer.LOG.info(res.getString());  break;
+                    case "fatal":
+                        // Somehow issue deprecation
+                    case "error":
+                        CarpetScriptServer.LOG.error(res.getString());
+                        break;
                     default: throw new InternalExpressionException("Unknown log level for 'logger': "+level);
                 }
             }
@@ -1102,6 +1105,8 @@ public class Auxiliary {
         });
 
         expression.addContextFunction("enable_hidden_dimensions", 0, (c, t, lv) -> {
+            return Value.NULL;
+            /*
             CarpetContext cc = (CarpetContext)c;
             // from minecraft.server.Main.main
             MinecraftServer server = cc.s.getServer();
@@ -1147,6 +1152,8 @@ public class Auxiliary {
                 }
             }
             return ListValue.wrap(addeds);
+
+             */
         });
     }
 

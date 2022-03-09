@@ -24,7 +24,7 @@ public class FormattedTextValue extends StringValue
         }
         else
         {
-            if (left instanceof NullValue)
+            if (left.isNull())
                 return right;
             text = new TextComponent(left.getString());
         }
@@ -36,7 +36,7 @@ public class FormattedTextValue extends StringValue
         }
         else
         {
-            if (right instanceof NullValue)
+            if (right.isNull())
                 return left;
             text.append(right.getString());
             return new FormattedTextValue(text);

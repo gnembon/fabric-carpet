@@ -22,8 +22,9 @@ import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Iterator;
 import java.util.Locale;
@@ -44,8 +45,8 @@ import static carpet.settings.RuleCategory.CLIENT;
 @SuppressWarnings("CanBeFinal")
 public class CarpetSettings
 {
-    public static final String carpetVersion = "1.4.60+v220202";
-    public static final Logger LOG = LogManager.getLogger("carpet");
+    public static final String carpetVersion = "1.4.66+v220228";
+    public static final Logger LOG = LoggerFactory.getLogger("carpet");
     public static ThreadLocal<Boolean> skipGenerationChecks = ThreadLocal.withInitial(() -> false);
     public static ThreadLocal<Boolean> impendingFillSkipUpdates = ThreadLocal.withInitial(() -> false);
     public static int runPermissionLevel = 2;
@@ -1092,4 +1093,13 @@ public class CarpetSettings
             return "Cannot be negative, can be true, false, or # > 0";
         }
     }
+
+    @Rule(
+            desc = "Creative players load chunks, or they don't! Just like spectators!",
+            extra = {"Toggling behaves exactly as if the player is in spectator mode and toggling the gamerule spectatorsGenerateChunks."
+            },
+            category = {CREATIVE, FEATURE}
+    )
+    public static boolean creativePlayersLoadChunks = true;
+
 }
