@@ -6,7 +6,6 @@ import carpet.fakes.ServerPlayerEntityInterface;
 import carpet.patches.EntityPlayerMPFake;
 import carpet.settings.SettingsManager;
 import carpet.utils.Messenger;
-import com.google.common.collect.Sets;
 import com.mojang.authlib.GameProfile;
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.CommandDispatcher;
@@ -32,6 +31,8 @@ import net.minecraft.world.phys.Vec2;
 import net.minecraft.world.phys.Vec3;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -140,7 +141,7 @@ public class PlayerCommand
 
     private static Collection<String> getPlayers(CommandSourceStack source)
     {
-        Set<String> players = Sets.newLinkedHashSet(Arrays.asList("Steve", "Alex"));
+        Set<String> players = new LinkedHashSet<>(List.of("Steve", "Alex"));
         players.addAll(source.getOnlinePlayerNames());
         return players;
     }

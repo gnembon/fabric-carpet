@@ -515,7 +515,7 @@ public class FileArgument
     {
         try (BufferedReader reader = Files.newBufferedReader(filePath, StandardCharsets.UTF_8))
         {
-            return new JsonParser().parse(new JsonReader(reader));
+            return JsonParser.parseReader(reader);
         }
         catch (JsonParseException e)
         {

@@ -303,25 +303,25 @@ public class EntityValue extends Value
 
         EntityClassDescriptor(EntityType<?> type, Predicate<? super Entity> predicate, Stream<EntityType<?>> types)
         {
-            this(type, predicate, types.collect(Collectors.toList()));
+            this(type, predicate, types.toList());
         }
 
         EntityClassDescriptor(EntityTypeTest<Entity, ?> type, Predicate<? super Entity> predicate, Stream<EntityType<?>> types)
         {
-            this(type, predicate, types.collect(Collectors.toList()));
+            this(type, predicate, types.toList());
         }
 
-        public final static Map<String, EntityClassDescriptor> byName = new HashMap<String, EntityClassDescriptor>() {{
-            List<EntityType<?>> allTypes = Registry.ENTITY_TYPE.stream().collect(Collectors.toList());
+        public final static Map<String, EntityClassDescriptor> byName = new HashMap<>() {{
+            List<EntityType<?>> allTypes = Registry.ENTITY_TYPE.stream().toList();
             // nonliving types
-            Set<EntityType<?>> projectiles = Sets.newHashSet(
+            Set<EntityType<?>> projectiles = Set.of(
                     EntityType.ARROW, EntityType.DRAGON_FIREBALL, EntityType.FIREWORK_ROCKET,
                     EntityType.FIREBALL, EntityType.LLAMA_SPIT, EntityType.SMALL_FIREBALL,
                     EntityType.SNOWBALL, EntityType.SPECTRAL_ARROW, EntityType.EGG,
                     EntityType.ENDER_PEARL, EntityType.EXPERIENCE_BOTTLE, EntityType.POTION,
                     EntityType.TRIDENT, EntityType.WITHER_SKULL, EntityType.FISHING_BOBBER, EntityType.SHULKER_BULLET
             );
-            Set<EntityType<?>> deads = Sets.newHashSet(
+            Set<EntityType<?>> deads = Set.of(
                     EntityType.AREA_EFFECT_CLOUD, EntityType.MARKER, EntityType.BOAT, EntityType.END_CRYSTAL,
                     EntityType.EVOKER_FANGS, EntityType.EXPERIENCE_ORB, EntityType.EYE_OF_ENDER,
                     EntityType.FALLING_BLOCK, EntityType.ITEM, EntityType.ITEM_FRAME, EntityType.GLOW_ITEM_FRAME,
@@ -329,39 +329,39 @@ public class EntityValue extends Value
                     EntityType.TNT, EntityType.ARMOR_STAND
 
             );
-            Set<EntityType<?>> minecarts = Sets.newHashSet(
+            Set<EntityType<?>> minecarts = Set.of(
                    EntityType.MINECART,  EntityType.CHEST_MINECART, EntityType.COMMAND_BLOCK_MINECART,
                     EntityType.FURNACE_MINECART, EntityType.HOPPER_MINECART,
                     EntityType.SPAWNER_MINECART, EntityType.TNT_MINECART
             );
             // living mob groups - non-defeault
-            Set<EntityType<?>> undeads = Sets.newHashSet(
+            Set<EntityType<?>> undeads = Set.of(
                     EntityType.STRAY, EntityType.SKELETON, EntityType.WITHER_SKELETON,
                     EntityType.ZOMBIE, EntityType.DROWNED, EntityType.ZOMBIE_VILLAGER,
                     EntityType.ZOMBIE_HORSE, EntityType.SKELETON_HORSE, EntityType.PHANTOM,
                     EntityType.WITHER, EntityType.ZOGLIN, EntityType.HUSK, EntityType.ZOMBIFIED_PIGLIN
 
             );
-            Set<EntityType<?>> arthropods = Sets.newHashSet(
+            Set<EntityType<?>> arthropods = Set.of(
                     EntityType.BEE, EntityType.ENDERMITE, EntityType.SILVERFISH, EntityType.SPIDER,
                     EntityType.CAVE_SPIDER
             );
-            Set<EntityType<?>> aquatique = Sets.newHashSet(
+            Set<EntityType<?>> aquatique = Set.of(
                     EntityType.GUARDIAN, EntityType.TURTLE, EntityType.COD, EntityType.DOLPHIN, EntityType.PUFFERFISH,
                     EntityType.SALMON, EntityType.SQUID, EntityType.TROPICAL_FISH
             );
-            Set<EntityType<?>> illagers = Sets.newHashSet(
+            Set<EntityType<?>> illagers = Set.of(
                     EntityType.PILLAGER, EntityType.ILLUSIONER, EntityType.VINDICATOR, EntityType.EVOKER,
                     EntityType.RAVAGER, EntityType.WITCH
             );
 
             Set<EntityType<?>> living = allTypes.stream().filter(et ->
                     !deads.contains(et) && !projectiles.contains(et) && !minecarts.contains(et)
-            ).collect(Collectors.toSet());
+            ).collect(Collectors.toUnmodifiableSet());
 
             Set<EntityType<?>> regular = allTypes.stream().filter(et ->
                     living.contains(et) && !undeads.contains(et) && !arthropods.contains(et) && !aquatique.contains(et) && !illagers.contains(et)
-            ).collect(Collectors.toSet());
+            ).collect(Collectors.toUnmodifiableSet());
 
 
             put("*", new EntityClassDescriptor(ANY, e -> true, allTypes) );

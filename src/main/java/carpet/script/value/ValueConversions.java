@@ -5,6 +5,8 @@ import carpet.script.exception.InternalExpressionException;
 import carpet.script.exception.ThrowStatement;
 import carpet.script.exception.Throwables;
 import carpet.utils.BlockInfo;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import net.minecraft.advancements.critereon.MinMaxBounds;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.GlobalPos;
@@ -351,48 +353,48 @@ public class ValueConversions
     }
 
 
-    private static final Map<Integer, ListValue> slotIdsToSlotParams = new HashMap<Integer, ListValue>() {{
+    private static final Int2ObjectMap<ListValue> slotIdsToSlotParams = new Int2ObjectOpenHashMap<ListValue>() {{
         int n;
         //covers blocks, player hotbar and inventory, and all default inventories
         for(n = 0; n < 54; ++n) {
-            put(n, ListValue.of(Value.NULL, NumericValue.of(n)));
+            put(n, ListValue.of(Value.NULL, new NumericValue(n)));
         }
         for(n = 0; n < 27; ++n) {
-            put(200+n, ListValue.of(StringValue.of("enderchest"), NumericValue.of(n)));
+            put(200+n, ListValue.of(StringValue.of("enderchest"), new NumericValue(n)));
         }
 
         // villager
         for(n = 0; n < 8; ++n) {
-            put(300+n, ListValue.of(Value.NULL, NumericValue.of(n)));
+            put(300+n, ListValue.of(Value.NULL, new NumericValue(n)));
         }
 
         // horse, llamas, donkeys, etc.
         // two first slots are for saddle and armour
         for(n = 0; n < 15; ++n) {
-            put(500+n, ListValue.of(Value.NULL, NumericValue.of(n+2)));
+            put(500+n, ListValue.of(Value.NULL, new NumericValue(n+2)));
         }
         Value equipment = StringValue.of("equipment");
         // weapon main hand
-        put(98, ListValue.of(equipment, NumericValue.of(0)));
+        put(98, ListValue.of(equipment, new NumericValue(0)));
         // offhand
-        put(99, ListValue.of(equipment, NumericValue.of(5)));
+        put(99, ListValue.of(equipment, new NumericValue(5)));
         // feet, legs, chest, head
         for(n = 0; n < 4; ++n) {
-            put(100+n, ListValue.of(equipment, NumericValue.of(n+1)));
+            put(100+n, ListValue.of(equipment, new NumericValue(n+1)));
         }
         //horse defaults saddle
-        put(400, ListValue.of(Value.NULL, NumericValue.of(0)));
+        put(400, ListValue.of(Value.NULL, new NumericValue(0)));
         // armor
-        put(401, ListValue.of(Value.NULL, NumericValue.of(1)));
+        put(401, ListValue.of(Value.NULL, new NumericValue(1)));
         // chest itself on the donkey is wierd - use NBT to alter that.
         //hashMap.put("horse.chest", 499);
     }};
 
     public static Value ofVanillaSlotResult(int itemSlot)
     {
-        Value ret = slotIdsToSlotParams.get(itemSlot);
-        if (ret == null) return ListValue.of(Value.NULL, NumericValue.of(itemSlot));
-        return ret;
+        ListValue ret = slotIdsToSlotParams.get(itemSlot);
+        if (ret == null) return ListValue.of(Value.NULL, new NumericValue(itemSlot));
+        return ret.deepcopy();
     }
 
     public static Value ofBlockPredicate(RegistryAccess registryAccess, Predicate<BlockInWorld> blockPredicate)

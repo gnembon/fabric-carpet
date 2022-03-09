@@ -983,11 +983,9 @@ public class CarpetEventServer
         }
 
         @Deprecated
-        public static final Map<EntityType<? extends Entity>, Event> ENTITY_LOAD= new HashMap<>()
-        {{
-            EntityType.byString("zombie");
-            Registry.ENTITY_TYPE.forEach(et -> {
-                put(et, new Event(getEntityLoadEventName(et), 1, true, false)
+        public static final Map<EntityType<? extends Entity>, Event> ENTITY_LOAD = Registry.ENTITY_TYPE
+                .stream()
+                .map(et -> Map.entry(et, new Event(getEntityLoadEventName(et), 1, true, false)
                 {
                     @Override
                     public void onEntityAction(Entity entity, boolean created)
@@ -997,32 +995,25 @@ public class CarpetEventServer
                                 () -> CarpetServer.minecraft_server.createCommandSourceStack().withLevel((ServerLevel) entity.level).withPermission(CarpetSettings.runPermissionLevel)
                         );
                     }
-                });
-            });
-        }};
+                })).collect(Collectors.toUnmodifiableMap(Map.Entry::getKey, Map.Entry::getValue));
 
         public static String getEntityHandlerEventName(EntityType<? extends Entity> et)
         {
             return "entity_handler_" + ValueConversions.of(Registry.ENTITY_TYPE.getKey(et)).getString();
         }
 
-        public static final Map<EntityType<? extends Entity>, Event> ENTITY_HANDLER= new HashMap<>()
-        {{
-            EntityType.byString("zombie");
-            Registry.ENTITY_TYPE.forEach(et -> {
-                put(et, new Event(getEntityHandlerEventName(et), 2, true, false)
-                {
+        public static final Map<EntityType<? extends Entity>, Event> ENTITY_HANDLER = Registry.ENTITY_TYPE
+                .stream()
+                .map(et -> Map.entry(et, new Event(getEntityHandlerEventName(et), 2, true, false) {
                     @Override
-                    public void onEntityAction(Entity entity, boolean created)
-                    {
+                    public void onEntityAction(Entity entity, boolean created) {
                         handler.call(
                                 () -> Arrays.asList(new EntityValue(entity), BooleanValue.of(created)),
                                 () -> CarpetServer.minecraft_server.createCommandSourceStack().withLevel((ServerLevel) entity.level).withPermission(CarpetSettings.runPermissionLevel)
                         );
                     }
-                });
-            });
-        }};
+                }))
+                .collect(Collectors.toUnmodifiableMap(Map.Entry::getKey, Map.Entry::getValue));
 
         // on projectile thrown (arrow from bows, crossbows, tridents, snoballs, e-pearls
 

@@ -34,7 +34,7 @@ public class MobAICommand
                                 executes( (c) -> {
                                     MobAI.startTracking(
                                             Registry.ENTITY_TYPE.get(EntitySummonArgument.getSummonableEntity(c, "entity type")),
-                                            MobAI.TrackingType.byName(StringArgumentType.getString(c, "aspect"))
+                                            MobAI.TrackingType.valueOf(StringArgumentType.getString(c, "aspect").toUpperCase())
                                     );
                                     return 1;
                                 })));

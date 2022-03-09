@@ -29,11 +29,11 @@ public class ServerNetworkHandler
     private static Map<ServerPlayer, String> remoteCarpetPlayers = new HashMap<>();
     private static Set<ServerPlayer> validCarpetPlayers = new HashSet<>();
 
-    private static Map<String, BiConsumer<ServerPlayer, Tag>> dataHandlers = new HashMap<String, BiConsumer<ServerPlayer, Tag>>(){{
-        put("clientCommand", (p, t) -> {
+    private static Map<String, BiConsumer<ServerPlayer, Tag>> dataHandlers = Map.of(
+        "clientCommand", (p, t) -> {
             handleClientCommand(p, (CompoundTag)t);
-        });
-    }};
+        }
+    );
 
     public static void handleData(FriendlyByteBuf data, ServerPlayer player)
     {

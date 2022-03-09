@@ -134,11 +134,11 @@ public class WorldAccess {
         DIRECTION_MAP.put("x", Direction.EAST);
 
     }
-    private final static Map<String, TicketType<?>> ticketTypes = new HashMap<String, TicketType<?>>(){{
-        put("portal", TicketType.PORTAL);
-        put("teleport", TicketType.POST_TELEPORT);
-        put("unknown", TicketType.UNKNOWN);  // unknown
-    }};
+    private final static Map<String, TicketType<?>> ticketTypes = Map.of(
+        "portal", TicketType.PORTAL,
+        "teleport", TicketType.POST_TELEPORT,
+        "unknown", TicketType.UNKNOWN
+    );
     // dummy entity for dummy requirements in the loot tables (see snowball)
     private static FallingBlockEntity DUMMY_ENTITY = null;
     private static Value booleanStateTest(
