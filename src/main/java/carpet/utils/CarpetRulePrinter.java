@@ -18,9 +18,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Runs only from GitHub Actions to generate the wiki
- * page with all Carpet rules on it.
- * It is here so it can be managed by the IDE
+ * Provides a command line interface to generate a dump with all rules
+ * in a pretty markdown format to a specified file, with an optional 
+ * category filter
  *
  */
 public class CarpetRulePrinter implements DedicatedServerModInitializer {
