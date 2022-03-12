@@ -15,19 +15,31 @@ import com.mojang.math.Vector3f;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Random;
 import java.util.function.BiFunction;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.GameRenderer;
+import net.minecraft.client.renderer.ItemBlockRenderTypes;
+import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.block.model.ItemTransforms;
+import net.minecraft.client.renderer.texture.OverlayTexture;
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.util.Mth;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LightLayer;
+import net.minecraft.world.level.block.EntityBlock;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 
 public class ShapesRenderer
@@ -45,6 +57,7 @@ public class ShapesRenderer
         put("cylinder", RenderedCylinder::new);
         put("label", RenderedText::new);
         put("poly",RenderedPolyface::new);
+        put("item_lable",RenderedItem::new);
     }};
 
     public ShapesRenderer(Minecraft minecraftClient)
@@ -235,6 +248,107 @@ public class ShapesRenderer
         {
             expiryTick = rshape.expiryTick;
         }
+    }
+
+    public static class RenderedItem extends RenderedShape<ShapeDispatcher.DisplayedItem>
+    {
+
+        protected RenderedItem(Minecraft client, ShapeDispatcher.ExpiringShape shape)
+        {
+            super(client, (ShapeDispatcher.DisplayedItem)shape);
+        }
+
+        @Override
+        public void renderLines(PoseStack matrices, Tesselator tessellator, BufferBuilder builder, double cx, double cy, double cz, float partialTick)
+        {
+            if (shape.a == 0.0) return;
+            Vec3 v1 = shape.relativiseRender(client.level, shape.pos, partialTick);
+            v1=shape.pos;
+            Camera camera1 = client.gameRenderer.getMainCamera();
+            
+            if (shape.doublesided)
+                RenderSystem.disableCull();
+            else
+                RenderSystem.enableCull();
+            matrices.pushPose();
+            //matrices.setIdentity();
+            matrices.translate(v1.x - cx,v1.y - cy,v1.z - cz);
+            /*if (shape.facing == null)
+            {
+                //matrices.method_34425(new Matrix4f(camera1.getRotation()));
+                matrices.mulPose(camera1.rotation());
+            }
+            else
+            {
+                switch (shape.facing)
+                {
+                    case NORTH:
+                        break;
+                    case SOUTH:
+                        matrices.mulPose(Vector3f.YP.rotationDegrees(180));
+                        break;
+                    case EAST:
+                        matrices.mulPose(Vector3f.YP.rotationDegrees(270));
+                        break;
+                    case WEST:
+                        matrices.mulPose(Vector3f.YP.rotationDegrees(90));
+                        break;
+                    case UP:
+                        matrices.mulPose(Vector3f.XP.rotationDegrees(90));
+                        break;
+                    case DOWN:
+                        matrices.mulPose(Vector3f.XP.rotationDegrees(-90));
+                        break;
+                }
+            }
+            //RenderSystem.scalef(shape.size* 0.0025f, -shape.size*0.0025f, shape.size*0.0025f);
+            if (shape.tilt!=0.0f) matrices.mulPose(Vector3f.ZP.rotationDegrees(shape.tilt));
+            if (shape.lean!=0.0f) matrices.mulPose(Vector3f.XP.rotationDegrees(shape.lean));
+            if (shape.turn!=0.0f) matrices.mulPose(Vector3f.YP.rotationDegrees(shape.turn));
+            
+            matrices.scale(-1, 1, 1);
+            //*/
+            RenderSystem.depthMask(true);
+            RenderSystem.enableCull();
+            RenderSystem.enableDepthTest();
+            
+            //matrices.scale(-1, 1, 1);
+            
+            MultiBufferSource.BufferSource immediate = MultiBufferSource.immediate(builder);
+            
+            
+            BlockPos blockPos=new BlockPos(0,10,0);
+            BlockState blockState=client.level.getBlockState(blockPos);
+            
+            client.getBlockRenderer().getModelRenderer().tesselateWithoutAO(client.level, client.getBlockRenderer().getBlockModel(blockState), blockState, blockPos , matrices, immediate.getBuffer(ItemBlockRenderTypes.getChunkRenderType(blockState)), false, new Random(), 373L, OverlayTexture.NO_OVERLAY);
+            client.getBlockRenderer().renderLiquid(blockPos, blockAndTintGetter, immediate, blockState, blockState.getFluidState());
+            //if(blockState.getBlock() instanceof EntityBlock eb){
+                //BlockEntity BlockEntity=eb.newBlockEntity(new BlockPos(0,0,0), blockState);
+                //BlockEntity.clearRemoved();
+                //BlockEntity.load(null);
+                //client.getBlockEntityRenderDispatcher().render(BlockEntity, client.getFrameTime(), matrices, immediate);
+
+            //}
+            BlockEntity BlockEntity=client.level.getBlockEntity(blockPos);
+            if(BlockEntity!=null)
+            client.getBlockEntityRenderDispatcher().render(BlockEntity,/* client.getFrameTime()*/partialTick, matrices, immediate);
+            int light=LightTexture.pack(client.level.getBrightness(LightLayer.BLOCK,new BlockPos(v1)), client.level.getBrightness(LightLayer.SKY, new BlockPos(v1)));
+            client.getItemRenderer().renderStatic(new ItemStack(Items.PINK_STAINED_GLASS), ItemTransforms.TransformType.NONE, light, OverlayTexture.NO_OVERLAY,matrices,immediate,(int) shape.key());
+            matrices.popPose();
+            immediate.endBatch();
+            RenderSystem.disableCull();
+            RenderSystem.disableDepthTest();
+            RenderSystem.depthMask(false);
+            
+        }
+
+        @Override
+        public boolean stageDeux()
+        {
+            return true;
+        }
+
+
     }
 
     public static class RenderedText extends RenderedShape<ShapeDispatcher.DisplayedText>

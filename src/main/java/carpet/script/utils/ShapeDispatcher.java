@@ -255,6 +255,7 @@ public class ShapeDispatcher
             put("cylinder", creator(Cylinder::new));
             put("label", creator(DisplayedText::new));
             put("poly",creator(Polyface::new));
+            put("item_lable",creator(DisplayedItem::new));
         }};
         private static Function<Map<String, Value>,ExpiringShape> creator(Supplier<ExpiringShape> shapeFactory)
         {
@@ -535,6 +536,123 @@ public class ShapeDispatcher
         {
             long hash = super.calcKey();
             hash ^= 5;                  hash *= 1099511628211L;
+            hash ^= vec3dhash(pos);     hash *= 1099511628211L;
+            hash ^= text.hashCode();    hash *= 1099511628211L;
+            if (facing!= null) hash ^= facing.hashCode(); hash *= 1099511628211L;
+            hash ^= Float.hashCode(raise); hash *= 1099511628211L;
+            hash ^= Float.hashCode(tilt); hash *= 1099511628211L;
+            hash ^= Float.hashCode(lean); hash *= 1099511628211L;
+            hash ^= Float.hashCode(turn); hash *= 1099511628211L;
+            hash ^= Float.hashCode(indent); hash *= 1099511628211L;
+            hash ^= Float.hashCode(height); hash *= 1099511628211L;
+            hash ^= Float.hashCode(size); hash *= 1099511628211L;
+            hash ^= Integer.hashCode(align); hash *= 1099511628211L;
+            hash ^= Boolean.hashCode(doublesided); hash *= 1099511628211L;
+
+            return hash;
+        }
+    }
+
+    public static class DisplayedItem extends ExpiringShape
+    {
+        private final Set<String> required = Set.of("pos", "text");
+        private final Map<String, Value> optional = Map.ofEntries(
+                entry("facing", new StringValue("player")),
+                entry("raise", new NumericValue(0)),
+                entry("tilt", new NumericValue(0)),
+                entry("lean", new NumericValue(0)),
+                entry("turn", new NumericValue(0)),
+                entry("indent", new NumericValue(0)),
+                entry("height", new NumericValue(0)),
+                entry("align", new StringValue("center")),
+                entry("size", new NumericValue(10)),
+                entry("value", Value.NULL),
+                entry("doublesided", new NumericValue(0)));
+        @Override
+        protected Set<String> requiredParams() { return Sets.union(super.requiredParams(), required); }
+        @Override
+        protected Set<String> optionalParams() { return Sets.union(super.optionalParams(), optional.keySet()); }
+        public DisplayedItem() { }
+
+        Vec3 pos;
+        String text;
+        int textcolor;
+        int textbck;
+
+        Direction facing;
+        float raise;
+        float tilt;
+        float lean;
+        float turn;
+        float size;
+        float indent;
+        int align;
+        float height;
+        Component value;
+        boolean doublesided;
+
+        @Override
+        protected void init(Map<String, Value> options)
+        {
+            super.init(options);
+            pos = vecFromValue(options.get("pos"));
+            value = ((FormattedTextValue)options.get("text")).getText();
+            text = value.getString();
+            if (options.containsKey("value"))
+            {
+                value = ((FormattedTextValue)options.get("value")).getText();
+            }
+            textcolor = rgba2argb(color);
+            textbck = rgba2argb(fillColor);
+            String dir = options.getOrDefault("facing", optional.get("facing")).getString();
+            facing = null;
+            switch (dir)
+            {
+                case "north": facing = Direction.NORTH; break;
+                case "south": facing = Direction.SOUTH; break;
+                case "east": facing = Direction.EAST; break;
+                case "west": facing = Direction.WEST; break;
+                case "up":  facing = Direction.UP; break;
+                case "down":  facing = Direction.DOWN; break;
+            }
+            
+            doublesided = false;
+            if (options.containsKey("doublesided"))
+            {
+                doublesided = options.get("doublesided").getBoolean();
+            }
+
+            raise = NumericValue.asNumber(options.getOrDefault("raise", optional.get("raise"))).getFloat();
+            tilt = NumericValue.asNumber(options.getOrDefault("tilt", optional.get("tilt"))).getFloat();
+            lean = NumericValue.asNumber(options.getOrDefault("lean", optional.get("lean"))).getFloat();
+            turn = NumericValue.asNumber(options.getOrDefault("turn", optional.get("turn"))).getFloat();
+            indent = NumericValue.asNumber(options.getOrDefault("indent", optional.get("indent"))).getFloat();
+            height = NumericValue.asNumber(options.getOrDefault("height", optional.get("height"))).getFloat();
+
+            size = NumericValue.asNumber(options.getOrDefault("size", optional.get("size"))).getFloat();
+        }
+
+        private int rgba2argb(int color)
+        {
+            int r = Math.max(1, color >> 24 & 0xFF);
+            int g = Math.max(1, color >> 16 & 0xFF);
+            int b = Math.max(1, color >>  8 & 0xFF);
+            int a = color & 0xFF;
+            return (a << 24) + (r << 16) + (g << 8) + b;
+        }
+
+
+        @Override
+        public Consumer<ServerPlayer> alternative()
+        {
+            return s -> {};
+        }
+
+        @Override
+        public long calcKey()
+        {
+            long hash = super.calcKey();
+            hash ^= 7;                  hash *= 1099511628211L;
             hash ^= vec3dhash(pos);     hash *= 1099511628211L;
             hash ^= text.hashCode();    hash *= 1099511628211L;
             if (facing!= null) hash ^= facing.hashCode(); hash *= 1099511628211L;
