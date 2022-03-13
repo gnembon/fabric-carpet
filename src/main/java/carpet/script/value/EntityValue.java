@@ -59,10 +59,14 @@ import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.ai.goal.MoveTowardsRestrictionGoal;
 import net.minecraft.world.entity.ai.memory.ExpirableValue;
 import net.minecraft.world.entity.ai.memory.MemoryModuleType;
+import net.minecraft.world.entity.animal.IronGolem;
+import net.minecraft.world.entity.decoration.ItemFrame;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.Projectile;
+import net.minecraft.world.entity.projectile.WitherSkull;
 import net.minecraft.world.entity.vehicle.AbstractMinecart;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.entity.EntityTypeTest;
@@ -521,7 +525,31 @@ public class EntityValue extends Value
         put("breeding_age", (e, a) -> e instanceof AgeableMob?new NumericValue(((AgeableMob) e).getAge()):Value.NULL);
         put("despawn_timer", (e, a) -> e instanceof LivingEntity?new NumericValue(((LivingEntity) e).getNoActionTime()):Value.NULL);
         //getter of ironman flower, blueness of skull, carryingitem 
-        put("item", (e, a) -> (e instanceof ItemEntity)?ValueConversions.of(((ItemEntity) e).getItem()):Value.NULL);
+        put("carrying_item",(e,a)->{
+            if (e instanceof ServerPlayer){
+                return ValueConversions.of(((ServerPlayer) e).containerMenu.getCarried());
+            }
+            return Value.NULL;
+        });
+        put("skull_dangerous",(e,a)->{
+            if (e instanceof WitherSkull w){
+                return BooleanValue.of(w.isDangerous());
+            }
+            return Value.NULL;
+        });
+        put("offer_flower",(e,a)->{
+            if (e instanceof IronGolem ig){
+                return BooleanValue.of(ig.getOfferFlowerTick()>0);
+            }
+            return Value.NULL;
+        });
+        put("item", (e, a) -> {
+            if(e instanceof ItemEntity)
+                return ValueConversions.of(((ItemEntity) e).getItem());
+            if(e instanceof ItemFrame)
+                return ValueConversions.of(((ItemFrame) e).getItem());
+            return Value.NULL;
+        });
         put("count", (e, a) -> (e instanceof ItemEntity)?new NumericValue(((ItemEntity) e).getItem().getCount()):Value.NULL);
         put("pickup_delay", (e, a) -> (e instanceof ItemEntity)?new NumericValue(((ItemEntityInterface) e).getPickupDelayCM()):Value.NULL);
         put("portal_cooldown", (e , a) ->new NumericValue(((EntityInterface)e).getPublicNetherPortalCooldown()));
@@ -1667,6 +1695,71 @@ public class EntityValue extends Value
             }
         });
         //setter of ironman flower, blueness of skull, carryingitem 
+        put("carrying_item",(e,v)->{
+            try{
+                if (e instanceof ServerPlayer pl){
+                    ItemStack item;
+                    if(v instanceof ListValue){
+                        List<Value> lv = ((ListValue) v).getItems();
+                        if (3 == lv.size() && lv.get(2) instanceof NBTSerializableValue nbt)
+                            item = NBTSerializableValue.parseItem(lv.get(0).getString(),nbt.getCompoundTag()).createItemStack(NumericValue.asNumber(lv.get(1)).getInt(),false);
+                        else
+                            return;
+                    }
+                    else if (v instanceof StringValue){
+                        item = NBTSerializableValue.parseItem(v.getString(),null).createItemStack(1,false);
+                        //return ValueConversions.of(((ServerPlayer) e).containerMenu.getCarried());
+                    }
+                    else{
+                        return;
+                    }
+                    item=item.copy();
+                    pl.containerMenu.setCarried(item);
+                }
+            } catch (CommandSyntaxException e1) {
+                e1.printStackTrace();
+            }
+            
+            
+        });
+        put("skull_dangerous",(e,v)->{
+            if (e instanceof WitherSkull w){
+                w.setDangerous(v.getBoolean());
+            }
+            
+        });
+        put("offer_flower",(e,v)->{
+            if (e instanceof IronGolem ig){
+                ig.offerFlower(v.getBoolean());
+            }
+            
+        });
+        put("item", (e, v) -> {
+            try{
+                ItemStack item;
+                if(v instanceof ListValue){
+                    List<Value> lv = ((ListValue) v).getItems();
+                    if (3 == lv.size() && lv.get(2) instanceof NBTSerializableValue nbt)
+                        item = NBTSerializableValue.parseItem(lv.get(0).getString(),nbt.getCompoundTag()).createItemStack(NumericValue.asNumber(lv.get(1)).getInt(),false);
+                    else
+                        return;
+                }
+                else if (v instanceof StringValue){
+                    item = NBTSerializableValue.parseItem(v.getString(),null).createItemStack(1,false);
+                }
+                else{
+                    return;
+                }
+                item=item.copy();
+            
+                if(e instanceof ItemEntity iteme)            
+                    iteme.setItem(item);
+                if(e instanceof ItemFrame iteme)
+                    iteme.setItem(item);
+            } catch (CommandSyntaxException e1) {
+                e1.printStackTrace();
+            }
+        });
         // "dimension"      []
         // "item"           []
         // "count",         []
