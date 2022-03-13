@@ -1715,6 +1715,7 @@ public class EntityValue extends Value
                     }
                     item=item.copy();
                     pl.containerMenu.setCarried(item);
+                    pl.containerMenu.broadcastFullState();
                 }
             } catch (CommandSyntaxException e1) {
                 e1.printStackTrace();
