@@ -520,6 +520,7 @@ public class EntityValue extends Value
         put("age", (e, a) -> new NumericValue(e.tickCount));
         put("breeding_age", (e, a) -> e instanceof AgeableMob?new NumericValue(((AgeableMob) e).getAge()):Value.NULL);
         put("despawn_timer", (e, a) -> e instanceof LivingEntity?new NumericValue(((LivingEntity) e).getNoActionTime()):Value.NULL);
+        //getter of ironman flower, blueness of skull, carryingitem 
         put("item", (e, a) -> (e instanceof ItemEntity)?ValueConversions.of(((ItemEntity) e).getItem()):Value.NULL);
         put("count", (e, a) -> (e instanceof ItemEntity)?new NumericValue(((ItemEntity) e).getItem().getCount()):Value.NULL);
         put("pickup_delay", (e, a) -> (e instanceof ItemEntity)?new NumericValue(((ItemEntityInterface) e).getPickupDelayCM()):Value.NULL);
@@ -1665,7 +1666,7 @@ public class EntityValue extends Value
                 }
             }
         });
-
+        //setter of ironman flower, blueness of skull, carryingitem 
         // "dimension"      []
         // "item"           []
         // "count",         []
