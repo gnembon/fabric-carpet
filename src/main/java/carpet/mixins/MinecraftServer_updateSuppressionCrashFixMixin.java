@@ -43,7 +43,8 @@ public class MinecraftServer_updateSuppressionCrashFixMixin {
 
 
     private void logUpdateSuppression(BlockPos pos) {
-        if(LoggerRegistry.__updateSuppressedCrashes) {
+        CarpetSettings.LOG.info("Server crash from update suppression prevented in world tick at [" + pos.toShortString() + "]");
+        if (LoggerRegistry.__updateSuppressedCrashes) {
             LoggerRegistry.getLogger("updateSuppressedCrashes").log(() -> {
                 return new BaseComponent[]{Messenger.c(
                         "w Server crash prevented in: ",
