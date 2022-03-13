@@ -40,6 +40,7 @@ import net.minecraft.world.level.LightLayer;
 import net.minecraft.world.level.block.EntityBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.phys.Vec3;
 
 public class ShapesRenderer
@@ -314,22 +315,25 @@ public class ShapesRenderer
             
             //matrices.scale(-1, 1, 1);
             
-            MultiBufferSource.BufferSource immediate = MultiBufferSource.immediate(builder);
+            
             
             
             BlockPos blockPos=new BlockPos(0,10,0);
             BlockState blockState=client.level.getBlockState(blockPos);
             
+            MultiBufferSource.BufferSource immediate = MultiBufferSource.immediate(builder);
             client.getBlockRenderer().getModelRenderer().tesselateWithoutAO(client.level, client.getBlockRenderer().getBlockModel(blockState), blockState, blockPos , matrices, immediate.getBuffer(ItemBlockRenderTypes.getChunkRenderType(blockState)), false, new Random(), 373L, OverlayTexture.NO_OVERLAY);
-            client.getBlockRenderer().renderLiquid(blockPos, blockAndTintGetter, immediate, blockState, blockState.getFluidState());
-            //if(blockState.getBlock() instanceof EntityBlock eb){
-                //BlockEntity BlockEntity=eb.newBlockEntity(new BlockPos(0,0,0), blockState);
+            //FluidState fluidState;
+            //client.getBlockRenderer().renderLiquid(blockPos, client.level, immediate.getBuffer(ItemBlockRenderTypes.getRenderLayer(fluidState=blockState.getFluidState())), blockState, fluidState);
+            BlockEntity BlockEntity=client.level.getBlockEntity(blockPos);
+            if(blockState.getBlock() instanceof EntityBlock eb){
+                BlockEntity=eb.newBlockEntity(blockPos, blockState);
                 //BlockEntity.clearRemoved();
                 //BlockEntity.load(null);
                 //client.getBlockEntityRenderDispatcher().render(BlockEntity, client.getFrameTime(), matrices, immediate);
 
-            //}
-            BlockEntity BlockEntity=client.level.getBlockEntity(blockPos);
+            }
+            
             if(BlockEntity!=null)
             client.getBlockEntityRenderDispatcher().render(BlockEntity,/* client.getFrameTime()*/partialTick, matrices, immediate);
             int light=LightTexture.pack(client.level.getBrightness(LightLayer.BLOCK,new BlockPos(v1)), client.level.getBrightness(LightLayer.SKY, new BlockPos(v1)));
