@@ -16,7 +16,7 @@ import net.minecraft.network.chat.BaseComponent;
  * 
  * @param <T> The value's type
  */
-public interface CarpetRule<T> extends Comparable<CarpetRule<?>> {
+public interface CarpetRule<T> {
     /**
      * <p>Returns this rule's name</p>
      * 
@@ -112,22 +112,6 @@ public interface CarpetRule<T> extends Comparable<CarpetRule<?>> {
      * @see #set(CommandSourceStack, String)
      */
     void set(CommandSourceStack source, T value) throws InvalidRuleValueException;
-    
-    /**
-     * <p>Compares this {@link CarpetRule} against another one, without taking the current value into account.</p>
-     * 
-     * <p>In the default {@link SettingsManager} implementation, this is used to sort the rules before displaying them.</p>
-     * 
-     * <p>The default comparison method depends only on the rule's name.</p>
-     * 
-     * <h1>int compareTo(CarpetRule<?> o)</h1>
-     * 
-     * {@inheritDoc}
-     */
-    @Override
-    default int compareTo(CarpetRule<?> o) {
-        return this.name().compareTo(o.name());
-    }
     
     @Override
     boolean equals(Object o);

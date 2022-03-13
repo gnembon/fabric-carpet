@@ -56,6 +56,7 @@ import net.minecraft.world.level.storage.LevelResource;
 
 import static carpet.script.CarpetEventServer.Event.CARPET_RULE_CHANGES;
 import static carpet.utils.Translations.tr;
+import static java.util.Comparator.comparing;
 import static net.minecraft.commands.Commands.argument;
 import static net.minecraft.commands.Commands.literal;
 import static net.minecraft.commands.SharedSuggestionProvider.suggest;
@@ -181,7 +182,7 @@ public class SettingsManager {
                 if (!warned) {
                     CarpetSettings.LOG.warn("""
                         Registering outdated rules for settings class '%s'!
-                        This won't be supported in the future and rules won't be registered!!""".formatted(settingsClass.getName()));
+                        This won't be supported in the future and rules won't be registered!""".formatted(settingsClass.getName()));
                     warned = true;
                 }
             } else {
@@ -338,7 +339,7 @@ public class SettingsManager {
     
     private Collection<CarpetRule<?>> getRulesSorted()
     {
-        return rules.values().stream().sorted().collect(Collectors.toList());
+        return rules.values().stream().sorted(comparing(CarpetRule::name)).toList();
     }
 
     /**
@@ -389,12 +390,12 @@ public class SettingsManager {
     {
         Set<String> defaults = readSettingsFromConf(getFile()).ruleMap().keySet();
         return rules.values().stream().filter(r -> defaults.contains(r.name())).
-                sorted().collect(Collectors.toList());
+                sorted(comparing(CarpetRule::name)).toList();
     }
 
     private Collection<CarpetRule<?>> getNonDefault()
     {
-        return rules.values().stream().filter(Predicate.not(RuleHelper::isInDefaultValue)).sorted().collect(Collectors.toList());
+        return rules.values().stream().filter(Predicate.not(RuleHelper::isInDefaultValue)).sorted(comparing(CarpetRule::name)).toList();
     }
 
     private void loadConfigurationFromConf()
@@ -498,7 +499,7 @@ public class SettingsManager {
             if (rule.name().toLowerCase(Locale.ROOT).contains(lcSearch)) return true; // substring match, case insensitive
             for (String c : rule.categories()) if (c.equals(search)) return true; // category exactly, case sensitive
             return Sets.newHashSet(RuleHelper.translatedDescription(rule).toLowerCase(Locale.ROOT).split("\\W+")).contains(lcSearch); // contains full term in description, but case insensitive
-        }).sorted().collect(Collectors.toUnmodifiableList());
+        }).sorted(comparing(CarpetRule::name)).toList();
     }
 
     /**

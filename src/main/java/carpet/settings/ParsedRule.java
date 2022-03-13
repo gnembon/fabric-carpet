@@ -1,5 +1,6 @@
 package carpet.settings;
 
+import carpet.CarpetSettings;
 import carpet.api.settings.CarpetRule;
 import carpet.api.settings.InvalidRuleValueException;
 import carpet.api.settings.RuleHelper;
@@ -35,7 +36,7 @@ import java.util.stream.Stream;
  * @deprecated Use the type {@link CarpetRule} instead
  */
 @Deprecated(forRemoval = true) // to move to api.settings package and visibility to package private
-public final class ParsedRule<T> implements CarpetRule<T> {
+public final class ParsedRule<T> implements CarpetRule<T>, Comparable<ParsedRule<?>> {
     private static final Map<Class<?>, FromStringConverter<?>> CONVERTER_MAP = Map.ofEntries(
             Map.entry(String.class, str -> str),
             Map.entry(Boolean.class, str -> {
@@ -441,6 +442,26 @@ public final class ParsedRule<T> implements CarpetRule<T> {
     {
         RuleHelper.resetToDefault(this, source);
     }
+
+    /**
+     * @deprecated Forcing {@link Comparable} isn't a thing on {@link CarpetRule}s. Instead, pass a comparator by name to your
+     *             sort methods, you can get one by calling {@code Comparator.comparing(CarpetRule::name)}
+     */
+    @Override
+    @Deprecated(forRemoval = true)
+    public int compareTo(ParsedRule<?> o)
+    {
+        if (!warnedComparable) {
+            warnedComparable = true;
+            CarpetSettings.LOG.warn("""
+                    Extension is relying on carpet rules to be comparable! This is not true for all carpet rules anymore, \
+                    and will crash the game in future versions or if an extension adds non-comparable rules!
+                    Fixing it is as simple as passing Comparator.comparing(CarpetRule::name) to the sorting method!""",
+                    new Throwable("Location:").fillInStackTrace());
+        }
+        return this.name.compareTo(o.name);
+    }
+    private static boolean warnedComparable = false;
 
     /**
      * @return A {@link String} being the translated {@link ParsedRule#name} of this rule,
