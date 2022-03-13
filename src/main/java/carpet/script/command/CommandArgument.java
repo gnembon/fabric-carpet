@@ -16,6 +16,7 @@ import carpet.script.value.StringValue;
 import carpet.script.value.Value;
 import carpet.script.value.ValueConversions;
 import carpet.utils.CarpetProfiler;
+import com.mojang.datafixers.util.Either;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
 
@@ -71,7 +72,9 @@ import net.minecraft.commands.arguments.ObjectiveArgument;
 import net.minecraft.commands.arguments.ObjectiveCriteriaArgument;
 import net.minecraft.commands.arguments.ParticleArgument;
 import net.minecraft.commands.arguments.RangeArgument;
+import net.minecraft.commands.arguments.ResourceKeyArgument;
 import net.minecraft.commands.arguments.ResourceLocationArgument;
+import net.minecraft.commands.arguments.ResourceOrTagLocationArgument;
 import net.minecraft.commands.arguments.ScoreHolderArgument;
 import net.minecraft.commands.arguments.ScoreboardSlotArgument;
 import net.minecraft.commands.arguments.TeamArgument;
@@ -91,9 +94,12 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Registry;
 import net.minecraft.network.chat.TextComponent;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.commands.BossBarCommands;
+import net.minecraft.tags.TagKey;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.phys.Vec2;
 import net.minecraft.world.scores.Scoreboard;
 
@@ -204,13 +210,25 @@ public abstract class CommandArgument
                     (c, p) -> ValueConversions.of( ResourceLocationArgument.getId(c, p)), (ctx, builder) -> SharedSuggestionProvider.suggestResource(ctx.getSource().getServer().getLootTables().getIds(), builder)
             ),
             new VanillaUnconfigurableArgument("attribute", ResourceLocationArgument::id,
-                    (c, p) -> ValueConversions.of( Registry.ATTRIBUTE.getKey(ResourceLocationArgument.getAttribute(c, p))), (ctx, builder) -> SharedSuggestionProvider.suggestResource(Registry.ATTRIBUTE.keySet(), builder)
+                    (c, p) -> ValueConversions.of( Registry.ATTRIBUTE.getKey(ResourceKeyArgument.getAttribute(c, p))), (ctx, builder) -> SharedSuggestionProvider.suggestResource(Registry.ATTRIBUTE.keySet(), builder)
             ),
             new VanillaUnconfigurableArgument("boss", ResourceLocationArgument::id,
                     (c, p) -> ValueConversions.of( ResourceLocationArgument.getId(c, p)), BossBarCommands.SUGGEST_BOSS_BAR
             ),
-            new VanillaUnconfigurableArgument("biome", ResourceLocationArgument::id,
-                    (c, p) -> ValueConversions.of( ResourceLocationArgument.getId(c, p)), SuggestionProviders.AVAILABLE_BIOMES
+            new VanillaUnconfigurableArgument("biome", () -> ResourceOrTagLocationArgument.resourceOrTag(Registry.BIOME_REGISTRY),
+                    (c, p) -> {
+                        ResourceOrTagLocationArgument.Result<Biome> result = ResourceOrTagLocationArgument.getBiome(c, p);
+                        Either<ResourceKey<Biome>, TagKey<Biome>> res = result.unwrap();
+                        if (res.left().isPresent())
+                        {
+                            return ValueConversions.of(res.left().get());
+                        }
+                        if (res.right().isPresent())
+                        {
+                            return ValueConversions.of(res.right().get());
+                        }
+                        return Value.NULL;
+                    }, (ctx, builder) -> SharedSuggestionProvider.suggestResource(ctx.getSource().getServer().registryAccess().registryOrThrow(Registry.BIOME_REGISTRY).keySet(), builder)
             ),
             new VanillaUnconfigurableArgument("sound", ResourceLocationArgument::id,
                     (c, p) -> ValueConversions.of( ResourceLocationArgument.getId(c, p)), SuggestionProviders.AVAILABLE_SOUNDS

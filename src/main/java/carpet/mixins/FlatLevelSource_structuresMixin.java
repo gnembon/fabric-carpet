@@ -1,35 +1,23 @@
 package carpet.mixins;
 
-import carpet.CarpetSettings;
-import carpet.helpers.CustomSpawnLists;
-import net.minecraft.core.Holder;
+import net.minecraft.core.HolderSet;
+import net.minecraft.core.Registry;
+import net.minecraft.world.level.levelgen.structure.StructureSet;
 import org.spongepowered.asm.mixin.Mixin;
 
-import net.minecraft.core.BlockPos;
-import net.minecraft.util.random.WeightedRandomList;
-import net.minecraft.world.entity.MobCategory;
-import net.minecraft.world.level.StructureFeatureManager;
-import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.biome.BiomeSource;
-import net.minecraft.world.level.biome.MobSpawnSettings;
 import net.minecraft.world.level.chunk.ChunkGenerator;
 import net.minecraft.world.level.levelgen.FlatLevelSource;
-import net.minecraft.world.level.levelgen.StructureSettings;
-import net.minecraft.world.level.levelgen.feature.NetherFortressFeature;
-import net.minecraft.world.level.levelgen.feature.OceanMonumentFeature;
-import net.minecraft.world.level.levelgen.feature.PillagerOutpostFeature;
-import net.minecraft.world.level.levelgen.feature.StructureFeature;
-import net.minecraft.world.level.levelgen.feature.SwamplandHutFeature;
+
+import java.util.Optional;
 
 @Mixin(FlatLevelSource.class)
 public abstract class FlatLevelSource_structuresMixin extends ChunkGenerator
 {
-
-    public FlatLevelSource_structuresMixin(BiomeSource biomeSource, StructureSettings structuresConfig)
-    {
-        super(biomeSource, structuresConfig);
+    public FlatLevelSource_structuresMixin(Registry<StructureSet> registry, Optional<HolderSet<StructureSet>> optional, BiomeSource biomeSource) {
+        super(registry, optional, biomeSource);
     }
-
+/*
     @Override
     public WeightedRandomList<MobSpawnSettings.SpawnerData> getMobsAt(Holder<Biome> biome, StructureFeatureManager accessor, MobCategory group, BlockPos pos)
     {
@@ -90,4 +78,6 @@ public abstract class FlatLevelSource_structuresMixin extends ChunkGenerator
 
 
     }
+    
+ */
 }

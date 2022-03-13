@@ -27,7 +27,7 @@ public class Monitoring {
         {
             if (lv.size() == 0)
             {
-                return SystemInfo.getAll((CarpetContext) c);
+                return SystemInfo.getAll();
             }
             if (lv.size() == 1) {
                 String what = lv.get(0).getString();
@@ -45,7 +45,7 @@ public class Monitoring {
             NaturalSpawner.SpawnState info = world.getChunkSource().getLastSpawnState();
             if (info == null) return Value.NULL;
             Object2IntMap<MobCategory> mobcounts = info.getMobCategoryCounts();
-            int chunks = ((SpawnHelperInnerInterface)info).cmGetChunkCount();
+            int chunks = info.getSpawnableChunkCount();
             if (lv.size() == 0)
             {
                 Map<Value, Value> retDict = new HashMap<>();

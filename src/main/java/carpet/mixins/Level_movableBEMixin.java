@@ -11,6 +11,7 @@ import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.EntityBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.LidBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.LevelChunk;
 import org.spongepowered.asm.mixin.Final;
@@ -64,9 +65,17 @@ public abstract class Level_movableBEMixin implements WorldInterface, LevelAcces
 
         BlockState blockState_2;
         if (newBlockEntity != null && block_1 instanceof EntityBlock)
+        {
             blockState_2 = ((WorldChunkInterface) worldChunk_1).setBlockStateWithBlockEntity(blockPos_1, blockState_1, newBlockEntity, (int_1 & 64) != 0);
+            if (newBlockEntity instanceof LidBlockEntity)
+            {
+                scheduleTick(blockPos_1, block_1, 5);
+            }
+        }
         else
+        {
             blockState_2 = worldChunk_1.setBlockState(blockPos_1, blockState_1, (int_1 & 64) != 0);
+        }
 
         if (blockState_2 == null)
         {

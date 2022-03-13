@@ -368,13 +368,11 @@ public class SpawnReporter
         for (MobCategory enumcreaturetype : MobCategory.values())
         {
             //String type_code = String.format("%s", enumcreaturetype);
-            boolean there_are_mobs_to_list = false;
             for (ResourceKey<Level> dim : worldIn.getServer().levelKeys()) //String world_code: new String[] {"", " (N)", " (E)"})
             {
                 Pair<ResourceKey<Level>, MobCategory> code = Pair.of(dim, enumcreaturetype);
                 if (spawn_ticks_spawns.get(code) > 0L)
                 {
-                    there_are_mobs_to_list = true;
                     double hours = overall_spawn_ticks.get(code)/72000.0;
                     report.add(Messenger.s(String.format(" > %s%s (%.1f min), %.1f m/t, %%{%.1fF %.1f- %.1f+}; %.2f s/att",
                         enumcreaturetype.getName().substring(0,3), getWorldCode(dim),
@@ -479,7 +477,7 @@ public class SpawnReporter
                             float f1 = (float)z + 0.5F;
                             mob.moveTo((double)f, (double)y, (double)f1, worldIn.random.nextFloat() * 360.0F, 0.0F);
                             fits1 = worldIn.noCollision(mob);
-                            EntityType etype = mob.getType();
+                            EntityType<?> etype = mob.getType();
 
                             for (int i = 0; i < 20; ++i)
                             {

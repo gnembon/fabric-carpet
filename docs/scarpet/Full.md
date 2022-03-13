@@ -2297,7 +2297,7 @@ Here is a list of built-in types, with their return value formats, as well as a 
   * `'loottable'`: name of a loot table source
   * `'attribute'`: an attribute name
   * `'boss'`: a bossbar name
-  * `'biome'`: a biome name 
+  * `'biome'`: a biome name. or biome tag
   * `'sound'`: name of a sound 
   * `'storekey'`: string of a valid current data store key.
   * `'identifier'`: any valid identifier. 'minecraft:' prefix is stripped off as a default.
@@ -3081,7 +3081,8 @@ These contain some popular features and structures that are impossible or diffic
 
 ### `structure_eligibility(pos, ?structure, ?size_needed)`
 
-Checks wordgen eligibility for a structure in a given chunk. Requires a `Standard Structure` name (see above).
+Checks wordgen eligibility for a structure in a given chunk. Requires a `Structure Variant` name (see above),
+or `Standard Structure` to check structures of this type.
 If no structure is given, or `null`, then it will check
 for all structures. If bounding box of the structures is also requested, it will compute size of potential
 structures. This function, unlike other in the `structure*` category is not using world data nor accesses chunks
@@ -3094,7 +3095,7 @@ If structure is specified, it will return `null` if a chunk is not eligible or i
 a map with two values: `'box'` for a pair of coordinates indicating bounding box of the structure, and `'pieces'` for 
 list of elements of the structure (as a tuple), with its name, direction, and box coordinates of the piece.
 
-If structure is not specified, it will return a set of structure names that are eligible, or a map with structures
+If structure is not specified, or a `Standard Structure` was specified, like `'village'`,it will return a set of structure names that are eligible, or a map with structures
 as keys, and same type of map values as with a single structure call. An empty set or an empty map would indicate that nothing
 should be generated there.
 
@@ -3437,6 +3438,10 @@ List of entities riding the entity.
 
 Entity that `e` rides.
 
+### `query(e, 'unmountable')`
+
+Boolean, true if the entity cannot be mounted.
+
 ### `(deprecated) query(e, 'tags')`
 
 Deprecated by `query(e, 'scoreboard_tags')`
@@ -3469,6 +3474,14 @@ Boolean, true if the entity is burning.
 
 Number of remaining ticks of being on fire.
 
+### `query(e, 'is_freezing')`
+
+Boolean, true if the entity is freezing.
+
+### `query(e, 'frost')`
+
+Number of remaining ticks of being frozen.
+
 ### `query(e, 'silent')`
 
 Boolean, true if the entity is silent.
@@ -3484,6 +3497,10 @@ Boolean, true if the entity is invulnerable.
 ### `query(e, 'immune_to_fire')`
 
 Boolean, true if the entity is immune to fire.
+
+### `query(e, 'immune_to_frost')`
+
+Boolean, true if the entity is immune to frost.
 
 ### `query(e, 'dimension')`
 
@@ -3677,10 +3694,10 @@ Retrieves player hunger related information. For non-players, returns `null`.
 
 Gets the absorption of the player (yellow hearts, e.g. when having a golden apple.)
 
-### `query(e,'xp')`
-### `query(e,'xp_level')`
-### `query(e,'xp_progress')`
-### `query(e,'score')`
+### `query(e, 'xp')`
+### `query(e, 'xp_level')`
+### `query(e, 'xp_progress')`
+### `query(e, 'score')`
 
 Numbers related to player's xp. `xp` is the overall xp player has, `xp_level` is the levels seen in the hotbar,
 `xp_progress` is a float between 0 and 1 indicating the percentage of the xp bar filled, and `score` is the number displayed upon death 
@@ -3871,7 +3888,7 @@ Moves the entity by a vector from its current location.
 
 Sets the motion vector (where and how much entity is moving).
 
-### `modify(e, 'motion_z', x), modify(e, 'motion_y', y), modify(e, 'motion_z', z)`
+### `modify(e, 'motion_x', x), modify(e, 'motion_y', y), modify(e, 'motion_z', z)`
 
 Sets the corresponding component of the motion vector.
 
@@ -3922,6 +3939,10 @@ Dismounts riding entity.
 
 Mounts the entity to the `other`.
 
+### `modify(e, 'unmountable', boolean)`
+
+Denies or allows an entity to be mounted.
+
 ### `modify(e, 'drop_passengers')`
 
 Shakes off all passengers.
@@ -3956,6 +3977,10 @@ players, since they are controlled client side.
 Applies status effect to the living entity. Takes several optional parameters, which default to `0`, `true`, 
 `true` and `false`. If no duration is specified, or if it's null or 0, the effect is removed. If name is not specified,
 it clears all effects.
+
+### `modify(e, 'health', float)`
+
+Modifies the health of an entity.
 
 ### `modify(e, 'may_fly', boolean)`
 
@@ -4038,6 +4063,10 @@ Toggles invulnerability for the entity.
 
 Will set entity on fire for `ticks` ticks. Set to 0 to extinguish.
 
+### `modify(e, 'frost', ticks)`
+
+Will give entity frost for `ticks` ticks. Set to 0 to unfreeze.
+
 ### `modify(e, 'hunger', value)`
 ### `modify(e, 'saturation', value)`
 ### `modify(e, 'exhaustion', value)`
@@ -4060,7 +4089,7 @@ maybe you will get a double, who knows.
 
 ### `modify(e, 'air', ticks)`
 
-Modifies entity air
+Modifies entity air.
 
 ### `modify(e, 'add_exhaustion', value)`
 
@@ -4937,6 +4966,9 @@ Triggered when the player has successfully logged in and was placed in the game.
 
 ### `__on_player_disconnects(player, reason)`
 Triggered when a player sends a disconnect package or is forcefully disconnected from the server.
+
+### `__on_player_message(player, message)`
+Triggered when a player sends a chat message or runs a command.
 
 ### `__on_statistic(player, category, event, value)`
 Triggered when a player statistic changes. Doesn't notify on periodic an rhythmic events, i.e. 
@@ -5925,7 +5957,8 @@ it could either mean your input is wrong, or statistic effectively has a value o
 
 
 ### `system_info()`, `system_info(property)`
-Fetches the value of a system property or returns all inforation as a map when called without any arguments. It can be used to 
+Fetches the value of one of the following system properties. If called without arguments, it returns a list of 
+available system_info options. It can be used to 
 fetch various information, mostly not changing, or only available via low level
 system calls. In all circumstances, these are only provided as read-only.
 

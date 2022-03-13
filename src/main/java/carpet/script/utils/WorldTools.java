@@ -114,7 +114,10 @@ public class WorldTools
         //    return server.getRegistryManager().get(Registry.CHUNK_GENERATOR_SETTINGS_KEY).getOrThrow(ChunkGeneratorSettings.OVERWORLD);
         //});
 
-        chunkGenerator2 = new NoiseBasedChunkGenerator(server.registryAccess().registryOrThrow(Registry.NOISE_REGISTRY), MultiNoiseBiomeSource.Preset.OVERWORLD.biomeSource(server.registryAccess().registryOrThrow(Registry.BIOME_REGISTRY)), seed,
+        chunkGenerator2 = new NoiseBasedChunkGenerator(
+                server.registryAccess().registryOrThrow(Registry.STRUCTURE_SET_REGISTRY),
+                server.registryAccess().registryOrThrow(Registry.NOISE_REGISTRY),
+                MultiNoiseBiomeSource.Preset.OVERWORLD.biomeSource(server.registryAccess().registryOrThrow(Registry.BIOME_REGISTRY)), seed,
             Holder.direct(server.registryAccess().registryOrThrow(Registry.NOISE_GENERATOR_SETTINGS_REGISTRY).getOrThrow(NoiseGeneratorSettings.OVERWORLD))
         );
 

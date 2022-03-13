@@ -15,8 +15,8 @@ import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -28,7 +28,7 @@ import java.util.regex.Pattern;
 
 public class Messenger
 {
-    public static final Logger LOG = LogManager.getLogger("Messaging System");
+    public static final Logger LOG = LoggerFactory.getLogger("Messaging System");
 
     private static final Pattern colorExtract = Pattern.compile("#([0-9a-fA-F]{6})");
     public enum CarpetFormatting
