@@ -11,12 +11,18 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.Tesselator;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import com.mojang.blaze3d.vertex.VertexFormat.Mode;
+import com.mojang.datafixers.util.Either;
 import com.mojang.math.Vector3f;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Random;
 import java.util.function.BiFunction;
+import java.util.function.Predicate;
+import java.util.stream.Stream;
+
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
@@ -29,19 +35,41 @@ import net.minecraft.client.renderer.block.model.ItemTransforms;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.Holder;
+import net.minecraft.core.Registry;
+import net.minecraft.core.RegistryAccess;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.tags.TagKey;
 import net.minecraft.util.Mth;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.item.crafting.RecipeManager;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LightLayer;
+import net.minecraft.world.level.biome.Biome;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.EntityBlock;
+import net.minecraft.world.level.block.RenderShape;
+import net.minecraft.world.level.block.ShulkerBoxBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.chunk.ChunkSource;
+import net.minecraft.world.level.dimension.DimensionType;
+import net.minecraft.world.level.entity.LevelEntityGetter;
+import net.minecraft.world.level.gameevent.GameEvent;
+import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.material.FluidState;
+import net.minecraft.world.level.saveddata.maps.MapItemSavedData;
 import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.scores.Scoreboard;
+import net.minecraft.world.ticks.LevelTickAccess;
 
 public class ShapesRenderer
 {
@@ -254,6 +282,8 @@ public class ShapesRenderer
     public static class RenderedItem extends RenderedShape<ShapeDispatcher.DisplayedItem>
     {
 
+        private BlockPos blockPos;
+        private BlockState blockState;
         protected RenderedItem(Minecraft client, ShapeDispatcher.ExpiringShape shape)
         {
             super(client, (ShapeDispatcher.DisplayedItem)shape);
@@ -264,7 +294,6 @@ public class ShapesRenderer
         {
             if (shape.a == 0.0) return;
             Vec3 v1 = shape.relativiseRender(client.level, shape.pos, partialTick);
-            v1=shape.pos;
             Camera camera1 = client.gameRenderer.getMainCamera();
             
             if (shape.doublesided)
@@ -273,8 +302,9 @@ public class ShapesRenderer
                 RenderSystem.enableCull();
             matrices.pushPose();
             //matrices.setIdentity();
+            matrices.translate(0.5, 0.5, 0.5);
             matrices.translate(v1.x - cx,v1.y - cy,v1.z - cz);
-            /*if (shape.facing == null)
+            if (shape.facing == null)
             {
                 //matrices.method_34425(new Matrix4f(camera1.getRotation()));
                 matrices.mulPose(camera1.rotation());
@@ -307,37 +337,243 @@ public class ShapesRenderer
             if (shape.lean!=0.0f) matrices.mulPose(Vector3f.XP.rotationDegrees(shape.lean));
             if (shape.turn!=0.0f) matrices.mulPose(Vector3f.YP.rotationDegrees(shape.turn));
             
-            matrices.scale(-1, 1, 1);
-            //*/
+			matrices.translate(-0.5, -0.5, -0.5);
+            //matrices.scale(-1, 1, 1);
             RenderSystem.depthMask(true);
             RenderSystem.enableCull();
             RenderSystem.enableDepthTest();
             
             //matrices.scale(-1, 1, 1);
+
+
+            blockPos=new BlockPos(v1);
+            int light=LightTexture.pack(client.level.getBrightness(LightLayer.BLOCK,blockPos), client.level.getBrightness(LightLayer.SKY, blockPos));
             
             
-            
-            
-            BlockPos blockPos=new BlockPos(0,10,0);
-            BlockState blockState=client.level.getBlockState(blockPos);
+            blockState=client.level.getBlockState(new BlockPos(0,10,0));
             
             MultiBufferSource.BufferSource immediate = MultiBufferSource.immediate(builder);
-            client.getBlockRenderer().getModelRenderer().tesselateWithoutAO(client.level, client.getBlockRenderer().getBlockModel(blockState), blockState, blockPos , matrices, immediate.getBuffer(ItemBlockRenderTypes.getChunkRenderType(blockState)), false, new Random(), 373L, OverlayTexture.NO_OVERLAY);
-            //FluidState fluidState;
-            //client.getBlockRenderer().renderLiquid(blockPos, client.level, immediate.getBuffer(ItemBlockRenderTypes.getRenderLayer(fluidState=blockState.getFluidState())), blockState, fluidState);
-            BlockEntity BlockEntity=client.level.getBlockEntity(blockPos);
-            if(blockState.getBlock() instanceof EntityBlock eb){
-                BlockEntity=eb.newBlockEntity(blockPos, blockState);
-                //BlockEntity.clearRemoved();
-                //BlockEntity.load(null);
-                //client.getBlockEntityRenderDispatcher().render(BlockEntity, client.getFrameTime(), matrices, immediate);
-
+            //draw the block itself
+            if(blockState.getRenderShape()==RenderShape.MODEL){
+                client.getBlockRenderer().renderSingleBlock(blockState, matrices, immediate, light, OverlayTexture.NO_OVERLAY);
             }
             
-            if(BlockEntity!=null)
-            client.getBlockEntityRenderDispatcher().render(BlockEntity,/* client.getFrameTime()*/partialTick, matrices, immediate);
-            int light=LightTexture.pack(client.level.getBrightness(LightLayer.BLOCK,new BlockPos(v1)), client.level.getBrightness(LightLayer.SKY, new BlockPos(v1)));
-            client.getItemRenderer().renderStatic(new ItemStack(Items.PINK_STAINED_GLASS), ItemTransforms.TransformType.NONE, light, OverlayTexture.NO_OVERLAY,matrices,immediate,(int) shape.key());
+            
+            //draw the block`s entity part
+            BlockEntity BlockEntity=null;
+            if(blockState.getBlock() instanceof EntityBlock eb){
+                BlockEntity=eb.newBlockEntity(blockPos, blockState);
+                if (BlockEntity!=null)
+                    BlockEntity.setLevel(client.level);
+                    //BlockEntity.load(null);maybe add some NBT here in the future?
+                if(blockState.getBlock() instanceof ShulkerBoxBlock){
+                    BlockEntity.setLevel(new Level(null, null, new Holder<>(){
+
+                        @Override
+                        public DimensionType value() {
+                            return client.level.dimensionType();
+                        }
+
+                        @Override
+                        public boolean isBound() {
+                            // TODO Auto-generated method stub
+                            return false;
+                        }
+
+                        @Override
+                        public boolean is(ResourceLocation resourceLocation) {
+                            // TODO Auto-generated method stub
+                            return false;
+                        }
+
+                        @Override
+                        public boolean is(ResourceKey<DimensionType> resourceKey) {
+                            // TODO Auto-generated method stub
+                            return false;
+                        }
+
+                        @Override
+                        public boolean is(Predicate<ResourceKey<DimensionType>> predicate) {
+                            // TODO Auto-generated method stub
+                            return false;
+                        }
+
+                        @Override
+                        public boolean is(TagKey<DimensionType> tagKey) {
+                            // TODO Auto-generated method stub
+                            return false;
+                        }
+
+                        @Override
+                        public Stream<TagKey<DimensionType>> tags() {
+                            // TODO Auto-generated method stub
+                            return null;
+                        }
+
+                        @Override
+                        public Either<ResourceKey<DimensionType>, DimensionType> unwrap() {
+                            // TODO Auto-generated method stub
+                            return null;
+                        }
+
+                        @Override
+                        public Optional<ResourceKey<DimensionType>> unwrapKey() {
+                            // TODO Auto-generated method stub
+                            return null;
+                        }
+
+                        @Override
+                        public Kind kind() {
+                            // TODO Auto-generated method stub
+                            return null;
+                        }
+
+                        @Override
+                        public boolean isValidInRegistry(Registry<DimensionType> registry) {
+                            // TODO Auto-generated method stub
+                            return false;
+                        }}, null, true, false, 0L)
+                    {
+                        public BlockState getBlockState(BlockPos b){
+                            return blockState;
+                        }
+
+                        @Override
+                        public LevelTickAccess<Block> getBlockTicks() {
+                            // TODO Auto-generated method stub
+                            return null;
+                        }
+
+                        @Override
+                        public LevelTickAccess<Fluid> getFluidTicks() {
+                            // TODO Auto-generated method stub
+                            return null;
+                        }
+
+                        @Override
+                        public ChunkSource getChunkSource() {
+                            // TODO Auto-generated method stub
+                            return null;
+                        }
+
+                        @Override
+                        public void levelEvent(Player player, int i, BlockPos blockPos, int j) {
+                            // TODO Auto-generated method stub
+                            
+                        }
+
+                        @Override
+                        public void gameEvent(Entity entity, GameEvent gameEvent, BlockPos blockPos) {
+                            // TODO Auto-generated method stub
+                            
+                        }
+
+                        @Override
+                        public RegistryAccess registryAccess() {
+                            // TODO Auto-generated method stub
+                            return null;
+                        }
+
+                        @Override
+                        public List<? extends Player> players() {
+                            // TODO Auto-generated method stub
+                            return null;
+                        }
+
+                        @Override
+                        public Holder<Biome> getUncachedNoiseBiome(int i, int j, int k) {
+                            // TODO Auto-generated method stub
+                            return null;
+                        }
+
+                        @Override
+                        public float getShade(Direction direction, boolean bl) {
+                            // TODO Auto-generated method stub
+                            return 0;
+                        }
+
+                        @Override
+                        public void sendBlockUpdated(BlockPos blockPos, BlockState blockState, BlockState blockState2,
+                                int i) {
+                            // TODO Auto-generated method stub
+                            
+                        }
+
+                        @Override
+                        public void playSound(Player player, double d, double e, double f, SoundEvent soundEvent,
+                                SoundSource soundSource, float g, float h) {
+                            // TODO Auto-generated method stub
+                            
+                        }
+
+                        @Override
+                        public void playSound(Player player, Entity entity, SoundEvent soundEvent,
+                                SoundSource soundSource, float f, float g) {
+                            // TODO Auto-generated method stub
+                            
+                        }
+
+                        @Override
+                        public String gatherChunkSourceStats() {
+                            // TODO Auto-generated method stub
+                            return null;
+                        }
+
+                        @Override
+                        public Entity getEntity(int i) {
+                            // TODO Auto-generated method stub
+                            return null;
+                        }
+
+                        @Override
+                        public MapItemSavedData getMapData(String string) {
+                            // TODO Auto-generated method stub
+                            return null;
+                        }
+
+                        @Override
+                        public void setMapData(String string, MapItemSavedData mapItemSavedData) {
+                            // TODO Auto-generated method stub
+                            
+                        }
+
+                        @Override
+                        public int getFreeMapId() {
+                            // TODO Auto-generated method stub
+                            return 0;
+                        }
+
+                        @Override
+                        public void destroyBlockProgress(int i, BlockPos blockPos, int j) {
+                            // TODO Auto-generated method stub
+                            
+                        }
+
+                        @Override
+                        public Scoreboard getScoreboard() {
+                            // TODO Auto-generated method stub
+                            return null;
+                        }
+
+                        @Override
+                        public RecipeManager getRecipeManager() {
+                            // TODO Auto-generated method stub
+                            return null;
+                        }
+
+                        @Override
+                        protected LevelEntityGetter<Entity> getEntities() {
+                            // TODO Auto-generated method stub
+                            return null;
+                        }
+                    });
+                }
+            }
+            if(BlockEntity!=null&&client.getBlockEntityRenderDispatcher().getRenderer(BlockEntity)!=null){
+                client.getBlockEntityRenderDispatcher().getRenderer(BlockEntity).render(BlockEntity, partialTick, matrices, immediate, light, OverlayTexture.NO_OVERLAY);
+            }
+            //draw item
+            client.getItemRenderer().renderStatic(new ItemStack(Items.PINK_STAINED_GLASS), ItemTransforms.TransformType.GUI, light, OverlayTexture.NO_OVERLAY,matrices,immediate,(int) shape.key());
             matrices.popPose();
             immediate.endBatch();
             RenderSystem.disableCull();
