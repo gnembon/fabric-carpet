@@ -152,10 +152,11 @@ public class BlockRotator
             else
             {
                 boolean turnCounterClockwise = switch (facing) {
-                    case NORTH      -> (hitVec.x <= 0.5);
-                    case SOUTH      -> !(hitVec.x <= 0.5);
-                    case EAST, WEST -> (hitVec.z <= 0.5);
-                    default         -> false;
+                    case NORTH ->  (hitVec.x <= 0.5);
+                    case SOUTH -> !(hitVec.x <= 0.5);
+                    case EAST  ->  (hitVec.z <= 0.5);
+                    case WEST  -> !(hitVec.z <= 0.5);
+                    default    -> false;
                 };
                 newState = state.rotate(turnCounterClockwise ? Rotation.COUNTERCLOCKWISE_90 : Rotation.CLOCKWISE_90);
             }
