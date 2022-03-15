@@ -336,7 +336,8 @@ public class ShapesRenderer
             if (shape.tilt!=0.0f) matrices.mulPose(Vector3f.ZP.rotationDegrees(shape.tilt));
             if (shape.lean!=0.0f) matrices.mulPose(Vector3f.XP.rotationDegrees(shape.lean));
             if (shape.turn!=0.0f) matrices.mulPose(Vector3f.YP.rotationDegrees(shape.turn));
-            
+            matrices.scale(shape.size*shape.width, shape.size*shape.height, shape.size);
+
 			matrices.translate(-0.5, -0.5, -0.5);
             //matrices.scale(-1, 1, 1);
             RenderSystem.depthMask(true);
@@ -347,10 +348,15 @@ public class ShapesRenderer
 
 
             blockPos=new BlockPos(v1);
-            int light=LightTexture.pack(client.level.getBrightness(LightLayer.BLOCK,blockPos), client.level.getBrightness(LightLayer.SKY, blockPos));
+            int light;
+            if (shape.light==-999){
+                light=LightTexture.pack(client.level.getBrightness(LightLayer.BLOCK,blockPos), client.level.getBrightness(LightLayer.SKY, blockPos));
+            }
+            else{
+                light=LightTexture.pack(shape.light,0);
+            }
             
-            
-            blockState=client.level.getBlockState(new BlockPos(0,10,0));
+            blockState=shape.blockState;
             
             MultiBufferSource.BufferSource immediate = MultiBufferSource.immediate(builder);
             //draw the block itself
@@ -365,7 +371,8 @@ public class ShapesRenderer
                 BlockEntity=eb.newBlockEntity(blockPos, blockState);
                 if (BlockEntity!=null)
                     BlockEntity.setLevel(client.level);
-                    //BlockEntity.load(null);maybe add some NBT here in the future?
+                    if (shape.blockEntity!=null)
+                        BlockEntity.load(shape.blockEntity);//maybe add some NBT here in the future?
                 if(blockState.getBlock() instanceof ShulkerBoxBlock){
                     BlockEntity.setLevel(new Level(null, null, new Holder<>(){
 
@@ -573,7 +580,8 @@ public class ShapesRenderer
                 client.getBlockEntityRenderDispatcher().getRenderer(BlockEntity).render(BlockEntity, partialTick, matrices, immediate, light, OverlayTexture.NO_OVERLAY);
             }
             //draw item
-            client.getItemRenderer().renderStatic(new ItemStack(Items.PINK_STAINED_GLASS), ItemTransforms.TransformType.GUI, light, OverlayTexture.NO_OVERLAY,matrices,immediate,(int) shape.key());
+            if (shape.item!=null)
+                client.getItemRenderer().renderStatic(shape.item, ItemTransforms.TransformType.GUI, light, OverlayTexture.NO_OVERLAY,matrices,immediate,(int) shape.key());
             matrices.popPose();
             immediate.endBatch();
             RenderSystem.disableCull();

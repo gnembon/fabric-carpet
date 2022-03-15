@@ -13,6 +13,7 @@ import carpet.script.value.EntityValue;
 import carpet.script.value.FormattedTextValue;
 import carpet.script.value.ListValue;
 import carpet.script.value.MapValue;
+import carpet.script.value.NBTSerializableValue;
 import carpet.script.value.NumericValue;
 import carpet.script.value.StringValue;
 import carpet.script.value.Value;
@@ -32,6 +33,7 @@ import net.minecraft.nbt.DoubleTag;
 import net.minecraft.nbt.FloatTag;
 import net.minecraft.nbt.IntTag;
 import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.NbtUtils;
 import net.minecraft.nbt.StringTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.nbt.NumericTag;
@@ -44,7 +46,9 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -555,18 +559,18 @@ public class ShapeDispatcher
 
     public static class DisplayedItem extends ExpiringShape
     {
-        private final Set<String> required = Set.of("pos", "text");
+        private final Set<String> required = Set.of("pos");
         private final Map<String, Value> optional = Map.ofEntries(
                 entry("facing", new StringValue("player")),
-                entry("raise", new NumericValue(0)),
                 entry("tilt", new NumericValue(0)),
                 entry("lean", new NumericValue(0)),
                 entry("turn", new NumericValue(0)),
-                entry("indent", new NumericValue(0)),
-                entry("height", new NumericValue(0)),
-                entry("align", new StringValue("center")),
-                entry("size", new NumericValue(10)),
-                entry("value", Value.NULL),
+                entry("item", Value.NULL),
+                entry("block", Value.NULL),
+                entry("height", new NumericValue(1)),
+                entry("width", new NumericValue(1)),
+                entry("size", new NumericValue(1)),
+                entry("light", new NumericValue(-999)),
                 entry("doublesided", new NumericValue(0)));
         @Override
         protected Set<String> requiredParams() { return Sets.union(super.requiredParams(), required); }
@@ -575,35 +579,53 @@ public class ShapeDispatcher
         public DisplayedItem() { }
 
         Vec3 pos;
-        String text;
-        int textcolor;
-        int textbck;
+
 
         Direction facing;
-        float raise;
+
         float tilt;
         float lean;
         float turn;
         float size;
-        float indent;
-        int align;
+        int light;
+
         float height;
-        Component value;
+        float width;
         boolean doublesided;
+        CompoundTag blockEntity;
+        BlockState blockState;
+        ItemStack item=null;
 
         @Override
         protected void init(Map<String, Value> options)
         {
             super.init(options);
             pos = vecFromValue(options.get("pos"));
-            value = ((FormattedTextValue)options.get("text")).getText();
-            text = value.getString();
-            if (options.containsKey("value"))
-            {
-                value = ((FormattedTextValue)options.get("value")).getText();
+            blockState=((BlockValue)options.getOrDefault("block", BlockValue.AIR)).getBlockState();
+            blockEntity = ((BlockValue)options.getOrDefault("block", BlockValue.AIR)).getData();
+            Value item_ =  options.getOrDefault("item",null);
+            if(item_!=null){
+                List<Value> items;
+                if(item_ instanceof ListValue blv && blv.length()==3){
+                    items = blv.getItems();
+                }else{
+                    items= List.of(StringValue.of(item_.getString()),Value.ONE,Value.NULL);
+                }
+                String id=items.get(0).getString();
+                int count=((NumericValue)items.get(1)).getInt();
+                CompoundTag nbt=null;
+                if (!items.get(2).isNull()){
+                    nbt=((NBTSerializableValue)(items.get(2))).getCompoundTag();
+                }
+                try{
+                    this.item=NBTSerializableValue.parseItem(id,nbt).createItemStack(count,false);
+                } catch (CommandSyntaxException e1) {
+                    e1.printStackTrace();
+                }
+            
             }
-            textcolor = rgba2argb(color);
-            textbck = rgba2argb(fillColor);
+            light=NumericValue.asNumber(options.getOrDefault("light", optional.get("light"))).getInt();
+            if (light>15)light=15;
             String dir = options.getOrDefault("facing", optional.get("facing")).getString();
             facing = null;
             switch (dir)
@@ -622,24 +644,15 @@ public class ShapeDispatcher
                 doublesided = options.get("doublesided").getBoolean();
             }
 
-            raise = NumericValue.asNumber(options.getOrDefault("raise", optional.get("raise"))).getFloat();
             tilt = NumericValue.asNumber(options.getOrDefault("tilt", optional.get("tilt"))).getFloat();
             lean = NumericValue.asNumber(options.getOrDefault("lean", optional.get("lean"))).getFloat();
             turn = NumericValue.asNumber(options.getOrDefault("turn", optional.get("turn"))).getFloat();
-            indent = NumericValue.asNumber(options.getOrDefault("indent", optional.get("indent"))).getFloat();
             height = NumericValue.asNumber(options.getOrDefault("height", optional.get("height"))).getFloat();
-
+            width = NumericValue.asNumber(options.getOrDefault("width", optional.get("width"))).getFloat();
             size = NumericValue.asNumber(options.getOrDefault("size", optional.get("size"))).getFloat();
         }
 
-        private int rgba2argb(int color)
-        {
-            int r = Math.max(1, color >> 24 & 0xFF);
-            int g = Math.max(1, color >> 16 & 0xFF);
-            int b = Math.max(1, color >>  8 & 0xFF);
-            int a = color & 0xFF;
-            return (a << 24) + (r << 16) + (g << 8) + b;
-        }
+        
 
 
         @Override
@@ -654,16 +667,17 @@ public class ShapeDispatcher
             long hash = super.calcKey();
             hash ^= 7;                  hash *= 1099511628211L;
             hash ^= vec3dhash(pos);     hash *= 1099511628211L;
-            hash ^= text.hashCode();    hash *= 1099511628211L;
             if (facing!= null) hash ^= facing.hashCode(); hash *= 1099511628211L;
-            hash ^= Float.hashCode(raise); hash *= 1099511628211L;
             hash ^= Float.hashCode(tilt); hash *= 1099511628211L;
             hash ^= Float.hashCode(lean); hash *= 1099511628211L;
             hash ^= Float.hashCode(turn); hash *= 1099511628211L;
-            hash ^= Float.hashCode(indent); hash *= 1099511628211L;
             hash ^= Float.hashCode(height); hash *= 1099511628211L;
             hash ^= Float.hashCode(size); hash *= 1099511628211L;
-            hash ^= Integer.hashCode(align); hash *= 1099511628211L;
+            hash ^= Float.hashCode(width); hash *= 1099511628211L;
+            hash ^= Float.hashCode(light); hash *= 1099511628211L;
+            if (blockEntity!= null) hash ^= blockEntity.hashCode(); hash *= 1099511628211L;
+            if (blockState!= null) hash ^= blockState.hashCode(); hash *= 1099511628211L;
+            if (item!= null) hash ^= item.hashCode(); hash *= 1099511628211L;
             hash ^= Boolean.hashCode(doublesided); hash *= 1099511628211L;
 
             return hash;
@@ -1208,6 +1222,7 @@ public class ShapeDispatcher
             put("radius", new PositiveFloatParam("radius"));
             put("level", new PositiveIntParam("level"));
             put("height", new FloatParam("height"));
+            put("width", new FloatParam("height"));
             put("axis", new StringChoiceParam("axis", "x", "y", "z"));
             put("points", new PointsParam("points"));
             put("text", new FormattedTextParam("text"));
@@ -1215,6 +1230,9 @@ public class ShapeDispatcher
             put("size", new PositiveIntParam("size"));
             put("align", new StringChoiceParam("align", "center", "left", "right"));
 
+            put("block", new BlockParam("block"));
+            put("item", new ItemParam("item"));
+            put("light", new PositiveIntParam("light"));
             put("indent", new FloatParam("indent"));
             put("raise", new FloatParam("raise"));
             put("tilt", new FloatParam("tilt"));
@@ -1259,6 +1277,83 @@ public class ShapeDispatcher
         public Tag toTag(Value value) { return StringTag.valueOf(value.getString()); }
         @Override
         public Value decode(Tag tag) { return new StringValue(tag.getAsString()); }
+    }
+    public static class BlockParam extends Param
+    {
+        
+        protected BlockParam(String id) {
+            super(id);
+        }
+        @Override
+        public Value validate(Map<String, Value> options, MinecraftServer server, Value value)
+        {
+            if(value instanceof BlockValue blv){
+                return value;
+            }
+            return BlockValue.fromString(value.getString());
+        }
+        @Override
+        public Tag toTag(Value value) {
+            if(value instanceof BlockValue blv){
+                CompoundTag com = NbtUtils.writeBlockState(blv.getBlockState());
+                CompoundTag dataTag = blv.getData();
+                if (dataTag != null)
+                {
+                    com.put("TileEntityData", dataTag);
+                }
+                return com;
+            }
+            return null;
+        }
+
+        @Override
+        public Value decode(Tag tag) {
+            BlockState bs = NbtUtils.readBlockState((CompoundTag) tag);
+            CompoundTag compoundTag2 = null;
+            if (((CompoundTag) tag).contains("TileEntityData", 10)) {
+				compoundTag2 = ((CompoundTag) tag).getCompound("TileEntityData");
+            }
+            return new BlockValue(bs, null, null, compoundTag2);
+        }
+    }
+    public static class ItemParam extends Param
+    {
+        
+        protected ItemParam(String id) {
+            super(id);
+        }
+        @Override
+        public Value validate(Map<String, Value> options, MinecraftServer server, Value value)
+        {
+            return decode(toTag(value));
+        }
+        @Override
+        public Tag toTag(Value value) {
+            
+            List<Value> item;
+            if(value instanceof ListValue blv && blv.length()==3){
+                item = blv.getItems();
+            
+            CompoundTag tag = new CompoundTag();
+            tag.put("id", StringTag.valueOf(item.get(0).getString()));
+            tag.put("count", ByteTag.valueOf((byte) (((NumericValue)item.get(1)).getInt())));
+            if (item.get(2).isNull()){
+                tag.put("tag", new CompoundTag());
+            }else if(item.get(2) instanceof NBTSerializableValue){
+                tag.put("tag", ((NBTSerializableValue)item.get(2)).getTag());
+            }else{
+                tag.put("tag", (new NBTSerializableValue(item.get(2).getString())).getTag());
+            }
+            return tag;
+            }
+            return StringTag.valueOf(value.getString());
+        }
+        @Override
+        public Value decode(Tag tag) {
+            if(tag instanceof CompoundTag cTag)
+            return ListValue.of(new StringValue(cTag.getString("id")),new NumericValue(cTag.getByte("count")),new NBTSerializableValue(cTag.getCompound("tag")));
+            return new StringValue(((StringTag)tag).getAsString());
+        }
     }
     public static class TextParam extends StringParam
     {
