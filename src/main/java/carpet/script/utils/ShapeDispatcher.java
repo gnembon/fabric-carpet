@@ -17,6 +17,8 @@ import carpet.script.value.NBTSerializableValue;
 import carpet.script.value.NumericValue;
 import carpet.script.value.StringValue;
 import carpet.script.value.Value;
+import carpet.script.value.ValueConversions;
+
 import com.google.common.collect.Sets;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import com.mojang.blaze3d.vertex.VertexFormat.Mode;
@@ -659,9 +661,9 @@ public class ShapeDispatcher
             hash ^= Float.hashCode(size); hash *= 1099511628211L;
             hash ^= Float.hashCode(width); hash *= 1099511628211L;
             hash ^= Float.hashCode(light); hash *= 1099511628211L;
-            if (blockEntity!= null) hash ^= blockEntity.hashCode(); hash *= 1099511628211L;
+            if (blockEntity!= null) hash ^= blockEntity.toString().hashCode(); hash *= 1099511628211L;
             if (blockState!= null) hash ^= blockState.hashCode(); hash *= 1099511628211L;
-            if (item!= null) hash ^= item.hashCode(); hash *= 1099511628211L;
+            hash ^= ValueConversions.of(item).getString().hashCode(); hash *= 1099511628211L;
             hash ^= Boolean.hashCode(doublesided); hash *= 1099511628211L;
 
             return hash;
