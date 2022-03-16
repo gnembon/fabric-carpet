@@ -59,20 +59,20 @@ public class SettingsManager extends carpet.api.settings.SettingsManager
      * 
      * <p>This <b>outdated</b> method may not be able to listen to all {@link CarpetRule} implementations</p>
      * 
-     * @see SettingsManager#addGlobalRuleObserver(RuleObserver)
+     * @see SettingsManager#registerGlobalRuleObserver(RuleObserver)
      * 
      * @param observer A {@link TriConsumer} that will be called with
      *                 the used {@link CommandSourceStack}, the changed
      *                 {@link ParsedRule} and a {@link String} being the
      *                 value that the user typed.
-     * @deprecated Use {@link SettingsManager#addRuleObserver(RuleObserver)} instead.
+     * @deprecated Use {@link SettingsManager#registerRuleObserver(RuleObserver)} instead.
      */
     @Deprecated(forRemoval = true) //to remove
     public void addRuleObserver(TriConsumer<CommandSourceStack, ParsedRule<?>, String> observer)
     {
-        addRuleObserver((source, rule) -> {
+        registerRuleObserver((source, rule, stringValue) -> {
             if (rule instanceof ParsedRule<?> pr)
-                observer.accept(source, pr, RuleHelper.toRuleString(rule.value()));
+                observer.accept(source, pr, stringValue);
         });
         CarpetSettings.LOG.warn("""
                 Extension added outdated rule observer, this is deprecated and will crash in later carpet versions \
@@ -89,14 +89,14 @@ public class SettingsManager extends carpet.api.settings.SettingsManager
      *                 the used {@link CommandSourceStack}, the changed
      *                 {@link ParsedRule} and a {@link String} being the
      *                 value that the user typed.
-     * @deprecated Use {@link SettingsManager#addRuleObserver(RuleObserver)} instead, given this one can't deal with {@link CarpetRule}
+     * @deprecated Use {@link SettingsManager#registerRuleObserver(RuleObserver)} instead, given this one can't deal with {@link CarpetRule}
      */
     @Deprecated(forRemoval = true) // to remove. This isn't really used anywhere
     public static void addGlobalRuleObserver(TriConsumer<CommandSourceStack, ParsedRule<?>, String> observer)
     {
-        addGlobalRuleObserver((source, rule) -> {
+        registerGlobalRuleObserver((source, rule, stringValue) -> {
             if (rule instanceof ParsedRule<?> pr)
-                observer.accept(source, pr, RuleHelper.toRuleString(rule.value()));
+                observer.accept(source, pr, stringValue);
             else
                 CarpetSettings.LOG.warn("Failed to notify observer '" + observer.getClass().getName() + "' about rule change");
         });

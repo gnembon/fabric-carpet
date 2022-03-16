@@ -29,11 +29,13 @@ public abstract class Validator<T>
      *        about it. May be {@code null} during rule synchronization.
      * @param changingRule The {@link CarpetRule} that is being changed
      * @param newValue The new value that is being set to the rule
-     * @param stringInput The value that is being given to the rule as a {@link String}
+     * @param userInput The value that is being given to this rule by the user as a {@link String}, or a best-effort representation
+     *                  of the value as a {@link String}. This value may not correspond to the result of {@link RuleHelper#toRuleString(Object)}
+     *                  if other validators have modified the value, it's just a representation of the user's input.
      * @return The new value to set the rule to instead, can return the {@code newValue} if the given value is correct.
      *         Returns {@code null} if the given value is not correct.
      */
-    public abstract T validate(CommandSourceStack source, CarpetRule<T> changingRule, T newValue, String stringInput);
+    public abstract T validate(CommandSourceStack source, CarpetRule<T> changingRule, T newValue, String userInput);
 
     /**
      * @return A description of this {@link Validator}. It is used in the default {@link #notifyFailure(CommandSourceStack, CarpetRule, String)}

@@ -84,19 +84,27 @@ public class SettingsManager {
     /**
      * <p>Defines a class that can be notified about a {@link CarpetRule} changing.</p>
      * 
-     * @see #ruleChanged(CommandSourceStack, CarpetRule)
-     * @see SettingsManager#addRuleObserver(RuleObserver)
-     * @see SettingsManager#addGlobalRuleObserver(RuleObserver)
+     * @see #ruleChanged(CommandSourceStack, CarpetRule, String)
+     * @see SettingsManager#registerRuleObserver(RuleObserver)
+     * @see SettingsManager#registerGlobalRuleObserver(RuleObserver)
      */
     @FunctionalInterface
     public static interface RuleObserver {
         /**
+         * <p>Notifies this {@link RuleObserver} about the change of a {@link CarpetRule}.</p>
+         * 
+         * <p>When this is called, the {@link CarpetRule} value has already been set.</p>
+         * 
          * @param source The {@link CommandSourceStack} that likely originated this change, and should be the notified source for further
          *               messages. Can be {@code null} if there was none and the operation shouldn't send feedback.
          * @param changedRule The {@link CarpetRule} that changed. Use {@link CarpetRule#value() changedRule.value()} to get the rule's value,
          *                    and pass it to {@link RuleHelper#toRuleString(Object)} to get the {@link String} version of it
+         * @param userInput The {@link String} that the user entered when changing the rule, or a best-effort representation of it in case that is
+         *                  is not available at the time (such as loading from disk or a rule being changed programmatically). Note that this value
+         *                  may not represent the same string as converting the current value to a {@link String} via {@link RuleHelper#toRuleString(Object)},
+         *                  given the rule implementation may have adapted the input into a different value, for example with the use of a {@link Validator}
          */
-        void ruleChanged(CommandSourceStack source, CarpetRule<?> changedRule);
+        void ruleChanged(CommandSourceStack source, CarpetRule<?> changedRule, String userInput);
     }
     
     /**
@@ -114,30 +122,30 @@ public class SettingsManager {
     }
     
     /**
-     * <p>Adds a {@link RuleObserver} to changes in rules from 
+     * <p>Registers a {@link RuleObserver} to changes in rules from 
      * this {@link SettingsManager} instance.</p>
      * 
-     * @see SettingsManager#addGlobalRuleObserver(RuleObserver)
+     * @see SettingsManager#registerGlobalRuleObserver(RuleObserver)
      * 
      * @param observer A {@link RuleObserver} that will be called with
      *                 the used {@link CommandSourceStack} and the changed
      *                 {@link CarpetRule}.
      */
-    public void addRuleObserver(RuleObserver observer)
+    public void registerRuleObserver(RuleObserver observer)
     {
         observers.add(observer);
     }
     
     /**
-     * Adds a {@link RuleObserver} to changes in rules from 
+     * Registers a {@link RuleObserver} to changes in rules from 
      * <b>any</b> {@link SettingsManager} instance (unless their implementation disallows it).
-     * @see SettingsManager#addRuleObserver(RuleObserver)
+     * @see SettingsManager#registerRuleObserver(RuleObserver)
      * 
      * @param observer A {@link RuleObserver} that will be called with
      *                 the used {@link CommandSourceStack}, and the changed
      *                 {@link CarpetRule}.
      */
-    public static void addGlobalRuleObserver(RuleObserver observer)
+    public static void registerGlobalRuleObserver(RuleObserver observer)
     {
         staticObservers.add(observer);
     }
@@ -250,10 +258,10 @@ public class SettingsManager {
         rules.put(rule.name(), rule);
     }
 
-    public void notifyRuleChanged(CommandSourceStack source, CarpetRule<?> rule)
+    public void notifyRuleChanged(CommandSourceStack source, CarpetRule<?> rule, String userInput)
     {
-        observers.forEach(observer -> observer.ruleChanged(source, rule));
-        staticObservers.forEach(observer -> observer.ruleChanged(source, rule));
+        observers.forEach(observer -> observer.ruleChanged(source, rule, userInput));
+        staticObservers.forEach(observer -> observer.ruleChanged(source, rule, userInput));
         ServerNetworkHandler.updateRuleWithConnectedClients(rule);
         switchScarpetRuleIfNeeded(source, rule); //TODO move into rule
         if (CARPET_RULE_CHANGES.isNeeded()) CARPET_RULE_CHANGES.onCarpetRuleChanges(rule, source);
@@ -589,7 +597,7 @@ public class SettingsManager {
 
     /**
      * Registers the the settings command for this {@link SettingsManager}.<br>
-     * It is handled automatically by Carpet.
+     * This method is handled automatically by Carpet and calling it is not supported.
      * @param dispatcher The current {@link CommandDispatcher}
      */
     public void registerCommand(CommandDispatcher<CommandSourceStack> dispatcher)

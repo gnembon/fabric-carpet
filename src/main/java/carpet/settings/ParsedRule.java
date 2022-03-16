@@ -281,26 +281,26 @@ public final class ParsedRule<T> implements CarpetRule<T>, Comparable<ParsedRule
         }
     }
 
+    @Override
     public void set(CommandSourceStack source, String value) throws InvalidRuleValueException
     {
         set(source, converter.convert(value), value);
     }
 
-    private void set(CommandSourceStack source, T value, String stringValue) throws InvalidRuleValueException
+    private void set(CommandSourceStack source, T value, String userInput) throws InvalidRuleValueException
     {
         for (var validator : this.realValidators)
         {
-            stringValue = RuleHelper.toRuleString(value);
-            value = validator.validate(source, this, value, stringValue);
+            value = validator.validate(source, this, value, userInput); // should this recalculate the string? Another validator may have changed value
             if (value == null) {
-                if (source != null) validator.notifyFailure(source, this, stringValue);
+                if (source != null) validator.notifyFailure(source, this, userInput);
                 throw new InvalidRuleValueException();
             }
         }
         if (!value.equals(value()) || source == null)
         {
             this.typedField.setStatic(value);
-            if (source != null) settingsManager().notifyRuleChanged(source, this);
+            if (source != null) settingsManager().notifyRuleChanged(source, this, userInput);
         }
     }
 

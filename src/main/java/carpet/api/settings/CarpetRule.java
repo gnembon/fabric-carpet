@@ -93,7 +93,7 @@ public interface CarpetRule<T> {
      * value, or the rule is immutable.</p>
      * 
      * <p>Implementations of this method must notify their {@link SettingsManager} by calling
-     * {@link SettingsManager#notifyRuleChanged(CommandSourceStack, CarpetRule)} , and are responsible for
+     * {@link SettingsManager#notifyRuleChanged(CommandSourceStack, CarpetRule, String)}, who is responsible for
      * notifying the {@link ServerNetworkHandler} (if the rule isn't restricted from being synchronized with clients)
      * and the {@link CarpetEventServer.Event#CARPET_RULE_CHANGES#onCarpetRuleChanges(CarpetRule, CommandSourceStack)} Scarpet event
      * in case the value of the rule was changed because of the invocation.</p>
