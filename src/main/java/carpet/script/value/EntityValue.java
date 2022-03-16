@@ -1698,30 +1698,13 @@ public class EntityValue extends Value
         });
         //setter of ironman flower, blueness of skull, carryingitem 
         put("carrying_item",(e,v)->{
-            try{
                 if (e instanceof ServerPlayer pl){
-                    ItemStack item;
-                    if(v instanceof ListValue){
-                        List<Value> lv = ((ListValue) v).getItems();
-                        if (3 == lv.size() && lv.get(2) instanceof NBTSerializableValue nbt)
-                            item = NBTSerializableValue.parseItem(lv.get(0).getString(),nbt.getCompoundTag()).createItemStack(NumericValue.asNumber(lv.get(1)).getInt(),false);
-                        else
-                            return;
-                    }
-                    else if (v instanceof StringValue){
-                        item = NBTSerializableValue.parseItem(v.getString(),null).createItemStack(1,false);
-                        //return ValueConversions.of(((ServerPlayer) e).containerMenu.getCarried());
-                    }
-                    else{
-                        return;
-                    }
+                    ItemStack item=getItemStackFromValue(v);
                     item=item.copy();
                     pl.containerMenu.setCarried(item);
                     pl.containerMenu.broadcastFullState();
                 }
-            } catch (CommandSyntaxException e1) {
-                e1.printStackTrace();
-            }
+            
             
             
         });
@@ -1738,30 +1721,11 @@ public class EntityValue extends Value
             
         });
         put("item", (e, v) -> {
-            try{
-                ItemStack item;
-                if(v instanceof ListValue){
-                    List<Value> lv = ((ListValue) v).getItems();
-                    if (3 == lv.size() && lv.get(2) instanceof NBTSerializableValue nbt)
-                        item = NBTSerializableValue.parseItem(lv.get(0).getString(),nbt.getCompoundTag()).createItemStack(NumericValue.asNumber(lv.get(1)).getInt(),false);
-                    else
-                        return;
-                }
-                else if (v instanceof StringValue){
-                    item = NBTSerializableValue.parseItem(v.getString(),null).createItemStack(1,false);
-                }
-                else{
-                    return;
-                }
-                item=item.copy();
-            
+                ItemStack item=getItemStackFromValue(v);
                 if(e instanceof ItemEntity iteme)            
                     iteme.setItem(item);
                 if(e instanceof ItemFrame iteme)
-                    iteme.setItem(item);
-            } catch (CommandSyntaxException e1) {
-                e1.printStackTrace();
-            }
+                    iteme.setItem(item);  
         });
         // "dimension"      []
         // "item"           []
@@ -1769,6 +1733,33 @@ public class EntityValue extends Value
         // "effect_"name    []
     }};
 
+    static public ItemStack getItemStackFromValue(Value value){
+        List<Value> items;
+        if(value instanceof ListValue blv && blv.length()==3){
+            items = blv.getItems();
+        }else if(value.isNull()){
+            return ItemStack.EMPTY;
+        }else{
+            items= List.of(StringValue.of(value.getString()),Value.ONE,Value.NULL);
+        }
+        String id=items.get(0).getString();
+        int count=((NumericValue)items.get(1)).getInt();
+        CompoundTag nbt=null;
+        if (!items.get(2).isNull()){
+            if(items.get(2) instanceof NBTSerializableValue nbtv){
+                nbt=nbtv.getCompoundTag();
+            }
+            else{
+                nbt=new NBTSerializableValue(items.get(2).getString()).getCompoundTag();
+            }
+        }
+        try{
+            return NBTSerializableValue.parseItem(id,nbt).createItemStack(count,false);
+        } catch (CommandSyntaxException e1) {
+            e1.printStackTrace();
+        }
+        return null;
+    }
     public void setEvent(CarpetContext cc, String eventName, FunctionValue fun, List<Value> args)
     {
         EntityEventsGroup.Event event = EntityEventsGroup.Event.byName.get(eventName);
