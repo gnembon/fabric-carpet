@@ -260,7 +260,7 @@ public class ShapeDispatcher
             put("cylinder", creator(Cylinder::new));
             put("label", creator(DisplayedText::new));
             put("poly",creator(Polyface::new));
-            put("item_lable",creator(DisplayedItem::new));
+            put("blockoritemdisplayer",creator(DisplayedItem::new));
         }};
         private static Function<Map<String, Value>,ExpiringShape> creator(Supplier<ExpiringShape> shapeFactory)
         {
@@ -570,7 +570,7 @@ public class ShapeDispatcher
                 entry("block", Value.NULL),
                 entry("height", new NumericValue(1)),
                 entry("width", new NumericValue(1)),
-                entry("size", new NumericValue(1)),
+                entry("obj_size", new NumericValue(1)),
                 entry("light", new NumericValue(-999)),
                 entry("doublesided", new NumericValue(0)));
         @Override
@@ -633,7 +633,7 @@ public class ShapeDispatcher
             turn = NumericValue.asNumber(options.getOrDefault("turn", optional.get("turn"))).getFloat();
             height = NumericValue.asNumber(options.getOrDefault("height", optional.get("height"))).getFloat();
             width = NumericValue.asNumber(options.getOrDefault("width", optional.get("width"))).getFloat();
-            size = NumericValue.asNumber(options.getOrDefault("size", optional.get("size"))).getFloat();
+            size = NumericValue.asNumber(options.getOrDefault("obj_size", optional.get("obj_size"))).getFloat();
         }
 
         
@@ -1206,7 +1206,8 @@ public class ShapeDispatcher
             put("radius", new PositiveFloatParam("radius"));
             put("level", new PositiveIntParam("level"));
             put("height", new FloatParam("height"));
-            put("width", new FloatParam("height"));
+            put("width", new FloatParam("width"));
+            put("obj_size", new FloatParam("obj_size"));
             put("axis", new StringChoiceParam("axis", "x", "y", "z"));
             put("points", new PointsParam("points"));
             put("text", new FormattedTextParam("text"));
@@ -1220,6 +1221,8 @@ public class ShapeDispatcher
             put("indent", new FloatParam("indent"));
             put("raise", new FloatParam("raise"));
             put("tilt", new FloatParam("tilt"));
+            put("lean", new FloatParam("lean"));
+            put("turn", new FloatParam("turn"));
             put("facing", new StringChoiceParam("axis", "player", "north", "south", "east", "west", "up", "down"));
             put("doublesided", new BoolParam("doublesided"));
 

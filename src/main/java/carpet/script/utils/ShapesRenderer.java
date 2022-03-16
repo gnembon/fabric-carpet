@@ -86,7 +86,7 @@ public class ShapesRenderer
         put("cylinder", RenderedCylinder::new);
         put("label", RenderedText::new);
         put("poly",RenderedPolyface::new);
-        put("item_lable",RenderedItem::new);
+        put("blockoritemdisplayer",RenderedItem::new);
     }};
 
     public ShapesRenderer(Minecraft minecraftClient)
@@ -308,6 +308,7 @@ public class ShapesRenderer
             {
                 //matrices.method_34425(new Matrix4f(camera1.getRotation()));
                 matrices.mulPose(camera1.rotation());
+                matrices.mulPose(Vector3f.YP.rotationDegrees(180));
             }
             else
             {
@@ -358,7 +359,7 @@ public class ShapesRenderer
             
             blockState=shape.blockState;
             
-            MultiBufferSource.BufferSource immediate = MultiBufferSource.immediate(builder);
+            MultiBufferSource.BufferSource immediate = client.renderBuffers().bufferSource();//= MultiBufferSource.immediate(builder);
             //draw the block itself
             if(blockState.getRenderShape()==RenderShape.MODEL){
                 client.getBlockRenderer().renderSingleBlock(blockState, matrices, immediate, light, OverlayTexture.NO_OVERLAY);
