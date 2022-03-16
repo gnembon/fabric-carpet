@@ -33,6 +33,7 @@ import net.minecraft.nbt.DoubleTag;
 import net.minecraft.nbt.FloatTag;
 import net.minecraft.nbt.IntTag;
 import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.NbtIo;
 import net.minecraft.nbt.NbtUtils;
 import net.minecraft.nbt.StringTag;
 import net.minecraft.nbt.Tag;
@@ -603,26 +604,9 @@ public class ShapeDispatcher
             pos = vecFromValue(options.get("pos"));
             blockState=((BlockValue)options.getOrDefault("block", BlockValue.AIR)).getBlockState();
             blockEntity = ((BlockValue)options.getOrDefault("block", BlockValue.AIR)).getData();
-            Value item_ =  options.getOrDefault("item",null);
+            NBTSerializableValue item_ =  (NBTSerializableValue) options.getOrDefault("item",null);
             if(item_!=null){
-                List<Value> items;
-                if(item_ instanceof ListValue blv && blv.length()==3){
-                    items = blv.getItems();
-                }else{
-                    items= List.of(StringValue.of(item_.getString()),Value.ONE,Value.NULL);
-                }
-                String id=items.get(0).getString();
-                int count=((NumericValue)items.get(1)).getInt();
-                CompoundTag nbt=null;
-                if (!items.get(2).isNull()){
-                    nbt=((NBTSerializableValue)(items.get(2))).getCompoundTag();
-                }
-                try{
-                    this.item=NBTSerializableValue.parseItem(id,nbt).createItemStack(count,false);
-                } catch (CommandSyntaxException e1) {
-                    e1.printStackTrace();
-                }
-            
+                this.item=ItemStack.of(item_.getCompoundTag());
             }
             light=NumericValue.asNumber(options.getOrDefault("light", optional.get("light"))).getInt();
             if (light>15)light=15;
@@ -1325,34 +1309,41 @@ public class ShapeDispatcher
         @Override
         public Value validate(Map<String, Value> options, MinecraftServer server, Value value)
         {
-            return decode(toTag(value));
+            List<Value> items;
+            ItemStack item;
+            if(value instanceof ListValue blv && blv.length()==3){
+                items = blv.getItems();
+            }else if(value.isNull()){
+                return new NBTSerializableValue(ItemStack.EMPTY.save(new CompoundTag()));
+            }else{
+                items= List.of(StringValue.of(value.getString()),Value.ONE,Value.NULL);
+            }
+            String id=items.get(0).getString();
+            int count=((NumericValue)items.get(1)).getInt();
+            CompoundTag nbt=null;
+            if (!items.get(2).isNull()){
+                if(items.get(2) instanceof NBTSerializableValue nbtv){
+                    nbt=nbtv.getCompoundTag();
+                }
+                else{
+                    nbt=new NBTSerializableValue(items.get(2).getString()).getCompoundTag();
+                }
+            }
+            try{
+                item=NBTSerializableValue.parseItem(id,nbt).createItemStack(count,false);
+                return new NBTSerializableValue(item.save(new CompoundTag()));
+            } catch (CommandSyntaxException e1) {
+                e1.printStackTrace();
+            }
+            return null;
         }
         @Override
         public Tag toTag(Value value) {
-            
-            List<Value> item;
-            if(value instanceof ListValue blv && blv.length()==3){
-                item = blv.getItems();
-            
-            CompoundTag tag = new CompoundTag();
-            tag.put("id", StringTag.valueOf(item.get(0).getString()));
-            tag.put("count", ByteTag.valueOf((byte) (((NumericValue)item.get(1)).getInt())));
-            if (item.get(2).isNull()){
-                tag.put("tag", new CompoundTag());
-            }else if(item.get(2) instanceof NBTSerializableValue){
-                tag.put("tag", ((NBTSerializableValue)item.get(2)).getTag());
-            }else{
-                tag.put("tag", (new NBTSerializableValue(item.get(2).getString())).getTag());
-            }
-            return tag;
-            }
-            return StringTag.valueOf(value.getString());
+            return ((NBTSerializableValue)value).getTag();
         }
         @Override
         public Value decode(Tag tag) {
-            if(tag instanceof CompoundTag cTag)
-            return ListValue.of(new StringValue(cTag.getString("id")),new NumericValue(cTag.getByte("count")),new NBTSerializableValue(cTag.getCompound("tag")));
-            return new StringValue(((StringTag)tag).getAsString());
+            return new NBTSerializableValue(tag);
         }
     }
     public static class TextParam extends StringParam
