@@ -194,6 +194,7 @@
     "ChunkMap_creativePlayersLoadChunksMixin"
   ],
   "client": [
+    "ShulkerBoxBlockEntity_renderFixMixin",
     "Timer_tickSpeedMixin",
     "MinecraftMixin",
     "Minecraft_pausedShakeMixin",
