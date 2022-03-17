@@ -145,7 +145,6 @@ public class CarpetServer // static for now - easier to handle all around the co
         // for all other, they will have them registered when they add themselves
         extensions.forEach(e -> {
             e.registerCommands(dispatcher, commandBuildContext);
-            e.registerCommands(dispatcher);
         });
         currentCommandDispatcher = dispatcher;
 

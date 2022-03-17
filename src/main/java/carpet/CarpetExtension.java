@@ -47,18 +47,14 @@ public interface CarpetExtension
      * Register your own commands right after vanilla commands are added
      * If that matters for you
      *
-     * Deprecated, use either this or rather {@link CarpetExtension#registerCommands(CommandDispatcher, CommandBuildContext)}
+     * Deprecated, Implement {@link CarpetExtension#registerCommands(CommandDispatcher, CommandBuildContext)}
      * 
      * @param dispatcher The current {@link CommandSource<ServerCommandSource>} dispatcher 
      *                   where you should register your commands
      * 
      */
     @Deprecated(forRemoval = true)
-    default void registerCommands(CommandDispatcher<CommandSourceStack> dispatcher) {
-        final CommandBuildContext context = new CommandBuildContext(RegistryAccess.BUILTIN.get());
-        context.missingTagAccessPolicy(CommandBuildContext.MissingTagAccessPolicy.RETURN_EMPTY);
-        registerCommands(dispatcher, context);
-    }
+    default void registerCommands(CommandDispatcher<CommandSourceStack> dispatcher) {}
 
     /**
      * Register your own commands right after vanilla commands are added
@@ -69,7 +65,9 @@ public interface CarpetExtension
      * @param commandBuildContext The current {@link CommandBuildContext} context
      *      *                   which you can use for registries lookup
      */
-    default void registerCommands(CommandDispatcher<CommandSourceStack> dispatcher, final CommandBuildContext commandBuildContext) {}
+    default void registerCommands(CommandDispatcher<CommandSourceStack> dispatcher, final CommandBuildContext commandBuildContext) {
+        registerCommands(dispatcher);
+    }
 
 
 

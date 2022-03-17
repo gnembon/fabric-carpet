@@ -25,10 +25,7 @@ public class BiomeInfo
         //put("top_material", (w, b) -> new BlockValue( b.getGenerationSettings(). getSurfaceConfig().getTopMaterial(), null, null));
         //put("under_material", (w, b) -> new BlockValue( b.getGenerationSettings().getSurfaceConfig().getUnderMaterial(), null, null));
         //put("category", (w, b) -> StringValue.of(Biome.getBiomeCategory(Holder.direct(b)).getName()));
-        put("biome_tags", (w, b) -> {
-            Holder<Biome> direct = Holder.direct(b);
-            return ListValue.wrap(w.registryAccess().registryOrThrow(Registry.BIOME_REGISTRY).getTags().filter(p -> p.getSecond().contains(direct)).map(p -> p.getFirst().location()).map(ValueConversions::of).collect(Collectors.toList()));
-        });
+        put("tags", (w, b) -> ListValue.wrap(w.registryAccess().registryOrThrow(Registry.BIOME_REGISTRY).getTags().filter(p -> p.getSecond().stream().anyMatch(h -> h.value() == b)).map(p -> p.getFirst().location()).map(ValueConversions::of).collect(Collectors.toList())));
 
         put("temperature", (w, b) -> NumericValue.of(b.getBaseTemperature()));
         put("fog_color", (w, b) -> ValueConversions.ofRGB(b.getSpecialEffects().getFogColor()));

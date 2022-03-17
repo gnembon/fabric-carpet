@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.Random;
 
@@ -85,10 +86,10 @@ public class FeatureGenerator
                 CarpetSettings.skipGenerationChecks.set(false);
             }
         }
-        StructureType<?> structureType = Registry.STRUCTURE_TYPES.get(id);
-        if (structure != null)
+        Optional<StructureType<?>> structureType = Registry.STRUCTURE_TYPES.getOptional(id);
+        if (structureType.isPresent())
         {
-            Structure configuredStandard = getDefaultFeature(structureType, world, pos);
+            Structure configuredStandard = getDefaultFeature(structureType.get(), world, pos);
             if (configuredStandard != null)
                 return plopAnywhere(configuredStandard, world, pos, world.getChunkSource().getGenerator(), false);
         }
