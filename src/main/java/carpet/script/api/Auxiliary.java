@@ -775,11 +775,11 @@ public class Auxiliary {
                 plopData.put(StringValue.of("configured_features"),
                         ListValue.wrap(registryManager.registryOrThrow(Registry.CONFIGURED_FEATURE_REGISTRY).keySet().stream().sorted().map(ValueConversions::of).collect(Collectors.toList()))
                 );
-                plopData.put(StringValue.of("structures"),
-                        ListValue.wrap(Registry.STRUCTURE_FEATURE.keySet().stream().sorted().map(ValueConversions::of).collect(Collectors.toList()))
+                plopData.put(StringValue.of("structure_types"),
+                        ListValue.wrap(Registry.STRUCTURE_TYPES.keySet().stream().sorted().map(ValueConversions::of).collect(Collectors.toList()))
                 );
-                plopData.put(StringValue.of("configured_structures"),
-                        ListValue.wrap(registryManager.registryOrThrow(Registry.CONFIGURED_STRUCTURE_FEATURE_REGISTRY).keySet().stream().sorted().map(ValueConversions::of).collect(Collectors.toList()))
+                plopData.put(StringValue.of("structures"),
+                        ListValue.wrap(registryManager.registryOrThrow(Registry.STRUCTURE_REGISTRY).keySet().stream().sorted().map(ValueConversions::of).collect(Collectors.toList()))
                 );
                 return MapValue.wrap(plopData);
             }

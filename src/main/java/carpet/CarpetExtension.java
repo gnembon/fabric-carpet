@@ -3,7 +3,9 @@ package carpet;
 import carpet.script.CarpetExpression;
 import carpet.settings.SettingsManager;
 import com.mojang.brigadier.CommandDispatcher;
+import net.minecraft.commands.CommandBuildContext;
 import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.core.RegistryAccess;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import java.util.Map;
@@ -44,12 +46,32 @@ public interface CarpetExtension
     /**
      * Register your own commands right after vanilla commands are added
      * If that matters for you
+     *
+     * Deprecated, use either this or rather {@link CarpetExtension#registerCommands(CommandDispatcher, CommandBuildContext)}
      * 
      * @param dispatcher The current {@link CommandSource<ServerCommandSource>} dispatcher 
      *                   where you should register your commands
      * 
      */
-    default void registerCommands(CommandDispatcher<CommandSourceStack> dispatcher) {}
+    @Deprecated(forRemoval = true)
+    default void registerCommands(CommandDispatcher<CommandSourceStack> dispatcher) {
+        final CommandBuildContext context = new CommandBuildContext(RegistryAccess.BUILTIN.get());
+        context.missingTagAccessPolicy(CommandBuildContext.MissingTagAccessPolicy.RETURN_EMPTY);
+        registerCommands(dispatcher, context);
+    }
+
+    /**
+     * Register your own commands right after vanilla commands are added
+     * If that matters for you
+     *
+     * @param dispatcher The current {@link CommandDispatcher<CommandSourceStack>} dispatcher
+     *                   where you should register your commands
+     * @param commandBuildContext The current {@link CommandBuildContext} context
+     *      *                   which you can use for registries lookup
+     */
+    default void registerCommands(CommandDispatcher<CommandSourceStack> dispatcher, final CommandBuildContext commandBuildContext) {}
+
+
 
     /**
      * Provide your own custom settings manager managed in the same way as base /carpet

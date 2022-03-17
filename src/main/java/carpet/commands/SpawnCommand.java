@@ -15,6 +15,8 @@ import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
 import java.util.Arrays;
 import java.util.Locale;
 import java.util.stream.Collectors;
+
+import net.minecraft.commands.CommandBuildContext;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.arguments.DimensionArgument;
 import net.minecraft.commands.arguments.coordinates.BlockPosArgument;
@@ -36,7 +38,7 @@ import static net.minecraft.commands.SharedSuggestionProvider.suggest;
 
 public class SpawnCommand
 {
-    public static void register(CommandDispatcher<CommandSourceStack> dispatcher)
+    public static void register(CommandDispatcher<CommandSourceStack> dispatcher, CommandBuildContext commandBuildContext)
     {
         LiteralArgumentBuilder<CommandSourceStack> literalargumentbuilder = literal("spawn").
                 requires((player) -> SettingsManager.canUseCommand(player, CarpetSettings.commandSpawn));

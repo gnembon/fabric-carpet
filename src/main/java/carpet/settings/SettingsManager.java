@@ -17,15 +17,16 @@ import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.loader.api.FabricLoader;
+import net.minecraft.commands.CommandBuildContext;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.SharedSuggestionProvider;
+import net.minecraft.core.RegistryAccess;
 import net.minecraft.network.chat.BaseComponent;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.TickTask;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.storage.LevelResource;
-import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.util.TriConsumer;
 
 import java.io.BufferedReader;
@@ -574,12 +575,21 @@ public class SettingsManager
         return suggestionsBuilder.buildFuture();
     }
 
+    @Deprecated(forRemoval = true)
+    public void registerCommand(CommandDispatcher<CommandSourceStack> dispatcher)
+    {
+        final CommandBuildContext context = new CommandBuildContext(RegistryAccess.BUILTIN.get());
+        context.missingTagAccessPolicy(CommandBuildContext.MissingTagAccessPolicy.RETURN_EMPTY);
+        registerCommand(dispatcher, context);
+    }
+
     /**
-     * Registers the the settings command for this {@link SettingsManager}.<br>
+     * Registers the settings command for this {@link SettingsManager}.<br>
      * It is handled automatically by Carpet.
      * @param dispatcher The current {@link CommandDispatcher}
+     * @param commandBuildContext The current {@link CommandBuildContext}
      */
-    public void registerCommand(CommandDispatcher<CommandSourceStack> dispatcher)
+    public void registerCommand(final CommandDispatcher<CommandSourceStack> dispatcher, final CommandBuildContext commandBuildContext)
     {
         if (dispatcher.getRoot().getChildren().stream().anyMatch(node -> node.getName().equalsIgnoreCase(identifier)))
         {

@@ -4,6 +4,7 @@ import carpet.CarpetSettings;
 import carpet.settings.SettingsManager;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import net.minecraft.commands.CommandBuildContext;
 import net.minecraft.commands.CommandSourceStack;
 
 import static carpet.commands.TickCommand.healthEntities;
@@ -15,7 +16,7 @@ import static net.minecraft.commands.Commands.literal;
 
 public class ProfileCommand
 {
-    public static void register(CommandDispatcher<CommandSourceStack> dispatcher)
+    public static void register(CommandDispatcher<CommandSourceStack> dispatcher, CommandBuildContext commandBuildContext)
     {
         LiteralArgumentBuilder<CommandSourceStack> literalargumentbuilder = literal("profile").
                 requires((player) -> SettingsManager.canUseCommand(player, CarpetSettings.commandProfile)).
