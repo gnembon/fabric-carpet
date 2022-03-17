@@ -112,10 +112,4 @@ public interface CarpetRule<T> {
      * @see #set(CommandSourceStack, String)
      */
     void set(CommandSourceStack source, T value) throws InvalidRuleValueException;
-    
-    @Override
-    boolean equals(Object o);
-    
-    @Override
-    int hashCode();
 }

@@ -3,7 +3,6 @@ package carpet.settings;
 import carpet.CarpetServer;
 import carpet.CarpetSettings;
 import carpet.api.settings.CarpetRule;
-import carpet.api.settings.RuleHelper;
 import carpet.utils.CommandHelper;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.server.MinecraftServer;
