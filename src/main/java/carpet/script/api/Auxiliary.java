@@ -73,6 +73,7 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 //import net.minecraft.server.WorldLoader;
+import net.minecraft.server.WorldLoader;
 import net.minecraft.server.WorldStem;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -1108,8 +1109,6 @@ public class Auxiliary {
         });
 
         expression.addContextFunction("enable_hidden_dimensions", 0, (c, t, lv) -> {
-            return Value.NULL;
-            /*
             CarpetContext cc = (CarpetContext)c;
             // from minecraft.server.Main.main
             MinecraftServer server = cc.s.getServer();
@@ -1144,7 +1143,7 @@ public class Auxiliary {
                     existing_worlds.put(resourceKey2, serverLevel2);
                 }
             }
-            return ListValue.wrap(addeds);*/
+            return ListValue.wrap(addeds);
         });
     }
 

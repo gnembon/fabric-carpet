@@ -353,7 +353,7 @@ public class FeatureGenerator
             int j = pos.getX() >> 4;
             int k = pos.getZ() >> 4;
             long chId = ChunkPos.asLong(j, k);
-            world.getChunk(j, k).setStartForFeature(structure, start);
+            world.getChunk(j, k).setStartForStructure(structure, start);
             world.getChunk(j, k).addReferenceForStructure(structure, chId);
 
             BoundingBox box = start.getBoundingBox();
