@@ -70,7 +70,7 @@ public class FeatureGenerator
         Structure structure = world.registryAccess().registryOrThrow(Registry.STRUCTURE_REGISTRY).get(id);
         if (structure != null)
         {
-            return plopAnywhere( structure, world, pos, world.getChunkSource().getGenerator(), false);
+             return plopAnywhere( structure, world, pos, world.getChunkSource().getGenerator(), false);
         }
 
         ConfiguredFeature<?, ?> configuredFeature = world.registryAccess().registryOrThrow(Registry.CONFIGURED_FEATURE_REGISTRY).get(id);
@@ -353,7 +353,7 @@ public class FeatureGenerator
             int j = pos.getX() >> 4;
             int k = pos.getZ() >> 4;
             long chId = ChunkPos.asLong(j, k);
-
+            world.getChunk(j, k).setStartForFeature(structure, start);
             world.getChunk(j, k).addReferenceForStructure(structure, chId);
 
             BoundingBox box = start.getBoundingBox();
