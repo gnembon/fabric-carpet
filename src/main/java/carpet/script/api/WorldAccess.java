@@ -1269,6 +1269,7 @@ public class WorldAccess {
                 return Value.FALSE;
             }
             if (doImmediateUpdate) WorldTools.forceChunkUpdate(pos, world);
+            chunk.setUnsaved(true);
             return Value.TRUE;
         });
 

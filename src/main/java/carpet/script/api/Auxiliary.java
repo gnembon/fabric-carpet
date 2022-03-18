@@ -39,10 +39,14 @@ import carpet.script.value.StringValue;
 import carpet.script.value.Value;
 import carpet.script.value.ValueConversions;
 import carpet.utils.Messenger;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
+import com.mojang.datafixers.util.Pair;
+import com.mojang.serialization.DynamicOps;
 import net.minecraft.SharedConstants;
 import net.minecraft.Util;
 import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.commands.Commands;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Registry;
 import net.minecraft.core.RegistryAccess;
@@ -64,16 +68,17 @@ import net.minecraft.network.protocol.game.ClientboundSetActionBarTextPacket;
 import net.minecraft.network.protocol.game.ClientboundSetSubtitleTextPacket;
 import net.minecraft.network.protocol.game.ClientboundSetTitleTextPacket;
 import net.minecraft.network.protocol.game.ClientboundSetTitlesAnimationPacket;
-//import net.minecraft.resources.RegistryReadOps;
+import net.minecraft.resources.RegistryOps;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
-//import net.minecraft.server.ServerResources;
+//import net.minecraft.server.WorldLoader;
+import net.minecraft.server.WorldStem;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.packs.repository.Pack;
 import net.minecraft.server.packs.repository.PackRepository;
-//import net.minecraft.server.packs.resources.SimpleReloadableResourceManager;
+import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.stats.Stat;
 import net.minecraft.stats.StatType;
@@ -89,8 +94,6 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.biome.BiomeManager;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.border.BorderChangeListener;
-import net.minecraft.world.level.chunk.ChunkGenerator;
-import net.minecraft.world.level.dimension.DimensionType;
 import net.minecraft.world.level.dimension.LevelStem;
 import net.minecraft.world.level.levelgen.WorldGenSettings;
 import net.minecraft.world.level.storage.CommandStorage;
@@ -1113,25 +1116,18 @@ public class Auxiliary {
             LevelStorageSource.LevelStorageAccess session = ((MinecraftServerInterface)server).getCMSession();
             DataPackConfig dataPackSettings = session.getDataPacks();
             PackRepository resourcePackManager = server.getPackRepository();
-            DataPackConfig dataPackSettings2 = MinecraftServer.configurePackRepository(resourcePackManager, dataPackSettings == null ? DataPackConfig.DEFAULT : dataPackSettings, false);
-            ServerResources serverRM = ((MinecraftServerInterface)server).getResourceManager();
-            SimpleReloadableResourceManager resourceManager = (SimpleReloadableResourceManager) serverRM.getResourceManager();
 
-            //believe the other one will fillup based on the datapacks only.
-            resourceManager.close();
-            resourcePackManager.openAllSelected().forEach(resourceManager::add);
+            WorldLoader.InitConfig initConfig = new WorldLoader.InitConfig(new WorldLoader.PackConfig(resourcePackManager, dataPackSettings == null ? DataPackConfig.DEFAULT : dataPackSettings, false), Commands.CommandSelection.DEDICATED, 4);
 
-            //not sure its needed, but doesn't seem to have a negative effect and might be used in some custom shtuff
-            serverRM.updateGlobals();
 
-            RegistryReadOps<Tag> registryOps = RegistryReadOps.create(NbtOps.INSTANCE, serverRM.getResourceManager(), (RegistryAccess.RegistryHolder) server.registryAccess());
-            WorldData saveProperties = session.getDataTag(registryOps, dataPackSettings2);
-            if (saveProperties == null) return Value.NULL;
-            //session.backupLevelDataFile(server.getRegistryManager(), saveProperties); // no need
+            final WorldData data = WorldLoader.load(initConfig, (resourceManager, dataPackConfigx) -> {
+                RegistryAccess.Writable writable = RegistryAccess.builtinCopy();
+                DynamicOps<Tag> dynamicOps = RegistryOps.createAndLoad(NbtOps.INSTANCE, writable, (ResourceManager) resourceManager);
+                WorldData worldData = session.getDataTag(dynamicOps, dataPackConfigx, writable.allElementsLifecycle());
+                return Pair.of(worldData, writable.freeze());
+            }, WorldStem::new, Util.backgroundExecutor(), Runnable::run).join().worldData();
+            WorldGenSettings generatorOptions = data.worldGenSettings();
 
-            // MinecraftServer.createWorlds
-            // save properties should now contain dimension settings
-            WorldGenSettings generatorOptions = saveProperties.worldGenSettings();
             boolean bl = generatorOptions.isDebug();
             long l = generatorOptions.seed();
             long m = BiomeManager.obfuscateSeed(l);
@@ -1141,19 +1137,14 @@ public class Auxiliary {
                 ResourceKey<LevelStem> registryKey = entry.getKey();
                 if (!existing_worlds.containsKey(registryKey))
                 {
-                    addeds.add(ValueConversions.of(registryKey.location()));
-                    ResourceKey<Level> registryKey2 = ResourceKey.create(Registry.DIMENSION_REGISTRY, registryKey.location());
-                    DimensionType dimensionType3 = entry.getValue().type();
-                    ChunkGenerator chunkGenerator3 = entry.getValue().generator();
-                    DerivedLevelData unmodifiableLevelProperties = new DerivedLevelData(saveProperties, ((ServerWorldInterface) server.overworld()).getWorldPropertiesCM());
-                    ServerLevel serverWorld2 = new ServerLevel(server, Util.backgroundExecutor(), session, unmodifiableLevelProperties, registryKey2, dimensionType3, WorldTools.NOOP_LISTENER, chunkGenerator3, bl, m, List.of(), false);
-                    server.overworld().getWorldBorder().addListener(new BorderChangeListener.DelegateBorderChangeListener(serverWorld2.getWorldBorder()));
-                    existing_worlds.put(registryKey2, serverWorld2);
+                    ResourceKey<Level> resourceKey2 = ResourceKey.create(Registry.DIMENSION_REGISTRY, registryKey.location());
+                    DerivedLevelData derivedLevelData = new DerivedLevelData(data, ((ServerWorldInterface) server.overworld()).getWorldPropertiesCM());
+                    ServerLevel serverLevel2 = new ServerLevel(server, Util.backgroundExecutor(), session, derivedLevelData, resourceKey2, entry.getValue(), WorldTools.NOOP_LISTENER, bl, m, ImmutableList.of(), false);
+                    server.overworld().getWorldBorder().addListener(new BorderChangeListener.DelegateBorderChangeListener(serverLevel2.getWorldBorder()));
+                    existing_worlds.put(resourceKey2, serverLevel2);
                 }
             }
-            return ListValue.wrap(addeds);
-
-             */
+            return ListValue.wrap(addeds);*/
         });
     }
 
