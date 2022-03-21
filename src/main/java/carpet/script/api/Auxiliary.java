@@ -48,6 +48,7 @@ import net.minecraft.Util;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Holder;
 import net.minecraft.core.Registry;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.Rotations;
@@ -94,6 +95,8 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.biome.BiomeManager;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.border.BorderChangeListener;
+import net.minecraft.world.level.chunk.ChunkGenerator;
+import net.minecraft.world.level.dimension.DimensionType;
 import net.minecraft.world.level.dimension.LevelStem;
 import net.minecraft.world.level.levelgen.WorldGenSettings;
 import net.minecraft.world.level.storage.CommandStorage;
@@ -1108,8 +1111,7 @@ public class Auxiliary {
         });
 
         expression.addContextFunction("enable_hidden_dimensions", 0, (c, t, lv) -> {
-            return Value.NULL;
-            /*
+
             CarpetContext cc = (CarpetContext)c;
             // from minecraft.server.Main.main
             MinecraftServer server = cc.s.getServer();
@@ -1117,16 +1119,20 @@ public class Auxiliary {
             DataPackConfig dataPackSettings = session.getDataPacks();
             PackRepository resourcePackManager = server.getPackRepository();
 
-            WorldLoader.InitConfig initConfig = new WorldLoader.InitConfig(new WorldLoader.PackConfig(resourcePackManager, dataPackSettings == null ? DataPackConfig.DEFAULT : dataPackSettings, false), Commands.CommandSelection.DEDICATED, 4);
+            WorldStem.InitConfig initConfig = new WorldStem.InitConfig(resourcePackManager, Commands.CommandSelection.DEDICATED, 4, false);
 
 
-            final WorldData data = WorldLoader.load(initConfig, (resourceManager, dataPackConfigx) -> {
+            final WorldStem data = WorldStem.load(initConfig, () -> {
+                            DataPackConfig dataPackConfig = session.getDataPacks();
+                            return dataPackConfig == null ? DataPackConfig.DEFAULT : dataPackConfig;
+                    },
+                    (resourceManager, dataPackConfigx) -> {
                 RegistryAccess.Writable writable = RegistryAccess.builtinCopy();
                 DynamicOps<Tag> dynamicOps = RegistryOps.createAndLoad(NbtOps.INSTANCE, writable, (ResourceManager) resourceManager);
                 WorldData worldData = session.getDataTag(dynamicOps, dataPackConfigx, writable.allElementsLifecycle());
                 return Pair.of(worldData, writable.freeze());
-            }, WorldStem::new, Util.backgroundExecutor(), Runnable::run).join().worldData();
-            WorldGenSettings generatorOptions = data.worldGenSettings();
+            }, Util.backgroundExecutor(), Runnable::run).join();
+            WorldGenSettings generatorOptions = data.worldData().worldGenSettings();
 
             boolean bl = generatorOptions.isDebug();
             long l = generatorOptions.seed();
@@ -1138,13 +1144,17 @@ public class Auxiliary {
                 if (!existing_worlds.containsKey(registryKey))
                 {
                     ResourceKey<Level> resourceKey2 = ResourceKey.create(Registry.DIMENSION_REGISTRY, registryKey.location());
-                    DerivedLevelData derivedLevelData = new DerivedLevelData(data, ((ServerWorldInterface) server.overworld()).getWorldPropertiesCM());
-                    ServerLevel serverLevel2 = new ServerLevel(server, Util.backgroundExecutor(), session, derivedLevelData, resourceKey2, entry.getValue(), WorldTools.NOOP_LISTENER, bl, m, ImmutableList.of(), false);
+                    DerivedLevelData derivedLevelData = new DerivedLevelData(data.worldData(), ((ServerWorldInterface) server.overworld()).getWorldPropertiesCM());
+                    ChunkGenerator chunkGenerator2 = ((LevelStem)entry.getValue()).generator();
+                    Holder<DimensionType> holder2 = ((LevelStem)entry.getValue()).typeHolder();
+                    ServerLevel serverLevel2 = new ServerLevel(server, Util.backgroundExecutor(), session, derivedLevelData, resourceKey2,
+                            holder2, WorldTools.NOOP_LISTENER,chunkGenerator2, bl, m, ImmutableList.of(), false);
                     server.overworld().getWorldBorder().addListener(new BorderChangeListener.DelegateBorderChangeListener(serverLevel2.getWorldBorder()));
                     existing_worlds.put(resourceKey2, serverLevel2);
+                    addeds.add(ValueConversions.of(registryKey.location()));
                 }
             }
-            return ListValue.wrap(addeds);*/
+            return ListValue.wrap(addeds);
         });
     }
 
