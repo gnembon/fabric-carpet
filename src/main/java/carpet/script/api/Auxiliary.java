@@ -1141,6 +1141,7 @@ public class Auxiliary {
                     ServerLevel serverLevel2 = new ServerLevel(server, Util.backgroundExecutor(), session, derivedLevelData, resourceKey2, entry.getValue(), WorldTools.NOOP_LISTENER, bl, m, ImmutableList.of(), false);
                     server.overworld().getWorldBorder().addListener(new BorderChangeListener.DelegateBorderChangeListener(serverLevel2.getWorldBorder()));
                     existing_worlds.put(resourceKey2, serverLevel2);
+                    addeds.add(ValueConversions.of(registryKey.location()));
                 }
             }
             return ListValue.wrap(addeds);

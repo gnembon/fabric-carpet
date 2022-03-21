@@ -1253,8 +1253,7 @@ public class WorldAccess {
             }
             ServerLevel world = cc.s.getLevel();
             BlockPos pos = locator.block.getPos();
-            ChunkAccess chunk = world.getChunk(pos.getX() >> 4, pos.getZ() >> 4, ChunkStatus.BIOMES);
-            if (chunk instanceof LevelChunk) return Value.FALSE; // questinoalble, but it makes sense
+            ChunkAccess chunk = world.getChunk(pos); // getting level chunk instead of protochunk with biomes
             int biomeX = QuartPos.fromBlock(pos.getX());
             int biomeY = QuartPos.fromBlock(pos.getY());
             int biomeZ = QuartPos.fromBlock(pos.getZ());
