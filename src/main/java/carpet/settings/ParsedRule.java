@@ -174,8 +174,8 @@ public final class ParsedRule<T> implements CarpetRule<T>, Comparable<ParsedRule
         this.categories = List.of(rule.category());
         this.scarpetApp = rule.appSource();
         this.realSettingsManager = settingsManager;
-        if (settingsManager instanceof carpet.settings.SettingsManager) {
-            // this is awkward...
+        if (!(settingsManager instanceof carpet.settings.SettingsManager)) {
+            // this is awkward... but people using a custom, new (extends only new api) manager should not be using this anyway but the interface method
             this.settingsManager = null;
         } else {
             this.settingsManager = (carpet.settings.SettingsManager) settingsManager;
