@@ -1144,6 +1144,7 @@ public class Auxiliary {
                     addeds.add(ValueConversions.of(registryKey.location()));
                 }
             }
+            ((MinecraftServerInterface)server).reloadAfterReload();
             return ListValue.wrap(addeds);
         });
     }

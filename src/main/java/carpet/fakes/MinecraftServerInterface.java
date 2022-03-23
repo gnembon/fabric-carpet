@@ -13,5 +13,5 @@ public interface MinecraftServerInterface
     void forceTick(BooleanSupplier sup);
     LevelStorageSource.LevelStorageAccess getCMSession();
     Map<ResourceKey<Level>, ServerLevel> getCMWorlds();
-    //ServerResources getResourceManager();
+    void reloadAfterReload();
 }
