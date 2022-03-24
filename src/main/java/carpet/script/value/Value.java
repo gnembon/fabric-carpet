@@ -4,8 +4,6 @@ import carpet.CarpetSettings;
 import carpet.script.exception.InternalExpressionException;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonPrimitive;
-import net.minecraft.nbt.NbtElement;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -13,6 +11,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 import java.util.stream.Collectors;
+import net.minecraft.nbt.Tag;
 
 public abstract class Value implements Comparable<Value>, Cloneable
 {
@@ -22,6 +21,7 @@ public abstract class Value implements Comparable<Value>, Cloneable
     public static NumericValue ONE = new NumericValue(1);
 
     public static NullValue NULL = NullValue.NULL;
+    public static UndefValue UNDEF = UndefValue.UNDEF;
 
     public String boundVariable;
 
@@ -43,7 +43,7 @@ public abstract class Value implements Comparable<Value>, Cloneable
         catch (CloneNotSupportedException e)
         {
             // should not happen
-            CarpetSettings.LOG.catching(e);
+            CarpetSettings.LOG.error("Failed to clone variable", e);
             throw new InternalExpressionException("Variable of type "+getTypeString()+" is not cloneable. Tell gnembon about it, this shoudn't happen");
         }
         copy.boundVariable = var;
@@ -237,7 +237,7 @@ public abstract class Value implements Comparable<Value>, Cloneable
         }
     }
 
-    public abstract NbtElement toTag(boolean force);
+    public abstract Tag toTag(boolean force);
 
     public JsonElement toJson()
     {

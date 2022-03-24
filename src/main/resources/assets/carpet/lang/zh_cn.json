@@ -187,6 +187,10 @@
   "rule.viewDistance.desc": "改变服务器视距，设为0以使用默认值",
   "rule.viewDistance.extra.0": "你必须在0（使用服务器默认设置）-32取一个整数",
   
+  "rule.simulationDistance.name": "自定义模拟视距",
+  "rule.simulationDistance.desc": "改变服务器模拟视距，设为0以使用默认值",
+  "rule.simulationDistance.extra.0": "你必须在0（使用服务器默认设置）-32取一个整数",
+
   "rule.xpNoCooldown.name": "经验吸收无冷却",
   "rule.xpNoCooldown.desc": "玩家吸收经验球时不会有冷却时间",
   

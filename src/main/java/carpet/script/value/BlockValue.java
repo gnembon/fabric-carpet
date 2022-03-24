@@ -7,50 +7,49 @@ import carpet.script.exception.Throwables;
 
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.command.argument.BlockArgumentParser;
-import net.minecraft.block.Blocks;
-import net.minecraft.item.ItemPlacementContext;
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.nbt.NbtString;
-import net.minecraft.nbt.NbtElement;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.state.property.Property;
-import net.minecraft.util.dynamic.GlobalPos;
-import net.minecraft.util.Hand;
-import net.minecraft.util.hit.BlockHitResult;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.util.registry.Registry;
-import net.minecraft.world.World;
-import net.minecraft.world.chunk.WorldChunk;
-
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.stream.Collectors;
+import net.minecraft.commands.arguments.blocks.BlockStateParser;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.core.Direction.Axis;
+import net.minecraft.core.GlobalPos;
+import net.minecraft.core.Registry;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.StringTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.context.BlockPlaceContext;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.Property;
+import net.minecraft.world.level.chunk.LevelChunk;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.Vec3;
 
 import static carpet.script.value.NBTSerializableValue.nameFromRegistryId;
 
 public class BlockValue extends Value
 {
-    public static final BlockValue AIR = new BlockValue(Blocks.AIR.getDefaultState(), null, BlockPos.ORIGIN);
+    public static final BlockValue AIR = new BlockValue(Blocks.AIR.defaultBlockState(), null, BlockPos.ZERO);
     public static final BlockValue NULL = new BlockValue(null, null, null);
     private BlockState blockState;
     private final BlockPos pos;
-    private final ServerWorld world;
-    private NbtCompound data;
+    private final ServerLevel world;
+    private CompoundTag data;
 
     public static BlockValue fromCoords(CarpetContext c, int x, int y, int z)
     {
         BlockPos pos = locateBlockPos(c, x,y,z);
-        return new BlockValue(null, c.s.getWorld(), pos);
+        return new BlockValue(null, c.s.getLevel(), pos);
     }
 
     private static final Map<String, BlockValue> bvCache= new HashMap<>();
@@ -60,13 +59,13 @@ public class BlockValue extends Value
         {
             BlockValue bv = bvCache.get(str);
             if (bv != null) return bv;
-            BlockArgumentParser blockstateparser = (new BlockArgumentParser(new StringReader(str), false)).parse(true);
-            if (blockstateparser.getBlockState() != null)
+            BlockStateParser blockstateparser = (new BlockStateParser(new StringReader(str), false)).parse(true);
+            if (blockstateparser.getState() != null)
             {
-                NbtCompound bd = blockstateparser.getNbtData();
+                CompoundTag bd = blockstateparser.getNbt();
                 if (bd == null)
-                    bd = new NbtCompound();
-                bv = new BlockValue(blockstateparser.getBlockState(), null, null, bd );
+                    bd = new CompoundTag();
+                bv = new BlockValue(blockstateparser.getState(), null, null, bd );
                 if (bvCache.size()>10000)
                     bvCache.clear();
                 bvCache.put(str, bv);
@@ -98,16 +97,16 @@ public class BlockValue extends Value
         throw new InternalExpressionException("Attempted to fetch block state without world or stored block state");
     }
 
-    public static BlockEntity getBlockEntity(ServerWorld world, BlockPos pos)
+    public static BlockEntity getBlockEntity(ServerLevel world, BlockPos pos)
     {
-        if (world.getServer().isOnThread())
+        if (world.getServer().isSameThread())
             return world.getBlockEntity(pos);
         else
-            return world.getWorldChunk(pos).getBlockEntity(pos, WorldChunk.CreationType.IMMEDIATE);
+            return world.getChunkAt(pos).getBlockEntity(pos, LevelChunk.EntityCreationType.IMMEDIATE);
     }
 
 
-    public NbtCompound getData()
+    public CompoundTag getData()
     {
         if (data != null)
         {
@@ -118,20 +117,19 @@ public class BlockValue extends Value
         if (world != null && pos != null)
         {
             BlockEntity be = getBlockEntity(world, pos);
-            NbtCompound tag = new NbtCompound();
             if (be == null)
             {
-                data = tag;
+                data = new CompoundTag();
                 return null;
             }
-            data = be.writeNbt(tag);
+            data = be.saveWithoutMetadata();
             return data;
         }
         return null;
     }
 
 
-    public BlockValue(BlockState state, ServerWorld world, BlockPos position)
+    public BlockValue(BlockState state, ServerLevel world, BlockPos position)
     {
         this.world = world;
         blockState = state;
@@ -139,7 +137,7 @@ public class BlockValue extends Value
         data = null;
     }
 
-    public BlockValue(BlockState state, ServerWorld world, BlockPos position, NbtCompound nbt)
+    public BlockValue(BlockState state, ServerLevel world, BlockPos position, CompoundTag nbt)
     {
         this.world = world;
         blockState = state;
@@ -151,7 +149,7 @@ public class BlockValue extends Value
     @Override
     public String getString()
     {
-        return nameFromRegistryId(Registry.BLOCK.getId(getBlockState().getBlock()));
+        return nameFromRegistryId(Registry.BLOCK.getKey(getBlockState().getBlock()));
     }
 
     @Override
@@ -176,7 +174,7 @@ public class BlockValue extends Value
     public int hashCode()
     {
         if (world != null && pos != null )
-            return GlobalPos.create(world.getRegistryKey() , pos).hashCode(); //getDimension().getType()
+            return GlobalPos.of(world.dimension() , pos).hashCode(); //getDimension().getType()
         return ("b"+getString()).hashCode();
     }
 
@@ -185,29 +183,29 @@ public class BlockValue extends Value
         return pos;
     }
 
-    public ServerWorld getWorld() { return world;}
+    public ServerLevel getWorld() { return world;}
 
     @Override
-    public NbtElement toTag(boolean force)
+    public Tag toTag(boolean force)
     {
         if (!force) throw new NBTSerializableValue.IncompatibleTypeException(this);
         // follows falling block convertion
-        NbtCompound tag =  new NbtCompound();
-        NbtCompound state = new NbtCompound();
+        CompoundTag tag =  new CompoundTag();
+        CompoundTag state = new CompoundTag();
         BlockState s = getBlockState();
-        state.put("Name", NbtString.of(Registry.BLOCK.getId(s.getBlock()).toString()));
+        state.put("Name", StringTag.valueOf(Registry.BLOCK.getKey(s.getBlock()).toString()));
         Collection<Property<?>> properties = s.getProperties();
         if (!properties.isEmpty())
         {
-            NbtCompound props = new NbtCompound();
+            CompoundTag props = new CompoundTag();
             for (Property<?> p: properties)
             {
-                props.put(p.getName(), NbtString.of(s.get(p).toString().toLowerCase(Locale.ROOT)));
+                props.put(p.getName(), StringTag.valueOf(s.getValue(p).toString().toLowerCase(Locale.ROOT)));
             }
             state.put("Properties", props);
         }
         tag.put("BlockState", state);
-        NbtCompound dataTag = getData();
+        CompoundTag dataTag = getData();
         if (dataTag != null)
         {
             tag.put("TileEntityData", dataTag);
@@ -242,7 +240,7 @@ public class BlockValue extends Value
         WESTUP("west-up", 1.0, 0.6, 0.5, Direction.WEST);
 
         public final String name;
-        public final Vec3d hitOffset;
+        public final Vec3 hitOffset;
         public final Direction facing;
 
         private static final Map<String, SpecificDirection> DIRECTION_MAP = Arrays.stream(values()).collect(Collectors.toMap(SpecificDirection::getName, d -> d));
@@ -251,7 +249,7 @@ public class BlockValue extends Value
         SpecificDirection(String name, double hitx, double hity, double hitz, Direction blockFacing)
         {
             this.name = name;
-            this.hitOffset = new Vec3d(hitx, hity, hitz);
+            this.hitOffset = new Vec3(hitx, hity, hitz);
             this.facing = blockFacing;
         }
         private String getName()
@@ -260,40 +258,40 @@ public class BlockValue extends Value
         }
     }
 
-    public static class PlacementContext extends ItemPlacementContext {
+    public static class PlacementContext extends BlockPlaceContext {
         private final Direction facing;
         private final boolean sneakPlace;
 
-        public static PlacementContext from(World world, BlockPos pos, String direction, boolean sneakPlace, ItemStack itemStack)
+        public static PlacementContext from(Level world, BlockPos pos, String direction, boolean sneakPlace, ItemStack itemStack)
         {
             SpecificDirection dir = SpecificDirection.DIRECTION_MAP.get(direction);
             if (dir == null)
                 throw new InternalExpressionException("unknown block placement direction: "+direction);
-            BlockHitResult hitres =  new BlockHitResult(Vec3d.of(pos).add(dir.hitOffset), dir.facing, pos, false);
+            BlockHitResult hitres =  new BlockHitResult(Vec3.atLowerCornerOf(pos).add(dir.hitOffset), dir.facing, pos, false);
             return new PlacementContext(world, dir.facing, sneakPlace, itemStack, hitres);
         }
-        private PlacementContext(World world_1, Direction direction_1, boolean sneakPlace, ItemStack itemStack_1, BlockHitResult hitres) {
-            super(world_1, null, Hand.MAIN_HAND, itemStack_1, hitres);
+        private PlacementContext(Level world_1, Direction direction_1, boolean sneakPlace, ItemStack itemStack_1, BlockHitResult hitres) {
+            super(world_1, null, InteractionHand.MAIN_HAND, itemStack_1, hitres);
             this.facing = direction_1;
             this.sneakPlace = sneakPlace;
         }
 
         @Override
-        public BlockPos getBlockPos() {
-            boolean prevcanReplaceExisting = canReplaceExisting;
-            canReplaceExisting = true;
-            BlockPos ret = super.getBlockPos();
-            canReplaceExisting = prevcanReplaceExisting;
+        public BlockPos getClickedPos() {
+            boolean prevcanReplaceExisting = replaceClicked;
+            replaceClicked = true;
+            BlockPos ret = super.getClickedPos();
+            replaceClicked = prevcanReplaceExisting;
             return ret;
         }
 
         @Override
-        public Direction getPlayerLookDirection() {
+        public Direction getNearestLookingDirection() {
             return facing.getOpposite();
         }
 
         @Override
-        public Direction[] getPlacementDirections() {
+        public Direction[] getNearestLookingDirections() {
             switch(this.facing) {
                 case DOWN:
                 default:
@@ -312,18 +310,23 @@ public class BlockValue extends Value
         }
 
         @Override
-        public Direction getPlayerFacing() {
+        public Direction getHorizontalDirection() {
             return this.facing.getAxis() == Direction.Axis.Y ? Direction.NORTH : this.facing;
         }
 
         @Override
-        public boolean shouldCancelInteraction() {
+        public Direction getNearestLookingVerticalDirection() {
+            return facing.getAxis() == Axis.Y ? facing : Direction.UP;
+        }
+
+        @Override
+        public boolean isSecondaryUseActive() {
             return sneakPlace;
         }
 
         @Override
-        public float getPlayerYaw() {
-            return (float)(this.facing.getHorizontal() * 90);
+        public float getRotation() {
+            return (float)(this.facing.get2DDataValue() * 90);
         }
     }
 }

@@ -1,18 +1,17 @@
 package carpet.fakes;
 
-import net.minecraft.resource.ServerResourceManager;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.util.registry.RegistryKey;
-import net.minecraft.world.World;
-import net.minecraft.world.level.storage.LevelStorage;
-
 import java.util.Map;
 import java.util.function.BooleanSupplier;
+import net.minecraft.resources.ResourceKey;
+//import net.minecraft.server.ServerResources;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.storage.LevelStorageSource;
 
 public interface MinecraftServerInterface
 {
     void forceTick(BooleanSupplier sup);
-    LevelStorage.Session getCMSession();
-    Map<RegistryKey<World>, ServerWorld> getCMWorlds();
-    ServerResourceManager getResourceManager();
+    LevelStorageSource.LevelStorageAccess getCMSession();
+    Map<ResourceKey<Level>, ServerLevel> getCMWorlds();
+    //ServerResources getResourceManager();
 }

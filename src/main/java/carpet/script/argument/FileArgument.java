@@ -13,13 +13,13 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonParser;
 import com.google.gson.stream.JsonReader;
-import net.minecraft.nbt.NbtCompound;
+import net.minecraft.ReportedException;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtAccounter;
 import net.minecraft.nbt.NbtIo;
-import net.minecraft.nbt.NbtTagSizeTracker;
-import net.minecraft.nbt.NbtElement;
-import net.minecraft.nbt.NbtTypes;
-import net.minecraft.util.WorldSavePath;
-import net.minecraft.util.crash.CrashException;
+import net.minecraft.nbt.Tag;
+import net.minecraft.nbt.TagTypes;
+import net.minecraft.world.level.storage.LevelResource;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -172,7 +172,7 @@ public class FileArgument
     {
         if (CarpetServer.minecraft_server == null)
             throw new InternalExpressionException("Accessing world files without server running");
-        return CarpetServer.minecraft_server.getSavePath(WorldSavePath.ROOT).resolve("scripts/"+suffix);
+        return CarpetServer.minecraft_server.getWorldPath(LevelResource.ROOT).resolve("scripts/"+suffix);
     }
 
     private Path toPath(Module module)
@@ -330,7 +330,7 @@ public class FileArgument
         return true;
     }
 
-    public NbtElement getNbtData(Module module) // aka getData
+    public Tag getNbtData(Module module) // aka getData
     {
         try { synchronized (writeIOSync) {
             Path dataFile = toPath(module);
@@ -344,7 +344,7 @@ public class FileArgument
 
     //copied private method from net.minecraft.nbt.NbtIo.read()
     // to read non-compound tags - these won't be compressed
-    public static NbtElement readTag(Path path)
+    public static Tag readTag(Path path)
     {
         try
         {
@@ -374,25 +374,25 @@ public class FileArgument
                     else
                     {
                         dataInput_1.readUTF();
-                        return NbtTypes.byId(byte_1).read(dataInput_1, 0, NbtTagSizeTracker.EMPTY);
+                        return TagTypes.getType(byte_1).load(dataInput_1, 0, NbtAccounter.UNLIMITED);
                     }
                 }
                 catch (IOException secondIO)
                 {
-                    CarpetScriptServer.LOG.warn("IOException when trying to read nbt file, something may have gone wrong with the fs",e);
-                    CarpetScriptServer.LOG.catching(ioException);
-                    CarpetScriptServer.LOG.catching(secondIO);
+                    CarpetScriptServer.LOG.warn("IOException when trying to read nbt file, something may have gone wrong with the fs", e);
+                    CarpetScriptServer.LOG.warn("", ioException);
+                    CarpetScriptServer.LOG.warn("", secondIO);
                     throw new ThrowStatement("Not a valid NBT tag in "+path.toString(), Throwables.NBT_ERROR);
                 }
             }
         }
-        catch (CrashException e)
+        catch (ReportedException e)
         {
             throw new ThrowStatement("Error when reading NBT file "+path.toString(), Throwables.NBT_ERROR);
         }
     }
 
-    public boolean saveNbtData(Module module, NbtElement tag) // aka saveData
+    public boolean saveNbtData(Module module, Tag tag) // aka saveData
     {
         try { synchronized (writeIOSync) {
             Path dataFile = toPath(module);
@@ -407,7 +407,7 @@ public class FileArgument
     }
 
     //copied private method from net.minecraft.nbt.NbtIo.write() and client method safe_write
-    public static boolean writeTagDisk(NbtElement tag_1, Path path, boolean zipped)
+    public static boolean writeTagDisk(Tag tag_1, Path path, boolean zipped)
     {
         Path original = path;
         try
@@ -418,16 +418,16 @@ public class FileArgument
                 Files.deleteIfExists(path);
             }
 
-            if (tag_1 instanceof NbtCompound)
+            if (tag_1 instanceof CompoundTag)
             {
-                NbtIo.writeCompressed((NbtCompound) tag_1, Files.newOutputStream(path));
+                NbtIo.writeCompressed((CompoundTag) tag_1, Files.newOutputStream(path));
             }
             else
             {
                 try (DataOutputStream dataOutputStream_1 = new DataOutputStream(Files.newOutputStream(path)))
                 {
-                    dataOutputStream_1.writeByte(tag_1.getType());
-                    if (tag_1.getType() != 0)
+                    dataOutputStream_1.writeByte(tag_1.getId());
+                    if (tag_1.getId() != 0)
                     {
                         dataOutputStream_1.writeUTF("");
                         tag_1.write(dataOutputStream_1);

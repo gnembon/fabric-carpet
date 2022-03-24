@@ -15,10 +15,9 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import net.fabricmc.loader.api.FabricLoader;
-import net.minecraft.command.CommandException;
-import net.minecraft.server.command.ServerCommandSource;
-import net.minecraft.util.WorldSavePath;
-
+import net.minecraft.commands.CommandRuntimeException;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.world.level.storage.LevelResource;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -48,7 +47,7 @@ public class AppStoreManager
     /** A local copy of the scarpet repo's file structure, to avoid multiple queries to github.com while typing out the
      * {@code /script download} command and getting the suggestions.
      */
-    public static final StoreNode APP_STORE_ROOT = StoreNode.folder(null, "");
+    private static StoreNode APP_STORE_ROOT = StoreNode.folder(null, "");
 
     /** This is the base link to the scarpet app repo from the github api.
      */
@@ -58,10 +57,9 @@ public class AppStoreManager
 
     public static class ScarpetAppStoreValidator extends Validator<String>
     {
-        @Override public String validate(ServerCommandSource source, ParsedRule<String> currentRule, String newValue, String string)
+        @Override public String validate(CommandSourceStack source, ParsedRule<String> currentRule, String newValue, String string)
         {
-            APP_STORE_ROOT.sealed = false;
-            APP_STORE_ROOT.children = new HashMap<>();
+            APP_STORE_ROOT = StoreNode.folder(null, "");
             if (newValue.equalsIgnoreCase("none"))
             {
                 scarpetRepoLink = null;
@@ -251,13 +249,13 @@ public class AppStoreManager
      * @return {@code 1} if we succesfully saved the script, {@code 0} otherwise
      */
 
-    public static int downloadScript(ServerCommandSource source, String path)
+    public static int downloadScript(CommandSourceStack source, String path)
     {
         AppInfo nodeInfo = getFileNode(path);
         return downloadScript(source, path, nodeInfo, false);
     }
 
-    private static int downloadScript(ServerCommandSource source, String path, AppInfo nodeInfo, boolean useTrash)
+    private static int downloadScript(CommandSourceStack source, String path, AppInfo nodeInfo, boolean useTrash)
     {
         String code;
         try
@@ -266,7 +264,7 @@ public class AppStoreManager
         }
         catch (IOException e)
         {
-            throw new CommandException(Messenger.c("rb Failed to obtain app file content: "+e.getMessage()));
+            throw new CommandRuntimeException(Messenger.c("rb Failed to obtain app file content: "+e.getMessage()));
         }
         if (!saveScriptToFile(source, path, nodeInfo.name(), code, false, useTrash)) return 0;
         boolean success = CarpetServer.scriptServer.addScriptHost(source, nodeInfo.name().replaceFirst("\\.sc$", ""), null, true, false, false, nodeInfo.source());
@@ -297,21 +295,21 @@ public class AppStoreManager
         }
         catch (IOException e)
         {
-            throw new CommandException(Messenger.c("rb '"+ appPath + "' is not a valid path to a scarpet app: "+e.getMessage()));
+            throw new CommandRuntimeException(Messenger.c("rb '"+ appPath + "' is not a valid path to a scarpet app: "+e.getMessage()));
         }
     }
 
 
-    public static boolean saveScriptToFile(ServerCommandSource source, String path, String appFileName, String code, boolean globalSavePath, boolean useTrash)
+    public static boolean saveScriptToFile(CommandSourceStack source, String path, String appFileName, String code, boolean globalSavePath, boolean useTrash)
     {
         Path scriptLocation;
-        if (globalSavePath && !source.getServer().isDedicated()) // never happens, this is always called with globalSavePath being false
+        if (globalSavePath && !source.getServer().isDedicatedServer()) // never happens, this is always called with globalSavePath being false
         { //cos config folder only is in clients
             scriptLocation = FabricLoader.getInstance().getConfigDir().resolve("carpet/scripts/appstore").toAbsolutePath().resolve(path);
         }
         else
         {
-            scriptLocation = source.getServer().getSavePath(WorldSavePath.ROOT).resolve("scripts").toAbsolutePath().resolve(appFileName);
+            scriptLocation = source.getServer().getWorldPath(LevelResource.ROOT).resolve("scripts").toAbsolutePath().resolve(appFileName);
         }
         try
         {
@@ -463,7 +461,7 @@ public class AppStoreManager
         {
             downloadScript(carpetScriptHost.responsibleSource, target, new AppInfo(target, contentUrl, getNewStoreNode(storeSource, source, contentUrl)), true);
         }
-        catch (CommandException e)
+        catch (CommandRuntimeException e)
         {
             throw new InternalExpressionException("Error when installing app dependencies: " + e.toString());
         }

@@ -4,6 +4,7 @@ import carpet.CarpetSettings;
 import carpet.settings.SettingsManager;
 import carpet.utils.Messenger;
 import com.google.common.collect.Lists;
+import com.mojang.brigadier.Command;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
@@ -12,104 +13,97 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
-import net.minecraft.block.Block;
-import net.minecraft.block.pattern.CachedBlockPosition;
-import net.minecraft.server.command.ServerCommandSource;
-import net.minecraft.command.argument.BlockPosArgumentType;
-import net.minecraft.command.argument.BlockPredicateArgumentType;
-import net.minecraft.command.argument.BlockStateArgument;
-import net.minecraft.command.argument.BlockStateArgumentType;
-import net.minecraft.inventory.Inventory;
-import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.util.math.MathHelper;
-
 import java.util.List;
 import java.util.function.Predicate;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.commands.arguments.blocks.BlockInput;
+import net.minecraft.commands.arguments.blocks.BlockPredicateArgument;
+import net.minecraft.commands.arguments.blocks.BlockStateArgument;
+import net.minecraft.commands.arguments.coordinates.BlockPosArgument;
+import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.Mth;
+import net.minecraft.world.Container;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.pattern.BlockInWorld;
 import java.lang.Math;
 
-import static net.minecraft.server.command.CommandManager.argument;
-import static net.minecraft.server.command.CommandManager.literal;
-import static net.minecraft.command.CommandSource.suggestMatching;
+import static net.minecraft.commands.Commands.argument;
+import static net.minecraft.commands.Commands.literal;
+import static net.minecraft.commands.SharedSuggestionProvider.suggest;
 
 public class DrawCommand
 {
-    public static void register(CommandDispatcher<ServerCommandSource> dispatcher)
+    public static void register(CommandDispatcher<CommandSourceStack> dispatcher)
     {
-        LiteralArgumentBuilder<ServerCommandSource> command = literal("draw").
+        LiteralArgumentBuilder<CommandSourceStack> command = literal("draw").
                 requires((player) -> SettingsManager.canUseCommand(player, CarpetSettings.commandDraw)).
                 then(literal("sphere").
-                        then(argument("center", BlockPosArgumentType.blockPos()).
+                        then(argument("center", BlockPosArgument.blockPos()).
                                 then(argument("radius", IntegerArgumentType.integer(1)).
                                         then(drawShape(c -> DrawCommand.drawSphere(c, false)))))).
                 then(literal("ball").
-                        then(argument("center", BlockPosArgumentType.blockPos()).
+                        then(argument("center", BlockPosArgument.blockPos()).
                                 then(argument("radius", IntegerArgumentType.integer(1)).
                                         then(drawShape(c -> DrawCommand.drawSphere(c, true)))))).
                 then(literal("diamond").
-                        then(argument("center", BlockPosArgumentType.blockPos()).
+                        then(argument("center", BlockPosArgument.blockPos()).
                                 then(argument("radius", IntegerArgumentType.integer(1)).
                                         then(drawShape(c -> DrawCommand.drawDiamond(c, true)))))).
                 then(literal("pyramid").
-                        then(argument("center", BlockPosArgumentType.blockPos()).
+                        then(argument("center", BlockPosArgument.blockPos()).
                                 then(argument("radius", IntegerArgumentType.integer(1)).
                                         then(argument("height",IntegerArgumentType.integer(1)).
-                                                then(argument("pointing",StringArgumentType.word()).suggests( (c, b) -> suggestMatching(new String[]{"up","down"},b)).
-                                                        then(argument("orientation",StringArgumentType.word()).suggests( (c, b) -> suggestMatching(new String[]{"y","x","z"},b)).
+                                                then(argument("pointing",StringArgumentType.word()).suggests( (c, b) -> suggest(new String[]{"up","down"},b)).
+                                                        then(argument("orientation",StringArgumentType.word()).suggests( (c, b) -> suggest(new String[]{"y","x","z"},b)).
                                                                 then(drawShape(c -> DrawCommand.drawPyramid(c, "square", true))))))))).
                 then(literal("cone").
-                        then(argument("center", BlockPosArgumentType.blockPos()).
+                        then(argument("center", BlockPosArgument.blockPos()).
                                 then(argument("radius", IntegerArgumentType.integer(1)).
                                         then(argument("height",IntegerArgumentType.integer(1)).
-                                                then(argument("pointing",StringArgumentType.word()).suggests( (c, b) -> suggestMatching(new String[]{"up","down"},b)).
-                                                        then(argument("orientation",StringArgumentType.word()).suggests( (c, b) -> suggestMatching(new String[]{"y","x","z"},b))
+                                                then(argument("pointing",StringArgumentType.word()).suggests( (c, b) -> suggest(new String[]{"up","down"},b)).
+                                                        then(argument("orientation",StringArgumentType.word()).suggests( (c, b) -> suggest(new String[]{"y","x","z"},b))
                                                                 .then(drawShape(c -> DrawCommand.drawPyramid(c, "circle", true))))))))).
                 then(literal("cylinder").
-                        then(argument("center", BlockPosArgumentType.blockPos()).
+                        then(argument("center", BlockPosArgument.blockPos()).
                                 then(argument("radius", IntegerArgumentType.integer(1)).
                                         then(argument("height",IntegerArgumentType.integer(1)).
-                                                        then(argument("orientation",StringArgumentType.word()).suggests( (c, b) -> suggestMatching(new String[]{"y","x","z"},b))
+                                                        then(argument("orientation",StringArgumentType.word()).suggests( (c, b) -> suggest(new String[]{"y","x","z"},b))
                                                                 .then(drawShape(c -> DrawCommand.drawPrism(c, "circle")))))))).
                 then(literal("cuboid").
-                        then(argument("center", BlockPosArgumentType.blockPos()).
+                        then(argument("center", BlockPosArgument.blockPos()).
                                 then(argument("radius", IntegerArgumentType.integer(1)).
                                         then(argument("height",IntegerArgumentType.integer(1)).
-                                                then(argument("orientation",StringArgumentType.word()).suggests( (c, b) -> suggestMatching(new String[]{"y","x","z"},b))
+                                                then(argument("orientation",StringArgumentType.word()).suggests( (c, b) -> suggest(new String[]{"y","x","z"},b))
                                                         .then(drawShape(c -> DrawCommand.drawPrism(c, "square"))))))));
         dispatcher.register(command);
     }
 
     @FunctionalInterface
-    private interface OptionalBlockSelector
-    {
-        Integer apply(final CommandContext<ServerCommandSource> ctx) throws CommandSyntaxException;
-    }
-
-    @FunctionalInterface
     private interface ArgumentExtractor<T>
     {
-        T apply(final CommandContext<ServerCommandSource> ctx, final String argName) throws CommandSyntaxException;
+        T apply(final CommandContext<CommandSourceStack> ctx, final String argName) throws CommandSyntaxException;
     }
 
-    private static RequiredArgumentBuilder<ServerCommandSource, BlockStateArgument>
-    drawShape(OptionalBlockSelector drawer)
+    private static RequiredArgumentBuilder<CommandSourceStack, BlockInput>
+    drawShape(Command<CommandSourceStack> drawer)
     {
-        return argument("block", BlockStateArgumentType.blockState()).
-                executes(drawer::apply)
+        return argument("block", BlockStateArgument.block()).
+                executes(drawer)
                 .then(literal("replace")
-                        .then(argument("filter", BlockPredicateArgumentType.blockPredicate())
-                                .executes(drawer::apply)));
+                        .then(argument("filter", BlockPredicateArgument.blockPredicate())
+                                .executes(drawer)));
     }
 
     private static class ErrorHandled extends RuntimeException {}
 
-    private static <T> T getArg(CommandContext<ServerCommandSource> ctx, ArgumentExtractor<T> extract, String hwat) throws CommandSyntaxException
+    private static <T> T getArg(CommandContext<CommandSourceStack> ctx, ArgumentExtractor<T> extract, String hwat) throws CommandSyntaxException
     {
         return getArg(ctx, extract, hwat, false);
     }
 
-    private static <T> T getArg(CommandContext<ServerCommandSource> ctx, ArgumentExtractor<T> extract, String hwat, boolean optional) throws CommandSyntaxException
+    private static <T> T getArg(CommandContext<CommandSourceStack> ctx, ArgumentExtractor<T> extract, String hwat, boolean optional) throws CommandSyntaxException
     {
         T arg = null;
         try
@@ -131,23 +125,23 @@ public class DrawCommand
     }
 
     private static int setBlock(
-            ServerWorld world, BlockPos.Mutable mbpos, int x, int y, int z,
-            BlockStateArgument block, Predicate<CachedBlockPosition> replacement,
+            ServerLevel world, BlockPos.MutableBlockPos mbpos, int x, int y, int z,
+            BlockInput block, Predicate<BlockInWorld> replacement,
             List<BlockPos> list
     )
     {
         mbpos.set(x, y, z);
         int success=0;
-        if (replacement == null || replacement.test(new CachedBlockPosition(world, mbpos, true)))
+        if (replacement == null || replacement.test(new BlockInWorld(world, mbpos, true)))
         {
             BlockEntity tileentity = world.getBlockEntity(mbpos);
-            if (tileentity instanceof Inventory)
+            if (tileentity instanceof Container)
             {
-                ((Inventory) tileentity).clear();
+                ((Container) tileentity).clearContent();
             }
-            if (block.setBlockState(world, mbpos, 2))
+            if (block.place(world, mbpos, 2))
             {
-                list.add(mbpos.toImmutable());
+                list.add(mbpos.immutable());
                 ++success;
             }
         }
@@ -155,23 +149,23 @@ public class DrawCommand
         return success;
     }
 
-    private static int drawSphere(CommandContext<ServerCommandSource> ctx, boolean solid) throws CommandSyntaxException
+    private static int drawSphere(CommandContext<CommandSourceStack> ctx, boolean solid) throws CommandSyntaxException
     {
         BlockPos pos;
         int radius;
-        BlockStateArgument block;
-        Predicate<CachedBlockPosition> replacement;
+        BlockInput block;
+        Predicate<BlockInWorld> replacement;
         try
         {
-            pos = getArg(ctx, BlockPosArgumentType::getBlockPos, "center");
+            pos = getArg(ctx, BlockPosArgument::getSpawnablePos, "center");
             radius = getArg(ctx, IntegerArgumentType::getInteger, "radius");
-            block = getArg(ctx, BlockStateArgumentType::getBlockState, "block");
-            replacement = getArg(ctx, BlockPredicateArgumentType::getBlockPredicate, "filter", true);
+            block = getArg(ctx, BlockStateArgument::getBlock, "block");
+            replacement = getArg(ctx, BlockPredicateArgument::getBlockPredicate, "filter", true);
         }
         catch (ErrorHandled ignored) { return 0; }
 
         int affected = 0;
-        ServerWorld world = ctx.getSource().getWorld();
+        ServerLevel world = ctx.getSource().getLevel();
 
         double radiusX = radius+0.5;
         double radiusY = radius+0.5;
@@ -185,7 +179,7 @@ public class DrawCommand
         final int ceilRadiusY = (int) Math.ceil(radiusY);
         final int ceilRadiusZ = (int) Math.ceil(radiusZ);
 
-        BlockPos.Mutable mbpos = pos.mutableCopy();
+        BlockPos.MutableBlockPos mbpos = pos.mutable();
         List<BlockPos> list = Lists.newArrayList();
 
         double nextXn = 0;
@@ -244,35 +238,35 @@ public class DrawCommand
         }
         if (CarpetSettings.fillUpdates)
         {
-            list.forEach(blockpos1 -> world.updateNeighbors(blockpos1, world.getBlockState(blockpos1).getBlock()));
+            list.forEach(blockpos1 -> world.blockUpdated(blockpos1, world.getBlockState(blockpos1).getBlock()));
         }
         Messenger.m(ctx.getSource(), "gi Filled " + affected + " blocks");
         return affected;
     }
 
-    private static int drawDiamond(CommandContext<ServerCommandSource> ctx, boolean solid) throws CommandSyntaxException
+    private static int drawDiamond(CommandContext<CommandSourceStack> ctx, boolean solid) throws CommandSyntaxException
     {
         BlockPos pos;
         int radius;
-        BlockStateArgument block;
-        Predicate<CachedBlockPosition> replacement;
+        BlockInput block;
+        Predicate<BlockInWorld> replacement;
         try
         {
-            pos = getArg(ctx, BlockPosArgumentType::getBlockPos, "center");
+            pos = getArg(ctx, BlockPosArgument::getSpawnablePos, "center");
             radius = getArg(ctx, IntegerArgumentType::getInteger, "radius");
-            block = getArg(ctx, BlockStateArgumentType::getBlockState, "block");
-            replacement = getArg(ctx, BlockPredicateArgumentType::getBlockPredicate, "filter", true);
+            block = getArg(ctx, BlockStateArgument::getBlock, "block");
+            replacement = getArg(ctx, BlockPredicateArgument::getBlockPredicate, "filter", true);
         }
         catch (ErrorHandled ignored) { return 0; }
 
-        ServerCommandSource source = ctx.getSource();
+        CommandSourceStack source = ctx.getSource();
 
         int affected=0;
 
-        BlockPos.Mutable mbpos = pos.mutableCopy();
+        BlockPos.MutableBlockPos mbpos = pos.mutable();
         List<BlockPos> list = Lists.newArrayList();
 
-        ServerWorld world = source.getWorld();
+        ServerLevel world = source.getLevel();
 
         CarpetSettings.impendingFillSkipUpdates.set(!CarpetSettings.fillUpdates);
 
@@ -294,7 +288,7 @@ public class DrawCommand
 
         if (CarpetSettings.fillUpdates)
         {
-            list.forEach(p -> world.updateNeighbors(p, world.getBlockState(p).getBlock()));
+            list.forEach(p -> world.blockUpdated(p, world.getBlockState(p).getBlock()));
         }
 
         Messenger.m(source, "gi Filled " + affected + " blocks");
@@ -303,13 +297,13 @@ public class DrawCommand
     }
 
     private static int fillFlat(
-            ServerWorld world, BlockPos pos, int offset, double dr, boolean rectangle, String orientation,
-            BlockStateArgument block, Predicate<CachedBlockPosition> replacement,
-            List<BlockPos> list, BlockPos.Mutable mbpos
+            ServerLevel world, BlockPos pos, int offset, double dr, boolean rectangle, String orientation,
+            BlockInput block, Predicate<BlockInWorld> replacement,
+            List<BlockPos> list, BlockPos.MutableBlockPos mbpos
     )
     {
         int successes=0;
-        int r = MathHelper.floor(dr);
+        int r = Mth.floor(dr);
         double drsq = dr*dr;
         if (orientation.equalsIgnoreCase("x"))
         {
@@ -347,35 +341,35 @@ public class DrawCommand
         return 0;
     }
 
-    private static int drawPyramid(CommandContext<ServerCommandSource> ctx, String base, boolean solid) throws CommandSyntaxException
+    private static int drawPyramid(CommandContext<CommandSourceStack> ctx, String base, boolean solid) throws CommandSyntaxException
     {
         BlockPos pos;
         double radius;
         int height;
         boolean pointup;
         String orientation;
-        BlockStateArgument block;
-        Predicate<CachedBlockPosition> replacement;
+        BlockInput block;
+        Predicate<BlockInWorld> replacement;
         try
         {
-            pos = getArg(ctx, BlockPosArgumentType::getBlockPos, "center");
+            pos = getArg(ctx, BlockPosArgument::getSpawnablePos, "center");
             radius = getArg(ctx, IntegerArgumentType::getInteger, "radius")+0.5D;
             height = getArg(ctx, IntegerArgumentType::getInteger, "height");
             pointup = getArg(ctx, StringArgumentType::getString, "pointing").equalsIgnoreCase("up");
             orientation = getArg(ctx, StringArgumentType::getString,"orientation");
-            block = getArg(ctx, BlockStateArgumentType::getBlockState, "block");
-            replacement = getArg(ctx, BlockPredicateArgumentType::getBlockPredicate, "filter", true);
+            block = getArg(ctx, BlockStateArgument::getBlock, "block");
+            replacement = getArg(ctx, BlockPredicateArgument::getBlockPredicate, "filter", true);
         }
         catch (ErrorHandled ignored) { return 0; }
 
-        ServerCommandSource source = ctx.getSource();
+        CommandSourceStack source = ctx.getSource();
 
         int affected = 0;
-        BlockPos.Mutable mbpos = pos.mutableCopy();
+        BlockPos.MutableBlockPos mbpos = pos.mutable();
 
         List<BlockPos> list = Lists.newArrayList();
 
-        ServerWorld world = source.getWorld();
+        ServerLevel world = source.getLevel();
 
         CarpetSettings.impendingFillSkipUpdates.set(!CarpetSettings.fillUpdates);
 
@@ -393,7 +387,7 @@ public class DrawCommand
 
             for (BlockPos blockpos1 : list) {
                 Block blokc = world.getBlockState(blockpos1).getBlock();
-                world.updateNeighbors(blockpos1, blokc);
+                world.blockUpdated(blockpos1, blokc);
             }
         }
 
@@ -402,32 +396,32 @@ public class DrawCommand
         return affected;
     }
 
-    private static int drawPrism(CommandContext<ServerCommandSource> ctx, String base){
+    private static int drawPrism(CommandContext<CommandSourceStack> ctx, String base){
         BlockPos pos;
         double radius;
         int height;
         String orientation;
-        BlockStateArgument block;
-        Predicate<CachedBlockPosition> replacement;
+        BlockInput block;
+        Predicate<BlockInWorld> replacement;
         try
         {
-            pos = getArg(ctx, BlockPosArgumentType::getBlockPos, "center");
+            pos = getArg(ctx, BlockPosArgument::getSpawnablePos, "center");
             radius = getArg(ctx, IntegerArgumentType::getInteger, "radius")+0.5D;
             height = getArg(ctx, IntegerArgumentType::getInteger, "height");
             orientation = getArg(ctx, StringArgumentType::getString,"orientation");
-            block = getArg(ctx, BlockStateArgumentType::getBlockState, "block");
-            replacement = getArg(ctx, BlockPredicateArgumentType::getBlockPredicate, "filter", true);
+            block = getArg(ctx, BlockStateArgument::getBlock, "block");
+            replacement = getArg(ctx, BlockPredicateArgument::getBlockPredicate, "filter", true);
         }
         catch (ErrorHandled | CommandSyntaxException ignored) { return 0; }
 
-        ServerCommandSource source = ctx.getSource();
+        CommandSourceStack source = ctx.getSource();
 
         int affected = 0;
-        BlockPos.Mutable mbpos = pos.mutableCopy();
+        BlockPos.MutableBlockPos mbpos = pos.mutable();
 
         List<BlockPos> list = Lists.newArrayList();
 
-        ServerWorld world = source.getWorld();
+        ServerLevel world = source.getLevel();
 
         CarpetSettings.impendingFillSkipUpdates.set(!CarpetSettings.fillUpdates);
 
@@ -444,7 +438,7 @@ public class DrawCommand
 
             for (BlockPos blockpos1 : list) {
                 Block blokc = world.getBlockState(blockpos1).getBlock();
-                world.updateNeighbors(blockpos1, blokc);
+                world.blockUpdated(blockpos1, blokc);
             }
         }
 

@@ -15,11 +15,13 @@ blocks_movement
 bossbar
 brightness
 chunk_tickets
+close_screen
 convert_date
 crafting_remaining_item
 create_datapack
 create_explosion
 create_marker
+create_screen
 current_dimension
 day_time
 delete_file
@@ -100,6 +102,7 @@ scoreboard_add
 scoreboard_remove
 scoreboard_display
 scoreboard_property
+screen_property
 tag_matches
 team_add
 team_leave

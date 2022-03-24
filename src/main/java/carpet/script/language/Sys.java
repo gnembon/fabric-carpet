@@ -11,7 +11,6 @@ import carpet.script.value.BooleanValue;
 import carpet.script.value.FunctionValue;
 import carpet.script.value.ListValue;
 import carpet.script.value.MapValue;
-import carpet.script.value.NullValue;
 import carpet.script.value.NumericValue;
 import carpet.script.value.StringValue;
 import carpet.script.value.Value;
@@ -241,8 +240,8 @@ public class Sys {
 
             double result;
 
-            if (z instanceof NullValue)
-                if (y instanceof NullValue)
+            if (z.isNull())
+                if (y.isNull())
                     result = sampler.sample1d(NumericValue.asNumber(x).getDouble());
                 else
                     result = sampler.sample2d(NumericValue.asNumber(x).getDouble(), NumericValue.asNumber(y).getDouble());
@@ -279,7 +278,7 @@ public class Sys {
             }
             double result;
 
-            if (z instanceof NullValue)
+            if (z.isNull())
                 result = sampler.sample2d(NumericValue.asNumber(x).getDouble(), NumericValue.asNumber(y).getDouble());
             else
                 result = sampler.sample3d(

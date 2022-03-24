@@ -4,23 +4,22 @@ import carpet.logging.LoggerRegistry;
 import carpet.utils.Messenger;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityType;
-import net.minecraft.text.BaseText;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.util.registry.Registry;
-import net.minecraft.world.explosion.Explosion;
-
 import java.util.ArrayList;
 import java.util.List;
+import net.minecraft.core.Registry;
+import net.minecraft.network.chat.BaseComponent;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.level.Explosion;
+import net.minecraft.world.phys.Vec3;
 
 import static carpet.utils.Messenger.c;
 
 public class ExplosionLogHelper
 {
     private final boolean createFire;
-    private final Explosion.DestructionType blockDestructionType;
-    public final Vec3d pos;
+    private final Explosion.BlockInteraction blockDestructionType;
+    public final Vec3 pos;
     public final Entity entity;
     private final float power;
     private boolean affectBlocks = false;
@@ -30,10 +29,10 @@ public class ExplosionLogHelper
     private static int explosionCountInCurretGT = 0;
     private static boolean newTick;
 
-    public ExplosionLogHelper(Entity entity, double x, double y, double z, float power, boolean createFire, Explosion.DestructionType blockDestructionType) {
+    public ExplosionLogHelper(Entity entity, double x, double y, double z, float power, boolean createFire, Explosion.BlockInteraction blockDestructionType) {
         this.entity = entity;
         this.power = power;
-        this.pos = new Vec3d(x,y,z);
+        this.pos = new Vec3(x,y,z);
         this.createFire = createFire;
         this.blockDestructionType = blockDestructionType;
     }
@@ -53,7 +52,7 @@ public class ExplosionLogHelper
         }
         explosionCountInCurretGT++;
         LoggerRegistry.getLogger("explosions").log( (option) -> {
-            List<BaseText> messages = new ArrayList<>();
+            List<BaseComponent> messages = new ArrayList<>();
             if(newTick) messages.add(c("wb tick : ", "d " + gametime));
             if ("brief".equals(option))
             {
@@ -79,27 +78,27 @@ public class ExplosionLogHelper
                         messages.add(c((k.pos.equals(pos))?"r   - TNT":"w   - ",
                                 Messenger.dblt((k.pos.equals(pos))?"r":"y", k.pos.x, k.pos.y, k.pos.z), "w  dV",
                                 Messenger.dblt("d", k.accel.x, k.accel.y, k.accel.z),
-                                "w  "+Registry.ENTITY_TYPE.getId(k.type).getPath(), (v>1)?"l ("+v+")":""
+                                "w  "+Registry.ENTITY_TYPE.getKey(k.type).getPath(), (v>1)?"l ("+v+")":""
                         ));
                     });
                 }
             }
-            return messages.toArray(new BaseText[0]);
+            return messages.toArray(new BaseComponent[0]);
         });
     }
 
-    public void onEntityImpacted(Entity entity, Vec3d accel)
+    public void onEntityImpacted(Entity entity, Vec3 accel)
     {
         EntityChangedStatusWithCount ent = new EntityChangedStatusWithCount(entity, accel);
         impactedEntities.put(ent, impactedEntities.getOrDefault(ent, 0)+1);
     }
 
 
-    public static record EntityChangedStatusWithCount(Vec3d pos, EntityType type, Vec3d accel)
+    public static record EntityChangedStatusWithCount(Vec3 pos, EntityType<?> type, Vec3 accel)
     {
-        public EntityChangedStatusWithCount(Entity e, Vec3d accel)
+        public EntityChangedStatusWithCount(Entity e, Vec3 accel)
         {
-            this(e.getPos(), e.getType(), accel);
+            this(e.position(), e.getType(), accel);
         }
     }
 }

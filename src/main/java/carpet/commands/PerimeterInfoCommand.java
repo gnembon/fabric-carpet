@@ -6,64 +6,64 @@ import carpet.utils.Messenger;
 import carpet.utils.PerimeterDiagnostics;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
-import net.minecraft.command.suggestion.SuggestionProviders;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityType;
-import net.minecraft.entity.mob.MobEntity;
-import net.minecraft.server.command.ServerCommandSource;
-import net.minecraft.command.argument.BlockPosArgumentType;
-import net.minecraft.command.argument.EntitySummonArgumentType;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.commands.arguments.EntitySummonArgument;
+import net.minecraft.commands.arguments.coordinates.BlockPosArgument;
+import net.minecraft.commands.synchronization.SuggestionProviders;
+import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.Mob;
 
-import static net.minecraft.server.command.CommandManager.argument;
-import static net.minecraft.server.command.CommandManager.literal;
+import static net.minecraft.commands.Commands.argument;
+import static net.minecraft.commands.Commands.literal;
 
 public class PerimeterInfoCommand
 {
-    public static void register(CommandDispatcher<ServerCommandSource> dispatcher)
+    public static void register(CommandDispatcher<CommandSourceStack> dispatcher)
     {
-        LiteralArgumentBuilder<ServerCommandSource> command = literal("perimeterinfo").
+        LiteralArgumentBuilder<CommandSourceStack> command = literal("perimeterinfo").
                 requires((player) -> SettingsManager.canUseCommand(player, CarpetSettings.commandPerimeterInfo)).
                 executes( (c) -> perimeterDiagnose(
                         c.getSource(),
                         new BlockPos(c.getSource().getPosition()),
                         null)).
-                then(argument("center position", BlockPosArgumentType.blockPos()).
+                then(argument("center position", BlockPosArgument.blockPos()).
                         executes( (c) -> perimeterDiagnose(
                                 c.getSource(),
-                                BlockPosArgumentType.getBlockPos(c, "center position"),
+                                BlockPosArgument.getSpawnablePos(c, "center position"),
                                 null)).
-                        then(argument("mob",EntitySummonArgumentType.entitySummon()).
+                        then(argument("mob",EntitySummonArgument.id()).
                                 suggests(SuggestionProviders.SUMMONABLE_ENTITIES).
                                 executes( (c) -> perimeterDiagnose(
                                         c.getSource(),
-                                        BlockPosArgumentType.getBlockPos(c, "center position"),
-                                        EntitySummonArgumentType.getEntitySummon(c, "mob").toString()
+                                        BlockPosArgument.getSpawnablePos(c, "center position"),
+                                        EntitySummonArgument.getSummonableEntity(c, "mob").toString()
                                 ))));
         dispatcher.register(command);
     }
 
-    private static int perimeterDiagnose(ServerCommandSource source, BlockPos pos, String mobId)
+    private static int perimeterDiagnose(CommandSourceStack source, BlockPos pos, String mobId)
     {
-        NbtCompound nbttagcompound = new NbtCompound();
-        MobEntity entityliving = null;
+        CompoundTag nbttagcompound = new CompoundTag();
+        Mob entityliving = null;
         if (mobId != null)
         {
             nbttagcompound.putString("id", mobId);
-            Entity baseEntity = EntityType.loadEntityWithPassengers(nbttagcompound, source.getWorld(), (entity_1x) -> {
-                entity_1x.refreshPositionAndAngles(new BlockPos(pos.getX(), source.getWorld().getBottomY()-10, pos.getZ()), entity_1x.getYaw(), entity_1x. getPitch());
-                return !source.getWorld().tryLoadEntity(entity_1x) ? null : entity_1x;
+            Entity baseEntity = EntityType.loadEntityRecursive(nbttagcompound, source.getLevel(), (entity_1x) -> {
+                entity_1x.moveTo(new BlockPos(pos.getX(), source.getLevel().getMinBuildHeight()-10, pos.getZ()), entity_1x.getYRot(), entity_1x. getXRot());
+                return !source.getLevel().addWithUUID(entity_1x) ? null : entity_1x;
             });
-            if (!(baseEntity instanceof  MobEntity))
+            if (!(baseEntity instanceof  Mob))
             {
                 Messenger.m(source, "r /perimeterinfo requires a mob entity to test agains.");
                 if (baseEntity != null) baseEntity.discard();
                 return 0;
             }
-            entityliving = (MobEntity) baseEntity;
+            entityliving = (Mob) baseEntity;
         }
-        PerimeterDiagnostics.Result res = PerimeterDiagnostics.countSpots(source.getWorld(), pos, entityliving);
+        PerimeterDiagnostics.Result res = PerimeterDiagnostics.countSpots(source.getLevel(), pos, entityliving);
 
         Messenger.m(source, "w Spawning spaces around ",Messenger.tp("c",pos), "w :");
         Messenger.m(source, "w   potential in-liquid: ","wb "+res.liquid);

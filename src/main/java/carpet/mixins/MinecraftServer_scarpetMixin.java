@@ -2,15 +2,14 @@ package carpet.mixins;
 
 import carpet.fakes.MinecraftServerInterface;
 import carpet.helpers.TickSpeed;
-import net.minecraft.resource.ServerResourceManager;
+import net.minecraft.Util;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.ServerTask;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.util.Util;
-import net.minecraft.util.registry.RegistryKey;
-import net.minecraft.util.thread.ReentrantThreadExecutor;
-import net.minecraft.world.World;
-import net.minecraft.world.level.storage.LevelStorage;
+import net.minecraft.server.TickTask;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.thread.ReentrantBlockableEventLoop;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.storage.LevelStorageSource;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -26,53 +25,53 @@ import static carpet.script.CarpetEventServer.Event.NETHER_TICK;
 import static carpet.script.CarpetEventServer.Event.TICK;
 
 @Mixin(MinecraftServer.class)
-public abstract class MinecraftServer_scarpetMixin extends ReentrantThreadExecutor<ServerTask> implements MinecraftServerInterface
+public abstract class MinecraftServer_scarpetMixin extends ReentrantBlockableEventLoop<TickTask> implements MinecraftServerInterface
 {
     public MinecraftServer_scarpetMixin(String string_1)
     {
         super(string_1);
     }
 
-    @Shadow protected abstract void tick(BooleanSupplier booleanSupplier_1);
+    @Shadow protected abstract void tickServer(BooleanSupplier booleanSupplier_1);
 
-    @Shadow private long timeReference;
+    @Shadow private long nextTickTime;
 
-    @Shadow private long lastTimeReference;
+    @Shadow private long lastOverloadWarning;
 
-    @Shadow public abstract boolean runTask();
+    @Shadow public abstract boolean pollTask();
 
-    @Shadow @Final protected LevelStorage.Session session;
+    @Shadow @Final protected LevelStorageSource.LevelStorageAccess storageSource;
 
-    @Shadow @Final private Map<RegistryKey<World>, ServerWorld> worlds;
+    @Shadow @Final private Map<ResourceKey<Level>, ServerLevel> levels;
 
-    @Shadow private ServerResourceManager serverResourceManager;
+    //@Shadow private ServerResources resources;
 
     @Override
     public void forceTick(BooleanSupplier isAhead)
     {
-        timeReference = lastTimeReference = Util.getMeasuringTimeMs();
-        tick(isAhead);
-        while(runTask()) {Thread.yield();}
+        nextTickTime = lastOverloadWarning = Util.getMillis();
+        tickServer(isAhead);
+        while(pollTask()) {Thread.yield();}
     }
 
     @Override
-    public LevelStorage.Session getCMSession()
+    public LevelStorageSource.LevelStorageAccess getCMSession()
     {
-        return session;
+        return storageSource;
     }
 
-    @Override
-    public ServerResourceManager getResourceManager() {
-        return serverResourceManager;
-    }
+    //@Override
+    //public ServerResources getResourceManager() {
+    //    return resources;
+    //}
 
     @Override
-    public Map<RegistryKey<World>, ServerWorld> getCMWorlds()
+    public Map<ResourceKey<Level>, ServerLevel> getCMWorlds()
     {
-        return worlds;
+        return levels;
     }
 
-    @Inject(method = "tick", at = @At(
+    @Inject(method = "tickServer", at = @At(
             value = "CONSTANT",
             args = "stringValue=tallying"
     ))

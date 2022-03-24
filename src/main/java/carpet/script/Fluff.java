@@ -30,6 +30,8 @@ public abstract class Fluff
     @FunctionalInterface
     public interface SexFunction<A, B, C, D, E, F, R> { R apply(A a, B b, C c, D d, E e, F f);}
 
+    public interface UsageProvider { String getUsage();}
+
     public interface EvalNode
     {
         /**
@@ -236,14 +238,16 @@ public abstract class Fluff
         @Override
         public LazyValue lazyEval(Context cc, Context.Type type, Expression e, Tokenizer.Token t, final LazyValue v1, final LazyValue v2)
         {
-            try
-            {
-                return (c, type_ignored) -> AbstractOperator.this.eval(v1.evalValue(c, Context.Type.NONE), v2.evalValue(c, Context.Type.NONE));
-            }
-            catch (RuntimeException exc)
-            {
-                throw Expression.handleCodeException(cc, exc, e, t);
-            }
+            return (c, typeIgnored) -> {
+                try
+                {
+                    return AbstractOperator.this.eval(v1.evalValue(c, Context.Type.NONE), v2.evalValue(c, Context.Type.NONE));
+                }
+                catch (RuntimeException exc)
+                {
+                    throw Expression.handleCodeException(cc, exc, e, t);
+                }
+            };
         }
     }
 
@@ -265,24 +269,26 @@ public abstract class Fluff
         @Override
         public LazyValue lazyEval(Context cc, Context.Type type, Expression e, Tokenizer.Token t, final LazyValue v1, final LazyValue v2)
         {
-            try
+            if (v2 != null)
             {
-                if (v2 != null)
+                throw new ExpressionException(cc, e, t, "Did not expect a second parameter for unary operator");
+            }
+            return (c, ignoredType) -> {
+                try
                 {
-                    throw new ExpressionException(cc, e, t, "Did not expect a second parameter for unary operator");
+                    return AbstractUnaryOperator.this.evalUnary(v1.evalValue(c, Context.Type.NONE));
                 }
-                return (c, ignored_type) -> AbstractUnaryOperator.this.evalUnary(v1.evalValue(c, Context.Type.NONE));
-            }
-            catch (RuntimeException exc)
-            {
-                throw Expression.handleCodeException(cc, exc, e, t);
-            }
+                catch (RuntimeException exc)
+                {
+                    throw Expression.handleCodeException(cc, exc, e, t);
+                }
+            };
         }
 
         @Override
         public Value eval(Value v1, Value v2)
         {
-            throw new RuntimeException("Shouldn't end up here");
+            throw new IllegalStateException("Shouldn't end up here");
         }
 
         public abstract Value evalUnary(Value v1);

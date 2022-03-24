@@ -2,8 +2,6 @@ package carpet.settings;
 
 import carpet.utils.Translations;
 import carpet.utils.Messenger;
-import net.minecraft.server.command.ServerCommandSource;
-
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
@@ -11,7 +9,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.stream.Collectors;
-
+import net.minecraft.commands.CommandSourceStack;
 import org.apache.commons.lang3.ClassUtils;
 
 import static carpet.utils.Translations.tr;
@@ -120,7 +118,7 @@ public final class ParsedRule<T> implements Comparable<ParsedRule> {
         }
     }
 
-    public ParsedRule<T> set(ServerCommandSource source, String value)
+    public ParsedRule<T> set(CommandSourceStack source, String value)
     {
         if (settingsManager != null && settingsManager.locked)
             return null;
@@ -152,7 +150,7 @@ public final class ParsedRule<T> implements Comparable<ParsedRule> {
         }
     }
 
-    ParsedRule<T> set(ServerCommandSource source, T value, String stringValue)
+    ParsedRule<T> set(CommandSourceStack source, T value, String stringValue)
     {
         try
         {
@@ -230,7 +228,7 @@ public final class ParsedRule<T> implements Comparable<ParsedRule> {
     /**
      * Resets this rule to its default value
      */
-    public void resetToDefault(ServerCommandSource source)
+    public void resetToDefault(CommandSourceStack source)
     {
         set(source, defaultValue, defaultAsString);
     }
