@@ -427,6 +427,18 @@ public class Inventories {
             return new ScreenValue(player,type,name,function,c);
         });
 
+        expression.addContextFunction("get_current_screen",-1, (c, t, lv) ->
+        {
+            if(lv.size() < 1) throw new InternalExpressionException("'get_current_screen' requires at least 1 argument");
+            Value playerValue = lv.get(0);
+            ServerPlayer player = EntityValue.getPlayerByValue(((CarpetContext) c).s.getServer(), playerValue);
+            if(player == null) throw new InternalExpressionException("'get_current_screen' requires a valid online player as the first argument.");
+            FunctionValue function = null;
+            if(lv.size() > 1)
+                function = FunctionArgument.findIn(c, expression.module, lv, 1, true, false).function;
+
+            return new ScreenValue(player,player.containerMenu,function,c);
+        });
         expression.addContextFunction("close_screen",1, (c, t, lv) ->
         {
             Value value = lv.get(0);
@@ -454,6 +466,9 @@ public class Inventories {
 
     private static void syncPlayerInventory(NBTSerializableValue.InventoryLocator inventory, int int_1)
     {
+        if (inventory.owner() instanceof ServerPlayer player && inventory.inventory() instanceof ScreenValue.ScreenHandlerInventory && (inventory.inventory().getContainerSize()-1)==int_1){
+            player.containerMenu.broadcastFullState();
+        }//not sure. if you think that is wrong, please tell me.
         if (inventory.owner() instanceof ServerPlayer player && !inventory.isEnder() && !(inventory.inventory() instanceof ScreenValue.ScreenHandlerInventory))
         {
             player.connection.send(new ClientboundContainerSetSlotPacket(
