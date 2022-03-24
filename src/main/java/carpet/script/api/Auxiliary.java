@@ -1119,13 +1119,13 @@ public class Auxiliary {
             WorldLoader.InitConfig initConfig = new WorldLoader.InitConfig(new WorldLoader.PackConfig(resourcePackManager, dataPackSettings == null ? DataPackConfig.DEFAULT : dataPackSettings, false), Commands.CommandSelection.DEDICATED, 4);
 
 
-            final WorldData data = WorldLoader.load(initConfig, (resourceManager, dataPackConfigx) -> {
+            final WorldStem stem = WorldLoader.load(initConfig, (resourceManager, dataPackConfigx) -> {
                 RegistryAccess.Writable writable = RegistryAccess.builtinCopy();
                 DynamicOps<Tag> dynamicOps = RegistryOps.createAndLoad(NbtOps.INSTANCE, writable, (ResourceManager) resourceManager);
                 WorldData worldData = session.getDataTag(dynamicOps, dataPackConfigx, writable.allElementsLifecycle());
                 return Pair.of(worldData, writable.freeze());
-            }, WorldStem::new, Util.backgroundExecutor(), Runnable::run).join().worldData();
-            WorldGenSettings generatorOptions = data.worldGenSettings();
+            }, WorldStem::new, Util.backgroundExecutor(), Runnable::run).join();
+            WorldGenSettings generatorOptions = stem.worldData().worldGenSettings();
 
             boolean bl = generatorOptions.isDebug();
             long l = generatorOptions.seed();
@@ -1137,14 +1137,14 @@ public class Auxiliary {
                 if (!existing_worlds.containsKey(registryKey))
                 {
                     ResourceKey<Level> resourceKey2 = ResourceKey.create(Registry.DIMENSION_REGISTRY, registryKey.location());
-                    DerivedLevelData derivedLevelData = new DerivedLevelData(data, ((ServerWorldInterface) server.overworld()).getWorldPropertiesCM());
+                    DerivedLevelData derivedLevelData = new DerivedLevelData(stem.worldData(), ((ServerWorldInterface) server.overworld()).getWorldPropertiesCM());
                     ServerLevel serverLevel2 = new ServerLevel(server, Util.backgroundExecutor(), session, derivedLevelData, resourceKey2, entry.getValue(), WorldTools.NOOP_LISTENER, bl, m, ImmutableList.of(), false);
                     server.overworld().getWorldBorder().addListener(new BorderChangeListener.DelegateBorderChangeListener(serverLevel2.getWorldBorder()));
                     existing_worlds.put(resourceKey2, serverLevel2);
                     addeds.add(ValueConversions.of(registryKey.location()));
                 }
             }
-            ((MinecraftServerInterface)server).reloadAfterReload(data.registryAccess());
+            ((MinecraftServerInterface)server).reloadAfterReload(stem.registryAccess());
             return ListValue.wrap(addeds);
         });
     }
