@@ -25,7 +25,7 @@ import com.google.common.collect.Lists;
 public abstract class ServerChunkCache_tickMixin
 {
 
-    @Shadow @Final private ServerLevel level;
+    @Shadow @Final ServerLevel level;
 
     @Shadow @Final
     public ChunkMap chunkMap;

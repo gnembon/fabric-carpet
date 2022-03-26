@@ -15,16 +15,16 @@ import net.minecraft.server.level.ServerLevel;
 @Mixin(ChunkMap.class)
 public class ChunkMap_tickMixin
 {
-    @Shadow @Final private ServerLevel level;
+    @Shadow @Final ServerLevel level;
     CarpetProfiler.ProfilerToken currentSection;
 
-    @Inject(method = "tick", at = @At("HEAD"))
+    @Inject(method = "tick(Ljava/util/function/BooleanSupplier;)V", at = @At("HEAD"))
     private void startProfilerSection(BooleanSupplier booleanSupplier_1, CallbackInfo ci)
     {
         currentSection = CarpetProfiler.start_section(level, "Unloading", CarpetProfiler.TYPE.GENERAL);
     }
 
-    @Inject(method = "tick", at = @At("RETURN"))
+    @Inject(method = "tick(Ljava/util/function/BooleanSupplier;)V", at = @At("RETURN"))
     private void stopProfilerSecion(BooleanSupplier booleanSupplier_1, CallbackInfo ci)
     {
         if (currentSection != null)
@@ -32,7 +32,4 @@ public class ChunkMap_tickMixin
             CarpetProfiler.end_current_section(currentSection);
         }
     }
-
-
-
 }
