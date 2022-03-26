@@ -64,7 +64,7 @@ public abstract class ServerLevel_tickMixin extends Level
         if (currentSection != null)
         {
             // out of chunk
-            currentSection = CarpetProfiler.start_section((Level) (Object) this, "Blocks", CarpetProfiler.TYPE.GENERAL);
+            currentSection = CarpetProfiler.start_section((Level) (Object) this, "Tile Ticks", CarpetProfiler.TYPE.GENERAL);
         }
     }
 
@@ -100,7 +100,7 @@ public abstract class ServerLevel_tickMixin extends Level
     ))
     private void startBlockAgainSection(BooleanSupplier booleanSupplier_1, CallbackInfo ci)
     {
-        currentSection = CarpetProfiler.start_section((Level) (Object) this, "Blocks", CarpetProfiler.TYPE.GENERAL);
+        currentSection = CarpetProfiler.start_section((Level) (Object) this, "Block Events", CarpetProfiler.TYPE.GENERAL);
     }
 
     @Inject(method = "tick", at = @At(
@@ -215,6 +215,4 @@ public abstract class ServerLevel_tickMixin extends Level
     {
         if (TickSpeed.process_entities) runBlockEvents();
     }
-
-
 }
