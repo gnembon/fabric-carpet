@@ -40,7 +40,7 @@ public class CarpetProfiler
             "Spawning",
             "Ice and Snow Ticks", "Random Ticks",
             "Ticket Manager", "Unloading",
-            "Blocks",
+            "Tile Ticks", "Block Events",
             "Entities", "Block Entities",
             "Entities (Client)", "Block Entities (Client)",
             "Village", "Environment"};
