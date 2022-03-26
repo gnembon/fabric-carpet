@@ -126,6 +126,42 @@ public abstract class ServerLevel_tickMixin extends Level
         CarpetProfiler.end_current_section(currentSection);
     }
 
+
+    @Inject(method = "tickChunk", at = @At("HEAD"))
+    private void startThunderSpawningSection(CallbackInfo ci) {
+        // Counting it in spawning because it's spawning skeleton horses
+        currentSection = CarpetProfiler.start_section((Level) (Object) this, "Spawning", CarpetProfiler.TYPE.GENERAL);
+    }
+
+    @Inject(method = "tickChunk", at = @At(
+            value = "CONSTANT",
+            args = "stringValue=iceandsnow"
+    ))
+    private void endThunderSpawningAndStartIceSnowRandomTicks(CallbackInfo ci) {
+        if (currentSection != null) {
+            CarpetProfiler.end_current_section(currentSection);
+            currentSection = CarpetProfiler.start_section((Level) (Object) this, "Ice and Snow Ticks", CarpetProfiler.TYPE.GENERAL);
+        }
+    }
+
+    @Inject(method = "tickChunk", at = @At(
+            value = "CONSTANT",
+            args = "stringValue=tickBlocks"
+    ))
+    private void endIceAndSnowAndStartRandomTicks(CallbackInfo ci) {
+        if (currentSection != null) {
+            CarpetProfiler.end_current_section(currentSection);
+            currentSection = CarpetProfiler.start_section((Level) (Object) this, "Random Ticks", CarpetProfiler.TYPE.GENERAL);
+        }
+    }
+
+    @Inject(method = "tickChunk", at = @At("RETURN"))
+    private void endIceSnowRandomTicks(CallbackInfo ci) {
+        if (currentSection != null) {
+            CarpetProfiler.end_current_section(currentSection);
+        }
+    }
+
     //// freeze
 
     @Redirect(method = "tick", at = @At(

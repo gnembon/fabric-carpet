@@ -37,8 +37,11 @@ public class CarpetProfiler
             "Scarpet command", "Scarpet load", "Scarpet app data", "Scarpet client"
     };
     private static final String[] SECTIONS = {
-            "Spawning and Random Ticks", "Ticket Manager","Unloading",
-            "Blocks", "Entities", "Block Entities",
+            "Spawning",
+            "Ice and Snow Ticks", "Random Ticks",
+            "Ticket Manager", "Unloading",
+            "Blocks",
+            "Entities", "Block Entities",
             "Entities (Client)", "Block Entities (Client)",
             "Village", "Environment"};
 
