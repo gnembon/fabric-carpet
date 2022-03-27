@@ -1,7 +1,5 @@
 package carpet.utils;
 
-import com.google.common.collect.ImmutableBiMap;
-import com.google.common.collect.ImmutableMap;
 import it.unimi.dsi.fastutil.objects.Object2LongMap;
 import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
 import net.minecraft.commands.CommandSourceStack;
@@ -33,38 +31,38 @@ public class CarpetProfiler
     private static int tick_health_elapsed = 0;
     private static TYPE test_type = TYPE.NONE; //1 for ticks, 2 for entities
     private static long current_tick_start = 0;
-    private static final ImmutableMap<String, String> GENERAL_SECTIONS = ImmutableMap.of(
-            "Network",     "Packet sending, player logins, disconnects, kicks, anti-cheat check for player movement, etc.",
-            "Autosave",    "Autosave",
-            "Async Tasks", "Various asynchronous tasks on the server. Mainly chunk generation, chunk saving, etc.",
-            "Datapacks",   "Datapack tick function execution. Load function execution if reload was performed.",
-            "Carpet",      "Player hud, scripts, and extensions (If they choose to use carpet's onTick)."
+    private static final Map<String, String> GENERAL_SECTIONS = Map.of(
+        "Network",     "Packet sending, player logins, disconnects, kicks, anti-cheat check for player movement, etc.",
+        "Autosave",    "Autosave",
+        "Async Tasks", "Various asynchronous tasks on the server. Mainly chunk generation, chunk saving, etc.",
+        "Datapacks",   "Datapack tick function execution. Load function execution if reload was performed.",
+        "Carpet",      "Player hud, scripts, and extensions (If they choose to use carpet's onTick)."
     );
 
-    private static final ImmutableMap<String, String> SCARPET_SECTIONS = ImmutableMap.of(
-            "Scarpet run",      "script run command execution",
-            "Scarpet events",   "script events, custom or built-in",
-            "Scarpet schedule", "script scheduled calls/events",
-            "Scarpet command",  "script custom commands. Calls, executions, suggestions, etc.",
-            "Scarpet load",     "script and libraries (if required) loading",
-            "Scarpet app data", "script module data (if required) ticking and saving",
-            "Scarpet client",   "script shape rendering. (Client side)"
+    private static final Map<String, String> SCARPET_SECTIONS = Map.of(
+        "Scarpet run",      "script run command execution",
+        "Scarpet events",   "script events, custom or built-in",
+        "Scarpet schedule", "script scheduled calls/events",
+        "Scarpet command",  "script custom commands. Calls, executions, suggestions, etc.",
+        "Scarpet load",     "script and libraries (if required) loading",
+        "Scarpet app data", "script module data (if required) ticking and saving",
+        "Scarpet client",   "script shape rendering. (Client side)"
     );
 
-    private static final ImmutableMap<String, String> SECTIONS = new ImmutableMap.Builder<String, String>()
-            .put("Spawning",                "Spawning of various things. Natural mobs, cat, patrol, wandering trader, phantom, skeleton horses, etc.")
-            .put("Random Ticks",            "Random ticks. Both block and fluid random ticks.")
-            .put("Ticket Manager",          "Chunk ticket manager. Assigning tickets, removing tickets, etc.")
-            .put("Unloading",               "POI ticking and chunk unloading.")
-            .put("Tile Ticks",              "Scheduled tile ticks. Repeaters, observers, redstone torch, water, lava, etc.")
-            .put("Block Events",            "Scheduled Block events. Pistons, comparators, noteblocks, block entity events (chests opening/closing), etc.")
-            .put("Entities",                "All the entities in the server. Ticking, removing, despawning, dragon fight (if active), etc.")
-            .put("Block Entities",          "All the block entities in the server. Removal, ticking, etc.")
-            .put("Entities (Client)",       "Entity lag client side. Mostly rendering.")
-            .put("Block Entities (Client)", "Block entity lag client side. Mostly rendering.")
-            .put("Raid",                    "Raid ticking, stopping, etc.")
-            .put("Environment",             "Weather, time, waking up players, water freezing, cauldron filling, snow layers, etc.")
-            .build();
+    private static final Map<String, String> SECTIONS = Map.ofEntries(
+        Map.entry("Spawning",                "Spawning of various things. Natural mobs, cats, patrols, wandering traders, phantoms, skeleton horses, etc."),
+        Map.entry("Random Ticks",            "Random ticks. Both block random ticks and fluid random ticks."),
+        Map.entry("Ticket Manager",          "Chunk ticket manager. Assigning tickets, removing tickets, etc."),
+        Map.entry("Unloading",               "POI ticking and chunk unloading."),
+        Map.entry("Schedule Ticks",          "Scheduled ticks. Repeaters, observers, redstone torch, water, lava, etc."),
+        Map.entry("Block Events",            "Scheduled Block events. Pistons, comparators, noteblocks, block entity events (chests opening/closing), etc."),
+        Map.entry("Entities",                "All the entities in the server. Ticking, removing, despawning, dragon fight (if active), etc."),
+        Map.entry("Block Entities",          "All the block entities in the server. Removal, ticking, etc."),
+        Map.entry("Entities (Client)",       "Entity lag client side. Mostly rendering."),
+        Map.entry("Block Entities (Client)", "Block entity lag client side. Mostly rendering."),
+        Map.entry("Raid",                    "Raid ticking, stopping, etc."),
+        Map.entry("Environment",             "Weather, time, waking up players, water freezing, cauldron filling, snow layers, etc.")
+    );
 
     public enum TYPE
     {

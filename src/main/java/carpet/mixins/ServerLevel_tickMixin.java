@@ -52,7 +52,7 @@ public abstract class ServerLevel_tickMixin extends Level
         if (currentSection != null)
         {
             CarpetProfiler.end_current_section(currentSection);
-            currentSection = CarpetProfiler.start_section((Level) (Object) this, "Tile Ticks", CarpetProfiler.TYPE.GENERAL);
+            currentSection = CarpetProfiler.start_section((Level) (Object) this, "Schedule Ticks", CarpetProfiler.TYPE.GENERAL);
         }
     }
     @Inject(method = "tick", at = @At(
