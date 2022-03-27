@@ -194,7 +194,8 @@
     "Level_updateSuppressionCrashFixMixin",
     "MinecraftServer_updateSuppressionCrashFixMixin",
     "ServerPlayer_updateSuppressionCrashFixMixin",
-    "ChunkMap_creativePlayersLoadChunksMixin"
+    "ChunkMap_creativePlayersLoadChunksMixin",
+    "CollectingNeighborUpdater_loggerMixin"
   ],
   "client": [
     "Timer_tickSpeedMixin",
