@@ -1,5 +1,7 @@
 package carpet.utils;
 
+import com.google.common.collect.ImmutableBiMap;
+import com.google.common.collect.ImmutableMap;
 import it.unimi.dsi.fastutil.objects.Object2LongMap;
 import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
 import net.minecraft.commands.CommandSourceStack;
@@ -31,19 +33,38 @@ public class CarpetProfiler
     private static int tick_health_elapsed = 0;
     private static TYPE test_type = TYPE.NONE; //1 for ticks, 2 for entities
     private static long current_tick_start = 0;
-    private static final String[] GENERAL_SECTIONS = {"Network", "Autosave", "Async Tasks", "Datapacks", "Carpet"};
-    private static final String[] SCARPET_SECTIONS = {
-            "Scarpet run", "Scarpet events", "Scarpet schedule",
-            "Scarpet command", "Scarpet load", "Scarpet app data", "Scarpet client"
-    };
-    private static final String[] SECTIONS = {
-            "Spawning",
-            "Ice and Snow Ticks", "Random Ticks",
-            "Ticket Manager", "Unloading",
-            "Tile Ticks", "Block Events",
-            "Entities", "Block Entities",
-            "Entities (Client)", "Block Entities (Client)",
-            "Village", "Environment"};
+    private static final ImmutableMap<String, String> GENERAL_SECTIONS = ImmutableMap.of(
+            "Network",     "Packet sending, player logins, disconnects, kicks, anti-cheat check for player movement, etc.",
+            "Autosave",    "Autosave",
+            "Async Tasks", "Various asynchronous tasks on the server. Mainly chunk generation, chunk saving, etc.",
+            "Datapacks",   "Datapack tick function execution. Load function execution if reload was performed.",
+            "Carpet",      "Player hud, scripts, and extensions (If they choose to use carpet's onTick)."
+    );
+
+    private static final ImmutableMap<String, String> SCARPET_SECTIONS = ImmutableMap.of(
+            "Scarpet run",      "script run command execution",
+            "Scarpet events",   "script events, custom or built-in",
+            "Scarpet schedule", "script scheduled calls/events",
+            "Scarpet command",  "script custom commands. Calls, executions, suggestions, etc.",
+            "Scarpet load",     "script and libraries (if required) loading",
+            "Scarpet app data", "script module data (if required) ticking and saving",
+            "Scarpet client",   "script shape rendering. (Client side)"
+    );
+
+    private static final ImmutableMap<String, String> SECTIONS = new ImmutableMap.Builder<String, String>()
+            .put("Spawning",                "Spawning of various things. Natural mobs, cat, patrol, wandering trader, phantom, skeleton horses, etc.")
+            .put("Random Ticks",            "Random ticks. Both block and fluid random ticks.")
+            .put("Ticket Manager",          "Chunk ticket manager. Assigning tickets, removing tickets, etc.")
+            .put("Unloading",               "POI ticking and chunk unloading.")
+            .put("Tile Ticks",              "Scheduled tile ticks. Repeaters, observers, redstone torch, water, lava, etc.")
+            .put("Block Events",            "Scheduled Block events. Pistons, comparators, noteblocks, block entity events (chests opening/closing), etc.")
+            .put("Entities",                "All the entities in the server. Ticking, removing, despawning, dragon fight (if active), etc.")
+            .put("Block Entities",          "All the block entities in the server. Removal, ticking, etc.")
+            .put("Entities (Client)",       "Entity lag client side. Mostly rendering.")
+            .put("Block Entities (Client)", "Block entity lag client side. Mostly rendering.")
+            .put("Raid",                    "Raid ticking, stopping, etc.")
+            .put("Environment",             "Weather, time, waking up players, water freezing, cauldron filling, snow layers, etc.")
+            .build();
 
     public enum TYPE
     {
@@ -69,17 +90,17 @@ public class CarpetProfiler
         ENTITY_TIMES.clear();
         test_type = TYPE.GENERAL;
         SECTION_STATS.put("tick", 0L);
-        for (String section : GENERAL_SECTIONS)
+        for (String section : GENERAL_SECTIONS.keySet())
         {
             SECTION_STATS.put(section, 0L);
         }
-        for (String section : SCARPET_SECTIONS)
+        for (String section : SCARPET_SECTIONS.keySet())
         {
             SECTION_STATS.put(section, 0L);
         }
         for (ResourceKey<Level> level : source.getServer().levelKeys())
         {
-            for (String section : SECTIONS)
+            for (String section : SECTIONS.keySet())
             {
                 SECTION_STATS.put(level.location() + "." + section, 0L);
             }
@@ -201,21 +222,31 @@ public class CarpetProfiler
         Messenger.m(currentRequester, "wb Average tick time: ", String.format("yb %.3fms", divider * total_tick_time));
         long accumulated = 0L;
 
-        for (String section : GENERAL_SECTIONS)
+        for (String section : GENERAL_SECTIONS.keySet())
         {
             double amount = divider * SECTION_STATS.get(section);
             if (amount > 0.01)
             {
                 accumulated += SECTION_STATS.get(section);
-                Messenger.m(currentRequester, "w "+section+": ", String.format("y %.3fms", amount));
+                Messenger.m(
+                        currentRequester,
+                        "w " + section + ": ",
+                        "^ " + GENERAL_SECTIONS.get(section),
+                        "y %.3fms".formatted(amount)
+                );
             }
         }
-        for (String section : SCARPET_SECTIONS)
+        for (String section : SCARPET_SECTIONS.keySet())
         {
             double amount = divider * SECTION_STATS.get(section);
             if (amount > 0.01)
             {
-                Messenger.m(currentRequester, "gi "+section+": ", String.format("di %.3fms", amount));
+                Messenger.m(
+                        currentRequester,
+                        "gi "+section+": ",
+                        "^ " + SCARPET_SECTIONS.get(section),
+                        "di %.3fms".formatted(amount)
+                );
             }
         }
 
@@ -223,9 +254,8 @@ public class CarpetProfiler
         {
             ResourceLocation dimensionId = dim.location();
             boolean hasSomethin = false;
-            for (String section : SECTIONS)
+            for (String section : SECTIONS.keySet())
             {
-
                 double amount = divider * SECTION_STATS.getOrDefault(dimensionId + "." + section, 0L);
                 if (amount > 0.01)
                 {
@@ -238,7 +268,7 @@ public class CarpetProfiler
                 continue;
             }
             Messenger.m(currentRequester, "wb "+(dimensionId.getNamespace().equals("minecraft")?dimensionId.getPath():dimensionId.toString()) + ":");
-            for (String section : SECTIONS)
+            for (String section : SECTIONS.keySet())
             {
                 double amount = divider * SECTION_STATS.getOrDefault(dimensionId + "." + section, 0L);
                 if (amount > 0.01)
@@ -246,7 +276,12 @@ public class CarpetProfiler
                     boolean cli = section.endsWith("(Client)");
                     if (!cli)
                         accumulated += SECTION_STATS.get(dimensionId + "." + section);
-                    Messenger.m(currentRequester, String.format("%s - %s: ", cli?"gi":"w", section), String.format("%s %.3fms", cli?"di":"y", amount));
+                    Messenger.m(
+                            currentRequester,
+                            "%s - %s: ".formatted(cli ? "gi" : "w", section),
+                            "^ " + SECTIONS.get(section),
+                            "%s %.3fms".formatted(cli ? "di" : "y", amount)
+                    );
                 }
             }
         }
