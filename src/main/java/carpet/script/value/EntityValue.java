@@ -1708,9 +1708,6 @@ public class EntityValue extends Value
                     pl.containerMenu.setCarried(item);
                     pl.containerMenu.broadcastFullState();
                 }
-            
-            
-            
         });
         */
         put("skull_dangerous",(e,v)->{
