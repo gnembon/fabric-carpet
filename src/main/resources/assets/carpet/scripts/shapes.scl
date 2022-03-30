@@ -1,5 +1,5 @@
 //This is a library app, mostly for the draw command, which allows to import these shape-drawing functions into your own app.
-//Arguments for each are to be given as a singleton list, for ease of use. This is with the exception of the fill_flat functions, with
+//Arguments for each are to be given as a singleton list, for ease of use. This is with the exception of the _fill_flat functions, with
 //the assumption that they're unlikely to be used outside of internal calls, but it is still available to be called if necessary.
 //Make sure you read the arguments and input them in the correct order, or it will mess up.
 //these functions return a set of all the positions in the shape, given the parameters, without repeating a position.
@@ -25,7 +25,7 @@ draw_sphere(args)->(
             syaw = sin(_)*cpitch*radius;
             if(hollow,
                 positions += [cx+cyaw,cy+spitch*radius,cz+syaw];
-                positions += [cx+cos(_+180)*ceil(cpitch*radius),cy+spitch*radius,cz+sin(_+180)*cpitch*radius],
+                positions += [cx+cos(_+180)*cpitch*radius,cy+spitch*radius,cz+sin(_+180)*cpitch*radius],
                 for(range(-syaw,syaw+1),
                     positions += [cx+cyaw*cpitch,cy+spitch*radius, cz+_]
                 )
@@ -70,7 +70,7 @@ draw_filled_diamond(args)->(
 );
 
 //Draws a bunch of circles or squares of decreasing or increasing radii based on where it's pointing.
-//Circles are drawn using fill_flat_circle
+//Circles are drawn using _fill_flat_circle
 //Algorithmic efficiency:
 //  O(n^2) for hollow cones / pyramids
 //  O(n^3) for filled cones / pyramids
@@ -81,12 +81,12 @@ draw_pyramid(args)->(
     pointup = pointing=='up';
     for(range(height),
         r = if(pointup, (radius * ( 1 - _ / height) - 1), radius * _ / height);
-        positions = positions + fill_flat(pos, _, r, is_square, orientation, !((pointup&&_==0)||(!pointup && _==height-1)) && hollow, true)//Always close bottom off
+        positions = positions + _fill_flat(pos, _, r, is_square, orientation, !((pointup&&_==0)||(!pointup && _==height-1)) && hollow, true)//Always close bottom off
     );
     positions
 );
 
-//Draws a column of squares/circles (circles using fill_flat_circle)
+//Draws a column of squares/circles (circles using _fill_flat_circle)
 //Only thing special to note is that here we pre-generate the points
 //and then use that with an offset to make the rest of the prism.
 //This avoid re-running algorithms for generating the shapes, which tend to be costly
@@ -98,10 +98,10 @@ draw_prism(args)->(
     positions = {};
     hollow = fill_type =='hollow';
     radius = rad+0.5;
-    filled_circle_points = fill_flat(pos, 0, radius, is_square, orientation, false, false); //I dont actually need to generate all the points lol
+    filled_circle_points = _fill_flat(pos, 0, radius, is_square, orientation, false, false); //I dont actually need to generate all the points lol
     offset_vector = if(orientation=='x', [1,0,0], orientation=='y', [0,1,0],[0,0,1]);
     if(hollow,
-        hollow_circle_points = fill_flat(pos, 0, radius, is_square, orientation, true, false);
+        hollow_circle_points = _fill_flat(pos, 0, radius, is_square, orientation, true, false);
 
         for(filled_circle_points,//Always close ends off
             positions+=_;
@@ -129,15 +129,15 @@ draw_prism(args)->(
 //'pyramid' parameter is cos this function is called by draw_prism and draw_pyramid
 //Now in pyramids, I want circles to be ever so slightly thicker,
 //whereas in prisms I don't, hence the parameter.
-//The reason I do abs() of the radius for fill_flat_circle is because sometimes,
+//The reason I do abs() of the radius for _fill_flat_circle is because sometimes,
 //the calculations result in -0 being inputted as a radius.
 //Algorithmic efficiency:
 //  O(n) for hollow circles / squares cos it's just a line
 //  O(n^2) for filled circles / squares cos 2d surface
-fill_flat(pos, offset, dr, rectangle, orientation, hollow, pyramid)->
+_fill_flat(pos, offset, dr, rectangle, orientation, hollow, pyramid)->
     if(rectangle,
-        fill_flat_rectangle(pos, offset, dr, orientation, hollow),
-        fill_flat_circle(pos, offset, abs(dr), orientation, hollow, pyramid)
+        _fill_flat_rectangle(pos, offset, dr, orientation, hollow),
+        _fill_flat_circle(pos, offset, abs(dr), orientation, hollow, pyramid)
     );
 
 
@@ -154,7 +154,7 @@ fill_flat(pos, offset, dr, rectangle, orientation, hollow, pyramid)->
 //Algorithmic efficiency:
 //  O(n) for hollow circles cos it's just a line
 //  O(n^2) for filled circles cos 2d surface
-fill_flat_circle(pos, offset, dr, orientation, hollow, thick) ->(
+_fill_flat_circle(pos, offset, dr, orientation, hollow, thick) ->(
 
     r = floor(dr);
 
@@ -171,12 +171,12 @@ fill_flat_circle(pos, offset, dr, orientation, hollow, thick) ->(
     d = 1.25-r;
 
     while(a<=b, r, //technically the limit is r/sqrt(2) but whatevs
-        positions = positions + fill_flat_circle_points(pos, orientation, offset, hollow, a, b);
+        positions = positions + _fill_flat_circle_points(pos, orientation, offset, hollow, a, b);
         if(d > 0,
 	        d+=2*a-2*b+5;
 	        b=b-1;
 	        if(hollow && thick, //to make circles slightly thicker
-	            positions = positions + fill_flat_circle_points(pos, orientation, offset, hollow, a, b)
+	            positions = positions + _fill_flat_circle_points(pos, orientation, offset, hollow, a, b)
 	        ),
 	        d+=2*a+3
         );
@@ -191,7 +191,7 @@ fill_flat_circle(pos, offset, dr, orientation, hollow, thick) ->(
 //Algorithmic efficiency:
 //  O(1) if hollow cos it's just 8 points
 //  O(n) if filled cos it draws the lines between the points
-fill_flat_circle_points(pos, orientation, offset, hollow, a, b) ->(
+_fill_flat_circle_points(pos, orientation, offset, hollow, a, b) ->(
     [x, y, z] = pos;
     positions = {};
     if(orientation == 'x',
@@ -260,7 +260,7 @@ fill_flat_circle_points(pos, orientation, offset, hollow, a, b) ->(
 //Algorithmic efficiency:
 //  O(n) for hollow squares cos it's just a line
 //  O(n^2) for filled squares cos 2d surface
-fill_flat_rectangle(pos, offset, dr, orientation, hollow) -> (
+_fill_flat_rectangle(pos, offset, dr, orientation, hollow) -> (
     r = floor(dr);
     [x, y, z] = pos;
     positions = {};
