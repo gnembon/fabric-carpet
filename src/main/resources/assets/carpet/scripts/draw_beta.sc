@@ -56,7 +56,7 @@ draw(what, args, block, replacement)->(
     for(positions,
         existing = block(_);
         if(block != existing && (!replacement || _block_matches(existing, replacement)),
-            affected += bool(set(existing,block))
+            affected += bool(set(existing,block)==null) //setting equal to null cos air returns false
         )
     );
     print(format('gi Filled ' + affected + ' blocks'));
