@@ -46,10 +46,10 @@ draw_diamond(args)->(
         y = r-radius+1;
         c_for(x=-r,x<=r,x+=1,
             z=r-abs(x);
-            positions += [pos:0+x, pos:1 +y, pos:2+z];
-            positions += [pos:0+x, pos:1 +y, pos:2-z];
-            positions += [pos:0+x, pos:1 -y, pos:2+z];
-            positions += [pos:0+x, pos:1 -y, pos:2-z];
+            positions += [pos:0+x, pos:1+y, pos:2+z];
+            positions += [pos:0+x, pos:1+y, pos:2-z];
+            positions += [pos:0+x, pos:1-y, pos:2+z];
+            positions += [pos:0+x, pos:1-y, pos:2-z];
         )
     );
     positions
