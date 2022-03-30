@@ -107,4 +107,10 @@ public abstract class MinecraftServer_scarpetMixin extends ReentrantBlockableEve
         functionManager.replaceLibrary(this.resources.managers().getFunctionLibrary());
         structureTemplateManager.onResourceManagerReload(this.resources.resourceManager());
     }
+
+    @Override
+    public MinecraftServer.ReloadableResources getResourceManager()
+    {
+        return resources;
+    }
 }
