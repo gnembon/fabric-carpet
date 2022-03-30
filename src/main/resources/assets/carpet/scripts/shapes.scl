@@ -204,13 +204,13 @@ _fill_flat_circle_points(pos, orientation, offset, hollow, a, b) ->(
             positions += [x + offset,y+b,z-a];
             positions += [x + offset,y-b,z+a];
             positions += [x + offset,y-b,z-a],
-            c_for(c = -a, c<=a, c+=1,
-                positions += [x + offset,c+y,z+b];
-                positions += [x + offset,c+y,z-b]
+            for(range(-b, b+1),
+                positions += [x + offset,y+a,_ + z];
+                positions += [x + offset,y-a,_ + z]
             );
-            c_for(c = -b, c<=b, c+=1,
-                positions += [x + offset,y+a,c + z];
-                positions += [x + offset,y-a,c + z]
+            for(range(-a, a+1),
+                positions += [x + offset,y+b,_ + z];
+                positions += [x + offset,y-b,_ + z]
             )
         ),
         orientation=='y',
@@ -243,13 +243,13 @@ _fill_flat_circle_points(pos, orientation, offset, hollow, a, b) ->(
             positions += [x+b,y-a, z + offset];
             positions += [x-b,y+a, z + offset];
             positions += [x-b,y-a, z + offset],
-            c_for(c = -a, c<=a, c+=1,
-                positions += [c+x,y+b,z + offset];
-                positions += [c+x,y-b,z + offset]
+            for(range(-b, b+1),
+                positions += [_ + x,y+a,z + offset];
+                positions += [_ + x,y-a,z + offset]
             );
-            c_for(c = -b, c<=b, c+=1,
-                positions += [x+a,c+y,z + offset];
-                positions += [x-a,c+y,z + offset]
+            for(range(-a, a+1),
+                positions += [_ + x,y+b,z + offset];
+                positions += [_ + x,y-b,z + offset]
             )
         )
     );
