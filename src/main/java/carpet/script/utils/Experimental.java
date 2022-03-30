@@ -19,6 +19,7 @@ import net.minecraft.nbt.Tag;
 import net.minecraft.resources.RegistryOps;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.WorldLoader;
 import net.minecraft.server.WorldStem;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.packs.PackResources;
@@ -100,7 +101,7 @@ public class Experimental
                 Holder<DimensionType> holder2 = (entry.getValue()).typeHolder();
                 ChunkGenerator chunkGenerator3 = entry.getValue().generator();
                 DerivedLevelData unmodifiableLevelProperties = new DerivedLevelData(saveProperties, ((ServerWorldInterface) server.overworld()).getWorldPropertiesCM());
-                ServerLevel serverWorld2 = new ServerLevel(server, Util.backgroundExecutor(), session, unmodifiableLevelProperties, registryKey2, holder2, WorldTools.NOOP_LISTENER, chunkGenerator3, bl, m, List.of(), false);
+                ServerLevel serverWorld2 = new ServerLevel(server, Util.backgroundExecutor(), session, unmodifiableLevelProperties, registryKey2, entry.getValue(), WorldTools.NOOP_LISTENER, bl, m, ImmutableList.of(), false);
                 server.overworld().getWorldBorder().addListener(new BorderChangeListener.DelegateBorderChangeListener(serverWorld2.getWorldBorder()));
                 existing_worlds.put(registryKey2, serverWorld2);
             }
@@ -114,20 +115,16 @@ public class Experimental
         DataPackConfig dataPackSettings = session.getDataPacks();
         PackRepository resourcePackManager = server.getPackRepository();
 
-        WorldStem.InitConfig initConfig = new WorldStem.InitConfig(resourcePackManager, Commands.CommandSelection.DEDICATED, 4, false);
+        WorldLoader.InitConfig initConfig = new WorldLoader.InitConfig(new WorldLoader.PackConfig(resourcePackManager, dataPackSettings == null ? DataPackConfig.DEFAULT : dataPackSettings, false), Commands.CommandSelection.DEDICATED, 4);
 
 
-        final WorldStem data = WorldStem.load(initConfig, () -> {
-                    DataPackConfig dataPackConfig = session.getDataPacks();
-                    return dataPackConfig == null ? DataPackConfig.DEFAULT : dataPackConfig;
-                },
-                (resourceManager, dataPackConfigx) -> {
-                    RegistryAccess.Writable writable = RegistryAccess.builtinCopy();
-                    DynamicOps<Tag> dynamicOps = RegistryOps.createAndLoad(NbtOps.INSTANCE, writable, (ResourceManager) resourceManager);
-                    WorldData worldData = session.getDataTag(dynamicOps, dataPackConfigx, writable.allElementsLifecycle());
-                    return Pair.of(worldData, writable.freeze());
-                }, Util.backgroundExecutor(), Runnable::run).join();
-        WorldGenSettings generatorOptions = data.worldData().worldGenSettings();
+        final WorldStem stem = WorldLoader.load(initConfig, (resourceManager, dataPackConfigx) -> {
+            RegistryAccess.Writable writable = RegistryAccess.builtinCopy();
+            DynamicOps<Tag> dynamicOps = RegistryOps.createAndLoad(NbtOps.INSTANCE, writable, (ResourceManager) resourceManager);
+            WorldData worldData = session.getDataTag(dynamicOps, dataPackConfigx, writable.allElementsLifecycle());
+            return Pair.of(worldData, writable.freeze());
+        }, WorldStem::new, Util.backgroundExecutor(), Runnable::run).join();
+        WorldGenSettings generatorOptions = stem.worldData().worldGenSettings();
 
         boolean bl = generatorOptions.isDebug();
         long l = generatorOptions.seed();
@@ -136,21 +133,17 @@ public class Experimental
         List<Value> addeds = new ArrayList<>();
         for (Map.Entry<ResourceKey<LevelStem>, LevelStem> entry : generatorOptions.dimensions().entrySet()) {
             ResourceKey<LevelStem> registryKey = entry.getKey();
-            CarpetScriptServer.LOG.error("Analysing workld: {}", registryKey.location());
             if (!existing_worlds.containsKey(registryKey))
             {
                 ResourceKey<Level> resourceKey2 = ResourceKey.create(Registry.DIMENSION_REGISTRY, registryKey.location());
-                DerivedLevelData derivedLevelData = new DerivedLevelData(data.worldData(), ((ServerWorldInterface) server.overworld()).getWorldPropertiesCM());
-                ChunkGenerator chunkGenerator2 = ((LevelStem)entry.getValue()).generator();
-                Holder<DimensionType> holder2 = ((LevelStem)entry.getValue()).typeHolder();
-                ServerLevel serverLevel2 = new ServerLevel(server, Util.backgroundExecutor(), session, derivedLevelData, resourceKey2,
-                        holder2, WorldTools.NOOP_LISTENER,chunkGenerator2, bl, m, ImmutableList.of(), false);
+                DerivedLevelData derivedLevelData = new DerivedLevelData(stem.worldData(), ((ServerWorldInterface) server.overworld()).getWorldPropertiesCM());
+                ServerLevel serverLevel2 = new ServerLevel(server, Util.backgroundExecutor(), session, derivedLevelData, resourceKey2, entry.getValue(), WorldTools.NOOP_LISTENER, bl, m, ImmutableList.of(), false);
                 server.overworld().getWorldBorder().addListener(new BorderChangeListener.DelegateBorderChangeListener(serverLevel2.getWorldBorder()));
                 existing_worlds.put(resourceKey2, serverLevel2);
                 addeds.add(ValueConversions.of(registryKey.location()));
             }
         }
-        ((MinecraftServerInterface)server).reloadAfterReload(data.registryAccess());
+        ((MinecraftServerInterface)server).reloadAfterReload(stem.registryAccess());
         return ListValue.wrap(addeds);
     }
 }
