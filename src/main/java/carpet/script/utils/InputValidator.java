@@ -19,7 +19,10 @@ public class InputValidator {
     {
         try
         {
-            return new ResourceLocation(string);
+            ResourceLocation res = new ResourceLocation(string);
+            if(res.getPath().isEmpty())
+                throw new InternalExpressionException("Path shall not be empty");
+            return res;
         }
         catch (ResourceLocationException iie)
         {

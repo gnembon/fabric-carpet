@@ -57,6 +57,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Random;
 import java.util.function.BiFunction;
 import java.util.function.BiPredicate;
 import java.util.function.Predicate;
@@ -64,6 +65,10 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import net.minecraft.commands.arguments.item.ItemInput;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.core.QuartPos;
+import net.minecraft.core.Registry;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.protocol.game.ClientboundExplodePacket;
@@ -105,6 +110,8 @@ import net.minecraft.world.level.biome.Climate;
 import net.minecraft.world.level.biome.MultiNoiseBiomeSource;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.Mirror;
+import net.minecraft.world.level.block.Rotation;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
@@ -120,6 +127,11 @@ import net.minecraft.world.level.levelgen.feature.ConfiguredStructureFeature;
 import net.minecraft.world.level.levelgen.feature.StructureFeature;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraft.world.level.levelgen.structure.StructureStart;
+import net.minecraft.world.level.levelgen.structure.templatesystem.BlockRotProcessor;
+import net.minecraft.world.level.levelgen.structure.templatesystem.GravityProcessor;
+import net.minecraft.world.level.levelgen.structure.templatesystem.StructureManager;
+import net.minecraft.world.level.levelgen.structure.templatesystem.StructurePlaceSettings;
+import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate;
 import net.minecraft.world.level.pathfinder.PathComputationType;
 import net.minecraft.world.level.storage.ServerLevelData;
 import net.minecraft.world.phys.Vec3;
@@ -1612,7 +1624,128 @@ public class WorldAccess {
                 cc.s.getLevel().getChunkSource().addRegionTicket(TicketType.UNKNOWN, target, radius, target);
             return new NumericValue(ticket.timeout());
         });
+        // =======================================
+        expression.addContextFunction("save_structure_template", -1, (c, t, lv) -> {
+            CarpetContext cc = (CarpetContext) c;
+            ServerLevel world = cc.s.getLevel();
 
+            StructureManager structureManager = world.getStructureManager();
+            StructureTemplate theStructure;
+            String name;
+
+            boolean returnnbt = lv.get(0).isNull();
+            ResourceLocation struident = null;
+            if (!returnnbt) {
+                name = lv.get(0).getString();
+                struident = InputValidator.identifierOf(name);
+                 // if(lv.size()==2&&lv.get(1).isNull()){lv3.remove(struident);return
+                  // Value.NULL;}
+                  theStructure = structureManager.getOrCreate(struident);
+            } else {
+                theStructure = new StructureTemplate();
+            }
+            BlockArgument start = BlockArgument.findIn((CarpetContext) c, lv, 1);
+            BlockArgument end = BlockArgument.findIn((CarpetContext) c, lv, start.offset);
+            BlockArgument ignoredblock = end.offset + 1<lv.size()?BlockArgument.findIn((CarpetContext) c, lv, end.offset + 1, true, true, false):null;
+
+            BlockPos startBlockPos = new BlockPos(
+                    Math.min(start.block.getPos().getX(), end.block.getPos().getX()),
+                    Math.min(start.block.getPos().getY(), end.block.getPos().getY()),
+                    Math.min(start.block.getPos().getZ(), end.block.getPos().getZ()));
+            BlockPos endBlockPos = new BlockPos(
+                    Math.max(start.block.getPos().getX(), end.block.getPos().getX()),
+                    Math.max(start.block.getPos().getY(), end.block.getPos().getY()),
+                    Math.max(start.block.getPos().getZ(), end.block.getPos().getZ()));
+            BlockPos size = endBlockPos.subtract(startBlockPos).offset(1, 1, 1);
+            // name,start,end, ignoreEntities, ignoredBlock,~~author~~,disk
+            theStructure.fillFromWorld(world,
+                    startBlockPos,
+                    size,
+                    !(end.offset<lv.size()?lv.get(end.offset).getBoolean():false),
+                    ignoredblock == null ? null : ignoredblock.block == null ? null : ignoredblock.block.getBlockState().getBlock());
+            // lv6.setAuthor(lv.get(9).getString());//MC-140821
+            if (!returnnbt) {
+                if (ignoredblock.offset<lv.size()?lv.get(ignoredblock.offset).getBoolean():false) {
+                    return BooleanValue.of(structureManager.save(struident));
+                }
+            } else {
+                return new NBTSerializableValue(theStructure.save(new CompoundTag()));
+            }
+
+            return Value.TRUE;
+        });
+
+        // =====================================
+        // =======================================
+        expression.addContextFunction("load_structure_template", -1, (c, t, lv) -> {
+            CarpetContext cc = (CarpetContext) c;
+            ServerLevel world = cc.s.getLevel();
+            boolean recievnbt = (lv.get(0) instanceof NBTSerializableValue)
+                    && (((NBTSerializableValue) lv.get(0)).getTag() instanceof CompoundTag);
+            StructureTemplate thestr;
+            if (!recievnbt) {
+                String name = lv.get(0).getString();
+
+                StructureManager sm = world.getStructureManager();
+                Optional<StructureTemplate> optional;
+
+                ResourceLocation struident = InputValidator.identifierOf(name);
+                
+                optional = sm.get(struident);
+                if (!optional.isPresent()) {
+                    return Value.FALSE;
+                }
+                thestr = optional.get();
+            } else {
+                thestr = world.getStructureManager()
+                        .readStructure((CompoundTag) ((NBTSerializableValue) lv.get(0)).getTag());
+            }
+            BlockArgument start = BlockArgument.findIn((CarpetContext) c, lv, 1);
+            // name,pos,
+            // ignoreEntities,integrity,awake,noupdate,fluid,gravity,rotation,mirror
+            StructurePlaceSettings lv4 = new StructurePlaceSettings();
+            lv4.clearProcessors();
+
+            lv4.setIgnoreEntities(start.offset <lv.size()?lv.get(start.offset).getBoolean():false)//ignore entity
+                    .setFinalizeEntities(start.offset + 2<lv.size()?lv.get(start.offset + 2).getBoolean():false)//awake
+                    .setKnownShape(start.offset + 3<lv.size()?lv.get(start.offset + 3).getBoolean():true)//update
+                    .setKeepLiquids(start.offset + 4<lv.size()?lv.get(start.offset + 4).getBoolean():false)//fluid
+                    .setMirror(start.offset + 7>=lv.size()?Mirror.NONE:lv.get(start.offset + 7).getString().equalsIgnoreCase("Z") ? Mirror.LEFT_RIGHT
+                            : lv.get(start.offset + 7).getString().equalsIgnoreCase("X") ? Mirror.FRONT_BACK
+                                    : Mirror.NONE)//mirror
+                    .setRotation(start.offset + 6>=lv.size()?Rotation.NONE:Rotation.values()[(((NumericValue) lv.get(start.offset + 6)).getInt() % 4 + 4) % 4]);//rotation
+
+            if (start.offset + 5<lv.size()&&!lv.get(start.offset + 5).isNull()) {//gravity
+                lv4.addProcessor(new GravityProcessor(Heightmap.Types.WORLD_SURFACE,
+                        ((NumericValue) lv.get(start.offset + 5)).getInt()));
+            }
+            if (start.offset + 1<lv.size()&&!lv.get(start.offset + 1).isNull()) {//integrity
+                lv4.addProcessor(new BlockRotProcessor(
+                        Mth.clamp(((NumericValue) lv.get(start.offset + 1)).getFloat(), 0.0f, 1.0f)));
+            }
+
+            BlockPos lv5 = start.block.getPos();
+            thestr.placeInWorld(world, lv5, lv5, lv4, new Random(), Block.UPDATE_CLIENTS);
+            return Value.TRUE;
+        });
+
+        // =====================================
+        // =======================================
+        expression.addContextFunction("unload_structure_template", -1, (c, t, lv) -> {
+            CarpetContext cc = (CarpetContext) c;
+            ServerLevel world = cc.s.getLevel();
+            String name = lv.get(0).getString();
+
+            StructureManager sm = world.getStructureManager();
+
+            ResourceLocation struident = InputValidator.identifierOf(name);
+            
+            sm.remove(struident);
+            return Value.NULL;
+
+        });
+
+        // =====================================
     }
 
     @ScarpetFunction(maxParams = -1)
