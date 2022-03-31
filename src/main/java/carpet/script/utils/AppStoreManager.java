@@ -17,6 +17,7 @@ import com.google.gson.JsonParser;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.commands.CommandRuntimeException;
 import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.network.chat.BaseComponent;
 import net.minecraft.world.level.storage.LevelResource;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -70,7 +71,7 @@ public class AppStoreManager
             return newValue;
         }
         @Override
-        public String description() { return "Appstore link should point to a valid github repository";}
+        public BaseComponent descriptionText() { return Messenger.tr("carpet.validator.ScarpetAppStore.desc"); }
     }
 
     public static class StoreNode

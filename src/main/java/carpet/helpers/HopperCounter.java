@@ -77,7 +77,7 @@ public class HopperCounter
      * The string which is passed into {@link Messenger#m} which makes each counter name be displayed in the colour of
      * that counter.
      */
-    private final String prettyColour;
+    private final BaseComponent prettyName;
     /**
      * All the items stored within the counter, as a map of {@link Item} mapped to a {@code long} of the amount of items
      * stored thus far of that item type.
@@ -99,7 +99,12 @@ public class HopperCounter
     {
         startTick = -1;
         this.color = color;
-        this.prettyColour = WoolTool.Material2DyeName.getOrDefault(color.getMaterialColor(),"w ") + color.getName();
+        this.prettyName = Messenger.c(WoolTool.Material2DyeName.getOrDefault(color.getMaterialColor(),"w ").strip(), Messenger.tr("carpet.common.color." + color.getName()));
+    }
+
+    public BaseComponent getPrettyName()
+    {
+        return prettyName;
     }
 
     /**
@@ -161,7 +166,7 @@ public class HopperCounter
         }
         if (text.isEmpty())
         {
-            text.add(Messenger.s("No items have been counted yet."));
+            text.add(Messenger.tr("carpet.command.counter.no_item_at_all"));
         }
         return text;
     }
@@ -177,34 +182,39 @@ public class HopperCounter
         {
             if (brief)
             {
-                return Collections.singletonList(Messenger.c("b"+prettyColour,"w : ","gi -, -/h, - min "));
+                return Collections.singletonList(Messenger.c("b", prettyName,"w : ","gi -, -/h, - min "));
             }
-            return Collections.singletonList(Messenger.c(prettyColour, "w  hasn't started counting yet"));
+            return Collections.singletonList(Messenger.tr("carpet.command.counter.has_not_started", prettyName));
         }
         long total = getTotalItems();
+        BaseComponent realtimeSuffix = realTime ? Messenger.c("  - ", Messenger.tr("carpet.command.counter.realtime")) : Messenger.s("");
         if (total == 0)
         {
             if (brief)
             {
-                return Collections.singletonList(Messenger.c("b"+prettyColour,"w : ","wb 0","w , ","wb 0","w /h, ", String.format("wb %.1f ", ticks / (20.0 * 60.0)), "w min"));
+                return Collections.singletonList(Messenger.c("b", prettyName,"w : ","wb 0","w , ","wb 0","w /h, ", String.format("wb %.1f ", ticks / (20.0 * 60.0)), "w min"));
             }
-            return Collections.singletonList(Messenger.c("w No items for ", prettyColour, String.format("w  yet (%.2f min.%s)",
-                    ticks / (20.0 * 60.0), (realTime ? " - real time" : "")),
-                    "nb  [X]", "^g reset", "!/counter " + color.getName() +" reset"));
+            return Collections.singletonList(Messenger.c(
+                    Messenger.tr("carpet.command.counter.no_item", prettyName, String.format("%.2f", ticks / (20.0 * 60.0)), realtimeSuffix),
+                    "nb  [X]", "^g", Messenger.tr("reset", prettyName),
+                    "!/counter " + color.getName() +" reset"
+            ));
         }
         if (brief)
         {
-            return Collections.singletonList(Messenger.c("b"+prettyColour,"w : ",
+            return Collections.singletonList(Messenger.c("b", prettyName,"w : ",
                     "wb "+total,"w , ",
                     "wb "+(total * (20 * 60 * 60) / ticks),"w /h, ",
                     String.format("wb %.1f ", ticks / (20.0 * 60.0)), "w min"
             ));
         }
         List<BaseComponent> items = new ArrayList<>();
-        items.add(Messenger.c("w Items for ", prettyColour,
-                "w  (",String.format("wb %.2f", ticks*1.0/(20*60)), "w  min"+(realTime?" - real time":"")+"), ",
-                "w total: ", "wb "+total, "w , (",String.format("wb %.1f",total*1.0*(20*60*60)/ticks),"w /h):",
-                "nb [X]", "^g reset", "!/counter "+color+" reset"
+        items.add(Messenger.c(
+                Messenger.tr("carpet.command.counter.summary",
+                        prettyName, Messenger.c(String.format("wb %.2f", ticks*1.0/(20*60))), realtimeSuffix,
+                        Messenger.c("wb "+total), Messenger.c(String.format("wb %.1f",total*1.0*(20*60*60)/ticks))
+                ),
+                "nb [X]", "^g", Messenger.tr("carpet.command.counter.reset", prettyName), "!/counter "+color+" reset"
         ));
         items.addAll(counter.object2LongEntrySet().stream().sorted((e, f) -> Long.compare(f.getLongValue(), e.getLongValue())).map(e ->
         {

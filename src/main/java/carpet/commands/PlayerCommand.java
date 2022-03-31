@@ -157,7 +157,7 @@ public class PlayerCommand
         Player player = getPlayer(context);
         if (player == null)
         {
-            Messenger.m(context.getSource(), "r Can only manipulate existing players");
+            Messenger.m(context.getSource(), "r", Messenger.tr("carpet.command.player.existed_only"));
             return true;
         }
         Player sendingPlayer;
@@ -174,7 +174,7 @@ public class PlayerCommand
         {
             if (sendingPlayer != player && !(player instanceof EntityPlayerMPFake))
             {
-                Messenger.m(context.getSource(), "r Non OP players can't control other real players");
+                Messenger.m(context.getSource(), "r", Messenger.tr("carpet.command.player.not_enough_permission"));
                 return true;
             }
         }
@@ -186,7 +186,7 @@ public class PlayerCommand
         if (cantManipulate(context)) return true;
         Player player = getPlayer(context);
         if (player instanceof EntityPlayerMPFake) return false;
-        Messenger.m(context.getSource(), "r Only fake players can be moved or killed");
+        Messenger.m(context.getSource(), "r", Messenger.tr("carpet.command.player.cannot_remove"));
         return true;
     }
 
@@ -198,7 +198,7 @@ public class PlayerCommand
         Player player = manager.getPlayerByName(playerName);
         if (player != null)
         {
-            Messenger.m(context.getSource(), "r Player ", "rb " + playerName, "r  is already logged on");
+            Messenger.m(context.getSource(), "r", Messenger.tr("carpet.command.player.already_logged_on", Messenger.c("rb " + playerName)));
             return true;
         }
         GameProfile profile = server.getProfileCache().get(playerName).orElse(null);
@@ -206,8 +206,7 @@ public class PlayerCommand
         {
             if (!CarpetSettings.allowSpawningOfflinePlayers)
             {
-                Messenger.m(context.getSource(), "r Player "+playerName+" is either banned by Mojang, or auth servers are down. " +
-                        "Banned players can only be summoned in Singleplayer and in servers in off-line mode.");
+                Messenger.m(context.getSource(), "r", Messenger.tr("carpet.command.player.invalid_profile", playerName));
                 return true;
             } else {
                 profile = new GameProfile(Player.createPlayerUUID(playerName), playerName);
@@ -215,12 +214,12 @@ public class PlayerCommand
         }
         if (manager.getBans().isBanned(profile))
         {
-            Messenger.m(context.getSource(), "r Player ", "rb " + playerName, "r  is banned on this server");
+            Messenger.m(context.getSource(), "r", Messenger.tr( "carpet.command.player.banned", Messenger.c("rb " + playerName)));
             return true;
         }
         if (manager.isUsingWhitelist() && manager.isWhiteListed(profile) && !context.getSource().hasPermission(2))
         {
-            Messenger.m(context.getSource(), "r Whitelisted players can only be spawned by operators");
+            Messenger.m(context.getSource(), "r", Messenger.tr("carpet.command.player.whitelist_protection"));
             return true;
         }
         return false;
@@ -290,7 +289,7 @@ public class PlayerCommand
             mode = GameType.byName(opGameMode, null);
             if(mode == null)
             {
-                Messenger.m(context.getSource(), "rb Invalid game mode: "+opGameMode+".");
+                Messenger.m(context.getSource(), "rb", Messenger.tr("carpet.command.player.invalid_game_mode", opGameMode));
                 return 0;
             }
         } catch (IllegalArgumentException ignored) {}
@@ -305,21 +304,20 @@ public class PlayerCommand
         String playerName = StringArgumentType.getString(context, "player");
         if (playerName.length()>maxPlayerLength(source.getServer()))
         {
-            Messenger.m(context.getSource(), "rb Player name: "+playerName+" is too long");
+            Messenger.m(context.getSource(), "rb", Messenger.tr("carpet.command.player.name_too_long", playerName));
             return 0;
         }
 
         MinecraftServer server = source.getServer();
         if (!Level.isInSpawnableBounds(new BlockPos(pos.x, pos.y, pos.z)))
         {
-            Messenger.m(context.getSource(), "rb Player "+playerName+" cannot be placed outside of the world");
+            Messenger.m(context.getSource(), "rb", Messenger.tr("carpet.command.player.spawn_outside_world", playerName));
             return 0;
         }
         Player player = EntityPlayerMPFake.createFake(playerName, server, pos.x, pos.y, pos.z, facing.y, facing.x, dimType, mode, flying);
         if (player == null)
         {
-            Messenger.m(context.getSource(), "rb Player " + StringArgumentType.getString(context, "player") + " doesn't exist " +
-                    "and cannot spawn in online mode. Turn the server offline to spawn non-existing players");
+            Messenger.m(context.getSource(), "rb", Messenger.tr("carpet.command.player.player_not_existed", playerName));
             return 0;
         }
         return 1;
@@ -361,7 +359,7 @@ public class PlayerCommand
         ServerPlayer player = getPlayer(context);
         if (player instanceof EntityPlayerMPFake)
         {
-            Messenger.m(context.getSource(), "r Cannot shadow fake players");
+            Messenger.m(context.getSource(), "r", Messenger.tr("carpet.command.player.cannot_shadow_fake"));
             return 0;
         }
         ServerPlayer sendingPlayer = null;

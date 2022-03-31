@@ -1,16 +1,14 @@
 package carpet.utils;
 
+import com.google.common.collect.ImmutableMap;
 import net.minecraft.ChatFormatting;
 import net.minecraft.Util;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.core.BlockPos;
-import net.minecraft.network.chat.BaseComponent;
-import net.minecraft.network.chat.ClickEvent;
-import net.minecraft.network.chat.HoverEvent;
-import net.minecraft.network.chat.Style;
-import net.minecraft.network.chat.TextColor;
-import net.minecraft.network.chat.TextComponent;
+import net.minecraft.network.chat.*;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
@@ -88,7 +86,7 @@ public class Messenger
 
     public static Style parseStyle(String style)
     {
-        Style myStyle= Style.EMPTY.withColor(ChatFormatting.WHITE);
+        Style myStyle= Style.EMPTY;
         for (CarpetFormatting cf: CarpetFormatting.values()) myStyle = cf.apply(style, myStyle);
         return myStyle;
     }
@@ -120,38 +118,54 @@ public class Messenger
         {
             return new TextComponent("");
         }
-        if (Character.isWhitespace(message.charAt(0)))
-        {
-            message = "w" + message;
-        }
         int limit = message.indexOf(' ');
         String desc = message;
         String str = "";
         if (limit >= 0)
         {
             desc = message.substring(0, limit);
-            str = message.substring(limit+1);
+            str = message.substring(limit + 1);
         }
-        if (previousMessage == null) {
-            BaseComponent text = new TextComponent(str);
-            text.setStyle(parseStyle(desc));
-            return text;
+        if (previousMessage == null)
+        {
+            return s(str, desc);
         }
         Style previousStyle = previousMessage.getStyle();
         BaseComponent ret = previousMessage;
-        previousMessage.setStyle(switch (desc.charAt(0)) {
+        previousMessage.setStyle(switch (desc.isEmpty() ? ' ' : desc.charAt(0)) {
             case '?' -> previousStyle.withClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, message.substring(1)));
             case '!' -> previousStyle.withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, message.substring(1)));
             case '^' -> previousStyle.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, c(message.substring(1))));
             case '@' -> previousStyle.withClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, message.substring(1)));
             case '&' -> previousStyle.withClickEvent(new ClickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD, message.substring(1)));
             default  -> { // Create a new component
-                ret = new TextComponent(str);
-                ret.setStyle(parseStyle(desc));
+                ret = s(str, desc);
                 yield previousStyle; // no op for the previous style
             }
         });
         return ret;
+    }
+    private static BaseComponent processChatComponentFromDesc(BaseComponent message, String desc, BaseComponent previousMessage)
+    {
+        message = (BaseComponent) message.copy();
+        boolean hover = false;
+        if (!desc.isEmpty() && desc.charAt(0) == '^')
+        {
+            desc = desc.substring(1);
+            hover = true;
+        }
+        if (!desc.isEmpty())
+        {
+            Style style = message.getStyle();
+            for (CarpetFormatting cf: CarpetFormatting.values()) style = cf.apply(desc, style);
+            message.setStyle(style);
+        }
+        if (previousMessage != null && hover)
+        {
+            previousMessage.setStyle(previousMessage.getStyle().withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, message)));
+            return previousMessage;
+        }
+        return message;
     }
     public static BaseComponent tp(String desc, Vec3 pos) { return tp(desc, pos.x, pos.y, pos.z); }
     public static BaseComponent tp(String desc, BlockPos pos) { return tp(desc, pos.getX(), pos.getY(), pos.getZ()); }
@@ -229,15 +243,25 @@ public class Messenger
         return c(text, command);
     }
 
+    private static final ImmutableMap<ResourceKey<Level>, BaseComponent> DIMENSION_NAMES = ImmutableMap.of(
+            Level.OVERWORLD, new TranslatableComponent("createWorld.customize.preset.overworld"),
+            Level.NETHER, new TranslatableComponent("advancements.nether.root.title"),
+            Level.END, new TranslatableComponent("advancements.end.root.title")
+    );
+    public static BaseComponent dim(ResourceKey<Level> dimType)
+    {
+        return (BaseComponent)DIMENSION_NAMES.getOrDefault(dimType, s(dimType.location().toString())).copy();
+    }
+
     //message source
     public static void m(CommandSourceStack source, Object ... fields)
     {
         if (source != null)
-            source.sendSuccess(Messenger.c(fields),source.getServer() != null && source.getServer().getLevel(Level.OVERWORLD) != null); //OW
+            source.sendSuccess(Translations.translate(Messenger.c(fields), source),source.getServer() != null && source.getServer().getLevel(Level.OVERWORLD) != null); //OW
     }
     public static void m(Player player, Object ... fields)
     {
-        player.sendMessage(Messenger.c(fields), Util.NIL_UUID);
+        player.sendMessage(Translations.translate(Messenger.c(fields), player), Util.NIL_UUID);
     }
 
     /*
@@ -247,18 +271,41 @@ public class Messenger
     {
         BaseComponent message = new TextComponent("");
         BaseComponent previousComponent = null;
+        String desc = null;
         for (Object o: fields)
         {
-            if (o instanceof BaseComponent)
+            BaseComponent comp;
+            if (o instanceof BaseComponent baseComponent)
             {
-                message.append((BaseComponent)o);
-                previousComponent = (BaseComponent)o;
-                continue;
+                comp = baseComponent;
             }
-            String txt = o.toString();
-            BaseComponent comp = getChatComponentFromDesc(txt, previousComponent);
-            if (comp != previousComponent) message.append(comp);
-            previousComponent = comp;
+            else
+            {
+                String txt = o.toString();
+                boolean noSpace = txt.indexOf(' ') == -1;
+                boolean notSpecialDesc = txt.isEmpty() || "?!@&".indexOf(txt.charAt(0)) == -1;
+                if (noSpace && notSpecialDesc)  // it's a descriptor for the next BaseComponent
+                {
+                    if (!txt.isEmpty())
+                    {
+                        desc = txt;
+                    }
+                    continue;
+                }
+                comp = getChatComponentFromDesc(txt, previousComponent);
+            }
+
+            if (desc != null)
+            {
+                comp = processChatComponentFromDesc(comp, desc, previousComponent);
+            }
+
+            desc = null;
+            if (comp != previousComponent)
+            {
+                message.append(comp);
+                previousComponent = comp;
+            }
         }
         return message;
     }
@@ -276,38 +323,39 @@ public class Messenger
         return message;
     }
 
+    //translation text
+    public static BaseComponent tr(String key, Object ... args)
+    {
+        return new TranslatableComponent(key, args);
+    }
 
 
 
     public static void send(Player player, Collection<BaseComponent> lines)
     {
-        lines.forEach(message -> player.sendMessage(message, Util.NIL_UUID));
+        lines.forEach(message -> player.sendMessage(Translations.translate(message, player), Util.NIL_UUID));
     }
     public static void send(CommandSourceStack source, Collection<BaseComponent> lines)
     {
-        lines.stream().forEachOrdered((s) -> source.sendSuccess(s, false));
+        lines.forEach(message -> source.sendSuccess(Translations.translate(message, source), false));
     }
 
 
     public static void print_server_message(MinecraftServer server, String message)
     {
-        if (server == null)
-            LOG.error("Message not delivered: "+message);
-        server.sendMessage(new TextComponent(message), Util.NIL_UUID);
-        BaseComponent txt = c("gi "+message);
-        for (Player entityplayer : server.getPlayerList().getPlayers())
-        {
-            entityplayer.sendMessage(txt, Util.NIL_UUID);
-        }
+        print_server_message(server, c("gi "+message));
     }
     public static void print_server_message(MinecraftServer server, BaseComponent message)
     {
         if (server == null)
-            LOG.error("Message not delivered: "+message.getString());
-        server.sendMessage(message, Util.NIL_UUID);
-        for (Player entityplayer : server.getPlayerList().getPlayers())
         {
-            entityplayer.sendMessage(message, Util.NIL_UUID);
+            LOG.error("Message not delivered since server is null: " + message);
+            return;
+        }
+        server.sendMessage(Translations.translate(message), Util.NIL_UUID);
+        for (ServerPlayer entityplayer : server.getPlayerList().getPlayers())
+        {
+            entityplayer.sendMessage(Translations.translate(message, entityplayer), Util.NIL_UUID);
         }
     }
 }

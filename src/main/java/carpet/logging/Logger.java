@@ -2,10 +2,12 @@ package carpet.logging;
 
 import carpet.CarpetServer;
 import carpet.CarpetSettings;
+import carpet.utils.Messenger;
 import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Supplier;
@@ -194,7 +196,7 @@ public class Logger
 
     public void sendPlayerMessage(ServerPlayer player, BaseComponent ... messages)
     {
-        Arrays.stream(messages).forEach(message -> player.sendMessage(message, Util.NIL_UUID));
+        Messenger.send(player, List.of(messages));
     }
 
     /**

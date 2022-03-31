@@ -109,7 +109,7 @@ public class SpawnCommand
     {
         if (!Arrays.stream(MobCategory.values()).map(MobCategory::getName).collect(Collectors.toSet()).contains(string))
         {
-            throw new SimpleCommandExceptionType(Messenger.c("r Wrong mob type: "+string+" should be "+ Arrays.stream(MobCategory.values()).map(MobCategory::getName).collect(Collectors.joining(", ")))).create();
+            throw new SimpleCommandExceptionType(Messenger.c("r", Messenger.tr("carpet.command.spawn.wrong_category", string, Arrays.stream(MobCategory.values()).map(MobCategory::getName).collect(Collectors.joining(", "))))).create();
         }
         return MobCategory.byName(string.toLowerCase(Locale.ROOT));
     }
@@ -131,7 +131,7 @@ public class SpawnCommand
     {
         if (SpawnReporter.track_spawns != 0L)
         {
-            Messenger.m(source, "r You are already tracking spawning.");
+            Messenger.m(source, "r", Messenger.tr("carpet.command.spawn.already_tracking"));
             return 0;
         }
         BlockPos lsl = null;
@@ -151,7 +151,7 @@ public class SpawnCommand
         SpawnReporter.track_spawns = (long) source.getServer().getTickCount();
         SpawnReporter.lower_spawning_limit = lsl;
         SpawnReporter.upper_spawning_limit = usl;
-        Messenger.m(source, "gi Spawning tracking started.");
+        Messenger.m(source, "gi", Messenger.tr("carpet.command.spawn.tracking_started"));
         return 1;
     }
 
@@ -162,7 +162,7 @@ public class SpawnCommand
         SpawnReporter.track_spawns = 0L;
         SpawnReporter.lower_spawning_limit = null;
         SpawnReporter.upper_spawning_limit = null;
-        Messenger.m(source, "gi Spawning tracking stopped.");
+        Messenger.m(source, "gi", Messenger.tr("carpet.command.spawn.tracking_stopped"));
         return 1;
     }
 
@@ -206,7 +206,7 @@ public class SpawnCommand
         {
         }
         TickSpeed.tickrate_advance(player, ticks, null, csource);
-        Messenger.m(source, String.format("gi Started spawn test for %d ticks", ticks));
+        Messenger.m(source, "gi", Messenger.tr("carpet.command.spawn.test_started", ticks));
         return 1;
     }
 
@@ -215,12 +215,12 @@ public class SpawnCommand
         if (domock)
         {
             SpawnReporter.initialize_mocking();
-            Messenger.m(source, "gi Mob spawns will now be mocked.");
+            Messenger.m(source, "gi", Messenger.tr("carpet.command.spawn.mocking_started"));
         }
         else
         {
             SpawnReporter.stop_mocking();
-            Messenger.m(source, "gi Normal mob spawning.");
+            Messenger.m(source, "gi", Messenger.tr("carpet.command.spawn.mocking_stopped"));
         }
         return 1;
     }
@@ -237,7 +237,7 @@ public class SpawnCommand
         {
             SpawnReporter.spawn_tries.put(s,1);
         }
-        Messenger.m(source, "gi Spawn rates brought to 1 round per tick for all groups.");
+        Messenger.m(source, "gi", Messenger.tr("carpet.command.spawn.spawn_rate_reset"));
 
         return 1;
     }
@@ -246,7 +246,7 @@ public class SpawnCommand
     {
         MobCategory cat = getCategory(mobtype);
         SpawnReporter.spawn_tries.put(cat, rounds);
-        Messenger.m(source, "gi "+mobtype+" mobs will now spawn "+rounds+" times per tick");
+        Messenger.m(source, "gi", Messenger.tr("carpet.command.spawn.spawn_rate_set", mobtype, rounds));
         return 1;
     }
 
@@ -254,7 +254,7 @@ public class SpawnCommand
     {
         double desired_ratio = (double)hostile_cap/ ((SpawnGroupInterface)(Object)MobCategory.MONSTER).getInitialSpawnCap();
         SpawnReporter.mobcap_exponent = 4.0*Math.log(desired_ratio)/Math.log(2.0);
-        Messenger.m(source, String.format("gi Mobcaps for hostile mobs changed to %d, other groups will follow", hostile_cap));
+        Messenger.m(source, "gi", Messenger.tr("carpet.command.spawn.mobcap_set", hostile_cap));
         return 1;
     }
 

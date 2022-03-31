@@ -3,8 +3,8 @@ package carpet.settings;
 import carpet.CarpetServer;
 import carpet.CarpetSettings;
 import carpet.network.ServerNetworkHandler;
-import carpet.utils.Translations;
 import carpet.utils.Messenger;
+import carpet.utils.Translations;
 import com.google.common.collect.Sets;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
@@ -12,7 +12,6 @@ import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
-
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import net.fabricmc.api.EnvType;
@@ -23,9 +22,7 @@ import net.minecraft.network.chat.BaseComponent;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.TickTask;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.storage.LevelResource;
-import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.util.TriConsumer;
 
 import java.io.BufferedReader;
@@ -37,26 +34,15 @@ import java.lang.reflect.Field;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
-import java.util.TreeMap;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static carpet.utils.Translations.tr;
 import static carpet.script.CarpetEventServer.Event.CARPET_RULE_CHANGES;
-import static net.minecraft.commands.SharedSuggestionProvider.suggest;
 import static net.minecraft.commands.Commands.argument;
 import static net.minecraft.commands.Commands.literal;
+import static net.minecraft.commands.SharedSuggestionProvider.suggest;
 
 /**
  * Manages and parses Carpet rules with their own command.
@@ -485,13 +471,13 @@ public class SettingsManager
         }
     }
 
-    private Collection<ParsedRule<?>> getRulesMatching(String search) {
+    private Collection<ParsedRule<?>> getRulesMatching(CommandSourceStack source, String search) {
         String lcSearch = search.toLowerCase(Locale.ROOT);
         return rules.values().stream().filter(rule ->
         {
             if (rule.name.toLowerCase(Locale.ROOT).contains(lcSearch)) return true; // substring match, case insensitive
             for (String c : rule.categories) if (c.equals(search)) return true; // category exactly, case sensitive
-            return Sets.newHashSet(rule.description.toLowerCase(Locale.ROOT).split("\\W+")).contains(lcSearch); // contains full term in description, but case insensitive
+            return Sets.newHashSet(Translations.translate(rule.getDescriptionText(), source).getString().toLowerCase(Locale.ROOT).split("\\W+")).contains(lcSearch); // contains full term in description, but case insensitive
         }).sorted().collect(Collectors.toUnmodifiableList());
     }
 
@@ -507,32 +493,33 @@ public class SettingsManager
     public int printAllRulesToLog(String category)
     {
         PrintStream ps = System.out;
-        ps.println("# "+fancyName+" Settings");
+        ps.println("# " + Messenger.tr("carpet.misc.rule_printer.header", fancyName).getString());
         for (Map.Entry<String, ParsedRule<?>> e : new TreeMap<>(rules).entrySet())
         {
             ParsedRule<?> rule = e.getValue();
             if (category != null && !rule.categories.contains(category))
                 continue;
-            ps.println("## " + rule.name);
-            ps.println(rule.description+"  ");
-            for (String extra : rule.extraInfo)
-                ps.println(extra + "  ");
-            ps.println("* Type: `" + rule.type.getSimpleName() + "`  ");
-            ps.println("* Default value: `" + rule.defaultAsString + "`  ");
+            ps.println("## " + rule.getNameText().getString());
+            ps.println(rule.getDescriptionText().getString()+"  ");
+            for (BaseComponent extra : rule.getExtrasText())
+                ps.println(extra.getString() + "  ");
+            ps.println("* " + Messenger.tr("carpet.misc.rule_printer.type").getString() + ": `" + rule.type.getSimpleName() + "`  ");
+            ps.println("* " + Messenger.tr("carpet.misc.rule_printer.default_value").getString() + ": `" + rule.defaultAsString + "`  ");
             String optionString = rule.options.stream().map(s -> "`" + s + "`").collect(Collectors.joining(", "));
-            if (!optionString.isEmpty()) ps.println((rule.isStrict?"* Required":"* Suggested")+" options: " + optionString + "  ");
-            ps.println("* Categories: " + rule.categories.stream().map(s -> "`" + s.toUpperCase(Locale.ROOT) + "`").collect(Collectors.joining(", ")) + "  ");
+            if (!optionString.isEmpty()) ps.println("* " + Messenger.tr("carpet.misc.rule_printer." + (rule.isStrict?"required_options":"suggested_options")).getString() + ": " + optionString + "  ");
+            ps.println("* " + Messenger.tr("carpet.misc.rule_printer.categories").getString() + ": " + rule.categories.stream().map(s -> "`" + s.toUpperCase(Locale.ROOT) + "`").collect(Collectors.joining(", ")) + "  ");
             boolean preamble = false;
             for (Validator<?> validator : rule.validators)
             {
-                if(validator.description() != null)
+                BaseComponent description = validator.descriptionText();
+                if(description != null)
                 {
                     if (!preamble)
                     {
-                        ps.println("* Additional notes:  ");
+                        ps.println("* " + Messenger.tr("carpet.misc.rule_printer.additional_notes").getString() + ":  ");
                         preamble = true;
                     }
-                    ps.println("  * "+validator.description()+"  ");
+                    ps.println("  * "+description.getString()+"  ");
                 }
             }
             ps.println("  ");
@@ -546,7 +533,7 @@ public class SettingsManager
         String ruleName = StringArgumentType.getString(ctx, "rule");
         ParsedRule<?> rule = getRule(ruleName);
         if (rule == null)
-            throw new SimpleCommandExceptionType(Messenger.c("rb "+ tr("ui.unknown_rule","Unknown rule")+": "+ruleName)).create();
+            throw new SimpleCommandExceptionType(Messenger.c("rb", Messenger.tr("carpet.command.carpet.unknown_rule"), "rb : " + ruleName)).create();
         return rule;
     }
 
@@ -574,6 +561,17 @@ public class SettingsManager
         return suggestionsBuilder.buildFuture();
     }
 
+    private BaseComponent categoryName(String category)
+    {
+        String key = identifier + ".category." + category;
+        // if the category does not have translation, use itself as displayed name
+        if (Translations.key2Translation(Translations.DEFAULT_LANGUAGE, key).isEmpty())
+        {
+            return Messenger.s(category);
+        }
+        return Messenger.tr(key);
+    }
+
     /**
      * Registers the the settings command for this {@link SettingsManager}.<br>
      * It is handled automatically by Carpet.
@@ -592,17 +590,17 @@ public class SettingsManager
 
         literalargumentbuilder.executes((context)-> listAllSettings(context.getSource())).
                 then(literal("list").
-                        executes( (c) -> listSettings(c.getSource(), String.format(tr("ui.all_%(mod)s_settings","All %s Settings"), fancyName),
+                        executes( (c) -> listSettings(c.getSource(), Messenger.tr("carpet.command.carpet.all_settings", fancyName),
                                 getRules())).
                         then(literal("defaults").
                                 executes( (c)-> listSettings(c.getSource(),
-                                        String.format(tr("ui.current_%(mod)s_startup_settings_from_%(conf)s","Current %s Startup Settings from %s"), fancyName, (identifier+".conf")),
+                                        Messenger.tr("carpet.command.carpet.current_startup_settings", fancyName, (identifier+".conf")),
                                         findStartupOverrides()))).
                         then(argument("tag",StringArgumentType.word()).
                                 suggests( (c, b)->suggest(getCategories(), b)).
                                 executes( (c) -> listSettings(c.getSource(),
-                                        String.format(tr("ui.%(mod)s_settings_matching_'%(query)s'","%s Settings matching \"%s\""), fancyName, tr("category." + StringArgumentType.getString(c, "tag"),StringArgumentType.getString(c, "tag"))),
-                                        getRulesMatching(StringArgumentType.getString(c, "tag")))))).
+                                        Messenger.tr("carpet.command.carpet.settings_matching", fancyName, categoryName(StringArgumentType.getString(c, "tag"))),
+                                        getRulesMatching(c.getSource(), StringArgumentType.getString(c, "tag")))))).
                 then(literal("removeDefault").
                         requires(s -> !locked).
                         then(argument("rule", StringArgumentType.word()).
@@ -628,35 +626,39 @@ public class SettingsManager
 
     private int displayRuleMenu(CommandSourceStack source, ParsedRule<?> rule)
     {
-        Player player;
-        String displayName = rule.translatedName();
-
         Messenger.m(source, "");
-        Messenger.m(source, "wb "+ displayName ,"!/"+identifier+" "+rule.name,"^g refresh");
-        Messenger.m(source, "w "+ rule.translatedDescription());
+        Messenger.m(source, "wb", rule.getNameText(source), "!/%s %s".formatted(identifier, rule.name), "^g", Messenger.tr("carpet.command.carpet.refresh"));
+        Messenger.m(source, rule.getDescriptionText());
 
-        rule.translatedExtras().forEach(s -> Messenger.m(source, "g  "+s));
+        rule.getExtrasText(source).forEach(extra -> Messenger.m(source, "g", extra));
 
-        List<BaseComponent> tags = new ArrayList<>();
-        tags.add(Messenger.c("w "+ tr("ui.tags", "Tags")+": "));
-        for (String t: rule.categories)
+        List<Object> tags = new ArrayList<>();
+        tags.add(Messenger.c(Messenger.tr("carpet.command.carpet.tags"), "w : "));
+        for (String category : rule.categories)
         {
-            String translated = tr("category." + t, t);
-            tags.add(Messenger.c("c ["+ translated +"]", "^g "+ String.format(tr("list_all_%s_settings","list all %s settings"), translated),"!/"+identifier+" list "+t));
+            BaseComponent translated = categoryName(category);
+            tags.add(Messenger.c("c [", "c", translated, "c ]"));
+            tags.add("^g"); tags.add(Messenger.tr("carpet.command.carpet.list_all_settings", translated));
+            tags.add("!/%s list %s".formatted(identifier, category));
             tags.add(Messenger.c("w , "));
         }
         tags.remove(tags.size()-1);
         Messenger.m(source, tags.toArray(new Object[0]));
 
-        Messenger.m(source, "w "+ tr("ui.current_value", "Current value")+": ",String.format("%s %s (%s value)",rule.getBoolValue()?"lb":"nb", rule.getAsString(),rule.isDefault()?"default":"modified"));
+        Messenger.m(source,
+                Messenger.tr("carpet.command.carpet.current_value"),
+                "w : ",
+                rule.getBoolValue() ? "lb" : "nb",
+                Messenger.c(" " + rule.getAsString() + " (", Messenger.tr(rule.isDefault() ? "carpet.command.carpet.default_value" : "carpet.command.carpet.modified_value"), " )")
+        );
         List<BaseComponent> options = new ArrayList<>();
-        options.add(Messenger.c("w Options: ", "y [ "));
+        options.add(Messenger.c(Messenger.tr("carpet.command.carpet.options"), "w : ", "y [ "));
         for (String o: rule.options)
         {
             options.add(makeSetRuleButton(rule, o, false));
             options.add(Messenger.c("w  "));
         }
-        options.remove(options.size()-1);
+        if (!rule.options.isEmpty()) options.remove(options.size() - 1);
         options.add(Messenger.c("y  ]"));
         Messenger.m(source, options.toArray(new Object[0]));
 
@@ -666,9 +668,11 @@ public class SettingsManager
     private int setRule(CommandSourceStack source, ParsedRule<?> rule, String newValue)
     {
         if (rule.set(source, newValue) != null)
-            Messenger.m(source, "w "+rule.toString()+", ", "c ["+ tr("ui.change_permanently","change permanently")+"?]",
-                    "^w "+String.format(tr("ui.click_to_keep_the_settings_in_%(conf)s_to_save_across_restarts","Click to keep the settings in %s to save across restarts"), identifier+".conf"),
-                    "?/"+identifier+" setDefault "+rule.name+" "+rule.getAsString());
+            Messenger.m(source,
+                    "w "+rule+", ", Messenger.c("c [", "c", Messenger.tr("carpet.command.carpet.change_permanently"), "c ]"),
+                    "^", Messenger.tr("carpet.command.carpet.click_to_save_the_setting", identifier+".conf"),
+                    "?/%s setDefault %s %s".formatted(identifier, rule.name, rule.getAsString())
+            );
         return 1;
     }
 
@@ -682,7 +686,7 @@ public class SettingsManager
         writeSettingsToConf(conf.ruleMap()); // this may feels weird, but if conf
         // is locked, it will never reach this point.
         rule.set(source,stringValue);
-        Messenger.m(source ,"gi "+String.format(tr("ui.rule_%(rule)s_will_now_default_to_%(value)s","Rule %s will now default to %s"), rule.translatedName(), stringValue));
+        Messenger.m(source ,"gi", Messenger.tr("carpet.command.carpet.set_default", rule.getNameText(source), stringValue));
         return 1;
     }
     // removes overrides of the default values in the file
@@ -694,17 +698,16 @@ public class SettingsManager
         conf.ruleMap().remove(rule.name);
         writeSettingsToConf(conf.ruleMap());
         rules.get(rule.name).resetToDefault(source);
-        Messenger.m(source ,"gi "+String.format(tr("ui.rule_%(rule)s_not_set_restart","Rule %s will now not be set on restart"), rule.translatedName()));
+        Messenger.m(source ,"gi", Messenger.tr("carpet.command.carpet.remove_default", rule.getNameText(source)));
         return 1;
     }
 
-    private BaseComponent displayInteractiveSetting(ParsedRule<?> rule)
+    private BaseComponent displayInteractiveSetting(CommandSourceStack source, ParsedRule<?> rule)
     {
-        String displayName = rule.translatedName();
         List<Object> args = new ArrayList<>();
-        args.add("w - "+ displayName +" ");
-        args.add("!/"+identifier+" "+rule.name);
-        args.add("^y "+rule.translatedDescription());
+        args.add(Messenger.c("w - ", rule.getNameText(source), "w  "));
+        args.add("!/%s %s".formatted(identifier, rule.name));
+        args.add("^y"); args.add(rule.getDescriptionText());
         for (String option: rule.options)
         {
             args.add(makeSetRuleButton(rule, option, true));
@@ -730,36 +733,38 @@ public class SettingsManager
         }
         String baseText = style + (brackets ? " [" : " ") + option + (brackets ? "]" : "");
         if (locked)
-            return Messenger.c(baseText, "^g "+fancyName+" " + tr("ui.settings_are_locked","settings are locked"));
+            return Messenger.c(baseText, "^g", Messenger.c("g " + fancyName + " ", Messenger.tr("carpet.command.carpet.settings_are_locked")));
         if (option.equalsIgnoreCase(rule.getAsString()))
             return Messenger.c(baseText);
-        return Messenger.c(baseText, "^g "+ tr("ui.switch_to","Switch to") +" " + option+(option.equalsIgnoreCase(rule.defaultAsString)?" (default)":""), "?/"+identifier+" " + rule.name + " " + option);
+        return Messenger.c(baseText,
+                "^g", Messenger.c("g", Messenger.tr("carpet.command.carpet.switch_to"), "g " + option, option.equalsIgnoreCase(rule.defaultAsString) ? Messenger.c("g  (", "g", Messenger.tr("carpet.command.carpet.default"), "g )"): Messenger.s("")),
+                "?/%s %s %s".formatted(identifier, rule.name, option)
+        );
     }
 
-    private int listSettings(CommandSourceStack source, String title, Collection<ParsedRule<?>> settings_list)
+    private int listSettings(CommandSourceStack source, BaseComponent title, Collection<ParsedRule<?>> settings_list)
     {
-
-        Messenger.m(source,String.format("wb %s:",title));
-        settings_list.forEach(e -> Messenger.m(source,displayInteractiveSetting(e)));
+        Messenger.m(source, "wb", title, "wb :");
+        settings_list.forEach(e -> Messenger.m(source,displayInteractiveSetting(source, e)));
         return settings_list.size();
     }
     private int listAllSettings(CommandSourceStack source)
     {
-        int count = listSettings(source, String.format(tr("ui.current_%(mod)s_settings","Current %s Settings"), fancyName), getNonDefault());
+        int count = listSettings(source, Messenger.tr("carpet.command.carpet.current_settings", fancyName), getNonDefault());
 
         if (version != null)
-            Messenger.m(source, "g "+fancyName+" "+ tr("ui.version",  "version") + ": "+ version);
+            Messenger.m(source, "g " + fancyName + " ", "g", Messenger.tr("carpet.command.carpet.version"), "g : "+ version);
 
         List<Object> tags = new ArrayList<>();
-        tags.add("w " + tr("ui.browse_categories", "Browse Categories")  + ":\n");
-        for (String t : getCategories())
+        tags.add(Messenger.tr("carpet.command.carpet.browse_categories"));
+        tags.add("w :\n");
+        for (String category : getCategories())
         {
-            String catKey = "category." + t;
-            String translated = tr(catKey, t);
-            String translatedPlus = Translations.hasTranslation(catKey) ? String.format("%s (%s)",tr(catKey, t), t) : t;
-            tags.add("c [" + translated +"]");
-            tags.add("^g " + String.format(tr("ui.list_all_%(cat)s_settings","list all %s settings"), translatedPlus));
-            tags.add("!/"+identifier+" list " + t);
+            BaseComponent translated = categoryName(category);
+            BaseComponent translatedPlus = !Translations.translate(translated, source).getString().equals(category) ? Messenger.c(translated, "  (" + category + ")") : translated;
+            tags.add(Messenger.c("c [", "c", translated, "c ]"));
+            tags.add("^g"); tags.add(Messenger.tr("carpet.command.carpet.list_all_settings", translatedPlus));
+            tags.add("!/%s list %s".formatted(identifier, category));
             tags.add("w  ");
         }
         tags.remove(tags.size() - 1);

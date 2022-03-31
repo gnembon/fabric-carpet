@@ -4,6 +4,7 @@ import it.unimi.dsi.fastutil.objects.Object2LongMap;
 import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.core.Registry;
+import net.minecraft.network.chat.BaseComponent;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
@@ -187,6 +188,16 @@ public class CarpetProfiler
         currentRequester = null;
     }
 
+    private static BaseComponent sectionName(String section)
+    {
+        String key = "carpet.command.tick.section." + section.replace(' ', '_').replace("(", "").replace(")", "").toLowerCase();
+        if (currentRequester != null && Translations.hasTranslation(key, currentRequester))
+        {
+            return Messenger.tr(key);
+        }
+        return Messenger.s(section);
+    }
+
     public static void finalize_tick_report_for_time(MinecraftServer server)
     {
         //print stats
@@ -195,7 +206,8 @@ public class CarpetProfiler
         long total_tick_time = SECTION_STATS.get("tick");
         double divider = 1.0D / tick_health_requested / 1000000;
         Messenger.m(currentRequester, "w ");
-        Messenger.m(currentRequester, "wb Average tick time: ", String.format("yb %.3fms", divider * total_tick_time));
+        Messenger.m(currentRequester, "wb", Messenger.tr("carpet.command.tick.report.average_tick_time", Messenger.c(String.format("yb %.3fms", divider * total_tick_time))));
+
         long accumulated = 0L;
 
         for (String section : GENERAL_SECTIONS)
@@ -204,7 +216,7 @@ public class CarpetProfiler
             if (amount > 0.01)
             {
                 accumulated += SECTION_STATS.get(section);
-                Messenger.m(currentRequester, "w "+section+": ", String.format("y %.3fms", amount));
+                Messenger.m(currentRequester, Messenger.c(" - ", sectionName(section)), "w : ", String.format("y %.3fms", amount));
             }
         }
         for (String section : SCARPET_SECTIONS)
@@ -212,7 +224,7 @@ public class CarpetProfiler
             double amount = divider * SECTION_STATS.get(section);
             if (amount > 0.01)
             {
-                Messenger.m(currentRequester, "gi "+section+": ", String.format("di %.3fms", amount));
+                Messenger.m(currentRequester, "gi", Messenger.c(" - ", sectionName(section)), "w : ", String.format("di %.3fms", amount));
             }
         }
 
@@ -234,7 +246,7 @@ public class CarpetProfiler
             {
                 continue;
             }
-            Messenger.m(currentRequester, "wb "+(dimensionId.getNamespace().equals("minecraft")?dimensionId.getPath():dimensionId.toString()) + ":");
+            Messenger.m(currentRequester, "wb", Messenger.dim(dim), "wb :");
             for (String section : SECTIONS)
             {
                 double amount = divider * SECTION_STATS.getOrDefault(dimensionId + "." + section, 0L);
@@ -243,35 +255,33 @@ public class CarpetProfiler
                     boolean cli = section.endsWith("(Client)");
                     if (!cli)
                         accumulated += SECTION_STATS.get(dimensionId + "." + section);
-                    Messenger.m(currentRequester, String.format("%s - %s: ", cli?"gi":"w", section), String.format("%s %.3fms", cli?"di":"y", amount));
+                    Messenger.m(currentRequester, cli?"gi":"w", Messenger.c(" - ", sectionName(section)), "w : ", String.format("%s %.3fms", cli?"di":"y", amount));
                 }
             }
         }
 
         long rest = total_tick_time - accumulated;
 
-        Messenger.m(currentRequester, String.format("gi The Rest, whatever that might be: %.3fms", divider * rest));
+        Messenger.m(currentRequester, "gi", Messenger.tr("carpet.command.tick.report.the_rest", String.format("%.3f", divider * rest)));
     }
 
-    private static String sectionName(Pair<Level,Object> section)
+    private static BaseComponent sectionName(Pair<Level,Object> section)
     {
-        ResourceLocation id;
-        if (section.getValue() instanceof EntityType)
+        BaseComponent name;
+        if (section.getValue() instanceof EntityType entityType)
         {
-            id = Registry.ENTITY_TYPE.getKey((EntityType<?>) section.getValue());
+            name = (BaseComponent)entityType.getDescription();
         }
         else
         {
-            id = Registry.BLOCK_ENTITY_TYPE.getKey((BlockEntityType<?>) section.getValue());
+            ResourceLocation id = Registry.BLOCK_ENTITY_TYPE.getKey((BlockEntityType<?>) section.getValue());
+            name = Messenger.s("minecraft".equals(id.getNamespace())?id.getPath():id.toString());
         }
-        String name = "minecraft".equals(id.getNamespace())?id.getPath():id.toString();
         if (section.getKey().isClientSide)
         {
-            name += " (client)";
+            name.append(" (").append(Messenger.tr("carpet.command.tick.section_name.client")).append(")");
         }
-        ResourceLocation dimkey = section.getKey().dimension().location();
-        String dim = "minecraft".equals(dimkey.getNamespace())?dimkey.getPath():dimkey.toString();
-        return name+" in "+dim;
+        return Messenger.tr("carpet.command.tick.section_name.text", name, Messenger.dim(section.getKey().dimension()));
     }
 
     public static void finalize_tick_report_for_entities(MinecraftServer server)
@@ -282,32 +292,31 @@ public class CarpetProfiler
         double divider = 1.0D / tick_health_requested / 1000000;
         double divider_1 = 1.0D / (tick_health_requested - 1) / 1000000;
         Messenger.m(currentRequester, "w ");
-        Messenger.m(currentRequester, "wb Average tick time: ", String.format("yb %.3fms", divider * total_tick_time));
+        Messenger.m(currentRequester, "wb", Messenger.tr("carpet.command.tick.report.average_tick_time", Messenger.c(String.format("yb %.3fms", divider * total_tick_time))));
         SECTION_STATS.remove("tick");
-        Messenger.m(currentRequester, "wb Top 10 counts:");
+        int maxEntry = 10;
         int total = 0;
+        Messenger.m(currentRequester, "wb", Messenger.tr("carpet.command.tick.report.top_n_count", maxEntry));
         for (Object2LongMap.Entry<Pair<Level, Object>> sectionEntry : ENTITY_COUNT.object2LongEntrySet().stream().sorted(Map.Entry.comparingByValue(Comparator.reverseOrder())).collect(Collectors.toList()))
         {
-            if (++total > 10) break;
+            if (++total > maxEntry) break;
             Pair<Level,Object> section = sectionEntry.getKey();
             boolean cli = section.getKey().isClientSide;
-            Messenger.m(currentRequester, String.format(
-                    "%s - %s: ", cli?"gi":"w",
-                    sectionName(section)),
+            Messenger.m(currentRequester,
+                    cli? "gi": "w", Messenger.c(" - ", sectionName(section), " : "),
                     String.format("%s %.1f", cli?"di":"y",
                     1.0D * sectionEntry.getLongValue() / (tick_health_requested - (cli? 1 : 0))
             ));
         }
-        Messenger.m(currentRequester, "wb Top 10 CPU hogs:");
+        Messenger.m(currentRequester, "wb", Messenger.tr("carpet.command.tick.report.top_n_cpu_hog", maxEntry));
         total = 0;
         for (Object2LongMap.Entry<Pair<Level,Object>> sectionEntry : ENTITY_TIMES.object2LongEntrySet().stream().sorted(Map.Entry.comparingByValue(Comparator.reverseOrder())).collect(Collectors.toList()))
         {
-            if (++total > 10) break;
+            if (++total > maxEntry) break;
             Pair<Level,Object> section = sectionEntry.getKey();
             boolean cli = section.getKey().isClientSide;
-            Messenger.m(currentRequester, String.format(
-                    "%s - %s: ", cli?"gi":"w",
-                    sectionName(section)),
+            Messenger.m(currentRequester,
+                    cli? "gi": "w", Messenger.c(" - ", sectionName(section), " : "),
                     String.format("%s %.2fms", cli?"di":"y",
                     (cli ? divider : divider_1) * sectionEntry.getLongValue()
             ));

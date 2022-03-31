@@ -55,9 +55,9 @@ public class PerimeterInfoCommand
                 entity_1x.moveTo(new BlockPos(pos.getX(), source.getLevel().getMinBuildHeight()-10, pos.getZ()), entity_1x.getYRot(), entity_1x. getXRot());
                 return !source.getLevel().addWithUUID(entity_1x) ? null : entity_1x;
             });
-            if (!(baseEntity instanceof  Mob))
+            if (!(baseEntity instanceof Mob))
             {
-                Messenger.m(source, "r /perimeterinfo requires a mob entity to test agains.");
+                Messenger.m(source, "r", Messenger.tr("carpet.command.perimeterinfo.not_mob_entity"));
                 if (baseEntity != null) baseEntity.discard();
                 return 0;
             }
@@ -65,9 +65,9 @@ public class PerimeterInfoCommand
         }
         PerimeterDiagnostics.Result res = PerimeterDiagnostics.countSpots(source.getLevel(), pos, entityliving);
 
-        Messenger.m(source, "w Spawning spaces around ",Messenger.tp("c",pos), "w :");
-        Messenger.m(source, "w   potential in-liquid: ","wb "+res.liquid);
-        Messenger.m(source, "w   potential on-ground: ","wb "+res.ground);
+        Messenger.m(source, Messenger.tr("carpet.command.perimeterinfo.result.header" ,Messenger.tp("c",pos)));
+        Messenger.m(source, "w   ", Messenger.tr("carpet.command.perimeterinfo.result.liquid", Messenger.c("wb "+res.liquid)));
+        Messenger.m(source, "w   ", Messenger.tr("carpet.command.perimeterinfo.result.ground", Messenger.c("wb "+res.ground)));
         if (entityliving != null)
         {
             Messenger.m(source, "w   ", entityliving.getDisplayName() ,"w : ","wb "+res.specific);

@@ -111,15 +111,15 @@ public class TickSpeed
             {
                 finish_time_warp();
                 tick_warp_sender = null;
-                return Messenger.c("gi Warp interrupted");
+                return Messenger.c("gi", Messenger.tr("carpet.command.tick.warp.interrupted"));
             }
-            return Messenger.c("ri No warp in progress");
+            return Messenger.c("ri", Messenger.tr("carpet.command.tick.warp.no_warp"));
         }
         if (time_bias > 0)
         {
-            String who = "Another player";
-            if (time_advancerer != null) who = time_advancerer.getScoreboardName();
-            return Messenger.c("l "+who+" is already advancing time at the moment. Try later or ask them");
+            BaseComponent who = Messenger.tr("carpet.command.tick.warp.another_player");
+            if (time_advancerer != null) who = Messenger.s(time_advancerer.getScoreboardName());
+            return Messenger.c("l", Messenger.tr("carpet.command.tick.warp.already_warping", who));
         }
         time_advancerer = player;
         time_warp_start_time = System.nanoTime();
@@ -127,7 +127,7 @@ public class TickSpeed
         time_bias = advance;
         tick_warp_callback = callback;
         tick_warp_sender = source;
-        return Messenger.c("gi Warp speed ....");
+        return Messenger.c("gi", Messenger.tr("carpet.command.tick.warp.warp_triggered"));
     }
 
     public static void finish_time_warp()
@@ -155,20 +155,21 @@ public class TickSpeed
             {
                 if (time_advancerer != null)
                 {
-                    Messenger.m(time_advancerer, "r Command Callback failed - unknown error: ", "rb /"+tick_warp_callback,"/"+tick_warp_callback);
+                    Messenger.m(time_advancerer, "r", Messenger.tr("carpet.command.tick.warp.callback_failed", Messenger.c("rb /"+tick_warp_callback,"/"+tick_warp_callback)));
                 }
             }
             tick_warp_callback = null;
             tick_warp_sender = null;
         }
+        BaseComponent message = Messenger.c("gi", Messenger.tr("carpet.command.tick.warp.finished", tps, String.format("%.2f", mspt)));
         if (time_advancerer != null)
         {
-            Messenger.m(time_advancerer, String.format("gi ... Time warp completed with %d tps, or %.2f mspt",tps, mspt ));
+            Messenger.m(time_advancerer, message);
             time_advancerer = null;
         }
         else
         {
-            Messenger.print_server_message(CarpetServer.minecraft_server, String.format("... Time warp completed with %d tps, or %.2f mspt",tps, mspt ));
+            Messenger.print_server_message(CarpetServer.minecraft_server, message);
         }
         time_bias = 0;
 

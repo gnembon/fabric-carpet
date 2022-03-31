@@ -27,6 +27,7 @@ import carpet.logging.HUDController;
 import carpet.utils.FabricAPIHooks;
 import carpet.utils.MobAI;
 import carpet.utils.SpawnReporter;
+import carpet.utils.Translations;
 import com.mojang.brigadier.CommandDispatcher;
 
 import net.fabricmc.api.ClientModInitializer;
@@ -78,6 +79,7 @@ public class CarpetServer // static for now - easier to handle all around the co
         extensions.forEach(CarpetExtension::onGameStarted);
         FabricAPIHooks.initialize();
         CarpetScriptServer.parseFunctionClasses();
+        Translations.loadTranslations();
     }
 
     public static void onServerLoaded(MinecraftServer server)

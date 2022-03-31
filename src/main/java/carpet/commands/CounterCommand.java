@@ -54,12 +54,9 @@ public class CounterCommand
     private static int displayCounter(CommandSourceStack source, String color, boolean realtime)
     {
         HopperCounter counter = HopperCounter.getCounter(color);
-        if (counter == null) throw new CommandRuntimeException(Messenger.s("Unknown wool color: "+color));
+        if (counter == null) throw new CommandRuntimeException(Messenger.tr("carpet.command.counter.unknown_wool_color", color));
 
-        for (BaseComponent message: counter.format(source.getServer(), realtime, false))
-        {
-            source.sendSuccess(message, false);
-        }
+        Messenger.send(source, counter.format(source.getServer(), realtime, false));
         return 1;
     }
 
@@ -73,14 +70,14 @@ public class CounterCommand
         if (color == null)
         {
             HopperCounter.resetAll(source.getServer(), false);
-            Messenger.m(source, "w Restarted all counters");
+            Messenger.m(source, Messenger.tr("carpet.command.counter.restarted_all"));
         }
         else
         {
             HopperCounter counter = HopperCounter.getCounter(color);
-            if (counter == null) throw new CommandRuntimeException(Messenger.s("Unknown wool color"));
+            if (counter == null) throw new CommandRuntimeException(Messenger.tr("carpet.command.counter.unknown_wool_color", color));
             counter.reset(source.getServer());
-            Messenger.m(source, "w Restarted "+color+" counter");
+            Messenger.m(source, Messenger.tr("carpet.command.counter.restarted_single", counter.getPrettyName()));
         }
         return 1;
     }
@@ -92,10 +89,7 @@ public class CounterCommand
      */
     private static int listAllCounters(CommandSourceStack source, boolean realtime)
     {
-        for (BaseComponent message: HopperCounter.formatAll(source.getServer(), realtime))
-        {
-            source.sendSuccess(message, false);
-        }
+        Messenger.send(source, HopperCounter.formatAll(source.getServer(), realtime));
         return 1;
     }
 

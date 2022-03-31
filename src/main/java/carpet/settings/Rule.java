@@ -26,12 +26,20 @@ public @interface Rule
 
     /**
      * A description of the rule
+     * Write your description in the language file instead of here
+     *
+     * @deprecated since v1.4.x TODO fill version number
      */
-    String desc();
+    @Deprecated
+    String desc() default "";
 
     /**
      * Extra information about the rule
+     * Write your extra information in the language file instead of here
+     *
+     * @deprecated since v1.4.x TODO fill version number
      */
+    @Deprecated
     String[] extra() default {};
 
     /**
