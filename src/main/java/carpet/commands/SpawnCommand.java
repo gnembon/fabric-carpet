@@ -14,6 +14,8 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
 import java.util.Arrays;
 import java.util.Locale;
+import java.util.Map;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import net.minecraft.commands.CommandBuildContext;
@@ -107,13 +109,15 @@ public class SpawnCommand
         dispatcher.register(literalargumentbuilder);
     }
 
+    private static final Map<String, MobCategory> MOB_CATEGORY_MAP = Arrays.stream(MobCategory.values()).collect(Collectors.toMap(MobCategory::getName, Function.identity()));
+
     private static MobCategory getCategory(String string) throws CommandSyntaxException
     {
         if (!Arrays.stream(MobCategory.values()).map(MobCategory::getName).collect(Collectors.toSet()).contains(string))
         {
             throw new SimpleCommandExceptionType(Messenger.c("r Wrong mob type: "+string+" should be "+ Arrays.stream(MobCategory.values()).map(MobCategory::getName).collect(Collectors.joining(", ")))).create();
         }
-        return MobCategory.byName(string.toLowerCase(Locale.ROOT));
+        return MOB_CATEGORY_MAP.get(string.toLowerCase(Locale.ROOT));
     }
 
 

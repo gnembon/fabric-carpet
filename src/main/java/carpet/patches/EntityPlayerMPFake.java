@@ -107,9 +107,9 @@ public class EntityPlayerMPFake extends ServerPlayer
     }
 
     @Override
-    protected void equipEventAndSound(ItemStack stack)
+    protected void equipEventAndSound(ItemStack stack, boolean sendGameEvent)
     {
-        if (!isUsingItem()) super.equipEventAndSound(stack);
+        if (!isUsingItem()) super.equipEventAndSound(stack, sendGameEvent);
     }
 
     @Override
