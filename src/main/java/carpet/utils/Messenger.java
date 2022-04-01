@@ -4,12 +4,14 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.Util;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.core.BlockPos;
+import net.minecraft.locale.Language;
 import net.minecraft.network.chat.BaseComponent;
 import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.HoverEvent;
 import net.minecraft.network.chat.Style;
 import net.minecraft.network.chat.TextColor;
 import net.minecraft.network.chat.TextComponent;
+import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.entity.player.Player;
@@ -21,8 +23,11 @@ import org.slf4j.LoggerFactory;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.BiFunction;
+import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -114,45 +119,6 @@ public class Messenger
         };
     }
 
-    private static BaseComponent getChatComponentFromDesc(String message, BaseComponent previousMessage)
-    {
-        if (message.equalsIgnoreCase(""))
-        {
-            return new TextComponent("");
-        }
-        if (Character.isWhitespace(message.charAt(0)))
-        {
-            message = "w" + message;
-        }
-        int limit = message.indexOf(' ');
-        String desc = message;
-        String str = "";
-        if (limit >= 0)
-        {
-            desc = message.substring(0, limit);
-            str = message.substring(limit+1);
-        }
-        if (previousMessage == null) {
-            BaseComponent text = new TextComponent(str);
-            text.setStyle(parseStyle(desc));
-            return text;
-        }
-        Style previousStyle = previousMessage.getStyle();
-        BaseComponent ret = previousMessage;
-        previousMessage.setStyle(switch (desc.charAt(0)) {
-            case '?' -> previousStyle.withClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, message.substring(1)));
-            case '!' -> previousStyle.withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, message.substring(1)));
-            case '^' -> previousStyle.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, c(message.substring(1))));
-            case '@' -> previousStyle.withClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, message.substring(1)));
-            case '&' -> previousStyle.withClickEvent(new ClickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD, message.substring(1)));
-            default  -> { // Create a new component
-                ret = new TextComponent(str);
-                ret.setStyle(parseStyle(desc));
-                yield previousStyle; // no op for the previous style
-            }
-        });
-        return ret;
-    }
     public static BaseComponent tp(String desc, Vec3 pos) { return tp(desc, pos.x, pos.y, pos.z); }
     public static BaseComponent tp(String desc, BlockPos pos) { return tp(desc, pos.getX(), pos.getY(), pos.getZ()); }
     public static BaseComponent tp(String desc, double x, double y, double z) { return tp(desc, (float)x, (float)y, (float)z);}
@@ -246,21 +212,150 @@ public class Messenger
     public static BaseComponent c(Object ... fields)
     {
         BaseComponent message = new TextComponent("");
-        BaseComponent previousComponent = null;
+        MessageComposer composer = new MessageComposer();
         for (Object o: fields)
         {
-            if (o instanceof BaseComponent)
-            {
-                message.append((BaseComponent)o);
-                previousComponent = (BaseComponent)o;
-                continue;
-            }
-            String txt = o.toString();
-            BaseComponent comp = getChatComponentFromDesc(txt, previousComponent);
-            if (comp != previousComponent) message.append(comp);
-            previousComponent = comp;
+            composer.consume(o);
+            composer.getComponent()
+                .ifPresent(message::append);
         }
+        composer.forceGetComponent()
+            .ifPresent(message::append);
         return message;
+    }
+    
+    private static class MessageComposer {
+        private Supplier<BaseComponent> componentSupplier;
+        private Consumer<Function<Style, Style>> styleConsumer;
+        private Consumer<BaseComponent> componentConsumer = defaultComponentConsumer();
+        private boolean componentHarvestable = false;
+        
+        /**
+         * Builds and returns a {@link BaseComponent} if one is available and finished (and it hasn't been returned yet),
+         * or an empty {@link Optional} if the last component has already been sent or all of its parameters haven't been
+         * filled yet.
+         */
+        public Optional<BaseComponent> getComponent() {
+            if (componentHarvestable) {
+                BaseComponent component = componentSupplier.get();
+                componentSupplier = null; // Remove the supplier so that the same component isn't returned again
+                componentHarvestable = false; // Set the component as not harvestable
+                return Optional.of(component);
+            }
+            return Optional.empty();
+        }
+        /**
+         * Does the same as {@link #buildIfAvailable()}, but forces the construction of a component if one is still being built
+         * instead of not returning it. Returns an empty {@link Optional} only if the latest component has already been returned.<p>
+         * 
+         * Intended to be used only as the latest call.
+         */
+        public Optional<BaseComponent> forceGetComponent() {
+            return componentSupplier == null ? Optional.empty() : Optional.of(componentSupplier.get());
+        }
+        
+        public void consume(Object o) {
+            if (o instanceof BaseComponent bc) {
+                consume(bc);
+                return;
+            }
+            String message = String.valueOf(o);
+            if (message.isEmpty()) {
+                consume(new TextComponent(""));
+                return;
+            }
+
+            var styleEditor = getStyleEditor(message);
+            if (styleEditor != null) {
+                styleConsumer.accept(styleEditor);
+                return;
+            }
+
+            if (Character.isWhitespace(message.charAt(0))) {
+                message = "w" + message;
+            }
+            int delimiter = message.indexOf(' ');
+            String desc, text;
+            if (delimiter >= 0)
+            {
+                desc = message.substring(0, delimiter);
+                text = message.substring(delimiter+1);
+            } else {
+                desc = message;
+                text = "";
+            }
+            if (desc.charAt(0) == 'j') {
+                class TranslatableComponentBuilder implements Consumer<BaseComponent> {
+                    private final List<BaseComponent> argList;
+                    private final String key = text;
+                    private final int expectedArgumentCount;
+                    private Style style = parseStyle(desc.substring(1));
+                    {
+                        // Count the number of arguments
+                        String translation = Language.getInstance().getOrDefault(key);
+                        int argCount = 0;
+                        int index = 0;
+                        while ((index = translation.indexOf('%', index)) != -1) {
+                            if (translation.charAt(index + 1) != '%') {
+                                argCount++;
+                            }
+                            index += 2; // We skip the first % and the second one if there is, if there's not we don't care about it anyway
+                        }
+                        expectedArgumentCount = argCount;
+                        argList = new ArrayList<>(argCount);
+                    }
+                    @Override
+                    public void accept(BaseComponent t) {
+                        argList.add(t);
+                        if (expectedArgumentCount == argList.size()) {
+                            componentHarvestable = true;
+                            componentConsumer = defaultComponentConsumer();
+                        }
+                    }
+                    public BaseComponent build() {
+                        var component = new TranslatableComponent(key, argList.toArray());
+                        component.setStyle(style);
+                        return component;
+                    }
+                    private void assign() {
+                        componentSupplier = this::build;
+                        styleConsumer = (mapper) -> style = mapper.apply(style);
+                        if (expectedArgumentCount == 0) {
+                            componentHarvestable = true;
+                        } else {
+                            componentConsumer = this;
+                        }
+                    }
+                };
+                new TranslatableComponentBuilder().assign();
+                return;
+            }
+            BaseComponent component = new TextComponent(text);
+            component.setStyle(parseStyle(desc));
+            consume(component);
+        }
+        private void consume(BaseComponent component) {
+            styleConsumer = (mapper) -> component.setStyle(mapper.apply(component.getStyle()));
+            componentConsumer.accept(component);
+        }
+        // Returns a component consumer that just makes the supplier return the given component and sets it harvestable
+        private Consumer<BaseComponent> defaultComponentConsumer() {
+            return (component) -> {
+                componentSupplier = () -> component;
+                componentHarvestable = true;
+            };
+        }
+    }
+
+    private static Function<Style, Style> getStyleEditor(String message) {
+        return switch (message.charAt(0)) {
+            case '?' -> (style) -> style.withClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, message.substring(1)));
+            case '!' -> (style) -> style.withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, message.substring(1)));
+            case '^' -> (style) -> style.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, c(message.substring(1))));
+            case '@' -> (style) -> style.withClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, message.substring(1)));
+            case '&' -> (style) -> style.withClickEvent(new ClickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD, message.substring(1)));
+            default -> null;
+        };
     }
 
     //simple text
