@@ -6,11 +6,16 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Locale;
 
+@Deprecated(forRemoval = true)
 public class FileModule extends Module
 {
     private String name;
     private String code;
     private boolean library;
+    /**
+     * Use {@link carpet.script.Module#fromPath(Path)} instead
+     */
+    @Deprecated(forRemoval = true)
     public FileModule(Path sourcePath)
     {
         library = sourcePath.getFileName().toString().endsWith(".scl");

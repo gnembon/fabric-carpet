@@ -10,7 +10,6 @@ import carpet.script.api.Monitoring;
 import carpet.script.api.Scoreboards;
 import carpet.script.api.Threading;
 import carpet.script.api.WorldAccess;
-import carpet.script.bundled.Module;
 import carpet.script.exception.CarpetExpressionException;
 import carpet.script.exception.ExpressionException;
 import carpet.script.value.BlockValue;
@@ -30,6 +29,12 @@ public class CarpetExpression
     public Expression getExpr() {return expr;}
     public CommandSourceStack getSource() {return source;}
     public BlockPos getOrigin() {return origin;}
+
+    @Deprecated(forRemoval = true)
+    public CarpetExpression(carpet.script.bundled.Module module, String expression, CommandSourceStack source, BlockPos origin)
+    {
+        this(module.toModule(), expression, source, origin);
+    }
 
     public CarpetExpression(Module module, String expression, CommandSourceStack source, BlockPos origin)
     {

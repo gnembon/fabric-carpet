@@ -1,31 +1,24 @@
 package carpet.script.bundled;
 
-import org.apache.commons.io.IOUtils;
-
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.util.Locale;
-
+/**
+ * @deprecated Use the static methods from {@link carpet.script.Module} instead
+ *
+ */
+@Deprecated(forRemoval = true)
 public class BundledModule extends Module
 {
     private String name;
     private String code;
     private boolean library;
+    /**
+     * @deprecated Use {@link carpet.script.Module} instead
+     */
+    @Deprecated(forRemoval = true)
     public BundledModule(String name, String code, boolean isLibrary)
     {
         library = isLibrary;
         this.name = name;
         this.code = code;
-    }
-    /**
-     * Creates a new {@link BundledModule} with an app located in Carpet's script storage.
-     * @param scriptName A {@link String} being the name of the script. The extension will be autocompleted
-     * @param isLibrary A {@link boolean} indicating whether or not the script is a library
-     * @return The created {@link BundledModule}
-     */
-    public static BundledModule carpetNative(String scriptName, boolean isLibrary)
-    {
-        return fromPath("assets/carpet/scripts/", scriptName, isLibrary);
     }
     
     /**
@@ -36,9 +29,11 @@ public class BundledModule extends Module
      * @param scriptName A {@link String} being the name of the script. The extension will be autocompleted
      * @param isLibrary A {@link boolean} indicating whether or not the script is a library
      * @return The created {@link BundledModule}
+     * @deprecated Use {@link carpet.script.Module#fromJarPath(String, String, boolean)}
      */
+    @Deprecated(forRemoval = true)
     public static BundledModule fromPath(String path, String scriptName, boolean isLibrary) {
-    	return fromPathWithCustomName(path+scriptName+(isLibrary?".scl":".sc"), scriptName, isLibrary);
+        return fromPathWithCustomName(path+scriptName+(isLibrary?".scl":".sc"), scriptName, isLibrary);
     }
     
     /**
@@ -49,23 +44,10 @@ public class BundledModule extends Module
      * @param customName A {@link String} being the custom name for the script.
      * @param isLibrary A {@link boolean} indicating whether or not the script is a library
      * @return The created {@link BundledModule}
+     * @deprecated Use {@link carpet.script.Module#fromJarPathWithCustomName(String, String, boolean)}
      */
     public static BundledModule fromPathWithCustomName(String fullPath, String customName, boolean isLibrary) {
-    	BundledModule module = new BundledModule(null, null, isLibrary);
-    	try
-    	{
-            module.name = customName.toLowerCase(Locale.ROOT);
-            module.code = IOUtils.toString(
-            		BundledModule.class.getClassLoader().getResourceAsStream(fullPath),
-                    StandardCharsets.UTF_8
-            );
-        }
-        catch ( NullPointerException | IOException e)
-        {
-            module.name = null;
-            module.code = null;
-        }
-        return module;
+        return new DelegatingBundledModule(carpet.script.Module.fromJarPathWithCustomName(fullPath, customName, isLibrary));
     }
 
     @Override
@@ -76,4 +58,20 @@ public class BundledModule extends Module
 
     @Override
     public String getCode() { return code; }
+    
+    // BundledModule implementation that delegates to a modern Module, returned by the factory methods here
+    // Saves compute time and memory if extensions were storing their BundledModule and passing it to methods that
+    // convert it multiple times
+    private static class DelegatingBundledModule extends BundledModule {
+        private final carpet.script.Module module;
+        public DelegatingBundledModule(carpet.script.Module module) {
+            super(module.name(), module.code(), module.library());
+            this.module = module;
+        }
+
+        @Override
+        public carpet.script.Module toModule() {
+            return module;
+        }
+    }
 }
