@@ -30,12 +30,6 @@ public class CarpetExpression
     public CommandSourceStack getSource() {return source;}
     public BlockPos getOrigin() {return origin;}
 
-    @Deprecated(forRemoval = true)
-    public CarpetExpression(carpet.script.bundled.Module module, String expression, CommandSourceStack source, BlockPos origin)
-    {
-        this(module.toModule(), expression, source, origin);
-    }
-
     public CarpetExpression(Module module, String expression, CommandSourceStack source, BlockPos origin)
     {
         this.origin = origin;

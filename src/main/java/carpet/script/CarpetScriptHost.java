@@ -106,11 +106,6 @@ public class CarpetScriptHost extends ScriptHost
         storeSource = null;
     }
 
-    @Deprecated(forRemoval = true)
-    public static CarpetScriptHost create(CarpetScriptServer scriptServer, carpet.script.bundled.Module module, boolean perPlayer, CommandSourceStack source, Predicate<CommandSourceStack> commandValidator, boolean isRuleApp, AppStoreManager.StoreNode storeSource) {
-    	return create(scriptServer, module.toModule(), perPlayer, source, commandValidator, isRuleApp, storeSource);
-    }
-
     public static CarpetScriptHost create(CarpetScriptServer scriptServer, Module module, boolean perPlayer, CommandSourceStack source, Predicate<CommandSourceStack> commandValidator, boolean isRuleApp, AppStoreManager.StoreNode storeSource)
     {
         CarpetScriptHost host = new CarpetScriptHost(scriptServer, module, perPlayer, null, Collections.emptyMap(), new HashMap<>(), commandValidator, isRuleApp);
@@ -1110,7 +1105,7 @@ public class CarpetScriptHost extends ScriptHost
     @Override
     public CarpetScriptServer scriptServer()
     {
-    	return (CarpetScriptServer)super.scriptServer();
+        return (CarpetScriptServer)super.scriptServer();
     }
 
     @Override
