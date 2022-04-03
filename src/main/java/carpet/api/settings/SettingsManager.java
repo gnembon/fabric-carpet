@@ -596,11 +596,12 @@ public class SettingsManager {
     }
 
     /**
-     * Registers the the settings command for this {@link SettingsManager}.<br>
-     * This method is handled automatically by Carpet and calling it is not supported.
+     * Registers the settings command for this {@link SettingsManager}.<br>
+     * It is handled automatically by Carpet.
      * @param dispatcher The current {@link CommandDispatcher}
+     * @param commandBuildContext The current {@link CommandBuildContext}
      */
-    public void registerCommand(CommandDispatcher<CommandSourceStack> dispatcher)
+    public void registerCommand(final CommandDispatcher<CommandSourceStack> dispatcher, final CommandBuildContext commandBuildContext)
     {
         if (dispatcher.getRoot().getChildren().stream().anyMatch(node -> node.getName().equalsIgnoreCase(identifier)))
         {
