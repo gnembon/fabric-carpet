@@ -200,4 +200,11 @@ public class SettingsManager extends carpet.api.settings.SettingsManager
         }
         return 0;
     }
+    @Deprecated(forRemoval = true)
+    public void registerCommand(CommandDispatcher<CommandSourceStack> dispatcher)
+    {
+        final CommandBuildContext context = new CommandBuildContext(RegistryAccess.BUILTIN.get());
+        context.missingTagAccessPolicy(CommandBuildContext.MissingTagAccessPolicy.RETURN_EMPTY);
+        registerCommand(dispatcher, context);
+    }
 }

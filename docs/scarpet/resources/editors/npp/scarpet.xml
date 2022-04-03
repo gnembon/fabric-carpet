@@ -60,7 +60,7 @@
                 place_item set_biome biome loaded_status generation_status sample_noise inhabited_time spawn_potential chunk_tickets
                 plop harvest destroy create_explosion
                 structure_eligibility structures structure_references set_structure
-                reset_chunk reload_chunk create_datapack enable_hidden_dimensions
+                reset_chunk reload_chunk create_datapack
                 add_chunk_ticket
 
                 convert_date unix_time
