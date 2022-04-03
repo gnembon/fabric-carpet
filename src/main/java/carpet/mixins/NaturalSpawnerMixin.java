@@ -46,7 +46,8 @@ public class NaturalSpawnerMixin
 
     @Shadow @Final private static MobCategory[] SPAWNING_CATEGORIES;
 
-    @Redirect(method = "isValidSpawnPostitionForType(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/entity/MobCategory;Lnet/minecraft/world/level/StructureFeatureManager;Lnet/minecraft/world/level/chunk/ChunkGenerator;Lnet/minecraft/world/level/biome/MobSpawnSettings$SpawnerData;Lnet/minecraft/core/BlockPos$MutableBlockPos;D)Z", at = @At(
+    @Redirect(method = "isValidSpawnPostitionForType",
+            at = @At(
             value = "INVOKE",
             target = "Lnet/minecraft/server/level/ServerLevel;noCollision(Lnet/minecraft/world/phys/AABB;)Z"
     ))

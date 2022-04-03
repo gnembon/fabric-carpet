@@ -9,6 +9,7 @@ import carpet.utils.Messenger;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import net.minecraft.commands.CommandBuildContext;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.network.chat.BaseComponent;
 import net.minecraft.server.level.ServerPlayer;
@@ -25,7 +26,7 @@ import static net.minecraft.commands.SharedSuggestionProvider.suggest;
 
 public class TickCommand
 {
-    public static void register(CommandDispatcher<CommandSourceStack> dispatcher)
+    public static void register(CommandDispatcher<CommandSourceStack> dispatcher, CommandBuildContext commandBuildContext)
     {
         LiteralArgumentBuilder<CommandSourceStack> literalargumentbuilder = literal("tick").
                 requires((player) -> SettingsManager.canUseCommand(player, CarpetSettings.commandTick)).

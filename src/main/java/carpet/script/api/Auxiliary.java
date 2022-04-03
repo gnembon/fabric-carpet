@@ -2,7 +2,6 @@ package carpet.script.api;
 
 import carpet.CarpetServer;
 import carpet.fakes.MinecraftServerInterface;
-import carpet.fakes.ServerWorldInterface;
 import carpet.fakes.ThreadedAnvilChunkStorageInterface;
 import carpet.helpers.FeatureGenerator;
 import carpet.logging.HUDController;
@@ -33,22 +32,15 @@ import carpet.script.value.LazyListValue;
 import carpet.script.value.ListValue;
 import carpet.script.value.MapValue;
 import carpet.script.value.NBTSerializableValue;
-import carpet.script.value.NullValue;
 import carpet.script.value.NumericValue;
 import carpet.script.value.StringValue;
 import carpet.script.value.Value;
 import carpet.script.value.ValueConversions;
 import carpet.utils.Messenger;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
-import com.mojang.datafixers.util.Pair;
-import com.mojang.serialization.DynamicOps;
 import net.minecraft.SharedConstants;
-import net.minecraft.Util;
 import net.minecraft.commands.CommandSourceStack;
-import net.minecraft.commands.Commands;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Holder;
 import net.minecraft.core.Registry;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.Rotations;
@@ -69,17 +61,12 @@ import net.minecraft.network.protocol.game.ClientboundSetActionBarTextPacket;
 import net.minecraft.network.protocol.game.ClientboundSetSubtitleTextPacket;
 import net.minecraft.network.protocol.game.ClientboundSetTitleTextPacket;
 import net.minecraft.network.protocol.game.ClientboundSetTitlesAnimationPacket;
-import net.minecraft.resources.RegistryOps;
-import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
-//import net.minecraft.server.WorldLoader;
-import net.minecraft.server.WorldStem;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.packs.repository.Pack;
 import net.minecraft.server.packs.repository.PackRepository;
-import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.stats.Stat;
 import net.minecraft.stats.StatType;
@@ -90,20 +77,10 @@ import net.minecraft.world.entity.decoration.ArmorStand;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.ChunkPos;
-import net.minecraft.world.level.DataPackConfig;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.biome.BiomeManager;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.border.BorderChangeListener;
-import net.minecraft.world.level.chunk.ChunkGenerator;
-import net.minecraft.world.level.dimension.DimensionType;
-import net.minecraft.world.level.dimension.LevelStem;
-import net.minecraft.world.level.levelgen.WorldGenSettings;
 import net.minecraft.world.level.storage.CommandStorage;
-import net.minecraft.world.level.storage.DerivedLevelData;
 import net.minecraft.world.level.storage.LevelResource;
-import net.minecraft.world.level.storage.LevelStorageSource;
-import net.minecraft.world.level.storage.WorldData;
 import net.minecraft.world.phys.Vec3;
 import org.apache.commons.io.FileUtils;
 
@@ -781,11 +758,11 @@ public class Auxiliary {
                 plopData.put(StringValue.of("configured_features"),
                         ListValue.wrap(registryManager.registryOrThrow(Registry.CONFIGURED_FEATURE_REGISTRY).keySet().stream().sorted().map(ValueConversions::of).collect(Collectors.toList()))
                 );
-                plopData.put(StringValue.of("structures"),
-                        ListValue.wrap(Registry.STRUCTURE_FEATURE.keySet().stream().sorted().map(ValueConversions::of).collect(Collectors.toList()))
+                plopData.put(StringValue.of("structure_types"),
+                        ListValue.wrap(Registry.STRUCTURE_TYPES.keySet().stream().sorted().map(ValueConversions::of).collect(Collectors.toList()))
                 );
-                plopData.put(StringValue.of("configured_structures"),
-                        ListValue.wrap(registryManager.registryOrThrow(Registry.CONFIGURED_STRUCTURE_FEATURE_REGISTRY).keySet().stream().sorted().map(ValueConversions::of).collect(Collectors.toList()))
+                plopData.put(StringValue.of("structures"),
+                        ListValue.wrap(registryManager.registryOrThrow(Registry.STRUCTURE_REGISTRY).keySet().stream().sorted().map(ValueConversions::of).collect(Collectors.toList()))
                 );
                 return MapValue.wrap(plopData);
             }
@@ -1111,51 +1088,9 @@ public class Auxiliary {
         });
 
         expression.addContextFunction("enable_hidden_dimensions", 0, (c, t, lv) -> {
-
             CarpetContext cc = (CarpetContext)c;
-            // from minecraft.server.Main.main
-            MinecraftServer server = cc.s.getServer();
-            LevelStorageSource.LevelStorageAccess session = ((MinecraftServerInterface)server).getCMSession();
-            DataPackConfig dataPackSettings = session.getDataPacks();
-            PackRepository resourcePackManager = server.getPackRepository();
-
-            WorldStem.InitConfig initConfig = new WorldStem.InitConfig(resourcePackManager, Commands.CommandSelection.DEDICATED, 4, false);
-
-
-            final WorldStem data = WorldStem.load(initConfig, () -> {
-                            DataPackConfig dataPackConfig = session.getDataPacks();
-                            return dataPackConfig == null ? DataPackConfig.DEFAULT : dataPackConfig;
-                    },
-                    (resourceManager, dataPackConfigx) -> {
-                RegistryAccess.Writable writable = RegistryAccess.builtinCopy();
-                DynamicOps<Tag> dynamicOps = RegistryOps.createAndLoad(NbtOps.INSTANCE, writable, (ResourceManager) resourceManager);
-                WorldData worldData = session.getDataTag(dynamicOps, dataPackConfigx, writable.allElementsLifecycle());
-                return Pair.of(worldData, writable.freeze());
-            }, Util.backgroundExecutor(), Runnable::run).join();
-            WorldGenSettings generatorOptions = data.worldData().worldGenSettings();
-
-            boolean bl = generatorOptions.isDebug();
-            long l = generatorOptions.seed();
-            long m = BiomeManager.obfuscateSeed(l);
-            Map<ResourceKey<Level>, ServerLevel> existing_worlds = ((MinecraftServerInterface)server).getCMWorlds();
-            List<Value> addeds = new ArrayList<>();
-            for (Map.Entry<ResourceKey<LevelStem>, LevelStem> entry : generatorOptions.dimensions().entrySet()) {
-                ResourceKey<LevelStem> registryKey = entry.getKey();
-                if (!existing_worlds.containsKey(registryKey))
-                {
-                    ResourceKey<Level> resourceKey2 = ResourceKey.create(Registry.DIMENSION_REGISTRY, registryKey.location());
-                    DerivedLevelData derivedLevelData = new DerivedLevelData(data.worldData(), ((ServerWorldInterface) server.overworld()).getWorldPropertiesCM());
-                    ChunkGenerator chunkGenerator2 = ((LevelStem)entry.getValue()).generator();
-                    Holder<DimensionType> holder2 = ((LevelStem)entry.getValue()).typeHolder();
-                    ServerLevel serverLevel2 = new ServerLevel(server, Util.backgroundExecutor(), session, derivedLevelData, resourceKey2,
-                            holder2, WorldTools.NOOP_LISTENER,chunkGenerator2, bl, m, ImmutableList.of(), false);
-                    server.overworld().getWorldBorder().addListener(new BorderChangeListener.DelegateBorderChangeListener(serverLevel2.getWorldBorder()));
-                    existing_worlds.put(resourceKey2, serverLevel2);
-                    addeds.add(ValueConversions.of(registryKey.location()));
-                }
-            }
-            ((MinecraftServerInterface)server).reloadAfterReload(data.registryAccess());
-            return ListValue.wrap(addeds);
+            cc.host.issueDeprecation("enable_hidden_dimensions in 1.18.2 and 1.19");
+            return Value.NULL;
         });
     }
 

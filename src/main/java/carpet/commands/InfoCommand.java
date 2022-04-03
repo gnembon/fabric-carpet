@@ -9,6 +9,8 @@ import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import net.minecraft.commands.CommandBuildContext;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.arguments.coordinates.BlockPosArgument;
 import net.minecraft.core.BlockPos;
@@ -21,7 +23,7 @@ import static net.minecraft.commands.Commands.literal;
 
 public class InfoCommand
 {
-    public static void register(CommandDispatcher<CommandSourceStack> dispatcher)
+    public static void register(CommandDispatcher<CommandSourceStack> dispatcher, CommandBuildContext commandBuildContext)
     {
         LiteralArgumentBuilder<CommandSourceStack> command = literal("info").
                 requires((player) -> SettingsManager.canUseCommand(player, CarpetSettings.commandInfo)).

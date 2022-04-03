@@ -159,10 +159,10 @@ public class PerimeterDiagnostics
 
     private boolean check_entity_spawn(BlockPos pos)
     {
-        if (sle == null || !worldServer.getChunkSource().getGenerator().getMobsAt(worldServer.getBiome(pos), worldServer.structureFeatureManager(), ctype, pos).unwrap().contains(sle))
+        if (sle == null || !worldServer.getChunkSource().getGenerator().getMobsAt(worldServer.getBiome(pos), worldServer.structureManager(), ctype, pos).unwrap().contains(sle))
         {
             sle = null;
-            for (MobSpawnSettings.SpawnerData sle: worldServer.getChunkSource().getGenerator().getMobsAt(worldServer.getBiome(pos), worldServer.structureFeatureManager(), ctype, pos).unwrap())
+            for (MobSpawnSettings.SpawnerData sle: worldServer.getChunkSource().getGenerator().getMobsAt(worldServer.getBiome(pos), worldServer.structureManager(), ctype, pos).unwrap())
             {
                 if (el.getType() == sle.type)
                 {
@@ -170,7 +170,7 @@ public class PerimeterDiagnostics
                     break;
                 }
             }
-            if (sle == null || !worldServer.getChunkSource().getGenerator().getMobsAt(worldServer.getBiome(pos), worldServer.structureFeatureManager(), ctype, pos).unwrap().contains(sle))
+            if (sle == null || !worldServer.getChunkSource().getGenerator().getMobsAt(worldServer.getBiome(pos), worldServer.structureManager(), ctype, pos).unwrap().contains(sle))
             {
                 return false;
             }

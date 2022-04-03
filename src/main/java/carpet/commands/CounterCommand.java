@@ -5,6 +5,7 @@ import carpet.helpers.HopperCounter;
 import carpet.utils.Messenger;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import net.minecraft.commands.CommandBuildContext;
 import net.minecraft.commands.CommandRuntimeException;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
@@ -20,7 +21,7 @@ public class CounterCommand
     /**
      * The method used to register the command and make it available for the players to use.
      */
-    public static void register(CommandDispatcher<CommandSourceStack> dispatcher)
+    public static void register(CommandDispatcher<CommandSourceStack> dispatcher, CommandBuildContext commandBuildContext)
     {
         LiteralArgumentBuilder<CommandSourceStack> literalargumentbuilder = Commands.literal("counter").executes((context)
          -> listAllCounters(context.getSource(), false)).requires((player) ->
