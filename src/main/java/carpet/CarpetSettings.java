@@ -1102,4 +1102,13 @@ public class CarpetSettings
     )
     public static boolean creativePlayersLoadChunks = true;
 
+    @Rule(
+            desc = "Customizable sculk sensor range",
+            options = {"8", "16", "32"},
+            category = CREATIVE,
+            strict = false,
+            validate = PushLimitLimits.class
+    )
+    public static int sculkSensorRange = 8;
+
 }
