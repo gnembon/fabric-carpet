@@ -50,7 +50,7 @@ public class BarrierBlock_updateSuppressionBlockMixin extends Block {
         BlockState stateAbove = level.getBlockState(posAbove);
         if (stateAbove.is(Blocks.ACTIVATOR_RAIL) && !stateAbove.getValue(PoweredRailBlock.POWERED)) {
             shouldPower = true;
-            level.setBlock(posAbove, stateAbove.setValue(PoweredRailBlock.POWERED, true), 3);
+            level.setBlock(posAbove, stateAbove.setValue(PoweredRailBlock.POWERED, true), Block.UPDATE_CLIENTS | Block.UPDATE_NONE);
             shouldPower = false;
         }
     }
