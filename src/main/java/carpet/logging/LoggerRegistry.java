@@ -42,7 +42,7 @@ public class LoggerRegistry
         registerLogger("tnt", Logger.stardardLogger( "tnt", "brief", new String[]{"brief", "full"}, true));
         registerLogger("projectiles", Logger.stardardLogger("projectiles", "brief",  new String[]{"brief", "full"}));
         registerLogger("fallingBlocks",Logger.stardardLogger("fallingBlocks", "brief", new String[]{"brief", "full"}));
-        registerLogger("pathfinding", Logger.stardardLogger("pathfinding", "20", new String[]{"2", "5", "10"}));
+        registerLogger("pathfinding", TypeLogger.stardardTypeLogger("pathfinding", "20", int.class, new String[]{"2", "5", "10"}));
         registerLogger("tps", HUDLogger.stardardHUDLogger("tps", null, null));
         registerLogger("packets", HUDLogger.stardardHUDLogger("packets", null, null));
         registerLogger("counter",HUDLogger.stardardHUDLogger("counter","white", Arrays.stream(DyeColor.values()).map(Object::toString).toArray(String[]::new)));
