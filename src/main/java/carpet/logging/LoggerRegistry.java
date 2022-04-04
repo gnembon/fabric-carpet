@@ -49,7 +49,7 @@ public class LoggerRegistry
         registerLogger("mobcaps", HUDLogger.stardardHUDLogger("mobcaps", "dynamic",new String[]{"dynamic", "overworld", "nether","end"}));
         registerLogger("explosions", Logger.stardardLogger("explosions", "brief",new String[]{"brief", "full"}, true));
         registerLogger("updateSuppressedCrashes", Logger.stardardLogger("updateSuppressedCrashes", null,null));
-        registerLogger("updateStackCount", Logger.stardardLogger("updateStackCount", null,null));
+        registerLogger("updateStackCount", TypeLogger.stardardTypeLogger("updateStackCount", "25", int.class, new String[]{"0", "10", "25", "10000"}));
     }
 
     /**

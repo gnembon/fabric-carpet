@@ -1102,10 +1102,4 @@ public class CarpetSettings
     )
     public static boolean creativePlayersLoadChunks = true;
 
-    @Rule(
-            desc = "Limits how large the stack count is before logging it",
-            category = {CREATIVE, SURVIVAL}
-    )
-    public static int updateStackCountLoggerLimit = 25;
-
 }

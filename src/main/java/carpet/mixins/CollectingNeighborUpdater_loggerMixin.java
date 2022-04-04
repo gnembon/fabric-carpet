@@ -1,9 +1,6 @@
 package carpet.mixins;
 
-import carpet.CarpetSettings;
-import carpet.logging.LoggerRegistry;
-import carpet.utils.Messenger;
-import net.minecraft.network.chat.BaseComponent;
+import carpet.logging.logHelpers.UpdateStackCountHelper;
 import net.minecraft.world.level.redstone.CollectingNeighborUpdater;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -28,12 +25,6 @@ public class CollectingNeighborUpdater_loggerMixin {
             )
     )
     private void onStackDone(CallbackInfo ci) {
-        if(LoggerRegistry.__updateStackCount && this.count > CarpetSettings.updateStackCountLoggerLimit) {
-            LoggerRegistry.getLogger("updateStackCount").log(() -> {
-                return new BaseComponent[]{Messenger.c(
-                        "w Stack finished with: "+this.count+" updates"
-                )};
-            });
-        }
+        UpdateStackCountHelper.onStackCount(this.count);
     }
 }
