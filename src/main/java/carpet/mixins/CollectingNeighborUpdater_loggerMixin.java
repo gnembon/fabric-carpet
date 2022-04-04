@@ -1,5 +1,6 @@
 package carpet.mixins;
 
+import carpet.CarpetSettings;
 import carpet.logging.LoggerRegistry;
 import carpet.utils.Messenger;
 import net.minecraft.network.chat.BaseComponent;
@@ -27,7 +28,7 @@ public class CollectingNeighborUpdater_loggerMixin {
             )
     )
     private void onStackDone(CallbackInfo ci) {
-        if(LoggerRegistry.__updateStackCount && this.count > 25) {
+        if(LoggerRegistry.__updateStackCount && this.count > CarpetSettings.updateStackCountLoggerLimit) {
             LoggerRegistry.getLogger("updateStackCount").log(() -> {
                 return new BaseComponent[]{Messenger.c(
                         "w Stack finished with: "+this.count+" updates"
