@@ -54,7 +54,6 @@ public class CarpetSettings
     public static boolean chainStoneStickToAll = false;
     public static Block structureBlockIgnoredBlock = Blocks.STRUCTURE_VOID;
     public static final int vanillaStructureBlockLimit = 48;
-    public static int updateSuppressionBlockSetting = -1;
 
     private static class LanguageValidator extends Validator<String> {
         @Override public String validate(CommandSourceStack source, ParsedRule<String> currentRule, String newValue, String string) {
@@ -1045,14 +1044,14 @@ public class CarpetSettings
     public static boolean lightningKillsDropsFix = false;
 
     @Rule(
-            desc = "Placing an activator rail on top of a barrier block will update suppress when the rail turns off.",
-            extra = {"Entering an integer will make the update suppression block auto-reset","Integer entered is the delay in ticks for it to reset"},
-            category = {CREATIVE, "extras"},
-            options = {"false","true","1","6"},
+            desc = "Placing an activator rail on top of a barrier block will fill the neighbor updater stack when the rail turns off.",
+            extra = {"The integer entered is the amount of updates that should be left in the stack", "-1 turns it off"},
+            category = CREATIVE,
+            options = {"-1","0","10","50"},
             strict = false,
             validate = updateSuppressionBlockModes.class
     )
-    public static String updateSuppressionBlock = "false";
+    public static int updateSuppressionBlock = -1;
 
     @Rule(
             desc = "Fixes update suppression causing server crashes.",
@@ -1060,37 +1059,11 @@ public class CarpetSettings
     )
     public static boolean updateSuppressionCrashFix = false;
 
-    public static int getInteger(String s) {
-        try {
-            return Integer.parseInt(s);
-        } catch(NumberFormatException e) {
-            return -1;
-        }
-    }
-
-    private static class updateSuppressionBlockModes extends Validator<String> {
+    private static class updateSuppressionBlockModes extends Validator<Integer> {
         @Override
-        public String validate(CommandSourceStack source, ParsedRule<String> currentRule, String newValue, String string) {
-            if (!currentRule.get().equals(newValue)) {
-                if (newValue.equalsIgnoreCase("false")) {
-                    updateSuppressionBlockSetting = -1;
-                } else if (newValue.equalsIgnoreCase("true")) {
-                    updateSuppressionBlockSetting = 0;
-                } else {
-                    int parsedInt = getInteger(newValue);
-                    if (parsedInt <= 0) {
-                        updateSuppressionBlockSetting = -1;
-                        return "false";
-                    } else {
-                        updateSuppressionBlockSetting = parsedInt;
-                    }
-                }
-            }
+        public Integer validate(CommandSourceStack source, ParsedRule<Integer> currentRule, Integer newValue, String string) {
+            if (newValue < -1) newValue = -1;
             return newValue;
-        }
-        @Override
-        public String description() {
-            return "Cannot be negative, can be true, false, or # > 0";
         }
     }
 
