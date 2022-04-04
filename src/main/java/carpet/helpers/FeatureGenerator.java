@@ -46,6 +46,7 @@ import net.minecraft.world.level.levelgen.heightproviders.ConstantHeight;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraft.world.level.levelgen.structure.Structure;
 import net.minecraft.world.level.levelgen.structure.StructureType;
+import net.minecraft.world.level.levelgen.structure.TerrainAdjustment;
 import net.minecraft.world.level.levelgen.structure.pools.StructurePoolElement;
 import net.minecraft.world.level.levelgen.structure.pools.StructureTemplatePool;
 import net.minecraft.world.level.levelgen.feature.treedecorators.BeehiveDecorator;
@@ -259,11 +260,12 @@ public class FeatureGenerator
                 PlacementUtils.inlinePlaced(Feature.CORAL_MUSHROOM, FeatureConfiguration.NONE)
         ))));
         put("bastion_remnant_units", spawnCustomStructure(
-                new JigsawStructure(
+                new JigsawStructure( new Structure.StructureSettings(
                         BuiltinRegistries.BIOME.getOrCreateTag(BiomeTags.HAS_BASTION_REMNANT),
                         Map.of(),
                         GenerationStep.Decoration.SURFACE_STRUCTURES,
-                        false,
+                        TerrainAdjustment.NONE
+                        ),
                         Holder.direct(new StructureTemplatePool(
                                 new ResourceLocation("bastion/starts"),
                                 new ResourceLocation("empty"),
@@ -278,11 +280,12 @@ public class FeatureGenerator
                 )
         ));
         put("bastion_remnant_hoglin_stable", spawnCustomStructure(
-                new JigsawStructure(
+                new JigsawStructure( new Structure.StructureSettings(
                         BuiltinRegistries.BIOME.getOrCreateTag(BiomeTags.HAS_BASTION_REMNANT),
                         Map.of(),
                         GenerationStep.Decoration.SURFACE_STRUCTURES,
-                        false,
+                        TerrainAdjustment.NONE
+                        ),
                         Holder.direct(new StructureTemplatePool(
                                 new ResourceLocation("bastion/starts"),
                                 new ResourceLocation("empty"),
@@ -297,11 +300,12 @@ public class FeatureGenerator
                 )
         ));
         put("bastion_remnant_treasure", spawnCustomStructure(
-                new JigsawStructure(
+                new JigsawStructure( new Structure.StructureSettings(
                         BuiltinRegistries.BIOME.getOrCreateTag(BiomeTags.HAS_BASTION_REMNANT),
                         Map.of(),
                         GenerationStep.Decoration.SURFACE_STRUCTURES,
-                        false,
+                        TerrainAdjustment.NONE
+                ),
                         Holder.direct(new StructureTemplatePool(
                                 new ResourceLocation("bastion/starts"),
                                 new ResourceLocation("empty"),
@@ -316,11 +320,12 @@ public class FeatureGenerator
                 )
         ));
         put("bastion_remnant_bridge", spawnCustomStructure(
-                new JigsawStructure(
+                new JigsawStructure(  new Structure.StructureSettings(
                         BuiltinRegistries.BIOME.getOrCreateTag(BiomeTags.HAS_BASTION_REMNANT),
                         Map.of(),
                         GenerationStep.Decoration.SURFACE_STRUCTURES,
-                        false,
+                        TerrainAdjustment.NONE
+                ),
                         Holder.direct(new StructureTemplatePool(
                                 new ResourceLocation("bastion/starts"),
                                 new ResourceLocation("empty"),
