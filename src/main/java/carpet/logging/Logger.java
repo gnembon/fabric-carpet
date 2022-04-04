@@ -74,11 +74,7 @@ public class Logger
     }
     public String [] getOptions()
     {
-        if (options == null)
-        {
-            return new String[0];
-        }
-        return options;
+        return options == null ? new String[0] : options;
     }
     public String getLogName()
     {
@@ -241,15 +237,15 @@ public class Logger
 
     public String getAcceptedOption(String arg)
     {
-        if (options != null && Arrays.asList(options).contains(arg)) return arg;
+        if (Arrays.asList(this.getOptions()).contains(arg)) return arg;
         return null;
     }
 
     public boolean isOptionValid(String option) {
         if (strictOptions)
         {
-            return Arrays.asList(this.options).contains(option);
+            return Arrays.asList(this.getOptions()).contains(option);
         }
-        return true;
+        return option != null;
     }
 }
