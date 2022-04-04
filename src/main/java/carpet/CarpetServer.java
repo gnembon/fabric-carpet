@@ -29,8 +29,6 @@ import carpet.utils.MobAI;
 import carpet.utils.SpawnReporter;
 import com.mojang.brigadier.CommandDispatcher;
 
-import net.fabricmc.api.ClientModInitializer;
-import net.fabricmc.api.DedicatedServerModInitializer;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
@@ -40,9 +38,6 @@ import net.minecraft.server.level.ServerPlayer;
 
 public class CarpetServer // static for now - easier to handle all around the code, its one anyways
 {
-    public static final ClientModInitializer CLIENT_INITIALIZER = CarpetServer::onGameStarted;
-    public static final DedicatedServerModInitializer SERVER_INITIALIZER = CarpetServer::onGameStarted;
-
     public static final Random rand = new Random();
     public static MinecraftServer minecraft_server;
     private static CommandDispatcher<CommandSourceStack> currentCommandDispatcher;
@@ -60,17 +55,25 @@ public class CarpetServer // static for now - easier to handle all around the co
     public static void manageExtension(CarpetExtension extension)
     {
         extensions.add(extension);
-        // for extensions that come late to the party, after server is created / loaded
-        // we will handle them now.
-        // that would handle all extensions, even these that add themselves really late to the party
+        // Stop the stupid practice of extensions mixing into Carpet just to register themselves
+        if (StackWalker.getInstance().walk(stream -> stream.anyMatch(el -> 
+            el.getClassName() == CarpetServer.class.getName() && !el.getMethodName().equals("manageExtension")
+        ))) {
+            CarpetSettings.LOG.warn("""
+                    Extension '%s' is registering itself using a mixin into Carpet instead of a regular ModInitializer!
+                    This is stupid and will crash the game in future versions!""".formatted(extension.getClass().getSimpleName()));
+        }
+
+        // for extensions that come late to the party, we used to handle them, but we've been giving them warnings about
+        // it for a while. Cause a crash
         if (currentCommandDispatcher != null)
         {
-            extension.registerCommands(currentCommandDispatcher);
-            CarpetSettings.LOG.warn(extension.getClass().getSimpleName() + " extension registered too late!");
-            CarpetSettings.LOG.warn("This won't be supported in later Carpet versions and may crash the game!");
+            throw new IllegalStateException("Extension %s tried to register too late!".formatted(extension.getClass().getSimpleName()));
         }
     }
 
+    // Gets called by Fabric Loader from a ServerModInitializer and a ClientModInitializer, in both to allow extensions 
+    // to register before this call in a ModInitializer (declared in fabric.mod.json)
     public static void onGameStarted()
     {
         settingsManager = new SettingsManager(CarpetSettings.carpetVersion, "carpet", "Carpet Mod");
