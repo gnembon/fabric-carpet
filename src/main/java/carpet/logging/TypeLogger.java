@@ -110,7 +110,7 @@ public class TypeLogger<T> extends Logger
         }
     }
 
-    public T parse(String value)
+    public T parse(String value) // To be replaced by FromStringConverter in the settings rework
     {
         if (type == String.class)
         {
