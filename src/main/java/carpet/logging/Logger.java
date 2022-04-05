@@ -215,9 +215,13 @@ public class Logger
         else if(firstTime)
         {
             Set<String> loggingOptions = new HashSet<>(Arrays.asList(CarpetSettings.defaultLoggers.split(",")));
-            if (loggingOptions.contains(getLogName()))
-            {
-                LoggerRegistry.subscribePlayer(playerName, getLogName(), getDefault());
+            String logName = getLogName();
+            for (String str : loggingOptions) {
+                String[] vars = str.split(" ");
+                if (vars[0].equals(logName)) {
+                    LoggerRegistry.subscribePlayer(playerName, getLogName(), vars.length == 1 ? getDefault() : vars[1]);
+                    break;
+                }
             }
         }
         LoggerRegistry.setAccess(this);
