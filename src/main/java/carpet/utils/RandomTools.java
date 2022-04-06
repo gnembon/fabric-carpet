@@ -1,12 +1,11 @@
 package carpet.utils;
 
 import carpet.CarpetSettings;
-
-import java.util.Random;
+import net.minecraft.util.RandomSource;
 
 public class RandomTools
 {
-    public static double nextGauBian(Random random)
+    public static double nextGauBian(RandomSource random)
     {
         if (CarpetSettings.extremeBehaviours)
         {

@@ -13,7 +13,7 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 @Mixin(StructureTemplate.class)
 public class StructureTemplate_fillUpdatesMixin
 {
-    @Redirect( method = "placeInWorld(Lnet/minecraft/world/level/ServerLevelAccessor;Lnet/minecraft/core/BlockPos;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/levelgen/structure/templatesystem/StructurePlaceSettings;Ljava/util/Random;I)Z", at = @At(
+    @Redirect( method = "placeInWorld", at = @At(
             value = "INVOKE",
             target = "Lnet/minecraft/world/level/ServerLevelAccessor;blockUpdated(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/Block;)V"
     ))
@@ -23,7 +23,7 @@ public class StructureTemplate_fillUpdatesMixin
             serverWorldAccess.blockUpdated(pos, block);
     }
 
-    @Redirect(method = "placeInWorld(Lnet/minecraft/world/level/ServerLevelAccessor;Lnet/minecraft/core/BlockPos;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/levelgen/structure/templatesystem/StructurePlaceSettings;Ljava/util/Random;I)Z", at = @At(
+    @Redirect(method = "placeInWorld", at = @At(
             value = "INVOKE",
             target = "Lnet/minecraft/world/level/levelgen/structure/templatesystem/StructurePlaceSettings;getKnownShape()Z"
     ))

@@ -164,10 +164,11 @@ public class Auxiliary {
             Vec3 vec = locator.vec;
             double d0 = Math.pow(volume > 1.0F ? (double)(volume * 16.0F) : 16.0D, 2.0D);
             int count = 0;
+            long seed = cc.s.getLevel().getRandom().nextLong();
             for (ServerPlayer player : cc.s.getLevel().getPlayers( (p) -> p.distanceToSqr(vec) < d0))
             {
                 count++;
-                player.connection.send(new ClientboundCustomSoundPacket(soundName, mixer, vec, volume, pitch));
+                player.connection.send(new ClientboundCustomSoundPacket(soundName, mixer, vec, volume, pitch, seed));
             }
             return new NumericValue(count);
         });
