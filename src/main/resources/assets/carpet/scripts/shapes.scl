@@ -1,10 +1,9 @@
 //This is a library app, mostly for the draw command, which allows to import these shape-drawing functions into your own app.
-//Arguments for each are to be given as a singleton list, for ease of use. This is with the exception of the _fill_flat functions, with
-//the assumption that they're unlikely to be used outside of internal calls, but it is still available to be called if necessary.
-//Make sure you read the arguments and input them in the correct order, or it will mess up.
-//these functions return a set of all the positions in the shape, given the parameters, without repeating a position.
+//The _fill_flat functions are mostly used in internal calls, but can be used outside as well
+//These functions return a set of all the positions in the shape, given the parameters, without repeating a position.
 //This way, you can efficiently iterate over the positions once having generated them. See draw_beta.sc for an example. todo change to draw once renamed
 //You can also read the documentation code above each function to see what it does, how it does it and how well it does it
+//One way you can speed things up is by threading the operations (see draw_beta.sc)
 
 //This algorithm turns half a circle (in radians), then at each angle
 //it turns another half circle in radians and then fills in the other half using - signs
@@ -12,8 +11,7 @@
 //Algorithmic efficiency:
 //  O(n^2) for hollow spheres cos 2d surface
 //  O(n^3) for filled spheres cos 3d volume
-draw_sphere(args)->(
-    [centre, radius, hollow] = args;
+draw_sphere(centre, radius, hollow)->(
     positions = {};
     [cx,cy,cz]=centre;
     radius = floor(radius);
@@ -39,8 +37,7 @@ draw_sphere(args)->(
 //It iterates along the radius, and at each point it draws a flat diamond in the y direction
 //Algorithmic efficiency:
 //  O(n^2) cos 2d surface
-draw_diamond(args)->(
-    [pos, radius] = args;
+draw_diamond(pos, radius)->(
     positions = {};
     c_for(r=0, r<radius, r+=1,
         y = r-radius+1;
@@ -60,8 +57,7 @@ draw_diamond(args)->(
 //which fills between the endpoints as opposed to just plotting them
 //Algorithmic efficiency:
 //  O(n^3) cos 3d volume
-draw_filled_diamond(args)->(
-    [pos, radius] = args;
+draw_filled_diamond(pos, radius)->(
     positions = {};
     loop(radius,
         positions = positions + draw_diamond([pos, _+1]);
@@ -74,8 +70,7 @@ draw_filled_diamond(args)->(
 //Algorithmic efficiency:
 //  O(n^2) for hollow cones / pyramids
 //  O(n^3) for filled cones / pyramids
-draw_pyramid(args)->(
-    [pos, radius, height, pointing, orientation, fill_type, is_square] = args;
+draw_pyramid(pos, radius, height, pointing, orientation, fill_type, is_square)->(
     positions = {};
     hollow = fill_type=='hollow';
     pointup = pointing=='up';
@@ -93,8 +88,7 @@ draw_pyramid(args)->(
 //Algorithmic efficiency:
 //  O(n^2) for hollow cuboids / cylinders
 //  O(n^3) for filled cuboids / cylinders
-draw_prism(args)->(
-    [pos, rad, height, orientation, fill_type, is_square]=args;
+draw_prism(pos, rad, height, orientation, fill_type, is_square)->(
     positions = {};
     hollow = fill_type =='hollow';
     radius = rad+0.5;
