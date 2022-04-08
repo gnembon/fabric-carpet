@@ -39,6 +39,7 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
@@ -716,7 +717,7 @@ public class ShapeDispatcher
         {
             ParticleOptions particle = replacementParticle();
             int partno = Math.min(1000,20*subdivisions);
-            Random rand = p.level.getRandom();
+            RandomSource rand = p.level.getRandom();
             ServerLevel world = p.getLevel();
 
             Vec3 ccenter = relativiseRender(world, center, 0 );
@@ -794,7 +795,7 @@ public class ShapeDispatcher
         {
             ParticleOptions particle = replacementParticle();
             int partno = (int)Math.min(1000,Math.sqrt(20*subdivisions*(1+height)));
-            Random rand = p.level.getRandom();
+            RandomSource rand = p.level.getRandom();
             ServerLevel world = p.getLevel();
 
             Vec3 ccenter = relativiseRender(world, center, 0 );
@@ -1312,7 +1313,7 @@ public class ShapeDispatcher
         int pcount = 0;
         if (distance < 100)
         {
-            Random rand = players.get(0).level.random;
+            RandomSource rand = players.get(0).level.random;
             int particles = (int)(distance/density)+1;
             Vec3 towards = to.subtract(from);
             for (int i = 0; i < particles; i++)

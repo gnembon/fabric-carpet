@@ -6,6 +6,8 @@ import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+
+import net.minecraft.Util;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
@@ -230,7 +232,7 @@ public class OptimizedExplosion
         if (damagesTerrain)
         {
             ObjectArrayList<Pair<ItemStack, BlockPos>> objectArrayList = new ObjectArrayList<>();
-            Collections.shuffle(e.getToBlow(), world.random);
+            Util.shuffle(e.getToBlow(), world.random);
 
             for (BlockPos blockpos : e.getToBlow())
             {

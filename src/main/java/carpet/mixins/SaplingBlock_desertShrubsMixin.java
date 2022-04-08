@@ -1,6 +1,7 @@
 package carpet.mixins;
 
 import carpet.CarpetSettings;
+import net.minecraft.util.RandomSource;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -22,9 +23,9 @@ import net.minecraft.world.level.block.state.BlockState;
 public abstract class SaplingBlock_desertShrubsMixin
 {
     @Inject(method = "advanceTree", at = @At(value = "INVOKE", shift = At.Shift.BEFORE,
-            target = "Lnet/minecraft/world/level/block/grower/AbstractTreeGrower;growTree(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/level/chunk/ChunkGenerator;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;Ljava/util/Random;)Z"),
+            target = "Lnet/minecraft/world/level/block/grower/AbstractTreeGrower;growTree(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/level/chunk/ChunkGenerator;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/util/RandomSource;)Z"),
             cancellable = true)
-    private void onGenerate(ServerLevel level, BlockPos pos, BlockState blockState, Random random, CallbackInfo ci)
+    private void onGenerate(ServerLevel level, BlockPos pos, BlockState blockState, RandomSource random, CallbackInfo ci)
     {
         if (CarpetSettings.desertShrubs && level.getBiome(pos).is(BiomeTags.HAS_DESERT_PYRAMID) && !nearWater(level, pos))
         {
