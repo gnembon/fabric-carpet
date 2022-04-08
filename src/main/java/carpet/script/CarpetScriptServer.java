@@ -290,9 +290,9 @@ public class CarpetScriptServer
         //addEvents(source, name);
         String action = (installer!=null)?(reload?"reinstalled":"installed"):(reload?"reloaded":"loaded");
 
-        
+        String finalName = name;
         Boolean isCommandAdded = newHost.addAppCommands(s -> {
-            if (!isRuleApp) Messenger.m(source, s);
+            if (!isRuleApp) Messenger.m(source, Messenger.c("r Failed to add app '" + finalName + "': ").append(s));
         });
         if (isCommandAdded == null) // error should be dispatched
         {

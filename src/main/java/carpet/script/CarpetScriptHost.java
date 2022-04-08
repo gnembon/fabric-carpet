@@ -399,6 +399,11 @@ public class CarpetScriptHost extends ScriptHost
         }
         if (appConfig.get(StringValue.of("commands")) != null)
         {
+            if (scriptServer.isInvalidCommandRoot(getName()))
+            {
+                notifier.accept(Messenger.c("g A command with the app's name already exists in vanilla or an installed mod."));
+                return null;
+            }
             try
             {
                 LiteralArgumentBuilder<CommandSourceStack> command = readCommands(commandValidator);
@@ -461,7 +466,7 @@ public class CarpetScriptHost extends ScriptHost
 
         if (scriptServer.isInvalidCommandRoot(getName()))
         {
-            notifier.accept(Messenger.c("gi A command with the app's name ("+ main.getName() +") already exists in vanilla or an installed mod."));
+            notifier.accept(Messenger.c("g A command with the app's name already exists in vanilla or an installed mod."));
             return null;
         }
 
