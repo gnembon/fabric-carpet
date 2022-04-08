@@ -461,7 +461,7 @@ public class CarpetScriptHost extends ScriptHost
 
         if (scriptServer.isInvalidCommandRoot(getName()))
         {
-            notifier.accept(Messenger.c("gi Tried to mask vanilla command."));
+            notifier.accept(Messenger.c("gi A command with the app's name already exists in vanilla or an installed mod."));
             return null;
         }
 
