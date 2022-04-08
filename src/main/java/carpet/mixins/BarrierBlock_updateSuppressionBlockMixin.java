@@ -6,7 +6,6 @@ import net.minecraft.world.level.redstone.NeighborUpdater;
 import net.minecraft.util.RandomSource;
 import org.spongepowered.asm.mixin.Mixin;
 
-import java.util.Random;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
@@ -46,7 +45,7 @@ public class BarrierBlock_updateSuppressionBlockMixin extends Block {
     }
 
     @Override
-    public void tick(BlockState state, ServerLevel world, BlockPos pos, RandomSource random) {
+    public void tick(BlockState state, ServerLevel level, BlockPos pos, RandomSource random) {
         BlockPos posAbove = pos.above();
         BlockState stateAbove = level.getBlockState(posAbove);
         if (stateAbove.is(Blocks.ACTIVATOR_RAIL) && !stateAbove.getValue(PoweredRailBlock.POWERED)) {
