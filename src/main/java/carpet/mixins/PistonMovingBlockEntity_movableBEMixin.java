@@ -3,7 +3,7 @@ package carpet.mixins;
 import carpet.CarpetSettings;
 import carpet.fakes.BlockEntityInterface;
 import carpet.fakes.PistonBlockEntityInterface;
-import carpet.fakes.WorldInterface;
+import carpet.fakes.LevelInterface;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.level.Level;
@@ -92,7 +92,7 @@ public abstract class PistonMovingBlockEntity_movableBEMixin extends BlockEntity
         if (!CarpetSettings.movableBlockEntities)
             return world.setBlock(blockPos_1, blockAState_2, int_1);
         else
-            return ((WorldInterface) (world)).setBlockStateWithBlockEntity(blockPos_1, blockAState_2, ((PistonBlockEntityInterface)pistonBlockEntity).getCarriedBlockEntity(), int_1);
+            return ((LevelInterface) (world)).setBlockStateWithBlockEntity(blockPos_1, blockAState_2, ((PistonBlockEntityInterface)pistonBlockEntity).getCarriedBlockEntity(), int_1);
     }
     
     @Redirect(method = "finalTick", at = @At(value = "INVOKE",
@@ -103,7 +103,7 @@ public abstract class PistonMovingBlockEntity_movableBEMixin extends BlockEntity
             return world.setBlock(blockPos_1, blockState_2, int_1);
         else
         {
-            boolean ret = ((WorldInterface) (world)).setBlockStateWithBlockEntity(blockPos_1, blockState_2, this.carriedBlockEntity, int_1);
+            boolean ret = ((LevelInterface) (world)).setBlockStateWithBlockEntity(blockPos_1, blockState_2, this.carriedBlockEntity, int_1);
             this.carriedBlockEntity = null; //this will cancel the finishHandleBroken
             return ret;
         }
@@ -122,7 +122,7 @@ public abstract class PistonMovingBlockEntity_movableBEMixin extends BlockEntity
                 blockState_2 = Blocks.AIR.defaultBlockState();
             else
                 blockState_2 = Block.updateFromNeighbourShapes(this.movedState, this.level, this.worldPosition);
-            ((WorldInterface) (this.level)).setBlockStateWithBlockEntity(this.worldPosition, blockState_2, this.carriedBlockEntity, 3);
+            ((LevelInterface) (this.level)).setBlockStateWithBlockEntity(this.worldPosition, blockState_2, this.carriedBlockEntity, 3);
             this.level.destroyBlock(this.worldPosition, false, null);
         }
     }
