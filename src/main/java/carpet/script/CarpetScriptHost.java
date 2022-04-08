@@ -419,7 +419,7 @@ public class CarpetScriptHost extends ScriptHost
             catch (CommandSyntaxException cse)
             {
                 // failed
-                notifier.accept(Messenger.c("r Failed to build command system for "+getName()+" thus failed to load the app: ", cse.getRawMessage()));
+                notifier.accept(Messenger.c("r Failed to build command system: ", cse.getRawMessage()));
                 return null;
             }
 
