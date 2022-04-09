@@ -57,12 +57,6 @@ public class ValueConversions
         return ListValue.of(new NumericValue(pos.getX()), new NumericValue(pos.getY()), new NumericValue(pos.getZ()));
     }
 
-    public static Value ofOptional(BlockPos pos)
-    {
-        if (pos == null) return Value.NULL;
-        return ListValue.of(new NumericValue(pos.getX()), new NumericValue(pos.getY()), new NumericValue(pos.getZ()));
-    }
-
     public static Value of(Vec3 vec)
     {
         return ListValue.of(new NumericValue(vec.x), new NumericValue(vec.y), new NumericValue(vec.z));
@@ -277,17 +271,17 @@ public class ValueConversions
         {
             v = new ArrayList(((Set) v));
         }
-        if (v instanceof List l)
+        if (v instanceof List<?> l)
         {
             if (l.isEmpty()) return ListValue.of();
             Object el = l.get(0);
             if (el instanceof Entity)
             {
-                return ListValue.wrap((List<Value>) l.stream().map(o -> new EntityValue((Entity)o)).collect(Collectors.toList()));
+                return ListValue.wrap(l.stream().map(o -> new EntityValue((Entity)o)).collect(Collectors.toList()));
             }
             if (el instanceof GlobalPos)
             {
-                return ListValue.wrap((List<Value>) l.stream().map(o ->  of((GlobalPos) o)).collect(Collectors.toList()));
+                return ListValue.wrap((List<Value>) l.stream().map(o -> of((GlobalPos) o)).collect(Collectors.toList()));
             }
         }
         return Value.NULL;
