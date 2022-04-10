@@ -35,7 +35,6 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 
 import static net.minecraft.commands.Commands.argument;
 import static net.minecraft.commands.Commands.literal;
@@ -49,8 +48,7 @@ public class PlayerCommand
     {
         final String[] gamemodeStrings = Arrays.stream(GameType.values())
                 .map(GameType::getName)
-                .collect(Collectors.toList())
-                .toArray(new String[]{});
+                .toArray(String[]::new);
         LiteralArgumentBuilder<CommandSourceStack> literalargumentbuilder = literal("player")
                 .requires((player) -> SettingsManager.canUseCommand(player, CarpetSettings.commandPlayer))
                 .then(argument("player", StringArgumentType.word())
