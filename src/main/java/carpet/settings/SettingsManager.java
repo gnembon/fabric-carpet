@@ -4,7 +4,10 @@ import carpet.CarpetServer;
 import carpet.CarpetSettings;
 import carpet.api.settings.CarpetRule;
 import carpet.utils.CommandHelper;
+import com.mojang.brigadier.CommandDispatcher;
+import net.minecraft.commands.CommandBuildContext;
 import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.core.RegistryAccess;
 import net.minecraft.server.MinecraftServer;
 import org.apache.logging.log4j.util.TriConsumer;
 import java.util.Collection;
@@ -199,5 +202,12 @@ public class SettingsManager extends carpet.api.settings.SettingsManager
                 return Integer.parseInt(commandLevel);
         }
         return 0;
+    }
+    @Deprecated(forRemoval = true)
+    public void registerCommand(CommandDispatcher<CommandSourceStack> dispatcher)
+    {
+        final CommandBuildContext context = new CommandBuildContext(RegistryAccess.BUILTIN.get());
+        context.missingTagAccessPolicy(CommandBuildContext.MissingTagAccessPolicy.RETURN_EMPTY);
+        registerCommand(dispatcher, context);
     }
 }

@@ -3,7 +3,9 @@ package carpet;
 import carpet.script.CarpetExpression;
 import carpet.api.settings.SettingsManager;
 import com.mojang.brigadier.CommandDispatcher;
+import net.minecraft.commands.CommandBuildContext;
 import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.core.RegistryAccess;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 
@@ -46,12 +48,28 @@ public interface CarpetExtension
     /**
      * Register your own commands right after vanilla commands are added
      * If that matters for you
+     *
+     * Deprecated, Implement {@link CarpetExtension#registerCommands(CommandDispatcher, CommandBuildContext)}
      * 
      * @param dispatcher The current {@link CommandSource<ServerCommandSource>} dispatcher 
      *                   where you should register your commands
      * 
      */
+    @Deprecated(forRemoval = true)
     default void registerCommands(CommandDispatcher<CommandSourceStack> dispatcher) {}
+
+    /**
+     * Register your own commands right after vanilla commands are added
+     * If that matters for you
+     *
+     * @param dispatcher The current {@link CommandDispatcher<CommandSourceStack>} dispatcher
+     *                   where you should register your commands
+     * @param commandBuildContext The current {@link CommandBuildContext} context
+     *      *                   which you can use for registries lookup
+     */
+    default void registerCommands(CommandDispatcher<CommandSourceStack> dispatcher, final CommandBuildContext commandBuildContext) {
+        registerCommands(dispatcher);
+    }
 
     /**
      * @deprecated Implement {@link #extensionSettingsManager()} instead
@@ -60,7 +78,7 @@ public interface CarpetExtension
     default carpet.settings.SettingsManager customSettingsManager() {return null;}
 
     /**
-     * Provides a custom {@link SettingsManager} for it to be managed in the same way as base /carpet
+     * Provide your own custom settings manager managed in the same way as base /carpet
      * command, but separated to its own command as defined in SettingsManager.
      * 
      * @return Your custom {@link SettingsManager} instance to be managed by Carpet

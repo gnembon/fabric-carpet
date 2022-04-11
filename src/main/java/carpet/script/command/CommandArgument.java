@@ -54,6 +54,7 @@ import java.util.stream.Collectors;
 import net.minecraft.ChatFormatting;
 import net.minecraft.advancements.Advancement;
 import net.minecraft.advancements.critereon.MinMaxBounds;
+import net.minecraft.commands.CommandBuildContext;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.commands.arguments.AngleArgument;
@@ -93,6 +94,7 @@ import net.minecraft.commands.synchronization.SuggestionProviders;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Registry;
+import net.minecraft.core.RegistryAccess;
 import net.minecraft.network.chat.TextComponent;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
@@ -266,7 +268,7 @@ public abstract class CommandArgument
             new VanillaUnconfigurableArgument("uuid", UuidArgument::uuid,
                     (c, p) -> StringValue.of(UuidArgument.getUuid(c, p).toString()), false
             ),
-            new VanillaUnconfigurableArgument("surfacelocation", Vec2Argument::vec2, // vec2
+            new VanillaUnconfigurableArgument("surfacelocation", () -> Vec2Argument.vec2(), // vec2
                     (c, p) -> {
                         Vec2 res = Vec2Argument.getVec2(c, p);
                         return ListValue.of(NumericValue.of(res.x), NumericValue.of(res.y));
@@ -298,10 +300,10 @@ public abstract class CommandArgument
     public static RequiredArgumentBuilder<CommandSourceStack, ?> argumentNode(String param, CarpetScriptHost host) throws CommandSyntaxException
     {
         CommandArgument arg = getTypeForArgument(param, host);
-        if (arg.suggestionProvider != null) return argument(param, arg.getArgumentType()).suggests(arg.suggestionProvider);
-        if (!arg.needsMatching) return argument(param, arg.getArgumentType());
+        if (arg.suggestionProvider != null) return argument(param, arg.getArgumentType(host)).suggests(arg.suggestionProvider);
+        if (!arg.needsMatching) return argument(param, arg.getArgumentType(host));
         String hostName = host.getName();
-        return argument(param, arg.getArgumentType()).suggests((ctx, b) -> {
+        return argument(param, arg.getArgumentType(host)).suggests((ctx, b) -> {
             CarpetScriptHost cHost = CarpetServer.scriptServer.modules.get(hostName).retrieveOwnForExecution(ctx.getSource());
             return arg.suggest(ctx, b, cHost);
         });
@@ -325,7 +327,7 @@ public abstract class CommandArgument
         this.needsMatching = suggestFromExamples;
     }
 
-    protected abstract ArgumentType<?> getArgumentType() throws CommandSyntaxException;
+    protected abstract ArgumentType<?> getArgumentType(CarpetScriptHost host) throws CommandSyntaxException;
 
 
     public static Value getValue(CommandContext<CommandSourceStack> context, String param, CarpetScriptHost host) throws CommandSyntaxException
@@ -445,7 +447,7 @@ public abstract class CommandArgument
         }
 
         @Override
-        public ArgumentType<?> getArgumentType()
+        public ArgumentType<?> getArgumentType(CarpetScriptHost host)
         {
             return StringArgumentType.string();
         }
@@ -490,7 +492,7 @@ public abstract class CommandArgument
     {
         private WordArgument() { super(); suffix = "term"; examples = StringArgumentType.StringType.SINGLE_WORD.getExamples(); }
         @Override
-        public ArgumentType<?> getArgumentType() { return StringArgumentType.word(); }
+        public ArgumentType<?> getArgumentType(CarpetScriptHost host) { return StringArgumentType.word(); }
         @Override
         protected Supplier<CommandArgument> factory() { return WordArgument::new; }
     }
@@ -499,7 +501,7 @@ public abstract class CommandArgument
     {
         private GreedyStringArgument() { super();suffix = "text"; examples = StringArgumentType.StringType.GREEDY_PHRASE.getExamples(); }
         @Override
-        public ArgumentType<?> getArgumentType() { return StringArgumentType.greedyString(); }
+        public ArgumentType<?> getArgumentType(CarpetScriptHost host) { return StringArgumentType.greedyString(); }
         @Override
         protected Supplier<CommandArgument> factory() { return GreedyStringArgument::new; }
     }
@@ -514,7 +516,7 @@ public abstract class CommandArgument
         }
 
         @Override
-        public ArgumentType<?> getArgumentType()
+        public ArgumentType<?> getArgumentType(CarpetScriptHost host)
         {
             return net.minecraft.commands.arguments.coordinates.BlockPosArgument.blockPos();
         }
@@ -552,7 +554,7 @@ public abstract class CommandArgument
             blockCentered = true;
         }
         @Override
-        protected ArgumentType<?> getArgumentType()
+        protected ArgumentType<?> getArgumentType(CarpetScriptHost host)
         {
             return Vec3Argument.vec3(blockCentered);
         }
@@ -589,7 +591,7 @@ public abstract class CommandArgument
             single = false;
         }
         @Override
-        protected ArgumentType<?> getArgumentType()
+        protected ArgumentType<?> getArgumentType(CarpetScriptHost host)
         {
             if (onlyFans)
             {
@@ -636,7 +638,7 @@ public abstract class CommandArgument
             single = false;
         }
         @Override
-        protected ArgumentType<?> getArgumentType()
+        protected ArgumentType<?> getArgumentType(CarpetScriptHost host)
         {
             return GameProfileArgument.gameProfile();
         }
@@ -677,7 +679,7 @@ public abstract class CommandArgument
             suggestionProvider = ScoreHolderArgument.SUGGEST_SCORE_HOLDERS;
         }
         @Override
-        protected ArgumentType<?> getArgumentType()
+        protected ArgumentType<?> getArgumentType(CarpetScriptHost host)
         {
             return single?ScoreHolderArgument.scoreHolder():ScoreHolderArgument.scoreHolders();
         }
@@ -716,7 +718,7 @@ public abstract class CommandArgument
             mapRequired = true;
         }
         @Override
-        protected ArgumentType<?> getArgumentType()
+        protected ArgumentType<?> getArgumentType(CarpetScriptHost host)
         {
             return mapRequired?CompoundTagArgument.compoundTag(): NbtTagArgument.nbtTag();
         }
@@ -754,7 +756,7 @@ public abstract class CommandArgument
         }
 
         @Override
-        protected ArgumentType<?> getArgumentType()
+        protected ArgumentType<?> getArgumentType(CarpetScriptHost host)
         {
             return ResourceLocationArgument.id();
         }
@@ -799,7 +801,7 @@ public abstract class CommandArgument
         }
 
         @Override
-        public ArgumentType<?> getArgumentType()
+        public ArgumentType<?> getArgumentType(CarpetScriptHost host)
         {
             if (min != null)
             {
@@ -850,7 +852,7 @@ public abstract class CommandArgument
         }
 
         @Override
-        public ArgumentType<?> getArgumentType()
+        public ArgumentType<?> getArgumentType(CarpetScriptHost host)
         {
             if (min != null)
             {
@@ -944,7 +946,7 @@ public abstract class CommandArgument
         }
 
         @Override
-        protected ArgumentType<?> getArgumentType() throws CommandSyntaxException
+        protected ArgumentType<?> getArgumentType(CarpetScriptHost host) throws CommandSyntaxException
         {
             return net.minecraft.commands.arguments.SlotArgument.slot();
         }
@@ -998,11 +1000,19 @@ public abstract class CommandArgument
         ArgumentType<?> get() throws CommandSyntaxException;
     }
 
+    @FunctionalInterface
+    private interface ArgumentProviderEx
+    {
+        ArgumentType<?> get(CommandBuildContext regAccess) throws CommandSyntaxException;
+    }
+
     public static class VanillaUnconfigurableArgument extends  CommandArgument
     {
         private final ArgumentProvider argumentTypeSupplier;
+        private final ArgumentProviderEx argumentTypeSupplierEx;
         private final ValueExtractor valueExtractor;
         private final boolean providesExamples;
+
         public VanillaUnconfigurableArgument(
                 String suffix,
                 ArgumentProvider argumentTypeSupplier,
@@ -1022,6 +1032,7 @@ public abstract class CommandArgument
             this.providesExamples = suggestFromExamples;
             this.argumentTypeSupplier = argumentTypeSupplier;
             this.valueExtractor = valueExtractor;
+            this.argumentTypeSupplierEx = null;
         }
         public VanillaUnconfigurableArgument(
                 String suffix,
@@ -1035,12 +1046,38 @@ public abstract class CommandArgument
             this.providesExamples = false;
             this.argumentTypeSupplier = argumentTypeSupplier;
             this.valueExtractor = valueExtractor;
+            this.argumentTypeSupplierEx = null;
+        }
+        public VanillaUnconfigurableArgument(
+                String suffix,
+                ArgumentProviderEx argumentTypeSupplier,
+                ValueExtractor valueExtractor,
+                boolean suggestFromExamples
+        )
+        {
+            super(suffix, null, suggestFromExamples);
+            try
+            {
+                final CommandBuildContext context = new CommandBuildContext(RegistryAccess.BUILTIN.get());
+                context.missingTagAccessPolicy(CommandBuildContext.MissingTagAccessPolicy.RETURN_EMPTY);
+                this.examples = argumentTypeSupplier.get(context).getExamples();
+            }
+            catch (CommandSyntaxException e)
+            {
+                this.examples = Collections.emptyList();
+            }
+            this.providesExamples = suggestFromExamples;
+            this.argumentTypeSupplierEx = argumentTypeSupplier;
+            this.valueExtractor = valueExtractor;
+            this.argumentTypeSupplier = null;
         }
 
         @Override
-        protected ArgumentType<?> getArgumentType() throws CommandSyntaxException
+        protected ArgumentType<?> getArgumentType(CarpetScriptHost host) throws CommandSyntaxException
         {
-            return argumentTypeSupplier.get();
+            if (argumentTypeSupplier != null) return argumentTypeSupplier.get();
+            CommandBuildContext registryAccess = new CommandBuildContext(host.getScriptServer().server.registryAccess());
+            return argumentTypeSupplierEx.get(registryAccess);
         }
 
         @Override
@@ -1052,7 +1089,8 @@ public abstract class CommandArgument
         @Override
         protected Supplier<CommandArgument> factory()
         {
-            return () -> new VanillaUnconfigurableArgument(getTypeSuffix(), argumentTypeSupplier, valueExtractor, providesExamples);
+            if (argumentTypeSupplier != null) return () -> new VanillaUnconfigurableArgument(getTypeSuffix(), argumentTypeSupplier, valueExtractor, providesExamples);
+            return () -> new VanillaUnconfigurableArgument(getTypeSuffix(), argumentTypeSupplierEx, valueExtractor, providesExamples);
         }
     }
 }

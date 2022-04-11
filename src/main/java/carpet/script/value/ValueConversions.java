@@ -66,7 +66,7 @@ public class ValueConversions
         return ListValue.of(new NumericValue(vec.x), new NumericValue(vec.y), new NumericValue(vec.z));
     }
 
-    public static Value of(ColumnPos cpos) { return ListValue.of(new NumericValue(cpos.x), new NumericValue(cpos.z));}
+    public static Value of(ColumnPos cpos) { return ListValue.of(new NumericValue(cpos.x()), new NumericValue(cpos.z()));}
 
     public static Value of(ServerLevel world)
     {

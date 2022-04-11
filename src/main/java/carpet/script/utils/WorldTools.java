@@ -72,7 +72,7 @@ public class WorldTools
         catch (IOException ignored) { }
         return true;
     }
-
+/*
     public static boolean createWorld(MinecraftServer server, String worldKey, Long seed)
     {
         ResourceLocation worldId = new ResourceLocation(worldKey);
@@ -137,7 +137,7 @@ public class WorldTools
         overWorld.getWorldBorder().addListener(new BorderChangeListener.DelegateBorderChangeListener(serverWorld.getWorldBorder()));
         ((MinecraftServerInterface) server).getCMWorlds().put(customWorld, serverWorld);
         return true;
-    }
+    }*/
 
     public static void forceChunkUpdate(BlockPos pos, ServerLevel world)
     {
