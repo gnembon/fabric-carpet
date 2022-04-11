@@ -326,7 +326,7 @@ public class EntityValue extends Value
                     EntityType.EVOKER_FANGS, EntityType.EXPERIENCE_ORB, EntityType.EYE_OF_ENDER,
                     EntityType.FALLING_BLOCK, EntityType.ITEM, EntityType.ITEM_FRAME, EntityType.GLOW_ITEM_FRAME,
                     EntityType.LEASH_KNOT, EntityType.LIGHTNING_BOLT, EntityType.PAINTING,
-                    EntityType.TNT, EntityType.ARMOR_STAND, EntityValue.CHEST_BOAT
+                    EntityType.TNT, EntityType.ARMOR_STAND, EntityType.CHEST_BOAT
 
             );
             Set<EntityType<?>> minecarts = Sets.newHashSet(
