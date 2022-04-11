@@ -41,7 +41,6 @@ import carpet.CarpetSettings;
 import carpet.api.settings.Rule.Condition;
 import carpet.network.ServerNetworkHandler;
 import carpet.settings.ParsedRule;
-import carpet.settings.Rule;
 import carpet.utils.CommandHelper;
 import carpet.utils.Messenger;
 import carpet.utils.TranslationKeys;
@@ -180,9 +179,9 @@ public class SettingsManager {
 
         nextRule: for (Field field : settingsClass.getDeclaredFields())
         {
-            Class<? extends carpet.api.settings.Rule.Condition>[] conditions;
-            var newAnnotation = field.getAnnotation(carpet.api.settings.Rule.class);
-            var oldAnnotation = field.getAnnotation(Rule.class);
+            Class<? extends Rule.Condition>[] conditions;
+            var newAnnotation = field.getAnnotation(Rule.class);
+            var oldAnnotation = field.getAnnotation(carpet.settings.Rule.class);
             if (newAnnotation != null) {
                 conditions = newAnnotation.conditions();
             } else if (oldAnnotation != null) {
