@@ -2,6 +2,7 @@ package carpet.patches;
 
 import carpet.CarpetSettings;
 import com.mojang.authlib.GameProfile;
+import net.minecraft.core.UUIDUtil;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.network.protocol.PacketFlow;
@@ -51,7 +52,7 @@ public class EntityPlayerMPFake extends ServerPlayer
             {
                 return null;
             } else {
-                gameprofile = new GameProfile(Player.createPlayerUUID(username), username);
+                gameprofile = new GameProfile(UUIDUtil.createOfflinePlayerUUID(username), username);
             }
         }
         if (gameprofile.getProperties().containsKey("textures"))
