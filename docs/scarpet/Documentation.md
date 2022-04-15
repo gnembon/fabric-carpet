@@ -8,15 +8,15 @@
 
 [Operators](/docs/scarpet/language/Operators.md)
 
-[Mathematical Functions](/docs/scarpet/language/Math.md)
+[Mathematical Functions](/docs/scarpet/language/MathematicalFunctions.md)
 
 [System Functions](/docs/scarpet/language/SystemFunctions.md)
 
 [Loops and Higher Order Functions](/docs/scarpet/language/LoopsAndHigherOrderFunctions.md)
 
-[User Defined Functions and Control Flow](/docs/scarpet/language/FunctionsAndControlFlow.md)
+[User Defined Functions and Control Flow](/docs/scarpet/language/UserDefinedFunctionsAndControlFlow.md)
 
-[Container Types](/docs/scarpet/language/Containers.md)
+[Container Types](/docs/scarpet/language/ContainerTypes.md)
 
 ## Minecraft API
 
@@ -32,9 +32,9 @@
 
 [Events](/docs/scarpet/api/Events.md)
 
-[Scoreboard manipulation](/docs/scarpet/api/Scoreboard.md)
+[Scoreboard Manipulation](/docs/scarpet/api/ScoreboardManipulation.md)
 
-[Auxiliary Functions](/docs/scarpet/api/Auxiliary.md)
+[Auxiliary Functions](/docs/scarpet/api/AuxiliaryFunctions.md)
 
 [`/script` Command](/docs/scarpet/api/ScriptCommand.md)
 
