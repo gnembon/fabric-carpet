@@ -341,11 +341,11 @@ public class Auxiliary {
             BlockState targetBlock = null;
             Vector3Argument pointLocator;
             boolean interactable = true;
-            String name;
+            Component name;
             try
             {
                 Value nameValue = lv.get(0);
-                name = nameValue.isNull() ? "" : nameValue.getString();
+                name = nameValue.isNull() ? null : FormattedTextValue.getTextByValue(nameValue);
                 pointLocator = Vector3Argument.findIn(lv, 1, true, false);
                 if (lv.size()>pointLocator.offset)
                 {
@@ -364,7 +364,7 @@ public class Auxiliary {
 
             ArmorStand armorstand = new ArmorStand(EntityType.ARMOR_STAND, cc.s.getLevel());
             double yoffset;
-            if (targetBlock == null && name.isEmpty())
+            if (targetBlock == null && name == null)
             {
                 yoffset = 0.0;
             }
@@ -395,9 +395,9 @@ public class Auxiliary {
             armorstand.addTag(MARKER_STRING);
             if (targetBlock != null)
                 armorstand.setItemSlot(EquipmentSlot.HEAD, new ItemStack(targetBlock.getBlock().asItem()));
-            if (!name.isEmpty())
+            if (name != null)
             {
-                armorstand.setCustomName(new TextComponent(name));
+                armorstand.setCustomName(name);
                 armorstand.setCustomNameVisible(true);
             }
             armorstand.setHeadPose(new Rotations((int)pointLocator.pitch,0,0));
