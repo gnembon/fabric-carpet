@@ -75,8 +75,21 @@ draw_pyramid(pos, radius, height, pointing, orientation, fill_type, is_square)->
     hollow = fill_type=='hollow';
     pointup = pointing=='up';
     for(range(height),
-        r = if(pointup, (radius * ( 1 - _ / height) - 1), radius * _ / height);
-        positions = positions + _fill_flat(pos, _, r, is_square, orientation, !((pointup&&_==0)||(!pointup && _==height-1)) && hollow, true)//Always close bottom off
+        h=_;
+        r = if(pointup, (radius * ( 1 - h / height) - 1), radius * h / height);
+
+        if(!hollow || (pointup&&h==0)||(!pointup && h==height-1),
+            positions = positions + _fill_flat(pos, h, r, is_square, orientation, false, true),//Always close bottom off
+            inner=if(radius<=height,
+                r-1,
+                2*radius+1>2*height,
+                if(pointup, (radius * ( 1 - (h+1) / height) - 1), radius * (h+1) / height),
+                r-2
+            );
+            for(range(inner, r),
+                positions = positions + _fill_flat(pos, h, _+1, is_square, orientation, true, true)//Always close bottom off
+            )
+        );
     );
     positions
 );
