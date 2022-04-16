@@ -8,6 +8,7 @@ import carpet.fakes.ServerChunkManagerInterface;
 import carpet.fakes.ServerWorldInterface;
 import carpet.fakes.SpawnHelperInnerInterface;
 import carpet.fakes.ThreadedAnvilChunkStorageInterface;
+import carpet.helpers.BlockRotator;
 import carpet.helpers.FeatureGenerator;
 import carpet.mixins.PoiRecord_scarpetMixin;
 import carpet.script.CarpetContext;
@@ -46,6 +47,11 @@ import net.minecraft.core.QuartPos;
 import net.minecraft.core.Registry;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.tags.TagKey;
+import net.minecraft.world.level.block.Mirror;
+import net.minecraft.world.level.block.Rotation;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.level.block.state.properties.DoubleBlockHalf;
+import net.minecraft.world.level.block.state.properties.SlabType;
 import net.minecraft.world.level.levelgen.structure.Structure;
 import net.minecraft.world.level.levelgen.structure.StructureType;
 import org.jetbrains.annotations.Nullable;
@@ -1631,5 +1637,78 @@ public class WorldAccess {
             ret.put(new StringValue(noise), new NumericValue(noiseValue));
         }
         return MapValue.wrap(ret);*/
+    }
+
+
+    @ScarpetFunction(maxParams = 5)
+    public Value rotate(Context c, @Locator.Block BlockValue blockValue, int nAngle) {
+        int angleIndex = nAngle % 360;
+        angleIndex = angleIndex < 0 ? angleIndex + 360 : angleIndex;
+        angleIndex /= 90;
+
+        Rotation rotation = Rotation.NONE;
+
+        switch (angleIndex) {
+            case 1 -> rotation = Rotation.CLOCKWISE_90;
+            case 2 -> rotation = Rotation.CLOCKWISE_180;
+            case 3 -> rotation = Rotation.COUNTERCLOCKWISE_90;
+        }
+
+        Block block = blockValue.getBlockState().getBlock();
+        BlockState state = blockValue.getBlockState();
+
+        return new BlockValue(block.rotate(state, rotation), ((CarpetContext) c).s.getLevel(), blockValue.getPos());
+    }
+
+    @ScarpetFunction(maxParams = 5)
+    public BlockValue mirror(Context c, @Locator.Block BlockValue blockValue, String axisArg) {
+        Direction.Axis axis = Direction.Axis.byName(axisArg);
+        if (axis == null) {
+            throw new InternalExpressionException("Axis should be one of 'x', 'y', 'z' in 'mirror'");
+        }
+
+        BlockState state = blockValue.getBlockState();
+        Block block = state.getBlock();
+        BlockState mirroredState = state;
+
+        switch (axis) {
+            case X -> mirroredState = block.mirror(state, Mirror.FRONT_BACK);
+            case Z -> mirroredState = block.mirror(state, Mirror.LEFT_RIGHT);
+            case Y -> {
+                if (state.hasProperty(BlockStateProperties.FACING))
+                {
+                    Direction facing = state.getValue(BlockStateProperties.FACING);
+                    if (facing == Direction.UP || facing == Direction.DOWN) {
+                        mirroredState = state.setValue(BlockStateProperties.FACING, facing.getOpposite());
+                    }
+                }
+                else if (state.hasProperty(BlockStateProperties.DOUBLE_BLOCK_HALF))
+                {
+                    DoubleBlockHalf half = state.getValue(BlockStateProperties.DOUBLE_BLOCK_HALF);
+                    switch (half) {
+                        case UPPER -> {
+                            mirroredState = state.setValue(BlockStateProperties.DOUBLE_BLOCK_HALF, DoubleBlockHalf.LOWER);
+                        }
+                        case LOWER -> {
+                            mirroredState = state.setValue(BlockStateProperties.DOUBLE_BLOCK_HALF, DoubleBlockHalf.UPPER);
+                        }
+                    }
+                }
+                else if (state.hasProperty(BlockStateProperties.SLAB_TYPE))
+                {
+                    SlabType type = state.getValue(BlockStateProperties.SLAB_TYPE);
+                    switch (type) {
+                        case TOP -> {
+                            mirroredState = state.setValue(BlockStateProperties.SLAB_TYPE, SlabType.BOTTOM);
+                        }
+                        case BOTTOM -> {
+                            mirroredState = state.setValue(BlockStateProperties.SLAB_TYPE, SlabType.TOP);
+                        }
+                    }
+                }
+            }
+        }
+
+        return new BlockValue(mirroredState, ((CarpetContext)c).s.getLevel(), blockValue.getPos());
     }
 }
