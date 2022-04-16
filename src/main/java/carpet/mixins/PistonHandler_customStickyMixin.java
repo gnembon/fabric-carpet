@@ -154,7 +154,7 @@ public abstract class PistonHandler_customStickyMixin
      * as well as other special sticky blocks (chains, gnembon).
      * @author 2No2Name, gnembon
      */
-    private void stickToStickySide(CallbackInfoReturnable<Boolean> cir, int int_1){
+    private void stickToStickySide(CallbackInfoReturnable<Boolean> cir, BlockState blockState, int int_1){
         if (CarpetSettings.movableBlockEntities)
         {
             if (!stickToStickySide(this.toPush.get(int_1)))
