@@ -60,7 +60,7 @@ draw_diamond(pos, radius)->(
 draw_filled_diamond(pos, radius)->(
     positions = {};
     loop(radius,
-        positions = positions + draw_diamond([pos, _+1]);
+        positions = positions + draw_diamond(pos, _+1);
     );
     positions
 );
