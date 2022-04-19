@@ -10,11 +10,16 @@ Plays a specific sound `name`, at block or position `pos`, with optional `volume
 optional `mixer`. Default values for `volume`, `pitch` and `mixer` are `1.0`, `1.0`, and `master`. 
 Valid mixer options are `master`, `music`, `record`, `weather`, `block`, `hostile`,`neutral`, `player`, `ambient`
 and `voice`. `pos` can be either a block, triple of coords, or a list of thee numbers. Uses the same options as a
- corresponding `playsound` command.
+ corresponding `playsound` command. Note that modifying `pitch` also modifies the duration of the sound.
  
-Used with no arguments, return the list of available sound names.
+Used with no arguments, return the list of all available sound names.
  
 Throws `unknown_sound` if sound doesn't exist.
+<pre>
+//Plays the sound of a zombie breaking down a door, with 4x the volume and 1/4th the pitch
+//Turning down ambient music in sound settings will reduce the volume of this sound
+sound('entity.zombie.break_wooden_door', [x, y, z], 4, 0.25, 'ambient')
+</pre>
 
 ## Particles
 
