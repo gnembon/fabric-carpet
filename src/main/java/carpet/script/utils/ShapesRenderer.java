@@ -284,6 +284,7 @@ public class ShapesRenderer
 
         private BlockPos blockPos;
         private BlockState blockState;
+        private BlockEntity BlockEntity=null;
         protected RenderedItem(Minecraft client, ShapeDispatcher.ExpiringShape shape)
         {
             super(client, (ShapeDispatcher.DisplayedItem)shape);
@@ -367,13 +368,15 @@ public class ShapesRenderer
             
             
             //draw the block`s entity part
-            BlockEntity BlockEntity=null;
-            if(blockState.getBlock() instanceof EntityBlock eb){
-                BlockEntity=eb.newBlockEntity(blockPos, blockState);
-                if (BlockEntity!=null)
-                    BlockEntity.setLevel(client.level);
-                    if (shape.blockEntity!=null)
-                        BlockEntity.load(shape.blockEntity);//maybe add some NBT here in the future?
+            if(BlockEntity==null){
+                if(blockState.getBlock() instanceof EntityBlock eb){
+                    BlockEntity=eb.newBlockEntity(blockPos, blockState);
+                    if (BlockEntity!=null){
+                        BlockEntity.setLevel(client.level);
+                        if (shape.blockEntity!=null)
+                            BlockEntity.load(shape.blockEntity);
+                    }
+                }
             }
             if(BlockEntity!=null&&client.getBlockEntityRenderDispatcher().getRenderer(BlockEntity)!=null){
                 client.getBlockEntityRenderDispatcher().getRenderer(BlockEntity).render(BlockEntity, partialTick, matrices, immediate, light, OverlayTexture.NO_OVERLAY);

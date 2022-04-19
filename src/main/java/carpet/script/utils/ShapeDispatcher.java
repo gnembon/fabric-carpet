@@ -1219,7 +1219,7 @@ public class ShapeDispatcher
 
             put("block", new BlockParam("block"));
             put("item", new ItemParam("item"));
-            put("light", new PositiveIntParam("light"));
+            put("light", new NonNegativeIntParam("light"));
             put("indent", new FloatParam("indent"));
             put("raise", new FloatParam("raise"));
             put("tilt", new FloatParam("tilt"));
