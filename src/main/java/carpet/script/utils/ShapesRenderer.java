@@ -86,7 +86,8 @@ public class ShapesRenderer
         put("cylinder", RenderedCylinder::new);
         put("label", RenderedText::new);
         put("poly",RenderedPolyface::new);
-        put("blockoritemdisplayer",RenderedItem::new);
+        put("block_displayer",RenderedItem::new);
+        put("item_displayer",RenderedItem::new);
     }};
 
     public ShapesRenderer(Minecraft minecraftClient)

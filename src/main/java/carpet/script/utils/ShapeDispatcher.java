@@ -262,7 +262,8 @@ public class ShapeDispatcher
             put("cylinder", creator(Cylinder::new));
             put("label", creator(DisplayedText::new));
             put("poly",creator(Polyface::new));
-            put("blockoritemdisplayer",creator(DisplayedItem::new));
+            put("block_displayer",creator(()->new DisplayedItem(false)));
+            put("item_displayer",creator(()->new DisplayedItem(true)));
         }};
         private static Function<Map<String, Value>,ExpiringShape> creator(Supplier<ExpiringShape> shapeFactory)
         {
@@ -568,18 +569,17 @@ public class ShapeDispatcher
                 entry("tilt", new NumericValue(0)),
                 entry("lean", new NumericValue(0)),
                 entry("turn", new NumericValue(0)),
-                entry("item", Value.NULL),
-                entry("block", Value.NULL),
                 entry("height", new NumericValue(1)),
                 entry("width", new NumericValue(1)),
                 entry("obj_size", new NumericValue(1)),
                 entry("light", new NumericValue(-999)),
                 entry("doublesided", new NumericValue(0)));
+        private boolean isitem;
         @Override
-        protected Set<String> requiredParams() { return Sets.union(super.requiredParams(), required); }
+        protected Set<String> requiredParams() { return Sets.union(Sets.union(super.requiredParams(), required), Set.of(isitem?"item":"block")); }
         @Override
         protected Set<String> optionalParams() { return Sets.union(super.optionalParams(), optional.keySet()); }
-        public DisplayedItem() { }
+        public DisplayedItem(boolean i) {isitem=i;}
 
         Vec3 pos;
 
