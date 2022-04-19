@@ -151,13 +151,15 @@ Available shapes:
      * `inneredges` - if `true` it will make the inner edges be drawn as well. 
      * `doublesided` - if `true` it will make the shapes visible from the back as well. Default is `true`. 
 
- * `'blockoritemdisplayer'`:
+ * `'block_displayer'` \ `'item_displayer'`:
+   * Required attributes:
+     * `pos` - position of the object.
    * Optional attributes:
      * `facing` - object's direction, where its facing. Possible options are: `player` (default, it
      always rotates to face the player), `north`, `south`, `east`, `west`, `up`, `down`
      * `tilt`, `lean`, `turn` - additional rotations along all three axis
-     * `item` - the object to show. could have NBT. is a item tuple or a string-id or null
-     * `block` - the object to show. could have NBT. is a block value or a string-id or null
+     * `item` - the object to show. could have NBT. is a item tuple or a string-id (exclusive to `'item_displayer'`)
+     * `block` - the object to show. could have NBT. is a block value or a string-id (exclusive to `'block_displayer'`)
      * `height`, `width`, `obj_size` - size of it. should be numbers
      * `light` - light level. omit it to use local light level. should between 0~15
 
