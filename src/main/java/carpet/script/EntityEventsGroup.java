@@ -7,15 +7,16 @@ import carpet.script.value.FunctionValue;
 import carpet.script.value.NumericValue;
 import carpet.script.value.StringValue;
 import carpet.script.value.Value;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.damage.DamageSource;
-
+import carpet.script.value.ValueConversions;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.phys.Vec3;
 
 public class EntityEventsGroup
 {
@@ -46,7 +47,7 @@ public class EntityEventsGroup
             }
             if (key.user() != null)
             {
-                if (entity.getServer().getPlayerManager().getPlayer(key.user())==null)
+                if (entity.getServer().getPlayerList().getPlayerByName(key.user())==null)
                 {
                     iterator.remove();
                     continue;
@@ -103,8 +104,21 @@ public class EntityEventsGroup
                 return Arrays.asList(
                         new EntityValue(entity),
                         new NumericValue(amount),
-                        new StringValue(source.getName()),
-                        source.getAttacker()==null?Value.NULL:new EntityValue(source.getAttacker())
+                        new StringValue(source.getMsgId()),
+                        source.getEntity()==null?Value.NULL:new EntityValue(source.getEntity())
+                );
+            }
+        };
+        public static final Event ON_MOVE = new Event("on_move", 3)
+        {
+            @Override
+            public List<Value> makeArgs(Entity entity, Object... providedArgs)
+            {
+                return Arrays.asList(
+                        new EntityValue(entity),
+                        ValueConversions.of((Vec3) providedArgs[0]),
+                        ValueConversions.of((Vec3) providedArgs[1]),
+                        ValueConversions.of((Vec3) providedArgs[2])
                 );
             }
         };
@@ -128,7 +142,7 @@ public class EntityEventsGroup
         public CarpetEventServer.CallbackResult call(CarpetEventServer.Callback tickCall, Entity entity, Object ... args)
         {
             assert args.length == argcount-1;
-            return tickCall.execute(entity.getCommandSource(), makeArgs(entity, args));
+            return tickCall.execute(entity.createCommandSourceStack(), makeArgs(entity, args));
         }
         protected List<Value> makeArgs(Entity entity, Object ... args)
         {

@@ -1,10 +1,10 @@
 package carpet.mixins;
 
 import carpet.CarpetSettings;
-import net.minecraft.block.Block;
-import net.minecraft.server.command.FillCommand;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.core.BlockPos;
+import net.minecraft.server.commands.FillCommand;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.block.Block;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Constant;
@@ -14,18 +14,18 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 @Mixin(FillCommand.class)
 public abstract class FillCommandMixin
 {
-    @ModifyConstant(method = "execute", constant = @Constant(intValue = 32768))
+    @ModifyConstant(method = "fillBlocks", constant = @Constant(intValue = 32768))
     private static int fillLimit(int original)
     {
         return CarpetSettings.fillLimit;
     }
 
-    @Redirect(method = "execute", at = @At(
+    @Redirect(method = "fillBlocks", at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/server/world/ServerWorld;updateNeighbors(Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/block/Block;)V"
+            target = "Lnet/minecraft/server/level/ServerLevel;blockUpdated(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/Block;)V"
     ))
-    private static void conditionalUpdating(ServerWorld serverWorld, BlockPos blockPos_1, Block block_1)
+    private static void conditionalUpdating(ServerLevel serverWorld, BlockPos blockPos_1, Block block_1)
     {
-        if (CarpetSettings.fillUpdates) serverWorld.updateNeighbors(blockPos_1, block_1);
+        if (CarpetSettings.fillUpdates) serverWorld.blockUpdated(blockPos_1, block_1);
     }
 }

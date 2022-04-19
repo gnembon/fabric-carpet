@@ -2,11 +2,10 @@ package carpet.script.bundled;
 
 import carpet.CarpetServer;
 import carpet.script.argument.FileArgument;
-import net.minecraft.nbt.NbtElement;
-import net.minecraft.util.WorldSavePath;
-
 import java.nio.file.Files;
 import java.nio.file.Path;
+import net.minecraft.nbt.Tag;
+import net.minecraft.world.level.storage.LevelResource;
 
 public abstract class Module
 {
@@ -14,7 +13,7 @@ public abstract class Module
     public abstract String getCode();
     public abstract boolean isLibrary();
 
-    public static NbtElement getData(Module module)
+    public static Tag getData(Module module)
     {
         Path dataFile = resolveResource(module);
         if (dataFile == null) return null;
@@ -22,7 +21,7 @@ public abstract class Module
         synchronized (FileArgument.writeIOSync) { return FileArgument.readTag(dataFile); }
     }
 
-    public static void saveData(Module module, NbtElement globalState)
+    public static void saveData(Module module, Tag globalState)
     {
         Path dataFile = resolveResource(module);
         if (dataFile == null) return;
@@ -33,7 +32,7 @@ public abstract class Module
     private static Path resolveResource(Module module)
     {
         if (module == null || module.getName() == null) return null; // commandline app
-        return CarpetServer.minecraft_server.getSavePath(WorldSavePath.ROOT).resolve("scripts/"+module.getName()+".data.nbt");
+        return CarpetServer.minecraft_server.getWorldPath(LevelResource.ROOT).resolve("scripts/"+module.getName()+".data.nbt");
     }
 
     @Override

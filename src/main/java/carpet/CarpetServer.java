@@ -32,11 +32,12 @@ import com.mojang.brigadier.CommandDispatcher;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.api.DedicatedServerModInitializer;
 import net.fabricmc.loader.api.FabricLoader;
-import net.minecraft.server.command.CommandManager;
-import net.minecraft.server.command.ServerCommandSource;
+import net.minecraft.commands.CommandBuildContext;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.commands.Commands;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.dedicated.command.PerfCommand;
-import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.server.commands.PerfCommand;
+import net.minecraft.server.level.ServerPlayer;
 
 public class CarpetServer // static for now - easier to handle all around the code, its one anyways
 {
@@ -45,7 +46,7 @@ public class CarpetServer // static for now - easier to handle all around the co
 
     public static final Random rand = new Random();
     public static MinecraftServer minecraft_server;
-    private static CommandDispatcher<ServerCommandSource> currentCommandDispatcher;
+    private static CommandDispatcher<CommandSourceStack> currentCommandDispatcher;
     public static CarpetScriptServer scriptServer;
     public static SettingsManager settingsManager;
     public static final List<CarpetExtension> extensions = new ArrayList<>();
@@ -66,6 +67,8 @@ public class CarpetServer // static for now - easier to handle all around the co
         if (currentCommandDispatcher != null)
         {
             extension.registerCommands(currentCommandDispatcher);
+            CarpetSettings.LOG.warn(extension.getClass().getSimpleName() + " extension registered too late!");
+            CarpetSettings.LOG.warn("This won't be supported in later Carpet versions and may crash the game!");
         }
     }
 
@@ -115,36 +118,37 @@ public class CarpetServer // static for now - easier to handle all around the co
         extensions.forEach(e -> e.onTick(server));
     }
 
-    @Deprecated
-    public static void registerCarpetCommands(CommandDispatcher<ServerCommandSource> dispatcher) {
-    }
-
-    public static void registerCarpetCommands(CommandDispatcher<ServerCommandSource> dispatcher, CommandManager.RegistrationEnvironment environment)
+    public static void registerCarpetCommands(CommandDispatcher<CommandSourceStack> dispatcher, Commands.CommandSelection environment, CommandBuildContext commandBuildContext)
     {
-        settingsManager.registerCommand(dispatcher);
+        if (settingsManager == null) // bootstrap dev initialization check
+        {
+            return;
+        }
+        settingsManager.registerCommand(dispatcher, commandBuildContext);
         extensions.forEach(e -> {
             SettingsManager sm = e.customSettingsManager();
-            if (sm != null) sm.registerCommand(dispatcher);
+            if (sm != null) sm.registerCommand(dispatcher, commandBuildContext);
         });
-        TickCommand.register(dispatcher);
-        ProfileCommand.register(dispatcher);
-        CounterCommand.register(dispatcher);
-        LogCommand.register(dispatcher);
-        SpawnCommand.register(dispatcher);
-        PlayerCommand.register(dispatcher);
-        //CameraModeCommand.register(dispatcher);
-        InfoCommand.register(dispatcher);
-        DistanceCommand.register(dispatcher);
-        PerimeterInfoCommand.register(dispatcher);
-        DrawCommand.register(dispatcher);
-        ScriptCommand.register(dispatcher);
-        MobAICommand.register(dispatcher);
+        TickCommand.register(dispatcher, commandBuildContext);
+        ProfileCommand.register(dispatcher, commandBuildContext);
+        CounterCommand.register(dispatcher, commandBuildContext);
+        LogCommand.register(dispatcher, commandBuildContext);
+        SpawnCommand.register(dispatcher, commandBuildContext);
+        PlayerCommand.register(dispatcher, commandBuildContext);
+        InfoCommand.register(dispatcher, commandBuildContext);
+        DistanceCommand.register(dispatcher, commandBuildContext);
+        PerimeterInfoCommand.register(dispatcher, commandBuildContext);
+        DrawCommand.register(dispatcher, commandBuildContext);
+        ScriptCommand.register(dispatcher, commandBuildContext);
+        MobAICommand.register(dispatcher, commandBuildContext);
         // registering command of extensions that has registered before either server is created
         // for all other, they will have them registered when they add themselves
-        extensions.forEach(e -> e.registerCommands(dispatcher));
+        extensions.forEach(e -> {
+            e.registerCommands(dispatcher, commandBuildContext);
+        });
         currentCommandDispatcher = dispatcher;
 
-        if (environment != CommandManager.RegistrationEnvironment.DEDICATED)
+        if (environment != Commands.CommandSelection.DEDICATED)
             PerfCommand.register(dispatcher);
         
         if (FabricLoader.getInstance().isDevelopmentEnvironment())
@@ -152,7 +156,7 @@ public class CarpetServer // static for now - easier to handle all around the co
         // todo 1.16 - re-registerer apps if that's a reload operation.
     }
 
-    public static void onPlayerLoggedIn(ServerPlayerEntity player)
+    public static void onPlayerLoggedIn(ServerPlayer player)
     {
         ServerNetworkHandler.onPlayerJoin(player);
         LoggerRegistry.playerConnected(player);
@@ -161,7 +165,7 @@ public class CarpetServer // static for now - easier to handle all around the co
 
     }
 
-    public static void onPlayerLoggedOut(ServerPlayerEntity player)
+    public static void onPlayerLoggedOut(ServerPlayer player)
     {
         ServerNetworkHandler.onPlayerLoggedOut(player);
         LoggerRegistry.playerDisconnected(player);

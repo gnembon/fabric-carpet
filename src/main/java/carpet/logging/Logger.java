@@ -2,11 +2,6 @@ package carpet.logging;
 
 import carpet.CarpetServer;
 import carpet.CarpetSettings;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.text.BaseText;
-import net.minecraft.util.Util;
-
 import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -14,6 +9,10 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Supplier;
+import net.minecraft.Util;
+import net.minecraft.network.chat.BaseComponent;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.player.Player;
 
 public class Logger
 {
@@ -32,11 +31,18 @@ public class Logger
 
     private Field acceleratorField;
 
+    private boolean strictOptions;
+
     static Logger stardardLogger(String logName, String def, String [] options)
+    {
+        return stardardLogger(logName, def, options, false);
+    }
+
+    static Logger stardardLogger(String logName, String def, String [] options, boolean strictOptions)
     {
         try
         {
-            return new Logger(LoggerRegistry.class.getField("__"+logName), logName, def, options);
+            return new Logger(LoggerRegistry.class.getField("__"+logName), logName, def, options, strictOptions);
         }
         catch (NoSuchFieldException e)
         {
@@ -44,7 +50,12 @@ public class Logger
         }
     }
 
-    public Logger(Field acceleratorField, String logName, String def, String [] options)
+    @Deprecated
+    public Logger(Field acceleratorField, String logName, String def, String [] options) {
+        this(acceleratorField, logName, def, options, false);
+    }
+
+    public Logger(Field acceleratorField, String logName, String def, String [] options, boolean strictOptions)
     {
         subscribedOnlinePlayers = new HashMap<>();
         subscribedOfflinePlayers = new HashMap<>();
@@ -52,6 +63,7 @@ public class Logger
         this.logName = logName;
         this.default_option = def;
         this.options = options;
+        this.strictOptions = strictOptions;
         if (acceleratorField == null)
             CarpetSettings.LOG.error("[CM] Logger "+getLogName()+" is missing a specified accelerator");
     }
@@ -123,15 +135,15 @@ public class Logger
      * will repeat invocation for players that share the same option
      */
     @FunctionalInterface
-    public interface lMessage { BaseText [] get(String playerOption, PlayerEntity player);}
+    public interface lMessage { BaseComponent [] get(String playerOption, Player player);}
     public void log(lMessage messagePromise)
     {
         for (Map.Entry<String,String> en : subscribedOnlinePlayers.entrySet())
         {
-            ServerPlayerEntity player = playerFromName(en.getKey());
+            ServerPlayer player = playerFromName(en.getKey());
             if (player != null)
             {
-                BaseText [] messages = messagePromise.get(en.getValue(),player);
+                BaseComponent [] messages = messagePromise.get(en.getValue(),player);
                 if (messages != null)
                     sendPlayerMessage(player, messages);
             }
@@ -143,13 +155,13 @@ public class Logger
      * and served the same way to all other players subscribed to the same option
      */
     @FunctionalInterface
-    public interface lMessageIgnorePlayer { BaseText [] get(String playerOption);}
+    public interface lMessageIgnorePlayer { BaseComponent [] get(String playerOption);}
     public void log(lMessageIgnorePlayer messagePromise)
     {
-        Map<String, BaseText[]> cannedMessages = new HashMap<>();
+        Map<String, BaseComponent[]> cannedMessages = new HashMap<>();
         for (Map.Entry<String,String> en : subscribedOnlinePlayers.entrySet())
         {
-            ServerPlayerEntity player = playerFromName(en.getKey());
+            ServerPlayer player = playerFromName(en.getKey());
             if (player != null)
             {
                 String option = en.getValue();
@@ -157,7 +169,7 @@ public class Logger
                 {
                     cannedMessages.put(option,messagePromise.get(option));
                 }
-                BaseText [] messages = cannedMessages.get(option);
+                BaseComponent [] messages = cannedMessages.get(option);
                 if (messages != null)
                     sendPlayerMessage(player, messages);
             }
@@ -166,12 +178,12 @@ public class Logger
     /**
      * guarantees that message is evaluated once, so independent from the player and chosen option
      */
-    public void log(Supplier<BaseText[]> messagePromise)
+    public void log(Supplier<BaseComponent[]> messagePromise)
     {
-        BaseText [] cannedMessages = null;
+        BaseComponent [] cannedMessages = null;
         for (Map.Entry<String,String> en : subscribedOnlinePlayers.entrySet())
         {
-            ServerPlayerEntity player = playerFromName(en.getKey());
+            ServerPlayer player = playerFromName(en.getKey());
             if (player != null)
             {
                 if (cannedMessages == null) cannedMessages = messagePromise.get();
@@ -180,22 +192,22 @@ public class Logger
         }
     }
 
-    public void sendPlayerMessage(ServerPlayerEntity player, BaseText ... messages)
+    public void sendPlayerMessage(ServerPlayer player, BaseComponent ... messages)
     {
-        Arrays.stream(messages).forEach(message -> player.sendSystemMessage(message, Util.NIL_UUID));
+        Arrays.stream(messages).forEach(message -> player.sendMessage(message, Util.NIL_UUID));
     }
 
     /**
      * Gets the {@code PlayerEntity} instance for a player given their UUID. Returns null if they are offline.
      */
-    protected ServerPlayerEntity playerFromName(String name)
+    protected ServerPlayer playerFromName(String name)
     {
-        return CarpetServer.minecraft_server.getPlayerManager().getPlayer(name);
+        return CarpetServer.minecraft_server.getPlayerList().getPlayerByName(name);
     }
 
     // ----- Event Handlers ----- //
 
-    public void onPlayerConnect(PlayerEntity player, boolean firstTime)
+    public void onPlayerConnect(Player player, boolean firstTime)
     {
         // If the player was subscribed to the log and offline, move them to the set of online subscribers.
         String playerName = player.getName().getString();
@@ -215,7 +227,7 @@ public class Logger
         LoggerRegistry.setAccess(this);
     }
 
-    public void onPlayerDisconnect(PlayerEntity player)
+    public void onPlayerDisconnect(Player player)
     {
         // If the player was subscribed to the log, move them to the set of offline subscribers.
         String playerName = player.getName().getString();
@@ -231,5 +243,13 @@ public class Logger
     {
         if (options != null && Arrays.asList(options).contains(arg)) return arg;
         return null;
+    }
+
+    public boolean isOptionValid(String option) {
+        if (strictOptions)
+        {
+            return Arrays.asList(this.options).contains(option);
+        }
+        return true;
     }
 }

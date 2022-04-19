@@ -32,6 +32,8 @@
                 sqrt
                 max min abs round floor ceil
                 then sum difference product quotient equal unique increasing decreasing nonincreasing nondecreasing or and
+                bitwise_or bitwise_and bitwise_xor bitwise_shift_left bitwise_shift_right bitwise_roll_left bitwise_roll_right bitwise_not bitwise_popcount
+                double_to_long_bits long_bits_to_double
                 mandelbrot relu
                 perlin simplex
 
@@ -55,10 +57,10 @@
                 hardness blast_resistance top loaded suffocates power ticks_randomly update block_tick random_tick in_slime_chunk
                 set without_updates
                 blocks_movement block_sound material map_colour block_state block_list block_tags block_data poi set_poi
-                place_item set_biome biome loaded_status generation_status inhabited_time spawn_potential chunk_tickets
+                place_item set_biome biome loaded_status generation_status sample_noise inhabited_time spawn_potential chunk_tickets
                 plop harvest destroy create_explosion
                 structure_eligibility structures structure_references set_structure
-                reset_chunk reload_chunk create_datapack enable_hidden_dimensions
+                reset_chunk reload_chunk create_datapack
                 add_chunk_ticket
 
                 convert_date unix_time
@@ -68,6 +70,8 @@
                 scoreboard scoreboard_add scoreboard_remove scoreboard_display scoreboard_property
 
                 team_add team_list team_remove team_leave team_property
+
+                create_screen close_screen screen_property
 
                 bossbar
 
@@ -143,6 +147,7 @@
                 __on_player_respawns
                 __on_player_disconnects
                 __on_player_connects
+                __on_player_message
                 __on_explosion
                 __on_explosion_outcome
             </Keywords>

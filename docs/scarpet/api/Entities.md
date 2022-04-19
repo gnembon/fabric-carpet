@@ -202,11 +202,23 @@ List of entities riding the entity.
 
 Entity that `e` rides.
 
-###  `query(e, 'scoreboard_tags')`, `query(e, 'tags')`(deprecated)
+### `query(e, 'unmountable')`
+
+Boolean, true if the entity cannot be mounted.
+
+### `(deprecated) query(e, 'tags')`
+
+Deprecated by `query(e, 'scoreboard_tags')`
+
+### `query(e, 'scoreboard_tags')`
 
 List of entity's scoreboard tags.
 
-### `query(e, 'has_scoreboard_tag',tag)`, `query(e, 'has_tag',tag)`(deprecated)
+### `(deprecated) query(e, 'has_tag',tag)`
+
+Deprecated by `query(e, 'has_scoreboard_tag',tag)`
+
+### `query(e, 'has_scoreboard_tag',tag)`
 
 Boolean, true if the entity is marked with a `tag` scoreboad tag.
 
@@ -226,6 +238,14 @@ Boolean, true if the entity is burning.
 
 Number of remaining ticks of being on fire.
 
+### `query(e, 'is_freezing')`
+
+Boolean, true if the entity is freezing.
+
+### `query(e, 'frost')`
+
+Number of remaining ticks of being frozen.
+
 ### `query(e, 'silent')`
 
 Boolean, true if the entity is silent.
@@ -241,6 +261,10 @@ Boolean, true if the entity is invulnerable.
 ### `query(e, 'immune_to_fire')`
 
 Boolean, true if the entity is immune to fire.
+
+### `query(e, 'immune_to_frost')`
+
+Boolean, true if the entity is immune to frost.
 
 ### `query(e, 'dimension')`
 
@@ -400,6 +424,30 @@ query(p,'effect','resistance')  => null
 
 Number indicating remaining entity health, or `null` if not applicable.
 
+### `query(e, 'may_fly')`
+
+Returns a boolean indicating if the player can fly.
+
+### `query(e, 'flying')`
+
+Returns a boolean indicating if the player is flying.
+
+### `query(e, 'may_build')`
+
+Returns a boolean indicating if the player is allowed to place blocks.
+
+### `query(e, 'insta_build')`
+
+Returns a boolean indicating if the player can place blocks without consuming the item and if the player can shoot arrows without having them in the inventory.
+
+### `query(e, 'fly_speed')`
+
+Returns a number indicating the speed at which the player moves while flying.
+
+### `query(e, 'walk_speed')`
+
+Returns a number indicating the speed at which the player moves while walking.
+
 ### `query(e, 'hunger')`
 ### `query(e, 'saturation')`
 ### `query(e, 'exhaustion')`
@@ -408,19 +456,19 @@ Retrieves player hunger related information. For non-players, returns `null`.
 
 ### `query(e, 'absorption')`
 
-Gets the absorption of the player (yellow hearts, e.g when having a golden apple.)
+Gets the absorption of the player (yellow hearts, e.g. when having a golden apple.)
 
-### `query(e,'xp')`
-### `query(e,'xp_level')`
-### `query(e,'xp_progress')`
-### `query(e,'score')`
+### `query(e, 'xp')`
+### `query(e, 'xp_level')`
+### `query(e, 'xp_progress')`
+### `query(e, 'score')`
 
 Numbers related to player's xp. `xp` is the overall xp player has, `xp_level` is the levels seen in the hotbar,
 `xp_progress` is a float between 0 and 1 indicating the percentage of the xp bar filled, and `score` is the number displayed upon death 
 
 ### `query(e, 'air')`
 
-Number indicating remaining entity health, or `null` if not applicable.
+Number indicating remaining entity air, or `null` if not applicable.
 
 ### `query(e, 'language')`
 
@@ -560,10 +608,7 @@ type objects via `get, put, has, delete`, so try to use API calls first for that
 
 ## Entity Modification
 
-Like with entity querying, entity modifications happen through one function. Most position and movements modifications 
-don't work currently on players as their position is controlled by clients.
-
-Currently there is no ability to modify NBT directly, but you could always use `run('data modify entity ...')`.
+Like with entity querying, entity modifications happen through one function.
 
 ### `modify(e, 'remove')`
 
@@ -607,7 +652,7 @@ Moves the entity by a vector from its current location.
 
 Sets the motion vector (where and how much entity is moving).
 
-### `modify(e, 'motion_z', x), modify(e, 'motion_y', y), modify(e, 'motion_z', z)`
+### `modify(e, 'motion_x', x), modify(e, 'motion_y', y), modify(e, 'motion_z', z)`
 
 Sets the corresponding component of the motion vector.
 
@@ -658,6 +703,10 @@ Dismounts riding entity.
 
 Mounts the entity to the `other`.
 
+### `modify(e, 'unmountable', boolean)`
+
+Denies or allows an entity to be mounted.
+
 ### `modify(e, 'drop_passengers')`
 
 Shakes off all passengers.
@@ -692,6 +741,38 @@ players, since they are controlled client side.
 Applies status effect to the living entity. Takes several optional parameters, which default to `0`, `true`, 
 `true` and `false`. If no duration is specified, or if it's null or 0, the effect is removed. If name is not specified,
 it clears all effects.
+
+### `modify(e, 'health', float)`
+
+Modifies the health of an entity.
+
+### `modify(e, 'may_fly', boolean)`
+
+Allows or denies the player the ability to fly. If the player is flying and the ability is removed, the player will stop flying.
+
+### `modify(e, 'flying', boolean)`
+
+Changes the flight status of the player (if it is flying or not).
+
+### `modify(e, 'may_build', boolean)`
+
+Allows or denies the player the ability to place blocks.
+
+### `modify(e, 'insta_build', boolean)`
+
+Allows or denies the player to place blocks without reducing the item count of the used stack and to shoot arrows without having them in the inventory.
+
+### `modify(e, 'fly_speed', float)`
+
+Modifies the value of the speed at which the player moves while flying.
+
+### `modify(e, 'walk_speed', float)`
+
+Modifies the value of the speed at which the player moves while walking.
+
+### `modify(e, 'selected_slot', int)`
+
+Changes player's selected slot.
 
 ### `modify(e, 'home', null), modify(e, 'home', block, distance?), modify(e, 'home', x, y, z, distance?)`
 
@@ -746,6 +827,10 @@ Toggles invulnerability for the entity.
 
 Will set entity on fire for `ticks` ticks. Set to 0 to extinguish.
 
+### `modify(e, 'frost', ticks)`
+
+Will give entity frost for `ticks` ticks. Set to 0 to unfreeze.
+
 ### `modify(e, 'hunger', value)`
 ### `modify(e, 'saturation', value)`
 ### `modify(e, 'exhaustion', value)`
@@ -768,7 +853,7 @@ maybe you will get a double, who knows.
 
 ### `modify(e, 'air', ticks)`
 
-Modifies entity air
+Modifies entity air.
 
 ### `modify(e, 'add_exhaustion', value)`
 
@@ -801,6 +886,7 @@ defining the callback with `entity_event`.
 The following events can be handled by entities:
 
 *   `'on_tick'`: executes every tick right before the entity is ticked in the game. Required arguments: `entity`
+*   `'on_move'`: executes every time an entity changes position, invoked just after it has been moved to the new position. Required arguments: `entity, velocity, pos1, pos2`
 *   `'on_death'`: executes once when a living entity dies. Required arguments: `entity, reason`
 *   `'on_removed'`: execute once when an entity is removed. Required arguments: `entity`
 *   `'on_damaged'`: executed every time a living entity is about to receive damage.

@@ -2,8 +2,8 @@ package carpet.mixins;
 
 import carpet.CarpetServer;
 import com.mojang.brigadier.context.CommandContext;
-import net.minecraft.server.command.ReloadCommand;
-import net.minecraft.server.command.ServerCommandSource;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.server.commands.ReloadCommand;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -15,7 +15,7 @@ public class ReloadCommand_reloadAppsMixin {
     // internal of register.
     @SuppressWarnings("UnresolvedMixinReference")
     @Inject(method = "method_13530", at = @At("TAIL"))
-    private static void onReload(CommandContext<ServerCommandSource> context, CallbackInfoReturnable<Integer> cir)
+    private static void onReload(CommandContext<CommandSourceStack> context, CallbackInfoReturnable<Integer> cir)
     {
         // can't fetch here the reference to the server
         CarpetServer.onReload(context.getSource().getServer());

@@ -1,10 +1,10 @@
 package carpet.fakes;
 
-import net.minecraft.world.chunk.light.ChunkLightProvider;
+import net.minecraft.world.level.lighting.LayerLightEngine;
 
 public interface LightStorageInterface extends Lighting_scarpetChunkCreationInterface
 {
     void processRemoveLightData(long pos);
 
-    void processRelight(ChunkLightProvider<?, ?> lightProvider, long pos);
+    void processRelight(LayerLightEngine<?, ?> lightProvider, long pos);
 }

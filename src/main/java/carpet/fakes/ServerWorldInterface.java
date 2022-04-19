@@ -1,10 +1,10 @@
 package carpet.fakes;
 
-import net.minecraft.entity.Entity;
-import net.minecraft.world.entity.EntityLookup;
-import net.minecraft.world.level.ServerWorldProperties;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.level.entity.LevelEntityGetter;
+import net.minecraft.world.level.storage.ServerLevelData;
 
 public interface ServerWorldInterface {
-    ServerWorldProperties getWorldPropertiesCM();
-    EntityLookup<Entity> getEntityLookupCMPublic();
+    ServerLevelData getWorldPropertiesCM();
+    LevelEntityGetter<Entity> getEntityLookupCMPublic();
 }

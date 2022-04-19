@@ -1,22 +1,22 @@
 package carpet.utils;
 
-import net.minecraft.server.command.ServerCommandSource;
-import net.minecraft.entity.SpawnGroup;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.text.BaseText;
-import net.minecraft.text.ClickEvent;
-import net.minecraft.text.HoverEvent;
-import net.minecraft.text.LiteralText;
-import net.minecraft.text.Style;
-import net.minecraft.text.TextColor;
-import net.minecraft.util.Util;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.util.Formatting;
+import net.minecraft.ChatFormatting;
+import net.minecraft.Util;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.BaseComponent;
+import net.minecraft.network.chat.ClickEvent;
+import net.minecraft.network.chat.HoverEvent;
+import net.minecraft.network.chat.Style;
+import net.minecraft.network.chat.TextColor;
+import net.minecraft.network.chat.TextComponent;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.world.World;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import net.minecraft.world.entity.MobCategory;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.Vec3;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -28,36 +28,36 @@ import java.util.regex.Pattern;
 
 public class Messenger
 {
-    public static final Logger LOG = LogManager.getLogger("Messaging System");
+    public static final Logger LOG = LoggerFactory.getLogger("Messaging System");
 
     private static final Pattern colorExtract = Pattern.compile("#([0-9a-fA-F]{6})");
     public enum CarpetFormatting
     {
         ITALIC      ('i', (s, f) -> s.withItalic(true)),
-        STRIKE      ('s', (s, f) -> s.withFormatting(Formatting.STRIKETHROUGH)),
-        UNDERLINE   ('u', (s, f) -> s.withFormatting(Formatting.UNDERLINE)),
+        STRIKE      ('s', (s, f) -> s.applyFormat(ChatFormatting.STRIKETHROUGH)),
+        UNDERLINE   ('u', (s, f) -> s.applyFormat(ChatFormatting.UNDERLINE)),
         BOLD        ('b', (s, f) -> s.withBold(true)),
-        OBFUSCATE   ('o', (s, f) -> s.withFormatting(Formatting.OBFUSCATED)),
+        OBFUSCATE   ('o', (s, f) -> s.applyFormat(ChatFormatting.OBFUSCATED)),
 
-        WHITE       ('w', (s, f) -> s.withColor(Formatting.WHITE)),
-        YELLOW      ('y', (s, f) -> s.withColor(Formatting.YELLOW)),
-        LIGHT_PURPLE('m', (s, f) -> s.withColor(Formatting.LIGHT_PURPLE)), // magenta
-        RED         ('r', (s, f) -> s.withColor(Formatting.RED)),
-        AQUA        ('c', (s, f) -> s.withColor(Formatting.AQUA)), // cyan
-        GREEN       ('l', (s, f) -> s.withColor(Formatting.GREEN)), // lime
-        BLUE        ('t', (s, f) -> s.withColor(Formatting.BLUE)), // light blue, teal
-        DARK_GRAY   ('f', (s, f) -> s.withColor(Formatting.DARK_GRAY)),
-        GRAY        ('g', (s, f) -> s.withColor(Formatting.GRAY)),
-        GOLD        ('d', (s, f) -> s.withColor(Formatting.GOLD)),
-        DARK_PURPLE ('p', (s, f) -> s.withColor(Formatting.DARK_PURPLE)), // purple
-        DARK_RED    ('n', (s, f) -> s.withColor(Formatting.DARK_RED)),  // brown
-        DARK_AQUA   ('q', (s, f) -> s.withColor(Formatting.DARK_AQUA)),
-        DARK_GREEN  ('e', (s, f) -> s.withColor(Formatting.DARK_GREEN)),
-        DARK_BLUE   ('v', (s, f) -> s.withColor(Formatting.DARK_BLUE)), // navy
-        BLACK       ('k', (s, f) -> s.withColor(Formatting.BLACK)),
+        WHITE       ('w', (s, f) -> s.withColor(ChatFormatting.WHITE)),
+        YELLOW      ('y', (s, f) -> s.withColor(ChatFormatting.YELLOW)),
+        LIGHT_PURPLE('m', (s, f) -> s.withColor(ChatFormatting.LIGHT_PURPLE)), // magenta
+        RED         ('r', (s, f) -> s.withColor(ChatFormatting.RED)),
+        AQUA        ('c', (s, f) -> s.withColor(ChatFormatting.AQUA)), // cyan
+        GREEN       ('l', (s, f) -> s.withColor(ChatFormatting.GREEN)), // lime
+        BLUE        ('t', (s, f) -> s.withColor(ChatFormatting.BLUE)), // light blue, teal
+        DARK_GRAY   ('f', (s, f) -> s.withColor(ChatFormatting.DARK_GRAY)),
+        GRAY        ('g', (s, f) -> s.withColor(ChatFormatting.GRAY)),
+        GOLD        ('d', (s, f) -> s.withColor(ChatFormatting.GOLD)),
+        DARK_PURPLE ('p', (s, f) -> s.withColor(ChatFormatting.DARK_PURPLE)), // purple
+        DARK_RED    ('n', (s, f) -> s.withColor(ChatFormatting.DARK_RED)),  // brown
+        DARK_AQUA   ('q', (s, f) -> s.withColor(ChatFormatting.DARK_AQUA)),
+        DARK_GREEN  ('e', (s, f) -> s.withColor(ChatFormatting.DARK_GREEN)),
+        DARK_BLUE   ('v', (s, f) -> s.withColor(ChatFormatting.DARK_BLUE)), // navy
+        BLACK       ('k', (s, f) -> s.withColor(ChatFormatting.BLACK)),
 
         COLOR       ('#', (s, f) -> {
-            TextColor color = TextColor.parse("#"+f);
+            TextColor color = TextColor.parseColor("#"+f);
             return color == null ? s : s.withColor(color);
         }, s -> {
             Matcher m = colorExtract.matcher(s);
@@ -88,7 +88,7 @@ public class Messenger
 
     public static Style parseStyle(String style)
     {
-        Style myStyle= Style.EMPTY.withColor(Formatting.WHITE);
+        Style myStyle= Style.EMPTY.withColor(ChatFormatting.WHITE);
         for (CarpetFormatting cf: CarpetFormatting.values()) myStyle = cf.apply(style, myStyle);
         return myStyle;
     }
@@ -101,33 +101,28 @@ public class Messenger
         if (actual > reference) color = "m";
         return color;
     }
-    public static String creatureTypeColor(SpawnGroup type)
+    public static String creatureTypeColor(MobCategory type)
     {
-        switch (type)
+        return switch (type)
         {
-            case MONSTER:
-                return "n";
-            case CREATURE:
-                return "e";
-            case AMBIENT:
-                return "f";
-            case WATER_CREATURE:
-                return "v";
-            case WATER_AMBIENT:
-                return "q";
-        }
-        return "w";
+            case MONSTER -> "n";
+            case CREATURE -> "e";
+            case AMBIENT -> "f";
+            case WATER_CREATURE -> "v";
+            case WATER_AMBIENT -> "q";
+            default -> "w"; // missing MISC and UNDERGROUND_WATER_CREATURE
+        };
     }
 
-    private static BaseText _getChatComponentFromDesc(String message, BaseText previous_message)
+    private static BaseComponent getChatComponentFromDesc(String message, BaseComponent previousMessage)
     {
         if (message.equalsIgnoreCase(""))
         {
-            return new LiteralText("");
+            return new TextComponent("");
         }
         if (Character.isWhitespace(message.charAt(0)))
         {
-            message = "w"+message;
+            message = "w" + message;
         }
         int limit = message.indexOf(' ');
         String desc = message;
@@ -137,60 +132,45 @@ public class Messenger
             desc = message.substring(0, limit);
             str = message.substring(limit+1);
         }
-        if (desc.charAt(0) == '/') // deprecated
-        {
-            if (previous_message != null)
-                previous_message.setStyle(
-                        previous_message.getStyle().withClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, message))
-                );
-            return previous_message;
+        if (previousMessage == null) {
+            BaseComponent text = new TextComponent(str);
+            text.setStyle(parseStyle(desc));
+            return text;
         }
-        if (desc.charAt(0) == '?')
-        {
-            if (previous_message != null)
-                previous_message.setStyle(
-                        previous_message.getStyle().withClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, message.substring(1)))
-                );
-            return previous_message;
-        }
-        if (desc.charAt(0) == '!')
-        {
-            if (previous_message != null)
-                previous_message.setStyle(
-                        previous_message.getStyle().withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, message.substring(1)))
-                );
-            return previous_message;
-        }
-        if (desc.charAt(0) == '^')
-        {
-            if (previous_message != null)
-                previous_message.setStyle(
-                        previous_message.getStyle().withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, c(message.substring(1))))
-                );
-            return previous_message;
-        }
-        BaseText txt = new LiteralText(str);
-        txt.setStyle(parseStyle(desc));
-        return txt;
+        Style previousStyle = previousMessage.getStyle();
+        BaseComponent ret = previousMessage;
+        previousMessage.setStyle(switch (desc.charAt(0)) {
+            case '?' -> previousStyle.withClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, message.substring(1)));
+            case '!' -> previousStyle.withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, message.substring(1)));
+            case '^' -> previousStyle.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, c(message.substring(1))));
+            case '@' -> previousStyle.withClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, message.substring(1)));
+            case '&' -> previousStyle.withClickEvent(new ClickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD, message.substring(1)));
+            default  -> { // Create a new component
+                ret = new TextComponent(str);
+                ret.setStyle(parseStyle(desc));
+                yield previousStyle; // no op for the previous style
+            }
+        });
+        return ret;
     }
-    public static BaseText tp(String desc, Vec3d pos) { return tp(desc, pos.x, pos.y, pos.z); }
-    public static BaseText tp(String desc, BlockPos pos) { return tp(desc, pos.getX(), pos.getY(), pos.getZ()); }
-    public static BaseText tp(String desc, double x, double y, double z) { return tp(desc, (float)x, (float)y, (float)z);}
-    public static BaseText tp(String desc, float x, float y, float z)
+    public static BaseComponent tp(String desc, Vec3 pos) { return tp(desc, pos.x, pos.y, pos.z); }
+    public static BaseComponent tp(String desc, BlockPos pos) { return tp(desc, pos.getX(), pos.getY(), pos.getZ()); }
+    public static BaseComponent tp(String desc, double x, double y, double z) { return tp(desc, (float)x, (float)y, (float)z);}
+    public static BaseComponent tp(String desc, float x, float y, float z)
     {
-        return _getCoordsTextComponent(desc, x, y, z, false);
+        return getCoordsTextComponent(desc, x, y, z, false);
     }
-    public static BaseText tp(String desc, int x, int y, int z)
+    public static BaseComponent tp(String desc, int x, int y, int z)
     {
-        return _getCoordsTextComponent(desc, (float)x, (float)y, (float)z, true);
+        return getCoordsTextComponent(desc, (float)x, (float)y, (float)z, true);
     }
 
     /// to be continued
-    public static BaseText dbl(String style, double double_value)
+    public static BaseComponent dbl(String style, double double_value)
     {
         return c(String.format("%s %.1f",style,double_value),String.format("^w %f",double_value));
     }
-    public static BaseText dbls(String style, double ... doubles)
+    public static BaseComponent dbls(String style, double ... doubles)
     {
         StringBuilder str = new StringBuilder(style + " [ ");
         String prefix = "";
@@ -202,7 +182,7 @@ public class Messenger
         str.append(" ]");
         return c(str.toString());
     }
-    public static BaseText dblf(String style, double ... doubles)
+    public static BaseComponent dblf(String style, double ... doubles)
     {
         StringBuilder str = new StringBuilder(style + " [ ");
         String prefix = "";
@@ -214,7 +194,7 @@ public class Messenger
         str.append(" ]");
         return c(str.toString());
     }
-    public static BaseText dblt(String style, double ... doubles)
+    public static BaseComponent dblt(String style, double ... doubles)
     {
         List<Object> components = new ArrayList<>();
         components.add(style+" [ ");
@@ -232,7 +212,7 @@ public class Messenger
         return c(components.toArray(new Object[0]));
     }
 
-    private static BaseText _getCoordsTextComponent(String style, float x, float y, float z, boolean isInt)
+    private static BaseComponent getCoordsTextComponent(String style, float x, float y, float z, boolean isInt)
     {
         String text;
         String command;
@@ -250,48 +230,48 @@ public class Messenger
     }
 
     //message source
-    public static void m(ServerCommandSource source, Object ... fields)
+    public static void m(CommandSourceStack source, Object ... fields)
     {
         if (source != null)
-            source.sendFeedback(Messenger.c(fields),source.getServer() != null && source.getServer().getWorld(World.OVERWORLD) != null); //OW
+            source.sendSuccess(Messenger.c(fields),source.getServer() != null && source.getServer().getLevel(Level.OVERWORLD) != null); //OW
     }
-    public static void m(PlayerEntity player, Object ... fields)
+    public static void m(Player player, Object ... fields)
     {
-        player.sendSystemMessage(Messenger.c(fields), Util.NIL_UUID);
+        player.sendMessage(Messenger.c(fields), Util.NIL_UUID);
     }
 
     /*
     composes single line, multicomponent message, and returns as one chat messagge
      */
-    public static BaseText c(Object ... fields)
+    public static BaseComponent c(Object ... fields)
     {
-        BaseText message = new LiteralText("");
-        BaseText previous_component = null;
+        BaseComponent message = new TextComponent("");
+        BaseComponent previousComponent = null;
         for (Object o: fields)
         {
-            if (o instanceof BaseText)
+            if (o instanceof BaseComponent)
             {
-                message.append((BaseText)o);
-                previous_component = (BaseText)o;
+                message.append((BaseComponent)o);
+                previousComponent = (BaseComponent)o;
                 continue;
             }
             String txt = o.toString();
-            BaseText comp = _getChatComponentFromDesc(txt,previous_component);
-            if (comp != previous_component) message.append(comp);
-            previous_component = comp;
+            BaseComponent comp = getChatComponentFromDesc(txt, previousComponent);
+            if (comp != previousComponent) message.append(comp);
+            previousComponent = comp;
         }
         return message;
     }
 
     //simple text
 
-    public static BaseText s(String text)
+    public static BaseComponent s(String text)
     {
         return s(text,"");
     }
-    public static BaseText s(String text, String style)
+    public static BaseComponent s(String text, String style)
     {
-        BaseText message = new LiteralText(text);
+        BaseComponent message = new TextComponent(text);
         message.setStyle(parseStyle(style));
         return message;
     }
@@ -299,13 +279,13 @@ public class Messenger
 
 
 
-    public static void send(PlayerEntity player, Collection<BaseText> lines)
+    public static void send(Player player, Collection<BaseComponent> lines)
     {
-        lines.forEach(message -> player.sendSystemMessage(message, Util.NIL_UUID));
+        lines.forEach(message -> player.sendMessage(message, Util.NIL_UUID));
     }
-    public static void send(ServerCommandSource source, Collection<BaseText> lines)
+    public static void send(CommandSourceStack source, Collection<BaseComponent> lines)
     {
-        lines.stream().forEachOrdered((s) -> source.sendFeedback(s, false));
+        lines.stream().forEachOrdered((s) -> source.sendSuccess(s, false));
     }
 
 
@@ -313,21 +293,21 @@ public class Messenger
     {
         if (server == null)
             LOG.error("Message not delivered: "+message);
-        server.sendSystemMessage(new LiteralText(message), Util.NIL_UUID);
-        BaseText txt = c("gi "+message);
-        for (PlayerEntity entityplayer : server.getPlayerManager().getPlayerList())
+        server.sendMessage(new TextComponent(message), Util.NIL_UUID);
+        BaseComponent txt = c("gi "+message);
+        for (Player entityplayer : server.getPlayerList().getPlayers())
         {
-            entityplayer.sendSystemMessage(txt, Util.NIL_UUID);
+            entityplayer.sendMessage(txt, Util.NIL_UUID);
         }
     }
-    public static void print_server_message(MinecraftServer server, BaseText message)
+    public static void print_server_message(MinecraftServer server, BaseComponent message)
     {
         if (server == null)
             LOG.error("Message not delivered: "+message.getString());
-        server.sendSystemMessage(message, Util.NIL_UUID);
-        for (PlayerEntity entityplayer : server.getPlayerManager().getPlayerList())
+        server.sendMessage(message, Util.NIL_UUID);
+        for (Player entityplayer : server.getPlayerList().getPlayers())
         {
-            entityplayer.sendSystemMessage(message, Util.NIL_UUID);
+            entityplayer.sendMessage(message, Util.NIL_UUID);
         }
     }
 }

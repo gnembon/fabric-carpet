@@ -1,14 +1,14 @@
 package carpet.script;
 
 import carpet.script.value.Value;
-import net.minecraft.server.command.ServerCommandSource;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.core.BlockPos;
 
 public class CarpetContext extends Context
 {
-    public ServerCommandSource s;
+    public CommandSourceStack s;
     public final BlockPos origin;
-    public CarpetContext(ScriptHost host, ServerCommandSource source, BlockPos origin)
+    public CarpetContext(ScriptHost host, CommandSourceStack source, BlockPos origin)
     {
         super(host);
         s = source;

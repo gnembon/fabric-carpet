@@ -2,15 +2,14 @@ package carpet.logging;
 
 import carpet.CarpetServer;
 import carpet.CarpetSettings;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.util.DyeColor;
-
 import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.DyeColor;
 
 public class LoggerRegistry
 {
@@ -28,6 +27,7 @@ public class LoggerRegistry
     public static boolean __packets;
     public static boolean __pathfinding;
     public static boolean __explosions;
+    public static boolean __updateSuppressedCrashes;
 
     public static void initLoggers()
     {
@@ -38,7 +38,7 @@ public class LoggerRegistry
 
     public static void registerLoggers()
     {
-        registerLogger("tnt", Logger.stardardLogger( "tnt", "brief", new String[]{"brief", "full"}));
+        registerLogger("tnt", Logger.stardardLogger( "tnt", "brief", new String[]{"brief", "full"}, true));
         registerLogger("projectiles", Logger.stardardLogger("projectiles", "brief",  new String[]{"brief", "full"}));
         registerLogger("fallingBlocks",Logger.stardardLogger("fallingBlocks", "brief", new String[]{"brief", "full"}));
         registerLogger("pathfinding", Logger.stardardLogger("pathfinding", "20", new String[]{"2", "5", "10"}));
@@ -46,7 +46,8 @@ public class LoggerRegistry
         registerLogger("packets", HUDLogger.stardardHUDLogger("packets", null, null));
         registerLogger("counter",HUDLogger.stardardHUDLogger("counter","white", Arrays.stream(DyeColor.values()).map(Object::toString).toArray(String[]::new)));
         registerLogger("mobcaps", HUDLogger.stardardHUDLogger("mobcaps", "dynamic",new String[]{"dynamic", "overworld", "nether","end"}));
-        registerLogger("explosions", HUDLogger.stardardLogger("explosions", "brief",new String[]{"brief", "full"}));
+        registerLogger("explosions", Logger.stardardLogger("explosions", "brief",new String[]{"brief", "full"}, true));
+        registerLogger("updateSuppressedCrashes", Logger.stardardLogger("updateSuppressedCrashes", null,null));
 
     }
 
@@ -150,7 +151,7 @@ public class LoggerRegistry
         loggerRegistry.clear();
         playerSubscriptions.clear();
     }
-    public static void playerConnected(PlayerEntity player)
+    public static void playerConnected(Player player)
     {
         boolean firstTime = false;
         if (!seenPlayers.contains(player.getName().getString()))
@@ -165,14 +166,11 @@ public class LoggerRegistry
         }
     }
 
-    public static void playerDisconnected(PlayerEntity player)
+    public static void playerDisconnected(Player player)
     {
         for(Logger log: loggerRegistry.values() )
         {
             log.onPlayerDisconnect(player);
         }
     }
-
-
-
 }

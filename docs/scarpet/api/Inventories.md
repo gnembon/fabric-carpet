@@ -206,3 +206,272 @@ Returns size of the actual dropped items.
 inventory_drop(player(), 0, 1) => 1 // Q's one item on the ground
 inventory_drop(x,y,z, 0) => 64 // removed and spawned in the world a full stack of items
 </pre>
+
+## Screens
+
+A screen is a value type used to open screens for a player and interact with them.
+For example, this includes the chest inventory gui, the crafting table gui and many more.
+
+### `create_screen(player, type, name, callback?)`
+
+Creates and opens a screen for a `player`.
+
+Available `type`s:
+
+* `anvil`
+* `beacon`
+* `blast_furnace`
+* `brewing_stand`
+* `cartography_table`
+* `crafting`
+* `enchantment`
+* `furnace`
+* `generic_3x3`
+* `generic_9x1`
+* `generic_9x2`
+* `generic_9x3`
+* `generic_9x4`
+* `generic_9x5`
+* `generic_9x6`
+* `grindstone`
+* `hopper`
+* `lectern`
+* `loom`
+* `merchant`
+* `shulker_box`
+* `smithing`
+* `smoker`
+* `stonecutter`
+
+The `name` parameter can be a formatted text and will be displayed at the top of the screen.
+Some screens like the lectern or beacon screen don't show it.
+
+Optionally, a `callback` function can be passed as the fourth argument.
+This functions needs to have four parameters:
+`_(screen, player, action, data) -> ...`
+
+The `screen` parameter is the screen value of the screen itself.
+`player` is the player who interacted with the screen.
+`action` is a string corresponding to the interaction type.
+Can be any of the following:
+
+Slot interactions:
+
+* `pickup`
+* `quick_move`
+* `swap`
+* `clone`
+* `throw`
+* `quick_craft`
+* `pickup_all`
+
+The `data` for this interaction is a map, with a `slot` and `button` value.
+`slot` is the slot index of the slot that was clicked.
+When holding an item in the cursor stack and clicking inside the screen,
+but not in a slot, this is -1.
+If clicked outside the screen (where it would drop held items), this value is null.
+The `button` is the mouse button used to click the slot.
+
+For the `swap` action, the `button` is the number key 0-8 for a certain hotbar slot.
+
+For the `quick_craft` action, the `data` also contains the `quick_craft_stage`,
+which is either 0 (beginning of quick crafting), 1 (adding item to slot) or 2 (end of quick crafting).
+
+Other interactions:
+
+* `button` Pressing a button in certain screens that have button elements (enchantment table, lectern, loom and stonecutter)
+The `data` provides a `button`, which is the index of the button that was pressed.
+Note that for lecterns, this index can be certain a value above 100, for jumping to a certain page.
+This can come from formatted text inside the book, with a `change_page` click event action.
+
+* `close` Triggers when the screen gets closed. No `data` provided.
+
+* `select_recipe` When clicking on a recipe in the recipe book.
+`data` contains a `recipe`, which is the identifier of the clicked recipe,
+as well as `craft_all`, which is a boolean specifying whether
+shift was pressed when selecting the recipe.
+
+* `slot_update` Gets called **after** a slot has changed contents. `data` provides a `slot` and `stack`.
+
+By returning a string `'cancel'` in the callback function,
+the screen interaction can be cancelled.
+This doesn't work for the `close` action.
+
+The `create_screen` function returns a `screen` value,
+which can be used in all inventory related functions to access the screens' slots.
+The screen inventory covers all slots in the screen and the player inventory.
+The last slot is the cursor stack of the screen,
+meaning that using `-1` can be used to modify the stack the players' cursor is holding.
+
+### `close_screen(screen)`
+
+Closes the screen of the given screen value.
+Returns `true` if the screen was closed.
+If the screen is already closed, returns `false`.
+
+### `screen_property(screen, property)`
+
+### `screen_property(screen, property, value)`
+
+Queries or modifies a certain `property` of a `screen`.
+The `property` is a string with the name of the property.
+When called with `screen` and `property` parameter, returns the current value of the property.
+When specifying a `value`,
+the property will be assigned the new `value` and synced with the client.
+
+**Options for `property` string:**
+
+| `property` | Required screen type | Type | Description |
+|---|---|---|---|
+| `name` | **All** | text | The name of the screen, as specified in the `create_screen()` function. Can only be queried. |
+| `open` | **All** | boolean | Returns `true` if the screen is open, `false` otherwise. Can only be queried. |
+| `fuel_progress` | furnace/smoker/blast_furnace | number | Current value of the fuel indicator. |
+| `max_fuel_progress` | furnace/smoker/blast_furnace | number | Maximum value for the full fuel indicator. |
+| `cook_progress` | furnace/smoker/blast_furnace | number | Cooking progress indicator value. |
+| `max_cook_progress` | furnace/smoker/blast_furnace | number | Maximum value for the cooking progress indicator. |
+| `level_cost` | anvil | number | Displayed level cost for the anvil. |
+| `page` | lectern | number | Opened page in the lectern screen. |
+| `beacon_level` | beacon | number | The power level of the beacon screen. This affects how many effects under primary power are grayed out. Should be a value between 0-5. |
+| `primary_effect` | beacon | number | The effect id of the primary effect. This changes the effect icon on the button on the secondary power side next to the regeneration effect. |
+| `secondary_effect` | beacon | number | The effect id of the secondary effect. This seems to change nothing, but it exists. |
+| `brew_time` | brewing_stand | number | The brewing time indicator value. This goes from 0 to 400. |
+| `brewing_fuel` | brewing_stand | number | The fuel indicator progress. Values range between 0 to 20. |
+| `enchantment_power_x` | enchantment | number | The level cost of the shown enchantment. Replace `x` with 1, 2 or 3 (e.g. `enchantment_power_2`) to target the first, second or third enchantment. |
+| `enchantment_id_x` | enchantment | number | The id of the enchantment shown (replace `x` with the enchantment slot 1/2/3). |
+| `enchantment_level_x` | enchantment | number | The enchantment level of the enchantment. |
+| `enchantment_seed` | enchantment | number | The seed of the enchanting screen. This affects the text shown in the standard Galactic alphabet. |
+| `banner_pattern` | loom | number | The selected banner pattern inside the loom. |
+| `stonecutter_recipe` | stonecutter | number | The selected recipe in the stonecutter. |
+
+### Screen example scripts
+
+<details>
+<summary>Chest click event</summary>
+
+```py
+__command() -> (
+    create_screen(player(),'generic_9x6',format('db Test'),_(screen, player, action, data) -> (
+        print(player('all'),str('%s\n%s\n%s',player,action,data)); //for testing
+        if(action=='pickup',
+            inventory_set(screen,data:'slot',1,if(inventory_get(screen,data:'slot'),'air','red_stained_glass_pane'));
+        );
+        'cancel'
+    ));
+);
+```
+</details>
+
+<details>
+<summary>Anvil text prompt</summary>
+
+```py
+// anvil text prompt gui
+__command() -> (
+    global_screen = create_screen(player(),'anvil',format('r Enter a text'),_(screen, player, action, data)->(
+        if(action == 'pickup' && data:'slot' == 2,
+            renamed_item = inventory_get(screen,2);
+            nbt = renamed_item:2;
+            name = parse_nbt(nbt:'display':'Name'):'text';
+            if(!name, return('cancel')); //don't accept empty string
+            print(player,'Text: ' + name);
+            close_screen(screen);
+        );
+        'cancel'
+    ));
+    inventory_set(global_screen,0,1,'paper','{display:{Name:\'{"text":""}\'}}');
+);
+
+```
+</details>
+
+<details>
+<summary>Lectern flip book</summary>
+
+```py
+// flip book lectern
+
+global_fac = 256/60;
+curve(v) -> (
+    v = v%360;
+    if(v<60,v*global_fac,v<180,255,v<240,255-(v-180)*global_fac,0);
+);
+
+hex_from_hue(hue) -> str('#%02X%02X%02X',curve(hue+120),curve(hue),curve(hue+240));
+
+make_char(hue) -> str('{"text":"▉","color":"%s"}',hex_from_hue(hue));
+
+make_page(hue) -> (
+    page = '[';
+    loop(15, //row
+        y = _;
+        loop(14, //col
+            x = _;
+            page += make_char(hue+x*4+y*4) + ',';
+        );
+    );
+    return(slice(page,0,-2)+']');
+);
+
+
+__command() -> (
+    screen = create_screen(player(),'lectern','Lectern example (this text is not visible)',_(screen, player, action, data)->(
+        if(action=='button',
+            print(player,'Button: ' + data:'button');
+        );
+        'cancel'
+    ));
+
+    page_count = 60;
+    pages = [];
+
+    loop(page_count,
+        hue = _/page_count*360;
+        pages += make_page(hue);
+    );
+
+    nbt = encode_nbt({
+        'pages'-> pages,
+        'author'->'-',
+        'title'->'-',
+        'resolved'->1
+    });
+
+    inventory_set(screen,0,1,'written_book',nbt);
+
+    task(_(outer(screen),outer(page_count))->(
+        while(screen != null && screen_property(screen,'open'),100000,
+            p = (p+1)%page_count;
+            screen_property(screen,'page',p);
+            sleep(50);
+        );
+    ));
+);
+
+```
+</details>
+
+<details>
+<summary>generic_3x3 cursor stack</summary>
+
+```py
+__command() -> (
+    screen = create_screen(player(),'generic_3x3','Title',_(screen, player, action, data) -> (
+        if(action=='pickup',
+            // set slot to the cursor stack item
+            inventory_set(screen,data:'slot',1,inventory_get(screen,-1):0);
+        );
+        'cancel'
+    ));
+
+    task(_(outer(screen))->(
+        // keep the cursor stack item blinking
+        while(screen_property(screen,'open'),100000,
+            inventory_set(screen,-1,1,'red_concrete');
+            sleep(500);
+            inventory_set(screen,-1,1,'lime_concrete');
+            sleep(500);
+        );
+    ));
+);
+```
+</details>

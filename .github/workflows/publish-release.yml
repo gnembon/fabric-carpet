@@ -65,17 +65,12 @@ jobs:
         uses: actions/checkout@v2
         with:
           ref: ${{ steps.getbranchinfo.outputs.branchname }}
-      - name: Set up JDK 16
+      - name: Set up JDK 17
         uses: actions/setup-java@v2
         with:
-          distribution: 'adopt'
-          java-version: 16
-      - name: Cache Gradle packages
-        uses: actions/cache@v2
-        with:
-          path: ~/.gradle/caches
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle') }}
-          restore-keys: ${{ runner.os }}-gradle
+          distribution: 'temurin'
+          java-version: 17
+          cache: 'gradle'
       - name: Grant execute permission to gradlew
         run: chmod +x gradlew
       - name: Build with Gradle
@@ -140,17 +135,12 @@ jobs:
     steps:
       - name: Checkout Carpet sources
         uses: actions/checkout@v2
-      - name: Set up JDK 16
+      - name: Set up JDK 17
         uses: actions/setup-java@v2
         with:
-          distribution: 'adopt'
-          java-version: 16
-      - name: Cache Gradle packages
-        uses: actions/cache@v2
-        with:
-          path: ~/.gradle/caches
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle') }}
-          restore-keys: ${{ runner.os }}-gradle
+          distribution: 'temurin'
+          java-version: 17
+          cache: 'gradle'
       - name: Replace fabric.mod.json
         run: |
           cd src/main/resources

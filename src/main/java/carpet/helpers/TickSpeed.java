@@ -3,14 +3,13 @@ package carpet.helpers;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.BiConsumer;
-
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.commands.Commands;
+import net.minecraft.network.chat.BaseComponent;
+import net.minecraft.server.level.ServerPlayer;
 import carpet.CarpetServer;
 import carpet.network.ServerNetworkHandler;
 import carpet.utils.Messenger;
-import net.minecraft.server.command.CommandManager;
-import net.minecraft.server.command.ServerCommandSource;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.text.BaseText;
 
 public class TickSpeed
 {
@@ -20,9 +19,9 @@ public class TickSpeed
     public static long time_bias = 0;
     public static long time_warp_start_time = 0;
     public static long time_warp_scheduled_ticks = 0;
-    public static ServerPlayerEntity time_advancerer = null;
+    public static ServerPlayer time_advancerer = null;
     public static String tick_warp_callback = null;
-    public static ServerCommandSource tick_warp_sender = null;
+    public static CommandSourceStack tick_warp_sender = null;
     public static int player_active_timeout = 0;
     public static boolean process_entities = true;
     private static boolean deepFreeze = false;
@@ -102,7 +101,7 @@ public class TickSpeed
         ServerNetworkHandler.updateTickPlayerActiveTimeoutToConnectedPlayers();
     }
 
-    public static BaseText tickrate_advance(ServerPlayerEntity player, int advance, String callback, ServerCommandSource source)
+    public static BaseComponent tickrate_advance(ServerPlayer player, int advance, String callback, CommandSourceStack source)
     {
         if (0 == advance)
         {
@@ -119,7 +118,7 @@ public class TickSpeed
         if (time_bias > 0)
         {
             String who = "Another player";
-            if (time_advancerer != null) who = time_advancerer.getEntityName();
+            if (time_advancerer != null) who = time_advancerer.getScoreboardName();
             return Messenger.c("l "+who+" is already advancing time at the moment. Try later or ask them");
         }
         time_advancerer = player;
@@ -147,10 +146,10 @@ public class TickSpeed
         time_warp_start_time = 0;
         if (tick_warp_callback != null)
         {
-            CommandManager icommandmanager = tick_warp_sender.getServer().getCommandManager();
+            Commands icommandmanager = tick_warp_sender.getServer().getCommands();
             try
             {
-                icommandmanager.execute(tick_warp_sender, tick_warp_callback);
+                icommandmanager.performCommand(tick_warp_sender, tick_warp_callback);
             }
             catch (Throwable var23)
             {

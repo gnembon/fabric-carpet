@@ -2,61 +2,59 @@ package carpet.helpers;
 
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
-import net.minecraft.command.argument.ParticleEffectArgumentType;
-import net.minecraft.particle.ParticleEffect;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.util.math.Vec3d;
-
 import java.util.HashMap;
 import java.util.Map;
+import net.minecraft.commands.arguments.ParticleArgument;
+import net.minecraft.core.particles.ParticleOptions;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.phys.Vec3;
 
 public class ParticleDisplay
 {
-    private static Map<String, ParticleEffect> particleCache = new HashMap<>();
+    private static Map<String, ParticleOptions> particleCache = new HashMap<>();
 
-    private static ParticleEffect parseParticle(String name)
+    private static ParticleOptions parseParticle(String name)
     {
         try
         {
-            return ParticleEffectArgumentType.readParameters(new StringReader(name));
+            return ParticleArgument.readParticle(new StringReader(name));
         }
         catch (CommandSyntaxException e)
         {
             throw new RuntimeException("No such particle: "+name);
         }
     }
-    public static ParticleEffect getEffect(String name)
+    public static ParticleOptions getEffect(String name)
     {
         if (name == null) return null;
-        ParticleEffect res = particleCache.get(name);
+        ParticleOptions res = particleCache.get(name);
         if (res != null) return res;
         particleCache.put(name, parseParticle(name));
         return particleCache.get(name);
     }
 
-    public static void drawParticleLine(ServerPlayerEntity player, Vec3d from, Vec3d to, String main, String accent, int count, double spread)
+    public static void drawParticleLine(ServerPlayer player, Vec3 from, Vec3 to, String main, String accent, int count, double spread)
     {
-        ParticleEffect accentParticle = getEffect(accent);
-        ParticleEffect mainParticle = getEffect(main);
+        ParticleOptions accentParticle = getEffect(accent);
+        ParticleOptions mainParticle = getEffect(main);
 
-        if (accentParticle != null) ((ServerWorld)player.world).spawnParticles(
+        if (accentParticle != null) ((ServerLevel)player.level).sendParticles(
                 player,
                 accentParticle,
                 true,
                 to.x, to.y, to.z, count,
                 spread, spread, spread, 0.0);
 
-        double lineLengthSq = from.squaredDistanceTo(to);
+        double lineLengthSq = from.distanceToSqr(to);
         if (lineLengthSq == 0) return;
 
-        Vec3d incvec = to.subtract(from).normalize();//    multiply(50/sqrt(lineLengthSq));
-        int pcount = 0;
-        for (Vec3d delta = new Vec3d(0.0,0.0,0.0);
-             delta.lengthSquared()<lineLengthSq;
-             delta = delta.add(incvec.multiply(player.world.random.nextFloat())))
+        Vec3 incvec = to.subtract(from).normalize();//    multiply(50/sqrt(lineLengthSq));
+        for (Vec3 delta = new Vec3(0.0,0.0,0.0);
+             delta.lengthSqr()<lineLengthSq;
+             delta = delta.add(incvec.scale(player.level.random.nextFloat())))
         {
-            ((ServerWorld)player.world).spawnParticles(
+            ((ServerLevel)player.level).sendParticles(
                     player,
                     mainParticle,
                     true,
