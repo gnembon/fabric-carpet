@@ -459,6 +459,7 @@ Boolean function, true if the block causes suffocation.
 ### `power(pos)`
 
 Numeric function, returning redstone power level at position.
+This can be through direct powering, but also if there is an adjacent powered block.
 
 ### `provides_power(pos)`
 
@@ -466,8 +467,8 @@ Boolean function, true if the block can provide power.
 
 ### `strong_power(pos)`
 
-Numeric function, returning strong redstone power level at position
-(i.e. via observer, repeater, comparator or torch).
+Numeric function, returning direct redstone power level at position, from a component
+directly pointing into that block.
 
 ### `ticks_randomly(pos)`
 
