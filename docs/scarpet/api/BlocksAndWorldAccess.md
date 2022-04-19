@@ -465,7 +465,7 @@ This can be through direct powering, but also if there is an adjacent powered bl
 
 Boolean function, true if the block can provide power.
 
-### `strong_power(pos)`
+### `direct_power(pos)`
 
 Numeric function, returning direct redstone power level at position, from a component
 directly pointing into that block.

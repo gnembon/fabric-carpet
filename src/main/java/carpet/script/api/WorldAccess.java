@@ -646,8 +646,8 @@ public class WorldAccess {
         expression.addContextFunction("provides_power", -1, (c, t, lv) ->
                 booleanStateTest(c, "provides_power", lv, (s, p) -> s.isSignalSource()));
 
-        expression.addContextFunction("strong_power", -1, (c, t, lv) ->
-                genericStateTest(c, "strong_power", lv, (s, p, w) -> NumericValue.of(w.getDirectSignalTo(p))));
+        expression.addContextFunction("direct_power", -1, (c, t, lv) ->
+                genericStateTest(c, "direct_power", lv, (s, p, w) -> NumericValue.of(w.getDirectSignalTo(p))));
 
         expression.addContextFunction("ticks_randomly", -1, (c, t, lv) ->
                 booleanStateTest(c, "ticks_randomly", lv, (s, p) -> s.isRandomlyTicking()));
