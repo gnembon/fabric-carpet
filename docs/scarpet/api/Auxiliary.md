@@ -4,6 +4,8 @@ Collection of other methods that control smaller, yet still important aspects of
 
 ## Sounds
 
+Functions which allow to manipulate the player's auditory environment.
+
 ### `sound()`, `sound(name, pos, volume?, pitch?, mixer?)`
 
 Plays a specific sound `name`, at block or position `pos`, with optional `volume` and modified `pitch`, and under
