@@ -150,7 +150,18 @@ Available shapes:
      * `mode` - how those points are connected. may be "polygon"(default),"strip" or "triangles". "polygon" means that it will be viewed as vertices of a polygon center on the first one. "strip" means that it will be viewed as a triangles strip. "triangles" means that it will be viewed as some triangles that are not related to each other (therefor length of `points` in this mode have to be a multiple of 3).
      * `inneredges` - if `true` it will make the inner edges be drawn as well. 
      * `doublesided` - if `true` it will make the shapes visible from the back as well. Default is `true`. 
-     
+
+ * `'blockoritemdisplayer'`:
+   * Optional attributes:
+     * `facing` - object's direction, where its facing. Possible options are: `player` (default, it
+     always rotates to face the player), `north`, `south`, `east`, `west`, `up`, `down`
+     * `tilt`, `lean`, `turn` - additional rotations of the text on the canvas along all three axis
+     * item - the object to show. could have NBT. is a item tuple or a string-id or null
+     * block - the object to show. could have NBT. is a block value or a string-id or null
+     * height width obj_size - size of it. should be numbers
+     * light - light level. omit it to use local light level. should between 0~15
+
+
       
 ### `create_marker(text, pos, rotation?, block?, interactive?)`
 
