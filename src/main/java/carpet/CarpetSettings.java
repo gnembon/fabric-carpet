@@ -964,7 +964,7 @@ public class CarpetSettings
     public static double creativeFlyDrag = 0.09;
 
     @Rule(
-            desc = "Removes abnoxious messages from the logs",
+            desc = "Removes obnoxious messages from the logs",
             extra = {
                     "Doesn't display 'Maximum sound pool size 247 reached'",
                     "Which is normal with decent farms and contraptions"
