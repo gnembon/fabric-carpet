@@ -144,10 +144,10 @@ Available shapes:
 
  * `'poly'`:
    * Required attributes:
-     * `points` - vertices of the polygon
+     * `points` - list of points defining vertices of the polygon
    * Optional attributes:
-     * `relative` - list of bools. vertices of the polygont that affected by 'follow'. Default means that every point is affacted.
-     * `mode` - how those points are connected. may be "polygon"(default),"strip" or "triangles". "polygon" means that it will be viewed as vertices of a polygon center on the first one. "strip" means that it will be viewed as a triangles strip. "triangles" means that it will be viewed as some triangles that are not related to each other.
+     * `relative` - list of bools. vertices of the polygon that affected by 'follow'. Default means that every point is affacted.
+     * `mode` - how those points are connected. may be "polygon"(default),"strip" or "triangles". "polygon" means that it will be viewed as vertices of a polygon center on the first one. "strip" means that it will be viewed as a triangles strip. "triangles" means that it will be viewed as some triangles that are not related to each other (therefor length of `points` in this mode have to be a multiple of 3).
      * `inneredges` - if `true` it will make the inner edges be drawn as well. 
      * `doublesided` - if `true` it will make the shapes visible from the back as well. Default is `true`. 
      
