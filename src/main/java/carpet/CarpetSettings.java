@@ -27,8 +27,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 
@@ -388,29 +388,53 @@ public class CarpetSettings
     
     @Rule(
     		desc = "Changes the blocks in the Non Movable Block List",
+    		extra = {
+    				"Add blocks to the list by passing the name of the block.\nexample: minecraft:chest",
+    				"Remove blocks from the list by adding '-' in front of the block to be removed.\nexample: -minecraft:chest"
+    		},
     		options = {"minecraft:chest", "minecraft:hopper", "minecraft:dropper", "minecraft:dispenser", "minecraft:grindstone"},
     		category = CREATIVE,
     		validate = NonMovableBlockValidator.class,
     		strict = false
     )
-	public static String nonMovableBlocks = "minecraft:ender_chest,minecraft:enchanting_table,minecraft:end_gateway,minecraft:end_portal,minecraft:moving_piston,minecraft:spawner";
-	public static List<Block> nonMovableBlocksList = new ArrayList<>();
+	public static String nonMovableBlocks = "minecraft:ender_chest, minecraft:enchanting_table, minecraft:end_gateway, minecraft:end_portal_frame, minecraft:moving_piston, minecraft:spawner";
+    public static ArrayList<Block> nonMovableBlocksList = new ArrayList<>();
 	
 	public static class NonMovableBlockValidator extends Validator<String> {
 		@Override
-		public String validate(ServerCommandSource source, ParsedRule<String> currentRule, String newValue,
-				String string) {
-			nonMovableBlocksList.clear();
+		public String validate(CommandSourceStack source, ParsedRule<String> currentRule, String newValue, String string) {
 			String[] stringList = newValue.split(",");
-			for(String s : stringList) {
-				Optional<Block> block = Registry.BLOCK.getOrEmpty(Identifier.tryParse(s.trim()));
-				if (!block.isPresent()) {
-					Messenger.m(source, "r Unknown block '" + s.trim() + "'.");
+			for(String newVal : stringList) {
+				newVal = newVal.trim();
+				if(newVal.contains("-")) {
+					String[] newValSplit = newVal.split("-");
+					if(newValSplit.length >= 2) {
+						String name = newValSplit[1];
+						Optional<Block> block = Registry.BLOCK.getOptional(ResourceLocation.tryParse(name));
+						if (!block.isPresent()) {
+							Messenger.m(source, "r Unknown block '" + newVal + "'.");
+						} else {
+							nonMovableBlocksList.remove(block.get());
+							nonMovableBlocks = "";
+							for(int i = 0; i < nonMovableBlocksList.size(); i++) {
+								String partName = nonMovableBlocksList.get(i).getName().getString().toLowerCase();
+								String fullName = "minecraft:" + partName.replace(" ", "_");
+								nonMovableBlocks += fullName + ", ";
+							}
+							nonMovableBlocks = nonMovableBlocks.substring(0, nonMovableBlocks.length() - 2);
+						}
+					}
 				} else {
-					nonMovableBlocksList.add(block.get());
+					Optional<Block> block = Registry.BLOCK.getOptional(ResourceLocation.tryParse(newVal));
+					if (!block.isPresent()) {
+						Messenger.m(source, "r Unknown block '" + newVal + "'.");
+					} else {
+						nonMovableBlocksList.add(block.get());
+						nonMovableBlocks += ", " + newVal;
+					}
 				}
 			}
-			return newValue;
+			return nonMovableBlocks;
 		}
 	}
 
