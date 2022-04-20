@@ -217,7 +217,7 @@ public class Logger
             Set<String> loggingOptions = new HashSet<>(Arrays.asList(CarpetSettings.defaultLoggers.split(",")));
             String logName = getLogName();
             for (String str : loggingOptions) {
-                String[] vars = str.split(" ");
+                String[] vars = str.split(" ", 2);
                 if (vars[0].equals(logName)) {
                     LoggerRegistry.subscribePlayer(playerName, getLogName(), vars.length == 1 ? getDefault() : vars[1]);
                     break;
