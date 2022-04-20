@@ -196,7 +196,6 @@
     "ServerPlayer_updateSuppressionCrashFixMixin",
     "ChunkMap_creativePlayersLoadChunksMixin",
     "SculkSensorBlock_rangeMixin",
-    "LevelAccessor",
     "CollectingNeighborUpdaterAccessor"
   ],
   "client": [
