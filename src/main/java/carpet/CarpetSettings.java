@@ -1039,7 +1039,7 @@ public class CarpetSettings
     @Rule(
             desc = "Lightning kills the items that drop when lightning kills an entity",
             extra = {"Setting to true will prevent lightning from killing drops", "Fixes [MC-206922](https://bugs.mojang.com/browse/MC-206922)."},
-            category = {BUGFIX}
+            category = BUGFIX
     )
     public static boolean lightningKillsDropsFix = false;
 
@@ -1049,21 +1049,25 @@ public class CarpetSettings
             category = CREATIVE,
             options = {"-1","0","10","50"},
             strict = false,
-            validate = updateSuppressionBlockModes.class
+            validate = UpdateSuppressionBlockModes.class
     )
     public static int updateSuppressionBlock = -1;
 
     @Rule(
             desc = "Fixes update suppression causing server crashes.",
-            category = {BUGFIX}
+            category = BUGFIX
     )
     public static boolean updateSuppressionCrashFix = false;
 
-    private static class updateSuppressionBlockModes extends Validator<Integer> {
+    private static class UpdateSuppressionBlockModes extends Validator<Integer> {
         @Override
         public Integer validate(CommandSourceStack source, ParsedRule<Integer> currentRule, Integer newValue, String string) {
             if (newValue < -1) newValue = -1;
             return newValue;
+        }
+        @Override
+        public String description() {
+            return "This value represents the amount of updates required before the logger logs them";
         }
     }
 
