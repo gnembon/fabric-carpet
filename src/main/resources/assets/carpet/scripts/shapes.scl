@@ -5,7 +5,7 @@
 //You can also read the documentation code above each function to see what it does, how it does it and how well it does it
 //One way you can speed things up is by threading the operations
 
-//This algorithm turns half a circle (in radians), then at each angle
+//This algorithm draws a sphere by turning half a circle (in radians), then at each angle
 //it turns another half circle in radians and then fills in the other half using - signs
 //For a filled circle we just fill in the end points of the circle
 //Algorithmic efficiency:
