@@ -900,17 +900,10 @@ public class CarpetSettings
     public static boolean flatWorldStructureSpawning = false;
 
     @Rule(
-            desc = "Edge cases are as frequent as common cases, for testing only!!",
-            extra = {"Velocities of items from dispensers, blaze projectiles, fireworks ",
-                    "Directions of fireballs, wither skulls, fishing bobbers, ",
-                    "items dropped from blocks and inventories, llamas spit, triggered trap horses",
-                    "Damage dealt with projectiles",
-                    "Blaze aggro sensitivity",
-                    "Mobs spawned follow range"
-            },
+            desc = "Increases for testing purposes number of blue skulls shot by the wither",
             category = CREATIVE
     )
-    public static boolean extremeBehaviours = false;
+    public static boolean moreBlueSkulls = false;
 
     @Rule(
             desc = "Removes fog from client in the nether and the end",
