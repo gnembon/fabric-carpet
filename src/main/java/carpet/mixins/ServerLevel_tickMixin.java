@@ -72,25 +72,20 @@ public abstract class ServerLevel_tickMixin extends Level
             value = "CONSTANT",
             args = "stringValue=chunkSource"
     ))
-    private void stopRaidStartChunkSource(BooleanSupplier booleanSupplier_1, CallbackInfo ci)
+    private void stopRaid(BooleanSupplier booleanSupplier_1, CallbackInfo ci)
     {
         if (currentSection != null)
         {
             CarpetProfiler.end_current_section(currentSection);
-            currentSection = CarpetProfiler.start_section((Level) (Object) this, "Unloading", CarpetProfiler.TYPE.GENERAL);
         }
     }
     @Inject(method = "tick", at = @At(
             value = "CONSTANT",
             args = "stringValue=blockEvents"
     ))
-    private void stopChunkSourceStartBlockEvents(BooleanSupplier booleanSupplier_1, CallbackInfo ci)
+    private void startBlockEvents(BooleanSupplier booleanSupplier_1, CallbackInfo ci)
     {
-        if (currentSection != null)
-        {
-            CarpetProfiler.end_current_section(currentSection);
-            currentSection = CarpetProfiler.start_section((Level) (Object) this, "Block Events", CarpetProfiler.TYPE.GENERAL);
-        }
+        currentSection = CarpetProfiler.start_section((Level) (Object) this, "Block Events", CarpetProfiler.TYPE.GENERAL);
     }
 
     @Inject(method = "tick", at = @At(
@@ -114,8 +109,10 @@ public abstract class ServerLevel_tickMixin extends Level
     private void endEntitySection(BooleanSupplier booleanSupplier_1, CallbackInfo ci)
     {
         CarpetProfiler.end_current_section(currentSection);
+        currentSection = null;
     }
 
+    // Chunk
 
     @Inject(method = "tickChunk", at = @At("HEAD"))
     private void startThunderSpawningSection(CallbackInfo ci) {
@@ -146,9 +143,10 @@ public abstract class ServerLevel_tickMixin extends Level
     }
 
     @Inject(method = "tickChunk", at = @At("RETURN"))
-    private void endIceSnowRandomTicks(CallbackInfo ci) {
+    private void endRandomTicks(CallbackInfo ci) {
         if (currentSection != null) {
             CarpetProfiler.end_current_section(currentSection);
+            currentSection = null;
         }
     }
 
