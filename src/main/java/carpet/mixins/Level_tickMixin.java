@@ -30,6 +30,7 @@ public abstract class Level_tickMixin implements LevelInterface
     Map<EntityType<?>, Entity> precookedMobs = new HashMap<>();
 
     @Override
+    @Unique
     public NeighborUpdater getNeighborUpdater() {
         return this.neighborUpdater;
     }
