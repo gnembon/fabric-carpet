@@ -20,7 +20,6 @@ import net.minecraft.nbt.StringTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.TextComponent;
 import net.minecraft.network.protocol.game.ClientboundCustomPayloadPacket;
 import net.minecraft.server.level.ServerPlayer;
 
@@ -95,7 +94,7 @@ public class ServerNetworkHandler
         int resultCode = -1;
         if (player.getServer() == null)
         {
-            error[0] = new TextComponent("No Server");
+            error[0] = Component.literal("No Server");
         }
         else
         {
@@ -106,7 +105,7 @@ public class ServerNetworkHandler
         CompoundTag result = new CompoundTag();
         result.putString("id", id);
         result.putInt("code", resultCode);
-        if (error[0] != null) result.putString("error", error[0].getContents());
+        if (error[0] != null) result.putString("error", error[0].getContents().toString());
         ListTag outputResult = new ListTag();
         for (Component line: output) outputResult.add(StringTag.valueOf(Component.Serializer.toJson(line)));
         if (!output.isEmpty()) result.put("output", outputResult);

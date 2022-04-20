@@ -47,13 +47,11 @@ import net.minecraft.core.Rotations;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtIo;
-import net.minecraft.nbt.NbtOps;
 import net.minecraft.nbt.NbtUtils;
 import net.minecraft.nbt.StringTag;
 import net.minecraft.nbt.Tag;
-import net.minecraft.network.chat.BaseComponent;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.TextComponent;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientboundClearTitlesPacket;
 import net.minecraft.network.protocol.game.ClientboundCustomSoundPacket;
@@ -551,7 +549,7 @@ public class Auxiliary {
             else title = null; // Will never happen, just to make lambda happy
             if (packetGetter == null)
             {
-                Map<String, BaseComponent> map;
+                Map<String, Component> map;
                 if (actionString.equals("player_list_header"))
                     map = HUDController.scarpet_headers;
                 else
@@ -566,7 +564,7 @@ public class Auxiliary {
                     });
                 else
                     targetList.forEach(target -> {
-                        map.put(target.getScoreboardName(), (BaseComponent) title);
+                        map.put(target.getScoreboardName(), (MutableComponent) title);
                         total.getAndIncrement();
                     });
                 HUDController.update_hud(((CarpetContext)c).s.getServer(), targetList);
@@ -621,7 +619,7 @@ public class Auxiliary {
             }
             catch (Exception exc)
             {
-                return ListValue.of(Value.NULL, ListValue.of(), new FormattedTextValue(new TextComponent(exc.getMessage())));
+                return ListValue.of(Value.NULL, ListValue.of(), new FormattedTextValue(Component.literal(exc.getMessage())));
             }
         });
 
