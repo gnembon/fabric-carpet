@@ -24,9 +24,11 @@ import net.minecraft.world.level.storage.WritableLevelData;
 @Mixin(ServerLevel.class)
 public abstract class ServerLevel_tickMixin extends Level
 {
-    protected ServerLevel_tickMixin(WritableLevelData properties, ResourceKey<Level> registryKey, Holder<DimensionType> dimensionType, Supplier<ProfilerFiller> supplier, boolean bl, boolean bl2, long l)
+
+
+    protected ServerLevel_tickMixin(WritableLevelData writableLevelData, ResourceKey<Level> resourceKey, Holder<DimensionType> holder, Supplier<ProfilerFiller> supplier, boolean bl, boolean bl2, long l, int i)
     {
-        super(properties, registryKey, dimensionType, supplier, bl, bl2, l);
+        super(writableLevelData, resourceKey, holder, supplier, bl, bl2, l, i);
     }
 
     @Shadow protected abstract void runBlockEvents();

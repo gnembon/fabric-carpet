@@ -5,7 +5,7 @@ import carpet.utils.Messenger;
 import java.util.List;
 import net.minecraft.commands.CommandSourceStack;
 
-public class CarpetExpressionException extends RuntimeException implements ResolvedException
+public class CarpetExpressionException extends StacklessRuntimeException implements ResolvedException
 {
     public final List<FunctionValue> stack;
 

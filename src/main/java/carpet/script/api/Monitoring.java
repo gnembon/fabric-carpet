@@ -12,14 +12,20 @@ import carpet.script.value.StringValue;
 import carpet.script.value.Value;
 import carpet.utils.SpawnReporter;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
+
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.level.NaturalSpawner;
 
 public class Monitoring {
+    private static final Map<String, MobCategory> MOB_CATEGORY_MAP = Arrays.stream(MobCategory.values()).collect(Collectors.toMap(MobCategory::getName, Function.identity()));
 
     public static void apply(Expression expression)
     {
@@ -62,7 +68,7 @@ public class Monitoring {
                 return MapValue.wrap(retDict);
             }
             String catString = lv.get(0).getString();
-            MobCategory cat = MobCategory.byName(catString.toLowerCase(Locale.ROOT));
+            MobCategory cat = MOB_CATEGORY_MAP.get(catString.toLowerCase(Locale.ROOT));
             if (cat == null) throw new InternalExpressionException("Unreconized mob category: "+catString);
             return ListValue.of(
                     new NumericValue(mobcounts.getInt(cat)),

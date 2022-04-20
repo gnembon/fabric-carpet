@@ -1,5 +1,6 @@
 package carpet.mixins;
 
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -32,7 +33,7 @@ public abstract class Explosion_scarpetEventMixin
     @Shadow @Final private double z;
     @Shadow @Final private float radius;
     @Shadow @Final private boolean fire;
-    @Shadow @Final private List<BlockPos> toBlow;
+    @Shadow @Final private ObjectArrayList<BlockPos> toBlow;
     @Shadow @Final private Explosion.BlockInteraction blockInteraction;
     @Shadow @Final private @Nullable Entity source;
 

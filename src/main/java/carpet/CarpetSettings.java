@@ -45,7 +45,7 @@ import static carpet.settings.RuleCategory.CLIENT;
 @SuppressWarnings("CanBeFinal")
 public class CarpetSettings
 {
-    public static final String carpetVersion = "1.4.66+v220228";
+    public static final String carpetVersion = "1.4.71+v220413";
     public static final Logger LOG = LoggerFactory.getLogger("carpet");
     public static ThreadLocal<Boolean> skipGenerationChecks = ThreadLocal.withInitial(() -> false);
     public static ThreadLocal<Boolean> impendingFillSkipUpdates = ThreadLocal.withInitial(() -> false);
@@ -1101,5 +1101,14 @@ public class CarpetSettings
             category = {CREATIVE, FEATURE}
     )
     public static boolean creativePlayersLoadChunks = true;
+
+    @Rule(
+            desc = "Customizable sculk sensor range",
+            options = {"8", "16", "32"},
+            category = CREATIVE,
+            strict = false,
+            validate = PushLimitLimits.class
+    )
+    public static int sculkSensorRange = 8;
 
 }

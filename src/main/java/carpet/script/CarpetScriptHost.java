@@ -1059,13 +1059,15 @@ public class CarpetScriptHost extends ScriptHost
                 continue;
             stringsToFormat.add(format + line.substring(lastPos, foundLocal.getKey()));
             stringsToFormat.add(format + foundLocal.getValue());
+            Value val = context.variables.get(foundLocal.getValue()).evalValue(context);
+            String type = val.getTypeString();
             String value;
             try {
-                value = context.variables.get(foundLocal.getValue()).evalValue(context).getPrettyString();
+                value = val.getPrettyString();
             } catch (StackOverflowError e) {
                 value = "Exception while rendering variable, there seems to be a recursive reference in there";
             }
-            stringsToFormat.add("^ Value of '" + foundLocal.getValue() + "' at position: \n"
+            stringsToFormat.add("^ Value of '" + foundLocal.getValue() + "' at position (" + type + "): \n"
                         + value);
             lastPos = foundLocal.getKey() + foundLocal.getValue().length();
         }
