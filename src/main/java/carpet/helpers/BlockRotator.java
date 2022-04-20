@@ -23,11 +23,13 @@ import net.minecraft.world.level.block.DiodeBlock;
 import net.minecraft.world.level.block.DirectionalBlock;
 import net.minecraft.world.level.block.DispenserBlock;
 import net.minecraft.world.level.block.EndRodBlock;
+import net.minecraft.world.level.block.FaceAttachedHorizontalDirectionalBlock;
 import net.minecraft.world.level.block.FenceGateBlock;
 import net.minecraft.world.level.block.GlazedTerracottaBlock;
 import net.minecraft.world.level.block.HopperBlock;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import net.minecraft.world.level.block.LeverBlock;
+import net.minecraft.world.level.block.Mirror;
 import net.minecraft.world.level.block.ObserverBlock;
 import net.minecraft.world.level.block.RepeaterBlock;
 import net.minecraft.world.level.block.RotatedPillarBlock;
@@ -38,12 +40,17 @@ import net.minecraft.world.level.block.TrapDoorBlock;
 import net.minecraft.world.level.block.piston.PistonBaseBlock;
 import net.minecraft.world.level.block.piston.PistonStructureResolver;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.AttachFace;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.ComparatorMode;
+import net.minecraft.world.level.block.state.properties.DoubleBlockHalf;
 import net.minecraft.world.level.block.state.properties.Half;
 import net.minecraft.world.level.block.state.properties.SlabType;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 import carpet.CarpetSettings;
+import org.apache.commons.lang3.ArrayUtils;
+
 
 public class BlockRotator
 {
@@ -401,6 +408,85 @@ public class BlockRotator
                     ((BlockItem) (player.getOffhandItem().getItem())).getBlock() == Blocks.CACTUS);
         }
         return false;
+    }
+
+    public static BlockState mirrorState(BlockState state, Direction.Axis axis) {
+        BlockState mirroredState = state;
+        switch (axis) {
+            case X -> mirroredState = state.mirror(Mirror.FRONT_BACK);
+            case Z -> mirroredState = state.mirror(Mirror.LEFT_RIGHT);
+            case Y -> {
+                if (state.hasProperty(BlockStateProperties.FACING))
+                {
+                    Direction facing = state.getValue(BlockStateProperties.FACING);
+                    if (facing == Direction.UP || facing == Direction.DOWN) {
+                        mirroredState = state.setValue(BlockStateProperties.FACING, facing.getOpposite());
+                    }
+                }
+                else if (state.hasProperty(BlockStateProperties.DOUBLE_BLOCK_HALF))
+                {
+                    DoubleBlockHalf half = state.getValue(BlockStateProperties.DOUBLE_BLOCK_HALF);
+                    mirroredState = switch (half) {
+                        case UPPER -> state.setValue(BlockStateProperties.DOUBLE_BLOCK_HALF, DoubleBlockHalf.LOWER);
+                        case LOWER -> state.setValue(BlockStateProperties.DOUBLE_BLOCK_HALF, DoubleBlockHalf.UPPER);
+                    };
+                }
+                else if (state.hasProperty(BlockStateProperties.SLAB_TYPE))
+                {
+                    SlabType type = state.getValue(BlockStateProperties.SLAB_TYPE);
+                    mirroredState = switch (type) {
+                        case TOP -> state.setValue(BlockStateProperties.SLAB_TYPE, SlabType.BOTTOM);
+                        case BOTTOM -> state.setValue(BlockStateProperties.SLAB_TYPE, SlabType.TOP);
+                        default -> state;
+                    };
+                }
+            }
+        }
+        return mirroredState;
+    }
+
+    public static BlockState rotateState(BlockState state, Direction.Axis axis, int angleIndex) {
+        BlockState rotatedState = state;
+        switch (axis) {
+            case X, Z -> {
+                Block block = state.getBlock();
+                if (block instanceof DirectionalBlock) { // rods, pistons, observers
+                    Direction facing = state.getValue(BlockStateProperties.FACING);
+                    return switch (angleIndex) {
+                        case 1 -> state.setValue(BlockStateProperties.FACING, facing.getClockWise(axis));
+                        case 2 -> {
+                            if (facing.getAxis() != axis) {
+                                yield state.setValue(BlockStateProperties.FACING, facing.getOpposite());
+                            }
+                            yield state;
+                        }
+                        case 3 -> state.setValue(BlockStateProperties.FACING, facing.getCounterClockWise(axis));
+                        default -> state;
+                    };
+                } else if (state.hasProperty(BlockStateProperties.HORIZONTAL_FACING)) {
+                    if (state.hasProperty(BlockStateProperties.ATTACH_FACE)) {
+                        AttachFace currentFace = state.getValue(BlockStateProperties.ATTACH_FACE);
+                        AttachFace[] faces = AttachFace.values();
+                        int currentIndex = ArrayUtils.indexOf(faces, currentFace);
+                        int newIndex = (currentIndex + angleIndex) % faces.length;
+                        rotatedState = state.setValue(BlockStateProperties.ATTACH_FACE, faces[newIndex]);
+                    }
+
+                    Direction facing = state.getValue(BlockStateProperties.HORIZONTAL_FACING);
+                    if (angleIndex == 2) {
+                        return state.setValue(BlockStateProperties.HORIZONTAL_FACING, facing.getOpposite());
+                    }
+                    return rotatedState;
+                }
+            }
+            case Y -> rotatedState = switch (angleIndex) {
+                case 1 -> state.rotate(Rotation.CLOCKWISE_90);
+                case 2 -> state.rotate(Rotation.CLOCKWISE_180);
+                case 3 -> state.rotate(Rotation.COUNTERCLOCKWISE_90);
+                default -> state;
+            };
+        }
+        return rotatedState;
     }
 
     public static class CactusDispenserBehaviour extends OptionalDispenseItemBehavior implements DispenseItemBehavior

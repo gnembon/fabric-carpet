@@ -1639,75 +1639,41 @@ public class WorldAccess {
         return MapValue.wrap(ret);*/
     }
 
+    @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
+    private static Direction.Axis getAxisOrThrow(Optional<String> axis, String functionName) {
+        Direction.Axis rotationAxis = Direction.Axis.Y;
+        if (axis.isPresent()) {
+            Direction.Axis axisValue = Direction.Axis.byName(axis.get());
+            if (axisValue == null) {
+                throw new InternalExpressionException("Axis should be one of 'x', 'y', 'z' in '" + functionName + "'");
+            }
+            rotationAxis = axisValue;
+        }
+        return rotationAxis;
+    }
 
-    @ScarpetFunction(maxParams = 5)
-    public Value rotate(Context c, @Locator.Block BlockValue blockValue, int nAngle) {
+    @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
+    @ScarpetFunction(maxParams = 6)
+    public Value rotate(Context c, @Locator.Block BlockValue blockValue, int nAngle, Optional<String> axis) {
+
+        Direction.Axis rotationAxis = getAxisOrThrow(axis, "rotate");
+
         int angleIndex = nAngle % 360;
         angleIndex = angleIndex < 0 ? angleIndex + 360 : angleIndex;
         angleIndex /= 90;
 
-        Rotation rotation = Rotation.NONE;
-
-        switch (angleIndex) {
-            case 1 -> rotation = Rotation.CLOCKWISE_90;
-            case 2 -> rotation = Rotation.CLOCKWISE_180;
-            case 3 -> rotation = Rotation.COUNTERCLOCKWISE_90;
-        }
-
-        Block block = blockValue.getBlockState().getBlock();
         BlockState state = blockValue.getBlockState();
+        BlockState rotatedState = BlockRotator.rotateState(state, rotationAxis, angleIndex);
 
-        return new BlockValue(block.rotate(state, rotation), ((CarpetContext) c).s.getLevel(), blockValue.getPos());
+        return new BlockValue(rotatedState, ((CarpetContext) c).s.getLevel(), blockValue.getPos());
     }
 
     @ScarpetFunction(maxParams = 5)
     public BlockValue mirror(Context c, @Locator.Block BlockValue blockValue, String axisArg) {
-        Direction.Axis axis = Direction.Axis.byName(axisArg);
-        if (axis == null) {
-            throw new InternalExpressionException("Axis should be one of 'x', 'y', 'z' in 'mirror'");
-        }
 
+        Direction.Axis axis = getAxisOrThrow(Optional.of(axisArg), "mirror");
         BlockState state = blockValue.getBlockState();
-        Block block = state.getBlock();
-        BlockState mirroredState = state;
-
-        switch (axis) {
-            case X -> mirroredState = block.mirror(state, Mirror.FRONT_BACK);
-            case Z -> mirroredState = block.mirror(state, Mirror.LEFT_RIGHT);
-            case Y -> {
-                if (state.hasProperty(BlockStateProperties.FACING))
-                {
-                    Direction facing = state.getValue(BlockStateProperties.FACING);
-                    if (facing == Direction.UP || facing == Direction.DOWN) {
-                        mirroredState = state.setValue(BlockStateProperties.FACING, facing.getOpposite());
-                    }
-                }
-                else if (state.hasProperty(BlockStateProperties.DOUBLE_BLOCK_HALF))
-                {
-                    DoubleBlockHalf half = state.getValue(BlockStateProperties.DOUBLE_BLOCK_HALF);
-                    switch (half) {
-                        case UPPER -> {
-                            mirroredState = state.setValue(BlockStateProperties.DOUBLE_BLOCK_HALF, DoubleBlockHalf.LOWER);
-                        }
-                        case LOWER -> {
-                            mirroredState = state.setValue(BlockStateProperties.DOUBLE_BLOCK_HALF, DoubleBlockHalf.UPPER);
-                        }
-                    }
-                }
-                else if (state.hasProperty(BlockStateProperties.SLAB_TYPE))
-                {
-                    SlabType type = state.getValue(BlockStateProperties.SLAB_TYPE);
-                    switch (type) {
-                        case TOP -> {
-                            mirroredState = state.setValue(BlockStateProperties.SLAB_TYPE, SlabType.BOTTOM);
-                        }
-                        case BOTTOM -> {
-                            mirroredState = state.setValue(BlockStateProperties.SLAB_TYPE, SlabType.TOP);
-                        }
-                    }
-                }
-            }
-        }
+        BlockState mirroredState = BlockRotator.mirrorState(state, axis);
 
         return new BlockValue(mirroredState, ((CarpetContext)c).s.getLevel(), blockValue.getPos());
     }
