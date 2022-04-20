@@ -92,7 +92,6 @@ public class HUDController
 
         if (LoggerRegistry.__mobcaps)
             LoggerRegistry.getLogger("mobcaps").log((option, player) -> {
-                player.level.dimension();
                 ResourceKey<Level> dim = switch (option) {
                     case "overworld" -> Level.OVERWORLD; // OW
                     case "nether" -> Level.NETHER; // nether
