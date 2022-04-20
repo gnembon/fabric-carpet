@@ -1062,12 +1062,11 @@ public class CarpetSettings
     private static class UpdateSuppressionBlockModes extends Validator<Integer> {
         @Override
         public Integer validate(CommandSourceStack source, ParsedRule<Integer> currentRule, Integer newValue, String string) {
-            if (newValue < -1) newValue = -1;
-            return newValue;
+            return newValue < -1 ? null : newValue;
         }
         @Override
         public String description() {
-            return "This value represents the amount of updates required before the logger logs them";
+            return "This value represents the amount of updates required before the logger logs them. Must be -1 or larger";
         }
     }
 
