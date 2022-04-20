@@ -62,7 +62,7 @@ public class Logger
         this.acceleratorField = acceleratorField;
         this.logName = logName;
         this.default_option = def;
-        this.options = options;
+        this.options = options == null ? new String[0] : options;
         this.strictOptions = strictOptions;
         if (acceleratorField == null)
             CarpetSettings.LOG.error("[CM] Logger "+getLogName()+" is missing a specified accelerator");
@@ -74,7 +74,7 @@ public class Logger
     }
     public String [] getOptions()
     {
-        return options == null ? new String[0] : options;
+        return options;
     }
     public String getLogName()
     {
