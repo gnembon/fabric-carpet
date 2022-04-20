@@ -1,5 +1,5 @@
 //This is a library app, mostly for the draw command, which allows to import these shape-drawing functions into your own app.
-//The _fill_flat functions are mostly used in internal calls, but can be used outside as well
+//The _fill_flat functions are used in internal calls, and are not a part of the API
 //These functions return a set of all the positions in the shape, given the parameters, without repeating a position.
 //This way, you can efficiently iterate over the positions once having generated them. See draw_beta.sc for an example. todo change to draw once renamed
 //You can also read the documentation code above each function to see what it does, how it does it and how well it does it
