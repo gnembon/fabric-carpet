@@ -25,8 +25,7 @@ sound('entity.zombie.break_wooden_door', [x, y, z], 4, 0.25, 'ambient')
 
 ## Particles
 
-Functions which allow to send particles of various forms to the player. These allow to highlight zones for all players,
-including those with vanilla clients (unlike with `draw_shape` function which only works for players with carpet clients)
+Functions which allow to send particles of various forms to the player. These allow to highlight zones for all or specific players.
 
 ### `particle()`, `particle(name, pos, count?. spread?, speed?, player?)`
 
