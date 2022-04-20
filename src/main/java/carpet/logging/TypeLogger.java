@@ -69,8 +69,8 @@ public class TypeLogger<T> extends Logger
      * will repeat invocation for players that share the same option
      */
     @FunctionalInterface
-    public interface typeMessage<T> { BaseComponent [] get(T playerOption, Player player);}
-    public void log(typeMessage<T> messagePromise)
+    public interface TypeMessage<T> { BaseComponent [] get(T playerOption, Player player);}
+    public void log(TypeMessage<T> messagePromise)
     {
         for (Map.Entry<String,T> en : parsedPlayerOptions.entrySet())
         {
@@ -89,8 +89,8 @@ public class TypeLogger<T> extends Logger
      * and served the same way to all other players subscribed to the same option
      */
     @FunctionalInterface
-    public interface typeMessageIgnorePlayer<T> { BaseComponent [] get(T playerOption);}
-    public void log(typeMessageIgnorePlayer<T> messagePromise)
+    public interface TypeMessageIgnorePlayer<T> { BaseComponent [] get(T playerOption);}
+    public void log(TypeMessageIgnorePlayer<T> messagePromise)
     {
         Map<T, BaseComponent[]> cannedMessages = new HashMap<>();
         for (Map.Entry<String,T> en : parsedPlayerOptions.entrySet())

@@ -12,15 +12,11 @@ public class UpdateStackCountHelper {
     public static void onStackCount(int count) {
         if(LoggerRegistry.__updateStackCount) {
             ((TypeLogger<Integer>) LoggerRegistry.getLogger("updateStackCount")).log(
-                    (TypeLogger.typeMessageIgnorePlayer<Integer>) (option) -> {
-                try {
-                    if (count >= option) {
-                        return new BaseComponent[]{Messenger.c(
-                                "w Stack finished with: " + count + " updates"
-                        )};
-                    }
-                } catch (NumberFormatException ex) {
-                    return null;
+                    (TypeLogger.TypeMessageIgnorePlayer<Integer>) (option) -> {
+                if (count >= option) {
+                    return new BaseComponent[]{Messenger.c(
+                            "w Stack finished with: " + count + " updates"
+                    )};
                 }
                 return null;
             });

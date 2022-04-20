@@ -13,7 +13,7 @@ public class PathfindingVisualizer
     public static void slowPath(Entity entity, Vec3 target, float miliseconds, boolean successful)
     {
         if (!LoggerRegistry.__pathfinding) return;
-        ((TypeLogger<Integer>)LoggerRegistry.getLogger("pathfinding")).log((TypeLogger.typeMessage<Integer>) (option, player)->
+        ((TypeLogger<Integer>)LoggerRegistry.getLogger("pathfinding")).log((TypeLogger.TypeMessage<Integer>) (option, player)->
         {
             if (!(player instanceof ServerPlayer))
                 return null;
