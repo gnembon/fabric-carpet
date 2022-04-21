@@ -8,6 +8,7 @@ import carpet.fakes.ServerChunkManagerInterface;
 import carpet.fakes.ServerWorldInterface;
 import carpet.fakes.SpawnHelperInnerInterface;
 import carpet.fakes.ThreadedAnvilChunkStorageInterface;
+import carpet.helpers.BlockRotator;
 import carpet.helpers.FeatureGenerator;
 import carpet.mixins.PoiRecord_scarpetMixin;
 import carpet.script.CarpetContext;
@@ -46,6 +47,11 @@ import net.minecraft.core.QuartPos;
 import net.minecraft.core.Registry;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.tags.TagKey;
+import net.minecraft.world.level.block.Mirror;
+import net.minecraft.world.level.block.Rotation;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.level.block.state.properties.DoubleBlockHalf;
+import net.minecraft.world.level.block.state.properties.SlabType;
 import net.minecraft.world.level.levelgen.structure.Structure;
 import net.minecraft.world.level.levelgen.structure.StructureType;
 import org.jetbrains.annotations.Nullable;
@@ -1631,5 +1637,44 @@ public class WorldAccess {
             ret.put(new StringValue(noise), new NumericValue(noiseValue));
         }
         return MapValue.wrap(ret);*/
+    }
+
+    @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
+    private static Direction.Axis getAxisOrThrow(Optional<String> axis, String functionName) {
+        Direction.Axis rotationAxis = Direction.Axis.Y;
+        if (axis.isPresent()) {
+            Direction.Axis axisValue = Direction.Axis.byName(axis.get());
+            if (axisValue == null) {
+                throw new InternalExpressionException("Axis should be one of 'x', 'y', 'z' in '" + functionName + "'");
+            }
+            rotationAxis = axisValue;
+        }
+        return rotationAxis;
+    }
+
+    @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
+    @ScarpetFunction(maxParams = 6)
+    public Value rotate(Context c, @Locator.Block BlockValue blockValue, int nAngle, Optional<String> axis) {
+
+        Direction.Axis rotationAxis = getAxisOrThrow(axis, "rotate");
+
+        int angleIndex = nAngle % 360;
+        angleIndex = angleIndex < 0 ? angleIndex + 360 : angleIndex;
+        angleIndex /= 90;
+
+        BlockState state = blockValue.getBlockState();
+        BlockState rotatedState = BlockRotator.rotateState(state, rotationAxis, angleIndex);
+
+        return new BlockValue(rotatedState, ((CarpetContext) c).s.getLevel(), blockValue.getPos());
+    }
+
+    @ScarpetFunction(maxParams = 5)
+    public BlockValue mirror(Context c, @Locator.Block BlockValue blockValue, String axisArg) {
+
+        Direction.Axis axis = getAxisOrThrow(Optional.of(axisArg), "mirror");
+        BlockState state = blockValue.getBlockState();
+        BlockState mirroredState = BlockRotator.mirrorState(state, axis);
+
+        return new BlockValue(mirroredState, ((CarpetContext)c).s.getLevel(), blockValue.getPos());
     }
 }
