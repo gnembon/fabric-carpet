@@ -65,7 +65,11 @@ jar {
 
 // configure the maven publication
 publishing {
-	from components.java
+	publications {
+		mavenJava(MavenPublication) {
+			from components.java
+		}
+	}
 
 	// Select the repositories you want to publish to
 	// To publish to maven local, no extra repositories are necessary. Just use the task `publishToMavenLocal`.
