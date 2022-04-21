@@ -131,17 +131,7 @@
     "DispenserBlock_qcMixin",
 
     "PickaxeItem_missingToolsMixin",
-    "DefaultDispenseItemBehavior_extremeBehavioursMixin",
-    "Containers_extremeMixin",
-    "FishingHook_extremeMixin",
-    "SkeletonTrapGoal_extremeMixin",
-    "FireworkRocketEntity_extremeMixin",
-    "Blaze_extremeMixin",
-    "BlazeAttackGoal_extremeMixin",
-    "Mob_extremeMixin",
-    "AbstractArrow_extremeMixin",
-    "Projectile_extremeMixin",
-    "WitherBoss_extremeMixin",
+    "WitherBoss_moreBlueMixin",
     "ArmorStand_scarpetMarkerMixin",
     "Entity_scarpetEventsMixin",
     "LivingEntity_scarpetEventsMixin",
@@ -194,7 +184,8 @@
     "Level_updateSuppressionCrashFixMixin",
     "MinecraftServer_updateSuppressionCrashFixMixin",
     "ServerPlayer_updateSuppressionCrashFixMixin",
-    "ChunkMap_creativePlayersLoadChunksMixin"
+    "ChunkMap_creativePlayersLoadChunksMixin",
+    "SculkSensorBlock_rangeMixin"
   ],
   "client": [
     "Timer_tickSpeedMixin",
