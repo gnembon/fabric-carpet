@@ -1,8 +1,10 @@
 package carpet;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
+import java.util.Set;
 
 import carpet.commands.CounterCommand;
 import carpet.commands.DistanceCommand;
@@ -219,6 +221,15 @@ public class CarpetServer // static for now - easier to handle all around the co
     {
         scriptServer.reload(server);
         extensions.forEach(e -> e.onReload(server));
+    }
+    
+    private static final Set<CarpetExtension> warnedOutdatedManagerProviders = new HashSet<>();
+    static void warnOutdatedManager(CarpetExtension ext)
+    {
+        if (!warnedOutdatedManagerProviders.contains(ext))
+            CarpetSettings.LOG.warn("""
+                    %s is providing a SettingsManager from an outdated method in CarpetExtension!
+                    This behaviour will not work in later Carpet versions and the manager won't be registered!""".formatted(ext.getClass().getName()));
     }
 }
 

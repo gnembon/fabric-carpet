@@ -5,7 +5,6 @@ import carpet.api.settings.SettingsManager;
 import com.mojang.brigadier.CommandDispatcher;
 import net.minecraft.commands.CommandBuildContext;
 import net.minecraft.commands.CommandSourceStack;
-import net.minecraft.core.RegistryAccess;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 
@@ -88,11 +87,8 @@ public interface CarpetExtension
         // Warn extensions overriding the other (deprecated) method, go ahead and override this if you want to provide a custom SettingsManager
         SettingsManager deprecatedManager = customSettingsManager();
         if (deprecatedManager != null) {
-            // Extension is providing a manager via the old method and hasn't overriden this
-            CarpetSettings.LOG.warn("""
-                    %s is providing a SettingsManager from an outdated method in CarpetExtension!
-                    This behaviour will not work in later Carpet versions and the manager won't be registered!
-                    """.formatted(this.getClass().getName()));
+            // Extension is providing a manager via the old method (and also hasn't overriden this)
+            CarpetServer.warnOutdatedManager(this);
         }
         return customSettingsManager();
     }
