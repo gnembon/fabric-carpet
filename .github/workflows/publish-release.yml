@@ -118,17 +118,40 @@ jobs:
     needs: [Build-And-Publish]
     steps:
      - name: Publish to discord
-       uses: appleboy/discord-action@0.0.3
-       with:
-         webhook_id: ${{ secrets.WEBHOOK_ID }}
-         webhook_token: ${{ secrets.WEBHOOK_TOKEN }}
-         message: |
-           **${{ github.event.release.name }}** has been released!
-           
-           ${{ github.event.release.body }}
-           
-           Get it on Github Releases: <${{ github.event.release.html_url }}>
-           Or on CurseForge
+       run: |
+         BOT_TOKEN="${{ secrets.DISCORD_BOT_TOKEN }}"
+         NEWS_CHANNEL_ID="967520511452143677"
+         
+         CONTENT=$(cat <<EOF
+         **${{ github.event.release.name }}** has been released!
+         
+         ${{ github.event.release.body }}
+
+         Get it on Github Releases: <${{ github.event.release.html_url }}>
+         Or on CurseForge
+         EOF
+         )
+         
+         MESSAGE_CONTENT_JSON=$(jq -n --arg content "$CONTENT" '{content: $content}')
+         
+         MESSAGES_ENDPOINT="https://discord.com/api/v9/channels/$NEWS_CHANNEL_ID/messages"
+         
+         CREATE_MESSAGE_RESPONSE=$(curl -s -L -X POST "$MESSAGES_ENDPOINT" \
+             --header "Authorization: Bot $BOT_TOKEN" \
+             --header 'Accept: application/json' \
+             --header 'Content-Type: application/json' \
+             --data-raw "$MESSAGE_CONTENT_JSON"
+         )
+         
+         RESPONSE_MESSAGE_ID=$(echo $CREATE_MESSAGE_RESPONSE | jq -r '.id')
+         
+         CROSSPOST_ENDPOINT="$MESSAGES_ENDPOINT/$RESPONSE_MESSAGE_ID/crosspost"
+         
+         CROSSPOST_RESPONSE=$(curl -s -L -X POST "$CROSSPOST_ENDPOINT" \
+             --header "Authorization: Bot $BOT_TOKEN" \
+             --header 'Content-Type: application/json' \
+             --data-raw "$CREATE_MESSAGE_RESPONSE"
+         )
   Merge-Scarpet-Docs:
     runs-on: ubuntu-latest
     steps:
