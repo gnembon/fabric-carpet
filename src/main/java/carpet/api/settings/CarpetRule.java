@@ -7,7 +7,7 @@ import org.apache.commons.lang3.ClassUtils;
 
 import carpet.network.ServerNetworkHandler;
 import net.minecraft.commands.CommandSourceStack;
-import net.minecraft.network.chat.BaseComponent;
+import net.minecraft.network.chat.Component;
 
 /**
  * <p>A Carpet rule, that can return its required properties and stores a value.</p>
@@ -33,7 +33,7 @@ public interface CarpetRule<T> {
      * 
      * <p>Handling of translation of the result of this method is responsibility of the rule implementation.</p>
      */
-    List<BaseComponent> extraInfo();
+    List<Component> extraInfo();
     
     /**
      * <p>Returns a {@link Collection} of categories this rule is on.</p>

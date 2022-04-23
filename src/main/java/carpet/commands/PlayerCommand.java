@@ -15,6 +15,7 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import com.mojang.util.UUIDTypeAdapter;
 import net.minecraft.commands.CommandBuildContext;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.arguments.DimensionArgument;
@@ -22,6 +23,7 @@ import net.minecraft.commands.arguments.coordinates.RotationArgument;
 import net.minecraft.commands.arguments.coordinates.Vec3Argument;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.UUIDUtil;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
@@ -211,7 +213,7 @@ public class PlayerCommand
                         "Banned players can only be summoned in Singleplayer and in servers in off-line mode.");
                 return true;
             } else {
-                profile = new GameProfile(Player.createPlayerUUID(playerName), playerName);
+                profile = new GameProfile(UUIDUtil.createOfflinePlayerUUID(playerName), playerName);
             }
         }
         if (manager.getBans().isBanned(profile))

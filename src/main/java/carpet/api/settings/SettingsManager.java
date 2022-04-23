@@ -50,7 +50,7 @@ import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.commands.CommandBuildContext;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.SharedSuggestionProvider;
-import net.minecraft.network.chat.BaseComponent;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.level.storage.LevelResource;
 
@@ -534,7 +534,7 @@ public class SettingsManager {
                 continue;
             ps.println("## " + rule.name());
             ps.println(RuleHelper.translatedDescription(rule)+"  ");
-            for (BaseComponent extra : rule.extraInfo())
+            for (Component extra : rule.extraInfo())
                 ps.println(extra.getString() + "  ");
             ps.println("* Type: `" + rule.type().getSimpleName() + "`  ");
             ps.println("* Default value: `" + RuleHelper.toRuleString(rule.defaultValue()) + "`  ");
@@ -658,7 +658,7 @@ public class SettingsManager {
 
         rule.extraInfo().forEach(s -> Messenger.m(source, s));
 
-        List<BaseComponent> tags = new ArrayList<>();
+        List<Component> tags = new ArrayList<>();
         tags.add(Messenger.c("w "+ tr(TranslationKeys.TAGS)+": "));
         for (String t: rule.categories())
         {
@@ -670,7 +670,7 @@ public class SettingsManager {
         Messenger.m(source, tags.toArray(new Object[0]));
 
         Messenger.m(source, "w "+ tr(TranslationKeys.CURRENT_VALUE)+": ", String.format("%s %s (%s value)", RuleHelper.getBooleanValue(rule) ? "lb" : "nb", RuleHelper.toRuleString(rule.value()), RuleHelper.isInDefaultValue(rule) ? "default" : "modified"));
-        List<BaseComponent> options = new ArrayList<>();
+        List<Component> options = new ArrayList<>();
         options.add(Messenger.c("w Options: ", "y [ "));
         for (String o: rule.suggestions())
         {
@@ -727,7 +727,7 @@ public class SettingsManager {
         return 1;
     }
 
-    private BaseComponent displayInteractiveSetting(CarpetRule<?> rule)
+    private Component displayInteractiveSetting(CarpetRule<?> rule)
     {
         String displayName = RuleHelper.translatedName(rule);
         List<Object> args = new ArrayList<>();
@@ -748,7 +748,7 @@ public class SettingsManager {
         return Messenger.c(args.toArray(new Object[0]));
     }
 
-    private BaseComponent makeSetRuleButton(CarpetRule<?> rule, String option, boolean brackets)
+    private Component makeSetRuleButton(CarpetRule<?> rule, String option, boolean brackets)
     {
         String style = RuleHelper.isInDefaultValue(rule)?"g":(option.equalsIgnoreCase(RuleHelper.toRuleString(rule.defaultValue()))?"e":"y");
         if (option.equalsIgnoreCase(RuleHelper.toRuleString(rule.value())))
@@ -757,10 +757,10 @@ public class SettingsManager {
             if (option.equalsIgnoreCase(RuleHelper.toRuleString(rule.defaultValue())))
                 style = style + "b";
         }
-        String baseComponent = style + (brackets ? " [" : " ") + option + (brackets ? "]" : "");
+        String component = style + (brackets ? " [" : " ") + option + (brackets ? "]" : "");
         if (option.equalsIgnoreCase(RuleHelper.toRuleString(rule.value())))
-            return Messenger.c(baseComponent);
-        return Messenger.c(baseComponent, "^g "+ tr(TranslationKeys.SWITCH_TO).formatted(option + (option.equals(RuleHelper.toRuleString(rule.defaultValue()))?" (default)":"")), "?/"+identifier+" " + rule.name() + " " + option);
+            return Messenger.c(component);
+        return Messenger.c(component, "^g "+ tr(TranslationKeys.SWITCH_TO).formatted(option + (option.equals(RuleHelper.toRuleString(rule.defaultValue()))?" (default)":"")), "?/"+identifier+" " + rule.name() + " " + option);
     }
 
     private int listSettings(CommandSourceStack source, String title, Collection<CarpetRule<?>> settings_list)

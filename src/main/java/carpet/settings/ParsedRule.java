@@ -11,7 +11,7 @@ import carpet.utils.TranslationKeys;
 import carpet.utils.Translations;
 import carpet.utils.TypedField;
 import net.minecraft.commands.CommandSourceStack;
-import net.minecraft.network.chat.BaseComponent;
+import net.minecraft.network.chat.Component;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
@@ -328,7 +328,7 @@ public final class ParsedRule<T> implements CarpetRule<T>, Comparable<ParsedRule
     }
 
     @Override
-    public List<BaseComponent> extraInfo() {
+    public List<Component> extraInfo() {
         return getTranslationArray(TranslationKeys.RULE_EXTRA_PREFIX_PATTERN.formatted(settingsManager().identifier(), name()))
                 .stream()
                 .map(str -> Messenger.c("g " + str))
@@ -492,6 +492,6 @@ public final class ParsedRule<T> implements CarpetRule<T>, Comparable<ParsedRule
     @Deprecated(forRemoval = true)
     public List<String> translatedExtras()
     {
-        return extraInfo().stream().map(BaseComponent::getString).toList();
+        return extraInfo().stream().map(Component::getString).toList();
     }
 }

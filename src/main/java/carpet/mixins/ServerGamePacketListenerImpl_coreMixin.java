@@ -20,6 +20,6 @@ public class ServerGamePacketListenerImpl_coreMixin {
     @Inject(method = "onDisconnect", at = @At("HEAD"))
     private void onPlayerDisconnect(Component reason, CallbackInfo ci) {
         CarpetServer.onPlayerLoggedOut(this.player);
-        if (PLAYER_DISCONNECTS.isNeeded()) PLAYER_DISCONNECTS.onPlayerMessage(player, reason.getContents());
+        if (PLAYER_DISCONNECTS.isNeeded()) PLAYER_DISCONNECTS.onPlayerMessage(player, reason.getContents().toString());
     }
 }

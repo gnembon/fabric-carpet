@@ -6,7 +6,7 @@ import carpet.logging.LoggerRegistry;
 import carpet.utils.Messenger;
 import net.minecraft.ReportedException;
 import net.minecraft.core.BlockPos;
-import net.minecraft.network.chat.BaseComponent;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import org.spongepowered.asm.mixin.Mixin;
@@ -45,7 +45,7 @@ public class MinecraftServer_updateSuppressionCrashFixMixin {
     private void logUpdateSuppression(BlockPos pos) {
         if(LoggerRegistry.__updateSuppressedCrashes) {
             LoggerRegistry.getLogger("updateSuppressedCrashes").log(() -> {
-                return new BaseComponent[]{Messenger.c(
+                return new Component[]{Messenger.c(
                         "w Server crash prevented in: ",
                         "m world tick ",
                         "w - at: ",

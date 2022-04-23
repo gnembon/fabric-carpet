@@ -11,7 +11,7 @@ import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.minecraft.commands.CommandBuildContext;
 import net.minecraft.commands.CommandSourceStack;
-import net.minecraft.network.chat.BaseComponent;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 
 import static com.mojang.brigadier.arguments.FloatArgumentType.floatArg;
@@ -94,7 +94,7 @@ public class TickCommand
         catch (CommandSyntaxException ignored)
         {
         }
-        BaseComponent message = TickSpeed.tickrate_advance(player, advance, tail_command, source);
+        Component message = TickSpeed.tickrate_advance(player, advance, tail_command, source);
         source.sendSuccess(message, false);
         return 1;
     }

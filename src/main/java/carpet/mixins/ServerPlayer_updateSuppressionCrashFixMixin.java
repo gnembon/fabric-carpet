@@ -7,7 +7,7 @@ import carpet.utils.Messenger;
 import com.mojang.authlib.GameProfile;
 import net.minecraft.ReportedException;
 import net.minecraft.core.BlockPos;
-import net.minecraft.network.chat.BaseComponent;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
@@ -49,7 +49,7 @@ public abstract class ServerPlayer_updateSuppressionCrashFixMixin extends Player
     private void logUpdateSuppressionPlayer(BlockPos pos) {
         if(LoggerRegistry.__updateSuppressedCrashes) {
             LoggerRegistry.getLogger("updateSuppressedCrashes").log(() -> {
-                return new BaseComponent[]{Messenger.c(
+                return new Component[]{Messenger.c(
                         "w Server crash prevented in: ",
                         "m player tick ",
                         "w - at: ",

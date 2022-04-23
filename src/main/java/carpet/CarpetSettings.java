@@ -46,7 +46,7 @@ import static carpet.api.settings.RuleCategory.CLIENT;
 @SuppressWarnings({"CanBeFinal", "removal"}) // removal should be removed after migrating rules to the new system
 public class CarpetSettings
 {
-    public static final String carpetVersion = "1.4.69+v220331";
+    public static final String carpetVersion = "1.4.72+v220421";
     public static final Logger LOG = LoggerFactory.getLogger("carpet");
     public static ThreadLocal<Boolean> skipGenerationChecks = ThreadLocal.withInitial(() -> false);
     public static ThreadLocal<Boolean> impendingFillSkipUpdates = ThreadLocal.withInitial(() -> false);
@@ -900,17 +900,10 @@ public class CarpetSettings
     public static boolean flatWorldStructureSpawning = false;
 
     @Rule(
-            desc = "Edge cases are as frequent as common cases, for testing only!!",
-            extra = {"Velocities of items from dispensers, blaze projectiles, fireworks ",
-                    "Directions of fireballs, wither skulls, fishing bobbers, ",
-                    "items dropped from blocks and inventories, llamas spit, triggered trap horses",
-                    "Damage dealt with projectiles",
-                    "Blaze aggro sensitivity",
-                    "Mobs spawned follow range"
-            },
+            desc = "Increases for testing purposes number of blue skulls shot by the wither",
             category = CREATIVE
     )
-    public static boolean extremeBehaviours = false;
+    public static boolean moreBlueSkulls = false;
 
     @Rule(
             desc = "Removes fog from client in the nether and the end",
