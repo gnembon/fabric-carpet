@@ -2,7 +2,7 @@ package carpet.settings;
 
 import carpet.CarpetSettings;
 import carpet.api.settings.CarpetRule;
-import carpet.api.settings.StandardValidators;
+import carpet.api.settings.Validators;
 import carpet.utils.CommandHelper;
 import carpet.utils.Messenger;
 import net.minecraft.commands.CommandSourceStack;
@@ -39,22 +39,22 @@ public abstract class Validator<T> extends carpet.api.settings.Validator<T>
     public abstract T validate(CommandSourceStack source, ParsedRule<T> currentRule, T newValue, String string);
 
     /**
-     * @deprecated Use {@link StandardValidators.CommandLevelValidator} instead
+     * @deprecated Use {@link Validators.CommandLevel} instead
      */
     @Deprecated(forRemoval = true) // to remove
-    public static class _COMMAND_LEVEL_VALIDATOR extends StandardValidators.CommandLevelValidator {}
+    public static class _COMMAND_LEVEL_VALIDATOR extends Validators.CommandLevel {}
 
     /**
-     * @deprecated Use {@link StandardValidators.NonNegativeNumberValidator} instead
+     * @deprecated Use {@link Validators.NonNegativeNumber} instead
      */
     @Deprecated(forRemoval = true) // to remove
-    public static class NONNEGATIVE_NUMBER<T extends Number> extends StandardValidators.NonNegativeNumberValidator<T> {}
+    public static class NONNEGATIVE_NUMBER<T extends Number> extends Validators.NonNegativeNumber<T> {}
 
     /**
-     * @deprecated Use {@link StandardValidators.ProbablityValidator} instead
+     * @deprecated Use {@link Validators.Probablity} instead
      */
     @Deprecated(forRemoval = true) // to remove
-    public static class PROBABILITY <T extends Number> extends StandardValidators.ProbablityValidator<T> {}
+    public static class PROBABILITY <T extends Number> extends Validators.Probablity<T> {}
 
     // The ones below are part of the implementation of ParsedRule or printRulesToLog, so they need to be close to it to stay hidden
     // They will need to be moved when moving ParsedRule

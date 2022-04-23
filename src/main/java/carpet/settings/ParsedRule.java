@@ -5,7 +5,7 @@ import carpet.api.settings.CarpetRule;
 import carpet.api.settings.InvalidRuleValueException;
 import carpet.api.settings.RuleHelper;
 import carpet.api.settings.SettingsManager;
-import carpet.api.settings.StandardValidators;
+import carpet.api.settings.Validators;
 import carpet.utils.Messenger;
 import carpet.utils.TranslationKeys;
 import carpet.utils.Translations;
@@ -189,7 +189,7 @@ public final class ParsedRule<T> implements CarpetRule<T>, Comparable<ParsedRule
             this.realValidators.add(new Validator._COMMAND<T>());
             if (this.type == String.class)
             {
-                this.realValidators.add(instantiateValidator(StandardValidators.CommandLevelValidator.class));
+                this.realValidators.add(instantiateValidator(Validators.CommandLevel.class));
             }
         }
         
@@ -213,7 +213,7 @@ public final class ParsedRule<T> implements CarpetRule<T>, Comparable<ParsedRule
         }
         else if (this.type == String.class && categories.contains(RuleCategory.COMMAND))
         {
-            this.options = Validator._COMMAND_LEVEL_VALIDATOR.OPTIONS;
+            this.options = Validators.CommandLevel.OPTIONS;
         }
         else if (this.type.isEnum())
         {

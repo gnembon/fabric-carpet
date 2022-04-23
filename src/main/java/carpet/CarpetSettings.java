@@ -2,7 +2,7 @@ package carpet;
 
 import carpet.api.settings.CarpetRule;
 import carpet.api.settings.RuleCategory;
-import carpet.api.settings.StandardValidators;
+import carpet.api.settings.Validators;
 import carpet.api.settings.Validator;
 import carpet.script.utils.AppStoreManager;
 import carpet.settings.Rule;
@@ -515,7 +515,7 @@ public class CarpetSettings
             },
             category = {SCARPET},
             options = {"ops", "0", "1", "2", "3", "4"},
-            validate = {StandardValidators.CommandLevelValidator.class, ModulePermissionLevel.class}
+            validate = {Validators.CommandLevel.class, ModulePermissionLevel.class}
     )
     public static String commandScriptACE = "ops";
 
@@ -649,7 +649,7 @@ public class CarpetSettings
             options = {"0", "1", "20"},
             category = OPTIMIZATION,
             strict = false,
-            validate = StandardValidators.NonNegativeNumberValidator.class
+            validate = Validators.NonNegativeNumber.class
     )
     public static int maxEntityCollisions = 0;
 
@@ -658,7 +658,7 @@ public class CarpetSettings
             options = {"0", "12", "20", "40"},
             category = CREATIVE,
             strict = false,
-            validate = StandardValidators.NonNegativeNumberValidator.class
+            validate = Validators.NonNegativeNumber.class
     )
     public static int pingPlayerListLimit = 12;
     /*
@@ -942,7 +942,7 @@ public class CarpetSettings
             },
             category = {CREATIVE, CLIENT},
             strict = false,
-            validate = StandardValidators.NonNegativeNumberValidator.class
+            validate = Validators.NonNegativeNumber.class
     )
     public static double creativeFlySpeed = 1.0;
 
@@ -958,7 +958,7 @@ public class CarpetSettings
             },
             category = {CREATIVE, CLIENT},
             strict = false,
-            validate = StandardValidators.ProbablityValidator.class
+            validate = Validators.Probablity.class
     )
     public static double creativeFlyDrag = 0.09;
 
@@ -1026,7 +1026,7 @@ public class CarpetSettings
             options = {"96", "192", "2048"},
             category = {CREATIVE, CLIENT},
             strict = false,
-            validate = StandardValidators.NonNegativeNumberValidator.class
+            validate = Validators.NonNegativeNumber.class
     )
     public static int structureBlockOutlineDistance = 96;
 
