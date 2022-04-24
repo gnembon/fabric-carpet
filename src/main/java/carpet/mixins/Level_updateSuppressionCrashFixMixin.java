@@ -26,7 +26,7 @@ public class Level_updateSuppressionCrashFixMixin {
     )
     public void checkUpdateSuppression(BlockPos sourcePos, Block sourceBlock, BlockPos neighborPos, CallbackInfo ci, BlockState state,Throwable throwable){
         if(CarpetSettings.updateSuppressionCrashFix && (throwable instanceof ThrowableSuppression || throwable instanceof StackOverflowError)){
-            throw new ThrowableSuppression("Update suppression",neighborPos);
+            throw new ThrowableSuppression("Update suppression", neighborPos);
         }
     }
 }

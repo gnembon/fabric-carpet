@@ -43,10 +43,10 @@ public abstract class Commands_customCommandsMixin
         CarpetSettings.impendingFillSkipUpdates.set(false);
     }
 
-    @SuppressWarnings("UnresolvedMixinReference")
     @Redirect(method = "performCommand", at = @At(
                 value = "INVOKE",
-                target = "Lorg/slf4j/Logger;isDebugEnabled()Z"
+                target = "Lorg/slf4j/Logger;isDebugEnabled()Z",
+                remap = false
             ),
         require = 0
     )
