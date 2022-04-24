@@ -1,6 +1,7 @@
 package carpet.mixins;
 
 import carpet.CarpetSettings;
+import net.minecraft.util.RandomSource;
 import org.spongepowered.asm.mixin.Mixin;
 
 import java.util.Random;
@@ -43,7 +44,7 @@ public class BarrierBlock_updateSuppressionBlockMixin extends Block {
     }
 
     @Override
-    public void tick(BlockState state, ServerLevel world, BlockPos pos, Random random) {
+    public void tick(BlockState state, ServerLevel world, BlockPos pos, RandomSource random) {
         BlockPos posAbove = pos.above();
         BlockState stateAbove = world.getBlockState(posAbove);
         if (stateAbove.is(Blocks.ACTIVATOR_RAIL) && !stateAbove.getValue(PoweredRailBlock.POWERED)) {

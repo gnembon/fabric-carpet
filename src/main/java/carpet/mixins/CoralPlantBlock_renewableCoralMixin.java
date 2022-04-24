@@ -4,6 +4,7 @@ import carpet.CarpetSettings;
 import carpet.fakes.CoralFeatureInterface;
 import net.minecraft.core.Holder;
 import net.minecraft.core.Registry;
+import net.minecraft.util.RandomSource;
 import org.spongepowered.asm.mixin.Mixin;
 
 import java.util.Random;
@@ -40,12 +41,12 @@ public abstract class CoralPlantBlock_renewableCoralMixin implements Bonemealabl
                 && var1.getFluidState(var2.above()).is(FluidTags.WATER);
     }
 
-    public boolean isBonemealSuccess(Level var1, Random var2, BlockPos var3, BlockState var4)
+    public boolean isBonemealSuccess(Level var1, RandomSource var2, BlockPos var3, BlockState var4)
     {
         return (double)var1.random.nextFloat() < 0.15D;
     }
 
-    public void performBonemeal(ServerLevel worldIn, Random random, BlockPos pos, BlockState blockUnder)
+    public void performBonemeal(ServerLevel worldIn, RandomSource random, BlockPos pos, BlockState blockUnder)
     {
 
         CoralFeature coral;
