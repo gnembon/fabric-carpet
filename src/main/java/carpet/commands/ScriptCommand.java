@@ -8,7 +8,6 @@ import carpet.script.CarpetExpression;
 import carpet.script.CarpetScriptHost;
 import carpet.script.Expression;
 import carpet.script.LazyValue;
-import carpet.script.Module;
 import carpet.script.ScriptHost;
 import carpet.script.Tokenizer;
 import carpet.script.exception.CarpetExpressionException;
@@ -61,7 +60,7 @@ public class ScriptCommand
     private static final TreeSet<String> APIFunctions;
     static
     {
-        Set<String> allFunctions = (new CarpetExpression((Module)null, "null", null, null)).getExpr().getFunctionNames();
+        Set<String> allFunctions = (new CarpetExpression(null, "null", null, null)).getExpr().getFunctionNames();
         scarpetFunctions = new TreeSet<>(Expression.none.getFunctionNames());
         APIFunctions = allFunctions.stream().filter(s -> !scarpetFunctions.contains(s)).collect(Collectors.toCollection(TreeSet::new));
     }
