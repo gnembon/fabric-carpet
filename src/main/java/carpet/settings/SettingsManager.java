@@ -21,7 +21,7 @@ import net.minecraft.commands.CommandBuildContext;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.core.RegistryAccess;
-import net.minecraft.network.chat.BaseComponent;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.TickTask;
 import net.minecraft.server.level.ServerPlayer;
@@ -647,7 +647,7 @@ public class SettingsManager
 
         rule.translatedExtras().forEach(s -> Messenger.m(source, "g  "+s));
 
-        List<BaseComponent> tags = new ArrayList<>();
+        List<Component> tags = new ArrayList<>();
         tags.add(Messenger.c("w "+ tr("ui.tags", "Tags")+": "));
         for (String t: rule.categories)
         {
@@ -659,7 +659,7 @@ public class SettingsManager
         Messenger.m(source, tags.toArray(new Object[0]));
 
         Messenger.m(source, "w "+ tr("ui.current_value", "Current value")+": ",String.format("%s %s (%s value)",rule.getBoolValue()?"lb":"nb", rule.getAsString(),rule.isDefault()?"default":"modified"));
-        List<BaseComponent> options = new ArrayList<>();
+        List<Component> options = new ArrayList<>();
         options.add(Messenger.c("w Options: ", "y [ "));
         for (String o: rule.options)
         {
@@ -708,7 +708,7 @@ public class SettingsManager
         return 1;
     }
 
-    private BaseComponent displayInteractiveSetting(ParsedRule<?> rule)
+    private Component displayInteractiveSetting(ParsedRule<?> rule)
     {
         String displayName = rule.translatedName();
         List<Object> args = new ArrayList<>();
@@ -729,7 +729,7 @@ public class SettingsManager
         return Messenger.c(args.toArray(new Object[0]));
     }
 
-    private BaseComponent makeSetRuleButton(ParsedRule<?> rule, String option, boolean brackets)
+    private Component makeSetRuleButton(ParsedRule<?> rule, String option, boolean brackets)
     {
         String style = rule.isDefault()?"g":(option.equalsIgnoreCase(rule.defaultAsString)?"e":"y");
         if (option.equalsIgnoreCase(rule.getAsString()))

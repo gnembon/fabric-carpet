@@ -1,7 +1,8 @@
 package carpet.logging;
 
 import java.lang.reflect.Field;
-import net.minecraft.network.chat.BaseComponent;
+
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 
 public class HUDLogger extends Logger
@@ -43,9 +44,9 @@ public class HUDLogger extends Logger
     }
 
     @Override
-    public void sendPlayerMessage(ServerPlayer player, BaseComponent... messages)
+    public void sendPlayerMessage(ServerPlayer player, Component... messages)
     {
-        for (BaseComponent m:messages) HUDController.addMessage(player, m);
+        for (Component m:messages) HUDController.addMessage(player, m);
     }
 
 

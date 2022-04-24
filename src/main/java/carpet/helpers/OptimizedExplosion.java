@@ -232,7 +232,7 @@ public class OptimizedExplosion
         if (damagesTerrain)
         {
             ObjectArrayList<Pair<ItemStack, BlockPos>> objectArrayList = new ObjectArrayList<>();
-            Util.shuffle(e.getToBlow(), world.random);
+            Util.shuffle((ObjectArrayList<BlockPos>) e.getToBlow(), world.random);
 
             for (BlockPos blockpos : e.getToBlow())
             {
