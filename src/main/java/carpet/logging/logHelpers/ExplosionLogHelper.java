@@ -7,7 +7,7 @@ import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.core.Registry;
-import net.minecraft.network.chat.BaseComponent;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.level.Explosion;
@@ -52,7 +52,7 @@ public class ExplosionLogHelper
         }
         explosionCountInCurretGT++;
         LoggerRegistry.getLogger("explosions").log( (option) -> {
-            List<BaseComponent> messages = new ArrayList<>();
+            List<Component> messages = new ArrayList<>();
             if(newTick) messages.add(c("wb tick : ", "d " + gametime));
             if ("brief".equals(option))
             {
@@ -83,7 +83,7 @@ public class ExplosionLogHelper
                     });
                 }
             }
-            return messages.toArray(new BaseComponent[0]);
+            return messages.toArray(new Component[0]);
         });
     }
 

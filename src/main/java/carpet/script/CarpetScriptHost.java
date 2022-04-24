@@ -42,9 +42,7 @@ import net.fabricmc.loader.api.metadata.version.VersionPredicate;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.Tag;
-import net.minecraft.network.chat.BaseComponent;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.TextComponent;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
@@ -156,7 +154,7 @@ public class CarpetScriptHost extends ScriptHost
         CarpetScriptHost cHost = CarpetServer.scriptServer.modules.get(hostName).retrieveOwnForExecution(ctx.getSource());
         List<String> argNames = funcSpec.function.getArguments();
         if ((argNames.size()-funcSpec.args.size()) != paramNames.size())
-            throw new SimpleCommandExceptionType(new TextComponent("Target function "+funcSpec.function.getPrettyString()+" as wrong number of arguments, required "+paramNames.size()+", found "+argNames.size()+" with "+funcSpec.args.size()+" provided")).create();
+            throw new SimpleCommandExceptionType(Component.literal("Target function "+funcSpec.function.getPrettyString()+" as wrong number of arguments, required "+paramNames.size()+", found "+argNames.size()+" with "+funcSpec.args.size()+" provided")).create();
         List<Value> args = new ArrayList<>(argNames.size());
         for (String s : paramNames)
         {
@@ -630,7 +628,7 @@ public class CarpetScriptHost extends ScriptHost
         }
         catch (CommandSyntaxException ignored)
         {
-            throw new SimpleCommandExceptionType(new TextComponent("Cannot run player based apps without the player context")).create();
+            throw new SimpleCommandExceptionType(Component.literal("Cannot run player based apps without the player context")).create();
         }
         CarpetScriptHost userHost = (CarpetScriptHost)retrieveForExecution(player.getScoreboardName());
         if (userHost.errorSnooper == null) userHost.setChatErrorSnooper(source);
@@ -1022,7 +1020,7 @@ public class CarpetScriptHost extends ScriptHost
     }
 
     /**
-     * <p>Creates a {@link BaseComponent} using {@link Messenger} that has the locals in the {@code line} snippet with a hover over
+     * <p>Creates a {@link Component} using {@link Messenger} that has the locals in the {@code line} snippet with a hover over
      * tooltip with the value of the local at that location</p> 
      * @param line The line to find references to locals on
      * @param context The {@link Context} to extract the locals from
@@ -1032,7 +1030,7 @@ public class CarpetScriptHost extends ScriptHost
      * @implNote The implementation of this method is far from perfect, and won't detect actual references to variables, but try to find the strings
      *              and add the hover effect to anything that equals to any variable name, so short variable names may appear on random positions
      */
-    private static BaseComponent withLocals(String format, String line, Context context)
+    private static Component withLocals(String format, String line, Context context)
     {
         format += " ";
         List<String> stringsToFormat = new ArrayList<>();
@@ -1059,13 +1057,15 @@ public class CarpetScriptHost extends ScriptHost
                 continue;
             stringsToFormat.add(format + line.substring(lastPos, foundLocal.getKey()));
             stringsToFormat.add(format + foundLocal.getValue());
+            Value val = context.variables.get(foundLocal.getValue()).evalValue(context);
+            String type = val.getTypeString();
             String value;
             try {
-                value = context.variables.get(foundLocal.getValue()).evalValue(context).getPrettyString();
+                value = val.getPrettyString();
             } catch (StackOverflowError e) {
                 value = "Exception while rendering variable, there seems to be a recursive reference in there";
             }
-            stringsToFormat.add("^ Value of '" + foundLocal.getValue() + "' at position: \n"
+            stringsToFormat.add("^ Value of '" + foundLocal.getValue() + "' at position (" + type + "): \n"
                         + value);
             lastPos = foundLocal.getKey() + foundLocal.getValue().length();
         }

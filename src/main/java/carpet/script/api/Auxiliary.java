@@ -47,13 +47,11 @@ import net.minecraft.core.Rotations;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtIo;
-import net.minecraft.nbt.NbtOps;
 import net.minecraft.nbt.NbtUtils;
 import net.minecraft.nbt.StringTag;
 import net.minecraft.nbt.Tag;
-import net.minecraft.network.chat.BaseComponent;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.TextComponent;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientboundClearTitlesPacket;
 import net.minecraft.network.protocol.game.ClientboundCustomSoundPacket;
@@ -164,10 +162,11 @@ public class Auxiliary {
             Vec3 vec = locator.vec;
             double d0 = Math.pow(volume > 1.0F ? (double)(volume * 16.0F) : 16.0D, 2.0D);
             int count = 0;
+            long seed = cc.s.getLevel().getRandom().nextLong();
             for (ServerPlayer player : cc.s.getLevel().getPlayers( (p) -> p.distanceToSqr(vec) < d0))
             {
                 count++;
-                player.connection.send(new ClientboundCustomSoundPacket(soundName, mixer, vec, volume, pitch));
+                player.connection.send(new ClientboundCustomSoundPacket(soundName, mixer, vec, volume, pitch, seed));
             }
             return new NumericValue(count);
         });
@@ -340,11 +339,11 @@ public class Auxiliary {
             BlockState targetBlock = null;
             Vector3Argument pointLocator;
             boolean interactable = true;
-            String name;
+            Component name;
             try
             {
                 Value nameValue = lv.get(0);
-                name = nameValue.isNull() ? "" : nameValue.getString();
+                name = nameValue.isNull() ? null : FormattedTextValue.getTextByValue(nameValue);
                 pointLocator = Vector3Argument.findIn(lv, 1, true, false);
                 if (lv.size()>pointLocator.offset)
                 {
@@ -363,7 +362,7 @@ public class Auxiliary {
 
             ArmorStand armorstand = new ArmorStand(EntityType.ARMOR_STAND, cc.s.getLevel());
             double yoffset;
-            if (targetBlock == null && name.isEmpty())
+            if (targetBlock == null && name == null)
             {
                 yoffset = 0.0;
             }
@@ -394,9 +393,9 @@ public class Auxiliary {
             armorstand.addTag(MARKER_STRING);
             if (targetBlock != null)
                 armorstand.setItemSlot(EquipmentSlot.HEAD, new ItemStack(targetBlock.getBlock().asItem()));
-            if (!name.isEmpty())
+            if (name != null)
             {
-                armorstand.setCustomName(new TextComponent(name));
+                armorstand.setCustomName(name);
                 armorstand.setCustomNameVisible(true);
             }
             armorstand.setHeadPose(new Rotations((int)pointLocator.pitch,0,0));
@@ -550,7 +549,7 @@ public class Auxiliary {
             else title = null; // Will never happen, just to make lambda happy
             if (packetGetter == null)
             {
-                Map<String, BaseComponent> map;
+                Map<String, Component> map;
                 if (actionString.equals("player_list_header"))
                     map = HUDController.scarpet_headers;
                 else
@@ -565,7 +564,7 @@ public class Auxiliary {
                     });
                 else
                     targetList.forEach(target -> {
-                        map.put(target.getScoreboardName(), (BaseComponent) title);
+                        map.put(target.getScoreboardName(), (MutableComponent) title);
                         total.getAndIncrement();
                     });
                 HUDController.update_hud(((CarpetContext)c).s.getServer(), targetList);
@@ -620,7 +619,7 @@ public class Auxiliary {
             }
             catch (Exception exc)
             {
-                return ListValue.of(Value.NULL, ListValue.of(), new FormattedTextValue(new TextComponent(exc.getMessage())));
+                return ListValue.of(Value.NULL, ListValue.of(), new FormattedTextValue(Component.literal(exc.getMessage())));
             }
         });
 
