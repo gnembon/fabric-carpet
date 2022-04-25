@@ -22,7 +22,7 @@ public abstract class LavaFluid_renewableDeepslateMixin {
     @Inject(method = "spreadTo", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/block/Block;defaultBlockState()Lnet/minecraft/world/level/block/state/BlockState;"), cancellable = true)
     private void generateDeepslate(LevelAccessor world, BlockPos pos, BlockState state, Direction direction, FluidState fluidState, CallbackInfo ci)
     {
-        if(CarpetSettings.renewableDeepslate && ((Level)world).dimension() == Level.OVERWORLD && pos.getY() < 16)
+        if(CarpetSettings.renewableDeepslate && ((Level)world).dimension() == Level.OVERWORLD && pos.getY() < 0)
         {
             world.setBlock(pos, Blocks.DEEPSLATE.defaultBlockState(), 3);
             this.fizz(world, pos);
