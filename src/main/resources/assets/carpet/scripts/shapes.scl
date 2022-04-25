@@ -67,8 +67,10 @@ draw_filled_diamond(pos, radius)->(
     positions
 );
 
-//Draws a bunch of circles or squares of decreasing or increasing radii based on where it's pointing.
+//Draws a pyramid using a bunch of circles or squares of decreasing or increasing radii based on where it's pointing.
 //Circles are drawn using _fill_flat_circle
+//If radius is greater than height and shape is hollow, it will fill in the gaps between layers,
+//drawing multiple shapes at the same y-level to maintain the slope
 //Algorithmic efficiency:
 //  O(n^2) for hollow cones / pyramids
 //  O(n^3) for filled cones / pyramids
@@ -96,7 +98,7 @@ draw_pyramid(pos, radius, height, pointing, orientation, fill_type, is_square)->
     positions
 );
 
-//Draws a column of squares/circles (circles using _fill_flat_circle)
+//Draws a prism as column of squares/circles (circles using _fill_flat_circle)
 //Only thing special to note is that here we pre-generate the points
 //and then use that with an offset to make the rest of the prism.
 //This avoid re-running algorithms for generating the shapes, which tend to be costly
