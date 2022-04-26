@@ -572,7 +572,8 @@ public class ShapeDispatcher
                 entry("height", new NumericValue(1)),
                 entry("width", new NumericValue(1)),
                 entry("obj_size", new NumericValue(1)),
-                entry("light", new NumericValue(-999)),
+                entry("light_fromblock", new NumericValue(-999)),
+                entry("light_fromsky", new NumericValue(-999)),
                 entry("doublesided", new NumericValue(0)));
         private boolean isitem;
         @Override
@@ -590,7 +591,7 @@ public class ShapeDispatcher
         float lean;
         float turn;
         float size;
-        int light;
+        int light_fromblock;int light_fromsky;
 
         float height;
         float width;
@@ -610,8 +611,10 @@ public class ShapeDispatcher
             if(item_!=null){
                 this.item=ItemStack.of(item_.getCompoundTag());
             }
-            light=NumericValue.asNumber(options.getOrDefault("light", optional.get("light"))).getInt();
-            if (light>15)light=15;
+            light_fromblock=NumericValue.asNumber(options.getOrDefault("light_fromblock", optional.get("light_fromblock"))).getInt();
+            if (light_fromblock>15)light_fromblock=15;
+            light_fromsky=NumericValue.asNumber(options.getOrDefault("light_fromsky", optional.get("light_fromsky"))).getInt();
+            if (light_fromsky>15)light_fromsky=15;
             String dir = options.getOrDefault("facing", optional.get("facing")).getString();
             facing = null;
             switch (dir)
@@ -660,7 +663,8 @@ public class ShapeDispatcher
             hash ^= Float.hashCode(height); hash *= 1099511628211L;
             hash ^= Float.hashCode(size); hash *= 1099511628211L;
             hash ^= Float.hashCode(width); hash *= 1099511628211L;
-            hash ^= Float.hashCode(light); hash *= 1099511628211L;
+            hash ^= Float.hashCode(light_fromsky); hash *= 1099511628211L;
+            hash ^= Float.hashCode(light_fromblock); hash *= 1099511628211L;
             if (blockEntity!= null) hash ^= blockEntity.toString().hashCode(); hash *= 1099511628211L;
             if (blockState!= null) hash ^= blockState.hashCode(); hash *= 1099511628211L;
             hash ^= ValueConversions.of(item).getString().hashCode(); hash *= 1099511628211L;
@@ -1219,7 +1223,8 @@ public class ShapeDispatcher
 
             put("block", new BlockParam("block"));
             put("item", new ItemParam("item"));
-            put("light", new NonNegativeIntParam("light"));
+            put("light_fromblock", new NonNegativeIntParam("light_fromblock"));
+            put("light_fromsky", new NonNegativeIntParam("light_fromsky"));
             put("indent", new FloatParam("indent"));
             put("raise", new FloatParam("raise"));
             put("tilt", new FloatParam("tilt"));

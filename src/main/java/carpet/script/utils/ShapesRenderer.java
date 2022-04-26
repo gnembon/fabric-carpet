@@ -359,12 +359,10 @@ public class ShapesRenderer
 
             blockPos=new BlockPos(v1);
             int light;
-            if (shape.light==-999){
-                light=LightTexture.pack(client.level.getBrightness(LightLayer.BLOCK,blockPos), client.level.getBrightness(LightLayer.SKY, blockPos));
-            }
-            else{
-                light=LightTexture.pack(shape.light,0);
-            }
+            light=LightTexture.pack(
+                shape.light_fromblock==-999?client.level.getBrightness(LightLayer.BLOCK,blockPos):shape.light_fromblock,
+                shape.light_fromsky==-999?client.level.getBrightness(LightLayer.SKY,blockPos):shape.light_fromsky);
+            
             
             blockState=shape.blockState;
             
