@@ -86,8 +86,8 @@ public class ShapesRenderer
         put("cylinder", RenderedCylinder::new);
         put("label", RenderedText::new);
         put("poly",RenderedPolyface::new);
-        put("block_displayer",RenderedItem::new);
-        put("item_displayer",RenderedItem::new);
+        put("block_displayer",(c,s)->new RenderedItem(c,s).set_isitem(false));
+        put("item_displayer",(c,s)->new RenderedItem(c,s).set_isitem(true));
     }};
 
     public ShapesRenderer(Minecraft minecraftClient)
@@ -283,6 +283,11 @@ public class ShapesRenderer
     public static class RenderedItem extends RenderedShape<ShapeDispatcher.DisplayedItem>
     {
 
+        private boolean isitem;
+        public RenderedItem set_isitem(boolean isitem){
+            this.isitem=isitem;
+            return this;
+        }
         private BlockPos blockPos;
         private BlockState blockState;
         private BlockEntity BlockEntity=null;
@@ -304,6 +309,7 @@ public class ShapesRenderer
                 RenderSystem.enableCull();
             matrices.pushPose();
             //matrices.setIdentity();
+            if(!isitem)//blocks should use its center as the origin
             matrices.translate(0.5, 0.5, 0.5);
             matrices.translate(v1.x - cx,v1.y - cy,v1.z - cz);
             if (shape.facing == null)
@@ -341,6 +347,7 @@ public class ShapesRenderer
             if (shape.turn!=0.0f) matrices.mulPose(Vector3f.YP.rotationDegrees(shape.turn));
             matrices.scale(shape.size*shape.width, shape.size*shape.height, shape.size);
 
+            if(!isitem)//blocks should use its center as the origin
 			matrices.translate(-0.5, -0.5, -0.5);
             //matrices.scale(-1, 1, 1);
             RenderSystem.depthMask(true);
@@ -362,6 +369,7 @@ public class ShapesRenderer
             blockState=shape.blockState;
             
             MultiBufferSource.BufferSource immediate = client.renderBuffers().bufferSource();//= MultiBufferSource.immediate(builder);
+            if(!isitem){
             //draw the block itself
             if(blockState.getRenderShape()==RenderShape.MODEL){
                 client.getBlockRenderer().renderSingleBlock(blockState, matrices, immediate, light, OverlayTexture.NO_OVERLAY);
@@ -382,9 +390,11 @@ public class ShapesRenderer
             if(BlockEntity!=null&&client.getBlockEntityRenderDispatcher().getRenderer(BlockEntity)!=null){
                 client.getBlockEntityRenderDispatcher().getRenderer(BlockEntity).render(BlockEntity, partialTick, matrices, immediate, light, OverlayTexture.NO_OVERLAY);
             }
+            }else{
             //draw item
             if (shape.item!=null)
                 client.getItemRenderer().renderStatic(shape.item, ItemTransforms.TransformType.GUI, light, OverlayTexture.NO_OVERLAY,matrices,immediate,(int) shape.key());
+            }
             matrices.popPose();
             immediate.endBatch();
             RenderSystem.disableCull();
