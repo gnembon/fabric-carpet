@@ -161,7 +161,7 @@ Available shapes:
      * `item` - the object to show. could have NBT. is a item tuple or a string-id (exclusive to `'item_displayer'`)
      * `block` - the object to show. could have NBT. is a block value or a string-id (exclusive to `'block_displayer'`)
      * `height`, `width`, `obj_size` - size of it. should be numbers
-     * `light` - light level. omit it to use local light level. should between 0~15
+     * `light_fromsky`, `light_fromblock` - light level. omit it to use local light level. should between 0~15.
 
 
       
