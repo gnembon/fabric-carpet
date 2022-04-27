@@ -5,7 +5,7 @@ import java.util.Map;
 import java.util.function.BiConsumer;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
-import net.minecraft.network.chat.BaseComponent;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import carpet.CarpetServer;
 import carpet.network.ServerNetworkHandler;
@@ -101,7 +101,7 @@ public class TickSpeed
         ServerNetworkHandler.updateTickPlayerActiveTimeoutToConnectedPlayers();
     }
 
-    public static BaseComponent tickrate_advance(ServerPlayer player, int advance, String callback, CommandSourceStack source)
+    public static Component tickrate_advance(ServerPlayer player, int advance, String callback, CommandSourceStack source)
     {
         if (0 == advance)
         {

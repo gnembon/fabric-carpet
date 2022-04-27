@@ -5,7 +5,8 @@ import carpet.logging.LoggerRegistry;
 import carpet.utils.Messenger;
 import java.util.ArrayList;
 import java.util.List;
-import net.minecraft.network.chat.BaseComponent;
+
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.phys.Vec3;
 
 /**
@@ -38,7 +39,7 @@ public class TrajectoryLogHelper
     {
         if (!doLog) return;
         logger.log( (option) -> {
-            List<BaseComponent> comp = new ArrayList<>();
+            List<Component> comp = new ArrayList<>();
             switch (option)
             {
                 case "brief":
@@ -71,7 +72,7 @@ public class TrajectoryLogHelper
                     }
                     break;
             }
-            return comp.toArray(new BaseComponent[0]);
+            return comp.toArray(new Component[0]);
         });
         doLog = false;
     }
