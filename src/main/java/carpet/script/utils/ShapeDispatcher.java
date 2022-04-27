@@ -561,8 +561,7 @@ public class ShapeDispatcher
         }
     }
 
-    public static class DisplayedItem extends ExpiringShape
-    {
+    public static class DisplayedItem extends ExpiringShape {
         private final Set<String> required = Set.of("pos");
         private final Map<String, Value> optional = Map.ofEntries(
                 entry("facing", new StringValue("player")),
@@ -576,14 +575,22 @@ public class ShapeDispatcher
                 entry("light_fromsky", new NumericValue(-999)),
                 entry("doublesided", new NumericValue(0)));
         private boolean isitem;
+
         @Override
-        protected Set<String> requiredParams() { return Sets.union(Sets.union(super.requiredParams(), required), Set.of(isitem?"item":"block")); }
+        protected Set<String> requiredParams() {
+            return Sets.union(Sets.union(super.requiredParams(), required), Set.of(isitem ? "item" : "block"));
+        }
+
         @Override
-        protected Set<String> optionalParams() { return Sets.union(super.optionalParams(), optional.keySet()); }
-        public DisplayedItem(boolean i) {isitem=i;}
+        protected Set<String> optionalParams() {
+            return Sets.union(super.optionalParams(), optional.keySet());
+        }
+
+        public DisplayedItem(boolean i) {
+            isitem = i;
+        }
 
         Vec3 pos;
-
 
         Direction facing;
 
@@ -591,30 +598,34 @@ public class ShapeDispatcher
         float lean;
         float turn;
         float size;
-        int light_fromblock;int light_fromsky;
+        int light_fromblock;
+        int light_fromsky;
 
         float height;
         float width;
         boolean doublesided;
         CompoundTag blockEntity;
         BlockState blockState;
-        ItemStack item=null;
+        ItemStack item = null;
 
         @Override
-        protected void init(Map<String, Value> options)
-        {
+        protected void init(Map<String, Value> options) {
             super.init(options);
             pos = vecFromValue(options.get("pos"));
-            blockState=((BlockValue)options.getOrDefault("block", BlockValue.AIR)).getBlockState();
-            blockEntity = ((BlockValue)options.getOrDefault("block", BlockValue.AIR)).getData();
-            NBTSerializableValue item_ =  (NBTSerializableValue) options.getOrDefault("item",null);
-            if(item_!=null){
-                this.item=ItemStack.of(item_.getCompoundTag());
+            blockState = ((BlockValue) options.getOrDefault("block", BlockValue.AIR)).getBlockState();
+            blockEntity = ((BlockValue) options.getOrDefault("block", BlockValue.AIR)).getData();
+            NBTSerializableValue item_ = (NBTSerializableValue) options.getOrDefault("item", null);
+            if (item_ != null) {
+                this.item = ItemStack.of(item_.getCompoundTag());
             }
-            light_fromblock=NumericValue.asNumber(options.getOrDefault("light_fromblock", optional.get("light_fromblock"))).getInt();
-            if (light_fromblock>15)light_fromblock=15;
-            light_fromsky=NumericValue.asNumber(options.getOrDefault("light_fromsky", optional.get("light_fromsky"))).getInt();
-            if (light_fromsky>15)light_fromsky=15;
+            light_fromblock = NumericValue
+                    .asNumber(options.getOrDefault("light_fromblock", optional.get("light_fromblock"))).getInt();
+            if (light_fromblock > 15)
+                light_fromblock = 15;
+            light_fromsky = NumericValue.asNumber(options.getOrDefault("light_fromsky", optional.get("light_fromsky")))
+                    .getInt();
+            if (light_fromsky > 15)
+                light_fromsky = 15;
             String dir = options.getOrDefault("facing", optional.get("facing")).getString();
             facing = null;
             switch (dir)
@@ -626,10 +637,9 @@ public class ShapeDispatcher
                 case "up":  facing = Direction.UP; break;
                 case "down":  facing = Direction.DOWN; break;
             }
-            
+
             doublesided = false;
-            if (options.containsKey("doublesided"))
-            {
+            if (options.containsKey("doublesided")) {
                 doublesided = options.get("doublesided").getBoolean();
             }
 
@@ -641,18 +651,13 @@ public class ShapeDispatcher
             size = NumericValue.asNumber(options.getOrDefault("obj_size", optional.get("obj_size"))).getFloat();
         }
 
-        
-
-
         @Override
-        public Consumer<ServerPlayer> alternative()
-        {
+        public Consumer<ServerPlayer> alternative() {
             return s -> {};
         }
 
         @Override
-        public long calcKey()
-        {
+        public long calcKey() {
             long hash = super.calcKey();
             hash ^= 7;                  hash *= 1099511628211L;
             hash ^= vec3dhash(pos);     hash *= 1099511628211L;

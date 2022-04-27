@@ -280,48 +280,46 @@ public class ShapesRenderer
         }
     }
 
-    public static class RenderedItem extends RenderedShape<ShapeDispatcher.DisplayedItem>
-    {
+    public static class RenderedItem extends RenderedShape<ShapeDispatcher.DisplayedItem> {
 
         private boolean isitem;
-        public RenderedItem set_isitem(boolean isitem){
-            this.isitem=isitem;
+
+        public RenderedItem set_isitem(boolean isitem) {
+            this.isitem = isitem;
             return this;
         }
+
         private BlockPos blockPos;
         private BlockState blockState;
-        private BlockEntity BlockEntity=null;
-        protected RenderedItem(Minecraft client, ShapeDispatcher.ExpiringShape shape)
-        {
-            super(client, (ShapeDispatcher.DisplayedItem)shape);
+        private BlockEntity BlockEntity = null;
+
+        protected RenderedItem(Minecraft client, ShapeDispatcher.ExpiringShape shape) {
+            super(client, (ShapeDispatcher.DisplayedItem) shape);
         }
 
         @Override
-        public void renderLines(PoseStack matrices, Tesselator tessellator, BufferBuilder builder, double cx, double cy, double cz, float partialTick)
-        {
-            if (shape.a == 0.0) return;
+        public void renderLines(PoseStack matrices, Tesselator tessellator, BufferBuilder builder, double cx, double cy,
+                double cz, float partialTick) {
+            if (shape.a == 0.0)
+                return;
             Vec3 v1 = shape.relativiseRender(client.level, shape.pos, partialTick);
             Camera camera1 = client.gameRenderer.getMainCamera();
-            
+
             if (shape.doublesided)
                 RenderSystem.disableCull();
             else
                 RenderSystem.enableCull();
             matrices.pushPose();
-            //matrices.setIdentity();
-            if(!isitem)//blocks should use its center as the origin
-            matrices.translate(0.5, 0.5, 0.5);
-            matrices.translate(v1.x - cx,v1.y - cy,v1.z - cz);
-            if (shape.facing == null)
-            {
-                //matrices.method_34425(new Matrix4f(camera1.getRotation()));
+            // matrices.setIdentity();
+            if (!isitem)// blocks should use its center as the origin
+                matrices.translate(0.5, 0.5, 0.5);
+            matrices.translate(v1.x - cx, v1.y - cy, v1.z - cz);
+            if (shape.facing == null) {
+                // matrices.method_34425(new Matrix4f(camera1.getRotation()));
                 matrices.mulPose(camera1.rotation());
                 matrices.mulPose(Vector3f.YP.rotationDegrees(180));
-            }
-            else
-            {
-                switch (shape.facing)
-                {
+            } else {
+                switch (shape.facing) {
                     case NORTH:
                         break;
                     case SOUTH:
@@ -341,74 +339,80 @@ public class ShapesRenderer
                         break;
                 }
             }
-            //RenderSystem.scalef(shape.size* 0.0025f, -shape.size*0.0025f, shape.size*0.0025f);
-            if (shape.tilt!=0.0f) matrices.mulPose(Vector3f.ZP.rotationDegrees(shape.tilt));
-            if (shape.lean!=0.0f) matrices.mulPose(Vector3f.XP.rotationDegrees(shape.lean));
-            if (shape.turn!=0.0f) matrices.mulPose(Vector3f.YP.rotationDegrees(shape.turn));
-            matrices.scale(shape.size*shape.width, shape.size*shape.height, shape.size);
+            // RenderSystem.scalef(shape.size* 0.0025f, -shape.size*0.0025f,
+            // shape.size*0.0025f);
+            if (shape.tilt != 0.0f)
+                matrices.mulPose(Vector3f.ZP.rotationDegrees(shape.tilt));
+            if (shape.lean != 0.0f)
+                matrices.mulPose(Vector3f.XP.rotationDegrees(shape.lean));
+            if (shape.turn != 0.0f)
+                matrices.mulPose(Vector3f.YP.rotationDegrees(shape.turn));
+            matrices.scale(shape.size * shape.width, shape.size * shape.height, shape.size);
 
-            if(!isitem)//blocks should use its center as the origin
-			matrices.translate(-0.5, -0.5, -0.5);
-            //matrices.scale(-1, 1, 1);
+            if (!isitem)// blocks should use its center as the origin
+                matrices.translate(-0.5, -0.5, -0.5);
+            // matrices.scale(-1, 1, 1);
             RenderSystem.depthMask(true);
             RenderSystem.enableCull();
             RenderSystem.enableDepthTest();
-            
-            //matrices.scale(-1, 1, 1);
 
+            // matrices.scale(-1, 1, 1);
 
-            blockPos=new BlockPos(v1);
+            blockPos = new BlockPos(v1);
             int light;
-            light=LightTexture.pack(
-                shape.light_fromblock==-999?client.level.getBrightness(LightLayer.BLOCK,blockPos):shape.light_fromblock,
-                shape.light_fromsky==-999?client.level.getBrightness(LightLayer.SKY,blockPos):shape.light_fromsky);
-            
-            
-            blockState=shape.blockState;
-            
-            MultiBufferSource.BufferSource immediate = client.renderBuffers().bufferSource();//= MultiBufferSource.immediate(builder);
-            if(!isitem){
-            //draw the block itself
-            if(blockState.getRenderShape()==RenderShape.MODEL){
-                client.getBlockRenderer().renderSingleBlock(blockState, matrices, immediate, light, OverlayTexture.NO_OVERLAY);
-            }
-            
-            
-            //draw the block`s entity part
-            if(BlockEntity==null){
-                if(blockState.getBlock() instanceof EntityBlock eb){
-                    BlockEntity=eb.newBlockEntity(blockPos, blockState);
-                    if (BlockEntity!=null){
-                        BlockEntity.setLevel(client.level);
-                        if (shape.blockEntity!=null)
-                            BlockEntity.load(shape.blockEntity);
+            light = LightTexture.pack(
+                    shape.light_fromblock == -999 ? client.level.getBrightness(LightLayer.BLOCK, blockPos)
+                            : shape.light_fromblock,
+                    shape.light_fromsky == -999 ? client.level.getBrightness(LightLayer.SKY, blockPos)
+                            : shape.light_fromsky);
+
+            blockState = shape.blockState;
+
+            MultiBufferSource.BufferSource immediate = client.renderBuffers().bufferSource();// =
+                                                                                             // MultiBufferSource.immediate(builder);
+            if (!isitem) {
+                // draw the block itself
+                if (blockState.getRenderShape() == RenderShape.MODEL) {
+                    client.getBlockRenderer().renderSingleBlock(blockState, matrices, immediate, light,
+                            OverlayTexture.NO_OVERLAY);
+                }
+
+                // draw the block`s entity part
+                if (BlockEntity == null) {
+                    if (blockState.getBlock() instanceof EntityBlock eb) {
+                        BlockEntity = eb.newBlockEntity(blockPos, blockState);
+                        if (BlockEntity != null) {
+                            BlockEntity.setLevel(client.level);
+                            if (shape.blockEntity != null)
+                                BlockEntity.load(shape.blockEntity);
+                        }
                     }
                 }
-            }
-            if(BlockEntity!=null&&client.getBlockEntityRenderDispatcher().getRenderer(BlockEntity)!=null){
-                client.getBlockEntityRenderDispatcher().getRenderer(BlockEntity).render(BlockEntity, partialTick, matrices, immediate, light, OverlayTexture.NO_OVERLAY);
-            }
-            }else{
-            //draw item
-            if (shape.item!=null)
-                client.getItemRenderer().renderStatic(shape.item, ItemTransforms.TransformType.GUI, light, OverlayTexture.NO_OVERLAY,matrices,immediate,(int) shape.key());
+                if (BlockEntity != null && client.getBlockEntityRenderDispatcher().getRenderer(BlockEntity) != null) {
+                    client.getBlockEntityRenderDispatcher().getRenderer(BlockEntity).render(BlockEntity, partialTick,
+                            matrices, immediate, light, OverlayTexture.NO_OVERLAY);
+                }
+            } else {
+                // draw item
+                if (shape.item != null)
+                    client.getItemRenderer().renderStatic(shape.item, ItemTransforms.TransformType.GUI, light,
+                            OverlayTexture.NO_OVERLAY, matrices, immediate, (int) shape.key());
             }
             matrices.popPose();
             immediate.endBatch();
             RenderSystem.disableCull();
             RenderSystem.disableDepthTest();
             RenderSystem.depthMask(false);
-            
+
         }
 
         @Override
-        public boolean stageDeux()
-        {
+        public boolean stageDeux() {
             return true;
         }
 
-
     }
+
 
     public static class RenderedText extends RenderedShape<ShapeDispatcher.DisplayedText>
     {
