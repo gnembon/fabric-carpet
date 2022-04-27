@@ -119,6 +119,7 @@
     "Explosion_optimizedTntMixin",
     "ExplosionAccessor",
     "Explosion_scarpetEventMixin",
+    "Explosion_xpFromBlocksMixin",
     "PrimedTntMixin",
     "AbstractArrowMixin",
     "FallingBlockEntityMixin",
