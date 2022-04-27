@@ -237,7 +237,7 @@ public class Messenger
     }
     public static void m(Player player, Object ... fields)
     {
-        player.sendMessage(Messenger.c(fields), Util.NIL_UUID);
+        player.sendSystemMessage(Messenger.c(fields));
     }
 
     /*
@@ -281,7 +281,7 @@ public class Messenger
 
     public static void send(Player player, Collection<Component> lines)
     {
-        lines.forEach(message -> player.sendMessage(message, Util.NIL_UUID));
+        lines.forEach(message -> player.sendSystemMessage(message));
     }
     public static void send(CommandSourceStack source, Collection<Component> lines)
     {
@@ -293,21 +293,21 @@ public class Messenger
     {
         if (server == null)
             LOG.error("Message not delivered: "+message);
-        server.sendMessage(Component.literal(message), Util.NIL_UUID);
+        server.sendSystemMessage(Component.literal(message));
         Component txt = c("gi "+message);
         for (Player entityplayer : server.getPlayerList().getPlayers())
         {
-            entityplayer.sendMessage(txt, Util.NIL_UUID);
+            entityplayer.sendSystemMessage(txt);
         }
     }
     public static void print_server_message(MinecraftServer server, Component message)
     {
         if (server == null)
             LOG.error("Message not delivered: "+message.getString());
-        server.sendMessage(message, Util.NIL_UUID);
+        server.sendSystemMessage(message);
         for (Player entityplayer : server.getPlayerList().getPlayers())
         {
-            entityplayer.sendMessage(message, Util.NIL_UUID);
+            entityplayer.sendSystemMessage(message);
         }
     }
 }
