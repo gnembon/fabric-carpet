@@ -510,6 +510,9 @@ public class WorldAccess {
         expression.addContextFunction("sky_light", -1, (c, t, lv) ->
                 genericStateTest(c, "sky_light", lv, (s, p, w) -> new NumericValue(w.getBrightness(LightLayer.SKY, p))));
 
+        expression.addContextFunction("real_light", -1, (c, t, lv) ->
+                genericStateTest(c, "real_light", lv, (s, p, w) -> new NumericValue(w.getMaxLocalRawBrightness(p))));
+
         expression.addContextFunction("see_sky", -1, (c, t, lv) ->
                 genericStateTest(c, "see_sky", lv, (s, p, w) -> BooleanValue.of(w.canSeeSky(p))));
 
