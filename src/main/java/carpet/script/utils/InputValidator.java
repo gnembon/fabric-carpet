@@ -1,7 +1,6 @@
 package carpet.script.utils;
 
 import carpet.script.exception.InternalExpressionException;
-import org.lwjgl.system.CallbackI;
 
 import java.util.Locale;
 import net.minecraft.ResourceLocationException;

@@ -5,6 +5,7 @@ import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.Util;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Holder;
 import net.minecraft.core.MappedRegistry;
 import net.minecraft.core.Registry;
 import net.minecraft.network.protocol.game.ClientboundLevelChunkWithLightPacket;
@@ -71,7 +72,7 @@ public class WorldTools
         catch (IOException ignored) { }
         return true;
     }
-
+/*
     public static boolean createWorld(MinecraftServer server, String worldKey, Long seed)
     {
         ResourceLocation worldId = new ResourceLocation(worldKey);
@@ -92,15 +93,15 @@ public class WorldTools
         long l = generatorOptions.seed();
         long m = BiomeManager.obfuscateSeed(l);
         List<CustomSpawner> list = List.of();
-        MappedRegistry<LevelStem> simpleRegistry = generatorOptions.dimensions();
+        Registry<LevelStem> simpleRegistry = generatorOptions.dimensions();
         LevelStem dimensionOptions = simpleRegistry.get(LevelStem.OVERWORLD);
         ChunkGenerator chunkGenerator2;
-        DimensionType dimensionType2;
+        Holder<DimensionType> dimensionType2;
         if (dimensionOptions == null) {
-            dimensionType2 = server.registryAccess().ownedRegistryOrThrow(Registry.DIMENSION_TYPE_REGISTRY).getOrThrow(DimensionType.OVERWORLD_LOCATION);
+            dimensionType2 = server.registryAccess().registryOrThrow(Registry.DIMENSION_TYPE_REGISTRY).getOrCreateHolder(DimensionType.OVERWORLD_LOCATION);;
             chunkGenerator2 = WorldGenSettings.makeDefaultOverworld(server.registryAccess(), (new Random()).nextLong());
         } else {
-            dimensionType2 = dimensionOptions.type();
+            dimensionType2 = dimensionOptions.typeHolder();
             chunkGenerator2 = dimensionOptions.generator();
         }
 
@@ -113,9 +114,12 @@ public class WorldTools
         //    return server.getRegistryManager().get(Registry.CHUNK_GENERATOR_SETTINGS_KEY).getOrThrow(ChunkGeneratorSettings.OVERWORLD);
         //});
 
-        chunkGenerator2 = new NoiseBasedChunkGenerator(server.registryAccess().registryOrThrow(Registry.NOISE_REGISTRY), MultiNoiseBiomeSource.Preset.OVERWORLD.biomeSource(server.registryAccess().registryOrThrow(Registry.BIOME_REGISTRY)), seed, () -> {
-            return server.registryAccess().registryOrThrow(Registry.NOISE_GENERATOR_SETTINGS_REGISTRY).getOrThrow(NoiseGeneratorSettings.OVERWORLD);
-        });
+        chunkGenerator2 = new NoiseBasedChunkGenerator(
+                server.registryAccess().registryOrThrow(Registry.STRUCTURE_SET_REGISTRY),
+                server.registryAccess().registryOrThrow(Registry.NOISE_REGISTRY),
+                MultiNoiseBiomeSource.Preset.OVERWORLD.biomeSource(server.registryAccess().registryOrThrow(Registry.BIOME_REGISTRY)), seed,
+            Holder.direct(server.registryAccess().registryOrThrow(Registry.NOISE_GENERATOR_SETTINGS_REGISTRY).getOrThrow(NoiseGeneratorSettings.OVERWORLD))
+        );
 
         ServerLevel serverWorld = new ServerLevel(
                 server,
@@ -133,7 +137,7 @@ public class WorldTools
         overWorld.getWorldBorder().addListener(new BorderChangeListener.DelegateBorderChangeListener(serverWorld.getWorldBorder()));
         ((MinecraftServerInterface) server).getCMWorlds().put(customWorld, serverWorld);
         return true;
-    }
+    }*/
 
     public static void forceChunkUpdate(BlockPos pos, ServerLevel world)
     {
@@ -142,7 +146,7 @@ public class WorldTools
         {
             int vd = world.getServer().getPlayerList().getViewDistance() * 16;
             int vvd = vd * vd;
-            List<ServerPlayer> nearbyPlayers = world.getPlayers(p -> pos.distSqr(p.getX(), pos.getY(), p.getZ(), true) < vvd);
+            List<ServerPlayer> nearbyPlayers = world.getPlayers(p -> pos.distToCenterSqr(p.getX(), pos.getY(), p.getZ()) < vvd);
             if (!nearbyPlayers.isEmpty())
             {
                 ClientboundLevelChunkWithLightPacket packet = new ClientboundLevelChunkWithLightPacket(worldChunk, world.getLightEngine(), null, null, false); // false seems to update neighbours as well.

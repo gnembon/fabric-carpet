@@ -2,8 +2,8 @@ package carpet.patches;
 
 import carpet.CarpetSettings;
 import com.mojang.authlib.GameProfile;
+import net.minecraft.core.UUIDUtil;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.network.protocol.PacketFlow;
 import net.minecraft.network.protocol.game.ClientboundPlayerInfoPacket;
 import net.minecraft.network.protocol.game.ClientboundRotateHeadPacket;
@@ -51,7 +51,7 @@ public class EntityPlayerMPFake extends ServerPlayer
             {
                 return null;
             } else {
-                gameprofile = new GameProfile(Player.createPlayerUUID(username), username);
+                gameprofile = new GameProfile(UUIDUtil.createOfflinePlayerUUID(username), username);
             }
         }
         if (gameprofile.getProperties().containsKey("textures"))
@@ -79,7 +79,7 @@ public class EntityPlayerMPFake extends ServerPlayer
     public static EntityPlayerMPFake createShadow(MinecraftServer server, ServerPlayer player)
     {
         player.getServer().getPlayerList().remove(player);
-        player.connection.disconnect(new TranslatableComponent("multiplayer.disconnect.duplicate_login"));
+        player.connection.disconnect(Component.translatable("multiplayer.disconnect.duplicate_login"));
         ServerLevel worldIn = player.getLevel();//.getWorld(player.dimension);
         GameProfile gameprofile = player.getGameProfile();
         EntityPlayerMPFake playerShadow = new EntityPlayerMPFake(server, worldIn, gameprofile, true);
@@ -107,9 +107,9 @@ public class EntityPlayerMPFake extends ServerPlayer
     }
 
     @Override
-    protected void equipEventAndSound(ItemStack stack)
+    protected void equipEventAndSound(ItemStack stack, boolean sendGameEvent)
     {
-        if (!isUsingItem()) super.equipEventAndSound(stack);
+        if (!isUsingItem()) super.equipEventAndSound(stack, sendGameEvent);
     }
 
     @Override

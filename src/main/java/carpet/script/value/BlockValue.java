@@ -10,14 +10,15 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.stream.Collectors;
 import net.minecraft.commands.arguments.blocks.BlockStateParser;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.Direction.Axis;
 import net.minecraft.core.GlobalPos;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.core.Registry;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.StringTag;
@@ -59,13 +60,13 @@ public class BlockValue extends Value
         {
             BlockValue bv = bvCache.get(str);
             if (bv != null) return bv;
-            BlockStateParser blockstateparser = (new BlockStateParser(new StringReader(str), false)).parse(true);
-            if (blockstateparser.getState() != null)
+            BlockStateParser.BlockResult foo = BlockStateParser.parseForBlock(HolderLookup.forRegistry(Registry.BLOCK), new StringReader(str), true );
+            if (foo.blockState() != null)
             {
-                CompoundTag bd = blockstateparser.getNbt();
+                CompoundTag bd = foo.nbt();
                 if (bd == null)
                     bd = new CompoundTag();
-                bv = new BlockValue(blockstateparser.getState(), null, null, bd );
+                bv = new BlockValue(foo.blockState(), null, null, bd );
                 if (bvCache.size()>10000)
                     bvCache.clear();
                 bvCache.put(str, bv);
@@ -312,6 +313,11 @@ public class BlockValue extends Value
         @Override
         public Direction getHorizontalDirection() {
             return this.facing.getAxis() == Direction.Axis.Y ? Direction.NORTH : this.facing;
+        }
+
+        @Override
+        public Direction getNearestLookingVerticalDirection() {
+            return facing.getAxis() == Axis.Y ? facing : Direction.UP;
         }
 
         @Override

@@ -215,9 +215,9 @@ public class SystemInfo {
     {
         return options.getOrDefault(what, c -> null).apply(cc);
     }
-    public static Value getAll(CarpetContext cc)
+    public static Value getAll()
     {
-        return MapValue.wrap(options.entrySet().stream().collect(Collectors.toMap(e -> new StringValue(e.getKey()), e -> e.getValue().apply(cc))));
+        return ListValue.wrap(options.keySet().stream().map(StringValue::of).collect(Collectors.toList()));
     }
 
 }

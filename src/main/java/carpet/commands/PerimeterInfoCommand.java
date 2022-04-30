@@ -6,6 +6,7 @@ import carpet.utils.Messenger;
 import carpet.utils.PerimeterDiagnostics;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import net.minecraft.commands.CommandBuildContext;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.arguments.EntitySummonArgument;
 import net.minecraft.commands.arguments.coordinates.BlockPosArgument;
@@ -21,7 +22,7 @@ import static net.minecraft.commands.Commands.literal;
 
 public class PerimeterInfoCommand
 {
-    public static void register(CommandDispatcher<CommandSourceStack> dispatcher)
+    public static void register(CommandDispatcher<CommandSourceStack> dispatcher, CommandBuildContext commandBuildContext)
     {
         LiteralArgumentBuilder<CommandSourceStack> command = literal("perimeterinfo").
                 requires((player) -> SettingsManager.canUseCommand(player, CarpetSettings.commandPerimeterInfo)).

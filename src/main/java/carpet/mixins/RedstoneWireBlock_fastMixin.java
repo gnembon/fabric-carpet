@@ -12,7 +12,6 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import java.util.Iterator;
 import java.util.Set;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -94,10 +93,7 @@ public abstract class RedstoneWireBlock_fastMixin implements RedstoneWireBlockIn
                     set.add(blockPos_1.relative(direction));
                 }
 
-                Iterator var10 = set.iterator();
-
-                while (var10.hasNext()) {
-                    BlockPos blockPos = (BlockPos) var10.next();
+                for (BlockPos blockPos : set) {
                     world_1.updateNeighborsAt(blockPos, blockState_1.getBlock());
                 }
             }

@@ -43,11 +43,11 @@ public abstract class ServerPlayerMixin implements ServerPlayerEntityInterface
         }
         catch (StackOverflowError soe)
         {
-            CarpetSettings.LOG.fatal("Caused stack overflow when performing player action", soe);
+            CarpetSettings.LOG.error("Caused stack overflow when performing player action", soe);
         }
         catch (Throwable exc)
         {
-            CarpetSettings.LOG.fatal("Error executing player tasks", exc);
+            CarpetSettings.LOG.error("Error executing player tasks", exc);
         }
     }
 }

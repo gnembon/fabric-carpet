@@ -23,6 +23,8 @@ import net.minecraft.commands.arguments.selector.EntitySelector;
 import net.minecraft.commands.arguments.selector.EntitySelectorParser;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.Holder;
+import net.minecraft.core.HolderSet;
 import net.minecraft.core.Registry;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.StringTag;
@@ -37,6 +39,7 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.tags.Tag;
+import net.minecraft.tags.TagKey;
 import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.effect.MobEffect;
@@ -236,6 +239,8 @@ public class EntityValue extends Value
         return getEntity().hashCode();
     }
 
+    public static final EntityTypeTest<Entity, ?> ANY = EntityTypeTest.forClass(Entity.class);
+
     public static EntityClassDescriptor getEntityDescriptor(String who, MinecraftServer server)
     {
         EntityClassDescriptor eDesc = EntityClassDescriptor.byName.get(who);
@@ -247,15 +252,26 @@ public class EntityValue extends Value
                 positive = false;
                 who = who.substring(1);
             }
-            Tag<EntityType<?>> eTag = server.getTags().getOrEmpty(Registry.ENTITY_TYPE_REGISTRY).getTag(InputValidator.identifierOf(who));
-            if (eTag == null) throw new InternalExpressionException(who+" is not a valid entity descriptor");
+            String booWho = who;
+            HolderSet.Named<EntityType<?>> eTagValue = server.registryAccess().registryOrThrow(Registry.ENTITY_TYPE_REGISTRY)
+                    .getTag(TagKey.create(Registry.ENTITY_TYPE_REGISTRY, InputValidator.identifierOf(who)))
+                    .orElseThrow( () -> new InternalExpressionException(booWho+" is not a valid entity descriptor"));
+            Set<EntityType<?>> eTag = eTagValue.stream().map(Holder::value).collect(Collectors.toUnmodifiableSet());
             if (positive)
             {
-                return new EntityClassDescriptor(null, e -> eTag.contains(e.getType()) && e.isAlive(), eTag.getValues().stream());
+                if (eTag.size() == 1)
+                {
+                    EntityType<?> type = eTag.iterator().next();
+                    return new EntityClassDescriptor(type, Entity::isAlive, eTag.stream());
+                }
+                else
+                {
+                    return new EntityClassDescriptor(ANY, e -> eTag.contains(e.getType()) && e.isAlive(), eTag.stream());
+                }
             }
             else
             {
-                return new EntityClassDescriptor(null, e -> !eTag.contains(e.getType()) && e.isAlive(), Registry.ENTITY_TYPE.stream().filter(et -> !eTag.contains(et)));
+                return new EntityClassDescriptor(ANY, e -> !eTag.contains(e.getType()) && e.isAlive(), Registry.ENTITY_TYPE.stream().filter(et -> !eTag.contains(et)));
             }
         }
         return eDesc;
@@ -310,7 +326,7 @@ public class EntityValue extends Value
                     EntityType.EVOKER_FANGS, EntityType.EXPERIENCE_ORB, EntityType.EYE_OF_ENDER,
                     EntityType.FALLING_BLOCK, EntityType.ITEM, EntityType.ITEM_FRAME, EntityType.GLOW_ITEM_FRAME,
                     EntityType.LEASH_KNOT, EntityType.LIGHTNING_BOLT, EntityType.PAINTING,
-                    EntityType.TNT, EntityType.ARMOR_STAND
+                    EntityType.TNT, EntityType.ARMOR_STAND, EntityType.CHEST_BOAT
 
             );
             Set<EntityType<?>> minecarts = Sets.newHashSet(
@@ -348,18 +364,18 @@ public class EntityValue extends Value
             ).collect(Collectors.toSet());
 
 
-            put("*", new EntityClassDescriptor(EntityTypeTest.forClass(Entity.class), e -> true, allTypes) );
-            put("valid", new EntityClassDescriptor(EntityTypeTest.forClass(Entity.class), net.minecraft.world.entity.EntitySelector.ENTITY_STILL_ALIVE, allTypes));
-            put("!valid", new EntityClassDescriptor(EntityTypeTest.forClass(Entity.class), e -> !e.isAlive(), allTypes));
+            put("*", new EntityClassDescriptor(ANY, e -> true, allTypes) );
+            put("valid", new EntityClassDescriptor(ANY, net.minecraft.world.entity.EntitySelector.ENTITY_STILL_ALIVE, allTypes));
+            put("!valid", new EntityClassDescriptor(ANY, e -> !e.isAlive(), allTypes));
 
             put("living",  new EntityClassDescriptor(EntityTypeTest.forClass(LivingEntity.class), net.minecraft.world.entity.EntitySelector.ENTITY_STILL_ALIVE, allTypes.stream().filter(living::contains)));
-            put("!living",  new EntityClassDescriptor(EntityTypeTest.forClass(Entity.class), (e) -> (!(e instanceof LivingEntity) && e.isAlive()), allTypes.stream().filter(et -> !living.contains(et))));
+            put("!living",  new EntityClassDescriptor(ANY, (e) -> (!(e instanceof LivingEntity) && e.isAlive()), allTypes.stream().filter(et -> !living.contains(et))));
 
             put("projectile", new EntityClassDescriptor(EntityTypeTest.forClass(Projectile.class), net.minecraft.world.entity.EntitySelector.ENTITY_STILL_ALIVE, allTypes.stream().filter(projectiles::contains)));
-            put("!projectile", new EntityClassDescriptor(EntityTypeTest.forClass(Entity.class), (e) -> (!(e instanceof Projectile) && e.isAlive()), allTypes.stream().filter(et -> !projectiles.contains(et) && !living.contains(et))));
+            put("!projectile", new EntityClassDescriptor(ANY, (e) -> (!(e instanceof Projectile) && e.isAlive()), allTypes.stream().filter(et -> !projectiles.contains(et) && !living.contains(et))));
 
             put("minecarts", new EntityClassDescriptor(EntityTypeTest.forClass(AbstractMinecart.class), net.minecraft.world.entity.EntitySelector.ENTITY_STILL_ALIVE, allTypes.stream().filter(minecarts::contains)));
-            put("!minecarts", new EntityClassDescriptor(EntityTypeTest.forClass(Entity.class), (e) -> (!(e instanceof AbstractMinecart) && e.isAlive()), allTypes.stream().filter(et -> !minecarts.contains(et) && !living.contains(et))));
+            put("!minecarts", new EntityClassDescriptor(ANY, (e) -> (!(e instanceof AbstractMinecart) && e.isAlive()), allTypes.stream().filter(et -> !minecarts.contains(et) && !living.contains(et))));
 
 
             // combat groups
@@ -384,13 +400,13 @@ public class EntityValue extends Value
                 EntityType<?> type  = Registry.ENTITY_TYPE.get(typeId);
                 String mobType = ValueConversions.simplify(typeId);
                 put(    mobType, new EntityClassDescriptor(type, net.minecraft.world.entity.EntitySelector.ENTITY_STILL_ALIVE, Stream.of(type)));
-                put("!"+mobType, new EntityClassDescriptor(EntityTypeTest.forClass(Entity.class), (e) -> e.getType() != type  && e.isAlive(), allTypes.stream().filter(et -> et != type)));
+                put("!"+mobType, new EntityClassDescriptor(ANY, (e) -> e.getType() != type  && e.isAlive(), allTypes.stream().filter(et -> et != type)));
             }
             for (MobCategory catId : MobCategory.values())
             {
                 String catStr = catId.getName();
-                put(    catStr, new EntityClassDescriptor(EntityTypeTest.forClass(Entity.class), e -> ((e.getType().getCategory() == catId) && e.isAlive()), allTypes.stream().filter(et -> et.getCategory() == catId)));
-                put("!"+catStr, new EntityClassDescriptor(EntityTypeTest.forClass(Entity.class), e -> ((e.getType().getCategory() != catId) && e.isAlive()), allTypes.stream().filter(et -> et.getCategory() != catId)));
+                put(    catStr, new EntityClassDescriptor(ANY, e -> ((e.getType().getCategory() == catId) && e.isAlive()), allTypes.stream().filter(et -> et.getCategory() == catId)));
+                put("!"+catStr, new EntityClassDescriptor(ANY, e -> ((e.getType().getCategory() != catId) && e.isAlive()), allTypes.stream().filter(et -> et.getCategory() != catId)));
             }
         }};
     }
@@ -450,15 +466,22 @@ public class EntityValue extends Value
         put("tags", (e, a) -> ListValue.wrap(e.getTags().stream().map(StringValue::new).collect(Collectors.toList())));
 
         put("scoreboard_tags", (e, a) -> ListValue.wrap(e.getTags().stream().map(StringValue::new).collect(Collectors.toList())));
-        put("entity_tags", (e, a) -> ListValue.wrap(e.getServer().getTags().getOrEmpty(Registry.ENTITY_TYPE_REGISTRY).getAllTags().entrySet().stream().filter(entry -> entry.getValue().contains(e.getType())).map(entry -> ValueConversions.of(entry.getKey())).collect(Collectors.toList())));
+        put("entity_tags", (e, a) -> {
+            EntityType<?> type = e.getType();
+            return ListValue.wrap(e.getServer().registryAccess().registryOrThrow(Registry.ENTITY_TYPE_REGISTRY).getTags().filter(entry -> entry.getSecond().stream().anyMatch(h -> h.value()==type)).map(entry -> ValueConversions.of(entry.getFirst())).collect(Collectors.toList()));
+        });
         // deprecated
         put("has_tag", (e, a) -> BooleanValue.of(e.getTags().contains(a.getString())));
 
         put("has_scoreboard_tag", (e, a) -> BooleanValue.of(e.getTags().contains(a.getString())));
         put("has_entity_tag", (e, a) -> {
-            Tag<EntityType<?>> tag = e.getServer().getTags().getOrEmpty(Registry.ENTITY_TYPE_REGISTRY).getTag(InputValidator.identifierOf(a.getString()));
-            if (tag == null) return Value.NULL;
-            return BooleanValue.of(e.getType().is(tag));
+            Optional<HolderSet.Named<EntityType<?>>> tag = e.getServer().registryAccess().registryOrThrow(Registry.ENTITY_TYPE_REGISTRY).getTag(TagKey.create(Registry.ENTITY_TYPE_REGISTRY, InputValidator.identifierOf(a.getString())));
+            if (tag.isEmpty()) return Value.NULL;
+            //Tag<EntityType<?>> tag = e.getServer().getTags().getOrEmpty(Registry.ENTITY_TYPE_REGISTRY).getTag(InputValidator.identifierOf(a.getString()));
+            //if (tag == null) return Value.NULL;
+            //return BooleanValue.of(e.getType().is(tag));
+            EntityType<?> type = e.getType();
+            return BooleanValue.of(tag.get().stream().anyMatch(h -> h.value() == type));
         });
 
         put("yaw", (e, a)-> new NumericValue(e.getYRot()));
@@ -1231,7 +1254,7 @@ public class EntityValue extends Value
 
         });
         put("custom_name", (e, v) -> {
-            if (v instanceof NullValue)
+            if (v.isNull())
             {
                 e.setCustomNameVisible(false);
                 e.setCustomName(null);
@@ -1326,7 +1349,7 @@ public class EntityValue extends Value
             PathfinderMob ec = (PathfinderMob)e;
             if (v == null)
                 throw new InternalExpressionException("'home' requires at least one position argument, and optional distance, or null to cancel");
-            if (v instanceof NullValue)
+            if (v.isNull())
             {
                 ec.restrictTo(BlockPos.ZERO, -1);
                 Map<String,Goal> tasks = ((MobEntityInterface)ec).getTemporaryTasks();

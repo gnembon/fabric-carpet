@@ -1,12 +1,11 @@
 package carpet.utils;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Registry;
-import net.minecraft.network.chat.BaseComponent;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobSpawnType;
@@ -23,205 +22,206 @@ import net.minecraft.world.level.material.MaterialColor;
 import net.minecraft.world.level.pathfinder.PathComputationType;
 import net.minecraft.world.phys.Vec3;
 
+import static java.util.Map.entry;
+
 public class BlockInfo
 {
-    public static final Map<SoundType, String> soundName = new HashMap<SoundType, String>() {{
-        put(SoundType.WOOD,   "wood"  );
-        put(SoundType.GRAVEL, "gravel");
-        put(SoundType.GRASS,  "grass" );
-        put(SoundType.LILY_PAD, "lily_pad");
-        put(SoundType.STONE,  "stone" );
-        put(SoundType.METAL,  "metal" );
-        put(SoundType.GLASS , "glass" );
-        put(SoundType.WOOL  , "wool"  );
-        put(SoundType.SAND  , "sand"  );
-        put(SoundType.SNOW  , "snow"  );
-        put(SoundType.POWDER_SNOW  , "powder_snow"  );
-        put(SoundType.LADDER, "ladder");
-        put(SoundType.ANVIL , "anvil" );
-        put(SoundType.SLIME_BLOCK  , "slime"  );
-        put(SoundType.HONEY_BLOCK  , "honey"  );
-        put(SoundType.WET_GRASS , "sea_grass" );
-        put(SoundType.CORAL_BLOCK , "coral" );
-        put(SoundType.BAMBOO , "bamboo" );
-        put(SoundType.BAMBOO_SAPLING , "shoots" );
-        put(SoundType.SCAFFOLDING , "scaffolding" );
-        put(SoundType.SWEET_BERRY_BUSH , "berry" );
-        put(SoundType.CROP , "crop" );
-        put(SoundType.HARD_CROP , "stem" );
-        put(SoundType.VINE , "vine" );
-        put(SoundType.NETHER_WART , "wart" );
-        put(SoundType.LANTERN , "lantern" );
-        put(SoundType.STEM, "fungi_stem");
-        put(SoundType.NYLIUM, "nylium");
-        put(SoundType.FUNGUS, "fungus");
-        put(SoundType.ROOTS, "roots");
-        put(SoundType.SHROOMLIGHT, "shroomlight");
-        put(SoundType.WEEPING_VINES, "weeping_vine");
-        put(SoundType.TWISTING_VINES, "twisting_vine");
-        put(SoundType.SOUL_SAND, "soul_sand");
-        put(SoundType.SOUL_SOIL, "soul_soil");
-        put(SoundType.BASALT, "basalt");
-        put(SoundType.WART_BLOCK, "wart");
-        put(SoundType.NETHERRACK, "netherrack");
-        put(SoundType.NETHER_BRICKS, "nether_bricks");
-        put(SoundType.NETHER_SPROUTS, "nether_sprouts");
-        put(SoundType.NETHER_ORE, "nether_ore");
-        put(SoundType.BONE_BLOCK, "bone");
-        put(SoundType.NETHERITE_BLOCK, "netherite");
-        put(SoundType.ANCIENT_DEBRIS, "ancient_debris");
-        put(SoundType.LODESTONE, "lodestone");
-        put(SoundType.CHAIN, "chain");
-        put(SoundType.NETHER_GOLD_ORE, "nether_gold_ore");
-        put(SoundType.GILDED_BLACKSTONE, "gilded_blackstone");
-        put(SoundType.CANDLE, "candle");
-        put(SoundType.AMETHYST, "amethyst");
-        put(SoundType.AMETHYST_CLUSTER, "amethyst_cluster");
-        put(SoundType.SMALL_AMETHYST_BUD, "small_amethyst_bud");
-        put(SoundType.MEDIUM_AMETHYST_BUD, "medium_amethyst_bud");
-        put(SoundType.LARGE_AMETHYST_BUD, "large_amethyst_bud");
+    public static final Map<SoundType, String> soundName = Map.ofEntries(
+        entry(SoundType.WOOD,   "wood"  ),
+        entry(SoundType.GRAVEL, "gravel"),
+        entry(SoundType.GRASS,  "grass" ),
+        entry(SoundType.LILY_PAD, "lily_pad"),
+        entry(SoundType.STONE,  "stone" ),
+        entry(SoundType.METAL,  "metal" ),
+        entry(SoundType.GLASS , "glass" ),
+        entry(SoundType.WOOL  , "wool"  ),
+        entry(SoundType.SAND  , "sand"  ),
+        entry(SoundType.SNOW  , "snow"  ),
+        entry(SoundType.POWDER_SNOW  , "powder_snow"  ),
+        entry(SoundType.LADDER, "ladder"),
+        entry(SoundType.ANVIL , "anvil" ),
+        entry(SoundType.SLIME_BLOCK  , "slime"  ),
+        entry(SoundType.HONEY_BLOCK  , "honey"  ),
+        entry(SoundType.WET_GRASS , "sea_grass" ),
+        entry(SoundType.CORAL_BLOCK , "coral" ),
+        entry(SoundType.BAMBOO , "bamboo" ),
+        entry(SoundType.BAMBOO_SAPLING , "shoots" ),
+        entry(SoundType.SCAFFOLDING , "scaffolding" ),
+        entry(SoundType.SWEET_BERRY_BUSH , "berry" ),
+        entry(SoundType.CROP , "crop" ),
+        entry(SoundType.HARD_CROP , "stem" ),
+        entry(SoundType.VINE , "vine" ),
+        entry(SoundType.NETHER_WART , "wart" ),
+        entry(SoundType.LANTERN , "lantern" ),
+        entry(SoundType.STEM, "fungi_stem"),
+        entry(SoundType.NYLIUM, "nylium"),
+        entry(SoundType.FUNGUS, "fungus"),
+        entry(SoundType.ROOTS, "roots"),
+        entry(SoundType.SHROOMLIGHT, "shroomlight"),
+        entry(SoundType.WEEPING_VINES, "weeping_vine"),
+        entry(SoundType.TWISTING_VINES, "twisting_vine"),
+        entry(SoundType.SOUL_SAND, "soul_sand"),
+        entry(SoundType.SOUL_SOIL, "soul_soil"),
+        entry(SoundType.BASALT, "basalt"),
+        entry(SoundType.WART_BLOCK, "wart"),
+        entry(SoundType.NETHERRACK, "netherrack"),
+        entry(SoundType.NETHER_BRICKS, "nether_bricks"),
+        entry(SoundType.NETHER_SPROUTS, "nether_sprouts"),
+        entry(SoundType.NETHER_ORE, "nether_ore"),
+        entry(SoundType.BONE_BLOCK, "bone"),
+        entry(SoundType.NETHERITE_BLOCK, "netherite"),
+        entry(SoundType.ANCIENT_DEBRIS, "ancient_debris"),
+        entry(SoundType.LODESTONE, "lodestone"),
+        entry(SoundType.CHAIN, "chain"),
+        entry(SoundType.NETHER_GOLD_ORE, "nether_gold_ore"),
+        entry(SoundType.GILDED_BLACKSTONE, "gilded_blackstone"),
+        entry(SoundType.CANDLE, "candle"),
+        entry(SoundType.AMETHYST, "amethyst"),
+        entry(SoundType.AMETHYST_CLUSTER, "amethyst_cluster"),
+        entry(SoundType.SMALL_AMETHYST_BUD, "small_amethyst_bud"),
+        entry(SoundType.MEDIUM_AMETHYST_BUD, "medium_amethyst_bud"),
+        entry(SoundType.LARGE_AMETHYST_BUD, "large_amethyst_bud"),
 
-        put(SoundType.TUFF, "tuff");
-        put(SoundType.CALCITE, "calcite");
-        put(SoundType.DRIPSTONE_BLOCK, "dripstone");
-        put(SoundType.POINTED_DRIPSTONE, "pointed_dripstone");
-        put(SoundType.COPPER, "copper");
-        put(SoundType.CAVE_VINES, "cave_vine");
-        put(SoundType.SPORE_BLOSSOM, "spore_blossom");
-        put(SoundType.AZALEA, "azalea");
-        put(SoundType.FLOWERING_AZALEA, "flowering_azalea");
-        put(SoundType.MOSS_CARPET, "moss_carpet");
-        put(SoundType.MOSS, "moss");
-        put(SoundType.BIG_DRIPLEAF, "big_dripleaf");
-        put(SoundType.SMALL_DRIPLEAF, "small_dripleaf");
-        put(SoundType.ROOTED_DIRT, "rooted_dirt");
-        put(SoundType.HANGING_ROOTS, "hanging_roots");
-        put(SoundType.AZALEA_LEAVES, "azalea_leaves");
-        put(SoundType.SCULK_SENSOR, "sculk_sensor");
-        put(SoundType.GLOW_LICHEN, "glow_lichen");
-        put(SoundType.DEEPSLATE, "deepslate");
-        put(SoundType.DEEPSLATE_BRICKS, "deepslate_bricks");
-        put(SoundType.DEEPSLATE_TILES, "deepslate_tiles");
-        put(SoundType.POLISHED_DEEPSLATE, "polished_deepslate");
-    }};
+        entry(SoundType.TUFF, "tuff"),
+        entry(SoundType.CALCITE, "calcite"),
+        entry(SoundType.DRIPSTONE_BLOCK, "dripstone"),
+        entry(SoundType.POINTED_DRIPSTONE, "pointed_dripstone"),
+        entry(SoundType.COPPER, "copper"),
+        entry(SoundType.CAVE_VINES, "cave_vine"),
+        entry(SoundType.SPORE_BLOSSOM, "spore_blossom"),
+        entry(SoundType.AZALEA, "azalea"),
+        entry(SoundType.FLOWERING_AZALEA, "flowering_azalea"),
+        entry(SoundType.MOSS_CARPET, "moss_carpet"),
+        entry(SoundType.MOSS, "moss"),
+        entry(SoundType.BIG_DRIPLEAF, "big_dripleaf"),
+        entry(SoundType.SMALL_DRIPLEAF, "small_dripleaf"),
+        entry(SoundType.ROOTED_DIRT, "rooted_dirt"),
+        entry(SoundType.HANGING_ROOTS, "hanging_roots"),
+        entry(SoundType.AZALEA_LEAVES, "azalea_leaves"),
+        entry(SoundType.SCULK_SENSOR, "sculk_sensor"),
+        entry(SoundType.GLOW_LICHEN, "glow_lichen"),
+        entry(SoundType.DEEPSLATE, "deepslate"),
+        entry(SoundType.DEEPSLATE_BRICKS, "deepslate_bricks"),
+        entry(SoundType.DEEPSLATE_TILES, "deepslate_tiles"),
+        entry(SoundType.POLISHED_DEEPSLATE, "polished_deepslate")
+    );
 
-    public static final Map<MaterialColor, String> mapColourName = new HashMap<MaterialColor, String>() {{
-        put(MaterialColor.NONE     , "air"       );
-        put(MaterialColor.GRASS     , "grass"     );
-        put(MaterialColor.SAND       , "sand"      );
-        put(MaterialColor.WOOL        , "wool"      );
-        put(MaterialColor.FIRE       , "tnt"       );
-        put(MaterialColor.ICE        , "ice"       );
-        put(MaterialColor.METAL      , "iron"      );
-        put(MaterialColor.PLANT    , "foliage"   );
-        put(MaterialColor.SNOW     , "snow"      );
-        put(MaterialColor.CLAY       , "clay"      );
-        put(MaterialColor.DIRT       , "dirt"      );
-        put(MaterialColor.STONE      , "stone"     );
-        put(MaterialColor.WATER      , "water"     );
-        put(MaterialColor.WOOD       , "wood"      );
-        put(MaterialColor.QUARTZ     , "quartz"    );
-        put(MaterialColor.COLOR_ORANGE    , "adobe"     );
-        put(MaterialColor.COLOR_MAGENTA   , "magenta"   );
-        put(MaterialColor.COLOR_LIGHT_BLUE, "light_blue");
-        put(MaterialColor.COLOR_YELLOW    , "yellow"    );
-        put(MaterialColor.COLOR_LIGHT_GREEN      , "lime"      );
-        put(MaterialColor.COLOR_PINK      , "pink"      );
-        put(MaterialColor.COLOR_GRAY      , "gray"      );
-        put(MaterialColor.COLOR_LIGHT_GRAY, "light_gray");
-        put(MaterialColor.COLOR_CYAN      , "cyan"      );
-        put(MaterialColor.COLOR_PURPLE    , "purple"    );
-        put(MaterialColor.COLOR_BLUE      , "blue"      );
-        put(MaterialColor.COLOR_BROWN     , "brown"     );
-        put(MaterialColor.COLOR_GREEN     , "green"     );
-        put(MaterialColor.COLOR_RED       , "red"       );
-        put(MaterialColor.COLOR_BLACK     , "black"     );
-        put(MaterialColor.GOLD      , "gold"      );
-        put(MaterialColor.DIAMOND    , "diamond"   );
-        put(MaterialColor.LAPIS      , "lapis"     );
-        put(MaterialColor.EMERALD    , "emerald"   );
-        put(MaterialColor.PODZOL     , "obsidian"  );
-        put(MaterialColor.NETHER     , "netherrack"); //TODO fix these
-        put(MaterialColor.TERRACOTTA_WHITE      , "white_terracotta"      );
-        put(MaterialColor.TERRACOTTA_ORANGE    , "orange_terracotta"     );
-        put(MaterialColor.TERRACOTTA_MAGENTA   , "magenta_terracotta"    );
-        put(MaterialColor.TERRACOTTA_LIGHT_BLUE, "light_blue_terracotta" );
-        put(MaterialColor.TERRACOTTA_YELLOW    , "yellow_terracotta"     );
-        put(MaterialColor.TERRACOTTA_LIGHT_GREEN      , "lime_terracotta"       );
-        put(MaterialColor.TERRACOTTA_PINK      , "pink_terracotta"       );
-        put(MaterialColor.TERRACOTTA_GRAY      , "gray_terracotta"       );
-        put(MaterialColor.TERRACOTTA_LIGHT_GRAY, "light_gray_terracotta" );
-        put(MaterialColor.TERRACOTTA_CYAN      , "cyan_terracotta"       );
-        put(MaterialColor.TERRACOTTA_PURPLE    , "purple_terracotta"     );
-        put(MaterialColor.TERRACOTTA_BLUE      , "blue_terracotta"       );
-        put(MaterialColor.TERRACOTTA_BROWN     , "brown_terracotta"      );
-        put(MaterialColor.TERRACOTTA_GREEN     , "green_terracotta"      );
-        put(MaterialColor.TERRACOTTA_RED       , "red_terracotta"        );
-        put(MaterialColor.TERRACOTTA_BLACK     , "black_terracotta"      );
-        put(MaterialColor.CRIMSON_NYLIUM        , "crimson_nylium"        );
-        put(MaterialColor.CRIMSON_STEM         , "crimson_stem"          );
-        put(MaterialColor.CRIMSON_HYPHAE        , "crimson_hyphae"        );
-        put(MaterialColor.WARPED_NYLIUM         , "warped_nylium"         );
-        put(MaterialColor.WARPED_STEM           , "warped_stem"           );
-        put(MaterialColor.WARPED_HYPHAE         , "warped_hyphae"         );
-        put(MaterialColor.WARPED_WART_BLOCK           , "warped_wart"           );
-        put(MaterialColor.DEEPSLATE           , "deepslate"           );
-        put(MaterialColor.RAW_IRON           , "raw_iron"           );
-        put(MaterialColor.GLOW_LICHEN           , "glow_lichen"           );
+    public static final Map<MaterialColor, String> mapColourName = Map.ofEntries(
+        entry(MaterialColor.NONE     , "air"       ),
+        entry(MaterialColor.GRASS     , "grass"     ),
+        entry(MaterialColor.SAND       , "sand"      ),
+        entry(MaterialColor.WOOL        , "wool"      ),
+        entry(MaterialColor.FIRE       , "tnt"       ),
+        entry(MaterialColor.ICE        , "ice"       ),
+        entry(MaterialColor.METAL      , "iron"      ),
+        entry(MaterialColor.PLANT    , "foliage"   ),
+        entry(MaterialColor.SNOW     , "snow"      ),
+        entry(MaterialColor.CLAY       , "clay"      ),
+        entry(MaterialColor.DIRT       , "dirt"      ),
+        entry(MaterialColor.STONE      , "stone"     ),
+        entry(MaterialColor.WATER      , "water"     ),
+        entry(MaterialColor.WOOD       , "wood"      ),
+        entry(MaterialColor.QUARTZ     , "quartz"    ),
+        entry(MaterialColor.COLOR_ORANGE    , "adobe"     ),
+        entry(MaterialColor.COLOR_MAGENTA   , "magenta"   ),
+        entry(MaterialColor.COLOR_LIGHT_BLUE, "light_blue"),
+        entry(MaterialColor.COLOR_YELLOW    , "yellow"    ),
+        entry(MaterialColor.COLOR_LIGHT_GREEN      , "lime"      ),
+        entry(MaterialColor.COLOR_PINK      , "pink"      ),
+        entry(MaterialColor.COLOR_GRAY      , "gray"      ),
+        entry(MaterialColor.COLOR_LIGHT_GRAY, "light_gray"),
+        entry(MaterialColor.COLOR_CYAN      , "cyan"      ),
+        entry(MaterialColor.COLOR_PURPLE    , "purple"    ),
+        entry(MaterialColor.COLOR_BLUE      , "blue"      ),
+        entry(MaterialColor.COLOR_BROWN     , "brown"     ),
+        entry(MaterialColor.COLOR_GREEN     , "green"     ),
+        entry(MaterialColor.COLOR_RED       , "red"       ),
+        entry(MaterialColor.COLOR_BLACK     , "black"     ),
+        entry(MaterialColor.GOLD      , "gold"      ),
+        entry(MaterialColor.DIAMOND    , "diamond"   ),
+        entry(MaterialColor.LAPIS      , "lapis"     ),
+        entry(MaterialColor.EMERALD    , "emerald"   ),
+        entry(MaterialColor.PODZOL     , "obsidian"  ),
+        entry(MaterialColor.NETHER     , "netherrack"), //TODO fix these
+        entry(MaterialColor.TERRACOTTA_WHITE      , "white_terracotta"      ),
+        entry(MaterialColor.TERRACOTTA_ORANGE    , "orange_terracotta"     ),
+        entry(MaterialColor.TERRACOTTA_MAGENTA   , "magenta_terracotta"    ),
+        entry(MaterialColor.TERRACOTTA_LIGHT_BLUE, "light_blue_terracotta" ),
+        entry(MaterialColor.TERRACOTTA_YELLOW    , "yellow_terracotta"     ),
+        entry(MaterialColor.TERRACOTTA_LIGHT_GREEN      , "lime_terracotta"       ),
+        entry(MaterialColor.TERRACOTTA_PINK      , "pink_terracotta"       ),
+        entry(MaterialColor.TERRACOTTA_GRAY      , "gray_terracotta"       ),
+        entry(MaterialColor.TERRACOTTA_LIGHT_GRAY, "light_gray_terracotta" ),
+        entry(MaterialColor.TERRACOTTA_CYAN      , "cyan_terracotta"       ),
+        entry(MaterialColor.TERRACOTTA_PURPLE    , "purple_terracotta"     ),
+        entry(MaterialColor.TERRACOTTA_BLUE      , "blue_terracotta"       ),
+        entry(MaterialColor.TERRACOTTA_BROWN     , "brown_terracotta"      ),
+        entry(MaterialColor.TERRACOTTA_GREEN     , "green_terracotta"      ),
+        entry(MaterialColor.TERRACOTTA_RED       , "red_terracotta"        ),
+        entry(MaterialColor.TERRACOTTA_BLACK     , "black_terracotta"      ),
+        entry(MaterialColor.CRIMSON_NYLIUM        , "crimson_nylium"        ),
+        entry(MaterialColor.CRIMSON_STEM         , "crimson_stem"          ),
+        entry(MaterialColor.CRIMSON_HYPHAE        , "crimson_hyphae"        ),
+        entry(MaterialColor.WARPED_NYLIUM         , "warped_nylium"         ),
+        entry(MaterialColor.WARPED_STEM           , "warped_stem"           ),
+        entry(MaterialColor.WARPED_HYPHAE         , "warped_hyphae"         ),
+        entry(MaterialColor.WARPED_WART_BLOCK           , "warped_wart"           ),
+        entry(MaterialColor.DEEPSLATE           , "deepslate"           ),
+        entry(MaterialColor.RAW_IRON           , "raw_iron"           ),
+        entry(MaterialColor.GLOW_LICHEN           , "glow_lichen"           )
+    );
 
-    }};
+    public static final Map<Material, String> materialName = Map.ofEntries(
+        entry(Material.AIR            , "air"          ),
+        entry(Material.STRUCTURAL_AIR , "void"         ),
+        entry(Material.PORTAL         , "portal"       ),
+        entry(Material.CLOTH_DECORATION         , "carpet"       ),
+        entry(Material.PLANT          , "plant"        ),
+        entry(Material.WATER_PLANT, "water_plant" ),
+        entry(Material.REPLACEABLE_PLANT, "vegetation"       ),
+        entry(Material.REPLACEABLE_FIREPROOF_PLANT, "nether_shoots"    ),
+        entry(Material.REPLACEABLE_WATER_PLANT, "sea_grass"    ),
+        entry(Material.WATER          , "water"        ),
+        entry(Material.BUBBLE_COLUMN  , "bubble_column"),
+        entry(Material.LAVA           , "lava"         ),
+        entry(Material.TOP_SNOW     , "snow_layer"   ),
+        entry(Material.FIRE           , "fire"         ),
+        entry(Material.DECORATION      , "decoration"   ),
+        entry(Material.WEB         , "cobweb"       ),
+        entry(Material.SCULK         , "sculk"       ),
+        entry(Material.BUILDABLE_GLASS  , "redstone_lamp"),
+        entry(Material.CLAY, "clay"         ),
+        entry(Material.DIRT           , "dirt"         ),
+        entry(Material.GRASS  , "grass"        ),
+        entry(Material.ICE_SOLID      , "packed_ice"   ),
+        entry(Material.SAND      , "sand"         ),
+        entry(Material.SPONGE         , "sponge"       ),
+        entry(Material.SHULKER_SHELL    , "shulker"      ),
+        entry(Material.WOOD           , "wood"         ),
+        entry(Material.NETHER_WOOD    , "nether_wood"  ),
+        entry(Material.BAMBOO_SAPLING , "shoots"       ),
+        entry(Material.BAMBOO         , "bamboo"       ),
+        entry(Material.WOOL           , "wool"         ),
+        entry(Material.EXPLOSIVE            , "tnt"          ),
+        entry(Material.LEAVES         , "leaves"       ),
+        entry(Material.GLASS          , "glass"        ),
+        entry(Material.ICE            , "ice"          ),
+        entry(Material.CACTUS         , "cactus"       ),
+        entry(Material.STONE          , "stone"        ),
+        entry(Material.METAL          , "metal"        ),
+        entry(Material.SNOW     , "snow"         ),
+        entry(Material.HEAVY_METAL , "anvil"        ),
+        entry(Material.BARRIER        , "barrier"      ),
+        entry(Material.PISTON         , "piston"       ),
+        entry(Material.MOSS     , "moss"         ),
+        entry(Material.VEGETABLE          , "gourd"        ),
+        entry(Material.EGG            , "dragon_egg"   ),
+        entry(Material.CAKE           , "cake"         ),
+        entry(Material.AMETHYST       , "amethyst"     ),
+        entry(Material.POWDER_SNOW    , "powder_snow")
+    );
 
-    public static final Map<Material, String> materialName = new HashMap<Material, String>() {{
-        put(Material.AIR            , "air"          );
-        put(Material.STRUCTURAL_AIR , "void"         );
-        put(Material.PORTAL         , "portal"       );
-        put(Material.CLOTH_DECORATION         , "carpet"       );
-        put(Material.PLANT          , "plant"        );
-        put(Material.WATER_PLANT, "water_plant" );
-        put(Material.REPLACEABLE_PLANT, "vegetation"       );
-        put(Material.REPLACEABLE_FIREPROOF_PLANT, "nether_shoots"    );
-        put(Material.REPLACEABLE_WATER_PLANT, "sea_grass"    );
-        put(Material.WATER          , "water"        );
-        put(Material.BUBBLE_COLUMN  , "bubble_column");
-        put(Material.LAVA           , "lava"         );
-        put(Material.TOP_SNOW     , "snow_layer"   );
-        put(Material.FIRE           , "fire"         );
-        put(Material.DECORATION      , "decoration"   );
-        put(Material.WEB         , "cobweb"       );
-        put(Material.SCULK         , "sculk"       );
-        put(Material.BUILDABLE_GLASS  , "redstone_lamp");
-        put(Material.CLAY, "clay"         );
-        put(Material.DIRT           , "dirt"         );
-        put(Material.GRASS  , "grass"        );
-        put(Material.ICE_SOLID      , "packed_ice"   );
-        put(Material.SAND      , "sand"         );
-        put(Material.SPONGE         , "sponge"       );
-        put(Material.SHULKER_SHELL    , "shulker"      );
-        put(Material.WOOD           , "wood"         );
-        put(Material.NETHER_WOOD    , "nether_wood"  );
-        put(Material.BAMBOO_SAPLING , "shoots"       );
-        put(Material.BAMBOO         , "bamboo"       );
-        put(Material.WOOL           , "wool"         );
-        put(Material.EXPLOSIVE            , "tnt"          );
-        put(Material.LEAVES         , "leaves"       );
-        put(Material.GLASS          , "glass"        );
-        put(Material.ICE            , "ice"          );
-        put(Material.CACTUS         , "cactus"       );
-        put(Material.STONE          , "stone"        );
-        put(Material.METAL          , "metal"        );
-        put(Material.SNOW     , "snow"         );
-        put(Material.HEAVY_METAL , "anvil"        );
-        put(Material.BARRIER        , "barrier"      );
-        put(Material.PISTON         , "piston"       );
-        put(Material.MOSS     , "moss"         );
-        put(Material.VEGETABLE          , "gourd"        );
-        put(Material.EGG            , "dragon_egg"   );
-        put(Material.CAKE           , "cake"         );
-        put(Material.AMETHYST       , "amethyst"     );
-        put(Material.POWDER_SNOW    , "powder_snow");
-    }};
-
-    public static List<BaseComponent> blockInfo(BlockPos pos, ServerLevel world)
+    public static List<Component> blockInfo(BlockPos pos, ServerLevel world)
     {
         BlockState state = world.getBlockState(pos);
         Material material = state.getMaterial();
@@ -231,7 +231,7 @@ public class BlockInfo
         {
             metastring += ", "+iproperty.getName() + '='+state.getValue(iproperty);
         }
-        List<BaseComponent> lst = new ArrayList<>();
+        List<Component> lst = new ArrayList<>();
         lst.add(Messenger.s(""));
         lst.add(Messenger.s("====================================="));
         lst.add(Messenger.s(String.format("Block info for %s%s (id %d%s):",Registry.BLOCK.getKey(block),metastring, Registry.BLOCK.getId(block), metastring )));
@@ -246,7 +246,7 @@ public class BlockInfo
         lst.add(Messenger.s(String.format(" - Light in: %d, above: %d",
                 Math.max(world.getBrightness(LightLayer.BLOCK, pos),world.getBrightness(LightLayer.SKY, pos)) ,
                 Math.max(world.getBrightness(LightLayer.BLOCK, pos.above()),world.getBrightness(LightLayer.SKY, pos.above())))));
-        lst.add(Messenger.s(String.format(" - Brightness in: %.2f, above: %.2f", world.getBrightness(pos), world.getBrightness(pos.above()))));
+        lst.add(Messenger.s(String.format(" - Brightness in: %.2f, above: %.2f", world.getLightLevelDependentMagicValue(pos), world.getLightLevelDependentMagicValue(pos.above()))));
         lst.add(Messenger.s(String.format(" - Is opaque: %s", material.isSolid() )));
         //lst.add(Messenger.s(String.format(" - Light opacity: %d", state.getOpacity(world,pos))));
         lst.add(Messenger.s(String.format(" - Blocks light: %s", state.getMaterial().isSolidBlocking())));
@@ -272,7 +272,7 @@ public class BlockInfo
         return lst;
     }
 
-    private static BaseComponent wander_chances(BlockPos pos, ServerLevel worldIn)
+    private static Component wander_chances(BlockPos pos, ServerLevel worldIn)
     {
         PathfinderMob creature = new ZombifiedPiglin(EntityType.ZOMBIFIED_PIGLIN, worldIn);
         creature.finalizeSpawn(worldIn, worldIn.getCurrentDifficultyAt(pos), MobSpawnType.NATURAL, null, null);

@@ -9,6 +9,7 @@ import net.minecraft.advancements.critereon.MinMaxBounds;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.GlobalPos;
 import net.minecraft.core.Registry;
+import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.Vec3i;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.resources.ResourceKey;
@@ -16,7 +17,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ColumnPos;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.tags.TagContainer;
+import net.minecraft.tags.TagKey;
 import net.minecraft.util.StringRepresentable;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
@@ -65,7 +66,7 @@ public class ValueConversions
         return ListValue.of(new NumericValue(vec.x), new NumericValue(vec.y), new NumericValue(vec.z));
     }
 
-    public static Value of(ColumnPos cpos) { return ListValue.of(new NumericValue(cpos.x), new NumericValue(cpos.z));}
+    public static Value of(ColumnPos cpos) { return ListValue.of(new NumericValue(cpos.x()), new NumericValue(cpos.z()));}
 
     public static Value of(ServerLevel world)
     {
@@ -164,10 +165,12 @@ public class ValueConversions
         }
     }
 
-    public static Value of(ResourceKey<Level> dim)
+    public static Value of(ResourceKey<?> dim)
     {
         return of(dim.location());
     }
+
+    public static Value of(TagKey<?> tagKey) { return of(tagKey.location()); }
 
     public static Value of(ResourceLocation id)
     {
@@ -311,7 +314,7 @@ public class ValueConversions
         );
     }
 
-    public static Value of(StructureStart<?> structure)
+    public static Value of(StructureStart structure)
     {
         if (structure == null || structure == StructureStart.INVALID_START) return Value.NULL;
         BoundingBox boundingBox = structure.getBoundingBox();
@@ -392,12 +395,12 @@ public class ValueConversions
         return ret;
     }
 
-    public static Value ofBlockPredicate(TagContainer tagManager, Predicate<BlockInWorld> blockPredicate)
+    public static Value ofBlockPredicate(RegistryAccess registryAccess, Predicate<BlockInWorld> blockPredicate)
     {
         BlockPredicateInterface predicateData = (BlockPredicateInterface) blockPredicate;
         return ListValue.of(
                 predicateData.getCMBlockState()==null?Value.NULL:of(Registry.BLOCK.getKey(predicateData.getCMBlockState().getBlock())),
-                predicateData.getCMBlockTag()==null?Value.NULL:of(tagManager.getOrEmpty(Registry.BLOCK_REGISTRY).getId(predicateData.getCMBlockTag())),
+                predicateData.getCMBlockTagKey()==null?Value.NULL:of(registryAccess.registryOrThrow(Registry.BLOCK_REGISTRY).getTag(predicateData.getCMBlockTagKey()).get().key()),
                 MapValue.wrap(predicateData.getCMProperties()),
                 predicateData.getCMDataTag() == null?Value.NULL:new NBTSerializableValue(predicateData.getCMDataTag())
         );

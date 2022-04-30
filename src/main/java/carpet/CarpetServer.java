@@ -29,9 +29,8 @@ import carpet.utils.MobAI;
 import carpet.utils.SpawnReporter;
 import com.mojang.brigadier.CommandDispatcher;
 
-import net.fabricmc.api.ClientModInitializer;
-import net.fabricmc.api.DedicatedServerModInitializer;
 import net.fabricmc.loader.api.FabricLoader;
+import net.minecraft.commands.CommandBuildContext;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.server.MinecraftServer;
@@ -40,9 +39,6 @@ import net.minecraft.server.level.ServerPlayer;
 
 public class CarpetServer // static for now - easier to handle all around the code, its one anyways
 {
-    public static final ClientModInitializer CLIENT_INITIALIZER = CarpetServer::onGameStarted;
-    public static final DedicatedServerModInitializer SERVER_INITIALIZER = CarpetServer::onGameStarted;
-
     public static final Random rand = new Random();
     public static MinecraftServer minecraft_server;
     private static CommandDispatcher<CommandSourceStack> currentCommandDispatcher;
@@ -60,15 +56,25 @@ public class CarpetServer // static for now - easier to handle all around the co
     public static void manageExtension(CarpetExtension extension)
     {
         extensions.add(extension);
-        // for extensions that come late to the party, after server is created / loaded
-        // we will handle them now.
-        // that would handle all extensions, even these that add themselves really late to the party
+        // Stop the stupid practice of extensions mixing into Carpet just to register themselves
+        if (StackWalker.getInstance().walk(stream -> stream.anyMatch(el -> 
+            el.getClassName() == CarpetServer.class.getName() && !el.getMethodName().equals("manageExtension")
+        ))) {
+            CarpetSettings.LOG.warn("""
+                    Extension '%s' is registering itself using a mixin into Carpet instead of a regular ModInitializer!
+                    This is stupid and will crash the game in future versions!""".formatted(extension.getClass().getSimpleName()));
+        }
+
+        // for extensions that come late to the party, we used to handle them, but we've been giving them warnings about
+        // it for a while. Cause a crash
         if (currentCommandDispatcher != null)
         {
-            extension.registerCommands(currentCommandDispatcher);
+            throw new IllegalStateException("Extension %s tried to register too late!".formatted(extension.getClass().getSimpleName()));
         }
     }
 
+    // Gets called by Fabric Loader from a ServerModInitializer and a ClientModInitializer, in both to allow extensions 
+    // to register before this call in a ModInitializer (declared in fabric.mod.json)
     public static void onGameStarted()
     {
         settingsManager = new SettingsManager(CarpetSettings.carpetVersion, "carpet", "Carpet Mod");
@@ -115,33 +121,34 @@ public class CarpetServer // static for now - easier to handle all around the co
         extensions.forEach(e -> e.onTick(server));
     }
 
-    @Deprecated
-    public static void registerCarpetCommands(CommandDispatcher<CommandSourceStack> dispatcher) {
-    }
-
-    public static void registerCarpetCommands(CommandDispatcher<CommandSourceStack> dispatcher, Commands.CommandSelection environment)
+    public static void registerCarpetCommands(CommandDispatcher<CommandSourceStack> dispatcher, Commands.CommandSelection environment, CommandBuildContext commandBuildContext)
     {
-        settingsManager.registerCommand(dispatcher);
+        if (settingsManager == null) // bootstrap dev initialization check
+        {
+            return;
+        }
+        settingsManager.registerCommand(dispatcher, commandBuildContext);
         extensions.forEach(e -> {
             SettingsManager sm = e.customSettingsManager();
-            if (sm != null) sm.registerCommand(dispatcher);
+            if (sm != null) sm.registerCommand(dispatcher, commandBuildContext);
         });
-        TickCommand.register(dispatcher);
-        ProfileCommand.register(dispatcher);
-        CounterCommand.register(dispatcher);
-        LogCommand.register(dispatcher);
-        SpawnCommand.register(dispatcher);
-        PlayerCommand.register(dispatcher);
-        //CameraModeCommand.register(dispatcher);
-        InfoCommand.register(dispatcher);
-        DistanceCommand.register(dispatcher);
-        PerimeterInfoCommand.register(dispatcher);
-        DrawCommand.register(dispatcher);
-        ScriptCommand.register(dispatcher);
-        MobAICommand.register(dispatcher);
+        TickCommand.register(dispatcher, commandBuildContext);
+        ProfileCommand.register(dispatcher, commandBuildContext);
+        CounterCommand.register(dispatcher, commandBuildContext);
+        LogCommand.register(dispatcher, commandBuildContext);
+        SpawnCommand.register(dispatcher, commandBuildContext);
+        PlayerCommand.register(dispatcher, commandBuildContext);
+        InfoCommand.register(dispatcher, commandBuildContext);
+        DistanceCommand.register(dispatcher, commandBuildContext);
+        PerimeterInfoCommand.register(dispatcher, commandBuildContext);
+        DrawCommand.register(dispatcher, commandBuildContext);
+        ScriptCommand.register(dispatcher, commandBuildContext);
+        MobAICommand.register(dispatcher, commandBuildContext);
         // registering command of extensions that has registered before either server is created
         // for all other, they will have them registered when they add themselves
-        extensions.forEach(e -> e.registerCommands(dispatcher));
+        extensions.forEach(e -> {
+            e.registerCommands(dispatcher, commandBuildContext);
+        });
         currentCommandDispatcher = dispatcher;
 
         if (environment != Commands.CommandSelection.DEDICATED)

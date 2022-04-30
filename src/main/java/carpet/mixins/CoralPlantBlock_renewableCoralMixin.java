@@ -2,9 +2,15 @@ package carpet.mixins;
 
 import carpet.CarpetSettings;
 import carpet.fakes.CoralFeatureInterface;
+import net.minecraft.core.Holder;
+import net.minecraft.core.Registry;
+import net.minecraft.util.RandomSource;
 import org.spongepowered.asm.mixin.Mixin;
 
 import java.util.Random;
+import java.util.Set;
+import java.util.stream.Collectors;
+
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.tags.BlockTags;
@@ -35,12 +41,12 @@ public abstract class CoralPlantBlock_renewableCoralMixin implements Bonemealabl
                 && var1.getFluidState(var2.above()).is(FluidTags.WATER);
     }
 
-    public boolean isBonemealSuccess(Level var1, Random var2, BlockPos var3, BlockState var4)
+    public boolean isBonemealSuccess(Level var1, RandomSource var2, BlockPos var3, BlockState var4)
     {
         return (double)var1.random.nextFloat() < 0.15D;
     }
 
-    public void performBonemeal(ServerLevel worldIn, Random random, BlockPos pos, BlockState blockUnder)
+    public void performBonemeal(ServerLevel worldIn, RandomSource random, BlockPos pos, BlockState blockUnder)
     {
 
         CoralFeature coral;
@@ -54,7 +60,8 @@ public abstract class CoralPlantBlock_renewableCoralMixin implements Bonemealabl
 
         MaterialColor color = blockUnder.getMapColor(worldIn, pos);
         BlockState proper_block = blockUnder;
-        for (Block block: BlockTags.CORAL_BLOCKS.getValues())
+        Set<Block> coralBlockSet = worldIn.registryAccess().registryOrThrow(Registry.BLOCK_REGISTRY).getTag(BlockTags.CORAL_BLOCKS).orElseThrow().stream().map(Holder::value).collect(Collectors.toUnmodifiableSet());
+        for (Block block: coralBlockSet)
         {
             proper_block = block.defaultBlockState();
             if (proper_block.getMapColor(worldIn,pos) == color)
@@ -73,7 +80,7 @@ public abstract class CoralPlantBlock_renewableCoralMixin implements Bonemealabl
             if (worldIn.random.nextInt(10)==0)
             {
                 BlockPos randomPos = pos.offset(worldIn.random.nextInt(16)-8,worldIn.random.nextInt(8),worldIn.random.nextInt(16)-8  );
-                if (BlockTags.CORAL_BLOCKS.contains(worldIn.getBlockState(randomPos).getBlock()))
+                if (coralBlockSet.contains(worldIn.getBlockState(randomPos).getBlock()))
                 {
                     worldIn.setBlock(randomPos, Blocks.WET_SPONGE.defaultBlockState(), 3);
                 }

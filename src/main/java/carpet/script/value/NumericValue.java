@@ -172,7 +172,7 @@ public class NumericValue extends Value
     @Override
     public int compareTo(Value o)
     {
-        if (o instanceof NullValue)
+        if (o.isNull())
         {
             return -o.compareTo(this);
         }
@@ -187,17 +187,18 @@ public class NumericValue extends Value
     @Override
     public boolean equals(Object o)
     {
-        if (o instanceof NullValue)
-        {
-            return o.equals(this);
+        if (o instanceof Value value) {
+            if (value.isNull()) {
+                return o.equals(this);
+            }
+            if (o instanceof NumericValue no) {
+                if (longValue != null && no.longValue != null)
+                    return longValue.equals(no.longValue);
+                return !this.subtract(no).getBoolean();
+            }
+            return super.equals(o);
         }
-        if (o instanceof NumericValue no)
-        {
-            if (longValue != null && no.longValue != null)
-                return longValue.equals(no.longValue);
-            return !this.subtract(no).getBoolean();
-        }
-        return super.equals(o);
+        return false;
     }
 
     public NumericValue(double value)

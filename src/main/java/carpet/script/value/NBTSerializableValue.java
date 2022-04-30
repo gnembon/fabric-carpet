@@ -22,6 +22,9 @@ import net.minecraft.commands.arguments.NbtPathArgument;
 import net.minecraft.commands.arguments.item.ItemInput;
 import net.minecraft.commands.arguments.item.ItemParser;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Holder;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.core.Registry;
 import net.minecraft.nbt.CollectionTag;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.EndTag;
@@ -301,17 +304,17 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
                 if (customTag == null)
                     return res;
                 else
-                    return new ItemInput(res.getItem(), customTag);
+                    return new ItemInput(Holder.direct(res.getItem()), customTag);
+            ItemParser.ItemResult parser = ItemParser.parseForItem(HolderLookup.forRegistry(Registry.ITEM), new StringReader(itemString));
+            res = new ItemInput(parser.item(), parser.nbt());
 
-            ItemParser parser = (new ItemParser(new StringReader(itemString), false)).parse();
-            res = new ItemInput(parser.getItem(), parser.getNbt());
             itemCache.put(itemString, res);
             if (itemCache.size()>64000)
                 itemCache.clear();
             if (customTag == null)
                 return res;
             else
-                return new ItemInput(res.getItem(), customTag);
+                return new ItemInput(Holder.direct(res.getItem()), customTag);
         }
         catch (CommandSyntaxException e)
         {
@@ -389,7 +392,7 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
     {
         if (v instanceof NBTSerializableValue)
             return v;
-        if (v instanceof NullValue)
+        if (v.isNull())
             return Value.NULL;
         return NBTSerializableValue.parseString(v.getString(), true);
     }

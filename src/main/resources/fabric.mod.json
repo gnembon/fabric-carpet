@@ -20,10 +20,10 @@
   "environment": "*",
   "entrypoints": {
     "client": [
-      "carpet.CarpetServer::CLIENT_INITIALIZER"
+      "carpet.CarpetServer::onGameStarted"
     ],
     "server": [
-      "carpet.CarpetServer::SERVER_INITIALIZER"
+      "carpet.CarpetServer::onGameStarted"
     ]
   },
   "mixins": [
@@ -32,7 +32,7 @@
   "accessWidener" : "carpet.accesswidener",
 
   "depends": {
-    "minecraft": "1.18.x",
+    "minecraft": "1.19.*",
     "fabricloader": ">=0.12.8",
     "java": ">=17"
   }

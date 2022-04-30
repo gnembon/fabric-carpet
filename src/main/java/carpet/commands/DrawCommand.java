@@ -4,6 +4,7 @@ import carpet.CarpetSettings;
 import carpet.settings.SettingsManager;
 import carpet.utils.Messenger;
 import com.google.common.collect.Lists;
+import com.mojang.brigadier.Command;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
@@ -14,6 +15,8 @@ import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import java.util.List;
 import java.util.function.Predicate;
+
+import net.minecraft.commands.CommandBuildContext;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.arguments.blocks.BlockInput;
 import net.minecraft.commands.arguments.blocks.BlockPredicateArgument;
@@ -34,55 +37,49 @@ import static net.minecraft.commands.SharedSuggestionProvider.suggest;
 
 public class DrawCommand
 {
-    public static void register(CommandDispatcher<CommandSourceStack> dispatcher)
+    public static void register(CommandDispatcher<CommandSourceStack> dispatcher, final CommandBuildContext context)
     {
         LiteralArgumentBuilder<CommandSourceStack> command = literal("draw").
                 requires((player) -> SettingsManager.canUseCommand(player, CarpetSettings.commandDraw)).
                 then(literal("sphere").
                         then(argument("center", BlockPosArgument.blockPos()).
                                 then(argument("radius", IntegerArgumentType.integer(1)).
-                                        then(drawShape(c -> DrawCommand.drawSphere(c, false)))))).
+                                        then(drawShape(c -> DrawCommand.drawSphere(c, false), context))))).
                 then(literal("ball").
                         then(argument("center", BlockPosArgument.blockPos()).
                                 then(argument("radius", IntegerArgumentType.integer(1)).
-                                        then(drawShape(c -> DrawCommand.drawSphere(c, true)))))).
+                                        then(drawShape(c -> DrawCommand.drawSphere(c, true), context))))).
                 then(literal("diamond").
                         then(argument("center", BlockPosArgument.blockPos()).
                                 then(argument("radius", IntegerArgumentType.integer(1)).
-                                        then(drawShape(c -> DrawCommand.drawDiamond(c, true)))))).
+                                        then(drawShape(c -> DrawCommand.drawDiamond(c, true), context))))).
                 then(literal("pyramid").
                         then(argument("center", BlockPosArgument.blockPos()).
                                 then(argument("radius", IntegerArgumentType.integer(1)).
                                         then(argument("height",IntegerArgumentType.integer(1)).
                                                 then(argument("pointing",StringArgumentType.word()).suggests( (c, b) -> suggest(new String[]{"up","down"},b)).
                                                         then(argument("orientation",StringArgumentType.word()).suggests( (c, b) -> suggest(new String[]{"y","x","z"},b)).
-                                                                then(drawShape(c -> DrawCommand.drawPyramid(c, "square", true))))))))).
+                                                                then(drawShape(c -> DrawCommand.drawPyramid(c, "square", true), context)))))))).
                 then(literal("cone").
                         then(argument("center", BlockPosArgument.blockPos()).
                                 then(argument("radius", IntegerArgumentType.integer(1)).
                                         then(argument("height",IntegerArgumentType.integer(1)).
                                                 then(argument("pointing",StringArgumentType.word()).suggests( (c, b) -> suggest(new String[]{"up","down"},b)).
                                                         then(argument("orientation",StringArgumentType.word()).suggests( (c, b) -> suggest(new String[]{"y","x","z"},b))
-                                                                .then(drawShape(c -> DrawCommand.drawPyramid(c, "circle", true))))))))).
+                                                                .then(drawShape(c -> DrawCommand.drawPyramid(c, "circle", true), context)))))))).
                 then(literal("cylinder").
                         then(argument("center", BlockPosArgument.blockPos()).
                                 then(argument("radius", IntegerArgumentType.integer(1)).
                                         then(argument("height",IntegerArgumentType.integer(1)).
                                                         then(argument("orientation",StringArgumentType.word()).suggests( (c, b) -> suggest(new String[]{"y","x","z"},b))
-                                                                .then(drawShape(c -> DrawCommand.drawPrism(c, "circle")))))))).
+                                                                .then(drawShape(c -> DrawCommand.drawPrism(c, "circle"), context))))))).
                 then(literal("cuboid").
                         then(argument("center", BlockPosArgument.blockPos()).
                                 then(argument("radius", IntegerArgumentType.integer(1)).
                                         then(argument("height",IntegerArgumentType.integer(1)).
                                                 then(argument("orientation",StringArgumentType.word()).suggests( (c, b) -> suggest(new String[]{"y","x","z"},b))
-                                                        .then(drawShape(c -> DrawCommand.drawPrism(c, "square"))))))));
+                                                        .then(drawShape(c -> DrawCommand.drawPrism(c, "square"), context)))))));
         dispatcher.register(command);
-    }
-
-    @FunctionalInterface
-    private interface OptionalBlockSelector
-    {
-        Integer apply(final CommandContext<CommandSourceStack> ctx) throws CommandSyntaxException;
     }
 
     @FunctionalInterface
@@ -92,13 +89,13 @@ public class DrawCommand
     }
 
     private static RequiredArgumentBuilder<CommandSourceStack, BlockInput>
-    drawShape(OptionalBlockSelector drawer)
+    drawShape(Command<CommandSourceStack> drawer, CommandBuildContext commandBuildContext)
     {
-        return argument("block", BlockStateArgument.block()).
-                executes(drawer::apply)
+        return argument("block", BlockStateArgument.block(commandBuildContext)).
+                executes(drawer)
                 .then(literal("replace")
-                        .then(argument("filter", BlockPredicateArgument.blockPredicate())
-                                .executes(drawer::apply)));
+                        .then(argument("filter", BlockPredicateArgument.blockPredicate(commandBuildContext))
+                                .executes(drawer)));
     }
 
     private static class ErrorHandled extends RuntimeException {}

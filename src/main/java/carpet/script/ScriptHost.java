@@ -4,13 +4,12 @@ import carpet.script.bundled.Module;
 import carpet.script.exception.ExpressionException;
 import carpet.script.exception.IntegrityException;
 import carpet.script.exception.InternalExpressionException;
-import carpet.script.language.Arithmetic;
 import carpet.script.value.FunctionValue;
 import carpet.script.value.Value;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -36,6 +35,7 @@ public abstract class ScriptHost
     private final Map<Value, ThreadPoolExecutor> executorServices = new HashMap<>();
     private final Map<Value, Object> locks = new ConcurrentHashMap<>();
     protected boolean inTermination = false;
+    public boolean strict;
 
     private final Set<String> deprecations = new HashSet<>();
 
@@ -118,6 +118,7 @@ public abstract class ScriptHost
         this.main = code;
         this.perUser = perUser;
         this.user = null;
+        this.strict = false;
         ModuleData moduleData = new ModuleData(code);
         initializeModuleGlobals(moduleData);
         this.moduleData.put(code, moduleData);
@@ -438,7 +439,7 @@ public abstract class ScriptHost
         errorSnooper=null;
     }
 
-    public static final Logger DEPRECATION_LOG = LogManager.getLogger("Scarpet Deprecation Warnings");
+    public static final Logger DEPRECATION_LOG = LoggerFactory.getLogger("Scarpet Deprecation Warnings");
 
     public boolean issueDeprecation(String feature)
     {

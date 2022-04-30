@@ -14,7 +14,11 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
 import java.util.Arrays;
 import java.util.Locale;
+import java.util.Map;
+import java.util.function.Function;
 import java.util.stream.Collectors;
+
+import net.minecraft.commands.CommandBuildContext;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.arguments.DimensionArgument;
 import net.minecraft.commands.arguments.coordinates.BlockPosArgument;
@@ -36,7 +40,7 @@ import static net.minecraft.commands.SharedSuggestionProvider.suggest;
 
 public class SpawnCommand
 {
-    public static void register(CommandDispatcher<CommandSourceStack> dispatcher)
+    public static void register(CommandDispatcher<CommandSourceStack> dispatcher, CommandBuildContext commandBuildContext)
     {
         LiteralArgumentBuilder<CommandSourceStack> literalargumentbuilder = literal("spawn").
                 requires((player) -> SettingsManager.canUseCommand(player, CarpetSettings.commandSpawn));
@@ -105,13 +109,15 @@ public class SpawnCommand
         dispatcher.register(literalargumentbuilder);
     }
 
+    private static final Map<String, MobCategory> MOB_CATEGORY_MAP = Arrays.stream(MobCategory.values()).collect(Collectors.toMap(MobCategory::getName, Function.identity()));
+
     private static MobCategory getCategory(String string) throws CommandSyntaxException
     {
         if (!Arrays.stream(MobCategory.values()).map(MobCategory::getName).collect(Collectors.toSet()).contains(string))
         {
             throw new SimpleCommandExceptionType(Messenger.c("r Wrong mob type: "+string+" should be "+ Arrays.stream(MobCategory.values()).map(MobCategory::getName).collect(Collectors.joining(", ")))).create();
         }
-        return MobCategory.byName(string.toLowerCase(Locale.ROOT));
+        return MOB_CATEGORY_MAP.get(string.toLowerCase(Locale.ROOT));
     }
 
 

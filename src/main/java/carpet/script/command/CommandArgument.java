@@ -16,6 +16,7 @@ import carpet.script.value.StringValue;
 import carpet.script.value.Value;
 import carpet.script.value.ValueConversions;
 import carpet.utils.CarpetProfiler;
+import com.mojang.datafixers.util.Either;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
 
@@ -53,6 +54,7 @@ import java.util.stream.Collectors;
 import net.minecraft.ChatFormatting;
 import net.minecraft.advancements.Advancement;
 import net.minecraft.advancements.critereon.MinMaxBounds;
+import net.minecraft.commands.CommandBuildContext;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.commands.arguments.AngleArgument;
@@ -71,7 +73,9 @@ import net.minecraft.commands.arguments.ObjectiveArgument;
 import net.minecraft.commands.arguments.ObjectiveCriteriaArgument;
 import net.minecraft.commands.arguments.ParticleArgument;
 import net.minecraft.commands.arguments.RangeArgument;
+import net.minecraft.commands.arguments.ResourceKeyArgument;
 import net.minecraft.commands.arguments.ResourceLocationArgument;
+import net.minecraft.commands.arguments.ResourceOrTagLocationArgument;
 import net.minecraft.commands.arguments.ScoreHolderArgument;
 import net.minecraft.commands.arguments.ScoreboardSlotArgument;
 import net.minecraft.commands.arguments.TeamArgument;
@@ -90,10 +94,14 @@ import net.minecraft.commands.synchronization.SuggestionProviders;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Registry;
-import net.minecraft.network.chat.TextComponent;
+import net.minecraft.core.RegistryAccess;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.commands.BossBarCommands;
+import net.minecraft.tags.TagKey;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.phys.Vec2;
 import net.minecraft.world.scores.Scoreboard;
 
@@ -103,7 +111,7 @@ public abstract class CommandArgument
 {
     public static CommandSyntaxException error(String text)
     {
-        return new SimpleCommandExceptionType(new TextComponent(text)).create();
+        return new SimpleCommandExceptionType(Component.literal(text)).create();
     }
 
     private static final List<? extends CommandArgument> baseTypes = Lists.newArrayList(
@@ -128,7 +136,7 @@ public abstract class CommandArgument
                     false
             ),
             new VanillaUnconfigurableArgument( "blockpredicate", BlockPredicateArgument::blockPredicate,
-                    (c, p) -> ValueConversions.ofBlockPredicate(c.getSource().getServer().getTags(), BlockPredicateArgument.getBlockPredicate(c, p)), false
+                    (c, p) -> ValueConversions.ofBlockPredicate(c.getSource().getServer().registryAccess(), BlockPredicateArgument.getBlockPredicate(c, p)), false
             ),
             new VanillaUnconfigurableArgument("teamcolor", ColorArgument::color,
                     (c, p) -> {
@@ -204,13 +212,25 @@ public abstract class CommandArgument
                     (c, p) -> ValueConversions.of( ResourceLocationArgument.getId(c, p)), (ctx, builder) -> SharedSuggestionProvider.suggestResource(ctx.getSource().getServer().getLootTables().getIds(), builder)
             ),
             new VanillaUnconfigurableArgument("attribute", ResourceLocationArgument::id,
-                    (c, p) -> ValueConversions.of( Registry.ATTRIBUTE.getKey(ResourceLocationArgument.getAttribute(c, p))), (ctx, builder) -> SharedSuggestionProvider.suggestResource(Registry.ATTRIBUTE.keySet(), builder)
+                    (c, p) -> ValueConversions.of( Registry.ATTRIBUTE.getKey(ResourceKeyArgument.getAttribute(c, p))), (ctx, builder) -> SharedSuggestionProvider.suggestResource(Registry.ATTRIBUTE.keySet(), builder)
             ),
             new VanillaUnconfigurableArgument("boss", ResourceLocationArgument::id,
                     (c, p) -> ValueConversions.of( ResourceLocationArgument.getId(c, p)), BossBarCommands.SUGGEST_BOSS_BAR
             ),
-            new VanillaUnconfigurableArgument("biome", ResourceLocationArgument::id,
-                    (c, p) -> ValueConversions.of( ResourceLocationArgument.getId(c, p)), SuggestionProviders.AVAILABLE_BIOMES
+            new VanillaUnconfigurableArgument("biome", () -> ResourceOrTagLocationArgument.resourceOrTag(Registry.BIOME_REGISTRY),
+                    (c, p) -> {
+                        ResourceOrTagLocationArgument.Result<Biome> result = ResourceOrTagLocationArgument.getBiome(c, p);
+                        Either<ResourceKey<Biome>, TagKey<Biome>> res = result.unwrap();
+                        if (res.left().isPresent())
+                        {
+                            return ValueConversions.of(res.left().get());
+                        }
+                        if (res.right().isPresent())
+                        {
+                            return ValueConversions.of(res.right().get());
+                        }
+                        return Value.NULL;
+                    }, (ctx, builder) -> SharedSuggestionProvider.suggestResource(ctx.getSource().getServer().registryAccess().registryOrThrow(Registry.BIOME_REGISTRY).keySet(), builder)
             ),
             new VanillaUnconfigurableArgument("sound", ResourceLocationArgument::id,
                     (c, p) -> ValueConversions.of( ResourceLocationArgument.getId(c, p)), SuggestionProviders.AVAILABLE_SOUNDS
@@ -248,7 +268,7 @@ public abstract class CommandArgument
             new VanillaUnconfigurableArgument("uuid", UuidArgument::uuid,
                     (c, p) -> StringValue.of(UuidArgument.getUuid(c, p).toString()), false
             ),
-            new VanillaUnconfigurableArgument("surfacelocation", Vec2Argument::vec2, // vec2
+            new VanillaUnconfigurableArgument("surfacelocation", () -> Vec2Argument.vec2(), // vec2
                     (c, p) -> {
                         Vec2 res = Vec2Argument.getVec2(c, p);
                         return ListValue.of(NumericValue.of(res.x), NumericValue.of(res.y));
@@ -280,10 +300,10 @@ public abstract class CommandArgument
     public static RequiredArgumentBuilder<CommandSourceStack, ?> argumentNode(String param, CarpetScriptHost host) throws CommandSyntaxException
     {
         CommandArgument arg = getTypeForArgument(param, host);
-        if (arg.suggestionProvider != null) return argument(param, arg.getArgumentType()).suggests(arg.suggestionProvider);
-        if (!arg.needsMatching) return argument(param, arg.getArgumentType());
+        if (arg.suggestionProvider != null) return argument(param, arg.getArgumentType(host)).suggests(arg.suggestionProvider);
+        if (!arg.needsMatching) return argument(param, arg.getArgumentType(host));
         String hostName = host.getName();
-        return argument(param, arg.getArgumentType()).suggests((ctx, b) -> {
+        return argument(param, arg.getArgumentType(host)).suggests((ctx, b) -> {
             CarpetScriptHost cHost = CarpetServer.scriptServer.modules.get(hostName).retrieveOwnForExecution(ctx.getSource());
             return arg.suggest(ctx, b, cHost);
         });
@@ -307,7 +327,7 @@ public abstract class CommandArgument
         this.needsMatching = suggestFromExamples;
     }
 
-    protected abstract ArgumentType<?> getArgumentType() throws CommandSyntaxException;
+    protected abstract ArgumentType<?> getArgumentType(CarpetScriptHost host) throws CommandSyntaxException;
 
 
     public static Value getValue(CommandContext<CommandSourceStack> context, String param, CarpetScriptHost host) throws CommandSyntaxException
@@ -427,7 +447,7 @@ public abstract class CommandArgument
         }
 
         @Override
-        public ArgumentType<?> getArgumentType()
+        public ArgumentType<?> getArgumentType(CarpetScriptHost host)
         {
             return StringArgumentType.string();
         }
@@ -439,7 +459,7 @@ public abstract class CommandArgument
             if (!caseSensitive) choseValue = choseValue.toLowerCase(Locale.ROOT);
             if (!validOptions.isEmpty() && !validOptions.contains(choseValue))
             {
-                throw new SimpleCommandExceptionType(new TextComponent("Incorrect value for "+param+": "+choseValue+" for custom type "+suffix)).create();
+                throw new SimpleCommandExceptionType(Component.literal("Incorrect value for "+param+": "+choseValue+" for custom type "+suffix)).create();
             }
             return StringValue.of(choseValue);
         }
@@ -472,7 +492,7 @@ public abstract class CommandArgument
     {
         private WordArgument() { super(); suffix = "term"; examples = StringArgumentType.StringType.SINGLE_WORD.getExamples(); }
         @Override
-        public ArgumentType<?> getArgumentType() { return StringArgumentType.word(); }
+        public ArgumentType<?> getArgumentType(CarpetScriptHost host) { return StringArgumentType.word(); }
         @Override
         protected Supplier<CommandArgument> factory() { return WordArgument::new; }
     }
@@ -481,7 +501,7 @@ public abstract class CommandArgument
     {
         private GreedyStringArgument() { super();suffix = "text"; examples = StringArgumentType.StringType.GREEDY_PHRASE.getExamples(); }
         @Override
-        public ArgumentType<?> getArgumentType() { return StringArgumentType.greedyString(); }
+        public ArgumentType<?> getArgumentType(CarpetScriptHost host) { return StringArgumentType.greedyString(); }
         @Override
         protected Supplier<CommandArgument> factory() { return GreedyStringArgument::new; }
     }
@@ -496,7 +516,7 @@ public abstract class CommandArgument
         }
 
         @Override
-        public ArgumentType<?> getArgumentType()
+        public ArgumentType<?> getArgumentType(CarpetScriptHost host)
         {
             return net.minecraft.commands.arguments.coordinates.BlockPosArgument.blockPos();
         }
@@ -534,7 +554,7 @@ public abstract class CommandArgument
             blockCentered = true;
         }
         @Override
-        protected ArgumentType<?> getArgumentType()
+        protected ArgumentType<?> getArgumentType(CarpetScriptHost host)
         {
             return Vec3Argument.vec3(blockCentered);
         }
@@ -571,7 +591,7 @@ public abstract class CommandArgument
             single = false;
         }
         @Override
-        protected ArgumentType<?> getArgumentType()
+        protected ArgumentType<?> getArgumentType(CarpetScriptHost host)
         {
             if (onlyFans)
             {
@@ -590,7 +610,7 @@ public abstract class CommandArgument
             if (!single) return ListValue.wrap(founds.stream().map(EntityValue::new).collect(Collectors.toList()));
             if (founds.size() == 0) return Value.NULL;
             if (founds.size() == 1) return new EntityValue(founds.iterator().next());
-            throw new SimpleCommandExceptionType(new TextComponent("Multiple entities returned while only one was requested"+" for custom type "+suffix)).create();
+            throw new SimpleCommandExceptionType(Component.literal("Multiple entities returned while only one was requested"+" for custom type "+suffix)).create();
         }
 
         @Override
@@ -618,7 +638,7 @@ public abstract class CommandArgument
             single = false;
         }
         @Override
-        protected ArgumentType<?> getArgumentType()
+        protected ArgumentType<?> getArgumentType(CarpetScriptHost host)
         {
             return GameProfileArgument.gameProfile();
         }
@@ -631,7 +651,7 @@ public abstract class CommandArgument
             int size = profiles.size();
             if (size == 0) return Value.NULL;
             if (size == 1) return StringValue.of(profiles.iterator().next().getName());
-            throw new SimpleCommandExceptionType(new TextComponent("Multiple game profiles returned while only one was requested"+" for custom type "+suffix)).create();
+            throw new SimpleCommandExceptionType(Component.literal("Multiple game profiles returned while only one was requested"+" for custom type "+suffix)).create();
         }
 
         @Override
@@ -659,7 +679,7 @@ public abstract class CommandArgument
             suggestionProvider = ScoreHolderArgument.SUGGEST_SCORE_HOLDERS;
         }
         @Override
-        protected ArgumentType<?> getArgumentType()
+        protected ArgumentType<?> getArgumentType(CarpetScriptHost host)
         {
             return single?ScoreHolderArgument.scoreHolder():ScoreHolderArgument.scoreHolders();
         }
@@ -672,7 +692,7 @@ public abstract class CommandArgument
             int size = holders.size();
             if (size == 0) return Value.NULL;
             if (size == 1) return StringValue.of(holders.iterator().next());
-            throw new SimpleCommandExceptionType(new TextComponent("Multiple score holders returned while only one was requested"+" for custom type "+suffix)).create();
+            throw new SimpleCommandExceptionType(Component.literal("Multiple score holders returned while only one was requested"+" for custom type "+suffix)).create();
         }
 
         @Override
@@ -698,7 +718,7 @@ public abstract class CommandArgument
             mapRequired = true;
         }
         @Override
-        protected ArgumentType<?> getArgumentType()
+        protected ArgumentType<?> getArgumentType(CarpetScriptHost host)
         {
             return mapRequired?CompoundTagArgument.compoundTag(): NbtTagArgument.nbtTag();
         }
@@ -736,7 +756,7 @@ public abstract class CommandArgument
         }
 
         @Override
-        protected ArgumentType<?> getArgumentType()
+        protected ArgumentType<?> getArgumentType(CarpetScriptHost host)
         {
             return ResourceLocationArgument.id();
         }
@@ -747,7 +767,7 @@ public abstract class CommandArgument
             ResourceLocation choseValue = ResourceLocationArgument.getId(context, param);
             if (!validOptions.isEmpty() && !validOptions.contains(choseValue))
             {
-                throw new SimpleCommandExceptionType(new TextComponent("Incorrect value for "+param+": "+choseValue+" for custom type "+suffix)).create();
+                throw new SimpleCommandExceptionType(Component.literal("Incorrect value for "+param+": "+choseValue+" for custom type "+suffix)).create();
             }
             return ValueConversions.of(choseValue);
         }
@@ -781,7 +801,7 @@ public abstract class CommandArgument
         }
 
         @Override
-        public ArgumentType<?> getArgumentType()
+        public ArgumentType<?> getArgumentType(CarpetScriptHost host)
         {
             if (min != null)
             {
@@ -832,7 +852,7 @@ public abstract class CommandArgument
         }
 
         @Override
-        public ArgumentType<?> getArgumentType()
+        public ArgumentType<?> getArgumentType(CarpetScriptHost host)
         {
             if (min != null)
             {
@@ -926,7 +946,7 @@ public abstract class CommandArgument
         }
 
         @Override
-        protected ArgumentType<?> getArgumentType() throws CommandSyntaxException
+        protected ArgumentType<?> getArgumentType(CarpetScriptHost host) throws CommandSyntaxException
         {
             return net.minecraft.commands.arguments.SlotArgument.slot();
         }
@@ -937,7 +957,7 @@ public abstract class CommandArgument
             int slot = net.minecraft.commands.arguments.SlotArgument.getSlot(context, param);
             if (restrict != null && !RESTRICTED_CONTAINERS.get(restrict).numericalIds().contains(slot))
             {
-                throw new SimpleCommandExceptionType(new TextComponent("Incorrect slot restricted to "+restrict+" for custom type "+suffix)).create();
+                throw new SimpleCommandExceptionType(Component.literal("Incorrect slot restricted to "+restrict+" for custom type "+suffix)).create();
             }
             return ValueConversions.ofVanillaSlotResult(slot);
         }
@@ -980,11 +1000,19 @@ public abstract class CommandArgument
         ArgumentType<?> get() throws CommandSyntaxException;
     }
 
+    @FunctionalInterface
+    private interface ArgumentProviderEx
+    {
+        ArgumentType<?> get(CommandBuildContext regAccess) throws CommandSyntaxException;
+    }
+
     public static class VanillaUnconfigurableArgument extends  CommandArgument
     {
         private final ArgumentProvider argumentTypeSupplier;
+        private final ArgumentProviderEx argumentTypeSupplierEx;
         private final ValueExtractor valueExtractor;
         private final boolean providesExamples;
+
         public VanillaUnconfigurableArgument(
                 String suffix,
                 ArgumentProvider argumentTypeSupplier,
@@ -1004,6 +1032,7 @@ public abstract class CommandArgument
             this.providesExamples = suggestFromExamples;
             this.argumentTypeSupplier = argumentTypeSupplier;
             this.valueExtractor = valueExtractor;
+            this.argumentTypeSupplierEx = null;
         }
         public VanillaUnconfigurableArgument(
                 String suffix,
@@ -1017,12 +1046,38 @@ public abstract class CommandArgument
             this.providesExamples = false;
             this.argumentTypeSupplier = argumentTypeSupplier;
             this.valueExtractor = valueExtractor;
+            this.argumentTypeSupplierEx = null;
+        }
+        public VanillaUnconfigurableArgument(
+                String suffix,
+                ArgumentProviderEx argumentTypeSupplier,
+                ValueExtractor valueExtractor,
+                boolean suggestFromExamples
+        )
+        {
+            super(suffix, null, suggestFromExamples);
+            try
+            {
+                final CommandBuildContext context = new CommandBuildContext(RegistryAccess.BUILTIN.get());
+                context.missingTagAccessPolicy(CommandBuildContext.MissingTagAccessPolicy.RETURN_EMPTY);
+                this.examples = argumentTypeSupplier.get(context).getExamples();
+            }
+            catch (CommandSyntaxException e)
+            {
+                this.examples = Collections.emptyList();
+            }
+            this.providesExamples = suggestFromExamples;
+            this.argumentTypeSupplierEx = argumentTypeSupplier;
+            this.valueExtractor = valueExtractor;
+            this.argumentTypeSupplier = null;
         }
 
         @Override
-        protected ArgumentType<?> getArgumentType() throws CommandSyntaxException
+        protected ArgumentType<?> getArgumentType(CarpetScriptHost host) throws CommandSyntaxException
         {
-            return argumentTypeSupplier.get();
+            if (argumentTypeSupplier != null) return argumentTypeSupplier.get();
+            CommandBuildContext registryAccess = new CommandBuildContext(host.getScriptServer().server.registryAccess());
+            return argumentTypeSupplierEx.get(registryAccess);
         }
 
         @Override
@@ -1034,7 +1089,8 @@ public abstract class CommandArgument
         @Override
         protected Supplier<CommandArgument> factory()
         {
-            return () -> new VanillaUnconfigurableArgument(getTypeSuffix(), argumentTypeSupplier, valueExtractor, providesExamples);
+            if (argumentTypeSupplier != null) return () -> new VanillaUnconfigurableArgument(getTypeSuffix(), argumentTypeSupplier, valueExtractor, providesExamples);
+            return () -> new VanillaUnconfigurableArgument(getTypeSuffix(), argumentTypeSupplierEx, valueExtractor, providesExamples);
         }
     }
 }
