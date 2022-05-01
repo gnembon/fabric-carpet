@@ -1,5 +1,6 @@
 package carpet.mixins;
 
+import net.minecraft.network.protocol.game.ServerboundChatPacket;
 import net.minecraft.server.network.TextFilter;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -282,11 +283,11 @@ public class ServerGamePacketListenerImpl_scarpetEventsMixin
         }
     }
 
-    @Inject(method = "handleChat(Lnet/minecraft/server/network/TextFilter$FilteredText;)V",
+    @Inject(method = "handleChat(Lnet/minecraft/network/protocol/game/ServerboundChatPacket;Lnet/minecraft/server/network/TextFilter$FilteredText;)V",
             at = @At(value = "INVOKE", target = "Ljava/lang/String;startsWith(Ljava/lang/String;)Z"),
             locals = LocalCapture.CAPTURE_FAILHARD
     )
-    private void onChatMessage(TextFilter.FilteredText filteredText, CallbackInfo ci, String string) {
+    private void onChatMessage(ServerboundChatPacket serverboundChatPacket, TextFilter.FilteredText filteredText, CallbackInfo ci, String string) {
         if (PLAYER_MESSAGE.isNeeded())
         {
             PLAYER_MESSAGE.onPlayerMessage(player,string);

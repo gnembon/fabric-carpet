@@ -45,7 +45,7 @@ import static carpet.settings.RuleCategory.CLIENT;
 @SuppressWarnings("CanBeFinal")
 public class CarpetSettings
 {
-    public static final String carpetVersion = "1.4.72+v220421";
+    public static final String carpetVersion = "1.4.73+v220427";
     public static final Logger LOG = LoggerFactory.getLogger("carpet");
     public static ThreadLocal<Boolean> skipGenerationChecks = ThreadLocal.withInitial(() -> false);
     public static ThreadLocal<Boolean> impendingFillSkipUpdates = ThreadLocal.withInitial(() -> false);
@@ -250,6 +250,9 @@ public class CarpetSettings
 
     @Rule( desc = "Explosions won't destroy blocks", category = {CREATIVE, TNT} )
     public static boolean explosionNoBlockDamage = false;
+
+    @Rule( desc = "Experience will drop from all experience barring blocks with any explosion type", category = {SURVIVAL, FEATURE})
+    public static boolean xpFromExplosions = false;
 
     @Rule( desc = "Removes random TNT momentum when primed", category = {CREATIVE, TNT} )
     public static boolean tntPrimerMomentumRemoved = false;
