@@ -125,8 +125,6 @@ public class Translations
     }
     
     private static void addFallbacksTo(Map<String, String> translationMap) {
-        for (var fallback : FALLBACKS.entrySet()) {
-            translationMap.putIfAbsent(fallback.getKey(), fallback.getValue());
-        }
+        FALLBACKS.forEach(translationMap::putIfAbsent);
     }
 }

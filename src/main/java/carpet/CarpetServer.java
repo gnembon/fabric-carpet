@@ -24,7 +24,7 @@ import carpet.helpers.HopperCounter;
 import carpet.helpers.TickSpeed;
 import carpet.logging.LoggerRegistry;
 import carpet.script.CarpetScriptServer;
-import carpet.settings.SettingsManager;
+import carpet.api.settings.SettingsManager;
 import carpet.logging.HUDController;
 import carpet.utils.FabricAPIHooks;
 import carpet.utils.MobAI;
@@ -45,7 +45,7 @@ public class CarpetServer // static for now - easier to handle all around the co
     public static MinecraftServer minecraft_server;
     private static CommandDispatcher<CommandSourceStack> currentCommandDispatcher;
     public static CarpetScriptServer scriptServer;
-    public static SettingsManager settingsManager; // to change type to api type, can't change right now because of binary and source compat
+    public static carpet.settings.SettingsManager settingsManager; // to change type to api type, can't change right now because of binary and source compat
     public static final List<CarpetExtension> extensions = new ArrayList<>();
 
     // Separate from onServerLoaded, because a server can be loaded multiple times in singleplayer
@@ -79,7 +79,7 @@ public class CarpetServer // static for now - easier to handle all around the co
     // to register before this call in a ModInitializer (declared in fabric.mod.json)
     public static void onGameStarted()
     {
-        settingsManager = new SettingsManager(CarpetSettings.carpetVersion, "carpet", "Carpet Mod");
+        settingsManager = new carpet.settings.SettingsManager(CarpetSettings.carpetVersion, "carpet", "Carpet Mod");
         settingsManager.parseSettingsClass(CarpetSettings.class);
         extensions.forEach(CarpetExtension::onGameStarted);
         FabricAPIHooks.initialize();
@@ -94,7 +94,7 @@ public class CarpetServer // static for now - easier to handle all around the co
 
         settingsManager.attachServer(server);
         extensions.forEach(e -> {
-            var sm = e.extensionSettingsManager();
+        	SettingsManager sm = e.extensionSettingsManager();
             if (sm != null) sm.attachServer(server);
             e.onServerLoaded(server);
         });
@@ -131,7 +131,7 @@ public class CarpetServer // static for now - easier to handle all around the co
         }
         settingsManager.registerCommand(dispatcher, commandBuildContext);
         extensions.forEach(e -> {
-            var sm = e.extensionSettingsManager();
+        	SettingsManager sm = e.extensionSettingsManager();
             if (sm != null) sm.registerCommand(dispatcher, commandBuildContext);
         });
         TickCommand.register(dispatcher, commandBuildContext);
@@ -207,7 +207,7 @@ public class CarpetServer // static for now - easier to handle all around the co
     {
         settingsManager.detachServer();
         extensions.forEach(e -> {
-            var manager = e.extensionSettingsManager();
+        	SettingsManager manager = e.extensionSettingsManager();
             if (manager != null) manager.detachServer();
         });
     }

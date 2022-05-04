@@ -13,6 +13,7 @@ import carpet.utils.TypedField;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.network.chat.Component;
 
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -271,7 +272,7 @@ public final class ParsedRule<T> implements CarpetRule<T>, Comparable<ParsedRule
     {
         try
         {
-            var constr = cls.getDeclaredConstructor();
+            Constructor<? extends carpet.api.settings.Validator> constr = cls.getDeclaredConstructor();
             constr.setAccessible(true);
             return constr.newInstance();
         }
@@ -289,7 +290,7 @@ public final class ParsedRule<T> implements CarpetRule<T>, Comparable<ParsedRule
 
     private void set(CommandSourceStack source, T value, String userInput) throws InvalidRuleValueException
     {
-        for (var validator : this.realValidators)
+        for (carpet.api.settings.Validator<T> validator : this.realValidators)
         {
             value = validator.validate(source, this, value, userInput); // should this recalculate the string? Another validator may have changed value
             if (value == null) {

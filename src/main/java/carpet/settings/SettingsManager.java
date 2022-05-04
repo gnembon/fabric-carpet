@@ -135,8 +135,7 @@ public class SettingsManager extends carpet.api.settings.SettingsManager
     @Deprecated(forRemoval = true)
     public Collection<ParsedRule<?>> getRules()
     {
-        var parsedRuleClass = ParsedRule.class;
-        return List.of(getCarpetRules().stream().filter(parsedRuleClass::isInstance).map(parsedRuleClass::cast).toArray(ParsedRule[]::new));
+        return List.of(getCarpetRules().stream().filter(ParsedRule.class::isInstance).map(ParsedRule.class::cast).toArray(ParsedRule[]::new));
     }
 
     /**

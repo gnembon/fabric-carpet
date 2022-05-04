@@ -181,8 +181,8 @@ public class SettingsManager {
         nextRule: for (Field field : settingsClass.getDeclaredFields())
         {
             Class<? extends Rule.Condition>[] conditions;
-            var newAnnotation = field.getAnnotation(Rule.class);
-            var oldAnnotation = field.getAnnotation(carpet.settings.Rule.class);
+            Rule newAnnotation = field.getAnnotation(Rule.class);
+            carpet.settings.Rule oldAnnotation = field.getAnnotation(carpet.settings.Rule.class);
             if (newAnnotation != null) {
                 conditions = newAnnotation.conditions();
             } else if (oldAnnotation != null) {
@@ -196,7 +196,7 @@ public class SettingsManager {
             } else {
                 continue;
             }
-            for (var condition : conditions) { //Should this be moved to ParsedRule.of?
+            for (Class<? extends Rule.Condition> condition : conditions) { //Should this be moved to ParsedRule.of?
                 try
                 {
                     Constructor<? extends Condition> constr = condition.getDeclaredConstructor();
