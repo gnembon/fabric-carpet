@@ -64,7 +64,7 @@
     "ExperienceOrb_xpNoCooldownMixin",
     "Player_xpNoCooldownMixin",
     "ServerboundPlayerActionPacketMixin",
-    "ServerPlayerMixin",
+    "ServerPlayer_actionPackMixin",
     "PlayerList_coreMixin",
     "PlayerList_fakePlayersMixin",
     "RedstoneWireBlock_fastMixin",

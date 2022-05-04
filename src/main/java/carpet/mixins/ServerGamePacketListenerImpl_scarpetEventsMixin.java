@@ -1,5 +1,7 @@
 package carpet.mixins;
 
+import net.minecraft.network.chat.MessageSignature;
+import net.minecraft.network.chat.SignedMessage;
 import net.minecraft.network.protocol.game.ServerboundChatPacket;
 import net.minecraft.server.network.TextFilter;
 import org.spongepowered.asm.mixin.Mixin;
@@ -284,13 +286,13 @@ public class ServerGamePacketListenerImpl_scarpetEventsMixin
     }
 
     @Inject(method = "handleChat(Lnet/minecraft/network/protocol/game/ServerboundChatPacket;Lnet/minecraft/server/network/TextFilter$FilteredText;)V",
-            at = @At(value = "INVOKE", target = "Ljava/lang/String;startsWith(Ljava/lang/String;)Z"),
+            at = @At(value = "INVOKE", target = "Lnet/minecraft/server/players/PlayerList;broadcastChatMessage(Lnet/minecraft/network/chat/SignedMessage;Lnet/minecraft/server/network/TextFilter$FilteredText;Lnet/minecraft/server/level/ServerPlayer;Lnet/minecraft/resources/ResourceKey;)V"),
             locals = LocalCapture.CAPTURE_FAILHARD
     )
-    private void onChatMessage(ServerboundChatPacket serverboundChatPacket, TextFilter.FilteredText filteredText, CallbackInfo ci, String string) {
+    private void onChatMessage(ServerboundChatPacket serverboundChatPacket, TextFilter.FilteredText filteredText, CallbackInfo ci, MessageSignature messageSignature, SignedMessage signedMessage) {
         if (PLAYER_MESSAGE.isNeeded())
         {
-            PLAYER_MESSAGE.onPlayerMessage(player,string);
+            PLAYER_MESSAGE.onPlayerMessage(player, filteredText.getRaw());
         }
     }
 }
