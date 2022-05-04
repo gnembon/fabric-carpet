@@ -75,6 +75,8 @@ public class SettingsManager extends carpet.api.settings.SettingsManager
         registerRuleObserver((source, rule, stringValue) -> {
             if (rule instanceof ParsedRule<?> pr)
                 observer.accept(source, pr, stringValue);
+            else
+                CarpetSettings.LOG.warn("Failed to notify observer '" + observer.getClass().getName() + "' about rule change");
         });
         CarpetSettings.LOG.warn("""
                 Extension added outdated rule observer, this is deprecated and will crash in later carpet versions \
