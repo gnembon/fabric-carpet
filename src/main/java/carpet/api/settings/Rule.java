@@ -51,7 +51,7 @@ public @interface Rule
     String appSource() default "";
 
     /**
-     * The class of the validator checked when the rule is changed.
+     * The class of the validator checked right before the rule is changed, using the returned value as the new value to set, or cancel the change if null is returned.
      */
     @SuppressWarnings("rawtypes")
     Class<? extends Validator>[] validators() default {};
