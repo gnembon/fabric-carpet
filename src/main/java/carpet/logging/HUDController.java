@@ -4,6 +4,7 @@ import carpet.CarpetServer;
 import carpet.helpers.HopperCounter;
 import carpet.helpers.TickSpeed;
 import carpet.logging.logHelpers.PacketCounter;
+import carpet.mixins.ChunkMapAccessor;
 import carpet.utils.Messenger;
 import carpet.utils.SpawnReporter;
 import io.netty.buffer.Unpooled;
@@ -12,9 +13,11 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundTabListPacket;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ChunkHolder;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
+import net.minecraft.world.entity.ai.village.poi.PoiManager;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 
@@ -122,6 +125,9 @@ public class HUDController
                 }
             });
 
+        if (LoggerRegistry.__pois)
+            LoggerRegistry.getLogger("pois").log((option, player) -> poiCounter(server, option, (ServerPlayer)player));
+
         // extensions have time to pitch in.
         HUDListeners.forEach(l -> l.accept(server));
 
@@ -170,7 +176,7 @@ public class HUDController
     private static Component [] scheduledTicksCount(ServerLevel level)
     {
         return new Component[]{
-                Messenger.c("w Ticks - Block: " + level.getBlockTicks().count() + "  Fluid: " + level.getFluidTicks().count()),
+                Messenger.c("w Ticks - Block: " + level.getBlockTicks().count() + "  Fluid: " + level.getFluidTicks().count())
         };
     }
     private static Component [] scheduledTicksCountGlobal(MinecraftServer server)
@@ -182,7 +188,34 @@ public class HUDController
             fluidTickCount += level.getFluidTicks().count();
         }
         return new Component[]{
-                Messenger.c("w Ticks - Block: " + blockTickCount + "  Fluid: " + fluidTickCount),
+                Messenger.c("w Ticks - Block: " + blockTickCount + "  Fluid: " + fluidTickCount)
         };
+    }
+    private static Component [] poiCounter(MinecraftServer server, String option, ServerPlayer player) {
+        if (Objects.equals(option, "global")) {
+            long globalPoiCount = 0;
+            for (ServerLevel level : server.getAllLevels()) {
+                for (ChunkHolder chunk : ((ChunkMapAccessor)level.getChunkSource().chunkMap).getVisibleChunks().values()) {
+                    globalPoiCount += level.getPoiManager().getInChunk((t) -> true, chunk.getPos(), PoiManager.Occupancy.ANY).count();
+                }
+            }
+            return new Component[]{Messenger.c("w Global POI Loaded: " + globalPoiCount)};
+        } else if (Objects.equals(option, "chunk")) {
+            long chunkPoiCount = player.getLevel().getPoiManager().getInChunk((t) -> true, player.chunkPosition(), PoiManager.Occupancy.ANY).count();
+            return new Component[]{Messenger.c("w Chunk POI Loaded: " + chunkPoiCount)};
+        } else {
+            ResourceKey<Level> dim = switch (option) {
+                case "overworld" -> Level.OVERWORLD; // OW
+                case "nether" -> Level.NETHER; // nether
+                case "end" -> Level.END; // end
+                default -> player.level.dimension(); //getDimType
+            };
+            ServerLevel level = server.getLevel(dim);
+            long levelPoiCount = 0;
+            for (ChunkHolder chunk : ((ChunkMapAccessor)level.getChunkSource().chunkMap).getVisibleChunks().values()) {
+                levelPoiCount += level.getPoiManager().getInChunk((t) -> true, chunk.getPos(), PoiManager.Occupancy.ANY).count();
+            }
+            return new Component[]{Messenger.c("w POI Loaded: " + levelPoiCount)};
+        }
     }
 }
