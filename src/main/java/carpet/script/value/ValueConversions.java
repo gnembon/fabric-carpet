@@ -347,9 +347,9 @@ public class ValueConversions
     }
 
     record SlotParam(/* Nullable */ String type, int id) {
-    	public ListValue build() {
-    		return ListValue.of(StringValue.of(type), new NumericValue(id));
-    	}
+        public ListValue build() {
+            return ListValue.of(StringValue.of(type), new NumericValue(id));
+        }
     }
 
     private static final Int2ObjectMap<SlotParam> slotIdsToSlotParams = new Int2ObjectOpenHashMap<>() {{
