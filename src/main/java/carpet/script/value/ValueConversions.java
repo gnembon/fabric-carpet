@@ -281,7 +281,7 @@ public class ValueConversions
             }
             if (el instanceof GlobalPos)
             {
-                return ListValue.wrap((List<Value>) l.stream().map(o -> of((GlobalPos) o)).collect(Collectors.toList()));
+                return ListValue.wrap(l.stream().map(o -> of((GlobalPos) o)).collect(Collectors.toList()));
             }
         }
         return Value.NULL;
@@ -346,49 +346,53 @@ public class ValueConversions
         throw new InternalExpressionException("Unknown property type: "+p.getName());
     }
 
+    record SlotParam(/* Nullable */ String type, int id) {
+    	public ListValue build() {
+    		return ListValue.of(StringValue.of(type), new NumericValue(id));
+    	}
+    }
 
-    private static final Int2ObjectMap<ListValue> slotIdsToSlotParams = new Int2ObjectOpenHashMap<ListValue>() {{
+    private static final Int2ObjectMap<SlotParam> slotIdsToSlotParams = new Int2ObjectOpenHashMap<>() {{
         int n;
         //covers blocks, player hotbar and inventory, and all default inventories
         for(n = 0; n < 54; ++n) {
-            put(n, ListValue.of(Value.NULL, new NumericValue(n)));
+            put(n, new SlotParam(null, n));
         }
         for(n = 0; n < 27; ++n) {
-            put(200+n, ListValue.of(StringValue.of("enderchest"), new NumericValue(n)));
+            put(200 + n, new SlotParam("enderchest", n));
         }
 
         // villager
         for(n = 0; n < 8; ++n) {
-            put(300+n, ListValue.of(Value.NULL, new NumericValue(n)));
+            put(300 + n, new SlotParam(null, n));
         }
 
         // horse, llamas, donkeys, etc.
         // two first slots are for saddle and armour
         for(n = 0; n < 15; ++n) {
-            put(500+n, ListValue.of(Value.NULL, new NumericValue(n+2)));
+            put(500 + n, new SlotParam(null, n + 2));
         }
-        Value equipment = StringValue.of("equipment");
         // weapon main hand
-        put(98, ListValue.of(equipment, new NumericValue(0)));
+        put(98, new SlotParam("equipment", 0));
         // offhand
-        put(99, ListValue.of(equipment, new NumericValue(5)));
+        put(99, new SlotParam("equipment", 5));
         // feet, legs, chest, head
         for(n = 0; n < 4; ++n) {
-            put(100+n, ListValue.of(equipment, new NumericValue(n+1)));
+            put(100 + n, new SlotParam("equipment", n + 1));
         }
         //horse defaults saddle
-        put(400, ListValue.of(Value.NULL, new NumericValue(0)));
+        put(400, new SlotParam(null, 0));
         // armor
-        put(401, ListValue.of(Value.NULL, new NumericValue(1)));
+        put(401, new SlotParam(null, 1));
         // chest itself on the donkey is wierd - use NBT to alter that.
         //hashMap.put("horse.chest", 499);
     }};
 
     public static Value ofVanillaSlotResult(int itemSlot)
     {
-        ListValue ret = slotIdsToSlotParams.get(itemSlot);
+        SlotParam ret = slotIdsToSlotParams.get(itemSlot);
         if (ret == null) return ListValue.of(Value.NULL, new NumericValue(itemSlot));
-        return ret.deepcopy();
+        return ret.build();
     }
 
     public static Value ofBlockPredicate(RegistryAccess registryAccess, Predicate<BlockInWorld> blockPredicate)
