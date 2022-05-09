@@ -12,19 +12,13 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundTabListPacket;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
+
+import java.util.*;
 import java.util.function.Consumer;
 
 public class HUDController
@@ -113,6 +107,21 @@ public class HUDController
         if (LoggerRegistry.__packets)
             LoggerRegistry.getLogger("packets").log(()-> packetCounter());
 
+        if (LoggerRegistry.__scheduledTicks)
+            LoggerRegistry.getLogger("scheduledTicks").log((option,player)-> {
+                if (Objects.equals(option, "global")) {
+                    return scheduledTicksCountGlobal(server);
+                } else {
+                    ResourceKey<Level> dim = switch (option) {
+                        case "overworld" -> Level.OVERWORLD; // OW
+                        case "nether" -> Level.NETHER; // nether
+                        case "end" -> Level.END; // end
+                        default -> player.level.dimension(); //getDimType
+                    };
+                    return scheduledTicksCount(server.getLevel(dim));
+                }
+            });
+
         // extensions have time to pitch in.
         HUDListeners.forEach(l -> l.accept(server));
 
@@ -157,5 +166,23 @@ public class HUDController
         };
         PacketCounter.reset();
         return ret;
+    }
+    private static Component [] scheduledTicksCount(ServerLevel level)
+    {
+        return new Component[]{
+                Messenger.c("w Ticks - Block: " + level.getBlockTicks().count() + "  Fluid: " + level.getFluidTicks().count()),
+        };
+    }
+    private static Component [] scheduledTicksCountGlobal(MinecraftServer server)
+    {
+        int blockTickCount = 0;
+        int fluidTickCount = 0;
+        for (ServerLevel level : server.getAllLevels()) {
+            blockTickCount += level.getBlockTicks().count();
+            fluidTickCount += level.getFluidTicks().count();
+        }
+        return new Component[]{
+                Messenger.c("w Ticks - Block: " + blockTickCount + "  Fluid: " + fluidTickCount),
+        };
     }
 }
