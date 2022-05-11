@@ -24,6 +24,8 @@ import com.mojang.blaze3d.vertex.VertexFormat;
 import com.mojang.blaze3d.vertex.VertexFormat.Mode;
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+
+import net.minecraft.client.renderer.block.model.ItemTransforms.TransformType;
 import net.minecraft.commands.arguments.ParticleArgument;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -583,7 +585,7 @@ public class ShapeDispatcher
 
         @Override
         protected Set<String> optionalParams() {
-            return Sets.union(super.optionalParams(), optional.keySet());
+            return Sets.union(Sets.union(super.optionalParams(), optional.keySet()),isitem ? Set.of("item_transform_type") : Set.of());
         }
 
         public DisplayedItem(boolean i) {
@@ -607,6 +609,7 @@ public class ShapeDispatcher
         CompoundTag blockEntity;
         BlockState blockState;
         ItemStack item = null;
+        TransformType item_transform_type;
 
         @Override
         protected void init(Map<String, Value> options) {
@@ -626,6 +629,9 @@ public class ShapeDispatcher
                     .getInt();
             if (light_fromsky > 15)
                 light_fromsky = 15;
+
+            item_transform_type = TransformType.valueOf(options.get("item_transform_type").getString());
+
             String dir = options.getOrDefault("facing", optional.get("facing")).getString();
             facing = null;
             switch (dir)
@@ -674,6 +680,7 @@ public class ShapeDispatcher
             if (blockState!= null) hash ^= blockState.hashCode(); hash *= 1099511628211L;
             hash ^= ValueConversions.of(item).getString().hashCode(); hash *= 1099511628211L;
             hash ^= Boolean.hashCode(doublesided); hash *= 1099511628211L;
+            hash ^= item_transform_type.hashCode(); hash *= 1099511628211L;
 
             return hash;
         }
@@ -1201,6 +1208,24 @@ public class ShapeDispatcher
             put("duration", new NonNegativeIntParam("duration"));
             put("color", new ColorParam("color"));
             put("follow", new EntityParam("follow"));
+            put("item_transform_type",new StringChoiceParam("item_transform_type",
+                    "NONE",
+                    "THIRD_PERSON_LEFT_HAND",
+                    "THIRD_PERSON_RIGHT_HAND",
+                    "FIRST_PERSON_LEFT_HAND",
+                    "FIRST_PERSON_RIGHT_HAND",
+                    "HEAD",
+                    "GUI",
+                    "GROUND",
+                    "FIXED")
+                    {
+                        public Value validate(Map o, MinecraftServer s, Value v)
+                        {
+                            var res = super.validate(o, s ,new StringValue(v.getString().toUpperCase(Locale.ROOT)));
+                            if (res!=null)return res;
+                            return new StringValue("GUI");
+                        }
+                    });
             put("snap", new StringChoiceParam("snap",
                     "xyz", "xz", "yz", "xy", "x", "y", "z",
                     "dxdydz", "dxdz", "dydz", "dxdy", "dx", "dy", "dz",

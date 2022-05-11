@@ -395,7 +395,7 @@ public class ShapesRenderer
             } else {
                 // draw item
                 if (shape.item != null)
-                    client.getItemRenderer().renderStatic(shape.item, ItemTransforms.TransformType.GUI, light,
+                    client.getItemRenderer().renderStatic(shape.item, shape.item_transform_type, light,
                             OverlayTexture.NO_OVERLAY, matrices, immediate, (int) shape.key());
             }
             matrices.popPose();
