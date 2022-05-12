@@ -219,7 +219,7 @@ public class FileArgument
         {
             return res.isEmpty()?"shared":"shared/"+res;
         }
-        if (module != null && module.name() != null) // appdata
+        if (module != null) // appdata
         {
             return module.name()+".data"+(res==null || res.isEmpty()?"":"/"+res);
         }
