@@ -630,7 +630,7 @@ public class ShapeDispatcher
             if (light_fromsky > 15)
                 light_fromsky = 15;
 
-            item_transform_type = TransformType.valueOf(options.get("item_transform_type").getString());
+            item_transform_type = TransformType.valueOf(options.getOrDefault("item_transform_type",new StringValue("GUI")).getString());
 
             String dir = options.getOrDefault("facing", optional.get("facing")).getString();
             facing = null;
