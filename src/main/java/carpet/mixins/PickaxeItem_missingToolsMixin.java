@@ -1,7 +1,6 @@
 package carpet.mixins;
 
 import carpet.CarpetSettings;
-import net.minecraft.tags.Tag;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.DiggerItem;
 import net.minecraft.world.item.ItemStack;

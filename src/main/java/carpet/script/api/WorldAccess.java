@@ -11,6 +11,7 @@ import carpet.fakes.ThreadedAnvilChunkStorageInterface;
 import carpet.helpers.FeatureGenerator;
 import carpet.mixins.PoiRecord_scarpetMixin;
 import carpet.script.CarpetContext;
+import carpet.script.CarpetScriptServer;
 import carpet.script.Context;
 import carpet.script.Expression;
 import carpet.script.Fluff;
@@ -278,14 +279,15 @@ public class WorldAccess {
             PoiManager store = cc.s.getLevel().getPoiManager();
             if (lv.size() == locator.offset)
             {
-                PoiType poiType = store.getType(pos).orElse(null);
-                if (poiType == null) return Value.NULL;
+                Optional<Holder<PoiType>> foo = store.getType(pos);
+                if (foo.isEmpty()) return Value.NULL;
+                PoiType poiType = foo.get().value();
 
                 // this feels wrong, but I don't want to mix-in more than I really need to.
                 // also distance adds 0.5 to each point which screws up accurate distance calculations
                 // you shoudn't be using POI with that in mind anyways, so I am not worried about it.
                 PoiRecord poi = store.getInRange(
-                        poiType.getPredicate(),
+                        type -> type.value() == poiType,
                         pos,
                         1,
                         PoiManager.Occupancy.ANY
@@ -293,13 +295,13 @@ public class WorldAccess {
                 if (poi == null)
                     return Value.NULL;
                 return ListValue.of(
-                        new StringValue(poi.getPoiType().toString()),
-                        new NumericValue(poiType.getMaxTickets() - ((PoiRecord_scarpetMixin)poi).getFreeTickets())
+                        ValueConversions.of(Registry.POINT_OF_INTEREST_TYPE.getKey(poi.getPoiType().value())),
+                        new NumericValue(poiType.maxTickets() - ((PoiRecord_scarpetMixin)poi).getFreeTickets())
                 );
             }
             int radius = NumericValue.asNumber(lv.get(locator.offset+0)).getInt();
             if (radius < 0) return ListValue.of();
-            Predicate<PoiType> condition = PoiType.ALL;
+            Predicate<Holder<PoiType>> condition = p -> true;
             PoiManager.Occupancy status = PoiManager.Occupancy.ANY;
             boolean inColumn = false;
             if (locator.offset + 1 < lv.size())
@@ -309,7 +311,7 @@ public class WorldAccess {
                 {
                     PoiType type =  Registry.POINT_OF_INTEREST_TYPE.getOptional(InputValidator.identifierOf(poiType))
                             .orElseThrow(() -> new ThrowStatement(poiType, Throwables.UNKNOWN_POI));
-                    condition = (tt) -> tt == type;
+                    condition = (tt) -> tt.value() == type;
                 }
                 if (locator.offset + 2 < lv.size())
                 {
@@ -333,8 +335,8 @@ public class WorldAccess {
                     store.getInRange(condition, pos, radius, status);
             return ListValue.wrap(pois.sorted(Comparator.comparingDouble(p -> p.getPos().distSqr(pos))).map(p ->
                     ListValue.of(
-                            new StringValue(p.getPoiType().toString()),
-                            new NumericValue(p.getPoiType().getMaxTickets() - ((PoiRecord_scarpetMixin)p).getFreeTickets()),
+                            ValueConversions.of(Registry.POINT_OF_INTEREST_TYPE.getKey(p.getPoiType().value())),
+                            new NumericValue(p.getPoiType().value().maxTickets() - ((PoiRecord_scarpetMixin)p).getFreeTickets()),
                             ListValue.of(new NumericValue(p.getPos().getX()), new NumericValue(p.getPos().getY()), new NumericValue(p.getPos().getZ()))
                     )
             ).collect(Collectors.toList()));
@@ -357,8 +359,11 @@ public class WorldAccess {
                 return Value.TRUE;
             }
             String poiTypeString = poi.getString().toLowerCase(Locale.ROOT);
-            PoiType type =  Registry.POINT_OF_INTEREST_TYPE.getOptional(InputValidator.identifierOf(poiTypeString))
+            ResourceLocation resource = InputValidator.identifierOf(poiTypeString);
+            PoiType type =  Registry.POINT_OF_INTEREST_TYPE.getOptional(resource)
                     .orElseThrow(() -> new ThrowStatement(poiTypeString, Throwables.UNKNOWN_POI));
+            Holder<PoiType> holder = Registry.POINT_OF_INTEREST_TYPE.getHolderOrThrow(ResourceKey.create(Registry.POINT_OF_INTEREST_TYPE_REGISTRY, resource));
+
             int occupancy = 0;
             if (locator.offset + 1 < lv.size())
             {
@@ -366,13 +371,13 @@ public class WorldAccess {
                 if (occupancy < 0) throw new InternalExpressionException("Occupancy cannot be negative");
             }
             if (store.getType(pos).isPresent()) store.remove(pos);
-            store.add(pos, type);
+            store.add(pos, holder);
             // setting occupancy for a
             // again - don't want to mix in unnecessarily - peeps not gonna use it that often so not worries about it.
             if (occupancy > 0)
             {
                 int finalO = occupancy;
-                store.getInSquare((tt) -> tt==type, pos, 1, PoiManager.Occupancy.ANY
+                store.getInSquare((tt) -> tt.value()==type, pos, 1, PoiManager.Occupancy.ANY
                 ).filter(p -> p.getPos().equals(pos)).findFirst().ifPresent(p -> {
                     for (int i=0; i < finalO; i++) ((PoiRecord_scarpetMixin)p).callAcquireTicket();
                 });
