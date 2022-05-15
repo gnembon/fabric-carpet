@@ -8,43 +8,43 @@ package carpet.settings;
 public class RuleCategory
 {
     /**
-     * @deprecated Use {@link carpet.api.settings.RuleCategory#BUGFIX} instead
+     * Use {@link carpet.api.settings.RuleCategory#BUGFIX} instead
      */
     public static final String BUGFIX = carpet.api.settings.RuleCategory.BUGFIX;
     /**
-     * @deprecated Use {@link carpet.api.settings.RuleCategory#SURVIVAL} instead
+     * Use {@link carpet.api.settings.RuleCategory#SURVIVAL} instead
      */
     public static final String SURVIVAL = carpet.api.settings.RuleCategory.SURVIVAL;
     /**
-     * @deprecated Use {@link carpet.api.settings.RuleCategory#CREATIVE} instead
+     * Use {@link carpet.api.settings.RuleCategory#CREATIVE} instead
      */
     public static final String CREATIVE = carpet.api.settings.RuleCategory.CREATIVE;
     /**
-     * @deprecated Use {@link carpet.api.settings.RuleCategory#EXPERIMENTAL} instead
+     * Use {@link carpet.api.settings.RuleCategory#EXPERIMENTAL} instead
      */
     public static final String EXPERIMENTAL = carpet.api.settings.RuleCategory.EXPERIMENTAL;
     /**
-     * @deprecated Use {@link carpet.api.settings.RuleCategory#OPTIMIZATION} instead
+     * Use {@link carpet.api.settings.RuleCategory#OPTIMIZATION} instead
      */
     public static final String OPTIMIZATION = carpet.api.settings.RuleCategory.OPTIMIZATION;
     /**
-     * @deprecated Use {@link carpet.api.settings.RuleCategory#FEATURE} instead
+     * Use {@link carpet.api.settings.RuleCategory#FEATURE} instead
      */
     public static final String FEATURE = carpet.api.settings.RuleCategory.FEATURE;
     /**
-     * @deprecated Use {@link carpet.api.settings.RuleCategory#COMMAND} instead
+     * Use {@link carpet.api.settings.RuleCategory#COMMAND} instead
      */
     public static final String COMMAND = carpet.api.settings.RuleCategory.COMMAND;
     /**
-     * @deprecated Use {@link carpet.api.settings.RuleCategory#TNT} instead
+     * Use {@link carpet.api.settings.RuleCategory#TNT} instead
      */
     public static final String TNT = carpet.api.settings.RuleCategory.TNT;
     /**
-     * @deprecated Use {@link carpet.api.settings.RuleCategory#DISPENSER} instead
+     * Use {@link carpet.api.settings.RuleCategory#DISPENSER} instead
      */
     public static final String DISPENSER = carpet.api.settings.RuleCategory.DISPENSER;
     /**
-     * @deprecated Use {@link carpet.api.settings.RuleCategory#SCARPET} instead
+     * Use {@link carpet.api.settings.RuleCategory#SCARPET} instead
      */
     public static final String SCARPET = carpet.api.settings.RuleCategory.SCARPET;
     /**
