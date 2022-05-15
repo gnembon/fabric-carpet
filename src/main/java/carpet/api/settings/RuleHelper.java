@@ -2,8 +2,6 @@ package carpet.api.settings;
 
 import java.util.Locale;
 
-import org.jetbrains.annotations.ApiStatus;
-
 import carpet.utils.TranslationKeys;
 import carpet.utils.Translations;
 import net.minecraft.commands.CommandSourceStack;
@@ -81,7 +79,6 @@ public final class RuleHelper {
      * 
      * @apiNote This method isn't stable API yet and may change or be removed in binary incompatible ways in later Carpet versions
      */
-    @ApiStatus.Experimental
     public static String translatedName(CarpetRule<?> rule) {
         String key = String.format(TranslationKeys.RULE_NAME_PATTERN, rule.settingsManager().identifier(), rule.name());
         return Translations.hasTranslation(key) ? Translations.tr(key) + String.format(" (%s)", rule.name()): rule.name();
@@ -93,7 +90,6 @@ public final class RuleHelper {
      * 
      * @apiNote This method isn't stable API yet and may change or be removed in binary incompatible ways in later Carpet versions
      */
-    @ApiStatus.Experimental
     public static String translatedDescription(CarpetRule<?> rule) {
         return Translations.tr(String.format(TranslationKeys.RULE_DESC_PATTERN, rule.settingsManager().identifier(), rule.name()));
     }
@@ -105,7 +101,6 @@ public final class RuleHelper {
      * 
      * @apiNote This method isn't stable API yet and may change or be removed in binary incompatible ways in later Carpet versions
      */
-    @ApiStatus.Experimental
     public static String translatedCategory(String manager, String category) {
         return Translations.tr(TranslationKeys.CATEGORY_PATTERN.formatted(manager, category), category);
     }
