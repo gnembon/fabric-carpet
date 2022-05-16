@@ -133,7 +133,7 @@ public class CarpetScriptServer extends ScriptServer
         tickStart = 0L;
         stopAll = false;
         holyMoly = server.getCommands().getDispatcher().getRoot().getChildren().stream().map(CommandNode::getName).collect(Collectors.toSet());
-        globalHost = CarpetScriptHost.create(this, (Module)null, false, null, p -> true, false, null);
+        globalHost = CarpetScriptHost.create(this, null, false, null, p -> true, false, null);
     }
 
     public void initializeForWorld()
