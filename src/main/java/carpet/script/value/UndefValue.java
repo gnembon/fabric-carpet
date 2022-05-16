@@ -137,4 +137,18 @@ public class UndefValue extends NullValue {
         throw getError();
     }
 
+    @Override
+    public Value reboundedTo(String var) {
+        if (getVariable() != null) {
+            // Here we're making a few assumptions:
+            // The bound variable of the constants in Value can be (unwillingly) set by some functions that set it on the instance directly
+            // (mostly loops, I'd assume for performance). Here we're assuming UNDEF will never get to that because:
+            // - Loops don't currently set variables to UNDEF, but to stuff like NULL or ZERO (therefore it won't get assigned by accident on init)
+            // - We are preventing someone from rebounding UNDEF into a loop variable with this (or trying to, at least), that should prevent you
+            //   from inserting UNDEF into those loop functions and therefore protect the boundVariable
+            throw getError();
+        }
+        return super.reboundedTo(var);
+    }
+
 }
