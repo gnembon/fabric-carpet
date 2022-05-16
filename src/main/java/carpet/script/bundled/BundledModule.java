@@ -1,8 +1,8 @@
 package carpet.script.bundled;
 
 /**
- * @deprecated Use the static methods from {@link carpet.script.Module} instead
- *
+ * @deprecated Use the static methods from {@link carpet.script.Module} instead.
+ *             To be removed in first 1.20 snapshots
  */
 @Deprecated(forRemoval = true)
 public class BundledModule extends Module
@@ -46,7 +46,8 @@ public class BundledModule extends Module
      * @return The created {@link BundledModule}
      * @deprecated Use {@link carpet.script.Module#fromJarPathWithCustomName(String, String, boolean)}
      */
-    public static BundledModule fromPathWithCustomName(String fullPath, String customName, boolean isLibrary) {
+    @Deprecated
+	public static BundledModule fromPathWithCustomName(String fullPath, String customName, boolean isLibrary) {
         return new DelegatingBundledModule(carpet.script.Module.fromJarPathWithCustomName(fullPath, customName, isLibrary));
     }
 

@@ -1,8 +1,8 @@
 package carpet.script.bundled;
 
 /**
- * @deprecated Use {@link carpet.script.Module} instead
- *
+ * @deprecated Use {@link carpet.script.Module} instead.
+ *             To be removed in first 1.20 snapshots
  */
 @Deprecated(forRemoval = true)
 public abstract class Module
