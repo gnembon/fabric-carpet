@@ -85,7 +85,7 @@ public class CarpetScriptServer extends ScriptServer
         registerSettingsApp(app.toModule());
     }
     /**
-     * Registers a Scarpet App to be always available to under the {@code /script load} list.
+     * Registers a Scarpet App to be always available under the {@code /script load} list.
      * @see Module#fromJarPath(String, String, boolean)
      * 
      * @param app The {@link Module} of the app
