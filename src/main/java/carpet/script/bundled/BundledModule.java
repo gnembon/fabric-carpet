@@ -46,8 +46,8 @@ public class BundledModule extends Module
      * @return The created {@link BundledModule}
      * @deprecated Use {@link carpet.script.Module#fromJarPathWithCustomName(String, String, boolean)}
      */
-    @Deprecated
-	public static BundledModule fromPathWithCustomName(String fullPath, String customName, boolean isLibrary) {
+    @Deprecated(forRemoval = true)
+    public static BundledModule fromPathWithCustomName(String fullPath, String customName, boolean isLibrary) {
         return new DelegatingBundledModule(carpet.script.Module.fromJarPathWithCustomName(fullPath, customName, isLibrary));
     }
 
