@@ -28,6 +28,8 @@ public class LoggerRegistry
     public static boolean __pathfinding;
     public static boolean __explosions;
     public static boolean __updateSuppressedCrashes;
+    public static boolean __scheduledTicks;
+    public static boolean __pois;
 
     public static void initLoggers()
     {
@@ -48,7 +50,8 @@ public class LoggerRegistry
         registerLogger("mobcaps", HUDLogger.stardardHUDLogger("mobcaps", "dynamic",new String[]{"dynamic", "overworld", "nether","end"}));
         registerLogger("explosions", Logger.stardardLogger("explosions", "brief",new String[]{"brief", "full"}, true));
         registerLogger("updateSuppressedCrashes", Logger.stardardLogger("updateSuppressedCrashes", null,null));
-
+        registerLogger("scheduledTicks", HUDLogger.stardardHUDLogger("scheduledTicks", "dynamic",new String[]{"dynamic", "overworld", "nether", "end", "global"}));
+        registerLogger("pois", HUDLogger.stardardHUDLogger("pois", "chunk",new String[]{"chunk", "dynamic", "overworld", "nether", "end", "global"}));
     }
 
     /**
