@@ -1048,12 +1048,6 @@ public class CarpetSettings
     )
     public static int updateSuppressionBlock = -1;
 
-    @Rule(
-            desc = "Fixes update suppression causing server crashes.",
-            category = BUGFIX
-    )
-    public static boolean updateSuppressionCrashFix = false;
-
     private static class UpdateSuppressionBlockModes extends Validator<Integer> {
         @Override
         public Integer validate(CommandSourceStack source, ParsedRule<Integer> currentRule, Integer newValue, String string) {
