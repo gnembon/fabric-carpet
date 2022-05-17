@@ -10,6 +10,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.player.ProfilePublicKey;
 import net.minecraft.world.level.Level;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -18,8 +19,8 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 @Mixin(ServerPlayer.class)
 public abstract class ServerPlayer_updateSuppressionCrashFixMixin extends Player {
 
-    public ServerPlayer_updateSuppressionCrashFixMixin(Level world, BlockPos pos, float yaw, GameProfile profile) {
-        super(world, pos, yaw, profile);
+    public ServerPlayer_updateSuppressionCrashFixMixin(Level level, BlockPos blockPos, float f, GameProfile gameProfile, ProfilePublicKey profilePublicKey) {
+        super(level, blockPos, f, gameProfile, profilePublicKey);
     }
 
     @Redirect(

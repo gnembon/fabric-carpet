@@ -21,7 +21,7 @@ public abstract class LiquidBlock_renewableDeepslateMixin {
     @Inject(method = "shouldSpreadLiquid", at = @At(value = "INVOKE",target = "Lnet/minecraft/world/level/material/FluidState;isSource()Z"), cancellable = true)
     private void receiveFluidToDeepslate(Level world, BlockPos pos, BlockState state, CallbackInfoReturnable<Boolean> cir)
     {
-        if(CarpetSettings.renewableDeepslate && !world.getFluidState(pos).isSource() && world.dimension() == Level.OVERWORLD && pos.getY() < 16)
+        if(CarpetSettings.renewableDeepslate && !world.getFluidState(pos).isSource() && world.dimension() == Level.OVERWORLD && pos.getY() < 0)
         {
             world.setBlockAndUpdate(pos, Blocks.COBBLED_DEEPSLATE.defaultBlockState());
             this.fizz(world, pos);

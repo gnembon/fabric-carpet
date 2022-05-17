@@ -45,7 +45,7 @@ import static carpet.settings.RuleCategory.CLIENT;
 @SuppressWarnings("CanBeFinal")
 public class CarpetSettings
 {
-    public static final String carpetVersion = "1.4.72+v220421";
+    public static final String carpetVersion = "1.4.75+v220513";
     public static final Logger LOG = LoggerFactory.getLogger("carpet");
     public static ThreadLocal<Boolean> skipGenerationChecks = ThreadLocal.withInitial(() -> false);
     public static ThreadLocal<Boolean> impendingFillSkipUpdates = ThreadLocal.withInitial(() -> false);
@@ -249,6 +249,9 @@ public class CarpetSettings
 
     @Rule( desc = "Explosions won't destroy blocks", category = {CREATIVE, TNT} )
     public static boolean explosionNoBlockDamage = false;
+
+    @Rule( desc = "Experience will drop from all experience barring blocks with any explosion type", category = {SURVIVAL, FEATURE})
+    public static boolean xpFromExplosions = false;
 
     @Rule( desc = "Removes random TNT momentum when primed", category = {CREATIVE, TNT} )
     public static boolean tntPrimerMomentumRemoved = false;
@@ -873,8 +876,7 @@ public class CarpetSettings
     public static boolean renewableBlackstone = false;
 
     @Rule(
-            desc = "Lava and water generate deepslate and cobbled deepslate instead below Y16",
-            extra = "This rule may change Y value to 0 with 1.18",
+            desc = "Lava and water generate deepslate and cobbled deepslate instead below Y0",
             category = FEATURE
     )
     public static boolean renewableDeepslate = false;

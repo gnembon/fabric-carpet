@@ -973,9 +973,9 @@ public class Auxiliary {
             FunctionArgument callback = FunctionArgument.findIn(c, expression.module, lv, 1, true, false);
             CarpetScriptHost host = ((CarpetScriptHost)c.host);
             if (callback.function == null)
-                return BooleanValue.of(host.getScriptServer().events.removeBuiltInEvent(event, host));
+                return BooleanValue.of(host.scriptServer().events.removeBuiltInEvent(event, host));
             // args don't need to be checked will be checked at the event
-            return BooleanValue.of( host.getScriptServer().events.handleCustomEvent(event, host, callback.function, callback.args ));
+            return BooleanValue.of( host.scriptServer().events.handleCustomEvent(event, host, callback.function, callback.args ));
         });
         //signal_event('event', player or null, args.... ) -> number of apps notified
         expression.addContextFunction("signal_event", -1, (c, t, lv) ->
@@ -983,7 +983,7 @@ public class Auxiliary {
             if (lv.size() == 0)
                 throw new InternalExpressionException("'signal' requires at least one argument");
             CarpetContext cc = (CarpetContext)c;
-            CarpetScriptServer server = ((CarpetScriptHost)c.host).getScriptServer();
+            CarpetScriptServer server = ((CarpetScriptHost)c.host).scriptServer();
             String eventName = lv.get(0).getString();
             // no such event yet
             if (CarpetEventServer.Event.getEvent(eventName, server) == null) return Value.NULL;
@@ -994,7 +994,7 @@ public class Auxiliary {
                 player = EntityValue.getPlayerByValue(server.server, lv.get(1));
                 if (lv.size() > 2) args = lv.subList(2, lv.size());
             }
-            int counts = ((CarpetScriptHost)c.host).getScriptServer().events.signalEvent(eventName, cc, player, args);
+            int counts = ((CarpetScriptHost)c.host).scriptServer().events.signalEvent(eventName, cc, player, args);
             if (counts < 0) return Value.NULL;
             return new NumericValue(counts);
         });
