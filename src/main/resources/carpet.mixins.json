@@ -1,6 +1,5 @@
 {
   "required": true,
-  "refmap": "fabric-carpet-refmap.json",
   "package": "carpet.mixins",
   "compatibilityLevel": "JAVA_16",
   "mixins": [
@@ -204,8 +203,6 @@
     "ClientPacketListener_customPacketsMixin",
     "DebugRenderer_scarpetRenderMixin",
     "LevelRenderer_scarpetRenderMixin"
-  ],
-  "server": [
   ],
   "injectors": {
     "defaultRequire": 1
