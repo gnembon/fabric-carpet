@@ -1080,7 +1080,7 @@ public abstract class CommandArgument
         protected ArgumentType<?> getArgumentType(CarpetScriptHost host) throws CommandSyntaxException
         {
             if (argumentTypeSupplier != null) return argumentTypeSupplier.get();
-            CommandBuildContext registryAccess = new CommandBuildContext(host.getScriptServer().server.registryAccess());
+            CommandBuildContext registryAccess = new CommandBuildContext(host.scriptServer().server.registryAccess());
             return argumentTypeSupplierEx.get(registryAccess);
         }
 
