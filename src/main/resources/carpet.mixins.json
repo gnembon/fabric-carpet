@@ -186,7 +186,8 @@
     "MinecraftServer_updateSuppressionCrashFixMixin",
     "ServerPlayer_updateSuppressionCrashFixMixin",
     "ChunkMap_creativePlayersLoadChunksMixin",
-    "SculkSensorBlock_rangeMixin"
+    "SculkSensorBlock_rangeMixin",
+    "CollectingNeighborUpdaterAccessor"
   ],
   "client": [
     "Timer_tickSpeedMixin",

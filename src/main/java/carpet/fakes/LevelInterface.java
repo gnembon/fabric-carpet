@@ -1,5 +1,6 @@
 package carpet.fakes;
 
+import net.minecraft.world.level.redstone.NeighborUpdater;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -12,11 +13,13 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 
-public interface WorldInterface
+public interface LevelInterface
 {
     Map<EntityType<?>, Entity> getPrecookedMobs();
     
     boolean setBlockStateWithBlockEntity(BlockPos blockPos, BlockState blockState, BlockEntity newBlockEntity, int int1);
 
     List<Entity> getOtherEntitiesLimited(@Nullable Entity except, AABB box, Predicate<? super Entity> predicate, int limit);
+
+    NeighborUpdater getNeighborUpdater();
 }
