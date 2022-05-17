@@ -7,9 +7,10 @@ import carpet.utils.Messenger;
 import com.mojang.authlib.GameProfile;
 import net.minecraft.ReportedException;
 import net.minecraft.core.BlockPos;
-import net.minecraft.network.chat.BaseComponent;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.player.ProfilePublicKey;
 import net.minecraft.world.level.Level;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -18,8 +19,8 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 @Mixin(ServerPlayer.class)
 public abstract class ServerPlayer_updateSuppressionCrashFixMixin extends Player {
 
-    public ServerPlayer_updateSuppressionCrashFixMixin(Level world, BlockPos pos, float yaw, GameProfile profile) {
-        super(world, pos, yaw, profile);
+    public ServerPlayer_updateSuppressionCrashFixMixin(Level level, BlockPos blockPos, float f, GameProfile gameProfile, ProfilePublicKey profilePublicKey) {
+        super(level, blockPos, f, gameProfile, profilePublicKey);
     }
 
     @Redirect(
@@ -49,7 +50,7 @@ public abstract class ServerPlayer_updateSuppressionCrashFixMixin extends Player
     private void logUpdateSuppressionPlayer(BlockPos pos) {
         if(LoggerRegistry.__updateSuppressedCrashes) {
             LoggerRegistry.getLogger("updateSuppressedCrashes").log(() -> {
-                return new BaseComponent[]{Messenger.c(
+                return new Component[]{Messenger.c(
                         "w Server crash prevented in: ",
                         "m player tick ",
                         "w - at: ",

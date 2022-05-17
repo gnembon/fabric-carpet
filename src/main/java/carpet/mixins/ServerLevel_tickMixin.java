@@ -24,9 +24,11 @@ import net.minecraft.world.level.storage.WritableLevelData;
 @Mixin(ServerLevel.class)
 public abstract class ServerLevel_tickMixin extends Level
 {
-    protected ServerLevel_tickMixin(WritableLevelData properties, ResourceKey<Level> registryKey, Holder<DimensionType> dimensionType, Supplier<ProfilerFiller> supplier, boolean bl, boolean bl2, long l)
+
+
+    protected ServerLevel_tickMixin(WritableLevelData writableLevelData, ResourceKey<Level> resourceKey, Holder<DimensionType> holder, Supplier<ProfilerFiller> supplier, boolean bl, boolean bl2, long l, int i)
     {
-        super(properties, registryKey, dimensionType, supplier, bl, bl2, l);
+        super(writableLevelData, resourceKey, holder, supplier, bl, bl2, l, i);
     }
 
     @Shadow protected abstract void runBlockEvents();
@@ -45,69 +47,54 @@ public abstract class ServerLevel_tickMixin extends Level
     }
     @Inject(method = "tick", at = @At(
             value = "CONSTANT",
-            args = "stringValue=chunkSource"
+            args = "stringValue=tickPending"
     ))
-    private void stopWeatherStartChunkSection(BooleanSupplier booleanSupplier_1, CallbackInfo ci)
+    private void stopWeatherStartTileTicks(BooleanSupplier booleanSupplier_1, CallbackInfo ci)
     {
         if (currentSection != null)
         {
             CarpetProfiler.end_current_section(currentSection);
-            // we go deeper here
+            currentSection = CarpetProfiler.start_section((Level) (Object) this, "Schedule Ticks", CarpetProfiler.TYPE.GENERAL);
         }
     }
-    @Inject(method = "tick", at = @At(
-            value = "CONSTANT",
-            args = "stringValue=tickPending"
-    ))
-    private void stopChunkStartBlockSection(BooleanSupplier booleanSupplier_1, CallbackInfo ci)
-    {
-        if (currentSection != null)
-        {
-            // out of chunk
-            currentSection = CarpetProfiler.start_section((Level) (Object) this, "Blocks", CarpetProfiler.TYPE.GENERAL);
-        }
-    }
-
     @Inject(method = "tick", at = @At(
             value = "CONSTANT",
             args = "stringValue=raid"
     ))
-    private void stopBlockStartVillageSection(BooleanSupplier booleanSupplier_1, CallbackInfo ci)
+    private void stopTileTicksStartRaid(BooleanSupplier booleanSupplier_1, CallbackInfo ci)
     {
         if (currentSection != null)
         {
             CarpetProfiler.end_current_section(currentSection);
-            currentSection = CarpetProfiler.start_section((Level) (Object) this, "Village", CarpetProfiler.TYPE.GENERAL);
+            currentSection = CarpetProfiler.start_section((Level) (Object) this, "Raid", CarpetProfiler.TYPE.GENERAL);
         }
     }
+
     @Inject(method = "tick", at = @At(
             value = "CONSTANT",
             args = "stringValue=chunkSource"
     ))
-    private void stopVillageSection(BooleanSupplier booleanSupplier_1, CallbackInfo ci)
+    private void stopRaid(BooleanSupplier booleanSupplier_1, CallbackInfo ci)
     {
         if (currentSection != null)
         {
             CarpetProfiler.end_current_section(currentSection);
-            currentSection = null;
         }
     }
-
-
     @Inject(method = "tick", at = @At(
             value = "CONSTANT",
             args = "stringValue=blockEvents"
     ))
-    private void startBlockAgainSection(BooleanSupplier booleanSupplier_1, CallbackInfo ci)
+    private void startBlockEvents(BooleanSupplier booleanSupplier_1, CallbackInfo ci)
     {
-        currentSection = CarpetProfiler.start_section((Level) (Object) this, "Blocks", CarpetProfiler.TYPE.GENERAL);
+        currentSection = CarpetProfiler.start_section((Level) (Object) this, "Block Events", CarpetProfiler.TYPE.GENERAL);
     }
 
     @Inject(method = "tick", at = @At(
             value = "CONSTANT",
             args = "stringValue=entities"
     ))
-    private void stopBlockAgainStartEntitySection(BooleanSupplier booleanSupplier_1, CallbackInfo ci)
+    private void stopBlockEventsStartEntitySection(BooleanSupplier booleanSupplier_1, CallbackInfo ci)
     {
         if (currentSection != null)
         {
@@ -124,6 +111,45 @@ public abstract class ServerLevel_tickMixin extends Level
     private void endEntitySection(BooleanSupplier booleanSupplier_1, CallbackInfo ci)
     {
         CarpetProfiler.end_current_section(currentSection);
+        currentSection = null;
+    }
+
+    // Chunk
+
+    @Inject(method = "tickChunk", at = @At("HEAD"))
+    private void startThunderSpawningSection(CallbackInfo ci) {
+        // Counting it in spawning because it's spawning skeleton horses
+        currentSection = CarpetProfiler.start_section((Level) (Object) this, "Spawning", CarpetProfiler.TYPE.GENERAL);
+    }
+
+    @Inject(method = "tickChunk", at = @At(
+            value = "CONSTANT",
+            args = "stringValue=iceandsnow"
+    ))
+    private void endThunderSpawningAndStartIceSnowRandomTicks(CallbackInfo ci) {
+        if (currentSection != null) {
+            CarpetProfiler.end_current_section(currentSection);
+            currentSection = CarpetProfiler.start_section((Level) (Object) this, "Environment", CarpetProfiler.TYPE.GENERAL);
+        }
+    }
+
+    @Inject(method = "tickChunk", at = @At(
+            value = "CONSTANT",
+            args = "stringValue=tickBlocks"
+    ))
+    private void endIceAndSnowAndStartRandomTicks(CallbackInfo ci) {
+        if (currentSection != null) {
+            CarpetProfiler.end_current_section(currentSection);
+            currentSection = CarpetProfiler.start_section((Level) (Object) this, "Random Ticks", CarpetProfiler.TYPE.GENERAL);
+        }
+    }
+
+    @Inject(method = "tickChunk", at = @At("RETURN"))
+    private void endRandomTicks(CallbackInfo ci) {
+        if (currentSection != null) {
+            CarpetProfiler.end_current_section(currentSection);
+            currentSection = null;
+        }
     }
 
     //// freeze
@@ -179,6 +205,4 @@ public abstract class ServerLevel_tickMixin extends Level
     {
         if (TickSpeed.process_entities) runBlockEvents();
     }
-
-
 }

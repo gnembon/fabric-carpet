@@ -23,6 +23,7 @@ import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
+import net.minecraft.commands.CommandBuildContext;
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.IOException;
@@ -129,7 +130,7 @@ public class ScriptCommand
         });
     }
 
-    public static void register(CommandDispatcher<CommandSourceStack> dispatcher)
+    public static void register(CommandDispatcher<CommandSourceStack> dispatcher, final CommandBuildContext commandBuildContext)
     {
         LiteralArgumentBuilder<CommandSourceStack> b = literal("globals").
                 executes(context -> listGlobals(context, false)).
@@ -216,7 +217,7 @@ public class ScriptCommand
                         then(argument("from", BlockPosArgument.blockPos()).
                                 then(argument("to", BlockPosArgument.blockPos()).
                                         then(argument("expr", StringArgumentType.string()).
-                                                then(argument("block", BlockStateArgument.block()).
+                                                then(argument("block", BlockStateArgument.block(commandBuildContext)).
                                                         executes((cc) -> scriptFill(
                                                                 cc,
                                                                 BlockPosArgument.getSpawnablePos(cc, "origin"),
@@ -227,7 +228,7 @@ public class ScriptCommand
                                                                 null, "solid"
                                                         )).
                                                         then(literal("replace").
-                                                                then(argument("filter", BlockPredicateArgument.blockPredicate())
+                                                                then(argument("filter", BlockPredicateArgument.blockPredicate(commandBuildContext))
                                                                         .executes((cc) -> scriptFill(
                                                                                 cc,
                                                                                 BlockPosArgument.getSpawnablePos(cc, "origin"),
@@ -243,7 +244,7 @@ public class ScriptCommand
                         then(argument("from", BlockPosArgument.blockPos()).
                                 then(argument("to", BlockPosArgument.blockPos()).
                                         then(argument("expr", StringArgumentType.string()).
-                                                then(argument("block", BlockStateArgument.block()).
+                                                then(argument("block", BlockStateArgument.block(commandBuildContext)).
                                                         executes((cc) -> scriptFill(
                                                                 cc,
                                                                 BlockPosArgument.getSpawnablePos(cc, "origin"),
@@ -254,7 +255,7 @@ public class ScriptCommand
                                                                 null, "outline"
                                                         )).
                                                         then(literal("replace").
-                                                                then(argument("filter", BlockPredicateArgument.blockPredicate())
+                                                                then(argument("filter", BlockPredicateArgument.blockPredicate(commandBuildContext))
                                                                         .executes((cc) -> scriptFill(
                                                                                 cc,
                                                                                 BlockPosArgument.getSpawnablePos(cc, "origin"),

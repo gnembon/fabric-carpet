@@ -44,7 +44,7 @@ __config() ->
         'clear' -> 'clear',
     },
     'arguments' -> {
-        'structure' -> {'type' -> 'term', 'suggest' -> plop():'configured_structures' },
+        'structure' -> {'type' -> 'term', 'suggest' -> plop():'structures' },
         'radius' -> {'type' -> 'int', 'min' -> 0, 'max' -> 1024, 'suggest' -> [128, 24, 32]},
         'shape' -> {'type' -> 'term', 'options' -> keys(global_shapes) },
         'color' -> {'type' -> 'teamcolor'}

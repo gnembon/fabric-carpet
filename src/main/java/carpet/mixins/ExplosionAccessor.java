@@ -1,5 +1,6 @@
 package carpet.mixins;
 
+import net.minecraft.util.RandomSource;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Accessor;
 
@@ -21,7 +22,7 @@ public interface ExplosionAccessor {
     Level getLevel();
 
     @Accessor
-    Random getRandom();
+    RandomSource getRandom();
 
     @Accessor
     double getX();
