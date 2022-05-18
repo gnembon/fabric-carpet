@@ -1,10 +1,7 @@
 package carpet.mixins;
 
-import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.MessageSignature;
-import net.minecraft.network.chat.PlayerChatMessage;
 import net.minecraft.network.protocol.game.ServerboundChatPacket;
-import net.minecraft.server.network.TextFilter;
+import net.minecraft.server.network.FilteredText;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
@@ -48,7 +45,6 @@ import net.minecraft.server.network.ServerGamePacketListenerImpl;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.BlockHitResult;
-import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 
 
 @Mixin(ServerGamePacketListenerImpl.class)
@@ -286,14 +282,13 @@ public class ServerGamePacketListenerImpl_scarpetEventsMixin
         }
     }
 
-    @Inject(method = "handleChat(Lnet/minecraft/network/protocol/game/ServerboundChatPacket;Lnet/minecraft/server/network/TextFilter$FilteredText;)V",
-            at = @At(value = "INVOKE", target = "Lnet/minecraft/server/players/PlayerList;broadcastChatMessage(Lnet/minecraft/network/chat/PlayerChatMessage;Lnet/minecraft/server/network/TextFilter$FilteredText;Lnet/minecraft/server/level/ServerPlayer;Lnet/minecraft/resources/ResourceKey;)V"),
-            locals = LocalCapture.CAPTURE_FAILHARD
+    @Inject(method = "handleChat(Lnet/minecraft/network/protocol/game/ServerboundChatPacket;Lnet/minecraft/server/network/FilteredText;)V",
+            at = @At(value = "INVOKE", target = "Lnet/minecraft/network/protocol/game/ServerboundChatPacket;signedPreview()Z")
     )
-    private void onChatMessage(ServerboundChatPacket serverboundChatPacket, TextFilter.FilteredText filteredText, CallbackInfo ci, Component component, MessageSignature messageSignature, PlayerChatMessage playerChatMessage) {
+    private void onChatMessage(ServerboundChatPacket serverboundChatPacket, FilteredText<String> filteredText, CallbackInfo ci) {
         if (PLAYER_MESSAGE.isNeeded())
         {
-            PLAYER_MESSAGE.onPlayerMessage(player, filteredText.getRaw());
+            PLAYER_MESSAGE.onPlayerMessage(player, filteredText.raw());
         }
     }
 }

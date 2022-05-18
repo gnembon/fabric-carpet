@@ -16,6 +16,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.players.GameProfileCache;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.player.ProfilePublicKey;
 import net.minecraft.world.food.FoodData;
@@ -108,9 +109,9 @@ public class EntityPlayerMPFake extends ServerPlayer
     }
 
     @Override
-    protected void equipEventAndSound(ItemStack stack, boolean sendGameEvent)
+    public void onEquipItem(final EquipmentSlot slot, final ItemStack stack)
     {
-        if (!isUsingItem()) super.equipEventAndSound(stack, sendGameEvent);
+        if (!isUsingItem()) super.onEquipItem(slot, stack);
     }
 
     @Override
