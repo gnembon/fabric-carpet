@@ -181,9 +181,6 @@
     "ShulkerBoxBlockEntity_creativeNoClipMixin",
     "TheEndGatewayBlockEntity_creativeNoClipMixin",
     "LivingEntity_creativeFlyMixin",
-    "Level_updateSuppressionCrashFixMixin",
-    "MinecraftServer_updateSuppressionCrashFixMixin",
-    "ServerPlayer_updateSuppressionCrashFixMixin",
     "ChunkMap_creativePlayersLoadChunksMixin",
     "SculkSensorBlock_rangeMixin",
     "CollectingNeighborUpdaterAccessor"

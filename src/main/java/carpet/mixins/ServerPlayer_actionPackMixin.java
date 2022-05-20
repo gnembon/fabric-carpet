@@ -38,10 +38,6 @@ public abstract class ServerPlayer_actionPackMixin implements ServerPlayerEntity
         {
             actionPack.onUpdate();
         }
-        catch (StackOverflowError soe)
-        {
-            CarpetSettings.LOG.error("Caused stack overflow when performing player action", soe);
-        }
         catch (Throwable exc)
         {
             CarpetSettings.LOG.error("Error executing player tasks", exc);
