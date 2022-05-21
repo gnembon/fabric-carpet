@@ -32,6 +32,7 @@ import java.util.Iterator;
 import java.util.Locale;
 import java.util.Optional;
 
+import static carpet.api.settings.RuleCategory.BUGFIX;
 import static carpet.api.settings.RuleCategory.COMMAND;
 import static carpet.api.settings.RuleCategory.CREATIVE;
 import static carpet.api.settings.RuleCategory.EXPERIMENTAL;
