@@ -1067,13 +1067,13 @@ public class CarpetEventServer
         public static void removeAllHostEvents(CarpetScriptHost host)
         {
             byName.values().forEach((e) -> e.handler.removeAllCalls(host));
-            host.getScriptServer().events.customEvents.values().forEach((e) -> e.handler.removeAllCalls(host));
+            host.scriptServer().events.customEvents.values().forEach((e) -> e.handler.removeAllCalls(host));
         }
 
         public static void transferAllHostEventsToChild(CarpetScriptHost host)
         {
             byName.values().forEach((e) -> e.handler.createChildEvents(host));
-            host.getScriptServer().events.customEvents.values().forEach((e) -> e.handler.createChildEvents(host));
+            host.scriptServer().events.customEvents.values().forEach((e) -> e.handler.createChildEvents(host));
         }
 
         public static void clearAllBuiltinEvents()
@@ -1259,7 +1259,7 @@ public class CarpetEventServer
 
     public int signalEvent(String event, CarpetContext cc, ServerPlayer optionalTarget, List<Value> callArgs)
     {
-        Event ev = Event.getEvent(event, ((CarpetScriptHost)cc.host).getScriptServer());
+        Event ev = Event.getEvent(event, ((CarpetScriptHost)cc.host).scriptServer());
         if (ev == null) return -1;
         return ev.handler.signal(cc.s, optionalTarget, callArgs);
     }
@@ -1286,7 +1286,7 @@ public class CarpetEventServer
     }
     public boolean removeBuiltInEvent(String event, CarpetScriptHost host)
     {
-        Event ev = Event.getEvent(event, host.getScriptServer());
+        Event ev = Event.getEvent(event, host.scriptServer());
         if (ev == null) return false;
         ev.handler.removeAllCalls(host);
         return true;
@@ -1294,7 +1294,7 @@ public class CarpetEventServer
 
     public void removeBuiltInEvent(String event, CarpetScriptHost host, String funName)
     {
-        Event ev = Event.getEvent(event, host.getScriptServer());
+        Event ev = Event.getEvent(event, host.scriptServer());
         if (ev != null) ev.handler.removeEventCall(host.getName(), host.user, funName);
     }
 

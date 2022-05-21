@@ -234,6 +234,8 @@ public class OptimizedExplosion
             ObjectArrayList<Pair<ItemStack, BlockPos>> objectArrayList = new ObjectArrayList<>();
             Util.shuffle((ObjectArrayList<BlockPos>) e.getToBlow(), world.random);
 
+            boolean dropFromExplosions = CarpetSettings.xpFromExplosions || e.getSourceMob() instanceof Player;
+
             for (BlockPos blockpos : e.getToBlow())
             {
                 BlockState state = world.getBlockState(blockpos);
@@ -241,7 +243,7 @@ public class OptimizedExplosion
 
                 if (state.getMaterial() != Material.AIR)
                 {
-                    if (block.dropFromExplosion(e) && world instanceof ServerLevel)
+                    if (block.dropFromExplosion(e) && world instanceof ServerLevel serverLevel)
                     {
                         BlockEntity blockEntity = state.hasBlockEntity() ? world.getBlockEntity(blockpos) : null;  //hasBlockEntity()
 
@@ -254,6 +256,8 @@ public class OptimizedExplosion
 
                         if (eAccess.getBlockInteraction() == Explosion.BlockInteraction.DESTROY)
                             lootBuilder.withParameter(LootContextParams.EXPLOSION_RADIUS, eAccess.getRadius());
+
+                        state.spawnAfterBreak(serverLevel, blockpos, ItemStack.EMPTY, dropFromExplosions);
 
                         state.getDrops(lootBuilder).forEach((itemStackx) -> {
                             method_24023(objectArrayList, itemStackx, blockpos.immutable());

@@ -43,7 +43,7 @@ public class SystemInfo {
             String name = c.host.getName();
             return name == null?Value.NULL:new StringValue(name);
         });
-        put("app_list", c -> ListValue.wrap(((CarpetScriptHost)c.host).getScriptServer().modules.keySet().stream().filter(Objects::nonNull).map(StringValue::new).collect(Collectors.toList())));
+        put("app_list", c -> ListValue.wrap(((CarpetScriptHost)c.host).scriptServer().modules.keySet().stream().filter(Objects::nonNull).map(StringValue::new).collect(Collectors.toList())));
         put("app_scope", c -> StringValue.of((c.host).isPerUser()?"player":"global"));
         put("app_players", c -> ListValue.wrap(c.host.getUserList().stream().map(StringValue::new).collect(Collectors.toList())));
 
