@@ -1,6 +1,7 @@
 package carpet.script;
 
 import carpet.CarpetSettings;
+import carpet.fakes.CommandDispatcherInterface;
 import carpet.script.annotation.AnnotationParser;
 import carpet.script.api.Auxiliary;
 import carpet.script.api.BlockIterators;
@@ -347,6 +348,7 @@ public class CarpetScriptServer
         events.removeAllHostEvents(modules.get(name));
         modules.get(name).onClose();
         modules.remove(name);
+        ((CommandDispatcherInterface)server.getCommands().getDispatcher()).carpet$unregister(name);
         if (!isRuleApp) unloadableModules.remove(name);
         CarpetServer.settingsManager.notifyPlayersCommandsChanged();
         if (notifySource) Messenger.m(source, "gi Removed "+name+" app");

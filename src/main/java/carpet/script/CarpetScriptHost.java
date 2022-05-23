@@ -202,7 +202,7 @@ public class CarpetScriptHost extends ScriptHost
         String hostName = main.getName();
         Predicate<CommandSourceStack> configValidator = getCommandConfigPermissions();
         LiteralArgumentBuilder<CommandSourceStack> command = literal(hostName).
-               requires((player) -> CarpetServer.scriptServer.modules.containsKey(hostName) && useValidator.test(player) && configValidator.test(player));
+               requires((player) -> useValidator.test(player) && configValidator.test(player));
         for (Pair<List<CommandToken>,FunctionArgument> commandData : entries)
         {
             command = this.addPathToCommand(command, commandData.getKey(), commandData.getValue());
@@ -477,7 +477,7 @@ public class CarpetScriptHost extends ScriptHost
         }
         String hostName = getName();
         LiteralArgumentBuilder<CommandSourceStack> command = literal(hostName).
-                requires((player) -> scriptServer.modules.containsKey(hostName) && commandValidator.test(player) && configValidator.test(player)).
+                requires((player) -> commandValidator.test(player) && configValidator.test(player)).
                 executes( (c) ->
                 {
                     CarpetScriptHost targetHost = scriptServer.modules.get(hostName).retrieveOwnForExecution(c.getSource());
@@ -510,7 +510,7 @@ public class CarpetScriptHost extends ScriptHost
             {
                 command = command.
                         then(literal(function).
-                                requires((player) -> scriptServer.modules.containsKey(hostName) && scriptServer.modules.get(hostName).getFunction(function) != null).
+                                requires((player) -> scriptServer.modules.get(hostName).getFunction(function) != null).
                                 executes((c) -> {
                                     CarpetScriptHost targetHost = scriptServer.modules.get(hostName).retrieveOwnForExecution(c.getSource());
                                     Value response = targetHost.handleCommandLegacy(c.getSource(),function, null, "");
