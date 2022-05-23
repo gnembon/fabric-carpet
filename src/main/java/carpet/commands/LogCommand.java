@@ -14,6 +14,8 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import net.minecraft.commands.CommandBuildContext;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.world.entity.player.Player;
@@ -24,7 +26,7 @@ import static net.minecraft.commands.SharedSuggestionProvider.suggest;
 
 public class LogCommand
 {
-    public static void register(CommandDispatcher<CommandSourceStack> dispatcher)
+    public static void register(CommandDispatcher<CommandSourceStack> dispatcher, CommandBuildContext commandBuildContext)
     {
         LiteralArgumentBuilder<CommandSourceStack> literalargumentbuilder = Commands.literal("log").
                 requires((player) -> SettingsManager.canUseCommand(player, CarpetSettings.commandLog)).

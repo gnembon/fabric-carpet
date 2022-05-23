@@ -17,15 +17,16 @@ import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.loader.api.FabricLoader;
+import net.minecraft.commands.CommandBuildContext;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.SharedSuggestionProvider;
-import net.minecraft.network.chat.BaseComponent;
+import net.minecraft.core.RegistryAccess;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.TickTask;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.storage.LevelResource;
-import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.util.TriConsumer;
 
 import java.io.BufferedReader;
@@ -574,12 +575,21 @@ public class SettingsManager
         return suggestionsBuilder.buildFuture();
     }
 
+    @Deprecated(forRemoval = true)
+    public void registerCommand(CommandDispatcher<CommandSourceStack> dispatcher)
+    {
+        final CommandBuildContext context = new CommandBuildContext(RegistryAccess.BUILTIN.get());
+        context.missingTagAccessPolicy(CommandBuildContext.MissingTagAccessPolicy.RETURN_EMPTY);
+        registerCommand(dispatcher, context);
+    }
+
     /**
-     * Registers the the settings command for this {@link SettingsManager}.<br>
+     * Registers the settings command for this {@link SettingsManager}.<br>
      * It is handled automatically by Carpet.
      * @param dispatcher The current {@link CommandDispatcher}
+     * @param commandBuildContext The current {@link CommandBuildContext}
      */
-    public void registerCommand(CommandDispatcher<CommandSourceStack> dispatcher)
+    public void registerCommand(final CommandDispatcher<CommandSourceStack> dispatcher, final CommandBuildContext commandBuildContext)
     {
         if (dispatcher.getRoot().getChildren().stream().anyMatch(node -> node.getName().equalsIgnoreCase(identifier)))
         {
@@ -637,7 +647,7 @@ public class SettingsManager
 
         rule.translatedExtras().forEach(s -> Messenger.m(source, "g  "+s));
 
-        List<BaseComponent> tags = new ArrayList<>();
+        List<Component> tags = new ArrayList<>();
         tags.add(Messenger.c("w "+ tr("ui.tags", "Tags")+": "));
         for (String t: rule.categories)
         {
@@ -649,7 +659,7 @@ public class SettingsManager
         Messenger.m(source, tags.toArray(new Object[0]));
 
         Messenger.m(source, "w "+ tr("ui.current_value", "Current value")+": ",String.format("%s %s (%s value)",rule.getBoolValue()?"lb":"nb", rule.getAsString(),rule.isDefault()?"default":"modified"));
-        List<BaseComponent> options = new ArrayList<>();
+        List<Component> options = new ArrayList<>();
         options.add(Messenger.c("w Options: ", "y [ "));
         for (String o: rule.options)
         {
@@ -698,7 +708,7 @@ public class SettingsManager
         return 1;
     }
 
-    private BaseComponent displayInteractiveSetting(ParsedRule<?> rule)
+    private Component displayInteractiveSetting(ParsedRule<?> rule)
     {
         String displayName = rule.translatedName();
         List<Object> args = new ArrayList<>();
@@ -719,7 +729,7 @@ public class SettingsManager
         return Messenger.c(args.toArray(new Object[0]));
     }
 
-    private BaseComponent makeSetRuleButton(ParsedRule<?> rule, String option, boolean brackets)
+    private Component makeSetRuleButton(ParsedRule<?> rule, String option, boolean brackets)
     {
         String style = rule.isDefault()?"g":(option.equalsIgnoreCase(rule.defaultAsString)?"e":"y");
         if (option.equalsIgnoreCase(rule.getAsString()))

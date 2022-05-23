@@ -1,11 +1,13 @@
 package carpet.mixins;
 
-import carpet.fakes.WorldInterface;
+import carpet.fakes.LevelInterface;
 import carpet.helpers.TickSpeed;
 import carpet.utils.CarpetProfiler;
+import net.minecraft.world.level.redstone.NeighborUpdater;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
@@ -19,13 +21,20 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 
 @Mixin(Level.class)
-public abstract class Level_tickMixin implements WorldInterface
+public abstract class Level_tickMixin implements LevelInterface
 {
     @Shadow @Final public boolean isClientSide;
+    @Shadow @Final protected NeighborUpdater neighborUpdater;
     CarpetProfiler.ProfilerToken currentSection;
     CarpetProfiler.ProfilerToken entitySection;
 
     Map<EntityType<?>, Entity> precookedMobs = new HashMap<>();
+
+    @Override
+    @Unique
+    public NeighborUpdater getNeighborUpdater() {
+        return this.neighborUpdater;
+    }
 
     public Map<EntityType<?>, Entity> getPrecookedMobs()
     {

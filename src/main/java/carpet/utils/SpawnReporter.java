@@ -6,7 +6,8 @@ import it.unimi.dsi.fastutil.objects.Object2LongMap;
 import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
-import net.minecraft.network.chat.BaseComponent;
+import net.minecraft.core.Registry;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
@@ -23,7 +24,7 @@ import net.minecraft.world.entity.animal.Ocelot;
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.NaturalSpawner;
-import net.minecraft.world.level.StructureFeatureManager;
+import net.minecraft.world.level.StructureManager;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.biome.MobSpawnSettings;
 import net.minecraft.world.level.block.Blocks;
@@ -32,8 +33,11 @@ import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.ChunkGenerator;
 import net.minecraft.world.level.entity.EntityTypeTest;
 import net.minecraft.world.level.levelgen.Heightmap;
-import net.minecraft.world.level.levelgen.feature.NetherFortressFeature;
+import net.minecraft.world.level.levelgen.structure.BuiltinStructures;
+import net.minecraft.world.level.levelgen.structure.Structure;
+import net.minecraft.world.level.levelgen.structure.structures.NetherFortressStructure;
 import org.apache.commons.lang3.tuple.Pair;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -100,11 +104,11 @@ public class SpawnReporter
         return MAGIC_NUMBER / (Math.pow(2.0,(SpawnReporter.mobcap_exponent/4)));
     }*/
 
-    public static List<BaseComponent> printMobcapsForDimension(ServerLevel world, boolean multiline)
+    public static List<Component> printMobcapsForDimension(ServerLevel world, boolean multiline)
     {
         ResourceKey<Level> dim = world.dimension();
         String name = dim.location().getPath();
-        List<BaseComponent> lst = new ArrayList<>();
+        List<Component> lst = new ArrayList<>();
         if (multiline)
             lst.add(Messenger.s(String.format("Mobcaps for %s:",name)));
         NaturalSpawner.SpawnState lastSpawner = world.getChunkSource().getLastSpawnState();
@@ -155,9 +159,9 @@ public class SpawnReporter
         return lst;
     }
     
-    public static List<BaseComponent> recent_spawns(Level world, MobCategory creature_type)
+    public static List<Component> recent_spawns(Level world, MobCategory creature_type)
     {
-        List<BaseComponent> lst = new ArrayList<>();
+        List<Component> lst = new ArrayList<>();
         if ((track_spawns == 0L))
         {
             lst.add(Messenger.s("Spawn tracking not started"));
@@ -183,7 +187,7 @@ public class SpawnReporter
 
     }
     
-    public static List<BaseComponent> show_mobcaps(BlockPos pos, ServerLevel worldIn)
+    public static List<Component> show_mobcaps(BlockPos pos, ServerLevel worldIn)
     {
         DyeColor under = WoolTool.getWoolColorAtPosition(worldIn, pos.below());
         if (under == null)
@@ -277,9 +281,9 @@ public class SpawnReporter
         return get_type_string(get_creature_type_from_code(str));
     }
     
-    public static List<BaseComponent> printEntitiesByType(MobCategory cat, Level worldIn, boolean all) //Class<?> entityType)
+    public static List<Component> printEntitiesByType(MobCategory cat, Level worldIn, boolean all) //Class<?> entityType)
     {
-        List<BaseComponent> lst = new ArrayList<>();
+        List<Component> lst = new ArrayList<>();
         lst.add( Messenger.s(String.format("Loaded entities for %s class:", get_type_string(cat))));
         for (Entity entity : ((ServerLevel)worldIn).getEntities(EntityTypeTest.forClass(Entity.class), (e) -> e.getType().getCategory()==cat))
         {
@@ -346,10 +350,10 @@ public class SpawnReporter
         return "("+world.location().getPath().toUpperCase(Locale.ROOT).replace("THE_","").charAt(0)+")";
     }
     
-    public static List<BaseComponent> tracking_report(Level worldIn)
+    public static List<Component> tracking_report(Level worldIn)
     {
 
-        List<BaseComponent> report = new ArrayList<>();
+        List<Component> report = new ArrayList<>();
         if (track_spawns == 0L)
         {
             report.add(Messenger.c(
@@ -422,16 +426,22 @@ public class SpawnReporter
     }
 
     // yeeted from NaturalSpawner - temporary access fix
-    private static List<MobSpawnSettings.SpawnerData> getSpawnEntries(final ServerLevel level, final StructureFeatureManager structureFeatureManager, final ChunkGenerator generator, final MobCategory mobCategory, final BlockPos pos, final Holder<Biome> biome) {
-        if (NaturalSpawner.isInNetherFortressBounds (pos, level, mobCategory, structureFeatureManager)) {
-            return NetherFortressFeature.FORTRESS_ENEMIES.unwrap();
-        }
-        return generator.getMobsAt(biome != null ? biome : level.getBiome(pos), structureFeatureManager, mobCategory, pos).unwrap();
+    private static List<MobSpawnSettings.SpawnerData> getSpawnEntries(ServerLevel serverLevel, StructureManager structureManager, ChunkGenerator chunkGenerator, MobCategory mobCategory, BlockPos blockPos, @Nullable Holder<Biome> holder) {
+        return isInNetherFortressBounds(blockPos, serverLevel, mobCategory, structureManager) ? NetherFortressStructure.FORTRESS_ENEMIES.unwrap() : chunkGenerator.getMobsAt(holder != null ? holder : serverLevel.getBiome(blockPos), structureManager, mobCategory, blockPos).unwrap();
     }
 
-    public static List<BaseComponent> report(BlockPos pos, ServerLevel worldIn)
+    public static boolean isInNetherFortressBounds(BlockPos blockPos, ServerLevel serverLevel, MobCategory mobCategory, StructureManager structureManager) {
+        if (mobCategory == MobCategory.MONSTER && serverLevel.getBlockState(blockPos.below()).is(Blocks.NETHER_BRICKS)) {
+            Structure structure = (Structure)structureManager.registryAccess().registryOrThrow(Registry.STRUCTURE_REGISTRY).get(BuiltinStructures.FORTRESS);
+            return structure == null ? false : structureManager.getStructureAt(blockPos, structure).isValid();
+        } else {
+            return false;
+        }
+    }
+
+    public static List<Component> report(BlockPos pos, ServerLevel worldIn)
     {
-        List<BaseComponent> rep = new ArrayList<>();
+        List<Component> rep = new ArrayList<>();
         int x = pos.getX(); int y = pos.getY(); int z = pos.getZ();
         ChunkAccess chunk = worldIn.getChunk(pos);
         int lc = chunk.getHeight(Heightmap.Types.WORLD_SURFACE, x, z) + 1;
@@ -442,7 +452,7 @@ public class SpawnReporter
         for (MobCategory enumcreaturetype : MobCategory.values())
         {
             String type_code = String.format("%s", enumcreaturetype).substring(0, 3);
-            List<MobSpawnSettings.SpawnerData> lst = getSpawnEntries(worldIn, worldIn.structureFeatureManager(), worldIn.getChunkSource().getGenerator(), enumcreaturetype, pos, worldIn.getBiome(pos) );//  ((ChunkGenerator)worldIn.getChunkManager().getChunkGenerator()).getEntitySpawnList(, worldIn.getStructureAccessor(), enumcreaturetype, pos);
+            List<MobSpawnSettings.SpawnerData> lst = getSpawnEntries(worldIn, worldIn.structureManager(), worldIn.getChunkSource().getGenerator(), enumcreaturetype, pos, worldIn.getBiome(pos) );//  ((ChunkGenerator)worldIn.getChunkManager().getChunkGenerator()).getEntitySpawnList(, worldIn.getStructureAccessor(), enumcreaturetype, pos);
             if (lst != null && !lst.isEmpty())
             {
                 for (MobSpawnSettings.SpawnerData spawnEntry : lst)

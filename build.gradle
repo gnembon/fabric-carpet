@@ -1,6 +1,6 @@
 plugins {
 	id 'fabric-loom' version '0.11-SNAPSHOT'
-	id 'io.github.juuxel.loom-quiltflower' version '1.6.0'
+	id 'io.github.juuxel.loom-quiltflower' version '1.7.1'
 	id 'maven-publish'
 }
 
@@ -67,13 +67,7 @@ jar {
 publishing {
 	publications {
 		mavenJava(MavenPublication) {
-			// add all the jars that should be included when publishing to maven
-			artifact(remapJar) {
-				builtBy remapJar
-			}
-			artifact(sourcesJar) {
-				builtBy remapSourcesJar
-			}
+			from components.java
 		}
 	}
 
