@@ -4,21 +4,18 @@ import carpet.CarpetServer;
 import carpet.helpers.HopperCounter;
 import carpet.helpers.TickSpeed;
 import carpet.logging.logHelpers.PacketCounter;
-import carpet.mixins.PlayerListHeaderS2CPacketMixin;
 import carpet.utils.Messenger;
 import carpet.utils.SpawnReporter;
 import io.netty.buffer.Unpooled;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.network.PacketByteBuf;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.network.packet.s2c.play.PlayerListHeaderS2CPacket;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.protocol.game.ClientboundTabListPacket;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.text.BaseText;
-import net.minecraft.text.LiteralText;
-import net.minecraft.util.registry.RegistryKey;
-import net.minecraft.world.World;
-
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.Mth;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.Level;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -43,18 +40,18 @@ public class HUDController
         HUDListeners.add(listener);
     }
 
-    public static Map<ServerPlayerEntity, List<BaseText>> player_huds = new HashMap<>();
+    public static Map<ServerPlayer, List<Component>> player_huds = new HashMap<>();
 //keyed with player names so unlogged players don't hold the reference
-    public static final Map<String, BaseText> scarpet_headers = new HashMap<>();
+    public static final Map<String, Component> scarpet_headers = new HashMap<>();
 
-    public static final Map<String, BaseText> scarpet_footers = new HashMap<>();
+    public static final Map<String, Component> scarpet_footers = new HashMap<>();
 
     public static void resetScarpetHUDs() {
         scarpet_headers.clear();
         scarpet_footers.clear();
     }
 
-    public static void addMessage(ServerPlayerEntity player, BaseText hudMessage)
+    public static void addMessage(ServerPlayer player, Component hudMessage)
     {
         if (player == null) return;
         if (!player_huds.containsKey(player))
@@ -63,29 +60,29 @@ public class HUDController
         }
         else
         {
-            player_huds.get(player).add(new LiteralText("\n"));
+            player_huds.get(player).add(Component.literal("\n"));
         }
         player_huds.get(player).add(hudMessage);
     }
-    public static void clear_player(PlayerEntity player)
+    public static void clear_player(Player player)
     {
-        PacketByteBuf packetData = new PacketByteBuf(Unpooled.buffer()).writeText(new LiteralText("")).writeText(new LiteralText(""));
-        PlayerListHeaderS2CPacket packet = new PlayerListHeaderS2CPacket(packetData);
+        FriendlyByteBuf packetData = new FriendlyByteBuf(Unpooled.buffer()).writeComponent(Component.literal("")).writeComponent(Component.literal(""));
+        ClientboundTabListPacket packet = new ClientboundTabListPacket(packetData);
         //((PlayerListHeaderS2CPacketMixin)packet).setHeader(new LiteralText(""));
         //((PlayerListHeaderS2CPacketMixin)packet).setFooter(new LiteralText(""));
-        ((ServerPlayerEntity)player).networkHandler.sendPacket(packet);
+        ((ServerPlayer)player).connection.send(packet);
     }
 
 
-    public static void update_hud(MinecraftServer server, List<ServerPlayerEntity> force)
+    public static void update_hud(MinecraftServer server, List<ServerPlayer> force)
     {
-        if (((server.getTicks() % 20 != 0) && force == null) || CarpetServer.minecraft_server == null)
+        if (((server.getTickCount() % 20 != 0) && force == null) || CarpetServer.minecraft_server == null)
             return;
 
         player_huds.clear();
 
-        server.getPlayerManager().getPlayerList().forEach(p -> {
-            BaseText scarpetFOoter = scarpet_footers.get(p.getEntityName());
+        server.getPlayerList().getPlayers().forEach(p -> {
+            Component scarpetFOoter = scarpet_footers.get(p.getScoreboardName());
             if (scarpetFOoter != null) HUDController.addMessage(p, scarpetFOoter);
         });
 
@@ -94,20 +91,20 @@ public class HUDController
 
         if (LoggerRegistry.__mobcaps)
             LoggerRegistry.getLogger("mobcaps").log((option, player) -> {
-                RegistryKey<World> dim = player.world.getRegistryKey(); //getDimType
+                ResourceKey<Level> dim = player.level.dimension(); //getDimType
                 switch (option)
                 {
                     case "overworld":
-                        dim = World.OVERWORLD; // OW
+                        dim = Level.OVERWORLD; // OW
                         break;
                     case "nether":
-                        dim = World.NETHER; // nether
+                        dim = Level.NETHER; // nether
                         break;
                     case "end":
-                        dim = World.END; // end
+                        dim = Level.END; // end
                         break;
                 }
-                return new BaseText[]{SpawnReporter.printMobcapsForDimension(server.getWorld(dim), false).get(0)};
+                return new Component[]{SpawnReporter.printMobcapsForDimension(server.getLevel(dim), false).get(0)};
             });
 
         if(LoggerRegistry.__counter)
@@ -119,43 +116,43 @@ public class HUDController
         // extensions have time to pitch in.
         HUDListeners.forEach(l -> l.accept(server));
 
-        Set<ServerPlayerEntity> targets = new HashSet<>(player_huds.keySet());
+        Set<ServerPlayer> targets = new HashSet<>(player_huds.keySet());
         if (force!= null) targets.addAll(force);
-        for (ServerPlayerEntity player: targets)
+        for (ServerPlayer player: targets)
         {
-            PacketByteBuf packetData = new PacketByteBuf(Unpooled.buffer()).
-                    writeText(scarpet_headers.getOrDefault(player.getEntityName(), new LiteralText(""))).
-                    writeText(Messenger.c(player_huds.getOrDefault(player, Collections.emptyList()).toArray(new Object[0])));
-            PlayerListHeaderS2CPacket packet = new PlayerListHeaderS2CPacket(packetData);
+            FriendlyByteBuf packetData = new FriendlyByteBuf(Unpooled.buffer()).
+                    writeComponent(scarpet_headers.getOrDefault(player.getScoreboardName(), Component.literal(""))).
+                    writeComponent(Messenger.c(player_huds.getOrDefault(player, Collections.emptyList()).toArray(new Object[0])));
+            ClientboundTabListPacket packet = new ClientboundTabListPacket(packetData);
 
             //PlayerListHeaderS2CPacket packet = new PlayerListHeaderS2CPacket();
             //((PlayerListHeaderS2CPacketMixin)packet).setHeader(scarpet_headers.getOrDefault(player.getEntityName(), new LiteralText("")));
             //((PlayerListHeaderS2CPacketMixin)packet).setFooter(Messenger.c(player_huds.getOrDefault(player, Collections.emptyList()).toArray(new Object[0])));
-            player.networkHandler.sendPacket(packet);
+            player.connection.send(packet);
         }
     }
-    private static BaseText [] send_tps_display(MinecraftServer server)
+    private static Component [] send_tps_display(MinecraftServer server)
     {
-        double MSPT = MathHelper.average(server.lastTickLengths) * 1.0E-6D;
+        double MSPT = Mth.average(server.tickTimes) * 1.0E-6D;
         double TPS = 1000.0D / Math.max((TickSpeed.time_warp_start_time != 0)?0.0:TickSpeed.mspt, MSPT);
         String color = Messenger.heatmap_color(MSPT,TickSpeed.mspt);
-        return new BaseText[]{Messenger.c(
+        return new Component[]{Messenger.c(
                 "g TPS: ", String.format(Locale.US, "%s %.1f",color, TPS),
                 "g  MSPT: ", String.format(Locale.US,"%s %.1f", color, MSPT))};
     }
 
-    private static BaseText [] send_counter_info(MinecraftServer server, String color)
+    private static Component [] send_counter_info(MinecraftServer server, String color)
     {
-        List <BaseText> res = new ArrayList<>();
+        List <Component> res = new ArrayList<>();
         Arrays.asList(color.split(",")).forEach(c ->{
             HopperCounter counter = HopperCounter.getCounter(c);
             if (counter != null) res.addAll(counter.format(server, false, true));
         });
-        return res.toArray(new BaseText[0]);
+        return res.toArray(new Component[0]);
     }
-    private static BaseText [] packetCounter()
+    private static Component [] packetCounter()
     {
-        BaseText [] ret =  new BaseText[]{
+        Component [] ret =  new Component[]{
                 Messenger.c("w I/" + PacketCounter.totalIn + " O/" + PacketCounter.totalOut),
         };
         PacketCounter.reset();

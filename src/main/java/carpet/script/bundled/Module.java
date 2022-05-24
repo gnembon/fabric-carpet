@@ -1,39 +1,19 @@
 package carpet.script.bundled;
 
-import carpet.CarpetServer;
-import carpet.script.argument.FileArgument;
-import net.minecraft.nbt.NbtElement;
-import net.minecraft.util.WorldSavePath;
-
-import java.nio.file.Files;
-import java.nio.file.Path;
-
+/**
+ * @deprecated Use {@link carpet.script.Module} instead.
+ *             To be removed in first 1.20 snapshots
+ */
+@Deprecated(forRemoval = true)
 public abstract class Module
 {
     public abstract String getName();
     public abstract String getCode();
     public abstract boolean isLibrary();
-
-    public static NbtElement getData(Module module)
+    
+    public carpet.script.Module toModule()
     {
-        Path dataFile = resolveResource(module);
-        if (dataFile == null) return null;
-        if (!Files.exists(dataFile) || !(dataFile.toFile().isFile())) return null;
-        synchronized (FileArgument.writeIOSync) { return FileArgument.readTag(dataFile); }
-    }
-
-    public static void saveData(Module module, NbtElement globalState)
-    {
-        Path dataFile = resolveResource(module);
-        if (dataFile == null) return;
-        if (!Files.exists(dataFile.getParent()) && !dataFile.toFile().getParentFile().mkdirs()) return;
-        synchronized (FileArgument.writeIOSync) { FileArgument.writeTagDisk(globalState, dataFile, false); }
-    }
-
-    private static Path resolveResource(Module module)
-    {
-        if (module == null || module.getName() == null) return null; // commandline app
-        return CarpetServer.minecraft_server.getSavePath(WorldSavePath.ROOT).resolve("scripts/"+module.getName()+".data.nbt");
+    	return new carpet.script.Module(getName(), getCode(), isLibrary());
     }
 
     @Override

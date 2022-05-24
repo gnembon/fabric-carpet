@@ -8,10 +8,7 @@ import carpet.script.api.Entities;
 import carpet.script.api.Inventories;
 import carpet.script.api.Scoreboards;
 import carpet.script.api.WorldAccess;
-import carpet.script.bundled.BundledModule;
 import carpet.CarpetServer;
-import carpet.script.bundled.FileModule;
-import carpet.script.bundled.Module;
 import carpet.script.exception.ExpressionException;
 import carpet.script.exception.LoadException;
 import carpet.script.language.Arithmetic;
@@ -30,12 +27,12 @@ import com.mojang.brigadier.tree.CommandNode;
 
 import net.fabricmc.api.EnvType;
 import net.fabricmc.loader.api.FabricLoader;
+import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.command.ServerCommandSource;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.util.WorldSavePath;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.level.storage.LevelResource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.file.FileVisitOption;
@@ -54,10 +51,10 @@ import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-public class CarpetScriptServer
+public class CarpetScriptServer extends ScriptServer
 {
     //make static for now, but will change that later:
-    public static final Logger LOG = LogManager.getLogger("scarpet");
+    public static final Logger LOG = LoggerFactory.getLogger("Scarpet");
     public final MinecraftServer server;
     public  CarpetScriptHost globalHost;
     public  Map<String, CarpetScriptHost> modules;
@@ -72,41 +69,54 @@ public class CarpetScriptServer
     private static final List<Module> ruleModuleData = new ArrayList<>();
 
     /**
-     * Registers a Scarpet App to be always available to be loaded
-     * in the /script load list.
-     * @see BundledModule#fromPath(String, String, boolean)
-     * 
-     * @param app The {@link BundledModule} of the app
+     * @deprecated Use {@link #registerBuiltInApp(Module)} instead
      */
-    public static void registerBuiltInScript(BundledModule app)
+    @Deprecated(forRemoval = true)
+    public static void registerBuiltInScript(carpet.script.bundled.BundledModule app)
     {
-        bundledModuleData.add(app);
+        registerBuiltInApp(app.toModule());
     }
     
     /**
-     * Registers a Scarpet App to be used as a Rule App
-     * (to be controlled with the value of a Carpet rule).
-     * Libraries should be registered with {@link #registerBuiltInScript(BundledModule)} instead
-     * @see BundledModule#fromPath(String, String, boolean)
-     * 
-     * @param app The {@link BundledModule} of the app.
+     * @deprecated Use {@link #registerSettingsApp(Module)} instead
      */
-    public static void registerSettingsApp(BundledModule app) {
+    @Deprecated(forRemoval = true)
+    public static void registerSettingsApp(carpet.script.bundled.BundledModule app) {
+        registerSettingsApp(app.toModule());
+    }
+    /**
+     * Registers a Scarpet App to be always available under the {@code /script load} list.
+     * @see Module#fromJarPath(String, String, boolean)
+     * 
+     * @param app The {@link Module} of the app
+     */
+    public static void registerBuiltInApp(Module app) {
+        bundledModuleData.add(app);
+    }
+
+    /**
+     * Registers a Scarpet App to be used as a Rule App (to be controlled with the value of a Carpet rule).
+     * Libraries should be registered with {@link #registerBuiltInScript(BundledModule)} instead
+     * @see Module#fromJarPath(String, String, boolean)
+     * 
+     * @param app The {@link Module} of the app.
+     */
+    public static void registerSettingsApp(Module app) {
         ruleModuleData.add(app);
     }
 
     static
     {
-        registerBuiltInScript(BundledModule.carpetNative("camera", false));
-        registerBuiltInScript(BundledModule.carpetNative("overlay", false));
-        registerBuiltInScript(BundledModule.carpetNative("event_test", false));
-        registerBuiltInScript(BundledModule.carpetNative("stats_test", false));
-        registerBuiltInScript(BundledModule.carpetNative("math", true));
-        registerBuiltInScript(BundledModule.carpetNative("chunk_display", false));
-        registerBuiltInScript(BundledModule.carpetNative("ai_tracker", false));
-        registerBuiltInScript(BundledModule.carpetNative("draw_beta", false));
-        registerBuiltInScript(BundledModule.carpetNative("shapes", true));
-        registerBuiltInScript(BundledModule.carpetNative("distance_beta", false));
+        registerBuiltInApp(Module.carpetNative("camera", false));
+        registerBuiltInApp(Module.carpetNative("overlay", false));
+        registerBuiltInApp(Module.carpetNative("event_test", false));
+        registerBuiltInApp(Module.carpetNative("stats_test", false));
+        registerBuiltInApp(Module.carpetNative("math", true));
+        registerBuiltInApp(Module.carpetNative("chunk_display", false));
+        registerBuiltInApp(Module.carpetNative("ai_tracker", false));
+        registerBuiltInApp(Module.carpetNative("draw_beta", false));
+        registerBuiltInApp(Module.carpetNative("shapes", true));
+        registerBuiltInApp(Module.carpetNative("distance_beta", false));
     }
 
     public CarpetScriptServer(MinecraftServer server)
@@ -117,13 +127,12 @@ public class CarpetScriptServer
 
     private void init()
     {
-        ScriptHost.systemGlobals.clear();
         events = new CarpetEventServer(this);
         modules = new HashMap<>();
         unloadableModules = new HashSet<>();
         tickStart = 0L;
         stopAll = false;
-        holyMoly = server.getCommandManager().getDispatcher().getRoot().getChildren().stream().map(CommandNode::getName).collect(Collectors.toSet());
+        holyMoly = server.getCommands().getDispatcher().getRoot().getChildren().stream().map(CommandNode::getName).collect(Collectors.toSet());
         globalHost = CarpetScriptHost.create(this, null, false, null, p -> true, false, null);
     }
 
@@ -139,7 +148,7 @@ public class CarpetScriptServer
         {
             for (String moduleName: listAvailableModules(false))
             {
-                addScriptHost(server.getCommandSource(), moduleName, null, true, true, false, null);
+                addScriptHost(server.createCommandSourceStack(), moduleName, null, true, true, false, null);
             }
         }
         CarpetEventServer.Event.START.onTick();
@@ -148,7 +157,7 @@ public class CarpetScriptServer
     public Module getModule(String name, boolean allowLibraries)
     {
         try {
-            Path folder = server.getSavePath(WorldSavePath.ROOT).resolve("scripts");
+            Path folder = server.getWorldPath(LevelResource.ROOT).resolve("scripts");
             if (!Files.exists(folder)) 
                 Files.createDirectories(folder);
             Optional<Path>
@@ -158,7 +167,7 @@ public class CarpetScriptServer
                     (allowLibraries && script.getFileName().toString().equalsIgnoreCase(name+".scl"))
                 ).findFirst();
             if (scriptPath.isPresent())
-                return new FileModule(scriptPath.get());
+                return Module.fromPath(scriptPath.get());
 
             if (FabricLoader.getInstance().getEnvironmentType() == EnvType.CLIENT)
             {
@@ -170,14 +179,14 @@ public class CarpetScriptServer
                                 (allowLibraries && script.getFileName().toString().equalsIgnoreCase(name + ".scl")))
                         .findFirst();
                 if (scriptPath.isPresent())
-                    return new FileModule(scriptPath.get());
+                    return Module.fromPath(scriptPath.get());
             }
         } catch (IOException e) {
             CarpetSettings.LOG.error("Exception while loading the app: ", e);
         }
         for (Module moduleData : bundledModuleData)
         {
-            if (moduleData.getName().equalsIgnoreCase(name) && (allowLibraries || !moduleData.isLibrary()))
+            if (moduleData.name().equalsIgnoreCase(name) && (allowLibraries || !moduleData.library()))
             {
                 return moduleData;
             }
@@ -189,7 +198,7 @@ public class CarpetScriptServer
     {
         for (Module moduleData : ruleModuleData)
         {
-            if (moduleData.getName().equalsIgnoreCase(name))
+            if (moduleData.name().equalsIgnoreCase(name))
             {
                 return moduleData;
             }
@@ -204,11 +213,11 @@ public class CarpetScriptServer
         {
             for (Module mi : bundledModuleData)
             {
-                if (!mi.isLibrary() && !mi.getName().endsWith("_beta")) moduleNames.add(mi.getName());
+                if (!mi.library() && !mi.name().endsWith("_beta")) moduleNames.add(mi.name());
             }
         }
         try {
-            Path worldScripts = server.getSavePath(WorldSavePath.ROOT).resolve("scripts");
+            Path worldScripts = server.getWorldPath(LevelResource.ROOT).resolve("scripts");
             if (!Files.exists(worldScripts)) 
                 Files.createDirectories(worldScripts);
             Files.list(worldScripts)
@@ -237,7 +246,7 @@ public class CarpetScriptServer
         return modules.get(name);
     }
 
-    public boolean addScriptHost(ServerCommandSource source, String name, Predicate<ServerCommandSource> commandValidator,
+    public boolean addScriptHost(CommandSourceStack source, String name, Predicate<CommandSourceStack> commandValidator,
                                  boolean perPlayer, boolean autoload, boolean isRuleApp, AppStoreManager.StoreNode installer)
     {
         CarpetProfiler.ProfilerToken currentSection = CarpetProfiler.start_section(null, "Scarpet load", CarpetProfiler.TYPE.GENERAL);
@@ -254,7 +263,7 @@ public class CarpetScriptServer
         Module module = isRuleApp ? getRuleModule(name) : getModule(name, false);
         if (module == null)
         {
-            Messenger.m(source, "r Failed to add "+name+" app");
+            Messenger.m(source, "r Failed to add "+name+" app: App not found");
             return false;
         }
         CarpetScriptHost newHost;
@@ -273,11 +282,6 @@ public class CarpetScriptServer
         //    Messenger.m(source, "r Failed to add "+name+" app: invalid app config (via '__config()' function)");
         //    return false;
         //}
-        if (module.getCode() == null)
-        {
-            Messenger.m(source, "r Unable to load "+name+" app - not found");
-            return false;
-        }
 
         modules.put(name, newHost);
         if (!isRuleApp) unloadableModules.add(name);
@@ -312,9 +316,9 @@ public class CarpetScriptServer
         if (newHost.isPerUser())
         {
             // that will provide player hosts right at the startup
-            for (ServerPlayerEntity player : source.getServer().getPlayerManager().getPlayerList())
+            for (ServerPlayer player : source.getServer().getPlayerList().getPlayers())
             {
-                newHost.retrieveForExecution(player.getCommandSource(), player);
+                newHost.retrieveForExecution(player.createCommandSourceStack(), player);
             }
         }
         else
@@ -335,7 +339,7 @@ public class CarpetScriptServer
     }
 
 
-    public boolean removeScriptHost(ServerCommandSource source, String name, boolean notifySource, boolean isRuleApp)
+    public boolean removeScriptHost(CommandSourceStack source, String name, boolean notifySource, boolean isRuleApp)
     {
         name = name.toLowerCase(Locale.ROOT);
         if (!modules.containsKey(name) || (!isRuleApp && !unloadableModules.contains(name)))
@@ -353,12 +357,12 @@ public class CarpetScriptServer
         return true;
     }
 
-    public boolean uninstallApp(ServerCommandSource source, String name)
+    public boolean uninstallApp(CommandSourceStack source, String name)
     {
         try
         {
             name = name.toLowerCase(Locale.ROOT);
-            Path folder = server.getSavePath(WorldSavePath.ROOT).resolve("scripts/trash");
+            Path folder = server.getWorldPath(LevelResource.ROOT).resolve("scripts/trash");
             if (!Files.exists(folder)) Files.createDirectories(folder);
             if (!Files.exists(folder.getParent().resolve(name+".sc")))
             {
@@ -401,7 +405,7 @@ public class CarpetScriptServer
         }
     }
 
-    public void onPlayerJoin(ServerPlayerEntity player)
+    public void onPlayerJoin(ServerPlayer player)
     {
         modules.values().forEach(h ->
         {
@@ -409,7 +413,7 @@ public class CarpetScriptServer
             {
                 try
                 {
-                    h.retrieveOwnForExecution(player.getCommandSource());
+                    h.retrieveOwnForExecution(player.createCommandSourceStack());
                 }
                 catch (CommandSyntaxException ignored)
                 {
@@ -418,7 +422,7 @@ public class CarpetScriptServer
         });
     }
 
-    private static record TransferData(boolean perUser, Predicate<ServerCommandSource> commandValidator, boolean isRuleApp)
+    private static record TransferData(boolean perUser, Predicate<CommandSourceStack> commandValidator, boolean isRuleApp)
     {
         private TransferData(CarpetScriptHost host)
         {
@@ -430,10 +434,10 @@ public class CarpetScriptServer
     {
         Map<String, TransferData> apps = new HashMap<>();
         modules.forEach((s, h) -> apps.put(s, new TransferData(h)));
-        apps.keySet().forEach(s -> removeScriptHost(server.getCommandSource(), s, false, false));
+        apps.keySet().forEach(s -> removeScriptHost(server.createCommandSourceStack(), s, false, false));
         CarpetEventServer.Event.clearAllBuiltinEvents();
         init();
-        apps.forEach((s, data) -> addScriptHost(server.getCommandSource(), s,data.commandValidator, data.perUser,false, data.isRuleApp, null));
+        apps.forEach((s, data) -> addScriptHost(server.createCommandSourceStack(), s,data.commandValidator, data.perUser,false, data.isRuleApp, null));
     }
 
     public void reAddCommands()

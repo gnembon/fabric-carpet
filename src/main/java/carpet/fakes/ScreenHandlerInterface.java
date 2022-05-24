@@ -1,12 +1,12 @@
 package carpet.fakes;
 
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.recipe.Recipe;
-import net.minecraft.screen.Property;
-import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.DataSlot;
+import net.minecraft.world.item.crafting.Recipe;
 
 public interface ScreenHandlerInterface {
-    Property getProperty(int index);
-    boolean callButtonClickListener(int button, PlayerEntity player);
-    boolean callSelectRecipeListener(ServerPlayerEntity player, Recipe<?> recipe, boolean craftAll);
+    DataSlot getProperty(int index);
+    boolean callButtonClickListener(int button, Player player);
+    boolean callSelectRecipeListener(ServerPlayer player, Recipe<?> recipe, boolean craftAll);
 }

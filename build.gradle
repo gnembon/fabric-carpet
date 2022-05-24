@@ -1,5 +1,6 @@
 plugins {
-	id 'fabric-loom' version '0.10-SNAPSHOT'
+	id 'fabric-loom' version '0.11-SNAPSHOT'
+	id 'io.github.juuxel.loom-quiltflower' version '1.7.1'
 	id 'maven-publish'
 }
 
@@ -12,16 +13,17 @@ group = project.maven_group
 
 loom {
 	accessWidenerPath = file("src/main/resources/carpet.accesswidener")
+	runtimeOnlyLog4j = false // Can be turned on after TriConsumer is no longer present in public API
 }
 
 dependencies {
 	// To change the versions see the gradle.properties file
 	minecraft "com.mojang:minecraft:${project.minecraft_version}"
-	mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
+	mappings loom.officialMojangMappings()
 	modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
 
 	// Fabric API. This is technically optional, but you probably want it anyway.
-	// modCompile "net.fabricmc:fabric:${project.fabric_version}"
+	//modImplementation "net.fabricmc:fabric:${project.fabric_version}"
 	modCompileOnly fabricApi.module("fabric-rendering-v1", project.fabric_version)
 
 	// PSA: Some older mods, compiled on Loom 0.2.1, might have outdated Maven POMs.
@@ -65,13 +67,7 @@ jar {
 publishing {
 	publications {
 		mavenJava(MavenPublication) {
-			// add all the jars that should be included when publishing to maven
-			artifact(remapJar) {
-				builtBy remapJar
-			}
-			artifact(sourcesJar) {
-				builtBy remapSourcesJar
-			}
+			from components.java
 		}
 	}
 

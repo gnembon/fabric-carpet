@@ -976,10 +976,11 @@ title('aBc') => 'Abc'
 ### `replace(string, regex, repl?); replace_first(string, regex, repl?)`
 
 Replaces all, or first occurence of a regular expression in the string with `repl` expression, 
-or nothing, if not specified
+or nothing, if not specified. To use escape characters (`\(`,`\+`,...), metacharacters (`\d`,`\w`,...), or position anchors (`\b`,`\z`,...) in your regular expression, use two backslashes.
 
 <pre>
 replace('abbccddebfg','b+','z')  // => azccddezfg
+replace('abbccddebfg','\\w$','z')  // => abbccddebfz
 replace_first('abbccddebfg','b+','z')  // => azccddebfg
 </pre>
 
@@ -1199,7 +1200,8 @@ not present, and default expression is provided, sets a new value to be associat
 ### `system_variable_set(key, new_value)`
 
 Returns the variable from the system shared key-value storage keyed with a `key` value, and sets a new 
-mapping for the key# Loops, and higher order functions
+mapping for the key
+# Loops, and higher order functions
 
 Efficient use of these functions can greatly simplify your programs and speed them up, as these functions will 
 internalize most of the operations that need to be applied on multiple values at the same time. Most of them take 
@@ -1980,9 +1982,13 @@ apps `__on_close()` will execute once per app, and with `'player'` scoped apps, 
 ### App config via `__config()` function
 
 If an app defines `__config` method, and that method returns a map, it will be used to apply custom settings 
-for this app. Currently the following options are supported:
+for this app. Currently, the following options are supported:
 
-*   `'scope'`: default scope for global variables for the app, Default is `'player'`, which means that globals and defined 
+* `'strict'` : if `true`, any use of an uninitialized variable will result in program failure. Defaults to `false` if 
+not specified. With `'strict'`you have to assign an initial value to any variable before using it. It is very useful 
+to use this setting for app debugging and for beginner programmers. Explicit initialization is not required for your 
+code to work, but mistakes may result from improper assumptions about initial variable values of `null`.
+* `'scope'`: default scope for global variables for the app, Default is `'player'`, which means that globals and defined 
 functions will be unique for each player so that apps for each player will run in isolation. This is useful in 
 tool-like applications, where behaviour of things is always from a player's perspective. With player scope the initial run 
 of the app creates is initial state: defined functions, global variables, config and event handlers, which is then copied for 
@@ -2293,7 +2299,7 @@ Here is a list of built-in types, with their return value formats, as well as a 
   * `'loottable'`: name of a loot table source
   * `'attribute'`: an attribute name
   * `'boss'`: a bossbar name
-  * `'biome'`: a biome name 
+  * `'biome'`: a biome name. or biome tag
   * `'sound'`: name of a sound 
   * `'storekey'`: string of a valid current data store key.
   * `'identifier'`: any valid identifier. 'minecraft:' prefix is stripped off as a default.
@@ -2676,10 +2682,11 @@ Note: Have to pass all 6 of the mentioned noise types and only these noise types
 With an optional feature, it returns value for the specified attribute for that biome. Available and queryable features include:
 * `'top_material'`: unlocalized block representing the top surface material (1.17.1 and below only)
 * `'under_material'`: unlocalized block representing what sits below topsoil (1.17.1 and below only)
-* `'category'`: the parent biome this biome is derived from. Possible values include:
+* `'category'`: the parent biome this biome is derived from. Possible values include (1.18.2 and below only):
 `'none'`, `'taiga'`, `'extreme_hills'`, `'jungle'`, `'mesa'`, `'plains'`, `'savanna'`,
 `'icy'`, `'the_end'`, `'beach'`, `'forest'`, `'ocean'`, `'desert'`, `'river'`,
 `'swamp'`, `'mushroom'` , `'nether'`, `'underground'` (1.18+) and `'mountain'` (1.18+).
+* `'tags'`: list of biome tags associated with this biome
 * `'temperature'`: temperature from 0 to 1
 * `'fog_color'`: RGBA color value of fog 
 * `'foliage_color'`: RGBA color value of foliage
@@ -2936,9 +2943,9 @@ with minecraft 1.16.1 and below or 1.16.2 and above since in 1.16.2 Mojang has a
 meaning that since 1.16.2 - they have official names that can be used by datapacks and scarpet. If you have most recent
 scarpet on 1.16.4, you can use `plop()` to get all available worldgen features including custom features and structures
 controlled by datapacks. It returns a map of lists in the following categories: 
-`'scarpet_custom'`, `'configured_features'`, `'structures'`, `'features'`, `'configured_structures'`
+`'scarpet_custom'`, `'configured_features'`, `'structures'`, `'features'`, `'structure_types'`
 
-### Previous Structure Names, including variants (MC1.16.1 and below)
+### Previous Structure Names, including variants (for MC1.16.1 and below only)
 *   `'monument'`: Ocean Monument. Generates at fixed Y coordinate, surrounds itself with water.
 *   `'fortress'`: Nether Fortress. Altitude varies, but its bounded by the code.
 *   `'mansion'`: Woodland Mansion
@@ -3032,28 +3039,10 @@ controlled by datapacks. It returns a map of lists in the following categories:
 *   `'twisting_vines'` (1.16)
 *   `'basalt_pillar'` (1.16)
 
-### Standard Structures (as of MC1.16.2+)
 
-Use `plop():'structures'`, but it always returns the following:
+### World Generation Features and Structures (as of MC1.16.2+)
 
-`'bastion_remnant'`, `'buried_treasure'`, `'desert_pyramid'`, `'endcity'`, `'fortress'`, `'igloo'`, 
-`'jungle_pyramid'`, `'mansion'`, `'mineshaft'`, `'monument'`, `'nether_fossil'`, `'ocean_ruin'`, 
-`'pillager_outpost'`, `'ruined_portal'`, `'shipwreck'`, `'stronghold'`, `'swamp_hut'`, `'village'`
-
-### Structure Variants (as of MC1.16.2+)
-
-Use `plop():'configured_structures'`, but it always returns the following:
-
-`'bastion_remnant'`, `'buried_treasure'`, `'desert_pyramid'`, `'end_city'`, `'fortress'`, `'igloo'`, 
-`'jungle_pyramid'`, `'mansion'`, `'mineshaft'`, `'mineshaft_mesa'`, `'monument'`, `'nether_fossil'`,
-`'ocean_ruin_cold'`, `'ocean_ruin_warm'`, `'pillager_outpost'`, `'ruined_portal'`, `'ruined_portal_desert'`, 
-`'ruined_portal_jungle'`, `'ruined_portal_mountain'`, `'ruined_portal_nether'`, `'ruined_portal_ocean'`, 
-`'ruined_portal_swamp'`, `'shipwreck'`, `'shipwreck_beached'`, `'stronghold'`, `'swamp_hut'`, 
-`'village_desert'`, `'village_plains'`, `'village_savanna'`, `'village_snovy'`, `'village_taiga'`
-
-### World Generation Features (as of MC1.16.2+)
-
-Use `plop():'features'` and `plop():'configured_features'` for a list of available options. Your output may vary based on
+Use `plop():'structure_types'`, `plop():'structures'`, `plop():'features'`, and `plop():'configured_features'` for a list of available options. Your output may vary based on
 datapacks installed in your world.
 
 ### Custom Scarpet Features
@@ -3077,7 +3066,8 @@ These contain some popular features and structures that are impossible or diffic
 
 ### `structure_eligibility(pos, ?structure, ?size_needed)`
 
-Checks wordgen eligibility for a structure in a given chunk. Requires a `Standard Structure` name (see above).
+Checks wordgen eligibility for a structure in a given chunk. Requires a `Structure Variant` name (see above),
+or `Standard Structure` to check structures of this type.
 If no structure is given, or `null`, then it will check
 for all structures. If bounding box of the structures is also requested, it will compute size of potential
 structures. This function, unlike other in the `structure*` category is not using world data nor accesses chunks
@@ -3090,7 +3080,7 @@ If structure is specified, it will return `null` if a chunk is not eligible or i
 a map with two values: `'box'` for a pair of coordinates indicating bounding box of the structure, and `'pieces'` for 
 list of elements of the structure (as a tuple), with its name, direction, and box coordinates of the piece.
 
-If structure is not specified, it will return a set of structure names that are eligible, or a map with structures
+If structure is not specified, or a `Standard Structure` was specified, like `'village'`,it will return a set of structure names that are eligible, or a map with structures
 as keys, and same type of map values as with a single structure call. An empty set or an empty map would indicate that nothing
 should be generated there.
 
@@ -3135,7 +3125,7 @@ Throws `unknown_structure` if structure doesn't exist.
 Plops a structure or a feature at a given `pos`, so block, triple position coordinates or a list of coordinates. 
 To `what` gets plopped and exactly where it often depends on the feature or structure itself. 
 
-Requires a `Structure Variant`,  `Standard Structure`, `World Generation Feature` or `Custom Scarpet Feature` name (see
+Requires a `Structure Type`,  `Structure`, `World Generation Feature` or `Custom Scarpet Feature` name (see
 above). If standard name is used, the variant of the structure may depend on the biome, otherwise the default 
 structure for this type will be generated.
 
@@ -3151,30 +3141,6 @@ which sets it without looking into world blocks, and then use `plop` to fill it 
 All generated structures will retain their properties, like mob spawning, however in many cases the world / dimension 
 itself has certain rules to spawn mobs, like plopping a nether fortress in the overworld will not spawn nether mobs, 
 because nether mobs can spawn only in the nether, but plopped in the nether - will behave like a valid nether fortress.
-
-###  (deprecated) `custom_dimension(name, seed?)`
-
-Deprecated by `create_datapack()` which can be used to setup custom dimensions
-
-Ensures the dimension with the given `'name'` is available and configured with the given seed. It merely sets the world
-generator settings to the overworld, and the optional custom seed (or using current world seed, if not provided). 
-
-If the dimension with this name already exists, returns `false` and does nothing.
-
-Created dimension with `custom_dimension` only exist till the game restart (same with the datapacks, if removed), but
-all the world data should be saved. If custom dimension is re-created next time the app is loaded it will be using
-the existing world content. This means that it is up to the programmer to make sure the custom dimensions settings
-are stored in app data and restored when app reloads and wants to use previous worlds. Since vanilla game only keeps
-track of world data, not the world settings, if the dimension hasn't been yet configured via `custom_dimension` and
-the app hasn't yet initalized their dimension, the players will be positioned in the overworld at the same coordinates.
-
-List of custom dimensions (to be used in the likes of `/execute in <dim>`) is only send to the clients when joining the 
-game, meaning custom worlds created after a player has joined will not be suggested in vanilla commands, but running
-vanilla commands on them will be successful. Its due to the fact that datapacks with dimensions are always loaded
-with the game and assumed not changing.
-
-`custom_dimension` is experimental and considered a WIP. More customization options besides the seed will be added in
-the future.
 # Iterating over larger areas of blocks
 
 These functions help scan larger areas of blocks without using generic loop functions, like nested `loop`.
@@ -3433,6 +3399,10 @@ List of entities riding the entity.
 
 Entity that `e` rides.
 
+### `query(e, 'unmountable')`
+
+Boolean, true if the entity cannot be mounted.
+
 ### `(deprecated) query(e, 'tags')`
 
 Deprecated by `query(e, 'scoreboard_tags')`
@@ -3465,6 +3435,14 @@ Boolean, true if the entity is burning.
 
 Number of remaining ticks of being on fire.
 
+### `query(e, 'is_freezing')`
+
+Boolean, true if the entity is freezing.
+
+### `query(e, 'frost')`
+
+Number of remaining ticks of being frozen.
+
 ### `query(e, 'silent')`
 
 Boolean, true if the entity is silent.
@@ -3480,6 +3458,10 @@ Boolean, true if the entity is invulnerable.
 ### `query(e, 'immune_to_fire')`
 
 Boolean, true if the entity is immune to fire.
+
+### `query(e, 'immune_to_frost')`
+
+Boolean, true if the entity is immune to frost.
 
 ### `query(e, 'dimension')`
 
@@ -3673,10 +3655,10 @@ Retrieves player hunger related information. For non-players, returns `null`.
 
 Gets the absorption of the player (yellow hearts, e.g. when having a golden apple.)
 
-### `query(e,'xp')`
-### `query(e,'xp_level')`
-### `query(e,'xp_progress')`
-### `query(e,'score')`
+### `query(e, 'xp')`
+### `query(e, 'xp_level')`
+### `query(e, 'xp_progress')`
+### `query(e, 'score')`
 
 Numbers related to player's xp. `xp` is the overall xp player has, `xp_level` is the levels seen in the hotbar,
 `xp_progress` is a float between 0 and 1 indicating the percentage of the xp bar filled, and `score` is the number displayed upon death 
@@ -3867,7 +3849,7 @@ Moves the entity by a vector from its current location.
 
 Sets the motion vector (where and how much entity is moving).
 
-### `modify(e, 'motion_z', x), modify(e, 'motion_y', y), modify(e, 'motion_z', z)`
+### `modify(e, 'motion_x', x), modify(e, 'motion_y', y), modify(e, 'motion_z', z)`
 
 Sets the corresponding component of the motion vector.
 
@@ -3918,6 +3900,10 @@ Dismounts riding entity.
 
 Mounts the entity to the `other`.
 
+### `modify(e, 'unmountable', boolean)`
+
+Denies or allows an entity to be mounted.
+
 ### `modify(e, 'drop_passengers')`
 
 Shakes off all passengers.
@@ -3952,6 +3938,10 @@ players, since they are controlled client side.
 Applies status effect to the living entity. Takes several optional parameters, which default to `0`, `true`, 
 `true` and `false`. If no duration is specified, or if it's null or 0, the effect is removed. If name is not specified,
 it clears all effects.
+
+### `modify(e, 'health', float)`
+
+Modifies the health of an entity.
 
 ### `modify(e, 'may_fly', boolean)`
 
@@ -4034,6 +4024,10 @@ Toggles invulnerability for the entity.
 
 Will set entity on fire for `ticks` ticks. Set to 0 to extinguish.
 
+### `modify(e, 'frost', ticks)`
+
+Will give entity frost for `ticks` ticks. Set to 0 to unfreeze.
+
 ### `modify(e, 'hunger', value)`
 ### `modify(e, 'saturation', value)`
 ### `modify(e, 'exhaustion', value)`
@@ -4056,7 +4050,7 @@ maybe you will get a double, who knows.
 
 ### `modify(e, 'air', ticks)`
 
-Modifies entity air
+Modifies entity air.
 
 ### `modify(e, 'add_exhaustion', value)`
 
@@ -4934,6 +4928,9 @@ Triggered when the player has successfully logged in and was placed in the game.
 ### `__on_player_disconnects(player, reason)`
 Triggered when a player sends a disconnect package or is forcefully disconnected from the server.
 
+### `__on_player_message(player, message)`
+Triggered when a player sends a chat message or runs a command.
+
 ### `__on_statistic(player, category, event, value)`
 Triggered when a player statistic changes. Doesn't notify on periodic an rhythmic events, i.e. 
 `time_since_death`, `time_since_rest`, and `played_one_minute` since these are triggered every tick. Event 
@@ -5790,7 +5787,7 @@ Function example:
 <pre>
  script run create_datapack('example',{'data/test/functions/talk.mcfunction'->'say 1\nsay 2'})
 </pre>
-### `enable_hidden_dimensions()`
+### `enable_hidden_dimensions()` (1.18.1 and lower)
 
 The function reads current datapack settings detecting new dimensions defined by these datapacks that have not yet been added
 to the list of current dimensions and adds them so that they can be used and accessed right away. It doesn't matter how the
@@ -5798,7 +5795,8 @@ datapacks have been added to the game, either with `create_datapack()` or manual
 `/datapack enable` on it. Returns the list of valid dimension names / identifiers that has been added in the process.
 
 Fine print: The function should be
-considered experimental. There 'should not be' (famous last words) any side-effects if no worlds are added. Already connected
+considered experimental. For example: is not supposed to work at all in vanilla, and its doing exactly that in 1.18.2+.
+There 'should not be' (famous last words) any side-effects if no worlds are added. Already connected
 clients will not see suggestions for commands that use dimensions `/execute in <dim>` (vanilla client limitation) 
 but all commands should work just fine with
 the new dimensions. Existing worlds that have gotten modified settings by the datapacks will not be reloaded or replaced.
@@ -5921,7 +5919,8 @@ it could either mean your input is wrong, or statistic effectively has a value o
 
 
 ### `system_info()`, `system_info(property)`
-Fetches the value of a system property or returns all inforation as a map when called without any arguments. It can be used to 
+Fetches the value of one of the following system properties. If called without arguments, it returns a list of 
+available system_info options. It can be used to 
 fetch various information, mostly not changing, or only available via low level
 system calls. In all circumstances, these are only provided as read-only.
 

@@ -2,16 +2,16 @@ package carpet.mixins;
 
 import carpet.CarpetSettings;
 import carpet.helpers.InventoryHelper;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LightningBolt;
+import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.ShulkerBoxBlock;
 import carpet.fakes.ItemEntityInterface;
-import net.minecraft.block.ShulkerBoxBlock;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityType;
-import net.minecraft.entity.ItemEntity;
-import net.minecraft.entity.LightningEntity;
-import net.minecraft.item.BlockItem;
-import net.minecraft.item.ItemStack;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.world.World;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
@@ -24,21 +24,21 @@ public abstract class ItemEntityMixin extends Entity implements ItemEntityInterf
 {
     private static final int SHULKERBOX_MAX_STACK_AMOUNT = 64;
 
-    @Shadow private int itemAge;
+    @Shadow private int age;
     @Shadow private int pickupDelay;
 
-    public ItemEntityMixin(EntityType<?> entityType_1, World world_1) {
+    public ItemEntityMixin(EntityType<?> entityType_1, Level world_1) {
         super(entityType_1, world_1);
     }
 
     @Override
-    public void onStruckByLightning(ServerWorld world, LightningEntity lightning) {
+    public void thunderHit(ServerLevel world, LightningBolt lightning) {
         if (CarpetSettings.lightningKillsDropsFix) {
-            if (this.itemAge > 8) { //Only kill item if its older then 8 ticks
-                super.onStruckByLightning(world, lightning);
+            if (this.age > 8) { //Only kill item if it's older than 8 ticks
+                super.thunderHit(world, lightning);
             }
         } else {
-            super.onStruckByLightning(world, lightning);
+            super.thunderHit(world, lightning);
         }
     }
 
@@ -47,69 +47,69 @@ public abstract class ItemEntityMixin extends Entity implements ItemEntityInterf
         return this.pickupDelay;
     }
 
-    @Inject(method="<init>(Lnet/minecraft/world/World;DDDLnet/minecraft/item/ItemStack;)V", at = @At("RETURN"))
-    private void removeEmptyShulkerBoxTags(World worldIn, double x, double y, double z, ItemStack stack, CallbackInfo ci)
+    @Inject(method="<init>(Lnet/minecraft/world/level/Level;DDDLnet/minecraft/world/item/ItemStack;)V", at = @At("RETURN"))
+    private void removeEmptyShulkerBoxTags(Level worldIn, double x, double y, double z, ItemStack stack, CallbackInfo ci)
     {
         if (CarpetSettings.shulkerBoxStackSize > 1
                 && stack.getItem() instanceof BlockItem
                 && ((BlockItem)stack.getItem()).getBlock() instanceof ShulkerBoxBlock)
         {
             if (InventoryHelper.cleanUpShulkerBoxTag(stack)) {
-                ((ItemEntity) (Object) this).setStack(stack);
+                ((ItemEntity) (Object) this).setItem(stack);
             }
         }
     }
 
     @Redirect(
-            method = "canMerge()Z",
+            method = "isMergable()Z",
             at = @At(
                     value = "INVOKE",
-                    target = "Lnet/minecraft/item/ItemStack;getMaxCount()I"
+                    target = "Lnet/minecraft/world/item/ItemStack;getMaxStackSize()I"
             )
     )
     private int getItemStackMaxAmount(ItemStack stack) {
         if (CarpetSettings.shulkerBoxStackSize > 1 && stack.getItem() instanceof BlockItem && ((BlockItem)stack.getItem()).getBlock() instanceof ShulkerBoxBlock)
             return CarpetSettings.shulkerBoxStackSize;
 
-        return stack.getMaxCount();
+        return stack.getMaxStackSize();
     }
 
     @Inject(
-            method = "tryMerge(Lnet/minecraft/entity/ItemEntity;)V",
+            method = "tryToMerge(Lnet/minecraft/world/entity/item/ItemEntity;)V",
             at = @At("HEAD"),
             cancellable = true
     )
     private void tryStackShulkerBoxes(ItemEntity other, CallbackInfo ci)
     {
         ItemEntity self = (ItemEntity)(Object)this;
-        ItemStack selfStack = self.getStack();
+        ItemStack selfStack = self.getItem();
         if (CarpetSettings.shulkerBoxStackSize == 1 || !(selfStack.getItem() instanceof BlockItem) || !(((BlockItem)selfStack.getItem()).getBlock() instanceof ShulkerBoxBlock)) {
             return;
         }
 
-        ItemStack otherStack = other.getStack();
+        ItemStack otherStack = other.getItem();
         if (selfStack.getItem() == otherStack.getItem()
                 && !InventoryHelper.shulkerBoxHasItems(selfStack)
                 && !InventoryHelper.shulkerBoxHasItems(otherStack)
-                && selfStack.hasNbt() == otherStack.hasNbt()
+                && selfStack.hasTag() == otherStack.hasTag()
                 && selfStack.getCount() + otherStack.getCount() <= CarpetSettings.shulkerBoxStackSize)
         {
             int amount = Math.min(otherStack.getCount(), CarpetSettings.shulkerBoxStackSize - selfStack.getCount());
 
-            selfStack.increment(amount);
-            self.setStack(selfStack);
+            selfStack.grow(amount);
+            self.setItem(selfStack);
 
             this.pickupDelay = Math.max(((ItemEntityInterface)other).getPickupDelayCM(), this.pickupDelay);
-            this.itemAge = Math.min(other.getItemAge(), this.itemAge);
+            this.age = Math.min(other.getAge(), this.age);
 
-            otherStack.decrement(amount);
+            otherStack.shrink(amount);
             if (otherStack.isEmpty())
             {
                 other.discard(); // discard remove();
             }
             else
             {
-                other.setStack(otherStack);
+                other.setItem(otherStack);
             }
             ci.cancel();
         }

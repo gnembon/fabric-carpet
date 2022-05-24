@@ -1,9 +1,9 @@
 package carpet.logging;
 
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.text.BaseText;
-
 import java.lang.reflect.Field;
+
+import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerPlayer;
 
 public class HUDLogger extends Logger
 {
@@ -38,15 +38,15 @@ public class HUDLogger extends Logger
     @Override
     public void removePlayer(String playerName)
     {
-        ServerPlayerEntity player = playerFromName(playerName);
+        ServerPlayer player = playerFromName(playerName);
         if (player != null) HUDController.clear_player(player);
         super.removePlayer(playerName);
     }
 
     @Override
-    public void sendPlayerMessage(ServerPlayerEntity player, BaseText... messages)
+    public void sendPlayerMessage(ServerPlayer player, Component... messages)
     {
-        for (BaseText m:messages) HUDController.addMessage(player, m);
+        for (Component m:messages) HUDController.addMessage(player, m);
     }
 
 

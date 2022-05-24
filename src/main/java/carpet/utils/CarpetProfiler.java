@@ -2,16 +2,16 @@ package carpet.utils;
 
 import it.unimi.dsi.fastutil.objects.Object2LongMap;
 import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
-import net.minecraft.block.entity.BlockEntityType;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityType;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.core.Registry;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.server.command.ServerCommandSource;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.registry.Registry;
-import net.minecraft.util.registry.RegistryKey;
-import net.minecraft.world.World;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.BlockEntityType;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.Comparator;
@@ -22,25 +22,47 @@ import java.util.stream.Collectors;
 public class CarpetProfiler
 {
     private static final Map<String, Long> SECTION_STATS = new HashMap<>();
-    private static final Object2LongMap<Pair<World,Object>> ENTITY_TIMES = new Object2LongOpenHashMap<>();
-    private static final Object2LongMap<Pair<World,Object>> ENTITY_COUNT = new Object2LongOpenHashMap<>();
+    private static final Object2LongMap<Pair<Level,Object>> ENTITY_TIMES = new Object2LongOpenHashMap<>();
+    private static final Object2LongMap<Pair<Level,Object>> ENTITY_COUNT = new Object2LongOpenHashMap<>();
 
 
-    private static ServerCommandSource currentRequester = null;
+    private static CommandSourceStack currentRequester = null;
     public static int tick_health_requested = 0;
     private static int tick_health_elapsed = 0;
     private static TYPE test_type = TYPE.NONE; //1 for ticks, 2 for entities
     private static long current_tick_start = 0;
-    private static final String[] GENERAL_SECTIONS = {"Network", "Autosave", "Async Tasks", "Datapacks", "Carpet"};
-    private static final String[] SCARPET_SECTIONS = {
-            "Scarpet run", "Scarpet events", "Scarpet schedule",
-            "Scarpet command", "Scarpet load", "Scarpet app data", "Scarpet client"
-    };
-    private static final String[] SECTIONS = {
-            "Spawning and Random Ticks", "Ticket Manager","Unloading",
-            "Blocks", "Entities", "Block Entities",
-            "Entities (Client)", "Block Entities (Client)",
-            "Village", "Environment"};
+    private static final Map<String, String> GENERAL_SECTIONS = Map.of(
+        "Network",     "Packet sending, player logins, disconnects, kicks, anti-cheat check for player movement, etc.",
+        "Autosave",    "Autosave",
+        "Async Tasks", "Various asynchronous tasks on the server. Mainly chunk generation, chunk saving, etc.",
+        "Datapacks",   "Datapack tick function execution. Load function execution if reload was performed.",
+        "Carpet",      "Player hud, scripts, and extensions (If they choose to use carpet's onTick)."
+    );
+
+    private static final Map<String, String> SCARPET_SECTIONS = Map.of(
+        "Scarpet run",      "script run command execution",
+        "Scarpet events",   "script events, custom or built-in",
+        "Scarpet schedule", "script scheduled calls/events",
+        "Scarpet command",  "script custom commands. Calls, executions, suggestions, etc.",
+        "Scarpet load",     "script and libraries (if required) loading",
+        "Scarpet app data", "script module data (if required) ticking and saving",
+        "Scarpet client",   "script shape rendering. (Client side)"
+    );
+
+    private static final Map<String, String> SECTIONS = Map.ofEntries(
+        Map.entry("Spawning",                "Spawning of various things. Natural mobs, cats, patrols, wandering traders, phantoms, skeleton horses, etc."),
+        Map.entry("Random Ticks",            "Random ticks. Both block random ticks and fluid random ticks."),
+        Map.entry("Ticket Manager",          "Chunk ticket manager. Assigning tickets, removing tickets, etc."),
+        Map.entry("Unloading",               "POI ticking and chunk unloading."),
+        Map.entry("Schedule Ticks",          "Scheduled ticks. Repeaters, observers, redstone torch, water, lava, etc."),
+        Map.entry("Block Events",            "Scheduled Block events. Pistons, comparators, noteblocks, block entity events (chests opening/closing), etc."),
+        Map.entry("Entities",                "All the entities in the server. Ticking, removing, despawning, dragon fight (if active), etc."),
+        Map.entry("Block Entities",          "All the block entities in the server. Removal, ticking, etc."),
+        Map.entry("Entities (Client)",       "Entity lag client side. Mostly rendering."),
+        Map.entry("Block Entities (Client)", "Block entity lag client side. Mostly rendering."),
+        Map.entry("Raid",                    "Raid ticking, stopping, etc."),
+        Map.entry("Environment",             "Weather, time, waking up players, water freezing, cauldron filling, snow layers, etc.")
+    );
 
     public enum TYPE
     {
@@ -50,15 +72,15 @@ public class CarpetProfiler
         TILEENTITY
     }
 
-    public static record ProfilerToken(TYPE type, Object section, long start, World world)
+    public static record ProfilerToken(TYPE type, Object section, long start, Level world)
     {
-        public ProfilerToken(TYPE type, Object section, World world)
+        public ProfilerToken(TYPE type, Object section, Level world)
         {
             this(type, section, System.nanoTime(), world);
         }
     }
 
-    public static void prepare_tick_report(ServerCommandSource source, int ticks)
+    public static void prepare_tick_report(CommandSourceStack source, int ticks)
     {
         //maybe add so it only spams the sending player, but honestly - all may want to see it
         SECTION_STATS.clear();
@@ -66,19 +88,19 @@ public class CarpetProfiler
         ENTITY_TIMES.clear();
         test_type = TYPE.GENERAL;
         SECTION_STATS.put("tick", 0L);
-        for (String section : GENERAL_SECTIONS)
+        for (String section : GENERAL_SECTIONS.keySet())
         {
             SECTION_STATS.put(section, 0L);
         }
-        for (String section : SCARPET_SECTIONS)
+        for (String section : SCARPET_SECTIONS.keySet())
         {
             SECTION_STATS.put(section, 0L);
         }
-        for (RegistryKey<World> level : source.getServer().getWorldRegistryKeys())
+        for (ResourceKey<Level> level : source.getServer().levelKeys())
         {
-            for (String section : SECTIONS)
+            for (String section : SECTIONS.keySet())
             {
-                SECTION_STATS.put(level.getValue() + "." + section, 0L);
+                SECTION_STATS.put(level.location() + "." + section, 0L);
             }
         }
 
@@ -88,7 +110,7 @@ public class CarpetProfiler
         currentRequester = source;
     }
 
-    public static void prepare_entity_report(ServerCommandSource source, int ticks)
+    public static void prepare_entity_report(CommandSourceStack source, int ticks)
     {
         //maybe add so it only spams the sending player, but honestly - all may want to see it
         SECTION_STATS.clear();
@@ -102,21 +124,21 @@ public class CarpetProfiler
         currentRequester = source;
     }
 
-    public static ProfilerToken start_section(World world, String name, TYPE type)
+    public static ProfilerToken start_section(Level world, String name, TYPE type)
     {
         if (tick_health_requested == 0L || test_type != TYPE.GENERAL || current_tick_start == 0)
             return null;
         return new ProfilerToken(type, name, world);
     }
 
-    public static ProfilerToken start_entity_section(World world, Entity e, TYPE type)
+    public static ProfilerToken start_entity_section(Level world, Entity e, TYPE type)
     {
         if (tick_health_requested == 0L || test_type != TYPE.ENTITY || current_tick_start == 0)
             return null;
         return new ProfilerToken(type, e.getType(), world);
     }
 
-    public static ProfilerToken start_block_entity_section(World world, BlockEntity be, TYPE type)
+    public static ProfilerToken start_block_entity_section(Level world, BlockEntity be, TYPE type)
     {
         if (tick_health_requested == 0L || test_type != TYPE.ENTITY || current_tick_start == 0)
             return null;
@@ -130,10 +152,10 @@ public class CarpetProfiler
         long end_time = System.nanoTime();
         if (tok.type == TYPE.GENERAL)
         {
-            World world = tok.world;
+            Level world = tok.world;
             String current_section = (world == null) ?
                     (String) tok.section :
-                    String.format("%s.%s%s", world.getRegistryKey().getValue(), tok.section, world.isClient ? " (Client)" : "");
+                    String.format("%s.%s%s", world.dimension().location(), tok.section, world.isClientSide ? " (Client)" : "");
             SECTION_STATS.put(current_section, SECTION_STATS.getOrDefault(current_section, 0L) + end_time - tok.start);
         }
     }
@@ -143,7 +165,7 @@ public class CarpetProfiler
         if (tick_health_requested == 0L || test_type != TYPE.ENTITY || current_tick_start == 0 || tok == null)
             return;
         long end_time = System.nanoTime();
-        Pair<World,Object> section = Pair.of(tok.world, tok.section);
+        Pair<Level,Object> section = Pair.of(tok.world, tok.section);
         ENTITY_TIMES.put(section, ENTITY_TIMES.getOrDefault(section, 0L) + end_time - tok.start);
         ENTITY_COUNT.put(section, ENTITY_COUNT.getOrDefault(section, 0L) + 1);
     }
@@ -198,31 +220,40 @@ public class CarpetProfiler
         Messenger.m(currentRequester, "wb Average tick time: ", String.format("yb %.3fms", divider * total_tick_time));
         long accumulated = 0L;
 
-        for (String section : GENERAL_SECTIONS)
+        for (String section : GENERAL_SECTIONS.keySet())
         {
             double amount = divider * SECTION_STATS.get(section);
             if (amount > 0.01)
             {
                 accumulated += SECTION_STATS.get(section);
-                Messenger.m(currentRequester, "w "+section+": ", String.format("y %.3fms", amount));
+                Messenger.m(
+                        currentRequester,
+                        "w " + section + ": ",
+                        "^ " + GENERAL_SECTIONS.get(section),
+                        "y %.3fms".formatted(amount)
+                );
             }
         }
-        for (String section : SCARPET_SECTIONS)
+        for (String section : SCARPET_SECTIONS.keySet())
         {
             double amount = divider * SECTION_STATS.get(section);
             if (amount > 0.01)
             {
-                Messenger.m(currentRequester, "gi "+section+": ", String.format("di %.3fms", amount));
+                Messenger.m(
+                        currentRequester,
+                        "gi "+section+": ",
+                        "^ " + SCARPET_SECTIONS.get(section),
+                        "di %.3fms".formatted(amount)
+                );
             }
         }
 
-        for (RegistryKey<World> dim : server.getWorldRegistryKeys())
+        for (ResourceKey<Level> dim : server.levelKeys())
         {
-            Identifier dimensionId = dim.getValue();
+            ResourceLocation dimensionId = dim.location();
             boolean hasSomethin = false;
-            for (String section : SECTIONS)
+            for (String section : SECTIONS.keySet())
             {
-
                 double amount = divider * SECTION_STATS.getOrDefault(dimensionId + "." + section, 0L);
                 if (amount > 0.01)
                 {
@@ -235,7 +266,7 @@ public class CarpetProfiler
                 continue;
             }
             Messenger.m(currentRequester, "wb "+(dimensionId.getNamespace().equals("minecraft")?dimensionId.getPath():dimensionId.toString()) + ":");
-            for (String section : SECTIONS)
+            for (String section : SECTIONS.keySet())
             {
                 double amount = divider * SECTION_STATS.getOrDefault(dimensionId + "." + section, 0L);
                 if (amount > 0.01)
@@ -243,7 +274,12 @@ public class CarpetProfiler
                     boolean cli = section.endsWith("(Client)");
                     if (!cli)
                         accumulated += SECTION_STATS.get(dimensionId + "." + section);
-                    Messenger.m(currentRequester, String.format("%s - %s: ", cli?"gi":"w", section), String.format("%s %.3fms", cli?"di":"y", amount));
+                    Messenger.m(
+                            currentRequester,
+                            "%s - %s: ".formatted(cli ? "gi" : "w", section),
+                            "^ " + SECTIONS.get(section),
+                            "%s %.3fms".formatted(cli ? "di" : "y", amount)
+                    );
                 }
             }
         }
@@ -253,23 +289,23 @@ public class CarpetProfiler
         Messenger.m(currentRequester, String.format("gi The Rest, whatever that might be: %.3fms", divider * rest));
     }
 
-    private static String sectionName(Pair<World,Object> section)
+    private static String sectionName(Pair<Level,Object> section)
     {
-        Identifier id;
+        ResourceLocation id;
         if (section.getValue() instanceof EntityType)
         {
-            id = Registry.ENTITY_TYPE.getId((EntityType<?>) section.getValue());
+            id = Registry.ENTITY_TYPE.getKey((EntityType<?>) section.getValue());
         }
         else
         {
-            id = Registry.BLOCK_ENTITY_TYPE.getId((BlockEntityType<?>) section.getValue());
+            id = Registry.BLOCK_ENTITY_TYPE.getKey((BlockEntityType<?>) section.getValue());
         }
         String name = "minecraft".equals(id.getNamespace())?id.getPath():id.toString();
-        if (section.getKey().isClient)
+        if (section.getKey().isClientSide)
         {
             name += " (client)";
         }
-        Identifier dimkey = section.getKey().getRegistryKey().getValue();
+        ResourceLocation dimkey = section.getKey().dimension().location();
         String dim = "minecraft".equals(dimkey.getNamespace())?dimkey.getPath():dimkey.toString();
         return name+" in "+dim;
     }
@@ -286,11 +322,11 @@ public class CarpetProfiler
         SECTION_STATS.remove("tick");
         Messenger.m(currentRequester, "wb Top 10 counts:");
         int total = 0;
-        for (Object2LongMap.Entry<Pair<World, Object>> sectionEntry : ENTITY_COUNT.object2LongEntrySet().stream().sorted(Map.Entry.comparingByValue(Comparator.reverseOrder())).collect(Collectors.toList()))
+        for (Object2LongMap.Entry<Pair<Level, Object>> sectionEntry : ENTITY_COUNT.object2LongEntrySet().stream().sorted(Map.Entry.comparingByValue(Comparator.reverseOrder())).collect(Collectors.toList()))
         {
             if (++total > 10) break;
-            Pair<World,Object> section = sectionEntry.getKey();
-            boolean cli = section.getKey().isClient;
+            Pair<Level,Object> section = sectionEntry.getKey();
+            boolean cli = section.getKey().isClientSide;
             Messenger.m(currentRequester, String.format(
                     "%s - %s: ", cli?"gi":"w",
                     sectionName(section)),
@@ -300,11 +336,11 @@ public class CarpetProfiler
         }
         Messenger.m(currentRequester, "wb Top 10 CPU hogs:");
         total = 0;
-        for (Object2LongMap.Entry<Pair<World,Object>> sectionEntry : ENTITY_TIMES.object2LongEntrySet().stream().sorted(Map.Entry.comparingByValue(Comparator.reverseOrder())).collect(Collectors.toList()))
+        for (Object2LongMap.Entry<Pair<Level,Object>> sectionEntry : ENTITY_TIMES.object2LongEntrySet().stream().sorted(Map.Entry.comparingByValue(Comparator.reverseOrder())).collect(Collectors.toList()))
         {
             if (++total > 10) break;
-            Pair<World,Object> section = sectionEntry.getKey();
-            boolean cli = section.getKey().isClient;
+            Pair<Level,Object> section = sectionEntry.getKey();
+            boolean cli = section.getKey().isClientSide;
             Messenger.m(currentRequester, String.format(
                     "%s - %s: ", cli?"gi":"w",
                     sectionName(section)),

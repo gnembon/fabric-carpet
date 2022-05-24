@@ -3,10 +3,11 @@ package carpet;
 import carpet.script.CarpetExpression;
 import carpet.settings.SettingsManager;
 import com.mojang.brigadier.CommandDispatcher;
+import net.minecraft.commands.CommandBuildContext;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.core.RegistryAccess;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.command.ServerCommandSource;
-import net.minecraft.server.network.ServerPlayerEntity;
-
+import net.minecraft.server.level.ServerPlayer;
 import java.util.Map;
 
 public interface CarpetExtension
@@ -45,12 +46,30 @@ public interface CarpetExtension
     /**
      * Register your own commands right after vanilla commands are added
      * If that matters for you
+     *
+     * Deprecated, Implement {@link CarpetExtension#registerCommands(CommandDispatcher, CommandBuildContext)}
      * 
      * @param dispatcher The current {@link CommandSource<ServerCommandSource>} dispatcher 
      *                   where you should register your commands
      * 
      */
-    default void registerCommands(CommandDispatcher<ServerCommandSource> dispatcher) {}
+    @Deprecated(forRemoval = true)
+    default void registerCommands(CommandDispatcher<CommandSourceStack> dispatcher) {}
+
+    /**
+     * Register your own commands right after vanilla commands are added
+     * If that matters for you
+     *
+     * @param dispatcher The current {@link CommandDispatcher<CommandSourceStack>} dispatcher
+     *                   where you should register your commands
+     * @param commandBuildContext The current {@link CommandBuildContext} context
+     *      *                   which you can use for registries lookup
+     */
+    default void registerCommands(CommandDispatcher<CommandSourceStack> dispatcher, final CommandBuildContext commandBuildContext) {
+        registerCommands(dispatcher);
+    }
+
+
 
     /**
      * Provide your own custom settings manager managed in the same way as base /carpet
@@ -64,18 +83,18 @@ public interface CarpetExtension
     /**
      * Event that gets called when a player logs in
      * 
-     * @param player The {@link ServerPlayerEntity} that logged in
+     * @param player The {@link ServerPlayer} that logged in
      * 
      */
-    default void onPlayerLoggedIn(ServerPlayerEntity player) {}
+    default void onPlayerLoggedIn(ServerPlayer player) {}
 
     /**
      * Event that gets called when a player logs out
      * 
-     * @param player The {@link ServerPlayerEntity} that logged out
+     * @param player The {@link ServerPlayer} that logged out
      * 
      */
-    default void onPlayerLoggedOut(ServerPlayerEntity player) {}
+    default void onPlayerLoggedOut(ServerPlayer player) {}
 
     /**
      * Event that gets called when the server closes.

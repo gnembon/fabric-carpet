@@ -5,41 +5,39 @@ import carpet.script.exception.InternalExpressionException;
 import carpet.script.exception.ThrowStatement;
 import carpet.script.exception.Throwables;
 import carpet.utils.BlockInfo;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.MapColor;
-import net.minecraft.block.pattern.CachedBlockPosition;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.ai.brain.LookTarget;
-import net.minecraft.entity.ai.brain.WalkTarget;
-import net.minecraft.entity.ai.pathing.Path;
-import net.minecraft.entity.ai.pathing.PathNode;
-import net.minecraft.entity.damage.DamageSource;
-import net.minecraft.item.ItemStack;
-import net.minecraft.particle.ParticleEffect;
-import net.minecraft.predicate.NumberRange;
-import net.minecraft.scoreboard.ScoreboardCriterion;
-import net.minecraft.scoreboard.ScoreboardObjective;
+import net.minecraft.advancements.critereon.MinMaxBounds;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.GlobalPos;
+import net.minecraft.core.Registry;
+import net.minecraft.core.RegistryAccess;
+import net.minecraft.core.Vec3i;
+import net.minecraft.core.particles.ParticleOptions;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.world.ServerWorld;
-
-import net.minecraft.state.property.Property;
-import net.minecraft.structure.StructurePiece;
-import net.minecraft.structure.StructureStart;
-import net.minecraft.tag.TagManager;
-import net.minecraft.util.Identifier;
-
-import net.minecraft.util.StringIdentifiable;
-import net.minecraft.util.dynamic.GlobalPos;
-import net.minecraft.util.math.BlockBox;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Box;
-import net.minecraft.util.math.ColumnPos;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.util.math.Vec3i;
-import net.minecraft.util.registry.Registry;
-import net.minecraft.util.registry.RegistryKey;
-import net.minecraft.world.World;
-
+import net.minecraft.server.level.ColumnPos;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.tags.TagKey;
+import net.minecraft.util.StringRepresentable;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.ai.behavior.PositionTracker;
+import net.minecraft.world.entity.ai.memory.WalkTarget;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.pattern.BlockInWorld;
+import net.minecraft.world.level.block.state.properties.Property;
+import net.minecraft.world.level.levelgen.structure.BoundingBox;
+import net.minecraft.world.level.levelgen.structure.StructurePiece;
+import net.minecraft.world.level.levelgen.structure.StructureStart;
+import net.minecraft.world.level.material.MaterialColor;
+import net.minecraft.world.level.pathfinder.Node;
+import net.minecraft.world.level.pathfinder.Path;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.scores.Objective;
+import net.minecraft.world.scores.criteria.ObjectiveCriteria;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -63,43 +61,43 @@ public class ValueConversions
         return ListValue.of(new NumericValue(pos.getX()), new NumericValue(pos.getY()), new NumericValue(pos.getZ()));
     }
 
-    public static Value of(Vec3d vec)
+    public static Value of(Vec3 vec)
     {
         return ListValue.of(new NumericValue(vec.x), new NumericValue(vec.y), new NumericValue(vec.z));
     }
 
-    public static Value of(ColumnPos cpos) { return ListValue.of(new NumericValue(cpos.x), new NumericValue(cpos.z));}
+    public static Value of(ColumnPos cpos) { return ListValue.of(new NumericValue(cpos.x()), new NumericValue(cpos.z()));}
 
-    public static Value of(ServerWorld world)
+    public static Value of(ServerLevel world)
     {
-        return of(world.getRegistryKey().getValue());
+        return of(world.dimension().location());
     }
 
-    public static Value of(MapColor color) {return ListValue.of(StringValue.of(BlockInfo.mapColourName.get(color)), ofRGB(color.color));}
+    public static Value of(MaterialColor color) {return ListValue.of(StringValue.of(BlockInfo.mapColourName.get(color)), ofRGB(color.col));}
 
-    public static <T extends Number> Value of(NumberRange<T> range) { return ListValue.of(NumericValue.of(range.getMin()), NumericValue.of(range.getMax()));}
+    public static <T extends Number> Value of(MinMaxBounds<T> range) { return ListValue.of(NumericValue.of(range.getMin()), NumericValue.of(range.getMax()));}
 
     public static Value of(ItemStack stack)
     {
         if (stack == null || stack.isEmpty())
             return Value.NULL;
         return ListValue.of(
-                of(Registry.ITEM.getId(stack.getItem())),
+                of(Registry.ITEM.getKey(stack.getItem())),
                 new NumericValue(stack.getCount()),
                 NBTSerializableValue.fromStack(stack)
         );
     }
 
-    public static Value of(ScoreboardObjective objective)
+    public static Value of(Objective objective)
     {
         return ListValue.of(
                 StringValue.of(objective.getName()),
-                StringValue.of(objective.getCriterion().getName())
+                StringValue.of(objective.getCriteria().getName())
                 );
     }
 
 
-    public static Value of(ScoreboardCriterion criteria)
+    public static Value of(ObjectiveCriteria criteria)
     {
         return ListValue.of(
                 StringValue.of(criteria.getName()),
@@ -108,20 +106,20 @@ public class ValueConversions
     }
 
 
-    public static Value of(ParticleEffect particle)
+    public static Value of(ParticleOptions particle)
     {
-        String repr = particle.asString();
+        String repr = particle.writeToString();
         if (repr.startsWith("minecraft:")) return StringValue.of(repr.substring(10));
         return StringValue.of(repr);
     }
 
     public static Value ofRGB(int value) {return new NumericValue(value*256+255 );}
 
-    public static World dimFromValue(Value dimensionValue, MinecraftServer server)
+    public static Level dimFromValue(Value dimensionValue, MinecraftServer server)
     {
         if (dimensionValue instanceof EntityValue)
         {
-            return ((EntityValue)dimensionValue).getEntity().getEntityWorld();
+            return ((EntityValue)dimensionValue).getEntity().getCommandSenderWorld();
         }
         else if (dimensionValue instanceof BlockValue bv)
         {
@@ -141,20 +139,20 @@ public class ValueConversions
             {
                 case "nether":
                 case "the_nether":
-                    return server.getWorld(World.NETHER);
+                    return server.getLevel(Level.NETHER);
                 case "end":
                 case "the_end":
-                    return server.getWorld(World.END);
+                    return server.getLevel(Level.END);
                 case "overworld":
                 case "over_world":
-                    return server.getWorld(World.OVERWORLD);
+                    return server.getLevel(Level.OVERWORLD);
                 default:
-                    RegistryKey<World> dim = null;
-                    Identifier id = new Identifier(dimString);
+                    ResourceKey<Level> dim = null;
+                    ResourceLocation id = new ResourceLocation(dimString);
                     // not using RegistryKey.of since that one creates on check
-                    for (RegistryKey<World> world : (server.getWorldRegistryKeys()))
+                    for (ResourceKey<Level> world : (server.levelKeys()))
                     {
-                        if (id.equals(world.getValue()))
+                        if (id.equals(world.location()))
                         {
                             dim = world;
                             break;
@@ -162,17 +160,19 @@ public class ValueConversions
                     }
                     if (dim == null)
                         throw new ThrowStatement(dimString, Throwables.UNKNOWN_DIMENSION);
-                    return server.getWorld(dim);
+                    return server.getLevel(dim);
             }
         }
     }
 
-    public static Value of(RegistryKey<World> dim)
+    public static Value of(ResourceKey<?> dim)
     {
-        return of(dim.getValue());
+        return of(dim.location());
     }
 
-    public static Value of(Identifier id)
+    public static Value of(TagKey<?> tagKey) { return of(tagKey.location()); }
+
+    public static Value of(ResourceLocation id)
     {
         if (id == null) // should be Value.NULL
             return Value.NULL;
@@ -181,7 +181,7 @@ public class ValueConversions
         return new StringValue(id.toString());
     }
 
-    public static String simplify(Identifier id)
+    public static String simplify(ResourceLocation id)
     {
         if (id == null) // should be Value.NULL
             return "";
@@ -193,23 +193,23 @@ public class ValueConversions
     public static Value of(GlobalPos pos)
     {
         return ListValue.of(
-                ValueConversions.of(pos.getDimension()),
-                ValueConversions.of(pos.getPos())
+                ValueConversions.of(pos.dimension()),
+                ValueConversions.of(pos.pos())
         );
     }
 
-    public static Value fromPath(ServerWorld world,  Path path)
+    public static Value fromPath(ServerLevel world,  Path path)
     {
         List<Value> nodes = new ArrayList<>();
         //for (PathNode node: path.getNodes())
-        for (int i = 0, len = path.getLength(); i < len; i++)
+        for (int i = 0, len = path.getNodeCount(); i < len; i++)
         {
-            PathNode node = path.getNode(i);
+            Node node = path.getNode(i);
             nodes.add( ListValue.of(
-                    new BlockValue(null, world, node.getBlockPos()),
+                    new BlockValue(null, world, node.asBlockPos()),
                     new StringValue(node.type.name().toLowerCase(Locale.ROOT)),
-                    new NumericValue(node.penalty),
-                    BooleanValue.of(node.visited)
+                    new NumericValue(node.costMalus),
+                    BooleanValue.of(node.closed)
             ));
         }
         return ListValue.wrap(nodes);
@@ -234,7 +234,7 @@ public class ValueConversions
         }
         if (v instanceof BlockPos)
         {
-            return new BlockValue(null, (ServerWorld) e.getEntityWorld(), (BlockPos) v);
+            return new BlockValue(null, (ServerLevel) e.getCommandSenderWorld(), (BlockPos) v);
         }
         if (v instanceof Number)
         {
@@ -246,29 +246,29 @@ public class ValueConversions
         }
         if (v instanceof UUID)
         {
-            return ofUUID( (ServerWorld) e.getEntityWorld(), (UUID)v);
+            return ofUUID( (ServerLevel) e.getCommandSenderWorld(), (UUID)v);
         }
         if (v instanceof DamageSource source)
         {
             return ListValue.of(
-                    new StringValue(source.getName()),
-                    source.getAttacker()==null?Value.NULL:new EntityValue(source.getAttacker())
+                    new StringValue(source.getMsgId()),
+                    source.getEntity()==null?Value.NULL:new EntityValue(source.getEntity())
             );
         }
         if (v instanceof Path)
         {
-            return fromPath((ServerWorld)e.getEntityWorld(), (Path)v);
+            return fromPath((ServerLevel)e.getCommandSenderWorld(), (Path)v);
         }
-        if (v instanceof LookTarget)
+        if (v instanceof PositionTracker)
         {
-            return new BlockValue(null, (ServerWorld) e.getEntityWorld(), ((LookTarget)v).getBlockPos());
+            return new BlockValue(null, (ServerLevel) e.getCommandSenderWorld(), ((PositionTracker)v).currentBlockPosition());
         }
         if (v instanceof WalkTarget)
         {
             return ListValue.of(
-                    new BlockValue(null, (ServerWorld) e.getEntityWorld(), ((WalkTarget)v).getLookTarget().getBlockPos()),
-                    new NumericValue(((WalkTarget) v).getSpeed()),
-                    new NumericValue(((WalkTarget) v).getCompletionRange())
+                    new BlockValue(null, (ServerLevel) e.getCommandSenderWorld(), ((WalkTarget)v).getTarget().currentBlockPosition()),
+                    new NumericValue(((WalkTarget) v).getSpeedModifier()),
+                    new NumericValue(((WalkTarget) v).getCloseEnoughDist())
             );
         }
         if (v instanceof Set)
@@ -291,7 +291,7 @@ public class ValueConversions
         return Value.NULL;
     }
 
-    private static Value ofUUID(ServerWorld entityWorld, UUID uuid)
+    private static Value ofUUID(ServerLevel entityWorld, UUID uuid)
     {
         Entity current = entityWorld.getEntity(uuid);
         return ListValue.of(
@@ -299,39 +299,39 @@ public class ValueConversions
                 new StringValue(uuid.toString())
         );
     }
-    public static Value of(Box box)
+    public static Value of(AABB box)
     {
         return ListValue.of(
                 ListValue.fromTriple(box.minX, box.minY, box.minZ),
                 ListValue.fromTriple(box.maxX, box.maxY, box.maxZ)
         );
     }
-    public static Value of(BlockBox box)
+    public static Value of(BoundingBox box)
     {
         return ListValue.of(
-                ListValue.fromTriple(box.getMinX(), box.getMinY(), box.getMinZ()),
-                ListValue.fromTriple(box.getMaxX(), box.getMaxY(), box.getMaxZ())
+                ListValue.fromTriple(box.minX(), box.minY(), box.minZ()),
+                ListValue.fromTriple(box.maxX(), box.maxY(), box.maxZ())
         );
     }
 
-    public static Value of(StructureStart<?> structure)
+    public static Value of(StructureStart structure)
     {
-        if (structure == null || structure == StructureStart.DEFAULT) return Value.NULL;
-        BlockBox boundingBox = structure.getBoundingBox();
-        if (boundingBox.getMaxX() < boundingBox.getMinX() || boundingBox.getMaxY() < boundingBox.getMinY() || boundingBox.getMaxZ() < boundingBox.getMinZ()) return Value.NULL;
+        if (structure == null || structure == StructureStart.INVALID_START) return Value.NULL;
+        BoundingBox boundingBox = structure.getBoundingBox();
+        if (boundingBox.maxX() < boundingBox.minX() || boundingBox.maxY() < boundingBox.minY() || boundingBox.maxZ() < boundingBox.minZ()) return Value.NULL;
         Map<Value, Value> ret = new HashMap<>();
         ret.put(new StringValue("box"), of(boundingBox));
         List<Value> pieces = new ArrayList<>();
-        for (StructurePiece piece : structure.getChildren())
+        for (StructurePiece piece : structure.getPieces())
         {
-            BlockBox box = piece.getBoundingBox();
-            if (box.getMaxX() >= box.getMinX() && box.getMaxY() >= box.getMinY() && box.getMaxZ() >= box.getMinZ())
+            BoundingBox box = piece.getBoundingBox();
+            if (box.maxX() >= box.minX() && box.maxY() >= box.minY() && box.maxZ() >= box.minZ())
             {
                 pieces.add(ListValue.of(
-                        new StringValue(NBTSerializableValue.nameFromRegistryId(Registry.STRUCTURE_PIECE.getId(piece.getType()))),
-                        (piece.getFacing() == null) ? Value.NULL : new StringValue(piece.getFacing().getName()),
-                        ListValue.fromTriple(box.getMinX(), box.getMinY(), box.getMinZ()),
-                        ListValue.fromTriple(box.getMaxX(), box.getMaxY(), box.getMaxZ())
+                        new StringValue(NBTSerializableValue.nameFromRegistryId(Registry.STRUCTURE_PIECE.getKey(piece.getType()))),
+                        (piece.getOrientation() == null) ? Value.NULL : new StringValue(piece.getOrientation().getName()),
+                        ListValue.fromTriple(box.minX(), box.minY(), box.minZ()),
+                        ListValue.fromTriple(box.maxX(), box.maxY(), box.maxZ())
                 ));
             }
         }
@@ -341,11 +341,11 @@ public class ValueConversions
 
     public static Value fromProperty(BlockState state, Property<?> p)
     {
-        Comparable<?> object = state.get(p);
+        Comparable<?> object = state.getValue(p);
         if (object instanceof Boolean || object instanceof Number) return StringValue.of(object.toString());
-        if (object instanceof StringIdentifiable)
+        if (object instanceof StringRepresentable)
         {
-            return StringValue.of(((StringIdentifiable) object).asString());
+            return StringValue.of(((StringRepresentable) object).getSerializedName());
         }
         throw new InternalExpressionException("Unknown property type: "+p.getName());
     }
@@ -395,18 +395,18 @@ public class ValueConversions
         return ret;
     }
 
-    public static Value ofBlockPredicate(TagManager tagManager, Predicate<CachedBlockPosition> blockPredicate)
+    public static Value ofBlockPredicate(RegistryAccess registryAccess, Predicate<BlockInWorld> blockPredicate)
     {
         BlockPredicateInterface predicateData = (BlockPredicateInterface) blockPredicate;
         return ListValue.of(
-                predicateData.getCMBlockState()==null?Value.NULL:of(Registry.BLOCK.getId(predicateData.getCMBlockState().getBlock())),
-                predicateData.getCMBlockTag()==null?Value.NULL:of(tagManager.getOrCreateTagGroup(Registry.BLOCK_KEY).getUncheckedTagId(predicateData.getCMBlockTag())),
+                predicateData.getCMBlockState()==null?Value.NULL:of(Registry.BLOCK.getKey(predicateData.getCMBlockState().getBlock())),
+                predicateData.getCMBlockTagKey()==null?Value.NULL:of(registryAccess.registryOrThrow(Registry.BLOCK_REGISTRY).getTag(predicateData.getCMBlockTagKey()).get().key()),
                 MapValue.wrap(predicateData.getCMProperties()),
                 predicateData.getCMDataTag() == null?Value.NULL:new NBTSerializableValue(predicateData.getCMDataTag())
         );
     }
 
-    public static Value guess(ServerWorld serverWorld, Object o) {
+    public static Value guess(ServerLevel serverWorld, Object o) {
         if (o == null)
             return Value.NULL;
         if (o instanceof List)
@@ -415,22 +415,22 @@ public class ValueConversions
             return new BlockValue(null, serverWorld, (BlockPos)o);
         if (o instanceof Entity)
             return EntityValue.of((Entity) o);
-        if (o instanceof Vec3d)
-            return of((Vec3d)o);
+        if (o instanceof Vec3)
+            return of((Vec3)o);
         if (o instanceof Vec3i)
             return of(new BlockPos((Vec3i)o));
-        if (o instanceof Box)
-            return of((Box)o);
-        if (o instanceof BlockBox)
-            return of((BlockBox) o);
+        if (o instanceof AABB)
+            return of((AABB)o);
+        if (o instanceof BoundingBox)
+            return of((BoundingBox) o);
         if (o instanceof ItemStack)
             return of((ItemStack)o);
         if (o instanceof Boolean)
             return BooleanValue.of((Boolean) o);
         if (o instanceof Number)
             return NumericValue.of((Number) o);
-        if (o instanceof Identifier)
-            return of((Identifier)o);
+        if (o instanceof ResourceLocation)
+            return of((ResourceLocation)o);
         return StringValue.of(o.toString());
     }
 }
