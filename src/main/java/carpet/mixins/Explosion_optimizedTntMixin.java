@@ -4,6 +4,7 @@ import carpet.helpers.OptimizedExplosion;
 import carpet.CarpetSettings;
 import carpet.logging.LoggerRegistry;
 import carpet.logging.logHelpers.ExplosionLogHelper;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -28,7 +29,7 @@ public abstract class Explosion_optimizedTntMixin
 {
     @Shadow
     @Final
-    private List<BlockPos> toBlow;
+    private ObjectArrayList<BlockPos> toBlow;
 
     @Shadow @Final private Level level;
 

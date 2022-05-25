@@ -22,7 +22,6 @@ import java.util.List;
 import java.util.stream.Collectors;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.TextComponent;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.ServerScoreboard;
 import net.minecraft.server.bossevents.CustomBossEvent;
@@ -152,7 +151,7 @@ public class Scoreboards {
                 return Value.FALSE;
             }
 
-            scoreboard.addObjective(objectiveName, criterion, new TextComponent(objectiveName), criterion.getDefaultRenderType());
+            scoreboard.addObjective(objectiveName, criterion, Component.literal(objectiveName), criterion.getDefaultRenderType());
             return Value.TRUE;
         });
 
@@ -409,7 +408,7 @@ public class Scoreboards {
             if(lv.size() == 1)
             {
                 if(bossBarManager.get(identifier) != null) return Value.FALSE;
-                return StringValue.of(bossBarManager.create(identifier,new TextComponent(id)).getTextId().toString());
+                return StringValue.of(bossBarManager.create(identifier,Component.literal(id)).getTextId().toString());
             }
 
             String property = lv.get(1).getString();

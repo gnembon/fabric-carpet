@@ -3,6 +3,7 @@ package carpet.mixins;
 import carpet.CarpetServer;
 import carpet.CarpetSettings;
 import com.mojang.brigadier.CommandDispatcher;
+import net.minecraft.commands.CommandBuildContext;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import org.slf4j.Logger;
@@ -25,9 +26,8 @@ public abstract class Commands_customCommandsMixin
     private CommandDispatcher<CommandSourceStack> dispatcher;
 
     @Inject(method = "<init>", at = @At("RETURN"))
-    private void onRegister(Commands.CommandSelection arg, CallbackInfo ci) {
-        CarpetServer.registerCarpetCommands(this.dispatcher);
-        CarpetServer.registerCarpetCommands(this.dispatcher, arg);
+    private void onRegister(Commands.CommandSelection commandSelection, CommandBuildContext commandBuildContext, CallbackInfo ci) {
+        CarpetServer.registerCarpetCommands(this.dispatcher, commandSelection, commandBuildContext);
     }
 
     @Inject(method = "performCommand", at = @At("HEAD"))
@@ -43,10 +43,10 @@ public abstract class Commands_customCommandsMixin
         CarpetSettings.impendingFillSkipUpdates.set(false);
     }
 
-    @SuppressWarnings("UnresolvedMixinReference")
     @Redirect(method = "performCommand", at = @At(
                 value = "INVOKE",
-                target = "Lorg/slf4j/Logger;isDebugEnabled()Z"
+                target = "Lorg/slf4j/Logger;isDebugEnabled()Z",
+                remap = false
             ),
         require = 0
     )

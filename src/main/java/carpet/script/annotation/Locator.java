@@ -15,7 +15,7 @@ import carpet.script.argument.Argument;
 import carpet.script.argument.BlockArgument;
 import carpet.script.argument.FunctionArgument;
 import carpet.script.argument.Vector3Argument;
-import carpet.script.bundled.Module;
+import carpet.script.Module;
 import carpet.script.value.BlockValue;
 import carpet.script.value.FunctionValue;
 import carpet.script.value.Value;

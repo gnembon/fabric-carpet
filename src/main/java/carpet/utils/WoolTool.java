@@ -11,7 +11,7 @@ import java.util.stream.Collectors;
 
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.core.BlockPos;
-import net.minecraft.network.chat.BaseComponent;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.DyeColor;
@@ -118,7 +118,7 @@ public class WoolTool
                     HopperCounter counter = HopperCounter.getCounter(under.toString());
                     if (counter == null) return;
                     counter.reset(placer.getServer());
-                    List<BaseComponent> res = new ArrayList<>();
+                    List<Component> res = new ArrayList<>();
                     res.add(Messenger.s(String.format("%s counter reset",under.toString())));
                     Messenger.send(placer, res);
                 }

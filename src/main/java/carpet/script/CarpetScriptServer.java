@@ -8,10 +8,7 @@ import carpet.script.api.Entities;
 import carpet.script.api.Inventories;
 import carpet.script.api.Scoreboards;
 import carpet.script.api.WorldAccess;
-import carpet.script.bundled.BundledModule;
 import carpet.CarpetServer;
-import carpet.script.bundled.FileModule;
-import carpet.script.bundled.Module;
 import carpet.script.exception.ExpressionException;
 import carpet.script.exception.LoadException;
 import carpet.script.language.Arithmetic;
@@ -54,7 +51,7 @@ import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-public class CarpetScriptServer
+public class CarpetScriptServer extends ScriptServer
 {
     //make static for now, but will change that later:
     public static final Logger LOG = LoggerFactory.getLogger("Scarpet");
@@ -72,41 +69,54 @@ public class CarpetScriptServer
     private static final List<Module> ruleModuleData = new ArrayList<>();
 
     /**
-     * Registers a Scarpet App to be always available to be loaded
-     * in the /script load list.
-     * @see BundledModule#fromPath(String, String, boolean)
-     * 
-     * @param app The {@link BundledModule} of the app
+     * @deprecated Use {@link #registerBuiltInApp(Module)} instead
      */
-    public static void registerBuiltInScript(BundledModule app)
+    @Deprecated(forRemoval = true)
+    public static void registerBuiltInScript(carpet.script.bundled.BundledModule app)
     {
-        bundledModuleData.add(app);
+        registerBuiltInApp(app.toModule());
     }
     
     /**
-     * Registers a Scarpet App to be used as a Rule App
-     * (to be controlled with the value of a Carpet rule).
-     * Libraries should be registered with {@link #registerBuiltInScript(BundledModule)} instead
-     * @see BundledModule#fromPath(String, String, boolean)
-     * 
-     * @param app The {@link BundledModule} of the app.
+     * @deprecated Use {@link #registerSettingsApp(Module)} instead
      */
-    public static void registerSettingsApp(BundledModule app) {
+    @Deprecated(forRemoval = true)
+    public static void registerSettingsApp(carpet.script.bundled.BundledModule app) {
+        registerSettingsApp(app.toModule());
+    }
+    /**
+     * Registers a Scarpet App to be always available under the {@code /script load} list.
+     * @see Module#fromJarPath(String, String, boolean)
+     * 
+     * @param app The {@link Module} of the app
+     */
+    public static void registerBuiltInApp(Module app) {
+        bundledModuleData.add(app);
+    }
+
+    /**
+     * Registers a Scarpet App to be used as a Rule App (to be controlled with the value of a Carpet rule).
+     * Libraries should be registered with {@link #registerBuiltInScript(BundledModule)} instead
+     * @see Module#fromJarPath(String, String, boolean)
+     * 
+     * @param app The {@link Module} of the app.
+     */
+    public static void registerSettingsApp(Module app) {
         ruleModuleData.add(app);
     }
 
     static
     {
-        registerBuiltInScript(BundledModule.carpetNative("camera", false));
-        registerBuiltInScript(BundledModule.carpetNative("overlay", false));
-        registerBuiltInScript(BundledModule.carpetNative("event_test", false));
-        registerBuiltInScript(BundledModule.carpetNative("stats_test", false));
-        registerBuiltInScript(BundledModule.carpetNative("math", true));
-        registerBuiltInScript(BundledModule.carpetNative("chunk_display", false));
-        registerBuiltInScript(BundledModule.carpetNative("ai_tracker", false));
-        registerBuiltInScript(BundledModule.carpetNative("draw_beta", false));
-        registerBuiltInScript(BundledModule.carpetNative("shapes", true));
-        registerBuiltInScript(BundledModule.carpetNative("distance_beta", false));
+        registerBuiltInApp(Module.carpetNative("camera", false));
+        registerBuiltInApp(Module.carpetNative("overlay", false));
+        registerBuiltInApp(Module.carpetNative("event_test", false));
+        registerBuiltInApp(Module.carpetNative("stats_test", false));
+        registerBuiltInApp(Module.carpetNative("math", true));
+        registerBuiltInApp(Module.carpetNative("chunk_display", false));
+        registerBuiltInApp(Module.carpetNative("ai_tracker", false));
+        registerBuiltInApp(Module.carpetNative("draw_beta", false));
+        registerBuiltInApp(Module.carpetNative("shapes", true));
+        registerBuiltInApp(Module.carpetNative("distance_beta", false));
     }
 
     public CarpetScriptServer(MinecraftServer server)
@@ -117,7 +127,6 @@ public class CarpetScriptServer
 
     private void init()
     {
-        ScriptHost.systemGlobals.clear();
         events = new CarpetEventServer(this);
         modules = new HashMap<>();
         unloadableModules = new HashSet<>();
@@ -158,7 +167,7 @@ public class CarpetScriptServer
                     (allowLibraries && script.getFileName().toString().equalsIgnoreCase(name+".scl"))
                 ).findFirst();
             if (scriptPath.isPresent())
-                return new FileModule(scriptPath.get());
+                return Module.fromPath(scriptPath.get());
 
             if (FabricLoader.getInstance().getEnvironmentType() == EnvType.CLIENT)
             {
@@ -170,14 +179,14 @@ public class CarpetScriptServer
                                 (allowLibraries && script.getFileName().toString().equalsIgnoreCase(name + ".scl")))
                         .findFirst();
                 if (scriptPath.isPresent())
-                    return new FileModule(scriptPath.get());
+                    return Module.fromPath(scriptPath.get());
             }
         } catch (IOException e) {
             CarpetSettings.LOG.error("Exception while loading the app: ", e);
         }
         for (Module moduleData : bundledModuleData)
         {
-            if (moduleData.getName().equalsIgnoreCase(name) && (allowLibraries || !moduleData.isLibrary()))
+            if (moduleData.name().equalsIgnoreCase(name) && (allowLibraries || !moduleData.library()))
             {
                 return moduleData;
             }
@@ -189,7 +198,7 @@ public class CarpetScriptServer
     {
         for (Module moduleData : ruleModuleData)
         {
-            if (moduleData.getName().equalsIgnoreCase(name))
+            if (moduleData.name().equalsIgnoreCase(name))
             {
                 return moduleData;
             }
@@ -204,7 +213,7 @@ public class CarpetScriptServer
         {
             for (Module mi : bundledModuleData)
             {
-                if (!mi.isLibrary() && !mi.getName().endsWith("_beta")) moduleNames.add(mi.getName());
+                if (!mi.library() && !mi.name().endsWith("_beta")) moduleNames.add(mi.name());
             }
         }
         try {
@@ -254,7 +263,7 @@ public class CarpetScriptServer
         Module module = isRuleApp ? getRuleModule(name) : getModule(name, false);
         if (module == null)
         {
-            Messenger.m(source, "r Failed to add "+name+" app");
+            Messenger.m(source, "r Failed to add "+name+" app: App not found");
             return false;
         }
         CarpetScriptHost newHost;
@@ -273,11 +282,6 @@ public class CarpetScriptServer
         //    Messenger.m(source, "r Failed to add "+name+" app: invalid app config (via '__config()' function)");
         //    return false;
         //}
-        if (module.getCode() == null)
-        {
-            Messenger.m(source, "r Unable to load "+name+" app - not found");
-            return false;
-        }
 
         modules.put(name, newHost);
         if (!isRuleApp) unloadableModules.add(name);

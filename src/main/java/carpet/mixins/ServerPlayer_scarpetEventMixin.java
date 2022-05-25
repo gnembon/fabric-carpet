@@ -14,6 +14,7 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.player.ProfilePublicKey;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 import org.spongepowered.asm.mixin.Mixin;
@@ -38,9 +39,8 @@ public abstract class ServerPlayer_scarpetEventMixin extends Player implements S
     @Unique
     private boolean isInvalidReference = false;
 
-    public ServerPlayer_scarpetEventMixin(Level world, BlockPos blockPos, float f, GameProfile gameProfile)
-    {
-        super(world, blockPos, f, gameProfile);
+    public ServerPlayer_scarpetEventMixin(Level level, BlockPos blockPos, float f, GameProfile gameProfile, ProfilePublicKey profilePublicKey) {
+        super(level, blockPos, f, gameProfile, profilePublicKey);
     }
 
     @Shadow protected abstract void completeUsingItem();

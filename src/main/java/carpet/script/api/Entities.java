@@ -257,7 +257,7 @@ public class Entities {
             Set<EntityType<? extends Entity>> types = new HashSet<>();
             descriptors.forEach(s -> types.addAll(EntityValue.getEntityDescriptor(s, ((CarpetContext) c).s.getServer()).typeList));
             FunctionArgument funArg = FunctionArgument.findIn(c, expression.module, lv, 1, true, false);
-            CarpetEventServer events = ((CarpetScriptHost)c.host).getScriptServer().events;
+            CarpetEventServer events = ((CarpetScriptHost)c.host).scriptServer().events;
             if (funArg.function == null)
             {
                 types.forEach(et -> events.removeBuiltInEvent(CarpetEventServer.Event.getEntityLoadEventName(et), (CarpetScriptHost) c.host));
