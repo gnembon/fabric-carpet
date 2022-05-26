@@ -57,7 +57,7 @@ public class ServerLevel_scarpetMixin implements ServerWorldInterface
     {
         if (CHUNK_UNLOADED.isNeeded())
         {
-            var level = (ServerLevel)((Object)this);
+            ServerLevel level = (ServerLevel)((Object)this);
             CHUNK_UNLOADED.onChunkEvent(level, levelChunk.getPos(), false);
         }
     }
