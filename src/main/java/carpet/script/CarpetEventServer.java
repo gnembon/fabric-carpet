@@ -33,7 +33,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Consumer;
-import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.regex.Matcher;
@@ -985,7 +984,7 @@ public class CarpetEventServer
         @Deprecated
         public static final Map<EntityType<? extends Entity>, Event> ENTITY_LOAD = Registry.ENTITY_TYPE
                 .stream()
-                .collect(Collectors.toUnmodifiableMap(Function.identity(), et -> new Event(getEntityLoadEventName(et), 1, true, false)
+                .map(et -> Map.entry(et, new Event(getEntityLoadEventName(et), 1, true, false)
                 {
                     @Override
                     public void onEntityAction(Entity entity, boolean created)
@@ -995,7 +994,7 @@ public class CarpetEventServer
                                 () -> CarpetServer.minecraft_server.createCommandSourceStack().withLevel((ServerLevel) entity.level).withPermission(CarpetSettings.runPermissionLevel)
                         );
                     }
-                }));
+                })).collect(Collectors.toUnmodifiableMap(Map.Entry::getKey, Map.Entry::getValue));
 
         public static String getEntityHandlerEventName(EntityType<? extends Entity> et)
         {
@@ -1004,7 +1003,7 @@ public class CarpetEventServer
 
         public static final Map<EntityType<? extends Entity>, Event> ENTITY_HANDLER = Registry.ENTITY_TYPE
                 .stream()
-                .collect(Collectors.toUnmodifiableMap(Function.identity(), et -> new Event(getEntityHandlerEventName(et), 2, true, false) {
+                .map(et -> Map.entry(et, new Event(getEntityHandlerEventName(et), 2, true, false) {
                     @Override
                     public void onEntityAction(Entity entity, boolean created) {
                         handler.call(
@@ -1012,7 +1011,8 @@ public class CarpetEventServer
                                 () -> CarpetServer.minecraft_server.createCommandSourceStack().withLevel((ServerLevel) entity.level).withPermission(CarpetSettings.runPermissionLevel)
                         );
                     }
-                }));
+                }))
+                .collect(Collectors.toUnmodifiableMap(Map.Entry::getKey, Map.Entry::getValue));
 
         // on projectile thrown (arrow from bows, crossbows, tridents, snoballs, e-pearls
 
