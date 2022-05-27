@@ -3,10 +3,10 @@ package carpet.script.language;
 import carpet.script.Context;
 import carpet.script.Expression;
 import carpet.script.LazyValue;
+import carpet.script.api.Auxiliary;
 import carpet.script.exception.InternalExpressionException;
 import carpet.script.exception.ThrowStatement;
 import carpet.script.exception.Throwables;
-import carpet.script.utils.ScarpetJsonDeserializer;
 import carpet.script.value.BooleanValue;
 import carpet.script.value.ContainerValueInterface;
 import carpet.script.value.LContainerValue;
@@ -341,7 +341,7 @@ public class DataStructures {
         expression.addUnaryFunction("encode_json", v -> StringValue.of(v.toJson().toString()));
         expression.addUnaryFunction("decode_json", v -> {
             try {
-                return new ScarpetJsonDeserializer().deserialize(new JsonParser().parse(v.getString()), null, null);
+                return Auxiliary.GSON.fromJson(v.getString(), Value.class);
             } catch (JsonParseException jpe){
                 throw new ThrowStatement("Invalid json string: " + v.getString(), Throwables.JSON_ERROR);
             }
