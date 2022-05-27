@@ -15,7 +15,6 @@ import carpet.script.EntityEventsGroup;
 import carpet.script.argument.Vector3Argument;
 import carpet.script.exception.InternalExpressionException;
 import carpet.script.utils.InputValidator;
-import com.google.common.collect.Sets;
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.minecraft.commands.CommandSourceStack;
@@ -356,11 +355,11 @@ public class EntityValue extends Value
 
             Set<EntityType<?>> living = allTypes.stream().filter(et ->
                     !deads.contains(et) && !projectiles.contains(et) && !minecarts.contains(et)
-            ).collect(Collectors.toUnmodifiableSet());
+            ).collect(Collectors.toSet());
 
             Set<EntityType<?>> regular = allTypes.stream().filter(et ->
                     living.contains(et) && !undeads.contains(et) && !arthropods.contains(et) && !aquatique.contains(et) && !illagers.contains(et)
-            ).collect(Collectors.toUnmodifiableSet());
+            ).collect(Collectors.toSet());
 
 
             put("*", new EntityClassDescriptor(ANY, e -> true, allTypes) );

@@ -134,7 +134,7 @@ public class WorldAccess {
         DIRECTION_MAP.put("x", Direction.EAST);
 
     }
-    private final static Map<String, TicketType<?>> ticketTypes = Map.of(
+    private static final Map<String, TicketType<?>> ticketTypes = Map.of(
         "portal", TicketType.PORTAL,
         "teleport", TicketType.POST_TELEPORT,
         "unknown", TicketType.UNKNOWN
