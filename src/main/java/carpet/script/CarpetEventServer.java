@@ -467,6 +467,18 @@ public class CarpetEventServer
             }
         };
 
+        public static final Event CHUNK_UNLOADED = new Event("chunk_unloaded", 2, true)
+        {
+            @Override
+            public void onChunkEvent(ServerLevel world, ChunkPos chPos, boolean generated)
+            {
+                handler.call(
+                        () -> Arrays.asList(new NumericValue(chPos.x << 4), new NumericValue(chPos.z << 4)),
+                        () -> CarpetServer.minecraft_server.createCommandSourceStack().withLevel(world)
+                );
+            }
+        };
+
         public static final Event PLAYER_JUMPS = new Event("player_jumps", 1, false)
         {
             @Override
