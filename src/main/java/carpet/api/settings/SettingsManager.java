@@ -79,7 +79,7 @@ public class SettingsManager {
     private MinecraftServer server;
     private final List<RuleObserver> observers = new ArrayList<>();
     private static final List<RuleObserver> staticObservers = new ArrayList<>();
-    static record ConfigFileData(Map<String, String> ruleMap, boolean locked, List<String> comments) {}
+    static record ConfigReadResult(Map<String, String> ruleMap, boolean locked) {}
     
     /**
      * <p>Defines a class that can be notified about a {@link CarpetRule} changing.</p>
@@ -371,17 +371,12 @@ public class SettingsManager {
         }
     }
 
-    private void writeSettingsToConf(ConfigFileData data)
+    private void writeSettingsToConf(ConfigReadResult data)
     {
         if (locked)
             return;
         try (BufferedWriter fw = Files.newBufferedWriter(getFile()))
         {
-            for (String comment : data.comments())
-            {
-                fw.write(comment);
-                fw.newLine();
-            }
             for (String key: data.ruleMap().keySet())
             {
                 fw.write(key + " " + data.ruleMap().get(key));
@@ -409,7 +404,7 @@ public class SettingsManager {
     private void loadConfigurationFromConf()
     {
         for (CarpetRule<?> rule : rules.values()) RuleHelper.resetToDefault(rule, server.createCommandSourceStack());
-        ConfigFileData conf = readSettingsFromConf(getFile());
+        ConfigReadResult conf = readSettingsFromConf(getFile());
         locked = false;
         if (conf.locked())
         {
@@ -432,14 +427,13 @@ public class SettingsManager {
     }
 
 
-    private ConfigFileData readSettingsFromConf(Path path)
+    private ConfigReadResult readSettingsFromConf(Path path)
     {
         try (BufferedReader reader = Files.newBufferedReader(path))
         {
             String line = "";
             boolean confLocked = false;
             Map<String, String> result = new HashMap<String, String>();
-            List<String> comments = new ArrayList<>();
             while ((line = reader.readLine()) != null)
             {
                 line = line.replaceAll("[\\r\\n]", "");
@@ -448,13 +442,10 @@ public class SettingsManager {
                     confLocked = true;
                 }
                 String[] fields = line.split("\\s+",2);
-                boolean saveComments = path.equals(getFile());
                 if (fields.length > 1)
                 {
                     if (result.isEmpty() && fields[0].startsWith("#") || fields[1].startsWith("#"))
                     {
-                        if (saveComments)
-                            comments.add(line); // Don't copy default config comments
                         continue;
                     }
                     if (!rules.containsKey(fields[0]))
@@ -462,10 +453,10 @@ public class SettingsManager {
                         CarpetSettings.LOG.error("[CM]: "+fancyName+" Setting " + fields[0] + " is not a valid rule - ignoring...");
                         continue;
                     }
-                    result.put(fields[0],fields[1]);
+                    result.put(fields[0], fields[1]);
                 }
             }
-            return new ConfigFileData(result, confLocked, comments);
+            return new ConfigReadResult(result, confLocked);
         }
         catch (NoSuchFileException e)
         {
@@ -491,12 +482,12 @@ public class SettingsManager {
                     CarpetSettings.LOG.error("Exception when loading fallback default config: ", e2);
                 }
             }
-            return new ConfigFileData(new HashMap<>(), false, List.of());
+            return new ConfigReadResult(new HashMap<>(), false);
         }
         catch (IOException e)
         {
             CarpetSettings.LOG.error("Exception while loading Carpet rules from config", e);
-            return new ConfigFileData(new HashMap<>(), false, List.of());
+            return new ConfigReadResult(new HashMap<>(), false);
         }
     }
 
@@ -702,7 +693,7 @@ public class SettingsManager {
     {
         if (locked()) return 0;
         if (!rules.containsKey(rule.name())) return 0;
-        ConfigFileData conf = readSettingsFromConf(getFile());
+        ConfigReadResult conf = readSettingsFromConf(getFile());
         conf.ruleMap().put(rule.name(), stringValue);
         writeSettingsToConf(conf); // this may feels weird, but if conf
         // is locked, it will never reach this point.
@@ -719,7 +710,7 @@ public class SettingsManager {
     {
         if (locked) return 0;
         if (!rules.containsKey(rule.name())) return 0;
-        ConfigFileData conf = readSettingsFromConf(getFile());
+        ConfigReadResult conf = readSettingsFromConf(getFile());
         conf.ruleMap().remove(rule.name());
         writeSettingsToConf(conf);
         RuleHelper.resetToDefault(rules.get(rule.name()), source);
