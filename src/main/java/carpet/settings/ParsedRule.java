@@ -163,6 +163,7 @@ public final class ParsedRule<T> implements CarpetRule<T>, Comparable<ParsedRule
     {
         this.isLegacy = rule.isLegacy();
         this.name = !isLegacy || rule.name().isEmpty() ? field.getName() : rule.name();
+        this.field = field;
         @SuppressWarnings("unchecked") // We are "defining" T here
         Class<T> type = (Class<T>)field.getType();
         this.type = type;
@@ -249,7 +250,6 @@ public final class ParsedRule<T> implements CarpetRule<T>, Comparable<ParsedRule
         this.description = isLegacy ? rule.desc() : Objects.requireNonNull(Translations.trOrNull(descKey), "No language key provided for " + descKey);
         this.extraInfo = isLegacy ? List.of(rule.extra()) : getTranslationArray(extraPrefix);
         this.defaultAsString = RuleHelper.toRuleString(this.defaultValue);
-        this.field = field;
         this.validators = realValidators.stream().filter(Validator.class::isInstance).map(v -> (Validator<T>) v).toList();
         if (!isLegacy && validators.size() != realValidators.size()) throw new IllegalArgumentException("Can't use legacy validators with new rules!");
 
