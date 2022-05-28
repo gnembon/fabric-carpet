@@ -26,6 +26,8 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.apache.commons.lang3.ClassUtils;
+
 /**
  * A Carpet rule parsed from a field, with its name, value, and other useful stuff.
  * 
@@ -165,7 +167,7 @@ public final class ParsedRule<T> implements CarpetRule<T>, Comparable<ParsedRule
         this.name = !isLegacy || rule.name().isEmpty() ? field.getName() : rule.name();
         this.field = field;
         @SuppressWarnings("unchecked") // We are "defining" T here
-        Class<T> type = (Class<T>)field.getType();
+        Class<T> type = (Class<T>)ClassUtils.primitiveToWrapper(field.getType());
         this.type = type;
         this.isStrict = rule.strict();
         this.categories = List.of(rule.category());
