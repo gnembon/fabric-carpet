@@ -253,7 +253,7 @@ public final class ParsedRule<T> implements CarpetRule<T>, Comparable<ParsedRule
         this.extraInfo = isLegacy ? List.of(rule.extra()) : getTranslationArray(extraPrefix);
         this.defaultAsString = RuleHelper.toRuleString(this.defaultValue);
         this.validators = realValidators.stream().filter(Validator.class::isInstance).map(v -> (Validator<T>) v).toList();
-        if (!isLegacy && validators.size() != realValidators.size()) throw new IllegalArgumentException("Can't use legacy validators with new rules!");
+        if (!isLegacy && !validators.isEmpty()) throw new IllegalArgumentException("Can't use legacy validators with new rules!");
 
         // Language fallbacks - Also asserts the strings will be available in non-english languages, given current system has no fallback
         if (isLegacy && !rule.name().isEmpty()) Translations.registerFallbackTranslation(nameKey, name);
