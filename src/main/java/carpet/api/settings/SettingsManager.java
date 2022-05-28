@@ -424,7 +424,8 @@ public class SettingsManager {
                 CarpetSettings.LOG.error("[CM Error]: Failed to load setting: " + key, exc);
             }
         }
-        CarpetSettings.LOG.info("[CM] Loaded " + loadedCount + " settings from " + identifier + ".conf");
+        if (loadedCount > 0)
+            CarpetSettings.LOG.info("[CM] Loaded " + loadedCount + " settings from " + identifier + ".conf");
         locked = conf.locked();
     }
 
