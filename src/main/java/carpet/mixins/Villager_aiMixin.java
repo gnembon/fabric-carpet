@@ -94,7 +94,7 @@ public abstract class Villager_aiMixin extends AbstractVillager
                     (recentlySeen?"rb ":"lb ")+time ));
             this.setCustomNameVisible(true);
         }
-        else if (MobAI.isTracking(this, MobAI.TrackingType.VILLAGER_BREEDING))
+        else if (MobAI.isTracking(this, MobAI.TrackingType.BREEDING))
         {
             if (tickCount % 50 == 0 || tickCount < 20)
             {
@@ -117,7 +117,7 @@ public abstract class Villager_aiMixin extends AbstractVillager
     @Inject(method = "mobInteract", at = @At("HEAD"), cancellable = true)
     private void onInteract(Player playerEntity_1, InteractionHand hand_1, CallbackInfoReturnable<InteractionResult> cir)
     {
-        if (MobAI.isTracking(this, MobAI.TrackingType.VILLAGER_BREEDING))
+        if (MobAI.isTracking(this, MobAI.TrackingType.BREEDING))
         {
             ItemStack itemStack_1 = playerEntity_1.getItemInHand(hand_1);
             if (itemStack_1.getItem() == Items.EMERALD)

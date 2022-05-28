@@ -109,9 +109,9 @@ public class EntityPlayerMPFake extends ServerPlayer
     }
 
     @Override
-    public void onEquipItem(final EquipmentSlot slot, final ItemStack stack)
+    public void onEquipItem(final EquipmentSlot slot, final ItemStack previous, final ItemStack stack)
     {
-        if (!isUsingItem()) super.onEquipItem(slot, stack);
+        if (!isUsingItem()) super.onEquipItem(slot, previous, stack);
     }
 
     @Override
