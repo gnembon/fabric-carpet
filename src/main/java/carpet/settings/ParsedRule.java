@@ -9,7 +9,6 @@ import carpet.api.settings.Validators;
 import carpet.utils.Messenger;
 import carpet.utils.TranslationKeys;
 import carpet.utils.Translations;
-import carpet.utils.TypedField;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.network.chat.Component;
 
@@ -56,7 +55,7 @@ public final class ParsedRule<T> implements CarpetRule<T>, Comparable<ParsedRule
      * @deprecated No replacement for this, since a {@link CarpetRule} may not always use a {@link Field}.
      *             Use {@link #value()} to access the rule's value
      */
-    @Deprecated(forRemoval = true) // to remove
+    @Deprecated(forRemoval = true) // to private
     public final Field field;
     /**
      * @deprecated Use {@link CarpetRule#name()} instead
@@ -125,7 +124,6 @@ public final class ParsedRule<T> implements CarpetRule<T>, Comparable<ParsedRule
     @Deprecated(forRemoval = true) // to private/subclass
     public final String scarpetApp;
     private final FromStringConverter<T> converter;
-    private final TypedField<T> typedField; // to rename to field
     private final SettingsManager realSettingsManager; // to rename to settingsManager
     /**
      * If you reference this field I'll steal your kneecaps
@@ -165,12 +163,9 @@ public final class ParsedRule<T> implements CarpetRule<T>, Comparable<ParsedRule
     {
         this.isLegacy = rule.isLegacy();
         this.name = !isLegacy || rule.name().isEmpty() ? field.getName() : rule.name();
-        try {
-            this.typedField = new TypedField<>(field);
-        } catch (IllegalAccessException e) {
-            throw new IllegalArgumentException("Couldn't access given field", e);
-        }
-        this.type = typedField.type();
+        @SuppressWarnings("unchecked") // We are "defining" T here
+        Class<T> type = (Class<T>)field.getType();
+        this.type = type;
         this.isStrict = rule.strict();
         this.categories = List.of(rule.category());
         this.scarpetApp = rule.appSource();
@@ -300,7 +295,11 @@ public final class ParsedRule<T> implements CarpetRule<T>, Comparable<ParsedRule
         }
         if (!value.equals(value()) || source == null)
         {
-            this.typedField.setStatic(value);
+            try {
+                this.field.set(null, value);
+            } catch (IllegalAccessException e) {
+                throw new IllegalStateException("Couldn't access field for rule: " + name, e);
+            }
             if (source != null) settingsManager().notifyRuleChanged(source, this, userInput);
         }
     }
@@ -360,8 +359,14 @@ public final class ParsedRule<T> implements CarpetRule<T>, Comparable<ParsedRule
     }
 
     @Override
+    @SuppressWarnings("unchecked") // T comes from the field
     public T value() {
-        return typedField.getStatic();
+        try {
+            return (T) field.get(null);
+        } catch (IllegalAccessException e) {
+            // Can't happen at regular runtime because we'd have thrown it on construction 
+            throw new IllegalArgumentException("Couldn't access field for rule: " + name, e);
+        }
     }
 
     @Override
