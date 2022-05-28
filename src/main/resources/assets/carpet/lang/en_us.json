@@ -3,17 +3,17 @@
   
   // Categories:
 
-  "carpet.settings.carpet.settings.category.bugfix": "bugfix",
-  "carpet.settings.category.survival": "survival",
-  "carpet.settings.category.creative": "creative",
-  "carpet.settings.category.experimental": "experimental",
-  "carpet.settings.category.optimization": "optimization",
-  "carpet.settings.category.feature": "feature",
-  "carpet.settings.category.command": "command",
-  "carpet.settings.category.tnt": "TNT",
-  "carpet.settings.category.dispenser": "dispenser",
-  "carpet.settings.category.scarpet": "scarpet",
-  "carpet.settings.category.client": "client",
+  "carpet.category.bugfix": "bugfix",
+  "carpet.category.survival": "survival",
+  "carpet.category.creative": "creative",
+  "carpet.category.experimental": "experimental",
+  "carpet.category.optimization": "optimization",
+  "carpet.category.feature": "feature",
+  "carpet.category.command": "command",
+  "carpet.category.tnt": "TNT",
+  "carpet.category.dispenser": "dispenser",
+  "carpet.category.scarpet": "scarpet",
+  "carpet.category.client": "client",
 
   // Settings command UI elements
 
