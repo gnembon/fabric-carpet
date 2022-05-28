@@ -411,18 +411,20 @@ public class SettingsManager {
             CarpetSettings.LOG.info("[CM]: "+fancyName+" features are locked by the administrator");
             disableBooleanCommands();
         }
+        int loadedCount = 0;
         for (String key: conf.ruleMap().keySet())
         {
             try
             {
                 rules.get(key).set(server.createCommandSourceStack(), conf.ruleMap().get(key));
-                CarpetSettings.LOG.info("[CM]: loaded setting " + key + " as " + conf.ruleMap().get(key) + " from " + identifier + ".conf");
+                loadedCount++;
             }
             catch (InvalidRuleValueException exc)
             {
-                CarpetSettings.LOG.error("[CM Error]: Failed to load setting: "+key+", " + exc.getMessage());
+                CarpetSettings.LOG.error("[CM Error]: Failed to load setting: " + key, exc);
             }
         }
+        CarpetSettings.LOG.info("[CM] Loaded " + loadedCount + " settings from " + identifier + ".conf");
         locked = conf.locked();
     }
 
