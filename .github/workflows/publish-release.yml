@@ -126,7 +126,7 @@ jobs:
            **${{ github.event.release.name }}** has been released!
            
            ${{ github.event.release.body }}
-           
+           ​
            Get it on Github Releases: <${{ github.event.release.html_url }}>
            Or on CurseForge
   Merge-Scarpet-Docs:
