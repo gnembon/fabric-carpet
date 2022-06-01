@@ -47,6 +47,7 @@ import net.minecraft.core.QuartPos;
 import net.minecraft.core.Registry;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.tags.TagKey;
+import net.minecraft.world.level.chunk.PalettedContainer;
 import net.minecraft.world.level.levelgen.structure.Structure;
 import net.minecraft.world.level.levelgen.structure.StructureType;
 import org.jetbrains.annotations.Nullable;
@@ -1267,7 +1268,8 @@ public class WorldAccess {
                 int j = i + QuartPos.fromBlock(chunk.getHeight()) - 1;
                 int k = Mth.clamp(biomeY, i, j);
                 int l = chunk.getSectionIndex(QuartPos.toBlock(k));
-                chunk.getSection(l).getBiomes().set(biomeX & 3, k & 3, biomeZ & 3, biome);
+                // accessing outside of the interface - might be dangerous in the future.
+                ((PalettedContainer<Holder<Biome>>) chunk.getSection(l).getBiomes()).set(biomeX & 3, k & 3, biomeZ & 3, biome);
             } catch (Throwable var8) {
                 return Value.FALSE;
             }
