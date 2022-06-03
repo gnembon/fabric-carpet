@@ -9,7 +9,7 @@ public class FunctionAnnotationValue extends Value
     {
         GLOBAL, VARARG
     }
-    public Type type;
+    public final Type type;
     public FunctionAnnotationValue(Value variable, Type type)
     {
         if (variable.getVariable() == null)
@@ -21,7 +21,7 @@ public class FunctionAnnotationValue extends Value
     @Override
     public String getString()
     {
-        return getVariable();
+        throw new AssertionError();
     }
 
     @Override

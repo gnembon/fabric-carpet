@@ -60,27 +60,30 @@ public class Functions {
                 String varArgs = null;
                 for (int i = 1; i < lv.size(); i++)
                 {
-                    Value v = lv.get(i).evalValue(c, Context.LOCALIZATION);
-                    if (!v.isBound())
-                    {
-                        throw new InternalExpressionException("Only variables can be used in function signature, not  " + v.getString());
+                    if (!(lv.get(i) instanceof LazyValue.VariableLazyValue var)) {
+                    	if (lv.get(i).evalValue(c, Context.LOCALIZATION).isBound()) {
+                    		//throw new AssertionError();
+                    		throw new InternalExpressionException("Varargs aren't supported in this build"); //TODO
+                    	}
+                    	throw new InternalExpressionException("Only variables can be used in function signature");
                     }
-                    if (v instanceof FunctionAnnotationValue)
+                    Value v = lv.get(i).evalValue(c, Context.LOCALIZATION);
+                    if (v instanceof FunctionAnnotationValue) // TODO move this into a LazyValue type?
                     {
                         if (((FunctionAnnotationValue) v).type == FunctionAnnotationValue.Type.GLOBAL)
                         {
-                            globals.add(v.getVariable());
+                            globals.add(var.name());
                         }
                         else
                         {
                             if (varArgs != null)
-                                throw new InternalExpressionException("Variable argument identifier is already defined as "+varArgs+", trying to overwrite with "+v.getVariable());
-                            varArgs = v.getVariable();
+                                throw new InternalExpressionException("Variable argument identifier is already defined as "+varArgs+", trying to overwrite with "+var.name());
+                            varArgs = var.name();
                         }
                     }
                     else
                     {
-                        args.add(v.getVariable());
+                        args.add(var.name());
                     }
                 }
                 Value retval = new FunctionSignatureValue(name, args, varArgs, globals);
@@ -106,11 +109,13 @@ public class Functions {
         });
 
 
-        expression.addContextFunction("outer", 1, (c, t, lv) ->
+        expression.addLazyFunction("outer", 1, (c, t, lv) ->
         {
             if (t != Context.LOCALIZATION)
                 throw new InternalExpressionException("Outer scoping of variables is only possible in function signatures.");
-            return new FunctionAnnotationValue(lv.get(0), FunctionAnnotationValue.Type.GLOBAL);
+            // TODO hack for outer(), possibly convert FuncAnnotation to a LV, making VariableLazyValue an interface (or extend an interface NamedLazyValue that is also extended by this)
+            Value ret = new FunctionAnnotationValue(lv.get(0).evalValue(c), FunctionAnnotationValue.Type.GLOBAL);
+            return new LazyValue.VariableLazyValue((cc, tt) -> ret, ((LazyValue.VariableLazyValue)lv.get(0)).name());
         });
 
         //assigns const procedure to the lhs, returning its previous value

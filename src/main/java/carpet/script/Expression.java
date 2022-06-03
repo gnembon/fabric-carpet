@@ -12,6 +12,7 @@ import carpet.script.Fluff.QuadFunction;
 import carpet.script.Fluff.QuinnFunction;
 import carpet.script.Fluff.SexFunction;
 import carpet.script.Fluff.TriFunction;
+import carpet.script.Tokenizer.Token;
 import carpet.script.exception.BreakStatement;
 import carpet.script.exception.ContinueStatement;
 import carpet.script.exception.ExitStatement;
@@ -1347,8 +1348,16 @@ public class Expression
                 return new LazyValue.VariableLazyValue((c, t) -> getOrSetAnyVariable(c, token.surface).evalValue(c, t), token.surface);
             case FUNCTION: {
                 ILazyFunction f = functions.get(token.surface);
+                // Special case for lists of variable references, given those interact closely with some operators
+                if (token.surface.equals("l") && node.args.stream().allMatch(n -> n.token.type == Token.TokenType.VARIABLE)) {
+                    return ReferenceArray.of(node, this);
+                }
                 Context.Type requestedType = f.staticType(expectedType);
                 List<LazyValue> params = node.args.stream().map(n -> extractOp(ctx, n, requestedType)).collect(Collectors.toList());
+                // Special case for outer(), TODO make this better. PLEASE DON'T FORGET IT'S AWFUL
+                if (token.surface.equals("outer")) {
+                	return new LazyValue.VariableLazyValue((c, t) -> f.lazyEval(c, t, this, token, params).evalValue(c, t), ((LazyValue.VariableLazyValue)params.get(0)).name());
+                }
                 return (c, t) -> f.lazyEval(c, t, this, token, params).evalValue(c, t);
             }
             case CONSTANT:
