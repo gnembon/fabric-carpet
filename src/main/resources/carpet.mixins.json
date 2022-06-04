@@ -180,6 +180,7 @@
     "StandingAndWallBlockItem_creativeNoClipMixin",
     "ShulkerBoxBlockEntity_creativeNoClipMixin",
     "TheEndGatewayBlockEntity_creativeNoClipMixin",
+    "PressurePlateBlock_creativeNoClipMixin",
     "LivingEntity_creativeFlyMixin",
     "ChunkMap_creativePlayersLoadChunksMixin",
     "SculkSensorBlock_rangeMixin",
