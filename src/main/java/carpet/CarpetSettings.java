@@ -1076,4 +1076,10 @@ public class CarpetSettings
     )
     public static int sculkSensorRange = 8;
 
+    @Rule(
+            desc = "Allows to grow nether trees with 3x3 base with bonemeal",
+            extra = {"Normally these can only grow as part of nether worldgen", "Note that these types of trees are still very unlikely (6% chance)"},
+            category = SURVIVAL
+    )
+    public static boolean canGrowThickFungus = false;
 }
