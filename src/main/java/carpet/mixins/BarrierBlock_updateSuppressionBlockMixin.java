@@ -1,9 +1,11 @@
 package carpet.mixins;
 
 import carpet.CarpetSettings;
+import carpet.fakes.LevelInterface;
+import net.minecraft.world.level.redstone.NeighborUpdater;
+import net.minecraft.util.RandomSource;
 import org.spongepowered.asm.mixin.Mixin;
 
-import java.util.Random;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
@@ -22,33 +24,33 @@ public class BarrierBlock_updateSuppressionBlockMixin extends Block {
     public BarrierBlock_updateSuppressionBlockMixin(Properties settings) { super(settings); }
 
     @Override
-    public int getSignal(BlockState state, BlockGetter world, BlockPos pos, Direction direction) {
+    public int getSignal(BlockState state, BlockGetter level, BlockPos pos, Direction direction) {
         return (shouldPower && direction == Direction.DOWN) ? 15 : 0;
     }
 
     @Override
-    public void neighborChanged(BlockState state, Level world, BlockPos pos, Block block, BlockPos fromPos, boolean notify) {
-        if (CarpetSettings.updateSuppressionBlockSetting != -1) {
+    public void neighborChanged(BlockState state, Level level, BlockPos pos, Block block, BlockPos fromPos, boolean notify) {
+        if (CarpetSettings.updateSuppressionBlock != -1) {
             if (fromPos.equals(pos.above())) {
-                BlockState stateAbove = world.getBlockState(fromPos);
+                BlockState stateAbove = level.getBlockState(fromPos);
                 if (stateAbove.is(Blocks.ACTIVATOR_RAIL) && !stateAbove.getValue(PoweredRailBlock.POWERED)) {
-                    if (CarpetSettings.updateSuppressionBlockSetting > 0) {
-                        world.scheduleTick(pos, this, CarpetSettings.updateSuppressionBlockSetting);
-                    }
-                    throw new StackOverflowError("updateSuppressionBlock");
+                    level.scheduleTick(pos, this, 1);
+                    NeighborUpdater updater = ((LevelInterface)level).getNeighborUpdater();
+                    if (updater instanceof CollectingNeighborUpdaterAccessor cnua)
+                        cnua.setCount(cnua.getMaxChainedNeighborUpdates()-CarpetSettings.updateSuppressionBlock);
                 }
             }
         }
-        super.neighborChanged(state, world, pos, block, fromPos, notify);
+        super.neighborChanged(state, level, pos, block, fromPos, notify);
     }
 
     @Override
-    public void tick(BlockState state, ServerLevel world, BlockPos pos, Random random) {
+    public void tick(BlockState state, ServerLevel level, BlockPos pos, RandomSource random) {
         BlockPos posAbove = pos.above();
-        BlockState stateAbove = world.getBlockState(posAbove);
+        BlockState stateAbove = level.getBlockState(posAbove);
         if (stateAbove.is(Blocks.ACTIVATOR_RAIL) && !stateAbove.getValue(PoweredRailBlock.POWERED)) {
             shouldPower = true;
-            world.setBlock(posAbove, stateAbove.setValue(PoweredRailBlock.POWERED, true), 3);
+            level.setBlock(posAbove, stateAbove.setValue(PoweredRailBlock.POWERED, true), Block.UPDATE_CLIENTS | Block.UPDATE_NONE);
             shouldPower = false;
         }
     }

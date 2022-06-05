@@ -31,7 +31,6 @@ display_title
 draw_shape
 drop_item
 emitted_light
-enable_hidden_dimensions
 encode_nbt
 entity_area
 entity_event

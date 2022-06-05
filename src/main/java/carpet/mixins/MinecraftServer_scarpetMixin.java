@@ -12,7 +12,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.players.PlayerList;
 import net.minecraft.util.thread.ReentrantBlockableEventLoop;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.levelgen.structure.templatesystem.StructureManager;
+import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplateManager;
 import net.minecraft.world.level.storage.LevelStorageSource;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -58,7 +58,7 @@ public abstract class MinecraftServer_scarpetMixin extends ReentrantBlockableEve
 
     @Shadow @Final private ServerFunctionManager functionManager;
 
-    @Shadow @Final private StructureManager structureManager;
+    @Shadow @Final private StructureTemplateManager structureTemplateManager;
 
     @Override
     public void forceTick(BooleanSupplier isAhead)
@@ -105,6 +105,12 @@ public abstract class MinecraftServer_scarpetMixin extends ReentrantBlockableEve
         getPlayerList().saveAll();
         getPlayerList().reloadResources();
         functionManager.replaceLibrary(this.resources.managers().getFunctionLibrary());
-        structureManager.onResourceManagerReload(this.resources.resourceManager());
+        structureTemplateManager.onResourceManagerReload(this.resources.resourceManager());
+    }
+
+    @Override
+    public MinecraftServer.ReloadableResources getResourceManager()
+    {
+        return resources;
     }
 }

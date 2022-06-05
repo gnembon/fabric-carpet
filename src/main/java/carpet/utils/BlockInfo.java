@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.Map;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Registry;
-import net.minecraft.network.chat.BaseComponent;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobSpawnType;
@@ -221,7 +221,7 @@ public class BlockInfo
         entry(Material.POWDER_SNOW    , "powder_snow")
     );
 
-    public static List<BaseComponent> blockInfo(BlockPos pos, ServerLevel world)
+    public static List<Component> blockInfo(BlockPos pos, ServerLevel world)
     {
         BlockState state = world.getBlockState(pos);
         Material material = state.getMaterial();
@@ -231,7 +231,7 @@ public class BlockInfo
         {
             metastring += ", "+iproperty.getName() + '='+state.getValue(iproperty);
         }
-        List<BaseComponent> lst = new ArrayList<>();
+        List<Component> lst = new ArrayList<>();
         lst.add(Messenger.s(""));
         lst.add(Messenger.s("====================================="));
         lst.add(Messenger.s(String.format("Block info for %s%s (id %d%s):",Registry.BLOCK.getKey(block),metastring, Registry.BLOCK.getId(block), metastring )));
@@ -246,7 +246,7 @@ public class BlockInfo
         lst.add(Messenger.s(String.format(" - Light in: %d, above: %d",
                 Math.max(world.getBrightness(LightLayer.BLOCK, pos),world.getBrightness(LightLayer.SKY, pos)) ,
                 Math.max(world.getBrightness(LightLayer.BLOCK, pos.above()),world.getBrightness(LightLayer.SKY, pos.above())))));
-        lst.add(Messenger.s(String.format(" - Brightness in: %.2f, above: %.2f", world.getBrightness(pos), world.getBrightness(pos.above()))));
+        lst.add(Messenger.s(String.format(" - Brightness in: %.2f, above: %.2f", world.getLightLevelDependentMagicValue(pos), world.getLightLevelDependentMagicValue(pos.above()))));
         lst.add(Messenger.s(String.format(" - Is opaque: %s", material.isSolid() )));
         //lst.add(Messenger.s(String.format(" - Light opacity: %d", state.getOpacity(world,pos))));
         lst.add(Messenger.s(String.format(" - Blocks light: %s", state.getMaterial().isSolidBlocking())));
@@ -272,7 +272,7 @@ public class BlockInfo
         return lst;
     }
 
-    private static BaseComponent wander_chances(BlockPos pos, ServerLevel worldIn)
+    private static Component wander_chances(BlockPos pos, ServerLevel worldIn)
     {
         PathfinderMob creature = new ZombifiedPiglin(EntityType.ZOMBIFIED_PIGLIN, worldIn);
         creature.finalizeSpawn(worldIn, worldIn.getCurrentDifficultyAt(pos), MobSpawnType.NATURAL, null, null);

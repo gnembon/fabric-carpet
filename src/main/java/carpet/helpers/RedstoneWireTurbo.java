@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.HashMap;
 import java.util.concurrent.ThreadLocalRandom;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
@@ -662,7 +663,20 @@ public class RedstoneWireTurbo
                     // already keeping track of all of the neighbor positions
                     // that need to be updated.  All on its own, handling neighbors 
                     // this way reduces block updates by 1/3 (24 instead of 36).
-                    worldIn.neighborChanged(upd.self, wire, upd.parent);
+//                    worldIn.neighborChanged(upd.self, wire, upd.parent);
+
+                    // [Space Walker]
+                    // The neighbor update system got a significant overhaul in 1.19.
+                    // Shape and block updates are now added to a stack before being
+                    // processed. These changes make it so any neighbor updates emitted
+                    // by this accelerator will not be processed until after the entire
+                    // wire network has updated. This has a significant impact on the
+                    // behavior and introduces Vanilla parity issues.
+                    // To circumvent this issue we bypass the neighbor update stack and
+                    // call BlockStateBase#neighborChanged directly. This change mostly
+                    // restores old behavior, at the cost of bypassing the
+                    // max-chained-neighbor-updates server property.
+                    worldIn.getBlockState(upd.self).neighborChanged(worldIn, upd.self, wire, upd.parent, false);
                 }
             }
  
@@ -908,12 +922,37 @@ public class RedstoneWireTurbo
             // [gnembon] added state check cause other things in the tick may have popped it up already
             // https://github.com/gnembon/fabric-carpet/issues/117
             if (worldIn.getBlockState(upd.self).getBlock() == Blocks.REDSTONE_WIRE)
-                worldIn.setBlock(upd.self, state, 2);
+                // [Space Walker] suppress shape updates and emit those manually to
+                // bypass the new neighbor update stack.
+                if (worldIn.setBlock(upd.self, state, Block.UPDATE_KNOWN_SHAPE | Block.UPDATE_CLIENTS))
+                    updateNeighborShapes(worldIn, upd.self, state);
         }
  
         return state;
     }
- 
+
+    /*
+     * [Space Walker]
+     * This method emits shape updates around the given block,
+     * bypassing the new neighbor update stack. Diagonal shape
+     * updates are omitted, as they are mostly unnecessary.
+     * Diagonal shape updates are emitted exclusively to other
+     * redstone wires, in order to update their connection properties.
+     * Wire connections should never change as a result of power
+     * changes, so the only behavioral change will be in scenarios
+     * where earlier shape updates have been suppressed to keep a
+     * redstone wire in an invalid state.
+     */
+    public void updateNeighborShapes(Level level, BlockPos pos, BlockState state) {
+        for (Direction dir : Block.UPDATE_SHAPE_ORDER) {
+            BlockPos neighborPos = pos.relative(dir);
+            BlockState neighborState = level.getBlockState(neighborPos);
+
+            BlockState newState = neighborState.updateShape(dir.getOpposite(), state, level, neighborPos, pos);
+            Block.updateOrDestroy(neighborState, newState, level, neighborPos, Block.UPDATE_CLIENTS);
+        }
+    }
+
     /*
      * Optimized function to compute a redstone wire's power level based on cached
      * state.

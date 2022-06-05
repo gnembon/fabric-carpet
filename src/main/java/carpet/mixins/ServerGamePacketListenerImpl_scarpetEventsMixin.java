@@ -1,6 +1,7 @@
 package carpet.mixins;
 
-import net.minecraft.server.network.TextFilter;
+import net.minecraft.network.protocol.game.ServerboundChatPacket;
+import net.minecraft.server.network.FilteredText;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
@@ -44,7 +45,6 @@ import net.minecraft.server.network.ServerGamePacketListenerImpl;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.BlockHitResult;
-import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 
 
 @Mixin(ServerGamePacketListenerImpl.class)
@@ -106,7 +106,7 @@ public class ServerGamePacketListenerImpl_scarpetEventsMixin
 
     @Inject(method = "handlePlayerAction", at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/server/level/ServerPlayerGameMode;handleBlockBreakAction(Lnet/minecraft/core/BlockPos;Lnet/minecraft/network/protocol/game/ServerboundPlayerActionPacket$Action;Lnet/minecraft/core/Direction;I)V",
+            target = "Lnet/minecraft/server/level/ServerPlayerGameMode;handleBlockBreakAction(Lnet/minecraft/core/BlockPos;Lnet/minecraft/network/protocol/game/ServerboundPlayerActionPacket$Action;Lnet/minecraft/core/Direction;II)V",
             shift = At.Shift.BEFORE
     ))
     private void onClicked(ServerboundPlayerActionPacket packet, CallbackInfo ci)
@@ -282,14 +282,13 @@ public class ServerGamePacketListenerImpl_scarpetEventsMixin
         }
     }
 
-    @Inject(method = "handleChat(Lnet/minecraft/server/network/TextFilter$FilteredText;)V",
-            at = @At(value = "INVOKE", target = "Ljava/lang/String;startsWith(Ljava/lang/String;)Z"),
-            locals = LocalCapture.CAPTURE_FAILHARD
+    @Inject(method = "handleChat(Lnet/minecraft/network/protocol/game/ServerboundChatPacket;Lnet/minecraft/server/network/FilteredText;)V",
+            at = @At(value = "INVOKE", target = "Lnet/minecraft/network/protocol/game/ServerboundChatPacket;signedPreview()Z")
     )
-    private void onChatMessage(TextFilter.FilteredText filteredText, CallbackInfo ci, String string) {
+    private void onChatMessage(ServerboundChatPacket serverboundChatPacket, FilteredText<String> filteredText, CallbackInfo ci) {
         if (PLAYER_MESSAGE.isNeeded())
         {
-            PLAYER_MESSAGE.onPlayerMessage(player,string);
+            PLAYER_MESSAGE.onPlayerMessage(player, filteredText.raw());
         }
     }
 }

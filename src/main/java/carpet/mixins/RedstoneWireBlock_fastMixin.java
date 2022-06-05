@@ -79,7 +79,10 @@ public abstract class RedstoneWireBlock_fastMixin implements RedstoneWireBlockIn
         if (blockState_1.getValue(POWER) != i) {
             blockState_1 = blockState_1.setValue(POWER, i);
             if (world_1.getBlockState(blockPos_1) == blockState) {
-                world_1.setBlock(blockPos_1, blockState_1, 2);
+                // [Space Walker] suppress shape updates and emit those manually to
+                // bypass the new neighbor update stack.
+                if (world_1.setBlock(blockPos_1, blockState_1, Block.UPDATE_KNOWN_SHAPE | Block.UPDATE_CLIENTS))
+                    wireTurbo.updateNeighborShapes(world_1, blockPos_1, blockState_1);
             }
 
             if (!CarpetSettings.fastRedstoneDust) {

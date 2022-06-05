@@ -2,7 +2,6 @@ package carpet.script.api;
 
 import carpet.CarpetServer;
 import carpet.fakes.MinecraftServerInterface;
-import carpet.fakes.ServerWorldInterface;
 import carpet.fakes.ThreadedAnvilChunkStorageInterface;
 import carpet.helpers.FeatureGenerator;
 import carpet.logging.HUDController;
@@ -33,35 +32,26 @@ import carpet.script.value.LazyListValue;
 import carpet.script.value.ListValue;
 import carpet.script.value.MapValue;
 import carpet.script.value.NBTSerializableValue;
-import carpet.script.value.NullValue;
 import carpet.script.value.NumericValue;
 import carpet.script.value.StringValue;
 import carpet.script.value.Value;
 import carpet.script.value.ValueConversions;
 import carpet.utils.Messenger;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
-import com.mojang.datafixers.util.Pair;
-import com.mojang.serialization.DynamicOps;
 import net.minecraft.SharedConstants;
-import net.minecraft.Util;
 import net.minecraft.commands.CommandSourceStack;
-import net.minecraft.commands.Commands;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Holder;
 import net.minecraft.core.Registry;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.Rotations;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtIo;
-import net.minecraft.nbt.NbtOps;
 import net.minecraft.nbt.NbtUtils;
 import net.minecraft.nbt.StringTag;
 import net.minecraft.nbt.Tag;
-import net.minecraft.network.chat.BaseComponent;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.TextComponent;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientboundClearTitlesPacket;
 import net.minecraft.network.protocol.game.ClientboundCustomSoundPacket;
@@ -69,17 +59,12 @@ import net.minecraft.network.protocol.game.ClientboundSetActionBarTextPacket;
 import net.minecraft.network.protocol.game.ClientboundSetSubtitleTextPacket;
 import net.minecraft.network.protocol.game.ClientboundSetTitleTextPacket;
 import net.minecraft.network.protocol.game.ClientboundSetTitlesAnimationPacket;
-import net.minecraft.resources.RegistryOps;
-import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
-//import net.minecraft.server.WorldLoader;
-import net.minecraft.server.WorldStem;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.packs.repository.Pack;
 import net.minecraft.server.packs.repository.PackRepository;
-import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.stats.Stat;
 import net.minecraft.stats.StatType;
@@ -90,20 +75,10 @@ import net.minecraft.world.entity.decoration.ArmorStand;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.ChunkPos;
-import net.minecraft.world.level.DataPackConfig;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.biome.BiomeManager;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.border.BorderChangeListener;
-import net.minecraft.world.level.chunk.ChunkGenerator;
-import net.minecraft.world.level.dimension.DimensionType;
-import net.minecraft.world.level.dimension.LevelStem;
-import net.minecraft.world.level.levelgen.WorldGenSettings;
 import net.minecraft.world.level.storage.CommandStorage;
-import net.minecraft.world.level.storage.DerivedLevelData;
 import net.minecraft.world.level.storage.LevelResource;
-import net.minecraft.world.level.storage.LevelStorageSource;
-import net.minecraft.world.level.storage.WorldData;
 import net.minecraft.world.phys.Vec3;
 import org.apache.commons.io.FileUtils;
 
@@ -187,10 +162,11 @@ public class Auxiliary {
             Vec3 vec = locator.vec;
             double d0 = Math.pow(volume > 1.0F ? (double)(volume * 16.0F) : 16.0D, 2.0D);
             int count = 0;
+            long seed = cc.s.getLevel().getRandom().nextLong();
             for (ServerPlayer player : cc.s.getLevel().getPlayers( (p) -> p.distanceToSqr(vec) < d0))
             {
                 count++;
-                player.connection.send(new ClientboundCustomSoundPacket(soundName, mixer, vec, volume, pitch));
+                player.connection.send(new ClientboundCustomSoundPacket(soundName, mixer, vec, volume, pitch, seed));
             }
             return new NumericValue(count);
         });
@@ -363,11 +339,11 @@ public class Auxiliary {
             BlockState targetBlock = null;
             Vector3Argument pointLocator;
             boolean interactable = true;
-            String name;
+            Component name;
             try
             {
                 Value nameValue = lv.get(0);
-                name = nameValue.isNull() ? "" : nameValue.getString();
+                name = nameValue.isNull() ? null : FormattedTextValue.getTextByValue(nameValue);
                 pointLocator = Vector3Argument.findIn(lv, 1, true, false);
                 if (lv.size()>pointLocator.offset)
                 {
@@ -386,7 +362,7 @@ public class Auxiliary {
 
             ArmorStand armorstand = new ArmorStand(EntityType.ARMOR_STAND, cc.s.getLevel());
             double yoffset;
-            if (targetBlock == null && name.isEmpty())
+            if (targetBlock == null && name == null)
             {
                 yoffset = 0.0;
             }
@@ -417,9 +393,9 @@ public class Auxiliary {
             armorstand.addTag(MARKER_STRING);
             if (targetBlock != null)
                 armorstand.setItemSlot(EquipmentSlot.HEAD, new ItemStack(targetBlock.getBlock().asItem()));
-            if (!name.isEmpty())
+            if (name != null)
             {
-                armorstand.setCustomName(new TextComponent(name));
+                armorstand.setCustomName(name);
                 armorstand.setCustomNameVisible(true);
             }
             armorstand.setHeadPose(new Rotations((int)pointLocator.pitch,0,0));
@@ -573,7 +549,7 @@ public class Auxiliary {
             else title = null; // Will never happen, just to make lambda happy
             if (packetGetter == null)
             {
-                Map<String, BaseComponent> map;
+                Map<String, Component> map;
                 if (actionString.equals("player_list_header"))
                     map = HUDController.scarpet_headers;
                 else
@@ -588,7 +564,7 @@ public class Auxiliary {
                     });
                 else
                     targetList.forEach(target -> {
-                        map.put(target.getScoreboardName(), (BaseComponent) title);
+                        map.put(target.getScoreboardName(), (MutableComponent) title);
                         total.getAndIncrement();
                     });
                 HUDController.update_hud(((CarpetContext)c).s.getServer(), targetList);
@@ -643,7 +619,7 @@ public class Auxiliary {
             }
             catch (Exception exc)
             {
-                return ListValue.of(Value.NULL, ListValue.of(), new FormattedTextValue(new TextComponent(exc.getMessage())));
+                return ListValue.of(Value.NULL, ListValue.of(), new FormattedTextValue(Component.literal(exc.getMessage())));
             }
         });
 
@@ -781,11 +757,11 @@ public class Auxiliary {
                 plopData.put(StringValue.of("configured_features"),
                         ListValue.wrap(registryManager.registryOrThrow(Registry.CONFIGURED_FEATURE_REGISTRY).keySet().stream().sorted().map(ValueConversions::of).collect(Collectors.toList()))
                 );
-                plopData.put(StringValue.of("structures"),
-                        ListValue.wrap(Registry.STRUCTURE_FEATURE.keySet().stream().sorted().map(ValueConversions::of).collect(Collectors.toList()))
+                plopData.put(StringValue.of("structure_types"),
+                        ListValue.wrap(Registry.STRUCTURE_TYPES.keySet().stream().sorted().map(ValueConversions::of).collect(Collectors.toList()))
                 );
-                plopData.put(StringValue.of("configured_structures"),
-                        ListValue.wrap(registryManager.registryOrThrow(Registry.CONFIGURED_STRUCTURE_FEATURE_REGISTRY).keySet().stream().sorted().map(ValueConversions::of).collect(Collectors.toList()))
+                plopData.put(StringValue.of("structures"),
+                        ListValue.wrap(registryManager.registryOrThrow(Registry.STRUCTURE_REGISTRY).keySet().stream().sorted().map(ValueConversions::of).collect(Collectors.toList()))
                 );
                 return MapValue.wrap(plopData);
             }
@@ -997,9 +973,9 @@ public class Auxiliary {
             FunctionArgument callback = FunctionArgument.findIn(c, expression.module, lv, 1, true, false);
             CarpetScriptHost host = ((CarpetScriptHost)c.host);
             if (callback.function == null)
-                return BooleanValue.of(host.getScriptServer().events.removeBuiltInEvent(event, host));
+                return BooleanValue.of(host.scriptServer().events.removeBuiltInEvent(event, host));
             // args don't need to be checked will be checked at the event
-            return BooleanValue.of( host.getScriptServer().events.handleCustomEvent(event, host, callback.function, callback.args ));
+            return BooleanValue.of( host.scriptServer().events.handleCustomEvent(event, host, callback.function, callback.args ));
         });
         //signal_event('event', player or null, args.... ) -> number of apps notified
         expression.addContextFunction("signal_event", -1, (c, t, lv) ->
@@ -1007,7 +983,7 @@ public class Auxiliary {
             if (lv.size() == 0)
                 throw new InternalExpressionException("'signal' requires at least one argument");
             CarpetContext cc = (CarpetContext)c;
-            CarpetScriptServer server = ((CarpetScriptHost)c.host).getScriptServer();
+            CarpetScriptServer server = ((CarpetScriptHost)c.host).scriptServer();
             String eventName = lv.get(0).getString();
             // no such event yet
             if (CarpetEventServer.Event.getEvent(eventName, server) == null) return Value.NULL;
@@ -1018,7 +994,7 @@ public class Auxiliary {
                 player = EntityValue.getPlayerByValue(server.server, lv.get(1));
                 if (lv.size() > 2) args = lv.subList(2, lv.size());
             }
-            int counts = ((CarpetScriptHost)c.host).getScriptServer().events.signalEvent(eventName, cc, player, args);
+            int counts = ((CarpetScriptHost)c.host).scriptServer().events.signalEvent(eventName, cc, player, args);
             if (counts < 0) return Value.NULL;
             return new NumericValue(counts);
         });
@@ -1111,51 +1087,9 @@ public class Auxiliary {
         });
 
         expression.addContextFunction("enable_hidden_dimensions", 0, (c, t, lv) -> {
-
             CarpetContext cc = (CarpetContext)c;
-            // from minecraft.server.Main.main
-            MinecraftServer server = cc.s.getServer();
-            LevelStorageSource.LevelStorageAccess session = ((MinecraftServerInterface)server).getCMSession();
-            DataPackConfig dataPackSettings = session.getDataPacks();
-            PackRepository resourcePackManager = server.getPackRepository();
-
-            WorldStem.InitConfig initConfig = new WorldStem.InitConfig(resourcePackManager, Commands.CommandSelection.DEDICATED, 4, false);
-
-
-            final WorldStem data = WorldStem.load(initConfig, () -> {
-                            DataPackConfig dataPackConfig = session.getDataPacks();
-                            return dataPackConfig == null ? DataPackConfig.DEFAULT : dataPackConfig;
-                    },
-                    (resourceManager, dataPackConfigx) -> {
-                RegistryAccess.Writable writable = RegistryAccess.builtinCopy();
-                DynamicOps<Tag> dynamicOps = RegistryOps.createAndLoad(NbtOps.INSTANCE, writable, (ResourceManager) resourceManager);
-                WorldData worldData = session.getDataTag(dynamicOps, dataPackConfigx, writable.allElementsLifecycle());
-                return Pair.of(worldData, writable.freeze());
-            }, Util.backgroundExecutor(), Runnable::run).join();
-            WorldGenSettings generatorOptions = data.worldData().worldGenSettings();
-
-            boolean bl = generatorOptions.isDebug();
-            long l = generatorOptions.seed();
-            long m = BiomeManager.obfuscateSeed(l);
-            Map<ResourceKey<Level>, ServerLevel> existing_worlds = ((MinecraftServerInterface)server).getCMWorlds();
-            List<Value> addeds = new ArrayList<>();
-            for (Map.Entry<ResourceKey<LevelStem>, LevelStem> entry : generatorOptions.dimensions().entrySet()) {
-                ResourceKey<LevelStem> registryKey = entry.getKey();
-                if (!existing_worlds.containsKey(registryKey))
-                {
-                    ResourceKey<Level> resourceKey2 = ResourceKey.create(Registry.DIMENSION_REGISTRY, registryKey.location());
-                    DerivedLevelData derivedLevelData = new DerivedLevelData(data.worldData(), ((ServerWorldInterface) server.overworld()).getWorldPropertiesCM());
-                    ChunkGenerator chunkGenerator2 = ((LevelStem)entry.getValue()).generator();
-                    Holder<DimensionType> holder2 = ((LevelStem)entry.getValue()).typeHolder();
-                    ServerLevel serverLevel2 = new ServerLevel(server, Util.backgroundExecutor(), session, derivedLevelData, resourceKey2,
-                            holder2, WorldTools.NOOP_LISTENER,chunkGenerator2, bl, m, ImmutableList.of(), false);
-                    server.overworld().getWorldBorder().addListener(new BorderChangeListener.DelegateBorderChangeListener(serverLevel2.getWorldBorder()));
-                    existing_worlds.put(resourceKey2, serverLevel2);
-                    addeds.add(ValueConversions.of(registryKey.location()));
-                }
-            }
-            ((MinecraftServerInterface)server).reloadAfterReload(data.registryAccess());
-            return ListValue.wrap(addeds);
+            cc.host.issueDeprecation("enable_hidden_dimensions in 1.18.2 and 1.19");
+            return Value.NULL;
         });
     }
 

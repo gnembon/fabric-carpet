@@ -8,8 +8,7 @@ import carpet.utils.Messenger;
 import carpet.utils.SpawnReporter;
 import io.netty.buffer.Unpooled;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.network.chat.BaseComponent;
-import net.minecraft.network.chat.TextComponent;
+import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundTabListPacket;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
@@ -41,18 +40,18 @@ public class HUDController
         HUDListeners.add(listener);
     }
 
-    public static Map<ServerPlayer, List<BaseComponent>> player_huds = new HashMap<>();
+    public static Map<ServerPlayer, List<Component>> player_huds = new HashMap<>();
 //keyed with player names so unlogged players don't hold the reference
-    public static final Map<String, BaseComponent> scarpet_headers = new HashMap<>();
+    public static final Map<String, Component> scarpet_headers = new HashMap<>();
 
-    public static final Map<String, BaseComponent> scarpet_footers = new HashMap<>();
+    public static final Map<String, Component> scarpet_footers = new HashMap<>();
 
     public static void resetScarpetHUDs() {
         scarpet_headers.clear();
         scarpet_footers.clear();
     }
 
-    public static void addMessage(ServerPlayer player, BaseComponent hudMessage)
+    public static void addMessage(ServerPlayer player, Component hudMessage)
     {
         if (player == null) return;
         if (!player_huds.containsKey(player))
@@ -61,13 +60,13 @@ public class HUDController
         }
         else
         {
-            player_huds.get(player).add(new TextComponent("\n"));
+            player_huds.get(player).add(Component.literal("\n"));
         }
         player_huds.get(player).add(hudMessage);
     }
     public static void clear_player(Player player)
     {
-        FriendlyByteBuf packetData = new FriendlyByteBuf(Unpooled.buffer()).writeComponent(new TextComponent("")).writeComponent(new TextComponent(""));
+        FriendlyByteBuf packetData = new FriendlyByteBuf(Unpooled.buffer()).writeComponent(Component.literal("")).writeComponent(Component.literal(""));
         ClientboundTabListPacket packet = new ClientboundTabListPacket(packetData);
         //((PlayerListHeaderS2CPacketMixin)packet).setHeader(new LiteralText(""));
         //((PlayerListHeaderS2CPacketMixin)packet).setFooter(new LiteralText(""));
@@ -83,7 +82,7 @@ public class HUDController
         player_huds.clear();
 
         server.getPlayerList().getPlayers().forEach(p -> {
-            BaseComponent scarpetFOoter = scarpet_footers.get(p.getScoreboardName());
+            Component scarpetFOoter = scarpet_footers.get(p.getScoreboardName());
             if (scarpetFOoter != null) HUDController.addMessage(p, scarpetFOoter);
         });
 
@@ -105,7 +104,7 @@ public class HUDController
                         dim = Level.END; // end
                         break;
                 }
-                return new BaseComponent[]{SpawnReporter.printMobcapsForDimension(server.getLevel(dim), false).get(0)};
+                return new Component[]{SpawnReporter.printMobcapsForDimension(server.getLevel(dim), false).get(0)};
             });
 
         if(LoggerRegistry.__counter)
@@ -122,7 +121,7 @@ public class HUDController
         for (ServerPlayer player: targets)
         {
             FriendlyByteBuf packetData = new FriendlyByteBuf(Unpooled.buffer()).
-                    writeComponent(scarpet_headers.getOrDefault(player.getScoreboardName(), new TextComponent(""))).
+                    writeComponent(scarpet_headers.getOrDefault(player.getScoreboardName(), Component.literal(""))).
                     writeComponent(Messenger.c(player_huds.getOrDefault(player, Collections.emptyList()).toArray(new Object[0])));
             ClientboundTabListPacket packet = new ClientboundTabListPacket(packetData);
 
@@ -132,28 +131,28 @@ public class HUDController
             player.connection.send(packet);
         }
     }
-    private static BaseComponent [] send_tps_display(MinecraftServer server)
+    private static Component [] send_tps_display(MinecraftServer server)
     {
         double MSPT = Mth.average(server.tickTimes) * 1.0E-6D;
         double TPS = 1000.0D / Math.max((TickSpeed.time_warp_start_time != 0)?0.0:TickSpeed.mspt, MSPT);
         String color = Messenger.heatmap_color(MSPT,TickSpeed.mspt);
-        return new BaseComponent[]{Messenger.c(
+        return new Component[]{Messenger.c(
                 "g TPS: ", String.format(Locale.US, "%s %.1f",color, TPS),
                 "g  MSPT: ", String.format(Locale.US,"%s %.1f", color, MSPT))};
     }
 
-    private static BaseComponent [] send_counter_info(MinecraftServer server, String color)
+    private static Component [] send_counter_info(MinecraftServer server, String color)
     {
-        List <BaseComponent> res = new ArrayList<>();
+        List <Component> res = new ArrayList<>();
         Arrays.asList(color.split(",")).forEach(c ->{
             HopperCounter counter = HopperCounter.getCounter(c);
             if (counter != null) res.addAll(counter.format(server, false, true));
         });
-        return res.toArray(new BaseComponent[0]);
+        return res.toArray(new Component[0]);
     }
-    private static BaseComponent [] packetCounter()
+    private static Component [] packetCounter()
     {
-        BaseComponent [] ret =  new BaseComponent[]{
+        Component [] ret =  new Component[]{
                 Messenger.c("w I/" + PacketCounter.totalIn + " O/" + PacketCounter.totalOut),
         };
         PacketCounter.reset();
