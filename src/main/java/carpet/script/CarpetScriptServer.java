@@ -296,7 +296,7 @@ public class CarpetScriptServer extends ScriptServer
 
         String finalName = name;
         Boolean isCommandAdded = newHost.addAppCommands(s -> {
-            if (!isRuleApp) Messenger.m(source, Messenger.c("r Failed to add app '" + finalName + "': ").append(s));
+            if (!isRuleApp) Messenger.m(source, Messenger.c("r Failed to add app '" + finalName + "': ", s));
         });
         if (isCommandAdded == null) // error should be dispatched
         {
