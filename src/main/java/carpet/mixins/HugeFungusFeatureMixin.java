@@ -1,15 +1,22 @@
 package carpet.mixins;
 
 import carpet.CarpetSettings;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.level.levelgen.feature.HugeFungusConfiguration;
 import net.minecraft.world.level.levelgen.feature.HugeFungusFeature;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.ModifyArg;
+import org.spongepowered.asm.mixin.injection.ModifyArgs;
+import org.spongepowered.asm.mixin.injection.invoke.arg.Args;
 
 @Mixin(HugeFungusFeature.class)
 public class HugeFungusFeatureMixin {
-    @ModifyArg(method = "place", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/levelgen/feature/HugeFungusFeature;placeStem(Lnet/minecraft/world/level/LevelAccessor;Lnet/minecraft/util/RandomSource;Lnet/minecraft/world/level/levelgen/feature/HugeFungusConfiguration;Lnet/minecraft/core/BlockPos;IZ)V"), index = 5)
-    private boolean mixin(boolean b1) {
-        return b1 || CarpetSettings.canGrowThickFungus;
+    @ModifyArgs(method = "place", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/levelgen/feature/HugeFungusFeature;placeStem(Lnet/minecraft/world/level/LevelAccessor;Lnet/minecraft/util/RandomSource;Lnet/minecraft/world/level/levelgen/feature/HugeFungusConfiguration;Lnet/minecraft/core/BlockPos;IZ)V"))
+    private void mixin(Args args) {
+        boolean natural = !((HugeFungusConfiguration) args.get(2)).planted;
+        args.set(5, natural && ((boolean) args.get(5)) ||
+            !natural && (CarpetSettings.thickHugeFungusGrowthFix.equals("all") ||
+            CarpetSettings.thickHugeFungusGrowthFix.equals("vanilla") && ((RandomSource) args.get(1)).nextFloat() < 0.06F)
+        );
     }
 }
