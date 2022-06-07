@@ -171,6 +171,11 @@ locations if you plan to move the armorstand around after the fact. If both text
 will be aligned (armorstand type markers text shows up at their feet, while for regular armorstands - above the head,
 while block on the head always render in the same position regardless if its a marker or not).
 
+<pre>
+//Spawns a marker 5 blocks away in the direction the player looks with an observer head looking back at the player
+//todo test dis
+create_marker('Hello', player~'pos'+[0, player~'eye_height', 0]+player~'look'*5, -player~'look', 'observer')
+</pre>
 
 ### `remove_all_markers()`
 
