@@ -77,12 +77,12 @@ are not required to follow all attributes precisely, but will allow vanilla clie
 apps. One of the attributes that will definitely not be honored is the duration - particles will be send once
 per shape and last whatever they typically last in the game.
 
-Shapes can be send one by one, using either of the first three invocations, or batched as a list of shape descriptors. 
-Batching has this benefit that they will be send possibly as one packet, limiting network overhead of 
-sending many small packets to draw several shapes at once. The drawback of sending shapes is batches is that they need to address
+Shapes can be sent one by one, using either of the first three invocations, or batched as a list of shape descriptors. 
+Batching has the benefit that they will be sent possibly as one packet, limiting network overhead of 
+sending many small packets to draw several shapes at once. The drawback of sending shapes in batches is that they need to address
 the same list of players, i.e. if multiple players from the list target different players, all shapes will be sent to all of them.
 
-Shapes will fail to draw and raise a runtime error if not all its required parameters
+Shapes will fail to draw and raise a runtime error if not all their required parameters
 are specified and all available shapes have some parameters that are required, so make sure to have them in place:
 
 On the client, shapes can recognize that they are being redrawn again with the same parameters, disregarding the 
