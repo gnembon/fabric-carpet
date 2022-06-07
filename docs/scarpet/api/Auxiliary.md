@@ -42,7 +42,7 @@ Throws `unknown_particle` if particle doesn't exist.
 
 <pre>
 // Shows 40 angry villager particles centred on the player's feet, with a spread of 0.75 blocks and speed of 1
-particle('angry_villager', [x, y, z], 40, 0.75, 1)
+particle('angry_villager', player()~'pos', 40, 0.75, 1)
 </pre>
 
 ### `particle_line(name, pos, pos2, density?, player?)`
