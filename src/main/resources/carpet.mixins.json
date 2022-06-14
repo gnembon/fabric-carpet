@@ -169,6 +169,8 @@
     "QuantizedSpaghettiRarityMixin_scarpetMixin",
 
     "BlockEntity_movableBEMixin",
+    "BarrierBlock_movableBarriersMixin",
+    "PistonBaseBlock_movableBarriersMixin",
     "PistonBaseBlock_movableBEMixin",
     "PistonMovingBlockEntity_movableBEMixin",
     "Level_movableBEMixin",

@@ -1076,4 +1076,10 @@ public class CarpetSettings
     )
     public static int sculkSensorRange = 8;
 
+    @Rule(
+            desc = "Makes barrier blocks movable by pistons.",
+            category = { CREATIVE, FEATURE }
+    )
+    public static boolean movableBarriers;
+
 }
