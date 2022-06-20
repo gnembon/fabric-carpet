@@ -659,6 +659,11 @@ world-localized block, so not `block('stone')`, or a string representing a dimen
  
 Throws `unknown_dimension` if provided dimension can't be found.
  
+<pre>
+//Querying the material of the end exit portal
+in_dimension('the_end', print(block(0,64,0))) // => 'bedrock'
+</pre>
+
 ### `view_distance()`
 
 _**Deprecated**. Use `system_info('game_view_distance')` instead._
