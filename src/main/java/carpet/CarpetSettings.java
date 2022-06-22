@@ -81,7 +81,7 @@ public class CarpetSettings
     public static String language = "none";
 
     /*
-    These will be turned when events can be added / removed in code
+    These will be turned on when events can be added / removed in code
     Then also gotta remember to remove relevant rules
 
     @Rule(
@@ -1075,5 +1075,10 @@ public class CarpetSettings
             validate = PushLimitLimits.class
     )
     public static int sculkSensorRange = 8;
-
+    
+    @Rule(
+            desc = "Restores the ability to force plants (Bamboo [NOT SHOOTS], Cactus, Chorus Flower, and Sugar Cane) to advance their growth stage with zero-ticking",
+            category = FEATURE
+    )
+    public static boolean zeroTickPlants = false;
 }

@@ -183,7 +183,12 @@
     "LivingEntity_creativeFlyMixin",
     "ChunkMap_creativePlayersLoadChunksMixin",
     "SculkSensorBlock_rangeMixin",
-    "CollectingNeighborUpdaterAccessor"
+    "CollectingNeighborUpdaterAccessor",
+    
+    "AbstractBambooBlock_zeroTickPlantsMixin",
+    "AbstractCactusBlock_zeroTickPlantsMixin",
+    "AbstractChorusFlowerBlock_zeroTickPlantsMixin",
+    "AbstractSugarCaneBlock_zeroTickPlantsMixin"
   ],
   "client": [
     "Timer_tickSpeedMixin",
