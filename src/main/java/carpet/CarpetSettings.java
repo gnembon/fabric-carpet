@@ -1068,6 +1068,15 @@ public class CarpetSettings
     public static boolean creativePlayersLoadChunks = true;
 
     @Rule(
+            desc = "Fake players load chunks, or they don't! Just like spectators!",
+            extra = {"Like creativePlayersLoadChunks",
+                    "this rule toggling behaves exactly as if the player is in spectator mode and toggling the gamerule spectatorsGenerateChunks."
+            },
+            category = {CREATIVE, FEATURE}
+    )
+    public static boolean fakePlayersLoadChunks = true;
+
+    @Rule(
             desc = "Customizable sculk sensor range",
             options = {"8", "16", "32"},
             category = CREATIVE,
