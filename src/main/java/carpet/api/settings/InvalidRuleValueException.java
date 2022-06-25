@@ -29,8 +29,8 @@ public class InvalidRuleValueException extends Exception {
      * <p>Notifies the given source with the exception's message if it exists, does nothing if it doesn't exist or it is {@code null}</p>
      * @param source The source to notify
      */
-    public void notifySource(CommandSourceStack source) {
+    public void notifySource(String ruleName, CommandSourceStack source) {
         if (getMessage() != null)
-            Messenger.m(source, "r " + getMessage());
+            Messenger.m(source, "r Couldn't set value for rule " + ruleName + ": "+ getMessage());
     }
 }

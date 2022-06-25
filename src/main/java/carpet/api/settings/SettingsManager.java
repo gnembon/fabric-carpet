@@ -313,14 +313,14 @@ public class SettingsManager {
             String[] res = string.split("\\s+", 3);
             if (res.length == 3)
             {
-                String setting = res[1];
+                String rule = res[1];
                 String strOption = res[2];
-                if (rules.containsKey(setting) && rules.get(setting).canBeToggledClientSide())
+                if (rules.containsKey(rule) && rules.get(rule).canBeToggledClientSide())
                 {
                     try {
-                        rules.get(setting).set(source, strOption);
+                        rules.get(rule).set(source, strOption);
                     } catch (InvalidRuleValueException e) {
-                        e.notifySource(source);
+                        e.notifySource(rule, source);
                     }
                 }
             }
@@ -686,7 +686,7 @@ public class SettingsManager {
                     "^w "+String.format(tr(TranslationKeys.CHANGE_PERMANENTLY_HOVER), identifier+".conf"),
                     "?/"+identifier+" setDefault "+rule.name()+" "+ RuleHelper.toRuleString(rule.value()));
         } catch (InvalidRuleValueException e) {
-            e.notifySource(source);
+            e.notifySource(rule.name(), source);
         }
         return 1;
     }
@@ -704,7 +704,7 @@ public class SettingsManager {
             rule.set(source, stringValue);
             Messenger.m(source ,"gi "+String.format(tr(TranslationKeys.DEFAULT_SET), RuleHelper.translatedName(rule), stringValue));
         } catch (InvalidRuleValueException e) {
-            e.notifySource(source);
+            e.notifySource(rule.name(), source);
         }
         return 1;
     }

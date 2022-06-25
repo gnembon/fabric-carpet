@@ -223,7 +223,7 @@ public final class ParsedRule<T> implements CarpetRule<T>, Comparable<ParsedRule
                     T ret = (T)Enum.valueOf((Class<? extends Enum>) type, str.toUpperCase(Locale.ROOT));
                     return ret;
                 } catch (IllegalArgumentException e) {
-                    throw new InvalidRuleValueException("Invalid value for rule. Valid ones are: " + this.options);
+                    throw new InvalidRuleValueException("Valid values for this rule are: " + this.options);
                 }
             };
         }
