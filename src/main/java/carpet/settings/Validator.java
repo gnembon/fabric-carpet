@@ -105,6 +105,7 @@ public abstract class Validator<T> extends carpet.api.settings.Validator<T>
             if (!currentRule.suggestions().contains(string))
             {
                 Messenger.m(source, "r Valid options: " + currentRule.suggestions().toString());
+                return null;
             }
             return newValue;
         }
