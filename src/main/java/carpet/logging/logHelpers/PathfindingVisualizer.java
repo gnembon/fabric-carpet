@@ -9,11 +9,12 @@ import net.minecraft.world.phys.Vec3;
 
 public class PathfindingVisualizer
 {
-    @SuppressWarnings("unchecked")
     public static void slowPath(Entity entity, Vec3 target, float miliseconds, boolean successful)
     {
         if (!LoggerRegistry.__pathfinding) return;
-        ((TypeLogger<Integer>)LoggerRegistry.getLogger("pathfinding")).log((TypeLogger.TypeMessage<Integer>) (option, player)->
+        @SuppressWarnings("unchecked")
+        TypeLogger<Integer> pathfindingLogger = (TypeLogger<Integer>)LoggerRegistry.getLogger("pathfinding");
+        pathfindingLogger.log((TypeLogger.TypeMessage<Integer>) (option, player)->
         {
             if (!(player instanceof ServerPlayer))
                 return null;
