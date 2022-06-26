@@ -16,6 +16,7 @@ import carpet.script.value.StringValue;
 import carpet.script.value.Value;
 import carpet.script.value.ValueConversions;
 import carpet.utils.CarpetProfiler;
+import com.mojang.brigadier.exceptions.DynamicCommandExceptionType;
 import com.mojang.datafixers.util.Either;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
@@ -95,7 +96,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Registry;
 import net.minecraft.core.RegistryAccess;
-import net.minecraft.network.chat.TextComponent;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.commands.BossBarCommands;
@@ -111,8 +112,11 @@ public abstract class CommandArgument
 {
     public static CommandSyntaxException error(String text)
     {
-        return new SimpleCommandExceptionType(new TextComponent(text)).create();
+        return new SimpleCommandExceptionType(Component.literal(text)).create();
     }
+
+    private static final DynamicCommandExceptionType ERROR_BIOME_INVALID = new DynamicCommandExceptionType(v -> Component.translatable("commands.locate.biome.invalid", v));
+
 
     private static final List<? extends CommandArgument> baseTypes = Lists.newArrayList(
             // default
@@ -219,7 +223,7 @@ public abstract class CommandArgument
             ),
             new VanillaUnconfigurableArgument("biome", () -> ResourceOrTagLocationArgument.resourceOrTag(Registry.BIOME_REGISTRY),
                     (c, p) -> {
-                        ResourceOrTagLocationArgument.Result<Biome> result = ResourceOrTagLocationArgument.getBiome(c, p);
+                        ResourceOrTagLocationArgument.Result<Biome> result = ResourceOrTagLocationArgument.getRegistryType(c, "biome", Registry.BIOME_REGISTRY, ERROR_BIOME_INVALID);
                         Either<ResourceKey<Biome>, TagKey<Biome>> res = result.unwrap();
                         if (res.left().isPresent())
                         {
@@ -459,7 +463,7 @@ public abstract class CommandArgument
             if (!caseSensitive) choseValue = choseValue.toLowerCase(Locale.ROOT);
             if (!validOptions.isEmpty() && !validOptions.contains(choseValue))
             {
-                throw new SimpleCommandExceptionType(new TextComponent("Incorrect value for "+param+": "+choseValue+" for custom type "+suffix)).create();
+                throw new SimpleCommandExceptionType(Component.literal("Incorrect value for "+param+": "+choseValue+" for custom type "+suffix)).create();
             }
             return StringValue.of(choseValue);
         }
@@ -610,7 +614,7 @@ public abstract class CommandArgument
             if (!single) return ListValue.wrap(founds.stream().map(EntityValue::new).collect(Collectors.toList()));
             if (founds.size() == 0) return Value.NULL;
             if (founds.size() == 1) return new EntityValue(founds.iterator().next());
-            throw new SimpleCommandExceptionType(new TextComponent("Multiple entities returned while only one was requested"+" for custom type "+suffix)).create();
+            throw new SimpleCommandExceptionType(Component.literal("Multiple entities returned while only one was requested"+" for custom type "+suffix)).create();
         }
 
         @Override
@@ -651,7 +655,7 @@ public abstract class CommandArgument
             int size = profiles.size();
             if (size == 0) return Value.NULL;
             if (size == 1) return StringValue.of(profiles.iterator().next().getName());
-            throw new SimpleCommandExceptionType(new TextComponent("Multiple game profiles returned while only one was requested"+" for custom type "+suffix)).create();
+            throw new SimpleCommandExceptionType(Component.literal("Multiple game profiles returned while only one was requested"+" for custom type "+suffix)).create();
         }
 
         @Override
@@ -692,7 +696,7 @@ public abstract class CommandArgument
             int size = holders.size();
             if (size == 0) return Value.NULL;
             if (size == 1) return StringValue.of(holders.iterator().next());
-            throw new SimpleCommandExceptionType(new TextComponent("Multiple score holders returned while only one was requested"+" for custom type "+suffix)).create();
+            throw new SimpleCommandExceptionType(Component.literal("Multiple score holders returned while only one was requested"+" for custom type "+suffix)).create();
         }
 
         @Override
@@ -767,7 +771,7 @@ public abstract class CommandArgument
             ResourceLocation choseValue = ResourceLocationArgument.getId(context, param);
             if (!validOptions.isEmpty() && !validOptions.contains(choseValue))
             {
-                throw new SimpleCommandExceptionType(new TextComponent("Incorrect value for "+param+": "+choseValue+" for custom type "+suffix)).create();
+                throw new SimpleCommandExceptionType(Component.literal("Incorrect value for "+param+": "+choseValue+" for custom type "+suffix)).create();
             }
             return ValueConversions.of(choseValue);
         }
@@ -957,7 +961,7 @@ public abstract class CommandArgument
             int slot = net.minecraft.commands.arguments.SlotArgument.getSlot(context, param);
             if (restrict != null && !RESTRICTED_CONTAINERS.get(restrict).numericalIds().contains(slot))
             {
-                throw new SimpleCommandExceptionType(new TextComponent("Incorrect slot restricted to "+restrict+" for custom type "+suffix)).create();
+                throw new SimpleCommandExceptionType(Component.literal("Incorrect slot restricted to "+restrict+" for custom type "+suffix)).create();
             }
             return ValueConversions.ofVanillaSlotResult(slot);
         }
@@ -1076,7 +1080,7 @@ public abstract class CommandArgument
         protected ArgumentType<?> getArgumentType(CarpetScriptHost host) throws CommandSyntaxException
         {
             if (argumentTypeSupplier != null) return argumentTypeSupplier.get();
-            CommandBuildContext registryAccess = new CommandBuildContext(host.getScriptServer().server.registryAccess());
+            CommandBuildContext registryAccess = new CommandBuildContext(host.scriptServer().server.registryAccess());
             return argumentTypeSupplierEx.get(registryAccess);
         }
 

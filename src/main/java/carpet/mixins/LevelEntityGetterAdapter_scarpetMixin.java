@@ -14,7 +14,7 @@ import net.minecraft.world.level.entity.EntitySectionStorage;
 import net.minecraft.world.level.entity.LevelEntityGetterAdapter;
 
 @Mixin(LevelEntityGetterAdapter.class)
-public class LevelEntityGetterAdapter_scarpetMixin<T extends EntityAccess> implements SimpleEntityLookupInterface
+public class LevelEntityGetterAdapter_scarpetMixin<T extends EntityAccess> implements SimpleEntityLookupInterface<T>
 {
 
     @Shadow @Final private EntitySectionStorage<T> sectionStorage;

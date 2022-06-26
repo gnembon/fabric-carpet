@@ -24,6 +24,7 @@ import net.minecraft.data.worldgen.placement.PlacementUtils;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.tags.BiomeTags;
+import net.minecraft.util.RandomSource;
 import net.minecraft.util.valueproviders.ConstantInt;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.biome.Biome;
@@ -157,7 +158,7 @@ public class FeatureGenerator
     private static Thing simpleTree(TreeConfiguration config)
     {
         //config.ignoreFluidCheck();
-        return simplePlop(new ConfiguredFeature(Feature.TREE, config));
+        return simplePlop(new ConfiguredFeature<>(Feature.TREE, config));
     }
 
     private static Thing spawnCustomStructure(Structure structure)
@@ -354,7 +355,7 @@ public class FeatureGenerator
             {
                 return false;
             }
-            Random rand = new Random(world.getRandom().nextInt());
+            RandomSource rand = RandomSource.create(world.getRandom().nextInt());
             int j = pos.getX() >> 4;
             int k = pos.getZ() >> 4;
             long chId = ChunkPos.asLong(j, k);

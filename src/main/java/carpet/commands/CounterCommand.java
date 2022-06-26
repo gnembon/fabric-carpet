@@ -9,7 +9,7 @@ import net.minecraft.commands.CommandBuildContext;
 import net.minecraft.commands.CommandRuntimeException;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
-import net.minecraft.network.chat.BaseComponent;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.DyeColor;
 
 /**
@@ -28,13 +28,13 @@ public class CounterCommand
                 CarpetSettings.hopperCounters);
 
         literalargumentbuilder.
-                then((Commands.literal("reset").executes( (p_198489_1_)->
-                        resetCounter(p_198489_1_.getSource(), null))));
+                then((Commands.literal("reset").executes( (context)->
+                        resetCounter(context.getSource(), null))));
         for (DyeColor enumDyeColor: DyeColor.values())
         {
             String color = enumDyeColor.toString();
             literalargumentbuilder.
-                    then((Commands.literal(color).executes( (p_198489_1_)-> displayCounter(p_198489_1_.getSource(), color, false))));
+                    then((Commands.literal(color).executes( (context)-> displayCounter(context.getSource(), color, false))));
             literalargumentbuilder.then(Commands.literal(color).
                     then(Commands.literal("reset").executes((context) ->
                             resetCounter(context.getSource(), color))));
@@ -57,7 +57,7 @@ public class CounterCommand
         HopperCounter counter = HopperCounter.getCounter(color);
         if (counter == null) throw new CommandRuntimeException(Messenger.s("Unknown wool color: "+color));
 
-        for (BaseComponent message: counter.format(source.getServer(), realtime, false))
+        for (Component message: counter.format(source.getServer(), realtime, false))
         {
             source.sendSuccess(message, false);
         }
@@ -93,7 +93,7 @@ public class CounterCommand
      */
     private static int listAllCounters(CommandSourceStack source, boolean realtime)
     {
-        for (BaseComponent message: HopperCounter.formatAll(source.getServer(), realtime))
+        for (Component message: HopperCounter.formatAll(source.getServer(), realtime))
         {
             source.sendSuccess(message, false);
         }

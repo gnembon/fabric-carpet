@@ -4,12 +4,12 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.Util;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.core.BlockPos;
-import net.minecraft.network.chat.BaseComponent;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.HoverEvent;
 import net.minecraft.network.chat.Style;
 import net.minecraft.network.chat.TextColor;
-import net.minecraft.network.chat.TextComponent;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.entity.player.Player;
@@ -114,11 +114,11 @@ public class Messenger
         };
     }
 
-    private static BaseComponent getChatComponentFromDesc(String message, BaseComponent previousMessage)
+    private static MutableComponent getChatComponentFromDesc(String message, MutableComponent previousMessage)
     {
         if (message.equalsIgnoreCase(""))
         {
-            return new TextComponent("");
+            return Component.literal("");
         }
         if (Character.isWhitespace(message.charAt(0)))
         {
@@ -133,12 +133,12 @@ public class Messenger
             str = message.substring(limit+1);
         }
         if (previousMessage == null) {
-            BaseComponent text = new TextComponent(str);
+            MutableComponent text = Component.literal(str);
             text.setStyle(parseStyle(desc));
             return text;
         }
         Style previousStyle = previousMessage.getStyle();
-        BaseComponent ret = previousMessage;
+        MutableComponent ret = previousMessage;
         previousMessage.setStyle(switch (desc.charAt(0)) {
             case '?' -> previousStyle.withClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, message.substring(1)));
             case '!' -> previousStyle.withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, message.substring(1)));
@@ -146,31 +146,31 @@ public class Messenger
             case '@' -> previousStyle.withClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, message.substring(1)));
             case '&' -> previousStyle.withClickEvent(new ClickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD, message.substring(1)));
             default  -> { // Create a new component
-                ret = new TextComponent(str);
+                ret = Component.literal(str);
                 ret.setStyle(parseStyle(desc));
                 yield previousStyle; // no op for the previous style
             }
         });
         return ret;
     }
-    public static BaseComponent tp(String desc, Vec3 pos) { return tp(desc, pos.x, pos.y, pos.z); }
-    public static BaseComponent tp(String desc, BlockPos pos) { return tp(desc, pos.getX(), pos.getY(), pos.getZ()); }
-    public static BaseComponent tp(String desc, double x, double y, double z) { return tp(desc, (float)x, (float)y, (float)z);}
-    public static BaseComponent tp(String desc, float x, float y, float z)
+    public static Component tp(String desc, Vec3 pos) { return tp(desc, pos.x, pos.y, pos.z); }
+    public static Component tp(String desc, BlockPos pos) { return tp(desc, pos.getX(), pos.getY(), pos.getZ()); }
+    public static Component tp(String desc, double x, double y, double z) { return tp(desc, (float)x, (float)y, (float)z);}
+    public static Component tp(String desc, float x, float y, float z)
     {
         return getCoordsTextComponent(desc, x, y, z, false);
     }
-    public static BaseComponent tp(String desc, int x, int y, int z)
+    public static Component tp(String desc, int x, int y, int z)
     {
         return getCoordsTextComponent(desc, (float)x, (float)y, (float)z, true);
     }
 
     /// to be continued
-    public static BaseComponent dbl(String style, double double_value)
+    public static Component dbl(String style, double double_value)
     {
         return c(String.format("%s %.1f",style,double_value),String.format("^w %f",double_value));
     }
-    public static BaseComponent dbls(String style, double ... doubles)
+    public static Component dbls(String style, double ... doubles)
     {
         StringBuilder str = new StringBuilder(style + " [ ");
         String prefix = "";
@@ -182,7 +182,7 @@ public class Messenger
         str.append(" ]");
         return c(str.toString());
     }
-    public static BaseComponent dblf(String style, double ... doubles)
+    public static Component dblf(String style, double ... doubles)
     {
         StringBuilder str = new StringBuilder(style + " [ ");
         String prefix = "";
@@ -194,7 +194,7 @@ public class Messenger
         str.append(" ]");
         return c(str.toString());
     }
-    public static BaseComponent dblt(String style, double ... doubles)
+    public static Component dblt(String style, double ... doubles)
     {
         List<Object> components = new ArrayList<>();
         components.add(style+" [ ");
@@ -212,7 +212,7 @@ public class Messenger
         return c(components.toArray(new Object[0]));
     }
 
-    private static BaseComponent getCoordsTextComponent(String style, float x, float y, float z, boolean isInt)
+    private static Component getCoordsTextComponent(String style, float x, float y, float z, boolean isInt)
     {
         String text;
         String command;
@@ -237,26 +237,26 @@ public class Messenger
     }
     public static void m(Player player, Object ... fields)
     {
-        player.sendMessage(Messenger.c(fields), Util.NIL_UUID);
+        player.sendSystemMessage(Messenger.c(fields));
     }
 
     /*
     composes single line, multicomponent message, and returns as one chat messagge
      */
-    public static BaseComponent c(Object ... fields)
+    public static Component c(Object ... fields)
     {
-        BaseComponent message = new TextComponent("");
-        BaseComponent previousComponent = null;
+        MutableComponent message = Component.literal("");
+        MutableComponent previousComponent = null;
         for (Object o: fields)
         {
-            if (o instanceof BaseComponent)
+            if (o instanceof MutableComponent)
             {
-                message.append((BaseComponent)o);
-                previousComponent = (BaseComponent)o;
+                message.append((MutableComponent)o);
+                previousComponent = (MutableComponent)o;
                 continue;
             }
             String txt = o.toString();
-            BaseComponent comp = getChatComponentFromDesc(txt, previousComponent);
+            MutableComponent comp = getChatComponentFromDesc(txt, previousComponent);
             if (comp != previousComponent) message.append(comp);
             previousComponent = comp;
         }
@@ -265,13 +265,13 @@ public class Messenger
 
     //simple text
 
-    public static BaseComponent s(String text)
+    public static Component s(String text)
     {
         return s(text,"");
     }
-    public static BaseComponent s(String text, String style)
+    public static Component s(String text, String style)
     {
-        BaseComponent message = new TextComponent(text);
+        MutableComponent message = Component.literal(text);
         message.setStyle(parseStyle(style));
         return message;
     }
@@ -279,11 +279,11 @@ public class Messenger
 
 
 
-    public static void send(Player player, Collection<BaseComponent> lines)
+    public static void send(Player player, Collection<Component> lines)
     {
-        lines.forEach(message -> player.sendMessage(message, Util.NIL_UUID));
+        lines.forEach(message -> player.sendSystemMessage(message));
     }
-    public static void send(CommandSourceStack source, Collection<BaseComponent> lines)
+    public static void send(CommandSourceStack source, Collection<Component> lines)
     {
         lines.stream().forEachOrdered((s) -> source.sendSuccess(s, false));
     }
@@ -293,21 +293,21 @@ public class Messenger
     {
         if (server == null)
             LOG.error("Message not delivered: "+message);
-        server.sendMessage(new TextComponent(message), Util.NIL_UUID);
-        BaseComponent txt = c("gi "+message);
+        server.sendSystemMessage(Component.literal(message));
+        Component txt = c("gi "+message);
         for (Player entityplayer : server.getPlayerList().getPlayers())
         {
-            entityplayer.sendMessage(txt, Util.NIL_UUID);
+            entityplayer.sendSystemMessage(txt);
         }
     }
-    public static void print_server_message(MinecraftServer server, BaseComponent message)
+    public static void print_server_message(MinecraftServer server, Component message)
     {
         if (server == null)
             LOG.error("Message not delivered: "+message.getString());
-        server.sendMessage(message, Util.NIL_UUID);
+        server.sendSystemMessage(message);
         for (Player entityplayer : server.getPlayerList().getPlayers())
         {
-            entityplayer.sendMessage(message, Util.NIL_UUID);
+            entityplayer.sendSystemMessage(message);
         }
     }
 }

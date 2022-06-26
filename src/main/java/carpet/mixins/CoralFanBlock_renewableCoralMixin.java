@@ -8,6 +8,7 @@ import net.minecraft.core.Registry;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.tags.FluidTags;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.BaseCoralPlantTypeBlock;
@@ -38,12 +39,12 @@ public abstract class CoralFanBlock_renewableCoralMixin implements BonemealableB
                 && var1.getFluidState(var2.above()).is(FluidTags.WATER);
     }
 
-    public boolean isBonemealSuccess(Level var1, Random var2, BlockPos var3, BlockState var4)
+    public boolean isBonemealSuccess(Level var1, RandomSource var2, BlockPos var3, BlockState var4)
     {
         return (double)var1.random.nextFloat() < 0.15D;
     }
 
-    public void performBonemeal(ServerLevel worldIn, Random random, BlockPos pos, BlockState blockUnder)
+    public void performBonemeal(ServerLevel worldIn, RandomSource random, BlockPos pos, BlockState blockUnder)
     {
 
         CoralFeature coral;

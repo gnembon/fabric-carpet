@@ -6,7 +6,6 @@ import carpet.fakes.ServerPlayerEntityInterface;
 import carpet.patches.EntityPlayerMPFake;
 import carpet.settings.SettingsManager;
 import carpet.utils.Messenger;
-import com.google.common.collect.Sets;
 import com.mojang.authlib.GameProfile;
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.CommandDispatcher;
@@ -15,6 +14,7 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import com.mojang.util.UUIDTypeAdapter;
 import net.minecraft.commands.CommandBuildContext;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.arguments.DimensionArgument;
@@ -22,6 +22,7 @@ import net.minecraft.commands.arguments.coordinates.RotationArgument;
 import net.minecraft.commands.arguments.coordinates.Vec3Argument;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.UUIDUtil;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
@@ -33,9 +34,10 @@ import net.minecraft.world.phys.Vec2;
 import net.minecraft.world.phys.Vec3;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 
 import static net.minecraft.commands.Commands.argument;
 import static net.minecraft.commands.Commands.literal;
@@ -49,8 +51,7 @@ public class PlayerCommand
     {
         final String[] gamemodeStrings = Arrays.stream(GameType.values())
                 .map(GameType::getName)
-                .collect(Collectors.toList())
-                .toArray(new String[]{});
+                .toArray(String[]::new);
         LiteralArgumentBuilder<CommandSourceStack> literalargumentbuilder = literal("player")
                 .requires((player) -> SettingsManager.canUseCommand(player, CarpetSettings.commandPlayer))
                 .then(argument("player", StringArgumentType.word())
@@ -141,7 +142,7 @@ public class PlayerCommand
 
     private static Collection<String> getPlayers(CommandSourceStack source)
     {
-        Set<String> players = Sets.newLinkedHashSet(Arrays.asList("Steve", "Alex"));
+        Set<String> players = new LinkedHashSet<>(List.of("Steve", "Alex"));
         players.addAll(source.getOnlinePlayerNames());
         return players;
     }
@@ -211,7 +212,7 @@ public class PlayerCommand
                         "Banned players can only be summoned in Singleplayer and in servers in off-line mode.");
                 return true;
             } else {
-                profile = new GameProfile(Player.createPlayerUUID(playerName), playerName);
+                profile = new GameProfile(UUIDUtil.createOfflinePlayerUUID(playerName), playerName);
             }
         }
         if (manager.getBans().isBanned(profile))

@@ -2,7 +2,7 @@ package carpet.patches;
 
 import net.minecraft.network.Connection;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.TranslatableComponent;
+import net.minecraft.network.chat.contents.TranslatableContents;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerGamePacketListenerImpl;
@@ -22,7 +22,7 @@ public class NetHandlerPlayServerFake extends ServerGamePacketListenerImpl
     @Override
     public void disconnect(Component message)
     {
-        if (message instanceof TranslatableComponent text && (text.getKey().equals("multiplayer.disconnect.idling") || text.getKey().equals("multiplayer.disconnect.duplicate_login")))
+        if (message.getContents() instanceof TranslatableContents text && (text.getKey().equals("multiplayer.disconnect.idling") || text.getKey().equals("multiplayer.disconnect.duplicate_login")))
         {
             ((EntityPlayerMPFake) player).kill(message);
         }

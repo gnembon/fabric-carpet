@@ -21,12 +21,12 @@ import carpet.script.value.ScreenValue;
 import carpet.script.value.StringValue;
 import carpet.script.value.Value;
 import carpet.script.value.ValueConversions;
-import com.google.common.collect.Sets;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 import net.minecraft.commands.arguments.item.ItemInput;
 import net.minecraft.core.HolderSet;
@@ -336,7 +336,7 @@ public class Inventories {
             if (lv.size() > inventoryLocator.offset()+1)
                 amount = (int)NumericValue.asNumber(lv.get(inventoryLocator.offset()+1)).getLong();
             // not enough
-            if (((amount == 1) && (!inventoryLocator.inventory().hasAnyOf(Sets.newHashSet(searchItem.getItem()))))
+            if (((amount == 1) && (!inventoryLocator.inventory().hasAnyOf(Set.of(searchItem.getItem()))))
                     || (inventoryLocator.inventory().countItem(searchItem.getItem()) < amount)) return Value.FALSE;
             for (int i = 0, maxi = inventoryLocator.inventory().getContainerSize(); i < maxi; i++)
             {

@@ -2,7 +2,7 @@ package carpet.logging.logHelpers;
 
 import carpet.logging.LoggerRegistry;
 import carpet.utils.Messenger;
-import net.minecraft.network.chat.BaseComponent;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.phys.Vec3;
 
 public class TNTLogHelper
@@ -37,12 +37,12 @@ public class TNTLogHelper
             switch (option)
             {
                 case "brief":
-                    return new BaseComponent[]{Messenger.c(
+                    return new Component[]{Messenger.c(
                             "l P ",Messenger.dblt("l",primedX,primedY,primedZ),
                             "w  ",Messenger.dblt("l", primedAngle.x, primedAngle.y, primedAngle.z),
                             "r  E ",Messenger.dblt("r",x, y, z))};
                 case "full":
-                    return new BaseComponent[]{Messenger.c(
+                    return new Component[]{Messenger.c(
                             "r #" + tntCount,
                             "m @" + gametime,
                             "g : ",
