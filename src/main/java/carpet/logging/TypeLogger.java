@@ -1,6 +1,6 @@
 package carpet.logging;
 
-import net.minecraft.network.chat.BaseComponent;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 
@@ -69,7 +69,7 @@ public class TypeLogger<T> extends Logger
      * will repeat invocation for players that share the same option
      */
     @FunctionalInterface
-    public interface TypeMessage<T> { BaseComponent [] get(T playerOption, Player player);}
+    public interface TypeMessage<T> { Component[] get(T playerOption, Player player);}
     public void log(TypeMessage<T> messagePromise)
     {
         for (Map.Entry<String,T> en : parsedPlayerOptions.entrySet())
@@ -77,7 +77,7 @@ public class TypeLogger<T> extends Logger
             ServerPlayer player = playerFromName(en.getKey());
             if (player != null)
             {
-                BaseComponent [] messages = messagePromise.get(en.getValue(),player);
+                Component [] messages = messagePromise.get(en.getValue(),player);
                 if (messages != null)
                     sendPlayerMessage(player, messages);
             }
@@ -89,10 +89,10 @@ public class TypeLogger<T> extends Logger
      * and served the same way to all other players subscribed to the same option
      */
     @FunctionalInterface
-    public interface TypeMessageIgnorePlayer<T> { BaseComponent [] get(T playerOption);}
+    public interface TypeMessageIgnorePlayer<T> { Component [] get(T playerOption);}
     public void log(TypeMessageIgnorePlayer<T> messagePromise)
     {
-        Map<T, BaseComponent[]> cannedMessages = new HashMap<>();
+        Map<T, Component[]> cannedMessages = new HashMap<>();
         for (Map.Entry<String,T> en : parsedPlayerOptions.entrySet())
         {
             ServerPlayer player = playerFromName(en.getKey());
@@ -103,7 +103,7 @@ public class TypeLogger<T> extends Logger
                 {
                     cannedMessages.put(option,messagePromise.get(option));
                 }
-                BaseComponent [] messages = cannedMessages.get(option);
+                Component [] messages = cannedMessages.get(option);
                 if (messages != null)
                     sendPlayerMessage(player, messages);
             }
