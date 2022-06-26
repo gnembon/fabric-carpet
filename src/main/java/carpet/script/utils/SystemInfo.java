@@ -199,7 +199,7 @@ public class SystemInfo {
             });
             return MapValue.wrap(rules);
         });
-        put("world_mob_spawning_threshold", c-> NumericValue.of(c.s.getLevel().dimensionType().monsterSpawnBlockLightLimit()));
+        put("world_mob_spawn_min_light_level", c-> NumericValue.of(c.s.getLevel().dimensionType().monsterSpawnBlockLightLimit()));
 
         put("source_entity", c -> EntityValue.of(c.s.getEntity()));
         put("source_position", c -> ValueConversions.of(c.s.getPosition()));

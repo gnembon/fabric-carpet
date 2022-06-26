@@ -710,7 +710,7 @@ system calls. In all circumstances, these are only provided as read-only.
   * `world_center` - Returns coordinates of the center of the world with respect of the world border
   * `world_size` - Returns radius of world border for current dimension.
   * `world_max_size` - Returns maximum possible radius of world border for current dimension.
-  * `world_mob_spawning_threshold` - Returns minimum light level at which mobs can spawn for current dimension, taking into account datapacks
+  * `world_mob_spawn_min_light_level` - Returns minimum light level at which mobs can spawn for current dimension, taking into account datapacks
 
 ##### Relevant gameplay related properties
   * `game_difficulty` - current difficulty of the game: `'peaceful'`, `'easy'`, `'normal'`, or `'hard'`
