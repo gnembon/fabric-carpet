@@ -182,7 +182,7 @@ public class PistonMoveBehaviorCommand {
                             withClickEvent(new ClickEvent(
                                 ClickEvent.Action.SUGGEST_COMMAND,
                                 String.format("/pistonmovebehavior defaultOverride %s %s", stateString, override.getName())));
-            }));
+                    }));
         }
 
         source.sendSuccess(message, true);
