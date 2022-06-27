@@ -58,7 +58,7 @@ public class ServerGamePacketListenerImpl_interactionUpdatesMixin
     }
     @Inject(method = "handlePlayerAction", at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/server/level/ServerPlayerGameMode;handleBlockBreakAction(Lnet/minecraft/core/BlockPos;Lnet/minecraft/network/protocol/game/ServerboundPlayerActionPacket$Action;Lnet/minecraft/core/Direction;I)V",
+            target = "Lnet/minecraft/server/level/ServerPlayerGameMode;handleBlockBreakAction(Lnet/minecraft/core/BlockPos;Lnet/minecraft/network/protocol/game/ServerboundPlayerActionPacket$Action;Lnet/minecraft/core/Direction;II)V",
             shift = At.Shift.BEFORE
     ))
     private void beforeBlockBroken(ServerboundPlayerActionPacket packet, CallbackInfo ci)
@@ -69,7 +69,7 @@ public class ServerGamePacketListenerImpl_interactionUpdatesMixin
 
     @Inject(method = "handlePlayerAction", at = @At(
             value = "INVOKE",
-            target ="Lnet/minecraft/server/level/ServerPlayerGameMode;handleBlockBreakAction(Lnet/minecraft/core/BlockPos;Lnet/minecraft/network/protocol/game/ServerboundPlayerActionPacket$Action;Lnet/minecraft/core/Direction;I)V",
+            target ="Lnet/minecraft/server/level/ServerPlayerGameMode;handleBlockBreakAction(Lnet/minecraft/core/BlockPos;Lnet/minecraft/network/protocol/game/ServerboundPlayerActionPacket$Action;Lnet/minecraft/core/Direction;II)V",
             shift = At.Shift.AFTER
     ))
     private void afterBlockBroken(ServerboundPlayerActionPacket packet, CallbackInfo ci)

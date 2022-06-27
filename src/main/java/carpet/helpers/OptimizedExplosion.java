@@ -6,6 +6,8 @@ import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+
+import net.minecraft.Util;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
@@ -230,7 +232,9 @@ public class OptimizedExplosion
         if (damagesTerrain)
         {
             ObjectArrayList<Pair<ItemStack, BlockPos>> objectArrayList = new ObjectArrayList<>();
-            Collections.shuffle(e.getToBlow(), world.random);
+            Util.shuffle((ObjectArrayList<BlockPos>) e.getToBlow(), world.random);
+
+            boolean dropFromExplosions = CarpetSettings.xpFromExplosions || e.getSourceMob() instanceof Player;
 
             for (BlockPos blockpos : e.getToBlow())
             {
@@ -239,7 +243,7 @@ public class OptimizedExplosion
 
                 if (state.getMaterial() != Material.AIR)
                 {
-                    if (block.dropFromExplosion(e) && world instanceof ServerLevel)
+                    if (block.dropFromExplosion(e) && world instanceof ServerLevel serverLevel)
                     {
                         BlockEntity blockEntity = state.hasBlockEntity() ? world.getBlockEntity(blockpos) : null;  //hasBlockEntity()
 
@@ -252,6 +256,8 @@ public class OptimizedExplosion
 
                         if (eAccess.getBlockInteraction() == Explosion.BlockInteraction.DESTROY)
                             lootBuilder.withParameter(LootContextParams.EXPLOSION_RADIUS, eAccess.getRadius());
+
+                        state.spawnAfterBreak(serverLevel, blockpos, ItemStack.EMPTY, dropFromExplosions);
 
                         state.getDrops(lootBuilder).forEach((itemStackx) -> {
                             method_24023(objectArrayList, itemStackx, blockpos.immutable());

@@ -9,10 +9,10 @@ import it.unimi.dsi.fastutil.objects.Object2LongLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2LongMap;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.Registry;
-import net.minecraft.network.chat.BaseComponent;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.Style;
 import net.minecraft.network.chat.TextColor;
-import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.item.BlockItem;
@@ -146,13 +146,13 @@ public class HopperCounter
     /**
      * Prints all the counters to chat, nicely formatted, and you can choose whether to diplay in in game time or IRL time
      */
-    public static List<BaseComponent> formatAll(MinecraftServer server, boolean realtime)
+    public static List<Component> formatAll(MinecraftServer server, boolean realtime)
     {
-        List<BaseComponent> text = new ArrayList<>();
+        List<Component> text = new ArrayList<>();
 
         for (HopperCounter counter : COUNTERS.values())
         {
-            List<BaseComponent> temp = counter.format(server, realtime, false);
+            List<Component> temp = counter.format(server, realtime, false);
             if (temp.size() > 1)
             {
                 if (!text.isEmpty()) text.add(Messenger.s(""));
@@ -170,7 +170,7 @@ public class HopperCounter
      * Prints a single counter's contents and timings to chat, with the option to keep it short (so no item breakdown,
      * only rates). Again, realtime displays IRL time as opposed to in game time.
      */
-    public List<BaseComponent> format(MinecraftServer server, boolean realTime, boolean brief)
+    public List<Component> format(MinecraftServer server, boolean realTime, boolean brief)
     {
         long ticks = Math.max(realTime ? (System.currentTimeMillis() - startMillis) / 50 : server.getLevel(Level.OVERWORLD).getGameTime() - startTick, 1);  //OW
         if (startTick < 0 || ticks == 0)
@@ -200,7 +200,7 @@ public class HopperCounter
                     String.format("wb %.1f ", ticks / (20.0 * 60.0)), "w min"
             ));
         }
-        List<BaseComponent> items = new ArrayList<>();
+        List<Component> items = new ArrayList<>();
         items.add(Messenger.c("w Items for ", prettyColour,
                 "w  (",String.format("wb %.2f", ticks*1.0/(20*60)), "w  min"+(realTime?" - real time":"")+"), ",
                 "w total: ", "wb "+total, "w , (",String.format("wb %.1f",total*1.0*(20*60*60)/ticks),"w /h):",
@@ -209,7 +209,7 @@ public class HopperCounter
         items.addAll(counter.object2LongEntrySet().stream().sorted((e, f) -> Long.compare(f.getLongValue(), e.getLongValue())).map(e ->
         {
             Item item = e.getKey();
-            BaseComponent itemName = new TranslatableComponent(item.getDescriptionId());
+            MutableComponent itemName = Component.translatable(item.getDescriptionId());
             Style itemStyle = itemName.getStyle();
             TextColor color = guessColor(item);
             itemName.setStyle((color != null) ? itemStyle.withColor(color) : itemStyle.withItalic(true));

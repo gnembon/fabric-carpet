@@ -2,6 +2,8 @@ package carpet.script.utils;
 
 import carpet.CarpetServer;
 import carpet.CarpetSettings;
+import carpet.api.settings.CarpetRule;
+import carpet.api.settings.RuleHelper;
 import carpet.script.CarpetContext;
 import carpet.script.CarpetScriptHost;
 import carpet.script.value.BooleanValue;
@@ -12,8 +14,7 @@ import carpet.script.value.NumericValue;
 import carpet.script.value.StringValue;
 import carpet.script.value.Value;
 import carpet.script.value.ValueConversions;
-import carpet.settings.ParsedRule;
-import carpet.settings.SettingsManager;
+import carpet.api.settings.SettingsManager;
 import com.sun.management.OperatingSystemMXBean;
 import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.loader.api.ModContainer;
@@ -42,7 +43,7 @@ public class SystemInfo {
             String name = c.host.getName();
             return name == null?Value.NULL:new StringValue(name);
         });
-        put("app_list", c -> ListValue.wrap(((CarpetScriptHost)c.host).getScriptServer().modules.keySet().stream().filter(Objects::nonNull).map(StringValue::new).collect(Collectors.toList())));
+        put("app_list", c -> ListValue.wrap(((CarpetScriptHost)c.host).scriptServer().modules.keySet().stream().filter(Objects::nonNull).map(StringValue::new).collect(Collectors.toList())));
         put("app_scope", c -> StringValue.of((c.host).isPerUser()?"player":"global"));
         put("app_players", c -> ListValue.wrap(c.host.getUserList().stream().map(StringValue::new).collect(Collectors.toList())));
 
@@ -172,18 +173,18 @@ public class SystemInfo {
             return new NumericValue(osBean.getProcessCpuLoad());
         });
         put("world_carpet_rules", c -> {
-            Collection<ParsedRule<?>> rules = CarpetServer.settingsManager.getRules();
+            Collection<CarpetRule<?>> rules = CarpetServer.settingsManager.getCarpetRules();
             MapValue carpetRules = new MapValue(Collections.emptyList());
             rules.forEach(rule -> {
-                carpetRules.put(new StringValue(rule.name), new StringValue(rule.getAsString()));
+                carpetRules.put(new StringValue(rule.name()), new StringValue(RuleHelper.toRuleString(rule.value())));
             });
             CarpetServer.extensions.forEach(e -> {
-                SettingsManager manager = e.customSettingsManager();
+                SettingsManager manager = e.extensionSettingsManager();
                 if (manager == null) return;
 
-                Collection<ParsedRule<?>> extensionRules = manager.getRules();
+                Collection<CarpetRule<?>> extensionRules = manager.getCarpetRules();
                 extensionRules.forEach(rule -> {
-                    carpetRules.put(new StringValue(manager.getIdentifier()+":"+rule.name), new StringValue(rule.getAsString()));
+                    carpetRules.put(new StringValue(manager.identifier()+":"+rule.name()), new StringValue(RuleHelper.toRuleString(rule.value())));
                 });
             });
             return carpetRules;

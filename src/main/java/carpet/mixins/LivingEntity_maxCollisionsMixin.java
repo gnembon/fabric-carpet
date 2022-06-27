@@ -1,7 +1,7 @@
 package carpet.mixins;
 
 import carpet.CarpetSettings;
-import carpet.fakes.WorldInterface;
+import carpet.fakes.LevelInterface;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
@@ -39,7 +39,7 @@ public abstract class LivingEntity_maxCollisionsMixin extends Entity
         if (CarpetSettings.maxEntityCollisions > 0)
         {
             maxEntityCramming = this.level.getGameRules().getInt(GameRules.RULE_MAX_ENTITY_CRAMMING);
-            entities = ((WorldInterface) this.level).getOtherEntitiesLimited(
+            entities = ((LevelInterface) this.level).getOtherEntitiesLimited(
                     this,
                     this.getBoundingBox(),
                     EntitySelector.pushableBy(this),

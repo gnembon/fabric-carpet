@@ -1,7 +1,7 @@
 package carpet.mixins;
 
 import carpet.CarpetSettings;
-import carpet.fakes.WorldInterface;
+import carpet.fakes.LevelInterface;
 import carpet.utils.SpawnReporter;
 import org.apache.commons.lang3.tuple.Pair;
 import org.spongepowered.asm.mixin.Final;
@@ -46,7 +46,8 @@ public class NaturalSpawnerMixin
 
     @Shadow @Final private static MobCategory[] SPAWNING_CATEGORIES;
 
-    @Redirect(method = "isValidSpawnPostitionForType(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/entity/MobCategory;Lnet/minecraft/world/level/StructureFeatureManager;Lnet/minecraft/world/level/chunk/ChunkGenerator;Lnet/minecraft/world/level/biome/MobSpawnSettings$SpawnerData;Lnet/minecraft/core/BlockPos$MutableBlockPos;D)Z", at = @At(
+    @Redirect(method = "isValidSpawnPostitionForType",
+            at = @At(
             value = "INVOKE",
             target = "Lnet/minecraft/server/level/ServerLevel;noCollision(Lnet/minecraft/world/phys/AABB;)Z"
     ))
@@ -138,7 +139,7 @@ public class NaturalSpawnerMixin
     {
         if (CarpetSettings.lagFreeSpawning)
         {
-            Map<EntityType<?>, Entity> precookedMobs = ((WorldInterface)world_1).getPrecookedMobs();
+            Map<EntityType<?>, Entity> precookedMobs = ((LevelInterface)world_1).getPrecookedMobs();
             if (precookedMobs.containsKey(entityType))
                 //this mob has been <init>'s but not used yet
                 return precookedMobs.get(entityType);
@@ -158,7 +159,7 @@ public class NaturalSpawnerMixin
     {
         if (CarpetSettings.lagFreeSpawning)
             // we used the mob - next time we will create a new one when needed
-            ((WorldInterface) world).getPrecookedMobs().remove(entity_1.getType());
+            ((LevelInterface) world).getPrecookedMobs().remove(entity_1.getType());
 
         if (SpawnReporter.track_spawns > 0L && SpawnReporter.local_spawns != null)
         {

@@ -26,6 +26,8 @@ import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 
 import static carpet.script.CarpetEventServer.Event.EXPLOSION;
 import static carpet.script.CarpetEventServer.Event.LIGHTNING;
+import static carpet.script.CarpetEventServer.Event.CHUNK_UNLOADED;
+
 
 @Mixin(ServerLevel.class)
 public class ServerLevel_scarpetMixin implements ServerWorldInterface
@@ -48,6 +50,16 @@ public class ServerLevel_scarpetMixin implements ServerWorldInterface
     {
         if (EXPLOSION.isNeeded())
             EXPLOSION.onExplosion((ServerLevel) (Object)this, entity, null, d, e, f, g, bl, null, null, destructionType);
+    }
+
+    @Inject(method = "unload", at = @At("HEAD"))
+    private void handleChunkUnload(LevelChunk levelChunk, CallbackInfo ci)
+    {
+        if (CHUNK_UNLOADED.isNeeded())
+        {
+            ServerLevel level = (ServerLevel)((Object)this);
+            CHUNK_UNLOADED.onChunkEvent(level, levelChunk.getPos(), false);
+        }
     }
 
     @Final
