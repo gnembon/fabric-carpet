@@ -1,13 +1,14 @@
 package carpet;
 
 import carpet.script.CarpetExpression;
-import carpet.settings.SettingsManager;
+import carpet.api.settings.SettingsManager;
 import com.mojang.brigadier.CommandDispatcher;
 import net.minecraft.commands.CommandBuildContext;
 import net.minecraft.commands.CommandSourceStack;
-import net.minecraft.core.RegistryAccess;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
+
+import java.util.Collections;
 import java.util.Map;
 
 public interface CarpetExtension
@@ -69,7 +70,11 @@ public interface CarpetExtension
         registerCommands(dispatcher);
     }
 
-
+    /**
+     * @deprecated Implement {@link #extensionSettingsManager()} instead
+     */
+    @Deprecated(forRemoval = true)
+    default carpet.settings.SettingsManager customSettingsManager() {return null;}
 
     /**
      * Provide your own custom settings manager managed in the same way as base /carpet
@@ -78,7 +83,15 @@ public interface CarpetExtension
      * @return Your custom {@link SettingsManager} instance to be managed by Carpet
      * 
      */
-    default SettingsManager customSettingsManager() {return null;}
+    default SettingsManager extensionSettingsManager() {
+        // Warn extensions overriding the other (deprecated) method, go ahead and override this if you want to provide a custom SettingsManager
+        SettingsManager deprecatedManager = customSettingsManager();
+        if (deprecatedManager != null) {
+            // Extension is providing a manager via the old method (and also hasn't overriden this)
+            CarpetServer.warnOutdatedManager(this);
+        }
+        return customSettingsManager();
+    }
 
     /**
      * Event that gets called when a player logs in
@@ -134,10 +147,10 @@ public interface CarpetExtension
      * 
      * @param lang A {@link String} being the language id selected by the user
      * @return A {@link Map<String, String>} containing the string key with it's 
-     *         respective translation {@link String} or {@link null} if not available
+     *         respective translation {@link String} or an empty map if not available
      * 
      */
-    default Map<String, String> canHasTranslations(String lang) { return null;}
+    default Map<String, String> canHasTranslations(String lang) { return Collections.emptyMap();}
 
     /**
      * Handles each call that creates / parses the scarpet expression.

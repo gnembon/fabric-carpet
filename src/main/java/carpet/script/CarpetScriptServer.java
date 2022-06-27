@@ -21,6 +21,7 @@ import carpet.script.language.Threading;
 import carpet.script.utils.AppStoreManager;
 import carpet.script.value.FunctionValue;
 import carpet.utils.CarpetProfiler;
+import carpet.utils.CommandHelper;
 import carpet.utils.Messenger;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.tree.CommandNode;
@@ -140,8 +141,8 @@ public class CarpetScriptServer extends ScriptServer
     {
         CarpetServer.settingsManager.initializeScarpetRules();
         CarpetServer.extensions.forEach(e -> {
-            if (e.customSettingsManager() != null) {
-                e.customSettingsManager().initializeScarpetRules();
+            if (e.extensionSettingsManager() != null) {
+                e.extensionSettingsManager().initializeScarpetRules();
             }
         });
         if (CarpetSettings.scriptsAutoload)
@@ -305,7 +306,7 @@ public class CarpetScriptServer extends ScriptServer
         }
         else if (isCommandAdded)
         {
-            CarpetServer.settingsManager.notifyPlayersCommandsChanged();
+            CommandHelper.notifyPlayersCommandsChanged(server);
             if (!isRuleApp) Messenger.m(source, "gi "+name+" app "+action+" with /"+name+" command");
         }
         else
@@ -352,7 +353,7 @@ public class CarpetScriptServer extends ScriptServer
         modules.get(name).onClose();
         modules.remove(name);
         if (!isRuleApp) unloadableModules.remove(name);
-        CarpetServer.settingsManager.notifyPlayersCommandsChanged();
+        CommandHelper.notifyPlayersCommandsChanged(server);
         if (notifySource) Messenger.m(source, "gi Removed "+name+" app");
         return true;
     }

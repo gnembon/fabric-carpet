@@ -4,7 +4,7 @@ import carpet.helpers.EntityPlayerActionPack;
 import carpet.CarpetSettings;
 import carpet.fakes.ServerPlayerEntityInterface;
 import carpet.patches.EntityPlayerMPFake;
-import carpet.settings.SettingsManager;
+import carpet.utils.CommandHelper;
 import carpet.utils.Messenger;
 import com.mojang.authlib.GameProfile;
 import com.mojang.brigadier.Command;
@@ -53,7 +53,7 @@ public class PlayerCommand
                 .map(GameType::getName)
                 .toArray(String[]::new);
         LiteralArgumentBuilder<CommandSourceStack> literalargumentbuilder = literal("player")
-                .requires((player) -> SettingsManager.canUseCommand(player, CarpetSettings.commandPlayer))
+                .requires((player) -> CommandHelper.canUseCommand(player, CarpetSettings.commandPlayer))
                 .then(argument("player", StringArgumentType.word())
                         .suggests( (c, b) -> suggest(getPlayers(c.getSource()), b))
                         .then(literal("stop").executes(PlayerCommand::stop))
