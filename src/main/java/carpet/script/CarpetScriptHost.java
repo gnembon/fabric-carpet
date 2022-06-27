@@ -389,6 +389,11 @@ public class CarpetScriptHost extends ScriptHost
         }
         if (appConfig.get(StringValue.of("commands")) != null)
         {
+            if (scriptServer().isInvalidCommandRoot(getName()))
+            {
+                notifier.accept(Messenger.c("g A command with the app's name already exists in vanilla or an installed mod."));
+                return null;
+            }
             try
             {
                 LiteralArgumentBuilder<CommandSourceStack> command = readCommands(commandValidator);
@@ -404,7 +409,7 @@ public class CarpetScriptHost extends ScriptHost
             catch (CommandSyntaxException cse)
             {
                 // failed
-                notifier.accept(Messenger.c("r Failed to build command system for "+getName()+" thus failed to load the app: ", cse.getRawMessage()));
+                notifier.accept(Messenger.c("r Failed to build command system: ", cse.getRawMessage()));
                 return null;
             }
 
@@ -451,7 +456,7 @@ public class CarpetScriptHost extends ScriptHost
 
         if (scriptServer().isInvalidCommandRoot(getName()))
         {
-            notifier.accept(Messenger.c("gi Tried to mask vanilla command."));
+            notifier.accept(Messenger.c("g A command with the app's name already exists in vanilla or an installed mod."));
             return null;
         }
 

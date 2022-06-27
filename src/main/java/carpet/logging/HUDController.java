@@ -29,7 +29,7 @@ import java.util.function.Consumer;
 
 public class HUDController
 {
-    private static List<Consumer<MinecraftServer>> HUDListeners = new ArrayList<>();
+    private static final List<Consumer<MinecraftServer>> HUDListeners = new ArrayList<>();
 
     /**
      * Adds listener to be called when HUD is updated for logging information
@@ -40,7 +40,7 @@ public class HUDController
         HUDListeners.add(listener);
     }
 
-    public static Map<ServerPlayer, List<Component>> player_huds = new HashMap<>();
+    public static final Map<ServerPlayer, List<Component>> player_huds = new HashMap<>();
 //keyed with player names so unlogged players don't hold the reference
     public static final Map<String, Component> scarpet_headers = new HashMap<>();
 
@@ -91,19 +91,12 @@ public class HUDController
 
         if (LoggerRegistry.__mobcaps)
             LoggerRegistry.getLogger("mobcaps").log((option, player) -> {
-                ResourceKey<Level> dim = player.level.dimension(); //getDimType
-                switch (option)
-                {
-                    case "overworld":
-                        dim = Level.OVERWORLD; // OW
-                        break;
-                    case "nether":
-                        dim = Level.NETHER; // nether
-                        break;
-                    case "end":
-                        dim = Level.END; // end
-                        break;
-                }
+                ResourceKey<Level> dim = switch (option) {
+                    case "overworld" -> Level.OVERWORLD;
+                    case "nether" -> Level.NETHER;
+                    case "end" -> Level.END;
+                    default -> player.level.dimension();
+                };
                 return new Component[]{SpawnReporter.printMobcapsForDimension(server.getLevel(dim), false).get(0)};
             });
 
@@ -111,7 +104,7 @@ public class HUDController
             LoggerRegistry.getLogger("counter").log((option)->send_counter_info(server, option));
 
         if (LoggerRegistry.__packets)
-            LoggerRegistry.getLogger("packets").log(()-> packetCounter());
+            LoggerRegistry.getLogger("packets").log(HUDController::packetCounter);
 
         // extensions have time to pitch in.
         HUDListeners.forEach(l -> l.accept(server));

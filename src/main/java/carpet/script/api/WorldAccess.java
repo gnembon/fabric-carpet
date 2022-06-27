@@ -36,6 +36,8 @@ import carpet.script.value.StringValue;
 import carpet.script.value.Value;
 import carpet.script.value.ValueConversions;
 import carpet.utils.BlockInfo;
+import carpet.utils.CommandHelper;
+
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.longs.LongSet;
@@ -1497,7 +1499,7 @@ public class WorldAccess {
 
             boolean success = WorldTools.createWorld(cc.s.getServer(), worldKey, seed);
             if (!success) return Value.FALSE;
-            CarpetServer.settingsManager.notifyPlayersCommandsChanged();
+            CommandHelper.notifyPlayersCommandsChanged(cc.s.getServer());
             return Value.TRUE;
         });
 */

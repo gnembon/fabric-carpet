@@ -1,54 +1,36 @@
-// This file isn't necessary at all, because the language module would use the strings coded in the source if language "none" is selected.
-// So en_us is the default language and probably no change will be made after loading this file.
-// But it could be a good example for writing the language file for other languages.
-
 {
-  "// Rules:": "",
-  "rule.portalSuffocationFix.name": "",
-  "// the key is genetated as:" : "String.format('rule.%s.name', rule.name)",
+  // TODO Rules
+  
+  // Categories:
 
+  "carpet.category.bugfix": "bugfix",
+  "carpet.category.survival": "survival",
+  "carpet.category.creative": "creative",
+  "carpet.category.experimental": "experimental",
+  "carpet.category.optimization": "optimization",
+  "carpet.category.feature": "feature",
+  "carpet.category.command": "command",
+  "carpet.category.tnt": "TNT",
+  "carpet.category.dispenser": "dispenser",
+  "carpet.category.scarpet": "scarpet",
+  "carpet.category.client": "client",
 
-  "rule.portalSuffocationFix.desc": "",
-  "// the key is genetated as:" : "String.format('rule.%s.desc', rule.name)",
+  // Settings command UI elements
 
-
-  "rule.portalSuffocationFix.extra.0": "",
-  "rule.portalSuffocationFix.extra.1": "",
-  "// the key is genetated as:" : "String.format('rule.%s.extra.%i', rule.name, index)",
-
-
-  "// Categories:": "",
-
-  "category.bugfix": "bugfix",
-  "category.survival": "survival",
-  "category.creative": "creative",
-  "category.experimental": "experimental",
-  "category.optimization": "optimization",
-  "category.feature": "feature",
-  "category.command": "command",
-  "category.tnt": "TNT",
-  "category.dispenser": "dispenser",
-  "category.scarpet": "scarpet",
-  "category.client": "client",
-
-  "// Settings command UI elements": "",
-
-  "ui.browse_categories": "Browse categories",
-  "ui.list_all_%(cat)s_settings": "list all %s settings",
-  "ui.version": "Version",
-  "ui.current_%(mod)s_settings": "Current %s settings",
-  "ui.switch_to": "Switch to",
-  "ui.settings_are_locked": "settings are locked",
-  "ui.is_set_to": "is set to",
-  "ui.unknown_rule": "Unknown rule",
-  "ui.current_%(mod)s_startup_settings_from_%(conf)s": "Current %s Startup Settings from %s",
-  "ui.%(mod)s_settings_matching_'%(query)s'": "%s settings matching \"%s\" ",
-  "ui.all_%(mod)s_settings": "All %s settings",
-  "ui.tags": "Tags",
-  "ui.change_permanently": "Change permanently",
-  "ui.click_to_keep_the_settings_in_%(conf)s_to_save_across_restarts": "click to keep the settings in %s to save across restarts",
-  "ui.rule_%(rule)s_will_now_default_to_%(value)s": "Rule %s will now default to %s",
-  "ui.rule_%(rule)s_not_set_restart": "Rule %s will now not be set on restart",
-  "ui.current_value": "current value"
+  "carpet.settings.command.browse_categories": "Browse categories",
+  "carpet.settings.command.version": "version",
+  "carpet.settings.command.list_all_category": "list all %s settings",
+  "carpet.settings.command.current_settings_header": "Current %s settings",
+  "carpet.settings.command.switch_to": "Switch to %s",
+  "carpet.settings.command.unknown_rule": "Unknown rule",
+  "carpet.settings.command.current_from_file_header": "Current %s Startup Settings from %s",
+  "carpet.settings.command.mod_settings_matching": "%s settings matching \"%s\" ",
+  "carpet.settings.command.all_mod_settings": "All %s settings",
+  "carpet.settings.command.tags": "Tags",
+  "carpet.settings.command.change_permanently": "Change permanently",
+  "carpet.settings.command.change_permanently_tooltip": "click to keep the settings in %s to save across restarts",
+  "carpet.settings.command.default_set": "Rule %s will now default to %s",
+  "carpet.settings.command.default_removed": "Rule %s will no longer be set on restart",
+  "carpet.settings.command.current_value": "current value"
 
 }
