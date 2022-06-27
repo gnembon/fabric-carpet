@@ -2,7 +2,7 @@ package carpet.mixins;
 
 import carpet.CarpetServer;
 import carpet.network.CarpetClient;
-import carpet.settings.SettingsManager;
+import carpet.api.settings.SettingsManager;
 import net.minecraft.client.player.LocalPlayer;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -25,7 +25,7 @@ public class LocalPlayer_clientCommandMixin
             LocalPlayer playerSource = (LocalPlayer)(Object) this;
             CarpetServer.settingsManager.inspectClientsideCommand(playerSource.createCommandSourceStack(), string);
             CarpetServer.extensions.forEach(e -> {
-                SettingsManager sm = e.customSettingsManager();
+                SettingsManager sm = e.extensionSettingsManager();
                 if (sm != null) sm.inspectClientsideCommand(playerSource.createCommandSourceStack(), string);
             });
         }

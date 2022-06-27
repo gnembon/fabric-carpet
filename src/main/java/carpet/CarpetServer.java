@@ -1,8 +1,9 @@
 package carpet;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
-import java.util.Random;
+import java.util.Set;
 
 import carpet.commands.CounterCommand;
 import carpet.commands.DistanceCommand;
@@ -24,7 +25,7 @@ import carpet.helpers.PistonMoveBehaviorManager;
 import carpet.helpers.TickSpeed;
 import carpet.logging.LoggerRegistry;
 import carpet.script.CarpetScriptServer;
-import carpet.settings.SettingsManager;
+import carpet.api.settings.SettingsManager;
 import carpet.logging.HUDController;
 import carpet.utils.FabricAPIHooks;
 import carpet.utils.MobAI;
@@ -41,11 +42,10 @@ import net.minecraft.server.level.ServerPlayer;
 
 public class CarpetServer // static for now - easier to handle all around the code, its one anyways
 {
-    public static final Random rand = new Random();
     public static MinecraftServer minecraft_server;
     private static CommandDispatcher<CommandSourceStack> currentCommandDispatcher;
     public static CarpetScriptServer scriptServer;
-    public static SettingsManager settingsManager;
+    public static carpet.settings.SettingsManager settingsManager; // to change type to api type, can't change right now because of binary and source compat
     public static final List<CarpetExtension> extensions = new ArrayList<>();
 
     // Separate from onServerLoaded, because a server can be loaded multiple times in singleplayer
@@ -79,7 +79,7 @@ public class CarpetServer // static for now - easier to handle all around the co
     // to register before this call in a ModInitializer (declared in fabric.mod.json)
     public static void onGameStarted()
     {
-        settingsManager = new SettingsManager(CarpetSettings.carpetVersion, "carpet", "Carpet Mod");
+        settingsManager = new carpet.settings.SettingsManager(CarpetSettings.carpetVersion, "carpet", "Carpet Mod");
         settingsManager.parseSettingsClass(CarpetSettings.class);
         extensions.forEach(CarpetExtension::onGameStarted);
         FabricAPIHooks.initialize();
@@ -94,7 +94,7 @@ public class CarpetServer // static for now - easier to handle all around the co
 
         settingsManager.attachServer(server);
         extensions.forEach(e -> {
-            SettingsManager sm = e.customSettingsManager();
+        	SettingsManager sm = e.extensionSettingsManager();
             if (sm != null) sm.attachServer(server);
             e.onServerLoaded(server);
         });
@@ -132,7 +132,7 @@ public class CarpetServer // static for now - easier to handle all around the co
         }
         settingsManager.registerCommand(dispatcher, commandBuildContext);
         extensions.forEach(e -> {
-            SettingsManager sm = e.customSettingsManager();
+        	SettingsManager sm = e.extensionSettingsManager();
             if (sm != null) sm.registerCommand(dispatcher, commandBuildContext);
         });
         TickCommand.register(dispatcher, commandBuildContext);
@@ -209,6 +209,10 @@ public class CarpetServer // static for now - easier to handle all around the co
     public static void onServerDoneClosing(MinecraftServer server)
     {
         settingsManager.detachServer();
+        extensions.forEach(e -> {
+        	SettingsManager manager = e.extensionSettingsManager();
+            if (manager != null) manager.detachServer();
+        });
     }
 
     public static void registerExtensionLoggers()
@@ -220,6 +224,15 @@ public class CarpetServer // static for now - easier to handle all around the co
     {
         scriptServer.reload(server);
         extensions.forEach(e -> e.onReload(server));
+    }
+    
+    private static final Set<CarpetExtension> warnedOutdatedManagerProviders = new HashSet<>();
+    static void warnOutdatedManager(CarpetExtension ext)
+    {
+        if (!warnedOutdatedManagerProviders.contains(ext))
+            CarpetSettings.LOG.warn("""
+                    %s is providing a SettingsManager from an outdated method in CarpetExtension!
+                    This behaviour will not work in later Carpet versions and the manager won't be registered!""".formatted(ext.getClass().getName()));
     }
 }
 

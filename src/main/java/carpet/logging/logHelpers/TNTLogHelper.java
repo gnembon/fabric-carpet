@@ -33,24 +33,19 @@ public class TNTLogHelper
             lastGametime = gametime;
         }
         tntCount++;
-        LoggerRegistry.getLogger("tnt").log( (option) -> {
-            switch (option)
-            {
-                case "brief":
-                    return new Component[]{Messenger.c(
-                            "l P ",Messenger.dblt("l",primedX,primedY,primedZ),
-                            "w  ",Messenger.dblt("l", primedAngle.x, primedAngle.y, primedAngle.z),
-                            "r  E ",Messenger.dblt("r",x, y, z))};
-                case "full":
-                    return new Component[]{Messenger.c(
-                            "r #" + tntCount,
-                            "m @" + gametime,
-                            "g : ",
-                            "l P ",Messenger.dblf("l",primedX,primedY,primedZ),
-                            "w  ",Messenger.dblf("l", primedAngle.x, primedAngle.y, primedAngle.z),
-                            "r  E ",Messenger.dblf("r",x, y, z))};
-            }
-            return null;
+        LoggerRegistry.getLogger("tnt").log( (option) -> switch (option) {
+            case "brief" -> new Component[]{Messenger.c(
+                    "l P ", Messenger.dblt("l", primedX, primedY, primedZ),
+                    "w  ", Messenger.dblt("l", primedAngle.x, primedAngle.y, primedAngle.z),
+                    "r  E ", Messenger.dblt("r", x, y, z))};
+            case "full" -> new Component[]{Messenger.c(
+                    "r #" + tntCount,
+                    "m @" + gametime,
+                    "g : ",
+                    "l P ", Messenger.dblf("l", primedX, primedY, primedZ),
+                    "w  ", Messenger.dblf("l", primedAngle.x, primedAngle.y, primedAngle.z),
+                    "r  E ", Messenger.dblf("r", x, y, z))};
+            default -> null;
         });
     }
 }
