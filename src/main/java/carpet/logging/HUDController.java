@@ -92,10 +92,10 @@ public class HUDController
         if (LoggerRegistry.__mobcaps)
             LoggerRegistry.getLogger("mobcaps").log((option, player) -> {
                 ResourceKey<Level> dim = switch (option) {
-                    case "overworld" -> Level.OVERWORLD; // OW
-                    case "nether" -> Level.NETHER; // nether
-                    case "end" -> Level.END; // end
-                    default -> player.level.dimension(); //getDimType
+                    case "overworld" -> Level.OVERWORLD;
+                    case "nether" -> Level.NETHER;
+                    case "end" -> Level.END;
+                    default -> player.level.dimension();
                 };
                 return new Component[]{SpawnReporter.printMobcapsForDimension(server.getLevel(dim), false).get(0)};
             });
