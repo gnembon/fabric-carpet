@@ -4,9 +4,8 @@ import carpet.helpers.EntityPlayerActionPack;
 import carpet.CarpetSettings;
 import carpet.fakes.ServerPlayerEntityInterface;
 import carpet.patches.EntityPlayerMPFake;
-import carpet.settings.SettingsManager;
+import carpet.utils.CommandHelper;
 import carpet.utils.Messenger;
-import com.google.common.collect.Sets;
 import com.mojang.authlib.GameProfile;
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.CommandDispatcher;
@@ -35,9 +34,10 @@ import net.minecraft.world.phys.Vec2;
 import net.minecraft.world.phys.Vec3;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 
 import static net.minecraft.commands.Commands.argument;
 import static net.minecraft.commands.Commands.literal;
@@ -51,10 +51,9 @@ public class PlayerCommand
     {
         final String[] gamemodeStrings = Arrays.stream(GameType.values())
                 .map(GameType::getName)
-                .collect(Collectors.toList())
-                .toArray(new String[]{});
+                .toArray(String[]::new);
         LiteralArgumentBuilder<CommandSourceStack> literalargumentbuilder = literal("player")
-                .requires((player) -> SettingsManager.canUseCommand(player, CarpetSettings.commandPlayer))
+                .requires((player) -> CommandHelper.canUseCommand(player, CarpetSettings.commandPlayer))
                 .then(argument("player", StringArgumentType.word())
                         .suggests( (c, b) -> suggest(getPlayers(c.getSource()), b))
                         .then(literal("stop").executes(PlayerCommand::stop))
@@ -143,7 +142,7 @@ public class PlayerCommand
 
     private static Collection<String> getPlayers(CommandSourceStack source)
     {
-        Set<String> players = Sets.newLinkedHashSet(Arrays.asList("Steve", "Alex"));
+        Set<String> players = new LinkedHashSet<>(List.of("Steve", "Alex"));
         players.addAll(source.getOnlinePlayerNames());
         return players;
     }

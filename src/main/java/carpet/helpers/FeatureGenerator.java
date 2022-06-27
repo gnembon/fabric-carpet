@@ -158,7 +158,7 @@ public class FeatureGenerator
     private static Thing simpleTree(TreeConfiguration config)
     {
         //config.ignoreFluidCheck();
-        return simplePlop(new ConfiguredFeature(Feature.TREE, config));
+        return simplePlop(new ConfiguredFeature<>(Feature.TREE, config));
     }
 
     private static Thing spawnCustomStructure(Structure structure)

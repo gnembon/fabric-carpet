@@ -16,6 +16,7 @@ import carpet.script.value.StringValue;
 import carpet.script.value.Value;
 import carpet.script.value.ValueConversions;
 import carpet.utils.CarpetProfiler;
+import com.mojang.brigadier.exceptions.DynamicCommandExceptionType;
 import com.mojang.datafixers.util.Either;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
@@ -113,6 +114,9 @@ public abstract class CommandArgument
     {
         return new SimpleCommandExceptionType(Component.literal(text)).create();
     }
+
+    private static final DynamicCommandExceptionType ERROR_BIOME_INVALID = new DynamicCommandExceptionType(v -> Component.translatable("commands.locate.biome.invalid", v));
+
 
     private static final List<? extends CommandArgument> baseTypes = Lists.newArrayList(
             // default
@@ -219,7 +223,7 @@ public abstract class CommandArgument
             ),
             new VanillaUnconfigurableArgument("biome", () -> ResourceOrTagLocationArgument.resourceOrTag(Registry.BIOME_REGISTRY),
                     (c, p) -> {
-                        ResourceOrTagLocationArgument.Result<Biome> result = ResourceOrTagLocationArgument.getBiome(c, p);
+                        ResourceOrTagLocationArgument.Result<Biome> result = ResourceOrTagLocationArgument.getRegistryType(c, "biome", Registry.BIOME_REGISTRY, ERROR_BIOME_INVALID);
                         Either<ResourceKey<Biome>, TagKey<Biome>> res = result.unwrap();
                         if (res.left().isPresent())
                         {
@@ -1076,7 +1080,7 @@ public abstract class CommandArgument
         protected ArgumentType<?> getArgumentType(CarpetScriptHost host) throws CommandSyntaxException
         {
             if (argumentTypeSupplier != null) return argumentTypeSupplier.get();
-            CommandBuildContext registryAccess = new CommandBuildContext(host.getScriptServer().server.registryAccess());
+            CommandBuildContext registryAccess = new CommandBuildContext(host.scriptServer().server.registryAccess());
             return argumentTypeSupplierEx.get(registryAccess);
         }
 

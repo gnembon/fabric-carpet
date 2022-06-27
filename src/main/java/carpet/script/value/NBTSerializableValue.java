@@ -516,7 +516,7 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
             }
             try
             {
-                CollectionTag<?> targetList = (CollectionTag) target;
+                CollectionTag<?> targetList = (CollectionTag<?>) target;
                 if (!targetList.addTag(index < 0 ? targetList.size() + index + 1 : index, newElement.copy()))
                     return false;
                 modified = true;

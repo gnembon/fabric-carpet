@@ -190,7 +190,7 @@ public class Logger
 
     public void sendPlayerMessage(ServerPlayer player, Component ... messages)
     {
-        Arrays.stream(messages).forEach(message -> player.sendMessage(message, Util.NIL_UUID));
+        Arrays.stream(messages).forEach(player::sendSystemMessage);
     }
 
     /**

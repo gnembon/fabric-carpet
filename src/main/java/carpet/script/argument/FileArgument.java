@@ -2,7 +2,7 @@ package carpet.script.argument;
 
 import carpet.CarpetServer;
 import carpet.script.CarpetScriptServer;
-import carpet.script.bundled.Module;
+import carpet.script.Module;
 import carpet.script.exception.InternalExpressionException;
 import carpet.script.exception.ThrowStatement;
 import carpet.script.exception.Throwables;
@@ -177,7 +177,7 @@ public class FileArgument
 
     private Path toPath(Module module)
     {
-        if (!isShared && (module == null || module.getName() == null)) return null;
+        if (!isShared && module == null) return null;
         if (zipContainer == null)
             return resolve(getDescriptor(module, resource)+(isFolder?"":type.extension));
         else
@@ -204,8 +204,8 @@ public class FileArgument
 
     private Path moduleRootPath(Module module)
     {
-        if (!isShared && (module == null || module.getName() == null)) return null;
-        return resolve(isShared?"shared":module.getName()+".data");
+        if (!isShared && module == null) return null;
+        return resolve(isShared?"shared":module.name()+".data");
     }
 
     public String getDisplayPath()
@@ -219,9 +219,9 @@ public class FileArgument
         {
             return res.isEmpty()?"shared":"shared/"+res;
         }
-        if (module != null && module.getName() != null) // appdata
+        if (module != null) // appdata
         {
-            return module.getName()+".data"+(res==null || res.isEmpty()?"":"/"+res);
+            return module.name()+".data"+(res==null || res.isEmpty()?"":"/"+res);
         }
         throw new InternalExpressionException("Invalid file descriptor: "+res);
     }
@@ -515,7 +515,7 @@ public class FileArgument
     {
         try (BufferedReader reader = Files.newBufferedReader(filePath, StandardCharsets.UTF_8))
         {
-            return new JsonParser().parse(new JsonReader(reader));
+            return JsonParser.parseReader(reader);
         }
         catch (JsonParseException e)
         {
