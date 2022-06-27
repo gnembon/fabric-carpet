@@ -55,7 +55,7 @@ public class CarpetRulePrinter implements DedicatedServerModInitializer {
         }
         String filter = options.valueOf(filterSpec);
         if (filter != null) logger.info("Applying category filter: " + filter);
-        CarpetServer.settingsManager.printAllRulesToLog(outputStream, filter);
+        CarpetServer.settingsManager.dumpAllRulesToStream(outputStream, filter);
         outputStream.close();
         logger.info("Rules have been printed");
         System.exit(0);
