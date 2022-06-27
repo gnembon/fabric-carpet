@@ -2,6 +2,8 @@ package carpet.script;
 
 import carpet.CarpetServer;
 import carpet.CarpetSettings;
+import carpet.api.settings.CarpetRule;
+import carpet.api.settings.RuleHelper;
 import carpet.helpers.TickSpeed;
 import carpet.script.exception.IntegrityException;
 import carpet.script.exception.InternalExpressionException;
@@ -17,7 +19,6 @@ import carpet.script.value.NumericValue;
 import carpet.script.value.StringValue;
 import carpet.script.value.Value;
 import carpet.script.value.ValueConversions;
-import carpet.settings.ParsedRule;
 import carpet.utils.CarpetProfiler;
 import carpet.utils.Messenger;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
@@ -917,9 +918,9 @@ public class CarpetEventServer
         public static final Event CARPET_RULE_CHANGES = new Event("carpet_rule_changes", 2, true)
         {
             @Override
-            public void onCarpetRuleChanges(ParsedRule<?> rule, CommandSourceStack source)
+            public void onCarpetRuleChanges(CarpetRule<?> rule, CommandSourceStack source)
             {
-                String identifier = rule.settingsManager.getIdentifier();
+                String identifier = rule.settingsManager().identifier();
                 final String namespace;
                 if (!identifier.equals("carpet")) 
                 {
@@ -927,8 +928,8 @@ public class CarpetEventServer
                 } else { namespace = "";}
                 handler.call(
                         () -> Arrays.asList(
-                                new StringValue(namespace+rule.name),
-                                new StringValue(rule.getAsString())
+                                new StringValue(namespace+rule.name()),
+                                new StringValue(RuleHelper.toRuleString(rule.value()))
                         ), () -> source
                 );
             }
@@ -1123,7 +1124,7 @@ public class CarpetEventServer
         public void onExplosion(ServerLevel world, Entity e,  Supplier<LivingEntity> attacker, double x, double y, double z, float power, boolean createFire, List<BlockPos> affectedBlocks, List<Entity> affectedEntities, Explosion.BlockInteraction type) { }
         public void onWorldEvent(ServerLevel world, BlockPos pos) { }
         public void onWorldEventFlag(ServerLevel world, BlockPos pos, int flag) { }
-        public void onCarpetRuleChanges(ParsedRule<?> rule, CommandSourceStack source) { }
+        public void onCarpetRuleChanges(CarpetRule<?> rule, CommandSourceStack source) { }
         public void onCustomPlayerEvent(ServerPlayer player, Object ... args)
         {
             if (handler.reqArgs != (args.length+1))
