@@ -1076,4 +1076,11 @@ public class CarpetSettings
     )
     public static int sculkSensorRange = 8;
 
+    @Rule(
+        desc = "Enables `/pistonmovebehavior` for players to change which blocks can be moved by pistons.",
+        extra = {"Block entities will remain immovable unless the `movableBlockEntities` rule is also enabled."},
+        category = {COMMAND, CREATIVE}
+    )
+    public static boolean commandPistonMoveBehavior = true;
+
 }

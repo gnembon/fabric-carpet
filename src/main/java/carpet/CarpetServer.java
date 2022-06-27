@@ -11,6 +11,7 @@ import carpet.commands.InfoCommand;
 import carpet.commands.LogCommand;
 import carpet.commands.MobAICommand;
 import carpet.commands.PerimeterInfoCommand;
+import carpet.commands.PistonMoveBehaviorCommand;
 import carpet.commands.PlayerCommand;
 import carpet.commands.ProfileCommand;
 import carpet.commands.ScriptCommand;
@@ -19,6 +20,7 @@ import carpet.commands.TestCommand;
 import carpet.commands.TickCommand;
 import carpet.network.ServerNetworkHandler;
 import carpet.helpers.HopperCounter;
+import carpet.helpers.PistonMoveBehaviorManager;
 import carpet.helpers.TickSpeed;
 import carpet.logging.LoggerRegistry;
 import carpet.script.CarpetScriptServer;
@@ -99,6 +101,7 @@ public class CarpetServer // static for now - easier to handle all around the co
         scriptServer = new CarpetScriptServer(server);
         MobAI.resetTrackers();
         LoggerRegistry.initLoggers();
+        PistonMoveBehaviorManager.load(server);
         //TickSpeed.reset();
     }
 
@@ -144,6 +147,7 @@ public class CarpetServer // static for now - easier to handle all around the co
         DrawCommand.register(dispatcher, commandBuildContext);
         ScriptCommand.register(dispatcher, commandBuildContext);
         MobAICommand.register(dispatcher, commandBuildContext);
+        PistonMoveBehaviorCommand.register(dispatcher, commandBuildContext);
         // registering command of extensions that has registered before either server is created
         // for all other, they will have them registered when they add themselves
         extensions.forEach(e -> {
@@ -192,6 +196,7 @@ public class CarpetServer // static for now - easier to handle all around the co
             ServerNetworkHandler.close();
             currentCommandDispatcher = null;
 
+            PistonMoveBehaviorManager.save(server);
             LoggerRegistry.stopLoggers();
             HUDController.resetScarpetHUDs();
             extensions.forEach(e -> e.onServerClosed(server));
