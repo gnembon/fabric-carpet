@@ -76,7 +76,7 @@
     "CoralPlantBlock_renewableCoralMixin",
     "CoralFanBlock_renewableCoralMixin",
     "CoralFeature_renewableCoralMixin",
-    "BuddingAmethystBlock_movableAmethystMixin",
+    "BuddingAmethystBlock_harvestableAmethystMixin",
     "LiquidBlock_renewableBlackstoneMixin",
     "LiquidBlock_renewableDeepslateMixin",
     "LavaFluid_renewableDeepslateMixin",

@@ -196,9 +196,9 @@ public class PistonMoveBehaviorManager {
         }
     }
 
-    private static class Config {
+    public static class Config {
 
-        private static final String FILE_NAME = "carpet_piston_move_behavior_overrides.json";
+        public static final String FILE_NAME = "carpet_piston_move_behavior_overrides.json";
         private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 
         private static Path getFile(MinecraftServer server) {

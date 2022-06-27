@@ -178,7 +178,7 @@ public class PistonMoveBehaviorCommand {
                             applyFormat(ChatFormatting.AQUA).
                             withHoverEvent(new HoverEvent(
                                 HoverEvent.Action.SHOW_TEXT,
-                                Component.literal("Click to keep the overrides in " + " to save across restarts"))).
+                                Component.literal("Click to keep the overrides in " + PistonMoveBehaviorManager.Config.FILE_NAME + " to save across restarts"))).
                             withClickEvent(new ClickEvent(
                                 ClickEvent.Action.SUGGEST_COMMAND,
                                 String.format("/pistonmovebehavior defaultOverride %s %s", stateString, override.getName())));
