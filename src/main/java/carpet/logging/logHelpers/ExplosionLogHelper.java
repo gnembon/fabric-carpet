@@ -23,7 +23,7 @@ public class ExplosionLogHelper
     public final Entity entity;
     private final float power;
     private boolean affectBlocks = false;
-    private Object2IntMap<EntityChangedStatusWithCount> impactedEntities = new Object2IntOpenHashMap<>();
+    private final Object2IntMap<EntityChangedStatusWithCount> impactedEntities = new Object2IntOpenHashMap<>();
 
     private static long lastGametime = 0;
     private static int explosionCountInCurretGT = 0;

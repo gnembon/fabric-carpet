@@ -3,8 +3,8 @@ package carpet.commands;
 import carpet.CarpetSettings;
 import carpet.helpers.TickSpeed;
 import carpet.network.ServerNetworkHandler;
-import carpet.settings.SettingsManager;
 import carpet.utils.CarpetProfiler;
+import carpet.utils.CommandHelper;
 import carpet.utils.Messenger;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
@@ -29,7 +29,7 @@ public class TickCommand
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher, CommandBuildContext commandBuildContext)
     {
         LiteralArgumentBuilder<CommandSourceStack> literalargumentbuilder = literal("tick").
-                requires((player) -> SettingsManager.canUseCommand(player, CarpetSettings.commandTick)).
+                requires((player) -> CommandHelper.canUseCommand(player, CarpetSettings.commandTick)).
                 then(literal("rate").
                         executes((c) -> queryTps(c.getSource())).
                         then(argument("rate", floatArg(0.1F, 500.0F)).

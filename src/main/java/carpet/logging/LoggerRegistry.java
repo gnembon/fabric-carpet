@@ -14,9 +14,9 @@ import net.minecraft.world.item.DyeColor;
 public class LoggerRegistry
 {
     // Map from logger names to loggers.
-    private static Map<String, Logger> loggerRegistry = new HashMap<>();
+    private static final Map<String, Logger> loggerRegistry = new HashMap<>();
     // Map from player names to the set of names of the logs that player is subscribed to.
-    private static Map<String, Map<String, String>> playerSubscriptions = new HashMap<>();
+    private static final Map<String, Map<String, String>> playerSubscriptions = new HashMap<>();
     //statics to quickly asses if its worth even to call each one
     public static boolean __tnt;
     public static boolean __projectiles;
@@ -116,7 +116,6 @@ public class LoggerRegistry
 
     protected static void setAccess(Logger logger)
     {
-        String name = logger.getLogName();
         boolean value = logger.hasOnlineSubscribers();
         try
         {
@@ -137,7 +136,7 @@ public class LoggerRegistry
         setAccess(logger);
     }
 
-    private static Set<String> seenPlayers = new HashSet<>();
+    private final static Set<String> seenPlayers = new HashSet<>();
 
     public static void stopLoggers()
     {

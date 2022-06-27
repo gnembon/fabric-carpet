@@ -1,42 +1,82 @@
 package carpet.settings;
 
-import carpet.CarpetServer;
+import carpet.CarpetSettings;
+import carpet.api.settings.CarpetRule;
+import carpet.api.settings.Validators;
+import carpet.utils.CommandHelper;
 import carpet.utils.Messenger;
-import java.util.List;
-import java.util.Locale;
-import java.util.stream.Collectors;
 import net.minecraft.commands.CommandSourceStack;
 
-public abstract class Validator<T>
+/**
+ * @deprecated Use {@link carpet.api.settings.Validator} instead
+ */
+@Deprecated(forRemoval = true)
+public abstract class Validator<T> extends carpet.api.settings.Validator<T>
 {
+	{
+		// Print deprecation warning once while instantiating the class
+	    CarpetSettings.LOG.warn("""
+                Validator '%s' is implementing the old Validator class! This class is deprecated and will be removed \
+                and crash in later Carpet versions!""".formatted(getClass().getName()));
+	}
     /**
      * Validate the new value of a rule
-     * @return true if valid, false if new rule invalid.
+     * @return a value if the given one was valid or could be cleanly adapted, null if new value is invalid.
      */
-    public abstract T validate(CommandSourceStack source, ParsedRule<T> currentRule, T newValue, String string);
-    public String description() {return null;}
-    public void notifyFailure(CommandSourceStack source, ParsedRule<T> currentRule, String providedValue)
-    {
-        Messenger.m(source, "r Wrong value for " + currentRule.name + ": " + providedValue);
+    @Override
+    public final T validate(CommandSourceStack source, CarpetRule<T> changingRule, T newValue, String stringInput) {
+        // Compatibility code
+        if (!(changingRule instanceof ParsedRule<T> parsedRule))
+            // Throwing here is not an issue because Carpet's current implementation only calls validators with ParsedRule.
+            // This would be thrown if a different implementation tries to use it, and then it's their issue in multiple ways
+            throw new IllegalArgumentException("Passed a non-ParsedRule to a validator using the outdated method!");
+        return validate(source, parsedRule, newValue, stringInput);
     }
+    /**
+     * @deprecated Implement {@link #validate(CommandSourceStack, CarpetRule, Object, String)} instead! It will get abstract soon!
+     */
+    @Deprecated(forRemoval = true)
+    public abstract T validate(CommandSourceStack source, ParsedRule<T> currentRule, T newValue, String string);
 
-    public static class _COMMAND<T> extends Validator<T>
+    /**
+     * @deprecated Use {@link Validators.CommandLevel} instead
+     */
+    @Deprecated(forRemoval = true) // to remove
+    public static class _COMMAND_LEVEL_VALIDATOR extends Validators.CommandLevel {}
+
+    /**
+     * @deprecated Use {@link Validators.NonNegativeNumber} instead
+     */
+    @Deprecated(forRemoval = true) // to remove
+    public static class NONNEGATIVE_NUMBER<T extends Number> extends Validators.NonNegativeNumber<T> {}
+
+    /**
+     * @deprecated Use {@link Validators.Probablity} instead
+     */
+    @Deprecated(forRemoval = true) // to remove
+    public static class PROBABILITY <T extends Number> extends Validators.Probablity<T> {}
+
+    // The ones below are part of the implementation of ParsedRule or printRulesToLog, so they need to be close to it to stay hidden
+    // They will need to be moved when moving ParsedRule
+    
+    static class _COMMAND<T> extends carpet.api.settings.Validator<T>
     {
         @Override
-        public T validate(CommandSourceStack source, ParsedRule<T> currentRule, T newValue, String string)
+        public T validate(CommandSourceStack source, CarpetRule<T> currentRule, T newValue, String string)
         {
-            if (CarpetServer.settingsManager != null && source != null)
-                CarpetServer.settingsManager.notifyPlayersCommandsChanged();
+            if (source != null)
+                CommandHelper.notifyPlayersCommandsChanged(source.getServer());
             return newValue;
         }
         @Override
         public String description() { return "It has an accompanying command";}
     }
 
-    public static class _CLIENT<T> extends Validator<T>
+    // maybe remove this one and make printRulesToLog check for canBeToggledClientSide instead
+    static class _CLIENT<T> extends carpet.api.settings.Validator<T>
     {
         @Override
-        public T validate(CommandSourceStack source, ParsedRule<T> currentRule, T newValue, String string)
+        public T validate(CommandSourceStack source, CarpetRule<T> currentRule, T newValue, String string)
         {
             return newValue;
         }
@@ -45,25 +85,10 @@ public abstract class Validator<T>
                 "In these situations (on vanilla servers) it will only affect the executing player, so each player needs to type it" +
                 " separately for the desired effect";}
     }
-
-    public static class _COMMAND_LEVEL_VALIDATOR extends Validator<String> {
-        private static List<String> OPTIONS = List.of("true", "false", "ops", "0", "1", "2", "3", "4");
-        @Override public String validate(CommandSourceStack source, ParsedRule<String> currentRule, String newValue, String userString) {
-            if (!OPTIONS.contains(userString.toLowerCase(Locale.ROOT)))
-            {
-                Messenger.m(source, "r Valid options for command type rules is 'true' or 'false'");
-                Messenger.m(source, "r Optionally you can choose 'ops' to only allow operators");
-                Messenger.m(source, "r or provide a custom required permission level");
-                return null;
-            }
-            return userString.toLowerCase(Locale.ROOT);
-        }
-        @Override public String description() { return "Can be limited to 'ops' only, or a custom permission level";}
-    }
     
-    public static class _SCARPET<T> extends Validator<T> {
+    static class ScarpetValidator<T> extends carpet.api.settings.Validator<T> { //TODO remove? The additional info isn't that useful tbh
         @Override
-        public T validate(CommandSourceStack source, ParsedRule<T> currentRule, T newValue, String string)
+        public T validate(CommandSourceStack source, CarpetRule<T> currentRule, T newValue, String string)
         {
             return newValue;
         }
@@ -72,65 +97,17 @@ public abstract class Validator<T>
         }
     }
 
-    public static class WIP<T> extends Validator<T>
+    static class StrictValidator<T> extends carpet.api.settings.Validator<T>
     {
         @Override
-        public T validate(CommandSourceStack source, ParsedRule<T> currentRule, T newValue, String string)
+        public T validate(CommandSourceStack source, CarpetRule<T> currentRule, T newValue, String string)
         {
-            Messenger.m(source, "r "+currentRule.name+" is missing a few bits - we are still working on it.");
-            return newValue;
-        }
-        @Override
-        public String description() { return "A few bits still needs implementing - we are working on it";}
-    }
-    public static class _STRICT<T> extends Validator<T>
-    {
-        @Override
-        public T validate(CommandSourceStack source, ParsedRule<T> currentRule, T newValue, String string)
-        {
-            if (!currentRule.options.contains(string))
+            if (!currentRule.suggestions().contains(string))
             {
-                Messenger.m(source, "r Valid options: " + currentRule.options.toString());
+                Messenger.m(source, "r Valid options: " + currentRule.suggestions().toString());
                 return null;
             }
             return newValue;
         }
-    }
-
-    public static class _STRICT_IGNORECASE<T> extends Validator<T>
-    {
-        @Override
-        public T validate(CommandSourceStack source, ParsedRule<T> currentRule, T newValue, String string)
-        {
-            if (!currentRule.options.stream().map(s->s.toLowerCase(Locale.ROOT)).collect(Collectors.toSet())
-                    .contains(string.toLowerCase(Locale.ROOT)))
-            {
-                Messenger.m(source, "r Valid options (case insensitive): " + currentRule.options.toString());
-                return null;
-            }
-            return newValue;
-        }
-    }
-
-    public static class NONNEGATIVE_NUMBER <T extends Number> extends Validator<T>
-    {
-        @Override
-        public T validate(CommandSourceStack source, ParsedRule<T> currentRule, T newValue, String string)
-        {
-            return newValue.doubleValue() >= 0 ? newValue : null;
-        }
-        @Override
-        public String description() { return "Must be a positive number";}
-    }
-
-    public static class PROBABILITY <T extends Number> extends Validator<T>
-    {
-        @Override
-        public T validate(CommandSourceStack source, ParsedRule<T> currentRule, T newValue, String string)
-        {
-            return (newValue.doubleValue() >= 0 && newValue.doubleValue() <= 1 )? newValue : null;
-        }
-        @Override
-        public String description() { return "Must be between 0 and 1";}
     }
 }
