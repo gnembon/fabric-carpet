@@ -302,13 +302,12 @@ public class ShapesRenderer
                 double cz, float partialTick) {
             if (shape.a == 0.0)
                 return;
+            if (shape.needf3b && !client.getEntityRenderDispatcher().shouldRenderHitBoxes()){
+                return;
+            }
             Vec3 v1 = shape.relativiseRender(client.level, shape.pos, partialTick);
             Camera camera1 = client.gameRenderer.getMainCamera();
 
-            if (shape.doublesided)
-                RenderSystem.disableCull();
-            else
-                RenderSystem.enableCull();
             matrices.pushPose();
             // matrices.setIdentity();
             if (!isitem)// blocks should use its center as the origin

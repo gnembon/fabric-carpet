@@ -575,7 +575,7 @@ public class ShapeDispatcher
                 entry("obj_size", new NumericValue(1)),
                 entry("light_fromblock", new NumericValue(-999)),
                 entry("light_fromsky", new NumericValue(-999)),
-                entry("doublesided", new NumericValue(0)));
+                entry("needf3b", BooleanValue.FALSE));
         private boolean isitem;
 
         @Override
@@ -605,7 +605,7 @@ public class ShapeDispatcher
 
         float height;
         float width;
-        boolean doublesided;
+        boolean needf3b;
         CompoundTag blockEntity;
         BlockState blockState;
         ItemStack item = null;
@@ -644,9 +644,9 @@ public class ShapeDispatcher
                 case "down":  facing = Direction.DOWN; break;
             }
 
-            doublesided = false;
-            if (options.containsKey("doublesided")) {
-                doublesided = options.get("doublesided").getBoolean();
+            needf3b = false;
+            if (options.containsKey("needf3b")) {
+                needf3b = options.get("needf3b").getBoolean();
             }
 
             tilt = NumericValue.asNumber(options.getOrDefault("tilt", optional.get("tilt"))).getFloat();
@@ -679,7 +679,7 @@ public class ShapeDispatcher
             if (blockEntity!= null) hash ^= blockEntity.toString().hashCode(); hash *= 1099511628211L;
             if (blockState!= null) hash ^= blockState.hashCode(); hash *= 1099511628211L;
             hash ^= ValueConversions.of(item).getString().hashCode(); hash *= 1099511628211L;
-            hash ^= Boolean.hashCode(doublesided); hash *= 1099511628211L;
+            hash ^= Boolean.hashCode(needf3b); hash *= 1099511628211L;
             hash ^= item_transform_type.hashCode(); hash *= 1099511628211L;
 
             return hash;
@@ -1262,6 +1262,7 @@ public class ShapeDispatcher
             put("turn", new FloatParam("turn"));
             put("facing", new StringChoiceParam("axis", "player", "north", "south", "east", "west", "up", "down"));
             put("doublesided", new BoolParam("doublesided"));
+            put("needf3b", new BoolParam("needf3b"));
 
         }};
         protected String id;
