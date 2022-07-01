@@ -278,7 +278,7 @@ public class PlayerCommand
                 () -> DimensionArgument.getDimension(context, "dimension").dimension(),
                 () -> source.getLevel().dimension() // dimension.getType()
         );
-        GameType mode = GameType.CREATIVE;
+        GameType mode = GameType.SURVIVAL; // some 3rd-part chat bot may use the server source to execute the spawn command directly, so set default gamemode to survival is safer!
         boolean flying = false;
         try
         {
