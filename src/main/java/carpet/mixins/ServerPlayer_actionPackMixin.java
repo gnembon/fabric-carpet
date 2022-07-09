@@ -1,6 +1,5 @@
 package carpet.mixins;
 
-import carpet.CarpetSettings;
 import carpet.fakes.ServerPlayerEntityInterface;
 import carpet.helpers.EntityPlayerActionPack;
 import com.mojang.authlib.GameProfile;
@@ -34,13 +33,6 @@ public abstract class ServerPlayer_actionPackMixin implements ServerPlayerEntity
     @Inject(method = "tick", at = @At(value = "HEAD"))
     private void onTick(CallbackInfo ci)
     {
-        try
-        {
-            actionPack.onUpdate();
-        }
-        catch (Throwable exc)
-        {
-            CarpetSettings.LOG.error("Error executing player tasks", exc);
-        }
+        actionPack.onUpdate();
     }
 }

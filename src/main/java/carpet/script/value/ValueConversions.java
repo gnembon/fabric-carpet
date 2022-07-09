@@ -24,6 +24,7 @@ import net.minecraft.util.StringRepresentable;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.ai.behavior.PositionTracker;
+import net.minecraft.world.entity.ai.memory.NearestVisibleLivingEntities;
 import net.minecraft.world.entity.ai.memory.WalkTarget;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
@@ -49,6 +50,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 public class ValueConversions
 {
@@ -266,6 +268,9 @@ public class ValueConversions
                     new NumericValue(((WalkTarget) v).getSpeedModifier()),
                     new NumericValue(((WalkTarget) v).getCloseEnoughDist())
             );
+        }
+        if (v instanceof NearestVisibleLivingEntities nvle) {
+            v = StreamSupport.stream(nvle.findAll(entity -> true).spliterator(), false).toList();
         }
         if (v instanceof Set)
         {

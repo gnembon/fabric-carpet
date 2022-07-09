@@ -4,7 +4,7 @@ import carpet.CarpetSettings;
 import carpet.fakes.SpawnGroupInterface;
 import carpet.helpers.HopperCounter;
 import carpet.helpers.TickSpeed;
-import carpet.settings.SettingsManager;
+import carpet.utils.CommandHelper;
 import carpet.utils.Messenger;
 import carpet.utils.SpawnReporter;
 import com.mojang.brigadier.CommandDispatcher;
@@ -37,13 +37,12 @@ import static net.minecraft.commands.Commands.argument;
 import static net.minecraft.commands.Commands.literal;
 import static net.minecraft.commands.SharedSuggestionProvider.suggest;
 
-
 public class SpawnCommand
 {
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher, CommandBuildContext commandBuildContext)
     {
         LiteralArgumentBuilder<CommandSourceStack> literalargumentbuilder = literal("spawn").
-                requires((player) -> SettingsManager.canUseCommand(player, CarpetSettings.commandSpawn));
+                requires((player) -> CommandHelper.canUseCommand(player, CarpetSettings.commandSpawn));
 
         literalargumentbuilder.
                 then(literal("list").
