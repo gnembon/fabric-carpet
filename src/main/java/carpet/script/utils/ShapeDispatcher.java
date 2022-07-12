@@ -785,6 +785,7 @@ public class ShapeDispatcher
         ArrayList<Vec3> alter_point=null;
         final Random random=new Random();
         boolean doublesided;
+        boolean needf3b;
         ArrayList<Vec3> alter_point(ServerPlayer p){
             if (alter_point!=null){
                 return alter_point;
@@ -890,7 +891,8 @@ public class ShapeDispatcher
             entry("relative",Value.NULL),
             entry("mode", new StringValue("polygon")),
             entry("inneredges", Value.TRUE),
-            entry("doublesided", Value.TRUE)
+            entry("doublesided", Value.TRUE),
+            entry("needf3b", Value.FALSE)
         );
         @Override
         protected Set<String> requiredParams() { return Sets.union(super.requiredParams(), required); }
@@ -904,6 +906,11 @@ public class ShapeDispatcher
         protected void init(Map<String, Value> options)
         {
             super.init(options);
+
+            needf3b = false;
+            if (options.containsKey("needf3b")) {
+                needf3b = options.get("needf3b").getBoolean();
+            }
 
             doublesided=options.getOrDefault("doublesided",optional.get("doublesided")).getBoolean();
             

@@ -576,6 +576,9 @@ public class ShapesRenderer
         public void renderFaces(Tesselator tessellator, BufferBuilder bufferBuilder, double cx, double cy, double cz, float partialTick)
         {       
             if(shape.fa==0){return;}
+            if (shape.needf3b && !client.getEntityRenderDispatcher().shouldRenderHitBoxes()){
+                return;
+            }
             if (shape.doublesided)
                 RenderSystem.disableCull();
             else
@@ -619,6 +622,9 @@ public class ShapesRenderer
         public void renderLines(PoseStack matrices, Tesselator tessellator, BufferBuilder builder, double cx, double cy,
                 double cz, float partialTick) {
                     if(shape.a==0){return;}
+                    if (shape.needf3b && !client.getEntityRenderDispatcher().shouldRenderHitBoxes()){
+                        return;
+                    }
                     if (shape.mode==Mode.TRIANGLE_FAN){
                         builder.begin(VertexFormat.Mode.DEBUG_LINE_STRIP, DefaultVertexFormat.POSITION_COLOR);
                         Vec3 vec0=null;
