@@ -780,6 +780,7 @@ public class ShapeDispatcher
             hash ^= Boolean.hashCode(doublesided);    hash *= 1099511628211L;
             hash ^= Integer.hashCode(vertex_list.size());    hash *= 1099511628211L;
             hash ^= Boolean.hashCode(inneredges);    hash *= 1099511628211L;
+            hash ^= Boolean.hashCode(needf3b); hash *= 1099511628211L;
             return hash;
         }
         ArrayList<Vec3> alter_point=null;
