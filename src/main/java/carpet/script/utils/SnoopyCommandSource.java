@@ -43,7 +43,7 @@ public class SnoopyCommandSource extends CommandSourceStack
     {
         super(CommandSource.NULL, original.getPosition(), original.getRotation(), original.getLevel(), CarpetSettings.runPermissionLevel,
                 original.getTextName(), original.getDisplayName(), original.getServer(), original.getEntity(), false,
-                (ctx, succ, res) -> { }, EntityAnchorArgument.Anchor.FEET, CommandSigningContext.NONE);
+                (ctx, succ, res) -> { }, EntityAnchorArgument.Anchor.FEET, CommandSigningContext.anonymous());
         this.output = CommandSource.NULL;
         this.position = original.getPosition();
         this.world = original.getLevel();
@@ -78,7 +78,7 @@ public class SnoopyCommandSource extends CommandSourceStack
         this.rotation = player.getRotationVector(); // not a client call really
         this.error = error;
         this.chatOutput = output;
-        this.signingContext = CommandSigningContext.NONE;
+        this.signingContext = CommandSigningContext.anonymous();
     }
 
     private SnoopyCommandSource(CommandSource output, Vec3 pos, Vec2 rot, ServerLevel world, int level, String simpleName, Component name, MinecraftServer server, @Nullable Entity entity, ResultConsumer<CommandSourceStack> consumer, EntityAnchorArgument.Anchor entityAnchor, CommandSigningContext context,
