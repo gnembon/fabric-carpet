@@ -772,9 +772,9 @@ public class CarpetEventServer
         public static final Event PLAYER_CHOOSES_RECIPE = new Event("player_chooses_recipe", 3, false)
         {
             @Override
-            public void onRecipeSelected(ServerPlayer player, ResourceLocation recipe, boolean fullStack)
+            public boolean onRecipeSelected(ServerPlayer player, ResourceLocation recipe, boolean fullStack)
             {
-                handler.call( () ->
+                return handler.call( () ->
                         Arrays.asList(
                                 new EntityValue(player),
                                 StringValue.of(NBTSerializableValue.nameFromRegistryId(recipe)),
@@ -1147,7 +1147,7 @@ public class CarpetEventServer
         public void onEntityAction(Entity entity, boolean created) { }
         public void onDimensionChange(ServerPlayer player, Vec3 from, Vec3 to, ResourceKey<Level> fromDim, ResourceKey<Level> dimTo) {}
         public boolean onDamage(Entity target, float amount, DamageSource source) {return false;}
-        public void onRecipeSelected(ServerPlayer player, ResourceLocation recipe, boolean fullStack) {}
+        public boolean onRecipeSelected(ServerPlayer player, ResourceLocation recipe, boolean fullStack) {return false;}
         public void onSlotSwitch(ServerPlayer player, int from, int to) {}
         public void onTrade(ServerPlayer player, Merchant merchant, MerchantOffer tradeOffer) {}
 

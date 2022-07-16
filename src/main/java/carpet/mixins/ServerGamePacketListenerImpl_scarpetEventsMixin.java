@@ -261,12 +261,12 @@ public class ServerGamePacketListenerImpl_scarpetEventsMixin
         // crafts not int the crafting window
         //CarpetSettings.LOG.error("Player clicks button "+packet.getButtonId());
     }
-    @Inject(method = "handlePlaceRecipe", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/level/ServerPlayer;resetLastActionTime()V"))
+    @Inject(method = "handlePlaceRecipe", cancellable = true, at = @At(value = "INVOKE", target = "Lnet/minecraft/server/level/ServerPlayer;resetLastActionTime()V"))
     private void onRecipeSelectedInRecipeManager(ServerboundPlaceRecipePacket packet, CallbackInfo ci)
     {
         if (PLAYER_CHOOSES_RECIPE.isNeeded())
         {
-            PLAYER_CHOOSES_RECIPE.onRecipeSelected(player, packet.getRecipe(), packet.isShiftDown());
+            if(PLAYER_CHOOSES_RECIPE.onRecipeSelected(player, packet.getRecipe(), packet.isShiftDown())) ci.cancel();
         }
     }
 
