@@ -745,13 +745,12 @@ public class CarpetEventServer
             public boolean onItemAction(ServerPlayer player, InteractionHand enumhand, ItemStack itemstack)
             {
                 // this.getStackInHand(this.getActiveHand()), this.activeItemStack)
-                handler.call( () ->
+                return handler.call( () ->
                         Arrays.asList(
                                 new EntityValue(player),
                                 ValueConversions.of(itemstack),
                                 new StringValue(enumhand == InteractionHand.MAIN_HAND ? "mainhand" : "offhand")
                         ), player::createCommandSourceStack);
-                return false;
             }
         };
         public static final Event PLAYER_DROPS_ITEM = new Event("player_drops_item", 1, false)

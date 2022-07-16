@@ -56,9 +56,10 @@ public abstract class ServerPlayer_scarpetEventMixin extends Player implements S
         if (PLAYER_FINISHED_USING_ITEM.isNeeded())
         {
             InteractionHand hand = getUsedItemHand();
-            PLAYER_FINISHED_USING_ITEM.onItemAction((ServerPlayer) (Object)this, hand, getUseItem());
-            // do vanilla
-            super.completeUsingItem();
+            if(!PLAYER_FINISHED_USING_ITEM.onItemAction((ServerPlayer) (Object)this, hand, getUseItem())) {
+                // do vanilla
+                super.completeUsingItem();
+            }
         }
         else
         {
