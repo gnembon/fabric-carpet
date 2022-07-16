@@ -1,8 +1,7 @@
 {
   "required": true,
-  "refmap": "fabric-carpet-refmap.json",
   "package": "carpet.mixins",
-  "compatibilityLevel": "JAVA_16",
+  "compatibilityLevel": "JAVA_17",
   "mixins": [
     "BarrierBlock_updateSuppressionBlockMixin",
     "SpawnState_scarpetMixin",
@@ -64,7 +63,7 @@
     "ExperienceOrb_xpNoCooldownMixin",
     "Player_xpNoCooldownMixin",
     "ServerboundPlayerActionPacketMixin",
-    "ServerPlayerMixin",
+    "ServerPlayer_actionPackMixin",
     "PlayerList_coreMixin",
     "PlayerList_fakePlayersMixin",
     "RedstoneWireBlock_fastMixin",
@@ -182,11 +181,9 @@
     "ShulkerBoxBlockEntity_creativeNoClipMixin",
     "TheEndGatewayBlockEntity_creativeNoClipMixin",
     "LivingEntity_creativeFlyMixin",
-    "Level_updateSuppressionCrashFixMixin",
-    "MinecraftServer_updateSuppressionCrashFixMixin",
-    "ServerPlayer_updateSuppressionCrashFixMixin",
     "ChunkMap_creativePlayersLoadChunksMixin",
-    "SculkSensorBlock_rangeMixin"
+    "SculkSensorBlock_rangeMixin",
+    "CollectingNeighborUpdaterAccessor"
   ],
   "client": [
     "Timer_tickSpeedMixin",
@@ -203,8 +200,6 @@
     "ClientPacketListener_customPacketsMixin",
     "DebugRenderer_scarpetRenderMixin",
     "LevelRenderer_scarpetRenderMixin"
-  ],
-  "server": [
   ],
   "injectors": {
     "defaultRequire": 1

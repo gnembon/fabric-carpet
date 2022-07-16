@@ -1,8 +1,8 @@
 package carpet.commands;
 
 import carpet.CarpetSettings;
-import carpet.settings.SettingsManager;
 import carpet.utils.BlockInfo;
+import carpet.utils.CommandHelper;
 import carpet.utils.Messenger;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
@@ -26,7 +26,7 @@ public class InfoCommand
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher, CommandBuildContext commandBuildContext)
     {
         LiteralArgumentBuilder<CommandSourceStack> command = literal("info").
-                requires((player) -> SettingsManager.canUseCommand(player, CarpetSettings.commandInfo)).
+                requires((player) -> CommandHelper.canUseCommand(player, CarpetSettings.commandInfo)).
                 then(literal("block").
                         then(argument("block position", BlockPosArgument.blockPos()).
                                 executes( (c) -> infoBlock(

@@ -3,6 +3,7 @@ package carpet.mixins;
 import carpet.helpers.ParticleDisplay;
 import carpet.utils.Messenger;
 import carpet.utils.MobAI;
+import net.minecraft.world.entity.ai.village.poi.PoiTypes;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
@@ -93,7 +94,7 @@ public abstract class Villager_aiMixin extends AbstractVillager
                     (recentlySeen?"rb ":"lb ")+time ));
             this.setCustomNameVisible(true);
         }
-        else if (MobAI.isTracking(this, MobAI.TrackingType.VILLAGER_BREEDING))
+        else if (MobAI.isTracking(this, MobAI.TrackingType.BREEDING))
         {
             if (tickCount % 50 == 0 || tickCount < 20)
             {
@@ -116,7 +117,7 @@ public abstract class Villager_aiMixin extends AbstractVillager
     @Inject(method = "mobInteract", at = @At("HEAD"), cancellable = true)
     private void onInteract(Player playerEntity_1, InteractionHand hand_1, CallbackInfoReturnable<InteractionResult> cir)
     {
-        if (MobAI.isTracking(this, MobAI.TrackingType.VILLAGER_BREEDING))
+        if (MobAI.isTracking(this, MobAI.TrackingType.BREEDING))
         {
             ItemStack itemStack_1 = playerEntity_1.getItemInHand(hand_1);
             if (itemStack_1.getItem() == Items.EMERALD)
@@ -141,9 +142,9 @@ public abstract class Villager_aiMixin extends AbstractVillager
             else if (itemStack_1.getItem() instanceof BedItem)
             {
                 List<PoiRecord> list_1 = ((ServerLevel) getCommandSenderWorld()).getPoiManager().getInRange(
-                        type -> type == PoiType.HOME,
+                        type -> type.is(PoiTypes.HOME),
                         blockPosition(),
-                        48, PoiManager.Occupancy.ANY).collect(Collectors.toList());
+                        48, PoiManager.Occupancy.ANY).toList();
                 for (PoiRecord poi : list_1)
                 {
                     Vec3 pv = Vec3.atCenterOf(poi.getPos());
@@ -153,7 +154,7 @@ public abstract class Villager_aiMixin extends AbstractVillager
                                 pv.x, pv.y+1.5, pv.z,
                                 50, 0.1, 0.3, 0.1, 0.0);
                     }
-                    else if (canReachHome((Villager)(Object)this, poi.getPos()))
+                    else if (canReachHome((Villager)(Object)this, poi.getPos(), poi))
                         ((ServerLevel) getCommandSenderWorld()).sendParticles(ParticleTypes.END_ROD,
                                 pv.x, pv.y+1, pv.z,
                                 50, 0.1, 0.3, 0.1, 0.0);
@@ -168,9 +169,9 @@ public abstract class Villager_aiMixin extends AbstractVillager
         }
     }
 
-    // stolen from VillagerBreedTask
-    private boolean canReachHome(Villager villager, BlockPos pos) {
-        Path path = villager.getNavigation().createPath(pos, PoiType.HOME.getValidRange());
+    // stolen from VillagerMakeLove
+    private boolean canReachHome(Villager villager, BlockPos pos, PoiRecord poi) {
+        Path path = villager.getNavigation().createPath(pos, poi.getPoiType().value().validRange());
         return path != null && path.canReach();
     }
 

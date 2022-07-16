@@ -68,30 +68,19 @@ public class MobAI
     {
         Set<TrackingType> availableOptions = new HashSet<>();
         for (TrackingType type: TrackingType.values())
-            for (EntityType<?> etype: type.types)
-                if (etype == entityType)
-                    availableOptions.add(type);
-        return availableOptions.stream().map(t -> t.name).collect(Collectors.toList());
+            if (type.types.contains(entityType))
+                availableOptions.add(type);
+        return availableOptions.stream().map(t -> t.name().toLowerCase()).collect(Collectors.toList());
     }
 
     public enum TrackingType
     {
-        IRON_GOLEM_SPAWNING("iron_golem_spawning", Sets.newHashSet(EntityType.VILLAGER)),
-        VILLAGER_BREEDING("breeding", Sets.newHashSet(EntityType.VILLAGER));
+        IRON_GOLEM_SPAWNING(Set.of(EntityType.VILLAGER)),
+        BREEDING(Set.of(EntityType.VILLAGER));
         public final Set<EntityType<?>> types;
-        public final String name;
-        TrackingType(String name, Set<EntityType<?>> applicableTypes)
+        TrackingType(Set<EntityType<?>> applicableTypes)
         {
-            this.name = name;
             types = applicableTypes;
-        }
-
-        public static TrackingType byName(String aspect)
-        {
-            for (TrackingType type: values())
-                if (type.name.equalsIgnoreCase(aspect))
-                    return type;
-            return null;
         }
     }
 

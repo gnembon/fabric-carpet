@@ -25,7 +25,7 @@ import com.google.common.collect.Lists;
 public abstract class ServerChunkCache_tickMixin
 {
 
-    @Shadow @Final private ServerLevel level;
+    @Shadow @Final ServerLevel level;
 
     @Shadow @Final
     public ChunkMap chunkMap;
@@ -35,7 +35,30 @@ public abstract class ServerChunkCache_tickMixin
     @Inject(method = "tickChunks", at = @At("HEAD"))
     private void startSpawningSection(CallbackInfo ci)
     {
-        currentSection = CarpetProfiler.start_section(level, "Spawning and Random Ticks", CarpetProfiler.TYPE.GENERAL);
+        currentSection = CarpetProfiler.start_section(level, "Spawning", CarpetProfiler.TYPE.GENERAL);
+    }
+
+    @Inject(method = "tickChunks", at = @At(
+            value = "FIELD",
+            target = "net/minecraft/server/level/ServerChunkCache.level:Lnet/minecraft/server/level/ServerLevel;",
+            ordinal = 10
+    ))
+    private void skipChunkTicking(CallbackInfo ci)
+    {
+        if (currentSection != null)
+        {
+            CarpetProfiler.end_current_section(currentSection);
+        }
+    }
+
+    @Inject(method = "tickChunks", at = @At(
+            value = "INVOKE",
+            target = "net/minecraft/server/level/ServerLevel.tickChunk(Lnet/minecraft/world/level/chunk/LevelChunk;I)V",
+            shift = At.Shift.AFTER
+    ))
+    private void resumeSpawningSection(CallbackInfo ci)
+    {
+        currentSection = CarpetProfiler.start_section(level, "Spawning", CarpetProfiler.TYPE.GENERAL);
     }
 
     @Inject(method = "tickChunks", at = @At("RETURN"))

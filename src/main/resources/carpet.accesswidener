@@ -5,3 +5,5 @@ accessible class net/minecraft/server/level/ThreadedLevelLightEngine$TaskType
 accessible class net/minecraft/world/item/crafting/Ingredient$Value
 accessible class net/minecraft/world/level/lighting/BlockLightSectionStorage$BlockDataLayerStorageMap
 accessible class net/minecraft/server/MinecraftServer$ReloadableResources
+
+accessible field net/minecraft/world/level/block/state/BlockBehaviour UPDATE_SHAPE_ORDER [Lnet/minecraft/core/Direction;
