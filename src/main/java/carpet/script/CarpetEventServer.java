@@ -892,16 +892,17 @@ public class CarpetEventServer
         };
         public static final Event PLAYER_DISCONNECTS = new Event("player_disconnects", 2, false) {
             @Override
-            public void onPlayerMessage(ServerPlayer player, String message)
+            public boolean onPlayerMessage(ServerPlayer player, String message)
             {
                 handler.call( () -> Arrays.asList(new EntityValue(player), new StringValue(message)), player::createCommandSourceStack);
+                return false;
             }
         };
 
         public static final Event PLAYER_MESSAGE = new Event("player_message", 2, false) {
             @Override
-            public void onPlayerMessage(ServerPlayer player, String message) {
-                handler.call( () -> Arrays.asList(new EntityValue(player), new StringValue(message)), player::createCommandSourceStack);
+            public boolean onPlayerMessage(ServerPlayer player, String message) {
+                return handler.call( () -> Arrays.asList(new EntityValue(player), new StringValue(message)), player::createCommandSourceStack);
             }
         };
 
@@ -1133,7 +1134,7 @@ public class CarpetEventServer
         public void onTick() { }
         public void onChunkEvent(ServerLevel world, ChunkPos chPos, boolean generated) { }
         public boolean onPlayerEvent(ServerPlayer player) {return false;}
-        public void onPlayerMessage(ServerPlayer player, String message) { }
+        public boolean onPlayerMessage(ServerPlayer player, String message) {return false;}
         public void onPlayerStatistic(ServerPlayer player, Stat<?> stat, int amount) { }
         public void onMountControls(ServerPlayer player, float strafeSpeed, float forwardSpeed, boolean jumping, boolean sneaking) { }
         public boolean onItemAction(ServerPlayer player, InteractionHand enumhand, ItemStack itemstack) {return false;}

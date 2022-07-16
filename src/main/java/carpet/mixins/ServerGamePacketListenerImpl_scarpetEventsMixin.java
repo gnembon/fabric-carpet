@@ -293,12 +293,13 @@ public class ServerGamePacketListenerImpl_scarpetEventsMixin
     }
 
     @Inject(method = "handleChat(Lnet/minecraft/network/protocol/game/ServerboundChatPacket;Lnet/minecraft/server/network/FilteredText;)V",
-            at = @At(value = "INVOKE", target = "Lnet/minecraft/network/protocol/game/ServerboundChatPacket;signedPreview()Z")
+            at = @At(value = "INVOKE", target = "Lnet/minecraft/network/protocol/game/ServerboundChatPacket;signedPreview()Z"),
+            cancellable = true
     )
     private void onChatMessage(ServerboundChatPacket serverboundChatPacket, FilteredText<String> filteredText, CallbackInfo ci) {
         if (PLAYER_MESSAGE.isNeeded())
         {
-            PLAYER_MESSAGE.onPlayerMessage(player, filteredText.raw());
+            if(PLAYER_MESSAGE.onPlayerMessage(player, filteredText.raw())) ci.cancel();
         }
     }
 }
