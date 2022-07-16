@@ -801,8 +801,7 @@ public class CarpetEventServer
             @Override
             public boolean onPlayerEvent(ServerPlayer player)
             {
-                handler.call( () -> Collections.singletonList(new EntityValue(player)), player::createCommandSourceStack);
-                return false;
+                return handler.call( () -> Collections.singletonList(new EntityValue(player)), player::createCommandSourceStack);
             }
         };
         public static final Event PLAYER_SWINGS_HAND = new Event("player_swings_hand", 2, false)
