@@ -1516,7 +1516,7 @@ public class EntityValue extends Value
                         showIcon = lv.get(4).getBoolean();
                     boolean ambient = false;
                     if (lv.size() > 5)
-                        showIcon = lv.get(5).getBoolean();
+                        ambient = lv.get(5).getBoolean();
                     le.addEffect(new MobEffectInstance(effect, duration, amplifier, ambient, showParticles, showIcon));
                     return;
                 }
