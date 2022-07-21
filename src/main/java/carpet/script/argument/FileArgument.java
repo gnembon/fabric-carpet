@@ -140,7 +140,7 @@ public class FileArgument
 
     public static Pair<String,String> recognizeResource(String origfile, boolean isFolder, Type type)
     {
-        String[] pathElements = origfile.toLowerCase(Locale.ROOT).split("[/\\\\]+");
+        String[] pathElements = origfile.split("[/\\\\]+");
         List<String> path = new ArrayList<>();
         String zipPath = null;
         for (int i =0; i < pathElements.length; i++ )
