@@ -329,10 +329,10 @@ public class DataStructures {
             return (cc, tt) -> ret;
         });
 
-        expression.addUnaryFunction("encode_b64", v -> StringValue.of(Base64.getEncoder().encodeToString(v.getString().getBytes())));
+        expression.addUnaryFunction("encode_b64", v -> StringValue.of(Base64.getEncoder().encodeToString(v.getString().getBytes(StandardCharsets.UTF_8))));
         expression.addUnaryFunction("decode_b64", v -> {
             try {
-                return StringValue.of(new String(Base64.getDecoder().decode(v.getString()), StandardCharsets.ISO_8859_1));//using this charset cos it's the one used in decoding function
+                return StringValue.of(new String(Base64.getDecoder().decode(v.getString()), StandardCharsets.UTF_8));
             } catch (IllegalArgumentException iae){
                 throw new ThrowStatement("Invalid b64 string: " + v.getString(), Throwables.B64_ERROR);
             }
