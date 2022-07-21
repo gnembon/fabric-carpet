@@ -196,7 +196,7 @@ public class CarpetServer // static for now - easier to handle all around the co
             ServerNetworkHandler.close();
             currentCommandDispatcher = null;
 
-            PistonMoveBehaviorManager.save(server);
+            PistonMoveBehaviorManager.save(server, false);
             LoggerRegistry.stopLoggers();
             HUDController.resetScarpetHUDs();
             extensions.forEach(e -> e.onServerClosed(server));

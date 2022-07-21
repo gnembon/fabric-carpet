@@ -117,9 +117,11 @@ public class PistonMoveBehaviorManager {
         dirty = false;
     }
 
-    public static void save(MinecraftServer server) {
+    public static void save(MinecraftServer server, boolean quietly) {
         if (dirty) {
-            LOGGER.info("saving carpet piston move behavior overrides...");
+            if (!quietly) {
+                LOGGER.info("saving carpet piston move behavior overrides...");
+            }
 
             Config.save(server);
             dirty = false;

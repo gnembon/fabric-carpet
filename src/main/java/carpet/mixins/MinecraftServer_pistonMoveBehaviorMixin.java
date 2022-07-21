@@ -18,7 +18,7 @@ public class MinecraftServer_pistonMoveBehaviorMixin {
             value = "HEAD"
         )
     )
-    private void savePistonMoveBehaviorOverrides(CallbackInfo ci) {
-        PistonMoveBehaviorManager.save((MinecraftServer)(Object)this);
+    private void savePistonMoveBehaviorOverrides(boolean quietly, boolean bl1, boolean bl2, CallbackInfo ci) {
+        PistonMoveBehaviorManager.save((MinecraftServer)(Object)this, quietly);
     }
 }
