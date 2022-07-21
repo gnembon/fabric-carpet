@@ -200,6 +200,10 @@ public class PistonMoveBehaviorManager {
         public boolean isPresent() {
             return pushReaction != null;
         }
+
+        public boolean is(PushReaction pushReaction) {
+            return pushReaction != null && this.pushReaction == pushReaction;
+        }
     }
 
     public static class Config {

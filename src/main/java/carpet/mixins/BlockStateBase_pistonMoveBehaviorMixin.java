@@ -49,7 +49,7 @@ public class BlockStateBase_pistonMoveBehaviorMixin implements BlockStateBaseInt
 
     @Override
     public void setPistonMoveBehaviorOverride(PistonMoveBehavior behavior) {
-        pistonMoveBehaviorOverride = behavior;
+        pistonMoveBehaviorOverride = getOverrideOrNone(behavior);
     }
 
     @Override
@@ -59,6 +59,11 @@ public class BlockStateBase_pistonMoveBehaviorMixin implements BlockStateBaseInt
 
     @Override
     public void setDefaultPistonMoveBehaviorOverride(PistonMoveBehavior behavior) {
-        defaultPistonMoveBehaviorOverride = behavior;
+        defaultPistonMoveBehaviorOverride = getOverrideOrNone(behavior);
+    }
+
+    private PistonMoveBehavior getOverrideOrNone(PistonMoveBehavior behavior) {
+        PushReaction vanillaBehavior = getBlock().getPistonPushReaction(asState());
+        return behavior.is(vanillaBehavior) ? PistonMoveBehavior.NONE : behavior;
     }
 }
