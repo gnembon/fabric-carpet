@@ -151,7 +151,7 @@ public class BlockUtils {
 
     public static <T extends Comparable<T>> T valueFromString(Property<T> property, String string) {
         Optional<T> o = property.getValue(string);
-        return o == null ? null : o.get();
+        return o == null || o.isEmpty() ? null : o.get();
     }
 
     @SuppressWarnings("unchecked")
