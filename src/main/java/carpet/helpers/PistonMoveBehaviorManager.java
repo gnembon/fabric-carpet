@@ -109,6 +109,8 @@ public class PistonMoveBehaviorManager {
     }
 
     public static void load(MinecraftServer server) {
+        LOGGER.info("loading carpet piston move behavior overrides...");
+
         initDefaultOverrides();
         Config.load(server);
         resetOverrides();
@@ -117,6 +119,8 @@ public class PistonMoveBehaviorManager {
 
     public static void save(MinecraftServer server) {
         if (dirty) {
+            LOGGER.info("saving carpet piston move behavior overrides...");
+
             Config.save(server);
             dirty = false;
         }

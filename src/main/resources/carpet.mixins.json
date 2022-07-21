@@ -187,6 +187,7 @@
 
     "BlockBehaviour_pistonMoveBehaviorMixin",
     "BlockStateBase_pistonMoveBehaviorMixin",
+    "MinecraftServer_pistonMoveBehaviorMixin",
     "MovingPistonBlock_pistonMoveBehaviorMixin",
     "PistonBaseBlock_pistonMoveBehaviorMixin"
   ],
