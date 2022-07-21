@@ -276,6 +276,10 @@ public class Auxiliary {
             ));
         });
 
+        expression.addContextFunction("item_display_name", 1, (c, t, lv)->{
+            return new FormattedTextValue(EntityValue.getItemStackFromValue(lv.get(0)).getDisplayName());
+        });
+
         expression.addContextFunction("particle_box", -1, (c, t, lv) ->
         {
             CarpetContext cc = (CarpetContext)c;
