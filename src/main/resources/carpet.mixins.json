@@ -189,7 +189,8 @@
     "BlockStateBase_pistonMoveBehaviorMixin",
     "MinecraftServer_pistonMoveBehaviorMixin",
     "MovingPistonBlock_pistonMoveBehaviorMixin",
-    "PistonBaseBlock_pistonMoveBehaviorMixin"
+    "PistonBaseBlock_pistonMoveBehaviorMixin",
+    "PistonHeadBlock_pistonMoveBehaviorMixin"
   ],
   "client": [
     "Timer_tickSpeedMixin",

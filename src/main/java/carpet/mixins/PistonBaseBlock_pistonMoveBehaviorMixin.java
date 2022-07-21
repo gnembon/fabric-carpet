@@ -9,7 +9,9 @@ import carpet.helpers.PistonMoveBehaviorManager;
 import carpet.helpers.PistonMoveBehaviorManager.PistonMoveBehavior;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.piston.PistonBaseBlock;
 import net.minecraft.world.level.block.state.BlockState;
@@ -21,9 +23,8 @@ public class PistonBaseBlock_pistonMoveBehaviorMixin {
         method = "isPushable",
         slice = @Slice(
             from = @At(
-                value = "INVOKE",
-                ordinal = 0,
-                target = "Lnet/minecraft/world/level/block/state/BlockState;isAir()Z"
+                value = "RETURN",
+                ordinal = 1
             ),
             to = @At(
                 value = "RETURN",
@@ -71,5 +72,26 @@ public class PistonBaseBlock_pistonMoveBehaviorMixin {
         }
 
         return destroySpeed;
+    }
+
+    @Redirect(
+        method = "isPushable",
+        slice = @Slice(
+            from = @At(
+                value = "RETURN",
+                ordinal = 4
+            ),
+            to = @At(
+                value = "RETURN",
+                ordinal = 5
+            )
+        ),
+        at = @At(
+            value = "INVOKE",
+            target = "Lnet/minecraft/world/level/block/state/BlockState;is(Lnet/minecraft/world/level/block/Block;)Z"
+        )
+    )
+    private static boolean overridePistonPushReaction(BlockState blockState, Block block, BlockState state, Level level, BlockPos pos, Direction moveDir, boolean allowDestroy, Direction pistonFacing) {
+        return state.is(block) && !PistonMoveBehaviorManager.getOverride(state).isPresent();
     }
 }
