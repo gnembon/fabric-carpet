@@ -149,7 +149,7 @@ public class TickSpeed
             Commands icommandmanager = tick_warp_sender.getServer().getCommands();
             try
             {
-                icommandmanager.performCommand(tick_warp_sender, tick_warp_callback);
+                icommandmanager.performPrefixedCommand(tick_warp_sender, tick_warp_callback);
             }
             catch (Throwable var23)
             {
