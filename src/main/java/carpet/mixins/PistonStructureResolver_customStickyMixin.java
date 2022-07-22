@@ -96,7 +96,7 @@ public class PistonStructureResolver_customStickyMixin {
             target = "Lnet/minecraft/world/level/block/piston/PistonStructureResolver;canStickToEachOther(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/block/state/BlockState;)Z"
         )
     )
-    private boolean onAddBranchingBlocksCanStickToEachOther(BlockState state, BlockState neighborState, BlockPos pos) {
+    private boolean onAddBranchingBlocksCanStickToEachOther(BlockState neighborState, BlockState state, BlockPos pos) {
         return ((BlockStateBaseInterface)state).isStickyToNeighbor(level, pos, neighborPos_addBranchingBlocks, neighborState, dir_addBranchingBlocks, pushDirection);
     }
 }
