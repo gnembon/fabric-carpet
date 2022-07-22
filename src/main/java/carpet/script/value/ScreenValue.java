@@ -111,27 +111,6 @@ public class ScreenValue extends Value {
 
 
 
-    public ScreenValue(ServerPlayer player, AbstractContainerMenu screenHandler, FunctionValue callback, Context c) {
-        this.screenHandler=screenHandler;
-        this.inventory = new ScreenHandlerInventory(this.screenHandler);
-        this.hostname = c.host.getName();
-        this.player=player;
-        name=null;//TO DO...
-        net.minecraft.resources.ResourceLocation menuname=null;
-        try {
-            menuname=net.minecraft.core.Registry.MENU.getKey(screenHandler.getType());
-        }catch(Exception e){}
-        if (menuname==null){
-            typestring=screenHandler != this.player.inventoryMenu?"__unknown":"inv";
-        }else if(menuname.getNamespace().equals("minecraft")){
-            typestring=menuname.getPath();
-        }else{
-            typestring=menuname.getNamespace();
-        }
-        if(callback != null) callback.checkArgs(4);
-        this.callback=callback;
-        addListenerCallback(screenHandler);
-    }
     public ScreenValue(ServerPlayer player, String type, Component name, FunctionValue callback, Context c) {
         this.name = name;
         this.typestring = type.toLowerCase();
