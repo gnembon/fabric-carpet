@@ -276,8 +276,12 @@ public class Auxiliary {
             ));
         });
 
-        expression.addContextFunction("item_display_name", 1, (c, t, lv)->{
-            return new FormattedTextValue(EntityValue.getItemStackFromValue(lv.get(0)).getDisplayName());
+        expression.addContextFunction("item_display_name", -1, (c, t, lv)->{
+            if(lv.size()==1 || lv.get(1).getBoolean()){
+                return new FormattedTextValue(EntityValue.getItemStackFromValue(lv.get(0)).getDisplayName());
+            }
+            return new FormattedTextValue(EntityValue.getItemStackFromValue(lv.get(0)).getHoverName());
+
         });
 
         expression.addContextFunction("particle_box", -1, (c, t, lv) ->
