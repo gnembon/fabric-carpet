@@ -129,6 +129,14 @@ map(entities_area('*',x,y,z,30,30,30),run('kill '+query(_,'id'))) // doesn't kil
 
 Triple of the entity's position
 
+### `query(e, 'blockpos')`
+
+Triple of entity's block position
+
+### `query(e, 'chunkpos')`
+
+Pair of x and z of the chunk entity is in
+
 ### `query(e, 'location')`
 
 Quin-tuple of the entity's position (x, y, and z coords), and rotation (yaw, pitch)

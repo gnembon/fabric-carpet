@@ -63,6 +63,7 @@ import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.entity.vehicle.AbstractMinecart;
+import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.entity.EntityTypeTest;
@@ -437,6 +438,11 @@ public class EntityValue extends Value
         put("uuid",(e, a) -> new StringValue(e.getStringUUID()));
         put("id",(e, a) -> new NumericValue(e.getId()));
         put("pos", (e, a) -> ListValue.of(new NumericValue(e.getX()), new NumericValue(e.getY()), new NumericValue(e.getZ())));
+        put("blockpos", (e, a) -> ListValue.of(new NumericValue(e.getBlockX()), new NumericValue(e.getBlockY()), new NumericValue(e.getBlockY())));
+        put("chunkpos", (e, a) -> {
+            ChunkPos cp = e.chunkPosition();
+            return ListValue.of(new NumericValue(cp.x), new NumericValue(cp.z));
+        });
         put("location", (e, a) -> ListValue.of(new NumericValue(e.getX()), new NumericValue(e.getY()), new NumericValue(e.getZ()), new NumericValue(e.getYRot()), new NumericValue(e.getXRot())));
         put("x", (e, a) -> new NumericValue(e.getX()));
         put("y", (e, a) -> new NumericValue(e.getY()));
