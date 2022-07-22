@@ -23,17 +23,16 @@ public class ChestBlock_customStickyMixin implements BlockBehaviourInterface {
 
     @Override
     public boolean isStickyToNeighbor(Level level, BlockPos pos, BlockState state, BlockPos neighborPos, BlockState neighborState, Direction dir, Direction moveDir) {
-        ChestType type = state.getValue(ChestBlock.TYPE);
-
-        if (type == ChestType.SINGLE) {
-            return false;
-        }
         if (!neighborState.is((Block)(Object)this)) {
             return false;
         }
 
+        ChestType type = state.getValue(ChestBlock.TYPE);
         ChestType neighborType = neighborState.getValue(ChestBlock.TYPE);
 
+        if (type == ChestType.SINGLE || neighborType == ChestType.SINGLE) {
+            return false;
+        }
         if (type != neighborType.getOpposite()) {
             return false;
         }
