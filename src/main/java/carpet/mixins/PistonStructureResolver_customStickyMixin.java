@@ -23,13 +23,7 @@ import net.minecraft.world.level.block.state.BlockState;
 public class PistonStructureResolver_customStickyMixin {
 
     @Shadow @Final private Level level;
-    @Shadow @Final private BlockPos pistonPos;
-    @Shadow @Final private boolean extending;
-    @Shadow @Final private BlockPos startPos;
     @Shadow @Final private Direction pushDirection;
-    @Shadow @Final private List<BlockPos> toPush;
-    @Shadow @Final private List<BlockPos> toDestroy;
-    @Shadow @Final private Direction pistonDirection;
 
     @Inject(
         method = "isSticky",
