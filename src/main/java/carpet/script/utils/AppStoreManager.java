@@ -59,6 +59,11 @@ public class AppStoreManager
     {
         @Override public String validate(CommandSourceStack source, CarpetRule<String> currentRule, String newValue, String stringInput)
         {
+            if (newValue.equals(currentRule.value())) {
+                // Don't refresh the local repo if it's the same (world change), helps preventing hitting rate limits from github when
+                // getting suggestions. Pending is a way to invalidate the cache when it gets old, and investigating api usage further
+                return newValue;
+            }
             APP_STORE_ROOT = StoreNode.folder(null, "");
             if (newValue.equalsIgnoreCase("none"))
             {
