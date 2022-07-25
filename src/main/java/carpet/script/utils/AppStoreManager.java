@@ -85,7 +85,6 @@ public class AppStoreManager
         public Map<String, StoreNode> children;
         public boolean sealed;
         public String value;
-        private CountDownLatch childrenProgress;
         public static StoreNode folder(StoreNode parent, String name)
         {
             StoreNode node = new StoreNode(parent, name);
@@ -127,24 +126,10 @@ public class AppStoreManager
             this.sealed = false;
         }
 
-        public void fillChildren() throws IOException
+        public synchronized void fillChildren() throws IOException
         {
             if (sealed) return;
             if (scarpetRepoLink == null) throw new IOException("Accessing scarpet app repo is disabled");
-            try
-            {
-                if (childrenProgress != null)
-                {
-                    childrenProgress.await();
-                    if (sealed) return;
-                    else throw new IOException("Problems fetching suggestions. Check more details in previous exceptions.");
-                }
-            }
-            catch (InterruptedException e)
-            {
-                throw new IOException("Suggestion provider thread was interrupted, unexpected!", e);
-            }
-            childrenProgress = new CountDownLatch(1);
 
             String queryPath = scarpetRepoLink + getPath();
             String response;
@@ -154,8 +139,7 @@ public class AppStoreManager
             }
             catch (IOException e)
             {
-                childrenProgress.countDown();
-                childrenProgress = null; // Reset to allow retrying
+                // Not sealing to allow retrying
                 throw new IOException("Problems fetching " + queryPath, e);
             }
             JsonArray files = new JsonParser().parse(response).getAsJsonArray();
@@ -174,7 +158,6 @@ public class AppStoreManager
                 }
             }
             sealed = true;
-            childrenProgress.countDown();
         }
 
         /**
