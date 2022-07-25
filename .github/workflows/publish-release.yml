@@ -103,7 +103,7 @@ jobs:
           file_path: build/libs/${{ steps.findjar.outputs.jarname }}
           changelog_type: markdown
           changelog: ${{ github.event.release.body }}
-          display_name: Carpet Mod v${{ needs.Get-Properties.outputs.carpet-version }} for ${{ steps.getbranchinfo.outputs.version }}
+          display_name: Carpet v${{ needs.Get-Properties.outputs.carpet-version }} for ${{ steps.getbranchinfo.outputs.version }}
           game_versions: 7499,4458,${{ steps.getbranchinfo.outputs.curse-versions }} #Fabric,Java 8,[version (s) for the branch]
           release_type: ${{ needs.Get-Properties.outputs.release-type }}
       - name: Ask Gradle to publish
