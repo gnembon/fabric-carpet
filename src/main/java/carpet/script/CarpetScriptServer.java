@@ -68,23 +68,6 @@ public class CarpetScriptServer extends ScriptServer
 
     private static final List<Module> bundledModuleData = new ArrayList<>();
     private static final List<Module> ruleModuleData = new ArrayList<>();
-
-    /**
-     * @deprecated Use {@link #registerBuiltInApp(Module)} instead
-     */
-    @Deprecated(forRemoval = true)
-    public static void registerBuiltInScript(carpet.script.bundled.BundledModule app)
-    {
-        registerBuiltInApp(app.toModule());
-    }
-    
-    /**
-     * @deprecated Use {@link #registerSettingsApp(Module)} instead
-     */
-    @Deprecated(forRemoval = true)
-    public static void registerSettingsApp(carpet.script.bundled.BundledModule app) {
-        registerSettingsApp(app.toModule());
-    }
     /**
      * Registers a Scarpet App to be always available under the {@code /script load} list.
      * @see Module#fromJarPath(String, String, boolean)
