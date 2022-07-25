@@ -18,14 +18,9 @@ import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.commands.CommandRuntimeException;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.world.level.storage.LevelResource;
-import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
-import java.io.StringWriter;
-import java.io.Writer;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -36,8 +31,9 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CountDownLatch;
 import java.util.stream.Collectors;
+
+import org.apache.commons.io.IOUtils;
 
 /**
  * A class used to save scarpet app store scripts to disk
@@ -135,14 +131,14 @@ public class AppStoreManager
             String response;
             try
             {
-                response = AppStoreManager.getStringFromStream(queryPath);
+                response = IOUtils.toString(new URL(queryPath), StandardCharsets.UTF_8);
             }
             catch (IOException e)
             {
                 // Not sealing to allow retrying
                 throw new IOException("Problems fetching " + queryPath, e);
             }
-            JsonArray files = new JsonParser().parse(response).getAsJsonArray();
+            JsonArray files = JsonParser.parseString(response).getAsJsonArray();
             for(JsonElement je : files)
             {
                 JsonObject jo = je.getAsJsonObject();
@@ -248,7 +244,7 @@ public class AppStoreManager
         String code;
         try
         {
-            code = getStringFromStream(nodeInfo.url());
+            code = IOUtils.toString(new URL(nodeInfo.url()), StandardCharsets.UTF_8);
         }
         catch (IOException e)
         {
@@ -331,36 +327,6 @@ public class AppStoreManager
             return false;
         }
         return true;
-    }
-
-    /** Returns the string from the inputstream gotten from the html request.
-     * Thanks to App Shah in <a href="https://crunchify.com/in-java-how-to-read-github-file-contents-using-httpurlconnection-convert-stream-to-string-utility/">this post</a>
-     * for this code.
-     *
-     * @return the string input from the InputStream
-     * @throws IOException if an I/O error occurs
-     */
-    public static String getStringFromStream(String url) throws IOException
-    {
-        InputStream inputStream = new URL(url).openStream();
-        if (inputStream == null)
-            throw new IOException("No app to be found on the appstore");
-
-        Writer stringWriter = new StringWriter();
-        char[] charBuffer = new char[2048];
-        try
-        {
-            Reader reader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8));
-            int counter;
-            while ((counter = reader.read(charBuffer)) != -1)
-                stringWriter.write(charBuffer, 0, counter);
-
-        }
-        finally
-        {
-            inputStream.close();
-        }
-        return stringWriter.toString();
     }
 
     public static void writeUrlToFile(String url, Path destination) throws IOException
