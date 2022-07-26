@@ -420,6 +420,10 @@ Numeric function, returning the block light at position (from torches and other 
 
 Numeric function, returning the sky light at position (from sky access).
 
+### `real_light(pos)`
+
+Numeric function, returning the real light at position.
+
 ### `see_sky(pos)`
 
 Boolean function, returning true if the block can see sky.
