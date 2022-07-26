@@ -304,7 +304,15 @@ Number of ticks an entity sits in a portal.
 
 ### `query(e, 'item')`
 
-The item triple (name, count, nbt) if its an item entity, `null` otherwise.
+The item triple (name, count, nbt) if its an item or item frame entity, `null` otherwise.
+
+### `query(e, 'offer_flower')`
+
+The iron golem have red flower in hand or not.
+
+### `query(e, 'skull_dangerous')`
+
+The skull is blue or not.
 
 ### `query(e, 'count')`
 
@@ -669,6 +677,18 @@ if the custom name is always visible, even through blocks.
 
 Sets the entity persistence tag to `true` (default) or `false`. Only affects mobs. Persistent mobs
 don't despawn and don't count towards the mobcap.
+
+### `modify(e, 'item', item_triple)`
+
+Sets the item for the item or item frame entity.
+
+### `modify(e, 'offer_flower', bool)`
+
+Sets if the iron golem have red flower in hand.
+
+### `modify(e, 'skull_dangerous', bool)`
+
+Sets the skull is blue or not.
 
 ### `modify(e, 'age', number)`
 
