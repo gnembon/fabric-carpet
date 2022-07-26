@@ -437,9 +437,9 @@ public class EntityValue extends Value
         put("removed", (entity, arg) -> BooleanValue.of(entity.isRemoved()));
         put("uuid",(e, a) -> new StringValue(e.getStringUUID()));
         put("id",(e, a) -> new NumericValue(e.getId()));
-        put("pos", (e, a) -> ListValue.of(new NumericValue(e.getX()), new NumericValue(e.getY()), new NumericValue(e.getZ())));
-        put("blockpos", (e, a) -> ListValue.of(new NumericValue(e.getBlockX()), new NumericValue(e.getBlockY()), new NumericValue(e.getBlockY())));
-        put("chunkpos", (e, a) -> {
+        put("pos", (e, a) -> ValueConversions.of(e.position()));
+        put("block_pos", (e, a) -> ValueConversions.of(e.blockPosition()));
+        put("chunk_pos", (e, a) -> {
             ChunkPos cp = e.chunkPosition();
             return ListValue.of(new NumericValue(cp.x), new NumericValue(cp.z));
         });
