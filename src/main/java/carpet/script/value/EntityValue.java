@@ -526,15 +526,6 @@ public class EntityValue extends Value
         put("age", (e, a) -> new NumericValue(e.tickCount));
         put("breeding_age", (e, a) -> e instanceof AgeableMob?new NumericValue(((AgeableMob) e).getAge()):Value.NULL);
         put("despawn_timer", (e, a) -> e instanceof LivingEntity?new NumericValue(((LivingEntity) e).getNoActionTime()):Value.NULL);
-        //getter of ironman flower, blueness of skull, carryingitem 
-        /*
-        put("carrying_item",(e,a)->{
-            if (e instanceof ServerPlayer){
-                return ValueConversions.of(((ServerPlayer) e).containerMenu.getCarried());
-            }
-            return Value.NULL;
-        });
-        */
         put("skull_dangerous",(e,a)->{
             if (e instanceof WitherSkull w){
                 return BooleanValue.of(w.isDangerous());
@@ -1699,17 +1690,6 @@ public class EntityValue extends Value
             }
         });
 
-        //setter of ironman flower, blueness of skull, carryingitem 
-        /*
-        put("carrying_item",(e,v)->{
-                if (e instanceof ServerPlayer pl){
-                    ItemStack item=getItemStackFromValue(v);
-                    item=item.copy();
-                    pl.containerMenu.setCarried(item);
-                    pl.containerMenu.broadcastFullState();
-                }
-        });
-        */
         put("skull_dangerous",(e,v)->{
             if (e instanceof WitherSkull w){
                 w.setDangerous(v.getBoolean());
@@ -1730,7 +1710,6 @@ public class EntityValue extends Value
                     iteme.setItem(item);  
         });
         // "dimension"      []
-        // "item"           []
         // "count",         []
         // "effect_"name    []
     }};
