@@ -362,7 +362,7 @@ public class SpawnReporter
                     "w ' to enable"));
             return report;
         }
-        long duration = worldIn.getServer().getTickCount() - track_spawns;
+        long duration = (long) worldIn.getServer().getTickCount() - track_spawns;
         report.add(Messenger.c("bw --------------------"));
         String simulated = mock_spawns?"[SIMULATED] ":"";
         String location = (lower_spawning_limit != null)?String.format("[in (%d, %d, %d)x(%d, %d, %d)]",
@@ -432,7 +432,7 @@ public class SpawnReporter
 
     public static boolean isInNetherFortressBounds(BlockPos blockPos, ServerLevel serverLevel, MobCategory mobCategory, StructureManager structureManager) {
         if (mobCategory == MobCategory.MONSTER && serverLevel.getBlockState(blockPos.below()).is(Blocks.NETHER_BRICKS)) {
-            Structure structure = structureManager.registryAccess().registryOrThrow(Registry.STRUCTURE_REGISTRY).get(BuiltinStructures.FORTRESS);
+            Structure structure = (Structure)structureManager.registryAccess().registryOrThrow(Registry.STRUCTURE_REGISTRY).get(BuiltinStructures.FORTRESS);
             return structure == null ? false : structureManager.getStructureAt(blockPos, structure).isValid();
         } else {
             return false;
@@ -483,9 +483,9 @@ public class SpawnReporter
                         will_spawn = 0;
                         for (int attempt = 0; attempt < 50; ++attempt)
                         {
-                            float f = x + 0.5F;
-                            float f1 = z + 0.5F;
-                            mob.moveTo(f, y, f1, worldIn.random.nextFloat() * 360.0F, 0.0F);
+                            float f = (float)x + 0.5F;
+                            float f1 = (float)z + 0.5F;
+                            mob.moveTo((double)f, (double)y, (double)f1, worldIn.random.nextFloat() * 360.0F, 0.0F);
                             fits1 = worldIn.noCollision(mob);
                             EntityType<?> etype = mob.getType();
 
