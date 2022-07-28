@@ -258,6 +258,9 @@ public class Inventories {
                 // clear slot
                 ItemStack removedStack = inventoryLocator.inventory().removeItemNoUpdate(slot);
                 syncPlayerInventory(inventoryLocator, slot);
+                if (inventoryLocator.owner() instanceof ServerPlayer sp){
+                    sp.containerMenu.broadcastChanges();
+                };
                 //Value res = ListValue.fromItemStack(removedStack); // that tuple will be read only but cheaper if noone cares
                 return ValueConversions.of(removedStack);
             }
@@ -268,6 +271,9 @@ public class Inventories {
                 newStack.setCount(count);
                 inventoryLocator.inventory().setItem(slot, newStack);
                 syncPlayerInventory(inventoryLocator, slot);
+                if (inventoryLocator.owner() instanceof ServerPlayer sp){
+                    sp.containerMenu.broadcastChanges();
+                };
                 return ValueConversions.of(previousStack);
             }
             CompoundTag nbt = null; // skipping one argument
@@ -287,6 +293,9 @@ public class Inventories {
             {
                 inventoryLocator.inventory().setItem(slot, newitem.createItemStack(count, false));
                 syncPlayerInventory(inventoryLocator, slot);
+                if (inventoryLocator.owner() instanceof ServerPlayer sp){
+                    sp.containerMenu.broadcastChanges();
+                };
             }
             catch (CommandSyntaxException e)
             {
