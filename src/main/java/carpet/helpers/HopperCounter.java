@@ -406,6 +406,6 @@ public class HopperCounter
      */
     public long getTotalItems()
     {
-        return counter.isEmpty()?0:counter.values().stream().mapToLong(Long::longValue).sum();
+        return counter.isEmpty()?0:counter.values().longStream().sum();
     }
 }

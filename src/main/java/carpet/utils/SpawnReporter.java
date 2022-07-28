@@ -52,7 +52,7 @@ public class SpawnReporter
     public static Long track_spawns = 0L;
     public static final HashMap<ResourceKey<Level>, Integer> chunkCounts = new HashMap<>();
 
-    public static final HashMap<Pair<ResourceKey<Level>, MobCategory>, Object2LongMap<EntityType>> spawn_stats = new HashMap<>();
+    public static final HashMap<Pair<ResourceKey<Level>, MobCategory>, Object2LongMap<EntityType<?>>> spawn_stats = new HashMap<>();
     public static double mobcap_exponent = 0.0D;
     
     public static final HashMap<Pair<ResourceKey<Level>, MobCategory>, Long> spawn_attempts = new HashMap<>();
@@ -62,7 +62,7 @@ public class SpawnReporter
     public static final HashMap<Pair<ResourceKey<Level>, MobCategory>, Long> spawn_ticks_succ = new HashMap<>();
     public static final HashMap<Pair<ResourceKey<Level>, MobCategory>, Long> spawn_ticks_spawns = new HashMap<>();
     public static final HashMap<Pair<ResourceKey<Level>, MobCategory>, Long> spawn_cap_count = new HashMap<>();
-    public static final HashMap<Pair<ResourceKey<Level>, MobCategory>, EvictingQueue<Pair<EntityType, BlockPos>>> spawned_mobs = new HashMap<>();
+    public static final HashMap<Pair<ResourceKey<Level>, MobCategory>, EvictingQueue<Pair<EntityType<?>, BlockPos>>> spawned_mobs = new HashMap<>();
     public static final HashMap<MobCategory, Integer> spawn_tries = new HashMap<>();
     public static BlockPos lower_spawning_limit = null;
     public static BlockPos upper_spawning_limit = null;
@@ -170,7 +170,7 @@ public class SpawnReporter
         String type_code = creature_type.getName();
         
         lst.add(Messenger.s(String.format("Recent %s spawns:",type_code)));
-        for (Pair<EntityType, BlockPos> pair : spawned_mobs.get(Pair.of(world.dimension(), creature_type)).keySet()) // getDImTYpe
+        for (Pair<EntityType<?>, BlockPos> pair : spawned_mobs.get(Pair.of(world.dimension(), creature_type)).keySet()) // getDImTYpe
         {
             lst.add( Messenger.c(
                     "w  - ",
@@ -291,7 +291,7 @@ public class SpawnReporter
             if (!all && persistent)
                 continue;
 
-            EntityType type = entity.getType();
+            EntityType<?> type = entity.getType();
             BlockPos pos = entity.blockPosition();
             lst.add( Messenger.c(
                     "w  - ",
@@ -362,7 +362,7 @@ public class SpawnReporter
                     "w ' to enable"));
             return report;
         }
-        long duration = (long) worldIn.getServer().getTickCount() - track_spawns;
+        long duration = worldIn.getServer().getTickCount() - track_spawns;
         report.add(Messenger.c("bw --------------------"));
         String simulated = mock_spawns?"[SIMULATED] ":"";
         String location = (lower_spawning_limit != null)?String.format("[in (%d, %d, %d)x(%d, %d, %d)]",
@@ -387,7 +387,7 @@ public class SpawnReporter
                         (100.0D*spawn_ticks_succ.get(code))/ spawn_attempts.get(code),
                         (1.0D*spawn_ticks_spawns.get(code))/(spawn_ticks_fail.get(code)+spawn_ticks_succ.get(code))
                     )));
-                    for (EntityType type: spawn_stats.get(code).keySet())
+                    for (EntityType<?> type: spawn_stats.get(code).keySet())
                     {
                         report.add(Messenger.s(String.format("   - %s: %d spawns, %d per hour",
                                 type.getDescription().getString(),
@@ -432,7 +432,7 @@ public class SpawnReporter
 
     public static boolean isInNetherFortressBounds(BlockPos blockPos, ServerLevel serverLevel, MobCategory mobCategory, StructureManager structureManager) {
         if (mobCategory == MobCategory.MONSTER && serverLevel.getBlockState(blockPos.below()).is(Blocks.NETHER_BRICKS)) {
-            Structure structure = (Structure)structureManager.registryAccess().registryOrThrow(Registry.STRUCTURE_REGISTRY).get(BuiltinStructures.FORTRESS);
+            Structure structure = structureManager.registryAccess().registryOrThrow(Registry.STRUCTURE_REGISTRY).get(BuiltinStructures.FORTRESS);
             return structure == null ? false : structureManager.getStructureAt(blockPos, structure).isValid();
         } else {
             return false;
@@ -483,9 +483,9 @@ public class SpawnReporter
                         will_spawn = 0;
                         for (int attempt = 0; attempt < 50; ++attempt)
                         {
-                            float f = (float)x + 0.5F;
-                            float f1 = (float)z + 0.5F;
-                            mob.moveTo((double)f, (double)y, (double)f1, worldIn.random.nextFloat() * 360.0F, 0.0F);
+                            float f = x + 0.5F;
+                            float f1 = z + 0.5F;
+                            mob.moveTo(f, y, f1, worldIn.random.nextFloat() * 360.0F, 0.0F);
                             fits1 = worldIn.noCollision(mob);
                             EntityType<?> etype = mob.getType();
 
