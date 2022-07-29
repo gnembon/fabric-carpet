@@ -46,7 +46,7 @@ public abstract class ServerChunkCacheMixin implements ServerChunkManagerInterfa
         //((WorldInterface)world).getPrecookedMobs().clear(); not needed because mobs are compared with predefined BBs
         SpawnReporter.chunkCounts.put(dim, j);
 
-        if (SpawnReporter.track_spawns > 0L)
+        if (SpawnReporter.trackingSpawns())
         {
             //local spawns now need to be tracked globally cause each calll is just for chunk
             SpawnReporter.local_spawns = new Object2LongOpenHashMap<>();
@@ -64,9 +64,9 @@ public abstract class ServerChunkCacheMixin implements ServerChunkManagerInterfa
     @Inject(method = "tickChunks", at = @At("RETURN"))
     private void onFinishSpawnWorldCycle(CallbackInfo ci)
     {
-        LevelData levelProperties_1 = this.level.getLevelData(); // levelProperies class
-        boolean boolean_3 = levelProperties_1.getGameTime() % 400L == 0L;
-        if (SpawnReporter.track_spawns > 0L && SpawnReporter.local_spawns != null)
+        LevelData levelData = this.level.getLevelData(); // levelProperies class
+        boolean boolean_3 = levelData.getGameTime() % 400L == 0L;
+        if (SpawnReporter.trackingSpawns() && SpawnReporter.local_spawns != null)
         {
             for (MobCategory cat: SpawnReporter.cachedMobCategoryValues())
             {

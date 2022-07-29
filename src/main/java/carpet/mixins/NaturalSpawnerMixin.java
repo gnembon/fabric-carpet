@@ -161,7 +161,7 @@ public class NaturalSpawnerMixin
             // we used the mob - next time we will create a new one when needed
             ((LevelInterface) world).getPrecookedMobs().remove(entity_1.getType());
 
-        if (SpawnReporter.track_spawns > 0L && SpawnReporter.local_spawns != null)
+        if (SpawnReporter.trackingSpawns() && SpawnReporter.local_spawns != null)
         {
             SpawnReporter.registerSpawn(
                     //world.method_27983(), // getDimensionType //dimension.getType(), // getDimensionType
@@ -169,7 +169,7 @@ public class NaturalSpawnerMixin
                     group, //entity_1.getType().getSpawnGroup(),
                     entity_1.blockPosition());
         }
-        if (!SpawnReporter.mock_spawns)
+        if (!SpawnReporter.mockSpawns)
             world.addFreshEntityWithPassengers(entity_1);
             //world.spawnEntity(entity_1);
     }
@@ -180,7 +180,7 @@ public class NaturalSpawnerMixin
     ))
     private static SpawnGroupData spawnEntity(Mob mobEntity, ServerLevelAccessor serverWorldAccess, DifficultyInstance difficulty, MobSpawnType spawnReason, SpawnGroupData entityData, CompoundTag entityTag)
     {
-        if (!SpawnReporter.mock_spawns) // WorldAccess
+        if (!SpawnReporter.mockSpawns) // WorldAccess
             return mobEntity.finalizeSpawn(serverWorldAccess, difficulty, spawnReason, entityData, entityTag);
         return null;
     }
@@ -273,7 +273,7 @@ public class NaturalSpawnerMixin
     private static void checkSpawns(ServerLevel world, LevelChunk chunk, NaturalSpawner.SpawnState info,
                                     boolean spawnAnimals, boolean spawnMonsters, boolean shouldSpawnAnimals, CallbackInfo ci)
     {
-        if (SpawnReporter.track_spawns > 0L)
+        if (SpawnReporter.trackingSpawns())
         {
             MobCategory[] var6 = SPAWNING_CATEGORIES;
             int var7 = var6.length;
@@ -288,12 +288,11 @@ public class NaturalSpawnerMixin
                     int int_3 = newCap * int_2 / MAGIC_NUMBER; //current spawning limits
                     int mobCount = info.getMobCategoryCounts().getInt(entityCategory);
 
-                    if (SpawnReporter.track_spawns > 0L && !SpawnReporter.first_chunk_marker.contains(entityCategory))
+                    if (SpawnReporter.trackingSpawns() && !SpawnReporter.first_chunk_marker.contains(entityCategory))
                     {
                         SpawnReporter.first_chunk_marker.add(entityCategory);
                         //first chunk with spawn eligibility for that category
                         Pair<ResourceKey<Level>, MobCategory> key = Pair.of(dim, entityCategory);
-
 
                         int spawnTries = SpawnReporter.spawn_tries.get(entityCategory);
 
@@ -302,7 +301,7 @@ public class NaturalSpawnerMixin
                         SpawnReporter.spawn_cap_count.addTo(key, mobCount);
                     }
 
-                    if (mobCount <= int_3 || SpawnReporter.mock_spawns) //TODO this will not float with player based mobcaps
+                    if (mobCount <= int_3 || SpawnReporter.mockSpawns) //TODO this will not float with player based mobcaps
                     {
                         //place 0 to indicate there were spawn attempts for a category
                         //if (entityCategory != EntityCategory.CREATURE || world.getServer().getTicks() % 400 == 0)
