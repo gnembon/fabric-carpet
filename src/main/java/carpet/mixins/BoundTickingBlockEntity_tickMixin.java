@@ -32,7 +32,7 @@ public class BoundTickingBlockEntity_tickMixin<T extends BlockEntity>
             value = "INVOKE",
             target = "Lnet/minecraft/world/level/block/entity/BlockEntityTicker;tick(Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/block/entity/BlockEntity;)V"
     ))
-    private void checkProcessTEs(BlockEntityTicker blockEntityTicker, Level world, BlockPos pos, BlockState state, T blockEntity)
+    private void checkProcessBEs(BlockEntityTicker<T> blockEntityTicker, Level world, BlockPos pos, BlockState state, T blockEntity)
     {
         if (TickSpeed.process_entities) blockEntityTicker.tick(world, pos, state, blockEntity);
     }
