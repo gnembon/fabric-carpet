@@ -1,7 +1,7 @@
 package carpet.script.utils;
 
 import carpet.fakes.MinecraftServerInterface;
-import carpet.fakes.ServerWorldInterface;
+import carpet.fakes.ServerLevelInterface;
 import carpet.script.CarpetScriptServer;
 import carpet.script.value.ListValue;
 import carpet.script.value.Value;
@@ -100,7 +100,7 @@ public class Experimental
                 ResourceKey<Level> registryKey2 = ResourceKey.create(Registry.DIMENSION_REGISTRY, registryKey.location());
                 Holder<DimensionType> holder2 = (entry.getValue()).typeHolder();
                 ChunkGenerator chunkGenerator3 = entry.getValue().generator();
-                DerivedLevelData unmodifiableLevelProperties = new DerivedLevelData(saveProperties, ((ServerWorldInterface) server.overworld()).getWorldPropertiesCM());
+                DerivedLevelData unmodifiableLevelProperties = new DerivedLevelData(saveProperties, ((ServerLevelInterface) server.overworld()).getWorldPropertiesCM());
                 ServerLevel serverWorld2 = new ServerLevel(server, Util.backgroundExecutor(), session, unmodifiableLevelProperties, registryKey2, entry.getValue(), WorldTools.NOOP_LISTENER, bl, m, ImmutableList.of(), false);
                 server.overworld().getWorldBorder().addListener(new BorderChangeListener.DelegateBorderChangeListener(serverWorld2.getWorldBorder()));
                 existing_worlds.put(registryKey2, serverWorld2);
@@ -136,7 +136,7 @@ public class Experimental
             if (!existing_worlds.containsKey(registryKey))
             {
                 ResourceKey<Level> resourceKey2 = ResourceKey.create(Registry.DIMENSION_REGISTRY, registryKey.location());
-                DerivedLevelData derivedLevelData = new DerivedLevelData(stem.worldData(), ((ServerWorldInterface) server.overworld()).getWorldPropertiesCM());
+                DerivedLevelData derivedLevelData = new DerivedLevelData(stem.worldData(), ((ServerLevelInterface) server.overworld()).getWorldPropertiesCM());
                 ServerLevel serverLevel2 = new ServerLevel(server, Util.backgroundExecutor(), session, derivedLevelData, resourceKey2, entry.getValue(), WorldTools.NOOP_LISTENER, bl, m, ImmutableList.of(), false);
                 server.overworld().getWorldBorder().addListener(new BorderChangeListener.DelegateBorderChangeListener(serverLevel2.getWorldBorder()));
                 existing_worlds.put(resourceKey2, serverLevel2);

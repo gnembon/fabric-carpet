@@ -61,7 +61,7 @@ public class SpawnCommand
                         then(literal("stop").
                                 executes( (c) -> stopTracking(c.getSource()))).
                         then(argument("type", word()).
-                                suggests( (c, b) -> suggest(Arrays.stream(MobCategory.values()).map(MobCategory::getName),b)).
+                                suggests( (c, b) -> suggest(Arrays.stream(SpawnReporter.cachedMobCategoryValues()).map(MobCategory::getName),b)).
                                 executes( (c) -> recentSpawnsForType(c.getSource(), getString(c, "type"))))).
                 then(literal("test").
                         executes( (c)-> runTest(c.getSource(), 72000, null)).
@@ -84,7 +84,7 @@ public class SpawnCommand
                         then(literal("reset").
                                 executes( (c) -> resetSpawnRates(c.getSource()))).
                         then(argument("type", word()).
-                                suggests( (c, b) -> suggest(Arrays.stream(MobCategory.values()).map(MobCategory::getName),b)).
+                                suggests( (c, b) -> suggest(Arrays.stream(SpawnReporter.cachedMobCategoryValues()).map(MobCategory::getName),b)).
                                 then(argument("rounds", integer(0)).
                                         suggests( (c, b) -> suggest(new String[]{"1"},b)).
                                         executes( (c) -> setSpawnRates(
@@ -101,20 +101,20 @@ public class SpawnCommand
                 then(literal("entities").
                         executes( (c) -> generalMobcaps(c.getSource()) ).
                         then(argument("type", string()).
-                                suggests( (c, b)->suggest(Arrays.stream(MobCategory.values()).map(MobCategory::getName), b)).
+                                suggests( (c, b)->suggest(Arrays.stream(SpawnReporter.cachedMobCategoryValues()).map(MobCategory::getName), b)).
                                 executes( (c) -> listEntitiesOfType(c.getSource(), getString(c, "type"), false)).
                                 then(literal("all").executes( (c) -> listEntitiesOfType(c.getSource(), getString(c, "type"), true)))));
 
         dispatcher.register(literalargumentbuilder);
     }
 
-    private static final Map<String, MobCategory> MOB_CATEGORY_MAP = Arrays.stream(MobCategory.values()).collect(Collectors.toMap(MobCategory::getName, Function.identity()));
+    private static final Map<String, MobCategory> MOB_CATEGORY_MAP = Arrays.stream(SpawnReporter.cachedMobCategoryValues()).collect(Collectors.toMap(MobCategory::getName, Function.identity()));
 
     private static MobCategory getCategory(String string) throws CommandSyntaxException
     {
-        if (!Arrays.stream(MobCategory.values()).map(MobCategory::getName).collect(Collectors.toSet()).contains(string))
+        if (!Arrays.stream(SpawnReporter.cachedMobCategoryValues()).map(MobCategory::getName).collect(Collectors.toSet()).contains(string))
         {
-            throw new SimpleCommandExceptionType(Messenger.c("r Wrong mob type: "+string+" should be "+ Arrays.stream(MobCategory.values()).map(MobCategory::getName).collect(Collectors.joining(", ")))).create();
+            throw new SimpleCommandExceptionType(Messenger.c("r Wrong mob type: "+string+" should be "+ Arrays.stream(SpawnReporter.cachedMobCategoryValues()).map(MobCategory::getName).collect(Collectors.joining(", ")))).create();
         }
         return MOB_CATEGORY_MAP.get(string.toLowerCase(Locale.ROOT));
     }

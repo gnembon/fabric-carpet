@@ -51,12 +51,10 @@ public abstract class ServerChunkCacheMixin implements ServerChunkManagerInterfa
             //local spawns now need to be tracked globally cause each calll is just for chunk
             SpawnReporter.local_spawns = new HashMap<>();
             SpawnReporter.first_chunk_marker = new HashSet<>();
-            for (MobCategory cat : MobCategory.values())
+            for (MobCategory cat : SpawnReporter.cachedMobCategoryValues())
             {
                 Pair<ResourceKey<Level>, MobCategory> key = Pair.of(dim, cat);
-                SpawnReporter.overall_spawn_ticks.put(key,
-                        SpawnReporter.overall_spawn_ticks.get(key)+
-                        SpawnReporter.spawn_tries.get(cat));
+                SpawnReporter.overall_spawn_ticks.addTo(key, SpawnReporter.spawn_tries.get(cat));
             }
         }
         return j;
@@ -70,7 +68,7 @@ public abstract class ServerChunkCacheMixin implements ServerChunkManagerInterfa
         boolean boolean_3 = levelProperties_1.getGameTime() % 400L == 0L;
         if (SpawnReporter.track_spawns > 0L && SpawnReporter.local_spawns != null)
         {
-            for (MobCategory cat: MobCategory.values())
+            for (MobCategory cat: SpawnReporter.cachedMobCategoryValues())
             {
                 ResourceKey<Level> dim = level.dimension(); // getDimensionType;
                 Pair<ResourceKey<Level>, MobCategory> key = Pair.of(dim, cat);
@@ -80,19 +78,15 @@ public abstract class ServerChunkCacheMixin implements ServerChunkManagerInterfa
                     if (!cat.isPersistent() || boolean_3) // isAnimal
                     {
                         // fill mobcaps for that category so spawn got cancelled
-                        SpawnReporter.spawn_ticks_full.put(key,
-                                SpawnReporter.spawn_ticks_full.get(key)+ spawnTries);
+                        SpawnReporter.spawn_ticks_full.addTo(key, spawnTries);
                     }
 
                 }
                 else if (SpawnReporter.local_spawns.get(cat) > 0)
                 {
                     // tick spawned mobs for that type
-                    SpawnReporter.spawn_ticks_succ.put(key,
-                        SpawnReporter.spawn_ticks_succ.get(key)+spawnTries);
-                    SpawnReporter.spawn_ticks_spawns.put(key,
-                        SpawnReporter.spawn_ticks_spawns.get(key)+
-                        SpawnReporter.local_spawns.get(cat));
+                    SpawnReporter.spawn_ticks_succ.addTo(key, spawnTries);
+                    SpawnReporter.spawn_ticks_spawns.addTo(key, SpawnReporter.local_spawns.get(cat));
                         // this will be off comparing to 1.13 as that would succeed if
                         // ANY tries in that round were successful.
                         // there will be much more difficult to mix in
@@ -102,8 +96,7 @@ public abstract class ServerChunkCacheMixin implements ServerChunkManagerInterfa
                 else // spawn no mobs despite trying
                 {
                     //tick didn's spawn mobs of that type
-                    SpawnReporter.spawn_ticks_fail.put(key,
-                        SpawnReporter.spawn_ticks_fail.get(key)+spawnTries);
+                    SpawnReporter.spawn_ticks_fail.addTo(key, spawnTries);
                 }
             }
         }

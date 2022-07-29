@@ -5,7 +5,7 @@ import carpet.CarpetSettings;
 import carpet.fakes.ChunkGeneratorInterface;
 import carpet.fakes.ChunkTicketManagerInterface;
 import carpet.fakes.ServerChunkManagerInterface;
-import carpet.fakes.ServerWorldInterface;
+import carpet.fakes.ServerLevelInterface;
 import carpet.fakes.SpawnHelperInnerInterface;
 import carpet.fakes.ThreadedAnvilChunkStorageInterface;
 import carpet.helpers.FeatureGenerator;
@@ -396,7 +396,7 @@ public class WorldAccess {
                 return new StringValue(world.isThundering() ? "thunder" : (world.isRaining() ? "rain" : "clear"));
 
             Value weather = lv.get(0);
-            ServerLevelData worldProperties = ((ServerWorldInterface) world).getWorldPropertiesCM();
+            ServerLevelData worldProperties = ((ServerLevelInterface) world).getWorldPropertiesCM();
             if(lv.size()==1)
             {
                 int ticks;

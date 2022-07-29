@@ -1,6 +1,6 @@
 package carpet.mixins;
 
-import carpet.fakes.ServerWorldInterface;
+import carpet.fakes.ServerLevelInterface;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.profiling.ProfilerFiller;
@@ -18,6 +18,7 @@ import net.minecraft.world.level.storage.ServerLevelData;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
@@ -28,9 +29,8 @@ import static carpet.script.CarpetEventServer.Event.EXPLOSION;
 import static carpet.script.CarpetEventServer.Event.LIGHTNING;
 import static carpet.script.CarpetEventServer.Event.CHUNK_UNLOADED;
 
-
 @Mixin(ServerLevel.class)
-public class ServerLevel_scarpetMixin implements ServerWorldInterface
+public class ServerLevel_scarpetMixin implements ServerLevelInterface
 {
     @Inject(method = "tickChunk", locals = LocalCapture.CAPTURE_FAILHARD, at = @At(
             value = "INVOKE",
@@ -67,10 +67,13 @@ public class ServerLevel_scarpetMixin implements ServerWorldInterface
     private ServerLevelData serverLevelData;
     @Shadow @Final private PersistentEntitySectionManager<Entity> entityManager;
 
+    @Unique
+    @Override
     public ServerLevelData getWorldPropertiesCM(){
         return serverLevelData;
     }
 
+    @Unique
     @Override
     public LevelEntityGetter<Entity> getEntityLookupCMPublic() {
         return entityManager.getEntityGetter();

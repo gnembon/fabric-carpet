@@ -297,11 +297,9 @@ public class NaturalSpawnerMixin
 
                         int spawnTries = SpawnReporter.spawn_tries.get(entityCategory);
 
-                        SpawnReporter.spawn_attempts.put(key,
-                                SpawnReporter.spawn_attempts.get(key) + spawnTries);
+                        SpawnReporter.spawn_attempts.addTo(key, spawnTries);
 
-                        SpawnReporter.spawn_cap_count.put(key,
-                                SpawnReporter.spawn_cap_count.get(key) + mobCount);
+                        SpawnReporter.spawn_cap_count.addTo(key, mobCount);
                     }
 
                     if (mobCount <= int_3 || SpawnReporter.mock_spawns) //TODO this will not float with player based mobcaps
