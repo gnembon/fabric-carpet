@@ -274,7 +274,7 @@ public class ValueConversions
         }
         if (v instanceof Set)
         {
-            v = new ArrayList(((Set) v));
+            v = new ArrayList<>(((Set<?>) v));
         }
         if (v instanceof List<?> l)
         {
