@@ -50,7 +50,6 @@
     "DistanceManager_spawnChunksMixin",
     "ServerLevel_spawnChunksMixin",
     "ThreadedLevelLightEngine_scarpetChunkCreationMixin",
-    "DistanceManager_spawnChunksMixin",
     "LivingEntity_cleanLogsMixin",
     "MobMixin",
     "ServerEntity_leashFixMixin",
