@@ -51,7 +51,7 @@ public class SpawnReporter
     public static Long track_spawns = 0L;
     public static final HashMap<ResourceKey<Level>, Integer> chunkCounts = new HashMap<>();
 
-    public static final HashMap<Pair<ResourceKey<Level>, MobCategory>, Object2LongMap<EntityType<?>>> spawn_stats = new HashMap<>();
+    public static final HashMap<Pair<ResourceKey<Level>, MobCategory>, Object2LongOpenHashMap<EntityType<?>>> spawn_stats = new HashMap<>();
     public static double mobcap_exponent = 0.0D;
     
     public static final Object2LongOpenHashMap<Pair<ResourceKey<Level>, MobCategory>> spawn_attempts = new Object2LongOpenHashMap<>();
@@ -66,7 +66,7 @@ public class SpawnReporter
     public static BlockPos lower_spawning_limit = null;
     public static BlockPos upper_spawning_limit = null;
     // in case game gets each thread for each world - these need to belong to workd.
-    public static HashMap<MobCategory, Long> local_spawns = null; // per world
+    public static Object2LongOpenHashMap<MobCategory> local_spawns = null; // per world
     public static HashSet<MobCategory> first_chunk_marker = null;
 
     static {
@@ -86,15 +86,14 @@ public class SpawnReporter
             }
         }
         Pair<ResourceKey<Level>, MobCategory> key = Pair.of(mob.level.dimension(), cat);
-        long count = spawn_stats.get(key).getOrDefault(mob.getType(), 0L);
-        spawn_stats.get(key).put(mob.getType(), count + 1);
+        spawn_stats.get(key).addTo(mob.getType(), 1);
         spawned_mobs.get(key).put(Pair.of(mob.getType(), pos));
         if (!local_spawns.containsKey(cat))
         {
             CarpetSettings.LOG.error("Rogue spawn detected for category "+cat.getName()+" for mob "+mob.getType().getDescription().getString()+". If you see this message let carpet peeps know about it on github issues.");
             local_spawns.put(cat, 0L);
         }
-        local_spawns.put(cat, local_spawns.get(cat)+1);
+        local_spawns.addTo(cat, 1);
     }
 
     public static final int MAGIC_NUMBER = (int)Math.pow(17.0D, 2.0D);
@@ -103,6 +102,7 @@ public class SpawnReporter
         return MAGIC_NUMBER / (Math.pow(2.0,(SpawnReporter.mobcap_exponent/4)));
     }*/
 
+    // Note to self (remove pre-commit) this is mixed in and called by TIS Addition
     public static List<Component> printMobcapsForDimension(ServerLevel world, boolean multiline)
     {
         ResourceKey<Level> dim = world.dimension();
@@ -274,9 +274,6 @@ public class SpawnReporter
     }
     public static void reset_spawn_stats(MinecraftServer server, boolean full)
     {
-        spawn_stats.clear();
-        spawned_mobs.clear();
-
         if (full)
         {
             for (MobCategory category : cachedMobCategoryValues())

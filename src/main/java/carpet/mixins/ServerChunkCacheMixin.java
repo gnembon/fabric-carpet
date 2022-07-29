@@ -2,6 +2,7 @@ package carpet.mixins;
 
 import carpet.fakes.ServerChunkManagerInterface;
 import carpet.utils.SpawnReporter;
+import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
 import org.apache.commons.lang3.tuple.Pair;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -11,7 +12,6 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import java.util.HashMap;
 import java.util.HashSet;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.DistanceManager;
@@ -49,7 +49,7 @@ public abstract class ServerChunkCacheMixin implements ServerChunkManagerInterfa
         if (SpawnReporter.track_spawns > 0L)
         {
             //local spawns now need to be tracked globally cause each calll is just for chunk
-            SpawnReporter.local_spawns = new HashMap<>();
+            SpawnReporter.local_spawns = new Object2LongOpenHashMap<>();
             SpawnReporter.first_chunk_marker = new HashSet<>();
             for (MobCategory cat : SpawnReporter.cachedMobCategoryValues())
             {
@@ -82,11 +82,11 @@ public abstract class ServerChunkCacheMixin implements ServerChunkManagerInterfa
                     }
 
                 }
-                else if (SpawnReporter.local_spawns.get(cat) > 0)
+                else if (SpawnReporter.local_spawns.getLong(cat) > 0)
                 {
                     // tick spawned mobs for that type
                     SpawnReporter.spawn_ticks_succ.addTo(key, spawnTries);
-                    SpawnReporter.spawn_ticks_spawns.addTo(key, SpawnReporter.local_spawns.get(cat));
+                    SpawnReporter.spawn_ticks_spawns.addTo(key, SpawnReporter.local_spawns.getLong(cat));
                         // this will be off comparing to 1.13 as that would succeed if
                         // ANY tries in that round were successful.
                         // there will be much more difficult to mix in
