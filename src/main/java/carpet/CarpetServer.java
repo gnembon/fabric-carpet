@@ -88,7 +88,7 @@ public class CarpetServer // static for now - easier to handle all around the co
     {
         CarpetServer.minecraft_server = server;
         // shoudl not be needed - that bit needs refactoring, but not now.
-        SpawnReporter.reset_spawn_stats(server, true);
+        SpawnReporter.resetSpawnStats(server, true);
 
         settingsManager.attachServer(server);
         extensions.forEach(e -> {
