@@ -523,8 +523,8 @@ public class EntityValue extends Value
         put("item", (e, a) -> (e instanceof ItemEntity)?ValueConversions.of(((ItemEntity) e).getItem()):Value.NULL);
         put("count", (e, a) -> (e instanceof ItemEntity)?new NumericValue(((ItemEntity) e).getItem().getCount()):Value.NULL);
         put("pickup_delay", (e, a) -> (e instanceof ItemEntity)?new NumericValue(((ItemEntityInterface) e).getPickupDelayCM()):Value.NULL);
-        put("portal_cooldown", (e , a) ->new NumericValue(((EntityInterface)e).getPortalTimer()));
-        put("portal_timer", (e , a) ->new NumericValue(((EntityInterface)e).getPublicNetherPortalCooldown()));
+        put("portal_cooldown", (e , a) ->new NumericValue(((EntityInterface)e).getPublicNetherPortalCooldown()));
+        put("portal_timer", (e , a) ->new NumericValue(((EntityInterface)e).getPortalTimer()));
         // ItemEntity -> despawn timer via ssGetAge
         put("is_baby", (e, a) -> (e instanceof LivingEntity)?BooleanValue.of(((LivingEntity) e).isBaby()):Value.NULL);
         put("target", (e, a) -> {
@@ -1516,7 +1516,7 @@ public class EntityValue extends Value
                         showIcon = lv.get(4).getBoolean();
                     boolean ambient = false;
                     if (lv.size() > 5)
-                        showIcon = lv.get(5).getBoolean();
+                        ambient = lv.get(5).getBoolean();
                     le.addEffect(new MobEffectInstance(effect, duration, amplifier, ambient, showParticles, showIcon));
                     return;
                 }

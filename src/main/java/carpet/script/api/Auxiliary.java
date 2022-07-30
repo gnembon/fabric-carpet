@@ -607,7 +607,7 @@ public class Auxiliary {
             {
                 Component[] error = {null};
                 List<Component> output = new ArrayList<>();
-                Value retval = new NumericValue(s.getServer().getCommands().performCommand(
+                Value retval = new NumericValue(s.getServer().getCommands().performPrefixedCommand(
                         new SnoopyCommandSource(s, error, output),
                         lv.get(0).getString())
                 );

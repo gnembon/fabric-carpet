@@ -3,6 +3,7 @@ package carpet.mixins;
 import carpet.CarpetServer;
 import carpet.CarpetSettings;
 import com.mojang.brigadier.CommandDispatcher;
+import com.mojang.brigadier.ParseResults;
 import net.minecraft.commands.CommandBuildContext;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
@@ -31,14 +32,14 @@ public abstract class Commands_customCommandsMixin
     }
 
     @Inject(method = "performCommand", at = @At("HEAD"))
-    private void onExecuteBegin(CommandSourceStack serverCommandSource_1, String string_1, CallbackInfoReturnable<Integer> cir)
+    private void onExecuteBegin(ParseResults<CommandSourceStack> parseResults, String string, CallbackInfoReturnable<Integer> cir)
     {
         if (!CarpetSettings.fillUpdates)
             CarpetSettings.impendingFillSkipUpdates.set(true);
     }
 
     @Inject(method = "performCommand", at = @At("RETURN"))
-    private void onExecuteEnd(CommandSourceStack serverCommandSource_1, String string_1, CallbackInfoReturnable<Integer> cir)
+    private void onExecuteEnd(ParseResults<CommandSourceStack> parseResults, String string, CallbackInfoReturnable<Integer> cir)
     {
         CarpetSettings.impendingFillSkipUpdates.set(false);
     }

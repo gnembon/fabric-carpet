@@ -6,7 +6,6 @@ import it.unimi.dsi.fastutil.objects.Object2LongMap;
 import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
-import net.minecraft.core.Registry;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
@@ -33,11 +32,11 @@ import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.ChunkGenerator;
 import net.minecraft.world.level.entity.EntityTypeTest;
 import net.minecraft.world.level.levelgen.Heightmap;
-import net.minecraft.world.level.levelgen.structure.BuiltinStructures;
-import net.minecraft.world.level.levelgen.structure.Structure;
 import net.minecraft.world.level.levelgen.structure.structures.NetherFortressStructure;
 import org.apache.commons.lang3.tuple.Pair;
 import org.jetbrains.annotations.Nullable;
+
+import static net.minecraft.world.entity.MobCategory.*;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -52,7 +51,7 @@ public class SpawnReporter
     public static Long track_spawns = 0L;
     public static final HashMap<ResourceKey<Level>, Integer> chunkCounts = new HashMap<>();
 
-    public static final HashMap<Pair<ResourceKey<Level>, MobCategory>, Object2LongMap<EntityType>> spawn_stats = new HashMap<>();
+    public static final HashMap<Pair<ResourceKey<Level>, MobCategory>, Object2LongMap<EntityType<?>>> spawn_stats = new HashMap<>();
     public static double mobcap_exponent = 0.0D;
     
     public static final HashMap<Pair<ResourceKey<Level>, MobCategory>, Long> spawn_attempts = new HashMap<>();
@@ -62,7 +61,7 @@ public class SpawnReporter
     public static final HashMap<Pair<ResourceKey<Level>, MobCategory>, Long> spawn_ticks_succ = new HashMap<>();
     public static final HashMap<Pair<ResourceKey<Level>, MobCategory>, Long> spawn_ticks_spawns = new HashMap<>();
     public static final HashMap<Pair<ResourceKey<Level>, MobCategory>, Long> spawn_cap_count = new HashMap<>();
-    public static final HashMap<Pair<ResourceKey<Level>, MobCategory>, EvictingQueue<Pair<EntityType, BlockPos>>> spawned_mobs = new HashMap<>();
+    public static final HashMap<Pair<ResourceKey<Level>, MobCategory>, EvictingQueue<Pair<EntityType<?>, BlockPos>>> spawned_mobs = new HashMap<>();
     public static final HashMap<MobCategory, Integer> spawn_tries = new HashMap<>();
     public static BlockPos lower_spawning_limit = null;
     public static BlockPos upper_spawning_limit = null;
@@ -170,7 +169,7 @@ public class SpawnReporter
         String type_code = creature_type.getName();
         
         lst.add(Messenger.s(String.format("Recent %s spawns:",type_code)));
-        for (Pair<EntityType, BlockPos> pair : spawned_mobs.get(Pair.of(world.dimension(), creature_type)).keySet()) // getDImTYpe
+        for (Pair<EntityType<?>, BlockPos> pair : spawned_mobs.get(Pair.of(world.dimension(), creature_type)).keySet()) // getDImTYpe
         {
             lst.add( Messenger.c(
                     "w  - ",
@@ -228,70 +227,28 @@ public class SpawnReporter
     
     public static MobCategory get_type_code_from_wool_code(DyeColor color)
     {
-        switch (color)
+        return switch (color)
         {
-            case RED:
-                return MobCategory.MONSTER;
-            case GREEN:
-                return MobCategory.CREATURE;
-            case BLUE:
-                return MobCategory.WATER_CREATURE;
-            case BROWN:
-                return MobCategory.AMBIENT;
-            case CYAN:
-                return MobCategory.WATER_AMBIENT;
-            default:
-            	return null;
-        }
-    }
-    
-    public static MobCategory get_creature_type_from_code(String type_code)
-    {
-        if ("hostile".equalsIgnoreCase(type_code))
-        {
-            return MobCategory.MONSTER;
-        }
-        else if ("passive".equalsIgnoreCase(type_code))
-        {
-            return MobCategory.CREATURE;
-        }
-        else if ("water".equalsIgnoreCase(type_code))
-        {
-            return MobCategory.WATER_CREATURE;
-        }
-        else if ("fish".equalsIgnoreCase(type_code))
-        {
-            return MobCategory.WATER_AMBIENT;
-        }
-        else if ("ambient".equalsIgnoreCase(type_code))
-        {
-            return MobCategory.AMBIENT;
-        }
-        return null;
-    }
-    
-    
-    public static String get_type_string(MobCategory type)
-    {
-        return String.format("%s", type);
-    }
-    
-    public static String get_creature_code_from_string(String str)
-    {
-        return get_type_string(get_creature_type_from_code(str));
+            case RED   -> MONSTER;
+            case GREEN -> CREATURE;
+            case BLUE  -> WATER_CREATURE;
+            case BROWN -> AMBIENT;
+            case CYAN  -> WATER_AMBIENT;
+            default    -> null;
+        };
     }
     
     public static List<Component> printEntitiesByType(MobCategory cat, Level worldIn, boolean all) //Class<?> entityType)
     {
         List<Component> lst = new ArrayList<>();
-        lst.add( Messenger.s(String.format("Loaded entities for %s class:", get_type_string(cat))));
+        lst.add( Messenger.s(String.format("Loaded entities for %s class:", cat)));
         for (Entity entity : ((ServerLevel)worldIn).getEntities(EntityTypeTest.forClass(Entity.class), (e) -> e.getType().getCategory()==cat))
         {
             boolean persistent = entity instanceof Mob && ( ((Mob) entity).isPersistenceRequired() || ((Mob) entity).requiresCustomPersistence());
             if (!all && persistent)
                 continue;
 
-            EntityType type = entity.getType();
+            EntityType<?> type = entity.getType();
             BlockPos pos = entity.blockPosition();
             lst.add( Messenger.c(
                     "w  - ",
@@ -362,7 +319,7 @@ public class SpawnReporter
                     "w ' to enable"));
             return report;
         }
-        long duration = (long) worldIn.getServer().getTickCount() - track_spawns;
+        long duration = worldIn.getServer().getTickCount() - track_spawns;
         report.add(Messenger.c("bw --------------------"));
         String simulated = mock_spawns?"[SIMULATED] ":"";
         String location = (lower_spawning_limit != null)?String.format("[in (%d, %d, %d)x(%d, %d, %d)]",
@@ -387,7 +344,7 @@ public class SpawnReporter
                         (100.0D*spawn_ticks_succ.get(code))/ spawn_attempts.get(code),
                         (1.0D*spawn_ticks_spawns.get(code))/(spawn_ticks_fail.get(code)+spawn_ticks_succ.get(code))
                     )));
-                    for (EntityType type: spawn_stats.get(code).keySet())
+                    for (EntityType<?> type: spawn_stats.get(code).keySet())
                     {
                         report.add(Messenger.s(String.format("   - %s: %d spawns, %d per hour",
                                 type.getDescription().getString(),
@@ -427,16 +384,7 @@ public class SpawnReporter
 
     // yeeted from NaturalSpawner - temporary access fix
     private static List<MobSpawnSettings.SpawnerData> getSpawnEntries(ServerLevel serverLevel, StructureManager structureManager, ChunkGenerator chunkGenerator, MobCategory mobCategory, BlockPos blockPos, @Nullable Holder<Biome> holder) {
-        return isInNetherFortressBounds(blockPos, serverLevel, mobCategory, structureManager) ? NetherFortressStructure.FORTRESS_ENEMIES.unwrap() : chunkGenerator.getMobsAt(holder != null ? holder : serverLevel.getBiome(blockPos), structureManager, mobCategory, blockPos).unwrap();
-    }
-
-    public static boolean isInNetherFortressBounds(BlockPos blockPos, ServerLevel serverLevel, MobCategory mobCategory, StructureManager structureManager) {
-        if (mobCategory == MobCategory.MONSTER && serverLevel.getBlockState(blockPos.below()).is(Blocks.NETHER_BRICKS)) {
-            Structure structure = (Structure)structureManager.registryAccess().registryOrThrow(Registry.STRUCTURE_REGISTRY).get(BuiltinStructures.FORTRESS);
-            return structure == null ? false : structureManager.getStructureAt(blockPos, structure).isValid();
-        } else {
-            return false;
-        }
+        return NaturalSpawner.isInNetherFortressBounds(blockPos, serverLevel, mobCategory, structureManager) ? NetherFortressStructure.FORTRESS_ENEMIES.unwrap() : chunkGenerator.getMobsAt(holder != null ? holder : serverLevel.getBiome(blockPos), structureManager, mobCategory, blockPos).unwrap();
     }
 
     public static List<Component> report(BlockPos pos, ServerLevel worldIn)
@@ -483,9 +431,9 @@ public class SpawnReporter
                         will_spawn = 0;
                         for (int attempt = 0; attempt < 50; ++attempt)
                         {
-                            float f = (float)x + 0.5F;
-                            float f1 = (float)z + 0.5F;
-                            mob.moveTo((double)f, (double)y, (double)f1, worldIn.random.nextFloat() * 360.0F, 0.0F);
+                            float f = x + 0.5F;
+                            float f1 = z + 0.5F;
+                            mob.moveTo(f, y, f1, worldIn.random.nextFloat() * 360.0F, 0.0F);
                             fits1 = worldIn.noCollision(mob);
                             EntityType<?> etype = mob.getType();
 

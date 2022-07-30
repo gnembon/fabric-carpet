@@ -944,6 +944,9 @@ public class RedstoneWireTurbo
      * redstone wire in an invalid state.
      */
     public void updateNeighborShapes(Level level, BlockPos pos, BlockState state) {
+        // these updates will be added to the stack and processed after the entire network has updated
+        state.updateIndirectNeighbourShapes(level, pos, Block.UPDATE_KNOWN_SHAPE | Block.UPDATE_CLIENTS);
+
         for (Direction dir : Block.UPDATE_SHAPE_ORDER) {
             BlockPos neighborPos = pos.relative(dir);
             BlockState neighborState = level.getBlockState(neighborPos);

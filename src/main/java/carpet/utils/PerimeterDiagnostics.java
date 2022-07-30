@@ -85,7 +85,7 @@ public class PerimeterDiagnostics
             }
         }
         PerimeterDiagnostics diagnostic = new PerimeterDiagnostics(worldserver,ctype,el);
-        EntityType type = EntityType.ZOMBIE;
+        EntityType<?> type = EntityType.ZOMBIE;
         if (el != null) type = el.getType();
         int minY = worldserver.getMinBuildHeight();
         int maxY = worldserver.getMaxBuildHeight();
@@ -180,7 +180,7 @@ public class PerimeterDiagnostics
 
         if (NaturalSpawner.isSpawnPositionOk(spt, worldServer, pos, sle.type))
         {
-            el.moveTo((float)pos.getX() + 0.5F, (float)pos.getY(), (float)pos.getZ()+0.5F, 0.0F, 0.0F);
+            el.moveTo(pos.getX() + 0.5F, pos.getY(), pos.getZ()+0.5F, 0.0F, 0.0F);
             return el.checkSpawnObstruction(worldServer) && el.checkSpawnRules(worldServer, MobSpawnType.NATURAL) &&
                     SpawnPlacements.checkSpawnRules(el.getType(),(ServerLevel)el.getCommandSenderWorld(), MobSpawnType.NATURAL, el.blockPosition(), el.getCommandSenderWorld().random) &&
                     worldServer.noCollision(el); // check collision rules once they stop fiddling with them after 1.14.1

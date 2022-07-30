@@ -92,7 +92,7 @@ public class ScriptCommand
     ) throws CommandSyntaxException
     {
         CarpetScriptHost currentHost = getHost(context);
-        String previous = suggestionsBuilder.getRemaining().toLowerCase(Locale.ROOT);
+        String previous = suggestionsBuilder.getRemaining();
         int strlen = previous.length();
         StringBuilder lastToken = new StringBuilder();
         for (int idx = strlen-1; idx >=0; idx--)
