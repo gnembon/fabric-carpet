@@ -13,7 +13,6 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
@@ -81,7 +80,7 @@ public abstract class Explosion_optimizedTntMixin
     {
         if (LoggerRegistry.__explosions && ! world.isClientSide)
         {
-            eLogger = new ExplosionLogHelper(entity, x, y, z, power, createFire, destructionType);
+            eLogger = new ExplosionLogHelper(x, y, z, power, createFire, destructionType);
         }
     }
 
