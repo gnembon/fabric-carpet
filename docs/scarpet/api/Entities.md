@@ -306,11 +306,11 @@ Number of ticks an entity sits in a portal.
 
 The item triple (name, count, nbt) if its an item or item frame entity, `null` otherwise.
 
-### `query(e, 'offer_flower')`
+### `query(e, 'offering_flower')`
 
 The iron golem have red flower in hand or not.
 
-### `query(e, 'skull_dangerous')`
+### `query(e, 'blue_skull')`
 
 The skull is blue or not.
 
@@ -682,11 +682,11 @@ don't despawn and don't count towards the mobcap.
 
 Sets the item for the item or item frame entity.
 
-### `modify(e, 'offer_flower', bool)`
+### `modify(e, 'offering_flower', bool)`
 
 Sets if the iron golem have red flower in hand.
 
-### `modify(e, 'skull_dangerous', bool)`
+### `modify(e, 'blue_skull', bool)`
 
 Sets the skull is blue or not.
 
