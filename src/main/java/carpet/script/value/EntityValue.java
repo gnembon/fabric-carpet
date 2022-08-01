@@ -526,13 +526,13 @@ public class EntityValue extends Value
         put("age", (e, a) -> new NumericValue(e.tickCount));
         put("breeding_age", (e, a) -> e instanceof AgeableMob?new NumericValue(((AgeableMob) e).getAge()):Value.NULL);
         put("despawn_timer", (e, a) -> e instanceof LivingEntity?new NumericValue(((LivingEntity) e).getNoActionTime()):Value.NULL);
-        put("skull_dangerous",(e,a)->{
+        put("blue_skull",(e,a)->{
             if (e instanceof WitherSkull w){
                 return BooleanValue.of(w.isDangerous());
             }
             return Value.NULL;
         });
-        put("offer_flower",(e,a)->{
+        put("offering_flower",(e,a)->{
             if (e instanceof IronGolem ig){
                 return BooleanValue.of(ig.getOfferFlowerTick()>0);
             }
@@ -1690,13 +1690,13 @@ public class EntityValue extends Value
             }
         });
 
-        put("skull_dangerous",(e,v)->{
+        put("blue_skull",(e,v)->{
             if (e instanceof WitherSkull w){
                 w.setDangerous(v.getBoolean());
             }
             
         });
-        put("offer_flower",(e,v)->{
+        put("offering_flower",(e,v)->{
             if (e instanceof IronGolem ig){
                 ig.offerFlower(v.getBoolean());
             }
