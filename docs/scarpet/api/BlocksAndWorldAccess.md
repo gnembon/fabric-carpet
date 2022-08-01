@@ -419,9 +419,9 @@ Numeric function, returning the block light at position (from torches and other 
 
 Numeric function, returning the sky light at position (from sky access).
 
-### `real_light(pos)`
+### `effective_light (pos)`
 
-Numeric function, returning the real light at position.
+Numeric function, returning the "real" light at position. affected by time and weather.
 
 ### `see_sky(pos)`
 
