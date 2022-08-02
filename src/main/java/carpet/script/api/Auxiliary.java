@@ -258,10 +258,10 @@ public class Auxiliary {
             ));
         });
 
-        expression.addContextFunction("item_display_name", -1, (c, t, lv)->{
-            if(lv.size()==1 || lv.get(1).getBoolean()){
+        expression.addContextFunction("item_name_text", -1, (c, t, lv)->{
+            /*if(lv.size()==1 || lv.get(1).getBoolean()){
                 return new FormattedTextValue(EntityValue.getItemStackFromValue(lv.get(0)).getDisplayName());
-            }
+            }*/
             return new FormattedTextValue(EntityValue.getItemStackFromValue(lv.get(0)).getHoverName());
 
         });

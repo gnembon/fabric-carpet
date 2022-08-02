@@ -268,8 +268,8 @@ Example usages:
   // not a problem in apps
 </pre>
 
-### `item_display_name(item, hasbracket?)`
- returns the `display_name` of the item as a Text Value. if hasbracket is true, there will be a bracket around it.
+### `item_name_text(item )`
+ returns the name of the item as a Text Value. 
 
 ### `display_title(players, type, text?, fadeInTicks?, stayTicks?, fadeOutTicks),`
 
