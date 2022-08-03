@@ -269,7 +269,8 @@ Example usages:
 </pre>
 
 ### `item_name_text(item )`
- returns the name of the item as a Text Value. 
+ returns the name of the item as a Text Value. `item` should be a list of `[item_name, count, nbt]`, or just an item name.
+
 
 ### `display_title(players, type, text?, fadeInTicks?, stayTicks?, fadeOutTicks),`
 
