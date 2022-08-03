@@ -421,7 +421,7 @@ Numeric function, returning the sky light at position (from sky access).
 
 ### `effective_light (pos)`
 
-Numeric function, returning the "real" light at position. affected by time and weather.
+Numeric function, returning the "real" light at position, which is affected by time and weather.
 
 ### `see_sky(pos)`
 
