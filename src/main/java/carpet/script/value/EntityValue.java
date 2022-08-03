@@ -1737,9 +1737,9 @@ public class EntityValue extends Value
         try{
             return NBTSerializableValue.parseItem(id,nbt).createItemStack(count,false);
         } catch (CommandSyntaxException e1) {
-            e1.printStackTrace();
+            throw new InternalExpressionException(e1.getMessage());
+            //not going to happen. but ide force me to write that.
         }
-        return null;
     }
     public void setEvent(CarpetContext cc, String eventName, FunctionValue fun, List<Value> args)
     {
