@@ -268,7 +268,7 @@ Example usages:
   // not a problem in apps
 </pre>
 
-### `item_name_text(item )`
+### `item_display_name(item )`
  returns the name of the item as a Text Value. `item` should be a list of `[item_name, count, nbt]`, or just an item name.
 
 
