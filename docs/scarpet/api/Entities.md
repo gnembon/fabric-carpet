@@ -312,7 +312,7 @@ The iron golem have red flower in hand or not.
 
 ### `query(e, 'blue_skull')`
 
-The skull is blue or not.
+The wither skull entity is blue or not.
 
 ### `query(e, 'count')`
 
@@ -680,7 +680,7 @@ don't despawn and don't count towards the mobcap.
 
 ### `modify(e, 'item', item_triple)`
 
-Sets the item for the item or item frame entity.
+Sets the item for the item or item frame entity. (The item triple is a list of `[item_name, count, nbt]`, or just an item name.)
 
 ### `modify(e, 'offering_flower', bool)`
 
@@ -688,7 +688,7 @@ Sets if the iron golem have red flower in hand.
 
 ### `modify(e, 'blue_skull', bool)`
 
-Sets the skull is blue or not.
+Sets the wither skull entity is blue or not.
 
 ### `modify(e, 'age', number)`
 
