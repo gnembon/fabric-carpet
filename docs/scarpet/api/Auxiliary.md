@@ -196,6 +196,12 @@ compound tag format, it will return `null` value.
 
 Consult section about container operations in `Expression` to learn about possible operations on nbt values.
 
+<pre>
+//Here, the string and number get parsed correctly, and can be accessed normally
+//But in order to access the elements of the list you need to wrap it with parse_nbt()
+nbt('{string:foobar, number:1.0d, list:[1,2,3,4]}')
+</pre>
+
 ### `escape_nbt(expr)`
 
 Excapes all the special characters in the string or nbt tag and returns a string that can be stored in nbt directly 
