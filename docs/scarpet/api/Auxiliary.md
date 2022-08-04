@@ -251,6 +251,10 @@ Other value types will only be converted to tags (including NBT tags) if `force`
 extra treatment when loading them back from NBT, but using `force` true will always produce output / never 
 produce an exception.
 
+<pre>
+encode_nbt({'bool'->true, 'double'->1.5, 'foo'->'bar', 'int'->1}) // => '{bool:1b,double:1.5d,foo:"bar",int:1}'
+</pre>
+
 ### `print(expr)`, `print(player/player_list, expr)`
 
 Displays the result of the expression to the chat. Overrides default `scarpet` behaviour of sending everyting to stderr.
