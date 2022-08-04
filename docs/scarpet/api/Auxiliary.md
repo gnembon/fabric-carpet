@@ -162,6 +162,9 @@ Spawns a (permanent) marker entity with text or block at position. Returns that 
 Unloading the app that spawned them will cause all the markers from the loaded portion of the world to be removed. 
 Also, if the game loads that marker in the future and the app is not loaded, it will be removed as well. 
 
+To add rotation, either put in each coordinate of `pos` as a separate argument followed by yaw and pitch, or put in
+a single list with 5 arguments.
+
 If `interactive` (`true` by default) is `false`, the armorstand will be a marker and would not be interactive in any
 gamemode. But blocks can be placed inside markers and will not catch any interaction events. 
 
@@ -173,8 +176,10 @@ while block on the head always render in the same position regardless if its a m
 
 <pre>
 //Spawns a marker 5 blocks away in the direction the player looks with an observer head looking back at the player
-//todo test dis
-create_marker('Hello', player~'pos'+[0, player~'eye_height', 0]+player~'look'*5, -player~'look', 'observer')
+//Using spread operator on the position so it will be treated as separate arguments as opposed to a single list argument
+//This allows to enter the yaw and pitch as separate arguments, as opposed to within the position list
+[lx, ly, lz]=player~'look';
+create_marker('Hello',...(player~'pos'+[0, player~'eye_height', 0]+player~'look'*5),-atan2(-lx, -lz),-player~'pitch', 'observer')
 </pre>
 
 ### `remove_all_markers()`
