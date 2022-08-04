@@ -207,6 +207,15 @@ nbt('{string:foobar, number:1.0d, list:[1,2,3,4]}')
 Excapes all the special characters in the string or nbt tag and returns a string that can be stored in nbt directly 
 as a string value.
 
+<pre>
+escape_nbt('{string:foo   d //There is a tab character between the foo and the d  
+bar}')
+//Result:
+//"{string:foo   d
+//bar}"
+//The tab gets replaced with spaces, but the newline can remain
+</pre>
+
 ### `tag_matches(daddy_tag, baby_tag, match_lists?)`
 
 Utility returning `true` if `baby_tag` is fully contained in `daddy_tag`. Anything matches `null` baby tag, and
