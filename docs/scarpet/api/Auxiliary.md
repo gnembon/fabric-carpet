@@ -224,7 +224,7 @@ Default behaviour is to match them.
 
 ### `parse_nbt(tag)`
 
-Converts NBT tag to a scarpet value, which you can navigate through much better.
+Converts NBT tag (or string tag) to a scarpet value, which you can navigate through much better.
 
 Converts:
  - Compound tags into maps with string keys
@@ -232,6 +232,11 @@ Converts:
  - Numbers (Ints, Floats, Doubles, Longs) into a number
  - Rest is converted to strings.
  
+<pre>
+parse_nbt('{foo:bar}')          //  => {'foo'->'bar'}
+parse_nbt('{foo:"\\"bar\\""}')  //  => {'foo'->'"bar"'}
+</pre>
+
 ### `encode_nbt(expr, force?)`
 
 Encodes value of the expression as an NBT tag. By default (or when `force` is false), it will only allow
