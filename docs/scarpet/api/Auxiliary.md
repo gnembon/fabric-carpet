@@ -667,6 +667,12 @@ Returns dimension-specific tick counter.
 Returns current daytime clock value. If `new_time` is specified, sets a new clock
 to that value. Daytime clocks are shared between all dimensions.
 
+<pre>
+day_time();      // => 6000 (= morning)
+day_time(6969);  // => 6000 (Set to new time while returning old time)
+day_time(12000); // => 6969 (= late afternoon)
+</pre>
+
 ### `last_tick_times()`
 
 _**Deprecated**. Use `system_info('server_last_tick_times')` instead._
