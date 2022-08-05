@@ -1,6 +1,6 @@
 package carpet.mixins;
 
-import net.minecraft.network.chat.Component;
+import net.minecraft.network.protocol.game.ServerboundChatCommandPacket;
 import net.minecraft.network.protocol.game.ServerboundChatPacket;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -289,6 +289,16 @@ public class ServerGamePacketListenerImpl_scarpetEventsMixin
         if (PLAYER_MESSAGE.isNeeded())
         {
             PLAYER_MESSAGE.onPlayerMessage(player, serverboundChatPacket.message());
+        }
+    }
+
+    @Inject(method = "handleChatCommand(Lnet/minecraft/network/protocol/game/ServerboundChatCommandPacket;)V",
+            at = @At(value = "HEAD")
+    )
+    private void onChatCommandMessage(ServerboundChatCommandPacket serverboundChatCommandPacket, CallbackInfo ci) {
+        if (PLAYER_MESSAGE.isNeeded())
+        {
+            PLAYER_MESSAGE.onPlayerMessage(player, serverboundChatCommandPacket.command());
         }
     }
 }
