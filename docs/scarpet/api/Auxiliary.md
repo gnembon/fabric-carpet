@@ -732,12 +732,18 @@ _**Deprecated**. Use `system_info('game_view_distance')` instead._
 
 Returns the view distance of the server.
 
-### `get_mob_counts()`, `get_mob_counts(category)` 1.16+
+### `get_mob_counts()`, `get_mob_counts(category)`
 
 Returns either a map of mob categories with its respective counts and capacities (a.k.a. mobcaps) or just a tuple
 of count and limit for a specific category. If a category was not spawning for whatever reason it may not be
 returned from `get_mob_counts()`, but could be retrieved for `get_mob_counts(category)`. Returned counts is what spawning
 algorithm has taken in to account last time mobs spawned. 
+
+<pre>
+get_mob_counts()           //=> {monster: [6, 70], creature: [12, 10]}
+get_mob_counts('monster')  //=> [6, 70]
+get_mob_counts('creature') //=> [12, 10]
+</pre>
 
 ### `schedule(delay, function, args...)`
 
