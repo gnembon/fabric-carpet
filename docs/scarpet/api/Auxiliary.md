@@ -455,6 +455,7 @@ specific data directory is under `world/scripts/foo.data/bar/../baz.nbt`, and sh
 `world/scripts/shared/bar/../baz.nbt`.
 
 You can use app data to save non-vanilla information separately from the world and other scripts.
+Typically you can leave this outside of any function, so it runs as the first thing in the app
 
 Throws `nbt_read_error` if failed to read app data.
 
