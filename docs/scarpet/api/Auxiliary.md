@@ -645,6 +645,16 @@ themselves, so that's about it.
 ### `tick_time()`
 
 Returns server tick counter. Can be used to run certain operations every n-th ticks, or to count in-game time.
+In order to run operations every n-th ticks, it's probably better to use `schedule()`
+
+<pre>
+global_timer = 20; //Doing something every second
+__on_tick()->(
+    if(tick_time()%global_timer,
+        do_something()
+    )
+);
+</pre>
 
 ### `world_time()`
 
