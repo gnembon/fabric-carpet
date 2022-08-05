@@ -470,8 +470,8 @@ if(!global_app_data,                            //If there was no data saved
 
 Note:  `store_app_data(tag, file)` and `store_app_data(tag, file, shared?)` usages deprecated. Use `write_file` instead.
 
-Stores the app data associated with the app from the world `/scripts` folder. With the `file` parameter saves 
-immediately and with every call to a specific file defined by the `file`, either in app space, or in the scripts
+Stores the app data associated with the app from the world `/scripts` folder in nbt form. With the `file` parameter
+saves immediately and with every call to a specific file defined by the `file`, either in app space, or in the scripts
 shared space if `shared` is true. Without `file` parameter, it may take up to 10
  seconds for the output file 
 to sync preventing flickering in case this tag changes frequently. It will be synced when server closes.
@@ -479,6 +479,15 @@ to sync preventing flickering in case this tag changes frequently. It will be sy
 Returns `true` if the file was saved successfully, `false` otherwise.
 
 Uses the same file structure for exclusive app data, and shared data folder as `load_app_data`.
+
+You might want to put this in the `__on_close()->` function, so it gets called as the last thing, when you want to save
+the app's data. But to do that, your data must be NBT-compatible.
+
+<pre>
+__on_close()->(
+    store_app_data(encode_nbt(global_app_data))
+);
+</pre>
 
 ### `create_datapack(name, data)`
 
