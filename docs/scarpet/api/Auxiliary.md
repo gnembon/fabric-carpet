@@ -650,7 +650,7 @@ In order to run operations every n-th ticks, it's probably better to use `schedu
 <pre>
 global_timer = 20; //Doing something every second
 __on_tick()->(
-    if(tick_time()%global_timer,
+    if(!(tick_time()%global_timer), //Inverting cos we want this to run when tick_time()%global_timer = 0
         do_something()
     )
 );
