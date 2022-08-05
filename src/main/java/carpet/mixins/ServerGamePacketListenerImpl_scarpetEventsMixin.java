@@ -1,6 +1,7 @@
 package carpet.mixins;
 
-import net.minecraft.server.network.TextFilter;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.protocol.game.ServerboundChatPacket;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
@@ -44,7 +45,6 @@ import net.minecraft.server.network.ServerGamePacketListenerImpl;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.BlockHitResult;
-import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 
 
 @Mixin(ServerGamePacketListenerImpl.class)
@@ -282,14 +282,13 @@ public class ServerGamePacketListenerImpl_scarpetEventsMixin
         }
     }
 
-    @Inject(method = "handleChat(Lnet/minecraft/server/network/TextFilter$FilteredText;)V",
-            at = @At(value = "INVOKE", target = "Ljava/lang/String;startsWith(Ljava/lang/String;)Z"),
-            locals = LocalCapture.CAPTURE_FAILHARD
+    @Inject(method = "handleChat(Lnet/minecraft/network/protocol/game/ServerboundChatPacket;)V",
+            at = @At(value = "HEAD")
     )
-    private void onChatMessage(TextFilter.FilteredText filteredText, CallbackInfo ci, String string) {
+    private void onChatMessage(ServerboundChatPacket serverboundChatPacket, CallbackInfo ci) {
         if (PLAYER_MESSAGE.isNeeded())
         {
-            PLAYER_MESSAGE.onPlayerMessage(player,string);
+            PLAYER_MESSAGE.onPlayerMessage(player, serverboundChatPacket.message());
         }
     }
 }

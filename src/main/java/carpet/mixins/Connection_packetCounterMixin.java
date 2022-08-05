@@ -7,7 +7,9 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.GenericFutureListener;
 import net.minecraft.network.Connection;
+import net.minecraft.network.PacketSendListener;
 import net.minecraft.network.protocol.Packet;
+import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Accessor;
 import org.spongepowered.asm.mixin.injection.At;
@@ -26,8 +28,7 @@ public abstract class Connection_packetCounterMixin implements ClientConnectionI
     
     // Add to the packet counter whenever a packet is sent.
     @Inject(method = "sendPacket", at = @At("HEAD"))
-    private void packetOutCount(Packet<?> packet_1,
-            GenericFutureListener<? extends Future<? super Void>> genericFutureListener_1, CallbackInfo ci)
+    private void packetOutCount(Packet<?> packet, @Nullable PacketSendListener packetSendListener, CallbackInfo ci)
     {
         PacketCounter.totalOut++;
     }

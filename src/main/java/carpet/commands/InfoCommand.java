@@ -1,8 +1,8 @@
 package carpet.commands;
 
 import carpet.CarpetSettings;
-import carpet.settings.SettingsManager;
 import carpet.utils.BlockInfo;
+import carpet.utils.CommandHelper;
 import carpet.utils.Messenger;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
@@ -14,7 +14,7 @@ import net.minecraft.commands.CommandBuildContext;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.arguments.coordinates.BlockPosArgument;
 import net.minecraft.core.BlockPos;
-import net.minecraft.network.chat.BaseComponent;
+import net.minecraft.network.chat.Component;
 
 import static com.mojang.brigadier.arguments.StringArgumentType.getString;
 import static com.mojang.brigadier.arguments.StringArgumentType.greedyString;
@@ -26,7 +26,7 @@ public class InfoCommand
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher, CommandBuildContext commandBuildContext)
     {
         LiteralArgumentBuilder<CommandSourceStack> command = literal("info").
-                requires((player) -> SettingsManager.canUseCommand(player, CarpetSettings.commandInfo)).
+                requires((player) -> CommandHelper.canUseCommand(player, CarpetSettings.commandInfo)).
                 then(literal("block").
                         then(argument("block position", BlockPosArgument.blockPos()).
                                 executes( (c) -> infoBlock(
@@ -42,7 +42,7 @@ public class InfoCommand
         dispatcher.register(command);
     }
 
-    public static void printBlock(List<BaseComponent> messages, CommandSourceStack source, String grep)
+    public static void printBlock(List<Component> messages, CommandSourceStack source, String grep)
     {
         Messenger.m(source, "");
         if (grep != null)
@@ -51,7 +51,7 @@ public class InfoCommand
             Messenger.m(source, messages.get(0));
             for (int i = 1; i<messages.size(); i++)
             {
-                BaseComponent line = messages.get(i);
+                Component line = messages.get(i);
                 Matcher m = p.matcher(line.getString());
                 if (m.find())
                 {

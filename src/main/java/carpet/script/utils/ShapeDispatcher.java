@@ -32,7 +32,6 @@ import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.StringTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.TextComponent;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
@@ -937,7 +936,7 @@ public class ShapeDispatcher
         public Value validate(Map<String, Value> options, MinecraftServer server, Value value)
         {
             if (!(value instanceof FormattedTextValue))
-                value = new FormattedTextValue(new TextComponent(value.getString()));
+                value = new FormattedTextValue(Component.literal(value.getString()));
             return value;
         }
 
@@ -945,7 +944,7 @@ public class ShapeDispatcher
         public Tag toTag(Value value)
         {
             if (!(value instanceof FormattedTextValue))
-                value = new FormattedTextValue(new TextComponent(value.getString()));
+                value = new FormattedTextValue(Component.literal(value.getString()));
             return StringTag.valueOf(((FormattedTextValue)value).serialize());
         }
 

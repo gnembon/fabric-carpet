@@ -3,9 +3,8 @@ package carpet.script.value;
 import com.google.gson.JsonElement;
 import net.minecraft.nbt.StringTag;
 import net.minecraft.nbt.Tag;
-import net.minecraft.network.chat.BaseComponent;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.TextComponent;
+import net.minecraft.network.chat.MutableComponent;
 
 public class FormattedTextValue extends StringValue
 {
@@ -17,16 +16,16 @@ public class FormattedTextValue extends StringValue
     }
 
     public static Value combine(Value left, Value right) {
-        BaseComponent text;
+        MutableComponent text;
         if (left instanceof FormattedTextValue)
         {
-            text = (BaseComponent) ((FormattedTextValue) left).getText().copy();
+            text = ((FormattedTextValue) left).getText().copy();
         }
         else
         {
             if (left.isNull())
                 return right;
-            text = new TextComponent(left.getString());
+            text = Component.literal(left.getString());
         }
         
         if (right instanceof FormattedTextValue)
@@ -103,7 +102,7 @@ public class FormattedTextValue extends StringValue
     }
 
     public static Component getTextByValue(Value value) {
-        return (value instanceof FormattedTextValue) ? ((FormattedTextValue) value).getText() : new TextComponent(value.getString());
+        return (value instanceof FormattedTextValue) ? ((FormattedTextValue) value).getText() : Component.literal(value.getString());
     }
 
 }

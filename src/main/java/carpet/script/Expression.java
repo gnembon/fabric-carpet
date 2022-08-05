@@ -12,7 +12,6 @@ import carpet.script.Fluff.QuadFunction;
 import carpet.script.Fluff.QuinnFunction;
 import carpet.script.Fluff.SexFunction;
 import carpet.script.Fluff.TriFunction;
-import carpet.script.bundled.Module;
 import carpet.script.exception.BreakStatement;
 import carpet.script.exception.ContinueStatement;
 import carpet.script.exception.ExitStatement;
@@ -64,7 +63,7 @@ public class Expression
 
     public String getModuleName()
     {
-        return module == null?"system chat":module.getName();
+        return module == null ? "system chat" : module.name();
     }
 
     public void asATextSource()

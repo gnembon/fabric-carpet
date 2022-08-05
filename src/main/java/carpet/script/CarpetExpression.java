@@ -10,7 +10,6 @@ import carpet.script.api.Monitoring;
 import carpet.script.api.Scoreboards;
 import carpet.script.api.Threading;
 import carpet.script.api.WorldAccess;
-import carpet.script.bundled.Module;
 import carpet.script.exception.CarpetExpressionException;
 import carpet.script.exception.ExpressionException;
 import carpet.script.value.BlockValue;

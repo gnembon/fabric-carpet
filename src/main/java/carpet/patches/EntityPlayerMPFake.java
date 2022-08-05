@@ -4,7 +4,6 @@ import carpet.CarpetSettings;
 import com.mojang.authlib.GameProfile;
 import net.minecraft.core.UUIDUtil;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.network.protocol.PacketFlow;
 import net.minecraft.network.protocol.game.ClientboundPlayerInfoPacket;
 import net.minecraft.network.protocol.game.ClientboundRotateHeadPacket;
@@ -17,7 +16,9 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.players.GameProfileCache;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.player.ProfilePublicKey;
 import net.minecraft.world.food.FoodData;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.GameType;
@@ -61,7 +62,7 @@ public class EntityPlayerMPFake extends ServerPlayer
             SkullBlockEntity.updateGameprofile(gameprofile, result::set);
             gameprofile = result.get();
         }
-        EntityPlayerMPFake instance = new EntityPlayerMPFake(server, worldIn, gameprofile, false);
+        EntityPlayerMPFake instance = new EntityPlayerMPFake(server, worldIn, gameprofile, false, null);
         instance.fixStartingPosition = () -> instance.moveTo(d0, d1, d2, (float) yaw, (float) pitch);
         server.getPlayerList().placeNewPlayer(new FakeClientConnection(PacketFlow.SERVERBOUND), instance);
         instance.teleportTo(worldIn, d0, d1, d2, (float)yaw, (float)pitch);
@@ -80,10 +81,10 @@ public class EntityPlayerMPFake extends ServerPlayer
     public static EntityPlayerMPFake createShadow(MinecraftServer server, ServerPlayer player)
     {
         player.getServer().getPlayerList().remove(player);
-        player.connection.disconnect(new TranslatableComponent("multiplayer.disconnect.duplicate_login"));
+        player.connection.disconnect(Component.translatable("multiplayer.disconnect.duplicate_login"));
         ServerLevel worldIn = player.getLevel();//.getWorld(player.dimension);
         GameProfile gameprofile = player.getGameProfile();
-        EntityPlayerMPFake playerShadow = new EntityPlayerMPFake(server, worldIn, gameprofile, true);
+        EntityPlayerMPFake playerShadow = new EntityPlayerMPFake(server, worldIn, gameprofile, true, player.getProfilePublicKey());
         server.getPlayerList().placeNewPlayer(new FakeClientConnection(PacketFlow.SERVERBOUND), playerShadow);
 
         playerShadow.setHealth(player.getHealth());
@@ -101,16 +102,16 @@ public class EntityPlayerMPFake extends ServerPlayer
         return playerShadow;
     }
 
-    private EntityPlayerMPFake(MinecraftServer server, ServerLevel worldIn, GameProfile profile, boolean shadow)
+    private EntityPlayerMPFake(MinecraftServer server, ServerLevel worldIn, GameProfile profile, boolean shadow, ProfilePublicKey profilePublicKey)
     {
-        super(server, worldIn, profile);
+        super(server, worldIn, profile, profilePublicKey);
         isAShadow = shadow;
     }
 
     @Override
-    protected void equipEventAndSound(ItemStack stack, boolean sendGameEvent)
+    public void onEquipItem(final EquipmentSlot slot, final ItemStack previous, final ItemStack stack)
     {
-        if (!isUsingItem()) super.equipEventAndSound(stack, sendGameEvent);
+        if (!isUsingItem()) super.onEquipItem(slot, previous, stack);
     }
 
     @Override

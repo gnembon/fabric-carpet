@@ -47,13 +47,11 @@ import net.minecraft.core.Rotations;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtIo;
-import net.minecraft.nbt.NbtOps;
 import net.minecraft.nbt.NbtUtils;
 import net.minecraft.nbt.StringTag;
 import net.minecraft.nbt.Tag;
-import net.minecraft.network.chat.BaseComponent;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.TextComponent;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientboundClearTitlesPacket;
 import net.minecraft.network.protocol.game.ClientboundCustomSoundPacket;
@@ -341,11 +339,11 @@ public class Auxiliary {
             BlockState targetBlock = null;
             Vector3Argument pointLocator;
             boolean interactable = true;
-            String name;
+            Component name;
             try
             {
                 Value nameValue = lv.get(0);
-                name = nameValue.isNull() ? "" : nameValue.getString();
+                name = nameValue.isNull() ? null : FormattedTextValue.getTextByValue(nameValue);
                 pointLocator = Vector3Argument.findIn(lv, 1, true, false);
                 if (lv.size()>pointLocator.offset)
                 {
@@ -364,7 +362,7 @@ public class Auxiliary {
 
             ArmorStand armorstand = new ArmorStand(EntityType.ARMOR_STAND, cc.s.getLevel());
             double yoffset;
-            if (targetBlock == null && name.isEmpty())
+            if (targetBlock == null && name == null)
             {
                 yoffset = 0.0;
             }
@@ -395,9 +393,9 @@ public class Auxiliary {
             armorstand.addTag(MARKER_STRING);
             if (targetBlock != null)
                 armorstand.setItemSlot(EquipmentSlot.HEAD, new ItemStack(targetBlock.getBlock().asItem()));
-            if (!name.isEmpty())
+            if (name != null)
             {
-                armorstand.setCustomName(new TextComponent(name));
+                armorstand.setCustomName(name);
                 armorstand.setCustomNameVisible(true);
             }
             armorstand.setHeadPose(new Rotations((int)pointLocator.pitch,0,0));
@@ -551,7 +549,7 @@ public class Auxiliary {
             else title = null; // Will never happen, just to make lambda happy
             if (packetGetter == null)
             {
-                Map<String, BaseComponent> map;
+                Map<String, Component> map;
                 if (actionString.equals("player_list_header"))
                     map = HUDController.scarpet_headers;
                 else
@@ -566,7 +564,7 @@ public class Auxiliary {
                     });
                 else
                     targetList.forEach(target -> {
-                        map.put(target.getScoreboardName(), (BaseComponent) title);
+                        map.put(target.getScoreboardName(), (MutableComponent) title);
                         total.getAndIncrement();
                     });
                 HUDController.update_hud(((CarpetContext)c).s.getServer(), targetList);
@@ -609,7 +607,7 @@ public class Auxiliary {
             {
                 Component[] error = {null};
                 List<Component> output = new ArrayList<>();
-                Value retval = new NumericValue(s.getServer().getCommands().performCommand(
+                Value retval = new NumericValue(s.getServer().getCommands().performPrefixedCommand(
                         new SnoopyCommandSource(s, error, output),
                         lv.get(0).getString())
                 );
@@ -621,7 +619,7 @@ public class Auxiliary {
             }
             catch (Exception exc)
             {
-                return ListValue.of(Value.NULL, ListValue.of(), new FormattedTextValue(new TextComponent(exc.getMessage())));
+                return ListValue.of(Value.NULL, ListValue.of(), new FormattedTextValue(Component.literal(exc.getMessage())));
             }
         });
 
@@ -975,9 +973,9 @@ public class Auxiliary {
             FunctionArgument callback = FunctionArgument.findIn(c, expression.module, lv, 1, true, false);
             CarpetScriptHost host = ((CarpetScriptHost)c.host);
             if (callback.function == null)
-                return BooleanValue.of(host.getScriptServer().events.removeBuiltInEvent(event, host));
+                return BooleanValue.of(host.scriptServer().events.removeBuiltInEvent(event, host));
             // args don't need to be checked will be checked at the event
-            return BooleanValue.of( host.getScriptServer().events.handleCustomEvent(event, host, callback.function, callback.args ));
+            return BooleanValue.of( host.scriptServer().events.handleCustomEvent(event, host, callback.function, callback.args ));
         });
         //signal_event('event', player or null, args.... ) -> number of apps notified
         expression.addContextFunction("signal_event", -1, (c, t, lv) ->
@@ -985,7 +983,7 @@ public class Auxiliary {
             if (lv.size() == 0)
                 throw new InternalExpressionException("'signal' requires at least one argument");
             CarpetContext cc = (CarpetContext)c;
-            CarpetScriptServer server = ((CarpetScriptHost)c.host).getScriptServer();
+            CarpetScriptServer server = ((CarpetScriptHost)c.host).scriptServer();
             String eventName = lv.get(0).getString();
             // no such event yet
             if (CarpetEventServer.Event.getEvent(eventName, server) == null) return Value.NULL;
@@ -996,7 +994,7 @@ public class Auxiliary {
                 player = EntityValue.getPlayerByValue(server.server, lv.get(1));
                 if (lv.size() > 2) args = lv.subList(2, lv.size());
             }
-            int counts = ((CarpetScriptHost)c.host).getScriptServer().events.signalEvent(eventName, cc, player, args);
+            int counts = ((CarpetScriptHost)c.host).scriptServer().events.signalEvent(eventName, cc, player, args);
             if (counts < 0) return Value.NULL;
             return new NumericValue(counts);
         });

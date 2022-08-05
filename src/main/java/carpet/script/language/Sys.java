@@ -431,15 +431,15 @@ public class Sys {
         {
             if (lv.size() == 0) throw new InternalExpressionException("'system_variable_get' expects at least a key to be fetched");
             Value key = lv.get(0).evalValue(c);
-            if (lv.size() > 1) ScriptHost.systemGlobals.computeIfAbsent(key, k -> lv.get(1).evalValue(c));
-            Value res = ScriptHost.systemGlobals.get(key);
+            if (lv.size() > 1) c.host.scriptServer().systemGlobals.computeIfAbsent(key, k -> lv.get(1).evalValue(c));
+            Value res = c.host.scriptServer().systemGlobals.get(key);
             if (res!=null) return (cc, tt) -> res;
             return LazyValue.NULL;
         });
 
-        expression.addBinaryFunction("system_variable_set", (key, value) ->
+        expression.addContextFunction("system_variable_set", 2, (c, t, lv) ->
         {
-            Value res = ScriptHost.systemGlobals.put(key, value);
+            Value res = c.host.scriptServer().systemGlobals.put(lv.get(0), lv.get(1));
             if (res!=null) return res;
             return Value.NULL;
         });

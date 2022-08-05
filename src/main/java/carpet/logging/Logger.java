@@ -10,7 +10,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Supplier;
 import net.minecraft.Util;
-import net.minecraft.network.chat.BaseComponent;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 
@@ -62,7 +62,7 @@ public class Logger
         this.acceleratorField = acceleratorField;
         this.logName = logName;
         this.default_option = def;
-        this.options = options;
+        this.options = options == null ? new String[0] : options;
         this.strictOptions = strictOptions;
         if (acceleratorField == null)
             CarpetSettings.LOG.error("[CM] Logger "+getLogName()+" is missing a specified accelerator");
@@ -74,10 +74,6 @@ public class Logger
     }
     public String [] getOptions()
     {
-        if (options == null)
-        {
-            return new String[0];
-        }
         return options;
     }
     public String getLogName()
@@ -135,7 +131,7 @@ public class Logger
      * will repeat invocation for players that share the same option
      */
     @FunctionalInterface
-    public interface lMessage { BaseComponent [] get(String playerOption, Player player);}
+    public interface lMessage { Component [] get(String playerOption, Player player);}
     public void log(lMessage messagePromise)
     {
         for (Map.Entry<String,String> en : subscribedOnlinePlayers.entrySet())
@@ -143,7 +139,7 @@ public class Logger
             ServerPlayer player = playerFromName(en.getKey());
             if (player != null)
             {
-                BaseComponent [] messages = messagePromise.get(en.getValue(),player);
+                Component [] messages = messagePromise.get(en.getValue(),player);
                 if (messages != null)
                     sendPlayerMessage(player, messages);
             }
@@ -155,10 +151,10 @@ public class Logger
      * and served the same way to all other players subscribed to the same option
      */
     @FunctionalInterface
-    public interface lMessageIgnorePlayer { BaseComponent [] get(String playerOption);}
+    public interface lMessageIgnorePlayer { Component [] get(String playerOption);}
     public void log(lMessageIgnorePlayer messagePromise)
     {
-        Map<String, BaseComponent[]> cannedMessages = new HashMap<>();
+        Map<String, Component[]> cannedMessages = new HashMap<>();
         for (Map.Entry<String,String> en : subscribedOnlinePlayers.entrySet())
         {
             ServerPlayer player = playerFromName(en.getKey());
@@ -169,7 +165,7 @@ public class Logger
                 {
                     cannedMessages.put(option,messagePromise.get(option));
                 }
-                BaseComponent [] messages = cannedMessages.get(option);
+                Component [] messages = cannedMessages.get(option);
                 if (messages != null)
                     sendPlayerMessage(player, messages);
             }
@@ -178,9 +174,9 @@ public class Logger
     /**
      * guarantees that message is evaluated once, so independent from the player and chosen option
      */
-    public void log(Supplier<BaseComponent[]> messagePromise)
+    public void log(Supplier<Component[]> messagePromise)
     {
-        BaseComponent [] cannedMessages = null;
+        Component [] cannedMessages = null;
         for (Map.Entry<String,String> en : subscribedOnlinePlayers.entrySet())
         {
             ServerPlayer player = playerFromName(en.getKey());
@@ -192,9 +188,9 @@ public class Logger
         }
     }
 
-    public void sendPlayerMessage(ServerPlayer player, BaseComponent ... messages)
+    public void sendPlayerMessage(ServerPlayer player, Component ... messages)
     {
-        Arrays.stream(messages).forEach(message -> player.sendMessage(message, Util.NIL_UUID));
+        Arrays.stream(messages).forEach(player::sendSystemMessage);
     }
 
     /**
@@ -219,9 +215,13 @@ public class Logger
         else if(firstTime)
         {
             Set<String> loggingOptions = new HashSet<>(Arrays.asList(CarpetSettings.defaultLoggers.split(",")));
-            if (loggingOptions.contains(getLogName()))
-            {
-                LoggerRegistry.subscribePlayer(playerName, getLogName(), getDefault());
+            String logName = getLogName();
+            for (String str : loggingOptions) {
+                String[] vars = str.split(" ", 2);
+                if (vars[0].equals(logName)) {
+                    LoggerRegistry.subscribePlayer(playerName, getLogName(), vars.length == 1 ? getDefault() : vars[1]);
+                    break;
+                }
             }
         }
         LoggerRegistry.setAccess(this);
@@ -241,15 +241,15 @@ public class Logger
 
     public String getAcceptedOption(String arg)
     {
-        if (options != null && Arrays.asList(options).contains(arg)) return arg;
+        if (Arrays.asList(this.getOptions()).contains(arg)) return arg;
         return null;
     }
 
     public boolean isOptionValid(String option) {
         if (strictOptions)
         {
-            return Arrays.asList(this.options).contains(option);
+            return Arrays.asList(this.getOptions()).contains(option);
         }
-        return true;
+        return option != null;
     }
 }

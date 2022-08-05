@@ -2,10 +2,11 @@ package carpet.network;
 
 import carpet.CarpetServer;
 import carpet.CarpetSettings;
+import carpet.api.settings.CarpetRule;
+import carpet.api.settings.RuleHelper;
 import carpet.helpers.TickSpeed;
 import carpet.script.utils.SnoopyCommandSource;
-import carpet.settings.ParsedRule;
-import carpet.settings.SettingsManager;
+import carpet.api.settings.SettingsManager;
 import io.netty.buffer.Unpooled;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -20,20 +21,19 @@ import net.minecraft.nbt.StringTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.TextComponent;
 import net.minecraft.network.protocol.game.ClientboundCustomPayloadPacket;
 import net.minecraft.server.level.ServerPlayer;
 
 public class ServerNetworkHandler
 {
-    private static Map<ServerPlayer, String> remoteCarpetPlayers = new HashMap<>();
-    private static Set<ServerPlayer> validCarpetPlayers = new HashSet<>();
+    private static final Map<ServerPlayer, String> remoteCarpetPlayers = new HashMap<>();
+    private static final Set<ServerPlayer> validCarpetPlayers = new HashSet<>();
 
-    private static Map<String, BiConsumer<ServerPlayer, Tag>> dataHandlers = new HashMap<String, BiConsumer<ServerPlayer, Tag>>(){{
-        put("clientCommand", (p, t) -> {
+    private static final Map<String, BiConsumer<ServerPlayer, Tag>> dataHandlers = Map.of(
+        "clientCommand", (p, t) -> {
             handleClientCommand(p, (CompoundTag)t);
-        });
-    }};
+        }
+    );
 
     public static void handleData(FriendlyByteBuf data, ServerPlayer player)
     {
@@ -76,11 +76,11 @@ public class ServerNetworkHandler
         else
             CarpetSettings.LOG.warn("Player "+playerEntity.getName().getString()+" joined with another carpet version: "+clientVersion);
         DataBuilder data = DataBuilder.create().withTickRate().withFrozenState().withTickPlayerActiveTimeout(); // .withSuperHotState()
-        CarpetServer.settingsManager.getRules().forEach(data::withRule);
+        CarpetServer.settingsManager.getCarpetRules().forEach(data::withRule);
         CarpetServer.extensions.forEach(e -> {
-            SettingsManager eManager = e.customSettingsManager();
+            SettingsManager eManager = e.extensionSettingsManager();
             if (eManager != null) {
-                eManager.getRules().forEach(data::withRule);
+                eManager.getCarpetRules().forEach(data::withRule);
             }
         });
         playerEntity.connection.send(new ClientboundCustomPayloadPacket(CarpetClient.CARPET_CHANNEL, data.build() ));
@@ -95,18 +95,18 @@ public class ServerNetworkHandler
         int resultCode = -1;
         if (player.getServer() == null)
         {
-            error[0] = new TextComponent("No Server");
+            error[0] = Component.literal("No Server");
         }
         else
         {
-            resultCode = player.getServer().getCommands().performCommand(
+            resultCode = player.getServer().getCommands().performPrefixedCommand(
                     new SnoopyCommandSource(player, error, output), command
             );
         }
         CompoundTag result = new CompoundTag();
         result.putString("id", id);
         result.putInt("code", resultCode);
-        if (error[0] != null) result.putString("error", error[0].getContents());
+        if (error[0] != null) result.putString("error", error[0].getContents().toString());
         ListTag outputResult = new ListTag();
         for (Component line: output) outputResult.add(StringTag.valueOf(Component.Serializer.toJson(line)));
         if (!output.isEmpty()) result.put("output", outputResult);
@@ -131,7 +131,7 @@ public class ServerNetworkHandler
         }
     }
 
-    public static void updateRuleWithConnectedClients(ParsedRule<?> rule)
+    public static void updateRuleWithConnectedClients(CarpetRule<?> rule)
     {
         if (CarpetSettings.superSecretSetting) return;
         for (ServerPlayer player : remoteCarpetPlayers.keySet())
@@ -276,7 +276,7 @@ public class ServerNetworkHandler
             tag.putInt("TickPlayerActiveTimeout", TickSpeed.player_active_timeout);
             return this;
         }
-        private DataBuilder withRule(ParsedRule<?> rule)
+        private DataBuilder withRule(CarpetRule<?> rule)
         {
             CompoundTag rules = (CompoundTag) tag.get("Rules");
             if (rules == null)
@@ -284,13 +284,13 @@ public class ServerNetworkHandler
                 rules = new CompoundTag();
                 tag.put("Rules", rules);
             }
-            String identifier = rule.settingsManager.getIdentifier();
-            String key = rule.name;
+            String identifier = rule.settingsManager().identifier();
+            String key = rule.name();
             while (rules.contains(key)) { key = key+"2";}
             CompoundTag ruleNBT = new CompoundTag();
-            ruleNBT.putString("Value", rule.getAsString());
-            ruleNBT.putString("Manager",identifier);
-            ruleNBT.putString("Rule",rule.name);
+            ruleNBT.putString("Value", RuleHelper.toRuleString(rule.value()));
+            ruleNBT.putString("Manager", identifier);
+            ruleNBT.putString("Rule", rule.name());
             rules.put(key, ruleNBT);
             return this;
         }

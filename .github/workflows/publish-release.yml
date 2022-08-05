@@ -103,7 +103,7 @@ jobs:
           file_path: build/libs/${{ steps.findjar.outputs.jarname }}
           changelog_type: markdown
           changelog: ${{ github.event.release.body }}
-          display_name: Carpet Mod v${{ needs.Get-Properties.outputs.carpet-version }} for ${{ steps.getbranchinfo.outputs.version }}
+          display_name: Carpet v${{ needs.Get-Properties.outputs.carpet-version }} for ${{ steps.getbranchinfo.outputs.version }}
           game_versions: 7499,4458,${{ steps.getbranchinfo.outputs.curse-versions }} #Fabric,Java 8,[version (s) for the branch]
           release_type: ${{ needs.Get-Properties.outputs.release-type }}
       - name: Ask Gradle to publish
@@ -113,6 +113,22 @@ jobs:
         with:
           name: Maven publishing artifacts for ${{ matrix.branch }}
           path: publish/carpet/fabric-carpet/
+  Publish-To-Discord:
+    runs-on: ubuntu-latest
+    needs: [Build-And-Publish]
+    steps:
+     - name: Publish to discord
+       uses: Crec0/announce-n-crosspost@v1
+       with:
+         bot-token: ${{ secrets.DISCORD_BOT_TOKEN }}
+         channel: '897934715200339999'
+         content: |
+           **${{ github.event.release.name }}** has been released!
+           
+           ${{ github.event.release.body }}
+           ​
+           Get it on Github Releases: <${{ github.event.release.html_url }}>
+           Or on CurseForge
   Merge-Scarpet-Docs:
     runs-on: ubuntu-latest
     steps:
