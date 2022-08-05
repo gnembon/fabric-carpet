@@ -458,6 +458,13 @@ You can use app data to save non-vanilla information separately from the world a
 
 Throws `nbt_read_error` if failed to read app data.
 
+<pre>
+global_app_data = parse_nbt(load_app_data());   //Grabs data stored on disk
+if(!global_app_data,                            //If there was no data saved
+    global_app_data = default_value
+);
+</pre>
+
 ### `store_app_data(tag)`
 
 Note:  `store_app_data(tag, file)` and `store_app_data(tag, file, shared?)` usages deprecated. Use `write_file` instead.
