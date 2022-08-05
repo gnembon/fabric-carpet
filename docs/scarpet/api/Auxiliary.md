@@ -719,6 +719,12 @@ Returns current world seed. Function is deprecated, use `system_info('world_seed
 
 Returns current dimension that the script runs in.
 
+<pre>
+current_dimension();                          // => overworld
+in_dimension('nether', current_dimension());  // => the_nether
+in_dimension('the_end', current_dimension()); // => the_end (what did you expect?)
+</pre>
+
 ### `in_dimension(smth, expr)`
 
 Evaluates the expression `expr` with different dimension execution context. `smth` can be an entity, 
