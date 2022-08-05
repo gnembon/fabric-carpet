@@ -522,6 +522,8 @@ script run create_datapack('foo',
 })
 </pre>
 
+#### Note: Custom dimensions no longer work as of 1.19
+
 Custom dimension example:
 <pre>
 // 1.17
