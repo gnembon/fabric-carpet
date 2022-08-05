@@ -253,6 +253,10 @@ produce an exception.
 
 <pre>
 encode_nbt({'bool'->true, 'double'->1.5, 'foo'->'bar', 'int'->1}) // => '{bool:1b,double:1.5d,foo:"bar",int:1}'
+encode_nbt({'list'->[0,2,3,4]})              // => '{list:[0,2,3,4]}' (list of numbers)
+encode_nbt({'list'->[0,2,'3',4]})            // => cannot reliably encode to a tag the value of '[0,2,3,4]'
+encode_nbt({'list'->[0,2,'3',4]}, true)      // => '{list:["0","2","3","4"]}' (list of strings)
+encode_nbt({'list'->[0,2,'3',{4->5}]}, true) // => '{list:["0","2","3","{4:5}"]}' (list of strings)
 </pre>
 
 ### `print(expr)`, `print(player/player_list, expr)`
