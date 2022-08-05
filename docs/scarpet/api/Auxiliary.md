@@ -765,6 +765,18 @@ of the tick, and they will run in order they were scheduled.
 In case you want to schedule a function that is not defined in your module, please read the tips on
  "Passing function references to other modules of your application" section in the `call(...)` section.
 
+It is also useful for running a function every n-th tick 
+
+<pre>
+global_timer = 40; //Every 2 seconds
+
+my_function(stuff)->(
+    modified_stuff = do_stuff(stuff);
+    schedule(global_timer, 'my_function', modified_stuff)
+);
+
+</pre>
+
 ### `statistic(player, category, entry)`
 
 Queries in-game statistics for certain values. Categories include:
