@@ -53,6 +53,9 @@ public class CarpetRulePrinter implements DedicatedServerModInitializer {
         } catch (IOException e) {
             throw new IllegalArgumentException("Invalid path passed, or something went very wrong", e);
         }
+        // Ensure translations fallbacks have been generated given we run before the validator that ensures that has.
+        // Remove after removing old setting system, given there'll be no fallbacks
+        Translations.updateLanguage();
         String filter = options.valueOf(filterSpec);
         if (filter != null) logger.info("Applying category filter: " + filter);
         CarpetServer.settingsManager.dumpAllRulesToStream(outputStream, filter);
