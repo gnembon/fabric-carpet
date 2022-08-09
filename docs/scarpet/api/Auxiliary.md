@@ -270,7 +270,9 @@ Example usages:
 
 ### `item_display_name(item )`
  Returns the name of the item as a Text Value. `item` should be a list of `[item_name, count, nbt]`, or just an item name.
- Please note that it is a translated value, and the result of it converting to a string may be affacted by your language.
+ 
+ Please note that it is a translated value, and the result of it converting to a string will using your servers language, but when you use print() to broadcast it to players, it will use each player's own language.
+
  If the item is renamed, it will also be reflected in the results.
 
 
