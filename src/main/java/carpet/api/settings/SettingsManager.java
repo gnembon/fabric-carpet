@@ -176,7 +176,7 @@ public class SettingsManager {
     {
         // In the current translation system languages are not loaded this early. Ensure they are loaded
         Translations.updateLanguage();
-        boolean warned = settingsClass == CarpetSettings.class; // don't warn for ourselves
+        boolean warned = false;
 
         nextRule: for (Field field : settingsClass.getDeclaredFields())
         {
