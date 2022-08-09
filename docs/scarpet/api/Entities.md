@@ -688,7 +688,7 @@ Sets if the iron golem has a red flower in hand.
 
 ### `modify(e, 'blue_skull', bool)`
 
-Sets the wither skull entity is blue or not.
+Sets whether the wither skull entity is blue.
 
 ### `modify(e, 'age', number)`
 
