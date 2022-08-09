@@ -1702,10 +1702,10 @@ public class EntityValue extends Value
         });
         put("item", (e, v) -> {
                 ItemStack item=getItemStackFromValue(v).copy();
-                if(e instanceof ItemEntity iteme)            
-                    iteme.setItem(item);
-                if(e instanceof ItemFrame iteme)
-                    iteme.setItem(item);  
+                if(e instanceof ItemEntity itementity)            
+                    itementity.setItem(item);
+                if(e instanceof ItemFrame itemframe)
+                    itemframe.setItem(item);  
         });
         // "dimension"      []
         // "count",         []
