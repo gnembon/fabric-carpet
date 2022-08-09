@@ -60,7 +60,6 @@
     "MinecraftServer_scarpetMixin",
     "ExperienceOrb_xpNoCooldownMixin",
     "Player_xpNoCooldownMixin",
-    "ServerboundPlayerActionPacketMixin",
     "ServerPlayer_actionPackMixin",
     "PlayerList_coreMixin",
     "PlayerList_fakePlayersMixin",
