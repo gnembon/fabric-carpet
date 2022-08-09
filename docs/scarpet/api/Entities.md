@@ -312,7 +312,7 @@ Whether the given iron golem has a red flower in their hand.
 
 ### `query(e, 'blue_skull')`
 
-The wither skull entity is blue or not.
+Whether the given wither skull entity is blue.
 
 ### `query(e, 'count')`
 
