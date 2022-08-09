@@ -1,20 +1,4 @@
 {
-  // TODO Rules
-  
-  // Categories:
-
-  "carpet.category.bugfix": "bugfix",
-  "carpet.category.survival": "survival",
-  "carpet.category.creative": "creative",
-  "carpet.category.experimental": "experimental",
-  "carpet.category.optimization": "optimization",
-  "carpet.category.feature": "feature",
-  "carpet.category.command": "command",
-  "carpet.category.tnt": "TNT",
-  "carpet.category.dispenser": "dispenser",
-  "carpet.category.scarpet": "scarpet",
-  "carpet.category.client": "client",
-
   // Settings command UI elements
 
   "carpet.settings.command.browse_categories": "Browse categories",
@@ -31,6 +15,410 @@
   "carpet.settings.command.change_permanently_tooltip": "click to keep the settings in %s to save across restarts",
   "carpet.settings.command.default_set": "Rule %s will now default to %s",
   "carpet.settings.command.default_removed": "Rule %s will no longer be set on restart",
-  "carpet.settings.command.current_value": "current value"
+  "carpet.settings.command.current_value": "current value",
+  
+  // Categories
+
+  "carpet.category.bugfix": "bugfix",
+  "carpet.category.survival": "survival",
+  "carpet.category.creative": "creative",
+  "carpet.category.experimental": "experimental",
+  "carpet.category.optimization": "optimization",
+  "carpet.category.feature": "feature",
+  "carpet.category.command": "command",
+  "carpet.category.tnt": "TNT",
+  "carpet.category.dispenser": "dispenser",
+  "carpet.category.scarpet": "scarpet",
+  "carpet.category.client": "client",
+  
+  // Rules
+  
+  // allowSpawningOfflinePlayers
+  "carpet.rule.allowSpawningOfflinePlayers.desc": "Spawn offline players in online mode if online-mode player with specified name does not exist",
+
+  // antiCheatDisabled
+  "carpet.rule.antiCheatDisabled.desc": "Prevents players from rubberbanding when moving too fast",
+
+  "carpet.rule.antiCheatDisabled.extra.0": "... or being kicked out for 'flying'",
+  "carpet.rule.antiCheatDisabled.extra.1": "Puts more trust in clients positioning",
+  "carpet.rule.antiCheatDisabled.extra.2": "Increases player allowed mining distance to 32 blocks",
+
+  // carpetCommandPermissionLevel
+  "carpet.rule.carpetCommandPermissionLevel.desc": "Carpet command permission level. Can only be set via .conf file",
+
+  // carpets
+  "carpet.rule.carpets.desc": "Placing carpets may issue carpet commands for non-op players",
+
+  // chainStone
+  "carpet.rule.chainStone.desc": "Chains will stick to each other on the long ends",
+
+  "carpet.rule.chainStone.extra.0": "and will stick to other blocks that connect to them directly.",
+  "carpet.rule.chainStone.extra.1": "With stick_to_all: it will stick even if not visually connected",
+
+  // cleanLogs
+  "carpet.rule.cleanLogs.desc": "Removes obnoxious messages from the logs",
+
+  "carpet.rule.cleanLogs.extra.0": "Doesn't display 'Maximum sound pool size 247 reached'",
+  "carpet.rule.cleanLogs.extra.1": "Which is normal with decent farms and contraptions",
+
+  // commandDistance
+  "carpet.rule.commandDistance.desc": "Enables /distance command to measure in game distance between points",
+
+  "carpet.rule.commandDistance.extra.0": "Also enables brown carpet placement action if 'carpets' rule is turned on as well",
+
+  // commandDraw
+  "carpet.rule.commandDraw.desc": "Enables /draw commands",
+
+  "carpet.rule.commandDraw.extra.0": "... allows for drawing simple shapes or",
+  "carpet.rule.commandDraw.extra.1": "other shapes which are sorta difficult to do normally",
+
+  // commandInfo
+  "carpet.rule.commandInfo.desc": "Enables /info command for blocks",
+
+  "carpet.rule.commandInfo.extra.0": "Also enables gray carpet placement action",
+  "carpet.rule.commandInfo.extra.1": "if 'carpets' rule is turned on as well",
+
+  // commandLog
+  "carpet.rule.commandLog.desc": "Enables /log command to monitor events via chat and overlays",
+
+  // commandPerimeterInfo
+  "carpet.rule.commandPerimeterInfo.desc": "Enables /perimeterinfo command",
+
+  "carpet.rule.commandPerimeterInfo.extra.0": "... that scans the area around the block for potential spawnable spots",
+
+  // commandPlayer
+  "carpet.rule.commandPlayer.desc": "Enables /player command to control/spawn players",
+
+  // commandProfile
+  "carpet.rule.commandProfile.desc": "Enables /profile command to monitor game performance",
+
+  "carpet.rule.commandProfile.extra.0": "subset of /tick command capabilities",
+
+  // commandScript
+  "carpet.rule.commandScript.desc": "Enables /script command",
+
+  "carpet.rule.commandScript.extra.0": "An in-game scripting API for Scarpet programming language",
+
+  // commandScriptACE
+  "carpet.rule.commandScriptACE.desc": "Enables restrictions for arbitrary code execution with scarpet",
+
+  "carpet.rule.commandScriptACE.extra.0": "Users that don't have this permission level",
+  "carpet.rule.commandScriptACE.extra.1": "won't be able to load apps or /script run.",
+  "carpet.rule.commandScriptACE.extra.2": "It is also the permission level apps will",
+  "carpet.rule.commandScriptACE.extra.3": "have when running commands with run()",
+
+  // commandSpawn
+  "carpet.rule.commandSpawn.desc": "Enables /spawn command for spawn tracking",
+
+  // commandTick
+  "carpet.rule.commandTick.desc": "Enables /tick command to control game clocks",
+
+  // commandTrackAI
+  "carpet.rule.commandTrackAI.desc": "Allows to track mobs AI via /track command",
+
+  // creativeFlyDrag
+  "carpet.rule.creativeFlyDrag.desc": "Creative air drag",
+
+  "carpet.rule.creativeFlyDrag.extra.0": "Increased drag will slow down your flight",
+  "carpet.rule.creativeFlyDrag.extra.1": "So need to adjust speed accordingly",
+  "carpet.rule.creativeFlyDrag.extra.2": "With 1.0 drag, using speed of 11 seems to matching vanilla speeds.",
+  "carpet.rule.creativeFlyDrag.extra.3": "Purely client side setting, meaning that",
+  "carpet.rule.creativeFlyDrag.extra.4": "having it set on the decicated server has no effect",
+  "carpet.rule.creativeFlyDrag.extra.5": "but this also means it will work on vanilla servers as well",
+
+  // creativeFlySpeed
+  "carpet.rule.creativeFlySpeed.desc": "Creative flying speed multiplier",
+
+  "carpet.rule.creativeFlySpeed.extra.0": "Purely client side setting, meaning that",
+  "carpet.rule.creativeFlySpeed.extra.1": "having it set on the decicated server has no effect",
+  "carpet.rule.creativeFlySpeed.extra.2": "but this also means it will work on vanilla servers as well",
+
+  // creativeNoClip
+  "carpet.rule.creativeNoClip.desc": "Creative No Clip",
+
+  "carpet.rule.creativeNoClip.extra.0": "On servers it needs to be set on both ",
+  "carpet.rule.creativeNoClip.extra.1": "client and server to function properly.",
+  "carpet.rule.creativeNoClip.extra.2": "Has no effect when set on the server only",
+  "carpet.rule.creativeNoClip.extra.3": "Can allow to phase through walls",
+  "carpet.rule.creativeNoClip.extra.4": "if only set on the carpet client side",
+  "carpet.rule.creativeNoClip.extra.5": "but requires some trapdoor magic to",
+  "carpet.rule.creativeNoClip.extra.6": "allow the player to enter blocks",
+
+  // creativePlayersLoadChunks
+  "carpet.rule.creativePlayersLoadChunks.desc": "Creative players load chunks, or they don't! Just like spectators!",
+
+  "carpet.rule.creativePlayersLoadChunks.extra.0": "Toggling behaves exactly as if the player is in spectator mode and toggling the gamerule spectatorsGenerateChunks.",
+
+  // ctrlQCraftingFix
+  "carpet.rule.ctrlQCraftingFix.desc": "Dropping entire stacks works also from on the crafting UI result slot",
+
+  // customMOTD
+  "carpet.rule.customMOTD.desc": "Sets a different motd message on client trying to connect to the server",
+
+  "carpet.rule.customMOTD.extra.0": "use '_' to use the startup setting from server.properties",
+
+  // defaultLoggers
+  "carpet.rule.defaultLoggers.desc": "sets these loggers in their default configurations for all new players",
+
+  "carpet.rule.defaultLoggers.extra.0": "use csv, like 'tps,mobcaps' for multiple loggers, none for nothing",
+
+  // desertShrubs
+  "carpet.rule.desertShrubs.desc": "Saplings turn into dead shrubs in hot climates and no water access",
+
+  // explosionNoBlockDamage
+  "carpet.rule.explosionNoBlockDamage.desc": "Explosions won't destroy blocks",
+
+  // fastRedstoneDust
+  "carpet.rule.fastRedstoneDust.desc": "Lag optimizations for redstone dust",
+
+  "carpet.rule.fastRedstoneDust.extra.0": "by Theosib",
+  "carpet.rule.fastRedstoneDust.extra.1": ".. also fixes some locational behaviours or vanilla redstone MC-11193",
+  "carpet.rule.fastRedstoneDust.extra.2": "so behaviour of locational vanilla contraptions is not guaranteed",
+
+  // fillLimit
+  "carpet.rule.fillLimit.desc": "Customizable fill/clone volume limit",
+
+  // fillUpdates
+  "carpet.rule.fillUpdates.desc": "fill/clone/setblock and structure blocks cause block updates",
+
+  // flatWorldStructureSpawning
+  "carpet.rule.flatWorldStructureSpawning.desc": "Allows structure mobs to spawn in flat worlds",
+
+  // flippinCactus
+  "carpet.rule.flippinCactus.desc": "Players can flip and rotate blocks when holding cactus",
+
+  "carpet.rule.flippinCactus.extra.0": "Doesn't cause block updates when rotated/flipped",
+  "carpet.rule.flippinCactus.extra.1": "Applies to pistons, observers, droppers, repeaters, stairs, glazed terracotta etc...",
+
+  // fogOff
+  "carpet.rule.fogOff.desc": "Removes fog from client in the nether and the end",
+
+  "carpet.rule.fogOff.extra.0": "Improves visibility, but looks weird",
+
+  // forceloadLimit
+  "carpet.rule.forceloadLimit.desc": "Customizable forceload chunk limit",
+
+  // hardcodeTNTangle
+  "carpet.rule.hardcodeTNTangle.desc": "Sets the horizontal random angle on TNT for debugging of TNT contraptions",
+
+  "carpet.rule.hardcodeTNTangle.extra.0": "Set to -1 for default behavior",
+
+  // hopperCounters
+  "carpet.rule.hopperCounters.desc": "hoppers pointing to wool will count items passing through them",
+
+  "carpet.rule.hopperCounters.extra.0": "Enables /counter command, and actions while placing red and green carpets on wool blocks",
+  "carpet.rule.hopperCounters.extra.1": "Use /counter <color?> reset to reset the counter, and /counter <color?> to query",
+  "carpet.rule.hopperCounters.extra.2": "In survival, place green carpet on same color wool to query, red to reset the counters",
+  "carpet.rule.hopperCounters.extra.3": "Counters are global and shared between players, 16 channels available",
+  "carpet.rule.hopperCounters.extra.4": "Items counted are destroyed, count up to one stack per tick per hopper",
+
+  // huskSpawningInTemples
+  "carpet.rule.huskSpawningInTemples.desc": "Only husks spawn in desert temples",
+
+  // interactionUpdates
+  "carpet.rule.interactionUpdates.desc": "placing blocks cause block updates",
+
+  // lagFreeSpawning
+  "carpet.rule.lagFreeSpawning.desc": "Spawning requires much less CPU and Memory",
+
+  // language
+  "carpet.rule.language.desc": "Sets the language for Carpet",
+
+  // leadFix
+  "carpet.rule.leadFix.desc": "Fixes leads breaking/becoming invisible in unloaded chunks",
+
+  "carpet.rule.leadFix.extra.0": "You may still get visibly broken leash links on the client side, but server side the link is still there.",
+
+  // lightEngineMaxBatchSize
+  "carpet.rule.lightEngineMaxBatchSize.desc": "Changes maximum light tasks batch size",
+
+  "carpet.rule.lightEngineMaxBatchSize.extra.0": "Allows for a higher light suppression tolerance",
+  "carpet.rule.lightEngineMaxBatchSize.extra.1": "setting it to 5 - Default limit defined by the game",
+
+  // lightningKillsDropsFix
+  "carpet.rule.lightningKillsDropsFix.desc": "Lightning kills the items that drop when lightning kills an entity",
+
+  "carpet.rule.lightningKillsDropsFix.extra.0": "Setting to true will prevent lightning from killing drops",
+  "carpet.rule.lightningKillsDropsFix.extra.1": "Fixes [MC-206922](https://bugs.mojang.com/browse/MC-206922).",
+
+  // liquidDamageDisabled
+  "carpet.rule.liquidDamageDisabled.desc": "Disables breaking of blocks caused by flowing liquids",
+
+  // maxEntityCollisions
+  "carpet.rule.maxEntityCollisions.desc": "Customizable maximal entity collision limits, 0 for no limits",
+
+  // mergeTNT
+  "carpet.rule.mergeTNT.desc": "Merges stationary primed TNT entities",
+
+  // missingTools
+  "carpet.rule.missingTools.desc": "Glass can be broken faster with pickaxes",
+
+  // moreBlueSkulls
+  "carpet.rule.moreBlueSkulls.desc": "Increases for testing purposes number of blue skulls shot by the wither",
+
+  // movableAmethyst
+  "carpet.rule.movableAmethyst.desc": "Allows Budding Amethyst blocks to be moved",
+
+  "carpet.rule.movableAmethyst.extra.0": "Allow for them to be moved by pistons",
+  "carpet.rule.movableAmethyst.extra.1": "as well as adds extra drop when mining with silk touch pickaxe",
+
+  // movableBlockEntities
+  "carpet.rule.movableBlockEntities.desc": "Pistons can push block entities, like hoppers, chests etc.",
+
+  // optimizedTNT
+  "carpet.rule.optimizedTNT.desc": "TNT causes less lag when exploding in the same spot and in liquids",
+
+  // perfPermissionLevel
+  "carpet.rule.perfPermissionLevel.desc": "Required permission level for /perf command",
+
+  // persistentParrots
+  "carpet.rule.persistentParrots.desc": "Parrots don't get of your shoulders until you receive proper damage",
+
+  // piglinsSpawningInBastions
+  "carpet.rule.piglinsSpawningInBastions.desc": "Piglins will respawn in bastion remnants",
+
+  "carpet.rule.piglinsSpawningInBastions.extra.0": "Includes piglins, brutes, and a few hoglins",
+
+  // pingPlayerListLimit
+  "carpet.rule.pingPlayerListLimit.desc": "Customizable server list ping (Multiplayer menu) playerlist sample limit",
+
+  // placementRotationFix
+  "carpet.rule.placementRotationFix.desc": "fixes block placement rotation issue when player rotates quickly while placing blocks",
+
+  // portalCreativeDelay
+  "carpet.rule.portalCreativeDelay.desc": "Amount of delay ticks to use a nether portal in creative",
+
+  // portalSurvivalDelay
+  "carpet.rule.portalSurvivalDelay.desc": "Amount of delay ticks to use a nether portal in survival",
+
+  // pushLimit
+  "carpet.rule.pushLimit.desc": "Customizable piston push limit",
+
+  // quasiConnectivity
+  "carpet.rule.quasiConnectivity.desc": "Pistons, droppers and dispensers react if block above them is powered",
+
+  // railPowerLimit
+  "carpet.rule.railPowerLimit.desc": "Customizable powered rail power range",
+
+  // renewableBlackstone
+  "carpet.rule.renewableBlackstone.desc": "Nether basalt generator without soul sand below ",
+
+  "carpet.rule.renewableBlackstone.extra.0": "  .. will convert into blackstone instead",
+
+  // renewableCoral
+  "carpet.rule.renewableCoral.desc": "Coral structures will grow with bonemeal from coral plants",
+
+  "carpet.rule.renewableCoral.extra.0": "Expanded also allows growing from coral fans for sustainable farming outside of warm oceans",
+
+  // renewableDeepslate
+  "carpet.rule.renewableDeepslate.desc": "Lava and water generate deepslate and cobbled deepslate instead below Y0",
+
+  // renewableSponges
+  "carpet.rule.renewableSponges.desc": "Guardians turn into Elder Guardian when struck by lightning",
+
+  // rotatorBlock
+  "carpet.rule.rotatorBlock.desc": "Cactus in dispensers rotates blocks.",
+
+  "carpet.rule.rotatorBlock.extra.0": "Rotates block anti-clockwise if possible",
+
+  // scriptsAppStore
+  "carpet.rule.scriptsAppStore.desc": "Location of the online repository of scarpet apps",
+
+  "carpet.rule.scriptsAppStore.extra.0": "set to 'none' to disable.",
+  "carpet.rule.scriptsAppStore.extra.1": "Point to any github repo with scarpet apps",
+  "carpet.rule.scriptsAppStore.extra.2": "using <user>/<repo>/contents/<path...>",
+
+  // scriptsAutoload
+  "carpet.rule.scriptsAutoload.desc": "Scarpet script from world files will autoload on server/world start ",
+
+  "carpet.rule.scriptsAutoload.extra.0": "if /script is enabled",
+
+  // scriptsDebugging
+  "carpet.rule.scriptsDebugging.desc": "Enables scripts debugging messages in system log",
+
+  // scriptsOptimization
+  "carpet.rule.scriptsOptimization.desc": "Enables scripts optimization",
+
+  // sculkSensorRange
+  "carpet.rule.sculkSensorRange.desc": "Customizable sculk sensor range",
+
+  // shulkerSpawningInEndCities
+  "carpet.rule.shulkerSpawningInEndCities.desc": "Shulkers will respawn in end cities",
+
+  // silverFishDropGravel
+  "carpet.rule.silverFishDropGravel.desc": "Silverfish drop a gravel item when breaking out of a block",
+
+  // simulationDistance
+  "carpet.rule.simulationDistance.desc": "Changes the simulation distance of the server.",
+
+  "carpet.rule.simulationDistance.extra.0": "Set to 0 to not override the value in server settings.",
+
+  // smoothClientAnimations
+  "carpet.rule.smoothClientAnimations.desc": "smooth client animations with low tps settings",
+
+  "carpet.rule.smoothClientAnimations.extra.0": "works only in SP, and will slow down players",
+
+  // spawnChunksSize
+  "carpet.rule.spawnChunksSize.desc": "Changes size of spawn chunks",
+
+  "carpet.rule.spawnChunksSize.extra.0": "Defines new radius",
+  "carpet.rule.spawnChunksSize.extra.1": "setting it to 0 - disables spawn chunks",
+
+  // stackableShulkerBoxes
+  "carpet.rule.stackableShulkerBoxes.desc": "Empty shulker boxes can stack when thrown on the ground.",
+
+  "carpet.rule.stackableShulkerBoxes.extra.0": ".. or when manipulated inside the inventories",
+
+  // structureBlockIgnored
+  "carpet.rule.structureBlockIgnored.desc": "Changes the block ignored by the Structure Block",
+
+  // structureBlockLimit
+  "carpet.rule.structureBlockLimit.desc": "Customizable structure block limit of each axis",
+
+  "carpet.rule.structureBlockLimit.extra.0": "WARNING: Needs to be permanent for correct loading.",
+  "carpet.rule.structureBlockLimit.extra.1": "Setting 'structureBlockIgnored' to air is recommended",
+  "carpet.rule.structureBlockLimit.extra.2": "when saving massive structures.",
+  "carpet.rule.structureBlockLimit.extra.3": "Required on client of player editing the Structure Block.",
+  "carpet.rule.structureBlockLimit.extra.4": "'structureBlockOutlineDistance' may be required for",
+  "carpet.rule.structureBlockLimit.extra.5": "correct rendering of long structures.",
+
+  // structureBlockOutlineDistance
+  "carpet.rule.structureBlockOutlineDistance.desc": "Customizable Structure Block outline render distance",
+
+  "carpet.rule.structureBlockOutlineDistance.extra.0": "Required on client to work properly",
+
+  // summonNaturalLightning
+  "carpet.rule.summonNaturalLightning.desc": "summoning a lightning bolt has all the side effects of natural lightning",
+
+  // superSecretSetting
+  "carpet.rule.superSecretSetting.desc": "Gbhs sgnf sadsgras fhskdpri!!!",
+
+  // tntDoNotUpdate
+  "carpet.rule.tntDoNotUpdate.desc": "TNT doesn't update when placed against a power source",
+
+  // tntPrimerMomentumRemoved
+  "carpet.rule.tntPrimerMomentumRemoved.desc": "Removes random TNT momentum when primed",
+
+  // tntRandomRange
+  "carpet.rule.tntRandomRange.desc": "Sets the tnt random explosion range to a fixed value",
+
+  "carpet.rule.tntRandomRange.extra.0": "Set to -1 for default behavior",
+
+  // updateSuppressionBlock
+  "carpet.rule.updateSuppressionBlock.desc": "Placing an activator rail on top of a barrier block will fill the neighbor updater stack when the rail turns off.",
+
+  "carpet.rule.updateSuppressionBlock.extra.0": "The integer entered is the amount of updates that should be left in the stack",
+  "carpet.rule.updateSuppressionBlock.extra.1": "-1 turns it off",
+
+  // viewDistance
+  "carpet.rule.viewDistance.desc": "Changes the view distance of the server.",
+
+  "carpet.rule.viewDistance.extra.0": "Set to 0 to not override the value in server settings.",
+
+  // xpFromExplosions
+  "carpet.rule.xpFromExplosions.desc": "Experience will drop from all experience barring blocks with any explosion type",
+
+  // xpNoCooldown
+  "carpet.rule.xpNoCooldown.desc": "Players absorb XP instantly, without delay"
 
 }
