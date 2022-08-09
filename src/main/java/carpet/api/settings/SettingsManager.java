@@ -174,6 +174,8 @@ public class SettingsManager {
      */
     public void parseSettingsClass(Class<?> settingsClass)
     {
+        // In the current translation system languages are not loaded this early. Ensure they are loaded
+        Translations.updateLanguage();
         boolean warned = settingsClass == CarpetSettings.class; // don't warn for ourselves
 
         nextRule: for (Field field : settingsClass.getDeclaredFields())
@@ -210,10 +212,6 @@ public class SettingsManager {
             CarpetRule<?> parsed = ParsedRule.of(field, this);
             rules.put(parsed.name(), parsed);
         }
-        // In the current translation system languages are not loaded this early. Ensure they are loaded
-        // after we've added fallbacks, else early systems such as the rule printer won't function for
-        // legacy rules given the validator (that triggers adding fallbacks normally) won't have ran
-        Translations.updateLanguage();
     }
 
     /**
