@@ -308,7 +308,7 @@ The item triple (name, count, nbt) if its an item or item frame entity, `null` o
 
 ### `query(e, 'offering_flower')`
 
-The iron golem have red flower in hand or not.
+Whether the given iron golem has a red flower in their hand.
 
 ### `query(e, 'blue_skull')`
 
