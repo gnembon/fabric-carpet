@@ -1,6 +1,7 @@
 package carpet.script.utils;
 
 import carpet.CarpetSettings;
+import carpet.helpers.ParticleDisplay;
 import carpet.network.ServerNetworkHandler;
 import carpet.script.exception.InternalExpressionException;
 import carpet.script.exception.ThrowStatement;
@@ -59,7 +60,6 @@ import static java.util.Map.entry;
 
 public class ShapeDispatcher
 {
-    private static final Map<String, ParticleOptions> particleCache = new HashMap<>();
     public static record ShapeWithConfig(ExpiringShape shape, Map<String, Value> config) {}
 
     public static ShapeWithConfig fromFunctionArgs(
@@ -159,19 +159,14 @@ public class ShapeDispatcher
 
     public static ParticleOptions getParticleData(String name)
     {
-        ParticleOptions particle = particleCache.get(name);
-        if (particle != null)
-            return particle;
         try
         {
-            particle = ParticleArgument.readParticle(new StringReader(name));
+            return ParticleDisplay.getEffect(name);
         }
-        catch (CommandSyntaxException e)
+        catch (IllegalArgumentException e)
         {
             throw new ThrowStatement(name, Throwables.UNKNOWN_PARTICLE);
         }
-        particleCache.put(name, particle);
-        return particle;
     }
 
     public static Map<String, Value> parseParams(List<Value> items)

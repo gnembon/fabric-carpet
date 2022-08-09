@@ -6,13 +6,12 @@ import java.util.HashMap;
 import java.util.Map;
 import net.minecraft.commands.arguments.ParticleArgument;
 import net.minecraft.core.particles.ParticleOptions;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.phys.Vec3;
 
 public class ParticleDisplay
 {
-    private static Map<String, ParticleOptions> particleCache = new HashMap<>();
+    private static final Map<String, ParticleOptions> particleCache = new HashMap<>();
 
     private static ParticleOptions parseParticle(String name)
     {
@@ -22,16 +21,13 @@ public class ParticleDisplay
         }
         catch (CommandSyntaxException e)
         {
-            throw new RuntimeException("No such particle: "+name);
+            throw new IllegalArgumentException("No such particle: " + name);
         }
     }
     public static ParticleOptions getEffect(String name)
     {
         if (name == null) return null;
-        ParticleOptions res = particleCache.get(name);
-        if (res != null) return res;
-        particleCache.put(name, parseParticle(name));
-        return particleCache.get(name);
+        return particleCache.computeIfAbsent(name, ParticleDisplay::parseParticle);
     }
 
     public static void drawParticleLine(ServerPlayer player, Vec3 from, Vec3 to, String main, String accent, int count, double spread)
@@ -39,7 +35,7 @@ public class ParticleDisplay
         ParticleOptions accentParticle = getEffect(accent);
         ParticleOptions mainParticle = getEffect(main);
 
-        if (accentParticle != null) ((ServerLevel)player.level).sendParticles(
+        if (accentParticle != null) player.getLevel().sendParticles(
                 player,
                 accentParticle,
                 true,
@@ -51,10 +47,10 @@ public class ParticleDisplay
 
         Vec3 incvec = to.subtract(from).normalize();//    multiply(50/sqrt(lineLengthSq));
         for (Vec3 delta = new Vec3(0.0,0.0,0.0);
-             delta.lengthSqr()<lineLengthSq;
+             delta.lengthSqr() < lineLengthSq;
              delta = delta.add(incvec.scale(player.level.random.nextFloat())))
         {
-            ((ServerLevel)player.level).sendParticles(
+            player.getLevel().sendParticles(
                     player,
                     mainParticle,
                     true,
