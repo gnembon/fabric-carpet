@@ -684,7 +684,7 @@ Sets the item for the item or item frame entity. (The item triple is a list of `
 
 ### `modify(e, 'offering_flower', bool)`
 
-Sets if the iron golem have red flower in hand.
+Sets if the iron golem has a red flower in hand.
 
 ### `modify(e, 'blue_skull', bool)`
 
