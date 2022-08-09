@@ -1735,8 +1735,7 @@ public class EntityValue extends Value
         try{
             return NBTSerializableValue.parseItem(id,nbt).createItemStack(count,false);
         } catch (CommandSyntaxException e1) {
-            throw new InternalExpressionException(e1.getMessage());
-            //not going to happen. but ide force me to write that.
+            throw new IllegalStateException("Unexpected exception while creating item stack", e1);
         }
     }
     public void setEvent(CarpetContext cc, String eventName, FunctionValue fun, List<Value> args)
