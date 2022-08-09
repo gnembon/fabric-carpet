@@ -13,7 +13,7 @@ group = project.maven_group
 
 loom {
 	accessWidenerPath = file("src/main/resources/carpet.accesswidener")
-	runtimeOnlyLog4j = false // Can be turned on after TriConsumer is no longer present in public API
+	runtimeOnlyLog4j = true
 }
 
 dependencies {

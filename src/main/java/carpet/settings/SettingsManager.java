@@ -1,15 +1,12 @@
 package carpet.settings;
 
 import carpet.CarpetServer;
-import carpet.CarpetSettings;
-import carpet.api.settings.CarpetRule;
 import carpet.utils.CommandHelper;
 import com.mojang.brigadier.CommandDispatcher;
 import net.minecraft.commands.CommandBuildContext;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.server.MinecraftServer;
-import org.apache.logging.log4j.util.TriConsumer;
 import java.util.Collection;
 import java.util.List;
 
@@ -53,61 +50,6 @@ public class SettingsManager extends carpet.api.settings.SettingsManager
     public SettingsManager(String version, String identifier, String fancyName)
     {
         super(version, identifier, fancyName);
-    }
-
-    /**
-     * <p>Adds a custom rule observer to changes in rules from 
-     * <b>this specific</b> {@link SettingsManager} instance.</p>
-     * 
-     * <p>This <b>outdated</b> method may not be able to listen to all {@link CarpetRule} implementations</p>
-     * 
-     * @see SettingsManager#registerGlobalRuleObserver(RuleObserver)
-     * 
-     * @param observer A {@link TriConsumer} that will be called with
-     *                 the used {@link CommandSourceStack}, the changed
-     *                 {@link ParsedRule} and a {@link String} being the
-     *                 value that the user typed.
-     * @deprecated Use {@link SettingsManager#registerRuleObserver(RuleObserver)} instead.
-     */
-    @Deprecated(forRemoval = true) //to remove
-    public void addRuleObserver(TriConsumer<CommandSourceStack, ParsedRule<?>, String> observer)
-    {
-        registerRuleObserver((source, rule, stringValue) -> {
-            if (rule instanceof ParsedRule<?> pr)
-                observer.accept(source, pr, stringValue);
-            else
-                CarpetSettings.LOG.warn("Failed to notify observer '" + observer.getClass().getName() + "' about rule change");
-        });
-        CarpetSettings.LOG.warn("""
-                Extension added outdated rule observer, this is deprecated and will crash in later carpet versions \
-                (way before the rest of the old settings api because of relying on log4j)!
-                The observer class name is '%s'""".formatted(observer.getClass().getName()));
-    }
-    
-    /**
-     * Adds a custom rule observer to changes in rules from 
-     * <b>any</b> registered {@link SettingsManager} instance.
-     * @see SettingsManager#addRuleObserver(TriConsumer)
-     * 
-     * @param observer A {@link TriConsumer} that will be called with
-     *                 the used {@link CommandSourceStack}, the changed
-     *                 {@link ParsedRule} and a {@link String} being the
-     *                 value that the user typed.
-     * @deprecated Use {@link SettingsManager#registerRuleObserver(RuleObserver)} instead, given this one can't deal with {@link CarpetRule}
-     */
-    @Deprecated(forRemoval = true) // to remove. This isn't really used anywhere
-    public static void addGlobalRuleObserver(TriConsumer<CommandSourceStack, ParsedRule<?>, String> observer)
-    {
-        registerGlobalRuleObserver((source, rule, stringValue) -> {
-            if (rule instanceof ParsedRule<?> pr)
-                observer.accept(source, pr, stringValue);
-            else
-                CarpetSettings.LOG.warn("Failed to notify observer '" + observer.getClass().getName() + "' about rule change");
-        });
-        CarpetSettings.LOG.warn("""
-                Extension added outdated rule observer, this is deprecated and will crash in later carpet versions \
-                (way before the rest of the old settings api because of relying on log4j)!
-                The observer class name is '%s'""".formatted(observer.getClass().getName()));
     }
 
     /**
