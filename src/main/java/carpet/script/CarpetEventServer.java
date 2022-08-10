@@ -876,6 +876,13 @@ public class CarpetEventServer
             }
         };
 
+        public static final Event PLAYER_COMMAND = new Event("player_command", 2, false) {
+            @Override
+            public void onPlayerMessage(ServerPlayer player, String message) {
+                handler.call( () -> Arrays.asList(new EntityValue(player), new StringValue(message)), player::createCommandSourceStack);
+            }
+        };
+
         public static final Event STATISTICS = new Event("statistic", 4, false)
         {
             private <T> ResourceLocation getStatId(Stat<T> stat)
