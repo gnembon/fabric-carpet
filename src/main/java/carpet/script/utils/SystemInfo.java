@@ -131,7 +131,7 @@ public class SystemInfo {
         put("server_mods", c -> {
             Map<Value, Value> ret = new HashMap<>();
             for (ModContainer mod : FabricLoader.getInstance().getAllMods())
-                ret.put(new StringValue(mod.getMetadata().getName()), new StringValue(mod.getMetadata().getVersion().getFriendlyString()));
+                ret.put(new StringValue(mod.getMetadata().getId()), new StringValue(mod.getMetadata().getVersion().getFriendlyString()));
             return MapValue.wrap(ret);
         });
         put("server_last_tick_times", c -> {
