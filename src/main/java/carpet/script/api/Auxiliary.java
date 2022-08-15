@@ -26,6 +26,7 @@ import carpet.script.utils.InputValidator;
 import carpet.script.utils.ScarpetJsonDeserializer;
 import carpet.script.utils.ShapeDispatcher;
 import carpet.script.utils.WorldTools;
+import carpet.script.value.BlockValue;
 import carpet.script.value.BooleanValue;
 import carpet.script.value.EntityValue;
 import carpet.script.value.FormattedTextValue;
@@ -281,6 +282,21 @@ public class Auxiliary {
 
         });
 
+        expression.addContextFunction("item_rarity", -1, (c, t, lv)->{
+            return StringValue.of(EntityValue.getItemStackFromValue(lv.get(0)).getRarity().toString());
+
+        });
+
+        expression.addContextFunction("pick",-1,(c, t, lv) -> {
+            ItemStack itemStack=null;
+            if(lv.get(0) instanceof EntityValue ev){
+                itemStack=ev.getEntity().getPickResult();
+            }
+            else if(lv.get(0) instanceof BlockValue bv){
+                itemStack=bv.getBlockState().getBlock().getCloneItemStack(((CarpetContext)c).s.getLevel(), bv.getPos(), bv.getBlockState());
+            }
+            return ValueConversions.of(itemStack);
+        });
         expression.addContextFunction("particle_box", -1, (c, t, lv) ->
         {
             CarpetContext cc = (CarpetContext)c;
