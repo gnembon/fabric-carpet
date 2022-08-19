@@ -136,10 +136,6 @@ query(p, 'pos') => [420.19801928, 69.3928301, 420.4098232]
 query(p, 'block_pos') => [420, 69, 420]
 </pre>
 
-### `query(e, 'chunk_pos')`
-
-Pair of x and z of the chunk entity is in.
-
 ### `query(e, 'location')`
 
 Quin-tuple of the entity's position (x, y, and z coords), and rotation (yaw, pitch)

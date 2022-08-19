@@ -439,10 +439,6 @@ public class EntityValue extends Value
         put("id",(e, a) -> new NumericValue(e.getId()));
         put("pos", (e, a) -> ValueConversions.of(e.position()));
         put("block_pos", (e, a) -> ValueConversions.of(e.blockPosition()));
-        put("chunk_pos", (e, a) -> {
-            ChunkPos cp = e.chunkPosition();
-            return ListValue.of(new NumericValue(cp.x), new NumericValue(cp.z));
-        });
         put("location", (e, a) -> ListValue.of(new NumericValue(e.getX()), new NumericValue(e.getY()), new NumericValue(e.getZ()), new NumericValue(e.getYRot()), new NumericValue(e.getXRot())));
         put("x", (e, a) -> new NumericValue(e.getX()));
         put("y", (e, a) -> new NumericValue(e.getY()));
