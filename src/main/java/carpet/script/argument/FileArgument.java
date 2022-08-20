@@ -12,7 +12,6 @@ import carpet.script.value.Value;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonParser;
-import com.google.gson.stream.JsonReader;
 import net.minecraft.ReportedException;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtAccounter;
@@ -264,18 +263,16 @@ public class FileArgument
     public Stream<String> listFolder(Module module)
     {
         Stream<String> strings;
-        try { synchronized (writeIOSync)
+        try (Stream<Path> result = listFiles(module)) { synchronized (writeIOSync)
         {
-            Stream<Path> result;
-            result = listFiles(module);
             if (result == null) return null;
             Path rootPath = moduleRootPath(module);
             if (rootPath == null) return null;
             String zipComponent = (zipContainer != null) ? rootPath.relativize(zipPath).toString() : null;
+            // need to evaluate the stream before exiting try-with-resources else there'll be no data to stream
             strings = (zipContainer == null)
-                    ? result.map(p -> rootPath.relativize(p).toString().replaceAll("[\\\\/]+", "/"))
-                    // need to remove ties to the zip file system before closing, so wrapping the stream
-                    : result.map(p -> (zipComponent + '/'+ p.toString()).replaceAll("[\\\\/]+", "/")).collect(Collectors.toList()).stream();
+                    ? result.map(p -> rootPath.relativize(p).toString().replaceAll("[\\\\/]+", "/")).toList().stream()
+                    : result.map(p -> (zipComponent + '/'+ p.toString()).replaceAll("[\\\\/]+", "/")).toList().stream();
         } }
         finally
         {
