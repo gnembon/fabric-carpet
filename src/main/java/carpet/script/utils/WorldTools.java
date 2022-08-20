@@ -32,7 +32,6 @@ import net.minecraft.world.level.levelgen.NoiseGeneratorSettings;
 import net.minecraft.world.level.levelgen.WorldGenSettings;
 import net.minecraft.world.level.storage.DerivedLevelData;
 import net.minecraft.world.level.storage.ServerLevelData;
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
@@ -54,10 +53,9 @@ public class WorldTools
             if (region == null) return false;
             return region.hasChunk(chpos);
         }
-        Path regionPath = new File(((MinecraftServerInterface )world.getServer()).getCMSession().getDimensionPath(world.dimension()).toFile(), "region").toPath();
-        Path regionFilePath = regionPath.resolve(currentRegionName);
-        File regionFile = regionFilePath.toFile();
-        if (!regionFile.exists())
+        Path regionsFolder = ((MinecraftServerInterface)world.getServer()).getCMSession().getDimensionPath(world.dimension()).resolve("region");
+        Path regionPath = regionsFolder.resolve(currentRegionName);
+        if (!regionPath.toFile().exists())
         {
             if (regionCache != null) regionCache.put(currentRegionName, null);
             return false;
@@ -65,7 +63,7 @@ public class WorldTools
         if (!deepcheck) return true; // not using cache in this case.
         try
         {
-            RegionFile region = new RegionFile(regionFile.toPath(), regionPath, true);
+            RegionFile region = new RegionFile(regionPath, regionsFolder, true);
             if (regionCache != null) regionCache.put(currentRegionName, region);
             return region.hasChunk(chpos);
         }

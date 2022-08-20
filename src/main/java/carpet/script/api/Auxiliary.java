@@ -80,7 +80,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.storage.CommandStorage;
 import net.minecraft.world.level.storage.LevelResource;
 import net.minecraft.world.phys.Vec3;
-import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.file.PathUtils;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -1076,7 +1076,7 @@ public class Auxiliary {
                 {
                     successful[0] = false;
                     try {
-                        FileUtils.forceDelete(packFloder.toFile());
+                        PathUtils.delete(packFloder);
                     } catch (IOException ignored) {
                         throw new InternalExpressionException("Failed to install a datapack and failed to clean up after it");
                     }
