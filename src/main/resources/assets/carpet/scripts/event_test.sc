@@ -258,6 +258,13 @@ __on_player_message(player, message) ->
     print('Player '+player+' sent message: '+message)
 );
 
+__on_player_command(player, command) ->
+(
+    print('');
+    print('__on_player_command(player, command)');
+    print('Player '+player+' sent command: '+command)
+);
+
 __on_player_chooses_recipe(player, recipe, full_stack) ->
 (
     print('');
