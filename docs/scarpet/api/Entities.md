@@ -308,11 +308,13 @@ The item triple (name, count, nbt) if its an item or item frame entity, `null` o
 
 ### `query(e, 'offering_flower')`
 
-Whether the given iron golem has a red flower in their hand.
+Whether the given iron golem has a red flower in their hand. returns null for all other entities
+
 
 ### `query(e, 'blue_skull')`
 
-Whether the given wither skull entity is blue.
+Whether the given wither skull entity is blue. returns null for all other entities
+
 
 ### `query(e, 'count')`
 
