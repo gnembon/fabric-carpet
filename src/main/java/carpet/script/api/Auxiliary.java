@@ -259,7 +259,7 @@ public class Auxiliary {
         });
 
         expression.addContextFunction("item_display_name", -1, (c, t, lv)->{
-            return new FormattedTextValue(EntityValue.getItemStackFromValue(lv.get(0)).getHoverName());
+            return new FormattedTextValue(ValueConversions.getItemStackFromValue(lv.get(0)).getHoverName());
 
         });
 
