@@ -12,6 +12,7 @@ import net.minecraft.core.Registry;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.Vec3i;
 import net.minecraft.core.particles.ParticleOptions;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
@@ -47,6 +48,8 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+
+import com.mojang.brigadier.exceptions.CommandSyntaxException;
 
 public class ValueConversions
 {
@@ -404,6 +407,33 @@ public class ValueConversions
                 MapValue.wrap(predicateData.getCMProperties()),
                 predicateData.getCMDataTag() == null?Value.NULL:new NBTSerializableValue(predicateData.getCMDataTag())
         );
+    }
+
+    static public ItemStack getItemStackFromValue(Value value){
+        List<Value> items;
+        if(value instanceof ListValue blv && blv.length()==3){
+            items = blv.getItems();
+        }else if(value.isNull()){
+            return ItemStack.EMPTY;
+        }else{
+            items= List.of(StringValue.of(value.getString()),Value.ONE,Value.NULL);
+        }
+        String id=items.get(0).getString();
+        int count=((NumericValue)items.get(1)).getInt();
+        CompoundTag nbt=null;
+        if (!items.get(2).isNull()){
+            if(items.get(2) instanceof NBTSerializableValue nbtv){
+                nbt=nbtv.getCompoundTag();
+            }
+            else{
+                nbt=new NBTSerializableValue(items.get(2).getString()).getCompoundTag();
+            }
+        }
+        try{
+            return NBTSerializableValue.parseItem(id,nbt).createItemStack(count,false);
+        } catch (CommandSyntaxException e1) {
+            throw new IllegalStateException("Unexpected exception while creating item stack", e1);
+        }
     }
 
     public static Value guess(ServerLevel serverWorld, Object o) {

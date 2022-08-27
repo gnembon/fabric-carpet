@@ -1703,7 +1703,7 @@ public class EntityValue extends Value
             
         });
         put("item", (e, v) -> {
-                ItemStack item=getItemStackFromValue(v);
+                ItemStack item=ValueConversions.getItemStackFromValue(v);
                 if(e instanceof ItemEntity itementity)            
                     itementity.setItem(item);
                 if(e instanceof ItemFrame itemframe)
@@ -1714,32 +1714,6 @@ public class EntityValue extends Value
         // "effect_"name    []
     }};
 
-    static public ItemStack getItemStackFromValue(Value value){
-        List<Value> items;
-        if(value instanceof ListValue blv && blv.length()==3){
-            items = blv.getItems();
-        }else if(value.isNull()){
-            return ItemStack.EMPTY;
-        }else{
-            items= List.of(StringValue.of(value.getString()),Value.ONE,Value.NULL);
-        }
-        String id=items.get(0).getString();
-        int count=((NumericValue)items.get(1)).getInt();
-        CompoundTag nbt=null;
-        if (!items.get(2).isNull()){
-            if(items.get(2) instanceof NBTSerializableValue nbtv){
-                nbt=nbtv.getCompoundTag();
-            }
-            else{
-                nbt=new NBTSerializableValue(items.get(2).getString()).getCompoundTag();
-            }
-        }
-        try{
-            return NBTSerializableValue.parseItem(id,nbt).createItemStack(count,false);
-        } catch (CommandSyntaxException e1) {
-            throw new IllegalStateException("Unexpected exception while creating item stack", e1);
-        }
-    }
     public void setEvent(CarpetContext cc, String eventName, FunctionValue fun, List<Value> args)
     {
         EntityEventsGroup.Event event = EntityEventsGroup.Event.byName.get(eventName);
