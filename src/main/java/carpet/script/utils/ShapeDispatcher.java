@@ -1358,33 +1358,8 @@ public class ShapeDispatcher
         @Override
         public Value validate(Map<String, Value> options, MinecraftServer server, Value value)
         {
-            List<Value> items;
-            ItemStack item;
-            if(value instanceof ListValue blv && blv.length()==3){
-                items = blv.getItems();
-            }else if(value.isNull()){
-                return new NBTSerializableValue(ItemStack.EMPTY.save(new CompoundTag()));
-            }else{
-                items= List.of(StringValue.of(value.getString()),Value.ONE,Value.NULL);
-            }
-            String id=items.get(0).getString();
-            int count=((NumericValue)items.get(1)).getInt();
-            CompoundTag nbt=null;
-            if (!items.get(2).isNull()){
-                if(items.get(2) instanceof NBTSerializableValue nbtv){
-                    nbt=nbtv.getCompoundTag();
-                }
-                else{
-                    nbt=new NBTSerializableValue(items.get(2).getString()).getCompoundTag();
-                }
-            }
-            try{
-                item=NBTSerializableValue.parseItem(id,nbt).createItemStack(count,false);
-                return new NBTSerializableValue(item.save(new CompoundTag()));
-            } catch (CommandSyntaxException e1) {
-                e1.printStackTrace();
-            }
-            return null;
+            ItemStack item=ValueConversions.getItemStackFromValue(value, true);
+            return new NBTSerializableValue(item.save(new CompoundTag()));
         }
         @Override
         public Tag toTag(Value value) {
