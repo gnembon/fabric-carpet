@@ -12,10 +12,13 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.ClassUtils;
+
+import com.google.common.base.Suppliers;
 
 import carpet.CarpetExtension;
 import carpet.script.Context;
@@ -26,6 +29,7 @@ import carpet.script.Fluff.UsageProvider;
 import carpet.script.exception.InternalExpressionException;
 import carpet.script.LazyValue;
 import carpet.script.value.Value;
+import net.fabricmc.api.ModInitializer;
 
 /**
  * <p>This class parses methods annotated with the {@link ScarpetFunction} annotation in a given {@link Class}, generating
@@ -81,13 +85,11 @@ public final class AnnotationParser
      * <p>Parses a given {@link Class} and registers its annotated methods, the ones with the {@link ScarpetFunction} annotation,
      * to be used in the Scarpet language.</p>
      * 
-     * <p><b>Only call this method once per class per lifetime of the JVM!</b> (for example, at {@link CarpetExtension#onGameStarted()})</p>
+     * <p><b>Only call this method once per class per lifetime of the JVM!</b> (for example, at {@link CarpetExtension#onGameStarted()} or 
+     * {@link ModInitializer#onInitialize()}).</p>
      * 
      * <p>There is a set of requirements for the class and its methods:</p>
      * <ul>
-     * <li>Class must be concrete. That is, no interfaces or abstract classes should be passed</li>
-     * <li>Class must have the default constructor (or an equivalent) available. That is done in order to not need the {@code static} modifier in every 
-     * method, making them faster to code and simpler to look at.</li>
      * <li>Annotated methods must not throw checked exceptions. They can throw regular {@link RuntimeException}s (including but not limited to 
      * {@link InternalExpressionException}).
      * Basically, it's fine as long as you don't add a {@code throws} declaration to your methods.</li>
@@ -97,26 +99,28 @@ public final class AnnotationParser
      * <li>Annotated methods must not have a parameter with generics as the varargs parameter. This is just because it was painful for me (altrisi) and 
      * didn't want to support it. Those will crash with a {@code ClassCastException}</li>
      * </ul>
+     * <p>Additionally, if the class contains annotated instance (non-static) methods, the class must be concrete and provide a no-arg constructor
+     * to instantiate it.</p>
      * 
      * @see ScarpetFunction
-     * @param <T>   The generic type of the class to parse.
      * @param clazz The class to parse
      */
-    public static <T> void parseFunctionClass(Class<T> clazz)
+    public static void parseFunctionClass(Class<?> clazz)
     {
-        if (Modifier.isAbstract(clazz.getModifiers()))
-            throw new IllegalArgumentException("Function class must be concrete! Class: " + clazz.getSimpleName());
-        T instance;
-        try
-        {
-            instance = clazz.getConstructor().newInstance();
-        }
-        catch (ReflectiveOperationException e)
-        {
-            throw new IllegalArgumentException(
-                    "Couldn't create instance of given " + clazz + ". Make sure default constructor is available", e);
-        }
-
+        // Only try to instantiate or require concrete classes if there are non-static annotated methods
+        Supplier<Object> instanceSupplier = Suppliers.memoize(() -> {
+            if (Modifier.isAbstract(clazz.getModifiers()))
+                throw new IllegalArgumentException("Function class must be concrete to support non-static methods! Class: " + clazz.getSimpleName());
+            try
+            {
+                return clazz.getConstructor().newInstance();
+            }
+            catch (ReflectiveOperationException e)
+            {
+                throw new IllegalArgumentException(
+                    "Couldn't create instance of given " + clazz + ". This is needed for non-static methods. Make sure default constructor is available", e);
+            }
+        });
         Method[] methodz = clazz.getDeclaredMethods();
         for (Method method : methodz)
         {
@@ -126,7 +130,7 @@ public final class AnnotationParser
             if (method.getExceptionTypes().length != 0)
                 throw new IllegalArgumentException("Annotated method '" + method.getName() +"', provided in '"+clazz+"' must not declare checked exceptions");
 
-            ParsedFunction function = new ParsedFunction(method, instance);
+            ParsedFunction function = new ParsedFunction(method, clazz, instanceSupplier);
             functionList.add(function);
         }
     }
@@ -160,7 +164,7 @@ public final class AnnotationParser
         private final int scarpetParamCount;
         private final Context.Type contextType;
 
-        private ParsedFunction(final Method method, final Object instance)
+        private ParsedFunction(Method method, Class<?> originClass, Supplier<Object> instance)
         {
             this.name = method.getName();
             this.isMethodVarArgs = method.isVarArgs();
@@ -190,12 +194,12 @@ public final class AnnotationParser
                 maxParams = method.getAnnotation(ScarpetFunction.class).maxParams();
                 if (maxParams == UNDEFINED_PARAMS)
                     throw new IllegalArgumentException("No maximum number of params specified for " + name + ", use ScarpetFunction.UNLIMITED_PARAMS for unlimited. "
-                            + "Provided in " + instance.getClass());
+                            + "Provided in " + originClass);
                 if (maxParams == ScarpetFunction.UNLIMITED_PARAMS)
                     maxParams = Integer.MAX_VALUE;
                 if (maxParams < this.minParams)
                     throw new IllegalArgumentException("Provided maximum number of params for " + name + " is smaller than method's param count."
-                            + "Provided in " + instance.getClass());
+                            + "Provided in " + originClass);
             }
             this.maxParams = maxParams;
 
@@ -212,7 +216,7 @@ public final class AnnotationParser
             {
                 MethodHandle tempHandle = MethodHandles.publicLookup().unreflect(method).asFixedArity().asSpreader(Object[].class, this.methodParamCount);
                 tempHandle = tempHandle.asType(tempHandle.type().changeReturnType(Object.class));
-                this.handle = Modifier.isStatic(method.getModifiers()) ? tempHandle : tempHandle.bindTo(instance);
+                this.handle = Modifier.isStatic(method.getModifiers()) ? tempHandle : tempHandle.bindTo(instance.get());
             } catch (IllegalAccessException e)
             {
                 throw new IllegalArgumentException(e);

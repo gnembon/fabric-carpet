@@ -2,7 +2,7 @@ package carpet.script.argument;
 
 import carpet.CarpetServer;
 import carpet.script.CarpetScriptServer;
-import carpet.script.bundled.Module;
+import carpet.script.Module;
 import carpet.script.exception.InternalExpressionException;
 import carpet.script.exception.ThrowStatement;
 import carpet.script.exception.Throwables;
@@ -12,7 +12,6 @@ import carpet.script.value.Value;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonParser;
-import com.google.gson.stream.JsonReader;
 import net.minecraft.ReportedException;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtAccounter;
@@ -140,7 +139,7 @@ public class FileArgument
 
     public static Pair<String,String> recognizeResource(String origfile, boolean isFolder, Type type)
     {
-        String[] pathElements = origfile.toLowerCase(Locale.ROOT).split("[/\\\\]+");
+        String[] pathElements = origfile.split("[/\\\\]+");
         List<String> path = new ArrayList<>();
         String zipPath = null;
         for (int i =0; i < pathElements.length; i++ )
@@ -177,7 +176,7 @@ public class FileArgument
 
     private Path toPath(Module module)
     {
-        if (!isShared && (module == null || module.getName() == null)) return null;
+        if (!isShared && module == null) return null;
         if (zipContainer == null)
             return resolve(getDescriptor(module, resource)+(isFolder?"":type.extension));
         else
@@ -204,8 +203,8 @@ public class FileArgument
 
     private Path moduleRootPath(Module module)
     {
-        if (!isShared && (module == null || module.getName() == null)) return null;
-        return resolve(isShared?"shared":module.getName()+".data");
+        if (!isShared && module == null) return null;
+        return resolve(isShared?"shared":module.name()+".data");
     }
 
     public String getDisplayPath()
@@ -219,9 +218,9 @@ public class FileArgument
         {
             return res.isEmpty()?"shared":"shared/"+res;
         }
-        if (module != null && module.getName() != null) // appdata
+        if (module != null) // appdata
         {
-            return module.getName()+".data"+(res==null || res.isEmpty()?"":"/"+res);
+            return module.name()+".data"+(res==null || res.isEmpty()?"":"/"+res);
         }
         throw new InternalExpressionException("Invalid file descriptor: "+res);
     }
@@ -264,18 +263,16 @@ public class FileArgument
     public Stream<String> listFolder(Module module)
     {
         Stream<String> strings;
-        try { synchronized (writeIOSync)
+        try (Stream<Path> result = listFiles(module)) { synchronized (writeIOSync)
         {
-            Stream<Path> result;
-            result = listFiles(module);
             if (result == null) return null;
             Path rootPath = moduleRootPath(module);
             if (rootPath == null) return null;
             String zipComponent = (zipContainer != null) ? rootPath.relativize(zipPath).toString() : null;
+            // need to evaluate the stream before exiting try-with-resources else there'll be no data to stream
             strings = (zipContainer == null)
-                    ? result.map(p -> rootPath.relativize(p).toString().replaceAll("[\\\\/]+", "/"))
-                    // need to remove ties to the zip file system before closing, so wrapping the stream
-                    : result.map(p -> (zipComponent + '/'+ p.toString()).replaceAll("[\\\\/]+", "/")).collect(Collectors.toList()).stream();
+                    ? result.map(p -> rootPath.relativize(p).toString().replaceAll("[\\\\/]+", "/")).toList().stream()
+                    : result.map(p -> (zipComponent + '/'+ p.toString()).replaceAll("[\\\\/]+", "/")).toList().stream();
         } }
         finally
         {
@@ -379,9 +376,9 @@ public class FileArgument
                 }
                 catch (IOException secondIO)
                 {
-                    CarpetScriptServer.LOG.warn("IOException when trying to read nbt file, something may have gone wrong with the fs",e);
-                    CarpetScriptServer.LOG.catching(ioException);
-                    CarpetScriptServer.LOG.catching(secondIO);
+                    CarpetScriptServer.LOG.warn("IOException when trying to read nbt file, something may have gone wrong with the fs", e);
+                    CarpetScriptServer.LOG.warn("", ioException);
+                    CarpetScriptServer.LOG.warn("", secondIO);
                     throw new ThrowStatement("Not a valid NBT tag in "+path.toString(), Throwables.NBT_ERROR);
                 }
             }
@@ -515,7 +512,7 @@ public class FileArgument
     {
         try (BufferedReader reader = Files.newBufferedReader(filePath, StandardCharsets.UTF_8))
         {
-            return new JsonParser().parse(new JsonReader(reader));
+            return JsonParser.parseReader(reader);
         }
         catch (JsonParseException e)
         {

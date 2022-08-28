@@ -15,7 +15,6 @@ import carpet.script.EntityEventsGroup;
 import carpet.script.argument.Vector3Argument;
 import carpet.script.exception.InternalExpressionException;
 import carpet.script.utils.InputValidator;
-import com.google.common.collect.Sets;
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.minecraft.commands.CommandSourceStack;
@@ -38,7 +37,6 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.tags.Tag;
 import net.minecraft.tags.TagKey;
 import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
@@ -61,10 +59,14 @@ import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.ai.goal.MoveTowardsRestrictionGoal;
 import net.minecraft.world.entity.ai.memory.ExpirableValue;
 import net.minecraft.world.entity.ai.memory.MemoryModuleType;
+import net.minecraft.world.entity.animal.IronGolem;
+import net.minecraft.world.entity.decoration.ItemFrame;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.Projectile;
+import net.minecraft.world.entity.projectile.WitherSkull;
 import net.minecraft.world.entity.vehicle.AbstractMinecart;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.entity.EntityTypeTest;
@@ -239,6 +241,8 @@ public class EntityValue extends Value
         return getEntity().hashCode();
     }
 
+    public static final EntityTypeTest<Entity, ?> ANY = EntityTypeTest.forClass(Entity.class);
+
     public static EntityClassDescriptor getEntityDescriptor(String who, MinecraftServer server)
     {
         EntityClassDescriptor eDesc = EntityClassDescriptor.byName.get(who);
@@ -255,14 +259,21 @@ public class EntityValue extends Value
                     .getTag(TagKey.create(Registry.ENTITY_TYPE_REGISTRY, InputValidator.identifierOf(who)))
                     .orElseThrow( () -> new InternalExpressionException(booWho+" is not a valid entity descriptor"));
             Set<EntityType<?>> eTag = eTagValue.stream().map(Holder::value).collect(Collectors.toUnmodifiableSet());
-            //Tag<EntityType<?>> eTag = server.getTags().getOrEmpty(Registry.ENTITY_TYPE_REGISTRY).getTag(InputValidator.identifierOf(who));
             if (positive)
             {
-                return new EntityClassDescriptor(null, e -> eTag.contains(e.getType()) && e.isAlive(), eTag.stream());
+                if (eTag.size() == 1)
+                {
+                    EntityType<?> type = eTag.iterator().next();
+                    return new EntityClassDescriptor(type, Entity::isAlive, eTag.stream());
+                }
+                else
+                {
+                    return new EntityClassDescriptor(ANY, e -> eTag.contains(e.getType()) && e.isAlive(), eTag.stream());
+                }
             }
             else
             {
-                return new EntityClassDescriptor(null, e -> !eTag.contains(e.getType()) && e.isAlive(), Registry.ENTITY_TYPE.stream().filter(et -> !eTag.contains(et)));
+                return new EntityClassDescriptor(ANY, e -> !eTag.contains(e.getType()) && e.isAlive(), Registry.ENTITY_TYPE.stream().filter(et -> !eTag.contains(et)));
             }
         }
         return eDesc;
@@ -294,54 +305,54 @@ public class EntityValue extends Value
 
         EntityClassDescriptor(EntityType<?> type, Predicate<? super Entity> predicate, Stream<EntityType<?>> types)
         {
-            this(type, predicate, types.collect(Collectors.toList()));
+            this(type, predicate, types.toList());
         }
 
         EntityClassDescriptor(EntityTypeTest<Entity, ?> type, Predicate<? super Entity> predicate, Stream<EntityType<?>> types)
         {
-            this(type, predicate, types.collect(Collectors.toList()));
+            this(type, predicate, types.toList());
         }
 
-        public final static Map<String, EntityClassDescriptor> byName = new HashMap<String, EntityClassDescriptor>() {{
-            List<EntityType<?>> allTypes = Registry.ENTITY_TYPE.stream().collect(Collectors.toList());
+        public final static Map<String, EntityClassDescriptor> byName = new HashMap<>() {{
+            List<EntityType<?>> allTypes = Registry.ENTITY_TYPE.stream().toList();
             // nonliving types
-            Set<EntityType<?>> projectiles = Sets.newHashSet(
+            Set<EntityType<?>> projectiles = Set.of(
                     EntityType.ARROW, EntityType.DRAGON_FIREBALL, EntityType.FIREWORK_ROCKET,
                     EntityType.FIREBALL, EntityType.LLAMA_SPIT, EntityType.SMALL_FIREBALL,
                     EntityType.SNOWBALL, EntityType.SPECTRAL_ARROW, EntityType.EGG,
                     EntityType.ENDER_PEARL, EntityType.EXPERIENCE_BOTTLE, EntityType.POTION,
                     EntityType.TRIDENT, EntityType.WITHER_SKULL, EntityType.FISHING_BOBBER, EntityType.SHULKER_BULLET
             );
-            Set<EntityType<?>> deads = Sets.newHashSet(
+            Set<EntityType<?>> deads = Set.of(
                     EntityType.AREA_EFFECT_CLOUD, EntityType.MARKER, EntityType.BOAT, EntityType.END_CRYSTAL,
                     EntityType.EVOKER_FANGS, EntityType.EXPERIENCE_ORB, EntityType.EYE_OF_ENDER,
                     EntityType.FALLING_BLOCK, EntityType.ITEM, EntityType.ITEM_FRAME, EntityType.GLOW_ITEM_FRAME,
                     EntityType.LEASH_KNOT, EntityType.LIGHTNING_BOLT, EntityType.PAINTING,
-                    EntityType.TNT, EntityType.ARMOR_STAND
+                    EntityType.TNT, EntityType.ARMOR_STAND, EntityType.CHEST_BOAT
 
             );
-            Set<EntityType<?>> minecarts = Sets.newHashSet(
+            Set<EntityType<?>> minecarts = Set.of(
                    EntityType.MINECART,  EntityType.CHEST_MINECART, EntityType.COMMAND_BLOCK_MINECART,
                     EntityType.FURNACE_MINECART, EntityType.HOPPER_MINECART,
                     EntityType.SPAWNER_MINECART, EntityType.TNT_MINECART
             );
             // living mob groups - non-defeault
-            Set<EntityType<?>> undeads = Sets.newHashSet(
+            Set<EntityType<?>> undeads = Set.of(
                     EntityType.STRAY, EntityType.SKELETON, EntityType.WITHER_SKELETON,
                     EntityType.ZOMBIE, EntityType.DROWNED, EntityType.ZOMBIE_VILLAGER,
                     EntityType.ZOMBIE_HORSE, EntityType.SKELETON_HORSE, EntityType.PHANTOM,
                     EntityType.WITHER, EntityType.ZOGLIN, EntityType.HUSK, EntityType.ZOMBIFIED_PIGLIN
 
             );
-            Set<EntityType<?>> arthropods = Sets.newHashSet(
+            Set<EntityType<?>> arthropods = Set.of(
                     EntityType.BEE, EntityType.ENDERMITE, EntityType.SILVERFISH, EntityType.SPIDER,
                     EntityType.CAVE_SPIDER
             );
-            Set<EntityType<?>> aquatique = Sets.newHashSet(
+            Set<EntityType<?>> aquatique = Set.of(
                     EntityType.GUARDIAN, EntityType.TURTLE, EntityType.COD, EntityType.DOLPHIN, EntityType.PUFFERFISH,
                     EntityType.SALMON, EntityType.SQUID, EntityType.TROPICAL_FISH
             );
-            Set<EntityType<?>> illagers = Sets.newHashSet(
+            Set<EntityType<?>> illagers = Set.of(
                     EntityType.PILLAGER, EntityType.ILLUSIONER, EntityType.VINDICATOR, EntityType.EVOKER,
                     EntityType.RAVAGER, EntityType.WITCH
             );
@@ -355,18 +366,18 @@ public class EntityValue extends Value
             ).collect(Collectors.toSet());
 
 
-            put("*", new EntityClassDescriptor(EntityTypeTest.forClass(Entity.class), e -> true, allTypes) );
-            put("valid", new EntityClassDescriptor(EntityTypeTest.forClass(Entity.class), net.minecraft.world.entity.EntitySelector.ENTITY_STILL_ALIVE, allTypes));
-            put("!valid", new EntityClassDescriptor(EntityTypeTest.forClass(Entity.class), e -> !e.isAlive(), allTypes));
+            put("*", new EntityClassDescriptor(ANY, e -> true, allTypes) );
+            put("valid", new EntityClassDescriptor(ANY, net.minecraft.world.entity.EntitySelector.ENTITY_STILL_ALIVE, allTypes));
+            put("!valid", new EntityClassDescriptor(ANY, e -> !e.isAlive(), allTypes));
 
             put("living",  new EntityClassDescriptor(EntityTypeTest.forClass(LivingEntity.class), net.minecraft.world.entity.EntitySelector.ENTITY_STILL_ALIVE, allTypes.stream().filter(living::contains)));
-            put("!living",  new EntityClassDescriptor(EntityTypeTest.forClass(Entity.class), (e) -> (!(e instanceof LivingEntity) && e.isAlive()), allTypes.stream().filter(et -> !living.contains(et))));
+            put("!living",  new EntityClassDescriptor(ANY, (e) -> (!(e instanceof LivingEntity) && e.isAlive()), allTypes.stream().filter(et -> !living.contains(et))));
 
             put("projectile", new EntityClassDescriptor(EntityTypeTest.forClass(Projectile.class), net.minecraft.world.entity.EntitySelector.ENTITY_STILL_ALIVE, allTypes.stream().filter(projectiles::contains)));
-            put("!projectile", new EntityClassDescriptor(EntityTypeTest.forClass(Entity.class), (e) -> (!(e instanceof Projectile) && e.isAlive()), allTypes.stream().filter(et -> !projectiles.contains(et) && !living.contains(et))));
+            put("!projectile", new EntityClassDescriptor(ANY, (e) -> (!(e instanceof Projectile) && e.isAlive()), allTypes.stream().filter(et -> !projectiles.contains(et) && !living.contains(et))));
 
             put("minecarts", new EntityClassDescriptor(EntityTypeTest.forClass(AbstractMinecart.class), net.minecraft.world.entity.EntitySelector.ENTITY_STILL_ALIVE, allTypes.stream().filter(minecarts::contains)));
-            put("!minecarts", new EntityClassDescriptor(EntityTypeTest.forClass(Entity.class), (e) -> (!(e instanceof AbstractMinecart) && e.isAlive()), allTypes.stream().filter(et -> !minecarts.contains(et) && !living.contains(et))));
+            put("!minecarts", new EntityClassDescriptor(ANY, (e) -> (!(e instanceof AbstractMinecart) && e.isAlive()), allTypes.stream().filter(et -> !minecarts.contains(et) && !living.contains(et))));
 
 
             // combat groups
@@ -391,13 +402,13 @@ public class EntityValue extends Value
                 EntityType<?> type  = Registry.ENTITY_TYPE.get(typeId);
                 String mobType = ValueConversions.simplify(typeId);
                 put(    mobType, new EntityClassDescriptor(type, net.minecraft.world.entity.EntitySelector.ENTITY_STILL_ALIVE, Stream.of(type)));
-                put("!"+mobType, new EntityClassDescriptor(EntityTypeTest.forClass(Entity.class), (e) -> e.getType() != type  && e.isAlive(), allTypes.stream().filter(et -> et != type)));
+                put("!"+mobType, new EntityClassDescriptor(ANY, (e) -> e.getType() != type  && e.isAlive(), allTypes.stream().filter(et -> et != type)));
             }
             for (MobCategory catId : MobCategory.values())
             {
                 String catStr = catId.getName();
-                put(    catStr, new EntityClassDescriptor(EntityTypeTest.forClass(Entity.class), e -> ((e.getType().getCategory() == catId) && e.isAlive()), allTypes.stream().filter(et -> et.getCategory() == catId)));
-                put("!"+catStr, new EntityClassDescriptor(EntityTypeTest.forClass(Entity.class), e -> ((e.getType().getCategory() != catId) && e.isAlive()), allTypes.stream().filter(et -> et.getCategory() != catId)));
+                put(    catStr, new EntityClassDescriptor(ANY, e -> ((e.getType().getCategory() == catId) && e.isAlive()), allTypes.stream().filter(et -> et.getCategory() == catId)));
+                put("!"+catStr, new EntityClassDescriptor(ANY, e -> ((e.getType().getCategory() != catId) && e.isAlive()), allTypes.stream().filter(et -> et.getCategory() != catId)));
             }
         }};
     }
@@ -513,11 +524,29 @@ public class EntityValue extends Value
         put("age", (e, a) -> new NumericValue(e.tickCount));
         put("breeding_age", (e, a) -> e instanceof AgeableMob?new NumericValue(((AgeableMob) e).getAge()):Value.NULL);
         put("despawn_timer", (e, a) -> e instanceof LivingEntity?new NumericValue(((LivingEntity) e).getNoActionTime()):Value.NULL);
-        put("item", (e, a) -> (e instanceof ItemEntity)?ValueConversions.of(((ItemEntity) e).getItem()):Value.NULL);
+        put("blue_skull",(e,a)->{
+            if (e instanceof WitherSkull w){
+                return BooleanValue.of(w.isDangerous());
+            }
+            return Value.NULL;
+        });
+        put("offering_flower",(e,a)->{
+            if (e instanceof IronGolem ig){
+                return BooleanValue.of(ig.getOfferFlowerTick()>0);
+            }
+            return Value.NULL;
+        });
+        put("item", (e, a) -> {
+            if(e instanceof ItemEntity)
+                return ValueConversions.of(((ItemEntity) e).getItem());
+            if(e instanceof ItemFrame)
+                return ValueConversions.of(((ItemFrame) e).getItem());
+            return Value.NULL;
+        });
         put("count", (e, a) -> (e instanceof ItemEntity)?new NumericValue(((ItemEntity) e).getItem().getCount()):Value.NULL);
         put("pickup_delay", (e, a) -> (e instanceof ItemEntity)?new NumericValue(((ItemEntityInterface) e).getPickupDelayCM()):Value.NULL);
-        put("portal_cooldown", (e , a) ->new NumericValue(((EntityInterface)e).getPortalTimer()));
-        put("portal_timer", (e , a) ->new NumericValue(((EntityInterface)e).getPublicNetherPortalCooldown()));
+        put("portal_cooldown", (e , a) ->new NumericValue(((EntityInterface)e).getPublicNetherPortalCooldown()));
+        put("portal_timer", (e , a) ->new NumericValue(((EntityInterface)e).getPortalTimer()));
         // ItemEntity -> despawn timer via ssGetAge
         put("is_baby", (e, a) -> (e instanceof LivingEntity)?BooleanValue.of(((LivingEntity) e).isBaby()):Value.NULL);
         put("target", (e, a) -> {
@@ -1509,7 +1538,7 @@ public class EntityValue extends Value
                         showIcon = lv.get(4).getBoolean();
                     boolean ambient = false;
                     if (lv.size() > 5)
-                        showIcon = lv.get(5).getBoolean();
+                        ambient = lv.get(5).getBoolean();
                     le.addEffect(new MobEffectInstance(effect, duration, amplifier, ambient, showParticles, showIcon));
                     return;
                 }
@@ -1659,8 +1688,26 @@ public class EntityValue extends Value
             }
         });
 
+        put("blue_skull",(e,v)->{
+            if (e instanceof WitherSkull w){
+                w.setDangerous(v.getBoolean());
+            }
+            
+        });
+        put("offering_flower",(e,v)->{
+            if (e instanceof IronGolem ig){
+                ig.offerFlower(v.getBoolean());
+            }
+            
+        });
+        put("item", (e, v) -> {
+                ItemStack item=ValueConversions.getItemStackFromValue(v, true);
+                if(e instanceof ItemEntity itementity)            
+                    itementity.setItem(item);
+                if(e instanceof ItemFrame itemframe)
+                    itemframe.setItem(item);  
+        });
         // "dimension"      []
-        // "item"           []
         // "count",         []
         // "effect_"name    []
     }};

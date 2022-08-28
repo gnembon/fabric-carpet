@@ -3,14 +3,15 @@ package carpet.commands;
 import carpet.CarpetSettings;
 import carpet.helpers.TickSpeed;
 import carpet.network.ServerNetworkHandler;
-import carpet.settings.SettingsManager;
 import carpet.utils.CarpetProfiler;
+import carpet.utils.CommandHelper;
 import carpet.utils.Messenger;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import net.minecraft.commands.CommandBuildContext;
 import net.minecraft.commands.CommandSourceStack;
-import net.minecraft.network.chat.BaseComponent;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 
 import static com.mojang.brigadier.arguments.FloatArgumentType.floatArg;
@@ -25,10 +26,10 @@ import static net.minecraft.commands.SharedSuggestionProvider.suggest;
 
 public class TickCommand
 {
-    public static void register(CommandDispatcher<CommandSourceStack> dispatcher)
+    public static void register(CommandDispatcher<CommandSourceStack> dispatcher, CommandBuildContext commandBuildContext)
     {
         LiteralArgumentBuilder<CommandSourceStack> literalargumentbuilder = literal("tick").
-                requires((player) -> SettingsManager.canUseCommand(player, CarpetSettings.commandTick)).
+                requires((player) -> CommandHelper.canUseCommand(player, CarpetSettings.commandTick)).
                 then(literal("rate").
                         executes((c) -> queryTps(c.getSource())).
                         then(argument("rate", floatArg(0.1F, 500.0F)).
@@ -93,7 +94,7 @@ public class TickCommand
         catch (CommandSyntaxException ignored)
         {
         }
-        BaseComponent message = TickSpeed.tickrate_advance(player, advance, tail_command, source);
+        Component message = TickSpeed.tickrate_advance(player, advance, tail_command, source);
         source.sendSuccess(message, false);
         return 1;
     }

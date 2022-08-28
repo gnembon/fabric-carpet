@@ -1,11 +1,12 @@
 package carpet.commands;
 
 import carpet.CarpetSettings;
-import carpet.settings.SettingsManager;
+import carpet.utils.CommandHelper;
 import carpet.utils.MobAI;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import net.minecraft.commands.CommandBuildContext;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.arguments.EntitySummonArgument;
 import net.minecraft.core.Registry;
@@ -16,10 +17,10 @@ import static net.minecraft.commands.SharedSuggestionProvider.suggest;
 
 public class MobAICommand
 {
-    public static void register(CommandDispatcher<CommandSourceStack> dispatcher)
+    public static void register(CommandDispatcher<CommandSourceStack> dispatcher, final CommandBuildContext commandBuildContext)
     {
         LiteralArgumentBuilder<CommandSourceStack> command = literal("track").
-                requires((player) -> SettingsManager.canUseCommand(player, CarpetSettings.commandTrackAI)).
+                requires((player) -> CommandHelper.canUseCommand(player, CarpetSettings.commandTrackAI)).
                 then(argument("entity type", EntitySummonArgument.id()).
 
                         suggests( (c, b) -> suggest(MobAI.availbleTypes(), b)).
@@ -34,7 +35,7 @@ public class MobAICommand
                                 executes( (c) -> {
                                     MobAI.startTracking(
                                             Registry.ENTITY_TYPE.get(EntitySummonArgument.getSummonableEntity(c, "entity type")),
-                                            MobAI.TrackingType.byName(StringArgumentType.getString(c, "aspect"))
+                                            MobAI.TrackingType.valueOf(StringArgumentType.getString(c, "aspect").toUpperCase())
                                     );
                                     return 1;
                                 })));

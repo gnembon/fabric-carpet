@@ -32,7 +32,6 @@ import net.minecraft.world.level.levelgen.NoiseGeneratorSettings;
 import net.minecraft.world.level.levelgen.WorldGenSettings;
 import net.minecraft.world.level.storage.DerivedLevelData;
 import net.minecraft.world.level.storage.ServerLevelData;
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
@@ -54,10 +53,9 @@ public class WorldTools
             if (region == null) return false;
             return region.hasChunk(chpos);
         }
-        Path regionPath = new File(((MinecraftServerInterface )world.getServer()).getCMSession().getDimensionPath(world.dimension()).toFile(), "region").toPath();
-        Path regionFilePath = regionPath.resolve(currentRegionName);
-        File regionFile = regionFilePath.toFile();
-        if (!regionFile.exists())
+        Path regionsFolder = ((MinecraftServerInterface)world.getServer()).getCMSession().getDimensionPath(world.dimension()).resolve("region");
+        Path regionPath = regionsFolder.resolve(currentRegionName);
+        if (!regionPath.toFile().exists())
         {
             if (regionCache != null) regionCache.put(currentRegionName, null);
             return false;
@@ -65,14 +63,14 @@ public class WorldTools
         if (!deepcheck) return true; // not using cache in this case.
         try
         {
-            RegionFile region = new RegionFile(regionFile.toPath(), regionPath, true);
+            RegionFile region = new RegionFile(regionPath, regionsFolder, true);
             if (regionCache != null) regionCache.put(currentRegionName, region);
             return region.hasChunk(chpos);
         }
         catch (IOException ignored) { }
         return true;
     }
-
+/*
     public static boolean createWorld(MinecraftServer server, String worldKey, Long seed)
     {
         ResourceLocation worldId = new ResourceLocation(worldKey);
@@ -114,7 +112,10 @@ public class WorldTools
         //    return server.getRegistryManager().get(Registry.CHUNK_GENERATOR_SETTINGS_KEY).getOrThrow(ChunkGeneratorSettings.OVERWORLD);
         //});
 
-        chunkGenerator2 = new NoiseBasedChunkGenerator(server.registryAccess().registryOrThrow(Registry.NOISE_REGISTRY), MultiNoiseBiomeSource.Preset.OVERWORLD.biomeSource(server.registryAccess().registryOrThrow(Registry.BIOME_REGISTRY)), seed,
+        chunkGenerator2 = new NoiseBasedChunkGenerator(
+                server.registryAccess().registryOrThrow(Registry.STRUCTURE_SET_REGISTRY),
+                server.registryAccess().registryOrThrow(Registry.NOISE_REGISTRY),
+                MultiNoiseBiomeSource.Preset.OVERWORLD.biomeSource(server.registryAccess().registryOrThrow(Registry.BIOME_REGISTRY)), seed,
             Holder.direct(server.registryAccess().registryOrThrow(Registry.NOISE_GENERATOR_SETTINGS_REGISTRY).getOrThrow(NoiseGeneratorSettings.OVERWORLD))
         );
 
@@ -134,7 +135,7 @@ public class WorldTools
         overWorld.getWorldBorder().addListener(new BorderChangeListener.DelegateBorderChangeListener(serverWorld.getWorldBorder()));
         ((MinecraftServerInterface) server).getCMWorlds().put(customWorld, serverWorld);
         return true;
-    }
+    }*/
 
     public static void forceChunkUpdate(BlockPos pos, ServerLevel world)
     {

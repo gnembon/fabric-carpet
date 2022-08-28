@@ -17,9 +17,9 @@ public class TestCommand
     {
         dispatcher.register(literal("testcarpet").
                 then(literal("dump").
-                        executes((c) -> CarpetServer.settingsManager.printAllRulesToLog(null)).
+                        executes((c) -> CarpetServer.settingsManager.dumpAllRulesToStream(System.out, null)).
                         then(argument("category", word()).
-                                executes( (c) -> CarpetServer.settingsManager.printAllRulesToLog(getString(c, "category"))))).
+                                executes( (c) -> CarpetServer.settingsManager.dumpAllRulesToStream(System.out, getString(c, "category"))))).
                 then(argument("first",word()).
                         executes( (c)-> test(c, getString(c, "first")+" 1"))).
                 then(argument("second", word()).

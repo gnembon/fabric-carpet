@@ -5,13 +5,17 @@ import carpet.script.exception.InternalExpressionException;
 import carpet.script.exception.ThrowStatement;
 import carpet.script.exception.Throwables;
 import carpet.utils.BlockInfo;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import net.minecraft.advancements.critereon.MinMaxBounds;
+import net.minecraft.commands.arguments.item.ItemInput;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.GlobalPos;
 import net.minecraft.core.Registry;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.Vec3i;
 import net.minecraft.core.particles.ParticleOptions;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
@@ -22,6 +26,7 @@ import net.minecraft.util.StringRepresentable;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.ai.behavior.PositionTracker;
+import net.minecraft.world.entity.ai.memory.NearestVisibleLivingEntities;
 import net.minecraft.world.entity.ai.memory.WalkTarget;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
@@ -47,6 +52,9 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
+
+import com.mojang.brigadier.exceptions.CommandSyntaxException;
 
 public class ValueConversions
 {
@@ -55,18 +63,12 @@ public class ValueConversions
         return ListValue.of(new NumericValue(pos.getX()), new NumericValue(pos.getY()), new NumericValue(pos.getZ()));
     }
 
-    public static Value ofOptional(BlockPos pos)
-    {
-        if (pos == null) return Value.NULL;
-        return ListValue.of(new NumericValue(pos.getX()), new NumericValue(pos.getY()), new NumericValue(pos.getZ()));
-    }
-
     public static Value of(Vec3 vec)
     {
         return ListValue.of(new NumericValue(vec.x), new NumericValue(vec.y), new NumericValue(vec.z));
     }
 
-    public static Value of(ColumnPos cpos) { return ListValue.of(new NumericValue(cpos.x), new NumericValue(cpos.z));}
+    public static Value of(ColumnPos cpos) { return ListValue.of(new NumericValue(cpos.x()), new NumericValue(cpos.z()));}
 
     public static Value of(ServerLevel world)
     {
@@ -271,21 +273,24 @@ public class ValueConversions
                     new NumericValue(((WalkTarget) v).getCloseEnoughDist())
             );
         }
+        if (v instanceof NearestVisibleLivingEntities nvle) {
+            v = StreamSupport.stream(nvle.findAll(entity -> true).spliterator(), false).toList();
+        }
         if (v instanceof Set)
         {
-            v = new ArrayList(((Set) v));
+            v = new ArrayList<>(((Set<?>) v));
         }
-        if (v instanceof List l)
+        if (v instanceof List<?> l)
         {
             if (l.isEmpty()) return ListValue.of();
             Object el = l.get(0);
             if (el instanceof Entity)
             {
-                return ListValue.wrap((List<Value>) l.stream().map(o -> new EntityValue((Entity)o)).collect(Collectors.toList()));
+                return ListValue.wrap(l.stream().map(o -> new EntityValue((Entity)o)).collect(Collectors.toList()));
             }
             if (el instanceof GlobalPos)
             {
-                return ListValue.wrap((List<Value>) l.stream().map(o ->  of((GlobalPos) o)).collect(Collectors.toList()));
+                return ListValue.wrap(l.stream().map(o -> of((GlobalPos) o)).collect(Collectors.toList()));
             }
         }
         return Value.NULL;
@@ -314,7 +319,7 @@ public class ValueConversions
         );
     }
 
-    public static Value of(StructureStart<?> structure)
+    public static Value of(StructureStart structure)
     {
         if (structure == null || structure == StructureStart.INVALID_START) return Value.NULL;
         BoundingBox boundingBox = structure.getBoundingBox();
@@ -350,49 +355,53 @@ public class ValueConversions
         throw new InternalExpressionException("Unknown property type: "+p.getName());
     }
 
+    record SlotParam(/* Nullable */ String type, int id) {
+        public ListValue build() {
+            return ListValue.of(StringValue.of(type), new NumericValue(id));
+        }
+    }
 
-    private static final Map<Integer, ListValue> slotIdsToSlotParams = new HashMap<Integer, ListValue>() {{
+    private static final Int2ObjectMap<SlotParam> slotIdsToSlotParams = new Int2ObjectOpenHashMap<>() {{
         int n;
         //covers blocks, player hotbar and inventory, and all default inventories
         for(n = 0; n < 54; ++n) {
-            put(n, ListValue.of(Value.NULL, NumericValue.of(n)));
+            put(n, new SlotParam(null, n));
         }
         for(n = 0; n < 27; ++n) {
-            put(200+n, ListValue.of(StringValue.of("enderchest"), NumericValue.of(n)));
+            put(200 + n, new SlotParam("enderchest", n));
         }
 
         // villager
         for(n = 0; n < 8; ++n) {
-            put(300+n, ListValue.of(Value.NULL, NumericValue.of(n)));
+            put(300 + n, new SlotParam(null, n));
         }
 
         // horse, llamas, donkeys, etc.
         // two first slots are for saddle and armour
         for(n = 0; n < 15; ++n) {
-            put(500+n, ListValue.of(Value.NULL, NumericValue.of(n+2)));
+            put(500 + n, new SlotParam(null, n + 2));
         }
-        Value equipment = StringValue.of("equipment");
         // weapon main hand
-        put(98, ListValue.of(equipment, NumericValue.of(0)));
+        put(98, new SlotParam("equipment", 0));
         // offhand
-        put(99, ListValue.of(equipment, NumericValue.of(5)));
+        put(99, new SlotParam("equipment", 5));
         // feet, legs, chest, head
         for(n = 0; n < 4; ++n) {
-            put(100+n, ListValue.of(equipment, NumericValue.of(n+1)));
+            put(100 + n, new SlotParam("equipment", n + 1));
         }
         //horse defaults saddle
-        put(400, ListValue.of(Value.NULL, NumericValue.of(0)));
+        put(400, new SlotParam(null, 0));
         // armor
-        put(401, ListValue.of(Value.NULL, NumericValue.of(1)));
+        put(401, new SlotParam(null, 1));
         // chest itself on the donkey is wierd - use NBT to alter that.
         //hashMap.put("horse.chest", 499);
     }};
 
     public static Value ofVanillaSlotResult(int itemSlot)
     {
-        Value ret = slotIdsToSlotParams.get(itemSlot);
-        if (ret == null) return ListValue.of(Value.NULL, NumericValue.of(itemSlot));
-        return ret;
+        SlotParam ret = slotIdsToSlotParams.get(itemSlot);
+        if (ret == null) return ListValue.of(Value.NULL, new NumericValue(itemSlot));
+        return ret.build();
     }
 
     public static Value ofBlockPredicate(RegistryAccess registryAccess, Predicate<BlockInWorld> blockPredicate)
@@ -404,6 +413,55 @@ public class ValueConversions
                 MapValue.wrap(predicateData.getCMProperties()),
                 predicateData.getCMDataTag() == null?Value.NULL:new NBTSerializableValue(predicateData.getCMDataTag())
         );
+    }
+
+    public static ItemStack getItemStackFromValue(Value value, boolean withCount)
+    {
+        if (value.isNull())
+        {
+            return ItemStack.EMPTY;
+        }
+        final String name;
+        int count = 1;
+        CompoundTag nbtTag = null;
+        if (value instanceof ListValue list)
+        {
+            if (list.length() != 3)
+            {
+                throw new ThrowStatement("item definition from list of size "+list.length(), Throwables.UNKNOWN_ITEM);
+            }
+            final List<Value> items = list.getItems();
+            name = items.get(0).getString();
+            if (withCount)
+            {
+                count = NumericValue.asNumber(items.get(1)).getInt();
+            }
+            Value nbtValue = items.get(2);
+            if (!nbtValue.isNull())
+            {
+                nbtTag = ((NBTSerializableValue) NBTSerializableValue.fromValue(nbtValue)).getCompoundTag();
+            }
+        }
+        else
+        {
+            name = value.getString();
+        }
+        ItemInput itemInput = NBTSerializableValue.parseItem(name, nbtTag);
+        try
+        {
+            return itemInput.createItemStack(count,false);
+        }
+        catch (CommandSyntaxException cse)
+        {
+            if (!withCount)
+            {
+                throw new IllegalStateException("Unexpected exception while creating item stack of " + name + ". All items should be able to stack to one", cse);
+            }
+            else
+            {
+                throw new ThrowStatement(count + " stack size of " + name, Throwables.UNKNOWN_ITEM);
+            }
+        }
     }
 
     public static Value guess(ServerLevel serverWorld, Object o) {

@@ -1,6 +1,6 @@
 package carpet.mixins;
 
-import carpet.fakes.WorldInterface;
+import carpet.fakes.LevelInterface;
 import com.google.common.collect.Lists;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
@@ -18,7 +18,7 @@ import net.minecraft.world.level.entity.LevelEntityGetter;
 import net.minecraft.world.phys.AABB;
 
 @Mixin(Level.class)
-public abstract class Level_getOtherEntitiesLimited implements WorldInterface {
+public abstract class Level_getOtherEntitiesLimited implements LevelInterface {
 
     private static final RuntimeException CONTROL_FLOW_EXCEPTION = new RuntimeException("Should be caught for control flow in World_getOtherEntitiesLimited!");
 

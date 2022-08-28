@@ -53,7 +53,7 @@ public abstract class ServerChunkCacheMixin implements ServerChunkManagerInterfa
             SpawnReporter.first_chunk_marker = new HashSet<>();
             for (MobCategory cat : MobCategory.values())
             {
-                Pair key = Pair.of(dim, cat);
+                Pair<ResourceKey<Level>, MobCategory> key = Pair.of(dim, cat);
                 SpawnReporter.overall_spawn_ticks.put(key,
                         SpawnReporter.overall_spawn_ticks.get(key)+
                         SpawnReporter.spawn_tries.get(cat));
@@ -73,7 +73,7 @@ public abstract class ServerChunkCacheMixin implements ServerChunkManagerInterfa
             for (MobCategory cat: MobCategory.values())
             {
                 ResourceKey<Level> dim = level.dimension(); // getDimensionType;
-                Pair key = Pair.of(dim, cat);
+                Pair<ResourceKey<Level>, MobCategory> key = Pair.of(dim, cat);
                 int spawnTries = SpawnReporter.spawn_tries.get(cat);
                 if (!SpawnReporter.local_spawns.containsKey(cat))
                 {

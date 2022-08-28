@@ -1,7 +1,7 @@
 package carpet.mixins;
 
 import carpet.fakes.WorldChunkInterface;
-import carpet.fakes.WorldInterface;
+import carpet.fakes.LevelInterface;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ChunkHolder;
 import net.minecraft.util.profiling.ProfilerFiller;
@@ -11,6 +11,7 @@ import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.EntityBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.LidBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.LevelChunk;
 import org.spongepowered.asm.mixin.Final;
@@ -18,7 +19,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 
 @Mixin(Level.class)
-public abstract class Level_movableBEMixin implements WorldInterface, LevelAccessor
+public abstract class Level_movableBEMixin implements LevelInterface, LevelAccessor
 {
     @Shadow
     @Final
@@ -64,9 +65,17 @@ public abstract class Level_movableBEMixin implements WorldInterface, LevelAcces
 
         BlockState blockState_2;
         if (newBlockEntity != null && block_1 instanceof EntityBlock)
+        {
             blockState_2 = ((WorldChunkInterface) worldChunk_1).setBlockStateWithBlockEntity(blockPos_1, blockState_1, newBlockEntity, (int_1 & 64) != 0);
+            if (newBlockEntity instanceof LidBlockEntity)
+            {
+                scheduleTick(blockPos_1, block_1, 5);
+            }
+        }
         else
+        {
             blockState_2 = worldChunk_1.setBlockState(blockPos_1, blockState_1, (int_1 & 64) != 0);
+        }
 
         if (blockState_2 == null)
         {

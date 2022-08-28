@@ -1,5 +1,7 @@
 package carpet.mixins;
 
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.protocol.game.ServerboundChatPacket;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
@@ -24,6 +26,7 @@ import static carpet.script.CarpetEventServer.Event.PLAYER_STOPS_SPRINTING;
 import static carpet.script.CarpetEventServer.Event.PLAYER_SWAPS_HANDS;
 import static carpet.script.CarpetEventServer.Event.PLAYER_SWINGS_HAND;
 import static carpet.script.CarpetEventServer.Event.PLAYER_SWITCHES_SLOT;
+import static carpet.script.CarpetEventServer.Event.PLAYER_MESSAGE;
 import static carpet.script.CarpetEventServer.Event.PLAYER_USES_ITEM;
 import static carpet.script.CarpetEventServer.Event.PLAYER_WAKES_UP;
 
@@ -103,7 +106,7 @@ public class ServerGamePacketListenerImpl_scarpetEventsMixin
 
     @Inject(method = "handlePlayerAction", at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/server/level/ServerPlayerGameMode;handleBlockBreakAction(Lnet/minecraft/core/BlockPos;Lnet/minecraft/network/protocol/game/ServerboundPlayerActionPacket$Action;Lnet/minecraft/core/Direction;I)V",
+            target = "Lnet/minecraft/server/level/ServerPlayerGameMode;handleBlockBreakAction(Lnet/minecraft/core/BlockPos;Lnet/minecraft/network/protocol/game/ServerboundPlayerActionPacket$Action;Lnet/minecraft/core/Direction;II)V",
             shift = At.Shift.BEFORE
     ))
     private void onClicked(ServerboundPlayerActionPacket packet, CallbackInfo ci)
@@ -276,6 +279,16 @@ public class ServerGamePacketListenerImpl_scarpetEventsMixin
         if (PLAYER_SWINGS_HAND.isNeeded() && !player.swinging)
         {
             PLAYER_SWINGS_HAND.onHandAction(player, packet.getHand());
+        }
+    }
+
+    @Inject(method = "handleChat(Lnet/minecraft/network/protocol/game/ServerboundChatPacket;)V",
+            at = @At(value = "HEAD")
+    )
+    private void onChatMessage(ServerboundChatPacket serverboundChatPacket, CallbackInfo ci) {
+        if (PLAYER_MESSAGE.isNeeded())
+        {
+            PLAYER_MESSAGE.onPlayerMessage(player, serverboundChatPacket.message());
         }
     }
 }

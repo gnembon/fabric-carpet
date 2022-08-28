@@ -4,6 +4,7 @@ import carpet.helpers.OptimizedExplosion;
 import carpet.CarpetSettings;
 import carpet.logging.LoggerRegistry;
 import carpet.logging.logHelpers.ExplosionLogHelper;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -12,7 +13,6 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
@@ -28,7 +28,7 @@ public abstract class Explosion_optimizedTntMixin
 {
     @Shadow
     @Final
-    private List<BlockPos> toBlow;
+    private ObjectArrayList<BlockPos> toBlow;
 
     @Shadow @Final private Level level;
 
@@ -80,7 +80,7 @@ public abstract class Explosion_optimizedTntMixin
     {
         if (LoggerRegistry.__explosions && ! world.isClientSide)
         {
-            eLogger = new ExplosionLogHelper(entity, x, y, z, power, createFire, destructionType);
+            eLogger = new ExplosionLogHelper(x, y, z, power, createFire, destructionType);
         }
     }
 

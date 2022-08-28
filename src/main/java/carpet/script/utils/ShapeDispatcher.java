@@ -43,13 +43,13 @@ import net.minecraft.nbt.StringTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.nbt.NumericTag;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.TextComponent;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
@@ -1041,7 +1041,7 @@ public class ShapeDispatcher
         {
             ParticleOptions particle = replacementParticle();
             int partno = Math.min(1000,20*subdivisions);
-            Random rand = p.level.getRandom();
+            RandomSource rand = p.level.getRandom();
             ServerLevel world = p.getLevel();
 
             Vec3 ccenter = relativiseRender(world, center, 0 );
@@ -1119,7 +1119,7 @@ public class ShapeDispatcher
         {
             ParticleOptions particle = replacementParticle();
             int partno = (int)Math.min(1000,Math.sqrt(20*subdivisions*(1+height)));
-            Random rand = p.level.getRandom();
+            RandomSource rand = p.level.getRandom();
             ServerLevel world = p.getLevel();
 
             Vec3 ccenter = relativiseRender(world, center, 0 );
@@ -1418,7 +1418,7 @@ public class ShapeDispatcher
         public Value validate(Map<String, Value> options, MinecraftServer server, Value value)
         {
             if (!(value instanceof FormattedTextValue))
-                value = new FormattedTextValue(new TextComponent(value.getString()));
+                value = new FormattedTextValue(Component.literal(value.getString()));
             return value;
         }
 
@@ -1426,7 +1426,7 @@ public class ShapeDispatcher
         public Tag toTag(Value value)
         {
             if (!(value instanceof FormattedTextValue))
-                value = new FormattedTextValue(new TextComponent(value.getString()));
+                value = new FormattedTextValue(Component.literal(value.getString()));
             return StringTag.valueOf(((FormattedTextValue)value).serialize());
         }
 
@@ -1794,7 +1794,7 @@ public class ShapeDispatcher
         int pcount = 0;
         if (distance < 100)
         {
-            Random rand = players.get(0).level.random;
+            RandomSource rand = players.get(0).level.random;
             int particles = (int)(distance/density)+1;
             Vec3 towards = to.subtract(from);
             for (int i = 0; i < particles; i++)

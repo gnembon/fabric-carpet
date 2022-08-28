@@ -2,7 +2,6 @@ package carpet.mixins;
 
 import carpet.CarpetSettings;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.TextComponent;
 import net.minecraft.network.protocol.status.ServerStatus;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -17,7 +16,7 @@ public class ServerStatus_motdMixin
     {
         if (!CarpetSettings.customMOTD.equals("_"))
         {
-            cir.setReturnValue(new TextComponent(CarpetSettings.customMOTD));
+            cir.setReturnValue(Component.literal(CarpetSettings.customMOTD));
             cir.cancel();
         }
     }

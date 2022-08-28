@@ -13,8 +13,8 @@ import carpet.script.Tokenizer;
 import carpet.script.exception.CarpetExpressionException;
 import carpet.script.value.FunctionValue;
 import carpet.script.value.Value;
-import carpet.settings.SettingsManager;
 import carpet.utils.CarpetProfiler;
+import carpet.utils.CommandHelper;
 import carpet.utils.Messenger;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
@@ -23,6 +23,7 @@ import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
+import net.minecraft.commands.CommandBuildContext;
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.IOException;
@@ -91,7 +92,7 @@ public class ScriptCommand
     ) throws CommandSyntaxException
     {
         CarpetScriptHost currentHost = getHost(context);
-        String previous = suggestionsBuilder.getRemaining().toLowerCase(Locale.ROOT);
+        String previous = suggestionsBuilder.getRemaining();
         int strlen = previous.length();
         StringBuilder lastToken = new StringBuilder();
         for (int idx = strlen-1; idx >=0; idx--)
@@ -129,7 +130,7 @@ public class ScriptCommand
         });
     }
 
-    public static void register(CommandDispatcher<CommandSourceStack> dispatcher)
+    public static void register(CommandDispatcher<CommandSourceStack> dispatcher, final CommandBuildContext commandBuildContext)
     {
         LiteralArgumentBuilder<CommandSourceStack> b = literal("globals").
                 executes(context -> listGlobals(context, false)).
@@ -139,7 +140,7 @@ public class ScriptCommand
         LiteralArgumentBuilder<CommandSourceStack> u = literal("resume").
                 executes( (cc) -> { CarpetServer.scriptServer.stopAll = false; return 1;});
         LiteralArgumentBuilder<CommandSourceStack> l = literal("run").
-                requires((player) -> SettingsManager.canUseCommand(player, CarpetSettings.commandScriptACE)).
+                requires((player) -> CommandHelper.canUseCommand(player, CarpetSettings.commandScriptACE)).
                 then(argument("expr", StringArgumentType.greedyString()).suggests(ScriptCommand::suggestCode).
                         executes((cc) -> compute(
                                 cc,
@@ -216,7 +217,7 @@ public class ScriptCommand
                         then(argument("from", BlockPosArgument.blockPos()).
                                 then(argument("to", BlockPosArgument.blockPos()).
                                         then(argument("expr", StringArgumentType.string()).
-                                                then(argument("block", BlockStateArgument.block()).
+                                                then(argument("block", BlockStateArgument.block(commandBuildContext)).
                                                         executes((cc) -> scriptFill(
                                                                 cc,
                                                                 BlockPosArgument.getSpawnablePos(cc, "origin"),
@@ -227,7 +228,7 @@ public class ScriptCommand
                                                                 null, "solid"
                                                         )).
                                                         then(literal("replace").
-                                                                then(argument("filter", BlockPredicateArgument.blockPredicate())
+                                                                then(argument("filter", BlockPredicateArgument.blockPredicate(commandBuildContext))
                                                                         .executes((cc) -> scriptFill(
                                                                                 cc,
                                                                                 BlockPosArgument.getSpawnablePos(cc, "origin"),
@@ -243,7 +244,7 @@ public class ScriptCommand
                         then(argument("from", BlockPosArgument.blockPos()).
                                 then(argument("to", BlockPosArgument.blockPos()).
                                         then(argument("expr", StringArgumentType.string()).
-                                                then(argument("block", BlockStateArgument.block()).
+                                                then(argument("block", BlockStateArgument.block(commandBuildContext)).
                                                         executes((cc) -> scriptFill(
                                                                 cc,
                                                                 BlockPosArgument.getSpawnablePos(cc, "origin"),
@@ -254,7 +255,7 @@ public class ScriptCommand
                                                                 null, "outline"
                                                         )).
                                                         then(literal("replace").
-                                                                then(argument("filter", BlockPredicateArgument.blockPredicate())
+                                                                then(argument("filter", BlockPredicateArgument.blockPredicate(commandBuildContext))
                                                                         .executes((cc) -> scriptFill(
                                                                                 cc,
                                                                                 BlockPosArgument.getSpawnablePos(cc, "origin"),
@@ -265,7 +266,7 @@ public class ScriptCommand
                                                                                 BlockPredicateArgument.getBlockPredicate(cc, "filter"),
                                                                                 "outline"
                                                                         )))))))));
-        LiteralArgumentBuilder<CommandSourceStack> a = literal("load").requires( (player) -> SettingsManager.canUseCommand(player, CarpetSettings.commandScriptACE) ).
+        LiteralArgumentBuilder<CommandSourceStack> a = literal("load").requires( (player) -> CommandHelper.canUseCommand(player, CarpetSettings.commandScriptACE) ).
                 then(argument("app", StringArgumentType.word()).
                         suggests( (cc, bb) -> suggest(CarpetServer.scriptServer.listAvailableModules(true),bb)).
                         executes((cc) ->
@@ -282,7 +283,7 @@ public class ScriptCommand
                                 )
                         )
                 );
-        LiteralArgumentBuilder<CommandSourceStack> f = literal("unload").requires( (player) -> SettingsManager.canUseCommand(player, CarpetSettings.commandScriptACE) ).
+        LiteralArgumentBuilder<CommandSourceStack> f = literal("unload").requires( (player) -> CommandHelper.canUseCommand(player, CarpetSettings.commandScriptACE) ).
                 then(argument("app", StringArgumentType.word()).
                         suggests( (cc, bb) -> suggest(CarpetServer.scriptServer.unloadableModules,bb)).
                         executes((cc) ->
@@ -291,7 +292,7 @@ public class ScriptCommand
                             return success?1:0;
                         }));
 
-        LiteralArgumentBuilder<CommandSourceStack> q = literal("event").requires( (player) -> SettingsManager.canUseCommand(player, CarpetSettings.commandScriptACE) ).
+        LiteralArgumentBuilder<CommandSourceStack> q = literal("event").requires( (player) -> CommandHelper.canUseCommand(player, CarpetSettings.commandScriptACE) ).
                 executes( (cc) -> listEvents(cc.getSource())).
                 then(literal("add_to").
                         then(argument("event", StringArgumentType.word()).
@@ -326,11 +327,11 @@ public class ScriptCommand
                                                 StringArgumentType.getString(cc, "call")
                                         )?1:0))));
 
-        LiteralArgumentBuilder<CommandSourceStack> d = literal("download").requires((player) -> SettingsManager.canUseCommand(player, CarpetSettings.commandScriptACE)).
+        LiteralArgumentBuilder<CommandSourceStack> d = literal("download").requires((player) -> CommandHelper.canUseCommand(player, CarpetSettings.commandScriptACE)).
                 then(argument("path", StringArgumentType.greedyString()).
                         suggests(ScriptCommand::suggestDownloadableApps).
                         executes(cc-> AppStoreManager.downloadScript(cc.getSource(), StringArgumentType.getString(cc,"path"))));
-        LiteralArgumentBuilder<CommandSourceStack> r = literal("remove").requires( (player) -> SettingsManager.canUseCommand(player, CarpetSettings.commandScriptACE) ).
+        LiteralArgumentBuilder<CommandSourceStack> r = literal("remove").requires( (player) -> CommandHelper.canUseCommand(player, CarpetSettings.commandScriptACE) ).
                 then(argument("app", StringArgumentType.word()).
                         suggests( (cc, bb) -> suggest(CarpetServer.scriptServer.unloadableModules,bb)).
                         executes((cc) ->
@@ -340,10 +341,10 @@ public class ScriptCommand
                         }));
 
         dispatcher.register(literal("script").
-                requires((player) ->  SettingsManager.canUseCommand(player, CarpetSettings.commandScript)).
+                requires((player) ->  CommandHelper.canUseCommand(player, CarpetSettings.commandScript)).
                 then(b).then(u).then(o).then(l).then(s).then(c).then(h).then(i).then(e).then(t).then(a).then(f).then(q).then(d).then(r));
         dispatcher.register(literal("script").
-                requires((player) -> SettingsManager.canUseCommand(player, CarpetSettings.commandScript)).
+                requires((player) -> CommandHelper.canUseCommand(player, CarpetSettings.commandScript)).
                 then(literal("in").
                         then(argument("app", StringArgumentType.word()).
                                 suggests( (cc, bb) -> suggest(CarpetServer.scriptServer.modules.keySet(), bb)).

@@ -9,7 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /* The internal expression evaluators exception class. */
-public class InternalExpressionException extends RuntimeException
+public class InternalExpressionException extends StacklessRuntimeException
 {
     public List<FunctionValue> stack = new ArrayList<>();
     public InternalExpressionException(String message)

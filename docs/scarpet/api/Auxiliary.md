@@ -295,6 +295,14 @@ Example usages:
   // not a problem in apps
 </pre>
 
+### `item_display_name(item)`
+ Returns the name of the item as a Text Value. `item` should be a list of `[item_name, count, nbt]`, or just an item name.
+ 
+ Please note that it is a translated value. treating it like a string (eg.slicing, breaking, changing its case) will turn it back into a normal string without translatable properties. just like a colorful formatted text loose its color. And the result of it converting to a string will use en-us (in a server) or your single player's language, but when you use print() or others functions that accept a text value to broadcast it to players, it will use each player's own language.
+ 
+ If the item is renamed, it will also be reflected in the results.
+
+
 ### `display_title(players, type, text?, fadeInTicks?, stayTicks?, fadeOutTicks),`
 
 Sends the player (or players if `players` is a list) a title of a specific type, with optionally some times.
@@ -579,7 +587,7 @@ Function example:
 <pre>
  script run create_datapack('example',{'data/test/functions/talk.mcfunction'->'say 1\nsay 2'})
 </pre>
-### `enable_hidden_dimensions()`
+### `enable_hidden_dimensions()` (1.18.1 and lower)
 
 The function reads current datapack settings detecting new dimensions defined by these datapacks that have not yet been added
 to the list of current dimensions and adds them so that they can be used and accessed right away. It doesn't matter how the
@@ -587,7 +595,8 @@ datapacks have been added to the game, either with `create_datapack()` or manual
 `/datapack enable` on it. Returns the list of valid dimension names / identifiers that has been added in the process.
 
 Fine print: The function should be
-considered experimental. There 'should not be' (famous last words) any side-effects if no worlds are added. Already connected
+considered experimental. For example: is not supposed to work at all in vanilla, and its doing exactly that in 1.18.2+.
+There 'should not be' (famous last words) any side-effects if no worlds are added. Already connected
 clients will not see suggestions for commands that use dimensions `/execute in <dim>` (vanilla client limitation) 
 but all commands should work just fine with
 the new dimensions. Existing worlds that have gotten modified settings by the datapacks will not be reloaded or replaced.
@@ -710,7 +719,8 @@ it could either mean your input is wrong, or statistic effectively has a value o
 
 
 ### `system_info()`, `system_info(property)`
-Fetches the value of a system property or returns all inforation as a map when called without any arguments. It can be used to 
+Fetches the value of one of the following system properties. If called without arguments, it returns a list of 
+available system_info options. It can be used to 
 fetch various information, mostly not changing, or only available via low level
 system calls. In all circumstances, these are only provided as read-only.
 
