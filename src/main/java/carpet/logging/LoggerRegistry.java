@@ -27,6 +27,7 @@ public class LoggerRegistry
     public static boolean __packets;
     public static boolean __pathfinding;
     public static boolean __explosions;
+    public static boolean __updateStackCount;
 
     public static void initLoggers()
     {
@@ -40,13 +41,13 @@ public class LoggerRegistry
         registerLogger("tnt", Logger.stardardLogger( "tnt", "brief", new String[]{"brief", "full"}, true));
         registerLogger("projectiles", Logger.stardardLogger("projectiles", "brief",  new String[]{"brief", "full"}));
         registerLogger("fallingBlocks",Logger.stardardLogger("fallingBlocks", "brief", new String[]{"brief", "full"}));
-        registerLogger("pathfinding", Logger.stardardLogger("pathfinding", "20", new String[]{"2", "5", "10"}));
+        registerLogger("pathfinding", TypeLogger.stardardTypeLogger("pathfinding", "20", int.class, new String[]{"2", "5", "10"}));
         registerLogger("tps", HUDLogger.stardardHUDLogger("tps", null, null));
         registerLogger("packets", HUDLogger.stardardHUDLogger("packets", null, null));
         registerLogger("counter",HUDLogger.stardardHUDLogger("counter","white", Arrays.stream(DyeColor.values()).map(Object::toString).toArray(String[]::new)));
         registerLogger("mobcaps", HUDLogger.stardardHUDLogger("mobcaps", "dynamic",new String[]{"dynamic", "overworld", "nether","end"}));
         registerLogger("explosions", Logger.stardardLogger("explosions", "brief",new String[]{"brief", "full"}, true));
-
+        registerLogger("updateStackCount", TypeLogger.stardardTypeLogger("updateStackCount", "25", int.class, new String[]{"0", "10", "25", "10000"}));
     }
 
     /**
