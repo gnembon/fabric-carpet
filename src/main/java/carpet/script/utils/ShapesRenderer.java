@@ -584,10 +584,12 @@ public class ShapesRenderer
             else
                 RenderSystem.enableCull();
             
+            /* 
             RenderSystem.depthMask(false);
             RenderSystem.depthFunc(516);
             RenderSystem.enableBlend();
             RenderSystem.blendFunc(GlStateManager.SourceFactor.ONE_MINUS_DST_ALPHA, GlStateManager.DestFactor.DST_ALPHA);
+             */
             bufferBuilder.begin(shape.mode, DefaultVertexFormat.POSITION_COLOR);
                 for(int i=0;i<shape.vertex_list.size();i++){
                     Vec3 vec=shape.vertex_list.get(i);
@@ -598,6 +600,7 @@ public class ShapesRenderer
                 }
                 tessellator.end();
 
+            /*
                 RenderSystem.depthFunc(515);
                 RenderSystem.enableBlend();
                 RenderSystem.defaultBlendFunc();
@@ -611,6 +614,7 @@ public class ShapesRenderer
                     bufferBuilder.vertex(vec.x()-cx, vec.y()-cy, vec.z()-cz).color(shape.fr, shape.fg, shape.fb, shape.fa).endVertex();
                 }
                 tessellator.end();
+            */
             RenderSystem.disableCull();
             RenderSystem.depthMask(false);
             //RenderSystem.enableDepthTest();
