@@ -280,7 +280,7 @@ public class ShapesRenderer
         }
     }
 
-    public static class RenderedItem extends RenderedShape<ShapeDispatcher.DisplayedItem> {
+    public static class RenderedItem extends RenderedShape<ShapeDispatcher.DisplayedSprite> {
 
         private boolean isitem;
 
@@ -294,7 +294,7 @@ public class ShapesRenderer
         private BlockEntity BlockEntity = null;
 
         protected RenderedItem(Minecraft client, ShapeDispatcher.ExpiringShape shape) {
-            super(client, (ShapeDispatcher.DisplayedItem) shape);
+            super(client, (ShapeDispatcher.DisplayedSprite) shape);
         }
 
         @Override

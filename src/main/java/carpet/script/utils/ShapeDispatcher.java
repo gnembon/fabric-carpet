@@ -264,8 +264,8 @@ public class ShapeDispatcher
             put("cylinder", creator(Cylinder::new));
             put("label", creator(DisplayedText::new));
             put("poly",creator(Polyface::new));
-            put("block_displayer",creator(()->new DisplayedItem(false)));
-            put("item_displayer",creator(()->new DisplayedItem(true)));
+            put("block_displayer",creator(()->new DisplayedSprite(false)));
+            put("item_displayer",creator(()->new DisplayedSprite(true)));
         }};
         private static Function<Map<String, Value>,ExpiringShape> creator(Supplier<ExpiringShape> shapeFactory)
         {
@@ -563,7 +563,7 @@ public class ShapeDispatcher
         }
     }
 
-    public static class DisplayedItem extends ExpiringShape {
+    public static class DisplayedSprite extends ExpiringShape {
         private final Set<String> required = Set.of("pos");
         private final Map<String, Value> optional = Map.ofEntries(
                 entry("facing", new StringValue("player")),
@@ -588,7 +588,7 @@ public class ShapeDispatcher
             return Sets.union(Sets.union(super.optionalParams(), optional.keySet()),isitem ? Set.of("item_transform_type") : Set.of());
         }
 
-        public DisplayedItem(boolean i) {
+        public DisplayedSprite(boolean i) {
             isitem = i;
         }
 
