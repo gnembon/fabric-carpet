@@ -8,6 +8,7 @@ import carpet.utils.BlockInfo;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import net.minecraft.advancements.critereon.MinMaxBounds;
+import net.minecraft.commands.arguments.item.ItemInput;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.GlobalPos;
 import net.minecraft.core.Registry;
@@ -414,30 +415,52 @@ public class ValueConversions
         );
     }
 
-    static public ItemStack getItemStackFromValue(Value value){
-        List<Value> items;
-        if(value instanceof ListValue blv && blv.length()==3){
-            items = blv.getItems();
-        }else if(value.isNull()){
+    public static ItemStack getItemStackFromValue(Value value, boolean withCount)
+    {
+        if (value.isNull())
+        {
             return ItemStack.EMPTY;
-        }else{
-            items= List.of(StringValue.of(value.getString()),Value.ONE,Value.NULL);
         }
-        String id=items.get(0).getString();
-        int count=((NumericValue)items.get(1)).getInt();
-        CompoundTag nbt=null;
-        if (!items.get(2).isNull()){
-            if(items.get(2) instanceof NBTSerializableValue nbtv){
-                nbt=nbtv.getCompoundTag();
+        final String name;
+        int count = 1;
+        CompoundTag nbtTag = null;
+        if (value instanceof ListValue list)
+        {
+            if (list.length() != 3)
+            {
+                throw new ThrowStatement("item definition from list of size "+list.length(), Throwables.UNKNOWN_ITEM);
             }
-            else{
-                nbt=new NBTSerializableValue(items.get(2).getString()).getCompoundTag();
+            final List<Value> items = list.getItems();
+            name = items.get(0).getString();
+            if (withCount)
+            {
+                count = NumericValue.asNumber(items.get(1)).getInt();
+            }
+            Value nbtValue = items.get(2);
+            if (!nbtValue.isNull())
+            {
+                nbtTag = ((NBTSerializableValue) NBTSerializableValue.fromValue(nbtValue)).getCompoundTag();
             }
         }
-        try{
-            return NBTSerializableValue.parseItem(id,nbt).createItemStack(count,false);
-        } catch (CommandSyntaxException e1) {
-            throw new IllegalStateException("Unexpected exception while creating item stack", e1);
+        else
+        {
+            name = value.getString();
+        }
+        ItemInput itemInput = NBTSerializableValue.parseItem(name, nbtTag);
+        try
+        {
+            return itemInput.createItemStack(count,false);
+        }
+        catch (CommandSyntaxException cse)
+        {
+            if (!withCount)
+            {
+                throw new IllegalStateException("Unexpected exception while creating item stack of " + name + ". All items should be able to stack to one", cse);
+            }
+            else
+            {
+                throw new ThrowStatement(count + " stack size of " + name, Throwables.UNKNOWN_ITEM);
+            }
         }
     }
 

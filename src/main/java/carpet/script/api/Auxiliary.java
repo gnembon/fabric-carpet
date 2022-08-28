@@ -258,10 +258,7 @@ public class Auxiliary {
             ));
         });
 
-        expression.addContextFunction("item_display_name", -1, (c, t, lv)->{
-            return new FormattedTextValue(ValueConversions.getItemStackFromValue(lv.get(0)).getHoverName());
-
-        });
+        expression.addUnaryFunction("item_display_name", v -> new FormattedTextValue(ValueConversions.getItemStackFromValue(v, false).getHoverName()));
 
         expression.addContextFunction("particle_box", -1, (c, t, lv) ->
         {

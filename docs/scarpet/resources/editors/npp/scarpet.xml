@@ -53,7 +53,7 @@
             </Keywords>
             <Keywords name="Keywords2">
                 block pos pos_offset solid air liquid flammable
-                transparent opacity blocks_daylight emitted_light light block_light sky_light see_sky brightness
+                transparent opacity blocks_daylight emitted_light light block_light sky_light effective_light see_sky brightness
                 hardness blast_resistance top loaded suffocates power ticks_randomly update block_tick random_tick in_slime_chunk
                 set without_updates
                 blocks_movement block_sound material map_colour block_state block_list block_tags block_data poi set_poi
@@ -77,7 +77,7 @@
 
                 player spawn entity_id entity_list entity_area entity_selector query modify entity_event entity_load_handler entity_types
 
-                item_list item_tags stack_limit item_category recipe_data crafting_remaining_item
+                item_list item_tags stack_limit item_category recipe_data crafting_remaining_item item_display_name
 
                 inventory_size inventory_has_items inventory_get inventory_set inventory_find inventory_remove drop_item
 

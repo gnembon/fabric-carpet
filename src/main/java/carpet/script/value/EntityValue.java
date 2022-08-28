@@ -1701,7 +1701,7 @@ public class EntityValue extends Value
             
         });
         put("item", (e, v) -> {
-                ItemStack item=ValueConversions.getItemStackFromValue(v);
+                ItemStack item=ValueConversions.getItemStackFromValue(v, true);
                 if(e instanceof ItemEntity itementity)            
                     itementity.setItem(item);
                 if(e instanceof ItemFrame itemframe)
