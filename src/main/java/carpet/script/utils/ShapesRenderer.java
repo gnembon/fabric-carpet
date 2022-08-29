@@ -372,8 +372,16 @@ public class ShapesRenderer
             if (!isitem) {
                 // draw the block itself
                 if (blockState.getRenderShape() == RenderShape.MODEL) {
-                    client.getBlockRenderer().renderSingleBlock(blockState, matrices, immediate, light,
-                            OverlayTexture.NO_OVERLAY);
+                    //client.getBlockRenderer().renderSingleBlock(blockState, matrices, immediate, light,
+                    //        OverlayTexture.NO_OVERLAY);
+                    var bakedModel = client.getBlockRenderer().getBlockModel(blockState);
+                    int color = client.getBlockColors().getColor(blockState,client.level,blockPos,0);
+                    //dont know why there is a 0. 
+                    //see https://github.com/senseiwells/EssentialClient/blob/4db1f291936f502304791ee323f369c206b3021d/src/main/java/me/senseiwells/essentialclient/utils/render/RenderHelper.java#L464
+                    float red = (color >> 16 & 0xFF) / 255.0F;
+			    	float green = (color >> 8 & 0xFF) / 255.0F;
+			    	float blue = (color & 0xFF) / 255.0F;
+                    client.getBlockRenderer().getModelRenderer().renderModel(matrices.last(), immediate.getBuffer(ItemBlockRenderTypes.getRenderType(blockState, false)), blockState, bakedModel, red, green, blue, light, OverlayTexture.NO_OVERLAY);
                 }
 
                 // draw the block`s entity part
