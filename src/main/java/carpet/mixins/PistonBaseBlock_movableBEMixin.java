@@ -2,20 +2,19 @@ package carpet.mixins;
 
 import carpet.CarpetSettings;
 import carpet.fakes.PistonBlockEntityInterface;
+
 import com.google.common.collect.Lists;
+
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.CommandBlock;
-import net.minecraft.world.level.block.DirectionalBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.piston.MovingPistonBlock;
 import net.minecraft.world.level.block.piston.PistonBaseBlock;
 import net.minecraft.world.level.block.piston.PistonStructureResolver;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.PushReaction;
+
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -27,56 +26,42 @@ import java.util.List;
 import java.util.Map;
 
 @Mixin(PistonBaseBlock.class)
-public abstract class PistonBaseBlock_movableBEMixin extends DirectionalBlock
-{
-    protected PistonBaseBlock_movableBEMixin(Properties block$Settings_1)
-    {
-        super(block$Settings_1);
-    }
-    
+public class PistonBaseBlock_movableBEMixin {
+
     private ThreadLocal<List<BlockEntity>> list1_BlockEntities = new ThreadLocal<>(); //Unneccessary ThreadLocal if client and server use different PistonBlock instances
 
-    @Inject(method = "isPushable", cancellable = true, at = @At(value = "RETURN", ordinal = 3, shift = At.Shift.BEFORE))
-    private static void movableCMD(BlockState blockState_1, Level world_1, BlockPos blockPos_1,
-            Direction direction_1, boolean boolean_1, Direction direction_2, CallbackInfoReturnable<Boolean> cir)
-    {
-        Block block_1 = blockState_1.getBlock();
-        //Make CommandBlocks movable, either use instanceof CommandBlock or the 3 cmd block objects,
-        if (CarpetSettings.movableBlockEntities && block_1 instanceof CommandBlock)
-        {
-            cir.setReturnValue(true);
-        }
-    }
-    
-    private static boolean isPushableBlockEntity(Block block)
-    {
-        //Making PISTON_EXTENSION (BlockPistonMoving) pushable would not work as its createNewTileEntity()-method returns null
-        return block != Blocks.ENDER_CHEST && block != Blocks.ENCHANTING_TABLE &&
-                       block != Blocks.END_GATEWAY && block != Blocks.END_PORTAL && block != Blocks.MOVING_PISTON  &&
-                       block != Blocks.SPAWNER;
-    }
-    
-    @Redirect(method = "isPushable", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/block/state/BlockState;hasBlockEntity()Z"))
-    private static boolean ifHasBlockEntity(BlockState blockState)
-    {
-        if (!blockState.hasBlockEntity())
-        {
-            return false;
-        }
-        else
-        {
-            return !(CarpetSettings.movableBlockEntities && isPushableBlockEntity(blockState.getBlock()));
+    @Inject(
+        method = "isPushable",
+        cancellable = true,
+        at = @At(
+            value = "INVOKE",
+            target = "Lnet/minecraft/world/level/block/state/BlockState;getDestroySpeed(Lnet/minecraft/world/level/BlockGetter;Lnet/minecraft/core/BlockPos;)F"
+        )
+    )
+    private static void overrideBlockEntityPushReaction(BlockState state, Level level, BlockPos pos, Direction moveDir, boolean allowDestroy, Direction pistonFacing, CallbackInfoReturnable<Boolean> cir) {
+        PushReaction pushReaction = state.getPistonPushReaction();
+
+        // The can-be-destroyed check takes precedence over the block entity check.
+        if (pushReaction == PushReaction.DESTROY) {
+            cir.setReturnValue(allowDestroy);
+        } else
+        // We move this check forward in order to fix an issue where 'push-only'
+        // blocks would ignore the block entity check.
+        if (state.hasBlockEntity() && !CarpetSettings.movableBlockEntities) {
+            cir.setReturnValue(false);
         }
     }
 
-    @Redirect(method = "isPushable", at = @At(
+    @Redirect(
+        method = "isPushable",
+        at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/world/level/block/state/BlockState;getPistonPushReaction()Lnet/minecraft/world/level/material/PushReaction;"
-    ))
-    private static PushReaction moveGrindstones(BlockState blockState)
-    {
-        if (CarpetSettings.movableBlockEntities && blockState.getBlock() == Blocks.GRINDSTONE) return PushReaction.NORMAL;
-        return blockState.getPistonPushReaction();
+            target = "Lnet/minecraft/world/level/block/state/BlockState;hasBlockEntity()Z"
+        )
+    )
+    private static boolean redirectHasBlockEntity(BlockState state) {
+        // Since we moved this check forward, we can just return false here.
+        return false;
     }
 
     @Inject(method = "moveBlocks", at = @At(value = "INVOKE", shift = At.Shift.BEFORE,

@@ -369,14 +369,10 @@ public class CarpetSettings
     public static boolean hopperCounters = false;
 
     @Rule(
-            desc = "Allows Budding Amethyst blocks to be moved",
-            extra = {
-                    "Allow for them to be moved by pistons",
-                    "as well as adds extra drop when mining with silk touch pickaxe"
-            },
+            desc = "Allows Budding Amethyst blocks to be harvested with a silk touch pickaxe",
             category = FEATURE
     )
-    public static boolean movableAmethyst = false;
+    public static boolean harvestableAmethyst = false;
 
     @Rule( desc = "Guardians turn into Elder Guardian when struck by lightning", category = FEATURE )
     public static boolean renewableSponges = false;
@@ -1076,5 +1072,12 @@ public class CarpetSettings
             validate = PushLimitLimits.class
     )
     public static int sculkSensorRange = 8;
+
+    @Rule(
+        desc = "Enables `/pistonmovebehavior` for players to change which blocks can be moved by pistons.",
+        extra = {"Block entities will remain immovable unless the `movableBlockEntities` rule is also enabled."},
+        category = {COMMAND, CREATIVE}
+    )
+    public static boolean commandPistonMoveBehavior = true;
 
 }

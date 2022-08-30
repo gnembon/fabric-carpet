@@ -73,7 +73,7 @@
     "CoralPlantBlock_renewableCoralMixin",
     "CoralFanBlock_renewableCoralMixin",
     "CoralFeature_renewableCoralMixin",
-    "BuddingAmethystBlock_movableAmethystMixin",
+    "BuddingAmethystBlock_harvestableAmethystMixin",
     "LiquidBlock_renewableBlackstoneMixin",
     "LiquidBlock_renewableDeepslateMixin",
     "LavaFluid_renewableDeepslateMixin",
@@ -180,7 +180,14 @@
     "LivingEntity_creativeFlyMixin",
     "ChunkMap_creativePlayersLoadChunksMixin",
     "SculkSensorBlock_rangeMixin",
-    "CollectingNeighborUpdaterAccessor"
+    "CollectingNeighborUpdaterAccessor",
+
+    "BlockBehaviour_pistonMoveBehaviorMixin",
+    "BlockStateBase_pistonMoveBehaviorMixin",
+    "MinecraftServer_pistonMoveBehaviorMixin",
+    "MovingPistonBlock_pistonMoveBehaviorMixin",
+    "PistonBaseBlock_pistonMoveBehaviorMixin",
+    "PistonHeadBlock_pistonMoveBehaviorMixin"
   ],
   "client": [
     "Timer_tickSpeedMixin",
