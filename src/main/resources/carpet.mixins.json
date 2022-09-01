@@ -183,7 +183,6 @@
     "CollectingNeighborUpdaterAccessor",
 
     "BlockBehaviour_customStickyMixin",
-    "BlockStateBase_customStickyMixin",
     "ChainBlock_customStickyMixin",
     "ChestBlock_customStickyMixin",
     "HoneyBlock_customStickyMixin",

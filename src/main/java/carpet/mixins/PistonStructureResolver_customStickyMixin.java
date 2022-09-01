@@ -9,7 +9,7 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 
-import carpet.fakes.BlockStateBaseInterface;
+import carpet.fakes.BlockBehaviourInterface;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -31,7 +31,7 @@ public class PistonStructureResolver_customStickyMixin {
         )
     )
     private static void isSticky(BlockState state, CallbackInfoReturnable<Boolean> cir) {
-        cir.setReturnValue(((BlockStateBaseInterface)state).isSticky());
+        cir.setReturnValue(((BlockBehaviourInterface)state.getBlock()).isSticky(state));
     }
 
     // fields that are needed because @Redirects cannot capture locals
@@ -60,7 +60,7 @@ public class PistonStructureResolver_customStickyMixin {
         )
     )
     private boolean onAddBlockLineCanStickToEachOther(BlockState state, BlockState behindState) {
-        return ((BlockStateBaseInterface)state).isStickyToNeighbor(level, pos_addBlockLine, behindPos_addBlockLine, behindState, pushDirection.getOpposite(), pushDirection);
+        return ((BlockBehaviourInterface)state.getBlock()).isStickyToNeighbor(level, pos_addBlockLine, state, behindPos_addBlockLine, behindState, pushDirection.getOpposite(), pushDirection);
     }
 
     // fields that are needed because @Redirects cannot capture locals
@@ -89,6 +89,6 @@ public class PistonStructureResolver_customStickyMixin {
         )
     )
     private boolean onAddBranchingBlocksCanStickToEachOther(BlockState neighborState, BlockState state, BlockPos pos) {
-        return ((BlockStateBaseInterface)state).isStickyToNeighbor(level, pos, neighborPos_addBranchingBlocks, neighborState, dir_addBranchingBlocks, pushDirection);
+        return ((BlockBehaviourInterface)state.getBlock()).isStickyToNeighbor(level, pos, state, neighborPos_addBranchingBlocks, neighborState, dir_addBranchingBlocks, pushDirection);
     }
 }
