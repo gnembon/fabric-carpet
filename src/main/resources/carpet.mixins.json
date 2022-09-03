@@ -170,7 +170,6 @@
     "PistonMovingBlockEntity_movableBEMixin",
     "Level_movableBEMixin",
     "LevelChunk_movableBEMixin",
-    "PistonHandler_customStickyMixin",
     "Player_creativeNoClipMixin",
     "PistonMovingBlockEntity_playerHandlingMixin",
     "BlockItem_creativeNoClipMixin",
@@ -180,7 +179,14 @@
     "LivingEntity_creativeFlyMixin",
     "ChunkMap_creativePlayersLoadChunksMixin",
     "SculkSensorBlock_rangeMixin",
-    "CollectingNeighborUpdaterAccessor"
+    "CollectingNeighborUpdaterAccessor",
+
+    "BlockBehaviour_customStickyMixin",
+    "ChainBlock_customStickyMixin",
+    "ChestBlock_customStickyMixin",
+    "HoneyBlock_customStickyMixin",
+    "PistonStructureResolver_customStickyMixin",
+    "SlimeBlock_customStickyMixin"
   ],
   "client": [
     "Timer_tickSpeedMixin",
