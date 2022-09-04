@@ -155,8 +155,8 @@ Available shapes:
  * `'block'` \ `'item'`:
    * Required attributes:
      * `pos` - position of the object.
-     * `item` - the object to show. could have NBT. is a item tuple or a string-id (exclusive to `'item_displayer'`)
-     * `block` - the object to show. could have NBT. is a block value or a string-id (exclusive to `'block_displayer'`)
+     * `item` - the object to show. could have NBT. is a item tuple or a string-id (exclusive to `'item'`)
+     * `block` - the object to show. could have NBT. is a block value or a string-id (exclusive to `'block'`)
    * Optional attributes:
      * `toggleable` - if True, can toggle visibility by using F3+B. just like entities' hitbox.
      * `facing` - object's direction, where its facing. Possible options are: `player` (default, it
@@ -165,7 +165,7 @@ Available shapes:
      * `height`, `width`, `obj_size` - size of it. should be numbers
      * `skylight`, `blocklight` - light level. omit it to use local light level. should between 0~15.
      * `item_transform_type` - one of "none","third_person_left_hand","third_person_right_hand","first_person_left_hand",
-     "first_person_right_hand","head","gui","ground","fixed". In addition to the literal meaning, it can also be used to use special models of tridents and telescopes. (exclusive to `'item_displayer'`)
+     "first_person_right_hand","head","gui","ground","fixed". In addition to the literal meaning, it can also be used to use special models of tridents and telescopes. (exclusive to `'item'`)
 
 
       
