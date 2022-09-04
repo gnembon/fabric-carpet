@@ -616,11 +616,11 @@ public class ShapeDispatcher
         protected void init(Map<String, Value> options) {
             super.init(options);
             pos = vecFromValue(options.get("pos"));
-            blockState = ((BlockValue) options.getOrDefault("block", BlockValue.AIR)).getBlockState();
-            blockEntity = ((BlockValue) options.getOrDefault("block", BlockValue.AIR)).getData();
-            NBTSerializableValue item_ = (NBTSerializableValue) options.getOrDefault("item", null);
-            if (item_ != null) {
-                this.item = ItemStack.of(item_.getCompoundTag());
+            if(!this.isitem){
+                blockState = ((BlockValue) options.get("block")).getBlockState();
+                blockEntity = ((BlockValue) options.get("block")).getData();
+            }else{
+                this.item = ItemStack.of(((NBTSerializableValue) options.get("item")).getCompoundTag());
             }
             light_fromblock = NumericValue
                     .asNumber(options.getOrDefault("blocklight", optional.get("blocklight"))).getInt();
