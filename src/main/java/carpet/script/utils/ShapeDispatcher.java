@@ -135,7 +135,7 @@ public class ShapeDispatcher
         List<ServerPlayer> alternativePlayers = new ArrayList<>();
         for (ServerPlayer player : players)
         {
-            if (ServerNetworkHandler.isValidCarpetPlayer(player)&&!CarpetSettings.superSecretSetting)//for debug
+            if (ServerNetworkHandler.isValidCarpetPlayer(player))
             {
                 clientPlayers.add(player);
             }
