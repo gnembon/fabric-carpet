@@ -164,8 +164,8 @@ Available shapes:
      * `tilt`, `lean`, `turn` - additional rotations along all three axis
      * `height`, `width`, `obj_size` - size of it. should be numbers
      * `light_fromsky`, `light_fromblock` - light level. omit it to use local light level. should between 0~15.
-     * `item_transform_type` - one of "NONE","THIRD_PERSON_LEFT_HAND","THIRD_PERSON_RIGHT_HAND","FIRST_PERSON_LEFT_HAND",
-     "FIRST_PERSON_RIGHT_HAND","HEAD","GUI","GROUND","FIXED". In addition to the literal meaning, it can also be used to use special models of tridents and telescopes. (exclusive to `'item_displayer'`)
+     * `item_transform_type` - one of "none","third_person_left_hand","third_person_right_hand","first_person_left_hand",
+     "first_person_right_hand","head","gui","ground","fixed". In addition to the literal meaning, it can also be used to use special models of tridents and telescopes. (exclusive to `'item_displayer'`)
 
 
       
