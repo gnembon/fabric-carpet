@@ -85,9 +85,9 @@ public class ShapesRenderer
         put("sphere", RenderedSphere::new);
         put("cylinder", RenderedCylinder::new);
         put("label", RenderedText::new);
-        put("poly",RenderedPolyface::new);
-        put("block_displayer",(c,s)->new RenderedItem(c,s).set_isitem(false));
-        put("item_displayer",(c,s)->new RenderedItem(c,s).set_isitem(true));
+        put("polygon",RenderedPolyface::new);
+        put("block",(c,s)->new RenderedItem(c,s).set_isitem(false));
+        put("item",(c,s)->new RenderedItem(c,s).set_isitem(true));
     }};
 
     public ShapesRenderer(Minecraft minecraftClient)

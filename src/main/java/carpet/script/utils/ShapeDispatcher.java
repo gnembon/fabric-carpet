@@ -263,9 +263,9 @@ public class ShapeDispatcher
             put("sphere", creator(Sphere::new));
             put("cylinder", creator(Cylinder::new));
             put("label", creator(DisplayedText::new));
-            put("poly",creator(Polyface::new));
-            put("block_displayer",creator(()->new DisplayedSprite(false)));
-            put("item_displayer",creator(()->new DisplayedSprite(true)));
+            put("polygon",creator(Polyface::new));
+            put("block",creator(()->new DisplayedSprite(false)));
+            put("item",creator(()->new DisplayedSprite(true)));
         }};
         private static Function<Map<String, Value>,ExpiringShape> creator(Supplier<ExpiringShape> shapeFactory)
         {
@@ -575,7 +575,7 @@ public class ShapeDispatcher
                 entry("obj_size", new NumericValue(1)),
                 entry("light_fromblock", new NumericValue(-999)),
                 entry("light_fromsky", new NumericValue(-999)),
-                entry("needf3b", BooleanValue.FALSE));
+                entry("toggleable", BooleanValue.FALSE));
         private boolean isitem;
 
         @Override
@@ -645,8 +645,8 @@ public class ShapeDispatcher
             }
 
             needf3b = false;
-            if (options.containsKey("needf3b")) {
-                needf3b = options.get("needf3b").getBoolean();
+            if (options.containsKey("toggleable")) {
+                needf3b = options.get("toggleable").getBoolean();
             }
 
             tilt = NumericValue.asNumber(options.getOrDefault("tilt", optional.get("tilt"))).getFloat();
@@ -893,7 +893,7 @@ public class ShapeDispatcher
             entry("mode", new StringValue("polygon")),
             entry("inneredges", Value.TRUE),
             entry("doublesided", Value.TRUE),
-            entry("needf3b", Value.FALSE)
+            entry("toggleable", Value.FALSE)
         );
         @Override
         protected Set<String> requiredParams() { return Sets.union(super.requiredParams(), required); }
@@ -909,8 +909,8 @@ public class ShapeDispatcher
             super.init(options);
 
             needf3b = false;
-            if (options.containsKey("needf3b")) {
-                needf3b = options.get("needf3b").getBoolean();
+            if (options.containsKey("toggleable")) {
+                needf3b = options.get("toggleable").getBoolean();
             }
 
             doublesided=options.getOrDefault("doublesided",optional.get("doublesided")).getBoolean();
@@ -1270,7 +1270,7 @@ public class ShapeDispatcher
             put("turn", new FloatParam("turn"));
             put("facing", new StringChoiceParam("axis", "player", "north", "south", "east", "west", "up", "down"));
             put("doublesided", new BoolParam("doublesided"));
-            put("needf3b", new BoolParam("needf3b"));
+            put("toggleable", new BoolParam("toggleable"));
 
         }};
         protected String id;

@@ -142,7 +142,7 @@ Available shapes:
      * `height` - height of the cyllinder, defaults to `0`, so flat disk. Can be negative.
      * `level` - level of details, see `'sphere'`.
 
- * `'poly'`:
+ * `'polygon'`:
    * Required attributes:
      * `points` - list of points defining vertices of the polygon
    * Optional attributes:
@@ -150,15 +150,15 @@ Available shapes:
      * `mode` - how those points are connected. may be "polygon"(default),"strip" or "triangles". "polygon" means that it will be viewed as vertices of a polygon center on the first one. "strip" means that it will be viewed as a triangles strip. "triangles" means that it will be viewed as some triangles that are not related to each other (therefor length of `points` in this mode have to be a multiple of 3).
      * `inneredges` - if `true` it will make the inner edges be drawn as well. 
      * `doublesided` - if `true` it will make the shapes visible from the back as well. Default is `true`. 
-     * `needf3b` - if True, can toggle visibility by using F3+B. just like entities' hitbox.
+     * `toggleable` - if True, can toggle visibility by using F3+B. just like entities' hitbox.
 
- * `'block_displayer'` \ `'item_displayer'`:
+ * `'block'` \ `'item'`:
    * Required attributes:
      * `pos` - position of the object.
      * `item` - the object to show. could have NBT. is a item tuple or a string-id (exclusive to `'item_displayer'`)
      * `block` - the object to show. could have NBT. is a block value or a string-id (exclusive to `'block_displayer'`)
    * Optional attributes:
-     * `needf3b` - if True, can toggle visibility by using F3+B. just like entities' hitbox.
+     * `toggleable` - if True, can toggle visibility by using F3+B. just like entities' hitbox.
      * `facing` - object's direction, where its facing. Possible options are: `player` (default, it
      always rotates to face the player), `north`, `south`, `east`, `west`, `up`, `down`
      * `tilt`, `lean`, `turn` - additional rotations along all three axis
