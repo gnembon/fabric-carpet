@@ -573,8 +573,8 @@ public class ShapeDispatcher
                 entry("height", new NumericValue(1)),
                 entry("width", new NumericValue(1)),
                 entry("obj_size", new NumericValue(1)),
-                entry("light_fromblock", new NumericValue(-999)),
-                entry("light_fromsky", new NumericValue(-999)),
+                entry("blocklight", new NumericValue(-999)),
+                entry("skylight", new NumericValue(-999)),
                 entry("toggleable", BooleanValue.FALSE));
         private boolean isitem;
 
@@ -622,10 +622,10 @@ public class ShapeDispatcher
                 this.item = ItemStack.of(item_.getCompoundTag());
             }
             light_fromblock = NumericValue
-                    .asNumber(options.getOrDefault("light_fromblock", optional.get("light_fromblock"))).getInt();
+                    .asNumber(options.getOrDefault("blocklight", optional.get("blocklight"))).getInt();
             if (light_fromblock > 15)
                 light_fromblock = 15;
-            light_fromsky = NumericValue.asNumber(options.getOrDefault("light_fromsky", optional.get("light_fromsky")))
+            light_fromsky = NumericValue.asNumber(options.getOrDefault("skylight", optional.get("skylight")))
                     .getInt();
             if (light_fromsky > 15)
                 light_fromsky = 15;
@@ -1261,8 +1261,8 @@ public class ShapeDispatcher
 
             put("block", new BlockParam("block"));
             put("item", new ItemParam("item"));
-            put("light_fromblock", new NonNegativeIntParam("light_fromblock"));
-            put("light_fromsky", new NonNegativeIntParam("light_fromsky"));
+            put("blocklight", new NonNegativeIntParam("blocklight"));
+            put("skylight", new NonNegativeIntParam("skylight"));
             put("indent", new FloatParam("indent"));
             put("raise", new FloatParam("raise"));
             put("tilt", new FloatParam("tilt"));
