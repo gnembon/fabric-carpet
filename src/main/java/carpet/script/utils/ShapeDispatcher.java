@@ -631,7 +631,10 @@ public class ShapeDispatcher
             if (light_fromsky > 15)
                 light_fromsky = 15;
 
-            item_transform_type = TransformType.valueOf(options.getOrDefault("item_transform_type",new StringValue("GUI")).getString());
+            item_transform_type = TransformType.GUI;
+            if(options.containsKey("item_transform_type")){
+                item_transform_type = TransformType.valueOf(options.get("item_transform_type").getString());
+            }
 
             String dir = options.getOrDefault("facing", optional.get("facing")).getString();
             facing = null;
@@ -1249,9 +1252,7 @@ public class ShapeDispatcher
                     {
                         public Value validate(Map o, MinecraftServer s, Value v)
                         {
-                            var res = super.validate(o, s ,new StringValue(v.getString().toUpperCase(Locale.ROOT)));
-                            if (res!=null)return res;
-                            return new StringValue("GUI");
+                            return super.validate(o, s ,new StringValue(v.getString().toUpperCase(Locale.ROOT)));
                         }
                     });
             put("snap", new StringChoiceParam("snap",
