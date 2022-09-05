@@ -7,3 +7,4 @@ accessible class net/minecraft/world/level/lighting/BlockLightSectionStorage$Blo
 accessible class net/minecraft/server/MinecraftServer$ReloadableResources
 
 accessible field net/minecraft/world/level/block/state/BlockBehaviour UPDATE_SHAPE_ORDER [Lnet/minecraft/core/Direction;
+accessible field net/minecraft/client/renderer/blockentity/ShulkerBoxRenderer model Lnet/minecraft/client/model/ShulkerModel;
