@@ -86,8 +86,8 @@ public class ShapesRenderer
         put("cylinder", RenderedCylinder::new);
         put("label", RenderedText::new);
         put("polygon",RenderedPolyface::new);
-        put("block",(c,s)->new RenderedItem(c,s).set_isitem(false));
-        put("item",(c,s)->new RenderedItem(c,s).set_isitem(true));
+        put("block",(c,s)->new RenderedSprite(c,s).set_isitem(false));
+        put("item",(c,s)->new RenderedSprite(c,s).set_isitem(true));
     }};
 
     public ShapesRenderer(Minecraft minecraftClient)
@@ -280,11 +280,11 @@ public class ShapesRenderer
         }
     }
 
-    public static class RenderedItem extends RenderedShape<ShapeDispatcher.DisplayedSprite> {
+    public static class RenderedSprite extends RenderedShape<ShapeDispatcher.DisplayedSprite> {
 
         private boolean isitem;
 
-        public RenderedItem set_isitem(boolean isitem) {
+        public RenderedSprite set_isitem(boolean isitem) {
             this.isitem = isitem;
             return this;
         }
@@ -293,7 +293,7 @@ public class ShapesRenderer
         private BlockState blockState;
         private BlockEntity BlockEntity = null;
 
-        protected RenderedItem(Minecraft client, ShapeDispatcher.ExpiringShape shape) {
+        protected RenderedSprite(Minecraft client, ShapeDispatcher.ExpiringShape shape) {
             super(client, (ShapeDispatcher.DisplayedSprite) shape);
         }
 
@@ -346,7 +346,7 @@ public class ShapesRenderer
                 matrices.mulPose(Vector3f.XP.rotationDegrees(shape.lean));
             if (shape.turn != 0.0f)
                 matrices.mulPose(Vector3f.YP.rotationDegrees(shape.turn));
-            matrices.scale(shape.width, shape.height, shape.size);
+            matrices.scale(shape.scale_x, shape.scale_y, shape.scale_z);
 
             if (!isitem)// blocks should use its center as the origin
                 matrices.translate(-0.5, -0.5, -0.5);

@@ -598,12 +598,12 @@ public class ShapeDispatcher
         float tilt;
         float lean;
         float turn;
-        float size = 1.0f;
+        float scale_z = 1.0f;
         int light_fromblock;
         int light_fromsky;
 
-        float height = 1.0f;
-        float width = 1.0f;
+        float scale_y = 1.0f;
+        float scale_x = 1.0f;
         boolean needf3b;
         CompoundTag blockEntity;
         BlockState blockState;
@@ -655,9 +655,9 @@ public class ShapeDispatcher
             lean = NumericValue.asNumber(options.getOrDefault("lean", optional.get("lean"))).getFloat();
             turn = NumericValue.asNumber(options.getOrDefault("turn", optional.get("turn"))).getFloat();
             List<Value> scale = ((ListValue) options.getOrDefault("scale", optional.get("scale"))).unpack();
-            height = NumericValue.asNumber(scale.get(1)).getFloat();
-            width = NumericValue.asNumber(scale.get(0)).getFloat();
-            size = NumericValue.asNumber(scale.get(2)).getFloat();
+            scale_y = NumericValue.asNumber(scale.get(1)).getFloat();
+            scale_x = NumericValue.asNumber(scale.get(0)).getFloat();
+            scale_z = NumericValue.asNumber(scale.get(2)).getFloat();
         }
 
         @Override
@@ -693,9 +693,9 @@ public class ShapeDispatcher
             hash ^= Float.hashCode(tilt); hash *= 1099511628211L;
             hash ^= Float.hashCode(lean); hash *= 1099511628211L;
             hash ^= Float.hashCode(turn); hash *= 1099511628211L;
-            hash ^= Float.hashCode(height); hash *= 1099511628211L;
-            hash ^= Float.hashCode(size); hash *= 1099511628211L;
-            hash ^= Float.hashCode(width); hash *= 1099511628211L;
+            hash ^= Float.hashCode(scale_y); hash *= 1099511628211L;
+            hash ^= Float.hashCode(scale_z); hash *= 1099511628211L;
+            hash ^= Float.hashCode(scale_x); hash *= 1099511628211L;
             hash ^= Float.hashCode(light_fromsky); hash *= 1099511628211L;
             hash ^= Float.hashCode(light_fromblock); hash *= 1099511628211L;
             if (blockEntity!= null) hash ^= blockEntity.toString().hashCode(); hash *= 1099511628211L;
