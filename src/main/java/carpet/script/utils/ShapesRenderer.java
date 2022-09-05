@@ -346,7 +346,7 @@ public class ShapesRenderer
                 matrices.mulPose(Vector3f.XP.rotationDegrees(shape.lean));
             if (shape.turn != 0.0f)
                 matrices.mulPose(Vector3f.YP.rotationDegrees(shape.turn));
-            matrices.scale(shape.size * shape.width, shape.size * shape.height, shape.size);
+            matrices.scale(shape.width, shape.height, shape.size);
 
             if (!isitem)// blocks should use its center as the origin
                 matrices.translate(-0.5, -0.5, -0.5);

@@ -162,7 +162,7 @@ Available shapes:
      * `facing` - object's direction, where its facing. Possible options are: `player` (default, it
      always rotates to face the player), `north`, `south`, `east`, `west`, `up`, `down`
      * `tilt`, `lean`, `turn` - additional rotations along all three axis
-     * `height`, `width`, `obj_size` - size of it. should be numbers
+     * `scale` - size of it. should be a number or a list of 3 numbers (x,y,z).
      * `skylight`, `blocklight` - light level. omit it to use local light level. should between 0~15.
      * `item_transform_type` - one of "none","third_person_left_hand","third_person_right_hand","first_person_left_hand",
      "first_person_right_hand","head","gui","ground","fixed". In addition to the literal meaning, it can also be used to use special models of tridents and telescopes. (exclusive to `'item'`)

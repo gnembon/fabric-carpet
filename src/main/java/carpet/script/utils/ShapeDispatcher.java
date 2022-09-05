@@ -571,9 +571,7 @@ public class ShapeDispatcher
                 entry("tilt", new NumericValue(0)),
                 entry("lean", new NumericValue(0)),
                 entry("turn", new NumericValue(0)),
-                entry("height", new NumericValue(1)),
-                entry("width", new NumericValue(1)),
-                entry("obj_size", new NumericValue(1)),
+                entry("scale", ListValue.fromTriple(1,1,1)),
                 entry("blocklight", new NumericValue(-999)),
                 entry("skylight", new NumericValue(-999)),
                 entry("toggleable", BooleanValue.FALSE));
@@ -600,12 +598,12 @@ public class ShapeDispatcher
         float tilt;
         float lean;
         float turn;
-        float size;
+        float size = 1.0f;
         int light_fromblock;
         int light_fromsky;
 
-        float height;
-        float width;
+        float height = 1.0f;
+        float width = 1.0f;
         boolean needf3b;
         CompoundTag blockEntity;
         BlockState blockState;
@@ -656,9 +654,10 @@ public class ShapeDispatcher
             tilt = NumericValue.asNumber(options.getOrDefault("tilt", optional.get("tilt"))).getFloat();
             lean = NumericValue.asNumber(options.getOrDefault("lean", optional.get("lean"))).getFloat();
             turn = NumericValue.asNumber(options.getOrDefault("turn", optional.get("turn"))).getFloat();
-            height = NumericValue.asNumber(options.getOrDefault("height", optional.get("height"))).getFloat();
-            width = NumericValue.asNumber(options.getOrDefault("width", optional.get("width"))).getFloat();
-            size = NumericValue.asNumber(options.getOrDefault("obj_size", optional.get("obj_size"))).getFloat();
+            List<Value> scale = ((ListValue) options.getOrDefault("scale", optional.get("scale"))).unpack();
+            height = NumericValue.asNumber(scale.get(1)).getFloat();
+            width = NumericValue.asNumber(scale.get(0)).getFloat();
+            size = NumericValue.asNumber(scale.get(2)).getFloat();
         }
 
         @Override
@@ -1272,7 +1271,14 @@ public class ShapeDispatcher
             put("level", new PositiveIntParam("level"));
             put("height", new FloatParam("height"));
             put("width", new FloatParam("width"));
-            put("obj_size", new FloatParam("obj_size"));
+            put("scale", new Vec3Param("scale", false){
+                public Value validate(java.util.Map<String,Value> options, MinecraftServer server, Value value) {
+                    if (value instanceof NumericValue vn){
+                        value = ListValue.of(vn,vn,vn);
+                    }
+                    return super.validate(options, server, value);
+                };
+            });
             put("axis", new StringChoiceParam("axis", "x", "y", "z"));
             put("points", new PointsParam("points"));
             put("text", new FormattedTextParam("text"));
