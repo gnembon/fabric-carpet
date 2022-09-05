@@ -662,18 +662,14 @@ public class ShapeDispatcher
 
         @Override
         public Consumer<ServerPlayer> alternative() {
-            int color;
+            ParticleOptions locparticledata;
             if(this.isitem){
-                color = Block.byItem(this.item.getItem()).defaultMaterialColor().col;
+                if(Block.byItem(this.item.getItem()).defaultBlockState().isAir())
+                    return p->{};
+                locparticledata = getParticleData("block_marker "+Registry.BLOCK.getKey(Block.byItem(this.item.getItem())));
             }else{
-                color = this.blockState.getMapColor(null, null).col;
+                locparticledata = getParticleData("block_marker "+Registry.BLOCK.getKey(this.blockState.getBlock()));
             }
-            if (color==0) return p->{};
-            fr=(float) ((color >> 16 & 0xFF)/255.0);
-            fg=(float) ((color >> 8 & 0xFF)/255.0);
-            fb=(float) ((color & 0xFF)/255.0);
-            final ParticleOptions locparticledata = getParticleData(String.format(Locale.ROOT ,"dust %.1f %.1f %.1f %.1f", fr, fg, fb, 1.0));
-            
             
 
             return p -> {
