@@ -146,9 +146,9 @@ Available shapes:
    * Required attributes:
      * `points` - list of points defining vertices of the polygon
    * Optional attributes:
-     * `relative` - list of bools. vertices of the polygon that affected by 'follow'. Default means that every point is affacted.
+     * `relative` - list of bools. vertices of the polygon that affected by 'follow'. Could be a single bools to affact allpoints too. Default means that every point is affacted.
      * `mode` - how those points are connected. may be "polygon"(default),"strip" or "triangles". "polygon" means that it will be viewed as vertices of a polygon center on the first one. "strip" means that it will be viewed as a triangles strip. "triangles" means that it will be viewed as some triangles that are not related to each other (therefor length of `points` in this mode have to be a multiple of 3).
-     * `inneredges` - if `true` it will make the inner edges be drawn as well. 
+     * `inner` - if `true` it will make the inner edges be drawn as well. 
      * `doublesided` - if `true` it will make the shapes visible from the back as well. Default is `true`. 
      * `toggleable` - if True, can toggle visibility by using F3+B. just like entities' hitbox.
 
@@ -164,7 +164,7 @@ Available shapes:
      * `tilt`, `lean`, `turn` - additional rotations along all three axis
      * `scale` - scale of it in 3 axis-direction. should be a number or a list of 3 numbers (x,y,z).
      * `skylight`, `blocklight` - light level. omit it to use local light level. should between 0~15.
-     * `item_transform_type` - one of "none","third_person_left_hand","third_person_right_hand","first_person_left_hand",
+     * `variant` - one of "none","third_person_left_hand","third_person_right_hand","first_person_left_hand",
      "first_person_right_hand","head","gui","ground","fixed". In addition to the literal meaning, it can also be used to use special models of tridents and telescopes. (exclusive to `'item'`)
 
 

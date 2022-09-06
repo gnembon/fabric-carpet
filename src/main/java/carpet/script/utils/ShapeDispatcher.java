@@ -584,7 +584,7 @@ public class ShapeDispatcher
 
         @Override
         protected Set<String> optionalParams() {
-            return Sets.union(Sets.union(super.optionalParams(), optional.keySet()),isitem ? Set.of("item_transform_type") : Set.of());
+            return Sets.union(Sets.union(super.optionalParams(), optional.keySet()),isitem ? Set.of("variant") : Set.of());
         }
 
         public DisplayedSprite(boolean i) {
@@ -630,8 +630,8 @@ public class ShapeDispatcher
                 light_fromsky = 15;
 
             item_transform_type = TransformType.GUI;
-            if(options.containsKey("item_transform_type")){
-                item_transform_type = TransformType.valueOf(options.get("item_transform_type").getString());
+            if(options.containsKey("variant")){
+                item_transform_type = TransformType.valueOf(options.get("variant").getString());
             }
 
             String dir = options.getOrDefault("facing", optional.get("facing")).getString();
@@ -1239,7 +1239,7 @@ public class ShapeDispatcher
             put("duration", new NonNegativeIntParam("duration"));
             put("color", new ColorParam("color"));
             put("follow", new EntityParam("follow"));
-            put("item_transform_type",new StringChoiceParam("item_transform_type",
+            put("variant",new StringChoiceParam("variant",
                     "NONE",
                     "THIRD_PERSON_LEFT_HAND",
                     "THIRD_PERSON_RIGHT_HAND",
