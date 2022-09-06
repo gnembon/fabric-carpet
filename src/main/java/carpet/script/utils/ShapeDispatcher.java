@@ -909,7 +909,7 @@ public class ShapeDispatcher
         private final Map<String, Value> optional = Map.ofEntries(
             entry("relative",Value.NULL),
             entry("mode", new StringValue("polygon")),
-            entry("inneredges", Value.TRUE),
+            entry("inner", Value.TRUE),
             entry("doublesided", Value.TRUE),
             entry("toggleable", Value.FALSE)
         );
@@ -937,7 +937,7 @@ public class ShapeDispatcher
                 abl.forEach(x->vertex_list.add(vecFromValue(x)));
             }
             String _mode = options.getOrDefault("mode",optional.get("mode")).getString();
-            inneredges = options.getOrDefault("inneredges",optional.get("inneredges")).getBoolean();
+            inneredges = options.getOrDefault("inner",optional.get("inner")).getBoolean();
             if(vertex_list.size()<3){
                 throw new IllegalArgumentException("Unexpected vertex list size: " + vertex_list.size());
             }else if(vertex_list.size()<4){
@@ -1228,7 +1228,7 @@ public class ShapeDispatcher
             });*/
             put("mode",new StringChoiceParam("mode","polygon","strip","triangles"));
             put("relative",new OptionalBoolListParam("relative"));
-            put("inneredges", new BoolParam("inneredges"));
+            put("inner", new BoolParam("inner"));
             put("shape", new ShapeParam());
             put("dim", new DimensionParam());
             put("duration", new NonNegativeIntParam("duration"));
