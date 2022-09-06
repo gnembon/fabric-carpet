@@ -959,6 +959,11 @@ public class ShapeDispatcher
                     relative.add(it.hasNext()?it.next().getBoolean():false);//if part of it got defined.
                 }
             }
+            else if(options.getOrDefault("relative",optional.get("relative")) instanceof BooleanValue boolv){
+                for(long i=0L;i<vertex_list.size();i++){
+                    relative.add(boolv.getBoolean());//if it is a boolean.
+                }
+            }
             else{
                 for(long i=0L;i<vertex_list.size();i++){
                     relative.add(true);//if there is nothing defined at all.
@@ -1316,6 +1321,9 @@ public class ShapeDispatcher
         public Value decode(Tag tag) {
             if(tag instanceof ListTag){
                 return ListValue.wrap(((ListTag)tag).stream().map(x->BooleanValue.of(((NumericTag)x).getAsNumber().doubleValue()!=0)));
+            }
+            if(tag instanceof ByteTag booltag){
+                return BooleanValue.of(booltag.getAsByte()!=0);
             }
             return Value.NULL;
         }
