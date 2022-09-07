@@ -1330,7 +1330,13 @@ public class ShapeDispatcher
 
         @Override
         public Value validate(Map<String, Value> options, MinecraftServer server, Value value) {
-            return decode(toTag(value));
+            if(value instanceof AbstractListValue lv){
+                return ListValue.wrap(lv.unpack().stream().map(Value::getBoolean).map(BooleanValue::of));
+            }
+            if(value instanceof BooleanValue || value.isNull()){
+                return value;
+            }
+            return BooleanValue.of(value.getBoolean());
         }
     }
     public abstract static class StringParam extends Param
