@@ -91,6 +91,7 @@ Optional shared shape attributes:
    value is `'xyz'`, meaning the shape will be drawn relatively to the entity in all three directions. Using `xz` for 
    instance makes so that the shape follows the entity, but stays at the same, absolute Y coordinate. Preceeding an axis
    with `d`, like `dxdydz` would make so that entity position is treated discretely (rounded down).
+ * `toggleable` - if True, can toggle visibility by using F3+B. just like entities' hitbox.
 
 Available shapes:
  * `'line'` - draws a straight line between two points.
@@ -150,7 +151,6 @@ Available shapes:
      * `mode` - how those points are connected. may be "polygon"(default),"strip" or "triangles". "polygon" means that it will be viewed as vertices of a polygon center on the first one. "strip" means that it will be viewed as a triangles strip. "triangles" means that it will be viewed as some triangles that are not related to each other (therefor length of `points` in this mode have to be a multiple of 3).
      * `inner` - if `true` it will make the inner edges be drawn as well. 
      * `doublesided` - if `true` it will make the shapes visible from the back as well. Default is `true`. 
-     * `toggleable` - if True, can toggle visibility by using F3+B. just like entities' hitbox.
 
  * `'block'` \ `'item'`:
    * Required attributes:
@@ -158,7 +158,6 @@ Available shapes:
      * `item` - the object to show. could have NBT. is a item tuple or a string-id (exclusive to `'item'`)
      * `block` - the object to show. could have NBT. is a block value or a string-id (exclusive to `'block'`)
    * Optional attributes:
-     * `toggleable` - if True, can toggle visibility by using F3+B. just like entities' hitbox.
      * `facing` - object's direction, where its facing. Possible options are: `player` (default, it
      always rotates to face the player), `north`, `south`, `east`, `west`, `up`, `down`
      * `tilt`, `lean`, `turn` - additional rotations along all three axis
