@@ -572,8 +572,8 @@ public class ShapeDispatcher
                 entry("lean", new NumericValue(0)),
                 entry("turn", new NumericValue(0)),
                 entry("scale", ListValue.fromTriple(1,1,1)),
-                entry("blocklight", new NumericValue(-999)),
-                entry("skylight", new NumericValue(-999)),
+                entry("blocklight", new NumericValue(-1)),
+                entry("skylight", new NumericValue(-1)),
                 entry("toggleable", BooleanValue.FALSE));
         private boolean isitem;
 
