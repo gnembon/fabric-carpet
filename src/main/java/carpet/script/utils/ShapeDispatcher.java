@@ -581,8 +581,7 @@ public class ShapeDispatcher
                 entry("turn", new NumericValue(0)),
                 entry("scale", ListValue.fromTriple(1,1,1)),
                 entry("blocklight", new NumericValue(-1)),
-                entry("skylight", new NumericValue(-1)),
-                entry("toggleable", BooleanValue.FALSE));
+                entry("skylight", new NumericValue(-1)));
         private boolean isitem;
 
         @Override
@@ -801,13 +800,13 @@ public class ShapeDispatcher
             hash ^= Boolean.hashCode(doublesided);    hash *= 1099511628211L;
             hash ^= Integer.hashCode(vertex_list.size());    hash *= 1099511628211L;
             hash ^= Boolean.hashCode(inneredges);    hash *= 1099511628211L;
-            hash ^= Boolean.hashCode(needf3b); hash *= 1099511628211L;
+            //hash ^= Boolean.hashCode(needf3b); hash *= 1099511628211L;
             return hash;
         }
         ArrayList<Vec3> alter_point=null;
         final Random random=new Random();
         boolean doublesided;
-        boolean needf3b;
+
         ArrayList<Vec3> alter_point(ServerPlayer p){
             if (alter_point!=null){
                 return alter_point;
@@ -913,8 +912,7 @@ public class ShapeDispatcher
             entry("relative",Value.NULL),
             entry("mode", new StringValue("polygon")),
             entry("inner", Value.TRUE),
-            entry("doublesided", Value.TRUE),
-            entry("toggleable", Value.FALSE)
+            entry("doublesided", Value.TRUE)
         );
         @Override
         protected Set<String> requiredParams() { return Sets.union(super.requiredParams(), required); }
@@ -929,10 +927,7 @@ public class ShapeDispatcher
         {
             super.init(options);
 
-            needf3b = false;
-            if (options.containsKey("toggleable")) {
-                needf3b = options.get("toggleable").getBoolean();
-            }
+
 
             doublesided=options.getOrDefault("doublesided",optional.get("doublesided")).getBoolean();
             
