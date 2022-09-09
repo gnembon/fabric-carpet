@@ -289,6 +289,7 @@ public class ShapeDispatcher
         protected boolean snapX, snapY, snapZ;
         protected boolean discreteX, discreteY, discreteZ;
         protected ResourceKey<Level> shapeDimension;
+        protected boolean needf3b;
 
 
         protected ExpiringShape() { }
@@ -339,6 +340,11 @@ public class ShapeDispatcher
             this.g = (float)(color >> 16 & 0xFF) / 255.0F;
             this.b = (float)(color >>  8 & 0xFF) / 255.0F;
             this.a = (float)(color & 0xFF) / 255.0F;
+
+            needf3b = false;
+            if (options.containsKey("toggleable")) {
+                needf3b = options.get("toggleable").getBoolean();
+            }
 
             key = 0;
             followEntity = -1;
@@ -404,6 +410,7 @@ public class ShapeDispatcher
             hash ^= shapeDimension.hashCode(); hash *= 1099511628211L;
             hash ^= color;                     hash *= 1099511628211L;
             hash ^= followEntity;              hash *= 1099511628211L;
+            hash ^= Boolean.hashCode(needf3b); hash *= 1099511628211L;
             if (followEntity >= 0)
             {
                 hash ^= snapTo.hashCode();     hash *= 1099511628211L;
@@ -426,6 +433,7 @@ public class ShapeDispatcher
                 "color", new NumericValue(-1),
                 "follow", new NumericValue(-1),
                 "line", new NumericValue(2.0),
+                "toggleable", Value.FALSE,
                 "fill", new NumericValue(0xffffff00),
                 "snap", new StringValue("xyz")
         );
@@ -604,7 +612,6 @@ public class ShapeDispatcher
 
         float scale_y = 1.0f;
         float scale_x = 1.0f;
-        boolean needf3b;
         CompoundTag blockEntity;
         BlockState blockState;
         ItemStack item = null;
@@ -646,10 +653,6 @@ public class ShapeDispatcher
                 case "down":  facing = Direction.DOWN; break;
             }
 
-            needf3b = false;
-            if (options.containsKey("toggleable")) {
-                needf3b = options.get("toggleable").getBoolean();
-            }
 
             tilt = NumericValue.asNumber(options.getOrDefault("tilt", optional.get("tilt"))).getFloat();
             lean = NumericValue.asNumber(options.getOrDefault("lean", optional.get("lean"))).getFloat();
@@ -697,7 +700,7 @@ public class ShapeDispatcher
             if (blockEntity!= null) hash ^= blockEntity.toString().hashCode(); hash *= 1099511628211L;
             if (blockState!= null) hash ^= blockState.hashCode(); hash *= 1099511628211L;
             hash ^= ValueConversions.of(item).getString().hashCode(); hash *= 1099511628211L;
-            hash ^= Boolean.hashCode(needf3b); hash *= 1099511628211L;
+            //hash ^= Boolean.hashCode(needf3b); hash *= 1099511628211L;
             hash ^= item_transform_type.hashCode(); hash *= 1099511628211L;
 
             return hash;

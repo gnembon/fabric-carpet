@@ -136,6 +136,7 @@ public class ShapesRenderer
         double cameraX = camera.getPosition().x;
         double cameraY = camera.getPosition().y;
         double cameraZ = camera.getPosition().z;
+        boolean hasf3b = client.getEntityRenderDispatcher().shouldRenderHitBoxes();
 
         if (shapes.size() != 0) { synchronized (shapes) {
             shapes.get(dimensionType).long2ObjectEntrySet().removeIf(
@@ -149,12 +150,12 @@ public class ShapesRenderer
             // lines
             RenderSystem.lineWidth(0.5F);
             shapes.get(dimensionType).values().forEach( s -> {
-                if (s.shouldRender(dimensionType)) s.renderLines(matrices, tessellator, bufferBuilder, cameraX, cameraY, cameraZ, partialTick);
+                if ( (!s.shape.needf3b ||hasf3b ) && s.shouldRender(dimensionType)) s.renderLines(matrices, tessellator, bufferBuilder, cameraX, cameraY, cameraZ, partialTick);
             });
             // faces
             RenderSystem.lineWidth(0.1F);
             shapes.get(dimensionType).values().forEach(s -> {
-                        if (s.shouldRender(dimensionType)) s.renderFaces(tessellator, bufferBuilder, cameraX, cameraY, cameraZ, partialTick);
+                        if ( (!s.shape.needf3b ||hasf3b ) && s.shouldRender(dimensionType)) s.renderFaces(tessellator, bufferBuilder, cameraX, cameraY, cameraZ, partialTick);
             });
             RenderSystem.lineWidth(1.0F);
             matrixStack.popPose();
@@ -167,7 +168,7 @@ public class ShapesRenderer
                     entry -> entry.getValue().isExpired(currentTime)
             );
             labels.get(dimensionType).values().forEach(s -> {
-                if (s.shouldRender(dimensionType)) s.renderLines(matrices, tessellator, bufferBuilder, cameraX, cameraY, cameraZ, partialTick);
+                if ( (!s.shape.needf3b || hasf3b) && s.shouldRender(dimensionType)) s.renderLines(matrices, tessellator, bufferBuilder, cameraX, cameraY, cameraZ, partialTick);
             });
         }}
         RenderSystem.enableCull();
