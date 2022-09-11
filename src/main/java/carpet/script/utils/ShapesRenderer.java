@@ -447,11 +447,11 @@ public class ShapesRenderer
             poseStack.mulPose(direction.getRotation());
             poseStack.scale(1.0F, -1.0F, -1.0F);
             poseStack.translate(0.0, -1.0, 0.0);
-            ModelPart modelPart = ((net.minecraft.client.renderer.blockentity.ShulkerBoxRenderer)(Object)(client.getBlockEntityRenderDispatcher().getRenderer(BlockEntity))).model.getLid();
+            ModelPart modelPart = ((carpet.mixins.ShulkerBoxAccessMixin)(Object)(client.getBlockEntityRenderDispatcher().getRenderer(BlockEntity))).getModel().getLid();
             modelPart.setPos(0.0F, 24.0F - shulkerBoxBlockEntity.getProgress(f) * 0.5F * 16.0F, 0.0F);
             modelPart.yRot = 270.0F * shulkerBoxBlockEntity.getProgress(f) * (float) (Math.PI / 180.0);
             VertexConsumer vertexConsumer = material.buffer(multiBufferSource, RenderType::entityCutoutNoCull);
-            ((net.minecraft.client.renderer.blockentity.ShulkerBoxRenderer)(Object)(client.getBlockEntityRenderDispatcher().getRenderer(BlockEntity))).model.renderToBuffer(poseStack, vertexConsumer, i, j, 1.0F, 1.0F, 1.0F, 1.0F);
+            ((carpet.mixins.ShulkerBoxAccessMixin)(Object)(client.getBlockEntityRenderDispatcher().getRenderer(BlockEntity))).getModel().renderToBuffer(poseStack, vertexConsumer, i, j, 1.0F, 1.0F, 1.0F, 1.0F);
             poseStack.popPose();
         }
     }

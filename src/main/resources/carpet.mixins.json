@@ -183,6 +183,7 @@
     "CollectingNeighborUpdaterAccessor"
   ],
   "client": [
+    "ShulkerBoxAccessMixin",
     "Timer_tickSpeedMixin",
     "MinecraftMixin",
     "Minecraft_pausedShakeMixin",
