@@ -315,12 +315,10 @@ public class ShapesRenderer
             Camera camera1 = client.gameRenderer.getMainCamera();
 
             matrices.pushPose();
-            // matrices.setIdentity();
             if (!isitem)// blocks should use its center as the origin
                 matrices.translate(0.5, 0.5, 0.5);
             matrices.translate(v1.x - cx, v1.y - cy, v1.z - cz);
             if (shape.facing == null) {
-                // matrices.method_34425(new Matrix4f(camera1.getRotation()));
                 matrices.mulPose(camera1.rotation());
                 matrices.mulPose(Vector3f.YP.rotationDegrees(180));
             } else {
@@ -344,8 +342,7 @@ public class ShapesRenderer
                         break;
                 }
             }
-            // RenderSystem.scalef(shape.size* 0.0025f, -shape.size*0.0025f,
-            // shape.size*0.0025f);
+
             if (shape.tilt != 0.0f)
                 matrices.mulPose(Vector3f.ZP.rotationDegrees(shape.tilt));
             if (shape.lean != 0.0f)
@@ -356,12 +353,12 @@ public class ShapesRenderer
 
             if (!isitem)// blocks should use its center as the origin
                 matrices.translate(-0.5, -0.5, -0.5);
-            // matrices.scale(-1, 1, 1);
+
             RenderSystem.depthMask(true);
             RenderSystem.enableCull();
             RenderSystem.enableDepthTest();
 
-            // matrices.scale(-1, 1, 1);
+
 
             blockPos = new BlockPos(v1);
             int light;
@@ -373,13 +370,11 @@ public class ShapesRenderer
 
             blockState = shape.blockState;
 
-            MultiBufferSource.BufferSource immediate = client.renderBuffers().bufferSource();// =
-                                                                                             // MultiBufferSource.immediate(builder);
+            MultiBufferSource.BufferSource immediate = client.renderBuffers().bufferSource();
             if (!isitem) {
                 // draw the block itself
                 if (blockState.getRenderShape() == RenderShape.MODEL) {
-                    //client.getBlockRenderer().renderSingleBlock(blockState, matrices, immediate, light,
-                    //        OverlayTexture.NO_OVERLAY);
+
                     var bakedModel = client.getBlockRenderer().getBlockModel(blockState);
                     int color = client.getBlockColors().getColor(blockState,client.level,blockPos,0);
                     //dont know why there is a 0. 
