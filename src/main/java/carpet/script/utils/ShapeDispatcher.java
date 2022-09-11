@@ -575,7 +575,7 @@ public class ShapeDispatcher
     public static class DisplayedSprite extends ExpiringShape {
         private final Set<String> required = Set.of("pos");
         private final Map<String, Value> optional = Map.ofEntries(
-                entry("facing", new StringValue("player")),
+                entry("facing", new StringValue("north")),
                 entry("tilt", new NumericValue(0)),
                 entry("lean", new NumericValue(0)),
                 entry("turn", new NumericValue(0)),
