@@ -423,6 +423,7 @@ public class ShapesRenderer
             return true;
         }
 
+        // copy and modifiy a bit from net.minecraft.client.renderer.blockentity.ShulkerBoxRenderer.render
         public void sbrender(ShulkerBoxBlockEntity shulkerBoxBlockEntity, float f, PoseStack poseStack, MultiBufferSource multiBufferSource, int i, int j) {
             Direction direction = Direction.UP;
             if (shulkerBoxBlockEntity.hasLevel()) {
