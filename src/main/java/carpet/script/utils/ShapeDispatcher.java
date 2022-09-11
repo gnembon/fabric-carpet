@@ -635,7 +635,7 @@ public class ShapeDispatcher
             if (light_fromsky > 15)
                 light_fromsky = 15;
 
-            item_transform_type = TransformType.GUI;
+            item_transform_type = TransformType.NONE;
             if(options.containsKey("variant")){
                 item_transform_type = TransformType.valueOf(options.get("variant").getString());
             }
