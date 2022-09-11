@@ -1204,31 +1204,6 @@ public class ShapeDispatcher
     public static abstract class Param
     {
         public static Map<String, Param> of = new HashMap<String, Param>(){{
-            /*put("vertex", new PointsParam("vertex"){
-                public Value decode(Tag tag)
-                {
-                    ListTag ltag = (ListTag)tag;
-                    List<Value> points = new ArrayList<>();
-                    for (int i=0, ll = ltag.size(); i<ll; i++)
-                    {
-                        ListTag ptag = ltag.getList(i);
-                        points.add(ListValue.of(
-                                new NumericValue(((NumericTag)ptag.get(0)).getAsDouble()),
-                                new NumericValue(((NumericTag)ptag.get(1)).getAsDouble()),
-                                new NumericValue(((NumericTag)ptag.get(2)).getAsDouble())
-                        ));
-                    }
-                    return ListValue.wrap(points);
-                }
-                public Tag toTag(Value pointsValue){
-                    return pointsValue.toTag(true);
-                
-                }
-                public Value validate(Map<String, Value> options, MinecraftServer server, Value value)
-                    {
-                        return value;
-                    }
-            });*/
             put("mode",new StringChoiceParam("mode","polygon","strip","triangles"));
             put("relative",new OptionalBoolListParam("relative"));
             put("inner", new BoolParam("inner"));
