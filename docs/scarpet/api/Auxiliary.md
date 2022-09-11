@@ -158,9 +158,9 @@ Available shapes:
      * `item` - the object to show. could have NBT. is a item tuple or a string-id (exclusive to `'item'`)
      * `block` - the object to show. could have NBT. is a block value or a string-id (exclusive to `'block'`)
    * Optional attributes:
-     * `facing` - object's direction, where its facing. Possible options are: `player` (default, it
-     always rotates to face the player), `north`, `south`, `east`, `west`, `up`, `down`
-     * `tilt`, `lean`, `turn` - additional rotations along all three axis
+     * `facing` - object's direction, where its facing. Possible options are: `player` (it
+     always rotates to face the player), `north`(default), `south`, `east`, `west`, `up`, `down`
+     * `tilt`, `lean`, `turn` - additional rotations along all three axis. for `block`, it use its block center as the origin.
      * `scale` - scale of it in 3 axis-direction. should be a number or a list of 3 numbers (x,y,z).
      * `skylight`, `blocklight` - light level. omit it to use local light level. should between 0~15.
      * `variant` - one of "none","third_person_left_hand","third_person_right_hand","first_person_left_hand",
