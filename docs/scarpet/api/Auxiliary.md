@@ -91,6 +91,7 @@ Optional shared shape attributes:
    value is `'xyz'`, meaning the shape will be drawn relatively to the entity in all three directions. Using `xz` for 
    instance makes so that the shape follows the entity, but stays at the same, absolute Y coordinate. Preceeding an axis
    with `d`, like `dxdydz` would make so that entity position is treated discretely (rounded down).
+ * `toggleable` - if True, can toggle visibility by using F3+B. just like entities' hitbox.
 
 Available shapes:
  * `'line'` - draws a straight line between two points.
@@ -142,6 +143,31 @@ Available shapes:
      * `height` - height of the cyllinder, defaults to `0`, so flat disk. Can be negative.
      * `level` - level of details, see `'sphere'`.
 
+ * `'polygon'`:
+   * Required attributes:
+     * `points` - list of points defining vertices of the polygon
+   * Optional attributes:
+     * `relative` - list of bools. vertices of the polygon that affected by 'follow'. Could be a single bools to affact allpoints too. Default means that every point is affacted.
+     * `mode` - how those points are connected. may be "polygon"(default),"strip" or "triangles". "polygon" means that it will be viewed as vertices of a polygon center on the first one. "strip" means that it will be viewed as a triangles strip. "triangles" means that it will be viewed as some triangles that are not related to each other (therefor length of `points` in this mode have to be a multiple of 3).
+     * `inner` - if `true` it will make the inner edges be drawn as well. 
+     * `doublesided` - if `true` it will make the shapes visible from the back as well. Default is `true`. 
+
+ * `'block'` \ `'item'`:
+   * Required attributes:
+     * `pos` - position of the object.
+     * `item` - the object to show. could have NBT. is a item tuple or a string-id (exclusive to `'item'`)
+     * `block` - the object to show. could have NBT. is a block value or a string-id (exclusive to `'block'`)
+   * Optional attributes:
+     * `facing` - object's direction, where its facing. Possible options are: `player` (it
+     always rotates to face the player), `north`(default), `south`, `east`, `west`, `up`, `down`
+     * `tilt`, `lean`, `turn` - additional rotations along all three axis. for `block`, it use its block center as the origin.
+     * `scale` - scale of it in 3 axis-direction. should be a number or a list of 3 numbers (x,y,z).
+     * `skylight`, `blocklight` - light level. omit it to use local light level. should between 0~15.
+     * `variant` - one of "none","third_person_left_hand","third_person_right_hand","first_person_left_hand",
+     "first_person_right_hand","head","gui","ground","fixed". In addition to the literal meaning, it can also be used to use special models of tridents and telescopes. (exclusive to `'item'`)
+
+
+      
 ### `create_marker(text, pos, rotation?, block?, interactive?)`
 
 Spawns a (permanent) marker entity with text or block at position. Returns that entity for further manipulations. 

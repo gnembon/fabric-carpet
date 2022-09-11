@@ -189,6 +189,7 @@
     "SlimeBlock_customStickyMixin"
   ],
   "client": [
+    "ShulkerBoxAccessMixin",
     "Timer_tickSpeedMixin",
     "MinecraftMixin",
     "Minecraft_pausedShakeMixin",
