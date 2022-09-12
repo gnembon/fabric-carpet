@@ -91,35 +91,13 @@ Optional shared shape attributes:
    value is `'xyz'`, meaning the shape will be drawn relatively to the entity in all three directions. Using `xz` for 
    instance makes so that the shape follows the entity, but stays at the same, absolute Y coordinate. Preceeding an axis
    with `d`, like `dxdydz` would make so that entity position is treated discretely (rounded down).
- * `toggleable` - if True, can toggle visibility by using F3+B. just like entities' hitbox.
+ * `debug` - if True, it will only be visible when F3+B entity bounding boxes is enabled.
 
 Available shapes:
  * `'line'` - draws a straight line between two points.
    * Required attributes:
      * `from` - triple coordinates, entity, or block value indicating one end of the line
      * `to` - other end of the line, same format as `from`
-     
- * `'label'` - draws a text in the world. Default `line` attribute controls main font color.
-      `fill` controls the color of the background. 
-   * Required attributes:
-     * `pos` - position
-     * `text` - string or formatted text to display
-   * Optional attributes
-     * `value` - string or formatted text to display instead of the main `text`. `value` unlike `text`
-     is not used to determine uniqueness of the drawn text so can be used to 
-     display smoothly dynamic elements where value of an element is constantly
-     changing and updates to it are being sent from the server.
-     * `size` - float. Default font size is 10.
-     * `facing` - text direction, where its facing. Possible options are: `player` (default, text
-     always rotates to face the player), `north`, `south`, `east`, `west`, `up`, `down`
-     * `doublesided` - if `true` it will make the text visible from the back as well. Default is `false` (1.16+)
-     * `align` - text alignment with regards to `pos`. Default is `center` (displayed text is
-     centered with respect to `pos`), `left` (`pos` indicates beginning of text), and `right` (`pos`
-     indicates the end of text).
-     * `tilt`, `lean`, `turn` - additional rotations of the text on the canvas along all three axis
-     * `indent`, `height`, `raise` - offsets for text rendering on X (`indent`), Y (`height`), and Z axis (`raise`) 
-     with regards to the plane of the text. One unit of these corresponds to 1 line spacing, which
-     can be used to display multiple lines of text bound to the same `pos` 
      
  * `'box'` - draws a box with corners in specified points
    * Required attributes:
@@ -152,20 +130,52 @@ Available shapes:
      * `inner` - if `true` it will make the inner edges be drawn as well. 
      * `doublesided` - if `true` it will make the shapes visible from the back as well. Default is `true`. 
 
- * `'block'` \ `'item'`:
+ * `'label'` - draws a text in the world. Default `line` attribute controls main font color. 
+ `fill` controls the color of the background.
+   * Required attributes:
+     * `pos` - position
+     * `text` - string or formatted text to display
+   * Optional attributes
+     * `value` - string or formatted text to display instead of the main `text`. `value` unlike `text`
+         is not used to determine uniqueness of the drawn text so can be used to
+         display smoothly dynamic elements where value of an element is constantly
+         changing and updates to it are being sent from the server.
+     * `size` - float. Default font size is 10.
+     * `facing` - text direction, where its facing. Possible options are: `player` (default, text
+         always rotates to face the player), `north`, `south`, `east`, `west`, `up`, `down`
+     * `doublesided` - if `true` it will make the text visible from the back as well. Default is `false` (1.16+)
+     * `align` - text alignment with regards to `pos`. Default is `center` (displayed text is
+         centered with respect to `pos`), `left` (`pos` indicates beginning of text), and `right` (`pos`
+         indicates the end of text).
+     * `tilt`, `lean`, `turn` - additional rotations of the text on the canvas along all three axis
+     * `indent`, `height`, `raise` - offsets for text rendering on X (`indent`), Y (`height`), and Z axis (`raise`)
+         with regards to the plane of the text. One unit of these corresponds to 1 line spacing, which
+         can be used to display multiple lines of text bound to the same `pos`
+
+ * `'block'`: draws a block at the specified position:
    * Required attributes:
      * `pos` - position of the object.
-     * `item` - the object to show. could have NBT. is a item tuple or a string-id (exclusive to `'item'`)
-     * `block` - the object to show. could have NBT. is a block value or a string-id (exclusive to `'block'`)
+     * `block` - the object to show. It is a block value or a name of a block with optional NBT data.
    * Optional attributes:
      * `facing` - object's direction, where its facing. Possible options are: `player` (it
-     always rotates to face the player), `north`(default), `south`, `east`, `west`, `up`, `down`
+     rotates to face the player), `north`(default), `south`, `east`, `west`, `up`, `down`
+     * `tilt`, `lean`, `turn` - additional rotations along all three axis. It uses the block center as the origin.
+     * `scale` - scale of it in 3 axis-direction. should be a number or a list of 3 numbers (x,y,z).
+     * `skylight`, `blocklight` - light level. omit it to use local light level. should between 0~15.
+
+ * `'item'`: draws an item at the specified position:
+   * Required attributes:
+     * `pos` - position of the object.
+     * `item` - the object to show. It is an item tuple or a string identified item that may have NBT data.
+   * Optional attributes:
+     * `facing` - object's direction, where its facing. Possible options are: `player` (it
+         always rotates to face the player), `north`(default), `south`, `east`, `west`, `up`, `down`
      * `tilt`, `lean`, `turn` - additional rotations along all three axis. for `block`, it use its block center as the origin.
      * `scale` - scale of it in 3 axis-direction. should be a number or a list of 3 numbers (x,y,z).
      * `skylight`, `blocklight` - light level. omit it to use local light level. should between 0~15.
-     * `variant` - one of "none","third_person_left_hand","third_person_right_hand","first_person_left_hand",
-     "first_person_right_hand","head","gui","ground","fixed". In addition to the literal meaning, it can also be used to use special models of tridents and telescopes. (exclusive to `'item'`)
-
+     * `variant` - one of `'none'`, `'third_person_left_hand'`, `'third_person_right_hand'`, `'first_person_left_hand'`,
+       `'first_person_right_hand'`, `'head'`, `'gui'`, `'ground'`, `'fixed'`. In addition to the literal meaning,
+       it can also be used to use special models of tridents and telescopes.
 
       
 ### `create_marker(text, pos, rotation?, block?, interactive?)`

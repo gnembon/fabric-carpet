@@ -37,7 +37,6 @@ import net.minecraft.nbt.DoubleTag;
 import net.minecraft.nbt.FloatTag;
 import net.minecraft.nbt.IntTag;
 import net.minecraft.nbt.ListTag;
-import net.minecraft.nbt.NbtIo;
 import net.minecraft.nbt.NbtUtils;
 import net.minecraft.nbt.StringTag;
 import net.minecraft.nbt.Tag;
@@ -289,7 +288,7 @@ public class ShapeDispatcher
         protected boolean snapX, snapY, snapZ;
         protected boolean discreteX, discreteY, discreteZ;
         protected ResourceKey<Level> shapeDimension;
-        protected boolean needf3b;
+        protected boolean debug;
 
 
         protected ExpiringShape() { }
@@ -341,9 +340,9 @@ public class ShapeDispatcher
             this.b = (float)(color >>  8 & 0xFF) / 255.0F;
             this.a = (float)(color & 0xFF) / 255.0F;
 
-            needf3b = false;
-            if (options.containsKey("toggleable")) {
-                needf3b = options.get("toggleable").getBoolean();
+            debug = false;
+            if (options.containsKey("debug")) {
+                debug = options.get("debug").getBoolean();
             }
 
             key = 0;
@@ -410,7 +409,7 @@ public class ShapeDispatcher
             hash ^= shapeDimension.hashCode(); hash *= 1099511628211L;
             hash ^= color;                     hash *= 1099511628211L;
             hash ^= followEntity;              hash *= 1099511628211L;
-            hash ^= Boolean.hashCode(needf3b); hash *= 1099511628211L;
+            hash ^= Boolean.hashCode(debug); hash *= 1099511628211L;
             if (followEntity >= 0)
             {
                 hash ^= snapTo.hashCode();     hash *= 1099511628211L;
@@ -433,7 +432,7 @@ public class ShapeDispatcher
                 "color", new NumericValue(-1),
                 "follow", new NumericValue(-1),
                 "line", new NumericValue(2.0),
-                "toggleable", Value.FALSE,
+                "debug", Value.FALSE,
                 "fill", new NumericValue(0xffffff00),
                 "snap", new StringValue("xyz")
         );
@@ -585,16 +584,13 @@ public class ShapeDispatcher
         private boolean isitem;
 
         @Override
-        protected Set<String> requiredParams() {
-            return Sets.union(Sets.union(super.requiredParams(), required), Set.of(isitem ? "item" : "block"));
-        }
+        protected Set<String> requiredParams() { return Sets.union(Sets.union(super.requiredParams(), required), Set.of(isitem ? "item" : "block"));}
 
         @Override
-        protected Set<String> optionalParams() {
-            return Sets.union(Sets.union(super.optionalParams(), optional.keySet()),isitem ? Set.of("variant") : Set.of());
-        }
+        protected Set<String> optionalParams() { return Sets.union(Sets.union(super.optionalParams(), optional.keySet()),isitem ? Set.of("variant") : Set.of()); }
 
-        public DisplayedSprite(boolean i) {
+        public DisplayedSprite(boolean i)
+        {
             isitem = i;
         }
 
@@ -605,80 +601,81 @@ public class ShapeDispatcher
         float tilt;
         float lean;
         float turn;
-        float scale_z = 1.0f;
-        int light_fromblock;
-        int light_fromsky;
 
-        float scale_y = 1.0f;
-        float scale_x = 1.0f;
+        int blockLight;
+        int skyLight;
+
+        float scaleX = 1.0f;
+        float scaleY = 1.0f;
+        float scaleZ = 1.0f;
         CompoundTag blockEntity;
         BlockState blockState;
         ItemStack item = null;
-        TransformType item_transform_type;
+        String itemTransformType;
 
         @Override
-        protected void init(Map<String, Value> options) {
+        protected void init(Map<String, Value> options)
+        {
             super.init(options);
             pos = vecFromValue(options.get("pos"));
-            if(!this.isitem){
-                blockState = ((BlockValue) options.get("block")).getBlockState();
-                blockEntity = ((BlockValue) options.get("block")).getData();
-            }else{
+            if (!this.isitem)
+            {
+                final BlockValue block = (BlockValue)options.get("block");
+                blockState = block.getBlockState();
+                blockEntity = block.getData();
+            }
+            else
+            {
                 this.item = ItemStack.of(((NBTSerializableValue) options.get("item")).getCompoundTag());
             }
-            light_fromblock = NumericValue
-                    .asNumber(options.getOrDefault("blocklight", optional.get("blocklight"))).getInt();
-            if (light_fromblock > 15)
-                light_fromblock = 15;
-            light_fromsky = NumericValue.asNumber(options.getOrDefault("skylight", optional.get("skylight")))
-                    .getInt();
-            if (light_fromsky > 15)
-                light_fromsky = 15;
+            blockLight = NumericValue.asNumber(options.getOrDefault("blocklight", optional.get("blocklight"))).getInt();
+            if (blockLight > 15) blockLight = 15;
+            skyLight = NumericValue.asNumber(options.getOrDefault("skylight", optional.get("skylight"))).getInt();
+            if (skyLight > 15) skyLight = 15;
 
-            item_transform_type = TransformType.NONE;
-            if(options.containsKey("variant")){
-                item_transform_type = TransformType.valueOf(options.get("variant").getString());
+            itemTransformType = "none";
+            if (options.containsKey("variant"))
+            {
+                itemTransformType = options.get("variant").getString().toLowerCase(Locale.ROOT);
             }
 
             String dir = options.getOrDefault("facing", optional.get("facing")).getString();
-            facing = null;
-            switch (dir)
-            {
-                case "north": facing = Direction.NORTH; break;
-                case "south": facing = Direction.SOUTH; break;
-                case "east": facing = Direction.EAST; break;
-                case "west": facing = Direction.WEST; break;
-                case "up":  facing = Direction.UP; break;
-                case "down":  facing = Direction.DOWN; break;
-            }
-
+            facing = switch (dir) {
+                case "north" -> Direction.NORTH;
+                case "south" -> Direction.SOUTH;
+                case "east" -> Direction.EAST;
+                case "west" -> Direction.WEST;
+                case "up" -> Direction.UP;
+                case "down" -> Direction.DOWN;
+                default -> null;
+            };
 
             tilt = NumericValue.asNumber(options.getOrDefault("tilt", optional.get("tilt"))).getFloat();
             lean = NumericValue.asNumber(options.getOrDefault("lean", optional.get("lean"))).getFloat();
             turn = NumericValue.asNumber(options.getOrDefault("turn", optional.get("turn"))).getFloat();
             List<Value> scale = ((ListValue) options.getOrDefault("scale", optional.get("scale"))).unpack();
-            scale_y = NumericValue.asNumber(scale.get(1)).getFloat();
-            scale_x = NumericValue.asNumber(scale.get(0)).getFloat();
-            scale_z = NumericValue.asNumber(scale.get(2)).getFloat();
+            scaleY = NumericValue.asNumber(scale.get(1)).getFloat();
+            scaleX = NumericValue.asNumber(scale.get(0)).getFloat();
+            scaleZ = NumericValue.asNumber(scale.get(2)).getFloat();
         }
 
         @Override
         public Consumer<ServerPlayer> alternative() {
-            ParticleOptions locparticledata;
-            if(this.isitem){
-                if(Block.byItem(this.item.getItem()).defaultBlockState().isAir())
-                    return p->{};
-                locparticledata = getParticleData("block_marker "+Registry.BLOCK.getKey(Block.byItem(this.item.getItem())));
-            }else{
-                locparticledata = getParticleData("block_marker "+Registry.BLOCK.getKey(this.blockState.getBlock()));
+            ParticleOptions particle;
+            if(this.isitem)
+            {
+                if (Block.byItem(this.item.getItem()).defaultBlockState().isAir()) return p->{};
+                particle = getParticleData("block_marker "+Registry.BLOCK.getKey(Block.byItem(this.item.getItem())));
+            }
+            else
+            {
+                particle = getParticleData("block_marker "+Registry.BLOCK.getKey(this.blockState.getBlock()));
             }
             
 
             return p -> {
-                Vec3 v=relativiseRender(p.level, this.pos, 0);
-                p.getLevel().sendParticles(p,locparticledata , true,
-                    v.x, v.y, v.z, 1,
-                    0.0, 0.0, 0.0, 0.0);
+                Vec3 v = relativiseRender(p.level, this.pos, 0);
+                p.getLevel().sendParticles(p, particle , true, v.x, v.y, v.z, 1,0.0, 0.0, 0.0, 0.0);
             };
         }
 
@@ -686,21 +683,21 @@ public class ShapeDispatcher
         public long calcKey() {
             long hash = super.calcKey();
             hash ^= 7;                  hash *= 1099511628211L;
+            hash ^= Boolean.hashCode(isitem); hash *= 1099511628211L;
             hash ^= vec3dhash(pos);     hash *= 1099511628211L;
             if (facing!= null) hash ^= facing.hashCode(); hash *= 1099511628211L;
             hash ^= Float.hashCode(tilt); hash *= 1099511628211L;
             hash ^= Float.hashCode(lean); hash *= 1099511628211L;
             hash ^= Float.hashCode(turn); hash *= 1099511628211L;
-            hash ^= Float.hashCode(scale_y); hash *= 1099511628211L;
-            hash ^= Float.hashCode(scale_z); hash *= 1099511628211L;
-            hash ^= Float.hashCode(scale_x); hash *= 1099511628211L;
-            hash ^= Float.hashCode(light_fromsky); hash *= 1099511628211L;
-            hash ^= Float.hashCode(light_fromblock); hash *= 1099511628211L;
+            hash ^= Float.hashCode(scaleY); hash *= 1099511628211L;
+            hash ^= Float.hashCode(scaleZ); hash *= 1099511628211L;
+            hash ^= Float.hashCode(scaleX); hash *= 1099511628211L;
+            hash ^= Float.hashCode(skyLight); hash *= 1099511628211L;
+            hash ^= Float.hashCode(blockLight); hash *= 1099511628211L;
             if (blockEntity!= null) hash ^= blockEntity.toString().hashCode(); hash *= 1099511628211L;
             if (blockState!= null) hash ^= blockState.hashCode(); hash *= 1099511628211L;
             hash ^= ValueConversions.of(item).getString().hashCode(); hash *= 1099511628211L;
-            //hash ^= Boolean.hashCode(needf3b); hash *= 1099511628211L;
-            hash ^= item_transform_type.hashCode(); hash *= 1099511628211L;
+            hash ^= itemTransformType.hashCode(); hash *= 1099511628211L;
 
             return hash;
         }
@@ -800,7 +797,6 @@ public class ShapeDispatcher
             hash ^= Boolean.hashCode(doublesided);    hash *= 1099511628211L;
             hash ^= Integer.hashCode(vertex_list.size());    hash *= 1099511628211L;
             hash ^= Boolean.hashCode(inneredges);    hash *= 1099511628211L;
-            //hash ^= Boolean.hashCode(needf3b); hash *= 1099511628211L;
             return hash;
         }
         ArrayList<Vec3> alter_point=null;
@@ -859,15 +855,11 @@ public class ShapeDispatcher
                     if(relative.get(1)){
                         vecB=relativiseRender(p.level, vecB, 0);
                     }
-                    //ArrayList<Vec3> last = new ArrayList<Vec3>();
-                    //last.add(vecA);last.add(vecB);
                     for(int i=2;i<vertex_list.size();i++){
                         Vec3 vec=vertex_list.get(i);
                         if(relative.get(i)){
                             vec=relativiseRender(p.level, vec, 0);
                         }
-                        //alter_draw_triangles(last.get(0),last.get(1),vec);
-                        //last.remove(0);last.add(vec);
                         alter_draw_triangles(vecA,vecB,vec);
                         vecA=vecB;vecB=vec;
                     }
@@ -926,8 +918,6 @@ public class ShapeDispatcher
         protected void init(Map<String, Value> options)
         {
             super.init(options);
-
-
 
             doublesided=options.getOrDefault("doublesided",optional.get("doublesided")).getBoolean();
             
@@ -1271,7 +1261,7 @@ public class ShapeDispatcher
             put("turn", new FloatParam("turn"));
             put("facing", new StringChoiceParam("axis", "player", "north", "south", "east", "west", "up", "down"));
             put("doublesided", new BoolParam("doublesided"));
-            put("toggleable", new BoolParam("toggleable"));
+            put("debug", new BoolParam("debug"));
 
         }};
         protected String id;

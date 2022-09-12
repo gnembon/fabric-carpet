@@ -1,9 +1,9 @@
 package carpet.script.utils;
 
 import carpet.CarpetSettings;
+import carpet.mixins.ShulkerBoxAccessMixin;
 import carpet.utils.CarpetProfiler;
 
-import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.BufferBuilder;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
@@ -12,21 +12,17 @@ import com.mojang.blaze3d.vertex.Tesselator;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import com.mojang.blaze3d.vertex.VertexFormat.Mode;
-import com.mojang.datafixers.util.Either;
 import com.mojang.math.Vector3f;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import java.util.HashMap;
-import java.util.List;
+import java.util.Locale;
 import java.util.Map;
-import java.util.Optional;
-import java.util.Random;
 import java.util.function.BiFunction;
-import java.util.function.Predicate;
-import java.util.stream.Stream;
 
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
+import net.minecraft.client.model.ShulkerModel;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.GameRenderer;
@@ -35,48 +31,28 @@ import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.Sheets;
+import net.minecraft.client.renderer.block.model.ItemTransform;
 import net.minecraft.client.renderer.block.model.ItemTransforms;
+import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
+import net.minecraft.client.renderer.blockentity.ShulkerBoxRenderer;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.resources.model.Material;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.core.Holder;
-import net.minecraft.core.Registry;
-import net.minecraft.core.RegistryAccess;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.sounds.SoundEvent;
-import net.minecraft.sounds.SoundSource;
-import net.minecraft.tags.TagKey;
 import net.minecraft.util.Mth;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.DyeColor;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
-import net.minecraft.world.item.crafting.RecipeManager;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LightLayer;
-import net.minecraft.world.level.biome.Biome;
-import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.EntityBlock;
 import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.ShulkerBoxBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.ShulkerBoxBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.chunk.ChunkSource;
-import net.minecraft.world.level.dimension.DimensionType;
-import net.minecraft.world.level.entity.LevelEntityGetter;
-import net.minecraft.world.level.gameevent.GameEvent;
-import net.minecraft.world.level.material.Fluid;
-import net.minecraft.world.level.material.FluidState;
-import net.minecraft.world.level.saveddata.maps.MapItemSavedData;
 import net.minecraft.world.phys.Vec3;
-import net.minecraft.world.scores.Scoreboard;
-import net.minecraft.world.ticks.LevelTickAccess;
 
 public class ShapesRenderer
 {
@@ -85,16 +61,15 @@ public class ShapesRenderer
     private Minecraft client;
 
     private Map<String, BiFunction<Minecraft, ShapeDispatcher.ExpiringShape, RenderedShape<? extends ShapeDispatcher.ExpiringShape >>> renderedShapes
-            = new HashMap<String, BiFunction<Minecraft, ShapeDispatcher.ExpiringShape, RenderedShape<? extends ShapeDispatcher.ExpiringShape>>>()
-    {{
+            = new HashMap<>() {{
         put("line", RenderedLine::new);
         put("box", RenderedBox::new);
         put("sphere", RenderedSphere::new);
         put("cylinder", RenderedCylinder::new);
         put("label", RenderedText::new);
-        put("polygon",RenderedPolyface::new);
-        put("block",(c,s)->new RenderedSprite(c,s).set_isitem(false));
-        put("item",(c,s)->new RenderedSprite(c,s).set_isitem(true));
+        put("polygon", RenderedPolyface::new);
+        put("block", (c, s) -> new RenderedSprite(c, s, false));
+        put("item", (c, s) -> new RenderedSprite(c, s, true));
     }};
 
     public ShapesRenderer(Minecraft minecraftClient)
@@ -136,7 +111,7 @@ public class ShapesRenderer
         double cameraX = camera.getPosition().x;
         double cameraY = camera.getPosition().y;
         double cameraZ = camera.getPosition().z;
-        boolean hasf3b = client.getEntityRenderDispatcher().shouldRenderHitBoxes();
+        boolean entityBoxes = client.getEntityRenderDispatcher().shouldRenderHitBoxes();
 
         if (shapes.size() != 0) { synchronized (shapes) {
             shapes.get(dimensionType).long2ObjectEntrySet().removeIf(
@@ -150,12 +125,12 @@ public class ShapesRenderer
             // lines
             RenderSystem.lineWidth(0.5F);
             shapes.get(dimensionType).values().forEach( s -> {
-                if ( (!s.shape.needf3b ||hasf3b ) && s.shouldRender(dimensionType)) s.renderLines(matrices, tessellator, bufferBuilder, cameraX, cameraY, cameraZ, partialTick);
+                if ( (!s.shape.debug ||entityBoxes ) && s.shouldRender(dimensionType)) s.renderLines(matrices, tessellator, bufferBuilder, cameraX, cameraY, cameraZ, partialTick);
             });
             // faces
             RenderSystem.lineWidth(0.1F);
             shapes.get(dimensionType).values().forEach(s -> {
-                        if ( (!s.shape.needf3b ||hasf3b ) && s.shouldRender(dimensionType)) s.renderFaces(tessellator, bufferBuilder, cameraX, cameraY, cameraZ, partialTick);
+                        if ( (!s.shape.debug ||entityBoxes ) && s.shouldRender(dimensionType)) s.renderFaces(tessellator, bufferBuilder, cameraX, cameraY, cameraZ, partialTick);
             });
             RenderSystem.lineWidth(1.0F);
             matrixStack.popPose();
@@ -168,7 +143,7 @@ public class ShapesRenderer
                     entry -> entry.getValue().isExpired(currentTime)
             );
             labels.get(dimensionType).values().forEach(s -> {
-                if ( (!s.shape.needf3b || hasf3b) && s.shouldRender(dimensionType)) s.renderLines(matrices, tessellator, bufferBuilder, cameraX, cameraY, cameraZ, partialTick);
+                if ( (!s.shape.debug || entityBoxes) && s.shouldRender(dimensionType)) s.renderLines(matrices, tessellator, bufferBuilder, cameraX, cameraY, cameraZ, partialTick);
             });
         }}
         RenderSystem.enableCull();
@@ -290,24 +265,25 @@ public class ShapesRenderer
 
     public static class RenderedSprite extends RenderedShape<ShapeDispatcher.DisplayedSprite> {
 
-        private boolean isitem;
-
-        public RenderedSprite set_isitem(boolean isitem) {
-            this.isitem = isitem;
-            return this;
-        }
+        private final boolean isitem;
+        private ItemTransforms.TransformType transformType = ItemTransforms.TransformType.NONE;
 
         private BlockPos blockPos;
         private BlockState blockState;
         private BlockEntity BlockEntity = null;
 
-        protected RenderedSprite(Minecraft client, ShapeDispatcher.ExpiringShape shape) {
+        protected RenderedSprite(Minecraft client, ShapeDispatcher.ExpiringShape shape, boolean isitem) {
             super(client, (ShapeDispatcher.DisplayedSprite) shape);
+            this.isitem = isitem;
+            if (isitem) {
+                this.transformType = ItemTransforms.TransformType.valueOf(((ShapeDispatcher.DisplayedSprite) shape).itemTransformType.toUpperCase(Locale.ROOT));
+            }
         }
 
         @Override
         public void renderLines(PoseStack matrices, Tesselator tessellator, BufferBuilder builder, double cx, double cy,
-                double cz, float partialTick) {
+                double cz, float partialTick)
+        {
             if (shape.a == 0.0)
                 return;
 
@@ -316,13 +292,19 @@ public class ShapesRenderer
 
             matrices.pushPose();
             if (!isitem)// blocks should use its center as the origin
+            {
                 matrices.translate(0.5, 0.5, 0.5);
+            }
             matrices.translate(v1.x - cx, v1.y - cy, v1.z - cz);
-            if (shape.facing == null) {
+            if (shape.facing == null)
+            {
                 matrices.mulPose(camera1.rotation());
                 matrices.mulPose(Vector3f.YP.rotationDegrees(180));
-            } else {
-                switch (shape.facing) {
+            }
+            else
+            {
+                switch (shape.facing)
+                {
                     case NORTH:
                         break;
                     case SOUTH:
@@ -343,30 +325,28 @@ public class ShapesRenderer
                 }
             }
 
-            if (shape.tilt != 0.0f)
-                matrices.mulPose(Vector3f.ZP.rotationDegrees(shape.tilt));
-            if (shape.lean != 0.0f)
-                matrices.mulPose(Vector3f.XP.rotationDegrees(shape.lean));
-            if (shape.turn != 0.0f)
-                matrices.mulPose(Vector3f.YP.rotationDegrees(shape.turn));
-            matrices.scale(shape.scale_x, shape.scale_y, shape.scale_z);
+            if (shape.tilt != 0.0f) matrices.mulPose(Vector3f.ZP.rotationDegrees(-shape.tilt));
+            if (shape.lean != 0.0f) matrices.mulPose(Vector3f.XP.rotationDegrees(-shape.lean));
+            if (shape.turn != 0.0f) matrices.mulPose(Vector3f.YP.rotationDegrees( shape.turn));
+            matrices.scale(shape.scaleX, shape.scaleY, shape.scaleZ);
 
             if (!isitem)// blocks should use its center as the origin
+            {
                 matrices.translate(-0.5, -0.5, -0.5);
+            }
 
             RenderSystem.depthMask(true);
             RenderSystem.enableCull();
             RenderSystem.enableDepthTest();
 
-
-
             blockPos = new BlockPos(v1);
-            int light;
-            light = LightTexture.pack(
-                    shape.light_fromblock < 0 ? client.level.getBrightness(LightLayer.BLOCK, blockPos)
-                            : shape.light_fromblock,
-                    shape.light_fromsky < 0 ? client.level.getBrightness(LightLayer.SKY, blockPos)
-                            : shape.light_fromsky);
+            int light = 0;
+            if (client.level != null) {
+                light = LightTexture.pack(
+                        shape.blockLight < 0 ? client.level.getBrightness(LightLayer.BLOCK, blockPos) : shape.blockLight,
+                        shape.skyLight < 0 ? client.level.getBrightness(LightLayer.SKY, blockPos) : shape.skyLight
+                );
+            }
 
             blockState = shape.blockState;
 
@@ -386,29 +366,43 @@ public class ShapesRenderer
                 }
 
                 // draw the block`s entity part
-                if (BlockEntity == null) {
-                    if (blockState.getBlock() instanceof EntityBlock eb) {
+                if (BlockEntity == null)
+                {
+                    if (blockState.getBlock() instanceof EntityBlock eb)
+                    {
                         BlockEntity = eb.newBlockEntity(blockPos, blockState);
-                        if (BlockEntity != null) {
+                        if (BlockEntity != null)
+                        {
                             BlockEntity.setLevel(client.level);
-                            if (shape.blockEntity != null)
-                                BlockEntity.load(shape.blockEntity);
+                            if (shape.blockEntity != null) BlockEntity.load(shape.blockEntity);
                         }
                     }
                 }
-                if (BlockEntity instanceof ShulkerBoxBlockEntity sbBlockEntity){
+                if (BlockEntity instanceof ShulkerBoxBlockEntity sbBlockEntity)
+                {
                     sbrender(sbBlockEntity, partialTick,
                     matrices, immediate, light, OverlayTexture.NO_OVERLAY);
-                }else
-                if (BlockEntity != null && client.getBlockEntityRenderDispatcher().getRenderer(BlockEntity) != null) {
-                    client.getBlockEntityRenderDispatcher().getRenderer(BlockEntity).render(BlockEntity, partialTick,
-                            matrices, immediate, light, OverlayTexture.NO_OVERLAY);
                 }
-            } else {
-                // draw item
+                else
+                {
+                    if (BlockEntity != null)
+                    {
+                        final BlockEntityRenderer<BlockEntity> blockEntityRenderer = client.getBlockEntityRenderDispatcher().getRenderer(BlockEntity);
+                        if (blockEntityRenderer != null) {
+                            blockEntityRenderer.render(BlockEntity, partialTick,
+                                    matrices, immediate, light, OverlayTexture.NO_OVERLAY);
+
+                        }
+                    }
+                }
+            }
+            else
+            {
                 if (shape.item != null)
-                    client.getItemRenderer().renderStatic(shape.item, shape.item_transform_type, light,
+                {
+                    client.getItemRenderer().renderStatic(shape.item, transformType, light,
                             OverlayTexture.NO_OVERLAY, matrices, immediate, (int) shape.key());
+                }
             }
             matrices.popPose();
             immediate.endBatch();
@@ -424,34 +418,40 @@ public class ShapesRenderer
         }
 
         // copy and modifiy a bit from net.minecraft.client.renderer.blockentity.ShulkerBoxRenderer.render
-        public void sbrender(ShulkerBoxBlockEntity shulkerBoxBlockEntity, float f, PoseStack poseStack, MultiBufferSource multiBufferSource, int i, int j) {
+        public void sbrender(ShulkerBoxBlockEntity shulkerBoxBlockEntity, float f, PoseStack poseStack, MultiBufferSource multiBufferSource, int i, int j)
+        {
             Direction direction = Direction.UP;
-            if (shulkerBoxBlockEntity.hasLevel()) {
+            if (shulkerBoxBlockEntity.hasLevel())
+            {
                 BlockState blockState = shulkerBoxBlockEntity.getBlockState();
-                if (blockState.getBlock() instanceof ShulkerBoxBlock) {
+                if (blockState.getBlock() instanceof ShulkerBoxBlock)
+                {
                     direction = blockState.getValue(ShulkerBoxBlock.FACING);
                 }
             }
             DyeColor dyeColor = shulkerBoxBlockEntity.getColor();
             Material material;
-            if (dyeColor == null) {
+            if (dyeColor == null)
+            {
                 material = Sheets.DEFAULT_SHULKER_TEXTURE_LOCATION;
-            } else {
-                material = (Material)Sheets.SHULKER_TEXTURE_LOCATION.get(dyeColor.getId());
+            }
+            else
+            {
+                material = Sheets.SHULKER_TEXTURE_LOCATION.get(dyeColor.getId());
             }
     
             poseStack.pushPose();
             poseStack.translate(0.5, 0.5, 0.5);
-            float g = 0.9995F;
             poseStack.scale(0.9995F, 0.9995F, 0.9995F);
             poseStack.mulPose(direction.getRotation());
             poseStack.scale(1.0F, -1.0F, -1.0F);
             poseStack.translate(0.0, -1.0, 0.0);
-            ModelPart modelPart = ((carpet.mixins.ShulkerBoxAccessMixin)(Object)(client.getBlockEntityRenderDispatcher().getRenderer(BlockEntity))).getModel().getLid();
+            ShulkerModel<?> model = ((ShulkerBoxAccessMixin) client.getBlockEntityRenderDispatcher().getRenderer(BlockEntity)).getModel();
+            ModelPart modelPart = model.getLid();
             modelPart.setPos(0.0F, 24.0F - shulkerBoxBlockEntity.getProgress(f) * 0.5F * 16.0F, 0.0F);
             modelPart.yRot = 270.0F * shulkerBoxBlockEntity.getProgress(f) * (float) (Math.PI / 180.0);
             VertexConsumer vertexConsumer = material.buffer(multiBufferSource, RenderType::entityCutoutNoCull);
-            ((carpet.mixins.ShulkerBoxAccessMixin)(Object)(client.getBlockEntityRenderDispatcher().getRenderer(BlockEntity))).getModel().renderToBuffer(poseStack, vertexConsumer, i, j, 1.0F, 1.0F, 1.0F, 1.0F);
+            model.renderToBuffer(poseStack, vertexConsumer, i, j, 1.0F, 1.0F, 1.0F, 1.0F);
             poseStack.popPose();
         }
     }
@@ -677,8 +677,6 @@ public class ShapesRenderer
                         return;
                     }
                     if (shape.mode==Mode.TRIANGLE_STRIP){
-                        //02468
-                        //1357*
                         builder.begin(VertexFormat.Mode.DEBUG_LINE_STRIP, DefaultVertexFormat.POSITION_COLOR);
                         Vec3 vec=shape.vertex_list.get(1);
                         if(shape.relative.get(1)){
