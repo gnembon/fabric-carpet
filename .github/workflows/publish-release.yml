@@ -103,7 +103,7 @@ jobs:
           file_path: build/libs/${{ steps.findjar.outputs.jarname }}
           changelog_type: markdown
           changelog: ${{ github.event.release.body }}
-          display_name: Carpet Mod v${{ needs.Get-Properties.outputs.carpet-version }} for ${{ steps.getbranchinfo.outputs.version }}
+          display_name: Carpet v${{ needs.Get-Properties.outputs.carpet-version }} for ${{ steps.getbranchinfo.outputs.version }}
           game_versions: 7499,4458,${{ steps.getbranchinfo.outputs.curse-versions }} #Fabric,Java 8,[version (s) for the branch]
           release_type: ${{ needs.Get-Properties.outputs.release-type }}
       - name: Ask Gradle to publish
@@ -157,40 +157,15 @@ jobs:
           distribution: 'temurin'
           java-version: 17
           cache: 'gradle'
-      - name: Replace fabric.mod.json
-        run: |
-          cd src/main/resources
-          rm fabric.mod.json
-          echo '
-          {
-            "schemaVersion": 1,
-            "id": "carpet",
-            "version": "1.4.36",
-            "entrypoints": {
-              "server": [ "carpet.utils.CarpetRulePrinter" ],
-              "preLaunch": [ "carpet.utils.CarpetRulePrinter" ]
-            }
-           }' > fabric.mod.json
-          cd ../../../
-      - name: Run solution
-        run: |
-          chmod +x gradlew
-          ./gradlew runServer > settings-toProccess.txt
       - name: Checkout wiki
         uses: actions/checkout@v2
         with:
           repository: ${{github.repository}}.wiki
           path: wiki
-      - name: Proccess Gradle log into a pretty wiki page
+      - name: Run rule printer into the wiki page
         run: |
-          from1="# Carpet";
-          File=settings-toProccess.txt
-          if grep -q "Deprecated Gradle features" "$File"; then # Happens after update to Gradle 6
-            to2="Deprecated Gradle features";
-          else
-            to2="BUILD SUCCESSFUL"
-          fi
-          a="$(cat settings-toProccess.txt)"; a="$(echo "${a#*"$from1"}")"; echo "$from1${a%%"$to2"*}" > wiki/Current-Available-Settings.md
+          chmod +x gradlew
+          ./gradlew runServer --args="-- -carpetDumpRules -dumpPath ../wiki/Current-Available-Settings.md"
       - name: Commit updated wiki page
         continue-on-error: true
         run: |

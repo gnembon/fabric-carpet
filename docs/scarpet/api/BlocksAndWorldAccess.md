@@ -420,6 +420,10 @@ Numeric function, returning the block light at position (from torches and other 
 
 Numeric function, returning the sky light at position (from sky access).
 
+### `effective_light(pos)`
+
+Numeric function, returning the "real" light at position, which is affected by time and weather. which also affects mobs spawning, frosted ice blocks melting.
+
 ### `see_sky(pos)`
 
 Boolean function, returning true if the block can see sky.

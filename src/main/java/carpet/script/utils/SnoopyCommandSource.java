@@ -11,6 +11,7 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
+import net.minecraft.util.TaskChainer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.dimension.DimensionType;
 import net.minecraft.world.phys.Vec2;
@@ -43,7 +44,7 @@ public class SnoopyCommandSource extends CommandSourceStack
     {
         super(CommandSource.NULL, original.getPosition(), original.getRotation(), original.getLevel(), CarpetSettings.runPermissionLevel,
                 original.getTextName(), original.getDisplayName(), original.getServer(), original.getEntity(), false,
-                (ctx, succ, res) -> { }, EntityAnchorArgument.Anchor.FEET, CommandSigningContext.anonymous());
+                (ctx, succ, res) -> { }, EntityAnchorArgument.Anchor.FEET, CommandSigningContext.ANONYMOUS, TaskChainer.IMMEDIATE);
         this.output = CommandSource.NULL;
         this.position = original.getPosition();
         this.world = original.getLevel();
@@ -78,7 +79,7 @@ public class SnoopyCommandSource extends CommandSourceStack
         this.rotation = player.getRotationVector(); // not a client call really
         this.error = error;
         this.chatOutput = output;
-        this.signingContext = CommandSigningContext.anonymous();
+        this.signingContext = CommandSigningContext.ANONYMOUS;
     }
 
     private SnoopyCommandSource(CommandSource output, Vec3 pos, Vec2 rot, ServerLevel world, int level, String simpleName, Component name, MinecraftServer server, @Nullable Entity entity, ResultConsumer<CommandSourceStack> consumer, EntityAnchorArgument.Anchor entityAnchor, CommandSigningContext context,
@@ -86,7 +87,7 @@ public class SnoopyCommandSource extends CommandSourceStack
     ) {
         super(output, pos, rot, world, level,
                 simpleName, name, server, entity, false,
-                consumer, entityAnchor, context);
+                consumer, entityAnchor, context, TaskChainer.IMMEDIATE);
         this.output = output;
         this.position = pos;
         this.rotation = rot;

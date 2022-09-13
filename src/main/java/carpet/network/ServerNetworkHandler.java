@@ -99,7 +99,7 @@ public class ServerNetworkHandler
         }
         else
         {
-            resultCode = player.getServer().getCommands().performCommand(
+            resultCode = player.getServer().getCommands().performPrefixedCommand(
                     new SnoopyCommandSource(player, error, output), command
             );
         }

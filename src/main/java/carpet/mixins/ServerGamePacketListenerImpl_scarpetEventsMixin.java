@@ -1,7 +1,7 @@
 package carpet.mixins;
 
+import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ServerboundChatPacket;
-import net.minecraft.server.network.FilteredText;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
@@ -292,14 +292,14 @@ public class ServerGamePacketListenerImpl_scarpetEventsMixin
         }
     }
 
-    @Inject(method = "handleChat(Lnet/minecraft/network/protocol/game/ServerboundChatPacket;Lnet/minecraft/server/network/FilteredText;)V",
-            at = @At(value = "INVOKE", target = "Lnet/minecraft/network/protocol/game/ServerboundChatPacket;signedPreview()Z"),
+    @Inject(method = "handleChat(Lnet/minecraft/network/protocol/game/ServerboundChatPacket;)V",
+            at = @At(value = "HEAD"),
             cancellable = true
     )
-    private void onChatMessage(ServerboundChatPacket serverboundChatPacket, FilteredText<String> filteredText, CallbackInfo ci) {
+    private void onChatMessage(ServerboundChatPacket serverboundChatPacket, CallbackInfo ci) {
         if (PLAYER_MESSAGE.isNeeded())
         {
-            if(PLAYER_MESSAGE.onPlayerMessage(player, filteredText.raw())) ci.cancel();
+            if(PLAYER_MESSAGE.onPlayerMessage(player, serverboundChatPacket.message())) ci.cancel();
         }
     }
 }
