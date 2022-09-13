@@ -622,10 +622,23 @@ public class CarpetEventServer
                 return false;
             }
         };
+        public static final Event PLAYER_PLACING_BLOCK = new Event("player_placing_block", 4, false)
+        {
+            @Override
+            public boolean onBlockPlaced(ServerPlayer player, BlockPos pos, InteractionHand enumhand, ItemStack itemstack)
+            {
+                return handler.call( () -> Arrays.asList(
+                        new EntityValue(player),
+                        ValueConversions.of(itemstack),
+                        StringValue.of(enumhand == InteractionHand.MAIN_HAND ? "mainhand" : "offhand"),
+                        new BlockValue(null, player.getLevel(), pos)
+                ), player::createCommandSourceStack);
+            }
+        };
         public static final Event PLAYER_PLACES_BLOCK = new Event("player_places_block", 4, false)
         {
             @Override
-            public void onBlockPlaced(ServerPlayer player, BlockPos pos, InteractionHand enumhand, ItemStack itemstack)
+            public boolean onBlockPlaced(ServerPlayer player, BlockPos pos, InteractionHand enumhand, ItemStack itemstack)
             {
                 handler.call( () -> Arrays.asList(
                         new EntityValue(player),
@@ -633,6 +646,7 @@ public class CarpetEventServer
                         StringValue.of(enumhand == InteractionHand.MAIN_HAND ? "mainhand" : "offhand"),
                         new BlockValue(null, player.getLevel(), pos)
                 ), player::createCommandSourceStack);
+                return false;
             }
         };
         public static final Event PLAYER_BREAK_BLOCK = new Event("player_breaks_block", 2, false)
@@ -1141,7 +1155,7 @@ public class CarpetEventServer
         public boolean onBlockAction(ServerPlayer player, BlockPos blockpos, Direction facing) {return false;}
         public boolean onBlockHit(ServerPlayer player, InteractionHand enumhand, BlockHitResult hitRes) {return false;}
         public boolean onBlockBroken(ServerPlayer player, BlockPos pos, BlockState previousBS) {return false;}
-        public void onBlockPlaced(ServerPlayer player, BlockPos pos, InteractionHand enumhand, ItemStack itemstack) { }
+        public boolean onBlockPlaced(ServerPlayer player, BlockPos pos, InteractionHand enumhand, ItemStack itemstack) {return false;}
         public boolean onEntityHandAction(ServerPlayer player, Entity entity, InteractionHand enumhand) {return false;}
         public void onHandAction(ServerPlayer player, InteractionHand enumhand) { }
         public void onEntityAction(Entity entity, boolean created) { }
