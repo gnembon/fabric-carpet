@@ -171,6 +171,9 @@ before other interaction events, like `'player_interacts_with_block'` or `'playe
 ### `__on_player_interacts_with_block(player, hand, block, face, hitvec)`
 Called when player successfully interacted with a block, which resulted in activation of said block,
 right after this happened.
+
+### `__on_player_placing_block(player, item_tuple, hand, block)`
+Triggered when player places a block, before block is placed in the world.
   
 ### `__on_player_places_block(player, item_tuple, hand, block)`
 Triggered when player places a block, after block is placed in the world, but before scoreboard is triggered or player inventory
