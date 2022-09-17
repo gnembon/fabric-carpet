@@ -1061,7 +1061,7 @@ public class CarpetScriptHost extends ScriptHost
                 continue;
             stringsToFormat.add(format + line.substring(lastPos, foundLocal.getKey()));
             stringsToFormat.add(format + foundLocal.getValue());
-            Value val = context.variables.get(foundLocal.getValue()).evalValue(context);
+            Value val = context.variables.get(foundLocal.getValue());
             String type = val.getTypeString();
             String value;
             try {

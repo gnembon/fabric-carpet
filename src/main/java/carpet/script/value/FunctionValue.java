@@ -27,7 +27,7 @@ public class FunctionValue extends Value implements Fluff.ILazyFunction
     private final Tokenizer.Token token;
     private final String name;
     private final LazyValue body;
-    private Map<String, LazyValue> outerState;
+    private Map<String, Value> outerState;
     private final List<String> args;
     private final String varArgs;
     private static long variantCounter = 1;
@@ -45,7 +45,7 @@ public class FunctionValue extends Value implements Fluff.ILazyFunction
         variant = 0L;
     }
 
-    public FunctionValue(Expression expression, Tokenizer.Token token, String name, LazyValue body, List<String> args, String varArgs, Map<String, LazyValue> outerState)
+    public FunctionValue(Expression expression, Tokenizer.Token token, String name, LazyValue body, List<String> args, String varArgs, Map<String, Value> outerState)
     {
         this.expression = expression;
         this.token = token;
@@ -71,7 +71,7 @@ public class FunctionValue extends Value implements Fluff.ILazyFunction
         List<String> stringArgs= new ArrayList<>(args);
         if (outerState != null)
             stringArgs.addAll(outerState.entrySet().stream().map(e ->
-                    "outer("+e.getKey()+") = "+e.getValue().evalValue(null).getPrettyString()).collect(Collectors.toList()));
+                    "outer("+e.getKey()+") = "+e.getValue().getPrettyString()).collect(Collectors.toList()));
         return (name.equals("_")?"<lambda>":name) +"("+String.join(", ",stringArgs)+")";
     }
 
@@ -235,7 +235,7 @@ public class FunctionValue extends Value implements Fluff.ILazyFunction
         {
             String arg = args.get(i);
             Value val = params.get(i).reboundedTo(arg); // todo check if we need to copy that
-            newFrame.setVariable(arg, (cc, tt) -> val);
+            newFrame.setVariable(arg, val);
         }
         if (varArgs != null)
         {
@@ -245,7 +245,7 @@ public class FunctionValue extends Value implements Fluff.ILazyFunction
                 extraParams.add(params.get(i).reboundedTo(null)); // copy by value I guess
             }
             Value rest = ListValue.wrap(extraParams).bindTo(varArgs); // didn't we just copied that?
-            newFrame.setVariable(varArgs, (cc, tt) -> rest);
+            newFrame.setVariable(varArgs, rest);
 
         }
         Value retVal;

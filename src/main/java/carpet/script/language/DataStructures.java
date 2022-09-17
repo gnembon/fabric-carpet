@@ -134,11 +134,11 @@ public class DataStructures {
             }
             LazyValue sortKey = lv.get(1);
             //scoping
-            LazyValue __ = c.getVariable("_");
+            Value __ = c.getVariable("_");
             Collections.sort(toSort,(v1, v2) -> {
-                c.setVariable("_",(cc, tt) -> v1);
+                c.setVariable("_", v1);
                 Value ev1 = sortKey.evalValue(c);
-                c.setVariable("_",(cc, tt) -> v2);
+                c.setVariable("_", v2);
                 Value ev2 = sortKey.evalValue(c);
                 return ev1.compareTo(ev2);
             });

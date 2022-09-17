@@ -44,8 +44,8 @@ public class Loops {
             long i = 0;
             Value lastOne = Value.NULL;
             //scoping
-            LazyValue _val = c.getVariable("_");
-            c.setVariable("_",(cc, tt) -> new NumericValue(0).bindTo("_"));
+            Value _val = c.getVariable("_");
+            c.setVariable("_", Value.ZERO.bindTo("_"));
             while (i<limit && condition.evalValue(c, Context.BOOLEAN).getBoolean() )
             {
                 try
@@ -58,8 +58,7 @@ public class Loops {
                     if (stmt instanceof BreakStatement) break;
                 }
                 i++;
-                long seriously = i;
-                c.setVariable("_", (cc, tt) -> new NumericValue(seriously).bindTo("_"));
+                c.setVariable("_", new NumericValue(i).bindTo("_"));
             }
             //revering scope
             c.setVariable("_", _val);
@@ -75,11 +74,10 @@ public class Loops {
             Value lastOne = Value.NULL;
             LazyValue expr = lv.get(1);
             //scoping
-            LazyValue _val = c.getVariable("_");
+            Value _val = c.getVariable("_");
             for (long i=0; i < limit; i++)
             {
-                long whyYouAsk = i;
-                c.setVariable("_", (cc, tt) -> new NumericValue(whyYouAsk).bindTo("_"));
+                c.setVariable("_", new NumericValue(i).bindTo("_"));
                 try
                 {
                     lastOne = expr.evalValue(c, t);
@@ -107,17 +105,16 @@ public class Loops {
             Iterator<Value> iterator = ((AbstractListValue) rval).iterator();
             LazyValue expr = lv.get(1);
             //scoping
-            LazyValue _val = c.getVariable("_");
-            LazyValue _iter = c.getVariable("_i");
+            Value _val = c.getVariable("_");
+            Value _iter = c.getVariable("_i");
             List<Value> result = new ArrayList<>();
             for (int i=0; iterator.hasNext(); i++)
             {
                 Value next = iterator.next();
                 String var = next.getVariable();
                 next.bindTo("_");
-                int doYouReally = i;
-                c.setVariable("_", (cc, tt) -> next);
-                c.setVariable("_i", (cc, tt) -> new NumericValue(doYouReally).bindTo("_i"));
+                c.setVariable("_", next);
+                c.setVariable("_i", new NumericValue(i).bindTo("_i"));
                 try
                 {
                     result.add(expr.evalValue(c, t));
@@ -153,17 +150,16 @@ public class Loops {
             Iterator<Value> iterator = ((AbstractListValue) rval).iterator();
             LazyValue expr = lv.get(1);
             //scoping
-            LazyValue _val = c.getVariable("_");
-            LazyValue _iter = c.getVariable("_i");
+            Value _val = c.getVariable("_");
+            Value _iter = c.getVariable("_i");
             List<Value> result = new ArrayList<>();
             for (int i=0; iterator.hasNext(); i++)
             {
                 Value next = iterator.next();
                 String var = next.getVariable();
                 next.bindTo("_");
-                int seriously = i;
-                c.setVariable("_", (cc, tt) -> next);
-                c.setVariable("_i", (cc, tt) -> new NumericValue(seriously).bindTo("_i"));
+                c.setVariable("_", next);
+                c.setVariable("_i", new NumericValue(i).bindTo("_i"));
                 try
                 {
                     if(expr.evalValue(c, Context.BOOLEAN).getBoolean())
@@ -201,17 +197,16 @@ public class Loops {
             Iterator<Value> iterator = ((AbstractListValue) rval).iterator();
             LazyValue expr = lv.get(1);
             //scoping
-            LazyValue _val = c.getVariable("_");
-            LazyValue _iter = c.getVariable("_i");
+            Value _val = c.getVariable("_");
+            Value _iter = c.getVariable("_i");
             Value result = Value.NULL;
             for (int i=0; iterator.hasNext(); i++)
             {
                 Value next = iterator.next();
                 String var = next.getVariable();
                 next.bindTo("_");
-                int seriously = i;
-                c.setVariable("_", (cc, tt) -> next);
-                c.setVariable("_i", (cc, tt) -> new NumericValue(seriously).bindTo("_i"));
+                c.setVariable("_", next);
+                c.setVariable("_i", new NumericValue(i).bindTo("_i"));
                 try
                 {
                     if(expr.evalValue(c, Context.BOOLEAN).getBoolean())
@@ -253,17 +248,16 @@ public class Loops {
             Iterator<Value> iterator = ((AbstractListValue) rval).iterator();
             LazyValue expr = lv.get(1);
             //scoping
-            LazyValue _val = c.getVariable("_");
-            LazyValue _iter = c.getVariable("_i");
+            Value _val = c.getVariable("_");
+            Value _iter = c.getVariable("_i");
             LazyValue result = LazyValue.TRUE;
             for (int i=0; iterator.hasNext(); i++)
             {
                 Value next = iterator.next();
                 String var = next.getVariable();
                 next.bindTo("_");
-                int seriously = i;
-                c.setVariable("_", (cc, tt) -> next);
-                c.setVariable("_i", (cc, tt) -> new NumericValue(seriously).bindTo("_i"));
+                c.setVariable("_", next);
+                c.setVariable("_i", new NumericValue(i).bindTo("_i"));
                 if(!expr.evalValue(c, Context.BOOLEAN).getBoolean())
                 {
                     result = LazyValue.FALSE;
@@ -318,17 +312,16 @@ public class Loops {
             Iterator<Value> iterator = ((AbstractListValue) rval).iterator();
             LazyValue expr = lv.get(1);
             //scoping
-            LazyValue _val = c.getVariable("_");
-            LazyValue _ite = c.getVariable("_i");
+            Value _val = c.getVariable("_");
+            Value _ite = c.getVariable("_i");
             int successCount = 0;
             for (int i=0; iterator.hasNext(); i++)
             {
                 Value next = iterator.next();
                 String var = next.getVariable();
                 next.bindTo("_");
-                int seriously = i;
-                c.setVariable("_", (cc, tt) -> next);
-                c.setVariable("_i", (cc, tt) -> new NumericValue(seriously).bindTo("_i"));
+                c.setVariable("_", next);
+                c.setVariable("_i", new NumericValue(i).bindTo("_i"));
                 Value result = Value.FALSE;
                 try
                 {
@@ -378,20 +371,18 @@ public class Loops {
             }
 
             //scoping
-            LazyValue _val = c.getVariable("_");
-            LazyValue _acc = c.getVariable("_a");
-            LazyValue _ite = c.getVariable("_i");
+            Value _val = c.getVariable("_");
+            Value _acc = c.getVariable("_a");
+            Value _ite = c.getVariable("_i");
 
             for (int i=0; iterator.hasNext(); i++)
             {
                 Value next = iterator.next();
                 String var = next.getVariable();
                 next.bindTo("_");
-                Value promiseWontChangeYou = acc;
-                int seriously = i;
-                c.setVariable("_a", (cc, tt) -> promiseWontChangeYou.bindTo("_a"));
-                c.setVariable("_", (cc, tt) -> next);
-                c.setVariable("_i", (cc, tt) -> new NumericValue(seriously).bindTo("_i"));
+                c.setVariable("_a", acc.bindTo("_a"));
+                c.setVariable("_", next);
+                c.setVariable("_i", new NumericValue(i).bindTo("_i"));
                 try
                 {
                     acc = expr.evalValue(c, t);

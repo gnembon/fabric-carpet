@@ -657,17 +657,17 @@ public class Expression
     {
         if (functions.containsKey(name))
             throw new ExpressionException(context, expr, token, "Function "+name+" would mask a built-in function");
-        Map<String, LazyValue> contextValues = new HashMap<>();
+        Map<String, Value> contextValues = new HashMap<>();
         for (String outer : outers)
         {
-            LazyValue  lv = context.getVariable(outer);
-            if (lv == null)
+            Value value = context.getVariable(outer);
+            if (value == null)
             {
                 throw new InternalExpressionException("Variable "+outer+" needs to be defined in outer scope to be used as outer parameter, and cannot be global");
             }
             else
             {
-                contextValues.put(outer, lv);
+                contextValues.put(outer, value);
             }
         }
         if (contextValues.isEmpty()) contextValues = null;
@@ -728,19 +728,18 @@ public class Expression
         }
         else
         {
-            c.setVariable(name, lv);
+            c.setVariable(name, lv.evalValue(c));
         }
     }
 
     public LazyValue getOrSetAnyVariable(Context c, String name)
     {
-        LazyValue var;
         if (!name.startsWith("global_"))
         {
-            var = c.getVariable(name);
-            if (var != null) return var;
+            Value value = c.getVariable(name);
+            if (value != null) return (cc, tt) -> value;
         }
-        var = c.host.getGlobalVariable(module, name);
+        LazyValue var = c.host.getGlobalVariable(module, name);
         if (var != null) return var;
         var = (_c, _t) -> _c.host.strict ? Value.UNDEF.reboundedTo(name) : Value.NULL.reboundedTo(name);
         setAnyVariable(c, name, var);
