@@ -63,7 +63,10 @@ public class MovingBorderExtent_tickMixin {
 		{
 			for (BorderChangeListener listener : this.field_12743.getListeners())
 			{
-				listener.onBorderSizeLerping(this.field_12743, this.from, this.to, (long) this.lerpDuration);
+				if (!(listener instanceof BorderChangeListener.DelegateBorderChangeListener))
+				{
+					listener.onBorderSizeLerping(this.field_12743, this.from, this.to, (long) this.lerpDuration);
+				}
 			}
 		}
 	}
