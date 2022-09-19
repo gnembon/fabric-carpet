@@ -48,7 +48,7 @@ public class MovingBorderExtent_tickMixin {
 	protected void getLerpRemaining(CallbackInfoReturnable<Long> cir)
 	{
 		// Rough estimation
-		double mspt = Mth.average(CarpetServer.minecraft_server.tickTimes) * 1.0E-6D;
+		double mspt = CarpetServer.minecraft_server == null ? TickSpeed.mspt : Mth.average(CarpetServer.minecraft_server.tickTimes) * 1.0E-6D;
 		double tps = 1000.0D / Math.max((TickSpeed.time_warp_start_time != 0) ? 0.0 : TickSpeed.mspt, mspt);
 		cir.setReturnValue((long) ((this.tickDuration - this.ticks) / tps * 1_000));
 	}
