@@ -153,11 +153,11 @@ public abstract class Value implements Comparable<Value>, Cloneable
         if (!m.find()) return Value.NULL;
         int gc = m.groupCount();
         if (gc == 0) return new StringValue(m.group());
-        if (gc == 1) return new StringValue(m.group(1));
+        if (gc == 1) return StringValue.of(m.group(1));
         List<Value> groups = new ArrayList<>(gc);
         for (int i = 1; i <= gc; i++)
         {
-            groups.add(new StringValue(m.group(i)));
+            groups.add(StringValue.of(m.group(i)));
         }
         return ListValue.wrap(groups);
     }
