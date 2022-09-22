@@ -24,6 +24,8 @@ import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.border.BorderStatus;
+import net.minecraft.world.level.border.WorldBorder;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -1077,4 +1079,41 @@ public class CarpetSettings
     )
     public static int sculkSensorRange = 8;
 
+    /**
+     * Listener, we need to update world borders to change whether
+     * they are currently moving in real time or in game time.
+     */
+    private static class WorldBorderValidator extends Validator<Boolean>
+    {
+        @Override
+        public Boolean validate(CommandSourceStack source, CarpetRule<Boolean> changingRule, Boolean newValue, String userInput)
+        {
+            if (changingRule.value() ^ newValue)
+            {
+                // Needed for the update
+                tickSyncedWorldBorders = newValue;
+                MinecraftServer server = source.getServer();
+                for (ServerLevel level : server.getAllLevels())
+                {
+                    WorldBorder worldBorder = level.getWorldBorder();
+                    if (worldBorder.getStatus() != BorderStatus.STATIONARY)
+                    {
+                        double from = worldBorder.getSize();
+                        double to = worldBorder.getLerpTarget();
+                        long time = worldBorder.getLerpRemainingTime();
+                        worldBorder.lerpSizeBetween(from, to, time);
+                    }
+                }
+            }
+            return newValue;
+        }
+    }
+
+    @Rule(
+            desc = "Makes world borders move based on in game time instead of real time",
+            extra = "This has the effect that when the tick rate changes the world border speed also changes proportional to it",
+            category = FEATURE,
+            validate = WorldBorderValidator.class
+    )
+    public static boolean tickSyncedWorldBorders = false;
 }
