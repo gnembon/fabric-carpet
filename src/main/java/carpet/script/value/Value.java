@@ -66,19 +66,13 @@ public abstract class Value implements Comparable<Value>, Cloneable
     public abstract boolean getBoolean();
 
     public Value add(Value o) {
-        String lstr = this.getString();
         if (o instanceof FormattedTextValue)
         {
             return FormattedTextValue.combine(this, o);
         }
-        if (lstr == null) // null
-            return new StringValue(o.getString());
-        String rstr = o.getString();
-        if (rstr == null)
-        {
-            return new StringValue(lstr);
-        }
-        return new StringValue(lstr+rstr);
+        String leftStr = this.getString();
+        String rightStr = o.getString();
+        return new StringValue(leftStr + rightStr);
     }
     public Value subtract(Value v)
     {
