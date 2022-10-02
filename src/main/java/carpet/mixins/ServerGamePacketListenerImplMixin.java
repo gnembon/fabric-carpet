@@ -3,6 +3,8 @@ package carpet.mixins;
 import carpet.network.CarpetClient;
 import carpet.network.ServerNetworkHandler;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.protocol.PacketUtils;
+import net.minecraft.network.protocol.game.ServerGamePacketListener;
 import net.minecraft.network.protocol.game.ServerboundCustomPayloadPacket;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
@@ -24,6 +26,10 @@ public class ServerGamePacketListenerImplMixin
         ResourceLocation channel = packet.getIdentifier();
         if (CarpetClient.CARPET_CHANNEL.equals(channel))
         {
+            // We should force onto the main thread here
+            // ServerNetworkHandler.handleData can possibly mutate data that isn't
+            // thread safe, and also allows for client commands to be executed
+            PacketUtils.ensureRunningOnSameThread(packet, (ServerGamePacketListener) this, player.getLevel());
             ServerNetworkHandler.handleData(new FriendlyByteBuf(packet.getData().copy()), player);
             ci.cancel();
         }
