@@ -1221,7 +1221,7 @@ public class CarpetEventServer
         if (executingHost == null) return CallbackResult.FAIL;
         try
         {
-            executingHost.callUDF(BlockPos.ZERO, source.withPermission(CarpetSettings.runPermissionLevel), udf, argv);
+            executingHost.callUDF(source.withPermission(CarpetSettings.runPermissionLevel), udf, argv);
             return CallbackResult.SUCCESS;
         }
         catch (NullPointerException | InvalidCallbackException | IntegrityException error)
