@@ -87,6 +87,7 @@ public class ClientNetworkHandler
         });
     };
 
+    // Ran on the Main Minecraft Thread
     public static void handleData(FriendlyByteBuf data, LocalPlayer player)
     {
         if (data != null)
@@ -101,22 +102,19 @@ public class ClientNetworkHandler
 
     private static void onHi(FriendlyByteBuf data)
     {
-        synchronized (CarpetClient.sync)
+        CarpetClient.setCarpet();
+        CarpetClient.serverCarpetVersion = data.readUtf(64);
+        if (CarpetSettings.carpetVersion.equals(CarpetClient.serverCarpetVersion))
         {
-            CarpetClient.setCarpet();
-            CarpetClient.serverCarpetVersion = data.readUtf(64);
-            if (CarpetSettings.carpetVersion.equals(CarpetClient.serverCarpetVersion))
-            {
-                CarpetSettings.LOG.info("Joined carpet server with matching carpet version");
-            }
-            else
-            {
-                CarpetSettings.LOG.warn("Joined carpet server with another carpet version: "+CarpetClient.serverCarpetVersion);
-            }
-            if (CarpetClient.getPlayer() != null)
-                respondHello();
-
+            CarpetSettings.LOG.info("Joined carpet server with matching carpet version");
         }
+        else
+        {
+            CarpetSettings.LOG.warn("Joined carpet server with another carpet version: "+CarpetClient.serverCarpetVersion);
+        }
+        // We can ensure that this packet is
+        // processed AFTER the player has joined
+        respondHello();
     }
 
     public static void respondHello()
