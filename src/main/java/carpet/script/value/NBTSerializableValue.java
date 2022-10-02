@@ -373,7 +373,7 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
         if (t instanceof CollectionTag)
         {
             List<Value> elems = new ArrayList<>();
-            CollectionTag<? extends Tag> ltag = (CollectionTag<? extends Tag>)t;
+            CollectionTag<?> ltag = (CollectionTag<?>)t;
             for (Tag elem: ltag)
             {
                 elems.add(decodeTagDeep(elem));
@@ -516,7 +516,7 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
             }
             try
             {
-                CollectionTag<?> targetList = (CollectionTag) target;
+                CollectionTag<?> targetList = (CollectionTag<?>) target;
                 if (!targetList.addTag(index < 0 ? targetList.size() + index + 1 : index, newElement.copy()))
                     return false;
                 modified = true;

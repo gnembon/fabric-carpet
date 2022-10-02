@@ -20,17 +20,15 @@ public class ExplosionLogHelper
     private final boolean createFire;
     private final Explosion.BlockInteraction blockDestructionType;
     public final Vec3 pos;
-    public final Entity entity;
     private final float power;
     private boolean affectBlocks = false;
-    private Object2IntMap<EntityChangedStatusWithCount> impactedEntities = new Object2IntOpenHashMap<>();
+    private final Object2IntMap<EntityChangedStatusWithCount> impactedEntities = new Object2IntOpenHashMap<>();
 
     private static long lastGametime = 0;
     private static int explosionCountInCurretGT = 0;
     private static boolean newTick;
 
-    public ExplosionLogHelper(Entity entity, double x, double y, double z, float power, boolean createFire, Explosion.BlockInteraction blockDestructionType) {
-        this.entity = entity;
+    public ExplosionLogHelper(double x, double y, double z, float power, boolean createFire, Explosion.BlockInteraction blockDestructionType) {
         this.power = power;
         this.pos = new Vec3(x,y,z);
         this.createFire = createFire;

@@ -28,13 +28,13 @@ public abstract class DistanceManager_spawnChunksMixin implements ChunkTicketMan
     {
         long pos = chunkPos.toLong();
         SortedArraySet<Ticket<?>> set = tickets.get(pos);
-        Ticket existingTicket = null;
+        Ticket<?> existingTicket = null;
         if (set != null)
         {
             Iterator<Ticket<?>> iter = set.iterator();
             while(iter.hasNext())
             {
-                Ticket ticket = iter.next();
+                Ticket<?> ticket = iter.next();
                 if (ticket.getType() == TicketType.START)
                 {
                     existingTicket = ticket;

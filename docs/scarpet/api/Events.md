@@ -103,6 +103,9 @@ this should not happen, but let you be warned.
 Called right after a chunk at a given coordinate is loaded. All newly generated chunks are considered loaded as well.
  `x` and `z` correspond to the lowest x and z coordinates in the chunk.
 
+### `__on_chunk_unloaded(x, z)`
+Called right before a chunk at the given coordinates is unloaded. `x` and `z` correspond to the lowest x and z coordinates in the chunk.
+
 ### `__on_lightning(block, mode)`
 Triggered right after a lightning strikes. Lightning entity as well as potential horseman trap would 
 already be spawned at that point. `mode` is `true` if the lightning did cause a trap to spawn. 

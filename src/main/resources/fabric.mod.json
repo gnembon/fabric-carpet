@@ -23,7 +23,8 @@
       "carpet.CarpetServer::onGameStarted"
     ],
     "server": [
-      "carpet.CarpetServer::onGameStarted"
+      "carpet.CarpetServer::onGameStarted",
+      "carpet.utils.CarpetRulePrinter"
     ]
   },
   "mixins": [
@@ -33,7 +34,7 @@
 
   "depends": {
     "minecraft": "1.19.*",
-    "fabricloader": ">=0.12.8",
+    "fabricloader": ">=0.14.6",
     "java": ">=17"
   }
 }

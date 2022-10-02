@@ -28,13 +28,13 @@ public class CounterCommand
                 CarpetSettings.hopperCounters);
 
         literalargumentbuilder.
-                then((Commands.literal("reset").executes( (p_198489_1_)->
-                        resetCounter(p_198489_1_.getSource(), null))));
+                then((Commands.literal("reset").executes( (context)->
+                        resetCounter(context.getSource(), null))));
         for (DyeColor enumDyeColor: DyeColor.values())
         {
             String color = enumDyeColor.toString();
             literalargumentbuilder.
-                    then((Commands.literal(color).executes( (p_198489_1_)-> displayCounter(p_198489_1_.getSource(), color, false))));
+                    then((Commands.literal(color).executes( (context)-> displayCounter(context.getSource(), color, false))));
             literalargumentbuilder.then(Commands.literal(color).
                     then(Commands.literal("reset").executes((context) ->
                             resetCounter(context.getSource(), color))));

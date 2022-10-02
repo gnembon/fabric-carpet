@@ -1,7 +1,7 @@
 {
   "required": true,
   "package": "carpet.mixins",
-  "compatibilityLevel": "JAVA_16",
+  "compatibilityLevel": "JAVA_17",
   "mixins": [
     "BarrierBlock_updateSuppressionBlockMixin",
     "SpawnState_scarpetMixin",
@@ -50,8 +50,6 @@
     "DistanceManager_spawnChunksMixin",
     "ServerLevel_spawnChunksMixin",
     "ThreadedLevelLightEngine_scarpetChunkCreationMixin",
-    "DistanceManager_spawnChunksMixin",
-    "ServerLevel_spawnChunksMixin",
     "LivingEntity_cleanLogsMixin",
     "MobMixin",
     "ServerEntity_leashFixMixin",
@@ -62,7 +60,6 @@
     "MinecraftServer_scarpetMixin",
     "ExperienceOrb_xpNoCooldownMixin",
     "Player_xpNoCooldownMixin",
-    "ServerboundPlayerActionPacketMixin",
     "ServerPlayer_actionPackMixin",
     "PlayerList_coreMixin",
     "PlayerList_fakePlayersMixin",
@@ -175,7 +172,6 @@
     "PistonMovingBlockEntity_movableBEMixin",
     "Level_movableBEMixin",
     "LevelChunk_movableBEMixin",
-    "PistonHandler_customStickyMixin",
     "Player_creativeNoClipMixin",
     "PistonMovingBlockEntity_playerHandlingMixin",
     "BlockItem_creativeNoClipMixin",
@@ -185,9 +181,17 @@
     "LivingEntity_creativeFlyMixin",
     "ChunkMap_creativePlayersLoadChunksMixin",
     "SculkSensorBlock_rangeMixin",
-    "CollectingNeighborUpdaterAccessor"
+    "CollectingNeighborUpdaterAccessor",
+
+    "BlockBehaviour_customStickyMixin",
+    "ChainBlock_customStickyMixin",
+    "ChestBlock_customStickyMixin",
+    "HoneyBlock_customStickyMixin",
+    "PistonStructureResolver_customStickyMixin",
+    "SlimeBlock_customStickyMixin"
   ],
   "client": [
+    "ShulkerBoxAccessMixin",
     "Timer_tickSpeedMixin",
     "MinecraftMixin",
     "Minecraft_pausedShakeMixin",

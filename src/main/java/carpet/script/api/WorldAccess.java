@@ -36,6 +36,8 @@ import carpet.script.value.StringValue;
 import carpet.script.value.Value;
 import carpet.script.value.ValueConversions;
 import carpet.utils.BlockInfo;
+import carpet.utils.CommandHelper;
+
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.longs.LongSet;
@@ -47,6 +49,7 @@ import net.minecraft.core.QuartPos;
 import net.minecraft.core.Registry;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.tags.TagKey;
+import net.minecraft.world.level.chunk.PalettedContainer;
 import net.minecraft.world.level.levelgen.structure.Structure;
 import net.minecraft.world.level.levelgen.structure.StructureType;
 import org.jetbrains.annotations.Nullable;
@@ -134,11 +137,11 @@ public class WorldAccess {
         DIRECTION_MAP.put("x", Direction.EAST);
 
     }
-    private final static Map<String, TicketType<?>> ticketTypes = new HashMap<String, TicketType<?>>(){{
-        put("portal", TicketType.PORTAL);
-        put("teleport", TicketType.POST_TELEPORT);
-        put("unknown", TicketType.UNKNOWN);  // unknown
-    }};
+    private static final Map<String, TicketType<?>> ticketTypes = Map.of(
+        "portal", TicketType.PORTAL,
+        "teleport", TicketType.POST_TELEPORT,
+        "unknown", TicketType.UNKNOWN
+    );
     // dummy entity for dummy requirements in the loot tables (see snowball)
     private static FallingBlockEntity DUMMY_ENTITY = null;
     private static Value booleanStateTest(
@@ -513,6 +516,9 @@ public class WorldAccess {
 
         expression.addContextFunction("sky_light", -1, (c, t, lv) ->
                 genericStateTest(c, "sky_light", lv, (s, p, w) -> new NumericValue(w.getBrightness(LightLayer.SKY, p))));
+
+        expression.addContextFunction("effective_light", -1, (c, t, lv) ->
+                genericStateTest(c, "effective_light", lv, (s, p, w) -> new NumericValue(w.getMaxLocalRawBrightness(p))));
 
         expression.addContextFunction("see_sky", -1, (c, t, lv) ->
                 genericStateTest(c, "see_sky", lv, (s, p, w) -> BooleanValue.of(w.canSeeSky(p))));
@@ -1267,7 +1273,8 @@ public class WorldAccess {
                 int j = i + QuartPos.fromBlock(chunk.getHeight()) - 1;
                 int k = Mth.clamp(biomeY, i, j);
                 int l = chunk.getSectionIndex(QuartPos.toBlock(k));
-                chunk.getSection(l).getBiomes().set(biomeX & 3, k & 3, biomeZ & 3, biome);
+                // accessing outside of the interface - might be dangerous in the future.
+                ((PalettedContainer<Holder<Biome>>) chunk.getSection(l).getBiomes()).set(biomeX & 3, k & 3, biomeZ & 3, biome);
             } catch (Throwable var8) {
                 return Value.FALSE;
             }
@@ -1495,7 +1502,7 @@ public class WorldAccess {
 
             boolean success = WorldTools.createWorld(cc.s.getServer(), worldKey, seed);
             if (!success) return Value.FALSE;
-            CarpetServer.settingsManager.notifyPlayersCommandsChanged();
+            CommandHelper.notifyPlayersCommandsChanged(cc.s.getServer());
             return Value.TRUE;
         });
 */

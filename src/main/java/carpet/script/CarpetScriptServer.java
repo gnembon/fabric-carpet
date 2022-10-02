@@ -22,6 +22,7 @@ import carpet.script.language.Threading;
 import carpet.script.utils.AppStoreManager;
 import carpet.script.value.FunctionValue;
 import carpet.utils.CarpetProfiler;
+import carpet.utils.CommandHelper;
 import carpet.utils.Messenger;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.tree.CommandNode;
@@ -51,6 +52,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class CarpetScriptServer extends ScriptServer
 {
@@ -68,23 +70,6 @@ public class CarpetScriptServer extends ScriptServer
 
     private static final List<Module> bundledModuleData = new ArrayList<>();
     private static final List<Module> ruleModuleData = new ArrayList<>();
-
-    /**
-     * @deprecated Use {@link #registerBuiltInApp(Module)} instead
-     */
-    @Deprecated(forRemoval = true)
-    public static void registerBuiltInScript(carpet.script.bundled.BundledModule app)
-    {
-        registerBuiltInApp(app.toModule());
-    }
-    
-    /**
-     * @deprecated Use {@link #registerSettingsApp(Module)} instead
-     */
-    @Deprecated(forRemoval = true)
-    public static void registerSettingsApp(carpet.script.bundled.BundledModule app) {
-        registerSettingsApp(app.toModule());
-    }
     /**
      * Registers a Scarpet App to be always available under the {@code /script load} list.
      * @see Module#fromJarPath(String, String, boolean)
@@ -141,8 +126,8 @@ public class CarpetScriptServer extends ScriptServer
     {
         CarpetServer.settingsManager.initializeScarpetRules();
         CarpetServer.extensions.forEach(e -> {
-            if (e.customSettingsManager() != null) {
-                e.customSettingsManager().initializeScarpetRules();
+            if (e.extensionSettingsManager() != null) {
+                e.extensionSettingsManager().initializeScarpetRules();
             }
         });
         if (CarpetSettings.scriptsAutoload)
@@ -161,26 +146,29 @@ public class CarpetScriptServer extends ScriptServer
             Path folder = server.getWorldPath(LevelResource.ROOT).resolve("scripts");
             if (!Files.exists(folder)) 
                 Files.createDirectories(folder);
-            Optional<Path>
-            scriptPath = Files.list(folder)
-                .filter(script -> 
-                    script.getFileName().toString().equalsIgnoreCase(name+".sc") || 
-                    (allowLibraries && script.getFileName().toString().equalsIgnoreCase(name+".scl"))
-                ).findFirst();
-            if (scriptPath.isPresent())
-                return Module.fromPath(scriptPath.get());
+            try (Stream<Path> folderLister = Files.list(folder)) {
+                Optional<Path> scriptPath = folderLister
+                    .filter(script -> 
+                        script.getFileName().toString().equalsIgnoreCase(name + ".sc") || 
+                        (allowLibraries && script.getFileName().toString().equalsIgnoreCase(name+".scl"))
+                    ).findFirst();
+                if (scriptPath.isPresent())
+                    return Module.fromPath(scriptPath.get());
+            }
 
             if (FabricLoader.getInstance().getEnvironmentType() == EnvType.CLIENT)
             {
                 Path globalFolder = FabricLoader.getInstance().getConfigDir().resolve("carpet/scripts");
                 if (!Files.exists(globalFolder)) 
                     Files.createDirectories(globalFolder);
-                scriptPath = Files.walk(globalFolder)
-                        .filter(script -> script.getFileName().toString().equalsIgnoreCase(name + ".sc") ||
-                                (allowLibraries && script.getFileName().toString().equalsIgnoreCase(name + ".scl")))
-                        .findFirst();
-                if (scriptPath.isPresent())
-                    return Module.fromPath(scriptPath.get());
+                try (Stream<Path> folderWalker = Files.walk(globalFolder)) {
+                    Optional<Path> scriptPath = folderWalker
+                            .filter(script -> script.getFileName().toString().equalsIgnoreCase(name + ".sc") ||
+                                    (allowLibraries && script.getFileName().toString().equalsIgnoreCase(name + ".scl")))
+                            .findFirst();
+                    if (scriptPath.isPresent())
+                        return Module.fromPath(scriptPath.get());
+                }
             }
         } catch (IOException e) {
             CarpetSettings.LOG.error("Exception while loading the app: ", e);
@@ -221,18 +209,22 @@ public class CarpetScriptServer extends ScriptServer
             Path worldScripts = server.getWorldPath(LevelResource.ROOT).resolve("scripts");
             if (!Files.exists(worldScripts)) 
                 Files.createDirectories(worldScripts);
-            Files.list(worldScripts)
-                .filter(f -> f.toString().endsWith(".sc"))
-                .forEach(f -> moduleNames.add(f.getFileName().toString().replaceFirst("\\.sc$","").toLowerCase(Locale.ROOT)));
+            try (Stream<Path> folderLister = Files.list(worldScripts)) {
+                folderLister
+                    .filter(f -> f.toString().endsWith(".sc"))
+                    .forEach(f -> moduleNames.add(f.getFileName().toString().replaceFirst("\\.sc$","").toLowerCase(Locale.ROOT)));
+            }
 
             if (includeBuiltIns && (FabricLoader.getInstance().getEnvironmentType() == EnvType.CLIENT))
             {
                 Path globalScripts = FabricLoader.getInstance().getConfigDir().resolve("carpet/scripts");
                 if (!Files.exists(globalScripts))
                     Files.createDirectories(globalScripts);
-                Files.walk(globalScripts, FileVisitOption.FOLLOW_LINKS)
-                    .filter(f -> f.toString().endsWith(".sc"))
-                    .forEach(f -> moduleNames.add(f.getFileName().toString().replaceFirst("\\.sc$","").toLowerCase(Locale.ROOT)));
+                try (Stream<Path> folderWalker = Files.walk(globalScripts, FileVisitOption.FOLLOW_LINKS)) {
+                    folderWalker
+                        .filter(f -> f.toString().endsWith(".sc"))
+                        .forEach(f -> moduleNames.add(f.getFileName().toString().replaceFirst("\\.sc$","").toLowerCase(Locale.ROOT)));
+                }
             }
         } catch (IOException e) {
             CarpetSettings.LOG.error("Exception while searching for apps: ", e);
@@ -295,9 +287,9 @@ public class CarpetScriptServer extends ScriptServer
         //addEvents(source, name);
         String action = (installer!=null)?(reload?"reinstalled":"installed"):(reload?"reloaded":"loaded");
 
-        
+        String finalName = name;
         Boolean isCommandAdded = newHost.addAppCommands(s -> {
-            if (!isRuleApp) Messenger.m(source, s);
+            if (!isRuleApp) Messenger.m(source, Messenger.c("r Failed to add app '" + finalName + "': ", s));
         });
         if (isCommandAdded == null) // error should be dispatched
         {
@@ -306,7 +298,7 @@ public class CarpetScriptServer extends ScriptServer
         }
         else if (isCommandAdded)
         {
-            CarpetServer.settingsManager.notifyPlayersCommandsChanged();
+            CommandHelper.notifyPlayersCommandsChanged(server);
             if (!isRuleApp) Messenger.m(source, "gi "+name+" app "+action+" with /"+name+" command");
         }
         else
@@ -354,7 +346,7 @@ public class CarpetScriptServer extends ScriptServer
         modules.remove(name);
         ((CommandDispatcherInterface)server.getCommands().getDispatcher()).carpet$unregister(name);
         if (!isRuleApp) unloadableModules.remove(name);
-        CarpetServer.settingsManager.notifyPlayersCommandsChanged();
+        CommandHelper.notifyPlayersCommandsChanged(server);
         if (notifySource) Messenger.m(source, "gi Removed "+name+" app");
         return true;
     }
