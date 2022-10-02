@@ -764,7 +764,7 @@ public class CarpetScriptHost extends ScriptHost
         {
             // TODO: this is just for now - invoke would be able to invoke other hosts scripts
             assertAppIntegrity(function.getModule());
-            Context context = new CarpetContext(this, source, BlockPos.ZERO);
+            Context context = new CarpetContext(this, source);
             return scriptServer().events.handleEvents.getWhileDisabled(() -> function.getExpression().evalValue(
                     () -> function.lazyEval(context, Context.VOID, function.getExpression(), function.getToken(), argv),
                     context,
@@ -795,7 +795,7 @@ public class CarpetScriptHost extends ScriptHost
         try
         {
             assertAppIntegrity(function.getModule());
-            Context context = new CarpetContext(this, source, BlockPos.ZERO);
+            Context context = new CarpetContext(this, source);
             return function.getExpression().evalValue(
                     () -> function.execute(context, Context.VOID, function.getExpression(), function.getToken(), argv),
                     context,
@@ -808,7 +808,12 @@ public class CarpetScriptHost extends ScriptHost
         }
     }
 
-    public Value callUDF(BlockPos pos, CommandSourceStack source, FunctionValue fun, List<Value> argv) throws InvalidCallbackException, IntegrityException
+    public Value callUDF(CommandSourceStack source, FunctionValue fun, List<Value> argv) throws InvalidCallbackException, IntegrityException
+    {
+        return callUDF(BlockPos.ZERO, source, fun, argv);
+    }
+
+    public Value callUDF(BlockPos origin, CommandSourceStack source, FunctionValue fun, List<Value> argv) throws InvalidCallbackException, IntegrityException
     {
         if (CarpetServer.scriptServer.stopAll)
             return Value.NULL;
@@ -824,7 +829,7 @@ public class CarpetScriptHost extends ScriptHost
         try
         {
             assertAppIntegrity(fun.getModule());
-            Context context = new CarpetContext(this, source, pos);
+            Context context = new CarpetContext(this, source, origin);
             return fun.getExpression().evalValue(
                     () -> fun.execute(context, Context.VOID, fun.getExpression(), fun.getToken(), argv),
                     context,
@@ -844,7 +849,7 @@ public class CarpetScriptHost extends ScriptHost
         return scriptServer().events.handleEvents.getWhileDisabled(()->{
         try
         {
-            return callUDF(BlockPos.ZERO, source, fun, arguments);
+            return callUDF(source, fun, arguments);
         }
         catch (InvalidCallbackException ignored)
         {

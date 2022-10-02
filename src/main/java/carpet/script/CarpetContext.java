@@ -8,6 +8,11 @@ public class CarpetContext extends Context
 {
     public CommandSourceStack s;
     public final BlockPos origin;
+
+    public CarpetContext(ScriptHost host, CommandSourceStack source) {
+        this(host, source, BlockPos.ZERO);
+    }
+
     public CarpetContext(ScriptHost host, CommandSourceStack source, BlockPos origin)
     {
         super(host);
