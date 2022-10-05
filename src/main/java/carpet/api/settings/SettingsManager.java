@@ -329,7 +329,7 @@ public class SettingsManager {
     
     private void switchScarpetRuleIfNeeded(CommandSourceStack source, CarpetRule<?> carpetRule) //TODO remove. This should be handled by the rule
     {
-        if (carpetRule instanceof ParsedRule<?> rule && !rule.scarpetApp.isEmpty())
+        if (carpetRule instanceof ParsedRule<?> rule && !rule.scarpetApp.isEmpty() && CarpetServer.scriptServer != null) // null check because we may be in server init
         {
             if (RuleHelper.getBooleanValue(rule) || (rule.type() == String.class && !rule.value().equals("false")))
             {
