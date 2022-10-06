@@ -305,14 +305,6 @@ public class ListValue extends AbstractListValue implements ContainerValueInterf
         return (int)idx;
     }
 
-    public static class ListConstructorValue extends ListValue
-    {
-        public ListConstructorValue(Collection<? extends Value> list)
-        {
-            super(list);
-        }
-    }
-
     @Override
     public int length()
     {

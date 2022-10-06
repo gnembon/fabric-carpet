@@ -3,7 +3,7 @@ package carpet.script.language;
 import carpet.script.Context;
 import carpet.script.Expression;
 import carpet.script.LazyValue;
-import carpet.script.LazyValue.VariableLazyValue;
+import carpet.script.LazyValue.Variable;
 import carpet.script.ReferenceArray;
 import carpet.script.exception.InternalExpressionException;
 import carpet.script.value.AbstractListValue;
@@ -322,7 +322,7 @@ public class Operators {
                 if (!(container.put(address, v2))) return (cc, tt) -> Value.NULL;
                 return (cc, tt) -> v2;
             }
-            if (!(lv1 instanceof VariableLazyValue var)) {
+            if (!(lv1 instanceof Variable var)) {
             	throw new InternalExpressionException("Left hand side must be a variable");
             }
             Value copy = v2.reboundedTo(var.name());
@@ -370,7 +370,7 @@ public class Operators {
                     return (cc, tt) -> res;
                 }
             }
-            if (!(lv1 instanceof VariableLazyValue var)) {
+            if (!(lv1 instanceof Variable var)) {
             	throw new InternalExpressionException("Left hand side must be a variable");
             }
             LazyValue boundedLHS;
@@ -405,10 +405,10 @@ public class Operators {
                 }
                 return LazyValue.TRUE;
             }
-            if (!(lv1 instanceof LazyValue.VariableLazyValue lhs)) {
+            if (!(lv1 instanceof LazyValue.Variable lhs)) {
             	throw new InternalExpressionException("Left hand side is not a variable");
             }
-            if (!(lv1 instanceof LazyValue.VariableLazyValue rhs)) {
+            if (!(lv1 instanceof LazyValue.Variable rhs)) {
             	throw new InternalExpressionException("Right hand side is not a variable");
             }
             Value v1 = lv1.evalValue(c);

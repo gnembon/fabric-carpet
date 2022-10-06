@@ -33,7 +33,7 @@ public class DataStructures {
         {
             if (lv.size() == 1 && lv.get(0) instanceof LazyListValue)
                 return ListValue.wrap(((LazyListValue) lv.get(0)).unroll());
-            return new ListValue.ListConstructorValue(lv);
+            return new ListValue(lv); // copies list, given the passed one may not be mutable
         });
 
         expression.addFunction("join", (lv) ->

@@ -738,7 +738,7 @@ public class Expression
         }
         var = c.host.getGlobalVariable(module, name);
         if (var != null) return var;
-        var = new LazyValue.VariableLazyValue((cc, tt) -> c.host.strict ? Value.UNDEF.reboundedTo(name) : Value.NULL.reboundedTo(name), name);
+        var = (cc, tt) -> c.host.strict ? Value.UNDEF.reboundedTo(name) : Value.NULL.reboundedTo(name);
         setAnyVariable(c, name, var);
         return var;
     }
@@ -1022,7 +1022,7 @@ public class Expression
                         nodeStack.push(new ExpressionNode(LazyValue.ofConstant(constant), Collections.emptyList(), token));
                     }
                     else {
-                        nodeStack.push(new ExpressionNode(((c, t) -> getOrSetAnyVariable(c, token.surface).evalValue(c, t)), Collections.emptyList(), token));
+                        nodeStack.push(new ExpressionNode(new LazyValue.Variable(token.surface, this), Collections.emptyList(), token));
                     }
                     break;
                 case FUNCTION:
@@ -1345,7 +1345,7 @@ public class Expression
                 return (c, t) -> op.lazyEval(c, t, this, token, arg, arh).evalValue(c, t);
             }
             case VARIABLE:
-                return new LazyValue.VariableLazyValue((c, t) -> getOrSetAnyVariable(c, token.surface).evalValue(c, t), token.surface);
+                return new LazyValue.Variable(token.surface, this);
             case FUNCTION: {
                 ILazyFunction f = functions.get(token.surface);
                 // Special case for lists of variable references, given those interact closely with some operators
@@ -1356,8 +1356,12 @@ public class Expression
                 List<LazyValue> params = node.args.stream().map(n -> extractOp(ctx, n, requestedType)).collect(Collectors.toList());
                 // Special case for outer(), TODO make this better. PLEASE DON'T FORGET IT'S AWFUL
                 if (token.surface.equals("outer")) {
-                	return new LazyValue.VariableLazyValue((c, t) -> f.lazyEval(c, t, this, token, params).evalValue(c, t), ((LazyValue.VariableLazyValue)params.get(0)).name());
+                	if (params.size() != 1 || !(params.get(0) instanceof LazyValue.Variable)) {
+                		throw new ExpressionException(ctx, this, token, "'outer' takes exactly an argument that must be a variable reference");
+                	}
+                	return new LazyValue.Outer(((LazyValue.Variable)params.get(0)).name());
                 }
+                // TODO what tf do I do with var?
                 return (c, t) -> f.lazyEval(c, t, this, token, params).evalValue(c, t);
             }
             case CONSTANT:

@@ -34,11 +34,28 @@ public interface LazyValue
         }
     }
     
-    public record VariableLazyValue(LazyValue lv, String name) implements LazyValue {
-
+    public interface Named extends LazyValue {
+    	String name();
+    }
+    
+    public record Outer(String name) implements Named {
+    	@Override
+    	public Value evalValue(Context c, Type type) {
+    		throw new IllegalStateException("Tried to evaluate 'outer' info as a runtime value");
+    	}
+    }
+    
+    public record VarArgs(String name) implements Named {
+    	@Override
+    	public Value evalValue(Context c, Type type) {
+    		throw new IllegalStateException("Tried to evaluate a varargs info as a runtime value");
+    	}
+    }
+    
+    public record Variable(String name, Expression expr) implements Named {
 		@Override
 		public Value evalValue(Context c, Type type) {
-			return lv.evalValue(c, type);
+			return expr.getOrSetAnyVariable(c, name).evalValue(c, type);
 		}
     }
 
@@ -57,11 +74,6 @@ public interface LazyValue
         @Override
         public Value evalType(Context.Type type) {
 
-            return result.fromConstant();
-        }
-
-        @Override
-        public Value evalValue(Context c, Context.Type type) {
             return result.fromConstant();
         }
     }

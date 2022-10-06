@@ -5,25 +5,27 @@ import java.util.List;
 
 import carpet.script.Context.Type;
 import carpet.script.Expression.ExpressionNode;
-import carpet.script.value.ListValue.ListConstructorValue;
+import carpet.script.value.ListValue;
 import carpet.script.value.Value;
 
-// TODO this better
 public record ReferenceArray(String[] variables, Expression expression) implements LazyValue {
-	// TODO assert this isn't called lazily, or we could be putting newer stuff into lists created before changes
 	@Override
 	public Value evalValue(Context c, Type type) {
 	    List<Value> contents = new ArrayList<>(variables.length);
 		for (int i = 0; i < variables.length; i++) {
 			contents.add(getValue(c, type, i));
 		}
-		return new ListConstructorValue(contents);
+		return ListValue.wrap(contents);
 	}
 	
 	private Value getValue(Context c, Context.Type type, int index) {
 		return expression.getOrSetAnyVariable(c, variables[index]).evalValue(c, type);
 	}
-	
+
+	/**
+	 * Gets the value at the given index without having to instantiate all about the list, for use in
+	 * the {@code +=} and {@code <>} operators
+	 */
 	public Value getValue(Context c, int index) {
 		return getValue(c, Context.NONE, index);
 	}
