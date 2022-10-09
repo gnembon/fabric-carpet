@@ -748,7 +748,7 @@ public class Expression
      */
     public Expression(String expression)
     {
-        this.expression = expression.trim().replaceAll("\\r\\n?", "\n").replaceAll("\\t","   ");
+        this.expression = expression.stripTrailing().replaceAll("\\r\\n?", "\n").replaceAll("\\t","   ");
         Operators.apply(this);
         ControlFlow.apply(this);
         Functions.apply(this);
