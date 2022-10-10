@@ -29,6 +29,7 @@ public class ServerGamePacketListenerImplMixin
             // We should force onto the main thread here
             // ServerNetworkHandler.handleData can possibly mutate data that isn't
             // thread safe, and also allows for client commands to be executed
+            // [TODO] need to investigate if that is actually an issue since carpet doesn't fiddle with its packets.
             PacketUtils.ensureRunningOnSameThread(packet, (ServerGamePacketListener) this, player.getLevel());
             ServerNetworkHandler.handleData(new FriendlyByteBuf(packet.getData().copy()), player);
             ci.cancel();
