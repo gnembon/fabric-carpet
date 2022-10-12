@@ -85,9 +85,9 @@ public final class ParsedRule<T> implements CarpetRule<T>, Comparable<ParsedRule
     @Deprecated(forRemoval = true) // to private (and rename?)
     public final List<String> options;
     /**
-     * @deprecated No replacement for this
+     * @deprecated Use {@link CarpetRule#strict()} instead
      */
-    @Deprecated(forRemoval = true) // to pckg private (for printRulesToLog, or get a different way)
+    @Deprecated(forRemoval = true) // to remove or fix
     public boolean isStrict;
     /**
      * @deprecated Use {@link CarpetRule#canBeToggledClientSide()} instead
@@ -389,6 +389,11 @@ public final class ParsedRule<T> implements CarpetRule<T>, Comparable<ParsedRule
     @Override
     public void set(CommandSourceStack source, T value) throws InvalidRuleValueException {
         set(source, value, RuleHelper.toRuleString(value));
+    }
+
+    @Override
+    public boolean strict() {
+        return !realValidators.isEmpty() && realValidators.get(0) instanceof Validator.StrictValidator;
     }
 
     private static <T> Map.Entry<Class<T>, FromStringConverter<T>> numericalConverter(Class<T> outputClass, Function<String, T> converter) {
