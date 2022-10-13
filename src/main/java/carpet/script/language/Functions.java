@@ -10,7 +10,6 @@ import carpet.script.exception.InternalExpressionException;
 import carpet.script.exception.ReturnStatement;
 import carpet.script.value.FunctionSignatureValue;
 import carpet.script.value.FunctionValue;
-import carpet.script.value.FunctionAnnotationValue;
 import carpet.script.value.ListValue;
 import carpet.script.value.StringValue;
 import carpet.script.value.Value;
@@ -62,17 +61,15 @@ public class Functions {
                 {
                     if (!(lv.get(i) instanceof LazyValue.Named var)) {
                     	if (lv.get(i).evalValue(c, Context.LOCALIZATION).isBound()) {
-                    		//throw new AssertionError();
-                    		throw new InternalExpressionException("Varargs aren't supported in this build"); //TODO
+                    		throw Operators.trap("varargs compiling");
                     	}
                     	throw new InternalExpressionException("Only variables can be used in function signature");
                     }
-                    //Value v = lv.get(i).evalValue(c, Context.LOCALIZATION); no longer needed
                     if (var instanceof LazyValue.Outer)
                     {
                         globals.add(var.name());
                     }
-                    else if (var instanceof LazyValue.VarArgs) // TODO nothing currently produces such type
+                    else if (var instanceof LazyValue.VarArgsOrUnpacker)
                     {
                     	if (varArgs != null)
                             throw new InternalExpressionException("Variable argument identifier is already defined as "+varArgs+", trying to overwrite with "+var.name());

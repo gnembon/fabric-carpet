@@ -1281,7 +1281,7 @@ public class Expression
         for (ExpressionNode arg : node.args) {
             try {
                 if (arg.op instanceof LazyValue.Constant) {
-                    Value val = ((LazyValue.Constant) arg.op).get();
+                    Value val = ((LazyValue.Constant) arg.op).value();
                     args.add((c, t) -> val);
                 }
                 else args.add((c, t) -> arg.op.evalValue(ctx, requestedType));
@@ -1318,7 +1318,7 @@ public class Expression
             // constants are immutable
             if (node.token.type.isConstant())
             {
-                Value value = ((LazyValue.Constant) node.op).get();
+                Value value = ((LazyValue.Constant) node.op).value();
                 return (c, t) -> value;
             }
             return node.op;
@@ -1335,6 +1335,10 @@ public class Expression
                 ILazyOperator op = operators.get(token.surface);
                 Context.Type requestedType = op.staticType(expectedType);
                 LazyValue arg = extractOp(ctx, node.args.get(0), requestedType);
+                // TODO haha no pls
+                if (token.surface.equals("...u") && node.args.get(0).token.type == Token.TokenType.VARIABLE) {
+                	return new LazyValue.VarArgsOrUnpacker(node.args.get(0).token.surface, arg);
+                }
                 return (c, t) -> op.lazyEval(c, t, this, token, arg, null).evalValue(c, t);
             }
             case OPERATOR: {
@@ -1357,11 +1361,17 @@ public class Expression
                 // Special case for outer(), TODO make this better. PLEASE DON'T FORGET IT'S AWFUL
                 if (token.surface.equals("outer")) {
                 	if (params.size() != 1 || !(params.get(0) instanceof LazyValue.Variable)) {
-                		throw new ExpressionException(ctx, this, token, "'outer' takes exactly an argument that must be a variable reference");
+                		throw new ExpressionException(ctx, this, token, "'outer' takes exactly one argument that must be a variable reference");
                 	}
                 	return new LazyValue.Outer(((LazyValue.Variable)params.get(0)).name());
                 }
-                // TODO what tf do I do with var?
+                // what tf do I do with var? Well, I do THIS!
+                if (token.surface.equals("var")) {
+                	if (params.size() != 1) {
+                		throw new ExpressionException(ctx, this, token, "'var' takes exactly one argument");
+                	}
+                	return new LazyValue.VarCall(params.get(0), this);
+                }
                 return (c, t) -> f.lazyEval(c, t, this, token, params).evalValue(c, t);
             }
             case CONSTANT:

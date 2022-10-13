@@ -3,13 +3,11 @@ package carpet.script.language;
 import carpet.script.Context;
 import carpet.script.Expression;
 import carpet.script.LazyValue;
-import carpet.script.LazyValue.Variable;
 import carpet.script.ReferenceArray;
 import carpet.script.exception.InternalExpressionException;
 import carpet.script.value.AbstractListValue;
 import carpet.script.value.BooleanValue;
 import carpet.script.value.ContainerValueInterface;
-import carpet.script.value.FunctionAnnotationValue;
 import carpet.script.value.FunctionUnpackedArgumentsValue;
 import carpet.script.value.LContainerValue;
 import carpet.script.value.ListValue;
@@ -312,23 +310,24 @@ public class Operators {
                 }
                 return (cc, tt) -> Value.TRUE;
             }
-            Value v1 = lv1.evalValue(c, Context.LVALUE);
-            if (v1 instanceof LContainerValue)
-            {
-                ContainerValueInterface container = ((LContainerValue) v1).getContainer();
-                if (container == null)
-                    return (cc, tt) -> Value.NULL;
-                Value address = ((LContainerValue) v1).getAddress();
-                if (!(container.put(address, v2))) return (cc, tt) -> Value.NULL;
-                return (cc, tt) -> v2;
-            }
-            if (!(lv1 instanceof Variable var)) {
+            if (!(lv1 instanceof LazyValue.Assignable var)) {
+            	// Check if it's LContainer, inside the check to prevent querying the LHS value if not needed
+            	Value v1 = lv1.evalValue(c, Context.LVALUE);
+                if (v1 instanceof LContainerValue)
+                {
+                    ContainerValueInterface container = ((LContainerValue) v1).getContainer();
+                    if (container == null)
+                        return (cc, tt) -> Value.NULL;
+                    Value address = ((LContainerValue) v1).getAddress();
+                    if (!(container.put(address, v2))) return (cc, tt) -> Value.NULL;
+                    return (cc, tt) -> v2;
+                }
+            	if (v1.isBound()) throw trap("compiling operator =");
             	throw new InternalExpressionException("Left hand side must be a variable");
             }
-            Value copy = v2.reboundedTo(var.name());
-            LazyValue boundedLHS = (cc, tt) -> copy;
-            expression.setAnyVariable(c, var.name(), boundedLHS);
-            return boundedLHS;
+            Value copy = v2.reboundedTo(null); // assignable.set will set the name
+            var.set(c, copy);
+            return (cc, tt) -> copy;
         });
 
         // lazy due to assignment
@@ -346,7 +345,7 @@ public class Operators {
                     Value result = lhs.getValue(c, i).add(ri.next()).bindTo(lhs.variables()[i]);
                     expression.setAnyVariable(c, lhs.variables()[i], (cc, tt) -> result);
                 }
-                return (cc, tt) -> Value.TRUE;
+                return LazyValue.TRUE;
             }
             Value v1 = lv1.evalValue(c, Context.LVALUE);
             if (v1 instanceof LContainerValue)
@@ -370,22 +369,22 @@ public class Operators {
                     return (cc, tt) -> res;
                 }
             }
-            if (!(lv1 instanceof Variable var)) {
+            if (!(lv1 instanceof LazyValue.Assignable assignable)) {
+            	if (v1.isBound()) throw trap("compiling operator +=");
             	throw new InternalExpressionException("Left hand side must be a variable");
             }
-            LazyValue boundedLHS;
+            Value result;
             if (v1 instanceof ListValue || v1 instanceof MapValue)
             {
                 ((AbstractListValue) v1).append(v2);
-                boundedLHS = (cc, tt)-> v1;
+                result = v1;
             }
             else
             {
-                Value result = v1.add(v2).bindTo(var.name());
-                boundedLHS = (cc, tt) -> result;
+                result = v1.add(v2);
             }
-            expression.setAnyVariable(c, var.name(), boundedLHS);
-            return boundedLHS;
+            assignable.set(c, result);
+            return (cc, tt) -> result;
         });
 
         expression.addLazyBinaryOperator("<>", precedence.get("assign=<>"), false, false, t -> Context.NONE, (c, t, lv1, lv2) ->
@@ -405,18 +404,24 @@ public class Operators {
                 }
                 return LazyValue.TRUE;
             }
-            if (!(lv1 instanceof LazyValue.Variable lhs)) {
+            if (!(lv1 instanceof LazyValue.Assignable lhs)) {
+            	if (lv1.evalValue(c).isBound()) {
+            		throw trap("compiling <> operator (left)");
+            	}
             	throw new InternalExpressionException("Left hand side is not a variable");
             }
-            if (!(lv1 instanceof LazyValue.Variable rhs)) {
+            if (!(lv2 instanceof LazyValue.Assignable rhs)) {
+            	if (lv2.evalValue(c).isBound()) {
+            		throw trap("compiling <> operator (right)");
+            	}
             	throw new InternalExpressionException("Right hand side is not a variable");
             }
             Value v1 = lv1.evalValue(c);
             Value v2 = lv2.evalValue(c);
-            Value lval = v2.reboundedTo(lhs.name());
-            Value rval = v1.reboundedTo(rhs.name());
-            expression.setAnyVariable(c, lhs.name(), (cc, tt) -> lval);
-            expression.setAnyVariable(c, rhs.name(), (cc, tt) -> rval);
+            Value lval = v2.reboundedTo(null); // Assignable.set will bind them, we don't know the variable as it could be a var() call
+            Value rval = v1.reboundedTo(null);
+            lhs.set(c, lval);
+            rhs.set(c, rval);
             return (cc, tt) -> lval;
         });
 
@@ -430,18 +435,22 @@ public class Operators {
         ); // might need context boolean
 
         // lazy because of typed evaluation of the argument
-        expression.addLazyUnaryOperator("...", Operators.precedence.get("unary+-!..."), false, true, t -> t== Context.Type.LOCALIZATION?Context.NONE:t, (c, t, lv) ->
+        expression.addLazyUnaryOperator("...", precedence.get("unary+-!..."), false, true, t -> t== Context.Type.LOCALIZATION?Context.NONE:t, (c, t, lv) ->
         {
             if (t == Context.LOCALIZATION)
-                return (cc, tt) -> new FunctionAnnotationValue(lv.evalValue(c), FunctionAnnotationValue.Type.VARARG);
+                throw trap("reading varargs info");
 
             Value params = lv.evalValue(c, t);
             if (!(params instanceof AbstractListValue))
                 throw new InternalExpressionException("Unable to unpack a non-list");
             FunctionUnpackedArgumentsValue fuaval = new FunctionUnpackedArgumentsValue( ((AbstractListValue) params).unpack());
             return (cc, tt) -> fuaval;
-            //throw new InternalExpressionException("That functionality has not been implemented yet.");
         });
 
+    }
+
+    // TODO remove, this is a trap while the new system is being tested
+    static InternalExpressionException trap(String doing) {
+    	return new InternalExpressionException("Unexpected error while " + doing + "! Please report this to Carpet!");
     }
 }
