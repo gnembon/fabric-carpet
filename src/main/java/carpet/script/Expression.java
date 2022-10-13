@@ -738,7 +738,7 @@ public class Expression
         }
         var = c.host.getGlobalVariable(module, name);
         if (var != null) return var;
-        var = (cc, tt) -> c.host.strict ? Value.UNDEF.reboundedTo(name) : Value.NULL.reboundedTo(name);
+        var = (_c, _t) -> _c.host.strict ? Value.UNDEF.reboundedTo(name) : Value.NULL.reboundedTo(name);
         setAnyVariable(c, name, var);
         return var;
     }

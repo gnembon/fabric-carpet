@@ -105,6 +105,7 @@ public class Functions {
 
         expression.addLazyFunction("outer", 1, (c, t, lv) ->
         {
+            if (t == Context.LOCALIZATION) throw Operators.trap("missed outer handling");
             throw new InternalExpressionException("Outer scoping of variables is only possible in function signatures.");
         });
 
