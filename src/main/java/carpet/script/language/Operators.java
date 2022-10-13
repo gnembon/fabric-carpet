@@ -438,7 +438,7 @@ public class Operators {
         expression.addLazyUnaryOperator("...", precedence.get("unary+-!..."), false, true, t -> t== Context.Type.LOCALIZATION?Context.NONE:t, (c, t, lv) ->
         {
             if (t == Context.LOCALIZATION)
-                throw trap("reading varargs info");
+                throw trap("unhandled varargs info read position");
 
             Value params = lv.evalValue(c, t);
             if (!(params instanceof AbstractListValue))
@@ -449,7 +449,7 @@ public class Operators {
 
     }
 
-    // TODO remove, this is a trap while the new system is being tested
+    // TODO remove, this is for traps while the new system is being tested
     static InternalExpressionException trap(String doing) {
     	return new InternalExpressionException("Unexpected error while " + doing + "! Please report this to Carpet!");
     }
