@@ -113,7 +113,7 @@ public class ShapesRenderer
         double cameraZ = camera.getPosition().z;
         boolean entityBoxes = client.getEntityRenderDispatcher().shouldRenderHitBoxes();
 
-        if (shapes.size() != 0) { synchronized (shapes) {
+        if (shapes.size() != 0) {
             shapes.get(dimensionType).long2ObjectEntrySet().removeIf(
                     entry -> entry.getValue().isExpired(currentTime)
             );
@@ -136,16 +136,15 @@ public class ShapesRenderer
             matrixStack.popPose();
             RenderSystem.applyModelViewMatrix();
 
-        }}
-        if (labels.size() != 0) { synchronized (labels)
-        {
+        }
+        if (labels.size() != 0) {
             labels.get(dimensionType).long2ObjectEntrySet().removeIf(
                     entry -> entry.getValue().isExpired(currentTime)
             );
             labels.get(dimensionType).values().forEach(s -> {
                 if ( (!s.shape.debug || entityBoxes) && s.shouldRender(dimensionType)) s.renderLines(matrices, tessellator, bufferBuilder, cameraX, cameraY, cameraZ, partialTick);
             });
-        }}
+        }
         RenderSystem.enableCull();
         RenderSystem.depthMask(true);
         RenderSystem.enableBlend();
@@ -181,43 +180,30 @@ public class ShapesRenderer
             long key = rshape.key();
             Map<ResourceKey<Level>, Long2ObjectOpenHashMap<RenderedShape<? extends ShapeDispatcher.ExpiringShape>>> container =
                     rshape.stageDeux()?labels:shapes;
-            synchronized (container)
-            {
-                RenderedShape<?> existing = container.computeIfAbsent(dim, d -> new Long2ObjectOpenHashMap<>()).get(key);
-                if (existing != null)
-                {   // promoting previous shape
-                    existing.promoteWith(rshape);
-                }
-                else
-                {
-                    container.get(dim).put(key, rshape);
-                }
+            RenderedShape<?> existing = container.computeIfAbsent(dim, d -> new Long2ObjectOpenHashMap<>()).get(key);
+            if (existing != null)
+            {   // promoting previous shape
+                existing.promoteWith(rshape);
             }
+            else
+            {
+                container.get(dim).put(key, rshape);
+            }
+
         }
     }
     public void reset()
     {
-        synchronized (shapes)
-        {
-            shapes.values().forEach(Long2ObjectOpenHashMap::clear);
-        }
-        synchronized (labels)
-        {
-            labels.values().forEach(Long2ObjectOpenHashMap::clear);
-        }
+        shapes.values().forEach(Long2ObjectOpenHashMap::clear);
+        labels.values().forEach(Long2ObjectOpenHashMap::clear);
     }
 
     public void renewShapes()
     {
         CarpetProfiler.ProfilerToken token = CarpetProfiler.start_section(null, "Scarpet client", CarpetProfiler.TYPE.GENERAL);
-        synchronized (shapes)
-        {
-            shapes.values().forEach(el -> el.values().forEach(shape -> shape.expiryTick++));
-        }
-        synchronized (labels)
-        {
-            labels.values().forEach(el -> el.values().forEach(shape -> shape.expiryTick++));
-        }
+        shapes.values().forEach(el -> el.values().forEach(shape -> shape.expiryTick++));
+        labels.values().forEach(el -> el.values().forEach(shape -> shape.expiryTick++));
+
         CarpetProfiler.end_current_section(token);
     }
 

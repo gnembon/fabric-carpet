@@ -283,34 +283,24 @@ public class EntityValue extends Value
 
     public static class EntityClassDescriptor
     {
-        public EntityTypeTest<Entity, ? extends Entity> directType; // interface of EntityType
-        public Predicate<? super Entity> filteringPredicate;
-        public List<EntityType<? extends  Entity>> typeList;
-        public Value listValue;
-        EntityClassDescriptor(EntityType<?> type, Predicate<? super Entity> predicate, List<EntityType<?>> types)
-        {
-            directType = type;
-            filteringPredicate = predicate;
-            typeList = types;
-            listValue = (types==null)?Value.NULL:ListValue.wrap(types.stream().map(et -> StringValue.of(nameFromRegistryId(Registry.ENTITY_TYPE.getKey(et)))).collect(Collectors.toList()));
-        }
+        public final EntityTypeTest<Entity, ? extends Entity> directType; // interface of EntityType
+        public final Predicate<? super Entity> filteringPredicate;
+        public final List<EntityType<? extends Entity>> types;
 
-        EntityClassDescriptor( EntityTypeTest<Entity, ?> type, Predicate<? super Entity> predicate, List<EntityType<?>> types)
+        EntityClassDescriptor(EntityTypeTest<Entity, ?> type, Predicate<? super Entity> predicate, List<EntityType<?>> types)
         {
-            directType = type;
-            filteringPredicate = predicate;
-            typeList = types;
-            listValue = (types==null)?Value.NULL:ListValue.wrap(types.stream().map(et -> StringValue.of(nameFromRegistryId(Registry.ENTITY_TYPE.getKey(et)))).collect(Collectors.toList()));
-        }
-
-        EntityClassDescriptor(EntityType<?> type, Predicate<? super Entity> predicate, Stream<EntityType<?>> types)
-        {
-            this(type, predicate, types.toList());
+            this.directType = type;
+            this.filteringPredicate = predicate;
+            this.types = types;
         }
 
         EntityClassDescriptor(EntityTypeTest<Entity, ?> type, Predicate<? super Entity> predicate, Stream<EntityType<?>> types)
         {
             this(type, predicate, types.toList());
+        }
+
+        public Value listValue() {
+            return ListValue.wrap(types.stream().map(et -> StringValue.of(nameFromRegistryId(Registry.ENTITY_TYPE.getKey(et)))));
         }
 
         public final static Map<String, EntityClassDescriptor> byName = new HashMap<>() {{

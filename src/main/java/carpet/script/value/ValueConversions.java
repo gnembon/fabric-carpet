@@ -178,9 +178,7 @@ public class ValueConversions
     {
         if (id == null) // should be Value.NULL
             return Value.NULL;
-        if (id.getNamespace().equals("minecraft"))
-            return new StringValue(id.getPath());
-        return new StringValue(id.toString());
+        return new StringValue(simplify(id));
     }
 
     public static String simplify(ResourceLocation id)

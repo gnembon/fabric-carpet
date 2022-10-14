@@ -1265,7 +1265,7 @@ public class CarpetEventServer
         if (executingHost == null) return CallbackResult.FAIL;
         try
         {
-            Value returnValue = executingHost.callUDF(BlockPos.ZERO, source.withPermission(CarpetSettings.runPermissionLevel), udf, argv);
+            Value returnValue = executingHost.callUDF(source.withPermission(CarpetSettings.runPermissionLevel), udf, argv);
             return returnValue instanceof StringValue && returnValue.getString().equals("cancel") ? CallbackResult.CANCEL : CallbackResult.SUCCESS;
         }
         catch (NullPointerException | InvalidCallbackException | IntegrityException error)

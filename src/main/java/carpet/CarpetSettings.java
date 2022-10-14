@@ -49,8 +49,8 @@ public class CarpetSettings
 {
     public static final String carpetVersion = "1.4.83+v220727";
     public static final Logger LOG = LoggerFactory.getLogger("carpet");
-    public static ThreadLocal<Boolean> skipGenerationChecks = ThreadLocal.withInitial(() -> false);
-    public static ThreadLocal<Boolean> impendingFillSkipUpdates = ThreadLocal.withInitial(() -> false);
+    public static final ThreadLocal<Boolean> skipGenerationChecks = ThreadLocal.withInitial(() -> false);
+    public static final ThreadLocal<Boolean> impendingFillSkipUpdates = ThreadLocal.withInitial(() -> false);
     public static int runPermissionLevel = 2;
     public static boolean doChainStone = false;
     public static boolean chainStoneStickToAll = false;

@@ -16,7 +16,7 @@ jobs:
       extra-branch-curse-version: ${{ steps.properties.outputs.release-extra-curse-version }}
     steps:
       - name: Checkout the sources
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: Determine release type
         id: type
         run: |
@@ -62,11 +62,11 @@ jobs:
             echo "::set-output name=curse-versions::${{ needs.Get-Properties.outputs.curse-versions }}"
           fi
       - name: Checkout the sources
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           ref: ${{ steps.getbranchinfo.outputs.branchname }}
       - name: Set up JDK 17
-        uses: actions/setup-java@v2
+        uses: actions/setup-java@v3
         with:
           distribution: 'temurin'
           java-version: 17
@@ -81,7 +81,7 @@ jobs:
           output="$(find build/libs/ ! -name "*-dev.jar" ! -name "*-sources.jar" -type f -printf "%f\n")"
           echo "::set-output name=jarname::$output"
       - name: Save build artifacts in the action
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: Artifacts for ${{ matrix.branch }}
           path: build/libs
@@ -109,7 +109,7 @@ jobs:
       - name: Ask Gradle to publish
         run: ./gradlew publish
       - name: Save publish folder in action's artifacts # Remove when automated
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: Maven publishing artifacts for ${{ matrix.branch }}
           path: publish/carpet/fabric-carpet/
@@ -133,7 +133,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout the sources
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           ref: master
       - name: Merge docs
@@ -150,15 +150,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Carpet sources
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: Set up JDK 17
-        uses: actions/setup-java@v2
+        uses: actions/setup-java@v3
         with:
           distribution: 'temurin'
           java-version: 17
           cache: 'gradle'
       - name: Checkout wiki
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           repository: ${{github.repository}}.wiki
           path: wiki
