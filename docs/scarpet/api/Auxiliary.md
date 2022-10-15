@@ -173,7 +173,8 @@ Available shapes:
      * `skylight`, `blocklight` - light level. omit it to use local light level. should between 0~15.
      * `variant` - one of `'none'`, `'third_person_left_hand'`, `'third_person_right_hand'`, `'first_person_left_hand'`,
        `'first_person_right_hand'`, `'head'`, `'gui'`, `'ground'`, `'fixed'`. In addition to the literal meaning,
-       it can also be used to use special models of tridents and telescopes.
+       it can also be used to use special models of tridents and telescopes. 
+        This attribute is experimental and use of it will change in the future.
 
       
 ### `create_marker(text, pos, rotation?, block?, interactive?)`
