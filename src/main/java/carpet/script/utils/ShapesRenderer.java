@@ -2,6 +2,7 @@ package carpet.script.utils;
 
 import carpet.CarpetSettings;
 import carpet.mixins.ShulkerBoxAccessMixin;
+import carpet.script.utils.shapes.ShapeDirection;
 import carpet.utils.CarpetProfiler;
 
 import com.mojang.blaze3d.systems.RenderSystem;
@@ -31,10 +32,8 @@ import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.Sheets;
-import net.minecraft.client.renderer.block.model.ItemTransform;
 import net.minecraft.client.renderer.block.model.ItemTransforms;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
-import net.minecraft.client.renderer.blockentity.ShulkerBoxRenderer;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.resources.model.Material;
 import net.minecraft.core.BlockPos;
@@ -281,44 +280,22 @@ public class ShapesRenderer
             {
                 matrices.translate(0.5, 0.5, 0.5);
             }
-            matrices.translate(v1.x - cx, v1.y - cy, v1.z - cz);
-            if (shape.facing == null)
-            {
-                matrices.mulPose(camera1.rotation());
-                matrices.mulPose(Vector3f.YP.rotationDegrees(180));
-            }
-            else
-            {
-                switch (shape.facing)
-                {
-                    case NORTH:
-                        break;
-                    case SOUTH:
-                        matrices.mulPose(Vector3f.YP.rotationDegrees(180));
-                        break;
-                    case EAST:
-                        matrices.mulPose(Vector3f.YP.rotationDegrees(270));
-                        break;
-                    case WEST:
-                        matrices.mulPose(Vector3f.YP.rotationDegrees(90));
-                        break;
-                    case UP:
-                        matrices.mulPose(Vector3f.XP.rotationDegrees(90));
-                        break;
-                    case DOWN:
-                        matrices.mulPose(Vector3f.XP.rotationDegrees(-90));
-                        break;
-                }
-            }
 
+            matrices.translate(v1.x - cx, v1.y - cy, v1.z - cz);
+            ShapeDirection.rotatePoseStackByShapeDirection(matrices, shape.facing, camera1, isitem ? v1 : v1.add(0.5, 0.5, 0.5));
             if (shape.tilt != 0.0f) matrices.mulPose(Vector3f.ZP.rotationDegrees(-shape.tilt));
             if (shape.lean != 0.0f) matrices.mulPose(Vector3f.XP.rotationDegrees(-shape.lean));
             if (shape.turn != 0.0f) matrices.mulPose(Vector3f.YP.rotationDegrees( shape.turn));
             matrices.scale(shape.scaleX, shape.scaleY, shape.scaleZ);
 
-            if (!isitem)// blocks should use its center as the origin
+            if (!isitem)
             {
+                // blocks should use its center as the origin
                 matrices.translate(-0.5, -0.5, -0.5);
+            }
+            else {
+                // items seems to be flipped by default
+                matrices.mulPose(Vector3f.YP.rotationDegrees(180));
             }
 
             RenderSystem.depthMask(true);
@@ -386,6 +363,7 @@ public class ShapesRenderer
             {
                 if (shape.item != null)
                 {
+                    // draw the item
                     client.getItemRenderer().renderStatic(shape.item, transformType, light,
                             OverlayTexture.NO_OVERLAY, matrices, immediate, (int) shape.key());
                 }
@@ -464,34 +442,9 @@ public class ShapesRenderer
                 RenderSystem.enableCull();
             matrices.pushPose();
             matrices.translate(v1.x - cx,v1.y - cy,v1.z - cz);
-            if (shape.facing == null)
-            {
-                //matrices.method_34425(new Matrix4f(camera1.getRotation()));
-                matrices.mulPose(camera1.rotation());
-            }
-            else
-            {
-                switch (shape.facing)
-                {
-                    case NORTH:
-                        break;
-                    case SOUTH:
-                        matrices.mulPose(Vector3f.YP.rotationDegrees(180));
-                        break;
-                    case EAST:
-                        matrices.mulPose(Vector3f.YP.rotationDegrees(270));
-                        break;
-                    case WEST:
-                        matrices.mulPose(Vector3f.YP.rotationDegrees(90));
-                        break;
-                    case UP:
-                        matrices.mulPose(Vector3f.XP.rotationDegrees(90));
-                        break;
-                    case DOWN:
-                        matrices.mulPose(Vector3f.XP.rotationDegrees(-90));
-                        break;
-                }
-            }
+
+            ShapeDirection.rotatePoseStackByShapeDirection(matrices, shape.facing, camera1, v1);
+
             matrices.scale(shape.size* 0.0025f, -shape.size*0.0025f, shape.size*0.0025f);
             //RenderSystem.scalef(shape.size* 0.0025f, -shape.size*0.0025f, shape.size*0.0025f);
             if (shape.tilt!=0.0f) matrices.mulPose(Vector3f.ZP.rotationDegrees(shape.tilt));

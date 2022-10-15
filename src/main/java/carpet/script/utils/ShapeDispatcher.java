@@ -6,6 +6,7 @@ import carpet.script.exception.InternalExpressionException;
 import carpet.script.exception.ThrowStatement;
 import carpet.script.exception.Throwables;
 import carpet.script.language.Sys;
+import carpet.script.utils.shapes.ShapeDirection;
 import carpet.script.value.AbstractListValue;
 import carpet.script.value.BlockValue;
 import carpet.script.value.BooleanValue;
@@ -68,6 +69,7 @@ import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 import static java.util.Map.entry;
 
@@ -472,7 +474,7 @@ public class ShapeDispatcher
         int textcolor;
         int textbck;
 
-        Direction facing;
+        ShapeDirection facing;
         float raise;
         float tilt;
         float lean;
@@ -498,16 +500,7 @@ public class ShapeDispatcher
             textcolor = rgba2argb(color);
             textbck = rgba2argb(fillColor);
             String dir = options.getOrDefault("facing", optional.get("facing")).getString();
-            facing = null;
-            switch (dir)
-            {
-                case "north": facing = Direction.NORTH; break;
-                case "south": facing = Direction.SOUTH; break;
-                case "east": facing = Direction.EAST; break;
-                case "west": facing = Direction.WEST; break;
-                case "up":  facing = Direction.UP; break;
-                case "down":  facing = Direction.DOWN; break;
-            }
+            facing = ShapeDirection.fromString(dir);
             align = 0;
             if (options.containsKey("align"))
             {
@@ -596,7 +589,7 @@ public class ShapeDispatcher
 
         Vec3 pos;
 
-        Direction facing;
+        ShapeDirection facing;
 
         float tilt;
         float lean;
@@ -640,15 +633,7 @@ public class ShapeDispatcher
             }
 
             String dir = options.getOrDefault("facing", optional.get("facing")).getString();
-            facing = switch (dir) {
-                case "north" -> Direction.NORTH;
-                case "south" -> Direction.SOUTH;
-                case "east" -> Direction.EAST;
-                case "west" -> Direction.WEST;
-                case "up" -> Direction.UP;
-                case "down" -> Direction.DOWN;
-                default -> null;
-            };
+            facing = ShapeDirection.fromString(dir);
 
             tilt = NumericValue.asNumber(options.getOrDefault("tilt", optional.get("tilt"))).getFloat();
             lean = NumericValue.asNumber(options.getOrDefault("lean", optional.get("lean"))).getFloat();
@@ -1259,7 +1244,7 @@ public class ShapeDispatcher
             put("tilt", new FloatParam("tilt"));
             put("lean", new FloatParam("lean"));
             put("turn", new FloatParam("turn"));
-            put("facing", new StringChoiceParam("axis", "player", "north", "south", "east", "west", "up", "down"));
+            put("facing", new StringChoiceParam("facing", "player", "camera", "north", "south", "east", "west", "up", "down"));
             put("doublesided", new BoolParam("doublesided"));
             put("debug", new BoolParam("debug"));
 

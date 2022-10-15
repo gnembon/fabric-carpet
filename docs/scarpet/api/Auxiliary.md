@@ -92,6 +92,10 @@ Optional shared shape attributes:
    instance makes so that the shape follows the entity, but stays at the same, absolute Y coordinate. Preceeding an axis
    with `d`, like `dxdydz` would make so that entity position is treated discretely (rounded down).
  * `debug` - if True, it will only be visible when F3+B entity bounding boxes is enabled.
+ * `facing` - applicable only to `'text'`, `'block'` or '`item'` shapes, where its facing. Possible options are:
+   * `player`: Default. Element always rotates to face the player eye position, 
+   * `camera`: Element is placed on the plane orthogonal to player look vector, 
+   * `north`, `south`, `east`, `west`, `up`, `down`: obvious
 
 Available shapes:
  * `'line'` - draws a straight line between two points.
@@ -141,8 +145,6 @@ Available shapes:
          display smoothly dynamic elements where value of an element is constantly
          changing and updates to it are being sent from the server.
      * `size` - float. Default font size is 10.
-     * `facing` - text direction, where its facing. Possible options are: `player` (default, text
-         always rotates to face the player), `north`, `south`, `east`, `west`, `up`, `down`
      * `doublesided` - if `true` it will make the text visible from the back as well. Default is `false` (1.16+)
      * `align` - text alignment with regards to `pos`. Default is `center` (displayed text is
          centered with respect to `pos`), `left` (`pos` indicates beginning of text), and `right` (`pos`
@@ -157,8 +159,6 @@ Available shapes:
      * `pos` - position of the object.
      * `block` - the object to show. It is a block value or a name of a block with optional NBT data.
    * Optional attributes:
-     * `facing` - object's direction, where its facing. Possible options are: `player` (it
-     rotates to face the player), `north`(default), `south`, `east`, `west`, `up`, `down`
      * `tilt`, `lean`, `turn` - additional rotations along all three axis. It uses the block center as the origin.
      * `scale` - scale of it in 3 axis-direction. should be a number or a list of 3 numbers (x,y,z).
      * `skylight`, `blocklight` - light level. omit it to use local light level. should between 0~15.
@@ -168,8 +168,6 @@ Available shapes:
      * `pos` - position of the object.
      * `item` - the object to show. It is an item tuple or a string identified item that may have NBT data.
    * Optional attributes:
-     * `facing` - object's direction, where its facing. Possible options are: `player` (it
-         always rotates to face the player), `north`(default), `south`, `east`, `west`, `up`, `down`
      * `tilt`, `lean`, `turn` - additional rotations along all three axis. for `block`, it use its block center as the origin.
      * `scale` - scale of it in 3 axis-direction. should be a number or a list of 3 numbers (x,y,z).
      * `skylight`, `blocklight` - light level. omit it to use local light level. should between 0~15.
