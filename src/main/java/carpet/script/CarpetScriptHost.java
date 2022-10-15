@@ -75,6 +75,7 @@ public class CarpetScriptHost extends ScriptHost
     private Tag globalState;
     private int saveTimeout;
     public boolean persistenceRequired;
+    public double eventPriority;
 
     public Map<Value, Value> appConfig;
     public Map<String, CommandArgument> appArgTypes;
@@ -298,6 +299,7 @@ public class CarpetScriptHost extends ScriptHost
             setPerPlayer(config.getOrDefault(new StringValue("scope"), new StringValue("player")).getString().equalsIgnoreCase("player"));
             persistenceRequired = config.getOrDefault(new StringValue("stay_loaded"), Value.TRUE).getBoolean();
             strict = config.getOrDefault(StringValue.of("strict"), Value.FALSE).getBoolean();
+            eventPriority = config.getOrDefault(new StringValue("event_priority"), Value.ZERO).readDoubleNumber();
             // check requires
             Value loadRequirements = config.get(new StringValue("requires"));
             if (loadRequirements instanceof FunctionValue)

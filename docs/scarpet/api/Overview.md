@@ -60,6 +60,8 @@ To access global/server state for a player app, which you shouldn't do, you need
 so either use a command block, or any 
 arbitrary entity: `/execute as @e[type=bat,limit=1] run script in <app> globals` for instance, however
 running anything in the global scope for a `'player'` scoped app is not intended.
+*   `'event_priority'`: defaults to `0`. This specifies the order in which events will be run, from highest to lowest.
+This is need since cancelling an event will stop executing the event in subsequent apps with lower priority. 
 *   `'stay_loaded'`: defaults to `true`. If true, and `/carpet scriptsAutoload` is turned on, the following apps will 
 stay loaded after startup. Otherwise, after reading the app the first time, and fetching the config, server will drop them down. 
  WARNING: all apps will run once at startup anyways, so be aware that their actions that are called 

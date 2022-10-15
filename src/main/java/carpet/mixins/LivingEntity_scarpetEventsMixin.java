@@ -37,7 +37,7 @@ public abstract class LivingEntity_scarpetEventsMixin extends Entity implements 
         ((EntityInterface)this).getEventContainer().onEvent(EntityEventsGroup.Event.ON_DEATH, damageSource_1.msgId);
     }
 
-    @Inject(method = "actuallyHurt", locals = LocalCapture.CAPTURE_FAILHARD, at = @At(
+    @Inject(method = "actuallyHurt", cancellable = true, locals = LocalCapture.CAPTURE_FAILHARD, at = @At(
             value = "INVOKE",
             target = "Lnet/minecraft/world/entity/LivingEntity;getDamageAfterArmorAbsorb(Lnet/minecraft/world/damagesource/DamageSource;F)F",
             shift = At.Shift.BEFORE
@@ -52,7 +52,9 @@ public abstract class LivingEntity_scarpetEventsMixin extends Entity implements 
         //}
         if (source.getEntity() instanceof ServerPlayer && PLAYER_DEALS_DAMAGE.isNeeded())
         {
-            PLAYER_DEALS_DAMAGE.onDamage(this, amount, source);
+            if(PLAYER_DEALS_DAMAGE.onDamage(this, amount, source)) {
+                ci.cancel();
+            }
         }
     }
 
