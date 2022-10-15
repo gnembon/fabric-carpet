@@ -533,7 +533,7 @@ public class SettingsManager {
             ps.println("* Type: `" + rule.type().getSimpleName() + "`  ");
             ps.println("* Default value: `" + RuleHelper.toRuleString(rule.defaultValue()) + "`  ");
             String options = rule.suggestions().stream().map(s -> "`" + s + "`").collect(Collectors.joining(", "));
-            if (!options.isEmpty()) ps.println((rule.strict() ? "* Required" : "* Suggested") + " options: " + options + "  ");
+            if (!options.isEmpty()) ps.println((rule.strict() ? "* Allowed" : "* Suggested") + " options: " + options + "  ");
             ps.println("* Categories: " + rule.categories().stream().map(s -> "`" + s.toUpperCase(Locale.ROOT) + "`").collect(Collectors.joining(", ")) + "  ");
             if (rule instanceof ParsedRule<?>)
             {
