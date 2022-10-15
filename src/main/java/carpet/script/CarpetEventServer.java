@@ -157,7 +157,7 @@ public class CarpetEventServer
         {
             // ignoring target as we will be always calling self
             super(context.host.getName(), null, function, args);
-            this.ctx = context;
+            this.ctx = context.duplicate();
             this.dueTime = dueTime;
         }
 

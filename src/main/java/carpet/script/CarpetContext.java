@@ -21,7 +21,7 @@ public class CarpetContext extends Context
     }
 
     @Override
-    public Context duplicate()
+    public CarpetContext duplicate()
     {
         return new CarpetContext(this.host, this.s, this.origin);
     }
