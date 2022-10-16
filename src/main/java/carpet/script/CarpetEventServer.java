@@ -223,7 +223,7 @@ public class CarpetEventServer
         {
             if (callList.size() > 0 && CarpetServer.scriptServer != null)
             {
-                return CarpetServer.scriptServer.events.handleEvents.runIfEnabled( () -> {
+                Boolean isCancelled = CarpetServer.scriptServer.events.handleEvents.runIfEnabled( () -> {
                     CarpetProfiler.ProfilerToken currentSection = CarpetProfiler.start_section(null, "Scarpet events", CarpetProfiler.TYPE.GENERAL);
                     List<Value> argv = argumentSupplier.get(); // empty for onTickDone
                     CommandSourceStack source;
@@ -266,6 +266,7 @@ public class CarpetEventServer
                     CarpetProfiler.end_current_section(currentSection);
                     return cancelled;
                 });
+                return isCancelled != null && isCancelled;
             }
             return false;
         }
