@@ -59,6 +59,7 @@ inventory_size
 item_category
 item_display_name
 item_list
+item_rarity
 item_tags
 last_tick_times
 light
