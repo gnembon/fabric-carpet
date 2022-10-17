@@ -110,6 +110,9 @@ Also note that some recipes leave some products in the crafting window, and thes
 returns `null` if the item has no remaining item in the crafting window when used as a crafting ingredient, or an
 item name that serves as a replacement after crafting is done. Currently it can only be buckets and glass bottles.
 
+### `item_rarity(item)`
+returns the items rarity. There are 4 levels currently in vanilla as following: `'COMMON'`,`'UNCOMMON'`,`'RARE'`,`'EPIC'`.
+
 ### `inventory_size(inventory)`
 
 Returns the size of the inventory for the entity or block in question. Returns null if the block or entity don't 
