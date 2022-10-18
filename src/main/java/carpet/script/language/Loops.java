@@ -271,11 +271,7 @@ public class Loops {
                     @Override
                     public String getString()
                     {
-                        return list_of_iterable_values.stream().map(x->{
-                            if(x.isBound())
-                            return x.getVariable();
-                            return "♾";//use a special inf symble to stand for a iterator
-                        }).collect(Collectors.joining(", ","zip(",")"));
+                        return  "[zip_of_"+list_of_iterable_values.size()+"...]";
                     }
                 };
             }
