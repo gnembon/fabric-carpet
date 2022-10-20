@@ -26,10 +26,10 @@ import com.mojang.blaze3d.vertex.VertexFormat.Mode;
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 
-import net.minecraft.client.renderer.block.model.ItemTransforms.TransformType;
 import net.minecraft.commands.arguments.ParticleArgument;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.core.Registry;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.nbt.ByteTag;
@@ -69,7 +69,6 @@ import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
 
 import static java.util.Map.entry;
 
@@ -180,7 +179,7 @@ public class ShapeDispatcher
             return particle;
         try
         {
-            particle = ParticleArgument.readParticle(new StringReader(name));
+            particle = ParticleArgument.readParticle(new StringReader(name), HolderLookup.forRegistry(Registry.PARTICLE_TYPE));
         }
         catch (CommandSyntaxException e)
         {
@@ -220,7 +219,7 @@ public class ShapeDispatcher
     }
 
     // client
-    public static ExpiringShape fromTag(CompoundTag tag)
+    public static ExpiringShape fromTag(CompoundTag tag, Level level)
     {
         Map<String, Value> options = new HashMap<>();
         for (String key : tag.getAllKeys())
@@ -231,7 +230,7 @@ public class ShapeDispatcher
                 CarpetSettings.LOG.info("Unknown parameter for shape: "+key);
                 return null;
             }
-            Value decodedValue = decoder.decode(tag.get(key));
+            Value decodedValue = decoder.decode(tag.get(key), level);
             options.put(key, decodedValue);
         }
         Value shapeValue = options.get("shape");
@@ -1257,7 +1256,7 @@ public class ShapeDispatcher
 
         public abstract Tag toTag(Value value); //validates value, returning null if not necessary to keep it and serialize
         public abstract Value validate(Map<String, Value> options, MinecraftServer server, Value value); // makes sure the value is proper
-        public abstract Value decode(Tag tag);
+        public abstract Value decode(Tag tag, Level level);
     }
     public static class OptionalBoolListParam extends Param
     {
@@ -1266,7 +1265,7 @@ public class ShapeDispatcher
         @Override
         public Tag toTag(Value value) { return value.toTag(true);}
         @Override
-        public Value decode(Tag tag) {
+        public Value decode(Tag tag, Level level) {
             if(tag instanceof ListTag){
                 return ListValue.wrap(((ListTag)tag).stream().map(x->BooleanValue.of(((NumericTag)x).getAsNumber().doubleValue()!=0)));
             }
@@ -1294,7 +1293,7 @@ public class ShapeDispatcher
         @Override
         public Tag toTag(Value value) { return StringTag.valueOf(value.getString()); }
         @Override
-        public Value decode(Tag tag) { return new StringValue(tag.getAsString()); }
+        public Value decode(Tag tag, Level level) { return new StringValue(tag.getAsString()); }
     }
     public static class BlockParam extends Param
     {
@@ -1325,8 +1324,8 @@ public class ShapeDispatcher
         }
 
         @Override
-        public Value decode(Tag tag) {
-            BlockState bs = NbtUtils.readBlockState((CompoundTag) tag);
+        public Value decode(Tag tag, Level level) {
+            BlockState bs = NbtUtils.readBlockState(level.holderLookup(Registry.BLOCK_REGISTRY), (CompoundTag) tag);
             CompoundTag compoundTag2 = null;
             if (((CompoundTag) tag).contains("TileEntityData", 10)) {
 				compoundTag2 = ((CompoundTag) tag).getCompound("TileEntityData");
@@ -1351,7 +1350,7 @@ public class ShapeDispatcher
             return ((NBTSerializableValue)value).getTag();
         }
         @Override
-        public Value decode(Tag tag) {
+        public Value decode(Tag tag, Level level) {
             return new NBTSerializableValue(tag);
         }
     }
@@ -1391,7 +1390,7 @@ public class ShapeDispatcher
         }
 
         @Override
-        public Value decode(Tag tag)
+        public Value decode(Tag tag, Level level)
         {
             return FormattedTextValue.deserialize(tag.getAsString());
         }
@@ -1462,7 +1461,7 @@ public class ShapeDispatcher
         }
 
         @Override
-        public Value decode(Tag tag)
+        public Value decode(Tag tag, Level level)
         {
             return BooleanValue.of(((ByteTag) tag).getAsByte() > 0);
         }
@@ -1471,7 +1470,7 @@ public class ShapeDispatcher
     {
         protected FloatParam(String id) { super(id); }
         @Override
-        public Value decode(Tag tag) { return new NumericValue(((FloatTag)tag).getAsFloat()); }
+        public Value decode(Tag tag, Level level) { return new NumericValue(((FloatTag)tag).getAsFloat()); }
         @Override
         public Tag toTag(Value value) { return FloatTag.valueOf(NumericValue.asNumber(value, id).getFloat()); }
     }
@@ -1490,7 +1489,7 @@ public class ShapeDispatcher
     {
         protected PositiveFloatParam(String id) { super(id); }
         @Override
-        public Value decode(Tag tag) { return new NumericValue(((FloatTag)tag).getAsFloat()); }
+        public Value decode(Tag tag, Level level) { return new NumericValue(((FloatTag)tag).getAsFloat()); }
         @Override
         public Tag toTag(Value value) { return FloatTag.valueOf(NumericValue.asNumber(value, id).getFloat()); }
 
@@ -1499,7 +1498,7 @@ public class ShapeDispatcher
     {
         protected PositiveIntParam(String id) { super(id); }
         @Override
-        public Value decode(Tag tag) { return new NumericValue(((IntTag)tag).getAsInt()); }
+        public Value decode(Tag tag, Level level) { return new NumericValue(((IntTag)tag).getAsInt()); }
         @Override
         public Tag toTag(Value value) { return IntTag.valueOf(NumericValue.asNumber(value, id).getInt()); }
 
@@ -1508,7 +1507,7 @@ public class ShapeDispatcher
     {
         protected NonNegativeIntParam(String id) { super(id); }
         @Override
-        public Value decode(Tag tag) { return new NumericValue(((IntTag)tag).getAsInt()); }
+        public Value decode(Tag tag, Level level) { return new NumericValue(((IntTag)tag).getAsInt()); }
         @Override
         public Tag toTag(Value value) { return IntTag.valueOf(NumericValue.asNumber(value, id).getInt()); }
         @Override public Value validate(Map<String, Value> options, MinecraftServer server, Value value)
@@ -1522,7 +1521,7 @@ public class ShapeDispatcher
     {
         protected NonNegativeFloatParam(String id) { super(id); }
         @Override
-        public Value decode(Tag tag) { return new NumericValue(((FloatTag)tag).getAsFloat()); }
+        public Value decode(Tag tag, Level level) { return new NumericValue(((FloatTag)tag).getAsFloat()); }
         @Override
         public Tag toTag(Value value) { return FloatTag.valueOf(NumericValue.asNumber(value, id).getFloat()); }
         @Override public Value validate(Map<String, Value> options, MinecraftServer server, Value value)
@@ -1590,7 +1589,7 @@ public class ShapeDispatcher
         }
 
         @Override
-        public Value decode(Tag tag)
+        public Value decode(Tag tag, Level level)
         {
             ListTag ctag = (ListTag)tag;
             return ListValue.of(
@@ -1629,7 +1628,7 @@ public class ShapeDispatcher
         }
 
         @Override
-        public Value decode(Tag tag)
+        public Value decode(Tag tag, Level level)
         {
             ListTag ltag = (ListTag)tag;
             List<Value> points = new ArrayList<>();
@@ -1671,7 +1670,7 @@ public class ShapeDispatcher
         }
 
         @Override
-        public Value decode(Tag tag) { return new NumericValue(((IntTag)tag).getAsInt()); }
+        public Value decode(Tag tag, Level level) { return new NumericValue(((IntTag)tag).getAsInt()); }
         @Override
         public Tag toTag(Value value) { return IntTag.valueOf(NumericValue.asNumber(value, id).getInt()); }
     }
@@ -1698,7 +1697,7 @@ public class ShapeDispatcher
         }
 
         @Override
-        public Value decode(Tag tag) { return new NumericValue(((IntTag)tag).getAsInt()); }
+        public Value decode(Tag tag, Level level) { return new NumericValue(((IntTag)tag).getAsInt()); }
     }
 
     private static boolean isStraight(Vec3 from, Vec3 to, double density)

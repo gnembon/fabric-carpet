@@ -77,7 +77,7 @@
 
                 player spawn entity_id entity_list entity_area entity_selector query modify entity_event entity_load_handler entity_types
 
-                item_list item_tags stack_limit item_category recipe_data crafting_remaining_item item_display_name
+                item_list item_tags stack_limit recipe_data crafting_remaining_item item_display_name
 
                 inventory_size inventory_has_items inventory_get inventory_set inventory_find inventory_remove drop_item
 

@@ -48,6 +48,7 @@ import static carpet.api.settings.RuleCategory.CLIENT;
 public class CarpetSettings
 {
     public static final String carpetVersion = "1.4.84+v221018";
+    public static final String releaseTarget = "1.19.3";
     public static final Logger LOG = LoggerFactory.getLogger("carpet");
     public static final ThreadLocal<Boolean> skipGenerationChecks = ThreadLocal.withInitial(() -> false);
     public static final ThreadLocal<Boolean> impendingFillSkipUpdates = ThreadLocal.withInitial(() -> false);

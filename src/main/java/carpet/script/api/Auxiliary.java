@@ -38,6 +38,7 @@ import carpet.script.value.Value;
 import carpet.script.value.ValueConversions;
 import carpet.utils.Messenger;
 import com.google.common.collect.Lists;
+import com.mojang.bridge.game.PackType;
 import net.minecraft.SharedConstants;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.core.BlockPos;
@@ -1050,7 +1051,7 @@ public class Auxiliary {
                         Path zipRoot = zipfs.getPath("/");
                         zipValueToJson(zipRoot.resolve("pack.mcmeta"), MapValue.wrap(
                                 Map.of(StringValue.of("pack"), MapValue.wrap(Map.of(
-                                        StringValue.of("pack_format"), new NumericValue(SharedConstants.getCurrentVersion().getPackVersion()),
+                                        StringValue.of("pack_format"), new NumericValue(SharedConstants.getCurrentVersion().getPackVersion(PackType.DATA)),
                                         StringValue.of("description"), StringValue.of(name),
                                         StringValue.of("source"), StringValue.of("scarpet")
                                 )))

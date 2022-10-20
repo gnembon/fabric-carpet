@@ -200,7 +200,7 @@
     "PlayerTabOverlayMixin",
     "PistonHeadRenderer_movableBEMixin",
     "StructureBlockRenderer_mixin",
-    "LocalPlayer_clientCommandMixin",
+    "ClientPacketListener_clientCommandMixin",
     "LevelRenderer_fogOffMixin",
     "LevelRenderer_creativeNoClipMixin",
     "ClientPacketListener_customPacketsMixin",

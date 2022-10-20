@@ -164,7 +164,7 @@ public class ShapesRenderer
 
     public void addShape(CompoundTag tag)
     {
-        ShapeDispatcher.ExpiringShape shape = ShapeDispatcher.fromTag(tag);
+        ShapeDispatcher.ExpiringShape shape = ShapeDispatcher.fromTag(tag, client.level);
         if (shape == null) return;
         BiFunction<Minecraft, ShapeDispatcher.ExpiringShape, RenderedShape<? extends ShapeDispatcher.ExpiringShape >> shapeFactory;
         shapeFactory = renderedShapes.get(tag.getString("shape"));
