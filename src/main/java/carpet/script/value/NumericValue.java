@@ -194,6 +194,8 @@ public class NumericValue extends Value
             if (o instanceof NumericValue no) {
                 if (longValue != null && no.longValue != null)
                     return longValue.equals(no.longValue);
+                if (Double.isNaN(value) || Double.isInfinite(value) || Double.isNaN(no.value) || Double.isInfinite(no.value))
+                    return value == no.value;
                 return !this.subtract(no).getBoolean();
             }
             return super.equals(o);
