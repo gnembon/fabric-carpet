@@ -21,9 +21,9 @@ jobs:
         id: type
         run: |
           if ${{ github.event.release.prerelease }}; then
-            echo "::set-output name=release-type::beta"
+            echo "release-type=beta" >> $GITHUB_OUTPUT
           else
-            echo "::set-output name=release-type::release"
+            echo "release-type=release" >> $GITHUB_OUTPUT
           fi
       - name: Read relevant fields from gradle.properties
         id: properties
@@ -33,13 +33,13 @@ jobs:
           do
             result=$(sed -n "/^[[:space:]]*$property[[:space:]]*=[[:space:]]*/s/^[[:space:]]*$property[[:space:]]*=[[:space:]]*//p" "$path")
             echo "$property: $result"
-            echo ::set-output name=$property::"$result"
+            echo "$property=$result" >> $GITHUB_OUTPUT
           done
       - name: Process property for matrix
         id: processmatrix
         run: |
           if ! ${{ steps.properties.outputs.release-extra-branch }}; then
-            echo "::set-output name=matrix-to-exclude::Snapshots"
+            echo "matrix-to-exclude=Snapshots" >> $GITHUB_OUTPUT
           fi
   Build-And-Publish:
     runs-on: ubuntu-latest
@@ -54,12 +54,12 @@ jobs:
         id: getbranchinfo
         run: |
           if ${{ matrix.branch == 'Snapshots'}}; then
-            echo "::set-output name=branchname::${{ needs.Get-Properties.outputs.extra-branch-name }}"
-            echo "::set-output name=version::${{ needs.Get-Properties.outputs.extra-branch-curse-version }}"
-            echo "::set-output name=curse-versions::${{ needs.Get-Properties.outputs.extra-branch-curse-version }}"
+            echo "branchname=${{ needs.Get-Properties.outputs.extra-branch-name }}" >> $GITHUB_OUTPUT
+            echo "version=${{ needs.Get-Properties.outputs.extra-branch-curse-version }}" >> $GITHUB_OUTPUT
+            echo "curse-versions=${{ needs.Get-Properties.outputs.extra-branch-curse-version }}" >> $GITHUB_OUTPUT
           else
-            echo "::set-output name=version::${{ needs.Get-Properties.outputs.minecraft-version }}"
-            echo "::set-output name=curse-versions::${{ needs.Get-Properties.outputs.curse-versions }}"
+            echo "version=${{ needs.Get-Properties.outputs.minecraft-version }}" >> $GITHUB_OUTPUT
+            echo "curse-versions=${{ needs.Get-Properties.outputs.curse-versions }}" >> $GITHUB_OUTPUT
           fi
       - name: Checkout the sources
         uses: actions/checkout@v3
@@ -79,7 +79,7 @@ jobs:
         id: findjar
         run: |
           output="$(find build/libs/ ! -name "*-dev.jar" ! -name "*-sources.jar" -type f -printf "%f\n")"
-          echo "::set-output name=jarname::$output"
+          echo "jarname=$output" >> $GITHUB_OUTPUT
       - name: Save build artifacts in the action
         uses: actions/upload-artifact@v3
         with:
