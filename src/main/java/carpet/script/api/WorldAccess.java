@@ -988,7 +988,7 @@ public class WorldAccess {
             // copy of ServerWorld.createExplosion #TRACK#
             Explosion explosion = new Explosion(cc.s.getLevel(), source, null, null, pos.x, pos.y, pos.z, powah, createFire, mode){
                 @Override
-                public @Nullable LivingEntity getSourceMob() {
+                public @Nullable LivingEntity getIndirectSourceEntity() {
                     return theAttacker;
                 }
             };

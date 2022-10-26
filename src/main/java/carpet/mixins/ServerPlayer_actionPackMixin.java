@@ -25,7 +25,7 @@ public abstract class ServerPlayer_actionPackMixin implements ServerPlayerEntity
     }
 
     @Inject(method = "<init>", at = @At(value = "RETURN"))
-    private void onServerPlayerEntityContructor(MinecraftServer minecraftServer, ServerLevel serverLevel, GameProfile gameProfile, RemoteChatSession remoteChatSession, CallbackInfo ci)
+    private void onServerPlayerEntityContructor(MinecraftServer minecraftServer, ServerLevel serverLevel, GameProfile gameProfile, CallbackInfo ci)
     {
         this.actionPack = new EntityPlayerActionPack((ServerPlayer) (Object) this);
     }

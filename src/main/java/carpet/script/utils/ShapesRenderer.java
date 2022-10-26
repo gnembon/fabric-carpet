@@ -13,7 +13,7 @@ import com.mojang.blaze3d.vertex.Tesselator;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import com.mojang.blaze3d.vertex.VertexFormat.Mode;
-import com.mojang.math.Vector3f;
+import com.mojang.math.Axis;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import java.util.HashMap;
 import java.util.Locale;
@@ -283,9 +283,9 @@ public class ShapesRenderer
 
             matrices.translate(v1.x - cx, v1.y - cy, v1.z - cz);
             ShapeDirection.rotatePoseStackByShapeDirection(matrices, shape.facing, camera1, isitem ? v1 : v1.add(0.5, 0.5, 0.5));
-            if (shape.tilt != 0.0f) matrices.mulPose(Vector3f.ZP.rotationDegrees(-shape.tilt));
-            if (shape.lean != 0.0f) matrices.mulPose(Vector3f.XP.rotationDegrees(-shape.lean));
-            if (shape.turn != 0.0f) matrices.mulPose(Vector3f.YP.rotationDegrees( shape.turn));
+            if (shape.tilt != 0.0f) matrices.mulPose(Axis.ZP.rotationDegrees(-shape.tilt));
+            if (shape.lean != 0.0f) matrices.mulPose(Axis.XP.rotationDegrees(-shape.lean));
+            if (shape.turn != 0.0f) matrices.mulPose(Axis.YP.rotationDegrees( shape.turn));
             matrices.scale(shape.scaleX, shape.scaleY, shape.scaleZ);
 
             if (!isitem)
@@ -295,7 +295,7 @@ public class ShapesRenderer
             }
             else {
                 // items seems to be flipped by default
-                matrices.mulPose(Vector3f.YP.rotationDegrees(180));
+                matrices.mulPose(Axis.YP.rotationDegrees(180));
             }
 
             RenderSystem.depthMask(true);
@@ -447,9 +447,9 @@ public class ShapesRenderer
 
             matrices.scale(shape.size* 0.0025f, -shape.size*0.0025f, shape.size*0.0025f);
             //RenderSystem.scalef(shape.size* 0.0025f, -shape.size*0.0025f, shape.size*0.0025f);
-            if (shape.tilt!=0.0f) matrices.mulPose(Vector3f.ZP.rotationDegrees(shape.tilt));
-            if (shape.lean!=0.0f) matrices.mulPose(Vector3f.XP.rotationDegrees(shape.lean));
-            if (shape.turn!=0.0f) matrices.mulPose(Vector3f.YP.rotationDegrees(shape.turn));
+            if (shape.tilt!=0.0f) matrices.mulPose(Axis.ZP.rotationDegrees(shape.tilt));
+            if (shape.lean!=0.0f) matrices.mulPose(Axis.XP.rotationDegrees(shape.lean));
+            if (shape.turn!=0.0f) matrices.mulPose(Axis.YP.rotationDegrees(shape.turn));
             matrices.translate(-10*shape.indent, -10*shape.height-9,  (-10*renderEpsilon)-10*shape.raise);
             //if (visibleThroughWalls) RenderSystem.disableDepthTest();
             matrices.scale(-1, 1, 1);

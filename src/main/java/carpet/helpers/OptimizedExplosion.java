@@ -205,7 +205,7 @@ public class OptimizedExplosion
 
         // If it is needed, calls scarpet event
         if (EXPLOSION_OUTCOME.isNeeded() && !world.isClientSide()) {
-            EXPLOSION_OUTCOME.onExplosion((ServerLevel) world, eAccess.getSource(), e::getSourceMob,  eAccess.getX(), eAccess.getY(), eAccess.getZ(), eAccess.getRadius(), eAccess.isFire(), e.getToBlow(), entityList, eAccess.getBlockInteraction());
+            EXPLOSION_OUTCOME.onExplosion((ServerLevel) world, eAccess.getSource(), e::getIndirectSourceEntity,  eAccess.getX(), eAccess.getY(), eAccess.getZ(), eAccess.getRadius(), eAccess.isFire(), e.getToBlow(), entityList, eAccess.getBlockInteraction());
         }
 
         boolean damagesTerrain = eAccess.getBlockInteraction() != Explosion.BlockInteraction.NONE;
@@ -234,7 +234,7 @@ public class OptimizedExplosion
             ObjectArrayList<Pair<ItemStack, BlockPos>> objectArrayList = new ObjectArrayList<>();
             Util.shuffle((ObjectArrayList<BlockPos>) e.getToBlow(), world.random);
 
-            boolean dropFromExplosions = CarpetSettings.xpFromExplosions || e.getSourceMob() instanceof Player;
+            boolean dropFromExplosions = CarpetSettings.xpFromExplosions || e.getIndirectSourceEntity() instanceof Player;
 
             for (BlockPos blockpos : e.getToBlow())
             {
