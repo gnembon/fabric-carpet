@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import carpet.script.Context.Type;
-import carpet.script.Expression.ExpressionNode;
 import carpet.script.value.ListValue;
 import carpet.script.value.Value;
 
@@ -32,15 +31,5 @@ public record ReferenceArray(String[] variables, Expression expression) implemen
 	
 	public int size() {
 		return variables.length;
-	}
-	
-	static ReferenceArray of(ExpressionNode list, Expression e) {
-		String[] values = new String[list.args.size()];
-		int i = 0;
-		for (ExpressionNode node : list.args) {
-			values[i] = node.token.surface;
-			i++;
-		}
-		return new ReferenceArray(values, e);
 	}
 }
