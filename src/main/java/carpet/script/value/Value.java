@@ -23,7 +23,7 @@ public abstract class Value implements Comparable<Value>, Cloneable
     public static final NullValue NULL = NullValue.NULL;
     public static final UndefValue UNDEF = UndefValue.UNDEF;
 
-    private String boundVariable;
+    public String boundVariable;
 
     public boolean isBound()
     {
@@ -117,19 +117,6 @@ public abstract class Value implements Comparable<Value>, Cloneable
         if (o instanceof Value)
             return this.compareTo((Value) o)==0;
         return false;
-    }
-
-    public void assertAssignable()
-    {
-        if (boundVariable == null)// || boundVariable.startsWith("_"))
-        {
-            /*if (boundVariable != null)
-            {
-                throw new InternalExpressionException(boundVariable+ " cannot be assigned a new value");
-            }*/
-            throw new InternalExpressionException(getString()+ " is not a variable");
-
-        }
     }
 
     public Value in(Value value1)
