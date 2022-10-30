@@ -2,8 +2,12 @@ package carpet.script.language;
 
 import carpet.script.Context;
 import carpet.script.Expression;
+import carpet.script.Fluff;
 import carpet.script.LazyValue;
 import carpet.script.ScriptHost;
+import carpet.script.Context.Type;
+import carpet.script.Tokenizer.Token;
+import carpet.script.exception.ExpressionException;
 import carpet.script.exception.InternalExpressionException;
 import carpet.script.utils.PerlinNoiseSampler;
 import carpet.script.utils.SimplexNoiseSampler;
@@ -368,8 +372,28 @@ public class Sys {
             return (cc, tt) -> res;
         });
 
-        expression.addContextFunction("var", 1, (c, t, lv) ->
-                expression.getOrSetAnyVariable(c, lv.get(0).getString()).evalValue(c));
+        // needs to customize the way to be used as lhs of an assignment operator
+        expression.addCustomFunction("var", new Fluff.AbstractLazyFunction(1, "var") {
+            @Override
+            public boolean pure() { return false; }
+            @Override
+            public boolean transitive() { return false; }
+
+            @Override
+            public LazyValue createExecutable(Context compilationContext, Expression expr, Token token, List<LazyValue> params) {
+                if (params.size() != 1) {
+                    throw new ExpressionException(compilationContext, expr, token, "'var' takes exactly one argument");
+                }
+                return new LazyValue.VarCall(params.get(0), expression);
+            }
+
+            @Override
+            public LazyValue lazyEval(Context c, Type type, Expression expr, Token token, List<LazyValue> lazyParams) {
+                // This isn't ever compiled, so it should be unreachable. Only thing that could call this is the compile-time evaluator,
+                // that shouldn't run in this kind of function
+                throw new IllegalStateException("Reached wrong evaluation of 'var' function");
+            }
+        });
 
         expression.addContextFunction("undef", 1, (c, t, lv) ->
         {

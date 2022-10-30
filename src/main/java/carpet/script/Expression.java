@@ -12,7 +12,6 @@ import carpet.script.Fluff.QuadFunction;
 import carpet.script.Fluff.QuinnFunction;
 import carpet.script.Fluff.SexFunction;
 import carpet.script.Fluff.TriFunction;
-import carpet.script.Tokenizer.Token;
 import carpet.script.exception.BreakStatement;
 import carpet.script.exception.ContinueStatement;
 import carpet.script.exception.ExitStatement;
@@ -231,6 +230,11 @@ public class Expression
     public void addCustomFunction(String name, ILazyFunction fun)
     {
         functions.put(name, fun);
+    }
+
+    public void addCustomOperator(String name, ILazyOperator op)
+    {
+        operators.put(name, op);
     }
 
     public void addLazyFunctionWithDelegation(String name, int numpar, boolean pure, boolean transitive,
@@ -1004,14 +1008,14 @@ public class Expression
                 case UNARY_OPERATOR:
                 {
                     final ExpressionNode node = nodeStack.pop();
-                    LazyValue result = (c, t) -> operators.get(token.surface).lazyEval(c, t, this, token, node.op, null).evalValue(c, t);
+                    LazyValue result = operators.get(token.surface).createExecutable(context, this, token, node.op, null);
                     nodeStack.push(new ExpressionNode(result, Collections.singletonList(node), token));
                     break;
                 }
                 case OPERATOR:
                     final ExpressionNode v1 = nodeStack.pop();
                     final ExpressionNode v2 = nodeStack.pop();
-                    LazyValue result = (c,t) -> operators.get(token.surface).lazyEval(c, t,this, token, v2.op, v1.op).evalValue(c, t);
+                    LazyValue result = operators.get(token.surface).createExecutable(context, this, token, v2.op, v1.op);
                     nodeStack.push(new ExpressionNode(result, List.of(v2, v1), token ));
                     break;
                 case VARIABLE:
@@ -1060,7 +1064,7 @@ public class Expression
                     List<LazyValue> params = p.stream().map(n -> n.op).collect(Collectors.toList());
 
                     nodeStack.push(new ExpressionNode(
-                            (c, t) -> f.lazyEval(c, t, this, token, params).evalValue(c, t),
+                            f.createExecutable(context, this, token, params),
                             p,token
                     ));
                     break;
@@ -1335,44 +1339,22 @@ public class Expression
                 ILazyOperator op = operators.get(token.surface);
                 Context.Type requestedType = op.staticType(expectedType);
                 LazyValue arg = extractOp(ctx, node.args.get(0), requestedType);
-                // TODO haha no pls
-                if (token.surface.equals("...u") && node.args.get(0).token.type == Token.TokenType.VARIABLE) {
-                	return new LazyValue.VarArgsOrUnpacker(node.args.get(0).token.surface, arg);
-                }
-                return (c, t) -> op.lazyEval(c, t, this, token, arg, null).evalValue(c, t);
+                return op.createExecutable(ctx, this, token, arg, null);
             }
             case OPERATOR: {
                 ILazyOperator op = operators.get(token.surface);
                 Context.Type requestedType = op.staticType(expectedType);
                 LazyValue arg = extractOp(ctx, node.args.get(0), requestedType);
                 LazyValue arh = extractOp(ctx, node.args.get(1), requestedType);
-                return (c, t) -> op.lazyEval(c, t, this, token, arg, arh).evalValue(c, t);
+                return op.createExecutable(ctx, this, token, arg, arh);
             }
             case VARIABLE:
                 return new LazyValue.Variable(token.surface, this);
             case FUNCTION: {
                 ILazyFunction f = functions.get(token.surface);
-                // Special case for lists of variable references, given those interact closely with some operators
-                if (token.surface.equals("l") && node.args.stream().allMatch(n -> n.token.type == Token.TokenType.VARIABLE)) {
-                    return ReferenceArray.of(node, this);
-                }
                 Context.Type requestedType = f.staticType(expectedType);
                 List<LazyValue> params = node.args.stream().map(n -> extractOp(ctx, n, requestedType)).collect(Collectors.toList());
-                // Special case for outer(), TODO make this better. PLEASE DON'T FORGET IT'S AWFUL
-                if (token.surface.equals("outer")) {
-                	if (params.size() != 1 || !(params.get(0) instanceof LazyValue.Variable)) {
-                		throw new ExpressionException(ctx, this, token, "'outer' takes exactly one argument that must be a variable reference");
-                	}
-                	return new LazyValue.Outer(((LazyValue.Variable)params.get(0)).name());
-                }
-                // what tf do I do with var? Well, I do THIS!
-                if (token.surface.equals("var")) {
-                	if (params.size() != 1) {
-                		throw new ExpressionException(ctx, this, token, "'var' takes exactly one argument");
-                	}
-                	return new LazyValue.VarCall(params.get(0), this);
-                }
-                return (c, t) -> f.lazyEval(c, t, this, token, params).evalValue(c, t);
+                return f.createExecutable(ctx, this, token, params);
             }
             case CONSTANT:
                 return node.op;

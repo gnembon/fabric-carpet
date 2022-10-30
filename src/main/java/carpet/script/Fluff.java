@@ -60,6 +60,22 @@ public abstract class Fluff
 
         LazyValue lazyEval(Context c, Context.Type type, Expression expr, Tokenizer.Token token, List<LazyValue> lazyParams);
 
+        /**
+         * Creates an executable {@link LazyValue} to be used for executing this function.<p>
+         * Unlike {@link #lazyEval(Context, carpet.script.Context.Type, Expression, carpet.script.Tokenizer.Token, List) lazyEval},
+         * this method is only ran once per function call during compilation, and the returned {@link LazyValue} will be exposed
+         * to whatever that this function execution is in.
+         * 
+         * @param compilationContext The current compilation context. It's likely to be unusable other than for error reporting
+         * @param expr The expression this call is in
+         * @param token The token of this call
+         * @param params A list with the parameters for this call, unevaluated and potentially with unpackers in it
+         * @return The executable as defined above
+         */
+        default LazyValue createExecutable(Context compilationContext/* ? */, Expression expr, Tokenizer.Token token, List<LazyValue> params) {
+            return (c, t) -> lazyEval(c, t, expr, token, params).evalValue(c, t);
+        }
+
         static void checkInterrupts()
         {
             if (ScriptHost.mainThread != Thread.currentThread() && Thread.currentThread().isInterrupted())
@@ -79,7 +95,14 @@ public abstract class Fluff
 
         boolean isLeftAssoc();
 
-        LazyValue lazyEval(Context c, Context.Type type, Expression e, Tokenizer.Token t, LazyValue v1, LazyValue v2);
+        LazyValue lazyEval(Context c, Context.Type type, Expression expr, Tokenizer.Token token, LazyValue v1, LazyValue v2);
+
+        /**
+         * @see ILazyFunction#createExecutable(Context, Expression, carpet.script.Tokenizer.Token, List)
+         */
+        default LazyValue createExecutable(Context compileContext, Expression expr, Tokenizer.Token token, LazyValue v1, LazyValue v2) {
+            return (c, t) -> lazyEval(c, t, expr, token, v1, v2).evalValue(c, t);
+        }
     }
 
     public interface IOperator extends ILazyOperator
@@ -89,15 +112,14 @@ public abstract class Fluff
 
     public abstract static class AbstractLazyFunction implements ILazyFunction
     {
-        protected String name;
-        int numParams;
+        protected final String name;
+        final int numParams;
 
         public AbstractLazyFunction(int numParams, String name)
         {
             this.numParams = numParams;
             this.name = name;
         }
-
 
         public String getName() {
             return name;
@@ -145,7 +167,7 @@ public abstract class Fluff
 
     public abstract static class AbstractFunction extends AbstractLazyFunction implements IFunction
     {
-        AbstractFunction(int numParams, String name) {
+        public AbstractFunction(int numParams, String name) {
             super(numParams, name);
         }
 
@@ -198,11 +220,10 @@ public abstract class Fluff
 
     public abstract static class AbstractLazyOperator implements ILazyOperator
     {
-        int precedence;
+        final int precedence;
+        final boolean leftAssoc;
 
-        boolean leftAssoc;
-
-        AbstractLazyOperator(int precedence, boolean leftAssoc) {
+        public AbstractLazyOperator(int precedence, boolean leftAssoc) {
             this.precedence = precedence;
             this.leftAssoc = leftAssoc;
         }

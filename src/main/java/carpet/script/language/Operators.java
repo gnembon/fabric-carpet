@@ -2,8 +2,11 @@ package carpet.script.language;
 
 import carpet.script.Context;
 import carpet.script.Expression;
+import carpet.script.Fluff;
 import carpet.script.LazyValue;
 import carpet.script.ReferenceArray;
+import carpet.script.Context.Type;
+import carpet.script.Tokenizer.Token;
 import carpet.script.exception.InternalExpressionException;
 import carpet.script.value.AbstractListValue;
 import carpet.script.value.BooleanValue;
@@ -311,8 +314,8 @@ public class Operators {
                 return (cc, tt) -> Value.TRUE;
             }
             if (!(lv1 instanceof LazyValue.Assignable var)) {
-            	// Check if it's LContainer, inside the check to prevent querying the LHS value if not needed
-            	Value v1 = lv1.evalValue(c, Context.LVALUE);
+                // Check if it's LContainer, inside the check to prevent querying the LHS value if not needed
+                Value v1 = lv1.evalValue(c, Context.LVALUE);
                 if (v1 instanceof LContainerValue)
                 {
                     ContainerValueInterface container = ((LContainerValue) v1).getContainer();
@@ -322,8 +325,8 @@ public class Operators {
                     if (!(container.put(address, v2))) return (cc, tt) -> Value.NULL;
                     return (cc, tt) -> v2;
                 }
-            	if (v1.isBound()) throw trap("compiling operator =");
-            	throw new InternalExpressionException("Left hand side must be a variable");
+                if (v1.isBound()) throw trap("compiling operator =");
+                throw new InternalExpressionException("Left hand side must be a variable");
             }
             Value copy = v2.reboundedTo(null); // assignable.set will set the name
             var.set(c, copy);
@@ -370,8 +373,8 @@ public class Operators {
                 }
             }
             if (!(lv1 instanceof LazyValue.Assignable assignable)) {
-            	if (v1.isBound()) throw trap("compiling operator +=");
-            	throw new InternalExpressionException("Left hand side must be a variable");
+                if (v1.isBound()) throw trap("compiling operator +=");
+                throw new InternalExpressionException("Left hand side must be a variable");
             }
             Value result;
             if (v1 instanceof ListValue || v1 instanceof MapValue)
@@ -399,22 +402,20 @@ public class Operators {
                     String rname = rhs.variables()[i];;
                     Value left = lhs.getValue(c, i).reboundedTo(rname);
                     Value right = rhs.getValue(c, i).reboundedTo(lname);
-                    expression.setAnyVariable(c, lhs.variables()[i], (cc, tt) -> right);
-                    expression.setAnyVariable(c, rhs.variables()[i], (cc, tt) -> left);
+                    expression.setAnyVariable(c, lname, (cc, tt) -> right);
+                    expression.setAnyVariable(c, rname, (cc, tt) -> left);
                 }
                 return LazyValue.TRUE;
             }
             if (!(lv1 instanceof LazyValue.Assignable lhs)) {
-            	if (lv1.evalValue(c).isBound()) {
-            		throw trap("compiling <> operator (left)");
-            	}
-            	throw new InternalExpressionException("Left hand side is not a variable");
+                if (lv1.evalValue(c).isBound())
+                    throw trap("compiling <> operator (left)");
+                throw new InternalExpressionException("Left hand side is not a variable");
             }
             if (!(lv2 instanceof LazyValue.Assignable rhs)) {
-            	if (lv2.evalValue(c).isBound()) {
-            		throw trap("compiling <> operator (right)");
-            	}
-            	throw new InternalExpressionException("Right hand side is not a variable");
+                if (lv2.evalValue(c).isBound())
+                    throw trap("compiling <> operator (right)");
+                throw new InternalExpressionException("Right hand side is not a variable");
             }
             Value v1 = lv1.evalValue(c);
             Value v2 = lv2.evalValue(c);
@@ -434,23 +435,38 @@ public class Operators {
                 lv.evalValue(c, Context.BOOLEAN).getBoolean() ? (cc, tt)-> Value.FALSE : (cc, tt) -> Value.TRUE
         ); // might need context boolean
 
-        // lazy because of typed evaluation of the argument
-        expression.addLazyUnaryOperator("...", precedence.get("unary+-!..."), false, true, t -> t== Context.Type.LOCALIZATION?Context.NONE:t, (c, t, lv) ->
-        {
-            if (t == Context.LOCALIZATION)
-                throw trap("unhandled varargs info read position");
+        // custom because of necessity to encode variable name for varargs and typed evaluation of argument as unpacker, "u" suffix because unary
+        expression.addCustomOperator("...u", new Fluff.AbstractLazyOperator(precedence.get("unary+-!..."), false) {
+            @Override
+            public boolean pure() {
+                // This operator is pure
+                return true;
+            }
+            @Override
+            public boolean transitive() { return false; }
 
-            Value params = lv.evalValue(c, t);
-            if (!(params instanceof AbstractListValue))
-                throw new InternalExpressionException("Unable to unpack a non-list");
-            FunctionUnpackedArgumentsValue fuaval = new FunctionUnpackedArgumentsValue( ((AbstractListValue) params).unpack());
-            return (cc, tt) -> fuaval;
+            @Override
+            public LazyValue createExecutable(Context compileContext, Expression expr, Token token, LazyValue v1, LazyValue _null) {
+                LazyValue executable = super.createExecutable(compileContext, expression, token, v1, _null);
+                if (v1 instanceof LazyValue.Variable var) {
+                    return new LazyValue.VarArgsOrUnpacker(var.name(), executable);
+                }
+                return executable;
+            }
+
+            @Override
+            public LazyValue lazyEval(Context c, Type type, Expression expr, Token token, LazyValue v1, LazyValue _null) {
+                Value params = v1.evalValue(c, type);
+                if (!(params instanceof AbstractListValue))
+                    throw new InternalExpressionException("Unable to unpack a non-list");
+                FunctionUnpackedArgumentsValue fuaval = new FunctionUnpackedArgumentsValue( ((AbstractListValue) params).unpack());
+                return (cc, tt) -> fuaval;
+            }
         });
-
     }
 
     // TODO remove, this is for traps while the new system is being tested
     static InternalExpressionException trap(String doing) {
-    	return new InternalExpressionException("Unexpected error while " + doing + "! Please report this to Carpet!");
+        return new InternalExpressionException("Unexpected error while " + doing + "! Please report this to Carpet!");
     }
 }
