@@ -45,7 +45,7 @@ public class Loops {
             Value lastOne = Value.NULL;
             //scoping
             Value _val = c.getVariable("_");
-            c.setVariable("_", Value.ZERO.bindTo("_"));
+            c.setVariable("_", Value.ZERO.reboundedTo("_"));
             while (i<limit && condition.evalValue(c, Context.BOOLEAN).getBoolean() )
             {
                 try

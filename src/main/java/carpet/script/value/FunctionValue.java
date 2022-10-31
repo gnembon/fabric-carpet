@@ -234,8 +234,7 @@ public class FunctionValue extends Value implements Fluff.ILazyFunction
         for (int i=0; i<args.size(); i++)
         {
             String arg = args.get(i);
-            Value val = params.get(i).reboundedTo(arg); // todo check if we need to copy that
-            newFrame.setVariable(arg, val);
+            newFrame.setVariable(arg, params.get(i).reboundedTo(arg));
         }
         if (varArgs != null)
         {
@@ -244,8 +243,7 @@ public class FunctionValue extends Value implements Fluff.ILazyFunction
             {
                 extraParams.add(params.get(i).reboundedTo(null)); // copy by value I guess
             }
-            Value rest = ListValue.wrap(extraParams).bindTo(varArgs); // didn't we just copied that?
-            newFrame.setVariable(varArgs, rest);
+            newFrame.setVariable(varArgs, ListValue.wrap(extraParams).bindTo(varArgs));
 
         }
         Value retVal;

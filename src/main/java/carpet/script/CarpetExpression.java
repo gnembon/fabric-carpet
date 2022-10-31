@@ -63,13 +63,11 @@ public class CarpetExpression
             Entity e = source.getEntity();
             if (e==null)
             {
-                Value nullPlayer = Value.NULL.reboundedTo("p");
-                context.with("p", nullPlayer);
+                context.with("p", Value.NULL.reboundedTo("p"));
             }
             else
             {
-                Value playerValue = new EntityValue(e).bindTo("p");
-                context.with("p", playerValue);
+                context.with("p", new EntityValue(e).bindTo("p"));
             }
             return CarpetServer.scriptServer.events.handleEvents.getWhileDisabled(()-> this.expr.eval(context).getBoolean());
         }
@@ -100,13 +98,11 @@ public class CarpetExpression
             Entity e = source.getEntity();
             if (e==null)
             {
-                Value nullPlayer = Value.NULL.reboundedTo("p");
-                context.with("p", nullPlayer );
+                context.with("p", Value.NULL.reboundedTo("p"));
             }
             else
             {
-                Value playerValue = new EntityValue(e).bindTo("p");
-                context.with("p", playerValue);
+                context.with("p", new EntityValue(e).bindTo("p"));
             }
             return CarpetServer.scriptServer.events.handleEvents.getWhileDisabled(()-> this.expr.eval(context));
         }
