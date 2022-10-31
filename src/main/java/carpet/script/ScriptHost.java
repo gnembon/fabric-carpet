@@ -53,7 +53,7 @@ public abstract class ScriptHost
     {
         Module parent;
         public Map<String, FunctionValue> globalFunctions = new Object2ObjectOpenHashMap<>();
-        public Map<String, LazyValue> globalVariables = new Object2ObjectOpenHashMap<>();
+        public Map<String, Value> globalVariables = new Object2ObjectOpenHashMap<>();
         public Map<String, ModuleData> functionImports = new Object2ObjectOpenHashMap<>(); // imported functions string to module
         public Map<String, ModuleData> globalsImports = new Object2ObjectOpenHashMap<>(); // imported global variables string to module
         public Map<String, ModuleData> futureImports = new Object2ObjectOpenHashMap<>(); // imports not known before used
@@ -65,10 +65,7 @@ public abstract class ScriptHost
             globalFunctions.putAll(other.globalFunctions);
             other.globalVariables.forEach((key, value) ->
             {
-                Value var = value.evalValue(null);
-                Value copy = var.deepcopy();
-                copy.bindTo(var.getVariable());
-                globalVariables.put(key, (c, t) -> copy);
+                globalVariables.put(key, value.deepcopy().bindTo(value.getVariable()));
             });
         }
 
@@ -238,11 +235,11 @@ public abstract class ScriptHost
         return null;
     }
 
-    public LazyValue getGlobalVariable(String name) { return getGlobalVariable(main, name); }
-    public LazyValue getGlobalVariable(Module module, String name)
+    public Value getGlobalVariable(String name) { return getGlobalVariable(main, name); }
+    public Value getGlobalVariable(Module module, String name)
     {
         ModuleData local = getModuleData(module);
-        LazyValue ret = local.globalVariables.get(name); // most uses would be from local scope anyways
+        Value ret = local.globalVariables.get(name); // most uses would be from local scope anyways
         if (ret != null) return ret;
         ModuleData target = local.globalsImports.get(name);
         if (target != null)
@@ -316,7 +313,7 @@ public abstract class ScriptHost
         getModuleData(module).globalFunctions.put(name, fun);
     }
 
-    public void setGlobalVariable(Module module, String name, LazyValue lv)
+    public void setGlobalVariable(Module module, String name, Value lv)
     {
         getModuleData(module).globalVariables.put(name, lv);
     }

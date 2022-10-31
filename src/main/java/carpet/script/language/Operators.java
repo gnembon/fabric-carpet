@@ -309,7 +309,7 @@ public class Operators {
                 for (String variable : lhs.variables())
                 {
                     Value vval = ri.next().reboundedTo(variable);
-                    expression.setAnyVariable(c, variable, (cc, tt) -> vval);
+                    expression.setAnyVariable(c, variable, vval);
                 }
                 return (cc, tt) -> Value.TRUE;
             }
@@ -346,7 +346,7 @@ public class Operators {
                 for (int i = 0; i < lhs.size(); i++)
                 {
                     Value result = lhs.getValue(c, i).add(ri.next()).bindTo(lhs.variables()[i]);
-                    expression.setAnyVariable(c, lhs.variables()[i], (cc, tt) -> result);
+                    expression.setAnyVariable(c, lhs.variables()[i], result);
                 }
                 return LazyValue.TRUE;
             }
@@ -402,8 +402,8 @@ public class Operators {
                     String rname = rhs.variables()[i];;
                     Value left = lhs.getValue(c, i).reboundedTo(rname);
                     Value right = rhs.getValue(c, i).reboundedTo(lname);
-                    expression.setAnyVariable(c, lname, (cc, tt) -> right);
-                    expression.setAnyVariable(c, rname, (cc, tt) -> left);
+                    expression.setAnyVariable(c, lname, right);
+                    expression.setAnyVariable(c, rname, left);
                 }
                 return LazyValue.TRUE;
             }

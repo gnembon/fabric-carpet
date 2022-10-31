@@ -7,7 +7,6 @@ import carpet.script.CarpetEventServer;
 import carpet.script.CarpetExpression;
 import carpet.script.CarpetScriptHost;
 import carpet.script.Expression;
-import carpet.script.LazyValue;
 import carpet.script.ScriptHost;
 import carpet.script.Tokenizer;
 import carpet.script.exception.CarpetExpressionException;
@@ -417,14 +416,14 @@ public class ScriptCommand
         Messenger.m(source, "w  ");
         Messenger.m(source, "lb Global variables"+((host == CarpetServer.scriptServer.globalHost)?":":" in "+host.getName()+":"));
         host.globalVariableNames(host.main, (s) -> s.startsWith("global_")).sorted().forEach( (s) -> {
-            LazyValue variable = host.getGlobalVariable(s);
+            Value variable = host.getGlobalVariable(s);
             if (variable == null)
             {
                 Messenger.m(source, "gb "+s, "g  - unused import");
             }
             else
             {
-                Messenger.m(source, "wb "+s+": ", "w "+ variable.evalValue(null).getPrettyString());
+                Messenger.m(source, "wb "+s+": ", "w "+ variable.getPrettyString());
             }
         });
         return 1;

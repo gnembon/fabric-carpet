@@ -696,8 +696,8 @@ public class CarpetScriptHost extends ScriptHost
             switch (tok.type)
             {
                 case VARIABLE:
-                    LazyValue var = getGlobalVariable(tok.surface);
-                    if (var != null) argv.add(var);
+                    Value var = getGlobalVariable(tok.surface);
+                    if (var != null) argv.add((cc, tt) -> var);
                     break;
                 case STRINGPARAM:
                     argv.add((c, t) -> new StringValue(tok.surface));

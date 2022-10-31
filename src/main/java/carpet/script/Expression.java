@@ -720,7 +720,7 @@ public class Expression
     }
 
 
-    public void setAnyVariable(Context c, String name, LazyValue lv)
+    public void setAnyVariable(Context c, String name, Value lv)
     {
         if (name.startsWith("global_"))
         {
@@ -728,22 +728,20 @@ public class Expression
         }
         else
         {
-            c.setVariable(name, lv.evalValue(c));
+            c.setVariable(name, lv);
         }
     }
 
-    public LazyValue getOrSetAnyVariable(Context c, String name)
+    public Value getAnyVariable(Context c, String name)
     {
         if (!name.startsWith("global_"))
         {
             Value value = c.getVariable(name);
-            if (value != null) return (cc, tt) -> value;
+            if (value != null) return value;
         }
-        LazyValue var = c.host.getGlobalVariable(module, name);
+        Value var = c.host.getGlobalVariable(module, name);
         if (var != null) return var;
-        var = (_c, _t) -> _c.host.strict ? Value.UNDEF.reboundedTo(name) : Value.NULL.reboundedTo(name);
-        setAnyVariable(c, name, var);
-        return var;
+        return c.host.strict ? Value.UNDEF.reboundedTo(name) : Value.NULL.reboundedTo(name);
     }
 
     public static final Expression none = new Expression("null");

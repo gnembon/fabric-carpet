@@ -12,13 +12,9 @@ public record ReferenceArray(String[] variables, Expression expression) implemen
 	public Value evalValue(Context c, Type type) {
 	    List<Value> contents = new ArrayList<>(variables.length);
 		for (int i = 0; i < variables.length; i++) {
-			contents.add(getValue(c, type, i));
+			contents.add(getValue(c, i));
 		}
 		return ListValue.wrap(contents);
-	}
-	
-	private Value getValue(Context c, Context.Type type, int index) {
-		return expression.getOrSetAnyVariable(c, variables[index]).evalValue(c, type);
 	}
 
 	/**
@@ -26,7 +22,7 @@ public record ReferenceArray(String[] variables, Expression expression) implemen
 	 * the {@code +=} and {@code <>} operators
 	 */
 	public Value getValue(Context c, int index) {
-		return getValue(c, Context.NONE, index);
+		return expression.getAnyVariable(c, variables[index]);
 	}
 	
 	public int size() {

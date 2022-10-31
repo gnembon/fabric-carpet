@@ -56,27 +56,27 @@ public interface LazyValue
     public record Variable(String name, Expression expr) implements Named, Assignable {
         @Override
         public Value evalValue(Context c, Type type) {
-            return expr.getOrSetAnyVariable(c, name).evalValue(c, type);
+            return expr.getAnyVariable(c, name);
         }
 
         @Override
         public void set(Context c, Value v) {
             v.bindTo(name);
-            expr.setAnyVariable(c, name, (cc, tt) -> v);
+            expr.setAnyVariable(c, name, v);
         }
     }
     
     public record VarCall(LazyValue nameGetter, Expression expr) implements Assignable {
         @Override
         public Value evalValue(Context c, Type type) {
-            return expr.getOrSetAnyVariable(c, nameGetter.evalValue(c, type).getString()).evalValue(c);
+            return expr.getAnyVariable(c, nameGetter.evalValue(c, type).getString());
         }
 
         @Override
         public void set(Context c, Value v) {
             String name = nameGetter.evalValue(c).getString();
             v.bindTo(name);
-            expr.setAnyVariable(c, name, (cc, tt) -> v);
+            expr.setAnyVariable(c, name, v);
         }
     }
     public sealed interface Assignable extends LazyValue permits Variable, VarCall {
