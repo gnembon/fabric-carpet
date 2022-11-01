@@ -1,0 +1,37 @@
+{
+    // TODO Rules
+    
+    // Categories:
+  
+    "carpet.category.bugfix": "bugfix",
+    "carpet.category.survival": "sobrevivência",
+    "carpet.category.creative": "criativo",
+    "carpet.category.experimental": "experimental",
+    "carpet.category.optimization": "otimização",
+    "carpet.category.feature": "característica",
+    "carpet.category.command": "comando",
+    "carpet.category.tnt": "TNT",
+    "carpet.category.dispenser": "distribuidor",
+    "carpet.category.scarpet": "scarpet",
+    "carpet.category.client": "cliente",
+  
+    // Settings command UI elements
+  
+    "carpet.settings.command.browse_categories": "Procurar categorias",
+    "carpet.settings.command.version": "versão",
+    "carpet.settings.command.list_all_category": "lista todas as configurações de %s",
+    "carpet.settings.command.current_settings_header": "Configurações atuais de %s",
+    "carpet.settings.command.switch_to": "Alternar para %s",
+    "carpet.settings.command.unknown_rule": "Regra desconhecida",
+    "carpet.settings.command.current_from_file_header": "Configurações de inicialização atuais de %s de %s",
+    "carpet.settings.command.mod_settings_matching": "%s configurações correspondentes \"%s\" ",
+    "carpet.settings.command.all_mod_settings": "Todas as configurações de %s",
+    "carpet.settings.command.tags": "Tags",
+    "carpet.settings.command.change_permanently": "Alterar permanentemente",
+    "carpet.settings.command.change_permanently_tooltip": "clique para manter as configurações em %s para salvar nas reinicializações",
+    "carpet.settings.command.default_set": "A regra %s agora será padronizada para %s",
+    "carpet.settings.command.default_removed": "A regra %s não será mais definida na reinicialização",
+    "carpet.settings.command.current_value": "valor atual"
+  
+  }
+  
