@@ -15,6 +15,7 @@ import carpet.script.value.StringValue;
 import carpet.script.value.Value;
 import carpet.script.value.ValueConversions;
 import carpet.api.settings.SettingsManager;
+import com.mojang.bridge.game.PackType;
 import com.sun.management.OperatingSystemMXBean;
 import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.loader.api.ModContainer;
@@ -87,19 +88,19 @@ public class SystemInfo {
         put("game_view_distance", c -> new NumericValue(c.s.getServer().getPlayerList().getViewDistance()));
         put("game_mod_name", c -> StringValue.of(c.s.getServer().getServerModName()));
         put("game_version", c -> StringValue.of(c.s.getServer().getServerVersion()));
-        put("game_target", c -> StringValue.of(SharedConstants.getCurrentVersion().getReleaseTarget()));
+        put("game_target", c -> StringValue.of(CarpetSettings.releaseTarget));
         put("game_protocol", c -> NumericValue.of(SharedConstants.getProtocolVersion()));
         put("game_major_target", c -> {
-            String [] vers = SharedConstants.getCurrentVersion().getReleaseTarget().split("\\.");
+            String [] vers = CarpetSettings.releaseTarget.split("\\.");
             return NumericValue.of((vers.length > 1)?Integer.parseInt(vers[1]):0);
         });
         put("game_minor_target", c -> {
-            String [] vers = SharedConstants.getCurrentVersion().getReleaseTarget().split("\\.");
+            String [] vers = CarpetSettings.releaseTarget.split("\\.");
             return NumericValue.of((vers.length > 2)?Integer.parseInt(vers[2]):0);
         });
         put("game_stable", c -> BooleanValue.of(SharedConstants.getCurrentVersion().isStable()));
         put("game_data_version", c->NumericValue.of(SharedConstants.getCurrentVersion().getWorldVersion()));
-        put("game_pack_version", c->NumericValue.of(SharedConstants.getCurrentVersion().getPackVersion()));
+        put("game_pack_version", c->NumericValue.of(SharedConstants.getCurrentVersion().getPackVersion(PackType.DATA)));
 
         put("server_ip", c -> StringValue.of(c.s.getServer().getLocalIp()));
         put("server_whitelisted", c -> BooleanValue.of(c.s.getServer().isEnforceWhitelist()));
@@ -131,7 +132,7 @@ public class SystemInfo {
         put("server_mods", c -> {
             Map<Value, Value> ret = new HashMap<>();
             for (ModContainer mod : FabricLoader.getInstance().getAllMods())
-                ret.put(new StringValue(mod.getMetadata().getName()), new StringValue(mod.getMetadata().getVersion().getFriendlyString()));
+                ret.put(new StringValue(mod.getMetadata().getId()), new StringValue(mod.getMetadata().getVersion().getFriendlyString()));
             return MapValue.wrap(ret);
         });
         put("server_last_tick_times", c -> {

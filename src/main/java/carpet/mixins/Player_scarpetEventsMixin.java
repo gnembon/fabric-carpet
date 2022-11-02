@@ -32,7 +32,7 @@ public abstract class Player_scarpetEventsMixin extends LivingEntity
         super(type, world);
     }
 
-    @Inject(method = "actuallyHurt", locals = LocalCapture.CAPTURE_FAILHARD, at = @At(
+    @Inject(method = "actuallyHurt", cancellable = true, locals = LocalCapture.CAPTURE_FAILHARD, at = @At(
             value = "INVOKE",
             target = "Lnet/minecraft/world/entity/player/Player;getDamageAfterArmorAbsorb(Lnet/minecraft/world/damagesource/DamageSource;F)F"
     ))
@@ -42,11 +42,15 @@ public abstract class Player_scarpetEventsMixin extends LivingEntity
         ((EntityInterface)this).getEventContainer().onEvent(EntityEventsGroup.Event.ON_DAMAGE, amount, source);
         if (PLAYER_TAKES_DAMAGE.isNeeded())
         {
-            PLAYER_TAKES_DAMAGE.onDamage(this, amount, source);
+            if(PLAYER_TAKES_DAMAGE.onDamage(this, amount, source)) {
+                ci.cancel();
+            }
         }
         if (source.getEntity() instanceof ServerPlayer && PLAYER_DEALS_DAMAGE.isNeeded())
         {
-            PLAYER_DEALS_DAMAGE.onDamage(this, amount, source);
+            if(PLAYER_DEALS_DAMAGE.onDamage(this, amount, source)) {
+                ci.cancel();
+            }
         }
     }
 
@@ -59,21 +63,26 @@ public abstract class Player_scarpetEventsMixin extends LivingEntity
         }
     }
 
-    @Inject(method = "interactOn", at = @At("HEAD"))
+    @Inject(method = "interactOn", cancellable = true, at = @At("HEAD"))
     private void doInteract(Entity entity, InteractionHand hand, CallbackInfoReturnable<InteractionResult> cir)
     {
         if (!level.isClientSide && PLAYER_INTERACTS_WITH_ENTITY.isNeeded())
         {
-            PLAYER_INTERACTS_WITH_ENTITY.onEntityHandAction((ServerPlayer) (Object)this, entity, hand);
+            if(PLAYER_INTERACTS_WITH_ENTITY.onEntityHandAction((ServerPlayer) (Object)this, entity, hand)) {
+                cir.setReturnValue(InteractionResult.PASS);
+                cir.cancel();
+            }
         }
     }
 
-    @Inject(method = "attack", at = @At("HEAD"))
+    @Inject(method = "attack", at = @At("HEAD"), cancellable = true)
     private void onAttack(Entity target, CallbackInfo ci)
     {
         if (!level.isClientSide && PLAYER_ATTACKS_ENTITY.isNeeded() && target.isAttackable())
         {
-            PLAYER_ATTACKS_ENTITY.onEntityHandAction((ServerPlayer) (Object)this, target, null);
+            if(PLAYER_ATTACKS_ENTITY.onEntityHandAction((ServerPlayer) (Object)this, target, null)) {
+                ci.cancel();
+            }
         }
     }
 }

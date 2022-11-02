@@ -1,6 +1,5 @@
 package carpet.script.api;
 
-import carpet.CarpetServer;
 import carpet.CarpetSettings;
 import carpet.fakes.ChunkGeneratorInterface;
 import carpet.fakes.ChunkTicketManagerInterface;
@@ -11,7 +10,6 @@ import carpet.fakes.ThreadedAnvilChunkStorageInterface;
 import carpet.helpers.FeatureGenerator;
 import carpet.mixins.PoiRecord_scarpetMixin;
 import carpet.script.CarpetContext;
-import carpet.script.CarpetScriptServer;
 import carpet.script.Context;
 import carpet.script.Expression;
 import carpet.script.Fluff;
@@ -340,7 +338,7 @@ public class WorldAccess {
                     ListValue.of(
                             ValueConversions.of(Registry.POINT_OF_INTEREST_TYPE.getKey(p.getPoiType().value())),
                             new NumericValue(p.getPoiType().value().maxTickets() - ((PoiRecord_scarpetMixin)p).getFreeTickets()),
-                            ListValue.of(new NumericValue(p.getPos().getX()), new NumericValue(p.getPos().getY()), new NumericValue(p.getPos().getZ()))
+                            ValueConversions.of(p.getPos())
                     )
             ).collect(Collectors.toList()));
         });
@@ -452,14 +450,14 @@ public class WorldAccess {
                 BlockPos pos = ((BlockValue) v).getPos();
                 if (pos == null)
                     throw new InternalExpressionException("Cannot fetch position of an unrealized block");
-                return ListValue.of(new NumericValue(pos.getX()), new NumericValue(pos.getY()), new NumericValue(pos.getZ()));
+                return ValueConversions.of(pos);
             }
             else if (v instanceof EntityValue)
             {
                 Entity e = ((EntityValue) v).getEntity();
                 if (e == null)
                     throw new InternalExpressionException("Null entity");
-                return ListValue.of(new NumericValue(e.getX()), new NumericValue(e.getY()), new NumericValue(e.getZ()));
+                return ValueConversions.of(e.position());
             }
             else
             {
@@ -481,7 +479,7 @@ public class WorldAccess {
             if (lv.size() > locator.offset+1)
                 howMuch = (int) NumericValue.asNumber(lv.get(locator.offset+1)).getLong();
             BlockPos retpos = pos.relative(dir, howMuch);
-            return ListValue.of(new NumericValue(retpos.getX()), new NumericValue(retpos.getY()), new NumericValue(retpos.getZ()));
+            return ValueConversions.of(retpos);
         });
 
         expression.addContextFunction("solid", -1, (c, t, lv) ->
@@ -516,6 +514,9 @@ public class WorldAccess {
 
         expression.addContextFunction("sky_light", -1, (c, t, lv) ->
                 genericStateTest(c, "sky_light", lv, (s, p, w) -> new NumericValue(w.getBrightness(LightLayer.SKY, p))));
+
+        expression.addContextFunction("effective_light", -1, (c, t, lv) ->
+                genericStateTest(c, "effective_light", lv, (s, p, w) -> new NumericValue(w.getMaxLocalRawBrightness(p))));
 
         expression.addContextFunction("see_sky", -1, (c, t, lv) ->
                 genericStateTest(c, "see_sky", lv, (s, p, w) -> BooleanValue.of(w.canSeeSky(p))));
@@ -987,7 +988,7 @@ public class WorldAccess {
             // copy of ServerWorld.createExplosion #TRACK#
             Explosion explosion = new Explosion(cc.s.getLevel(), source, null, null, pos.x, pos.y, pos.z, powah, createFire, mode){
                 @Override
-                public @Nullable LivingEntity getSourceMob() {
+                public @Nullable LivingEntity getIndirectSourceEntity() {
                     return theAttacker;
                 }
             };
@@ -1411,7 +1412,7 @@ public class WorldAccess {
                     BoundingBox box = start.getBoundingBox();
                     structureList.put(
                             new StringValue(NBTSerializableValue.nameFromRegistryId(reg.getKey(entry.getKey()))),
-                            ListValue.of(ListValue.fromTriple(box.minX(), box.minY(), box.minZ()), ListValue.fromTriple(box.maxX(), box.maxY(), box.maxZ()))
+                            ValueConversions.of(box)
                     );
                 }
                 return MapValue.wrap(structureList);

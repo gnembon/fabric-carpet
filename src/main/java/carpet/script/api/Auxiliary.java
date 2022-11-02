@@ -38,6 +38,7 @@ import carpet.script.value.Value;
 import carpet.script.value.ValueConversions;
 import carpet.utils.Messenger;
 import com.google.common.collect.Lists;
+import com.mojang.bridge.game.PackType;
 import net.minecraft.SharedConstants;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.core.BlockPos;
@@ -80,7 +81,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.storage.CommandStorage;
 import net.minecraft.world.level.storage.LevelResource;
 import net.minecraft.world.phys.Vec3;
-import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.file.PathUtils;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -257,6 +258,8 @@ public class Auxiliary {
                     particle, pos1.vec, pos2.vec, density
             ));
         });
+
+        expression.addUnaryFunction("item_display_name", v -> new FormattedTextValue(ValueConversions.getItemStackFromValue(v, false).getHoverName()));
 
         expression.addContextFunction("particle_box", -1, (c, t, lv) ->
         {
@@ -1048,7 +1051,7 @@ public class Auxiliary {
                         Path zipRoot = zipfs.getPath("/");
                         zipValueToJson(zipRoot.resolve("pack.mcmeta"), MapValue.wrap(
                                 Map.of(StringValue.of("pack"), MapValue.wrap(Map.of(
-                                        StringValue.of("pack_format"), new NumericValue(SharedConstants.getCurrentVersion().getPackVersion()),
+                                        StringValue.of("pack_format"), new NumericValue(SharedConstants.getCurrentVersion().getPackVersion(PackType.DATA)),
                                         StringValue.of("description"), StringValue.of(name),
                                         StringValue.of("source"), StringValue.of("scarpet")
                                 )))
@@ -1076,7 +1079,7 @@ public class Auxiliary {
                 {
                     successful[0] = false;
                     try {
-                        FileUtils.forceDelete(packFloder.toFile());
+                        PathUtils.delete(packFloder);
                     } catch (IOException ignored) {
                         throw new InternalExpressionException("Failed to install a datapack and failed to clean up after it");
                     }

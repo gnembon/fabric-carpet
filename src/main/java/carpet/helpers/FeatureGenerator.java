@@ -11,7 +11,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.OptionalInt;
-import java.util.Random;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
@@ -60,7 +59,6 @@ import net.minecraft.world.level.levelgen.structure.structures.JigsawStructure;
 
 public class FeatureGenerator
 {
-    public static final Object boo = new Object();
     synchronized public static Boolean plop(String featureName, ServerLevel world, BlockPos pos)
     {
         Thing custom = featureMap.get(featureName);
@@ -168,13 +166,6 @@ public class FeatureGenerator
     private static Thing setupCustomStructure(Structure structure, boolean wireOnly)
         {
         return (w, p) -> plopAnywhere(structure, w, p, w.getChunkSource().getGenerator(), wireOnly);
-    }
-
-    public static Boolean spawn(String name, ServerLevel world, BlockPos pos)
-    {
-        if (featureMap.containsKey(name))
-            return featureMap.get(name).plop(world, pos);
-        return null;
     }
 
     private static Structure getDefaultFeature(StructureType<?> structure, ServerLevel world, BlockPos pos)
@@ -345,8 +336,6 @@ public class FeatureGenerator
 
     public static boolean plopAnywhere(Structure structure, ServerLevel world, BlockPos pos, ChunkGenerator generator, boolean wireOnly)
     {
-        if (world.isClientSide())
-            return false;
         CarpetSettings.skipGenerationChecks.set(true);
         try
         {

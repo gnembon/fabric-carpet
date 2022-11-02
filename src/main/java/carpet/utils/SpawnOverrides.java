@@ -83,16 +83,6 @@ public class SpawnOverrides {
         return level.structureManager().getStructureAt(pos, fortressFeature).isValid();
     }
 
-    public static boolean isStructureAtPosition(ServerLevel level, StructureType<?> structure, BlockPos pos)
-    {
-        for(StructureStart structureStart : startsForFeature(level, SectionPos.of(pos), structure)) {
-            if (structureStart.getBoundingBox().isInside(pos) && structureStart.isValid()) {
-                return true;
-            }
-        }
-        return false;
-    }
-
     public static List<StructureStart> startsForFeature(ServerLevel level, SectionPos sectionPos, StructureType<?> structure) {
         Map<Structure, LongSet> allrefs = level.getChunk(sectionPos.x(), sectionPos.z(), ChunkStatus.STRUCTURE_REFERENCES).getAllReferences();
         List<StructureStart> result = new ArrayList<>();

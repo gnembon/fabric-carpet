@@ -59,11 +59,10 @@ public class Inventories {
         expression.addUnaryFunction("stack_limit", v ->
                 new NumericValue(NBTSerializableValue.parseItem(v.getString()).getItem().getMaxStackSize()));
 
-        expression.addUnaryFunction("item_category", v ->
-        {
-            ItemInput item = NBTSerializableValue.parseItem(v.getString());
-            CreativeModeTab ig = item.getItem().getItemCategory();
-            return (ig==null)?Value.NULL:new StringValue(ig.getRecipeFolderName());
+        expression.addContextFunction("item_category", -1, (c, t, lv) -> {
+            CarpetContext cc = (CarpetContext)c;
+            cc.host.issueDeprecation("item_category in 1.19.3+");
+            return Value.NULL;
         });
 
         expression.addContextFunction("item_list", -1, (c, t, lv) ->

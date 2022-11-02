@@ -15,15 +15,15 @@ import net.minecraft.world.level.block.entity.BlockEntityType;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.Map;
-import java.util.stream.Collectors;
+
+import static java.util.Map.entry;
 
 public class CarpetProfiler
 {
-    private static final Map<String, Long> SECTION_STATS = new HashMap<>();
-    private static final Object2LongMap<Pair<Level,Object>> ENTITY_TIMES = new Object2LongOpenHashMap<>();
-    private static final Object2LongMap<Pair<Level,Object>> ENTITY_COUNT = new Object2LongOpenHashMap<>();
+    private static final Object2LongOpenHashMap<String> SECTION_STATS = new Object2LongOpenHashMap<>();
+    private static final Object2LongOpenHashMap<Pair<Level,Object>> ENTITY_TIMES = new Object2LongOpenHashMap<>();
+    private static final Object2LongOpenHashMap<Pair<Level,Object>> ENTITY_COUNT = new Object2LongOpenHashMap<>();
 
 
     private static CommandSourceStack currentRequester = null;
@@ -50,18 +50,18 @@ public class CarpetProfiler
     );
 
     private static final Map<String, String> SECTIONS = Map.ofEntries(
-        Map.entry("Spawning",                "Spawning of various things. Natural mobs, cats, patrols, wandering traders, phantoms, skeleton horses, etc."),
-        Map.entry("Random Ticks",            "Random ticks. Both block random ticks and fluid random ticks."),
-        Map.entry("Ticket Manager",          "Chunk ticket manager. Assigning tickets, removing tickets, etc."),
-        Map.entry("Unloading",               "POI ticking and chunk unloading."),
-        Map.entry("Schedule Ticks",          "Scheduled ticks. Repeaters, observers, redstone torch, water, lava, etc."),
-        Map.entry("Block Events",            "Scheduled Block events. Pistons, comparators, noteblocks, block entity events (chests opening/closing), etc."),
-        Map.entry("Entities",                "All the entities in the server. Ticking, removing, despawning, dragon fight (if active), etc."),
-        Map.entry("Block Entities",          "All the block entities in the server. Removal, ticking, etc."),
-        Map.entry("Entities (Client)",       "Entity lag client side. Mostly rendering."),
-        Map.entry("Block Entities (Client)", "Block entity lag client side. Mostly rendering."),
-        Map.entry("Raid",                    "Raid ticking, stopping, etc."),
-        Map.entry("Environment",             "Weather, time, waking up players, water freezing, cauldron filling, snow layers, etc.")
+        entry("Spawning",                "Spawning of various things. Natural mobs, cats, patrols, wandering traders, phantoms, skeleton horses, etc."),
+        entry("Random Ticks",            "Random ticks. Both block random ticks and fluid random ticks."),
+        entry("Ticket Manager",          "Chunk ticket manager. Assigning tickets, removing tickets, etc."),
+        entry("Unloading",               "POI ticking and chunk unloading."),
+        entry("Schedule Ticks",          "Scheduled ticks. Repeaters, observers, redstone torch, water, lava, etc."),
+        entry("Block Events",            "Scheduled Block events. Pistons, comparators, noteblocks, block entity events (chests opening/closing), etc."),
+        entry("Entities",                "All the entities in the server. Ticking, removing, despawning, dragon fight (if active), etc."),
+        entry("Block Entities",          "All the block entities in the server. Removal, ticking, etc."),
+        entry("Entities (Client)",       "Entity lag client side. Mostly rendering."),
+        entry("Block Entities (Client)", "Block entity lag client side. Mostly rendering."),
+        entry("Raid",                    "Raid ticking, stopping, etc."),
+        entry("Environment",             "Weather, time, waking up players, water freezing, cauldron filling, snow layers, etc.")
     );
 
     public enum TYPE
@@ -83,26 +83,10 @@ public class CarpetProfiler
     public static void prepare_tick_report(CommandSourceStack source, int ticks)
     {
         //maybe add so it only spams the sending player, but honestly - all may want to see it
-        SECTION_STATS.clear();
+        SECTION_STATS.clear(); // everything then defaults to 0
         ENTITY_COUNT.clear();
         ENTITY_TIMES.clear();
         test_type = TYPE.GENERAL;
-        SECTION_STATS.put("tick", 0L);
-        for (String section : GENERAL_SECTIONS.keySet())
-        {
-            SECTION_STATS.put(section, 0L);
-        }
-        for (String section : SCARPET_SECTIONS.keySet())
-        {
-            SECTION_STATS.put(section, 0L);
-        }
-        for (ResourceKey<Level> level : source.getServer().levelKeys())
-        {
-            for (String section : SECTIONS.keySet())
-            {
-                SECTION_STATS.put(level.location() + "." + section, 0L);
-            }
-        }
 
         tick_health_elapsed = ticks;
         tick_health_requested = ticks;
@@ -114,7 +98,6 @@ public class CarpetProfiler
     {
         //maybe add so it only spams the sending player, but honestly - all may want to see it
         SECTION_STATS.clear();
-        SECTION_STATS.put("tick", 0L);
         ENTITY_COUNT.clear();
         ENTITY_TIMES.clear();
         test_type = TYPE.ENTITY;
@@ -156,7 +139,7 @@ public class CarpetProfiler
             String current_section = (world == null) ?
                     (String) tok.section :
                     String.format("%s.%s%s", world.dimension().location(), tok.section, world.isClientSide ? " (Client)" : "");
-            SECTION_STATS.put(current_section, SECTION_STATS.getOrDefault(current_section, 0L) + end_time - tok.start);
+            SECTION_STATS.addTo(current_section, end_time - tok.start);
         }
     }
 
@@ -166,8 +149,8 @@ public class CarpetProfiler
             return;
         long end_time = System.nanoTime();
         Pair<Level,Object> section = Pair.of(tok.world, tok.section);
-        ENTITY_TIMES.put(section, ENTITY_TIMES.getOrDefault(section, 0L) + end_time - tok.start);
-        ENTITY_COUNT.put(section, ENTITY_COUNT.getOrDefault(section, 0L) + 1);
+        ENTITY_TIMES.addTo(section, end_time - tok.start);
+        ENTITY_COUNT.addTo(section, 1);
     }
 
     public static void start_tick_profiling()
@@ -179,7 +162,7 @@ public class CarpetProfiler
     {
         if (current_tick_start == 0L)
             return;
-        SECTION_STATS.put("tick", SECTION_STATS.get("tick") + System.nanoTime() - current_tick_start);
+        SECTION_STATS.addTo("tick", System.nanoTime() - current_tick_start);
         tick_health_elapsed--;
         if (tick_health_elapsed <= 0)
         {
@@ -199,7 +182,6 @@ public class CarpetProfiler
     public static void cleanup_tick_report()
     {
         SECTION_STATS.clear();
-        SECTION_STATS.put("tick", 0L);
         ENTITY_TIMES.clear();
         ENTITY_COUNT.clear();
         test_type = TYPE.NONE;
@@ -214,7 +196,7 @@ public class CarpetProfiler
         //print stats
         if (currentRequester == null)
             return;
-        long total_tick_time = SECTION_STATS.get("tick");
+        long total_tick_time = SECTION_STATS.getLong("tick");
         double divider = 1.0D / tick_health_requested / 1000000;
         Messenger.m(currentRequester, "w ");
         Messenger.m(currentRequester, "wb Average tick time: ", String.format("yb %.3fms", divider * total_tick_time));
@@ -222,10 +204,10 @@ public class CarpetProfiler
 
         for (String section : GENERAL_SECTIONS.keySet())
         {
-            double amount = divider * SECTION_STATS.get(section);
+            double amount = divider * SECTION_STATS.getLong(section);
             if (amount > 0.01)
             {
-                accumulated += SECTION_STATS.get(section);
+                accumulated += SECTION_STATS.getLong(section);
                 Messenger.m(
                         currentRequester,
                         "w " + section + ": ",
@@ -236,7 +218,7 @@ public class CarpetProfiler
         }
         for (String section : SCARPET_SECTIONS.keySet())
         {
-            double amount = divider * SECTION_STATS.get(section);
+            double amount = divider * SECTION_STATS.getLong(section);
             if (amount > 0.01)
             {
                 Messenger.m(
@@ -254,7 +236,7 @@ public class CarpetProfiler
             boolean hasSomethin = false;
             for (String section : SECTIONS.keySet())
             {
-                double amount = divider * SECTION_STATS.getOrDefault(dimensionId + "." + section, 0L);
+                double amount = divider * SECTION_STATS.getLong(dimensionId + "." + section);
                 if (amount > 0.01)
                 {
                     hasSomethin = true;
@@ -268,12 +250,12 @@ public class CarpetProfiler
             Messenger.m(currentRequester, "wb "+(dimensionId.getNamespace().equals("minecraft")?dimensionId.getPath():dimensionId.toString()) + ":");
             for (String section : SECTIONS.keySet())
             {
-                double amount = divider * SECTION_STATS.getOrDefault(dimensionId + "." + section, 0L);
+                double amount = divider * SECTION_STATS.getLong(dimensionId + "." + section);
                 if (amount > 0.01)
                 {
                     boolean cli = section.endsWith("(Client)");
                     if (!cli)
-                        accumulated += SECTION_STATS.get(dimensionId + "." + section);
+                        accumulated += SECTION_STATS.getLong(dimensionId + "." + section);
                     Messenger.m(
                             currentRequester,
                             "%s - %s: ".formatted(cli ? "gi" : "w", section),
@@ -314,15 +296,15 @@ public class CarpetProfiler
     {
         if (currentRequester == null)
             return;
-        long total_tick_time = SECTION_STATS.get("tick");
+        long total_tick_time = SECTION_STATS.getLong("tick");
         double divider = 1.0D / tick_health_requested / 1000000;
         double divider_1 = 1.0D / (tick_health_requested - 1) / 1000000;
         Messenger.m(currentRequester, "w ");
         Messenger.m(currentRequester, "wb Average tick time: ", String.format("yb %.3fms", divider * total_tick_time));
-        SECTION_STATS.remove("tick");
+        SECTION_STATS.removeLong("tick");
         Messenger.m(currentRequester, "wb Top 10 counts:");
         int total = 0;
-        for (Object2LongMap.Entry<Pair<Level, Object>> sectionEntry : ENTITY_COUNT.object2LongEntrySet().stream().sorted(Map.Entry.comparingByValue(Comparator.reverseOrder())).collect(Collectors.toList()))
+        for (Object2LongMap.Entry<Pair<Level, Object>> sectionEntry : sortedByValue(ENTITY_COUNT))
         {
             if (++total > 10) break;
             Pair<Level,Object> section = sectionEntry.getKey();
@@ -336,7 +318,7 @@ public class CarpetProfiler
         }
         Messenger.m(currentRequester, "wb Top 10 CPU hogs:");
         total = 0;
-        for (Object2LongMap.Entry<Pair<Level,Object>> sectionEntry : ENTITY_TIMES.object2LongEntrySet().stream().sorted(Map.Entry.comparingByValue(Comparator.reverseOrder())).collect(Collectors.toList()))
+        for (Object2LongMap.Entry<Pair<Level, Object>> sectionEntry : sortedByValue(ENTITY_TIMES))
         {
             if (++total > 10) break;
             Pair<Level,Object> section = sectionEntry.getKey();
@@ -348,5 +330,13 @@ public class CarpetProfiler
                     (cli ? divider : divider_1) * sectionEntry.getLongValue()
             ));
         }
+    }
+
+    private static <T> Iterable<Object2LongMap.Entry<T>> sortedByValue(Object2LongMap<T> mapToSort) {
+        return () -> mapToSort
+                .object2LongEntrySet()
+                .stream()
+                .sorted(Comparator.<Object2LongMap.Entry<T>>comparingLong(Object2LongMap.Entry::getLongValue).reversed())
+                .iterator();
     }
 }

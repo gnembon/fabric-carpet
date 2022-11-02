@@ -25,6 +25,7 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -77,7 +78,7 @@ public class CarpetEventServer
 
     public enum CallbackResult
     {
-        SUCCESS, PASS, FAIL
+        SUCCESS, PASS, FAIL, CANCEL
     }
 
     public static class Callback
@@ -157,7 +158,7 @@ public class CarpetEventServer
         {
             // ignoring target as we will be always calling self
             super(context.host.getName(), null, function, args);
-            this.ctx = context;
+            this.ctx = context.duplicate();
             this.dueTime = dueTime;
         }
 
@@ -216,12 +217,13 @@ public class CarpetEventServer
          * Handles only built-in events from the events system
          * @param argumentSupplier
          * @param cmdSourceSupplier
+         * @return Whether this event call has been cancelled
          */
-        public void call(Supplier<List<Value>> argumentSupplier, Supplier<CommandSourceStack> cmdSourceSupplier)
+        public boolean call(Supplier<List<Value>> argumentSupplier, Supplier<CommandSourceStack> cmdSourceSupplier)
         {
             if (callList.size() > 0 && CarpetServer.scriptServer != null)
             {
-                CarpetServer.scriptServer.events.handleEvents.runIfEnabled( () -> {
+                Boolean isCancelled = CarpetServer.scriptServer.events.handleEvents.runIfEnabled( () -> {
                     CarpetProfiler.ProfilerToken currentSection = CarpetProfiler.start_section(null, "Scarpet events", CarpetProfiler.TYPE.GENERAL);
                     List<Value> argv = argumentSupplier.get(); // empty for onTickDone
                     CommandSourceStack source;
@@ -231,10 +233,11 @@ public class CarpetEventServer
                     }
                     catch (NullPointerException noReference) // todo figure out what happens when closing.
                     {
-                        return;
+                        return false;
                     }
                     String nameCheck = perPlayerDistribution ? source.getTextName() : null;
                     assert argv.size() == reqArgs;
+                    boolean cancelled = false;
                     try
                     {
                         // we are ok with list growing in the meantime
@@ -246,7 +249,12 @@ public class CarpetEventServer
                             // supressing calls where target player hosts simply don't match
                             // handling global hosts with player targets is left to when the host is resolved (few calls deeper).
                             if (nameCheck != null && call.optionalTarget != null && !nameCheck.equals(call.optionalTarget)) continue;
-                            if (call.execute(source, argv) == CallbackResult.FAIL) removedCalls.add(call);
+                            CallbackResult result = call.execute(source, argv);
+                            if(result == CallbackResult.CANCEL) {
+                                cancelled = true;
+                                break;
+                            }
+                            if (result == CallbackResult.FAIL) removedCalls.add(call);
                         }
                     }
                     finally
@@ -256,8 +264,11 @@ public class CarpetEventServer
                     for (Callback call : removedCalls) callList.remove(call);
                     removedCalls.clear();
                     CarpetProfiler.end_current_section(currentSection);
+                    return cancelled;
                 });
+                return isCancelled != null && isCancelled;
             }
+            return false;
         }
 
         public int signal(CommandSourceStack sender, ServerPlayer optinoalReceipient, List<Value> callArg)
@@ -362,6 +373,10 @@ public class CarpetEventServer
             // when some moron puts /reload in an event call.
             if (inSignal || inCall) callList = new ArrayList<>();
             callList.clear();
+        }
+
+        public void sortByPriority(CarpetScriptServer scriptServer) {
+            callList.sort(Comparator.comparingDouble(c -> -scriptServer.getAppHostByName(c.host).eventPriority));
         }
     }
 
@@ -483,33 +498,37 @@ public class CarpetEventServer
         public static final Event PLAYER_JUMPS = new Event("player_jumps", 1, false)
         {
             @Override
-            public void onPlayerEvent(ServerPlayer player)
+            public boolean onPlayerEvent(ServerPlayer player)
             {
                 handler.call( () -> Collections.singletonList(new EntityValue(player)), player::createCommandSourceStack);
+                return false;
             }
         };
         public static final Event PLAYER_DEPLOYS_ELYTRA = new Event("player_deploys_elytra", 1, false)
         {
             @Override
-            public void onPlayerEvent(ServerPlayer player)
+            public boolean onPlayerEvent(ServerPlayer player)
             {
                 handler.call( () -> Collections.singletonList(new EntityValue(player)), player::createCommandSourceStack);
+                return false;
             }
         };
         public static final Event PLAYER_WAKES_UP = new Event("player_wakes_up", 1, false)
         {
             @Override
-            public void onPlayerEvent(ServerPlayer player)
+            public boolean onPlayerEvent(ServerPlayer player)
             {
                 handler.call( () -> Collections.singletonList(new EntityValue(player)), player::createCommandSourceStack);
+                return false;
             }
         };
         public static final Event PLAYER_ESCAPES_SLEEP = new Event("player_escapes_sleep", 1, false)
         {
             @Override
-            public void onPlayerEvent(ServerPlayer player)
+            public boolean onPlayerEvent(ServerPlayer player)
             {
                 handler.call( () -> Collections.singletonList(new EntityValue(player)), player::createCommandSourceStack);
+                return false;
             }
         };
         public static final Event PLAYER_RIDES = new Event("player_rides", 5, false)
@@ -525,9 +544,9 @@ public class CarpetEventServer
         public static final Event PLAYER_USES_ITEM = new Event("player_uses_item", 3, false)
         {
             @Override
-            public void onItemAction(ServerPlayer player, InteractionHand enumhand, ItemStack itemstack)
+            public boolean onItemAction(ServerPlayer player, InteractionHand enumhand, ItemStack itemstack)
             {
-                handler.call( () ->
+                return handler.call( () ->
                 {
                     //ItemStack itemstack = player.getStackInHand(enumhand);
                     return Arrays.asList(
@@ -541,9 +560,9 @@ public class CarpetEventServer
         public static final Event PLAYER_CLICKS_BLOCK = new Event("player_clicks_block", 3, false)
         {
             @Override
-            public void onBlockAction(ServerPlayer player, BlockPos blockpos, Direction facing)
+            public boolean onBlockAction(ServerPlayer player, BlockPos blockpos, Direction facing)
             {
-                handler.call( () ->
+                return handler.call( () ->
                 {
                     return Arrays.asList(
                             new EntityValue(player),
@@ -556,9 +575,9 @@ public class CarpetEventServer
         public static final Event PLAYER_RIGHT_CLICKS_BLOCK = new Event("player_right_clicks_block", 6, false)
         {
             @Override
-            public void onBlockHit(ServerPlayer player, InteractionHand enumhand, BlockHitResult hitRes)//ItemStack itemstack, Hand enumhand, BlockPos blockpos, Direction enumfacing, Vec3d vec3d)
+            public boolean onBlockHit(ServerPlayer player, InteractionHand enumhand, BlockHitResult hitRes)//ItemStack itemstack, Hand enumhand, BlockPos blockpos, Direction enumfacing, Vec3d vec3d)
             {
-                handler.call( () ->
+                return handler.call( () ->
                 {
                     ItemStack itemstack = player.getItemInHand(enumhand);
                     BlockPos blockpos = hitRes.getBlockPos();
@@ -582,7 +601,7 @@ public class CarpetEventServer
         public static final Event PLAYER_INTERACTS_WITH_BLOCK = new Event("player_interacts_with_block", 5, false)
         {
             @Override
-            public void onBlockHit(ServerPlayer player, InteractionHand enumhand, BlockHitResult hitRes)
+            public boolean onBlockHit(ServerPlayer player, InteractionHand enumhand, BlockHitResult hitRes)
             {
                 handler.call( () ->
                 {
@@ -601,14 +620,15 @@ public class CarpetEventServer
                             )
                     );
                 }, player::createCommandSourceStack);
+                return false;
             }
         };
-        public static final Event PLAYER_PLACES_BLOCK = new Event("player_places_block", 4, false)
+        public static final Event PLAYER_PLACING_BLOCK = new Event("player_placing_block", 4, false)
         {
             @Override
-            public void onBlockPlaced(ServerPlayer player, BlockPos pos, InteractionHand enumhand, ItemStack itemstack)
+            public boolean onBlockPlaced(ServerPlayer player, BlockPos pos, InteractionHand enumhand, ItemStack itemstack)
             {
-                handler.call( () -> Arrays.asList(
+                return handler.call( () -> Arrays.asList(
                         new EntityValue(player),
                         ValueConversions.of(itemstack),
                         StringValue.of(enumhand == InteractionHand.MAIN_HAND ? "mainhand" : "offhand"),
@@ -616,12 +636,26 @@ public class CarpetEventServer
                 ), player::createCommandSourceStack);
             }
         };
+        public static final Event PLAYER_PLACES_BLOCK = new Event("player_places_block", 4, false)
+        {
+            @Override
+            public boolean onBlockPlaced(ServerPlayer player, BlockPos pos, InteractionHand enumhand, ItemStack itemstack)
+            {
+                handler.call( () -> Arrays.asList(
+                        new EntityValue(player),
+                        ValueConversions.of(itemstack),
+                        StringValue.of(enumhand == InteractionHand.MAIN_HAND ? "mainhand" : "offhand"),
+                        new BlockValue(null, player.getLevel(), pos)
+                ), player::createCommandSourceStack);
+                return false;
+            }
+        };
         public static final Event PLAYER_BREAK_BLOCK = new Event("player_breaks_block", 2, false)
         {
             @Override
-            public void onBlockBroken(ServerPlayer player, BlockPos pos, BlockState previousBS)
+            public boolean onBlockBroken(ServerPlayer player, BlockPos pos, BlockState previousBS)
             {
-                handler.call(
+                return handler.call(
                         () -> Arrays.asList(new EntityValue(player), new BlockValue(previousBS, player.getLevel(), pos)),
                         player::createCommandSourceStack
                 );
@@ -630,9 +664,9 @@ public class CarpetEventServer
         public static final Event PLAYER_INTERACTS_WITH_ENTITY = new Event("player_interacts_with_entity", 3, false)
         {
             @Override
-            public void onEntityHandAction(ServerPlayer player, Entity entity, InteractionHand enumhand)
+            public boolean onEntityHandAction(ServerPlayer player, Entity entity, InteractionHand enumhand)
             {
-                handler.call( () -> Arrays.asList(
+                return handler.call( () -> Arrays.asList(
                         new EntityValue(player), new EntityValue(entity), StringValue.of(enumhand==InteractionHand.MAIN_HAND?"mainhand":"offhand")
                 ), player::createCommandSourceStack);
             }
@@ -654,56 +688,61 @@ public class CarpetEventServer
         public static final Event PLAYER_PICKS_UP_ITEM = new Event("player_picks_up_item", 2, false)
         {
             @Override
-            public void onItemAction(ServerPlayer player, InteractionHand enumhand, ItemStack itemstack) {
+            public boolean onItemAction(ServerPlayer player, InteractionHand enumhand, ItemStack itemstack) {
                 handler.call( () -> Arrays.asList(new EntityValue(player), ValueConversions.of(itemstack)), player::createCommandSourceStack);
+                return false;
             }
         };
 
         public static final Event PLAYER_ATTACKS_ENTITY = new Event("player_attacks_entity", 2, false)
         {
             @Override
-            public void onEntityHandAction(ServerPlayer player, Entity entity, InteractionHand enumhand)
+            public boolean onEntityHandAction(ServerPlayer player, Entity entity, InteractionHand enumhand)
             {
-                handler.call( () -> Arrays.asList(new EntityValue(player), new EntityValue(entity)), player::createCommandSourceStack);
+                return handler.call( () -> Arrays.asList(new EntityValue(player), new EntityValue(entity)), player::createCommandSourceStack);
             }
         };
         public static final Event PLAYER_STARTS_SNEAKING = new Event("player_starts_sneaking", 1, false)
         {
             @Override
-            public void onPlayerEvent(ServerPlayer player)
+            public boolean onPlayerEvent(ServerPlayer player)
             {
                 handler.call( () -> Collections.singletonList(new EntityValue(player)), player::createCommandSourceStack);
+                return false;
             }
         };
         public static final Event PLAYER_STOPS_SNEAKING = new Event("player_stops_sneaking", 1, false)
         {
             @Override
-            public void onPlayerEvent(ServerPlayer player)
+            public boolean onPlayerEvent(ServerPlayer player)
             {
                 handler.call( () -> Collections.singletonList(new EntityValue(player)), player::createCommandSourceStack);
+                return false;
             }
         };
         public static final Event PLAYER_STARTS_SPRINTING = new Event("player_starts_sprinting", 1, false)
         {
             @Override
-            public void onPlayerEvent(ServerPlayer player)
+            public boolean onPlayerEvent(ServerPlayer player)
             {
                 handler.call( () -> Collections.singletonList(new EntityValue(player)), player::createCommandSourceStack);
+                return false;
             }
         };
         public static final Event PLAYER_STOPS_SPRINTING = new Event("player_stops_sprinting", 1, false)
         {
             @Override
-            public void onPlayerEvent(ServerPlayer player)
+            public boolean onPlayerEvent(ServerPlayer player)
             {
                 handler.call( () -> Collections.singletonList(new EntityValue(player)), player::createCommandSourceStack);
+                return false;
             }
         };
 
         public static final Event PLAYER_RELEASED_ITEM = new Event("player_releases_item", 3, false)
         {
             @Override
-            public void onItemAction(ServerPlayer player, InteractionHand enumhand, ItemStack itemstack)
+            public boolean onItemAction(ServerPlayer player, InteractionHand enumhand, ItemStack itemstack)
             {
                 // this.getStackInHand(this.getActiveHand()), this.activeItemStack)
                 handler.call( () ->
@@ -712,15 +751,16 @@ public class CarpetEventServer
                                 ValueConversions.of(itemstack),
                                 StringValue.of(enumhand == InteractionHand.MAIN_HAND ? "mainhand" : "offhand")
                         ), player::createCommandSourceStack);
+                return false;
             }
         };
         public static final Event PLAYER_FINISHED_USING_ITEM = new Event("player_finishes_using_item", 3, false)
         {
             @Override
-            public void onItemAction(ServerPlayer player, InteractionHand enumhand, ItemStack itemstack)
+            public boolean onItemAction(ServerPlayer player, InteractionHand enumhand, ItemStack itemstack)
             {
                 // this.getStackInHand(this.getActiveHand()), this.activeItemStack)
-                handler.call( () ->
+                return handler.call( () ->
                         Arrays.asList(
                                 new EntityValue(player),
                                 ValueConversions.of(itemstack),
@@ -731,25 +771,25 @@ public class CarpetEventServer
         public static final Event PLAYER_DROPS_ITEM = new Event("player_drops_item", 1, false)
         {
             @Override
-            public void onPlayerEvent(ServerPlayer player)
+            public boolean onPlayerEvent(ServerPlayer player)
             {
-                handler.call( () -> Collections.singletonList(new EntityValue(player)), player::createCommandSourceStack);
+                return handler.call( () -> Collections.singletonList(new EntityValue(player)), player::createCommandSourceStack);
             }
         };
         public static final Event PLAYER_DROPS_STACK = new Event("player_drops_stack", 1, false)
         {
             @Override
-            public void onPlayerEvent(ServerPlayer player)
+            public boolean onPlayerEvent(ServerPlayer player)
             {
-                handler.call( () -> Collections.singletonList(new EntityValue(player)), player::createCommandSourceStack);
+                return handler.call( () -> Collections.singletonList(new EntityValue(player)), player::createCommandSourceStack);
             }
         };
         public static final Event PLAYER_CHOOSES_RECIPE = new Event("player_chooses_recipe", 3, false)
         {
             @Override
-            public void onRecipeSelected(ServerPlayer player, ResourceLocation recipe, boolean fullStack)
+            public boolean onRecipeSelected(ServerPlayer player, ResourceLocation recipe, boolean fullStack)
             {
-                handler.call( () ->
+                return handler.call( () ->
                         Arrays.asList(
                                 new EntityValue(player),
                                 StringValue.of(NBTSerializableValue.nameFromRegistryId(recipe)),
@@ -774,9 +814,9 @@ public class CarpetEventServer
         public static final Event PLAYER_SWAPS_HANDS = new Event("player_swaps_hands", 1, false)
         {
             @Override
-            public void onPlayerEvent(ServerPlayer player)
+            public boolean onPlayerEvent(ServerPlayer player)
             {
-                handler.call( () -> Collections.singletonList(new EntityValue(player)), player::createCommandSourceStack);
+                return handler.call( () -> Collections.singletonList(new EntityValue(player)), player::createCommandSourceStack);
             }
         };
         public static final Event PLAYER_SWINGS_HAND = new Event("player_swings_hand", 2, false)
@@ -794,9 +834,9 @@ public class CarpetEventServer
         public static final Event PLAYER_TAKES_DAMAGE = new Event("player_takes_damage", 4, false)
         {
             @Override
-            public void onDamage(Entity target, float amount, DamageSource source)
+            public boolean onDamage(Entity target, float amount, DamageSource source)
             {
-                handler.call( () ->
+                return handler.call( () ->
                         Arrays.asList(
                                  new EntityValue(target),
                                  new NumericValue(amount),
@@ -808,9 +848,9 @@ public class CarpetEventServer
         public static final Event PLAYER_DEALS_DAMAGE = new Event("player_deals_damage", 3, false)
         {
             @Override
-            public void onDamage(Entity target, float amount, DamageSource source)
+            public boolean onDamage(Entity target, float amount, DamageSource source)
             {
-                handler.call( () ->
+                return handler.call( () ->
                         Arrays.asList(new EntityValue(source.getEntity()), new NumericValue(amount), new EntityValue(target)),
                         () -> source.getEntity().createCommandSourceStack()
                 );
@@ -819,25 +859,28 @@ public class CarpetEventServer
         public static final Event PLAYER_COLLIDES_WITH_ENTITY = new Event("player_collides_with_entity", 2, false)
         {
             @Override
-            public void onEntityHandAction(ServerPlayer player, Entity entity, InteractionHand enumhand) {
+            public boolean onEntityHandAction(ServerPlayer player, Entity entity, InteractionHand enumhand) {
                 handler.call( () -> Arrays.asList(new EntityValue(player), new EntityValue(entity)), player::createCommandSourceStack);
+                return false;
             }
         };
 
         public static final Event PLAYER_DIES = new Event("player_dies", 1, false)
         {
             @Override
-            public void onPlayerEvent(ServerPlayer player)
+            public boolean onPlayerEvent(ServerPlayer player)
             {
                 handler.call( () -> Collections.singletonList(new EntityValue(player)), player::createCommandSourceStack);
+                return false;
             }
         };
         public static final Event PLAYER_RESPAWNS = new Event("player_respawns", 1, false)
         {
             @Override
-            public void onPlayerEvent(ServerPlayer player)
+            public boolean onPlayerEvent(ServerPlayer player)
             {
                 handler.call( () -> Collections.singletonList(new EntityValue(player)), player::createCommandSourceStack);
+                return false;
             }
         };
         public static final Event PLAYER_CHANGES_DIMENSION = new Event("player_changes_dimension", 5, false)
@@ -856,23 +899,25 @@ public class CarpetEventServer
         };
         public static final Event PLAYER_CONNECTS = new Event("player_connects", 1, false) {
             @Override
-            public void onPlayerEvent(ServerPlayer player)
+            public boolean onPlayerEvent(ServerPlayer player)
             {
                 handler.call( () -> Collections.singletonList(new EntityValue(player)), player::createCommandSourceStack);
+                return false;
             }
         };
         public static final Event PLAYER_DISCONNECTS = new Event("player_disconnects", 2, false) {
             @Override
-            public void onPlayerMessage(ServerPlayer player, String message)
+            public boolean onPlayerMessage(ServerPlayer player, String message)
             {
                 handler.call( () -> Arrays.asList(new EntityValue(player), new StringValue(message)), player::createCommandSourceStack);
+                return false;
             }
         };
 
         public static final Event PLAYER_MESSAGE = new Event("player_message", 2, false) {
             @Override
-            public void onPlayerMessage(ServerPlayer player, String message) {
-                handler.call( () -> Arrays.asList(new EntityValue(player), new StringValue(message)), player::createCommandSourceStack);
+            public boolean onPlayerMessage(ServerPlayer player, String message) {
+                return handler.call( () -> Arrays.asList(new EntityValue(player), new StringValue(message)), player::createCommandSourceStack);
             }
         };
 
@@ -1110,21 +1155,21 @@ public class CarpetEventServer
         //stubs for calls just to ease calls in vanilla code so they don't need to deal with scarpet value types
         public void onTick() { }
         public void onChunkEvent(ServerLevel world, ChunkPos chPos, boolean generated) { }
-        public void onPlayerEvent(ServerPlayer player) { }
-        public void onPlayerMessage(ServerPlayer player, String message) { }
+        public boolean onPlayerEvent(ServerPlayer player) {return false;}
+        public boolean onPlayerMessage(ServerPlayer player, String message) {return false;}
         public void onPlayerStatistic(ServerPlayer player, Stat<?> stat, int amount) { }
         public void onMountControls(ServerPlayer player, float strafeSpeed, float forwardSpeed, boolean jumping, boolean sneaking) { }
-        public void onItemAction(ServerPlayer player, InteractionHand enumhand, ItemStack itemstack) { }
-        public void onBlockAction(ServerPlayer player, BlockPos blockpos, Direction facing) { }
-        public void onBlockHit(ServerPlayer player, InteractionHand enumhand, BlockHitResult hitRes) { }
-        public void onBlockBroken(ServerPlayer player, BlockPos pos, BlockState previousBS) { }
-        public void onBlockPlaced(ServerPlayer player, BlockPos pos, InteractionHand enumhand, ItemStack itemstack) { }
-        public void onEntityHandAction(ServerPlayer player, Entity entity, InteractionHand enumhand) { }
+        public boolean onItemAction(ServerPlayer player, InteractionHand enumhand, ItemStack itemstack) {return false;}
+        public boolean onBlockAction(ServerPlayer player, BlockPos blockpos, Direction facing) {return false;}
+        public boolean onBlockHit(ServerPlayer player, InteractionHand enumhand, BlockHitResult hitRes) {return false;}
+        public boolean onBlockBroken(ServerPlayer player, BlockPos pos, BlockState previousBS) {return false;}
+        public boolean onBlockPlaced(ServerPlayer player, BlockPos pos, InteractionHand enumhand, ItemStack itemstack) {return false;}
+        public boolean onEntityHandAction(ServerPlayer player, Entity entity, InteractionHand enumhand) {return false;}
         public void onHandAction(ServerPlayer player, InteractionHand enumhand) { }
         public void onEntityAction(Entity entity, boolean created) { }
         public void onDimensionChange(ServerPlayer player, Vec3 from, Vec3 to, ResourceKey<Level> fromDim, ResourceKey<Level> dimTo) {}
-        public void onDamage(Entity target, float amount, DamageSource source) { }
-        public void onRecipeSelected(ServerPlayer player, ResourceLocation recipe, boolean fullStack) {}
+        public boolean onDamage(Entity target, float amount, DamageSource source) {return false;}
+        public boolean onRecipeSelected(ServerPlayer player, ResourceLocation recipe, boolean fullStack) {return false;}
         public void onSlotSwitch(ServerPlayer player, int from, int to) {}
         public void onTrade(ServerPlayer player, Merchant merchant, MerchantOffer tradeOffer) {}
 
@@ -1228,8 +1273,8 @@ public class CarpetEventServer
         if (executingHost == null) return CallbackResult.FAIL;
         try
         {
-            executingHost.callUDF(BlockPos.ZERO, source.withPermission(CarpetSettings.runPermissionLevel), udf, argv);
-            return CallbackResult.SUCCESS;
+            Value returnValue = executingHost.callUDF(source.withPermission(CarpetSettings.runPermissionLevel), udf, argv);
+            return returnValue instanceof StringValue && returnValue.getString().equals("cancel") ? CallbackResult.CANCEL : CallbackResult.SUCCESS;
         }
         catch (NullPointerException | InvalidCallbackException | IntegrityException error)
         {
@@ -1276,6 +1321,7 @@ public class CarpetEventServer
     private void onEventAddedToHost(Event event, ScriptHost host)
     {
         if (event.deprecated()) host.issueDeprecation(event.name+" event");
+        event.handler.sortByPriority(this.scriptServer);
         //return !(event.globalOnly && (host.perUser || host.parent != null));
     }
 
