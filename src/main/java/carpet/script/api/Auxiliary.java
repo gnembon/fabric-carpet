@@ -200,7 +200,7 @@ public class Auxiliary {
                     }
                 }
             }
-            ParticleOptions particle = ShapeDispatcher.getParticleData(particleName);
+            ParticleOptions particle = ShapeDispatcher.getParticleData(particleName, world.registryAccess());
             Vec3 vec = locator.vec;
             if (player == null)
             {
@@ -225,7 +225,7 @@ public class Auxiliary {
             CarpetContext cc = (CarpetContext)c;
             ServerLevel world = cc.s.getLevel();
             String particleName = lv.get(0).getString();
-            ParticleOptions particle = ShapeDispatcher.getParticleData(particleName);
+            ParticleOptions particle = ShapeDispatcher.getParticleData(particleName, world.registryAccess());
             Vector3Argument pos1 = Vector3Argument.findIn(lv, 1);
             Vector3Argument pos2 = Vector3Argument.findIn(lv, pos1.offset);
             double density = 1.0;
@@ -259,14 +259,14 @@ public class Auxiliary {
             ));
         });
 
-        expression.addUnaryFunction("item_display_name", v -> new FormattedTextValue(ValueConversions.getItemStackFromValue(v, false).getHoverName()));
+        expression.addContextFunction("item_display_name", 1, (c, t, lv) -> new FormattedTextValue(ValueConversions.getItemStackFromValue(lv.get(0), false, ((CarpetContext)c).s.registryAccess() ).getHoverName()));
 
         expression.addContextFunction("particle_box", -1, (c, t, lv) ->
         {
             CarpetContext cc = (CarpetContext)c;
             ServerLevel world = cc.s.getLevel();
             String particleName = lv.get(0).getString();
-            ParticleOptions particle = ShapeDispatcher.getParticleData(particleName);
+            ParticleOptions particle = ShapeDispatcher.getParticleData(particleName, world.registryAccess() );
             Vector3Argument pos1 = Vector3Argument.findIn(lv, 1);
             Vector3Argument pos2 = Vector3Argument.findIn(lv, pos1.offset);
 

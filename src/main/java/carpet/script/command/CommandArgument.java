@@ -1061,8 +1061,7 @@ public abstract class CommandArgument
             super(suffix, null, suggestFromExamples);
             try
             {
-                final CommandBuildContext context = new CommandBuildContext(server.registryAccess(), server.getWorldData().enabledFeatures());
-                context.missingTagAccessPolicy(CommandBuildContext.MissingTagAccessPolicy.RETURN_EMPTY);
+                final CommandBuildContext context = CommandBuildContext.simple(server.registryAccess(), server.getWorldData().enabledFeatures());
                 this.examples = argumentTypeSupplier.get(context).getExamples();
             }
             catch (CommandSyntaxException e)
@@ -1122,7 +1121,7 @@ public abstract class CommandArgument
         protected ArgumentType<?> getArgumentType(CarpetScriptHost host) throws CommandSyntaxException
         {
             if (argumentTypeSupplier != null) return argumentTypeSupplier.get();
-            CommandBuildContext registryAccess = new CommandBuildContext(host.scriptServer().server.registryAccess(), host.scriptServer().server.getWorldData().enabledFeatures());
+            CommandBuildContext registryAccess = CommandBuildContext.simple(host.scriptServer().server.registryAccess(), host.scriptServer().server.getWorldData().enabledFeatures());
             return argumentTypeSupplierEx.get(registryAccess);
         }
 

@@ -34,7 +34,6 @@ import carpet.script.value.StringValue;
 import carpet.script.value.Value;
 import carpet.script.value.ValueConversions;
 import carpet.utils.BlockInfo;
-import carpet.utils.CommandHelper;
 
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
@@ -926,7 +925,7 @@ public class WorldAccess {
                 throw new InternalExpressionException("'create_explosion' requires at least a position to explode");
             CarpetContext cc = (CarpetContext)c;
             float powah = 4.0f;
-            Explosion.BlockInteraction mode = Explosion.BlockInteraction.BREAK;
+            Explosion.BlockInteraction mode = Explosion.BlockInteraction.DESTROY; // should probably read the gamerule for default behaviour
             boolean createFire = false;
             Entity source = null;
             LivingEntity attacker = null;
@@ -994,7 +993,7 @@ public class WorldAccess {
             };
             explosion.explode();
             explosion.finalizeExplosion(false);
-            if (mode == Explosion.BlockInteraction.NONE) explosion.clearToBlow();
+            if (mode == Explosion.BlockInteraction.KEEP) explosion.clearToBlow();
             cc.s.getLevel().players().forEach(spe -> {
                 if (spe.distanceToSqr(pos) < 4096.0D)
                     spe.connection.send(new ClientboundExplodePacket(pos.x, pos.y, pos.z, thePowah, explosion.getToBlow(), explosion.getHitPlayers().get(spe)));
@@ -1010,7 +1009,7 @@ public class WorldAccess {
             CarpetContext cc = (CarpetContext) c;
             String itemString = lv.get(0).getString();
             Vector3Argument locator = Vector3Argument.findIn(lv, 1);
-            ItemInput stackArg = NBTSerializableValue.parseItem(itemString);
+            ItemInput stackArg = NBTSerializableValue.parseItem(itemString, cc.s.registryAccess());
             BlockPos where = new BlockPos(locator.vec);
             String facing;
             if (lv.size() > locator.offset) {

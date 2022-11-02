@@ -11,13 +11,16 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.OptionalInt;
+import java.util.function.Function;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
+import net.minecraft.core.HolderGetter;
 import net.minecraft.core.HolderSet;
 import net.minecraft.core.QuartPos;
 import net.minecraft.core.Registry;
-import net.minecraft.data.BuiltinRegistries;
+import net.minecraft.core.RegistryAccess;
+import net.minecraft.data.worldgen.Pools;
 import net.minecraft.data.worldgen.ProcessorLists;
 import net.minecraft.data.worldgen.placement.PlacementUtils;
 import net.minecraft.resources.ResourceLocation;
@@ -56,15 +59,16 @@ import net.minecraft.world.level.levelgen.placement.PlacedFeature;
 import net.minecraft.world.level.levelgen.structure.StructureStart;
 import net.minecraft.world.level.levelgen.structure.placement.StructurePlacement;
 import net.minecraft.world.level.levelgen.structure.structures.JigsawStructure;
+import net.minecraft.world.level.levelgen.structure.templatesystem.StructureProcessorList;
 
 public class FeatureGenerator
 {
     synchronized public static Boolean plop(String featureName, ServerLevel world, BlockPos pos)
     {
-        Thing custom = featureMap.get(featureName);
+        Function<ServerLevel, Thing> custom = featureMap.get(featureName);
         if (custom != null)
         {
-            return custom.plop(world, pos);
+            return custom.apply(world).plop(world, pos);
         }
         ResourceLocation id = new ResourceLocation(featureName);
         Structure structure = world.registryAccess().registryOrThrow(Registry.STRUCTURE_REGISTRY).get(id);
@@ -206,7 +210,7 @@ public class FeatureGenerator
         ChunkGeneratorInterface cgi = (ChunkGeneratorInterface) generator;
         List<StructurePlacement> structureConfig = cgi.getPlacementsForFeatureCM(world, structure);
         ChunkPos chunkPos = new ChunkPos(pos);
-        boolean couldPlace = structureConfig.stream().anyMatch(p -> p.isStructureChunk(generator, seed, world.getSeed(),  chunkPos.x, chunkPos.z));
+        boolean couldPlace = structureConfig.stream().anyMatch(p -> p.isStructureChunk(world.getChunkSource().getGeneratorState(),  chunkPos.x, chunkPos.z));
         if (!couldPlace) return null;
 
         final HolderSet<Biome> structureBiomes = structure.biomes();
@@ -236,101 +240,138 @@ public class FeatureGenerator
         return new TreeConfiguration.TreeConfigurationBuilder(BlockStateProvider.simple(block), new StraightTrunkPlacer(i, j, k), BlockStateProvider.simple(block2), new BlobFoliagePlacer(ConstantInt.of(l), ConstantInt.of(0), 3), new TwoLayersFeatureSize(1, 0, 1));
     }
 
-    public static final Map<String, Thing> featureMap = new HashMap<>() {{
+    public static final Map<String, Function<ServerLevel, Thing>> featureMap = new HashMap<>() {{
 
-        put("oak_bees", simpleTree( createTree(Blocks.OAK_LOG, Blocks.OAK_LEAVES, 4, 2, 0, 2).ignoreVines().decorators(List.of(new BeehiveDecorator(1.00F))).build()));
-        put("fancy_oak_bees", simpleTree( (new TreeConfiguration.TreeConfigurationBuilder(BlockStateProvider.simple(Blocks.OAK_LOG), new FancyTrunkPlacer(3, 11, 0), BlockStateProvider.simple(Blocks.OAK_LEAVES), new FancyFoliagePlacer(ConstantInt.of(2), ConstantInt.of(4), 4), new TwoLayersFeatureSize(0, 0, 0, OptionalInt.of(4)))).ignoreVines().decorators(List.of(new BeehiveDecorator(1.00F))).build()));
-        put("birch_bees", simpleTree( createTree(Blocks.BIRCH_LOG, Blocks.BIRCH_LEAVES, 5, 2, 0, 2).ignoreVines().decorators(List.of(new BeehiveDecorator(1.00F))).build()));
+        put("oak_bees", l -> simpleTree( createTree(Blocks.OAK_LOG, Blocks.OAK_LEAVES, 4, 2, 0, 2).ignoreVines().decorators(List.of(new BeehiveDecorator(1.00F))).build()));
+        put("fancy_oak_bees", l -> simpleTree( (new TreeConfiguration.TreeConfigurationBuilder(BlockStateProvider.simple(Blocks.OAK_LOG), new FancyTrunkPlacer(3, 11, 0), BlockStateProvider.simple(Blocks.OAK_LEAVES), new FancyFoliagePlacer(ConstantInt.of(2), ConstantInt.of(4), 4), new TwoLayersFeatureSize(0, 0, 0, OptionalInt.of(4)))).ignoreVines().decorators(List.of(new BeehiveDecorator(1.00F))).build()));
+        put("birch_bees", l -> simpleTree( createTree(Blocks.BIRCH_LOG, Blocks.BIRCH_LEAVES, 5, 2, 0, 2).ignoreVines().decorators(List.of(new BeehiveDecorator(1.00F))).build()));
 
-        put("coral_tree", simplePlop(Feature.CORAL_TREE, FeatureConfiguration.NONE));
+        put("coral_tree", l -> simplePlop(Feature.CORAL_TREE, FeatureConfiguration.NONE));
 
-        put("coral_claw", simplePlop(Feature.CORAL_CLAW, FeatureConfiguration.NONE));
-        put("coral_mushroom", simplePlop(Feature.CORAL_MUSHROOM, FeatureConfiguration.NONE));
-        put("coral", simplePlop(Feature.SIMPLE_RANDOM_SELECTOR, new SimpleRandomFeatureConfiguration(HolderSet.direct(
+        put("coral_claw", l -> simplePlop(Feature.CORAL_CLAW, FeatureConfiguration.NONE));
+        put("coral_mushroom", l -> simplePlop(Feature.CORAL_MUSHROOM, FeatureConfiguration.NONE));
+        put("coral", l -> simplePlop(Feature.SIMPLE_RANDOM_SELECTOR, new SimpleRandomFeatureConfiguration(HolderSet.direct(
                 PlacementUtils.inlinePlaced(Feature.CORAL_TREE, FeatureConfiguration.NONE),
                 PlacementUtils.inlinePlaced(Feature.CORAL_CLAW, FeatureConfiguration.NONE),
                 PlacementUtils.inlinePlaced(Feature.CORAL_MUSHROOM, FeatureConfiguration.NONE)
         ))));
-        put("bastion_remnant_units", spawnCustomStructure(
-                new JigsawStructure( new Structure.StructureSettings(
-                        BuiltinRegistries.BIOME.getOrCreateTag(BiomeTags.HAS_BASTION_REMNANT),
-                        Map.of(),
-                        GenerationStep.Decoration.SURFACE_STRUCTURES,
-                        TerrainAdjustment.NONE
-                        ),
-                        Holder.direct(new StructureTemplatePool(
-                                new ResourceLocation("bastion/starts"),
-                                new ResourceLocation("empty"),
-                                ImmutableList.of(
-                                        Pair.of(StructurePoolElement.single("bastion/units/air_base", ProcessorLists.BASTION_GENERIC_DEGRADATION), 1)
-                                ),
-                                StructureTemplatePool.Projection.RIGID
-                        )),
-                        6,
-                        ConstantHeight.of(VerticalAnchor.absolute(33)),
-                        false
-                )
-        ));
-        put("bastion_remnant_hoglin_stable", spawnCustomStructure(
-                new JigsawStructure( new Structure.StructureSettings(
-                        BuiltinRegistries.BIOME.getOrCreateTag(BiomeTags.HAS_BASTION_REMNANT),
-                        Map.of(),
-                        GenerationStep.Decoration.SURFACE_STRUCTURES,
-                        TerrainAdjustment.NONE
-                        ),
-                        Holder.direct(new StructureTemplatePool(
-                                new ResourceLocation("bastion/starts"),
-                                new ResourceLocation("empty"),
-                                ImmutableList.of(
-                                        Pair.of(StructurePoolElement.single("bastion/hoglin_stable/air_base", ProcessorLists.BASTION_GENERIC_DEGRADATION), 1)
-                                ),
-                                StructureTemplatePool.Projection.RIGID
-                        )),
-                        6,
-                        ConstantHeight.of(VerticalAnchor.absolute(33)),
-                        false
-                )
-        ));
-        put("bastion_remnant_treasure", spawnCustomStructure(
-                new JigsawStructure( new Structure.StructureSettings(
-                        BuiltinRegistries.BIOME.getOrCreateTag(BiomeTags.HAS_BASTION_REMNANT),
-                        Map.of(),
-                        GenerationStep.Decoration.SURFACE_STRUCTURES,
-                        TerrainAdjustment.NONE
-                ),
-                        Holder.direct(new StructureTemplatePool(
-                                new ResourceLocation("bastion/starts"),
-                                new ResourceLocation("empty"),
-                                ImmutableList.of(
-                                        Pair.of(StructurePoolElement.single("bastion/treasure/big_air_full", ProcessorLists.BASTION_GENERIC_DEGRADATION), 1)
-                                ),
-                                StructureTemplatePool.Projection.RIGID
-                        )),
-                        6,
-                        ConstantHeight.of(VerticalAnchor.absolute(33)),
-                        false
-                )
-        ));
-        put("bastion_remnant_bridge", spawnCustomStructure(
-                new JigsawStructure(  new Structure.StructureSettings(
-                        BuiltinRegistries.BIOME.getOrCreateTag(BiomeTags.HAS_BASTION_REMNANT),
-                        Map.of(),
-                        GenerationStep.Decoration.SURFACE_STRUCTURES,
-                        TerrainAdjustment.NONE
-                ),
-                        Holder.direct(new StructureTemplatePool(
-                                new ResourceLocation("bastion/starts"),
-                                new ResourceLocation("empty"),
-                                ImmutableList.of(
-                                        Pair.of(StructurePoolElement.single("bastion/bridge/starting_pieces/entrance_base", ProcessorLists.BASTION_GENERIC_DEGRADATION), 1)
-                                ),
-                                StructureTemplatePool.Projection.RIGID
-                        )),
-                        6,
-                        ConstantHeight.of(VerticalAnchor.absolute(33)),
-                        false
-                )
-        ));
+        put("bastion_remnant_units", l -> {
+            RegistryAccess regs = l.registryAccess();
+
+            final HolderGetter<StructureProcessorList> processorLists = regs.lookupOrThrow(Registry.PROCESSOR_LIST_REGISTRY);
+            final Holder<StructureProcessorList> bastionGenericDegradation = processorLists.getOrThrow(ProcessorLists.BASTION_GENERIC_DEGRADATION);
+
+            final HolderGetter<StructureTemplatePool> pools = regs.lookupOrThrow(Registry.TEMPLATE_POOL_REGISTRY);
+            final Holder<StructureTemplatePool> empty = pools.getOrThrow(Pools.EMPTY);
+
+
+            return spawnCustomStructure(
+                    new JigsawStructure(new Structure.StructureSettings(
+                            l.registryAccess().registryOrThrow(Registry.BIOME_REGISTRY).getOrCreateTag(BiomeTags.HAS_BASTION_REMNANT),
+                            Map.of(),
+                            GenerationStep.Decoration.SURFACE_STRUCTURES,
+                            TerrainAdjustment.NONE
+                    ),
+                            Holder.direct(new StructureTemplatePool(
+                                    empty,
+                                    ImmutableList.of(
+                                            Pair.of(StructurePoolElement.single("bastion/units/air_base", bastionGenericDegradation), 1)
+                                    ),
+                                    StructureTemplatePool.Projection.RIGID
+                            )),
+                            6,
+                            ConstantHeight.of(VerticalAnchor.absolute(33)),
+                            false
+                    )
+            );
+        });
+        put("bastion_remnant_hoglin_stable", l -> {
+            RegistryAccess regs = l.registryAccess();
+
+            final HolderGetter<StructureProcessorList> processorLists = regs.lookupOrThrow(Registry.PROCESSOR_LIST_REGISTRY);
+            final Holder<StructureProcessorList> bastionGenericDegradation = processorLists.getOrThrow(ProcessorLists.BASTION_GENERIC_DEGRADATION);
+
+            final HolderGetter<StructureTemplatePool> pools = regs.lookupOrThrow(Registry.TEMPLATE_POOL_REGISTRY);
+            final Holder<StructureTemplatePool> empty = pools.getOrThrow(Pools.EMPTY);
+
+            return spawnCustomStructure(
+                    new JigsawStructure(new Structure.StructureSettings(
+                            l.registryAccess().registryOrThrow(Registry.BIOME_REGISTRY).getOrCreateTag(BiomeTags.HAS_BASTION_REMNANT),
+                            Map.of(),
+                            GenerationStep.Decoration.SURFACE_STRUCTURES,
+                            TerrainAdjustment.NONE
+                    ),
+                            Holder.direct(new StructureTemplatePool(
+                                    empty,
+                                    ImmutableList.of(
+                                            Pair.of(StructurePoolElement.single("bastion/hoglin_stable/air_base", bastionGenericDegradation), 1)
+                                    ),
+                                    StructureTemplatePool.Projection.RIGID
+                            )),
+                            6,
+                            ConstantHeight.of(VerticalAnchor.absolute(33)),
+                            false
+                    )
+            );
+        });
+        put("bastion_remnant_treasure", l -> {
+            RegistryAccess regs = l.registryAccess();
+
+            final HolderGetter<StructureProcessorList> processorLists = regs.lookupOrThrow(Registry.PROCESSOR_LIST_REGISTRY);
+            final Holder<StructureProcessorList> bastionGenericDegradation = processorLists.getOrThrow(ProcessorLists.BASTION_GENERIC_DEGRADATION);
+
+            final HolderGetter<StructureTemplatePool> pools = regs.lookupOrThrow(Registry.TEMPLATE_POOL_REGISTRY);
+            final Holder<StructureTemplatePool> empty = pools.getOrThrow(Pools.EMPTY);
+
+            return spawnCustomStructure(
+                    new JigsawStructure(new Structure.StructureSettings(
+                            l.registryAccess().registryOrThrow(Registry.BIOME_REGISTRY).getOrCreateTag(BiomeTags.HAS_BASTION_REMNANT),
+                            Map.of(),
+                            GenerationStep.Decoration.SURFACE_STRUCTURES,
+                            TerrainAdjustment.NONE
+                    ),
+                            Holder.direct(new StructureTemplatePool(
+                                    empty,
+                                    ImmutableList.of(
+                                            Pair.of(StructurePoolElement.single("bastion/treasure/big_air_full", bastionGenericDegradation), 1)
+                                    ),
+                                    StructureTemplatePool.Projection.RIGID
+                            )),
+                            6,
+                            ConstantHeight.of(VerticalAnchor.absolute(33)),
+                            false
+                    )
+            );
+        });
+        put("bastion_remnant_bridge", l -> {
+            RegistryAccess regs = l.registryAccess();
+
+            final HolderGetter<StructureProcessorList> processorLists = regs.lookupOrThrow(Registry.PROCESSOR_LIST_REGISTRY);
+            final Holder<StructureProcessorList> bastionGenericDegradation = processorLists.getOrThrow(ProcessorLists.BASTION_GENERIC_DEGRADATION);
+
+            final HolderGetter<StructureTemplatePool> pools = regs.lookupOrThrow(Registry.TEMPLATE_POOL_REGISTRY);
+            final Holder<StructureTemplatePool> empty = pools.getOrThrow(Pools.EMPTY);
+
+            return spawnCustomStructure(
+                    new JigsawStructure(new Structure.StructureSettings(
+                            l.registryAccess().registryOrThrow(Registry.BIOME_REGISTRY).getOrCreateTag(BiomeTags.HAS_BASTION_REMNANT),
+                            Map.of(),
+                            GenerationStep.Decoration.SURFACE_STRUCTURES,
+                            TerrainAdjustment.NONE
+                    ),
+                            Holder.direct(new StructureTemplatePool(
+                                    empty,
+                                    ImmutableList.of(
+                                            Pair.of(StructurePoolElement.single("bastion/bridge/starting_pieces/entrance_base", bastionGenericDegradation), 1)
+                                    ),
+                                    StructureTemplatePool.Projection.RIGID
+                            )),
+                            6,
+                            ConstantHeight.of(VerticalAnchor.absolute(33)),
+                            false
+                    )
+            );
+        });
     }};
 
 

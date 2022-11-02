@@ -16,30 +16,30 @@ public class ParticleDisplay
 {
     private static Map<String, ParticleOptions> particleCache = new HashMap<>();
 
-    private static ParticleOptions parseParticle(String name)
+    private static ParticleOptions parseParticle(String name, ServerLevel level)  // [SCARY SHIT] persistent caches over server reloads
     {
         try
         {
-            return ParticleArgument.readParticle(new StringReader(name), HolderLookup.forRegistry(Registry.PARTICLE_TYPE));
+            return ParticleArgument.readParticle(new StringReader(name), level.holderLookup(Registry.PARTICLE_TYPE_REGISTRY));
         }
         catch (CommandSyntaxException e)
         {
             throw new RuntimeException("No such particle: "+name);
         }
     }
-    public static ParticleOptions getEffect(String name)
+    public static ParticleOptions getEffect(String name, ServerLevel level)
     {
         if (name == null) return null;
         ParticleOptions res = particleCache.get(name);
         if (res != null) return res;
-        particleCache.put(name, parseParticle(name));
+        particleCache.put(name, parseParticle(name, level));
         return particleCache.get(name);
     }
 
     public static void drawParticleLine(ServerPlayer player, Vec3 from, Vec3 to, String main, String accent, int count, double spread)
     {
-        ParticleOptions accentParticle = getEffect(accent);
-        ParticleOptions mainParticle = getEffect(main);
+        ParticleOptions accentParticle = getEffect(accent, player.getLevel());
+        ParticleOptions mainParticle = getEffect(main, player.getLevel());
 
         if (accentParticle != null) ((ServerLevel)player.level).sendParticles(
                 player,

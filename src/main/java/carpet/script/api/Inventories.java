@@ -4,7 +4,6 @@ import carpet.fakes.IngredientInterface;
 import carpet.fakes.RecipeManagerInterface;
 import carpet.script.CarpetContext;
 import carpet.script.Expression;
-import carpet.script.argument.BlockArgument;
 import carpet.script.argument.FunctionArgument;
 import carpet.script.exception.InternalExpressionException;
 import carpet.script.exception.ThrowStatement;
@@ -40,7 +39,6 @@ import net.minecraft.tags.TagKey;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.AbstractCookingRecipe;
@@ -50,14 +48,13 @@ import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.item.crafting.ShapedRecipe;
 import net.minecraft.world.item.crafting.ShapelessRecipe;
 import net.minecraft.world.item.crafting.SingleItemRecipe;
-import net.minecraft.world.level.block.Block;
 import net.minecraft.world.phys.Vec3;
 
 public class Inventories {
     public static void apply(Expression expression)
     {
-        expression.addUnaryFunction("stack_limit", v ->
-                new NumericValue(NBTSerializableValue.parseItem(v.getString()).getItem().getMaxStackSize()));
+        expression.addContextFunction("stack_limit", 1, (c, t, lv) ->
+                new NumericValue(NBTSerializableValue.parseItem(lv.get(0).getString(), ((CarpetContext) c).s.registryAccess() ).getItem().getMaxStackSize()));
 
         expression.addContextFunction("item_category", -1, (c, t, lv) -> {
             CarpetContext cc = (CarpetContext)c;
@@ -91,7 +88,7 @@ public class Inventories {
             Registry<Item> blocks = cc.s.getServer().registryAccess().registryOrThrow(Registry.ITEM_REGISTRY);
             if (lv.size() == 0)
                 return ListValue.wrap(blocks.getTagNames().map(ValueConversions::of).collect(Collectors.toList()));
-            Item item = NBTSerializableValue.parseItem(lv.get(0).getString()).getItem();
+            Item item = NBTSerializableValue.parseItem(lv.get(0).getString(), cc.s.registryAccess()).getItem();
             if (lv.size() == 1)
             {
                 return ListValue.wrap( blocks.getTags().filter(e -> e.getSecond().stream().anyMatch(h -> (h.value() == item))).map(e -> ValueConversions.of(e.getFirst())).collect(Collectors.toList()));
@@ -280,7 +277,7 @@ public class Inventories {
                 else
                     nbt = new NBTSerializableValue(nbtValue.getString()).getCompoundTag();
             }
-            ItemInput newitem = NBTSerializableValue.parseItem(lv.get(inventoryLocator.offset()+2).getString(), nbt);
+            ItemInput newitem = NBTSerializableValue.parseItem(lv.get(inventoryLocator.offset()+2).getString(), nbt, cc.s.registryAccess());
             ItemStack previousStack = inventoryLocator.inventory().getItem(slot);
             try
             {
@@ -305,7 +302,7 @@ public class Inventories {
             {
                 Value secondArg = lv.get(inventoryLocator.offset()+0);
                 if (!secondArg.isNull())
-                    itemArg = NBTSerializableValue.parseItem(secondArg.getString());
+                    itemArg = NBTSerializableValue.parseItem(secondArg.getString(), cc.s.registryAccess());
             }
             int startIndex = 0;
             if (lv.size() > inventoryLocator.offset()+1)
@@ -330,7 +327,7 @@ public class Inventories {
             if (inventoryLocator == null) return Value.NULL;
             if (lv.size() <= inventoryLocator.offset())
                 throw new InternalExpressionException("'inventory_remove' requires at least an item to be removed");
-            ItemInput searchItem = NBTSerializableValue.parseItem(lv.get(inventoryLocator.offset()).getString());
+            ItemInput searchItem = NBTSerializableValue.parseItem(lv.get(inventoryLocator.offset()).getString(), cc.s.registryAccess());
             int amount = 1;
             if (lv.size() > inventoryLocator.offset()+1)
                 amount = (int)NumericValue.asNumber(lv.get(inventoryLocator.offset()+1)).getLong();

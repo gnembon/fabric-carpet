@@ -413,7 +413,7 @@ public class ValueConversions
         );
     }
 
-    public static ItemStack getItemStackFromValue(Value value, boolean withCount)
+    public static ItemStack getItemStackFromValue(Value value, boolean withCount, RegistryAccess regs)
     {
         if (value.isNull())
         {
@@ -444,7 +444,7 @@ public class ValueConversions
         {
             name = value.getString();
         }
-        ItemInput itemInput = NBTSerializableValue.parseItem(name, nbtTag);
+        ItemInput itemInput = NBTSerializableValue.parseItem(name, nbtTag, regs);
         try
         {
             return itemInput.createItemStack(count,false);

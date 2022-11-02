@@ -208,7 +208,7 @@ public class OptimizedExplosion
             EXPLOSION_OUTCOME.onExplosion((ServerLevel) world, eAccess.getSource(), e::getIndirectSourceEntity,  eAccess.getX(), eAccess.getY(), eAccess.getZ(), eAccess.getRadius(), eAccess.isFire(), e.getToBlow(), entityList, eAccess.getBlockInteraction());
         }
 
-        boolean damagesTerrain = eAccess.getBlockInteraction() != Explosion.BlockInteraction.NONE;
+        boolean damagesTerrain = eAccess.getBlockInteraction() != Explosion.BlockInteraction.KEEP;
 
         // explosionSound incremented till disabling the explosion particles and sound
         if (explosionSound < 100 || explosionSound % 100 == 0)

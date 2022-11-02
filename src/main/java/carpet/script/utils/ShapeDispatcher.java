@@ -29,8 +29,8 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.minecraft.commands.arguments.ParticleArgument;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.core.HolderLookup;
 import net.minecraft.core.Registry;
+import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.nbt.ByteTag;
 import net.minecraft.nbt.CompoundTag;
@@ -172,14 +172,14 @@ public class ShapeDispatcher
         }
     }
 
-    public static ParticleOptions getParticleData(String name)
+    public static ParticleOptions getParticleData(String name, RegistryAccess regs)
     {
-        ParticleOptions particle = particleCache.get(name);
+        ParticleOptions particle = particleCache.get(name); // [SCARY SHIT] cache should be cleared between worlds
         if (particle != null)
             return particle;
         try
         {
-            particle = ParticleArgument.readParticle(new StringReader(name), HolderLookup.forRegistry(Registry.PARTICLE_TYPE));
+            particle = ParticleArgument.readParticle(new StringReader(name), regs.lookupOrThrow(Registry.PARTICLE_TYPE_REGISTRY));
         }
         catch (CommandSyntaxException e)
         {
@@ -388,12 +388,12 @@ public class ShapeDispatcher
                     NumericValue.asNumber( elements.get(2)).getDouble()
             );
         }
-        protected ParticleOptions replacementParticle()
+        protected ParticleOptions replacementParticle(RegistryAccess regs)
         {
             String particleName = fa ==0 ?
                     String.format(Locale.ROOT , "dust %.1f %.1f %.1f 1.0", r, g, b):
                     String.format(Locale.ROOT , "dust %.1f %.1f %.1f 1.0", fr, fg, fb);
-            return getParticleData(particleName);
+            return getParticleData(particleName, regs);
         }
 
 
@@ -645,19 +645,18 @@ public class ShapeDispatcher
 
         @Override
         public Consumer<ServerPlayer> alternative() {
-            ParticleOptions particle;
-            if(this.isitem)
-            {
-                if (Block.byItem(this.item.getItem()).defaultBlockState().isAir()) return p->{};
-                particle = getParticleData("block_marker "+Registry.BLOCK.getKey(Block.byItem(this.item.getItem())));
-            }
-            else
-            {
-                particle = getParticleData("block_marker "+Registry.BLOCK.getKey(this.blockState.getBlock()));
-            }
-            
-
             return p -> {
+                ParticleOptions particle;
+                if(this.isitem)
+                {
+                    if (Block.byItem(this.item.getItem()).defaultBlockState().isAir()) return;
+                    particle = getParticleData("block_marker "+Registry.BLOCK.getKey(Block.byItem(this.item.getItem())), p.level.registryAccess());
+                }
+                else
+                {
+                    particle = getParticleData("block_marker "+Registry.BLOCK.getKey(this.blockState.getBlock()), p.level.registryAccess());
+                }
+
                 Vec3 v = relativiseRender(p.level, this.pos, 0);
                 p.getLevel().sendParticles(p, particle , true, v.x, v.y, v.z, 1,0.0, 0.0, 0.0, 0.0);
             };
@@ -712,7 +711,6 @@ public class ShapeDispatcher
         @Override
         public Consumer<ServerPlayer> alternative()
         {
-            ParticleOptions particle = replacementParticle();
             double density = Math.max(2.0, from.distanceTo(to) /50/ (a+0.1)) ;
             return p ->
             {
@@ -720,7 +718,7 @@ public class ShapeDispatcher
                 {
                     particleMesh(
                             Collections.singletonList(p),
-                            particle,
+                            replacementParticle(p.level.registryAccess()),
                             density,
                             relativiseRender(p.level, from, 0),
                             relativiseRender(p.level, to, 0)
@@ -872,10 +870,10 @@ public class ShapeDispatcher
         }
         @Override
         public Consumer<ServerPlayer> alternative() {
-            final ParticleOptions locparticledata = getParticleData(String.format(Locale.ROOT ,"dust %.1f %.1f %.1f %.1f", fr, fg, fb, fa));
             return p->{
                 if(p.level.dimension() != this.shapeDimension){return;}
                 if(!(fa>0.0f)){return;}
+                final ParticleOptions locparticledata = getParticleData(String.format(Locale.ROOT ,"dust %.1f %.1f %.1f %.1f", fr, fg, fb, fa), p.level.registryAccess());
                 for(Vec3 v : alter_point(p)){
                     p.getLevel().sendParticles(p,locparticledata , true,
                     v.x, v.y, v.z, 1,
@@ -973,13 +971,12 @@ public class ShapeDispatcher
         @Override
         public Consumer<ServerPlayer> alternative()
         {
-            ParticleOptions particle = replacementParticle();
             double density = Math.max(2.0, from.distanceTo(to) /50) / (a+0.1);
             return p ->
             {
                 if (p.level.dimension() == shapeDimension) drawParticleLine(
                         Collections.singletonList(p),
-                        particle,
+                        replacementParticle(p.level.registryAccess()),
                         relativiseRender(p.level, from, 0),
                         relativiseRender(p.level, to, 0),
                         density
@@ -1034,10 +1031,11 @@ public class ShapeDispatcher
         @Override
         public Consumer<ServerPlayer> alternative() { return p ->
         {
-            ParticleOptions particle = replacementParticle();
+
             int partno = Math.min(1000,20*subdivisions);
             RandomSource rand = p.level.getRandom();
             ServerLevel world = p.getLevel();
+            ParticleOptions particle = replacementParticle(world.registryAccess());
 
             Vec3 ccenter = relativiseRender(world, center, 0 );
 
@@ -1112,10 +1110,11 @@ public class ShapeDispatcher
         @Override
         public Consumer<ServerPlayer> alternative() { return p ->
         {
-            ParticleOptions particle = replacementParticle();
+
             int partno = (int)Math.min(1000,Math.sqrt(20*subdivisions*(1+height)));
             RandomSource rand = p.level.getRandom();
             ServerLevel world = p.getLevel();
+            ParticleOptions particle = replacementParticle(world.registryAccess());
 
             Vec3 ccenter = relativiseRender(world, center, 0 );
 
@@ -1307,7 +1306,7 @@ public class ShapeDispatcher
             if(value instanceof BlockValue blv){
                 return value;
             }
-            return BlockValue.fromString(value.getString());
+            return BlockValue.fromString(value.getString(), server.registryAccess());
         }
         @Override
         public Tag toTag(Value value) {
@@ -1342,7 +1341,7 @@ public class ShapeDispatcher
         @Override
         public Value validate(Map<String, Value> options, MinecraftServer server, Value value)
         {
-            ItemStack item=ValueConversions.getItemStackFromValue(value, true);
+            ItemStack item=ValueConversions.getItemStackFromValue(value, true, server.registryAccess());
             return new NBTSerializableValue(item.save(new CompoundTag()));
         }
         @Override
