@@ -73,7 +73,7 @@ public class CarpetSettings
     @Rule(
             desc = "Sets the language for Carpet",
             category = FEATURE,
-            options = {"en_us", "zh_cn", "zh_tw"},
+            options = {"en_us", "pt_br", "zh_cn", "zh_tw"},
             strict = true, // the current system doesn't handle fallbacks and other, not defined languages would make unreadable mess. Change later
             validate = LanguageValidator.class
     )
