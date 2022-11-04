@@ -94,6 +94,11 @@
     "ChunkGenerator_customMobSpawnsMixin",
     "ServerChunkCacheMixin",
     "NaturalSpawnerMixin",
+    "EnderDragon_scarpetMixin",
+    "DragonHoldingPatternPhase_scarpetMixin",
+    "DragonLandingApproachPhase_scarpetMixin",
+    "DragonStrafePlayerPhase_scarpetMixin",
+    "DragonTakeoffPhase_scarpetMixin",
 
     "DirectionMixin",
     "ServerPlayerGameMode_cactusMixin",

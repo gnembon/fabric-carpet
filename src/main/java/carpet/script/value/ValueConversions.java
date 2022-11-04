@@ -215,6 +215,20 @@ public class ValueConversions
         return ListValue.wrap(nodes);
     }
 
+    public static Value fromNodeArray(ServerLevel world,  Node[] nodes)
+    {
+        List<Value> nodesValue = new ArrayList<>();
+        for (Node node : nodes) {
+            nodesValue.add(ListValue.of(
+                    new BlockValue(null, world, node.asBlockPos()),
+                    new StringValue(node.type.name().toLowerCase(Locale.ROOT)),
+                    new NumericValue(node.costMalus),
+                    BooleanValue.of(node.closed)
+            ));
+        }
+        return ListValue.wrap(nodesValue);
+    }
+
     public static Value fromTimedMemory(Entity e, long expiry, Object v)
     {
         Value ret = fromEntityMemory(e, v);

@@ -7,6 +7,11 @@ import carpet.fakes.MobEntityInterface;
 import carpet.fakes.ServerPlayerEntityInterface;
 import carpet.fakes.ServerPlayerInteractionManagerInterface;
 import carpet.helpers.Tracer;
+import carpet.mixins.DragonHoldingPatternPhase_scarpetMixin;
+import carpet.mixins.DragonLandingApproachPhase_scarpetMixin;
+import carpet.mixins.DragonStrafePlayerPhase_scarpetMixin;
+import carpet.mixins.DragonTakeoffPhase_scarpetMixin;
+import carpet.mixins.EnderDragon_scarpetMixin;
 import carpet.network.ServerNetworkHandler;
 import carpet.patches.EntityPlayerMPFake;
 import carpet.script.CarpetContext;
@@ -60,6 +65,8 @@ import net.minecraft.world.entity.ai.goal.MoveTowardsRestrictionGoal;
 import net.minecraft.world.entity.ai.memory.ExpirableValue;
 import net.minecraft.world.entity.ai.memory.MemoryModuleType;
 import net.minecraft.world.entity.animal.IronGolem;
+import net.minecraft.world.entity.boss.enderdragon.EnderDragon;
+import net.minecraft.world.entity.boss.enderdragon.phases.*;
 import net.minecraft.world.entity.decoration.ItemFrame;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
@@ -70,6 +77,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.entity.EntityTypeTest;
+import net.minecraft.world.level.pathfinder.Node;
 import net.minecraft.world.level.pathfinder.Path;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
@@ -643,8 +651,74 @@ public class EntityValue extends Value
             }
             return Value.NULL;
         });
-
+        put("dragon_nodes", (e, a) -> {
+            if (e instanceof EnderDragon)
+            {
+                Node[] nodes = ((EnderDragon_scarpetMixin) e).getNodes();
+                if (nodes == null) return Value.NULL;
+                return ValueConversions.fromNodeArray((ServerLevel)e.getCommandSenderWorld(), nodes);
+            }
+            return Value.NULL;
+        });
+        put("dragon_node_adjacency", (e, a) -> {
+            if (e instanceof EnderDragon)
+            {
+                int[] nodeAdjacency = ((EnderDragon_scarpetMixin) e).getNodeAdjacency();
+                if (nodeAdjacency == null) return Value.NULL;
+                ListValue matrix = ListValue.of();
+                for (int adjacent : nodeAdjacency)
+                {
+                    ListValue row = ListValue.of();
+                    int i = 0;
+                    while (adjacent > 0)
+                    {
+                        if ((adjacent & 1) == 1)
+                        {
+                            row.append(new NumericValue(i));
+                        }
+                        i++;
+                        adjacent >>= 1;
+                    }
+                    matrix.append(row);
+                }
+                return matrix;
+            }
+            return Value.NULL;
+        });
+        put("dragon_target", (e, a) -> {
+            if (e instanceof EnderDragon ed)
+            {
+                DragonPhaseInstance phase = ed.getPhaseManager().getCurrentPhase();
+                Vec3 target = phase.getFlyTargetLocation();
+                if (target == null) return Value.NULL;
+                return ValueConversions.of(target);
+            }
+            return Value.NULL;
+        });
         put("path", (e, a) -> {
+            if (e instanceof EnderDragon ed)
+            {
+                DragonPhaseInstance phase = ed.getPhaseManager().getCurrentPhase();
+                Path path = null;
+                if (phase instanceof DragonHoldingPatternPhase)
+                {
+                    path = ((DragonHoldingPatternPhase_scarpetMixin) phase).getCurrentPath();
+                }
+                if (phase instanceof DragonLandingApproachPhase)
+                {
+                     path = ((DragonLandingApproachPhase_scarpetMixin) phase).getCurrentPath();
+                }
+                if (phase instanceof DragonStrafePlayerPhase)
+                {
+                     path = ((DragonStrafePlayerPhase_scarpetMixin) phase).getCurrentPath();
+                }
+                if (phase instanceof DragonTakeoffPhase)
+                {
+                    path = ((DragonTakeoffPhase_scarpetMixin) phase).getCurrentPath();
+                }
+                if (path == null) return Value.NULL;
+                return ValueConversions.fromPath((ServerLevel)ed.getCommandSenderWorld(), path);
+            }
             if (e instanceof Mob)
             {
                 Path path = ((Mob)e).getNavigation().getPath();
@@ -1682,20 +1756,20 @@ public class EntityValue extends Value
             if (e instanceof WitherSkull w){
                 w.setDangerous(v.getBoolean());
             }
-            
+
         });
         put("offering_flower",(e,v)->{
             if (e instanceof IronGolem ig){
                 ig.offerFlower(v.getBoolean());
             }
-            
+
         });
         put("item", (e, v) -> {
                 ItemStack item=ValueConversions.getItemStackFromValue(v, true, e.level.registryAccess());
-                if(e instanceof ItemEntity itementity)            
+                if(e instanceof ItemEntity itementity)
                     itementity.setItem(item);
                 if(e instanceof ItemFrame itemframe)
-                    itemframe.setItem(item);  
+                    itemframe.setItem(item);
         });
         // "dimension"      []
         // "count",         []
