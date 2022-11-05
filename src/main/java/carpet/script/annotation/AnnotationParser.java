@@ -52,9 +52,8 @@ import net.fabricmc.api.ModInitializer;
  * <p>You can also declare optional parameters by using Java's {@link Optional} as the type of one of your parameters, though it must be
  * at the end of the function, just before varargs if present and/or any other {@link Optional} parameters.</p>
  * 
- * <p>Output of the annotated methods will also be converted to a compatible {@link LazyValue} using the registered {@link OutputConverter}s,
- * allowing to remove the need of explicitly converting to a {@link Value} and then to a {@link LazyValue} just to end the method (though you can
- * return a {@link LazyValue} if you want.</p>
+ * <p>Output of the annotated methods will also be converted to a compatible {@link Value} using the registered {@link OutputConverter}s,
+ * allowing to remove the need of explicitly converting to a {@link Value} to end the method..</p>
  * 
  * <p>For a variable argument count, the Java varargs notation can be used in the last parameter, converting the function into a variable argument
  * function that will pass all the rest of parameters to that last varargs parameter, also converted into the specified type.</p>
@@ -147,7 +146,7 @@ public final class AnnotationParser
             expr.addLazyFunction(function.name, function.scarpetParamCount, function);
     }
 
-    private static class ParsedFunction implements TriFunction<Context, Context.Type, List<LazyValue>, LazyValue>, UsageProvider
+    private static class ParsedFunction implements TriFunction<Context, Context.Type, List<LazyValue>, Value>, UsageProvider
     {
         private final String name;
         private final boolean isMethodVarArgs;
@@ -227,8 +226,9 @@ public final class AnnotationParser
         }
 
         @Override
-        public LazyValue apply(Context context, Context.Type t, List<LazyValue> lazyValues)
+        public Value apply(Context context, Context.Type t, List<LazyValue> lazyValues)
         {
+        	// TODO figure out a way of using the "integrated" unpacker while allowing custom contextType for arg evaluation and without requiring pure
             List<Value> lv = AbstractLazyFunction.unpackLazy(lazyValues, context, contextType);
             if (isEffectivelyVarArgs)
             {

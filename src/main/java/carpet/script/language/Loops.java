@@ -62,8 +62,7 @@ public class Loops {
             }
             //revering scope
             c.setVariable("_", _val);
-            Value lastValueNoKidding = lastOne;
-            return (cc, tt) -> lastValueNoKidding;
+            return lastOne;
         });
 
         // loop(Num, expr) => last_value
@@ -90,8 +89,7 @@ public class Loops {
             }
             //revering scope
             c.setVariable("_", _val);
-            Value trulyLastOne = lastOne;
-            return (cc, tt) -> trulyLastOne;
+            return lastOne;
         });
 
         // map(list or Num, expr) => list_results
@@ -99,7 +97,7 @@ public class Loops {
         expression.addLazyFunction("map", 2, (c, t, lv) ->
         {
             Value rval= lv.get(0).evalValue(c, Context.NONE);
-            if (rval.isNull()) return ListValue.lazyEmpty();
+            if (rval.isNull()) return ListValue.of();
             if (!(rval instanceof AbstractListValue))
                 throw new InternalExpressionException("First argument of 'map' function should be a list or iterator");
             Iterator<Value> iterator = ((AbstractListValue) rval).iterator();
@@ -135,7 +133,7 @@ public class Loops {
             //revering scope
             c.setVariable("_", _val);
             c.setVariable("_i", _iter);
-            return (cc, tt) ->  ret;
+            return ret;
         });
 
         // grep(list or num, expr) => list
@@ -144,7 +142,7 @@ public class Loops {
         expression.addLazyFunction("filter", 2, (c, t, lv) ->
         {
             Value rval= lv.get(0).evalValue(c, Context.NONE);
-            if (rval.isNull()) return ListValue.lazyEmpty();
+            if (rval.isNull()) return ListValue.of();
             if (!(rval instanceof AbstractListValue))
                 throw new InternalExpressionException("First argument of 'filter' function should be a list or iterator");
             Iterator<Value> iterator = ((AbstractListValue) rval).iterator();
@@ -181,7 +179,7 @@ public class Loops {
             //revering scope
             c.setVariable("_", _val);
             c.setVariable("_i", _iter);
-            return (cc, tt) -> ret;
+            return ret;
         });
 
         // first(list, expr) => elem or null
@@ -191,7 +189,7 @@ public class Loops {
         {
 
             Value rval= lv.get(0).evalValue(c, Context.NONE);
-            if (rval.isNull()) return LazyValue.NULL;
+            if (rval.isNull()) return Value.NULL;
             if (!(rval instanceof AbstractListValue))
                 throw new InternalExpressionException("First argument of 'first' function should be a list or iterator");
             Iterator<Value> iterator = ((AbstractListValue) rval).iterator();
@@ -230,10 +228,9 @@ public class Loops {
             }
             //revering scope
             ((AbstractListValue) rval).fatality();
-            Value whyWontYouTrustMeJava = result;
             c.setVariable("_", _val);
             c.setVariable("_i", _iter);
-            return (cc, tt) -> whyWontYouTrustMeJava;
+            return result;
         });
 
         // all(list, expr) => boolean
@@ -242,7 +239,7 @@ public class Loops {
         expression.addLazyFunction("all", 2, (c, t, lv) ->
         {
             Value rval= lv.get(0).evalValue(c, Context.NONE);
-            if (rval.isNull()) return LazyValue.TRUE;
+            if (rval.isNull()) return Value.TRUE;
             if (!(rval instanceof AbstractListValue))
                 throw new InternalExpressionException("First argument of 'all' function should be a list or iterator");
             Iterator<Value> iterator = ((AbstractListValue) rval).iterator();
@@ -250,7 +247,7 @@ public class Loops {
             //scoping
             Value _val = c.getVariable("_");
             Value _iter = c.getVariable("_i");
-            LazyValue result = LazyValue.TRUE;
+            Value result = Value.TRUE;
             for (int i=0; iterator.hasNext(); i++)
             {
                 Value next = iterator.next();
@@ -260,7 +257,7 @@ public class Loops {
                 c.setVariable("_i", new NumericValue(i).bindTo("_i"));
                 if(!expr.evalValue(c, Context.BOOLEAN).getBoolean())
                 {
-                    result = LazyValue.FALSE;
+                    result = Value.FALSE;
                     next.bindTo(var);
                     break;
                 }
@@ -296,8 +293,7 @@ public class Loops {
                 }
                 iterations++;
             }
-            int finalIterations = iterations;
-            return (cc, tt) -> new NumericValue(finalIterations);
+            return new NumericValue(iterations);
         });
 
         // similar to map, but returns total number of successes
@@ -306,7 +302,7 @@ public class Loops {
         expression.addLazyFunction("for", 2, (c, t, lv) ->
         {
             Value rval= lv.get(0).evalValue(c, Context.NONE);
-            if (rval.isNull()) return LazyValue.ZERO;
+            if (rval.isNull()) return Value.ZERO;
             if (!(rval instanceof AbstractListValue))
                 throw new InternalExpressionException("First argument of 'for' function should be a list or iterator");
             Iterator<Value> iterator = ((AbstractListValue) rval).iterator();
@@ -344,8 +340,7 @@ public class Loops {
             ((AbstractListValue) rval).fatality();
             c.setVariable("_", _val);
             c.setVariable("_i", _ite);
-            long promiseWontChange = successCount;
-            return (cc, tt) -> new NumericValue(promiseWontChange);
+            return new NumericValue(successCount);
         });
 
 
@@ -357,7 +352,7 @@ public class Loops {
         {
 
             Value rval= lv.get(0).evalValue(c, Context.NONE);
-            if (rval.isNull()) return ListValue.lazyEmpty();
+            if (rval.isNull()) return ListValue.of();
             if (!(rval instanceof AbstractListValue))
                 throw new InternalExpressionException("First argument of 'reduce' should be a list or iterator");
             LazyValue expr = lv.get(1);
@@ -366,8 +361,7 @@ public class Loops {
 
             if (!iterator.hasNext())
             {
-                Value seriouslyWontChange = acc;
-                return (cc, tt) -> seriouslyWontChange;
+                return acc;
             }
 
             //scoping
@@ -404,8 +398,7 @@ public class Loops {
             c.setVariable("_", _val);
             c.setVariable("_i", _ite);
 
-            Value hopeItsEnoughPromise = acc;
-            return (cc, tt) -> hopeItsEnoughPromise;
+            return acc;
         });
     }
 }

@@ -121,21 +121,21 @@ public class Operators {
 
         expression.addPureLazyFunction("and", -1, t -> Context.Type.BOOLEAN, (c, t, lv) -> {
             int last = lv.size()-1;
-            if (last == -1) return LazyValue.TRUE;
+            if (last == -1) return Value.TRUE;
             for (LazyValue l: lv.subList(0, last))
             {
                 Value val = l.evalValue(c, Context.Type.BOOLEAN);
                 if (val instanceof FunctionUnpackedArgumentsValue)
                 {
                     for (Value it : (FunctionUnpackedArgumentsValue) val)
-                        if (!it.getBoolean()) return (cc, tt) -> it;
+                        if (!it.getBoolean()) return it;
                 }
                 else
                 {
-                    if (!val.getBoolean()) return (cc, tt) -> val;
+                    if (!val.getBoolean()) return val;
                 }
             }
-            return lv.get(last);
+            return lv.get(last).evalValue(c, Context.Type.BOOLEAN);
         });
         expression.addFunctionalEquivalence("&&", "and");
 
@@ -149,21 +149,21 @@ public class Operators {
 
         expression.addPureLazyFunction("or", -1, t -> Context.Type.BOOLEAN, (c, t, lv) -> {
             int last = lv.size()-1;
-            if (last == -1) return LazyValue.FALSE;
+            if (last == -1) return Value.FALSE;
             for (LazyValue l: lv.subList(0, last))
             {
                 Value val = l.evalValue(c, Context.Type.BOOLEAN);
                 if (val instanceof FunctionUnpackedArgumentsValue)
                 {
                     for (Value it : (FunctionUnpackedArgumentsValue) val)
-                        if (it.getBoolean()) return (cc, tt) -> it;
+                        if (it.getBoolean()) return it;
                 }
                 else
                 {
-                    if (val.getBoolean()) return (cc, tt) -> val;
+                    if (val.getBoolean()) return val;
                 }
             }
-            return lv.get(last);
+            return lv.get(last).evalValue(c, Context.Type.BOOLEAN);
         });
         expression.addFunctionalEquivalence("||", "or");
 

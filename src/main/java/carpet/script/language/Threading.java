@@ -56,7 +56,7 @@ public class Threading
         {
             // pass through placeholder
             // implmenetation should dock the task on the main thread.
-            return lv.get(0);
+            return lv.get(0).evalValue(c);
         });
 
         expression.addUnaryFunction("task_completed", (v) ->
@@ -79,8 +79,7 @@ public class Threading
             }
             synchronized (c.host.getLock(lockValue))
             {
-                Value ret = lv.get(ind).evalValue(c, t);
-                return (_c, _t) -> ret;
+                return lv.get(ind).evalValue(c, t);
             }
         });
 
@@ -108,7 +107,7 @@ public class Threading
                 }
                 throw new ExitStatement(exceptionally);
             }
-            return (cc, tt) -> new NumericValue(time); // pass through for variables
+            return new NumericValue(time); // pass through for variables
         });
     }
 }

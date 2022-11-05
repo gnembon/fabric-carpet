@@ -368,8 +368,7 @@ public class Sys {
                 lazy.evalValue(c);
                 it++;
             }
-            Value res = new NumericValue(it);
-            return (cc, tt) -> res;
+            return new NumericValue(it);
         });
 
         // needs to customize the way to be used as lhs of an assignment operator
@@ -388,7 +387,7 @@ public class Sys {
             }
 
             @Override
-            public LazyValue lazyEval(Context c, Type type, Expression expr, Token token, List<LazyValue> lazyParams) {
+            public Value lazyEval(Context c, Type type, Expression expr, Token token, List<LazyValue> lazyParams) {
                 // This isn't ever compiled, so it should be unreachable. Only thing that could call this is the compile-time evaluator,
                 // that shouldn't run in this kind of function
                 throw new IllegalStateException("Reached wrong evaluation of 'var' function");
@@ -457,8 +456,8 @@ public class Sys {
             Value key = lv.get(0).evalValue(c);
             if (lv.size() > 1) c.host.scriptServer().systemGlobals.computeIfAbsent(key, k -> lv.get(1).evalValue(c));
             Value res = c.host.scriptServer().systemGlobals.get(key);
-            if (res!=null) return (cc, tt) -> res;
-            return LazyValue.NULL;
+            if (res!=null) return res;
+            return Value.NULL;
         });
 
         expression.addContextFunction("system_variable_set", 2, (c, t, lv) ->

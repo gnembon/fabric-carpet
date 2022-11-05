@@ -566,7 +566,7 @@ public class Auxiliary {
                     });
                 else
                     targetList.forEach(target -> {
-                        map.put(target.getScoreboardName(), (MutableComponent) title);
+                        map.put(target.getScoreboardName(), title);
                         total.getAndIncrement();
                     });
                 HUDController.update_hud(((CarpetContext)c).s.getServer(), targetList);
@@ -735,13 +735,12 @@ public class Auxiliary {
             CommandSourceStack outerSource = ((CarpetContext)c).s;
             Value dimensionValue = lv.get(0).evalValue(c);
             Level world = ValueConversions.dimFromValue(dimensionValue, outerSource.getServer());
-            if (world == outerSource.getLevel()) return lv.get(1);
+            if (world == outerSource.getLevel()) return lv.get(1).evalValue(c);
             CommandSourceStack innerSource = outerSource.withLevel((ServerLevel)world);
             Context newCtx = c.recreate();
             ((CarpetContext) newCtx).s = innerSource;
             newCtx.variables = c.variables;
-            Value retval = lv.get(1).evalValue(newCtx);
-            return (cc, tt) -> retval;
+            return lv.get(1).evalValue(newCtx);
         });
 
         expression.addContextFunction("plop", -1, (c, t, lv) ->{

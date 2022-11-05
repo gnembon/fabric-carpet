@@ -683,7 +683,7 @@ public class WorldAccess {
         expression.addLazyFunction("without_updates", 1, (c, t, lv) ->
         {
             boolean previous = CarpetSettings.impendingFillSkipUpdates.get();
-            if (previous) return lv.get(0);
+            if (previous) return lv.get(0).evalValue(c);
             Value [] result = new Value[]{Value.NULL};
             ((CarpetContext)c).s.getServer().executeBlocking( () ->
             {
@@ -697,7 +697,7 @@ public class WorldAccess {
                     CarpetSettings.impendingFillSkipUpdates.set(previous);
                 }
             });
-            return (cc, tt) -> result[0];
+            return result[0];
         });
 
         expression.addContextFunction("set", -1, (c, t, lv) ->

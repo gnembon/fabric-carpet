@@ -14,7 +14,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec3;
 import org.apache.commons.lang3.ClassUtils;
 
-import carpet.script.LazyValue;
+import carpet.script.value.BooleanValue;
 import carpet.script.value.EntityValue;
 import carpet.script.value.FormattedTextValue;
 import carpet.script.value.NBTSerializableValue;
@@ -24,22 +24,21 @@ import carpet.script.value.Value;
 import carpet.script.value.ValueConversions;
 
 /**
- * <p>A converter from a given {@link Object} of type T into a {@link LazyValue}, used in order to convert the outputs of methods into usable Scarpet
+ * <p>A converter from a given {@link Object} of type T into a {@link Value}, used in order to convert the outputs of methods into usable Scarpet
  * values.</p>
  *
  * @see #register(Class, Function)
- * @see #registerToValue(Class, Function)
- * @param <T> The type to convert from into a {@link LazyValue}
+ * @param <T> The type to convert from into a {@link Value}
  */
 public final class OutputConverter<T>
 {
     private static final Map<Class<?>, OutputConverter<?>> byResult = new HashMap<>();
-    private static final OutputConverter<Value> VALUE = new OutputConverter<>(v -> (c, t) -> v);
+    private static final OutputConverter<Value> VALUE = new OutputConverter<>(Function.identity());
     static
     {
-        register(LazyValue.class, Function.identity()); // Primitives are handled. Things are boxed in the process anyway, therefore
-        register(Boolean.class, v -> (v ? LazyValue.TRUE : LazyValue.FALSE)); // would recommend boxed outputs, so you can use null
-        register(Void.TYPE, v -> LazyValue.NULL);
+        // Primitives are handled. Things are boxed in the process anyway, therefore would recommend boxed outputs, so you can use null
+        register(Void.TYPE, v -> Value.NULL);
+        register(Boolean.class, BooleanValue::of);
         registerToValue(Integer.class, NumericValue::of);
         registerToValue(Double.class, NumericValue::of);
         registerToValue(Float.class, NumericValue::of);
@@ -55,9 +54,9 @@ public final class OutputConverter<T>
         registerToValue(GlobalPos.class, ValueConversions::of);
     }
 
-    private final Function<T, LazyValue> converter;
+    private final Function<T, Value> converter;
 
-    private OutputConverter(Function<T, LazyValue> converter)
+    private OutputConverter(Function<T, Value> converter)
     {
         this.converter = converter;
     }
@@ -81,27 +80,27 @@ public final class OutputConverter<T>
     }
 
     /**
-     * <p>Converts the given input object into a {@link LazyValue}, to be used in return values of Scarpet functions</p>
+     * <p>Converts the given input object into a {@link Value}, to be used in return values of Scarpet functions</p>
      * 
-     * <p>Returns {@link LazyValue#NULL} if passed a {@code null} input</p>
+     * <p>Returns {@link Value#NULL} if passed a {@code null} input</p>
      * 
      * @param input The value to convert
      * @return The converted value
      */
-    public LazyValue convert(T input)
+    public Value convert(T input)
     {
-        return input == null ? LazyValue.NULL : converter.apply(input);
+        return input == null ? Value.NULL : converter.apply(input);
     }
 
     /**
-     * <p>Registers a new type to be able to be used as the return value of methods, converting from inputType to a {@link LazyValue}.</p>
+     * <p>Registers a new type to be able to be used as the return value of methods, converting from inputType to a {@link Value}
+     * using the given function.</p>
      * 
-     * @see #registerToValue(Class, Function)
      * @param <T>       The type of the input type
      * @param inputType The class of T
-     * @param converter The function that converts the an instance of T to a {@link LazyValue}
+     * @param converter The function that converts the instance of T to a {@link Value}
      */
-    public static <T> void register(Class<T> inputType, Function<T, LazyValue> converter)
+    public static <T> void register(Class<T> inputType, Function<T, Value> converter)
     {
         OutputConverter<T> instance = new OutputConverter<T>(converter);
         if (byResult.containsKey(inputType))
@@ -110,19 +109,13 @@ public final class OutputConverter<T>
     }
 
     /**
-     * <p>Registers a new type to be able to be used as the return value of methods, converting from inputType to a {@link LazyValue}, with the
-     * converter returning a {@link Value} type.</p>
-     * 
      * @see #register(Class, Function)
-     * @param <T>       The type of the input type
-     * @param inputType The class of T
-     * @param converter The function that converts an instance of T to a {@link Value}
+     * 
+     * @deprecated Just use {@link #register(Class, Function)}, it now does the same as this
      */
+    @Deprecated
     public static <T> void registerToValue(Class<T> inputType, Function<T, Value> converter)
     {
-        OutputConverter<T> instance = new OutputConverter<>(converter.andThen(v -> (c, t) -> v));
-        if (byResult.containsKey(inputType))
-            throw new IllegalArgumentException(inputType + " already has a registered OutputConverter");
-        byResult.put(inputType, instance);
+        register(inputType, converter);
     }
 }

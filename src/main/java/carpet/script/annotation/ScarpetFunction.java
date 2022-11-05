@@ -9,7 +9,6 @@ import static java.lang.annotation.ElementType.METHOD;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 import carpet.script.Context;
-import carpet.script.LazyValue;
 import carpet.script.value.Value;
 
 /**
@@ -23,7 +22,7 @@ import carpet.script.value.Value;
  * <p>Types to be used in those functions must be already registered in their respective {@link ValueConverter} implementations.<br>
  * In order to register a new type to convert to, you can do so in {@link SimpleTypeConverter#registerType(Class, Class, java.util.function.Function, String)},
  * and in order to register a new variant of {@link Value}, use {@link ValueCaster#register(Class, String)}.<br>
- * In order to convert the output of your method to a {@link LazyValue} you will also need to register its conversion in {@link OutputConverter}</p>
+ * In order to convert the output of your method to a {@link Value} you will also need to register its conversion in {@link OutputConverter}</p>
  * 
  * <p>In order for Carpet to find methods annotated with this annotation, you must add your function class(es) to Carpet by running
  * {@link AnnotationParser#parseFunctionClass(Class)} ONCE.</p>

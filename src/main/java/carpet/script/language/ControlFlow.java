@@ -30,8 +30,7 @@ public class ControlFlow {
         expression.addPureLazyFunction("then", -1, t -> Context.Type.VOID, (c, t, lv) -> {
             int imax = lv.size()-1;
             for (int i = 0; i < imax; i++) lv.get(i).evalValue(c, Context.VOID);
-            Value v = lv.get(imax).evalValue(c, t);
-            return (cc, tt) -> v;
+            return lv.get(imax).evalValue(c, t);
         });
         expression.addFunctionalEquivalence(";", "then");
 
@@ -46,16 +45,14 @@ public class ControlFlow {
                 if (lv.get(i).evalValue(c, Context.BOOLEAN).getBoolean())
                 {
                     //int iFinal = i;
-                    Value ret = lv.get(i+1).evalValue(c, t);
-                    return (cc, tt) -> ret;
+                    return lv.get(i+1).evalValue(c, t);
                 }
             }
             if (lv.size()%2 == 1)
             {
-                Value ret = lv.get(lv.size() - 1).evalValue(c, t);
-                return (cc, tt) -> ret;
+                return lv.get(lv.size() - 1).evalValue(c, t);
             }
-            return (cc, tt) -> Value.NULL;
+            return Value.NULL;
         });
 
         expression.addImpureFunction("exit", (lv) -> { throw new ExitStatement(lv.size()==0?Value.NULL:lv.get(0)); });
@@ -84,8 +81,7 @@ public class ControlFlow {
                 throw new InternalExpressionException("'try' needs at least an expression block, and either a catch_epr, or a number of pairs of filters and catch_expr");
             try
             {
-                Value retval = lv.get(0).evalValue(c, t);
-                return (c_, t_) -> retval;
+                return lv.get(0).evalValue(c, t);
             }
             catch (ProcessedThrowStatement ret)
             {
@@ -93,7 +89,7 @@ public class ControlFlow {
                 {
                     if (!ret.thrownExceptionType.isUserException())
                         throw ret;
-                    return (c_, t_) -> Value.NULL;
+                    return Value.NULL;
                 }
                 if (lv.size() > 3 && lv.size() % 2 == 0)
                 {
@@ -151,8 +147,7 @@ public class ControlFlow {
                 {
                     throw ret;
                 }
-                Value retval = val;
-                return (c_, t_) -> retval;
+                return val;
             }
         });
     }

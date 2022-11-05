@@ -43,7 +43,7 @@ public class Functions {
         // needs to be lazy because of custom context of execution of arguments as a signature
         expression.addCustomFunction("call", new Fluff.AbstractLazyFunction(-1, "call") {
             @Override
-            public LazyValue lazyEval(Context c, Context.Type t, Expression expr, Tokenizer.Token tok, List<LazyValue> lv)
+            public Value lazyEval(Context c, Context.Type t, Expression expr, Tokenizer.Token tok, List<LazyValue> lv)
             {
                 if (lv.size() == 0)
                     throw new InternalExpressionException("'call' expects at least function name to call");
@@ -82,8 +82,7 @@ public class Functions {
                         args.add(var.name());
                     }
                 }
-                Value retval = new FunctionSignatureValue(name, args, varArgs, globals); // TODO could/should this be a LV?
-                return (cc, tt) -> retval;
+                return new FunctionSignatureValue(name, args, varArgs, globals); // TODO could/should this be a LV?
             }
 
             @Override
@@ -121,7 +120,7 @@ public class Functions {
             public boolean transitive() { return false; }
 
             @Override
-            public LazyValue lazyEval(Context c, Type type, Expression expr, Token token, List<LazyValue> lazyParams) {
+            public Value lazyEval(Context c, Type type, Expression expr, Token token, List<LazyValue> lazyParams) {
                 // This isn't ever compiled, so it should be unreachable. Only thing that could call this is the compile-time evaluator.
                 // Proper exception for it being present somewhere else is in LazyValue.Outer
                 throw new IllegalStateException("Reached wrong evaluation of 'outer' function");

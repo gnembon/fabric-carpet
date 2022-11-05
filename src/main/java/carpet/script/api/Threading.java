@@ -28,7 +28,7 @@ public class Threading
         expression.addLazyFunctionWithDelegation("task_dock", 1, false,true, (c, t, expr, tok, lv) -> {
             CarpetContext cc = (CarpetContext)c;
             MinecraftServer server = cc.s.getServer();
-            if (server.isSameThread()) return lv.get(0); // pass through for on thread tasks
+            if (server.isSameThread()) return lv.get(0).evalValue(c); // pass through for on thread tasks
             Value[] result = new Value[]{Value.NULL};
             RuntimeException[] internal = new RuntimeException[]{null};
             try
@@ -62,8 +62,7 @@ public class Threading
             {
                 throw internal[0];
             }
-            Value ret = result[0]; // preventing from lazy evaluating of the result in case a future completes later
-            return (_c, _t) -> ret;
+            return result[0]; // preventing from lazy evaluating of the result in case a future completes later
             // pass through placeholder
             // implmenetation should dock the task on the main thread.
         });

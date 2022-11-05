@@ -58,7 +58,7 @@ public abstract class Fluff
 
         boolean numParamsVaries();
 
-        LazyValue lazyEval(Context c, Context.Type type, Expression expr, Tokenizer.Token token, List<LazyValue> lazyParams);
+        Value lazyEval(Context c, Context.Type type, Expression expr, Tokenizer.Token token, List<LazyValue> lazyParams);
 
         /**
          * Creates an executable {@link LazyValue} to be used for executing this function.<p>
@@ -73,7 +73,7 @@ public abstract class Fluff
          * @return The executable as defined above
          */
         default LazyValue createExecutable(Context compilationContext/* ? */, Expression expr, Tokenizer.Token token, List<LazyValue> params) {
-            return (c, t) -> lazyEval(c, t, expr, token, params).evalValue(c, t);
+            return (c, t) -> lazyEval(c, t, expr, token, params);
         }
 
         static void checkInterrupts()
@@ -182,39 +182,18 @@ public abstract class Fluff
         }
 
         @Override
-        public LazyValue lazyEval(Context cc, Context.Type type, Expression e, Tokenizer.Token t, final List<LazyValue> lazyParams)
+        public Value lazyEval(Context cc, Context.Type type, Expression e, Tokenizer.Token t, final List<LazyValue> lazyParams)
         {
-
-            return new LazyValue()
-            { // eager evaluation always ignores the required type and evals params by none default
-                private List<Value> params;
-                @Override
-                public Value evalValue(Context c, Context.Type type)
-                {
-                    ILazyFunction.checkInterrupts();
-                    try
-                    {
-                        return AbstractFunction.this.eval(getParams(c));
-                    }
-                    catch (RuntimeException exc)
-                    {
-                        throw Expression.handleCodeException(cc, exc, e, t);
-                    }
-                }
-                private List<Value> getParams(Context c)
-                {
-                    if (params == null)
-                    {
-                        // very likely needs to be dynamic, so not static like here, or remember if it was.
-                        params = unpackArgs(lazyParams, c, Context.Type.NONE);
-                    }
-                    else
-                    {
-                        CarpetSettings.LOG.error("How did we get here 1");
-                    }
-                    return params;
-                }
-            };
+            // eager evaluation always ignores the required type and evals params by none default
+            ILazyFunction.checkInterrupts();
+            try
+            {
+                return AbstractFunction.this.eval(unpackArgs(lazyParams, cc, Context.Type.NONE));
+            }
+            catch (RuntimeException exc)
+            {
+                throw Expression.handleCodeException(cc, exc, e, t);
+            }
         }
     }
 

@@ -45,7 +45,7 @@ public class ThreadValue extends Value
                     {
                         try
                         {
-                            return function.execute(ctx, Context.NONE, expr, token, args).evalValue(ctx);
+                            return function.execute(ctx, Context.NONE, expr, token, args);
                         }
                         catch (ExitStatement exit)
                         {
