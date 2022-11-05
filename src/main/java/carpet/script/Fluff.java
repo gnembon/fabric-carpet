@@ -95,13 +95,13 @@ public abstract class Fluff
 
         boolean isLeftAssoc();
 
-        LazyValue lazyEval(Context c, Context.Type type, Expression expr, Tokenizer.Token token, LazyValue v1, LazyValue v2);
+        Value lazyEval(Context c, Context.Type type, Expression expr, Tokenizer.Token token, LazyValue v1, LazyValue v2);
 
         /**
          * @see ILazyFunction#createExecutable(Context, Expression, carpet.script.Tokenizer.Token, List)
          */
         default LazyValue createExecutable(Context compileContext, Expression expr, Tokenizer.Token token, LazyValue v1, LazyValue v2) {
-            return (c, t) -> lazyEval(c, t, expr, token, v1, v2).evalValue(c, t);
+            return (c, t) -> lazyEval(c, t, expr, token, v1, v2);
         }
     }
 
@@ -236,18 +236,16 @@ public abstract class Fluff
         }
 
         @Override
-        public LazyValue lazyEval(Context cc, Context.Type type, Expression e, Tokenizer.Token t, final LazyValue v1, final LazyValue v2)
+        public Value lazyEval(Context c, Context.Type type, Expression e, Tokenizer.Token t, final LazyValue v1, final LazyValue v2)
         {
-            return (c, typeIgnored) -> {
-                try
-                {
-                    return AbstractOperator.this.eval(v1.evalValue(c, Context.Type.NONE), v2.evalValue(c, Context.Type.NONE));
-                }
-                catch (RuntimeException exc)
-                {
-                    throw Expression.handleCodeException(cc, exc, e, t);
-                }
-            };
+            try
+            {
+                return AbstractOperator.this.eval(v1.evalValue(c, Context.Type.NONE), v2.evalValue(c, Context.Type.NONE));
+            }
+            catch (RuntimeException exc)
+            {
+                throw Expression.handleCodeException(c, exc, e, t);
+            }
         }
     }
 
@@ -267,22 +265,20 @@ public abstract class Fluff
         }
 
         @Override
-        public LazyValue lazyEval(Context cc, Context.Type type, Expression e, Tokenizer.Token t, final LazyValue v1, final LazyValue v2)
+        public Value lazyEval(Context c, Context.Type type, Expression e, Tokenizer.Token t, final LazyValue v1, final LazyValue v2)
         {
             if (v2 != null)
             {
-                throw new ExpressionException(cc, e, t, "Did not expect a second parameter for unary operator");
+                throw new ExpressionException(c, e, t, "Did not expect a second parameter for unary operator");
             }
-            return (c, ignoredType) -> {
-                try
-                {
-                    return AbstractUnaryOperator.this.evalUnary(v1.evalValue(c, Context.Type.NONE));
-                }
-                catch (RuntimeException exc)
-                {
-                    throw Expression.handleCodeException(cc, exc, e, t);
-                }
-            };
+            try
+            {
+                return AbstractUnaryOperator.this.evalUnary(v1.evalValue(c, Context.Type.NONE));
+            }
+            catch (RuntimeException exc)
+            {
+                throw Expression.handleCodeException(c, exc, e, t);
+            }
         }
 
         @Override

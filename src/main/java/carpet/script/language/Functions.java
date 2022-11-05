@@ -133,14 +133,12 @@ public class Functions {
         {
             if (type == Context.MAPDEF)
             {
-                Value result = ListValue.of(lv1.evalValue(c), lv2.evalValue(c));
-                return (cc, tt) -> result;
+                return ListValue.of(lv1.evalValue(c), lv2.evalValue(c));
             }
             Value v1 = lv1.evalValue(c, Context.SIGNATURE);
             if (!(v1 instanceof FunctionSignatureValue sign))
                 throw new InternalExpressionException("'->' operator requires a function signature on the LHS");
-            Value result = expression.createUserDefinedFunction(c, sign.getName(), e, t, sign.getArgs(), sign.getVarArgs(), sign.getGlobals(), lv2);
-            return (cc, tt) -> result;
+            return expression.createUserDefinedFunction(c, sign.getName(), e, t, sign.getArgs(), sign.getVarArgs(), sign.getGlobals(), lv2);
         });
 
         expression.addImpureFunction("return", (lv) -> { throw new ReturnStatement(lv.size()==0?Value.NULL:lv.get(0));} );

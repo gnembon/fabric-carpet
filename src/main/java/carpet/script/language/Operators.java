@@ -115,8 +115,8 @@ public class Operators {
         expression.addLazyBinaryOperator("&&", precedence.get("and&&"), false, true, t -> Context.Type.BOOLEAN, (c, t, lv1, lv2) ->
         { // todo check how is optimizations going
             Value v1 = lv1.evalValue(c, Context.BOOLEAN);
-            if (!v1.getBoolean()) return (cc, tt) -> v1;
-            return lv2;
+            if (!v1.getBoolean()) return v1;
+            return lv2.evalValue(c, Context.BOOLEAN);
         });
 
         expression.addPureLazyFunction("and", -1, t -> Context.Type.BOOLEAN, (c, t, lv) -> {
@@ -143,8 +143,8 @@ public class Operators {
         expression.addLazyBinaryOperator("||", precedence.get("or||"), false, true, t -> Context.Type.BOOLEAN, (c, t, lv1, lv2) ->
         {
             Value v1 = lv1.evalValue(c, Context.BOOLEAN);
-            if (v1.getBoolean()) return (cc, tt) -> v1;
-            return lv2;
+            if (v1.getBoolean()) return v1;
+            return lv2.evalValue(c, Context.BOOLEAN);
         });
 
         expression.addPureLazyFunction("or", -1, t -> Context.Type.BOOLEAN, (c, t, lv) -> {
@@ -311,7 +311,7 @@ public class Operators {
                     Value vval = ri.next().reboundedTo(variable);
                     expression.setAnyVariable(c, variable, vval);
                 }
-                return (cc, tt) -> Value.TRUE;
+                return Value.TRUE;
             }
             if (!(lv1 instanceof LazyValue.Assignable var)) {
                 // Check if it's LContainer, inside the check to prevent querying the LHS value if not needed
@@ -320,17 +320,17 @@ public class Operators {
                 {
                     ContainerValueInterface container = ((LContainerValue) v1).getContainer();
                     if (container == null)
-                        return (cc, tt) -> Value.NULL;
+                        return Value.NULL;
                     Value address = ((LContainerValue) v1).getAddress();
-                    if (!(container.put(address, v2))) return (cc, tt) -> Value.NULL;
-                    return (cc, tt) -> v2;
+                    if (!(container.put(address, v2))) return Value.NULL;
+                    return v2;
                 }
                 if (v1.isBound()) throw trap("compiling operator =");
                 throw new InternalExpressionException("Left hand side must be a variable");
             }
             Value copy = v2.reboundedTo(null); // assignable.set will set the name
             var.set(c, copy);
-            return (cc, tt) -> copy;
+            return copy;
         });
 
         // lazy due to assignment
@@ -348,7 +348,7 @@ public class Operators {
                     Value result = lhs.getValue(c, i).add(ri.next()).bindTo(lhs.variables()[i]);
                     expression.setAnyVariable(c, lhs.variables()[i], result);
                 }
-                return LazyValue.TRUE;
+                return Value.TRUE;
             }
             Value v1 = lv1.evalValue(c, Context.LVALUE);
             if (v1 instanceof LContainerValue)
@@ -363,13 +363,13 @@ public class Operators {
                 if (value instanceof ListValue || value instanceof MapValue)
                 {
                     ((AbstractListValue) value).append(v2);
-                    return (cc, tt) -> value;
+                    return value;
                 }
                 else
                 {
                     Value res = value.add(v2);
                     cvi.put(key, res);
-                    return (cc, tt) -> res;
+                    return res;
                 }
             }
             if (!(lv1 instanceof LazyValue.Assignable assignable)) {
@@ -387,7 +387,7 @@ public class Operators {
                 result = v1.add(v2);
             }
             assignable.set(c, result);
-            return (cc, tt) -> result;
+            return result;
         });
 
         expression.addLazyBinaryOperator("<>", precedence.get("assign=<>"), false, false, t -> Context.NONE, (c, t, lv1, lv2) ->
@@ -405,7 +405,7 @@ public class Operators {
                     expression.setAnyVariable(c, lname, right);
                     expression.setAnyVariable(c, rname, left);
                 }
-                return LazyValue.TRUE;
+                return Value.TRUE;
             }
             if (!(lv1 instanceof LazyValue.Assignable lhs)) {
                 if (lv1.evalValue(c).isBound())
@@ -423,7 +423,7 @@ public class Operators {
             Value rval = v1.reboundedTo(null);
             lhs.set(c, lval);
             rhs.set(c, rval);
-            return (cc, tt) -> lval;
+            return lval;
         });
 
         expression.addUnaryOperator("-",  false, v -> NumericValue.asNumber(v).opposite());
@@ -432,7 +432,7 @@ public class Operators {
 
         // could be non-lazy, but who cares - its a small one.
         expression.addLazyUnaryOperator("!", precedence.get("unary+-!..."), false, true, x -> Context.Type.BOOLEAN, (c, t, lv) ->
-                lv.evalValue(c, Context.BOOLEAN).getBoolean() ? (cc, tt)-> Value.FALSE : (cc, tt) -> Value.TRUE
+                lv.evalValue(c, Context.BOOLEAN).getBoolean() ? Value.FALSE : Value.TRUE
         ); // might need context boolean
 
         // custom because of necessity to encode variable name for varargs and typed evaluation of argument as unpacker, "u" suffix because unary
@@ -455,12 +455,11 @@ public class Operators {
             }
 
             @Override
-            public LazyValue lazyEval(Context c, Type type, Expression expr, Token token, LazyValue v1, LazyValue _null) {
+            public Value lazyEval(Context c, Type type, Expression expr, Token token, LazyValue v1, LazyValue _null) {
                 Value params = v1.evalValue(c, type);
                 if (!(params instanceof AbstractListValue))
                     throw new InternalExpressionException("Unable to unpack a non-list");
-                FunctionUnpackedArgumentsValue fuaval = new FunctionUnpackedArgumentsValue( ((AbstractListValue) params).unpack());
-                return (cc, tt) -> fuaval;
+                return new FunctionUnpackedArgumentsValue( ((AbstractListValue) params).unpack());
             }
         });
     }

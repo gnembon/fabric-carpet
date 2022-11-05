@@ -23,8 +23,7 @@ public class ControlFlow {
         expression.addLazyBinaryOperator(";", Operators.precedence.get("nextop;"), true, true, t -> Context.Type.VOID, (c, t, lv1, lv2) ->
         {
             lv1.evalValue(c, Context.VOID);
-            Value v2 = lv2.evalValue(c, t);
-            return (cc, tt) -> v2;
+            return lv2.evalValue(c, t);
         });
 
         expression.addPureLazyFunction("then", -1, t -> Context.Type.VOID, (c, t, lv) -> {

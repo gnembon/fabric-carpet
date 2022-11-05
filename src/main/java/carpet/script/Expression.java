@@ -162,7 +162,7 @@ public class Expression
 
 
     public void addLazyUnaryOperator(String surface, int precedence, boolean leftAssoc, boolean pure, Function<Context.Type,Context.Type> staticTyper,
-                                       TriFunction<Context, Context.Type, LazyValue, LazyValue> lazyfun)
+                                       TriFunction<Context, Context.Type, LazyValue, Value> lazyfun)
     {
         operators.put(surface+"u", new AbstractLazyOperator(precedence, leftAssoc)
         {
@@ -182,7 +182,7 @@ public class Expression
             }
 
             @Override
-            public LazyValue lazyEval(Context c, Context.Type t, Expression e, Tokenizer.Token token, LazyValue v, LazyValue v2)
+            public Value lazyEval(Context c, Context.Type t, Expression e, Tokenizer.Token token, LazyValue v, LazyValue v2)
             {
                 try
                 {
@@ -198,7 +198,7 @@ public class Expression
 
 
     public void addLazyBinaryOperatorWithDelegation(String surface, int precedence, boolean leftAssoc, boolean pure,
-                                       SexFunction<Context, Context.Type, Expression, Tokenizer.Token, LazyValue, LazyValue, LazyValue> lazyfun)
+                                       SexFunction<Context, Context.Type, Expression, Tokenizer.Token, LazyValue, LazyValue, Value> lazyfun)
     {
         operators.put(surface, new AbstractLazyOperator(precedence, leftAssoc)
         {
@@ -213,7 +213,7 @@ public class Expression
             }
 
             @Override
-            public LazyValue lazyEval(Context c, Context.Type type, Expression e, Tokenizer.Token t, LazyValue v1, LazyValue v2)
+            public Value lazyEval(Context c, Context.Type type, Expression e, Tokenizer.Token t, LazyValue v1, LazyValue v2)
             {
                 try
                 {
@@ -299,7 +299,7 @@ public class Expression
     }
 
     public void addLazyBinaryOperator(String surface, int precedence, boolean leftAssoc, boolean pure, Function<Context.Type, Context.Type> typer,
-                                       QuadFunction<Context, Context.Type, LazyValue, LazyValue, LazyValue> lazyfun)
+                                       QuadFunction<Context, Context.Type, LazyValue, LazyValue, Value> lazyfun)
     {
         operators.put(surface, new AbstractLazyOperator(precedence, leftAssoc)
         {
@@ -321,7 +321,7 @@ public class Expression
             }
 
             @Override
-            public LazyValue lazyEval(Context c, Context.Type t, Expression e, Tokenizer.Token token, LazyValue v1, LazyValue v2)
+            public Value lazyEval(Context c, Context.Type t, Expression e, Tokenizer.Token token, LazyValue v1, LazyValue v2)
             {
                 ILazyFunction.checkInterrupts();
                 try
@@ -352,12 +352,11 @@ public class Expression
             }
 
             @Override
-            public LazyValue lazyEval(Context c, Context.Type t, Expression e, Tokenizer.Token token, LazyValue v1, LazyValue v2)
+            public Value lazyEval(Context c, Context.Type t, Expression e, Tokenizer.Token token, LazyValue v1, LazyValue v2)
             {
                 try
                 {
-                    Value ret = fun.apply(c, t, v1.evalValue(c, Context.NONE), v2.evalValue(c, Context.NONE));
-                    return (cc, tt) -> ret;
+                    return fun.apply(c, t, v1.evalValue(c, Context.NONE), v2.evalValue(c, Context.NONE));
                 }
                 catch (RuntimeException exc)
                 {
@@ -1296,11 +1295,11 @@ public class Expression
         }
         else if (args.size() == 1)
         {
-            result = ((ILazyOperator)operation).lazyEval(ctx, expectedType, this, node.token, args.get(0), null).evalValue(null, expectedType);
+            result = ((ILazyOperator)operation).lazyEval(ctx, expectedType, this, node.token, args.get(0), null);
         }
         else // args == 2
         {
-            result = ((ILazyOperator)operation).lazyEval(ctx, expectedType, this, node.token, args.get(0), args.get(1)).evalValue(null, expectedType);
+            result = ((ILazyOperator)operation).lazyEval(ctx, expectedType, this, node.token, args.get(0), args.get(1));
         }
         node.op = LazyValue.ofConstant(result);
         //node.token.morph(Tokenizer.Token.TokenType.CONSTANT, node.token.surface);
