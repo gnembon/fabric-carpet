@@ -923,8 +923,8 @@ public class CarpetEventServer
 
         public static final Event PLAYER_COMMAND = new Event("player_command", 2, false) {
             @Override
-            public void onPlayerMessage(ServerPlayer player, String message) {
-                handler.call( () -> Arrays.asList(new EntityValue(player), new StringValue(message)), player::createCommandSourceStack);
+            public boolean onPlayerMessage(ServerPlayer player, String message) {
+                return handler.call( () -> Arrays.asList(new EntityValue(player), new StringValue(message)), player::createCommandSourceStack);
             }
         };
 
