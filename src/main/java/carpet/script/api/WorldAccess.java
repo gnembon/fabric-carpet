@@ -1629,6 +1629,10 @@ public class WorldAccess {
 
     @ScarpetFunction(maxParams = -1)
     public Value compute_density_function(Context c, @Locator.Block BlockPos pos, String... densityFunctionQueries) {
+        if (densityFunctionQueries.length == 0) {
+            throw new InternalExpressionException("Must pass at least 1 density function to compute.");
+        }
+
         Map<Value, Value> result = new HashMap<>();
 
         var level = ((CarpetContext) c).s.getLevel();
