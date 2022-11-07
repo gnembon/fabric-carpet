@@ -1628,7 +1628,7 @@ public class WorldAccess {
     }
 
     @ScarpetFunction(maxParams = -1)
-    public Value compute_density_function(Context c, @Locator.Block BlockPos pos, String... noiseQueries) {
+    public Value compute_density_function(Context c, @Locator.Block BlockPos pos, String... densityFunctionQueries) {
         Map<Value, Value> result = new HashMap<>();
 
         var level = ((CarpetContext) c).s.getLevel();
@@ -1641,15 +1641,14 @@ public class WorldAccess {
                     .lookupOrThrow(Registry.NOISE_REGISTRY), level.getSeed());
 
             var densityFunctionRegistry = level.registryAccess().registryOrThrow(Registry.DENSITY_FUNCTION_REGISTRY);
-            System.out.println(Arrays.toString(densityFunctionRegistry.keySet().toArray()));
 
             var visitor = ((RandomStateVisitorAccessor) (Object) randomState).getVisitor();
 
             var singlePointContext = new DensityFunction.SinglePointContext(pos.getX(), pos.getY(), pos.getZ());
             var router = generator.generatorSettings().value().noiseRouter();
 
-            for (String noiseQuery : noiseQueries) {
-                var densityFunction = switch (noiseQuery) {
+            for (String densityFunctionQuery : densityFunctionQueries) {
+                var densityFunction = switch (densityFunctionQuery) {
                     case "barrier_noise" -> router.barrierNoise();
                     case "fluid_level_floodedness_noise" -> router.fluidLevelFloodednessNoise();
                     case "fluid_level_spread_noise" -> router.fluidLevelSpreadNoise();
@@ -1665,18 +1664,27 @@ public class WorldAccess {
                     case "vein_toggle" -> router.veinToggle();
                     case "vein_ridged" -> router.veinRidged();
                     case "vein_gap" -> router.veinGap();
-                    default -> {
-                        var densityFunctionKey = ResourceLocation.tryParse(noiseQuery);
-                        if (densityFunctionKey != null && densityFunctionRegistry.containsKey(densityFunctionKey)) {
-                            yield densityFunctionRegistry.get(densityFunctionKey);
-                        } else {
-                            throw new InternalExpressionException("Density function '" + noiseQuery + "' doesn't exist. Please check the spelling or try with full 'namespace:value' if its custom defined.");
-                        }
-                    }
+                    default -> null;
                 };
-                // requiresNonNull just to fend off the "may be null" warning.
-                var value = Objects.requireNonNull(densityFunction).mapAll(visitor).compute(singlePointContext);
-                result.put(StringValue.of(noiseQuery), new NumericValue(value));
+
+                if (densityFunction == null) {
+                    ResourceLocation densityFunctionKey = ResourceLocation.tryParse(densityFunctionQuery);
+                    if (densityFunctionKey == null) {
+                        throw new InternalExpressionException("Density function name '" + densityFunctionQuery + "' is invalid. Please follow the correct [a-z0-9._-]:[a-z0-9/._-] format.");
+                    }
+
+                    if (densityFunctionRegistry.containsKey(densityFunctionKey)) {
+                        densityFunctionQuery = densityFunctionKey.toString();
+                        densityFunction = densityFunctionRegistry.get(densityFunctionKey);
+                    }
+
+                    if (densityFunction == null) {
+                        throw new InternalExpressionException("Density function '" + densityFunctionQuery + "' doesn't exist. Please check the spelling or use with full 'namespace:value' if its custom defined.");
+                    }
+                }
+
+                double value = densityFunction.mapAll(visitor).compute(singlePointContext);
+                result.put(StringValue.of(densityFunctionQuery), new NumericValue(value));
             }
         }
         return MapValue.wrap(result);
