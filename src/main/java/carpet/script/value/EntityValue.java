@@ -59,11 +59,15 @@ import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.ai.goal.MoveTowardsRestrictionGoal;
 import net.minecraft.world.entity.ai.memory.ExpirableValue;
 import net.minecraft.world.entity.ai.memory.MemoryModuleType;
+import net.minecraft.world.entity.animal.IronGolem;
+import net.minecraft.world.entity.decoration.ItemFrame;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.Projectile;
+import net.minecraft.world.entity.projectile.WitherSkull;
 import net.minecraft.world.entity.vehicle.AbstractMinecart;
 import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.entity.EntityTypeTest;
@@ -280,34 +284,24 @@ public class EntityValue extends Value
 
     public static class EntityClassDescriptor
     {
-        public EntityTypeTest<Entity, ? extends Entity> directType; // interface of EntityType
-        public Predicate<? super Entity> filteringPredicate;
-        public List<EntityType<? extends  Entity>> typeList;
-        public Value listValue;
-        EntityClassDescriptor(EntityType<?> type, Predicate<? super Entity> predicate, List<EntityType<?>> types)
-        {
-            directType = type;
-            filteringPredicate = predicate;
-            typeList = types;
-            listValue = (types==null)?Value.NULL:ListValue.wrap(types.stream().map(et -> StringValue.of(nameFromRegistryId(Registry.ENTITY_TYPE.getKey(et)))).collect(Collectors.toList()));
-        }
+        public final EntityTypeTest<Entity, ? extends Entity> directType; // interface of EntityType
+        public final Predicate<? super Entity> filteringPredicate;
+        public final List<EntityType<? extends Entity>> types;
 
-        EntityClassDescriptor( EntityTypeTest<Entity, ?> type, Predicate<? super Entity> predicate, List<EntityType<?>> types)
+        EntityClassDescriptor(EntityTypeTest<Entity, ?> type, Predicate<? super Entity> predicate, List<EntityType<?>> types)
         {
-            directType = type;
-            filteringPredicate = predicate;
-            typeList = types;
-            listValue = (types==null)?Value.NULL:ListValue.wrap(types.stream().map(et -> StringValue.of(nameFromRegistryId(Registry.ENTITY_TYPE.getKey(et)))).collect(Collectors.toList()));
-        }
-
-        EntityClassDescriptor(EntityType<?> type, Predicate<? super Entity> predicate, Stream<EntityType<?>> types)
-        {
-            this(type, predicate, types.toList());
+            this.directType = type;
+            this.filteringPredicate = predicate;
+            this.types = types;
         }
 
         EntityClassDescriptor(EntityTypeTest<Entity, ?> type, Predicate<? super Entity> predicate, Stream<EntityType<?>> types)
         {
             this(type, predicate, types.toList());
+        }
+
+        public Value listValue() {
+            return ListValue.wrap(types.stream().map(et -> StringValue.of(nameFromRegistryId(Registry.ENTITY_TYPE.getKey(et)))));
         }
 
         public final static Map<String, EntityClassDescriptor> byName = new HashMap<>() {{
@@ -522,7 +516,25 @@ public class EntityValue extends Value
         put("age", (e, a) -> new NumericValue(e.tickCount));
         put("breeding_age", (e, a) -> e instanceof AgeableMob?new NumericValue(((AgeableMob) e).getAge()):Value.NULL);
         put("despawn_timer", (e, a) -> e instanceof LivingEntity?new NumericValue(((LivingEntity) e).getNoActionTime()):Value.NULL);
-        put("item", (e, a) -> (e instanceof ItemEntity)?ValueConversions.of(((ItemEntity) e).getItem()):Value.NULL);
+        put("blue_skull",(e,a)->{
+            if (e instanceof WitherSkull w){
+                return BooleanValue.of(w.isDangerous());
+            }
+            return Value.NULL;
+        });
+        put("offering_flower",(e,a)->{
+            if (e instanceof IronGolem ig){
+                return BooleanValue.of(ig.getOfferFlowerTick()>0);
+            }
+            return Value.NULL;
+        });
+        put("item", (e, a) -> {
+            if(e instanceof ItemEntity)
+                return ValueConversions.of(((ItemEntity) e).getItem());
+            if(e instanceof ItemFrame)
+                return ValueConversions.of(((ItemFrame) e).getItem());
+            return Value.NULL;
+        });
         put("count", (e, a) -> (e instanceof ItemEntity)?new NumericValue(((ItemEntity) e).getItem().getCount()):Value.NULL);
         put("pickup_delay", (e, a) -> (e instanceof ItemEntity)?new NumericValue(((ItemEntityInterface) e).getPickupDelayCM()):Value.NULL);
         put("portal_cooldown", (e , a) ->new NumericValue(((EntityInterface)e).getPublicNetherPortalCooldown()));
@@ -1668,8 +1680,26 @@ public class EntityValue extends Value
             }
         });
 
+        put("blue_skull",(e,v)->{
+            if (e instanceof WitherSkull w){
+                w.setDangerous(v.getBoolean());
+            }
+
+        });
+        put("offering_flower",(e,v)->{
+            if (e instanceof IronGolem ig){
+                ig.offerFlower(v.getBoolean());
+            }
+
+        });
+        put("item", (e, v) -> {
+                ItemStack item=ValueConversions.getItemStackFromValue(v, true, e.level.registryAccess());
+                if(e instanceof ItemEntity itementity)
+                    itementity.setItem(item);
+                if(e instanceof ItemFrame itemframe)
+                    itemframe.setItem(item);
+        });
         // "dimension"      []
-        // "item"           []
         // "count",         []
         // "effect_"name    []
     }};

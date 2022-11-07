@@ -155,6 +155,8 @@
     "PersistentEntitySectionManager_scarpetMixin",
     "ReloadCommand_reloadAppsMixin",
     "SystemReport_addScarpetAppsMixin",
+    "CommandNode_scarpetCommandsMixin",
+    "CommandDispatcher_scarpetCommandsMixin",
 
     "RecipeManager_scarpetMixin",
     "Ingredient_scarpetMixin",
@@ -170,7 +172,6 @@
     "PistonMovingBlockEntity_movableBEMixin",
     "Level_movableBEMixin",
     "LevelChunk_movableBEMixin",
-    "PistonHandler_customStickyMixin",
     "Player_creativeNoClipMixin",
     "PistonMovingBlockEntity_playerHandlingMixin",
     "BlockItem_creativeNoClipMixin",
@@ -180,9 +181,17 @@
     "LivingEntity_creativeFlyMixin",
     "ChunkMap_creativePlayersLoadChunksMixin",
     "SculkSensorBlock_rangeMixin",
-    "CollectingNeighborUpdaterAccessor"
+    "CollectingNeighborUpdaterAccessor",
+
+    "BlockBehaviour_customStickyMixin",
+    "ChainBlock_customStickyMixin",
+    "ChestBlock_customStickyMixin",
+    "HoneyBlock_customStickyMixin",
+    "PistonStructureResolver_customStickyMixin",
+    "SlimeBlock_customStickyMixin"
   ],
   "client": [
+    "ShulkerBoxAccessMixin",
     "Timer_tickSpeedMixin",
     "MinecraftMixin",
     "Minecraft_pausedShakeMixin",
@@ -191,7 +200,7 @@
     "PlayerTabOverlayMixin",
     "PistonHeadRenderer_movableBEMixin",
     "StructureBlockRenderer_mixin",
-    "LocalPlayer_clientCommandMixin",
+    "ClientPacketListener_clientCommandMixin",
     "LevelRenderer_fogOffMixin",
     "LevelRenderer_creativeNoClipMixin",
     "ClientPacketListener_customPacketsMixin",

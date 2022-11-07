@@ -14,7 +14,6 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.entity.player.ProfilePublicKey;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 import org.spongepowered.asm.mixin.Mixin;
@@ -39,8 +38,8 @@ public abstract class ServerPlayer_scarpetEventMixin extends Player implements S
     @Unique
     private boolean isInvalidReference = false;
 
-    public ServerPlayer_scarpetEventMixin(Level level, BlockPos blockPos, float f, GameProfile gameProfile, ProfilePublicKey profilePublicKey) {
-        super(level, blockPos, f, gameProfile, profilePublicKey);
+    public ServerPlayer_scarpetEventMixin(Level level, BlockPos blockPos, float f, GameProfile gameProfile) {
+        super(level, blockPos, f, gameProfile);
     }
 
     @Shadow protected abstract void completeUsingItem();
@@ -56,9 +55,10 @@ public abstract class ServerPlayer_scarpetEventMixin extends Player implements S
         if (PLAYER_FINISHED_USING_ITEM.isNeeded())
         {
             InteractionHand hand = getUsedItemHand();
-            PLAYER_FINISHED_USING_ITEM.onItemAction((ServerPlayer) (Object)this, hand, getUseItem());
-            // do vanilla
-            super.completeUsingItem();
+            if(!PLAYER_FINISHED_USING_ITEM.onItemAction((ServerPlayer) (Object)this, hand, getUseItem())) {
+                // do vanilla
+                super.completeUsingItem();
+            }
         }
         else
         {

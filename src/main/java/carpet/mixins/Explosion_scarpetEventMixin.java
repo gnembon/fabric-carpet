@@ -37,7 +37,7 @@ public abstract class Explosion_scarpetEventMixin
     @Shadow @Final private Explosion.BlockInteraction blockInteraction;
     @Shadow @Final private @Nullable Entity source;
 
-    @Shadow /*@Nullable*/ public abstract /*@Nullable*/ LivingEntity getSourceMob();
+    @Shadow /*@Nullable*/ public abstract /*@Nullable*/ LivingEntity getIndirectSourceEntity();
 
     @Shadow public static float getSeenPercent(Vec3 source, Entity entity) {return 0.0f;}
 
@@ -71,7 +71,7 @@ public abstract class Explosion_scarpetEventMixin
     {
         if (EXPLOSION_OUTCOME.isNeeded() && !level.isClientSide())
         {
-            EXPLOSION_OUTCOME.onExplosion((ServerLevel) level, source, this::getSourceMob, x, y, z, radius, fire, toBlow, affectedEntities, blockInteraction);
+            EXPLOSION_OUTCOME.onExplosion((ServerLevel) level, source, this::getIndirectSourceEntity, x, y, z, radius, fire, toBlow, affectedEntities, blockInteraction);
         }
     }
 }

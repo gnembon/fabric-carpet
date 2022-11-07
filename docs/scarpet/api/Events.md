@@ -22,6 +22,14 @@ partially handle the event before it happens and handle the rest after. While in
 confusion (like handling the respawn event still referring to player's original position and dimension), but gives much 
 more control over these events.
 
+Some events also provide the ability to cancel minecraft's processing of the event by returning `'cancel'` from the event handler.
+This only works for particular events that are triggered before they take an effect in the game.
+However, cancelling the event will also stop events from subsequent apps from triggering.
+The order of events being executed can be changed by specifying an `'event_priority'` in the app config,
+with the highest value being executed first.
+Note that cancelling some events might introduce a desynchronization to the client from the server,
+creating ghost items or blocks. This can be solved by updating the inventory or block to the client, by using `inventory_set` or `set`.
+
 Programmers can also define their own events and signal other events, including built-in events, and across all loaded apps.
 
 ## App scopes and event distribution
@@ -142,6 +150,8 @@ Triggers with a right click action. Event is triggered right after a server rece
 game manages to do anything about it. Event triggers when player starts eating food, or starts drawing a bow.
 Use `player_finishes_using_item`, or `player_releases_item` to capture the end of these events.
 
+This event can be cancelled by returning `'cancel'`, which prevents the item from being used.
+
 Event is not triggered when a player places a block, for that use
 `player_right_clicks_block` or `player_places_block` event.
 
@@ -156,21 +166,34 @@ Player using of an item is done. This is controlled server side and is responsib
 eating. The event is triggered after confirming that the action is valid, and sending the feedback back
 to the client, but before triggering it and its effects in game.
 
+This event can be cancelled by returning `'cancel'`, which prevents the player from finishing using the item.
+
 ### `__on_player_clicks_block(player, block, face)`
 Representing left-click attack on a block, usually signifying start of breaking of a block. Triggers right after the server
-receives a client packet, before anything happens on the server side.   
+receives a client packet, before anything happens on the server side.
+
+This event can be cancelled by returning `'cancel'`, which stops the player from breaking a block.
   
 
 ### `__on_player_breaks_block(player, block)`
 Called when player breaks a block, right before any changes to the world are done, but the decision is made to remove the block.
 
+This event can be cancelled by returning `'cancel'`, which prevents the block from being placed.
+
 ### `__on_player_right_clicks_block(player, item_tuple, hand, block, face, hitvec)` 
 Called when player right clicks on a block with anything, or interacts with a block. This event is triggered right
 before other interaction events, like `'player_interacts_with_block'` or `'player_places_block'`.
+
+This event can be cancelled by returning `'cancel'`, which prevents the player interaction.
  
 ### `__on_player_interacts_with_block(player, hand, block, face, hitvec)`
 Called when player successfully interacted with a block, which resulted in activation of said block,
 right after this happened.
+
+### `__on_player_placing_block(player, item_tuple, hand, block)`
+Triggered when player places a block, before block is placed in the world.
+
+This event can be cancelled by returning `'cancel'`, which prevents the block from being placed.
   
 ### `__on_player_places_block(player, item_tuple, hand, block)`
 Triggered when player places a block, after block is placed in the world, but before scoreboard is triggered or player inventory
@@ -180,6 +203,8 @@ adjusted.
 Triggered when player right clicks (interacts) with an entity, even if the entity has no vanilla interaction with the player or
 the item they are holding. The event is invoked after receiving a packet from the client, before anything happens server side
 with that interaction.
+
+This event can be cancelled by returning `'cancel'`, which prevents the player interacting with the entity.
 
 ### `__on_player_trades(player, entity, buy_left, buy_right, sell)`
 Triggered when player trades with a merchant. The event is invoked after the server allow the trade, but before the inventory
@@ -195,12 +220,16 @@ on the player.
 Triggered when a player clicks a recipe in the crafting window from the crafting book, after server received
 a client request, but before any items are moved from its inventory to the crafting menu.
 
+This event can be cancelled by returning `'cancel'`, which prevents the recipe from being moved into the crafting grid.
+
 ### `__on_player_switches_slot(player, from, to)`
 Triggered when a player changes their selected hotbar slot. Applied right after the server receives the message to switch 
 the slot.
 
 ### `__on_player_swaps_hands(player)`
 Triggered when a player sends a command to swap their offhand item. Executed before the effect is applied on the server.
+
+This event can be cancelled by returning `'cancel'`, which prevents the hands from being swapped.
 
 ### `__on_player_swings_hand(player, hand)`
 Triggered when a player starts swinging their hand. The event typically triggers after a corresponding event that caused it 
@@ -210,14 +239,20 @@ swinging continues as an effect of an action, no new swinging events will be iss
 ### `__on_player_attacks_entity(player, entity)`
 Triggered when a player attacks entity, right before it happens server side.
 
+This event can be cancelled by returning `'cancel'`, which prevents the player from attacking the entity.
+
 ### `__on_player_takes_damage(player, amount, source, source_entity)`
 Triggered when a player is taking damage. Event is executed right after potential absorbtion was applied and before
 the actual damage is applied to the player. 
+
+This event can be cancelled by returning `'cancel'`, which prevents the player from taking damage.
 
 ### `__on_player_deals_damage(player, amount, entity)`
 Triggered when a player deals damage to another entity. Its applied in the same moment as `player_takes_damage` if both
 sides of the event are players, and similar for all other entities, just their absorbtion is taken twice, just noone ever 
 notices that ¯\_(ツ)_/¯
+
+This event can be cancelled by returning `'cancel'`, which prevents the damage from being dealt.
 
 ### `__on_player_dies(player)`
 Triggered when a player dies. Player is already dead, so don't revive them then. Event applied before broadcasting messages
@@ -267,6 +302,8 @@ Four events triggered when player controls for sneaking and sprinting toggle.
 Triggered when the game receives the request from a player to drop one item or full stack from its inventory.
 Event happens before anything is changed server side.
 
+These events can be cancelled by returning `'cancel'`, which prevents the player dropping the items.
+
 ### `__on_player_picks_up_item(player, item)`
 Triggered AFTER a player successfully ingested an item in its inventory. Item represents the total stack of items
 ingested by the player. The exact position of these items is unknown as technically these
@@ -280,6 +317,8 @@ Triggered when a player sends a disconnect package or is forcefully disconnected
 
 ### `__on_player_message(player, message)`
 Triggered when a player sends a chat message or runs a command.
+
+This event can be cancelled by returning `'cancel'`, which prevents the message from being sent.
 
 ### `__on_statistic(player, category, event, value)`
 Triggered when a player statistic changes. Doesn't notify on periodic an rhythmic events, i.e. 

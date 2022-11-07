@@ -9,6 +9,7 @@ import net.minecraft.commands.CommandBuildContext;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.world.flag.FeatureFlags;
 import org.apache.logging.log4j.util.TriConsumer;
 import java.util.Collection;
 import java.util.List;
@@ -207,8 +208,7 @@ public class SettingsManager extends carpet.api.settings.SettingsManager
     @Deprecated(forRemoval = true)
     public void registerCommand(CommandDispatcher<CommandSourceStack> dispatcher)
     {
-        final CommandBuildContext context = new CommandBuildContext(RegistryAccess.BUILTIN.get());
-        context.missingTagAccessPolicy(CommandBuildContext.MissingTagAccessPolicy.RETURN_EMPTY);
+        final CommandBuildContext context = CommandBuildContext.simple(RegistryAccess.EMPTY, FeatureFlags.VANILLA_SET);
         registerCommand(dispatcher, context);
     }
 }

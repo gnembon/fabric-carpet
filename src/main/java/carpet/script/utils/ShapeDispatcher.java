@@ -6,22 +6,31 @@ import carpet.script.exception.InternalExpressionException;
 import carpet.script.exception.ThrowStatement;
 import carpet.script.exception.Throwables;
 import carpet.script.language.Sys;
+import carpet.script.utils.shapes.ShapeDirection;
+import carpet.script.value.AbstractListValue;
 import carpet.script.value.BlockValue;
 import carpet.script.value.BooleanValue;
 import carpet.script.value.EntityValue;
 import carpet.script.value.FormattedTextValue;
 import carpet.script.value.ListValue;
 import carpet.script.value.MapValue;
+import carpet.script.value.NBTSerializableValue;
 import carpet.script.value.NumericValue;
 import carpet.script.value.StringValue;
 import carpet.script.value.Value;
+import carpet.script.value.ValueConversions;
+
 import com.google.common.collect.Sets;
+import com.mojang.blaze3d.vertex.VertexFormat;
+import com.mojang.blaze3d.vertex.VertexFormat.Mode;
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+
 import net.minecraft.commands.arguments.ParticleArgument;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Registry;
+import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.nbt.ByteTag;
 import net.minecraft.nbt.CompoundTag;
@@ -29,8 +38,10 @@ import net.minecraft.nbt.DoubleTag;
 import net.minecraft.nbt.FloatTag;
 import net.minecraft.nbt.IntTag;
 import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.NbtUtils;
 import net.minecraft.nbt.StringTag;
 import net.minecraft.nbt.Tag;
+import net.minecraft.nbt.NumericTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
@@ -40,12 +51,16 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -157,14 +172,14 @@ public class ShapeDispatcher
         }
     }
 
-    public static ParticleOptions getParticleData(String name)
+    public static ParticleOptions getParticleData(String name, RegistryAccess regs)
     {
-        ParticleOptions particle = particleCache.get(name);
+        ParticleOptions particle = particleCache.get(name); // [SCARY SHIT] cache should be cleared between worlds
         if (particle != null)
             return particle;
         try
         {
-            particle = ParticleArgument.readParticle(new StringReader(name));
+            particle = ParticleArgument.readParticle(new StringReader(name), regs.lookupOrThrow(Registry.PARTICLE_TYPE_REGISTRY));
         }
         catch (CommandSyntaxException e)
         {
@@ -204,7 +219,7 @@ public class ShapeDispatcher
     }
 
     // client
-    public static ExpiringShape fromTag(CompoundTag tag)
+    public static ExpiringShape fromTag(CompoundTag tag, Level level)
     {
         Map<String, Value> options = new HashMap<>();
         for (String key : tag.getAllKeys())
@@ -215,7 +230,7 @@ public class ShapeDispatcher
                 CarpetSettings.LOG.info("Unknown parameter for shape: "+key);
                 return null;
             }
-            Value decodedValue = decoder.decode(tag.get(key));
+            Value decodedValue = decoder.decode(tag.get(key), level);
             options.put(key, decodedValue);
         }
         Value shapeValue = options.get("shape");
@@ -249,6 +264,9 @@ public class ShapeDispatcher
             put("sphere", creator(Sphere::new));
             put("cylinder", creator(Cylinder::new));
             put("label", creator(DisplayedText::new));
+            put("polygon",creator(Polyface::new));
+            put("block",creator(()->new DisplayedSprite(false)));
+            put("item",creator(()->new DisplayedSprite(true)));
         }};
         private static Function<Map<String, Value>,ExpiringShape> creator(Supplier<ExpiringShape> shapeFactory)
         {
@@ -271,6 +289,7 @@ public class ShapeDispatcher
         protected boolean snapX, snapY, snapZ;
         protected boolean discreteX, discreteY, discreteZ;
         protected ResourceKey<Level> shapeDimension;
+        protected boolean debug;
 
 
         protected ExpiringShape() { }
@@ -322,6 +341,11 @@ public class ShapeDispatcher
             this.b = (float)(color >>  8 & 0xFF) / 255.0F;
             this.a = (float)(color & 0xFF) / 255.0F;
 
+            debug = false;
+            if (options.containsKey("debug")) {
+                debug = options.get("debug").getBoolean();
+            }
+
             key = 0;
             followEntity = -1;
             shapeDimension = ResourceKey.create(Registry.DIMENSION_REGISTRY, new ResourceLocation(options.get("dim").getString()));
@@ -364,12 +388,12 @@ public class ShapeDispatcher
                     NumericValue.asNumber( elements.get(2)).getDouble()
             );
         }
-        protected ParticleOptions replacementParticle()
+        protected ParticleOptions replacementParticle(RegistryAccess regs)
         {
             String particleName = fa ==0 ?
                     String.format(Locale.ROOT , "dust %.1f %.1f %.1f 1.0", r, g, b):
                     String.format(Locale.ROOT , "dust %.1f %.1f %.1f 1.0", fr, fg, fb);
-            return getParticleData(particleName);
+            return getParticleData(particleName, regs);
         }
 
 
@@ -386,6 +410,7 @@ public class ShapeDispatcher
             hash ^= shapeDimension.hashCode(); hash *= 1099511628211L;
             hash ^= color;                     hash *= 1099511628211L;
             hash ^= followEntity;              hash *= 1099511628211L;
+            hash ^= Boolean.hashCode(debug); hash *= 1099511628211L;
             if (followEntity >= 0)
             {
                 hash ^= snapTo.hashCode();     hash *= 1099511628211L;
@@ -408,6 +433,7 @@ public class ShapeDispatcher
                 "color", new NumericValue(-1),
                 "follow", new NumericValue(-1),
                 "line", new NumericValue(2.0),
+                "debug", Value.FALSE,
                 "fill", new NumericValue(0xffffff00),
                 "snap", new StringValue("xyz")
         );
@@ -447,7 +473,7 @@ public class ShapeDispatcher
         int textcolor;
         int textbck;
 
-        Direction facing;
+        ShapeDirection facing;
         float raise;
         float tilt;
         float lean;
@@ -473,16 +499,7 @@ public class ShapeDispatcher
             textcolor = rgba2argb(color);
             textbck = rgba2argb(fillColor);
             String dir = options.getOrDefault("facing", optional.get("facing")).getString();
-            facing = null;
-            switch (dir)
-            {
-                case "north": facing = Direction.NORTH; break;
-                case "south": facing = Direction.SOUTH; break;
-                case "east": facing = Direction.EAST; break;
-                case "west": facing = Direction.WEST; break;
-                case "up":  facing = Direction.UP; break;
-                case "down":  facing = Direction.DOWN; break;
-            }
+            facing = ShapeDirection.fromString(dir);
             align = 0;
             if (options.containsKey("align"))
             {
@@ -546,6 +563,129 @@ public class ShapeDispatcher
         }
     }
 
+    public static class DisplayedSprite extends ExpiringShape {
+        private final Set<String> required = Set.of("pos");
+        private final Map<String, Value> optional = Map.ofEntries(
+                entry("facing", new StringValue("north")),
+                entry("tilt", new NumericValue(0)),
+                entry("lean", new NumericValue(0)),
+                entry("turn", new NumericValue(0)),
+                entry("scale", ListValue.fromTriple(1,1,1)),
+                entry("blocklight", new NumericValue(-1)),
+                entry("skylight", new NumericValue(-1)));
+        private boolean isitem;
+
+        @Override
+        protected Set<String> requiredParams() { return Sets.union(Sets.union(super.requiredParams(), required), Set.of(isitem ? "item" : "block"));}
+
+        @Override
+        protected Set<String> optionalParams() { return Sets.union(Sets.union(super.optionalParams(), optional.keySet()),isitem ? Set.of("variant") : Set.of()); }
+
+        public DisplayedSprite(boolean i)
+        {
+            isitem = i;
+        }
+
+        Vec3 pos;
+
+        ShapeDirection facing;
+
+        float tilt;
+        float lean;
+        float turn;
+
+        int blockLight;
+        int skyLight;
+
+        float scaleX = 1.0f;
+        float scaleY = 1.0f;
+        float scaleZ = 1.0f;
+        CompoundTag blockEntity;
+        BlockState blockState;
+        ItemStack item = null;
+        String itemTransformType;
+
+        @Override
+        protected void init(Map<String, Value> options)
+        {
+            super.init(options);
+            pos = vecFromValue(options.get("pos"));
+            if (!this.isitem)
+            {
+                final BlockValue block = (BlockValue)options.get("block");
+                blockState = block.getBlockState();
+                blockEntity = block.getData();
+            }
+            else
+            {
+                this.item = ItemStack.of(((NBTSerializableValue) options.get("item")).getCompoundTag());
+            }
+            blockLight = NumericValue.asNumber(options.getOrDefault("blocklight", optional.get("blocklight"))).getInt();
+            if (blockLight > 15) blockLight = 15;
+            skyLight = NumericValue.asNumber(options.getOrDefault("skylight", optional.get("skylight"))).getInt();
+            if (skyLight > 15) skyLight = 15;
+
+            itemTransformType = "none";
+            if (options.containsKey("variant"))
+            {
+                itemTransformType = options.get("variant").getString().toLowerCase(Locale.ROOT);
+            }
+
+            String dir = options.getOrDefault("facing", optional.get("facing")).getString();
+            facing = ShapeDirection.fromString(dir);
+
+            tilt = NumericValue.asNumber(options.getOrDefault("tilt", optional.get("tilt"))).getFloat();
+            lean = NumericValue.asNumber(options.getOrDefault("lean", optional.get("lean"))).getFloat();
+            turn = NumericValue.asNumber(options.getOrDefault("turn", optional.get("turn"))).getFloat();
+            List<Value> scale = ((ListValue) options.getOrDefault("scale", optional.get("scale"))).unpack();
+            scaleY = NumericValue.asNumber(scale.get(1)).getFloat();
+            scaleX = NumericValue.asNumber(scale.get(0)).getFloat();
+            scaleZ = NumericValue.asNumber(scale.get(2)).getFloat();
+        }
+
+        @Override
+        public Consumer<ServerPlayer> alternative() {
+            return p -> {
+                ParticleOptions particle;
+                if(this.isitem)
+                {
+                    if (Block.byItem(this.item.getItem()).defaultBlockState().isAir()) return;
+                    particle = getParticleData("block_marker "+Registry.BLOCK.getKey(Block.byItem(this.item.getItem())), p.level.registryAccess());
+                }
+                else
+                {
+                    particle = getParticleData("block_marker "+Registry.BLOCK.getKey(this.blockState.getBlock()), p.level.registryAccess());
+                }
+
+                Vec3 v = relativiseRender(p.level, this.pos, 0);
+                p.getLevel().sendParticles(p, particle , true, v.x, v.y, v.z, 1,0.0, 0.0, 0.0, 0.0);
+            };
+        }
+
+        @Override
+        public long calcKey() {
+            long hash = super.calcKey();
+            hash ^= 7;                  hash *= 1099511628211L;
+            hash ^= Boolean.hashCode(isitem); hash *= 1099511628211L;
+            hash ^= vec3dhash(pos);     hash *= 1099511628211L;
+            if (facing!= null) hash ^= facing.hashCode(); hash *= 1099511628211L;
+            hash ^= Float.hashCode(tilt); hash *= 1099511628211L;
+            hash ^= Float.hashCode(lean); hash *= 1099511628211L;
+            hash ^= Float.hashCode(turn); hash *= 1099511628211L;
+            hash ^= Float.hashCode(scaleY); hash *= 1099511628211L;
+            hash ^= Float.hashCode(scaleZ); hash *= 1099511628211L;
+            hash ^= Float.hashCode(scaleX); hash *= 1099511628211L;
+            hash ^= Float.hashCode(skyLight); hash *= 1099511628211L;
+            hash ^= Float.hashCode(blockLight); hash *= 1099511628211L;
+            if (blockEntity!= null) hash ^= blockEntity.toString().hashCode(); hash *= 1099511628211L;
+            if (blockState!= null) hash ^= blockState.hashCode(); hash *= 1099511628211L;
+            hash ^= ValueConversions.of(item).getString().hashCode(); hash *= 1099511628211L;
+            hash ^= itemTransformType.hashCode(); hash *= 1099511628211L;
+
+            return hash;
+        }
+    }
+
 
     public static class Box extends ExpiringShape
     {
@@ -571,7 +711,6 @@ public class ShapeDispatcher
         @Override
         public Consumer<ServerPlayer> alternative()
         {
-            ParticleOptions particle = replacementParticle();
             double density = Math.max(2.0, from.distanceTo(to) /50/ (a+0.1)) ;
             return p ->
             {
@@ -579,7 +718,7 @@ public class ShapeDispatcher
                 {
                     particleMesh(
                             Collections.singletonList(p),
-                            particle,
+                            replacementParticle(p.level.registryAccess()),
                             density,
                             relativiseRender(p.level, from, 0),
                             relativiseRender(p.level, to, 0)
@@ -625,6 +764,185 @@ public class ShapeDispatcher
         }
     }
 
+    public static class Polyface extends ExpiringShape
+    {
+        @Override
+        public long calcKey(){
+            long hash = super.calcKey();
+            hash ^= 6;                     hash *= 1099511628211L;
+            hash ^= mode.hashCode();   hash *= 1099511628211L;
+            hash ^= relative.hashCode();      hash *= 1099511628211L;
+            for (Vec3 i :vertex_list){
+                hash ^= vec3dhash(i);
+                hash *= 1099511628211L;
+            }
+            hash ^= Boolean.hashCode(doublesided);    hash *= 1099511628211L;
+            hash ^= Integer.hashCode(vertex_list.size());    hash *= 1099511628211L;
+            hash ^= Boolean.hashCode(inneredges);    hash *= 1099511628211L;
+            return hash;
+        }
+        ArrayList<Vec3> alter_point=null;
+        final Random random=new Random();
+        boolean doublesided;
+
+        ArrayList<Vec3> alter_point(ServerPlayer p){
+            if (alter_point!=null){
+                return alter_point;
+            }
+            alter_point=new ArrayList<>();
+            switch (mode) {
+                case TRIANGLES:
+                    for (int i=0;i<vertex_list.size();i++){
+                        Vec3 vecA=vertex_list.get(i);
+                        if(relative.get(i)){
+                            vecA=relativiseRender(p.level, vecA, 0);
+                        }
+                        i++;
+                        Vec3 vecB=vertex_list.get(i);
+                        if(relative.get(i)){
+                            vecB=relativiseRender(p.level, vecB, 0);
+                        }
+                        i++;
+                        Vec3 vecC=vertex_list.get(i);
+                        if(relative.get(i)){
+                            vecC=relativiseRender(p.level, vecC, 0);
+                        }
+                        alter_draw_triangles(vecA, vecB, vecC);
+                    }
+                    break;
+                case TRIANGLE_FAN:
+                    Vec3 vec0=vertex_list.get(0);
+                    if(relative.get(0)){
+                        vec0=relativiseRender(p.level, vec0, 0);
+                    }
+                    Vec3 vec1=vertex_list.get(1);
+                    if(relative.get(1)){
+                        vec1=relativiseRender(p.level, vec1, 0);
+                    }
+                    for(int i=2;i<vertex_list.size();i++){
+                        Vec3 vec=vertex_list.get(i);
+                        if(relative.get(i)){
+                            vec=relativiseRender(p.level, vec, 0);
+                        }
+                        alter_draw_triangles(vec0,vec1,vec);
+                        vec1=vec;
+                    }
+                    break;
+                case TRIANGLE_STRIP:
+                    Vec3 vecA=vertex_list.get(0);
+                    if(relative.get(0)){
+                        vecA=relativiseRender(p.level, vecA, 0);
+                    }
+                    Vec3 vecB=vertex_list.get(1);
+                    if(relative.get(1)){
+                        vecB=relativiseRender(p.level, vecB, 0);
+                    }
+                    for(int i=2;i<vertex_list.size();i++){
+                        Vec3 vec=vertex_list.get(i);
+                        if(relative.get(i)){
+                            vec=relativiseRender(p.level, vec, 0);
+                        }
+                        alter_draw_triangles(vecA,vecB,vec);
+                        vecA=vecB;vecB=vec;
+                    }
+                    break;
+                default:
+                    break;
+            }
+            
+            return alter_point;
+        }
+        void alter_draw_triangles(Vec3 a,Vec3 b,Vec3 c){
+            
+            
+            Vec3 B = b.subtract(a);Vec3 C = c.subtract(a);
+            for(int i=0;i/8<B.cross(C).length();i++){
+                double x = random.nextDouble();double y = random.nextDouble();
+                alter_point.add(a.add(B.scale(x/2)).add(C.scale(y/2)));
+                if(x+y<1){
+                    alter_point.add(a.add(B.scale((x+1)/2)).add(C.scale(y/2)));
+                }else{
+                    x=1-x;y=1-y;
+                    alter_point.add(a.add(B.scale(x/2)).add(C.scale((y+1)/2)));
+                }
+            }
+            
+        }
+        @Override
+        public Consumer<ServerPlayer> alternative() {
+            return p->{
+                if(p.level.dimension() != this.shapeDimension){return;}
+                if(!(fa>0.0f)){return;}
+                final ParticleOptions locparticledata = getParticleData(String.format(Locale.ROOT ,"dust %.1f %.1f %.1f %.1f", fr, fg, fb, fa), p.level.registryAccess());
+                for(Vec3 v : alter_point(p)){
+                    p.getLevel().sendParticles(p,locparticledata , true,
+                    v.x, v.y, v.z, 1,
+                    0.0, 0.0, 0.0, 0.0);
+                }
+            };
+        }
+        private final Set<String> required = Set.of("points");
+        private final Map<String, Value> optional = Map.ofEntries(
+            entry("relative",Value.NULL),
+            entry("mode", new StringValue("polygon")),
+            entry("inner", Value.TRUE),
+            entry("doublesided", Value.TRUE)
+        );
+        @Override
+        protected Set<String> requiredParams() { return Sets.union(super.requiredParams(), required); }
+        @Override
+        protected Set<String> optionalParams() { return Sets.union(super.optionalParams(), optional.keySet()); }
+        ArrayList<Vec3> vertex_list=new ArrayList<>();
+        Mode mode;
+        ArrayList<Boolean> relative=new ArrayList<>();
+        boolean inneredges;
+        @Override
+        protected void init(Map<String, Value> options)
+        {
+            super.init(options);
+
+            doublesided=options.getOrDefault("doublesided",optional.get("doublesided")).getBoolean();
+            
+            if (options.get("points") instanceof AbstractListValue abl){
+                abl.forEach(x->vertex_list.add(vecFromValue(x)));
+            }
+            String _mode = options.getOrDefault("mode",optional.get("mode")).getString();
+            inneredges = options.getOrDefault("inner",optional.get("inner")).getBoolean();
+            if(vertex_list.size()<3){
+                throw new IllegalArgumentException("Unexpected vertex list size: " + vertex_list.size());
+            }else if(vertex_list.size()<4){
+                inneredges=false;
+            }
+            if("polygon".equals(_mode)){
+                mode=VertexFormat.Mode.TRIANGLE_FAN;
+            }else if("strip".equals(_mode)){
+                mode=VertexFormat.Mode.TRIANGLE_STRIP;
+            }else if("triangles".equals(_mode)){
+                mode=VertexFormat.Mode.TRIANGLES;
+                if(vertex_list.size()%3!=0){
+                    throw new IllegalArgumentException("Unexpected vertex list size: " + vertex_list.size());
+                }
+            }
+            if (options.getOrDefault("relative",optional.get("relative")) instanceof AbstractListValue abl){
+                Iterator<Value> it = abl.iterator();
+                for(long i=0L;i<vertex_list.size();i++){
+                    relative.add(it.hasNext()?it.next().getBoolean():false);//if part of it got defined.
+                }
+            }
+            else if(options.getOrDefault("relative",optional.get("relative")) instanceof BooleanValue boolv){
+                for(long i=0L;i<vertex_list.size();i++){
+                    relative.add(boolv.getBoolean());//if it is a boolean.
+                }
+            }
+            else{
+                for(long i=0L;i<vertex_list.size();i++){
+                    relative.add(true);//if there is nothing defined at all.
+                }
+            }
+            
+        }
+    }
+
     public static class Line extends ExpiringShape
     {
         private final Set<String> required = Set.of("from", "to");
@@ -653,13 +971,12 @@ public class ShapeDispatcher
         @Override
         public Consumer<ServerPlayer> alternative()
         {
-            ParticleOptions particle = replacementParticle();
             double density = Math.max(2.0, from.distanceTo(to) /50) / (a+0.1);
             return p ->
             {
                 if (p.level.dimension() == shapeDimension) drawParticleLine(
                         Collections.singletonList(p),
-                        particle,
+                        replacementParticle(p.level.registryAccess()),
                         relativiseRender(p.level, from, 0),
                         relativiseRender(p.level, to, 0),
                         density
@@ -714,10 +1031,11 @@ public class ShapeDispatcher
         @Override
         public Consumer<ServerPlayer> alternative() { return p ->
         {
-            ParticleOptions particle = replacementParticle();
+
             int partno = Math.min(1000,20*subdivisions);
             RandomSource rand = p.level.getRandom();
             ServerLevel world = p.getLevel();
+            ParticleOptions particle = replacementParticle(world.registryAccess());
 
             Vec3 ccenter = relativiseRender(world, center, 0 );
 
@@ -792,10 +1110,11 @@ public class ShapeDispatcher
         @Override
         public Consumer<ServerPlayer> alternative() { return p ->
         {
-            ParticleOptions particle = replacementParticle();
+
             int partno = (int)Math.min(1000,Math.sqrt(20*subdivisions*(1+height)));
             RandomSource rand = p.level.getRandom();
             ServerLevel world = p.getLevel();
+            ParticleOptions particle = replacementParticle(world.registryAccess());
 
             Vec3 ccenter = relativiseRender(world, center, 0 );
 
@@ -858,11 +1177,30 @@ public class ShapeDispatcher
     public static abstract class Param
     {
         public static Map<String, Param> of = new HashMap<String, Param>(){{
+            put("mode",new StringChoiceParam("mode","polygon","strip","triangles"));
+            put("relative",new OptionalBoolListParam("relative"));
+            put("inner", new BoolParam("inner"));
             put("shape", new ShapeParam());
             put("dim", new DimensionParam());
             put("duration", new NonNegativeIntParam("duration"));
             put("color", new ColorParam("color"));
             put("follow", new EntityParam("follow"));
+            put("variant",new StringChoiceParam("variant",
+                    "NONE",
+                    "THIRD_PERSON_LEFT_HAND",
+                    "THIRD_PERSON_RIGHT_HAND",
+                    "FIRST_PERSON_LEFT_HAND",
+                    "FIRST_PERSON_RIGHT_HAND",
+                    "HEAD",
+                    "GUI",
+                    "GROUND",
+                    "FIXED")
+                    {
+                        public Value validate(Map o, MinecraftServer s, Value v)
+                        {
+                            return super.validate(o, s ,new StringValue(v.getString().toUpperCase(Locale.ROOT)));
+                        }
+                    });
             put("snap", new StringChoiceParam("snap",
                     "xyz", "xz", "yz", "xy", "x", "y", "z",
                     "dxdydz", "dxdz", "dydz", "dxdy", "dx", "dy", "dz",
@@ -879,6 +1217,15 @@ public class ShapeDispatcher
             put("radius", new PositiveFloatParam("radius"));
             put("level", new PositiveIntParam("level"));
             put("height", new FloatParam("height"));
+            put("width", new FloatParam("width"));
+            put("scale", new Vec3Param("scale", false){
+                public Value validate(java.util.Map<String,Value> options, MinecraftServer server, Value value) {
+                    if (value instanceof NumericValue vn){
+                        value = ListValue.of(vn,vn,vn);
+                    }
+                    return super.validate(options, server, value);
+                };
+            });
             put("axis", new StringChoiceParam("axis", "x", "y", "z"));
             put("points", new PointsParam("points"));
             put("text", new FormattedTextParam("text"));
@@ -886,11 +1233,18 @@ public class ShapeDispatcher
             put("size", new PositiveIntParam("size"));
             put("align", new StringChoiceParam("align", "center", "left", "right"));
 
+            put("block", new BlockParam("block"));
+            put("item", new ItemParam("item"));
+            put("blocklight", new NonNegativeIntParam("blocklight"));
+            put("skylight", new NonNegativeIntParam("skylight"));
             put("indent", new FloatParam("indent"));
             put("raise", new FloatParam("raise"));
             put("tilt", new FloatParam("tilt"));
-            put("facing", new StringChoiceParam("axis", "player", "north", "south", "east", "west", "up", "down"));
+            put("lean", new FloatParam("lean"));
+            put("turn", new FloatParam("turn"));
+            put("facing", new StringChoiceParam("facing", "player", "camera", "north", "south", "east", "west", "up", "down"));
             put("doublesided", new BoolParam("doublesided"));
+            put("debug", new BoolParam("debug"));
 
         }};
         protected String id;
@@ -901,9 +1255,36 @@ public class ShapeDispatcher
 
         public abstract Tag toTag(Value value); //validates value, returning null if not necessary to keep it and serialize
         public abstract Value validate(Map<String, Value> options, MinecraftServer server, Value value); // makes sure the value is proper
-        public abstract Value decode(Tag tag);
+        public abstract Value decode(Tag tag, Level level);
     }
+    public static class OptionalBoolListParam extends Param
+    {
+        public OptionalBoolListParam(String id) { super(id); }
 
+        @Override
+        public Tag toTag(Value value) { return value.toTag(true);}
+        @Override
+        public Value decode(Tag tag, Level level) {
+            if(tag instanceof ListTag){
+                return ListValue.wrap(((ListTag)tag).stream().map(x->BooleanValue.of(((NumericTag)x).getAsNumber().doubleValue()!=0)));
+            }
+            if(tag instanceof ByteTag booltag){
+                return BooleanValue.of(booltag.getAsByte()!=0);
+            }
+            return Value.NULL;
+        }
+
+        @Override
+        public Value validate(Map<String, Value> options, MinecraftServer server, Value value) {
+            if(value instanceof AbstractListValue lv){
+                return ListValue.wrap(lv.unpack().stream().map(Value::getBoolean).map(BooleanValue::of));
+            }
+            if(value instanceof BooleanValue || value.isNull()){
+                return value;
+            }
+            return BooleanValue.of(value.getBoolean());
+        }
+    }
     public abstract static class StringParam extends Param
     {
         protected StringParam(String id) { super(id); }
@@ -911,7 +1292,66 @@ public class ShapeDispatcher
         @Override
         public Tag toTag(Value value) { return StringTag.valueOf(value.getString()); }
         @Override
-        public Value decode(Tag tag) { return new StringValue(tag.getAsString()); }
+        public Value decode(Tag tag, Level level) { return new StringValue(tag.getAsString()); }
+    }
+    public static class BlockParam extends Param
+    {
+        
+        protected BlockParam(String id) {
+            super(id);
+        }
+        @Override
+        public Value validate(Map<String, Value> options, MinecraftServer server, Value value)
+        {
+            if(value instanceof BlockValue blv){
+                return value;
+            }
+            return BlockValue.fromString(value.getString(), server.registryAccess());
+        }
+        @Override
+        public Tag toTag(Value value) {
+            if(value instanceof BlockValue blv){
+                CompoundTag com = NbtUtils.writeBlockState(blv.getBlockState());
+                CompoundTag dataTag = blv.getData();
+                if (dataTag != null)
+                {
+                    com.put("TileEntityData", dataTag);
+                }
+                return com;
+            }
+            return null;
+        }
+
+        @Override
+        public Value decode(Tag tag, Level level) {
+            BlockState bs = NbtUtils.readBlockState(level.holderLookup(Registry.BLOCK_REGISTRY), (CompoundTag) tag);
+            CompoundTag compoundTag2 = null;
+            if (((CompoundTag) tag).contains("TileEntityData", 10)) {
+				compoundTag2 = ((CompoundTag) tag).getCompound("TileEntityData");
+            }
+            return new BlockValue(bs, null, null, compoundTag2);
+        }
+    }
+    public static class ItemParam extends Param
+    {
+        
+        protected ItemParam(String id) {
+            super(id);
+        }
+        @Override
+        public Value validate(Map<String, Value> options, MinecraftServer server, Value value)
+        {
+            ItemStack item=ValueConversions.getItemStackFromValue(value, true, server.registryAccess());
+            return new NBTSerializableValue(item.save(new CompoundTag()));
+        }
+        @Override
+        public Tag toTag(Value value) {
+            return ((NBTSerializableValue)value).getTag();
+        }
+        @Override
+        public Value decode(Tag tag, Level level) {
+            return new NBTSerializableValue(tag);
+        }
     }
     public static class TextParam extends StringParam
     {
@@ -949,7 +1389,7 @@ public class ShapeDispatcher
         }
 
         @Override
-        public Value decode(Tag tag)
+        public Value decode(Tag tag, Level level)
         {
             return FormattedTextValue.deserialize(tag.getAsString());
         }
@@ -1020,7 +1460,7 @@ public class ShapeDispatcher
         }
 
         @Override
-        public Value decode(Tag tag)
+        public Value decode(Tag tag, Level level)
         {
             return BooleanValue.of(((ByteTag) tag).getAsByte() > 0);
         }
@@ -1029,7 +1469,7 @@ public class ShapeDispatcher
     {
         protected FloatParam(String id) { super(id); }
         @Override
-        public Value decode(Tag tag) { return new NumericValue(((FloatTag)tag).getAsFloat()); }
+        public Value decode(Tag tag, Level level) { return new NumericValue(((FloatTag)tag).getAsFloat()); }
         @Override
         public Tag toTag(Value value) { return FloatTag.valueOf(NumericValue.asNumber(value, id).getFloat()); }
     }
@@ -1048,7 +1488,7 @@ public class ShapeDispatcher
     {
         protected PositiveFloatParam(String id) { super(id); }
         @Override
-        public Value decode(Tag tag) { return new NumericValue(((FloatTag)tag).getAsFloat()); }
+        public Value decode(Tag tag, Level level) { return new NumericValue(((FloatTag)tag).getAsFloat()); }
         @Override
         public Tag toTag(Value value) { return FloatTag.valueOf(NumericValue.asNumber(value, id).getFloat()); }
 
@@ -1057,7 +1497,7 @@ public class ShapeDispatcher
     {
         protected PositiveIntParam(String id) { super(id); }
         @Override
-        public Value decode(Tag tag) { return new NumericValue(((IntTag)tag).getAsInt()); }
+        public Value decode(Tag tag, Level level) { return new NumericValue(((IntTag)tag).getAsInt()); }
         @Override
         public Tag toTag(Value value) { return IntTag.valueOf(NumericValue.asNumber(value, id).getInt()); }
 
@@ -1066,7 +1506,7 @@ public class ShapeDispatcher
     {
         protected NonNegativeIntParam(String id) { super(id); }
         @Override
-        public Value decode(Tag tag) { return new NumericValue(((IntTag)tag).getAsInt()); }
+        public Value decode(Tag tag, Level level) { return new NumericValue(((IntTag)tag).getAsInt()); }
         @Override
         public Tag toTag(Value value) { return IntTag.valueOf(NumericValue.asNumber(value, id).getInt()); }
         @Override public Value validate(Map<String, Value> options, MinecraftServer server, Value value)
@@ -1080,7 +1520,7 @@ public class ShapeDispatcher
     {
         protected NonNegativeFloatParam(String id) { super(id); }
         @Override
-        public Value decode(Tag tag) { return new NumericValue(((FloatTag)tag).getAsFloat()); }
+        public Value decode(Tag tag, Level level) { return new NumericValue(((FloatTag)tag).getAsFloat()); }
         @Override
         public Tag toTag(Value value) { return FloatTag.valueOf(NumericValue.asNumber(value, id).getFloat()); }
         @Override public Value validate(Map<String, Value> options, MinecraftServer server, Value value)
@@ -1148,7 +1588,7 @@ public class ShapeDispatcher
         }
 
         @Override
-        public Value decode(Tag tag)
+        public Value decode(Tag tag, Level level)
         {
             ListTag ctag = (ListTag)tag;
             return ListValue.of(
@@ -1187,7 +1627,7 @@ public class ShapeDispatcher
         }
 
         @Override
-        public Value decode(Tag tag)
+        public Value decode(Tag tag, Level level)
         {
             ListTag ltag = (ListTag)tag;
             List<Value> points = new ArrayList<>();
@@ -1211,9 +1651,9 @@ public class ShapeDispatcher
             {
                 List<Value> coords = ((ListValue)value).getItems();
                 ListTag tag = new ListTag();
-                tag.add(DoubleTag.valueOf(NumericValue.asNumber(lv.get(0), "x").getDouble()));
-                tag.add(DoubleTag.valueOf(NumericValue.asNumber(lv.get(1), "y").getDouble()));
-                tag.add(DoubleTag.valueOf(NumericValue.asNumber(lv.get(2), "z").getDouble()));
+                tag.add(DoubleTag.valueOf(NumericValue.asNumber(coords.get(0), "x").getDouble()));
+                tag.add(DoubleTag.valueOf(NumericValue.asNumber(coords.get(1), "y").getDouble()));
+                tag.add(DoubleTag.valueOf(NumericValue.asNumber(coords.get(2), "z").getDouble()));
                 ltag.add(tag);
             }
             return ltag;
@@ -1229,7 +1669,7 @@ public class ShapeDispatcher
         }
 
         @Override
-        public Value decode(Tag tag) { return new NumericValue(((IntTag)tag).getAsInt()); }
+        public Value decode(Tag tag, Level level) { return new NumericValue(((IntTag)tag).getAsInt()); }
         @Override
         public Tag toTag(Value value) { return IntTag.valueOf(NumericValue.asNumber(value, id).getInt()); }
     }
@@ -1256,7 +1696,7 @@ public class ShapeDispatcher
         }
 
         @Override
-        public Value decode(Tag tag) { return new NumericValue(((IntTag)tag).getAsInt()); }
+        public Value decode(Tag tag, Level level) { return new NumericValue(((IntTag)tag).getAsInt()); }
     }
 
     private static boolean isStraight(Vec3 from, Vec3 to, double density)

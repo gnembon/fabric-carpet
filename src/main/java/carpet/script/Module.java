@@ -89,7 +89,7 @@ public record Module(String name, String code, boolean library) {
     {
         Path dataFile = resolveResource(module);
         if (dataFile == null) return null;
-        if (!Files.exists(dataFile) || !(dataFile.toFile().isFile())) return null;
+        if (!Files.exists(dataFile) || !(Files.isRegularFile(dataFile))) return null;
         synchronized (FileArgument.writeIOSync) { return FileArgument.readTag(dataFile); }
     }
 
@@ -97,7 +97,13 @@ public record Module(String name, String code, boolean library) {
     {
         Path dataFile = resolveResource(module);
         if (dataFile == null) return;
-        if (!Files.exists(dataFile.getParent()) && !dataFile.toFile().getParentFile().mkdirs()) return;
+        if (!Files.exists(dataFile.getParent())) {
+            try {
+                Files.createDirectories(dataFile.getParent());
+            } catch (IOException e) {
+                throw new IllegalStateException(e);
+            }
+        }
         synchronized (FileArgument.writeIOSync) { FileArgument.writeTagDisk(globalState, dataFile, false); }
     }
 

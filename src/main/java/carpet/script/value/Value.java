@@ -66,19 +66,13 @@ public abstract class Value implements Comparable<Value>, Cloneable
     public abstract boolean getBoolean();
 
     public Value add(Value o) {
-        String lstr = this.getString();
         if (o instanceof FormattedTextValue)
         {
             return FormattedTextValue.combine(this, o);
         }
-        if (lstr == null) // null
-            return new StringValue(o.getString());
-        String rstr = o.getString();
-        if (rstr == null)
-        {
-            return new StringValue(lstr);
-        }
-        return new StringValue(lstr+rstr);
+        String leftStr = this.getString();
+        String rightStr = o.getString();
+        return new StringValue(leftStr + rightStr);
     }
     public Value subtract(Value v)
     {
@@ -153,11 +147,11 @@ public abstract class Value implements Comparable<Value>, Cloneable
         if (!m.find()) return Value.NULL;
         int gc = m.groupCount();
         if (gc == 0) return new StringValue(m.group());
-        if (gc == 1) return new StringValue(m.group(1));
+        if (gc == 1) return StringValue.of(m.group(1));
         List<Value> groups = new ArrayList<>(gc);
         for (int i = 1; i <= gc; i++)
         {
-            groups.add(new StringValue(m.group(i)));
+            groups.add(StringValue.of(m.group(i)));
         }
         return ListValue.wrap(groups);
     }

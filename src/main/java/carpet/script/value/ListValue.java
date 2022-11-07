@@ -64,8 +64,7 @@ public class ListValue extends AbstractListValue implements ContainerValueInterf
 
     public ListValue(Collection<? extends Value> list)
     {
-        items = new ArrayList<>();
-        items.addAll(list);
+        items = new ArrayList<>(list);
     }
 
     protected ListValue(List<Value> list)

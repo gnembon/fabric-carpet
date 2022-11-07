@@ -224,7 +224,7 @@ public class CarpetServer // static for now - easier to handle all around the co
     private static final Set<CarpetExtension> warnedOutdatedManagerProviders = new HashSet<>();
     static void warnOutdatedManager(CarpetExtension ext)
     {
-        if (!warnedOutdatedManagerProviders.contains(ext))
+        if (warnedOutdatedManagerProviders.add(ext))
             CarpetSettings.LOG.warn("""
                     %s is providing a SettingsManager from an outdated method in CarpetExtension!
                     This behaviour will not work in later Carpet versions and the manager won't be registered!""".formatted(ext.getClass().getName()));

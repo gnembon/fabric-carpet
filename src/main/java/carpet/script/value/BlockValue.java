@@ -18,8 +18,8 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Direction.Axis;
 import net.minecraft.core.GlobalPos;
-import net.minecraft.core.HolderLookup;
 import net.minecraft.core.Registry;
+import net.minecraft.core.RegistryAccess;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.StringTag;
 import net.minecraft.nbt.Tag;
@@ -54,13 +54,13 @@ public class BlockValue extends Value
     }
 
     private static final Map<String, BlockValue> bvCache= new HashMap<>();
-    public static BlockValue fromString(String str)
+    public static BlockValue fromString(String str, RegistryAccess regs)
     {
         try
         {
-            BlockValue bv = bvCache.get(str);
+            BlockValue bv = bvCache.get(str); // [SCARY SHIT] persistent caches over server reloads
             if (bv != null) return bv;
-            BlockStateParser.BlockResult foo = BlockStateParser.parseForBlock(HolderLookup.forRegistry(Registry.BLOCK), new StringReader(str), true );
+            BlockStateParser.BlockResult foo = BlockStateParser.parseForBlock(regs.lookupOrThrow(Registry.BLOCK_REGISTRY), new StringReader(str), true );
             if (foo.blockState() != null)
             {
                 CompoundTag bd = foo.nbt();

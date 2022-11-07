@@ -38,6 +38,7 @@ import carpet.script.value.Value;
 import carpet.script.value.ValueConversions;
 import carpet.utils.Messenger;
 import com.google.common.collect.Lists;
+import com.mojang.bridge.game.PackType;
 import net.minecraft.SharedConstants;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.core.BlockPos;
@@ -80,7 +81,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.storage.CommandStorage;
 import net.minecraft.world.level.storage.LevelResource;
 import net.minecraft.world.phys.Vec3;
-import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.file.PathUtils;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -199,7 +200,7 @@ public class Auxiliary {
                     }
                 }
             }
-            ParticleOptions particle = ShapeDispatcher.getParticleData(particleName);
+            ParticleOptions particle = ShapeDispatcher.getParticleData(particleName, world.registryAccess());
             Vec3 vec = locator.vec;
             if (player == null)
             {
@@ -224,7 +225,7 @@ public class Auxiliary {
             CarpetContext cc = (CarpetContext)c;
             ServerLevel world = cc.s.getLevel();
             String particleName = lv.get(0).getString();
-            ParticleOptions particle = ShapeDispatcher.getParticleData(particleName);
+            ParticleOptions particle = ShapeDispatcher.getParticleData(particleName, world.registryAccess());
             Vector3Argument pos1 = Vector3Argument.findIn(lv, 1);
             Vector3Argument pos2 = Vector3Argument.findIn(lv, pos1.offset);
             double density = 1.0;
@@ -258,12 +259,14 @@ public class Auxiliary {
             ));
         });
 
+        expression.addContextFunction("item_display_name", 1, (c, t, lv) -> new FormattedTextValue(ValueConversions.getItemStackFromValue(lv.get(0), false, ((CarpetContext)c).s.registryAccess() ).getHoverName()));
+
         expression.addContextFunction("particle_box", -1, (c, t, lv) ->
         {
             CarpetContext cc = (CarpetContext)c;
             ServerLevel world = cc.s.getLevel();
             String particleName = lv.get(0).getString();
-            ParticleOptions particle = ShapeDispatcher.getParticleData(particleName);
+            ParticleOptions particle = ShapeDispatcher.getParticleData(particleName, world.registryAccess() );
             Vector3Argument pos1 = Vector3Argument.findIn(lv, 1);
             Vector3Argument pos2 = Vector3Argument.findIn(lv, pos1.offset);
 
@@ -1048,7 +1051,7 @@ public class Auxiliary {
                         Path zipRoot = zipfs.getPath("/");
                         zipValueToJson(zipRoot.resolve("pack.mcmeta"), MapValue.wrap(
                                 Map.of(StringValue.of("pack"), MapValue.wrap(Map.of(
-                                        StringValue.of("pack_format"), new NumericValue(SharedConstants.getCurrentVersion().getPackVersion()),
+                                        StringValue.of("pack_format"), new NumericValue(SharedConstants.getCurrentVersion().getPackVersion(PackType.DATA)),
                                         StringValue.of("description"), StringValue.of(name),
                                         StringValue.of("source"), StringValue.of("scarpet")
                                 )))
@@ -1076,7 +1079,7 @@ public class Auxiliary {
                 {
                     successful[0] = false;
                     try {
-                        FileUtils.forceDelete(packFloder.toFile());
+                        PathUtils.delete(packFloder);
                     } catch (IOException ignored) {
                         throw new InternalExpressionException("Failed to install a datapack and failed to clean up after it");
                     }
