@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Registry;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.EntityType;
@@ -234,7 +234,7 @@ public class BlockInfo
         List<Component> lst = new ArrayList<>();
         lst.add(Messenger.s(""));
         lst.add(Messenger.s("====================================="));
-        lst.add(Messenger.s(String.format("Block info for %s%s (id %d%s):",Registry.BLOCK.getKey(block),metastring, Registry.BLOCK.getId(block), metastring )));
+        lst.add(Messenger.s(String.format("Block info for %s%s (id %d%s):", BuiltInRegistries.BLOCK.getKey(block),metastring, BuiltInRegistries.BLOCK.getId(block), metastring )));
         lst.add(Messenger.s(String.format(" - Material: %s", materialName.get(material))));
         lst.add(Messenger.s(String.format(" - Map colour: %s", mapColourName.get(state.getMapColor(world, pos)))));
         lst.add(Messenger.s(String.format(" - Sound type: %s", soundName.get(block.getSoundType(state)))));

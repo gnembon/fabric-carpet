@@ -4,7 +4,7 @@ import carpet.CarpetSettings;
 import carpet.fakes.CoralFeatureInterface;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
-import net.minecraft.core.Registry;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.tags.FluidTags;
@@ -58,7 +58,7 @@ public abstract class CoralFanBlock_renewableCoralMixin implements BonemealableB
 
         MaterialColor color = blockUnder.getMapColor(worldIn, pos);
         BlockState proper_block = blockUnder;
-        Set<Block> coralBlockSet = worldIn.registryAccess().registryOrThrow(Registry.BLOCK_REGISTRY).getTag(BlockTags.CORAL_BLOCKS).orElseThrow().stream().map(Holder::value).collect(Collectors.toUnmodifiableSet());
+        Set<Block> coralBlockSet = worldIn.registryAccess().registryOrThrow(Registries.BLOCK).getTag(BlockTags.CORAL_BLOCKS).orElseThrow().stream().map(Holder::value).collect(Collectors.toUnmodifiableSet());
         for (Block block: coralBlockSet)
         {
             proper_block = block.defaultBlockState();

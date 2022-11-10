@@ -2,13 +2,13 @@ package carpet.mixins;
 
 import carpet.fakes.ChunkHolderInterface;
 import com.mojang.datafixers.util.Either;
+import net.minecraft.core.registries.Registries;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReferenceArray;
-import net.minecraft.core.Registry;
 import net.minecraft.server.level.ChunkHolder;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.thread.BlockableEventLoop;
@@ -30,7 +30,7 @@ public abstract class ChunkHolder_scarpetChunkCreationMixin implements ChunkHold
     {
         int i = ChunkStatus.EMPTY.getIndex();
         CompletableFuture<Either<ChunkAccess, ChunkHolder.ChunkLoadingFailure>> completableFuture2 = CompletableFuture.supplyAsync(
-                () -> Either.left(new ProtoChunk(chpos, UpgradeData.EMPTY, world,  world.registryAccess().registryOrThrow(Registry.BIOME_REGISTRY), null)), // todo figure out what that does - maybe add an option to reset with blending enabled..?
+                () -> Either.left(new ProtoChunk(chpos, UpgradeData.EMPTY, world,  world.registryAccess().registryOrThrow(Registries.BIOME), null)), // todo figure out what that does - maybe add an option to reset with blending enabled..?
                 executor
         );
         updateChunkToSave(completableFuture2, "unfull"); // possible debug data

@@ -29,9 +29,10 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.minecraft.commands.arguments.ParticleArgument;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.core.Registry;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.particles.ParticleOptions;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.ByteTag;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.DoubleTag;
@@ -179,7 +180,7 @@ public class ShapeDispatcher
             return particle;
         try
         {
-            particle = ParticleArgument.readParticle(new StringReader(name), regs.lookupOrThrow(Registry.PARTICLE_TYPE_REGISTRY));
+            particle = ParticleArgument.readParticle(new StringReader(name), regs.lookupOrThrow(Registries.PARTICLE_TYPE));
         }
         catch (CommandSyntaxException e)
         {
@@ -348,7 +349,7 @@ public class ShapeDispatcher
 
             key = 0;
             followEntity = -1;
-            shapeDimension = ResourceKey.create(Registry.DIMENSION_REGISTRY, new ResourceLocation(options.get("dim").getString()));
+            shapeDimension = ResourceKey.create(Registries.DIMENSION, new ResourceLocation(options.get("dim").getString()));
             if (options.containsKey("follow"))
             {
                 followEntity = NumericValue.asNumber(options.getOrDefault("follow", optional.get("follow"))).getInt();
@@ -650,11 +651,11 @@ public class ShapeDispatcher
                 if(this.isitem)
                 {
                     if (Block.byItem(this.item.getItem()).defaultBlockState().isAir()) return;
-                    particle = getParticleData("block_marker "+Registry.BLOCK.getKey(Block.byItem(this.item.getItem())), p.level.registryAccess());
+                    particle = getParticleData("block_marker "+ BuiltInRegistries.BLOCK.getKey(Block.byItem(this.item.getItem())), p.level.registryAccess());
                 }
                 else
                 {
-                    particle = getParticleData("block_marker "+Registry.BLOCK.getKey(this.blockState.getBlock()), p.level.registryAccess());
+                    particle = getParticleData("block_marker "+BuiltInRegistries.BLOCK.getKey(this.blockState.getBlock()), p.level.registryAccess());
                 }
 
                 Vec3 v = relativiseRender(p.level, this.pos, 0);
@@ -1324,7 +1325,7 @@ public class ShapeDispatcher
 
         @Override
         public Value decode(Tag tag, Level level) {
-            BlockState bs = NbtUtils.readBlockState(level.holderLookup(Registry.BLOCK_REGISTRY), (CompoundTag) tag);
+            BlockState bs = NbtUtils.readBlockState(level.holderLookup(Registries.BLOCK), (CompoundTag) tag);
             CompoundTag compoundTag2 = null;
             if (((CompoundTag) tag).contains("TileEntityData", 10)) {
 				compoundTag2 = ((CompoundTag) tag).getCompound("TileEntityData");

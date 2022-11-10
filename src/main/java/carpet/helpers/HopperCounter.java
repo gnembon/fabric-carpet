@@ -8,7 +8,7 @@ import carpet.utils.Messenger;
 import it.unimi.dsi.fastutil.objects.Object2LongLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2LongMap;
 import net.minecraft.ChatFormatting;
-import net.minecraft.core.Registry;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.Style;
@@ -336,14 +336,14 @@ public class HopperCounter
         if (DEFAULTS.containsKey(item)) return TextColor.fromRgb(appropriateColor(DEFAULTS.get(item).defaultMaterialColor().col));
         if (item instanceof DyeItem) return TextColor.fromRgb(appropriateColor(((DyeItem) item).getDyeColor().getMaterialColor().col));
         Block block = null;
-        ResourceLocation id = Registry.ITEM.getKey(item);
+        ResourceLocation id = BuiltInRegistries.ITEM.getKey(item);
         if (item instanceof BlockItem)
         {
             block = ((BlockItem) item).getBlock();
         }
-        else if (Registry.BLOCK.getOptional(id).isPresent())
+        else if (BuiltInRegistries.BLOCK.getOptional(id).isPresent())
         {
-            block = Registry.BLOCK.get(id);
+            block = BuiltInRegistries.BLOCK.get(id);
         }
         if (block != null)
         {
@@ -363,8 +363,8 @@ public class HopperCounter
         TextColor direct = fromItem(item);
         if (direct != null) return direct;
         if (CarpetServer.minecraft_server == null) return WHITE;
-        ResourceLocation id = Registry.ITEM.getKey(item);
-        for (RecipeType<?> type: Registry.RECIPE_TYPE)
+        ResourceLocation id = BuiltInRegistries.ITEM.getKey(item);
+        for (RecipeType<?> type: BuiltInRegistries.RECIPE_TYPE)
         {
             for (Recipe<?> r: ((RecipeManagerInterface) CarpetServer.minecraft_server.getRecipeManager()).getAllMatching(type, id))
             {

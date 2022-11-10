@@ -9,7 +9,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Registry;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
@@ -61,7 +61,7 @@ public class MobAI
         {
             types.addAll(type.types);
         }
-        return types.stream().map(t -> Registry.ENTITY_TYPE.getKey(t).getPath()).collect(Collectors.toList());
+        return types.stream().map(t -> BuiltInRegistries.ENTITY_TYPE.getKey(t).getPath()).collect(Collectors.toList());
     }
 
     public static List<String> availableFor(EntityType<?> entityType)

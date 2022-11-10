@@ -25,7 +25,7 @@ import java.util.UUID;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import net.minecraft.commands.CommandSourceStack;
-import net.minecraft.core.Registry;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -101,7 +101,7 @@ public class Entities {
             try
             {
                 entityId = ResourceLocation.read(new StringReader(entityString));
-                EntityType<? extends Entity> type = Registry.ENTITY_TYPE.getOptional(entityId).orElse(null);
+                EntityType<? extends Entity> type = BuiltInRegistries.ENTITY_TYPE.getOptional(entityId).orElse(null);
                 if (type == null || !type.canSummon())
                     return Value.NULL;
             }

@@ -42,10 +42,11 @@ import com.mojang.bridge.game.PackType;
 import net.minecraft.SharedConstants;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Registry;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.Rotations;
 import net.minecraft.core.particles.ParticleOptions;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtIo;
 import net.minecraft.nbt.NbtUtils;
@@ -136,12 +137,12 @@ public class Auxiliary {
             CarpetContext cc = (CarpetContext)c;
             if (lv.size() == 0)
             {
-                return ListValue.wrap(Registry.SOUND_EVENT.keySet().stream().map(ValueConversions::of));
+                return ListValue.wrap(BuiltInRegistries.SOUND_EVENT.keySet().stream().map(ValueConversions::of));
             }
             String rawString = lv.get(0).getString();
             ResourceLocation soundName = InputValidator.identifierOf(rawString);
             Vector3Argument locator = Vector3Argument.findIn(lv, 1);
-            if (Registry.SOUND_EVENT.get(soundName) == null)
+            if (BuiltInRegistries.SOUND_EVENT.get(soundName) == null)
                 throw new ThrowStatement(rawString, Throwables.UNKNOWN_SOUND);
             float volume = 1.0F;
             float pitch = 1.0F;
@@ -175,7 +176,7 @@ public class Auxiliary {
         expression.addContextFunction("particle", -1, (c, t, lv) ->
         {
             CarpetContext cc = (CarpetContext)c;
-            if (lv.size() == 0) return ListValue.wrap(Registry.PARTICLE_TYPE.keySet().stream().map(ValueConversions::of));
+            if (lv.size() == 0) return ListValue.wrap(BuiltInRegistries.PARTICLE_TYPE.keySet().stream().map(ValueConversions::of));
             MinecraftServer ms = cc.s.getServer();
             ServerLevel world = cc.s.getLevel();
             Vector3Argument locator = Vector3Argument.findIn(lv, 1);
@@ -755,16 +756,16 @@ public class Auxiliary {
                         ListValue.wrap(FeatureGenerator.featureMap.keySet().stream().sorted().map(StringValue::of).collect(Collectors.toList()))
                 );
                 plopData.put(StringValue.of("features"),
-                        ListValue.wrap(Registry.FEATURE.keySet().stream().sorted().map(ValueConversions::of).collect(Collectors.toList()))
+                        ListValue.wrap(BuiltInRegistries.FEATURE.keySet().stream().sorted().map(ValueConversions::of).collect(Collectors.toList()))
                 );
                 plopData.put(StringValue.of("configured_features"),
-                        ListValue.wrap(registryManager.registryOrThrow(Registry.CONFIGURED_FEATURE_REGISTRY).keySet().stream().sorted().map(ValueConversions::of).collect(Collectors.toList()))
+                        ListValue.wrap(registryManager.registryOrThrow(Registries.CONFIGURED_FEATURE).keySet().stream().sorted().map(ValueConversions::of).collect(Collectors.toList()))
                 );
                 plopData.put(StringValue.of("structure_types"),
-                        ListValue.wrap(Registry.STRUCTURE_TYPES.keySet().stream().sorted().map(ValueConversions::of).collect(Collectors.toList()))
+                        ListValue.wrap(BuiltInRegistries.STRUCTURE_TYPE.keySet().stream().sorted().map(ValueConversions::of).collect(Collectors.toList()))
                 );
                 plopData.put(StringValue.of("structures"),
-                        ListValue.wrap(registryManager.registryOrThrow(Registry.STRUCTURE_REGISTRY).keySet().stream().sorted().map(ValueConversions::of).collect(Collectors.toList()))
+                        ListValue.wrap(registryManager.registryOrThrow(Registries.STRUCTURE).keySet().stream().sorted().map(ValueConversions::of).collect(Collectors.toList()))
                 );
                 return MapValue.wrap(plopData);
             }
@@ -960,7 +961,7 @@ public class Auxiliary {
             ResourceLocation statName;
             category = InputValidator.identifierOf(lv.get(1).getString());
             statName = InputValidator.identifierOf(lv.get(2).getString());
-            StatType<?> type = Registry.STAT_TYPE.get(category);
+            StatType<?> type = BuiltInRegistries.STAT_TYPE.get(category);
             if (type == null) return Value.NULL;
             Stat<?> stat = getStat(type, statName);
             if (stat == null) return Value.NULL;

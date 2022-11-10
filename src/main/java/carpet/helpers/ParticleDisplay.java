@@ -5,9 +5,8 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import java.util.HashMap;
 import java.util.Map;
 import net.minecraft.commands.arguments.ParticleArgument;
-import net.minecraft.core.HolderLookup;
-import net.minecraft.core.Registry;
 import net.minecraft.core.particles.ParticleOptions;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.phys.Vec3;
@@ -20,7 +19,7 @@ public class ParticleDisplay
     {
         try
         {
-            return ParticleArgument.readParticle(new StringReader(name), level.holderLookup(Registry.PARTICLE_TYPE_REGISTRY));
+            return ParticleArgument.readParticle(new StringReader(name), level.holderLookup(Registries.PARTICLE_TYPE));
         }
         catch (CommandSyntaxException e)
         {

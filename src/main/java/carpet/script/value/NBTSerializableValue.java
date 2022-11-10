@@ -23,8 +23,8 @@ import net.minecraft.commands.arguments.item.ItemInput;
 import net.minecraft.commands.arguments.item.ItemParser;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
-import net.minecraft.core.Registry;
 import net.minecraft.core.RegistryAccess;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CollectionTag;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.EndTag;
@@ -305,7 +305,7 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
                     return res;
                 else
                     return new ItemInput(Holder.direct(res.getItem()), customTag);
-            ItemParser.ItemResult parser = ItemParser.parseForItem(regs.lookupOrThrow(Registry.ITEM_REGISTRY), new StringReader(itemString));
+            ItemParser.ItemResult parser = ItemParser.parseForItem(regs.lookupOrThrow(Registries.ITEM), new StringReader(itemString));
             res = new ItemInput(parser.item(), parser.nbt());
 
             itemCache.put(itemString, res);

@@ -95,6 +95,8 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.Holder;
 import net.minecraft.core.HolderSet;
 import net.minecraft.core.Registry;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
@@ -160,7 +162,7 @@ public abstract class CommandArgument
             new VanillaUnconfigurableArgument("anchor", EntityAnchorArgument::anchor,
                     (c, p) -> StringValue.of(EntityAnchorArgument.getAnchor(c, p).name()), false
             ),
-            new VanillaUnconfigurableArgument("entitytype", c -> ResourceArgument.resource(c, Registry.ENTITY_TYPE_REGISTRY),
+            new VanillaUnconfigurableArgument("entitytype", c -> ResourceArgument.resource(c, Registries.ENTITY_TYPE),
                     (c, p) -> ValueConversions.of(ResourceArgument.getSummonableEntityType(c, p).key()), SuggestionProviders.SUMMONABLE_ENTITIES
             ),
             new VanillaUnconfigurableArgument("floatrange", RangeArgument::floatRange,
@@ -172,7 +174,7 @@ public abstract class CommandArgument
             new VanillaUnconfigurableArgument("intrange", RangeArgument::intRange,
                     (c, p) -> ValueConversions.of(RangeArgument.Ints.getRange(c, p)), true
             ),
-            new VanillaUnconfigurableArgument("enchantment", Registry.ENCHANTMENT_REGISTRY),
+            new VanillaUnconfigurableArgument("enchantment", Registries.ENCHANTMENT),
 
             // item_predicate  ?? //same as item but accepts tags, not sure right now
             new SlotArgument(),
@@ -183,7 +185,7 @@ public abstract class CommandArgument
             new VanillaUnconfigurableArgument("message", MessageArgument::message,
                     (c, p) -> new FormattedTextValue(MessageArgument.getMessage(c, p)), true
             ),
-            new VanillaUnconfigurableArgument("effect", Registry.MOB_EFFECT_REGISTRY),
+            new VanillaUnconfigurableArgument("effect", Registries.MOB_EFFECT),
 
             new TagArgument(), // for nbt_compound_tag and nbt_tag
             new VanillaUnconfigurableArgument("path", NbtPathArgument::nbtPath,
@@ -197,7 +199,7 @@ public abstract class CommandArgument
             ),
             // operation // not sure if we need it, you have scarpet for that
             new VanillaUnconfigurableArgument("particle", ParticleArgument::particle,
-                    (c, p) -> ValueConversions.of(ParticleArgument.getParticle(c, p)), (c, b) -> SharedSuggestionProvider.suggestResource(c.getSource().getServer().registryAccess().registryOrThrow(Registry.PARTICLE_TYPE_REGISTRY).keySet(), b)
+                    (c, p) -> ValueConversions.of(ParticleArgument.getParticle(c, p)), (c, b) -> SharedSuggestionProvider.suggestResource(c.getSource().getServer().registryAccess().registryOrThrow(Registries.PARTICLE_TYPE).keySet(), b)
             ),
 
             // resource / identifier section
@@ -209,20 +211,20 @@ public abstract class CommandArgument
                     (c, p) -> ValueConversions.of( ResourceLocationArgument.getAdvancement(c, p).getId()), (ctx, builder) -> SharedSuggestionProvider.suggestResource(ctx.getSource().getServer().getAdvancements().getAllAdvancements().stream().map(Advancement::getId), builder)
             ),
             new VanillaUnconfigurableArgument("lootcondition", ResourceLocationArgument::id,
-                    (c, p) -> ValueConversions.of( Registry.LOOT_CONDITION_TYPE.getKey(ResourceLocationArgument.getPredicate(c, p).getType())), (ctx, builder) -> SharedSuggestionProvider.suggestResource(ctx.getSource().getServer().getPredicateManager().getKeys(), builder)
+                    (c, p) -> ValueConversions.of( BuiltInRegistries.LOOT_CONDITION_TYPE.getKey(ResourceLocationArgument.getPredicate(c, p).getType())), (ctx, builder) -> SharedSuggestionProvider.suggestResource(ctx.getSource().getServer().getPredicateManager().getKeys(), builder)
             ),
             new VanillaUnconfigurableArgument("loottable", ResourceLocationArgument::id,
                     (c, p) -> ValueConversions.of( ResourceLocationArgument.getId(c, p)), (ctx, builder) -> SharedSuggestionProvider.suggestResource(ctx.getSource().getServer().getLootTables().getIds(), builder)
             ),
-            new VanillaUnconfigurableArgument("attribute", Registry.ATTRIBUTE_REGISTRY),
+            new VanillaUnconfigurableArgument("attribute", Registries.ATTRIBUTE),
 
             new VanillaUnconfigurableArgument("boss", ResourceLocationArgument::id,
                     (c, p) -> ValueConversions.of( ResourceLocationArgument.getId(c, p)), BossBarCommands.SUGGEST_BOSS_BAR
             ),
 
-            new VanillaUnconfigurableArgument("biome", (c) -> ResourceOrTagArgument.resourceOrTag(c, Registry.BIOME_REGISTRY),
+            new VanillaUnconfigurableArgument("biome", (c) -> ResourceOrTagArgument.resourceOrTag(c, Registries.BIOME),
                     (c, p) -> {
-                        ResourceOrTagArgument.Result<Biome> result = ResourceOrTagArgument.getResourceOrTag(c, "biome", Registry.BIOME_REGISTRY);
+                        ResourceOrTagArgument.Result<Biome> result = ResourceOrTagArgument.getResourceOrTag(c, "biome", Registries.BIOME);
                         Either<Holder.Reference<Biome>, HolderSet.Named<Biome>> res = result.unwrap();
                         if (res.left().isPresent())
                         {
@@ -233,7 +235,7 @@ public abstract class CommandArgument
                             return ValueConversions.of(res.right().get().key());
                         }
                         return Value.NULL;
-                    }, (ctx, builder) -> SharedSuggestionProvider.suggestResource(ctx.getSource().getServer().registryAccess().registryOrThrow(Registry.BIOME_REGISTRY).keySet(), builder)
+                    }, (ctx, builder) -> SharedSuggestionProvider.suggestResource(ctx.getSource().getServer().registryAccess().registryOrThrow(Registries.BIOME).keySet(), builder)
             ),
             new VanillaUnconfigurableArgument("sound", ResourceLocationArgument::id,
                     (c, p) -> ValueConversions.of( ResourceLocationArgument.getId(c, p)), SuggestionProviders.AVAILABLE_SOUNDS

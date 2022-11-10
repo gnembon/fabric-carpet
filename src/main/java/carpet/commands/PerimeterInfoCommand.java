@@ -11,7 +11,7 @@ import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.arguments.coordinates.BlockPosArgument;
 import net.minecraft.commands.synchronization.SuggestionProviders;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Registry;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
@@ -37,7 +37,7 @@ public class PerimeterInfoCommand
                                 c.getSource(),
                                 BlockPosArgument.getSpawnablePos(c, "center position"),
                                 null)).
-                        then(argument("mob", resource(commandBuildContext, Registry.ENTITY_TYPE_REGISTRY)).
+                        then(argument("mob", resource(commandBuildContext, Registries.ENTITY_TYPE)).
                                 suggests(SuggestionProviders.SUMMONABLE_ENTITIES).
                                 executes( (c) -> perimeterDiagnose(
                                         c.getSource(),

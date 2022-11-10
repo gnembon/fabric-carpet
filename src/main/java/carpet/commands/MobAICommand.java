@@ -8,7 +8,7 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import net.minecraft.commands.CommandBuildContext;
 import net.minecraft.commands.CommandSourceStack;
-import net.minecraft.core.Registry;
+import net.minecraft.core.registries.Registries;
 
 import static net.minecraft.commands.Commands.argument;
 import static net.minecraft.commands.Commands.literal;
@@ -22,7 +22,7 @@ public class MobAICommand
     {
         LiteralArgumentBuilder<CommandSourceStack> command = literal("track").
                 requires((player) -> CommandHelper.canUseCommand(player, CarpetSettings.commandTrackAI)).
-                then(argument("entity type", resource(commandBuildContext, Registry.ENTITY_TYPE_REGISTRY)).
+                then(argument("entity type", resource(commandBuildContext, Registries.ENTITY_TYPE)).
 
                         suggests( (c, b) -> suggest(MobAI.availbleTypes(), b)).
                         then(literal("clear").executes( (c) ->

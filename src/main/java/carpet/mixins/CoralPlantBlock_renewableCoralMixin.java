@@ -3,7 +3,7 @@ package carpet.mixins;
 import carpet.CarpetSettings;
 import carpet.fakes.CoralFeatureInterface;
 import net.minecraft.core.Holder;
-import net.minecraft.core.Registry;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.util.RandomSource;
 import org.spongepowered.asm.mixin.Mixin;
 
@@ -60,7 +60,7 @@ public abstract class CoralPlantBlock_renewableCoralMixin implements Bonemealabl
 
         MaterialColor color = blockUnder.getMapColor(worldIn, pos);
         BlockState proper_block = blockUnder;
-        Set<Block> coralBlockSet = worldIn.registryAccess().registryOrThrow(Registry.BLOCK_REGISTRY).getTag(BlockTags.CORAL_BLOCKS).orElseThrow().stream().map(Holder::value).collect(Collectors.toUnmodifiableSet());
+        Set<Block> coralBlockSet = worldIn.registryAccess().registryOrThrow(Registries.BLOCK).getTag(BlockTags.CORAL_BLOCKS).orElseThrow().stream().map(Holder::value).collect(Collectors.toUnmodifiableSet());
         for (Block block: coralBlockSet)
         {
             proper_block = block.defaultBlockState();

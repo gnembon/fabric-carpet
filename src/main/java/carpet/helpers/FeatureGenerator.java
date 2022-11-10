@@ -20,6 +20,8 @@ import net.minecraft.core.HolderSet;
 import net.minecraft.core.QuartPos;
 import net.minecraft.core.Registry;
 import net.minecraft.core.RegistryAccess;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.data.worldgen.Pools;
 import net.minecraft.data.worldgen.ProcessorLists;
 import net.minecraft.data.worldgen.placement.PlacementUtils;
@@ -71,13 +73,13 @@ public class FeatureGenerator
             return custom.apply(world).plop(world, pos);
         }
         ResourceLocation id = new ResourceLocation(featureName);
-        Structure structure = world.registryAccess().registryOrThrow(Registry.STRUCTURE_REGISTRY).get(id);
+        Structure structure = world.registryAccess().registryOrThrow(Registries.STRUCTURE).get(id);
         if (structure != null)
         {
              return plopAnywhere( structure, world, pos, world.getChunkSource().getGenerator(), false);
         }
 
-        ConfiguredFeature<?, ?> configuredFeature = world.registryAccess().registryOrThrow(Registry.CONFIGURED_FEATURE_REGISTRY).get(id);
+        ConfiguredFeature<?, ?> configuredFeature = world.registryAccess().registryOrThrow(Registries.CONFIGURED_FEATURE).get(id);
         if (configuredFeature != null)
         {
             CarpetSettings.skipGenerationChecks.set(true);
@@ -90,14 +92,14 @@ public class FeatureGenerator
                 CarpetSettings.skipGenerationChecks.set(false);
             }
         }
-        Optional<StructureType<?>> structureType = Registry.STRUCTURE_TYPES.getOptional(id);
+        Optional<StructureType<?>> structureType = BuiltInRegistries.STRUCTURE_TYPE.getOptional(id);
         if (structureType.isPresent())
         {
             Structure configuredStandard = getDefaultFeature(structureType.get(), world, pos);
             if (configuredStandard != null)
                 return plopAnywhere(configuredStandard, world, pos, world.getChunkSource().getGenerator(), false);
         }
-        Feature<?> feature = Registry.FEATURE.get(id);
+        Feature<?> feature = BuiltInRegistries.FEATURE.get(id);
         if (feature != null)
         {
             ConfiguredFeature<?,?> configuredStandard = getDefaultFeature(feature, world, pos, true);
@@ -120,9 +122,9 @@ public class FeatureGenerator
     public static Structure resolveConfiguredStructure(String name, ServerLevel world, BlockPos pos)
     {
         ResourceLocation id = new ResourceLocation(name);
-        Structure configuredStructureFeature =  world.registryAccess().registryOrThrow(Registry.STRUCTURE_REGISTRY).get(id);
+        Structure configuredStructureFeature =  world.registryAccess().registryOrThrow(Registries.STRUCTURE).get(id);
         if (configuredStructureFeature != null) return configuredStructureFeature;
-        StructureType<?> structureFeature = Registry.STRUCTURE_TYPES.get(id);
+        StructureType<?> structureFeature = BuiltInRegistries.STRUCTURE_TYPE.get(id);
         if (structureFeature == null) return null;
         return getDefaultFeature(structureFeature, world, pos);
     }
@@ -178,7 +180,7 @@ public class FeatureGenerator
         // TODO allow old types, like vaillage, or bastion
         Holder<Biome> existingBiome = world.getBiome(pos);
         Structure result = null;
-        for (Structure confstr :  world.registryAccess().registryOrThrow(Registry.STRUCTURE_REGISTRY).entrySet().stream().
+        for (Structure confstr :  world.registryAccess().registryOrThrow(Registries.STRUCTURE).entrySet().stream().
                      filter(cS -> cS.getValue().type() == structure).map(Map.Entry::getValue).toList())
         {
             result = confstr;
@@ -197,7 +199,7 @@ public class FeatureGenerator
                     return provider.value().feature().value();
             }
         if (!tryHard) return null;
-        return world.registryAccess().registryOrThrow(Registry.CONFIGURED_FEATURE_REGISTRY).entrySet().stream().
+        return world.registryAccess().registryOrThrow(Registries.CONFIGURED_FEATURE).entrySet().stream().
                 filter(cS -> cS.getValue().feature() == feature).
                 findFirst().map(Map.Entry::getValue).orElse(null);
     }
@@ -258,16 +260,16 @@ public class FeatureGenerator
         put("bastion_remnant_units", l -> {
             RegistryAccess regs = l.registryAccess();
 
-            final HolderGetter<StructureProcessorList> processorLists = regs.lookupOrThrow(Registry.PROCESSOR_LIST_REGISTRY);
+            final HolderGetter<StructureProcessorList> processorLists = regs.lookupOrThrow(Registries.PROCESSOR_LIST);
             final Holder<StructureProcessorList> bastionGenericDegradation = processorLists.getOrThrow(ProcessorLists.BASTION_GENERIC_DEGRADATION);
 
-            final HolderGetter<StructureTemplatePool> pools = regs.lookupOrThrow(Registry.TEMPLATE_POOL_REGISTRY);
+            final HolderGetter<StructureTemplatePool> pools = regs.lookupOrThrow(Registries.TEMPLATE_POOL);
             final Holder<StructureTemplatePool> empty = pools.getOrThrow(Pools.EMPTY);
 
 
             return spawnCustomStructure(
                     new JigsawStructure(new Structure.StructureSettings(
-                            l.registryAccess().registryOrThrow(Registry.BIOME_REGISTRY).getOrCreateTag(BiomeTags.HAS_BASTION_REMNANT),
+                            l.registryAccess().registryOrThrow(Registries.BIOME).getOrCreateTag(BiomeTags.HAS_BASTION_REMNANT),
                             Map.of(),
                             GenerationStep.Decoration.SURFACE_STRUCTURES,
                             TerrainAdjustment.NONE
@@ -288,15 +290,15 @@ public class FeatureGenerator
         put("bastion_remnant_hoglin_stable", l -> {
             RegistryAccess regs = l.registryAccess();
 
-            final HolderGetter<StructureProcessorList> processorLists = regs.lookupOrThrow(Registry.PROCESSOR_LIST_REGISTRY);
+            final HolderGetter<StructureProcessorList> processorLists = regs.lookupOrThrow(Registries.PROCESSOR_LIST);
             final Holder<StructureProcessorList> bastionGenericDegradation = processorLists.getOrThrow(ProcessorLists.BASTION_GENERIC_DEGRADATION);
 
-            final HolderGetter<StructureTemplatePool> pools = regs.lookupOrThrow(Registry.TEMPLATE_POOL_REGISTRY);
+            final HolderGetter<StructureTemplatePool> pools = regs.lookupOrThrow(Registries.TEMPLATE_POOL);
             final Holder<StructureTemplatePool> empty = pools.getOrThrow(Pools.EMPTY);
 
             return spawnCustomStructure(
                     new JigsawStructure(new Structure.StructureSettings(
-                            l.registryAccess().registryOrThrow(Registry.BIOME_REGISTRY).getOrCreateTag(BiomeTags.HAS_BASTION_REMNANT),
+                            l.registryAccess().registryOrThrow(Registries.BIOME).getOrCreateTag(BiomeTags.HAS_BASTION_REMNANT),
                             Map.of(),
                             GenerationStep.Decoration.SURFACE_STRUCTURES,
                             TerrainAdjustment.NONE
@@ -317,15 +319,15 @@ public class FeatureGenerator
         put("bastion_remnant_treasure", l -> {
             RegistryAccess regs = l.registryAccess();
 
-            final HolderGetter<StructureProcessorList> processorLists = regs.lookupOrThrow(Registry.PROCESSOR_LIST_REGISTRY);
+            final HolderGetter<StructureProcessorList> processorLists = regs.lookupOrThrow(Registries.PROCESSOR_LIST);
             final Holder<StructureProcessorList> bastionGenericDegradation = processorLists.getOrThrow(ProcessorLists.BASTION_GENERIC_DEGRADATION);
 
-            final HolderGetter<StructureTemplatePool> pools = regs.lookupOrThrow(Registry.TEMPLATE_POOL_REGISTRY);
+            final HolderGetter<StructureTemplatePool> pools = regs.lookupOrThrow(Registries.TEMPLATE_POOL);
             final Holder<StructureTemplatePool> empty = pools.getOrThrow(Pools.EMPTY);
 
             return spawnCustomStructure(
                     new JigsawStructure(new Structure.StructureSettings(
-                            l.registryAccess().registryOrThrow(Registry.BIOME_REGISTRY).getOrCreateTag(BiomeTags.HAS_BASTION_REMNANT),
+                            l.registryAccess().registryOrThrow(Registries.BIOME).getOrCreateTag(BiomeTags.HAS_BASTION_REMNANT),
                             Map.of(),
                             GenerationStep.Decoration.SURFACE_STRUCTURES,
                             TerrainAdjustment.NONE
@@ -346,15 +348,15 @@ public class FeatureGenerator
         put("bastion_remnant_bridge", l -> {
             RegistryAccess regs = l.registryAccess();
 
-            final HolderGetter<StructureProcessorList> processorLists = regs.lookupOrThrow(Registry.PROCESSOR_LIST_REGISTRY);
+            final HolderGetter<StructureProcessorList> processorLists = regs.lookupOrThrow(Registries.PROCESSOR_LIST);
             final Holder<StructureProcessorList> bastionGenericDegradation = processorLists.getOrThrow(ProcessorLists.BASTION_GENERIC_DEGRADATION);
 
-            final HolderGetter<StructureTemplatePool> pools = regs.lookupOrThrow(Registry.TEMPLATE_POOL_REGISTRY);
+            final HolderGetter<StructureTemplatePool> pools = regs.lookupOrThrow(Registries.TEMPLATE_POOL);
             final Holder<StructureTemplatePool> empty = pools.getOrThrow(Pools.EMPTY);
 
             return spawnCustomStructure(
                     new JigsawStructure(new Structure.StructureSettings(
-                            l.registryAccess().registryOrThrow(Registry.BIOME_REGISTRY).getOrCreateTag(BiomeTags.HAS_BASTION_REMNANT),
+                            l.registryAccess().registryOrThrow(Registries.BIOME).getOrCreateTag(BiomeTags.HAS_BASTION_REMNANT),
                             Map.of(),
                             GenerationStep.Decoration.SURFACE_STRUCTURES,
                             TerrainAdjustment.NONE
@@ -396,7 +398,7 @@ public class FeatureGenerator
 
             if (!wireOnly)
             {
-                Registry<Structure> registry3 = world.registryAccess().registryOrThrow(Registry.STRUCTURE_REGISTRY);
+                Registry<Structure> registry3 = world.registryAccess().registryOrThrow(Registries.STRUCTURE);
                 world.setCurrentlyGenerating(() -> {
                     Objects.requireNonNull(structure);
                     return registry3.getResourceKey(structure).map(Object::toString).orElseGet(structure::toString);
