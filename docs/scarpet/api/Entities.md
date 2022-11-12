@@ -73,7 +73,7 @@ the center point/area. Uses the same `type` selectors as `entities_list`.
 also be represented as a block, in this case the search box will be centered on the middle of the block, or an entity - in this case
 entire bounding box of the entity serves as a 'center' of search which is then expanded in all directions with the `'distance'` vector.
 
-In any case - returns all entities which bounding box collides with the bounding box defined by `'center'` and `'disteance'`.
+In any case - returns all entities which bounding box collides with the bounding box defined by `'center'` and `'distance'`.
 
 entity_area is simpler than `entity_selector` and runs about 20% faster, but is limited to predefined selectors and 
 cuboid search area.
@@ -882,7 +882,7 @@ Modifies entity air.
 Adds exhaustion value to the current player exhaustion level - that's the method you probably want to use
 to manipulate how much 'food' an action costs.
 
-### `modify(e, 'breaking_progress', value)` 
+### `modify(e, 'breaking_progress', value)`
 
 Modifies the breaking progress of a player currently mined block. Value of `null`, `-1` makes it reset. 
 Values `0` to `10` will show respective animation of a breaking block. Check `query(e, 'breaking_progress')` for 

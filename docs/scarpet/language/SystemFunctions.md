@@ -76,7 +76,7 @@ str('foo') => 'foo'
 str('3bar') => '3bar'
 str(2)+str(2) => '22'
 str('pi: %.2f',pi) => 'pi: 3.14'
-str('player at: %d %d %d',pos(player())) => 'player at: 567, -2423, 124'
+str('player at: %d, %d, %d',pos(player())) => 'player at: 567, -2423, 124'
 </pre>
 
 * * *
