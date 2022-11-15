@@ -206,9 +206,9 @@ public class Inventories {
             return new StringValue(NBTSerializableValue.nameFromRegistryId(Registry.ITEM.getKey(item.getCraftingRemainingItem())));
         });
 
-        expression.addUnaryFunction("item_rarity", v ->
+        expression.addContextFunction("item_rarity", 1, (c, t, lv)  ->
         {
-            return StringValue.of(ValueConversions.getItemStackFromValue(v,true).getRarity().toString()); 
+            return StringValue.of(ValueConversions.getItemStackFromValue(lv.get(0),true, ((CarpetContext)c).s.registryAccess() ).getRarity().toString()); 
         });
 
         expression.addContextFunction("inventory_size", -1, (c, t, lv) ->
