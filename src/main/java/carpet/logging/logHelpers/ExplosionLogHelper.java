@@ -25,7 +25,7 @@ public class ExplosionLogHelper
     private final Object2IntMap<EntityChangedStatusWithCount> impactedEntities = new Object2IntOpenHashMap<>();
 
     private static long lastGametime = 0;
-    private static int explosionCountInCurretGT = 0;
+    private static int explosionCountInCurrentGT = 0;
     private static boolean newTick;
 
     public ExplosionLogHelper(double x, double y, double z, float power, boolean createFire, Explosion.BlockInteraction blockDestructionType) {
@@ -44,22 +44,22 @@ public class ExplosionLogHelper
     {
         newTick = false;
         if (!(lastGametime == gametime)){
-            explosionCountInCurretGT = 0;
+            explosionCountInCurrentGT = 0;
             lastGametime = gametime;
             newTick = true;
         }
-        explosionCountInCurretGT++;
+        explosionCountInCurrentGT++;
         LoggerRegistry.getLogger("explosions").log( (option) -> {
             List<Component> messages = new ArrayList<>();
             if(newTick) messages.add(c("wb tick : ", "d " + gametime));
             if ("brief".equals(option))
             {
-                messages.add( c("d #" + explosionCountInCurretGT,"gb ->",
+                messages.add( c("d #" + explosionCountInCurrentGT,"gb ->",
                         Messenger.dblt("l", pos.x, pos.y, pos.z), (affectBlocks)?"m  (affects blocks)":"m  (doesn't affect blocks)" ));
             }
             if ("full".equals(option))
             {
-                messages.add( c("d #" + explosionCountInCurretGT,"gb ->", Messenger.dblt("l", pos.x, pos.y, pos.z) ));
+                messages.add( c("d #" + explosionCountInCurrentGT,"gb ->", Messenger.dblt("l", pos.x, pos.y, pos.z) ));
                 messages.add(c("w   affects blocks: ", "m " + this.affectBlocks));
                 messages.add(c("w   creates fire: ", "m " + this.createFire));
                 messages.add(c("w   power: ", "c " + this.power));
