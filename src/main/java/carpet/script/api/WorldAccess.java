@@ -1644,9 +1644,9 @@ public class WorldAccess {
 
             var randomState = RandomState
                     .create(generator.generatorSettings().value(), level.registryAccess()
-                    .lookupOrThrow(Registry.NOISE_REGISTRY), level.getSeed());
+                    .lookupOrThrow(Registries.NOISE), level.getSeed());
 
-            var densityFunctionRegistry = level.registryAccess().registryOrThrow(Registry.DENSITY_FUNCTION_REGISTRY);
+            var densityFunctionRegistry = level.registryAccess().registryOrThrow(Registries.DENSITY_FUNCTION);
 
             var visitor = ((RandomStateVisitorAccessor) (Object) randomState).getVisitor();
 
