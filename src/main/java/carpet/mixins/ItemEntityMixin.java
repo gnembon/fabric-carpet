@@ -12,6 +12,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.ShulkerBoxBlock;
 import carpet.fakes.ItemEntityInterface;
+import java.util.Objects;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
@@ -22,8 +23,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(ItemEntity.class)
 public abstract class ItemEntityMixin extends Entity implements ItemEntityInterface
 {
-    private static final int SHULKERBOX_MAX_STACK_AMOUNT = 64;
-
     @Shadow private int age;
     @Shadow private int pickupDelay;
 
@@ -51,12 +50,10 @@ public abstract class ItemEntityMixin extends Entity implements ItemEntityInterf
     private void removeEmptyShulkerBoxTags(Level worldIn, double x, double y, double z, ItemStack stack, CallbackInfo ci)
     {
         if (CarpetSettings.shulkerBoxStackSize > 1
-                && stack.getItem() instanceof BlockItem
-                && ((BlockItem)stack.getItem()).getBlock() instanceof ShulkerBoxBlock)
+                && stack.getItem() instanceof BlockItem bi
+                && bi.getBlock() instanceof ShulkerBoxBlock)
         {
-            if (InventoryHelper.cleanUpShulkerBoxTag(stack)) {
-                ((ItemEntity) (Object) this).setItem(stack);
-            }
+            InventoryHelper.cleanUpShulkerBoxTag(stack);
         }
     }
 
@@ -83,7 +80,7 @@ public abstract class ItemEntityMixin extends Entity implements ItemEntityInterf
     {
         ItemEntity self = (ItemEntity)(Object)this;
         ItemStack selfStack = self.getItem();
-        if (CarpetSettings.shulkerBoxStackSize == 1 || !(selfStack.getItem() instanceof BlockItem) || !(((BlockItem)selfStack.getItem()).getBlock() instanceof ShulkerBoxBlock)) {
+        if (CarpetSettings.shulkerBoxStackSize == 1 || !(selfStack.getItem() instanceof BlockItem bi) || !(bi.getBlock() instanceof ShulkerBoxBlock)) {
             return;
         }
 
@@ -91,8 +88,8 @@ public abstract class ItemEntityMixin extends Entity implements ItemEntityInterf
         if (selfStack.getItem() == otherStack.getItem()
                 && !InventoryHelper.shulkerBoxHasItems(selfStack)
                 && !InventoryHelper.shulkerBoxHasItems(otherStack)
-                && selfStack.hasTag() == otherStack.hasTag()
-                && selfStack.getCount() + otherStack.getCount() <= CarpetSettings.shulkerBoxStackSize)
+                && Objects.equals(selfStack.getTag(), otherStack.getTag()) // empty block entity tags are cleaned up when spawning
+                && selfStack.getCount() != CarpetSettings.shulkerBoxStackSize)
         {
             int amount = Math.min(otherStack.getCount(), CarpetSettings.shulkerBoxStackSize - selfStack.getCount());
 
@@ -105,7 +102,7 @@ public abstract class ItemEntityMixin extends Entity implements ItemEntityInterf
             otherStack.shrink(amount);
             if (otherStack.isEmpty())
             {
-                other.discard(); // discard remove();
+                other.discard();
             }
             else
             {
