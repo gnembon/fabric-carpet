@@ -44,7 +44,6 @@ import java.util.Set;
 import java.util.Stack;
 import java.util.function.BiFunction;
 import java.util.function.Function;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import static java.lang.Math.max;
@@ -934,14 +933,14 @@ public class Expression
         {
             ast = getAST(c);
         }
-        return evalValue(() -> ast, c, Context.Type.NONE);
+        return evalValue(ast, c, Context.Type.NONE);
     }
 
-    public Value evalValue(Supplier<LazyValue> exprProvider, Context c, Context.Type expectedType)
+    public Value evalValue(LazyValue exprProvider, Context c, Context.Type expectedType)
     {
         try
         {
-            return exprProvider.get().evalValue(c, expectedType);
+            return exprProvider.evalValue(c, expectedType);
         }
         catch (ContinueStatement | BreakStatement | ReturnStatement exc)
         {
