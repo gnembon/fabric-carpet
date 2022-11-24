@@ -96,15 +96,15 @@ public class BlockIterators {
             int sCount = 0;
             outer:for (int y=cy-yrange; y <= cy+yprange; y++)
             {
-                c.setVariable("_y", new NumericValue(y).bindTo("_y"));
+                c.setVariable("_y", new NumericValue(y));
                 for (int x=cx-xrange; x <= cx+xprange; x++)
                 {
-                    c.setVariable("_x", new NumericValue(x).bindTo("_x"));
+                    c.setVariable("_x", new NumericValue(x));
                     for (int z=cz-zrange; z <= cz+zprange; z++)
                     {
 
-                        c.setVariable("_z", new NumericValue(z).bindTo("_z"));
-                        Value blockValue = BlockValue.fromCoords(((CarpetContext)c), x, y, z).bindTo("_");
+                        c.setVariable("_z", new NumericValue(z));
+                        Value blockValue = BlockValue.fromCoords(((CarpetContext)c), x, y, z);
                         c.setVariable( "_", blockValue);
                         Value result;
                         try
@@ -168,14 +168,14 @@ public class BlockIterators {
             int sCount = 0;
             outer:for (int y=miny; y <= maxy; y++)
             {
-                c.setVariable("_y", new NumericValue(y).bindTo("_y"));
+                c.setVariable("_y", new NumericValue(y));
                 for (int x=minx; x <= maxx; x++)
                 {
-                    c.setVariable("_x", new NumericValue(x).bindTo("_x"));
+                    c.setVariable("_x", new NumericValue(x));
                     for (int z=minz; z <= maxz; z++)
                     {
-                        c.setVariable("_z", new NumericValue(z).bindTo("_z"));
-                        Value blockValue = BlockValue.fromCoords(((CarpetContext)c), x, y, z).bindTo("_");
+                        c.setVariable("_z", new NumericValue(z));
+                        Value blockValue = BlockValue.fromCoords(((CarpetContext)c), x, y, z);
                         c.setVariable( "_", blockValue);
                         Value result;
                         try

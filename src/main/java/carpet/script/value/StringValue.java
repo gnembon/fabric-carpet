@@ -19,12 +19,6 @@ public class StringValue extends Value
         return str != null && !str.isEmpty();
     }
 
-    @Override
-    public Value clone()
-    {
-        return new StringValue(str);
-    }
-
     public StringValue(String str)
     {
         this.str = str;

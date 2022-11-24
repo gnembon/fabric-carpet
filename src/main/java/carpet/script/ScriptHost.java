@@ -65,7 +65,7 @@ public abstract class ScriptHost
             globalFunctions.putAll(other.globalFunctions);
             other.globalVariables.forEach((key, value) ->
             {
-                globalVariables.put(key, value.deepcopy().bindTo(value.getVariable()));
+                globalVariables.put(key, value.deepcopy());
             });
         }
 

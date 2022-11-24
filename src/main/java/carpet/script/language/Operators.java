@@ -308,7 +308,7 @@ public class Operators {
                 Iterator<Value> ri = rl.iterator();
                 for (String variable : lhs.variables())
                 {
-                    Value vval = ri.next().reboundedTo(variable);
+                    Value vval = ri.next();
                     expression.setAnyVariable(c, variable, vval);
                 }
                 return Value.TRUE;
@@ -325,12 +325,10 @@ public class Operators {
                     if (!(container.put(address, v2))) return Value.NULL;
                     return v2;
                 }
-                if (v1.isBound()) throw trap("compiling operator =");
                 throw new InternalExpressionException("Left hand side must be a variable");
             }
-            Value copy = v2.reboundedTo(null); // assignable.set will set the name
-            var.set(c, copy);
-            return copy;
+            var.set(c, v2);
+            return v2;
         });
 
         // lazy due to assignment
@@ -345,7 +343,7 @@ public class Operators {
                 Iterator<Value> ri = rl.iterator();
                 for (int i = 0; i < lhs.size(); i++)
                 {
-                    Value result = lhs.getValue(c, i).add(ri.next()).bindTo(lhs.variables()[i]);
+                    Value result = lhs.getValue(c, i).add(ri.next());
                     expression.setAnyVariable(c, lhs.variables()[i], result);
                 }
                 return Value.TRUE;
@@ -373,7 +371,6 @@ public class Operators {
                 }
             }
             if (!(lv1 instanceof LazyValue.Assignable assignable)) {
-                if (v1.isBound()) throw trap("compiling operator +=");
                 throw new InternalExpressionException("Left hand side must be a variable");
             }
             Value result;
@@ -400,30 +397,24 @@ public class Operators {
                 {
                     String lname = lhs.variables()[i];
                     String rname = rhs.variables()[i];;
-                    Value left = lhs.getValue(c, i).reboundedTo(rname);
-                    Value right = rhs.getValue(c, i).reboundedTo(lname);
+                    Value left = lhs.getValue(c, i);
+                    Value right = rhs.getValue(c, i);
                     expression.setAnyVariable(c, lname, right);
                     expression.setAnyVariable(c, rname, left);
                 }
                 return Value.TRUE;
             }
             if (!(lv1 instanceof LazyValue.Assignable lhs)) {
-                if (lv1.evalValue(c).isBound())
-                    throw trap("compiling <> operator (left)");
                 throw new InternalExpressionException("Left hand side is not a variable");
             }
             if (!(lv2 instanceof LazyValue.Assignable rhs)) {
-                if (lv2.evalValue(c).isBound())
-                    throw trap("compiling <> operator (right)");
                 throw new InternalExpressionException("Right hand side is not a variable");
             }
             Value v1 = lv1.evalValue(c);
             Value v2 = lv2.evalValue(c);
-            Value lval = v2.reboundedTo(null); // Assignable.set will bind them, we don't know the variable as it could be a var() call
-            Value rval = v1.reboundedTo(null);
-            lhs.set(c, lval);
-            rhs.set(c, rval);
-            return lval;
+            lhs.set(c, v2);
+            rhs.set(c, v1);
+            return v2;
         });
 
         expression.addUnaryOperator("-",  false, v -> NumericValue.asNumber(v).opposite());
@@ -462,10 +453,5 @@ public class Operators {
                 return new FunctionUnpackedArgumentsValue( ((AbstractListValue) params).unpack());
             }
         });
-    }
-
-    // TODO remove, this is for traps while the new system is being tested
-    static InternalExpressionException trap(String doing) {
-        return new InternalExpressionException("Unexpected error while " + doing + "! Please report this to Carpet!");
     }
 }

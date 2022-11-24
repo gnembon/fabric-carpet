@@ -98,7 +98,7 @@ public class ControlFlow {
                 Value val = null; // This is always assigned at some point, just the compiler doesn't know
                 
                 Value __ = c.getVariable("_");
-                c.setVariable("_", ret.data.reboundedTo("_"));
+                c.setVariable("_", ret.data);
                 Value _trace = c.getVariable("_trace");
                 c.setVariable("_trace", MapValue.wrap(Map.of(
                         StringValue.of("stack"), ListValue.wrap(ret.stack.stream().map(f -> ListValue.of(

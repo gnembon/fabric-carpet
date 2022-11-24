@@ -1,6 +1,5 @@
 package carpet.script.value;
 
-import carpet.CarpetSettings;
 import carpet.script.exception.InternalExpressionException;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonPrimitive;
@@ -13,7 +12,7 @@ import java.util.regex.PatternSyntaxException;
 import java.util.stream.Collectors;
 import net.minecraft.nbt.Tag;
 
-public abstract class Value implements Comparable<Value>, Cloneable
+public abstract class Value implements Comparable<Value>
 {
     public static final NumericValue FALSE = BooleanValue.FALSE;
     public static final NumericValue TRUE = BooleanValue.TRUE;
@@ -21,39 +20,6 @@ public abstract class Value implements Comparable<Value>, Cloneable
     public static final NumericValue ONE = new NumericValue(1);
 
     public static final NullValue NULL = NullValue.NULL;
-    public static final UndefValue UNDEF = UndefValue.UNDEF;
-
-    public String boundVariable;
-
-    public boolean isBound()
-    {
-        return boundVariable != null;
-    }
-    public String getVariable()
-    {
-        return boundVariable;
-    }
-    public Value reboundedTo(String var)
-    {
-        Value copy;
-        try
-        {
-            copy = (Value)clone();
-        }
-        catch (CloneNotSupportedException e)
-        {
-            // should not happen
-            CarpetSettings.LOG.error("Failed to clone variable", e);
-            throw new InternalExpressionException("Variable of type "+getTypeString()+" is not cloneable. Tell gnembon about it, this shoudn't happen");
-        }
-        copy.boundVariable = var;
-        return copy;
-    }
-    public Value bindTo(String var)
-    {
-        this.boundVariable = var;
-        return this;
-    }
 
     public abstract String getString();
 
@@ -94,11 +60,6 @@ public abstract class Value implements Comparable<Value>, Cloneable
             return new StringValue(lstr.substring(0, (int)(lstr.length()/ ((NumericValue) v).getDouble())));
         }
         return new StringValue(getString()+"/"+v.getString());
-    }
-
-    public Value()
-    {
-        this.boundVariable = null;
     }
 
     @Override
@@ -205,17 +166,12 @@ public abstract class Value implements Comparable<Value>, Cloneable
         return ("s"+stringVal).hashCode();
     }
 
+    /**
+     * @return A deep copy of this Value. It may be itself if it's immutable, and that's the default implementation
+     */
     public Value deepcopy()
     {
-        try
-        {
-            return (Value)this.clone();
-        }
-        catch (CloneNotSupportedException e)
-        {
-            // should never happen
-            throw new InternalExpressionException("Cannot make a copy of value: "+this);
-        }
+        return this;
     }
 
     public abstract Tag toTag(boolean force);

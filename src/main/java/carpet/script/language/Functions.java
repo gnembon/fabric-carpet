@@ -63,8 +63,6 @@ public class Functions {
                 for (int i = 1; i < lv.size(); i++)
                 {
                     if (!(lv.get(i) instanceof LazyValue.Named var)) {
-                        if (lv.get(i).evalValue(c, Context.LOCALIZATION).isBound())
-                            throw Operators.trap("varargs compiling");
                         throw new InternalExpressionException("Only variables can be used in function signature");
                     }
                     if (var instanceof LazyValue.Outer)

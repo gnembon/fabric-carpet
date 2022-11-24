@@ -166,12 +166,6 @@ public class BlockValue extends Value
     }
 
     @Override
-    public Value clone()
-    {
-        return new BlockValue(blockState, world, pos, data);
-    }
-
-    @Override
     public int hashCode()
     {
         if (world != null && pos != null )
@@ -327,7 +321,7 @@ public class BlockValue extends Value
 
         @Override
         public float getRotation() {
-            return (float)(this.facing.get2DDataValue() * 90);
+            return this.facing.get2DDataValue() * 90;
         }
     }
 }

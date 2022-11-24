@@ -49,12 +49,6 @@ public class ListValue extends AbstractListValue implements ContainerValueInterf
     }
 
     @Override
-    public Value clone()
-    {
-        return new ListValue(items);
-    }
-
-    @Override
     public Value deepcopy()
     {
         List<Value> copyItems = new ArrayList<>(items.size());
@@ -365,7 +359,7 @@ public class ListValue extends AbstractListValue implements ContainerValueInterf
     @Override
     public double readDoubleNumber()
     {
-        return (double)items.size();
+        return items.size();
     }
 
     @Override

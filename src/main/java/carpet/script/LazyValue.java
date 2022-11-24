@@ -61,7 +61,6 @@ public interface LazyValue
 
         @Override
         public void set(Context c, Value v) {
-            v.bindTo(name);
             expr.setAnyVariable(c, name, v);
         }
     }
@@ -75,16 +74,12 @@ public interface LazyValue
         @Override
         public void set(Context c, Value v) {
             String name = nameGetter.evalValue(c).getString();
-            v.bindTo(name);
             expr.setAnyVariable(c, name, v);
         }
     }
     public sealed interface Assignable extends LazyValue permits Variable, VarCall {
         /**
          * Assigns this to the given {@link Value} in the specified {@link Context}
-         * 
-         * @implNote This method <b>MUST</b> bind the variable to its new name, though it will
-         *           <b>NOT</b> make a copy
          * 
          * @param c The {@link Context} that may be used if the variable is a local
          * @param v The value to set this assignable to

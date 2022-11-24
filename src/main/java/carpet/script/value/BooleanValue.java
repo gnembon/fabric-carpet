@@ -37,11 +37,6 @@ public class BooleanValue extends NumericValue
     }
 
     @Override
-    public Value clone() {
-        return new BooleanValue(boolValue);
-    }
-
-    @Override
     public int hashCode() {
         return Boolean.hashCode(boolValue);
     }

@@ -733,10 +733,14 @@ public class Expression
         {
             Value value = c.getVariable(name);
             if (value != null) return value;
+        } else {
+            Value var = c.host.getGlobalVariable(module, name);
+            if (var != null) return var;
         }
-        Value var = c.host.getGlobalVariable(module, name);
-        if (var != null) return var;
-        return c.host.strict ? Value.UNDEF.reboundedTo(name) : Value.NULL.reboundedTo(name);
+        if (c.host.strict) {
+            throw new InternalExpressionException("variable " + name + " was used before initialization under 'strict' app config");
+        }
+        return Value.NULL;
     }
 
     public static final Expression none = new Expression("null");

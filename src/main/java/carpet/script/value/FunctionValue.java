@@ -33,18 +33,6 @@ public class FunctionValue extends Value implements Fluff.ILazyFunction
     private static long variantCounter = 1;
     private long variant;
 
-    private FunctionValue(Expression expression, Tokenizer.Token token, String name, LazyValue body, List<String> args, String varArgs)
-    {
-        this.expression = expression;
-        this.token = token;
-        this.name = name;
-        this.body = body;
-        this.args = args;
-        this.varArgs = varArgs;
-        this.outerState = null;
-        variant = 0L;
-    }
-
     public FunctionValue(Expression expression, Tokenizer.Token token, String name, LazyValue body, List<String> args, String varArgs, Map<String, Value> outerState)
     {
         this.expression = expression;
@@ -81,15 +69,6 @@ public class FunctionValue extends Value implements Fluff.ILazyFunction
     public boolean getBoolean()
     {
         return true;
-    }
-
-    @Override
-    protected Value clone()
-    {
-        FunctionValue ret = new FunctionValue(expression, token, name, body, args, varArgs);
-        ret.outerState = this.outerState;
-        ret.variant = this.variant;
-        return ret;
     }
 
     @Override
@@ -234,16 +213,16 @@ public class FunctionValue extends Value implements Fluff.ILazyFunction
         for (int i=0; i<args.size(); i++)
         {
             String arg = args.get(i);
-            newFrame.setVariable(arg, params.get(i).reboundedTo(arg));
+            newFrame.setVariable(arg, params.get(i));
         }
         if (varArgs != null)
         {
             List<Value> extraParams = new ArrayList<>();
             for (int i = args.size(), mx = params.size(); i < mx; i++)
             {
-                extraParams.add(params.get(i).reboundedTo(null)); // copy by value I guess
+                extraParams.add(params.get(i));
             }
-            newFrame.setVariable(varArgs, ListValue.wrap(extraParams).bindTo(varArgs));
+            newFrame.setVariable(varArgs, ListValue.wrap(extraParams));
 
         }
         Value retVal;

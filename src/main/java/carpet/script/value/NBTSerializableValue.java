@@ -132,24 +132,14 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
         return value;
     }
 
-
-    @Override
-    public Value clone()
-    {
-        // sets only nbttag, even if emtpy;
-        NBTSerializableValue copy = new NBTSerializableValue(nbtTag);
-        copy.nbtSupplier = this.nbtSupplier;
-        copy.nbtString = this.nbtString;
-        copy.owned = this.owned;
-        return copy;
-    }
-
     @Override
     public Value deepcopy()
     {
-        NBTSerializableValue copy = (NBTSerializableValue) clone();
+        NBTSerializableValue copy = new NBTSerializableValue(nbtTag);
+        copy.nbtSupplier = this.nbtSupplier;
+        copy.nbtString = this.nbtString;
         copy.owned = false;
-        ensureOwnership();
+        ensureOwnership(); // should this be called on copy?
         return copy;
     }
 
@@ -696,7 +686,6 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
 
     public static class IncompatibleTypeException extends RuntimeException
     {
-        private IncompatibleTypeException() {}
         public Value val;
         public IncompatibleTypeException(Value val)
         {

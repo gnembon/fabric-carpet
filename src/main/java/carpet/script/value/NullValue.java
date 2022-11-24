@@ -27,11 +27,6 @@ public class NullValue extends NumericValue // TODO check nonsingleton code
         return false;
     }
 
-    @Override
-    public Value clone()
-    {
-        return new NullValue();
-    }
     protected NullValue() {super(0);}
 
     @Override
