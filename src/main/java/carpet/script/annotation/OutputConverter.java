@@ -39,19 +39,19 @@ public final class OutputConverter<T>
         // Primitives are handled. Things are boxed in the process anyway, therefore would recommend boxed outputs, so you can use null
         register(Void.TYPE, v -> Value.NULL);
         register(Boolean.class, BooleanValue::of);
-        registerToValue(Integer.class, NumericValue::of);
-        registerToValue(Double.class, NumericValue::of);
-        registerToValue(Float.class, NumericValue::of);
-        registerToValue(Long.class, NumericValue::of);
-        registerToValue(String.class, StringValue::new);
-        registerToValue(Entity.class, EntityValue::new);
-        registerToValue(Component.class, FormattedTextValue::new);
-        registerToValue(Tag.class, NBTSerializableValue::new);
-        registerToValue(BlockPos.class, ValueConversions::of);
-        registerToValue(Vec3.class, ValueConversions::of);
-        registerToValue(ItemStack.class, ValueConversions::of);
-        registerToValue(ResourceLocation.class, ValueConversions::of);
-        registerToValue(GlobalPos.class, ValueConversions::of);
+        register(Integer.class, NumericValue::new);
+        register(Double.class, NumericValue::of);
+        register(Float.class, NumericValue::of);
+        register(Long.class, NumericValue::new);
+        register(String.class, StringValue::new);
+        register(Entity.class, EntityValue::new);
+        register(Component.class, FormattedTextValue::new);
+        register(Tag.class, NBTSerializableValue::new);
+        register(BlockPos.class, ValueConversions::of);
+        register(Vec3.class, ValueConversions::of);
+        register(ItemStack.class, ValueConversions::of);
+        register(ResourceLocation.class, ValueConversions::of);
+        register(GlobalPos.class, ValueConversions::of);
     }
 
     private final Function<T, Value> converter;
