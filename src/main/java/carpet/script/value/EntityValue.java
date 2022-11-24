@@ -1549,7 +1549,7 @@ public class EntityValue extends Value
         put("gamemode", (e,v)->{
             if(!(e instanceof ServerPlayer)) return;
             GameType toSet = v instanceof NumericValue ?
-                    GameType.byId(((NumericValue) v).getInt(), null) :
+                    GameType.byId(((NumericValue) v).getInt()) :
                     GameType.byName(v.getString().toLowerCase(Locale.ROOT), null);
             if (toSet != null) ((ServerPlayer) e).setGameMode(toSet);
         });
