@@ -218,8 +218,8 @@ public class FeatureGenerator
         final HolderSet<Biome> structureBiomes = structure.biomes();
 
         if (!computeBox) {
-            Holder<Biome> genBiome = generator.getBiomeSource().getNoiseBiome(QuartPos.fromBlock(pos.getX()), QuartPos.fromBlock(pos.getY()), QuartPos.fromBlock(pos.getZ()), seed.sampler());
-            if (structureBiomes.contains(genBiome) && structure.findValidGenerationPoint(new Structure.GenerationContext(
+            //Holder<Biome> genBiome = generator.getBiomeSource().getNoiseBiome(QuartPos.fromBlock(pos.getX()), QuartPos.fromBlock(pos.getY()), QuartPos.fromBlock(pos.getZ()), seed.sampler());
+            if (structure.findValidGenerationPoint(new Structure.GenerationContext(
                     world.registryAccess(), generator, generator.getBiomeSource(),
                     seed, world.getStructureManager(), world.getSeed(), chunkPos, world, structureBiomes::contains
             )).isPresent())
