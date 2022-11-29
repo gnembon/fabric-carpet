@@ -588,7 +588,7 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
         }
         try
         {
-            nbtPath.set(tag, () -> replacement);
+            nbtPath.set(tag, replacement);
         }
         catch (CommandSyntaxException e)
         {

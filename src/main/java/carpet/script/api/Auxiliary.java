@@ -42,6 +42,7 @@ import com.mojang.bridge.game.PackType;
 import net.minecraft.SharedConstants;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Holder;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.Rotations;
 import net.minecraft.core.particles.ParticleOptions;
@@ -56,17 +57,18 @@ import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientboundClearTitlesPacket;
-import net.minecraft.network.protocol.game.ClientboundCustomSoundPacket;
 import net.minecraft.network.protocol.game.ClientboundSetActionBarTextPacket;
 import net.minecraft.network.protocol.game.ClientboundSetSubtitleTextPacket;
 import net.minecraft.network.protocol.game.ClientboundSetTitleTextPacket;
 import net.minecraft.network.protocol.game.ClientboundSetTitlesAnimationPacket;
+import net.minecraft.network.protocol.game.ClientboundSoundPacket;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.packs.repository.Pack;
 import net.minecraft.server.packs.repository.PackRepository;
+import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.stats.Stat;
 import net.minecraft.stats.StatType;
@@ -144,6 +146,7 @@ public class Auxiliary {
             Vector3Argument locator = Vector3Argument.findIn(lv, 1);
             if (BuiltInRegistries.SOUND_EVENT.get(soundName) == null)
                 throw new ThrowStatement(rawString, Throwables.UNKNOWN_SOUND);
+            final Holder<SoundEvent> soundHolder = Holder.direct(SoundEvent.createVariableRangeEvent(soundName));
             float volume = 1.0F;
             float pitch = 1.0F;
             SoundSource mixer = SoundSource.MASTER;
@@ -168,7 +171,7 @@ public class Auxiliary {
             for (ServerPlayer player : cc.s.getLevel().getPlayers( (p) -> p.distanceToSqr(vec) < d0))
             {
                 count++;
-                player.connection.send(new ClientboundCustomSoundPacket(soundName, mixer, vec, volume, pitch, seed));
+                player.connection.send(new ClientboundSoundPacket(soundHolder, mixer, vec.x, vec.y, vec.z, volume, pitch, seed));
             }
             return new NumericValue(count);
         });
