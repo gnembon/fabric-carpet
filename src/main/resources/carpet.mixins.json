@@ -11,6 +11,7 @@
 
     "PerfCommand_permissionMixin",
     "FillCommandMixin",
+    "FillBiomeCommandMixin",
     "CloneCommands_fillUpdatesMixin",
     "SetBlockCommand_fillUpdatesMixin",
     "ForceLoadCommand_forceLoadLimitMixin",
