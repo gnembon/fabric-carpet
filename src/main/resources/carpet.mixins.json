@@ -67,7 +67,7 @@
     "RedstoneWireBlock_fastMixin",
     "WoolCarpetBlock_placeMixin",
     "SummonCommand_lightningMixin",
-    "PistonHandler_pushLimitMixin",
+    "PistonStructureResolver_pushLimitMixin",
     "PoweredRailBlock_powerLimitMixin",
     "LivingEntity_maxCollisionsMixin",
     "Level_getOtherEntitiesLimited",

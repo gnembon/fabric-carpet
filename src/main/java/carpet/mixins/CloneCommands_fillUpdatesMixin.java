@@ -15,7 +15,7 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 @Mixin(CloneCommands.class)
 public abstract class CloneCommands_fillUpdatesMixin
 {
-    @ModifyConstant(method = "clone", constant = @Constant(intValue = 32768))
+    @ModifyConstant(method = "clone", constant = @Constant(intValue = CarpetSettings.VANILLA_FILL_LIMIT))
     private static int fillLimit(int original) {
         return CarpetSettings.fillLimit;
     }

@@ -24,6 +24,8 @@ import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.entity.StructureBlockEntity;
+import net.minecraft.world.level.block.piston.PistonStructureResolver;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -52,12 +54,11 @@ public class CarpetSettings
     public static final Logger LOG = LoggerFactory.getLogger("carpet");
     public static final ThreadLocal<Boolean> skipGenerationChecks = ThreadLocal.withInitial(() -> false);
     public static final ThreadLocal<Boolean> impendingFillSkipUpdates = ThreadLocal.withInitial(() -> false);
+    public static final int VANILLA_FILL_LIMIT = 32768;
     public static int runPermissionLevel = 2;
     public static boolean doChainStone = false;
     public static boolean chainStoneStickToAll = false;
     public static Block structureBlockIgnoredBlock = Blocks.STRUCTURE_VOID;
-    public static final int vanillaStructureBlockLimit = 48;
-
     private static class LanguageValidator extends Validator<String> {
         @Override public String validate(CommandSourceStack source, CarpetRule<String> currentRule, String newValue, String string) {
             if (!Translations.isValidLanguage(newValue))
@@ -611,7 +612,7 @@ public class CarpetSettings
             strict = false,
             validate = PushLimitLimits.class
     )
-    public static int pushLimit = 12;
+    public static int pushLimit = PistonStructureResolver.MAX_PUSH_DEPTH;
 
     @Rule(
             desc = "Customizable powered rail power range",
@@ -636,7 +637,7 @@ public class CarpetSettings
             strict = false,
             validate = FillLimitLimits.class
     )
-    public static int fillLimit = 32768;
+    public static int fillLimit = VANILLA_FILL_LIMIT;
 
 
     @Rule(
@@ -815,7 +816,7 @@ public class CarpetSettings
             options = {"0", "11"},
             validate = ChangeSpawnChunksValidator.class
     )
-    public static int spawnChunksSize = 11;
+    public static int spawnChunksSize = MinecraftServer.START_CHUNK_RADIUS;
 
     public static class LightBatchValidator extends Validator<Integer> {
         public static void applyLightBatchSizes(int maxBatchSize)
@@ -978,7 +979,7 @@ public class CarpetSettings
     public static class StructureBlockLimitValidator extends Validator<Integer> {
 
         @Override public Integer validate(CommandSourceStack source, CarpetRule<Integer> currentRule, Integer newValue, String string) {
-            return (newValue >= vanillaStructureBlockLimit) ? newValue : null;
+            return (newValue >= StructureBlockEntity.MAX_SIZE_PER_AXIS) ? newValue : null;
         }
 
         @Override
@@ -999,7 +1000,7 @@ public class CarpetSettings
             validate = StructureBlockLimitValidator.class,
             strict = false
     )
-    public static int structureBlockLimit = vanillaStructureBlockLimit;
+    public static int structureBlockLimit = StructureBlockEntity.MAX_SIZE_PER_AXIS;
 
     public static class StructureBlockIgnoredValidator extends Validator<String> {
 

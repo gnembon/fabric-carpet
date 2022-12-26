@@ -9,7 +9,7 @@ import org.spongepowered.asm.mixin.injection.ModifyConstant;
 @Mixin(FillBiomeCommand.class)
 public class FillBiomeCommandMixin
 {
-	@ModifyConstant(method = "fill", constant = @Constant(intValue = 32768))
+	@ModifyConstant(method = "fill", constant = @Constant(intValue = CarpetSettings.VANILLA_FILL_LIMIT))
 	private static int fillLimit(int original)
 	{
 		return CarpetSettings.fillLimit;

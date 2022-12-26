@@ -14,7 +14,7 @@ public abstract class StructureBlockEntity_limitsMixin
 {
     @ModifyConstant(
             method = "load",
-            constant = @Constant(intValue = 48)
+            constant = @Constant(intValue = StructureBlockEntity.MAX_SIZE_PER_AXIS)
     )
     private int positiveLimit(int original) {
         return CarpetSettings.structureBlockLimit;
@@ -22,7 +22,7 @@ public abstract class StructureBlockEntity_limitsMixin
 
     @ModifyConstant(
             method = "load",
-            constant = @Constant(intValue = -48)
+            constant = @Constant(intValue = -StructureBlockEntity.MAX_SIZE_PER_AXIS)
     )
     private int negativeLimit(int original) {
         return -CarpetSettings.structureBlockLimit;
