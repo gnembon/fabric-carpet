@@ -630,7 +630,7 @@ public class CarpetSettings
         public String description() { return "You must choose a value from 1 to 20M";}
     }
     @Rule(
-            desc = "Customizable fill/clone volume limit",
+            desc = "Customizable fill/fillbiome/clone volume limit",
             options = {"32768", "250000", "1000000"},
             category = CREATIVE,
             strict = false,
