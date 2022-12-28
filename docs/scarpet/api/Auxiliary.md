@@ -244,7 +244,7 @@ produce an exception.
 
 ### `print(expr)`, `print(player/player_list, expr)`
 
-Displays the result of the expression to the chat. Overrides default `scarpet` behaviour of sending everyting to stderr.
+Displays the result of the expression to the chat. Overrides default `scarpet` behaviour of sending everything to stderr.
 Can optionally define player or list of players to send the message to.
 
 ### `format(components, ...)`, `format([components, ...])`
