@@ -347,6 +347,21 @@ public class CarpetSettings
     @Rule(desc = "Pistons, droppers and dispensers react if block above them is powered", category = CREATIVE)
     public static boolean quasiConnectivity = true;
 
+    private static class QuasiConnectivityRangeValidator extends Validator<Integer> {
+
+        @Override
+        public Integer validate(CommandSourceStack source, CarpetRule<Integer> changingRule, Integer newValue, String userInput) {
+            return newValue > 0 && newValue < 384 ? newValue : null;
+        }
+    }
+
+    @Rule(
+        desc = "The range at which pistons, droppers, and dispensers check for 'quasi power'",
+        category = CREATIVE,
+        validate = QuasiConnectivityRangeValidator.class
+    )
+    public static int quasiConnectivityRange = 1;
+
     @Rule(
             desc = "Players can flip and rotate blocks when holding cactus",
             extra = {
