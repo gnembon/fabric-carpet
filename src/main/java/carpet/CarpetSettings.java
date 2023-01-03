@@ -351,7 +351,14 @@ public class CarpetSettings
 
         @Override
         public Integer validate(CommandSourceStack source, CarpetRule<Integer> changingRule, Integer newValue, String userInput) {
-            return newValue > 0 && newValue < 384 ? newValue : null;
+            int minRange = 1;
+            int maxRange = 1;
+
+            for (Level level : source.getServer().getAllLevels()) {
+                maxRange = Math.max(maxRange, level.getHeight() - 1);
+            }
+
+            return (newValue >= minRange && newValue <= maxRange) ? newValue : null;
         }
     }
 

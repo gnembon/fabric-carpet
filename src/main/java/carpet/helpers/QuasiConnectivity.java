@@ -10,7 +10,12 @@ public class QuasiConnectivity {
     public static boolean hasQuasiSignal(Level level, BlockPos pos) {
         if (CarpetSettings.quasiConnectivity) {
             for (int i = 1; i <= CarpetSettings.quasiConnectivityRange; i++) {
-                if (level.hasNeighborSignal(pos.above(i))) {
+                BlockPos above = pos.above(i);
+
+                if (level.isOutsideBuildHeight(above)) {
+                    break;
+                }
+                if (level.hasNeighborSignal(above)) {
                     return true;
                 }
             }
