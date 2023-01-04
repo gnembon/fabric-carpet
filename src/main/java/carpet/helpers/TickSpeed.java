@@ -203,11 +203,11 @@ public class TickSpeed
         }
         if (is_paused)
         {
-            process_entities = player_active_timeout < PLAYER_GRACE;
+            process_entities = player_active_timeout >= PLAYER_GRACE;
         }
         else if (is_superHot)
         {
-            process_entities = player_active_timeout <= 0;
+            process_entities = player_active_timeout > 0;
         }
         else
         {
