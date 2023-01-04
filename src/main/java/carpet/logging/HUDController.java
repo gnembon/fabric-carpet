@@ -6,19 +6,15 @@ import carpet.helpers.TickSpeed;
 import carpet.logging.logHelpers.PacketCounter;
 import carpet.utils.Messenger;
 import carpet.utils.SpawnReporter;
-import io.netty.buffer.Unpooled;
-import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundTabListPacket;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -64,13 +60,11 @@ public class HUDController
         }
         player_huds.get(player).add(hudMessage);
     }
-    public static void clear_player(Player player)
+
+    public static void clearPlayer(ServerPlayer player)
     {
-        FriendlyByteBuf packetData = new FriendlyByteBuf(Unpooled.buffer()).writeComponent(Component.literal("")).writeComponent(Component.literal(""));
-        ClientboundTabListPacket packet = new ClientboundTabListPacket(packetData);
-        //((PlayerListHeaderS2CPacketMixin)packet).setHeader(new LiteralText(""));
-        //((PlayerListHeaderS2CPacketMixin)packet).setFooter(new LiteralText(""));
-        ((ServerPlayer)player).connection.send(packet);
+        ClientboundTabListPacket packet = new ClientboundTabListPacket(Component.literal(""), Component.literal(""));
+        player.connection.send(packet);
     }
 
 
@@ -113,14 +107,10 @@ public class HUDController
         if (force!= null) targets.addAll(force);
         for (ServerPlayer player: targets)
         {
-            FriendlyByteBuf packetData = new FriendlyByteBuf(Unpooled.buffer()).
-                    writeComponent(scarpet_headers.getOrDefault(player.getScoreboardName(), Component.literal(""))).
-                    writeComponent(Messenger.c(player_huds.getOrDefault(player, Collections.emptyList()).toArray(new Object[0])));
-            ClientboundTabListPacket packet = new ClientboundTabListPacket(packetData);
-
-            //PlayerListHeaderS2CPacket packet = new PlayerListHeaderS2CPacket();
-            //((PlayerListHeaderS2CPacketMixin)packet).setHeader(scarpet_headers.getOrDefault(player.getEntityName(), new LiteralText("")));
-            //((PlayerListHeaderS2CPacketMixin)packet).setFooter(Messenger.c(player_huds.getOrDefault(player, Collections.emptyList()).toArray(new Object[0])));
+            ClientboundTabListPacket packet = new ClientboundTabListPacket(
+                        scarpet_headers.getOrDefault(player.getScoreboardName(), Component.literal("")),
+                        Messenger.c(player_huds.getOrDefault(player, List.of()).toArray(new Object[0]))
+                    );
             player.connection.send(packet);
         }
     }
