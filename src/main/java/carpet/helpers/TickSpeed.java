@@ -241,7 +241,7 @@ public class TickSpeed
         private final String prefix;
 
         private TickingState(char prefixColor) {
-            this.prefix = prefixColor + " (" + name().replace('_', ' ').toLowerCase() + ") ";
+            this.prefix = prefixColor + " [" + name().replace('_', ' ') + "] ";
         }
 
         public String statePrefix() {
