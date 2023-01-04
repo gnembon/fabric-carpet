@@ -1,6 +1,7 @@
 package carpet.helpers;
 
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.function.BiConsumer;
 import net.minecraft.commands.CommandSourceStack;
@@ -34,7 +35,7 @@ public class TickSpeed
      *         since that one accounts for tick steps and superhot
      */
     public static boolean isPaused() {
-	    return is_paused;
+        return is_paused;
     }
 
     /**
@@ -214,6 +215,55 @@ public class TickSpeed
             process_entities = true;
         }
     }
+
+    public static TickingState getTickingState() {
+        boolean warping = time_warp_start_time != 0;
+        if (isPaused()) {
+            boolean stepping = player_active_timeout >= PLAYER_GRACE;
+            if (stepping)
+                return warping ? TickingState.WARPING : TickingState.RUNNING;
+            return deeplyFrozen() ? TickingState.DEEPLY_FROZEN : TickingState.FROZEN;
+        }
+        if (warping)
+            return TickingState.WARPING;
+        return TickingState.RUNNING;
+    }
+
+    public enum TickingState {
+        RUNNING(' ') {
+            // no prefix
+            @Override public String statePrefix() { return ""; }
+        },
+        WARPING('d'),
+        //SUPERHOT, Just RUNNING
+        FROZEN('c'),
+        DEEPLY_FROZEN('t');
+        private final String prefix;
+
+        private TickingState(char prefixColor) {
+            this.prefix = prefixColor + " (" + name().replace('_', ' ').toLowerCase() + ") ";
+        }
+
+        public String statePrefix() {
+            return prefix;
+        }
+
+        private boolean shouldShowTPS() {
+            return this != FROZEN && this != DEEPLY_FROZEN;
+        }
+        
+        public String tpsPrefix() {
+            return shouldShowTPS() ? "g TPS: " : "";
+        }
+
+        public String formatTPS(double tps, String color) {
+            if (shouldShowTPS()) {
+                return String.format(Locale.US, "%s %.1f ", color, tps);
+            }
+            return "";
+        }
+    }
+
     //unused - mod compat reasons
     public static void tickrate(float rate) {tickrate(rate, true);}
     public static void tickrate(float rate, boolean update)
