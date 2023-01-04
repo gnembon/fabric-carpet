@@ -177,6 +177,7 @@ public class TickSpeed
     public static boolean continueWarp()
     {
         if (!process_entities)
+            // Returning false so we don't have to run at max speed when doing nothing
             return false;
         if (time_bias > 0)
         {
