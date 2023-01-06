@@ -26,12 +26,13 @@ import com.mojang.blaze3d.vertex.VertexFormat.Mode;
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 
-import net.minecraft.client.renderer.block.model.ItemTransforms.TransformType;
 import net.minecraft.commands.arguments.ParticleArgument;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.core.Registry;
+import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.particles.ParticleOptions;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.ByteTag;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.DoubleTag;
@@ -69,7 +70,6 @@ import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
 
 import static java.util.Map.entry;
 
@@ -173,14 +173,14 @@ public class ShapeDispatcher
         }
     }
 
-    public static ParticleOptions getParticleData(String name)
+    public static ParticleOptions getParticleData(String name, RegistryAccess regs)
     {
-        ParticleOptions particle = particleCache.get(name);
+        ParticleOptions particle = particleCache.get(name); // [SCARY SHIT] cache should be cleared between worlds
         if (particle != null)
             return particle;
         try
         {
-            particle = ParticleArgument.readParticle(new StringReader(name));
+            particle = ParticleArgument.readParticle(new StringReader(name), regs.lookupOrThrow(Registries.PARTICLE_TYPE));
         }
         catch (CommandSyntaxException e)
         {
@@ -220,7 +220,7 @@ public class ShapeDispatcher
     }
 
     // client
-    public static ExpiringShape fromTag(CompoundTag tag)
+    public static ExpiringShape fromTag(CompoundTag tag, Level level)
     {
         Map<String, Value> options = new HashMap<>();
         for (String key : tag.getAllKeys())
@@ -231,7 +231,7 @@ public class ShapeDispatcher
                 CarpetSettings.LOG.info("Unknown parameter for shape: "+key);
                 return null;
             }
-            Value decodedValue = decoder.decode(tag.get(key));
+            Value decodedValue = decoder.decode(tag.get(key), level);
             options.put(key, decodedValue);
         }
         Value shapeValue = options.get("shape");
@@ -349,7 +349,7 @@ public class ShapeDispatcher
 
             key = 0;
             followEntity = -1;
-            shapeDimension = ResourceKey.create(Registry.DIMENSION_REGISTRY, new ResourceLocation(options.get("dim").getString()));
+            shapeDimension = ResourceKey.create(Registries.DIMENSION, new ResourceLocation(options.get("dim").getString()));
             if (options.containsKey("follow"))
             {
                 followEntity = NumericValue.asNumber(options.getOrDefault("follow", optional.get("follow"))).getInt();
@@ -389,12 +389,12 @@ public class ShapeDispatcher
                     NumericValue.asNumber( elements.get(2)).getDouble()
             );
         }
-        protected ParticleOptions replacementParticle()
+        protected ParticleOptions replacementParticle(RegistryAccess regs)
         {
             String particleName = fa ==0 ?
                     String.format(Locale.ROOT , "dust %.1f %.1f %.1f 1.0", r, g, b):
                     String.format(Locale.ROOT , "dust %.1f %.1f %.1f 1.0", fr, fg, fb);
-            return getParticleData(particleName);
+            return getParticleData(particleName, regs);
         }
 
 
@@ -646,19 +646,18 @@ public class ShapeDispatcher
 
         @Override
         public Consumer<ServerPlayer> alternative() {
-            ParticleOptions particle;
-            if(this.isitem)
-            {
-                if (Block.byItem(this.item.getItem()).defaultBlockState().isAir()) return p->{};
-                particle = getParticleData("block_marker "+Registry.BLOCK.getKey(Block.byItem(this.item.getItem())));
-            }
-            else
-            {
-                particle = getParticleData("block_marker "+Registry.BLOCK.getKey(this.blockState.getBlock()));
-            }
-            
-
             return p -> {
+                ParticleOptions particle;
+                if(this.isitem)
+                {
+                    if (Block.byItem(this.item.getItem()).defaultBlockState().isAir()) return;
+                    particle = getParticleData("block_marker "+ BuiltInRegistries.BLOCK.getKey(Block.byItem(this.item.getItem())), p.level.registryAccess());
+                }
+                else
+                {
+                    particle = getParticleData("block_marker "+BuiltInRegistries.BLOCK.getKey(this.blockState.getBlock()), p.level.registryAccess());
+                }
+
                 Vec3 v = relativiseRender(p.level, this.pos, 0);
                 p.getLevel().sendParticles(p, particle , true, v.x, v.y, v.z, 1,0.0, 0.0, 0.0, 0.0);
             };
@@ -713,7 +712,6 @@ public class ShapeDispatcher
         @Override
         public Consumer<ServerPlayer> alternative()
         {
-            ParticleOptions particle = replacementParticle();
             double density = Math.max(2.0, from.distanceTo(to) /50/ (a+0.1)) ;
             return p ->
             {
@@ -721,7 +719,7 @@ public class ShapeDispatcher
                 {
                     particleMesh(
                             Collections.singletonList(p),
-                            particle,
+                            replacementParticle(p.level.registryAccess()),
                             density,
                             relativiseRender(p.level, from, 0),
                             relativiseRender(p.level, to, 0)
@@ -873,10 +871,10 @@ public class ShapeDispatcher
         }
         @Override
         public Consumer<ServerPlayer> alternative() {
-            final ParticleOptions locparticledata = getParticleData(String.format(Locale.ROOT ,"dust %.1f %.1f %.1f %.1f", fr, fg, fb, fa));
             return p->{
                 if(p.level.dimension() != this.shapeDimension){return;}
                 if(!(fa>0.0f)){return;}
+                final ParticleOptions locparticledata = getParticleData(String.format(Locale.ROOT ,"dust %.1f %.1f %.1f %.1f", fr, fg, fb, fa), p.level.registryAccess());
                 for(Vec3 v : alter_point(p)){
                     p.getLevel().sendParticles(p,locparticledata , true,
                     v.x, v.y, v.z, 1,
@@ -974,13 +972,12 @@ public class ShapeDispatcher
         @Override
         public Consumer<ServerPlayer> alternative()
         {
-            ParticleOptions particle = replacementParticle();
             double density = Math.max(2.0, from.distanceTo(to) /50) / (a+0.1);
             return p ->
             {
                 if (p.level.dimension() == shapeDimension) drawParticleLine(
                         Collections.singletonList(p),
-                        particle,
+                        replacementParticle(p.level.registryAccess()),
                         relativiseRender(p.level, from, 0),
                         relativiseRender(p.level, to, 0),
                         density
@@ -1035,10 +1032,11 @@ public class ShapeDispatcher
         @Override
         public Consumer<ServerPlayer> alternative() { return p ->
         {
-            ParticleOptions particle = replacementParticle();
+
             int partno = Math.min(1000,20*subdivisions);
             RandomSource rand = p.level.getRandom();
             ServerLevel world = p.getLevel();
+            ParticleOptions particle = replacementParticle(world.registryAccess());
 
             Vec3 ccenter = relativiseRender(world, center, 0 );
 
@@ -1113,10 +1111,11 @@ public class ShapeDispatcher
         @Override
         public Consumer<ServerPlayer> alternative() { return p ->
         {
-            ParticleOptions particle = replacementParticle();
+
             int partno = (int)Math.min(1000,Math.sqrt(20*subdivisions*(1+height)));
             RandomSource rand = p.level.getRandom();
             ServerLevel world = p.getLevel();
+            ParticleOptions particle = replacementParticle(world.registryAccess());
 
             Vec3 ccenter = relativiseRender(world, center, 0 );
 
@@ -1257,7 +1256,7 @@ public class ShapeDispatcher
 
         public abstract Tag toTag(Value value); //validates value, returning null if not necessary to keep it and serialize
         public abstract Value validate(Map<String, Value> options, MinecraftServer server, Value value); // makes sure the value is proper
-        public abstract Value decode(Tag tag);
+        public abstract Value decode(Tag tag, Level level);
     }
     public static class OptionalBoolListParam extends Param
     {
@@ -1266,7 +1265,7 @@ public class ShapeDispatcher
         @Override
         public Tag toTag(Value value) { return value.toTag(true);}
         @Override
-        public Value decode(Tag tag) {
+        public Value decode(Tag tag, Level level) {
             if(tag instanceof ListTag){
                 return ListValue.wrap(((ListTag)tag).stream().map(x->BooleanValue.of(((NumericTag)x).getAsNumber().doubleValue()!=0)));
             }
@@ -1294,7 +1293,7 @@ public class ShapeDispatcher
         @Override
         public Tag toTag(Value value) { return StringTag.valueOf(value.getString()); }
         @Override
-        public Value decode(Tag tag) { return new StringValue(tag.getAsString()); }
+        public Value decode(Tag tag, Level level) { return new StringValue(tag.getAsString()); }
     }
     public static class BlockParam extends Param
     {
@@ -1308,7 +1307,7 @@ public class ShapeDispatcher
             if(value instanceof BlockValue blv){
                 return value;
             }
-            return BlockValue.fromString(value.getString());
+            return BlockValue.fromString(value.getString(), server.registryAccess());
         }
         @Override
         public Tag toTag(Value value) {
@@ -1325,8 +1324,8 @@ public class ShapeDispatcher
         }
 
         @Override
-        public Value decode(Tag tag) {
-            BlockState bs = NbtUtils.readBlockState((CompoundTag) tag);
+        public Value decode(Tag tag, Level level) {
+            BlockState bs = NbtUtils.readBlockState(level.holderLookup(Registries.BLOCK), (CompoundTag) tag);
             CompoundTag compoundTag2 = null;
             if (((CompoundTag) tag).contains("TileEntityData", 10)) {
 				compoundTag2 = ((CompoundTag) tag).getCompound("TileEntityData");
@@ -1343,7 +1342,7 @@ public class ShapeDispatcher
         @Override
         public Value validate(Map<String, Value> options, MinecraftServer server, Value value)
         {
-            ItemStack item=ValueConversions.getItemStackFromValue(value, true);
+            ItemStack item=ValueConversions.getItemStackFromValue(value, true, server.registryAccess());
             return new NBTSerializableValue(item.save(new CompoundTag()));
         }
         @Override
@@ -1351,7 +1350,7 @@ public class ShapeDispatcher
             return ((NBTSerializableValue)value).getTag();
         }
         @Override
-        public Value decode(Tag tag) {
+        public Value decode(Tag tag, Level level) {
             return new NBTSerializableValue(tag);
         }
     }
@@ -1391,7 +1390,7 @@ public class ShapeDispatcher
         }
 
         @Override
-        public Value decode(Tag tag)
+        public Value decode(Tag tag, Level level)
         {
             return FormattedTextValue.deserialize(tag.getAsString());
         }
@@ -1462,7 +1461,7 @@ public class ShapeDispatcher
         }
 
         @Override
-        public Value decode(Tag tag)
+        public Value decode(Tag tag, Level level)
         {
             return BooleanValue.of(((ByteTag) tag).getAsByte() > 0);
         }
@@ -1471,7 +1470,7 @@ public class ShapeDispatcher
     {
         protected FloatParam(String id) { super(id); }
         @Override
-        public Value decode(Tag tag) { return new NumericValue(((FloatTag)tag).getAsFloat()); }
+        public Value decode(Tag tag, Level level) { return new NumericValue(((FloatTag)tag).getAsFloat()); }
         @Override
         public Tag toTag(Value value) { return FloatTag.valueOf(NumericValue.asNumber(value, id).getFloat()); }
     }
@@ -1490,7 +1489,7 @@ public class ShapeDispatcher
     {
         protected PositiveFloatParam(String id) { super(id); }
         @Override
-        public Value decode(Tag tag) { return new NumericValue(((FloatTag)tag).getAsFloat()); }
+        public Value decode(Tag tag, Level level) { return new NumericValue(((FloatTag)tag).getAsFloat()); }
         @Override
         public Tag toTag(Value value) { return FloatTag.valueOf(NumericValue.asNumber(value, id).getFloat()); }
 
@@ -1499,7 +1498,7 @@ public class ShapeDispatcher
     {
         protected PositiveIntParam(String id) { super(id); }
         @Override
-        public Value decode(Tag tag) { return new NumericValue(((IntTag)tag).getAsInt()); }
+        public Value decode(Tag tag, Level level) { return new NumericValue(((IntTag)tag).getAsInt()); }
         @Override
         public Tag toTag(Value value) { return IntTag.valueOf(NumericValue.asNumber(value, id).getInt()); }
 
@@ -1508,7 +1507,7 @@ public class ShapeDispatcher
     {
         protected NonNegativeIntParam(String id) { super(id); }
         @Override
-        public Value decode(Tag tag) { return new NumericValue(((IntTag)tag).getAsInt()); }
+        public Value decode(Tag tag, Level level) { return new NumericValue(((IntTag)tag).getAsInt()); }
         @Override
         public Tag toTag(Value value) { return IntTag.valueOf(NumericValue.asNumber(value, id).getInt()); }
         @Override public Value validate(Map<String, Value> options, MinecraftServer server, Value value)
@@ -1522,7 +1521,7 @@ public class ShapeDispatcher
     {
         protected NonNegativeFloatParam(String id) { super(id); }
         @Override
-        public Value decode(Tag tag) { return new NumericValue(((FloatTag)tag).getAsFloat()); }
+        public Value decode(Tag tag, Level level) { return new NumericValue(((FloatTag)tag).getAsFloat()); }
         @Override
         public Tag toTag(Value value) { return FloatTag.valueOf(NumericValue.asNumber(value, id).getFloat()); }
         @Override public Value validate(Map<String, Value> options, MinecraftServer server, Value value)
@@ -1590,7 +1589,7 @@ public class ShapeDispatcher
         }
 
         @Override
-        public Value decode(Tag tag)
+        public Value decode(Tag tag, Level level)
         {
             ListTag ctag = (ListTag)tag;
             return ListValue.of(
@@ -1629,7 +1628,7 @@ public class ShapeDispatcher
         }
 
         @Override
-        public Value decode(Tag tag)
+        public Value decode(Tag tag, Level level)
         {
             ListTag ltag = (ListTag)tag;
             List<Value> points = new ArrayList<>();
@@ -1671,7 +1670,7 @@ public class ShapeDispatcher
         }
 
         @Override
-        public Value decode(Tag tag) { return new NumericValue(((IntTag)tag).getAsInt()); }
+        public Value decode(Tag tag, Level level) { return new NumericValue(((IntTag)tag).getAsInt()); }
         @Override
         public Tag toTag(Value value) { return IntTag.valueOf(NumericValue.asNumber(value, id).getInt()); }
     }
@@ -1698,7 +1697,7 @@ public class ShapeDispatcher
         }
 
         @Override
-        public Value decode(Tag tag) { return new NumericValue(((IntTag)tag).getAsInt()); }
+        public Value decode(Tag tag, Level level) { return new NumericValue(((IntTag)tag).getAsInt()); }
     }
 
     private static boolean isStraight(Vec3 from, Vec3 to, double density)

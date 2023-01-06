@@ -6,7 +6,7 @@ import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import java.util.ArrayList;
 import java.util.List;
-import net.minecraft.core.Registry;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
@@ -76,7 +76,7 @@ public class ExplosionLogHelper
                         messages.add(c((k.pos.equals(pos))?"r   - TNT":"w   - ",
                                 Messenger.dblt((k.pos.equals(pos))?"r":"y", k.pos.x, k.pos.y, k.pos.z), "w  dV",
                                 Messenger.dblt("d", k.accel.x, k.accel.y, k.accel.z),
-                                "w  "+Registry.ENTITY_TYPE.getKey(k.type).getPath(), (v>1)?"l ("+v+")":""
+                                "w  "+ BuiltInRegistries.ENTITY_TYPE.getKey(k.type).getPath(), (v>1)?"l ("+v+")":""
                         ));
                     });
                 }

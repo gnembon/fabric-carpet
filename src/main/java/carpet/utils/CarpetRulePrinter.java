@@ -4,6 +4,8 @@ import carpet.CarpetServer;
 import joptsimple.OptionParser;
 import joptsimple.OptionSet;
 import joptsimple.OptionSpec;
+import joptsimple.util.PathConverter;
+import joptsimple.util.PathProperties;
 import net.fabricmc.api.DedicatedServerModInitializer;
 import net.fabricmc.loader.api.FabricLoader;
 
@@ -33,7 +35,7 @@ public class CarpetRulePrinter implements DedicatedServerModInitializer {
         // Prepare an OptionParser for our parameters
         OptionParser parser = new OptionParser();
         OptionSpec<Void> shouldDump = parser.accepts("carpetDumpRules");
-        OptionSpec<String> pathSpec = parser.accepts("dumpPath").withRequiredArg();
+        OptionSpec<Path> pathSpec = parser.accepts("dumpPath").withRequiredArg().withValuesConvertedBy(new PathConverter(PathProperties.WRITABLE));
         OptionSpec<String> filterSpec = parser.accepts("dumpFilter").withRequiredArg();
         parser.allowsUnrecognizedOptions(); // minecraft may need more stuff later that we don't want to special-case
         OptionSet options = parser.parse(args);
@@ -46,12 +48,12 @@ public class CarpetRulePrinter implements DedicatedServerModInitializer {
         // at this point, onGameStarted() already ran given it as an entrypoint runs before
         PrintStream outputStream;
         try {
-            Path path = Path.of(options.valueOf(pathSpec)).toAbsolutePath();
+            Path path = options.valueOf(pathSpec).toAbsolutePath();
             logger.info("Printing rules to: " + path);
             Files.createDirectories(path.getParent());
             outputStream = new PrintStream(Files.newOutputStream(path));
         } catch (IOException e) {
-            throw new IllegalArgumentException("Invalid path passed, or something went very wrong", e);
+            throw new IllegalStateException(e);
         }
         // Ensure translations fallbacks have been generated given we run before the validator that ensures that has.
         // Remove after removing old setting system, given there'll be no fallbacks

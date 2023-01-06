@@ -18,8 +18,9 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Direction.Axis;
 import net.minecraft.core.GlobalPos;
-import net.minecraft.core.HolderLookup;
-import net.minecraft.core.Registry;
+import net.minecraft.core.RegistryAccess;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.StringTag;
 import net.minecraft.nbt.Tag;
@@ -54,13 +55,13 @@ public class BlockValue extends Value
     }
 
     private static final Map<String, BlockValue> bvCache= new HashMap<>();
-    public static BlockValue fromString(String str)
+    public static BlockValue fromString(String str, RegistryAccess regs)
     {
         try
         {
-            BlockValue bv = bvCache.get(str);
+            BlockValue bv = bvCache.get(str); // [SCARY SHIT] persistent caches over server reloads
             if (bv != null) return bv;
-            BlockStateParser.BlockResult foo = BlockStateParser.parseForBlock(HolderLookup.forRegistry(Registry.BLOCK), new StringReader(str), true );
+            BlockStateParser.BlockResult foo = BlockStateParser.parseForBlock(regs.lookupOrThrow(Registries.BLOCK), new StringReader(str), true );
             if (foo.blockState() != null)
             {
                 CompoundTag bd = foo.nbt();
@@ -150,7 +151,7 @@ public class BlockValue extends Value
     @Override
     public String getString()
     {
-        return nameFromRegistryId(Registry.BLOCK.getKey(getBlockState().getBlock()));
+        return nameFromRegistryId(BuiltInRegistries.BLOCK.getKey(getBlockState().getBlock()));
     }
 
     @Override
@@ -194,7 +195,7 @@ public class BlockValue extends Value
         CompoundTag tag =  new CompoundTag();
         CompoundTag state = new CompoundTag();
         BlockState s = getBlockState();
-        state.put("Name", StringTag.valueOf(Registry.BLOCK.getKey(s.getBlock()).toString()));
+        state.put("Name", StringTag.valueOf(BuiltInRegistries.BLOCK.getKey(s.getBlock()).toString()));
         Collection<Property<?>> properties = s.getProperties();
         if (!properties.isEmpty())
         {

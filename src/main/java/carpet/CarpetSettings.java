@@ -10,9 +10,10 @@ import carpet.utils.Translations;
 import carpet.utils.CommandHelper;
 import carpet.utils.Messenger;
 import carpet.utils.SpawnChunks;
+import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Registry;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.ServerInterface;
@@ -24,6 +25,8 @@ import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.entity.StructureBlockEntity;
+import net.minecraft.world.level.block.piston.PistonStructureResolver;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,16 +50,16 @@ import static carpet.api.settings.RuleCategory.CLIENT;
 @SuppressWarnings({"CanBeFinal", "removal"}) // removal should be removed after migrating rules to the new system
 public class CarpetSettings
 {
-    public static final String carpetVersion = "1.4.83+v220727";
+    public static final String carpetVersion = FabricLoader.getInstance().getModContainer("carpet").orElseThrow().getMetadata().getVersion().toString();
+    public static final String releaseTarget = "1.19.3";
     public static final Logger LOG = LoggerFactory.getLogger("carpet");
     public static final ThreadLocal<Boolean> skipGenerationChecks = ThreadLocal.withInitial(() -> false);
     public static final ThreadLocal<Boolean> impendingFillSkipUpdates = ThreadLocal.withInitial(() -> false);
+    public static final int VANILLA_FILL_LIMIT = 32768;
     public static int runPermissionLevel = 2;
     public static boolean doChainStone = false;
     public static boolean chainStoneStickToAll = false;
     public static Block structureBlockIgnoredBlock = Blocks.STRUCTURE_VOID;
-    public static final int vanillaStructureBlockLimit = 48;
-
     private static class LanguageValidator extends Validator<String> {
         @Override public String validate(CommandSourceStack source, CarpetRule<String> currentRule, String newValue, String string) {
             if (!Translations.isValidLanguage(newValue))
@@ -72,7 +75,7 @@ public class CarpetSettings
     @Rule(
             desc = "Sets the language for Carpet",
             category = FEATURE,
-            options = {"en_us", "zh_cn", "zh_tw"},
+            options = {"en_us", "pt_br", "zh_cn", "zh_tw"},
             strict = true, // the current system doesn't handle fallbacks and other, not defined languages would make unreadable mess. Change later
             validate = LanguageValidator.class
     )
@@ -610,7 +613,7 @@ public class CarpetSettings
             strict = false,
             validate = PushLimitLimits.class
     )
-    public static int pushLimit = 12;
+    public static int pushLimit = PistonStructureResolver.MAX_PUSH_DEPTH;
 
     @Rule(
             desc = "Customizable powered rail power range",
@@ -629,13 +632,13 @@ public class CarpetSettings
         public String description() { return "You must choose a value from 1 to 20M";}
     }
     @Rule(
-            desc = "Customizable fill/clone volume limit",
+            desc = "Customizable fill/fillbiome/clone volume limit",
             options = {"32768", "250000", "1000000"},
             category = CREATIVE,
             strict = false,
             validate = FillLimitLimits.class
     )
-    public static int fillLimit = 32768;
+    public static int fillLimit = VANILLA_FILL_LIMIT;
 
 
     @Rule(
@@ -814,7 +817,7 @@ public class CarpetSettings
             options = {"0", "11"},
             validate = ChangeSpawnChunksValidator.class
     )
-    public static int spawnChunksSize = 11;
+    public static int spawnChunksSize = MinecraftServer.START_CHUNK_RADIUS;
 
     public static class LightBatchValidator extends Validator<Integer> {
         public static void applyLightBatchSizes(int maxBatchSize)
@@ -977,7 +980,7 @@ public class CarpetSettings
     public static class StructureBlockLimitValidator extends Validator<Integer> {
 
         @Override public Integer validate(CommandSourceStack source, CarpetRule<Integer> currentRule, Integer newValue, String string) {
-            return (newValue >= vanillaStructureBlockLimit) ? newValue : null;
+            return (newValue >= StructureBlockEntity.MAX_SIZE_PER_AXIS) ? newValue : null;
         }
 
         @Override
@@ -998,13 +1001,13 @@ public class CarpetSettings
             validate = StructureBlockLimitValidator.class,
             strict = false
     )
-    public static int structureBlockLimit = vanillaStructureBlockLimit;
+    public static int structureBlockLimit = StructureBlockEntity.MAX_SIZE_PER_AXIS;
 
     public static class StructureBlockIgnoredValidator extends Validator<String> {
 
         @Override
         public String validate(CommandSourceStack source, CarpetRule<String> currentRule, String newValue, String string) {
-            Optional<Block> ignoredBlock = Registry.BLOCK.getOptional(ResourceLocation.tryParse(newValue));
+            Optional<Block> ignoredBlock = BuiltInRegistries.BLOCK.getOptional(ResourceLocation.tryParse(newValue));
             if (!ignoredBlock.isPresent()) {
                 Messenger.m(source, "r Unknown block '" + newValue + "'.");
                 return null;

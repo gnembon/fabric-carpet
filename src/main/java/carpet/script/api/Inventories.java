@@ -4,7 +4,6 @@ import carpet.fakes.IngredientInterface;
 import carpet.fakes.RecipeManagerInterface;
 import carpet.script.CarpetContext;
 import carpet.script.Expression;
-import carpet.script.argument.BlockArgument;
 import carpet.script.argument.FunctionArgument;
 import carpet.script.exception.InternalExpressionException;
 import carpet.script.exception.ThrowStatement;
@@ -31,6 +30,8 @@ import java.util.stream.Collectors;
 import net.minecraft.commands.arguments.item.ItemInput;
 import net.minecraft.core.HolderSet;
 import net.minecraft.core.Registry;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundContainerSetSlotPacket;
@@ -40,7 +41,6 @@ import net.minecraft.tags.TagKey;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.AbstractCookingRecipe;
@@ -50,30 +50,28 @@ import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.item.crafting.ShapedRecipe;
 import net.minecraft.world.item.crafting.ShapelessRecipe;
 import net.minecraft.world.item.crafting.SingleItemRecipe;
-import net.minecraft.world.level.block.Block;
 import net.minecraft.world.phys.Vec3;
 
 public class Inventories {
     public static void apply(Expression expression)
     {
-        expression.addUnaryFunction("stack_limit", v ->
-                new NumericValue(NBTSerializableValue.parseItem(v.getString()).getItem().getMaxStackSize()));
+        expression.addContextFunction("stack_limit", 1, (c, t, lv) ->
+                new NumericValue(NBTSerializableValue.parseItem(lv.get(0).getString(), ((CarpetContext) c).s.registryAccess() ).getItem().getMaxStackSize()));
 
-        expression.addUnaryFunction("item_category", v ->
-        {
-            ItemInput item = NBTSerializableValue.parseItem(v.getString());
-            CreativeModeTab ig = item.getItem().getItemCategory();
-            return (ig==null)?Value.NULL:new StringValue(ig.getRecipeFolderName());
+        expression.addContextFunction("item_category", -1, (c, t, lv) -> {
+            CarpetContext cc = (CarpetContext)c;
+            cc.host.issueDeprecation("item_category in 1.19.3+");
+            return Value.NULL;
         });
 
         expression.addContextFunction("item_list", -1, (c, t, lv) ->
         {
             if (lv.size() == 0)
-                return ListValue.wrap(Registry.ITEM.keySet().stream().map(ValueConversions::of).collect(Collectors.toList()));
+                return ListValue.wrap(BuiltInRegistries.ITEM.keySet().stream().map(ValueConversions::of).collect(Collectors.toList()));
             CarpetContext cc = (CarpetContext)c;
-            Registry<Item> items = cc.s.getServer().registryAccess().registryOrThrow(Registry.ITEM_REGISTRY);
+            Registry<Item> items = cc.s.getServer().registryAccess().registryOrThrow(Registries.ITEM);
             String tag = lv.get(0).getString();
-            Optional<HolderSet.Named<Item>> itemTag = items.getTag(TagKey.create(Registry.ITEM_REGISTRY, InputValidator.identifierOf(tag)));
+            Optional<HolderSet.Named<Item>> itemTag = items.getTag(TagKey.create(Registries.ITEM, InputValidator.identifierOf(tag)));
             if (itemTag.isEmpty()) return Value.NULL;
             return ListValue.wrap(itemTag.get().stream().map(b -> ValueConversions.of(items.getKey(b.value()))).collect(Collectors.toList()));
             /*
@@ -89,16 +87,16 @@ public class Inventories {
         {
             CarpetContext cc = (CarpetContext)c;
 
-            Registry<Item> blocks = cc.s.getServer().registryAccess().registryOrThrow(Registry.ITEM_REGISTRY);
+            Registry<Item> blocks = cc.s.getServer().registryAccess().registryOrThrow(Registries.ITEM);
             if (lv.size() == 0)
                 return ListValue.wrap(blocks.getTagNames().map(ValueConversions::of).collect(Collectors.toList()));
-            Item item = NBTSerializableValue.parseItem(lv.get(0).getString()).getItem();
+            Item item = NBTSerializableValue.parseItem(lv.get(0).getString(), cc.s.registryAccess()).getItem();
             if (lv.size() == 1)
             {
                 return ListValue.wrap( blocks.getTags().filter(e -> e.getSecond().stream().anyMatch(h -> (h.value() == item))).map(e -> ValueConversions.of(e.getFirst())).collect(Collectors.toList()));
             }
             String tag = lv.get(1).getString();
-            Optional<HolderSet.Named<Item>> tagSet = blocks.getTag(TagKey.create(Registry.ITEM_REGISTRY, InputValidator.identifierOf(tag)));
+            Optional<HolderSet.Named<Item>> tagSet = blocks.getTag(TagKey.create(Registries.ITEM, InputValidator.identifierOf(tag)));
             if (tagSet.isEmpty()) return Value.NULL;
 
             //return BooleanValue.of(tagSet.get().contains(item.builtInRegistryHolder()));
@@ -127,7 +125,7 @@ public class Inventories {
             if (lv.size() > 1)
             {
                 String recipeType = lv.get(1).getString();
-                type = Registry.RECIPE_TYPE.get(InputValidator.identifierOf(recipeType));
+                type = BuiltInRegistries.RECIPE_TYPE.get(InputValidator.identifierOf(recipeType));
             }
             List<Recipe<?>> recipes;
             recipes = ((RecipeManagerInterface) cc.s.getServer().getRecipeManager()).getAllMatching(type, InputValidator.identifierOf(recipeName));
@@ -201,9 +199,9 @@ public class Inventories {
             String itemStr = v.getString();
             Item item;
             ResourceLocation id = InputValidator.identifierOf(itemStr);
-            item = Registry.ITEM.getOptional(id).orElseThrow(() -> new ThrowStatement(itemStr, Throwables.UNKNOWN_ITEM));
+            item = BuiltInRegistries.ITEM.getOptional(id).orElseThrow(() -> new ThrowStatement(itemStr, Throwables.UNKNOWN_ITEM));
             if (!item.hasCraftingRemainingItem()) return Value.NULL;
-            return new StringValue(NBTSerializableValue.nameFromRegistryId(Registry.ITEM.getKey(item.getCraftingRemainingItem())));
+            return new StringValue(NBTSerializableValue.nameFromRegistryId(BuiltInRegistries.ITEM.getKey(item.getCraftingRemainingItem())));
         });
 
         expression.addContextFunction("item_rarity", 1, (c, t, lv)  ->
@@ -286,7 +284,7 @@ public class Inventories {
                 else
                     nbt = new NBTSerializableValue(nbtValue.getString()).getCompoundTag();
             }
-            ItemInput newitem = NBTSerializableValue.parseItem(lv.get(inventoryLocator.offset()+2).getString(), nbt);
+            ItemInput newitem = NBTSerializableValue.parseItem(lv.get(inventoryLocator.offset()+2).getString(), nbt, cc.s.registryAccess());
             ItemStack previousStack = inventoryLocator.inventory().getItem(slot);
             try
             {
@@ -311,7 +309,7 @@ public class Inventories {
             {
                 Value secondArg = lv.get(inventoryLocator.offset()+0);
                 if (!secondArg.isNull())
-                    itemArg = NBTSerializableValue.parseItem(secondArg.getString());
+                    itemArg = NBTSerializableValue.parseItem(secondArg.getString(), cc.s.registryAccess());
             }
             int startIndex = 0;
             if (lv.size() > inventoryLocator.offset()+1)
@@ -336,7 +334,7 @@ public class Inventories {
             if (inventoryLocator == null) return Value.NULL;
             if (lv.size() <= inventoryLocator.offset())
                 throw new InternalExpressionException("'inventory_remove' requires at least an item to be removed");
-            ItemInput searchItem = NBTSerializableValue.parseItem(lv.get(inventoryLocator.offset()).getString());
+            ItemInput searchItem = NBTSerializableValue.parseItem(lv.get(inventoryLocator.offset()).getString(), cc.s.registryAccess());
             int amount = 1;
             if (lv.size() > inventoryLocator.offset()+1)
                 amount = (int)NumericValue.asNumber(lv.get(inventoryLocator.offset()+1)).getLong();

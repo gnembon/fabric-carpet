@@ -12,12 +12,11 @@ import java.util.Map;
 import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
-import net.minecraft.core.Holder;
 import net.minecraft.core.Registry;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.levelgen.feature.ConfiguredFeature;
-import net.minecraft.world.level.levelgen.placement.PlacedFeature;
 
 public class BiomeInfo
 {
@@ -25,7 +24,7 @@ public class BiomeInfo
         //put("top_material", (w, b) -> new BlockValue( b.getGenerationSettings(). getSurfaceConfig().getTopMaterial(), null, null));
         //put("under_material", (w, b) -> new BlockValue( b.getGenerationSettings().getSurfaceConfig().getUnderMaterial(), null, null));
         //put("category", (w, b) -> StringValue.of(Biome.getBiomeCategory(Holder.direct(b)).getName()));
-        put("tags", (w, b) -> ListValue.wrap(w.registryAccess().registryOrThrow(Registry.BIOME_REGISTRY).getTags().filter(p -> p.getSecond().stream().anyMatch(h -> h.value() == b)).map(p -> p.getFirst().location()).map(ValueConversions::of).collect(Collectors.toList())));
+        put("tags", (w, b) -> ListValue.wrap(w.registryAccess().registryOrThrow(Registries.BIOME).getTags().filter(p -> p.getSecond().stream().anyMatch(h -> h.value() == b)).map(p -> p.getFirst().location()).map(ValueConversions::of).collect(Collectors.toList())));
 
         put("temperature", (w, b) -> NumericValue.of(b.getBaseTemperature()));
         put("fog_color", (w, b) -> ValueConversions.ofRGB(b.getSpecialEffects().getFogColor()));
@@ -39,7 +38,7 @@ public class BiomeInfo
         //put("scale", (w, b) -> NumericValue.of(b.getScale()));
         put("features", (w, b) -> {
 
-            Registry<ConfiguredFeature<?,?>> registry = w.registryAccess().registryOrThrow(Registry.CONFIGURED_FEATURE_REGISTRY);
+            Registry<ConfiguredFeature<?,?>> registry = w.registryAccess().registryOrThrow(Registries.CONFIGURED_FEATURE);
             return ListValue.wrap(
                     b.getGenerationSettings().features().stream().map(step ->
                             ListValue.wrap(step.stream().map(cfp ->

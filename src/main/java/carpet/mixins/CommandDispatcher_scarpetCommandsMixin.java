@@ -10,7 +10,7 @@ import com.mojang.brigadier.tree.RootCommandNode;
 import carpet.fakes.CommandDispatcherInterface;
 import carpet.fakes.CommandNodeInterface;
 
-@Mixin(CommandDispatcher.class)
+@Mixin(value = CommandDispatcher.class, remap = false)
 public class CommandDispatcher_scarpetCommandsMixin<S> implements CommandDispatcherInterface {
     @Shadow @Final
     private RootCommandNode<S> root;

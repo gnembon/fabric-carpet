@@ -8,10 +8,10 @@ import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import net.minecraft.commands.CommandBuildContext;
 import net.minecraft.commands.CommandSourceStack;
-import net.minecraft.commands.arguments.EntitySummonArgument;
 import net.minecraft.commands.arguments.coordinates.BlockPosArgument;
 import net.minecraft.commands.synchronization.SuggestionProviders;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
@@ -19,6 +19,8 @@ import net.minecraft.world.entity.Mob;
 
 import static net.minecraft.commands.Commands.argument;
 import static net.minecraft.commands.Commands.literal;
+import static net.minecraft.commands.arguments.ResourceArgument.getSummonableEntityType;
+import static net.minecraft.commands.arguments.ResourceArgument.resource;
 
 public class PerimeterInfoCommand
 {
@@ -35,12 +37,12 @@ public class PerimeterInfoCommand
                                 c.getSource(),
                                 BlockPosArgument.getSpawnablePos(c, "center position"),
                                 null)).
-                        then(argument("mob",EntitySummonArgument.id()).
+                        then(argument("mob", resource(commandBuildContext, Registries.ENTITY_TYPE)).
                                 suggests(SuggestionProviders.SUMMONABLE_ENTITIES).
                                 executes( (c) -> perimeterDiagnose(
                                         c.getSource(),
                                         BlockPosArgument.getSpawnablePos(c, "center position"),
-                                        EntitySummonArgument.getSummonableEntity(c, "mob").toString()
+                                        getSummonableEntityType(c, "mob").key().location().toString()
                                 ))));
         dispatcher.register(command);
     }
@@ -58,7 +60,7 @@ public class PerimeterInfoCommand
             });
             if (!(baseEntity instanceof  Mob))
             {
-                Messenger.m(source, "r /perimeterinfo requires a mob entity to test agains.");
+                Messenger.m(source, "r /perimeterinfo requires a mob entity to test against.");
                 if (baseEntity != null) baseEntity.discard();
                 return 0;
             }

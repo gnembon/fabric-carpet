@@ -43,7 +43,7 @@ import java.util.stream.Collectors;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.core.Registry;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -223,7 +223,7 @@ public class CarpetEventServer
         {
             if (callList.size() > 0 && CarpetServer.scriptServer != null)
             {
-                return CarpetServer.scriptServer.events.handleEvents.runIfEnabled( () -> {
+                Boolean isCancelled = CarpetServer.scriptServer.events.handleEvents.runIfEnabled( () -> {
                     CarpetProfiler.ProfilerToken currentSection = CarpetProfiler.start_section(null, "Scarpet events", CarpetProfiler.TYPE.GENERAL);
                     List<Value> argv = argumentSupplier.get(); // empty for onTickDone
                     CommandSourceStack source;
@@ -266,6 +266,7 @@ public class CarpetEventServer
                     CarpetProfiler.end_current_section(currentSection);
                     return cancelled;
                 });
+                return isCancelled != null && isCancelled;
             }
             return false;
         }
@@ -920,6 +921,13 @@ public class CarpetEventServer
             }
         };
 
+        public static final Event PLAYER_COMMAND = new Event("player_command", 2, false) {
+            @Override
+            public boolean onPlayerMessage(ServerPlayer player, String message) {
+                return handler.call( () -> Arrays.asList(new EntityValue(player), new StringValue(message)), player::createCommandSourceStack);
+            }
+        };
+
         public static final Event STATISTICS = new Event("statistic", 4, false)
         {
             private <T> ResourceLocation getStatId(Stat<T> stat)
@@ -940,7 +948,7 @@ public class CarpetEventServer
                 if (skippedStats.contains(id)) return;
                 handler.call( () -> Arrays.asList(
                         new EntityValue(player),
-                        StringValue.of(NBTSerializableValue.nameFromRegistryId(Registry.STAT_TYPE.getKey(stat.getType()))),
+                        StringValue.of(NBTSerializableValue.nameFromRegistryId(BuiltInRegistries.STAT_TYPE.getKey(stat.getType()))),
                         StringValue.of(NBTSerializableValue.nameFromRegistryId(id)),
                         new NumericValue(amount)
                 ), player::createCommandSourceStack);
@@ -1035,11 +1043,11 @@ public class CarpetEventServer
         @Deprecated
         public static String getEntityLoadEventName(EntityType<? extends Entity> et)
         {
-            return "entity_loaded_" + ValueConversions.of(Registry.ENTITY_TYPE.getKey(et)).getString();
+            return "entity_loaded_" + ValueConversions.of(BuiltInRegistries.ENTITY_TYPE.getKey(et)).getString();
         }
 
         @Deprecated
-        public static final Map<EntityType<? extends Entity>, Event> ENTITY_LOAD = Registry.ENTITY_TYPE
+        public static final Map<EntityType<? extends Entity>, Event> ENTITY_LOAD = BuiltInRegistries.ENTITY_TYPE
                 .stream()
                 .map(et -> Map.entry(et, new Event(getEntityLoadEventName(et), 1, true, false)
                 {
@@ -1055,10 +1063,10 @@ public class CarpetEventServer
 
         public static String getEntityHandlerEventName(EntityType<? extends Entity> et)
         {
-            return "entity_handler_" + ValueConversions.of(Registry.ENTITY_TYPE.getKey(et)).getString();
+            return "entity_handler_" + ValueConversions.of(BuiltInRegistries.ENTITY_TYPE.getKey(et)).getString();
         }
 
-        public static final Map<EntityType<? extends Entity>, Event> ENTITY_HANDLER = Registry.ENTITY_TYPE
+        public static final Map<EntityType<? extends Entity>, Event> ENTITY_HANDLER = BuiltInRegistries.ENTITY_TYPE
                 .stream()
                 .map(et -> Map.entry(et, new Event(getEntityHandlerEventName(et), 2, true, false) {
                     @Override

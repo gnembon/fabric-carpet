@@ -316,7 +316,10 @@ Triggered when the player has successfully logged in and was placed in the game.
 Triggered when a player sends a disconnect package or is forcefully disconnected from the server.
 
 ### `__on_player_message(player, message)`
-Triggered when a player sends a chat message or runs a command.
+Triggered when a player sends a chat message.
+
+### `__on_player_command(player, command)`
+Triggered when a player runs a command. Command value is returned without the / in front.
 
 This event can be cancelled by returning `'cancel'`, which prevents the message from being sent.
 

@@ -23,8 +23,8 @@ import net.minecraft.commands.arguments.item.ItemInput;
 import net.minecraft.commands.arguments.item.ItemParser;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
-import net.minecraft.core.HolderLookup;
-import net.minecraft.core.Registry;
+import net.minecraft.core.RegistryAccess;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CollectionTag;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.EndTag;
@@ -290,22 +290,22 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
 
     private static final Map<String,ItemInput> itemCache = new HashMap<>();
 
-    public static ItemInput parseItem(String itemString)
+    public static ItemInput parseItem(String itemString, RegistryAccess regs)
     {
-        return parseItem(itemString, null);
+        return parseItem(itemString, null, regs);
     }
 
-    public static ItemInput parseItem(String itemString, CompoundTag customTag)
+    public static ItemInput parseItem(String itemString, CompoundTag customTag, RegistryAccess regs)
     {
         try
         {
-            ItemInput res = itemCache.get(itemString);
+            ItemInput res = itemCache.get(itemString);  // [SCARY SHIT] persistent caches over server reloads
             if (res != null)
                 if (customTag == null)
                     return res;
                 else
                     return new ItemInput(Holder.direct(res.getItem()), customTag);
-            ItemParser.ItemResult parser = ItemParser.parseForItem(HolderLookup.forRegistry(Registry.ITEM), new StringReader(itemString));
+            ItemParser.ItemResult parser = ItemParser.parseForItem(regs.lookupOrThrow(Registries.ITEM), new StringReader(itemString));
             res = new ItemInput(parser.item(), parser.nbt());
 
             itemCache.put(itemString, res);
@@ -588,7 +588,7 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
         }
         try
         {
-            nbtPath.set(tag, () -> replacement);
+            nbtPath.set(tag, replacement);
         }
         catch (CommandSyntaxException e)
         {

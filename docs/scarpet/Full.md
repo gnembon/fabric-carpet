@@ -2002,6 +2002,8 @@ To access global/server state for a player app, which you shouldn't do, you need
 so either use a command block, or any 
 arbitrary entity: `/execute as @e[type=bat,limit=1] run script in <app> globals` for instance, however
 running anything in the global scope for a `'player'` scoped app is not intended.
+*   `'event_priority'`: defaults to `0`. This specifies the order in which events will be run, from highest to lowest.
+This is need since cancelling an event will stop executing the event in subsequent apps with lower priority. 
 *   `'stay_loaded'`: defaults to `true`. If true, and `/carpet scriptsAutoload` is turned on, the following apps will 
 stay loaded after startup. Otherwise, after reading the app the first time, and fetching the config, server will drop them down. 
  WARNING: all apps will run once at startup anyways, so be aware that their actions that are called 
@@ -2745,6 +2747,10 @@ Numeric function, returning the block light at position (from torches and other 
 
 Numeric function, returning the sky light at position (from sky access).
 
+### `effective_light(pos)`
+
+Numeric function, returning the "real" light at position, which is affected by time and weather. which also affects mobs spawning, frosted ice blocks melting.
+
 ### `see_sky(pos)`
 
 Boolean function, returning true if the block can see sky.
@@ -3270,7 +3276,7 @@ the center point/area. Uses the same `type` selectors as `entities_list`.
 also be represented as a block, in this case the search box will be centered on the middle of the block, or an entity - in this case
 entire bounding box of the entity serves as a 'center' of search which is then expanded in all directions with the `'distance'` vector.
 
-In any case - returns all entities which bounding box collides with the bounding box defined by `'center'` and `'disteance'`.
+In any case - returns all entities which bounding box collides with the bounding box defined by `'center'` and `'distance'`.
 
 entity_area is simpler than `entity_selector` and runs about 20% faster, but is limited to predefined selectors and 
 cuboid search area.
@@ -3501,7 +3507,17 @@ Number of ticks an entity sits in a portal.
 
 ### `query(e, 'item')`
 
-The item triple (name, count, nbt) if its an item entity, `null` otherwise.
+The item triple (name, count, nbt) if its an item or item frame entity, `null` otherwise.
+
+### `query(e, 'offering_flower')`
+
+Whether the given iron golem has a red flower in their hand. returns null for all other entities
+
+
+### `query(e, 'blue_skull')`
+
+Whether the given wither skull entity is blue. returns null for all other entities
+
 
 ### `query(e, 'count')`
 
@@ -3867,6 +3883,18 @@ if the custom name is always visible, even through blocks.
 Sets the entity persistence tag to `true` (default) or `false`. Only affects mobs. Persistent mobs
 don't despawn and don't count towards the mobcap.
 
+### `modify(e, 'item', item_triple)`
+
+Sets the item for the item or item frame entity. (The item triple is a list of `[item_name, count, nbt]`, or just an item name.)
+
+### `modify(e, 'offering_flower', bool)`
+
+Sets if the iron golem has a red flower in hand.
+
+### `modify(e, 'blue_skull', bool)`
+
+Sets whether the wither skull entity is blue.
+
 ### `modify(e, 'age', number)`
 
 Modifies entity's internal age counter. Fiddling with this will affect directly AI behaviours of complex 
@@ -4228,18 +4256,6 @@ Throws `unknown_item` if item doesn't exist.
 stack_limit('wooden_axe') => 1
 stack_limit('ender_pearl') => 16
 stack_limit('stone') => 64
-</pre>
-
-### `item_category(item)`
-
-Returns the string representing the category of a given item, like `building_blocks`, `combat`, or `tools`.
-
-Throws `unknown_item` if item doesn't exist.
-
-<pre>
-item_category('wooden_axe') => tools
-item_category('ender_pearl') => misc
-item_category('stone') => building_blocks
 </pre>
 
 ### `recipe_data(item, type?)`, `recipe_data(recipe, type?)`
@@ -4675,6 +4691,14 @@ partially handle the event before it happens and handle the rest after. While in
 confusion (like handling the respawn event still referring to player's original position and dimension), but gives much 
 more control over these events.
 
+Some events also provide the ability to cancel minecraft's processing of the event by returning `'cancel'` from the event handler.
+This only works for particular events that are triggered before they take an effect in the game.
+However, cancelling the event will also stop events from subsequent apps from triggering.
+The order of events being executed can be changed by specifying an `'event_priority'` in the app config,
+with the highest value being executed first.
+Note that cancelling some events might introduce a desynchronization to the client from the server,
+creating ghost items or blocks. This can be solved by updating the inventory or block to the client, by using `inventory_set` or `set`.
+
 Programmers can also define their own events and signal other events, including built-in events, and across all loaded apps.
 
 ## App scopes and event distribution
@@ -4795,6 +4819,8 @@ Triggers with a right click action. Event is triggered right after a server rece
 game manages to do anything about it. Event triggers when player starts eating food, or starts drawing a bow.
 Use `player_finishes_using_item`, or `player_releases_item` to capture the end of these events.
 
+This event can be cancelled by returning `'cancel'`, which prevents the item from being used.
+
 Event is not triggered when a player places a block, for that use
 `player_right_clicks_block` or `player_places_block` event.
 
@@ -4809,21 +4835,34 @@ Player using of an item is done. This is controlled server side and is responsib
 eating. The event is triggered after confirming that the action is valid, and sending the feedback back
 to the client, but before triggering it and its effects in game.
 
+This event can be cancelled by returning `'cancel'`, which prevents the player from finishing using the item.
+
 ### `__on_player_clicks_block(player, block, face)`
 Representing left-click attack on a block, usually signifying start of breaking of a block. Triggers right after the server
-receives a client packet, before anything happens on the server side.   
+receives a client packet, before anything happens on the server side.
+
+This event can be cancelled by returning `'cancel'`, which stops the player from breaking a block.
   
 
 ### `__on_player_breaks_block(player, block)`
 Called when player breaks a block, right before any changes to the world are done, but the decision is made to remove the block.
 
+This event can be cancelled by returning `'cancel'`, which prevents the block from being placed.
+
 ### `__on_player_right_clicks_block(player, item_tuple, hand, block, face, hitvec)` 
 Called when player right clicks on a block with anything, or interacts with a block. This event is triggered right
 before other interaction events, like `'player_interacts_with_block'` or `'player_places_block'`.
+
+This event can be cancelled by returning `'cancel'`, which prevents the player interaction.
  
 ### `__on_player_interacts_with_block(player, hand, block, face, hitvec)`
 Called when player successfully interacted with a block, which resulted in activation of said block,
 right after this happened.
+
+### `__on_player_placing_block(player, item_tuple, hand, block)`
+Triggered when player places a block, before block is placed in the world.
+
+This event can be cancelled by returning `'cancel'`, which prevents the block from being placed.
   
 ### `__on_player_places_block(player, item_tuple, hand, block)`
 Triggered when player places a block, after block is placed in the world, but before scoreboard is triggered or player inventory
@@ -4833,6 +4872,8 @@ adjusted.
 Triggered when player right clicks (interacts) with an entity, even if the entity has no vanilla interaction with the player or
 the item they are holding. The event is invoked after receiving a packet from the client, before anything happens server side
 with that interaction.
+
+This event can be cancelled by returning `'cancel'`, which prevents the player interacting with the entity.
 
 ### `__on_player_trades(player, entity, buy_left, buy_right, sell)`
 Triggered when player trades with a merchant. The event is invoked after the server allow the trade, but before the inventory
@@ -4848,12 +4889,16 @@ on the player.
 Triggered when a player clicks a recipe in the crafting window from the crafting book, after server received
 a client request, but before any items are moved from its inventory to the crafting menu.
 
+This event can be cancelled by returning `'cancel'`, which prevents the recipe from being moved into the crafting grid.
+
 ### `__on_player_switches_slot(player, from, to)`
 Triggered when a player changes their selected hotbar slot. Applied right after the server receives the message to switch 
 the slot.
 
 ### `__on_player_swaps_hands(player)`
 Triggered when a player sends a command to swap their offhand item. Executed before the effect is applied on the server.
+
+This event can be cancelled by returning `'cancel'`, which prevents the hands from being swapped.
 
 ### `__on_player_swings_hand(player, hand)`
 Triggered when a player starts swinging their hand. The event typically triggers after a corresponding event that caused it 
@@ -4863,14 +4908,20 @@ swinging continues as an effect of an action, no new swinging events will be iss
 ### `__on_player_attacks_entity(player, entity)`
 Triggered when a player attacks entity, right before it happens server side.
 
+This event can be cancelled by returning `'cancel'`, which prevents the player from attacking the entity.
+
 ### `__on_player_takes_damage(player, amount, source, source_entity)`
 Triggered when a player is taking damage. Event is executed right after potential absorbtion was applied and before
 the actual damage is applied to the player. 
+
+This event can be cancelled by returning `'cancel'`, which prevents the player from taking damage.
 
 ### `__on_player_deals_damage(player, amount, entity)`
 Triggered when a player deals damage to another entity. Its applied in the same moment as `player_takes_damage` if both
 sides of the event are players, and similar for all other entities, just their absorbtion is taken twice, just noone ever 
 notices that ¯\_(ツ)_/¯
+
+This event can be cancelled by returning `'cancel'`, which prevents the damage from being dealt.
 
 ### `__on_player_dies(player)`
 Triggered when a player dies. Player is already dead, so don't revive them then. Event applied before broadcasting messages
@@ -4920,6 +4971,8 @@ Four events triggered when player controls for sneaking and sprinting toggle.
 Triggered when the game receives the request from a player to drop one item or full stack from its inventory.
 Event happens before anything is changed server side.
 
+These events can be cancelled by returning `'cancel'`, which prevents the player dropping the items.
+
 ### `__on_player_picks_up_item(player, item)`
 Triggered AFTER a player successfully ingested an item in its inventory. Item represents the total stack of items
 ingested by the player. The exact position of these items is unknown as technically these
@@ -4932,7 +4985,12 @@ Triggered when the player has successfully logged in and was placed in the game.
 Triggered when a player sends a disconnect package or is forcefully disconnected from the server.
 
 ### `__on_player_message(player, message)`
-Triggered when a player sends a chat message or runs a command.
+Triggered when a player sends a chat message.
+
+### `__on_player_command(player, command)`
+Triggered when a player runs a command. Command value is returned without the / in front.
+
+This event can be cancelled by returning `'cancel'`, which prevents the message from being sent.
 
 ### `__on_statistic(player, category, event, value)`
 Triggered when a player statistic changes. Doesn't notify on periodic an rhythmic events, i.e. 
@@ -5329,34 +5387,17 @@ Optional shared shape attributes:
    value is `'xyz'`, meaning the shape will be drawn relatively to the entity in all three directions. Using `xz` for 
    instance makes so that the shape follows the entity, but stays at the same, absolute Y coordinate. Preceeding an axis
    with `d`, like `dxdydz` would make so that entity position is treated discretely (rounded down).
+ * `debug` - if True, it will only be visible when F3+B entity bounding boxes is enabled.
+ * `facing` - applicable only to `'text'`, `'block'` or '`item'` shapes, where its facing. Possible options are:
+   * `player`: Default. Element always rotates to face the player eye position, 
+   * `camera`: Element is placed on the plane orthogonal to player look vector, 
+   * `north`, `south`, `east`, `west`, `up`, `down`: obvious
 
 Available shapes:
  * `'line'` - draws a straight line between two points.
    * Required attributes:
      * `from` - triple coordinates, entity, or block value indicating one end of the line
      * `to` - other end of the line, same format as `from`
-     
- * `'label'` - draws a text in the world. Default `line` attribute controls main font color.
-      `fill` controls the color of the background. 
-   * Required attributes:
-     * `pos` - position
-     * `text` - string or formatted text to display
-   * Optional attributes
-     * `value` - string or formatted text to display instead of the main `text`. `value` unlike `text`
-     is not used to determine uniqueness of the drawn text so can be used to 
-     display smoothly dynamic elements where value of an element is constantly
-     changing and updates to it are being sent from the server.
-     * `size` - float. Default font size is 10.
-     * `facing` - text direction, where its facing. Possible options are: `player` (default, text
-     always rotates to face the player), `north`, `south`, `east`, `west`, `up`, `down`
-     * `doublesided` - if `true` it will make the text visible from the back as well. Default is `false` (1.16+)
-     * `align` - text alignment with regards to `pos`. Default is `center` (displayed text is
-     centered with respect to `pos`), `left` (`pos` indicates beginning of text), and `right` (`pos`
-     indicates the end of text).
-     * `tilt`, `lean`, `turn` - additional rotations of the text on the canvas along all three axis
-     * `indent`, `height`, `raise` - offsets for text rendering on X (`indent`), Y (`height`), and Z axis (`raise`) 
-     with regards to the plane of the text. One unit of these corresponds to 1 line spacing, which
-     can be used to display multiple lines of text bound to the same `pos` 
      
  * `'box'` - draws a box with corners in specified points
    * Required attributes:
@@ -5380,6 +5421,58 @@ Available shapes:
      * `height` - height of the cyllinder, defaults to `0`, so flat disk. Can be negative.
      * `level` - level of details, see `'sphere'`.
 
+ * `'polygon'`:
+   * Required attributes:
+     * `points` - list of points defining vertices of the polygon
+   * Optional attributes:
+     * `relative` - list of bools. vertices of the polygon that affected by 'follow'. Could be a single bools to affact allpoints too. Default means that every point is affacted.
+     * `mode` - how those points are connected. may be "polygon"(default),"strip" or "triangles". "polygon" means that it will be viewed as vertices of a polygon center on the first one. "strip" means that it will be viewed as a triangles strip. "triangles" means that it will be viewed as some triangles that are not related to each other (therefor length of `points` in this mode have to be a multiple of 3).
+     * `inner` - if `true` it will make the inner edges be drawn as well. 
+     * `doublesided` - if `true` it will make the shapes visible from the back as well. Default is `true`. 
+
+ * `'label'` - draws a text in the world. Default `line` attribute controls main font color. 
+ `fill` controls the color of the background.
+   * Required attributes:
+     * `pos` - position
+     * `text` - string or formatted text to display
+   * Optional attributes
+     * `value` - string or formatted text to display instead of the main `text`. `value` unlike `text`
+         is not used to determine uniqueness of the drawn text so can be used to
+         display smoothly dynamic elements where value of an element is constantly
+         changing and updates to it are being sent from the server.
+     * `size` - float. Default font size is 10.
+     * `doublesided` - if `true` it will make the text visible from the back as well. Default is `false` (1.16+)
+     * `align` - text alignment with regards to `pos`. Default is `center` (displayed text is
+         centered with respect to `pos`), `left` (`pos` indicates beginning of text), and `right` (`pos`
+         indicates the end of text).
+     * `tilt`, `lean`, `turn` - additional rotations of the text on the canvas along all three axis
+     * `indent`, `height`, `raise` - offsets for text rendering on X (`indent`), Y (`height`), and Z axis (`raise`)
+         with regards to the plane of the text. One unit of these corresponds to 1 line spacing, which
+         can be used to display multiple lines of text bound to the same `pos`
+
+ * `'block'`: draws a block at the specified position:
+   * Required attributes:
+     * `pos` - position of the object.
+     * `block` - the object to show. It is a block value or a name of a block with optional NBT data.
+   * Optional attributes:
+     * `tilt`, `lean`, `turn` - additional rotations along all three axis. It uses the block center as the origin.
+     * `scale` - scale of it in 3 axis-direction. should be a number or a list of 3 numbers (x,y,z).
+     * `skylight`, `blocklight` - light level. omit it to use local light level. should between 0~15.
+
+ * `'item'`: draws an item at the specified position:
+   * Required attributes:
+     * `pos` - position of the object.
+     * `item` - the object to show. It is an item tuple or a string identified item that may have NBT data.
+   * Optional attributes:
+     * `tilt`, `lean`, `turn` - additional rotations along all three axis. for `block`, it use its block center as the origin.
+     * `scale` - scale of it in 3 axis-direction. should be a number or a list of 3 numbers (x,y,z).
+     * `skylight`, `blocklight` - light level. omit it to use local light level. should between 0~15.
+     * `variant` - one of `'none'`, `'third_person_left_hand'`, `'third_person_right_hand'`, `'first_person_left_hand'`,
+       `'first_person_right_hand'`, `'head'`, `'gui'`, `'ground'`, `'fixed'`. In addition to the literal meaning,
+       it can also be used to use special models of tridents and telescopes. 
+        This attribute is experimental and use of it will change in the future.
+
+      
 ### `create_marker(text, pos, rotation?, block?, interactive?)`
 
 Spawns a (permanent) marker entity with text or block at position. Returns that entity for further manipulations. 
@@ -5505,6 +5598,14 @@ Example usages:
   // the reason why I backslash the second space is that otherwise command parser may contract consecutive spaces
   // not a problem in apps
 </pre>
+
+### `item_display_name(item)`
+ Returns the name of the item as a Text Value. `item` should be a list of `[item_name, count, nbt]`, or just an item name.
+ 
+ Please note that it is a translated value. treating it like a string (eg.slicing, breaking, changing its case) will turn it back into a normal string without translatable properties. just like a colorful formatted text loose its color. And the result of it converting to a string will use en-us (in a server) or your single player's language, but when you use print() or others functions that accept a text value to broadcast it to players, it will use each player's own language.
+ 
+ If the item is renamed, it will also be reflected in the results.
+
 
 ### `display_title(players, type, text?, fadeInTicks?, stayTicks?, fadeOutTicks),`
 

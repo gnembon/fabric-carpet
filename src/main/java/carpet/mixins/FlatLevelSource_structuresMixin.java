@@ -9,14 +9,13 @@ import net.minecraft.world.level.biome.BiomeSource;
 import net.minecraft.world.level.chunk.ChunkGenerator;
 import net.minecraft.world.level.levelgen.FlatLevelSource;
 
-import java.util.Optional;
-
-@Mixin(FlatLevelSource.class)
+@Mixin(FlatLevelSource.class) // YEET
 public abstract class FlatLevelSource_structuresMixin extends ChunkGenerator
 {
-    public FlatLevelSource_structuresMixin(Registry<StructureSet> registry, Optional<HolderSet<StructureSet>> optional, BiomeSource biomeSource) {
-        super(registry, optional, biomeSource);
+    public FlatLevelSource_structuresMixin(BiomeSource biomeSource) {
+        super(biomeSource);
     }
+
 /*
     @Override
     public WeightedRandomList<MobSpawnSettings.SpawnerData> getMobsAt(Holder<Biome> biome, StructureFeatureManager accessor, MobCategory group, BlockPos pos)

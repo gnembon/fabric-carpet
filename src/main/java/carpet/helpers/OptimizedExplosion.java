@@ -205,10 +205,10 @@ public class OptimizedExplosion
 
         // If it is needed, calls scarpet event
         if (EXPLOSION_OUTCOME.isNeeded() && !world.isClientSide()) {
-            EXPLOSION_OUTCOME.onExplosion((ServerLevel) world, eAccess.getSource(), e::getSourceMob,  eAccess.getX(), eAccess.getY(), eAccess.getZ(), eAccess.getRadius(), eAccess.isFire(), e.getToBlow(), entityList, eAccess.getBlockInteraction());
+            EXPLOSION_OUTCOME.onExplosion((ServerLevel) world, eAccess.getSource(), e::getIndirectSourceEntity,  eAccess.getX(), eAccess.getY(), eAccess.getZ(), eAccess.getRadius(), eAccess.isFire(), e.getToBlow(), entityList, eAccess.getBlockInteraction());
         }
 
-        boolean damagesTerrain = eAccess.getBlockInteraction() != Explosion.BlockInteraction.NONE;
+        boolean damagesTerrain = eAccess.getBlockInteraction() != Explosion.BlockInteraction.KEEP;
 
         // explosionSound incremented till disabling the explosion particles and sound
         if (explosionSound < 100 || explosionSound % 100 == 0)
@@ -234,7 +234,7 @@ public class OptimizedExplosion
             ObjectArrayList<Pair<ItemStack, BlockPos>> objectArrayList = new ObjectArrayList<>();
             Util.shuffle((ObjectArrayList<BlockPos>) e.getToBlow(), world.random);
 
-            boolean dropFromExplosions = CarpetSettings.xpFromExplosions || e.getSourceMob() instanceof Player;
+            boolean dropFromExplosions = CarpetSettings.xpFromExplosions || e.getIndirectSourceEntity() instanceof Player;
 
             for (BlockPos blockpos : e.getToBlow())
             {
@@ -254,7 +254,7 @@ public class OptimizedExplosion
                                 .withOptionalParameter(LootContextParams.BLOCK_ENTITY, blockEntity)
                                 .withOptionalParameter(LootContextParams.THIS_ENTITY, eAccess.getSource());
 
-                        if (eAccess.getBlockInteraction() == Explosion.BlockInteraction.DESTROY)
+                        if (eAccess.getBlockInteraction() == Explosion.BlockInteraction.DESTROY_WITH_DECAY)
                             lootBuilder.withParameter(LootContextParams.EXPLOSION_RADIUS, eAccess.getRadius());
 
                         state.spawnAfterBreak(serverLevel, blockpos, ItemStack.EMPTY, dropFromExplosions);
