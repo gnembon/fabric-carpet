@@ -14,7 +14,10 @@ import java.lang.annotation.Target;
  * - String
  * - a subclass of Enum
  * The default value of the rule will be the initial value of the field.
+ * 
+ * @deprecated Use {@link carpet.api.settings.Rule} instead
  */
+@Deprecated(forRemoval = true)
 @Target(ElementType.FIELD)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Rule
@@ -55,18 +58,18 @@ public @interface Rule
     /**
      * If specified, the rule will automatically enable or disable 
      * a builtin Scarpet Rule App with this name.
-     * Consider telling the rule name so users can edit globals
-     * (in case there are relevant globals to edit ofc)
      */
     String appSource() default "";
 
     /**
      * The class of the validator checked when the rule is changed.
      */
-    Class<? extends Validator>[] validate() default {};
+    @SuppressWarnings("rawtypes")
+    Class<? extends carpet.api.settings.Validator>[] validate() default {};
 
     /**
-     * The class of the condition checked when the rule is parsed.
+     * The class of the condition checked when the rule is parsed, before being added
+     * to the Settings Manager.
      */
-    Class<? extends Condition>[] condition() default {};
+    Class<? extends carpet.api.settings.Rule.Condition>[] condition() default {};
 }

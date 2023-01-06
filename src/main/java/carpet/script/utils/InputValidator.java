@@ -1,11 +1,10 @@
 package carpet.script.utils;
 
 import carpet.script.exception.InternalExpressionException;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.InvalidIdentifierException;
-import org.lwjgl.system.CallbackI;
 
 import java.util.Locale;
+import net.minecraft.ResourceLocationException;
+import net.minecraft.resources.ResourceLocation;
 
 public class InputValidator {
     public static String validateSimpleString(String input, boolean strict)
@@ -16,13 +15,13 @@ public class InputValidator {
         return simplified;
     }
 
-    public static Identifier identifierOf(String string)
+    public static ResourceLocation identifierOf(String string)
     {
         try
         {
-            return new Identifier(string);
+            return new ResourceLocation(string);
         }
-        catch (InvalidIdentifierException iie)
+        catch (ResourceLocationException iie)
         {
             throw new InternalExpressionException("Incorrect identifier format '"+string+"': "+iie.getMessage());
         }

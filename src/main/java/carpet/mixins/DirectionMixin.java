@@ -3,8 +3,8 @@ package carpet.mixins;
 import carpet.CarpetSettings;
 import carpet.fakes.EntityInterface;
 import carpet.helpers.BlockRotator;
-import net.minecraft.entity.Entity;
-import net.minecraft.util.math.Direction;
+import net.minecraft.core.Direction;
+import net.minecraft.world.entity.Entity;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
@@ -12,13 +12,13 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 @Mixin(Direction.class)
 public abstract class DirectionMixin
 {
-    @Redirect(method = "getEntityFacingOrder", at = @At(value = "INVOKE", target = "Lnet/minecraft/entity/Entity;getYaw(F)F"))
+    @Redirect(method = "orderedByNearest", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/Entity;getViewYRot(F)F"))
     private static float getYaw(Entity entity, float float_1)
     {
         float yaw;
         if (!CarpetSettings.placementRotationFix)
         {
-            yaw = entity.getYaw(float_1);
+            yaw = entity.getViewYRot(float_1);
         }
         else
         {
@@ -30,10 +30,10 @@ public abstract class DirectionMixin
         }
         return yaw;
     }
-    @Redirect(method = "getEntityFacingOrder", at = @At(value = "INVOKE", target = "Lnet/minecraft/entity/Entity;getPitch(F)F"))
+    @Redirect(method = "orderedByNearest", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/Entity;getViewXRot(F)F"))
     private static float getPitch(Entity entity, float float_1)
     {
-        float pitch = entity.getPitch(float_1);
+        float pitch = entity.getViewXRot(float_1);
         if (BlockRotator.flippinEligibility(entity))
         {
             pitch = -pitch;

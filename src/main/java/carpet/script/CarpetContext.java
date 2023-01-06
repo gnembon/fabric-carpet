@@ -1,14 +1,19 @@
 package carpet.script;
 
 import carpet.script.value.Value;
-import net.minecraft.server.command.ServerCommandSource;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.core.BlockPos;
 
 public class CarpetContext extends Context
 {
-    public ServerCommandSource s;
+    public CommandSourceStack s;
     public final BlockPos origin;
-    public CarpetContext(ScriptHost host, ServerCommandSource source, BlockPos origin)
+
+    public CarpetContext(CarpetScriptHost host, CommandSourceStack source) {
+        this(host, source, BlockPos.ZERO);
+    }
+
+    public CarpetContext(ScriptHost host, CommandSourceStack source, BlockPos origin)
     {
         super(host);
         s = source;
@@ -16,7 +21,7 @@ public class CarpetContext extends Context
     }
 
     @Override
-    public Context duplicate()
+    public CarpetContext duplicate()
     {
         return new CarpetContext(this.host, this.s, this.origin);
     }

@@ -1,8 +1,8 @@
 package carpet.fakes;
 
-import net.minecraft.world.chunk.ChunkNibbleArray;
+import net.minecraft.world.level.chunk.DataLayer;
 
 public interface ChunkLightProviderInterface
 {
-    int callGetCurrentLevelFromSection(ChunkNibbleArray array, long blockPos);
+    int callGetCurrentLevelFromSection(DataLayer array, long blockPos);
 }

@@ -15,8 +15,8 @@ import carpet.script.value.Value;
 /**
  * <p>Defines a method that can be used as a function in the Scarpet language.</p>
  * 
- * <p>Methods annotated with this annotation are not required to accept and return the typical {@code Context context, Integer t, List<Value> lv}, but
- * instead can specify whatever parameters they actually need that will be automatically converted from their respective {@link Value}s and passed to
+ * <p>Methods annotated with this annotation are not required to accept and return the implementation {@code Context context, Context.Type t, List<Value> lv}, 
+ * but instead can specify whatever parameters they actually need that will be automatically converted from their respective {@link Value}s and passed to
  * the method as the expected type. Functions will automatically fail if given parameters are not compatible with the specified ones, or if the number
  * of provided arguments is either too large or too small.</p>
  * 
@@ -26,8 +26,7 @@ import carpet.script.value.Value;
  * In order to convert the output of your method to a {@link LazyValue} you will also need to register its conversion in {@link OutputConverter}</p>
  * 
  * <p>In order for Carpet to find methods annotated with this annotation, you must add your function class(es) to Carpet by running
- * {@link AnnotationParser#parseFunctionClass(Class)} ONCE. The provided {@link Class} must be concrete and provide the default constructor or an
- * equivalent to it.</p>
+ * {@link AnnotationParser#parseFunctionClass(Class)} ONCE.</p>
  * 
  * <p>Methods annotated with this annotation must not declare throwing any checked exceptions.</p>
  * 

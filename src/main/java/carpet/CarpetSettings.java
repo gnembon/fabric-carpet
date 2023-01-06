@@ -1,83 +1,85 @@
 package carpet;
 
+import carpet.api.settings.CarpetRule;
+import carpet.api.settings.RuleCategory;
+import carpet.api.settings.Validators;
+import carpet.api.settings.Validator;
 import carpet.script.utils.AppStoreManager;
-import carpet.settings.ParsedRule;
 import carpet.settings.Rule;
-import carpet.settings.SettingsManager;
-import carpet.settings.Validator;
 import carpet.utils.Translations;
+import carpet.utils.CommandHelper;
 import carpet.utils.Messenger;
 import carpet.utils.SpawnChunks;
-import net.minecraft.block.Block;
-import net.minecraft.block.Blocks;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.player.PlayerEntity;
+import net.fabricmc.loader.api.FabricLoader;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.command.ServerCommandSource;
+import net.minecraft.server.ServerInterface;
 import net.minecraft.server.dedicated.DedicatedServer;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.ChunkPos;
-import net.minecraft.util.registry.Registry;
-import net.minecraft.world.World;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.entity.StructureBlockEntity;
+import net.minecraft.world.level.block.piston.PistonStructureResolver;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Iterator;
 import java.util.Locale;
 import java.util.Optional;
 
-import static carpet.settings.RuleCategory.BUGFIX;
-import static carpet.settings.RuleCategory.COMMAND;
-import static carpet.settings.RuleCategory.CREATIVE;
-import static carpet.settings.RuleCategory.EXPERIMENTAL;
-import static carpet.settings.RuleCategory.FEATURE;
-import static carpet.settings.RuleCategory.OPTIMIZATION;
-import static carpet.settings.RuleCategory.SURVIVAL;
-import static carpet.settings.RuleCategory.TNT;
-import static carpet.settings.RuleCategory.DISPENSER;
-import static carpet.settings.RuleCategory.SCARPET;
-import static carpet.settings.RuleCategory.CLIENT;
+import static carpet.api.settings.RuleCategory.BUGFIX;
+import static carpet.api.settings.RuleCategory.COMMAND;
+import static carpet.api.settings.RuleCategory.CREATIVE;
+import static carpet.api.settings.RuleCategory.EXPERIMENTAL;
+import static carpet.api.settings.RuleCategory.FEATURE;
+import static carpet.api.settings.RuleCategory.OPTIMIZATION;
+import static carpet.api.settings.RuleCategory.SURVIVAL;
+import static carpet.api.settings.RuleCategory.TNT;
+import static carpet.api.settings.RuleCategory.DISPENSER;
+import static carpet.api.settings.RuleCategory.SCARPET;
+import static carpet.api.settings.RuleCategory.CLIENT;
 
-@SuppressWarnings("CanBeFinal")
+@SuppressWarnings({"CanBeFinal", "removal"}) // removal should be removed after migrating rules to the new system
 public class CarpetSettings
 {
-    public static final String carpetVersion = "1.4.58+v220120";
-    public static final Logger LOG = LogManager.getLogger("carpet");
-    public static ThreadLocal<Boolean> skipGenerationChecks = ThreadLocal.withInitial(() -> false);
-    public static ThreadLocal<Boolean> impendingFillSkipUpdates = ThreadLocal.withInitial(() -> false);
+    public static final String carpetVersion = FabricLoader.getInstance().getModContainer("carpet").orElseThrow().getMetadata().getVersion().toString();
+    public static final String releaseTarget = "1.19.3";
+    public static final Logger LOG = LoggerFactory.getLogger("carpet");
+    public static final ThreadLocal<Boolean> skipGenerationChecks = ThreadLocal.withInitial(() -> false);
+    public static final ThreadLocal<Boolean> impendingFillSkipUpdates = ThreadLocal.withInitial(() -> false);
+    public static final int VANILLA_FILL_LIMIT = 32768;
     public static int runPermissionLevel = 2;
     public static boolean doChainStone = false;
     public static boolean chainStoneStickToAll = false;
     public static Block structureBlockIgnoredBlock = Blocks.STRUCTURE_VOID;
-    public static final int vanillaStructureBlockLimit = 48;
-    public static int updateSuppressionBlockSetting = -1;
-
     private static class LanguageValidator extends Validator<String> {
-        @Override public String validate(ServerCommandSource source, ParsedRule<String> currentRule, String newValue, String string) {
-            if (currentRule.get().equals(newValue) || source == null)
-            {
-                return newValue;
-            }
+        @Override public String validate(CommandSourceStack source, CarpetRule<String> currentRule, String newValue, String string) {
             if (!Translations.isValidLanguage(newValue))
             {
                 Messenger.m(source, "r "+newValue+" is not a valid language");
                 return null;
             }
             CarpetSettings.language = newValue;
-            Translations.updateLanguage(source);
+            Translations.updateLanguage();
             return newValue;
         }
     }
     @Rule(
-            desc = "sets the language for carpet",
+            desc = "Sets the language for Carpet",
             category = FEATURE,
-            options = {"none", "zh_cn", "zh_tw"},
-            strict = false,
+            options = {"en_us", "pt_br", "zh_cn", "zh_tw"},
+            strict = true, // the current system doesn't handle fallbacks and other, not defined languages would make unreadable mess. Change later
             validate = LanguageValidator.class
     )
-    public static String language = "none";
+    public static String language = "en_us";
 
     /*
     These will be turned when events can be added / removed in code
@@ -128,8 +130,8 @@ public class CarpetSettings
     */
 
     private static class CarpetPermissionLevel extends Validator<String> {
-        @Override public String validate(ServerCommandSource source, ParsedRule<String> currentRule, String newValue, String string) {
-            if (source == null || source.hasPermissionLevel(4))
+        @Override public String validate(CommandSourceStack source, CarpetRule<String> currentRule, String newValue, String string) {
+            if (source == null || source.hasPermission(4))
                 return newValue;
             return null;
         }
@@ -173,14 +175,14 @@ public class CarpetSettings
 
 
     private static class OneHourMaxDelayLimit extends Validator<Integer> {
-        @Override public Integer validate(ServerCommandSource source, ParsedRule<Integer> currentRule, Integer newValue, String string) {
+        @Override public Integer validate(CommandSourceStack source, CarpetRule<Integer> currentRule, Integer newValue, String string) {
             return (newValue > 0 && newValue <= 72000) ? newValue : null;
         }
         @Override
         public String description() { return "You must choose a value from 1 to 72000";}
     }
 
-    @Rule(desc = "Dropping entire stacks works also from on the crafting UI result slot", category = {BUGFIX, SURVIVAL})
+    @Rule(desc = "Dropping entire stacks works also from on the crafting UI result slot", category = {RuleCategory.BUGFIX, SURVIVAL})
     public static boolean ctrlQCraftingFix = false;
 
     @Rule(desc = "Parrots don't get of your shoulders until you receive proper damage", category = {SURVIVAL, FEATURE})
@@ -208,7 +210,7 @@ public class CarpetSettings
     public static class StackableShulkerBoxValidator extends Validator<String> 
     {
         @Override
-        public String validate(ServerCommandSource source, ParsedRule<String> currentRule, String newValue, String string)
+        public String validate(CommandSourceStack source, CarpetRule<String> currentRule, String newValue, String string)
         {
             if (newValue.matches("^[0-9]+$")) {
                 int value = Integer.parseInt(newValue);
@@ -249,6 +251,9 @@ public class CarpetSettings
     @Rule( desc = "Explosions won't destroy blocks", category = {CREATIVE, TNT} )
     public static boolean explosionNoBlockDamage = false;
 
+    @Rule( desc = "Experience will drop from all experience barring blocks with any explosion type", category = {SURVIVAL, FEATURE})
+    public static boolean xpFromExplosions = false;
+
     @Rule( desc = "Removes random TNT momentum when primed", category = {CREATIVE, TNT} )
     public static boolean tntPrimerMomentumRemoved = false;
 
@@ -258,8 +263,8 @@ public class CarpetSettings
     private static class CheckOptimizedTntEnabledValidator<T> extends Validator<T>
     {
         @Override
-        public T validate(ServerCommandSource source, ParsedRule<T> currentRule, T newValue, String string) {
-            return optimizedTNT || currentRule.defaultValue.equals(newValue) ? newValue : null;
+        public T validate(CommandSourceStack source, CarpetRule<T> currentRule, T newValue, String string) {
+            return optimizedTNT || currentRule.defaultValue().equals(newValue) ? newValue : null;
         }
 
         @Override
@@ -274,7 +279,7 @@ public class CarpetSettings
 
     private static class TNTRandomRangeValidator extends Validator<Double> {
         @Override
-        public Double validate(ServerCommandSource source, ParsedRule<Double> currentRule, Double newValue, String string) {
+        public Double validate(CommandSourceStack source, CarpetRule<Double> currentRule, Double newValue, String string) {
             return newValue == -1 || newValue >= 0 ? newValue : null;
         }
 
@@ -290,7 +295,7 @@ public class CarpetSettings
 
     private static class TNTAngleValidator extends Validator<Double> {
         @Override
-        public Double validate(ServerCommandSource source, ParsedRule<Double> currentRule, Double newValue, String string) {
+        public Double validate(CommandSourceStack source, CarpetRule<Double> currentRule, Double newValue, String string) {
             return (newValue >= 0 && newValue < Math.PI * 2) || newValue == -1 ? newValue : null;
         }
 
@@ -384,7 +389,7 @@ public class CarpetSettings
 
 
     private static class ChainStoneSetting extends Validator<String> {
-        @Override public String validate(ServerCommandSource source, ParsedRule<String> currentRule, String newValue, String string) {
+        @Override public String validate(CommandSourceStack source, CarpetRule<String> currentRule, String newValue, String string) {
             CarpetSettings.doChainStone = !newValue.toLowerCase(Locale.ROOT).equals("false");
             CarpetSettings.chainStoneStickToAll = newValue.toLowerCase(Locale.ROOT).equals("stick_to_all");
 
@@ -481,12 +486,26 @@ public class CarpetSettings
     public static String commandScript = "true";
 
     private static class ModulePermissionLevel extends Validator<String> {
-        @Override public String validate(ServerCommandSource source, ParsedRule<String> currentRule, String newValue, String string) {
-            int permissionLevel = SettingsManager.getCommandLevel(newValue);
-            if (source != null && !source.hasPermissionLevel(permissionLevel))
+        @Override public String validate(CommandSourceStack source, CarpetRule<String> currentRule, String newValue, String string) {
+            int permissionLevel = switch (newValue) {
+                    case "false":
+                        yield 0;
+                    case "true":
+                    case "ops":
+                        yield 2;
+                    case "0":
+                    case "1":
+                    case "2":
+                    case "3":
+                    case "4":
+                    	yield Integer.parseInt(newValue);
+                    default: throw new IllegalArgumentException();
+            	};
+            if (source != null && !source.hasPermission(permissionLevel))
                 return null;
             CarpetSettings.runPermissionLevel = permissionLevel;
-            CarpetServer.settingsManager.notifyPlayersCommandsChanged();
+            if (source != null)
+                CommandHelper.notifyPlayersCommandsChanged(source.getServer());
             return newValue;
         }
         @Override
@@ -502,7 +521,7 @@ public class CarpetSettings
             },
             category = {SCARPET},
             options = {"ops", "0", "1", "2", "3", "4"},
-            validate = {Validator._COMMAND_LEVEL_VALIDATOR.class, ModulePermissionLevel.class}
+            validate = {Validators.CommandLevel.class, ModulePermissionLevel.class}
     )
     public static String commandScriptACE = "ops";
 
@@ -581,7 +600,7 @@ public class CarpetSettings
     //public static boolean miningGhostBlockFix = false;
 
     private static class PushLimitLimits extends Validator<Integer> {
-        @Override public Integer validate(ServerCommandSource source, ParsedRule<Integer> currentRule, Integer newValue, String string) {
+        @Override public Integer validate(CommandSourceStack source, CarpetRule<Integer> currentRule, Integer newValue, String string) {
             return (newValue>0 && newValue <= 1024) ? newValue : null;
         }
         @Override
@@ -594,7 +613,7 @@ public class CarpetSettings
             strict = false,
             validate = PushLimitLimits.class
     )
-    public static int pushLimit = 12;
+    public static int pushLimit = PistonStructureResolver.MAX_PUSH_DEPTH;
 
     @Rule(
             desc = "Customizable powered rail power range",
@@ -606,20 +625,20 @@ public class CarpetSettings
     public static int railPowerLimit = 9;
 
     private static class FillLimitLimits extends Validator<Integer> {
-        @Override public Integer validate(ServerCommandSource source, ParsedRule<Integer> currentRule, Integer newValue, String string) {
+        @Override public Integer validate(CommandSourceStack source, CarpetRule<Integer> currentRule, Integer newValue, String string) {
             return (newValue>0 && newValue <= 20000000) ? newValue : null;
         }
         @Override
         public String description() { return "You must choose a value from 1 to 20M";}
     }
     @Rule(
-            desc = "Customizable fill/clone volume limit",
+            desc = "Customizable fill/fillbiome/clone volume limit",
             options = {"32768", "250000", "1000000"},
             category = CREATIVE,
             strict = false,
             validate = FillLimitLimits.class
     )
-    public static int fillLimit = 32768;
+    public static int fillLimit = VANILLA_FILL_LIMIT;
 
 
     @Rule(
@@ -636,7 +655,7 @@ public class CarpetSettings
             options = {"0", "1", "20"},
             category = OPTIMIZATION,
             strict = false,
-            validate = Validator.NONNEGATIVE_NUMBER.class
+            validate = Validators.NonNegativeNumber.class
     )
     public static int maxEntityCollisions = 0;
 
@@ -645,7 +664,7 @@ public class CarpetSettings
             options = {"0", "12", "20", "40"},
             category = CREATIVE,
             strict = false,
-            validate = Validator.NONNEGATIVE_NUMBER.class
+            validate = Validators.NonNegativeNumber.class
     )
     public static int pingPlayerListLimit = 12;
     /*
@@ -676,9 +695,9 @@ public class CarpetSettings
 
     private static class ViewDistanceValidator extends Validator<Integer>
     {
-        @Override public Integer validate(ServerCommandSource source, ParsedRule<Integer> currentRule, Integer newValue, String string)
+        @Override public Integer validate(CommandSourceStack source, CarpetRule<Integer> currentRule, Integer newValue, String string)
         {
-            if (currentRule.get().equals(newValue) || source == null)
+            if (currentRule.value().equals(newValue) || source == null)
             {
                 return newValue;
             }
@@ -689,11 +708,11 @@ public class CarpetSettings
             }
             MinecraftServer server = source.getServer();
 
-            if (server.isDedicated())
+            if (server.isDedicatedServer())
             {
-                int vd = (newValue >= 2)?newValue:((DedicatedServer) server).getProperties().viewDistance;
-                if (vd != server.getPlayerManager().getViewDistance())
-                    server.getPlayerManager().setViewDistance(vd);
+                int vd = (newValue >= 2)?newValue:((ServerInterface) server).getProperties().viewDistance;
+                if (vd != server.getPlayerList().getViewDistance())
+                    server.getPlayerList().setViewDistance(vd);
                 return newValue;
             }
             else
@@ -715,33 +734,74 @@ public class CarpetSettings
     )
     public static int viewDistance = 0;
 
+    private static class SimulationDistanceValidator extends Validator<Integer>
+    {
+        @Override public Integer validate(CommandSourceStack source, CarpetRule<Integer> currentRule, Integer newValue, String string)
+        {
+            if (currentRule.value().equals(newValue) || source == null)
+            {
+                return newValue;
+            }
+            if (newValue < 0 || newValue > 32)
+            {
+                Messenger.m(source, "r simulation distance has to be between 0 and 32");
+                return null;
+            }
+            MinecraftServer server = source.getServer();
+
+            if (server.isDedicatedServer())
+            {
+                int vd = (newValue >= 2)?newValue:((DedicatedServer) server).getProperties().simulationDistance;
+                if (vd != server.getPlayerList().getSimulationDistance())
+                    server.getPlayerList().setSimulationDistance(vd);
+                return newValue;
+            }
+            else
+            {
+                Messenger.m(source, "r simulation distance can only be changed on a server");
+                return 0;
+            }
+        }
+        @Override
+        public String description() { return "You must choose a value from 0 (use server settings) to 32";}
+    }
+    @Rule(
+            desc = "Changes the simulation distance of the server.",
+            extra = "Set to 0 to not override the value in server settings.",
+            options = {"0", "12", "16", "32"},
+            category = CREATIVE,
+            strict = false,
+            validate = SimulationDistanceValidator.class
+    )
+    public static int simulationDistance = 0;
+
     public static class ChangeSpawnChunksValidator extends Validator<Integer> {
         public static void changeSpawnSize(int size)
         {
-            ServerWorld overworld = CarpetServer.minecraft_server.getWorld(World.OVERWORLD); // OW
+            ServerLevel overworld = CarpetServer.minecraft_server.getLevel(Level.OVERWORLD); // OW
             if (overworld != null) {
                 ChunkPos centerChunk = new ChunkPos(new BlockPos(
-                        overworld.getLevelProperties().getSpawnX(),
-                        overworld.getLevelProperties().getSpawnY(),
-                        overworld.getLevelProperties().getSpawnZ()
+                        overworld.getLevelData().getXSpawn(),
+                        overworld.getLevelData().getYSpawn(),
+                        overworld.getLevelData().getZSpawn()
                 ));
-                SpawnChunks.changeSpawnChunks(overworld.getChunkManager(), centerChunk, size);
+                SpawnChunks.changeSpawnChunks(overworld.getChunkSource(), centerChunk, size);
             }
         }
-        @Override public Integer validate(ServerCommandSource source, ParsedRule<Integer> currentRule, Integer newValue, String string) {
+        @Override public Integer validate(CommandSourceStack source, CarpetRule<Integer> currentRule, Integer newValue, String string) {
             if (source == null) return newValue;
             if (newValue < 0 || newValue > 32)
             {
                 Messenger.m(source, "r spawn chunk size has to be between 0 and 32");
                 return null;
             }
-            if (currentRule.get().intValue() == newValue.intValue())
+            if (currentRule.value().intValue() == newValue.intValue())
             {
                 //must been some startup thing
                 return newValue;
             }
             if (CarpetServer.minecraft_server == null) return newValue;
-            ServerWorld currentOverworld = CarpetServer.minecraft_server.getWorld(World.OVERWORLD); // OW
+            ServerLevel currentOverworld = CarpetServer.minecraft_server.getLevel(Level.OVERWORLD); // OW
             if (currentOverworld != null)
             {
                 changeSpawnSize(newValue);
@@ -757,45 +817,34 @@ public class CarpetSettings
             options = {"0", "11"},
             validate = ChangeSpawnChunksValidator.class
     )
-    public static int spawnChunksSize = 11;
+    public static int spawnChunksSize = MinecraftServer.START_CHUNK_RADIUS;
 
     public static class LightBatchValidator extends Validator<Integer> {
-        public static void applyLightBatchSizes()
+        public static void applyLightBatchSizes(int maxBatchSize)
         {
-            Iterator<ServerWorld> iterator = CarpetServer.minecraft_server.getWorlds().iterator();
+            Iterator<ServerLevel> iterator = CarpetServer.minecraft_server.getAllLevels().iterator();
             
             while (iterator.hasNext()) 
             {
-                ServerWorld serverWorld = iterator.next();
-                serverWorld.getChunkManager().getLightingProvider().setTaskBatchSize(lightEngineMaxBatchSize);
+                ServerLevel serverWorld = iterator.next();
+                serverWorld.getChunkSource().getLightEngine().setTaskPerBatch(maxBatchSize);
             }
         }
-        @Override public Integer validate(ServerCommandSource source, ParsedRule<Integer> currentRule, Integer newValue, String string) {
+        @Override public Integer validate(CommandSourceStack source, CarpetRule<Integer> currentRule, Integer newValue, String string) {
             if (source == null) return newValue;
             if (newValue < 0)
             {
                 Messenger.m(source, "r light batch size has to be at least 0");
                 return null;
             }
-            if (currentRule.get().intValue() == newValue.intValue())
+            if (currentRule.value().intValue() == newValue.intValue())
             {
                 //must been some startup thing
                 return newValue;
             }
             if (CarpetServer.minecraft_server == null) return newValue;
-          
-            // Set the field before we apply.
-            try
-            {
-                currentRule.field.set(null, newValue.intValue());
-            }
-            catch (IllegalAccessException e)
-            {
-                Messenger.m(source, "r Unable to access setting for  "+currentRule.name);
-                return null;
-            }
             
-            applyLightBatchSizes(); // Apply new settings
+            applyLightBatchSizes(newValue); // Apply new settings
             
             return newValue;
         }
@@ -831,19 +880,18 @@ public class CarpetSettings
     public static boolean renewableBlackstone = false;
 
     @Rule(
-            desc = "Lava and water generate deepslate and cobbled deepslate instead below Y16",
-            extra = "This rule may change Y value to 0 with 1.18",
+            desc = "Lava and water generate deepslate and cobbled deepslate instead below Y0",
             category = FEATURE
     )
     public static boolean renewableDeepslate = false;
 
-    @Rule(desc = "fixes block placement rotation issue when player rotates quickly while placing blocks", category = BUGFIX)
+    @Rule(desc = "fixes block placement rotation issue when player rotates quickly while placing blocks", category = RuleCategory.BUGFIX)
     public static boolean placementRotationFix = false;
 
     @Rule(
             desc = "Fixes leads breaking/becoming invisible in unloaded chunks",
             extra = "You may still get visibly broken leash links on the client side, but server side the link is still there.",
-            category = BUGFIX
+            category = RuleCategory.BUGFIX
     )// needs checkfix for 1.15
     public static boolean leadFix = false;
 
@@ -857,17 +905,10 @@ public class CarpetSettings
     public static boolean flatWorldStructureSpawning = false;
 
     @Rule(
-            desc = "Edge cases are as frequent as common cases, for testing only!!",
-            extra = {"Velocities of items from dispensers, blaze projectiles, fireworks ",
-                    "Directions of fireballs, wither skulls, fishing bobbers, ",
-                    "items dropped from blocks and inventories, llamas spit, triggered trap horses",
-                    "Damage dealt with projectiles",
-                    "Blaze aggro sensitivity",
-                    "Mobs spawned follow range"
-            },
+            desc = "Increases for testing purposes number of blue skulls shot by the wither",
             category = CREATIVE
     )
-    public static boolean extremeBehaviours = false;
+    public static boolean moreBlueSkulls = false;
 
     @Rule(
             desc = "Removes fog from client in the nether and the end",
@@ -893,7 +934,7 @@ public class CarpetSettings
     public static boolean isCreativeFlying(Entity entity)
     {
         // #todo replace after merger to 1.17
-        return CarpetSettings.creativeNoClip && entity instanceof PlayerEntity && (((PlayerEntity) entity).isCreative()) && ((PlayerEntity) entity).getAbilities().flying;
+        return CarpetSettings.creativeNoClip && entity instanceof Player && (((Player) entity).isCreative()) && ((Player) entity).getAbilities().flying;
     }
 
 
@@ -906,7 +947,7 @@ public class CarpetSettings
             },
             category = {CREATIVE, CLIENT},
             strict = false,
-            validate = Validator.NONNEGATIVE_NUMBER.class
+            validate = Validators.NonNegativeNumber.class
     )
     public static double creativeFlySpeed = 1.0;
 
@@ -922,12 +963,12 @@ public class CarpetSettings
             },
             category = {CREATIVE, CLIENT},
             strict = false,
-            validate = Validator.PROBABILITY.class
+            validate = Validators.Probablity.class
     )
     public static double creativeFlyDrag = 0.09;
 
     @Rule(
-            desc = "Removes abnoxious messages from the logs",
+            desc = "Removes obnoxious messages from the logs",
             extra = {
                     "Doesn't display 'Maximum sound pool size 247 reached'",
                     "Which is normal with decent farms and contraptions"
@@ -938,8 +979,8 @@ public class CarpetSettings
 
     public static class StructureBlockLimitValidator extends Validator<Integer> {
 
-        @Override public Integer validate(ServerCommandSource source, ParsedRule<Integer> currentRule, Integer newValue, String string) {
-            return (newValue >= vanillaStructureBlockLimit) ? newValue : null;
+        @Override public Integer validate(CommandSourceStack source, CarpetRule<Integer> currentRule, Integer newValue, String string) {
+            return (newValue >= StructureBlockEntity.MAX_SIZE_PER_AXIS) ? newValue : null;
         }
 
         @Override
@@ -960,13 +1001,13 @@ public class CarpetSettings
             validate = StructureBlockLimitValidator.class,
             strict = false
     )
-    public static int structureBlockLimit = vanillaStructureBlockLimit;
+    public static int structureBlockLimit = StructureBlockEntity.MAX_SIZE_PER_AXIS;
 
     public static class StructureBlockIgnoredValidator extends Validator<String> {
 
         @Override
-        public String validate(ServerCommandSource source, ParsedRule<String> currentRule, String newValue, String string) {
-            Optional<Block> ignoredBlock = Registry.BLOCK.getOrEmpty(Identifier.tryParse(newValue));
+        public String validate(CommandSourceStack source, CarpetRule<String> currentRule, String newValue, String string) {
+            Optional<Block> ignoredBlock = BuiltInRegistries.BLOCK.getOptional(ResourceLocation.tryParse(newValue));
             if (!ignoredBlock.isPresent()) {
                 Messenger.m(source, "r Unknown block '" + newValue + "'.");
                 return null;
@@ -990,64 +1031,53 @@ public class CarpetSettings
             options = {"96", "192", "2048"},
             category = {CREATIVE, CLIENT},
             strict = false,
-            validate = Validator.NONNEGATIVE_NUMBER.class
+            validate = Validators.NonNegativeNumber.class
     )
     public static int structureBlockOutlineDistance = 96;
 
     @Rule(
             desc = "Lightning kills the items that drop when lightning kills an entity",
             extra = {"Setting to true will prevent lightning from killing drops", "Fixes [MC-206922](https://bugs.mojang.com/browse/MC-206922)."},
-            category = {BUGFIX}
+            category = BUGFIX
     )
     public static boolean lightningKillsDropsFix = false;
 
     @Rule(
-            desc = "Placing an activator rail on top of a barrier block will update suppress when the rail turns off.",
-            extra = {"Entering an integer will make the update suppression block auto-reset","Integer entered is the delay in ticks for it to reset"},
-            category = {CREATIVE, "extras"},
-            options = {"false","true","1","6"},
+            desc = "Placing an activator rail on top of a barrier block will fill the neighbor updater stack when the rail turns off.",
+            extra = {"The integer entered is the amount of updates that should be left in the stack", "-1 turns it off"},
+            category = CREATIVE,
+            options = {"-1","0","10","50"},
             strict = false,
-            validate = updateSuppressionBlockModes.class
+            validate = UpdateSuppressionBlockModes.class
     )
-    public static String updateSuppressionBlock = "false";
+    public static int updateSuppressionBlock = -1;
 
-    @Rule(
-            desc = "Fixes update suppression causing server crashes.",
-            category = {BUGFIX}
-    )
-    public static boolean updateSuppressionCrashFix = false;
-
-    public static int getInteger(String s) {
-        try {
-            return Integer.parseInt(s);
-        } catch(NumberFormatException e) {
-            return -1;
-        }
-    }
-
-    private static class updateSuppressionBlockModes extends Validator<String> {
+    private static class UpdateSuppressionBlockModes extends Validator<Integer> {
         @Override
-        public String validate(ServerCommandSource source, ParsedRule<String> currentRule, String newValue, String string) {
-            if (!currentRule.get().equals(newValue)) {
-                if (newValue.equalsIgnoreCase("false")) {
-                    updateSuppressionBlockSetting = -1;
-                } else if (newValue.equalsIgnoreCase("true")) {
-                    updateSuppressionBlockSetting = 0;
-                } else {
-                    int parsedInt = getInteger(newValue);
-                    if (parsedInt <= 0) {
-                        updateSuppressionBlockSetting = -1;
-                        return "false";
-                    } else {
-                        updateSuppressionBlockSetting = parsedInt;
-                    }
-                }
-            }
-            return newValue;
+        public Integer validate(CommandSourceStack source, CarpetRule<Integer> currentRule, Integer newValue, String string) {
+            return newValue < -1 ? null : newValue;
         }
         @Override
         public String description() {
-            return "Cannot be negative, can be true, false, or # > 0";
+            return "This value represents the amount of updates required before the logger logs them. Must be -1 or larger";
         }
     }
+
+    @Rule(
+            desc = "Creative players load chunks, or they don't! Just like spectators!",
+            extra = {"Toggling behaves exactly as if the player is in spectator mode and toggling the gamerule spectatorsGenerateChunks."
+            },
+            category = {CREATIVE, FEATURE}
+    )
+    public static boolean creativePlayersLoadChunks = true;
+
+    @Rule(
+            desc = "Customizable sculk sensor range",
+            options = {"8", "16", "32"},
+            category = CREATIVE,
+            strict = false,
+            validate = PushLimitLimits.class
+    )
+    public static int sculkSensorRange = 8;
+
 }

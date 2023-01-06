@@ -16,7 +16,7 @@ public class Threading
     {
         //"overidden" native call to cancel if on main thread
         expression.addContextFunction("task_join", 1, (c, t, lv) -> {
-            if (((CarpetContext)c).s.getServer().isOnThread())
+            if (((CarpetContext)c).s.getServer().isSameThread())
                 throw new InternalExpressionException("'task_join' cannot be called from main thread to avoid deadlocks");
             Value v = lv.get(0);
             if (!(v instanceof ThreadValue))
@@ -28,12 +28,12 @@ public class Threading
         expression.addLazyFunctionWithDelegation("task_dock", 1, false,true, (c, t, expr, tok, lv) -> {
             CarpetContext cc = (CarpetContext)c;
             MinecraftServer server = cc.s.getServer();
-            if (server.isOnThread()) return lv.get(0); // pass through for on thread tasks
+            if (server.isSameThread()) return lv.get(0); // pass through for on thread tasks
             Value[] result = new Value[]{Value.NULL};
             RuntimeException[] internal = new RuntimeException[]{null};
             try
             {
-                ((CarpetContext) c).s.getServer().submitAndJoin(() ->
+                ((CarpetContext) c).s.getServer().executeBlocking(() ->
                 {
                     try
                     {

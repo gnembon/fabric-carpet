@@ -3,14 +3,13 @@ package carpet.helpers;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.BiConsumer;
-
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.commands.Commands;
+import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerPlayer;
 import carpet.CarpetServer;
 import carpet.network.ServerNetworkHandler;
 import carpet.utils.Messenger;
-import net.minecraft.server.command.CommandManager;
-import net.minecraft.server.command.ServerCommandSource;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.text.BaseText;
 
 public class TickSpeed
 {
@@ -20,9 +19,9 @@ public class TickSpeed
     public static long time_bias = 0;
     public static long time_warp_start_time = 0;
     public static long time_warp_scheduled_ticks = 0;
-    public static ServerPlayerEntity time_advancerer = null;
+    public static ServerPlayer time_advancerer = null;
     public static String tick_warp_callback = null;
-    public static ServerCommandSource tick_warp_sender = null;
+    public static CommandSourceStack tick_warp_sender = null;
     public static int player_active_timeout = 0;
     public static boolean process_entities = true;
     private static boolean deepFreeze = false;
@@ -102,7 +101,7 @@ public class TickSpeed
         ServerNetworkHandler.updateTickPlayerActiveTimeoutToConnectedPlayers();
     }
 
-    public static BaseText tickrate_advance(ServerPlayerEntity player, int advance, String callback, ServerCommandSource source)
+    public static Component tickrate_advance(ServerPlayer player, int advance, String callback, CommandSourceStack source)
     {
         if (0 == advance)
         {
@@ -119,7 +118,7 @@ public class TickSpeed
         if (time_bias > 0)
         {
             String who = "Another player";
-            if (time_advancerer != null) who = time_advancerer.getEntityName();
+            if (time_advancerer != null) who = time_advancerer.getScoreboardName();
             return Messenger.c("l "+who+" is already advancing time at the moment. Try later or ask them");
         }
         time_advancerer = player;
@@ -147,10 +146,10 @@ public class TickSpeed
         time_warp_start_time = 0;
         if (tick_warp_callback != null)
         {
-            CommandManager icommandmanager = tick_warp_sender.getServer().getCommandManager();
+            Commands icommandmanager = tick_warp_sender.getServer().getCommands();
             try
             {
-                icommandmanager.execute(tick_warp_sender, tick_warp_callback);
+                icommandmanager.performPrefixedCommand(tick_warp_sender, tick_warp_callback);
             }
             catch (Throwable var23)
             {
@@ -177,6 +176,9 @@ public class TickSpeed
 
     public static boolean continueWarp()
     {
+        if (!process_entities)
+            // Returning false so we don't have to run at max speed when doing nothing
+            return false;
         if (time_bias > 0)
         {
             if (time_bias == time_warp_scheduled_ticks) //first call after previous tick, adjust start time
@@ -195,25 +197,21 @@ public class TickSpeed
 
     public static void tick()
     {
-        process_entities = true;
         if (player_active_timeout > 0)
         {
             player_active_timeout--;
         }
         if (is_paused)
         {
-            if (player_active_timeout < PLAYER_GRACE)
-            {
-                process_entities = false;
-            }
+            process_entities = player_active_timeout >= PLAYER_GRACE;
         }
         else if (is_superHot)
         {
-            if (player_active_timeout <= 0)
-            {
-                process_entities = false;
-
-            }
+            process_entities = player_active_timeout > 0;
+        }
+        else
+        {
+            process_entities = true;
         }
     }
     //unused - mod compat reasons
@@ -228,7 +226,7 @@ public class TickSpeed
             tickrate = 1000.0f;
         }
         
-        TickSpeed.mspt = (float)mspt;
+        TickSpeed.mspt = mspt;
         
         if (update) notifyTickrateListeners("carpet");
     }

@@ -1,15 +1,14 @@
 package carpet.fakes;
 
 import com.mojang.datafixers.util.Either;
-import net.minecraft.server.world.ChunkHolder;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.util.math.ChunkPos;
-import net.minecraft.util.thread.ThreadExecutor;
-import net.minecraft.world.chunk.Chunk;
-
 import java.util.concurrent.CompletableFuture;
+import net.minecraft.server.level.ChunkHolder;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.thread.BlockableEventLoop;
+import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.level.chunk.ChunkAccess;
 
 public interface ChunkHolderInterface
 {
-    CompletableFuture<Either<Chunk, ChunkHolder.Unloaded>> setDefaultProtoChunk(ChunkPos chpos, ThreadExecutor<Runnable> executor, ServerWorld world);
+    CompletableFuture<Either<ChunkAccess, ChunkHolder.ChunkLoadingFailure>> setDefaultProtoChunk(ChunkPos chpos, BlockableEventLoop<Runnable> executor, ServerLevel world);
 }

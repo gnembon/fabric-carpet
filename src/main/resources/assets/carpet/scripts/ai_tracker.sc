@@ -270,9 +270,9 @@ global_functions = {
    'portal_cooldown' -> {
       '*' -> [
          _(arg) -> _(e) -> (
-            portal_timer = e~'portal_timer';
-            if (portal_timer,
-               [[], [],  [['portal', 'portal cooldown:', portal_timer]]]
+            portal_cooldown = e~'portal_cooldown';
+            if (portal_cooldown,
+               [[], [],  [['portal', 'portal cooldown:', portal_cooldown]]]
             ,
                [[], [], []]
             )

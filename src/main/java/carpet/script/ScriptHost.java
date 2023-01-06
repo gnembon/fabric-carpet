@@ -1,16 +1,14 @@
 package carpet.script;
 
-import carpet.script.bundled.Module;
 import carpet.script.exception.ExpressionException;
 import carpet.script.exception.IntegrityException;
 import carpet.script.exception.InternalExpressionException;
-import carpet.script.language.Arithmetic;
 import carpet.script.value.FunctionValue;
 import carpet.script.value.Value;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -29,13 +27,14 @@ import java.util.stream.Stream;
 
 public abstract class ScriptHost
 {
-    public static Map<Value, Value> systemGlobals = new ConcurrentHashMap<>();
     private static final Map<Long, Random> randomizers = new Long2ObjectOpenHashMap<>();
 
     public static Thread mainThread = null;
     private final Map<Value, ThreadPoolExecutor> executorServices = new HashMap<>();
     private final Map<Value, Object> locks = new ConcurrentHashMap<>();
+    private final ScriptServer scriptServer;
     protected boolean inTermination = false;
+    public boolean strict;
 
     private final Set<String> deprecations = new HashSet<>();
 
@@ -101,7 +100,7 @@ public abstract class ScriptHost
     protected boolean perUser;
     public String user;
 
-    public String getName() {return main ==null?null: main.getName();}
+    public String getName() {return main ==null?null: main.name();}
 
     public final Module main;
 
@@ -112,16 +111,18 @@ public abstract class ScriptHost
     }
     public ErrorSnooper errorSnooper = null;
 
-    protected ScriptHost(Module code, boolean perUser, ScriptHost parent)
+    protected ScriptHost(Module code, ScriptServer scriptServer, boolean perUser, ScriptHost parent)
     {
         this.parent = parent;
         this.main = code;
         this.perUser = perUser;
         this.user = null;
+        this.strict = false;
+        this.scriptServer = scriptServer;
         ModuleData moduleData = new ModuleData(code);
         initializeModuleGlobals(moduleData);
         this.moduleData.put(code, moduleData);
-        this.modules.put(code==null?null:code.getName(), code);
+        this.modules.put(code==null?null:code.name(), code);
         mainThread = Thread.currentThread();
     }
 
@@ -133,8 +134,8 @@ public abstract class ScriptHost
     {
         if (modules.containsKey(moduleName.toLowerCase(Locale.ROOT))) return;  // aready imported
         Module module = getModuleOrLibraryByName(moduleName);
-        if (modules.containsKey(module.getName())) return;  // aready imported, once again, in case some discrepancies in names?
-        modules.put(module.getName(), module);
+        if (modules.containsKey(module.name())) return;  // aready imported, once again, in case some discrepancies in names?
+        modules.put(module.name(), module);
         ModuleData data = new ModuleData(module);
         initializeModuleGlobals(data);
         moduleData.put(module, data);
@@ -200,7 +201,7 @@ public abstract class ScriptHost
             if (module == main)
                 throw new InternalExpressionException("Function '"+name+"' is not defined yet");
             else
-                throw new InternalExpressionException("Function '"+name+"' is not defined nor visible by its name in the imported module '"+module.getName()+"'");
+                throw new InternalExpressionException("Function '"+name+"' is not defined nor visible by its name in the imported module '"+module.name()+"'");
         }
         return ret;
     }
@@ -438,7 +439,7 @@ public abstract class ScriptHost
         errorSnooper=null;
     }
 
-    public static final Logger DEPRECATION_LOG = LogManager.getLogger("Scarpet Deprecation Warnings");
+    public static final Logger DEPRECATION_LOG = LoggerFactory.getLogger("Scarpet Deprecation Warnings");
 
     public boolean issueDeprecation(String feature)
     {
@@ -447,4 +448,9 @@ public abstract class ScriptHost
         DEPRECATION_LOG.warn("'"+feature+"' is deprecated and soon will be removed. Please consult the docs for their replacement");
         return true;
     }
+
+	public ScriptServer scriptServer()
+	{
+		return scriptServer;
+	}
 }

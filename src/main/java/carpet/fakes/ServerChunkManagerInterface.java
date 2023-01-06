@@ -1,8 +1,8 @@
 package carpet.fakes;
 
-import net.minecraft.server.world.ChunkTicketManager;
+import net.minecraft.server.level.DistanceManager;
 
 public interface ServerChunkManagerInterface
 {
-    ChunkTicketManager getCMTicketManager();
+    DistanceManager getCMTicketManager();
 }

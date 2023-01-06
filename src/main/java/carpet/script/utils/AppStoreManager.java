@@ -1,32 +1,26 @@
 package carpet.script.utils;
 
 import carpet.CarpetServer;
+import carpet.api.settings.CarpetRule;
+import carpet.api.settings.Validator;
 import carpet.script.CarpetScriptHost;
 import carpet.script.CarpetScriptServer;
 import carpet.script.exception.InternalExpressionException;
 import carpet.script.value.MapValue;
 import carpet.script.value.StringValue;
 import carpet.script.value.Value;
-import carpet.settings.ParsedRule;
-import carpet.settings.Validator;
 import carpet.utils.Messenger;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import net.fabricmc.loader.api.FabricLoader;
-import net.minecraft.command.CommandException;
-import net.minecraft.server.command.ServerCommandSource;
-import net.minecraft.util.WorldSavePath;
-
-import java.io.BufferedReader;
+import net.minecraft.commands.CommandRuntimeException;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.world.level.storage.LevelResource;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
-import java.io.StringWriter;
-import java.io.Writer;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -37,8 +31,9 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CountDownLatch;
 import java.util.stream.Collectors;
+
+import org.apache.commons.io.IOUtils;
 
 /**
  * A class used to save scarpet app store scripts to disk
@@ -48,7 +43,7 @@ public class AppStoreManager
     /** A local copy of the scarpet repo's file structure, to avoid multiple queries to github.com while typing out the
      * {@code /script download} command and getting the suggestions.
      */
-    public static final StoreNode APP_STORE_ROOT = StoreNode.folder(null, "");
+    private static StoreNode APP_STORE_ROOT = StoreNode.folder(null, "");
 
     /** This is the base link to the scarpet app repo from the github api.
      */
@@ -58,10 +53,14 @@ public class AppStoreManager
 
     public static class ScarpetAppStoreValidator extends Validator<String>
     {
-        @Override public String validate(ServerCommandSource source, ParsedRule<String> currentRule, String newValue, String string)
+        @Override public String validate(CommandSourceStack source, CarpetRule<String> currentRule, String newValue, String stringInput)
         {
-            APP_STORE_ROOT.sealed = false;
-            APP_STORE_ROOT.children = new HashMap<>();
+            if (newValue.equals(currentRule.value())) {
+                // Don't refresh the local repo if it's the same (world change), helps preventing hitting rate limits from github when
+                // getting suggestions. Pending is a way to invalidate the cache when it gets old, and investigating api usage further
+                return newValue;
+            }
+            APP_STORE_ROOT = StoreNode.folder(null, "");
             if (newValue.equalsIgnoreCase("none"))
             {
                 scarpetRepoLink = null;
@@ -82,7 +81,6 @@ public class AppStoreManager
         public Map<String, StoreNode> children;
         public boolean sealed;
         public String value;
-        private CountDownLatch childrenProgress;
         public static StoreNode folder(StoreNode parent, String name)
         {
             StoreNode node = new StoreNode(parent, name);
@@ -124,38 +122,23 @@ public class AppStoreManager
             this.sealed = false;
         }
 
-        public void fillChildren() throws IOException
+        public synchronized void fillChildren() throws IOException
         {
             if (sealed) return;
             if (scarpetRepoLink == null) throw new IOException("Accessing scarpet app repo is disabled");
-            try
-            {
-                if (childrenProgress != null)
-                {
-                    childrenProgress.await();
-                    if (sealed) return;
-                    else throw new IOException("Problems fetching suggestions. Check more details in previous exceptions.");
-                }
-            }
-            catch (InterruptedException e)
-            {
-                throw new IOException("Suggestion provider thread was interrupted, unexpected!", e);
-            }
-            childrenProgress = new CountDownLatch(1);
 
             String queryPath = scarpetRepoLink + getPath();
             String response;
             try
             {
-                response = AppStoreManager.getStringFromStream(queryPath);
+                response = IOUtils.toString(new URL(queryPath), StandardCharsets.UTF_8);
             }
             catch (IOException e)
             {
-                childrenProgress.countDown();
-                childrenProgress = null; // Reset to allow retrying
+                // Not sealing to allow retrying
                 throw new IOException("Problems fetching " + queryPath, e);
             }
-            JsonArray files = new JsonParser().parse(response).getAsJsonArray();
+            JsonArray files = JsonParser.parseString(response).getAsJsonArray();
             for(JsonElement je : files)
             {
                 JsonObject jo = je.getAsJsonObject();
@@ -171,7 +154,6 @@ public class AppStoreManager
                 }
             }
             sealed = true;
-            childrenProgress.countDown();
         }
 
         /**
@@ -251,22 +233,22 @@ public class AppStoreManager
      * @return {@code 1} if we succesfully saved the script, {@code 0} otherwise
      */
 
-    public static int downloadScript(ServerCommandSource source, String path)
+    public static int downloadScript(CommandSourceStack source, String path)
     {
         AppInfo nodeInfo = getFileNode(path);
         return downloadScript(source, path, nodeInfo, false);
     }
 
-    private static int downloadScript(ServerCommandSource source, String path, AppInfo nodeInfo, boolean useTrash)
+    private static int downloadScript(CommandSourceStack source, String path, AppInfo nodeInfo, boolean useTrash)
     {
         String code;
         try
         {
-            code = getStringFromStream(nodeInfo.url());
+            code = IOUtils.toString(new URL(nodeInfo.url()), StandardCharsets.UTF_8);
         }
         catch (IOException e)
         {
-            throw new CommandException(Messenger.c("rb Failed to obtain app file content: "+e.getMessage()));
+            throw new CommandRuntimeException(Messenger.c("rb Failed to obtain app file content: "+e.getMessage()));
         }
         if (!saveScriptToFile(source, path, nodeInfo.name(), code, false, useTrash)) return 0;
         boolean success = CarpetServer.scriptServer.addScriptHost(source, nodeInfo.name().replaceFirst("\\.sc$", ""), null, true, false, false, nodeInfo.source());
@@ -297,21 +279,21 @@ public class AppStoreManager
         }
         catch (IOException e)
         {
-            throw new CommandException(Messenger.c("rb '"+ appPath + "' is not a valid path to a scarpet app: "+e.getMessage()));
+            throw new CommandRuntimeException(Messenger.c("rb '"+ appPath + "' is not a valid path to a scarpet app: "+e.getMessage()));
         }
     }
 
 
-    public static boolean saveScriptToFile(ServerCommandSource source, String path, String appFileName, String code, boolean globalSavePath, boolean useTrash)
+    public static boolean saveScriptToFile(CommandSourceStack source, String path, String appFileName, String code, boolean globalSavePath, boolean useTrash)
     {
         Path scriptLocation;
-        if (globalSavePath && !source.getServer().isDedicated()) // never happens, this is always called with globalSavePath being false
+        if (globalSavePath && !source.getServer().isDedicatedServer()) // never happens, this is always called with globalSavePath being false
         { //cos config folder only is in clients
             scriptLocation = FabricLoader.getInstance().getConfigDir().resolve("carpet/scripts/appstore").toAbsolutePath().resolve(path);
         }
         else
         {
-            scriptLocation = source.getServer().getSavePath(WorldSavePath.ROOT).resolve("scripts").toAbsolutePath().resolve(appFileName);
+            scriptLocation = source.getServer().getWorldPath(LevelResource.ROOT).resolve("scripts").toAbsolutePath().resolve(appFileName);
         }
         try
         {
@@ -345,36 +327,6 @@ public class AppStoreManager
             return false;
         }
         return true;
-    }
-
-    /** Returns the string from the inputstream gotten from the html request.
-     * Thanks to App Shah in <a href="https://crunchify.com/in-java-how-to-read-github-file-contents-using-httpurlconnection-convert-stream-to-string-utility/">this post</a>
-     * for this code.
-     *
-     * @return the string input from the InputStream
-     * @throws IOException if an I/O error occurs
-     */
-    public static String getStringFromStream(String url) throws IOException
-    {
-        InputStream inputStream = new URL(url).openStream();
-        if (inputStream == null)
-            throw new IOException("No app to be found on the appstore");
-
-        Writer stringWriter = new StringWriter();
-        char[] charBuffer = new char[2048];
-        try
-        {
-            Reader reader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8));
-            int counter;
-            while ((counter = reader.read(charBuffer)) != -1)
-                stringWriter.write(charBuffer, 0, counter);
-
-        }
-        finally
-        {
-            inputStream.close();
-        }
-        return stringWriter.toString();
     }
 
     public static void writeUrlToFile(String url, Path destination) throws IOException
@@ -463,7 +415,7 @@ public class AppStoreManager
         {
             downloadScript(carpetScriptHost.responsibleSource, target, new AppInfo(target, contentUrl, getNewStoreNode(storeSource, source, contentUrl)), true);
         }
-        catch (CommandException e)
+        catch (CommandRuntimeException e)
         {
             throw new InternalExpressionException("Error when installing app dependencies: " + e.toString());
         }

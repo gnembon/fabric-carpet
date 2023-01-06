@@ -48,21 +48,22 @@ public class GlocalFlag extends ThreadLocal<Boolean>
         return result;
     }
 
-    public boolean runIfEnabled(Runnable action)
+    public <T> T runIfEnabled(Supplier<T> action)
     {
         synchronized (this)
         {
-            if (get() != initial) return false;
+            if (get() != initial) return null;
             set(!initial);
         }
+        T result;
         try
         {
-            action.run();
+            result = action.get();
         }
         finally
         {
             set(initial);
         }
-        return true;
+        return result;
     }
 }

@@ -15,14 +15,13 @@ import carpet.script.value.LazyListValue;
 import carpet.script.value.ListValue;
 import carpet.script.value.NumericValue;
 import carpet.script.value.Value;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.Vec3i;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Vec3i;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.Mth;
 
 import static java.lang.Math.abs;
 import static java.lang.Math.max;
@@ -217,11 +216,11 @@ public class BlockIterators {
         expression.addContextFunction("neighbours", -1, (c, t, lv)->
         {
             BlockPos center = BlockArgument.findIn((CarpetContext) c, lv,0).block.getPos();
-            ServerWorld world = ((CarpetContext) c).s.getWorld();
+            ServerLevel world = ((CarpetContext) c).s.getLevel();
 
             List<Value> neighbours = new ArrayList<>();
-            neighbours.add(new BlockValue(null, world, center.up()));
-            neighbours.add(new BlockValue(null, world, center.down()));
+            neighbours.add(new BlockValue(null, world, center.above()));
+            neighbours.add(new BlockValue(null, world, center.below()));
             neighbours.add(new BlockValue(null, world, center.north()));
             neighbours.add(new BlockValue(null, world, center.south()));
             neighbours.add(new BlockValue(null, world, center.east()));
@@ -245,30 +244,30 @@ public class BlockIterators {
                 Vector3Argument diffLocator = Vector3Argument.findIn(lv, cposLocator.offset);
                 if (diffLocator.fromBlock)
                 {
-                    sminx = MathHelper.floor(abs(diffLocator.vec.x - cx));
-                    sminy = MathHelper.floor(abs(diffLocator.vec.y - cx));
-                    sminz = MathHelper.floor(abs(diffLocator.vec.z - cx));
+                    sminx = Mth.floor(abs(diffLocator.vec.x - cx));
+                    sminy = Mth.floor(abs(diffLocator.vec.y - cx));
+                    sminz = Mth.floor(abs(diffLocator.vec.z - cx));
                 }
                 else
                 {
-                    sminx = MathHelper.floor(abs(diffLocator.vec.x));
-                    sminy = MathHelper.floor(abs(diffLocator.vec.y));
-                    sminz = MathHelper.floor(abs(diffLocator.vec.z));
+                    sminx = Mth.floor(abs(diffLocator.vec.x));
+                    sminy = Mth.floor(abs(diffLocator.vec.y));
+                    sminz = Mth.floor(abs(diffLocator.vec.z));
                 }
                 if (lv.size() > diffLocator.offset)
                 {
                     Vector3Argument posDiff = Vector3Argument.findIn(lv, diffLocator.offset);
                     if (posDiff.fromBlock)
                     {
-                        smaxx = MathHelper.floor(abs(posDiff.vec.x - cx));
-                        smaxy = MathHelper.floor(abs(posDiff.vec.y - cx));
-                        smaxz = MathHelper.floor(abs(posDiff.vec.z - cx));
+                        smaxx = Mth.floor(abs(posDiff.vec.x - cx));
+                        smaxy = Mth.floor(abs(posDiff.vec.y - cx));
+                        smaxz = Mth.floor(abs(posDiff.vec.z - cx));
                     }
                     else
                     {
-                        smaxx = MathHelper.floor(abs(posDiff.vec.x));
-                        smaxy = MathHelper.floor(abs(posDiff.vec.y));
-                        smaxz = MathHelper.floor(abs(posDiff.vec.z));
+                        smaxx = Mth.floor(abs(posDiff.vec.x));
+                        smaxy = Mth.floor(abs(posDiff.vec.y));
+                        smaxz = Mth.floor(abs(posDiff.vec.z));
                     }
                 }
                 else

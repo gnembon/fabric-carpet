@@ -4,8 +4,14 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.Function;
-
-import net.minecraft.nbt.NbtElement;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.GlobalPos;
+import net.minecraft.nbt.Tag;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.phys.Vec3;
 import org.apache.commons.lang3.ClassUtils;
 
 import carpet.script.LazyValue;
@@ -16,13 +22,6 @@ import carpet.script.value.NumericValue;
 import carpet.script.value.StringValue;
 import carpet.script.value.Value;
 import carpet.script.value.ValueConversions;
-import net.minecraft.entity.Entity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.dynamic.GlobalPos;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Vec3d;
 
 /**
  * <p>A converter from a given {@link Object} of type T into a {@link LazyValue}, used in order to convert the outputs of methods into usable Scarpet
@@ -47,12 +46,12 @@ public final class OutputConverter<T>
         registerToValue(Long.class, NumericValue::of);
         registerToValue(String.class, StringValue::new);
         registerToValue(Entity.class, EntityValue::new);
-        registerToValue(Text.class, FormattedTextValue::new);
-        registerToValue(NbtElement.class, NBTSerializableValue::new);
+        registerToValue(Component.class, FormattedTextValue::new);
+        registerToValue(Tag.class, NBTSerializableValue::new);
         registerToValue(BlockPos.class, ValueConversions::of);
-        registerToValue(Vec3d.class, ValueConversions::of);
+        registerToValue(Vec3.class, ValueConversions::of);
         registerToValue(ItemStack.class, ValueConversions::of);
-        registerToValue(Identifier.class, ValueConversions::of);
+        registerToValue(ResourceLocation.class, ValueConversions::of);
         registerToValue(GlobalPos.class, ValueConversions::of);
     }
 

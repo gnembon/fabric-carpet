@@ -108,7 +108,7 @@ public class ControlFlow {
                 LazyValue _trace = c.getVariable("_trace");
                 c.setVariable("_trace", (__c, __t) -> MapValue.wrap(Map.of(
                         StringValue.of("stack"), ListValue.wrap(ret.stack.stream().map(f -> ListValue.of(
-                                StringValue.of(f.getModule().getName()),
+                                StringValue.of(f.getModule().name()),
                                 StringValue.of(f.getString()),
                                 NumericValue.of(f.getToken().lineno+1),
                                 NumericValue.of(f.getToken().linepos+1)

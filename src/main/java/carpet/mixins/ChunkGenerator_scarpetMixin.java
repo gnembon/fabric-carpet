@@ -1,25 +1,26 @@
 package carpet.mixins;
 
 import carpet.fakes.ChunkGeneratorInterface;
-import net.minecraft.world.biome.Biome;
-import net.minecraft.world.gen.chunk.ChunkGenerator;
+import net.minecraft.core.Holder;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.chunk.ChunkGenerator;
+import net.minecraft.world.level.levelgen.structure.Structure;
+import net.minecraft.world.level.levelgen.structure.placement.StructurePlacement;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Shadow;
+
+import java.util.List;
 
 @Mixin(ChunkGenerator.class)
 public abstract class ChunkGenerator_scarpetMixin implements ChunkGeneratorInterface
 {
-    @Shadow protected abstract void generateStrongholdPositions();
-    @Shadow private static boolean canPlaceStrongholdInBiome(Biome biome) { return true;}
-
-        @Override
-    public void initStrongholds()
+    @Override
+    public void initStrongholds(final ServerLevel level)
     {
-        generateStrongholdPositions();
+        level.getChunkSource().getGeneratorState().ensureStructuresGenerated();
     }
 
     @Override
-    public boolean canPlaceStrongholdInBiomeCM(Biome biome) {
-        return canPlaceStrongholdInBiome(biome);
+    public List<StructurePlacement> getPlacementsForFeatureCM(final ServerLevel level, Structure structure) {
+        return level.getChunkSource().getGeneratorState().getPlacementsForStructure(Holder.direct(structure));
     }
 }

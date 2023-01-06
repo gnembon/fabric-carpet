@@ -22,7 +22,7 @@ import java.util.List;
 import java.util.Map;
 
 public class Operators {
-    public static final Map<String, Integer> precedence = new HashMap<String,Integer>() {{
+    public static final Map<String, Integer> precedence = new HashMap<String, Integer>() {{
         put("attribute~:", 80);
         put("unary+-!...", 60);
         put("exponent^", 40);

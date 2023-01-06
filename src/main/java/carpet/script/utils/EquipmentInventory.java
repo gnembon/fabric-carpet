@@ -1,15 +1,14 @@
 package carpet.script.utils;
 
-import net.minecraft.entity.EquipmentSlot;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.inventory.Inventory;
-import net.minecraft.item.ItemStack;
-
 import java.util.Arrays;
 import java.util.List;
+import net.minecraft.world.Container;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
 
-public class EquipmentInventory implements Inventory
+public class EquipmentInventory implements Container
 {
     private static final List<EquipmentSlot> slotToSlot = Arrays.asList(
             EquipmentSlot.MAINHAND,
@@ -24,7 +23,7 @@ public class EquipmentInventory implements Inventory
     }
 
     @Override
-    public int size()
+    public int getContainerSize()
     {
         return 6;
     }
@@ -33,12 +32,12 @@ public class EquipmentInventory implements Inventory
     public boolean isEmpty()
     {
         for (EquipmentSlot slot: slotToSlot)
-            if (!mob.getEquippedStack(slot).isEmpty()) return false;
+            if (!mob.getItemBySlot(slot).isEmpty()) return false;
         return true;
     }
 
     @Override
-    public ItemStack getStack(int slot)
+    public ItemStack getItem(int slot)
     {
         EquipmentSlot slotSlot;
         try
@@ -50,11 +49,11 @@ public class EquipmentInventory implements Inventory
             //going out of the index should be really exceptional
             return ItemStack.EMPTY;
         }
-        return mob.getEquippedStack(slotSlot);
+        return mob.getItemBySlot(slotSlot);
     }
 
     @Override
-    public ItemStack removeStack(int slot, int amount)
+    public ItemStack removeItem(int slot, int amount)
     {
         EquipmentSlot slotSlot;
         try
@@ -66,11 +65,11 @@ public class EquipmentInventory implements Inventory
             //going out of the index should be really exceptional
             return ItemStack.EMPTY;
         }
-        return mob.getEquippedStack(slotSlot).split(amount);
+        return mob.getItemBySlot(slotSlot).split(amount);
     }
 
     @Override
-    public ItemStack removeStack(int slot)
+    public ItemStack removeItemNoUpdate(int slot)
     {
         EquipmentSlot slotSlot;
         try
@@ -82,13 +81,13 @@ public class EquipmentInventory implements Inventory
             //going out of the index should be really exceptional
             return ItemStack.EMPTY;
         }
-        ItemStack previous = mob.getEquippedStack(slotSlot);
-        mob.equipStack(slotSlot, ItemStack.EMPTY);
+        ItemStack previous = mob.getItemBySlot(slotSlot);
+        mob.setItemSlot(slotSlot, ItemStack.EMPTY);
         return previous;
     }
 
     @Override
-    public void setStack(int slot, ItemStack stack)
+    public void setItem(int slot, ItemStack stack)
     {
         EquipmentSlot slotSlot;
         try
@@ -100,25 +99,25 @@ public class EquipmentInventory implements Inventory
             //going out of the index should be really exceptional
             return;
         }
-        mob.equipStack(slotSlot, stack);
+        mob.setItemSlot(slotSlot, stack);
     }
 
     @Override
-    public void markDirty()
+    public void setChanged()
     {
 
     }
 
     @Override
-    public boolean canPlayerUse(PlayerEntity player)
+    public boolean stillValid(Player player)
     {
         return false;
     }
 
     @Override
-    public void clear()
+    public void clearContent()
     {
         for (EquipmentSlot slot: slotToSlot)
-            mob.equipStack(slot, ItemStack.EMPTY);
+            mob.setItemSlot(slot, ItemStack.EMPTY);
     }
 }

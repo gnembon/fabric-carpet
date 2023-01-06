@@ -2,7 +2,7 @@ package carpet.script.argument;
 
 import carpet.script.Context;
 import carpet.script.ScriptHost;
-import carpet.script.bundled.Module;
+import carpet.script.Module;
 import carpet.script.command.CommandArgument;
 import carpet.script.exception.InternalExpressionException;
 import carpet.script.value.FunctionValue;

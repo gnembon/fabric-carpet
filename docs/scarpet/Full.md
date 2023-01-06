@@ -976,10 +976,11 @@ title('aBc') => 'Abc'
 ### `replace(string, regex, repl?); replace_first(string, regex, repl?)`
 
 Replaces all, or first occurence of a regular expression in the string with `repl` expression, 
-or nothing, if not specified
+or nothing, if not specified. To use escape characters (`\(`,`\+`,...), metacharacters (`\d`,`\w`,...), or position anchors (`\b`,`\z`,...) in your regular expression, use two backslashes.
 
 <pre>
 replace('abbccddebfg','b+','z')  // => azccddezfg
+replace('abbccddebfg','\\w$','z')  // => abbccddebfz
 replace_first('abbccddebfg','b+','z')  // => azccddebfg
 </pre>
 
@@ -1199,7 +1200,8 @@ not present, and default expression is provided, sets a new value to be associat
 ### `system_variable_set(key, new_value)`
 
 Returns the variable from the system shared key-value storage keyed with a `key` value, and sets a new 
-mapping for the key# Loops, and higher order functions
+mapping for the key
+# Loops, and higher order functions
 
 Efficient use of these functions can greatly simplify your programs and speed them up, as these functions will 
 internalize most of the operations that need to be applied on multiple values at the same time. Most of them take 
@@ -1980,9 +1982,13 @@ apps `__on_close()` will execute once per app, and with `'player'` scoped apps, 
 ### App config via `__config()` function
 
 If an app defines `__config` method, and that method returns a map, it will be used to apply custom settings 
-for this app. Currently the following options are supported:
+for this app. Currently, the following options are supported:
 
-*   `'scope'`: default scope for global variables for the app, Default is `'player'`, which means that globals and defined 
+* `'strict'` : if `true`, any use of an uninitialized variable will result in program failure. Defaults to `false` if 
+not specified. With `'strict'`you have to assign an initial value to any variable before using it. It is very useful 
+to use this setting for app debugging and for beginner programmers. Explicit initialization is not required for your 
+code to work, but mistakes may result from improper assumptions about initial variable values of `null`.
+* `'scope'`: default scope for global variables for the app, Default is `'player'`, which means that globals and defined 
 functions will be unique for each player so that apps for each player will run in isolation. This is useful in 
 tool-like applications, where behaviour of things is always from a player's perspective. With player scope the initial run 
 of the app creates is initial state: defined functions, global variables, config and event handlers, which is then copied for 
@@ -1996,6 +2002,8 @@ To access global/server state for a player app, which you shouldn't do, you need
 so either use a command block, or any 
 arbitrary entity: `/execute as @e[type=bat,limit=1] run script in <app> globals` for instance, however
 running anything in the global scope for a `'player'` scoped app is not intended.
+*   `'event_priority'`: defaults to `0`. This specifies the order in which events will be run, from highest to lowest.
+This is need since cancelling an event will stop executing the event in subsequent apps with lower priority. 
 *   `'stay_loaded'`: defaults to `true`. If true, and `/carpet scriptsAutoload` is turned on, the following apps will 
 stay loaded after startup. Otherwise, after reading the app the first time, and fetching the config, server will drop them down. 
  WARNING: all apps will run once at startup anyways, so be aware that their actions that are called 
@@ -2293,7 +2301,7 @@ Here is a list of built-in types, with their return value formats, as well as a 
   * `'loottable'`: name of a loot table source
   * `'attribute'`: an attribute name
   * `'boss'`: a bossbar name
-  * `'biome'`: a biome name 
+  * `'biome'`: a biome name. or biome tag
   * `'sound'`: name of a sound 
   * `'storekey'`: string of a valid current data store key.
   * `'identifier'`: any valid identifier. 'minecraft:' prefix is stripped off as a default.
@@ -2676,10 +2684,11 @@ Note: Have to pass all 6 of the mentioned noise types and only these noise types
 With an optional feature, it returns value for the specified attribute for that biome. Available and queryable features include:
 * `'top_material'`: unlocalized block representing the top surface material (1.17.1 and below only)
 * `'under_material'`: unlocalized block representing what sits below topsoil (1.17.1 and below only)
-* `'category'`: the parent biome this biome is derived from. Possible values include:
+* `'category'`: the parent biome this biome is derived from. Possible values include (1.18.2 and below only):
 `'none'`, `'taiga'`, `'extreme_hills'`, `'jungle'`, `'mesa'`, `'plains'`, `'savanna'`,
 `'icy'`, `'the_end'`, `'beach'`, `'forest'`, `'ocean'`, `'desert'`, `'river'`,
 `'swamp'`, `'mushroom'` , `'nether'`, `'underground'` (1.18+) and `'mountain'` (1.18+).
+* `'tags'`: list of biome tags associated with this biome
 * `'temperature'`: temperature from 0 to 1
 * `'fog_color'`: RGBA color value of fog 
 * `'foliage_color'`: RGBA color value of foliage
@@ -2737,6 +2746,10 @@ Numeric function, returning the block light at position (from torches and other 
 ### `sky_light(pos)`
 
 Numeric function, returning the sky light at position (from sky access).
+
+### `effective_light(pos)`
+
+Numeric function, returning the "real" light at position, which is affected by time and weather. which also affects mobs spawning, frosted ice blocks melting.
 
 ### `see_sky(pos)`
 
@@ -2936,9 +2949,9 @@ with minecraft 1.16.1 and below or 1.16.2 and above since in 1.16.2 Mojang has a
 meaning that since 1.16.2 - they have official names that can be used by datapacks and scarpet. If you have most recent
 scarpet on 1.16.4, you can use `plop()` to get all available worldgen features including custom features and structures
 controlled by datapacks. It returns a map of lists in the following categories: 
-`'scarpet_custom'`, `'configured_features'`, `'structures'`, `'features'`, `'configured_structures'`
+`'scarpet_custom'`, `'configured_features'`, `'structures'`, `'features'`, `'structure_types'`
 
-### Previous Structure Names, including variants (MC1.16.1 and below)
+### Previous Structure Names, including variants (for MC1.16.1 and below only)
 *   `'monument'`: Ocean Monument. Generates at fixed Y coordinate, surrounds itself with water.
 *   `'fortress'`: Nether Fortress. Altitude varies, but its bounded by the code.
 *   `'mansion'`: Woodland Mansion
@@ -3032,28 +3045,10 @@ controlled by datapacks. It returns a map of lists in the following categories:
 *   `'twisting_vines'` (1.16)
 *   `'basalt_pillar'` (1.16)
 
-### Standard Structures (as of MC1.16.2+)
 
-Use `plop():'structures'`, but it always returns the following:
+### World Generation Features and Structures (as of MC1.16.2+)
 
-`'bastion_remnant'`, `'buried_treasure'`, `'desert_pyramid'`, `'endcity'`, `'fortress'`, `'igloo'`, 
-`'jungle_pyramid'`, `'mansion'`, `'mineshaft'`, `'monument'`, `'nether_fossil'`, `'ocean_ruin'`, 
-`'pillager_outpost'`, `'ruined_portal'`, `'shipwreck'`, `'stronghold'`, `'swamp_hut'`, `'village'`
-
-### Structure Variants (as of MC1.16.2+)
-
-Use `plop():'configured_structures'`, but it always returns the following:
-
-`'bastion_remnant'`, `'buried_treasure'`, `'desert_pyramid'`, `'end_city'`, `'fortress'`, `'igloo'`, 
-`'jungle_pyramid'`, `'mansion'`, `'mineshaft'`, `'mineshaft_mesa'`, `'monument'`, `'nether_fossil'`,
-`'ocean_ruin_cold'`, `'ocean_ruin_warm'`, `'pillager_outpost'`, `'ruined_portal'`, `'ruined_portal_desert'`, 
-`'ruined_portal_jungle'`, `'ruined_portal_mountain'`, `'ruined_portal_nether'`, `'ruined_portal_ocean'`, 
-`'ruined_portal_swamp'`, `'shipwreck'`, `'shipwreck_beached'`, `'stronghold'`, `'swamp_hut'`, 
-`'village_desert'`, `'village_plains'`, `'village_savanna'`, `'village_snovy'`, `'village_taiga'`
-
-### World Generation Features (as of MC1.16.2+)
-
-Use `plop():'features'` and `plop():'configured_features'` for a list of available options. Your output may vary based on
+Use `plop():'structure_types'`, `plop():'structures'`, `plop():'features'`, and `plop():'configured_features'` for a list of available options. Your output may vary based on
 datapacks installed in your world.
 
 ### Custom Scarpet Features
@@ -3077,7 +3072,8 @@ These contain some popular features and structures that are impossible or diffic
 
 ### `structure_eligibility(pos, ?structure, ?size_needed)`
 
-Checks wordgen eligibility for a structure in a given chunk. Requires a `Standard Structure` name (see above).
+Checks wordgen eligibility for a structure in a given chunk. Requires a `Structure Variant` name (see above),
+or `Standard Structure` to check structures of this type.
 If no structure is given, or `null`, then it will check
 for all structures. If bounding box of the structures is also requested, it will compute size of potential
 structures. This function, unlike other in the `structure*` category is not using world data nor accesses chunks
@@ -3090,7 +3086,7 @@ If structure is specified, it will return `null` if a chunk is not eligible or i
 a map with two values: `'box'` for a pair of coordinates indicating bounding box of the structure, and `'pieces'` for 
 list of elements of the structure (as a tuple), with its name, direction, and box coordinates of the piece.
 
-If structure is not specified, it will return a set of structure names that are eligible, or a map with structures
+If structure is not specified, or a `Standard Structure` was specified, like `'village'`,it will return a set of structure names that are eligible, or a map with structures
 as keys, and same type of map values as with a single structure call. An empty set or an empty map would indicate that nothing
 should be generated there.
 
@@ -3135,7 +3131,7 @@ Throws `unknown_structure` if structure doesn't exist.
 Plops a structure or a feature at a given `pos`, so block, triple position coordinates or a list of coordinates. 
 To `what` gets plopped and exactly where it often depends on the feature or structure itself. 
 
-Requires a `Structure Variant`,  `Standard Structure`, `World Generation Feature` or `Custom Scarpet Feature` name (see
+Requires a `Structure Type`,  `Structure`, `World Generation Feature` or `Custom Scarpet Feature` name (see
 above). If standard name is used, the variant of the structure may depend on the biome, otherwise the default 
 structure for this type will be generated.
 
@@ -3151,30 +3147,6 @@ which sets it without looking into world blocks, and then use `plop` to fill it 
 All generated structures will retain their properties, like mob spawning, however in many cases the world / dimension 
 itself has certain rules to spawn mobs, like plopping a nether fortress in the overworld will not spawn nether mobs, 
 because nether mobs can spawn only in the nether, but plopped in the nether - will behave like a valid nether fortress.
-
-###  (deprecated) `custom_dimension(name, seed?)`
-
-Deprecated by `create_datapack()` which can be used to setup custom dimensions
-
-Ensures the dimension with the given `'name'` is available and configured with the given seed. It merely sets the world
-generator settings to the overworld, and the optional custom seed (or using current world seed, if not provided). 
-
-If the dimension with this name already exists, returns `false` and does nothing.
-
-Created dimension with `custom_dimension` only exist till the game restart (same with the datapacks, if removed), but
-all the world data should be saved. If custom dimension is re-created next time the app is loaded it will be using
-the existing world content. This means that it is up to the programmer to make sure the custom dimensions settings
-are stored in app data and restored when app reloads and wants to use previous worlds. Since vanilla game only keeps
-track of world data, not the world settings, if the dimension hasn't been yet configured via `custom_dimension` and
-the app hasn't yet initalized their dimension, the players will be positioned in the overworld at the same coordinates.
-
-List of custom dimensions (to be used in the likes of `/execute in <dim>`) is only send to the clients when joining the 
-game, meaning custom worlds created after a player has joined will not be suggested in vanilla commands, but running
-vanilla commands on them will be successful. Its due to the fact that datapacks with dimensions are always loaded
-with the game and assumed not changing.
-
-`custom_dimension` is experimental and considered a WIP. More customization options besides the seed will be added in
-the future.
 # Iterating over larger areas of blocks
 
 These functions help scan larger areas of blocks without using generic loop functions, like nested `loop`.
@@ -3304,7 +3276,7 @@ the center point/area. Uses the same `type` selectors as `entities_list`.
 also be represented as a block, in this case the search box will be centered on the middle of the block, or an entity - in this case
 entire bounding box of the entity serves as a 'center' of search which is then expanded in all directions with the `'distance'` vector.
 
-In any case - returns all entities which bounding box collides with the bounding box defined by `'center'` and `'disteance'`.
+In any case - returns all entities which bounding box collides with the bounding box defined by `'center'` and `'distance'`.
 
 entity_area is simpler than `entity_selector` and runs about 20% faster, but is limited to predefined selectors and 
 cuboid search area.
@@ -3433,6 +3405,10 @@ List of entities riding the entity.
 
 Entity that `e` rides.
 
+### `query(e, 'unmountable')`
+
+Boolean, true if the entity cannot be mounted.
+
 ### `(deprecated) query(e, 'tags')`
 
 Deprecated by `query(e, 'scoreboard_tags')`
@@ -3465,6 +3441,14 @@ Boolean, true if the entity is burning.
 
 Number of remaining ticks of being on fire.
 
+### `query(e, 'is_freezing')`
+
+Boolean, true if the entity is freezing.
+
+### `query(e, 'frost')`
+
+Number of remaining ticks of being frozen.
+
 ### `query(e, 'silent')`
 
 Boolean, true if the entity is silent.
@@ -3480,6 +3464,10 @@ Boolean, true if the entity is invulnerable.
 ### `query(e, 'immune_to_fire')`
 
 Boolean, true if the entity is immune to fire.
+
+### `query(e, 'immune_to_frost')`
+
+Boolean, true if the entity is immune to frost.
 
 ### `query(e, 'dimension')`
 
@@ -3519,7 +3507,17 @@ Number of ticks an entity sits in a portal.
 
 ### `query(e, 'item')`
 
-The item triple (name, count, nbt) if its an item entity, `null` otherwise.
+The item triple (name, count, nbt) if its an item or item frame entity, `null` otherwise.
+
+### `query(e, 'offering_flower')`
+
+Whether the given iron golem has a red flower in their hand. returns null for all other entities
+
+
+### `query(e, 'blue_skull')`
+
+Whether the given wither skull entity is blue. returns null for all other entities
+
 
 ### `query(e, 'count')`
 
@@ -3673,10 +3671,10 @@ Retrieves player hunger related information. For non-players, returns `null`.
 
 Gets the absorption of the player (yellow hearts, e.g. when having a golden apple.)
 
-### `query(e,'xp')`
-### `query(e,'xp_level')`
-### `query(e,'xp_progress')`
-### `query(e,'score')`
+### `query(e, 'xp')`
+### `query(e, 'xp_level')`
+### `query(e, 'xp_progress')`
+### `query(e, 'score')`
 
 Numbers related to player's xp. `xp` is the overall xp player has, `xp_level` is the levels seen in the hotbar,
 `xp_progress` is a float between 0 and 1 indicating the percentage of the xp bar filled, and `score` is the number displayed upon death 
@@ -3867,7 +3865,7 @@ Moves the entity by a vector from its current location.
 
 Sets the motion vector (where and how much entity is moving).
 
-### `modify(e, 'motion_z', x), modify(e, 'motion_y', y), modify(e, 'motion_z', z)`
+### `modify(e, 'motion_x', x), modify(e, 'motion_y', y), modify(e, 'motion_z', z)`
 
 Sets the corresponding component of the motion vector.
 
@@ -3884,6 +3882,18 @@ if the custom name is always visible, even through blocks.
 
 Sets the entity persistence tag to `true` (default) or `false`. Only affects mobs. Persistent mobs
 don't despawn and don't count towards the mobcap.
+
+### `modify(e, 'item', item_triple)`
+
+Sets the item for the item or item frame entity. (The item triple is a list of `[item_name, count, nbt]`, or just an item name.)
+
+### `modify(e, 'offering_flower', bool)`
+
+Sets if the iron golem has a red flower in hand.
+
+### `modify(e, 'blue_skull', bool)`
+
+Sets whether the wither skull entity is blue.
 
 ### `modify(e, 'age', number)`
 
@@ -3917,6 +3927,10 @@ Dismounts riding entity.
 ### `modify(e, 'mount', other)`
 
 Mounts the entity to the `other`.
+
+### `modify(e, 'unmountable', boolean)`
+
+Denies or allows an entity to be mounted.
 
 ### `modify(e, 'drop_passengers')`
 
@@ -3952,6 +3966,10 @@ players, since they are controlled client side.
 Applies status effect to the living entity. Takes several optional parameters, which default to `0`, `true`, 
 `true` and `false`. If no duration is specified, or if it's null or 0, the effect is removed. If name is not specified,
 it clears all effects.
+
+### `modify(e, 'health', float)`
+
+Modifies the health of an entity.
 
 ### `modify(e, 'may_fly', boolean)`
 
@@ -4034,6 +4052,10 @@ Toggles invulnerability for the entity.
 
 Will set entity on fire for `ticks` ticks. Set to 0 to extinguish.
 
+### `modify(e, 'frost', ticks)`
+
+Will give entity frost for `ticks` ticks. Set to 0 to unfreeze.
+
 ### `modify(e, 'hunger', value)`
 ### `modify(e, 'saturation', value)`
 ### `modify(e, 'exhaustion', value)`
@@ -4056,7 +4078,7 @@ maybe you will get a double, who knows.
 
 ### `modify(e, 'air', ticks)`
 
-Modifies entity air
+Modifies entity air.
 
 ### `modify(e, 'add_exhaustion', value)`
 
@@ -4234,18 +4256,6 @@ Throws `unknown_item` if item doesn't exist.
 stack_limit('wooden_axe') => 1
 stack_limit('ender_pearl') => 16
 stack_limit('stone') => 64
-</pre>
-
-### `item_category(item)`
-
-Returns the string representing the category of a given item, like `building_blocks`, `combat`, or `tools`.
-
-Throws `unknown_item` if item doesn't exist.
-
-<pre>
-item_category('wooden_axe') => tools
-item_category('ender_pearl') => misc
-item_category('stone') => building_blocks
 </pre>
 
 ### `recipe_data(item, type?)`, `recipe_data(recipe, type?)`
@@ -4681,6 +4691,14 @@ partially handle the event before it happens and handle the rest after. While in
 confusion (like handling the respawn event still referring to player's original position and dimension), but gives much 
 more control over these events.
 
+Some events also provide the ability to cancel minecraft's processing of the event by returning `'cancel'` from the event handler.
+This only works for particular events that are triggered before they take an effect in the game.
+However, cancelling the event will also stop events from subsequent apps from triggering.
+The order of events being executed can be changed by specifying an `'event_priority'` in the app config,
+with the highest value being executed first.
+Note that cancelling some events might introduce a desynchronization to the client from the server,
+creating ghost items or blocks. This can be solved by updating the inventory or block to the client, by using `inventory_set` or `set`.
+
 Programmers can also define their own events and signal other events, including built-in events, and across all loaded apps.
 
 ## App scopes and event distribution
@@ -4762,6 +4780,9 @@ this should not happen, but let you be warned.
 Called right after a chunk at a given coordinate is loaded. All newly generated chunks are considered loaded as well.
  `x` and `z` correspond to the lowest x and z coordinates in the chunk.
 
+### `__on_chunk_unloaded(x, z)`
+Called right before a chunk at the given coordinates is unloaded. `x` and `z` correspond to the lowest x and z coordinates in the chunk.
+
 ### `__on_lightning(block, mode)`
 Triggered right after a lightning strikes. Lightning entity as well as potential horseman trap would 
 already be spawned at that point. `mode` is `true` if the lightning did cause a trap to spawn. 
@@ -4798,6 +4819,8 @@ Triggers with a right click action. Event is triggered right after a server rece
 game manages to do anything about it. Event triggers when player starts eating food, or starts drawing a bow.
 Use `player_finishes_using_item`, or `player_releases_item` to capture the end of these events.
 
+This event can be cancelled by returning `'cancel'`, which prevents the item from being used.
+
 Event is not triggered when a player places a block, for that use
 `player_right_clicks_block` or `player_places_block` event.
 
@@ -4812,21 +4835,34 @@ Player using of an item is done. This is controlled server side and is responsib
 eating. The event is triggered after confirming that the action is valid, and sending the feedback back
 to the client, but before triggering it and its effects in game.
 
+This event can be cancelled by returning `'cancel'`, which prevents the player from finishing using the item.
+
 ### `__on_player_clicks_block(player, block, face)`
 Representing left-click attack on a block, usually signifying start of breaking of a block. Triggers right after the server
-receives a client packet, before anything happens on the server side.   
+receives a client packet, before anything happens on the server side.
+
+This event can be cancelled by returning `'cancel'`, which stops the player from breaking a block.
   
 
 ### `__on_player_breaks_block(player, block)`
 Called when player breaks a block, right before any changes to the world are done, but the decision is made to remove the block.
 
+This event can be cancelled by returning `'cancel'`, which prevents the block from being placed.
+
 ### `__on_player_right_clicks_block(player, item_tuple, hand, block, face, hitvec)` 
 Called when player right clicks on a block with anything, or interacts with a block. This event is triggered right
 before other interaction events, like `'player_interacts_with_block'` or `'player_places_block'`.
+
+This event can be cancelled by returning `'cancel'`, which prevents the player interaction.
  
 ### `__on_player_interacts_with_block(player, hand, block, face, hitvec)`
 Called when player successfully interacted with a block, which resulted in activation of said block,
 right after this happened.
+
+### `__on_player_placing_block(player, item_tuple, hand, block)`
+Triggered when player places a block, before block is placed in the world.
+
+This event can be cancelled by returning `'cancel'`, which prevents the block from being placed.
   
 ### `__on_player_places_block(player, item_tuple, hand, block)`
 Triggered when player places a block, after block is placed in the world, but before scoreboard is triggered or player inventory
@@ -4836,6 +4872,8 @@ adjusted.
 Triggered when player right clicks (interacts) with an entity, even if the entity has no vanilla interaction with the player or
 the item they are holding. The event is invoked after receiving a packet from the client, before anything happens server side
 with that interaction.
+
+This event can be cancelled by returning `'cancel'`, which prevents the player interacting with the entity.
 
 ### `__on_player_trades(player, entity, buy_left, buy_right, sell)`
 Triggered when player trades with a merchant. The event is invoked after the server allow the trade, but before the inventory
@@ -4851,12 +4889,16 @@ on the player.
 Triggered when a player clicks a recipe in the crafting window from the crafting book, after server received
 a client request, but before any items are moved from its inventory to the crafting menu.
 
+This event can be cancelled by returning `'cancel'`, which prevents the recipe from being moved into the crafting grid.
+
 ### `__on_player_switches_slot(player, from, to)`
 Triggered when a player changes their selected hotbar slot. Applied right after the server receives the message to switch 
 the slot.
 
 ### `__on_player_swaps_hands(player)`
 Triggered when a player sends a command to swap their offhand item. Executed before the effect is applied on the server.
+
+This event can be cancelled by returning `'cancel'`, which prevents the hands from being swapped.
 
 ### `__on_player_swings_hand(player, hand)`
 Triggered when a player starts swinging their hand. The event typically triggers after a corresponding event that caused it 
@@ -4866,14 +4908,20 @@ swinging continues as an effect of an action, no new swinging events will be iss
 ### `__on_player_attacks_entity(player, entity)`
 Triggered when a player attacks entity, right before it happens server side.
 
+This event can be cancelled by returning `'cancel'`, which prevents the player from attacking the entity.
+
 ### `__on_player_takes_damage(player, amount, source, source_entity)`
 Triggered when a player is taking damage. Event is executed right after potential absorbtion was applied and before
 the actual damage is applied to the player. 
+
+This event can be cancelled by returning `'cancel'`, which prevents the player from taking damage.
 
 ### `__on_player_deals_damage(player, amount, entity)`
 Triggered when a player deals damage to another entity. Its applied in the same moment as `player_takes_damage` if both
 sides of the event are players, and similar for all other entities, just their absorbtion is taken twice, just noone ever 
 notices that ¯\_(ツ)_/¯
+
+This event can be cancelled by returning `'cancel'`, which prevents the damage from being dealt.
 
 ### `__on_player_dies(player)`
 Triggered when a player dies. Player is already dead, so don't revive them then. Event applied before broadcasting messages
@@ -4923,6 +4971,8 @@ Four events triggered when player controls for sneaking and sprinting toggle.
 Triggered when the game receives the request from a player to drop one item or full stack from its inventory.
 Event happens before anything is changed server side.
 
+These events can be cancelled by returning `'cancel'`, which prevents the player dropping the items.
+
 ### `__on_player_picks_up_item(player, item)`
 Triggered AFTER a player successfully ingested an item in its inventory. Item represents the total stack of items
 ingested by the player. The exact position of these items is unknown as technically these
@@ -4933,6 +4983,14 @@ Triggered when the player has successfully logged in and was placed in the game.
 
 ### `__on_player_disconnects(player, reason)`
 Triggered when a player sends a disconnect package or is forcefully disconnected from the server.
+
+### `__on_player_message(player, message)`
+Triggered when a player sends a chat message.
+
+### `__on_player_command(player, command)`
+Triggered when a player runs a command. Command value is returned without the / in front.
+
+This event can be cancelled by returning `'cancel'`, which prevents the message from being sent.
 
 ### `__on_statistic(player, category, event, value)`
 Triggered when a player statistic changes. Doesn't notify on periodic an rhythmic events, i.e. 
@@ -5329,34 +5387,17 @@ Optional shared shape attributes:
    value is `'xyz'`, meaning the shape will be drawn relatively to the entity in all three directions. Using `xz` for 
    instance makes so that the shape follows the entity, but stays at the same, absolute Y coordinate. Preceeding an axis
    with `d`, like `dxdydz` would make so that entity position is treated discretely (rounded down).
+ * `debug` - if True, it will only be visible when F3+B entity bounding boxes is enabled.
+ * `facing` - applicable only to `'text'`, `'block'` or '`item'` shapes, where its facing. Possible options are:
+   * `player`: Default. Element always rotates to face the player eye position, 
+   * `camera`: Element is placed on the plane orthogonal to player look vector, 
+   * `north`, `south`, `east`, `west`, `up`, `down`: obvious
 
 Available shapes:
  * `'line'` - draws a straight line between two points.
    * Required attributes:
      * `from` - triple coordinates, entity, or block value indicating one end of the line
      * `to` - other end of the line, same format as `from`
-     
- * `'label'` - draws a text in the world. Default `line` attribute controls main font color.
-      `fill` controls the color of the background. 
-   * Required attributes:
-     * `pos` - position
-     * `text` - string or formatted text to display
-   * Optional attributes
-     * `value` - string or formatted text to display instead of the main `text`. `value` unlike `text`
-     is not used to determine uniqueness of the drawn text so can be used to 
-     display smoothly dynamic elements where value of an element is constantly
-     changing and updates to it are being sent from the server.
-     * `size` - float. Default font size is 10.
-     * `facing` - text direction, where its facing. Possible options are: `player` (default, text
-     always rotates to face the player), `north`, `south`, `east`, `west`, `up`, `down`
-     * `doublesided` - if `true` it will make the text visible from the back as well. Default is `false` (1.16+)
-     * `align` - text alignment with regards to `pos`. Default is `center` (displayed text is
-     centered with respect to `pos`), `left` (`pos` indicates beginning of text), and `right` (`pos`
-     indicates the end of text).
-     * `tilt`, `lean`, `turn` - additional rotations of the text on the canvas along all three axis
-     * `indent`, `height`, `raise` - offsets for text rendering on X (`indent`), Y (`height`), and Z axis (`raise`) 
-     with regards to the plane of the text. One unit of these corresponds to 1 line spacing, which
-     can be used to display multiple lines of text bound to the same `pos` 
      
  * `'box'` - draws a box with corners in specified points
    * Required attributes:
@@ -5380,6 +5421,58 @@ Available shapes:
      * `height` - height of the cyllinder, defaults to `0`, so flat disk. Can be negative.
      * `level` - level of details, see `'sphere'`.
 
+ * `'polygon'`:
+   * Required attributes:
+     * `points` - list of points defining vertices of the polygon
+   * Optional attributes:
+     * `relative` - list of bools. vertices of the polygon that affected by 'follow'. Could be a single bools to affact allpoints too. Default means that every point is affacted.
+     * `mode` - how those points are connected. may be "polygon"(default),"strip" or "triangles". "polygon" means that it will be viewed as vertices of a polygon center on the first one. "strip" means that it will be viewed as a triangles strip. "triangles" means that it will be viewed as some triangles that are not related to each other (therefor length of `points` in this mode have to be a multiple of 3).
+     * `inner` - if `true` it will make the inner edges be drawn as well. 
+     * `doublesided` - if `true` it will make the shapes visible from the back as well. Default is `true`. 
+
+ * `'label'` - draws a text in the world. Default `line` attribute controls main font color. 
+ `fill` controls the color of the background.
+   * Required attributes:
+     * `pos` - position
+     * `text` - string or formatted text to display
+   * Optional attributes
+     * `value` - string or formatted text to display instead of the main `text`. `value` unlike `text`
+         is not used to determine uniqueness of the drawn text so can be used to
+         display smoothly dynamic elements where value of an element is constantly
+         changing and updates to it are being sent from the server.
+     * `size` - float. Default font size is 10.
+     * `doublesided` - if `true` it will make the text visible from the back as well. Default is `false` (1.16+)
+     * `align` - text alignment with regards to `pos`. Default is `center` (displayed text is
+         centered with respect to `pos`), `left` (`pos` indicates beginning of text), and `right` (`pos`
+         indicates the end of text).
+     * `tilt`, `lean`, `turn` - additional rotations of the text on the canvas along all three axis
+     * `indent`, `height`, `raise` - offsets for text rendering on X (`indent`), Y (`height`), and Z axis (`raise`)
+         with regards to the plane of the text. One unit of these corresponds to 1 line spacing, which
+         can be used to display multiple lines of text bound to the same `pos`
+
+ * `'block'`: draws a block at the specified position:
+   * Required attributes:
+     * `pos` - position of the object.
+     * `block` - the object to show. It is a block value or a name of a block with optional NBT data.
+   * Optional attributes:
+     * `tilt`, `lean`, `turn` - additional rotations along all three axis. It uses the block center as the origin.
+     * `scale` - scale of it in 3 axis-direction. should be a number or a list of 3 numbers (x,y,z).
+     * `skylight`, `blocklight` - light level. omit it to use local light level. should between 0~15.
+
+ * `'item'`: draws an item at the specified position:
+   * Required attributes:
+     * `pos` - position of the object.
+     * `item` - the object to show. It is an item tuple or a string identified item that may have NBT data.
+   * Optional attributes:
+     * `tilt`, `lean`, `turn` - additional rotations along all three axis. for `block`, it use its block center as the origin.
+     * `scale` - scale of it in 3 axis-direction. should be a number or a list of 3 numbers (x,y,z).
+     * `skylight`, `blocklight` - light level. omit it to use local light level. should between 0~15.
+     * `variant` - one of `'none'`, `'third_person_left_hand'`, `'third_person_right_hand'`, `'first_person_left_hand'`,
+       `'first_person_right_hand'`, `'head'`, `'gui'`, `'ground'`, `'fixed'`. In addition to the literal meaning,
+       it can also be used to use special models of tridents and telescopes. 
+        This attribute is experimental and use of it will change in the future.
+
+      
 ### `create_marker(text, pos, rotation?, block?, interactive?)`
 
 Spawns a (permanent) marker entity with text or block at position. Returns that entity for further manipulations. 
@@ -5505,6 +5598,14 @@ Example usages:
   // the reason why I backslash the second space is that otherwise command parser may contract consecutive spaces
   // not a problem in apps
 </pre>
+
+### `item_display_name(item)`
+ Returns the name of the item as a Text Value. `item` should be a list of `[item_name, count, nbt]`, or just an item name.
+ 
+ Please note that it is a translated value. treating it like a string (eg.slicing, breaking, changing its case) will turn it back into a normal string without translatable properties. just like a colorful formatted text loose its color. And the result of it converting to a string will use en-us (in a server) or your single player's language, but when you use print() or others functions that accept a text value to broadcast it to players, it will use each player's own language.
+ 
+ If the item is renamed, it will also be reflected in the results.
+
 
 ### `display_title(players, type, text?, fadeInTicks?, stayTicks?, fadeOutTicks),`
 
@@ -5790,7 +5891,7 @@ Function example:
 <pre>
  script run create_datapack('example',{'data/test/functions/talk.mcfunction'->'say 1\nsay 2'})
 </pre>
-### `enable_hidden_dimensions()`
+### `enable_hidden_dimensions()` (1.18.1 and lower)
 
 The function reads current datapack settings detecting new dimensions defined by these datapacks that have not yet been added
 to the list of current dimensions and adds them so that they can be used and accessed right away. It doesn't matter how the
@@ -5798,7 +5899,8 @@ datapacks have been added to the game, either with `create_datapack()` or manual
 `/datapack enable` on it. Returns the list of valid dimension names / identifiers that has been added in the process.
 
 Fine print: The function should be
-considered experimental. There 'should not be' (famous last words) any side-effects if no worlds are added. Already connected
+considered experimental. For example: is not supposed to work at all in vanilla, and its doing exactly that in 1.18.2+.
+There 'should not be' (famous last words) any side-effects if no worlds are added. Already connected
 clients will not see suggestions for commands that use dimensions `/execute in <dim>` (vanilla client limitation) 
 but all commands should work just fine with
 the new dimensions. Existing worlds that have gotten modified settings by the datapacks will not be reloaded or replaced.
@@ -5921,7 +6023,8 @@ it could either mean your input is wrong, or statistic effectively has a value o
 
 
 ### `system_info()`, `system_info(property)`
-Fetches the value of a system property or returns all inforation as a map when called without any arguments. It can be used to 
+Fetches the value of one of the following system properties. If called without arguments, it returns a list of 
+available system_info options. It can be used to 
 fetch various information, mostly not changing, or only available via low level
 system calls. In all circumstances, these are only provided as read-only.
 

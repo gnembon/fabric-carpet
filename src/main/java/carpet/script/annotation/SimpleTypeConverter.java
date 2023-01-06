@@ -3,7 +3,10 @@ package carpet.script.annotation;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
-
+import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.level.Level;
 import carpet.CarpetServer;
 import carpet.script.exception.InternalExpressionException;
 import carpet.script.value.EntityValue;
@@ -11,10 +14,6 @@ import carpet.script.value.FormattedTextValue;
 import carpet.script.value.NumericValue;
 import carpet.script.value.Value;
 import carpet.script.value.ValueConversions;
-import net.minecraft.entity.Entity;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.text.Text;
-import net.minecraft.world.World;
 
 /**
  * <p>A simple {@link ValueConverter} implementation that converts from a specified subclass of {@link Value} into {@code <R>} by using a given
@@ -32,10 +31,10 @@ public final class SimpleTypeConverter<T extends Value, R> implements ValueConve
     private static final Map<Class<?>, SimpleTypeConverter<? extends Value, ?>> byResult = new HashMap<>();
     static
     {
-        registerType(Value.class, ServerPlayerEntity.class, val -> EntityValue.getPlayerByValue(CarpetServer.minecraft_server, val), "online player");
+        registerType(Value.class, ServerPlayer.class, val -> EntityValue.getPlayerByValue(CarpetServer.minecraft_server, val), "online player");
         registerType(EntityValue.class, Entity.class, EntityValue::getEntity, "entity");
-        registerType(Value.class, World.class, val -> ValueConversions.dimFromValue(val, CarpetServer.minecraft_server), "dimension");
-        registerType(Value.class, Text.class, FormattedTextValue::getTextByValue, "text");
+        registerType(Value.class, Level.class, val -> ValueConversions.dimFromValue(val, CarpetServer.minecraft_server), "dimension");
+        registerType(Value.class, Component.class, FormattedTextValue::getTextByValue, "text");
         registerType(Value.class, String.class, Value::getString, "string"); // Check out @Param.Strict for more specific types
 
         // Primitives are also query those classes
@@ -86,9 +85,10 @@ public final class SimpleTypeConverter<T extends Value, R> implements ValueConve
     }
 
     @Override
-    public R convert(Value value)
+    @SuppressWarnings("unchecked") // more than checked. not using class.cast because then "method is too big" for inlining, because javac is useless
+    public R convert(Value value)                                                          // and adds millions of casts. This one is even removed
     {
-        return valueClass.isInstance(value) ? converter.apply(valueClass.cast(value)) : null;
+        return valueClass.isInstance(value) ? converter.apply((T)value) : null;
     }
 
     /**

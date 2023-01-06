@@ -1,9 +1,8 @@
 package carpet.fakes;
 
-import net.minecraft.entity.ai.goal.Goal;
-import net.minecraft.entity.ai.goal.GoalSelector;
-
 import java.util.Map;
+import net.minecraft.world.entity.ai.goal.Goal;
+import net.minecraft.world.entity.ai.goal.GoalSelector;
 
 public interface MobEntityInterface
 {

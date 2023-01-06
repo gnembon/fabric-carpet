@@ -1,11 +1,10 @@
 package carpet.script.value;
 
 import java.util.ArrayList;
-
+import net.minecraft.nbt.StringTag;
+import net.minecraft.nbt.Tag;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonNull;
-import net.minecraft.nbt.NbtString;
-import net.minecraft.nbt.NbtElement;
 
 public class NullValue extends NumericValue // TODO check nonsingleton code
 {
@@ -33,12 +32,16 @@ public class NullValue extends NumericValue // TODO check nonsingleton code
     {
         return new NullValue();
     }
-    private NullValue() {super(0);}
+    protected NullValue() {super(0);}
 
     @Override
     public boolean equals(final Object o)
     {
-        return o instanceof NullValue;
+        if (o instanceof Value value)
+        {
+            return value.isNull();
+        }
+        return false;
     }
 
     @Override
@@ -59,7 +62,7 @@ public class NullValue extends NumericValue // TODO check nonsingleton code
     @Override
     public int compareTo(Value o)
     {
-        return  o instanceof NullValue ? 0 : -1;
+        return  o.isNull() ? 0 : -1;
     }
 
     @Override
@@ -80,10 +83,10 @@ public class NullValue extends NumericValue // TODO check nonsingleton code
     }
 
     @Override
-    public NbtElement toTag(boolean force)
+    public Tag toTag(boolean force)
     {
         if (!force) throw new NBTSerializableValue.IncompatibleTypeException(this);
-        return NbtString.of("null");
+        return StringTag.valueOf("null");
     }
 
     @Override

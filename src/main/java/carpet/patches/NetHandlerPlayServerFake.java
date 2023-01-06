@@ -1,28 +1,28 @@
 package carpet.patches;
 
-import net.minecraft.network.ClientConnection;
-import net.minecraft.network.Packet;
+import net.minecraft.network.Connection;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.contents.TranslatableContents;
+import net.minecraft.network.protocol.Packet;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.network.ServerPlayNetworkHandler;
-import net.minecraft.text.Text;
-import net.minecraft.text.TranslatableText;
+import net.minecraft.server.network.ServerGamePacketListenerImpl;
 
-public class NetHandlerPlayServerFake extends ServerPlayNetworkHandler
+public class NetHandlerPlayServerFake extends ServerGamePacketListenerImpl
 {
-    public NetHandlerPlayServerFake(MinecraftServer server, ClientConnection cc, EntityPlayerMPFake playerIn)
+    public NetHandlerPlayServerFake(MinecraftServer server, Connection cc, EntityPlayerMPFake playerIn)
     {
         super(server, cc, playerIn);
     }
 
     @Override
-    public void sendPacket(final Packet<?> packetIn)
+    public void send(final Packet<?> packetIn)
     {
     }
 
     @Override
-    public void disconnect(Text message)
+    public void disconnect(Component message)
     {
-        if (message instanceof TranslatableText text && (text.getKey().equals("multiplayer.disconnect.idling") || text.getKey().equals("multiplayer.disconnect.duplicate_login")))
+        if (message.getContents() instanceof TranslatableContents text && (text.getKey().equals("multiplayer.disconnect.idling") || text.getKey().equals("multiplayer.disconnect.duplicate_login")))
         {
             ((EntityPlayerMPFake) player).kill(message);
         }

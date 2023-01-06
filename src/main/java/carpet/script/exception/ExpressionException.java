@@ -2,7 +2,6 @@ package carpet.script.exception;
 
 import carpet.script.Context;
 import carpet.script.Expression;
-import carpet.script.Fluff;
 import carpet.script.Tokenizer;
 import carpet.script.value.FunctionValue;
 import carpet.utils.Messenger;
@@ -13,7 +12,7 @@ import java.util.List;
 import java.util.function.Supplier;
 
 /* The expression evaluators exception class. */
-public class ExpressionException extends RuntimeException implements ResolvedException
+public class ExpressionException extends StacklessRuntimeException implements ResolvedException
 {
     public final Context context;
     public final Tokenizer.Token token;
@@ -51,9 +50,8 @@ public class ExpressionException extends RuntimeException implements ResolvedExc
         context = c;
     }
 
-    private static final Fluff.TriFunction<Expression, Tokenizer.Token, String, List<String>> errorMaker = (expr, /*Nullable*/ token, errmessage) ->
+    private static List<String> makeError(Expression expr, /*Nullable*/Tokenizer.Token token, String errmessage)
     {
-
         List<String> errMsg = new ArrayList<>();
         errmessage += expr.getModuleName() == null?"":(" in "+expr.getModuleName());
         if (token != null)
@@ -72,7 +70,7 @@ public class ExpressionException extends RuntimeException implements ResolvedExc
         }
         errMsg.add(errmessage);
         return errMsg;
-    };
+    }
 
     synchronized static String makeMessage(Context c, Expression e, Tokenizer.Token t, String message) throws ExpressionException
     {
@@ -84,7 +82,7 @@ public class ExpressionException extends RuntimeException implements ResolvedExc
                 return String.join("\n", alternative);
             }
         }
-        return String.join("\n", errorMaker.apply(e, t, message));
+        return String.join("\n", makeError(e, t, message));
     }
     
     @Override

@@ -20,9 +20,9 @@ import carpet.script.value.FormattedTextValue;
 import carpet.script.value.NumericValue;
 import carpet.script.value.StringValue;
 import carpet.script.value.Value;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.text.Text;
+import net.minecraft.server.level.ServerPlayer;
 
 import static java.lang.annotation.ElementType.PARAMETER;
 import static java.lang.annotation.ElementType.TYPE_USE;
@@ -97,7 +97,7 @@ public interface Param
     }
 
     /**
-     * <p>Defines that a parameter of type {@link String}, {@link Text}, {@link ServerPlayerEntity}, {@link Boolean} or other registered strict type
+     * <p>Defines that a parameter of type {@link String}, {@link Component}, {@link ServerPlayer}, {@link Boolean} or other registered strict type
      * <b>must</b> be of its corresponding {@link Value} in order to be accepted (respectively {@link StringValue}, {@link FormattedTextValue},
      * {@link EntityValue} or {@link BooleanValue}).</p>
      * 
@@ -105,7 +105,7 @@ public interface Param
      * {@code new LiteralText(Value#getString())}, {@link EntityValue#getPlayerByValue(MinecraftServer, Value)} or {@link Value#getBoolean()}.</p>
      * 
      * <p>You can define "shallow strictness" ({@link #shallow()}) if you want to allow passing both a {@link StringValue} or a
-     * {@link FormattedTextValue} to a {@link Text} parameter or a {@link NumericValue} to a {@link BooleanValue}, but not any {@link Value}.</p>
+     * {@link FormattedTextValue} to a {@link Component} parameter or a {@link NumericValue} to a {@link BooleanValue}, but not any {@link Value}.</p>
      *
      */
     @Documented
@@ -114,7 +114,7 @@ public interface Param
     public @interface Strict
     {
         /**
-         * <p>Defines whether this parameter can accept types with "shallow strictness", that is, in order to get a {@link Text}, accepting either a
+         * <p>Defines whether this parameter can accept types with "shallow strictness", that is, in order to get a {@link Component}, accepting either a
          * {@link StringValue} or a {@link FormattedTextValue} as the parameter, or in order to get a {@link Boolean}, accepting either a
          * {@link NumericValue} or a {@link BooleanValue}.</p>
          * 
@@ -198,9 +198,9 @@ public interface Param
         static
         { // TODO Specify strictness in name?
             registerStrictConverter(String.class, false, new SimpleTypeConverter<>(StringValue.class, StringValue::getString, "string"));
-            registerStrictConverter(Text.class, false, new SimpleTypeConverter<>(FormattedTextValue.class, FormattedTextValue::getText, "text"));
-            registerStrictConverter(Text.class, true, new SimpleTypeConverter<>(StringValue.class, FormattedTextValue::getTextByValue, "text"));
-            registerStrictConverter(ServerPlayerEntity.class, false, new SimpleTypeConverter<>(EntityValue.class,
+            registerStrictConverter(Component.class, false, new SimpleTypeConverter<>(FormattedTextValue.class, FormattedTextValue::getText, "text"));
+            registerStrictConverter(Component.class, true, new SimpleTypeConverter<>(StringValue.class, FormattedTextValue::getTextByValue, "text"));
+            registerStrictConverter(ServerPlayer.class, false, new SimpleTypeConverter<>(EntityValue.class,
                     v -> EntityValue.getPlayerByValue(CarpetServer.minecraft_server, v), "online player entity"));
             registerStrictConverter(Boolean.class, false, new SimpleTypeConverter<>(BooleanValue.class, BooleanValue::getBoolean, "boolean"));
             registerStrictConverter(Boolean.class, true, new SimpleTypeConverter<>(NumericValue.class, NumericValue::getBoolean, "boolean"));

@@ -77,11 +77,12 @@ public final class ValueCaster<R> implements ValueConverter<R> // R always exten
     }
 
     @Override
+    @SuppressWarnings("unchecked") // more than checked, see SimpleTypeConverter#converter for reasoning
     public R convert(Value value)
     {
         if (!outputType.isInstance(value))
             return null;
-        return outputType.cast(value);
+        return (R)value;
     }
 
     /**

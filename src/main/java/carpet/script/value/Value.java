@@ -4,8 +4,6 @@ import carpet.CarpetSettings;
 import carpet.script.exception.InternalExpressionException;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonPrimitive;
-import net.minecraft.nbt.NbtElement;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -13,6 +11,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 import java.util.stream.Collectors;
+import net.minecraft.nbt.Tag;
 
 public abstract class Value implements Comparable<Value>, Cloneable
 {
@@ -22,6 +21,7 @@ public abstract class Value implements Comparable<Value>, Cloneable
     public static NumericValue ONE = new NumericValue(1);
 
     public static NullValue NULL = NullValue.NULL;
+    public static UndefValue UNDEF = UndefValue.UNDEF;
 
     public String boundVariable;
 
@@ -43,7 +43,7 @@ public abstract class Value implements Comparable<Value>, Cloneable
         catch (CloneNotSupportedException e)
         {
             // should not happen
-            CarpetSettings.LOG.catching(e);
+            CarpetSettings.LOG.error("Failed to clone variable", e);
             throw new InternalExpressionException("Variable of type "+getTypeString()+" is not cloneable. Tell gnembon about it, this shoudn't happen");
         }
         copy.boundVariable = var;
@@ -66,19 +66,13 @@ public abstract class Value implements Comparable<Value>, Cloneable
     public abstract boolean getBoolean();
 
     public Value add(Value o) {
-        String lstr = this.getString();
         if (o instanceof FormattedTextValue)
         {
             return FormattedTextValue.combine(this, o);
         }
-        if (lstr == null) // null
-            return new StringValue(o.getString());
-        String rstr = o.getString();
-        if (rstr == null)
-        {
-            return new StringValue(lstr);
-        }
-        return new StringValue(lstr+rstr);
+        String leftStr = this.getString();
+        String rightStr = o.getString();
+        return new StringValue(leftStr + rightStr);
     }
     public Value subtract(Value v)
     {
@@ -153,11 +147,11 @@ public abstract class Value implements Comparable<Value>, Cloneable
         if (!m.find()) return Value.NULL;
         int gc = m.groupCount();
         if (gc == 0) return new StringValue(m.group());
-        if (gc == 1) return new StringValue(m.group(1));
+        if (gc == 1) return StringValue.of(m.group(1));
         List<Value> groups = new ArrayList<>(gc);
         for (int i = 1; i <= gc; i++)
         {
-            groups.add(new StringValue(m.group(i)));
+            groups.add(StringValue.of(m.group(i)));
         }
         return ListValue.wrap(groups);
     }
@@ -237,7 +231,7 @@ public abstract class Value implements Comparable<Value>, Cloneable
         }
     }
 
-    public abstract NbtElement toTag(boolean force);
+    public abstract Tag toTag(boolean force);
 
     public JsonElement toJson()
     {

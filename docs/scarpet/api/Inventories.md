@@ -53,18 +53,6 @@ stack_limit('ender_pearl') => 16
 stack_limit('stone') => 64
 </pre>
 
-### `item_category(item)`
-
-Returns the string representing the category of a given item, like `building_blocks`, `combat`, or `tools`.
-
-Throws `unknown_item` if item doesn't exist.
-
-<pre>
-item_category('wooden_axe') => tools
-item_category('ender_pearl') => misc
-item_category('stone') => building_blocks
-</pre>
-
 ### `recipe_data(item, type?)`, `recipe_data(recipe, type?)`
 
 returns all recipes matching either an `item`, or represent actual `recipe` name. In vanilla datapack, for all items

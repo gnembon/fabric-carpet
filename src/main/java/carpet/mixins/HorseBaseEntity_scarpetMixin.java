@@ -1,21 +1,21 @@
 package carpet.mixins;
 
 import carpet.fakes.InventoryBearerInterface;
-import net.minecraft.entity.passive.HorseBaseEntity;
-import net.minecraft.inventory.Inventory;
-import net.minecraft.inventory.SimpleInventory;
+import net.minecraft.world.Container;
+import net.minecraft.world.SimpleContainer;
+import net.minecraft.world.entity.animal.horse.AbstractHorse;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 
-@Mixin(HorseBaseEntity.class)
+@Mixin(AbstractHorse.class)
 public class HorseBaseEntity_scarpetMixin implements InventoryBearerInterface
 {
 
-    @Shadow protected SimpleInventory items;
+    @Shadow protected SimpleContainer inventory;
 
     @Override
-    public Inventory getCMInventory()
+    public Container getCMInventory()
     {
-        return items;
+        return inventory;
     }
 }

@@ -3,10 +3,10 @@ package carpet.script.language;
 import carpet.script.Context;
 import carpet.script.Expression;
 import carpet.script.LazyValue;
+import carpet.script.api.Auxiliary;
 import carpet.script.exception.InternalExpressionException;
 import carpet.script.exception.ThrowStatement;
 import carpet.script.exception.Throwables;
-import carpet.script.utils.ScarpetJsonDeserializer;
 import carpet.script.value.BooleanValue;
 import carpet.script.value.ContainerValueInterface;
 import carpet.script.value.LContainerValue;
@@ -329,10 +329,10 @@ public class DataStructures {
             return (cc, tt) -> ret;
         });
 
-        expression.addUnaryFunction("encode_b64", v -> StringValue.of(Base64.getEncoder().encodeToString(v.getString().getBytes())));
+        expression.addUnaryFunction("encode_b64", v -> StringValue.of(Base64.getEncoder().encodeToString(v.getString().getBytes(StandardCharsets.UTF_8))));
         expression.addUnaryFunction("decode_b64", v -> {
             try {
-                return StringValue.of(new String(Base64.getDecoder().decode(v.getString()), StandardCharsets.ISO_8859_1));//using this charset cos it's the one used in decoding function
+                return StringValue.of(new String(Base64.getDecoder().decode(v.getString()), StandardCharsets.UTF_8));
             } catch (IllegalArgumentException iae){
                 throw new ThrowStatement("Invalid b64 string: " + v.getString(), Throwables.B64_ERROR);
             }
@@ -341,7 +341,7 @@ public class DataStructures {
         expression.addUnaryFunction("encode_json", v -> StringValue.of(v.toJson().toString()));
         expression.addUnaryFunction("decode_json", v -> {
             try {
-                return new ScarpetJsonDeserializer().deserialize(new JsonParser().parse(v.getString()), null, null);
+                return Auxiliary.GSON.fromJson(v.getString(), Value.class);
             } catch (JsonParseException jpe){
                 throw new ThrowStatement("Invalid json string: " + v.getString(), Throwables.JSON_ERROR);
             }

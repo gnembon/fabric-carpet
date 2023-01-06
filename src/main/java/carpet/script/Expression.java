@@ -12,7 +12,6 @@ import carpet.script.Fluff.QuadFunction;
 import carpet.script.Fluff.QuinnFunction;
 import carpet.script.Fluff.SexFunction;
 import carpet.script.Fluff.TriFunction;
-import carpet.script.bundled.Module;
 import carpet.script.exception.BreakStatement;
 import carpet.script.exception.ContinueStatement;
 import carpet.script.exception.ExitStatement;
@@ -64,7 +63,7 @@ public class Expression
 
     public String getModuleName()
     {
-        return module == null?"system chat":module.getName();
+        return module == null ? "system chat" : module.name();
     }
 
     public void asATextSource()
@@ -738,7 +737,7 @@ public class Expression
         }
         var = c.host.getGlobalVariable(module, name);
         if (var != null) return var;
-        var = (_c, _t ) -> Value.ZERO.reboundedTo(name);
+        var = (_c, _t ) -> _c.host.strict ? Value.UNDEF.reboundedTo(name) : Value.NULL.reboundedTo(name);
         setAnyVariable(c, name, var);
         return var;
     }
@@ -749,7 +748,7 @@ public class Expression
      */
     public Expression(String expression)
     {
-        this.expression = expression.trim().replaceAll("\\r\\n?", "\n").replaceAll("\\t","   ");
+        this.expression = expression.stripTrailing().replaceAll("\\r\\n?", "\n").replaceAll("\\t","   ");
         Operators.apply(this);
         ControlFlow.apply(this);
         Functions.apply(this);
@@ -1117,26 +1116,34 @@ public class Expression
         if (CarpetSettings.scriptsDebugging)
             CarpetScriptServer.LOG.info("Input code size for "+getModuleName()+": " + treeSize(root) + " nodes, " + treeDepth(root) + " deep");
 
+        // Defined out here to not need to conditionally assign them with debugging disabled
+        int prevTreeSize = -1;
+        int prevTreeDepth = -1;
+
         boolean changed = true;
         while(changed) {
             changed = false;
             while (true) {
-                int tree_size = treeSize(root);
-                int tree_depth = treeDepth(root);
+                if (CarpetSettings.scriptsDebugging) {
+                    prevTreeSize = treeSize(root);
+                    prevTreeDepth = treeDepth(root);
+                }
                 boolean optimized = compactTree(root, Context.Type.NONE, 0);
                 if (!optimized) break;
                 changed = true;
                 if (CarpetSettings.scriptsDebugging)
-                    CarpetScriptServer.LOG.info("Compacted from " + tree_size + " nodes, " + tree_depth + " code depth to " + treeSize(root) + " nodes, " + treeDepth(root) + " code depth");
+                    CarpetScriptServer.LOG.info("Compacted from " + prevTreeSize + " nodes, " + prevTreeDepth + " code depth to " + treeSize(root) + " nodes, " + treeDepth(root) + " code depth");
             }
             while (true) {
-                int tree_size = treeSize(root);
-                int tree_depth = treeDepth(root);
+                if (CarpetSettings.scriptsDebugging) {
+                    prevTreeSize = treeSize(root);
+                    prevTreeDepth = treeDepth(root);
+                }
                 boolean optimized = optimizeTree(optimizeOnlyContext, root, Context.Type.NONE, 0);
                 if (!optimized) break;
                 changed = true;
                 if (CarpetSettings.scriptsDebugging)
-                    CarpetScriptServer.LOG.info("Optimized from " + tree_size + " nodes, " + tree_depth + " code depth to " + treeSize(root) + " nodes, " + treeDepth(root) + " code depth");
+                    CarpetScriptServer.LOG.info("Optimized from " + prevTreeSize + " nodes, " + prevTreeDepth + " code depth to " + treeSize(root) + " nodes, " + treeDepth(root) + " code depth");
             }
         }
         return extractOp(optimizeOnlyContext, root, Context.Type.NONE);

@@ -5,22 +5,21 @@ import carpet.script.Context;
 import carpet.script.Expression;
 import carpet.script.Fluff;
 import carpet.script.LazyValue;
+import carpet.script.Module;
 import carpet.script.Tokenizer;
-import carpet.script.bundled.Module;
 import carpet.script.exception.BreakStatement;
 import carpet.script.exception.ContinueStatement;
 import carpet.script.exception.ExpressionException;
 import carpet.script.exception.InternalExpressionException;
 import carpet.script.exception.ReturnStatement;
-import net.minecraft.nbt.NbtString;
-import net.minecraft.nbt.NbtElement;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
+import net.minecraft.nbt.StringTag;
+import net.minecraft.nbt.Tag;
 
 public class FunctionValue extends Value implements Fluff.ILazyFunction
 {
@@ -76,7 +75,7 @@ public class FunctionValue extends Value implements Fluff.ILazyFunction
         return (name.equals("_")?"<lambda>":name) +"("+String.join(", ",stringArgs)+")";
     }
 
-    public String fullName() {return (name.equals("_")?"<lambda>":name)+(expression.module == null?"":"["+expression.module.getName()+"]");}
+    public String fullName() {return (name.equals("_")?"<lambda>":name)+(expression.module == null?"":"["+expression.module.name()+"]");}
 
     @Override
     public boolean getBoolean()
@@ -281,10 +280,10 @@ public class FunctionValue extends Value implements Fluff.ILazyFunction
     public String getVarArgs() {return varArgs; }
 
     @Override
-    public NbtElement toTag(boolean force)
+    public Tag toTag(boolean force)
     {
         if (!force) throw new NBTSerializableValue.IncompatibleTypeException(this);
-        return NbtString.of(getString());
+        return StringTag.valueOf(getString());
     }
 
     public void assertArgsOk(List<?> list, Consumer<Boolean> feedback)
