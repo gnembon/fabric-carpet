@@ -79,12 +79,6 @@ public class MapValue extends AbstractListValue implements ContainerValueInterfa
     }
 
     @Override
-    public Value clone()
-    {
-        return new MapValue(map);
-    }
-
-    @Override
     public Value deepcopy()
     {
         Map<Value, Value> copyMap = new HashMap<>();
@@ -217,7 +211,7 @@ public class MapValue extends AbstractListValue implements ContainerValueInterfa
     @Override
     public double readDoubleNumber()
     {
-        return (double)map.size();
+        return map.size();
     }
 
     @Override

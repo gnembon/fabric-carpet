@@ -72,7 +72,7 @@ public class NumericValue extends Value
     public String getPrettyString()
     {
 
-        if (longValue!= null ||  getDouble() == (double)getLong())
+        if (longValue!= null ||  getDouble() == getLong())
         {
             return Long.toString(getLong());
         }
@@ -98,7 +98,7 @@ public class NumericValue extends Value
 
     private static long floor(double double_1) {
         long int_1 = (long)double_1;
-        return double_1 < (double)int_1 ? int_1 - 1 : int_1;
+        return double_1 < int_1 ? int_1 - 1 : int_1;
     }
 
     public long getLong()
@@ -164,12 +164,6 @@ public class NumericValue extends Value
     }
 
     @Override
-    public Value clone()
-    {
-        return new NumericValue(value, longValue);
-    }
-
-    @Override
     public int compareTo(Value o)
     {
         if (o.isNull())
@@ -227,7 +221,7 @@ public class NumericValue extends Value
     public NumericValue(long value)
     {
         this.longValue = value;
-        this.value = (double)value;
+        this.value = value;
     }
 
     @Override
@@ -278,7 +272,7 @@ public class NumericValue extends Value
             return LongTag.valueOf(longValue);
         }
         long lv = getLong();
-        if (value == (double)lv)
+        if (value == lv)
         {
             if (abs(value) < Integer.MAX_VALUE-2)
                 return IntTag.valueOf((int)lv);
@@ -296,7 +290,7 @@ public class NumericValue extends Value
         if (longValue != null)
             return new JsonPrimitive(longValue);
         long lv = getLong();
-        if (value == (double)lv)
+        if (value == lv)
         {
             return new JsonPrimitive(getLong());
         }
@@ -313,7 +307,7 @@ public class NumericValue extends Value
 
     public boolean isInteger()
     {
-        return longValue!= null ||  getDouble() == (double)getLong();
+        return longValue!= null ||  getDouble() == getLong();
     }
 
     public Value mod(NumericValue n2)

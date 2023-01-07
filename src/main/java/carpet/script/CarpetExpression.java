@@ -56,21 +56,12 @@ public class CarpetExpression
         try
         {
             Context context = new CarpetContext(host, source, origin).
-                    with("x", (c, t) -> new NumericValue(x - origin.getX()).bindTo("x")).
-                    with("y", (c, t) -> new NumericValue(y - origin.getY()).bindTo("y")).
-                    with("z", (c, t) -> new NumericValue(z - origin.getZ()).bindTo("z")).
-                    with("_", (c, t) -> new BlockValue(null, source.getLevel(), new BlockPos(x, y, z)).bindTo("_"));
+                    with("x", new NumericValue(x - origin.getX())).
+                    with("y", new NumericValue(y - origin.getY())).
+                    with("z", new NumericValue(z - origin.getZ())).
+                    with("_", new BlockValue(null, source.getLevel(), new BlockPos(x, y, z)));
             Entity e = source.getEntity();
-            if (e==null)
-            {
-                Value nullPlayer = Value.NULL.reboundedTo("p");
-                context.with("p", (cc, tt) -> nullPlayer );
-            }
-            else
-            {
-                Value playerValue = new EntityValue(e).bindTo("p");
-                context.with("p", (cc, tt) -> playerValue);
-            }
+            context.with("p", EntityValue.of(e));
             return CarpetServer.scriptServer.events.handleEvents.getWhileDisabled(()-> this.expr.eval(context).getBoolean());
         }
         catch (ExpressionException e)
@@ -94,20 +85,11 @@ public class CarpetExpression
         try
         {
             Context context = new CarpetContext(host, source, origin).
-                    with("x", (c, t) -> new NumericValue(pos.getX() - origin.getX()).bindTo("x")).
-                    with("y", (c, t) -> new NumericValue(pos.getY() - origin.getY()).bindTo("y")).
-                    with("z", (c, t) -> new NumericValue(pos.getZ() - origin.getZ()).bindTo("z"));
+                    with("x", new NumericValue(pos.getX() - origin.getX())).
+                    with("y", new NumericValue(pos.getY() - origin.getY())).
+                    with("z", new NumericValue(pos.getZ() - origin.getZ()));
             Entity e = source.getEntity();
-            if (e==null)
-            {
-                Value nullPlayer = Value.NULL.reboundedTo("p");
-                context.with("p", (cc, tt) -> nullPlayer );
-            }
-            else
-            {
-                Value playerValue = new EntityValue(e).bindTo("p");
-                context.with("p", (cc, tt) -> playerValue);
-            }
+            context.with("p", EntityValue.of(e));
             return CarpetServer.scriptServer.events.handleEvents.getWhileDisabled(()-> this.expr.eval(context));
         }
         catch (ExpressionException e)

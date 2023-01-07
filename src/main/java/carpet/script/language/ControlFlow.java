@@ -2,7 +2,6 @@ package carpet.script.language;
 
 import carpet.script.Context;
 import carpet.script.Expression;
-import carpet.script.LazyValue;
 import carpet.script.exception.ExitStatement;
 import carpet.script.exception.InternalExpressionException;
 import carpet.script.exception.ProcessedThrowStatement;
@@ -24,15 +23,13 @@ public class ControlFlow {
         expression.addLazyBinaryOperator(";", Operators.precedence.get("nextop;"), true, true, t -> Context.Type.VOID, (c, t, lv1, lv2) ->
         {
             lv1.evalValue(c, Context.VOID);
-            Value v2 = lv2.evalValue(c, t);
-            return (cc, tt) -> v2;
+            return lv2.evalValue(c, t);
         });
 
         expression.addPureLazyFunction("then", -1, t -> Context.Type.VOID, (c, t, lv) -> {
             int imax = lv.size()-1;
             for (int i = 0; i < imax; i++) lv.get(i).evalValue(c, Context.VOID);
-            Value v = lv.get(imax).evalValue(c, t);
-            return (cc, tt) -> v;
+            return lv.get(imax).evalValue(c, t);
         });
         expression.addFunctionalEquivalence(";", "then");
 
@@ -47,16 +44,14 @@ public class ControlFlow {
                 if (lv.get(i).evalValue(c, Context.BOOLEAN).getBoolean())
                 {
                     //int iFinal = i;
-                    Value ret = lv.get(i+1).evalValue(c, t);
-                    return (cc, tt) -> ret;
+                    return lv.get(i+1).evalValue(c, t);
                 }
             }
             if (lv.size()%2 == 1)
             {
-                Value ret = lv.get(lv.size() - 1).evalValue(c, t);
-                return (cc, tt) -> ret;
+                return lv.get(lv.size() - 1).evalValue(c, t);
             }
-            return (cc, tt) -> Value.NULL;
+            return Value.NULL;
         });
 
         expression.addImpureFunction("exit", (lv) -> { throw new ExitStatement(lv.size()==0?Value.NULL:lv.get(0)); });
@@ -85,8 +80,7 @@ public class ControlFlow {
                 throw new InternalExpressionException("'try' needs at least an expression block, and either a catch_epr, or a number of pairs of filters and catch_expr");
             try
             {
-                Value retval = lv.get(0).evalValue(c, t);
-                return (c_, t_) -> retval;
+                return lv.get(0).evalValue(c, t);
             }
             catch (ProcessedThrowStatement ret)
             {
@@ -94,7 +88,7 @@ public class ControlFlow {
                 {
                     if (!ret.thrownExceptionType.isUserException())
                         throw ret;
-                    return (c_, t_) -> Value.NULL;
+                    return Value.NULL;
                 }
                 if (lv.size() > 3 && lv.size() % 2 == 0)
                 {
@@ -103,10 +97,10 @@ public class ControlFlow {
                 
                 Value val = null; // This is always assigned at some point, just the compiler doesn't know
                 
-                LazyValue __ = c.getVariable("_");
-                c.setVariable("_", (__c, __t) -> ret.data.reboundedTo("_"));
-                LazyValue _trace = c.getVariable("_trace");
-                c.setVariable("_trace", (__c, __t) -> MapValue.wrap(Map.of(
+                Value __ = c.getVariable("_");
+                c.setVariable("_", ret.data);
+                Value _trace = c.getVariable("_trace");
+                c.setVariable("_trace", MapValue.wrap(Map.of(
                         StringValue.of("stack"), ListValue.wrap(ret.stack.stream().map(f -> ListValue.of(
                                 StringValue.of(f.getModule().name()),
                                 StringValue.of(f.getString()),
@@ -116,7 +110,7 @@ public class ControlFlow {
 
                         StringValue.of("locals"), MapValue.wrap(ret.context.variables.entrySet().stream().filter(e -> !e.getKey().equals("_trace")).collect(Collectors.toMap(
                                 e -> StringValue.of(e.getKey()),
-                                e -> e.getValue().evalValue(ret.context)
+                                e -> e.getValue()
                         ))),
                         StringValue.of("token"), ListValue.of(
                                 StringValue.of(ret.token.surface),
@@ -152,8 +146,7 @@ public class ControlFlow {
                 {
                     throw ret;
                 }
-                Value retval = val;
-                return (c_, t_) -> retval;
+                return val;
             }
         });
     }

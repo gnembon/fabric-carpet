@@ -8,7 +8,7 @@ import java.util.Locale;
 import net.minecraft.nbt.StringTag;
 import net.minecraft.nbt.Tag;
 
-public abstract class LazyListValue extends AbstractListValue implements Iterator<Value>
+public abstract class LazyListValue extends AbstractListValue implements Iterator<Value>, Cloneable
 {
     public static LazyListValue rangeDouble(double from, double to, double step)
     {

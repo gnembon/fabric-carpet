@@ -17,7 +17,7 @@ public abstract class FrameworkValue extends Value
     }
 
     @Override
-    public Value clone()
+    public Value deepcopy()
     {
         throw new UnsupportedOperationException("Scarpet language component cannot be used");
     }

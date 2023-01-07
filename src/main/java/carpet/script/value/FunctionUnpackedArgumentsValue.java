@@ -9,12 +9,6 @@ public class FunctionUnpackedArgumentsValue extends ListValue
     }
 
     @Override
-    public Value clone()
-    {
-        return new FunctionUnpackedArgumentsValue(items);
-    }
-
-    @Override
     public Value deepcopy()
     {
         ListValue copy = (ListValue)super.deepcopy();

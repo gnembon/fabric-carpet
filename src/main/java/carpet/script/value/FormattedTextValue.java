@@ -58,12 +58,6 @@ public class FormattedTextValue extends StringValue
     }
 
     @Override
-    public Value clone()
-    {
-        return new FormattedTextValue(text);
-    }
-
-    @Override
     public String getTypeString()
     {
         return "text";
