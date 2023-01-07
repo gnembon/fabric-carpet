@@ -30,8 +30,8 @@ public class CarpetContext extends Context
     protected void initialize()
     {
         super.initialize();
-        variables.put("_x", (c, t) -> Value.ZERO);
-        variables.put("_y", (c, t) -> Value.ZERO);
-        variables.put("_z", (c, t) -> Value.ZERO);
+        variables.put("_x", Value.ZERO);
+        variables.put("_y", Value.ZERO);
+        variables.put("_z", Value.ZERO);
     }
 }

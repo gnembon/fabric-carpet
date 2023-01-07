@@ -15,13 +15,13 @@ import net.minecraft.nbt.Tag;
 
 public abstract class Value implements Comparable<Value>, Cloneable
 {
-    public static NumericValue FALSE = BooleanValue.FALSE;
-    public static NumericValue TRUE = BooleanValue.TRUE;
-    public static NumericValue ZERO = new NumericValue(0);
-    public static NumericValue ONE = new NumericValue(1);
+    public static final NumericValue FALSE = BooleanValue.FALSE;
+    public static final NumericValue TRUE = BooleanValue.TRUE;
+    public static final NumericValue ZERO = new NumericValue(0);
+    public static final NumericValue ONE = new NumericValue(1);
 
-    public static NullValue NULL = NullValue.NULL;
-    public static UndefValue UNDEF = UndefValue.UNDEF;
+    public static final NullValue NULL = NullValue.NULL;
+    public static final UndefValue UNDEF = UndefValue.UNDEF;
 
     public String boundVariable;
 
@@ -117,19 +117,6 @@ public abstract class Value implements Comparable<Value>, Cloneable
         if (o instanceof Value)
             return this.compareTo((Value) o)==0;
         return false;
-    }
-
-    public void assertAssignable()
-    {
-        if (boundVariable == null)// || boundVariable.startsWith("_"))
-        {
-            /*if (boundVariable != null)
-            {
-                throw new InternalExpressionException(boundVariable+ " cannot be assigned a new value");
-            }*/
-            throw new InternalExpressionException(getString()+ " is not a variable");
-
-        }
     }
 
     public Value in(Value value1)

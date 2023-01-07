@@ -696,8 +696,8 @@ public class CarpetScriptHost extends ScriptHost
             switch (tok.type)
             {
                 case VARIABLE:
-                    LazyValue var = getGlobalVariable(tok.surface);
-                    if (var != null) argv.add(var);
+                    Value var = getGlobalVariable(tok.surface);
+                    if (var != null) argv.add((cc, tt) -> var);
                     break;
                 case STRINGPARAM:
                     argv.add((c, t) -> new StringValue(tok.surface));
@@ -768,7 +768,7 @@ public class CarpetScriptHost extends ScriptHost
             assertAppIntegrity(function.getModule());
             Context context = new CarpetContext(this, source);
             return scriptServer().events.handleEvents.getWhileDisabled(() -> function.getExpression().evalValue(
-                    () -> function.lazyEval(context, Context.VOID, function.getExpression(), function.getToken(), argv),
+                    (c, t) -> function.lazyEval(context, Context.VOID, function.getExpression(), function.getToken(), argv),
                     context,
                     Context.VOID
             ));
@@ -799,7 +799,7 @@ public class CarpetScriptHost extends ScriptHost
             assertAppIntegrity(function.getModule());
             Context context = new CarpetContext(this, source);
             return function.getExpression().evalValue(
-                    () -> function.execute(context, Context.VOID, function.getExpression(), function.getToken(), argv),
+                    (c, t) -> function.execute(context, Context.VOID, function.getExpression(), function.getToken(), argv),
                     context,
                     Context.VOID
             );
@@ -833,7 +833,7 @@ public class CarpetScriptHost extends ScriptHost
             assertAppIntegrity(fun.getModule());
             Context context = new CarpetContext(this, source, origin);
             return fun.getExpression().evalValue(
-                    () -> fun.execute(context, Context.VOID, fun.getExpression(), fun.getToken(), argv),
+                    (c, t) -> fun.execute(context, Context.VOID, fun.getExpression(), fun.getToken(), argv),
                     context,
                     Context.VOID);
         }
@@ -1061,7 +1061,7 @@ public class CarpetScriptHost extends ScriptHost
                 continue;
             stringsToFormat.add(format + line.substring(lastPos, foundLocal.getKey()));
             stringsToFormat.add(format + foundLocal.getValue());
-            Value val = context.variables.get(foundLocal.getValue()).evalValue(context);
+            Value val = context.variables.get(foundLocal.getValue());
             String type = val.getTypeString();
             String value;
             try {

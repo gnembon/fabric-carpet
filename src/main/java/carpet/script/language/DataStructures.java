@@ -2,7 +2,10 @@ package carpet.script.language;
 
 import carpet.script.Context;
 import carpet.script.Expression;
+import carpet.script.Fluff;
 import carpet.script.LazyValue;
+import carpet.script.ReferenceArray;
+import carpet.script.Tokenizer.Token;
 import carpet.script.api.Auxiliary;
 import carpet.script.exception.InternalExpressionException;
 import carpet.script.exception.ThrowStatement;
@@ -17,7 +20,6 @@ import carpet.script.value.NumericValue;
 import carpet.script.value.StringValue;
 import carpet.script.value.Value;
 import com.google.gson.JsonParseException;
-import com.google.gson.JsonParser;
 
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -29,11 +31,23 @@ import java.util.stream.Collectors;
 public class DataStructures {
     public static void apply(Expression expression)
     {
-        expression.addFunction("l", lv ->
-        {
-            if (lv.size() == 1 && lv.get(0) instanceof LazyListValue)
-                return ListValue.wrap(((LazyListValue) lv.get(0)).unroll());
-            return new ListValue.ListConstructorValue(lv);
+        // custom because variable only lists have special interactions with assignment operators 
+        expression.addCustomFunction("l", new Fluff.AbstractFunction(-1, "l") {
+            @Override
+            public Value eval(List<Value> lv) {
+                if (lv.size() == 1 && lv.get(0) instanceof LazyListValue)
+                    return ListValue.wrap(((LazyListValue) lv.get(0)).unroll());
+                return new ListValue(lv); // copies list, given the passed one may not be mutable
+            }
+
+            @Override
+            public LazyValue createExecutable(Context compilationContext, Expression expr, Token token, List<LazyValue> params) {
+                boolean allVariables = params.stream().allMatch(lv -> (lv instanceof LazyValue.Variable));
+                if (allVariables) {
+                    return new ReferenceArray(params.stream().map(lv -> ((LazyValue.Variable)lv).name()).toArray(String[]::new), expr);
+                }
+                return super.createExecutable(compilationContext, expr, token, params);
+            }
         });
 
         expression.addFunction("join", (lv) ->
@@ -115,23 +129,21 @@ public class DataStructures {
             if (lv.size()==1)
             {
                 Collections.shuffle(toSort);
-                Value ret = ListValue.wrap(toSort);
-                return (_c, _t) -> ret;
+                return ListValue.wrap(toSort);
             }
             LazyValue sortKey = lv.get(1);
             //scoping
-            LazyValue __ = c.getVariable("_");
+            Value __ = c.getVariable("_");
             Collections.sort(toSort,(v1, v2) -> {
-                c.setVariable("_",(cc, tt) -> v1);
+                c.setVariable("_", v1);
                 Value ev1 = sortKey.evalValue(c);
-                c.setVariable("_",(cc, tt) -> v2);
+                c.setVariable("_", v2);
                 Value ev2 = sortKey.evalValue(c);
                 return ev1.compareTo(ev2);
             });
             //revering scope
             c.setVariable("_", __);
-            Value ret = ListValue.wrap(toSort);
-            return (cc, tt) -> ret;
+            return ListValue.wrap(toSort);
         });
 
         expression.addFunction("range", (lv) ->
@@ -215,23 +227,21 @@ public class DataStructures {
             {
                 Value v = lv.get(0).evalValue(c, Context.LVALUE);
                 if (!(v  instanceof LContainerValue))
-                    return LazyValue.NULL;
+                    return Value.NULL;
                 ContainerValueInterface container = ((LContainerValue) v).getContainer();
                 if (container == null)
-                    return LazyValue.NULL;
-                Value ret = container.get(((LContainerValue) v).getAddress());
-                return (cc, tt) -> ret;
+                    return Value.NULL;
+                return container.get(((LContainerValue) v).getAddress());
             }
             Value container = lv.get(0).evalValue(c);
             for (int i = 1; i < lv.size(); i++)
             {
-                if (!(container instanceof ContainerValueInterface)) return (cc, tt) -> Value.NULL;
+                if (!(container instanceof ContainerValueInterface)) return Value.NULL;
                 container = ((ContainerValueInterface) container).get(lv.get(i).evalValue(c));
             }
             if (container == null)
-                return (cc, tt) -> Value.NULL;
-            Value finalContainer = container;
-            return (cc, tt) -> finalContainer;
+                return Value.NULL;
+            return container;
         });
 
         // same as `get`
@@ -243,23 +253,21 @@ public class DataStructures {
             {
                 Value v = lv.get(0).evalValue(c, Context.LVALUE);
                 if (!(v  instanceof LContainerValue))
-                    return LazyValue.NULL;
+                    return Value.NULL;
                 ContainerValueInterface container = ((LContainerValue) v).getContainer();
                 if (container == null)
-                    return LazyValue.NULL;
-                Value ret = BooleanValue.of(container.has(((LContainerValue) v).getAddress()));
-                return (cc, tt) -> ret;
+                    return Value.NULL;
+                return BooleanValue.of(container.has(((LContainerValue) v).getAddress()));
             }
             Value container = lv.get(0).evalValue(c);
             for (int i = 1; i < lv.size()-1; i++)
             {
-                if (!(container instanceof ContainerValueInterface)) return LazyValue.NULL;
+                if (!(container instanceof ContainerValueInterface)) return Value.NULL;
                 container = ((ContainerValueInterface) container).get(lv.get(i).evalValue(c));
             }
             if (!(container instanceof ContainerValueInterface))
-                return LazyValue.NULL;
-            Value ret = BooleanValue.of(((ContainerValueInterface) container).has(lv.get(lv.size()-1).evalValue(c)));
-            return (cc, tt) -> ret;
+                return Value.NULL;
+            return BooleanValue.of(((ContainerValueInterface) container).has(lv.get(lv.size()-1).evalValue(c)));
         });
 
         // same as `get`
@@ -275,14 +283,14 @@ public class DataStructures {
                 ContainerValueInterface internalContainer = ((LContainerValue) container).getContainer();
                 if (internalContainer == null)
                 {
-                    return LazyValue.NULL;
+                    return Value.NULL;
                 }
                 Value address = ((LContainerValue) container).getAddress();
                 Value what = lv.get(1).evalValue(c);
                 Value retVal = BooleanValue.of((lv.size() > 2)
                         ? internalContainer.put(address, what, lv.get(2).evalValue(c))
                         : internalContainer.put(address, what));
-                return (cc, tt) -> retVal;
+                return retVal;
 
             }
             if(lv.size()<3)
@@ -291,14 +299,14 @@ public class DataStructures {
             }
             if (!(container instanceof ContainerValueInterface))
             {
-                return LazyValue.NULL;
+                return Value.NULL;
             }
             Value where = lv.get(1).evalValue(c);
             Value what = lv.get(2).evalValue(c);
             Value retVal = BooleanValue.of((lv.size()>3)
                     ? ((ContainerValueInterface) container).put(where, what, lv.get(3).evalValue(c))
                     : ((ContainerValueInterface) container).put(where, what));
-            return (cc, tt) -> retVal;
+            return retVal;
         });
 
         // same as `get`
@@ -310,23 +318,21 @@ public class DataStructures {
             {
                 Value v = lv.get(0).evalValue(c, Context.LVALUE);
                 if (!(v  instanceof LContainerValue))
-                    return LazyValue.NULL;
+                    return Value.NULL;
                 ContainerValueInterface container = ((LContainerValue) v).getContainer();
                 if (container == null)
-                    return LazyValue.NULL;
-                Value ret = BooleanValue.of(container.delete(((LContainerValue) v).getAddress()));
-                return (cc, tt) -> ret;
+                    return Value.NULL;
+                return BooleanValue.of(container.delete(((LContainerValue) v).getAddress()));
             }
             Value container = lv.get(0).evalValue(c);
             for (int i = 1; i < lv.size()-1; i++)
             {
-                if (!(container instanceof ContainerValueInterface)) return LazyValue.NULL;
+                if (!(container instanceof ContainerValueInterface)) return Value.NULL;
                 container = ((ContainerValueInterface) container).get(lv.get(i).evalValue(c));
             }
             if (!(container instanceof ContainerValueInterface))
-                return LazyValue.NULL;
-            Value ret = BooleanValue.of(((ContainerValueInterface) container).delete(lv.get(lv.size()-1).evalValue(c)));
-            return (cc, tt) -> ret;
+                return Value.NULL;
+            return BooleanValue.of(((ContainerValueInterface) container).delete(lv.get(lv.size()-1).evalValue(c)));
         });
 
         expression.addUnaryFunction("encode_b64", v -> StringValue.of(Base64.getEncoder().encodeToString(v.getString().getBytes(StandardCharsets.UTF_8))));
