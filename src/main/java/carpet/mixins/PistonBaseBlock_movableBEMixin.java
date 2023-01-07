@@ -48,14 +48,6 @@ public abstract class PistonBaseBlock_movableBEMixin extends DirectionalBlock
         }
     }
     
-    private static boolean isPushableBlockEntity(Block block)
-    {
-        //Making PISTON_EXTENSION (BlockPistonMoving) pushable would not work as its createNewTileEntity()-method returns null
-        return block != Blocks.ENDER_CHEST && block != Blocks.ENCHANTING_TABLE &&
-                       block != Blocks.END_GATEWAY && block != Blocks.END_PORTAL && block != Blocks.MOVING_PISTON  &&
-                       block != Blocks.SPAWNER;
-    }
-    
     @Redirect(method = "isPushable", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/block/state/BlockState;hasBlockEntity()Z"))
     private static boolean ifHasBlockEntity(BlockState blockState)
     {
@@ -65,7 +57,7 @@ public abstract class PistonBaseBlock_movableBEMixin extends DirectionalBlock
         }
         else
         {
-            return !(CarpetSettings.movableBlockEntities && isPushableBlockEntity(blockState.getBlock()));
+            return !(CarpetSettings.movableBlockEntities && !CarpetSettings.nonMovableBlocksList.contains(blockState.getBlock()));
         }
     }
 
@@ -75,7 +67,8 @@ public abstract class PistonBaseBlock_movableBEMixin extends DirectionalBlock
     ))
     private static PushReaction moveGrindstones(BlockState blockState)
     {
-        if (CarpetSettings.movableBlockEntities && blockState.getBlock() == Blocks.GRINDSTONE) return PushReaction.NORMAL;
+        if (CarpetSettings.movableBlockEntities && blockState.getBlock() == Blocks.GRINDSTONE
+        		&& !CarpetSettings.nonMovableBlocksList.contains(blockState.getBlock())) return PushReaction.NORMAL;
         return blockState.getPistonPushReaction();
     }
 
