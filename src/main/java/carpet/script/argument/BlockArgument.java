@@ -60,23 +60,25 @@ public class BlockArgument extends Argument
             }
             if (acceptString && v1 instanceof StringValue)
             {
-                return new BlockArgument(BlockValue.fromString(v1.getString(), c.s.registryAccess()), 1 + offset);
+                return new BlockArgument(BlockValue.fromString(v1.getString(), c.registryAccess()), 1 + offset);
             }
             if (v1 instanceof BlockValue)
             {
                 return new BlockArgument(((BlockValue) v1), 1 + offset);
             }
+            final BlockPos pos = c.origin();
             if (v1 instanceof ListValue)
             {
                 List<Value> args = ((ListValue) v1).getItems();
                 int xpos = (int) NumericValue.asNumber(args.get(0)).getLong();
                 int ypos = (int) NumericValue.asNumber(args.get(1)).getLong();
                 int zpos = (int) NumericValue.asNumber(args.get(2)).getLong();
+
                 return new BlockArgument(
                         new BlockValue(
                                 null,
-                                c.s.getLevel(),
-                                new BlockPos(c.origin.getX() + xpos, c.origin.getY() + ypos, c.origin.getZ() + zpos)
+                                c.level(),
+                                new BlockPos(pos.getX() + xpos, pos.getY() + ypos, pos.getZ() + zpos)
                         ),
                         1 + offset);
             }
@@ -86,8 +88,8 @@ public class BlockArgument extends Argument
             return new BlockArgument(
                     new BlockValue(
                             null,
-                            c.s.getLevel(),
-                            new BlockPos(c.origin.getX() + xpos, c.origin.getY() + ypos, c.origin.getZ() + zpos)
+                            c.level(),
+                            new BlockPos(pos.getX() + xpos, pos.getY() + ypos, pos.getZ() + zpos)
                     ),
                     3 + offset
             );

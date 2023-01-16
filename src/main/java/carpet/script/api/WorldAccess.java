@@ -198,7 +198,7 @@ public class WorldAccess {
         {
             try
             {
-                return test.apply(((BlockValue) v0).getBlockState(), ((BlockValue) v0).getPos(), cc.s.getLevel());
+                return test.apply(((BlockValue) v0).getBlockState(), ((BlockValue) v0).getPos(), cc.level());
             }
             catch (NullPointerException ignored)
             {
@@ -206,7 +206,7 @@ public class WorldAccess {
             }
         }
         BlockValue block = BlockArgument.findIn(cc, params, 0).block;
-        return test.apply(block.getBlockState(), block.getPos(), cc.s.getLevel());
+        return test.apply(block.getBlockState(), block.getPos(), cc.level());
     }
 
     private static <T extends Comparable<T>> BlockState setProperty(Property<T> property, String name, String value,
@@ -278,7 +278,7 @@ public class WorldAccess {
             if (lv.size() == 0) throw new InternalExpressionException("'poi' requires at least one parameter");
             BlockArgument locator = BlockArgument.findIn(cc, lv, 0, false);
             BlockPos pos = locator.block.getPos();
-            PoiManager store = cc.s.getLevel().getPoiManager();
+            PoiManager store = cc.level().getPoiManager();
             if (lv.size() == locator.offset)
             {
                 Optional<Holder<PoiType>> foo = store.getType(pos);
@@ -353,7 +353,7 @@ public class WorldAccess {
             BlockPos pos = locator.block.getPos();
             if (lv.size() < locator.offset) throw new InternalExpressionException("'set_poi' requires the new poi type or null, after position argument");
             Value poi = lv.get(locator.offset+0);
-            PoiManager store = cc.s.getLevel().getPoiManager();
+            PoiManager store = cc.level().getPoiManager();
             if (poi.isNull())
             {   // clear poi information
                 if (!store.getType(pos).isPresent()) return Value.FALSE;
@@ -389,7 +389,7 @@ public class WorldAccess {
 
 
         expression.addContextFunction("weather",-1,(c, t, lv) -> {
-            ServerLevel world = ((CarpetContext) c).s.getLevel();
+            ServerLevel world = ((CarpetContext) c).level();
 
             if(lv.size()==0)//cos it can thunder when raining or when clear.
                 return new StringValue(world.isThundering() ? "thunder" : (world.isRaining() ? "rain" : "clear"));
@@ -537,7 +537,7 @@ public class WorldAccess {
             ChunkPos chunkPos = new ChunkPos(pos);
             return BooleanValue.of(WorldgenRandom.seedSlimeChunk(
                     chunkPos.x, chunkPos.z,
-                    ((CarpetContext)c).s.getLevel().getSeed(),
+                    ((CarpetContext)c).level().getSeed(),
                     987234911L
             ).nextInt(10) == 0);
         });
@@ -559,24 +559,24 @@ public class WorldAccess {
             BlockPos pos = locator.block.getPos();
             int x = pos.getX();
             int z = pos.getZ();
-            return new NumericValue(((CarpetContext)c).s.getLevel().getChunk(x >> 4, z >> 4).getHeight(htype, x & 15, z & 15) + 1);
+            return new NumericValue(((CarpetContext)c).level().getChunk(x >> 4, z >> 4).getHeight(htype, x & 15, z & 15) + 1);
         });
 
         expression.addContextFunction("loaded", -1, (c, t, lv) ->
-                BooleanValue.of((((CarpetContext) c).s.getLevel().hasChunkAt(BlockArgument.findIn((CarpetContext) c, lv, 0).block.getPos()))));
+                BooleanValue.of((((CarpetContext) c).level().hasChunkAt(BlockArgument.findIn((CarpetContext) c, lv, 0).block.getPos()))));
 
         // Deprecated, use loaded_status as more indicative
         expression.addContextFunction("loaded_ep", -1, (c, t, lv) ->
         {
             c.host.issueDeprecation("loaded_ep(...)");
             BlockPos pos = BlockArgument.findIn((CarpetContext)c, lv, 0).block.getPos();
-            return BooleanValue.of(((CarpetContext)c).s.getLevel().isPositionEntityTicking(pos));// 1.17pre1 getChunkManager().shouldTickChunk(new ChunkPos(pos)));
+            return BooleanValue.of(((CarpetContext)c).level().isPositionEntityTicking(pos));// 1.17pre1 getChunkManager().shouldTickChunk(new ChunkPos(pos)));
         });
 
         expression.addContextFunction("loaded_status", -1, (c, t, lv) ->
         {
             BlockPos pos = BlockArgument.findIn((CarpetContext)c, lv, 0).block.getPos();
-            LevelChunk chunk = ((CarpetContext)c).s.getLevel().getChunkSource().getChunk(pos.getX()>>4, pos.getZ()>>4, false);
+            LevelChunk chunk = ((CarpetContext)c).level().getChunkSource().getChunk(pos.getX()>>4, pos.getZ()>>4, false);
             if (chunk == null) return Value.ZERO;
             return new NumericValue(chunk.getFullStatus().ordinal());
         });
@@ -588,7 +588,7 @@ public class WorldAccess {
             boolean force = false;
             if (lv.size() > locator.offset)
                 force = lv.get(locator.offset).getBoolean();
-            return BooleanValue.of(canHasChunk(((CarpetContext)c).s.getLevel(), new ChunkPos(pos), null, force));
+            return BooleanValue.of(canHasChunk(((CarpetContext)c).level(), new ChunkPos(pos), null, force));
         });
 
         expression.addContextFunction("generation_status", -1, (c, t, lv) ->
@@ -598,14 +598,14 @@ public class WorldAccess {
             boolean forceLoad = false;
             if (lv.size() > blockArgument.offset)
                 forceLoad = lv.get(blockArgument.offset).getBoolean();
-            ChunkAccess chunk = ((CarpetContext)c).s.getLevel().getChunk(pos.getX()>>4, pos.getZ()>>4, ChunkStatus.EMPTY, forceLoad);
+            ChunkAccess chunk = ((CarpetContext)c).level().getChunk(pos.getX()>>4, pos.getZ()>>4, ChunkStatus.EMPTY, forceLoad);
             if (chunk == null) return Value.NULL;
             return new StringValue(chunk.getStatus().getName());
         });
 
         expression.addContextFunction("chunk_tickets", -1, (c, t, lv) ->
         {
-            ServerLevel world = ((CarpetContext) c).s.getLevel();
+            ServerLevel world = ((CarpetContext) c).level();
             Long2ObjectOpenHashMap<SortedArraySet<Ticket<?>>> levelTickets = (
                     (ChunkTicketManagerInterface) ((ServerChunkManagerInterface) world.getChunkSource())
                             .getCMTicketManager()
@@ -659,14 +659,14 @@ public class WorldAccess {
         expression.addContextFunction("update", -1, (c, t, lv) ->
                 booleanStateTest(c, "update", lv, (s, p) ->
                 {
-                    ((CarpetContext) c).s.getLevel().neighborChanged(p, s.getBlock(), p);
+                    ((CarpetContext) c).level().neighborChanged(p, s.getBlock(), p);
                     return true;
                 }));
 
         expression.addContextFunction("block_tick", -1, (c, t, lv) ->
                 booleanStateTest(c, "block_tick", lv, (s, p) ->
                 {
-                    ServerLevel w = ((CarpetContext)c).s.getLevel();
+                    ServerLevel w = ((CarpetContext)c).level();
                     s.randomTick(w, p, w.random);
                     return true;
                 }));
@@ -674,7 +674,7 @@ public class WorldAccess {
         expression.addContextFunction("random_tick", -1, (c, t, lv) ->
                 booleanStateTest(c, "random_tick", lv, (s, p) ->
                 {
-                    ServerLevel w = ((CarpetContext)c).s.getLevel();
+                    ServerLevel w = ((CarpetContext)c).level();
                     if (s.isRandomlyTicking() || s.getFluidState().isRandomlyTicking())
                         s.randomTick(w, p, w.random);
                     return true;
@@ -686,7 +686,7 @@ public class WorldAccess {
             boolean previous = CarpetSettings.impendingFillSkipUpdates.get();
             if (previous) return lv.get(0);
             Value [] result = new Value[]{Value.NULL};
-            ((CarpetContext)c).s.getServer().executeBlocking( () ->
+            ((CarpetContext)c).server().executeBlocking( () ->
             {
                 try
                 {
@@ -704,7 +704,7 @@ public class WorldAccess {
         expression.addContextFunction("set", -1, (c, t, lv) ->
         {
             CarpetContext cc = (CarpetContext)c;
-            ServerLevel world = cc.s.getLevel();
+            ServerLevel world = cc.level();
             BlockArgument targetLocator = BlockArgument.findIn(cc, lv, 0);
             BlockArgument sourceLocator = BlockArgument.findIn(cc, lv, targetLocator.offset, true);
             BlockState sourceBlockState = sourceLocator.block.getBlockState();
@@ -775,7 +775,7 @@ public class WorldAccess {
             BlockState finalSourceBlockState = sourceBlockState;
             BlockPos targetPos = targetLocator.block.getPos();
             Boolean[] result = new Boolean[]{true};
-            cc.s.getServer().executeBlocking( () ->
+            cc.server().executeBlocking( () ->
             {
                 Clearable.tryClear(world.getBlockEntity(targetPos));
                 boolean success = world.setBlock(targetPos, finalSourceBlockState, 2);
@@ -802,7 +802,7 @@ public class WorldAccess {
         expression.addContextFunction("destroy", -1, (c, t, lv) ->
         {
             CarpetContext cc = (CarpetContext)c;
-            ServerLevel world = cc.s.getLevel();
+            ServerLevel world = cc.level();
             BlockArgument locator = BlockArgument.findIn(cc, lv, 0);
             BlockState state = locator.block.getBlockState();
             if (state.isAir()) return Value.FALSE;
@@ -901,7 +901,7 @@ public class WorldAccess {
             if (lv.size()<2)
                 throw new InternalExpressionException("'harvest' takes at least 2 parameters: entity and block, or position, to harvest");
             CarpetContext cc = (CarpetContext)c;
-            Level world = cc.s.getLevel();
+            Level world = cc.level();
             Value entityValue = lv.get(0);
             if (!(entityValue instanceof EntityValue))
                 return Value.FALSE;
@@ -987,7 +987,7 @@ public class WorldAccess {
             float thePowah = powah;
 
             // copy of ServerWorld.createExplosion #TRACK#
-            Explosion explosion = new Explosion(cc.s.getLevel(), source, null, null, pos.x, pos.y, pos.z, powah, createFire, mode){
+            Explosion explosion = new Explosion(cc.level(), source, null, null, pos.x, pos.y, pos.z, powah, createFire, mode){
                 @Override
                 public @Nullable LivingEntity getIndirectSourceEntity() {
                     return theAttacker;
@@ -996,7 +996,7 @@ public class WorldAccess {
             explosion.explode();
             explosion.finalizeExplosion(false);
             if (mode == Explosion.BlockInteraction.KEEP) explosion.clearToBlow();
-            cc.s.getLevel().players().forEach(spe -> {
+            cc.level().players().forEach(spe -> {
                 if (spe.distanceToSqr(pos) < 4096.0D)
                     spe.connection.send(new ClientboundExplodePacket(pos.x, pos.y, pos.z, thePowah, explosion.getToBlow(), explosion.getHitPlayers().get(spe)));
             });
@@ -1011,7 +1011,7 @@ public class WorldAccess {
             CarpetContext cc = (CarpetContext) c;
             String itemString = lv.get(0).getString();
             Vector3Argument locator = Vector3Argument.findIn(lv, 1);
-            ItemInput stackArg = NBTSerializableValue.parseItem(itemString, cc.s.registryAccess());
+            ItemInput stackArg = NBTSerializableValue.parseItem(itemString, cc.registryAccess());
             BlockPos where = new BlockPos(locator.vec);
             String facing;
             if (lv.size() > locator.offset) {
@@ -1027,7 +1027,7 @@ public class WorldAccess {
             BlockValue.PlacementContext ctx;
             try
             {
-                ctx = BlockValue.PlacementContext.from(cc.s.getLevel(), where, facing, sneakPlace, stackArg.createItemStack(1, false));
+                ctx = BlockValue.PlacementContext.from(cc.level(), where, facing, sneakPlace, stackArg.createItemStack(1, false));
             }
             catch (CommandSyntaxException e)
             {
@@ -1049,11 +1049,12 @@ public class WorldAccess {
                 BlockState placementState = blockItem.getBlock().getStateForPlacement(ctx);
                 if (placementState != null)
                 {
-                    if (placementState.canSurvive(cc.s.getLevel(), where))
+                    final Level level = ctx.getLevel();
+                    if (placementState.canSurvive(level, where))
                     {
-                        cc.s.getLevel().setBlock(where, placementState, 2);
+                        level.setBlock(where, placementState, 2);
                         SoundType blockSoundGroup = placementState.getSoundType();
-                        cc.s.getLevel().playSound(null, where, blockSoundGroup.getPlaceSound(), SoundSource.BLOCKS, (blockSoundGroup.getVolume() + 1.0F) / 2.0F, blockSoundGroup.getPitch() * 0.8F);
+                        level.playSound(null, where, blockSoundGroup.getPlaceSound(), SoundSource.BLOCKS, (blockSoundGroup.getVolume() + 1.0F) / 2.0F, blockSoundGroup.getPitch() * 0.8F);
                         return Value.TRUE;
                     }
                 }
@@ -1063,7 +1064,7 @@ public class WorldAccess {
 
         expression.addContextFunction("blocks_movement", -1, (c, t, lv) ->
                 booleanStateTest(c, "blocks_movement", lv, (s, p) ->
-                        !s.isPathfindable(((CarpetContext) c).s.getLevel(), p, PathComputationType.LAND)));
+                        !s.isPathfindable(((CarpetContext) c).level(), p, PathComputationType.LAND)));
 
         expression.addContextFunction("block_sound", -1, (c, t, lv) ->
                 stateStringQuery(c, "block_sound", lv, (s, p) ->
@@ -1075,7 +1076,7 @@ public class WorldAccess {
 
         expression.addContextFunction("map_colour", -1, (c, t, lv) ->
                 stateStringQuery(c, "map_colour", lv, (s, p) ->
-                        BlockInfo.mapColourName.get(s.getMapColor(((CarpetContext)c).s.getLevel(), p))));
+                        BlockInfo.mapColourName.get(s.getMapColor(((CarpetContext)c).level(), p))));
 
 
         // Deprecated for block_state()
@@ -1135,7 +1136,7 @@ public class WorldAccess {
             CarpetContext cc = (CarpetContext)c;
             ResourceLocation tag = InputValidator.identifierOf(lv.get(0).getString());
 
-            Registry<Block> blocks = cc.s.getServer().registryAccess().registryOrThrow(Registries.BLOCK);
+            Registry<Block> blocks = cc.registry(Registries.BLOCK);
             Optional<HolderSet.Named<Block>> tagset = blocks.getTag(TagKey.create(Registries.BLOCK, tag));
             if (tagset.isEmpty()) return Value.NULL;
             return ListValue.wrap(tagset.get().stream().map(b -> ValueConversions.of(blocks.getKey(b.value()))).collect(Collectors.toList()));
@@ -1144,7 +1145,7 @@ public class WorldAccess {
         expression.addContextFunction("block_tags", -1, (c, t, lv) ->
         {
             CarpetContext cc = (CarpetContext)c;
-            Registry<Block> blocks = cc.s.getServer().registryAccess().registryOrThrow(Registries.BLOCK);
+            Registry<Block> blocks = cc.registry(Registries.BLOCK);
             if (lv.size() == 0)
                 return ListValue.wrap(blocks.getTagNames().map(ValueConversions::of).collect(Collectors.toList()));
             BlockArgument blockLocator = BlockArgument.findIn(cc, lv, 0, true);
@@ -1178,7 +1179,7 @@ public class WorldAccess {
 
         expression.addContextFunction("biome", -1, (c, t, lv) -> {
             CarpetContext cc = (CarpetContext) c;
-            ServerLevel world = cc.s.getLevel();
+            ServerLevel world = cc.level();
             if (lv.size() == 0)
                 return ListValue.wrap(world.registryAccess().registryOrThrow(Registries.BIOME).keySet().stream().map(ValueConversions::of));
 
@@ -1215,7 +1216,7 @@ public class WorldAccess {
                         Climate.quantizeCoord(numberGetOrThrow(weirdness))
                 );
                 biome = mnbs.getNoiseBiome(point).value();
-                ResourceLocation biomeId = cc.s.getServer().registryAccess().registryOrThrow(Registries.BIOME).getKey(biome);
+                ResourceLocation biomeId = cc.registry(Registries.BIOME).getKey(biome);
                 return new StringValue(NBTSerializableValue.nameFromRegistryId(biomeId));
             }
 
@@ -1234,7 +1235,7 @@ public class WorldAccess {
             // in locatebiome
             if (locator.offset == lv.size())
             {
-                ResourceLocation biomeId = cc.s.getServer().registryAccess().registryOrThrow(Registries.BIOME).getKey(biome);
+                ResourceLocation biomeId = cc.registry(Registries.BIOME).getKey(biome);
                 return new StringValue(NBTSerializableValue.nameFromRegistryId(biomeId));
             }
             String biomeFeature = lv.get(locator.offset).getString();
@@ -1252,7 +1253,7 @@ public class WorldAccess {
                 throw new InternalExpressionException("'set_biome' needs a biome name as an argument");
             String biomeName = lv.get(locator.offset+0).getString();
             // from locatebiome command code
-            Holder<Biome> biome = cc.s.getServer().registryAccess().registryOrThrow(Registries.BIOME).getHolder(ResourceKey.create(Registries.BIOME, InputValidator.identifierOf(biomeName)))
+            Holder<Biome> biome = cc.registry(Registries.BIOME).getHolder(ResourceKey.create(Registries.BIOME, InputValidator.identifierOf(biomeName)))
                 .orElseThrow(() -> new ThrowStatement(biomeName, Throwables.UNKNOWN_BIOME));
 
 
@@ -1261,7 +1262,7 @@ public class WorldAccess {
             {
                 doImmediateUpdate = lv.get(locator.offset+1).getBoolean();
             }
-            ServerLevel world = cc.s.getLevel();
+            ServerLevel world = cc.level();
             BlockPos pos = locator.block.getPos();
             ChunkAccess chunk = world.getChunk(pos); // getting level chunk instead of protochunk with biomes
             int biomeX = QuartPos.fromBlock(pos.getX());
@@ -1285,18 +1286,18 @@ public class WorldAccess {
         expression.addContextFunction("reload_chunk", -1, (c, t, lv) -> {
             CarpetContext cc = (CarpetContext)c;
             BlockPos pos = BlockArgument.findIn(cc, lv, 0).block.getPos();
-            ServerLevel world = cc.s.getLevel();
-            cc.s.getServer().executeBlocking( () -> WorldTools.forceChunkUpdate(pos, world));
+            ServerLevel world = cc.level();
+            cc.server().executeBlocking( () -> WorldTools.forceChunkUpdate(pos, world));
             return Value.TRUE;
         });
 
         expression.addContextFunction("structure_references", -1, (c, t, lv) -> {
             CarpetContext cc = (CarpetContext)c;
             BlockArgument locator = BlockArgument.findIn(cc, lv, 0);
-            ServerLevel world = cc.s.getLevel();
+            ServerLevel world = cc.level();
             BlockPos pos = locator.block.getPos();
             Map<Structure, LongSet> references = world.getChunk(pos.getX() >> 4, pos.getZ() >> 4, ChunkStatus.STRUCTURE_REFERENCES).getAllReferences();
-            Registry<Structure> reg = cc.s.getServer().registryAccess().registryOrThrow(Registries.STRUCTURE);
+            Registry<Structure> reg = cc.registry(Registries.STRUCTURE);
             if (lv.size() == locator.offset)
                 return ListValue.wrap(references.entrySet().stream().
                         filter(e -> e.getValue()!= null && !e.getValue().isEmpty()).
@@ -1318,7 +1319,7 @@ public class WorldAccess {
             CarpetContext cc = (CarpetContext)c;
             BlockArgument locator = BlockArgument.findIn(cc, lv, 0);
 
-            ServerLevel world = cc.s.getLevel();
+            ServerLevel world = cc.level();
 
             // well, because
             BooYah(world);
@@ -1327,7 +1328,7 @@ public class WorldAccess {
             final List<Structure> structure = new ArrayList<>();
             boolean needSize = false;
             boolean singleOutput = false;
-            Registry<Structure> reg = cc.s.getServer().registryAccess().registryOrThrow(Registries.STRUCTURE);
+            Registry<Structure> reg = cc.registry(Registries.STRUCTURE);
             if (lv.size() > locator.offset)
             {
                 Value requested = lv.get(locator.offset+0);
@@ -1398,10 +1399,10 @@ public class WorldAccess {
             CarpetContext cc = (CarpetContext)c;
             BlockArgument locator = BlockArgument.findIn(cc, lv, 0);
 
-            ServerLevel world = cc.s.getLevel();
+            ServerLevel world = cc.level();
             BlockPos pos = locator.block.getPos();
             Map<Structure, StructureStart> structures = world.getChunk(pos.getX() >> 4, pos.getZ() >> 4, ChunkStatus.STRUCTURE_STARTS).getAllStarts();
-            Registry<Structure> reg = cc.s.getServer().registryAccess().registryOrThrow(Registries.STRUCTURE);
+            Registry<Structure> reg = cc.registry(Registries.STRUCTURE);
             if (lv.size() == locator.offset)
             {
                 Map<Value, Value> structureList = new HashMap<>();
@@ -1427,7 +1428,7 @@ public class WorldAccess {
             CarpetContext cc = (CarpetContext)c;
             BlockArgument locator = BlockArgument.findIn(cc, lv, 0);
 
-            ServerLevel world = cc.s.getLevel();
+            ServerLevel world = cc.level();
             BlockPos pos = locator.block.getPos();
 
             if (lv.size() == locator.offset)
@@ -1438,12 +1439,12 @@ public class WorldAccess {
             // good 'ol pointer
             Value[] result = new Value[]{Value.NULL};
             // technically a world modification. Even if we could let it slide, we will still park it
-            ((CarpetContext) c).s.getServer().executeBlocking(() ->
+            ((CarpetContext) c).server().executeBlocking(() ->
             {
                 Map<Structure, StructureStart> structures = world.getChunk(pos).getAllStarts();
                 if (lv.size() == locator.offset + 1)
                 {
-                    Boolean res = FeatureGenerator.plopGrid(configuredStructure, ((CarpetContext) c).s.getLevel(), locator.block.getPos());
+                    Boolean res = FeatureGenerator.plopGrid(configuredStructure, ((CarpetContext) c).level(), locator.block.getPos());
                     if (res == null) return;
                     result[0] = res?Value.TRUE:Value.FALSE;
                     return;
@@ -1553,11 +1554,11 @@ public class WorldAccess {
             }
 
 
-            ServerLevel world = cc.s.getLevel();
+            ServerLevel world = cc.level();
 
             Value [] result = new Value[]{Value.NULL};
 
-            ((CarpetContext)c).s.getServer().executeBlocking( () ->
+            ((CarpetContext)c).server().executeBlocking( () ->
             {
                 Map<String, Integer> report = ((ThreadedAnvilChunkStorageInterface) world.getChunkSource().chunkMap).regenerateChunkRegion(requestedChunks);
                 /*for (ChunkPos chpos: requestedChunks) // needed in 1.16 only
@@ -1580,7 +1581,7 @@ public class WorldAccess {
             CarpetContext cc = (CarpetContext)c;
             BlockArgument locator = BlockArgument.findIn(cc, lv, 0);
             BlockPos pos = locator.block.getPos();
-            return new NumericValue(cc.s.getLevel().getChunk(pos).getInhabitedTime());
+            return new NumericValue(cc.level().getChunk(pos).getInhabitedTime());
         });
 
         expression.addContextFunction("spawn_potential", -1, (c, t, lv) ->
@@ -1591,7 +1592,7 @@ public class WorldAccess {
             double required_charge = 1;
             if (lv.size() > locator.offset)
                 required_charge = NumericValue.asNumber(lv.get(locator.offset)).getDouble();
-            NaturalSpawner.SpawnState charger = cc.s.getLevel().getChunkSource().getLastSpawnState();
+            NaturalSpawner.SpawnState charger = cc.level().getChunkSource().getLastSpawnState();
             if (charger == null) return Value.NULL;
             return new NumericValue(
                     ((SpawnHelperInnerInterface)charger).getPotentialCalculator().
@@ -1613,11 +1614,11 @@ public class WorldAccess {
             // due to types we will wing it:
             ChunkPos target = new ChunkPos(pos);
             if (ticket == TicketType.PORTAL) // portal
-                cc.s.getLevel().getChunkSource().addRegionTicket(TicketType.PORTAL, target, radius, pos);
+                cc.level().getChunkSource().addRegionTicket(TicketType.PORTAL, target, radius, pos);
             else if (ticket == TicketType.POST_TELEPORT) // post teleport
-                cc.s.getLevel().getChunkSource().addRegionTicket(TicketType.POST_TELEPORT, target, radius, 1);
+                cc.level().getChunkSource().addRegionTicket(TicketType.POST_TELEPORT, target, radius, 1);
             else
-                cc.s.getLevel().getChunkSource().addRegionTicket(TicketType.UNKNOWN, target, radius, target);
+                cc.level().getChunkSource().addRegionTicket(TicketType.UNKNOWN, target, radius, target);
             return new NumericValue(ticket.timeout());
         });
 

@@ -56,7 +56,7 @@ public class Inventories {
     public static void apply(Expression expression)
     {
         expression.addContextFunction("stack_limit", 1, (c, t, lv) ->
-                new NumericValue(NBTSerializableValue.parseItem(lv.get(0).getString(), ((CarpetContext) c).s.registryAccess() ).getItem().getMaxStackSize()));
+                new NumericValue(NBTSerializableValue.parseItem(lv.get(0).getString(), ((CarpetContext) c).registryAccess() ).getItem().getMaxStackSize()));
 
         expression.addContextFunction("item_category", -1, (c, t, lv) -> {
             CarpetContext cc = (CarpetContext)c;
@@ -69,7 +69,7 @@ public class Inventories {
             if (lv.size() == 0)
                 return ListValue.wrap(BuiltInRegistries.ITEM.keySet().stream().map(ValueConversions::of).collect(Collectors.toList()));
             CarpetContext cc = (CarpetContext)c;
-            Registry<Item> items = cc.s.getServer().registryAccess().registryOrThrow(Registries.ITEM);
+            Registry<Item> items = cc.registry(Registries.ITEM);
             String tag = lv.get(0).getString();
             Optional<HolderSet.Named<Item>> itemTag = items.getTag(TagKey.create(Registries.ITEM, InputValidator.identifierOf(tag)));
             if (itemTag.isEmpty()) return Value.NULL;
@@ -87,10 +87,10 @@ public class Inventories {
         {
             CarpetContext cc = (CarpetContext)c;
 
-            Registry<Item> blocks = cc.s.getServer().registryAccess().registryOrThrow(Registries.ITEM);
+            Registry<Item> blocks = cc.registry(Registries.ITEM);
             if (lv.size() == 0)
                 return ListValue.wrap(blocks.getTagNames().map(ValueConversions::of).collect(Collectors.toList()));
-            Item item = NBTSerializableValue.parseItem(lv.get(0).getString(), cc.s.registryAccess()).getItem();
+            Item item = NBTSerializableValue.parseItem(lv.get(0).getString(), cc.registryAccess()).getItem();
             if (lv.size() == 1)
             {
                 return ListValue.wrap( blocks.getTags().filter(e -> e.getSecond().stream().anyMatch(h -> (h.value() == item))).map(e -> ValueConversions.of(e.getFirst())).collect(Collectors.toList()));
@@ -128,7 +128,7 @@ public class Inventories {
                 type = BuiltInRegistries.RECIPE_TYPE.get(InputValidator.identifierOf(recipeType));
             }
             List<Recipe<?>> recipes;
-            recipes = ((RecipeManagerInterface) cc.s.getServer().getRecipeManager()).getAllMatching(type, InputValidator.identifierOf(recipeName));
+            recipes = ((RecipeManagerInterface) cc.server().getRecipeManager()).getAllMatching(type, InputValidator.identifierOf(recipeName));
             if (recipes.isEmpty())
                 return Value.NULL;
             List<Value> recipesOutput = new ArrayList<>();
@@ -279,7 +279,7 @@ public class Inventories {
                 else
                     nbt = new NBTSerializableValue(nbtValue.getString()).getCompoundTag();
             }
-            ItemInput newitem = NBTSerializableValue.parseItem(lv.get(inventoryLocator.offset()+2).getString(), nbt, cc.s.registryAccess());
+            ItemInput newitem = NBTSerializableValue.parseItem(lv.get(inventoryLocator.offset()+2).getString(), nbt, cc.registryAccess());
             ItemStack previousStack = inventoryLocator.inventory().getItem(slot);
             try
             {
@@ -304,7 +304,7 @@ public class Inventories {
             {
                 Value secondArg = lv.get(inventoryLocator.offset()+0);
                 if (!secondArg.isNull())
-                    itemArg = NBTSerializableValue.parseItem(secondArg.getString(), cc.s.registryAccess());
+                    itemArg = NBTSerializableValue.parseItem(secondArg.getString(), cc.registryAccess());
             }
             int startIndex = 0;
             if (lv.size() > inventoryLocator.offset()+1)
@@ -329,7 +329,7 @@ public class Inventories {
             if (inventoryLocator == null) return Value.NULL;
             if (lv.size() <= inventoryLocator.offset())
                 throw new InternalExpressionException("'inventory_remove' requires at least an item to be removed");
-            ItemInput searchItem = NBTSerializableValue.parseItem(lv.get(inventoryLocator.offset()).getString(), cc.s.registryAccess());
+            ItemInput searchItem = NBTSerializableValue.parseItem(lv.get(inventoryLocator.offset()).getString(), cc.registryAccess());
             int amount = 1;
             if (lv.size() > inventoryLocator.offset()+1)
                 amount = (int)NumericValue.asNumber(lv.get(inventoryLocator.offset()+1)).getLong();
@@ -398,14 +398,14 @@ public class Inventories {
                 Vec3 vec3d_1 = villager.getViewVector(1.0F).normalize().scale(0.3);//  new Vec3d(0, 0.3, 0);
                 item.setDeltaMovement(vec3d_1);
                 item.setDefaultPickUpDelay();
-                cc.s.getLevel().addFreshEntity(item);
+                cc.level().addFreshEntity(item);
             }
             else
             {
                 Vec3 point = Vec3.atCenterOf(inventoryLocator.position()); //pos+0.5v
-                item = new ItemEntity(cc.s.getLevel(), point.x, point.y, point.z, droppedStack);
+                item = new ItemEntity(cc.level(), point.x, point.y, point.z, droppedStack);
                 item.setDefaultPickUpDelay();
-                cc.s.getLevel().addFreshEntity(item);
+                cc.level().addFreshEntity(item);
             }
             return new NumericValue(item.getItem().getCount());
         });
@@ -414,7 +414,7 @@ public class Inventories {
         {
             if(lv.size() < 3) throw new InternalExpressionException("'create_screen' requires at least three arguments");
             Value playerValue = lv.get(0);
-            ServerPlayer player = EntityValue.getPlayerByValue(((CarpetContext) c).s.getServer(), playerValue);
+            ServerPlayer player = EntityValue.getPlayerByValue(((CarpetContext) c).server(), playerValue);
             if(player == null) throw new InternalExpressionException("'create_screen' requires a valid online player as the first argument.");
             String type = lv.get(1).getString();
             Component name = FormattedTextValue.getTextByValue(lv.get(2));

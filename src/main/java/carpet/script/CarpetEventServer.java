@@ -167,7 +167,7 @@ public class CarpetEventServer
          */
         public void execute()
         {
-            CarpetServer.scriptServer.events.runScheduledCall(ctx.origin, ctx.s, host, (CarpetScriptHost) ctx.host, function, parametrizedArgs);
+            CarpetServer.scriptServer.events.runScheduledCall(ctx.origin(), ctx.source(), host, (CarpetScriptHost) ctx.host, function, parametrizedArgs);
         }
     }
 
@@ -1315,7 +1315,7 @@ public class CarpetEventServer
     {
         Event ev = Event.getEvent(event, ((CarpetScriptHost)cc.host).scriptServer());
         if (ev == null) return -1;
-        return ev.handler.signal(cc.s, optionalTarget, callArgs);
+        return ev.handler.signal(cc.source(), optionalTarget, callArgs);
     }
 
     private void onEventAddedToHost(Event event, ScriptHost host)

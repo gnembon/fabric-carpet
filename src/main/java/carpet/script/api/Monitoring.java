@@ -47,7 +47,7 @@ public class Monitoring {
         expression.addContextFunction("get_mob_counts", -1, (c, t, lv) ->
         {
             CarpetContext cc = (CarpetContext)c;
-            ServerLevel world = cc.s.getLevel();
+            ServerLevel world = cc.level();
             NaturalSpawner.SpawnState info = world.getChunkSource().getLastSpawnState();
             if (info == null) return Value.NULL;
             Object2IntMap<MobCategory> mobcounts = info.getMobCategoryCounts();

@@ -51,7 +51,7 @@ public class BlockValue extends Value
     public static BlockValue fromCoords(CarpetContext c, int x, int y, int z)
     {
         BlockPos pos = locateBlockPos(c, x,y,z);
-        return new BlockValue(null, c.s.getLevel(), pos);
+        return new BlockValue(null, c.level(), pos);
     }
 
     private static final Map<String, BlockValue> bvCache= new HashMap<>();
@@ -82,7 +82,8 @@ public class BlockValue extends Value
 
     public static BlockPos locateBlockPos(CarpetContext c, int xpos, int ypos, int zpos)
     {
-        return new BlockPos(c.origin.getX() + xpos, c.origin.getY() + ypos, c.origin.getZ() + zpos);
+        final BlockPos pos = c.origin();
+        return new BlockPos(pos.getX() + xpos, pos.getY() + ypos, pos.getZ() + zpos);
     }
 
     public BlockState getBlockState()
