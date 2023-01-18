@@ -15,11 +15,11 @@ import carpet.script.value.StringValue;
 import carpet.script.value.Value;
 import carpet.script.value.ValueConversions;
 import carpet.api.settings.SettingsManager;
-import com.mojang.bridge.game.PackType;
 import com.sun.management.OperatingSystemMXBean;
 import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.loader.api.ModContainer;
 import net.minecraft.SharedConstants;
+import net.minecraft.server.packs.PackType;
 import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.border.WorldBorder;
 import net.minecraft.world.level.storage.LevelData;
@@ -99,8 +99,8 @@ public class SystemInfo {
             return NumericValue.of((vers.length > 2)?Integer.parseInt(vers[2]):0);
         });
         put("game_stable", c -> BooleanValue.of(SharedConstants.getCurrentVersion().isStable()));
-        put("game_data_version", c->NumericValue.of(SharedConstants.getCurrentVersion().getWorldVersion()));
-        put("game_pack_version", c->NumericValue.of(SharedConstants.getCurrentVersion().getPackVersion(PackType.DATA)));
+        put("game_data_version", c->NumericValue.of(SharedConstants.getCurrentVersion().getDataVersion().getVersion()));
+        put("game_pack_version", c->NumericValue.of(SharedConstants.getCurrentVersion().getPackVersion(PackType.SERVER_DATA)));
 
         put("server_ip", c -> StringValue.of(c.server().getLocalIp()));
         put("server_whitelisted", c -> BooleanValue.of(c.server().isEnforceWhitelist()));

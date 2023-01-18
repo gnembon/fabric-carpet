@@ -55,7 +55,6 @@ public class CarpetSettings
     public static final Logger LOG = LoggerFactory.getLogger("carpet");
     public static final ThreadLocal<Boolean> skipGenerationChecks = ThreadLocal.withInitial(() -> false);
     public static final ThreadLocal<Boolean> impendingFillSkipUpdates = ThreadLocal.withInitial(() -> false);
-    public static final int VANILLA_FILL_LIMIT = 32768;
     public static int runPermissionLevel = 2;
     public static boolean doChainStone = false;
     public static boolean chainStoneStickToAll = false;
@@ -632,14 +631,14 @@ public class CarpetSettings
         public String description() { return "You must choose a value from 1 to 20M";}
     }
     @Rule(
-            desc = "Customizable fill/fillbiome/clone volume limit",
+            desc = "[Deprecated] Customizable fill/fillbiome/clone volume limit",
+            extra = "Use vanilla gamerule instead. This setting will be removed in 1.20.0",
             options = {"32768", "250000", "1000000"},
             category = CREATIVE,
             strict = false,
             validate = FillLimitLimits.class
     )
-    public static int fillLimit = VANILLA_FILL_LIMIT;
-
+    public static int fillLimit = 32768;
 
     @Rule(
             desc = "Customizable forceload chunk limit",

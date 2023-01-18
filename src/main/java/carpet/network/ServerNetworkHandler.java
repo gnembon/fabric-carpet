@@ -4,6 +4,7 @@ import carpet.CarpetServer;
 import carpet.CarpetSettings;
 import carpet.api.settings.CarpetRule;
 import carpet.api.settings.RuleHelper;
+import carpet.fakes.ServerGamePacketListenerImplInterface;
 import carpet.helpers.TickSpeed;
 import carpet.script.utils.SnoopyCommandSource;
 import carpet.api.settings.SettingsManager;
@@ -51,7 +52,7 @@ public class ServerNetworkHandler
 
     public static void onPlayerJoin(ServerPlayer playerEntity)
     {
-        if (!playerEntity.connection.connection.isMemoryConnection())
+        if (!((ServerGamePacketListenerImplInterface)playerEntity.connection).getConnection().isMemoryConnection())
         {
             playerEntity.connection.send(new ClientboundCustomPayloadPacket(
                     CarpetClient.CARPET_CHANNEL,
@@ -218,7 +219,7 @@ public class ServerNetworkHandler
     public static void onPlayerLoggedOut(ServerPlayer player)
     {
         validCarpetPlayers.remove(player);
-        if (!player.connection.connection.isMemoryConnection())
+        if (!((ServerGamePacketListenerImplInterface)player.connection).getConnection().isMemoryConnection())
             remoteCarpetPlayers.remove(player);
     }
 

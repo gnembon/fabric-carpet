@@ -165,6 +165,7 @@
     "HorseBaseEntity_scarpetMixin",
     "NoiseSampler_scarpetMixin",
     "QuantizedSpaghettiRarityMixin_scarpetMixin",
+    "Biome_scarpetMixin",
 
     "BlockEntity_movableBEMixin",
     "PistonBaseBlock_movableBEMixin",
