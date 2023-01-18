@@ -76,7 +76,7 @@ str('foo') => 'foo'
 str('3bar') => '3bar'
 str(2)+str(2) => '22'
 str('pi: %.2f',pi) => 'pi: 3.14'
-str('player at: %d %d %d',pos(player())) => 'player at: 567, -2423, 124'
+str('player at: %d, %d, %d',pos(player())) => 'player at: 567, -2423, 124'
 </pre>
 
 * * *
@@ -204,7 +204,7 @@ title('aBc') => 'Abc'
 
 ### `replace(string, regex, repl?); replace_first(string, regex, repl?)`
 
-Replaces all, or first occurence of a regular expression in the string with `repl` expression, 
+Replaces all, or first occurrence of a regular expression in the string with `repl` expression, 
 or nothing, if not specified. To use escape characters (`\(`,`\+`,...), metacharacters (`\d`,`\w`,...), or position anchors (`\b`,`\z`,...) in your regular expression, use two backslashes.
 
 <pre>

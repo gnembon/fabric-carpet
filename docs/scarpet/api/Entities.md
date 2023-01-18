@@ -80,7 +80,7 @@ cuboid search area.
 
 ### `entity_selector(selector)`
 
-Returns entities satisifying given vanilla entity selector. Most complex among all the methods of selecting entities, 
+Returns entities satisfying given vanilla entity selector. Most complex among all the methods of selecting entities, 
 but the most capable. Selectors are cached so it should be as fast as other methods of selecting entities. Unlike other
 entities fetching / filtering method, this one doesn't guarantee to return entities from current dimension, since
 selectors can return any loaded entity in the world.
@@ -111,7 +111,7 @@ Boolean. True if the entity is removed.
 
 ### `query(e, 'id')`
 
-Returns numerical id of the entity. Most efficient way to keep track of entites in a script. 
+Returns numerical id of the entity. Most efficient way to keep track of entities in a script. 
 Ids are only unique within current game session (ids are not preserved between restarts), 
 and dimension (each dimension has its own ids which can overlap).
 
@@ -161,7 +161,7 @@ Respective component of the entity's motion vector
 
 ### `query(e, 'on_ground')`
 
-Returns `true` if en entity is standing on firm ground and falling down due to that.
+Returns `true` if an entity is standing on firm ground and falling down due to that.
 
 ### `query(e, 'name'), query(e, 'display_name'), query(e, 'custom_name'), query(e, 'type')`
 
@@ -394,7 +394,7 @@ Returns `null` if the argument is not a player, otherwise:
 *   `multiplayer`: for players on a dedicated server
 *   `lan_host`: for singleplayer owner that opened the game to LAN
 *   `lan_player`: for all other players that connected to a LAN host
-*   `fake`: any carpet-spanwed fake player
+*   `fake`: any carpet-spawned fake player
 *   `shadow`: any carpet-shadowed real player
 *   `realms`: ?
 

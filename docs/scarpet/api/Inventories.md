@@ -34,7 +34,7 @@ With no arguments, returns a list of all items in the game. With an item tag pro
 
 ### `item_tags(item, tag?)`
 
-Returns list of tags the item belongs to, or, if tag is provided, `true` if an item maches the tag, `false` if it doesn't and `null` if that's not a valid tag
+Returns list of tags the item belongs to, or, if tag is provided, `true` if an item matches the tag, `false` if it doesn't and `null` if that's not a valid tag
 
 Throws `unknown_item` if item doesn't exist.
 
