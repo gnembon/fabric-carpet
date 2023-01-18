@@ -2,7 +2,6 @@ package carpet.script.api;
 
 import carpet.mixins.Objective_scarpetMixin;
 import carpet.mixins.Scoreboard_scarpetMixin;
-import carpet.mixins.PlayerTeam_scarpetMixin;
 import carpet.script.CarpetContext;
 import carpet.script.Expression;
 import carpet.script.exception.InternalExpressionException;
@@ -334,7 +333,7 @@ public class Scoreboards {
                     team.setCollisionRule(collisionRule);
                     break;
                 case "color":
-                    if(!modifying) return new StringValue(((PlayerTeam_scarpetMixin) team).getColor().getName());
+                    if(!modifying) return new StringValue(team.getColor().getName());
                     if(!(settingVal instanceof StringValue)) throw new InternalExpressionException("'team_property' requires a string as the third argument for the property " + propertyVal.getString());
                     ChatFormatting color = ChatFormatting.getByName(settingVal.getString().toUpperCase());
                     if(color == null || !color.isColor()) throw new InternalExpressionException("Unknown value for property " + propertyVal.getString() + ": " + settingVal.getString());

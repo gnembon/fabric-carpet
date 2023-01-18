@@ -143,7 +143,6 @@
     "Inventory_scarpetEventMixin",
     "Objective_scarpetMixin",
     "Scoreboard_scarpetMixin",
-    "PlayerTeam_scarpetMixin",
     "MerchantResultSlot_scarpetEventMixin",
     "AbstractContainerMenu_scarpetMixin",
     "AbstractContainerMenuSubclasses_scarpetMixin",
