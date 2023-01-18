@@ -13,7 +13,6 @@ import carpet.utils.SpawnChunks;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
@@ -898,12 +897,6 @@ public class CarpetSettings
 
     @Rule(desc = "Spawning requires much less CPU and Memory", category = OPTIMIZATION)
     public static boolean lagFreeSpawning = false;
-    
-    @Rule(
-            desc = "Allows structure mobs to spawn in flat worlds",
-            category = {EXPERIMENTAL, CREATIVE}
-    )
-    public static boolean flatWorldStructureSpawning = false;
 
     @Rule(
             desc = "Increases for testing purposes number of blue skulls shot by the wither",
