@@ -217,9 +217,9 @@ public class ShapesRenderer
         protected RenderedShape(Minecraft client, T shape)
         {
             this.shape = shape;
-            expiryTick = client.level.getGameTime()+shape.getExpiry();
-            renderEpsilon = (3+((double)shape.key())/Long.MAX_VALUE)/1000;
             this.client = client;
+            expiryTick = client.level.getGameTime()+shape.getExpiry();
+            renderEpsilon = (3+((double)key())/Long.MAX_VALUE)/1000;
         }
 
         public boolean isExpired(long currentTick)
@@ -228,7 +228,7 @@ public class ShapesRenderer
         }
         public long key()
         {
-            return shape.key();
+            return shape.key(client.level.registryAccess());
         };
         public boolean shouldRender(ResourceKey<Level> dim)
         {
@@ -365,7 +365,7 @@ public class ShapesRenderer
                 {
                     // draw the item
                     client.getItemRenderer().renderStatic(shape.item, transformType, light,
-                            OverlayTexture.NO_OVERLAY, matrices, immediate, (int) shape.key());
+                            OverlayTexture.NO_OVERLAY, matrices, immediate, (int) shape.key(client.level.registryAccess()));
                 }
             }
             matrices.popPose();

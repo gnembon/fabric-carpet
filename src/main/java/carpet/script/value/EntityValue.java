@@ -24,6 +24,8 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Holder;
 import net.minecraft.core.HolderSet;
+import net.minecraft.core.Registry;
+import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
@@ -274,7 +276,7 @@ public class EntityValue extends Value
             }
             else
             {
-                return new EntityClassDescriptor(ANY, e -> !eTag.contains(e.getType()) && e.isAlive(), BuiltInRegistries.ENTITY_TYPE.stream().filter(et -> !eTag.contains(et)));
+                return new EntityClassDescriptor(ANY, e -> !eTag.contains(e.getType()) && e.isAlive(), server.registryAccess().registryOrThrow(Registries.ENTITY_TYPE).stream().filter(et -> !eTag.contains(et)));
             }
         }
         return eDesc;
@@ -300,8 +302,9 @@ public class EntityValue extends Value
             this(type, predicate, types.toList());
         }
 
-        public Value listValue() {
-            return ListValue.wrap(types.stream().map(et -> StringValue.of(nameFromRegistryId(BuiltInRegistries.ENTITY_TYPE.getKey(et)))));
+        public Value listValue(RegistryAccess regs) {
+            final Registry<EntityType> entityRegs = regs.registryOrThrow(Registries.ENTITY_TYPE);
+            return ListValue.wrap(types.stream().map(et -> StringValue.of(nameFromRegistryId(entityRegs.getKey(et)))));
         }
 
         public final static Map<String, EntityClassDescriptor> byName = new HashMap<>() {{
@@ -449,7 +452,7 @@ public class EntityValue extends Value
         put("display_name", (e, a) -> new FormattedTextValue(e.getDisplayName()));
         put("command_name", (e, a) -> new StringValue(e.getScoreboardName()));
         put("custom_name", (e, a) -> e.hasCustomName()?new StringValue(e.getCustomName().getString()):Value.NULL);
-        put("type", (e, a) -> new StringValue(nameFromRegistryId(BuiltInRegistries.ENTITY_TYPE.getKey(e.getType()))));
+        put("type", (e, a) -> new StringValue(nameFromRegistryId(e.getLevel().registryAccess().registryOrThrow(Registries.ENTITY_TYPE).getKey(e.getType()))));
         put("is_riding", (e, a) -> BooleanValue.of(e.isPassenger()));
         put("is_ridden", (e, a) -> BooleanValue.of(e.isVehicle()));
         put("passengers", (e, a) -> ListValue.wrap(e.getPassengers().stream().map(EntityValue::new).collect(Collectors.toList())));
@@ -529,9 +532,9 @@ public class EntityValue extends Value
         });
         put("item", (e, a) -> {
             if(e instanceof ItemEntity)
-                return ValueConversions.of(((ItemEntity) e).getItem());
+                return ValueConversions.of(((ItemEntity) e).getItem(), e.getServer().registryAccess());
             if(e instanceof ItemFrame)
-                return ValueConversions.of(((ItemFrame) e).getItem());
+                return ValueConversions.of(((ItemFrame) e).getItem(), e.getServer().registryAccess());
             return Value.NULL;
         });
         put("count", (e, a) -> (e instanceof ItemEntity)?new NumericValue(((ItemEntity) e).getItem().getCount()):Value.NULL);
@@ -657,7 +660,7 @@ public class EntityValue extends Value
 
         put("brain", (e, a) -> {
             String module = a.getString();
-            MemoryModuleType<?> moduleType = BuiltInRegistries.MEMORY_MODULE_TYPE.get(InputValidator.identifierOf(module));
+            MemoryModuleType<?> moduleType = e.getLevel().registryAccess().registryOrThrow(Registries.MEMORY_MODULE_TYPE).get(InputValidator.identifierOf(module));
             if (moduleType == MemoryModuleType.DUMMY) return Value.NULL;
             if (e instanceof LivingEntity livingEntity)
             {
@@ -820,7 +823,7 @@ public class EntityValue extends Value
             if (where == null)
                 throw new InternalExpressionException("Unknown inventory slot: "+a.getString());
             if (e instanceof LivingEntity)
-                return ValueConversions.of(((LivingEntity)e).getItemBySlot(where));
+                return ValueConversions.of(((LivingEntity)e).getItemBySlot(where), e.getServer().registryAccess());
             return Value.NULL;
         });
 
@@ -931,13 +934,14 @@ public class EntityValue extends Value
         put("attribute", (e, a) ->{
             if (!(e instanceof LivingEntity)) return Value.NULL;
             LivingEntity el = (LivingEntity)e;
+            final Registry<Attribute> attributes = e.getLevel().registryAccess().registryOrThrow(Registries.ATTRIBUTE);
             if (a == null)
             {
                 AttributeMap container = el.getAttributes();
-                return MapValue.wrap(BuiltInRegistries.ATTRIBUTE.stream().filter(container::hasAttribute).collect(Collectors.toMap(aa -> ValueConversions.of(BuiltInRegistries.ATTRIBUTE.getKey(aa)), aa -> NumericValue.of(container.getValue(aa)))));
+                return MapValue.wrap(attributes.stream().filter(container::hasAttribute).collect(Collectors.toMap(aa -> ValueConversions.of(attributes.getKey(aa)), aa -> NumericValue.of(container.getValue(aa)))));
             }
             ResourceLocation id =  InputValidator.identifierOf(a.getString());
-            Attribute attrib = BuiltInRegistries.ATTRIBUTE.getOptional(id).orElseThrow(
+            Attribute attrib = attributes.getOptional(id).orElseThrow(
                     () -> new InternalExpressionException("Unknown attribute: "+a.getString())
             );
             if (!el.getAttributes().hasAttribute(attrib)) return Value.NULL;
@@ -1717,7 +1721,8 @@ public class EntityValue extends Value
         if (!force) throw new NBTSerializableValue.IncompatibleTypeException(this);
         CompoundTag tag = new CompoundTag();
         tag.put("Data", getEntity().saveWithoutId( new CompoundTag()));
-        tag.put("Name", StringTag.valueOf(BuiltInRegistries.ENTITY_TYPE.getKey(getEntity().getType()).toString()));
+        final Registry<EntityType<?>> reg = getEntity().level.registryAccess().registryOrThrow(Registries.ENTITY_TYPE);
+        tag.put("Name", StringTag.valueOf(reg.getKey(getEntity().getType()).toString()));
         return tag;
     }
 }

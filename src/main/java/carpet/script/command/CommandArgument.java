@@ -2,6 +2,7 @@ package carpet.script.command;
 
 import carpet.CarpetServer;
 import carpet.fakes.BlockStateArgumentInterface;
+import carpet.script.CarpetContext;
 import carpet.script.CarpetScriptHost;
 import carpet.script.argument.FunctionArgument;
 import carpet.script.value.BlockValue;
@@ -136,7 +137,7 @@ public abstract class CommandArgument
             new VanillaUnconfigurableArgument( "block", BlockStateArgument::block,
                     (c, p) -> {
                         BlockInput result = BlockStateArgument.getBlock(c, p);
-                        return new BlockValue(result.getState(), null, null, ((BlockStateArgumentInterface)result).getCMTag() );
+                        return new BlockValue(result.getState(), c.getSource().getLevel(), null, ((BlockStateArgumentInterface)result).getCMTag() );
                     },
                     param -> (ctx, builder) -> ctx.getArgument(param, BlockStateArgument.class).listSuggestions(ctx, builder)
             ),
@@ -179,7 +180,7 @@ public abstract class CommandArgument
             // item_predicate  ?? //same as item but accepts tags, not sure right now
             new SlotArgument(),
             new VanillaUnconfigurableArgument("item", ItemArgument::item,
-                    (c, p) -> ValueConversions.of(ItemArgument.getItem(c, p).createItemStack(1, false)),
+                    (c, p) -> ValueConversions.of(ItemArgument.getItem(c, p).createItemStack(1, false), c.getSource().registryAccess()),
                     param -> (ctx, builder) -> ctx.getArgument(param, ItemArgument.class).listSuggestions(ctx, builder)
             ),
             new VanillaUnconfigurableArgument("message", MessageArgument::message,
@@ -211,7 +212,7 @@ public abstract class CommandArgument
                     (c, p) -> ValueConversions.of( ResourceLocationArgument.getAdvancement(c, p).getId()), (ctx, builder) -> SharedSuggestionProvider.suggestResource(ctx.getSource().getServer().getAdvancements().getAllAdvancements().stream().map(Advancement::getId), builder)
             ),
             new VanillaUnconfigurableArgument("lootcondition", ResourceLocationArgument::id,
-                    (c, p) -> ValueConversions.of( BuiltInRegistries.LOOT_CONDITION_TYPE.getKey(ResourceLocationArgument.getPredicate(c, p).getType())), (ctx, builder) -> SharedSuggestionProvider.suggestResource(ctx.getSource().getServer().getPredicateManager().getKeys(), builder)
+                    (c, p) -> ValueConversions.of( c.getSource().registryAccess().registryOrThrow(Registries.LOOT_CONDITION_TYPE).getKey(ResourceLocationArgument.getPredicate(c, p).getType())), (ctx, builder) -> SharedSuggestionProvider.suggestResource(ctx.getSource().getServer().getPredicateManager().getKeys(), builder)
             ),
             new VanillaUnconfigurableArgument("loottable", ResourceLocationArgument::id,
                     (c, p) -> ValueConversions.of( ResourceLocationArgument.getId(c, p)), (ctx, builder) -> SharedSuggestionProvider.suggestResource(ctx.getSource().getServer().getLootTables().getIds(), builder)

@@ -30,6 +30,7 @@ import java.util.stream.Collectors;
 import net.minecraft.commands.arguments.item.ItemInput;
 import net.minecraft.core.HolderSet;
 import net.minecraft.core.Registry;
+import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
@@ -66,10 +67,10 @@ public class Inventories {
 
         expression.addContextFunction("item_list", -1, (c, t, lv) ->
         {
-            if (lv.size() == 0)
-                return ListValue.wrap(BuiltInRegistries.ITEM.keySet().stream().map(ValueConversions::of).collect(Collectors.toList()));
             CarpetContext cc = (CarpetContext)c;
             Registry<Item> items = cc.registry(Registries.ITEM);
+            if (lv.size() == 0)
+                return ListValue.wrap(items.keySet().stream().map(ValueConversions::of).collect(Collectors.toList()));
             String tag = lv.get(0).getString();
             Optional<HolderSet.Named<Item>> itemTag = items.getTag(TagKey.create(Registries.ITEM, InputValidator.identifierOf(tag)));
             if (itemTag.isEmpty()) return Value.NULL;
@@ -125,13 +126,14 @@ public class Inventories {
             if (lv.size() > 1)
             {
                 String recipeType = lv.get(1).getString();
-                type = BuiltInRegistries.RECIPE_TYPE.get(InputValidator.identifierOf(recipeType));
+                type = cc.registry(Registries.RECIPE_TYPE).get(InputValidator.identifierOf(recipeType));
             }
             List<Recipe<?>> recipes;
-            recipes = ((RecipeManagerInterface) cc.server().getRecipeManager()).getAllMatching(type, InputValidator.identifierOf(recipeName));
+            recipes = ((RecipeManagerInterface) cc.server().getRecipeManager()).getAllMatching(type, InputValidator.identifierOf(recipeName), cc.registryAccess());
             if (recipes.isEmpty())
                 return Value.NULL;
             List<Value> recipesOutput = new ArrayList<>();
+            RegistryAccess regs = cc.registryAccess();
             for (Recipe<?> recipe: recipes)
             {
                 ItemStack result = recipe.getResultItem();
@@ -150,7 +152,7 @@ public class Inventories {
                             else
                             {
                                 List<Value> alternatives = new ArrayList<>();
-                                stacks.forEach(col -> col.stream().map(ValueConversions::of).forEach(alternatives::add));
+                                stacks.forEach(col -> col.stream().map(is -> ValueConversions.of(is, regs)).forEach(alternatives::add));
                                 ingredientValue.add(ListValue.wrap(alternatives));
                             }
                         }
@@ -189,19 +191,20 @@ public class Inventories {
                     recipeSpec = ListValue.of(new StringValue("custom"));
                 }
 
-                recipesOutput.add(ListValue.of(ValueConversions.of(result), ListValue.wrap(ingredientValue), recipeSpec));
+                recipesOutput.add(ListValue.of(ValueConversions.of(result, regs), ListValue.wrap(ingredientValue), recipeSpec));
             }
             return ListValue.wrap(recipesOutput);
         });
 
-        expression.addUnaryFunction("crafting_remaining_item", v ->
+        expression.addContextFunction("crafting_remaining_item", 1, (c, t, v) ->
         {
-            String itemStr = v.getString();
+            String itemStr = v.get(0).getString();
             Item item;
             ResourceLocation id = InputValidator.identifierOf(itemStr);
-            item = BuiltInRegistries.ITEM.getOptional(id).orElseThrow(() -> new ThrowStatement(itemStr, Throwables.UNKNOWN_ITEM));
+            Registry<Item> registry = ((CarpetContext)c).registry(Registries.ITEM);
+            item = registry.getOptional(id).orElseThrow(() -> new ThrowStatement(itemStr, Throwables.UNKNOWN_ITEM));
             if (!item.hasCraftingRemainingItem()) return Value.NULL;
-            return new StringValue(NBTSerializableValue.nameFromRegistryId(BuiltInRegistries.ITEM.getKey(item.getCraftingRemainingItem())));
+            return new StringValue(NBTSerializableValue.nameFromRegistryId(registry.getKey(item.getCraftingRemainingItem())));
         });
 
         expression.addContextFunction("inventory_size", -1, (c, t, lv) ->
@@ -226,17 +229,18 @@ public class Inventories {
             CarpetContext cc = (CarpetContext) c;
             NBTSerializableValue.InventoryLocator inventoryLocator = NBTSerializableValue.locateInventory(cc, lv, 0);
             if (inventoryLocator == null) return Value.NULL;
+            RegistryAccess regs = cc.registryAccess();
             if (lv.size() == inventoryLocator.offset())
             {
                 List<Value> fullInventory = new ArrayList<>();
                 for (int i = 0, maxi = inventoryLocator.inventory().getContainerSize(); i < maxi; i++)
-                    fullInventory.add(ValueConversions.of(inventoryLocator.inventory().getItem(i)));
+                    fullInventory.add(ValueConversions.of(inventoryLocator.inventory().getItem(i), regs));
                 return ListValue.wrap(fullInventory);
             }
             int slot = (int)NumericValue.asNumber(lv.get(inventoryLocator.offset())).getLong();
             slot = NBTSerializableValue.validateSlot(slot, inventoryLocator.inventory());
             if (slot == inventoryLocator.inventory().getContainerSize()) return Value.NULL;
-            return ValueConversions.of(inventoryLocator.inventory().getItem(slot));
+            return ValueConversions.of(inventoryLocator.inventory().getItem(slot), regs);
         });
 
         //inventory_set(<b,e>, <n>, <count>, <item>, <nbt>)
@@ -251,13 +255,14 @@ public class Inventories {
             slot = NBTSerializableValue.validateSlot(slot, inventoryLocator.inventory());
             if (slot == inventoryLocator.inventory().getContainerSize()) return Value.NULL;
             int count = (int) NumericValue.asNumber(lv.get(inventoryLocator.offset()+1)).getLong();
+            RegistryAccess regs = cc.registryAccess();
             if (count == 0)
             {
                 // clear slot
                 ItemStack removedStack = inventoryLocator.inventory().removeItemNoUpdate(slot);
                 syncPlayerInventory(inventoryLocator, slot);
                 //Value res = ListValue.fromItemStack(removedStack); // that tuple will be read only but cheaper if noone cares
-                return ValueConversions.of(removedStack);
+                return ValueConversions.of(removedStack, regs);
             }
             if (lv.size() < inventoryLocator.offset()+3)
             {
@@ -266,7 +271,7 @@ public class Inventories {
                 newStack.setCount(count);
                 inventoryLocator.inventory().setItem(slot, newStack);
                 syncPlayerInventory(inventoryLocator, slot);
-                return ValueConversions.of(previousStack);
+                return ValueConversions.of(previousStack, regs);
             }
             CompoundTag nbt = null; // skipping one argument
             if (lv.size() > inventoryLocator.offset()+3)
@@ -290,7 +295,7 @@ public class Inventories {
             {
                 throw new InternalExpressionException(e.getMessage());
             }
-            return ValueConversions.of(previousStack);
+            return ValueConversions.of(previousStack, regs);
         });
 
         //inventory_find(<b, e>, <item> or null (first empty slot), <start_from=0> ) -> <N> or null

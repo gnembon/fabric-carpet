@@ -279,6 +279,7 @@ public class WorldAccess {
             BlockArgument locator = BlockArgument.findIn(cc, lv, 0, false);
             BlockPos pos = locator.block.getPos();
             PoiManager store = cc.level().getPoiManager();
+            Registry<PoiType> poiReg = cc.registry(Registries.POINT_OF_INTEREST_TYPE);
             if (lv.size() == locator.offset)
             {
                 Optional<Holder<PoiType>> foo = store.getType(pos);
@@ -297,7 +298,7 @@ public class WorldAccess {
                 if (poi == null)
                     return Value.NULL;
                 return ListValue.of(
-                        ValueConversions.of(BuiltInRegistries.POINT_OF_INTEREST_TYPE.getKey(poi.getPoiType().value())),
+                        ValueConversions.of(poiReg.getKey(poi.getPoiType().value())),
                         new NumericValue(poiType.maxTickets() - ((PoiRecord_scarpetMixin)poi).getFreeTickets())
                 );
             }
@@ -311,7 +312,7 @@ public class WorldAccess {
                 String poiType = lv.get(locator.offset+1).getString().toLowerCase(Locale.ROOT);
                 if (!"any".equals(poiType))
                 {
-                    PoiType type =  BuiltInRegistries.POINT_OF_INTEREST_TYPE.getOptional(InputValidator.identifierOf(poiType))
+                    PoiType type =  poiReg.getOptional(InputValidator.identifierOf(poiType))
                             .orElseThrow(() -> new ThrowStatement(poiType, Throwables.UNKNOWN_POI));
                     condition = (tt) -> tt.value() == type;
                 }
@@ -337,7 +338,7 @@ public class WorldAccess {
                     store.getInRange(condition, pos, radius, status);
             return ListValue.wrap(pois.sorted(Comparator.comparingDouble(p -> p.getPos().distSqr(pos))).map(p ->
                     ListValue.of(
-                            ValueConversions.of(BuiltInRegistries.POINT_OF_INTEREST_TYPE.getKey(p.getPoiType().value())),
+                            ValueConversions.of(poiReg.getKey(p.getPoiType().value())),
                             new NumericValue(p.getPoiType().value().maxTickets() - ((PoiRecord_scarpetMixin)p).getFreeTickets()),
                             ValueConversions.of(p.getPos())
                     )
@@ -362,9 +363,10 @@ public class WorldAccess {
             }
             String poiTypeString = poi.getString().toLowerCase(Locale.ROOT);
             ResourceLocation resource = InputValidator.identifierOf(poiTypeString);
-            PoiType type =  BuiltInRegistries.POINT_OF_INTEREST_TYPE.getOptional(resource)
+            Registry<PoiType> poiReg = cc.registry(Registries.POINT_OF_INTEREST_TYPE);
+            PoiType type =  poiReg.getOptional(resource)
                     .orElseThrow(() -> new ThrowStatement(poiTypeString, Throwables.UNKNOWN_POI));
-            Holder<PoiType> holder = BuiltInRegistries.POINT_OF_INTEREST_TYPE.getHolderOrThrow(ResourceKey.create(Registries.POINT_OF_INTEREST_TYPE, resource));
+            Holder<PoiType> holder = poiReg.getHolderOrThrow(ResourceKey.create(Registries.POINT_OF_INTEREST_TYPE, resource));
 
             int occupancy = 0;
             if (locator.offset + 1 < lv.size())
@@ -822,7 +824,7 @@ public class WorldAccess {
                 {
                     playerBreak = true;
                     String itemString = val.getString();
-                    item = BuiltInRegistries.ITEM.getOptional(InputValidator.identifierOf(itemString))
+                    item = cc.registry(Registries.ITEM).getOptional(InputValidator.identifierOf(itemString))
                             .orElseThrow(() -> new ThrowStatement(itemString, Throwables.UNKNOWN_ITEM));
                 }
             }
@@ -971,7 +973,7 @@ public class WorldAccess {
                                         attacker = (LivingEntity) attackingEntity;
                                     }
                                     else throw new InternalExpressionException("Attacking entity needs to be a living thing, "+
-                                            ValueConversions.of(BuiltInRegistries.ENTITY_TYPE.getKey(attackingEntity.getType())).getString() +" ain't it.");
+                                            ValueConversions.of(cc.registry(Registries.ENTITY_TYPE).getKey(attackingEntity.getType())).getString() +" ain't it.");
 
                                 }
                                 else
@@ -1131,12 +1133,12 @@ public class WorldAccess {
 
         expression.addContextFunction("block_list", -1, (c, t, lv) ->
         {
-            if (lv.size() == 0)
-                return ListValue.wrap(BuiltInRegistries.BLOCK.keySet().stream().map(ValueConversions::of).collect(Collectors.toList()));
             CarpetContext cc = (CarpetContext)c;
+            Registry<Block> blocks = cc.registry(Registries.BLOCK);
+            if (lv.size() == 0)
+                return ListValue.wrap(blocks.keySet().stream().map(ValueConversions::of).collect(Collectors.toList()));
             ResourceLocation tag = InputValidator.identifierOf(lv.get(0).getString());
 
-            Registry<Block> blocks = cc.registry(Registries.BLOCK);
             Optional<HolderSet.Named<Block>> tagset = blocks.getTag(TagKey.create(Registries.BLOCK, tag));
             if (tagset.isEmpty()) return Value.NULL;
             return ListValue.wrap(tagset.get().stream().map(b -> ValueConversions.of(blocks.getKey(b.value()))).collect(Collectors.toList()));
@@ -1344,7 +1346,7 @@ public class WorldAccess {
                     }
                     else
                     {
-                        StructureType<?> sss = BuiltInRegistries.STRUCTURE_TYPE.get(id);
+                        StructureType<?> sss = cc.registry(Registries.STRUCTURE_TYPE).get(id);
                         reg.entrySet().stream().filter(e -> e.getValue().type() ==sss).forEach(e -> structure.add(e.getValue()));
                     }
                     if (structure.isEmpty())
@@ -1371,7 +1373,7 @@ public class WorldAccess {
                 StructureStart start = FeatureGenerator.shouldStructureStartAt(world, pos, structure.get(0), needSize);
                 if (start == null) return Value.NULL;
                 if (!needSize) return Value.TRUE;
-                return ValueConversions.of(start);
+                return ValueConversions.of(start, cc.registryAccess());
             }
             Map<Value, Value> ret = new HashMap<>();
             for(Structure str: structure)
@@ -1390,7 +1392,7 @@ public class WorldAccess {
                 if (start == null) continue;
 
                 Value key = new StringValue(NBTSerializableValue.nameFromRegistryId(reg.getKey(str)));
-                ret.put(key, (!needSize)?Value.NULL: ValueConversions.of(start));
+                ret.put(key, (!needSize)?Value.NULL: ValueConversions.of(start, cc.registryAccess()));
             }
             return MapValue.wrap(ret);
         });
@@ -1420,7 +1422,7 @@ public class WorldAccess {
                 return MapValue.wrap(structureList);
             }
             String structureName = lv.get(locator.offset).getString().toLowerCase(Locale.ROOT);
-            return ValueConversions.of(structures.get(reg.get(InputValidator.identifierOf(structureName))));
+            return ValueConversions.of(structures.get(reg.get(InputValidator.identifierOf(structureName))), cc.registryAccess());
         });
 
         expression.addContextFunction("set_structure", -1, (c, t, lv) ->

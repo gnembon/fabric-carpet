@@ -60,7 +60,7 @@ public class BlockArgument extends Argument
             }
             if (acceptString && v1 instanceof StringValue)
             {
-                return new BlockArgument(BlockValue.fromString(v1.getString(), c.registryAccess()), 1 + offset);
+                return new BlockArgument(BlockValue.fromString(v1.getString(), c.level()), 1 + offset);
             }
             if (v1 instanceof BlockValue)
             {

@@ -26,6 +26,7 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -101,7 +102,7 @@ public class Entities {
             try
             {
                 entityId = ResourceLocation.read(new StringReader(entityString));
-                EntityType<? extends Entity> type = BuiltInRegistries.ENTITY_TYPE.getOptional(entityId).orElse(null);
+                EntityType<? extends Entity> type = cc.registry(Registries.ENTITY_TYPE).getOptional(entityId).orElse(null);
                 if (type == null || !type.canSummon())
                     return Value.NULL;
             }
@@ -244,7 +245,7 @@ public class Entities {
         {
             if (lv.size() > 1) throw new InternalExpressionException("'entity_types' requires one or no arguments");
             String desc = (lv.size() == 1)?lv.get(0).getString():"*";
-            return EntityValue.getEntityDescriptor(desc, ((CarpetContext) c).server()).listValue();
+            return EntityValue.getEntityDescriptor(desc, ((CarpetContext) c).server()).listValue(((CarpetContext)c).registryAccess());
         });
 
         expression.addContextFunction("entity_load_handler", -1, (c, t, lv) ->

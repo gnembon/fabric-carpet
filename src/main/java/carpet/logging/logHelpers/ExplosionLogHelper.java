@@ -6,7 +6,10 @@ import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import java.util.ArrayList;
 import java.util.List;
+
+import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
@@ -19,6 +22,7 @@ public class ExplosionLogHelper
 {
     private final boolean createFire;
     private final Explosion.BlockInteraction blockDestructionType;
+    private final RegistryAccess regs;
     public final Vec3 pos;
     private final float power;
     private boolean affectBlocks = false;
@@ -28,11 +32,12 @@ public class ExplosionLogHelper
     private static int explosionCountInCurretGT = 0;
     private static boolean newTick;
 
-    public ExplosionLogHelper(double x, double y, double z, float power, boolean createFire, Explosion.BlockInteraction blockDestructionType) {
+    public ExplosionLogHelper(double x, double y, double z, float power, boolean createFire, Explosion.BlockInteraction blockDestructionType, RegistryAccess regs) {
         this.power = power;
         this.pos = new Vec3(x,y,z);
         this.createFire = createFire;
         this.blockDestructionType = blockDestructionType;
+        this.regs = regs;
     }
 
     public void setAffectBlocks(boolean b)
@@ -76,7 +81,7 @@ public class ExplosionLogHelper
                         messages.add(c((k.pos.equals(pos))?"r   - TNT":"w   - ",
                                 Messenger.dblt((k.pos.equals(pos))?"r":"y", k.pos.x, k.pos.y, k.pos.z), "w  dV",
                                 Messenger.dblt("d", k.accel.x, k.accel.y, k.accel.z),
-                                "w  "+ BuiltInRegistries.ENTITY_TYPE.getKey(k.type).getPath(), (v>1)?"l ("+v+")":""
+                                "w  "+ regs.registryOrThrow(Registries.ENTITY_TYPE).getKey(k.type).getPath(), (v>1)?"l ("+v+")":""
                         ));
                     });
                 }
