@@ -17,7 +17,6 @@ import carpet.script.value.NumericValue;
 import carpet.script.value.StringValue;
 import carpet.script.value.Value;
 import com.google.gson.JsonParseException;
-import com.google.gson.JsonParser;
 
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -186,7 +185,7 @@ public class DataStructures {
             if (v instanceof MapValue)
                 return ListValue.wrap(((MapValue) v).getMap().entrySet().stream().map(
                         (p) -> ListValue.of(p.getKey(), p.getValue())
-                ).collect(Collectors.toList()));
+                ));
             return Value.NULL;
         });
 

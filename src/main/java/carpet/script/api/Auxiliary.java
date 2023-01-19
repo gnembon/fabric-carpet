@@ -42,17 +42,14 @@ import net.minecraft.SharedConstants;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
-import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.Rotations;
 import net.minecraft.core.particles.ParticleOptions;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtIo;
 import net.minecraft.nbt.NbtUtils;
 import net.minecraft.nbt.StringTag;
 import net.minecraft.nbt.Tag;
-import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientboundClearTitlesPacket;
@@ -572,7 +569,7 @@ public class Auxiliary {
                     });
                 else
                     targetList.forEach(target -> {
-                        map.put(target.getScoreboardName(), (MutableComponent) title);
+                        map.put(target.getScoreboardName(), title);
                         total.getAndIncrement();
                     });
                 HUDController.update_hud(((CarpetContext)c).server(), targetList);
@@ -621,7 +618,7 @@ public class Auxiliary {
                 );
                 return ListValue.of(
                         retval,
-                        ListValue.wrap(output.stream().map(FormattedTextValue::new).collect(Collectors.toList())),
+                        ListValue.wrap(output.stream().map(FormattedTextValue::new)),
                         FormattedTextValue.of(error[0])
                 );
             }
@@ -757,19 +754,19 @@ public class Auxiliary {
                 Map<Value, Value> plopData = new HashMap<>();
                 CarpetContext cc = (CarpetContext)c;
                 plopData.put(StringValue.of("scarpet_custom"),
-                        ListValue.wrap(FeatureGenerator.featureMap.keySet().stream().sorted().map(StringValue::of).collect(Collectors.toList()))
+                        ListValue.wrap(FeatureGenerator.featureMap.keySet().stream().sorted().map(StringValue::of))
                 );
                 plopData.put(StringValue.of("features"),
-                        ListValue.wrap(cc.registry(Registries.FEATURE).keySet().stream().sorted().map(ValueConversions::of).collect(Collectors.toList()))
+                        ListValue.wrap(cc.registry(Registries.FEATURE).keySet().stream().sorted().map(ValueConversions::of))
                 );
                 plopData.put(StringValue.of("configured_features"),
-                        ListValue.wrap(cc.registry(Registries.CONFIGURED_FEATURE).keySet().stream().sorted().map(ValueConversions::of).collect(Collectors.toList()))
+                        ListValue.wrap(cc.registry(Registries.CONFIGURED_FEATURE).keySet().stream().sorted().map(ValueConversions::of))
                 );
                 plopData.put(StringValue.of("structure_types"),
-                        ListValue.wrap(cc.registry(Registries.STRUCTURE_TYPE).keySet().stream().sorted().map(ValueConversions::of).collect(Collectors.toList()))
+                        ListValue.wrap(cc.registry(Registries.STRUCTURE_TYPE).keySet().stream().sorted().map(ValueConversions::of))
                 );
                 plopData.put(StringValue.of("structures"),
-                        ListValue.wrap(cc.registry(Registries.STRUCTURE).keySet().stream().sorted().map(ValueConversions::of).collect(Collectors.toList()))
+                        ListValue.wrap(cc.registry(Registries.STRUCTURE).keySet().stream().sorted().map(ValueConversions::of))
                 );
                 return MapValue.wrap(plopData);
             }
@@ -841,7 +838,7 @@ public class Auxiliary {
             FileArgument fdesc = FileArgument.from(lv,true, FileArgument.Reason.READ);
             Stream<String> files = ((CarpetScriptHost) c.host).listFolder(fdesc);
             if (files == null) return Value.NULL;
-            return ListValue.wrap(files.map(StringValue::of).collect(Collectors.toList()));
+            return ListValue.wrap(files.map(StringValue::of));
         });
 
         expression.addContextFunction("read_file", 2, (c, t, lv) ->
@@ -868,7 +865,7 @@ public class Auxiliary {
             {
                 List<String> content = ((CarpetScriptHost) c.host).readTextResource(fdesc);
                 if (content == null) return Value.NULL;
-                retVal = ListValue.wrap(content.stream().map(StringValue::new).collect(Collectors.toList()));
+                retVal = ListValue.wrap(content.stream().map(StringValue::new));
             }
             return retVal;
         });
@@ -1015,7 +1012,7 @@ public class Auxiliary {
             CarpetContext cc = (CarpetContext) c;
             CommandStorage storage = cc.server().getCommandStorage();
             if (lv.size() == 0)
-                return ListValue.wrap(storage.keys().map(i -> new StringValue(nameFromRegistryId(i))).collect(Collectors.toList()));
+                return ListValue.wrap(storage.keys().map(i -> new StringValue(nameFromRegistryId(i))));
             String key = lv.get(0).getString();
             CompoundTag old_nbt = storage.get(InputValidator.identifierOf(key));
             if (lv.size() == 2) {

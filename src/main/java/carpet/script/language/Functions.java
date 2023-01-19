@@ -18,7 +18,6 @@ import carpet.script.value.Value;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
-import java.util.stream.Collectors;
 
 public class Functions {
     public static void apply(Expression expression) // public just to get the javadoc right
@@ -31,10 +30,10 @@ public class Functions {
             c.host.importModule(c, moduleName);
             moduleName = moduleName.toLowerCase(Locale.ROOT);
             if (lv.size() > 1)
-                c.host.importNames(c, expression.module, moduleName, lv.subList(1, lv.size()).stream().map(Value::getString).collect(Collectors.toList()));
+                c.host.importNames(c, expression.module, moduleName, lv.subList(1, lv.size()).stream().map(Value::getString).toList());
             if (t == Context.VOID)
                 return Value.NULL;
-            return ListValue.wrap(c.host.availableImports(moduleName).map(StringValue::new).collect(Collectors.toList()));
+            return ListValue.wrap(c.host.availableImports(moduleName).map(StringValue::new));
         });
 
 

@@ -456,16 +456,16 @@ public class EntityValue extends Value
         put("type", (e, a) -> new StringValue(nameFromRegistryId(e.getLevel().registryAccess().registryOrThrow(Registries.ENTITY_TYPE).getKey(e.getType()))));
         put("is_riding", (e, a) -> BooleanValue.of(e.isPassenger()));
         put("is_ridden", (e, a) -> BooleanValue.of(e.isVehicle()));
-        put("passengers", (e, a) -> ListValue.wrap(e.getPassengers().stream().map(EntityValue::new).collect(Collectors.toList())));
+        put("passengers", (e, a) -> ListValue.wrap(e.getPassengers().stream().map(EntityValue::new)));
         put("mount", (e, a) -> (e.getVehicle()!=null)?new EntityValue(e.getVehicle()):Value.NULL);
         put("unmountable", (e, a) -> BooleanValue.of(((EntityInterface)e).isPermanentVehicle()));
         // deprecated
-        put("tags", (e, a) -> ListValue.wrap(e.getTags().stream().map(StringValue::new).collect(Collectors.toList())));
+        put("tags", (e, a) -> ListValue.wrap(e.getTags().stream().map(StringValue::new)));
 
-        put("scoreboard_tags", (e, a) -> ListValue.wrap(e.getTags().stream().map(StringValue::new).collect(Collectors.toList())));
+        put("scoreboard_tags", (e, a) -> ListValue.wrap(e.getTags().stream().map(StringValue::new)));
         put("entity_tags", (e, a) -> {
             EntityType<?> type = e.getType();
-            return ListValue.wrap(e.getServer().registryAccess().registryOrThrow(Registries.ENTITY_TYPE).getTags().filter(entry -> entry.getSecond().stream().anyMatch(h -> h.value()==type)).map(entry -> ValueConversions.of(entry.getFirst())).collect(Collectors.toList()));
+            return ListValue.wrap(e.getServer().registryAccess().registryOrThrow(Registries.ENTITY_TYPE).getTags().filter(entry -> entry.getSecond().stream().anyMatch(h -> h.value()==type)).map(entry -> ValueConversions.of(entry.getFirst())));
         });
         // deprecated
         put("has_tag", (e, a) -> BooleanValue.of(e.getTags().contains(a.getString())));
@@ -558,7 +558,7 @@ public class EntityValue extends Value
         put("home", (e, a) -> {
             if (e instanceof Mob)
             {
-                return (((Mob) e).getRestrictRadius () > 0)?new BlockValue(null, (ServerLevel) e.getCommandSenderWorld(), ((PathfinderMob) e).getRestrictCenter()):Value.FALSE;
+                return (((Mob) e).getRestrictRadius () > 0)?new BlockValue(null, e.getCommandSenderWorld(), ((PathfinderMob) e).getRestrictCenter()):Value.FALSE;
             }
             return Value.NULL;
         });
@@ -840,7 +840,7 @@ public class EntityValue extends Value
                 ServerPlayerInteractionManagerInterface manager = (ServerPlayerInteractionManagerInterface) (((ServerPlayer) e).gameMode);
                 BlockPos pos = manager.getCurrentBreakingBlock();
                 if (pos == null) return Value.NULL;
-                return new BlockValue(null, (ServerLevel) e.level, pos);
+                return new BlockValue(null, e.level, pos);
             }
             return Value.NULL;
         });
@@ -926,7 +926,7 @@ public class EntityValue extends Value
             switch (hitres.getType())
             {
                 case MISS: return Value.NULL;
-                case BLOCK: return new BlockValue(null, (ServerLevel) e.getCommandSenderWorld(), ((BlockHitResult)hitres).getBlockPos() );
+                case BLOCK: return new BlockValue(null, e.getCommandSenderWorld(), ((BlockHitResult)hitres).getBlockPos() );
                 case ENTITY: return new EntityValue(((EntityHitResult)hitres).getEntity());
             }
             return Value.NULL;

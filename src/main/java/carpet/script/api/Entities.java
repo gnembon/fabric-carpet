@@ -23,9 +23,7 @@ import java.util.Locale;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 import net.minecraft.commands.CommandSourceStack;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
@@ -157,7 +155,7 @@ public class Entities {
             CommandSourceStack source = ((CarpetContext)c).source();
             EntityValue.EntityClassDescriptor eDesc = EntityValue.getEntityDescriptor(who, source.getServer());
             List<? extends Entity> entityList = source.getLevel().getEntities(eDesc.directType, eDesc.filteringPredicate);
-            return ListValue.wrap(entityList.stream().map(EntityValue::new).collect(Collectors.toList()));
+            return ListValue.wrap(entityList.stream().map(EntityValue::new));
         });
 
         expression.addContextFunction("entity_area", -1, (c, t, lv) ->
@@ -185,7 +183,7 @@ public class Entities {
             AABB area = centerBox.inflate(range.x, range.y, range.z);
             EntityValue.EntityClassDescriptor eDesc = EntityValue.getEntityDescriptor(who, cc.server());
             List<? extends Entity> entityList = cc.level().getEntities(eDesc.directType, area,eDesc.filteringPredicate);
-            return ListValue.wrap(entityList.stream().map(EntityValue::new).collect(Collectors.toList()));
+            return ListValue.wrap(entityList.stream().map(EntityValue::new));
         });
 
         expression.addContextFunction("entity_selector", -1, (c, t, lv) ->
@@ -253,7 +251,7 @@ public class Entities {
             if (lv.size() < 2) throw new InternalExpressionException("'entity_load_handler' required the entity type, and a function to call");
             Value entityValue = lv.get(0);
             List<String> descriptors = (entityValue instanceof ListValue)
-                    ? ((ListValue) entityValue).getItems().stream().map(Value::getString).collect(Collectors.toList())
+                    ? ((ListValue) entityValue).getItems().stream().map(Value::getString).toList()
                     : Collections.singletonList(entityValue.getString());
             Set<EntityType<? extends Entity>> types = new HashSet<>();
             descriptors.forEach(s -> types.addAll(EntityValue.getEntityDescriptor(s, ((CarpetContext) c).server()).types));

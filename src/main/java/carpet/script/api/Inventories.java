@@ -26,12 +26,10 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 import net.minecraft.commands.arguments.item.ItemInput;
 import net.minecraft.core.HolderSet;
 import net.minecraft.core.Registry;
 import net.minecraft.core.RegistryAccess;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
@@ -70,17 +68,17 @@ public class Inventories {
             CarpetContext cc = (CarpetContext)c;
             Registry<Item> items = cc.registry(Registries.ITEM);
             if (lv.size() == 0)
-                return ListValue.wrap(items.keySet().stream().map(ValueConversions::of).collect(Collectors.toList()));
+                return ListValue.wrap(items.keySet().stream().map(ValueConversions::of));
             String tag = lv.get(0).getString();
             Optional<HolderSet.Named<Item>> itemTag = items.getTag(TagKey.create(Registries.ITEM, InputValidator.identifierOf(tag)));
             if (itemTag.isEmpty()) return Value.NULL;
-            return ListValue.wrap(itemTag.get().stream().map(b -> ValueConversions.of(items.getKey(b.value()))).collect(Collectors.toList()));
+            return ListValue.wrap(itemTag.get().stream().map(b -> ValueConversions.of(items.getKey(b.value()))));
             /*
             TagContainer tagManager = cc.s.getServer(). getTags();
             String tag = lv.get(0).getString();
             net.minecraft.tags.Tag<Item> itemTag = tagManager.getOrEmpty(Registry.ITEM_REGISTRY).getTag(InputValidator.identifierOf(tag));
             if (itemTag == null) return Value.NULL;
-            return ListValue.wrap(itemTag.getValues().stream().map(b -> ValueConversions.of(Registry.ITEM.getKey(b))).collect(Collectors.toList()));
+            return ListValue.wrap(itemTag.getValues().stream().map(b -> ValueConversions.of(Registry.ITEM.getKey(b))));
             */
         });
 
@@ -90,11 +88,11 @@ public class Inventories {
 
             Registry<Item> blocks = cc.registry(Registries.ITEM);
             if (lv.size() == 0)
-                return ListValue.wrap(blocks.getTagNames().map(ValueConversions::of).collect(Collectors.toList()));
+                return ListValue.wrap(blocks.getTagNames().map(ValueConversions::of));
             Item item = NBTSerializableValue.parseItem(lv.get(0).getString(), cc.registryAccess()).getItem();
             if (lv.size() == 1)
             {
-                return ListValue.wrap( blocks.getTags().filter(e -> e.getSecond().stream().anyMatch(h -> (h.value() == item))).map(e -> ValueConversions.of(e.getFirst())).collect(Collectors.toList()));
+                return ListValue.wrap( blocks.getTags().filter(e -> e.getSecond().stream().anyMatch(h -> (h.value() == item))).map(e -> ValueConversions.of(e.getFirst())));
             }
             String tag = lv.get(1).getString();
             Optional<HolderSet.Named<Item>> tagSet = blocks.getTag(TagKey.create(Registries.ITEM, InputValidator.identifierOf(tag)));
@@ -106,10 +104,10 @@ public class Inventories {
             /*
             TagContainer tagManager = cc.s.getServer().getTags();
             if (lv.size() == 0)
-                return ListValue.wrap(tagManager.getOrEmpty(Registry.ITEM_REGISTRY).getAvailableTags().stream().map(ValueConversions::of).collect(Collectors.toList()));
+                return ListValue.wrap(tagManager.getOrEmpty(Registry.ITEM_REGISTRY).getAvailableTags().stream().map(ValueConversions::of));
             Item item = NBTSerializableValue.parseItem(lv.get(0).getString()).getItem();
             if (lv.size() == 1)
-                return ListValue.wrap(tagManager.getOrEmpty(Registry.ITEM_REGISTRY).getAllTags().entrySet().stream().filter(e -> e.getValue().contains(item)).map(e -> ValueConversions.of(e.getKey())).collect(Collectors.toList()));
+                return ListValue.wrap(tagManager.getOrEmpty(Registry.ITEM_REGISTRY).getAllTags().entrySet().stream().filter(e -> e.getValue().contains(item)).map(e -> ValueConversions.of(e.getKey())));
             String tag = lv.get(1).getString();
             net.minecraft.tags.Tag<Item> itemTag = tagManager.getOrEmpty(Registry.ITEM_REGISTRY).getTag(InputValidator.identifierOf(tag));
             if (itemTag == null) return Value.NULL;
@@ -398,7 +396,7 @@ public class Inventories {
             else if (owner instanceof LivingEntity villager)
             {
                 // stolen from LookTargetUtil.give((VillagerEntity)owner, droppedStack, (LivingEntity) owner);
-                double double_1 = villager.getY() - 0.30000001192092896D + (double)villager.getEyeHeight();
+                double double_1 = villager.getY() - 0.30000001192092896D + villager.getEyeHeight();
                 item = new ItemEntity(villager.level, villager.getX(), double_1, villager.getZ(), droppedStack);
                 Vec3 vec3d_1 = villager.getViewVector(1.0F).normalize().scale(0.3);//  new Vec3d(0, 0.3, 0);
                 item.setDeltaMovement(vec3d_1);

@@ -35,18 +35,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 public class SystemInfo {
-    private static final Map<String, Function<CarpetContext,Value>> options = new HashMap<String, Function<CarpetContext,Value>>(){{
+    private static final Map<String, Function<CarpetContext,Value>> options = new HashMap<>(){{
         put("app_name", c ->
         {
             String name = c.host.getName();
             return name == null?Value.NULL:new StringValue(name);
         });
-        put("app_list", c -> ListValue.wrap(((CarpetScriptHost)c.host).scriptServer().modules.keySet().stream().filter(Objects::nonNull).map(StringValue::new).collect(Collectors.toList())));
+        put("app_list", c -> ListValue.wrap(((CarpetScriptHost)c.host).scriptServer().modules.keySet().stream().filter(Objects::nonNull).map(StringValue::new)));
         put("app_scope", c -> StringValue.of((c.host).isPerUser()?"player":"global"));
-        put("app_players", c -> ListValue.wrap(c.host.getUserList().stream().map(StringValue::new).collect(Collectors.toList())));
+        put("app_players", c -> ListValue.wrap(c.host.getUserList().stream().map(StringValue::new)));
 
         put("world_name", c -> new StringValue(c.server().getWorldData().getLevelName()));
         put("world_seed", c -> new NumericValue(c.level().getSeed()));
@@ -59,7 +58,7 @@ public class SystemInfo {
             String tlf = serverPath.getName(nodeCount-2).toString();
             return StringValue.of(tlf);
         });
-        put("world_dimensions", c -> ListValue.wrap(c.server().levelKeys().stream().map(k -> ValueConversions.of(k.location())).collect(Collectors.toList())));
+        put("world_dimensions", c -> ListValue.wrap(c.server().levelKeys().stream().map(k -> ValueConversions.of(k.location()))));
         put("world_spawn_point", c -> {
             LevelData prop = c.server().overworld().getLevelData();
             return ListValue.of(NumericValue.of(prop.getXSpawn()), NumericValue.of(prop.getYSpawn()), NumericValue.of(prop.getZSpawn()));
@@ -143,7 +142,7 @@ public class SystemInfo {
             final long[] tickArray = c.server().tickTimes;
             for (int i=currentReportedTick+100; i > currentReportedTick; i--)
             {
-                ticks.add(new NumericValue(((double)tickArray[i % 100])/1000000.0));
+                ticks.add(new NumericValue((tickArray[i % 100])/1000000.0));
             }
             return ListValue.wrap(ticks);
         });
@@ -219,7 +218,7 @@ public class SystemInfo {
     }
     public static Value getAll()
     {
-        return ListValue.wrap(options.keySet().stream().map(StringValue::of).collect(Collectors.toList()));
+        return ListValue.wrap(options.keySet().stream().map(StringValue::of));
     }
 
 }
