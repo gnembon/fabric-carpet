@@ -757,16 +757,16 @@ public class Auxiliary {
                         ListValue.wrap(FeatureGenerator.featureMap.keySet().stream().sorted().map(StringValue::of))
                 );
                 plopData.put(StringValue.of("features"),
-                        ListValue.wrap(cc.registry(Registries.FEATURE).keySet().stream().sorted().map(ValueConversions::of).collect(Collectors.toList()))
+                        ListValue.wrap(cc.registry(Registries.FEATURE).keySet().stream().sorted().map(ValueConversions::of))
                 );
                 plopData.put(StringValue.of("configured_features"),
-                        ListValue.wrap(cc.registry(Registries.CONFIGURED_FEATURE).keySet().stream().sorted().map(ValueConversions::of).collect(Collectors.toList()))
+                        ListValue.wrap(cc.registry(Registries.CONFIGURED_FEATURE).keySet().stream().sorted().map(ValueConversions::of))
                 );
                 plopData.put(StringValue.of("structure_types"),
-                        ListValue.wrap(cc.registry(Registries.STRUCTURE_TYPE).keySet().stream().sorted().map(ValueConversions::of).collect(Collectors.toList()))
+                        ListValue.wrap(cc.registry(Registries.STRUCTURE_TYPE).keySet().stream().sorted().map(ValueConversions::of))
                 );
                 plopData.put(StringValue.of("structures"),
-                        ListValue.wrap(cc.registry(Registries.STRUCTURE).keySet().stream().sorted().map(ValueConversions::of).collect(Collectors.toList()))
+                        ListValue.wrap(cc.registry(Registries.STRUCTURE).keySet().stream().sorted().map(ValueConversions::of))
                 );
                 return MapValue.wrap(plopData);
             }
