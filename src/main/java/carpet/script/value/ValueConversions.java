@@ -54,7 +54,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
@@ -274,12 +273,12 @@ public class ValueConversions
         }
         if (v instanceof PositionTracker)
         {
-            return new BlockValue(null, (ServerLevel) e.getCommandSenderWorld(), ((PositionTracker)v).currentBlockPosition());
+            return new BlockValue(null, e.getCommandSenderWorld(), ((PositionTracker)v).currentBlockPosition());
         }
         if (v instanceof WalkTarget)
         {
             return ListValue.of(
-                    new BlockValue(null, (ServerLevel) e.getCommandSenderWorld(), ((WalkTarget)v).getTarget().currentBlockPosition()),
+                    new BlockValue(null, e.getCommandSenderWorld(), ((WalkTarget)v).getTarget().currentBlockPosition()),
                     new NumericValue(((WalkTarget) v).getSpeedModifier()),
                     new NumericValue(((WalkTarget) v).getCloseEnoughDist())
             );
@@ -297,11 +296,11 @@ public class ValueConversions
             Object el = l.get(0);
             if (el instanceof Entity)
             {
-                return ListValue.wrap(l.stream().map(o -> new EntityValue((Entity)o)).collect(Collectors.toList()));
+                return ListValue.wrap(l.stream().map(o -> new EntityValue((Entity)o)));
             }
             if (el instanceof GlobalPos)
             {
-                return ListValue.wrap(l.stream().map(o -> of((GlobalPos) o)).collect(Collectors.toList()));
+                return ListValue.wrap(l.stream().map(o -> of((GlobalPos) o)));
             }
         }
         return Value.NULL;
@@ -480,7 +479,7 @@ public class ValueConversions
         if (o == null)
             return Value.NULL;
         if (o instanceof List)
-            return ListValue.wrap(((List<?>) o).stream().map(oo -> guess(serverWorld, oo)).collect(Collectors.toList()));
+            return ListValue.wrap(((List<?>) o).stream().map(oo -> guess(serverWorld, oo)));
         if (o instanceof BlockPos)
             return new BlockValue(null, serverWorld, (BlockPos)o);
         if (o instanceof Entity)

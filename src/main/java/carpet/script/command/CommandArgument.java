@@ -2,7 +2,6 @@ package carpet.script.command;
 
 import carpet.CarpetServer;
 import carpet.fakes.BlockStateArgumentInterface;
-import carpet.script.CarpetContext;
 import carpet.script.CarpetScriptHost;
 import carpet.script.argument.FunctionArgument;
 import carpet.script.value.BlockValue;
@@ -96,7 +95,6 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.Holder;
 import net.minecraft.core.HolderSet;
 import net.minecraft.core.Registry;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
@@ -613,7 +611,7 @@ public abstract class CommandArgument
         protected Value getValueFromContext(CommandContext<CommandSourceStack> context, String param) throws CommandSyntaxException
         {
             Collection<? extends Entity> founds = net.minecraft.commands.arguments.EntityArgument.getOptionalEntities(context, param);
-            if (!single) return ListValue.wrap(founds.stream().map(EntityValue::new).collect(Collectors.toList()));
+            if (!single) return ListValue.wrap(founds.stream().map(EntityValue::new));
             if (founds.size() == 0) return Value.NULL;
             if (founds.size() == 1) return new EntityValue(founds.iterator().next());
             throw new SimpleCommandExceptionType(Component.literal("Multiple entities returned while only one was requested"+" for custom type "+suffix)).create();
@@ -653,7 +651,7 @@ public abstract class CommandArgument
         protected Value getValueFromContext(CommandContext<CommandSourceStack> context, String param) throws CommandSyntaxException
         {
             Collection<GameProfile> profiles = GameProfileArgument.getGameProfiles(context, param);
-            if (!single) return ListValue.wrap(profiles.stream().map(p -> StringValue.of(p.getName())).collect(Collectors.toList()));
+            if (!single) return ListValue.wrap(profiles.stream().map(p -> StringValue.of(p.getName())));
             int size = profiles.size();
             if (size == 0) return Value.NULL;
             if (size == 1) return StringValue.of(profiles.iterator().next().getName());
@@ -694,7 +692,7 @@ public abstract class CommandArgument
         protected Value getValueFromContext(CommandContext<CommandSourceStack> context, String param) throws CommandSyntaxException
         {
             Collection<String> holders = ScoreHolderArgument.getNames(context, param);
-            if (!single) return ListValue.wrap(holders.stream().map(StringValue::of).collect(Collectors.toList()));
+            if (!single) return ListValue.wrap(holders.stream().map(StringValue::of));
             int size = holders.size();
             if (size == 0) return Value.NULL;
             if (size == 1) return StringValue.of(holders.iterator().next());
