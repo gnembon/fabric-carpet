@@ -20,6 +20,7 @@ import carpet.commands.TestCommand;
 import carpet.commands.TickCommand;
 import carpet.network.ServerNetworkHandler;
 import carpet.helpers.HopperCounter;
+import carpet.helpers.ParticleDisplay;
 import carpet.helpers.TickSpeed;
 import carpet.logging.LoggerRegistry;
 import carpet.script.CarpetScriptServer;
@@ -194,6 +195,7 @@ public class CarpetServer // static for now - easier to handle all around the co
 
             LoggerRegistry.stopLoggers();
             HUDController.resetScarpetHUDs();
+            ParticleDisplay.resetCache();
             extensions.forEach(e -> e.onServerClosed(server));
             minecraft_server = null;
         }
