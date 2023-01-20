@@ -125,15 +125,22 @@ accessed via UUID, but should be accessed with their name instead.
 map(entities_area('*',x,y,z,30,30,30),run('kill '+query(_,'id'))) // doesn't kill the player
 </pre>
 
-### `query(e, 'pos')`
+### `query(e, 'pos')`, `query(e, 'block_pos')`
 
 Triple of the entity's position
+
+`block_pos` is rounded down / floored position of the entity.
+
+<pre>
+query(p, 'pos') => [420.19801928, 69.3928301, 420.4098232]
+query(p, 'block_pos') => [420, 69, 420]
+</pre>
 
 ### `query(e, 'location')`
 
 Quin-tuple of the entity's position (x, y, and z coords), and rotation (yaw, pitch)
 
-### `query(e, 'x'), query(e, 'y'), query(e, 'z')`
+### `query(e, 'x')`, `query(e, 'y')`, `query(e, 'z')`
 
 Respective component of entity's coordinates
 
@@ -155,7 +162,7 @@ Triple of entity's motion vector, `[motion_x, motion_y, motion_z]`. Motion repre
 that exert on the given entity. Things that are not 'forces' like voluntary movement, or reaction from the ground are
 not part of said forces.
 
-### `query(e, 'motion_x'), query(e, 'motion_y'), query(e, 'motion_z')`
+### `query(e, 'motion_x')`, `query(e, 'motion_y')`, `query(e, 'motion_z')`
 
 Respective component of the entity's motion vector
 
@@ -163,7 +170,7 @@ Respective component of the entity's motion vector
 
 Returns `true` if an entity is standing on firm ground and falling down due to that.
 
-### `query(e, 'name'), query(e, 'display_name'), query(e, 'custom_name'), query(e, 'type')`
+### `query(e, 'name')`, `query(e, 'display_name')`, `query(e, 'custom_name')`, `query(e, 'type')`
 
 String of entity name or formatted text in the case of `display_name`
 

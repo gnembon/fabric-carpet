@@ -70,6 +70,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.entity.projectile.WitherSkull;
 import net.minecraft.world.entity.vehicle.AbstractMinecart;
+import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.Level;
@@ -435,7 +436,8 @@ public class EntityValue extends Value
         put("removed", (entity, arg) -> BooleanValue.of(entity.isRemoved()));
         put("uuid",(e, a) -> new StringValue(e.getStringUUID()));
         put("id",(e, a) -> new NumericValue(e.getId()));
-        put("pos", (e, a) -> ListValue.of(new NumericValue(e.getX()), new NumericValue(e.getY()), new NumericValue(e.getZ())));
+        put("pos", (e, a) -> ValueConversions.of(e.position()));
+        put("block_pos", (e, a) -> ValueConversions.of(e.blockPosition()));
         put("location", (e, a) -> ListValue.of(new NumericValue(e.getX()), new NumericValue(e.getY()), new NumericValue(e.getZ()), new NumericValue(e.getYRot()), new NumericValue(e.getXRot())));
         put("x", (e, a) -> new NumericValue(e.getX()));
         put("y", (e, a) -> new NumericValue(e.getY()));
@@ -1688,20 +1690,20 @@ public class EntityValue extends Value
             if (e instanceof WitherSkull w){
                 w.setDangerous(v.getBoolean());
             }
-            
+
         });
         put("offering_flower",(e,v)->{
             if (e instanceof IronGolem ig){
                 ig.offerFlower(v.getBoolean());
             }
-            
+
         });
         put("item", (e, v) -> {
                 ItemStack item=ValueConversions.getItemStackFromValue(v, true, e.level.registryAccess());
-                if(e instanceof ItemEntity itementity)            
+                if(e instanceof ItemEntity itementity)
                     itementity.setItem(item);
                 if(e instanceof ItemFrame itemframe)
-                    itemframe.setItem(item);  
+                    itemframe.setItem(item);
         });
         // "dimension"      []
         // "count",         []
