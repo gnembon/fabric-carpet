@@ -10,6 +10,7 @@ import net.minecraft.world.level.border.WorldBorder;
 import net.minecraft.world.phys.shapes.BooleanOp;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 
@@ -104,6 +105,7 @@ public class TickSyncedBorderExtent implements WorldBorder.BorderExtent
 		return this.to;
 	}
 
+	@NotNull
 	@Override
 	public BorderStatus getStatus()
 	{
@@ -122,6 +124,7 @@ public class TickSyncedBorderExtent implements WorldBorder.BorderExtent
 
 	}
 
+	@NotNull
 	@Override
 	public WorldBorder.BorderExtent update()
 	{
@@ -139,6 +142,7 @@ public class TickSyncedBorderExtent implements WorldBorder.BorderExtent
 		return this.ticks >= this.tickDuration ? this.border.new StaticBorderExtent(this.to) : this;
 	}
 
+	@NotNull
 	@Override
 	public VoxelShape getCollisionShape()
 	{
