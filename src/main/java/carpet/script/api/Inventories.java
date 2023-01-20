@@ -4,7 +4,6 @@ import carpet.fakes.IngredientInterface;
 import carpet.fakes.RecipeManagerInterface;
 import carpet.script.CarpetContext;
 import carpet.script.Expression;
-import carpet.script.argument.BlockArgument;
 import carpet.script.argument.FunctionArgument;
 import carpet.script.exception.InternalExpressionException;
 import carpet.script.exception.ThrowStatement;
@@ -31,6 +30,9 @@ import java.util.stream.Collectors;
 import net.minecraft.commands.arguments.item.ItemInput;
 import net.minecraft.core.HolderSet;
 import net.minecraft.core.Registry;
+import net.minecraft.core.RegistryAccess;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundContainerSetSlotPacket;
@@ -40,7 +42,6 @@ import net.minecraft.tags.TagKey;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.AbstractCookingRecipe;
@@ -50,30 +51,28 @@ import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.item.crafting.ShapedRecipe;
 import net.minecraft.world.item.crafting.ShapelessRecipe;
 import net.minecraft.world.item.crafting.SingleItemRecipe;
-import net.minecraft.world.level.block.Block;
 import net.minecraft.world.phys.Vec3;
 
 public class Inventories {
     public static void apply(Expression expression)
     {
-        expression.addUnaryFunction("stack_limit", v ->
-                new NumericValue(NBTSerializableValue.parseItem(v.getString()).getItem().getMaxStackSize()));
+        expression.addContextFunction("stack_limit", 1, (c, t, lv) ->
+                new NumericValue(NBTSerializableValue.parseItem(lv.get(0).getString(), ((CarpetContext) c).registryAccess() ).getItem().getMaxStackSize()));
 
-        expression.addUnaryFunction("item_category", v ->
-        {
-            ItemInput item = NBTSerializableValue.parseItem(v.getString());
-            CreativeModeTab ig = item.getItem().getItemCategory();
-            return (ig==null)?Value.NULL:new StringValue(ig.getRecipeFolderName());
+        expression.addContextFunction("item_category", -1, (c, t, lv) -> {
+            CarpetContext cc = (CarpetContext)c;
+            cc.host.issueDeprecation("item_category in 1.19.3+");
+            return Value.NULL;
         });
 
         expression.addContextFunction("item_list", -1, (c, t, lv) ->
         {
-            if (lv.size() == 0)
-                return ListValue.wrap(Registry.ITEM.keySet().stream().map(ValueConversions::of).collect(Collectors.toList()));
             CarpetContext cc = (CarpetContext)c;
-            Registry<Item> items = cc.s.getServer().registryAccess().registryOrThrow(Registry.ITEM_REGISTRY);
+            Registry<Item> items = cc.registry(Registries.ITEM);
+            if (lv.size() == 0)
+                return ListValue.wrap(items.keySet().stream().map(ValueConversions::of).collect(Collectors.toList()));
             String tag = lv.get(0).getString();
-            Optional<HolderSet.Named<Item>> itemTag = items.getTag(TagKey.create(Registry.ITEM_REGISTRY, InputValidator.identifierOf(tag)));
+            Optional<HolderSet.Named<Item>> itemTag = items.getTag(TagKey.create(Registries.ITEM, InputValidator.identifierOf(tag)));
             if (itemTag.isEmpty()) return Value.NULL;
             return ListValue.wrap(itemTag.get().stream().map(b -> ValueConversions.of(items.getKey(b.value()))).collect(Collectors.toList()));
             /*
@@ -89,16 +88,16 @@ public class Inventories {
         {
             CarpetContext cc = (CarpetContext)c;
 
-            Registry<Item> blocks = cc.s.getServer().registryAccess().registryOrThrow(Registry.ITEM_REGISTRY);
+            Registry<Item> blocks = cc.registry(Registries.ITEM);
             if (lv.size() == 0)
                 return ListValue.wrap(blocks.getTagNames().map(ValueConversions::of).collect(Collectors.toList()));
-            Item item = NBTSerializableValue.parseItem(lv.get(0).getString()).getItem();
+            Item item = NBTSerializableValue.parseItem(lv.get(0).getString(), cc.registryAccess()).getItem();
             if (lv.size() == 1)
             {
                 return ListValue.wrap( blocks.getTags().filter(e -> e.getSecond().stream().anyMatch(h -> (h.value() == item))).map(e -> ValueConversions.of(e.getFirst())).collect(Collectors.toList()));
             }
             String tag = lv.get(1).getString();
-            Optional<HolderSet.Named<Item>> tagSet = blocks.getTag(TagKey.create(Registry.ITEM_REGISTRY, InputValidator.identifierOf(tag)));
+            Optional<HolderSet.Named<Item>> tagSet = blocks.getTag(TagKey.create(Registries.ITEM, InputValidator.identifierOf(tag)));
             if (tagSet.isEmpty()) return Value.NULL;
 
             //return BooleanValue.of(tagSet.get().contains(item.builtInRegistryHolder()));
@@ -127,13 +126,14 @@ public class Inventories {
             if (lv.size() > 1)
             {
                 String recipeType = lv.get(1).getString();
-                type = Registry.RECIPE_TYPE.get(InputValidator.identifierOf(recipeType));
+                type = cc.registry(Registries.RECIPE_TYPE).get(InputValidator.identifierOf(recipeType));
             }
             List<Recipe<?>> recipes;
-            recipes = ((RecipeManagerInterface) cc.s.getServer().getRecipeManager()).getAllMatching(type, InputValidator.identifierOf(recipeName));
+            recipes = ((RecipeManagerInterface) cc.server().getRecipeManager()).getAllMatching(type, InputValidator.identifierOf(recipeName), cc.registryAccess());
             if (recipes.isEmpty())
                 return Value.NULL;
             List<Value> recipesOutput = new ArrayList<>();
+            RegistryAccess regs = cc.registryAccess();
             for (Recipe<?> recipe: recipes)
             {
                 ItemStack result = recipe.getResultItem();
@@ -152,7 +152,7 @@ public class Inventories {
                             else
                             {
                                 List<Value> alternatives = new ArrayList<>();
-                                stacks.forEach(col -> col.stream().map(ValueConversions::of).forEach(alternatives::add));
+                                stacks.forEach(col -> col.stream().map(is -> ValueConversions.of(is, regs)).forEach(alternatives::add));
                                 ingredientValue.add(ListValue.wrap(alternatives));
                             }
                         }
@@ -191,19 +191,20 @@ public class Inventories {
                     recipeSpec = ListValue.of(new StringValue("custom"));
                 }
 
-                recipesOutput.add(ListValue.of(ValueConversions.of(result), ListValue.wrap(ingredientValue), recipeSpec));
+                recipesOutput.add(ListValue.of(ValueConversions.of(result, regs), ListValue.wrap(ingredientValue), recipeSpec));
             }
             return ListValue.wrap(recipesOutput);
         });
 
-        expression.addUnaryFunction("crafting_remaining_item", v ->
+        expression.addContextFunction("crafting_remaining_item", 1, (c, t, v) ->
         {
-            String itemStr = v.getString();
+            String itemStr = v.get(0).getString();
             Item item;
             ResourceLocation id = InputValidator.identifierOf(itemStr);
-            item = Registry.ITEM.getOptional(id).orElseThrow(() -> new ThrowStatement(itemStr, Throwables.UNKNOWN_ITEM));
+            Registry<Item> registry = ((CarpetContext)c).registry(Registries.ITEM);
+            item = registry.getOptional(id).orElseThrow(() -> new ThrowStatement(itemStr, Throwables.UNKNOWN_ITEM));
             if (!item.hasCraftingRemainingItem()) return Value.NULL;
-            return new StringValue(NBTSerializableValue.nameFromRegistryId(Registry.ITEM.getKey(item.getCraftingRemainingItem())));
+            return new StringValue(NBTSerializableValue.nameFromRegistryId(registry.getKey(item.getCraftingRemainingItem())));
         });
 
         expression.addContextFunction("inventory_size", -1, (c, t, lv) ->
@@ -228,17 +229,18 @@ public class Inventories {
             CarpetContext cc = (CarpetContext) c;
             NBTSerializableValue.InventoryLocator inventoryLocator = NBTSerializableValue.locateInventory(cc, lv, 0);
             if (inventoryLocator == null) return Value.NULL;
+            RegistryAccess regs = cc.registryAccess();
             if (lv.size() == inventoryLocator.offset())
             {
                 List<Value> fullInventory = new ArrayList<>();
                 for (int i = 0, maxi = inventoryLocator.inventory().getContainerSize(); i < maxi; i++)
-                    fullInventory.add(ValueConversions.of(inventoryLocator.inventory().getItem(i)));
+                    fullInventory.add(ValueConversions.of(inventoryLocator.inventory().getItem(i), regs));
                 return ListValue.wrap(fullInventory);
             }
             int slot = (int)NumericValue.asNumber(lv.get(inventoryLocator.offset())).getLong();
             slot = NBTSerializableValue.validateSlot(slot, inventoryLocator.inventory());
             if (slot == inventoryLocator.inventory().getContainerSize()) return Value.NULL;
-            return ValueConversions.of(inventoryLocator.inventory().getItem(slot));
+            return ValueConversions.of(inventoryLocator.inventory().getItem(slot), regs);
         });
 
         //inventory_set(<b,e>, <n>, <count>, <item>, <nbt>)
@@ -253,13 +255,14 @@ public class Inventories {
             slot = NBTSerializableValue.validateSlot(slot, inventoryLocator.inventory());
             if (slot == inventoryLocator.inventory().getContainerSize()) return Value.NULL;
             int count = (int) NumericValue.asNumber(lv.get(inventoryLocator.offset()+1)).getLong();
+            RegistryAccess regs = cc.registryAccess();
             if (count == 0)
             {
                 // clear slot
                 ItemStack removedStack = inventoryLocator.inventory().removeItemNoUpdate(slot);
                 syncPlayerInventory(inventoryLocator, slot);
                 //Value res = ListValue.fromItemStack(removedStack); // that tuple will be read only but cheaper if noone cares
-                return ValueConversions.of(removedStack);
+                return ValueConversions.of(removedStack, regs);
             }
             if (lv.size() < inventoryLocator.offset()+3)
             {
@@ -268,7 +271,7 @@ public class Inventories {
                 newStack.setCount(count);
                 inventoryLocator.inventory().setItem(slot, newStack);
                 syncPlayerInventory(inventoryLocator, slot);
-                return ValueConversions.of(previousStack);
+                return ValueConversions.of(previousStack, regs);
             }
             CompoundTag nbt = null; // skipping one argument
             if (lv.size() > inventoryLocator.offset()+3)
@@ -281,7 +284,7 @@ public class Inventories {
                 else
                     nbt = new NBTSerializableValue(nbtValue.getString()).getCompoundTag();
             }
-            ItemInput newitem = NBTSerializableValue.parseItem(lv.get(inventoryLocator.offset()+2).getString(), nbt);
+            ItemInput newitem = NBTSerializableValue.parseItem(lv.get(inventoryLocator.offset()+2).getString(), nbt, cc.registryAccess());
             ItemStack previousStack = inventoryLocator.inventory().getItem(slot);
             try
             {
@@ -292,7 +295,7 @@ public class Inventories {
             {
                 throw new InternalExpressionException(e.getMessage());
             }
-            return ValueConversions.of(previousStack);
+            return ValueConversions.of(previousStack, regs);
         });
 
         //inventory_find(<b, e>, <item> or null (first empty slot), <start_from=0> ) -> <N> or null
@@ -306,7 +309,7 @@ public class Inventories {
             {
                 Value secondArg = lv.get(inventoryLocator.offset()+0);
                 if (!secondArg.isNull())
-                    itemArg = NBTSerializableValue.parseItem(secondArg.getString());
+                    itemArg = NBTSerializableValue.parseItem(secondArg.getString(), cc.registryAccess());
             }
             int startIndex = 0;
             if (lv.size() > inventoryLocator.offset()+1)
@@ -331,7 +334,7 @@ public class Inventories {
             if (inventoryLocator == null) return Value.NULL;
             if (lv.size() <= inventoryLocator.offset())
                 throw new InternalExpressionException("'inventory_remove' requires at least an item to be removed");
-            ItemInput searchItem = NBTSerializableValue.parseItem(lv.get(inventoryLocator.offset()).getString());
+            ItemInput searchItem = NBTSerializableValue.parseItem(lv.get(inventoryLocator.offset()).getString(), cc.registryAccess());
             int amount = 1;
             if (lv.size() > inventoryLocator.offset()+1)
                 amount = (int)NumericValue.asNumber(lv.get(inventoryLocator.offset()+1)).getLong();
@@ -400,14 +403,14 @@ public class Inventories {
                 Vec3 vec3d_1 = villager.getViewVector(1.0F).normalize().scale(0.3);//  new Vec3d(0, 0.3, 0);
                 item.setDeltaMovement(vec3d_1);
                 item.setDefaultPickUpDelay();
-                cc.s.getLevel().addFreshEntity(item);
+                cc.level().addFreshEntity(item);
             }
             else
             {
                 Vec3 point = Vec3.atCenterOf(inventoryLocator.position()); //pos+0.5v
-                item = new ItemEntity(cc.s.getLevel(), point.x, point.y, point.z, droppedStack);
+                item = new ItemEntity(cc.level(), point.x, point.y, point.z, droppedStack);
                 item.setDefaultPickUpDelay();
-                cc.s.getLevel().addFreshEntity(item);
+                cc.level().addFreshEntity(item);
             }
             return new NumericValue(item.getItem().getCount());
         });
@@ -416,7 +419,7 @@ public class Inventories {
         {
             if(lv.size() < 3) throw new InternalExpressionException("'create_screen' requires at least three arguments");
             Value playerValue = lv.get(0);
-            ServerPlayer player = EntityValue.getPlayerByValue(((CarpetContext) c).s.getServer(), playerValue);
+            ServerPlayer player = EntityValue.getPlayerByValue(((CarpetContext) c).server(), playerValue);
             if(player == null) throw new InternalExpressionException("'create_screen' requires a valid online player as the first argument.");
             String type = lv.get(1).getString();
             Component name = FormattedTextValue.getTextByValue(lv.get(2));

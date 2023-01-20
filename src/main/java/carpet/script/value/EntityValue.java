@@ -25,6 +25,9 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.Holder;
 import net.minecraft.core.HolderSet;
 import net.minecraft.core.Registry;
+import net.minecraft.core.RegistryAccess;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.StringTag;
 import net.minecraft.network.protocol.game.ClientboundPlayerPositionPacket;
@@ -255,8 +258,8 @@ public class EntityValue extends Value
                 who = who.substring(1);
             }
             String booWho = who;
-            HolderSet.Named<EntityType<?>> eTagValue = server.registryAccess().registryOrThrow(Registry.ENTITY_TYPE_REGISTRY)
-                    .getTag(TagKey.create(Registry.ENTITY_TYPE_REGISTRY, InputValidator.identifierOf(who)))
+            HolderSet.Named<EntityType<?>> eTagValue = server.registryAccess().registryOrThrow(Registries.ENTITY_TYPE)
+                    .getTag(TagKey.create(Registries.ENTITY_TYPE, InputValidator.identifierOf(who)))
                     .orElseThrow( () -> new InternalExpressionException(booWho+" is not a valid entity descriptor"));
             Set<EntityType<?>> eTag = eTagValue.stream().map(Holder::value).collect(Collectors.toUnmodifiableSet());
             if (positive)
@@ -273,7 +276,7 @@ public class EntityValue extends Value
             }
             else
             {
-                return new EntityClassDescriptor(ANY, e -> !eTag.contains(e.getType()) && e.isAlive(), Registry.ENTITY_TYPE.stream().filter(et -> !eTag.contains(et)));
+                return new EntityClassDescriptor(ANY, e -> !eTag.contains(e.getType()) && e.isAlive(), server.registryAccess().registryOrThrow(Registries.ENTITY_TYPE).stream().filter(et -> !eTag.contains(et)));
             }
         }
         return eDesc;
@@ -283,29 +286,15 @@ public class EntityValue extends Value
 
     public static class EntityClassDescriptor
     {
-        public EntityTypeTest<Entity, ? extends Entity> directType; // interface of EntityType
-        public Predicate<? super Entity> filteringPredicate;
-        public List<EntityType<? extends  Entity>> typeList;
-        public Value listValue;
-        EntityClassDescriptor(EntityType<?> type, Predicate<? super Entity> predicate, List<EntityType<?>> types)
-        {
-            directType = type;
-            filteringPredicate = predicate;
-            typeList = types;
-            listValue = (types==null)?Value.NULL:ListValue.wrap(types.stream().map(et -> StringValue.of(nameFromRegistryId(Registry.ENTITY_TYPE.getKey(et)))).collect(Collectors.toList()));
-        }
+        public final EntityTypeTest<Entity, ? extends Entity> directType; // interface of EntityType
+        public final Predicate<? super Entity> filteringPredicate;
+        public final List<EntityType<? extends Entity>> types;
 
-        EntityClassDescriptor( EntityTypeTest<Entity, ?> type, Predicate<? super Entity> predicate, List<EntityType<?>> types)
+        EntityClassDescriptor(EntityTypeTest<Entity, ?> type, Predicate<? super Entity> predicate, List<EntityType<?>> types)
         {
-            directType = type;
-            filteringPredicate = predicate;
-            typeList = types;
-            listValue = (types==null)?Value.NULL:ListValue.wrap(types.stream().map(et -> StringValue.of(nameFromRegistryId(Registry.ENTITY_TYPE.getKey(et)))).collect(Collectors.toList()));
-        }
-
-        EntityClassDescriptor(EntityType<?> type, Predicate<? super Entity> predicate, Stream<EntityType<?>> types)
-        {
-            this(type, predicate, types.toList());
+            this.directType = type;
+            this.filteringPredicate = predicate;
+            this.types = types;
         }
 
         EntityClassDescriptor(EntityTypeTest<Entity, ?> type, Predicate<? super Entity> predicate, Stream<EntityType<?>> types)
@@ -313,8 +302,13 @@ public class EntityValue extends Value
             this(type, predicate, types.toList());
         }
 
+        public Value listValue(RegistryAccess regs) {
+            final Registry<EntityType> entityRegs = regs.registryOrThrow(Registries.ENTITY_TYPE);
+            return ListValue.wrap(types.stream().map(et -> StringValue.of(nameFromRegistryId(entityRegs.getKey(et)))));
+        }
+
         public final static Map<String, EntityClassDescriptor> byName = new HashMap<>() {{
-            List<EntityType<?>> allTypes = Registry.ENTITY_TYPE.stream().toList();
+            List<EntityType<?>> allTypes = BuiltInRegistries.ENTITY_TYPE.stream().toList();
             // nonliving types
             Set<EntityType<?>> projectiles = Set.of(
                     EntityType.ARROW, EntityType.DRAGON_FIREBALL, EntityType.FIREWORK_ROCKET,
@@ -397,9 +391,9 @@ public class EntityValue extends Value
             put("regular", new EntityClassDescriptor(EntityTypeTest.forClass(LivingEntity.class), e -> (((LivingEntity) e).getMobType() == MobType.UNDEFINED && e.isAlive()), allTypes.stream().filter(regular::contains)));
             put("!regular", new EntityClassDescriptor(EntityTypeTest.forClass(LivingEntity.class), e -> (((LivingEntity) e).getMobType() != MobType.UNDEFINED && e.isAlive()), allTypes.stream().filter(et -> !regular.contains(et) && living.contains(et))));
 
-            for (ResourceLocation typeId : Registry.ENTITY_TYPE.keySet())
+            for (ResourceLocation typeId : BuiltInRegistries.ENTITY_TYPE.keySet())
             {
-                EntityType<?> type  = Registry.ENTITY_TYPE.get(typeId);
+                EntityType<?> type  = BuiltInRegistries.ENTITY_TYPE.get(typeId);
                 String mobType = ValueConversions.simplify(typeId);
                 put(    mobType, new EntityClassDescriptor(type, net.minecraft.world.entity.EntitySelector.ENTITY_STILL_ALIVE, Stream.of(type)));
                 put("!"+mobType, new EntityClassDescriptor(ANY, (e) -> e.getType() != type  && e.isAlive(), allTypes.stream().filter(et -> et != type)));
@@ -458,7 +452,7 @@ public class EntityValue extends Value
         put("display_name", (e, a) -> new FormattedTextValue(e.getDisplayName()));
         put("command_name", (e, a) -> new StringValue(e.getScoreboardName()));
         put("custom_name", (e, a) -> e.hasCustomName()?new StringValue(e.getCustomName().getString()):Value.NULL);
-        put("type", (e, a) -> new StringValue(nameFromRegistryId(Registry.ENTITY_TYPE.getKey(e.getType()))));
+        put("type", (e, a) -> new StringValue(nameFromRegistryId(e.getLevel().registryAccess().registryOrThrow(Registries.ENTITY_TYPE).getKey(e.getType()))));
         put("is_riding", (e, a) -> BooleanValue.of(e.isPassenger()));
         put("is_ridden", (e, a) -> BooleanValue.of(e.isVehicle()));
         put("passengers", (e, a) -> ListValue.wrap(e.getPassengers().stream().map(EntityValue::new).collect(Collectors.toList())));
@@ -470,14 +464,14 @@ public class EntityValue extends Value
         put("scoreboard_tags", (e, a) -> ListValue.wrap(e.getTags().stream().map(StringValue::new).collect(Collectors.toList())));
         put("entity_tags", (e, a) -> {
             EntityType<?> type = e.getType();
-            return ListValue.wrap(e.getServer().registryAccess().registryOrThrow(Registry.ENTITY_TYPE_REGISTRY).getTags().filter(entry -> entry.getSecond().stream().anyMatch(h -> h.value()==type)).map(entry -> ValueConversions.of(entry.getFirst())).collect(Collectors.toList()));
+            return ListValue.wrap(e.getServer().registryAccess().registryOrThrow(Registries.ENTITY_TYPE).getTags().filter(entry -> entry.getSecond().stream().anyMatch(h -> h.value()==type)).map(entry -> ValueConversions.of(entry.getFirst())).collect(Collectors.toList()));
         });
         // deprecated
         put("has_tag", (e, a) -> BooleanValue.of(e.getTags().contains(a.getString())));
 
         put("has_scoreboard_tag", (e, a) -> BooleanValue.of(e.getTags().contains(a.getString())));
         put("has_entity_tag", (e, a) -> {
-            Optional<HolderSet.Named<EntityType<?>>> tag = e.getServer().registryAccess().registryOrThrow(Registry.ENTITY_TYPE_REGISTRY).getTag(TagKey.create(Registry.ENTITY_TYPE_REGISTRY, InputValidator.identifierOf(a.getString())));
+            Optional<HolderSet.Named<EntityType<?>>> tag = e.getServer().registryAccess().registryOrThrow(Registries.ENTITY_TYPE).getTag(TagKey.create(Registries.ENTITY_TYPE, InputValidator.identifierOf(a.getString())));
             if (tag.isEmpty()) return Value.NULL;
             //Tag<EntityType<?>> tag = e.getServer().getTags().getOrEmpty(Registry.ENTITY_TYPE_REGISTRY).getTag(InputValidator.identifierOf(a.getString()));
             //if (tag == null) return Value.NULL;
@@ -538,9 +532,9 @@ public class EntityValue extends Value
         });
         put("item", (e, a) -> {
             if(e instanceof ItemEntity)
-                return ValueConversions.of(((ItemEntity) e).getItem());
+                return ValueConversions.of(((ItemEntity) e).getItem(), e.getServer().registryAccess());
             if(e instanceof ItemFrame)
-                return ValueConversions.of(((ItemFrame) e).getItem());
+                return ValueConversions.of(((ItemFrame) e).getItem(), e.getServer().registryAccess());
             return Value.NULL;
         });
         put("count", (e, a) -> (e instanceof ItemEntity)?new NumericValue(((ItemEntity) e).getItem().getCount()):Value.NULL);
@@ -666,7 +660,7 @@ public class EntityValue extends Value
 
         put("brain", (e, a) -> {
             String module = a.getString();
-            MemoryModuleType<?> moduleType = Registry.MEMORY_MODULE_TYPE.get(InputValidator.identifierOf(module));
+            MemoryModuleType<?> moduleType = e.getLevel().registryAccess().registryOrThrow(Registries.MEMORY_MODULE_TYPE).get(InputValidator.identifierOf(module));
             if (moduleType == MemoryModuleType.DUMMY) return Value.NULL;
             if (e instanceof LivingEntity livingEntity)
             {
@@ -758,7 +752,7 @@ public class EntityValue extends Value
                 return ListValue.wrap(effects);
             }
             String effectName = a.getString();
-            MobEffect potion = Registry.MOB_EFFECT.get(InputValidator.identifierOf(effectName));
+            MobEffect potion = BuiltInRegistries.MOB_EFFECT.get(InputValidator.identifierOf(effectName));
             if (potion == null)
                 throw new InternalExpressionException("No such an effect: "+effectName);
             if (!((LivingEntity) e).hasEffect(potion))
@@ -829,7 +823,7 @@ public class EntityValue extends Value
             if (where == null)
                 throw new InternalExpressionException("Unknown inventory slot: "+a.getString());
             if (e instanceof LivingEntity)
-                return ValueConversions.of(((LivingEntity)e).getItemBySlot(where));
+                return ValueConversions.of(((LivingEntity)e).getItemBySlot(where), e.getServer().registryAccess());
             return Value.NULL;
         });
 
@@ -940,13 +934,14 @@ public class EntityValue extends Value
         put("attribute", (e, a) ->{
             if (!(e instanceof LivingEntity)) return Value.NULL;
             LivingEntity el = (LivingEntity)e;
+            final Registry<Attribute> attributes = e.getLevel().registryAccess().registryOrThrow(Registries.ATTRIBUTE);
             if (a == null)
             {
                 AttributeMap container = el.getAttributes();
-                return MapValue.wrap(Registry.ATTRIBUTE.stream().filter(container::hasAttribute).collect(Collectors.toMap(aa -> ValueConversions.of(Registry.ATTRIBUTE.getKey(aa)), aa -> NumericValue.of(container.getValue(aa)))));
+                return MapValue.wrap(attributes.stream().filter(container::hasAttribute).collect(Collectors.toMap(aa -> ValueConversions.of(attributes.getKey(aa)), aa -> NumericValue.of(container.getValue(aa)))));
             }
             ResourceLocation id =  InputValidator.identifierOf(a.getString());
-            Attribute attrib = Registry.ATTRIBUTE.getOptional(id).orElseThrow(
+            Attribute attrib = attributes.getOptional(id).orElseThrow(
                     () -> new InternalExpressionException("Unknown attribute: "+a.getString())
             );
             if (!el.getAttributes().hasAttribute(attrib)) return Value.NULL;
@@ -1513,7 +1508,7 @@ public class EntityValue extends Value
                 if (lv.size() >= 1 && lv.size() <= 6)
                 {
                     String effectName = lv.get(0).getString();
-                    MobEffect effect = Registry.MOB_EFFECT.get(InputValidator.identifierOf(effectName));
+                    MobEffect effect = BuiltInRegistries.MOB_EFFECT.get(InputValidator.identifierOf(effectName));
                     if (effect == null)
                         throw new InternalExpressionException("Wrong effect name: "+effectName);
                     if (lv.size() == 1)
@@ -1546,7 +1541,7 @@ public class EntityValue extends Value
             else
             {
                 String effectName = v.getString();
-                MobEffect effect = Registry.MOB_EFFECT.get(InputValidator.identifierOf(effectName));
+                MobEffect effect = BuiltInRegistries.MOB_EFFECT.get(InputValidator.identifierOf(effectName));
                 if (effect == null)
                     throw new InternalExpressionException("Wrong effect name: "+effectName);
                 le.removeEffect(effect);
@@ -1558,7 +1553,7 @@ public class EntityValue extends Value
         put("gamemode", (e,v)->{
             if(!(e instanceof ServerPlayer)) return;
             GameType toSet = v instanceof NumericValue ?
-                    GameType.byId(((NumericValue) v).getInt(), null) :
+                    GameType.byId(((NumericValue) v).getInt()) :
                     GameType.byName(v.getString().toLowerCase(Locale.ROOT), null);
             if (toSet != null) ((ServerPlayer) e).setGameMode(toSet);
         });
@@ -1701,7 +1696,7 @@ public class EntityValue extends Value
             
         });
         put("item", (e, v) -> {
-                ItemStack item=ValueConversions.getItemStackFromValue(v, true);
+                ItemStack item=ValueConversions.getItemStackFromValue(v, true, e.level.registryAccess());
                 if(e instanceof ItemEntity itementity)            
                     itementity.setItem(item);
                 if(e instanceof ItemFrame itemframe)
@@ -1726,7 +1721,8 @@ public class EntityValue extends Value
         if (!force) throw new NBTSerializableValue.IncompatibleTypeException(this);
         CompoundTag tag = new CompoundTag();
         tag.put("Data", getEntity().saveWithoutId( new CompoundTag()));
-        tag.put("Name", StringTag.valueOf(Registry.ENTITY_TYPE.getKey(getEntity().getType()).toString()));
+        final Registry<EntityType<?>> reg = getEntity().level.registryAccess().registryOrThrow(Registries.ENTITY_TYPE);
+        tag.put("Name", StringTag.valueOf(reg.getKey(getEntity().getType()).toString()));
         return tag;
     }
 }

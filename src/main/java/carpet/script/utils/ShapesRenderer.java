@@ -2,6 +2,7 @@ package carpet.script.utils;
 
 import carpet.CarpetSettings;
 import carpet.mixins.ShulkerBoxAccessMixin;
+import carpet.script.utils.shapes.ShapeDirection;
 import carpet.utils.CarpetProfiler;
 
 import com.mojang.blaze3d.systems.RenderSystem;
@@ -12,7 +13,7 @@ import com.mojang.blaze3d.vertex.Tesselator;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import com.mojang.blaze3d.vertex.VertexFormat.Mode;
-import com.mojang.math.Vector3f;
+import com.mojang.math.Axis;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import java.util.HashMap;
 import java.util.Locale;
@@ -31,10 +32,8 @@ import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.Sheets;
-import net.minecraft.client.renderer.block.model.ItemTransform;
 import net.minecraft.client.renderer.block.model.ItemTransforms;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
-import net.minecraft.client.renderer.blockentity.ShulkerBoxRenderer;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.resources.model.Material;
 import net.minecraft.core.BlockPos;
@@ -113,7 +112,7 @@ public class ShapesRenderer
         double cameraZ = camera.getPosition().z;
         boolean entityBoxes = client.getEntityRenderDispatcher().shouldRenderHitBoxes();
 
-        if (shapes.size() != 0) { synchronized (shapes) {
+        if (shapes.size() != 0) {
             shapes.get(dimensionType).long2ObjectEntrySet().removeIf(
                     entry -> entry.getValue().isExpired(currentTime)
             );
@@ -136,16 +135,15 @@ public class ShapesRenderer
             matrixStack.popPose();
             RenderSystem.applyModelViewMatrix();
 
-        }}
-        if (labels.size() != 0) { synchronized (labels)
-        {
+        }
+        if (labels.size() != 0) {
             labels.get(dimensionType).long2ObjectEntrySet().removeIf(
                     entry -> entry.getValue().isExpired(currentTime)
             );
             labels.get(dimensionType).values().forEach(s -> {
                 if ( (!s.shape.debug || entityBoxes) && s.shouldRender(dimensionType)) s.renderLines(matrices, tessellator, bufferBuilder, cameraX, cameraY, cameraZ, partialTick);
             });
-        }}
+        }
         RenderSystem.enableCull();
         RenderSystem.depthMask(true);
         RenderSystem.enableBlend();
@@ -166,7 +164,7 @@ public class ShapesRenderer
 
     public void addShape(CompoundTag tag)
     {
-        ShapeDispatcher.ExpiringShape shape = ShapeDispatcher.fromTag(tag);
+        ShapeDispatcher.ExpiringShape shape = ShapeDispatcher.fromTag(tag, client.level);
         if (shape == null) return;
         BiFunction<Minecraft, ShapeDispatcher.ExpiringShape, RenderedShape<? extends ShapeDispatcher.ExpiringShape >> shapeFactory;
         shapeFactory = renderedShapes.get(tag.getString("shape"));
@@ -181,43 +179,30 @@ public class ShapesRenderer
             long key = rshape.key();
             Map<ResourceKey<Level>, Long2ObjectOpenHashMap<RenderedShape<? extends ShapeDispatcher.ExpiringShape>>> container =
                     rshape.stageDeux()?labels:shapes;
-            synchronized (container)
-            {
-                RenderedShape<?> existing = container.computeIfAbsent(dim, d -> new Long2ObjectOpenHashMap<>()).get(key);
-                if (existing != null)
-                {   // promoting previous shape
-                    existing.promoteWith(rshape);
-                }
-                else
-                {
-                    container.get(dim).put(key, rshape);
-                }
+            RenderedShape<?> existing = container.computeIfAbsent(dim, d -> new Long2ObjectOpenHashMap<>()).get(key);
+            if (existing != null)
+            {   // promoting previous shape
+                existing.promoteWith(rshape);
             }
+            else
+            {
+                container.get(dim).put(key, rshape);
+            }
+
         }
     }
     public void reset()
     {
-        synchronized (shapes)
-        {
-            shapes.values().forEach(Long2ObjectOpenHashMap::clear);
-        }
-        synchronized (labels)
-        {
-            labels.values().forEach(Long2ObjectOpenHashMap::clear);
-        }
+        shapes.values().forEach(Long2ObjectOpenHashMap::clear);
+        labels.values().forEach(Long2ObjectOpenHashMap::clear);
     }
 
     public void renewShapes()
     {
         CarpetProfiler.ProfilerToken token = CarpetProfiler.start_section(null, "Scarpet client", CarpetProfiler.TYPE.GENERAL);
-        synchronized (shapes)
-        {
-            shapes.values().forEach(el -> el.values().forEach(shape -> shape.expiryTick++));
-        }
-        synchronized (labels)
-        {
-            labels.values().forEach(el -> el.values().forEach(shape -> shape.expiryTick++));
-        }
+        shapes.values().forEach(el -> el.values().forEach(shape -> shape.expiryTick++));
+        labels.values().forEach(el -> el.values().forEach(shape -> shape.expiryTick++));
+
         CarpetProfiler.end_current_section(token);
     }
 
@@ -232,9 +217,9 @@ public class ShapesRenderer
         protected RenderedShape(Minecraft client, T shape)
         {
             this.shape = shape;
-            expiryTick = client.level.getGameTime()+shape.getExpiry();
-            renderEpsilon = (3+((double)shape.key())/Long.MAX_VALUE)/1000;
             this.client = client;
+            expiryTick = client.level.getGameTime()+shape.getExpiry();
+            renderEpsilon = (3+((double)key())/Long.MAX_VALUE)/1000;
         }
 
         public boolean isExpired(long currentTick)
@@ -243,7 +228,7 @@ public class ShapesRenderer
         }
         public long key()
         {
-            return shape.key();
+            return shape.key(client.level.registryAccess());
         };
         public boolean shouldRender(ResourceKey<Level> dim)
         {
@@ -295,44 +280,22 @@ public class ShapesRenderer
             {
                 matrices.translate(0.5, 0.5, 0.5);
             }
-            matrices.translate(v1.x - cx, v1.y - cy, v1.z - cz);
-            if (shape.facing == null)
-            {
-                matrices.mulPose(camera1.rotation());
-                matrices.mulPose(Vector3f.YP.rotationDegrees(180));
-            }
-            else
-            {
-                switch (shape.facing)
-                {
-                    case NORTH:
-                        break;
-                    case SOUTH:
-                        matrices.mulPose(Vector3f.YP.rotationDegrees(180));
-                        break;
-                    case EAST:
-                        matrices.mulPose(Vector3f.YP.rotationDegrees(270));
-                        break;
-                    case WEST:
-                        matrices.mulPose(Vector3f.YP.rotationDegrees(90));
-                        break;
-                    case UP:
-                        matrices.mulPose(Vector3f.XP.rotationDegrees(90));
-                        break;
-                    case DOWN:
-                        matrices.mulPose(Vector3f.XP.rotationDegrees(-90));
-                        break;
-                }
-            }
 
-            if (shape.tilt != 0.0f) matrices.mulPose(Vector3f.ZP.rotationDegrees(-shape.tilt));
-            if (shape.lean != 0.0f) matrices.mulPose(Vector3f.XP.rotationDegrees(-shape.lean));
-            if (shape.turn != 0.0f) matrices.mulPose(Vector3f.YP.rotationDegrees( shape.turn));
+            matrices.translate(v1.x - cx, v1.y - cy, v1.z - cz);
+            ShapeDirection.rotatePoseStackByShapeDirection(matrices, shape.facing, camera1, isitem ? v1 : v1.add(0.5, 0.5, 0.5));
+            if (shape.tilt != 0.0f) matrices.mulPose(Axis.ZP.rotationDegrees(-shape.tilt));
+            if (shape.lean != 0.0f) matrices.mulPose(Axis.XP.rotationDegrees(-shape.lean));
+            if (shape.turn != 0.0f) matrices.mulPose(Axis.YP.rotationDegrees( shape.turn));
             matrices.scale(shape.scaleX, shape.scaleY, shape.scaleZ);
 
-            if (!isitem)// blocks should use its center as the origin
+            if (!isitem)
             {
+                // blocks should use its center as the origin
                 matrices.translate(-0.5, -0.5, -0.5);
+            }
+            else {
+                // items seems to be flipped by default
+                matrices.mulPose(Axis.YP.rotationDegrees(180));
             }
 
             RenderSystem.depthMask(true);
@@ -400,8 +363,9 @@ public class ShapesRenderer
             {
                 if (shape.item != null)
                 {
+                    // draw the item
                     client.getItemRenderer().renderStatic(shape.item, transformType, light,
-                            OverlayTexture.NO_OVERLAY, matrices, immediate, (int) shape.key());
+                            OverlayTexture.NO_OVERLAY, matrices, immediate, (int) shape.key(client.level.registryAccess()));
                 }
             }
             matrices.popPose();
@@ -478,39 +442,14 @@ public class ShapesRenderer
                 RenderSystem.enableCull();
             matrices.pushPose();
             matrices.translate(v1.x - cx,v1.y - cy,v1.z - cz);
-            if (shape.facing == null)
-            {
-                //matrices.method_34425(new Matrix4f(camera1.getRotation()));
-                matrices.mulPose(camera1.rotation());
-            }
-            else
-            {
-                switch (shape.facing)
-                {
-                    case NORTH:
-                        break;
-                    case SOUTH:
-                        matrices.mulPose(Vector3f.YP.rotationDegrees(180));
-                        break;
-                    case EAST:
-                        matrices.mulPose(Vector3f.YP.rotationDegrees(270));
-                        break;
-                    case WEST:
-                        matrices.mulPose(Vector3f.YP.rotationDegrees(90));
-                        break;
-                    case UP:
-                        matrices.mulPose(Vector3f.XP.rotationDegrees(90));
-                        break;
-                    case DOWN:
-                        matrices.mulPose(Vector3f.XP.rotationDegrees(-90));
-                        break;
-                }
-            }
+
+            ShapeDirection.rotatePoseStackByShapeDirection(matrices, shape.facing, camera1, v1);
+
             matrices.scale(shape.size* 0.0025f, -shape.size*0.0025f, shape.size*0.0025f);
             //RenderSystem.scalef(shape.size* 0.0025f, -shape.size*0.0025f, shape.size*0.0025f);
-            if (shape.tilt!=0.0f) matrices.mulPose(Vector3f.ZP.rotationDegrees(shape.tilt));
-            if (shape.lean!=0.0f) matrices.mulPose(Vector3f.XP.rotationDegrees(shape.lean));
-            if (shape.turn!=0.0f) matrices.mulPose(Vector3f.YP.rotationDegrees(shape.turn));
+            if (shape.tilt!=0.0f) matrices.mulPose(Axis.ZP.rotationDegrees(shape.tilt));
+            if (shape.lean!=0.0f) matrices.mulPose(Axis.XP.rotationDegrees(shape.lean));
+            if (shape.turn!=0.0f) matrices.mulPose(Axis.YP.rotationDegrees(shape.turn));
             matrices.translate(-10*shape.indent, -10*shape.height-9,  (-10*renderEpsilon)-10*shape.raise);
             //if (visibleThroughWalls) RenderSystem.disableDepthTest();
             matrices.scale(-1, 1, 1);

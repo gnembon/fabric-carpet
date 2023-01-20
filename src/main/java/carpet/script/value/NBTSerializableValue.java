@@ -23,8 +23,8 @@ import net.minecraft.commands.arguments.item.ItemInput;
 import net.minecraft.commands.arguments.item.ItemParser;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
-import net.minecraft.core.HolderLookup;
-import net.minecraft.core.Registry;
+import net.minecraft.core.RegistryAccess;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CollectionTag;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.EndTag;
@@ -208,7 +208,7 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
                 if (strVal.equals("enderchest"))
                 {
                     Value v2 = params.get(1 + offset);
-                    ServerPlayer player = EntityValue.getPlayerByValue(c.s.getServer(), v2);
+                    ServerPlayer player = EntityValue.getPlayerByValue(c.server(), v2);
                     if (player == null) throw new InternalExpressionException("enderchest inventory requires player argument");
                     return new InventoryLocator(player, player.blockPosition(), player.getEnderChestInventory(), offset + 2, true);
                 }
@@ -222,7 +222,7 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
                 }
                 boolean isEnder = strVal.startsWith("enderchest_");
                 if (isEnder) strVal = strVal.substring(11); // len("enderchest_")
-                ServerPlayer player = c.s.getServer().getPlayerList().getPlayerByName(strVal);
+                ServerPlayer player = c.server().getPlayerList().getPlayerByName(strVal);
                 if (player == null) throw new InternalExpressionException("String description of an inventory should either denote a player or player's enderchest");
                 return new InventoryLocator(
                         player,
@@ -251,7 +251,7 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
                 BlockPos pos = ((BlockValue) v1).getPos();
                 if (pos == null)
                     throw new InternalExpressionException("Block to access inventory needs to be positioned in the world");
-                Container inv = getInventoryAt(c.s.getLevel(), pos);
+                Container inv = getInventoryAt(c.level(), pos);
                 if (inv == null)
                     return null;
                 return new InventoryLocator(pos, pos, inv, offset+1);
@@ -263,7 +263,7 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
                         NumericValue.asNumber(args.get(0)).getDouble(),
                         NumericValue.asNumber(args.get(1)).getDouble(),
                         NumericValue.asNumber(args.get(2)).getDouble());
-                Container inv = getInventoryAt(c.s.getLevel(), pos);
+                Container inv = getInventoryAt(c.level(), pos);
                 if (inv == null)
                     return null;
                 return new InventoryLocator(pos, pos, inv, offset+1);
@@ -277,7 +277,7 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
                     NumericValue.asNumber(v1).getDouble(),
                     NumericValue.asNumber(params.get(1 + offset)).getDouble(),
                     NumericValue.asNumber(params.get(2 + offset)).getDouble());
-            Container inv = getInventoryAt(c.s.getLevel(), pos);
+            Container inv = getInventoryAt(c.level(), pos);
             if (inv == null)
                 return null;
             return new InventoryLocator(pos, pos, inv, offset + 3);
@@ -290,22 +290,22 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
 
     private static final Map<String,ItemInput> itemCache = new HashMap<>();
 
-    public static ItemInput parseItem(String itemString)
+    public static ItemInput parseItem(String itemString, RegistryAccess regs)
     {
-        return parseItem(itemString, null);
+        return parseItem(itemString, null, regs);
     }
 
-    public static ItemInput parseItem(String itemString, CompoundTag customTag)
+    public static ItemInput parseItem(String itemString, CompoundTag customTag, RegistryAccess regs)
     {
         try
         {
-            ItemInput res = itemCache.get(itemString);
+            ItemInput res = itemCache.get(itemString);  // [SCARY SHIT] persistent caches over server reloads
             if (res != null)
                 if (customTag == null)
                     return res;
                 else
                     return new ItemInput(Holder.direct(res.getItem()), customTag);
-            ItemParser.ItemResult parser = ItemParser.parseForItem(HolderLookup.forRegistry(Registry.ITEM), new StringReader(itemString));
+            ItemParser.ItemResult parser = ItemParser.parseForItem(regs.lookupOrThrow(Registries.ITEM), new StringReader(itemString));
             res = new ItemInput(parser.item(), parser.nbt());
 
             itemCache.put(itemString, res);
@@ -588,7 +588,7 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
         }
         try
         {
-            nbtPath.set(tag, () -> replacement);
+            nbtPath.set(tag, replacement);
         }
         catch (CommandSyntaxException e)
         {

@@ -216,7 +216,7 @@ public class BlockIterators {
         expression.addContextFunction("neighbours", -1, (c, t, lv)->
         {
             BlockPos center = BlockArgument.findIn((CarpetContext) c, lv,0).block.getPos();
-            ServerLevel world = ((CarpetContext) c).s.getLevel();
+            ServerLevel world = ((CarpetContext) c).level();
 
             List<Value> neighbours = new ArrayList<>();
             neighbours.add(new BlockValue(null, world, center.above()));

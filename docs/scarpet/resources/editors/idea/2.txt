@@ -56,7 +56,6 @@ inventory_get
 inventory_remove
 inventory_set
 inventory_size
-item_category
 item_display_name
 item_list
 item_tags

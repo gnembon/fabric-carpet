@@ -15,6 +15,8 @@ import net.minecraft.core.Registry;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.Vec3i;
 import net.minecraft.core.particles.ParticleOptions;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
@@ -30,6 +32,7 @@ import net.minecraft.world.entity.ai.memory.NearestVisibleLivingEntities;
 import net.minecraft.world.entity.ai.memory.WalkTarget;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.pattern.BlockInWorld;
 import net.minecraft.world.level.block.state.properties.Property;
@@ -79,12 +82,22 @@ public class ValueConversions
 
     public static <T extends Number> Value of(MinMaxBounds<T> range) { return ListValue.of(NumericValue.of(range.getMin()), NumericValue.of(range.getMax()));}
 
+    @Deprecated
     public static Value of(ItemStack stack)
     {
         if (stack == null || stack.isEmpty())
             return Value.NULL;
         return ListValue.of(
-                of(Registry.ITEM.getKey(stack.getItem())),
+                of(BuiltInRegistries.ITEM.getKey(stack.getItem())),
+                new NumericValue(stack.getCount()),
+                NBTSerializableValue.fromStack(stack)
+        );
+    }
+    public static Value of(ItemStack stack, RegistryAccess regs) {
+        if (stack == null || stack.isEmpty())
+            return Value.NULL;
+        return ListValue.of(
+                of(regs.registryOrThrow(Registries.ITEM).getKey(stack.getItem())),
                 new NumericValue(stack.getCount()),
                 NBTSerializableValue.fromStack(stack)
         );
@@ -178,9 +191,7 @@ public class ValueConversions
     {
         if (id == null) // should be Value.NULL
             return Value.NULL;
-        if (id.getNamespace().equals("minecraft"))
-            return new StringValue(id.getPath());
-        return new StringValue(id.toString());
+        return new StringValue(simplify(id));
     }
 
     public static String simplify(ResourceLocation id)
@@ -319,7 +330,7 @@ public class ValueConversions
         );
     }
 
-    public static Value of(StructureStart structure)
+    public static Value of(StructureStart structure, final RegistryAccess regs)
     {
         if (structure == null || structure == StructureStart.INVALID_START) return Value.NULL;
         BoundingBox boundingBox = structure.getBoundingBox();
@@ -333,7 +344,7 @@ public class ValueConversions
             if (box.maxX() >= box.minX() && box.maxY() >= box.minY() && box.maxZ() >= box.minZ())
             {
                 pieces.add(ListValue.of(
-                        new StringValue(NBTSerializableValue.nameFromRegistryId(Registry.STRUCTURE_PIECE.getKey(piece.getType()))),
+                        new StringValue(NBTSerializableValue.nameFromRegistryId(regs.registryOrThrow(Registries.STRUCTURE_PIECE).getKey(piece.getType()))),
                         (piece.getOrientation() == null) ? Value.NULL : new StringValue(piece.getOrientation().getName()),
                         ListValue.fromTriple(box.minX(), box.minY(), box.minZ()),
                         ListValue.fromTriple(box.maxX(), box.maxY(), box.maxZ())
@@ -407,15 +418,16 @@ public class ValueConversions
     public static Value ofBlockPredicate(RegistryAccess registryAccess, Predicate<BlockInWorld> blockPredicate)
     {
         BlockPredicateInterface predicateData = (BlockPredicateInterface) blockPredicate;
+        final Registry<Block> blocks = registryAccess.registryOrThrow(Registries.BLOCK);
         return ListValue.of(
-                predicateData.getCMBlockState()==null?Value.NULL:of(Registry.BLOCK.getKey(predicateData.getCMBlockState().getBlock())),
-                predicateData.getCMBlockTagKey()==null?Value.NULL:of(registryAccess.registryOrThrow(Registry.BLOCK_REGISTRY).getTag(predicateData.getCMBlockTagKey()).get().key()),
+                predicateData.getCMBlockState()==null?Value.NULL:of(blocks.getKey(predicateData.getCMBlockState().getBlock())),
+                predicateData.getCMBlockTagKey()==null?Value.NULL:of(blocks.getTag(predicateData.getCMBlockTagKey()).get().key()),
                 MapValue.wrap(predicateData.getCMProperties()),
                 predicateData.getCMDataTag() == null?Value.NULL:new NBTSerializableValue(predicateData.getCMDataTag())
         );
     }
 
-    public static ItemStack getItemStackFromValue(Value value, boolean withCount)
+    public static ItemStack getItemStackFromValue(Value value, boolean withCount, RegistryAccess regs)
     {
         if (value.isNull())
         {
@@ -446,7 +458,7 @@ public class ValueConversions
         {
             name = value.getString();
         }
-        ItemInput itemInput = NBTSerializableValue.parseItem(name, nbtTag);
+        ItemInput itemInput = NBTSerializableValue.parseItem(name, nbtTag, regs);
         try
         {
             return itemInput.createItemStack(count,false);
@@ -482,7 +494,7 @@ public class ValueConversions
         if (o instanceof BoundingBox)
             return of((BoundingBox) o);
         if (o instanceof ItemStack)
-            return of((ItemStack)o);
+            return of((ItemStack)o, serverWorld.registryAccess());
         if (o instanceof Boolean)
             return BooleanValue.of((Boolean) o);
         if (o instanceof Number)

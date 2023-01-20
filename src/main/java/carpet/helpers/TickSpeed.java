@@ -176,6 +176,9 @@ public class TickSpeed
 
     public static boolean continueWarp()
     {
+        if (!process_entities)
+            // Returning false so we don't have to run at max speed when doing nothing
+            return false;
         if (time_bias > 0)
         {
             if (time_bias == time_warp_scheduled_ticks) //first call after previous tick, adjust start time
@@ -194,25 +197,21 @@ public class TickSpeed
 
     public static void tick()
     {
-        process_entities = true;
         if (player_active_timeout > 0)
         {
             player_active_timeout--;
         }
         if (is_paused)
         {
-            if (player_active_timeout < PLAYER_GRACE)
-            {
-                process_entities = false;
-            }
+            process_entities = player_active_timeout >= PLAYER_GRACE;
         }
         else if (is_superHot)
         {
-            if (player_active_timeout <= 0)
-            {
-                process_entities = false;
-
-            }
+            process_entities = player_active_timeout > 0;
+        }
+        else
+        {
+            process_entities = true;
         }
     }
     //unused - mod compat reasons
@@ -227,7 +226,7 @@ public class TickSpeed
             tickrate = 1000.0f;
         }
         
-        TickSpeed.mspt = (float)mspt;
+        TickSpeed.mspt = mspt;
         
         if (update) notifyTickrateListeners("carpet");
     }

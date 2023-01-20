@@ -79,7 +79,7 @@ public abstract class PrimedTntMixin extends Entity implements TntEntityInterfac
                 this.level.explode(this, this.getX(), this.getY() + (double)(this.getBbHeight() / 16.0F),
                         this.getZ(),
                         4.0F,
-                        Explosion.BlockInteraction.BREAK);
+                        Level.ExplosionInteraction.TNT);
     }
 
     @Inject(method = "tick", at = @At(value = "INVOKE",
