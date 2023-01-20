@@ -26,6 +26,7 @@
     "FlowingFluid_liquidDamageDisabledMixin",
     "ServerStatus_motdMixin",
     "MinecraftServer_pingPlayerSampleLimit",
+    "HugeFungusFeatureMixin",
 
     "MinecraftServer_coreMixin",
 
