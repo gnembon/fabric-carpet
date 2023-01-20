@@ -7,6 +7,7 @@ accessible class net/minecraft/world/level/lighting/BlockLightSectionStorage$Blo
 accessible class net/minecraft/world/level/border/WorldBorder$BorderExtent
 accessible class net/minecraft/world/level/border/WorldBorder$StaticBorderExtent
 accessible class net/minecraft/server/MinecraftServer$ReloadableResources
+accessible class net/minecraft/world/level/biome/Biome$ClimateSettings
 
 accessible method net/minecraft/world/level/border/WorldBorder getListeners ()Ljava/util/List;
 

@@ -17,7 +17,6 @@ import java.util.Map;
 import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 import net.minecraft.commands.arguments.NbtPathArgument;
 import net.minecraft.commands.arguments.item.ItemInput;
 import net.minecraft.commands.arguments.item.ItemParser;
@@ -609,7 +608,7 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
                 return Value.NULL;
             if (tags.size()==1 && !valString.endsWith("[]"))
                 return NBTSerializableValue.decodeTag(tags.get(0));
-            return ListValue.wrap(tags.stream().map(NBTSerializableValue::decodeTag).collect(Collectors.toList()));
+            return ListValue.wrap(tags.stream().map(NBTSerializableValue::decodeTag));
         }
         catch (CommandSyntaxException ignored) { }
         return Value.NULL;
@@ -696,8 +695,7 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
 
     public static class IncompatibleTypeException extends RuntimeException
     {
-        private IncompatibleTypeException() {}
-        public Value val;
+        public final Value val;
         public IncompatibleTypeException(Value val)
         {
             this.val = val;

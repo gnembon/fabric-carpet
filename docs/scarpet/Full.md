@@ -549,7 +549,7 @@ A set of assignment operators. All require bounded variable on the LHS, `<>` req
 right hand side as well (bounded, meaning being variables). Additionally they can also handle list constructors 
 with all bounded variables, and work then as list assignment operators. When `+=` is used on a list, it extends 
 that list of that element, and returns the list (old == new). `scarpet` doesn't support currently removal of items. 
-Removal of items can be obtaine via `filter` command, and reassigning it fo the same variable. Both operations would 
+Removal of items can be obtained via `filter` command, and reassigning it fo the same variable. Both operations would 
 require rewriting of the array anyways.
 
 <pre>
@@ -603,7 +603,7 @@ args() -> ... [1, 2, 3]; sum(a, b, c) -> a+b+c; sum(args())   => 6
 a = ... [1, 2, 3]; sum(a, b, c) -> a+b+c; sum(a)   => 6
 </pre>
 
-Unpacking mechanics can be used for list and map constriction, not just for function calls.
+Unpacking mechanics can be used for list and map construction, not just for function calls.
 
 <pre>
 [...range(5), pi, ...range(5,-1,-1)]   => [0, 1, 2, 3, 4, 3.14159265359, 5, 4, 3, 2, 1, 0]
@@ -677,7 +677,7 @@ Highest integer that is still no larger then `n`. Insert a floor pun here.
 
 ### `ceil(n)`
 
-First lucky integer that is not smalller than `n`. As you would expect, ceiling is typically right above the floor.
+First lucky integer that is not smaller than `n`. As you would expect, ceiling is typically right above the floor.
 
 ### `ln(n)`
 
@@ -847,7 +847,7 @@ str('foo') => 'foo'
 str('3bar') => '3bar'
 str(2)+str(2) => '22'
 str('pi: %.2f',pi) => 'pi: 3.14'
-str('player at: %d %d %d',pos(player())) => 'player at: 567, -2423, 124'
+str('player at: %d, %d, %d',pos(player())) => 'player at: 567, -2423, 124'
 </pre>
 
 * * *
@@ -975,7 +975,7 @@ title('aBc') => 'Abc'
 
 ### `replace(string, regex, repl?); replace_first(string, regex, repl?)`
 
-Replaces all, or first occurence of a regular expression in the string with `repl` expression, 
+Replaces all, or first occurrence of a regular expression in the string with `repl` expression, 
 or nothing, if not specified. To use escape characters (`\(`,`\+`,...), metacharacters (`\d`,`\w`,...), or position anchors (`\b`,`\z`,...) in your regular expression, use two backslashes.
 
 <pre>
@@ -1256,7 +1256,7 @@ From which we can learn that there is 7216 primes between 1M and 1.1M
 
 Evaluates expression `expr` repeatedly until condition `cond` becomes false, but not more than `limit` times. 
 Returns the result of the last `expr` evaluation, or `null` if nothing was successful. Both `expr` and `cond` will 
-recveived a bound variable `_` indicating current iteration, so its a number.
+received a bound variable `_` indicating current iteration, so its a number.
 
 <pre>
 while(a<100,10,a=_*_)  => 81 // loop exhausted via limit
@@ -2829,8 +2829,8 @@ Returns the map colour of a block at position. One of:
 
 `'air'`, `'grass'`, `'sand'`, `'wool'`, `'tnt'`, `'ice'`, `'iron'`, `'foliage'`, `'snow'`, `'clay'`, `'dirt'`, 
 `'stone'`, `'water'`, `'wood'`, `'quartz'`, `'adobe'`, `'magenta'`, `'light_blue'`, `'yellow'`, `'lime'`, `'pink'`, 
-`'gray'`, `'light_gray'`, `'cyan'`, `'purple'`, `'blue'`, `'brown'`, `'green'`, `'red'`, `'black'`, `'gold
-'`, `'diamond'`, `'lapis'`, `'emerald'`, `'obsidian'`, `'netherrack'`, `'white_terracotta'`, `'orange_terracotta'`, 
+`'gray'`, `'light_gray'`, `'cyan'`, `'purple'`, `'blue'`, `'brown'`, `'green'`, `'red'`, `'black'`, `'gold'`, 
+`'diamond'`, `'lapis'`, `'emerald'`, `'obsidian'`, `'netherrack'`, `'white_terracotta'`, `'orange_terracotta'`, 
 `'magenta_terracotta'`, `'light_blue_terracotta'`, `'yellow_terracotta'`, `'lime_terracotta'`, `'pink_terracotta'`, 
 `'gray_terracotta'`, `'light_gray_terracotta'`, `'cyan_terracotta'`, `'purple_terracotta'`, `'blue_terracotta'`, 
 `'brown_terracotta'`, `'green_terracotta'`, `'red_terracotta'`, `'black_terracotta'`,
@@ -3067,12 +3067,12 @@ These contain some popular features and structures that are impossible or diffic
 * `'coral_mushroom'` - mushroom coral feature
 * `'coral_tree'` - tree coral feature
 * `'fancy_oak_bees'` - large oak tree variant with a mandatory beehive unlike standard that generate with probability
-* `'oak_bees'` - normal oak tree with a manatory beehive unlike standard that generate with probability
+* `'oak_bees'` - normal oak tree with a mandatory beehive unlike standard that generate with probability
 
 
 ### `structure_eligibility(pos, ?structure, ?size_needed)`
 
-Checks wordgen eligibility for a structure in a given chunk. Requires a `Structure Variant` name (see above),
+Checks worldgen eligibility for a structure in a given chunk. Requires a `Structure Variant` name (see above),
 or `Standard Structure` to check structures of this type.
 If no structure is given, or `null`, then it will check
 for all structures. If bounding box of the structures is also requested, it will compute size of potential
@@ -3283,7 +3283,7 @@ cuboid search area.
 
 ### `entity_selector(selector)`
 
-Returns entities satisifying given vanilla entity selector. Most complex among all the methods of selecting entities, 
+Returns entities satisfying given vanilla entity selector. Most complex among all the methods of selecting entities, 
 but the most capable. Selectors are cached so it should be as fast as other methods of selecting entities. Unlike other
 entities fetching / filtering method, this one doesn't guarantee to return entities from current dimension, since
 selectors can return any loaded entity in the world.
@@ -3314,7 +3314,7 @@ Boolean. True if the entity is removed.
 
 ### `query(e, 'id')`
 
-Returns numerical id of the entity. Most efficient way to keep track of entites in a script. 
+Returns numerical id of the entity. Most efficient way to keep track of entities in a script. 
 Ids are only unique within current game session (ids are not preserved between restarts), 
 and dimension (each dimension has its own ids which can overlap).
 
@@ -3364,7 +3364,7 @@ Respective component of the entity's motion vector
 
 ### `query(e, 'on_ground')`
 
-Returns `true` if en entity is standing on firm ground and falling down due to that.
+Returns `true` if an entity is standing on firm ground and falling down due to that.
 
 ### `query(e, 'name'), query(e, 'display_name'), query(e, 'custom_name'), query(e, 'type')`
 
@@ -3597,7 +3597,7 @@ Returns `null` if the argument is not a player, otherwise:
 *   `multiplayer`: for players on a dedicated server
 *   `lan_host`: for singleplayer owner that opened the game to LAN
 *   `lan_player`: for all other players that connected to a LAN host
-*   `fake`: any carpet-spanwed fake player
+*   `fake`: any carpet-spawned fake player
 *   `shadow`: any carpet-shadowed real player
 *   `realms`: ?
 
@@ -4239,7 +4239,7 @@ With no arguments, returns a list of all items in the game. With an item tag pro
 
 ### `item_tags(item, tag?)`
 
-Returns list of tags the item belongs to, or, if tag is provided, `true` if an item maches the tag, `false` if it doesn't and `null` if that's not a valid tag
+Returns list of tags the item belongs to, or, if tag is provided, `true` if an item matches the tag, `false` if it doesn't and `null` if that's not a valid tag
 
 Throws `unknown_item` if item doesn't exist.
 
@@ -4707,7 +4707,7 @@ Events triggered in an app can result in zero, one, or multiple executions, depe
  * player targeted events (like `player_breaks_block`) target each app once:
    * for global scoped apps - targets a single app instance and provides `player` as the first argument.
    * for player scoped apps - targets only a given player instance, providing player argument for API consistency, 
-     since active player in player scoped apps can always be retrived using `player()`. 
+     since active player in player scoped apps can always be retrieved using `player()`. 
  * global events could be handled by multiple players multiple times (like `explosion`, or `tick`):
    * for global scoped apps - triggered once for the single app instance.
    * for player scoped apps - triggered N times for each player separately, so they can do something with that information
@@ -4749,7 +4749,7 @@ the system is closing down exceptionally.
 ## Built-in global events
 
 Global events will be handled once per app that is with `'global'` scope. With `player` scoped apps, each player instance
- will be triggerd once for each player, so a global event may be executed multiple times for such apps.
+ will be triggered once for each player, so a global event may be executed multiple times for such apps.
 
 ### `__on_server_starts()`
 Event triggers after world is loaded and after all startup apps have started. It won't be triggered with `/reload`.
@@ -4911,14 +4911,14 @@ Triggered when a player attacks entity, right before it happens server side.
 This event can be cancelled by returning `'cancel'`, which prevents the player from attacking the entity.
 
 ### `__on_player_takes_damage(player, amount, source, source_entity)`
-Triggered when a player is taking damage. Event is executed right after potential absorbtion was applied and before
+Triggered when a player is taking damage. Event is executed right after potential absorption was applied and before
 the actual damage is applied to the player. 
 
 This event can be cancelled by returning `'cancel'`, which prevents the player from taking damage.
 
 ### `__on_player_deals_damage(player, amount, entity)`
 Triggered when a player deals damage to another entity. Its applied in the same moment as `player_takes_damage` if both
-sides of the event are players, and similar for all other entities, just their absorbtion is taken twice, just noone ever 
+sides of the event are players, and similar for all other entities, just their absorption is taken twice, just noone ever 
 notices that ¯\_(ツ)_/¯
 
 This event can be cancelled by returning `'cancel'`, which prevents the damage from being dealt.
@@ -5001,7 +5001,7 @@ is handled before scoreboard values for these statistics are changed.
 
 App programmers can define and trigger their own custom events. Unlike built-in events, all custom events pass a single value
 as an argument, but this doesn't mean that they cannot pass a complex list, map, or nbt tag as a message. Each event signal is
-either targetting all apps instances for all players, including global apps, if no target player has been identified, 
+either targeting all apps instances for all players, including global apps, if no target player has been identified, 
 or only player scoped apps, if the target player
 is specified, running once for that player app. You cannot target global apps with player-targeted signals. Built-in events
 do target global apps, since their first argument is clearly defined and passed. That may change in the future in case there is 
@@ -5045,7 +5045,7 @@ to it when the event is triggered. All custom events expect a function that take
 If extra arguments are provided, they will be appended to the argument list of the callback function.
 
 Returns `true` if subscription to the event was successful, or `false` if it failed (for instance wrong scope for built-in event,
-or incorect number of parameters for the event).
+or incorrect number of parameters for the event).
 
 If a callback is specified as `null`, the given app (or player app instance )stops handling that event. 
 
@@ -5069,7 +5069,7 @@ In case you want to pass an event handler that is not defined in your module, pl
 
 Fires a specific event. If the event does not exist (only `handle_event` creates missing new events), or provided argument list
 was not matching the callee expected arguments, returns `null`, 
-otherwise returns number of apps notified. If `target_player` is specified and not `null` triggers a player specific event, targetting
+otherwise returns number of apps notified. If `target_player` is specified and not `null` triggers a player specific event, targeting
 only `player` scoped apps for that player. Apps with globals scope will not be notified even if they handle this event.
 If the `target_player` is omitted or `null`, it will target `global` scoped apps and all instances of `player` scoped apps.
 Note that all built-in player events have a player as a first argument, so to trigger these events, you need to 
@@ -5305,7 +5305,7 @@ Collection of other methods that control smaller, yet still important aspects of
 Plays a specific sound `name`, at block or position `pos`, with optional `volume` and modified `pitch`, and under
 optional `mixer`. Default values for `volume`, `pitch` and `mixer` are `1.0`, `1.0`, and `master`. 
 Valid mixer options are `master`, `music`, `record`, `weather`, `block`, `hostile`,`neutral`, `player`, `ambient`
-and `voice`. `pos` can be either a block, triple of coords, or a list of thee numbers. Uses the same options as a
+and `voice`. `pos` can be either a block, triple of coords, or a list of three numbers. Uses the same options as a
  corresponding `playsound` command.
  
 Used with no arguments, return the list of available sound names.
@@ -5540,7 +5540,7 @@ produce an exception.
 
 ### `print(expr)`, `print(player/player_list, expr)`
 
-Displays the result of the expression to the chat. Overrides default `scarpet` behaviour of sending everyting to stderr.
+Displays the result of the expression to the chat. Overrides default `scarpet` behaviour of sending everything to stderr.
 Can optionally define player or list of players to send the message to.
 
 ### `format(components, ...)`, `format([components, ...])`
@@ -5930,7 +5930,7 @@ to that value. Daytime clocks are shared between all dimensions.
 _**Deprecated**. Use `system_info('server_last_tick_times')` instead._
 
 Returns a 100-long array of recent tick times, in milliseconds. First item on the list is the most recent tick
-If called outside of the main tick (either throgh scheduled tasks, or async execution), then the first item on the
+If called outside of the main tick (either through scheduled tasks, or async execution), then the first item on the
 list may refer to the previous tick performance. In this case the last entry (tick 100) would refer to the most current
 tick. For all intent and purpose, `last_tick_times():0` should be used as last tick execution time, but
 individual tick times may vary greatly, and these need to be taken with the little grain of 
@@ -5951,7 +5951,7 @@ If you need to break
 up your execution into chunks, you could queue the rest of the work into the next task using `schedule`, or perform your actions
 defining `__on_tick()` event handler, but in case you need to take a full control over the game loop and run some simulations using 
 `game_tick()` as the way to advance the game progress, that might be the simplest way to do it, 
-and triggering the script in a 'proper' way (there is not 'proper' way, but via commmand line, or server chat is the most 'proper'),
+and triggering the script in a 'proper' way (there is not 'proper' way, but via command line, or server chat is the most 'proper'),
 would be the safest way to do it. For instance, running `game_tick()` from a command block triggered with a button, or in an entity
  event triggered in an entity tick, may technically
 cause the game to run and encounter that call again, causing stack to overflow. Thankfully it doesn't happen in vanilla running 
@@ -6157,7 +6157,7 @@ check `load_app_data` and `store_app_data` functions.
 
 
 Unloading the app will only mask their command tree, not remove it. This has the same effect than not having that command
-at all, with the exception that if you load a diffrent app with the same name, this may cause commands to reappear.
+at all, with the exception that if you load a different app with the same name, this may cause commands to reappear.
 To remove the commands fully, use `/reload`.
 
 
@@ -6204,7 +6204,7 @@ at the end
 
 ### `/script invokearea <fun> <coords x y z> <coords x y z> <args?> ...`
 
-It is equivalent to `invoke` except it assumes that the first three arguments are one set of ccordinates, 
+It is equivalent to `invoke` except it assumes that the first three arguments are one set of coordinates, 
 followed by the second set of coordinates, providing tab completion, with `looking at...` mechanics for convenience, 
 followed by any other required arguments
 

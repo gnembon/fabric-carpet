@@ -1,6 +1,7 @@
 package carpet.script.utils;
 
 import carpet.CarpetSettings;
+import carpet.helpers.ParticleDisplay;
 import carpet.network.ServerNetworkHandler;
 import carpet.script.exception.InternalExpressionException;
 import carpet.script.exception.ThrowStatement;
@@ -23,16 +24,11 @@ import carpet.script.value.ValueConversions;
 import com.google.common.collect.Sets;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import com.mojang.blaze3d.vertex.VertexFormat.Mode;
-import com.mojang.brigadier.StringReader;
-import com.mojang.brigadier.exceptions.CommandSyntaxException;
-
-import net.minecraft.commands.arguments.ParticleArgument;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Registry;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.particles.ParticleOptions;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.ByteTag;
 import net.minecraft.nbt.CompoundTag;
@@ -70,14 +66,12 @@ import java.util.Random;
 import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
-import java.util.function.Function;
 import java.util.function.Supplier;
 
 import static java.util.Map.entry;
 
 public class ShapeDispatcher
 {
-    private static final Map<String, ParticleOptions> particleCache = new HashMap<>();
     public static record ShapeWithConfig(ExpiringShape shape, Map<String, Value> config) {}
 
     public static ShapeWithConfig fromFunctionArgs(
@@ -177,19 +171,14 @@ public class ShapeDispatcher
 
     public static ParticleOptions getParticleData(String name, RegistryAccess regs)
     {
-        ParticleOptions particle = particleCache.get(name); // [SCARY SHIT] cache should be cleared between worlds
-        if (particle != null)
-            return particle;
         try
         {
-            particle = ParticleArgument.readParticle(new StringReader(name), regs.lookupOrThrow(Registries.PARTICLE_TYPE));
+            return ParticleDisplay.getEffect(name, regs.lookupOrThrow(Registries.PARTICLE_TYPE));
         }
-        catch (CommandSyntaxException e)
+        catch (IllegalArgumentException e)
         {
             throw new ThrowStatement(name, Throwables.UNKNOWN_PARTICLE);
         }
-        particleCache.put(name, particle);
-        return particle;
     }
 
     public static Map<String, Value> parseParams(List<Value> items)
@@ -261,7 +250,7 @@ public class ShapeDispatcher
 
     public abstract static class ExpiringShape
     {
-        public static final Map<String, BiFunction<Map<String, Value>, RegistryAccess, ExpiringShape>> shapeProviders = new HashMap<String, BiFunction<Map<String, Value>, RegistryAccess, ExpiringShape>>(){{
+        public static final Map<String, BiFunction<Map<String, Value>, RegistryAccess, ExpiringShape>> shapeProviders = new HashMap<>(){{
             put("line", creator(Line::new));
             put("box", creator(Box::new));
             put("sphere", creator(Sphere::new));
@@ -1200,7 +1189,7 @@ public class ShapeDispatcher
                     "GROUND",
                     "FIXED")
                     {
-                        public Value validate(Map o, MinecraftServer s, Value v)
+                        public Value validate(Map<String, Value> o, MinecraftServer s, Value v)
                         {
                             return super.validate(o, s ,new StringValue(v.getString().toUpperCase(Locale.ROOT)));
                         }

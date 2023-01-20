@@ -10,7 +10,6 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
-import java.util.stream.Collectors;
 import net.minecraft.nbt.Tag;
 
 public abstract class Value implements Comparable<Value>, Cloneable
@@ -179,7 +178,7 @@ public abstract class Value implements Comparable<Value>, Cloneable
         }
         try
         {
-            return ListValue.wrap(Arrays.stream(getString().split(delimiter.getString())).map(StringValue::new).collect(Collectors.toList()));
+            return ListValue.wrap(Arrays.stream(getString().split(delimiter.getString())).map(StringValue::new));
         }
         catch (PatternSyntaxException pse)
         {

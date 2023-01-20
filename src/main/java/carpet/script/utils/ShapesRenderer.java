@@ -87,7 +87,6 @@ public class ShapesRenderer
         if ((shapes.get(dimensionType) == null || shapes.get(dimensionType).isEmpty()) &&
                 (labels.get(dimensionType) == null || labels.get(dimensionType).isEmpty())) return;
         long currentTime = client.level.getGameTime();
-        RenderSystem.disableTexture();
         RenderSystem.enableDepthTest();
         RenderSystem.setShader(GameRenderer::getPositionColorShader);
         RenderSystem.depthFunc(515);
@@ -148,7 +147,6 @@ public class ShapesRenderer
         RenderSystem.depthMask(true);
         RenderSystem.enableBlend();
         RenderSystem.defaultBlendFunc();
-        RenderSystem.enableTexture();
         CarpetProfiler.end_current_section(token);
     }
 
