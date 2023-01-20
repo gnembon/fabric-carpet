@@ -80,7 +80,7 @@ public class CarpetServer // static for now - easier to handle all around the co
         settingsManager = new carpet.settings.SettingsManager(CarpetSettings.carpetVersion, "carpet", "Carpet Mod");
         settingsManager.parseSettingsClass(CarpetSettings.class);
         extensions.forEach(CarpetExtension::onGameStarted);
-        FabricAPIHooks.initialize();
+        //FabricAPIHooks.initialize();
         CarpetScriptServer.parseFunctionClasses();
     }
 

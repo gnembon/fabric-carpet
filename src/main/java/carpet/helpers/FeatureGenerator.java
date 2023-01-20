@@ -92,14 +92,14 @@ public class FeatureGenerator
                 CarpetSettings.skipGenerationChecks.set(false);
             }
         }
-        Optional<StructureType<?>> structureType = BuiltInRegistries.STRUCTURE_TYPE.getOptional(id);
+        Optional<StructureType<?>> structureType = world.registryAccess().registryOrThrow(Registries.STRUCTURE_TYPE).getOptional(id);
         if (structureType.isPresent())
         {
             Structure configuredStandard = getDefaultFeature(structureType.get(), world, pos);
             if (configuredStandard != null)
                 return plopAnywhere(configuredStandard, world, pos, world.getChunkSource().getGenerator(), false);
         }
-        Feature<?> feature = BuiltInRegistries.FEATURE.get(id);
+        Feature<?> feature = world.registryAccess().registryOrThrow(Registries.FEATURE).get(id);
         if (feature != null)
         {
             ConfiguredFeature<?,?> configuredStandard = getDefaultFeature(feature, world, pos, true);
@@ -124,7 +124,7 @@ public class FeatureGenerator
         ResourceLocation id = new ResourceLocation(name);
         Structure configuredStructureFeature =  world.registryAccess().registryOrThrow(Registries.STRUCTURE).get(id);
         if (configuredStructureFeature != null) return configuredStructureFeature;
-        StructureType<?> structureFeature = BuiltInRegistries.STRUCTURE_TYPE.get(id);
+        StructureType<?> structureFeature = world.registryAccess().registryOrThrow(Registries.STRUCTURE_TYPE).get(id);
         if (structureFeature == null) return null;
         return getDefaultFeature(structureFeature, world, pos);
     }
@@ -218,8 +218,8 @@ public class FeatureGenerator
         final HolderSet<Biome> structureBiomes = structure.biomes();
 
         if (!computeBox) {
-            Holder<Biome> genBiome = generator.getBiomeSource().getNoiseBiome(QuartPos.fromBlock(pos.getX()), QuartPos.fromBlock(pos.getY()), QuartPos.fromBlock(pos.getZ()), seed.sampler());
-            if (structureBiomes.contains(genBiome) && structure.findGenerationPoint(new Structure.GenerationContext(
+            //Holder<Biome> genBiome = generator.getBiomeSource().getNoiseBiome(QuartPos.fromBlock(pos.getX()), QuartPos.fromBlock(pos.getY()), QuartPos.fromBlock(pos.getZ()), seed.sampler());
+            if (structure.findValidGenerationPoint(new Structure.GenerationContext(
                     world.registryAccess(), generator, generator.getBiomeSource(),
                     seed, world.getStructureManager(), world.getSeed(), chunkPos, world, structureBiomes::contains
             )).isPresent())

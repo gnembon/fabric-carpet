@@ -29,6 +29,7 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.minecraft.commands.arguments.ParticleArgument;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.Registry;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -67,6 +68,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
+import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -214,9 +216,9 @@ public class ShapeDispatcher
             if (param==null) throw new InternalExpressionException("Unknown feature for shape: "+key);
             userParams.put(key, param.validate(userParams, server, userParams.get(key)));
         });
-        Function<Map<String, Value>,ExpiringShape> factory = ExpiringShape.shapeProviders.get(shapeType);
+        BiFunction<Map<String, Value>, RegistryAccess, ExpiringShape> factory = ExpiringShape.shapeProviders.get(shapeType);
         if (factory == null) throw new InternalExpressionException("Unknown shape: "+shapeType);
-        return factory.apply(userParams);
+        return factory.apply(userParams, server.registryAccess());
     }
 
     // client
@@ -240,7 +242,7 @@ public class ShapeDispatcher
             CarpetSettings.LOG.info("Shape id missing in "+ String.join(", ", tag.getAllKeys()));
             return null;
         }
-        Function<Map<String, Value>,ExpiringShape> factory = ExpiringShape.shapeProviders.get(shapeValue.getString());
+        BiFunction<Map<String, Value>, RegistryAccess, ExpiringShape> factory = ExpiringShape.shapeProviders.get(shapeValue.getString());
         if (factory == null)
         {
             CarpetSettings.LOG.info("Unknown shape: "+shapeValue.getString());
@@ -248,7 +250,7 @@ public class ShapeDispatcher
         }
         try
         {
-            return factory.apply(options);
+            return factory.apply(options, level.registryAccess());
         }
         catch (InternalExpressionException exc)
         {
@@ -259,7 +261,7 @@ public class ShapeDispatcher
 
     public abstract static class ExpiringShape
     {
-        public static final Map<String, Function<Map<String, Value>,ExpiringShape>> shapeProviders = new HashMap<String, Function<Map<String, Value>, ExpiringShape>>(){{
+        public static final Map<String, BiFunction<Map<String, Value>, RegistryAccess, ExpiringShape>> shapeProviders = new HashMap<String, BiFunction<Map<String, Value>, RegistryAccess, ExpiringShape>>(){{
             put("line", creator(Line::new));
             put("box", creator(Box::new));
             put("sphere", creator(Sphere::new));
@@ -269,11 +271,11 @@ public class ShapeDispatcher
             put("block",creator(()->new DisplayedSprite(false)));
             put("item",creator(()->new DisplayedSprite(true)));
         }};
-        private static Function<Map<String, Value>,ExpiringShape> creator(Supplier<ExpiringShape> shapeFactory)
+        private static BiFunction<Map<String, Value>, RegistryAccess, ExpiringShape> creator(Supplier<ExpiringShape> shapeFactory)
         {
-            return o -> {
+            return (o, regs) -> {
                 ExpiringShape shape = shapeFactory.get();
-                shape.fromOptions(o);
+                shape.fromOptions(o, regs);
                 return shape;
             };
         }
@@ -305,7 +307,7 @@ public class ShapeDispatcher
             return tag;
         }
 
-        private void fromOptions(Map<String, Value> options)
+        private void fromOptions(Map<String, Value> options, RegistryAccess regs)
         {
             Set<String> optional = optionalParams();
             Set<String> required = requiredParams();
@@ -318,12 +320,12 @@ public class ShapeDispatcher
                 if (!this.canTake(k))
                     throw new InternalExpressionException("Parameter "+k+" doesn't apply for shape "+options.get("shape").getString());
             });
-            init(options);
+            init(options, regs);
         }
 
 
 
-        protected void init(Map<String, Value> options)
+        protected void init(Map<String, Value> options, RegistryAccess regs)
         {
 
             duration = NumericValue.asNumber(options.get("duration")).getInt();
@@ -399,13 +401,13 @@ public class ShapeDispatcher
 
 
         public abstract Consumer<ServerPlayer> alternative();
-        public long key()
+        public long key(final RegistryAccess regs)
         {
             if (key!=0) return key;
-            key = calcKey();
+            key = calcKey(regs);
             return key;
         }
-        protected long calcKey()
+        protected long calcKey(final RegistryAccess regs)
         { // using FNV-1a algorithm
             long hash = -3750763034362895579L;
             hash ^= shapeDimension.hashCode(); hash *= 1099511628211L;
@@ -487,9 +489,9 @@ public class ShapeDispatcher
         boolean doublesided;
 
         @Override
-        protected void init(Map<String, Value> options)
+        protected void init(Map<String, Value> options, RegistryAccess regs)
         {
-            super.init(options);
+            super.init(options, regs);
             pos = vecFromValue(options.get("pos"));
             value = ((FormattedTextValue)options.get("text")).getText();
             text = value.getString();
@@ -543,9 +545,9 @@ public class ShapeDispatcher
         }
 
         @Override
-        public long calcKey()
+        public long calcKey(final RegistryAccess regs)
         {
-            long hash = super.calcKey();
+            long hash = super.calcKey(regs);
             hash ^= 5;                  hash *= 1099511628211L;
             hash ^= vec3dhash(pos);     hash *= 1099511628211L;
             hash ^= text.hashCode();    hash *= 1099511628211L;
@@ -607,9 +609,9 @@ public class ShapeDispatcher
         String itemTransformType;
 
         @Override
-        protected void init(Map<String, Value> options)
+        protected void init(Map<String, Value> options, RegistryAccess regs)
         {
-            super.init(options);
+            super.init(options, regs);
             pos = vecFromValue(options.get("pos"));
             if (!this.isitem)
             {
@@ -648,14 +650,15 @@ public class ShapeDispatcher
         public Consumer<ServerPlayer> alternative() {
             return p -> {
                 ParticleOptions particle;
+                final Registry<Block> blocks = p.getServer().registryAccess().registryOrThrow(Registries.BLOCK);
                 if(this.isitem)
                 {
                     if (Block.byItem(this.item.getItem()).defaultBlockState().isAir()) return;
-                    particle = getParticleData("block_marker "+ BuiltInRegistries.BLOCK.getKey(Block.byItem(this.item.getItem())), p.level.registryAccess());
+                    particle = getParticleData("block_marker " + blocks.getKey(Block.byItem(this.item.getItem())), p.level.registryAccess());
                 }
                 else
                 {
-                    particle = getParticleData("block_marker "+BuiltInRegistries.BLOCK.getKey(this.blockState.getBlock()), p.level.registryAccess());
+                    particle = getParticleData("block_marker " + blocks.getKey(this.blockState.getBlock()), p.level.registryAccess());
                 }
 
                 Vec3 v = relativiseRender(p.level, this.pos, 0);
@@ -664,8 +667,8 @@ public class ShapeDispatcher
         }
 
         @Override
-        public long calcKey() {
-            long hash = super.calcKey();
+        public long calcKey(final RegistryAccess regs) {
+            long hash = super.calcKey(regs);
             hash ^= 7;                  hash *= 1099511628211L;
             hash ^= Boolean.hashCode(isitem); hash *= 1099511628211L;
             hash ^= vec3dhash(pos);     hash *= 1099511628211L;
@@ -680,7 +683,7 @@ public class ShapeDispatcher
             hash ^= Float.hashCode(blockLight); hash *= 1099511628211L;
             if (blockEntity!= null) hash ^= blockEntity.toString().hashCode(); hash *= 1099511628211L;
             if (blockState!= null) hash ^= blockState.hashCode(); hash *= 1099511628211L;
-            hash ^= ValueConversions.of(item).getString().hashCode(); hash *= 1099511628211L;
+            hash ^= ValueConversions.of(item, regs).getString().hashCode(); hash *= 1099511628211L;
             hash ^= itemTransformType.hashCode(); hash *= 1099511628211L;
 
             return hash;
@@ -702,9 +705,9 @@ public class ShapeDispatcher
         Vec3 to;
 
         @Override
-        protected void init(Map<String, Value> options)
+        protected void init(Map<String, Value> options, RegistryAccess regs)
         {
-            super.init(options);
+            super.init(options, regs);
             from = vecFromValue(options.get("from"));
             to = vecFromValue(options.get("to"));
         }
@@ -729,9 +732,9 @@ public class ShapeDispatcher
         }
 
         @Override
-        public long calcKey()
+        public long calcKey(final RegistryAccess regs)
         {
-            long hash = super.calcKey();
+            long hash = super.calcKey(regs);
             hash ^= 1;                     hash *= 1099511628211L;
             hash ^= vec3dhash(from);       hash *= 1099511628211L;
             hash ^= vec3dhash(to);         hash *= 1099511628211L;
@@ -768,8 +771,8 @@ public class ShapeDispatcher
     public static class Polyface extends ExpiringShape
     {
         @Override
-        public long calcKey(){
-            long hash = super.calcKey();
+        public long calcKey(final RegistryAccess regs){
+            long hash = super.calcKey(regs);
             hash ^= 6;                     hash *= 1099511628211L;
             hash ^= mode.hashCode();   hash *= 1099511628211L;
             hash ^= relative.hashCode();      hash *= 1099511628211L;
@@ -898,9 +901,9 @@ public class ShapeDispatcher
         ArrayList<Boolean> relative=new ArrayList<>();
         boolean inneredges;
         @Override
-        protected void init(Map<String, Value> options)
+        protected void init(Map<String, Value> options, RegistryAccess regs)
         {
-            super.init(options);
+            super.init(options, regs);
 
             doublesided=options.getOrDefault("doublesided",optional.get("doublesided")).getBoolean();
             
@@ -962,9 +965,9 @@ public class ShapeDispatcher
         Vec3 to;
 
         @Override
-        protected void init(Map<String, Value> options)
+        protected void init(Map<String, Value> options, RegistryAccess regs)
         {
-            super.init(options);
+            super.init(options, regs);
             from = vecFromValue(options.get("from"));
             to = vecFromValue(options.get("to"));
         }
@@ -986,9 +989,9 @@ public class ShapeDispatcher
         }
 
         @Override
-        public long calcKey()
+        public long calcKey(final RegistryAccess regs)
         {
-            long hash = super.calcKey();
+            long hash = super.calcKey(regs);
             hash ^= 2;                     hash *= 1099511628211L;
             hash ^= vec3dhash(from);       hash *= 1099511628211L;
             hash ^= vec3dhash(to);         hash *= 1099511628211L;
@@ -1016,9 +1019,9 @@ public class ShapeDispatcher
         int subdivisions;
 
         @Override
-        protected void init(Map<String, Value> options)
+        protected void init(Map<String, Value> options, RegistryAccess regs)
         {
-            super.init(options);
+            super.init(options, regs);
             center = vecFromValue(options.get("center"));
             radius = NumericValue.asNumber(options.get("radius")).getFloat();
             level = NumericValue.asNumber(options.getOrDefault("level", optional.get("level"))).getInt();
@@ -1059,9 +1062,9 @@ public class ShapeDispatcher
         };}
 
         @Override
-        public long calcKey()
+        public long calcKey(final RegistryAccess regs)
         {
-            long hash = super.calcKey();
+            long hash = super.calcKey(regs);
             hash ^= 3;                        hash *= 1099511628211L;
             hash ^= vec3dhash(center);        hash *= 1099511628211L;
             hash ^= Double.hashCode(radius);  hash *= 1099511628211L;
@@ -1092,9 +1095,9 @@ public class ShapeDispatcher
         private Cylinder() { super(); }
 
         @Override
-        protected void init(Map<String, Value> options)
+        protected void init(Map<String, Value> options, RegistryAccess regs)
         {
-            super.init(options);
+            super.init(options, regs);
             center = vecFromValue(options.get("center"));
             radius = NumericValue.asNumber(options.get("radius")).getFloat();
             level = NumericValue.asNumber(options.getOrDefault("level", optional.get("level"))).getInt();
@@ -1162,9 +1165,9 @@ public class ShapeDispatcher
         };}
 
         @Override
-        public long calcKey()
+        public long calcKey(final RegistryAccess regs)
         {
-            long hash = super.calcKey();
+            long hash = super.calcKey(regs);
             hash ^= 4;                        hash *= 1099511628211L;
             hash ^= vec3dhash(center);        hash *= 1099511628211L;
             hash ^= Double.hashCode(radius);  hash *= 1099511628211L;
@@ -1307,7 +1310,7 @@ public class ShapeDispatcher
             if(value instanceof BlockValue blv){
                 return value;
             }
-            return BlockValue.fromString(value.getString(), server.registryAccess());
+            return BlockValue.fromString(value.getString(), server.overworld());
         }
         @Override
         public Tag toTag(Value value) {
@@ -1330,7 +1333,7 @@ public class ShapeDispatcher
             if (((CompoundTag) tag).contains("TileEntityData", 10)) {
 				compoundTag2 = ((CompoundTag) tag).getCompound("TileEntityData");
             }
-            return new BlockValue(bs, null, null, compoundTag2);
+            return new BlockValue(bs, level, null, compoundTag2);
         }
     }
     public static class ItemParam extends Param

@@ -38,7 +38,7 @@ Events triggered in an app can result in zero, one, or multiple executions, depe
  * player targeted events (like `player_breaks_block`) target each app once:
    * for global scoped apps - targets a single app instance and provides `player` as the first argument.
    * for player scoped apps - targets only a given player instance, providing player argument for API consistency, 
-     since active player in player scoped apps can always be retrived using `player()`. 
+     since active player in player scoped apps can always be retrieved using `player()`. 
  * global events could be handled by multiple players multiple times (like `explosion`, or `tick`):
    * for global scoped apps - triggered once for the single app instance.
    * for player scoped apps - triggered N times for each player separately, so they can do something with that information
@@ -80,7 +80,7 @@ the system is closing down exceptionally.
 ## Built-in global events
 
 Global events will be handled once per app that is with `'global'` scope. With `player` scoped apps, each player instance
- will be triggerd once for each player, so a global event may be executed multiple times for such apps.
+ will be triggered once for each player, so a global event may be executed multiple times for such apps.
 
 ### `__on_server_starts()`
 Event triggers after world is loaded and after all startup apps have started. It won't be triggered with `/reload`.
@@ -242,14 +242,14 @@ Triggered when a player attacks entity, right before it happens server side.
 This event can be cancelled by returning `'cancel'`, which prevents the player from attacking the entity.
 
 ### `__on_player_takes_damage(player, amount, source, source_entity)`
-Triggered when a player is taking damage. Event is executed right after potential absorbtion was applied and before
+Triggered when a player is taking damage. Event is executed right after potential absorption was applied and before
 the actual damage is applied to the player. 
 
 This event can be cancelled by returning `'cancel'`, which prevents the player from taking damage.
 
 ### `__on_player_deals_damage(player, amount, entity)`
 Triggered when a player deals damage to another entity. Its applied in the same moment as `player_takes_damage` if both
-sides of the event are players, and similar for all other entities, just their absorbtion is taken twice, just noone ever 
+sides of the event are players, and similar for all other entities, just their absorption is taken twice, just noone ever 
 notices that ¯\_(ツ)_/¯
 
 This event can be cancelled by returning `'cancel'`, which prevents the damage from being dealt.
@@ -316,7 +316,10 @@ Triggered when the player has successfully logged in and was placed in the game.
 Triggered when a player sends a disconnect package or is forcefully disconnected from the server.
 
 ### `__on_player_message(player, message)`
-Triggered when a player sends a chat message or runs a command.
+Triggered when a player sends a chat message.
+
+### `__on_player_command(player, command)`
+Triggered when a player runs a command. Command value is returned without the / in front.
 
 This event can be cancelled by returning `'cancel'`, which prevents the message from being sent.
 
@@ -329,7 +332,7 @@ is handled before scoreboard values for these statistics are changed.
 
 App programmers can define and trigger their own custom events. Unlike built-in events, all custom events pass a single value
 as an argument, but this doesn't mean that they cannot pass a complex list, map, or nbt tag as a message. Each event signal is
-either targetting all apps instances for all players, including global apps, if no target player has been identified, 
+either targeting all apps instances for all players, including global apps, if no target player has been identified, 
 or only player scoped apps, if the target player
 is specified, running once for that player app. You cannot target global apps with player-targeted signals. Built-in events
 do target global apps, since their first argument is clearly defined and passed. That may change in the future in case there is 
@@ -373,7 +376,7 @@ to it when the event is triggered. All custom events expect a function that take
 If extra arguments are provided, they will be appended to the argument list of the callback function.
 
 Returns `true` if subscription to the event was successful, or `false` if it failed (for instance wrong scope for built-in event,
-or incorect number of parameters for the event).
+or incorrect number of parameters for the event).
 
 If a callback is specified as `null`, the given app (or player app instance )stops handling that event. 
 
@@ -397,7 +400,7 @@ In case you want to pass an event handler that is not defined in your module, pl
 
 Fires a specific event. If the event does not exist (only `handle_event` creates missing new events), or provided argument list
 was not matching the callee expected arguments, returns `null`, 
-otherwise returns number of apps notified. If `target_player` is specified and not `null` triggers a player specific event, targetting
+otherwise returns number of apps notified. If `target_player` is specified and not `null` triggers a player specific event, targeting
 only `player` scoped apps for that player. Apps with globals scope will not be notified even if they handle this event.
 If the `target_player` is omitted or `null`, it will target `global` scoped apps and all instances of `player` scoped apps.
 Note that all built-in player events have a player as a first argument, so to trigger these events, you need to 

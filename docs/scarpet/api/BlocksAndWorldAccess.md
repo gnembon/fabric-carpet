@@ -502,8 +502,8 @@ Returns the map colour of a block at position. One of:
 
 `'air'`, `'grass'`, `'sand'`, `'wool'`, `'tnt'`, `'ice'`, `'iron'`, `'foliage'`, `'snow'`, `'clay'`, `'dirt'`, 
 `'stone'`, `'water'`, `'wood'`, `'quartz'`, `'adobe'`, `'magenta'`, `'light_blue'`, `'yellow'`, `'lime'`, `'pink'`, 
-`'gray'`, `'light_gray'`, `'cyan'`, `'purple'`, `'blue'`, `'brown'`, `'green'`, `'red'`, `'black'`, `'gold
-'`, `'diamond'`, `'lapis'`, `'emerald'`, `'obsidian'`, `'netherrack'`, `'white_terracotta'`, `'orange_terracotta'`, 
+`'gray'`, `'light_gray'`, `'cyan'`, `'purple'`, `'blue'`, `'brown'`, `'green'`, `'red'`, `'black'`, `'gold'`, 
+`'diamond'`, `'lapis'`, `'emerald'`, `'obsidian'`, `'netherrack'`, `'white_terracotta'`, `'orange_terracotta'`, 
 `'magenta_terracotta'`, `'light_blue_terracotta'`, `'yellow_terracotta'`, `'lime_terracotta'`, `'pink_terracotta'`, 
 `'gray_terracotta'`, `'light_gray_terracotta'`, `'cyan_terracotta'`, `'purple_terracotta'`, `'blue_terracotta'`, 
 `'brown_terracotta'`, `'green_terracotta'`, `'red_terracotta'`, `'black_terracotta'`,
@@ -754,12 +754,12 @@ These contain some popular features and structures that are impossible or diffic
 * `'coral_mushroom'` - mushroom coral feature
 * `'coral_tree'` - tree coral feature
 * `'fancy_oak_bees'` - large oak tree variant with a mandatory beehive unlike standard that generate with probability
-* `'oak_bees'` - normal oak tree with a manatory beehive unlike standard that generate with probability
+* `'oak_bees'` - normal oak tree with a mandatory beehive unlike standard that generate with probability
 
 
 ### `structure_eligibility(pos, ?structure, ?size_needed)`
 
-Checks wordgen eligibility for a structure in a given chunk. Requires a `Structure Variant` name (see above),
+Checks worldgen eligibility for a structure in a given chunk. Requires a `Structure Variant` name (see above),
 or `Standard Structure` to check structures of this type.
 If no structure is given, or `null`, then it will check
 for all structures. If bounding box of the structures is also requested, it will compute size of potential

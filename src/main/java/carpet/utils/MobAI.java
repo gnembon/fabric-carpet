@@ -8,8 +8,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+
+import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
@@ -54,14 +57,14 @@ public class MobAI
         aiTrackers.get(e).add(type);
     }
 
-    public static List<String> availbleTypes()
+    public static List<String> availbleTypes(CommandSourceStack source)
     {
         Set<EntityType<?>> types = new HashSet<>();
         for (TrackingType type: TrackingType.values())
         {
             types.addAll(type.types);
         }
-        return types.stream().map(t -> BuiltInRegistries.ENTITY_TYPE.getKey(t).getPath()).collect(Collectors.toList());
+        return types.stream().map(t -> source.registryAccess().registryOrThrow(Registries.ENTITY_TYPE).getKey(t).getPath()).collect(Collectors.toList());
     }
 
     public static List<String> availableFor(EntityType<?> entityType)

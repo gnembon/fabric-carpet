@@ -1,7 +1,5 @@
 package carpet.script.utils;
 
-import carpet.fakes.PlacedFeatureInterface;
-import carpet.script.value.BlockValue;
 import carpet.script.value.ListValue;
 import carpet.script.value.NumericValue;
 import carpet.script.value.StringValue;

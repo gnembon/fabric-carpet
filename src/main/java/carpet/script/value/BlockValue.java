@@ -18,7 +18,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Direction.Axis;
 import net.minecraft.core.GlobalPos;
-import net.minecraft.core.RegistryAccess;
+import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
@@ -29,45 +29,44 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.Property;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
+import org.jetbrains.annotations.NotNull;
 
 import static carpet.script.value.NBTSerializableValue.nameFromRegistryId;
 
 public class BlockValue extends Value
 {
-    public static final BlockValue AIR = new BlockValue(Blocks.AIR.defaultBlockState(), null, BlockPos.ZERO);
-    public static final BlockValue NULL = new BlockValue(null, null, null);
     private BlockState blockState;
     private final BlockPos pos;
-    private final ServerLevel world;
+    @NotNull private final Level world;
     private CompoundTag data;
 
     public static BlockValue fromCoords(CarpetContext c, int x, int y, int z)
     {
         BlockPos pos = locateBlockPos(c, x,y,z);
-        return new BlockValue(null, c.s.getLevel(), pos);
+        return new BlockValue(null, c.level(), pos);
     }
 
     private static final Map<String, BlockValue> bvCache= new HashMap<>();
-    public static BlockValue fromString(String str, RegistryAccess regs)
+    public static BlockValue fromString(String str, Level level)
     {
         try
         {
             BlockValue bv = bvCache.get(str); // [SCARY SHIT] persistent caches over server reloads
             if (bv != null) return bv;
-            BlockStateParser.BlockResult foo = BlockStateParser.parseForBlock(regs.lookupOrThrow(Registries.BLOCK), new StringReader(str), true );
+            BlockStateParser.BlockResult foo = BlockStateParser.parseForBlock(level.registryAccess().lookupOrThrow(Registries.BLOCK), new StringReader(str), true );
             if (foo.blockState() != null)
             {
                 CompoundTag bd = foo.nbt();
                 if (bd == null)
                     bd = new CompoundTag();
-                bv = new BlockValue(foo.blockState(), null, null, bd );
+                bv = new BlockValue(foo.blockState(), level, null, bd );
                 if (bvCache.size()>10000)
                     bvCache.clear();
                 bvCache.put(str, bv);
@@ -82,7 +81,8 @@ public class BlockValue extends Value
 
     public static BlockPos locateBlockPos(CarpetContext c, int xpos, int ypos, int zpos)
     {
-        return new BlockPos(c.origin.getX() + xpos, c.origin.getY() + ypos, c.origin.getZ() + zpos);
+        final BlockPos pos = c.origin();
+        return new BlockPos(pos.getX() + xpos, pos.getY() + ypos, pos.getZ() + zpos);
     }
 
     public BlockState getBlockState()
@@ -91,7 +91,7 @@ public class BlockValue extends Value
         {
             return blockState;
         }
-        if (world != null && pos != null)
+        if (pos != null)
         {
             blockState = world.getBlockState(pos);
             return blockState;
@@ -99,12 +99,15 @@ public class BlockValue extends Value
         throw new InternalExpressionException("Attempted to fetch block state without world or stored block state");
     }
 
-    public static BlockEntity getBlockEntity(ServerLevel world, BlockPos pos)
+    public static BlockEntity getBlockEntity(Level level, BlockPos pos)
     {
-        if (world.getServer().isSameThread())
-            return world.getBlockEntity(pos);
-        else
-            return world.getChunkAt(pos).getBlockEntity(pos, LevelChunk.EntityCreationType.IMMEDIATE);
+        if (level instanceof ServerLevel serverLevel) {
+            if (serverLevel.getServer().isSameThread())
+                return serverLevel.getBlockEntity(pos);
+            else
+                return serverLevel.getChunkAt(pos).getBlockEntity(pos, LevelChunk.EntityCreationType.IMMEDIATE);
+        }
+        return null;
     }
 
 
@@ -116,7 +119,7 @@ public class BlockValue extends Value
                 return null;
             return data;
         }
-        if (world != null && pos != null)
+        if (pos != null)
         {
             BlockEntity be = getBlockEntity(world, pos);
             if (be == null)
@@ -131,7 +134,7 @@ public class BlockValue extends Value
     }
 
 
-    public BlockValue(BlockState state, ServerLevel world, BlockPos position)
+    public BlockValue(BlockState state, @NotNull Level world, BlockPos position)
     {
         this.world = world;
         blockState = state;
@@ -139,7 +142,7 @@ public class BlockValue extends Value
         data = null;
     }
 
-    public BlockValue(BlockState state, ServerLevel world, BlockPos position, CompoundTag nbt)
+    public BlockValue(BlockState state, @NotNull Level world, BlockPos position, CompoundTag nbt)
     {
         this.world = world;
         blockState = state;
@@ -151,13 +154,14 @@ public class BlockValue extends Value
     @Override
     public String getString()
     {
-        return nameFromRegistryId(BuiltInRegistries.BLOCK.getKey(getBlockState().getBlock()));
+        Registry<Block> blockRegistry = world.registryAccess().registryOrThrow(Registries.BLOCK);
+        return nameFromRegistryId(blockRegistry.getKey(getBlockState().getBlock()));
     }
 
     @Override
     public boolean getBoolean()
     {
-        return this != NULL && !getBlockState().isAir();
+        return !getBlockState().isAir();
     }
 
     @Override
@@ -175,7 +179,7 @@ public class BlockValue extends Value
     @Override
     public int hashCode()
     {
-        if (world != null && pos != null )
+        if (pos != null )
             return GlobalPos.of(world.dimension() , pos).hashCode(); //getDimension().getType()
         return ("b"+getString()).hashCode();
     }
@@ -185,7 +189,7 @@ public class BlockValue extends Value
         return pos;
     }
 
-    public ServerLevel getWorld() { return world;}
+    public Level getWorld() { return world;}
 
     @Override
     public Tag toTag(boolean force)
@@ -195,7 +199,7 @@ public class BlockValue extends Value
         CompoundTag tag =  new CompoundTag();
         CompoundTag state = new CompoundTag();
         BlockState s = getBlockState();
-        state.put("Name", StringTag.valueOf(BuiltInRegistries.BLOCK.getKey(s.getBlock()).toString()));
+        state.put("Name", StringTag.valueOf(world.registryAccess().registryOrThrow(Registries.BLOCK).getKey(s.getBlock()).toString()));
         Collection<Property<?>> properties = s.getProperties();
         if (!properties.isEmpty())
         {

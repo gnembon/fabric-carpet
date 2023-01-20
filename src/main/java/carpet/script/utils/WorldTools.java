@@ -139,17 +139,15 @@ public class WorldTools
 
     public static void forceChunkUpdate(BlockPos pos, ServerLevel world)
     {
-        LevelChunk worldChunk = world.getChunkSource().getChunk(pos.getX()>>4, pos.getZ()>>4, false);
+        ChunkPos chunkPos = new ChunkPos(pos);
+        LevelChunk worldChunk = world.getChunkSource().getChunk(chunkPos.x, chunkPos.z, false);
         if (worldChunk != null)
         {
-            int vd = world.getServer().getPlayerList().getViewDistance() * 16;
-            int vvd = vd * vd;
-            List<ServerPlayer> nearbyPlayers = world.getPlayers(p -> pos.distToCenterSqr(p.getX(), pos.getY(), p.getZ()) < vvd);
-            if (!nearbyPlayers.isEmpty())
+            List<ServerPlayer> players = world.getChunkSource().chunkMap.getPlayers(chunkPos, false);
+            if (!players.isEmpty())
             {
                 ClientboundLevelChunkWithLightPacket packet = new ClientboundLevelChunkWithLightPacket(worldChunk, world.getLightEngine(), null, null, false); // false seems to update neighbours as well.
-                ChunkPos chpos = new ChunkPos(pos);
-                nearbyPlayers.forEach(p -> p.connection.send(packet));
+                players.forEach(p -> p.connection.send(packet));
             }
         }
     }

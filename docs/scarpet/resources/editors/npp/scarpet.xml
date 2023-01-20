@@ -149,6 +149,7 @@
                 __on_player_disconnects(player, reason) ->
                 __on_player_connects(player) ->
                 __on_player_message(player, message) ->
+                __on_player_command(player, command) ->
                 __on_explosion(pos, power, source, causer, mode, fire) ->
                 __on_explosion_outcome(pos, power, source, causer, mode, fire, blocks, entities) ->
             </Keywords>

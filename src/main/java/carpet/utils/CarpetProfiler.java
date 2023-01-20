@@ -3,7 +3,9 @@ package carpet.utils;
 import it.unimi.dsi.fastutil.objects.Object2LongMap;
 import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
 import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
@@ -274,13 +276,14 @@ public class CarpetProfiler
     private static String sectionName(Pair<Level,Object> section)
     {
         ResourceLocation id;
+        final RegistryAccess regs = section.getKey().registryAccess();
         if (section.getValue() instanceof EntityType)
         {
-            id = BuiltInRegistries.ENTITY_TYPE.getKey((EntityType<?>) section.getValue());
+            id = regs.registryOrThrow(Registries.ENTITY_TYPE).getKey((EntityType<?>) section.getValue());
         }
         else
         {
-            id = BuiltInRegistries.BLOCK_ENTITY_TYPE.getKey((BlockEntityType<?>) section.getValue());
+            id = regs.registryOrThrow(Registries.BLOCK_ENTITY_TYPE).getKey((BlockEntityType<?>) section.getValue());
         }
         String name = "minecraft".equals(id.getNamespace())?id.getPath():id.toString();
         if (section.getKey().isClientSide)

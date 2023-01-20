@@ -80,7 +80,7 @@ public abstract class Explosion_optimizedTntMixin
     {
         if (LoggerRegistry.__explosions && ! world.isClientSide)
         {
-            eLogger = new ExplosionLogHelper(x, y, z, power, createFire, destructionType);
+            eLogger = new ExplosionLogHelper(x, y, z, power, createFire, destructionType, level.registryAccess());
         }
     }
 

@@ -8,7 +8,10 @@ import carpet.utils.Messenger;
 import it.unimi.dsi.fastutil.objects.Object2LongLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2LongMap;
 import net.minecraft.ChatFormatting;
+import net.minecraft.core.Registry;
+import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.Style;
@@ -211,7 +214,7 @@ public class HopperCounter
             Item item = e.getKey();
             MutableComponent itemName = Component.translatable(item.getDescriptionId());
             Style itemStyle = itemName.getStyle();
-            TextColor color = guessColor(item);
+            TextColor color = guessColor(item, server.registryAccess());
             itemName.setStyle((color != null) ? itemStyle.withColor(color) : itemStyle.withItalic(true));
             long count = e.getLongValue();
             return Messenger.c("g - ", itemName,
@@ -240,7 +243,7 @@ public class HopperCounter
 
     /**
      * Maps items that don't get a good block to reference for colour, or those that colour is wrong to a number of blocks, so we can get their colours easily with the
-     * {@link Block#getDefaultMaterialColor()} method as these items have those same colours.
+     * {@link Block#defaultMaterialColor()} method as these items have those same colours.
      */
     private static final Map<Item, Block> DEFAULTS = Map.ofEntries(
             entry(Items.DANDELION, Blocks.YELLOW_WOOL),
@@ -331,19 +334,21 @@ public class HopperCounter
     /**
      * Gets the colour to print an item in when printing its count in a hopper counter.
      */
-    public static TextColor fromItem(Item item)
+    public static TextColor fromItem(Item item, RegistryAccess registryAccess)
     {
         if (DEFAULTS.containsKey(item)) return TextColor.fromRgb(appropriateColor(DEFAULTS.get(item).defaultMaterialColor().col));
-        if (item instanceof DyeItem) return TextColor.fromRgb(appropriateColor(((DyeItem) item).getDyeColor().getMaterialColor().col));
+        if (item instanceof DyeItem dye) return TextColor.fromRgb(appropriateColor(dye.getDyeColor().getMaterialColor().col));
         Block block = null;
-        ResourceLocation id = BuiltInRegistries.ITEM.getKey(item);
-        if (item instanceof BlockItem)
+        final Registry<Item> itemRegistry = registryAccess.registryOrThrow(Registries.ITEM);
+        final Registry<Block> blockRegistry = registryAccess.registryOrThrow(Registries.BLOCK);
+        ResourceLocation id = itemRegistry.getKey(item);
+        if (item instanceof BlockItem blockItem)
         {
-            block = ((BlockItem) item).getBlock();
+            block = blockItem.getBlock();
         }
-        else if (BuiltInRegistries.BLOCK.getOptional(id).isPresent())
+        else if (blockRegistry.getOptional(id).isPresent())
         {
-            block = BuiltInRegistries.BLOCK.get(id);
+            block = blockRegistry.get(id);
         }
         if (block != null)
         {
@@ -358,15 +363,16 @@ public class HopperCounter
      * Guesses the item's colour from the item itself. It first calls {@link HopperCounter#fromItem} to see if it has a
      * valid colour there, if not just makes a guess, and if that fails just returns null
      */
-    public static TextColor guessColor(Item item)
+    public static TextColor guessColor(Item item, RegistryAccess registryAccess)
     {
-        TextColor direct = fromItem(item);
+        TextColor direct = fromItem(item, registryAccess);
         if (direct != null) return direct;
         if (CarpetServer.minecraft_server == null) return WHITE;
-        ResourceLocation id = BuiltInRegistries.ITEM.getKey(item);
-        for (RecipeType<?> type: BuiltInRegistries.RECIPE_TYPE)
+
+        ResourceLocation id = registryAccess.registryOrThrow(Registries.ITEM).getKey(item);
+        for (RecipeType<?> type: registryAccess.registryOrThrow(Registries.RECIPE_TYPE))
         {
-            for (Recipe<?> r: ((RecipeManagerInterface) CarpetServer.minecraft_server.getRecipeManager()).getAllMatching(type, id))
+            for (Recipe<?> r: ((RecipeManagerInterface) CarpetServer.minecraft_server.getRecipeManager()).getAllMatching(type, id, registryAccess))
             {
                 for (Ingredient ingredient: r.getIngredients())
                 {
@@ -374,7 +380,7 @@ public class HopperCounter
                     {
                         for (ItemStack iStak : stacks)
                         {
-                            TextColor cand = fromItem(iStak.getItem());
+                            TextColor cand = fromItem(iStak.getItem(), registryAccess);
                             if (cand != null)
                                 return cand;
                         }

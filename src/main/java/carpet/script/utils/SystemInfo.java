@@ -48,46 +48,46 @@ public class SystemInfo {
         put("app_scope", c -> StringValue.of((c.host).isPerUser()?"player":"global"));
         put("app_players", c -> ListValue.wrap(c.host.getUserList().stream().map(StringValue::new).collect(Collectors.toList())));
 
-        put("world_name", c -> new StringValue(c.s.getServer().getWorldData().getLevelName()));
-        put("world_seed", c -> new NumericValue(c.s.getLevel().getSeed()));
-        put("server_motd", c -> StringValue.of(c.s.getServer().getMotd()));
-        put("world_path", c -> StringValue.of(c.s.getServer().getWorldPath(LevelResource.ROOT).toString()));
+        put("world_name", c -> new StringValue(c.server().getWorldData().getLevelName()));
+        put("world_seed", c -> new NumericValue(c.level().getSeed()));
+        put("server_motd", c -> StringValue.of(c.server().getMotd()));
+        put("world_path", c -> StringValue.of(c.server().getWorldPath(LevelResource.ROOT).toString()));
         put("world_folder", c -> {
-            Path serverPath = c.s.getServer().getWorldPath(LevelResource.ROOT);
+            Path serverPath = c.server().getWorldPath(LevelResource.ROOT);
             int nodeCount = serverPath.getNameCount();
             if (nodeCount < 2) return Value.NULL;
             String tlf = serverPath.getName(nodeCount-2).toString();
             return StringValue.of(tlf);
         });
-        put("world_dimensions", c -> ListValue.wrap(c.s.getServer().levelKeys().stream().map(k -> ValueConversions.of(k.location())).collect(Collectors.toList())));
+        put("world_dimensions", c -> ListValue.wrap(c.server().levelKeys().stream().map(k -> ValueConversions.of(k.location())).collect(Collectors.toList())));
         put("world_spawn_point", c -> {
-            LevelData prop = c.s.getServer().overworld().getLevelData();
+            LevelData prop = c.server().overworld().getLevelData();
             return ListValue.of(NumericValue.of(prop.getXSpawn()), NumericValue.of(prop.getYSpawn()), NumericValue.of(prop.getZSpawn()));
         });
 
-        put("world_bottom", c-> new NumericValue(c.s.getLevel().getMinBuildHeight()));
+        put("world_bottom", c-> new NumericValue(c.level().getMinBuildHeight()));
 
-        put("world_top", c-> new NumericValue(c.s.getLevel().getMaxBuildHeight()));
+        put("world_top", c-> new NumericValue(c.level().getMaxBuildHeight()));
 
         put("world_center", c-> {
-            WorldBorder worldBorder = c.s.getLevel().getWorldBorder();
+            WorldBorder worldBorder = c.level().getWorldBorder();
             return ListValue.fromTriple(worldBorder.getCenterX(), 0, worldBorder.getCenterZ());
         });
 
-        put("world_size", c -> new NumericValue(c.s.getLevel().getWorldBorder().getSize() / 2));
+        put("world_size", c -> new NumericValue(c.level().getWorldBorder().getSize() / 2));
 
-        put("world_max_size", c-> new NumericValue( c.s.getLevel().getWorldBorder().getAbsoluteMaxSize()));
+        put("world_max_size", c-> new NumericValue( c.level().getWorldBorder().getAbsoluteMaxSize()));
 
-        put("world_time", c -> new NumericValue(c.s.getLevel().getGameTime()));
+        put("world_time", c -> new NumericValue(c.level().getGameTime()));
 
-        put("game_difficulty", c -> StringValue.of(c.s.getServer().getWorldData().getDifficulty().getKey()));
-        put("game_hardcore", c -> BooleanValue.of(c.s.getServer().getWorldData().isHardcore()));
-        put("game_storage_format", c -> StringValue.of(c.s.getServer().getWorldData().getStorageVersionName(c.s.getServer().getWorldData().getVersion())));
-        put("game_default_gamemode", c -> StringValue.of(c.s.getServer().getDefaultGameType().getName()));
-        put("game_max_players", c -> new NumericValue(c.s.getServer().getMaxPlayers()));
-        put("game_view_distance", c -> new NumericValue(c.s.getServer().getPlayerList().getViewDistance()));
-        put("game_mod_name", c -> StringValue.of(c.s.getServer().getServerModName()));
-        put("game_version", c -> StringValue.of(c.s.getServer().getServerVersion()));
+        put("game_difficulty", c -> StringValue.of(c.server().getWorldData().getDifficulty().getKey()));
+        put("game_hardcore", c -> BooleanValue.of(c.server().getWorldData().isHardcore()));
+        put("game_storage_format", c -> StringValue.of(c.server().getWorldData().getStorageVersionName(c.server().getWorldData().getVersion())));
+        put("game_default_gamemode", c -> StringValue.of(c.server().getDefaultGameType().getName()));
+        put("game_max_players", c -> new NumericValue(c.server().getMaxPlayers()));
+        put("game_view_distance", c -> new NumericValue(c.server().getPlayerList().getViewDistance()));
+        put("game_mod_name", c -> StringValue.of(c.server().getServerModName()));
+        put("game_version", c -> StringValue.of(c.server().getServerVersion()));
         put("game_target", c -> StringValue.of(CarpetSettings.releaseTarget));
         put("game_protocol", c -> NumericValue.of(SharedConstants.getProtocolVersion()));
         put("game_major_target", c -> {
@@ -102,11 +102,11 @@ public class SystemInfo {
         put("game_data_version", c->NumericValue.of(SharedConstants.getCurrentVersion().getWorldVersion()));
         put("game_pack_version", c->NumericValue.of(SharedConstants.getCurrentVersion().getPackVersion(PackType.DATA)));
 
-        put("server_ip", c -> StringValue.of(c.s.getServer().getLocalIp()));
-        put("server_whitelisted", c -> BooleanValue.of(c.s.getServer().isEnforceWhitelist()));
+        put("server_ip", c -> StringValue.of(c.server().getLocalIp()));
+        put("server_whitelisted", c -> BooleanValue.of(c.server().isEnforceWhitelist()));
         put("server_whitelist", c -> {
             MapValue whitelist = new MapValue(Collections.emptyList());
-            for (String s: c.s.getServer().getPlayerList().getWhiteListNames())
+            for (String s: c.server().getPlayerList().getWhiteListNames())
             {
                 whitelist.append(StringValue.of(s));
             }
@@ -114,7 +114,7 @@ public class SystemInfo {
         });
         put("server_banned_players", c -> {
             MapValue whitelist = new MapValue(Collections.emptyList());
-            for (String s: c.s.getServer().getPlayerList().getBans().getUserList())
+            for (String s: c.server().getPlayerList().getBans().getUserList())
             {
                 whitelist.append(StringValue.of(s));
             }
@@ -122,7 +122,7 @@ public class SystemInfo {
         });
         put("server_banned_ips", c -> {
             MapValue whitelist = new MapValue(Collections.emptyList());
-            for (String s: c.s.getServer().getPlayerList().getIpBans().getUserList())
+            for (String s: c.server().getPlayerList().getIpBans().getUserList())
             {
                 whitelist.append(StringValue.of(s));
             }
@@ -138,9 +138,9 @@ public class SystemInfo {
         put("server_last_tick_times", c -> {
         	//assuming we are in the tick world section
             // might be off one tick when run in the off tasks or asynchronously.
-            int currentReportedTick = c.s.getServer().getTickCount()-1;
+            int currentReportedTick = c.server().getTickCount()-1;
             List<Value> ticks = new ArrayList<>(100);
-            final long[] tickArray = c.s.getServer().tickTimes;
+            final long[] tickArray = c.server().tickTimes;
             for (int i=currentReportedTick+100; i > currentReportedTick; i--)
             {
                 ticks.add(new NumericValue(((double)tickArray[i % 100])/1000000.0));
@@ -192,7 +192,7 @@ public class SystemInfo {
         });
         put("world_gamerules", c->{
             Map<Value, Value> rules = new HashMap<>();
-            final GameRules gameRules = c.s.getLevel().getGameRules();
+            final GameRules gameRules = c.level().getGameRules();
             GameRules.visitGameRuleTypes(new GameRules.GameRuleTypeVisitor() {
                 @Override
                 public <T extends GameRules.Value<T>> void visit(GameRules.Key<T> key, GameRules.Type<T> type) {
@@ -202,11 +202,11 @@ public class SystemInfo {
             return MapValue.wrap(rules);
         });
 
-        put("source_entity", c -> EntityValue.of(c.s.getEntity()));
-        put("source_position", c -> ValueConversions.of(c.s.getPosition()));
-        put("source_dimension", c -> ValueConversions.of(c.s.getLevel()));
+        put("source_entity", c -> EntityValue.of(c.source().getEntity()));
+        put("source_position", c -> ValueConversions.of(c.source().getPosition()));
+        put("source_dimension", c -> ValueConversions.of(c.level()));
         put("source_rotation", c -> {
-            Vec2 rotation = c.s.getRotation();
+            Vec2 rotation = c.source().getRotation();
             return ListValue.of(new NumericValue(rotation.x), new NumericValue(rotation.y));
         });
         

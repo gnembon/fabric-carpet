@@ -3276,7 +3276,7 @@ the center point/area. Uses the same `type` selectors as `entities_list`.
 also be represented as a block, in this case the search box will be centered on the middle of the block, or an entity - in this case
 entire bounding box of the entity serves as a 'center' of search which is then expanded in all directions with the `'distance'` vector.
 
-In any case - returns all entities which bounding box collides with the bounding box defined by `'center'` and `'disteance'`.
+In any case - returns all entities which bounding box collides with the bounding box defined by `'center'` and `'distance'`.
 
 entity_area is simpler than `entity_selector` and runs about 20% faster, but is limited to predefined selectors and 
 cuboid search area.
@@ -4985,7 +4985,10 @@ Triggered when the player has successfully logged in and was placed in the game.
 Triggered when a player sends a disconnect package or is forcefully disconnected from the server.
 
 ### `__on_player_message(player, message)`
-Triggered when a player sends a chat message or runs a command.
+Triggered when a player sends a chat message.
+
+### `__on_player_command(player, command)`
+Triggered when a player runs a command. Command value is returned without the / in front.
 
 This event can be cancelled by returning `'cancel'`, which prevents the message from being sent.
 

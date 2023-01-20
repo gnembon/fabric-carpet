@@ -254,7 +254,7 @@ public class OptimizedExplosion
                                 .withOptionalParameter(LootContextParams.BLOCK_ENTITY, blockEntity)
                                 .withOptionalParameter(LootContextParams.THIS_ENTITY, eAccess.getSource());
 
-                        if (eAccess.getBlockInteraction() == Explosion.BlockInteraction.DESTROY)
+                        if (eAccess.getBlockInteraction() == Explosion.BlockInteraction.DESTROY_WITH_DECAY)
                             lootBuilder.withParameter(LootContextParams.EXPLOSION_RADIUS, eAccess.getRadius());
 
                         state.spawnAfterBreak(serverLevel, blockpos, ItemStack.EMPTY, dropFromExplosions);

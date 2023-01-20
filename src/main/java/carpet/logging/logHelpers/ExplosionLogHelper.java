@@ -6,7 +6,9 @@ import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import java.util.ArrayList;
 import java.util.List;
-import net.minecraft.core.registries.BuiltInRegistries;
+
+import net.minecraft.core.RegistryAccess;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
@@ -19,20 +21,22 @@ public class ExplosionLogHelper
 {
     private final boolean createFire;
     private final Explosion.BlockInteraction blockDestructionType;
+    private final RegistryAccess regs;
     public final Vec3 pos;
     private final float power;
     private boolean affectBlocks = false;
     private final Object2IntMap<EntityChangedStatusWithCount> impactedEntities = new Object2IntOpenHashMap<>();
 
     private static long lastGametime = 0;
-    private static int explosionCountInCurretGT = 0;
+    private static int explosionCountInCurrentGT = 0;
     private static boolean newTick;
 
-    public ExplosionLogHelper(double x, double y, double z, float power, boolean createFire, Explosion.BlockInteraction blockDestructionType) {
+    public ExplosionLogHelper(double x, double y, double z, float power, boolean createFire, Explosion.BlockInteraction blockDestructionType, RegistryAccess regs) {
         this.power = power;
         this.pos = new Vec3(x,y,z);
         this.createFire = createFire;
         this.blockDestructionType = blockDestructionType;
+        this.regs = regs;
     }
 
     public void setAffectBlocks(boolean b)
@@ -44,22 +48,22 @@ public class ExplosionLogHelper
     {
         newTick = false;
         if (!(lastGametime == gametime)){
-            explosionCountInCurretGT = 0;
+            explosionCountInCurrentGT = 0;
             lastGametime = gametime;
             newTick = true;
         }
-        explosionCountInCurretGT++;
+        explosionCountInCurrentGT++;
         LoggerRegistry.getLogger("explosions").log( (option) -> {
             List<Component> messages = new ArrayList<>();
             if(newTick) messages.add(c("wb tick : ", "d " + gametime));
             if ("brief".equals(option))
             {
-                messages.add( c("d #" + explosionCountInCurretGT,"gb ->",
+                messages.add( c("d #" + explosionCountInCurrentGT,"gb ->",
                         Messenger.dblt("l", pos.x, pos.y, pos.z), (affectBlocks)?"m  (affects blocks)":"m  (doesn't affect blocks)" ));
             }
             if ("full".equals(option))
             {
-                messages.add( c("d #" + explosionCountInCurretGT,"gb ->", Messenger.dblt("l", pos.x, pos.y, pos.z) ));
+                messages.add( c("d #" + explosionCountInCurrentGT,"gb ->", Messenger.dblt("l", pos.x, pos.y, pos.z) ));
                 messages.add(c("w   affects blocks: ", "m " + this.affectBlocks));
                 messages.add(c("w   creates fire: ", "m " + this.createFire));
                 messages.add(c("w   power: ", "c " + this.power));
@@ -76,7 +80,7 @@ public class ExplosionLogHelper
                         messages.add(c((k.pos.equals(pos))?"r   - TNT":"w   - ",
                                 Messenger.dblt((k.pos.equals(pos))?"r":"y", k.pos.x, k.pos.y, k.pos.z), "w  dV",
                                 Messenger.dblt("d", k.accel.x, k.accel.y, k.accel.z),
-                                "w  "+ BuiltInRegistries.ENTITY_TYPE.getKey(k.type).getPath(), (v>1)?"l ("+v+")":""
+                                "w  "+ regs.registryOrThrow(Registries.ENTITY_TYPE).getKey(k.type).getPath(), (v>1)?"l ("+v+")":""
                         ));
                     });
                 }

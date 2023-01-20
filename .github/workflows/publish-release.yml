@@ -41,6 +41,22 @@ jobs:
           if ! ${{ steps.properties.outputs.release-extra-branch }}; then
             echo "matrix-to-exclude=Snapshots" >> $GITHUB_OUTPUT
           fi
+      - uses: actions/github-script@v6
+        env:
+          READ_VERSION: ${{ steps.properties.outputs.mod_version }}
+        with:
+          script: |
+            const { READ_VERSION } = process.env;
+            console.log('Read version is: ' + READ_VERSION);
+            let releases = (await github.rest.repos.listReleases({
+              owner: context.repo.owner,
+              repo: context.repo.repo
+            })).data;
+            console.log('Previous release was: ' + releases[1].name);
+            for (let release of releases.slice(1)) {
+              if (release.name.includes(READ_VERSION))
+                core.setFailed('Version number is the same as a previous release!')
+            }
   Build-And-Publish:
     runs-on: ubuntu-latest
     needs: [Get-Properties]

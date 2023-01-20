@@ -43,12 +43,16 @@ import java.util.stream.Collectors;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.Registry;
+import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.stats.Stat;
+import net.minecraft.stats.StatType;
 import net.minecraft.stats.Stats;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.damagesource.DamageSource;
@@ -167,7 +171,7 @@ public class CarpetEventServer
          */
         public void execute()
         {
-            CarpetServer.scriptServer.events.runScheduledCall(ctx.origin, ctx.s, host, (CarpetScriptHost) ctx.host, function, parametrizedArgs);
+            CarpetServer.scriptServer.events.runScheduledCall(ctx.origin(), ctx.source(), host, (CarpetScriptHost) ctx.host, function, parametrizedArgs);
         }
     }
 
@@ -551,7 +555,7 @@ public class CarpetEventServer
                     //ItemStack itemstack = player.getStackInHand(enumhand);
                     return Arrays.asList(
                             new EntityValue(player),
-                            ValueConversions.of(itemstack),
+                            ValueConversions.of(itemstack, player.getLevel().registryAccess()),
                             StringValue.of(enumhand == InteractionHand.MAIN_HAND ? "mainhand" : "offhand")
                     );
                 }, player::createCommandSourceStack);
@@ -585,7 +589,7 @@ public class CarpetEventServer
                     Vec3 vec3d = hitRes.getLocation().subtract(blockpos.getX(), blockpos.getY(), blockpos.getZ());
                     return Arrays.asList(
                             new EntityValue(player),
-                            ValueConversions.of(itemstack),
+                            ValueConversions.of(itemstack, player.getLevel().registryAccess()),
                             StringValue.of(enumhand == InteractionHand.MAIN_HAND ? "mainhand" : "offhand"),
                             new BlockValue(null, player.getLevel(), blockpos),
                             StringValue.of(enumfacing.getName()),
@@ -630,7 +634,7 @@ public class CarpetEventServer
             {
                 return handler.call( () -> Arrays.asList(
                         new EntityValue(player),
-                        ValueConversions.of(itemstack),
+                        ValueConversions.of(itemstack, player.getLevel().registryAccess()),
                         StringValue.of(enumhand == InteractionHand.MAIN_HAND ? "mainhand" : "offhand"),
                         new BlockValue(null, player.getLevel(), pos)
                 ), player::createCommandSourceStack);
@@ -643,7 +647,7 @@ public class CarpetEventServer
             {
                 handler.call( () -> Arrays.asList(
                         new EntityValue(player),
-                        ValueConversions.of(itemstack),
+                        ValueConversions.of(itemstack, player.getLevel().registryAccess()),
                         StringValue.of(enumhand == InteractionHand.MAIN_HAND ? "mainhand" : "offhand"),
                         new BlockValue(null, player.getLevel(), pos)
                 ), player::createCommandSourceStack);
@@ -676,12 +680,13 @@ public class CarpetEventServer
             @Override
             public void onTrade(ServerPlayer player, Merchant merchant, MerchantOffer tradeOffer)
             {
+                final RegistryAccess regs = player.getLevel().registryAccess();
                 handler.call( () -> Arrays.asList(
                         new EntityValue(player),
                         merchant instanceof AbstractVillager ? new EntityValue((AbstractVillager) merchant) : Value.NULL,
-                        ValueConversions.of(tradeOffer.getBaseCostA()),
-                        ValueConversions.of(tradeOffer.getCostB()),
-                        ValueConversions.of(tradeOffer.getResult())
+                        ValueConversions.of(tradeOffer.getBaseCostA(), regs),
+                        ValueConversions.of(tradeOffer.getCostB(), regs),
+                        ValueConversions.of(tradeOffer.getResult(), regs)
                 ), player::createCommandSourceStack);
             }
         };
@@ -689,7 +694,7 @@ public class CarpetEventServer
         {
             @Override
             public boolean onItemAction(ServerPlayer player, InteractionHand enumhand, ItemStack itemstack) {
-                handler.call( () -> Arrays.asList(new EntityValue(player), ValueConversions.of(itemstack)), player::createCommandSourceStack);
+                handler.call( () -> Arrays.asList(new EntityValue(player), ValueConversions.of(itemstack, player.getLevel().registryAccess())), player::createCommandSourceStack);
                 return false;
             }
         };
@@ -748,7 +753,7 @@ public class CarpetEventServer
                 handler.call( () ->
                         Arrays.asList(
                                 new EntityValue(player),
-                                ValueConversions.of(itemstack),
+                                ValueConversions.of(itemstack, player.getLevel().registryAccess()),
                                 StringValue.of(enumhand == InteractionHand.MAIN_HAND ? "mainhand" : "offhand")
                         ), player::createCommandSourceStack);
                 return false;
@@ -763,7 +768,7 @@ public class CarpetEventServer
                 return handler.call( () ->
                         Arrays.asList(
                                 new EntityValue(player),
-                                ValueConversions.of(itemstack),
+                                ValueConversions.of(itemstack, player.getLevel().registryAccess()),
                                 new StringValue(enumhand == InteractionHand.MAIN_HAND ? "mainhand" : "offhand")
                         ), player::createCommandSourceStack);
             }
@@ -921,6 +926,13 @@ public class CarpetEventServer
             }
         };
 
+        public static final Event PLAYER_COMMAND = new Event("player_command", 2, false) {
+            @Override
+            public boolean onPlayerMessage(ServerPlayer player, String message) {
+                return handler.call( () -> Arrays.asList(new EntityValue(player), new StringValue(message)), player::createCommandSourceStack);
+            }
+        };
+
         public static final Event STATISTICS = new Event("statistic", 4, false)
         {
             private <T> ResourceLocation getStatId(Stat<T> stat)
@@ -939,9 +951,10 @@ public class CarpetEventServer
             {
                 ResourceLocation id = getStatId(stat);
                 if (skippedStats.contains(id)) return;
+                final Registry<StatType<?>> registry = player.getLevel().registryAccess().registryOrThrow(Registries.STAT_TYPE);
                 handler.call( () -> Arrays.asList(
                         new EntityValue(player),
-                        StringValue.of(NBTSerializableValue.nameFromRegistryId(BuiltInRegistries.STAT_TYPE.getKey(stat.getType()))),
+                        StringValue.of(NBTSerializableValue.nameFromRegistryId(registry.getKey(stat.getType()))),
                         StringValue.of(NBTSerializableValue.nameFromRegistryId(id)),
                         new NumericValue(amount)
                 ), player::createCommandSourceStack);
@@ -1308,7 +1321,7 @@ public class CarpetEventServer
     {
         Event ev = Event.getEvent(event, ((CarpetScriptHost)cc.host).scriptServer());
         if (ev == null) return -1;
-        return ev.handler.signal(cc.s, optionalTarget, callArgs);
+        return ev.handler.signal(cc.source(), optionalTarget, callArgs);
     }
 
     private void onEventAddedToHost(Event event, ScriptHost host)

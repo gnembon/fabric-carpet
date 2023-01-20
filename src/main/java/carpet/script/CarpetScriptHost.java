@@ -579,9 +579,9 @@ public class CarpetScriptHost extends ScriptHost
     protected void runModuleCode(Context c, Module module)
     {
         CarpetContext cc = (CarpetContext)c;
-        CarpetExpression ex = new CarpetExpression(module, module.code(), cc.s, cc.origin);
+        CarpetExpression ex = new CarpetExpression(module, module.code(), cc.source(), cc.origin());
         ex.getExpr().asATextSource();
-        ex.scriptRunCommand(this, cc.origin);
+        ex.scriptRunCommand(this, cc.origin());
     }
 
     @Override

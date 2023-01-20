@@ -1,6 +1,6 @@
 package carpet.mixins;
 
-import net.minecraft.network.chat.Component;
+import net.minecraft.network.protocol.game.ServerboundChatCommandPacket;
 import net.minecraft.network.protocol.game.ServerboundChatPacket;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -27,6 +27,7 @@ import static carpet.script.CarpetEventServer.Event.PLAYER_SWAPS_HANDS;
 import static carpet.script.CarpetEventServer.Event.PLAYER_SWINGS_HAND;
 import static carpet.script.CarpetEventServer.Event.PLAYER_SWITCHES_SLOT;
 import static carpet.script.CarpetEventServer.Event.PLAYER_MESSAGE;
+import static carpet.script.CarpetEventServer.Event.PLAYER_COMMAND;
 import static carpet.script.CarpetEventServer.Event.PLAYER_USES_ITEM;
 import static carpet.script.CarpetEventServer.Event.PLAYER_WAKES_UP;
 
@@ -300,6 +301,16 @@ public class ServerGamePacketListenerImpl_scarpetEventsMixin
         if (PLAYER_MESSAGE.isNeeded())
         {
             if(PLAYER_MESSAGE.onPlayerMessage(player, serverboundChatPacket.message())) ci.cancel();
+        }
+    }
+
+    @Inject(method = "handleChatCommand(Lnet/minecraft/network/protocol/game/ServerboundChatCommandPacket;)V",
+            at = @At(value = "HEAD")
+    )
+    private void onChatCommandMessage(ServerboundChatCommandPacket serverboundChatCommandPacket, CallbackInfo ci) {
+        if (PLAYER_COMMAND.isNeeded())
+        {
+            PLAYER_COMMAND.onPlayerMessage(player, serverboundChatCommandPacket.command());
         }
     }
 }
