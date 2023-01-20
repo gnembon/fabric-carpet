@@ -388,8 +388,6 @@ It can affect global variable pool, and local variable set for a particular func
 inc(i) -> i+1; foo = 5; inc(foo) => 6
 inc(i) -> i+1; foo = 5; undef('foo'); inc(foo) => 1
 inc(i) -> i+1; foo = 5; undef('inc'); undef('foo'); inc(foo) => Error: Function inc is not defined yet at pos 53
-undef('pi')  => bad idea - removes hidden variable holding the pi value
-undef('true')  => even worse idea, unbinds global true value, all references to true would now refer to the default 0
 </pre>
 
 ### `vars(prefix)`
