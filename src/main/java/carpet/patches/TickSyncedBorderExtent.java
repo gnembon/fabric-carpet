@@ -78,7 +78,7 @@ public class TickSyncedBorderExtent implements WorldBorder.BorderExtent
 	@Override
 	public double getLerpSpeed()
 	{
-		return Math.abs(this.from - this.to) / this.tickDuration;
+		return Math.abs(this.from - this.to) / this.realDuration;
 	}
 
 	@Override
