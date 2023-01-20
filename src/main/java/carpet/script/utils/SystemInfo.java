@@ -200,6 +200,7 @@ public class SystemInfo {
             });
             return MapValue.wrap(rules);
         });
+        put("world_min_spawning_light", c-> NumericValue.of(c.s.getLevel().dimensionType().monsterSpawnBlockLightLimit()));
 
         put("source_entity", c -> EntityValue.of(c.source().getEntity()));
         put("source_position", c -> ValueConversions.of(c.source().getPosition()));
