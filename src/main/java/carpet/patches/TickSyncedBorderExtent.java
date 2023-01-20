@@ -22,141 +22,141 @@ import java.util.Arrays;
 @SuppressWarnings("JavadocReference")
 public class TickSyncedBorderExtent implements WorldBorder.BorderExtent
 {
-	private final WorldBorder border;
-	private final long realDuration;
-	private final double tickDuration;
-	private final double from;
-	private final double to;
+    private final WorldBorder border;
+    private final long realDuration;
+    private final double tickDuration;
+    private final double from;
+    private final double to;
 
-	private int ticks;
+    private int ticks;
 
-	public TickSyncedBorderExtent(WorldBorder border, long realDuration, double from, double to)
-	{
-		this.border = border;
-		this.realDuration = realDuration;
-		this.tickDuration = realDuration / 50.0;
-		this.from = from;
-		this.to = to;
-		this.ticks = 0;
-	}
+    public TickSyncedBorderExtent(WorldBorder border, long realDuration, double from, double to)
+    {
+        this.border = border;
+        this.realDuration = realDuration;
+        this.tickDuration = realDuration / 50.0;
+        this.from = from;
+        this.to = to;
+        this.ticks = 0;
+    }
 
-	@Override
-	public double getMinX()
-	{
-		int maxSize = this.border.getAbsoluteMaxSize();
-		return Mth.clamp(this.border.getCenterX() - this.getSize() / 2.0, -maxSize, maxSize);
-	}
+    @Override
+    public double getMinX()
+    {
+        int maxSize = this.border.getAbsoluteMaxSize();
+        return Mth.clamp(this.border.getCenterX() - this.getSize() / 2.0, -maxSize, maxSize);
+    }
 
-	@Override
-	public double getMaxX()
-	{
-		int maxSize = this.border.getAbsoluteMaxSize();
-		return Mth.clamp(this.border.getCenterX() + this.getSize() / 2.0, -maxSize, maxSize);
-	}
+    @Override
+    public double getMaxX()
+    {
+        int maxSize = this.border.getAbsoluteMaxSize();
+        return Mth.clamp(this.border.getCenterX() + this.getSize() / 2.0, -maxSize, maxSize);
+    }
 
-	@Override
-	public double getMinZ()
-	{
-		int maxSize = this.border.getAbsoluteMaxSize();
-		return Mth.clamp(this.border.getCenterZ() - this.getSize() / 2.0, -maxSize, maxSize);
-	}
+    @Override
+    public double getMinZ()
+    {
+        int maxSize = this.border.getAbsoluteMaxSize();
+        return Mth.clamp(this.border.getCenterZ() - this.getSize() / 2.0, -maxSize, maxSize);
+    }
 
-	@Override
-	public double getMaxZ()
-	{
-		int maxSize = this.border.getAbsoluteMaxSize();
-		return Mth.clamp(this.border.getCenterZ() + this.getSize() / 2.0, -maxSize, maxSize);
-	}
+    @Override
+    public double getMaxZ()
+    {
+        int maxSize = this.border.getAbsoluteMaxSize();
+        return Mth.clamp(this.border.getCenterZ() + this.getSize() / 2.0, -maxSize, maxSize);
+    }
 
-	@Override
-	public double getSize()
-	{
-		double progress = this.ticks / this.tickDuration;
-		return progress < 1.0 ? Mth.lerp(progress, this.from, this.to) : this.to;
-	}
+    @Override
+    public double getSize()
+    {
+        double progress = this.ticks / this.tickDuration;
+        return progress < 1.0 ? Mth.lerp(progress, this.from, this.to) : this.to;
+    }
 
-	@Override
-	public double getLerpSpeed()
-	{
-		return Math.abs(this.from - this.to) / this.realDuration;
-	}
+    @Override
+    public double getLerpSpeed()
+    {
+        return Math.abs(this.from - this.to) / this.realDuration;
+    }
 
-	@Override
-	public long getLerpRemainingTime()
-	{
-		// Rough estimation
-		MinecraftServer server = CarpetServer.minecraft_server;
-		double ms;
-		if (server == null)
-		{
-		    ms = TickSpeed.mspt;
-		}
-		else
-		{
-		     ms = Arrays.stream(server.tickTimes).average().orElseThrow(IllegalStateException::new) * 1.0E-6D;
-		}
-		double tps = 1_000.0D / Math.max((TickSpeed.time_warp_start_time != 0) ? 0.0 : TickSpeed.mspt, ms);
-		return (long) ((this.tickDuration - this.ticks) / tps * 1_000);
-	}
+    @Override
+    public long getLerpRemainingTime()
+    {
+        // Rough estimation
+        MinecraftServer server = CarpetServer.minecraft_server;
+        double ms;
+        if (server == null)
+        {
+            ms = TickSpeed.mspt;
+        }
+        else
+        {
+             ms = Arrays.stream(server.tickTimes).average().orElseThrow(IllegalStateException::new) * 1.0E-6D;
+        }
+        double tps = 1_000.0D / Math.max((TickSpeed.time_warp_start_time != 0) ? 0.0 : TickSpeed.mspt, ms);
+        return (long) ((this.tickDuration - this.ticks) / tps * 1_000);
+    }
 
-	@Override
-	public double getLerpTarget()
-	{
-		return this.to;
-	}
+    @Override
+    public double getLerpTarget()
+    {
+        return this.to;
+    }
 
-	@NotNull
-	@Override
-	public BorderStatus getStatus()
-	{
-		return this.to < this.from ? BorderStatus.SHRINKING : BorderStatus.GROWING;
-	}
+    @NotNull
+    @Override
+    public BorderStatus getStatus()
+    {
+        return this.to < this.from ? BorderStatus.SHRINKING : BorderStatus.GROWING;
+    }
 
-	@Override
-	public void onAbsoluteMaxSizeChange()
-	{
+    @Override
+    public void onAbsoluteMaxSizeChange()
+    {
 
-	}
+    }
 
-	@Override
-	public void onCenterChange()
-	{
+    @Override
+    public void onCenterChange()
+    {
 
-	}
+    }
 
-	@NotNull
-	@Override
-	public WorldBorder.BorderExtent update()
-	{
-		if (this.ticks++ % 20 == 0)
-		{
-			for (BorderChangeListener listener : this.border.getListeners())
-			{
-				if (!(listener instanceof BorderChangeListener.DelegateBorderChangeListener))
-				{
-					listener.onBorderSizeLerping(this.border, this.from, this.to, this.realDuration);
-				}
-			}
-		}
+    @NotNull
+    @Override
+    public WorldBorder.BorderExtent update()
+    {
+        if (this.ticks++ % 20 == 0)
+        {
+            for (BorderChangeListener listener : this.border.getListeners())
+            {
+                if (!(listener instanceof BorderChangeListener.DelegateBorderChangeListener))
+                {
+                    listener.onBorderSizeLerping(this.border, this.from, this.to, this.realDuration);
+                }
+            }
+        }
 
-		return this.ticks >= this.tickDuration ? this.border.new StaticBorderExtent(this.to) : this;
-	}
+        return this.ticks >= this.tickDuration ? this.border.new StaticBorderExtent(this.to) : this;
+    }
 
-	@NotNull
-	@Override
-	public VoxelShape getCollisionShape()
-	{
-		return Shapes.join(
-			Shapes.INFINITY,
-			Shapes.box(
-				Math.floor(this.getMinX()),
-				Double.NEGATIVE_INFINITY,
-				Math.floor(this.getMinZ()),
-				Math.ceil(this.getMaxX()),
-				Double.POSITIVE_INFINITY,
-				Math.ceil(this.getMaxZ())
-			),
-			BooleanOp.ONLY_FIRST
-		);
-	}
+    @NotNull
+    @Override
+    public VoxelShape getCollisionShape()
+    {
+        return Shapes.join(
+            Shapes.INFINITY,
+            Shapes.box(
+                Math.floor(this.getMinX()),
+                Double.NEGATIVE_INFINITY,
+                Math.floor(this.getMinZ()),
+                Math.ceil(this.getMaxX()),
+                Double.POSITIVE_INFINITY,
+                Math.ceil(this.getMaxZ())
+            ),
+            BooleanOp.ONLY_FIRST
+        );
+    }
 }
