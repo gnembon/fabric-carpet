@@ -130,14 +130,14 @@ public class TickSyncedBorderExtent implements WorldBorder.BorderExtent
     {
         if (this.ticks++ % 20 == 0)
         {
-			// We need to update any listeners
-			// Most importantly those that send updates to the client
-			// This is because the client logic uses real time
-			// So if the tick speed has changed we need to tell the client
+            // We need to update any listeners
+            // Most importantly those that send updates to the client
+            // This is because the client logic uses real time
+            // So if the tick speed has changed we need to tell the client
             for (BorderChangeListener listener : this.border.getListeners())
             {
-				// We do not want to update DelegateBorderChangeListener
-				// This updates borders in other dimensions
+                // We do not want to update DelegateBorderChangeListener
+                // This updates borders in other dimensions
                 if (!(listener instanceof BorderChangeListener.DelegateBorderChangeListener))
                 {
                     listener.onBorderSizeLerping(this.border, this.from, this.to, this.realDuration);
