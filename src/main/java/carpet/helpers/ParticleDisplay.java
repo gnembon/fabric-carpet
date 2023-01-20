@@ -33,6 +33,10 @@ public class ParticleDisplay
         return particleCache.computeIfAbsent(name, particle -> parseParticle(particle, lookup));
     }
 
+    public static void resetCache() {
+        particleCache.clear();
+    }
+
     public static void drawParticleLine(ServerPlayer player, Vec3 from, Vec3 to, String main, String accent, int count, double spread)
     {
         HolderLookup<ParticleType<?>> lookup = player.getLevel().holderLookup(Registries.PARTICLE_TYPE);
