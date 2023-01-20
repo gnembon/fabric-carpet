@@ -322,16 +322,16 @@ public class ShapeDispatcher
             lineWidth = NumericValue.asNumber(options.getOrDefault("line", optional.get("line"))).getFloat();
 
             fillColor = NumericValue.asNumber(options.getOrDefault("fill", optional.get("fill"))).getInt();
-            this.fr = (fillColor >> 24 & 0xFF) / 255.0F;
-            this.fg = (fillColor >> 16 & 0xFF) / 255.0F;
-            this.fb = (fillColor >>  8 & 0xFF) / 255.0F;
-            this.fa = (fillColor & 0xFF) / 255.0F;
+            this.fr = (float)(fillColor >> 24 & 0xFF) / 255.0F;
+            this.fg = (float)(fillColor >> 16 & 0xFF) / 255.0F;
+            this.fb = (float)(fillColor >>  8 & 0xFF) / 255.0F;
+            this.fa = (float)(fillColor & 0xFF) / 255.0F;
 
             color = NumericValue.asNumber(options.getOrDefault("color", optional.get("color"))).getInt();
-            this.r = (color >> 24 & 0xFF) / 255.0F;
-            this.g = (color >> 16 & 0xFF) / 255.0F;
-            this.b = (color >>  8 & 0xFF) / 255.0F;
-            this.a = (color & 0xFF) / 255.0F;
+            this.r = (float)(color >> 24 & 0xFF) / 255.0F;
+            this.g = (float)(color >> 16 & 0xFF) / 255.0F;
+            this.b = (float)(color >>  8 & 0xFF) / 255.0F;
+            this.a = (float)(color & 0xFF) / 255.0F;
 
             debug = false;
             if (options.containsKey("debug")) {
@@ -1189,8 +1189,7 @@ public class ShapeDispatcher
                     "GROUND",
                     "FIXED")
                     {
-                        @Override
-						public Value validate(Map<String, Value> o, MinecraftServer s, Value v)
+                        public Value validate(Map<String, Value> o, MinecraftServer s, Value v)
                         {
                             return super.validate(o, s ,new StringValue(v.getString().toUpperCase(Locale.ROOT)));
                         }
@@ -1213,8 +1212,7 @@ public class ShapeDispatcher
             put("height", new FloatParam("height"));
             put("width", new FloatParam("width"));
             put("scale", new Vec3Param("scale", false){
-                @Override
-				public Value validate(java.util.Map<String,Value> options, MinecraftServer server, Value value) {
+                public Value validate(java.util.Map<String,Value> options, MinecraftServer server, Value value) {
                     if (value instanceof NumericValue vn){
                         value = ListValue.of(vn,vn,vn);
                     }
