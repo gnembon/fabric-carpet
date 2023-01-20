@@ -1089,7 +1089,11 @@ public class CarpetSettings
             {
                 // Needed for the update
                 tickSyncedWorldBorders = newValue;
-                MinecraftServer server = source.getServer();
+                MinecraftServer server = CarpetServer.minecraft_server;
+                if (server == null)
+                {
+                    return newValue;
+                }
                 for (ServerLevel level : server.getAllLevels())
                 {
                     WorldBorder worldBorder = level.getWorldBorder();
