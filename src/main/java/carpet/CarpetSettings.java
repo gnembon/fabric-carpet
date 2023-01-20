@@ -1083,7 +1083,6 @@ public class CarpetSettings
     @Rule(
             desc = "Allows to grow nether trees with 3x3 base with bonemeal",
             extra = {"Setting to 'all' will make all nether fungi grow into 3x3 trees", "Setting to 'vanilla' will make 6% of all nether fungi grow into 3x3 trees", "(this being consistent with worldgen)", "Fixes [MC-215169](https://bugs.mojang.com/browse/MC-215169)."},
-            options = {"false", "all", "vanilla"},
             category = {SURVIVAL, BUGFIX}
     )
     public static FungusFixMode thickHugeFungusGrowthFix = FungusFixMode.FALSE;
