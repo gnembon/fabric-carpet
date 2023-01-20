@@ -45,7 +45,6 @@ import net.minecraft.core.Holder;
 import net.minecraft.core.HolderSet;
 import net.minecraft.core.QuartPos;
 import net.minecraft.core.Registry;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.tags.TagKey;
@@ -66,7 +65,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.BiPredicate;
@@ -1640,7 +1638,7 @@ public class WorldAccess {
 
         Map<Value, Value> result = new HashMap<>();
 
-        var level = ((CarpetContext) c).s.getLevel();
+        ServerLevel level = ((CarpetContext) c).level();
         ChunkGenerator chunkGenerator = level.getChunkSource().getGenerator();
 
         if (chunkGenerator instanceof NoiseBasedChunkGenerator generator) {
