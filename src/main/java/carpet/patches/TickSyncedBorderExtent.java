@@ -92,9 +92,9 @@ public class TickSyncedBorderExtent implements WorldBorder.BorderExtent
 		} 
 		else 
 		{
-		     OptionalDouble optional = Arrays.stream(server.tickTimes).average().getAsDouble() * 1.0E-6D;
+		     OptionalDouble optional = Arrays.stream(server.tickTimes).average();
 		     // Optional should never be empty but just in case...
-		     ms = optional.isEmpty() ? 50.0D : optional.getAsDouble() * 1.0E-6D;
+		     ms = optional.isEmpty() ? TickSpeed.mspt : optional.getAsDouble() * 1.0E-6D;
 		}
 		double tps = 1_000.0D / Math.max((TickSpeed.time_warp_start_time != 0) ? 0.0 : TickSpeed.mspt, ms);
 		return (long) ((this.tickDuration - this.ticks) / tps * 1_000);
