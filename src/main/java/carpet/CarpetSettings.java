@@ -354,8 +354,12 @@ public class CarpetSettings
             int minRange = 1;
             int maxRange = 1;
 
-            for (Level level : source.getServer().getAllLevels()) {
-                maxRange = Math.max(maxRange, level.getHeight() - 1);
+            if (source == null) {
+                maxRange = Integer.MAX_VALUE;
+            } else {
+                for (Level level : source.getServer().getAllLevels()) {
+                    maxRange = Math.max(maxRange, level.getHeight() - 1);
+                }
             }
 
             return (newValue >= minRange && newValue <= maxRange) ? newValue : null;
