@@ -44,7 +44,7 @@ public class SnoopyCommandSource extends CommandSourceStack
     {
         super(CommandSource.NULL, original.getPosition(), original.getRotation(), original.getLevel(), CarpetSettings.runPermissionLevel,
                 original.getTextName(), original.getDisplayName(), original.getServer(), original.getEntity(), false,
-                (ctx, succ, res) -> { }, EntityAnchorArgument.Anchor.FEET, CommandSigningContext.ANONYMOUS, TaskChainer.IMMEDIATE);
+                (ctx, succ, res) -> { }, EntityAnchorArgument.Anchor.FEET, CommandSigningContext.ANONYMOUS, TaskChainer.immediate(original.getServer()));
         this.output = CommandSource.NULL;
         this.position = original.getPosition();
         this.world = original.getLevel();
@@ -87,7 +87,7 @@ public class SnoopyCommandSource extends CommandSourceStack
     ) {
         super(output, pos, rot, world, level,
                 simpleName, name, server, entity, false,
-                consumer, entityAnchor, context, TaskChainer.IMMEDIATE);
+                consumer, entityAnchor, context, TaskChainer.immediate(server));
         this.output = output;
         this.position = pos;
         this.rotation = rot;

@@ -9,7 +9,7 @@ Collection of other methods that control smaller, yet still important aspects of
 Plays a specific sound `name`, at block or position `pos`, with optional `volume` and modified `pitch`, and under
 optional `mixer`. Default values for `volume`, `pitch` and `mixer` are `1.0`, `1.0`, and `master`. 
 Valid mixer options are `master`, `music`, `record`, `weather`, `block`, `hostile`,`neutral`, `player`, `ambient`
-and `voice`. `pos` can be either a block, triple of coords, or a list of thee numbers. Uses the same options as a
+and `voice`. `pos` can be either a block, triple of coords, or a list of three numbers. Uses the same options as a
  corresponding `playsound` command.
  
 Used with no arguments, return the list of available sound names.
@@ -91,34 +91,17 @@ Optional shared shape attributes:
    value is `'xyz'`, meaning the shape will be drawn relatively to the entity in all three directions. Using `xz` for 
    instance makes so that the shape follows the entity, but stays at the same, absolute Y coordinate. Preceeding an axis
    with `d`, like `dxdydz` would make so that entity position is treated discretely (rounded down).
+ * `debug` - if True, it will only be visible when F3+B entity bounding boxes is enabled.
+ * `facing` - applicable only to `'text'`, `'block'` or '`item'` shapes, where its facing. Possible options are:
+   * `player`: Default. Element always rotates to face the player eye position, 
+   * `camera`: Element is placed on the plane orthogonal to player look vector, 
+   * `north`, `south`, `east`, `west`, `up`, `down`: obvious
 
 Available shapes:
  * `'line'` - draws a straight line between two points.
    * Required attributes:
      * `from` - triple coordinates, entity, or block value indicating one end of the line
      * `to` - other end of the line, same format as `from`
-     
- * `'label'` - draws a text in the world. Default `line` attribute controls main font color.
-      `fill` controls the color of the background. 
-   * Required attributes:
-     * `pos` - position
-     * `text` - string or formatted text to display
-   * Optional attributes
-     * `value` - string or formatted text to display instead of the main `text`. `value` unlike `text`
-     is not used to determine uniqueness of the drawn text so can be used to 
-     display smoothly dynamic elements where value of an element is constantly
-     changing and updates to it are being sent from the server.
-     * `size` - float. Default font size is 10.
-     * `facing` - text direction, where its facing. Possible options are: `player` (default, text
-     always rotates to face the player), `north`, `south`, `east`, `west`, `up`, `down`
-     * `doublesided` - if `true` it will make the text visible from the back as well. Default is `false` (1.16+)
-     * `align` - text alignment with regards to `pos`. Default is `center` (displayed text is
-     centered with respect to `pos`), `left` (`pos` indicates beginning of text), and `right` (`pos`
-     indicates the end of text).
-     * `tilt`, `lean`, `turn` - additional rotations of the text on the canvas along all three axis
-     * `indent`, `height`, `raise` - offsets for text rendering on X (`indent`), Y (`height`), and Z axis (`raise`) 
-     with regards to the plane of the text. One unit of these corresponds to 1 line spacing, which
-     can be used to display multiple lines of text bound to the same `pos` 
      
  * `'box'` - draws a box with corners in specified points
    * Required attributes:
@@ -142,6 +125,58 @@ Available shapes:
      * `height` - height of the cyllinder, defaults to `0`, so flat disk. Can be negative.
      * `level` - level of details, see `'sphere'`.
 
+ * `'polygon'`:
+   * Required attributes:
+     * `points` - list of points defining vertices of the polygon
+   * Optional attributes:
+     * `relative` - list of bools. vertices of the polygon that affected by 'follow'. Could be a single bools to affact allpoints too. Default means that every point is affacted.
+     * `mode` - how those points are connected. may be "polygon"(default),"strip" or "triangles". "polygon" means that it will be viewed as vertices of a polygon center on the first one. "strip" means that it will be viewed as a triangles strip. "triangles" means that it will be viewed as some triangles that are not related to each other (therefor length of `points` in this mode have to be a multiple of 3).
+     * `inner` - if `true` it will make the inner edges be drawn as well. 
+     * `doublesided` - if `true` it will make the shapes visible from the back as well. Default is `true`. 
+
+ * `'label'` - draws a text in the world. Default `line` attribute controls main font color. 
+ `fill` controls the color of the background.
+   * Required attributes:
+     * `pos` - position
+     * `text` - string or formatted text to display
+   * Optional attributes
+     * `value` - string or formatted text to display instead of the main `text`. `value` unlike `text`
+         is not used to determine uniqueness of the drawn text so can be used to
+         display smoothly dynamic elements where value of an element is constantly
+         changing and updates to it are being sent from the server.
+     * `size` - float. Default font size is 10.
+     * `doublesided` - if `true` it will make the text visible from the back as well. Default is `false` (1.16+)
+     * `align` - text alignment with regards to `pos`. Default is `center` (displayed text is
+         centered with respect to `pos`), `left` (`pos` indicates beginning of text), and `right` (`pos`
+         indicates the end of text).
+     * `tilt`, `lean`, `turn` - additional rotations of the text on the canvas along all three axis
+     * `indent`, `height`, `raise` - offsets for text rendering on X (`indent`), Y (`height`), and Z axis (`raise`)
+         with regards to the plane of the text. One unit of these corresponds to 1 line spacing, which
+         can be used to display multiple lines of text bound to the same `pos`
+
+ * `'block'`: draws a block at the specified position:
+   * Required attributes:
+     * `pos` - position of the object.
+     * `block` - the object to show. It is a block value or a name of a block with optional NBT data.
+   * Optional attributes:
+     * `tilt`, `lean`, `turn` - additional rotations along all three axis. It uses the block center as the origin.
+     * `scale` - scale of it in 3 axis-direction. should be a number or a list of 3 numbers (x,y,z).
+     * `skylight`, `blocklight` - light level. omit it to use local light level. should between 0~15.
+
+ * `'item'`: draws an item at the specified position:
+   * Required attributes:
+     * `pos` - position of the object.
+     * `item` - the object to show. It is an item tuple or a string identified item that may have NBT data.
+   * Optional attributes:
+     * `tilt`, `lean`, `turn` - additional rotations along all three axis. for `block`, it use its block center as the origin.
+     * `scale` - scale of it in 3 axis-direction. should be a number or a list of 3 numbers (x,y,z).
+     * `skylight`, `blocklight` - light level. omit it to use local light level. should between 0~15.
+     * `variant` - one of `'none'`, `'third_person_left_hand'`, `'third_person_right_hand'`, `'first_person_left_hand'`,
+       `'first_person_right_hand'`, `'head'`, `'gui'`, `'ground'`, `'fixed'`. In addition to the literal meaning,
+       it can also be used to use special models of tridents and telescopes. 
+        This attribute is experimental and use of it will change in the future.
+
+      
 ### `create_marker(text, pos, rotation?, block?, interactive?)`
 
 Spawns a (permanent) marker entity with text or block at position. Returns that entity for further manipulations. 
@@ -209,7 +244,7 @@ produce an exception.
 
 ### `print(expr)`, `print(player/player_list, expr)`
 
-Displays the result of the expression to the chat. Overrides default `scarpet` behaviour of sending everyting to stderr.
+Displays the result of the expression to the chat. Overrides default `scarpet` behaviour of sending everything to stderr.
 Can optionally define player or list of players to send the message to.
 
 ### `format(components, ...)`, `format([components, ...])`
@@ -267,6 +302,14 @@ Example usages:
   // the reason why I backslash the second space is that otherwise command parser may contract consecutive spaces
   // not a problem in apps
 </pre>
+
+### `item_display_name(item)`
+ Returns the name of the item as a Text Value. `item` should be a list of `[item_name, count, nbt]`, or just an item name.
+ 
+ Please note that it is a translated value. treating it like a string (eg.slicing, breaking, changing its case) will turn it back into a normal string without translatable properties. just like a colorful formatted text loose its color. And the result of it converting to a string will use en-us (in a server) or your single player's language, but when you use print() or others functions that accept a text value to broadcast it to players, it will use each player's own language.
+ 
+ If the item is renamed, it will also be reflected in the results.
+
 
 ### `display_title(players, type, text?, fadeInTicks?, stayTicks?, fadeOutTicks),`
 
@@ -591,7 +634,7 @@ to that value. Daytime clocks are shared between all dimensions.
 _**Deprecated**. Use `system_info('server_last_tick_times')` instead._
 
 Returns a 100-long array of recent tick times, in milliseconds. First item on the list is the most recent tick
-If called outside of the main tick (either throgh scheduled tasks, or async execution), then the first item on the
+If called outside of the main tick (either through scheduled tasks, or async execution), then the first item on the
 list may refer to the previous tick performance. In this case the last entry (tick 100) would refer to the most current
 tick. For all intent and purpose, `last_tick_times():0` should be used as last tick execution time, but
 individual tick times may vary greatly, and these need to be taken with the little grain of 
@@ -612,7 +655,7 @@ If you need to break
 up your execution into chunks, you could queue the rest of the work into the next task using `schedule`, or perform your actions
 defining `__on_tick()` event handler, but in case you need to take a full control over the game loop and run some simulations using 
 `game_tick()` as the way to advance the game progress, that might be the simplest way to do it, 
-and triggering the script in a 'proper' way (there is not 'proper' way, but via commmand line, or server chat is the most 'proper'),
+and triggering the script in a 'proper' way (there is not 'proper' way, but via command line, or server chat is the most 'proper'),
 would be the safest way to do it. For instance, running `game_tick()` from a command block triggered with a button, or in an entity
  event triggered in an entity tick, may technically
 cause the game to run and encounter that call again, causing stack to overflow. Thankfully it doesn't happen in vanilla running 

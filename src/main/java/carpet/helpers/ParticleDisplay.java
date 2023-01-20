@@ -5,35 +5,39 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import java.util.HashMap;
 import java.util.Map;
 import net.minecraft.commands.arguments.ParticleArgument;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.core.particles.ParticleOptions;
+import net.minecraft.core.particles.ParticleType;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.phys.Vec3;
 
 public class ParticleDisplay
 {
-    private static final Map<String, ParticleOptions> particleCache = new HashMap<>();
+    private static final Map<String, ParticleOptions> particleCache = new HashMap<>(); // we reset this on reloads, but probably need something better
 
-    private static ParticleOptions parseParticle(String name)
+    private static ParticleOptions parseParticle(String name, HolderLookup<ParticleType<?>> lookup)
     {
         try
         {
-            return ParticleArgument.readParticle(new StringReader(name));
+            return ParticleArgument.readParticle(new StringReader(name), lookup);
         }
         catch (CommandSyntaxException e)
         {
             throw new IllegalArgumentException("No such particle: " + name);
         }
     }
-    public static ParticleOptions getEffect(String name)
+    public static ParticleOptions getEffect(String name, HolderLookup<ParticleType<?>> lookup)
     {
         if (name == null) return null;
-        return particleCache.computeIfAbsent(name, ParticleDisplay::parseParticle);
+        return particleCache.computeIfAbsent(name, particle -> parseParticle(particle, lookup));
     }
 
     public static void drawParticleLine(ServerPlayer player, Vec3 from, Vec3 to, String main, String accent, int count, double spread)
     {
-        ParticleOptions accentParticle = getEffect(accent);
-        ParticleOptions mainParticle = getEffect(main);
+        HolderLookup<ParticleType<?>> lookup = player.getLevel().holderLookup(Registries.PARTICLE_TYPE);
+        ParticleOptions accentParticle = getEffect(accent, lookup);
+        ParticleOptions mainParticle = getEffect(main, lookup);
 
         if (accentParticle != null) player.getLevel().sendParticles(
                 player,

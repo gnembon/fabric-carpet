@@ -86,6 +86,18 @@ public interface CarpetRule<T> {
     T defaultValue();
     
     /**
+     * <p>Returns whether this rule is strict.</p>
+     * 
+     * <p>A rule being strict means that it will only accept the suggestions returned by {@link #suggestions()} as valid values.</p>
+     * 
+     * <p>Note that a rule implementation may return {@code false} in this method but still not accept options other than those
+     * returned in {@link #suggestions()}, only the opposite is guaranteed.</p>
+     */
+    default boolean strict() {
+        return false;
+    }
+    
+    /**
      * <p>Sets this rule's value to the provided {@link String}, after first converting the {@link String} into a suitable type.</p>
      * 
      * <p>This methods run any required validation on the value first, and throws {@link InvalidRuleValueException} if the value is not suitable

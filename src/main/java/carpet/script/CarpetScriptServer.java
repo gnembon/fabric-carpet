@@ -1,6 +1,7 @@
 package carpet.script;
 
 import carpet.CarpetSettings;
+import carpet.fakes.CommandDispatcherInterface;
 import carpet.script.annotation.AnnotationParser;
 import carpet.script.api.Auxiliary;
 import carpet.script.api.BlockIterators;
@@ -51,6 +52,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class CarpetScriptServer extends ScriptServer
 {
@@ -144,26 +146,29 @@ public class CarpetScriptServer extends ScriptServer
             Path folder = server.getWorldPath(LevelResource.ROOT).resolve("scripts");
             if (!Files.exists(folder)) 
                 Files.createDirectories(folder);
-            Optional<Path>
-            scriptPath = Files.list(folder)
-                .filter(script -> 
-                    script.getFileName().toString().equalsIgnoreCase(name+".sc") || 
-                    (allowLibraries && script.getFileName().toString().equalsIgnoreCase(name+".scl"))
-                ).findFirst();
-            if (scriptPath.isPresent())
-                return Module.fromPath(scriptPath.get());
+            try (Stream<Path> folderLister = Files.list(folder)) {
+                Optional<Path> scriptPath = folderLister
+                    .filter(script -> 
+                        script.getFileName().toString().equalsIgnoreCase(name + ".sc") || 
+                        (allowLibraries && script.getFileName().toString().equalsIgnoreCase(name+".scl"))
+                    ).findFirst();
+                if (scriptPath.isPresent())
+                    return Module.fromPath(scriptPath.get());
+            }
 
             if (FabricLoader.getInstance().getEnvironmentType() == EnvType.CLIENT)
             {
                 Path globalFolder = FabricLoader.getInstance().getConfigDir().resolve("carpet/scripts");
                 if (!Files.exists(globalFolder)) 
                     Files.createDirectories(globalFolder);
-                scriptPath = Files.walk(globalFolder)
-                        .filter(script -> script.getFileName().toString().equalsIgnoreCase(name + ".sc") ||
-                                (allowLibraries && script.getFileName().toString().equalsIgnoreCase(name + ".scl")))
-                        .findFirst();
-                if (scriptPath.isPresent())
-                    return Module.fromPath(scriptPath.get());
+                try (Stream<Path> folderWalker = Files.walk(globalFolder)) {
+                    Optional<Path> scriptPath = folderWalker
+                            .filter(script -> script.getFileName().toString().equalsIgnoreCase(name + ".sc") ||
+                                    (allowLibraries && script.getFileName().toString().equalsIgnoreCase(name + ".scl")))
+                            .findFirst();
+                    if (scriptPath.isPresent())
+                        return Module.fromPath(scriptPath.get());
+                }
             }
         } catch (IOException e) {
             CarpetSettings.LOG.error("Exception while loading the app: ", e);
@@ -204,18 +209,22 @@ public class CarpetScriptServer extends ScriptServer
             Path worldScripts = server.getWorldPath(LevelResource.ROOT).resolve("scripts");
             if (!Files.exists(worldScripts)) 
                 Files.createDirectories(worldScripts);
-            Files.list(worldScripts)
-                .filter(f -> f.toString().endsWith(".sc"))
-                .forEach(f -> moduleNames.add(f.getFileName().toString().replaceFirst("\\.sc$","").toLowerCase(Locale.ROOT)));
+            try (Stream<Path> folderLister = Files.list(worldScripts)) {
+                folderLister
+                    .filter(f -> f.toString().endsWith(".sc"))
+                    .forEach(f -> moduleNames.add(f.getFileName().toString().replaceFirst("\\.sc$","").toLowerCase(Locale.ROOT)));
+            }
 
             if (includeBuiltIns && (FabricLoader.getInstance().getEnvironmentType() == EnvType.CLIENT))
             {
                 Path globalScripts = FabricLoader.getInstance().getConfigDir().resolve("carpet/scripts");
                 if (!Files.exists(globalScripts))
                     Files.createDirectories(globalScripts);
-                Files.walk(globalScripts, FileVisitOption.FOLLOW_LINKS)
-                    .filter(f -> f.toString().endsWith(".sc"))
-                    .forEach(f -> moduleNames.add(f.getFileName().toString().replaceFirst("\\.sc$","").toLowerCase(Locale.ROOT)));
+                try (Stream<Path> folderWalker = Files.walk(globalScripts, FileVisitOption.FOLLOW_LINKS)) {
+                    folderWalker
+                        .filter(f -> f.toString().endsWith(".sc"))
+                        .forEach(f -> moduleNames.add(f.getFileName().toString().replaceFirst("\\.sc$","").toLowerCase(Locale.ROOT)));
+                }
             }
         } catch (IOException e) {
             CarpetSettings.LOG.error("Exception while searching for apps: ", e);
@@ -335,6 +344,7 @@ public class CarpetScriptServer extends ScriptServer
         events.removeAllHostEvents(modules.get(name));
         modules.get(name).onClose();
         modules.remove(name);
+        ((CommandDispatcherInterface)server.getCommands().getDispatcher()).carpet$unregister(name);
         if (!isRuleApp) unloadableModules.remove(name);
         CommandHelper.notifyPlayersCommandsChanged(server);
         if (notifySource) Messenger.m(source, "gi Removed "+name+" app");

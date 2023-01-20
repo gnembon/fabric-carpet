@@ -41,7 +41,7 @@ check `load_app_data` and `store_app_data` functions.
 
 
 Unloading the app will only mask their command tree, not remove it. This has the same effect than not having that command
-at all, with the exception that if you load a diffrent app with the same name, this may cause commands to reappear.
+at all, with the exception that if you load a different app with the same name, this may cause commands to reappear.
 To remove the commands fully, use `/reload`.
 
 
@@ -88,7 +88,7 @@ at the end
 
 ### `/script invokearea <fun> <coords x y z> <coords x y z> <args?> ...`
 
-It is equivalent to `invoke` except it assumes that the first three arguments are one set of ccordinates, 
+It is equivalent to `invoke` except it assumes that the first three arguments are one set of coordinates, 
 followed by the second set of coordinates, providing tab completion, with `looking at...` mechanics for convenience, 
 followed by any other required arguments
 

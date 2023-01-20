@@ -3,8 +3,8 @@ package carpet.utils;
 import carpet.CarpetSettings;
 import it.unimi.dsi.fastutil.longs.LongSet;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Registry;
 import net.minecraft.core.SectionPos;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -54,8 +54,8 @@ public class SpawnOverrides {
 
     public static WeightedRandomList<MobSpawnSettings.SpawnerData> test(StructureManager structureFeatureManager, LongSet foo,
                                                                         MobCategory cat, Structure confExisting, BlockPos where) {
-        ResourceLocation resource = structureFeatureManager.registryAccess().registryOrThrow(Registry.STRUCTURE_REGISTRY).getKey(confExisting);
-        ResourceKey<Structure> key = ResourceKey.create(Registry.STRUCTURE_REGISTRY, resource);
+        ResourceLocation resource = structureFeatureManager.registryAccess().registryOrThrow(Registries.STRUCTURE).getKey(confExisting);
+        ResourceKey<Structure> key = ResourceKey.create(Registries.STRUCTURE, resource);
         final Pair<BooleanSupplier, StructureSpawnOverride> spawnData = carpetOverrides.get(Pair.of(cat, key));
         if (spawnData == null || !spawnData.getKey().getAsBoolean()) return null;
         StructureSpawnOverride override = spawnData.getRight();
@@ -76,21 +76,11 @@ public class SpawnOverrides {
 
     public static boolean isStructureAtPosition(ServerLevel level, ResourceKey<Structure> structureKey, BlockPos pos)
     {
-        final Structure fortressFeature = level.registryAccess().registryOrThrow(Registry.STRUCTURE_REGISTRY).get(structureKey);
+        final Structure fortressFeature = level.registryAccess().registryOrThrow(Registries.STRUCTURE).get(structureKey);
         if (fortressFeature == null) {
             return false;
         }
         return level.structureManager().getStructureAt(pos, fortressFeature).isValid();
-    }
-
-    public static boolean isStructureAtPosition(ServerLevel level, StructureType<?> structure, BlockPos pos)
-    {
-        for(StructureStart structureStart : startsForFeature(level, SectionPos.of(pos), structure)) {
-            if (structureStart.getBoundingBox().isInside(pos) && structureStart.isValid()) {
-                return true;
-            }
-        }
-        return false;
     }
 
     public static List<StructureStart> startsForFeature(ServerLevel level, SectionPos sectionPos, StructureType<?> structure) {

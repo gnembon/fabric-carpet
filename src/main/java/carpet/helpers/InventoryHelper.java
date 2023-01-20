@@ -35,7 +35,7 @@ public class InventoryHelper
             changed = true;
         }
 
-        if (bet.isEmpty())
+        if (bet.isEmpty() || (bet.size() == 1 && bet.getString("id").equals("minecraft:shulker_box")))
         {
             tag.remove("BlockEntityTag");
             changed = true;

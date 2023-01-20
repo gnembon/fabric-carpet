@@ -12,7 +12,6 @@ import net.minecraft.resources.ResourceLocation;
 
 public class CarpetClient
 {
-    public static final Object sync = new Object();
     public static final int HI = 69;
     public static final int HELLO = 420;
     public static final int DATA = 1;
@@ -25,14 +24,7 @@ public class CarpetClient
 
     public static void gameJoined(LocalPlayer player)
     {
-        synchronized (sync)
-        {
-            clientPlayer = player;
-            // client didn't say hi back yet
-            if (isServerCarpet)
-                ClientNetworkHandler.respondHello();
-
-        }
+        clientPlayer = player;
     }
 
     public static void disconnect()
