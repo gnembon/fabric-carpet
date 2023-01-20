@@ -17,6 +17,7 @@ __on_player_interacts_with_block(player, hand, block, face, hitvec) ->
 __on_player_interacts_with_entity(player, entity, hand) -> 
 __on_player_jumps(player) -> 
 __on_player_picks_up_item(player, item) -> 
+__on_player_placing_block(player, item_tuple, hand, block) -> 
 __on_player_places_block(player, item_tuple, hand, block) -> 
 __on_player_releases_item(player, item_tuple, hand) -> 
 __on_player_rides(player, forward, strafe, jumping, sneaking) -> 
@@ -45,5 +46,6 @@ __on_player_respawns(player) ->
 __on_player_disconnects(player, reason) -> 
 __on_player_connects(player) -> 
 __on_player_message(player, message) ->
+__on_player_command(player, command) ->
 __on_explosion(pos, power, source, causer, mode, fire) ->
 __on_explosion_outcome(pos, power, source, causer, mode, fire, blocks, entities) ->

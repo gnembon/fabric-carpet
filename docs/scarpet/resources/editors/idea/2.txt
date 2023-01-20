@@ -30,6 +30,7 @@ diamond
 display_title
 draw_shape
 drop_item
+effective_light
 emitted_light
 encode_nbt
 entity_area
@@ -55,7 +56,7 @@ inventory_get
 inventory_remove
 inventory_set
 inventory_size
-item_category
+item_display_name
 item_list
 item_tags
 last_tick_times

@@ -1,6 +1,6 @@
 plugins {
-	id 'fabric-loom' version '0.11-SNAPSHOT'
-	id 'io.github.juuxel.loom-quiltflower' version '1.7.1'
+	id 'fabric-loom' version '1.0-SNAPSHOT'
+	id 'io.github.juuxel.loom-quiltflower' version '1.7.3'
 	id 'maven-publish'
 }
 
@@ -24,17 +24,17 @@ dependencies {
 
 	// Fabric API. This is technically optional, but you probably want it anyway.
 	//modImplementation "net.fabricmc:fabric:${project.fabric_version}"
-	modCompileOnly fabricApi.module("fabric-rendering-v1", project.fabric_version)
+	//modCompileOnly fabricApi.module("fabric-rendering-v1", project.fabric_version)
 
 	// PSA: Some older mods, compiled on Loom 0.2.1, might have outdated Maven POMs.
 	// You may need to force-disable transitiveness on them.
 }
 
 processResources {
-	inputs.property "version", project.version
+	inputs.property "version", project.version+'+v'+new Date().format('yyMMdd')
 
 	filesMatching("fabric.mod.json") {
-		expand "version": project.mod_version
+		expand "version": project.mod_version+'+v'+new Date().format('yyMMdd')
 	}
 }
 

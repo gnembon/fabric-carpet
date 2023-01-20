@@ -27,7 +27,7 @@ Highest integer that is still no larger then `n`. Insert a floor pun here.
 
 ### `ceil(n)`
 
-First lucky integer that is not smalller than `n`. As you would expect, ceiling is typically right above the floor.
+First lucky integer that is not smaller than `n`. As you would expect, ceiling is typically right above the floor.
 
 ### `ln(n)`
 

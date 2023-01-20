@@ -53,7 +53,7 @@
             </Keywords>
             <Keywords name="Keywords2">
                 block pos pos_offset solid air liquid flammable
-                transparent opacity blocks_daylight emitted_light light block_light sky_light see_sky brightness
+                transparent opacity blocks_daylight emitted_light light block_light sky_light effective_light see_sky brightness
                 hardness blast_resistance top loaded suffocates power ticks_randomly update block_tick random_tick in_slime_chunk
                 set without_updates
                 blocks_movement block_sound material map_colour block_state block_list block_tags block_data poi set_poi
@@ -77,7 +77,7 @@
 
                 player spawn entity_id entity_list entity_area entity_selector query modify entity_event entity_load_handler entity_types
 
-                item_list item_tags stack_limit item_category recipe_data crafting_remaining_item
+                item_list item_tags stack_limit recipe_data crafting_remaining_item item_display_name
 
                 inventory_size inventory_has_items inventory_get inventory_set inventory_find inventory_remove drop_item
 
@@ -101,55 +101,57 @@
             <Keywords name="Keywords5">_ _i _a _x _y _z _trace</Keywords>
             <Keywords name="Keywords6">global_</Keywords>
             <Keywords name="Keywords7">
-                __command
-                __config
-                __on_chunk_generated
-                __on_chunk_loaded
-                __on_close
-                __on_player_attacks_entity
-                __on_player_breaks_block
-                __on_player_clicks_block
-                __on_player_changes_dimension
-                __on_player_chooses_recipe
-                __on_player_collides_with_entity
-                __on_player_deploys_elytra
-                __on_player_drops_item
-                __on_player_drops_stack
-                __on_player_finishes_using_item
-                __on_player_interacts_with_block
-                __on_player_interacts_with_entity
-                __on_player_jumps
-                __on_player_picks_up_item
-                __on_player_places_block
-                __on_player_releases_item
-                __on_player_rides
-                __on_player_right_clicks_block
-                __on_player_starts_sneaking
-                __on_player_starts_sprinting
-                __on_player_stops_sneaking
-                __on_player_stops_sprinting
-                __on_player_swings_hand
-                __on_player_switches_slot
-                __on_player_swaps_hands
-                __on_player_takes_damage
-                __on_player_trades
-                __on_player_uses_item
-                __on_player_wakes_up
-                __on_player_escapes_sleep
-                __on_statistic
-                __on_start
-                __on_tick
-                __on_tick_ender
-                __on_tick_nether
-                __on_player_takes_damage
-                __on_player_deals_damage
-                __on_player_dies
-                __on_player_respawns
-                __on_player_disconnects
-                __on_player_connects
-                __on_player_message
-                __on_explosion
-                __on_explosion_outcome
+                __command() ->
+                __config() ->
+                __on_chunk_generated(x, z) ->
+                __on_chunk_loaded(x, z) ->
+                __on_close() ->
+                __on_player_attacks_entity(player, entity) ->
+                __on_player_breaks_block(player, block) ->
+                __on_player_clicks_block(player, block, face) ->
+                __on_player_changes_dimension(player, from_pos, from_dimension, to_pos, to_dimension) ->
+                __on_player_chooses_recipe(player, recipe, full_stack) ->
+                __on_player_collides_with_entity(player, entity) ->
+                __on_player_deploys_elytra(player) ->
+                __on_player_drops_item(player) ->
+                __on_player_drops_stack(player) ->
+                __on_player_finishes_using_item(player, item_tuple, hand) ->
+                __on_player_interacts_with_block(player, hand, block, face, hitvec) ->
+                __on_player_interacts_with_entity(player, entity, hand) ->
+                __on_player_jumps(player) ->
+                __on_player_picks_up_item(player, item) ->
+                __on_player_placing_block(player, item_tuple, hand, block) ->
+                __on_player_places_block(player, item_tuple, hand, block) ->
+                __on_player_releases_item(player, item_tuple, hand) ->
+                __on_player_rides(player, forward, strafe, jumping, sneaking) ->
+                __on_player_right_clicks_block(player, item_tuple, hand, block, face, hitvec) ->
+                __on_player_starts_sneaking(player) ->
+                __on_player_starts_sprinting(player) ->
+                __on_player_stops_sneaking(player) ->
+                __on_player_stops_sprinting(player) ->
+                __on_player_swings_hand(player, hand) ->
+                __on_player_switches_slot(player, from, to) ->
+                __on_player_swaps_hands(player) ->
+                __on_player_takes_damage(player, amount, source, entity) ->
+                __on_player_trades(player, entity, buy_left, buy_right, sell) ->
+                __on_player_uses_item(player, item_tuple, hand) ->
+                __on_player_wakes_up(player) ->
+                __on_player_escapes_sleep(player) ->
+                __on_statistic(player, category, event, value) ->
+                __on_start() ->
+                __on_tick() ->
+                __on_tick_ender() ->
+                __on_tick_nether() ->
+                __on_player_takes_damage(player, amount, source, source_entity) ->
+                __on_player_deals_damage(player, amount, entity) ->
+                __on_player_dies(player) ->
+                __on_player_respawns(player) ->
+                __on_player_disconnects(player, reason) ->
+                __on_player_connects(player) ->
+                __on_player_message(player, message) ->
+                __on_player_command(player, command) ->
+                __on_explosion(pos, power, source, causer, mode, fire) ->
+                __on_explosion_outcome(pos, power, source, causer, mode, fire, blocks, entities) ->
             </Keywords>
             <Keywords name="Keywords8">$</Keywords>
             <Keywords name="Delimiters">00&apos; 01\ 02&apos; 03 04 05 06 07 08 09 10 11 12 13 14 15 16 17 18 19 20 21 22 23</Keywords>

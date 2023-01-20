@@ -18,7 +18,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.OptionalInt;
 import net.minecraft.commands.CommandSourceStack;
-import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
@@ -182,7 +181,7 @@ public class ScreenValue extends Value {
         CarpetScriptHost executingHost = appHost.retrieveForExecution(source,player);
         try
         {
-            Value cancelValue = executingHost.callUDF(BlockPos.ZERO, source.withPermission(CarpetSettings.runPermissionLevel), callback, args);
+            Value cancelValue = executingHost.callUDF(source.withPermission(CarpetSettings.runPermissionLevel), callback, args);
             return cancelValue.getString().equals("cancel");
         }
         catch (NullPointerException | InvalidCallbackException | IntegrityException error)
@@ -229,7 +228,7 @@ public class ScreenValue extends Value {
             public void slotChanged(AbstractContainerMenu handler, int slotId, ItemStack stack) {
                 Map<Value,Value> data = new HashMap<>();
                 data.put(StringValue.of("slot"),NumericValue.of(slotId));
-                data.put(StringValue.of("stack"),ValueConversions.of(stack));
+                data.put(StringValue.of("stack"),ValueConversions.of(stack, player.level.registryAccess()));
                 ScreenValue.this.callListener(ScreenValue.this.player,"slot_update",data);
             }
             @Override

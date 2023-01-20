@@ -1,6 +1,6 @@
 package carpet.mixins;
 
-import net.minecraft.network.chat.Component;
+import net.minecraft.network.protocol.game.ServerboundChatCommandPacket;
 import net.minecraft.network.protocol.game.ServerboundChatPacket;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -27,6 +27,7 @@ import static carpet.script.CarpetEventServer.Event.PLAYER_SWAPS_HANDS;
 import static carpet.script.CarpetEventServer.Event.PLAYER_SWINGS_HAND;
 import static carpet.script.CarpetEventServer.Event.PLAYER_SWITCHES_SLOT;
 import static carpet.script.CarpetEventServer.Event.PLAYER_MESSAGE;
+import static carpet.script.CarpetEventServer.Event.PLAYER_COMMAND;
 import static carpet.script.CarpetEventServer.Event.PLAYER_USES_ITEM;
 import static carpet.script.CarpetEventServer.Event.PLAYER_WAKES_UP;
 
@@ -61,7 +62,7 @@ public class ServerGamePacketListenerImpl_scarpetEventsMixin
         }
     }
 
-    @Inject(method = "handlePlayerAction", at = @At(
+    @Inject(method = "handlePlayerAction", cancellable = true, at = @At(
             value = "INVOKE",
             target = "Lnet/minecraft/server/level/ServerPlayer;drop(Z)Z", // dropSelectedItem
             ordinal = 0,
@@ -69,10 +70,12 @@ public class ServerGamePacketListenerImpl_scarpetEventsMixin
     ))
     private void onQItem(ServerboundPlayerActionPacket playerActionC2SPacket_1, CallbackInfo ci)
     {
-        PLAYER_DROPS_ITEM.onPlayerEvent(player);
+        if(PLAYER_DROPS_ITEM.onPlayerEvent(player)) {
+            ci.cancel();
+        }
     }
 
-    @Inject(method = "handlePlayerAction", at = @At(
+    @Inject(method = "handlePlayerAction", cancellable = true, at = @At(
             value = "INVOKE",
             target = "Lnet/minecraft/server/level/ServerPlayer;getItemInHand(Lnet/minecraft/world/InteractionHand;)Lnet/minecraft/world/item/ItemStack;",
             ordinal = 0,
@@ -80,10 +83,10 @@ public class ServerGamePacketListenerImpl_scarpetEventsMixin
     ))
     private void onHandSwap(ServerboundPlayerActionPacket playerActionC2SPacket_1, CallbackInfo ci)
     {
-        PLAYER_SWAPS_HANDS.onPlayerEvent(player);
+        if(PLAYER_SWAPS_HANDS.onPlayerEvent(player)) ci.cancel();
     }
 
-    @Inject(method = "handlePlayerAction", at = @At(
+    @Inject(method = "handlePlayerAction", cancellable = true, at = @At(
             value = "INVOKE",
             target = "Lnet/minecraft/server/level/ServerPlayer;drop(Z)Z", // dropSelectedItem
             ordinal = 1,
@@ -91,7 +94,9 @@ public class ServerGamePacketListenerImpl_scarpetEventsMixin
     ))
     private void onCtrlQItem(ServerboundPlayerActionPacket playerActionC2SPacket_1, CallbackInfo ci)
     {
-        PLAYER_DROPS_STACK.onPlayerEvent(player);
+        if(PLAYER_DROPS_STACK.onPlayerEvent(player)) {
+            ci.cancel();
+        }
     }
 
 
@@ -104,7 +109,7 @@ public class ServerGamePacketListenerImpl_scarpetEventsMixin
         PLAYER_JUMPS.onPlayerEvent(player);
     }
 
-    @Inject(method = "handlePlayerAction", at = @At(
+    @Inject(method = "handlePlayerAction", cancellable = true, at = @At(
             value = "INVOKE",
             target = "Lnet/minecraft/server/level/ServerPlayerGameMode;handleBlockBreakAction(Lnet/minecraft/core/BlockPos;Lnet/minecraft/network/protocol/game/ServerboundPlayerActionPacket$Action;Lnet/minecraft/core/Direction;II)V",
             shift = At.Shift.BEFORE
@@ -112,7 +117,9 @@ public class ServerGamePacketListenerImpl_scarpetEventsMixin
     private void onClicked(ServerboundPlayerActionPacket packet, CallbackInfo ci)
     {
         if (packet.getAction() == ServerboundPlayerActionPacket.Action.START_DESTROY_BLOCK)
-            PLAYER_CLICKS_BLOCK.onBlockAction(player, packet.getPos(), packet.getDirection());
+            if(PLAYER_CLICKS_BLOCK.onBlockAction(player, packet.getPos(), packet.getDirection())) {
+                ci.cancel();
+            }
     }
 
     @Redirect(method = "handlePlayerAction", at = @At(
@@ -134,7 +141,7 @@ public class ServerGamePacketListenerImpl_scarpetEventsMixin
         }
     }
 
-    @Inject(method = "handleUseItemOn", at = @At(
+    @Inject(method = "handleUseItemOn", cancellable = true, at = @At(
             value = "INVOKE",
             target = "Lnet/minecraft/server/level/ServerPlayerGameMode;useItemOn(Lnet/minecraft/server/level/ServerPlayer;Lnet/minecraft/world/level/Level;Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/InteractionHand;Lnet/minecraft/world/phys/BlockHitResult;)Lnet/minecraft/world/InteractionResult;"
     ))
@@ -144,11 +151,13 @@ public class ServerGamePacketListenerImpl_scarpetEventsMixin
         {
             InteractionHand hand = playerInteractBlockC2SPacket_1.getHand();
             BlockHitResult hitRes = playerInteractBlockC2SPacket_1.getHitResult();
-            PLAYER_RIGHT_CLICKS_BLOCK.onBlockHit(player, hand, hitRes);
+            if(PLAYER_RIGHT_CLICKS_BLOCK.onBlockHit(player, hand, hitRes)) {
+                ci.cancel();
+            }
         }
     }
 
-    @Inject(method = "handleUseItem", at = @At(
+    @Inject(method = "handleUseItem", cancellable = true, at = @At(
             value = "INVOKE",
             target = "Lnet/minecraft/server/level/ServerPlayer;resetLastActionTime()V"
     ))
@@ -157,7 +166,9 @@ public class ServerGamePacketListenerImpl_scarpetEventsMixin
         if (PLAYER_USES_ITEM.isNeeded())
         {
             InteractionHand hand = playerInteractItemC2SPacket_1.getHand();
-            PLAYER_USES_ITEM.onItemAction(player, hand, player.getItemInHand(hand).copy());
+            if(PLAYER_USES_ITEM.onItemAction(player, hand, player.getItemInHand(hand).copy())) {
+                ci.cancel();
+            }
         }
     }
 
@@ -251,12 +262,12 @@ public class ServerGamePacketListenerImpl_scarpetEventsMixin
         // crafts not int the crafting window
         //CarpetSettings.LOG.error("Player clicks button "+packet.getButtonId());
     }
-    @Inject(method = "handlePlaceRecipe", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/level/ServerPlayer;resetLastActionTime()V"))
+    @Inject(method = "handlePlaceRecipe", cancellable = true, at = @At(value = "INVOKE", target = "Lnet/minecraft/server/level/ServerPlayer;resetLastActionTime()V"))
     private void onRecipeSelectedInRecipeManager(ServerboundPlaceRecipePacket packet, CallbackInfo ci)
     {
         if (PLAYER_CHOOSES_RECIPE.isNeeded())
         {
-            PLAYER_CHOOSES_RECIPE.onRecipeSelected(player, packet.getRecipe(), packet.isShiftDown());
+            if(PLAYER_CHOOSES_RECIPE.onRecipeSelected(player, packet.getRecipe(), packet.isShiftDown())) ci.cancel();
         }
     }
 
@@ -283,12 +294,23 @@ public class ServerGamePacketListenerImpl_scarpetEventsMixin
     }
 
     @Inject(method = "handleChat(Lnet/minecraft/network/protocol/game/ServerboundChatPacket;)V",
-            at = @At(value = "HEAD")
+            at = @At(value = "HEAD"),
+            cancellable = true
     )
     private void onChatMessage(ServerboundChatPacket serverboundChatPacket, CallbackInfo ci) {
         if (PLAYER_MESSAGE.isNeeded())
         {
-            PLAYER_MESSAGE.onPlayerMessage(player, serverboundChatPacket.message());
+            if(PLAYER_MESSAGE.onPlayerMessage(player, serverboundChatPacket.message())) ci.cancel();
+        }
+    }
+
+    @Inject(method = "handleChatCommand(Lnet/minecraft/network/protocol/game/ServerboundChatCommandPacket;)V",
+            at = @At(value = "HEAD")
+    )
+    private void onChatCommandMessage(ServerboundChatCommandPacket serverboundChatCommandPacket, CallbackInfo ci) {
+        if (PLAYER_COMMAND.isNeeded())
+        {
+            PLAYER_COMMAND.onPlayerMessage(player, serverboundChatCommandPacket.command());
         }
     }
 }

@@ -34,7 +34,7 @@ With no arguments, returns a list of all items in the game. With an item tag pro
 
 ### `item_tags(item, tag?)`
 
-Returns list of tags the item belongs to, or, if tag is provided, `true` if an item maches the tag, `false` if it doesn't and `null` if that's not a valid tag
+Returns list of tags the item belongs to, or, if tag is provided, `true` if an item matches the tag, `false` if it doesn't and `null` if that's not a valid tag
 
 Throws `unknown_item` if item doesn't exist.
 
@@ -51,18 +51,6 @@ Throws `unknown_item` if item doesn't exist.
 stack_limit('wooden_axe') => 1
 stack_limit('ender_pearl') => 16
 stack_limit('stone') => 64
-</pre>
-
-### `item_category(item)`
-
-Returns the string representing the category of a given item, like `building_blocks`, `combat`, or `tools`.
-
-Throws `unknown_item` if item doesn't exist.
-
-<pre>
-item_category('wooden_axe') => tools
-item_category('ender_pearl') => misc
-item_category('stone') => building_blocks
 </pre>
 
 ### `recipe_data(item, type?)`, `recipe_data(recipe, type?)`

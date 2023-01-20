@@ -53,7 +53,7 @@ From which we can learn that there is 7216 primes between 1M and 1.1M
 
 Evaluates expression `expr` repeatedly until condition `cond` becomes false, but not more than `limit` times. 
 Returns the result of the last `expr` evaluation, or `null` if nothing was successful. Both `expr` and `cond` will 
-recveived a bound variable `_` indicating current iteration, so its a number.
+received a bound variable `_` indicating current iteration, so its a number.
 
 <pre>
 while(a<100,10,a=_*_)  => 81 // loop exhausted via limit
