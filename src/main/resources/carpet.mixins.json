@@ -54,7 +54,6 @@
     "ThreadedLevelLightEngine_scarpetChunkCreationMixin",
     "LivingEntity_cleanLogsMixin",
     "MobMixin",
-    "ServerEntity_leashFixMixin",
     "Villager_aiMixin",
     "Player_fakePlayersMixin",
     "ServerGamePacketListenerImpl_coreMixin",

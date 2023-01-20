@@ -864,13 +864,6 @@ public class CarpetSettings
     @Rule(desc = "fixes block placement rotation issue when player rotates quickly while placing blocks", category = RuleCategory.BUGFIX)
     public static boolean placementRotationFix = false;
 
-    @Rule(
-            desc = "Fixes leads breaking/becoming invisible in unloaded chunks",
-            extra = "You may still get visibly broken leash links on the client side, but server side the link is still there.",
-            category = RuleCategory.BUGFIX
-    )// needs checkfix for 1.15
-    public static boolean leadFix = false;
-
     @Rule(desc = "Spawning requires much less CPU and Memory", category = OPTIMIZATION)
     public static boolean lagFreeSpawning = false;
 
