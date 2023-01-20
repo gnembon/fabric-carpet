@@ -10,8 +10,8 @@ import net.minecraft.world.level.border.WorldBorder;
 import net.minecraft.world.phys.shapes.BooleanOp;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
+
 import java.util.Arrays;
-import java.util.OptionalDouble;
 
 /**
  * This class is essentially a copy of {@link net.minecraft.world.level.border.WorldBorder.MovingBorderExtent}
@@ -86,15 +86,13 @@ public class TickSyncedBorderExtent implements WorldBorder.BorderExtent
 		// Rough estimation
 		MinecraftServer server = CarpetServer.minecraft_server;
 		double ms;
-		if (server == null) 
+		if (server == null)
 		{
 		    ms = TickSpeed.mspt;
-		} 
-		else 
+		}
+		else
 		{
-		     OptionalDouble optional = Arrays.stream(server.tickTimes).average();
-		     // Optional should never be empty but just in case...
-		     ms = optional.isEmpty() ? TickSpeed.mspt : optional.getAsDouble() * 1.0E-6D;
+		     ms = Arrays.stream(server.tickTimes).average().orElseThrow(IllegalStateException::new) * 1.0E-6D;
 		}
 		double tps = 1_000.0D / Math.max((TickSpeed.time_warp_start_time != 0) ? 0.0 : TickSpeed.mspt, ms);
 		return (long) ((this.tickDuration - this.ticks) / tps * 1_000);
