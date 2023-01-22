@@ -42,6 +42,7 @@ import it.unimi.dsi.fastutil.longs.LongSet;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Holder;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.core.HolderSet;
 import net.minecraft.core.QuartPos;
 import net.minecraft.core.Registry;
@@ -52,9 +53,11 @@ import net.minecraft.world.level.chunk.ChunkGenerator;
 import net.minecraft.world.level.chunk.PalettedContainer;
 import net.minecraft.world.level.levelgen.DensityFunction;
 import net.minecraft.world.level.levelgen.NoiseBasedChunkGenerator;
+import net.minecraft.world.level.levelgen.NoiseRouter;
 import net.minecraft.world.level.levelgen.RandomState;
 import net.minecraft.world.level.levelgen.structure.Structure;
 import net.minecraft.world.level.levelgen.structure.StructureType;
+import net.minecraft.world.level.levelgen.synth.NormalNoise;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -1632,67 +1635,70 @@ public class WorldAccess {
 
     @ScarpetFunction(maxParams = -1)
     public Value compute_density_function(Context c, @Locator.Block BlockPos pos, String... densityFunctionQueries) {
-        if (densityFunctionQueries.length == 0) {
-            throw new InternalExpressionException("Must pass at least 1 density function to compute.");
-        }
 
         Map<Value, Value> result = new HashMap<>();
 
         ServerLevel level = ((CarpetContext) c).level();
+        Registry<DensityFunction> densityFunctionRegistry = level.registryAccess().registryOrThrow(Registries.DENSITY_FUNCTION);
+
+        if (densityFunctionQueries.length == 0) {
+            return ListValue.wrap(densityFunctionRegistry.keySet().stream().map(ResourceLocation::toString).map(StringValue::of).toList());
+        }
+
         ChunkGenerator chunkGenerator = level.getChunkSource().getGenerator();
+        if (!(chunkGenerator instanceof NoiseBasedChunkGenerator generator)) {
+            return MapValue.wrap(result);
+        }
 
-        if (chunkGenerator instanceof NoiseBasedChunkGenerator generator) {
+        RandomState randomState = RandomState.create(
+            generator.generatorSettings().value(),
+            level.registryAccess().lookupOrThrow(Registries.NOISE), level.getSeed()
+        );
 
-            var randomState = RandomState
-                    .create(generator.generatorSettings().value(), level.registryAccess()
-                    .lookupOrThrow(Registries.NOISE), level.getSeed());
+        DensityFunction.Visitor visitor = ((RandomStateVisitorAccessor) (Object) randomState).getVisitor();
+        DensityFunction.SinglePointContext singlePointContext = new DensityFunction.SinglePointContext(pos.getX(), pos.getY(), pos.getZ());
+        NoiseRouter router = generator.generatorSettings().value().noiseRouter();
 
-            var densityFunctionRegistry = level.registryAccess().registryOrThrow(Registries.DENSITY_FUNCTION);
-
-            var visitor = ((RandomStateVisitorAccessor) (Object) randomState).getVisitor();
-
-            var singlePointContext = new DensityFunction.SinglePointContext(pos.getX(), pos.getY(), pos.getZ());
-            var router = generator.generatorSettings().value().noiseRouter();
-
-            for (String densityFunctionQuery : densityFunctionQueries) {
-                var densityFunction = switch (densityFunctionQuery) {
-                    case "barrier_noise" -> router.barrierNoise();
-                    case "fluid_level_floodedness_noise" -> router.fluidLevelFloodednessNoise();
-                    case "fluid_level_spread_noise" -> router.fluidLevelSpreadNoise();
-                    case "lava_noise" -> router.lavaNoise();
-                    case "temperature" -> router.temperature();
-                    case "vegetation" -> router.vegetation();
-                    case "continents" -> router.continents();
-                    case "erosion" -> router.erosion();
-                    case "depth" -> router.depth();
-                    case "ridges" -> router.ridges();
-                    case "initial_density_without_jaggedness" -> router.initialDensityWithoutJaggedness();
-                    case "final_density" -> router.finalDensity();
-                    case "vein_toggle" -> router.veinToggle();
-                    case "vein_ridged" -> router.veinRidged();
-                    case "vein_gap" -> router.veinGap();
-                    default -> null;
-                };
-
-                if (densityFunction == null) {
-                    ResourceLocation densityFunctionKey = ResourceLocation.tryParse(densityFunctionQuery);
-                    if (densityFunctionKey == null) {
-                        throw new InternalExpressionException("Density function name '" + densityFunctionQuery + "' is invalid. Please follow the correct [a-z0-9._-]:[a-z0-9/._-] format.");
-                    }
+        for (String densityFunctionQuery : densityFunctionQueries) {
+            DensityFunction densityFunction = switch (densityFunctionQuery) {
+                case "barrier_noise" -> router.barrierNoise();
+                case "fluid_level_floodedness_noise" -> router.fluidLevelFloodednessNoise();
+                case "fluid_level_spread_noise" -> router.fluidLevelSpreadNoise();
+                case "lava_noise" -> router.lavaNoise();
+                case "temperature" -> router.temperature();
+                case "vegetation" -> router.vegetation();
+                case "continents" -> router.continents();
+                case "erosion" -> router.erosion();
+                case "depth" -> router.depth();
+                case "ridges" -> router.ridges();
+                case "initial_density_without_jaggedness" -> router.initialDensityWithoutJaggedness();
+                case "final_density" -> router.finalDensity();
+                case "vein_toggle" -> router.veinToggle();
+                case "vein_ridged" -> router.veinRidged();
+                case "vein_gap" -> router.veinGap();
+                default -> {
+                    ResourceLocation densityFunctionKey = InputValidator.identifierOf(densityFunctionQuery);
 
                     if (densityFunctionRegistry.containsKey(densityFunctionKey)) {
-                        densityFunctionQuery = densityFunctionKey.toString();
-                        densityFunction = densityFunctionRegistry.get(densityFunctionKey);
+                        yield densityFunctionRegistry.get(densityFunctionKey);
                     }
 
-                    if (densityFunction == null) {
-                        throw new InternalExpressionException("Density function '" + densityFunctionQuery + "' doesn't exist. Please check the spelling or use with full 'namespace:value' if its custom defined.");
-                    }
+                    throw new InternalExpressionException(
+                        "Density function '" + densityFunctionQuery + "' doesn't exist. " +
+                        "Please check the spelling or use with full 'namespace:value' if its custom defined."
+                    );
                 }
+            };
 
-                double value = densityFunction.mapAll(visitor).compute(singlePointContext);
-                result.put(StringValue.of(densityFunctionQuery), new NumericValue(value));
+            if (densityFunction == null) {
+                throw new InternalExpressionException(
+                    "Somehow density function was not found in the whole registry and error checking didn't trigger." +
+                    "Ideally this should never reach here."
+                );
             }
+
+            double value = densityFunction.mapAll(visitor).compute(singlePointContext);
+            result.put(StringValue.of(densityFunctionQuery), new NumericValue(value));
         }
         return MapValue.wrap(result);
     }

@@ -515,6 +515,8 @@ Returns the map colour of a block at position. One of:
 
 Computes the density function(s) on the given position. Check the [Available Types](#available-types) for list of available density functions.
 
+If no types are passed in, it returns a list of all the available density functions. Built-in and custom ones.
+
 <pre>
 // passing type as multiple arguments
 compute_density_function(pos, 'continents', 'depth') => {continents: -0.205013844481, depth: 1.04772473438}
