@@ -1018,10 +1018,10 @@ public class CarpetEventServer
                                 EntityValue.of(attacker!= null?attacker.get():Event.getExplosionCausingEntity(e)),
                                 StringValue.of(type.name().toLowerCase(Locale.ROOT)),
                                 BooleanValue.of(createFire),
-                                new ListValue(affectedBlocks.stream().filter(b -> !world.isEmptyBlock(b)). map( // da heck they send air blocks
+                                ListValue.wrap(affectedBlocks.stream().filter(b -> !world.isEmptyBlock(b)). map( // da heck they send air blocks
                                         b -> new BlockValue(world.getBlockState(b),world,b)
-                                ).collect(Collectors.toList())),
-                                new ListValue(affectedEntities.stream().map(EntityValue::of).collect(Collectors.toList()))
+                                )),
+                                ListValue.wrap(affectedEntities.stream().map(EntityValue::of))
                         ), () -> CarpetServer.minecraft_server.createCommandSourceStack().withLevel(world)
                 );
             }

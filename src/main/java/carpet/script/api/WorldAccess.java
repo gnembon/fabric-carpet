@@ -349,7 +349,7 @@ public class WorldAccess {
                             new NumericValue(p.getPoiType().value().maxTickets() - ((PoiRecord_scarpetMixin)p).getFreeTickets()),
                             ValueConversions.of(p.getPos())
                     )
-            ).collect(Collectors.toList()));
+            ));
         });
 
         //poi_set(pos, null) poi_set(pos, type, occupied?,
@@ -1111,7 +1111,7 @@ public class WorldAccess {
             BlockState state = locator.block.getBlockState();
             StateDefinition<Block, BlockState> states = state.getBlock().getStateDefinition();
             return ListValue.wrap(states.getProperties().stream().map(
-                    p -> new StringValue(p.getName())).collect(Collectors.toList())
+                    p -> new StringValue(p.getName()))
             );
         });
 
@@ -1143,12 +1143,12 @@ public class WorldAccess {
             CarpetContext cc = (CarpetContext)c;
             Registry<Block> blocks = cc.registry(Registries.BLOCK);
             if (lv.size() == 0)
-                return ListValue.wrap(blocks.keySet().stream().map(ValueConversions::of).collect(Collectors.toList()));
+                return ListValue.wrap(blocks.keySet().stream().map(ValueConversions::of));
             ResourceLocation tag = InputValidator.identifierOf(lv.get(0).getString());
 
             Optional<HolderSet.Named<Block>> tagset = blocks.getTag(TagKey.create(Registries.BLOCK, tag));
             if (tagset.isEmpty()) return Value.NULL;
-            return ListValue.wrap(tagset.get().stream().map(b -> ValueConversions.of(blocks.getKey(b.value()))).collect(Collectors.toList()));
+            return ListValue.wrap(tagset.get().stream().map(b -> ValueConversions.of(blocks.getKey(b.value()))));
         });
 
         expression.addContextFunction("block_tags", -1, (c, t, lv) ->
@@ -1156,12 +1156,12 @@ public class WorldAccess {
             CarpetContext cc = (CarpetContext)c;
             Registry<Block> blocks = cc.registry(Registries.BLOCK);
             if (lv.size() == 0)
-                return ListValue.wrap(blocks.getTagNames().map(ValueConversions::of).collect(Collectors.toList()));
+                return ListValue.wrap(blocks.getTagNames().map(ValueConversions::of));
             BlockArgument blockLocator = BlockArgument.findIn(cc, lv, 0, true);
             if (blockLocator.offset == lv.size())
             {
                 Block target = blockLocator.block.getBlockState().getBlock();
-                return ListValue.wrap( blocks.getTags().filter(e -> e.getSecond().stream().anyMatch(h -> (h.value() == target))).map(e -> ValueConversions.of(e.getFirst())).collect(Collectors.toList()));
+                return ListValue.wrap( blocks.getTags().filter(e -> e.getSecond().stream().anyMatch(h -> (h.value() == target))).map(e -> ValueConversions.of(e.getFirst())));
             }
             String tag = lv.get(blockLocator.offset).getString();
             Optional<HolderSet.Named<Block>> tagSet = blocks.getTag(TagKey.create(Registries.BLOCK, InputValidator.identifierOf(tag)));
@@ -1172,12 +1172,12 @@ public class WorldAccess {
             /* before
             TagContainer tagManager = cc.s.getServer().getTags();
             if (lv.size() == 0)
-                return ListValue.wrap(tagManager.getOrEmpty(Registry.BLOCK_REGISTRY).getAvailableTags().stream().map(ValueConversions::of).collect(Collectors.toList()));
+                return ListValue.wrap(tagManager.getOrEmpty(Registry.BLOCK_REGISTRY).getAvailableTags().stream().map(ValueConversions::of));
             BlockArgument blockLocator = BlockArgument.findIn(cc, lv, 0, true);
             if (blockLocator.offset == lv.size())
             {
                 Block target = blockLocator.block.getBlockState().getBlock();
-                return ListValue.wrap(tagManager.getOrEmpty(Registry.BLOCK_REGISTRY).getAllTags().entrySet().stream().filter(e -> e.getValue().contains(target)).map(e -> ValueConversions.of(e.getKey())).collect(Collectors.toList()));
+                return ListValue.wrap(tagManager.getOrEmpty(Registry.BLOCK_REGISTRY).getAllTags().entrySet().stream().filter(e -> e.getValue().contains(target)).map(e -> ValueConversions.of(e.getKey())));
             }
             String tag = lv.get(blockLocator.offset).getString();
             net.minecraft.tags.Tag<Block> blockTag = tagManager.getOrEmpty(Registry.BLOCK_REGISTRY).getTag(InputValidator.identifierOf(tag));
@@ -1310,7 +1310,7 @@ public class WorldAccess {
             if (lv.size() == locator.offset)
                 return ListValue.wrap(references.entrySet().stream().
                         filter(e -> e.getValue()!= null && !e.getValue().isEmpty()).
-                        map(e -> new StringValue(NBTSerializableValue.nameFromRegistryId(reg.getKey(e.getKey())))).collect(Collectors.toList())
+                        map(e -> new StringValue(NBTSerializableValue.nameFromRegistryId(reg.getKey(e.getKey()))))
                 );
             String simpleStructureName = lv.get(locator.offset).getString().toLowerCase(Locale.ROOT);
             Structure structureName = reg.get(InputValidator.identifierOf(simpleStructureName));
@@ -1320,7 +1320,7 @@ public class WorldAccess {
             return ListValue.wrap(structureReferences.longStream().mapToObj(l -> ListValue.of(
                     new NumericValue(16*ChunkPos.getX(l)),
                     Value.ZERO,
-                    new NumericValue(16*ChunkPos.getZ(l)))).collect(Collectors.toList()));
+                    new NumericValue(16*ChunkPos.getZ(l)))));
         });
 
         expression.addContextFunction("structure_eligibility", -1, (c, t, lv) ->

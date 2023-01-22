@@ -3,6 +3,7 @@ package carpet.mixins;
 import org.spongepowered.asm.mixin.Mixin;
 
 import carpet.CarpetSettings;
+import carpet.CarpetSettings.ChainStoneMode;
 import carpet.fakes.BlockBehaviourInterface;
 
 import net.minecraft.core.BlockPos;
@@ -20,7 +21,7 @@ public class ChainBlock_customStickyMixin implements BlockBehaviourInterface {
 
     @Override
     public boolean isSticky(BlockState state) {
-        return CarpetSettings.doChainStone;
+        return CarpetSettings.chainStone.enabled();
     }
 
     @Override
@@ -31,7 +32,7 @@ public class ChainBlock_customStickyMixin implements BlockBehaviourInterface {
             return false;
         }
 
-        if (CarpetSettings.chainStoneStickToAll) {
+        if (CarpetSettings.chainStone == ChainStoneMode.STICK_TO_ALL) {
             return true;
         }
         if (neighborState.is((Block)(Object)this)) {

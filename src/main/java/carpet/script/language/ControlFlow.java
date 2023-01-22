@@ -112,7 +112,7 @@ public class ControlFlow {
                                 StringValue.of(f.getString()),
                                 NumericValue.of(f.getToken().lineno+1),
                                 NumericValue.of(f.getToken().linepos+1)
-                        )).collect(Collectors.toList())),
+                        ))),
 
                         StringValue.of("locals"), MapValue.wrap(ret.context.variables.entrySet().stream().filter(e -> !e.getKey().equals("_trace")).collect(Collectors.toMap(
                                 e -> StringValue.of(e.getKey()),

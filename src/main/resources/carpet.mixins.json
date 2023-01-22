@@ -26,6 +26,7 @@
     "FlowingFluid_liquidDamageDisabledMixin",
     "ServerStatus_motdMixin",
     "MinecraftServer_pingPlayerSampleLimit",
+    "HugeFungusFeatureMixin",
 
     "MinecraftServer_coreMixin",
 
@@ -53,7 +54,6 @@
     "ThreadedLevelLightEngine_scarpetChunkCreationMixin",
     "LivingEntity_cleanLogsMixin",
     "MobMixin",
-    "ServerEntity_leashFixMixin",
     "Villager_aiMixin",
     "Player_fakePlayersMixin",
     "ServerGamePacketListenerImpl_coreMixin",
@@ -143,7 +143,6 @@
     "Inventory_scarpetEventMixin",
     "Objective_scarpetMixin",
     "Scoreboard_scarpetMixin",
-    "PlayerTeam_scarpetMixin",
     "MerchantResultSlot_scarpetEventMixin",
     "AbstractContainerMenu_scarpetMixin",
     "AbstractContainerMenuSubclasses_scarpetMixin",
@@ -163,7 +162,9 @@
     "BlockPredicate_scarpetMixin",
     "TagPredicate_scarpetMixin",
     "HorseBaseEntity_scarpetMixin",
-    "RandomState_ScarpetMixin",
+    "NoiseSampler_scarpetMixin",
+    "QuantizedSpaghettiRarityMixin_scarpetMixin",
+    "Biome_scarpetMixin",
 
     "BlockEntity_movableBEMixin",
     "PistonBaseBlock_movableBEMixin",

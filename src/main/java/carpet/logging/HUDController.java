@@ -11,7 +11,6 @@ import net.minecraft.network.protocol.game.ClientboundTabListPacket;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.util.Mth;
 import net.minecraft.world.level.Level;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -20,6 +19,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.OptionalDouble;
 import java.util.Set;
 import java.util.function.Consumer;
 
@@ -116,7 +116,12 @@ public class HUDController
     }
     private static Component [] send_tps_display(MinecraftServer server)
     {
-        double MSPT = Mth.average(server.tickTimes) * 1.0E-6D;
+        final OptionalDouble averageTPS = Arrays.stream(server.tickTimes).average();
+        if (averageTPS.isEmpty())
+        {
+            return new Component[]{Component.literal("No TPS data available")};
+        }
+        double MSPT = Arrays.stream(server.tickTimes).average().getAsDouble() * 1.0E-6D;
         double TPS = 1000.0D / Math.max((TickSpeed.time_warp_start_time != 0)?0.0:TickSpeed.mspt, MSPT);
         if (TickSpeed.isPaused()) {
             TPS = 0;

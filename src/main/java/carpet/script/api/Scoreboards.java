@@ -2,7 +2,6 @@ package carpet.script.api;
 
 import carpet.mixins.Objective_scarpetMixin;
 import carpet.mixins.Scoreboard_scarpetMixin;
-import carpet.mixins.PlayerTeam_scarpetMixin;
 import carpet.script.CarpetContext;
 import carpet.script.Expression;
 import carpet.script.exception.InternalExpressionException;
@@ -19,7 +18,6 @@ import carpet.script.value.Value;
 import com.google.common.collect.Lists;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -67,12 +65,12 @@ public class Scoreboards {
             CarpetContext cc = (CarpetContext)c;
             Scoreboard scoreboard =  cc.server().getScoreboard();
             if (lv.size()==0)
-                return ListValue.wrap(scoreboard.getObjectiveNames().stream().map(StringValue::new).collect(Collectors.toList()));
+                return ListValue.wrap(scoreboard.getObjectiveNames().stream().map(StringValue::new));
             String objectiveName = lv.get(0).getString();
             Objective objective = scoreboard.getOrCreateObjective(objectiveName);
             if (objective == null) return Value.NULL;
             if (lv.size()==1)
-                return ListValue.wrap(scoreboard.getPlayerScores(objective).stream().map(s -> new StringValue(s.getOwner())).collect(Collectors.toList()));
+                return ListValue.wrap(scoreboard.getPlayerScores(objective).stream().map(s -> new StringValue(s.getOwner())));
             String key = getScoreboardKeyFromValue(lv.get(1));
             if(lv.size()==2)
             {
@@ -247,11 +245,11 @@ public class Scoreboards {
             CarpetContext cc = (CarpetContext)c;
             ServerScoreboard scoreboard = cc.server().getScoreboard();
             if(lv.size() == 0)
-                return ListValue.wrap(scoreboard.getTeamNames().stream().map(StringValue::of).collect(Collectors.toList()));
+                return ListValue.wrap(scoreboard.getTeamNames().stream().map(StringValue::of));
             if (lv.size() != 1) return Value.NULL;
             PlayerTeam team = scoreboard.getPlayerTeam(lv.get(0).getString());
             if(team == null) return Value.NULL;
-            return ListValue.wrap(team.getPlayers().stream().map(StringValue::of).collect(Collectors.toList()));
+            return ListValue.wrap(team.getPlayers().stream().map(StringValue::of));
         });
 
 
@@ -334,7 +332,7 @@ public class Scoreboards {
                     team.setCollisionRule(collisionRule);
                     break;
                 case "color":
-                    if(!modifying) return new StringValue(((PlayerTeam_scarpetMixin) team).getColor().getName());
+                    if(!modifying) return new StringValue(team.getColor().getName());
                     if(!(settingVal instanceof StringValue)) throw new InternalExpressionException("'team_property' requires a string as the third argument for the property " + propertyVal.getString());
                     ChatFormatting color = ChatFormatting.getByName(settingVal.getString().toUpperCase());
                     if(color == null || !color.isColor()) throw new InternalExpressionException("Unknown value for property " + propertyVal.getString() + ": " + settingVal.getString());
@@ -399,7 +397,7 @@ public class Scoreboards {
             CustomBossEvents bossBarManager = ((CarpetContext)c).server().getCustomBossEvents();
             if(lv.size() > 3) throw new InternalExpressionException("'bossbar' accepts max three arguments");
 
-            if(lv.size() == 0) return ListValue.wrap(bossBarManager.getEvents().stream().map(CustomBossEvent::getTextId).map(ResourceLocation::toString).map(StringValue::of).collect(Collectors.toList()));
+            if(lv.size() == 0) return ListValue.wrap(bossBarManager.getEvents().stream().map(CustomBossEvent::getTextId).map(ResourceLocation::toString).map(StringValue::of));
 
             String id = lv.get(0).getString();
             ResourceLocation identifier;
@@ -459,7 +457,7 @@ public class Scoreboards {
                     }
                     return Value.FALSE;
                 case "players":
-                    if (propertyValue == null) return ListValue.wrap(bossBar.getPlayers().stream().map(EntityValue::new).collect(Collectors.toList()));
+                    if (propertyValue == null) return ListValue.wrap(bossBar.getPlayers().stream().map(EntityValue::new));
                     if(propertyValue instanceof ListValue)
                     {
                         bossBar.removeAllPlayers();

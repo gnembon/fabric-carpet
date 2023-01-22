@@ -377,7 +377,7 @@ public class Expression
             return exc;
         // unexpected really - should be caught earlier and converted to InternalExpressionException
         CarpetSettings.LOG.error("Unexpected exception while running Scarpet code", exc);
-        return new ExpressionException(c, e, token, "Error while evaluating expression: "+exc);
+        return new ExpressionException(c, e, token, "Internal error (please report this issue to Carpet) while evaluating: " + exc);
     }
 
     public void addUnaryOperator(String surface, boolean leftAssoc, Function<Value, Value> fun)

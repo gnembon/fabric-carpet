@@ -32,7 +32,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Iterator;
-import java.util.Locale;
 import java.util.Optional;
 
 import static carpet.api.settings.RuleCategory.BUGFIX;
@@ -51,14 +50,11 @@ import static carpet.api.settings.RuleCategory.CLIENT;
 public class CarpetSettings
 {
     public static final String carpetVersion = FabricLoader.getInstance().getModContainer("carpet").orElseThrow().getMetadata().getVersion().toString();
-    public static final String releaseTarget = "1.19.3";
+    public static final String releaseTarget = "1.19.4";
     public static final Logger LOG = LoggerFactory.getLogger("carpet");
     public static final ThreadLocal<Boolean> skipGenerationChecks = ThreadLocal.withInitial(() -> false);
     public static final ThreadLocal<Boolean> impendingFillSkipUpdates = ThreadLocal.withInitial(() -> false);
-    public static final int VANILLA_FILL_LIMIT = 32768;
     public static int runPermissionLevel = 2;
-    public static boolean doChainStone = false;
-    public static boolean chainStoneStickToAll = false;
     public static Block structureBlockIgnoredBlock = Blocks.STRUCTURE_VOID;
     private static class LanguageValidator extends Validator<String> {
         @Override public String validate(CommandSourceStack source, CarpetRule<String> currentRule, String newValue, String string) {
@@ -387,13 +383,10 @@ public class CarpetSettings
     @Rule( desc = "Pistons can push block entities, like hoppers, chests etc.", category = {EXPERIMENTAL, FEATURE} )
     public static boolean movableBlockEntities = false;
 
-
-    private static class ChainStoneSetting extends Validator<String> {
-        @Override public String validate(CommandSourceStack source, CarpetRule<String> currentRule, String newValue, String string) {
-            CarpetSettings.doChainStone = !newValue.toLowerCase(Locale.ROOT).equals("false");
-            CarpetSettings.chainStoneStickToAll = newValue.toLowerCase(Locale.ROOT).equals("stick_to_all");
-
-            return newValue;
+    public enum ChainStoneMode {
+        TRUE, FALSE, STICK_TO_ALL;
+        public boolean enabled() {
+            return this != FALSE;
         }
     }
 
@@ -403,11 +396,9 @@ public class CarpetSettings
                     "and will stick to other blocks that connect to them directly.",
                     "With stick_to_all: it will stick even if not visually connected"
             },
-            category = {EXPERIMENTAL, FEATURE},
-            options = {"true", "false", "stick_to_all"},
-            validate = ChainStoneSetting.class
+            category = {EXPERIMENTAL, FEATURE}
     )
-    public static String chainStone = "false";
+    public static ChainStoneMode chainStone = ChainStoneMode.FALSE;
 
     @Rule( desc = "Saplings turn into dead shrubs in hot climates and no water access", category = FEATURE )
     public static boolean desertShrubs = false;
@@ -488,18 +479,10 @@ public class CarpetSettings
     private static class ModulePermissionLevel extends Validator<String> {
         @Override public String validate(CommandSourceStack source, CarpetRule<String> currentRule, String newValue, String string) {
             int permissionLevel = switch (newValue) {
-                    case "false":
-                        yield 0;
-                    case "true":
-                    case "ops":
-                        yield 2;
-                    case "0":
-                    case "1":
-                    case "2":
-                    case "3":
-                    case "4":
-                    	yield Integer.parseInt(newValue);
-                    default: throw new IllegalArgumentException();
+                    case "false" -> 0;
+                    case "true", "ops" -> 2;
+                    case "0", "1", "2", "3", "4" -> Integer.parseInt(newValue);
+                    default -> throw new IllegalArgumentException(); // already checked by previous validator
             	};
             if (source != null && !source.hasPermission(permissionLevel))
                 return null;
@@ -592,13 +575,6 @@ public class CarpetSettings
     )
     public static boolean smoothClientAnimations;
 
-    //@Rule(
-    //        desc="Fixes mining ghost blocks by trusting clients with block breaking",
-    //        extra="Increases player allowed mining distance to 32 blocks",
-    //        category = SURVIVAL
-    //)
-    //public static boolean miningGhostBlockFix = false;
-
     private static class PushLimitLimits extends Validator<Integer> {
         @Override public Integer validate(CommandSourceStack source, CarpetRule<Integer> currentRule, Integer newValue, String string) {
             return (newValue>0 && newValue <= 1024) ? newValue : null;
@@ -632,14 +608,14 @@ public class CarpetSettings
         public String description() { return "You must choose a value from 1 to 20M";}
     }
     @Rule(
-            desc = "Customizable fill/fillbiome/clone volume limit",
+            desc = "[Deprecated] Customizable fill/fillbiome/clone volume limit",
+            extra = "Use vanilla gamerule instead. This setting will be removed in 1.20.0",
             options = {"32768", "250000", "1000000"},
             category = CREATIVE,
             strict = false,
             validate = FillLimitLimits.class
     )
-    public static int fillLimit = VANILLA_FILL_LIMIT;
-
+    public static int fillLimit = 32768;
 
     @Rule(
             desc = "Customizable forceload chunk limit",
@@ -888,13 +864,6 @@ public class CarpetSettings
     @Rule(desc = "fixes block placement rotation issue when player rotates quickly while placing blocks", category = RuleCategory.BUGFIX)
     public static boolean placementRotationFix = false;
 
-    @Rule(
-            desc = "Fixes leads breaking/becoming invisible in unloaded chunks",
-            extra = "You may still get visibly broken leash links on the client side, but server side the link is still there.",
-            category = RuleCategory.BUGFIX
-    )// needs checkfix for 1.15
-    public static boolean leadFix = false;
-
     @Rule(desc = "Spawning requires much less CPU and Memory", category = OPTIMIZATION)
     public static boolean lagFreeSpawning = false;
 
@@ -1001,6 +970,7 @@ public class CarpetSettings
 
         @Override
         public String validate(CommandSourceStack source, CarpetRule<String> currentRule, String newValue, String string) {
+            if (source == null) return newValue; // closing or sync
             Optional<Block> ignoredBlock = source.registryAccess().registryOrThrow(Registries.BLOCK).getOptional(ResourceLocation.tryParse(newValue));
             if (!ignoredBlock.isPresent()) {
                 Messenger.m(source, "r Unknown block '" + newValue + "'.");
@@ -1074,4 +1044,14 @@ public class CarpetSettings
     )
     public static int sculkSensorRange = 8;
 
+    public enum FungusFixMode {
+        FALSE, VANILLA, ALL;
+    }
+
+    @Rule(
+            desc = "Allows to grow nether trees with 3x3 base with bonemeal",
+            extra = {"Setting to 'all' will make all nether fungi grow into 3x3 trees", "Setting to 'vanilla' will make 6% of all nether fungi grow into 3x3 trees", "(this being consistent with worldgen)", "Fixes [MC-215169](https://bugs.mojang.com/browse/MC-215169)."},
+            category = {SURVIVAL, BUGFIX}
+    )
+    public static FungusFixMode thickHugeFungusGrowthFix = FungusFixMode.FALSE;
 }
