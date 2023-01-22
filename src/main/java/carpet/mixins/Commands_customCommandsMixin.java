@@ -53,7 +53,7 @@ public abstract class Commands_customCommandsMixin
     )
     private boolean doesOutputCommandStackTrace(Logger logger)
     {
-        if (CarpetSettings.superSecretSetting)
+        if (CarpetSettings.outputCommandStackTrace)
             return true;
         return logger.isDebugEnabled();
     }

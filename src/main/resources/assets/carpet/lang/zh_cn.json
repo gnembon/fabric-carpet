@@ -240,6 +240,10 @@
   "carpet.rule.spawnChunksSize.name": "出生点永久加载区块半径",
   "carpet.rule.spawnChunksSize.desc": "更改出生点永久加载区块半径",
   "carpet.rule.spawnChunksSize.extra.0": "定义新半径\n设为0以禁用出生点区块加载",
+  
+  "carpet.rule.outputCommandStackTrace.name": "输出命令中意外错误堆栈踪迹",
+  "carpet.rule.outputCommandStackTrace.desc": "将命令在执行时遇到的意外错误的堆栈踪迹输出到控制台中",
+  "carpet.rule.outputCommandStackTrace.extra.0": "在原版Minecraft中，命令在执行中的意外错误的堆栈踪迹不会被输出，这使得开发者难以修复这一问题。最初这些堆栈踪迹的输出可以通过superSecretSetting启用。",
 
 
   "carpet.category.bugfix": "漏洞修复",

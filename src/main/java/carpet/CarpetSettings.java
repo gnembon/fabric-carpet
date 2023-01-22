@@ -1054,4 +1054,11 @@ public class CarpetSettings
             category = {SURVIVAL, BUGFIX}
     )
     public static FungusFixMode thickHugeFungusGrowthFix = FungusFixMode.FALSE;
+    
+    @Rule(
+            desc = "Output the stacktrace to the console if an unexpected error was encountered when executing a command",
+            extra = {"In vanilla Minecraft, the stacktrace of unexpected exceptions in the execution of commands are not outputed, making it hard for developers to handle the problem. Originally, the stacktrace outputing can be enabled via superSecretSetting。"},
+            category = CREATIVE
+    )
+    public static boolean outputCommandStackTrace;
 }
