@@ -162,8 +162,7 @@
     "BlockPredicate_scarpetMixin",
     "TagPredicate_scarpetMixin",
     "HorseBaseEntity_scarpetMixin",
-    "NoiseSampler_scarpetMixin",
-    "QuantizedSpaghettiRarityMixin_scarpetMixin",
+    "RandomState_ScarpetMixin",
     "Biome_scarpetMixin",
 
     "BlockEntity_movableBEMixin",
