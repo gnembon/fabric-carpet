@@ -408,7 +408,7 @@ public class CarpetScriptHost extends ScriptHost
                 LiteralArgumentBuilder<CommandSourceStack> command = readCommands(commandValidator);
                 if (command != null)
                 {
-                	registerCommand(command);
+                    registerCommand(command);
                     return true;
                 }
                 else {
