@@ -341,10 +341,11 @@ public class CarpetScriptServer extends ScriptServer
             return false;
         }
         // stop all events associated with name
-        events.removeAllHostEvents(modules.get(name));
-        modules.get(name).onClose();
-        modules.remove(name);
-        ((CommandDispatcherInterface)server.getCommands().getDispatcher()).carpet$unregister(name);
+        CarpetScriptHost host = modules.remove(name);
+        events.removeAllHostEvents(host);
+        host.onClose();
+        if (host.hasCommand)
+            ((CommandDispatcherInterface)server.getCommands().getDispatcher()).carpet$unregister(name);
         if (!isRuleApp) unloadableModules.remove(name);
         CommandHelper.notifyPlayersCommandsChanged(server);
         if (notifySource) Messenger.m(source, "gi Removed "+name+" app");
