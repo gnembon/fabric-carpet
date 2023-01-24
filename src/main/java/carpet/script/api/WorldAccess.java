@@ -1642,7 +1642,7 @@ public class WorldAccess {
         Registry<DensityFunction> densityFunctionRegistry = level.registryAccess().registryOrThrow(Registries.DENSITY_FUNCTION);
 
         if (densityFunctionQueries.length == 0) {
-            return ListValue.wrap(densityFunctionRegistry.keySet().stream().map(ResourceLocation::toString).map(StringValue::of).toList());
+            return ListValue.wrap(densityFunctionRegistry.keySet().stream().map(ResourceLocation::toString).map(StringValue::of));
         }
 
         ChunkGenerator chunkGenerator = level.getChunkSource().getGenerator();
