@@ -134,7 +134,7 @@ public class Inventories {
             RegistryAccess regs = cc.registryAccess();
             for (Recipe<?> recipe: recipes)
             {
-                ItemStack result = recipe.getResultItem();
+                ItemStack result = recipe.getResultItem(regs);
                 List<Value> ingredientValue = new ArrayList<>();
                 recipe.getIngredients().forEach(
                         ingredient ->
