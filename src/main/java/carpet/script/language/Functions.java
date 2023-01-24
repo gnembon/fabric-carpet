@@ -1,16 +1,18 @@
 package carpet.script.language;
 
 import carpet.script.Context;
+import carpet.script.Context.Type;
 import carpet.script.Expression;
 import carpet.script.Fluff;
 import carpet.script.LazyValue;
 import carpet.script.Tokenizer;
+import carpet.script.Tokenizer.Token;
 import carpet.script.argument.FunctionArgument;
+import carpet.script.exception.ExpressionException;
 import carpet.script.exception.InternalExpressionException;
 import carpet.script.exception.ReturnStatement;
 import carpet.script.value.FunctionSignatureValue;
 import carpet.script.value.FunctionValue;
-import carpet.script.value.FunctionAnnotationValue;
 import carpet.script.value.ListValue;
 import carpet.script.value.StringValue;
 import carpet.script.value.Value;
@@ -59,30 +61,27 @@ public class Functions {
                 String varArgs = null;
                 for (int i = 1; i < lv.size(); i++)
                 {
-                    Value v = lv.get(i).evalValue(c, Context.LOCALIZATION);
-                    if (!v.isBound())
-                    {
-                        throw new InternalExpressionException("Only variables can be used in function signature, not  " + v.getString());
+                    if (!(lv.get(i) instanceof LazyValue.Named var)) {
+                        if (lv.get(i).evalValue(c, Context.LOCALIZATION).isBound())
+                            throw Operators.trap("varargs compiling");
+                        throw new InternalExpressionException("Only variables can be used in function signature");
                     }
-                    if (v instanceof FunctionAnnotationValue)
+                    if (var instanceof LazyValue.Outer)
                     {
-                        if (((FunctionAnnotationValue) v).type == FunctionAnnotationValue.Type.GLOBAL)
-                        {
-                            globals.add(v.boundVariable);
-                        }
-                        else
-                        {
-                            if (varArgs != null)
-                                throw new InternalExpressionException("Variable argument identifier is already defined as "+varArgs+", trying to overwrite with "+v.boundVariable);
-                            varArgs = v.boundVariable;
-                        }
+                        globals.add(var.name());
+                    }
+                    else if (var instanceof LazyValue.VarArgsOrUnpacker)
+                    {
+                        if (varArgs != null)
+                            throw new InternalExpressionException("Variable argument identifier is already defined as "+varArgs+", trying to overwrite with "+var.name());
+                        varArgs = var.name();
                     }
                     else
                     {
-                        args.add(v.boundVariable);
+                        args.add(var.name());
                     }
                 }
-                Value retval = new FunctionSignatureValue(name, args, varArgs, globals);
+                Value retval = new FunctionSignatureValue(name, args, varArgs, globals); // TODO could/should this be a LV?
                 return (cc, tt) -> retval;
             }
 
@@ -104,12 +103,28 @@ public class Functions {
             }
         });
 
+        // custom because it needs to encode info in its "executable" (the variable name to capture)
+        expression.addCustomFunction("outer", new Fluff.AbstractLazyFunction(1, "outer") {
+            @Override
+            public LazyValue createExecutable(Context compilationCtx, Expression expr, Token token, List<LazyValue> params) {
+                if (params.size() != 1 || !(params.get(0) instanceof LazyValue.Variable var)) {
+                    throw new ExpressionException(compilationCtx, expr, token, "'outer' takes exactly one argument that must be a variable reference");
+                }
+                return new LazyValue.Outer(var.name());
+            }
 
-        expression.addContextFunction("outer", 1, (c, t, lv) ->
-        {
-            if (t != Context.LOCALIZATION)
-                throw new InternalExpressionException("Outer scoping of variables is only possible in function signatures.");
-            return new FunctionAnnotationValue(lv.get(0), FunctionAnnotationValue.Type.GLOBAL);
+            @Override
+            public boolean pure() { return false; }
+
+            @Override
+            public boolean transitive() { return false; }
+
+            @Override
+            public LazyValue lazyEval(Context c, Type type, Expression expr, Token token, List<LazyValue> lazyParams) {
+                // This isn't ever compiled, so it should be unreachable. Only thing that could call this is the compile-time evaluator.
+                // Proper exception for it being present somewhere else is in LazyValue.Outer
+                throw new IllegalStateException("Reached wrong evaluation of 'outer' function");
+            }
         });
 
         //assigns const procedure to the lhs, returning its previous value

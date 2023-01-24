@@ -67,7 +67,7 @@ public abstract class ScriptHost
             {
                 Value var = value.evalValue(null);
                 Value copy = var.deepcopy();
-                copy.boundVariable = var.boundVariable;
+                copy.bindTo(var.getVariable());
                 globalVariables.put(key, (c, t) -> copy);
             });
         }

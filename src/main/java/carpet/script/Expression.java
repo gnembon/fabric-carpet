@@ -234,6 +234,11 @@ public class Expression
         functions.put(name, fun);
     }
 
+    public void addCustomOperator(String name, ILazyOperator op)
+    {
+        operators.put(name, op);
+    }
+
     public void addLazyFunctionWithDelegation(String name, int numpar, boolean pure, boolean transitive,
                                                      QuinnFunction<Context, Context.Type, Expression, Tokenizer.Token, List<LazyValue>, LazyValue> lazyfun)
     {
@@ -739,7 +744,7 @@ public class Expression
         }
         var = c.host.getGlobalVariable(module, name);
         if (var != null) return var;
-        var = (_c, _t ) -> _c.host.strict ? Value.UNDEF.reboundedTo(name) : Value.NULL.reboundedTo(name);
+        var = (_c, _t) -> _c.host.strict ? Value.UNDEF.reboundedTo(name) : Value.NULL.reboundedTo(name);
         setAnyVariable(c, name, var);
         return var;
     }
@@ -1005,14 +1010,14 @@ public class Expression
                 case UNARY_OPERATOR:
                 {
                     final ExpressionNode node = nodeStack.pop();
-                    LazyValue result = (c, t) -> operators.get(token.surface).lazyEval(c, t, this, token, node.op, null).evalValue(c, t);
+                    LazyValue result = operators.get(token.surface).createExecutable(context, this, token, node.op, null);
                     nodeStack.push(new ExpressionNode(result, Collections.singletonList(node), token));
                     break;
                 }
                 case OPERATOR:
                     final ExpressionNode v1 = nodeStack.pop();
                     final ExpressionNode v2 = nodeStack.pop();
-                    LazyValue result = (c,t) -> operators.get(token.surface).lazyEval(c, t,this, token, v2.op, v1.op).evalValue(c, t);
+                    LazyValue result = operators.get(token.surface).createExecutable(context, this, token, v2.op, v1.op);
                     nodeStack.push(new ExpressionNode(result, List.of(v2, v1), token ));
                     break;
                 case VARIABLE:
@@ -1023,7 +1028,7 @@ public class Expression
                         nodeStack.push(new ExpressionNode(LazyValue.ofConstant(constant), Collections.emptyList(), token));
                     }
                     else {
-                        nodeStack.push(new ExpressionNode(((c, t) -> getOrSetAnyVariable(c, token.surface).evalValue(c, t)), Collections.emptyList(), token));
+                        nodeStack.push(new ExpressionNode(new LazyValue.Variable(token.surface, this), Collections.emptyList(), token));
                     }
                     break;
                 case FUNCTION:
@@ -1061,7 +1066,7 @@ public class Expression
                     List<LazyValue> params = p.stream().map(n -> n.op).collect(Collectors.toList());
 
                     nodeStack.push(new ExpressionNode(
-                            (c, t) -> f.lazyEval(c, t, this, token, params).evalValue(c, t),
+                            f.createExecutable(context, this, token, params),
                             p,token
                     ));
                     break;
@@ -1290,7 +1295,7 @@ public class Expression
         for (ExpressionNode arg : node.args) {
             try {
                 if (arg.op instanceof LazyValue.Constant) {
-                    Value val = ((LazyValue.Constant) arg.op).get();
+                    Value val = ((LazyValue.Constant) arg.op).value();
                     args.add((c, t) -> val);
                 }
                 else args.add((c, t) -> arg.op.evalValue(ctx, requestedType));
@@ -1327,7 +1332,7 @@ public class Expression
             // constants are immutable
             if (node.token.type.isConstant())
             {
-                Value value = ((LazyValue.Constant) node.op).get();
+                Value value = ((LazyValue.Constant) node.op).value();
                 return (c, t) -> value;
             }
             return node.op;
@@ -1344,22 +1349,22 @@ public class Expression
                 ILazyOperator op = operators.get(token.surface);
                 Context.Type requestedType = op.staticType(expectedType);
                 LazyValue arg = extractOp(ctx, node.args.get(0), requestedType);
-                return (c, t) -> op.lazyEval(c, t, this, token, arg, null).evalValue(c, t);
+                return op.createExecutable(ctx, this, token, arg, null);
             }
             case OPERATOR: {
                 ILazyOperator op = operators.get(token.surface);
                 Context.Type requestedType = op.staticType(expectedType);
                 LazyValue arg = extractOp(ctx, node.args.get(0), requestedType);
                 LazyValue arh = extractOp(ctx, node.args.get(1), requestedType);
-                return (c, t) -> op.lazyEval(c, t, this, token, arg, arh).evalValue(c, t);
+                return op.createExecutable(ctx, this, token, arg, arh);
             }
             case VARIABLE:
-                return (c, t) -> getOrSetAnyVariable(c, token.surface).evalValue(c, t);
+                return new LazyValue.Variable(token.surface, this);
             case FUNCTION: {
                 ILazyFunction f = functions.get(token.surface);
                 Context.Type requestedType = f.staticType(expectedType);
                 List<LazyValue> params = node.args.stream().map(n -> extractOp(ctx, n, requestedType)).collect(Collectors.toList());
-                return (c, t) -> f.lazyEval(c, t, this, token, params).evalValue(c, t);
+                return f.createExecutable(ctx, this, token, params);
             }
             case CONSTANT:
                 return node.op;
