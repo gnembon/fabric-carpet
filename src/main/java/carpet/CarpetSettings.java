@@ -1045,13 +1045,14 @@ public class CarpetSettings
     public static int sculkSensorRange = 8;
 
     public enum FungusFixMode {
-        FALSE, VANILLA, ALL;
+        FALSE, RANDOM, ALL;
     }
 
+    // refers to "[MC-215169](https://bugs.mojang.com/browse/MC-215169)." - unconfirmed yet that its a java bug
     @Rule(
-            desc = "Allows to grow nether trees with 3x3 base with bonemeal",
-            extra = {"Setting to 'all' will make all nether fungi grow into 3x3 trees", "Setting to 'vanilla' will make 6% of all nether fungi grow into 3x3 trees", "(this being consistent with worldgen)", "Fixes [MC-215169](https://bugs.mojang.com/browse/MC-215169)."},
-            category = {SURVIVAL, BUGFIX}
+            desc = "Allows to grow nether fungi with 3x3 base with bonemeal",
+            extra = {"Setting to 'all' will make all nether fungi grow into 3x3 trees", "Setting to 'random' will make 6% of all nether fungi grow into 3x3 trees", "(this being consistent with worldgen)"},
+            category = {SURVIVAL, FEATURE}
     )
-    public static FungusFixMode thickHugeFungusGrowthFix = FungusFixMode.FALSE;
+    public static FungusFixMode thickFungusGrowth = FungusFixMode.FALSE;
 }
