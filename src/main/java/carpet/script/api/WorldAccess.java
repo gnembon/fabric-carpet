@@ -1642,7 +1642,7 @@ public class WorldAccess {
         Registry<DensityFunction> densityFunctionRegistry = level.registryAccess().registryOrThrow(Registries.DENSITY_FUNCTION);
 
         if (densityFunctionQueries.length == 0) {
-            return ListValue.wrap(densityFunctionRegistry.keySet().stream().map(ResourceLocation::toString).map(StringValue::of));
+            return ListValue.wrap(densityFunctionRegistry.keySet().stream().map(ValueConversions::of));
         }
 
         ChunkGenerator chunkGenerator = level.getChunkSource().getGenerator();
@@ -1690,12 +1690,8 @@ public class WorldAccess {
                 }
             };
 
-            if (densityFunction == null) {
-                throw new InternalExpressionException(
-                    "Somehow density function was not found in the whole registry and error checking didn't trigger." +
-                    "Ideally this should never reach here."
-                );
-            }
+            if (densityFunction == null) // IDE thinks may be null as Registry.get is Nullable, but we checked it
+                throw new IllegalStateException("density function can't be null here"); 
 
             double value = densityFunction.mapAll(visitor).compute(singlePointContext);
             result.put(StringValue.of(densityFunctionQuery), new NumericValue(value));
