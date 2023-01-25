@@ -341,8 +341,32 @@ public class CarpetSettings
     )
     public static boolean antiCheatDisabled = false;
 
-    @Rule(desc = "Pistons, droppers and dispensers react if block above them is powered", category = CREATIVE)
-    public static boolean quasiConnectivity = true;
+    private static class QuasiConnectivityValidator extends Validator<Integer> {
+
+        @Override
+        public Integer validate(CommandSourceStack source, CarpetRule<Integer> changingRule, Integer newValue, String userInput) {
+            int minRange = 0;
+            int maxRange = 1;
+
+            if (source == null) {
+                maxRange = Integer.MAX_VALUE;
+            } else {
+                for (Level level : source.getServer().getAllLevels()) {
+                    maxRange = Math.max(maxRange, level.getHeight() - 1);
+                }
+            }
+
+            return (newValue >= minRange && newValue <= maxRange) ? newValue : null;
+        }
+    }
+
+    @Rule(
+        desc = "Pistons, droppers, and dispensers check for power to the block(s) above them.",
+        extra = { "Defines the range at which pistons, droppers, and dispensers check for 'quasi power'." },
+        category = CREATIVE,
+        validate = QuasiConnectivityValidator.class
+    )
+    public static int quasiConnectivity = 1;
 
     @Rule(
             desc = "Players can flip and rotate blocks when holding cactus",
