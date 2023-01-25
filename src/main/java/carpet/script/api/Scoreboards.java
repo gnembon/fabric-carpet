@@ -132,18 +132,15 @@ public class Scoreboards {
             else
             {
                 String critetionName = lv.get(1).getString();
-                criterion = ObjectiveCriteria.byName(critetionName).orElse(null);
-                if (criterion==null)
-                {
-                    throw new ThrowStatement(critetionName, Throwables.UNKNOWN_CRITERION);
-                }
+                criterion = ObjectiveCriteria.byName(critetionName)
+                        .orElseThrow(() -> new ThrowStatement(critetionName, Throwables.UNKNOWN_CRITERION));
             }
 
-            Objective objective = scoreboard.getOrCreateObjective(objectiveName);
+            Objective objective = scoreboard.getObjective(objectiveName);
             if (objective != null) {
+                if (objective.getCriteria().equals(criterion)) return Value.NULL;
                 c.host.issueDeprecation("reading or modifying an objective's criterion with scoreboard_add");
                 if(lv.size() == 1) return StringValue.of(objective.getCriteria().getName());
-                if(objective.getCriteria().equals(criterion) || lv.size() == 1) return Value.NULL;
                 ((Scoreboard_scarpetMixin)scoreboard).getObjectivesByCriterion().get(objective.getCriteria()).remove(objective);
                 ((Objective_scarpetMixin) objective).setCriterion(criterion);
                 (((Scoreboard_scarpetMixin)scoreboard).getObjectivesByCriterion().computeIfAbsent(criterion, (criterion1) -> Lists.newArrayList())).add(objective);
