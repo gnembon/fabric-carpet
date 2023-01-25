@@ -348,7 +348,7 @@ public class CarpetSettings
 
         @Override
         public Integer validate(CommandSourceStack source, CarpetRule<Integer> changingRule, Integer newValue, String userInput) {
-            int minRange = 1;
+            int minRange = 0;
             int maxRange = 1;
 
             if (source == null) {
