@@ -32,7 +32,10 @@ import carpet.script.value.FunctionValue;
 import carpet.script.value.NumericValue;
 import carpet.script.value.StringValue;
 import carpet.script.value.Value;
+import it.unimi.dsi.fastutil.Stack;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -41,7 +44,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.Stack;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -763,7 +765,7 @@ public class Expression
     private List<Tokenizer.Token> shuntingYard(Context c)
     {
         List<Tokenizer.Token> outputQueue = new ArrayList<>();
-        Stack<Tokenizer.Token> stack = new Stack<>();
+        Stack<Tokenizer.Token> stack = new ObjectArrayList<>();
 
         Tokenizer tokenizer = new Tokenizer(c, this, expression, allowComments, allowNewlineSubstitutions);
         // stripping lousy but acceptable semicolons
@@ -801,7 +803,7 @@ public class Expression
                     {
                         throw new ExpressionException(c, this, previousToken, "Missing parameter(s) for operator ");
                     }
-                    while (!stack.isEmpty() && stack.peek().type != Tokenizer.Token.TokenType.OPEN_PAREN)
+                    while (!stack.isEmpty() && stack.top().type != Tokenizer.Token.TokenType.OPEN_PAREN)
                     {
                         outputQueue.add(stack.pop());
                     }
@@ -878,7 +880,7 @@ public class Expression
                     {
                         throw new ExpressionException(c, this, previousToken, "Missing parameter(s) for operator " + previousToken);
                     }
-                    while (!stack.isEmpty() && stack.peek().type != Tokenizer.Token.TokenType.OPEN_PAREN)
+                    while (!stack.isEmpty() && stack.top().type != Tokenizer.Token.TokenType.OPEN_PAREN)
                     {
                         outputQueue.add(stack.pop());
                     }
@@ -887,7 +889,7 @@ public class Expression
                         throw new ExpressionException(c, this, "Mismatched parentheses");
                     }
                     stack.pop();
-                    if (!stack.isEmpty() && stack.peek().type == Tokenizer.Token.TokenType.FUNCTION)
+                    if (!stack.isEmpty() && stack.top().type == Tokenizer.Token.TokenType.FUNCTION)
                     {
                         outputQueue.add(stack.pop());
                     }
@@ -918,7 +920,7 @@ public class Expression
 
     private void shuntOperators(List<Tokenizer.Token> outputQueue, Stack<Tokenizer.Token> stack, ILazyOperator o1)
     {
-        Tokenizer.Token nextToken = stack.isEmpty() ? null : stack.peek();
+        Tokenizer.Token nextToken = stack.isEmpty() ? null : stack.top();
         while (nextToken != null
                 && (nextToken.type == Tokenizer.Token.TokenType.OPERATOR
                 || nextToken.type == Tokenizer.Token.TokenType.UNARY_OPERATOR)
@@ -926,7 +928,7 @@ public class Expression
                 || (o1.getPrecedence() < operators.get(nextToken.surface).getPrecedence())))
         {
             outputQueue.add(stack.pop());
-            nextToken = stack.isEmpty() ? null : stack.peek();
+            nextToken = stack.isEmpty() ? null : stack.top();
         }
     }
 
@@ -995,7 +997,7 @@ public class Expression
 
     private ExpressionNode RPNToParseTree(List<Tokenizer.Token> tokens, Context context)
     {
-        Stack<ExpressionNode> nodeStack = new Stack<>();
+        Stack<ExpressionNode> nodeStack = new ObjectArrayList<>();
         for (final Tokenizer.Token token : tokens)
         {
             switch (token.type)
@@ -1041,7 +1043,7 @@ public class Expression
                     }
                     // pop parameters off the stack until we hit the start of
                     // this function's parameter list
-                    while (!nodeStack.isEmpty() && nodeStack.peek() != ExpressionNode.PARAMS_START)
+                    while (!nodeStack.isEmpty() && nodeStack.top() != ExpressionNode.PARAMS_START)
                     {
                         p.add(nodeStack.pop());
                     }
@@ -1052,7 +1054,7 @@ public class Expression
                     }
                     Collections.reverse(p);
 
-                    if (nodeStack.peek() == ExpressionNode.PARAMS_START)
+                    if (nodeStack.top() == ExpressionNode.PARAMS_START)
                     {
                         nodeStack.pop();
                     };
@@ -1377,7 +1379,7 @@ public class Expression
         // each
         // layer on the stack being the count of the number of parameters in
         // that scope
-        Stack<Integer> stack = new Stack<>();
+        IntArrayList stack = new IntArrayList(); // IntArrayList instead of just IntStack because we need to query the size
 
         // push the 'global' scope
         stack.push(0);
@@ -1387,13 +1389,13 @@ public class Expression
             switch (token.type)
             {
                 case UNARY_OPERATOR:
-                    if (stack.peek() < 1)
+                    if (stack.topInt() < 1)
                     {
                         throw new ExpressionException(c, this, token, "Missing parameter(s) for operator " + token);
                     }
                     break;
                 case OPERATOR:
-                    if (stack.peek() < 2)
+                    if (stack.topInt() < 2)
                     {
                         if (token.surface.equals(";"))
                         {
@@ -1402,7 +1404,7 @@ public class Expression
                         throw new ExpressionException(c, this, token, "Missing parameter(s) for operator " + token);
                     }
                     // pop the operator's 2 parameters and add the result
-                    stack.set(stack.size() - 1, stack.peek() - 2 + 1);
+                    stack.set(stack.size() - 1, stack.topInt() - 2 + 1);
                     break;
                 case FUNCTION:
                     //ILazyFunction f = functions.get(token.surface);// don't validate global - userdef functions
@@ -1411,7 +1413,7 @@ public class Expression
                     //{
                     //    throw new ExpressionException(c, this, token, "Function " + token + " expected " + f.getNumParams() + " parameters, got " + numParams);
                     //}
-                    stack.pop();
+                    stack.popInt();
                     // due to unpacking, all functions can have variable number of arguments
                     // we will be checking that at runtime.
                     // TODO try analyze arguments and assess if its possible that they are static
@@ -1420,13 +1422,13 @@ public class Expression
                         throw new ExpressionException(c, this, token, "Too many function calls, maximum scope exceeded");
                     }
                     // push the result of the function
-                    stack.set(stack.size() - 1, stack.peek() + 1);
+                    stack.set(stack.size() - 1, stack.topInt() + 1);
                     break;
                 case OPEN_PAREN:
                     stack.push(0);
                     break;
                 default:
-                    stack.set(stack.size() - 1, stack.peek() + 1);
+                    stack.set(stack.size() - 1, stack.topInt() + 1);
             }
         }
 
@@ -1434,11 +1436,11 @@ public class Expression
         {
             throw new ExpressionException(c, this, "Too many unhandled function parameter lists");
         }
-        else if (stack.peek() > 1)
+        else if (stack.topInt() > 1)
         {
             throw new ExpressionException(c, this, "Too many numbers or variables");
         }
-        else if (stack.peek() < 1)
+        else if (stack.topInt() < 1)
         {
             throw new ExpressionException(c, this, "Empty expression");
         }

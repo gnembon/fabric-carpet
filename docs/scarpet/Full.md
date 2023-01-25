@@ -1159,8 +1159,6 @@ It can affect global variable pool, and local variable set for a particular func
 inc(i) -> i+1; foo = 5; inc(foo) => 6
 inc(i) -> i+1; foo = 5; undef('foo'); inc(foo) => 1
 inc(i) -> i+1; foo = 5; undef('inc'); undef('foo'); inc(foo) => Error: Function inc is not defined yet at pos 53
-undef('pi')  => bad idea - removes hidden variable holding the pi value
-undef('true')  => even worse idea, unbinds global true value, all references to true would now refer to the default 0
 </pre>
 
 ### `vars(prefix)`
@@ -6049,7 +6047,8 @@ system calls. In all circumstances, these are only provided as read-only.
   * `world_center` - Returns coordinates of the center of the world with respect of the world border
   * `world_size` - Returns radius of world border for current dimension.
   * `world_max_size` - Returns maximum possible radius of world border for current dimension.
-  * 
+  * `world_min_spawning_light` - Returns minimum light level at which mobs can spawn for current dimension, taking into account datapacks
+
 ##### Relevant gameplay related properties
   * `game_difficulty` - current difficulty of the game: `'peaceful'`, `'easy'`, `'normal'`, or `'hard'`
   * `game_hardcore` - boolean whether the game is in hardcore mode

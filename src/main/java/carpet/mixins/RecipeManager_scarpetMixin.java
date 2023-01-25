@@ -34,6 +34,6 @@ public class RecipeManager_scarpetMixin implements RecipeManagerInterface
         if (typeRecipes.containsKey(output)) return Collections.singletonList(typeRecipes.get(output));
         final Registry<Item> regs = registryAccess.registryOrThrow(Registries.ITEM);
         return Lists.newArrayList(typeRecipes.values().stream().filter(
-                r -> regs.getKey(r.getResultItem().getItem()).equals(output)).collect(Collectors.toList()));
+                r -> regs.getKey(r.getResultItem(registryAccess).getItem()).equals(output)).collect(Collectors.toList()));
     }
 }

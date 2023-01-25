@@ -83,6 +83,7 @@ public class CarpetScriptHost extends ScriptHost
     Predicate<CommandSourceStack> commandValidator;
     boolean isRuleApp;
     public AppStoreManager.StoreNode storeSource;
+    boolean hasCommand;
 
     private CarpetScriptHost(CarpetScriptServer server, Module code, boolean perUser, ScriptHost parent, Map<Value, Value> config, Map<String, CommandArgument> argTypes, Predicate<CommandSourceStack> commandValidator, boolean isRuleApp)
     {
@@ -358,6 +359,12 @@ public class CarpetScriptHost extends ScriptHost
         }
     }
 
+    // Used to ensure app gets marked as holding command from a central place
+    private void registerCommand(LiteralArgumentBuilder<CommandSourceStack> command) {
+        scriptServer().server.getCommands().getDispatcher().register(command);
+        hasCommand = true;
+    }
+
     public void readCustomArgumentTypes() throws CommandSyntaxException
     {
         // read custom arguments
@@ -401,7 +408,7 @@ public class CarpetScriptHost extends ScriptHost
                 LiteralArgumentBuilder<CommandSourceStack> command = readCommands(commandValidator);
                 if (command != null)
                 {
-                    scriptServer().server.getCommands().getDispatcher().register(command);
+                    registerCommand(command);
                     return true;
                 }
                 else {
@@ -523,7 +530,7 @@ public class CarpetScriptHost extends ScriptHost
                                         })));
             }
         }
-        scriptServer().server.getCommands().getDispatcher().register(command);
+        registerCommand(command);
         return true;
     }
 

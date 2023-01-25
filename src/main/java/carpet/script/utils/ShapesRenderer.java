@@ -363,7 +363,7 @@ public class ShapesRenderer
                 {
                     // draw the item
                     client.getItemRenderer().renderStatic(shape.item, transformType, light,
-                            OverlayTexture.NO_OVERLAY, matrices, immediate, (int) shape.key(client.level.registryAccess()));
+                            OverlayTexture.NO_OVERLAY, matrices, immediate, client.level, (int) shape.key(client.level.registryAccess()));
                 }
             }
             matrices.popPose();
