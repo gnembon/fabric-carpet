@@ -38,6 +38,7 @@
     "ChunkMap_tickMixin",
     "DistanceManager_tickMixin",
     "ServerFunctionManager_tickMixin",
+    "WorldBorder_tickMixin",
     "ChunkMap_scarpetChunkCreationMixin",
     "LevelEntityGetterAdapter_scarpetMixin",
     "ChunkHolder_scarpetChunkCreationMixin",
