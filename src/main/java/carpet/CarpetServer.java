@@ -42,12 +42,10 @@ import net.minecraft.server.level.ServerPlayer;
 public class CarpetServer // static for now - easier to handle all around the code, its one anyways
 {
     public static MinecraftServer minecraft_server;
-    private static CommandDispatcher<CommandSourceStack> currentCommandDispatcher;
     public static CarpetScriptServer scriptServer;
     public static carpet.settings.SettingsManager settingsManager; // to change type to api type, can't change right now because of binary and source compat
     public static final List<CarpetExtension> extensions = new ArrayList<>();
 
-    // Separate from onServerLoaded, because a server can be loaded multiple times in singleplayer
     /**
      * Registers a {@link CarpetExtension} to be managed by Carpet.<br>
      * Should be called before Carpet's startup, like in Fabric Loader's
@@ -58,22 +56,16 @@ public class CarpetServer // static for now - easier to handle all around the co
     {
         extensions.add(extension);
         // Stop the stupid practice of extensions mixing into Carpet just to register themselves
-        if (StackWalker.getInstance().walk(stream -> stream.anyMatch(el -> 
-            el.getClassName() == CarpetServer.class.getName() && !el.getMethodName().equals("manageExtension")
-        ))) {
+        if (StackWalker.getInstance().walk(stream -> stream.skip(1)
+                .anyMatch(el -> el.getClassName() == CarpetServer.class.getName())))
+        {
             CarpetSettings.LOG.warn("""
                     Extension '%s' is registering itself using a mixin into Carpet instead of a regular ModInitializer!
                     This is stupid and will crash the game in future versions!""".formatted(extension.getClass().getSimpleName()));
         }
-
-        // for extensions that come late to the party, we used to handle them, but we've been giving them warnings about
-        // it for a while. Cause a crash
-        if (currentCommandDispatcher != null)
-        {
-            throw new IllegalStateException("Extension %s tried to register too late!".formatted(extension.getClass().getSimpleName()));
-        }
     }
 
+    // Separate from onServerLoaded, because a server can be loaded multiple times in singleplayer
     // Gets called by Fabric Loader from a ServerModInitializer and a ClientModInitializer, in both to allow extensions 
     // to register before this call in a ModInitializer (declared in fabric.mod.json)
     public static void onGameStarted()
@@ -150,7 +142,6 @@ public class CarpetServer // static for now - easier to handle all around the co
         extensions.forEach(e -> {
             e.registerCommands(dispatcher, commandBuildContext);
         });
-        currentCommandDispatcher = dispatcher;
 
         if (environment != Commands.CommandSelection.DEDICATED)
             PerfCommand.register(dispatcher);
@@ -191,7 +182,6 @@ public class CarpetServer // static for now - easier to handle all around the co
             if (scriptServer != null) scriptServer.onClose();
             scriptServer = null;
             ServerNetworkHandler.close();
-            currentCommandDispatcher = null;
 
             LoggerRegistry.stopLoggers();
             HUDController.resetScarpetHUDs();
