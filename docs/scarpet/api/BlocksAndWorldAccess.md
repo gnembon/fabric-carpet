@@ -509,46 +509,27 @@ Returns the map colour of a block at position. One of:
 `'brown_terracotta'`, `'green_terracotta'`, `'red_terracotta'`, `'black_terracotta'`,
 `'crimson_nylium'`, `'crimson_stem'`, `'crimson_hyphae'`, `'warped_nylium'`, `'warped_stem'`, `'warped_hyphae'`, `'warped_wart'`
 
-### `compute_density_function(pos, ...types?)` 1.19+ only
+### `sample_density()`, `sample_density(pos, ... types?)` 1.19+
 
-**Note: Replaces the old `sample_noise` function**
+**Note: Replaces the old defunct `sample_noise` function**
 
-Computes the density function(s) on the given position. Check the [Available Types](#available-types) for list of available density functions.
+Samples the density function(s) / worldgen noise values at a given position.
 
-If no types are passed in, it returns a list of all the available density functions. Built-in and custom ones.
+If no types are passed in, or no arguments are given, it returns a list of all the available registry defined density functions.
+
+Function accepts any registry defined density functions, both built in, as well as namespaced defined in datapacks. 
+On top of that, scarpet provides the following list of functions for convenience (not returned with no-argument call):
+
+`'barrier_noise'`, `'fluid_level_floodedness_noise'`, `'fluid_level_spread_noise'`, `'lava_noise'`,
+`'temperature'`, `'vegetation'`, `'continents'`, `'erosion'`, `'depth'`, `'ridges'`, 
+`'initial_density_without_jaggedness'`, `'final_density'`, `'vein_toggle'`, `'vein_ridged'` and `'vein_gap'`
 
 <pre>
+// requesting single value
+sample_density(pos, 'continents') => 0.211626790923
 // passing type as multiple arguments
-compute_density_function(pos, 'continents', 'depth') => {continents: -0.205013844481, depth: 1.04772473438}
-// passing types as a list with unpacking operator
-compute_density_function(pos, ...['ridges', 'overworld/caves/pillars']) => {ridges: -0.186052125186, overworld/caves/pillars: 0.211626790923}
-// Custom Defined types
-compute_density_function(pos, 'mydatapack:my_density_func') => {mydatapack:my_density_func: -0.186052125186}
+sample_density(pos, 'continents', 'depth', 'overworld/caves/pillars', 'mydatapack:foo/my_function') => [-0.205013844481, 1.04772473438, 0.211626790923, 0.123]
 </pre>
-
-#### Available types:
-
-##### Built-in
-
-`'barrier_noise'`, `'continents'`, `'depth'`, `'end/base_3d_noise'`, `'end/sloped_cheese'`, `'erosion'`, `'final_density'`, 
-`'fluid_level_floodedness_noise'`, `'fluid_level_spread_noise'`, `'initial_density_without_jaggedness'`, `'lava_noise'`, 
-`'nether/base_3d_noise'`, `'overworld/base_3d_noise'`, `'overworld/base_continents'`, `'overworld/caves/entrances'`, 
-`'overworld/caves/noodle'`, `'overworld/caves/pillars'`, `'overworld/caves/spaghetti_2d'`, `'overworld/caves/spaghetti_2d_thickness_modulator'`, 
-`'overworld/caves/spaghetti_roughness_function'`, `'overworld/continents'`, `'overworld/depth'`, `'overworld/erosion'`, 
-`'overworld/factor'`, `'overworld/jaggedness'`, `'overworld/offset'`, `'overworld/ridges'`, `'overworld/ridges_folded'`, 
-`'overworld/sloped_cheese'`, `'overworld_amplified/depth'`, `'overworld_amplified/factor'`, `'overworld_amplified/jaggedness'`, 
-`'overworld_amplified/offset'`, `'overworld_amplified/sloped_cheese'`, `'overworld_large_biomes/base_continents'`, 
-`'overworld_large_biomes/continents'`, `'overworld_large_biomes/depth'`, `'overworld_large_biomes/erosion'`, 
-`'overworld_large_biomes/factor'`, `'overworld_large_biomes/jaggedness'`, `'overworld_large_biomes/offset'`, 
-`'overworld_large_biomes/sloped_cheese'`, `'ridges'`, `'shift_x'`, `'shift_z'`, `'temperature'`, `'vegetation'`, 
-`'vein_gap'`, `'vein_gapbarrier_noise'`, `'vein_ridged'`, `'vein_toggle'`, `'y'`, `'zero'`
-
-##### Custom
-
-Custom defined density functions from datapacks are also available and can be used. However, unlike built-in types, these
-ones must use full namespace. i.e. `namespace:path`. Examples: `'mydatapack:density_function'`, `'mydatapack:nested/density_function'`
-
-**Note: Custom density functions require a server relaunch after enabling the datapack.**
 
 ### `loaded(pos)`
 

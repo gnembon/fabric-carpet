@@ -93,7 +93,7 @@ reload_chunk
 remove_all_markers
 reset_chunk
 run
-compute_density_function
+sample_density
 save
 scan
 schedule

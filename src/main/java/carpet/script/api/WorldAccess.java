@@ -1632,6 +1632,24 @@ public class WorldAccess {
             return new NumericValue(ticket.timeout());
         });
 
+        expression.addContextFunction("sample_density", -1, (c, t, lv) ->
+        {
+            final CarpetContext cc = (CarpetContext) c;
+            if (lv.size() == 0) {
+                return ListValue.wrap(cc.registry(Registries.DENSITY_FUNCTION).keySet().stream().map(ValueConversions::of));
+            }
+            final ServerLevel level = cc.level();
+            final BlockArgument locator = BlockArgument.findIn(cc, lv, 0);
+            final BlockPos pos = locator.block.getPos();
+            final String[] densityFunctionQueries = lv.stream().skip(locator.offset).map(Value::getString).toArray(String[]::new);
+            if (densityFunctionQueries.length == 0) {
+                return ListValue.wrap(cc.registry(Registries.DENSITY_FUNCTION).keySet().stream().map(ValueConversions::of));
+            }
+            if (densityFunctionQueries.length == 1) {
+                return NumericValue.of(stupidWorldgenNoiseCacheGetter.apply(Pair.of(level, densityFunctionQueries[0])).apply(pos));
+            }
+            return ListValue.wrap(Arrays.stream(densityFunctionQueries).map(s -> NumericValue.of(stupidWorldgenNoiseCacheGetter.apply(Pair.of(level, s)).apply(pos))));
+        });
     }
 
     public static Function<Pair<ServerLevel, String>, Function<BlockPos, Double>> stupidWorldgenNoiseCacheGetter = Util.memoize(pair -> {
@@ -1665,10 +1683,7 @@ public class WorldAccess {
                         yield densityFunctionRegistry.get(densityFunctionKey);
                     }
 
-                    throw new InternalExpressionException(
-                            "Density function '" + densityFunctionQuery + "' doesn't exist. " +
-                                    "Please check the spelling or use with full 'namespace:value' if its custom defined."
-                    );
+                    throw new InternalExpressionException("Density function '" + densityFunctionQuery + "' is not defined in the registies.");
                 }
             };
 
@@ -1684,17 +1699,4 @@ public class WorldAccess {
         }
         return origin -> 0.0;
     });
-
-    @ScarpetFunction(maxParams = -1)
-    public Value compute_density_function(Context c, @Locator.Block BlockPos pos, String... densityFunctionQueries) {
-        final CarpetContext cc = (CarpetContext) c;
-        if (densityFunctionQueries.length == 0) {
-            return ListValue.wrap(cc.registry(Registries.DENSITY_FUNCTION).keySet().stream().map(ValueConversions::of));
-        }
-        final ServerLevel level = cc.level();
-        if (densityFunctionQueries.length == 1) {
-            return NumericValue.of(stupidWorldgenNoiseCacheGetter.apply(Pair.of(level, densityFunctionQueries[0])).apply(pos));
-        }
-        return ListValue.wrap(Arrays.stream(densityFunctionQueries).map(s -> NumericValue.of(stupidWorldgenNoiseCacheGetter.apply(Pair.of(level, s)).apply(pos))));
-    }
 }
