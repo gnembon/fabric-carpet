@@ -520,6 +520,8 @@ If no types are passed in, or no arguments are given, it returns a list of all t
 Function accepts any registry defined density functions, both built in, as well as namespaced defined in datapacks. 
 On top of that, scarpet provides the following list of functions for convenience (not returned with no-argument call):
 
+With a single function name passed in, it returns a scalar. With multiple function names passed in, it returns a list of results.
+
 `'barrier_noise'`, `'fluid_level_floodedness_noise'`, `'fluid_level_spread_noise'`, `'lava_noise'`,
 `'temperature'`, `'vegetation'`, `'continents'`, `'erosion'`, `'depth'`, `'ridges'`, 
 `'initial_density_without_jaggedness'`, `'final_density'`, `'vein_toggle'`, `'vein_ridged'` and `'vein_gap'`
