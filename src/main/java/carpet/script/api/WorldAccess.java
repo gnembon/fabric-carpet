@@ -39,10 +39,10 @@ import carpet.utils.BlockInfo;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.longs.LongSet;
+import net.minecraft.Util;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Holder;
-import net.minecraft.core.HolderLookup;
 import net.minecraft.core.HolderSet;
 import net.minecraft.core.QuartPos;
 import net.minecraft.core.Registry;
@@ -57,7 +57,7 @@ import net.minecraft.world.level.levelgen.NoiseRouter;
 import net.minecraft.world.level.levelgen.RandomState;
 import net.minecraft.world.level.levelgen.structure.Structure;
 import net.minecraft.world.level.levelgen.structure.StructureType;
-import net.minecraft.world.level.levelgen.synth.NormalNoise;
+import org.apache.commons.lang3.tuple.Pair;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -71,6 +71,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.BiPredicate;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -1633,33 +1634,14 @@ public class WorldAccess {
 
     }
 
-    @ScarpetFunction(maxParams = -1)
-    public Value compute_density_function(Context c, @Locator.Block BlockPos pos, String... densityFunctionQueries) {
+    public static Function<Pair<ServerLevel, String>, Function<BlockPos, Double>> stupidWorldgenNoiseCacheGetter = Util.memoize(pair -> {
+        ServerLevel level = pair.getKey();
+        String densityFunctionQuery = pair.getValue();
+        ChunkGenerator generator = level.getChunkSource().getGenerator();
 
-        Map<Value, Value> result = new HashMap<>();
-
-        ServerLevel level = ((CarpetContext) c).level();
-        Registry<DensityFunction> densityFunctionRegistry = level.registryAccess().registryOrThrow(Registries.DENSITY_FUNCTION);
-
-        if (densityFunctionQueries.length == 0) {
-            return ListValue.wrap(densityFunctionRegistry.keySet().stream().map(ValueConversions::of));
-        }
-
-        ChunkGenerator chunkGenerator = level.getChunkSource().getGenerator();
-        if (!(chunkGenerator instanceof NoiseBasedChunkGenerator generator)) {
-            return MapValue.wrap(result);
-        }
-
-        RandomState randomState = RandomState.create(
-            generator.generatorSettings().value(),
-            level.registryAccess().lookupOrThrow(Registries.NOISE), level.getSeed()
-        );
-
-        DensityFunction.Visitor visitor = ((RandomStateVisitorAccessor) (Object) randomState).getVisitor();
-        DensityFunction.SinglePointContext singlePointContext = new DensityFunction.SinglePointContext(pos.getX(), pos.getY(), pos.getZ());
-        NoiseRouter router = generator.generatorSettings().value().noiseRouter();
-
-        for (String densityFunctionQuery : densityFunctionQueries) {
+        if (generator instanceof NoiseBasedChunkGenerator noiseBasedChunkGenerator) {
+            Registry<DensityFunction> densityFunctionRegistry = level.registryAccess().registryOrThrow(Registries.DENSITY_FUNCTION);
+            final NoiseRouter router = noiseBasedChunkGenerator.generatorSettings().value().noiseRouter();
             DensityFunction densityFunction = switch (densityFunctionQuery) {
                 case "barrier_noise" -> router.barrierNoise();
                 case "fluid_level_floodedness_noise" -> router.fluidLevelFloodednessNoise();
@@ -1684,18 +1666,35 @@ public class WorldAccess {
                     }
 
                     throw new InternalExpressionException(
-                        "Density function '" + densityFunctionQuery + "' doesn't exist. " +
-                        "Please check the spelling or use with full 'namespace:value' if its custom defined."
+                            "Density function '" + densityFunctionQuery + "' doesn't exist. " +
+                                    "Please check the spelling or use with full 'namespace:value' if its custom defined."
                     );
                 }
             };
 
-            if (densityFunction == null) // IDE thinks may be null as Registry.get is Nullable, but we checked it
-                throw new IllegalStateException("density function can't be null here"); 
+            RandomState randomState = RandomState.create(
+                    noiseBasedChunkGenerator.generatorSettings().value(),
+                    level.registryAccess().lookupOrThrow(Registries.NOISE), level.getSeed()
+            );
+            DensityFunction.Visitor visitor = ((RandomStateVisitorAccessor) (Object) randomState).getVisitor();
 
-            double value = densityFunction.mapAll(visitor).compute(singlePointContext);
-            result.put(StringValue.of(densityFunctionQuery), new NumericValue(value));
+            DensityFunction temp = densityFunction.mapAll(visitor);
+
+            return pos -> temp.compute(new DensityFunction.SinglePointContext(pos.getX(), pos.getY(), pos.getZ()));
         }
-        return MapValue.wrap(result);
+        return origin -> 0.0;
+    });
+
+    @ScarpetFunction(maxParams = -1)
+    public Value compute_density_function(Context c, @Locator.Block BlockPos pos, String... densityFunctionQueries) {
+        final CarpetContext cc = (CarpetContext) c;
+        if (densityFunctionQueries.length == 0) {
+            return ListValue.wrap(cc.registry(Registries.DENSITY_FUNCTION).keySet().stream().map(ValueConversions::of));
+        }
+        final ServerLevel level = cc.level();
+        if (densityFunctionQueries.length == 1) {
+            return NumericValue.of(stupidWorldgenNoiseCacheGetter.apply(Pair.of(level, densityFunctionQueries[0])).apply(pos));
+        }
+        return ListValue.wrap(Arrays.stream(densityFunctionQueries).map(s -> NumericValue.of(stupidWorldgenNoiseCacheGetter.apply(Pair.of(level, s)).apply(pos))));
     }
 }
