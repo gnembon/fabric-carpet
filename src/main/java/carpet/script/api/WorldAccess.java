@@ -52,6 +52,7 @@ import net.minecraft.tags.TagKey;
 import net.minecraft.world.level.chunk.ChunkGenerator;
 import net.minecraft.world.level.chunk.PalettedContainer;
 import net.minecraft.world.level.levelgen.DensityFunction;
+import net.minecraft.world.level.levelgen.DensityFunctions;
 import net.minecraft.world.level.levelgen.NoiseBasedChunkGenerator;
 import net.minecraft.world.level.levelgen.NoiseRouter;
 import net.minecraft.world.level.levelgen.RandomState;
@@ -1632,7 +1633,7 @@ public class WorldAccess {
             return new NumericValue(ticket.timeout());
         });
 
-        expression.addContextFunction("sample_density", -1, (c, t, lv) ->
+        expression.addContextFunction("sample_noise", -1, (c, t, lv) ->
         {
             final CarpetContext cc = (CarpetContext) c;
             if (lv.size() == 0) {
@@ -1645,14 +1646,53 @@ public class WorldAccess {
             if (densityFunctionQueries.length == 0) {
                 return ListValue.wrap(cc.registry(Registries.DENSITY_FUNCTION).keySet().stream().map(ValueConversions::of));
             }
+            NoiseRouter router = level.getChunkSource().randomState().router();
             if (densityFunctionQueries.length == 1) {
-                return NumericValue.of(stupidWorldgenNoiseCacheGetter.apply(Pair.of(level, densityFunctionQueries[0])).apply(pos));
+                return NumericValue.of(sampleNoise(router, level, densityFunctionQueries[0], pos));
             }
-            return ListValue.wrap(Arrays.stream(densityFunctionQueries).map(s -> NumericValue.of(stupidWorldgenNoiseCacheGetter.apply(Pair.of(level, s)).apply(pos))));
+            return ListValue.wrap(Arrays.stream(densityFunctionQueries).map(s -> NumericValue.of(sampleNoise(router, level, s, pos))));
         });
     }
 
-    public static Function<Pair<ServerLevel, String>, Function<BlockPos, Double>> stupidWorldgenNoiseCacheGetter = Util.memoize(pair -> {
+    public static double sampleNoise(NoiseRouter router, ServerLevel level, String what, BlockPos pos) {
+        DensityFunction densityFunction = switch (what) {
+            case "barrier_noise" -> router.barrierNoise();
+            case "fluid_level_floodedness_noise" -> router.fluidLevelFloodednessNoise();
+            case "fluid_level_spread_noise" -> router.fluidLevelSpreadNoise();
+            case "lava_noise" -> router.lavaNoise();
+            case "temperature" -> router.temperature();
+            case "vegetation" -> router.vegetation();
+            case "continents" -> router.continents();
+            case "erosion" -> router.erosion();
+            case "depth" -> router.depth();
+            case "ridges" -> router.ridges();
+            case "initial_density_without_jaggedness" -> router.initialDensityWithoutJaggedness();
+            case "final_density" -> router.finalDensity();
+            case "vein_toggle" -> router.veinToggle();
+            case "vein_ridged" -> router.veinRidged();
+            case "vein_gap" -> router.veinGap();
+            default -> stupidWorldgenNoiseCacheGetter.apply(Pair.of(level, what));
+                /*ResourceLocation densityFunctionKey = InputValidator.identifierOf(what);
+                Registry<DensityFunction> densityFunctionRegistry = level.registryAccess().registryOrThrow(Registries.DENSITY_FUNCTION);
+                if (densityFunctionRegistry.containsKey(densityFunctionKey) && level.getChunkSource().getGenerator() instanceof NoiseBasedChunkGenerator noiseBasedChunkGenerator) {
+                    DensityFunction densityFunction1 = densityFunctionRegistry.get(densityFunctionKey);
+                    RandomState randomState = RandomState.create(
+                            noiseBasedChunkGenerator.generatorSettings().value(),
+                            level.registryAccess().lookupOrThrow(Registries.NOISE), level.getSeed()
+                    );
+                    DensityFunction.Visitor visitor = ((RandomStateVisitorAccessor) (Object) randomState).getVisitor();
+
+                    DensityFunction temp = densityFunction.mapAll(visitor);
+                }
+
+                throw new InternalExpressionException("Density function '" + what + "' is not defined in the registies.");*/
+
+        };
+        return densityFunction.compute(new DensityFunction.SinglePointContext(pos.getX(), pos.getY(), pos.getZ()));
+    }
+
+    // to be used with future seedable noise
+    public static Function<Pair<ServerLevel, String>, DensityFunction> stupidWorldgenNoiseCacheGetter = Util.memoize(pair -> {
         ServerLevel level = pair.getKey();
         String densityFunctionQuery = pair.getValue();
         ChunkGenerator generator = level.getChunkSource().getGenerator();
@@ -1695,8 +1735,8 @@ public class WorldAccess {
 
             DensityFunction temp = densityFunction.mapAll(visitor);
 
-            return pos -> temp.compute(new DensityFunction.SinglePointContext(pos.getX(), pos.getY(), pos.getZ()));
+            return temp;
         }
-        return origin -> 0.0;
+        return DensityFunctions.zero();
     });
 }

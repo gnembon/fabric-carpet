@@ -509,18 +509,17 @@ Returns the map colour of a block at position. One of:
 `'brown_terracotta'`, `'green_terracotta'`, `'red_terracotta'`, `'black_terracotta'`,
 `'crimson_nylium'`, `'crimson_stem'`, `'crimson_hyphae'`, `'warped_nylium'`, `'warped_stem'`, `'warped_hyphae'`, `'warped_wart'`
 
-### `sample_density()`, `sample_density(pos, ... types?)` 1.19+
+### `sample_noise()`, `sample_noise(pos, ... types?)` 1.18+
 
-**Note: Replaces the old defunct `sample_noise` function**
-
-Samples the density function(s) / worldgen noise values at a given position.
+Samples the world generation noise values / data driven density function(s) at a given position.
 
 If no types are passed in, or no arguments are given, it returns a list of all the available registry defined density functions.
 
-Function accepts any registry defined density functions, both built in, as well as namespaced defined in datapacks. 
-On top of that, scarpet provides the following list of functions for convenience (not returned with no-argument call):
-
 With a single function name passed in, it returns a scalar. With multiple function names passed in, it returns a list of results.
+
+Function accepts any registry defined density functions, both built in, as well as namespaced defined in datapacks. 
+On top of that, scarpet provides the following list of noises sampled directly from the current level (and not returned with no-argument call):
+
 
 `'barrier_noise'`, `'fluid_level_floodedness_noise'`, `'fluid_level_spread_noise'`, `'lava_noise'`,
 `'temperature'`, `'vegetation'`, `'continents'`, `'erosion'`, `'depth'`, `'ridges'`, 
