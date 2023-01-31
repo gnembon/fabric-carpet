@@ -551,6 +551,9 @@ public class ShapesRenderer
     }
     public static class RenderedPolyface extends RenderedShape<ShapeDispatcher.Polyface>
     {
+        private static final VertexFormat.Mode[] faceIndices = new VertexFormat.Mode[]{
+                Mode.LINES, Mode.LINE_STRIP, Mode.DEBUG_LINES, Mode.DEBUG_LINE_STRIP, Mode.TRIANGLES, Mode.TRIANGLE_STRIP, Mode.TRIANGLE_FAN, Mode.QUADS};
+
         public RenderedPolyface(Minecraft client, ShapeDispatcher.ExpiringShape shape)
         {
             super(client, (ShapeDispatcher.Polyface)shape);
@@ -565,7 +568,7 @@ public class ShapesRenderer
             else
                 RenderSystem.enableCull();
             
-            bufferBuilder.begin(VertexFormat.Mode.values()[shape.mode], DefaultVertexFormat.POSITION_COLOR);
+            bufferBuilder.begin(faceIndices[shape.mode], DefaultVertexFormat.POSITION_COLOR);
                 for(int i=0;i<shape.vertex_list.size();i++){
                     Vec3 vec=shape.vertex_list.get(i);
                     if(shape.relative.get(i)){
