@@ -22,8 +22,6 @@ import carpet.script.value.Value;
 import carpet.script.value.ValueConversions;
 
 import com.google.common.collect.Sets;
-import com.mojang.blaze3d.vertex.VertexFormat;
-import com.mojang.blaze3d.vertex.VertexFormat.Mode;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Registry;
@@ -763,7 +761,7 @@ public class ShapeDispatcher
         public long calcKey(final RegistryAccess regs){
             long hash = super.calcKey(regs);
             hash ^= 6;                     hash *= 1099511628211L;
-            hash ^= mode.hashCode();   hash *= 1099511628211L;
+            hash ^= mode;   hash *= 1099511628211L;
             hash ^= relative.hashCode();      hash *= 1099511628211L;
             for (Vec3 i :vertex_list){
                 hash ^= vec3dhash(i);
@@ -784,7 +782,7 @@ public class ShapeDispatcher
             }
             alter_point=new ArrayList<>();
             switch (mode) {
-                case TRIANGLES:
+                case 4:
                     for (int i=0;i<vertex_list.size();i++){
                         Vec3 vecA=vertex_list.get(i);
                         if(relative.get(i)){
@@ -803,7 +801,7 @@ public class ShapeDispatcher
                         alter_draw_triangles(vecA, vecB, vecC);
                     }
                     break;
-                case TRIANGLE_FAN:
+                case 6:
                     Vec3 vec0=vertex_list.get(0);
                     if(relative.get(0)){
                         vec0=relativiseRender(p.level, vec0, 0);
@@ -821,7 +819,7 @@ public class ShapeDispatcher
                         vec1=vec;
                     }
                     break;
-                case TRIANGLE_STRIP:
+                case 5:
                     Vec3 vecA=vertex_list.get(0);
                     if(relative.get(0)){
                         vecA=relativiseRender(p.level, vecA, 0);
@@ -886,7 +884,7 @@ public class ShapeDispatcher
         @Override
         protected Set<String> optionalParams() { return Sets.union(super.optionalParams(), optional.keySet()); }
         ArrayList<Vec3> vertex_list=new ArrayList<>();
-        Mode mode;
+        int mode;
         ArrayList<Boolean> relative=new ArrayList<>();
         boolean inneredges;
         @Override
@@ -907,11 +905,11 @@ public class ShapeDispatcher
                 inneredges=false;
             }
             if("polygon".equals(_mode)){
-                mode=VertexFormat.Mode.TRIANGLE_FAN;
+                mode=6;
             }else if("strip".equals(_mode)){
-                mode=VertexFormat.Mode.TRIANGLE_STRIP;
+                mode=5;
             }else if("triangles".equals(_mode)){
-                mode=VertexFormat.Mode.TRIANGLES;
+                mode=4;
                 if(vertex_list.size()%3!=0){
                     throw new IllegalArgumentException("Unexpected vertex list size: " + vertex_list.size());
                 }
