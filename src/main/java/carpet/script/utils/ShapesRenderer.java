@@ -565,7 +565,7 @@ public class ShapesRenderer
             else
                 RenderSystem.enableCull();
             
-            bufferBuilder.begin(shape.mode, DefaultVertexFormat.POSITION_COLOR);
+            bufferBuilder.begin(VertexFormat.Mode.values()[shape.mode], DefaultVertexFormat.POSITION_COLOR);
                 for(int i=0;i<shape.vertex_list.size();i++){
                     Vec3 vec=shape.vertex_list.get(i);
                     if(shape.relative.get(i)){
@@ -587,7 +587,7 @@ public class ShapesRenderer
                 double cz, float partialTick) {
                     if(shape.a==0){return;}
 
-                    if (shape.mode==Mode.TRIANGLE_FAN){
+                    if (shape.mode==6){
                         builder.begin(VertexFormat.Mode.DEBUG_LINE_STRIP, DefaultVertexFormat.POSITION_COLOR);
                         Vec3 vec0=null;
                         for(int i=0;i<shape.vertex_list.size();i++){
@@ -615,7 +615,7 @@ public class ShapesRenderer
                         }
                         return;
                     }
-                    if (shape.mode==Mode.TRIANGLE_STRIP){
+                    if (shape.mode==5){
                         builder.begin(VertexFormat.Mode.DEBUG_LINE_STRIP, DefaultVertexFormat.POSITION_COLOR);
                         Vec3 vec=shape.vertex_list.get(1);
                         if(shape.relative.get(1)){
@@ -650,7 +650,7 @@ public class ShapesRenderer
                         tessellator.end();
                         return;
                     }
-                    if (shape.mode==Mode.TRIANGLES){
+                    if (shape.mode==4){
                         builder.begin(VertexFormat.Mode.DEBUG_LINES, DefaultVertexFormat.POSITION_COLOR);
                         for (int i=0;i<shape.vertex_list.size();i++){
                             Vec3 vecA=shape.vertex_list.get(i);
