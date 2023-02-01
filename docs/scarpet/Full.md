@@ -2834,30 +2834,28 @@ Returns the map colour of a block at position. One of:
 `'brown_terracotta'`, `'green_terracotta'`, `'red_terracotta'`, `'black_terracotta'`,
 `'crimson_nylium'`, `'crimson_stem'`, `'crimson_hyphae'`, `'warped_nylium'`, `'warped_stem'`, `'warped_hyphae'`, `'warped_wart'`
 
-### `sample_noise(pos, ...type?)` 1.18+ only
+### `sample_noise()`, `sample_noise(pos, ... types?)` 1.18+
 
- Samples the multi noise value(s) on the given position.  
-If no type is passed, returns a map of `continentalness`, `depth`, `erosion`, `humidity`, `temperature`, `weirdness`.  
-Otherwise, returns the map of that specific noise.
+Samples the world generation noise values / data driven density function(s) at a given position.
+
+If no types are passed in, or no arguments are given, it returns a list of all the available registry defined density functions.
+
+With a single function name passed in, it returns a scalar. With multiple function names passed in, it returns a list of results.
+
+Function accepts any registry defined density functions, both built in, as well as namespaced defined in datapacks. 
+On top of that, scarpet provides the following list of noises sampled directly from the current level (and not returned with no-argument call):
+
+
+`'barrier_noise'`, `'fluid_level_floodedness_noise'`, `'fluid_level_spread_noise'`, `'lava_noise'`,
+`'temperature'`, `'vegetation'`, `'continents'`, `'erosion'`, `'depth'`, `'ridges'`, 
+`'initial_density_without_jaggedness'`, `'final_density'`, `'vein_toggle'`, `'vein_ridged'` and `'vein_gap'`
 
 <pre>
-// without type
-sample_noise(pos) => {continentalness: 0.445300012827, erosion: 0.395399987698, temperature: 0.165399998426, ...}
+// requesting single value
+sample_density(pos, 'continents') => 0.211626790923
 // passing type as multiple arguments
-sample_noise(pos, 'pillarRareness', 'aquiferBarrier') => {aquiferBarrier: -0.205013844481, pillarRareness: 1.04772473438}
-// passing types as a list with unpacking operator
-sample_noise(pos, ...['spaghetti3dFirst', 'spaghetti3dSecond']) => {spaghetti3dFirst: -0.186052125186, spaghetti3dSecond: 0.211626790923}
+sample_density(pos, 'continents', 'depth', 'overworld/caves/pillars', 'mydatapack:foo/my_function') => [-0.205013844481, 1.04772473438, 0.211626790923, 0.123]
 </pre>
-
-Available types:
-
-`aquiferBarrier`, `aquiferFluidLevelFloodedness`, `aquiferFluidLevelSpread`, `aquiferLava`, `caveCheese`,
-`caveEntrance`, `caveLayer`, `continentalness`, `depth`, `erosion`, `humidity`, `island`, `jagged`, `oreGap`,
-`pillar`, `pillarRareness`, `pillarThickness`, `shiftX`, `shiftY`, `shiftZ`, `spaghetti2d`, `spaghetti2dElevation`,
-`spaghetti2dModulator`, `spaghetti2dThickness`, `spaghetti3d`, `spaghetti3dFirst`, `spaghetti3dRarity`,
-`spaghetti3dSecond`, `spaghetti3dThickness`, `spaghettiRoughness`, `spaghettiRoughnessModulator`, `temperature`,
-`terrain`, `terrainFactor`, `terrainOffset`, `terrainPeaks`, `weirdness`
-
 
 ### `loaded(pos)`
 
