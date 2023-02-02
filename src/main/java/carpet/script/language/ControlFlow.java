@@ -2,7 +2,6 @@ package carpet.script.language;
 
 import carpet.script.Context;
 import carpet.script.Expression;
-import carpet.script.LazyValue;
 import carpet.script.exception.ExitStatement;
 import carpet.script.exception.InternalExpressionException;
 import carpet.script.exception.ProcessedThrowStatement;
@@ -103,10 +102,10 @@ public class ControlFlow {
                 
                 Value val = null; // This is always assigned at some point, just the compiler doesn't know
                 
-                LazyValue __ = c.getVariable("_");
-                c.setVariable("_", (__c, __t) -> ret.data.reboundedTo("_"));
-                LazyValue _trace = c.getVariable("_trace");
-                c.setVariable("_trace", (__c, __t) -> MapValue.wrap(Map.of(
+                Value __ = c.getVariable("_");
+                c.setVariable("_", ret.data.reboundedTo("_"));
+                Value _trace = c.getVariable("_trace");
+                c.setVariable("_trace", MapValue.wrap(Map.of(
                         StringValue.of("stack"), ListValue.wrap(ret.stack.stream().map(f -> ListValue.of(
                                 StringValue.of(f.getModule().name()),
                                 StringValue.of(f.getString()),
@@ -116,7 +115,7 @@ public class ControlFlow {
 
                         StringValue.of("locals"), MapValue.wrap(ret.context.variables.entrySet().stream().filter(e -> !e.getKey().equals("_trace")).collect(Collectors.toMap(
                                 e -> StringValue.of(e.getKey()),
-                                e -> e.getValue().evalValue(ret.context)
+                                e -> e.getValue()
                         ))),
                         StringValue.of("token"), ListValue.of(
                                 StringValue.of(ret.token.surface),

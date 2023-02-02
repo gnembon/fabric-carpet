@@ -703,8 +703,8 @@ public class CarpetScriptHost extends ScriptHost
             switch (tok.type)
             {
                 case VARIABLE:
-                    LazyValue var = getGlobalVariable(tok.surface);
-                    if (var != null) argv.add(var);
+                    Value var = getGlobalVariable(tok.surface);
+                    if (var != null) argv.add((cc, tt) -> var);
                     break;
                 case STRINGPARAM:
                     argv.add((c, t) -> new StringValue(tok.surface));
@@ -1068,7 +1068,7 @@ public class CarpetScriptHost extends ScriptHost
                 continue;
             stringsToFormat.add(format + line.substring(lastPos, foundLocal.getKey()));
             stringsToFormat.add(format + foundLocal.getValue());
-            Value val = context.variables.get(foundLocal.getValue()).evalValue(context);
+            Value val = context.variables.get(foundLocal.getValue());
             String type = val.getTypeString();
             String value;
             try {

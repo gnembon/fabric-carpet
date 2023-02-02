@@ -2,7 +2,10 @@ package carpet.script.language;
 
 import carpet.script.Context;
 import carpet.script.Expression;
+import carpet.script.Fluff;
 import carpet.script.LazyValue;
+import carpet.script.ReferenceArray;
+import carpet.script.Tokenizer.Token;
 import carpet.script.api.Auxiliary;
 import carpet.script.exception.InternalExpressionException;
 import carpet.script.exception.ThrowStatement;
@@ -28,11 +31,23 @@ import java.util.stream.Collectors;
 public class DataStructures {
     public static void apply(Expression expression)
     {
-        expression.addFunction("l", lv ->
-        {
-            if (lv.size() == 1 && lv.get(0) instanceof LazyListValue)
-                return ListValue.wrap(((LazyListValue) lv.get(0)).unroll());
-            return new ListValue.ListConstructorValue(lv);
+        // custom because variable only lists have special interactions with assignment operators 
+        expression.addCustomFunction("l", new Fluff.AbstractFunction(-1, "l") {
+            @Override
+            public Value eval(List<Value> lv) {
+                if (lv.size() == 1 && lv.get(0) instanceof LazyListValue)
+                    return ListValue.wrap(((LazyListValue) lv.get(0)).unroll());
+                return new ListValue(lv); // copies list, given the passed one may not be mutable
+            }
+
+            @Override
+            public LazyValue createExecutable(Context compilationContext, Expression expr, Token token, List<LazyValue> params) {
+                boolean allVariables = params.stream().allMatch(lv -> (lv instanceof LazyValue.Variable));
+                if (allVariables) {
+                    return new ReferenceArray(params.stream().map(lv -> ((LazyValue.Variable)lv).name()).toArray(String[]::new), expr);
+                }
+                return super.createExecutable(compilationContext, expr, token, params);
+            }
         });
 
         expression.addFunction("join", (lv) ->
@@ -119,11 +134,11 @@ public class DataStructures {
             }
             LazyValue sortKey = lv.get(1);
             //scoping
-            LazyValue __ = c.getVariable("_");
+            Value __ = c.getVariable("_");
             Collections.sort(toSort,(v1, v2) -> {
-                c.setVariable("_",(cc, tt) -> v1);
+                c.setVariable("_", v1);
                 Value ev1 = sortKey.evalValue(c);
-                c.setVariable("_",(cc, tt) -> v2);
+                c.setVariable("_", v2);
                 Value ev2 = sortKey.evalValue(c);
                 return ev1.compareTo(ev2);
             });

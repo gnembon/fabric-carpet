@@ -25,7 +25,7 @@ public class Context
     public static final Type LVALUE = Type.LVALUE;
     public static final Type MAPDEF = Type.MAPDEF;
 
-    public Map<String, LazyValue> variables = new HashMap<>();
+    public Map<String, Value> variables = new HashMap<>();
 
     public final ScriptHost host;
 
@@ -34,14 +34,14 @@ public class Context
         this.host = host;
     }
 
-    public LazyValue getVariable(String name)
+    public Value getVariable(String name)
     {
         return variables.get(name);
     }
 
-    public void setVariable(String name, LazyValue lv)
+    public void setVariable(String name, Value value)
     {
-        variables.put(name, lv);
+        variables.put(name, value);
     }
 
     public void delVariable(String variable)
@@ -51,12 +51,12 @@ public class Context
 
     public void removeVariablesMatching(String varname)
     {
-        variables.entrySet().removeIf(e -> e.getKey().startsWith(varname));
+        variables.keySet().removeIf(e -> e.startsWith(varname));
     }
 
-    public Context with(String variable, LazyValue lv)
+    public Context with(String variable, Value value)
     {
-        variables.put(variable, lv);
+        variables.put(variable, value);
         return this;
     }
 
@@ -75,9 +75,9 @@ public class Context
     protected void initialize()
     {
         //special variables for second order functions so we don't need to check them all the time
-        variables.put("_", (c, t) -> Value.ZERO);
-        variables.put("_i", (c, t) -> Value.ZERO);
-        variables.put("_a", (c, t) -> Value.ZERO);
+        variables.put("_", Value.ZERO);
+        variables.put("_i", Value.ZERO);
+        variables.put("_a", Value.ZERO);
     }
 
     public Context duplicate()
@@ -117,10 +117,10 @@ public class Context
 
         }
         @Override
-        public LazyValue getVariable(String name) { badProgrammer(); return null;}
+        public Value getVariable(String name) { badProgrammer(); return null;}
 
         @Override
-        public void setVariable(String name, LazyValue lv) { badProgrammer(); }
+        public void setVariable(String name, Value value) { badProgrammer(); }
 
         @Override
         public void delVariable(String variable) { badProgrammer(); }
@@ -129,7 +129,7 @@ public class Context
         public void removeVariablesMatching(String varname) { badProgrammer(); }
 
         @Override
-        public Context with(String variable, LazyValue lv) { badProgrammer(); return this; }
+        public Context with(String variable, Value value) { badProgrammer(); return this; }
 
         @Override
         public Set<String> getAllVariableNames() { badProgrammer(); return null;}

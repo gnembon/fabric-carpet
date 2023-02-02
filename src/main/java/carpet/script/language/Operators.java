@@ -2,12 +2,15 @@ package carpet.script.language;
 
 import carpet.script.Context;
 import carpet.script.Expression;
+import carpet.script.Fluff;
 import carpet.script.LazyValue;
+import carpet.script.ReferenceArray;
+import carpet.script.Context.Type;
+import carpet.script.Tokenizer.Token;
 import carpet.script.exception.InternalExpressionException;
 import carpet.script.value.AbstractListValue;
 import carpet.script.value.BooleanValue;
 import carpet.script.value.ContainerValueInterface;
-import carpet.script.value.FunctionAnnotationValue;
 import carpet.script.value.FunctionUnpackedArgumentsValue;
 import carpet.script.value.LContainerValue;
 import carpet.script.value.ListValue;
@@ -296,65 +299,58 @@ public class Operators {
         // lazy cause of assignment which is non-trivial
         expression.addLazyBinaryOperator("=", precedence.get("assign=<>"), false, false, t -> Context.Type.LVALUE, (c, t, lv1, lv2) ->
         {
-            Value v1 = lv1.evalValue(c, Context.LVALUE);
             Value v2 = lv2.evalValue(c);
-            if (v1 instanceof ListValue.ListConstructorValue && v2 instanceof ListValue)
+            if (lv1 instanceof ReferenceArray lhs && v2 instanceof ListValue)
             {
-                List<Value> ll = ((ListValue)v1).getItems();
                 List<Value> rl = ((ListValue)v2).getItems();
-                if (ll.size() < rl.size()) throw new InternalExpressionException("Too many values to unpack");
-                if (ll.size() > rl.size()) throw new InternalExpressionException("Too few values to unpack");
-                for (Value v: ll) v.assertAssignable();
-                Iterator<Value> li = ll.iterator();
+                if (lhs.size() < rl.size()) throw new InternalExpressionException("Too many values to unpack");
+                if (lhs.size() > rl.size()) throw new InternalExpressionException("Too few values to unpack");
                 Iterator<Value> ri = rl.iterator();
-                while(li.hasNext())
+                for (String variable : lhs.variables())
                 {
-                    String lname = li.next().getVariable();
-                    Value vval = ri.next().reboundedTo(lname);
-                    expression.setAnyVariable(c, lname, (cc, tt) -> vval);
+                    Value vval = ri.next().reboundedTo(variable);
+                    expression.setAnyVariable(c, variable, vval);
                 }
                 return (cc, tt) -> Value.TRUE;
             }
-            if (v1 instanceof LContainerValue)
-            {
-                ContainerValueInterface container = ((LContainerValue) v1).getContainer();
-                if (container == null)
-                    return (cc, tt) -> Value.NULL;
-                Value address = ((LContainerValue) v1).getAddress();
-                if (!(container.put(address, v2))) return (cc, tt) -> Value.NULL;
-                return (cc, tt) -> v2;
+            if (!(lv1 instanceof LazyValue.Assignable var)) {
+                // Check if it's LContainer, inside the check to prevent querying the LHS value if not needed
+                Value v1 = lv1.evalValue(c, Context.LVALUE);
+                if (v1 instanceof LContainerValue)
+                {
+                    ContainerValueInterface container = ((LContainerValue) v1).getContainer();
+                    if (container == null)
+                        return (cc, tt) -> Value.NULL;
+                    Value address = ((LContainerValue) v1).getAddress();
+                    if (!(container.put(address, v2))) return (cc, tt) -> Value.NULL;
+                    return (cc, tt) -> v2;
+                }
+                if (v1.isBound()) throw trap("compiling operator =");
+                throw new InternalExpressionException("Left hand side must be a variable");
             }
-            v1.assertAssignable();
-            String varname = v1.getVariable();
-            Value copy = v2.reboundedTo(varname);
-            LazyValue boundedLHS = (cc, tt) -> copy;
-            expression.setAnyVariable(c, varname, boundedLHS);
-            return boundedLHS;
+            Value copy = v2.reboundedTo(null); // assignable.set will set the name
+            var.set(c, copy);
+            return (cc, tt) -> copy;
         });
 
         // lazy due to assignment
         expression.addLazyBinaryOperator("+=", precedence.get("assign=<>"), false, false, t -> Context.Type.LVALUE, (c, t, lv1, lv2) ->
         {
-            Value v1 = lv1.evalValue(c, Context.LVALUE);
             Value v2 = lv2.evalValue(c);
-            if (v1 instanceof ListValue.ListConstructorValue && v2 instanceof ListValue)
+            if (lv1 instanceof ReferenceArray lhs && v2 instanceof ListValue)
             {
-                List<Value> ll = ((ListValue)v1).getItems();
                 List<Value> rl = ((ListValue)v2).getItems();
-                if (ll.size() < rl.size()) throw new InternalExpressionException("Too many values to unpack");
-                if (ll.size() > rl.size()) throw new InternalExpressionException("Too few values to unpack");
-                for (Value v: ll) v.assertAssignable();
-                Iterator<Value> li = ll.iterator();
+                if (lhs.size() < rl.size()) throw new InternalExpressionException("Too many values to unpack");
+                if (lhs.size() > rl.size()) throw new InternalExpressionException("Too few values to unpack");
                 Iterator<Value> ri = rl.iterator();
-                while(li.hasNext())
+                for (int i = 0; i < lhs.size(); i++)
                 {
-                    Value lval = li.next();
-                    String lname = lval.getVariable();
-                    Value result = lval.add(ri.next()).bindTo(lname);
-                    expression.setAnyVariable(c, lname, (cc, tt) -> result);
+                    Value result = lhs.getValue(c, i).add(ri.next()).bindTo(lhs.variables()[i]);
+                    expression.setAnyVariable(c, lhs.variables()[i], result);
                 }
-                return (cc, tt) -> Value.TRUE;
+                return LazyValue.TRUE;
             }
+            Value v1 = lv1.evalValue(c, Context.LVALUE);
             if (v1 instanceof LContainerValue)
             {
                 ContainerValueInterface cvi = ((LContainerValue) v1).getContainer();
@@ -376,57 +372,58 @@ public class Operators {
                     return (cc, tt) -> res;
                 }
             }
-            v1.assertAssignable();
-            String varname = v1.getVariable();
-            LazyValue boundedLHS;
+            if (!(lv1 instanceof LazyValue.Assignable assignable)) {
+                if (v1.isBound()) throw trap("compiling operator +=");
+                throw new InternalExpressionException("Left hand side must be a variable");
+            }
+            Value result;
             if (v1 instanceof ListValue || v1 instanceof MapValue)
             {
                 ((AbstractListValue) v1).append(v2);
-                boundedLHS = (cc, tt)-> v1;
+                result = v1;
             }
             else
             {
-                Value result = v1.add(v2).bindTo(varname);
-                boundedLHS = (cc, tt) -> result;
+                result = v1.add(v2);
             }
-            expression.setAnyVariable(c, varname, boundedLHS);
-            return boundedLHS;
+            assignable.set(c, result);
+            return (cc, tt) -> result;
         });
 
-        expression.addBinaryContextOperator("<>", precedence.get("assign=<>"), false, false, false, (c, t, v1, v2) ->
+        expression.addLazyBinaryOperator("<>", precedence.get("assign=<>"), false, false, t -> Context.NONE, (c, t, lv1, lv2) ->
         {
-            if (v1 instanceof ListValue.ListConstructorValue && v2 instanceof ListValue.ListConstructorValue)
+            if (lv1 instanceof ReferenceArray lhs && lv2 instanceof ReferenceArray rhs)
             {
-                List<Value> ll = ((ListValue)v1).getItems();
-                List<Value> rl = ((ListValue)v2).getItems();
-                if (ll.size() < rl.size()) throw new InternalExpressionException("Too many values to unpack");
-                if (ll.size() > rl.size()) throw new InternalExpressionException("Too few values to unpack");
-                for (Value v: ll) v.assertAssignable();
-                for (Value v: rl) v.assertAssignable();
-                Iterator<Value> li = ll.iterator();
-                Iterator<Value> ri = rl.iterator();
-                while(li.hasNext())
+                if (lhs.size() < rhs.size()) throw new InternalExpressionException("Too many values to unpack");
+                if (lhs.size() > rhs.size()) throw new InternalExpressionException("Too few values to unpack");
+                for (int i = 0; i < lhs.size(); i++)
                 {
-                    Value lval = li.next();
-                    Value rval = ri.next();
-                    String lname = lval.getVariable();
-                    String rname = rval.getVariable();
-                    lval.reboundedTo(rname);
-                    rval.reboundedTo(lname);
-                    expression.setAnyVariable(c, lname, (cc, tt) -> rval);
-                    expression.setAnyVariable(c, rname, (cc, tt) -> lval);
+                    String lname = lhs.variables()[i];
+                    String rname = rhs.variables()[i];;
+                    Value left = lhs.getValue(c, i).reboundedTo(rname);
+                    Value right = rhs.getValue(c, i).reboundedTo(lname);
+                    expression.setAnyVariable(c, lname, right);
+                    expression.setAnyVariable(c, rname, left);
                 }
-                return Value.TRUE;
+                return LazyValue.TRUE;
             }
-            v1.assertAssignable();
-            v2.assertAssignable();
-            String lvalvar = v1.getVariable();
-            String rvalvar = v2.getVariable();
-            Value lval = v2.reboundedTo(lvalvar);
-            Value rval = v1.reboundedTo(rvalvar);
-            expression.setAnyVariable(c, lvalvar, (cc, tt) -> lval);
-            expression.setAnyVariable(c, rvalvar, (cc, tt) -> rval);
-            return lval;
+            if (!(lv1 instanceof LazyValue.Assignable lhs)) {
+                if (lv1.evalValue(c).isBound())
+                    throw trap("compiling <> operator (left)");
+                throw new InternalExpressionException("Left hand side is not a variable");
+            }
+            if (!(lv2 instanceof LazyValue.Assignable rhs)) {
+                if (lv2.evalValue(c).isBound())
+                    throw trap("compiling <> operator (right)");
+                throw new InternalExpressionException("Right hand side is not a variable");
+            }
+            Value v1 = lv1.evalValue(c);
+            Value v2 = lv2.evalValue(c);
+            Value lval = v2.reboundedTo(null); // Assignable.set will bind them, we don't know the variable as it could be a var() call
+            Value rval = v1.reboundedTo(null);
+            lhs.set(c, lval);
+            rhs.set(c, rval);
+            return (cc, tt) -> lval;
         });
 
         expression.addUnaryOperator("-",  false, v -> NumericValue.asNumber(v).opposite());
@@ -438,19 +435,38 @@ public class Operators {
                 lv.evalValue(c, Context.BOOLEAN).getBoolean() ? (cc, tt)-> Value.FALSE : (cc, tt) -> Value.TRUE
         ); // might need context boolean
 
-        // lazy because of typed evaluation of the argument
-        expression.addLazyUnaryOperator("...", Operators.precedence.get("unary+-!..."), false, true, t -> t== Context.Type.LOCALIZATION?Context.NONE:t, (c, t, lv) ->
-        {
-            if (t == Context.LOCALIZATION)
-                return (cc, tt) -> new FunctionAnnotationValue(lv.evalValue(c), FunctionAnnotationValue.Type.VARARG);
+        // custom because of necessity to encode variable name for varargs and typed evaluation of argument as unpacker, "u" suffix because unary
+        expression.addCustomOperator("...u", new Fluff.AbstractLazyOperator(precedence.get("unary+-!..."), false) {
+            @Override
+            public boolean pure() {
+                // This operator is pure
+                return true;
+            }
+            @Override
+            public boolean transitive() { return false; }
 
-            Value params = lv.evalValue(c, t);
-            if (!(params instanceof AbstractListValue))
-                throw new InternalExpressionException("Unable to unpack a non-list");
-            FunctionUnpackedArgumentsValue fuaval = new FunctionUnpackedArgumentsValue( ((AbstractListValue) params).unpack());
-            return (cc, tt) -> fuaval;
-            //throw new InternalExpressionException("That functionality has not been implemented yet.");
+            @Override
+            public LazyValue createExecutable(Context compileContext, Expression expr, Token token, LazyValue v1, LazyValue _null) {
+                LazyValue executable = super.createExecutable(compileContext, expression, token, v1, _null);
+                if (v1 instanceof LazyValue.Variable var) {
+                    return new LazyValue.VarArgsOrUnpacker(var.name(), executable);
+                }
+                return executable;
+            }
+
+            @Override
+            public LazyValue lazyEval(Context c, Type type, Expression expr, Token token, LazyValue v1, LazyValue _null) {
+                Value params = v1.evalValue(c, type);
+                if (!(params instanceof AbstractListValue))
+                    throw new InternalExpressionException("Unable to unpack a non-list");
+                FunctionUnpackedArgumentsValue fuaval = new FunctionUnpackedArgumentsValue( ((AbstractListValue) params).unpack());
+                return (cc, tt) -> fuaval;
+            }
         });
+    }
 
+    // TODO remove, this is for traps while the new system is being tested
+    static InternalExpressionException trap(String doing) {
+        return new InternalExpressionException("Unexpected error while " + doing + "! Please report this to Carpet!");
     }
 }

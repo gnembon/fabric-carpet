@@ -89,26 +89,23 @@ public class BlockIterators {
             int zprange = upperRange.getZ();
 
             //saving outer scope
-            LazyValue _x = c.getVariable("_x");
-            LazyValue _y = c.getVariable("_y");
-            LazyValue _z = c.getVariable("_z");
-            LazyValue __ = c.getVariable("_");
+            Value _x = c.getVariable("_x");
+            Value _y = c.getVariable("_y");
+            Value _z = c.getVariable("_z");
+            Value __ = c.getVariable("_");
             int sCount = 0;
             outer:for (int y=cy-yrange; y <= cy+yprange; y++)
             {
-                int yFinal = y;
-                c.setVariable("_y", (c_, t_) -> new NumericValue(yFinal).bindTo("_y"));
+                c.setVariable("_y", new NumericValue(y).bindTo("_y"));
                 for (int x=cx-xrange; x <= cx+xprange; x++)
                 {
-                    int xFinal = x;
-                    c.setVariable("_x", (c_, t_) -> new NumericValue(xFinal).bindTo("_x"));
+                    c.setVariable("_x", new NumericValue(x).bindTo("_x"));
                     for (int z=cz-zrange; z <= cz+zprange; z++)
                     {
-                        int zFinal = z;
 
-                        c.setVariable("_z", (c_, t_) -> new NumericValue(zFinal).bindTo("_z"));
-                        Value blockValue = BlockValue.fromCoords(((CarpetContext)c), xFinal,yFinal,zFinal).bindTo("_");
-                        c.setVariable( "_", (cc_, t_c) -> blockValue);
+                        c.setVariable("_z", new NumericValue(z).bindTo("_z"));
+                        Value blockValue = BlockValue.fromCoords(((CarpetContext)c), x, y, z).bindTo("_");
+                        c.setVariable( "_", blockValue);
                         Value result;
                         try
                         {
@@ -165,25 +162,22 @@ public class BlockIterators {
             LazyValue expr = llv.get(pos2Locator.offset);
 
             //saving outer scope
-            LazyValue _x = c.getVariable("_x");
-            LazyValue _y = c.getVariable("_y");
-            LazyValue _z = c.getVariable("_z");
-            LazyValue __ = c.getVariable("_");
+            Value _x = c.getVariable("_x");
+            Value _y = c.getVariable("_y");
+            Value _z = c.getVariable("_z");
+            Value __ = c.getVariable("_");
             int sCount = 0;
             outer:for (int y=miny; y <= maxy; y++)
             {
-                int yFinal = y;
-                c.setVariable("_y", (c_, t_) -> new NumericValue(yFinal).bindTo("_y"));
+                c.setVariable("_y", new NumericValue(y).bindTo("_y"));
                 for (int x=minx; x <= maxx; x++)
                 {
-                    int xFinal = x;
-                    c.setVariable("_x", (c_, t_) -> new NumericValue(xFinal).bindTo("_x"));
+                    c.setVariable("_x", new NumericValue(x).bindTo("_x"));
                     for (int z=minz; z <= maxz; z++)
                     {
-                        int zFinal = z;
-                        c.setVariable("_z", (c_, t_) -> new NumericValue(zFinal).bindTo("_z"));
-                        Value blockValue = BlockValue.fromCoords(((CarpetContext)c), xFinal,yFinal,zFinal).bindTo("_");
-                        c.setVariable( "_", (cc_, t_c) -> blockValue);
+                        c.setVariable("_z", new NumericValue(z).bindTo("_z"));
+                        Value blockValue = BlockValue.fromCoords(((CarpetContext)c), x, y, z).bindTo("_");
+                        c.setVariable( "_", blockValue);
                         Value result;
                         try
                         {
