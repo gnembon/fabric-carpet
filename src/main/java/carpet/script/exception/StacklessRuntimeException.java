@@ -3,17 +3,21 @@ package carpet.script.exception;
 /**
  * A type of {@link RuntimeException} that doesn't spend time producing and filling a stacktrace
  */
-abstract class StacklessRuntimeException extends RuntimeException {
-    public StacklessRuntimeException() {
+abstract class StacklessRuntimeException extends RuntimeException
+{
+    public StacklessRuntimeException()
+    {
         super();
     }
 
-    public StacklessRuntimeException(String message) {
+    public StacklessRuntimeException(final String message)
+    {
         super(message);
     }
 
     @Override
-    public Throwable fillInStackTrace() {
+    public Throwable fillInStackTrace()
+    {
         return this;
     }
 }

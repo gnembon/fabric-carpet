@@ -6,6 +6,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import carpet.script.value.Value;
 
 // WIP
-public class ScriptServer {
+public class ScriptServer
+{
     public final Map<Value, Value> systemGlobals = new ConcurrentHashMap<>();
 }

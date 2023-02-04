@@ -46,6 +46,7 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.scores.Objective;
 import net.minecraft.world.scores.criteria.ObjectiveCriteria;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -60,58 +61,65 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 
 public class ValueConversions
 {
-    public static Value of(BlockPos pos)
+    public static Value of(final BlockPos pos)
     {
         return ListValue.of(new NumericValue(pos.getX()), new NumericValue(pos.getY()), new NumericValue(pos.getZ()));
     }
 
-    public static Value of(Vec3 vec)
+    public static Value of(final Vec3 vec)
     {
         return ListValue.of(new NumericValue(vec.x), new NumericValue(vec.y), new NumericValue(vec.z));
     }
 
-    public static Value of(ColumnPos cpos) { return ListValue.of(new NumericValue(cpos.x()), new NumericValue(cpos.z()));}
+    public static Value of(final ColumnPos cpos)
+    {
+        return ListValue.of(new NumericValue(cpos.x()), new NumericValue(cpos.z()));
+    }
 
-    public static Value of(ServerLevel world)
+    public static Value of(final ServerLevel world)
     {
         return of(world.dimension().location());
     }
 
-    public static Value of(MaterialColor color) {return ListValue.of(StringValue.of(BlockInfo.mapColourName.get(color)), ofRGB(color.col));}
+    public static Value of(final MaterialColor color)
+    {
+        return ListValue.of(StringValue.of(BlockInfo.mapColourName.get(color)), ofRGB(color.col));
+    }
 
-    public static <T extends Number> Value of(MinMaxBounds<T> range) { return ListValue.of(NumericValue.of(range.getMin()), NumericValue.of(range.getMax()));}
+    public static <T extends Number> Value of(final MinMaxBounds<T> range)
+    {
+        return ListValue.of(NumericValue.of(range.getMin()), NumericValue.of(range.getMax()));
+    }
 
     @Deprecated
-    public static Value of(ItemStack stack)
+    public static Value of(final ItemStack stack)
     {
-        if (stack == null || stack.isEmpty())
-            return Value.NULL;
-        return ListValue.of(
+        return stack == null || stack.isEmpty() ? Value.NULL : ListValue.of(
                 of(BuiltInRegistries.ITEM.getKey(stack.getItem())),
                 new NumericValue(stack.getCount()),
                 NBTSerializableValue.fromStack(stack)
         );
     }
-    public static Value of(ItemStack stack, RegistryAccess regs) {
-        if (stack == null || stack.isEmpty())
-            return Value.NULL;
-        return ListValue.of(
+
+    public static Value of(final ItemStack stack, final RegistryAccess regs)
+    {
+        return stack == null || stack.isEmpty() ? Value.NULL : ListValue.of(
                 of(regs.registryOrThrow(Registries.ITEM).getKey(stack.getItem())),
                 new NumericValue(stack.getCount()),
                 NBTSerializableValue.fromStack(stack)
         );
     }
 
-    public static Value of(Objective objective)
+    public static Value of(final Objective objective)
     {
         return ListValue.of(
                 StringValue.of(objective.getName()),
                 StringValue.of(objective.getCriteria().getName())
-                );
+        );
     }
 
 
-    public static Value of(ObjectiveCriteria criteria)
+    public static Value of(final ObjectiveCriteria criteria)
     {
         return ListValue.of(
                 StringValue.of(criteria.getName()),
@@ -120,20 +128,22 @@ public class ValueConversions
     }
 
 
-    public static Value of(ParticleOptions particle)
+    public static Value of(final ParticleOptions particle)
     {
-        String repr = particle.writeToString();
-        if (repr.startsWith("minecraft:")) return StringValue.of(repr.substring(10));
-        return StringValue.of(repr);
+        final String repr = particle.writeToString();
+        return StringValue.of(repr.startsWith("minecraft:") ? repr.substring(10) : repr);
     }
 
-    public static Value ofRGB(int value) {return new NumericValue(value*256+255 );}
+    public static Value ofRGB(final int value)
+    {
+        return new NumericValue(value * 256 + 255);
+    }
 
-    public static Level dimFromValue(Value dimensionValue, MinecraftServer server)
+    public static Level dimFromValue(final Value dimensionValue, final MinecraftServer server)
     {
         if (dimensionValue instanceof EntityValue)
         {
-            return ((EntityValue)dimensionValue).getEntity().getCommandSenderWorld();
+            return ((EntityValue) dimensionValue).getEntity().getCommandSenderWorld();
         }
         else if (dimensionValue instanceof BlockValue bv)
         {
@@ -148,23 +158,16 @@ public class ValueConversions
         }
         else
         {
-            String dimString = dimensionValue.getString().toLowerCase(Locale.ROOT);
-            switch (dimString)
-            {
-                case "nether":
-                case "the_nether":
-                    return server.getLevel(Level.NETHER);
-                case "end":
-                case "the_end":
-                    return server.getLevel(Level.END);
-                case "overworld":
-                case "over_world":
-                    return server.getLevel(Level.OVERWORLD);
-                default:
+            final String dimString = dimensionValue.getString().toLowerCase(Locale.ROOT);
+            return switch (dimString) {
+                case "nether", "the_nether" -> server.getLevel(Level.NETHER);
+                case "end", "the_end" -> server.getLevel(Level.END);
+                case "overworld", "over_world" -> server.getLevel(Level.OVERWORLD);
+                default -> {
                     ResourceKey<Level> dim = null;
-                    ResourceLocation id = new ResourceLocation(dimString);
+                    final ResourceLocation id = new ResourceLocation(dimString);
                     // not using RegistryKey.of since that one creates on check
-                    for (ResourceKey<Level> world : (server.levelKeys()))
+                    for (final ResourceKey<Level> world : (server.levelKeys()))
                     {
                         if (id.equals(world.location()))
                         {
@@ -173,36 +176,48 @@ public class ValueConversions
                         }
                     }
                     if (dim == null)
+                    {
                         throw new ThrowStatement(dimString, Throwables.UNKNOWN_DIMENSION);
-                    return server.getLevel(dim);
-            }
+                    }
+                    yield server.getLevel(dim);
+                }
+            };
         }
     }
 
-    public static Value of(ResourceKey<?> dim)
+    public static Value of(final ResourceKey<?> dim)
     {
         return of(dim.location());
     }
 
-    public static Value of(TagKey<?> tagKey) { return of(tagKey.location()); }
+    public static Value of(final TagKey<?> tagKey)
+    {
+        return of(tagKey.location());
+    }
 
-    public static Value of(ResourceLocation id)
+    public static Value of(final ResourceLocation id)
     {
         if (id == null) // should be Value.NULL
+        {
             return Value.NULL;
+        }
         return new StringValue(simplify(id));
     }
 
-    public static String simplify(ResourceLocation id)
+    public static String simplify(final ResourceLocation id)
     {
         if (id == null) // should be Value.NULL
+        {
             return "";
+        }
         if (id.getNamespace().equals("minecraft"))
+        {
             return id.getPath();
+        }
         return id.toString();
     }
 
-    public static Value of(GlobalPos pos)
+    public static Value of(final GlobalPos pos)
     {
         return ListValue.of(
                 ValueConversions.of(pos.dimension()),
@@ -210,14 +225,13 @@ public class ValueConversions
         );
     }
 
-    public static Value fromPath(ServerLevel world,  Path path)
+    public static Value fromPath(final ServerLevel world, final Path path)
     {
-        List<Value> nodes = new ArrayList<>();
-        //for (PathNode node: path.getNodes())
+        final List<Value> nodes = new ArrayList<>();
         for (int i = 0, len = path.getNodeCount(); i < len; i++)
         {
-            Node node = path.getNode(i);
-            nodes.add( ListValue.of(
+            final Node node = path.getNode(i);
+            nodes.add(ListValue.of(
                     new BlockValue(null, world, node.asBlockPos()),
                     new StringValue(node.type.name().toLowerCase(Locale.ROOT)),
                     new NumericValue(node.costMalus),
@@ -227,101 +241,106 @@ public class ValueConversions
         return ListValue.wrap(nodes);
     }
 
-    public static Value fromTimedMemory(Entity e, long expiry, Object v)
+    public static Value fromTimedMemory(final Entity e, final long expiry, final Object v)
     {
-        Value ret = fromEntityMemory(e, v);
-        if (ret.isNull() || expiry == Long.MAX_VALUE) return ret;
-        return ListValue.of(ret, new NumericValue(expiry));
+        final Value ret = fromEntityMemory(e, v);
+        return ret.isNull() || expiry == Long.MAX_VALUE ? ret : ListValue.of(ret, new NumericValue(expiry));
     }
 
-    private static Value fromEntityMemory(Entity e, Object v)
+    private static Value fromEntityMemory(final Entity e, Object v)
     {
         if (v instanceof GlobalPos pos)
         {
             return of(pos);
         }
-        if (v instanceof Entity)
+        if (v instanceof final Entity entity)
         {
-            return new EntityValue((Entity)v);
+            return new EntityValue(entity);
         }
-        if (v instanceof BlockPos)
+        if (v instanceof final BlockPos pos)
         {
-            return new BlockValue(null, (ServerLevel) e.getCommandSenderWorld(), (BlockPos) v);
+            return new BlockValue(null, e.getCommandSenderWorld(), pos);
         }
-        if (v instanceof Number)
+        if (v instanceof final Number number)
         {
-            return new NumericValue(((Number) v).doubleValue());
+            return new NumericValue(number.doubleValue());
         }
-        if (v instanceof Boolean)
+        if (v instanceof final Boolean bool)
         {
-            return BooleanValue.of((Boolean) v);
+            return BooleanValue.of(bool);
         }
-        if (v instanceof UUID)
+        if (v instanceof final UUID uuid)
         {
-            return ofUUID( (ServerLevel) e.getCommandSenderWorld(), (UUID)v);
+            return ofUUID((ServerLevel) e.getCommandSenderWorld(), uuid);
         }
-        if (v instanceof DamageSource source)
+        if (v instanceof final DamageSource source)
         {
             return ListValue.of(
                     new StringValue(source.getMsgId()),
-                    source.getEntity()==null?Value.NULL:new EntityValue(source.getEntity())
+                    source.getEntity() == null ? Value.NULL : new EntityValue(source.getEntity())
             );
         }
-        if (v instanceof Path)
+        if (v instanceof final Path path)
         {
-            return fromPath((ServerLevel)e.getCommandSenderWorld(), (Path)v);
+            return fromPath((ServerLevel) e.getCommandSenderWorld(), path);
         }
-        if (v instanceof PositionTracker)
+        if (v instanceof final PositionTracker tracker)
         {
-            return new BlockValue(null, e.getCommandSenderWorld(), ((PositionTracker)v).currentBlockPosition());
+            return new BlockValue(null, e.getCommandSenderWorld(), tracker.currentBlockPosition());
         }
-        if (v instanceof WalkTarget)
+        if (v instanceof final WalkTarget target)
         {
             return ListValue.of(
-                    new BlockValue(null, e.getCommandSenderWorld(), ((WalkTarget)v).getTarget().currentBlockPosition()),
-                    new NumericValue(((WalkTarget) v).getSpeedModifier()),
-                    new NumericValue(((WalkTarget) v).getCloseEnoughDist())
+                    new BlockValue(null, e.getCommandSenderWorld(), target.getTarget().currentBlockPosition()),
+                    new NumericValue(target.getSpeedModifier()),
+                    new NumericValue(target.getCloseEnoughDist())
             );
         }
-        if (v instanceof NearestVisibleLivingEntities nvle) {
+        if (v instanceof final NearestVisibleLivingEntities nvle)
+        {
             v = StreamSupport.stream(nvle.findAll(entity -> true).spliterator(), false).toList();
         }
-        if (v instanceof Set)
+        if (v instanceof final Set<?> set)
         {
-            v = new ArrayList<>(((Set<?>) v));
+            v = new ArrayList<>(set);
         }
-        if (v instanceof List<?> l)
+        if (v instanceof final List<?> l)
         {
-            if (l.isEmpty()) return ListValue.of();
-            Object el = l.get(0);
-            if (el instanceof Entity)
+            if (l.isEmpty())
             {
-                return ListValue.wrap(l.stream().map(o -> new EntityValue((Entity)o)));
+                return ListValue.of();
             }
-            if (el instanceof GlobalPos)
+            final Object el = l.get(0);
+            if (el instanceof final Entity entity)
             {
-                return ListValue.wrap(l.stream().map(o -> of((GlobalPos) o)));
+                return ListValue.wrap(l.stream().map(o -> new EntityValue(entity)));
+            }
+            if (el instanceof final GlobalPos pos)
+            {
+                return ListValue.wrap(l.stream().map(o -> of(pos)));
             }
         }
         return Value.NULL;
     }
 
-    private static Value ofUUID(ServerLevel entityWorld, UUID uuid)
+    private static Value ofUUID(final ServerLevel entityWorld, final UUID uuid)
     {
-        Entity current = entityWorld.getEntity(uuid);
+        final Entity current = entityWorld.getEntity(uuid);
         return ListValue.of(
-                current == null?Value.NULL:new EntityValue(current),
+                current == null ? Value.NULL : new EntityValue(current),
                 new StringValue(uuid.toString())
         );
     }
-    public static Value of(AABB box)
+
+    public static Value of(final AABB box)
     {
         return ListValue.of(
                 ListValue.fromTriple(box.minX, box.minY, box.minZ),
                 ListValue.fromTriple(box.maxX, box.maxY, box.maxZ)
         );
     }
-    public static Value of(BoundingBox box)
+
+    public static Value of(final BoundingBox box)
     {
         return ListValue.of(
                 ListValue.fromTriple(box.minX(), box.minY(), box.minZ()),
@@ -329,17 +348,23 @@ public class ValueConversions
         );
     }
 
-    public static Value of(StructureStart structure, final RegistryAccess regs)
+    public static Value of(final StructureStart structure, final RegistryAccess regs)
     {
-        if (structure == null || structure == StructureStart.INVALID_START) return Value.NULL;
-        BoundingBox boundingBox = structure.getBoundingBox();
-        if (boundingBox.maxX() < boundingBox.minX() || boundingBox.maxY() < boundingBox.minY() || boundingBox.maxZ() < boundingBox.minZ()) return Value.NULL;
-        Map<Value, Value> ret = new HashMap<>();
-        ret.put(new StringValue("box"), of(boundingBox));
-        List<Value> pieces = new ArrayList<>();
-        for (StructurePiece piece : structure.getPieces())
+        if (structure == null || structure == StructureStart.INVALID_START)
         {
-            BoundingBox box = piece.getBoundingBox();
+            return Value.NULL;
+        }
+        final BoundingBox boundingBox = structure.getBoundingBox();
+        if (boundingBox.maxX() < boundingBox.minX() || boundingBox.maxY() < boundingBox.minY() || boundingBox.maxZ() < boundingBox.minZ())
+        {
+            return Value.NULL;
+        }
+        final Map<Value, Value> ret = new HashMap<>();
+        ret.put(new StringValue("box"), of(boundingBox));
+        final List<Value> pieces = new ArrayList<>();
+        for (final StructurePiece piece : structure.getPieces())
+        {
+            final BoundingBox box = piece.getBoundingBox();
             if (box.maxX() >= box.minX() && box.maxY() >= box.minY() && box.maxZ() >= box.minZ())
             {
                 pieces.add(ListValue.of(
@@ -354,41 +379,51 @@ public class ValueConversions
         return MapValue.wrap(ret);
     }
 
-    public static Value fromProperty(BlockState state, Property<?> p)
+    public static Value fromProperty(final BlockState state, final Property<?> p)
     {
-        Comparable<?> object = state.getValue(p);
-        if (object instanceof Boolean || object instanceof Number) return StringValue.of(object.toString());
-        if (object instanceof StringRepresentable)
+        final Comparable<?> object = state.getValue(p);
+        if (object instanceof Boolean || object instanceof Number)
         {
-            return StringValue.of(((StringRepresentable) object).getSerializedName());
+            return StringValue.of(object.toString());
         }
-        throw new InternalExpressionException("Unknown property type: "+p.getName());
+        if (object instanceof final StringRepresentable stringRepresentable)
+        {
+            return StringValue.of(stringRepresentable.getSerializedName());
+        }
+        throw new InternalExpressionException("Unknown property type: " + p.getName());
     }
 
-    record SlotParam(/* Nullable */ String type, int id) {
-        public ListValue build() {
+    record SlotParam(/* Nullable */ String type, int id)
+    {
+        public ListValue build()
+        {
             return ListValue.of(StringValue.of(type), new NumericValue(id));
         }
     }
 
-    private static final Int2ObjectMap<SlotParam> slotIdsToSlotParams = new Int2ObjectOpenHashMap<>() {{
+    private static final Int2ObjectMap<SlotParam> slotIdsToSlotParams = new Int2ObjectOpenHashMap<>()
+    {{
         int n;
         //covers blocks, player hotbar and inventory, and all default inventories
-        for(n = 0; n < 54; ++n) {
+        for (n = 0; n < 54; ++n)
+        {
             put(n, new SlotParam(null, n));
         }
-        for(n = 0; n < 27; ++n) {
+        for (n = 0; n < 27; ++n)
+        {
             put(200 + n, new SlotParam("enderchest", n));
         }
 
         // villager
-        for(n = 0; n < 8; ++n) {
+        for (n = 0; n < 8; ++n)
+        {
             put(300 + n, new SlotParam(null, n));
         }
 
         // horse, llamas, donkeys, etc.
         // two first slots are for saddle and armour
-        for(n = 0; n < 15; ++n) {
+        for (n = 0; n < 15; ++n)
+        {
             put(500 + n, new SlotParam(null, n + 2));
         }
         // weapon main hand
@@ -396,7 +431,8 @@ public class ValueConversions
         // offhand
         put(99, new SlotParam("equipment", 5));
         // feet, legs, chest, head
-        for(n = 0; n < 4; ++n) {
+        for (n = 0; n < 4; ++n)
+        {
             put(100 + n, new SlotParam("equipment", n + 1));
         }
         //horse defaults saddle
@@ -407,26 +443,25 @@ public class ValueConversions
         //hashMap.put("horse.chest", 499);
     }};
 
-    public static Value ofVanillaSlotResult(int itemSlot)
+    public static Value ofVanillaSlotResult(final int itemSlot)
     {
-        SlotParam ret = slotIdsToSlotParams.get(itemSlot);
-        if (ret == null) return ListValue.of(Value.NULL, new NumericValue(itemSlot));
-        return ret.build();
+        final SlotParam ret = slotIdsToSlotParams.get(itemSlot);
+        return ret == null ? ListValue.of(Value.NULL, new NumericValue(itemSlot)) : ret.build();
     }
 
-    public static Value ofBlockPredicate(RegistryAccess registryAccess, Predicate<BlockInWorld> blockPredicate)
+    public static Value ofBlockPredicate(final RegistryAccess registryAccess, final Predicate<BlockInWorld> blockPredicate)
     {
-        BlockPredicateInterface predicateData = (BlockPredicateInterface) blockPredicate;
+        final BlockPredicateInterface predicateData = (BlockPredicateInterface) blockPredicate;
         final Registry<Block> blocks = registryAccess.registryOrThrow(Registries.BLOCK);
         return ListValue.of(
-                predicateData.getCMBlockState()==null?Value.NULL:of(blocks.getKey(predicateData.getCMBlockState().getBlock())),
-                predicateData.getCMBlockTagKey()==null?Value.NULL:of(blocks.getTag(predicateData.getCMBlockTagKey()).get().key()),
+                predicateData.getCMBlockState() == null ? Value.NULL : of(blocks.getKey(predicateData.getCMBlockState().getBlock())),
+                predicateData.getCMBlockTagKey() == null ? Value.NULL : of(blocks.getTag(predicateData.getCMBlockTagKey()).get().key()),
                 MapValue.wrap(predicateData.getCMProperties()),
-                predicateData.getCMDataTag() == null?Value.NULL:new NBTSerializableValue(predicateData.getCMDataTag())
+                predicateData.getCMDataTag() == null ? Value.NULL : new NBTSerializableValue(predicateData.getCMDataTag())
         );
     }
 
-    public static ItemStack getItemStackFromValue(Value value, boolean withCount, RegistryAccess regs)
+    public static ItemStack getItemStackFromValue(final Value value, final boolean withCount, final RegistryAccess regs)
     {
         if (value.isNull())
         {
@@ -439,7 +474,7 @@ public class ValueConversions
         {
             if (list.length() != 3)
             {
-                throw new ThrowStatement("item definition from list of size "+list.length(), Throwables.UNKNOWN_ITEM);
+                throw new ThrowStatement("item definition from list of size " + list.length(), Throwables.UNKNOWN_ITEM);
             }
             final List<Value> items = list.getItems();
             name = items.get(0).getString();
@@ -447,7 +482,7 @@ public class ValueConversions
             {
                 count = NumericValue.asNumber(items.get(1)).getInt();
             }
-            Value nbtValue = items.get(2);
+            final Value nbtValue = items.get(2);
             if (!nbtValue.isNull())
             {
                 nbtTag = ((NBTSerializableValue) NBTSerializableValue.fromValue(nbtValue)).getCompoundTag();
@@ -457,12 +492,12 @@ public class ValueConversions
         {
             name = value.getString();
         }
-        ItemInput itemInput = NBTSerializableValue.parseItem(name, nbtTag, regs);
+        final ItemInput itemInput = NBTSerializableValue.parseItem(name, nbtTag, regs);
         try
         {
-            return itemInput.createItemStack(count,false);
+            return itemInput.createItemStack(count, false);
         }
-        catch (CommandSyntaxException cse)
+        catch (final CommandSyntaxException cse)
         {
             if (!withCount)
             {
@@ -475,31 +510,56 @@ public class ValueConversions
         }
     }
 
-    public static Value guess(ServerLevel serverWorld, Object o) {
+    public static Value guess(final ServerLevel serverWorld, final Object o)
+    {
         if (o == null)
+        {
             return Value.NULL;
-        if (o instanceof List)
-            return ListValue.wrap(((List<?>) o).stream().map(oo -> guess(serverWorld, oo)));
-        if (o instanceof BlockPos)
-            return new BlockValue(null, serverWorld, (BlockPos)o);
-        if (o instanceof Entity)
-            return EntityValue.of((Entity) o);
-        if (o instanceof Vec3)
-            return of((Vec3)o);
-        if (o instanceof Vec3i)
-            return of(new BlockPos((Vec3i)o));
-        if (o instanceof AABB)
-            return of((AABB)o);
-        if (o instanceof BoundingBox)
-            return of((BoundingBox) o);
-        if (o instanceof ItemStack)
-            return of((ItemStack)o, serverWorld.registryAccess());
-        if (o instanceof Boolean)
-            return BooleanValue.of((Boolean) o);
-        if (o instanceof Number)
-            return NumericValue.of((Number) o);
-        if (o instanceof ResourceLocation)
-            return of((ResourceLocation)o);
+        }
+        if (o instanceof final List<?> list)
+        {
+            return ListValue.wrap(list.stream().map(oo -> guess(serverWorld, oo)));
+        }
+        if (o instanceof final BlockPos pos)
+        {
+            return new BlockValue(null, serverWorld, pos);
+        }
+        if (o instanceof final Entity e)
+        {
+            return EntityValue.of(e);
+        }
+        if (o instanceof final Vec3 vec3)
+        {
+            return of(vec3);
+        }
+        if (o instanceof final Vec3i vec3i)
+        {
+            return of(new BlockPos(vec3i));
+        }
+        if (o instanceof final AABB aabb)
+        {
+            return of(aabb);
+        }
+        if (o instanceof final BoundingBox bb)
+        {
+            return of(bb);
+        }
+        if (o instanceof final ItemStack itemStack)
+        {
+            return of(itemStack, serverWorld.registryAccess());
+        }
+        if (o instanceof final Boolean bool)
+        {
+            return BooleanValue.of(bool);
+        }
+        if (o instanceof final Number number)
+        {
+            return NumericValue.of(number);
+        }
+        if (o instanceof final ResourceLocation resourceLocation)
+        {
+            return of(resourceLocation);
+        }
         return StringValue.of(o.toString());
     }
 }

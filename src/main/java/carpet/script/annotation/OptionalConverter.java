@@ -50,25 +50,33 @@ final class OptionalConverter<R> implements ValueConverter<Optional<R>>
      *           {@link #checkAndConvert(Iterator, Context, Context.Type)} and is only used as a fallback in types that don't support it.
      */
     @Override
-    public Optional<R> convert(Value value)
+    public Optional<R> convert(final Value value)
     {
         if (value.isNull())
+        {
             return Optional.empty();
-        R converted = typeConverter.convert(value);
+        }
+        final R converted = typeConverter.convert(value);
         if (converted == null)
+        {
             return null;
+        }
         return Optional.of(converted);
     }
 
     @Override
-    public Optional<R> checkAndConvert(Iterator<Value> valueIterator, Context context, Context.Type theLazyT)
+    public Optional<R> checkAndConvert(final Iterator<Value> valueIterator, final Context context, final Context.Type theLazyT)
     {
         if (!valueIterator.hasNext() || valueIterator.next().isNull())
+        {
             return Optional.empty();
+        }
         ((ListIterator<Value>) valueIterator).previous();
-        R converted = typeConverter.checkAndConvert(valueIterator, context, theLazyT);
+        final R converted = typeConverter.checkAndConvert(valueIterator, context, theLazyT);
         if (converted == null)
+        {
             return null;
+        }
         return Optional.of(converted);
     }
 
@@ -98,10 +106,10 @@ final class OptionalConverter<R> implements ValueConverter<Optional<R>>
      * @param annotatedType The type to get generics information from
      * @return A new {@link OptionalConverter} for the data specified in the {@link AnnotatedType}
      */
-    static OptionalConverter<?> fromAnnotatedType(AnnotatedType annotatedType)
+    static OptionalConverter<?> fromAnnotatedType(final AnnotatedType annotatedType)
     {
-        AnnotatedParameterizedType paramType = (AnnotatedParameterizedType) annotatedType;
-        AnnotatedType wrappedType = paramType.getAnnotatedActualTypeArguments()[0];
+        final AnnotatedParameterizedType paramType = (AnnotatedParameterizedType) annotatedType;
+        final AnnotatedType wrappedType = paramType.getAnnotatedActualTypeArguments()[0];
         return new OptionalConverter<>(wrappedType);
     }
 }

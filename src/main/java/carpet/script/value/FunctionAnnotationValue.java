@@ -9,11 +9,15 @@ public class FunctionAnnotationValue extends Value
     {
         GLOBAL, VARARG
     }
+
     public Type type;
-    public FunctionAnnotationValue(Value variable, Type type)
+
+    public FunctionAnnotationValue(final Value variable, final Type type)
     {
         if (variable.boundVariable == null)
+        {
             throw new InternalExpressionException("You can only borrow variables from the outer scope");
+        }
         this.boundVariable = variable.boundVariable;
         this.type = type;
     }
@@ -37,7 +41,7 @@ public class FunctionAnnotationValue extends Value
     }
 
     @Override
-    public Tag toTag(boolean force)
+    public Tag toTag(final boolean force)
     {
         throw new UnsupportedOperationException("Global value cannot be serialized to the tag");
     }

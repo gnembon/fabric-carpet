@@ -6,10 +6,12 @@ import carpet.script.Tokenizer;
 import carpet.script.exception.ExitStatement;
 import carpet.script.exception.ExpressionException;
 import carpet.script.exception.InternalExpressionException;
+
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
+
 import net.minecraft.nbt.Tag;
 
 public class ThreadValue extends Value
@@ -18,21 +20,21 @@ public class ThreadValue extends Value
     private final long id;
     private static long sequence = 0L;
 
-    public ThreadValue(CompletableFuture<Value> taskFuture)
+    public ThreadValue(final CompletableFuture<Value> taskFuture)
     {
         this.taskFuture = taskFuture;
         this.id = sequence++;
     }
 
-    public ThreadValue(Value pool, FunctionValue function, Expression expr, Tokenizer.Token token, Context ctx, List<Value> args)
+    public ThreadValue(final Value pool, final FunctionValue function, final Expression expr, final Tokenizer.Token token, final Context ctx, final List<Value> args)
     {
         this(getCompletableFutureFromFunction(pool, function, expr, token, ctx, args));
         Thread.yield();
     }
 
-    public static CompletableFuture<Value> getCompletableFutureFromFunction(Value pool, FunctionValue function, Expression expr, Tokenizer.Token token, Context ctx, List<Value> args)
+    public static CompletableFuture<Value> getCompletableFutureFromFunction(final Value pool, final FunctionValue function, final Expression expr, final Tokenizer.Token token, final Context ctx, final List<Value> args)
     {
-        ExecutorService executor = ctx.host.getExecutor(pool);
+        final ExecutorService executor = ctx.host.getExecutor(pool);
         if (executor == null)
         {
             // app is shutting down - no more threads can be spawned.
@@ -40,27 +42,22 @@ public class ThreadValue extends Value
         }
         else
         {
-            return CompletableFuture.supplyAsync(
-                    () ->
-                    {
-                        try
-                        {
-                            return function.execute(ctx, Context.NONE, expr, token, args).evalValue(ctx);
-                        }
-                        catch (ExitStatement exit)
-                        {
-                            // app stopped
-                            return exit.retval;
-                        }
-                        catch (ExpressionException exc)
-                        {
-                            ctx.host.handleExpressionException("Thread failed\n", exc);
-                            return Value.NULL;
-                        }
-
-                    },
-                    ctx.host.getExecutor(pool)
-            );
+            return CompletableFuture.supplyAsync(() -> {
+                try
+                {
+                    return function.execute(ctx, Context.NONE, expr, token, args).evalValue(ctx);
+                }
+                catch (final ExitStatement exit)
+                {
+                    // app stopped
+                    return exit.retval;
+                }
+                catch (final ExpressionException exc)
+                {
+                    ctx.host.handleExpressionException("Thread failed\n", exc);
+                    return Value.NULL;
+                }
+            }, ctx.host.getExecutor(pool));
         }
     }
 
@@ -87,12 +84,12 @@ public class ThreadValue extends Value
         {
             return taskFuture.get();
         }
-        catch (ExitStatement exit)
+        catch (final ExitStatement exit)
         {
             taskFuture.complete(exit.retval);
             return exit.retval;
         }
-        catch (InterruptedException | ExecutionException e)
+        catch (final InterruptedException | ExecutionException e)
         {
             return Value.NULL;
         }
@@ -104,19 +101,19 @@ public class ThreadValue extends Value
     }
 
     @Override
-    public boolean equals(Object o)
+    public boolean equals(final Object o)
     {
-        if (!(o instanceof ThreadValue))
-            return false;
-        return ((ThreadValue) o).id == this.id;
+        return o instanceof final ThreadValue tv && tv.id == this.id;
     }
 
     @Override
-    public int compareTo(Value o)
+    public int compareTo(final Value o)
     {
-        if (!(o instanceof ThreadValue))
+        if (!(o instanceof final ThreadValue tv))
+        {
             throw new InternalExpressionException("Cannot compare tasks to other types");
-        return (int) (this.id - ((ThreadValue) o).id);
+        }
+        return (int) (this.id - tv.id);
     }
 
     @Override
@@ -126,9 +123,12 @@ public class ThreadValue extends Value
     }
 
     @Override
-    public Tag toTag(boolean force)
+    public Tag toTag(final boolean force)
     {
-        if (!force) throw new NBTSerializableValue.IncompatibleTypeException(this);
+        if (!force)
+        {
+            throw new NBTSerializableValue.IncompatibleTypeException(this);
+        }
         return getValue().toTag(true);
     }
 

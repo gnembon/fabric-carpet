@@ -4,7 +4,7 @@ import carpet.script.value.Value;
 
 public class ContinueStatement extends ExitStatement
 {
-    public ContinueStatement(Value value)
+    public ContinueStatement(final Value value)
     {
         super(value);
     }

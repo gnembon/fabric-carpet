@@ -4,8 +4,7 @@ import carpet.script.value.Value;
 
 public class ReturnStatement extends ExitStatement
 {
-
-    public ReturnStatement(Value value)
+    public ReturnStatement(final Value value)
     {
         super(value);
     }

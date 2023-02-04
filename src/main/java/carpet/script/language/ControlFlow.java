@@ -17,21 +17,25 @@ import carpet.script.value.Value;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-public class ControlFlow {
-    public static void apply(Expression expression) // public just to get the javadoc right
+public class ControlFlow
+{
+    public static void apply(final Expression expression) // public just to get the javadoc right
     {
         // needs to be lazy cause of custom contextualization
         expression.addLazyBinaryOperator(";", Operators.precedence.get("nextop;"), true, true, t -> Context.Type.VOID, (c, t, lv1, lv2) ->
         {
             lv1.evalValue(c, Context.VOID);
-            Value v2 = lv2.evalValue(c, t);
+            final Value v2 = lv2.evalValue(c, t);
             return (cc, tt) -> v2;
         });
 
         expression.addPureLazyFunction("then", -1, t -> Context.Type.VOID, (c, t, lv) -> {
-            int imax = lv.size()-1;
-            for (int i = 0; i < imax; i++) lv.get(i).evalValue(c, Context.VOID);
-            Value v = lv.get(imax).evalValue(c, t);
+            final int imax = lv.size() - 1;
+            for (int i = 0; i < imax; i++)
+            {
+                lv.get(i).evalValue(c, Context.VOID);
+            }
+            final Value v = lv.get(imax).evalValue(c, t);
             return (cc, tt) -> v;
         });
         expression.addFunctionalEquivalence(";", "then");
@@ -40,78 +44,80 @@ public class ControlFlow {
         // obvious lazy due to conditional evaluation of arguments
         expression.addLazyFunction("if", (c, t, lv) ->
         {
-            if ( lv.size() < 2 )
+            if (lv.size() < 2)
+            {
                 throw new InternalExpressionException("'if' statement needs to have at least one condition and one case");
-            for (int i=0; i<lv.size()-1; i+=2)
+            }
+            for (int i = 0; i < lv.size() - 1; i += 2)
             {
                 if (lv.get(i).evalValue(c, Context.BOOLEAN).getBoolean())
                 {
-                    //int iFinal = i;
-                    Value ret = lv.get(i+1).evalValue(c, t);
+                    final Value ret = lv.get(i + 1).evalValue(c, t);
                     return (cc, tt) -> ret;
                 }
             }
-            if (lv.size()%2 == 1)
+            if (lv.size() % 2 == 1)
             {
-                Value ret = lv.get(lv.size() - 1).evalValue(c, t);
+                final Value ret = lv.get(lv.size() - 1).evalValue(c, t);
                 return (cc, tt) -> ret;
             }
             return (cc, tt) -> Value.NULL;
         });
 
-        expression.addImpureFunction("exit", (lv) -> { throw new ExitStatement(lv.size()==0?Value.NULL:lv.get(0)); });
+        expression.addImpureFunction("exit", (lv) -> {
+            throw new ExitStatement(lv.size() == 0 ? Value.NULL : lv.get(0));
+        });
 
-        expression.addImpureFunction("throw", lv->
+        expression.addImpureFunction("throw", lv ->
         {
-            switch (lv.size()) 
+            switch (lv.size())
             {
-                case 0:
-                    throw new ThrowStatement(Value.NULL, Throwables.USER_DEFINED);
-                case 1:
-                    throw new ThrowStatement(lv.get(0), Throwables.USER_DEFINED );
-                case 2:
-                    throw new ThrowStatement(lv.get(1), Throwables.getTypeForException(lv.get(0).getString()));
-                case 3:
-                    throw new ThrowStatement(lv.get(2), Throwables.getTypeForException(lv.get(1).getString()), lv.get(0).getString());
-                default:
-                    throw new InternalExpressionException("throw() can't accept more than 3 parameters");
+                case 0 -> throw new ThrowStatement(Value.NULL, Throwables.USER_DEFINED);
+                case 1 -> throw new ThrowStatement(lv.get(0), Throwables.USER_DEFINED);
+                case 2 -> throw new ThrowStatement(lv.get(1), Throwables.getTypeForException(lv.get(0).getString()));
+                case 3 -> throw new ThrowStatement(lv.get(2), Throwables.getTypeForException(lv.get(1).getString()), lv.get(0).getString());
+                default -> throw new InternalExpressionException("throw() can't accept more than 3 parameters");
             }
         });
 
         // needs to be lazy since execution of parameters but first one are conditional
         expression.addLazyFunction("try", (c, t, lv) ->
         {
-            if (lv.size()==0)
+            if (lv.size() == 0)
+            {
                 throw new InternalExpressionException("'try' needs at least an expression block, and either a catch_epr, or a number of pairs of filters and catch_expr");
+            }
             try
             {
-                Value retval = lv.get(0).evalValue(c, t);
+                final Value retval = lv.get(0).evalValue(c, t);
                 return (c_, t_) -> retval;
             }
-            catch (ProcessedThrowStatement ret)
+            catch (final ProcessedThrowStatement ret)
             {
                 if (lv.size() == 1)
                 {
                     if (!ret.thrownExceptionType.isUserException())
+                    {
                         throw ret;
+                    }
                     return (c_, t_) -> Value.NULL;
                 }
                 if (lv.size() > 3 && lv.size() % 2 == 0)
                 {
                     throw new InternalExpressionException("Try-catch block needs the code to run, and either a catch expression for user thrown exceptions, or a number of pairs of filters and catch expressions");
                 }
-                
+
                 Value val = null; // This is always assigned at some point, just the compiler doesn't know
-                
-                LazyValue __ = c.getVariable("_");
+
+                final LazyValue __ = c.getVariable("_");
                 c.setVariable("_", (__c, __t) -> ret.data.reboundedTo("_"));
-                LazyValue _trace = c.getVariable("_trace");
+                final LazyValue _trace = c.getVariable("_trace");
                 c.setVariable("_trace", (__c, __t) -> MapValue.wrap(Map.of(
                         StringValue.of("stack"), ListValue.wrap(ret.stack.stream().map(f -> ListValue.of(
                                 StringValue.of(f.getModule().name()),
                                 StringValue.of(f.getString()),
-                                NumericValue.of(f.getToken().lineno+1),
-                                NumericValue.of(f.getToken().linepos+1)
+                                NumericValue.of(f.getToken().lineno + 1),
+                                NumericValue.of(f.getToken().linepos + 1)
                         ))),
 
                         StringValue.of("locals"), MapValue.wrap(ret.context.variables.entrySet().stream().filter(e -> !e.getKey().equals("_trace")).collect(Collectors.toMap(
@@ -120,20 +126,22 @@ public class ControlFlow {
                         ))),
                         StringValue.of("token"), ListValue.of(
                                 StringValue.of(ret.token.surface),
-                                NumericValue.of(ret.token.lineno+1),
-                                NumericValue.of(ret.token.linepos+1)
+                                NumericValue.of(ret.token.lineno + 1),
+                                NumericValue.of(ret.token.linepos + 1)
                         )
                 )));
 
                 if (lv.size() == 2)
                 {
                     if (ret.thrownExceptionType.isUserException())
+                    {
                         val = lv.get(1).evalValue(c, t);
+                    }
                 }
                 else
                 {
                     int pointer = 1;
-                    while (pointer < lv.size() -1)
+                    while (pointer < lv.size() - 1)
                     {
                         if (ret.thrownExceptionType.isRelevantFor(lv.get(pointer).evalValue(c).getString()))
                         {
@@ -145,14 +153,18 @@ public class ControlFlow {
                 }
                 c.setVariable("_", __);
                 if (_trace != null)
+                {
                     c.setVariable("_trace", _trace);
+                }
                 else
+                {
                     c.delVariable("_trace");
+                }
                 if (val == null)  // not handled
                 {
                     throw ret;
                 }
-                Value retval = val;
+                final Value retval = val;
                 return (c_, t_) -> retval;
             }
         });

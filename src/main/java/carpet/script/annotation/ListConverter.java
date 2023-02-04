@@ -32,34 +32,38 @@ final class ListConverter<T> implements ValueConverter<List<T>>
     }
 
     @Override
-    public List<T> convert(Value value)
+    public List<T> convert(final Value value)
     {
         return value instanceof ListValue ? convertListValue((ListValue) value) : allowSingletonCreation ? convertSingleton(value) : null;
     }
 
-    private List<T> convertListValue(ListValue values)
+    private List<T> convertListValue(final ListValue values)
     {
-        List<T> list = new ArrayList<>(values.getItems().size());
-        for (Value value : values)
+        final List<T> list = new ArrayList<>(values.getItems().size());
+        for (final Value value : values)
         {
-            T converted = itemConverter.convert(value);
+            final T converted = itemConverter.convert(value);
             if (converted == null)
+            {
                 return null;
+            }
             list.add(converted);
         }
         return list;
     }
 
-    private List<T> convertSingleton(Value val)
+    private List<T> convertSingleton(final Value val)
     {
-        T converted = itemConverter.convert(val);
+        final T converted = itemConverter.convert(val);
         if (converted == null)
+        {
             return null;
+        }
         return Collections.singletonList(converted);
 
     }
 
-    private ListConverter(AnnotatedType itemType, boolean allowSingletonCreation)
+    private ListConverter(final AnnotatedType itemType, final boolean allowSingletonCreation)
     {
         itemConverter = ValueConverter.fromAnnotatedType(itemType);
         this.allowSingletonCreation = allowSingletonCreation;
@@ -79,11 +83,11 @@ final class ListConverter<T> implements ValueConverter<List<T>>
      * @param annotatedType The type to get generics information from
      * @return A new {@link ListConverter} for the data specified in the {@link AnnotatedType}
      */
-    static ListConverter<?> fromAnnotatedType(AnnotatedType annotatedType)
+    static ListConverter<?> fromAnnotatedType(final AnnotatedType annotatedType)
     {
-        AnnotatedParameterizedType paramType = (AnnotatedParameterizedType) annotatedType;
-        AnnotatedType itemType = paramType.getAnnotatedActualTypeArguments()[0];
-        boolean allowSingletonCreation = annotatedType.isAnnotationPresent(Param.AllowSingleton.class);
+        final AnnotatedParameterizedType paramType = (AnnotatedParameterizedType) annotatedType;
+        final AnnotatedType itemType = paramType.getAnnotatedActualTypeArguments()[0];
+        final boolean allowSingletonCreation = annotatedType.isAnnotationPresent(Param.AllowSingleton.class);
         return new ListConverter<>(itemType, allowSingletonCreation);
     }
 

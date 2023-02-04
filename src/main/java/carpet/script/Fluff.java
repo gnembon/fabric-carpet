@@ -13,24 +13,33 @@ import java.util.List;
 public abstract class Fluff
 {
     @FunctionalInterface
-    public interface TriFunction<A, B, C, R> { R apply(A a, B b, C c); }
+    public interface TriFunction<A, B, C, R>
+    {
+        R apply(A a, B b, C c);
+    }
 
     @FunctionalInterface
-    public interface TriConsumer<A, B, C> { void accept(A a, B b, C c); }
+    public interface QuadFunction<A, B, C, D, R>
+    {
+        R apply(A a, B b, C c, D d);
+    }
 
     @FunctionalInterface
-    public interface QuadConsumer<A, B, C, D> { void accept(A a, B b, C c, D d); }
+    public interface QuinnFunction<A, B, C, D, E, R>
+    {
+        R apply(A a, B b, C c, D d, E e);
+    }
 
     @FunctionalInterface
-    public interface QuadFunction<A, B, C, D, R> { R apply(A a, B b, C c, D d);}
+    public interface SexFunction<A, B, C, D, E, F, R>
+    {
+        R apply(A a, B b, C c, D d, E e, F f);
+    }
 
-    @FunctionalInterface
-    public interface QuinnFunction<A, B, C, D, E, R> { R apply(A a, B b, C c, D d, E e);}
-
-    @FunctionalInterface
-    public interface SexFunction<A, B, C, D, E, F, R> { R apply(A a, B b, C c, D d, E e, F f);}
-
-    public interface UsageProvider { String getUsage();}
+    public interface UsageProvider
+    {
+        String getUsage();
+    }
 
     public interface EvalNode
     {
@@ -49,7 +58,11 @@ public abstract class Fluff
         /**
          * @return required argument eval type in case its evaluated statically without context but with a given context type
          */
-        default Context.Type staticType(Context.Type outerType) {return transitive()?outerType:Context.NONE;};
+        default Context.Type staticType(final Context.Type outerType)
+        {
+            return transitive() ? outerType : Context.NONE;
+        }
+
     }
 
     public interface ILazyFunction extends EvalNode
@@ -63,9 +76,11 @@ public abstract class Fluff
         static void checkInterrupts()
         {
             if (ScriptHost.mainThread != Thread.currentThread() && Thread.currentThread().isInterrupted())
+            {
                 throw new InternalExpressionException("Thread interrupted");
+            }
         }
-        // lazy function has a chance to change execution based on contxt
+        // lazy function has a chance to change execution based on context
     }
 
     public interface IFunction extends ILazyFunction
@@ -92,94 +107,109 @@ public abstract class Fluff
         protected String name;
         int numParams;
 
-        public AbstractLazyFunction(int numParams, String name)
+        public AbstractLazyFunction(final int numParams, final String name)
         {
+            super();
             this.numParams = numParams;
             this.name = name;
         }
 
 
-        public String getName() {
+        public String getName()
+        {
             return name;
         }
 
         @Override
-        public int getNumParams() {
+        public int getNumParams()
+        {
             return numParams;
         }
 
         @Override
-        public boolean numParamsVaries() {
+        public boolean numParamsVaries()
+        {
             return numParams < 0;
         }
 
-        public static List<Value> unpackLazy(List<LazyValue> lzargs, Context c, Context.Type contextType)
+        public static List<Value> unpackLazy(final List<LazyValue> lzargs, final Context c, final Context.Type contextType)
         {
-            List<Value> args = new ArrayList<>();
-            for (LazyValue lv : lzargs)
+            final List<Value> args = new ArrayList<>();
+            for (final LazyValue lv : lzargs)
             {
-                Value arg = lv.evalValue(c, contextType);
+                final Value arg = lv.evalValue(c, contextType);
                 if (arg instanceof FunctionUnpackedArgumentsValue)
+                {
                     args.addAll(((ListValue) arg).getItems());
+                }
                 else
+                {
                     args.add(arg);
+                }
             }
             return args;
         }
 
-        public List<Value> unpackArgs(List<LazyValue> lzargs, Context c, Context.Type contextType)
+        public List<Value> unpackArgs(final List<LazyValue> lzargs, final Context c, final Context.Type contextType)
         {
-            List<Value> args = unpackLazy(lzargs, c, contextType);
+            final List<Value> args = unpackLazy(lzargs, c, contextType);
             if (!numParamsVaries() && getNumParams() != args.size())
+            {
                 throw new InternalExpressionException("Function " + getName() + " expected " + getNumParams() + " parameters, got " + args.size());
+            }
             return args;
         }
 
-        public static List<LazyValue> lazify(List<Value> args)
+        public static List<LazyValue> lazify(final List<Value> args)
         {
-            List<LazyValue> lzargs = new ArrayList<>(args.size());
-            args.forEach( v -> lzargs.add( (c, t) -> v));
+            final List<LazyValue> lzargs = new ArrayList<>(args.size());
+            args.forEach(v -> lzargs.add((c, t) -> v));
             return lzargs;
         }
     }
 
     public abstract static class AbstractFunction extends AbstractLazyFunction implements IFunction
     {
-        AbstractFunction(int numParams, String name) {
+        AbstractFunction(final int numParams, final String name)
+        {
             super(numParams, name);
         }
 
         @Override
-        public boolean pure() {
+        public boolean pure()
+        {
             return true;
         }
 
         @Override
-        public boolean transitive() {
+        public boolean transitive()
+        {
             return false;
         }
 
         @Override
-        public LazyValue lazyEval(Context cc, Context.Type type, Expression e, Tokenizer.Token t, final List<LazyValue> lazyParams)
+        public LazyValue lazyEval(final Context cc, final Context.Type type, final Expression e, final Tokenizer.Token t, final List<LazyValue> lazyParams)
         {
 
             return new LazyValue()
             { // eager evaluation always ignores the required type and evals params by none default
                 private List<Value> params;
+
                 @Override
-                public Value evalValue(Context c, Context.Type type)
+                public Value evalValue(final Context c, final Context.Type type)
                 {
                     ILazyFunction.checkInterrupts();
                     try
                     {
                         return AbstractFunction.this.eval(getParams(c));
                     }
-                    catch (RuntimeException exc)
+                    catch (final RuntimeException exc)
                     {
                         throw Expression.handleCodeException(cc, exc, e, t);
                     }
                 }
-                private List<Value> getParams(Context c)
+
+                private List<Value> getParams(final Context c)
                 {
                     if (params == null)
                     {
@@ -202,18 +232,22 @@ public abstract class Fluff
 
         boolean leftAssoc;
 
-        AbstractLazyOperator(int precedence, boolean leftAssoc) {
+        AbstractLazyOperator(final int precedence, final boolean leftAssoc)
+        {
+            super();
             this.precedence = precedence;
             this.leftAssoc = leftAssoc;
         }
 
         @Override
-        public int getPrecedence() {
+        public int getPrecedence()
+        {
             return precedence;
         }
 
         @Override
-        public boolean isLeftAssoc() {
+        public boolean isLeftAssoc()
+        {
             return leftAssoc;
         }
 
@@ -222,28 +256,32 @@ public abstract class Fluff
     public abstract static class AbstractOperator extends AbstractLazyOperator implements IOperator
     {
 
-        AbstractOperator(int precedence, boolean leftAssoc) {
+        AbstractOperator(final int precedence, final boolean leftAssoc)
+        {
             super(precedence, leftAssoc);
         }
+
         @Override
-        public boolean pure() {
+        public boolean pure()
+        {
             return true;
         }
 
         @Override
-        public boolean transitive() {
+        public boolean transitive()
+        {
             return false;
         }
 
         @Override
-        public LazyValue lazyEval(Context cc, Context.Type type, Expression e, Tokenizer.Token t, final LazyValue v1, final LazyValue v2)
+        public LazyValue lazyEval(final Context cc, final Context.Type type, final Expression e, final Tokenizer.Token t, final LazyValue v1, final LazyValue v2)
         {
             return (c, typeIgnored) -> {
                 try
                 {
                     return AbstractOperator.this.eval(v1.evalValue(c, Context.Type.NONE), v2.evalValue(c, Context.Type.NONE));
                 }
-                catch (RuntimeException exc)
+                catch (final RuntimeException exc)
                 {
                     throw Expression.handleCodeException(cc, exc, e, t);
                 }
@@ -253,21 +291,25 @@ public abstract class Fluff
 
     public abstract static class AbstractUnaryOperator extends AbstractOperator
     {
-        AbstractUnaryOperator(int precedence, boolean leftAssoc) {
+        AbstractUnaryOperator(final int precedence, final boolean leftAssoc)
+        {
             super(precedence, leftAssoc);
         }
+
         @Override
-        public boolean pure() {
+        public boolean pure()
+        {
             return true;
         }
 
         @Override
-        public boolean transitive() {
+        public boolean transitive()
+        {
             return false;
         }
 
         @Override
-        public LazyValue lazyEval(Context cc, Context.Type type, Expression e, Tokenizer.Token t, final LazyValue v1, final LazyValue v2)
+        public LazyValue lazyEval(final Context cc, final Context.Type type, final Expression e, final Tokenizer.Token t, final LazyValue v1, final LazyValue v2)
         {
             if (v2 != null)
             {
@@ -278,7 +320,7 @@ public abstract class Fluff
                 {
                     return AbstractUnaryOperator.this.evalUnary(v1.evalValue(c, Context.Type.NONE));
                 }
-                catch (RuntimeException exc)
+                catch (final RuntimeException exc)
                 {
                     throw Expression.handleCodeException(cc, exc, e, t);
                 }
@@ -286,7 +328,7 @@ public abstract class Fluff
         }
 
         @Override
-        public Value eval(Value v1, Value v2)
+        public Value eval(final Value v1, final Value v2)
         {
             throw new IllegalStateException("Shouldn't end up here");
         }

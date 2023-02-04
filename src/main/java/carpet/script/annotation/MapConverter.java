@@ -37,17 +37,19 @@ class MapConverter<K, V> implements ValueConverter<Map<K, V>>
     }
 
     @Override
-    public Map<K, V> convert(Value value)
+    public Map<K, V> convert(final Value value)
     {
-        Map<K, V> result = new HashMap<>();
+        final Map<K, V> result = new HashMap<>();
         if (value instanceof MapValue)
         {
-            for (Entry<Value, Value> entry : ((MapValue) value).getMap().entrySet())
+            for (final Entry<Value, Value> entry : ((MapValue) value).getMap().entrySet())
             {
-                K key = keyConverter.convert(entry.getKey());
-                V val = valueConverter.convert(entry.getValue());
+                final K key = keyConverter.convert(entry.getKey());
+                final V val = valueConverter.convert(entry.getValue());
                 if (key == null || val == null)
+                {
                     return null;
+                }
                 result.put(key, val);
             }
             return result;
@@ -55,8 +57,9 @@ class MapConverter<K, V> implements ValueConverter<Map<K, V>>
         return null;
     }
 
-    private MapConverter(AnnotatedType keyType, AnnotatedType valueType)
+    private MapConverter(final AnnotatedType keyType, final AnnotatedType valueType)
     {
+        super();
         keyConverter = ValueConverter.fromAnnotatedType(keyType);
         valueConverter = ValueConverter.fromAnnotatedType(valueType);
     }
@@ -77,9 +80,9 @@ class MapConverter<K, V> implements ValueConverter<Map<K, V>>
      * @param annotatedType The type to get generics information from
      * @return A new {@link MapConverter} for the data specified in the {@link AnnotatedType}
      */
-    static MapConverter<?, ?> fromAnnotatedType(AnnotatedType annotatedType)
+    static MapConverter<?, ?> fromAnnotatedType(final AnnotatedType annotatedType)
     {
-        AnnotatedType[] annotatedGenerics = ((AnnotatedParameterizedType) annotatedType).getAnnotatedActualTypeArguments();
+        final AnnotatedType[] annotatedGenerics = ((AnnotatedParameterizedType) annotatedType).getAnnotatedActualTypeArguments();
         return annotatedType.isAnnotationPresent(Param.KeyValuePairs.class)
                 ? new PairConverter<>(annotatedGenerics[0], annotatedGenerics[1], annotatedType.getAnnotation(Param.KeyValuePairs.class))
                 : new MapConverter<>(annotatedGenerics[0], annotatedGenerics[1]);
@@ -89,7 +92,7 @@ class MapConverter<K, V> implements ValueConverter<Map<K, V>>
     {
         private final boolean acceptMultiParam;
 
-        private PairConverter(AnnotatedType keyType, AnnotatedType valueType, Param.KeyValuePairs config)
+        private PairConverter(final AnnotatedType keyType, final AnnotatedType valueType, final Param.KeyValuePairs config)
         {
             super(keyType, valueType);
             acceptMultiParam = config.allowMultiparam();
@@ -102,51 +105,63 @@ class MapConverter<K, V> implements ValueConverter<Map<K, V>>
         }
 
         @Override
-        public Map<K, V> convert(Value value) {
+        public Map<K, V> convert(final Value value) {
             return value instanceof MapValue ? super.convert(value)
                     : value instanceof ListValue ? convertList(((ListValue)value).getItems())
                             : null; // Multiparam mode can only be used in evalAndConvert 
         }
 
 
-        private Map<K, V> convertList(List<Value> valueList)
+        private Map<K, V> convertList(final List<Value> valueList)
         {
             if (valueList.size() % 2 == 1)
+            {
                 return null;
-            Map<K, V> map = new HashMap<>();
-            Iterator<Value> val = valueList.iterator();
+            }
+            final Map<K, V> map = new HashMap<>();
+            final Iterator<Value> val = valueList.iterator();
             while (val.hasNext())
             {
-                K key = keyConverter.convert(val.next());
-                V value = valueConverter.convert(val.next());
+                final K key = keyConverter.convert(val.next());
+                final V value = valueConverter.convert(val.next());
                 if (key == null || value == null)
+                {
                     return null;
+                }
                 map.put(key, value);
             }
             return map;
         }
 
         @Override
-        public Map<K, V> checkAndConvert(Iterator<Value> valueIterator, Context context, Context.Type theLazyT)
+        public Map<K, V> checkAndConvert(final Iterator<Value> valueIterator, final Context context, final Context.Type theLazyT)
         {
             if (!valueIterator.hasNext())
+            {
                 return null;
-            Value val = valueIterator.next();
+            }
+            final Value val = valueIterator.next();
             if (!acceptMultiParam || val instanceof MapValue || (val instanceof ListValue && !(keyConverter instanceof ListConverter)))
+            {
                 return convert(val);                              // @KeyValuePairs Map<List<Something>, Boolean> will not support list consumption
+            }
             
-            Map<K, V> map = new HashMap<>();
+            final Map<K, V> map = new HashMap<>();
             K key = keyConverter.convert(val); //First pair is manual since we got it to check for a different conversion mode
             V value = valueConverter.checkAndConvert(valueIterator, context, theLazyT);
             if (key == null || value == null)
+            {
                 return null;
+            }
             map.put(key, value);
             while (valueIterator.hasNext())
             {
                 key = keyConverter.checkAndConvert(valueIterator, context, theLazyT);
                 value = valueConverter.checkAndConvert(valueIterator, context, theLazyT);
                 if (key == null || value == null)
+                {
                     return null;
+                }
                 map.put(key, value);
             }
             return map;

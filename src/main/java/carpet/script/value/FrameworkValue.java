@@ -29,7 +29,7 @@ public abstract class FrameworkValue extends Value
     }
 
     @Override
-    public Tag toTag(boolean force)
+    public Tag toTag(final boolean force)
     {
         throw new UnsupportedOperationException("Scarpet language component cannot be serialized to the tag");
     }

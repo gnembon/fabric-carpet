@@ -58,8 +58,9 @@ public final class SimpleTypeConverter<T extends Value, R> implements ValueConve
      * @param inputType The required type for the input {@link Value}
      * @param converter The function to convert an instance of inputType into R.
      */
-    public SimpleTypeConverter(Class<T> inputType, Function<T, R> converter, String typeName)
+    public SimpleTypeConverter(final Class<T> inputType, final Function<T, R> converter, final String typeName)
     {
+        super();
         this.converter = converter;
         this.valueClass = inputType;
         this.typeName = typeName;
@@ -79,14 +80,14 @@ public final class SimpleTypeConverter<T extends Value, R> implements ValueConve
      * @return The {@link SimpleTypeConverter} for the specified outputType
      */
     @SuppressWarnings("unchecked") // T always extends Value, R is always the same as map's key, since map is private.
-    static <R> SimpleTypeConverter<Value, R> get(Class<R> outputType)
+    static <R> SimpleTypeConverter<Value, R> get(final Class<R> outputType)
     {
         return (SimpleTypeConverter<Value, R>) byResult.get(outputType);
     }
 
     @Override
     @SuppressWarnings("unchecked") // more than checked. not using class.cast because then "method is too big" for inlining, because javac is useless
-    public R convert(Value value)                                                          // and adds millions of casts. This one is even removed
+    public R convert(final Value value)                                                          // and adds millions of casts. This one is even removed
     {
         return valueClass.isInstance(value) ? converter.apply((T)value) : null;
     }
@@ -103,10 +104,10 @@ public final class SimpleTypeConverter<T extends Value, R> implements ValueConve
      *                  can also throw an {@link InternalExpressionException} by itself if really necessary.
      * @param typeName The name of the type, following the conventions of {@link ValueConverter#getTypeName()}
      */
-    public static <T extends Value, R> void registerType(Class<T> requiredInputType, Class<R> outputType,
-            Function<T, R> converter, String typeName)
+    public static <T extends Value, R> void registerType(final Class<T> requiredInputType, final Class<R> outputType,
+                                                         final Function<T, R> converter, final String typeName)
     {
-        SimpleTypeConverter<T, R> type = new SimpleTypeConverter<>(requiredInputType, converter, typeName);
+        final SimpleTypeConverter<T, R> type = new SimpleTypeConverter<>(requiredInputType, converter, typeName);
         byResult.put(outputType, type);
     }
 }

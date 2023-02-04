@@ -37,7 +37,7 @@ public interface ValueConverter<R>
      * @apiNote This method is intended to only be called when an error has occurred and therefore there is a need to print a stacktrace with some
      *          helpful usage instructions.
      */
-    public String getTypeName();
+    String getTypeName();
 
     /**
      * <p>Converts the given {@link Value} to {@code <R>}, which was defined when being registered.</p>
@@ -62,8 +62,7 @@ public interface ValueConverter<R>
      *          <p>Even with the above reasons, {@link ValueConverter} users should try to implement {@link #convert(Value)} whenever possible instead of
      *          {@link #checkAndConvert(Iterator, Context, Context.Type)}, since it allows its usage in generics of lists and maps.</p>
      */
-    @Nullable
-    public R convert(Value value);
+    @Nullable R convert(Value value);
 
     /**
      * <p>Returns whether this {@link ValueConverter} consumes a variable number of elements from the {@link Iterator} passed to it via
@@ -72,7 +71,7 @@ public interface ValueConverter<R>
      * @implNote The default implementation returns {@code false}
      * @see #valueConsumption()
      */
-    default public boolean consumesVariableArgs()
+    default boolean consumesVariableArgs()
     {
         return false;
     }
@@ -87,7 +86,7 @@ public interface ValueConverter<R>
      * @implNote The default implementation returns {@code 1}
      * 
      */
-    default public int valueConsumption()
+    default int valueConsumption()
     {
         return 1;
     }
@@ -107,7 +106,7 @@ public interface ValueConverter<R>
      * @return A usable {@link ValueConverter} to convert from a {@link Value} to {@code <R>}
      */
     @SuppressWarnings("unchecked")
-    public static <R> ValueConverter<R> fromAnnotatedType(AnnotatedType annoType)
+    static <R> ValueConverter<R> fromAnnotatedType(final AnnotatedType annoType)
     {
         Class<R> type = annoType.getType() instanceof ParameterizedType ? // We are defining R here.
                 (Class<R>) ((ParameterizedType) annoType.getType()).getRawType() :
@@ -118,33 +117,51 @@ public interface ValueConverter<R>
         // Example: AnnotatedGenericTypeArray (or similar) being (@Paran.KeyValuePairs Map<String, String>... name)
         // Those will just fail with a ClassCastException.
         if (type.isArray())
+        {
             type = (Class<R>) type.getComponentType(); // Varargs
+        }
         type = (Class<R>) ClassUtils.primitiveToWrapper(type); // It will be boxed anyway, this saves unboxing-boxing
         if (type == List.class)
+        {
             return (ValueConverter<R>) ListConverter.fromAnnotatedType(annoType); // Already checked that type is List
+        }
         if (type == Map.class)
+        {
             return (ValueConverter<R>) MapConverter.fromAnnotatedType(annoType); // Already checked that type is Map
+        }
         if (type == Optional.class)
+        {
             return (ValueConverter<R>) OptionalConverter.fromAnnotatedType(annoType);
+        }
         if (annoType.getDeclaredAnnotations().length != 0)
         {
             if (annoType.isAnnotationPresent(Param.Custom.class))
-                return Param.Params.getCustomConverter(annoType, type); // Throws if incorrect usage
+            {
+                return Params.getCustomConverter(annoType, type); // Throws if incorrect usage
+            }
             if (annoType.isAnnotationPresent(Param.Strict.class))
+            {
                 return (ValueConverter<R>) Params.getStrictConverter(annoType); // Throws if incorrect usage
+            }
             if (annoType.getAnnotations()[0].annotationType().getEnclosingClass() == Locator.class)
+            {
                 return Locator.Locators.fromAnnotatedType(annoType, type);
+            }
         }
 
         // Class only checks
         if (Value.class.isAssignableFrom(type))
+        {
             return Objects.requireNonNull(ValueCaster.get(type), "Value subclass " + type + " is not registered. Register it in ValueCaster to use it");
-        // if (type == LazyValue.class) // No longer supported
-        //     return (ValueConverter<R>) Params.LAZY_VALUE_IDENTITY;
+        }
         if (type == Context.class)
+        {
             return (ValueConverter<R>) Params.CONTEXT_PROVIDER;
+        }
         if (type == Context.Type.class)
+        {
             return (ValueConverter<R>) Params.CONTEXT_TYPE_PROVIDER;
+        }
         return Objects.requireNonNull(SimpleTypeConverter.get(type), "Type " + type + " is not registered. Register it in SimpleTypeConverter to use it");
     }
 
@@ -168,10 +185,8 @@ public interface ValueConverter<R>
      * @implNote This method's default implementation runs the {@link #convert(Value)} function in the next {@link Value} ignoring {@link Context} and
      *           {@code theLazyT}.
      */
-    default public R checkAndConvert(Iterator<Value> valueIterator, Context context, Context.Type contextType)
+    default R checkAndConvert(final Iterator<Value> valueIterator, final Context context, final Context.Type contextType)
     {
-        if (!valueIterator.hasNext())
-            return null;
-        return convert(valueIterator.next());
+        return !valueIterator.hasNext() ? null : convert(valueIterator.next());
     }
 }

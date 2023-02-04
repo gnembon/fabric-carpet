@@ -16,25 +16,35 @@ import java.util.stream.StreamSupport;
  */
 public class Tokenizer implements Iterator<Tokenizer.Token>
 {
-    /** What character to use for decimal separators. */
+    /**
+     * What character to use for decimal separators.
+     */
     private static final char decimalSeparator = '.';
-    /** What character to use for minus sign (negative values). */
+    /**
+     * What character to use for minus sign (negative values).
+     */
     private static final char minusSign = '-';
-    /** Actual position in expression string. */
+    /**
+     * Actual position in expression string.
+     */
     private int pos = 0;
     private int lineno = 0;
     private int linepos = 0;
-    private boolean comments;
-    private boolean newLinesMarkers;
-    /** The original input expression. */
-    private String input;
-    /** The previous token or <code>null</code> if none. */
+    private final boolean comments;
+    private final boolean newLinesMarkers;
+    /**
+     * The original input expression.
+     */
+    private final String input;
+    /**
+     * The previous token or <code>null</code> if none.
+     */
     private Token previousToken;
 
-    private Expression expression;
-    private Context context;
+    private final Expression expression;
+    private final Context context;
 
-    Tokenizer(Context c, Expression expr, String input, boolean allowComments, boolean allowNewLineMakers)
+    Tokenizer(final Context c, final Expression expr, final String input, final boolean allowComments, final boolean allowNewLineMakers)
     {
         this.input = input;
         this.expression = expr;
@@ -45,16 +55,18 @@ public class Tokenizer implements Iterator<Tokenizer.Token>
 
     public List<Token> postProcess()
     {
-        Iterable<Token> iterable = () -> this;
-        List<Token> originalTokens = StreamSupport.stream(iterable.spliterator(), false).collect(Collectors.toList());
-        List<Token> cleanedTokens = new ArrayList<>();
+        final Iterable<Token> iterable = () -> this;
+        final List<Token> originalTokens = StreamSupport.stream(iterable.spliterator(), false).collect(Collectors.toList());
+        final List<Token> cleanedTokens = new ArrayList<>();
         Token last = null;
-        while (originalTokens.size() > 0)
+        while (!originalTokens.isEmpty())
         {
-            Token current = originalTokens.remove(originalTokens.size()-1);
+            final Token current = originalTokens.remove(originalTokens.size() - 1);
             if (current.type == Token.TokenType.MARKER && current.surface.startsWith("//"))
+            {
                 continue;
-                // skipping comments
+            }
+            // skipping comments
             if (!isSemicolon(current)
                     || (last != null && last.type != Token.TokenType.CLOSE_PAREN && last.type != Token.TokenType.COMMA && !isSemicolon(last)))
             {
@@ -84,7 +96,9 @@ public class Tokenizer implements Iterator<Tokenizer.Token>
                 cleanedTokens.add(current);
             }
             if (!(current.type == Token.TokenType.MARKER && current.surface.equals("$")))
+            {
                 last = current;
+            }
         }
         Collections.reverse(cleanedTokens);
         return cleanedTokens;
@@ -106,30 +120,33 @@ public class Tokenizer implements Iterator<Tokenizer.Token>
         return (pos < (input.length() - 1)) ? input.charAt(pos + 1) : 0;
     }
 
-    private boolean isHexDigit(char ch)
+    private boolean isHexDigit(final char ch)
     {
         return ch == 'x' || ch == 'X' || (ch >= '0' && ch <= '9') || (ch >= 'a' && ch <= 'f')
                 || (ch >= 'A' && ch <= 'F');
     }
 
-    private static boolean isSemicolon(Token tok)
+    private static boolean isSemicolon(final Token tok)
     {
-        return (    tok.type == Token.TokenType.OPERATOR && tok.surface.equals(";") )
-                || (tok.type == Token.TokenType.UNARY_OPERATOR && tok.surface.equals(";u") );
+        return (tok.type == Token.TokenType.OPERATOR && tok.surface.equals(";"))
+                || (tok.type == Token.TokenType.UNARY_OPERATOR && tok.surface.equals(";u"));
     }
 
-    public static List<Token> simplepass(String input)
+    public static List<Token> simplepass(final String input)
     {
-        Tokenizer tok = new Tokenizer(null, null, input, false, false);
-        List<Token> res = new ArrayList<>();
-        while (tok.hasNext()) res.add(tok.next());
+        final Tokenizer tok = new Tokenizer(null, null, input, false, false);
+        final List<Token> res = new ArrayList<>();
+        while (tok.hasNext())
+        {
+            res.add(tok.next());
+        }
         return res;
     }
 
     @Override
     public Token next()
     {
-        Token token = new Token();
+        final Token token = new Token();
 
         if (pos >= input.length())
         {
@@ -139,7 +156,7 @@ public class Tokenizer implements Iterator<Tokenizer.Token>
         while (Character.isWhitespace(ch) && pos < input.length())
         {
             linepos++;
-            if (ch=='\n')
+            if (ch == '\n')
             {
                 lineno++;
                 linepos = 0;
@@ -153,10 +170,12 @@ public class Tokenizer implements Iterator<Tokenizer.Token>
         boolean isHex = false;
 
         if (Character.isDigit(ch)) // || (ch == decimalSeparator && Character.isDigit(peekNextChar())))
-                                   // decided to no support this notation to favour element access via . operator
+        // decided to no support this notation to favour element access via . operator
         {
             if (ch == '0' && (peekNextChar() == 'x' || peekNextChar() == 'X'))
+            {
                 isHex = true;
+            }
             while ((isHex
                     && isHexDigit(
                     ch))
@@ -181,13 +200,15 @@ public class Tokenizer implements Iterator<Tokenizer.Token>
             linepos++;
             token.type = Token.TokenType.STRINGPARAM;
             if (pos == input.length() && expression != null && context != null)
+            {
                 throw new ExpressionException(context, this.expression, token, "Program truncated");
+            }
             ch = input.charAt(pos);
             while (ch != '\'')
             {
                 if (ch == '\\')
                 {
-                    char nextChar = peekNextChar();
+                    final char nextChar = peekNextChar();
                     if (nextChar == 'n')
                     {
                         token.append('\n');
@@ -213,22 +234,26 @@ public class Tokenizer implements Iterator<Tokenizer.Token>
                         pos--;
                         linepos--;
                     }
-                    pos+=2;
-                    linepos+=2;
+                    pos += 2;
+                    linepos += 2;
                     if (pos == input.length() && expression != null && context != null)
+                    {
                         throw new ExpressionException(context, this.expression, token, "Program truncated");
+                    }
                 }
                 else
                 {
                     token.append(input.charAt(pos++));
                     linepos++;
-                    if (ch=='\n')
+                    if (ch == '\n')
                     {
                         lineno++;
                         linepos = 0;
                     }
                     if (pos == input.length() && expression != null && context != null)
+                    {
                         throw new ExpressionException(context, this.expression, token, "Program truncated");
+                    }
                 }
                 ch = input.charAt(pos);
             }
@@ -252,7 +277,7 @@ public class Tokenizer implements Iterator<Tokenizer.Token>
                 {
                     ch = input.charAt(pos++);
                     linepos++;
-                    if (ch=='\n')
+                    if (ch == '\n')
                     {
                         lineno++;
                         linepos = 0;
@@ -291,14 +316,16 @@ public class Tokenizer implements Iterator<Tokenizer.Token>
                     (ch == ')' || ch == ',' || ch == ']' || ch == '}') &&
                     !previousToken.surface.equalsIgnoreCase(";")
             )
+            {
                 throw new ExpressionException(context, this.expression, previousToken,
                         "Can't have operator " + previousToken.surface + " at the end of a subexpression");
+            }
         }
         else
         {
             String greedyMatch = "";
-            int initialPos = pos;
-            int initialLinePos = linepos;
+            final int initialPos = pos;
+            final int initialLinePos = linepos;
             ch = input.charAt(pos);
             int validOperatorSeenUntil = -1;
             while (!Character.isLetter(ch) && !Character.isDigit(ch) && "_".indexOf(ch) < 0
@@ -309,13 +336,13 @@ public class Tokenizer implements Iterator<Tokenizer.Token>
                 if (comments && "//".equals(greedyMatch))
                 {
 
-                    while ( ch != '\n' && pos < input.length())
+                    while (ch != '\n' && pos < input.length())
                     {
                         ch = input.charAt(pos++);
                         linepos++;
                         greedyMatch += ch;
                     }
-                    if (ch=='\n')
+                    if (ch == '\n')
                     {
                         lineno++;
                         linepos = 0;
@@ -344,7 +371,7 @@ public class Tokenizer implements Iterator<Tokenizer.Token>
             {
                 token.append(input.substring(initialPos, validOperatorSeenUntil));
                 pos = validOperatorSeenUntil;
-                linepos = initialLinePos+validOperatorSeenUntil-initialPos;
+                linepos = initialLinePos + validOperatorSeenUntil - initialPos;
             }
             else
             {
@@ -353,7 +380,7 @@ public class Tokenizer implements Iterator<Tokenizer.Token>
 
             if (previousToken == null || previousToken.type == Token.TokenType.OPERATOR
                     || previousToken.type == Token.TokenType.OPEN_PAREN || previousToken.type == Token.TokenType.COMMA
-                    || (previousToken.type == Token.TokenType.MARKER && ( previousToken.surface.equals("{") || previousToken.surface.equals("[") ) )
+                    || (previousToken.type == Token.TokenType.MARKER && (previousToken.surface.equals("{") || previousToken.surface.equals("[")))
             )
             {
                 token.surface += "u";
@@ -365,25 +392,25 @@ public class Tokenizer implements Iterator<Tokenizer.Token>
             }
         }
         if (expression != null && context != null && previousToken != null &&
-            (
-                token.type == Token.TokenType.LITERAL ||
-                token.type == Token.TokenType.HEX_LITERAL ||
-                token.type == Token.TokenType.VARIABLE ||
-                token.type == Token.TokenType.STRINGPARAM ||
-              ( token.type == Token.TokenType.MARKER && ( previousToken.surface.equalsIgnoreCase("{") || previousToken.surface.equalsIgnoreCase("["))) ||
-                token.type == Token.TokenType.FUNCTION
-            ) &&(
+                (
+                        token.type == Token.TokenType.LITERAL ||
+                                token.type == Token.TokenType.HEX_LITERAL ||
+                                token.type == Token.TokenType.VARIABLE ||
+                                token.type == Token.TokenType.STRINGPARAM ||
+                                (token.type == Token.TokenType.MARKER && (previousToken.surface.equalsIgnoreCase("{") || previousToken.surface.equalsIgnoreCase("["))) ||
+                                token.type == Token.TokenType.FUNCTION
+                ) && (
                 previousToken.type == Token.TokenType.VARIABLE ||
-                previousToken.type == Token.TokenType.FUNCTION ||
-                previousToken.type == Token.TokenType.LITERAL ||
-                previousToken.type == Token.TokenType.CLOSE_PAREN ||
-              ( previousToken.type == Token.TokenType.MARKER && ( previousToken.surface.equalsIgnoreCase("}") || previousToken.surface.equalsIgnoreCase("]"))) ||
-                previousToken.type == Token.TokenType.HEX_LITERAL ||
-                previousToken.type == Token.TokenType.STRINGPARAM
-            )
+                        previousToken.type == Token.TokenType.FUNCTION ||
+                        previousToken.type == Token.TokenType.LITERAL ||
+                        previousToken.type == Token.TokenType.CLOSE_PAREN ||
+                        (previousToken.type == Token.TokenType.MARKER && (previousToken.surface.equalsIgnoreCase("}") || previousToken.surface.equalsIgnoreCase("]"))) ||
+                        previousToken.type == Token.TokenType.HEX_LITERAL ||
+                        previousToken.type == Token.TokenType.STRINGPARAM
+        )
         )
         {
-            throw new ExpressionException(context, this.expression, previousToken, "'"+token.surface +"' is not allowed after '"+previousToken.surface+"'");
+            throw new ExpressionException(context, this.expression, previousToken, "'" + token.surface + "' is not allowed after '" + previousToken.surface + "'");
         }
         return previousToken = token;
     }
@@ -403,10 +430,10 @@ public class Tokenizer implements Iterator<Tokenizer.Token>
             LITERAL(false, true), HEX_LITERAL(false, true), STRINGPARAM(false, true),
             OPEN_PAREN(false, true), COMMA(false, true), CLOSE_PAREN(false, true), MARKER(false, true);
 
-            boolean functional;
-            boolean constant;
+            final boolean functional;
+            final boolean constant;
 
-            TokenType(boolean functional, boolean constant)
+            TokenType(final boolean functional, final boolean constant)
             {
                 this.functional = functional;
                 this.constant = constant;
@@ -417,44 +444,47 @@ public class Tokenizer implements Iterator<Tokenizer.Token>
                 return functional;
             }
 
-            public boolean isConstant() {
+            public boolean isConstant()
+            {
                 return constant;
             }
         }
+
         public String surface = "";
         public TokenType type;
         public int pos;
         public int linepos;
         public int lineno;
         public static final Token NONE = new Token();
-        public Token morphedInto(TokenType newType, String newSurface)
+
+        public Token morphedInto(final TokenType newType, final String newSurface)
         {
-            Token created = new Token();
+            final Token created = new Token();
             created.surface = newSurface;
             created.type = newType;
             created.pos = pos;
             created.linepos = linepos;
-            created.lineno= lineno;
+            created.lineno = lineno;
             return created;
         }
 
-        public void morph(TokenType type, String s)
+        public void morph(final TokenType type, final String s)
         {
             this.type = type;
             this.surface = s;
         }
 
-        public void append(char c)
+        public void append(final char c)
         {
             surface += c;
         }
 
-        public void append(String s)
+        public void append(final String s)
         {
             surface += s;
         }
 
-        public char charAt(int pos)
+        public char charAt(final int pos)
         {
             return surface.charAt(pos);
         }

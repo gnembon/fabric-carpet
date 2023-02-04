@@ -8,21 +8,25 @@ import java.util.List;
 
 public abstract class AbstractListValue extends Value implements Iterable<Value>
 {
-    @Override public abstract Iterator<Value> iterator();
     public List<Value> unpack()
     {
-        List<Value> retVal = Lists.newArrayList(iterator());
+        final List<Value> retVal = Lists.newArrayList(iterator());
         fatality();
         return retVal;
     }
-    public void fatality() { }
-    public void append(Value v)
+
+    public void fatality()
+    {
+    }
+
+    public void append(final Value v)
     {
         throw new InternalExpressionException("Cannot append a value to an abstract list");
     }
 
     @Override
-    public Value fromConstant() {
+    public Value fromConstant()
+    {
         return this.deepcopy();
     }
 }

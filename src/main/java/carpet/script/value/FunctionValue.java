@@ -12,12 +12,14 @@ import carpet.script.exception.ContinueStatement;
 import carpet.script.exception.ExpressionException;
 import carpet.script.exception.InternalExpressionException;
 import carpet.script.exception.ReturnStatement;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
+
 import net.minecraft.nbt.StringTag;
 import net.minecraft.nbt.Tag;
 
@@ -33,7 +35,7 @@ public class FunctionValue extends Value implements Fluff.ILazyFunction
     private static long variantCounter = 1;
     private long variant;
 
-    private FunctionValue(Expression expression, Tokenizer.Token token, String name, LazyValue body, List<String> args, String varArgs)
+    private FunctionValue(final Expression expression, final Tokenizer.Token token, final String name, final LazyValue body, final List<String> args, final String varArgs)
     {
         this.expression = expression;
         this.token = token;
@@ -45,7 +47,7 @@ public class FunctionValue extends Value implements Fluff.ILazyFunction
         variant = 0L;
     }
 
-    public FunctionValue(Expression expression, Tokenizer.Token token, String name, LazyValue body, List<String> args, String varArgs, Map<String, LazyValue> outerState)
+    public FunctionValue(final Expression expression, final Tokenizer.Token token, final String name, final LazyValue body, final List<String> args, final String varArgs, final Map<String, LazyValue> outerState)
     {
         this.expression = expression;
         this.token = token;
@@ -63,19 +65,27 @@ public class FunctionValue extends Value implements Fluff.ILazyFunction
         return name;
     }
 
-    public Module getModule() {return expression.module;}
+    public Module getModule()
+    {
+        return expression.module;
+    }
 
     @Override
     public String getPrettyString()
     {
-        List<String> stringArgs= new ArrayList<>(args);
+        final List<String> stringArgs = new ArrayList<>(args);
         if (outerState != null)
+        {
             stringArgs.addAll(outerState.entrySet().stream().map(e ->
-                    "outer("+e.getKey()+") = "+e.getValue().evalValue(null).getPrettyString()).collect(Collectors.toList()));
-        return (name.equals("_")?"<lambda>":name) +"("+String.join(", ",stringArgs)+")";
+                    "outer(" + e.getKey() + ") = " + e.getValue().evalValue(null).getPrettyString()).toList());
+        }
+        return (name.equals("_") ? "<lambda>" : name) + "(" + String.join(", ", stringArgs) + ")";
     }
 
-    public String fullName() {return (name.equals("_")?"<lambda>":name)+(expression.module == null?"":"["+expression.module.name()+"]");}
+    public String fullName()
+    {
+        return (name.equals("_") ? "<lambda>" : name) + (expression.module == null ? "" : "[" + expression.module.name() + "]");
+    }
 
     @Override
     public boolean getBoolean()
@@ -86,7 +96,7 @@ public class FunctionValue extends Value implements Fluff.ILazyFunction
     @Override
     protected Value clone()
     {
-        FunctionValue ret = new FunctionValue(expression, token, name, body, args, varArgs);
+        final FunctionValue ret = new FunctionValue(expression, token, name, body, args, varArgs);
         ret.outerState = this.outerState;
         ret.variant = this.variant;
         return ret;
@@ -95,26 +105,22 @@ public class FunctionValue extends Value implements Fluff.ILazyFunction
     @Override
     public int hashCode()
     {
-        return name.hashCode()+(int)variant;
+        return name.hashCode() + (int) variant;
     }
 
     @Override
-    public boolean equals(Object o)
+    public boolean equals(final Object o)
     {
-        if (o instanceof FunctionValue)
-            return name.equals(((FunctionValue) o).name) && variant == ((FunctionValue) o).variant;
-        return false;
+        return o instanceof final FunctionValue fv && name.equals(fv.name) && variant == fv.variant;
     }
 
     @Override
     public int compareTo(final Value o)
     {
-        if (o instanceof FunctionValue)
+        if (o instanceof final FunctionValue fv)
         {
-            int nameSame = this.name.compareTo(((FunctionValue) o).name);
-            if (nameSame != 0)
-                return nameSame;
-            return (int) (variant-((FunctionValue) o).variant);
+            final int nameSame = this.name.compareTo(fv.name);
+            return nameSame != 0 ? nameSame : (int) (variant - fv.variant);
         }
         return getString().compareTo(o.getString());
     }
@@ -132,7 +138,7 @@ public class FunctionValue extends Value implements Fluff.ILazyFunction
     }
 
     @Override
-    public Value slice(long from, Long to)
+    public Value slice(final long from, final Long to)
     {
         throw new InternalExpressionException("Cannot slice a function");
     }
@@ -149,46 +155,49 @@ public class FunctionValue extends Value implements Fluff.ILazyFunction
         return varArgs != null;
     }
 
-    public LazyValue callInContext(Context c, Context.Type type, List<Value> params)
+    public LazyValue callInContext(final Context c, final Context.Type type, final List<Value> params)
     {
         try
         {
             return execute(c, type, expression, token, params);
         }
-        catch (ExpressionException exc)
+        catch (final ExpressionException exc)
         {
             exc.stack.add(this);
             throw exc;
         }
-        catch (InternalExpressionException exc)
+        catch (final InternalExpressionException exc)
         {
             exc.stack.add(this);
             throw new ExpressionException(c, expression, token, exc.getMessage(), exc.stack);
         }
-
-        catch (ArithmeticException exc)
+        catch (final ArithmeticException exc)
         {
-            throw new ExpressionException(c, expression, token, "Your math is wrong, "+exc.getMessage(), Collections.singletonList(this));
+            throw new ExpressionException(c, expression, token, "Your math is wrong, " + exc.getMessage(), Collections.singletonList(this));
         }
     }
 
-    public void checkArgs(int candidates)
+    public void checkArgs(final int candidates)
     {
-        int actual = getArguments().size();
+        final int actual = getArguments().size();
 
         if (candidates < actual)
+        {
             throw new InternalExpressionException("Function " + getPrettyString() + " requires at least " + actual + " arguments");
+        }
         if (candidates > actual && getVarArgs() == null)
+        {
             throw new InternalExpressionException("Function " + getPrettyString() + " requires " + actual + " arguments");
+        }
     }
 
-    public static List<Value> unpackArgs(List<LazyValue> lazyParams, Context c)
+    public static List<Value> unpackArgs(final List<LazyValue> lazyParams, final Context c)
     {
         // TODO we shoudn't need that if all fuctions are not lazy really
-        List<Value> params = new ArrayList<>();
-        for (LazyValue lv : lazyParams)
+        final List<Value> params = new ArrayList<>();
+        for (final LazyValue lv : lazyParams)
         {
-            Value param = lv.evalValue(c, Context.NONE);
+            final Value param = lv.evalValue(c, Context.NONE);
             if (param instanceof FunctionUnpackedArgumentsValue)
             {
                 CarpetSettings.LOG.error("How did we get here?");
@@ -203,48 +212,51 @@ public class FunctionValue extends Value implements Fluff.ILazyFunction
     }
 
     @Override
-    public LazyValue lazyEval(Context c, Context.Type type, Expression e, Tokenizer.Token t, List<LazyValue> lazyParams) {
-        List<Value> resolvedParams = unpackArgs(lazyParams, c);
+    public LazyValue lazyEval(final Context c, final Context.Type type, final Expression e, final Tokenizer.Token t, final List<LazyValue> lazyParams)
+    {
+        final List<Value> resolvedParams = unpackArgs(lazyParams, c);
         return execute(c, type, e, t, resolvedParams);
     }
 
-    public LazyValue execute(Context c, Context.Type type, Expression e, Tokenizer.Token t, List<Value> params)
+    public LazyValue execute(final Context c, final Context.Type type, final Expression e, final Tokenizer.Token t, final List<Value> params)
     {
-        assertArgsOk(params, (fixedArgs) ->{
+        assertArgsOk(params, fixedArgs -> {
             if (fixedArgs)  // wrong number of args for fixed args
             {
                 throw new ExpressionException(c, e, t,
-                        "Incorrect number of arguments for function "+name+
-                                ". Should be "+args.size()+", not "+params.size()+" like "+args
+                        "Incorrect number of arguments for function " + name +
+                                ". Should be " + args.size() + ", not " + params.size() + " like " + args
                 );
             }
-            else  // too few args for varargs
-            {
-                List<String> argList = new ArrayList<>(args);
-                argList.add("... "+varArgs);
-                throw new ExpressionException(c, e, t,
-                        "Incorrect number of arguments for function "+name+
-                                ". Should be at least "+args.size()+", not "+params.size()+" like "+argList
-                );
-            }
-        });
-        Context newFrame = c.recreate();
+            // too few args for varargs
 
-        if (outerState != null) outerState.forEach(newFrame::setVariable);
-        for (int i=0; i<args.size(); i++)
+            final List<String> argList = new ArrayList<>(args);
+            argList.add("... " + varArgs);
+            throw new ExpressionException(c, e, t,
+                    "Incorrect number of arguments for function " + name +
+                            ". Should be at least " + args.size() + ", not " + params.size() + " like " + argList
+            );
+        });
+        final Context newFrame = c.recreate();
+
+        if (outerState != null)
         {
-            String arg = args.get(i);
-            Value val = params.get(i).reboundedTo(arg); // todo check if we need to copy that
+            outerState.forEach(newFrame::setVariable);
+        }
+        for (int i = 0; i < args.size(); i++)
+        {
+            final String arg = args.get(i);
+            final Value val = params.get(i).reboundedTo(arg); // todo check if we need to copy that
             newFrame.setVariable(arg, (cc, tt) -> val);
         }
         if (varArgs != null)
         {
-            List<Value> extraParams = new ArrayList<>();
+            final List<Value> extraParams = new ArrayList<>();
             for (int i = args.size(), mx = params.size(); i < mx; i++)
             {
                 extraParams.add(params.get(i).reboundedTo(null)); // copy by value I guess
             }
-            Value rest = ListValue.wrap(extraParams).bindTo(varArgs); // didn't we just copied that?
+            final Value rest = ListValue.wrap(extraParams).bindTo(varArgs); // didn't we just copied that?
             newFrame.setVariable(varArgs, (cc, tt) -> rest);
 
         }
@@ -253,15 +265,15 @@ public class FunctionValue extends Value implements Fluff.ILazyFunction
         {
             retVal = body.evalValue(newFrame, type); // todo not sure if we need to propagete type / consider boolean context in defined functions - answer seems ye
         }
-        catch (BreakStatement | ContinueStatement exc)
+        catch (final BreakStatement | ContinueStatement exc)
         {
             throw new ExpressionException(c, e, t, "'continue' and 'break' can only be called inside loop function bodies");
         }
-        catch (ReturnStatement returnStatement)
+        catch (final ReturnStatement returnStatement)
         {
             retVal = returnStatement.retval;
         }
-        Value otherRetVal = retVal;
+        final Value otherRetVal = retVal;
         return (cc, tt) -> otherRetVal;
     }
 
@@ -269,30 +281,38 @@ public class FunctionValue extends Value implements Fluff.ILazyFunction
     {
         return expression;
     }
+
     public Tokenizer.Token getToken()
     {
         return token;
     }
+
     public List<String> getArguments()
     {
         return args;
     }
-    public String getVarArgs() {return varArgs; }
+
+    public String getVarArgs()
+    {
+        return varArgs;
+    }
 
     @Override
-    public Tag toTag(boolean force)
+    public Tag toTag(final boolean force)
     {
-        if (!force) throw new NBTSerializableValue.IncompatibleTypeException(this);
+        if (!force)
+        {
+            throw new NBTSerializableValue.IncompatibleTypeException(this);
+        }
         return StringTag.valueOf(getString());
     }
 
-    public void assertArgsOk(List<?> list, Consumer<Boolean> feedback)
+    public void assertArgsOk(final List<?> list, final Consumer<Boolean> feedback)
     {
-        int size = list.size();
+        final int size = list.size();
         if (varArgs == null && args.size() != size) // wrong number of args for fixed args
         {
             feedback.accept(true);
-
         }
         else if (varArgs != null && args.size() > size) // too few args for varargs
         {
@@ -301,12 +321,14 @@ public class FunctionValue extends Value implements Fluff.ILazyFunction
     }
 
     @Override
-    public boolean pure() {
+    public boolean pure()
+    {
         return false;
     }
 
     @Override
-    public boolean transitive() {
+    public boolean transitive()
+    {
         return false;
     }
 }

@@ -16,21 +16,28 @@ public class Threading
     {
         //"overidden" native call to cancel if on main thread
         expression.addContextFunction("task_join", 1, (c, t, lv) -> {
-            if (((CarpetContext)c).server().isSameThread())
+            if (((CarpetContext) c).server().isSameThread())
+            {
                 throw new InternalExpressionException("'task_join' cannot be called from main thread to avoid deadlocks");
-            Value v = lv.get(0);
-            if (!(v instanceof ThreadValue))
+            }
+            final Value v = lv.get(0);
+            if (!(v instanceof final ThreadValue tv))
+            {
                 throw new InternalExpressionException("'task_join' could only be used with a task value");
-            return ((ThreadValue) v).join();
+            }
+            return tv.join();
         });
 
         // has to be lazy due to deferred execution of the expression
-        expression.addLazyFunctionWithDelegation("task_dock", 1, false,true, (c, t, expr, tok, lv) -> {
-            CarpetContext cc = (CarpetContext)c;
-            MinecraftServer server = cc.server();
-            if (server.isSameThread()) return lv.get(0); // pass through for on thread tasks
-            Value[] result = new Value[]{Value.NULL};
-            RuntimeException[] internal = new RuntimeException[]{null};
+        expression.addLazyFunctionWithDelegation("task_dock", 1, false, true, (c, t, expr, tok, lv) -> {
+            final CarpetContext cc = (CarpetContext) c;
+            final MinecraftServer server = cc.server();
+            if (server.isSameThread())
+            {
+                return lv.get(0); // pass through for on thread tasks
+            }
+            final Value[] result = new Value[]{Value.NULL};
+            final RuntimeException[] internal = new RuntimeException[]{null};
             try
             {
                 ((CarpetContext) c).server().executeBlocking(() ->
@@ -39,22 +46,22 @@ public class Threading
                     {
                         result[0] = lv.get(0).evalValue(c, t);
                     }
-                    catch (ExpressionException exc)
+                    catch (final ExpressionException exc)
                     {
                         internal[0] = exc;
                     }
-                    catch (InternalExpressionException exc)
+                    catch (final InternalExpressionException exc)
                     {
                         internal[0] = new ExpressionException(c, expr, tok, exc.getMessage(), exc.stack);
                     }
 
-                    catch (ArithmeticException exc)
+                    catch (final ArithmeticException exc)
                     {
-                        internal[0] = new ExpressionException(c, expr, tok, "Your math is wrong, "+exc.getMessage());
+                        internal[0] = new ExpressionException(c, expr, tok, "Your math is wrong, " + exc.getMessage());
                     }
                 });
             }
-            catch (CompletionException exc)
+            catch (final CompletionException exc)
             {
                 throw new InternalExpressionException("Error while executing docked task section, internal stack trace is gone");
             }
@@ -62,7 +69,7 @@ public class Threading
             {
                 throw internal[0];
             }
-            Value ret = result[0]; // preventing from lazy evaluating of the result in case a future completes later
+            final Value ret = result[0]; // preventing from lazy evaluating of the result in case a future completes later
             return (_c, _t) -> ret;
             // pass through placeholder
             // implmenetation should dock the task on the main thread.

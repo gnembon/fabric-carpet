@@ -4,13 +4,14 @@ import carpet.script.exception.InternalExpressionException;
 import com.google.gson.JsonElement;
 import net.minecraft.nbt.Tag;
 
-public class UndefValue extends NullValue {
+public class UndefValue extends NullValue
+{
     public static final UndefValue UNDEF = new UndefValue();
 
-    private RuntimeException getError() {
-        return new InternalExpressionException("variable "+boundVariable+" was used before initialization under 'strict' app config");
+    private RuntimeException getError()
+    {
+        return new InternalExpressionException("variable " + boundVariable + " was used before initialization under 'strict' app config");
     }
-
 
     @Override
     public String getString()
@@ -43,28 +44,32 @@ public class UndefValue extends NullValue {
     }
 
     @Override
-    public Value slice(long fromDesc, Long toDesc) {
-        throw getError();
-    }
-
-    @Override
-    public NumericValue opposite() {
-        throw getError();
-    }
-
-    @Override
-    public int length() {
-        throw getError();
-    }
-
-    @Override
-    public int compareTo(Value o)
+    public Value slice(final long fromDesc, final Long toDesc)
     {
         throw getError();
     }
 
     @Override
-    public Value in(Value value) {
+    public NumericValue opposite()
+    {
+        throw getError();
+    }
+
+    @Override
+    public int length()
+    {
+        throw getError();
+    }
+
+    @Override
+    public int compareTo(final Value o)
+    {
+        throw getError();
+    }
+
+    @Override
+    public Value in(final Value value)
+    {
         throw getError();
     }
 
@@ -81,13 +86,14 @@ public class UndefValue extends NullValue {
     }
 
     @Override
-    public Tag toTag(boolean force)
+    public Tag toTag(final boolean force)
     {
         throw getError();
     }
 
     @Override
-    public Value split(Value delimiter) {
+    public Value split(final Value delimiter)
+    {
         throw getError();
     }
 
@@ -98,29 +104,31 @@ public class UndefValue extends NullValue {
     }
 
     @Override
-    public boolean isNull() {
-        throw getError();
-    }
-
-    @Override
-    public Value add(Value v) {
-        throw getError();
-    }
-
-    @Override
-    public Value subtract(Value v)
+    public boolean isNull()
     {
         throw getError();
     }
 
     @Override
-    public Value multiply(Value v)
+    public Value add(final Value v)
     {
         throw getError();
     }
 
     @Override
-    public Value divide(Value v)
+    public Value subtract(final Value v)
+    {
+        throw getError();
+    }
+
+    @Override
+    public Value multiply(final Value v)
+    {
+        throw getError();
+    }
+
+    @Override
+    public Value divide(final Value v)
     {
         throw getError();
     }

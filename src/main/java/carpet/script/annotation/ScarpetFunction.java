@@ -53,7 +53,7 @@ public @interface ScarpetFunction
     /**
      * <p>Used to define that this {@link ScarpetFunction} can accept an unlimited number of parameters</p>
      */
-    public static final int UNLIMITED_PARAMS = -1;
+    int UNLIMITED_PARAMS = -1;
 
     /**
      * <p>If the function can accept a variable number of parameters, either by declaring its last parameter as a varargs parameter or by having one

@@ -6,7 +6,7 @@ public class GlocalFlag extends ThreadLocal<Boolean>
 {
     private final boolean initial;
 
-    public GlocalFlag(boolean initial)
+    public GlocalFlag(final boolean initial)
     {
         this.initial = initial;
     }
@@ -19,19 +19,20 @@ public class GlocalFlag extends ThreadLocal<Boolean>
 
     /**
      * Allows to thread-safely wrap a call while disabling a global flag and setting it back up right after.
+     *
      * @param action - callback to invoke when the wrapping is all setup
-     * @param <T> - returned value of that action, whatever that might be
+     * @param <T>    - returned value of that action, whatever that might be
      * @return result of the action
      */
-    public <T> T getWhileDisabled(Supplier<T> action)
+    public <T> T getWhileDisabled(final Supplier<T> action)
     {
         return whileValueReturn(!initial, action);
     }
 
-    private <T> T whileValueReturn(boolean what, Supplier<T> action)
+    private <T> T whileValueReturn(final boolean what, final Supplier<T> action)
     {
         T result;
-        boolean previous;
+        final boolean previous;
         synchronized (this)
         {
             previous = get();
@@ -48,11 +49,14 @@ public class GlocalFlag extends ThreadLocal<Boolean>
         return result;
     }
 
-    public <T> T runIfEnabled(Supplier<T> action)
+    public <T> T runIfEnabled(final Supplier<T> action)
     {
         synchronized (this)
         {
-            if (get() != initial) return null;
+            if (get() != initial)
+            {
+                return null;
+            }
             set(!initial);
         }
         T result;

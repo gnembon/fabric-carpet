@@ -7,48 +7,52 @@ import carpet.script.value.ListValue;
 import carpet.script.value.NumericValue;
 import carpet.script.value.StringValue;
 import carpet.script.value.Value;
+
 import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
+
 import net.minecraft.core.BlockPos;
 
 public class BlockArgument extends Argument
 {
     public final BlockValue block;
     public final String replacement;
-    private BlockArgument(BlockValue b, int o)
+
+    private BlockArgument(final BlockValue b, final int o)
     {
         super(o);
         block = b;
         replacement = null;
     }
-    private BlockArgument(BlockValue b, int o, String replacement)
+
+    private BlockArgument(final BlockValue b, final int o, final String replacement)
     {
         super(o);
         block = b;
         this.replacement = replacement;
     }
 
-    public static BlockArgument findIn(CarpetContext c, List<Value> params, int offset)
+    public static BlockArgument findIn(final CarpetContext c, final List<Value> params, final int offset)
     {
-        return findIn(c, params,offset, false, false, false);
+        return findIn(c, params, offset, false, false, false);
     }
 
-    public static BlockArgument findIn(CarpetContext c, List<Value> params, int offset, boolean acceptString)
+    public static BlockArgument findIn(final CarpetContext c, final List<Value> params, final int offset, final boolean acceptString)
     {
-        return findIn(c, params,offset, acceptString, false, false);
+        return findIn(c, params, offset, acceptString, false, false);
     }
 
-    public static BlockArgument findIn(CarpetContext c, List<Value> params, int offset, boolean acceptString, boolean optional, boolean anyString)
+    public static BlockArgument findIn(final CarpetContext c, final List<Value> params, final int offset, final boolean acceptString, final boolean optional, final boolean anyString)
     {
         return findIn(c, params.listIterator(offset), offset, acceptString, optional, anyString);
     }
 
-    public static BlockArgument findIn(CarpetContext c, Iterator<Value> params, int offset, boolean acceptString, boolean optional, boolean anyString)
+    public static BlockArgument findIn(final CarpetContext c, final Iterator<Value> params, final int offset, final boolean acceptString, final boolean optional, final boolean anyString)
     {
         try
         {
-            Value v1 = params.next();
+            final Value v1 = params.next();
             //add conditional from string name
             if (optional && v1.isNull())
             {
@@ -69,10 +73,10 @@ public class BlockArgument extends Argument
             final BlockPos pos = c.origin();
             if (v1 instanceof ListValue)
             {
-                List<Value> args = ((ListValue) v1).getItems();
-                int xpos = (int) NumericValue.asNumber(args.get(0)).getLong();
-                int ypos = (int) NumericValue.asNumber(args.get(1)).getLong();
-                int zpos = (int) NumericValue.asNumber(args.get(2)).getLong();
+                final List<Value> args = ((ListValue) v1).getItems();
+                final int xpos = (int) NumericValue.asNumber(args.get(0)).getLong();
+                final int ypos = (int) NumericValue.asNumber(args.get(1)).getLong();
+                final int zpos = (int) NumericValue.asNumber(args.get(2)).getLong();
 
                 return new BlockArgument(
                         new BlockValue(
@@ -82,9 +86,9 @@ public class BlockArgument extends Argument
                         ),
                         1 + offset);
             }
-            int xpos = (int) NumericValue.asNumber(v1).getLong();
-            int ypos = (int) NumericValue.asNumber( params.next()).getLong();
-            int zpos = (int) NumericValue.asNumber( params.next()).getLong();
+            final int xpos = (int) NumericValue.asNumber(v1).getLong();
+            final int ypos = (int) NumericValue.asNumber(params.next()).getLong();
+            final int zpos = (int) NumericValue.asNumber(params.next()).getLong();
             return new BlockArgument(
                     new BlockValue(
                             null,
@@ -100,13 +104,17 @@ public class BlockArgument extends Argument
         }
     }
 
-    private static InternalExpressionException handleError(boolean optional, boolean acceptString)
+    private static InternalExpressionException handleError(final boolean optional, final boolean acceptString)
     {
         String message = "Block-type argument should be defined either by three coordinates (a triple or by three arguments), or a block value";
         if (acceptString)
-            message+=", or a string with block description";
+        {
+            message += ", or a string with block description";
+        }
         if (optional)
-            message+=", or null";
+        {
+            message += ", or null";
+        }
         return new InternalExpressionException(message);
     }
 

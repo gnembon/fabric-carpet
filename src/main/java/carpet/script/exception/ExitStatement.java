@@ -6,7 +6,8 @@ import carpet.script.value.Value;
 public class ExitStatement extends StacklessRuntimeException
 {
     public final Value retval;
-    public ExitStatement(Value value)
+
+    public ExitStatement(final Value value)
     {
         retval = value;
     }

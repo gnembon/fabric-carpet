@@ -7,15 +7,17 @@ public class StringValue extends Value
 {
     public static Value EMPTY = StringValue.of("");
 
-    private String str;
+    private final String str;
 
     @Override
-    public String getString() {
+    public String getString()
+    {
         return str;
     }
 
     @Override
-    public boolean getBoolean() {
+    public boolean getBoolean()
+    {
         return str != null && !str.isEmpty();
     }
 
@@ -25,15 +27,14 @@ public class StringValue extends Value
         return new StringValue(str);
     }
 
-    public StringValue(String str)
+    public StringValue(final String str)
     {
         this.str = str;
     }
 
-    public static Value of(String value)
+    public static Value of(final String value)
     {
-        if (value == null) return Value.NULL;
-        return new StringValue(value);
+        return value == null ? Value.NULL : new StringValue(value);
     }
 
     @Override
@@ -43,7 +44,7 @@ public class StringValue extends Value
     }
 
     @Override
-    public Tag toTag(boolean force)
+    public Tag toTag(final boolean force)
     {
         return StringTag.valueOf(str);
     }

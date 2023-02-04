@@ -19,20 +19,23 @@ public class ExpressionException extends StacklessRuntimeException implements Re
     public final List<FunctionValue> stack = new ArrayList<>();
     private final Supplier<String> lazyMessage;
     private String cachedMessage = null;
-    public static void prepareForDoom(){
+
+    public static void prepareForDoom()
+    {
         Messenger.c("foo bar");
     }
 
-    public ExpressionException(Context c, Expression e, String message)
+    public ExpressionException(final Context c, final Expression e, final String message)
     {
         this(c, e, Tokenizer.Token.NONE, message);
     }
 
-    public ExpressionException(Context c, Expression e, Tokenizer.Token t, String message)
+    public ExpressionException(final Context c, final Expression e, final Tokenizer.Token t, final String message)
     {
         this(c, e, t, message, Collections.emptyList());
     }
-    public ExpressionException(Context c, Expression e, Tokenizer.Token t, String message, List<FunctionValue> stack)
+
+    public ExpressionException(final Context c, final Expression e, final Tokenizer.Token t, final String message, final List<FunctionValue> stack)
     {
         super("Error");
         this.stack.addAll(stack);
@@ -41,7 +44,7 @@ public class ExpressionException extends StacklessRuntimeException implements Re
         context = c;
     }
 
-    public ExpressionException(Context c, Expression e, Tokenizer.Token t, Supplier<String> messageSupplier, List<FunctionValue> stack)
+    public ExpressionException(final Context c, final Expression e, final Tokenizer.Token t, final Supplier<String> messageSupplier, final List<FunctionValue> stack)
     {
         super("Error");
         this.stack.addAll(stack);
@@ -50,13 +53,13 @@ public class ExpressionException extends StacklessRuntimeException implements Re
         context = c;
     }
 
-    private static List<String> makeError(Expression expr, /*Nullable*/Tokenizer.Token token, String errmessage)
+    private static List<String> makeError(final Expression expr, /*Nullable*/final Tokenizer.Token token, String errmessage)
     {
-        List<String> errMsg = new ArrayList<>();
-        errmessage += expr.getModuleName() == null?"":(" in "+expr.getModuleName());
+        final List<String> errMsg = new ArrayList<>();
+        errmessage += expr.getModuleName() == null ? "" : (" in " + expr.getModuleName());
         if (token != null)
         {
-            List<String> snippet = expr.getExpressionSnippet(token);
+            final List<String> snippet = expr.getExpressionSnippet(token);
             errMsg.addAll(snippet);
 
             if (snippet.size() != 1)
@@ -72,11 +75,11 @@ public class ExpressionException extends StacklessRuntimeException implements Re
         return errMsg;
     }
 
-    synchronized static String makeMessage(Context c, Expression e, Tokenizer.Token t, String message) throws ExpressionException
+    static synchronized String makeMessage(final Context c, final Expression e, final Tokenizer.Token t, final String message) throws ExpressionException
     {
         if (c.getErrorSnooper() != null)
         {
-            List<String> alternative = c.getErrorSnooper().apply(e, t, c, message);
+            final List<String> alternative = c.getErrorSnooper().apply(e, t, c, message);
             if (alternative != null)
             {
                 return String.join("\n", alternative);
@@ -84,12 +87,13 @@ public class ExpressionException extends StacklessRuntimeException implements Re
         }
         return String.join("\n", makeError(e, t, message));
     }
-    
+
     @Override
-    public String getMessage() {
+    public String getMessage()
+    {
         if (cachedMessage == null)
         {
-        	cachedMessage = lazyMessage.get();
+            cachedMessage = lazyMessage.get();
         }
         return cachedMessage;
     }

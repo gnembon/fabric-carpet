@@ -25,6 +25,7 @@ import net.minecraft.world.level.border.WorldBorder;
 import net.minecraft.world.level.storage.LevelData;
 import net.minecraft.world.level.storage.LevelResource;
 import net.minecraft.world.phys.Vec2;
+
 import java.lang.management.ManagementFactory;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -36,15 +37,17 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.function.Function;
 
-public class SystemInfo {
-    private static final Map<String, Function<CarpetContext,Value>> options = new HashMap<>(){{
+public class SystemInfo
+{
+    private static final Map<String, Function<CarpetContext, Value>> options = new HashMap<>()
+    {{
         put("app_name", c ->
         {
-            String name = c.host.getName();
-            return name == null?Value.NULL:new StringValue(name);
+            final String name = c.host.getName();
+            return name == null ? Value.NULL : new StringValue(name);
         });
-        put("app_list", c -> ListValue.wrap(((CarpetScriptHost)c.host).scriptServer().modules.keySet().stream().filter(Objects::nonNull).map(StringValue::new)));
-        put("app_scope", c -> StringValue.of((c.host).isPerUser()?"player":"global"));
+        put("app_list", c -> ListValue.wrap(((CarpetScriptHost) c.host).scriptServer().modules.keySet().stream().filter(Objects::nonNull).map(StringValue::new)));
+        put("app_scope", c -> StringValue.of((c.host).isPerUser() ? "player" : "global"));
         put("app_players", c -> ListValue.wrap(c.host.getUserList().stream().map(StringValue::new)));
 
         put("world_name", c -> new StringValue(c.server().getWorldData().getLevelName()));
@@ -52,30 +55,33 @@ public class SystemInfo {
         put("server_motd", c -> StringValue.of(c.server().getMotd()));
         put("world_path", c -> StringValue.of(c.server().getWorldPath(LevelResource.ROOT).toString()));
         put("world_folder", c -> {
-            Path serverPath = c.server().getWorldPath(LevelResource.ROOT);
-            int nodeCount = serverPath.getNameCount();
-            if (nodeCount < 2) return Value.NULL;
-            String tlf = serverPath.getName(nodeCount-2).toString();
+            final Path serverPath = c.server().getWorldPath(LevelResource.ROOT);
+            final int nodeCount = serverPath.getNameCount();
+            if (nodeCount < 2)
+            {
+                return Value.NULL;
+            }
+            final String tlf = serverPath.getName(nodeCount - 2).toString();
             return StringValue.of(tlf);
         });
         put("world_dimensions", c -> ListValue.wrap(c.server().levelKeys().stream().map(k -> ValueConversions.of(k.location()))));
         put("world_spawn_point", c -> {
-            LevelData prop = c.server().overworld().getLevelData();
+            final LevelData prop = c.server().overworld().getLevelData();
             return ListValue.of(NumericValue.of(prop.getXSpawn()), NumericValue.of(prop.getYSpawn()), NumericValue.of(prop.getZSpawn()));
         });
 
-        put("world_bottom", c-> new NumericValue(c.level().getMinBuildHeight()));
+        put("world_bottom", c -> new NumericValue(c.level().getMinBuildHeight()));
 
-        put("world_top", c-> new NumericValue(c.level().getMaxBuildHeight()));
+        put("world_top", c -> new NumericValue(c.level().getMaxBuildHeight()));
 
-        put("world_center", c-> {
-            WorldBorder worldBorder = c.level().getWorldBorder();
+        put("world_center", c -> {
+            final WorldBorder worldBorder = c.level().getWorldBorder();
             return ListValue.fromTriple(worldBorder.getCenterX(), 0, worldBorder.getCenterZ());
         });
 
         put("world_size", c -> new NumericValue(c.level().getWorldBorder().getSize() / 2));
 
-        put("world_max_size", c-> new NumericValue( c.level().getWorldBorder().getAbsoluteMaxSize()));
+        put("world_max_size", c -> new NumericValue(c.level().getWorldBorder().getAbsoluteMaxSize()));
 
         put("world_time", c -> new NumericValue(c.level().getGameTime()));
 
@@ -90,133 +96,137 @@ public class SystemInfo {
         put("game_target", c -> StringValue.of(CarpetSettings.releaseTarget));
         put("game_protocol", c -> NumericValue.of(SharedConstants.getProtocolVersion()));
         put("game_major_target", c -> {
-            String [] vers = CarpetSettings.releaseTarget.split("\\.");
-            return NumericValue.of((vers.length > 1)?Integer.parseInt(vers[1]):0);
+            final String[] vers = CarpetSettings.releaseTarget.split("\\.");
+            return NumericValue.of((vers.length > 1) ? Integer.parseInt(vers[1]) : 0);
         });
         put("game_minor_target", c -> {
-            String [] vers = CarpetSettings.releaseTarget.split("\\.");
-            return NumericValue.of((vers.length > 2)?Integer.parseInt(vers[2]):0);
+            final String[] vers = CarpetSettings.releaseTarget.split("\\.");
+            return NumericValue.of((vers.length > 2) ? Integer.parseInt(vers[2]) : 0);
         });
         put("game_stable", c -> BooleanValue.of(SharedConstants.getCurrentVersion().isStable()));
-        put("game_data_version", c->NumericValue.of(SharedConstants.getCurrentVersion().getDataVersion().getVersion()));
-        put("game_pack_version", c->NumericValue.of(SharedConstants.getCurrentVersion().getPackVersion(PackType.SERVER_DATA)));
+        put("game_data_version", c -> NumericValue.of(SharedConstants.getCurrentVersion().getDataVersion().getVersion()));
+        put("game_pack_version", c -> NumericValue.of(SharedConstants.getCurrentVersion().getPackVersion(PackType.SERVER_DATA)));
 
         put("server_ip", c -> StringValue.of(c.server().getLocalIp()));
         put("server_whitelisted", c -> BooleanValue.of(c.server().isEnforceWhitelist()));
         put("server_whitelist", c -> {
-            MapValue whitelist = new MapValue(Collections.emptyList());
-            for (String s: c.server().getPlayerList().getWhiteListNames())
+            final MapValue whitelist = new MapValue(Collections.emptyList());
+            for (final String s : c.server().getPlayerList().getWhiteListNames())
             {
                 whitelist.append(StringValue.of(s));
             }
             return whitelist;
         });
         put("server_banned_players", c -> {
-            MapValue whitelist = new MapValue(Collections.emptyList());
-            for (String s: c.server().getPlayerList().getBans().getUserList())
+            final MapValue whitelist = new MapValue(Collections.emptyList());
+            for (final String s : c.server().getPlayerList().getBans().getUserList())
             {
                 whitelist.append(StringValue.of(s));
             }
             return whitelist;
         });
         put("server_banned_ips", c -> {
-            MapValue whitelist = new MapValue(Collections.emptyList());
-            for (String s: c.server().getPlayerList().getIpBans().getUserList())
+            final MapValue whitelist = new MapValue(Collections.emptyList());
+            for (final String s : c.server().getPlayerList().getIpBans().getUserList())
             {
                 whitelist.append(StringValue.of(s));
             }
             return whitelist;
         });
-        put("server_dev_environment", c-> BooleanValue.of(FabricLoader.getInstance().isDevelopmentEnvironment()));
+        put("server_dev_environment", c -> BooleanValue.of(FabricLoader.getInstance().isDevelopmentEnvironment()));
         put("server_mods", c -> {
-            Map<Value, Value> ret = new HashMap<>();
-            for (ModContainer mod : FabricLoader.getInstance().getAllMods())
+            final Map<Value, Value> ret = new HashMap<>();
+            for (final ModContainer mod : FabricLoader.getInstance().getAllMods())
+            {
                 ret.put(new StringValue(mod.getMetadata().getId()), new StringValue(mod.getMetadata().getVersion().getFriendlyString()));
+            }
             return MapValue.wrap(ret);
         });
         put("server_last_tick_times", c -> {
-        	//assuming we are in the tick world section
+            //assuming we are in the tick world section
             // might be off one tick when run in the off tasks or asynchronously.
-            int currentReportedTick = c.server().getTickCount()-1;
-            List<Value> ticks = new ArrayList<>(100);
+            final int currentReportedTick = c.server().getTickCount() - 1;
+            final List<Value> ticks = new ArrayList<>(100);
             final long[] tickArray = c.server().tickTimes;
-            for (int i=currentReportedTick+100; i > currentReportedTick; i--)
+            for (int i = currentReportedTick + 100; i > currentReportedTick; i--)
             {
-                ticks.add(new NumericValue((tickArray[i % 100])/1000000.0));
+                ticks.add(new NumericValue((tickArray[i % 100]) / 1000000.0));
             }
             return ListValue.wrap(ticks);
         });
 
         put("java_max_memory", c -> new NumericValue(Runtime.getRuntime().maxMemory()));
         put("java_allocated_memory", c -> new NumericValue(Runtime.getRuntime().totalMemory()));
-        put("java_used_memory", c -> new NumericValue(Runtime.getRuntime().totalMemory()-Runtime.getRuntime().freeMemory()));
+        put("java_used_memory", c -> new NumericValue(Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()));
         put("java_cpu_count", c -> new NumericValue(Runtime.getRuntime().availableProcessors()));
         put("java_version", c -> StringValue.of(System.getProperty("java.version")));
         put("java_bits", c -> {
-            for (String property : new String[]{"sun.arch.data.model", "com.ibm.vm.bitmode", "os.arch"})
+            for (final String property : new String[]{"sun.arch.data.model", "com.ibm.vm.bitmode", "os.arch"})
             {
-                String value = System.getProperty(property);
+                final String value = System.getProperty(property);
                 if (value != null && value.contains("64"))
+                {
                     return new NumericValue(64);
-
+                }
             }
             return new NumericValue(32);
         });
         put("java_system_cpu_load", c -> {
-            OperatingSystemMXBean osBean = ManagementFactory.getPlatformMXBean(
+            final OperatingSystemMXBean osBean = ManagementFactory.getPlatformMXBean(
                     OperatingSystemMXBean.class);
             return new NumericValue(osBean.getCpuLoad());
         });
         put("java_process_cpu_load", c -> {
-            OperatingSystemMXBean osBean = ManagementFactory.getPlatformMXBean(
+            final OperatingSystemMXBean osBean = ManagementFactory.getPlatformMXBean(
                     OperatingSystemMXBean.class);
             return new NumericValue(osBean.getProcessCpuLoad());
         });
         put("world_carpet_rules", c -> {
-            Collection<CarpetRule<?>> rules = CarpetServer.settingsManager.getCarpetRules();
-            MapValue carpetRules = new MapValue(Collections.emptyList());
-            rules.forEach(rule -> {
-                carpetRules.put(new StringValue(rule.name()), new StringValue(RuleHelper.toRuleString(rule.value())));
-            });
+            final Collection<CarpetRule<?>> rules = CarpetServer.settingsManager.getCarpetRules();
+            final MapValue carpetRules = new MapValue(Collections.emptyList());
+            rules.forEach(rule -> carpetRules.put(new StringValue(rule.name()), new StringValue(RuleHelper.toRuleString(rule.value()))));
             CarpetServer.extensions.forEach(e -> {
-                SettingsManager manager = e.extensionSettingsManager();
-                if (manager == null) return;
-
-                Collection<CarpetRule<?>> extensionRules = manager.getCarpetRules();
-                extensionRules.forEach(rule -> {
-                    carpetRules.put(new StringValue(manager.identifier()+":"+rule.name()), new StringValue(RuleHelper.toRuleString(rule.value())));
-                });
+                final SettingsManager manager = e.extensionSettingsManager();
+                if (manager == null)
+                {
+                    return;
+                }
+                manager.getCarpetRules().forEach(rule -> carpetRules.put(new StringValue(manager.identifier() + ":" + rule.name()), new StringValue(RuleHelper.toRuleString(rule.value()))));
             });
             return carpetRules;
         });
-        put("world_gamerules", c->{
-            Map<Value, Value> rules = new HashMap<>();
+        put("world_gamerules", c -> {
+            final Map<Value, Value> rules = new HashMap<>();
             final GameRules gameRules = c.level().getGameRules();
-            GameRules.visitGameRuleTypes(new GameRules.GameRuleTypeVisitor() {
+            GameRules.visitGameRuleTypes(new GameRules.GameRuleTypeVisitor()
+            {
                 @Override
-                public <T extends GameRules.Value<T>> void visit(GameRules.Key<T> key, GameRules.Type<T> type) {
+                public <T extends GameRules.Value<T>> void visit(final GameRules.Key<T> key, final GameRules.Type<T> type)
+                {
                     rules.put(StringValue.of(key.getId()), StringValue.of(gameRules.getRule(key).toString()));
                 }
             });
             return MapValue.wrap(rules);
         });
-        put("world_min_spawning_light", c-> NumericValue.of(c.level().dimensionType().monsterSpawnBlockLightLimit()));
+        put("world_min_spawning_light", c -> NumericValue.of(c.level().dimensionType().monsterSpawnBlockLightLimit()));
 
         put("source_entity", c -> EntityValue.of(c.source().getEntity()));
         put("source_position", c -> ValueConversions.of(c.source().getPosition()));
         put("source_dimension", c -> ValueConversions.of(c.level()));
         put("source_rotation", c -> {
-            Vec2 rotation = c.source().getRotation();
+            final Vec2 rotation = c.source().getRotation();
             return ListValue.of(new NumericValue(rotation.x), new NumericValue(rotation.y));
         });
-        
+
         put("scarpet_version", c -> StringValue.of(CarpetSettings.carpetVersion));
 
     }};
-    public static Value get(String what, CarpetContext cc)
+
+    public static Value get(final String what, final CarpetContext cc)
     {
         return options.getOrDefault(what, c -> null).apply(cc);
     }
+
     public static Value getAll()
     {
         return ListValue.wrap(options.keySet().stream().map(StringValue::of));

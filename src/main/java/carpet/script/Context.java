@@ -13,6 +13,7 @@ public class Context
     {
         NONE, VOID, BOOLEAN, NUMBER, STRING, LIST, ITERATOR, SIGNATURE, LOCALIZATION, LVALUE, MAPDEF
     }
+
     public static final Type NONE = Type.NONE;
     public static final Type VOID = Type.VOID;
     public static final Type BOOLEAN = Type.BOOLEAN;
@@ -29,32 +30,32 @@ public class Context
 
     public final ScriptHost host;
 
-    public Context(ScriptHost host)
+    public Context(final ScriptHost host)
     {
         this.host = host;
     }
 
-    public LazyValue getVariable(String name)
+    public LazyValue getVariable(final String name)
     {
         return variables.get(name);
     }
 
-    public void setVariable(String name, LazyValue lv)
+    public void setVariable(final String name, final LazyValue lv)
     {
         variables.put(name, lv);
     }
 
-    public void delVariable(String variable)
+    public void delVariable(final String variable)
     {
         variables.remove(variable);
     }
 
-    public void removeVariablesMatching(String varname)
+    public void removeVariablesMatching(final String varname)
     {
         variables.entrySet().removeIf(e -> e.getKey().startsWith(varname));
     }
 
-    public Context with(String variable, LazyValue lv)
+    public Context with(final String variable, final LazyValue lv)
     {
         variables.put(variable, lv);
         return this;
@@ -67,7 +68,7 @@ public class Context
 
     public Context recreate()
     {
-        Context ctx = duplicate();
+        final Context ctx = duplicate();
         ctx.initialize();
         return ctx;
     }
@@ -84,11 +85,11 @@ public class Context
     {
         return new Context(this.host);
     }
+
     public ScriptHost.ErrorSnooper getErrorSnooper()
     {
         return host.errorSnooper;
     }
-
 
     /**
      * immutable context only for reason on reporting access violations in evaluating expressions in optimizization
@@ -97,10 +98,11 @@ public class Context
     public static class ContextForErrorReporting extends Context
     {
         public ScriptHost.ErrorSnooper optmizerEerrorSnooper;
-        public ContextForErrorReporting(Context parent)
+
+        public ContextForErrorReporting(final Context parent)
         {
             super(null);
-            optmizerEerrorSnooper =  parent.host.errorSnooper;
+            optmizerEerrorSnooper = parent.host.errorSnooper;
         }
 
         @Override
@@ -116,31 +118,64 @@ public class Context
                     "of scarpet authors. Please report this issue directly to the scarpet issue tracker");
 
         }
-        @Override
-        public LazyValue getVariable(String name) { badProgrammer(); return null;}
 
         @Override
-        public void setVariable(String name, LazyValue lv) { badProgrammer(); }
+        public LazyValue getVariable(final String name)
+        {
+            badProgrammer();
+            return null;
+        }
 
         @Override
-        public void delVariable(String variable) { badProgrammer(); }
+        public void setVariable(final String name, final LazyValue lv)
+        {
+            badProgrammer();
+        }
 
         @Override
-        public void removeVariablesMatching(String varname) { badProgrammer(); }
+        public void delVariable(final String variable)
+        {
+            badProgrammer();
+        }
 
         @Override
-        public Context with(String variable, LazyValue lv) { badProgrammer(); return this; }
+        public void removeVariablesMatching(final String varname)
+        {
+            badProgrammer();
+        }
 
         @Override
-        public Set<String> getAllVariableNames() { badProgrammer(); return null;}
+        public Context with(final String variable, final LazyValue lv)
+        {
+            badProgrammer();
+            return this;
+        }
 
         @Override
-        public Context recreate() { badProgrammer(); return null;}
+        public Set<String> getAllVariableNames()
+        {
+            badProgrammer();
+            return null;
+        }
 
         @Override
-        protected void initialize() { badProgrammer();}
+        public Context recreate()
+        {
+            badProgrammer();
+            return null;
+        }
 
         @Override
-        public Context duplicate() { badProgrammer(); return null;}
+        protected void initialize()
+        {
+            badProgrammer();
+        }
+
+        @Override
+        public Context duplicate()
+        {
+            badProgrammer();
+            return null;
+        }
     }
 }

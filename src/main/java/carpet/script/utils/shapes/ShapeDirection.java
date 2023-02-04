@@ -7,7 +7,8 @@ import net.minecraft.world.phys.Vec3;
 
 import java.util.Locale;
 
-public enum ShapeDirection {
+public enum ShapeDirection
+{
     NORTH,
     SOUTH,
     EAST,
@@ -17,8 +18,10 @@ public enum ShapeDirection {
     CAMERA,
     PLAYER;
 
-    public static ShapeDirection fromString(String direction) {
-        return switch (direction.toLowerCase(Locale.ROOT)) {
+    public static ShapeDirection fromString(final String direction)
+    {
+        return switch (direction.toLowerCase(Locale.ROOT))
+        {
             case "north" -> NORTH;
             case "south" -> SOUTH;
             case "east" -> EAST;
@@ -31,8 +34,10 @@ public enum ShapeDirection {
         };
     }
 
-    public static void rotatePoseStackByShapeDirection(PoseStack poseStack, ShapeDirection shapeDirection, Camera camera, Vec3 objectPos) {
-        switch (shapeDirection) {
+    public static void rotatePoseStackByShapeDirection(final PoseStack poseStack, final ShapeDirection shapeDirection, final Camera camera, final Vec3 objectPos)
+    {
+        switch (shapeDirection)
+        {
             case NORTH -> {}
             case SOUTH -> poseStack.mulPose(Axis.YP.rotationDegrees(180));
             case EAST -> poseStack.mulPose(Axis.YP.rotationDegrees(270));
