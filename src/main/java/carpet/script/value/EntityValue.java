@@ -1537,8 +1537,8 @@ public class EntityValue extends Value
             {
                 return;
             }
-            final GameType toSet = v instanceof final NumericValue number ?
-                    GameType.byId(number.getInt()) :
+            final GameType toSet = v instanceof NumericValue ?
+                    GameType.byId(((NumericValue) v).getInt()) :
                     GameType.byName(v.getString().toLowerCase(Locale.ROOT), null);
             if (toSet != null)
             {
