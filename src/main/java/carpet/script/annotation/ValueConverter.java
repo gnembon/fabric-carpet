@@ -50,6 +50,7 @@ public interface ValueConverter<R>
      * trying to convert to anything else, where it would be recommended to tell the user the name of the final type instead.</p>
      * 
      * @param value The {@link Value} to convert
+     * @param context
      * @return The converted value, or {@code null} if the conversion failed in the process
      * @apiNote <p>While most implementations of this method should and will return the type from this method, implementations that <b>require</b>
      *          parameters from {@link #checkAndConvert(Iterator, Context, Context.Type)} or that require multiple parameters may decide to throw
@@ -59,10 +60,16 @@ public interface ValueConverter<R>
      *          <p>Implementations can also provide different implementations for this and {@link #checkAndConvert(Iterator, Context, Context.Type)}, in case
      *          they can support it in some situations that can't be used else, such as inside of lists or maps, although they should try to provide
      *          in {@link #checkAndConvert(Iterator, Context, Context.Type)} at least the same conversion as the one from this method.</p>
-     *          <p>Even with the above reasons, {@link ValueConverter} users should try to implement {@link #convert(Value)} whenever possible instead of
+     *          <p>Even with the above reasons, {@link ValueConverter} users should try to implement {@link #convert(Value, Context)} whenever possible instead of
      *          {@link #checkAndConvert(Iterator, Context, Context.Type)}, since it allows its usage in generics of lists and maps.</p>
      */
-    @Nullable R convert(Value value);
+    @Nullable R convert(Value value, final Context context);
+
+    @Deprecated(forRemoval = true)
+    default R convert(final Value value)
+    {
+        return convert(value, null);
+    }
 
     /**
      * <p>Returns whether this {@link ValueConverter} consumes a variable number of elements from the {@link Iterator} passed to it via
@@ -176,17 +183,17 @@ public interface ValueConverter<R>
      *           providers like {@link Context}. <p>Implementations can also use more than a single parameter when being called with this function,
      *           but in such case they must implement {@link #valueConsumption()} to return how many parameters do they consume at minimum, and, if
      *           they may consume variable arguments, implement {@link #consumesVariableArgs()}</p> <p>This method holds the same nullability
-     *           constraints as {@link #convert(Value)}</p>
+     *           constraints as {@link #convert(Value, Context)}</p>
      * @param valueIterator An {@link Iterator} holding the {@link Value} to convert in next position
      * @param context       The {@link Context} this function has been called with. This was used when this passed lazy values instead in order to
      *                      evaluate, now it's used to get the context
      * @param contextType   The {@link Context.Type} that the original function was called with
      * @return The next {@link Value} (s) converted to the type {@code <R>} of this {@link ValueConverter}
-     * @implNote This method's default implementation runs the {@link #convert(Value)} function in the next {@link Value} ignoring {@link Context} and
+     * @implNote This method's default implementation runs the {@link #convert(Value, Context)} function in the next {@link Value} ignoring {@link Context} and
      *           {@code theLazyT}.
      */
     default R checkAndConvert(final Iterator<Value> valueIterator, final Context context, final Context.Type contextType)
     {
-        return !valueIterator.hasNext() ? null : convert(valueIterator.next());
+        return !valueIterator.hasNext() ? null : convert(valueIterator.next(), context);
     }
 }

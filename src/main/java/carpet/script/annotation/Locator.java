@@ -276,7 +276,7 @@ public interface Locator
         private abstract static class AbstractLocator<R> implements ValueConverter<R>, Locator
         {
             @Override
-            public R convert(final Value value)
+            public R convert(final Value value, final Context context)
             {
                 throw new UnsupportedOperationException("Cannot call a locator in a parameter that doesn't contain a context!");
             }

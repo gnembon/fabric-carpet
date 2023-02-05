@@ -2,12 +2,15 @@ package carpet.script.annotation;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.BiFunction;
 import java.util.function.Function;
+
+import carpet.script.CarpetContext;
+import carpet.script.Context;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.Level;
-import carpet.CarpetServer;
 import carpet.script.exception.InternalExpressionException;
 import carpet.script.value.EntityValue;
 import carpet.script.value.FormattedTextValue;
@@ -31,9 +34,9 @@ public final class SimpleTypeConverter<T extends Value, R> implements ValueConve
     private static final Map<Class<?>, SimpleTypeConverter<? extends Value, ?>> byResult = new HashMap<>();
     static
     {
-        registerType(Value.class, ServerPlayer.class, val -> EntityValue.getPlayerByValue(CarpetServer.minecraft_server, val), "online player");
+        registerType(Value.class, ServerPlayer.class, (v, c) -> EntityValue.getPlayerByValue(((CarpetContext)c).server(), v), "online player");
         registerType(EntityValue.class, Entity.class, EntityValue::getEntity, "entity");
-        registerType(Value.class, Level.class, val -> ValueConversions.dimFromValue(val, CarpetServer.minecraft_server), "dimension");
+        registerType(Value.class, Level.class, (v, c) -> ValueConversions.dimFromValue(v, ((CarpetContext)c).server()), "dimension");
         registerType(Value.class, Component.class, FormattedTextValue::getTextByValue, "text");
         registerType(Value.class, String.class, Value::getString, "string"); // Check out @Param.Strict for more specific types
 
@@ -44,7 +47,7 @@ public final class SimpleTypeConverter<T extends Value, R> implements ValueConve
         registerType(Value.class, Boolean.class, Value::getBoolean, "boolean"); // Check out @Param.Strict for more specific types
     }
 
-    private final Function<T, R> converter;
+    private final BiFunction<T, Context, R> converter;
     private final Class<T> valueClass;
     private final String typeName;
 
@@ -58,10 +61,18 @@ public final class SimpleTypeConverter<T extends Value, R> implements ValueConve
      * @param inputType The required type for the input {@link Value}
      * @param converter The function to convert an instance of inputType into R.
      */
-    public SimpleTypeConverter(final Class<T> inputType, final Function<T, R> converter, final String typeName)
+    public SimpleTypeConverter(final Class<T> inputType, final BiFunction<T, Context, R> converter, final String typeName)
     {
         super();
         this.converter = converter;
+        this.valueClass = inputType;
+        this.typeName = typeName;
+    }
+
+    public SimpleTypeConverter(final Class<T> inputType, final Function<T, R> converter, final String typeName)
+    {
+        super();
+        this.converter = (v, c) -> converter.apply(v);
         this.valueClass = inputType;
         this.typeName = typeName;
     }
@@ -87,9 +98,9 @@ public final class SimpleTypeConverter<T extends Value, R> implements ValueConve
 
     @Override
     @SuppressWarnings("unchecked") // more than checked. not using class.cast because then "method is too big" for inlining, because javac is useless
-    public R convert(final Value value)                                                          // and adds millions of casts. This one is even removed
+    public R convert(final Value value, final Context context)                                                          // and adds millions of casts. This one is even removed
     {
-        return valueClass.isInstance(value) ? converter.apply((T)value) : null;
+        return valueClass.isInstance(value) ? converter.apply((T)value, context) : null;
     }
 
     /**
@@ -99,15 +110,21 @@ public final class SimpleTypeConverter<T extends Value, R> implements ValueConve
      * @param <R> The type of the resulting object
      * @param requiredInputType The {@link Class} of {@code <T>}
      * @param outputType The {@link Class} of {@code <R>>}
-     * @param converter A function that converts from the given {@link Value} subtype to the given type. Should ideally return {@code null}
+     * @param converter A bi function that converts from the given {@link Value} subtype to the given type. Should ideally return {@code null}
      *                  when given {@link Value} cannot be converted to the {@code <R>}, to follow the {@link ValueConverter} contract, but it
      *                  can also throw an {@link InternalExpressionException} by itself if really necessary.
      * @param typeName The name of the type, following the conventions of {@link ValueConverter#getTypeName()}
      */
     public static <T extends Value, R> void registerType(final Class<T> requiredInputType, final Class<R> outputType,
-                                                         final Function<T, R> converter, final String typeName)
+                                                         final BiFunction<T, Context, R> converter, final String typeName)
     {
         final SimpleTypeConverter<T, R> type = new SimpleTypeConverter<>(requiredInputType, converter, typeName);
         byResult.put(outputType, type);
+    }
+
+    public static <T extends Value, R> void registerType(final Class<T> requiredInputType, final Class<R> outputType,
+                                                         final Function<T, R> converter, final String typeName)
+    {
+        registerType(requiredInputType, outputType, (val, ctx) -> converter.apply(val), typeName);
     }
 }

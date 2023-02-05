@@ -20,7 +20,6 @@ import org.apache.commons.lang3.ClassUtils;
 
 import com.google.common.base.Suppliers;
 
-import carpet.CarpetExtension;
 import carpet.script.Context;
 import carpet.script.Expression;
 import carpet.script.Fluff.AbstractLazyFunction;
@@ -85,7 +84,7 @@ public final class AnnotationParser
      * <p>Parses a given {@link Class} and registers its annotated methods, the ones with the {@link ScarpetFunction} annotation,
      * to be used in the Scarpet language.</p>
      * 
-     * <p><b>Only call this method once per class per lifetime of the JVM!</b> (for example, at {@link CarpetExtension#onGameStarted()} or 
+     * <p><b>Only call this method once per class per lifetime of the JVM!</b> (for example, at {@link carpet.CarpetExtension#onGameStarted()} or
      * {@link ModInitializer#onInitialize()}).</p>
      * 
      * <p>There is a set of requirements for the class and its methods:</p>

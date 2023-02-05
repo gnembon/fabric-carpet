@@ -3,6 +3,7 @@ package carpet.script.annotation;
 import java.util.HashMap;
 import java.util.Map;
 
+import carpet.script.Context;
 import carpet.script.value.AbstractListValue;
 import carpet.script.value.BlockValue;
 import carpet.script.value.BooleanValue;
@@ -79,7 +80,7 @@ public final class ValueCaster<R> implements ValueConverter<R> // R always exten
 
     @Override
     @SuppressWarnings("unchecked") // more than checked, see SimpleTypeConverter#converter for reasoning
-    public R convert(final Value value)
+    public R convert(final Value value, final Context context)
     {
         if (!outputType.isInstance(value))
         {
