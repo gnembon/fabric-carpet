@@ -148,7 +148,7 @@ public interface Param
             @Override public String getTypeName() { return null; }
 
             @Override
-            public Context convert(final Value value)
+            public Context convert(final Value value, final Context context)
             {
                 throw new UnsupportedOperationException("Called convert() with Value in Context Provider converter, where only checkAndConvert is supported");
             }
@@ -175,7 +175,7 @@ public interface Param
             @Override public String getTypeName() { return null; }
 
             @Override
-            public Context.Type convert(final Value value)
+            public Context.Type convert(final Value value, final Context context)
             {
                 throw new UnsupportedOperationException("Called convert() with a Value in TheLazyT Provider, where only checkAndConvert is supported");
             }

@@ -50,13 +50,13 @@ final class OptionalConverter<R> implements ValueConverter<Optional<R>>
      *           {@link #checkAndConvert(Iterator, Context, Context.Type)} and is only used as a fallback in types that don't support it.
      */
     @Override
-    public Optional<R> convert(final Value value)
+    public Optional<R> convert(final Value value, final Context context)
     {
         if (value.isNull())
         {
             return Optional.empty();
         }
-        final R converted = typeConverter.convert(value);
+        final R converted = typeConverter.convert(value, context);
         if (converted == null)
         {
             return null;

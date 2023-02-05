@@ -37,15 +37,15 @@ class MapConverter<K, V> implements ValueConverter<Map<K, V>>
     }
 
     @Override
-    public Map<K, V> convert(final Value value)
+    public Map<K, V> convert(final Value value, final Context context)
     {
         final Map<K, V> result = new HashMap<>();
         if (value instanceof MapValue)
         {
             for (final Entry<Value, Value> entry : ((MapValue) value).getMap().entrySet())
             {
-                final K key = keyConverter.convert(entry.getKey());
-                final V val = valueConverter.convert(entry.getValue());
+                final K key = keyConverter.convert(entry.getKey(), context);
+                final V val = valueConverter.convert(entry.getValue(), context);
                 if (key == null || val == null)
                 {
                     return null;
@@ -105,14 +105,14 @@ class MapConverter<K, V> implements ValueConverter<Map<K, V>>
         }
 
         @Override
-        public Map<K, V> convert(final Value value) {
-            return value instanceof MapValue ? super.convert(value)
-                    : value instanceof ListValue ? convertList(((ListValue)value).getItems())
+        public Map<K, V> convert(final Value value, final Context context) {
+            return value instanceof MapValue ? super.convert(value, context)
+                    : value instanceof ListValue ? convertList(((ListValue)value).getItems(), context)
                             : null; // Multiparam mode can only be used in evalAndConvert 
         }
 
 
-        private Map<K, V> convertList(final List<Value> valueList)
+        private Map<K, V> convertList(final List<Value> valueList, final Context context)
         {
             if (valueList.size() % 2 == 1)
             {
@@ -122,8 +122,8 @@ class MapConverter<K, V> implements ValueConverter<Map<K, V>>
             final Iterator<Value> val = valueList.iterator();
             while (val.hasNext())
             {
-                final K key = keyConverter.convert(val.next());
-                final V value = valueConverter.convert(val.next());
+                final K key = keyConverter.convert(val.next(), context);
+                final V value = valueConverter.convert(val.next(), context);
                 if (key == null || value == null)
                 {
                     return null;
@@ -143,11 +143,11 @@ class MapConverter<K, V> implements ValueConverter<Map<K, V>>
             final Value val = valueIterator.next();
             if (!acceptMultiParam || val instanceof MapValue || (val instanceof ListValue && !(keyConverter instanceof ListConverter)))
             {
-                return convert(val);                              // @KeyValuePairs Map<List<Something>, Boolean> will not support list consumption
+                return convert(val, context);                              // @KeyValuePairs Map<List<Something>, Boolean> will not support list consumption
             }
             
             final Map<K, V> map = new HashMap<>();
-            K key = keyConverter.convert(val); //First pair is manual since we got it to check for a different conversion mode
+            K key = keyConverter.convert(val, context); //First pair is manual since we got it to check for a different conversion mode
             V value = valueConverter.checkAndConvert(valueIterator, context, theLazyT);
             if (key == null || value == null)
             {

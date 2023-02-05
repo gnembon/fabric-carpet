@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import carpet.script.Context;
 import carpet.script.value.ListValue;
 import carpet.script.value.Value;
 
@@ -32,17 +33,17 @@ final class ListConverter<T> implements ValueConverter<List<T>>
     }
 
     @Override
-    public List<T> convert(final Value value)
+    public List<T> convert(final Value value, final Context context)
     {
-        return value instanceof ListValue ? convertListValue((ListValue) value) : allowSingletonCreation ? convertSingleton(value) : null;
+        return value instanceof ListValue ? convertListValue((ListValue) value, context) : allowSingletonCreation ? convertSingleton(value, context) : null;
     }
 
-    private List<T> convertListValue(final ListValue values)
+    private List<T> convertListValue(final ListValue values, final Context context)
     {
         final List<T> list = new ArrayList<>(values.getItems().size());
         for (final Value value : values)
         {
-            final T converted = itemConverter.convert(value);
+            final T converted = itemConverter.convert(value, context);
             if (converted == null)
             {
                 return null;
@@ -52,9 +53,9 @@ final class ListConverter<T> implements ValueConverter<List<T>>
         return list;
     }
 
-    private List<T> convertSingleton(final Value val)
+    private List<T> convertSingleton(final Value val, final Context context)
     {
-        final T converted = itemConverter.convert(val);
+        final T converted = itemConverter.convert(val, context);
         if (converted == null)
         {
             return null;
