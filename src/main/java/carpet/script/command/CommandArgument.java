@@ -1,9 +1,10 @@
 package carpet.script.command;
 
-import carpet.CarpetServer;
-import carpet.fakes.BlockStateArgumentInterface;
 import carpet.script.CarpetScriptHost;
+import carpet.script.CarpetScriptServer;
 import carpet.script.argument.FunctionArgument;
+import carpet.script.external.Carpet;
+import carpet.script.external.Vanilla;
 import carpet.script.value.BlockValue;
 import carpet.script.value.BooleanValue;
 import carpet.script.value.EntityValue;
@@ -15,8 +16,6 @@ import carpet.script.value.NumericValue;
 import carpet.script.value.StringValue;
 import carpet.script.value.Value;
 import carpet.script.value.ValueConversions;
-import carpet.utils.CarpetProfiler;
-import com.mojang.brigadier.exceptions.DynamicCommandExceptionType;
 import com.mojang.datafixers.util.Either;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
@@ -134,7 +133,7 @@ public abstract class CommandArgument
             new VanillaUnconfigurableArgument("block", BlockStateArgument::block,
                     (c, p) -> {
                         BlockInput result = BlockStateArgument.getBlock(c, p);
-                        return new BlockValue(result.getState(), c.getSource().getLevel(), null, ((BlockStateArgumentInterface) result).getCMTag());
+                        return new BlockValue(result.getState(), c.getSource().getLevel(), null, Vanilla.BlockInput_getTag(result));
                     },
                     param -> (ctx, builder) -> ctx.getArgument(param, BlockStateArgument.class).listSuggestions(ctx, builder)
             ),
@@ -318,8 +317,9 @@ public abstract class CommandArgument
             return argument(param, arg.getArgumentType(host));
         }
         final String hostName = host.getName();
+        final CarpetScriptServer scriptServer = host.scriptServer();
         return argument(param, arg.getArgumentType(host)).suggests((ctx, b) -> {
-            final CarpetScriptHost cHost = CarpetServer.scriptServer.modules.get(hostName).retrieveOwnForExecution(ctx.getSource());
+            final CarpetScriptHost cHost = scriptServer.modules.get(hostName).retrieveOwnForExecution(ctx.getSource());
             return arg.suggest(ctx, b, cHost);
         });
     }
@@ -426,7 +426,7 @@ public abstract class CommandArgument
     {
         if (customSuggester != null)
         {
-            final CarpetProfiler.ProfilerToken currentSection = CarpetProfiler.start_section(null, "Scarpet command", CarpetProfiler.TYPE.GENERAL);
+            final Runnable currentSection = Carpet.startProfilerSection("Scarpet command");
             final Map<Value, Value> params = new HashMap<>();
             for (final ParsedCommandNode<CommandSourceStack> pnode : context.getNodes())
             {
@@ -445,7 +445,7 @@ public abstract class CommandArgument
                 throw error("Custom suggester should return a list of options" + " for custom type " + suffix);
             }
             final Collection<String> res = ((ListValue) response).getItems().stream().map(Value::getString).collect(Collectors.toList());
-            CarpetProfiler.end_current_section(currentSection);
+            currentSection.run();
             return res;
         }
         return needsMatching ? examples : Collections.singletonList("... " + getTypeSuffix());

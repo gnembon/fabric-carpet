@@ -1,7 +1,7 @@
 package carpet.mixins;
 
 import carpet.CarpetServer;
-import carpet.fakes.ServerPlayerEntityInterface;
+import carpet.fakes.ServerPlayerInterface;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.players.PlayerList;
 import org.spongepowered.asm.mixin.Mixin;
@@ -27,7 +27,7 @@ public class PlayerList_scarpetEventsMixin
     ))
     private void invalidatePreviousInstance(ServerPlayer player, boolean alive, CallbackInfoReturnable<ServerPlayer> cir)
     {
-        ((ServerPlayerEntityInterface)player).invalidateEntityObjectReference();
+        ((ServerPlayerInterface)player).invalidateEntityObjectReference();
     }
 
     @Inject(method = "reloadResources", at = @At("HEAD"))

@@ -27,7 +27,7 @@ public class MobAICommand
                         suggests( (c, b) -> suggest(MobAI.availbleTypes(c.getSource()), b)).
                         then(literal("clear").executes( (c) ->
                                 {
-                                    MobAI.clearTracking(getSummonableEntityType(c, "entity type").value());
+                                    MobAI.clearTracking(c.getSource().getServer(), getSummonableEntityType(c, "entity type").value());
                                     return 1;
                                 }
                         )).

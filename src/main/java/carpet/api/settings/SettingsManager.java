@@ -25,6 +25,8 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import carpet.script.CarpetEventServer;
+import carpet.script.value.StringValue;
 import com.google.common.collect.Sets;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
@@ -54,7 +56,6 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.level.storage.LevelResource;
 
-import static carpet.script.CarpetEventServer.Event.CARPET_RULE_CHANGES;
 import static carpet.utils.Translations.tr;
 import static java.util.Comparator.comparing;
 import static net.minecraft.commands.Commands.argument;
@@ -258,13 +259,39 @@ public class SettingsManager {
         rules.put(rule.name(), rule);
     }
 
+    public static final CarpetEventServer.Event CARPET_RULE_CHANGES = new CarpetEventServer.Event("carpet_rule_changes", 2, true)
+    {
+        @Override
+        public void handleAny(final Object ... args)
+        {
+            final CarpetRule<?> rule = (CarpetRule<?>) args[0];
+            final CommandSourceStack source = (CommandSourceStack) args[1];
+            final String id = rule.settingsManager().identifier();
+            final String namespace;
+            if (!id.equals("carpet"))
+            {
+                namespace = id + ":";
+            }
+            else
+            {
+                namespace = "";
+            }
+            handler.call(
+                    () -> Arrays.asList(
+                            new StringValue(namespace + rule.name()),
+                            new StringValue(RuleHelper.toRuleString(rule.value()))
+                    ), () -> source
+            );
+        }
+    };
+
     public void notifyRuleChanged(CommandSourceStack source, CarpetRule<?> rule, String userInput)
     {
         observers.forEach(observer -> observer.ruleChanged(source, rule, userInput));
         staticObservers.forEach(observer -> observer.ruleChanged(source, rule, userInput));
         ServerNetworkHandler.updateRuleWithConnectedClients(rule);
         switchScarpetRuleIfNeeded(source, rule); //TODO move into rule
-        if (CARPET_RULE_CHANGES.isNeeded()) CARPET_RULE_CHANGES.onCarpetRuleChanges(rule, source);
+        if (CARPET_RULE_CHANGES.isNeeded()) CARPET_RULE_CHANGES.handleAny(rule, source);
     }
 
     /**

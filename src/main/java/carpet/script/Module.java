@@ -9,10 +9,8 @@ import java.util.Objects;
 
 import org.apache.commons.io.IOUtils;
 
-import carpet.CarpetServer;
 import carpet.script.argument.FileArgument;
 import net.minecraft.nbt.Tag;
-import net.minecraft.world.level.storage.LevelResource;
 
 public record Module(String name, String code, boolean library)
 {
@@ -89,9 +87,9 @@ public record Module(String name, String code, boolean library)
         }
     }
 
-    public static Tag getData(final Module module)
+    public static Tag getData(final Module module, final ScriptServer scriptServer)
     {
-        final Path dataFile = resolveResource(module);
+        final Path dataFile = resolveResource(module, scriptServer);
         if (dataFile == null || !Files.exists(dataFile) || !(Files.isRegularFile(dataFile)))
         {
             return null;
@@ -102,9 +100,9 @@ public record Module(String name, String code, boolean library)
         }
     }
 
-    public static void saveData(final Module module, final Tag globalState)
+    public static void saveData(final Module module, final Tag globalState, final ScriptServer scriptServer)
     {
-        final Path dataFile = resolveResource(module);
+        final Path dataFile = resolveResource(module, scriptServer);
         if (dataFile == null)
         {
             return;
@@ -126,9 +124,8 @@ public record Module(String name, String code, boolean library)
         }
     }
 
-    private static Path resolveResource(final Module module)
+    private static Path resolveResource(final Module module, final ScriptServer scriptServer)
     {
-        return module == null ? null : CarpetServer.minecraft_server.getWorldPath(LevelResource.ROOT).resolve("scripts/" + module.name() + ".data.nbt"); // commandline app
+        return module == null ? null : scriptServer.resolveResource(module.name() + ".data.nbt");
     }
-
 }

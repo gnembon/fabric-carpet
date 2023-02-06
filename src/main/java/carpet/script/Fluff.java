@@ -1,6 +1,5 @@
 package carpet.script;
 
-import carpet.CarpetSettings;
 import carpet.script.exception.ExpressionException;
 import carpet.script.exception.InternalExpressionException;
 import carpet.script.value.FunctionUnpackedArgumentsValue;
@@ -218,7 +217,7 @@ public abstract class Fluff
                     }
                     else
                     {
-                        CarpetSettings.LOG.error("How did we get here 1");
+                        CarpetScriptServer.LOG.error("How did we get here 1");
                     }
                     return params;
                 }

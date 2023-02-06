@@ -88,7 +88,6 @@
     "Player_parrotMixin",
     "SaplingBlock_desertShrubsMixin",
     "EntityMixin",
-    "ChunkGenerator_scarpetMixin",
     "Guardian_renewableSpongesMixin",
     "Husk_templesMixin",
     "ChunkGenerator_customMobSpawnsMixin",

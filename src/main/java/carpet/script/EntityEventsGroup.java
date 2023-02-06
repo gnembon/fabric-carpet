@@ -1,7 +1,7 @@
 package carpet.script;
 
-import carpet.CarpetServer;
 import carpet.script.exception.InternalExpressionException;
+import carpet.script.external.Vanilla;
 import carpet.script.value.EntityValue;
 import carpet.script.value.FunctionValue;
 import carpet.script.value.NumericValue;
@@ -46,7 +46,8 @@ public class EntityEventsGroup
         {
             return;
         }
-        if (CarpetServer.scriptServer == null)
+        final CarpetScriptServer scriptServer = Vanilla.MinecraftServer_getScriptServer(entity.getServer());
+        if (scriptServer.stopAll)
         {
             return; // executed after world is closin down
         }
@@ -54,7 +55,7 @@ public class EntityEventsGroup
         {
             final Map.Entry<EventKey, CarpetEventServer.Callback> action = iterator.next();
             final EventKey key = action.getKey();
-            final ScriptHost host = CarpetServer.scriptServer.getAppHostByName(key.host());
+            final ScriptHost host = scriptServer.getAppHostByName(key.host());
             if (host == null)
             {
                 iterator.remove();
@@ -81,7 +82,7 @@ public class EntityEventsGroup
         final EventKey key = new EventKey(host.getName(), host.user);
         if (fun != null)
         {
-            final CarpetEventServer.Callback call = type.create(key, fun, extraargs);
+            final CarpetEventServer.Callback call = type.create(key, fun, extraargs, (CarpetScriptServer) host.scriptServer());
             if (call == null)
             {
                 throw new InternalExpressionException("wrong number of arguments for callback, required " + type.argcount);
@@ -154,13 +155,13 @@ public class EntityEventsGroup
             byName.put(identifier, this);
         }
 
-        public CarpetEventServer.Callback create(final EventKey key, final FunctionValue function, final List<Value> extraArgs)
+        public CarpetEventServer.Callback create(final EventKey key, final FunctionValue function, final List<Value> extraArgs, final CarpetScriptServer scriptServer)
         {
             if ((function.getArguments().size() - (extraArgs == null ? 0 : extraArgs.size())) != argcount)
             {
                 return null;
             }
-            return new CarpetEventServer.Callback(key.host(), key.user(), function, extraArgs);
+            return new CarpetEventServer.Callback(key.host(), key.user(), function, extraArgs, scriptServer);
         }
 
         public CarpetEventServer.CallbackResult call(final CarpetEventServer.Callback tickCall, final Entity entity, final Object... args)

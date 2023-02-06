@@ -1,6 +1,6 @@
 package carpet.script.value;
 
-import carpet.CarpetSettings;
+import carpet.script.CarpetScriptServer;
 import carpet.script.Context;
 import carpet.script.Expression;
 import carpet.script.Fluff;
@@ -18,7 +18,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 
 import net.minecraft.nbt.StringTag;
 import net.minecraft.nbt.Tag;
@@ -200,7 +199,7 @@ public class FunctionValue extends Value implements Fluff.ILazyFunction
             final Value param = lv.evalValue(c, Context.NONE);
             if (param instanceof FunctionUnpackedArgumentsValue)
             {
-                CarpetSettings.LOG.error("How did we get here?");
+                CarpetScriptServer.LOG.error("How did we get here?");
                 params.addAll(((ListValue) param).getItems());
             }
             else

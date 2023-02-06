@@ -1,7 +1,7 @@
 package carpet.script.exception;
 
+import carpet.script.external.Carpet;
 import carpet.script.value.FunctionValue;
-import carpet.utils.Messenger;
 
 import java.util.List;
 
@@ -23,7 +23,7 @@ public class CarpetExpressionException extends StacklessRuntimeException impleme
         {
             for (final FunctionValue fun : stack)
             {
-                Messenger.m(source, "e  ... in " + fun.fullName(), "e /" + (fun.getToken().lineno + 1) + ":" + (fun.getToken().linepos + 1));
+                Carpet.Messenger_message(source, "e  ... in " + fun.fullName(), "e /" + (fun.getToken().lineno + 1) + ":" + (fun.getToken().linepos + 1));
             }
         }
     }

@@ -10,6 +10,7 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -50,6 +51,11 @@ public abstract class ScriptHost
     public boolean resetRandom(final long aLong)
     {
         return randomizers.remove(aLong) != null;
+    }
+
+    public Path resolveScriptFile(final String suffix)
+    {
+        return scriptServer.resolveResource(suffix);
     }
 
     public static class ModuleData

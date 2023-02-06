@@ -1,6 +1,6 @@
 package carpet.script.value;
 
-import carpet.CarpetSettings;
+import carpet.script.CarpetScriptServer;
 import carpet.script.exception.InternalExpressionException;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonPrimitive;
@@ -46,7 +46,7 @@ public abstract class Value implements Comparable<Value>, Cloneable
         catch (final CloneNotSupportedException e)
         {
             // should not happen
-            CarpetSettings.LOG.error("Failed to clone variable", e);
+            CarpetScriptServer.LOG.error("Failed to clone variable", e);
             throw new InternalExpressionException("Variable of type " + getTypeString() + " is not cloneable. Tell gnembon about it, this shoudn't happen");
         }
         copy.boundVariable = value;

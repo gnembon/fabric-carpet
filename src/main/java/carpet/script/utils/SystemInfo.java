@@ -1,11 +1,9 @@
 package carpet.script.utils;
 
-import carpet.CarpetServer;
-import carpet.CarpetSettings;
-import carpet.api.settings.CarpetRule;
-import carpet.api.settings.RuleHelper;
 import carpet.script.CarpetContext;
 import carpet.script.CarpetScriptHost;
+import carpet.script.external.Carpet;
+import carpet.script.external.Vanilla;
 import carpet.script.value.BooleanValue;
 import carpet.script.value.EntityValue;
 import carpet.script.value.ListValue;
@@ -14,10 +12,7 @@ import carpet.script.value.NumericValue;
 import carpet.script.value.StringValue;
 import carpet.script.value.Value;
 import carpet.script.value.ValueConversions;
-import carpet.api.settings.SettingsManager;
 import com.sun.management.OperatingSystemMXBean;
-import net.fabricmc.loader.api.FabricLoader;
-import net.fabricmc.loader.api.ModContainer;
 import net.minecraft.SharedConstants;
 import net.minecraft.server.packs.PackType;
 import net.minecraft.world.level.GameRules;
@@ -29,7 +24,6 @@ import net.minecraft.world.phys.Vec2;
 import java.lang.management.ManagementFactory;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -93,14 +87,14 @@ public class SystemInfo
         put("game_view_distance", c -> new NumericValue(c.server().getPlayerList().getViewDistance()));
         put("game_mod_name", c -> StringValue.of(c.server().getServerModName()));
         put("game_version", c -> StringValue.of(c.server().getServerVersion()));
-        put("game_target", c -> StringValue.of(CarpetSettings.releaseTarget));
+        put("game_target", c -> StringValue.of(Vanilla.MinecraftServer_getReleaseTarget(c.server())));
         put("game_protocol", c -> NumericValue.of(SharedConstants.getProtocolVersion()));
         put("game_major_target", c -> {
-            final String[] vers = CarpetSettings.releaseTarget.split("\\.");
+            final String[] vers = Vanilla.MinecraftServer_getReleaseTarget(c.server()).split("\\.");
             return NumericValue.of((vers.length > 1) ? Integer.parseInt(vers[1]) : 0);
         });
         put("game_minor_target", c -> {
-            final String[] vers = CarpetSettings.releaseTarget.split("\\.");
+            final String[] vers = Vanilla.MinecraftServer_getReleaseTarget(c.server()).split("\\.");
             return NumericValue.of((vers.length > 2) ? Integer.parseInt(vers[2]) : 0);
         });
         put("game_stable", c -> BooleanValue.of(SharedConstants.getCurrentVersion().isStable()));
@@ -133,15 +127,8 @@ public class SystemInfo
             }
             return whitelist;
         });
-        put("server_dev_environment", c -> BooleanValue.of(FabricLoader.getInstance().isDevelopmentEnvironment()));
-        put("server_mods", c -> {
-            final Map<Value, Value> ret = new HashMap<>();
-            for (final ModContainer mod : FabricLoader.getInstance().getAllMods())
-            {
-                ret.put(new StringValue(mod.getMetadata().getId()), new StringValue(mod.getMetadata().getVersion().getFriendlyString()));
-            }
-            return MapValue.wrap(ret);
-        });
+        put("server_dev_environment", c -> BooleanValue.of(Vanilla.isDevelopmentEnvironment()));
+        put("server_mods", c -> Vanilla.getServerMods(c.server()));
         put("server_last_tick_times", c -> {
             //assuming we are in the tick world section
             // might be off one tick when run in the off tasks or asynchronously.
@@ -181,20 +168,7 @@ public class SystemInfo
                     OperatingSystemMXBean.class);
             return new NumericValue(osBean.getProcessCpuLoad());
         });
-        put("world_carpet_rules", c -> {
-            final Collection<CarpetRule<?>> rules = CarpetServer.settingsManager.getCarpetRules();
-            final MapValue carpetRules = new MapValue(Collections.emptyList());
-            rules.forEach(rule -> carpetRules.put(new StringValue(rule.name()), new StringValue(RuleHelper.toRuleString(rule.value()))));
-            CarpetServer.extensions.forEach(e -> {
-                final SettingsManager manager = e.extensionSettingsManager();
-                if (manager == null)
-                {
-                    return;
-                }
-                manager.getCarpetRules().forEach(rule -> carpetRules.put(new StringValue(manager.identifier() + ":" + rule.name()), new StringValue(RuleHelper.toRuleString(rule.value()))));
-            });
-            return carpetRules;
-        });
+        put("world_carpet_rules", c -> Carpet.getAllCarpetRules());
         put("world_gamerules", c -> {
             final Map<Value, Value> rules = new HashMap<>();
             final GameRules gameRules = c.level().getGameRules();
@@ -217,9 +191,7 @@ public class SystemInfo
             final Vec2 rotation = c.source().getRotation();
             return ListValue.of(new NumericValue(rotation.x), new NumericValue(rotation.y));
         });
-
-        put("scarpet_version", c -> StringValue.of(CarpetSettings.carpetVersion));
-
+        put("scarpet_version", c -> StringValue.of(Carpet.getCarpetVersion()));
     }};
 
     public static Value get(final String what, final CarpetContext cc)

@@ -1,9 +1,9 @@
 package carpet.script.utils;
 
-import carpet.CarpetSettings;
-import carpet.mixins.ShulkerBoxAccessMixin;
+import carpet.script.CarpetScriptServer;
+import carpet.script.external.Carpet;
+import carpet.script.external.VanillaClient;
 import carpet.script.utils.shapes.ShapeDirection;
-import carpet.utils.CarpetProfiler;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.BufferBuilder;
@@ -82,7 +82,7 @@ public class ShapesRenderer
 
     public void render(final PoseStack matrices, final Camera camera, final float partialTick)
     {
-        final CarpetProfiler.ProfilerToken token = CarpetProfiler.start_section(null, "Scarpet client", CarpetProfiler.TYPE.GENERAL);
+        final Runnable token = Carpet.startProfilerSection("Scarpet client");
         //Camera camera = this.client.gameRenderer.getCamera();
         final ClientLevel iWorld = this.client.level;
         final ResourceKey<Level> dimensionType = iWorld.dimension();
@@ -163,17 +163,17 @@ public class ShapesRenderer
         RenderSystem.depthMask(true);
         RenderSystem.enableBlend();
         RenderSystem.defaultBlendFunc();
-        CarpetProfiler.end_current_section(token);
+        token.run();
     }
 
     public void addShapes(final ListTag tag)
     {
-        final CarpetProfiler.ProfilerToken token = CarpetProfiler.start_section(null, "Scarpet client", CarpetProfiler.TYPE.GENERAL);
+        final Runnable token = Carpet.startProfilerSection("Scarpet client");
         for (int i = 0, count = tag.size(); i < count; i++)
         {
             addShape(tag.getCompound(i));
         }
-        CarpetProfiler.end_current_section(token);
+        token.run();
     }
 
     public void addShape(final CompoundTag tag)
@@ -187,7 +187,7 @@ public class ShapesRenderer
         shapeFactory = renderedShapes.get(tag.getString("shape"));
         if (shapeFactory == null)
         {
-            CarpetSettings.LOG.info("Unrecognized shape: " + tag.getString("shape"));
+            CarpetScriptServer.LOG.info("Unrecognized shape: " + tag.getString("shape"));
         }
         else
         {
@@ -217,11 +217,11 @@ public class ShapesRenderer
 
     public void renewShapes()
     {
-        final CarpetProfiler.ProfilerToken token = CarpetProfiler.start_section(null, "Scarpet client", CarpetProfiler.TYPE.GENERAL);
+        final Runnable token = Carpet.startProfilerSection("Scarpet client");
         shapes.values().forEach(el -> el.values().forEach(shape -> shape.expiryTick++));
         labels.values().forEach(el -> el.values().forEach(shape -> shape.expiryTick++));
 
-        CarpetProfiler.end_current_section(token);
+        token.run();
     }
 
     public abstract static class RenderedShape<T extends ShapeDispatcher.ExpiringShape>
@@ -468,7 +468,7 @@ public class ShapesRenderer
             poseStack.mulPose(direction.getRotation());
             poseStack.scale(1.0F, -1.0F, -1.0F);
             poseStack.translate(0.0, -1.0, 0.0);
-            final ShulkerModel<?> model = ((ShulkerBoxAccessMixin) client.getBlockEntityRenderDispatcher().getRenderer(BlockEntity)).getModel();
+            final ShulkerModel<?> model = VanillaClient.ShulkerBoxRenderer_model(client.getBlockEntityRenderDispatcher().getRenderer(shulkerBoxBlockEntity));
             final ModelPart modelPart = model.getLid();
             modelPart.setPos(0.0F, 24.0F - shulkerBoxBlockEntity.getProgress(f) * 0.5F * 16.0F, 0.0F);
             modelPart.yRot = 270.0F * shulkerBoxBlockEntity.getProgress(f) * (float) (Math.PI / 180.0);
@@ -561,7 +561,7 @@ public class ShapesRenderer
             }
             catch (final ClassCastException ignored)
             {
-                CarpetSettings.LOG.error("shape " + rshape.shape.getClass() + " cannot cast to a Label");
+                CarpetScriptServer.LOG.error("shape " + rshape.shape.getClass() + " cannot cast to a Label");
             }
         }
     }

@@ -1,7 +1,5 @@
 package carpet.script;
 
-import carpet.CarpetServer;
-import carpet.CarpetSettings;
 import carpet.script.api.Auxiliary;
 import carpet.script.argument.FileArgument;
 import carpet.script.argument.FunctionArgument;
@@ -13,6 +11,8 @@ import carpet.script.exception.IntegrityException;
 import carpet.script.exception.InternalExpressionException;
 import carpet.script.exception.InvalidCallbackException;
 import carpet.script.exception.LoadException;
+import carpet.script.external.Carpet;
+import carpet.script.external.Vanilla;
 import carpet.script.utils.AppStoreManager;
 import carpet.script.value.EntityValue;
 import carpet.script.value.FunctionValue;
@@ -21,8 +21,6 @@ import carpet.script.value.MapValue;
 import carpet.script.value.NumericValue;
 import carpet.script.value.StringValue;
 import carpet.script.value.Value;
-import carpet.utils.CarpetProfiler;
-import carpet.utils.Messenger;
 
 import com.google.gson.JsonElement;
 import com.mojang.brigadier.arguments.StringArgumentType;
@@ -144,8 +142,9 @@ public class CarpetScriptHost extends ScriptHost
 
     private static int execute(final CommandContext<CommandSourceStack> ctx, final String hostName, final FunctionArgument funcSpec, final List<String> paramNames) throws CommandSyntaxException
     {
-        final CarpetProfiler.ProfilerToken currentSection = CarpetProfiler.start_section(null, "Scarpet command", CarpetProfiler.TYPE.GENERAL);
-        final CarpetScriptHost cHost = CarpetServer.scriptServer.modules.get(hostName).retrieveOwnForExecution(ctx.getSource());
+        final Runnable token = Carpet.startProfilerSection("Scarpet command");
+        final CarpetScriptServer scriptServer = Vanilla.MinecraftServer_getScriptServer(ctx.getSource().getServer());
+        final CarpetScriptHost cHost = scriptServer.modules.get(hostName).retrieveOwnForExecution(ctx.getSource());
         final List<String> argNames = funcSpec.function.getArguments();
         if ((argNames.size() - funcSpec.args.size()) != paramNames.size())
         {
@@ -159,7 +158,7 @@ public class CarpetScriptHost extends ScriptHost
         args.addAll(funcSpec.args);
         final Value response = cHost.handleCommand(ctx.getSource(), funcSpec.function, args);
         final int intres = (int) response.readInteger();
-        CarpetProfiler.end_current_section(currentSection);
+        token.run();
         return intres;
     }
 
@@ -239,18 +238,18 @@ public class CarpetScriptHost extends ScriptHost
         return s -> {
             try
             {
-                final CarpetProfiler.ProfilerToken currentSection = CarpetProfiler.start_section(null, "Scarpet command", CarpetProfiler.TYPE.GENERAL);
-                final CarpetScriptHost cHost = CarpetServer.scriptServer.modules.get(hostName).retrieveOwnForExecution(s);
+                final Runnable token = Carpet.startProfilerSection("Scarpet command");
+                final CarpetScriptHost cHost = scriptServer().modules.get(hostName).retrieveOwnForExecution(s);
                 final Value response = cHost.handleCommand(s, fun, Collections.singletonList(
                         (s.getEntity() instanceof ServerPlayer) ? new EntityValue(s.getEntity()) : Value.NULL)
                 );
                 final boolean res = response.getBoolean();
-                CarpetProfiler.end_current_section(currentSection);
+                token.run();
                 return res;
             }
             catch (final CommandSyntaxException e)
             {
-                Messenger.m(s, "rb Unable to run app command: " + e.getMessage());
+                Carpet.Messenger_message(s, "rb Unable to run app command: " + e.getMessage());
                 return false;
             }
         };
@@ -434,14 +433,14 @@ public class CarpetScriptHost extends ScriptHost
         }
         catch (final CommandSyntaxException e)
         {
-            notifier.accept(Messenger.c("r Error when handling of setting up custom argument types: " + e.getMessage()));
+            notifier.accept(Carpet.Messenger_compose("r Error when handling of setting up custom argument types: " + e.getMessage()));
             return false;
         }
         if (appConfig.get(StringValue.of("commands")) != null)
         {
             if (scriptServer().isInvalidCommandRoot(getName()))
             {
-                notifier.accept(Messenger.c("g A command with the app's name already exists in vanilla or an installed mod."));
+                notifier.accept(Carpet.Messenger_compose("g A command with the app's name already exists in vanilla or an installed mod."));
                 return null;
             }
             try
@@ -457,7 +456,7 @@ public class CarpetScriptHost extends ScriptHost
             catch (final CommandSyntaxException cse)
             {
                 // failed
-                notifier.accept(Messenger.c("r Failed to build command system: ", cse.getRawMessage()));
+                notifier.accept(Carpet.Messenger_compose("r Failed to build command system: ", cse.getRawMessage()));
                 return null;
             }
 
@@ -512,7 +511,7 @@ public class CarpetScriptHost extends ScriptHost
 
         if (scriptServer().isInvalidCommandRoot(getName()))
         {
-            notifier.accept(Messenger.c("g A command with the app's name already exists in vanilla or an installed mod."));
+            notifier.accept(Carpet.Messenger_compose("g A command with the app's name already exists in vanilla or an installed mod."));
             return null;
         }
 
@@ -523,7 +522,7 @@ public class CarpetScriptHost extends ScriptHost
         }
         catch (final CommandSyntaxException e)
         {
-            notifier.accept(Messenger.c("rb " + e.getMessage()));
+            notifier.accept(Carpet.Messenger_compose("rb " + e.getMessage()));
             return null;
         }
         final String hostName = getName();
@@ -535,7 +534,7 @@ public class CarpetScriptHost extends ScriptHost
                     final Value response = targetHost.handleCommandLegacy(c.getSource(), "__command", null, "");
                     if (!response.isNull())
                     {
-                        Messenger.m(c.getSource(), "gi " + response.getString());
+                        Carpet.Messenger_message(c.getSource(), "gi " + response.getString());
                     }
                     return (int) response.readInteger();
                 });
@@ -570,7 +569,7 @@ public class CarpetScriptHost extends ScriptHost
                                     final Value response = targetHost.handleCommandLegacy(c.getSource(), function, null, "");
                                     if (!response.isNull())
                                     {
-                                        Messenger.m(c.getSource(), "gi " + response.getString());
+                                        Carpet.Messenger_message(c.getSource(), "gi " + response.getString());
                                     }
                                     return (int) response.readInteger();
                                 }).
@@ -580,7 +579,7 @@ public class CarpetScriptHost extends ScriptHost
                                             final Value response = targetHost.handleCommandLegacy(c.getSource(), function, null, StringArgumentType.getString(c, "args..."));
                                             if (!response.isNull())
                                             {
-                                                Messenger.m(c.getSource(), "gi " + response.getString());
+                                                Carpet.Messenger_message(c.getSource(), "gi " + response.getString());
                                             }
                                             return (int) response.readInteger();
                                         })));
@@ -721,9 +720,9 @@ public class CarpetScriptHost extends ScriptHost
     {
         try
         {
-            final CarpetProfiler.ProfilerToken currentSection = CarpetProfiler.start_section(null, "Scarpet command", CarpetProfiler.TYPE.GENERAL);
+            final Runnable token = Carpet.startProfilerSection("Scarpet command");
             final Value res = callLegacy(source, call, coords, arg);
-            CarpetProfiler.end_current_section(currentSection);
+            token.run();
             return res;
         }
         catch (final CarpetExpressionException exc)
@@ -764,7 +763,7 @@ public class CarpetScriptHost extends ScriptHost
 
     public Value callLegacy(final CommandSourceStack source, final String call, final List<Integer> coords, final String arg)
     {
-        if (CarpetServer.scriptServer.stopAll)
+        if (scriptServer().stopAll)
         {
             throw new CarpetExpressionException("SCARPET PAUSED (unpause with /script resume)", null);
         }
@@ -871,7 +870,7 @@ public class CarpetScriptHost extends ScriptHost
 
     public Value call(final CommandSourceStack source, final FunctionValue function, final List<Value> argv)
     {
-        if (CarpetServer.scriptServer.stopAll)
+        if (scriptServer().stopAll)
         {
             throw new CarpetExpressionException("SCARPET PAUSED (unpause with /script resume)", null);
         }
@@ -909,7 +908,7 @@ public class CarpetScriptHost extends ScriptHost
 
     public Value callUDF(final BlockPos origin, final CommandSourceStack source, final FunctionValue fun, final List<Value> argv) throws InvalidCallbackException, IntegrityException
     {
-        if (CarpetServer.scriptServer.stopAll)
+        if (scriptServer().stopAll)
         {
             return Value.NULL;
         }
@@ -987,12 +986,12 @@ public class CarpetScriptHost extends ScriptHost
 
     private void dumpState()
     {
-        Module.saveData(main, globalState);
+        Module.saveData(main, globalState, this.scriptServer());
     }
 
     private Tag loadState()
     {
-        return Module.getData(main);
+        return Module.getData(main, this.scriptServer());
     }
 
     public Tag readFileTag(final FileArgument fdesc)
@@ -1061,7 +1060,7 @@ public class CarpetScriptHost extends ScriptHost
 
     public boolean applyActionForResource(final String path, final boolean shared, final Consumer<Path> action)
     {
-        final FileArgument fdesc = FileArgument.resourceFromPath(path, FileArgument.Reason.CREATE, shared);
+        final FileArgument fdesc = FileArgument.resourceFromPath(this, path, FileArgument.Reason.CREATE, shared);
         return fdesc.findPathAndApply(main, action);
     }
 
@@ -1104,21 +1103,21 @@ public class CarpetScriptHost extends ScriptHost
                 {
                     shebang += " at pos " + (token.pos + 1);
                 }
-                Messenger.m(source, "r " + shebang);
+                Carpet.Messenger_message(source, "r " + shebang);
                 if (lines.length > 1 && token.lineno > 0)
                 {
-                    Messenger.m(source, withLocals("l", lines[token.lineno - 1], ctx));
+                    Carpet.Messenger_message(source, withLocals("l", lines[token.lineno - 1], ctx));
                 }
-                Messenger.m(source, withLocals("l", lines[token.lineno].substring(0, token.linepos), ctx), "r  HERE>> ",
+                Carpet.Messenger_message(source, withLocals("l", lines[token.lineno].substring(0, token.linepos), ctx), "r  HERE>> ",
                         withLocals("l", lines[token.lineno].substring(token.linepos), ctx));
                 if (lines.length > 1 && token.lineno < lines.length - 1)
                 {
-                    Messenger.m(source, withLocals("l", lines[token.lineno + 1], ctx));
+                    Carpet.Messenger_message(source, withLocals("l", lines[token.lineno + 1], ctx));
                 }
             }
             else
             {
-                Messenger.m(source, "r " + shebang);
+                Carpet.Messenger_message(source, "r " + shebang);
             }
             return new ArrayList<>();
         };
@@ -1182,7 +1181,7 @@ public class CarpetScriptHost extends ScriptHost
         {
             stringsToFormat.add(format + line.substring(lastPos));
         }
-        return Messenger.c(stringsToFormat.toArray());
+        return Carpet.Messenger_compose(stringsToFormat.toArray());
     }
 
     @Override
@@ -1201,11 +1200,11 @@ public class CarpetScriptHost extends ScriptHost
                 cee.printStack(responsibleSource);
             }
             final String message = exception.getMessage();
-            Messenger.m(responsibleSource, "r " + intro + ((message == null || message.isEmpty()) ? "" : ": " + message));
+            Carpet.Messenger_message(responsibleSource, "r " + intro + ((message == null || message.isEmpty()) ? "" : ": " + message));
         }
         else
         {
-            CarpetSettings.LOG.error(intro + ": " + exception.getMessage());
+            CarpetScriptServer.LOG.error(intro + ": " + exception.getMessage());
         }
     }
 
@@ -1235,7 +1234,7 @@ public class CarpetScriptHost extends ScriptHost
     {
         if (super.issueDeprecation(feature))
         {
-            Messenger.m(responsibleSource, "rb '" + feature + "' is deprecated and soon will be removed. Please consult the docs for their replacement");
+            Carpet.Messenger_message(responsibleSource, "rb '" + feature + "' is deprecated and soon will be removed. Please consult the docs for their replacement");
             return true;
         }
         return false;

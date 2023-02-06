@@ -1,10 +1,12 @@
 package carpet.helpers;
 
-import carpet.fakes.ServerPlayerEntityInterface;
+import carpet.fakes.ServerPlayerInterface;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+
+import carpet.script.utils.Tracer;
 import net.minecraft.commands.arguments.EntityAnchorArgument;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -289,7 +291,7 @@ public class EntityPlayerActionPack
             @Override
             boolean execute(ServerPlayer player, Action action)
             {
-                EntityPlayerActionPack ap = ((ServerPlayerEntityInterface) player).getActionPack();
+                EntityPlayerActionPack ap = ((ServerPlayerInterface) player).getActionPack();
                 if (ap.itemUseCooldown > 0)
                 {
                     ap.itemUseCooldown--;
@@ -358,7 +360,7 @@ public class EntityPlayerActionPack
             @Override
             void inactiveTick(ServerPlayer player, Action action)
             {
-                EntityPlayerActionPack ap = ((ServerPlayerEntityInterface) player).getActionPack();
+                EntityPlayerActionPack ap = ((ServerPlayerInterface) player).getActionPack();
                 ap.itemUseCooldown = 0;
                 player.releaseUsingItem();
             }
@@ -380,7 +382,7 @@ public class EntityPlayerActionPack
                         return true;
                     }
                     case BLOCK: {
-                        EntityPlayerActionPack ap = ((ServerPlayerEntityInterface) player).getActionPack();
+                        EntityPlayerActionPack ap = ((ServerPlayerInterface) player).getActionPack();
                         if (ap.blockHitDelay > 0)
                         {
                             ap.blockHitDelay--;
@@ -451,7 +453,7 @@ public class EntityPlayerActionPack
             @Override
             void inactiveTick(ServerPlayer player, Action action)
             {
-                EntityPlayerActionPack ap = ((ServerPlayerEntityInterface) player).getActionPack();
+                EntityPlayerActionPack ap = ((ServerPlayerInterface) player).getActionPack();
                 if (ap.currentBlock == null) return;
                 player.level.destroyBlockProgress(-1, ap.currentBlock, -1);
                 player.gameMode.handleBlockBreakAction(ap.currentBlock, ServerboundPlayerActionPacket.Action.ABORT_DESTROY_BLOCK, Direction.DOWN, player.getLevel().getMaxBuildHeight(), -1);

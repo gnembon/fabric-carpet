@@ -92,6 +92,7 @@ public abstract class ServerLevel_scarpetMixin extends Level implements ServerWo
     private ServerLevelData serverLevelData;
     @Shadow @Final private PersistentEntitySectionManager<Entity> entityManager;
 
+    @Override
     public ServerLevelData getWorldPropertiesCM(){
         return serverLevelData;
     }

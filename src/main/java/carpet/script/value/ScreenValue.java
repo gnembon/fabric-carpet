@@ -1,9 +1,5 @@
 package carpet.script.value;
 
-import carpet.CarpetServer;
-import carpet.CarpetSettings;
-import carpet.fakes.ScreenHandlerInterface;
-
 import carpet.script.CarpetScriptHost;
 import carpet.script.CarpetScriptServer;
 import carpet.script.Context;
@@ -12,6 +8,7 @@ import carpet.script.exception.InternalExpressionException;
 import carpet.script.exception.InvalidCallbackException;
 import carpet.script.exception.ThrowStatement;
 import carpet.script.exception.Throwables;
+import carpet.script.external.Vanilla;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -31,7 +28,32 @@ import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.SimpleMenuProvider;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.inventory.*;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.AbstractFurnaceMenu;
+import net.minecraft.world.inventory.AnvilMenu;
+import net.minecraft.world.inventory.BeaconMenu;
+import net.minecraft.world.inventory.BlastFurnaceMenu;
+import net.minecraft.world.inventory.BrewingStandMenu;
+import net.minecraft.world.inventory.CartographyTableMenu;
+import net.minecraft.world.inventory.ChestMenu;
+import net.minecraft.world.inventory.ClickType;
+import net.minecraft.world.inventory.ContainerListener;
+import net.minecraft.world.inventory.CraftingMenu;
+import net.minecraft.world.inventory.DataSlot;
+import net.minecraft.world.inventory.EnchantmentMenu;
+import net.minecraft.world.inventory.FurnaceMenu;
+import net.minecraft.world.inventory.GrindstoneMenu;
+import net.minecraft.world.inventory.HopperMenu;
+import net.minecraft.world.inventory.LecternMenu;
+import net.minecraft.world.inventory.LegacySmithingMenu;
+import net.minecraft.world.inventory.LoomMenu;
+import net.minecraft.world.inventory.MerchantMenu;
+import net.minecraft.world.inventory.ShulkerBoxMenu;
+import net.minecraft.world.inventory.SimpleContainerData;
+import net.minecraft.world.inventory.Slot;
+import net.minecraft.world.inventory.SmithingMenu;
+import net.minecraft.world.inventory.SmokerMenu;
+import net.minecraft.world.inventory.StonecutterMenu;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Recipe;
 
@@ -47,6 +69,7 @@ public class ScreenValue extends Value
     private final FunctionValue callback;
     private final String hostname;
     private final ServerPlayer player;
+    private final CarpetScriptServer scriptServer;
 
     public static Map<String, ScarpetScreenHandlerFactory> screenHandlerFactories;
 
@@ -96,6 +119,7 @@ public class ScreenValue extends Value
         }
         this.callback = callback;
         this.hostname = c.host.getName();
+        this.scriptServer = (CarpetScriptServer) c.host.scriptServer();
         this.player = player;
         final MenuProvider factory = this.createScreenHandlerFactory();
         if (factory == null)
@@ -167,18 +191,19 @@ public class ScreenValue extends Value
         final Value actionValue = StringValue.of(action);
         final Value dataValue = MapValue.wrap(data);
         final List<Value> args = Arrays.asList(this, playerValue, actionValue, dataValue);
-        final CarpetScriptHost appHost = CarpetServer.scriptServer.getAppHostByName(this.hostname);
+        final CarpetScriptHost appHost = scriptServer.getAppHostByName(this.hostname);
         if (appHost == null)
         {
             this.close();
             this.screenHandler = null;
             return false;
         }
-        final CommandSourceStack source = player.createCommandSourceStack().withPermission(CarpetSettings.runPermissionLevel);
+        final int runPermissionLevel = Vanilla.MinecraftServer_getRunPermissionLevel(player.server);
+        final CommandSourceStack source = player.createCommandSourceStack().withPermission(runPermissionLevel);
         final CarpetScriptHost executingHost = appHost.retrieveForExecution(source, player);
         try
         {
-            final Value cancelValue = executingHost.callUDF(source.withPermission(CarpetSettings.runPermissionLevel), callback, args);
+            final Value cancelValue = executingHost.callUDF(source, callback, args);
             return cancelValue.getString().equals("cancel");
         }
         catch (final NullPointerException | InvalidCallbackException | IntegrityException error)
@@ -255,7 +280,7 @@ public class ScreenValue extends Value
     {
         if (screenHandlerClass.isInstance(this.screenHandler))
         {
-            return ((ScreenHandlerInterface) this.screenHandler).getProperty(propertyIndex);
+            return Vanilla.AbstractContainerMenu_getDataSlot(this.screenHandler, propertyIndex);
         }
         if (!this.isOpen())
         {

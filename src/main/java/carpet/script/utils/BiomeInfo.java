@@ -1,6 +1,6 @@
 package carpet.script.utils;
 
-import carpet.fakes.BiomeInterface;
+import carpet.script.external.Vanilla;
 import carpet.script.value.ListValue;
 import carpet.script.value.NumericValue;
 import carpet.script.value.StringValue;
@@ -30,7 +30,7 @@ public class BiomeInfo
         put("sky_color", (w, b) -> ValueConversions.ofRGB(b.getSpecialEffects().getSkyColor()));
         put("water_color", (w, b) -> ValueConversions.ofRGB(b.getSpecialEffects().getWaterColor()));
         put("water_fog_color", (w, b) -> ValueConversions.ofRGB(b.getSpecialEffects().getWaterFogColor()));
-        put("humidity", (w, b) -> NumericValue.of(((BiomeInterface) (Object) b).getClimateSettings().downfall()));
+        put("humidity", (w, b) -> NumericValue.of(Vanilla.Biome_getClimateSettings(b).downfall()));
         put("precipitation", (w, b) -> StringValue.of(b.getPrecipitationAt(new BlockPos(0, w.getSeaLevel(), 0)).name().toLowerCase(Locale.ROOT)));
         put("features", (w, b) -> {
             final Registry<ConfiguredFeature<?, ?>> registry = w.registryAccess().registryOrThrow(Registries.CONFIGURED_FEATURE);

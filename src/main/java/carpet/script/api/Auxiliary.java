@@ -1,10 +1,7 @@
 package carpet.script.api;
 
-import carpet.CarpetServer;
-import carpet.fakes.MinecraftServerInterface;
-import carpet.fakes.ThreadedAnvilChunkStorageInterface;
-import carpet.helpers.FeatureGenerator;
-import carpet.logging.HUDController;
+import carpet.script.external.Vanilla;
+import carpet.script.utils.FeatureGenerator;
 import carpet.script.argument.FileArgument;
 import carpet.script.CarpetContext;
 import carpet.script.CarpetEventServer;
@@ -19,6 +16,7 @@ import carpet.script.exception.ExitStatement;
 import carpet.script.exception.InternalExpressionException;
 import carpet.script.exception.ThrowStatement;
 import carpet.script.exception.Throwables;
+import carpet.script.external.Carpet;
 import carpet.script.utils.SnoopyCommandSource;
 import carpet.script.utils.SystemInfo;
 import carpet.script.utils.InputValidator;
@@ -36,7 +34,6 @@ import carpet.script.value.NumericValue;
 import carpet.script.value.StringValue;
 import carpet.script.value.Value;
 import carpet.script.value.ValueConversions;
-import carpet.utils.Messenger;
 import com.google.common.collect.Lists;
 import net.minecraft.SharedConstants;
 import net.minecraft.commands.CommandSourceStack;
@@ -73,7 +70,6 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.decoration.ArmorStand;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
@@ -613,11 +609,11 @@ public class Auxiliary
                 final Map<String, Component> map;
                 if (actionString.equals("player_list_header"))
                 {
-                    map = HUDController.scarpet_headers;
+                    map = Carpet.getScarpetHeaders();
                 }
                 else
                 {
-                    map = HUDController.scarpet_footers;
+                    map = Carpet.getScarpetFooters();
                 }
 
                 final AtomicInteger total = new AtomicInteger(0);
@@ -636,7 +632,7 @@ public class Auxiliary
                         total.getAndIncrement();
                     });
                 }
-                HUDController.update_hud(((CarpetContext) c).server(), targetList);
+                Carpet.updateScarpetHUDs(((CarpetContext) c).server(), targetList);
                 return NumericValue.of(total.get());
             }
             final ClientboundSetTitlesAnimationPacket timesPacket; // TimesPacket
@@ -678,7 +674,7 @@ public class Auxiliary
             {
                 values = list.getItems();
             }
-            return new FormattedTextValue(Messenger.c(values.stream().map(Value::getString).toArray()));
+            return new FormattedTextValue(Carpet.Messenger_compose(values.stream().map(Value::getString).toArray()));
         });
 
         expression.addContextFunction("run", 1, (c, t, lv) ->
@@ -750,7 +746,8 @@ public class Auxiliary
         expression.addContextFunction("game_tick", -1, (c, t, lv) -> {
             final CarpetContext cc = (CarpetContext) c;
             final MinecraftServer server = cc.server();
-            if (CarpetServer.scriptServer == null)
+            final CarpetScriptServer scriptServer = (CarpetScriptServer) c.host.scriptServer();
+            if (scriptServer == null)
             {
                 return Value.NULL;
             }
@@ -758,18 +755,18 @@ public class Auxiliary
             {
                 throw new InternalExpressionException("Unable to run ticks from threads");
             }
-            if (CarpetServer.scriptServer.tickDepth > 16)
+            if (scriptServer.tickDepth > 16)
             {
                 throw new InternalExpressionException("'game_tick' function caused other 'game_tick' functions to run. You should not allow that.");
             }
             try
             {
-                CarpetServer.scriptServer.tickDepth++;
-                ((MinecraftServerInterface) server).forceTick(() -> System.nanoTime() - CarpetServer.scriptServer.tickStart < 50000000L);
+                scriptServer.tickDepth++;
+                Vanilla.MinecraftServer_forceTick(server, () -> System.nanoTime() - scriptServer.tickStart < 50000000L);
                 if (lv.size() > 0)
                 {
                     final long ms_total = NumericValue.asNumber(lv.get(0)).getLong();
-                    final long end_expected = CarpetServer.scriptServer.tickStart + ms_total * 1000000L;
+                    final long end_expected = scriptServer.tickStart + ms_total * 1000000L;
                     final long wait = end_expected - System.nanoTime();
                     if (wait > 0L)
                     {
@@ -782,17 +779,17 @@ public class Auxiliary
                         }
                     }
                 }
-                CarpetServer.scriptServer.tickStart = System.nanoTime(); // for the next tick
+                scriptServer.tickStart = System.nanoTime(); // for the next tick
                 Thread.yield();
             }
             finally
             {
-                if (CarpetServer.scriptServer != null)
+                if (scriptServer != null)
                 {
-                    CarpetServer.scriptServer.tickDepth--;
+                    scriptServer.tickDepth--;
                 }
             }
-            if (CarpetServer.scriptServer != null && CarpetServer.scriptServer.stopAll)
+            if (scriptServer != null && scriptServer.stopAll)
             {
                 throw new ExitStatement(Value.NULL);
             }
@@ -811,7 +808,7 @@ public class Auxiliary
             final BlockArgument locator = BlockArgument.findIn(cc, lv, 0);
             final BlockPos pos = locator.block.getPos();
             final ServerLevel world = cc.level();
-            ((ThreadedAnvilChunkStorageInterface) world.getChunkSource().chunkMap).relightChunk(new ChunkPos(pos));
+            Vanilla.ChunkMap_relightChunk(world.getChunkSource().chunkMap, new ChunkPos(pos));
             WorldTools.forceChunkUpdate(pos, world);
             return Value.TRUE;
         });
@@ -896,7 +893,7 @@ public class Auxiliary
             final long delay = NumericValue.asNumber(lv.get(0)).getLong();
 
             final FunctionArgument functionArgument = FunctionArgument.findIn(c, expression.module, lv, 1, false, false);
-            CarpetServer.scriptServer.events.scheduleCall(
+            ((CarpetScriptServer)c.host.scriptServer()).events.scheduleCall(
                     (CarpetContext) c,
                     functionArgument.function,
                     functionArgument.checkedArgs(),
@@ -938,14 +935,14 @@ public class Auxiliary
 
         expression.addContextFunction("list_files", 2, (c, t, lv) ->
         {
-            final FileArgument fdesc = FileArgument.from(lv, true, FileArgument.Reason.READ);
+            final FileArgument fdesc = FileArgument.from(c, lv, true, FileArgument.Reason.READ);
             final Stream<String> files = ((CarpetScriptHost) c.host).listFolder(fdesc);
             return files == null ? Value.NULL : ListValue.wrap(files.map(StringValue::of));
         });
 
         expression.addContextFunction("read_file", 2, (c, t, lv) ->
         {
-            final FileArgument fdesc = FileArgument.from(lv, false, FileArgument.Reason.READ);
+            final FileArgument fdesc = FileArgument.from(c, lv, false, FileArgument.Reason.READ);
             if (fdesc.type == FileArgument.Type.NBT)
             {
                 final Tag state = ((CarpetScriptHost) c.host).readFileTag(fdesc);
@@ -966,14 +963,14 @@ public class Auxiliary
         });
 
         expression.addContextFunction("delete_file", 2, (c, t, lv) ->
-                BooleanValue.of(((CarpetScriptHost) c.host).removeResourceFile(FileArgument.from(lv, false, FileArgument.Reason.DELETE))));
+                BooleanValue.of(((CarpetScriptHost) c.host).removeResourceFile(FileArgument.from(c, lv, false, FileArgument.Reason.DELETE))));
 
         expression.addContextFunction("write_file", -1, (c, t, lv) -> {
             if (lv.size() < 3)
             {
                 throw new InternalExpressionException("'write_file' requires three or more arguments");
             }
-            final FileArgument fdesc = FileArgument.from(lv, false, FileArgument.Reason.CREATE);
+            final FileArgument fdesc = FileArgument.from(c, lv, false, FileArgument.Reason.CREATE);
 
             final boolean success;
             if (fdesc.type == FileArgument.Type.NBT)
@@ -1021,13 +1018,13 @@ public class Auxiliary
 
         expression.addContextFunction("load_app_data", -1, (c, t, lv) ->
         {
-            FileArgument fdesc = new FileArgument(null, FileArgument.Type.NBT, null, false, false, FileArgument.Reason.READ);
+            FileArgument fdesc = new FileArgument(null, FileArgument.Type.NBT, null, false, false, FileArgument.Reason.READ, c.host);
             if (lv.size() > 0)
             {
                 c.host.issueDeprecation("load_app_data(...) with arguments");
                 final String resource = recognizeResource(lv.get(0), false);
                 final boolean shared = lv.size() > 1 && lv.get(1).getBoolean();
-                fdesc = new FileArgument(resource, FileArgument.Type.NBT, null, false, shared, FileArgument.Reason.READ);
+                fdesc = new FileArgument(resource, FileArgument.Type.NBT, null, false, shared, FileArgument.Reason.READ, c.host);
             }
             return NBTSerializableValue.of(((CarpetScriptHost) c.host).readFileTag(fdesc));
         });
@@ -1039,13 +1036,13 @@ public class Auxiliary
                 throw new InternalExpressionException("'store_app_data' needs NBT tag and an optional file");
             }
             final Value val = lv.get(0);
-            FileArgument fdesc = new FileArgument(null, FileArgument.Type.NBT, null, false, false, FileArgument.Reason.CREATE);
+            FileArgument fdesc = new FileArgument(null, FileArgument.Type.NBT, null, false, false, FileArgument.Reason.CREATE, c.host);
             if (lv.size() > 1)
             {
                 c.host.issueDeprecation("store_app_data(...) with more than one argument");
                 final String resource = recognizeResource(lv.get(1), false);
                 final boolean shared = lv.size() > 2 && lv.get(2).getBoolean();
-                fdesc = new FileArgument(resource, FileArgument.Type.NBT, null, false, shared, FileArgument.Reason.CREATE);
+                fdesc = new FileArgument(resource, FileArgument.Type.NBT, null, false, shared, FileArgument.Reason.CREATE, c.host);
             }
             final NBTSerializableValue tagValue = (val instanceof final NBTSerializableValue nbtsv)
                     ? nbtsv

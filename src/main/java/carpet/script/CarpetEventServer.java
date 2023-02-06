@@ -1,13 +1,10 @@
 package carpet.script;
 
-import carpet.CarpetServer;
-import carpet.CarpetSettings;
-import carpet.api.settings.CarpetRule;
-import carpet.api.settings.RuleHelper;
-import carpet.helpers.TickSpeed;
 import carpet.script.exception.IntegrityException;
 import carpet.script.exception.InternalExpressionException;
 import carpet.script.exception.InvalidCallbackException;
+import carpet.script.external.Carpet;
+import carpet.script.external.Vanilla;
 import carpet.script.utils.GlocalFlag;
 import carpet.script.value.BlockValue;
 import carpet.script.value.BooleanValue;
@@ -19,8 +16,6 @@ import carpet.script.value.NumericValue;
 import carpet.script.value.StringValue;
 import carpet.script.value.Value;
 import carpet.script.value.ValueConversions;
-import carpet.utils.CarpetProfiler;
-import carpet.utils.Messenger;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 
 import java.util.ArrayList;
@@ -51,6 +46,7 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.stats.Stat;
@@ -93,13 +89,15 @@ public class CarpetEventServer
         public final String optionalTarget;
         public final FunctionValue function;
         public final List<Value> parametrizedArgs;
+        public final CarpetScriptServer scriptServer;
 
-        public Callback(final String host, final String target, final FunctionValue function, final List<Value> parametrizedArgs)
+        public Callback(final String host, final String target, final FunctionValue function, final List<Value> parametrizedArgs, final CarpetScriptServer scriptServer)
         {
             this.host = host;
             this.function = function;
             this.optionalTarget = target;
             this.parametrizedArgs = parametrizedArgs == null ? NOARGS : parametrizedArgs;
+            this.scriptServer = scriptServer;
         }
 
         /**
@@ -115,12 +113,12 @@ public class CarpetEventServer
                 runtimeArgs = new ArrayList<>(runtimeArgs);
                 runtimeArgs.addAll(this.parametrizedArgs);
             }
-            if (CarpetServer.scriptServer == null)
+            if (scriptServer.stopAll)
             {
                 return CallbackResult.FAIL; // already stopped
             }
-            return CarpetServer.scriptServer.events.runEventCall(
-                    sender.withPermission(CarpetSettings.runPermissionLevel),
+            return scriptServer.events.runEventCall(
+                    sender.withPermission(Vanilla.MinecraftServer_getRunPermissionLevel(sender.getServer())),
                     host, optionalTarget, function, runtimeArgs);
         }
 
@@ -169,7 +167,7 @@ public class CarpetEventServer
         public ScheduledCall(final CarpetContext context, final FunctionValue function, final List<Value> args, final long dueTime)
         {
             // ignoring target as we will be always calling self
-            super(context.host.getName(), null, function, args);
+            super(context.host.getName(), null, function, args, (CarpetScriptServer) context.scriptServer());
             this.ctx = context.duplicate();
             this.dueTime = dueTime;
         }
@@ -179,7 +177,7 @@ public class CarpetEventServer
          */
         public void execute()
         {
-            CarpetServer.scriptServer.events.runScheduledCall(ctx.origin(), ctx.source(), host, (CarpetScriptHost) ctx.host, function, parametrizedArgs);
+            scriptServer.events.runScheduledCall(ctx.origin(), ctx.source(), host, (CarpetScriptHost) ctx.host, function, parametrizedArgs);
         }
     }
 
@@ -237,64 +235,69 @@ public class CarpetEventServer
          */
         public boolean call(final Supplier<List<Value>> argumentSupplier, final Supplier<CommandSourceStack> cmdSourceSupplier)
         {
-            if (!callList.isEmpty() && CarpetServer.scriptServer != null)
+            if (callList.isEmpty())
             {
-                final Boolean isCancelled = CarpetServer.scriptServer.events.handleEvents.runIfEnabled(() -> {
-                    final CarpetProfiler.ProfilerToken currentSection = CarpetProfiler.start_section(null, "Scarpet events", CarpetProfiler.TYPE.GENERAL);
-                    final List<Value> argv = argumentSupplier.get(); // empty for onTickDone
-                    final CommandSourceStack source;
-                    try
+                return false;
+            }
+            final CommandSourceStack source;
+            try
+            {
+                source = cmdSourceSupplier.get();
+            }
+            catch (final NullPointerException noReference) // todo figure out what happens when closing.
+            {
+                return false;
+            }
+            final CarpetScriptServer scriptServer = Vanilla.MinecraftServer_getScriptServer(source.getServer());
+            if (scriptServer.stopAll)
+            {
+                return false;
+            }
+            final Boolean isCancelled = scriptServer.events.handleEvents.runIfEnabled(() -> {
+                final Runnable profilerToken = Carpet.startProfilerSection("Scarpet events");
+                final List<Value> argv = argumentSupplier.get(); // empty for onTickDone
+                final String nameCheck = perPlayerDistribution ? source.getTextName() : null;
+                assert argv.size() == reqArgs;
+                boolean cancelled = false;
+                try
+                {
+                    // we are ok with list growing in the meantime
+                    // which might happen during inCall or inSignal
+                    inCall = true;
+                    for (int i = 0; i < callList.size(); i++)
                     {
-                        source = cmdSourceSupplier.get();
-                    }
-                    catch (final NullPointerException noReference) // todo figure out what happens when closing.
-                    {
-                        return false;
-                    }
-                    final String nameCheck = perPlayerDistribution ? source.getTextName() : null;
-                    assert argv.size() == reqArgs;
-                    boolean cancelled = false;
-                    try
-                    {
-                        // we are ok with list growing in the meantime
-                        // which might happen during inCall or inSignal
-                        inCall = true;
-                        for (int i = 0; i < callList.size(); i++)
+                        final Callback call = callList.get(i);
+                        // supressing calls where target player hosts simply don't match
+                        // handling global hosts with player targets is left to when the host is resolved (few calls deeper).
+                        if (nameCheck != null && call.optionalTarget != null && !nameCheck.equals(call.optionalTarget))
                         {
-                            final Callback call = callList.get(i);
-                            // supressing calls where target player hosts simply don't match
-                            // handling global hosts with player targets is left to when the host is resolved (few calls deeper).
-                            if (nameCheck != null && call.optionalTarget != null && !nameCheck.equals(call.optionalTarget))
-                            {
-                                continue;
-                            }
-                            final CallbackResult result = call.execute(source, argv);
-                            if (result == CallbackResult.CANCEL)
-                            {
-                                cancelled = true;
-                                break;
-                            }
-                            if (result == CallbackResult.FAIL)
-                            {
-                                removedCalls.add(call);
-                            }
+                            continue;
+                        }
+                        final CallbackResult result = call.execute(source, argv);
+                        if (result == CallbackResult.CANCEL)
+                        {
+                            cancelled = true;
+                            break;
+                        }
+                        if (result == CallbackResult.FAIL)
+                        {
+                            removedCalls.add(call);
                         }
                     }
-                    finally
-                    {
-                        inCall = false;
-                    }
-                    for (final Callback call : removedCalls)
-                    {
-                        callList.remove(call);
-                    }
-                    removedCalls.clear();
-                    CarpetProfiler.end_current_section(currentSection);
-                    return cancelled;
-                });
-                return isCancelled != null && isCancelled;
-            }
-            return false;
+                }
+                finally
+                {
+                    inCall = false;
+                }
+                for (final Callback call : removedCalls)
+                {
+                    callList.remove(call);
+                }
+                removedCalls.clear();
+                profilerToken.run();
+                return cancelled;
+            });
+            return isCancelled != null && isCancelled;
         }
 
         public int signal(final CommandSourceStack sender, final ServerPlayer optinoalReceipient, final List<Value> callArg)
@@ -323,13 +326,13 @@ public class CarpetEventServer
             return successes;
         }
 
-        public boolean addFromExternal(final CommandSourceStack source, final String hostName, final String funName, final Consumer<ScriptHost> hostOnEventHandler)
+        public boolean addFromExternal(final CommandSourceStack source, final String hostName, final String funName, final Consumer<ScriptHost> hostOnEventHandler, final CarpetScriptServer scriptServer)
         {
-            final ScriptHost host = CarpetServer.scriptServer.getAppHostByName(hostName);
+            final ScriptHost host = scriptServer.getAppHostByName(hostName);
             if (host == null)
             {
                 // impossible call to add
-                Messenger.m(source, "r Unknown app " + hostName);
+                Carpet.Messenger_message(source, "r Unknown app " + hostName);
                 return false;
             }
             hostOnEventHandler.accept(host);
@@ -337,7 +340,7 @@ public class CarpetEventServer
             if (udf == null || udf.getArguments().size() != reqArgs)
             {
                 // call won't match arguments
-                Messenger.m(source, "r Callback doesn't expect required number of arguments: " + reqArgs);
+                Carpet.Messenger_message(source, "r Callback doesn't expect required number of arguments: " + reqArgs);
                 return false;
             }
             String target = null;
@@ -349,7 +352,7 @@ public class CarpetEventServer
                 }
                 catch (final CommandSyntaxException e)
                 {
-                    Messenger.m(source, "r Cannot add event to a player scoped app from a command without a player context");
+                    Carpet.Messenger_message(source, "r Cannot add event to a player scoped app from a command without a player context");
                     return false;
                 }
             }
@@ -357,7 +360,7 @@ public class CarpetEventServer
             //remove duplicates
 
             removeEventCall(hostName, target, udf.getString());
-            callList.add(new Callback(hostName, target, udf, null));
+            callList.add(new Callback(hostName, target, udf, null, scriptServer));
             return true;
         }
 
@@ -369,7 +372,7 @@ public class CarpetEventServer
             }
             //removing duplicates
             removeEventCall(host.getName(), host.user, function.getString());
-            callList.add(new Callback(host.getName(), host.user, function, args));
+            callList.add(new Callback(host.getName(), host.user, function, args, (CarpetScriptServer) host.scriptServer()));
             return true;
         }
 
@@ -392,10 +395,10 @@ public class CarpetEventServer
             final List<Callback> copyCalls = new ArrayList<>();
             callList.forEach((c) ->
             {
-                if ((Objects.equals(c.host, host.getName()))
+                if ((Objects.equals(c.host, host.getName())) // TODO fix me
                         && c.optionalTarget == null)
                 {
-                    copyCalls.add(new Callback(c.host, host.user, c.function, c.parametrizedArgs));
+                    copyCalls.add(new Callback(c.host, host.user, c.function, c.parametrizedArgs, host.scriptServer()));
                 }
             });
             callList.addAll(copyCalls);
@@ -434,11 +437,10 @@ public class CarpetEventServer
         public static final Event START = new Event("server_starts", 0, true)
         {
             @Override
-            public void onTick()
+            public void onTick(final MinecraftServer server)
             {
                 handler.call(Collections::emptyList, () ->
-                        CarpetServer.minecraft_server.createCommandSourceStack().
-                                withLevel(CarpetServer.minecraft_server.getLevel(Level.OVERWORLD))
+                        server.createCommandSourceStack().withLevel(server.getLevel(Level.OVERWORLD))
                 );
             }
         };
@@ -446,11 +448,10 @@ public class CarpetEventServer
         public static final Event SHUTDOWN = new Event("server_shuts_down", 0, true)
         {
             @Override
-            public void onTick()
+            public void onTick(final MinecraftServer server)
             {
                 handler.call(Collections::emptyList, () ->
-                        CarpetServer.minecraft_server.createCommandSourceStack().
-                                withLevel(CarpetServer.minecraft_server.getLevel(Level.OVERWORLD))
+                        server.createCommandSourceStack().withLevel(server.getLevel(Level.OVERWORLD))
                 );
             }
         };
@@ -458,11 +459,10 @@ public class CarpetEventServer
         public static final Event TICK = new Event("tick", 0, true)
         {
             @Override
-            public void onTick()
+            public void onTick(final MinecraftServer server)
             {
                 handler.call(Collections::emptyList, () ->
-                        CarpetServer.minecraft_server.createCommandSourceStack().
-                                withLevel(CarpetServer.minecraft_server.getLevel(Level.OVERWORLD))
+                        server.createCommandSourceStack().withLevel(server.getLevel(Level.OVERWORLD))
                 );
             }
         };
@@ -475,11 +475,11 @@ public class CarpetEventServer
             }
 
             @Override
-            public void onTick()
+            public void onTick(final MinecraftServer server)
             {
                 handler.call(Collections::emptyList, () ->
-                        CarpetServer.minecraft_server.createCommandSourceStack().
-                                withLevel(CarpetServer.minecraft_server.getLevel(Level.NETHER))
+                        server.createCommandSourceStack().
+                                withLevel(server.getLevel(Level.NETHER))
                 );
             }
         };
@@ -492,11 +492,11 @@ public class CarpetEventServer
             }
 
             @Override
-            public void onTick()
+            public void onTick(final MinecraftServer server)
             {
                 handler.call(Collections::emptyList, () ->
-                        CarpetServer.minecraft_server.createCommandSourceStack().
-                                withLevel(CarpetServer.minecraft_server.getLevel(Level.END))
+                        server.createCommandSourceStack().
+                                withLevel(server.getLevel(Level.END))
                 );
             }
         };
@@ -507,7 +507,7 @@ public class CarpetEventServer
             {
                 handler.call(
                         () -> Arrays.asList(new NumericValue(chPos.x << 4), new NumericValue(chPos.z << 4)),
-                        () -> CarpetServer.minecraft_server.createCommandSourceStack().withLevel(world)
+                        () -> world.getServer().createCommandSourceStack().withLevel(world)
                 );
             }
         };
@@ -518,7 +518,7 @@ public class CarpetEventServer
             {
                 handler.call(
                         () -> Arrays.asList(new NumericValue(chPos.x << 4), new NumericValue(chPos.z << 4)),
-                        () -> CarpetServer.minecraft_server.createCommandSourceStack().withLevel(world)
+                        () -> world.getServer().createCommandSourceStack().withLevel(world)
                 );
             }
         };
@@ -530,7 +530,7 @@ public class CarpetEventServer
             {
                 handler.call(
                         () -> Arrays.asList(new NumericValue(chPos.x << 4), new NumericValue(chPos.z << 4)),
-                        () -> CarpetServer.minecraft_server.createCommandSourceStack().withLevel(world)
+                        () -> world.getServer().createCommandSourceStack().withLevel(world)
                 );
             }
         };
@@ -714,7 +714,7 @@ public class CarpetEventServer
                 final RegistryAccess regs = player.getLevel().registryAccess();
                 handler.call(() -> Arrays.asList(
                         new EntityValue(player),
-                        merchant instanceof final AbstractVillager villager? new EntityValue(villager) : Value.NULL,
+                        merchant instanceof final AbstractVillager villager ? new EntityValue(villager) : Value.NULL,
                         ValueConversions.of(tradeOffer.getBaseCostA(), regs),
                         ValueConversions.of(tradeOffer.getCostB(), regs),
                         ValueConversions.of(tradeOffer.getResult(), regs)
@@ -1015,30 +1015,7 @@ public class CarpetEventServer
                         () -> Arrays.asList(
                                 new BlockValue(null, world, pos),
                                 flag > 0 ? Value.TRUE : Value.FALSE
-                        ), () -> CarpetServer.minecraft_server.createCommandSourceStack().withLevel(world)
-                );
-            }
-        };
-        public static final Event CARPET_RULE_CHANGES = new Event("carpet_rule_changes", 2, true)
-        {
-            @Override
-            public void onCarpetRuleChanges(final CarpetRule<?> rule, final CommandSourceStack source)
-            {
-                final String identifier = rule.settingsManager().identifier();
-                final String namespace;
-                if (!identifier.equals("carpet"))
-                {
-                    namespace = identifier + ":";
-                }
-                else
-                {
-                    namespace = "";
-                }
-                handler.call(
-                        () -> Arrays.asList(
-                                new StringValue(namespace + rule.name()),
-                                new StringValue(RuleHelper.toRuleString(rule.value()))
-                        ), () -> source
+                        ), () -> world.getServer().createCommandSourceStack().withLevel(world)
                 );
             }
         };
@@ -1086,7 +1063,7 @@ public class CarpetEventServer
                                         b -> new BlockValue(world.getBlockState(b), world, b)
                                 )),
                                 ListValue.wrap(affectedEntities.stream().map(EntityValue::of))
-                        ), () -> CarpetServer.minecraft_server.createCommandSourceStack().withLevel(world)
+                        ), () -> world.getServer().createCommandSourceStack().withLevel(world)
                 );
             }
         };
@@ -1105,7 +1082,7 @@ public class CarpetEventServer
                                 EntityValue.of(attacker != null ? attacker.get() : Event.getExplosionCausingEntity(e)),
                                 StringValue.of(type.name().toLowerCase(Locale.ROOT)),
                                 BooleanValue.of(createFire)
-                        ), () -> CarpetServer.minecraft_server.createCommandSourceStack().withLevel(world)
+                        ), () -> world.getServer().createCommandSourceStack().withLevel(world)
                 );
             }
         };
@@ -1126,7 +1103,7 @@ public class CarpetEventServer
                     {
                         handler.call(
                                 () -> Collections.singletonList(new EntityValue(entity)),
-                                () -> CarpetServer.minecraft_server.createCommandSourceStack().withLevel((ServerLevel) entity.level).withPermission(CarpetSettings.runPermissionLevel)
+                                () -> entity.getServer().createCommandSourceStack().withLevel((ServerLevel) entity.level).withPermission(Vanilla.MinecraftServer_getRunPermissionLevel(entity.getServer()))
                         );
                     }
                 })).collect(Collectors.toUnmodifiableMap(Map.Entry::getKey, Map.Entry::getValue));
@@ -1145,7 +1122,7 @@ public class CarpetEventServer
                     {
                         handler.call(
                                 () -> Arrays.asList(new EntityValue(entity), BooleanValue.of(created)),
-                                () -> CarpetServer.minecraft_server.createCommandSourceStack().withLevel((ServerLevel) entity.level).withPermission(CarpetSettings.runPermissionLevel)
+                                () -> entity.getServer().createCommandSourceStack().withLevel((ServerLevel) entity.level).withPermission(Vanilla.MinecraftServer_getRunPermissionLevel(entity.getServer()))
                         );
                     }
                 }))
@@ -1241,7 +1218,7 @@ public class CarpetEventServer
         }
 
         //stubs for calls just to ease calls in vanilla code so they don't need to deal with scarpet value types
-        public void onTick()
+        public void onTick(final MinecraftServer server)
         {
         }
 
@@ -1339,7 +1316,7 @@ public class CarpetEventServer
         {
         }
 
-        public void onCarpetRuleChanges(final CarpetRule<?> rule, final CommandSourceStack source)
+        public void handleAny(final Object... args)
         {
         }
 
@@ -1376,7 +1353,7 @@ public class CarpetEventServer
                             valArgs.add(ValueConversions.guess(world, o));
                         }
                         return valArgs;
-                    }, () -> CarpetServer.minecraft_server.createCommandSourceStack().withLevel(world)
+                    }, () -> world.getServer().createCommandSourceStack().withLevel(world)
             );
         }
     }
@@ -1390,7 +1367,7 @@ public class CarpetEventServer
 
     public void tick()
     {
-        if (!TickSpeed.process_entities)
+        if (Carpet.isTickProcessingPaused())
         {
             return;
         }
@@ -1455,7 +1432,7 @@ public class CarpetEventServer
                 return CallbackResult.FAIL;
             }
         }
-        final CommandSourceStack source = sender.withPermission(CarpetSettings.runPermissionLevel);
+        final CommandSourceStack source = sender.withPermission(Vanilla.MinecraftServer_getRunPermissionLevel(sender.getServer()));
         final CarpetScriptHost executingHost = appHost.retrieveForExecution(sender, target);
         if (executingHost == null)
         {
@@ -1463,7 +1440,7 @@ public class CarpetEventServer
         }
         try
         {
-            final Value returnValue = executingHost.callUDF(source.withPermission(CarpetSettings.runPermissionLevel), udf, argv);
+            final Value returnValue = executingHost.callUDF(source, udf, argv);
             return returnValue instanceof StringValue && returnValue.getString().equals("cancel") ? CallbackResult.CANCEL : CallbackResult.SUCCESS;
         }
         catch (final NullPointerException | InvalidCallbackException | IntegrityException error)
@@ -1475,15 +1452,15 @@ public class CarpetEventServer
 
     public boolean addEventFromCommand(final CommandSourceStack source, final String event, final String host, final String funName)
     {
-        final Event ev = Event.getEvent(event, CarpetServer.scriptServer);
+        final Event ev = Event.getEvent(event, scriptServer);
         if (ev == null)
         {
             return false;
         }
-        final boolean added = ev.handler.addFromExternal(source, host, funName, h -> onEventAddedToHost(ev, h));
+        final boolean added = ev.handler.addFromExternal(source, host, funName, h -> onEventAddedToHost(ev, h), scriptServer);
         if (added)
         {
-            Messenger.m(source, "gi Added " + funName + " to " + event);
+            Carpet.Messenger_message(source, "gi Added " + funName + " to " + event);
         }
         return added;
     }
@@ -1524,16 +1501,16 @@ public class CarpetEventServer
 
     public boolean removeEventFromCommand(final CommandSourceStack source, final String event, final String funName)
     {
-        final Event ev = Event.getEvent(event, CarpetServer.scriptServer);
+        final Event ev = Event.getEvent(event, scriptServer);
         if (ev == null)
         {
-            Messenger.m(source, "r Unknown event: " + event);
+            Carpet.Messenger_message(source, "r Unknown event: " + event);
             return false;
         }
         final Callback.Signature call = Callback.fromString(funName);
         ev.handler.removeEventCall(call.host, call.target, call.function);
         // could verified if actually removed
-        Messenger.m(source, "gi Removed event: " + funName + " from " + event);
+        Carpet.Messenger_message(source, "gi Removed event: " + funName + " from " + event);
         return true;
     }
 

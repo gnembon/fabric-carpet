@@ -3,13 +3,13 @@ package carpet.script.api;
 import carpet.script.CarpetContext;
 import carpet.script.Expression;
 import carpet.script.exception.InternalExpressionException;
+import carpet.script.external.Vanilla;
 import carpet.script.utils.SystemInfo;
 import carpet.script.value.ListValue;
 import carpet.script.value.MapValue;
 import carpet.script.value.NumericValue;
 import carpet.script.value.StringValue;
 import carpet.script.value.Value;
-import carpet.utils.SpawnReporter;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 
 import java.util.Arrays;
@@ -64,7 +64,7 @@ public class Monitoring
                 final Map<Value, Value> retDict = new HashMap<>();
                 for (final MobCategory category : mobcounts.keySet())
                 {
-                    final int currentCap = category.getMaxInstancesPerChunk() * chunks / SpawnReporter.MAGIC_NUMBER;
+                    final int currentCap = category.getMaxInstancesPerChunk() * chunks / Vanilla.NaturalSpawner_MAGIC_NUMBER();
                     retDict.put(
                             new StringValue(category.getSerializedName().toLowerCase(Locale.ROOT)),
                             ListValue.of(
@@ -82,7 +82,7 @@ public class Monitoring
             }
             return ListValue.of(
                     new NumericValue(mobcounts.getInt(cat)),
-                    new NumericValue((int) (cat.getMaxInstancesPerChunk() * chunks / SpawnReporter.MAGIC_NUMBER))
+                    new NumericValue((int) (cat.getMaxInstancesPerChunk() * chunks / Vanilla.NaturalSpawner_MAGIC_NUMBER()))
             );
         });
     }

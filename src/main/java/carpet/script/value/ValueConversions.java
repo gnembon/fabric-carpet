@@ -1,10 +1,10 @@
 package carpet.script.value;
 
-import carpet.fakes.BlockPredicateInterface;
 import carpet.script.exception.InternalExpressionException;
 import carpet.script.exception.ThrowStatement;
 import carpet.script.exception.Throwables;
-import carpet.utils.BlockInfo;
+import carpet.script.external.Carpet;
+import carpet.script.external.Vanilla;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import net.minecraft.advancements.critereon.MinMaxBounds;
@@ -83,7 +83,7 @@ public class ValueConversions
 
     public static Value of(final MaterialColor color)
     {
-        return ListValue.of(StringValue.of(BlockInfo.mapColourName.get(color)), ofRGB(color.col));
+        return ListValue.of(StringValue.of(Carpet.getMapColorNames().get(color)), ofRGB(color.col));
     }
 
     public static <T extends Number> Value of(final MinMaxBounds<T> range)
@@ -451,13 +451,13 @@ public class ValueConversions
 
     public static Value ofBlockPredicate(final RegistryAccess registryAccess, final Predicate<BlockInWorld> blockPredicate)
     {
-        final BlockPredicateInterface predicateData = (BlockPredicateInterface) blockPredicate;
+        final Vanilla.BlockPredicatePayload payload = Vanilla.BlockPredicatePayload.of(blockPredicate);
         final Registry<Block> blocks = registryAccess.registryOrThrow(Registries.BLOCK);
         return ListValue.of(
-                predicateData.getCMBlockState() == null ? Value.NULL : of(blocks.getKey(predicateData.getCMBlockState().getBlock())),
-                predicateData.getCMBlockTagKey() == null ? Value.NULL : of(blocks.getTag(predicateData.getCMBlockTagKey()).get().key()),
-                MapValue.wrap(predicateData.getCMProperties()),
-                predicateData.getCMDataTag() == null ? Value.NULL : new NBTSerializableValue(predicateData.getCMDataTag())
+                payload.state() == null ? Value.NULL : of(blocks.getKey(payload.state().getBlock())),
+                payload.tagKey() == null ? Value.NULL : of(blocks.getTag(payload.tagKey()).get().key()),
+                MapValue.wrap(payload.properties()),
+                payload.tag() == null ? Value.NULL : new NBTSerializableValue(payload.tag())
         );
     }
 

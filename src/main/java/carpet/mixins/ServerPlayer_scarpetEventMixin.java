@@ -1,7 +1,7 @@
 package carpet.mixins;
 
 import carpet.fakes.EntityInterface;
-import carpet.fakes.ServerPlayerEntityInterface;
+import carpet.fakes.ServerPlayerInterface;
 import carpet.script.EntityEventsGroup;
 import com.mojang.authlib.GameProfile;
 import net.minecraft.core.BlockPos;
@@ -31,7 +31,7 @@ import static carpet.script.CarpetEventServer.Event.PLAYER_FINISHED_USING_ITEM;
 import static carpet.script.CarpetEventServer.Event.STATISTICS;
 
 @Mixin(ServerPlayer.class)
-public abstract class ServerPlayer_scarpetEventMixin extends Player implements ServerPlayerEntityInterface
+public abstract class ServerPlayer_scarpetEventMixin extends Player implements ServerPlayerInterface
 {
     // to denote if the player reference is valid
 

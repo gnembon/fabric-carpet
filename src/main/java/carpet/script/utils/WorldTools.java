@@ -1,8 +1,9 @@
 package carpet.script.utils;
 
-import carpet.fakes.MinecraftServerInterface;
-import net.fabricmc.api.EnvType;
-import net.fabricmc.api.Environment;
+//import carpet.fakes.MinecraftServerInterface;
+import carpet.script.external.Vanilla;
+//import net.fabricmc.api.EnvType;
+//import net.fabricmc.api.Environment;
 import net.minecraft.Util;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
@@ -59,7 +60,7 @@ public class WorldTools
             }
             return region.hasChunk(chpos);
         }
-        final Path regionsFolder = ((MinecraftServerInterface) world.getServer()).getCMSession().getDimensionPath(world.dimension()).resolve("region");
+        final Path regionsFolder = Vanilla.MinecraftServer_storageSource(world.getServer()).getDimensionPath(world.dimension()).resolve("region");
         final Path regionPath = regionsFolder.resolve(currentRegionName);
         if (!regionPath.toFile().exists())
         {
@@ -169,7 +170,7 @@ public class WorldTools
         }
     }
 
-
+/*
     private static class NoopWorldGenerationProgressListener implements ChunkProgressListener
     {
         @Override
@@ -182,7 +183,7 @@ public class WorldTools
         {
         }
 
-        @Environment(EnvType.CLIENT)
+        //@Environment(EnvType.CLIENT)
         @Override
         public void start()
         {
@@ -195,4 +196,6 @@ public class WorldTools
     }
 
     public static final ChunkProgressListener NOOP_LISTENER = new NoopWorldGenerationProgressListener();
+
+ */
 }

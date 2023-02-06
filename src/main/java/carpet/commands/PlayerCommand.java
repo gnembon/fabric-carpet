@@ -2,7 +2,7 @@ package carpet.commands;
 
 import carpet.helpers.EntityPlayerActionPack;
 import carpet.CarpetSettings;
-import carpet.fakes.ServerPlayerEntityInterface;
+import carpet.fakes.ServerPlayerInterface;
 import carpet.patches.EntityPlayerMPFake;
 import carpet.utils.CommandHelper;
 import carpet.utils.Messenger;
@@ -14,7 +14,6 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
-import com.mojang.util.UUIDTypeAdapter;
 import net.minecraft.commands.CommandBuildContext;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.arguments.DimensionArgument;
@@ -336,7 +335,7 @@ public class PlayerCommand
     {
         if (cantManipulate(context)) return 0;
         ServerPlayer player = getPlayer(context);
-        ((ServerPlayerEntityInterface) player).getActionPack().stopAll();
+        ((ServerPlayerInterface) player).getActionPack().stopAll();
         return 1;
     }
 
@@ -344,7 +343,7 @@ public class PlayerCommand
     {
         if (cantManipulate(context)) return 0;
         ServerPlayer player = getPlayer(context);
-        action.accept(((ServerPlayerEntityInterface) player).getActionPack());
+        action.accept(((ServerPlayerInterface) player).getActionPack());
         return 1;
     }
 

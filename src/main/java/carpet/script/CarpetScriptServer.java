@@ -1,7 +1,5 @@
 package carpet.script;
 
-import carpet.CarpetSettings;
-import carpet.fakes.CommandDispatcherInterface;
 import carpet.script.annotation.AnnotationParser;
 import carpet.script.api.Auxiliary;
 import carpet.script.api.BlockIterators;
@@ -9,9 +7,10 @@ import carpet.script.api.Entities;
 import carpet.script.api.Inventories;
 import carpet.script.api.Scoreboards;
 import carpet.script.api.WorldAccess;
-import carpet.CarpetServer;
 import carpet.script.exception.ExpressionException;
 import carpet.script.exception.LoadException;
+import carpet.script.external.Carpet;
+import carpet.script.external.Vanilla;
 import carpet.script.language.Arithmetic;
 import carpet.script.language.ControlFlow;
 import carpet.script.language.DataStructures;
@@ -21,9 +20,6 @@ import carpet.script.language.Sys;
 import carpet.script.language.Threading;
 import carpet.script.utils.AppStoreManager;
 import carpet.script.value.FunctionValue;
-import carpet.utils.CarpetProfiler;
-import carpet.utils.CommandHelper;
-import carpet.utils.Messenger;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.tree.CommandNode;
 
@@ -127,21 +123,14 @@ public class CarpetScriptServer extends ScriptServer
 
     public void initializeForWorld()
     {
-        CarpetServer.settingsManager.initializeScarpetRules();
-        CarpetServer.extensions.forEach(e -> {
-            if (e.extensionSettingsManager() != null)
-            {
-                e.extensionSettingsManager().initializeScarpetRules();
-            }
-        });
-        if (CarpetSettings.scriptsAutoload)
+        if (Vanilla.MinecraftServer_doScriptsAutoload(server))
         {
             for (final String moduleName : listAvailableModules(false))
             {
                 addScriptHost(server.createCommandSourceStack(), moduleName, null, true, true, false, null);
             }
         }
-        CarpetEventServer.Event.START.onTick();
+        CarpetEventServer.Event.START.onTick(server);
     }
 
     public Module getModule(final String name, final boolean allowLibraries)
@@ -188,7 +177,7 @@ public class CarpetScriptServer extends ScriptServer
         }
         catch (final IOException e)
         {
-            CarpetSettings.LOG.error("Exception while loading the app: ", e);
+            LOG.error("Exception while loading the app: ", e);
         }
         for (final Module moduleData : bundledModuleData)
         {
@@ -256,7 +245,7 @@ public class CarpetScriptServer extends ScriptServer
         }
         catch (final IOException e)
         {
-            CarpetSettings.LOG.error("Exception while searching for apps: ", e);
+            LOG.error("Exception while searching for apps: ", e);
         }
         return moduleNames;
     }
@@ -269,7 +258,7 @@ public class CarpetScriptServer extends ScriptServer
     public boolean addScriptHost(final CommandSourceStack source, String name, Predicate<CommandSourceStack> commandValidator,
                                  final boolean perPlayer, final boolean autoload, final boolean isRuleApp, final AppStoreManager.StoreNode installer)
     {
-        final CarpetProfiler.ProfilerToken currentSection = CarpetProfiler.start_section(null, "Scarpet load", CarpetProfiler.TYPE.GENERAL);
+        final Runnable token = Carpet.startProfilerSection("Scarpet load");
         if (commandValidator == null)
         {
             commandValidator = p -> true;
@@ -289,7 +278,7 @@ public class CarpetScriptServer extends ScriptServer
         final Module module = isRuleApp ? getRuleModule(name) : getModule(name, false);
         if (module == null)
         {
-            Messenger.m(source, "r Failed to add " + name + " app: App not found");
+            Carpet.Messenger_message(source, "r Failed to add " + name + " app: App not found");
             return false;
         }
         final CarpetScriptHost newHost;
@@ -299,7 +288,7 @@ public class CarpetScriptServer extends ScriptServer
         }
         catch (final LoadException e)
         {
-            Messenger.m(source, "r Failed to add " + name + " app" + (e.getMessage() == null ? "" : ": " + e.getMessage()));
+            Carpet.Messenger_message(source, "r Failed to add " + name + " app" + (e.getMessage() == null ? "" : ": " + e.getMessage()));
             return false;
         }
 
@@ -320,7 +309,7 @@ public class CarpetScriptServer extends ScriptServer
         final Boolean isCommandAdded = newHost.addAppCommands(s -> {
             if (!isRuleApp)
             {
-                Messenger.m(source, Messenger.c("r Failed to add app '" + finalName + "': ", s));
+                Carpet.Messenger_message(source, "r Failed to add app '" + finalName + "': ", s);
             }
         });
         if (isCommandAdded == null) // error should be dispatched
@@ -330,17 +319,17 @@ public class CarpetScriptServer extends ScriptServer
         }
         else if (isCommandAdded)
         {
-            CommandHelper.notifyPlayersCommandsChanged(server);
+            Vanilla.MinecraftServer_notifyPlayersCommandsChanged(server);
             if (!isRuleApp)
             {
-                Messenger.m(source, "gi " + name + " app " + action + " with /" + name + " command");
+                Carpet.Messenger_message(source, "gi " + name + " app " + action + " with /" + name + " command");
             }
         }
         else
         {
             if (!isRuleApp)
             {
-                Messenger.m(source, "gi " + name + " app " + action);
+                Carpet.Messenger_message(source, "gi " + name + " app " + action);
             }
         }
 
@@ -361,9 +350,9 @@ public class CarpetScriptServer extends ScriptServer
                 newHost.callNow(onStart, Collections.emptyList());
             }
         }
-        CarpetProfiler.end_current_section(currentSection);
+        token.run();
         final long end = System.nanoTime();
-        CarpetSettings.LOG.info("App " + name + " loaded in " + (end - start) / 1000000 + " ms");
+        LOG.info("App " + name + " loaded in " + (end - start) / 1000000 + " ms");
         return true;
     }
 
@@ -380,7 +369,7 @@ public class CarpetScriptServer extends ScriptServer
         {
             if (notifySource)
             {
-                Messenger.m(source, "r No such app found: ", "wb  " + name);
+                Carpet.Messenger_message(source, "r No such app found: ", "wb  " + name);
             }
             return false;
         }
@@ -390,16 +379,16 @@ public class CarpetScriptServer extends ScriptServer
         host.onClose();
         if (host.hasCommand)
         {
-            ((CommandDispatcherInterface) server.getCommands().getDispatcher()).carpet$unregister(name);
+            Vanilla.CommandDispatcher_unregisterCommand(server.getCommands().getDispatcher(), name);
         }
         if (!isRuleApp)
         {
             unloadableModules.remove(name);
         }
-        CommandHelper.notifyPlayersCommandsChanged(server);
+        Vanilla.MinecraftServer_notifyPlayersCommandsChanged(server);
         if (notifySource)
         {
-            Messenger.m(source, "gi Removed " + name + " app");
+            Carpet.Messenger_message(source, "gi Removed " + name + " app");
         }
         return true;
     }
@@ -416,46 +405,47 @@ public class CarpetScriptServer extends ScriptServer
             }
             if (!Files.exists(folder.getParent().resolve(name + ".sc")))
             {
-                Messenger.m(source, "App doesn't exist in the world scripts folder, so can only be unloaded");
+                Carpet.Messenger_message(source, "App doesn't exist in the world scripts folder, so can only be unloaded");
                 return false;
             }
             removeScriptHost(source, name, false, false);
             Files.move(folder.getParent().resolve(name + ".sc"), folder.resolve(name + ".sc"), StandardCopyOption.REPLACE_EXISTING);
-            Messenger.m(source, "gi Removed " + name + " app");
+            Carpet.Messenger_message(source, "gi Removed " + name + " app");
             return true;
         }
         catch (final IOException exc)
         {
-            Messenger.m(source, "rb Failed to uninstall the app");
+            Carpet.Messenger_message(source, "rb Failed to uninstall the app");
         }
         return false;
     }
 
     public void tick()
     {
-        CarpetProfiler.ProfilerToken token;
-        token = CarpetProfiler.start_section(null, "Scarpet schedule", CarpetProfiler.TYPE.GENERAL);
+        Runnable token;
+        token = Carpet.startProfilerSection("Scarpet schedule");
         events.handleEvents.getWhileDisabled(() -> {
             events.tick();
             return null;
         });
-        CarpetProfiler.end_current_section(token);
-        token = CarpetProfiler.start_section(null, "Scarpet app data", CarpetProfiler.TYPE.GENERAL);
+        token.run();
+        token = Carpet.startProfilerSection("Scarpet app data");
         for (final CarpetScriptHost host : modules.values())
         {
             host.tick();
         }
-        CarpetProfiler.end_current_section(token);
+        token.run();
     }
 
     public void onClose()
     {
-        CarpetEventServer.Event.SHUTDOWN.onTick();
+        CarpetEventServer.Event.SHUTDOWN.onTick(server);
         for (final CarpetScriptHost host : modules.values())
         {
             host.onClose();
             events.removeAllHostEvents(host);
         }
+        stopAll = true;
     }
 
     public void onPlayerJoin(final ServerPlayer player)
@@ -473,6 +463,12 @@ public class CarpetScriptServer extends ScriptServer
                 }
             }
         });
+    }
+
+    @Override
+    public Path resolveResource(final String suffix)
+    {
+        return server.getWorldPath(LevelResource.ROOT).resolve("scripts/" + suffix);
     }
 
     private record TransferData(boolean perUser, Predicate<CommandSourceStack> commandValidator,

@@ -1,6 +1,6 @@
 package carpet.script.utils;
 
-import carpet.CarpetSettings;
+import carpet.script.external.Vanilla;
 import com.mojang.brigadier.ResultConsumer;
 import net.minecraft.commands.CommandSigningContext;
 import net.minecraft.commands.CommandSource;
@@ -42,14 +42,14 @@ public class SnoopyCommandSource extends CommandSourceStack
 
     public SnoopyCommandSource(final CommandSourceStack original, final Component[] error, final List<Component> chatOutput)
     {
-        super(CommandSource.NULL, original.getPosition(), original.getRotation(), original.getLevel(), CarpetSettings.runPermissionLevel,
+        super(CommandSource.NULL, original.getPosition(), original.getRotation(), original.getLevel(), Vanilla.MinecraftServer_getRunPermissionLevel(original.getServer()),
                 original.getTextName(), original.getDisplayName(), original.getServer(), original.getEntity(), false,
                 (ctx, succ, res) -> {
                 }, EntityAnchorArgument.Anchor.FEET, CommandSigningContext.ANONYMOUS, TaskChainer.immediate(original.getServer()));
         this.output = CommandSource.NULL;
         this.position = original.getPosition();
         this.world = original.getLevel();
-        this.level = CarpetSettings.runPermissionLevel;
+        this.level = Vanilla.MinecraftServer_getRunPermissionLevel(original.getServer());
         this.simpleName = original.getTextName();
         this.name = original.getDisplayName();
         this.server = original.getServer();

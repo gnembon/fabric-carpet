@@ -1,12 +1,11 @@
 package carpet.script.api;
 
-import carpet.mixins.Objective_scarpetMixin;
-import carpet.mixins.Scoreboard_scarpetMixin;
 import carpet.script.CarpetContext;
 import carpet.script.Expression;
 import carpet.script.exception.InternalExpressionException;
 import carpet.script.exception.ThrowStatement;
 import carpet.script.exception.Throwables;
+import carpet.script.external.Vanilla;
 import carpet.script.utils.InputValidator;
 import carpet.script.value.BooleanValue;
 import carpet.script.value.EntityValue;
@@ -164,9 +163,9 @@ public class Scoreboards
                 {
                     return Value.NULL;
                 }
-                ((Scoreboard_scarpetMixin) scoreboard).getObjectivesByCriterion().get(objective.getCriteria()).remove(objective);
-                ((Objective_scarpetMixin) objective).setCriterion(criterion);
-                (((Scoreboard_scarpetMixin) scoreboard).getObjectivesByCriterion().computeIfAbsent(criterion, (criterion1) -> Lists.newArrayList())).add(objective);
+                Vanilla.Scoreboard_getObjectivesByCriterion(scoreboard).get(objective.getCriteria()).remove(objective);
+                Vanilla.Objective_setCriterion(objective, criterion);
+                (Vanilla.Scoreboard_getObjectivesByCriterion(scoreboard).computeIfAbsent(criterion, (criterion1) -> Lists.newArrayList())).add(objective);
                 scoreboard.onObjectiveAdded(objective);
                 return Value.FALSE;
             }
@@ -209,9 +208,9 @@ public class Scoreboards
                         {
                             return Value.FALSE;
                         }
-                        ((Scoreboard_scarpetMixin) scoreboard).getObjectivesByCriterion().get(objective.getCriteria()).remove(objective);
-                        ((Objective_scarpetMixin) objective).setCriterion(criterion);
-                        (((Scoreboard_scarpetMixin) scoreboard).getObjectivesByCriterion().computeIfAbsent(criterion, (criterion1) -> Lists.newArrayList())).add(objective);
+                        Vanilla.Scoreboard_getObjectivesByCriterion(scoreboard).get(objective.getCriteria()).remove(objective);
+                        Vanilla.Objective_setCriterion(objective, criterion);
+                        (Vanilla.Scoreboard_getObjectivesByCriterion(scoreboard).computeIfAbsent(criterion, (criterion1) -> Lists.newArrayList())).add(objective);
                         scoreboard.onObjectiveAdded(objective);
                         return Value.TRUE;
                     }

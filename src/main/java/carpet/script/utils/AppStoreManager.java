@@ -1,15 +1,13 @@
 package carpet.script.utils;
 
-import carpet.CarpetServer;
-import carpet.api.settings.CarpetRule;
-import carpet.api.settings.Validator;
 import carpet.script.CarpetScriptHost;
 import carpet.script.CarpetScriptServer;
 import carpet.script.exception.InternalExpressionException;
+import carpet.script.external.Carpet;
+import carpet.script.external.Vanilla;
 import carpet.script.value.MapValue;
 import carpet.script.value.StringValue;
 import carpet.script.value.Value;
-import carpet.utils.Messenger;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -36,6 +34,8 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.io.IOUtils;
 
+import javax.annotation.Nullable;
+
 /**
  * A class used to save scarpet app store scripts to disk
  */
@@ -52,40 +52,15 @@ public class AppStoreManager
      */
     private static String scarpetRepoLink = "https://api.github.com/repos/gnembon/scarpet/contents/programs/";
 
-    private record AppInfo(String name, String url, StoreNode source)
+    public static void setScarpetRepoLink(@Nullable final String link)
     {
+        APP_STORE_ROOT = AppStoreManager.StoreNode.folder(null, "");
+        scarpetRepoLink = link;
     }
 
-    public static class ScarpetAppStoreValidator extends Validator<String>
-    {
-        @Override
-        public String validate(final CommandSourceStack source, final CarpetRule<String> currentRule, String newValue, final String stringInput)
-        {
-            if (newValue.equals(currentRule.value()))
-            {
-                // Don't refresh the local repo if it's the same (world change), helps preventing hitting rate limits from github when
-                // getting suggestions. Pending is a way to invalidate the cache when it gets old, and investigating api usage further
-                return newValue;
-            }
-            APP_STORE_ROOT = StoreNode.folder(null, "");
-            if (newValue.equalsIgnoreCase("none"))
-            {
-                scarpetRepoLink = null;
-                return newValue;
-            }
-            if (newValue.endsWith("/"))
-            {
-                newValue = newValue.replaceAll("/$", "");
-            }
-            scarpetRepoLink = "https://api.github.com/repos/" + newValue + "/";
-            return newValue;
-        }
 
-        @Override
-        public String description()
-        {
-            return "Appstore link should point to a valid github repository";
-        }
+    private record AppInfo(String name, String url, StoreNode source)
+    {
     }
 
     public static class StoreNode
@@ -291,13 +266,13 @@ public class AppStoreManager
         }
         catch (final IOException e)
         {
-            throw new CommandRuntimeException(Messenger.c("rb Failed to obtain app file content: " + e.getMessage()));
+            throw new CommandRuntimeException(Carpet.Messenger_compose("rb Failed to obtain app file content: " + e.getMessage()));
         }
         if (!saveScriptToFile(source, path, nodeInfo.name(), code, false, useTrash))
         {
             return 0;
         }
-        final boolean success = CarpetServer.scriptServer.addScriptHost(source, nodeInfo.name().replaceFirst("\\.sc$", ""), null, true, false, false, nodeInfo.source());
+        final boolean success = Vanilla.MinecraftServer_getScriptServer(source.getServer()).addScriptHost(source, nodeInfo.name().replaceFirst("\\.sc$", ""), null, true, false, false, nodeInfo.source());
         return success ? 1 : 0;
     }
 
@@ -328,7 +303,7 @@ public class AppStoreManager
         }
         catch (final IOException e)
         {
-            throw new CommandRuntimeException(Messenger.c("rb '" + appPath + "' is not a valid path to a scarpet app: " + e.getMessage()));
+            throw new CommandRuntimeException(Carpet.Messenger_compose("rb '" + appPath + "' is not a valid path to a scarpet app: " + e.getMessage()));
         }
     }
 
@@ -363,7 +338,7 @@ public class AppStoreManager
                     }
                     Files.move(scriptLocation, trashPath);
                 }
-                Messenger.m(source, String.format("gi Note: replaced existing app '%s'" + (useTrash ? " (old moved to /trash folder)" : ""), appFileName));
+                Carpet.Messenger_message(source, String.format("gi Note: replaced existing app '%s'" + (useTrash ? " (old moved to /trash folder)" : ""), appFileName));
             }
             final BufferedWriter writer = Files.newBufferedWriter(scriptLocation);
             writer.write(code);
@@ -371,7 +346,7 @@ public class AppStoreManager
         }
         catch (final IOException e)
         {
-            Messenger.m(source, "r Error while downloading app: " + e);
+            Carpet.Messenger_message(source, "r Error while downloading app: " + e);
             CarpetScriptServer.LOG.warn("Error while downloading app", e);
             return false;
         }

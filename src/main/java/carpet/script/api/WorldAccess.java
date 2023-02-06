@@ -1,21 +1,14 @@
 package carpet.script.api;
 
-import carpet.CarpetSettings;
-import carpet.fakes.ChunkGeneratorInterface;
-import carpet.fakes.ChunkTicketManagerInterface;
-import carpet.fakes.RandomStateVisitorAccessor;
-import carpet.fakes.ServerChunkManagerInterface;
-import carpet.fakes.ServerWorldInterface;
-import carpet.fakes.SpawnHelperInnerInterface;
-import carpet.fakes.ThreadedAnvilChunkStorageInterface;
-import carpet.helpers.FeatureGenerator;
-import carpet.mixins.PoiRecord_scarpetMixin;
 import carpet.script.CarpetContext;
+import carpet.script.CarpetScriptServer;
 import carpet.script.Context;
 import carpet.script.Expression;
 import carpet.script.Fluff;
-import carpet.script.annotation.Locator;
-import carpet.script.annotation.ScarpetFunction;
+import carpet.script.external.Carpet;
+import carpet.script.external.Vanilla;
+import carpet.script.utils.FeatureGenerator;
+import carpet.mixins.PoiRecord_scarpetMixin;
 import carpet.script.argument.BlockArgument;
 import carpet.script.argument.Vector3Argument;
 import carpet.script.exception.InternalExpressionException;
@@ -34,7 +27,6 @@ import carpet.script.value.NumericValue;
 import carpet.script.value.StringValue;
 import carpet.script.value.Value;
 import carpet.script.value.ValueConversions;
-import carpet.utils.BlockInfo;
 
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
@@ -48,6 +40,11 @@ import net.minecraft.core.QuartPos;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
+import net.minecraft.server.level.DistanceManager;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.level.Ticket;
+import net.minecraft.server.level.TicketType;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.level.chunk.ChunkGenerator;
 import net.minecraft.world.level.chunk.PalettedContainer;
@@ -59,7 +56,6 @@ import net.minecraft.world.level.levelgen.RandomState;
 import net.minecraft.world.level.levelgen.structure.Structure;
 import net.minecraft.world.level.levelgen.structure.StructureType;
 import org.apache.commons.lang3.tuple.Pair;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -82,10 +78,6 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.protocol.game.ClientboundExplodePacket;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.level.ServerLevel;
-import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.server.level.Ticket;
-import net.minecraft.server.level.TicketType;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
 import net.minecraft.util.SortedArraySet;
@@ -134,6 +126,8 @@ import net.minecraft.world.level.levelgen.structure.StructureStart;
 import net.minecraft.world.level.pathfinder.PathComputationType;
 import net.minecraft.world.level.storage.ServerLevelData;
 import net.minecraft.world.phys.Vec3;
+
+import javax.annotation.Nullable;
 
 import static carpet.script.utils.WorldTools.canHasChunk;
 
@@ -256,7 +250,7 @@ public class WorldAccess
     {
         synchronized (level)
         {
-            ((ChunkGeneratorInterface) level.getChunkSource().getGenerator()).initStrongholds(level);
+            level.getChunkSource().getGeneratorState().ensureStructuresGenerated();
         }
     }
 
@@ -444,7 +438,7 @@ public class WorldAccess
             }
 
             final Value weather = lv.get(0);
-            final ServerLevelData worldProperties = ((ServerWorldInterface) world).getWorldPropertiesCM();
+            final ServerLevelData worldProperties = Vanilla.ServerLevel_getWorldProperties(world);
             if (lv.size() == 1)
             {
                 return new NumericValue(switch (weather.getString().toLowerCase(Locale.ROOT))
@@ -644,10 +638,9 @@ public class WorldAccess
         expression.addContextFunction("chunk_tickets", -1, (c, t, lv) ->
         {
             final ServerLevel world = ((CarpetContext) c).level();
-            final Long2ObjectOpenHashMap<SortedArraySet<Ticket<?>>> levelTickets = (
-                    (ChunkTicketManagerInterface) ((ServerChunkManagerInterface) world.getChunkSource())
-                            .getCMTicketManager()
-            ).getTicketsByPosition();
+            DistanceManager foo = Vanilla.ServerChunkCache_getCMTicketManager(world.getChunkSource());
+            final Long2ObjectOpenHashMap<SortedArraySet<Ticket<?>>> levelTickets = Vanilla.ChunkTicketManager_getTicketsByPosition(foo);
+
             final List<Value> res = new ArrayList<>();
             if (lv.size() == 0)
             {
@@ -723,22 +716,23 @@ public class WorldAccess
         // lazy cause its parked execution
         expression.addLazyFunction("without_updates", 1, (c, t, lv) ->
         {
-            final boolean previous = CarpetSettings.impendingFillSkipUpdates.get();
-            if (previous)
+            if (Carpet.getImpendingFillSkipUpdates().get())
             {
                 return lv.get(0);
             }
             final Value[] result = new Value[]{Value.NULL};
             ((CarpetContext) c).server().executeBlocking(() ->
             {
+                final ThreadLocal<Boolean> skipUpdates = Carpet.getImpendingFillSkipUpdates();
+                final boolean previous = skipUpdates.get();
                 try
                 {
-                    CarpetSettings.impendingFillSkipUpdates.set(true);
+                    skipUpdates.set(true);
                     result[0] = lv.get(0).evalValue(c, t);
                 }
                 finally
                 {
-                    CarpetSettings.impendingFillSkipUpdates.set(false);
+                    skipUpdates.set(previous);
                 }
             });
             return (cc, tt) -> result[0];
@@ -1080,7 +1074,9 @@ public class WorldAccess
             final Explosion explosion = new Explosion(cc.level(), source, null, null, pos.x, pos.y, pos.z, powah, createFire, mode)
             {
                 @Override
-                public @Nullable LivingEntity getIndirectSourceEntity()
+                @Nullable
+                public
+                LivingEntity getIndirectSourceEntity()
                 {
                     return theAttacker;
                 }
@@ -1168,15 +1164,15 @@ public class WorldAccess
 
         expression.addContextFunction("block_sound", -1, (c, t, lv) ->
                 stateStringQuery(c, "block_sound", lv, (s, p) ->
-                        BlockInfo.soundName.get(s.getSoundType())));
+                        Carpet.getSoundTypeNames().get(s.getSoundType())));
 
         expression.addContextFunction("material", -1, (c, t, lv) ->
                 stateStringQuery(c, "material", lv, (s, p) ->
-                        BlockInfo.materialName.get(s.getMaterial())));
+                        Carpet.getMaterialNames().get(s.getMaterial())));
 
         expression.addContextFunction("map_colour", -1, (c, t, lv) ->
                 stateStringQuery(c, "map_colour", lv, (s, p) ->
-                        BlockInfo.mapColourName.get(s.getMapColor(((CarpetContext) c).level(), p))));
+                        Carpet.getMapColorNames().get(s.getMapColor(((CarpetContext) c).level(), p))));
 
 
         // Deprecated for block_state()
@@ -1485,7 +1481,7 @@ public class WorldAccess
                 }
                 catch (final NullPointerException npe)
                 {
-                    CarpetSettings.LOG.error("Failed to detect structure: " + reg.getKey(str));
+                    CarpetScriptServer.LOG.error("Failed to detect structure: " + reg.getKey(str));
                     start = null;
                 }
 
@@ -1649,7 +1645,7 @@ public class WorldAccess
             final Value[] result = new Value[]{Value.NULL};
             ((CarpetContext) c).server().executeBlocking(() ->
             {
-                final Map<String, Integer> report = ((ThreadedAnvilChunkStorageInterface) world.getChunkSource().chunkMap).regenerateChunkRegion(requestedChunks);
+                final Map<String, Integer> report = Vanilla.ChunkMap_regenerateChunkRegion(world.getChunkSource().chunkMap, requestedChunks);
                 result[0] = MapValue.wrap(report.entrySet().stream().collect(Collectors.toMap(
                         e -> new StringValue(e.getKey()),
                         e -> new NumericValue(e.getValue())
@@ -1677,9 +1673,7 @@ public class WorldAccess
                 required_charge = NumericValue.asNumber(lv.get(locator.offset)).getDouble();
             }
             final NaturalSpawner.SpawnState charger = cc.level().getChunkSource().getLastSpawnState();
-            return charger == null ? Value.NULL : new NumericValue(
-                    ((SpawnHelperInnerInterface) charger).getPotentialCalculator().
-                            getPotentialEnergyChange(pos, required_charge)
+            return charger == null ? Value.NULL : new NumericValue(Vanilla.SpawnState_getPotentialCalculator(charger).getPotentialEnergyChange(pos, required_charge)
             );
         });
 
@@ -1809,7 +1803,7 @@ public class WorldAccess
                     noiseBasedChunkGenerator.generatorSettings().value(),
                     level.registryAccess().lookupOrThrow(Registries.NOISE), level.getSeed()
             );
-            DensityFunction.Visitor visitor = ((RandomStateVisitorAccessor) (Object) randomState).getVisitor();
+            DensityFunction.Visitor visitor = Vanilla.RandomState_getVisitor(randomState);
 
             return densityFunction.mapAll(visitor);
         }

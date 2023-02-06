@@ -21,7 +21,6 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.Direction.Axis;
 import net.minecraft.core.GlobalPos;
 import net.minecraft.core.Registry;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.StringTag;
@@ -38,7 +37,6 @@ import net.minecraft.world.level.block.state.properties.Property;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
-import org.jetbrains.annotations.NotNull;
 
 import static carpet.script.value.NBTSerializableValue.nameFromRegistryId;
 
@@ -46,7 +44,6 @@ public class BlockValue extends Value
 {
     private BlockState blockState;
     private final BlockPos pos;
-    @NotNull
     private final Level world;
     private CompoundTag data;
 
@@ -143,7 +140,7 @@ public class BlockValue extends Value
     }
 
 
-    public BlockValue(final BlockState state, @NotNull final Level world, final BlockPos position)
+    public BlockValue(final BlockState state, final Level world, final BlockPos position)
     {
         this.world = world;
         blockState = state;
@@ -151,7 +148,7 @@ public class BlockValue extends Value
         data = null;
     }
 
-    public BlockValue(final BlockState state, @NotNull final Level world, final BlockPos position, final CompoundTag nbt)
+    public BlockValue(final BlockState state, final Level world, final BlockPos position, final CompoundTag nbt)
     {
         this.world = world;
         blockState = state;

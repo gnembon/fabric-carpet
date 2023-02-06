@@ -1,13 +1,12 @@
 package carpet.script.api;
 
-import carpet.fakes.IngredientInterface;
-import carpet.fakes.RecipeManagerInterface;
 import carpet.script.CarpetContext;
 import carpet.script.Expression;
 import carpet.script.argument.FunctionArgument;
 import carpet.script.exception.InternalExpressionException;
 import carpet.script.exception.ThrowStatement;
 import carpet.script.exception.Throwables;
+import carpet.script.external.Vanilla;
 import carpet.script.utils.InputValidator;
 import carpet.script.value.BooleanValue;
 import carpet.script.value.EntityValue;
@@ -111,7 +110,7 @@ public class Inventories
                 final String recipeType = lv.get(1).getString();
                 type = cc.registry(Registries.RECIPE_TYPE).get(InputValidator.identifierOf(recipeType));
             }
-            final List<Recipe<?>> recipes = ((RecipeManagerInterface) cc.server().getRecipeManager()).getAllMatching(type, InputValidator.identifierOf(recipeName), cc.registryAccess());
+            final List<Recipe<?>> recipes = Vanilla.RecipeManager_getAllMatching(cc.server().getRecipeManager(), type, InputValidator.identifierOf(recipeName), cc.registryAccess());
             if (recipes.isEmpty())
             {
                 return Value.NULL;
@@ -126,7 +125,7 @@ public class Inventories
                     // I am flattening ingredient lists per slot.
                     // consider recipe_data('wooden_sword','crafting') and ('iron_nugget', 'blasting') and notice difference
                     // in depths of lists.
-                    final List<Collection<ItemStack>> stacks = ((IngredientInterface) (Object) ingredient).getRecipeStacks();
+                    final List<Collection<ItemStack>> stacks = Vanilla.Ingredient_getRecipeStacks(ingredient);
                     if (stacks.isEmpty())
                     {
                         ingredientValue.add(Value.NULL);

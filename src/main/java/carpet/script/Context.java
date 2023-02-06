@@ -91,6 +91,11 @@ public class Context
         return host.errorSnooper;
     }
 
+    public ScriptServer scriptServer()
+    {
+        return host.scriptServer();
+    }
+
     /**
      * immutable context only for reason on reporting access violations in evaluating expressions in optimizization
      * mode detecting any potential violations that may happen on the way

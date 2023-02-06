@@ -4,7 +4,7 @@ import carpet.api.settings.CarpetRule;
 import carpet.api.settings.RuleCategory;
 import carpet.api.settings.Validators;
 import carpet.api.settings.Validator;
-import carpet.script.utils.AppStoreManager;
+import carpet.script.external.Carpet;
 import carpet.settings.Rule;
 import carpet.utils.Translations;
 import carpet.utils.CommandHelper;
@@ -562,7 +562,7 @@ public class CarpetSettings
             },
             category = SCARPET,
             strict = false,
-            validate= AppStoreManager.ScarpetAppStoreValidator.class
+            validate= Carpet.ScarpetAppStoreValidator.class
     )
     public static String scriptsAppStore = "gnembon/scarpet/contents/programs";
 

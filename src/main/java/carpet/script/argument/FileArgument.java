@@ -1,8 +1,9 @@
 package carpet.script.argument;
 
-import carpet.CarpetServer;
 import carpet.script.CarpetScriptServer;
+import carpet.script.Context;
 import carpet.script.Module;
+import carpet.script.ScriptHost;
 import carpet.script.exception.InternalExpressionException;
 import carpet.script.exception.ThrowStatement;
 import carpet.script.exception.Throwables;
@@ -18,7 +19,6 @@ import net.minecraft.nbt.NbtAccounter;
 import net.minecraft.nbt.NbtIo;
 import net.minecraft.nbt.Tag;
 import net.minecraft.nbt.TagTypes;
-import net.minecraft.world.level.storage.LevelResource;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -58,6 +58,7 @@ public class FileArgument
     public Reason reason;
     private FileSystem zfs;
     private Path zipPath;
+    private ScriptHost host;
 
     public static final Object writeIOSync = new Object();
 
@@ -103,7 +104,7 @@ public class FileArgument
         READ, CREATE, DELETE
     }
 
-    public FileArgument(final String resource, final Type type, final String zipContainer, final boolean isFolder, final boolean isShared, final Reason reason)
+    public FileArgument(final String resource, final Type type, final String zipContainer, final boolean isFolder, final boolean isShared, final Reason reason, final ScriptHost host)
     {
         this.resource = resource;
         this.type = type;
@@ -113,6 +114,7 @@ public class FileArgument
         this.reason = reason;
         this.zfs = null;
         this.zipPath = null;
+        this.host = host;
     }
 
     @Override
@@ -121,7 +123,7 @@ public class FileArgument
         return "path: " + resource + " zip: " + zipContainer + " type: " + type.id + " folder: " + isFolder + " shared: " + isShared + " reason: " + reason.toString();
     }
 
-    public static FileArgument from(final List<Value> lv, final boolean isFolder, final Reason reason)
+    public static FileArgument from(final Context context, final List<Value> lv, final boolean isFolder, final Reason reason)
     {
         if (lv.size() < 2)
         {
@@ -140,14 +142,14 @@ public class FileArgument
         {
             throw new InternalExpressionException("Folder types are no supported for this IO function");
         }
-        return new FileArgument(resource.getLeft(), type, resource.getRight(), isFolder, shared, reason);
+        return new FileArgument(resource.getLeft(), type, resource.getRight(), isFolder, shared, reason, context.host);
 
     }
 
-    public static FileArgument resourceFromPath(final String path, final Reason reason, final boolean shared)
+    public static FileArgument resourceFromPath(final ScriptHost host, final String path, final Reason reason, final boolean shared)
     {
         final Pair<String, String> resource = recognizeResource(path, false, Type.ANY);
-        return new FileArgument(resource.getLeft(), Type.ANY, resource.getRight(), false, shared, reason);
+        return new FileArgument(resource.getLeft(), Type.ANY, resource.getRight(), false, shared, reason, host);
     }
 
     public static Pair<String, String> recognizeResource(final String origfile, final boolean isFolder, final Type type)
@@ -196,11 +198,7 @@ public class FileArgument
 
     private Path resolve(final String suffix)
     {
-        if (CarpetServer.minecraft_server == null)
-        {
-            throw new InternalExpressionException("Accessing world files without server running");
-        }
-        return CarpetServer.minecraft_server.getWorldPath(LevelResource.ROOT).resolve("scripts/" + suffix);
+        return host.resolveScriptFile(suffix);
     }
 
     private Path toPath(final Module module)

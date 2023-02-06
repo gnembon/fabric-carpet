@@ -3,8 +3,8 @@ package carpet.script.exception;
 import carpet.script.Context;
 import carpet.script.Expression;
 import carpet.script.Tokenizer;
+import carpet.script.external.Carpet;
 import carpet.script.value.FunctionValue;
-import carpet.utils.Messenger;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -22,7 +22,7 @@ public class ExpressionException extends StacklessRuntimeException implements Re
 
     public static void prepareForDoom()
     {
-        Messenger.c("foo bar");
+        Carpet.Messenger_compose("foo bar");
     }
 
     public ExpressionException(final Context c, final Expression e, final String message)

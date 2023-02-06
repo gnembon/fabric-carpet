@@ -1,6 +1,5 @@
 package carpet.script;
 
-import carpet.CarpetSettings;
 import carpet.script.Fluff.AbstractFunction;
 import carpet.script.Fluff.AbstractLazyFunction;
 import carpet.script.Fluff.AbstractLazyOperator;
@@ -20,6 +19,7 @@ import carpet.script.exception.IntegrityException;
 import carpet.script.exception.InternalExpressionException;
 import carpet.script.exception.ResolvedException;
 import carpet.script.exception.ReturnStatement;
+import carpet.script.external.Vanilla;
 import carpet.script.language.Arithmetic;
 import carpet.script.language.ControlFlow;
 import carpet.script.language.DataStructures;
@@ -44,11 +44,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.*;
+import java.util.function.BiFunction;
+import java.util.function.BinaryOperator;
+import java.util.function.DoubleToLongFunction;
+import java.util.function.DoubleUnaryOperator;
+import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
-
-import static java.lang.Math.max;
-import static java.lang.Math.min;
 
 public class Expression
 {
@@ -164,8 +166,8 @@ public class Expression
         }
         else
         {
-            output.add(expr.substring(max(0, token.pos - 40), token.pos));
-            output.add(expr.substring(token.pos, min(token.pos + 1 + 40, expr.length())));
+            output.add(expr.substring(Math.max(0, token.pos - 40), token.pos));
+            output.add(expr.substring(token.pos, Math.min(token.pos + 1 + 40, expr.length())));
         }
         return output;
     }
@@ -424,7 +426,7 @@ public class Expression
             return exc;
         }
         // unexpected really - should be caught earlier and converted to InternalExpressionException
-        CarpetSettings.LOG.error("Unexpected exception while running Scarpet code", exc);
+        CarpetScriptServer.LOG.error("Unexpected exception while running Scarpet code", exc);
         return new ExpressionException(c, e, token, "Internal error (please report this issue to Carpet) while evaluating: " + exc);
     }
 
@@ -1188,13 +1190,14 @@ public class Expression
         final List<Tokenizer.Token> rpn = shuntingYard(context);
         validate(context, rpn);
         final ExpressionNode root = RPNToParseTree(rpn, context);
-        if (!CarpetSettings.scriptsOptimization)
+        if (!Vanilla.ScriptServer_scriptOptimizations(((CarpetScriptServer)context.scriptServer()).server))
         {
             return root.op;
         }
 
         final Context optimizeOnlyContext = new Context.ContextForErrorReporting(context);
-        if (CarpetSettings.scriptsDebugging)
+        final boolean scriptsDebugging = Vanilla.ScriptServer_scriptDebugging(((CarpetScriptServer)context.scriptServer()).server);
+        if (scriptsDebugging)
         {
             CarpetScriptServer.LOG.info("Input code size for " + getModuleName() + ": " + treeSize(root) + " nodes, " + treeDepth(root) + " deep");
         }
@@ -1209,36 +1212,36 @@ public class Expression
             changed = false;
             while (true)
             {
-                if (CarpetSettings.scriptsDebugging)
+                if (scriptsDebugging)
                 {
                     prevTreeSize = treeSize(root);
                     prevTreeDepth = treeDepth(root);
                 }
-                final boolean optimized = compactTree(root, Context.Type.NONE, 0);
+                final boolean optimized = compactTree(root, Context.Type.NONE, 0, scriptsDebugging);
                 if (!optimized)
                 {
                     break;
                 }
                 changed = true;
-                if (CarpetSettings.scriptsDebugging)
+                if (scriptsDebugging)
                 {
                     CarpetScriptServer.LOG.info("Compacted from " + prevTreeSize + " nodes, " + prevTreeDepth + " code depth to " + treeSize(root) + " nodes, " + treeDepth(root) + " code depth");
                 }
             }
             while (true)
             {
-                if (CarpetSettings.scriptsDebugging)
+                if (scriptsDebugging)
                 {
                     prevTreeSize = treeSize(root);
                     prevTreeDepth = treeDepth(root);
                 }
-                final boolean optimized = optimizeTree(optimizeOnlyContext, root, Context.Type.NONE, 0);
+                final boolean optimized = optimizeTree(optimizeOnlyContext, root, Context.Type.NONE, 0, scriptsDebugging);
                 if (!optimized)
                 {
                     break;
                 }
                 changed = true;
-                if (CarpetSettings.scriptsDebugging)
+                if (scriptsDebugging)
                 {
                     CarpetScriptServer.LOG.info("Optimized from " + prevTreeSize + " nodes, " + prevTreeDepth + " code depth to " + treeSize(root) + " nodes, " + treeDepth(root) + " code depth");
                 }
@@ -1258,7 +1261,7 @@ public class Expression
     }
 
 
-    private boolean compactTree(final ExpressionNode node, final Context.Type expectedType, final int indent)
+    private boolean compactTree(final ExpressionNode node, final Context.Type expectedType, final int indent, final boolean scriptsDebugging)
     {
         // ctx is just to report errors, not values evaluation
         boolean optimized = false;
@@ -1278,7 +1281,7 @@ public class Expression
         final Context.Type requestedType = operation.staticType(expectedType);
         for (final ExpressionNode arg : node.args)
         {
-            if (compactTree(arg, requestedType, indent + 1))
+            if (compactTree(arg, requestedType, indent + 1, scriptsDebugging))
             {
                 optimized = true;
             }
@@ -1308,7 +1311,7 @@ public class Expression
                     returnNode.token = returnNode.args.get(0).token;
                     returnNode.range = returnNode.args.get(0).range;
                     returnNode.args = returnNode.args.get(0).args;
-                    if (CarpetSettings.scriptsDebugging)
+                    if (scriptsDebugging)
                     {
                         CarpetScriptServer.LOG.info(" - Removed unnecessary tail return of " + returnNode.token.surface + " from function body at line " + (returnNode.token.lineno + 1) + ", node depth " + indent);
                     }
@@ -1318,7 +1321,7 @@ public class Expression
                     returnNode.op = LazyValue.ofConstant(Value.NULL);
                     returnNode.token.morph(Tokenizer.Token.TokenType.CONSTANT, "");
                     returnNode.args = Collections.emptyList();
-                    if (CarpetSettings.scriptsDebugging)
+                    if (scriptsDebugging)
                     {
                         CarpetScriptServer.LOG.info(" - Removed unnecessary tail return from function body at line " + (returnNode.token.lineno + 1) + ", node depth " + indent);
                     }
@@ -1356,7 +1359,7 @@ public class Expression
                         newargs.addAll(optimizedChild.args);
                     }
 
-                    if (CarpetSettings.scriptsDebugging)
+                    if (scriptsDebugging)
                     {
                         CarpetScriptServer.LOG.info(" - " + symbol + "(" + node.args.size() + ") => " + function + "(" + newargs.size() + ") at line " + (node.token.lineno + 1) + ", node depth " + indent);
                     }
@@ -1368,7 +1371,7 @@ public class Expression
         return optimized;
     }
 
-    private boolean optimizeTree(final Context ctx, final ExpressionNode node, Context.Type expectedType, final int indent)
+    private boolean optimizeTree(final Context ctx, final ExpressionNode node, Context.Type expectedType, final int indent, final boolean scriptsDebugging)
     {
         // ctx is just to report errors, not values evaluation
         boolean optimized = false;
@@ -1390,7 +1393,7 @@ public class Expression
         final Context.Type requestedType = operation.staticType(expectedType);
         for (final ExpressionNode arg : node.args)
         {
-            if (optimizeTree(ctx, arg, requestedType, indent + 1))
+            if (optimizeTree(ctx, arg, requestedType, indent + 1, scriptsDebugging))
             {
                 optimized = true;
             }
@@ -1457,7 +1460,7 @@ public class Expression
             result = ((ILazyOperator) operation).lazyEval(ctx, expectedType, this, node.token, args.get(0), args.get(1)).evalValue(null, expectedType);
         }
         node.op = LazyValue.ofConstant(result);
-        if (CarpetSettings.scriptsDebugging)
+        if (scriptsDebugging)
         {
             CarpetScriptServer.LOG.info(" - " + symbol + "(" + args.stream().map(a -> a.evalValue(null, requestedType).getString()).collect(Collectors.joining(", ")) + ") => " + result.getString() + " at line " + (node.token.lineno + 1) + ", node depth " + indent);
         }

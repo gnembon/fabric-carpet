@@ -1,6 +1,5 @@
 package carpet.script;
 
-import carpet.CarpetServer;
 import carpet.script.annotation.AnnotationParser;
 import carpet.script.api.Auxiliary;
 import carpet.script.api.BlockIterators;
@@ -12,6 +11,7 @@ import carpet.script.api.Threading;
 import carpet.script.api.WorldAccess;
 import carpet.script.exception.CarpetExpressionException;
 import carpet.script.exception.ExpressionException;
+import carpet.script.external.Carpet;
 import carpet.script.value.BlockValue;
 import carpet.script.value.EntityValue;
 import carpet.script.value.NumericValue;
@@ -58,12 +58,13 @@ public class CarpetExpression
         Scoreboards.apply(this.expr);
         Monitoring.apply(this.expr);
         AnnotationParser.apply(this.expr);
-        CarpetServer.extensions.forEach(e -> e.scarpetApi(this));
+        Carpet.handleExtensionsAPI(this);
     }
 
     public boolean fillAndScanCommand(final ScriptHost host, final int x, final int y, final int z)
     {
-        if (CarpetServer.scriptServer.stopAll)
+        CarpetScriptServer scriptServer = (CarpetScriptServer) host.scriptServer();
+        if (scriptServer.stopAll)
         {
             return false;
         }
@@ -85,7 +86,7 @@ public class CarpetExpression
                 final Value playerValue = new EntityValue(e).bindTo("p");
                 context.with("p", (cc, tt) -> playerValue);
             }
-            return CarpetServer.scriptServer.events.handleEvents.getWhileDisabled(() -> this.expr.eval(context).getBoolean());
+            return scriptServer.events.handleEvents.getWhileDisabled(() -> this.expr.eval(context).getBoolean());
         }
         catch (final ExpressionException e)
         {
@@ -103,7 +104,8 @@ public class CarpetExpression
 
     public Value scriptRunCommand(final ScriptHost host, final BlockPos pos)
     {
-        if (CarpetServer.scriptServer.stopAll)
+        CarpetScriptServer scriptServer = (CarpetScriptServer) host.scriptServer();
+        if (scriptServer.stopAll)
         {
             throw new CarpetExpressionException("SCRIPTING PAUSED (unpause with /script resume)", null);
         }
@@ -124,7 +126,7 @@ public class CarpetExpression
                 final Value playerValue = new EntityValue(e).bindTo("p");
                 context.with("p", (cc, tt) -> playerValue);
             }
-            return CarpetServer.scriptServer.events.handleEvents.getWhileDisabled(() -> this.expr.eval(context));
+            return scriptServer.events.handleEvents.getWhileDisabled(() -> this.expr.eval(context));
         }
         catch (final ExpressionException e)
         {

@@ -1,19 +1,14 @@
 package carpet.script.value;
 
-import carpet.fakes.EntityInterface;
-import carpet.fakes.ItemEntityInterface;
-import carpet.fakes.LivingEntityInterface;
-import carpet.fakes.MobEntityInterface;
-import carpet.fakes.ServerPlayerEntityInterface;
-import carpet.fakes.ServerPlayerInteractionManagerInterface;
-import carpet.helpers.Tracer;
-import carpet.network.ServerNetworkHandler;
-import carpet.patches.EntityPlayerMPFake;
+import carpet.script.external.Vanilla;
+import carpet.script.utils.Tracer;
 import carpet.script.CarpetContext;
 import carpet.script.CarpetScriptServer;
 import carpet.script.EntityEventsGroup;
 import carpet.script.argument.Vector3Argument;
 import carpet.script.exception.InternalExpressionException;
+import carpet.script.external.Carpet;
+import carpet.script.utils.EntityTools;
 import carpet.script.utils.InputValidator;
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
@@ -96,7 +91,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static carpet.script.value.NBTSerializableValue.nameFromRegistryId;
-import static carpet.utils.MobAI.genericJump;
 
 // TODO: decide whether copy(entity) should duplicate entity in the world.
 public class EntityValue extends Value
@@ -136,7 +130,7 @@ public class EntityValue extends Value
 
     public Entity getEntity()
     {
-        if (entity instanceof ServerPlayer && ((ServerPlayerEntityInterface) entity).isInvalidEntityObject())
+        if (entity instanceof final ServerPlayer serverPlayer && Vanilla.ServerPlayer_isInvalidEntityObject(serverPlayer))
         {
             final ServerPlayer newPlayer = entity.getServer().getPlayerList().getPlayer(entity.getUUID());
             if (newPlayer != null)
@@ -449,7 +443,7 @@ public class EntityValue extends Value
         put("is_ridden", (e, a) -> BooleanValue.of(e.isVehicle()));
         put("passengers", (e, a) -> ListValue.wrap(e.getPassengers().stream().map(EntityValue::new)));
         put("mount", (e, a) -> (e.getVehicle() != null) ? new EntityValue(e.getVehicle()) : Value.NULL);
-        put("unmountable", (e, a) -> BooleanValue.of(((EntityInterface) e).isPermanentVehicle()));
+        put("unmountable", (e, a) -> BooleanValue.of(Vanilla.Entity_isPermanentVehicle(e)));
         // deprecated
         put("tags", (e, a) -> ListValue.wrap(e.getTags().stream().map(StringValue::new)));
 
@@ -505,9 +499,9 @@ public class EntityValue extends Value
         put("offering_flower", (e, a) -> e instanceof final IronGolem ig ? BooleanValue.of(ig.getOfferFlowerTick() > 0) : Value.NULL);
         put("item", (e, a) -> e instanceof final ItemEntity ie ? ValueConversions.of(ie.getItem(), e.getServer().registryAccess()) : e instanceof final ItemFrame frame ? ValueConversions.of(frame.getItem(), e.getServer().registryAccess()) : Value.NULL);
         put("count", (e, a) -> (e instanceof final ItemEntity ie) ? new NumericValue(ie.getItem().getCount()) : Value.NULL);
-        put("pickup_delay", (e, a) -> (e instanceof ItemEntity) ? new NumericValue(((ItemEntityInterface) e).getPickupDelayCM()) : Value.NULL);
-        put("portal_cooldown", (e, a) -> new NumericValue(((EntityInterface) e).getPublicNetherPortalCooldown()));
-        put("portal_timer", (e, a) -> new NumericValue(((EntityInterface) e).getPortalTimer()));
+        put("pickup_delay", (e, a) -> (e instanceof final ItemEntity ie) ? new NumericValue(Vanilla.ItemEntity_getPickupDelay(ie)) : Value.NULL);
+        put("portal_cooldown", (e, a) -> new NumericValue(Vanilla.Entity_getPublicNetherPortalCooldown(e)));
+        put("portal_timer", (e, a) -> new NumericValue(Vanilla.Entity_getPortalTimer(e)));
         // ItemEntity -> despawn timer via ssGetAge
         put("is_baby", (e, a) -> (e instanceof final LivingEntity le) ? BooleanValue.of(le.isBaby()) : Value.NULL);
         put("target", (e, a) -> {
@@ -544,7 +538,7 @@ public class EntityValue extends Value
         put("swimming", (e, a) -> e.isSwimming() ? Value.TRUE : Value.FALSE);
         put("swinging", (e, a) -> e instanceof final LivingEntity le ? BooleanValue.of(le.swinging) : Value.NULL);
         put("air", (e, a) -> new NumericValue(e.getAirSupply()));
-        put("language", (e, a) -> !(e instanceof ServerPlayer) ? NULL : StringValue.of(((ServerPlayerEntityInterface) e).getLanguage()));
+        put("language", (e, a) -> !(e instanceof final ServerPlayer p) ? NULL : StringValue.of(Vanilla.ServerPlayer_getLanguage(p)));
         put("persistence", (e, a) -> e instanceof final Mob mob ? BooleanValue.of(mob.isPersistenceRequired()) : Value.NULL);
         put("hunger", (e, a) -> e instanceof final Player player ? new NumericValue(player.getFoodData().getFoodLevel()) : Value.NULL);
         put("saturation", (e, a) -> e instanceof final Player player ? new NumericValue(player.getFoodData().getSaturationLevel()) : Value.NULL);
@@ -554,7 +548,7 @@ public class EntityValue extends Value
         put("xp_level", (e, a) -> e instanceof final Player player ? new NumericValue(player.experienceLevel) : Value.NULL);
         put("xp_progress", (e, a) -> e instanceof final Player player ? new NumericValue(player.experienceProgress) : Value.NULL);
         put("score", (e, a) -> e instanceof final Player player ? new NumericValue(player.getScore()) : Value.NULL);
-        put("jumping", (e, a) -> e instanceof LivingEntity ? ((LivingEntityInterface) e).isJumpingCM() ? Value.TRUE : Value.FALSE : Value.NULL);
+        put("jumping", (e, a) -> e instanceof final LivingEntity le ? Vanilla.LivingEntity_isJumping(le) ? Value.TRUE : Value.FALSE : Value.NULL);
         put("gamemode", (e, a) -> e instanceof final ServerPlayer sp ? new StringValue(sp.gameMode.getGameModeForPlayer().getName()) : Value.NULL);
         put("path", (e, a) -> {
             if (e instanceof final Mob mob)
@@ -610,9 +604,10 @@ public class EntityValue extends Value
         put("player_type", (e, a) -> {
             if (e instanceof final Player p)
             {
-                if (e instanceof final EntityPlayerMPFake fake)
+                final String moddedType = Carpet.isModdedPlayer(p);
+                if (moddedType != null)
                 {
-                    return new StringValue(fake.isAShadow ? "shadow" : "fake");
+                    return StringValue.of(moddedType);
                 }
                 final MinecraftServer server = p.getCommandSenderWorld().getServer();
                 if (server.isDedicatedServer())
@@ -635,7 +630,7 @@ public class EntityValue extends Value
             return Value.NULL;
         });
 
-        put("client_brand", (e, a) -> e instanceof final ServerPlayer sp ? StringValue.of(ServerNetworkHandler.getPlayerStatus(sp)) : Value.NULL);
+        put("client_brand", (e, a) -> e instanceof final ServerPlayer sp ? StringValue.of(Carpet.getPlayerStatus(sp)) : Value.NULL);
         put("team", (e, a) -> e.getTeam() == null ? Value.NULL : new StringValue(e.getTeam().getName()));
         put("ping", (e, a) -> e instanceof final ServerPlayer sp ? new NumericValue(sp.latency) : Value.NULL);
 
@@ -703,8 +698,7 @@ public class EntityValue extends Value
         put("active_block", (e, a) -> {
             if (e instanceof final ServerPlayer sp)
             {
-                final ServerPlayerInteractionManagerInterface manager = (ServerPlayerInteractionManagerInterface) (sp.gameMode);
-                final BlockPos pos = manager.getCurrentBreakingBlock();
+                final BlockPos pos = Vanilla.ServerPlayerGameMode_getCurrentBlockPosition(sp.gameMode);
                 if (pos == null)
                 {
                     return Value.NULL;
@@ -717,8 +711,7 @@ public class EntityValue extends Value
         put("breaking_progress", (e, a) -> {
             if (e instanceof final ServerPlayer sp)
             {
-                final ServerPlayerInteractionManagerInterface manager = (ServerPlayerInteractionManagerInterface) (sp.gameMode);
-                final int progress = manager.getCurrentBlockBreakingProgress();
+                final int progress = Vanilla.ServerPlayerGameMode_getCurrentBlockBreakingProgress (sp.gameMode);
                 return progress < 0 ? Value.NULL : new NumericValue(progress);
             }
             return Value.NULL;
@@ -1204,7 +1197,7 @@ public class EntityValue extends Value
 
         put("persistence", (e, v) ->
         {
-            if (!(e instanceof Mob))
+            if (!(e instanceof final Mob mob))
             {
                 return;
             }
@@ -1212,7 +1205,7 @@ public class EntityValue extends Value
             {
                 v = Value.TRUE;
             }
-            ((MobEntityInterface) e).setPersistence(v.getBoolean());
+            Vanilla.Mob_setPersistence(mob, v.getBoolean());
         });
 
         put("dismount", (e, v) -> e.stopRiding());
@@ -1226,7 +1219,7 @@ public class EntityValue extends Value
                 sp.connection.send(new ClientboundSetPassengersPacket(e));
             }
         });
-        put("unmountable", (e, v) -> ((EntityInterface) e).setPermanentVehicle(v == null || v.getBoolean()));
+        put("unmountable", (e, v) -> Vanilla.Entity_setPermanentVehicle(e, v == null || v.getBoolean()));
         put("drop_passengers", (e, v) -> e.ejectPassengers());
         put("mount_passengers", (e, v) -> {
             if (v == null)
@@ -1316,8 +1309,8 @@ public class EntityValue extends Value
             if (v.isNull())
             {
                 ec.restrictTo(BlockPos.ZERO, -1);
-                final Map<String, Goal> tasks = ((MobEntityInterface) ec).getTemporaryTasks();
-                ((MobEntityInterface) ec).getAI(false).removeGoal(tasks.get("home"));
+                final Map<String, Goal> tasks = Vanilla.Mob_getTemporaryTasks(ec);
+                Vanilla.Mob_getAI(ec, false).removeGoal(tasks.get("home"));
                 tasks.remove("home");
                 return;
             }
@@ -1349,12 +1342,12 @@ public class EntityValue extends Value
             }
 
             ec.restrictTo(pos, distance);
-            final Map<String, Goal> tasks = ((MobEntityInterface) ec).getTemporaryTasks();
+            final Map<String, Goal> tasks = Vanilla.Mob_getTemporaryTasks(ec);
             if (!tasks.containsKey("home"))
             {
                 final Goal task = new MoveTowardsRestrictionGoal(ec, 1.0D);
                 tasks.put("home", task);
-                ((MobEntityInterface) ec).getAI(false).addGoal(10, task);
+                Vanilla.Mob_getAI(ec, false).addGoal(10, task);
             }
         }); //requires mixing
 
@@ -1430,7 +1423,7 @@ public class EntityValue extends Value
             {
                 throw new InternalExpressionException("'portal_cooldown' requires a value to set");
             }
-            ((EntityInterface) e).setPublicNetherPortalCooldown(NumericValue.asNumber(v).getInt());
+            Vanilla.Entity_setPublicNetherPortalCooldown(e, NumericValue.asNumber(v).getInt());
         });
 
         put("portal_timer", (e, v) ->
@@ -1439,7 +1432,7 @@ public class EntityValue extends Value
             {
                 throw new InternalExpressionException("'portal_timer' requires a value to set");
             }
-            ((EntityInterface) e).setPortalTimer(NumericValue.asNumber(v).getInt());
+            Vanilla.Entity_setPortalTimer(e, NumericValue.asNumber(v).getInt());
         });
 
         put("ai", (e, v) ->
@@ -1555,13 +1548,13 @@ public class EntityValue extends Value
         });
 
         put("jump", (e, v) -> {
-            if (e instanceof LivingEntity)
+            if (e instanceof final LivingEntity le)
             {
-                ((LivingEntityInterface) e).doJumpCM();
+                Vanilla.LivingEntity_setJumping(le);
             }
             else
             {
-                genericJump(e);
+                EntityTools.genericJump(e);
             }
         });
 
@@ -1671,8 +1664,7 @@ public class EntityValue extends Value
             if (e instanceof final ServerPlayer sp)
             {
                 final int progress = (a == null || a.isNull()) ? -1 : NumericValue.asNumber(a).getInt();
-                final ServerPlayerInteractionManagerInterface manager = (ServerPlayerInteractionManagerInterface) (sp.gameMode);
-                manager.setBlockBreakingProgress(progress);
+                Vanilla.ServerPlayerGameMode_setBlockBreakingProgress(sp.gameMode, progress);
             }
         });
 
@@ -1740,7 +1732,7 @@ public class EntityValue extends Value
         {
             throw new InternalExpressionException("Unknown entity event: " + eventName);
         }
-        ((EntityInterface) getEntity()).getEventContainer().addEvent(event, cc.host, fun, args);
+        Vanilla.Entity_getEventContainer(getEntity()).addEvent(event, cc.host, fun, args);
     }
 
     @Override

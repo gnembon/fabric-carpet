@@ -1,10 +1,10 @@
 package carpet.script.value;
 
-import carpet.fakes.InventoryBearerInterface;
 import carpet.script.CarpetContext;
 import carpet.script.exception.InternalExpressionException;
 import carpet.script.exception.ThrowStatement;
 import carpet.script.exception.Throwables;
+import carpet.script.external.Vanilla;
 import carpet.script.utils.EquipmentInventory;
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
@@ -44,6 +44,7 @@ import net.minecraft.world.WorldlyContainerHolder;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntitySelector;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.animal.horse.AbstractHorse;
 import net.minecraft.world.entity.npc.InventoryCarrier;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -280,9 +281,9 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
                 {
                     inv = io.getInventory();
                 }
-                else if (e instanceof final InventoryBearerInterface ibi)
+                else if (e instanceof final AbstractHorse ibi)
                 {
-                    inv = ibi.getCMInventory(); // horse only
+                    inv = Vanilla.AbstractHorse_getInventory(ibi); // horse only
                 }
                 else if (e instanceof final LivingEntity le)
                 {

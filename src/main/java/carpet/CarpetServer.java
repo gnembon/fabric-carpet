@@ -14,19 +14,19 @@ import carpet.commands.MobAICommand;
 import carpet.commands.PerimeterInfoCommand;
 import carpet.commands.PlayerCommand;
 import carpet.commands.ProfileCommand;
-import carpet.commands.ScriptCommand;
+import carpet.script.ScriptCommand;
 import carpet.commands.SpawnCommand;
 import carpet.commands.TestCommand;
 import carpet.commands.TickCommand;
 import carpet.network.ServerNetworkHandler;
 import carpet.helpers.HopperCounter;
-import carpet.helpers.ParticleDisplay;
 import carpet.helpers.TickSpeed;
 import carpet.logging.LoggerRegistry;
 import carpet.script.CarpetScriptServer;
 import carpet.api.settings.SettingsManager;
 import carpet.logging.HUDController;
-import carpet.utils.FabricAPIHooks;
+import carpet.script.external.Carpet;
+import carpet.script.utils.ParticleParser;
 import carpet.utils.MobAI;
 import carpet.utils.SpawnReporter;
 import com.mojang.brigadier.CommandDispatcher;
@@ -90,6 +90,7 @@ public class CarpetServer // static for now - easier to handle all around the co
             e.onServerLoaded(server);
         });
         scriptServer = new CarpetScriptServer(server);
+        Carpet.MinecraftServer_addScriptServer(server, scriptServer);
         MobAI.resetTrackers();
         LoggerRegistry.initLoggers();
         //TickSpeed.reset();
@@ -99,6 +100,14 @@ public class CarpetServer // static for now - easier to handle all around the co
     {
         HopperCounter.resetAll(minecraftServer, true);
         extensions.forEach(e -> e.onServerLoadedWorlds(minecraftServer));
+        // initialize scarpet rules after all extensions are loaded
+        settingsManager.initializeScarpetRules();
+        extensions.forEach(e -> {
+            if (e.extensionSettingsManager() != null)
+            {
+                e.extensionSettingsManager().initializeScarpetRules();
+            }
+        });
         scriptServer.initializeForWorld();
     }
 
@@ -185,7 +194,7 @@ public class CarpetServer // static for now - easier to handle all around the co
 
             LoggerRegistry.stopLoggers();
             HUDController.resetScarpetHUDs();
-            ParticleDisplay.resetCache();
+            ParticleParser.resetCache();
             extensions.forEach(e -> e.onServerClosed(server));
             minecraft_server = null;
         }
