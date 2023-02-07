@@ -25,6 +25,7 @@ import carpet.script.value.ValueConversions;
  * <p>{@link SimpleTypeConverter}s are reused whenever asked for one, since they don't have any complexity.</p>
  *
  * @see #registerType(Class, Class, Function, String)
+ * @see #registerType(Class, Class, BiFunction, String)
  * 
  * @param <T> The type of the required input {@link Value}
  * @param <R> The type that this converter converts to
@@ -52,27 +53,34 @@ public final class SimpleTypeConverter<T extends Value, R> implements ValueConve
     private final String typeName;
 
     /**
-     * <p>The default constructor for {@link SimpleTypeConverter}.</p>
+     * Same as {@link #SimpleTypeConverter(Class, BiFunction, String)}, but without the converter function taking a {@link Context}
+     * 
+     * @param inputType The required type for the input {@link Value}
+     * @param converter The function to convert an instance of inputType into R, with the context of the call.
+     * @param typeName  The name of the type for error messages
+     * 
+     * @see #SimpleTypeConverter(Class, BiFunction, String)
+     */
+    public SimpleTypeConverter(final Class<T> inputType, final Function<T, R> converter, final String typeName)
+    {
+        this(inputType, (v, c) -> converter.apply(v), typeName);
+    }
+
+    /**
+     * <p>A constructor for {@link SimpleTypeConverter}.</p>
      * 
      * <p>This is public in order to provide an implementation to use when registering {@link ValueConverter}s for the {@link Param.Strict} annotation
      * registry, and it's not intended way to register new {@link SimpleTypeConverter}</p> <p>Use {@link #registerType(Class, Class, Function, String)} for
      * that.</p>
      * 
      * @param inputType The required type for the input {@link Value}
-     * @param converter The function to convert an instance of inputType into R.
+     * @param converter The function to convert an instance of inputType into R, with the context of the call.
+     * @param typeName  The name of the type for error messages
      */
     public SimpleTypeConverter(final Class<T> inputType, final BiFunction<T, Context, R> converter, final String typeName)
     {
         super();
         this.converter = converter;
-        this.valueClass = inputType;
-        this.typeName = typeName;
-    }
-
-    public SimpleTypeConverter(final Class<T> inputType, final Function<T, R> converter, final String typeName)
-    {
-        super();
-        this.converter = (v, c) -> converter.apply(v);
         this.valueClass = inputType;
         this.typeName = typeName;
     }
@@ -114,17 +122,31 @@ public final class SimpleTypeConverter<T extends Value, R> implements ValueConve
      *                  when given {@link Value} cannot be converted to the {@code <R>}, to follow the {@link ValueConverter} contract, but it
      *                  can also throw an {@link InternalExpressionException} by itself if really necessary.
      * @param typeName The name of the type, following the conventions of {@link ValueConverter#getTypeName()}
+     * 
+     * @see #registerType(Class, Class, BiFunction, String)
+     */
+    public static <T extends Value, R> void registerType(final Class<T> requiredInputType, final Class<R> outputType,
+                                                         final Function<T, R> converter, final String typeName)
+    {
+        registerType(requiredInputType, outputType, (val, ctx) -> converter.apply(val), typeName);
+    }
+
+    /**
+     * <p>Registers a new conversion from a {@link Value} subclass to a Java type, with the context of the call.</p>
+     * 
+     * @param <T> The {@link Value} subtype required for this conversion, for automatic checked casting
+     * @param <R> The type of the resulting object
+     * @param requiredInputType The {@link Class} of {@code <T>}
+     * @param outputType The {@link Class} of {@code <R>>}
+     * @param converter A function that converts from the given {@link Value} subtype to the given type. Should ideally return {@code null}
+     *                  when given {@link Value} cannot be converted to the {@code <R>}, to follow the {@link ValueConverter} contract, but it
+     *                  can also throw an {@link InternalExpressionException} by itself if really necessary.
+     * @param typeName The name of the type, following the conventions of {@link ValueConverter#getTypeName()}
      */
     public static <T extends Value, R> void registerType(final Class<T> requiredInputType, final Class<R> outputType,
                                                          final BiFunction<T, Context, R> converter, final String typeName)
     {
         final SimpleTypeConverter<T, R> type = new SimpleTypeConverter<>(requiredInputType, converter, typeName);
         byResult.put(outputType, type);
-    }
-
-    public static <T extends Value, R> void registerType(final Class<T> requiredInputType, final Class<R> outputType,
-                                                         final Function<T, R> converter, final String typeName)
-    {
-        registerType(requiredInputType, outputType, (val, ctx) -> converter.apply(val), typeName);
     }
 }

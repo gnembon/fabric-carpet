@@ -49,8 +49,8 @@ public interface ValueConverter<R>
      * <p>Functions using the converter can use {@link #getTypeName()} to get the name of the type this was trying to convert to, in case they are not
      * trying to convert to anything else, where it would be recommended to tell the user the name of the final type instead.</p>
      * 
-     * @param value The {@link Value} to convert
-     * @param context
+     * @param value   The {@link Value} to convert
+     * @param context The {@link Context} of the call
      * @return The converted value, or {@code null} if the conversion failed in the process
      * @apiNote <p>While most implementations of this method should and will return the type from this method, implementations that <b>require</b>
      *          parameters from {@link #checkAndConvert(Iterator, Context, Context.Type)} or that require multiple parameters may decide to throw
@@ -65,10 +65,27 @@ public interface ValueConverter<R>
      */
     @Nullable R convert(Value value, final Context context);
 
+    /**
+     * Old version of {@link #convert(Value)} without taking a {@link Context}.<p>
+     * 
+     * This shouldn't be used given converters now take a context in the convert function to allow for converting
+     * values in lists or other places without using static state.<p>
+     * 
+     * @param value The value to convert
+     * @return A converted value
+     * @deprecated Calling this method instead of {@link #convert(Value, Context)} may not return values for some converters
+     */
     @Deprecated(forRemoval = true)
     default R convert(final Value value)
     {
-        return convert(value, null);
+        try
+        {
+            return convert(value, null);
+        }
+        catch (NullPointerException e)
+        {
+            return null;
+        }
     }
 
     /**
@@ -185,8 +202,7 @@ public interface ValueConverter<R>
      *           they may consume variable arguments, implement {@link #consumesVariableArgs()}</p> <p>This method holds the same nullability
      *           constraints as {@link #convert(Value, Context)}</p>
      * @param valueIterator An {@link Iterator} holding the {@link Value} to convert in next position
-     * @param context       The {@link Context} this function has been called with. This was used when this passed lazy values instead in order to
-     *                      evaluate, now it's used to get the context
+     * @param context       The {@link Context} this function has been called with
      * @param contextType   The {@link Context.Type} that the original function was called with
      * @return The next {@link Value} (s) converted to the type {@code <R>} of this {@link ValueConverter}
      * @implNote This method's default implementation runs the {@link #convert(Value, Context)} function in the next {@link Value} ignoring {@link Context} and
