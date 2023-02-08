@@ -18,14 +18,14 @@ public class ThrowStatement extends InternalExpressionException
      * @param data The value to pass
      * @param type Exception type
      */
-    public ThrowStatement(final Value data, final Throwables type)
+    public ThrowStatement(Value data, Throwables type)
     {
         super(type.getId());
         this.data = data;
         this.type = type;
     }
 
-    public ThrowStatement(final Value data, final Throwables parent, final String subtype)
+    public ThrowStatement(Value data, Throwables parent, String subtype)
     {
         super(subtype);
         this.data = data;
@@ -42,7 +42,7 @@ public class ThrowStatement extends InternalExpressionException
      *                for this exception. When throwing from Java,
      *                those exceptions should be pre-registered.
      */
-    public ThrowStatement(final String message, final Throwables type)
+    public ThrowStatement(String message, Throwables type)
     {
         super(type.getId());
         this.data = StringValue.of(message);
@@ -50,7 +50,7 @@ public class ThrowStatement extends InternalExpressionException
     }
 
     @Override
-    public ExpressionException promote(final Context c, final Expression e, final Token token)
+    public ExpressionException promote(Context c, Expression e, Token token)
     {
         return new ProcessedThrowStatement(c, e, token, stack, type, data);
     }

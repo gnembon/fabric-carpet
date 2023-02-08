@@ -1,5 +1,6 @@
 package carpet.script.exception;
 
+import javax.annotation.Nullable;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -10,6 +11,7 @@ import java.util.Map;
 public class Throwables
 {
     private final String id;
+    @Nullable
     private final Throwables parent;
 
     private static final Map<String, Throwables> byId = new HashMap<>();
@@ -41,9 +43,9 @@ public class Throwables
      * @param parent The parent of the exception being created, or <code>null</code> if top-level
      * @return The created exception
      */
-    public static Throwables register(final String id, final Throwables parent)
+    public static Throwables register(String id, @Nullable Throwables parent)
     {
-        final Throwables exc = new Throwables(id, parent);
+        Throwables exc = new Throwables(id, parent);
         byId.put(id, exc);
         return exc;
     }
@@ -55,15 +57,15 @@ public class Throwables
      *
      * @param id The exception's value as a {@link String}
      */
-    public Throwables(final String id, final Throwables parent)
+    public Throwables(String id, @Nullable Throwables parent)
     {
         this.id = id;
         this.parent = parent;
     }
 
-    public static Throwables getTypeForException(final String type)
+    public static Throwables getTypeForException(String type)
     {
-        final Throwables properType = byId.get(type);
+        Throwables properType = byId.get(type);
         if (properType == null)
         {
             throw new InternalExpressionException("Unknown exception type: " + type);
@@ -78,7 +80,7 @@ public class Throwables
      * @param filter The type to check against
      * @return Whether or not the given value matches this exception's hierarchy
      */
-    public boolean isRelevantFor(final String filter)
+    public boolean isRelevantFor(String filter)
     {
         return (id.equals(filter) || (parent != null && parent.isRelevantFor(filter)));
     }

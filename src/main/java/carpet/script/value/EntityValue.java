@@ -74,6 +74,7 @@ import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 
+import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.EnumSet;
@@ -97,19 +98,19 @@ public class EntityValue extends Value
 {
     private Entity entity;
 
-    public EntityValue(final Entity e)
+    public EntityValue(Entity e)
     {
         entity = e;
     }
 
-    public static Value of(final Entity e)
+    public static Value of(@Nullable Entity e)
     {
         return e == null ? Value.NULL : new EntityValue(e);
     }
 
     private static final Map<String, EntitySelector> selectorCache = new HashMap<>();
 
-    public static Collection<? extends Entity> getEntitiesFromSelector(final CommandSourceStack source, final String selector)
+    public static Collection<? extends Entity> getEntitiesFromSelector(CommandSourceStack source, String selector)
     {
         try
         {
@@ -122,7 +123,7 @@ public class EntityValue extends Value
             selectorCache.put(selector, entitySelector);
             return entitySelector.findEntities(source.withMaximumPermission(4));
         }
-        catch (final CommandSyntaxException e)
+        catch (CommandSyntaxException e)
         {
             throw new InternalExpressionException("Cannot select entities from " + selector);
         }
@@ -132,7 +133,7 @@ public class EntityValue extends Value
     {
         if (entity instanceof final ServerPlayer serverPlayer && Vanilla.ServerPlayer_isInvalidEntityObject(serverPlayer))
         {
-            final ServerPlayer newPlayer = entity.getServer().getPlayerList().getPlayer(entity.getUUID());
+            ServerPlayer newPlayer = entity.getServer().getPlayerList().getPlayer(entity.getUUID());
             if (newPlayer != null)
             {
                 entity = newPlayer;
@@ -141,7 +142,7 @@ public class EntityValue extends Value
         return entity;
     }
 
-    public static ServerPlayer getPlayerByValue(final MinecraftServer server, final Value value)
+    public static ServerPlayer getPlayerByValue(MinecraftServer server, Value value)
     {
         if (value instanceof final EntityValue ev && ev.getEntity() instanceof final ServerPlayer sp)
         {
@@ -151,11 +152,11 @@ public class EntityValue extends Value
         {
             return null;
         }
-        final String playerName = value.getString();
+        String playerName = value.getString();
         return server.getPlayerList().getPlayerByName(playerName);
     }
 
-    public static String getPlayerNameByValue(final Value value)
+    public static String getPlayerNameByValue(Value value)
     {
         if (value instanceof final EntityValue ev && ev.getEntity() instanceof final ServerPlayer sp)
         {
@@ -181,7 +182,7 @@ public class EntityValue extends Value
     }
 
     @Override
-    public boolean equals(final Object v)
+    public boolean equals(Object v)
     {
         if (v instanceof final EntityValue ev)
         {
@@ -191,12 +192,12 @@ public class EntityValue extends Value
     }
 
     @Override
-    public Value in(final Value v)
+    public Value in(Value v)
     {
         if (v instanceof final ListValue lv)
         {
-            final List<Value> values = lv.getItems();
-            final String what = values.get(0).getString();
+            List<Value> values = lv.getItems();
+            String what = values.get(0).getString();
             Value arg = null;
             if (values.size() == 2)
             {
@@ -208,7 +209,7 @@ public class EntityValue extends Value
             }
             return this.get(what, arg);
         }
-        final String what = v.getString();
+        String what = v.getString();
         return this.get(what, null);
     }
 
@@ -226,9 +227,9 @@ public class EntityValue extends Value
 
     public static final EntityTypeTest<Entity, ?> ANY = EntityTypeTest.forClass(Entity.class);
 
-    public static EntityClassDescriptor getEntityDescriptor(String who, final MinecraftServer server)
+    public static EntityClassDescriptor getEntityDescriptor(String who, MinecraftServer server)
     {
-        final EntityClassDescriptor eDesc = EntityClassDescriptor.byName.get(who);
+        EntityClassDescriptor eDesc = EntityClassDescriptor.byName.get(who);
         if (eDesc == null)
         {
             boolean positive = true;
@@ -237,16 +238,16 @@ public class EntityValue extends Value
                 positive = false;
                 who = who.substring(1);
             }
-            final String booWho = who;
-            final HolderSet.Named<EntityType<?>> eTagValue = server.registryAccess().registryOrThrow(Registries.ENTITY_TYPE)
+            String booWho = who;
+            HolderSet.Named<EntityType<?>> eTagValue = server.registryAccess().registryOrThrow(Registries.ENTITY_TYPE)
                     .getTag(TagKey.create(Registries.ENTITY_TYPE, InputValidator.identifierOf(who)))
                     .orElseThrow(() -> new InternalExpressionException(booWho + " is not a valid entity descriptor"));
-            final Set<EntityType<?>> eTag = eTagValue.stream().map(Holder::value).collect(Collectors.toUnmodifiableSet());
+            Set<EntityType<?>> eTag = eTagValue.stream().map(Holder::value).collect(Collectors.toUnmodifiableSet());
             if (positive)
             {
                 if (eTag.size() == 1)
                 {
-                    final EntityType<?> type = eTag.iterator().next();
+                    EntityType<?> type = eTag.iterator().next();
                     return new EntityClassDescriptor(type, Entity::isAlive, eTag.stream());
                 }
                 else
@@ -270,36 +271,36 @@ public class EntityValue extends Value
         public final Predicate<? super Entity> filteringPredicate;
         public final List<EntityType<? extends Entity>> types;
 
-        EntityClassDescriptor(final EntityTypeTest<Entity, ?> type, final Predicate<? super Entity> predicate, final List<EntityType<?>> types)
+        EntityClassDescriptor(EntityTypeTest<Entity, ?> type, Predicate<? super Entity> predicate, List<EntityType<?>> types)
         {
             this.directType = type;
             this.filteringPredicate = predicate;
             this.types = types;
         }
 
-        EntityClassDescriptor(final EntityTypeTest<Entity, ?> type, final Predicate<? super Entity> predicate, final Stream<EntityType<?>> types)
+        EntityClassDescriptor(EntityTypeTest<Entity, ?> type, Predicate<? super Entity> predicate, Stream<EntityType<?>> types)
         {
             this(type, predicate, types.toList());
         }
 
-        public Value listValue(final RegistryAccess regs)
+        public Value listValue(RegistryAccess regs)
         {
-            final Registry<EntityType> entityRegs = regs.registryOrThrow(Registries.ENTITY_TYPE);
-            return ListValue.wrap(types.stream().map(et -> StringValue.of(nameFromRegistryId(entityRegs.getKey(et)))));
+            Registry<EntityType<?>> entityRegs = regs.registryOrThrow(Registries.ENTITY_TYPE);
+            return ListValue.wrap(types.stream().map(et -> nameFromRegistryId(entityRegs.getKey(et))));
         }
 
         public static final Map<String, EntityClassDescriptor> byName = new HashMap<>()
         {{
-            final List<EntityType<?>> allTypes = BuiltInRegistries.ENTITY_TYPE.stream().toList();
+            List<EntityType<?>> allTypes = BuiltInRegistries.ENTITY_TYPE.stream().toList();
             // nonliving types
-            final Set<EntityType<?>> projectiles = Set.of(
+            Set<EntityType<?>> projectiles = Set.of(
                     EntityType.ARROW, EntityType.DRAGON_FIREBALL, EntityType.FIREWORK_ROCKET,
                     EntityType.FIREBALL, EntityType.LLAMA_SPIT, EntityType.SMALL_FIREBALL,
                     EntityType.SNOWBALL, EntityType.SPECTRAL_ARROW, EntityType.EGG,
                     EntityType.ENDER_PEARL, EntityType.EXPERIENCE_BOTTLE, EntityType.POTION,
                     EntityType.TRIDENT, EntityType.WITHER_SKULL, EntityType.FISHING_BOBBER, EntityType.SHULKER_BULLET
             );
-            final Set<EntityType<?>> deads = Set.of(
+            Set<EntityType<?>> deads = Set.of(
                     EntityType.AREA_EFFECT_CLOUD, EntityType.MARKER, EntityType.BOAT, EntityType.END_CRYSTAL,
                     EntityType.EVOKER_FANGS, EntityType.EXPERIENCE_ORB, EntityType.EYE_OF_ENDER,
                     EntityType.FALLING_BLOCK, EntityType.ITEM, EntityType.ITEM_FRAME, EntityType.GLOW_ITEM_FRAME,
@@ -307,37 +308,37 @@ public class EntityValue extends Value
                     EntityType.TNT, EntityType.ARMOR_STAND, EntityType.CHEST_BOAT
 
             );
-            final Set<EntityType<?>> minecarts = Set.of(
+            Set<EntityType<?>> minecarts = Set.of(
                     EntityType.MINECART, EntityType.CHEST_MINECART, EntityType.COMMAND_BLOCK_MINECART,
                     EntityType.FURNACE_MINECART, EntityType.HOPPER_MINECART,
                     EntityType.SPAWNER_MINECART, EntityType.TNT_MINECART
             );
             // living mob groups - non-defeault
-            final Set<EntityType<?>> undeads = Set.of(
+            Set<EntityType<?>> undeads = Set.of(
                     EntityType.STRAY, EntityType.SKELETON, EntityType.WITHER_SKELETON,
                     EntityType.ZOMBIE, EntityType.DROWNED, EntityType.ZOMBIE_VILLAGER,
                     EntityType.ZOMBIE_HORSE, EntityType.SKELETON_HORSE, EntityType.PHANTOM,
                     EntityType.WITHER, EntityType.ZOGLIN, EntityType.HUSK, EntityType.ZOMBIFIED_PIGLIN
 
             );
-            final Set<EntityType<?>> arthropods = Set.of(
+            Set<EntityType<?>> arthropods = Set.of(
                     EntityType.BEE, EntityType.ENDERMITE, EntityType.SILVERFISH, EntityType.SPIDER,
                     EntityType.CAVE_SPIDER
             );
-            final Set<EntityType<?>> aquatique = Set.of(
+            Set<EntityType<?>> aquatique = Set.of(
                     EntityType.GUARDIAN, EntityType.TURTLE, EntityType.COD, EntityType.DOLPHIN, EntityType.PUFFERFISH,
                     EntityType.SALMON, EntityType.SQUID, EntityType.TROPICAL_FISH
             );
-            final Set<EntityType<?>> illagers = Set.of(
+            Set<EntityType<?>> illagers = Set.of(
                     EntityType.PILLAGER, EntityType.ILLUSIONER, EntityType.VINDICATOR, EntityType.EVOKER,
                     EntityType.RAVAGER, EntityType.WITCH
             );
 
-            final Set<EntityType<?>> living = allTypes.stream().filter(et ->
+            Set<EntityType<?>> living = allTypes.stream().filter(et ->
                     !deads.contains(et) && !projectiles.contains(et) && !minecarts.contains(et)
             ).collect(Collectors.toSet());
 
-            final Set<EntityType<?>> regular = allTypes.stream().filter(et ->
+            Set<EntityType<?>> regular = allTypes.stream().filter(et ->
                     living.contains(et) && !undeads.contains(et) && !arthropods.contains(et) && !aquatique.contains(et) && !illagers.contains(et)
             ).collect(Collectors.toSet());
 
@@ -373,23 +374,23 @@ public class EntityValue extends Value
             put("regular", new EntityClassDescriptor(EntityTypeTest.forClass(LivingEntity.class), e -> (((LivingEntity) e).getMobType() == MobType.UNDEFINED && e.isAlive()), allTypes.stream().filter(regular::contains)));
             put("!regular", new EntityClassDescriptor(EntityTypeTest.forClass(LivingEntity.class), e -> (((LivingEntity) e).getMobType() != MobType.UNDEFINED && e.isAlive()), allTypes.stream().filter(et -> !regular.contains(et) && living.contains(et))));
 
-            for (final ResourceLocation typeId : BuiltInRegistries.ENTITY_TYPE.keySet())
+            for (ResourceLocation typeId : BuiltInRegistries.ENTITY_TYPE.keySet())
             {
-                final EntityType<?> type = BuiltInRegistries.ENTITY_TYPE.get(typeId);
-                final String mobType = ValueConversions.simplify(typeId);
+                EntityType<?> type = BuiltInRegistries.ENTITY_TYPE.get(typeId);
+                String mobType = ValueConversions.simplify(typeId);
                 put(mobType, new EntityClassDescriptor(type, net.minecraft.world.entity.EntitySelector.ENTITY_STILL_ALIVE, Stream.of(type)));
                 put("!" + mobType, new EntityClassDescriptor(ANY, (e) -> e.getType() != type && e.isAlive(), allTypes.stream().filter(et -> et != type)));
             }
-            for (final MobCategory catId : MobCategory.values())
+            for (MobCategory catId : MobCategory.values())
             {
-                final String catStr = catId.getName();
+                String catStr = catId.getName();
                 put(catStr, new EntityClassDescriptor(ANY, e -> ((e.getType().getCategory() == catId) && e.isAlive()), allTypes.stream().filter(et -> et.getCategory() == catId)));
                 put("!" + catStr, new EntityClassDescriptor(ANY, e -> ((e.getType().getCategory() != catId) && e.isAlive()), allTypes.stream().filter(et -> et.getCategory() != catId)));
             }
         }};
     }
 
-    public Value get(final String what, final Value arg)
+    public Value get(String what, @Nullable Value arg)
     {
         if (!(featureAccessors.containsKey(what)))
         {
@@ -399,7 +400,7 @@ public class EntityValue extends Value
         {
             return featureAccessors.get(what).apply(getEntity(), arg);
         }
-        catch (final NullPointerException npe)
+        catch (NullPointerException npe)
         {
             throw new InternalExpressionException("Cannot fetch '" + what + "' with these arguments");
         }
@@ -427,7 +428,7 @@ public class EntityValue extends Value
         put("z", (e, a) -> new NumericValue(e.getZ()));
         put("motion", (e, a) ->
         {
-            final Vec3 velocity = e.getDeltaMovement();
+            Vec3 velocity = e.getDeltaMovement();
             return ListValue.of(new NumericValue(velocity.x), new NumericValue(velocity.y), new NumericValue(velocity.z));
         });
         put("motion_x", (e, a) -> new NumericValue(e.getDeltaMovement().x));
@@ -438,7 +439,7 @@ public class EntityValue extends Value
         put("display_name", (e, a) -> new FormattedTextValue(e.getDisplayName()));
         put("command_name", (e, a) -> new StringValue(e.getScoreboardName()));
         put("custom_name", (e, a) -> e.hasCustomName() ? new StringValue(e.getCustomName().getString()) : Value.NULL);
-        put("type", (e, a) -> new StringValue(nameFromRegistryId(e.getLevel().registryAccess().registryOrThrow(Registries.ENTITY_TYPE).getKey(e.getType()))));
+        put("type", (e, a) -> nameFromRegistryId(e.getLevel().registryAccess().registryOrThrow(Registries.ENTITY_TYPE).getKey(e.getType())));
         put("is_riding", (e, a) -> BooleanValue.of(e.isPassenger()));
         put("is_ridden", (e, a) -> BooleanValue.of(e.isVehicle()));
         put("passengers", (e, a) -> ListValue.wrap(e.getPassengers().stream().map(EntityValue::new)));
@@ -449,7 +450,7 @@ public class EntityValue extends Value
 
         put("scoreboard_tags", (e, a) -> ListValue.wrap(e.getTags().stream().map(StringValue::new)));
         put("entity_tags", (e, a) -> {
-            final EntityType<?> type = e.getType();
+            EntityType<?> type = e.getType();
             return ListValue.wrap(e.getServer().registryAccess().registryOrThrow(Registries.ENTITY_TYPE).getTags().filter(entry -> entry.getSecond().stream().anyMatch(h -> h.value() == type)).map(entry -> ValueConversions.of(entry.getFirst())));
         });
         // deprecated
@@ -457,7 +458,7 @@ public class EntityValue extends Value
 
         put("has_scoreboard_tag", (e, a) -> BooleanValue.of(e.getTags().contains(a.getString())));
         put("has_entity_tag", (e, a) -> {
-            final Optional<HolderSet.Named<EntityType<?>>> tag = e.getServer().registryAccess().registryOrThrow(Registries.ENTITY_TYPE).getTag(TagKey.create(Registries.ENTITY_TYPE, InputValidator.identifierOf(a.getString())));
+            Optional<HolderSet.Named<EntityType<?>>> tag = e.getServer().registryAccess().registryOrThrow(Registries.ENTITY_TYPE).getTag(TagKey.create(Registries.ENTITY_TYPE, InputValidator.identifierOf(a.getString())));
             if (tag.isEmpty())
             {
                 return Value.NULL;
@@ -465,7 +466,7 @@ public class EntityValue extends Value
             //Tag<EntityType<?>> tag = e.getServer().getTags().getOrEmpty(Registry.ENTITY_TYPE_REGISTRY).getTag(InputValidator.identifierOf(a.getString()));
             //if (tag == null) return Value.NULL;
             //return BooleanValue.of(e.getType().is(tag));
-            final EntityType<?> type = e.getType();
+            EntityType<?> type = e.getType();
             return BooleanValue.of(tag.get().stream().anyMatch(h -> h.value() == type));
         });
 
@@ -475,7 +476,7 @@ public class EntityValue extends Value
 
         put("pitch", (e, a) -> new NumericValue(e.getXRot()));
         put("look", (e, a) -> {
-            final Vec3 look = e.getLookAngle();
+            Vec3 look = e.getLookAngle();
             return ListValue.of(new NumericValue(look.x), new NumericValue(look.y), new NumericValue(look.z));
         });
         put("is_burning", (e, a) -> BooleanValue.of(e.isOnFire()));
@@ -488,7 +489,7 @@ public class EntityValue extends Value
         put("immune_to_frost", (e, a) -> BooleanValue.of(!e.canFreeze()));
 
         put("invulnerable", (e, a) -> BooleanValue.of(e.isInvulnerable()));
-        put("dimension", (e, a) -> new StringValue(nameFromRegistryId(e.level.dimension().location()))); // getDimId
+        put("dimension", (e, a) -> nameFromRegistryId(e.level.dimension().location())); // getDimId
         put("height", (e, a) -> new NumericValue(e.getDimensions(Pose.STANDING).height));
         put("width", (e, a) -> new NumericValue(e.getDimensions(Pose.STANDING).width));
         put("eye_height", (e, a) -> new NumericValue(e.getEyeHeight()));
@@ -507,7 +508,7 @@ public class EntityValue extends Value
         put("target", (e, a) -> {
             if (e instanceof final Mob mob)
             {
-                final LivingEntity target = mob.getTarget(); // there is also getAttacking in living....
+                LivingEntity target = mob.getTarget(); // there is also getAttacking in living....
                 if (target != null)
                 {
                     return new EntityValue(target);
@@ -515,7 +516,7 @@ public class EntityValue extends Value
             }
             return Value.NULL;
         });
-        put("home", (e, a) -> e instanceof final Mob mob ? (mob.getRestrictRadius() > 0) ? new BlockValue(null, e.getCommandSenderWorld(), mob.getRestrictCenter()) : Value.FALSE : Value.NULL);
+        put("home", (e, a) -> e instanceof final Mob mob ? (mob.getRestrictRadius() > 0) ? new BlockValue(null, (ServerLevel) e.getLevel(), mob.getRestrictCenter()) : Value.FALSE : Value.NULL);
         put("spawn_point", (e, a) -> {
             if (e instanceof final ServerPlayer spe)
             {
@@ -553,7 +554,7 @@ public class EntityValue extends Value
         put("path", (e, a) -> {
             if (e instanceof final Mob mob)
             {
-                final Path path = mob.getNavigation().getPath();
+                Path path = mob.getNavigation().getPath();
                 if (path == null)
                 {
                     return Value.NULL;
@@ -564,22 +565,22 @@ public class EntityValue extends Value
         });
 
         put("brain", (e, a) -> {
-            final String module = a.getString();
-            final MemoryModuleType<?> moduleType = e.getLevel().registryAccess().registryOrThrow(Registries.MEMORY_MODULE_TYPE).get(InputValidator.identifierOf(module));
+            String module = a.getString();
+            MemoryModuleType<?> moduleType = e.getLevel().registryAccess().registryOrThrow(Registries.MEMORY_MODULE_TYPE).get(InputValidator.identifierOf(module));
             if (moduleType == MemoryModuleType.DUMMY)
             {
                 return Value.NULL;
             }
             if (e instanceof final LivingEntity livingEntity)
             {
-                final Brain<?> brain = livingEntity.getBrain();
-                final Map<MemoryModuleType<?>, Optional<? extends ExpirableValue<?>>> memories = brain.getMemories();
-                final Optional<? extends ExpirableValue<?>> optmemory = memories.get(moduleType);
+                Brain<?> brain = livingEntity.getBrain();
+                Map<MemoryModuleType<?>, Optional<? extends ExpirableValue<?>>> memories = brain.getMemories();
+                Optional<? extends ExpirableValue<?>> optmemory = memories.get(moduleType);
                 if (optmemory == null || !optmemory.isPresent())
                 {
                     return Value.NULL;
                 }
-                final ExpirableValue<?> memory = optmemory.get();
+                ExpirableValue<?> memory = optmemory.get();
                 return ValueConversions.fromTimedMemory(e, memory.getTimeToLive(), memory.getValue());
             }
             return Value.NULL;
@@ -604,22 +605,22 @@ public class EntityValue extends Value
         put("player_type", (e, a) -> {
             if (e instanceof final Player p)
             {
-                final String moddedType = Carpet.isModdedPlayer(p);
+                String moddedType = Carpet.isModdedPlayer(p);
                 if (moddedType != null)
                 {
                     return StringValue.of(moddedType);
                 }
-                final MinecraftServer server = p.getCommandSenderWorld().getServer();
+                MinecraftServer server = p.getCommandSenderWorld().getServer();
                 if (server.isDedicatedServer())
                 {
                     return new StringValue("multiplayer");
                 }
-                final boolean runningLan = server.isPublished();
+                boolean runningLan = server.isPublished();
                 if (!runningLan)
                 {
                     return new StringValue("singleplayer");
                 }
-                final boolean isowner = server.isSingleplayerOwner(p.getGameProfile());
+                boolean isowner = server.isSingleplayerOwner(p.getGameProfile());
                 if (isowner)
                 {
                     return new StringValue("lan_host");
@@ -644,8 +645,8 @@ public class EntityValue extends Value
             }
             if (a == null)
             {
-                final List<Value> effects = new ArrayList<>();
-                for (final MobEffectInstance p : le.getActiveEffects())
+                List<Value> effects = new ArrayList<>();
+                for (MobEffectInstance p : le.getActiveEffects())
                 {
                     effects.add(ListValue.of(
                             new StringValue(p.getDescriptionId().replaceFirst("^effect\\.minecraft\\.", "")),
@@ -655,8 +656,8 @@ public class EntityValue extends Value
                 }
                 return ListValue.wrap(effects);
             }
-            final String effectName = a.getString();
-            final MobEffect potion = BuiltInRegistries.MOB_EFFECT.get(InputValidator.identifierOf(effectName));
+            String effectName = a.getString();
+            MobEffect potion = BuiltInRegistries.MOB_EFFECT.get(InputValidator.identifierOf(effectName));
             if (potion == null)
             {
                 throw new InternalExpressionException("No such an effect: " + effectName);
@@ -665,7 +666,7 @@ public class EntityValue extends Value
             {
                 return Value.NULL;
             }
-            final MobEffectInstance pe = le.getEffect(potion);
+            MobEffectInstance pe = le.getEffect(potion);
             return ListValue.of(new NumericValue(pe.getAmplifier()), new NumericValue(pe.getDuration()));
         });
 
@@ -698,12 +699,12 @@ public class EntityValue extends Value
         put("active_block", (e, a) -> {
             if (e instanceof final ServerPlayer sp)
             {
-                final BlockPos pos = Vanilla.ServerPlayerGameMode_getCurrentBlockPosition(sp.gameMode);
+                BlockPos pos = Vanilla.ServerPlayerGameMode_getCurrentBlockPosition(sp.gameMode);
                 if (pos == null)
                 {
                     return Value.NULL;
                 }
-                return new BlockValue(null, e.level, pos);
+                return new BlockValue(null, sp.getLevel(), pos);
             }
             return Value.NULL;
         });
@@ -711,7 +712,7 @@ public class EntityValue extends Value
         put("breaking_progress", (e, a) -> {
             if (e instanceof final ServerPlayer sp)
             {
-                final int progress = Vanilla.ServerPlayerGameMode_getCurrentBlockBreakingProgress (sp.gameMode);
+                int progress = Vanilla.ServerPlayerGameMode_getCurrentBlockBreakingProgress (sp.gameMode);
                 return progress < 0 ? Value.NULL : new NumericValue(progress);
             }
             return Value.NULL;
@@ -748,7 +749,7 @@ public class EntityValue extends Value
                 }
                 else
                 {
-                    final List<Value> args = lv.getItems();
+                    List<Value> args = lv.getItems();
                     if (args.size() == 0)
                     {
                         throw new InternalExpressionException("'trace' needs more arguments");
@@ -760,7 +761,7 @@ public class EntityValue extends Value
                         blocks = false;
                         for (int i = 1; i < args.size(); i++)
                         {
-                            final String what = args.get(i).getString();
+                            String what = args.get(i).getString();
                             if (what.equalsIgnoreCase("entities"))
                             {
                                 entities = true;
@@ -791,7 +792,7 @@ public class EntityValue extends Value
                 reach = 5.0f;
             }
 
-            final HitResult hitres;
+            HitResult hitres;
             if (entities && !blocks)
             {
                 hitres = Tracer.rayTraceEntities(e, 1, reach, reach * reach);
@@ -818,7 +819,7 @@ public class EntityValue extends Value
                 case MISS:
                     return Value.NULL;
                 case BLOCK:
-                    return new BlockValue(null, e.getCommandSenderWorld(), ((BlockHitResult) hitres).getBlockPos());
+                    return new BlockValue((ServerLevel) e.getCommandSenderWorld(), ((BlockHitResult) hitres).getBlockPos());
                 case ENTITY:
                     return new EntityValue(((EntityHitResult) hitres).getEntity());
             }
@@ -830,14 +831,14 @@ public class EntityValue extends Value
             {
                 return Value.NULL;
             }
-            final Registry<Attribute> attributes = e.getLevel().registryAccess().registryOrThrow(Registries.ATTRIBUTE);
+            Registry<Attribute> attributes = e.getLevel().registryAccess().registryOrThrow(Registries.ATTRIBUTE);
             if (a == null)
             {
-                final AttributeMap container = el.getAttributes();
+                AttributeMap container = el.getAttributes();
                 return MapValue.wrap(attributes.stream().filter(container::hasAttribute).collect(Collectors.toMap(aa -> ValueConversions.of(attributes.getKey(aa)), aa -> NumericValue.of(container.getValue(aa)))));
             }
-            final ResourceLocation id = InputValidator.identifierOf(a.getString());
-            final Attribute attrib = attributes.getOptional(id).orElseThrow(
+            ResourceLocation id = InputValidator.identifierOf(a.getString());
+            Attribute attrib = attributes.getOptional(id).orElseThrow(
                     () -> new InternalExpressionException("Unknown attribute: " + a.getString())
             );
             if (!el.getAttributes().hasAttribute(attrib))
@@ -848,7 +849,7 @@ public class EntityValue extends Value
         });
 
         put("nbt", (e, a) -> {
-            final CompoundTag nbttagcompound = e.saveWithoutId((new CompoundTag()));
+            CompoundTag nbttagcompound = e.saveWithoutId((new CompoundTag()));
             if (a == null)
             {
                 return new NBTSerializableValue(nbttagcompound);
@@ -861,7 +862,7 @@ public class EntityValue extends Value
         });
     }};
 
-    public void set(final String what, final Value toWhat)
+    public void set(String what, @Nullable Value toWhat)
     {
         if (!(featureModifiers.containsKey(what)))
         {
@@ -871,17 +872,17 @@ public class EntityValue extends Value
         {
             featureModifiers.get(what).accept(getEntity(), toWhat);
         }
-        catch (final NullPointerException npe)
+        catch (NullPointerException npe)
         {
             throw new InternalExpressionException("'modify' for '" + what + "' expects a value");
         }
-        catch (final IndexOutOfBoundsException ind)
+        catch (IndexOutOfBoundsException ind)
         {
             throw new InternalExpressionException("Wrong number of arguments for `modify` option: " + what);
         }
     }
 
-    private static void updatePosition(final Entity e, final double x, final double y, final double z, final float yaw, final float pitch)
+    private static void updatePosition(Entity e, double x, double y, double z, float yaw, float pitch)
     {
         if (
                 !Double.isFinite(x) || Double.isNaN(x) ||
@@ -896,7 +897,7 @@ public class EntityValue extends Value
         if (e instanceof final ServerPlayer sp)
         {
             // this forces position but doesn't angles for some reason. Need both in the API in the future.
-            final EnumSet<RelativeMovement> set = EnumSet.noneOf(RelativeMovement.class);
+            EnumSet<RelativeMovement> set = EnumSet.noneOf(RelativeMovement.class);
             set.add(RelativeMovement.X_ROT);
             set.add(RelativeMovement.Y_ROT);
             sp.connection.teleport(x, y, z, yaw, pitch, set);
@@ -921,7 +922,7 @@ public class EntityValue extends Value
         }
     }
 
-    private static void updateVelocity(final Entity e, final double scale)
+    private static void updateVelocity(Entity e, double scale)
     {
         e.hurtMarked = true;
         if (Math.abs(scale) > 10000)
@@ -935,7 +936,7 @@ public class EntityValue extends Value
         put("remove", (entity, value) -> entity.discard()); // using discard here - will see other options if valid
         put("age", (e, v) -> e.tickCount = Math.abs((int) NumericValue.asNumber(v).getLong()));
         put("health", (e, v) -> {
-            final float health = (float) NumericValue.asNumber(v).getDouble();
+            float health = (float) NumericValue.asNumber(v).getDouble();
             if (health <= 0f && e instanceof final ServerPlayer player)
             {
                 if (player.containerMenu != null)
@@ -954,7 +955,7 @@ public class EntityValue extends Value
         });
 
         put("may_fly", (e, v) -> {
-            final boolean mayFly = v.getBoolean();
+            boolean mayFly = v.getBoolean();
             if (e instanceof final ServerPlayer player)
             {
                 player.getAbilities().mayfly = mayFly;
@@ -967,7 +968,7 @@ public class EntityValue extends Value
         });
 
         put("flying", (e, v) -> {
-            final boolean flying = v.getBoolean();
+            boolean flying = v.getBoolean();
             if (e instanceof final ServerPlayer player)
             {
                 player.getAbilities().flying = flying;
@@ -976,7 +977,7 @@ public class EntityValue extends Value
         });
 
         put("may_build", (e, v) -> {
-            final boolean mayBuild = v.getBoolean();
+            boolean mayBuild = v.getBoolean();
             if (e instanceof final ServerPlayer player)
             {
                 player.getAbilities().mayBuild = mayBuild;
@@ -985,7 +986,7 @@ public class EntityValue extends Value
         });
 
         put("insta_build", (e, v) -> {
-            final boolean instaBuild = v.getBoolean();
+            boolean instaBuild = v.getBoolean();
             if (e instanceof final ServerPlayer player)
             {
                 player.getAbilities().instabuild = instaBuild;
@@ -994,7 +995,7 @@ public class EntityValue extends Value
         });
 
         put("fly_speed", (e, v) -> {
-            final float flySpeed = NumericValue.asNumber(v).getFloat();
+            float flySpeed = NumericValue.asNumber(v).getFloat();
             if (e instanceof final ServerPlayer player)
             {
                 player.getAbilities().setFlyingSpeed(flySpeed);
@@ -1003,7 +1004,7 @@ public class EntityValue extends Value
         });
 
         put("walk_speed", (e, v) -> {
-            final float walkSpeed = NumericValue.asNumber(v).getFloat();
+            float walkSpeed = NumericValue.asNumber(v).getFloat();
             if (e instanceof final ServerPlayer player)
             {
                 player.getAbilities().setWalkingSpeed(walkSpeed);
@@ -1015,7 +1016,7 @@ public class EntityValue extends Value
         {
             if (e instanceof final ServerPlayer player)
             {
-                final int slot = NumericValue.asNumber(v).getInt();
+                int slot = NumericValue.asNumber(v).getInt();
                 player.connection.send(new ClientboundSetCarriedItemPacket(slot));
             }
         });
@@ -1042,7 +1043,7 @@ public class EntityValue extends Value
             {
                 throw new InternalExpressionException("Expected a list of 5 parameters as a second argument");
             }
-            final List<Value> coords = lv.getItems();
+            List<Value> coords = lv.getItems();
             updatePosition(e,
                     NumericValue.asNumber(coords.get(0)).getDouble(),
                     NumericValue.asNumber(coords.get(1)).getDouble(),
@@ -1057,7 +1058,7 @@ public class EntityValue extends Value
             {
                 throw new InternalExpressionException("Expected a list of 3 parameters as a second argument");
             }
-            final List<Value> coords = lv.getItems();
+            List<Value> coords = lv.getItems();
             updatePosition(e,
                     NumericValue.asNumber(coords.get(0)).getDouble(),
                     NumericValue.asNumber(coords.get(1)).getDouble(),
@@ -1092,11 +1093,11 @@ public class EntityValue extends Value
             {
                 throw new InternalExpressionException("Expected a list of 3 parameters as a second argument");
             }
-            final List<Value> vec = lv.getItems();
+            List<Value> vec = lv.getItems();
             float x = NumericValue.asNumber(vec.get(0)).getFloat();
             float y = NumericValue.asNumber(vec.get(1)).getFloat();
             float z = NumericValue.asNumber(vec.get(2)).getFloat();
-            final float l = Mth.sqrt(x * x + y * y + z * z);
+            float l = Mth.sqrt(x * x + y * y + z * z);
             if (l == 0)
             {
                 return;
@@ -1104,8 +1105,8 @@ public class EntityValue extends Value
             x /= l;
             y /= l;
             z /= l;
-            final float pitch = (float) -Math.asin(y) / 0.017453292F;
-            final float yaw = (float) (x == 0 && z == 0 ? e.getYRot() : Mth.atan2(-x, z) / 0.017453292F);
+            float pitch = (float) -Math.asin(y) / 0.017453292F;
+            float yaw = (float) (x == 0 && z == 0 ? e.getYRot() : Mth.atan2(-x, z) / 0.017453292F);
             updatePosition(e, e.getX(), e.getY(), e.getZ(), yaw, pitch);
         });
 
@@ -1118,7 +1119,7 @@ public class EntityValue extends Value
             {
                 throw new InternalExpressionException("Expected a list of 3 parameters as a second argument");
             }
-            final List<Value> coords = lv.getItems();
+            List<Value> coords = lv.getItems();
             updatePosition(e,
                     e.getX() + NumericValue.asNumber(coords.get(0)).getDouble(),
                     e.getY() + NumericValue.asNumber(coords.get(1)).getDouble(),
@@ -1134,31 +1135,31 @@ public class EntityValue extends Value
             {
                 throw new InternalExpressionException("Expected a list of 3 parameters as a second argument");
             }
-            final List<Value> coords = lv.getItems();
-            final double dx = NumericValue.asNumber(coords.get(0)).getDouble();
-            final double dy = NumericValue.asNumber(coords.get(1)).getDouble();
-            final double dz = NumericValue.asNumber(coords.get(2)).getDouble();
+            List<Value> coords = lv.getItems();
+            double dx = NumericValue.asNumber(coords.get(0)).getDouble();
+            double dy = NumericValue.asNumber(coords.get(1)).getDouble();
+            double dz = NumericValue.asNumber(coords.get(2)).getDouble();
             e.setDeltaMovement(dx, dy, dz);
             updateVelocity(e, Mth.absMax(Mth.absMax(dx, dy), dz));
         });
         put("motion_x", (e, v) ->
         {
-            final Vec3 velocity = e.getDeltaMovement();
-            final double dv = NumericValue.asNumber(v).getDouble();
+            Vec3 velocity = e.getDeltaMovement();
+            double dv = NumericValue.asNumber(v).getDouble();
             e.setDeltaMovement(dv, velocity.y, velocity.z);
             updateVelocity(e, dv);
         });
         put("motion_y", (e, v) ->
         {
-            final Vec3 velocity = e.getDeltaMovement();
-            final double dv = NumericValue.asNumber(v).getDouble();
+            Vec3 velocity = e.getDeltaMovement();
+            double dv = NumericValue.asNumber(v).getDouble();
             e.setDeltaMovement(velocity.x, dv, velocity.z);
             updateVelocity(e, dv);
         });
         put("motion_z", (e, v) ->
         {
-            final Vec3 velocity = e.getDeltaMovement();
-            final double dv = NumericValue.asNumber(v).getDouble();
+            Vec3 velocity = e.getDeltaMovement();
+            double dv = NumericValue.asNumber(v).getDouble();
             e.setDeltaMovement(velocity.x, velocity.y, dv);
             updateVelocity(e, dv);
         });
@@ -1169,7 +1170,7 @@ public class EntityValue extends Value
             {
                 throw new InternalExpressionException("Expected a list of 3 parameters as a second argument");
             }
-            final List<Value> coords = lv.getItems();
+            List<Value> coords = lv.getItems();
             e.push(
                     NumericValue.asNumber(coords.get(0)).getDouble(),
                     NumericValue.asNumber(coords.get(1)).getDouble(),
@@ -1232,7 +1233,7 @@ public class EntityValue extends Value
             }
             else if (v instanceof final ListValue lv)
             {
-                for (final Value element : lv.getItems())
+                for (Value element : lv.getItems())
                 {
                     if (element instanceof final EntityValue ev)
                     {
@@ -1248,7 +1249,7 @@ public class EntityValue extends Value
             }
             if (v instanceof final ListValue lv)
             {
-                for (final Value element : lv.getItems())
+                for (Value element : lv.getItems())
                 {
                     e.addTag(element.getString());
                 }
@@ -1265,7 +1266,7 @@ public class EntityValue extends Value
             }
             if (v instanceof final ListValue lv)
             {
-                for (final Value element : lv.getItems())
+                for (Value element : lv.getItems())
                 {
                     e.removeTag(element.getString());
                 }
@@ -1309,13 +1310,13 @@ public class EntityValue extends Value
             if (v.isNull())
             {
                 ec.restrictTo(BlockPos.ZERO, -1);
-                final Map<String, Goal> tasks = Vanilla.Mob_getTemporaryTasks(ec);
+                Map<String, Goal> tasks = Vanilla.Mob_getTemporaryTasks(ec);
                 Vanilla.Mob_getAI(ec, false).removeGoal(tasks.get("home"));
                 tasks.remove("home");
                 return;
             }
 
-            final BlockPos pos;
+            BlockPos pos;
             int distance = 16;
 
             if (v instanceof final BlockValue bv)
@@ -1328,8 +1329,8 @@ public class EntityValue extends Value
             }
             else if (v instanceof final ListValue lv)
             {
-                final List<Value> list = lv.getItems();
-                final Vector3Argument locator = Vector3Argument.findIn(list, 0, false, false);
+                List<Value> list = lv.getItems();
+                Vector3Argument locator = Vector3Argument.findIn(list, 0, false, false);
                 pos = new BlockPos(locator.vec.x, locator.vec.y, locator.vec.z);
                 if (list.size() > locator.offset)
                 {
@@ -1342,10 +1343,10 @@ public class EntityValue extends Value
             }
 
             ec.restrictTo(pos, distance);
-            final Map<String, Goal> tasks = Vanilla.Mob_getTemporaryTasks(ec);
+            Map<String, Goal> tasks = Vanilla.Mob_getTemporaryTasks(ec);
             if (!tasks.containsKey("home"))
             {
-                final Goal task = new MoveTowardsRestrictionGoal(ec, 1.0D);
+                Goal task = new MoveTowardsRestrictionGoal(ec, 1.0D);
                 tasks.put("home", task);
                 Vanilla.Mob_getAI(ec, false).addGoal(10, task);
             }
@@ -1362,15 +1363,15 @@ public class EntityValue extends Value
             }
             else if (a instanceof final ListValue lv)
             {
-                final List<Value> params = lv.getItems();
-                final Vector3Argument blockLocator = Vector3Argument.findIn(params, 0, false, false);
-                final BlockPos pos = new BlockPos(blockLocator.vec);
+                List<Value> params = lv.getItems();
+                Vector3Argument blockLocator = Vector3Argument.findIn(params, 0, false, false);
+                BlockPos pos = new BlockPos(blockLocator.vec);
                 ResourceKey<Level> world = spe.getCommandSenderWorld().dimension();
                 float angle = spe.getYHeadRot();
                 boolean forced = false;
                 if (params.size() > blockLocator.offset)
                 {
-                    final Value worldValue = params.get(blockLocator.offset + 0);
+                    Value worldValue = params.get(blockLocator.offset + 0);
                     world = ValueConversions.dimFromValue(worldValue, spe.getServer()).dimension();
                     if (params.size() > blockLocator.offset + 1)
                     {
@@ -1467,11 +1468,11 @@ public class EntityValue extends Value
             }
             else if (v instanceof final ListValue lv)
             {
-                final List<Value> list = lv.getItems();
+                List<Value> list = lv.getItems();
                 if (list.size() >= 1 && list.size() <= 6)
                 {
-                    final String effectName = list.get(0).getString();
-                    final MobEffect effect = BuiltInRegistries.MOB_EFFECT.get(InputValidator.identifierOf(effectName));
+                    String effectName = list.get(0).getString();
+                    MobEffect effect = BuiltInRegistries.MOB_EFFECT.get(InputValidator.identifierOf(effectName));
                     if (effect == null)
                     {
                         throw new InternalExpressionException("Wrong effect name: " + effectName);
@@ -1481,7 +1482,7 @@ public class EntityValue extends Value
                         le.removeEffect(effect);
                         return;
                     }
-                    final int duration = (int) NumericValue.asNumber(list.get(1)).getLong();
+                    int duration = (int) NumericValue.asNumber(list.get(1)).getLong();
                     if (duration <= 0)
                     {
                         le.removeEffect(effect);
@@ -1513,8 +1514,8 @@ public class EntityValue extends Value
             }
             else
             {
-                final String effectName = v.getString();
-                final MobEffect effect = BuiltInRegistries.MOB_EFFECT.get(InputValidator.identifierOf(effectName));
+                String effectName = v.getString();
+                MobEffect effect = BuiltInRegistries.MOB_EFFECT.get(InputValidator.identifierOf(effectName));
                 if (effect == null)
                 {
                     throw new InternalExpressionException("Wrong effect name: " + effectName);
@@ -1530,7 +1531,7 @@ public class EntityValue extends Value
             {
                 return;
             }
-            final GameType toSet = v instanceof NumericValue ?
+            GameType toSet = v instanceof NumericValue ?
                     GameType.byId(((NumericValue) v).getInt()) :
                     GameType.byName(v.getString().toLowerCase(Locale.ROOT), null);
             if (toSet != null)
@@ -1564,7 +1565,7 @@ public class EntityValue extends Value
                 InteractionHand hand = InteractionHand.MAIN_HAND;
                 if (v != null)
                 {
-                    final String handString = v.getString().toLowerCase(Locale.ROOT);
+                    String handString = v.getString().toLowerCase(Locale.ROOT);
                     if (handString.equals("offhand") || handString.equals("off_hand"))
                     {
                         hand = InteractionHand.OFF_HAND;
@@ -1579,7 +1580,7 @@ public class EntityValue extends Value
         put("gravity", (e, v) -> e.setNoGravity(!v.getBoolean()));
 
         put("invulnerable", (e, v) -> {
-            final boolean invulnerable = v.getBoolean();
+            boolean invulnerable = v.getBoolean();
             if (e instanceof final ServerPlayer player)
             {
                 player.getAbilities().invulnerable = invulnerable;
@@ -1663,7 +1664,7 @@ public class EntityValue extends Value
         put("breaking_progress", (e, a) -> {
             if (e instanceof final ServerPlayer sp)
             {
-                final int progress = (a == null || a.isNull()) ? -1 : NumericValue.asNumber(a).getInt();
+                int progress = (a == null || a.isNull()) ? -1 : NumericValue.asNumber(a).getInt();
                 Vanilla.ServerPlayerGameMode_setBlockBreakingProgress(sp.gameMode, progress);
             }
         });
@@ -1671,8 +1672,8 @@ public class EntityValue extends Value
         put("nbt", (e, v) -> {
             if (!(e instanceof Player))
             {
-                final UUID uUID = e.getUUID();
-                final Value tagValue = NBTSerializableValue.fromValue(v);
+                UUID uUID = e.getUUID();
+                Value tagValue = NBTSerializableValue.fromValue(v);
                 if (tagValue instanceof final NBTSerializableValue nbtsv)
                 {
                     e.load(nbtsv.getCompoundTag());
@@ -1683,11 +1684,11 @@ public class EntityValue extends Value
         put("nbt_merge", (e, v) -> {
             if (!(e instanceof Player))
             {
-                final UUID uUID = e.getUUID();
-                final Value tagValue = NBTSerializableValue.fromValue(v);
+                UUID uUID = e.getUUID();
+                Value tagValue = NBTSerializableValue.fromValue(v);
                 if (tagValue instanceof final NBTSerializableValue nbtsv)
                 {
-                    final CompoundTag nbttagcompound = e.saveWithoutId((new CompoundTag()));
+                    CompoundTag nbttagcompound = e.saveWithoutId((new CompoundTag()));
                     nbttagcompound.merge(nbtsv.getCompoundTag());
                     e.load(nbttagcompound);
                     e.setUUID(uUID);
@@ -1710,7 +1711,7 @@ public class EntityValue extends Value
 
         });
         put("item", (e, v) -> {
-            final ItemStack item = ValueConversions.getItemStackFromValue(v, true, e.level.registryAccess());
+            ItemStack item = ValueConversions.getItemStackFromValue(v, true, e.level.registryAccess());
             if (e instanceof final ItemEntity itementity)
             {
                 itementity.setItem(item);
@@ -1725,9 +1726,9 @@ public class EntityValue extends Value
         // "effect_"name    []
     }};
 
-    public void setEvent(final CarpetContext cc, final String eventName, final FunctionValue fun, final List<Value> args)
+    public void setEvent(CarpetContext cc, String eventName, FunctionValue fun, List<Value> args)
     {
-        final EntityEventsGroup.Event event = EntityEventsGroup.Event.byName.get(eventName);
+        EntityEventsGroup.Event event = EntityEventsGroup.Event.byName.get(eventName);
         if (event == null)
         {
             throw new InternalExpressionException("Unknown entity event: " + eventName);
@@ -1736,15 +1737,15 @@ public class EntityValue extends Value
     }
 
     @Override
-    public net.minecraft.nbt.Tag toTag(final boolean force)
+    public net.minecraft.nbt.Tag toTag(boolean force)
     {
         if (!force)
         {
             throw new NBTSerializableValue.IncompatibleTypeException(this);
         }
-        final CompoundTag tag = new CompoundTag();
+        CompoundTag tag = new CompoundTag();
         tag.put("Data", getEntity().saveWithoutId(new CompoundTag()));
-        final Registry<EntityType<?>> reg = getEntity().level.registryAccess().registryOrThrow(Registries.ENTITY_TYPE);
+        Registry<EntityType<?>> reg = getEntity().level.registryAccess().registryOrThrow(Registries.ENTITY_TYPE);
         tag.put("Name", StringTag.valueOf(reg.getKey(getEntity().getType()).toString()));
         return tag;
     }

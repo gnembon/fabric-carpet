@@ -32,6 +32,7 @@ import net.minecraft.world.level.storage.LevelResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.nio.file.FileVisitOption;
 import java.nio.file.Files;
@@ -73,7 +74,7 @@ public class CarpetScriptServer extends ScriptServer
      * @param app The {@link Module} of the app
      * @see Module#fromJarPath(String, String, boolean)
      */
-    public static void registerBuiltInApp(final Module app)
+    public static void registerBuiltInApp(Module app)
     {
         bundledModuleData.add(app);
     }
@@ -85,7 +86,7 @@ public class CarpetScriptServer extends ScriptServer
      * @param app The {@link Module} of the app.
      * @see Module#fromJarPath(String, String, boolean)
      */
-    public static void registerSettingsApp(final Module app)
+    public static void registerSettingsApp(Module app)
     {
         ruleModuleData.add(app);
     }
@@ -104,7 +105,7 @@ public class CarpetScriptServer extends ScriptServer
         registerBuiltInApp(Module.carpetNative("distance_beta", false));
     }
 
-    public CarpetScriptServer(final MinecraftServer server)
+    public CarpetScriptServer(MinecraftServer server)
     {
         this.server = server;
         init();
@@ -125,7 +126,7 @@ public class CarpetScriptServer extends ScriptServer
     {
         if (Vanilla.MinecraftServer_doScriptsAutoload(server))
         {
-            for (final String moduleName : listAvailableModules(false))
+            for (String moduleName : listAvailableModules(false))
             {
                 addScriptHost(server.createCommandSourceStack(), moduleName, null, true, true, false, null);
             }
@@ -133,18 +134,18 @@ public class CarpetScriptServer extends ScriptServer
         CarpetEventServer.Event.START.onTick(server);
     }
 
-    public Module getModule(final String name, final boolean allowLibraries)
+    public Module getModule(String name, boolean allowLibraries)
     {
         try
         {
-            final Path folder = server.getWorldPath(LevelResource.ROOT).resolve("scripts");
+            Path folder = server.getWorldPath(LevelResource.ROOT).resolve("scripts");
             if (!Files.exists(folder))
             {
                 Files.createDirectories(folder);
             }
-            try (final Stream<Path> folderLister = Files.list(folder))
+            try (Stream<Path> folderLister = Files.list(folder))
             {
-                final Optional<Path> scriptPath = folderLister
+                Optional<Path> scriptPath = folderLister
                         .filter(script ->
                                 script.getFileName().toString().equalsIgnoreCase(name + ".sc") ||
                                         (allowLibraries && script.getFileName().toString().equalsIgnoreCase(name + ".scl"))
@@ -157,14 +158,14 @@ public class CarpetScriptServer extends ScriptServer
 
             if (FabricLoader.getInstance().getEnvironmentType() == EnvType.CLIENT)
             {
-                final Path globalFolder = FabricLoader.getInstance().getConfigDir().resolve("carpet/scripts");
+                Path globalFolder = FabricLoader.getInstance().getConfigDir().resolve("carpet/scripts");
                 if (!Files.exists(globalFolder))
                 {
                     Files.createDirectories(globalFolder);
                 }
-                try (final Stream<Path> folderWalker = Files.walk(globalFolder))
+                try (Stream<Path> folderWalker = Files.walk(globalFolder))
                 {
-                    final Optional<Path> scriptPath = folderWalker
+                    Optional<Path> scriptPath = folderWalker
                             .filter(script -> script.getFileName().toString().equalsIgnoreCase(name + ".sc") ||
                                     (allowLibraries && script.getFileName().toString().equalsIgnoreCase(name + ".scl")))
                             .findFirst();
@@ -175,11 +176,11 @@ public class CarpetScriptServer extends ScriptServer
                 }
             }
         }
-        catch (final IOException e)
+        catch (IOException e)
         {
             LOG.error("Exception while loading the app: ", e);
         }
-        for (final Module moduleData : bundledModuleData)
+        for (Module moduleData : bundledModuleData)
         {
             if (moduleData.name().equalsIgnoreCase(name) && (allowLibraries || !moduleData.library()))
             {
@@ -189,9 +190,9 @@ public class CarpetScriptServer extends ScriptServer
         return null;
     }
 
-    public Module getRuleModule(final String name)
+    public Module getRuleModule(String name)
     {
-        for (final Module moduleData : ruleModuleData)
+        for (Module moduleData : ruleModuleData)
         {
             if (moduleData.name().equalsIgnoreCase(name))
             {
@@ -201,12 +202,12 @@ public class CarpetScriptServer extends ScriptServer
         return null;
     }
 
-    public List<String> listAvailableModules(final boolean includeBuiltIns)
+    public List<String> listAvailableModules(boolean includeBuiltIns)
     {
-        final List<String> moduleNames = new ArrayList<>();
+        List<String> moduleNames = new ArrayList<>();
         if (includeBuiltIns)
         {
-            for (final Module mi : bundledModuleData)
+            for (Module mi : bundledModuleData)
             {
                 if (!mi.library() && !mi.name().endsWith("_beta"))
                 {
@@ -216,12 +217,12 @@ public class CarpetScriptServer extends ScriptServer
         }
         try
         {
-            final Path worldScripts = server.getWorldPath(LevelResource.ROOT).resolve("scripts");
+            Path worldScripts = server.getWorldPath(LevelResource.ROOT).resolve("scripts");
             if (!Files.exists(worldScripts))
             {
                 Files.createDirectories(worldScripts);
             }
-            try (final Stream<Path> folderLister = Files.list(worldScripts))
+            try (Stream<Path> folderLister = Files.list(worldScripts))
             {
                 folderLister
                         .filter(f -> f.toString().endsWith(".sc"))
@@ -230,12 +231,12 @@ public class CarpetScriptServer extends ScriptServer
 
             if (includeBuiltIns && (FabricLoader.getInstance().getEnvironmentType() == EnvType.CLIENT))
             {
-                final Path globalScripts = FabricLoader.getInstance().getConfigDir().resolve("carpet/scripts");
+                Path globalScripts = FabricLoader.getInstance().getConfigDir().resolve("carpet/scripts");
                 if (!Files.exists(globalScripts))
                 {
                     Files.createDirectories(globalScripts);
                 }
-                try (final Stream<Path> folderWalker = Files.walk(globalScripts, FileVisitOption.FOLLOW_LINKS))
+                try (Stream<Path> folderWalker = Files.walk(globalScripts, FileVisitOption.FOLLOW_LINKS))
                 {
                     folderWalker
                             .filter(f -> f.toString().endsWith(".sc"))
@@ -243,27 +244,27 @@ public class CarpetScriptServer extends ScriptServer
                 }
             }
         }
-        catch (final IOException e)
+        catch (IOException e)
         {
             LOG.error("Exception while searching for apps: ", e);
         }
         return moduleNames;
     }
 
-    public CarpetScriptHost getAppHostByName(final String name)
+    public CarpetScriptHost getAppHostByName(String name)
     {
         return name == null ? globalHost : modules.get(name);
     }
 
-    public boolean addScriptHost(final CommandSourceStack source, String name, Predicate<CommandSourceStack> commandValidator,
-                                 final boolean perPlayer, final boolean autoload, final boolean isRuleApp, final AppStoreManager.StoreNode installer)
+    public boolean addScriptHost(CommandSourceStack source, String name, @Nullable Predicate<CommandSourceStack> commandValidator,
+                                 boolean perPlayer, boolean autoload, boolean isRuleApp, AppStoreManager.StoreNode installer)
     {
-        final Runnable token = Carpet.startProfilerSection("Scarpet load");
+        Runnable token = Carpet.startProfilerSection("Scarpet load");
         if (commandValidator == null)
         {
             commandValidator = p -> true;
         }
-        final long start = System.nanoTime();
+        long start = System.nanoTime();
         name = name.toLowerCase(Locale.ROOT);
         boolean reload = false;
         if (modules.containsKey(name))
@@ -275,18 +276,18 @@ public class CarpetScriptServer extends ScriptServer
             removeScriptHost(source, name, false, isRuleApp);
             reload = true;
         }
-        final Module module = isRuleApp ? getRuleModule(name) : getModule(name, false);
+        Module module = isRuleApp ? getRuleModule(name) : getModule(name, false);
         if (module == null)
         {
             Carpet.Messenger_message(source, "r Failed to add " + name + " app: App not found");
             return false;
         }
-        final CarpetScriptHost newHost;
+        CarpetScriptHost newHost;
         try
         {
             newHost = CarpetScriptHost.create(this, module, perPlayer, source, commandValidator, isRuleApp, installer);
         }
-        catch (final LoadException e)
+        catch (LoadException e)
         {
             Carpet.Messenger_message(source, "r Failed to add " + name + " app" + (e.getMessage() == null ? "" : ": " + e.getMessage()));
             return false;
@@ -303,10 +304,10 @@ public class CarpetScriptServer extends ScriptServer
             removeScriptHost(source, name, false, false);
             return false;
         }
-        final String action = (installer != null) ? (reload ? "reinstalled" : "installed") : (reload ? "reloaded" : "loaded");
+        String action = (installer != null) ? (reload ? "reinstalled" : "installed") : (reload ? "reloaded" : "loaded");
 
-        final String finalName = name;
-        final Boolean isCommandAdded = newHost.addAppCommands(s -> {
+        String finalName = name;
+        Boolean isCommandAdded = newHost.addAppCommands(s -> {
             if (!isRuleApp)
             {
                 Carpet.Messenger_message(source, "r Failed to add app '" + finalName + "': ", s);
@@ -336,7 +337,7 @@ public class CarpetScriptServer extends ScriptServer
         if (newHost.isPerUser())
         {
             // that will provide player hosts right at the startup
-            for (final ServerPlayer player : source.getServer().getPlayerList().getPlayers())
+            for (ServerPlayer player : source.getServer().getPlayerList().getPlayers())
             {
                 newHost.retrieveForExecution(player.createCommandSourceStack(), player);
             }
@@ -344,25 +345,25 @@ public class CarpetScriptServer extends ScriptServer
         else
         {
             // global app - calling start now.
-            final FunctionValue onStart = newHost.getFunction("__on_start");
+            FunctionValue onStart = newHost.getFunction("__on_start");
             if (onStart != null)
             {
                 newHost.callNow(onStart, Collections.emptyList());
             }
         }
         token.run();
-        final long end = System.nanoTime();
+        long end = System.nanoTime();
         LOG.info("App " + name + " loaded in " + (end - start) / 1000000 + " ms");
         return true;
     }
 
-    public boolean isInvalidCommandRoot(final String appName)
+    public boolean isInvalidCommandRoot(String appName)
     {
         return holyMoly.contains(appName);
     }
 
 
-    public boolean removeScriptHost(final CommandSourceStack source, String name, final boolean notifySource, final boolean isRuleApp)
+    public boolean removeScriptHost(CommandSourceStack source, String name, boolean notifySource, boolean isRuleApp)
     {
         name = name.toLowerCase(Locale.ROOT);
         if (!modules.containsKey(name) || (!isRuleApp && !unloadableModules.contains(name)))
@@ -374,7 +375,7 @@ public class CarpetScriptServer extends ScriptServer
             return false;
         }
         // stop all events associated with name
-        final CarpetScriptHost host = modules.remove(name);
+        CarpetScriptHost host = modules.remove(name);
         events.removeAllHostEvents(host);
         host.onClose();
         if (host.hasCommand)
@@ -393,12 +394,12 @@ public class CarpetScriptServer extends ScriptServer
         return true;
     }
 
-    public boolean uninstallApp(final CommandSourceStack source, String name)
+    public boolean uninstallApp(CommandSourceStack source, String name)
     {
         try
         {
             name = name.toLowerCase(Locale.ROOT);
-            final Path folder = server.getWorldPath(LevelResource.ROOT).resolve("scripts/trash");
+            Path folder = server.getWorldPath(LevelResource.ROOT).resolve("scripts/trash");
             if (!Files.exists(folder))
             {
                 Files.createDirectories(folder);
@@ -413,7 +414,7 @@ public class CarpetScriptServer extends ScriptServer
             Carpet.Messenger_message(source, "gi Removed " + name + " app");
             return true;
         }
-        catch (final IOException exc)
+        catch (IOException exc)
         {
             Carpet.Messenger_message(source, "rb Failed to uninstall the app");
         }
@@ -430,7 +431,7 @@ public class CarpetScriptServer extends ScriptServer
         });
         token.run();
         token = Carpet.startProfilerSection("Scarpet app data");
-        for (final CarpetScriptHost host : modules.values())
+        for (CarpetScriptHost host : modules.values())
         {
             host.tick();
         }
@@ -440,7 +441,7 @@ public class CarpetScriptServer extends ScriptServer
     public void onClose()
     {
         CarpetEventServer.Event.SHUTDOWN.onTick(server);
-        for (final CarpetScriptHost host : modules.values())
+        for (CarpetScriptHost host : modules.values())
         {
             host.onClose();
             events.removeAllHostEvents(host);
@@ -448,7 +449,7 @@ public class CarpetScriptServer extends ScriptServer
         stopAll = true;
     }
 
-    public void onPlayerJoin(final ServerPlayer player)
+    public void onPlayerJoin(ServerPlayer player)
     {
         modules.values().forEach(h ->
         {
@@ -458,7 +459,7 @@ public class CarpetScriptServer extends ScriptServer
                 {
                     h.retrieveOwnForExecution(player.createCommandSourceStack());
                 }
-                catch (final CommandSyntaxException ignored)
+                catch (CommandSyntaxException ignored)
                 {
                 }
             }
@@ -466,7 +467,7 @@ public class CarpetScriptServer extends ScriptServer
     }
 
     @Override
-    public Path resolveResource(final String suffix)
+    public Path resolveResource(String suffix)
     {
         return server.getWorldPath(LevelResource.ROOT).resolve("scripts/" + suffix);
     }
@@ -474,15 +475,15 @@ public class CarpetScriptServer extends ScriptServer
     private record TransferData(boolean perUser, Predicate<CommandSourceStack> commandValidator,
                                 boolean isRuleApp)
     {
-        private TransferData(final CarpetScriptHost host)
+        private TransferData(CarpetScriptHost host)
         {
             this(host.perUser, host.commandValidator, host.isRuleApp);
         }
     }
 
-    public void reload(final MinecraftServer server)
+    public void reload(MinecraftServer server)
     {
-        final Map<String, TransferData> apps = new HashMap<>();
+        Map<String, TransferData> apps = new HashMap<>();
         modules.forEach((s, h) -> apps.put(s, new TransferData(h)));
         apps.keySet().forEach(s -> removeScriptHost(server.createCommandSourceStack(), s, false, false));
         CarpetEventServer.Event.clearAllBuiltinEvents();

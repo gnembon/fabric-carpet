@@ -12,13 +12,13 @@ public class BooleanValue extends NumericValue
 
     boolean boolValue;
 
-    private BooleanValue(final boolean boolval)
+    private BooleanValue(boolean boolval)
     {
         super(boolval ? 1L : 0L);
         boolValue = boolval;
     }
 
-    public static BooleanValue of(final boolean value)
+    public static BooleanValue of(boolean value)
     {
         return value ? TRUE : FALSE;
     }
@@ -54,7 +54,7 @@ public class BooleanValue extends NumericValue
     }
 
     @Override
-    public Tag toTag(final boolean force)
+    public Tag toTag(boolean force)
     {
         return ByteTag.valueOf(boolValue);
     }

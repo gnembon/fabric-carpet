@@ -9,11 +9,12 @@ import java.util.Objects;
 import java.util.Optional;
 
 import org.apache.commons.lang3.ClassUtils;
-import org.jetbrains.annotations.Nullable;
 
 import carpet.script.Context;
 import carpet.script.annotation.Param.Params;
 import carpet.script.value.Value;
+
+import javax.annotation.Nullable;
 
 /**
  * <p>Classes implementing this interface are able to convert {@link Value} instances into {@code <R>}, in order to easily use them in parameters for
@@ -37,6 +38,7 @@ public interface ValueConverter<R>
      * @apiNote This method is intended to only be called when an error has occurred and therefore there is a need to print a stacktrace with some
      *          helpful usage instructions.
      */
+    @Nullable
     String getTypeName();
 
     /**
@@ -63,7 +65,7 @@ public interface ValueConverter<R>
      *          <p>Even with the above reasons, {@link ValueConverter} users should try to implement {@link #convert(Value, Context)} whenever possible instead of
      *          {@link #checkAndConvert(Iterator, Context, Context.Type)}, since it allows its usage in generics of lists and maps.</p>
      */
-    @Nullable R convert(Value value, final Context context);
+    @Nullable R convert(Value value, @Nullable Context context);
 
     /**
      * Old version of {@link #convert(Value)} without taking a {@link Context}.<p>
@@ -75,8 +77,9 @@ public interface ValueConverter<R>
      * @return A converted value
      * @deprecated Calling this method instead of {@link #convert(Value, Context)} may not return values for some converters
      */
+    @Nullable
     @Deprecated(forRemoval = true)
-    default R convert(final Value value)
+    default R convert(Value value)
     {
         try
         {
@@ -130,7 +133,7 @@ public interface ValueConverter<R>
      * @return A usable {@link ValueConverter} to convert from a {@link Value} to {@code <R>}
      */
     @SuppressWarnings("unchecked")
-    static <R> ValueConverter<R> fromAnnotatedType(final AnnotatedType annoType)
+    static <R> ValueConverter<R> fromAnnotatedType(AnnotatedType annoType)
     {
         Class<R> type = annoType.getType() instanceof ParameterizedType ? // We are defining R here.
                 (Class<R>) ((ParameterizedType) annoType.getType()).getRawType() :
@@ -208,7 +211,8 @@ public interface ValueConverter<R>
      * @implNote This method's default implementation runs the {@link #convert(Value, Context)} function in the next {@link Value} ignoring {@link Context} and
      *           {@code theLazyT}.
      */
-    default R checkAndConvert(final Iterator<Value> valueIterator, final Context context, final Context.Type contextType)
+    @Nullable
+    default R checkAndConvert(Iterator<Value> valueIterator, Context context, Context.Type contextType)
     {
         return !valueIterator.hasNext() ? null : convert(valueIterator.next(), context);
     }

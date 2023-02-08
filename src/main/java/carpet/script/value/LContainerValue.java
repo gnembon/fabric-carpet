@@ -6,7 +6,7 @@ public class LContainerValue extends FrameworkValue
     private final Value address;
     public static final LContainerValue NULL_CONTAINER = new LContainerValue(null, null);
 
-    public LContainerValue(final ContainerValueInterface c, final Value v)
+    public LContainerValue(ContainerValueInterface c, Value v)
     {
         container = c;
         address = v;

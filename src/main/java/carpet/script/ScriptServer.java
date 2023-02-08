@@ -11,5 +11,5 @@ public abstract class ScriptServer
 {
     public final Map<Value, Value> systemGlobals = new ConcurrentHashMap<>();
 
-    public abstract Path resolveResource(final String suffix);
+    public abstract Path resolveResource(String suffix);
 }

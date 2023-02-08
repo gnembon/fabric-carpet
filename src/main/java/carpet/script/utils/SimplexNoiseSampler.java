@@ -15,7 +15,7 @@ public class SimplexNoiseSampler extends PerlinNoiseSampler
     public static SimplexNoiseSampler instance = new SimplexNoiseSampler(new Random(0));
     public static Map<Long, SimplexNoiseSampler> samplers = new Long2ObjectOpenHashMap<>();
 
-    public static SimplexNoiseSampler getSimplex(final long aLong)
+    public static SimplexNoiseSampler getSimplex(long aLong)
     {
         if (samplers.size() > 256)
         {
@@ -24,15 +24,15 @@ public class SimplexNoiseSampler extends PerlinNoiseSampler
         return samplers.computeIfAbsent(aLong, seed -> new SimplexNoiseSampler(new Random(seed)));
     }
 
-    public SimplexNoiseSampler(final Random random)
+    public SimplexNoiseSampler(Random random)
     {
         super(random);
     }
 
-    private double grad(final int hash, final double x, final double y, final double z, final double d)
+    private double grad(int hash, double x, double y, double z, double d)
     {
         double e = d - x * x - y * y - z * z;
-        final double g;
+        double g;
         if (e < 0.0D)
         {
             g = 0.0D;
@@ -51,16 +51,16 @@ public class SimplexNoiseSampler extends PerlinNoiseSampler
     {
         x = x / 2;
         y = y / 2;
-        final double d = (x + y) * SKEW_FACTOR_2D;
-        final int i = PerlinNoiseSampler.floor(x + d);
-        final int j = PerlinNoiseSampler.floor(y + d);
-        final double e = (i + j) * UNSKEW_FACTOR_2D;
-        final double f = i - e;
-        final double g = j - e;
-        final double h = x - f;
-        final double k = y - g;
-        final byte n;
-        final byte o;
+        double d = (x + y) * SKEW_FACTOR_2D;
+        int i = PerlinNoiseSampler.floor(x + d);
+        int j = PerlinNoiseSampler.floor(y + d);
+        double e = (i + j) * UNSKEW_FACTOR_2D;
+        double f = i - e;
+        double g = j - e;
+        double h = x - f;
+        double k = y - g;
+        byte n;
+        byte o;
         if (h > k)
         {
             n = 1;
@@ -72,18 +72,18 @@ public class SimplexNoiseSampler extends PerlinNoiseSampler
             o = 1;
         }
 
-        final double p = h - n + UNSKEW_FACTOR_2D;
-        final double q = k - o + UNSKEW_FACTOR_2D;
-        final double r = h - 1.0D + 2.0D * UNSKEW_FACTOR_2D;
-        final double s = k - 1.0D + 2.0D * UNSKEW_FACTOR_2D;
-        final int t = i & 255;
-        final int u = j & 255;
-        final int v = this.getGradient(t + this.getGradient(u)) % 12;
-        final int w = this.getGradient(t + n + this.getGradient(u + o)) % 12;
-        final int z = this.getGradient(t + 1 + this.getGradient(u + 1)) % 12;
-        final double aa = this.grad(v, h, k, 0.0D, 0.5D);
-        final double ab = this.grad(w, p, q, 0.0D, 0.5D);
-        final double ac = this.grad(z, r, s, 0.0D, 0.5D);
+        double p = h - n + UNSKEW_FACTOR_2D;
+        double q = k - o + UNSKEW_FACTOR_2D;
+        double r = h - 1.0D + 2.0D * UNSKEW_FACTOR_2D;
+        double s = k - 1.0D + 2.0D * UNSKEW_FACTOR_2D;
+        int t = i & 255;
+        int u = j & 255;
+        int v = this.getGradient(t + this.getGradient(u)) % 12;
+        int w = this.getGradient(t + n + this.getGradient(u + o)) % 12;
+        int z = this.getGradient(t + 1 + this.getGradient(u + 1)) % 12;
+        double aa = this.grad(v, h, k, 0.0D, 0.5D);
+        double ab = this.grad(w, p, q, 0.0D, 0.5D);
+        double ac = this.grad(z, r, s, 0.0D, 0.5D);
         //return 70.0D * (aa + ab + ac);
         return 35.0D * (aa + ab + ac) + 0.5;
     }
@@ -95,24 +95,24 @@ public class SimplexNoiseSampler extends PerlinNoiseSampler
         e = e / 2;
         f = f / 2;
         //final double g = 0.3333333333333333D;
-        final double h = (d + e + f) * 0.3333333333333333D;
-        final int i = floor(d + h);
-        final int j = floor(e + h);
-        final int k = floor(f + h);
+        double h = (d + e + f) * 0.3333333333333333D;
+        int i = floor(d + h);
+        int j = floor(e + h);
+        int k = floor(f + h);
         //final double l = 0.16666666666666666D;
-        final double m = (i + j + k) * 0.16666666666666666D;
-        final double n = i - m;
-        final double o = j - m;
-        final double p = k - m;
-        final double q = d - n;
-        final double r = e - o;
-        final double s = f - p;
-        final byte z;
-        final byte aa;
-        final byte ab;
-        final byte ac;
-        final byte ad;
-        final byte bc;
+        double m = (i + j + k) * 0.16666666666666666D;
+        double n = i - m;
+        double o = j - m;
+        double p = k - m;
+        double q = d - n;
+        double r = e - o;
+        double s = f - p;
+        byte z;
+        byte aa;
+        byte ab;
+        byte ac;
+        byte ad;
+        byte bc;
         if (q >= r)
         {
             if (r >= s)
@@ -171,26 +171,26 @@ public class SimplexNoiseSampler extends PerlinNoiseSampler
             bc = 0;
         }
 
-        final double bd = q - z + 0.16666666666666666D;
-        final double be = r - aa + 0.16666666666666666D;
-        final double bf = s - ab + 0.16666666666666666D;
-        final double bg = q - ac + 0.3333333333333333D;
-        final double bh = r - ad + 0.3333333333333333D;
-        final double bi = s - bc + 0.3333333333333333D;
-        final double bj = q - 1.0D + 0.5D;
-        final double bk = r - 1.0D + 0.5D;
-        final double bl = s - 1.0D + 0.5D;
-        final int bm = i & 255;
-        final int bn = j & 255;
-        final int bo = k & 255;
-        final int bp = this.getGradient(bm + this.getGradient(bn + this.getGradient(bo))) % 12;
-        final int bq = this.getGradient(bm + z + this.getGradient(bn + aa + this.getGradient(bo + ab))) % 12;
-        final int br = this.getGradient(bm + ac + this.getGradient(bn + ad + this.getGradient(bo + bc))) % 12;
-        final int bs = this.getGradient(bm + 1 + this.getGradient(bn + 1 + this.getGradient(bo + 1))) % 12;
-        final double bt = this.grad(bp, q, r, s, 0.6D);
-        final double bu = this.grad(bq, bd, be, bf, 0.6D);
-        final double bv = this.grad(br, bg, bh, bi, 0.6D);
-        final double bw = this.grad(bs, bj, bk, bl, 0.6D);
+        double bd = q - z + 0.16666666666666666D;
+        double be = r - aa + 0.16666666666666666D;
+        double bf = s - ab + 0.16666666666666666D;
+        double bg = q - ac + 0.3333333333333333D;
+        double bh = r - ad + 0.3333333333333333D;
+        double bi = s - bc + 0.3333333333333333D;
+        double bj = q - 1.0D + 0.5D;
+        double bk = r - 1.0D + 0.5D;
+        double bl = s - 1.0D + 0.5D;
+        int bm = i & 255;
+        int bn = j & 255;
+        int bo = k & 255;
+        int bp = this.getGradient(bm + this.getGradient(bn + this.getGradient(bo))) % 12;
+        int bq = this.getGradient(bm + z + this.getGradient(bn + aa + this.getGradient(bo + ab))) % 12;
+        int br = this.getGradient(bm + ac + this.getGradient(bn + ad + this.getGradient(bo + bc))) % 12;
+        int bs = this.getGradient(bm + 1 + this.getGradient(bn + 1 + this.getGradient(bo + 1))) % 12;
+        double bt = this.grad(bp, q, r, s, 0.6D);
+        double bu = this.grad(bq, bd, be, bf, 0.6D);
+        double bv = this.grad(br, bg, bh, bi, 0.6D);
+        double bw = this.grad(bs, bj, bk, bl, 0.6D);
         return 16.0D * (bt + bu + bv + bw) + 0.5;
     }
 

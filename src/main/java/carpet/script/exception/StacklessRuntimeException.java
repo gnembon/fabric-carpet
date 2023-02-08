@@ -10,7 +10,7 @@ public abstract class StacklessRuntimeException extends RuntimeException
         super();
     }
 
-    public StacklessRuntimeException(final String message)
+    public StacklessRuntimeException(String message)
     {
         super(message);
     }

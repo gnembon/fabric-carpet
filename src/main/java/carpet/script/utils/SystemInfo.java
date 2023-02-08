@@ -37,7 +37,7 @@ public class SystemInfo
     {{
         put("app_name", c ->
         {
-            final String name = c.host.getName();
+            String name = c.host.getName();
             return name == null ? Value.NULL : new StringValue(name);
         });
         put("app_list", c -> ListValue.wrap(((CarpetScriptHost) c.host).scriptServer().modules.keySet().stream().filter(Objects::nonNull).map(StringValue::new)));
@@ -49,18 +49,18 @@ public class SystemInfo
         put("server_motd", c -> StringValue.of(c.server().getMotd()));
         put("world_path", c -> StringValue.of(c.server().getWorldPath(LevelResource.ROOT).toString()));
         put("world_folder", c -> {
-            final Path serverPath = c.server().getWorldPath(LevelResource.ROOT);
-            final int nodeCount = serverPath.getNameCount();
+            Path serverPath = c.server().getWorldPath(LevelResource.ROOT);
+            int nodeCount = serverPath.getNameCount();
             if (nodeCount < 2)
             {
                 return Value.NULL;
             }
-            final String tlf = serverPath.getName(nodeCount - 2).toString();
+            String tlf = serverPath.getName(nodeCount - 2).toString();
             return StringValue.of(tlf);
         });
         put("world_dimensions", c -> ListValue.wrap(c.server().levelKeys().stream().map(k -> ValueConversions.of(k.location()))));
         put("world_spawn_point", c -> {
-            final LevelData prop = c.server().overworld().getLevelData();
+            LevelData prop = c.server().overworld().getLevelData();
             return ListValue.of(NumericValue.of(prop.getXSpawn()), NumericValue.of(prop.getYSpawn()), NumericValue.of(prop.getZSpawn()));
         });
 
@@ -69,7 +69,7 @@ public class SystemInfo
         put("world_top", c -> new NumericValue(c.level().getMaxBuildHeight()));
 
         put("world_center", c -> {
-            final WorldBorder worldBorder = c.level().getWorldBorder();
+            WorldBorder worldBorder = c.level().getWorldBorder();
             return ListValue.fromTriple(worldBorder.getCenterX(), 0, worldBorder.getCenterZ());
         });
 
@@ -90,11 +90,11 @@ public class SystemInfo
         put("game_target", c -> StringValue.of(Vanilla.MinecraftServer_getReleaseTarget(c.server())));
         put("game_protocol", c -> NumericValue.of(SharedConstants.getProtocolVersion()));
         put("game_major_target", c -> {
-            final String[] vers = Vanilla.MinecraftServer_getReleaseTarget(c.server()).split("\\.");
+            String[] vers = Vanilla.MinecraftServer_getReleaseTarget(c.server()).split("\\.");
             return NumericValue.of((vers.length > 1) ? Integer.parseInt(vers[1]) : 0);
         });
         put("game_minor_target", c -> {
-            final String[] vers = Vanilla.MinecraftServer_getReleaseTarget(c.server()).split("\\.");
+            String[] vers = Vanilla.MinecraftServer_getReleaseTarget(c.server()).split("\\.");
             return NumericValue.of((vers.length > 2) ? Integer.parseInt(vers[2]) : 0);
         });
         put("game_stable", c -> BooleanValue.of(SharedConstants.getCurrentVersion().isStable()));
@@ -104,24 +104,24 @@ public class SystemInfo
         put("server_ip", c -> StringValue.of(c.server().getLocalIp()));
         put("server_whitelisted", c -> BooleanValue.of(c.server().isEnforceWhitelist()));
         put("server_whitelist", c -> {
-            final MapValue whitelist = new MapValue(Collections.emptyList());
-            for (final String s : c.server().getPlayerList().getWhiteListNames())
+            MapValue whitelist = new MapValue(Collections.emptyList());
+            for (String s : c.server().getPlayerList().getWhiteListNames())
             {
                 whitelist.append(StringValue.of(s));
             }
             return whitelist;
         });
         put("server_banned_players", c -> {
-            final MapValue whitelist = new MapValue(Collections.emptyList());
-            for (final String s : c.server().getPlayerList().getBans().getUserList())
+            MapValue whitelist = new MapValue(Collections.emptyList());
+            for (String s : c.server().getPlayerList().getBans().getUserList())
             {
                 whitelist.append(StringValue.of(s));
             }
             return whitelist;
         });
         put("server_banned_ips", c -> {
-            final MapValue whitelist = new MapValue(Collections.emptyList());
-            for (final String s : c.server().getPlayerList().getIpBans().getUserList())
+            MapValue whitelist = new MapValue(Collections.emptyList());
+            for (String s : c.server().getPlayerList().getIpBans().getUserList())
             {
                 whitelist.append(StringValue.of(s));
             }
@@ -132,9 +132,9 @@ public class SystemInfo
         put("server_last_tick_times", c -> {
             //assuming we are in the tick world section
             // might be off one tick when run in the off tasks or asynchronously.
-            final int currentReportedTick = c.server().getTickCount() - 1;
-            final List<Value> ticks = new ArrayList<>(100);
-            final long[] tickArray = c.server().tickTimes;
+            int currentReportedTick = c.server().getTickCount() - 1;
+            List<Value> ticks = new ArrayList<>(100);
+            long[] tickArray = c.server().tickTimes;
             for (int i = currentReportedTick + 100; i > currentReportedTick; i--)
             {
                 ticks.add(new NumericValue((tickArray[i % 100]) / 1000000.0));
@@ -148,9 +148,9 @@ public class SystemInfo
         put("java_cpu_count", c -> new NumericValue(Runtime.getRuntime().availableProcessors()));
         put("java_version", c -> StringValue.of(System.getProperty("java.version")));
         put("java_bits", c -> {
-            for (final String property : new String[]{"sun.arch.data.model", "com.ibm.vm.bitmode", "os.arch"})
+            for (String property : new String[]{"sun.arch.data.model", "com.ibm.vm.bitmode", "os.arch"})
             {
-                final String value = System.getProperty(property);
+                String value = System.getProperty(property);
                 if (value != null && value.contains("64"))
                 {
                     return new NumericValue(64);
@@ -159,23 +159,23 @@ public class SystemInfo
             return new NumericValue(32);
         });
         put("java_system_cpu_load", c -> {
-            final OperatingSystemMXBean osBean = ManagementFactory.getPlatformMXBean(
+            OperatingSystemMXBean osBean = ManagementFactory.getPlatformMXBean(
                     OperatingSystemMXBean.class);
             return new NumericValue(osBean.getCpuLoad());
         });
         put("java_process_cpu_load", c -> {
-            final OperatingSystemMXBean osBean = ManagementFactory.getPlatformMXBean(
+            OperatingSystemMXBean osBean = ManagementFactory.getPlatformMXBean(
                     OperatingSystemMXBean.class);
             return new NumericValue(osBean.getProcessCpuLoad());
         });
         put("world_carpet_rules", c -> Carpet.getAllCarpetRules());
         put("world_gamerules", c -> {
-            final Map<Value, Value> rules = new HashMap<>();
-            final GameRules gameRules = c.level().getGameRules();
+            Map<Value, Value> rules = new HashMap<>();
+            GameRules gameRules = c.level().getGameRules();
             GameRules.visitGameRuleTypes(new GameRules.GameRuleTypeVisitor()
             {
                 @Override
-                public <T extends GameRules.Value<T>> void visit(final GameRules.Key<T> key, final GameRules.Type<T> type)
+                public <T extends GameRules.Value<T>> void visit(GameRules.Key<T> key, GameRules.Type<T> type)
                 {
                     rules.put(StringValue.of(key.getId()), StringValue.of(gameRules.getRule(key).toString()));
                 }
@@ -188,13 +188,13 @@ public class SystemInfo
         put("source_position", c -> ValueConversions.of(c.source().getPosition()));
         put("source_dimension", c -> ValueConversions.of(c.level()));
         put("source_rotation", c -> {
-            final Vec2 rotation = c.source().getRotation();
+            Vec2 rotation = c.source().getRotation();
             return ListValue.of(new NumericValue(rotation.x), new NumericValue(rotation.y));
         });
         put("scarpet_version", c -> StringValue.of(Carpet.getCarpetVersion()));
     }};
 
-    public static Value get(final String what, final CarpetContext cc)
+    public static Value get(String what, CarpetContext cc)
     {
         return options.getOrDefault(what, c -> null).apply(cc);
     }

@@ -12,7 +12,7 @@ public class FunctionAnnotationValue extends Value
 
     public Type type;
 
-    public FunctionAnnotationValue(final Value variable, final Type type)
+    public FunctionAnnotationValue(Value variable, Type type)
     {
         if (variable.boundVariable == null)
         {
@@ -41,7 +41,7 @@ public class FunctionAnnotationValue extends Value
     }
 
     @Override
-    public Tag toTag(final boolean force)
+    public Tag toTag(boolean force)
     {
         throw new UnsupportedOperationException("Global value cannot be serialized to the tag");
     }

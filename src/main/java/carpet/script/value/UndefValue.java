@@ -38,13 +38,13 @@ public class UndefValue extends NullValue
     }
 
     @Override
-    public boolean equals(final Object o)
+    public boolean equals(Object o)
     {
         throw getError();
     }
 
     @Override
-    public Value slice(final long fromDesc, final Long toDesc)
+    public Value slice(long fromDesc, Long toDesc)
     {
         throw getError();
     }
@@ -62,13 +62,13 @@ public class UndefValue extends NullValue
     }
 
     @Override
-    public int compareTo(final Value o)
+    public int compareTo(Value o)
     {
         throw getError();
     }
 
     @Override
-    public Value in(final Value value)
+    public Value in(Value value)
     {
         throw getError();
     }
@@ -86,13 +86,13 @@ public class UndefValue extends NullValue
     }
 
     @Override
-    public Tag toTag(final boolean force)
+    public Tag toTag(boolean force)
     {
         throw getError();
     }
 
     @Override
-    public Value split(final Value delimiter)
+    public Value split(Value delimiter)
     {
         throw getError();
     }
@@ -110,25 +110,25 @@ public class UndefValue extends NullValue
     }
 
     @Override
-    public Value add(final Value v)
+    public Value add(Value v)
     {
         throw getError();
     }
 
     @Override
-    public Value subtract(final Value v)
+    public Value subtract(Value v)
     {
         throw getError();
     }
 
     @Override
-    public Value multiply(final Value v)
+    public Value multiply(Value v)
     {
         throw getError();
     }
 
     @Override
-    public Value divide(final Value v)
+    public Value divide(Value v)
     {
         throw getError();
     }

@@ -9,7 +9,7 @@ public abstract class AbstractListValue extends Value implements Iterable<Value>
 {
     public List<Value> unpack()
     {
-        final List<Value> retVal = Lists.newArrayList(iterator());
+        List<Value> retVal = Lists.newArrayList(iterator());
         fatality();
         return retVal;
     }
@@ -18,7 +18,7 @@ public abstract class AbstractListValue extends Value implements Iterable<Value>
     {
     }
 
-    public void append(final Value v)
+    public void append(Value v)
     {
         throw new InternalExpressionException("Cannot append a value to an abstract list");
     }

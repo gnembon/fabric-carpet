@@ -24,12 +24,12 @@ public class ScarpetJsonDeserializer implements JsonDeserializer<Value>
 {
 
     @Override
-    public Value deserialize(final JsonElement json, final Type typeOfT, final JsonDeserializationContext context) throws JsonParseException
+    public Value deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException
     {
         return parseElement(json);
     }
 
-    private Value parseElement(final JsonElement element) throws JsonParseException
+    private Value parseElement(JsonElement element) throws JsonParseException
     {
         if (element.isJsonObject())
         {
@@ -46,21 +46,21 @@ public class ScarpetJsonDeserializer implements JsonDeserializer<Value>
         return Value.NULL;
     }
 
-    private Value parseMap(final JsonObject jsonMap) throws JsonParseException
+    private Value parseMap(JsonObject jsonMap) throws JsonParseException
     {
-        final Map<Value, Value> map = new HashMap<>();
+        Map<Value, Value> map = new HashMap<>();
         jsonMap.entrySet().forEach(entry -> map.put(new StringValue(entry.getKey()), parseElement(entry.getValue())));
         return MapValue.wrap(map);
     }
 
-    private Value parseList(final JsonArray jsonList) throws JsonParseException
+    private Value parseList(JsonArray jsonList) throws JsonParseException
     {
-        final List<Value> list = new ArrayList<>();
+        List<Value> list = new ArrayList<>();
         jsonList.forEach(elem -> list.add(parseElement(elem)));
         return new ListValue(list);
     }
 
-    private Value parsePrimitive(final JsonPrimitive primitive) throws JsonParseException
+    private Value parsePrimitive(JsonPrimitive primitive) throws JsonParseException
     {
         if (primitive.isString())
         {

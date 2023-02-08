@@ -12,7 +12,7 @@ public class LoadException extends RuntimeException implements ResolvedException
     {
         super();
     }
-    public LoadException(final String message)
+    public LoadException(String message)
     {
         super(message);
     }

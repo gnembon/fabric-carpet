@@ -34,6 +34,7 @@ import net.minecraft.world.level.levelgen.WorldGenSettings;
 import net.minecraft.world.level.storage.DerivedLevelData;
 import net.minecraft.world.level.storage.ServerLevelData;
 
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
@@ -44,24 +45,24 @@ import java.util.Set;
 public class WorldTools
 {
 
-    public static boolean canHasChunk(final ServerLevel world, final ChunkPos chpos, final Map<String, RegionFile> regionCache, final boolean deepcheck)
+    public static boolean canHasChunk(ServerLevel world, ChunkPos chpos, @Nullable Map<String, RegionFile> regionCache, boolean deepcheck)
     {
         if (world.getChunk(chpos.x, chpos.z, ChunkStatus.STRUCTURE_STARTS, false) != null)
         {
             return true;
         }
-        final String currentRegionName = "r." + chpos.getRegionX() + "." + chpos.getRegionZ() + ".mca";
+        String currentRegionName = "r." + chpos.getRegionX() + "." + chpos.getRegionZ() + ".mca";
         if (regionCache != null && regionCache.containsKey(currentRegionName))
         {
-            final RegionFile region = regionCache.get(currentRegionName);
+            RegionFile region = regionCache.get(currentRegionName);
             if (region == null)
             {
                 return false;
             }
             return region.hasChunk(chpos);
         }
-        final Path regionsFolder = Vanilla.MinecraftServer_storageSource(world.getServer()).getDimensionPath(world.dimension()).resolve("region");
-        final Path regionPath = regionsFolder.resolve(currentRegionName);
+        Path regionsFolder = Vanilla.MinecraftServer_storageSource(world.getServer()).getDimensionPath(world.dimension()).resolve("region");
+        Path regionPath = regionsFolder.resolve(currentRegionName);
         if (!regionPath.toFile().exists())
         {
             if (regionCache != null)
@@ -76,14 +77,14 @@ public class WorldTools
         }
         try
         {
-            final RegionFile region = new RegionFile(regionPath, regionsFolder, true);
+            RegionFile region = new RegionFile(regionPath, regionsFolder, true);
             if (regionCache != null)
             {
                 regionCache.put(currentRegionName, region);
             }
             return region.hasChunk(chpos);
         }
-        catch (final IOException ignored)
+        catch (IOException ignored)
         {
         }
         return true;
@@ -155,16 +156,16 @@ public class WorldTools
         return true;
     }*/
 
-    public static void forceChunkUpdate(final BlockPos pos, final ServerLevel world)
+    public static void forceChunkUpdate(BlockPos pos, ServerLevel world)
     {
-        final ChunkPos chunkPos = new ChunkPos(pos);
-        final LevelChunk worldChunk = world.getChunkSource().getChunk(chunkPos.x, chunkPos.z, false);
+        ChunkPos chunkPos = new ChunkPos(pos);
+        LevelChunk worldChunk = world.getChunkSource().getChunk(chunkPos.x, chunkPos.z, false);
         if (worldChunk != null)
         {
-            final List<ServerPlayer> players = world.getChunkSource().chunkMap.getPlayers(chunkPos, false);
+            List<ServerPlayer> players = world.getChunkSource().chunkMap.getPlayers(chunkPos, false);
             if (!players.isEmpty())
             {
-                final ClientboundLevelChunkWithLightPacket packet = new ClientboundLevelChunkWithLightPacket(worldChunk, world.getLightEngine(), null, null, false); // false seems to update neighbours as well.
+                ClientboundLevelChunkWithLightPacket packet = new ClientboundLevelChunkWithLightPacket(worldChunk, world.getLightEngine(), null, null, false); // false seems to update neighbours as well.
                 players.forEach(p -> p.connection.send(packet));
             }
         }

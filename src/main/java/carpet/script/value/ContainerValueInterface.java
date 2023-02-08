@@ -4,7 +4,7 @@ public interface ContainerValueInterface
 {
     boolean put(Value where, Value value);
 
-    default boolean put(final Value where, final Value value, final Value conditions)
+    default boolean put(Value where, Value value, Value conditions)
     {
         return put(where, value);
     }

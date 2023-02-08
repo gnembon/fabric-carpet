@@ -19,7 +19,7 @@ public class EquipmentInventory implements Container
 
     LivingEntity mob;
 
-    public EquipmentInventory(final LivingEntity mob)
+    public EquipmentInventory(LivingEntity mob)
     {
         this.mob = mob;
     }
@@ -33,7 +33,7 @@ public class EquipmentInventory implements Container
     @Override
     public boolean isEmpty()
     {
-        for (final EquipmentSlot slot : slotToSlot)
+        for (EquipmentSlot slot : slotToSlot)
         {
             if (!mob.getItemBySlot(slot).isEmpty())
             {
@@ -44,14 +44,14 @@ public class EquipmentInventory implements Container
     }
 
     @Override
-    public ItemStack getItem(final int slot)
+    public ItemStack getItem(int slot)
     {
-        final EquipmentSlot slotSlot;
+        EquipmentSlot slotSlot;
         try
         {
             slotSlot = slotToSlot.get(slot);
         }
-        catch (final IndexOutOfBoundsException ignored)
+        catch (IndexOutOfBoundsException ignored)
         {
             //going out of the index should be really exceptional
             return ItemStack.EMPTY;
@@ -60,14 +60,14 @@ public class EquipmentInventory implements Container
     }
 
     @Override
-    public ItemStack removeItem(final int slot, final int amount)
+    public ItemStack removeItem(int slot, int amount)
     {
-        final EquipmentSlot slotSlot;
+        EquipmentSlot slotSlot;
         try
         {
             slotSlot = slotToSlot.get(slot);
         }
-        catch (final IndexOutOfBoundsException ignored)
+        catch (IndexOutOfBoundsException ignored)
         {
             //going out of the index should be really exceptional
             return ItemStack.EMPTY;
@@ -76,32 +76,32 @@ public class EquipmentInventory implements Container
     }
 
     @Override
-    public ItemStack removeItemNoUpdate(final int slot)
+    public ItemStack removeItemNoUpdate(int slot)
     {
-        final EquipmentSlot slotSlot;
+        EquipmentSlot slotSlot;
         try
         {
             slotSlot = slotToSlot.get(slot);
         }
-        catch (final IndexOutOfBoundsException ignored)
+        catch (IndexOutOfBoundsException ignored)
         {
             //going out of the index should be really exceptional
             return ItemStack.EMPTY;
         }
-        final ItemStack previous = mob.getItemBySlot(slotSlot);
+        ItemStack previous = mob.getItemBySlot(slotSlot);
         mob.setItemSlot(slotSlot, ItemStack.EMPTY);
         return previous;
     }
 
     @Override
-    public void setItem(final int slot, final ItemStack stack)
+    public void setItem(int slot, ItemStack stack)
     {
-        final EquipmentSlot slotSlot;
+        EquipmentSlot slotSlot;
         try
         {
             slotSlot = slotToSlot.get(slot);
         }
-        catch (final IndexOutOfBoundsException ignored)
+        catch (IndexOutOfBoundsException ignored)
         {
             //going out of the index should be really exceptional
             return;
@@ -116,7 +116,7 @@ public class EquipmentInventory implements Container
     }
 
     @Override
-    public boolean stillValid(final Player player)
+    public boolean stillValid(Player player)
     {
         return false;
     }
@@ -124,7 +124,7 @@ public class EquipmentInventory implements Container
     @Override
     public void clearContent()
     {
-        for (final EquipmentSlot slot : slotToSlot)
+        for (EquipmentSlot slot : slotToSlot)
         {
             mob.setItemSlot(slot, ItemStack.EMPTY);
         }

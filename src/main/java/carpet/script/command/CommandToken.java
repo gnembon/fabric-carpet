@@ -14,22 +14,26 @@ import java.util.Objects;
 
 import net.minecraft.commands.CommandSourceStack;
 
+import javax.annotation.Nullable;
+
 import static net.minecraft.commands.Commands.literal;
 
 public class CommandToken implements Comparable<CommandToken>
 {
-    public String surface;
-    public boolean isArgument;
-    public CommandArgument type;
+    public final String surface;
+    public final boolean isArgument;
+    @Nullable
+    public final CommandArgument type;
 
-    private CommandToken(final String surface, final CommandArgument type)
+    private CommandToken(String surface, @Nullable CommandArgument type)
     {
         this.surface = surface;
         this.type = type;
         isArgument = type != null;
     }
 
-    public static CommandToken getToken(String source, final CarpetScriptHost host)
+    @Nullable
+    public static CommandToken getToken(String source, CarpetScriptHost host)
     {
         // todo add more type checking and return null
         if (!source.startsWith("<"))
@@ -40,18 +44,18 @@ public class CommandToken implements Comparable<CommandToken>
         return source.matches("[_a-zA-Z]+") ? new CommandToken(source, CommandArgument.getTypeForArgument(source, host)) : null;
     }
 
-    public static List<CommandToken> parseSpec(String spec, final CarpetScriptHost host) throws CommandSyntaxException
+    public static List<CommandToken> parseSpec(String spec, CarpetScriptHost host) throws CommandSyntaxException
     {
         spec = spec.trim();
         if (spec.isEmpty())
         {
             return Collections.emptyList();
         }
-        final List<CommandToken> elements = new ArrayList<>();
-        final HashSet<String> seenArgs = new HashSet<>();
-        for (final String el : spec.split("\\s+"))
+        List<CommandToken> elements = new ArrayList<>();
+        HashSet<String> seenArgs = new HashSet<>();
+        for (String el : spec.split("\\s+"))
         {
-            final CommandToken tok = CommandToken.getToken(el, host);
+            CommandToken tok = CommandToken.getToken(el, host);
             if (tok == null)
             {
                 throw CommandArgument.error("Unrecognized command token: " + el);
@@ -69,23 +73,23 @@ public class CommandToken implements Comparable<CommandToken>
         return elements;
     }
 
-    public static String specFromSignature(final FunctionValue function)
+    public static String specFromSignature(FunctionValue function)
     {
-        final List<String> tokens = Lists.newArrayList(function.getString());
-        for (final String arg : function.getArguments())
+        List<String> tokens = Lists.newArrayList(function.getString());
+        for (String arg : function.getArguments())
         {
             tokens.add("<" + arg + ">");
         }
         return String.join(" ", tokens);
     }
 
-    public ArgumentBuilder<CommandSourceStack, ?> getCommandNode(final CarpetScriptHost host) throws CommandSyntaxException
+    public ArgumentBuilder<CommandSourceStack, ?> getCommandNode(CarpetScriptHost host) throws CommandSyntaxException
     {
         return isArgument ? CommandArgument.argumentNode(surface, host) : literal(surface);
     }
 
     @Override
-    public boolean equals(final Object o)
+    public boolean equals(Object o)
     {
         if (this == o)
         {
@@ -95,7 +99,7 @@ public class CommandToken implements Comparable<CommandToken>
         {
             return false;
         }
-        final CommandToken that = (CommandToken) o;
+        CommandToken that = (CommandToken) o;
         return surface.equals(that.surface) &&
                 Objects.equals(type, that.type);
     }
@@ -107,7 +111,7 @@ public class CommandToken implements Comparable<CommandToken>
     }
 
     @Override
-    public int compareTo(final CommandToken o)
+    public int compareTo(CommandToken o)
     {
         if (isArgument && !o.isArgument)
         {

@@ -41,13 +41,13 @@ public class NullValue extends NumericValue // TODO check nonsingleton code
     }
 
     @Override
-    public boolean equals(final Object o)
+    public boolean equals(Object o)
     {
         return o instanceof Value value && value.isNull();
     }
 
     @Override
-    public Value slice(final long fromDesc, final Long toDesc)
+    public Value slice(long fromDesc, Long toDesc)
     {
         return Value.NULL;
     }
@@ -65,13 +65,13 @@ public class NullValue extends NumericValue // TODO check nonsingleton code
     }
 
     @Override
-    public int compareTo(final Value o)
+    public int compareTo(Value o)
     {
         return o.isNull() ? 0 : -1;
     }
 
     @Override
-    public Value in(final Value value)
+    public Value in(Value value)
     {
         return Value.NULL;
     }
@@ -89,7 +89,7 @@ public class NullValue extends NumericValue // TODO check nonsingleton code
     }
 
     @Override
-    public Tag toTag(final boolean force)
+    public Tag toTag(boolean force)
     {
         if (!force)
         {
@@ -99,7 +99,7 @@ public class NullValue extends NumericValue // TODO check nonsingleton code
     }
 
     @Override
-    public Value split(final Value delimiter)
+    public Value split(Value delimiter)
     {
         return ListValue.wrap(new ArrayList<>());
     }

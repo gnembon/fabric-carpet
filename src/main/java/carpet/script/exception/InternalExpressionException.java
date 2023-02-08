@@ -13,7 +13,7 @@ public class InternalExpressionException extends StacklessRuntimeException
 {
     public List<FunctionValue> stack = new ArrayList<>();
 
-    public InternalExpressionException(final String message)
+    public InternalExpressionException(String message)
     {
         super(message);
     }
@@ -30,7 +30,7 @@ public class InternalExpressionException extends StacklessRuntimeException
      * @return The new {@link ExpressionException} (or {@link ProcessedThrowStatement}),
      * depending on the implementation.
      */
-    public ExpressionException promote(final Context c, final Expression e, final Tokenizer.Token token)
+    public ExpressionException promote(Context c, Expression e, Tokenizer.Token token)
     {
         return new ExpressionException(c, e, token, getMessage(), stack);
     }

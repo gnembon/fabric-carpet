@@ -18,6 +18,8 @@ import carpet.script.value.NumericValue;
 import carpet.script.value.Value;
 import carpet.script.value.ValueConversions;
 
+import javax.annotation.Nullable;
+
 /**
  * <p>A simple {@link ValueConverter} implementation that converts from a specified subclass of {@link Value} into {@code <R>} by using a given
  * function.</p>
@@ -61,7 +63,7 @@ public final class SimpleTypeConverter<T extends Value, R> implements ValueConve
      * 
      * @see #SimpleTypeConverter(Class, BiFunction, String)
      */
-    public SimpleTypeConverter(final Class<T> inputType, final Function<T, R> converter, final String typeName)
+    public SimpleTypeConverter(Class<T> inputType, Function<T, R> converter, String typeName)
     {
         this(inputType, (v, c) -> converter.apply(v), typeName);
     }
@@ -77,7 +79,7 @@ public final class SimpleTypeConverter<T extends Value, R> implements ValueConve
      * @param converter The function to convert an instance of inputType into R, with the context of the call.
      * @param typeName  The name of the type for error messages
      */
-    public SimpleTypeConverter(final Class<T> inputType, final BiFunction<T, Context, R> converter, final String typeName)
+    public SimpleTypeConverter(Class<T> inputType, BiFunction<T, Context, R> converter, String typeName)
     {
         super();
         this.converter = converter;
@@ -99,14 +101,15 @@ public final class SimpleTypeConverter<T extends Value, R> implements ValueConve
      * @return The {@link SimpleTypeConverter} for the specified outputType
      */
     @SuppressWarnings("unchecked") // T always extends Value, R is always the same as map's key, since map is private.
-    static <R> SimpleTypeConverter<Value, R> get(final Class<R> outputType)
+    static <R> SimpleTypeConverter<Value, R> get(Class<R> outputType)
     {
         return (SimpleTypeConverter<Value, R>) byResult.get(outputType);
     }
 
+    @Nullable
     @Override
     @SuppressWarnings("unchecked") // more than checked. not using class.cast because then "method is too big" for inlining, because javac is useless
-    public R convert(final Value value, final Context context)                                                          // and adds millions of casts. This one is even removed
+    public R convert(Value value, @Nullable Context context)                                                          // and adds millions of casts. This one is even removed
     {
         return valueClass.isInstance(value) ? converter.apply((T)value, context) : null;
     }
@@ -125,8 +128,8 @@ public final class SimpleTypeConverter<T extends Value, R> implements ValueConve
      * 
      * @see #registerType(Class, Class, BiFunction, String)
      */
-    public static <T extends Value, R> void registerType(final Class<T> requiredInputType, final Class<R> outputType,
-                                                         final Function<T, R> converter, final String typeName)
+    public static <T extends Value, R> void registerType(Class<T> requiredInputType, Class<R> outputType,
+                                                         Function<T, R> converter, String typeName)
     {
         registerType(requiredInputType, outputType, (val, ctx) -> converter.apply(val), typeName);
     }
@@ -143,10 +146,10 @@ public final class SimpleTypeConverter<T extends Value, R> implements ValueConve
      *                  can also throw an {@link InternalExpressionException} by itself if really necessary.
      * @param typeName The name of the type, following the conventions of {@link ValueConverter#getTypeName()}
      */
-    public static <T extends Value, R> void registerType(final Class<T> requiredInputType, final Class<R> outputType,
-                                                         final BiFunction<T, Context, R> converter, final String typeName)
+    public static <T extends Value, R> void registerType(Class<T> requiredInputType, Class<R> outputType,
+                                                         BiFunction<T, Context, R> converter, String typeName)
     {
-        final SimpleTypeConverter<T, R> type = new SimpleTypeConverter<>(requiredInputType, converter, typeName);
+        SimpleTypeConverter<T, R> type = new SimpleTypeConverter<>(requiredInputType, converter, typeName);
         byResult.put(outputType, type);
     }
 }

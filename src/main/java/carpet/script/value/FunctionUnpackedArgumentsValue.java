@@ -4,7 +4,7 @@ import java.util.List;
 
 public class FunctionUnpackedArgumentsValue extends ListValue
 {
-    public FunctionUnpackedArgumentsValue(final List<Value> list)
+    public FunctionUnpackedArgumentsValue(List<Value> list)
     {
         super(list);
     }

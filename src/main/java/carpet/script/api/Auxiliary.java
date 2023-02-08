@@ -83,6 +83,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 
+import javax.annotation.Nullable;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.net.URI;
@@ -104,7 +105,6 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static carpet.script.value.NBTSerializableValue.nameFromRegistryId;
 import static java.lang.Math.max;
 import static java.lang.Math.min;
 
@@ -115,9 +115,9 @@ public class Auxiliary
     public static final Gson GSON = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().registerTypeAdapter(Value.class, new ScarpetJsonDeserializer()).create();
 
     @Deprecated
-    public static String recognizeResource(final Value value, final boolean isFloder)
+    public static String recognizeResource(Value value, boolean isFloder)
     {
-        final String origfile = value.getString();
+        String origfile = value.getString();
         String file = origfile.toLowerCase(Locale.ROOT).replaceAll("[^A-Za-z0-9\\-+_/]", "");
         file = Arrays.stream(file.split("/+")).filter(s -> !s.isEmpty()).collect(Collectors.joining("/"));
         if (file.isEmpty() && !isFloder)
@@ -127,34 +127,34 @@ public class Auxiliary
         return file;
     }
 
-    public static void apply(final Expression expression)
+    public static void apply(Expression expression)
     {
         expression.addContextFunction("sound", -1, (c, t, lv) -> {
-            final CarpetContext cc = (CarpetContext) c;
-            if (lv.size() == 0)
+            CarpetContext cc = (CarpetContext) c;
+            if (lv.isEmpty())
             {
                 return ListValue.wrap(cc.registry(Registries.SOUND_EVENT).keySet().stream().map(ValueConversions::of));
             }
-            final String rawString = lv.get(0).getString();
-            final ResourceLocation soundName = InputValidator.identifierOf(rawString);
-            final Vector3Argument locator = Vector3Argument.findIn(lv, 1);
+            String rawString = lv.get(0).getString();
+            ResourceLocation soundName = InputValidator.identifierOf(rawString);
+            Vector3Argument locator = Vector3Argument.findIn(lv, 1);
             if (cc.registry(Registries.SOUND_EVENT).get(soundName) == null)
             {
                 throw new ThrowStatement(rawString, Throwables.UNKNOWN_SOUND);
             }
-            final Holder<SoundEvent> soundHolder = Holder.direct(SoundEvent.createVariableRangeEvent(soundName));
+            Holder<SoundEvent> soundHolder = Holder.direct(SoundEvent.createVariableRangeEvent(soundName));
             float volume = 1.0F;
             float pitch = 1.0F;
             SoundSource mixer = SoundSource.MASTER;
-            if (lv.size() > 0 + locator.offset)
+            if (lv.size() > locator.offset)
             {
-                volume = (float) NumericValue.asNumber(lv.get(0 + locator.offset)).getDouble();
+                volume = (float) NumericValue.asNumber(lv.get(locator.offset)).getDouble();
                 if (lv.size() > 1 + locator.offset)
                 {
                     pitch = (float) NumericValue.asNumber(lv.get(1 + locator.offset)).getDouble();
                     if (lv.size() > 2 + locator.offset)
                     {
-                        final String mixerName = lv.get(2 + locator.offset).getString();
+                        String mixerName = lv.get(2 + locator.offset).getString();
                         mixer = mixerMap.get(mixerName.toLowerCase(Locale.ROOT));
                         if (mixer == null)
                         {
@@ -163,12 +163,12 @@ public class Auxiliary
                     }
                 }
             }
-            final Vec3 vec = locator.vec;
-            final double d0 = Math.pow(volume > 1.0F ? (double) (volume * 16.0F) : 16.0D, 2.0D);
+            Vec3 vec = locator.vec;
+            double d0 = Math.pow(volume > 1.0F ? (double) (volume * 16.0F) : 16.0D, 2.0D);
             int count = 0;
-            final ServerLevel level = cc.level();
-            final long seed = level.getRandom().nextLong();
-            for (final ServerPlayer player : level.getPlayers((p) -> p.distanceToSqr(vec) < d0))
+            ServerLevel level = cc.level();
+            long seed = level.getRandom().nextLong();
+            for (ServerPlayer player : level.getPlayers(p -> p.distanceToSqr(vec) < d0))
             {
                 count++;
                 player.connection.send(new ClientboundSoundPacket(soundHolder, mixer, vec.x, vec.y, vec.z, volume, pitch, seed));
@@ -178,15 +178,15 @@ public class Auxiliary
 
         expression.addContextFunction("particle", -1, (c, t, lv) ->
         {
-            final CarpetContext cc = (CarpetContext) c;
-            if (lv.size() == 0)
+            CarpetContext cc = (CarpetContext) c;
+            if (lv.isEmpty())
             {
                 return ListValue.wrap(cc.registry(Registries.PARTICLE_TYPE).keySet().stream().map(ValueConversions::of));
             }
-            final MinecraftServer ms = cc.server();
-            final ServerLevel world = cc.level();
-            final Vector3Argument locator = Vector3Argument.findIn(lv, 1);
-            final String particleName = lv.get(0).getString();
+            MinecraftServer ms = cc.server();
+            ServerLevel world = cc.level();
+            Vector3Argument locator = Vector3Argument.findIn(lv, 1);
+            String particleName = lv.get(0).getString();
             int count = 10;
             double speed = 0;
             float spread = 0.5f;
@@ -207,11 +207,11 @@ public class Auxiliary
                     }
                 }
             }
-            final ParticleOptions particle = ShapeDispatcher.getParticleData(particleName, world.registryAccess());
-            final Vec3 vec = locator.vec;
+            ParticleOptions particle = ShapeDispatcher.getParticleData(particleName, world.registryAccess());
+            Vec3 vec = locator.vec;
             if (player == null)
             {
-                for (final ServerPlayer p : (world.players()))
+                for (ServerPlayer p : (world.players()))
                 {
                     world.sendParticles(p, particle, true, vec.x, vec.y, vec.z, count,
                             spread, spread, spread, speed);
@@ -229,27 +229,27 @@ public class Auxiliary
 
         expression.addContextFunction("particle_line", -1, (c, t, lv) ->
         {
-            final CarpetContext cc = (CarpetContext) c;
-            final ServerLevel world = cc.level();
-            final String particleName = lv.get(0).getString();
-            final ParticleOptions particle = ShapeDispatcher.getParticleData(particleName, world.registryAccess());
-            final Vector3Argument pos1 = Vector3Argument.findIn(lv, 1);
-            final Vector3Argument pos2 = Vector3Argument.findIn(lv, pos1.offset);
+            CarpetContext cc = (CarpetContext) c;
+            ServerLevel world = cc.level();
+            String particleName = lv.get(0).getString();
+            ParticleOptions particle = ShapeDispatcher.getParticleData(particleName, world.registryAccess());
+            Vector3Argument pos1 = Vector3Argument.findIn(lv, 1);
+            Vector3Argument pos2 = Vector3Argument.findIn(lv, pos1.offset);
             double density = 1.0;
             ServerPlayer player = null;
-            if (lv.size() > pos2.offset + 0)
+            if (lv.size() > pos2.offset)
             {
-                density = NumericValue.asNumber(lv.get(pos2.offset + 0)).getDouble();
+                density = NumericValue.asNumber(lv.get(pos2.offset)).getDouble();
                 if (density <= 0)
                 {
                     throw new InternalExpressionException("Particle density should be positive");
                 }
                 if (lv.size() > pos2.offset + 1)
                 {
-                    final Value playerValue = lv.get(pos2.offset + 1);
+                    Value playerValue = lv.get(pos2.offset + 1);
                     if (playerValue instanceof EntityValue entityValue)
                     {
-                        final Entity e = entityValue.getEntity();
+                        Entity e = entityValue.getEntity();
                         if (!(e instanceof final ServerPlayer sp))
                         {
                             throw new InternalExpressionException("'particle_line' player argument has to be a player");
@@ -273,28 +273,28 @@ public class Auxiliary
 
         expression.addContextFunction("particle_box", -1, (c, t, lv) ->
         {
-            final CarpetContext cc = (CarpetContext) c;
-            final ServerLevel world = cc.level();
-            final String particleName = lv.get(0).getString();
-            final ParticleOptions particle = ShapeDispatcher.getParticleData(particleName, world.registryAccess());
-            final Vector3Argument pos1 = Vector3Argument.findIn(lv, 1);
-            final Vector3Argument pos2 = Vector3Argument.findIn(lv, pos1.offset);
+            CarpetContext cc = (CarpetContext) c;
+            ServerLevel world = cc.level();
+            String particleName = lv.get(0).getString();
+            ParticleOptions particle = ShapeDispatcher.getParticleData(particleName, world.registryAccess());
+            Vector3Argument pos1 = Vector3Argument.findIn(lv, 1);
+            Vector3Argument pos2 = Vector3Argument.findIn(lv, pos1.offset);
 
             double density = 1.0;
             ServerPlayer player = null;
-            if (lv.size() > pos2.offset + 0)
+            if (lv.size() > pos2.offset)
             {
-                density = NumericValue.asNumber(lv.get(pos2.offset + 0)).getDouble();
+                density = NumericValue.asNumber(lv.get(pos2.offset)).getDouble();
                 if (density <= 0)
                 {
                     throw new InternalExpressionException("Particle density should be positive");
                 }
                 if (lv.size() > pos2.offset + 1)
                 {
-                    final Value playerValue = lv.get(pos2.offset + 1);
+                    Value playerValue = lv.get(pos2.offset + 1);
                     if (playerValue instanceof EntityValue entityValue)
                     {
-                        final Entity e = entityValue.getEntity();
+                        Entity e = entityValue.getEntity();
                         if (!(e instanceof final ServerPlayer sp))
                         {
                             throw new InternalExpressionException("'particle_box' player argument has to be a player");
@@ -307,11 +307,11 @@ public class Auxiliary
                     }
                 }
             }
-            final Vec3 a = pos1.vec;
-            final Vec3 b = pos2.vec;
-            final Vec3 from = new Vec3(min(a.x, b.x), min(a.y, b.y), min(a.z, b.z));
-            final Vec3 to = new Vec3(max(a.x, b.x), max(a.y, b.y), max(a.z, b.z));
-            final int particleCount = ShapeDispatcher.Box.particleMesh(
+            Vec3 a = pos1.vec;
+            Vec3 b = pos2.vec;
+            Vec3 from = new Vec3(min(a.x, b.x), min(a.y, b.y), min(a.z, b.z));
+            Vec3 to = new Vec3(max(a.x, b.x), max(a.y, b.y), max(a.z, b.z));
+            int particleCount = ShapeDispatcher.Box.particleMesh(
                     player == null ? world.players() : Collections.singletonList(player),
                     particle, density, from, to
             );
@@ -323,19 +323,19 @@ public class Auxiliary
 
         expression.addContextFunction("draw_shape", -1, (c, t, lv) ->
         {
-            final CarpetContext cc = (CarpetContext) c;
-            final ServerLevel world = cc.level();
-            final MinecraftServer server = world.getServer();
-            final Set<ServerPlayer> playerTargets = new HashSet<>();
-            final List<ShapeDispatcher.ShapeWithConfig> shapes = new ArrayList<>();
+            CarpetContext cc = (CarpetContext) c;
+            ServerLevel world = cc.level();
+            MinecraftServer server = world.getServer();
+            Set<ServerPlayer> playerTargets = new HashSet<>();
+            List<ShapeDispatcher.ShapeWithConfig> shapes = new ArrayList<>();
             if (lv.size() == 1) // bulk
             {
-                final Value specLoad = lv.get(0);
+                Value specLoad = lv.get(0);
                 if (!(specLoad instanceof final ListValue spec))
                 {
                     throw new InternalExpressionException("In bulk mode - shapes need to be provided as a list of shape specs");
                 }
-                for (final Value list : spec.getItems())
+                for (Value list : spec.getItems())
                 {
                     if (!(list instanceof final ListValue inner))
                     {
@@ -357,20 +357,20 @@ public class Auxiliary
         });
 
         expression.addContextFunction("create_marker", -1, (c, t, lv) -> {
-            final CarpetContext cc = (CarpetContext) c;
+            CarpetContext cc = (CarpetContext) c;
             BlockState targetBlock = null;
-            final Vector3Argument pointLocator;
+            Vector3Argument pointLocator;
             boolean interactable = true;
-            final Component name;
+            Component name;
             try
             {
-                final Value nameValue = lv.get(0);
+                Value nameValue = lv.get(0);
                 name = nameValue.isNull() ? null : FormattedTextValue.getTextByValue(nameValue);
                 pointLocator = Vector3Argument.findIn(lv, 1, true, false);
                 if (lv.size() > pointLocator.offset)
                 {
-                    final BlockArgument blockLocator = BlockArgument.findIn(cc, lv, pointLocator.offset, true, true, false);
-                    if (blockLocator.block != null)
+                    BlockArgument blockLocator = BlockArgument.findIn(cc, lv, pointLocator.offset, true, true, false);
+                    if (!(blockLocator instanceof BlockArgument.MissingBlockArgument))
                     {
                         targetBlock = blockLocator.block.getBlockState();
                     }
@@ -384,9 +384,9 @@ public class Auxiliary
             {
                 throw new InternalExpressionException("'create_marker' requires a name and three coordinates, with optional direction, and optional block on its head");
             }
-            final Level level = cc.level();
-            final ArmorStand armorstand = new ArmorStand(EntityType.ARMOR_STAND, level);
-            final double yoffset;
+            Level level = cc.level();
+            ArmorStand armorstand = new ArmorStand(EntityType.ARMOR_STAND, level);
+            double yoffset;
             if (targetBlock == null && name == null)
             {
                 yoffset = 0.0;
@@ -435,13 +435,13 @@ public class Auxiliary
         });
 
         expression.addContextFunction("remove_all_markers", 0, (c, t, lv) -> {
-            final CarpetContext cc = (CarpetContext) c;
+            CarpetContext cc = (CarpetContext) c;
             int total = 0;
-            final String markerName = MARKER_STRING + "_" + ((cc.host.getName() == null) ? "" : cc.host.getName());
-            for (final Entity e : cc.level().getEntities(EntityType.ARMOR_STAND, (as) -> as.getTags().contains(markerName)))
+            String markerName = MARKER_STRING + "_" + ((cc.host.getName() == null) ? "" : cc.host.getName());
+            for (Entity e : cc.level().getEntities(EntityType.ARMOR_STAND, as -> as.getTags().contains(markerName)))
             {
                 total++;
-                e.discard(); // discard // remove();
+                e.discard();
             }
             return new NumericValue(total);
         });
@@ -455,12 +455,12 @@ public class Auxiliary
             {
                 return nbtsv.toValue();
             }
-            final NBTSerializableValue ret = NBTSerializableValue.parseString(v.getString(), false);
+            NBTSerializableValue ret = NBTSerializableValue.parseString(v.getString());
             return ret == null ? Value.NULL : ret.toValue();
         });
 
-        expression.addFunction("tag_matches", (lv) -> {
-            final int numParam = lv.size();
+        expression.addFunction("tag_matches", lv -> {
+            int numParam = lv.size();
             if (numParam != 2 && numParam != 3)
             {
                 throw new InternalExpressionException("'tag_matches' requires 2 or 3 arguments");
@@ -473,25 +473,25 @@ public class Auxiliary
             {
                 return Value.FALSE;
             }
-            final Tag source = ((NBTSerializableValue) (NBTSerializableValue.fromValue(lv.get(0)))).getTag();
-            final Tag match = ((NBTSerializableValue) (NBTSerializableValue.fromValue(lv.get(1)))).getTag();
+            Tag source = ((NBTSerializableValue) (NBTSerializableValue.fromValue(lv.get(0)))).getTag();
+            Tag match = ((NBTSerializableValue) (NBTSerializableValue.fromValue(lv.get(1)))).getTag();
             return BooleanValue.of(NbtUtils.compareNbt(match, source, numParam == 2 || lv.get(2).getBoolean()));
         });
 
         expression.addFunction("encode_nbt", lv -> {
-            final int argSize = lv.size();
+            int argSize = lv.size();
             if (argSize == 0 || argSize > 2)
             {
                 throw new InternalExpressionException("'encode_nbt' requires 1 or 2 parameters");
             }
-            final Value v = lv.get(0);
-            final boolean force = (argSize > 1) && lv.get(1).getBoolean();
-            final Tag tag;
+            Value v = lv.get(0);
+            boolean force = (argSize > 1) && lv.get(1).getBoolean();
+            Tag tag;
             try
             {
                 tag = v.toTag(force);
             }
-            catch (final NBTSerializableValue.IncompatibleTypeException exception)
+            catch (NBTSerializableValue.IncompatibleTypeException exception)
             {
                 throw new InternalExpressionException("cannot reliably encode to a tag the value of '" + exception.val.getPrettyString() + "'");
             }
@@ -501,20 +501,20 @@ public class Auxiliary
         //"overridden" native call that prints to stderr
         expression.addContextFunction("print", -1, (c, t, lv) ->
         {
-            if (lv.size() == 0 || lv.size() > 2)
+            if (lv.isEmpty() || lv.size() > 2)
             {
                 throw new InternalExpressionException("'print' takes one or two arguments");
             }
-            final CommandSourceStack s = ((CarpetContext) c).source();
-            final MinecraftServer server = s.getServer();
+            CommandSourceStack s = ((CarpetContext) c).source();
+            MinecraftServer server = s.getServer();
             Value res = lv.get(0);
             List<ServerPlayer> targets = null;
             if (lv.size() == 2)
             {
-                final List<Value> playerValues = (res instanceof ListValue list) ? list.getItems() : Collections.singletonList(res);
-                final List<ServerPlayer> playerTargets = new ArrayList<>();
+                List<Value> playerValues = (res instanceof ListValue list) ? list.getItems() : Collections.singletonList(res);
+                List<ServerPlayer> playerTargets = new ArrayList<>();
                 playerValues.forEach(pv -> {
-                    final ServerPlayer player = EntityValue.getPlayerByValue(server, pv);
+                    ServerPlayer player = EntityValue.getPlayerByValue(server, pv);
                     if (player == null)
                     {
                         throw new InternalExpressionException("Cannot target player " + pv.getString() + " in print");
@@ -524,7 +524,7 @@ public class Auxiliary
                 targets = playerTargets;
                 res = lv.get(1);
             }
-            final Component message = FormattedTextValue.getTextByValue(res);
+            Component message = FormattedTextValue.getTextByValue(res);
             if (targets == null)
             {
                 s.sendSuccess(message, false);
@@ -546,10 +546,10 @@ public class Auxiliary
             {
                 pVal = ListValue.of(pVal);
             }
-            final MinecraftServer server = ((CarpetContext) c).server();
-            final Stream<ServerPlayer> targets = ((ListValue) pVal).getItems().stream().map(v ->
+            MinecraftServer server = ((CarpetContext) c).server();
+            Stream<ServerPlayer> targets = ((ListValue) pVal).getItems().stream().map(v ->
             {
-                final ServerPlayer player = EntityValue.getPlayerByValue(server, v);
+                ServerPlayer player = EntityValue.getPlayerByValue(server, v);
                 if (player == null)
                 {
                     throw new InternalExpressionException("'display_title' requires a valid online player or a list of players as first argument. " + v.getString() + " is not a player.");
@@ -557,7 +557,7 @@ public class Auxiliary
                 return player;
             });
             Function<Component, Packet<?>> packetGetter = null;
-            final String actionString = lv.get(1).getString().toLowerCase(Locale.ROOT);
+            String actionString = lv.get(1).getString().toLowerCase(Locale.ROOT);
             switch (actionString)
             {
                 case "title":
@@ -592,7 +592,7 @@ public class Auxiliary
                 default:
                     throw new InternalExpressionException("'display_title' requires 'title', 'subtitle', 'actionbar', 'player_list_header', 'player_list_footer' or 'clear' as second argument");
             }
-            final Component title;
+            Component title;
             boolean soundsTrue = false;
             if (lv.size() > 2)
             {
@@ -606,7 +606,7 @@ public class Auxiliary
             }
             if (packetGetter == null)
             {
-                final Map<String, Component> map;
+                Map<String, Component> map;
                 if (actionString.equals("player_list_header"))
                 {
                     map = Carpet.getScarpetHeaders();
@@ -616,8 +616,8 @@ public class Auxiliary
                     map = Carpet.getScarpetFooters();
                 }
 
-                final AtomicInteger total = new AtomicInteger(0);
-                final List<ServerPlayer> targetList = targets.collect(Collectors.toList());
+                AtomicInteger total = new AtomicInteger(0);
+                List<ServerPlayer> targetList = targets.collect(Collectors.toList());
                 if (!soundsTrue) // null or empty string
                 {
                     targetList.forEach(target -> {
@@ -635,16 +635,16 @@ public class Auxiliary
                 Carpet.updateScarpetHUDs(((CarpetContext) c).server(), targetList);
                 return NumericValue.of(total.get());
             }
-            final ClientboundSetTitlesAnimationPacket timesPacket; // TimesPacket
+            ClientboundSetTitlesAnimationPacket timesPacket; // TimesPacket
             if (lv.size() > 3)
             {
                 if (lv.size() != 6)
                 {
                     throw new InternalExpressionException("'display_title' needs all fade-in, stay and fade-out times");
                 }
-                final int in = NumericValue.asNumber(lv.get(3), "fade in for display_title").getInt();
-                final int stay = NumericValue.asNumber(lv.get(4), "stay for display_title").getInt();
-                final int out = NumericValue.asNumber(lv.get(5), "fade out for display_title").getInt();
+                int in = NumericValue.asNumber(lv.get(3), "fade in for display_title").getInt();
+                int stay = NumericValue.asNumber(lv.get(4), "stay for display_title").getInt();
+                int out = NumericValue.asNumber(lv.get(5), "fade out for display_title").getInt();
                 timesPacket = new ClientboundSetTitlesAnimationPacket(in, stay, out);
             }
             else
@@ -652,8 +652,8 @@ public class Auxiliary
                 timesPacket = null;
             }
 
-            final Packet<?> packet = packetGetter.apply(title);
-            final AtomicInteger total = new AtomicInteger(0);
+            Packet<?> packet = packetGetter.apply(title);
+            AtomicInteger total = new AtomicInteger(0);
             targets.forEach(p -> {
                 if (timesPacket != null)
                 {
@@ -666,7 +666,7 @@ public class Auxiliary
         });
 
         expression.addFunction("format", values -> {
-            if (values.size() == 0)
+            if (values.isEmpty())
             {
                 throw new InternalExpressionException("'format' requires at least one component");
             }
@@ -679,12 +679,12 @@ public class Auxiliary
 
         expression.addContextFunction("run", 1, (c, t, lv) ->
         {
-            final CommandSourceStack s = ((CarpetContext) c).source();
+            CommandSourceStack s = ((CarpetContext) c).source();
             try
             {
-                final Component[] error = {null};
-                final List<Component> output = new ArrayList<>();
-                final Value retval = new NumericValue(s.getServer().getCommands().performPrefixedCommand(
+                Component[] error = {null};
+                List<Component> output = new ArrayList<>();
+                Value retval = new NumericValue(s.getServer().getCommands().performPrefixedCommand(
                         new SnoopyCommandSource(s, error, output),
                         lv.get(0).getString())
                 );
@@ -694,7 +694,7 @@ public class Auxiliary
                         FormattedTextValue.of(error[0])
                 );
             }
-            catch (final Exception exc)
+            catch (Exception exc)
             {
                 return ListValue.of(Value.NULL, ListValue.of(), new FormattedTextValue(Component.literal(exc.getMessage())));
             }
@@ -702,10 +702,10 @@ public class Auxiliary
 
         expression.addContextFunction("save", 0, (c, t, lv) ->
         {
-            final CommandSourceStack s = ((CarpetContext) c).source();
+            CommandSourceStack s = ((CarpetContext) c).source();
             s.getServer().getPlayerList().saveAll();
             s.getServer().saveAllChunks(true, true, true);
-            for (final ServerLevel world : s.getServer().getAllLevels())
+            for (ServerLevel world : s.getServer().getAllLevels())
             {
                 world.getChunkSource().tick(() -> true, false);
             }
@@ -723,8 +723,8 @@ public class Auxiliary
 
         expression.addContextFunction("day_time", -1, (c, t, lv) ->
         {
-            final Value time = new NumericValue(((CarpetContext) c).level().getDayTime());
-            if (lv.size() > 0)
+            Value time = new NumericValue(((CarpetContext) c).level().getDayTime());
+            if (!lv.isEmpty())
             {
                 long newTime = NumericValue.asNumber(lv.get(0)).getLong();
                 if (newTime < 0)
@@ -744,9 +744,9 @@ public class Auxiliary
 
 
         expression.addContextFunction("game_tick", -1, (c, t, lv) -> {
-            final CarpetContext cc = (CarpetContext) c;
-            final MinecraftServer server = cc.server();
-            final CarpetScriptServer scriptServer = (CarpetScriptServer) c.host.scriptServer();
+            CarpetContext cc = (CarpetContext) c;
+            MinecraftServer server = cc.server();
+            CarpetScriptServer scriptServer = (CarpetScriptServer) c.host.scriptServer();
             if (scriptServer == null)
             {
                 return Value.NULL;
@@ -763,18 +763,18 @@ public class Auxiliary
             {
                 scriptServer.tickDepth++;
                 Vanilla.MinecraftServer_forceTick(server, () -> System.nanoTime() - scriptServer.tickStart < 50000000L);
-                if (lv.size() > 0)
+                if (!lv.isEmpty())
                 {
-                    final long ms_total = NumericValue.asNumber(lv.get(0)).getLong();
-                    final long end_expected = scriptServer.tickStart + ms_total * 1000000L;
-                    final long wait = end_expected - System.nanoTime();
+                    long msTotal = NumericValue.asNumber(lv.get(0)).getLong();
+                    long endExpected = scriptServer.tickStart + msTotal * 1000000L;
+                    long wait = endExpected - System.nanoTime();
                     if (wait > 0L)
                     {
                         try
                         {
                             Thread.sleep(wait / 1000000L);
                         }
-                        catch (final InterruptedException ignored)
+                        catch (InterruptedException ignored)
                         {
                         }
                     }
@@ -784,12 +784,12 @@ public class Auxiliary
             }
             finally
             {
-                if (scriptServer != null)
+                if (!scriptServer.stopAll)
                 {
                     scriptServer.tickDepth--;
                 }
             }
-            if (scriptServer != null && scriptServer.stopAll)
+            if (scriptServer.stopAll)
             {
                 throw new ExitStatement(Value.NULL);
             }
@@ -797,17 +797,17 @@ public class Auxiliary
         });
 
         expression.addContextFunction("seed", -1, (c, t, lv) -> {
-            final CommandSourceStack s = ((CarpetContext) c).source();
+            CommandSourceStack s = ((CarpetContext) c).source();
             c.host.issueDeprecation("seed()");
             return new NumericValue(s.getLevel().getSeed());
         });
 
         expression.addContextFunction("relight", -1, (c, t, lv) ->
         {
-            final CarpetContext cc = (CarpetContext) c;
-            final BlockArgument locator = BlockArgument.findIn(cc, lv, 0);
-            final BlockPos pos = locator.block.getPos();
-            final ServerLevel world = cc.level();
+            CarpetContext cc = (CarpetContext) c;
+            BlockArgument locator = BlockArgument.findIn(cc, lv, 0);
+            BlockPos pos = locator.block.getPos();
+            ServerLevel world = cc.level();
             Vanilla.ChunkMap_relightChunk(world.getChunkSource().chunkMap, new ChunkPos(pos));
             WorldTools.forceChunkUpdate(pos, world);
             return Value.TRUE;
@@ -824,26 +824,26 @@ public class Auxiliary
 
         // lazy due to passthrough and context changing ability
         expression.addLazyFunction("in_dimension", 2, (c, t, lv) -> {
-            final CommandSourceStack outerSource = ((CarpetContext) c).source();
-            final Value dimensionValue = lv.get(0).evalValue(c);
-            final Level world = ValueConversions.dimFromValue(dimensionValue, outerSource.getServer());
+            CommandSourceStack outerSource = ((CarpetContext) c).source();
+            Value dimensionValue = lv.get(0).evalValue(c);
+            Level world = ValueConversions.dimFromValue(dimensionValue, outerSource.getServer());
             if (world == outerSource.getLevel())
             {
                 return lv.get(1);
             }
-            final CommandSourceStack innerSource = outerSource.withLevel((ServerLevel) world);
-            final Context newCtx = c.recreate();
+            CommandSourceStack innerSource = outerSource.withLevel((ServerLevel) world);
+            Context newCtx = c.recreate();
             ((CarpetContext) newCtx).swapSource(innerSource);
             newCtx.variables = c.variables;
-            final Value retval = lv.get(1).evalValue(newCtx);
+            Value retval = lv.get(1).evalValue(newCtx);
             return (cc, tt) -> retval;
         });
 
         expression.addContextFunction("plop", -1, (c, t, lv) -> {
-            if (lv.size() == 0)
+            if (lv.isEmpty())
             {
-                final Map<Value, Value> plopData = new HashMap<>();
-                final CarpetContext cc = (CarpetContext) c;
+                Map<Value, Value> plopData = new HashMap<>();
+                CarpetContext cc = (CarpetContext) c;
                 plopData.put(StringValue.of("scarpet_custom"),
                         ListValue.wrap(FeatureGenerator.featureMap.keySet().stream().sorted().map(StringValue::of))
                 );
@@ -861,16 +861,16 @@ public class Auxiliary
                 );
                 return MapValue.wrap(plopData);
             }
-            final BlockArgument locator = BlockArgument.findIn((CarpetContext) c, lv, 0);
+            BlockArgument locator = BlockArgument.findIn((CarpetContext) c, lv, 0);
             if (lv.size() <= locator.offset)
             {
                 throw new InternalExpressionException("'plop' needs extra argument indicating what to plop");
             }
-            final String what = lv.get(locator.offset).getString();
-            final Value[] result = new Value[]{Value.NULL};
+            String what = lv.get(locator.offset).getString();
+            Value[] result = new Value[]{Value.NULL};
             ((CarpetContext) c).server().executeBlocking(() ->
             {
-                final Boolean res = FeatureGenerator.plop(what, ((CarpetContext) c).level(), locator.block.getPos());
+                Boolean res = FeatureGenerator.plop(what, ((CarpetContext) c).level(), locator.block.getPos());
 
                 if (res == null)
                 {
@@ -890,9 +890,9 @@ public class Auxiliary
             {
                 throw new InternalExpressionException("'schedule' should have at least 2 arguments, delay and call name");
             }
-            final long delay = NumericValue.asNumber(lv.get(0)).getLong();
+            long delay = NumericValue.asNumber(lv.get(0)).getLong();
 
-            final FunctionArgument functionArgument = FunctionArgument.findIn(c, expression.module, lv, 1, false, false);
+            FunctionArgument functionArgument = FunctionArgument.findIn(c, expression.module, lv, 1, false, false);
             ((CarpetScriptServer)c.host.scriptServer()).events.scheduleCall(
                     (CarpetContext) c,
                     functionArgument.function,
@@ -904,7 +904,7 @@ public class Auxiliary
 
         expression.addImpureFunction("logger", lv ->
         {
-            final Value res;
+            Value res;
 
             if (lv.size() == 1)
             {
@@ -913,7 +913,7 @@ public class Auxiliary
             }
             else if (lv.size() == 2)
             {
-                final String level = lv.get(0).getString().toLowerCase(Locale.ROOT);
+                String level = lv.get(0).getString().toLowerCase(Locale.ROOT);
                 res = lv.get(1);
                 switch (level)
                 {
@@ -935,29 +935,29 @@ public class Auxiliary
 
         expression.addContextFunction("list_files", 2, (c, t, lv) ->
         {
-            final FileArgument fdesc = FileArgument.from(c, lv, true, FileArgument.Reason.READ);
-            final Stream<String> files = ((CarpetScriptHost) c.host).listFolder(fdesc);
+            FileArgument fdesc = FileArgument.from(c, lv, true, FileArgument.Reason.READ);
+            Stream<String> files = ((CarpetScriptHost) c.host).listFolder(fdesc);
             return files == null ? Value.NULL : ListValue.wrap(files.map(StringValue::of));
         });
 
         expression.addContextFunction("read_file", 2, (c, t, lv) ->
         {
-            final FileArgument fdesc = FileArgument.from(c, lv, false, FileArgument.Reason.READ);
+            FileArgument fdesc = FileArgument.from(c, lv, false, FileArgument.Reason.READ);
             if (fdesc.type == FileArgument.Type.NBT)
             {
-                final Tag state = ((CarpetScriptHost) c.host).readFileTag(fdesc);
+                Tag state = ((CarpetScriptHost) c.host).readFileTag(fdesc);
                 return state == null ? Value.NULL : new NBTSerializableValue(state);
             }
             else if (fdesc.type == FileArgument.Type.JSON)
             {
-                final JsonElement json;
+                JsonElement json;
                 json = ((CarpetScriptHost) c.host).readJsonFile(fdesc);
-                final Value parsedJson = GSON.fromJson(json, Value.class);
+                Value parsedJson = GSON.fromJson(json, Value.class);
                 return parsedJson == null ? Value.NULL : parsedJson;
             }
             else
             {
-                final List<String> content = ((CarpetScriptHost) c.host).readTextResource(fdesc);
+                List<String> content = ((CarpetScriptHost) c.host).readTextResource(fdesc);
                 return content == null ? Value.NULL : ListValue.wrap(content.stream().map(StringValue::new));
             }
         });
@@ -970,33 +970,33 @@ public class Auxiliary
             {
                 throw new InternalExpressionException("'write_file' requires three or more arguments");
             }
-            final FileArgument fdesc = FileArgument.from(c, lv, false, FileArgument.Reason.CREATE);
+            FileArgument fdesc = FileArgument.from(c, lv, false, FileArgument.Reason.CREATE);
 
-            final boolean success;
+            boolean success;
             if (fdesc.type == FileArgument.Type.NBT)
             {
-                final Value val = lv.get(2);
-                final NBTSerializableValue tagValue = (val instanceof final NBTSerializableValue nbtsv)
+                Value val = lv.get(2);
+                NBTSerializableValue tagValue = (val instanceof final NBTSerializableValue nbtsv)
                         ? nbtsv
                         : new NBTSerializableValue(val.getString());
-                final Tag tag = tagValue.getTag();
+                Tag tag = tagValue.getTag();
                 success = ((CarpetScriptHost) c.host).writeTagFile(tag, fdesc);
             }
             else if (fdesc.type == FileArgument.Type.JSON)
             {
-                final List<String> data = Collections.singletonList(GSON.toJson(lv.get(2).toJson()));
+                List<String> data = Collections.singletonList(GSON.toJson(lv.get(2).toJson()));
                 ((CarpetScriptHost) c.host).removeResourceFile(fdesc);
                 success = ((CarpetScriptHost) c.host).appendLogFile(fdesc, data);
             }
             else
             {
-                final List<String> data = new ArrayList<>();
+                List<String> data = new ArrayList<>();
                 if (lv.size() == 3)
                 {
-                    final Value val = lv.get(2);
+                    Value val = lv.get(2);
                     if (val instanceof final ListValue list)
                     {
-                        final List<Value> lval = list.getItems();
+                        List<Value> lval = list.getItems();
                         lval.forEach(v -> data.add(v.getString()));
                     }
                     else
@@ -1019,11 +1019,11 @@ public class Auxiliary
         expression.addContextFunction("load_app_data", -1, (c, t, lv) ->
         {
             FileArgument fdesc = new FileArgument(null, FileArgument.Type.NBT, null, false, false, FileArgument.Reason.READ, c.host);
-            if (lv.size() > 0)
+            if (!lv.isEmpty())
             {
                 c.host.issueDeprecation("load_app_data(...) with arguments");
-                final String resource = recognizeResource(lv.get(0), false);
-                final boolean shared = lv.size() > 1 && lv.get(1).getBoolean();
+                String resource = recognizeResource(lv.get(0), false);
+                boolean shared = lv.size() > 1 && lv.get(1).getBoolean();
                 fdesc = new FileArgument(resource, FileArgument.Type.NBT, null, false, shared, FileArgument.Reason.READ, c.host);
             }
             return NBTSerializableValue.of(((CarpetScriptHost) c.host).readFileTag(fdesc));
@@ -1031,20 +1031,20 @@ public class Auxiliary
 
         expression.addContextFunction("store_app_data", -1, (c, t, lv) ->
         {
-            if (lv.size() == 0)
+            if (lv.isEmpty())
             {
                 throw new InternalExpressionException("'store_app_data' needs NBT tag and an optional file");
             }
-            final Value val = lv.get(0);
+            Value val = lv.get(0);
             FileArgument fdesc = new FileArgument(null, FileArgument.Type.NBT, null, false, false, FileArgument.Reason.CREATE, c.host);
             if (lv.size() > 1)
             {
                 c.host.issueDeprecation("store_app_data(...) with more than one argument");
-                final String resource = recognizeResource(lv.get(1), false);
-                final boolean shared = lv.size() > 2 && lv.get(2).getBoolean();
+                String resource = recognizeResource(lv.get(1), false);
+                boolean shared = lv.size() > 2 && lv.get(2).getBoolean();
                 fdesc = new FileArgument(resource, FileArgument.Type.NBT, null, false, shared, FileArgument.Reason.CREATE, c.host);
             }
-            final NBTSerializableValue tagValue = (val instanceof final NBTSerializableValue nbtsv)
+            NBTSerializableValue tagValue = (val instanceof final NBTSerializableValue nbtsv)
                     ? nbtsv
                     : new NBTSerializableValue(val.getString());
             return BooleanValue.of(((CarpetScriptHost) c.host).writeTagFile(tagValue.getTag(), fdesc));
@@ -1052,22 +1052,22 @@ public class Auxiliary
 
         expression.addContextFunction("statistic", 3, (c, t, lv) ->
         {
-            final CarpetContext cc = (CarpetContext) c;
-            final ServerPlayer player = EntityValue.getPlayerByValue(cc.server(), lv.get(0));
+            CarpetContext cc = (CarpetContext) c;
+            ServerPlayer player = EntityValue.getPlayerByValue(cc.server(), lv.get(0));
             if (player == null)
             {
                 return Value.NULL;
             }
-            final ResourceLocation category;
-            final ResourceLocation statName;
+            ResourceLocation category;
+            ResourceLocation statName;
             category = InputValidator.identifierOf(lv.get(1).getString());
             statName = InputValidator.identifierOf(lv.get(2).getString());
-            final StatType<?> type = cc.registry(Registries.STAT_TYPE).get(category);
+            StatType<?> type = cc.registry(Registries.STAT_TYPE).get(category);
             if (type == null)
             {
                 return Value.NULL;
             }
-            final Stat<?> stat = getStat(type, statName);
+            Stat<?> stat = getStat(type, statName);
             if (stat == null)
             {
                 return Value.NULL;
@@ -1082,9 +1082,9 @@ public class Auxiliary
             {
                 throw new InternalExpressionException("'handle_event' requires at least two arguments, event name, and a callback");
             }
-            final String event = lv.get(0).getString();
-            final FunctionArgument callback = FunctionArgument.findIn(c, expression.module, lv, 1, true, false);
-            final CarpetScriptHost host = ((CarpetScriptHost) c.host);
+            String event = lv.get(0).getString();
+            FunctionArgument callback = FunctionArgument.findIn(c, expression.module, lv, 1, true, false);
+            CarpetScriptHost host = ((CarpetScriptHost) c.host);
             if (callback.function == null)
             {
                 return BooleanValue.of(host.scriptServer().events.removeBuiltInEvent(event, host));
@@ -1095,13 +1095,13 @@ public class Auxiliary
         //signal_event('event', player or null, args.... ) -> number of apps notified
         expression.addContextFunction("signal_event", -1, (c, t, lv) ->
         {
-            if (lv.size() == 0)
+            if (lv.isEmpty())
             {
                 throw new InternalExpressionException("'signal' requires at least one argument");
             }
-            final CarpetContext cc = (CarpetContext) c;
-            final CarpetScriptServer server = ((CarpetScriptHost) c.host).scriptServer();
-            final String eventName = lv.get(0).getString();
+            CarpetContext cc = (CarpetContext) c;
+            CarpetScriptServer server = ((CarpetScriptHost) c.host).scriptServer();
+            String eventName = lv.get(0).getString();
             // no such event yet
             if (CarpetEventServer.Event.getEvent(eventName, server) == null)
             {
@@ -1117,7 +1117,7 @@ public class Auxiliary
                     args = lv.subList(2, lv.size());
                 }
             }
-            final int counts = ((CarpetScriptHost) c.host).scriptServer().events.signalEvent(eventName, cc, player, args);
+            int counts = ((CarpetScriptHost) c.host).scriptServer().events.signalEvent(eventName, cc, player, args);
             if (counts < 0)
             {
                 return Value.NULL;
@@ -1133,32 +1133,32 @@ public class Auxiliary
             {
                 throw new InternalExpressionException("'nbt_storage' requires 0, 1 or 2 arguments.");
             }
-            final CarpetContext cc = (CarpetContext) c;
-            final CommandStorage storage = cc.server().getCommandStorage();
-            if (lv.size() == 0)
+            CarpetContext cc = (CarpetContext) c;
+            CommandStorage storage = cc.server().getCommandStorage();
+            if (lv.isEmpty())
             {
-                return ListValue.wrap(storage.keys().map(i -> new StringValue(nameFromRegistryId(i))));
+                return ListValue.wrap(storage.keys().map(NBTSerializableValue::nameFromRegistryId));
             }
-            final String key = lv.get(0).getString();
-            final CompoundTag old_nbt = storage.get(InputValidator.identifierOf(key));
+            String key = lv.get(0).getString();
+            CompoundTag oldNbt = storage.get(InputValidator.identifierOf(key));
             if (lv.size() == 2)
             {
-                final Value nbt = lv.get(1);
-                final NBTSerializableValue new_nbt = (nbt instanceof final NBTSerializableValue nbtsv)
+                Value nbt = lv.get(1);
+                NBTSerializableValue newNbt = (nbt instanceof final NBTSerializableValue nbtsv)
                         ? nbtsv
-                        : NBTSerializableValue.parseString(nbt.getString(), true);
-                storage.set(InputValidator.identifierOf(key), new_nbt.getCompoundTag());
+                        : NBTSerializableValue.parseStringOrFail(nbt.getString());
+                storage.set(InputValidator.identifierOf(key), newNbt.getCompoundTag());
             }
-            return NBTSerializableValue.of(old_nbt);
+            return NBTSerializableValue.of(oldNbt);
         });
 
         // script run create_datapack('foo', {'foo' -> {'bar.json' -> {'c' -> true,'d' -> false,'e' -> {'foo' -> [1,2,3]},'a' -> 'foobar','b' -> 5}}})
         expression.addContextFunction("create_datapack", 2, (c, t, lv) -> {
-            final CarpetContext cc = (CarpetContext) c;
-            final String origName = lv.get(0).getString();
-            final String name = InputValidator.validateSimpleString(origName, true);
-            final MinecraftServer server = cc.server();
-            for (final String dpName : server.getPackRepository().getAvailableIds())
+            CarpetContext cc = (CarpetContext) c;
+            String origName = lv.get(0).getString();
+            String name = InputValidator.validateSimpleString(origName, true);
+            MinecraftServer server = cc.server();
+            for (String dpName : server.getPackRepository().getAvailableIds())
             {
                 if (dpName.equalsIgnoreCase("file/" + name + ".zip") ||
                         dpName.equalsIgnoreCase("file/" + name))
@@ -1167,26 +1167,26 @@ public class Auxiliary
                 }
 
             }
-            final Value dpdata = lv.get(1);
+            Value dpdata = lv.get(1);
             if (!(dpdata instanceof final MapValue dpMap))
             {
                 throw new InternalExpressionException("datapack data needs to be a valid map type");
             }
-            final PackRepository packManager = server.getPackRepository();
-            final Path dbFloder = server.getWorldPath(LevelResource.DATAPACK_DIR);
-            final Path packFloder = dbFloder.resolve(name + ".zip");
+            PackRepository packManager = server.getPackRepository();
+            Path dbFloder = server.getWorldPath(LevelResource.DATAPACK_DIR);
+            Path packFloder = dbFloder.resolve(name + ".zip");
             if (Files.exists(packFloder) || Files.exists(dbFloder.resolve(name)))
             {
                 return Value.NULL;
             }
-            final Boolean[] successful = new Boolean[]{true};
+            Boolean[] successful = new Boolean[]{true};
             server.executeBlocking(() ->
             {
                 try
                 {
-                    try (final FileSystem zipfs = FileSystems.newFileSystem(URI.create("jar:" + packFloder.toUri().toString()), Map.of("create", "true")))
+                    try (FileSystem zipfs = FileSystems.newFileSystem(URI.create("jar:" + packFloder.toUri()), Map.of("create", "true")))
                     {
-                        final Path zipRoot = zipfs.getPath("/");
+                        Path zipRoot = zipfs.getPath("/");
                         zipValueToJson(zipRoot.resolve("pack.mcmeta"), MapValue.wrap(
                                 Map.of(StringValue.of("pack"), MapValue.wrap(Map.of(
                                         StringValue.of("pack_format"), new NumericValue(SharedConstants.getCurrentVersion().getPackVersion(PackType.SERVER_DATA)),
@@ -1197,12 +1197,12 @@ public class Auxiliary
                         walkTheDPMap(dpMap, zipRoot);
                     }
                     packManager.reload();
-                    final Pack resourcePackProfile = packManager.getPack("file/" + name + ".zip");
+                    Pack resourcePackProfile = packManager.getPack("file/" + name + ".zip");
                     if (resourcePackProfile == null || packManager.getSelectedPacks().contains(resourcePackProfile))
                     {
                         throw new IOException();
                     }
-                    final List<Pack> list = Lists.newArrayList(packManager.getSelectedPacks());
+                    List<Pack> list = Lists.newArrayList(packManager.getSelectedPacks());
                     resourcePackProfile.getDefaultPosition().insert(list, resourcePackProfile, p -> p, false);
 
 
@@ -1216,14 +1216,14 @@ public class Auxiliary
                         throw new IOException();
                     }
                 }
-                catch (final IOException e)
+                catch (IOException e)
                 {
                     successful[0] = false;
                     try
                     {
                         PathUtils.delete(packFloder);
                     }
-                    catch (final IOException ignored)
+                    catch (IOException ignored)
                     {
                         throw new InternalExpressionException("Failed to install a datapack and failed to clean up after it");
                     }
@@ -1234,28 +1234,28 @@ public class Auxiliary
         });
 
         expression.addContextFunction("enable_hidden_dimensions", 0, (c, t, lv) -> {
-            final CarpetContext cc = (CarpetContext) c;
+            CarpetContext cc = (CarpetContext) c;
             cc.host.issueDeprecation("enable_hidden_dimensions in 1.18.2 and 1.19+");
             return Value.NULL;
         });
     }
 
-    private static void zipValueToJson(final Path path, final Value output) throws IOException
+    private static void zipValueToJson(Path path, Value output) throws IOException
     {
-        final JsonElement element = output.toJson();
+        JsonElement element = output.toJson();
         if (element == null)
         {
             throw new InternalExpressionException("Cannot interpret " + output.getPrettyString() + " as a json object");
         }
-        final String string = GSON.toJson(element);
+        String string = GSON.toJson(element);
         Files.createDirectories(path.getParent());
-        final BufferedWriter bufferedWriter = Files.newBufferedWriter(path);
+        BufferedWriter bufferedWriter = Files.newBufferedWriter(path);
         Throwable incident = null;
         try
         {
             bufferedWriter.write(string);
         }
-        catch (final Throwable shitHappened)
+        catch (Throwable shitHappened)
         {
             incident = shitHappened;
             throw shitHappened;
@@ -1268,7 +1268,7 @@ public class Auxiliary
                 {
                     bufferedWriter.close();
                 }
-                catch (final Throwable otherShitHappened)
+                catch (Throwable otherShitHappened)
                 {
                     incident.addSuppressed(otherShitHappened);
                 }
@@ -1280,11 +1280,11 @@ public class Auxiliary
         }
     }
 
-    private static void zipValueToText(final Path path, final Value output) throws IOException
+    private static void zipValueToText(Path path, Value output) throws IOException
     {
-        final List<Value> toJoin;
-        final String string;
-        final String delimiter = System.lineSeparator();
+        List<Value> toJoin;
+        String string;
+        String delimiter = System.lineSeparator();
         // i dont know it shoule be \n or System.lineSeparator
         if (output instanceof LazyListValue lazyListValue)
         {
@@ -1303,13 +1303,13 @@ public class Auxiliary
 
 
         Files.createDirectories(path.getParent());
-        final BufferedWriter bufferedWriter = Files.newBufferedWriter(path);
+        BufferedWriter bufferedWriter = Files.newBufferedWriter(path);
         Throwable incident = null;
         try
         {
             bufferedWriter.write(string);
         }
-        catch (final Throwable shitHappened)
+        catch (Throwable shitHappened)
         {
             incident = shitHappened;
             throw shitHappened;
@@ -1322,7 +1322,7 @@ public class Auxiliary
                 {
                     bufferedWriter.close();
                 }
-                catch (final Throwable otherShitHappened)
+                catch (Throwable otherShitHappened)
                 {
                     incident.addSuppressed(otherShitHappened);
                 }
@@ -1334,34 +1334,27 @@ public class Auxiliary
         }
     }
 
-    private static void zipValueToNBT(final Path path, final Value output) throws IOException
+    private static void zipValueToNBT(Path path, Value output) throws IOException
     {
-        final NBTSerializableValue tagValue = (output instanceof NBTSerializableValue nbtSerializableValue)
+        NBTSerializableValue tagValue = (output instanceof NBTSerializableValue nbtSerializableValue)
                 ? nbtSerializableValue
                 : new NBTSerializableValue(output.getString());
-        final Tag tag = tagValue.getTag();
+        Tag tag = tagValue.getTag();
         Files.createDirectories(path.getParent());
-        try
+        if (tag instanceof final CompoundTag cTag)
         {
-            if (tag instanceof final CompoundTag cTag)
-            {
-                NbtIo.writeCompressed(cTag, Files.newOutputStream(path));
-            }
-        }
-        catch (final Throwable shitHappened)
-        {
-            throw shitHappened;
+            NbtIo.writeCompressed(cTag, Files.newOutputStream(path));
         }
     }
 
-    private static void walkTheDPMap(final MapValue node, final Path path) throws IOException
+    private static void walkTheDPMap(MapValue node, Path path) throws IOException
     {
-        final Map<Value, Value> items = node.getMap();
-        for (final Map.Entry<Value, Value> entry : items.entrySet())
+        Map<Value, Value> items = node.getMap();
+        for (Map.Entry<Value, Value> entry : items.entrySet())
         {
-            final Value val = entry.getValue();
-            final String strkey = entry.getKey().getString();
-            final Path child = path.resolve(strkey);
+            Value val = entry.getValue();
+            String strkey = entry.getKey().getString();
+            Path child = path.resolve(strkey);
             if (strkey.endsWith(".json"))
             {
                 zipValueToJson(child, val);
@@ -1386,9 +1379,10 @@ public class Auxiliary
         }
     }
 
-    private static <T> Stat<T> getStat(final StatType<T> type, final ResourceLocation id)
+    @Nullable
+    private static <T> Stat<T> getStat(StatType<T> type, ResourceLocation id)
     {
-        final T key = type.getRegistry().get(id);
+        T key = type.getRegistry().get(id);
         if (key == null || !type.contains(key))
         {
             return null;

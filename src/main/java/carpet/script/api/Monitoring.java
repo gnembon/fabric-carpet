@@ -27,18 +27,18 @@ public class Monitoring
 {
     private static final Map<String, MobCategory> MOB_CATEGORY_MAP = Arrays.stream(MobCategory.values()).collect(Collectors.toMap(MobCategory::getName, Function.identity()));
 
-    public static void apply(final Expression expression)
+    public static void apply(Expression expression)
     {
         expression.addContextFunction("system_info", -1, (c, t, lv) ->
         {
-            if (lv.size() == 0)
+            if (lv.isEmpty())
             {
                 return SystemInfo.getAll();
             }
             if (lv.size() == 1)
             {
-                final String what = lv.get(0).getString();
-                final Value res = SystemInfo.get(what, (CarpetContext) c);
+                String what = lv.get(0).getString();
+                Value res = SystemInfo.get(what, (CarpetContext) c);
                 if (res == null)
                 {
                     throw new InternalExpressionException("Unknown option for 'system_info': " + what);
@@ -50,21 +50,21 @@ public class Monitoring
         // game processed snooper functions
         expression.addContextFunction("get_mob_counts", -1, (c, t, lv) ->
         {
-            final CarpetContext cc = (CarpetContext) c;
-            final ServerLevel world = cc.level();
-            final NaturalSpawner.SpawnState info = world.getChunkSource().getLastSpawnState();
+            CarpetContext cc = (CarpetContext) c;
+            ServerLevel world = cc.level();
+            NaturalSpawner.SpawnState info = world.getChunkSource().getLastSpawnState();
             if (info == null)
             {
                 return Value.NULL;
             }
-            final Object2IntMap<MobCategory> mobcounts = info.getMobCategoryCounts();
-            final int chunks = info.getSpawnableChunkCount();
-            if (lv.size() == 0)
+            Object2IntMap<MobCategory> mobcounts = info.getMobCategoryCounts();
+            int chunks = info.getSpawnableChunkCount();
+            if (lv.isEmpty())
             {
-                final Map<Value, Value> retDict = new HashMap<>();
-                for (final MobCategory category : mobcounts.keySet())
+                Map<Value, Value> retDict = new HashMap<>();
+                for (MobCategory category : mobcounts.keySet())
                 {
-                    final int currentCap = category.getMaxInstancesPerChunk() * chunks / Vanilla.NaturalSpawner_MAGIC_NUMBER();
+                    int currentCap = category.getMaxInstancesPerChunk() * chunks / Vanilla.NaturalSpawner_MAGIC_NUMBER();
                     retDict.put(
                             new StringValue(category.getSerializedName().toLowerCase(Locale.ROOT)),
                             ListValue.of(
@@ -74,15 +74,15 @@ public class Monitoring
                 }
                 return MapValue.wrap(retDict);
             }
-            final String catString = lv.get(0).getString();
-            final MobCategory cat = MOB_CATEGORY_MAP.get(catString.toLowerCase(Locale.ROOT));
+            String catString = lv.get(0).getString();
+            MobCategory cat = MOB_CATEGORY_MAP.get(catString.toLowerCase(Locale.ROOT));
             if (cat == null)
             {
                 throw new InternalExpressionException("Unreconized mob category: " + catString);
             }
             return ListValue.of(
                     new NumericValue(mobcounts.getInt(cat)),
-                    new NumericValue((int) (cat.getMaxInstancesPerChunk() * chunks / Vanilla.NaturalSpawner_MAGIC_NUMBER()))
+                    new NumericValue((long) cat.getMaxInstancesPerChunk() * chunks / Vanilla.NaturalSpawner_MAGIC_NUMBER())
             );
         });
     }

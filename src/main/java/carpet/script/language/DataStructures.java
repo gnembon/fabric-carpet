@@ -27,21 +27,21 @@ import java.util.stream.Collectors;
 
 public class DataStructures
 {
-    public static void apply(final Expression expression)
+    public static void apply(Expression expression)
     {
         expression.addFunction("l", lv ->
                 lv.size() == 1 && lv.get(0) instanceof final LazyListValue llv
                         ? ListValue.wrap(llv.unroll())
                         : new ListValue.ListConstructorValue(lv));
 
-        expression.addFunction("join", (lv) ->
+        expression.addFunction("join", lv ->
         {
             if (lv.size() < 2)
             {
                 throw new InternalExpressionException("'join' takes at least 2 arguments");
             }
-            final String delimiter = lv.get(0).getString();
-            final List<Value> toJoin;
+            String delimiter = lv.get(0).getString();
+            List<Value> toJoin;
             if (lv.size() == 2 && lv.get(1) instanceof final LazyListValue llv)
             {
                 toJoin = llv.unroll();
@@ -57,10 +57,10 @@ public class DataStructures
             return new StringValue(toJoin.stream().map(Value::getString).collect(Collectors.joining(delimiter)));
         });
 
-        expression.addFunction("split", (lv) ->
+        expression.addFunction("split", lv ->
         {
-            final Value delimiter;
-            final Value hwat;
+            Value delimiter;
+            Value hwat;
             if (lv.size() == 1)
             {
                 hwat = lv.get(0);
@@ -78,14 +78,14 @@ public class DataStructures
             return hwat.split(delimiter);
         });
 
-        expression.addFunction("slice", (lv) ->
+        expression.addFunction("slice", lv ->
         {
             if (lv.size() != 2 && lv.size() != 3)
             {
                 throw new InternalExpressionException("'slice' takes 2 or 3 arguments");
             }
-            final Value hwat = lv.get(0);
-            final long from = NumericValue.asNumber(lv.get(1)).getLong();
+            Value hwat = lv.get(0);
+            long from = NumericValue.asNumber(lv.get(1)).getLong();
             Long to = null;
             if (lv.size() == 3)
             {
@@ -94,7 +94,7 @@ public class DataStructures
             return hwat.slice(from, to);
         });
 
-        expression.addFunction("sort", (lv) ->
+        expression.addFunction("sort", lv ->
         {
             List<Value> toSort = lv;
             if (lv.size() == 1 && lv.get(0) instanceof final ListValue llv)
@@ -108,44 +108,44 @@ public class DataStructures
         // needs lazy cause sort function is reused
         expression.addLazyFunction("sort_key", (c, t, lv) ->  //get working with iterators
         {
-            if (lv.size() == 0)
+            if (lv.isEmpty())
             {
                 throw new InternalExpressionException("First argument for 'sort_key' should be a List");
             }
-            final Value v = lv.get(0).evalValue(c);
+            Value v = lv.get(0).evalValue(c);
             if (!(v instanceof final ListValue list))
             {
                 throw new InternalExpressionException("First argument for 'sort_key' should be a List");
             }
-            final List<Value> toSort = new ArrayList<>(list.getItems());
+            List<Value> toSort = new ArrayList<>(list.getItems());
             if (lv.size() == 1)
             {
                 Collections.shuffle(toSort);
-                final Value ret = ListValue.wrap(toSort);
-                return (_c, _t) -> ret;
+                Value ret = ListValue.wrap(toSort);
+                return (ct, tt) -> ret;
             }
-            final LazyValue sortKey = lv.get(1);
+            LazyValue sortKey = lv.get(1);
             //scoping
-            final LazyValue __ = c.getVariable("_");
+            LazyValue defaultVal = c.getVariable("_");
             toSort.sort((v1, v2) -> {
                 c.setVariable("_", (cc, tt) -> v1);
-                final Value ev1 = sortKey.evalValue(c);
+                Value ev1 = sortKey.evalValue(c);
                 c.setVariable("_", (cc, tt) -> v2);
-                final Value ev2 = sortKey.evalValue(c);
+                Value ev2 = sortKey.evalValue(c);
                 return ev1.compareTo(ev2);
             });
             //revering scope
-            c.setVariable("_", __);
-            final Value ret = ListValue.wrap(toSort);
+            c.setVariable("_", defaultVal);
+            Value ret = ListValue.wrap(toSort);
             return (cc, tt) -> ret;
         });
 
-        expression.addFunction("range", (lv) ->
+        expression.addFunction("range", lv ->
         {
             NumericValue from = Value.ZERO;
             NumericValue to;
             NumericValue step = Value.ONE;
-            final int argsize = lv.size();
+            int argsize = lv.size();
             if (argsize == 0 || argsize > 3)
             {
                 throw new InternalExpressionException("'range' accepts from 1 to 3 arguments, not " + argsize);
@@ -192,7 +192,7 @@ public class DataStructures
         {
             if (container instanceof final LContainerValue lcv)
             {
-                final ContainerValueInterface outerContainer = lcv.container();
+                ContainerValueInterface outerContainer = lcv.container();
                 if (outerContainer == null)
                 {
                     return LContainerValue.NULL_CONTAINER;
@@ -211,23 +211,23 @@ public class DataStructures
         // lazy cause conditional typing - questionable
         expression.addLazyFunction("get", (c, t, lv) ->
         {
-            if (lv.size() == 0)
+            if (lv.isEmpty())
             {
                 throw new InternalExpressionException("'get' requires parameters");
             }
             if (lv.size() == 1)
             {
-                final Value v = lv.get(0).evalValue(c, Context.LVALUE);
+                Value v = lv.get(0).evalValue(c, Context.LVALUE);
                 if (!(v instanceof final LContainerValue lcv))
                 {
                     return LazyValue.NULL;
                 }
-                final ContainerValueInterface container = lcv.container();
+                ContainerValueInterface container = lcv.container();
                 if (container == null)
                 {
                     return LazyValue.NULL;
                 }
-                final Value ret = container.get(lcv.address());
+                Value ret = container.get(lcv.address());
                 return (cc, tt) -> ret;
             }
             Value container = lv.get(0).evalValue(c);
@@ -243,30 +243,30 @@ public class DataStructures
             {
                 return (cc, tt) -> Value.NULL;
             }
-            final Value finalContainer = container;
+            Value finalContainer = container;
             return (cc, tt) -> finalContainer;
         });
 
         // same as `get`
         expression.addLazyFunction("has", (c, t, lv) ->
         {
-            if (lv.size() == 0)
+            if (lv.isEmpty())
             {
                 throw new InternalExpressionException("'has' requires parameters");
             }
             if (lv.size() == 1)
             {
-                final Value v = lv.get(0).evalValue(c, Context.LVALUE);
+                Value v = lv.get(0).evalValue(c, Context.LVALUE);
                 if (!(v instanceof final LContainerValue lcv))
                 {
                     return LazyValue.NULL;
                 }
-                final ContainerValueInterface container = lcv.container();
+                ContainerValueInterface container = lcv.container();
                 if (container == null)
                 {
                     return LazyValue.NULL;
                 }
-                final Value ret = BooleanValue.of(container.has(lcv.address()));
+                Value ret = BooleanValue.of(container.has(lcv.address()));
                 return (cc, tt) -> ret;
             }
             Value container = lv.get(0).evalValue(c);
@@ -282,7 +282,7 @@ public class DataStructures
             {
                 return LazyValue.NULL;
             }
-            final Value ret = BooleanValue.of(cvi.has(lv.get(lv.size() - 1).evalValue(c)));
+            Value ret = BooleanValue.of(cvi.has(lv.get(lv.size() - 1).evalValue(c)));
             return (cc, tt) -> ret;
         });
 
@@ -293,17 +293,17 @@ public class DataStructures
             {
                 throw new InternalExpressionException("'put' takes at least three arguments, a container, address, and values to insert at that index");
             }
-            final Value container = lv.get(0).evalValue(c, Context.LVALUE);
+            Value container = lv.get(0).evalValue(c, Context.LVALUE);
             if (container instanceof final LContainerValue lcv)
             {
-                final ContainerValueInterface internalContainer = lcv.container();
+                ContainerValueInterface internalContainer = lcv.container();
                 if (internalContainer == null)
                 {
                     return LazyValue.NULL;
                 }
-                final Value address = lcv.address();
-                final Value what = lv.get(1).evalValue(c);
-                final Value retVal = BooleanValue.of((lv.size() > 2)
+                Value address = lcv.address();
+                Value what = lv.get(1).evalValue(c);
+                Value retVal = BooleanValue.of((lv.size() > 2)
                         ? internalContainer.put(address, what, lv.get(2).evalValue(c))
                         : internalContainer.put(address, what));
                 return (cc, tt) -> retVal;
@@ -317,9 +317,9 @@ public class DataStructures
             {
                 return LazyValue.NULL;
             }
-            final Value where = lv.get(1).evalValue(c);
-            final Value what = lv.get(2).evalValue(c);
-            final Value retVal = BooleanValue.of((lv.size() > 3)
+            Value where = lv.get(1).evalValue(c);
+            Value what = lv.get(2).evalValue(c);
+            Value retVal = BooleanValue.of((lv.size() > 3)
                     ? cvi.put(where, what, lv.get(3).evalValue(c))
                     : cvi.put(where, what));
             return (cc, tt) -> retVal;
@@ -328,23 +328,23 @@ public class DataStructures
         // same as `get`
         expression.addLazyFunction("delete", (c, t, lv) ->
         {
-            if (lv.size() == 0)
+            if (lv.isEmpty())
             {
                 throw new InternalExpressionException("'delete' requires parameters");
             }
             if (lv.size() == 1)
             {
-                final Value v = lv.get(0).evalValue(c, Context.LVALUE);
+                Value v = lv.get(0).evalValue(c, Context.LVALUE);
                 if (!(v instanceof final LContainerValue lcv))
                 {
                     return LazyValue.NULL;
                 }
-                final ContainerValueInterface container = lcv.container();
+                ContainerValueInterface container = lcv.container();
                 if (container == null)
                 {
                     return LazyValue.NULL;
                 }
-                final Value ret = BooleanValue.of(container.delete(lcv.address()));
+                Value ret = BooleanValue.of(container.delete(lcv.address()));
                 return (cc, tt) -> ret;
             }
             Value container = lv.get(0).evalValue(c);
@@ -360,7 +360,7 @@ public class DataStructures
             {
                 return LazyValue.NULL;
             }
-            final Value ret = BooleanValue.of(cvi.delete(lv.get(lv.size() - 1).evalValue(c)));
+            Value ret = BooleanValue.of(cvi.delete(lv.get(lv.size() - 1).evalValue(c)));
             return (cc, tt) -> ret;
         });
 
@@ -370,7 +370,7 @@ public class DataStructures
             {
                 return StringValue.of(new String(Base64.getDecoder().decode(v.getString()), StandardCharsets.UTF_8));
             }
-            catch (final IllegalArgumentException iae)
+            catch (IllegalArgumentException iae)
             {
                 throw new ThrowStatement("Invalid b64 string: " + v.getString(), Throwables.B64_ERROR);
             }
@@ -382,7 +382,7 @@ public class DataStructures
             {
                 return Auxiliary.GSON.fromJson(v.getString(), Value.class);
             }
-            catch (final JsonParseException jpe)
+            catch (JsonParseException jpe)
             {
                 throw new ThrowStatement("Invalid json string: " + v.getString(), Throwables.JSON_ERROR);
             }

@@ -13,12 +13,12 @@ public class Arithmetic
     public static final Value PI = new NumericValue(Math.PI);
     public static final Value euler = new NumericValue(Math.E);
 
-    public static void apply(final Expression expression)
+    public static void apply(Expression expression)
     {
         expression.addTypedContextFunction("not", 1, Context.Type.BOOLEAN, (c, t, lv) -> BooleanValue.of(lv.get(0).getBoolean()));
-        expression.addUnaryFunction("fact", (v) ->
+        expression.addUnaryFunction("fact", v ->
         {
-            final long number = NumericValue.asNumber(v).getLong();
+            long number = NumericValue.asNumber(v).getLong();
             if (number < 21)
             {
                 long factorial = 1;
@@ -82,26 +82,26 @@ public class Arithmetic
         expression.addMathematicalUnaryIntFunction("ceil", n -> (long) Math.ceil(n));
 
         expression.addContextFunction("mandelbrot", 3, (c, t, lv) -> {
-            final double a0 = NumericValue.asNumber(lv.get(0)).getDouble();
-            final double b0 = NumericValue.asNumber(lv.get(1)).getDouble();
-            final long maxiter = NumericValue.asNumber(lv.get(2)).getLong();
+            double a0 = NumericValue.asNumber(lv.get(0)).getDouble();
+            double b0 = NumericValue.asNumber(lv.get(1)).getDouble();
+            long maxiter = NumericValue.asNumber(lv.get(2)).getLong();
             double a = 0.0D;
             double b = 0.0D;
             long iter = 0;
             while (a * a + b * b < 4 && iter < maxiter)
             {
-                final double temp = a * a - b * b + a0;
+                double temp = a * a - b * b + a0;
                 b = 2 * a * b + b0;
                 a = temp;
                 iter++;
             }
-            final long iFinal = iter;
+            long iFinal = iter;
             return new NumericValue(iFinal);
         });
 
-        expression.addFunction("max", (lv) ->
+        expression.addFunction("max", lv ->
         {
-            if (lv.size() == 0)
+            if (lv.isEmpty())
             {
                 throw new InternalExpressionException("'max' requires at least one parameter");
             }
@@ -110,7 +110,7 @@ public class Arithmetic
             {
                 lv = ((ListValue) lv.get(0)).getItems();
             }
-            for (final Value parameter : lv)
+            for (Value parameter : lv)
             {
                 if (max == null || parameter.compareTo(max) > 0)
                 {
@@ -120,9 +120,9 @@ public class Arithmetic
             return max;
         });
 
-        expression.addFunction("min", (lv) ->
+        expression.addFunction("min", lv ->
         {
-            if (lv.size() == 0)
+            if (lv.isEmpty())
             {
                 throw new InternalExpressionException("'min' requires at least one parameter");
             }
@@ -131,7 +131,7 @@ public class Arithmetic
             {
                 lv = ((ListValue) lv.get(0)).getItems();
             }
-            for (final Value parameter : lv)
+            for (Value parameter : lv)
             {
                 if (min == null || parameter.compareTo(min) < 0)
                 {

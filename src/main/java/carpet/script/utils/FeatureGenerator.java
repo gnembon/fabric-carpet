@@ -68,24 +68,24 @@ import javax.annotation.Nullable;
 public class FeatureGenerator
 {
     @Nullable
-    public static synchronized Boolean plop(final String featureName, final ServerLevel world, final BlockPos pos)
+    public static synchronized Boolean plop(String featureName, ServerLevel world, BlockPos pos)
     {
-        final Function<ServerLevel, Thing> custom = featureMap.get(featureName);
+        Function<ServerLevel, Thing> custom = featureMap.get(featureName);
         if (custom != null)
         {
             return custom.apply(world).plop(world, pos);
         }
-        final ResourceLocation id = new ResourceLocation(featureName);
-        final Structure structure = world.registryAccess().registryOrThrow(Registries.STRUCTURE).get(id);
+        ResourceLocation id = new ResourceLocation(featureName);
+        Structure structure = world.registryAccess().registryOrThrow(Registries.STRUCTURE).get(id);
         if (structure != null)
         {
             return plopAnywhere(structure, world, pos, world.getChunkSource().getGenerator(), false);
         }
 
-        final ConfiguredFeature<?, ?> configuredFeature = world.registryAccess().registryOrThrow(Registries.CONFIGURED_FEATURE).get(id);
+        ConfiguredFeature<?, ?> configuredFeature = world.registryAccess().registryOrThrow(Registries.CONFIGURED_FEATURE).get(id);
         if (configuredFeature != null)
         {
-            final ThreadLocal<Boolean> checks = Vanilla.skipGenerationChecks(world);
+            ThreadLocal<Boolean> checks = Vanilla.skipGenerationChecks(world);
             checks.set(true);
             try
             {
@@ -96,22 +96,22 @@ public class FeatureGenerator
                 checks.set(false);
             }
         }
-        final Optional<StructureType<?>> structureType = world.registryAccess().registryOrThrow(Registries.STRUCTURE_TYPE).getOptional(id);
+        Optional<StructureType<?>> structureType = world.registryAccess().registryOrThrow(Registries.STRUCTURE_TYPE).getOptional(id);
         if (structureType.isPresent())
         {
-            final Structure configuredStandard = getDefaultFeature(structureType.get(), world, pos);
+            Structure configuredStandard = getDefaultFeature(structureType.get(), world, pos);
             if (configuredStandard != null)
             {
                 return plopAnywhere(configuredStandard, world, pos, world.getChunkSource().getGenerator(), false);
             }
         }
-        final Feature<?> feature = world.registryAccess().registryOrThrow(Registries.FEATURE).get(id);
+        Feature<?> feature = world.registryAccess().registryOrThrow(Registries.FEATURE).get(id);
         if (feature != null)
         {
-            final ConfiguredFeature<?, ?> configuredStandard = getDefaultFeature(feature, world, pos, true);
+            ConfiguredFeature<?, ?> configuredStandard = getDefaultFeature(feature, world, pos, true);
             if (configuredStandard != null)
             {
-                final ThreadLocal<Boolean> checks = Vanilla.skipGenerationChecks(world);
+                ThreadLocal<Boolean> checks = Vanilla.skipGenerationChecks(world);
                 checks.set(true);
                 try
                 {
@@ -126,15 +126,16 @@ public class FeatureGenerator
         return null;
     }
 
-    public static Structure resolveConfiguredStructure(final String name, final ServerLevel world, final BlockPos pos)
+    @Nullable
+    public static Structure resolveConfiguredStructure(String name, ServerLevel world, BlockPos pos)
     {
-        final ResourceLocation id = new ResourceLocation(name);
-        final Structure configuredStructureFeature = world.registryAccess().registryOrThrow(Registries.STRUCTURE).get(id);
+        ResourceLocation id = new ResourceLocation(name);
+        Structure configuredStructureFeature = world.registryAccess().registryOrThrow(Registries.STRUCTURE).get(id);
         if (configuredStructureFeature != null)
         {
             return configuredStructureFeature;
         }
-        final StructureType<?> structureFeature = world.registryAccess().registryOrThrow(Registries.STRUCTURE_TYPE).get(id);
+        StructureType<?> structureFeature = world.registryAccess().registryOrThrow(Registries.STRUCTURE_TYPE).get(id);
         if (structureFeature == null)
         {
             return null;
@@ -142,7 +143,7 @@ public class FeatureGenerator
         return getDefaultFeature(structureFeature, world, pos);
     }
 
-    public static synchronized Boolean plopGrid(final Structure structureFeature, final ServerLevel world, final BlockPos pos)
+    public static synchronized boolean plopGrid(Structure structureFeature, ServerLevel world, BlockPos pos)
     {
         return plopAnywhere(structureFeature, world, pos, world.getChunkSource().getGenerator(), true);
     }
@@ -153,10 +154,10 @@ public class FeatureGenerator
         Boolean plop(ServerLevel world, BlockPos pos);
     }
 
-    private static Thing simplePlop(final ConfiguredFeature<?, ?> feature)
+    private static Thing simplePlop(ConfiguredFeature<?, ?> feature)
     {
         return (w, p) -> {
-            final ThreadLocal<Boolean> checks = Vanilla.skipGenerationChecks(w);
+            ThreadLocal<Boolean> checks = Vanilla.skipGenerationChecks(w);
             checks.set(true);
             try
             {
@@ -169,34 +170,34 @@ public class FeatureGenerator
         };
     }
 
-    private static <FC extends FeatureConfiguration, F extends Feature<FC>> Thing simplePlop(final F feature, final FC config)
+    private static <FC extends FeatureConfiguration, F extends Feature<FC>> Thing simplePlop(F feature, FC config)
     {
         return simplePlop(new ConfiguredFeature<>(feature, config));
     }
 
-    private static Thing simpleTree(final TreeConfiguration config)
+    private static Thing simpleTree(TreeConfiguration config)
     {
         //config.ignoreFluidCheck();
         return simplePlop(new ConfiguredFeature<>(Feature.TREE, config));
     }
 
-    private static Thing spawnCustomStructure(final Structure structure)
+    private static Thing spawnCustomStructure(Structure structure)
     {
         return setupCustomStructure(structure, false);
     }
 
-    private static Thing setupCustomStructure(final Structure structure, final boolean wireOnly)
+    private static Thing setupCustomStructure(Structure structure, boolean wireOnly)
     {
         return (w, p) -> plopAnywhere(structure, w, p, w.getChunkSource().getGenerator(), wireOnly);
     }
 
-    private static Structure getDefaultFeature(final StructureType<?> structure, final ServerLevel world, final BlockPos pos)
+    private static Structure getDefaultFeature(StructureType<?> structure, ServerLevel world, BlockPos pos)
     {
         // would be nice to have a way to grab structures of this type for position
         // TODO allow old types, like vaillage, or bastion
-        final Holder<Biome> existingBiome = world.getBiome(pos);
+        Holder<Biome> existingBiome = world.getBiome(pos);
         Structure result = null;
-        for (final Structure confstr : world.registryAccess().registryOrThrow(Registries.STRUCTURE).entrySet().stream().
+        for (Structure confstr : world.registryAccess().registryOrThrow(Registries.STRUCTURE).entrySet().stream().
                 filter(cS -> cS.getValue().type() == structure).map(Map.Entry::getValue).toList())
         {
             result = confstr;
@@ -208,12 +209,12 @@ public class FeatureGenerator
         return result;
     }
 
-    private static ConfiguredFeature<?, ?> getDefaultFeature(final Feature<?> feature, final ServerLevel world, final BlockPos pos, final boolean tryHard)
+    private static ConfiguredFeature<?, ?> getDefaultFeature(Feature<?> feature, ServerLevel world, BlockPos pos, boolean tryHard)
     {
-        final List<HolderSet<PlacedFeature>> configuredStepFeatures = world.getBiome(pos).value().getGenerationSettings().features();
-        for (final HolderSet<PlacedFeature> step : configuredStepFeatures)
+        List<HolderSet<PlacedFeature>> configuredStepFeatures = world.getBiome(pos).value().getGenerationSettings().features();
+        for (HolderSet<PlacedFeature> step : configuredStepFeatures)
         {
-            for (final Holder<PlacedFeature> provider : step)
+            for (Holder<PlacedFeature> provider : step)
             {
                 if (provider.value().feature().value().feature() == feature)
                 {
@@ -230,21 +231,22 @@ public class FeatureGenerator
                 findFirst().map(Map.Entry::getValue).orElse(null);
     }
 
-    public static <T extends FeatureConfiguration> StructureStart shouldStructureStartAt(final ServerLevel world, final BlockPos pos, final Structure structure, final boolean computeBox)
+
+    public static <T extends FeatureConfiguration> StructureStart shouldStructureStartAt(ServerLevel world, BlockPos pos, Structure structure, boolean computeBox)
     {
-        final ServerChunkCache chunkSource = world.getChunkSource();
-        final RandomState seed = chunkSource.randomState();
-        final ChunkGenerator generator = chunkSource.getGenerator();
-        final ChunkGeneratorStructureState structureState = chunkSource.getGeneratorState();
-        final List<StructurePlacement> structureConfig = structureState.getPlacementsForStructure(Holder.direct(structure));
-        final ChunkPos chunkPos = new ChunkPos(pos);
-        final boolean couldPlace = structureConfig.stream().anyMatch(p -> p.isStructureChunk(structureState, chunkPos.x, chunkPos.z));
+        ServerChunkCache chunkSource = world.getChunkSource();
+        RandomState seed = chunkSource.randomState();
+        ChunkGenerator generator = chunkSource.getGenerator();
+        ChunkGeneratorStructureState structureState = chunkSource.getGeneratorState();
+        List<StructurePlacement> structureConfig = structureState.getPlacementsForStructure(Holder.direct(structure));
+        ChunkPos chunkPos = new ChunkPos(pos);
+        boolean couldPlace = structureConfig.stream().anyMatch(p -> p.isStructureChunk(structureState, chunkPos.x, chunkPos.z));
         if (!couldPlace)
         {
             return null;
         }
 
-        final HolderSet<Biome> structureBiomes = structure.biomes();
+        HolderSet<Biome> structureBiomes = structure.biomes();
 
         if (!computeBox)
         {
@@ -259,7 +261,7 @@ public class FeatureGenerator
         }
         else
         {
-            final StructureStart filledStructure = structure.generate(
+            StructureStart filledStructure = structure.generate(
                     world.registryAccess(), generator, generator.getBiomeSource(), seed, world.getStructureManager(),
                     world.getSeed(), chunkPos, 0, world, structureBiomes::contains);
             if (filledStructure != null && filledStructure.isValid())
@@ -270,7 +272,7 @@ public class FeatureGenerator
         return null;
     }
 
-    private static TreeConfiguration.TreeConfigurationBuilder createTree(final Block block, final Block block2, final int i, final int j, final int k, final int l)
+    private static TreeConfiguration.TreeConfigurationBuilder createTree(Block block, Block block2, int i, int j, int k, int l)
     {
         return new TreeConfiguration.TreeConfigurationBuilder(BlockStateProvider.simple(block), new StraightTrunkPlacer(i, j, k), BlockStateProvider.simple(block2), new BlobFoliagePlacer(ConstantInt.of(l), ConstantInt.of(0), 3), new TwoLayersFeatureSize(1, 0, 1));
     }
@@ -292,13 +294,13 @@ public class FeatureGenerator
                 PlacementUtils.inlinePlaced(Feature.CORAL_MUSHROOM, FeatureConfiguration.NONE)
         ))));
         put("bastion_remnant_units", l -> {
-            final RegistryAccess regs = l.registryAccess();
+            RegistryAccess regs = l.registryAccess();
 
-            final HolderGetter<StructureProcessorList> processorLists = regs.lookupOrThrow(Registries.PROCESSOR_LIST);
-            final Holder<StructureProcessorList> bastionGenericDegradation = processorLists.getOrThrow(ProcessorLists.BASTION_GENERIC_DEGRADATION);
+            HolderGetter<StructureProcessorList> processorLists = regs.lookupOrThrow(Registries.PROCESSOR_LIST);
+            Holder<StructureProcessorList> bastionGenericDegradation = processorLists.getOrThrow(ProcessorLists.BASTION_GENERIC_DEGRADATION);
 
-            final HolderGetter<StructureTemplatePool> pools = regs.lookupOrThrow(Registries.TEMPLATE_POOL);
-            final Holder<StructureTemplatePool> empty = pools.getOrThrow(Pools.EMPTY);
+            HolderGetter<StructureTemplatePool> pools = regs.lookupOrThrow(Registries.TEMPLATE_POOL);
+            Holder<StructureTemplatePool> empty = pools.getOrThrow(Pools.EMPTY);
 
 
             return spawnCustomStructure(
@@ -322,13 +324,13 @@ public class FeatureGenerator
             );
         });
         put("bastion_remnant_hoglin_stable", l -> {
-            final RegistryAccess regs = l.registryAccess();
+            RegistryAccess regs = l.registryAccess();
 
-            final HolderGetter<StructureProcessorList> processorLists = regs.lookupOrThrow(Registries.PROCESSOR_LIST);
-            final Holder<StructureProcessorList> bastionGenericDegradation = processorLists.getOrThrow(ProcessorLists.BASTION_GENERIC_DEGRADATION);
+            HolderGetter<StructureProcessorList> processorLists = regs.lookupOrThrow(Registries.PROCESSOR_LIST);
+            Holder<StructureProcessorList> bastionGenericDegradation = processorLists.getOrThrow(ProcessorLists.BASTION_GENERIC_DEGRADATION);
 
-            final HolderGetter<StructureTemplatePool> pools = regs.lookupOrThrow(Registries.TEMPLATE_POOL);
-            final Holder<StructureTemplatePool> empty = pools.getOrThrow(Pools.EMPTY);
+            HolderGetter<StructureTemplatePool> pools = regs.lookupOrThrow(Registries.TEMPLATE_POOL);
+            Holder<StructureTemplatePool> empty = pools.getOrThrow(Pools.EMPTY);
 
             return spawnCustomStructure(
                     new JigsawStructure(new Structure.StructureSettings(
@@ -351,13 +353,13 @@ public class FeatureGenerator
             );
         });
         put("bastion_remnant_treasure", l -> {
-            final RegistryAccess regs = l.registryAccess();
+            RegistryAccess regs = l.registryAccess();
 
-            final HolderGetter<StructureProcessorList> processorLists = regs.lookupOrThrow(Registries.PROCESSOR_LIST);
-            final Holder<StructureProcessorList> bastionGenericDegradation = processorLists.getOrThrow(ProcessorLists.BASTION_GENERIC_DEGRADATION);
+            HolderGetter<StructureProcessorList> processorLists = regs.lookupOrThrow(Registries.PROCESSOR_LIST);
+            Holder<StructureProcessorList> bastionGenericDegradation = processorLists.getOrThrow(ProcessorLists.BASTION_GENERIC_DEGRADATION);
 
-            final HolderGetter<StructureTemplatePool> pools = regs.lookupOrThrow(Registries.TEMPLATE_POOL);
-            final Holder<StructureTemplatePool> empty = pools.getOrThrow(Pools.EMPTY);
+            HolderGetter<StructureTemplatePool> pools = regs.lookupOrThrow(Registries.TEMPLATE_POOL);
+            Holder<StructureTemplatePool> empty = pools.getOrThrow(Pools.EMPTY);
 
             return spawnCustomStructure(
                     new JigsawStructure(new Structure.StructureSettings(
@@ -380,13 +382,13 @@ public class FeatureGenerator
             );
         });
         put("bastion_remnant_bridge", l -> {
-            final RegistryAccess regs = l.registryAccess();
+            RegistryAccess regs = l.registryAccess();
 
-            final HolderGetter<StructureProcessorList> processorLists = regs.lookupOrThrow(Registries.PROCESSOR_LIST);
-            final Holder<StructureProcessorList> bastionGenericDegradation = processorLists.getOrThrow(ProcessorLists.BASTION_GENERIC_DEGRADATION);
+            HolderGetter<StructureProcessorList> processorLists = regs.lookupOrThrow(Registries.PROCESSOR_LIST);
+            Holder<StructureProcessorList> bastionGenericDegradation = processorLists.getOrThrow(ProcessorLists.BASTION_GENERIC_DEGRADATION);
 
-            final HolderGetter<StructureTemplatePool> pools = regs.lookupOrThrow(Registries.TEMPLATE_POOL);
-            final Holder<StructureTemplatePool> empty = pools.getOrThrow(Pools.EMPTY);
+            HolderGetter<StructureTemplatePool> pools = regs.lookupOrThrow(Registries.TEMPLATE_POOL);
+            Holder<StructureTemplatePool> empty = pools.getOrThrow(Pools.EMPTY);
 
             return spawnCustomStructure(
                     new JigsawStructure(new Structure.StructureSettings(
@@ -411,29 +413,29 @@ public class FeatureGenerator
     }};
 
 
-    public static boolean plopAnywhere(final Structure structure, final ServerLevel world, final BlockPos pos, final ChunkGenerator generator, final boolean wireOnly)
+    public static boolean plopAnywhere(Structure structure, ServerLevel world, BlockPos pos, ChunkGenerator generator, boolean wireOnly)
     {
-        final ThreadLocal<Boolean> checks = Vanilla.skipGenerationChecks(world);
+        ThreadLocal<Boolean> checks = Vanilla.skipGenerationChecks(world);
         checks.set(true);
         try
         {
-            final StructureStart start = structure.generate(world.registryAccess(), generator, generator.getBiomeSource(), world.getChunkSource().randomState(), world.getStructureManager(), world.getSeed(), new ChunkPos(pos), 0, world, b -> true);
+            StructureStart start = structure.generate(world.registryAccess(), generator, generator.getBiomeSource(), world.getChunkSource().randomState(), world.getStructureManager(), world.getSeed(), new ChunkPos(pos), 0, world, b -> true);
             if (start == StructureStart.INVALID_START)
             {
                 return false;
             }
-            final RandomSource rand = RandomSource.create(world.getRandom().nextInt());
-            final int j = pos.getX() >> 4;
-            final int k = pos.getZ() >> 4;
-            final long chId = ChunkPos.asLong(j, k);
+            RandomSource rand = RandomSource.create(world.getRandom().nextInt());
+            int j = pos.getX() >> 4;
+            int k = pos.getZ() >> 4;
+            long chId = ChunkPos.asLong(j, k);
             world.getChunk(j, k).setStartForStructure(structure, start);
             world.getChunk(j, k).addReferenceForStructure(structure, chId);
 
-            final BoundingBox box = start.getBoundingBox();
+            BoundingBox box = start.getBoundingBox();
 
             if (!wireOnly)
             {
-                final Registry<Structure> registry3 = world.registryAccess().registryOrThrow(Registries.STRUCTURE);
+                Registry<Structure> registry3 = world.registryAccess().registryOrThrow(Registries.STRUCTURE);
                 world.setCurrentlyGenerating(() -> {
                     Objects.requireNonNull(structure);
                     return registry3.getResourceKey(structure).map(Object::toString).orElseGet(structure::toString);
@@ -441,7 +443,7 @@ public class FeatureGenerator
                 start.placeInChunk(world, world.structureManager(), generator, rand, box, new ChunkPos(j, k));
             }
             //structurestart.notifyPostProcessAt(new ChunkPos(j, k));
-            final int i = Math.max(box.getXSpan(), box.getZSpan()) / 16 + 1;
+            int i = Math.max(box.getXSpan(), box.getZSpan()) / 16 + 1;
 
             //int i = getRadius();
             for (int k1 = j - i; k1 <= j + i; ++k1)
@@ -459,7 +461,7 @@ public class FeatureGenerator
                 }
             }
         }
-        catch (final Exception booboo)
+        catch (Exception booboo)
         {
             CarpetScriptServer.LOG.error("Unknown Exception while plopping structure: " + booboo, booboo);
             return false;

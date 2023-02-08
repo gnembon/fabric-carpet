@@ -23,6 +23,8 @@ import carpet.script.value.StringValue;
 import carpet.script.value.Value;
 import carpet.script.value.ValueConversions;
 
+import javax.annotation.Nullable;
+
 /**
  * <p>A converter from a given {@link Object} of type T into a {@link LazyValue}, used in order to convert the outputs of methods into usable Scarpet
  * values.</p>
@@ -57,7 +59,7 @@ public final class OutputConverter<T>
 
     private final Function<T, LazyValue> converter;
 
-    private OutputConverter(final Function<T, LazyValue> converter)
+    private OutputConverter(Function<T, LazyValue> converter)
     {
         this.converter = converter;
     }
@@ -90,7 +92,7 @@ public final class OutputConverter<T>
      * @param input The value to convert
      * @return The converted value
      */
-    public LazyValue convert(final T input)
+    public LazyValue convert(@Nullable T input)
     {
         return input == null ? LazyValue.NULL : converter.apply(input);
     }
@@ -103,9 +105,9 @@ public final class OutputConverter<T>
      * @param inputType The class of T
      * @param converter The function that converts the an instance of T to a {@link LazyValue}
      */
-    public static <T> void register(final Class<T> inputType, final Function<T, LazyValue> converter)
+    public static <T> void register(Class<T> inputType, Function<T, LazyValue> converter)
     {
-        final OutputConverter<T> instance = new OutputConverter<>(converter);
+        OutputConverter<T> instance = new OutputConverter<>(converter);
         if (byResult.containsKey(inputType))
         {
             throw new IllegalArgumentException(inputType + " already has a registered OutputConverter");
@@ -122,9 +124,9 @@ public final class OutputConverter<T>
      * @param inputType The class of T
      * @param converter The function that converts an instance of T to a {@link Value}
      */
-    public static <T> void registerToValue(final Class<T> inputType, final Function<T, Value> converter)
+    public static <T> void registerToValue(Class<T> inputType, Function<T, Value> converter)
     {
-        final OutputConverter<T> instance = new OutputConverter<>(converter.andThen(v -> (c, t) -> v));
+        OutputConverter<T> instance = new OutputConverter<>(converter.andThen(v -> (c, t) -> v));
         if (byResult.containsKey(inputType))
         {
             throw new IllegalArgumentException(inputType + " already has a registered OutputConverter");

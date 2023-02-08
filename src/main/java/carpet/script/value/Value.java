@@ -14,6 +14,8 @@ import java.util.regex.PatternSyntaxException;
 
 import net.minecraft.nbt.Tag;
 
+import javax.annotation.Nullable;
+
 public abstract class Value implements Comparable<Value>, Cloneable
 {
     public static final NumericValue FALSE = BooleanValue.FALSE;
@@ -36,14 +38,14 @@ public abstract class Value implements Comparable<Value>, Cloneable
         return boundVariable;
     }
 
-    public Value reboundedTo(final String value)
+    public Value reboundedTo(String value)
     {
-        final Value copy;
+        Value copy;
         try
         {
             copy = (Value) clone();
         }
-        catch (final CloneNotSupportedException e)
+        catch (CloneNotSupportedException e)
         {
             // should not happen
             CarpetScriptServer.LOG.error("Failed to clone variable", e);
@@ -53,7 +55,7 @@ public abstract class Value implements Comparable<Value>, Cloneable
         return copy;
     }
 
-    public Value bindTo(final String value)
+    public Value bindTo(String value)
     {
         this.boundVariable = value;
         return this;
@@ -69,34 +71,34 @@ public abstract class Value implements Comparable<Value>, Cloneable
 
     public abstract boolean getBoolean();
 
-    public Value add(final Value o)
+    public Value add(Value o)
     {
         if (o instanceof FormattedTextValue)
         {
             return FormattedTextValue.combine(this, o);
         }
-        final String leftStr = this.getString();
-        final String rightStr = o.getString();
+        String leftStr = this.getString();
+        String rightStr = o.getString();
         return new StringValue(leftStr + rightStr);
     }
 
-    public Value subtract(final Value v)
+    public Value subtract(Value v)
     {
         return new StringValue(this.getString().replace(v.getString(), ""));
     }
 
-    public Value multiply(final Value v)
+    public Value multiply(Value v)
     {
         return v instanceof NumericValue || v instanceof ListValue
                 ? v.multiply(this)
                 : new StringValue(this.getString() + "." + v.getString());
     }
 
-    public Value divide(final Value v)
+    public Value divide(Value v)
     {
         if (v instanceof final NumericValue number)
         {
-            final String lstr = getString();
+            String lstr = getString();
             return new StringValue(lstr.substring(0, (int) (lstr.length() / number.getDouble())));
         }
         return new StringValue(getString() + "/" + v.getString());
@@ -108,7 +110,7 @@ public abstract class Value implements Comparable<Value>, Cloneable
     }
 
     @Override
-    public int compareTo(final Value o)
+    public int compareTo(Value o)
     {
         return o instanceof NumericValue || o instanceof ListValue || o instanceof ThreadValue
                 ? -o.compareTo(this)
@@ -116,7 +118,7 @@ public abstract class Value implements Comparable<Value>, Cloneable
     }
 
     @Override // for hashmap key access, and == operator
-    public boolean equals(final Object o)
+    public boolean equals(Object o)
     {
         if (o instanceof final Value v)
         {
@@ -137,23 +139,23 @@ public abstract class Value implements Comparable<Value>, Cloneable
         }
     }
 
-    public Value in(final Value value1)
+    public Value in(Value value1)
     {
-        final Pattern p;
+        Pattern p;
         try
         {
             p = Pattern.compile(value1.getString());
         }
-        catch (final PatternSyntaxException pse)
+        catch (PatternSyntaxException pse)
         {
             throw new InternalExpressionException("Incorrect matching pattern: " + pse.getMessage());
         }
-        final Matcher m = p.matcher(this.getString());
+        Matcher m = p.matcher(this.getString());
         if (!m.find())
         {
             return Value.NULL;
         }
-        final int gc = m.groupCount();
+        int gc = m.groupCount();
         if (gc == 0)
         {
             return new StringValue(m.group());
@@ -162,7 +164,7 @@ public abstract class Value implements Comparable<Value>, Cloneable
         {
             return StringValue.of(m.group(1));
         }
-        final List<Value> groups = new ArrayList<>(gc);
+        List<Value> groups = new ArrayList<>(gc);
         for (int i = 1; i <= gc; i++)
         {
             groups.add(StringValue.of(m.group(i)));
@@ -175,16 +177,16 @@ public abstract class Value implements Comparable<Value>, Cloneable
         return getString().length();
     }
 
-    public Value slice(final long fromDesc, final Long toDesc)
+    public Value slice(long fromDesc, @Nullable Long toDesc)
     {
-        final String value = this.getString();
-        final int size = value.length();
-        final int from = ListValue.normalizeIndex(fromDesc, size);
+        String value = this.getString();
+        int size = value.length();
+        int from = ListValue.normalizeIndex(fromDesc, size);
         if (toDesc == null)
         {
             return new StringValue(value.substring(from));
         }
-        final int to = ListValue.normalizeIndex(toDesc, size + 1);
+        int to = ListValue.normalizeIndex(toDesc, size + 1);
         if (from > to)
         {
             return StringValue.EMPTY;
@@ -192,7 +194,7 @@ public abstract class Value implements Comparable<Value>, Cloneable
         return new StringValue(value.substring(from, to));
     }
 
-    public Value split(Value delimiter)
+    public Value split(@Nullable Value delimiter)
     {
         if (delimiter == null)
         {
@@ -202,7 +204,7 @@ public abstract class Value implements Comparable<Value>, Cloneable
         {
             return ListValue.wrap(Arrays.stream(getString().split(delimiter.getString())).map(StringValue::new));
         }
-        catch (final PatternSyntaxException pse)
+        catch (PatternSyntaxException pse)
         {
             throw new InternalExpressionException("Incorrect pattern for 'split': " + pse.getMessage());
         }
@@ -210,12 +212,12 @@ public abstract class Value implements Comparable<Value>, Cloneable
 
     public double readDoubleNumber()
     {
-        final String s = getString();
+        String s = getString();
         try
         {
             return Double.parseDouble(s);
         }
-        catch (final NumberFormatException e)
+        catch (NumberFormatException e)
         {
             return Double.NaN;
         }
@@ -234,7 +236,7 @@ public abstract class Value implements Comparable<Value>, Cloneable
     @Override
     public int hashCode()
     {
-        final String stringVal = getString();
+        String stringVal = getString();
         return stringVal.isEmpty() ? 0 : ("s" + stringVal).hashCode();
     }
 
@@ -244,7 +246,7 @@ public abstract class Value implements Comparable<Value>, Cloneable
         {
             return (Value) this.clone();
         }
-        catch (final CloneNotSupportedException e)
+        catch (CloneNotSupportedException e)
         {
             // should never happen
             throw new InternalExpressionException("Cannot make a copy of value: " + this);

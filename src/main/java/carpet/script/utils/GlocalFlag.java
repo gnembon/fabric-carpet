@@ -1,12 +1,13 @@
 package carpet.script.utils;
 
+import javax.annotation.Nullable;
 import java.util.function.Supplier;
 
 public class GlocalFlag extends ThreadLocal<Boolean>
 {
     private final boolean initial;
 
-    public GlocalFlag(final boolean initial)
+    public GlocalFlag(boolean initial)
     {
         this.initial = initial;
     }
@@ -24,15 +25,15 @@ public class GlocalFlag extends ThreadLocal<Boolean>
      * @param <T>    - returned value of that action, whatever that might be
      * @return result of the action
      */
-    public <T> T getWhileDisabled(final Supplier<T> action)
+    public <T> T getWhileDisabled(Supplier<T> action)
     {
         return whileValueReturn(!initial, action);
     }
 
-    private <T> T whileValueReturn(final boolean what, final Supplier<T> action)
+    private <T> T whileValueReturn(boolean what, Supplier<T> action)
     {
         T result;
-        final boolean previous;
+        boolean previous;
         synchronized (this)
         {
             previous = get();
@@ -49,7 +50,8 @@ public class GlocalFlag extends ThreadLocal<Boolean>
         return result;
     }
 
-    public <T> T runIfEnabled(final Supplier<T> action)
+    @Nullable
+    public <T> T runIfEnabled(Supplier<T> action)
     {
         synchronized (this)
         {

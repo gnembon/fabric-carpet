@@ -20,21 +20,21 @@ public class ThreadValue extends Value
     private final long id;
     private static long sequence = 0L;
 
-    public ThreadValue(final CompletableFuture<Value> taskFuture)
+    public ThreadValue(CompletableFuture<Value> taskFuture)
     {
         this.taskFuture = taskFuture;
         this.id = sequence++;
     }
 
-    public ThreadValue(final Value pool, final FunctionValue function, final Expression expr, final Tokenizer.Token token, final Context ctx, final List<Value> args)
+    public ThreadValue(Value pool, FunctionValue function, Expression expr, Tokenizer.Token token, Context ctx, List<Value> args)
     {
         this(getCompletableFutureFromFunction(pool, function, expr, token, ctx, args));
         Thread.yield();
     }
 
-    public static CompletableFuture<Value> getCompletableFutureFromFunction(final Value pool, final FunctionValue function, final Expression expr, final Tokenizer.Token token, final Context ctx, final List<Value> args)
+    public static CompletableFuture<Value> getCompletableFutureFromFunction(Value pool, FunctionValue function, Expression expr, Tokenizer.Token token, Context ctx, List<Value> args)
     {
-        final ExecutorService executor = ctx.host.getExecutor(pool);
+        ExecutorService executor = ctx.host.getExecutor(pool);
         if (executor == null)
         {
             // app is shutting down - no more threads can be spawned.
@@ -47,12 +47,12 @@ public class ThreadValue extends Value
                 {
                     return function.execute(ctx, Context.NONE, expr, token, args).evalValue(ctx);
                 }
-                catch (final ExitStatement exit)
+                catch (ExitStatement exit)
                 {
                     // app stopped
                     return exit.retval;
                 }
-                catch (final ExpressionException exc)
+                catch (ExpressionException exc)
                 {
                     ctx.host.handleExpressionException("Thread failed\n", exc);
                     return Value.NULL;
@@ -84,12 +84,12 @@ public class ThreadValue extends Value
         {
             return taskFuture.get();
         }
-        catch (final ExitStatement exit)
+        catch (ExitStatement exit)
         {
             taskFuture.complete(exit.retval);
             return exit.retval;
         }
-        catch (final InterruptedException | ExecutionException e)
+        catch (InterruptedException | ExecutionException e)
         {
             return Value.NULL;
         }
@@ -101,13 +101,13 @@ public class ThreadValue extends Value
     }
 
     @Override
-    public boolean equals(final Object o)
+    public boolean equals(Object o)
     {
         return o instanceof final ThreadValue tv && tv.id == this.id;
     }
 
     @Override
-    public int compareTo(final Value o)
+    public int compareTo(Value o)
     {
         if (!(o instanceof final ThreadValue tv))
         {
@@ -123,7 +123,7 @@ public class ThreadValue extends Value
     }
 
     @Override
-    public Tag toTag(final boolean force)
+    public Tag toTag(boolean force)
     {
         if (!force)
         {

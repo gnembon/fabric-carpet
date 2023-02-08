@@ -7,7 +7,7 @@ import net.minecraft.world.level.block.entity.ShulkerBoxBlockEntity;
 
 public class VanillaClient
 {
-    public static ShulkerModel<?> ShulkerBoxRenderer_model(final BlockEntityRenderer<ShulkerBoxBlockEntity> shulkerBoxRenderer) {
+    public static ShulkerModel<?> ShulkerBoxRenderer_model(BlockEntityRenderer<ShulkerBoxBlockEntity> shulkerBoxRenderer) {
         return ((ShulkerBoxAccessMixin)shulkerBoxRenderer).getModel();
     }
 }

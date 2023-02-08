@@ -30,32 +30,32 @@ public class Context
 
     public final ScriptHost host;
 
-    public Context(final ScriptHost host)
+    public Context(ScriptHost host)
     {
         this.host = host;
     }
 
-    public LazyValue getVariable(final String name)
+    public LazyValue getVariable(String name)
     {
         return variables.get(name);
     }
 
-    public void setVariable(final String name, final LazyValue lv)
+    public void setVariable(String name, LazyValue lv)
     {
         variables.put(name, lv);
     }
 
-    public void delVariable(final String variable)
+    public void delVariable(String variable)
     {
         variables.remove(variable);
     }
 
-    public void removeVariablesMatching(final String varname)
+    public void removeVariablesMatching(String varname)
     {
         variables.entrySet().removeIf(e -> e.getKey().startsWith(varname));
     }
 
-    public Context with(final String variable, final LazyValue lv)
+    public Context with(String variable, LazyValue lv)
     {
         variables.put(variable, lv);
         return this;
@@ -68,7 +68,7 @@ public class Context
 
     public Context recreate()
     {
-        final Context ctx = duplicate();
+        Context ctx = duplicate();
         ctx.initialize();
         return ctx;
     }
@@ -104,7 +104,7 @@ public class Context
     {
         public ScriptHost.ErrorSnooper optmizerEerrorSnooper;
 
-        public ContextForErrorReporting(final Context parent)
+        public ContextForErrorReporting(Context parent)
         {
             super(null);
             optmizerEerrorSnooper = parent.host.errorSnooper;
@@ -125,32 +125,32 @@ public class Context
         }
 
         @Override
-        public LazyValue getVariable(final String name)
+        public LazyValue getVariable(String name)
         {
             badProgrammer();
             return null;
         }
 
         @Override
-        public void setVariable(final String name, final LazyValue lv)
+        public void setVariable(String name, LazyValue lv)
         {
             badProgrammer();
         }
 
         @Override
-        public void delVariable(final String variable)
+        public void delVariable(String variable)
         {
             badProgrammer();
         }
 
         @Override
-        public void removeVariablesMatching(final String varname)
+        public void removeVariablesMatching(String varname)
         {
             badProgrammer();
         }
 
         @Override
-        public Context with(final String variable, final LazyValue lv)
+        public Context with(String variable, LazyValue lv)
         {
             badProgrammer();
             return this;

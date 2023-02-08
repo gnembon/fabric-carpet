@@ -39,17 +39,17 @@ public class Operators
         put("nextop;", 1);
     }};
 
-    public static void apply(final Expression expression)
+    public static void apply(Expression expression)
     {
         expression.addBinaryOperator("+", precedence.get("addition+-"), true, Value::add);
         expression.addFunction("sum", lv -> {
-            final int size = lv.size();
+            int size = lv.size();
             if (size == 0)
             {
                 return Value.NULL;
             }
             Value accumulator = lv.get(0);
-            for (final Value v : lv.subList(1, size))
+            for (Value v : lv.subList(1, size))
             {
                 accumulator = accumulator.add(v);
             }
@@ -59,13 +59,13 @@ public class Operators
 
         expression.addBinaryOperator("-", precedence.get("addition+-"), true, Value::subtract);
         expression.addFunction("difference", lv -> {
-            final int size = lv.size();
+            int size = lv.size();
             if (size == 0)
             {
                 return Value.NULL;
             }
             Value accumulator = lv.get(0);
-            for (final Value v : lv.subList(1, size))
+            for (Value v : lv.subList(1, size))
             {
                 accumulator = accumulator.subtract(v);
             }
@@ -75,13 +75,13 @@ public class Operators
 
         expression.addBinaryOperator("*", precedence.get("multiplication*/%"), true, Value::multiply);
         expression.addFunction("product", lv -> {
-            final int size = lv.size();
+            int size = lv.size();
             if (size == 0)
             {
                 return Value.NULL;
             }
             Value accumulator = lv.get(0);
-            for (final Value v : lv.subList(1, size))
+            for (Value v : lv.subList(1, size))
             {
                 accumulator = accumulator.multiply(v);
             }
@@ -91,13 +91,13 @@ public class Operators
 
         expression.addBinaryOperator("/", precedence.get("multiplication*/%"), true, Value::divide);
         expression.addFunction("quotient", lv -> {
-            final int size = lv.size();
+            int size = lv.size();
             if (size == 0)
             {
                 return Value.NULL;
             }
             Value accumulator = lv.get(0);
-            for (final Value v : lv.subList(1, size))
+            for (Value v : lv.subList(1, size))
             {
                 accumulator = accumulator.divide(v);
             }
@@ -111,13 +111,13 @@ public class Operators
                 new NumericValue(java.lang.Math.pow(NumericValue.asNumber(v1).getDouble(), NumericValue.asNumber(v2).getDouble())));
 
         expression.addFunction("bitwise_and", lv -> {
-            final int size = lv.size();
+            int size = lv.size();
             if (size == 0)
             {
                 return Value.NULL;
             }
             long accumulator = NumericValue.asNumber(lv.get(0)).getLong();
-            for (final Value v : lv.subList(1, size))
+            for (Value v : lv.subList(1, size))
             {
                 accumulator = accumulator & NumericValue.asNumber(v).getLong();
             }
@@ -125,13 +125,13 @@ public class Operators
         });
 
         expression.addFunction("bitwise_xor", lv -> {
-            final int size = lv.size();
+            int size = lv.size();
             if (size == 0)
             {
                 return Value.NULL;
             }
             long accumulator = NumericValue.asNumber(lv.get(0)).getLong();
-            for (final Value v : lv.subList(1, size))
+            for (Value v : lv.subList(1, size))
             {
                 accumulator = accumulator ^ NumericValue.asNumber(v).getLong();
             }
@@ -139,13 +139,13 @@ public class Operators
         });
 
         expression.addFunction("bitwise_or", lv -> {
-            final int size = lv.size();
+            int size = lv.size();
             if (size == 0)
             {
                 return Value.NULL;
             }
             long accumulator = NumericValue.asNumber(lv.get(0)).getLong();
-            for (final Value v : lv.subList(1, size))
+            for (Value v : lv.subList(1, size))
             {
                 accumulator = accumulator | NumericValue.asNumber(v).getLong();
             }
@@ -155,22 +155,22 @@ public class Operators
         // lazy cause RHS is only conditional
         expression.addLazyBinaryOperator("&&", precedence.get("and&&"), false, true, t -> Context.Type.BOOLEAN, (c, t, lv1, lv2) ->
         { // todo check how is optimizations going
-            final Value v1 = lv1.evalValue(c, Context.BOOLEAN);
+            Value v1 = lv1.evalValue(c, Context.BOOLEAN);
             return v1.getBoolean() ? lv2 : ((cc, tt) -> v1);
         });
 
         expression.addPureLazyFunction("and", -1, t -> Context.Type.BOOLEAN, (c, t, lv) -> {
-            final int last = lv.size() - 1;
+            int last = lv.size() - 1;
             if (last == -1)
             {
                 return LazyValue.TRUE;
             }
-            for (final LazyValue l : lv.subList(0, last))
+            for (LazyValue l : lv.subList(0, last))
             {
-                final Value val = l.evalValue(c, Context.Type.BOOLEAN);
+                Value val = l.evalValue(c, Context.Type.BOOLEAN);
                 if (val instanceof final FunctionUnpackedArgumentsValue fuav)
                 {
-                    for (final Value it : fuav)
+                    for (Value it : fuav)
                     {
                         if (!it.getBoolean())
                         {
@@ -193,22 +193,22 @@ public class Operators
         // lazy cause RHS is only conditional
         expression.addLazyBinaryOperator("||", precedence.get("or||"), false, true, t -> Context.Type.BOOLEAN, (c, t, lv1, lv2) ->
         {
-            final Value v1 = lv1.evalValue(c, Context.BOOLEAN);
+            Value v1 = lv1.evalValue(c, Context.BOOLEAN);
             return v1.getBoolean() ? ((cc, tt) -> v1) : lv2;
         });
 
         expression.addPureLazyFunction("or", -1, t -> Context.Type.BOOLEAN, (c, t, lv) -> {
-            final int last = lv.size() - 1;
+            int last = lv.size() - 1;
             if (last == -1)
             {
                 return LazyValue.FALSE;
             }
-            for (final LazyValue l : lv.subList(0, last))
+            for (LazyValue l : lv.subList(0, last))
             {
-                final Value val = l.evalValue(c, Context.Type.BOOLEAN);
+                Value val = l.evalValue(c, Context.Type.BOOLEAN);
                 if (val instanceof final FunctionUnpackedArgumentsValue fuav)
                 {
-                    for (final Value it : fuav)
+                    for (Value it : fuav)
                     {
                         if (it.getBoolean())
                         {
@@ -233,13 +233,13 @@ public class Operators
         expression.addBinaryOperator(">", precedence.get("compare>=><=<"), false, (v1, v2) ->
                 BooleanValue.of(v1.compareTo(v2) > 0));
         expression.addFunction("decreasing", lv -> {
-            final int size = lv.size();
+            int size = lv.size();
             if (size < 2)
             {
                 return Value.TRUE;
             }
             Value prev = lv.get(0);
-            for (final Value next : lv.subList(1, size))
+            for (Value next : lv.subList(1, size))
             {
                 if (prev.compareTo(next) <= 0)
                 {
@@ -254,13 +254,13 @@ public class Operators
         expression.addBinaryOperator(">=", precedence.get("compare>=><=<"), false, (v1, v2) ->
                 BooleanValue.of(v1.compareTo(v2) >= 0));
         expression.addFunction("nonincreasing", lv -> {
-            final int size = lv.size();
+            int size = lv.size();
             if (size < 2)
             {
                 return Value.TRUE;
             }
             Value prev = lv.get(0);
-            for (final Value next : lv.subList(1, size))
+            for (Value next : lv.subList(1, size))
             {
                 if (prev.compareTo(next) < 0)
                 {
@@ -275,13 +275,13 @@ public class Operators
         expression.addBinaryOperator("<", precedence.get("compare>=><=<"), false, (v1, v2) ->
                 BooleanValue.of(v1.compareTo(v2) < 0));
         expression.addFunction("increasing", lv -> {
-            final int size = lv.size();
+            int size = lv.size();
             if (size < 2)
             {
                 return Value.TRUE;
             }
             Value prev = lv.get(0);
-            for (final Value next : lv.subList(1, size))
+            for (Value next : lv.subList(1, size))
             {
                 if (prev.compareTo(next) >= 0)
                 {
@@ -296,13 +296,13 @@ public class Operators
         expression.addBinaryOperator("<=", precedence.get("compare>=><=<"), false, (v1, v2) ->
                 BooleanValue.of(v1.compareTo(v2) <= 0));
         expression.addFunction("nondecreasing", lv -> {
-            final int size = lv.size();
+            int size = lv.size();
             if (size < 2)
             {
                 return Value.TRUE;
             }
             Value prev = lv.get(0);
-            for (final Value next : lv.subList(1, size))
+            for (Value next : lv.subList(1, size))
             {
                 if (prev.compareTo(next) > 0)
                 {
@@ -316,21 +316,21 @@ public class Operators
         expression.addMathematicalBinaryIntFunction("bitwise_shift_left", (num, amount) -> num << amount);
         expression.addMathematicalBinaryIntFunction("bitwise_shift_right", (num, amount) -> num >> amount);
         expression.addMathematicalBinaryIntFunction("bitwise_roll_left", (num, num2) -> {
-            final long amount = num2 % 64;
-            final long amountToRoll = 64 - amount;
-            final long rolledBits = ((-1L) >> amountToRoll) << amountToRoll;
-            final long rolledAmount = (num & rolledBits) >> amountToRoll;
+            long amount = num2 % 64;
+            long amountToRoll = 64 - amount;
+            long rolledBits = ((-1L) >> amountToRoll) << amountToRoll;
+            long rolledAmount = (num & rolledBits) >> amountToRoll;
             return num << amount | rolledAmount;
         });
         expression.addMathematicalBinaryIntFunction("bitwise_roll_right", (num, num2) -> {
-            final long amount = num2 % 64;
-            final long amountToRoll = 64 - amount;
-            final long rolledBits = ((-1L) << amountToRoll) >> amountToRoll;
-            final long rolledAmount = (num & rolledBits) << amountToRoll;
+            long amount = num2 % 64;
+            long amountToRoll = 64 - amount;
+            long rolledBits = ((-1L) << amountToRoll) >> amountToRoll;
+            long rolledAmount = (num & rolledBits) << amountToRoll;
             return num >> amount | rolledAmount;
         });
         expression.addMathematicalUnaryIntFunction("bitwise_not", d -> {
-            final long num = (long) d;
+            long num = (long) d;
             return ~num;
         });
         expression.addMathematicalUnaryIntFunction("bitwise_popcount", d -> (long) Long.bitCount((long)d));
@@ -340,13 +340,13 @@ public class Operators
         expression.addBinaryOperator("==", precedence.get("equal==!="), false, (v1, v2) ->
                 v1.equals(v2) ? Value.TRUE : Value.FALSE);
         expression.addFunction("equal", lv -> {
-            final int size = lv.size();
+            int size = lv.size();
             if (size < 2)
             {
                 return Value.TRUE;
             }
             Value prev = lv.get(0);
-            for (final Value next : lv.subList(1, size))
+            for (Value next : lv.subList(1, size))
             {
                 if (!prev.equals(next))
                 {
@@ -360,7 +360,7 @@ public class Operators
         expression.addBinaryOperator("!=", precedence.get("equal==!="), false, (v1, v2) ->
                 v1.equals(v2) ? Value.FALSE : Value.TRUE);
         expression.addFunction("unique", lv -> {
-            final int size = lv.size();
+            int size = lv.size();
             if (size < 2)
             {
                 return Value.TRUE;
@@ -368,7 +368,7 @@ public class Operators
             // need to order them so same obejects will be next to each other.
             lv.sort(Comparator.comparingInt(Value::hashCode));
             Value prev = lv.get(0);
-            for (final Value next : lv.subList(1, size))
+            for (Value next : lv.subList(1, size))
             {
                 if (prev.equals(next))
                 {
@@ -383,12 +383,12 @@ public class Operators
         // lazy cause of assignment which is non-trivial
         expression.addLazyBinaryOperator("=", precedence.get("assign=<>"), false, false, t -> Context.Type.LVALUE, (c, t, lv1, lv2) ->
         {
-            final Value v1 = lv1.evalValue(c, Context.LVALUE);
-            final Value v2 = lv2.evalValue(c);
+            Value v1 = lv1.evalValue(c, Context.LVALUE);
+            Value v2 = lv2.evalValue(c);
             if (v1 instanceof final ListValue.ListConstructorValue lcv && v2 instanceof final ListValue list)
             {
-                final List<Value> ll = lcv.getItems();
-                final List<Value> rl = list.getItems();
+                List<Value> ll = lcv.getItems();
+                List<Value> rl = list.getItems();
                 if (ll.size() < rl.size())
                 {
                     throw new InternalExpressionException("Too many values to unpack");
@@ -397,28 +397,28 @@ public class Operators
                 {
                     throw new InternalExpressionException("Too few values to unpack");
                 }
-                for (final Value v : ll)
+                for (Value v : ll)
                 {
                     v.assertAssignable();
                 }
-                final Iterator<Value> li = ll.iterator();
-                final Iterator<Value> ri = rl.iterator();
+                Iterator<Value> li = ll.iterator();
+                Iterator<Value> ri = rl.iterator();
                 while (li.hasNext())
                 {
-                    final String lname = li.next().getVariable();
-                    final Value vval = ri.next().reboundedTo(lname);
+                    String lname = li.next().getVariable();
+                    Value vval = ri.next().reboundedTo(lname);
                     expression.setAnyVariable(c, lname, (cc, tt) -> vval);
                 }
                 return (cc, tt) -> Value.TRUE;
             }
             if (v1 instanceof final LContainerValue lcv)
             {
-                final ContainerValueInterface container = lcv.container();
+                ContainerValueInterface container = lcv.container();
                 if (container == null)
                 {
                     return (cc, tt) -> Value.NULL;
                 }
-                final Value address = lcv.address();
+                Value address = lcv.address();
                 if (!(container.put(address, v2)))
                 {
                     return (cc, tt) -> Value.NULL;
@@ -426,9 +426,9 @@ public class Operators
                 return (cc, tt) -> v2;
             }
             v1.assertAssignable();
-            final String varname = v1.getVariable();
-            final Value copy = v2.reboundedTo(varname);
-            final LazyValue boundedLHS = (cc, tt) -> copy;
+            String varname = v1.getVariable();
+            Value copy = v2.reboundedTo(varname);
+            LazyValue boundedLHS = (cc, tt) -> copy;
             expression.setAnyVariable(c, varname, boundedLHS);
             return boundedLHS;
         });
@@ -436,12 +436,12 @@ public class Operators
         // lazy due to assignment
         expression.addLazyBinaryOperator("+=", precedence.get("assign=<>"), false, false, t -> Context.Type.LVALUE, (c, t, lv1, lv2) ->
         {
-            final Value v1 = lv1.evalValue(c, Context.LVALUE);
-            final Value v2 = lv2.evalValue(c);
+            Value v1 = lv1.evalValue(c, Context.LVALUE);
+            Value v2 = lv2.evalValue(c);
             if (v1 instanceof final ListValue.ListConstructorValue lcv && v2 instanceof final ListValue list)
             {
-                final List<Value> ll = lcv.getItems();
-                final List<Value> rl = list.getItems();
+                List<Value> ll = lcv.getItems();
+                List<Value> rl = list.getItems();
                 if (ll.size() < rl.size())
                 {
                     throw new InternalExpressionException("Too many values to unpack");
@@ -450,30 +450,30 @@ public class Operators
                 {
                     throw new InternalExpressionException("Too few values to unpack");
                 }
-                for (final Value v : ll)
+                for (Value v : ll)
                 {
                     v.assertAssignable();
                 }
-                final Iterator<Value> li = ll.iterator();
-                final Iterator<Value> ri = rl.iterator();
+                Iterator<Value> li = ll.iterator();
+                Iterator<Value> ri = rl.iterator();
                 while (li.hasNext())
                 {
-                    final Value lval = li.next();
-                    final String lname = lval.getVariable();
-                    final Value result = lval.add(ri.next()).bindTo(lname);
+                    Value lval = li.next();
+                    String lname = lval.getVariable();
+                    Value result = lval.add(ri.next()).bindTo(lname);
                     expression.setAnyVariable(c, lname, (cc, tt) -> result);
                 }
                 return (cc, tt) -> Value.TRUE;
             }
             if (v1 instanceof final LContainerValue lcv)
             {
-                final ContainerValueInterface cvi = lcv.container();
+                ContainerValueInterface cvi = lcv.container();
                 if (cvi == null)
                 {
                     throw new InternalExpressionException("Failed to resolve left hand side of the += operation");
                 }
-                final Value key = lcv.address();
-                final Value value = cvi.get(key);
+                Value key = lcv.address();
+                Value value = cvi.get(key);
                 if (value instanceof ListValue || value instanceof MapValue)
                 {
                     ((AbstractListValue) value).append(v2);
@@ -481,14 +481,14 @@ public class Operators
                 }
                 else
                 {
-                    final Value res = value.add(v2);
+                    Value res = value.add(v2);
                     cvi.put(key, res);
                     return (cc, tt) -> res;
                 }
             }
             v1.assertAssignable();
-            final String varname = v1.getVariable();
-            final LazyValue boundedLHS;
+            String varname = v1.getVariable();
+            LazyValue boundedLHS;
             if (v1 instanceof ListValue || v1 instanceof MapValue)
             {
                 ((AbstractListValue) v1).append(v2);
@@ -496,7 +496,7 @@ public class Operators
             }
             else
             {
-                final Value result = v1.add(v2).bindTo(varname);
+                Value result = v1.add(v2).bindTo(varname);
                 boundedLHS = (cc, tt) -> result;
             }
             expression.setAnyVariable(c, varname, boundedLHS);
@@ -507,8 +507,8 @@ public class Operators
         {
             if (v1 instanceof final ListValue.ListConstructorValue lcv1 && v2 instanceof final ListValue.ListConstructorValue lcv2)
             {
-                final List<Value> ll = lcv1.getItems();
-                final List<Value> rl = lcv2.getItems();
+                List<Value> ll = lcv1.getItems();
+                List<Value> rl = lcv2.getItems();
                 if (ll.size() < rl.size())
                 {
                     throw new InternalExpressionException("Too many values to unpack");
@@ -517,22 +517,22 @@ public class Operators
                 {
                     throw new InternalExpressionException("Too few values to unpack");
                 }
-                for (final Value v : ll)
+                for (Value v : ll)
                 {
                     v.assertAssignable();
                 }
-                for (final Value v : rl)
+                for (Value v : rl)
                 {
                     v.assertAssignable();
                 }
-                final Iterator<Value> li = ll.iterator();
-                final Iterator<Value> ri = rl.iterator();
+                Iterator<Value> li = ll.iterator();
+                Iterator<Value> ri = rl.iterator();
                 while (li.hasNext())
                 {
-                    final Value lval = li.next();
-                    final Value rval = ri.next();
-                    final String lname = lval.getVariable();
-                    final String rname = rval.getVariable();
+                    Value lval = li.next();
+                    Value rval = ri.next();
+                    String lname = lval.getVariable();
+                    String rname = rval.getVariable();
                     lval.reboundedTo(rname);
                     rval.reboundedTo(lname);
                     expression.setAnyVariable(c, lname, (cc, tt) -> rval);
@@ -542,10 +542,10 @@ public class Operators
             }
             v1.assertAssignable();
             v2.assertAssignable();
-            final String lvalvar = v1.getVariable();
-            final String rvalvar = v2.getVariable();
-            final Value lval = v2.reboundedTo(lvalvar);
-            final Value rval = v1.reboundedTo(rvalvar);
+            String lvalvar = v1.getVariable();
+            String rvalvar = v2.getVariable();
+            Value lval = v2.reboundedTo(lvalvar);
+            Value rval = v1.reboundedTo(rvalvar);
             expression.setAnyVariable(c, lvalvar, (cc, tt) -> lval);
             expression.setAnyVariable(c, rvalvar, (cc, tt) -> rval);
             return lval;
@@ -571,7 +571,7 @@ public class Operators
             {
                 throw new InternalExpressionException("Unable to unpack a non-list");
             }
-            final FunctionUnpackedArgumentsValue fuaval = new FunctionUnpackedArgumentsValue(alv.unpack());
+            FunctionUnpackedArgumentsValue fuaval = new FunctionUnpackedArgumentsValue(alv.unpack());
             return (cc, tt) -> fuaval;
         });
 

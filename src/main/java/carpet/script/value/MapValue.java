@@ -25,13 +25,13 @@ public class MapValue extends AbstractListValue implements ContainerValueInterfa
         map = new HashMap<>();
     }
 
-    public MapValue(final List<Value> kvPairs)
+    public MapValue(List<Value> kvPairs)
     {
         this();
         kvPairs.forEach(this::put);
     }
 
-    public MapValue(final Set<Value> keySet)
+    public MapValue(Set<Value> keySet)
     {
         this();
         keySet.forEach(v -> map.put(v, Value.NULL));
@@ -62,8 +62,8 @@ public class MapValue extends AbstractListValue implements ContainerValueInterfa
         {
             return "{" + map.entrySet().stream().map(p -> p.getKey().getPrettyString() + ": " + p.getValue().getPrettyString()).collect(Collectors.joining(", ")) + "}";
         }
-        final List<Value> keys = new ArrayList<>(map.keySet());
-        final int max = keys.size();
+        List<Value> keys = new ArrayList<>(map.keySet());
+        int max = keys.size();
         return "{" + keys.get(0).getPrettyString() + ": " + map.get(keys.get(0)).getPrettyString() + ", " +
                 keys.get(1).getPrettyString() + ": " + map.get(keys.get(1)).getPrettyString() + ", ..., " +
                 keys.get(max - 2).getPrettyString() + ": " + map.get(keys.get(max - 2)).getPrettyString() + ", " +
@@ -85,32 +85,32 @@ public class MapValue extends AbstractListValue implements ContainerValueInterfa
     @Override
     public Value deepcopy()
     {
-        final Map<Value, Value> copyMap = new HashMap<>();
+        Map<Value, Value> copyMap = new HashMap<>();
         map.forEach((key, value) -> copyMap.put(key.deepcopy(), value.deepcopy()));
         return new MapValue(copyMap);
     }
 
-    private MapValue(final Map<Value, Value> other)
+    private MapValue(Map<Value, Value> other)
     {
         map = other;
     }
 
-    public static MapValue wrap(final Map<Value, Value> other)
+    public static MapValue wrap(Map<Value, Value> other)
     {
         return new MapValue(other);
     }
 
     @Override
-    public Value add(final Value o)
+    public Value add(Value o)
     {
-        final Map<Value, Value> newItems = new HashMap<>(map);
+        Map<Value, Value> newItems = new HashMap<>(map);
         if (o instanceof final MapValue mapValue)
         {
             newItems.putAll(mapValue.map);
         }
         else if (o instanceof final AbstractListValue alv)
         {
-            for (final Value value : alv)
+            for (Value value : alv)
             {
                 newItems.put(value, Value.NULL);
             }
@@ -123,24 +123,24 @@ public class MapValue extends AbstractListValue implements ContainerValueInterfa
     }
 
     @Override
-    public Value subtract(final Value v)
+    public Value subtract(Value v)
     {
         throw new InternalExpressionException("Cannot subtract from a map value");
     }
 
     @Override
-    public Value multiply(final Value v)
+    public Value multiply(Value v)
     {
         throw new InternalExpressionException("Cannot multiply with a map value");
     }
 
     @Override
-    public Value divide(final Value v)
+    public Value divide(Value v)
     {
         throw new InternalExpressionException("Cannot divide a map value");
     }
 
-    public void put(final Value v)
+    public void put(Value v)
     {
         if (!(v instanceof final ListValue pair))
         {
@@ -155,19 +155,19 @@ public class MapValue extends AbstractListValue implements ContainerValueInterfa
     }
 
     @Override
-    public void append(final Value v)
+    public void append(Value v)
     {
         map.put(v, Value.NULL);
     }
 
     @Override
-    public int compareTo(final Value o)
+    public int compareTo(Value o)
     {
         throw new InternalExpressionException("Cannot compare with a map value");
     }
 
     @Override
-    public boolean equals(final Object o)
+    public boolean equals(Object o)
     {
         return o instanceof final MapValue mapValue && map.equals(mapValue.map);
     }
@@ -177,7 +177,7 @@ public class MapValue extends AbstractListValue implements ContainerValueInterfa
         return map;
     }
 
-    public void extend(final List<Value> subList)
+    public void extend(List<Value> subList)
     {
         subList.forEach(this::put);
     }
@@ -189,19 +189,19 @@ public class MapValue extends AbstractListValue implements ContainerValueInterfa
     }
 
     @Override
-    public Value in(final Value value)
+    public Value in(Value value)
     {
         return map.containsKey(value) ? value : Value.NULL;
     }
 
     @Override
-    public Value slice(final long from, final Long to)
+    public Value slice(long from, Long to)
     {
         throw new InternalExpressionException("Cannot slice a map value");
     }
 
     @Override
-    public Value split(final Value delimiter)
+    public Value split(Value delimiter)
     {
         throw new InternalExpressionException("Cannot split a map value");
     }
@@ -213,25 +213,25 @@ public class MapValue extends AbstractListValue implements ContainerValueInterfa
     }
 
     @Override
-    public Value get(final Value v2)
+    public Value get(Value v2)
     {
         return map.getOrDefault(v2, Value.NULL);
     }
 
     @Override
-    public boolean has(final Value where)
+    public boolean has(Value where)
     {
         return map.containsKey(where);
     }
 
     @Override
-    public boolean delete(final Value where)
+    public boolean delete(Value where)
     {
         return map.remove(where) != null;
     }
 
     @Override
-    public boolean put(final Value key, final Value value)
+    public boolean put(Value key, Value value)
     {
         return map.put(key, value) != null;
     }
@@ -249,9 +249,9 @@ public class MapValue extends AbstractListValue implements ContainerValueInterfa
     }
 
     @Override
-    public Tag toTag(final boolean force)
+    public Tag toTag(boolean force)
     {
-        final CompoundTag tag = new CompoundTag();
+        CompoundTag tag = new CompoundTag();
         map.forEach((k, v) ->
         {
             if (!force && !(k instanceof StringValue))
@@ -266,8 +266,8 @@ public class MapValue extends AbstractListValue implements ContainerValueInterfa
     @Override
     public JsonElement toJson()
     {
-        final JsonObject jsonMap = new JsonObject();
-        final List<Value> keys = new ArrayList<>(map.keySet());
+        JsonObject jsonMap = new JsonObject();
+        List<Value> keys = new ArrayList<>(map.keySet());
         Collections.sort(keys);
         keys.forEach(k -> jsonMap.add(k.getString(), map.get(k).toJson()));
         return jsonMap;

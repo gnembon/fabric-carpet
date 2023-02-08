@@ -33,7 +33,7 @@ public class BiomeInfo
         put("humidity", (w, b) -> NumericValue.of(Vanilla.Biome_getClimateSettings(b).downfall()));
         put("precipitation", (w, b) -> StringValue.of(b.getPrecipitationAt(new BlockPos(0, w.getSeaLevel(), 0)).name().toLowerCase(Locale.ROOT)));
         put("features", (w, b) -> {
-            final Registry<ConfiguredFeature<?, ?>> registry = w.registryAccess().registryOrThrow(Registries.CONFIGURED_FEATURE);
+            Registry<ConfiguredFeature<?, ?>> registry = w.registryAccess().registryOrThrow(Registries.CONFIGURED_FEATURE);
             return ListValue.wrap(
                     b.getGenerationSettings().features().stream().map(step ->
                             ListValue.wrap(step.stream().map(cfp ->

@@ -22,6 +22,7 @@ import net.minecraft.nbt.TagTypes;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.tuple.Pair;
 
+import javax.annotation.Nullable;
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -50,15 +51,15 @@ import java.util.stream.Stream;
 
 public class FileArgument
 {
-    public String resource;
-    public Type type;
-    public String zipContainer;
-    public boolean isFolder;
-    public boolean isShared;
-    public Reason reason;
+    public final String resource;
+    public final Type type;
+    public final String zipContainer;
+    public final boolean isFolder;
+    public final boolean isShared;
+    public final Reason reason;
     private FileSystem zfs;
     private Path zipPath;
-    private ScriptHost host;
+    private final ScriptHost host;
 
     public static final Object writeIOSync = new Object();
 
@@ -70,7 +71,7 @@ public class FileArgument
             {
                 zfs.close();
             }
-            catch (final IOException e)
+            catch (IOException e)
             {
                 throw new InternalExpressionException("Unable to close zip container: " + zipContainer);
             }
@@ -90,9 +91,9 @@ public class FileArgument
         private final String id;
         private final String extension;
 
-        public static Map<String, Type> of = Arrays.stream(values()).collect(Collectors.toMap(t -> t.id, t -> t));
+        private static final Map<String, Type> of = Arrays.stream(values()).collect(Collectors.toMap(t -> t.id, t -> t));
 
-        Type(final String id, final String extension)
+        Type(String id, String extension)
         {
             this.id = id;
             this.extension = extension;
@@ -104,7 +105,7 @@ public class FileArgument
         READ, CREATE, DELETE
     }
 
-    public FileArgument(final String resource, final Type type, final String zipContainer, final boolean isFolder, final boolean isShared, final Reason reason, final ScriptHost host)
+    public FileArgument(@Nullable String resource, Type type, @Nullable String zipContainer, boolean isFolder, boolean isShared, Reason reason, ScriptHost host)
     {
         this.resource = resource;
         this.type = type;
@@ -120,24 +121,24 @@ public class FileArgument
     @Override
     public String toString()
     {
-        return "path: " + resource + " zip: " + zipContainer + " type: " + type.id + " folder: " + isFolder + " shared: " + isShared + " reason: " + reason.toString();
+        return "path: " + resource + " zip: " + zipContainer + " type: " + type.id + " folder: " + isFolder + " shared: " + isShared + " reason: " + reason;
     }
 
-    public static FileArgument from(final Context context, final List<Value> lv, final boolean isFolder, final Reason reason)
+    public static FileArgument from(Context context, List<Value> lv, boolean isFolder, Reason reason)
     {
         if (lv.size() < 2)
         {
             throw new InternalExpressionException("File functions require path and type as first two arguments");
         }
-        final String origtype = lv.get(1).getString().toLowerCase(Locale.ROOT);
-        final boolean shared = origtype.startsWith("shared_");
-        final String typeString = shared ? origtype.substring(7) : origtype; //len(shared_)
-        final Type type = Type.of.get(typeString);
-        final Pair<String, String> resource = recognizeResource(lv.get(0).getString(), isFolder, type);
+        String origtype = lv.get(1).getString().toLowerCase(Locale.ROOT);
+        boolean shared = origtype.startsWith("shared_");
+        String typeString = shared ? origtype.substring(7) : origtype; //len(shared_)
+        Type type = Type.of.get(typeString);
         if (type == null)
         {
             throw new InternalExpressionException("Unsupported file type: " + origtype);
         }
+        Pair<String, String> resource = recognizeResource(lv.get(0).getString(), isFolder, type);
         if (type == Type.FOLDER && !isFolder)
         {
             throw new InternalExpressionException("Folder types are no supported for this IO function");
@@ -146,21 +147,21 @@ public class FileArgument
 
     }
 
-    public static FileArgument resourceFromPath(final ScriptHost host, final String path, final Reason reason, final boolean shared)
+    public static FileArgument resourceFromPath(ScriptHost host, String path, Reason reason, boolean shared)
     {
-        final Pair<String, String> resource = recognizeResource(path, false, Type.ANY);
+        Pair<String, String> resource = recognizeResource(path, false, Type.ANY);
         return new FileArgument(resource.getLeft(), Type.ANY, resource.getRight(), false, shared, reason, host);
     }
 
-    public static Pair<String, String> recognizeResource(final String origfile, final boolean isFolder, final Type type)
+    public static Pair<String, String> recognizeResource(String origfile, boolean isFolder, Type type)
     {
-        final String[] pathElements = origfile.split("[/\\\\]+");
-        final List<String> path = new ArrayList<>();
+        String[] pathElements = origfile.split("[/\\\\]+");
+        List<String> path = new ArrayList<>();
         String zipPath = null;
         for (int i = 0; i < pathElements.length; i++)
         {
             String token = pathElements[i];
-            final boolean isZip = token.endsWith(".zip") && (isFolder || (i < pathElements.length - 1));
+            boolean isZip = token.endsWith(".zip") && (isFolder || (i < pathElements.length - 1));
             if (zipPath != null && isZip)
             {
                 throw new InternalExpressionException(token + " indicates zip access in an already zipped location " + zipPath);
@@ -196,12 +197,13 @@ public class FileArgument
         return Pair.of(String.join("/", path), zipPath);
     }
 
-    private Path resolve(final String suffix)
+    private Path resolve(String suffix)
     {
         return host.resolveScriptFile(suffix);
     }
 
-    private Path toPath(final Module module)
+    @Nullable
+    private Path toPath(@Nullable Module module)
     {
         if (!isShared && module == null)
         {
@@ -215,7 +217,7 @@ public class FileArgument
         {
             if (zfs == null)
             {
-                final Map<String, String> env = new HashMap<>();
+                Map<String, String> env = new HashMap<>();
                 if (reason == Reason.CREATE)
                 {
                     env.put("create", "true");
@@ -233,7 +235,7 @@ public class FileArgument
                     }
                     zfs = FileSystems.newFileSystem(URI.create("jar:" + zipPath.toUri()), env);
                 }
-                catch (final FileSystemNotFoundException | IOException e)
+                catch (FileSystemNotFoundException | IOException e)
                 {
                     CarpetScriptServer.LOG.warn("Exception when opening zip file", e);
                     throw new ThrowStatement("Unable to open zip file: " + zipContainer, Throwables.IO_EXCEPTION);
@@ -243,7 +245,8 @@ public class FileArgument
         }
     }
 
-    private Path moduleRootPath(final Module module)
+    @Nullable
+    private Path moduleRootPath(@Nullable Module module)
     {
         return !isShared && module == null
                 ? null
@@ -255,7 +258,7 @@ public class FileArgument
         return (isShared ? "shared/" : "") + (zipContainer != null ? zipContainer + "/" : "") + resource + type.extension;
     }
 
-    private String getDescriptor(final Module module, final String res)
+    private String getDescriptor(@Nullable Module module, @Nullable String res)
     {
         if (isShared)
         {
@@ -269,13 +272,13 @@ public class FileArgument
     }
 
 
-    public boolean findPathAndApply(final Module module, final Consumer<Path> action)
+    public boolean findPathAndApply(Module module, Consumer<Path> action)
     {
         try
         {
             synchronized (writeIOSync)
             {
-                final Path dataFile = toPath(module);//, resourceName, supportedTypes.get(type), isShared);
+                Path dataFile = toPath(module);//, resourceName, supportedTypes.get(type), isShared);
                 if (dataFile == null)
                 {
                     return false;
@@ -291,14 +294,15 @@ public class FileArgument
         return true;
     }
 
-    public Stream<Path> listFiles(final Module module)
+    @Nullable
+    public Stream<Path> listFiles(Module module)
     {
-        final Path dir = toPath(module);
+        Path dir = toPath(module);
         if (dir == null || !Files.exists(dir))
         {
             return null;
         }
-        final String ext = type.extension;
+        String ext = type.extension;
         try
         {
             return Files.list(dir).filter(path -> (type == Type.FOLDER)
@@ -306,16 +310,17 @@ public class FileArgument
                     : (Files.isRegularFile(path) && path.toString().endsWith(ext))
             );
         }
-        catch (final IOException ignored)
+        catch (IOException ignored)
         {
             return null;
         }
     }
 
-    public Stream<String> listFolder(final Module module)
+    @Nullable
+    public Stream<String> listFolder(Module module)
     {
         Stream<String> strings;
-        try (final Stream<Path> result = listFiles(module))
+        try (Stream<Path> result = listFiles(module))
         {
             synchronized (writeIOSync)
             {
@@ -323,12 +328,12 @@ public class FileArgument
                 {
                     return null;
                 }
-                final Path rootPath = moduleRootPath(module);
+                Path rootPath = moduleRootPath(module);
                 if (rootPath == null)
                 {
                     return null;
                 }
-                final String zipComponent = (zipContainer != null) ? rootPath.relativize(zipPath).toString() : null;
+                String zipComponent = (zipContainer != null) ? rootPath.relativize(zipPath).toString() : null;
                 // need to evaluate the stream before exiting try-with-resources else there'll be no data to stream
                 strings = (zipContainer == null)
                         ? result.map(p -> rootPath.relativize(p).toString().replaceAll("[\\\\/]+", "/")).toList().stream()
@@ -345,7 +350,7 @@ public class FileArgument
                 : strings.map(FilenameUtils::removeExtension);
     }
 
-    private void createPaths(final Path file)
+    private void createPaths(Path file)
     {
         try
         {
@@ -357,29 +362,29 @@ public class FileArgument
                 throw new IOException();
             }
         }
-        catch (final IOException e)
+        catch (IOException e)
         {
             CarpetScriptServer.LOG.warn("IOException when creating paths", e);
             throw new ThrowStatement("Unable to create paths for " + file, Throwables.IO_EXCEPTION);
         }
     }
 
-    public boolean appendToTextFile(final Module module, final List<String> message)
+    public boolean appendToTextFile(Module module, List<String> message)
     {
         try
         {
             synchronized (writeIOSync)
             {
-                final Path dataFile = toPath(module);
+                Path dataFile = toPath(module);
                 if (dataFile == null)
                 {
                     return false;
                 }
                 createPaths(dataFile);
-                final OutputStream out = Files.newOutputStream(dataFile, StandardOpenOption.APPEND, StandardOpenOption.CREATE);
-                try (final BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(out, StandardCharsets.UTF_8)))
+                OutputStream out = Files.newOutputStream(dataFile, StandardOpenOption.APPEND, StandardOpenOption.CREATE);
+                try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(out, StandardCharsets.UTF_8)))
                 {
-                    for (final String line : message)
+                    for (String line : message)
                     {
                         writer.append(line);
                         if (type == Type.TEXT)
@@ -390,7 +395,7 @@ public class FileArgument
                 }
             }
         }
-        catch (final IOException e)
+        catch (IOException e)
         {
             CarpetScriptServer.LOG.warn("IOException when appending to text file", e);
             throw new ThrowStatement("Error when writing to the file: " + e, Throwables.IO_EXCEPTION);
@@ -402,13 +407,14 @@ public class FileArgument
         return true;
     }
 
-    public Tag getNbtData(final Module module) // aka getData
+    @Nullable
+    public Tag getNbtData(Module module) // aka getData
     {
         try
         {
             synchronized (writeIOSync)
             {
-                final Path dataFile = toPath(module);
+                Path dataFile = toPath(module);
                 if (dataFile == null || !Files.exists(dataFile))
                 {
                     return null;
@@ -424,29 +430,30 @@ public class FileArgument
 
     //copied private method from net.minecraft.nbt.NbtIo.read()
     // to read non-compound tags - these won't be compressed
-    public static Tag readTag(final Path path)
+    @Nullable
+    public static Tag readTag(Path path)
     {
         try
         {
             return NbtIo.readCompressed(Files.newInputStream(path));
         }
-        catch (final IOException e)
+        catch (IOException e)
         {
             // Copy of NbtIo.read(File) because that's now client-side only
             if (!Files.exists(path))
             {
                 return null;
             }
-            try (final DataInputStream in = new DataInputStream(new BufferedInputStream(Files.newInputStream(path))))
+            try (DataInputStream in = new DataInputStream(new BufferedInputStream(Files.newInputStream(path))))
             {
                 return NbtIo.read(in);
             }
-            catch (final IOException ioException)
+            catch (IOException ioException)
             {
                 // not compressed compound tag neither uncompressed compound tag - trying any type of a tag
-                try (final DataInputStream dataInputStream = new DataInputStream(new BufferedInputStream(Files.newInputStream(path))))
+                try (DataInputStream dataInputStream = new DataInputStream(new BufferedInputStream(Files.newInputStream(path))))
                 {
-                    final byte b = dataInputStream.readByte();
+                    byte b = dataInputStream.readByte();
                     if (b == 0)
                     {
                         return null;
@@ -457,7 +464,7 @@ public class FileArgument
                         return TagTypes.getType(b).load(dataInputStream, 0, NbtAccounter.UNLIMITED);
                     }
                 }
-                catch (final IOException secondIO)
+                catch (IOException secondIO)
                 {
                     CarpetScriptServer.LOG.warn("IOException when trying to read nbt file, something may have gone wrong with the fs", e);
                     CarpetScriptServer.LOG.warn("", ioException);
@@ -466,19 +473,19 @@ public class FileArgument
                 }
             }
         }
-        catch (final ReportedException e)
+        catch (ReportedException e)
         {
-            throw new ThrowStatement("Error when reading NBT file " + path.toString(), Throwables.NBT_ERROR);
+            throw new ThrowStatement("Error when reading NBT file " + path, Throwables.NBT_ERROR);
         }
     }
 
-    public boolean saveNbtData(final Module module, final Tag tag) // aka saveData
+    public boolean saveNbtData(Module module, Tag tag) // aka saveData
     {
         try
         {
             synchronized (writeIOSync)
             {
-                final Path dataFile = toPath(module);
+                Path dataFile = toPath(module);
                 if (dataFile == null)
                 {
                     return false;
@@ -494,9 +501,9 @@ public class FileArgument
     }
 
     //copied private method from net.minecraft.nbt.NbtIo.write() and client method safe_write
-    public static boolean writeTagDisk(final Tag tag, Path path, final boolean zipped)
+    public static boolean writeTagDisk(Tag tag, Path path, boolean zipped)
     {
-        final Path original = path;
+        Path original = path;
         try
         {
             if (!zipped)
@@ -511,7 +518,7 @@ public class FileArgument
             }
             else
             {
-                try (final DataOutputStream dataOutputStream = new DataOutputStream(Files.newOutputStream(path)))
+                try (DataOutputStream dataOutputStream = new DataOutputStream(Files.newOutputStream(path)))
                 {
                     dataOutputStream.writeByte(tag.getId());
                     if (tag.getId() != 0)
@@ -528,20 +535,20 @@ public class FileArgument
             }
             return true;
         }
-        catch (final IOException e)
+        catch (IOException e)
         {
             CarpetScriptServer.LOG.warn("IO Exception when writing nbt file", e);
             throw new ThrowStatement("Unable to write tag to " + original, Throwables.IO_EXCEPTION);
         }
     }
 
-    public boolean dropExistingFile(final Module module)
+    public boolean dropExistingFile(Module module)
     {
         try
         {
             synchronized (writeIOSync)
             {
-                final Path dataFile = toPath(module);
+                Path dataFile = toPath(module);
                 if (dataFile == null)
                 {
                     return false;
@@ -549,7 +556,7 @@ public class FileArgument
                 return Files.deleteIfExists(dataFile);
             }
         }
-        catch (final IOException e)
+        catch (IOException e)
         {
             CarpetScriptServer.LOG.warn("IOException when removing file", e);
             throw new ThrowStatement("Error while removing file: " + getDisplayPath(), Throwables.IO_EXCEPTION);
@@ -560,13 +567,14 @@ public class FileArgument
         }
     }
 
-    public List<String> listFile(final Module module)
+    @Nullable
+    public List<String> listFile(Module module)
     {
         try
         {
             synchronized (writeIOSync)
             {
-                final Path dataFile = toPath(module);
+                Path dataFile = toPath(module);
                 if (dataFile == null)
                 {
                     return null;
@@ -584,14 +592,14 @@ public class FileArgument
         }
     }
 
-    public static List<String> listFileContent(final Path filePath)
+    public static List<String> listFileContent(Path filePath)
     {
-        try (final BufferedReader reader = Files.newBufferedReader(filePath, StandardCharsets.UTF_8))
+        try (BufferedReader reader = Files.newBufferedReader(filePath, StandardCharsets.UTF_8))
         {
-            final List<String> result = new ArrayList<>();
+            List<String> result = new ArrayList<>();
             for (; ; )
             {
-                final String line = reader.readLine();
+                String line = reader.readLine();
                 if (line == null)
                 {
                     break;
@@ -600,20 +608,21 @@ public class FileArgument
             }
             return result;
         }
-        catch (final IOException e)
+        catch (IOException e)
         {
             CarpetScriptServer.LOG.warn("IOException when reading text file", e);
             throw new ThrowStatement("Failed to read text file " + filePath, Throwables.IO_EXCEPTION);
         }
     }
 
-    public JsonElement readJsonFile(final Module module)
+    @Nullable
+    public JsonElement readJsonFile(Module module)
     {
         try
         {
             synchronized (writeIOSync)
             {
-                final Path dataFile = toPath(module);
+                Path dataFile = toPath(module);
                 if (dataFile == null || !Files.exists(dataFile))
                 {
                     return null;
@@ -627,13 +636,13 @@ public class FileArgument
         }
     }
 
-    public static JsonElement readJsonContent(final Path filePath)
+    public static JsonElement readJsonContent(Path filePath)
     {
-        try (final BufferedReader reader = Files.newBufferedReader(filePath, StandardCharsets.UTF_8))
+        try (BufferedReader reader = Files.newBufferedReader(filePath, StandardCharsets.UTF_8))
         {
             return JsonParser.parseReader(reader);
         }
-        catch (final JsonParseException e)
+        catch (JsonParseException e)
         {
             Throwable exc = e;
             if (e.getCause() != null)
@@ -645,7 +654,7 @@ public class FileArgument
                     StringValue.of("path"), StringValue.of(filePath.toString())
             )), Throwables.JSON_ERROR);
         }
-        catch (final IOException e)
+        catch (IOException e)
         {
             CarpetScriptServer.LOG.warn("IOException when reading JSON file", e);
             throw new ThrowStatement("Failed to read json file content " + filePath, Throwables.IO_EXCEPTION);

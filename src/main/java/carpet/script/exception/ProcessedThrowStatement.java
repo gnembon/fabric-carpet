@@ -13,7 +13,7 @@ public class ProcessedThrowStatement extends ExpressionException
     public final Throwables thrownExceptionType;
     public final Value data;
 
-    public ProcessedThrowStatement(final Context c, final Expression e, final Token token, final List<FunctionValue> stack, final Throwables thrownExceptionType, final Value data)
+    public ProcessedThrowStatement(Context c, Expression e, Token token, List<FunctionValue> stack, Throwables thrownExceptionType, Value data)
     {
         super(c, e, token, () -> "Unhandled " + thrownExceptionType.getId() + " exception: " + data.getString(), stack);
         this.thrownExceptionType = thrownExceptionType;

@@ -25,7 +25,7 @@ public class NumericValue extends Value
     private static final double epsilon = abs(32 * ((7 * 0.1) * 10 - 7));
     private static final MathContext displayRounding = new MathContext(12, RoundingMode.HALF_EVEN);
 
-    public static NumericValue asNumber(final Value v1, final String id)
+    public static NumericValue asNumber(Value v1, String id)
     {
         if (v1 instanceof final NumericValue nv)
         {
@@ -34,7 +34,7 @@ public class NumericValue extends Value
         throw new InternalExpressionException("Argument " + id + " has to be of a numeric type");
     }
 
-    public static NumericValue asNumber(final Value v1)
+    public static NumericValue asNumber(Value v1)
     {
         if (v1 instanceof final NumericValue nv)
         {
@@ -43,7 +43,7 @@ public class NumericValue extends Value
         throw new InternalExpressionException("Operand has to be of a numeric type");
     }
 
-    public static <T extends Number> Value of(final T value)
+    public static <T extends Number> Value of(T value)
     {
         if (value == null)
         {
@@ -85,7 +85,7 @@ public class NumericValue extends Value
             // dobules have 16 point precision, 12 is plenty to display
             return BigDecimal.valueOf(value).round(displayRounding).stripTrailingZeros().toPlainString();
         }
-        catch (final NumberFormatException exc)
+        catch (NumberFormatException exc)
         {
             throw new InternalExpressionException("Incorrect number format for " + value);
         }
@@ -115,9 +115,9 @@ public class NumericValue extends Value
         return (float) value;
     }
 
-    private static long floor(final double v)
+    private static long floor(double v)
     {
-        final long invValue = (long) v;
+        long invValue = (long) v;
         return v < invValue ? invValue - 1 : invValue;
     }
 
@@ -127,7 +127,7 @@ public class NumericValue extends Value
     }
 
     @Override
-    public Value add(final Value v)
+    public Value add(Value v)
     {  // TODO test if definintn add(NumericVlaue) woud solve the casting
         if (v instanceof final NumericValue nv)
         {
@@ -137,7 +137,7 @@ public class NumericValue extends Value
     }
 
     @Override
-    public Value subtract(final Value v)
+    public Value subtract(Value v)
     {  // TODO test if definintn add(NumericVlaue) woud solve the casting
         if (v instanceof final NumericValue nv)
         {
@@ -147,7 +147,7 @@ public class NumericValue extends Value
     }
 
     @Override
-    public Value multiply(final Value v)
+    public Value multiply(Value v)
     {
         if (v instanceof final NumericValue nv)
         {
@@ -157,7 +157,7 @@ public class NumericValue extends Value
     }
 
     @Override
-    public Value divide(final Value v)
+    public Value divide(Value v)
     {
         return v instanceof final NumericValue nv ? new NumericValue(getDouble() / nv.getDouble()) : super.divide(v);
     }
@@ -169,7 +169,7 @@ public class NumericValue extends Value
     }
 
     @Override
-    public int compareTo(final Value o)
+    public int compareTo(Value o)
     {
         if (o.isNull())
         {
@@ -183,7 +183,7 @@ public class NumericValue extends Value
     }
 
     @Override
-    public boolean equals(final Object o)
+    public boolean equals(Object o)
     {
         if (o instanceof final Value otherValue)
         {
@@ -200,34 +200,34 @@ public class NumericValue extends Value
         return false;
     }
 
-    public NumericValue(final double value)
+    public NumericValue(double value)
     {
         this.value = value;
     }
 
-    private NumericValue(final double value, final Long longValue)
+    private NumericValue(double value, Long longValue)
     {
         this.value = value;
         this.longValue = longValue;
     }
 
-    public NumericValue(final String value)
+    public NumericValue(String value)
     {
-        final BigDecimal decimal = new BigDecimal(value);
+        BigDecimal decimal = new BigDecimal(value);
         if (decimal.stripTrailingZeros().scale() <= 0)
         {
             try
             {
                 longValue = decimal.longValueExact();
             }
-            catch (final ArithmeticException ignored)
+            catch (ArithmeticException ignored)
             {
             }
         }
         this.value = decimal.doubleValue();
     }
 
-    public NumericValue(final long value)
+    public NumericValue(long value)
     {
         this.longValue = value;
         this.value = (double) value;
@@ -271,7 +271,7 @@ public class NumericValue extends Value
     }
 
     @Override
-    public Tag toTag(final boolean force)
+    public Tag toTag(boolean force)
     {
         if (longValue != null)
         {
@@ -281,7 +281,7 @@ public class NumericValue extends Value
             }
             return LongTag.valueOf(longValue);
         }
-        final long lv = getLong();
+        long lv = getLong();
         if (value == (double) lv)
         {
             if (abs(value) < Integer.MAX_VALUE - 2)
@@ -303,7 +303,7 @@ public class NumericValue extends Value
         {
             return new JsonPrimitive(longValue);
         }
-        final long lv = getLong();
+        long lv = getLong();
         return new JsonPrimitive(value == lv ? getLong() : value);
     }
 
@@ -317,14 +317,14 @@ public class NumericValue extends Value
         return longValue != null || getDouble() == getLong();
     }
 
-    public Value mod(final NumericValue n2)
+    public Value mod(NumericValue n2)
     {
         if (this.longValue != null && n2.longValue != null)
         {
             return new NumericValue(Math.floorMod(longValue, n2.longValue));
         }
-        final double x = value;
-        final double y = n2.value;
+        double x = value;
+        double y = n2.value;
         if (y == 0)
         {
             throw new ArithmeticException("Division by zero");

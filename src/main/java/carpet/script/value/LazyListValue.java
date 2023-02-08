@@ -12,7 +12,7 @@ import net.minecraft.nbt.Tag;
 
 public abstract class LazyListValue extends AbstractListValue implements Iterator<Value>
 {
-    public static LazyListValue rangeDouble(final double from, final double to, final double step)
+    public static LazyListValue rangeDouble(double from, double to, double step)
     {
         return new LazyListValue()
         {
@@ -35,7 +35,7 @@ public abstract class LazyListValue extends AbstractListValue implements Iterato
             @Override
             public Value next()
             {
-                final Value val = new NumericValue(current);
+                Value val = new NumericValue(current);
                 current += stepp;
                 return val;
             }
@@ -60,7 +60,7 @@ public abstract class LazyListValue extends AbstractListValue implements Iterato
         };
     }
 
-    public static LazyListValue rangeLong(final long from, final long to, final long step)
+    public static LazyListValue rangeLong(long from, long to, long step)
     {
         return new LazyListValue()
         {
@@ -83,7 +83,7 @@ public abstract class LazyListValue extends AbstractListValue implements Iterato
             @Override
             public Value next()
             {
-                final Value val = new NumericValue(current);
+                Value val = new NumericValue(current);
                 current += stepp;
                 return val;
             }
@@ -136,7 +136,7 @@ public abstract class LazyListValue extends AbstractListValue implements Iterato
 
     public List<Value> unroll()
     {
-        final List<Value> result = new ArrayList<>();
+        List<Value> result = new ArrayList<>();
         this.forEachRemaining(result::add);
         fatality();
         return result;
@@ -157,7 +157,7 @@ public abstract class LazyListValue extends AbstractListValue implements Iterato
         {
             return ListValue.of();
         }
-        final List<Value> result = new ArrayList<>();
+        List<Value> result = new ArrayList<>();
         int i;
         for (i = 0; i < from; i++)
         {
@@ -187,13 +187,13 @@ public abstract class LazyListValue extends AbstractListValue implements Iterato
     }
 
     @Override
-    public Value add(final Value other)
+    public Value add(Value other)
     {
         throw new InternalExpressionException("Cannot add to iterators");
     }
 
     @Override
-    public boolean equals(final Object o)
+    public boolean equals(Object o)
     {
         return false;
     }
@@ -207,12 +207,12 @@ public abstract class LazyListValue extends AbstractListValue implements Iterato
     @Override
     public Object clone()
     {
-        final Object copy;
+        Object copy;
         try
         {
             copy = super.clone();
         }
-        catch (final CloneNotSupportedException e)
+        catch (CloneNotSupportedException e)
         {
             throw new InternalExpressionException("Cannot copy iterators");
         }
@@ -233,7 +233,7 @@ public abstract class LazyListValue extends AbstractListValue implements Iterato
     }
 
     @Override
-    public Tag toTag(final boolean force)
+    public Tag toTag(boolean force)
     {
         if (!force)
         {

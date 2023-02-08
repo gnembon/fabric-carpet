@@ -60,54 +60,54 @@ public class ListValue extends AbstractListValue implements ContainerValueInterf
     @Override
     public Value deepcopy()
     {
-        final List<Value> copyItems = new ArrayList<>(items.size());
-        for (final Value entry : items)
+        List<Value> copyItems = new ArrayList<>(items.size());
+        for (Value entry : items)
         {
             copyItems.add(entry.deepcopy());
         }
         return new ListValue(copyItems);
     }
 
-    public ListValue(final Collection<? extends Value> list)
+    public ListValue(Collection<? extends Value> list)
     {
         items = new ArrayList<>(list);
     }
 
-    protected ListValue(final List<Value> list)
+    protected ListValue(List<Value> list)
     {
         items = list;
     }
 
-    public static Value fromTriple(final double a, final double b, final double c)
+    public static Value fromTriple(double a, double b, double c)
     {
         return ListValue.of(new NumericValue(a), new NumericValue(b), new NumericValue(c));
     }
 
-    public static Value fromTriple(final int a, final int b, final int c)
+    public static Value fromTriple(int a, int b, int c)
     {
         return fromTriple((double) a, b, c);
     }
 
 
-    public static ListValue wrap(final Stream<Value> stream)
+    public static ListValue wrap(Stream<Value> stream)
     {
         return wrap(stream.collect(Collectors.toList()));
     }
 
-    public static ListValue wrap(final List<Value> list)
+    public static ListValue wrap(List<Value> list)
     {
         return new ListValue(list);
     }
 
-    public static ListValue of(final Value... list)
+    public static ListValue of(Value... list)
     {
         return new ListValue(new ArrayList<>(Arrays.asList(list)));
     }
 
-    public static ListValue ofNums(final Number... list)
+    public static ListValue ofNums(Number... list)
     {
-        final List<Value> valList = new ArrayList<>();
-        for (final Number i : list)
+        List<Value> valList = new ArrayList<>();
+        for (Number i : list)
         {
             valList.add(new NumericValue(i.doubleValue()));
         }
@@ -116,7 +116,7 @@ public class ListValue extends AbstractListValue implements ContainerValueInterf
 
     public static LazyValue lazyEmpty()
     {
-        final Value ret = new ListValue();
+        Value ret = new ListValue();
         return (c, t) -> ret;
     }
 
@@ -126,12 +126,12 @@ public class ListValue extends AbstractListValue implements ContainerValueInterf
     }
 
     @Override
-    public Value add(final Value other)
+    public Value add(Value other)
     {
-        final ListValue output = new ListValue();
+        ListValue output = new ListValue();
         if (other instanceof final ListValue list)
         {
-            final List<Value> otherItems = list.items;
+            List<Value> otherItems = list.items;
             if (otherItems.size() == items.size())
             {
                 for (int i = 0, size = items.size(); i < size; i++)
@@ -146,7 +146,7 @@ public class ListValue extends AbstractListValue implements ContainerValueInterf
         }
         else
         {
-            for (final Value v : items)
+            for (Value v : items)
             {
                 output.items.add(v.add(other));
             }
@@ -155,18 +155,18 @@ public class ListValue extends AbstractListValue implements ContainerValueInterf
     }
 
     @Override
-    public void append(final Value v)
+    public void append(Value v)
     {
         items.add(v);
     }
 
     @Override
-    public Value subtract(final Value other)
+    public Value subtract(Value other)
     {
-        final ListValue output = new ListValue();
+        ListValue output = new ListValue();
         if (other instanceof final ListValue list)
         {
-            final List<Value> otherItems = list.items;
+            List<Value> otherItems = list.items;
             if (otherItems.size() == items.size())
             {
                 for (int i = 0, size = items.size(); i < size; i++)
@@ -181,7 +181,7 @@ public class ListValue extends AbstractListValue implements ContainerValueInterf
         }
         else
         {
-            for (final Value v : items)
+            for (Value v : items)
             {
                 output.items.add(v.subtract(other));
             }
@@ -189,19 +189,19 @@ public class ListValue extends AbstractListValue implements ContainerValueInterf
         return output;
     }
 
-    public void subtractFrom(final Value v) // if I ever do -= then it wouod remove items
+    public void subtractFrom(Value v) // if I ever do -= then it wouod remove items
     {
         throw new UnsupportedOperationException(); // TODO
     }
 
 
     @Override
-    public Value multiply(final Value other)
+    public Value multiply(Value other)
     {
-        final ListValue output = new ListValue();
+        ListValue output = new ListValue();
         if (other instanceof final ListValue list)
         {
-            final List<Value> otherItems = list.items;
+            List<Value> otherItems = list.items;
             if (otherItems.size() == items.size())
             {
                 for (int i = 0, size = items.size(); i < size; i++)
@@ -216,7 +216,7 @@ public class ListValue extends AbstractListValue implements ContainerValueInterf
         }
         else
         {
-            for (final Value v : items)
+            for (Value v : items)
             {
                 output.items.add(v.multiply(other));
             }
@@ -225,12 +225,12 @@ public class ListValue extends AbstractListValue implements ContainerValueInterf
     }
 
     @Override
-    public Value divide(final Value other)
+    public Value divide(Value other)
     {
-        final ListValue output = new ListValue();
+        ListValue output = new ListValue();
         if (other instanceof final ListValue list)
         {
-            final List<Value> otherItems = list.items;
+            List<Value> otherItems = list.items;
             if (otherItems.size() == items.size())
             {
                 for (int i = 0, size = items.size(); i < size; i++)
@@ -245,7 +245,7 @@ public class ListValue extends AbstractListValue implements ContainerValueInterf
         }
         else
         {
-            for (final Value v : items)
+            for (Value v : items)
             {
                 output.items.add(v.divide(other));
             }
@@ -254,12 +254,12 @@ public class ListValue extends AbstractListValue implements ContainerValueInterf
     }
 
     @Override
-    public int compareTo(final Value o)
+    public int compareTo(Value o)
     {
         if (o instanceof final ListValue ol)
         {
-            final int size = this.getItems().size();
-            final int otherSize = ol.getItems().size();
+            int size = this.getItems().size();
+            int otherSize = ol.getItems().size();
             if (size != otherSize)
             {
                 return size - otherSize;
@@ -270,7 +270,7 @@ public class ListValue extends AbstractListValue implements ContainerValueInterf
             }
             for (int i = 0; i < size; i++)
             {
-                final int res = this.items.get(i).compareTo(ol.items.get(i));
+                int res = this.items.get(i).compareTo(ol.items.get(i));
                 if (res != 0)
                 {
                     return res;
@@ -282,7 +282,7 @@ public class ListValue extends AbstractListValue implements ContainerValueInterf
     }
 
     @Override
-    public boolean equals(final Object o)
+    public boolean equals(Object o)
     {
         return o instanceof final ListValue list && getItems().equals(list.getItems());
     }
@@ -304,7 +304,7 @@ public class ListValue extends AbstractListValue implements ContainerValueInterf
         return new ArrayList<>(items);
     }
 
-    public void extend(final List<Value> subList)
+    public void extend(List<Value> subList)
     {
         items.addAll(subList);
     }
@@ -316,13 +316,13 @@ public class ListValue extends AbstractListValue implements ContainerValueInterf
      * @param len
      * @return
      */
-    public static int normalizeIndex(long idx, final int len)
+    public static int normalizeIndex(long idx, int len)
     {
         if (idx >= 0 && idx < len)
         {
             return (int) idx;
         }
-        final long range = abs(idx) / len;
+        long range = abs(idx) / len;
         idx += (range + 2) * len;
         idx = idx % len;
         return (int) idx;
@@ -330,7 +330,7 @@ public class ListValue extends AbstractListValue implements ContainerValueInterf
 
     public static class ListConstructorValue extends ListValue
     {
-        public ListConstructorValue(final Collection<? extends Value> list)
+        public ListConstructorValue(Collection<? extends Value> list)
         {
             super(list);
         }
@@ -343,11 +343,11 @@ public class ListValue extends AbstractListValue implements ContainerValueInterf
     }
 
     @Override
-    public Value in(final Value value1)
+    public Value in(Value value1)
     {
         for (int i = 0; i < items.size(); i++)
         {
-            final Value v = items.get(i);
+            Value v = items.get(i);
             if (v.equals(value1))
             {
                 return new NumericValue(i);
@@ -357,16 +357,16 @@ public class ListValue extends AbstractListValue implements ContainerValueInterf
     }
 
     @Override
-    public Value slice(final long fromDesc, final Long toDesc)
+    public Value slice(long fromDesc, Long toDesc)
     {
-        final List<Value> items = getItems();
-        final int size = items.size();
-        final int from = normalizeIndex(fromDesc, size);
+        List<Value> items = getItems();
+        int size = items.size();
+        int from = normalizeIndex(fromDesc, size);
         if (toDesc == null)
         {
             return new ListValue(new ArrayList<>(getItems().subList(from, size)));
         }
-        final int to = normalizeIndex(toDesc, size + 1);
+        int to = normalizeIndex(toDesc, size + 1);
         if (from > to)
         {
             return ListValue.of();
@@ -375,9 +375,9 @@ public class ListValue extends AbstractListValue implements ContainerValueInterf
     }
 
     @Override
-    public Value split(final Value delimiter)
+    public Value split(Value delimiter)
     {
-        final ListValue result = new ListValue();
+        ListValue result = new ListValue();
         if (delimiter == null)
         {
             this.forEach(item -> result.items.add(of(item)));
@@ -385,7 +385,7 @@ public class ListValue extends AbstractListValue implements ContainerValueInterf
         }
         int startIndex = 0;
         int index = 0;
-        for (final Value val : this.items)
+        for (Value val : this.items)
         {
             index++;
             if (val.equals(delimiter))
@@ -405,9 +405,9 @@ public class ListValue extends AbstractListValue implements ContainerValueInterf
     }
 
     @Override
-    public boolean put(final Value where, final Value value, final Value conditionValue)
+    public boolean put(Value where, Value value, Value conditionValue)
     {
-        final String condition = conditionValue.getString();
+        String condition = conditionValue.getString();
         if (condition.equalsIgnoreCase("insert"))
         {
             return put(where, value, false, false);
@@ -424,12 +424,12 @@ public class ListValue extends AbstractListValue implements ContainerValueInterf
     }
 
     @Override
-    public boolean put(final Value ind, final Value value)
+    public boolean put(Value ind, Value value)
     {
         return put(ind, value, true, false);
     }
 
-    private boolean put(final Value ind, final Value value, final boolean replace, final boolean extend)
+    private boolean put(Value ind, Value value, boolean replace, boolean extend)
     {
         if (ind.isNull())
         {
@@ -444,7 +444,7 @@ public class ListValue extends AbstractListValue implements ContainerValueInterf
         }
         else
         {
-            final int numitems = items.size();
+            int numitems = items.size();
             if (!(ind instanceof NumericValue))
             {
                 return false;
@@ -470,8 +470,8 @@ public class ListValue extends AbstractListValue implements ContainerValueInterf
 
             if (extend && value instanceof AbstractListValue)
             {
-                final Iterable<Value> iterable = ((AbstractListValue) value)::iterator;
-                final List<Value> appendix = StreamSupport.stream(iterable.spliterator(), false).collect(Collectors.toList());
+                Iterable<Value> iterable = ((AbstractListValue) value)::iterator;
+                List<Value> appendix = StreamSupport.stream(iterable.spliterator(), false).collect(Collectors.toList());
                 items.addAll(index, appendix);
                 return true;
             }
@@ -481,27 +481,27 @@ public class ListValue extends AbstractListValue implements ContainerValueInterf
     }
 
     @Override
-    public Value get(final Value value)
+    public Value get(Value value)
     {
-        final int size = items.size();
+        int size = items.size();
         return size == 0 ? Value.NULL : items.get(normalizeIndex(NumericValue.asNumber(value, "'address' to a list index").getLong(), size));
     }
 
     @Override
-    public boolean has(final Value where)
+    public boolean has(Value where)
     {
-        final long index = NumericValue.asNumber(where, "'address' to a list index").getLong();
+        long index = NumericValue.asNumber(where, "'address' to a list index").getLong();
         return index >= 0 && index < items.size();
     }
 
     @Override
-    public boolean delete(final Value where)
+    public boolean delete(Value where)
     {
         if (!(where instanceof NumericValue) || items.isEmpty())
         {
             return false;
         }
-        final long index = ((NumericValue) where).getLong();
+        long index = ((NumericValue) where).getLong();
         items.remove(normalizeIndex(index, items.size()));
         return true;
     }
@@ -527,7 +527,7 @@ public class ListValue extends AbstractListValue implements ContainerValueInterf
         MAP,
         STRING;
 
-        private static TagTypeCompat getType(final Tag tag)
+        private static TagTypeCompat getType(Tag tag)
         {
             if (tag instanceof IntTag)
             {
@@ -555,23 +555,23 @@ public class ListValue extends AbstractListValue implements ContainerValueInterf
 
 
     @Override
-    public Tag toTag(final boolean force)
+    public Tag toTag(boolean force)
     {
-        final int argSize = items.size();
+        int argSize = items.size();
         if (argSize == 0)
         {
             return new ListTag();
         }
-        final ListTag tag = new ListTag();
+        ListTag tag = new ListTag();
         if (argSize == 1)
         {
             tag.add(items.get(0).toTag(force));
             return tag;
         }
         // figuring out the types
-        final List<Tag> tags = new ArrayList<>();
+        List<Tag> tags = new ArrayList<>();
         items.forEach(v -> tags.add(v.toTag(force)));
-        final Set<TagTypeCompat> cases = EnumSet.noneOf(TagTypeCompat.class);
+        Set<TagTypeCompat> cases = EnumSet.noneOf(TagTypeCompat.class);
         tags.forEach(t -> cases.add(TagTypeCompat.getType(t)));
         if (cases.size() == 1) // well, one type of items
         {
@@ -599,8 +599,8 @@ public class ListValue extends AbstractListValue implements ContainerValueInterf
     @Override
     public JsonElement toJson()
     {
-        final JsonArray array = new JsonArray();
-        for (final Value el : items)
+        JsonArray array = new JsonArray();
+        for (Value el : items)
         {
             array.add(el.toJson());
         }

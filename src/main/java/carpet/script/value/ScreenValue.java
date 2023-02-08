@@ -57,6 +57,8 @@ import net.minecraft.world.inventory.StonecutterMenu;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Recipe;
 
+import javax.annotation.Nullable;
+
 import static net.minecraft.world.inventory.MenuType.*;
 
 public class ScreenValue extends Value
@@ -109,7 +111,7 @@ public class ScreenValue extends Value
         AbstractContainerMenu create(int syncId, Inventory playerInventory);
     }
 
-    public ScreenValue(final ServerPlayer player, final String type, final Component name, final FunctionValue callback, final Context c)
+    public ScreenValue(ServerPlayer player, String type, Component name, @Nullable FunctionValue callback, Context c)
     {
         this.name = name;
         this.typestring = type.toLowerCase();
@@ -121,7 +123,7 @@ public class ScreenValue extends Value
         this.hostname = c.host.getName();
         this.scriptServer = (CarpetScriptServer) c.host.scriptServer();
         this.player = player;
-        final MenuProvider factory = this.createScreenHandlerFactory();
+        MenuProvider factory = this.createScreenHandlerFactory();
         if (factory == null)
         {
             throw new ThrowStatement(type, Throwables.UNKNOWN_SCREEN);
@@ -138,20 +140,20 @@ public class ScreenValue extends Value
         }
 
         return new SimpleMenuProvider((i, playerInventory, playerEntity) -> {
-            final AbstractContainerMenu screen = screenHandlerFactories.get(ScreenValue.this.typestring).create(i, playerInventory);
+            AbstractContainerMenu screen = screenHandlerFactories.get(ScreenValue.this.typestring).create(i, playerInventory);
             ScreenValue.this.addListenerCallback(screen);
             ScreenValue.this.screenHandler = screen;
             return screen;
         }, this.name);
     }
 
-    private void openScreen(final MenuProvider factory)
+    private void openScreen(MenuProvider factory)
     {
         if (this.player == null)
         {
             return;
         }
-        final OptionalInt optionalSyncId = this.player.openMenu(factory);
+        OptionalInt optionalSyncId = this.player.openMenu(factory);
         if (optionalSyncId.isPresent() && this.player.containerMenu.containerId == optionalSyncId.getAsInt())
         {
             this.screenHandler = this.player.containerMenu;
@@ -185,35 +187,35 @@ public class ScreenValue extends Value
     }
 
 
-    private boolean callListener(final ServerPlayer player, final String action, final Map<Value, Value> data)
+    private boolean callListener(ServerPlayer player, String action, Map<Value, Value> data)
     {
-        final Value playerValue = EntityValue.of(player);
-        final Value actionValue = StringValue.of(action);
-        final Value dataValue = MapValue.wrap(data);
-        final List<Value> args = Arrays.asList(this, playerValue, actionValue, dataValue);
-        final CarpetScriptHost appHost = scriptServer.getAppHostByName(this.hostname);
+        Value playerValue = EntityValue.of(player);
+        Value actionValue = StringValue.of(action);
+        Value dataValue = MapValue.wrap(data);
+        List<Value> args = Arrays.asList(this, playerValue, actionValue, dataValue);
+        CarpetScriptHost appHost = scriptServer.getAppHostByName(this.hostname);
         if (appHost == null)
         {
             this.close();
             this.screenHandler = null;
             return false;
         }
-        final int runPermissionLevel = Vanilla.MinecraftServer_getRunPermissionLevel(player.server);
-        final CommandSourceStack source = player.createCommandSourceStack().withPermission(runPermissionLevel);
-        final CarpetScriptHost executingHost = appHost.retrieveForExecution(source, player);
+        int runPermissionLevel = Vanilla.MinecraftServer_getRunPermissionLevel(player.server);
+        CommandSourceStack source = player.createCommandSourceStack().withPermission(runPermissionLevel);
+        CarpetScriptHost executingHost = appHost.retrieveForExecution(source, player);
         try
         {
-            final Value cancelValue = executingHost.callUDF(source, callback, args);
+            Value cancelValue = executingHost.callUDF(source, callback, args);
             return cancelValue.getString().equals("cancel");
         }
-        catch (final NullPointerException | InvalidCallbackException | IntegrityException error)
+        catch (NullPointerException | InvalidCallbackException | IntegrityException error)
         {
             CarpetScriptServer.LOG.error("Got exception when running screen event call ", error);
             return false;
         }
     }
 
-    private void addListenerCallback(final AbstractContainerMenu screenHandler)
+    private void addListenerCallback(AbstractContainerMenu screenHandler)
     {
         if (this.callback == null)
         {
@@ -223,9 +225,9 @@ public class ScreenValue extends Value
         screenHandler.addSlotListener(new ScarpetScreenHandlerListener()
         {
             @Override
-            public boolean onSlotClick(final ServerPlayer player, final ClickType actionType, final int slot, int button)
+            public boolean onSlotClick(ServerPlayer player, ClickType actionType, int slot, int button)
             {
-                final Map<Value, Value> data = new HashMap<>();
+                Map<Value, Value> data = new HashMap<>();
                 data.put(StringValue.of("slot"), slot == AbstractContainerMenu.SLOT_CLICKED_OUTSIDE ? Value.NULL : NumericValue.of(slot));
                 if (actionType == ClickType.QUICK_CRAFT)
                 {
@@ -237,46 +239,46 @@ public class ScreenValue extends Value
             }
 
             @Override
-            public boolean onButtonClick(final ServerPlayer player, final int button)
+            public boolean onButtonClick(ServerPlayer player, int button)
             {
-                final Map<Value, Value> data = new HashMap<>();
+                Map<Value, Value> data = new HashMap<>();
                 data.put(StringValue.of("button"), NumericValue.of(button));
                 return ScreenValue.this.callListener(player, "button", data);
             }
 
             @Override
-            public void onClose(final ServerPlayer player)
+            public void onClose(ServerPlayer player)
             {
-                final Map<Value, Value> data = new HashMap<>();
+                Map<Value, Value> data = new HashMap<>();
                 ScreenValue.this.callListener(player, "close", data);
             }
 
             @Override
-            public boolean onSelectRecipe(final ServerPlayer player, final Recipe<?> recipe, final boolean craftAll)
+            public boolean onSelectRecipe(ServerPlayer player, Recipe<?> recipe, boolean craftAll)
             {
-                final Map<Value, Value> data = new HashMap<>();
+                Map<Value, Value> data = new HashMap<>();
                 data.put(StringValue.of("recipe"), StringValue.of(recipe.getId().toString()));
                 data.put(StringValue.of("craft_all"), BooleanValue.of(craftAll));
                 return ScreenValue.this.callListener(player, "select_recipe", data);
             }
 
             @Override
-            public void slotChanged(final AbstractContainerMenu handler, final int slotId, final ItemStack stack)
+            public void slotChanged(AbstractContainerMenu handler, int slotId, ItemStack stack)
             {
-                final Map<Value, Value> data = new HashMap<>();
+                Map<Value, Value> data = new HashMap<>();
                 data.put(StringValue.of("slot"), NumericValue.of(slotId));
                 data.put(StringValue.of("stack"), ValueConversions.of(stack, player.level.registryAccess()));
                 ScreenValue.this.callListener(ScreenValue.this.player, "slot_update", data);
             }
 
             @Override
-            public void dataChanged(final AbstractContainerMenu handler, final int property, final int value)
+            public void dataChanged(AbstractContainerMenu handler, int property, int value)
             {
             }
         });
     }
 
-    private DataSlot getPropertyForType(final Class<? extends AbstractContainerMenu> screenHandlerClass, final String requiredType, final int propertyIndex, final String propertyName)
+    private DataSlot getPropertyForType(Class<? extends AbstractContainerMenu> screenHandlerClass, String requiredType, int propertyIndex, String propertyName)
     {
         if (screenHandlerClass.isInstance(this.screenHandler))
         {
@@ -289,7 +291,7 @@ public class ScreenValue extends Value
         throw new InternalExpressionException("Screen property " + propertyName + " expected a " + requiredType + " screen.");
     }
 
-    private DataSlot getProperty(final String propertyName)
+    private DataSlot getProperty(String propertyName)
     {
         return switch (propertyName)
         {
@@ -321,7 +323,7 @@ public class ScreenValue extends Value
 
     }
 
-    public Value queryProperty(final String propertyName)
+    public Value queryProperty(String propertyName)
     {
         if (propertyName.equals("name"))
         {
@@ -331,14 +333,14 @@ public class ScreenValue extends Value
         {
             return BooleanValue.of(this.isOpen());
         }
-        final DataSlot property = getProperty(propertyName);
+        DataSlot property = getProperty(propertyName);
         return NumericValue.of(property.get());
     }
 
-    public Value modifyProperty(final String propertyName, final List<Value> lv)
+    public Value modifyProperty(String propertyName, List<Value> lv)
     {
-        final DataSlot property = getProperty(propertyName);
-        final int intValue = NumericValue.asNumber(lv.get(0)).getInt();
+        DataSlot property = getProperty(propertyName);
+        int intValue = NumericValue.asNumber(lv.get(0)).getInt();
         property.set(intValue);
         this.screenHandler.sendAllDataToRemote();
         return Value.TRUE;
@@ -373,17 +375,17 @@ public class ScreenValue extends Value
     }
 
     @Override
-    public Tag toTag(final boolean force)
+    public Tag toTag(boolean force)
     {
         if (this.screenHandler == null)
         {
             return Value.NULL.toTag(true);
         }
 
-        final ListTag nbtList = new ListTag();
+        ListTag nbtList = new ListTag();
         for (int i = 0; i < this.screenHandler.slots.size(); i++)
         {
-            final ItemStack itemStack = this.screenHandler.getSlot(i).getItem();
+            ItemStack itemStack = this.screenHandler.getSlot(i).getItem();
             nbtList.add(itemStack.save(new CompoundTag()));
         }
         return nbtList;
@@ -405,7 +407,7 @@ public class ScreenValue extends Value
     {
         protected AbstractContainerMenu screenHandler;
 
-        public ScreenHandlerInventory(final AbstractContainerMenu screenHandler)
+        public ScreenHandlerInventory(AbstractContainerMenu screenHandler)
         {
             this.screenHandler = screenHandler;
         }
@@ -419,7 +421,7 @@ public class ScreenValue extends Value
         @Override
         public boolean isEmpty()
         {
-            for (final Slot slot : this.screenHandler.slots)
+            for (Slot slot : this.screenHandler.slots)
             {
                 if (slot.hasItem() && !slot.getItem().isEmpty())
                 {
@@ -430,7 +432,7 @@ public class ScreenValue extends Value
         }
 
         @Override
-        public ItemStack getItem(final int slot)
+        public ItemStack getItem(int slot)
         {
             if (slot == this.getContainerSize() - 1)
             {
@@ -440,9 +442,9 @@ public class ScreenValue extends Value
         }
 
         @Override
-        public ItemStack removeItem(final int slot, final int amount)
+        public ItemStack removeItem(int slot, int amount)
         {
-            final ItemStack itemStack;
+            ItemStack itemStack;
             if (slot == this.getContainerSize() - 1)
             {
                 itemStack = this.screenHandler.getCarried().split(amount);
@@ -459,9 +461,9 @@ public class ScreenValue extends Value
         }
 
         @Override
-        public ItemStack removeItemNoUpdate(final int slot)
+        public ItemStack removeItemNoUpdate(int slot)
         {
-            final ItemStack itemStack;
+            ItemStack itemStack;
             if (slot == this.getContainerSize() - 1)
             {
                 itemStack = this.screenHandler.getCarried();
@@ -489,7 +491,7 @@ public class ScreenValue extends Value
         }
 
         @Override
-        public void setItem(final int slot, final ItemStack stack)
+        public void setItem(int slot, ItemStack stack)
         {
             if (slot == this.getContainerSize() - 1)
             {
@@ -513,7 +515,7 @@ public class ScreenValue extends Value
         }
 
         @Override
-        public boolean stillValid(final Player player)
+        public boolean stillValid(Player player)
         {
             return true;
         }
@@ -521,7 +523,7 @@ public class ScreenValue extends Value
         @Override
         public void clearContent()
         {
-            for (final Slot slot : this.screenHandler.slots)
+            for (Slot slot : this.screenHandler.slots)
             {
                 slot.set(ItemStack.EMPTY);
             }
@@ -530,13 +532,13 @@ public class ScreenValue extends Value
         }
 
 
-        public static ItemStack splitStack(final List<Slot> slots, final int slot, final int amount)
+        public static ItemStack splitStack(List<Slot> slots, int slot, int amount)
         {
             return slot >= 0 && slot < slots.size() && !slots.get(slot).getItem().isEmpty() && amount > 0 ? slots.get(slot).getItem().split(amount) : ItemStack.EMPTY;
         }
     }
 
-    private static String actionTypeToString(final ClickType actionType)
+    private static String actionTypeToString(ClickType actionType)
     {
         return switch (actionType)
         {

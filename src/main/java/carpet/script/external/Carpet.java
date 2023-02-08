@@ -46,17 +46,17 @@ public class Carpet
         return HUDController.scarpet_footers;
     }
 
-    public static void updateScarpetHUDs(final MinecraftServer server, final List<ServerPlayer> players)
+    public static void updateScarpetHUDs(MinecraftServer server, List<ServerPlayer> players)
     {
         HUDController.update_hud(server, players);
     }
 
-    public static Component Messenger_compose(final Object... messages)
+    public static Component Messenger_compose(Object... messages)
     {
         return Messenger.c(messages);
     }
 
-    public static void Messenger_message(final CommandSourceStack source, final Object... messages)
+    public static void Messenger_message(CommandSourceStack source, Object... messages)
     {
         Messenger.m(source, messages);
     }
@@ -81,34 +81,34 @@ public class Carpet
         return BlockInfo.materialName;
     }
 
-    public static Runnable startProfilerSection(final String name)
+    public static Runnable startProfilerSection(String name)
     {
-        final CarpetProfiler.ProfilerToken token = CarpetProfiler.start_section(null, name, CarpetProfiler.TYPE.GENERAL);
+        CarpetProfiler.ProfilerToken token = CarpetProfiler.start_section(null, name, CarpetProfiler.TYPE.GENERAL);
         return () -> CarpetProfiler.end_current_section(token);
     }
 
-    public static void MinecraftServer_addScriptServer(final MinecraftServer server, final CarpetScriptServer scriptServer)
+    public static void MinecraftServer_addScriptServer(MinecraftServer server, CarpetScriptServer scriptServer)
     {
         ((MinecraftServerInterface) server).addScriptServer(scriptServer);
     }
 
-    public static boolean isValidCarpetPlayer(final ServerPlayer player)
+    public static boolean isValidCarpetPlayer(ServerPlayer player)
     {
         return ServerNetworkHandler.isValidCarpetPlayer(player);
     }
 
-    public static String getPlayerStatus(final ServerPlayer player)
+    public static String getPlayerStatus(ServerPlayer player)
     {
         return ServerNetworkHandler.getPlayerStatus(player);
     }
 
     public static MapValue getAllCarpetRules()
     {
-        final Collection<CarpetRule<?>> rules = CarpetServer.settingsManager.getCarpetRules();
-        final MapValue carpetRules = new MapValue(Collections.emptyList());
+        Collection<CarpetRule<?>> rules = CarpetServer.settingsManager.getCarpetRules();
+        MapValue carpetRules = new MapValue(Collections.emptyList());
         rules.forEach(rule -> carpetRules.put(new StringValue(rule.name()), new StringValue(RuleHelper.toRuleString(rule.value()))));
         CarpetServer.extensions.forEach(e -> {
-            final SettingsManager manager = e.extensionSettingsManager();
+            SettingsManager manager = e.extensionSettingsManager();
             if (manager == null)
             {
                 return;
@@ -124,7 +124,7 @@ public class Carpet
     }
 
     @Nullable
-    public static String isModdedPlayer(final Player p)
+    public static String isModdedPlayer(Player p)
     {
         if (p instanceof final EntityPlayerMPFake fake)
         {
@@ -138,7 +138,7 @@ public class Carpet
         return !TickSpeed.process_entities;
     }
 
-    public static void handleExtensionsAPI(final CarpetExpression expression)
+    public static void handleExtensionsAPI(CarpetExpression expression)
     {
         CarpetServer.extensions.forEach(e -> e.scarpetApi(expression));
     }
@@ -151,7 +151,7 @@ public class Carpet
     public static class ScarpetAppStoreValidator extends Validator<String>
     {
         @Override
-        public String validate(final CommandSourceStack source, final CarpetRule<String> currentRule, String newValue, final String stringInput)
+        public String validate(@Nullable CommandSourceStack source, CarpetRule<String> currentRule, String newValue, String stringInput)
         {
             if (newValue.equals(currentRule.value()))
             {

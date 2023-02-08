@@ -93,27 +93,27 @@ import java.util.function.Predicate;
 
 public class Vanilla
 {
-    public static void MinecraftServer_forceTick(final MinecraftServer server, final BooleanSupplier sup)
+    public static void MinecraftServer_forceTick(MinecraftServer server, BooleanSupplier sup)
     {
         ((MinecraftServerInterface) server).forceTick(sup);
     }
 
-    public static void ChunkMap_relightChunk(final ChunkMap chunkMap, final ChunkPos pos)
+    public static void ChunkMap_relightChunk(ChunkMap chunkMap, ChunkPos pos)
     {
         ((ThreadedAnvilChunkStorageInterface) chunkMap).relightChunk(pos);
     }
 
-    public static Map<String, Integer> ChunkMap_regenerateChunkRegion(final ChunkMap chunkMap, final List<ChunkPos> requestedChunks)
+    public static Map<String, Integer> ChunkMap_regenerateChunkRegion(ChunkMap chunkMap, List<ChunkPos> requestedChunks)
     {
         return ((ThreadedAnvilChunkStorageInterface) chunkMap).regenerateChunkRegion(requestedChunks);
     }
 
-    public static List<Collection<ItemStack>> Ingredient_getRecipeStacks(final Ingredient ingredient)
+    public static List<Collection<ItemStack>> Ingredient_getRecipeStacks(Ingredient ingredient)
     {
         return ((IngredientInterface) (Object) ingredient).getRecipeStacks();
     }
 
-    public static List<Recipe<?>> RecipeManager_getAllMatching(final RecipeManager recipeManager, final RecipeType<?> type, final ResourceLocation output, final RegistryAccess registryAccess)
+    public static List<Recipe<?>> RecipeManager_getAllMatching(RecipeManager recipeManager, RecipeType<?> type, ResourceLocation output, RegistryAccess registryAccess)
     {
         return ((RecipeManagerInterface) recipeManager).getAllMatching(type, output, registryAccess);
     }
@@ -123,72 +123,72 @@ public class Vanilla
         return SpawnReporter.MAGIC_NUMBER;
     }
 
-    public static PotentialCalculator SpawnState_getPotentialCalculator(final NaturalSpawner.SpawnState spawnState)
+    public static PotentialCalculator SpawnState_getPotentialCalculator(NaturalSpawner.SpawnState spawnState)
     {
         return ((SpawnHelperInnerInterface) spawnState).getPotentialCalculator();
     }
 
-    public static void Objective_setCriterion(final Objective objective, final ObjectiveCriteria criterion)
+    public static void Objective_setCriterion(Objective objective, ObjectiveCriteria criterion)
     {
         ((Objective_scarpetMixin) objective).setCriterion(criterion);
     }
 
-    public static Map<ObjectiveCriteria, List<Objective>> Scoreboard_getObjectivesByCriterion(final Scoreboard scoreboard)
+    public static Map<ObjectiveCriteria, List<Objective>> Scoreboard_getObjectivesByCriterion(Scoreboard scoreboard)
     {
         return ((Scoreboard_scarpetMixin) scoreboard).getObjectivesByCriterion();
     }
 
-    public static ServerLevelData ServerLevel_getWorldProperties(final ServerLevel world)
+    public static ServerLevelData ServerLevel_getWorldProperties(ServerLevel world)
     {
         return ((ServerWorldInterface) world).getWorldPropertiesCM();
     }
 
-    public static DistanceManager ServerChunkCache_getCMTicketManager(final ServerChunkCache chunkCache)
+    public static DistanceManager ServerChunkCache_getCMTicketManager(ServerChunkCache chunkCache)
     {
         return ((ServerChunkManagerInterface) chunkCache).getCMTicketManager();
     }
 
-    public static Long2ObjectOpenHashMap<SortedArraySet<Ticket<?>>> ChunkTicketManager_getTicketsByPosition(final DistanceManager ticketManager)
+    public static Long2ObjectOpenHashMap<SortedArraySet<Ticket<?>>> ChunkTicketManager_getTicketsByPosition(DistanceManager ticketManager)
     {
         return ((ChunkTicketManagerInterface) ticketManager).getTicketsByPosition();
     }
 
-    public static DensityFunction.Visitor RandomState_getVisitor(final RandomState randomState)
+    public static DensityFunction.Visitor RandomState_getVisitor(RandomState randomState)
     {
         return ((RandomStateVisitorAccessor) (Object) randomState).getVisitor();
     }
 
-    public static CompoundTag BlockInput_getTag(final BlockInput blockInput)
+    public static CompoundTag BlockInput_getTag(BlockInput blockInput)
     {
         return ((BlockStateArgumentInterface) blockInput).getCMTag();
     }
 
-    public static CarpetScriptServer MinecraftServer_getScriptServer(final MinecraftServer server)
+    public static CarpetScriptServer MinecraftServer_getScriptServer(MinecraftServer server)
     {
         return ((MinecraftServerInterface) server).getScriptServer();
     }
 
-    public static Biome.ClimateSettings Biome_getClimateSettings(final Biome biome)
+    public static Biome.ClimateSettings Biome_getClimateSettings(Biome biome)
     {
         return ((BiomeInterface) (Object) biome).getClimateSettings();
     }
 
-    public static ThreadLocal<Boolean> skipGenerationChecks(final ServerLevel level)
+    public static ThreadLocal<Boolean> skipGenerationChecks(ServerLevel level)
     { // not sure does vanilla care at all - needs checking
         return CarpetSettings.skipGenerationChecks;
     }
 
-    public static void sendScarpetShapesDataToPlayer(final ServerPlayer player, final Tag data)
+    public static void sendScarpetShapesDataToPlayer(ServerPlayer player, Tag data)
     { // dont forget to add the packet to vanilla packed handler and call ShapesRenderer.addShape to handle on client
         ServerNetworkHandler.sendCustomCommand(player, "scShapes", data);
     }
 
-    public static int MinecraftServer_getRunPermissionLevel(final MinecraftServer server)
+    public static int MinecraftServer_getRunPermissionLevel(MinecraftServer server)
     {
         return CarpetSettings.runPermissionLevel;
     }
 
-    public static String MinecraftServer_getReleaseTarget(final MinecraftServer server)
+    public static String MinecraftServer_getReleaseTarget(MinecraftServer server)
     {
         return CarpetSettings.releaseTarget;
     }
@@ -198,165 +198,165 @@ public class Vanilla
         return FabricLoader.getInstance().isDevelopmentEnvironment();
     }
 
-    public static MapValue getServerMods(final MinecraftServer server)
+    public static MapValue getServerMods(MinecraftServer server)
     {
-        final Map<Value, Value> ret = new HashMap<>();
-        for (final ModContainer mod : FabricLoader.getInstance().getAllMods())
+        Map<Value, Value> ret = new HashMap<>();
+        for (ModContainer mod : FabricLoader.getInstance().getAllMods())
         {
             ret.put(new StringValue(mod.getMetadata().getId()), new StringValue(mod.getMetadata().getVersion().getFriendlyString()));
         }
         return MapValue.wrap(ret);
     }
 
-    public static LevelStorageSource.LevelStorageAccess MinecraftServer_storageSource(final MinecraftServer server)
+    public static LevelStorageSource.LevelStorageAccess MinecraftServer_storageSource(MinecraftServer server)
     {
         return ((MinecraftServerInterface) server).getCMSession();
     }
 
-    public static BlockPos ServerPlayerGameMode_getCurrentBlockPosition(final ServerPlayerGameMode gameMode)
+    public static BlockPos ServerPlayerGameMode_getCurrentBlockPosition(ServerPlayerGameMode gameMode)
     {
         return ((ServerPlayerInteractionManagerInterface) gameMode).getCurrentBreakingBlock();
     }
 
-    public static int ServerPlayerGameMode_getCurrentBlockBreakingProgress(final ServerPlayerGameMode gameMode)
+    public static int ServerPlayerGameMode_getCurrentBlockBreakingProgress(ServerPlayerGameMode gameMode)
     {
         return ((ServerPlayerInteractionManagerInterface) gameMode).getCurrentBlockBreakingProgress();
     }
 
-    public static void ServerPlayerGameMode_setBlockBreakingProgress(final ServerPlayerGameMode gameMode, final int progress)
+    public static void ServerPlayerGameMode_setBlockBreakingProgress(ServerPlayerGameMode gameMode, int progress)
     {
         ((ServerPlayerInteractionManagerInterface) gameMode).setBlockBreakingProgress(progress);
     }
 
-    public static boolean ServerPlayer_isInvalidEntityObject(final ServerPlayer player)
+    public static boolean ServerPlayer_isInvalidEntityObject(ServerPlayer player)
     {
         return ((ServerPlayerInterface) player).isInvalidEntityObject();
     }
 
-    public static String ServerPlayer_getLanguage(final ServerPlayer player)
+    public static String ServerPlayer_getLanguage(ServerPlayer player)
     {
         return ((ServerPlayerInterface) player).getLanguage();
     }
 
-    public static GoalSelector Mob_getAI(final Mob mob, final boolean target)
+    public static GoalSelector Mob_getAI(Mob mob, boolean target)
     {
         return ((MobEntityInterface) mob).getAI(target);
     }
 
-    public static Map<String, Goal> Mob_getTemporaryTasks(final Mob mob)
+    public static Map<String, Goal> Mob_getTemporaryTasks(Mob mob)
     {
         return ((MobEntityInterface) mob).getTemporaryTasks();
     }
 
-    public static void Mob_setPersistence(final Mob mob, final boolean what)
+    public static void Mob_setPersistence(Mob mob, boolean what)
     {
         ((MobEntityInterface) mob).setPersistence(what);
     }
 
-    public static EntityEventsGroup Entity_getEventContainer(final Entity entity)
+    public static EntityEventsGroup Entity_getEventContainer(Entity entity)
     {
         return ((EntityInterface) entity).getEventContainer();
     }
 
-    public static boolean Entity_isPermanentVehicle(final Entity entity)
+    public static boolean Entity_isPermanentVehicle(Entity entity)
     {
         return ((EntityInterface) entity).isPermanentVehicle();
     }
 
-    public static void Entity_setPermanentVehicle(final Entity entity, final boolean permanent)
+    public static void Entity_setPermanentVehicle(Entity entity, boolean permanent)
     {
         ((EntityInterface) entity).setPermanentVehicle(permanent);
     }
 
-    public static int Entity_getPortalTimer(final Entity entity)
+    public static int Entity_getPortalTimer(Entity entity)
     {
         return ((EntityInterface) entity).getPortalTimer();
     }
 
-    public static void Entity_setPortalTimer(final Entity entity, final int amount)
+    public static void Entity_setPortalTimer(Entity entity, int amount)
     {
         ((EntityInterface) entity).setPortalTimer(amount);
     }
 
-    public static int Entity_getPublicNetherPortalCooldown(final Entity entity)
+    public static int Entity_getPublicNetherPortalCooldown(Entity entity)
     {
         return ((EntityInterface) entity).getPublicNetherPortalCooldown();
     }
 
-    public static void Entity_setPublicNetherPortalCooldown(final Entity entity, final int what)
+    public static void Entity_setPublicNetherPortalCooldown(Entity entity, int what)
     {
         ((EntityInterface) entity).setPublicNetherPortalCooldown(what);
     }
 
-    public static int ItemEntity_getPickupDelay(final ItemEntity entity)
+    public static int ItemEntity_getPickupDelay(ItemEntity entity)
     {
         return ((ItemEntityInterface) entity).getPickupDelayCM();
     }
 
-    public static boolean LivingEntity_isJumping(final LivingEntity entity)
+    public static boolean LivingEntity_isJumping(LivingEntity entity)
     {
         return ((LivingEntityInterface) entity).isJumpingCM();
     }
 
-    public static void LivingEntity_setJumping(final LivingEntity entity)
+    public static void LivingEntity_setJumping(LivingEntity entity)
     {
         ((LivingEntityInterface) entity).doJumpCM();
     }
 
-    public static Container AbstractHorse_getInventory(final AbstractHorse horse)
+    public static Container AbstractHorse_getInventory(AbstractHorse horse)
     {
         return ((InventoryBearerInterface) horse).getCMInventory();
     }
 
-    public static DataSlot AbstractContainerMenu_getDataSlot(final AbstractContainerMenu handler, final int index)
+    public static DataSlot AbstractContainerMenu_getDataSlot(AbstractContainerMenu handler, int index)
     {
         return ((AbstractContainerMenuInterface) handler).getDataSlot(index);
     }
 
-    public static void CommandDispatcher_unregisterCommand(final CommandDispatcher<CommandSourceStack> dispatcher, final String name)
+    public static void CommandDispatcher_unregisterCommand(CommandDispatcher<CommandSourceStack> dispatcher, String name)
     {
         ((CommandDispatcherInterface) dispatcher).carpet$unregister(name);
     }
 
-    public static boolean MinecraftServer_doScriptsAutoload(final MinecraftServer server)
+    public static boolean MinecraftServer_doScriptsAutoload(MinecraftServer server)
     {
         return CarpetSettings.scriptsAutoload;
     }
 
-    public static void MinecraftServer_notifyPlayersCommandsChanged(final MinecraftServer server)
+    public static void MinecraftServer_notifyPlayersCommandsChanged(MinecraftServer server)
     {
         CommandHelper.notifyPlayersCommandsChanged(server);
     }
 
-    public static boolean ScriptServer_scriptOptimizations(final MinecraftServer scriptServer)
+    public static boolean ScriptServer_scriptOptimizations(MinecraftServer scriptServer)
     {
         return CarpetSettings.scriptsOptimization;
     }
 
-    public static boolean ScriptServer_scriptDebugging(final MinecraftServer server)
+    public static boolean ScriptServer_scriptDebugging(MinecraftServer server)
     {
         return CarpetSettings.scriptsDebugging;
     }
 
-    public static boolean ServerPlayer_canScriptACE(final CommandSourceStack player)
+    public static boolean ServerPlayer_canScriptACE(CommandSourceStack player)
     {
         return CommandHelper.canUseCommand(player, CarpetSettings.commandScriptACE);
     }
 
-    public static boolean ServerPlayer_canScriptGeneral(final CommandSourceStack player)
+    public static boolean ServerPlayer_canScriptGeneral(CommandSourceStack player)
     {
         return CommandHelper.canUseCommand(player, CarpetSettings.commandScript);
     }
 
-    public static int MinecraftServer_getFillLimit(final MinecraftServer server)
+    public static int MinecraftServer_getFillLimit(MinecraftServer server)
     {
         return Math.max(server.getGameRules().getInt(GameRules.RULE_COMMAND_MODIFICATION_BLOCK_LIMIT), CarpetSettings.fillLimit);
     }
 
     public record BlockPredicatePayload(BlockState state, TagKey<Block> tagKey, Map<Value, Value> properties, CompoundTag tag) {
-        public static BlockPredicatePayload of(final Predicate<BlockInWorld> blockPredicate)
+        public static BlockPredicatePayload of(Predicate<BlockInWorld> blockPredicate)
         {
-            final BlockPredicateInterface predicateData = (BlockPredicateInterface) blockPredicate;
+            BlockPredicateInterface predicateData = (BlockPredicateInterface) blockPredicate;
             return new BlockPredicatePayload(predicateData.getCMBlockState(), predicateData.getCMBlockTagKey(), predicateData.getCMProperties(), predicateData.getCMDataTag());
         }
     }

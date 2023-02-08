@@ -10,16 +10,17 @@ import carpet.script.value.ListValue;
 import carpet.script.value.Value;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 
+import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 public class FunctionArgument extends Argument
 {
-    public FunctionValue function;
-    public List<Value> args;
+    public final FunctionValue function;
+    public final List<Value> args;
 
-    private FunctionArgument(final FunctionValue function, final int offset, final List<Value> args)
+    private FunctionArgument(@Nullable FunctionValue function, int offset, List<Value> args)
     {
         super(offset);
         this.function = function;
@@ -38,12 +39,12 @@ public class FunctionArgument extends Argument
      * @return argument data
      */
     public static FunctionArgument findIn(
-            final Context c,
-            final Module module,
-            final List<Value> params,
-            final int offset,
-            final boolean allowNone,
-            final boolean checkArgs)
+            Context c,
+            Module module,
+            List<Value> params,
+            int offset,
+            boolean allowNone,
+            boolean checkArgs)
     {
         Value functionValue = params.get(offset);
         if (functionValue.isNull())
@@ -56,14 +57,14 @@ public class FunctionArgument extends Argument
         }
         if (!(functionValue instanceof FunctionValue))
         {
-            final String name = functionValue.getString();
+            String name = functionValue.getString();
             functionValue = c.host.getAssertFunction(module, name);
         }
-        final FunctionValue fun = (FunctionValue) functionValue;
-        final int argsize = fun.getArguments().size();
+        FunctionValue fun = (FunctionValue) functionValue;
+        int argsize = fun.getArguments().size();
         if (checkArgs)
         {
-            final int extraargs = params.size() - argsize - offset - 1;
+            int extraargs = params.size() - argsize - offset - 1;
             if (extraargs < 0)
             {
                 throw new InternalExpressionException("Function " + fun.getPrettyString() + " requires at least " + fun.getArguments().size() + " arguments");
@@ -73,7 +74,7 @@ public class FunctionArgument extends Argument
                 throw new InternalExpressionException("Function " + fun.getPrettyString() + " requires " + fun.getArguments().size() + " arguments");
             }
         }
-        final List<Value> lvargs = new ArrayList<>();
+        List<Value> lvargs = new ArrayList<>();
         for (int i = offset + 1, mx = params.size(); i < mx; i++)
         {
             lvargs.add(params.get(i));
@@ -81,27 +82,27 @@ public class FunctionArgument extends Argument
         return new FunctionArgument(fun, offset + 1 + argsize, lvargs);
     }
 
-    public static FunctionArgument fromCommandSpec(final ScriptHost host, Value funSpec) throws CommandSyntaxException
+    public static FunctionArgument fromCommandSpec(ScriptHost host, Value funSpec) throws CommandSyntaxException
     {
-        final FunctionValue function;
+        FunctionValue function;
         List<Value> args = Collections.emptyList();
         if (!(funSpec instanceof ListValue))
         {
             funSpec = ListValue.of(funSpec);
         }
-        final List<Value> params = ((ListValue) funSpec).getItems();
+        List<Value> params = ((ListValue) funSpec).getItems();
         if (params.isEmpty())
         {
             throw CommandArgument.error("Function has empty spec");
         }
-        final Value first = params.get(0);
+        Value first = params.get(0);
         if (first instanceof FunctionValue)
         {
             function = (FunctionValue) first;
         }
         else
         {
-            final String name = first.getString();
+            String name = first.getString();
             function = host.getFunction(name);
             if (function == null)
             {

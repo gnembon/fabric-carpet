@@ -13,14 +13,14 @@ public interface LazyValue
     LazyValue NULL = (c, t) -> Value.NULL;
     LazyValue ZERO = (c, t) -> Value.ZERO;
 
-    static LazyValue ofConstant(final Value val)
+    static LazyValue ofConstant(Value val)
     {
         return new Constant(val);
     }
 
     Value evalValue(Context c, Context.Type type);
 
-    default Value evalValue(final Context c)
+    default Value evalValue(Context c)
     {
         return evalValue(c, Context.Type.NONE);
     }
@@ -32,7 +32,7 @@ public interface LazyValue
         Value evalType(Context.Type type);
 
         @Override
-        default Value evalValue(final Context c, final Context.Type type)
+        default Value evalValue(Context c, Context.Type type)
         {
             return evalType(type);
         }
@@ -43,7 +43,7 @@ public interface LazyValue
     {
         Value result;
 
-        public Constant(final Value value)
+        public Constant(Value value)
         {
             result = value;
         }
@@ -54,14 +54,14 @@ public interface LazyValue
         }
 
         @Override
-        public Value evalType(final Context.Type type)
+        public Value evalType(Context.Type type)
         {
 
             return result.fromConstant();
         }
 
         @Override
-        public Value evalValue(final Context c, final Context.Type type)
+        public Value evalValue(Context c, Context.Type type)
         {
             return result.fromConstant();
         }

@@ -42,7 +42,7 @@ public class CarpetExpression
         return origin;
     }
 
-    public CarpetExpression(final Module module, final String expression, final CommandSourceStack source, final BlockPos origin)
+    public CarpetExpression(Module module, String expression, CommandSourceStack source, BlockPos origin)
     {
         this.origin = origin;
         this.source = source;
@@ -61,7 +61,7 @@ public class CarpetExpression
         Carpet.handleExtensionsAPI(this);
     }
 
-    public boolean fillAndScanCommand(final ScriptHost host, final int x, final int y, final int z)
+    public boolean fillAndScanCommand(ScriptHost host, int x, int y, int z)
     {
         CarpetScriptServer scriptServer = (CarpetScriptServer) host.scriptServer();
         if (scriptServer.stopAll)
@@ -70,39 +70,39 @@ public class CarpetExpression
         }
         try
         {
-            final Context context = new CarpetContext(host, source, origin).
+            Context context = new CarpetContext(host, source, origin).
                     with("x", (c, t) -> new NumericValue(x - origin.getX()).bindTo("x")).
                     with("y", (c, t) -> new NumericValue(y - origin.getY()).bindTo("y")).
                     with("z", (c, t) -> new NumericValue(z - origin.getZ()).bindTo("z")).
                     with("_", (c, t) -> new BlockValue(null, source.getLevel(), new BlockPos(x, y, z)).bindTo("_"));
-            final Entity e = source.getEntity();
+            Entity e = source.getEntity();
             if (e == null)
             {
-                final Value nullPlayer = Value.NULL.reboundedTo("p");
+                Value nullPlayer = Value.NULL.reboundedTo("p");
                 context.with("p", (cc, tt) -> nullPlayer);
             }
             else
             {
-                final Value playerValue = new EntityValue(e).bindTo("p");
+                Value playerValue = new EntityValue(e).bindTo("p");
                 context.with("p", (cc, tt) -> playerValue);
             }
             return scriptServer.events.handleEvents.getWhileDisabled(() -> this.expr.eval(context).getBoolean());
         }
-        catch (final ExpressionException e)
+        catch (ExpressionException e)
         {
             throw new CarpetExpressionException(e.getMessage(), e.stack);
         }
-        catch (final ArithmeticException ae)
+        catch (ArithmeticException ae)
         {
             throw new CarpetExpressionException("Math doesn't compute... " + ae.getMessage(), null);
         }
-        catch (final StackOverflowError soe)
+        catch (StackOverflowError soe)
         {
             throw new CarpetExpressionException("Your thoughts are too deep", null);
         }
     }
 
-    public Value scriptRunCommand(final ScriptHost host, final BlockPos pos)
+    public Value scriptRunCommand(ScriptHost host, BlockPos pos)
     {
         CarpetScriptServer scriptServer = (CarpetScriptServer) host.scriptServer();
         if (scriptServer.stopAll)
@@ -111,32 +111,32 @@ public class CarpetExpression
         }
         try
         {
-            final Context context = new CarpetContext(host, source, origin).
+            Context context = new CarpetContext(host, source, origin).
                     with("x", (c, t) -> new NumericValue(pos.getX() - origin.getX()).bindTo("x")).
                     with("y", (c, t) -> new NumericValue(pos.getY() - origin.getY()).bindTo("y")).
                     with("z", (c, t) -> new NumericValue(pos.getZ() - origin.getZ()).bindTo("z"));
-            final Entity e = source.getEntity();
+            Entity e = source.getEntity();
             if (e == null)
             {
-                final Value nullPlayer = Value.NULL.reboundedTo("p");
+                Value nullPlayer = Value.NULL.reboundedTo("p");
                 context.with("p", (cc, tt) -> nullPlayer);
             }
             else
             {
-                final Value playerValue = new EntityValue(e).bindTo("p");
+                Value playerValue = new EntityValue(e).bindTo("p");
                 context.with("p", (cc, tt) -> playerValue);
             }
             return scriptServer.events.handleEvents.getWhileDisabled(() -> this.expr.eval(context));
         }
-        catch (final ExpressionException e)
+        catch (ExpressionException e)
         {
             throw new CarpetExpressionException(e.getMessage(), e.stack);
         }
-        catch (final ArithmeticException ae)
+        catch (ArithmeticException ae)
         {
             throw new CarpetExpressionException("Math doesn't compute... " + ae.getMessage(), null);
         }
-        catch (final StackOverflowError soe)
+        catch (StackOverflowError soe)
         {
             throw new CarpetExpressionException("Your thoughts are too deep", null);
         }

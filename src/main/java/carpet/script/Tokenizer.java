@@ -44,7 +44,7 @@ public class Tokenizer implements Iterator<Tokenizer.Token>
     private final Expression expression;
     private final Context context;
 
-    Tokenizer(final Context c, final Expression expr, final String input, final boolean allowComments, final boolean allowNewLineMakers)
+    Tokenizer(Context c, Expression expr, String input, boolean allowComments, boolean allowNewLineMakers)
     {
         this.input = input;
         this.expression = expr;
@@ -55,13 +55,13 @@ public class Tokenizer implements Iterator<Tokenizer.Token>
 
     public List<Token> postProcess()
     {
-        final Iterable<Token> iterable = () -> this;
-        final List<Token> originalTokens = StreamSupport.stream(iterable.spliterator(), false).collect(Collectors.toList());
-        final List<Token> cleanedTokens = new ArrayList<>();
+        Iterable<Token> iterable = () -> this;
+        List<Token> originalTokens = StreamSupport.stream(iterable.spliterator(), false).collect(Collectors.toList());
+        List<Token> cleanedTokens = new ArrayList<>();
         Token last = null;
         while (!originalTokens.isEmpty())
         {
-            final Token current = originalTokens.remove(originalTokens.size() - 1);
+            Token current = originalTokens.remove(originalTokens.size() - 1);
             if (current.type == Token.TokenType.MARKER && current.surface.startsWith("//"))
             {
                 continue;
@@ -120,22 +120,22 @@ public class Tokenizer implements Iterator<Tokenizer.Token>
         return (pos < (input.length() - 1)) ? input.charAt(pos + 1) : 0;
     }
 
-    private boolean isHexDigit(final char ch)
+    private boolean isHexDigit(char ch)
     {
         return ch == 'x' || ch == 'X' || (ch >= '0' && ch <= '9') || (ch >= 'a' && ch <= 'f')
                 || (ch >= 'A' && ch <= 'F');
     }
 
-    private static boolean isSemicolon(final Token tok)
+    private static boolean isSemicolon(Token tok)
     {
         return (tok.type == Token.TokenType.OPERATOR && tok.surface.equals(";"))
                 || (tok.type == Token.TokenType.UNARY_OPERATOR && tok.surface.equals(";u"));
     }
 
-    public static List<Token> simplepass(final String input)
+    public static List<Token> simplepass(String input)
     {
-        final Tokenizer tok = new Tokenizer(null, null, input, false, false);
-        final List<Token> res = new ArrayList<>();
+        Tokenizer tok = new Tokenizer(null, null, input, false, false);
+        List<Token> res = new ArrayList<>();
         while (tok.hasNext())
         {
             res.add(tok.next());
@@ -146,7 +146,7 @@ public class Tokenizer implements Iterator<Tokenizer.Token>
     @Override
     public Token next()
     {
-        final Token token = new Token();
+        Token token = new Token();
 
         if (pos >= input.length())
         {
@@ -208,7 +208,7 @@ public class Tokenizer implements Iterator<Tokenizer.Token>
             {
                 if (ch == '\\')
                 {
-                    final char nextChar = peekNextChar();
+                    char nextChar = peekNextChar();
                     if (nextChar == 'n')
                     {
                         token.append('\n');
@@ -324,8 +324,8 @@ public class Tokenizer implements Iterator<Tokenizer.Token>
         else
         {
             String greedyMatch = "";
-            final int initialPos = pos;
-            final int initialLinePos = linepos;
+            int initialPos = pos;
+            int initialLinePos = linepos;
             ch = input.charAt(pos);
             int validOperatorSeenUntil = -1;
             while (!Character.isLetter(ch) && !Character.isDigit(ch) && "_".indexOf(ch) < 0
@@ -433,7 +433,7 @@ public class Tokenizer implements Iterator<Tokenizer.Token>
             final boolean functional;
             final boolean constant;
 
-            TokenType(final boolean functional, final boolean constant)
+            TokenType(boolean functional, boolean constant)
             {
                 this.functional = functional;
                 this.constant = constant;
@@ -457,9 +457,9 @@ public class Tokenizer implements Iterator<Tokenizer.Token>
         public int lineno;
         public static final Token NONE = new Token();
 
-        public Token morphedInto(final TokenType newType, final String newSurface)
+        public Token morphedInto(TokenType newType, String newSurface)
         {
-            final Token created = new Token();
+            Token created = new Token();
             created.surface = newSurface;
             created.type = newType;
             created.pos = pos;
@@ -468,23 +468,23 @@ public class Tokenizer implements Iterator<Tokenizer.Token>
             return created;
         }
 
-        public void morph(final TokenType type, final String s)
+        public void morph(TokenType type, String s)
         {
             this.type = type;
             this.surface = s;
         }
 
-        public void append(final char c)
+        public void append(char c)
         {
             surface += c;
         }
 
-        public void append(final String s)
+        public void append(String s)
         {
             surface += s;
         }
 
-        public char charAt(final int pos)
+        public char charAt(int pos)
         {
             return surface.charAt(pos);
         }

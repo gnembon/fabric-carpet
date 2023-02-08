@@ -20,16 +20,16 @@ public record Module(String name, String code, boolean library)
         Objects.requireNonNull(code);
     }
 
-    public static Module fromPath(final Path path)
+    public static Module fromPath(Path path)
     {
-        final boolean library = path.getFileName().toString().endsWith(".scl");
+        boolean library = path.getFileName().toString().endsWith(".scl");
         try
         {
-            final String name = path.getFileName().toString().replaceFirst("\\.scl?", "").toLowerCase(Locale.ROOT);
-            final String code = new String(Files.readAllBytes(path), StandardCharsets.UTF_8);
+            String name = path.getFileName().toString().replaceFirst("\\.scl?", "").toLowerCase(Locale.ROOT);
+            String code = new String(Files.readAllBytes(path), StandardCharsets.UTF_8);
             return new Module(name, code, library);
         }
-        catch (final IOException e)
+        catch (IOException e)
         {
             throw new IllegalArgumentException("Failed to load scarpet module", e);
         }
@@ -42,7 +42,7 @@ public record Module(String name, String code, boolean library)
      * @param isLibrary  A {@link boolean} indicating whether or not the script is a library
      * @return The created {@link BundledModule}
      */
-    public static Module carpetNative(final String scriptName, final boolean isLibrary)
+    public static Module carpetNative(String scriptName, boolean isLibrary)
     {
         return fromJarPath("assets/carpet/scripts/", scriptName, isLibrary);
     }
@@ -56,7 +56,7 @@ public record Module(String name, String code, boolean library)
      * @return The created {@link BundledModule}
      * @see #fromJarPathWithCustomName(String, String, boolean)
      */
-    public static Module fromJarPath(final String path, final String scriptName, final boolean isLibrary)
+    public static Module fromJarPath(String path, String scriptName, boolean isLibrary)
     {
         return fromJarPathWithCustomName(path + scriptName + (isLibrary ? ".scl" : ".sc"), scriptName, isLibrary);
     }
@@ -70,26 +70,26 @@ public record Module(String name, String code, boolean library)
      * @return The created {@link Module}
      * @see #fromJarPath(String, String, boolean)
      */
-    public static Module fromJarPathWithCustomName(final String fullPath, final String customName, final boolean isLibrary)
+    public static Module fromJarPathWithCustomName(String fullPath, String customName, boolean isLibrary)
     {
         try
         {
-            final String name = customName.toLowerCase(Locale.ROOT);
-            final String code = IOUtils.toString(
+            String name = customName.toLowerCase(Locale.ROOT);
+            String code = IOUtils.toString(
                     Module.class.getClassLoader().getResourceAsStream(fullPath),
                     StandardCharsets.UTF_8
             );
             return new Module(name, code, isLibrary);
         }
-        catch (final IOException e)
+        catch (IOException e)
         {
             throw new IllegalArgumentException("Failed to load bundled module", e);
         }
     }
 
-    public static Tag getData(final Module module, final ScriptServer scriptServer)
+    public static Tag getData(Module module, ScriptServer scriptServer)
     {
-        final Path dataFile = resolveResource(module, scriptServer);
+        Path dataFile = resolveResource(module, scriptServer);
         if (dataFile == null || !Files.exists(dataFile) || !(Files.isRegularFile(dataFile)))
         {
             return null;
@@ -100,9 +100,9 @@ public record Module(String name, String code, boolean library)
         }
     }
 
-    public static void saveData(final Module module, final Tag globalState, final ScriptServer scriptServer)
+    public static void saveData(Module module, Tag globalState, ScriptServer scriptServer)
     {
-        final Path dataFile = resolveResource(module, scriptServer);
+        Path dataFile = resolveResource(module, scriptServer);
         if (dataFile == null)
         {
             return;
@@ -113,7 +113,7 @@ public record Module(String name, String code, boolean library)
             {
                 Files.createDirectories(dataFile.getParent());
             }
-            catch (final IOException e)
+            catch (IOException e)
             {
                 throw new IllegalStateException(e);
             }
@@ -124,7 +124,7 @@ public record Module(String name, String code, boolean library)
         }
     }
 
-    private static Path resolveResource(final Module module, final ScriptServer scriptServer)
+    private static Path resolveResource(Module module, ScriptServer scriptServer)
     {
         return module == null ? null : scriptServer.resolveResource(module.name() + ".data.nbt");
     }

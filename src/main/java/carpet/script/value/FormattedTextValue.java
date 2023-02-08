@@ -10,15 +10,15 @@ public class FormattedTextValue extends StringValue
 {
     Component text;
 
-    public FormattedTextValue(final Component text)
+    public FormattedTextValue(Component text)
     {
         super(null);
         this.text = text;
     }
 
-    public static Value combine(final Value left, final Value right)
+    public static Value combine(Value left, Value right)
     {
-        final MutableComponent text;
+        MutableComponent text;
         if (left instanceof final FormattedTextValue ftv)
         {
             text = ftv.getText().copy();
@@ -45,7 +45,7 @@ public class FormattedTextValue extends StringValue
         return new FormattedTextValue(text);
     }
 
-    public static Value of(final Component text)
+    public static Value of(Component text)
     {
         return text == null ? Value.NULL : new FormattedTextValue(text);
     }
@@ -80,7 +80,7 @@ public class FormattedTextValue extends StringValue
     }
 
     @Override
-    public Tag toTag(final boolean force)
+    public Tag toTag(boolean force)
     {
         if (!force)
         {
@@ -96,7 +96,7 @@ public class FormattedTextValue extends StringValue
     }
 
     @Override
-    public Value add(final Value o)
+    public Value add(Value o)
     {
         return combine(this, o);
     }
@@ -106,12 +106,12 @@ public class FormattedTextValue extends StringValue
         return Component.Serializer.toJson(text);
     }
 
-    public static FormattedTextValue deserialize(final String serialized)
+    public static FormattedTextValue deserialize(String serialized)
     {
         return new FormattedTextValue(Component.Serializer.fromJson(serialized));
     }
 
-    public static Component getTextByValue(final Value value)
+    public static Component getTextByValue(Value value)
     {
         return (value instanceof final FormattedTextValue ftv) ? ftv.getText() : Component.literal(value.getString());
     }

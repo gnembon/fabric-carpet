@@ -40,7 +40,7 @@ public class SnoopyCommandSource extends CommandSourceStack
     private final List<Component> chatOutput;
     private final CommandSigningContext signingContext;
 
-    public SnoopyCommandSource(final CommandSourceStack original, final Component[] error, final List<Component> chatOutput)
+    public SnoopyCommandSource(CommandSourceStack original, Component[] error, List<Component> chatOutput)
     {
         super(CommandSource.NULL, original.getPosition(), original.getRotation(), original.getLevel(), Vanilla.MinecraftServer_getRunPermissionLevel(original.getServer()),
                 original.getTextName(), original.getDisplayName(), original.getServer(), original.getEntity(), false,
@@ -63,7 +63,7 @@ public class SnoopyCommandSource extends CommandSourceStack
         this.signingContext = original.getSigningContext();
     }
 
-    public SnoopyCommandSource(final ServerPlayer player, final Component[] error, final List<Component> output)
+    public SnoopyCommandSource(ServerPlayer player, Component[] error, List<Component> output)
     {
         super(player, player.position(), player.getRotationVector(),
                 player.level instanceof final ServerLevel serverLevel ? serverLevel : null,
@@ -86,8 +86,8 @@ public class SnoopyCommandSource extends CommandSourceStack
         this.signingContext = CommandSigningContext.ANONYMOUS;
     }
 
-    private SnoopyCommandSource(final CommandSource output, final Vec3 pos, final Vec2 rot, final ServerLevel world, final int level, final String simpleName, final Component name, final MinecraftServer server, @Nullable final Entity entity, final ResultConsumer<CommandSourceStack> consumer, final EntityAnchorArgument.Anchor entityAnchor, final CommandSigningContext context,
-                                final Component[] error, final List<Component> chatOutput
+    private SnoopyCommandSource(CommandSource output, Vec3 pos, Vec2 rot, ServerLevel world, int level, String simpleName, Component name, MinecraftServer server, @Nullable Entity entity, ResultConsumer<CommandSourceStack> consumer, EntityAnchorArgument.Anchor entityAnchor, CommandSigningContext context,
+                                Component[] error, List<Component> chatOutput
     )
     {
         super(output, pos, rot, world, level,
@@ -110,33 +110,33 @@ public class SnoopyCommandSource extends CommandSourceStack
     }
 
     @Override
-    public CommandSourceStack withEntity(final Entity entity)
+    public CommandSourceStack withEntity(Entity entity)
     {
         return new SnoopyCommandSource(output, position, rotation, world, level, entity.getName().getString(), entity.getDisplayName(), server, entity, resultConsumer, entityAnchor, signingContext, error, chatOutput);
     }
 
     @Override
-    public CommandSourceStack withPosition(final Vec3 position)
+    public CommandSourceStack withPosition(Vec3 position)
     {
         return new SnoopyCommandSource(output, position, rotation, world, level, simpleName, name, server, entity, resultConsumer, entityAnchor, signingContext, error, chatOutput);
     }
 
     @Override
-    public CommandSourceStack withRotation(final Vec2 rotation)
+    public CommandSourceStack withRotation(Vec2 rotation)
     {
         return new SnoopyCommandSource(output, position, rotation, world, level, simpleName, name, server, entity, resultConsumer, entityAnchor, signingContext, error, chatOutput);
     }
 
     @Override
-    public CommandSourceStack withCallback(final ResultConsumer<CommandSourceStack> consumer)
+    public CommandSourceStack withCallback(ResultConsumer<CommandSourceStack> consumer)
     {
         return new SnoopyCommandSource(output, position, rotation, world, level, simpleName, name, server, entity, consumer, entityAnchor, signingContext, error, chatOutput);
     }
 
     @Override
-    public CommandSourceStack withCallback(final ResultConsumer<CommandSourceStack> consumer, final BinaryOperator<ResultConsumer<CommandSourceStack>> binaryOperator)
+    public CommandSourceStack withCallback(ResultConsumer<CommandSourceStack> consumer, BinaryOperator<ResultConsumer<CommandSourceStack>> binaryOperator)
     {
-        final ResultConsumer<CommandSourceStack> resultConsumer = binaryOperator.apply(this.resultConsumer, consumer);
+        ResultConsumer<CommandSourceStack> resultConsumer = binaryOperator.apply(this.resultConsumer, consumer);
         return this.withCallback(resultConsumer);
     }
 
@@ -145,58 +145,58 @@ public class SnoopyCommandSource extends CommandSourceStack
     //public ServerCommandSource withSilent() { return this; }
 
     @Override
-    public CommandSourceStack withPermission(final int level)
+    public CommandSourceStack withPermission(int level)
     {
         return this;
     }
 
     @Override
-    public CommandSourceStack withMaximumPermission(final int level)
+    public CommandSourceStack withMaximumPermission(int level)
     {
         return this;
     }
 
     @Override
-    public CommandSourceStack withAnchor(final EntityAnchorArgument.Anchor anchor)
+    public CommandSourceStack withAnchor(EntityAnchorArgument.Anchor anchor)
     {
         return new SnoopyCommandSource(output, position, rotation, world, level, simpleName, name, server, entity, resultConsumer, anchor, signingContext, error, chatOutput);
     }
 
     @Override
-    public CommandSourceStack withSigningContext(final CommandSigningContext commandSigningContext)
+    public CommandSourceStack withSigningContext(CommandSigningContext commandSigningContext)
     {
         return new SnoopyCommandSource(output, position, rotation, world, level, simpleName, name, server, entity, resultConsumer, entityAnchor, commandSigningContext, error, chatOutput);
     }
 
     @Override
-    public CommandSourceStack withLevel(final ServerLevel world)
+    public CommandSourceStack withLevel(ServerLevel world)
     {
-        final double d = DimensionType.getTeleportationScale(this.world.dimensionType(), world.dimensionType());
-        final Vec3 position = new Vec3(this.position.x * d, this.position.y, this.position.z * d);
+        double d = DimensionType.getTeleportationScale(this.world.dimensionType(), world.dimensionType());
+        Vec3 position = new Vec3(this.position.x * d, this.position.y, this.position.z * d);
         return new SnoopyCommandSource(output, position, rotation, world, level, simpleName, name, server, entity, resultConsumer, entityAnchor, signingContext, error, chatOutput);
     }
 
     @Override
-    public CommandSourceStack facing(final Vec3 position)
+    public CommandSourceStack facing(Vec3 position)
     {
-        final Vec3 vec3d = this.entityAnchor.apply(this);
-        final double d = position.x - vec3d.x;
-        final double e = position.y - vec3d.y;
-        final double f = position.z - vec3d.z;
-        final double g = Math.sqrt(d * d + f * f);
-        final float h = Mth.wrapDegrees((float) (-(Mth.atan2(e, g) * 57.2957763671875D)));
-        final float i = Mth.wrapDegrees((float) (Mth.atan2(f, d) * 57.2957763671875D) - 90.0F);
+        Vec3 vec3d = this.entityAnchor.apply(this);
+        double d = position.x - vec3d.x;
+        double e = position.y - vec3d.y;
+        double f = position.z - vec3d.z;
+        double g = Math.sqrt(d * d + f * f);
+        float h = Mth.wrapDegrees((float) (-(Mth.atan2(e, g) * 57.2957763671875D)));
+        float i = Mth.wrapDegrees((float) (Mth.atan2(f, d) * 57.2957763671875D) - 90.0F);
         return this.withRotation(new Vec2(h, i));
     }
 
     @Override
-    public void sendFailure(final Component message)
+    public void sendFailure(Component message)
     {
         error[0] = message;
     }
 
     @Override
-    public void sendSuccess(final Component message, final boolean broadcastToOps)
+    public void sendSuccess(Component message, boolean broadcastToOps)
     {
         chatOutput.add(message);
     }

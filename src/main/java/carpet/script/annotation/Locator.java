@@ -20,6 +20,8 @@ import carpet.script.value.BlockValue;
 import carpet.script.value.FunctionValue;
 import carpet.script.value.Value;
 
+import javax.annotation.Nullable;
+
 import static java.lang.annotation.ElementType.PARAMETER;
 import static java.lang.annotation.ElementType.TYPE_USE;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
@@ -122,7 +124,7 @@ public interface Locator
             super();
         }
 
-        static <R> ValueConverter<R> fromAnnotatedType(final AnnotatedType annoType, final Class<R> type)
+        static <R> ValueConverter<R> fromAnnotatedType(AnnotatedType annoType, Class<R> type)
         {
             if (annoType.isAnnotationPresent(Block.class))
             {
@@ -146,7 +148,7 @@ public interface Locator
             private final boolean anyString;
             private final boolean optional;
 
-            public BlockLocator(final Block annotation, final Class<R> type)
+            public BlockLocator(Block annotation, Class<R> type)
             {
                 super();
                 this.acceptString = annotation.acceptString();
@@ -163,8 +165,9 @@ public interface Locator
                 }
             }
 
+            @Nullable
             @SuppressWarnings("unchecked")
-            private static <R> java.util.function.Function<BlockArgument, R> getReturnFunction(final Class<R> type)
+            private static <R> java.util.function.Function<BlockArgument, R> getReturnFunction(Class<R> type)
             {
                 if (type == BlockArgument.class)
                 {
@@ -192,9 +195,9 @@ public interface Locator
             }
 
             @Override
-            public R checkAndConvert(final Iterator<Value> valueIterator, final Context context, final Context.Type theLazyT)
+            public R checkAndConvert(Iterator<Value> valueIterator, Context context, Context.Type theLazyT)
             {
-                final BlockArgument locator = BlockArgument.findIn((CarpetContext) context, valueIterator, 0, acceptString, optional, anyString);
+                BlockArgument locator = BlockArgument.findIn((CarpetContext) context, valueIterator, 0, acceptString, optional, anyString);
                 return returnFunction.apply(locator);
             }
         }
@@ -205,7 +208,7 @@ public interface Locator
             private final boolean optionalEntity;
             private final boolean returnVec3d;
 
-            public Vec3dLocator(final Vec3d annotation, final Class<R> type)
+            public Vec3dLocator(Vec3d annotation, Class<R> type)
             {
                 this.optionalDirection = annotation.optionalDirection();
                 this.optionalEntity = annotation.optionalEntity();
@@ -227,10 +230,10 @@ public interface Locator
             }
 
             @Override
-            public R checkAndConvert(final Iterator<Value> valueIterator, final Context context, final Context.Type theLazyT)
+            public R checkAndConvert(Iterator<Value> valueIterator, Context context, Context.Type theLazyT)
             {
-                final Vector3Argument locator = Vector3Argument.findIn(valueIterator, 0, optionalDirection, optionalEntity);
-                @SuppressWarnings("unchecked") final R ret = (R) (returnVec3d ? locator.vec : locator);
+                Vector3Argument locator = Vector3Argument.findIn(valueIterator, 0, optionalDirection, optionalEntity);
+                @SuppressWarnings("unchecked") R ret = (R) (returnVec3d ? locator.vec : locator);
                 return ret;
             }
         }
@@ -241,7 +244,7 @@ public interface Locator
             private final boolean allowNone;
             private final boolean checkArgs;
 
-            FunctionLocator(final Function annotation, final Class<R> type)
+            FunctionLocator(Function annotation, Class<R> type)
             {
                 super();
                 this.returnFunctionValue = type == FunctionValue.class;
@@ -258,11 +261,11 @@ public interface Locator
             }
 
             @Override
-            public R checkAndConvert(final Iterator<Value> valueIterator, final Context context, final Context.Type theLazyT)
+            public R checkAndConvert(Iterator<Value> valueIterator, Context context, Context.Type theLazyT)
             {
-                final Module module = context.host.main;
-                final FunctionArgument locator = FunctionArgument.findIn(context, module, Lists.newArrayList(valueIterator), 0, allowNone, checkArgs);
-                @SuppressWarnings("unchecked") final R ret = (R) (returnFunctionValue ? locator.function : locator);
+                Module module = context.host.main;
+                FunctionArgument locator = FunctionArgument.findIn(context, module, Lists.newArrayList(valueIterator), 0, allowNone, checkArgs);
+                @SuppressWarnings("unchecked") R ret = (R) (returnFunctionValue ? locator.function : locator);
                 return ret;
             }
 
@@ -276,7 +279,7 @@ public interface Locator
         private abstract static class AbstractLocator<R> implements ValueConverter<R>, Locator
         {
             @Override
-            public R convert(final Value value, final Context context)
+            public R convert(Value value, @Nullable Context context)
             {
                 throw new UnsupportedOperationException("Cannot call a locator in a parameter that doesn't contain a context!");
             }

@@ -21,7 +21,7 @@ import java.util.Locale;
 
 public class Functions
 {
-    public static void apply(final Expression expression) // public just to get the javadoc right
+    public static void apply(Expression expression) // public just to get the javadoc right
     {
         // artificial construct to handle user defined functions and function definitions
         expression.addContextFunction("import", -1, (c, t, lv) ->
@@ -45,28 +45,28 @@ public class Functions
         expression.addCustomFunction("call", new Fluff.AbstractLazyFunction(-1, "call")
         {
             @Override
-            public LazyValue lazyEval(final Context c, final Context.Type t, final Expression expr, final Tokenizer.Token tok, final List<LazyValue> lv)
+            public LazyValue lazyEval(Context c, Context.Type t, Expression expr, Tokenizer.Token tok, List<LazyValue> lv)
             {
-                if (lv.size() == 0)
+                if (lv.isEmpty())
                 {
                     throw new InternalExpressionException("'call' expects at least function name to call");
                 }
                 //lv.remove(lv.size()-1); // aint gonna cut it // maybe it will because of the eager eval changes
                 if (t != Context.SIGNATURE) // just call the function
                 {
-                    final List<Value> args = Fluff.AbstractFunction.unpackLazy(lv, c, Context.NONE);
-                    final FunctionArgument functionArgument = FunctionArgument.findIn(c, expression.module, args, 0, false, true);
-                    final FunctionValue fun = functionArgument.function;
+                    List<Value> args = Fluff.AbstractFunction.unpackLazy(lv, c, Context.NONE);
+                    FunctionArgument functionArgument = FunctionArgument.findIn(c, expression.module, args, 0, false, true);
+                    FunctionValue fun = functionArgument.function;
                     return fun.callInContext(c, t, functionArgument.args);
                 }
                 // gimme signature
-                final String name = lv.get(0).evalValue(c, Context.NONE).getString();
-                final List<String> args = new ArrayList<>();
-                final List<String> globals = new ArrayList<>();
+                String name = lv.get(0).evalValue(c, Context.NONE).getString();
+                List<String> args = new ArrayList<>();
+                List<String> globals = new ArrayList<>();
                 String varArgs = null;
                 for (int i = 1; i < lv.size(); i++)
                 {
-                    final Value v = lv.get(i).evalValue(c, Context.LOCALIZATION);
+                    Value v = lv.get(i).evalValue(c, Context.LOCALIZATION);
                     if (!v.isBound())
                     {
                         throw new InternalExpressionException("Only variables can be used in function signature, not  " + v.getString());
@@ -91,7 +91,7 @@ public class Functions
                         args.add(v.boundVariable);
                     }
                 }
-                final Value retval = new FunctionSignatureValue(name, args, varArgs, globals);
+                Value retval = new FunctionSignatureValue(name, args, varArgs, globals);
                 return (cc, tt) -> retval;
             }
 
@@ -108,7 +108,7 @@ public class Functions
             }
 
             @Override
-            public Context.Type staticType(final Context.Type outerType)
+            public Context.Type staticType(Context.Type outerType)
             {
                 return outerType == Context.SIGNATURE ? Context.LOCALIZATION : Context.NONE;
             }
@@ -130,19 +130,19 @@ public class Functions
         {
             if (type == Context.MAPDEF)
             {
-                final Value result = ListValue.of(lv1.evalValue(c), lv2.evalValue(c));
+                Value result = ListValue.of(lv1.evalValue(c), lv2.evalValue(c));
                 return (cc, tt) -> result;
             }
-            final Value v1 = lv1.evalValue(c, Context.SIGNATURE);
+            Value v1 = lv1.evalValue(c, Context.SIGNATURE);
             if (!(v1 instanceof final FunctionSignatureValue sign))
             {
                 throw new InternalExpressionException("'->' operator requires a function signature on the LHS");
             }
-            final Value result = expression.createUserDefinedFunction(c, sign.identifier(), e, t, sign.arguments(), sign.varArgs(), sign.globals(), lv2);
+            Value result = expression.createUserDefinedFunction(c, sign.identifier(), e, t, sign.arguments(), sign.varArgs(), sign.globals(), lv2);
             return (cc, tt) -> result;
         });
 
-        expression.addImpureFunction("return", (lv) -> {
+        expression.addImpureFunction("return", lv -> {
             throw new ReturnStatement(lv.size() == 0 ? Value.NULL : lv.get(0));
         });
     }

@@ -19,23 +19,23 @@ import java.util.stream.Collectors;
 
 public class ControlFlow
 {
-    public static void apply(final Expression expression) // public just to get the javadoc right
+    public static void apply(Expression expression) // public just to get the javadoc right
     {
         // needs to be lazy cause of custom contextualization
         expression.addLazyBinaryOperator(";", Operators.precedence.get("nextop;"), true, true, t -> Context.Type.VOID, (c, t, lv1, lv2) ->
         {
             lv1.evalValue(c, Context.VOID);
-            final Value v2 = lv2.evalValue(c, t);
+            Value v2 = lv2.evalValue(c, t);
             return (cc, tt) -> v2;
         });
 
         expression.addPureLazyFunction("then", -1, t -> Context.Type.VOID, (c, t, lv) -> {
-            final int imax = lv.size() - 1;
+            int imax = lv.size() - 1;
             for (int i = 0; i < imax; i++)
             {
                 lv.get(i).evalValue(c, Context.VOID);
             }
-            final Value v = lv.get(imax).evalValue(c, t);
+            Value v = lv.get(imax).evalValue(c, t);
             return (cc, tt) -> v;
         });
         expression.addFunctionalEquivalence(";", "then");
@@ -52,20 +52,20 @@ public class ControlFlow
             {
                 if (lv.get(i).evalValue(c, Context.BOOLEAN).getBoolean())
                 {
-                    final Value ret = lv.get(i + 1).evalValue(c, t);
+                    Value ret = lv.get(i + 1).evalValue(c, t);
                     return (cc, tt) -> ret;
                 }
             }
             if (lv.size() % 2 == 1)
             {
-                final Value ret = lv.get(lv.size() - 1).evalValue(c, t);
+                Value ret = lv.get(lv.size() - 1).evalValue(c, t);
                 return (cc, tt) -> ret;
             }
             return (cc, tt) -> Value.NULL;
         });
 
-        expression.addImpureFunction("exit", (lv) -> {
-            throw new ExitStatement(lv.size() == 0 ? Value.NULL : lv.get(0));
+        expression.addImpureFunction("exit", lv -> {
+            throw new ExitStatement(lv.isEmpty() ? Value.NULL : lv.get(0));
         });
 
         expression.addImpureFunction("throw", lv ->
@@ -83,16 +83,16 @@ public class ControlFlow
         // needs to be lazy since execution of parameters but first one are conditional
         expression.addLazyFunction("try", (c, t, lv) ->
         {
-            if (lv.size() == 0)
+            if (lv.isEmpty())
             {
                 throw new InternalExpressionException("'try' needs at least an expression block, and either a catch_epr, or a number of pairs of filters and catch_expr");
             }
             try
             {
-                final Value retval = lv.get(0).evalValue(c, t);
-                return (c_, t_) -> retval;
+                Value retval = lv.get(0).evalValue(c, t);
+                return (ct, tt) -> retval;
             }
-            catch (final ProcessedThrowStatement ret)
+            catch (ProcessedThrowStatement ret)
             {
                 if (lv.size() == 1)
                 {
@@ -100,7 +100,7 @@ public class ControlFlow
                     {
                         throw ret;
                     }
-                    return (c_, t_) -> Value.NULL;
+                    return (ct, tt) -> Value.NULL;
                 }
                 if (lv.size() > 3 && lv.size() % 2 == 0)
                 {
@@ -109,10 +109,10 @@ public class ControlFlow
 
                 Value val = null; // This is always assigned at some point, just the compiler doesn't know
 
-                final LazyValue __ = c.getVariable("_");
-                c.setVariable("_", (__c, __t) -> ret.data.reboundedTo("_"));
-                final LazyValue _trace = c.getVariable("_trace");
-                c.setVariable("_trace", (__c, __t) -> MapValue.wrap(Map.of(
+                LazyValue defaultVal = c.getVariable("_");
+                c.setVariable("_", (ct, tt) -> ret.data.reboundedTo("_"));
+                LazyValue trace = c.getVariable("_trace");
+                c.setVariable("_trace", (ct, tt) -> MapValue.wrap(Map.of(
                         StringValue.of("stack"), ListValue.wrap(ret.stack.stream().map(f -> ListValue.of(
                                 StringValue.of(f.getModule().name()),
                                 StringValue.of(f.getString()),
@@ -151,10 +151,10 @@ public class ControlFlow
                         pointer += 2;
                     }
                 }
-                c.setVariable("_", __);
-                if (_trace != null)
+                c.setVariable("_", defaultVal);
+                if (trace != null)
                 {
-                    c.setVariable("_trace", _trace);
+                    c.setVariable("_trace", trace);
                 }
                 else
                 {
@@ -164,8 +164,8 @@ public class ControlFlow
                 {
                     throw ret;
                 }
-                final Value retval = val;
-                return (c_, t_) -> retval;
+                Value retval = val;
+                return (ct, tt) -> retval;
             }
         });
     }
