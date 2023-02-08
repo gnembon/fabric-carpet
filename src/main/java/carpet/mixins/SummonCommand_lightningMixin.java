@@ -17,7 +17,7 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 @Mixin(SummonCommand.class)
 public class SummonCommand_lightningMixin
 {
-    @Redirect(method = "spawnEntity", at = @At(
+    @Redirect(method = "createEntity", at = @At(
             value = "INVOKE",
             target = "Lnet/minecraft/world/entity/Entity;blockPosition()Lnet/minecraft/core/BlockPos;"
     ))

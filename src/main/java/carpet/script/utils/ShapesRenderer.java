@@ -33,7 +33,6 @@ import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.Sheets;
-import net.minecraft.client.renderer.block.model.ItemTransforms;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.resources.model.Material;
@@ -44,6 +43,7 @@ import net.minecraft.nbt.ListTag;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.util.Mth;
 import net.minecraft.world.item.DyeColor;
+import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LightLayer;
 import net.minecraft.world.level.block.EntityBlock;
@@ -287,7 +287,7 @@ public class ShapesRenderer
     {
 
         private final boolean isitem;
-        private ItemTransforms.TransformType transformType = ItemTransforms.TransformType.NONE;
+        private ItemDisplayContext transformType = ItemDisplayContext.NONE;
 
         private BlockPos blockPos;
         private BlockState blockState;
@@ -299,7 +299,7 @@ public class ShapesRenderer
             this.isitem = isitem;
             if (isitem)
             {
-                this.transformType = ItemTransforms.TransformType.valueOf(((ShapeDispatcher.DisplayedSprite) shape).itemTransformType.toUpperCase(Locale.ROOT));
+                this.transformType = ItemDisplayContext.valueOf(((ShapeDispatcher.DisplayedSprite) shape).itemTransformType.toUpperCase(Locale.ROOT));
             }
         }
 

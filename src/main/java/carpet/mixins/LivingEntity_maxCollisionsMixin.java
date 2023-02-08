@@ -9,7 +9,6 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.util.List;
-import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntitySelector;
 import net.minecraft.world.entity.EntityType;
@@ -62,7 +61,7 @@ public abstract class LivingEntity_maxCollisionsMixin extends Entity
                 }
 
                 if (candidates > maxEntityCramming - 1) {
-                    this.hurt(DamageSource.CRAMMING, 6.0F);
+                    this.hurt(damageSources().cramming(), 6.0F);
                 }
             }
             if (CarpetSettings.maxEntityCollisions > 0 && entities.size() > CarpetSettings.maxEntityCollisions)

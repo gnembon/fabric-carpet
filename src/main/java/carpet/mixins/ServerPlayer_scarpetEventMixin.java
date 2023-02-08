@@ -42,7 +42,7 @@ public abstract class ServerPlayer_scarpetEventMixin extends Player implements S
         super(level, blockPos, f, gameProfile);
     }
 
-    @Shadow protected abstract void completeUsingItem();
+    //@Shadow protected abstract void completeUsingItem();
 
     @Shadow public boolean wonGame;
 
@@ -76,7 +76,7 @@ public abstract class ServerPlayer_scarpetEventMixin extends Player implements S
     @Inject(method = "die", at = @At("HEAD"))
     private void onDeathEvent(DamageSource source, CallbackInfo ci)
     {
-        ((EntityInterface)this).getEventContainer().onEvent(EntityEventsGroup.Event.ON_DEATH, source.msgId);
+        ((EntityInterface)this).getEventContainer().onEvent(EntityEventsGroup.Event.ON_DEATH, source.getMsgId());
         if (PLAYER_DIES.isNeeded())
         {
             PLAYER_DIES.onPlayerEvent((ServerPlayer) (Object)this);

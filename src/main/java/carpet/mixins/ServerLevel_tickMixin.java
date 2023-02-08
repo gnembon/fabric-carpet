@@ -3,6 +3,7 @@ package carpet.mixins;
 import carpet.helpers.TickSpeed;
 import carpet.utils.CarpetProfiler;
 import net.minecraft.core.Holder;
+import net.minecraft.core.RegistryAccess;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
@@ -24,11 +25,9 @@ import net.minecraft.world.level.storage.WritableLevelData;
 @Mixin(ServerLevel.class)
 public abstract class ServerLevel_tickMixin extends Level
 {
-
-
-    protected ServerLevel_tickMixin(WritableLevelData writableLevelData, ResourceKey<Level> resourceKey, Holder<DimensionType> holder, Supplier<ProfilerFiller> supplier, boolean bl, boolean bl2, long l, int i)
+    protected ServerLevel_tickMixin(final WritableLevelData writableLevelData, final ResourceKey<Level> resourceKey, final RegistryAccess registryAccess, final Holder<DimensionType> holder, final Supplier<ProfilerFiller> supplier, final boolean bl, final boolean bl2, final long l, final int i)
     {
-        super(writableLevelData, resourceKey, holder, supplier, bl, bl2, l, i);
+        super(writableLevelData, resourceKey, registryAccess, holder, supplier, bl, bl2, l, i);
     }
 
     @Shadow protected abstract void runBlockEvents();
