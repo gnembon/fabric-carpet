@@ -5463,8 +5463,8 @@ Available shapes:
      * `tilt`, `lean`, `turn` - additional rotations along all three axis. for `block`, it use its block center as the origin.
      * `scale` - scale of it in 3 axis-direction. should be a number or a list of 3 numbers (x,y,z).
      * `skylight`, `blocklight` - light level. omit it to use local light level. should between 0~15.
-     * `variant` - one of `'none'`, `'third_person_left_hand'`, `'third_person_right_hand'`, `'first_person_left_hand'`,
-       `'first_person_right_hand'`, `'head'`, `'gui'`, `'ground'`, `'fixed'`. In addition to the literal meaning,
+     * `variant` - one of `'none'`, `'thirdperson_lefthand'`, `'thirdperson_righthand'`, `'firstperson_lefthand'`,
+       `'firstperson_righthand'`, `'head'`, `'gui'`, `'ground'`, `'fixed'`. In addition to the literal meaning,
        it can also be used to use special models of tridents and telescopes. 
         This attribute is experimental and use of it will change in the future.
 
