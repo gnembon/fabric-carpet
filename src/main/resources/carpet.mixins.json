@@ -138,6 +138,7 @@
     "FallingBlockEntity_scarpetEventsMixin",
     "HangingEntity_scarpetEventsMixin",
     "PrimedTnt_scarpetEventsMixin",
+    "Display_scarpetEventMixin",
     "BlockItem_scarpetEventMixin",
     "PlayerList_scarpetEventsMixin",
     "Inventory_scarpetEventMixin",
