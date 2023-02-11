@@ -9,8 +9,6 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import static carpet.script.CarpetEventServer.Event.PLAYER_CONNECTS;
-
 @Mixin(PlayerList.class)
 public class PlayerList_coreMixin
 {
@@ -19,6 +17,5 @@ public class PlayerList_coreMixin
     private void onPlayerConnected(Connection connection, ServerPlayer player, CallbackInfo ci)
     {
         CarpetServer.onPlayerLoggedIn(player);
-        PLAYER_CONNECTS.onPlayerEvent(player);
     }
 }

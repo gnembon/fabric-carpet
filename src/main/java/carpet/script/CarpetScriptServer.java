@@ -23,9 +23,8 @@ import carpet.script.value.FunctionValue;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.tree.CommandNode;
 
-import net.fabricmc.api.EnvType;
-import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.storage.LevelResource;
@@ -50,6 +49,9 @@ import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import static carpet.script.CarpetEventServer.Event.PLAYER_CONNECTS;
+import static carpet.script.CarpetEventServer.Event.PLAYER_DISCONNECTS;
 
 public class CarpetScriptServer extends ScriptServer
 {
@@ -156,24 +158,10 @@ public class CarpetScriptServer extends ScriptServer
                 }
             }
 
-            if (FabricLoader.getInstance().getEnvironmentType() == EnvType.CLIENT)
+            Module globalModule = Carpet.fetchGlobalModule(name, allowLibraries);
+            if (globalModule != null)
             {
-                Path globalFolder = FabricLoader.getInstance().getConfigDir().resolve("carpet/scripts");
-                if (!Files.exists(globalFolder))
-                {
-                    Files.createDirectories(globalFolder);
-                }
-                try (Stream<Path> folderWalker = Files.walk(globalFolder))
-                {
-                    Optional<Path> scriptPath = folderWalker
-                            .filter(script -> script.getFileName().toString().equalsIgnoreCase(name + ".sc") ||
-                                    (allowLibraries && script.getFileName().toString().equalsIgnoreCase(name + ".scl")))
-                            .findFirst();
-                    if (scriptPath.isPresent())
-                    {
-                        return Module.fromPath(scriptPath.get());
-                    }
-                }
+                return globalModule;
             }
         }
         catch (IOException e)
@@ -229,20 +217,8 @@ public class CarpetScriptServer extends ScriptServer
                         .forEach(f -> moduleNames.add(f.getFileName().toString().replaceFirst("\\.sc$", "").toLowerCase(Locale.ROOT)));
             }
 
-            if (includeBuiltIns && (FabricLoader.getInstance().getEnvironmentType() == EnvType.CLIENT))
-            {
-                Path globalScripts = FabricLoader.getInstance().getConfigDir().resolve("carpet/scripts");
-                if (!Files.exists(globalScripts))
-                {
-                    Files.createDirectories(globalScripts);
-                }
-                try (Stream<Path> folderWalker = Files.walk(globalScripts, FileVisitOption.FOLLOW_LINKS))
-                {
-                    folderWalker
-                            .filter(f -> f.toString().endsWith(".sc"))
-                            .forEach(f -> moduleNames.add(f.getFileName().toString().replaceFirst("\\.sc$", "").toLowerCase(Locale.ROOT)));
-                }
-            }
+            Carpet.addGlobalModules(moduleNames, includeBuiltIns);
+
         }
         catch (IOException e)
         {
@@ -451,6 +427,7 @@ public class CarpetScriptServer extends ScriptServer
 
     public void onPlayerJoin(ServerPlayer player)
     {
+        PLAYER_CONNECTS.onPlayerEvent(player);
         modules.values().forEach(h ->
         {
             if (h.isPerUser())
@@ -470,6 +447,14 @@ public class CarpetScriptServer extends ScriptServer
     public Path resolveResource(String suffix)
     {
         return server.getWorldPath(LevelResource.ROOT).resolve("scripts/" + suffix);
+    }
+
+    public void onPlayerLoggedOut(ServerPlayer player, Component reason)
+    {
+        if (PLAYER_DISCONNECTS.isNeeded())
+        {
+            PLAYER_DISCONNECTS.onPlayerMessage(player, reason.getContents().toString());
+        }
     }
 
     private record TransferData(boolean perUser, Predicate<CommandSourceStack> commandValidator,
@@ -497,8 +482,11 @@ public class CarpetScriptServer extends ScriptServer
         }));
     }
 
+    private static boolean bootstrapDone = false;
     public static void parseFunctionClasses()
     {
+        if (bootstrapDone) return;
+        bootstrapDone = true;
         ExpressionException.prepareForDoom(); // see fc-#1172
         // Language
         AnnotationParser.parseFunctionClass(Arithmetic.class);

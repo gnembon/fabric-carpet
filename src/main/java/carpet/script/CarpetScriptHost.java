@@ -30,12 +30,6 @@ import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
 
-import net.fabricmc.loader.api.FabricLoader;
-import net.fabricmc.loader.api.ModContainer;
-import net.fabricmc.loader.api.SemanticVersion;
-import net.fabricmc.loader.api.Version;
-import net.fabricmc.loader.api.VersionParsingException;
-import net.fabricmc.loader.api.metadata.version.VersionPredicate;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.Tag;
@@ -474,31 +468,13 @@ public class CarpetScriptHost extends ScriptHost
         {
             throw new InternalExpressionException("`requires` field must be a map of mod dependencies or a function to be executed");
         }
+
         Map<Value, Value> requirements = map.getMap();
         for (Entry<Value, Value> requirement : requirements.entrySet())
         {
             String requiredModId = requirement.getKey().getString();
             String stringPredicate = requirement.getValue().getString();
-            VersionPredicate predicate;
-            try
-            {
-                predicate = VersionPredicate.parse(stringPredicate);
-            }
-            catch (VersionParsingException e)
-            {
-                throw new InternalExpressionException("Failed to parse version conditions for '" + requiredModId + "' in 'requires': " + e.getMessage());
-            }
-
-            ModContainer mod = FabricLoader.getInstance().getModContainer(requiredModId).orElse(null);
-            if (mod != null)
-            {
-                Version presentVersion = mod.getMetadata().getVersion();
-                if (predicate.test(presentVersion) || (FabricLoader.getInstance().isDevelopmentEnvironment() && !(presentVersion instanceof SemanticVersion)))
-                { // in a dev env, mod version is usually replaced with ${version}, and that isn't semantic
-                    continue;
-                }
-            }
-            throw new LoadException(String.format("%s requires a version of mod '%s' matching '%s', which is missing!", getName(), requiredModId, stringPredicate));
+            Carpet.assertRequirementMet(this, requiredModId, stringPredicate);
         }
     }
 

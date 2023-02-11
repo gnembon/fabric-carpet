@@ -13,8 +13,6 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import static carpet.script.CarpetEventServer.Event.PLAYER_DISCONNECTS;
-
 @Mixin(ServerGamePacketListenerImpl.class)
 public class ServerGamePacketListenerImpl_coreMixin implements ServerGamePacketListenerImplInterface {
     @Shadow
@@ -24,8 +22,7 @@ public class ServerGamePacketListenerImpl_coreMixin implements ServerGamePacketL
 
     @Inject(method = "onDisconnect", at = @At("HEAD"))
     private void onPlayerDisconnect(Component reason, CallbackInfo ci) {
-        CarpetServer.onPlayerLoggedOut(this.player);
-        if (PLAYER_DISCONNECTS.isNeeded()) PLAYER_DISCONNECTS.onPlayerMessage(player, reason.getContents().toString());
+        CarpetServer.onPlayerLoggedOut(this.player, reason);
     }
 
     @Override

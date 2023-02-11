@@ -73,6 +73,35 @@ public class ShapesRenderer
         put("item", (c, s) -> new RenderedSprite(c, s, true));
     }};
 
+    public static void rotatePoseStackByShapeDirection(PoseStack poseStack, ShapeDirection shapeDirection, Camera camera, Vec3 objectPos)
+    {
+        switch (shapeDirection)
+        {
+            case NORTH -> {}
+            case SOUTH -> poseStack.mulPose(Axis.YP.rotationDegrees(180));
+            case EAST -> poseStack.mulPose(Axis.YP.rotationDegrees(270));
+            case WEST -> poseStack.mulPose(Axis.YP.rotationDegrees(90));
+            case UP -> poseStack.mulPose(Axis.XP.rotationDegrees(90));
+            case DOWN -> poseStack.mulPose(Axis.XP.rotationDegrees(-90));
+            case CAMERA -> poseStack.mulPose(camera.rotation());
+            case PLAYER -> {
+                Vec3 vector = objectPos.subtract(camera.getPosition());
+                double x = vector.x;
+                double y = vector.y;
+                double z = vector.z;
+                double d = Math.sqrt(x * x + z * z);
+                float rotX = (float) (Math.atan2(x, z));
+                float rotY = (float) (Math.atan2(y, d));
+
+                // that should work somehow but it doesn't for some reason
+                //matrices.mulPose(new Quaternion( -rotY, rotX, 0, false));
+
+                poseStack.mulPose(Axis.YP.rotation(rotX));
+                poseStack.mulPose(Axis.XP.rotation(-rotY));
+            }
+        }
+    }
+
     public ShapesRenderer(Minecraft minecraftClient)
     {
         this.client = minecraftClient;
@@ -322,7 +351,7 @@ public class ShapesRenderer
             }
 
             matrices.translate(v1.x - cx, v1.y - cy, v1.z - cz);
-            ShapeDirection.rotatePoseStackByShapeDirection(matrices, shape.facing, camera1, isitem ? v1 : v1.add(0.5, 0.5, 0.5));
+            rotatePoseStackByShapeDirection(matrices, shape.facing, camera1, isitem ? v1 : v1.add(0.5, 0.5, 0.5));
             if (shape.tilt != 0.0f)
             {
                 matrices.mulPose(Axis.ZP.rotationDegrees(-shape.tilt));
@@ -508,7 +537,7 @@ public class ShapesRenderer
             matrices.pushPose();
             matrices.translate(v1.x - cx, v1.y - cy, v1.z - cz);
 
-            ShapeDirection.rotatePoseStackByShapeDirection(matrices, shape.facing, camera1, v1);
+            rotatePoseStackByShapeDirection(matrices, shape.facing, camera1, v1);
 
             matrices.scale(shape.size * 0.0025f, -shape.size * 0.0025f, shape.size * 0.0025f);
             //RenderSystem.scalef(shape.size* 0.0025f, -shape.size*0.0025f, shape.size*0.0025f);

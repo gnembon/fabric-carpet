@@ -237,25 +237,6 @@ public class ServerGamePacketListenerImpl_scarpetEventsMixin
         PLAYER_DEPLOYS_ELYTRA.onPlayerEvent(player);
     }
 
-    /*@Inject(method = "onPlayerInteractEntity", at = @At(
-            value = "INVOKE",
-            target = "Lnet/minecraft/server/network/ServerPlayerEntity;interact(Lnet/minecraft/entity/Entity;Lnet/minecraft/util/Hand;)Lnet/minecraft/util/ActionResult;"
-    ))
-    private void onEntityInteract(PlayerInteractEntityC2SPacket playerInteractEntityC2SPacket_1, CallbackInfo ci)
-    {
-        PLAYER_INTERACTS_WITH_ENTITY.onEntityHandAction(player, playerInteractEntityC2SPacket_1.getEntity(player.getWorld()), playerInteractEntityC2SPacket_1.getHand());
-    }*/
-
-    /*@Inject(method = "onPlayerInteractEntity", at = @At(
-            value = "INVOKE",
-            target = "Lnet/minecraft/server/network/ServerPlayerEntity;attack(Lnet/minecraft/entity/Entity;)V"
-    ))
-    private void onEntityAttack(PlayerInteractEntityC2SPacket playerInteractEntityC2SPacket_1, CallbackInfo ci)
-    {
-        //todo add hit and hand in the future
-        PLAYER_ATTACKS_ENTITY.onEntityHandAction(player, playerInteractEntityC2SPacket_1.getEntity(player.getWorld()), null);
-    }*/
-
     @Inject(method = "handleContainerButtonClick", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/level/ServerPlayer;resetLastActionTime()V"))
     private void onItemBeingPickedFromInventory(ServerboundContainerButtonClickPacket packet, CallbackInfo ci)
     {

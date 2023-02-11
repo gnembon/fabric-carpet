@@ -5,6 +5,7 @@ import carpet.script.exception.ThrowStatement;
 import carpet.script.exception.Throwables;
 import carpet.script.external.Carpet;
 import carpet.script.external.Vanilla;
+import carpet.script.utils.Colors;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import net.minecraft.advancements.critereon.MinMaxBounds;
@@ -85,7 +86,7 @@ public class ValueConversions
 
     public static Value of(MaterialColor color)
     {
-        return ListValue.of(StringValue.of(Carpet.getMapColorNames().get(color)), ofRGB(color.col));
+        return ListValue.of(StringValue.of(Colors.mapColourName.get(color)), ofRGB(color.col));
     }
 
     public static <T extends Number> Value of(MinMaxBounds<T> range)

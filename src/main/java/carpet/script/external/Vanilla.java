@@ -16,13 +16,13 @@ import carpet.fakes.MobEntityInterface;
 import carpet.fakes.RandomStateVisitorAccessor;
 import carpet.fakes.RecipeManagerInterface;
 import carpet.fakes.AbstractContainerMenuInterface;
-import carpet.fakes.ServerChunkManagerInterface;
 import carpet.fakes.ServerPlayerInterface;
 import carpet.fakes.ServerPlayerInteractionManagerInterface;
 import carpet.fakes.ServerWorldInterface;
 import carpet.fakes.SpawnHelperInnerInterface;
 import carpet.fakes.ThreadedAnvilChunkStorageInterface;
 import carpet.mixins.Objective_scarpetMixin;
+import carpet.mixins.PoiRecord_scarpetMixin;
 import carpet.mixins.Scoreboard_scarpetMixin;
 import carpet.network.ServerNetworkHandler;
 import carpet.script.CarpetScriptServer;
@@ -46,7 +46,6 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ChunkMap;
 import net.minecraft.server.level.DistanceManager;
-import net.minecraft.server.level.ServerChunkCache;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.level.ServerPlayerGameMode;
@@ -59,6 +58,7 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.ai.goal.GoalSelector;
+import net.minecraft.world.entity.ai.village.poi.PoiRecord;
 import net.minecraft.world.entity.animal.horse.AbstractHorse;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.inventory.AbstractContainerMenu;
@@ -141,11 +141,6 @@ public class Vanilla
     public static ServerLevelData ServerLevel_getWorldProperties(ServerLevel world)
     {
         return ((ServerWorldInterface) world).getWorldPropertiesCM();
-    }
-
-    public static DistanceManager ServerChunkCache_getCMTicketManager(ServerChunkCache chunkCache)
-    {
-        return ((ServerChunkManagerInterface) chunkCache).getCMTicketManager();
     }
 
     public static Long2ObjectOpenHashMap<SortedArraySet<Ticket<?>>> ChunkTicketManager_getTicketsByPosition(DistanceManager ticketManager)
@@ -351,6 +346,16 @@ public class Vanilla
     public static int MinecraftServer_getFillLimit(MinecraftServer server)
     {
         return Math.max(server.getGameRules().getInt(GameRules.RULE_COMMAND_MODIFICATION_BLOCK_LIMIT), CarpetSettings.fillLimit);
+    }
+
+    public static int PoiRecord_getFreeTickets(PoiRecord record)
+    {
+        return ((PoiRecord_scarpetMixin) record).getFreeTickets();
+    }
+
+    public static void PoiRecord_callAcquireTicket(PoiRecord record)
+    {
+        ((PoiRecord_scarpetMixin) record).callAcquireTicket();
     }
 
     public record BlockPredicatePayload(BlockState state, TagKey<Block> tagKey, Map<Value, Value> properties, CompoundTag tag) {

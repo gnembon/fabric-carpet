@@ -12,27 +12,41 @@ import carpet.logging.HUDController;
 import carpet.network.ServerNetworkHandler;
 import carpet.patches.EntityPlayerMPFake;
 import carpet.script.CarpetExpression;
+import carpet.script.CarpetScriptHost;
 import carpet.script.CarpetScriptServer;
+import carpet.script.Module;
+import carpet.script.exception.InternalExpressionException;
+import carpet.script.exception.LoadException;
 import carpet.script.utils.AppStoreManager;
 import carpet.script.value.MapValue;
 import carpet.script.value.StringValue;
-import carpet.utils.BlockInfo;
 import carpet.utils.CarpetProfiler;
 import carpet.utils.Messenger;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.loader.api.FabricLoader;
+import net.fabricmc.loader.api.ModContainer;
+import net.fabricmc.loader.api.SemanticVersion;
+import net.fabricmc.loader.api.Version;
+import net.fabricmc.loader.api.VersionParsingException;
+import net.fabricmc.loader.api.metadata.version.VersionPredicate;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.level.block.SoundType;
-import net.minecraft.world.level.material.Material;
-import net.minecraft.world.level.material.MaterialColor;
 
 import javax.annotation.Nullable;
+import java.io.IOException;
+import java.nio.file.FileVisitOption;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Stream;
 
 public class Carpet
 {
@@ -64,21 +78,6 @@ public class Carpet
     public static ThreadLocal<Boolean> getImpendingFillSkipUpdates()
     {
         return CarpetSettings.impendingFillSkipUpdates;
-    }
-
-    public static Map<SoundType, String> getSoundTypeNames()
-    {
-        return BlockInfo.soundName;
-    }
-
-    public static Map<MaterialColor, String> getMapColorNames()
-    {
-        return BlockInfo.mapColourName;
-    }
-
-    public static Map<Material, String> getMaterialNames()
-    {
-        return BlockInfo.materialName;
     }
 
     public static Runnable startProfilerSection(String name)
@@ -146,6 +145,73 @@ public class Carpet
     public static boolean getFillUpdates()
     {
         return CarpetSettings.fillUpdates;
+    }
+
+    @Nullable
+    public static Module fetchGlobalModule(String name, boolean allowLibraries) throws IOException
+    {
+        if (FabricLoader.getInstance().getEnvironmentType() == EnvType.CLIENT)
+        {
+            Path globalFolder = FabricLoader.getInstance().getConfigDir().resolve("carpet/scripts");
+            if (!Files.exists(globalFolder))
+            {
+                Files.createDirectories(globalFolder);
+            }
+            try (Stream<Path> folderWalker = Files.walk(globalFolder))
+            {
+                Optional<Path> scriptPath = folderWalker
+                        .filter(script -> script.getFileName().toString().equalsIgnoreCase(name + ".sc") ||
+                                (allowLibraries && script.getFileName().toString().equalsIgnoreCase(name + ".scl")))
+                        .findFirst();
+                if (scriptPath.isPresent())
+                {
+                    return Module.fromPath(scriptPath.get());
+                }
+            }
+        }
+        return null;
+    }
+
+    public static void addGlobalModules(final List<String> moduleNames, boolean includeBuiltIns) throws IOException
+    {
+        if (includeBuiltIns && (FabricLoader.getInstance().getEnvironmentType() == EnvType.CLIENT))
+        {
+            Path globalScripts = FabricLoader.getInstance().getConfigDir().resolve("carpet/scripts");
+            if (!Files.exists(globalScripts))
+            {
+                Files.createDirectories(globalScripts);
+            }
+            try (Stream<Path> folderWalker = Files.walk(globalScripts, FileVisitOption.FOLLOW_LINKS))
+            {
+                folderWalker
+                        .filter(f -> f.toString().endsWith(".sc"))
+                        .forEach(f -> moduleNames.add(f.getFileName().toString().replaceFirst("\\.sc$", "").toLowerCase(Locale.ROOT)));
+            }
+        }
+    }
+
+    public static void assertRequirementMet(CarpetScriptHost host, String requiredModId, String stringPredicate)
+    {
+        VersionPredicate predicate;
+        try
+        {
+            predicate = VersionPredicate.parse(stringPredicate);
+        }
+        catch (VersionParsingException e)
+        {
+            throw new InternalExpressionException("Failed to parse version conditions for '" + requiredModId + "' in 'requires': " + e.getMessage());
+        }
+
+        ModContainer mod = FabricLoader.getInstance().getModContainer(requiredModId).orElse(null);
+        if (mod != null)
+        {
+            Version presentVersion = mod.getMetadata().getVersion();
+            if (predicate.test(presentVersion) || (FabricLoader.getInstance().isDevelopmentEnvironment() && !(presentVersion instanceof SemanticVersion)))
+            { // in a dev env, mod version is usually replaced with ${version}, and that isn't semantic
+                return;
+            }
+        }
+        throw new LoadException(String.format("%s requires a version of mod '%s' matching '%s', which is missing!", host.getName(), requiredModId, stringPredicate));
     }
 
     public static class ScarpetAppStoreValidator extends Validator<String>

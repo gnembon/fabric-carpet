@@ -7,8 +7,8 @@ import carpet.script.Expression;
 import carpet.script.Fluff;
 import carpet.script.external.Carpet;
 import carpet.script.external.Vanilla;
+import carpet.script.utils.Colors;
 import carpet.script.utils.FeatureGenerator;
-import carpet.mixins.PoiRecord_scarpetMixin;
 import carpet.script.argument.BlockArgument;
 import carpet.script.argument.Vector3Argument;
 import carpet.script.exception.InternalExpressionException;
@@ -311,7 +311,7 @@ public class WorldAccess
                 ).filter(p -> p.getPos().equals(pos)).findFirst().orElse(null);
                 return poi == null ? Value.NULL : ListValue.of(
                         ValueConversions.of(poiReg.getKey(poi.getPoiType().value())),
-                        new NumericValue(poiType.maxTickets() - ((PoiRecord_scarpetMixin) poi).getFreeTickets())
+                        new NumericValue(poiType.maxTickets() - Vanilla.PoiRecord_getFreeTickets(poi))
                 );
             }
             int radius = NumericValue.asNumber(lv.get(locator.offset)).getInt();
@@ -360,7 +360,7 @@ public class WorldAccess
             return ListValue.wrap(pois.sorted(Comparator.comparingDouble(p -> p.getPos().distSqr(pos))).map(p ->
                     ListValue.of(
                             ValueConversions.of(poiReg.getKey(p.getPoiType().value())),
-                            new NumericValue(p.getPoiType().value().maxTickets() - ((PoiRecord_scarpetMixin) p).getFreeTickets()),
+                            new NumericValue(p.getPoiType().value().maxTickets() - Vanilla.PoiRecord_getFreeTickets(p)),
                             ValueConversions.of(p.getPos())
                     )
             ));
@@ -421,7 +421,7 @@ public class WorldAccess
                 ).filter(p -> p.getPos().equals(pos)).findFirst().ifPresent(p -> {
                     for (int i = 0; i < finalO; i++)
                     {
-                        ((PoiRecord_scarpetMixin) p).callAcquireTicket();
+                        Vanilla.PoiRecord_callAcquireTicket(p);
                     }
                 });
             }
@@ -638,7 +638,7 @@ public class WorldAccess
         expression.addContextFunction("chunk_tickets", -1, (c, t, lv) ->
         {
             ServerLevel world = ((CarpetContext) c).level();
-            DistanceManager foo = Vanilla.ServerChunkCache_getCMTicketManager(world.getChunkSource());
+            DistanceManager foo = world.getChunkSource().chunkMap.getDistanceManager();
             Long2ObjectOpenHashMap<SortedArraySet<Ticket<?>>> levelTickets = Vanilla.ChunkTicketManager_getTicketsByPosition(foo);
 
             List<Value> res = new ArrayList<>();
@@ -1158,15 +1158,15 @@ public class WorldAccess
 
         expression.addContextFunction("block_sound", -1, (c, t, lv) ->
                 stateStringQuery(c, "block_sound", lv, (s, p) ->
-                        Carpet.getSoundTypeNames().get(s.getSoundType())));
+                        Colors.soundName.get(s.getSoundType())));
 
         expression.addContextFunction("material", -1, (c, t, lv) ->
                 stateStringQuery(c, "material", lv, (s, p) ->
-                        Carpet.getMaterialNames().get(s.getMaterial())));
+                        Colors.materialName.get(s.getMaterial())));
 
         expression.addContextFunction("map_colour", -1, (c, t, lv) ->
                 stateStringQuery(c, "map_colour", lv, (s, p) ->
-                        Carpet.getMapColorNames().get(s.getMapColor(((CarpetContext) c).level(), p))));
+                        Colors.materialName.get(s.getMapColor(((CarpetContext) c).level(), p))));
 
 
         // Deprecated for block_state()

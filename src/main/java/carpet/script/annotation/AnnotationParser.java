@@ -28,7 +28,6 @@ import carpet.script.Fluff.UsageProvider;
 import carpet.script.exception.InternalExpressionException;
 import carpet.script.LazyValue;
 import carpet.script.value.Value;
-import net.fabricmc.api.ModInitializer;
 
 /**
  * <p>This class parses methods annotated with the {@link ScarpetFunction} annotation in a given {@link Class}, generating
@@ -85,7 +84,7 @@ public final class AnnotationParser
      * to be used in the Scarpet language.</p>
      * 
      * <p><b>Only call this method once per class per lifetime of the JVM!</b> (for example, at {@link carpet.CarpetExtension#onGameStarted()} or
-     * {@link ModInitializer#onInitialize()}).</p>
+     * {@link net.fabricmc.api.ModInitializer#onInitialize()}).</p>
      * 
      * <p>There is a set of requirements for the class and its methods:</p>
      * <ul>

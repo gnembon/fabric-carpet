@@ -26,6 +26,7 @@ import carpet.script.CarpetScriptServer;
 import carpet.api.settings.SettingsManager;
 import carpet.logging.HUDController;
 import carpet.script.external.Carpet;
+import carpet.script.external.Vanilla;
 import carpet.script.utils.ParticleParser;
 import carpet.utils.MobAI;
 import carpet.utils.SpawnReporter;
@@ -35,6 +36,7 @@ import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.commands.CommandBuildContext;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.commands.PerfCommand;
 import net.minecraft.server.level.ServerPlayer;
@@ -164,16 +166,25 @@ public class CarpetServer // static for now - easier to handle all around the co
     {
         ServerNetworkHandler.onPlayerJoin(player);
         LoggerRegistry.playerConnected(player);
-        scriptServer.onPlayerJoin(player);
         extensions.forEach(e -> e.onPlayerLoggedIn(player));
-
+        scriptServer.onPlayerJoin(player);
     }
 
+    @Deprecated(forRemoval = true)
     public static void onPlayerLoggedOut(ServerPlayer player)
+    {
+        onPlayerLoggedOut(player, Component.translatable("multiplayer.player.left"));
+    }
+    public static void onPlayerLoggedOut(ServerPlayer player, Component reason)
     {
         ServerNetworkHandler.onPlayerLoggedOut(player);
         LoggerRegistry.playerDisconnected(player);
         extensions.forEach(e -> e.onPlayerLoggedOut(player));
+        // first case client, second case server
+        CarpetScriptServer runningScriptServer = (player.getServer() == null) ? scriptServer : Vanilla.MinecraftServer_getScriptServer(player.getServer());
+        if (runningScriptServer != null && !runningScriptServer.stopAll) {
+            runningScriptServer.onPlayerLoggedOut(player, reason);
+        }
     }
 
     public static void clientPreClosing()
@@ -189,6 +200,11 @@ public class CarpetServer // static for now - easier to handle all around the co
         if (minecraft_server != null)
         {
             if (scriptServer != null) scriptServer.onClose();
+            // this is a mess, will cleanip onlly when global reference is gone
+            if (!Vanilla.MinecraftServer_getScriptServer(server).stopAll) {
+                Vanilla.MinecraftServer_getScriptServer(server).onClose();
+            }
+
             scriptServer = null;
             ServerNetworkHandler.close();
 

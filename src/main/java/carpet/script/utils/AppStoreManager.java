@@ -12,7 +12,6 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.commands.CommandRuntimeException;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.world.level.storage.LevelResource;
@@ -262,7 +261,7 @@ public class AppStoreManager
         {
             throw new CommandRuntimeException(Carpet.Messenger_compose("rb Failed to obtain app file content: " + e.getMessage()));
         }
-        if (!saveScriptToFile(source, path, nodeInfo.name(), code, false, useTrash))
+        if (!saveScriptToFile(source, path, nodeInfo.name(), code, useTrash))
         {
             return 0;
         }
@@ -302,17 +301,9 @@ public class AppStoreManager
     }
 
 
-    public static boolean saveScriptToFile(CommandSourceStack source, String path, String appFileName, String code, boolean globalSavePath, boolean useTrash)
+    public static boolean saveScriptToFile(CommandSourceStack source, String path, String appFileName, String code, boolean useTrash)
     {
-        Path scriptLocation;
-        if (globalSavePath && !source.getServer().isDedicatedServer()) // never happens, this is always called with globalSavePath being false
-        { //cos config folder only is in clients
-            scriptLocation = FabricLoader.getInstance().getConfigDir().resolve("carpet/scripts/appstore").toAbsolutePath().resolve(path);
-        }
-        else
-        {
-            scriptLocation = source.getServer().getWorldPath(LevelResource.ROOT).resolve("scripts").toAbsolutePath().resolve(appFileName);
-        }
+        Path scriptLocation = source.getServer().getWorldPath(LevelResource.ROOT).resolve("scripts").toAbsolutePath().resolve(appFileName);
         try
         {
             Files.createDirectories(scriptLocation.getParent());
