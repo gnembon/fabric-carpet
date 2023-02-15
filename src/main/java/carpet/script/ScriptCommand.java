@@ -128,7 +128,7 @@ public class ScriptCommand
             String previous = suggestionsBuilder.getRemaining();
             try
             {
-                AppStoreManager.suggestionsFromPath(previous).forEach(suggestionsBuilder::suggest);
+                AppStoreManager.suggestionsFromPath(previous, context.getSource()).forEach(suggestionsBuilder::suggest);
             }
             catch (IOException e)
             {

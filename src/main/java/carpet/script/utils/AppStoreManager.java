@@ -45,6 +45,7 @@ public class AppStoreManager
      * {@code /script download} command and getting the suggestions.
      */
     private static StoreNode APP_STORE_ROOT = StoreNode.folder(null, "");
+    private static long storeErrorTime = 0;
 
     /**
      * This is the base link to the scarpet app repo from the github api.
@@ -116,7 +117,7 @@ public class AppStoreManager
             this.sealed = false;
         }
 
-        public synchronized void fillChildren() throws IOException
+        public synchronized void fillChildren(@Nullable CommandSourceStack source) throws IOException
         {
             if (sealed)
             {
@@ -125,6 +126,14 @@ public class AppStoreManager
             if (scarpetRepoLink == null)
             {
                 throw new IOException("Accessing scarpet app repo is disabled");
+            }
+            if (System.currentTimeMillis() - storeErrorTime < 30000)
+            {
+                if (source != null)
+                {
+                    Carpet.Messenger_message(source, "di App store is not available yet");
+                }
+                return;
             }
 
             String queryPath = scarpetRepoLink + getPath();
@@ -135,6 +144,11 @@ public class AppStoreManager
             }
             catch (IOException e)
             {
+                if (source != null)
+                {
+                    Carpet.Messenger_message(source, "r Scarpet app store is not available at the moment, try in a minute");
+                }
+                storeErrorTime = System.currentTimeMillis();
                 // Not sealing to allow retrying
                 throw new IOException("Problems fetching " + queryPath, e);
             }
@@ -160,36 +174,36 @@ public class AppStoreManager
          * Returns true if doing down the directory structure cannot continue since the matching element is either a leaf or
          * a string not matching of any node.
          */
-        public boolean cannotContinueFor(String pathElement) throws IOException
+        public boolean cannotContinueFor(String pathElement, CommandSourceStack source) throws IOException
         {
             if (isLeaf())
             {
                 return true;
             }
-            fillChildren();
+            fillChildren(source);
             return !children.containsKey(pathElement);
         }
 
-        public List<String> createPathSuggestions() throws IOException
+        public List<String> createPathSuggestions(CommandSourceStack source) throws IOException
         {
             if (isLeaf())
             {
                 return name.endsWith(".sc") ? Collections.singletonList(getPath()) : Collections.emptyList();
             }
-            fillChildren();
+            fillChildren(source);
             String prefix = getPath();
             return children.values().stream().
                     filter(n -> (!n.isLeaf() || n.name.endsWith(".sc"))).
                     map(s -> prefix + s.pathElement().replaceAll("/$", "")).toList();
         }
 
-        public StoreNode drillDown(String pathElement) throws IOException
+        public StoreNode drillDown(String pathElement, CommandSourceStack source) throws IOException
         {
             if (isLeaf())
             {
                 throw new IOException(pathElement + " is not a folder");
             }
-            fillChildren();
+            fillChildren(source);
             if (!children.containsKey(pathElement))
             {
                 throw new IOException("Folder " + pathElement + " is not present");
@@ -197,9 +211,9 @@ public class AppStoreManager
             return children.get(pathElement);
         }
 
-        public String getValue(String file) throws IOException
+        public String getValue(String file, CommandSourceStack source) throws IOException
         {
-            StoreNode leaf = drillDown(file);
+            StoreNode leaf = drillDown(file, source);
             if (!leaf.isLeaf())
             {
                 throw new IOException(file + " is not a file");
@@ -216,22 +230,22 @@ public class AppStoreManager
      * @param currentPath The path down which we want to search for files
      * @return A pair of the current valid path, as well as the set of all the file/directory names at the end of that path
      */
-    public static List<String> suggestionsFromPath(String currentPath) throws IOException
+    public static List<String> suggestionsFromPath(String currentPath, CommandSourceStack source) throws IOException
     {
         String[] path = currentPath.split("/");
         StoreNode appKiosk = APP_STORE_ROOT;
         for (String pathElement : path)
         {
-            if (appKiosk.cannotContinueFor(pathElement))
+            if (appKiosk.cannotContinueFor(pathElement, source))
             {
                 break;
             }
             appKiosk = appKiosk.children.get(pathElement);
         }
-        List<String> filteredSuggestions = appKiosk.createPathSuggestions().stream().filter(s -> s.startsWith(currentPath)).toList();
+        List<String> filteredSuggestions = appKiosk.createPathSuggestions(source).stream().filter(s -> s.startsWith(currentPath)).toList();
         if (filteredSuggestions.size() == 1 && !appKiosk.isLeaf())
         {
-            return suggestionsFromPath(filteredSuggestions.get(0)); // Start suggesting directory contents
+            return suggestionsFromPath(filteredSuggestions.get(0), source); // Start suggesting directory contents
         }
         return filteredSuggestions;
     }
@@ -246,7 +260,7 @@ public class AppStoreManager
 
     public static int downloadScript(CommandSourceStack source, String path)
     {
-        AppInfo nodeInfo = getFileNode(path);
+        AppInfo nodeInfo = getFileNode(path, source);
         return downloadScript(source, path, nodeInfo, false);
     }
 
@@ -275,12 +289,12 @@ public class AppStoreManager
      * @param appPath The user inputted path to the scarpet script
      * @return Pair of app file name and content
      */
-    public static AppInfo getFileNode(String appPath)
+    public static AppInfo getFileNode(String appPath, CommandSourceStack source)
     {
-        return getFileNodeFrom(APP_STORE_ROOT, appPath);
+        return getFileNodeFrom(APP_STORE_ROOT, appPath, source);
     }
 
-    public static AppInfo getFileNodeFrom(StoreNode start, String appPath)
+    public static AppInfo getFileNodeFrom(StoreNode start, String appPath, CommandSourceStack source)
     {
         String[] path = appPath.split("/");
         StoreNode appKiosk = start;
@@ -288,11 +302,11 @@ public class AppStoreManager
         {
             for (String pathElement : Arrays.copyOfRange(path, 0, path.length - 1))
             {
-                appKiosk = appKiosk.drillDown(pathElement);
+                appKiosk = appKiosk.drillDown(pathElement, source);
             }
             String appName = path[path.length - 1];
-            appKiosk.getValue(appName);
-            return new AppInfo(appName, appKiosk.getValue(appName), appKiosk);
+            appKiosk.getValue(appName, source);
+            return new AppInfo(appName, appKiosk.getValue(appName, source), appKiosk);
         }
         catch (IOException e)
         {
@@ -346,7 +360,7 @@ public class AppStoreManager
         }
     }
 
-    private static String getFullContentUrl(String original, StoreNode storeSource)
+    private static String getFullContentUrl(String original, StoreNode storeSource, CommandSourceStack source)
     {
         if (original.matches("^https?://.*$")) // We've got a full url here: Just use it
         {
@@ -354,9 +368,9 @@ public class AppStoreManager
         }
         if (original.charAt(0) == '/') // We've got an absolute path: Use app store root
         {
-            return getFileNode(original.substring(1)).url();
+            return getFileNode(original.substring(1), source).url();
         }
-        return getFileNodeFrom(storeSource, original).url(); // Relative path: Use download location
+        return getFileNodeFrom(storeSource, original, source).url(); // Relative path: Use download location
     }
 
     public static void addResource(CarpetScriptHost carpetScriptHost, StoreNode storeSource, Value resource)
@@ -371,7 +385,7 @@ public class AppStoreManager
             throw new InternalExpressionException("Missing 'source' field in resource descriptor: " + resource.getString());
         }
         String source = resourceMap.get("source").getString();
-        String contentUrl = getFullContentUrl(source, storeSource);
+        String contentUrl = getFullContentUrl(source, storeSource, carpetScriptHost.responsibleSource);
         String target = resourceMap.computeIfAbsent("target", k -> new StringValue(contentUrl.substring(contentUrl.lastIndexOf('/') + 1))).getString();
         boolean shared = resourceMap.getOrDefault("shared", Value.FALSE).getBoolean();
 
@@ -396,11 +410,11 @@ public class AppStoreManager
      *
      * @param originalSource The StoreNode from the container's app
      * @param sourceString   The string the app specified as source
-     * @param contentUrl     The full content URL, from {@link #getFullContentUrl(String, StoreNode)}
+     * @param contentUrl     The full content URL, from {@link #getFullContentUrl(String, StoreNode, CommandSourceStack)}
      * @return A {@link StoreNode} that can be used in an app that came from the provided source
      */
     @Nullable
-    private static StoreNode getNewStoreNode(StoreNode originalSource, String sourceString, String contentUrl)
+    private static StoreNode getNewStoreNode(CommandSourceStack commandSource, StoreNode originalSource, String sourceString, String contentUrl)
     {
         StoreNode next = originalSource;
         if (sourceString == contentUrl) // External URL (check getFullUrlContent)
@@ -417,7 +431,7 @@ public class AppStoreManager
         {
             for (int i = 0; i < dirs.length - 1; i++)
             {
-                next = next.drillDown(dirs[i]);
+                next = next.drillDown(dirs[i], commandSource);
             }
         }
         catch (IOException e)
@@ -435,7 +449,7 @@ public class AppStoreManager
         }
         Map<String, String> libraryMap = map.getMap().entrySet().stream().collect(Collectors.toMap(e -> e.getKey().getString(), e -> e.getValue().getString()));
         String source = libraryMap.get("source");
-        String contentUrl = getFullContentUrl(source, storeSource);
+        String contentUrl = getFullContentUrl(source, storeSource, carpetScriptHost.responsibleSource);
         String target = libraryMap.computeIfAbsent("target", k -> contentUrl.substring(contentUrl.lastIndexOf('/') + 1));
         if (!(contentUrl.endsWith(".sc") || contentUrl.endsWith(".scl")))
         {
@@ -447,7 +461,7 @@ public class AppStoreManager
         }
         try
         {
-            downloadScript(carpetScriptHost.responsibleSource, target, new AppInfo(target, contentUrl, getNewStoreNode(storeSource, source, contentUrl)), true);
+            downloadScript(carpetScriptHost.responsibleSource, target, new AppInfo(target, contentUrl, getNewStoreNode(carpetScriptHost.responsibleSource, storeSource, source, contentUrl)), true);
         }
         catch (CommandRuntimeException e)
         {
