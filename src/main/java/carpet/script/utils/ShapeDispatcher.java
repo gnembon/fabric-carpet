@@ -7,6 +7,7 @@ import carpet.script.exception.Throwables;
 import carpet.script.external.Carpet;
 import carpet.script.external.Vanilla;
 import carpet.script.language.Sys;
+import carpet.script.utils.shapes.FowlerNollVoDigest;
 import carpet.script.utils.shapes.ShapeDirection;
 import carpet.script.value.AbstractListValue;
 import carpet.script.value.BlockValue;
@@ -448,34 +449,23 @@ public class ShapeDispatcher
             {
                 return key;
             }
-            key = calcKey(regs);
+            key = calcKey(regs).getDigest();
             return key;
         }
 
-        protected long calcKey(RegistryAccess regs)
+        protected FowlerNollVoDigest calcKey(RegistryAccess regs)
         { // using FNV-1a algorithm
-            long hash = -3750763034362895579L;
-            hash ^= shapeDimension.hashCode();
-            hash *= 1099511628211L;
-            hash ^= color;
-            hash *= 1099511628211L;
-            hash ^= followEntity;
-            hash *= 1099511628211L;
-            hash ^= Boolean.hashCode(debug);
-            hash *= 1099511628211L;
+            FowlerNollVoDigest digest = FowlerNollVoDigest.of(shapeDimension, followEntity).
+                    withInt(color).withBool(debug).withFloat(lineWidth);
             if (followEntity >= 0)
             {
-                hash ^= snapTo.hashCode();
-                hash *= 1099511628211L;
+                digest.with(snapTo);
             }
-            hash ^= Float.hashCode(lineWidth);
-            hash *= 1099511628211L;
             if (fa != 0.0)
             {
-                hash = 31 * hash + fillColor;
-                hash *= 1099511628211L;
+                digest.withInt(fillColor);
             }
-            return hash;
+            return digest;
         }
 
         private static final double xdif = new Random('x').nextDouble();
@@ -625,40 +615,10 @@ public class ShapeDispatcher
         }
 
         @Override
-        public long calcKey(RegistryAccess regs)
+        public FowlerNollVoDigest calcKey(RegistryAccess regs)
         {
-            long hash = super.calcKey(regs);
-            hash ^= 5;
-            hash *= 1099511628211L;
-            hash ^= vec3dhash(pos);
-            hash *= 1099511628211L;
-            hash ^= text.hashCode();
-            hash *= 1099511628211L;
-            if (facing != null)
-            {
-                hash ^= facing.hashCode();
-            }
-            hash *= 1099511628211L;
-            hash ^= Float.hashCode(raise);
-            hash *= 1099511628211L;
-            hash ^= Float.hashCode(tilt);
-            hash *= 1099511628211L;
-            hash ^= Float.hashCode(lean);
-            hash *= 1099511628211L;
-            hash ^= Float.hashCode(turn);
-            hash *= 1099511628211L;
-            hash ^= Float.hashCode(indent);
-            hash *= 1099511628211L;
-            hash ^= Float.hashCode(height);
-            hash *= 1099511628211L;
-            hash ^= Float.hashCode(size);
-            hash *= 1099511628211L;
-            hash ^= Integer.hashCode(align);
-            hash *= 1099511628211L;
-            hash ^= Boolean.hashCode(doublesided);
-            hash *= 1099511628211L;
-
-            return hash;
+            return super.calcKey(regs).withInt(5, align).withCoords(pos).with(text, facing).withBool(doublesided)
+                    .withFloat(raise, tilt, lean, turn, indent, height, size);
         }
     }
 
@@ -780,52 +740,14 @@ public class ShapeDispatcher
         }
 
         @Override
-        public long calcKey(RegistryAccess regs)
+        public FowlerNollVoDigest calcKey(RegistryAccess regs)
         {
-            long hash = super.calcKey(regs);
-            hash ^= 7;
-            hash *= 1099511628211L;
-            hash ^= Boolean.hashCode(isitem);
-            hash *= 1099511628211L;
-            hash ^= vec3dhash(pos);
-            hash *= 1099511628211L;
-            if (facing != null)
-            {
-                hash ^= facing.hashCode();
-            }
-            hash *= 1099511628211L;
-            hash ^= Float.hashCode(tilt);
-            hash *= 1099511628211L;
-            hash ^= Float.hashCode(lean);
-            hash *= 1099511628211L;
-            hash ^= Float.hashCode(turn);
-            hash *= 1099511628211L;
-            hash ^= Float.hashCode(scaleY);
-            hash *= 1099511628211L;
-            hash ^= Float.hashCode(scaleZ);
-            hash *= 1099511628211L;
-            hash ^= Float.hashCode(scaleX);
-            hash *= 1099511628211L;
-            hash ^= Float.hashCode(skyLight);
-            hash *= 1099511628211L;
-            hash ^= Float.hashCode(blockLight);
-            hash *= 1099511628211L;
-            if (blockEntity != null)
-            {
-                hash ^= blockEntity.toString().hashCode();
-            }
-            hash *= 1099511628211L;
-            if (blockState != null)
-            {
-                hash ^= blockState.hashCode();
-            }
-            hash *= 1099511628211L;
-            hash ^= ValueConversions.of(item, regs).getString().hashCode();
-            hash *= 1099511628211L;
-            hash ^= itemTransformType.hashCode();
-            hash *= 1099511628211L;
-
-            return hash;
+            return super.calcKey(regs)
+                    .withInt(7, skyLight, blockLight)
+                    .withBool(isitem)
+                    .withCoords(pos)
+                    .with(facing, blockState, ValueConversions.of(item, regs).getString(), itemTransformType)
+                    .withFloat(tilt, lean, turn, scaleX, scaleY, scaleZ);
         }
     }
 
@@ -882,16 +804,9 @@ public class ShapeDispatcher
         }
 
         @Override
-        public long calcKey(RegistryAccess regs)
+        public FowlerNollVoDigest calcKey(RegistryAccess regs)
         {
-            long hash = super.calcKey(regs);
-            hash ^= 1;
-            hash *= 1099511628211L;
-            hash ^= vec3dhash(from);
-            hash *= 1099511628211L;
-            hash ^= vec3dhash(to);
-            hash *= 1099511628211L;
-            return hash;
+            return super.calcKey(regs).withInt(1).withCoords(from, to);
         }
 
         public static int particleMesh(List<ServerPlayer> playerList, ParticleOptions particle, double density,
@@ -924,26 +839,11 @@ public class ShapeDispatcher
     public static class Polyface extends ExpiringShape
     {
         @Override
-        public long calcKey(RegistryAccess regs)
+        public FowlerNollVoDigest calcKey(RegistryAccess regs)
         {
-            long hash = super.calcKey(regs);
-            hash ^= 6;
-            hash *= 1099511628211L;
-            hash ^= mode;
-            hash *= 1099511628211L;
-            hash ^= relative.hashCode();
-            hash *= 1099511628211L;
-            for (Vec3 i : vertexList)
-            {
-                hash ^= vec3dhash(i);
-                hash *= 1099511628211L;
-            }
-            hash ^= Boolean.hashCode(doublesided);
-            hash *= 1099511628211L;
-            hash ^= Integer.hashCode(vertexList.size());
-            hash *= 1099511628211L;
-            hash ^= Boolean.hashCode(inneredges);
-            hash *= 1099511628211L;
+            FowlerNollVoDigest hash = super.calcKey(regs);
+            hash.withInt(6, mode).with(relative).withBool(doublesided, inneredges);
+            hash.withCoords(vertexList.toArray(new Vec3[0]));
             return hash;
         }
 
@@ -1219,16 +1119,9 @@ public class ShapeDispatcher
         }
 
         @Override
-        public long calcKey(RegistryAccess regs)
+        public FowlerNollVoDigest calcKey(RegistryAccess regs)
         {
-            long hash = super.calcKey(regs);
-            hash ^= 2;
-            hash *= 1099511628211L;
-            hash ^= vec3dhash(from);
-            hash *= 1099511628211L;
-            hash ^= vec3dhash(to);
-            hash *= 1099511628211L;
-            return hash;
+            return super.calcKey(regs).withInt(2).withCoords(from, to);
         }
     }
 
@@ -1305,18 +1198,9 @@ public class ShapeDispatcher
         }
 
         @Override
-        public long calcKey(RegistryAccess regs)
+        public FowlerNollVoDigest calcKey(RegistryAccess regs)
         {
-            long hash = super.calcKey(regs);
-            hash ^= 3;
-            hash *= 1099511628211L;
-            hash ^= vec3dhash(center);
-            hash *= 1099511628211L;
-            hash ^= Double.hashCode(radius);
-            hash *= 1099511628211L;
-            hash ^= level;
-            hash *= 1099511628211L;
-            return hash;
+            return super.calcKey(regs).withInt(3, level).withCoords(center).withDbl(radius);
         }
     }
 
@@ -1426,20 +1310,9 @@ public class ShapeDispatcher
         }
 
         @Override
-        public long calcKey(RegistryAccess regs)
+        public FowlerNollVoDigest calcKey(RegistryAccess regs)
         {
-            long hash = super.calcKey(regs);
-            hash ^= 4;
-            hash *= 1099511628211L;
-            hash ^= vec3dhash(center);
-            hash *= 1099511628211L;
-            hash ^= Double.hashCode(radius);
-            hash *= 1099511628211L;
-            hash ^= Double.hashCode(height);
-            hash *= 1099511628211L;
-            hash ^= level;
-            hash *= 1099511628211L;
-            return hash;
+            return super.calcKey(regs).withInt(4, level).withCoords(center).withDbl(radius, height);
         }
     }
 

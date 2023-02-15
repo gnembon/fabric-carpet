@@ -54,6 +54,8 @@ import net.minecraft.world.level.block.entity.ShulkerBoxBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 
+import javax.annotation.Nullable;
+
 public class ShapesRenderer
 {
     private final Map<ResourceKey<Level>, Long2ObjectOpenHashMap<RenderedShape<? extends ShapeDispatcher.ExpiringShape>>> shapes;
@@ -320,7 +322,9 @@ public class ShapesRenderer
 
         private BlockPos blockPos;
         private BlockState blockState;
-        private BlockEntity BlockEntity = null;
+        @Nullable
+        private BlockEntity renderedBlockEntity = null;
+        private final int displayKey;
 
         protected RenderedSprite(Minecraft client, ShapeDispatcher.ExpiringShape shape, boolean isitem)
         {
@@ -330,6 +334,9 @@ public class ShapesRenderer
             {
                 this.transformType = ItemDisplayContext.valueOf(((ShapeDispatcher.DisplayedSprite) shape).itemTransformType.toUpperCase(Locale.ROOT));
             }
+            // fold shape.key into int by clicing long in hald and xor-ing
+            long key = shape.key(client.level.registryAccess());
+            displayKey = (int) (key ^ key >> 32);
         }
 
         @Override
@@ -410,35 +417,31 @@ public class ShapesRenderer
                     client.getBlockRenderer().getModelRenderer().renderModel(matrices.last(), immediate.getBuffer(ItemBlockRenderTypes.getRenderType(blockState, false)), blockState, bakedModel, red, green, blue, light, OverlayTexture.NO_OVERLAY);
                 }
 
-                // draw the block`s entity part
-                if (BlockEntity == null)
+                if (blockState.getBlock() instanceof EntityBlock eb)
                 {
-                    if (blockState.getBlock() instanceof EntityBlock eb)
+                    if (renderedBlockEntity == null)
                     {
-                        BlockEntity = eb.newBlockEntity(blockPos, blockState);
-                        if (BlockEntity != null)
+                        renderedBlockEntity = eb.newBlockEntity(blockPos, blockState);
+                        if (renderedBlockEntity != null)
                         {
-                            BlockEntity.setLevel(client.level);
+                            renderedBlockEntity.setLevel(client.level);
                             if (shape.blockEntity != null)
                             {
-                                BlockEntity.load(shape.blockEntity);
+                                renderedBlockEntity.load(shape.blockEntity);
                             }
                         }
                     }
-                }
-                if (BlockEntity instanceof ShulkerBoxBlockEntity sbBlockEntity)
-                {
-                    sbrender(sbBlockEntity, partialTick,
-                            matrices, immediate, light, OverlayTexture.NO_OVERLAY);
-                }
-                else
-                {
-                    if (BlockEntity != null)
+                    if (renderedBlockEntity instanceof ShulkerBoxBlockEntity sbBlockEntity)
                     {
-                        BlockEntityRenderer<BlockEntity> blockEntityRenderer = client.getBlockEntityRenderDispatcher().getRenderer(BlockEntity);
+                        sbrender(sbBlockEntity, partialTick,
+                                matrices, immediate, light, OverlayTexture.NO_OVERLAY);
+                    }
+                    else if (renderedBlockEntity != null)
+                    {
+                        BlockEntityRenderer<BlockEntity> blockEntityRenderer = client.getBlockEntityRenderDispatcher().getRenderer(renderedBlockEntity);
                         if (blockEntityRenderer != null)
                         {
-                            blockEntityRenderer.render(BlockEntity, partialTick,
+                            blockEntityRenderer.render(renderedBlockEntity, partialTick,
                                     matrices, immediate, light, OverlayTexture.NO_OVERLAY);
 
                         }
@@ -451,7 +454,7 @@ public class ShapesRenderer
                 {
                     // draw the item
                     client.getItemRenderer().renderStatic(shape.item, transformType, light,
-                            OverlayTexture.NO_OVERLAY, matrices, immediate, client.level, (int) shape.key(client.level.registryAccess()));
+                            OverlayTexture.NO_OVERLAY, matrices, immediate, client.level, displayKey);
                 }
             }
             matrices.popPose();
