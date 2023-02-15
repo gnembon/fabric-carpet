@@ -568,7 +568,7 @@ public class ShapesRenderer
                 text_x = (float) (-textRenderer.width(shape.value.getString()));
             }
             MultiBufferSource.BufferSource immediate = MultiBufferSource.immediate(builder);
-            textRenderer.drawInBatch(shape.value, text_x, 0.0F, shape.textcolor, false, matrices.last().pose(), immediate, false, shape.textbck, 15728880);
+            textRenderer.drawInBatch(shape.value, text_x, 0.0F, shape.textcolor, false, matrices.last().pose(), immediate, Font.DisplayMode.NORMAL, shape.textbck, 15728880);
             immediate.endBatch();
             matrices.popPose();
             RenderSystem.enableCull();

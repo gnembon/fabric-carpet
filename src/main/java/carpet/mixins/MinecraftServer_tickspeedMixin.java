@@ -82,7 +82,7 @@ public abstract class MinecraftServer_tickspeedMixin extends ReentrantBlockableE
     // could possibly just inject that mspt selection at the beginning of the loop, but then adding all mspt's to
     // replace 50L will be a hassle
     @Inject(method = "runServer", at = @At(value = "INVOKE", shift = At.Shift.AFTER,
-            target = "Lnet/minecraft/server/MinecraftServer;updateStatusIcon(Lnet/minecraft/network/protocol/status/ServerStatus;)V"))
+            target = "Lnet/minecraft/server/MinecraftServer;buildServerStatus()Lnet/minecraft/network/protocol/status/ServerStatus;"))
     private void modifiedRunLoop(CallbackInfo ci)
     {
         while (this.running)
