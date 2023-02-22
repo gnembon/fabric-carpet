@@ -876,10 +876,6 @@ public class Auxiliary
                 {
                     return;
                 }
-                if (what.equalsIgnoreCase("forest_rock"))  // there might be more of those
-                {
-                    WorldTools.forceChunkUpdate(locator.block.getPos(), ((CarpetContext) c).level());
-                }
                 result[0] = BooleanValue.of(res);
             });
             return result[0];
