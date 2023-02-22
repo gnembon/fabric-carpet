@@ -866,7 +866,7 @@ public class CarpetScriptHost extends ScriptHost
             assertAppIntegrity(function.getModule());
             Context context = new CarpetContext(this, source);
             return function.getExpression().evalValue(
-                    () -> function.execute(context, Context.VOID, function.getExpression(), function.getToken(), argv),
+                    () -> function.execute(context, Context.VOID, function.getExpression(), function.getToken(), argv, null),
                     context,
                     Context.VOID
             );
@@ -903,7 +903,7 @@ public class CarpetScriptHost extends ScriptHost
             assertAppIntegrity(fun.getModule());
             Context context = new CarpetContext(this, source, origin);
             return fun.getExpression().evalValue(
-                    () -> fun.execute(context, Context.VOID, fun.getExpression(), fun.getToken(), argv),
+                    () -> fun.execute(context, Context.VOID, fun.getExpression(), fun.getToken(), argv, null),
                     context,
                     Context.VOID);
         }
@@ -1214,5 +1214,11 @@ public class CarpetScriptHost extends ScriptHost
             return true;
         }
         return false;
+    }
+
+    @Override
+    public boolean canSynchronouslyExecute()
+    {
+        return !scriptServer().server.isSameThread();
     }
 }

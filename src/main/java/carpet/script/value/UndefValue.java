@@ -7,6 +7,7 @@ import net.minecraft.nbt.Tag;
 public class UndefValue extends NullValue
 {
     public static final UndefValue UNDEF = new UndefValue();
+    public static final UndefValue EOL = new UndefValue();
 
     private RuntimeException getError()
     {

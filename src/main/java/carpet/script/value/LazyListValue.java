@@ -137,7 +137,12 @@ public abstract class LazyListValue extends AbstractListValue implements Iterato
     public List<Value> unroll()
     {
         List<Value> result = new ArrayList<>();
-        this.forEachRemaining(result::add);
+        this.forEachRemaining(v -> {
+            if (v != Value.EOL)
+            {
+                result.add(v);
+            }
+        });
         fatality();
         return result;
     }

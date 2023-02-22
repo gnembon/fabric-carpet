@@ -7,34 +7,39 @@ import carpet.script.exception.ExitStatement;
 import carpet.script.exception.ExpressionException;
 import carpet.script.exception.InternalExpressionException;
 
+import java.util.ArrayDeque;
+import java.util.Deque;
+import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.atomic.AtomicReference;
 
 import net.minecraft.nbt.Tag;
 
-public class ThreadValue extends Value
+public class ThreadValue extends LazyListValue
 {
     private final CompletableFuture<Value> taskFuture;
     private final long id;
     private static long sequence = 0L;
-
-    public ThreadValue(CompletableFuture<Value> taskFuture)
-    {
-        this.taskFuture = taskFuture;
-        this.id = sequence++;
-    }
+    private final Deque<Value> coState = new ArrayDeque<>();
+    private final AtomicReference<Value> coLock = new AtomicReference<>(Value.EOL);
+    public final boolean isCoroutine;
 
     public ThreadValue(Value pool, FunctionValue function, Expression expr, Tokenizer.Token token, Context ctx, List<Value> args)
     {
-        this(getCompletableFutureFromFunction(pool, function, expr, token, ctx, args));
+        this.id = sequence++;
+        this.isCoroutine = ctx.host.canSynchronouslyExecute();
+        this.taskFuture = getCompletableFutureFromFunction(pool, function, expr, token, ctx, args);
+
         Thread.yield();
     }
 
-    public static CompletableFuture<Value> getCompletableFutureFromFunction(Value pool, FunctionValue function, Expression expr, Tokenizer.Token token, Context ctx, List<Value> args)
+    public CompletableFuture<Value> getCompletableFutureFromFunction(Value pool, FunctionValue function, Expression expr, Tokenizer.Token token, Context ctx, List<Value> args)
     {
         ExecutorService executor = ctx.host.getExecutor(pool);
+        ThreadValue callingThread = isCoroutine ? this : null;
         if (executor == null)
         {
             // app is shutting down - no more threads can be spawned.
@@ -45,7 +50,7 @@ public class ThreadValue extends Value
             return CompletableFuture.supplyAsync(() -> {
                 try
                 {
-                    return function.execute(ctx, Context.NONE, expr, token, args).evalValue(ctx);
+                    return function.execute(ctx, Context.NONE, expr, token, args, callingThread).evalValue(ctx);
                 }
                 catch (ExitStatement exit)
                 {
@@ -136,5 +141,144 @@ public class ThreadValue extends Value
     public String getTypeString()
     {
         return "task";
+    }
+
+    @Override
+    public void fatality()
+    {
+        // we signal that won't be interested in the co-thread anymore
+        // but threads run client code, so we can't just kill them
+    }
+
+    @Override
+    public void reset()
+    {
+        //throw new InternalExpressionException("Illegal operation on a task");
+    }
+
+
+    @Override
+    public Iterator<Value> iterator()
+    {
+        if (!isCoroutine)
+        {
+            throw new InternalExpressionException("Cannot iterate over this task");
+        }
+        return this;
+    }
+
+    @Override
+    public boolean hasNext()
+    {
+        return !(coState.isEmpty() && taskFuture.isDone());
+    }
+
+    @Override
+    public Value next()
+    {
+        Value popped = null;
+        synchronized (coState)
+        {
+            while (true)
+            {
+                if (!coState.isEmpty())
+                {
+                    popped = coState.pop();
+                }
+                else if (taskFuture.isDone())
+                {
+                    popped = Value.EOL;
+                }
+                if (popped != null)
+                {
+                    break;
+                }
+                try
+                {
+                    coState.wait(1);
+                }
+                catch (InterruptedException ignored)
+                {
+                }
+            }
+            coState.notifyAll();
+        }
+        return popped;
+    }
+
+    public void send(Value value)
+    {
+        synchronized (coLock)
+        {
+            coLock.set(value);
+            coLock.notifyAll();
+        }
+    }
+
+    public Value ping(Value value, boolean lock)
+    {
+        synchronized (coState)
+        {
+            try
+            {
+                if (!lock)
+                {
+                    coState.add(value);
+                    return Value.NULL;
+                }
+                while (true)
+                {
+                    if (coState.isEmpty())
+                    {
+                        coState.add(value);
+                        break;
+                    }
+                    try
+                    {
+                        coState.wait(1);
+                    }
+
+                    catch (InterruptedException ignored)
+                    {
+                    }
+                }
+            }
+            finally
+            {
+                coState.notifyAll();
+            }
+        }
+
+        // locked mode
+
+        synchronized (coLock)
+        {
+            Value ret;
+            try
+            {
+                while (true)
+                {
+                    Value current = coLock.get();
+                    if (current != Value.EOL)
+                    {
+                        ret = current;
+                        coLock.set(Value.EOL);
+                        break;
+                    }
+                    try
+                    {
+                        coLock.wait(1);
+                    }
+                    catch (InterruptedException ignored)
+                    {
+                    }
+                }
+            }
+            finally
+            {
+                coLock.notifyAll();
+            }
+            return ret;
+        }
     }
 }

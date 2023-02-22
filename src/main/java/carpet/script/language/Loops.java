@@ -143,6 +143,9 @@ public class Loops
             for (int i = 0; iterator.hasNext(); i++)
             {
                 Value next = iterator.next();
+                if(next == Value.EOL) {
+                    continue;
+                }
                 String variable = next.boundVariable;
                 next.bindTo("_");
                 int doYouReally = i;
@@ -197,6 +200,9 @@ public class Loops
             for (int i = 0; iterator.hasNext(); i++)
             {
                 Value next = iterator.next();
+                if(next == Value.EOL) {
+                    continue;
+                }
                 String veriable = next.boundVariable;
                 next.bindTo("_");
                 int seriously = i;
@@ -254,6 +260,9 @@ public class Loops
             for (int i = 0; iterator.hasNext(); i++)
             {
                 Value next = iterator.next();
+                if(next == Value.EOL) {
+                    continue;
+                }
                 String variable = next.boundVariable;
                 next.bindTo("_");
                 int seriously = i;
@@ -311,6 +320,9 @@ public class Loops
             for (int i = 0; iterator.hasNext(); i++)
             {
                 Value next = iterator.next();
+                if(next == Value.EOL) {
+                    continue;
+                }
                 String variable = next.boundVariable;
                 next.bindTo("_");
                 int seriously = i;
@@ -381,6 +393,9 @@ public class Loops
             for (int i = 0; iterator.hasNext(); i++)
             {
                 Value next = iterator.next();
+                if(next == Value.EOL) {
+                    continue;
+                }
                 String variable = next.boundVariable;
                 next.bindTo("_");
                 int seriously = i;
@@ -452,6 +467,9 @@ public class Loops
             for (int i = 0; iterator.hasNext(); i++)
             {
                 Value next = iterator.next();
+                if(next == Value.EOL) {
+                    continue;
+                }
                 String variable = next.boundVariable;
                 next.bindTo("_");
                 Value promiseWontChangeYou = acc;

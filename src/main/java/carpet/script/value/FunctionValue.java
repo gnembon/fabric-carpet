@@ -22,6 +22,8 @@ import java.util.function.Consumer;
 import net.minecraft.nbt.StringTag;
 import net.minecraft.nbt.Tag;
 
+import javax.annotation.Nullable;
+
 public class FunctionValue extends Value implements Fluff.ILazyFunction
 {
     private final Expression expression;
@@ -158,7 +160,7 @@ public class FunctionValue extends Value implements Fluff.ILazyFunction
     {
         try
         {
-            return execute(c, type, expression, token, params);
+            return execute(c, type, expression, token, params, null);
         }
         catch (ExpressionException exc)
         {
@@ -214,10 +216,10 @@ public class FunctionValue extends Value implements Fluff.ILazyFunction
     public LazyValue lazyEval(Context c, Context.Type type, Expression e, Tokenizer.Token t, List<LazyValue> lazyParams)
     {
         List<Value> resolvedParams = unpackArgs(lazyParams, c);
-        return execute(c, type, e, t, resolvedParams);
+        return execute(c, type, e, t, resolvedParams, null);
     }
 
-    public LazyValue execute(Context c, Context.Type type, Expression e, Tokenizer.Token t, List<Value> params)
+    public LazyValue execute(Context c, Context.Type type, Expression e, Tokenizer.Token t, List<Value> params, @Nullable ThreadValue freshNewCallingThread)
     {
         assertArgsOk(params, fixedArgs -> {
             if (fixedArgs)  // wrong number of args for fixed args
@@ -237,6 +239,10 @@ public class FunctionValue extends Value implements Fluff.ILazyFunction
             );
         });
         Context newFrame = c.recreate();
+        if (freshNewCallingThread != null)
+        {
+            newFrame.setThreadContext(freshNewCallingThread);
+        }
 
         if (outerState != null)
         {

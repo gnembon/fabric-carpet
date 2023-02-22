@@ -1,5 +1,6 @@
 package carpet.script.language;
 
+import carpet.script.Context;
 import carpet.script.Expression;
 import carpet.script.argument.FunctionArgument;
 import carpet.script.exception.ExitStatement;
@@ -127,6 +128,64 @@ public class Threading
                 throw new ExitStatement(exceptionally);
             }
             return (cc, tt) -> new NumericValue(time); // pass through for variables
+        });
+
+        expression.addLazyFunction("yield", (c, t, lv) ->
+        {
+            if (c.getThreadContext() == null)
+            {
+                throw new InternalExpressionException("'yield' can only be used in a task");
+            }
+            if (lv.isEmpty())
+            {
+                throw new InternalExpressionException("'yield' requires at least one argument");
+            }
+            boolean lock = lv.size() > 1 && lv.get(1).evalValue(c, Context.BOOLEAN).getBoolean();
+            Value value = lv.get(0).evalValue(c);
+            Value ret = c.getThreadContext().ping(value, lock);
+            return (cc, tt) -> ret;
+        });
+
+        expression.addLazyFunction("task_send", 2, (c, t, lv) ->
+        {
+            Value threadValue = lv.get(0).evalValue(c);
+            if (!(threadValue instanceof ThreadValue thread))
+            {
+                throw new InternalExpressionException("'task_next' requires a task value");
+            }
+            if (!thread.isCoroutine)
+            {
+                throw new InternalExpressionException("'task_next' requires a coroutine task value");
+            }
+            Value ret = lv.get(1).evalValue(c);
+            thread.send(ret);
+            return (cc, tt) -> Value.NULL;
+        });
+
+        expression.addLazyFunction("task_await", 1, (c, t, lv) ->
+        {
+            Value threadValue = lv.get(0).evalValue(c);
+            if (!(threadValue instanceof ThreadValue thread))
+            {
+                throw new InternalExpressionException("'task_await' requires a task value");
+            }
+            if (!thread.isCoroutine)
+            {
+                throw new InternalExpressionException("'task_await' requires a coroutine task value");
+            }
+            Value ret = thread.next();
+            return ret == Value.EOL ? ((cc, tt) -> Value.NULL) : ((cc, tt) -> ret);
+        });
+
+        expression.addLazyFunction("task_ready", 1, (c, t, lv) ->
+        {
+            Value threadValue = lv.get(0).evalValue(c);
+            if (!(threadValue instanceof ThreadValue thread))
+            {
+                throw new InternalExpressionException("'task_ready' requires a task value");
+            }
+            boolean ret = thread.isCoroutine && thread.hasNext();
+            return (cc, tt) -> BooleanValue.of(ret);
         });
     }
 }

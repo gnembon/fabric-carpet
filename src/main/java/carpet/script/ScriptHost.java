@@ -58,6 +58,11 @@ public abstract class ScriptHost
         return scriptServer.resolveResource(suffix);
     }
 
+    public boolean canSynchronouslyExecute()
+    {
+        return true;
+    }
+
     public static class ModuleData
     {
         Module parent;

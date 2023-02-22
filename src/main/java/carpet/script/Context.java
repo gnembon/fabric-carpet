@@ -1,6 +1,7 @@
 package carpet.script;
 
 import carpet.script.exception.InternalExpressionException;
+import carpet.script.value.ThreadValue;
 import carpet.script.value.Value;
 
 import java.util.HashMap;
@@ -29,6 +30,8 @@ public class Context
     public Map<String, LazyValue> variables = new HashMap<>();
 
     public final ScriptHost host;
+
+    private ThreadValue threadContext = null;
 
     public Context(ScriptHost host)
     {
@@ -69,8 +72,19 @@ public class Context
     public Context recreate()
     {
         Context ctx = duplicate();
+        ctx.threadContext = threadContext;
         ctx.initialize();
         return ctx;
+    }
+
+    public void setThreadContext(ThreadValue callingThread)
+    {
+        this.threadContext = callingThread;
+    }
+
+    public ThreadValue getThreadContext()
+    {
+        return threadContext;
     }
 
     protected void initialize()
