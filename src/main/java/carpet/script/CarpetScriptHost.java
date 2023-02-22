@@ -110,7 +110,7 @@ public class CarpetScriptHost extends ScriptHost
                 CarpetExpression ex = new CarpetExpression(host.main, module.code(), source, new BlockPos(0, 0, 0));
                 ex.getExpr().asATextSource();
                 host.storeSource = storeSource;
-                ex.scriptRunCommand(host, new BlockPos(source.getPosition()));
+                ex.scriptRunCommand(host, BlockPos.containing(source.getPosition()));
             }
             catch (CarpetExpressionException e)
             {

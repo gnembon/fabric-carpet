@@ -50,14 +50,18 @@ public class BlockIterators
             if (rangeLocator.fromBlock)
             {
                 range = new Vec3i(
-                        abs(rangeLocator.vec.x - center.getX()),
-                        abs(rangeLocator.vec.y - center.getY()),
-                        abs(rangeLocator.vec.z - center.getZ())
+                        Mth.floor(abs(rangeLocator.vec.x - center.getX())),
+                        Mth.floor(abs(rangeLocator.vec.y - center.getY())),
+                        Mth.floor(abs(rangeLocator.vec.z - center.getZ()))
                 );
             }
             else
             {
-                range = new Vec3i(abs(rangeLocator.vec.x), abs(rangeLocator.vec.y), abs(rangeLocator.vec.z));
+                range = new Vec3i(
+                        Mth.floor(abs(rangeLocator.vec.x)),
+                        Mth.floor(abs(rangeLocator.vec.y)),
+                        Mth.floor(abs(rangeLocator.vec.z))
+                );
             }
             Vec3i upperRange = range;
             if (lv.size() > rangeLocator.offset + 1) // +1 cause we still need the expression
@@ -66,14 +70,17 @@ public class BlockIterators
                 if (rangeLocator.fromBlock)
                 {
                     upperRange = new Vec3i(
-                            abs(rangeLocator.vec.x - center.getX()),
-                            abs(rangeLocator.vec.y - center.getY()),
-                            abs(rangeLocator.vec.z - center.getZ())
+                            Mth.floor(abs(rangeLocator.vec.x - center.getX())),
+                            Mth.floor(abs(rangeLocator.vec.y - center.getY())),
+                            Mth.floor(abs(rangeLocator.vec.z - center.getZ()))
                     );
                 }
                 else
                 {
-                    upperRange = new Vec3i(abs(rangeLocator.vec.x), abs(rangeLocator.vec.y), abs(rangeLocator.vec.z));
+                    upperRange = new Vec3i(
+                            Mth.floor(abs(rangeLocator.vec.x)),
+                            Mth.floor(abs(rangeLocator.vec.y)),
+                            Mth.floor(abs(rangeLocator.vec.z)));
                 }
             }
             if (llv.size() != rangeLocator.offset + 1)

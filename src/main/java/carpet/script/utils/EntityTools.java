@@ -17,7 +17,7 @@ public class EntityTools
             return;
         }
         float m = e.level.getBlockState(e.blockPosition()).getBlock().getJumpFactor();
-        float g = e.level.getBlockState(new BlockPos(e.getX(), e.getBoundingBox().minY - 0.5000001D, e.getZ())).getBlock().getJumpFactor();
+        float g = e.level.getBlockState(BlockPos.containing(e.getX(), e.getBoundingBox().minY - 0.5000001D, e.getZ())).getBlock().getJumpFactor();
         float jumpVelocityMultiplier = m == 1.0D ? g : m;
         float jumpStrength = (0.42F * jumpVelocityMultiplier);
         Vec3 vec3d = e.getDeltaMovement();

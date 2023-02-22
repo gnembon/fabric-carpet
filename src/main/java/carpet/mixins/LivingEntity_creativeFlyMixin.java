@@ -17,7 +17,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 @Mixin(LivingEntity.class)
 public abstract class LivingEntity_creativeFlyMixin extends Entity
 {
-    @Shadow public float flyingSpeed;
+    @Shadow protected abstract float getFlyingSpeed();
 
     public LivingEntity_creativeFlyMixin(EntityType<?> type, Level world)
     {
@@ -44,7 +44,7 @@ public abstract class LivingEntity_creativeFlyMixin extends Entity
         {
             Player self = (Player)(Object)(this);
             if (self.getAbilities().flying && !onGround)
-                cir.setReturnValue( flyingSpeed* (float)CarpetSettings.creativeFlySpeed);
+                cir.setReturnValue( getFlyingSpeed() * (float)CarpetSettings.creativeFlySpeed);
         }
     }
 }

@@ -30,7 +30,7 @@ public class PerimeterInfoCommand
                 requires((player) -> CommandHelper.canUseCommand(player, CarpetSettings.commandPerimeterInfo)).
                 executes( (c) -> perimeterDiagnose(
                         c.getSource(),
-                        new BlockPos(c.getSource().getPosition()),
+                        BlockPos.containing(c.getSource().getPosition()),
                         null)).
                 then(argument("center position", BlockPosArgument.blockPos()).
                         executes( (c) -> perimeterDiagnose(

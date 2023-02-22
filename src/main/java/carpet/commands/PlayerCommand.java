@@ -311,7 +311,7 @@ public class PlayerCommand
         }
 
         MinecraftServer server = source.getServer();
-        if (!Level.isInSpawnableBounds(new BlockPos(pos.x, pos.y, pos.z)))
+        if (!Level.isInSpawnableBounds(BlockPos.containing(pos.x, pos.y, pos.z)))
         {
             Messenger.m(context.getSource(), "rb Player "+playerName+" cannot be placed outside of the world");
             return 0;

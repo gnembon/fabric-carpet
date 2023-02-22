@@ -1101,7 +1101,7 @@ public class WorldAccess
             String itemString = lv.get(0).getString();
             Vector3Argument locator = Vector3Argument.findIn(lv, 1);
             ItemInput stackArg = NBTSerializableValue.parseItem(itemString, cc.registryAccess());
-            BlockPos where = new BlockPos(locator.vec);
+            BlockPos where = BlockPos.containing(locator.vec);
             // Paintings throw an exception if their direction is vertical, therefore we change the default here
             String facing = lv.size() > locator.offset
                     ? lv.get(locator.offset).getString()

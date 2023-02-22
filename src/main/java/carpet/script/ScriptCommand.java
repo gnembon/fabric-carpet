@@ -532,7 +532,7 @@ public class ScriptCommand
         CarpetScriptHost host = getHost(context);
         return handleCall(source, host, () -> {
             CarpetExpression ex = new CarpetExpression(host.main, expr, source, new BlockPos(0, 0, 0));
-            return ex.scriptRunCommand(host, new BlockPos(source.getPosition()));
+            return ex.scriptRunCommand(host, BlockPos.containing(source.getPosition()));
         });
     }
 

@@ -381,7 +381,7 @@ public class ShapesRenderer
             RenderSystem.enableCull();
             RenderSystem.enableDepthTest();
 
-            blockPos = new BlockPos(v1);
+            blockPos = BlockPos.containing(v1);
             int light = 0;
             if (client.level != null)
             {

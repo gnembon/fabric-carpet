@@ -315,7 +315,7 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
             if (v1 instanceof final ListValue lv)
             {
                 List<Value> args = lv.getItems();
-                BlockPos pos = new BlockPos(
+                BlockPos pos = BlockPos.containing(
                         NumericValue.asNumber(args.get(0)).getDouble(),
                         NumericValue.asNumber(args.get(1)).getDouble(),
                         NumericValue.asNumber(args.get(2)).getDouble());
@@ -326,7 +326,7 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
             {
                 return !screenValue.isOpen() ? null : new InventoryLocator(screenValue.getPlayer(), screenValue.getPlayer().blockPosition(), screenValue.getInventory(), offset + 1);
             }
-            BlockPos pos = new BlockPos(
+            BlockPos pos = BlockPos.containing(
                     NumericValue.asNumber(v1).getDouble(),
                     NumericValue.asNumber(params.get(1 + offset)).getDouble(),
                     NumericValue.asNumber(params.get(2 + offset)).getDouble());

@@ -69,7 +69,7 @@ public class EntityPlayerMPFake extends ServerPlayer
         instance.teleportTo(worldIn, d0, d1, d2, (float)yaw, (float)pitch);
         instance.setHealth(20.0F);
         instance.unsetRemoved();
-        instance.maxUpStep = 0.6F;
+        instance.setMaxUpStep(0.6F);
         instance.gameMode.changeGameModeForPlayer(gamemode);
         server.getPlayerList().broadcastAll(new ClientboundRotateHeadPacket(instance, (byte) (instance.yHeadRot * 256 / 360)), dimensionId);//instance.dimension);
         server.getPlayerList().broadcastAll(new ClientboundTeleportEntityPacket(instance), dimensionId);//instance.dimension);
@@ -93,7 +93,7 @@ public class EntityPlayerMPFake extends ServerPlayer
         playerShadow.connection.teleport(player.getX(), player.getY(), player.getZ(), player.getYRot(), player.getXRot());
         playerShadow.gameMode.changeGameModeForPlayer(player.gameMode.getGameModeForPlayer());
         ((ServerPlayerInterface) playerShadow).getActionPack().copyFrom(((ServerPlayerInterface) player).getActionPack());
-        playerShadow.maxUpStep = 0.6F;
+        playerShadow.setMaxUpStep(0.6F);
         playerShadow.entityData.set(DATA_PLAYER_MODE_CUSTOMISATION, player.getEntityData().get(DATA_PLAYER_MODE_CUSTOMISATION));
 
 

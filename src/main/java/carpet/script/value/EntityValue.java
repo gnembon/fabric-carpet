@@ -1331,7 +1331,7 @@ public class EntityValue extends Value
             {
                 List<Value> list = lv.getItems();
                 Vector3Argument locator = Vector3Argument.findIn(list, 0, false, false);
-                pos = new BlockPos(locator.vec.x, locator.vec.y, locator.vec.z);
+                pos = BlockPos.containing(locator.vec.x, locator.vec.y, locator.vec.z);
                 if (list.size() > locator.offset)
                 {
                     distance = (int) NumericValue.asNumber(list.get(locator.offset)).getLong();
@@ -1365,7 +1365,7 @@ public class EntityValue extends Value
             {
                 List<Value> params = lv.getItems();
                 Vector3Argument blockLocator = Vector3Argument.findIn(params, 0, false, false);
-                BlockPos pos = new BlockPos(blockLocator.vec);
+                BlockPos pos = BlockPos.containing(blockLocator.vec);
                 ResourceKey<Level> world = spe.getCommandSenderWorld().dimension();
                 float angle = spe.getYHeadRot();
                 boolean forced = false;
