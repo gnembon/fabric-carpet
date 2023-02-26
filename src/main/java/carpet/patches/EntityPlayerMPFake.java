@@ -6,9 +6,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.UUIDUtil;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.PacketFlow;
-import net.minecraft.network.protocol.game.ClientboundPlayerInfoUpdatePacket;
-import net.minecraft.network.protocol.game.ClientboundRotateHeadPacket;
-import net.minecraft.network.protocol.game.ClientboundTeleportEntityPacket;
+import net.minecraft.network.protocol.game.*;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.TickTask;
@@ -18,6 +16,7 @@ import net.minecraft.server.players.GameProfileCache;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.RelativeMovement;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.food.FoodData;
 import net.minecraft.world.item.ItemStack;
@@ -28,6 +27,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import carpet.fakes.ServerPlayerInterface;
 import carpet.utils.Messenger;
 
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 
 @SuppressWarnings("EntityConstructor")
@@ -104,6 +104,11 @@ public class EntityPlayerMPFake extends ServerPlayer
         return playerShadow;
     }
 
+    public static EntityPlayerMPFake respawnFake(MinecraftServer server, ServerLevel level, GameProfile profile)
+    {
+        return new EntityPlayerMPFake(server, level, profile, false);
+    }
+
     private EntityPlayerMPFake(MinecraftServer server, ServerLevel worldIn, GameProfile profile, boolean shadow)
     {
         super(server, worldIn, profile);
@@ -137,7 +142,6 @@ public class EntityPlayerMPFake extends ServerPlayer
         {
             this.connection.resetPosition();
             this.getLevel().getChunkSource().move(this);
-            hasChangedDimension(); //<- causes hard crash but would need to be done to enable portals // not as of 1.17
         }
         try
         {
@@ -181,5 +185,22 @@ public class EntityPlayerMPFake extends ServerPlayer
     @Override
     protected void checkFallDamage(double y, boolean onGround, BlockState state, BlockPos pos) {
         doCheckFallDamage(y, onGround);
+    }
+
+    @Override
+    public Entity changeDimension(ServerLevel serverLevel)
+    {
+        super.changeDimension(serverLevel);
+        if (wonGame) {
+            ServerboundClientCommandPacket p = new ServerboundClientCommandPacket(ServerboundClientCommandPacket.Action.PERFORM_RESPAWN);
+            connection.handleClientCommand(p);
+        }
+
+        // If above branch was taken, *this* has been removed and replaced, the new instance has been set
+        // on 'our' connection (which is now theirs, but we still have a ref).
+        if (connection.player.isChangingDimension()) {
+            connection.player.hasChangedDimension();
+        }
+        return connection.player;
     }
 }
