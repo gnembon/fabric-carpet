@@ -4,8 +4,11 @@ import net.minecraft.network.Connection;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.contents.TranslatableContents;
 import net.minecraft.network.protocol.Packet;
+import net.minecraft.network.protocol.game.*;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerGamePacketListenerImpl;
+import net.minecraft.world.entity.RelativeMovement;
+import java.util.Set;
 
 public class NetHandlerPlayServerFake extends ServerGamePacketListenerImpl
 {
@@ -27,6 +30,26 @@ public class NetHandlerPlayServerFake extends ServerGamePacketListenerImpl
             ((EntityPlayerMPFake) player).kill(message);
         }
     }
+    private boolean hasSpawned = false;
+
+    @Override
+    public void teleport(double d, double e, double f, float g, float h, Set<RelativeMovement> set)
+    {
+        super.teleport(d, e, f, g, h, set);
+
+        handleAcceptTeleportPacket(
+            new ServerboundAcceptTeleportationPacket(this.awaitingTeleport)
+        );
+
+        if (!hasSpawned) {
+            hasSpawned = true;
+        } else {
+            handleMovePlayer(
+                new ServerboundMovePlayerPacket.PosRot(player.getX(), player.getY(), player.getZ(), player.getYRot(), player.getXRot(), false)
+            );
+        }
+    }
+
 }
 
 
