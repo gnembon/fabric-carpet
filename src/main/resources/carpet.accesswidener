@@ -12,3 +12,4 @@ accessible class net/minecraft/world/level/biome/Biome$ClimateSettings
 accessible method net/minecraft/world/level/border/WorldBorder getListeners ()Ljava/util/List;
 
 accessible field net/minecraft/world/level/block/state/BlockBehaviour UPDATE_SHAPE_ORDER [Lnet/minecraft/core/Direction;
+accessible field net/minecraft/server/network/ServerGamePacketListenerImpl awaitingTeleport I
