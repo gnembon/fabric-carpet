@@ -45,10 +45,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.BiFunction;
-import java.util.function.BinaryOperator;
+import java.util.function.DoubleBinaryOperator;
 import java.util.function.DoubleToLongFunction;
 import java.util.function.DoubleUnaryOperator;
 import java.util.function.Function;
+import java.util.function.LongBinaryOperator;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -537,16 +538,16 @@ public class Expression
         addUnaryFunction(name, (v) -> new NumericValue(fun.applyAsLong(NumericValue.asNumber(v).getDouble())));
     }
 
-    public void addMathematicalBinaryIntFunction(String name, BinaryOperator<Long> fun)
+    public void addMathematicalBinaryIntFunction(String name, LongBinaryOperator fun)
     {
         addBinaryFunction(name, (w, v) ->
-                new NumericValue(fun.apply(NumericValue.asNumber(w).getLong(), NumericValue.asNumber(v).getLong())));
+                new NumericValue(fun.applyAsLong(NumericValue.asNumber(w).getLong(), NumericValue.asNumber(v).getLong())));
     }
 
-    public void addMathematicalBinaryFunction(String name, BinaryOperator<Double> fun)
+    public void addMathematicalBinaryFunction(String name, DoubleBinaryOperator fun)
     {
         addBinaryFunction(name, (w, v) ->
-                new NumericValue(fun.apply(NumericValue.asNumber(w).getDouble(), NumericValue.asNumber(v).getDouble())));
+                new NumericValue(fun.applyAsDouble(NumericValue.asNumber(w).getDouble(), NumericValue.asNumber(v).getDouble())));
     }
 
 

@@ -315,20 +315,8 @@ public class Operators
         expression.addFunctionalEquivalence("<=", "nondecreasing");
         expression.addMathematicalBinaryIntFunction("bitwise_shift_left", (num, amount) -> num << amount);
         expression.addMathematicalBinaryIntFunction("bitwise_shift_right", (num, amount) -> num >> amount);
-        expression.addMathematicalBinaryIntFunction("bitwise_roll_left", (num, num2) -> {
-            long amount = num2 % 64;
-            long amountToRoll = 64 - amount;
-            long rolledBits = ((-1L) >> amountToRoll) << amountToRoll;
-            long rolledAmount = (num & rolledBits) >> amountToRoll;
-            return num << amount | rolledAmount;
-        });
-        expression.addMathematicalBinaryIntFunction("bitwise_roll_right", (num, num2) -> {
-            long amount = num2 % 64;
-            long amountToRoll = 64 - amount;
-            long rolledBits = ((-1L) << amountToRoll) >> amountToRoll;
-            long rolledAmount = (num & rolledBits) << amountToRoll;
-            return num >> amount | rolledAmount;
-        });
+        expression.addMathematicalBinaryIntFunction("bitwise_roll_left", (num, amount) -> Long.rotateLeft(num, (int)amount));
+        expression.addMathematicalBinaryIntFunction("bitwise_roll_right", (num, amount) -> Long.rotateRight(num, (int)amount));
         expression.addMathematicalUnaryIntFunction("bitwise_not", d -> {
             long num = (long) d;
             return ~num;
