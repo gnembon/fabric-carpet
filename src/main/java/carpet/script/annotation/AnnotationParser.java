@@ -77,6 +77,7 @@ import carpet.script.value.Value;
 public final class AnnotationParser
 {
     static final int UNDEFINED_PARAMS = -2;
+    static final String USE_METHOD_NAME = "$METHOD_NAME_MARKER$";
     private static final List<ParsedFunction> functionList = new ArrayList<>();
 
     /**
@@ -172,7 +173,8 @@ public final class AnnotationParser
 
         private ParsedFunction(Method method, Class<?> originClass, Supplier<Object> instance)
         {
-            this.name = method.getName();
+            ScarpetFunction annotation = method.getAnnotation(ScarpetFunction.class);
+            this.name = annotation.functionName() == USE_METHOD_NAME ? method.getName() : annotation.functionName();
             this.isMethodVarArgs = method.isVarArgs();
             this.methodParamCount = method.getParameterCount();
 
@@ -199,7 +201,7 @@ public final class AnnotationParser
             int setMaxParams = this.minParams; // Unlimited == Integer.MAX_VALUE
             if (this.isEffectivelyVarArgs)
             {
-                setMaxParams = method.getAnnotation(ScarpetFunction.class).maxParams();
+                setMaxParams = annotation.maxParams();
                 if (setMaxParams == UNDEFINED_PARAMS)
                 {
                     throw new IllegalArgumentException("No maximum number of params specified for " + name + ", use ScarpetFunction.UNLIMITED_PARAMS for unlimited. "
@@ -237,7 +239,7 @@ public final class AnnotationParser
             }
 
             this.scarpetParamCount = this.isEffectivelyVarArgs ? -1 : this.minParams;
-            this.contextType = method.getAnnotation(ScarpetFunction.class).contextType();
+            this.contextType = annotation.contextType();
         }
 
         @Override
