@@ -223,10 +223,10 @@ public class Carpet
             @Override
             public void handleAny(final Object... args)
             {
-                final CarpetRule<?> rule = (CarpetRule<?>) args[0];
-                final CommandSourceStack source = (CommandSourceStack) args[1];
-                final String id = rule.settingsManager().identifier();
-                final String namespace;
+                CarpetRule<?> rule = (CarpetRule<?>) args[0];
+                CommandSourceStack source = (CommandSourceStack) args[1];
+                String id = rule.settingsManager().identifier();
+                String namespace;
                 if (!id.equals("carpet"))
                 {
                     namespace = id + ":";
@@ -234,8 +234,10 @@ public class Carpet
                 {
                     namespace = "";
                 }
-                handler.call(() -> Arrays.asList(new StringValue(namespace + rule.name()), new StringValue(RuleHelper.toRuleString(rule.value()))),
-                        () -> source);
+                handler.call(() -> Arrays.asList(
+                                new StringValue(namespace + rule.name()),
+                                new StringValue(RuleHelper.toRuleString(rule.value()))
+                        ), () -> source);
             }
         };
         SettingsManager.registerGlobalRuleObserver((source, changedRule, userInput) -> carpetRuleChanges.handleAny(changedRule, source));
