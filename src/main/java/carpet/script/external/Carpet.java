@@ -216,7 +216,7 @@ public class Carpet
         throw new LoadException(String.format("%s requires a version of mod '%s' matching '%s', which is missing!", host.getName(), requiredModId, stringPredicate));
     }
 
-    // to be ran once during CarpetEventServer.Event init
+    // to be ran once during CarpetEventServer.Event static init
     public static void initCarpetEvents() {
         CarpetEventServer.Event carpetRuleChanges = new CarpetEventServer.Event("carpet_rule_changes", 2, true)
         {
