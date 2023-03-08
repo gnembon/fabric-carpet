@@ -76,6 +76,15 @@ public @interface ScarpetFunction
     int maxParams() default AnnotationParser.UNDEFINED_PARAMS;
 
     /**
+     * <p>The name of the function in Scarpet, that by default will be the method name.<p>
+     * 
+     * <p>The convention in Scarpet is to use names in snake case.</p>
+     * 
+     * @return The name for this function in Scarpet
+     */
+    String functionName() default AnnotationParser.USE_METHOD_NAME;
+
+    /**
      * <p>Defines the Context Type that will be used when evaluating arguments to annotated methods.</p>
      * 
      * <p>Note that this is not the same as the output from a {@link Context.Type} parameter, since that returns the Context Type the method was
