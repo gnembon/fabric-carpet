@@ -11,6 +11,7 @@ import carpet.helpers.TickSpeed;
 import carpet.logging.HUDController;
 import carpet.network.ServerNetworkHandler;
 import carpet.patches.EntityPlayerMPFake;
+import carpet.script.CarpetEventServer;
 import carpet.script.CarpetExpression;
 import carpet.script.CarpetScriptHost;
 import carpet.script.CarpetScriptServer;
@@ -40,6 +41,7 @@ import java.io.IOException;
 import java.nio.file.FileVisitOption;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -212,6 +214,33 @@ public class Carpet
             }
         }
         throw new LoadException(String.format("%s requires a version of mod '%s' matching '%s', which is missing!", host.getName(), requiredModId, stringPredicate));
+    }
+
+    // to be ran once during CarpetEventServer.Event static init
+    public static void initCarpetEvents() {
+        CarpetEventServer.Event carpetRuleChanges = new CarpetEventServer.Event("carpet_rule_changes", 2, true)
+        {
+            @Override
+            public void handleAny(final Object... args)
+            {
+                CarpetRule<?> rule = (CarpetRule<?>) args[0];
+                CommandSourceStack source = (CommandSourceStack) args[1];
+                String id = rule.settingsManager().identifier();
+                String namespace;
+                if (!id.equals("carpet"))
+                {
+                    namespace = id + ":";
+                } else
+                {
+                    namespace = "";
+                }
+                handler.call(() -> Arrays.asList(
+                                new StringValue(namespace + rule.name()),
+                                new StringValue(RuleHelper.toRuleString(rule.value()))
+                        ), () -> source);
+            }
+        };
+        SettingsManager.registerGlobalRuleObserver((source, changedRule, userInput) -> carpetRuleChanges.handleAny(changedRule, source));
     }
 
     public static class ScarpetAppStoreValidator extends Validator<String>
