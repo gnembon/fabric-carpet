@@ -232,7 +232,7 @@ public class Carpet
             }
             if (newValue.endsWith("/"))
             {
-                newValue = newValue.replaceAll("/$", "");
+                newValue = newValue.substring(0, newValue.length() - 1);
             }
             AppStoreManager.setScarpetRepoLink("https://api.github.com/repos/" + newValue + "/");
             return newValue;
