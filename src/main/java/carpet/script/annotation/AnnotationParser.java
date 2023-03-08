@@ -260,7 +260,8 @@ public final class AnnotationParser
             Object[] params = getMethodParams(lv, context, t);
             try
             {
-                return outputConverter.convert(handle.invokeExact(params));
+                Value result = outputConverter.convert(handle.invokeExact(params));
+                return (cc, tt) -> result;
             }
             catch (Throwable e)
             {
