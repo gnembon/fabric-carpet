@@ -314,7 +314,8 @@ public class Operators
         });
         expression.addFunctionalEquivalence("<=", "nondecreasing");
         expression.addMathematicalBinaryIntFunction("bitwise_shift_left", (num, amount) -> num << amount);
-        expression.addMathematicalBinaryIntFunction("bitwise_shift_right", (num, amount) -> num >> amount);
+        expression.addMathematicalBinaryIntFunction("bitwise_shift_right", (num, amount) -> num >>> amount);
+        expression.addMathematicalBinaryIntFunction("bitwise_arithmetic_shift_right", (num, amount) -> num >> amount);
         expression.addMathematicalBinaryIntFunction("bitwise_roll_left", (num, amount) -> Long.rotateLeft(num, (int)amount));
         expression.addMathematicalBinaryIntFunction("bitwise_roll_right", (num, amount) -> Long.rotateRight(num, (int)amount));
         expression.addMathematicalUnaryIntFunction("bitwise_not", d -> {
