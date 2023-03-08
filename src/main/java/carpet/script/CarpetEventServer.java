@@ -437,6 +437,11 @@ public class CarpetEventServer
             return events;
         }
 
+        static
+        {
+            Carpet.initCarpetEvents();
+        }
+
         public static final Event START = new Event("server_starts", 0, true)
         {
             @Override
