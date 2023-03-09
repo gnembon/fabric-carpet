@@ -1,10 +1,12 @@
 package carpet.patches;
 
+import carpet.mixins.ServerGamePacketListenerImplAccessor;
 import net.minecraft.network.Connection;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.contents.TranslatableContents;
 import net.minecraft.network.protocol.Packet;
-import net.minecraft.network.protocol.game.*;
+import net.minecraft.network.protocol.game.ServerboundAcceptTeleportationPacket;
+import net.minecraft.network.protocol.game.ServerboundMovePlayerPacket;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerGamePacketListenerImpl;
 import net.minecraft.world.entity.RelativeMovement;
@@ -38,7 +40,7 @@ public class NetHandlerPlayServerFake extends ServerGamePacketListenerImpl
         super.teleport(d, e, f, g, h, set);
 
         handleAcceptTeleportPacket(
-            new ServerboundAcceptTeleportationPacket(this.awaitingTeleport)
+            new ServerboundAcceptTeleportationPacket( ((ServerGamePacketListenerImplAccessor)this).getAwaitingTeleport() )
         );
 
         if (!hasSpawned) {
