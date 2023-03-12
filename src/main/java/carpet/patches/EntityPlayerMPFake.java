@@ -6,7 +6,10 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.UUIDUtil;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.PacketFlow;
-import net.minecraft.network.protocol.game.*;
+import net.minecraft.network.protocol.game.ClientboundPlayerInfoUpdatePacket;
+import net.minecraft.network.protocol.game.ClientboundRotateHeadPacket;
+import net.minecraft.network.protocol.game.ClientboundTeleportEntityPacket;
+import net.minecraft.network.protocol.game.ServerboundClientCommandPacket;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.TickTask;
@@ -16,7 +19,6 @@ import net.minecraft.server.players.GameProfileCache;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EquipmentSlot;
-import net.minecraft.world.entity.RelativeMovement;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.food.FoodData;
 import net.minecraft.world.item.ItemStack;
@@ -27,7 +29,6 @@ import net.minecraft.world.level.block.state.BlockState;
 import carpet.fakes.ServerPlayerInterface;
 import carpet.utils.Messenger;
 
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 
 @SuppressWarnings("EntityConstructor")
