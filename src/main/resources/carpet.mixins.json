@@ -8,6 +8,7 @@
     "MobCategory_spawnMixin",
     "Commands_customCommandsMixin",
     "ServerGamePacketListenerImplMixin",
+    "ServerGamePacketListenerImplAccessor",
 
     "PerfCommand_permissionMixin",
     "FillCommandMixin",
