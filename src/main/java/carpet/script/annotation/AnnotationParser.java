@@ -174,7 +174,7 @@ public final class AnnotationParser
         private ParsedFunction(Method method, Class<?> originClass, Supplier<Object> instance)
         {
             ScarpetFunction annotation = method.getAnnotation(ScarpetFunction.class);
-            this.name = annotation.functionName() == USE_METHOD_NAME ? method.getName() : annotation.functionName();
+            this.name = USE_METHOD_NAME.equals(annotation.functionName()) ? method.getName() : annotation.functionName();
             this.isMethodVarArgs = method.isVarArgs();
             this.methodParamCount = method.getParameterCount();
 
