@@ -220,8 +220,8 @@ public class EntityPlayerActionPack
             // skipping attack if use was successful
             if (!(actionAttempts.getOrDefault(ActionType.USE, false) && e.getKey() == ActionType.ATTACK))
             {
-                Boolean actionStatus = action.tick(this, e.getKey());
-                if (actionStatus != null)
+                boolean actionStatus = action.tick(this, e.getKey());
+                if (!actionStatus)
                     actionAttempts.put(e.getKey(), actionStatus);
             }
             // optionally retrying use after successful attack and unsuccessful use
@@ -237,9 +237,9 @@ public class EntityPlayerActionPack
                 }
             }
         }
-        float vel = sneaking?0.3F:1.0F;
-        player.zza = forward*vel;
-        player.xxa = strafing*vel;
+        float vel = sneaking ? 0.3F : 1.0F;
+        player.zza = forward * vel;
+        player.xxa = strafing * vel;
     }
 
     static HitResult getTarget(ServerPlayer player)
@@ -584,31 +584,27 @@ public class EntityPlayerActionPack
         }
 
         Boolean tick(EntityPlayerActionPack actionPack, ActionType type) {
-
-            Boolean isCanceled = null;
+            boolean isSuccess = true;
             boolean isNotSpectator = !type.preventSpectator || !actionPack.player.isSpectator();
 
             if (--next > 0) {
-                return isCanceled;
-            }
-
-            for (int i = 0; i < this.perTickAmount; i++) {
                 if (isNotSpectator) {
-                    isCanceled = type.execute(actionPack.player, this);
-                }
-                if (interval == 1 && !isContinuous && isNotSpectator) {
                     type.inactiveTick(actionPack.player, this);
                 }
+                return isSuccess;
+            }
+
+            for (int i = 0; i < this.perTickAmount && isNotSpectator; i++) {
+                isSuccess = type.execute(actionPack.player, this) && isSuccess;
             }
 
             if (++count == limit) {
                 type.stop(actionPack.player, null);
                 done = true;
-                return isCanceled;
+                return false;
             }
             next = interval;
-
-            return isCanceled;
+            return isSuccess;
         }
 
         void retry(EntityPlayerActionPack actionPack, ActionType type)
