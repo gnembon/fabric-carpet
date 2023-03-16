@@ -216,7 +216,7 @@ public final class ParsedRule<T> implements CarpetRule<T>, Comparable<ParsedRule
         }
         else if (this.type.isEnum())
         {
-            this.options = Arrays.stream(this.type.getEnumConstants()).map(e -> ((Enum<?>) e).name().toLowerCase(Locale.ROOT)).collect(Collectors.toUnmodifiableList());
+            this.options = Arrays.stream(this.type.getEnumConstants()).map(e -> ((Enum<?>) e).name().toLowerCase(Locale.ROOT)).toList();
             converter0 = str -> {
                 try {
                     @SuppressWarnings({"unchecked", "rawtypes"}) // Raw necessary because of signature. Unchecked because compiler doesn't know T extends Enum
