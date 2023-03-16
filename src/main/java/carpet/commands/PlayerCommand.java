@@ -123,7 +123,9 @@ public class PlayerCommand
                 .then(literal("once").executes(c -> action(c, type, EntityPlayerActionPack.Action.once())))
                 .then(literal("continuous").executes(c -> action(c, type, EntityPlayerActionPack.Action.continuous())))
                 .then(literal("interval").then(argument("ticks", IntegerArgumentType.integer(1))
-                        .executes(c -> action(c, type, EntityPlayerActionPack.Action.interval(IntegerArgumentType.getInteger(c, "ticks"))))));
+                        .executes(c -> action(c, type, EntityPlayerActionPack.Action.interval(IntegerArgumentType.getInteger(c, "ticks"))))))
+                .then(literal("perTick").then(argument("amount", IntegerArgumentType.integer(1, 64))
+                      .executes(ctx -> action(ctx, type,EntityPlayerActionPack.Action.perTick(IntegerArgumentType.getInteger(ctx, "amount"))))));
     }
 
     private static LiteralArgumentBuilder<CommandSourceStack> makeDropCommand(String actionName, boolean dropAll)

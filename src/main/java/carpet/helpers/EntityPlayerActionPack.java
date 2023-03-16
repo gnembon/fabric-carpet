@@ -220,8 +220,8 @@ public class EntityPlayerActionPack
             // skipping attack if use was successful
             if (!(actionAttempts.getOrDefault(ActionType.USE, false) && e.getKey() == ActionType.ATTACK))
             {
-                Boolean actionStatus = action.tick(this, e.getKey());
-                if (actionStatus != null)
+                boolean actionStatus = action.tick(this, e.getKey());
+                if (!actionStatus)
                     actionAttempts.put(e.getKey(), actionStatus);
             }
             // optionally retrying use after successful attack and unsuccessful use
@@ -237,9 +237,9 @@ public class EntityPlayerActionPack
                 }
             }
         }
-        float vel = sneaking?0.3F:1.0F;
-        player.zza = forward*vel;
-        player.xxa = strafing*vel;
+        float vel = sneaking ? 0.3F : 1.0F;
+        player.zza = forward * vel;
+        player.xxa = strafing * vel;
     }
 
     static HitResult getTarget(ServerPlayer player)
@@ -386,7 +386,8 @@ public class EntityPlayerActionPack
                         BlockHitResult blockHit = (BlockHitResult) hit;
                         BlockPos pos = blockHit.getBlockPos();
                         Direction side = blockHit.getDirection();
-                        if (player.blockActionRestricted(player.level, pos, player.gameMode.getGameModeForPlayer())) return false;
+                        if (player.blockActionRestricted(player.level, pos, player.gameMode.getGameModeForPlayer()))
+                            return false;
                         if (ap.currentBlock != null && player.level.getBlockState(ap.currentBlock).isAir())
                         {
                             ap.currentBlock = null;
@@ -399,7 +400,7 @@ public class EntityPlayerActionPack
                             player.gameMode.handleBlockBreakAction(pos, ServerboundPlayerActionPacket.Action.START_DESTROY_BLOCK, side, player.getLevel().getMaxBuildHeight(), -1);
                             ap.blockHitDelay = 5;
                             blockBroken = true;
-                        }
+                            }
                         else  if (ap.currentBlock == null || !ap.currentBlock.equals(pos))
                         {
                             if (ap.currentBlock != null)
@@ -534,15 +535,27 @@ public class EntityPlayerActionPack
         public final int offset;
         private int count;
         private int next;
+        private int perTickAmount;
         private final boolean isContinuous;
 
-        private Action(int limit, int interval, int offset, boolean continuous)
-        {
+        public Action(
+                int limit,
+                int interval,
+                int offset,
+                int perTickAmount,
+                boolean isContinuous
+        ) {
             this.limit = limit;
             this.interval = interval;
             this.offset = offset;
-            next = interval + offset;
-            isContinuous = continuous;
+            this.next = interval + offset;
+            this.perTickAmount = perTickAmount;
+            this.isContinuous = isContinuous;
+        }
+
+        private Action(int limit, int interval, int offset, boolean continuous)
+        {
+            this(limit, interval, offset, 1, continuous);
         }
 
         public static Action once()
@@ -565,43 +578,33 @@ public class EntityPlayerActionPack
             return new Action(-1, interval, offset, false);
         }
 
-        Boolean tick(EntityPlayerActionPack actionPack, ActionType type)
+        public static Action perTick(int amount)
         {
-            next--;
-            Boolean cancel = null;
-            if (next <= 0)
-            {
-                if (interval == 1 && !isContinuous)
-                {
-                    // need to allow entity to tick, otherwise won't have effect (bow)
-                    // actions are 20 tps, so need to clear status mid tick, allowing entities process it till next time
-                    if (!type.preventSpectator || !actionPack.player.isSpectator())
-                    {
-                        type.inactiveTick(actionPack.player, this);
-                    }
-                }
+            return new Action(-1, 1, 0, amount, false);
+        }
 
-                if (!type.preventSpectator || !actionPack.player.isSpectator())
-                {
-                    cancel = type.execute(actionPack.player, this);
-                }
-                count++;
-                if (count == limit)
-                {
-                    type.stop(actionPack.player, null);
-                    done = true;
-                    return cancel;
-                }
-                next = interval;
-            }
-            else
-            {
-                if (!type.preventSpectator || !actionPack.player.isSpectator())
-                {
+        Boolean tick(EntityPlayerActionPack actionPack, ActionType type) {
+            boolean isSuccess = true;
+            boolean isNotSpectator = !type.preventSpectator || !actionPack.player.isSpectator();
+
+            if (--next > 0) {
+                if (isNotSpectator) {
                     type.inactiveTick(actionPack.player, this);
                 }
+                return isSuccess;
             }
-            return cancel;
+
+            for (int i = 0; i < this.perTickAmount && isNotSpectator; i++) {
+                isSuccess = type.execute(actionPack.player, this) && isSuccess;
+            }
+
+            if (++count == limit) {
+                type.stop(actionPack.player, null);
+                done = true;
+                return false;
+            }
+            next = interval;
+            return isSuccess;
         }
 
         void retry(EntityPlayerActionPack actionPack, ActionType type)
