@@ -386,7 +386,8 @@ public class EntityPlayerActionPack
                         BlockHitResult blockHit = (BlockHitResult) hit;
                         BlockPos pos = blockHit.getBlockPos();
                         Direction side = blockHit.getDirection();
-                        if (player.blockActionRestricted(player.level, pos, player.gameMode.getGameModeForPlayer())) return false;
+                        if (player.blockActionRestricted(player.level, pos, player.gameMode.getGameModeForPlayer()))
+                            return false;
                         if (ap.currentBlock != null && player.level.getBlockState(ap.currentBlock).isAir())
                         {
                             ap.currentBlock = null;
@@ -399,7 +400,7 @@ public class EntityPlayerActionPack
                             player.gameMode.handleBlockBreakAction(pos, ServerboundPlayerActionPacket.Action.START_DESTROY_BLOCK, side, player.getLevel().getMaxBuildHeight(), -1);
                             ap.blockHitDelay = 5;
                             blockBroken = true;
-                        }
+                            }
                         else  if (ap.currentBlock == null || !ap.currentBlock.equals(pos))
                         {
                             if (ap.currentBlock != null)
@@ -534,15 +535,27 @@ public class EntityPlayerActionPack
         public final int offset;
         private int count;
         private int next;
+        private int perTickAmount;
         private final boolean isContinuous;
 
-        private Action(int limit, int interval, int offset, boolean continuous)
-        {
+        public Action(
+                int limit,
+                int interval,
+                int offset,
+                int perTickAmount,
+                boolean isContinuous
+        ) {
             this.limit = limit;
             this.interval = interval;
             this.offset = offset;
-            next = interval + offset;
-            isContinuous = continuous;
+            this.next = interval + offset;
+            this.perTickAmount = perTickAmount;
+            this.isContinuous = isContinuous;
+        }
+
+        private Action(int limit, int interval, int offset, boolean continuous)
+        {
+            this(limit, interval, offset, 1, continuous);
         }
 
         public static Action once()
@@ -565,43 +578,37 @@ public class EntityPlayerActionPack
             return new Action(-1, interval, offset, false);
         }
 
-        Boolean tick(EntityPlayerActionPack actionPack, ActionType type)
+        public static Action perTick(int amount)
         {
-            next--;
-            Boolean cancel = null;
-            if (next <= 0)
-            {
-                if (interval == 1 && !isContinuous)
-                {
-                    // need to allow entity to tick, otherwise won't have effect (bow)
-                    // actions are 20 tps, so need to clear status mid tick, allowing entities process it till next time
-                    if (!type.preventSpectator || !actionPack.player.isSpectator())
-                    {
-                        type.inactiveTick(actionPack.player, this);
-                    }
-                }
+            return new Action(-1, 1, 0, amount, false);
+        }
 
-                if (!type.preventSpectator || !actionPack.player.isSpectator())
-                {
-                    cancel = type.execute(actionPack.player, this);
-                }
-                count++;
-                if (count == limit)
-                {
-                    type.stop(actionPack.player, null);
-                    done = true;
-                    return cancel;
-                }
-                next = interval;
+        Boolean tick(EntityPlayerActionPack actionPack, ActionType type) {
+
+            Boolean isCanceled = null;
+            boolean isNotSpectator = !type.preventSpectator || !actionPack.player.isSpectator();
+
+            if (--next > 0) {
+                return isCanceled;
             }
-            else
-            {
-                if (!type.preventSpectator || !actionPack.player.isSpectator())
-                {
+
+            for (int i = 0; i < this.perTickAmount; i++) {
+                if (isNotSpectator) {
+                    isCanceled = type.execute(actionPack.player, this);
+                }
+                if (interval == 1 && !isContinuous && isNotSpectator) {
                     type.inactiveTick(actionPack.player, this);
                 }
             }
-            return cancel;
+
+            if (++count == limit) {
+                type.stop(actionPack.player, null);
+                done = true;
+                return isCanceled;
+            }
+            next = interval;
+
+            return isCanceled;
         }
 
         void retry(EntityPlayerActionPack actionPack, ActionType type)

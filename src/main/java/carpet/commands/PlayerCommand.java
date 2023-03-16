@@ -56,7 +56,21 @@ public class PlayerCommand
                 .then(argument("player", StringArgumentType.word())
                         .suggests( (c, b) -> suggest(getPlayers(c.getSource()), b))
                         .then(literal("stop").executes(PlayerCommand::stop))
-                        .then(makeActionCommand("use", EntityPlayerActionPack.ActionType.USE))
+                        .then(
+                            makeActionCommand("use", EntityPlayerActionPack.ActionType.USE)
+                                .then(
+                                    literal("perTick")
+                                        .then(argument("amount", IntegerArgumentType.integer(1, 64))
+                                    .executes(ctx ->
+                                          action(
+                                              ctx,
+                                              EntityPlayerActionPack.ActionType.USE,
+                                              EntityPlayerActionPack.Action.perTick(
+                                                  IntegerArgumentType.getInteger(ctx, "amount")
+                                              )
+                                          )))
+                                )
+                        )
                         .then(makeActionCommand("jump", EntityPlayerActionPack.ActionType.JUMP))
                         .then(makeActionCommand("attack", EntityPlayerActionPack.ActionType.ATTACK))
                         .then(makeActionCommand("drop", EntityPlayerActionPack.ActionType.DROP_ITEM))
