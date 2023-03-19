@@ -239,6 +239,7 @@ public class EntityPlayerActionPack
             }
         }
         float vel = sneaking?0.3F:1.0F;
+        // The != 0.0F checks are needed given else real players can't control minecarts, however it works with fakes and else they don't stop immediately
         if (forward != 0.0F || player instanceof EntityPlayerMPFake) {
             player.zza = forward * vel;
         }
