@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
+import carpet.patches.EntityPlayerMPFake;
 import carpet.script.utils.Tracer;
 import net.minecraft.commands.arguments.EntityAnchorArgument;
 import net.minecraft.core.BlockPos;
@@ -238,8 +239,13 @@ public class EntityPlayerActionPack
             }
         }
         float vel = sneaking?0.3F:1.0F;
-        player.zza = forward*vel;
-        player.xxa = strafing*vel;
+        // The != 0.0F checks are needed given else real players can't control minecarts, however it works with fakes and else they don't stop immediately
+        if (forward != 0.0F || player instanceof EntityPlayerMPFake) {
+            player.zza = forward * vel;
+        }
+        if (strafing != 0.0F || player instanceof EntityPlayerMPFake) {
+            player.xxa = strafing * vel;
+        }
     }
 
     static HitResult getTarget(ServerPlayer player)
