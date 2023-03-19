@@ -237,9 +237,14 @@ public class EntityPlayerActionPack
                 }
             }
         }
-        float vel = sneaking?0.3F:1.0F;
-        player.zza = forward*vel;
-        player.xxa = strafing*vel;
+        if (forward != 0.0F)
+        {
+            player.zza = forward*(sneaking?0.3F:1.0F);
+        }
+        if (strafing != 0.0F)
+        {
+            player.xxa = strafing*(sneaking?0.3F:1.0F);
+        }
     }
 
     static HitResult getTarget(ServerPlayer player)
