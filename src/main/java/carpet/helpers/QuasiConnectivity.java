@@ -3,11 +3,11 @@ package carpet.helpers;
 import carpet.CarpetSettings;
 
 import net.minecraft.core.BlockPos;
-import net.minecraft.world.level.Level;
+import net.minecraft.world.level.SignalGetter;
 
 public class QuasiConnectivity {
 
-    public static boolean hasQuasiSignal(Level level, BlockPos pos) {
+    public static boolean hasQuasiSignal(SignalGetter level, BlockPos pos) {
         for (int i = 1; i <= CarpetSettings.quasiConnectivity; i++) {
             BlockPos above = pos.above(i);
 
