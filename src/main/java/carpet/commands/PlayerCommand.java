@@ -35,7 +35,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Objects;
 import java.util.Set;
 import java.util.function.Consumer;
 
@@ -366,8 +365,7 @@ public class PlayerCommand
             Messenger.m(context.getSource(), "r Cannot shadow fake players");
             return 0;
         }
-        MinecraftServer server = Objects.requireNonNull(player.getServer());
-        if (server.isSingleplayer() && server.isSingleplayerOwner(player.getGameProfile())) {
+        if (player.getServer().isSingleplayerOwner(player.getGameProfile())) {
             Messenger.m(context.getSource(), "r Cannot shadow single-player server owner");
             return 0;
         }
