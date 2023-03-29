@@ -524,7 +524,7 @@ public class WorldAccess
                 booleanStateTest(c, "liquid", lv, (s, p) -> !s.getFluidState().isEmpty()));
 
         expression.addContextFunction("flammable", -1, (c, t, lv) ->
-                booleanStateTest(c, "flammable", lv, (s, p) -> s.getMaterial().isFlammable()));
+                booleanStateTest(c, "flammable", lv, (s, p) -> s.ignitedByLava()));
 
         expression.addContextFunction("transparent", -1, (c, t, lv) ->
                 booleanStateTest(c, "transparent", lv, (s, p) -> !s.getMaterial().isSolid()));

@@ -182,7 +182,6 @@ public class Colors
             entry(Material.SPONGE         , "sponge"       ),
             entry(Material.SHULKER_SHELL    , "shulker"      ),
             entry(Material.WOOD           , "wood"         ),
-            entry(Material.NETHER_WOOD    , "nether_wood"  ),
             entry(Material.BAMBOO_SAPLING , "shoots"       ),
             entry(Material.BAMBOO         , "bamboo"       ),
             entry(Material.WOOL           , "wool"         ),

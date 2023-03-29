@@ -61,7 +61,7 @@ public class BlockInfo
         lst.add(Messenger.s(String.format(" - Blocks movement on land: %s", !state.isPathfindable(world,pos, PathComputationType.LAND))));
         lst.add(Messenger.s(String.format(" - Blocks movement in air: %s", !state.isPathfindable(world,pos, PathComputationType.AIR))));
         lst.add(Messenger.s(String.format(" - Blocks movement in liquids: %s", !state.isPathfindable(world,pos, PathComputationType.WATER))));
-        lst.add(Messenger.s(String.format(" - Can burn: %s", material.isFlammable())));
+        lst.add(Messenger.s(String.format(" - Can burn: %s", state.ignitedByLava())));
         lst.add(Messenger.s(String.format(" - Requires a tool: %s", !material.isReplaceable()))); //?maybe
         lst.add(Messenger.s(String.format(" - Hardness: %.2f", state.getDestroySpeed(world, pos))));
         lst.add(Messenger.s(String.format(" - Blast resistance: %.2f", block.getExplosionResistance())));
