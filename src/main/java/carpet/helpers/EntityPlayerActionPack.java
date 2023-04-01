@@ -131,7 +131,7 @@ public class EntityPlayerActionPack
     {
         player.setXRot(Mth.clamp(pitch, -90, 90)); // setPitch
         player.setYRot(yaw % 360); //setYaw
-        // maybe player.setPositionAndAngles(player.x, player.y, player.z, yaw, MathHelper.clamp(pitch,-90.0F, 90.0F));
+        // maybe player.moveTo(player.getX(), player.getY(), player.getZ(), yaw, Mth.clamp(pitch,-90.0F, 90.0F));
         return this;
     }
 
