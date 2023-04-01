@@ -365,6 +365,10 @@ public class PlayerCommand
             Messenger.m(context.getSource(), "r Cannot shadow fake players");
             return 0;
         }
+        if (player.getServer().isSingleplayerOwner(player.getGameProfile())) {
+            Messenger.m(context.getSource(), "r Cannot shadow single-player server owner");
+            return 0;
+        }
         ServerPlayer sendingPlayer = null;
         try
         {
