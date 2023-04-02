@@ -80,7 +80,8 @@ public class PlayerCommand
                                 .then(literal("west").executes(manipulation(ap -> ap.look(Direction.WEST))))
                                 .then(literal("up").executes(manipulation(ap -> ap.look(Direction.UP))))
                                 .then(literal("down").executes(manipulation(ap -> ap.look(Direction.DOWN))))
-                                .then(literal("at").then(argument("position", Vec3Argument.vec3()).executes(PlayerCommand::lookAt)))
+                                .then(literal("at").then(argument("position", Vec3Argument.vec3())
+                                        .executes(c -> manipulate(c, ap -> ap.lookAt(Vec3Argument.getVec3(c, "position"))))))
                                 .then(argument("direction", RotationArgument.rotation())
                                         .executes(c -> manipulate(c, ap -> ap.look(RotationArgument.getRotation(c, "direction").getRotation(c.getSource())))))
                         ).then(literal("turn")
@@ -227,11 +228,6 @@ public class PlayerCommand
         return 1;
     }
 
-    private static int lookAt(CommandContext<CommandSourceStack> context)
-    {
-        return manipulate(context, ap -> ap.lookAt(Vec3Argument.getVec3(context, "position")));
-    }
-
     @FunctionalInterface
     interface SupplierWithCSE<T>
     {
@@ -288,7 +284,7 @@ public class PlayerCommand
             flying = false;
         }
         String playerName = StringArgumentType.getString(context, "player");
-        if (playerName.length() > maxPlayerLength(source.getServer()))
+        if (playerName.length() > maxNameLength(source.getServer()))
         {
             Messenger.m(source, "rb Player name: " + playerName + " is too long");
             return 0;
@@ -310,7 +306,7 @@ public class PlayerCommand
         return 1;
     }
 
-    private static int maxPlayerLength(MinecraftServer server)
+    private static int maxNameLength(MinecraftServer server)
     {
         return server.getPort() >= 0 ? 16 : 40;
     }
