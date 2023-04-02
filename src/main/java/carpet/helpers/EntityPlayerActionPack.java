@@ -1,10 +1,10 @@
 package carpet.helpers;
 
 import carpet.fakes.ServerPlayerInterface;
+import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeMap;
 
 import carpet.patches.EntityPlayerMPFake;
 import carpet.script.utils.Tracer;
@@ -36,7 +36,7 @@ public class EntityPlayerActionPack
 {
     private final ServerPlayer player;
 
-    private final Map<ActionType, Action> actions = new TreeMap<>();
+    private final Map<ActionType, Action> actions = new EnumMap<>(ActionType.class);
 
     private BlockPos currentBlock;
     private int blockHitDelay;
