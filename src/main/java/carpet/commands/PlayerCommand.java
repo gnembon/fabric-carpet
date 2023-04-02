@@ -253,13 +253,14 @@ public class PlayerCommand
     private static int spawn(CommandContext<CommandSourceStack> context) throws CommandSyntaxException
     {
         if (cantSpawn(context)) return 0;
+
         CommandSourceStack source = context.getSource();
         Vec3 pos = getArgOrDefault(
                 () -> Vec3Argument.getVec3(context, "position"),
                 source.getPosition()
         );
         Vec2 facing = getArgOrDefault(
-                () -> RotationArgument.getRotation(context, "direction").getRotation(context.getSource()),
+                () -> RotationArgument.getRotation(context, "direction").getRotation(source),
                 source.getRotation()
         );
         ResourceKey<Level> dimType = getArgOrDefault(
@@ -268,10 +269,10 @@ public class PlayerCommand
         );
         GameType mode = GameType.CREATIVE;
         boolean flying = false;
-        if (context.getSource().getEntity() instanceof ServerPlayer player)
+        if (source.getEntity() instanceof ServerPlayer sender)
         {
-            mode = player.gameMode.getGameModeForPlayer();
-            flying = player.getAbilities().flying;
+            mode = sender.gameMode.getGameModeForPlayer();
+            flying = sender.getAbilities().flying;
         }
         try {
             mode = GameModeArgument.getGameMode(context, "gamemode");
@@ -289,20 +290,20 @@ public class PlayerCommand
         String playerName = StringArgumentType.getString(context, "player");
         if (playerName.length() > maxPlayerLength(source.getServer()))
         {
-            Messenger.m(context.getSource(), "rb Player name: "+playerName+" is too long");
+            Messenger.m(source, "rb Player name: " + playerName + " is too long");
             return 0;
         }
 
         MinecraftServer server = source.getServer();
         if (!Level.isInSpawnableBounds(BlockPos.containing(pos.x, pos.y, pos.z)))
         {
-            Messenger.m(context.getSource(), "rb Player "+playerName+" cannot be placed outside of the world");
+            Messenger.m(source, "rb Player " + playerName + " cannot be placed outside of the world");
             return 0;
         }
         Player player = EntityPlayerMPFake.createFake(playerName, server, pos.x, pos.y, pos.z, facing.y, facing.x, dimType, mode, flying);
         if (player == null)
         {
-            Messenger.m(context.getSource(), "rb Player " + playerName + " doesn't exist and cannot spawn in online mode. " +
+            Messenger.m(source, "rb Player " + playerName + " doesn't exist and cannot spawn in online mode. " +
                     "Turn the server offline to spawn non-existing players");
             return 0;
         }
