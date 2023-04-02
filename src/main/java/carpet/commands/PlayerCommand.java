@@ -131,10 +131,7 @@ public class PlayerCommand
                 .then(literal("mainhand").executes(manipulation(ap -> ap.drop(-1, dropAll))))
                 .then(literal("offhand").executes(manipulation(ap -> ap.drop(40, dropAll))))
                 .then(argument("slot", IntegerArgumentType.integer(0, 40)).
-                        executes(c -> manipulate(c, ap -> ap.drop(
-                                IntegerArgumentType.getInteger(c, "slot"),
-                                dropAll
-                        ))));
+                        executes(c -> manipulate(c, ap -> ap.drop(IntegerArgumentType.getInteger(c, "slot"), dropAll))));
     }
 
     private static Collection<String> getPlayerSuggestions(CommandSourceStack source)
