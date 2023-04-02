@@ -288,13 +288,12 @@ public class PlayerCommand
             return 0;
         }
 
-        MinecraftServer server = source.getServer();
         if (!Level.isInSpawnableBounds(BlockPos.containing(pos.x, pos.y, pos.z)))
         {
             Messenger.m(source, "rb Player " + playerName + " cannot be placed outside of the world");
             return 0;
         }
-        Player player = EntityPlayerMPFake.createFake(playerName, server, pos.x, pos.y, pos.z, facing.y, facing.x, dimType, mode, flying);
+        Player player = EntityPlayerMPFake.createFake(playerName, source.getServer(), pos, facing.y, facing.x, dimType, mode, flying);
         if (player == null)
         {
             Messenger.m(source, "rb Player " + playerName + " doesn't exist and cannot spawn in online mode. " +
