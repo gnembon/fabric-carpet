@@ -112,16 +112,15 @@ public class EntityPlayerActionPack
     }
     public EntityPlayerActionPack look(Direction direction)
     {
-        switch (direction)
+        return switch (direction)
         {
-            case NORTH: return look(180, 0);
-            case SOUTH: return look(0, 0);
-            case EAST: return look(-90, 0);
-            case WEST: return look(90, 0);
-            case UP: return look(player.getYRot(), -90);
-            case DOWN: return look(player.getYRot(), 90);
-        }
-        return this;
+            case NORTH -> look(180, 0);
+            case SOUTH -> look(0, 0);
+            case EAST  -> look(-90, 0);
+            case WEST  -> look(90, 0);
+            case UP    -> look(player.getYRot(), -90);
+            case DOWN  -> look(player.getYRot(), 90);
+        };
     }
     public EntityPlayerActionPack look(Vec2 rotation)
     {
@@ -132,7 +131,7 @@ public class EntityPlayerActionPack
     {
         player.setYRot(yaw % 360); //setYaw
         player.setXRot(Mth.clamp(pitch, -90, 90)); // setPitch
-        // maybe player.setPositionAndAngles(player.x, player.y, player.z, yaw, MathHelper.clamp(pitch,-90.0F, 90.0F));
+        // maybe player.moveTo(player.getX(), player.getY(), player.getZ(), yaw, Mth.clamp(pitch,-90.0F, 90.0F));
         return this;
     }
 
