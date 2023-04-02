@@ -1,6 +1,8 @@
 package carpet.commands;
 
 import carpet.helpers.EntityPlayerActionPack;
+import carpet.helpers.EntityPlayerActionPack.Action;
+import carpet.helpers.EntityPlayerActionPack.ActionType;
 import carpet.CarpetSettings;
 import carpet.fakes.ServerPlayerInterface;
 import carpet.patches.EntityPlayerMPFake;
@@ -53,14 +55,14 @@ public class PlayerCommand
                 .then(argument("player", StringArgumentType.word())
                         .suggests((c, b) -> suggest(getPlayerSuggestions(c.getSource()), b))
                         .then(literal("stop").executes(manipulation(EntityPlayerActionPack::stopAll)))
-                        .then(makeActionCommand("use", EntityPlayerActionPack.ActionType.USE))
-                        .then(makeActionCommand("jump", EntityPlayerActionPack.ActionType.JUMP))
-                        .then(makeActionCommand("attack", EntityPlayerActionPack.ActionType.ATTACK))
-                        .then(makeActionCommand("drop", EntityPlayerActionPack.ActionType.DROP_ITEM))
+                        .then(makeActionCommand("use", ActionType.USE))
+                        .then(makeActionCommand("jump", ActionType.JUMP))
+                        .then(makeActionCommand("attack", ActionType.ATTACK))
+                        .then(makeActionCommand("drop", ActionType.DROP_ITEM))
                         .then(makeDropCommand("drop", false))
-                        .then(makeActionCommand("dropStack", EntityPlayerActionPack.ActionType.DROP_STACK))
+                        .then(makeActionCommand("dropStack", ActionType.DROP_STACK))
                         .then(makeDropCommand("dropStack", true))
-                        .then(makeActionCommand("swapHands", EntityPlayerActionPack.ActionType.SWAP_HANDS))
+                        .then(makeActionCommand("swapHands", ActionType.SWAP_HANDS))
                         .then(literal("hotbar")
                                 .then(argument("slot", IntegerArgumentType.integer(1, 9))
                                         .executes(c -> manipulate(c, ap -> ap.setSlot(IntegerArgumentType.getInteger(c, "slot"))))))
@@ -113,14 +115,14 @@ public class PlayerCommand
         dispatcher.register(literalargumentbuilder);
     }
 
-    private static LiteralArgumentBuilder<CommandSourceStack> makeActionCommand(String actionName, EntityPlayerActionPack.ActionType type)
+    private static LiteralArgumentBuilder<CommandSourceStack> makeActionCommand(String actionName, ActionType type)
     {
         return literal(actionName)
-                .executes(manipulation(ap -> ap.start(type, EntityPlayerActionPack.Action.once())))
-                .then(literal("once").executes(manipulation(ap -> ap.start(type, EntityPlayerActionPack.Action.once()))))
-                .then(literal("continuous").executes(manipulation(ap -> ap.start(type, EntityPlayerActionPack.Action.continuous()))))
+                .executes(manipulation(ap -> ap.start(type, Action.once())))
+                .then(literal("once").executes(manipulation(ap -> ap.start(type, Action.once()))))
+                .then(literal("continuous").executes(manipulation(ap -> ap.start(type, Action.continuous()))))
                 .then(literal("interval").then(argument("ticks", IntegerArgumentType.integer(1))
-                        .executes(c -> manipulate(c, ap -> ap.start(type, EntityPlayerActionPack.Action.interval(IntegerArgumentType.getInteger(c, "ticks")))))));
+                        .executes(c -> manipulate(c, ap -> ap.start(type, Action.interval(IntegerArgumentType.getInteger(c, "ticks")))))));
     }
 
     private static LiteralArgumentBuilder<CommandSourceStack> makeDropCommand(String actionName, boolean dropAll)
