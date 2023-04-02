@@ -116,11 +116,11 @@ public class PlayerCommand
     private static LiteralArgumentBuilder<CommandSourceStack> makeActionCommand(String actionName, EntityPlayerActionPack.ActionType type)
     {
         return literal(actionName)
-                .executes(c -> action(c, type, EntityPlayerActionPack.Action.once()))
-                .then(literal("once").executes(c -> action(c, type, EntityPlayerActionPack.Action.once())))
-                .then(literal("continuous").executes(c -> action(c, type, EntityPlayerActionPack.Action.continuous())))
+                .executes(manipulation(ap -> ap.start(type, EntityPlayerActionPack.Action.once())))
+                .then(literal("once").executes(manipulation(ap -> ap.start(type, EntityPlayerActionPack.Action.once()))))
+                .then(literal("continuous").executes(manipulation(ap -> ap.start(type, EntityPlayerActionPack.Action.continuous()))))
                 .then(literal("interval").then(argument("ticks", IntegerArgumentType.integer(1))
-                        .executes(c -> action(c, type, EntityPlayerActionPack.Action.interval(IntegerArgumentType.getInteger(c, "ticks"))))));
+                        .executes(c -> manipulate(c, ap -> ap.start(type, EntityPlayerActionPack.Action.interval(IntegerArgumentType.getInteger(c, "ticks")))))));
     }
 
     private static LiteralArgumentBuilder<CommandSourceStack> makeDropCommand(String actionName, boolean dropAll)
@@ -322,11 +322,6 @@ public class PlayerCommand
     private static Command<CommandSourceStack> manipulation(Consumer<EntityPlayerActionPack> action)
     {
         return c -> manipulate(c, action);
-    }
-
-    private static int action(CommandContext<CommandSourceStack> context, EntityPlayerActionPack.ActionType type, EntityPlayerActionPack.Action action)
-    {
-        return manipulate(context, ap -> ap.start(type, action));
     }
 
     private static int shadow(CommandContext<CommandSourceStack> context)
