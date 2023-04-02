@@ -288,7 +288,7 @@ public class PlayerCommand
             return 0;
         }
 
-        if (!Level.isInSpawnableBounds(BlockPos.containing(pos.x, pos.y, pos.z)))
+        if (!Level.isInSpawnableBounds(BlockPos.containing(pos)))
         {
             Messenger.m(source, "rb Player " + playerName + " cannot be placed outside of the world");
             return 0;
