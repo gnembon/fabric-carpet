@@ -46,11 +46,10 @@ import static net.minecraft.commands.SharedSuggestionProvider.suggest;
 
 public class PlayerCommand
 {
-
     // TODO: allow any order like execute
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher, CommandBuildContext commandBuildContext)
     {
-        LiteralArgumentBuilder<CommandSourceStack> literalargumentbuilder = literal("player")
+        LiteralArgumentBuilder<CommandSourceStack> command = literal("player")
                 .requires((player) -> CommandHelper.canUseCommand(player, CarpetSettings.commandPlayer))
                 .then(argument("player", StringArgumentType.word())
                         .suggests((c, b) -> suggest(getPlayerSuggestions(c.getSource()), b))
@@ -112,7 +111,7 @@ public class PlayerCommand
                                 ))
                         )
                 );
-        dispatcher.register(literalargumentbuilder);
+        dispatcher.register(command);
     }
 
     private static LiteralArgumentBuilder<CommandSourceStack> makeActionCommand(String actionName, ActionType type)
