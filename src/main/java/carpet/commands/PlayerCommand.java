@@ -305,7 +305,7 @@ public class PlayerCommand
 
     private static int maxNameLength(MinecraftServer server)
     {
-        return server.getPort() >= 0 ? 16 : 40;
+        return server.getPort() >= 0 ? Player.MAX_NAME_LENGTH : 40;
     }
 
     private static int manipulate(CommandContext<CommandSourceStack> context, Consumer<EntityPlayerActionPack> action)
