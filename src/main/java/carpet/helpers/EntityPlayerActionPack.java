@@ -213,19 +213,20 @@ public class EntityPlayerActionPack
     public void onUpdate()
     {
         Map<ActionType, Boolean> actionAttempts = new HashMap<>();
-        actions.entrySet().removeIf((e) -> e.getValue().done);
+        actions.values().removeIf(e -> e.done);
         for (Map.Entry<ActionType, Action> e : actions.entrySet())
         {
+            ActionType type = e.getKey();
             Action action = e.getValue();
             // skipping attack if use was successful
-            if (!(actionAttempts.getOrDefault(ActionType.USE, false) && e.getKey() == ActionType.ATTACK))
+            if (!(actionAttempts.getOrDefault(ActionType.USE, false) && type == ActionType.ATTACK))
             {
                 Boolean actionStatus = action.tick(this, e.getKey());
                 if (actionStatus != null)
-                    actionAttempts.put(e.getKey(), actionStatus);
+                    actionAttempts.put(type, actionStatus);
             }
             // optionally retrying use after successful attack and unsuccessful use
-            if ( e.getKey() == ActionType.ATTACK
+            if (type == ActionType.ATTACK
                     && actionAttempts.getOrDefault(ActionType.ATTACK, false)
                     && !actionAttempts.getOrDefault(ActionType.USE, true) )
             {
