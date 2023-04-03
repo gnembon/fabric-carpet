@@ -221,7 +221,7 @@ public class EntityPlayerActionPack
             // skipping attack if use was successful
             if (!(actionAttempts.getOrDefault(ActionType.USE, false) && type == ActionType.ATTACK))
             {
-                Boolean actionStatus = action.tick(this, e.getKey());
+                Boolean actionStatus = action.tick(this, type);
                 if (actionStatus != null)
                     actionAttempts.put(type, actionStatus);
             }
