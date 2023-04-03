@@ -3,6 +3,9 @@ package carpet.logging.logHelpers;
 import carpet.logging.Logger;
 import carpet.logging.LoggerRegistry;
 import carpet.utils.Messenger;
+import it.unimi.dsi.fastutil.longs.LongArrayList;
+import it.unimi.dsi.fastutil.longs.LongList;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -21,6 +24,7 @@ public class TrajectoryLogHelper
 
     private final ArrayList<Vec3> positions = new ArrayList<>();
     private final ArrayList<Vec3> motions = new ArrayList<>();
+    private final LongList gameTimes = new LongArrayList();
 
     public TrajectoryLogHelper(String logName)
     {
@@ -28,11 +32,12 @@ public class TrajectoryLogHelper
         this.doLog = this.logger.hasOnlineSubscribers();
     }
 
-    public void onTick(double x, double y, double z, Vec3 velocity)
+    public void onTick(double x, double y, double z, Vec3 velocity, long gameTime)
     {
         if (!doLog) return;
         positions.add(new Vec3(x, y, z));
         motions.add(velocity);
+        gameTimes.add(gameTime);
     }
 
     public void onFinish()
@@ -48,8 +53,8 @@ public class TrajectoryLogHelper
                         Vec3 pos = positions.get(i);
                         Vec3 mot = motions.get(i);
                         line.add("w  x");
-                        line.add(String.format("^w Tick: %d\nx: %f\ny: %f\nz: %f\n------------\nmx: %f\nmy: %f\nmz: %f",
-                                i, pos.x, pos.y, pos.z, mot.x, mot.y, mot.z));
+                        line.add(String.format("^w Tick: %d\nTime: %d\nx: %f\ny: %f\nz: %f\n------------\nmx: %f\nmy: %f\nmz: %f",
+                                i, gameTimes.getLong(i), pos.x, pos.y, pos.z, mot.x, mot.y, mot.z));
                         if ((((i + 1) % MAX_TICKS_PER_LINE) == 0) || i == positions.size() - 1) {
                             comp.add(Messenger.c(line.toArray(new Object[0])));
                             line.clear();
@@ -62,7 +67,8 @@ public class TrajectoryLogHelper
                         Vec3 pos = positions.get(i);
                         Vec3 mot = motions.get(i);
                         comp.add(Messenger.c(
-                                String.format("w tick: %3d pos", i), Messenger.dblt("w", pos.x, pos.y, pos.z),
+                                String.format("w tick: %3d ", i), String.format("^w GameTime: %d", gameTimes.getLong(i)), 
+                                "pos", Messenger.dblt("w", pos.x, pos.y, pos.z), 
                                 "w   mot", Messenger.dblt("w", mot.x, mot.y, mot.z)));
                     }
                 }

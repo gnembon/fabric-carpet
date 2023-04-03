@@ -22,14 +22,17 @@ public abstract class ThrowableProjectileMixin extends Entity
     private void addLogger(EntityType<? extends Projectile> entityType_1, Level world_1, CallbackInfo ci)
     {
         if (LoggerRegistry.__projectiles && !world_1.isClientSide)
+        {
+            
             logHelper = new TrajectoryLogHelper("projectiles");
+        }
     }
 
     @Inject(method = "tick", at = @At("HEAD"))
     private void tickCheck(CallbackInfo ci)
     {
         if (LoggerRegistry.__projectiles && logHelper != null)
-            logHelper.onTick(getX(), getY(), getZ(), getDeltaMovement());
+            logHelper.onTick(getX(), getY(), getZ(), getDeltaMovement(), getLevel().getGameTime());
     }
 
     @Override

@@ -31,7 +31,7 @@ public abstract class AbstractArrowMixin extends Entity
     private void tickCheck(CallbackInfo ci)
     {
         if (LoggerRegistry.__projectiles && logHelper != null)
-            logHelper.onTick(getX(), getY(), getZ(), getDeltaMovement());
+            logHelper.onTick(getX(), getY(), getZ(), getDeltaMovement(), getLevel().getGameTime());
     }
 
     // todo should be moved on one place this is acceessed from
