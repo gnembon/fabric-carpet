@@ -9,7 +9,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyArgs;
 import org.spongepowered.asm.mixin.injection.invoke.arg.Args;
 
-import static carpet.CarpetSettings.FungusFixMode.*;
+import static carpet.CarpetSettings.FungusGrowthMode.*;
 
 @Mixin(HugeFungusFeature.class)
 public class HugeFungusFeatureMixin {
@@ -17,8 +17,8 @@ public class HugeFungusFeatureMixin {
     private void mixin(Args args) {
         boolean natural = !((HugeFungusConfiguration) args.get(2)).planted;
         args.set(5, natural && ((boolean) args.get(5)) ||
-            !natural && (CarpetSettings.thickFungusGrowth.equals(ALL) ||
-            CarpetSettings.thickFungusGrowth.equals(RANDOM) && ((RandomSource) args.get(1)).nextFloat() < 0.06F)
+            !natural && (CarpetSettings.thickFungusGrowth == ALL ||
+            CarpetSettings.thickFungusGrowth == RANDOM && ((RandomSource) args.get(1)).nextFloat() < 0.06F)
         );
     }
 }

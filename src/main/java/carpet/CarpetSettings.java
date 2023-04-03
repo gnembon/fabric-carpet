@@ -1144,7 +1144,7 @@ public class CarpetSettings
     )
     public static boolean tickSyncedWorldBorders = false;
 
-    public enum FungusFixMode {
+    public enum FungusGrowthMode {
         FALSE, RANDOM, ALL;
     }
 
@@ -1154,5 +1154,5 @@ public class CarpetSettings
             extra = {"Setting to 'all' will make all nether fungi grow into 3x3 trees", "Setting to 'random' will make 6% of all nether fungi grow into 3x3 trees", "(this being consistent with worldgen)"},
             category = {SURVIVAL, FEATURE}
     )
-    public static FungusFixMode thickFungusGrowth = FungusFixMode.FALSE;
+    public static FungusGrowthMode thickFungusGrowth = FungusGrowthMode.FALSE;
 }
