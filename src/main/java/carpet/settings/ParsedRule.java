@@ -38,6 +38,7 @@ import org.apache.commons.lang3.ClassUtils;
  * @deprecated Use the type {@link CarpetRule} instead
  */
 @Deprecated(forRemoval = true) // to move to api.settings package and visibility to package private
+@SuppressWarnings("removal") // Gradle needs the explicit suppression
 public final class ParsedRule<T> implements CarpetRule<T>, Comparable<ParsedRule<?>> {
     private static final Map<Class<?>, FromStringConverter<?>> CONVERTER_MAP = Map.ofEntries(
             Map.entry(String.class, str -> str),

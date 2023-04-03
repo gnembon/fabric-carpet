@@ -19,6 +19,7 @@ import java.util.List;
  * @deprecated Use {@link carpet.api.settings.SettingsManager} instead
  */
 @Deprecated(forRemoval = true)
+@SuppressWarnings("removal") // Gradle needs the explicit suppression
 public class SettingsManager extends carpet.api.settings.SettingsManager
 {
     /**

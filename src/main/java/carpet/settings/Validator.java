@@ -11,6 +11,7 @@ import net.minecraft.commands.CommandSourceStack;
  * @deprecated Use {@link carpet.api.settings.Validator} instead
  */
 @Deprecated(forRemoval = true)
+@SuppressWarnings("removal") // Gradle needs the explicit suppression
 public abstract class Validator<T> extends carpet.api.settings.Validator<T>
 {
 	{
