@@ -40,18 +40,13 @@ public final class CommandHelper {
     {
         if (commandLevel instanceof Boolean) return (Boolean) commandLevel;
         String commandLevelString = commandLevel.toString();
-        switch (commandLevelString)
+        return switch (commandLevelString)
         {
-            case "true": return true;
-            case "false": return false;
-            case "ops": return source.hasPermission(2); // typical for other cheaty commands
-            case "0":
-            case "1":
-            case "2":
-            case "3":
-            case "4":
-                return source.hasPermission(Integer.parseInt(commandLevelString));
-        }
-        return false;
+            case "true"  -> true;
+            case "false" -> false;
+            case "ops"   -> source.hasPermission(2); // typical for other cheaty commands
+            case "0", "1", "2", "3", "4" -> source.hasPermission(Integer.parseInt(commandLevelString));
+            default -> false;
+        };
     }
 }
