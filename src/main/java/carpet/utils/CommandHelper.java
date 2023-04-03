@@ -1,5 +1,6 @@
 package carpet.utils;
 
+import carpet.CarpetSettings;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.TickTask;
@@ -29,7 +30,10 @@ public final class CommandHelper {
                     server.getCommands().sendCommands(player);
                 }
             }
-            catch (NullPointerException ignored) {}
+            catch (NullPointerException e)
+            {
+                CarpetSettings.LOG.warn("Exception while refreshing commands, please report this to Carpet", e);
+            }
         }));
     }
     
