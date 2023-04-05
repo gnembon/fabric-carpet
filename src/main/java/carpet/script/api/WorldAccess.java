@@ -1160,14 +1160,15 @@ public class WorldAccess
                 stateStringQuery(c, "block_sound", lv, (s, p) ->
                         Colors.soundName.get(s.getSoundType())));
 
-        expression.addContextFunction("material", -1, (c, t, lv) ->
-                stateStringQuery(c, "material", lv, (s, p) ->
-                        Colors.materialName.get(s.getMaterial())));
+        expression.addContextFunction("material", -1, (c, t, lv) -> {
+            c.host.issueDeprecation("material(...)"); // deprecated for block_state()
+            return stateStringQuery(c, "material", lv, (s, p) ->
+                    Colors.materialName.getOrDefault(s.getMaterial(), "unknown"));
+        });
 
         expression.addContextFunction("map_colour", -1, (c, t, lv) ->
                 stateStringQuery(c, "map_colour", lv, (s, p) ->
-                        Colors.materialName.get(s.getMapColor(((CarpetContext) c).level(), p))));
-
+                        Colors.mapColourName.get(s.getMapColor(((CarpetContext) c).level(), p))));
 
         // Deprecated for block_state()
         expression.addContextFunction("property", -1, (c, t, lv) ->
