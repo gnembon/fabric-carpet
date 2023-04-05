@@ -17,6 +17,7 @@ import net.minecraft.world.entity.ai.util.DefaultRandomPos;
 import net.minecraft.world.entity.monster.ZombifiedPiglin;
 import net.minecraft.world.level.LightLayer;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.Material;
 import net.minecraft.world.level.pathfinder.PathComputationType;
@@ -39,13 +40,12 @@ public class BlockInfo
         lst.add(Messenger.s(""));
         lst.add(Messenger.s("====================================="));
         lst.add(Messenger.s(String.format("Block info for %s%s (id %d%s):", blocks.getKey(block),metastring, blocks.getId(block), metastring )));
-        lst.add(Messenger.s(String.format(" - Material: %s", Colors.materialName.get(material))));
         lst.add(Messenger.s(String.format(" - Map colour: %s", Colors.mapColourName.get(state.getMapColor(world, pos)))));
         lst.add(Messenger.s(String.format(" - Sound type: %s", Colors.soundName.get(block.getSoundType(state)))));
         lst.add(Messenger.s(""));
         lst.add(Messenger.s(String.format(" - Full block: %s", state.isCollisionShapeFullBlock(world, pos)))); //  isFullCube() )));
         lst.add(Messenger.s(String.format(" - Normal cube: %s", state.isRedstoneConductor(world, pos)))); //isNormalCube()))); isSimpleFullBlock
-        lst.add(Messenger.s(String.format(" - Is liquid: %s", material.isLiquid())));
+        lst.add(Messenger.s(String.format(" - Is liquid: %s", state.is(Blocks.WATER) || state.is(Blocks.LAVA))));
         lst.add(Messenger.s(""));
         lst.add(Messenger.s(String.format(" - Light in: %d, above: %d",
                 Math.max(world.getBrightness(LightLayer.BLOCK, pos),world.getBrightness(LightLayer.SKY, pos)) ,

@@ -13,13 +13,15 @@ import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.tags.BlockTags;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.material.Material;
 import net.minecraft.world.level.material.MaterialColor;
 import net.minecraft.world.phys.Vec3;
+
+import javax.annotation.Nullable;
 
 import static java.util.Map.entry;
 
@@ -129,11 +131,15 @@ public class WoolTool
     /**
      * Gets the colour of wool at the position, for hoppers to be able to decide whether to add their items to the global counter.
      */
+    @Nullable
     public static DyeColor getWoolColorAtPosition(Level worldIn, BlockPos pos)
     {
         BlockState state = worldIn.getBlockState(pos);
-        if (state.getMaterial() != Material.WOOL || !state.isRedstoneConductor(worldIn, pos)) //isSimpleFullBlock
+        // wool and wool carpets
+        if (!state.is(BlockTags.WOOL))
+        {
             return null;
+        }
         return Material2Dye.get(state.getMapColor(worldIn, pos));
     }
 }

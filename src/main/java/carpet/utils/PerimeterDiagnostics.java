@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.tags.FluidTags;
 import net.minecraft.world.entity.AgeableMob;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.Mob;
@@ -18,7 +19,6 @@ import net.minecraft.world.level.biome.MobSpawnSettings;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.material.Material;
 
 public class PerimeterDiagnostics
 {
@@ -114,7 +114,7 @@ public class PerimeterDiagnostics
                     BlockState iblockstate_down = worldserver.getBlockState(pos.below());
                     BlockState iblockstate_up = worldserver.getBlockState(pos.above());
 
-                    if ( iblockstate.getMaterial() == Material.WATER && iblockstate_down.getMaterial() == Material.WATER && !iblockstate_up.isRedstoneConductor(worldserver, pos)) // isSimpleFUllBLock
+                    if ( iblockstate.getFluidState().is(FluidTags.WATER) && !iblockstate_up.isRedstoneConductor(worldserver, pos)) // isSimpleFUllBLock
                     {
                         result.liquid++;
                         if (add_water && diagnostic.check_entity_spawn(pos))
