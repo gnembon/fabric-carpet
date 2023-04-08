@@ -110,7 +110,7 @@ public abstract class ServerPlayer_scarpetEventMixin extends Player implements S
         {
             ServerPlayer player = (ServerPlayer) (Object)this;
             Vec3 to = null;
-            if (!wonGame || previousDimension != Level.END || destination.dimension() != Level.OVERWORLD) // end ow
+            if (!wonGame || previousDimension != Level.END || destination.dimension() != Level.OVERWORLD)
             {
                 to = position();
             }
