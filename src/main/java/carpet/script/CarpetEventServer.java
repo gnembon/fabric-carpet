@@ -447,9 +447,7 @@ public class CarpetEventServer
             @Override
             public void onTick(MinecraftServer server)
             {
-                handler.call(Collections::emptyList, () ->
-                        server.createCommandSourceStack().withLevel(server.getLevel(Level.OVERWORLD))
-                );
+                handler.call(Collections::emptyList, server::createCommandSourceStack);
             }
         };
 
@@ -458,9 +456,7 @@ public class CarpetEventServer
             @Override
             public void onTick(MinecraftServer server)
             {
-                handler.call(Collections::emptyList, () ->
-                        server.createCommandSourceStack().withLevel(server.getLevel(Level.OVERWORLD))
-                );
+            handler.call(Collections::emptyList,server::createCommandSourceStack);
             }
         };
 
@@ -469,9 +465,7 @@ public class CarpetEventServer
             @Override
             public void onTick(MinecraftServer server)
             {
-                handler.call(Collections::emptyList, () ->
-                        server.createCommandSourceStack().withLevel(server.getLevel(Level.OVERWORLD))
-                );
+            handler.call(Collections::emptyList,server::createCommandSourceStack);
             }
         };
         public static final Event NETHER_TICK = new Event("tick_nether", 0, true)
