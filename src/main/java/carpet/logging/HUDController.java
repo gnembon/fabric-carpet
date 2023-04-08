@@ -132,13 +132,14 @@ public class HUDController
                 "g  MSPT: ", String.format(Locale.US,"%s %.1f", color, MSPT))};
     }
 
-    private static Component [] send_counter_info(MinecraftServer server, String color)
+    private static Component[] send_counter_info(MinecraftServer server, String colors)
     {
         List <Component> res = new ArrayList<>();
-        Arrays.asList(color.split(",")).forEach(c ->{
-            HopperCounter counter = HopperCounter.getCounter(c);
+        for (String color : colors.split(","))
+        {
+            HopperCounter counter = HopperCounter.getCounter(color);
             if (counter != null) res.addAll(counter.format(server, false, true));
-        });
+        }
         return res.toArray(new Component[0]);
     }
     private static Component [] packetCounter()
