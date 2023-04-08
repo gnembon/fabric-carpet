@@ -6,16 +6,15 @@ import carpet.utils.Messenger;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import net.minecraft.commands.CommandBuildContext;
-import net.minecraft.commands.CommandRuntimeException;
 import net.minecraft.commands.CommandSourceStack;
-import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.DyeColor;
+
+import static net.minecraft.commands.Commands.literal;
 
 /**
  * Class for the /counter command which allows to use hoppers pointing into wool
  */
-
 public class CounterCommand
 {
     /**
@@ -23,26 +22,24 @@ public class CounterCommand
      */
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher, CommandBuildContext commandBuildContext)
     {
-        LiteralArgumentBuilder<CommandSourceStack> literalargumentbuilder = Commands.literal("counter").executes((context)
-         -> listAllCounters(context.getSource(), false)).requires((player) ->
-                CarpetSettings.hopperCounters);
+        LiteralArgumentBuilder<CommandSourceStack> commandBuilder = literal("counter")
+                .requires(c -> CarpetSettings.hopperCounters)
+                .executes(c -> listAllCounters(c.getSource(), false))
+                .then(literal("reset")
+                        .executes(c -> resetCounters(c.getSource())));
 
-        literalargumentbuilder.
-                then((Commands.literal("reset").executes( (context)->
-                        resetCounter(context.getSource(), null))));
-        for (DyeColor enumDyeColor: DyeColor.values())
+        for (DyeColor dyeColor : DyeColor.values())
         {
-            String color = enumDyeColor.toString();
-            literalargumentbuilder.
-                    then((Commands.literal(color).executes( (context)-> displayCounter(context.getSource(), color, false))));
-            literalargumentbuilder.then(Commands.literal(color).
-                    then(Commands.literal("reset").executes((context) ->
-                            resetCounter(context.getSource(), color))));
-            literalargumentbuilder.then(Commands.literal(color).
-                    then(Commands.literal("realtime").executes((context) ->
-                            displayCounter(context.getSource(), color, true))));
+            commandBuilder.then(
+                    literal(dyeColor.toString())
+                            .executes(c -> displayCounter(c.getSource(), dyeColor, false))
+                            .then(literal("reset")
+                                    .executes(c -> resetCounter(c.getSource(), dyeColor)))
+                            .then(literal("realtime")
+                                    .executes(c -> displayCounter(c.getSource(), dyeColor, true)))
+                    );
         }
-        dispatcher.register(literalargumentbuilder);
+        dispatcher.register(commandBuilder);
     }
 
     /**
@@ -52,10 +49,9 @@ public class CounterCommand
      *                would make it slower than IRL
      */
 
-    private static int displayCounter(CommandSourceStack source, String color, boolean realtime)
+    private static int displayCounter(CommandSourceStack source, DyeColor color, boolean realtime)
     {
         HopperCounter counter = HopperCounter.getCounter(color);
-        if (counter == null) throw new CommandRuntimeException(Messenger.s("Unknown wool color: "+color));
 
         for (Component message: counter.format(source.getServer(), realtime, false))
         {
@@ -64,25 +60,22 @@ public class CounterCommand
         return 1;
     }
 
+    private static int resetCounters(CommandSourceStack source)
+    {
+        HopperCounter.resetAll(source.getServer(), false);
+        Messenger.m(source, "w Restarted all counters");
+        return 1;
+    }
+
     /**
-     * A method to reset the counter's timer to 0 and empty its items. If the {@code color} parameter is {@code null},
-     * it will reset all counters.
+     * A method to reset the counter's timer to 0 and empty its items
+     * 
      * @param color The counter whose contents we want to reset
      */
-    private static int resetCounter(CommandSourceStack source, String color)
+    private static int resetCounter(CommandSourceStack source, DyeColor color)
     {
-        if (color == null)
-        {
-            HopperCounter.resetAll(source.getServer(), false);
-            Messenger.m(source, "w Restarted all counters");
-        }
-        else
-        {
-            HopperCounter counter = HopperCounter.getCounter(color);
-            if (counter == null) throw new CommandRuntimeException(Messenger.s("Unknown wool color"));
-            counter.reset(source.getServer());
-            Messenger.m(source, "w Restarted "+color+" counter");
-        }
+        HopperCounter.getCounter(color).reset(source.getServer());
+        Messenger.m(source, "w Restarted " + color + " counter");
         return 1;
     }
 
@@ -99,5 +92,4 @@ public class CounterCommand
         }
         return 1;
     }
-
 }
