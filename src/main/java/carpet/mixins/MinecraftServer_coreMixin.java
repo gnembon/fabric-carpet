@@ -68,6 +68,6 @@ public abstract class MinecraftServer_coreMixin
         if (CarpetSettings.spawnChunksSize != 11)
             SpawnChunks.changeSpawnSize(overworld(), CarpetSettings.spawnChunksSize);
         
-        CarpetSettings.LightBatchValidator.applyLightBatchSizes(CarpetSettings.lightEngineMaxBatchSize);
+        CarpetSettings.LightBatchValidator.applyLightBatchSizes((MinecraftServer) (Object) this, CarpetSettings.lightEngineMaxBatchSize);
     }
 }

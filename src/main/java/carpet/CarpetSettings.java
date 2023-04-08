@@ -32,7 +32,6 @@ import net.minecraft.world.level.border.WorldBorder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Iterator;
 import java.util.Optional;
 
 import static carpet.api.settings.RuleCategory.BUGFIX;
@@ -839,14 +838,11 @@ public class CarpetSettings
     public static int spawnChunksSize = MinecraftServer.START_CHUNK_RADIUS;
 
     public static class LightBatchValidator extends Validator<Integer> {
-        public static void applyLightBatchSizes(int maxBatchSize)
+        public static void applyLightBatchSizes(MinecraftServer server, int maxBatchSize)
         {
-            Iterator<ServerLevel> iterator = CarpetServer.minecraft_server.getAllLevels().iterator();
-            
-            while (iterator.hasNext()) 
+            for (ServerLevel world : server.getAllLevels())
             {
-                ServerLevel serverWorld = iterator.next();
-                serverWorld.getChunkSource().getLightEngine().setTaskPerBatch(maxBatchSize);
+                world.getChunkSource().getLightEngine().setTaskPerBatch(maxBatchSize);
             }
         }
         @Override public Integer validate(CommandSourceStack source, CarpetRule<Integer> currentRule, Integer newValue, String string) {
@@ -861,9 +857,8 @@ public class CarpetSettings
                 //must been some startup thing
                 return newValue;
             }
-            if (CarpetServer.minecraft_server == null) return newValue;
             
-            applyLightBatchSizes(newValue); // Apply new settings
+            applyLightBatchSizes(source.getServer(), newValue); // Apply new settings
             
             return newValue;
         }
