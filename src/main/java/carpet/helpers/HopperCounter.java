@@ -10,7 +10,6 @@ import it.unimi.dsi.fastutil.objects.Object2LongMap;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.Registry;
 import net.minecraft.core.RegistryAccess;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
@@ -27,7 +26,6 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.RecipeType;
-import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.AbstractBannerBlock;
 import net.minecraft.world.level.block.BeaconBeamBlock;
 import net.minecraft.world.level.block.Block;
@@ -114,7 +112,7 @@ public class HopperCounter
     {
         if (startTick < 0)
         {
-            startTick = server.getLevel(Level.OVERWORLD).getGameTime();  //OW
+            startTick = server.overworld().getGameTime();
             startMillis = System.currentTimeMillis();
         }
         Item item = stack.getItem();
@@ -128,7 +126,7 @@ public class HopperCounter
     public void reset(MinecraftServer server)
     {
         counter.clear();
-        startTick = server.getLevel(Level.OVERWORLD).getGameTime();  //OW
+        startTick = server.overworld().getGameTime();
         startMillis = System.currentTimeMillis();
         // pubSubProvider.publish();
     }
@@ -175,7 +173,7 @@ public class HopperCounter
      */
     public List<Component> format(MinecraftServer server, boolean realTime, boolean brief)
     {
-        long ticks = Math.max(realTime ? (System.currentTimeMillis() - startMillis) / 50 : server.getLevel(Level.OVERWORLD).getGameTime() - startTick, 1);  //OW
+        long ticks = Math.max(realTime ? (System.currentTimeMillis() - startMillis) / 50 : server.overworld().getGameTime() - startTick, 1);
         if (startTick < 0 || ticks == 0)
         {
             if (brief)
@@ -389,6 +387,13 @@ public class HopperCounter
             }
         }
         return null;
+    }
+
+    /**
+     * Returns the hopper counter for the given color
+     */
+    public static HopperCounter getCounter(DyeColor color) {
+        return COUNTERS.get(color);
     }
 
     /**

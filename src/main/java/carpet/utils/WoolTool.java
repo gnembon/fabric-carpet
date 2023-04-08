@@ -107,9 +107,8 @@ public class WoolTool
                 {
                     DyeColor under = getWoolColorAtPosition(worldIn, pos.below());
                     if (under == null) return;
-                    HopperCounter counter = HopperCounter.getCounter(under.toString());
-                    if (counter != null)
-                        Messenger.send(placer, counter.format(worldIn.getServer(), false, false));
+                    HopperCounter counter = HopperCounter.getCounter(under);
+                    Messenger.send(placer, counter.format(worldIn.getServer(), false, false));
                 }
                 break;
             case RED:
@@ -117,8 +116,7 @@ public class WoolTool
                 {
                     DyeColor under = getWoolColorAtPosition(worldIn, pos.below());
                     if (under == null) return;
-                    HopperCounter counter = HopperCounter.getCounter(under.toString());
-                    if (counter == null) return;
+                    HopperCounter counter = HopperCounter.getCounter(under);
                     counter.reset(placer.getServer());
                     List<Component> res = new ArrayList<>();
                     res.add(Messenger.s(String.format("%s counter reset",under.toString())));
