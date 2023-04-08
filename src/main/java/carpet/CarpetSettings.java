@@ -12,7 +12,6 @@ import carpet.utils.Messenger;
 import carpet.utils.SpawnChunks;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.commands.CommandSourceStack;
-import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
@@ -21,7 +20,6 @@ import net.minecraft.server.dedicated.DedicatedServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
@@ -810,18 +808,6 @@ public class CarpetSettings
     public static int simulationDistance = 0;
 
     public static class ChangeSpawnChunksValidator extends Validator<Integer> {
-        public static void changeSpawnSize(int size)
-        {
-            ServerLevel overworld = CarpetServer.minecraft_server.overworld();
-            if (overworld != null) {
-                ChunkPos centerChunk = new ChunkPos(new BlockPos(
-                        overworld.getLevelData().getXSpawn(),
-                        overworld.getLevelData().getYSpawn(),
-                        overworld.getLevelData().getZSpawn()
-                ));
-                SpawnChunks.changeSpawnChunks(overworld.getChunkSource(), centerChunk, size);
-            }
-        }
         @Override public Integer validate(CommandSourceStack source, CarpetRule<Integer> currentRule, Integer newValue, String string) {
             if (source == null) return newValue;
             if (newValue < 0 || newValue > 32)
@@ -837,7 +823,7 @@ public class CarpetSettings
             ServerLevel currentOverworld = source.getServer().overworld();
             if (currentOverworld != null)
             {
-                changeSpawnSize(newValue);
+                SpawnChunks.changeSpawnSize(currentOverworld, newValue);
             }
             return newValue;
         }

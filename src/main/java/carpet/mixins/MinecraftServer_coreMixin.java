@@ -3,9 +3,12 @@ package carpet.mixins;
 import carpet.CarpetServer;
 import carpet.CarpetSettings;
 import carpet.utils.CarpetProfiler;
+import carpet.utils.SpawnChunks;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.progress.ChunkProgressListener;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
@@ -56,11 +59,14 @@ public abstract class MinecraftServer_coreMixin
         CarpetServer.onServerDoneClosing((MinecraftServer) (Object) this);
     }
 
+    @Shadow
+    public abstract ServerLevel overworld();
+
     @Inject(method = "prepareLevels", at = @At("RETURN"))
     private void afterSpawnCreated(ChunkProgressListener worldGenerationProgressListener, CallbackInfo ci)
     {
         if (CarpetSettings.spawnChunksSize != 11)
-            CarpetSettings.ChangeSpawnChunksValidator.changeSpawnSize(CarpetSettings.spawnChunksSize);
+            SpawnChunks.changeSpawnSize(overworld(), CarpetSettings.spawnChunksSize);
         
         CarpetSettings.LightBatchValidator.applyLightBatchSizes(CarpetSettings.lightEngineMaxBatchSize);
     }
