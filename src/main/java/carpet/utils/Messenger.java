@@ -160,7 +160,7 @@ public class Messenger
     }
     public static Component tp(String desc, int x, int y, int z)
     {
-        return getCoordsTextComponent(desc, (float)x, (float)y, (float)z, true);
+        return getCoordsTextComponent(desc, x, y, z, true);
     }
 
     /// to be continued
@@ -231,7 +231,7 @@ public class Messenger
     public static void m(CommandSourceStack source, Object ... fields)
     {
         if (source != null)
-            source.sendSuccess(Messenger.c(fields), source.getServer() != null && source.getServer().overworld() != null); // OW
+            source.sendSuccess(Messenger.c(fields), source.getServer() != null && source.getServer().overworld() != null);
     }
     public static void m(Player player, Object ... fields)
     {
