@@ -10,8 +10,6 @@ public class SpawnChunks
 {
     public static void changeSpawnSize(ServerLevel overworld, int size)
     {
-        assert overworld != null : "Overworld must not be null";
-        assert overworld == overworld.getServer().overworld() : "Given world isn't overworld";
         ChunkPos centerChunk = new ChunkPos(new BlockPos(
                 overworld.getLevelData().getXSpawn(),
                 overworld.getLevelData().getYSpawn(),
