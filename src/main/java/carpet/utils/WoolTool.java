@@ -106,8 +106,7 @@ public class WoolTool
                     DyeColor under = getWoolColorAtPosition(worldIn, pos.below());
                     if (under == null) return;
                     HopperCounter counter = HopperCounter.getCounter(under);
-                    if (counter != null)
-                        Messenger.send(placer, counter.format(worldIn.getServer(), false, false));
+                    Messenger.send(placer, counter.format(worldIn.getServer(), false, false));
                 }
                 break;
             case RED:
