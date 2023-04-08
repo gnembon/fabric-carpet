@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Consumer;
 
 import carpet.commands.CounterCommand;
 import carpet.commands.DistanceCommand;
@@ -105,7 +106,7 @@ public class CarpetServer // static for now - easier to handle all around the co
         HopperCounter.resetAll(minecraftServer, true);
         extensions.forEach(e -> e.onServerLoadedWorlds(minecraftServer));
         // initialize scarpet rules after all extensions are loaded
-        settingsManager.initializeScarpetRules();
+        forEachManager(SettingsManager::initializeScarpetRules);
         // run fillLimit rule migration now that gamerules are available
         @SuppressWarnings("unchecked")
         CarpetRule<Integer> fillLimit = (CarpetRule<Integer>) settingsManager.getCarpetRule("fillLimit");
@@ -116,12 +117,6 @@ public class CarpetServer // static for now - easier to handle all around the co
         {
             throw new AssertionError();
         }
-        extensions.forEach(e -> {
-            if (e.extensionSettingsManager() != null)
-            {
-                e.extensionSettingsManager().initializeScarpetRules();
-            }
-        });
         scriptServer.initializeForWorld();
     }
 
@@ -143,11 +138,8 @@ public class CarpetServer // static for now - easier to handle all around the co
         {
             return;
         }
-        settingsManager.registerCommand(dispatcher, commandBuildContext);
-        extensions.forEach(e -> {
-        	SettingsManager sm = e.extensionSettingsManager();
-            if (sm != null) sm.registerCommand(dispatcher, commandBuildContext);
-        });
+        forEachManager(sm -> sm.registerCommand(dispatcher, commandBuildContext));
+
         TickCommand.register(dispatcher, commandBuildContext);
         ProfileCommand.register(dispatcher, commandBuildContext);
         CounterCommand.register(dispatcher, commandBuildContext);
@@ -232,11 +224,22 @@ public class CarpetServer // static for now - easier to handle all around the co
     }
     public static void onServerDoneClosing(MinecraftServer server)
     {
-        settingsManager.detachServer();
-        extensions.forEach(e -> {
-        	SettingsManager manager = e.extensionSettingsManager();
-            if (manager != null) manager.detachServer();
-        });
+        forEachManager(SettingsManager::detachServer);
+    }
+
+    // not API
+    // carpet's included
+    public static void forEachManager(Consumer<SettingsManager> consumer)
+    {
+        consumer.accept(settingsManager);
+        for (CarpetExtension e : extensions)
+        {
+            SettingsManager manager = e.extensionSettingsManager();
+            if (manager != null)
+            {
+                consumer.accept(manager);
+            }
+        }
     }
 
     public static void registerExtensionLoggers()
