@@ -8,7 +8,6 @@ import carpet.utils.CommandHelper;
 import carpet.utils.Messenger;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
-import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.minecraft.commands.CommandBuildContext;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.network.chat.Component;
@@ -86,14 +85,7 @@ public class TickCommand
 
     private static int setWarp(CommandSourceStack source, int advance, String tail_command)
     {
-        ServerPlayer player = null;
-        try
-        {
-            player = source.getPlayerOrException();
-        }
-        catch (CommandSyntaxException ignored)
-        {
-        }
+        ServerPlayer player = source.getPlayer(); // may be null
         Component message = TickSpeed.tickrate_advance(player, advance, tail_command, source);
         source.sendSuccess(message, false);
         return 1;
