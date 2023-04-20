@@ -488,7 +488,8 @@ Returns the name of sound type made by the block at position. One of:
 
 ### `(Deprecated) material(pos)`
 
-Returns the name of material of the block at position. Very limited as the use of material for blocks is removed.
+Returns `'unknown'`. The concept of material for blocks is removed. On previous versions it returned the name of the material the block
+was made of.
 
 ### `map_colour(pos)`
 
