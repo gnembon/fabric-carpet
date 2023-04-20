@@ -1,7 +1,6 @@
 package carpet.script.utils;
 
 import net.minecraft.world.level.block.SoundType;
-import net.minecraft.world.level.material.Material;
 import net.minecraft.world.level.material.MaterialColor;
 
 import java.util.Map;
@@ -153,14 +152,5 @@ public class Colors
             entry(MaterialColor.DEEPSLATE           , "deepslate"           ),
             entry(MaterialColor.RAW_IRON           , "raw_iron"           ),
             entry(MaterialColor.GLOW_LICHEN           , "glow_lichen"           )
-    );
-
-    public static final Map<Material, String> materialName = Map.ofEntries(
-            entry(Material.PLANT          , "plant"        ),
-            entry(Material.DEPRECATED_REPLACEABLE, "vegetation"       ),
-            entry(Material.SAND      , "sand"         ),
-            entry(Material.WOOD           , "wood"         ),
-            entry(Material.GLASS          , "glass"        ),
-            entry(Material.STONE          , "stone"        )
     );
 }

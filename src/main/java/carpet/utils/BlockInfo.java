@@ -19,7 +19,6 @@ import net.minecraft.world.level.LightLayer;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.material.Material;
 import net.minecraft.world.level.pathfinder.PathComputationType;
 import net.minecraft.world.phys.Vec3;
 
@@ -28,7 +27,6 @@ public class BlockInfo
     public static List<Component> blockInfo(BlockPos pos, ServerLevel world)
     {
         BlockState state = world.getBlockState(pos);
-        Material material = state.getMaterial();
         Block block = state.getBlock();
         String metastring = "";
         final Registry<Block> blocks = world.registryAccess().registryOrThrow(Registries.BLOCK);
@@ -51,9 +49,8 @@ public class BlockInfo
                 Math.max(world.getBrightness(LightLayer.BLOCK, pos),world.getBrightness(LightLayer.SKY, pos)) ,
                 Math.max(world.getBrightness(LightLayer.BLOCK, pos.above()),world.getBrightness(LightLayer.SKY, pos.above())))));
         lst.add(Messenger.s(String.format(" - Brightness in: %.2f, above: %.2f", world.getLightLevelDependentMagicValue(pos), world.getLightLevelDependentMagicValue(pos.above()))));
-        lst.add(Messenger.s(String.format(" - Is opaque: %s", material.isSolid() )));
+        lst.add(Messenger.s(String.format(" - Is opaque: %s", state.isSolid() )));
         //lst.add(Messenger.s(String.format(" - Light opacity: %d", state.getOpacity(world,pos))));
-        lst.add(Messenger.s(String.format(" - Blocks light: %s", state.getMaterial().isSolidBlocking())));
         //lst.add(Messenger.s(String.format(" - Emitted light: %d", state.getLightValue())));
         //lst.add(Messenger.s(String.format(" - Picks neighbour light value: %s", state.useNeighborBrightness(world, pos))));
         lst.add(Messenger.s(""));
@@ -62,7 +59,6 @@ public class BlockInfo
         lst.add(Messenger.s(String.format(" - Blocks movement in air: %s", !state.isPathfindable(world,pos, PathComputationType.AIR))));
         lst.add(Messenger.s(String.format(" - Blocks movement in liquids: %s", !state.isPathfindable(world,pos, PathComputationType.WATER))));
         lst.add(Messenger.s(String.format(" - Can burn: %s", state.ignitedByLava())));
-        lst.add(Messenger.s(String.format(" - Requires a tool: %s", !material.isReplaceable()))); //?maybe
         lst.add(Messenger.s(String.format(" - Hardness: %.2f", state.getDestroySpeed(world, pos))));
         lst.add(Messenger.s(String.format(" - Blast resistance: %.2f", block.getExplosionResistance())));
         lst.add(Messenger.s(String.format(" - Ticks randomly: %s", block.isRandomlyTicking(state))));

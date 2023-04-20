@@ -527,7 +527,7 @@ public class WorldAccess
                 booleanStateTest(c, "flammable", lv, (s, p) -> s.ignitedByLava()));
 
         expression.addContextFunction("transparent", -1, (c, t, lv) ->
-                booleanStateTest(c, "transparent", lv, (s, p) -> !s.getMaterial().isSolid()));
+                booleanStateTest(c, "transparent", lv, (s, p) -> !s.isSolid()));
 
         /*this.expr.addContextFunction("opacity", -1, (c, t, lv) ->
                 genericStateTest(c, "opacity", lv, (s, p, w) -> new NumericValue(s.getOpacity(w, p))));
@@ -1162,8 +1162,7 @@ public class WorldAccess
 
         expression.addContextFunction("material", -1, (c, t, lv) -> {
             c.host.issueDeprecation("material(...)"); // deprecated for block_state()
-            return stateStringQuery(c, "material", lv, (s, p) ->
-                    Colors.materialName.getOrDefault(s.getMaterial(), "unknown"));
+            return StringValue.of("unknown");
         });
 
         expression.addContextFunction("map_colour", -1, (c, t, lv) ->

@@ -19,7 +19,7 @@ public class FlowingFluid_liquidDamageDisabledMixin
             method = "canHoldFluid",
             at = @At(
                     value = "INVOKE",
-                    target = "Lnet/minecraft/world/level/material/Material;blocksMotion()Z"
+                    target = "Lnet/minecraft/world/level/block/state/BlockState;blocksMotion()Z"
             ),
             cancellable = true
     )

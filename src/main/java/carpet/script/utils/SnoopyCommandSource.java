@@ -45,7 +45,7 @@ public class SnoopyCommandSource extends CommandSourceStack
         super(CommandSource.NULL, original.getPosition(), original.getRotation(), original.getLevel(), Vanilla.MinecraftServer_getRunPermissionLevel(original.getServer()),
                 original.getTextName(), original.getDisplayName(), original.getServer(), original.getEntity(), false,
                 (ctx, succ, res) -> {
-                }, EntityAnchorArgument.Anchor.FEET, CommandSigningContext.ANONYMOUS, TaskChainer.immediate(original.getServer()));
+                }, EntityAnchorArgument.Anchor.FEET, CommandSigningContext.ANONYMOUS, TaskChainer.immediate(original.getServer()), i -> {});
         this.output = CommandSource.NULL;
         this.position = original.getPosition();
         this.world = original.getLevel();
@@ -92,7 +92,7 @@ public class SnoopyCommandSource extends CommandSourceStack
     {
         super(output, pos, rot, world, level,
                 simpleName, name, server, entity, false,
-                consumer, entityAnchor, context, TaskChainer.immediate(server));
+                consumer, entityAnchor, context, TaskChainer.immediate(server), i -> {});
         this.output = output;
         this.position = pos;
         this.rotation = rot;
