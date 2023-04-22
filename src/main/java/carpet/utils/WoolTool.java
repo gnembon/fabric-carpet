@@ -39,30 +39,6 @@ public class WoolTool
             .collect(Collectors.toUnmodifiableMap(DyeColor::getMaterialColor, Function.identity()));
 
     /**
-     * A map of all the wool colours to their respective colours in the {@link Messenger#m} format so the name of the counter
-     * gets printed in colour.
-     */
-
-    public static final Map<MaterialColor,String> Material2DyeName = Map.ofEntries(
-        entry(MaterialColor.SNOW, "w "),
-        entry(MaterialColor.COLOR_ORANGE, "#F9801D "),
-        entry(MaterialColor.COLOR_MAGENTA, "m "),
-        entry(MaterialColor.COLOR_LIGHT_BLUE, "t "),
-        entry(MaterialColor.COLOR_YELLOW, "y "),
-        entry(MaterialColor.COLOR_LIGHT_GREEN, "l "),
-        entry(MaterialColor.COLOR_PINK, "#FFACCB "),
-        entry(MaterialColor.COLOR_GRAY, "f "),
-        entry(MaterialColor.COLOR_LIGHT_GRAY, "g "),
-        entry(MaterialColor.COLOR_CYAN, "c "),
-        entry(MaterialColor.COLOR_PURPLE, "p "),
-        entry(MaterialColor.COLOR_BLUE, "v "),
-        entry(MaterialColor.COLOR_BROWN, "#835432 "),
-        entry(MaterialColor.COLOR_GREEN, "e "),
-        entry(MaterialColor.COLOR_RED, "r "),
-        entry(MaterialColor.COLOR_BLACK, "k ")
-    );
-
-    /**
      * The method which gets triggered when a player places a carpet, and decides what to do based on the carpet's colour:
      * <ul>
      *     <li>Red - Resets the counter of the colour of wool underneath the carpet (if there is no wool, then nothing happens)</li>
