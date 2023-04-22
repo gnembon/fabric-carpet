@@ -3,11 +3,8 @@ package carpet.utils;
 import carpet.CarpetSettings;
 import carpet.helpers.HopperCounter;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.core.BlockPos;
@@ -32,11 +29,27 @@ import static java.util.Map.entry;
 public class WoolTool
 {
     /**
-     * A map of the {@link MaterialColor} to the {@link DyeColor} which is used in {@link WoolTool#getWoolColorAtPosition}
+     * A map from a wool {@link Block} to its {@link DyeColor} which is used in {@link WoolTool#getWoolColorAtPosition}
      * to get the colour of wool at a position.
      */
-    private static final Map<MaterialColor,DyeColor> Material2Dye = Arrays.stream(DyeColor.values())
-            .collect(Collectors.toUnmodifiableMap(DyeColor::getMaterialColor, Function.identity()));
+    private static final Map<Block, DyeColor> WOOL_BLOCK_TO_DYE = Map.ofEntries(
+            entry(Blocks.WHITE_WOOL, DyeColor.WHITE),
+            entry(Blocks.ORANGE_WOOL, DyeColor.ORANGE),
+            entry(Blocks.MAGENTA_WOOL, DyeColor.MAGENTA),
+            entry(Blocks.LIGHT_BLUE_WOOL, DyeColor.LIGHT_BLUE),
+            entry(Blocks.YELLOW_WOOL, DyeColor.YELLOW),
+            entry(Blocks.LIME_WOOL, DyeColor.LIME),
+            entry(Blocks.PINK_WOOL, DyeColor.PINK),
+            entry(Blocks.GRAY_WOOL, DyeColor.GRAY),
+            entry(Blocks.LIGHT_GRAY_WOOL, DyeColor.LIGHT_GRAY),
+            entry(Blocks.CYAN_WOOL, DyeColor.CYAN),
+            entry(Blocks.PURPLE_WOOL, DyeColor.PURPLE),
+            entry(Blocks.BLUE_WOOL, DyeColor.BLUE),
+            entry(Blocks.BROWN_WOOL, DyeColor.BROWN),
+            entry(Blocks.GREEN_WOOL, DyeColor.GREEN),
+            entry(Blocks.RED_WOOL, DyeColor.RED),
+            entry(Blocks.BLACK_WOOL, DyeColor.BLACK)
+    );
 
     /**
      * A map of all the wool colours to their respective colours in the {@link Messenger#m} format so the name of the counter
@@ -133,11 +146,6 @@ public class WoolTool
     public static DyeColor getWoolColorAtPosition(Level worldIn, BlockPos pos)
     {
         BlockState state = worldIn.getBlockState(pos);
-        // wool and wool carpets
-        if (!state.is(BlockTags.WOOL))
-        {
-            return null;
-        }
-        return Material2Dye.get(state.getMapColor(worldIn, pos));
+        return WOOL_BLOCK_TO_DYE.get(state.getBlock());
     }
 }
