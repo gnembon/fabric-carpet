@@ -52,7 +52,7 @@ public class HopperCounter
     /**
      * A map of all the {@link HopperCounter} counters.
      */
-    public static final Map<DyeColor, HopperCounter> COUNTERS;
+    private static final Map<DyeColor, HopperCounter> COUNTERS;
 
     /**
      * The default display colour of each item, which makes them look nicer when printing the counter contents to the chat
