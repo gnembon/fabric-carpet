@@ -85,7 +85,7 @@ public class EntityPlayerMPFake extends ServerPlayer
     {
         player.getServer().getPlayerList().remove(player);
         player.connection.disconnect(Component.translatable("multiplayer.disconnect.duplicate_login"));
-        ServerLevel worldIn = player.getLevel();//.getWorld(player.dimension);
+        ServerLevel worldIn = player.serverLevel();//.getWorld(player.dimension);
         GameProfile gameprofile = player.getGameProfile();
         EntityPlayerMPFake playerShadow = new EntityPlayerMPFake(server, worldIn, gameprofile, true);
         playerShadow.setChatSession(player.getChatSession());
@@ -99,7 +99,7 @@ public class EntityPlayerMPFake extends ServerPlayer
         playerShadow.entityData.set(DATA_PLAYER_MODE_CUSTOMISATION, player.getEntityData().get(DATA_PLAYER_MODE_CUSTOMISATION));
 
 
-        server.getPlayerList().broadcastAll(new ClientboundRotateHeadPacket(playerShadow, (byte) (player.yHeadRot * 256 / 360)), playerShadow.level.dimension());
+        server.getPlayerList().broadcastAll(new ClientboundRotateHeadPacket(playerShadow, (byte) (player.yHeadRot * 256 / 360)), playerShadow.level().dimension());
         server.getPlayerList().broadcastAll(new ClientboundPlayerInfoUpdatePacket(ClientboundPlayerInfoUpdatePacket.Action.ADD_PLAYER, playerShadow));
         //player.world.getChunkManager().updatePosition(playerShadow);
         playerShadow.getAbilities().flying = player.getAbilities().flying;
@@ -143,7 +143,7 @@ public class EntityPlayerMPFake extends ServerPlayer
         if (this.getServer().getTickCount() % 10 == 0)
         {
             this.connection.resetPosition();
-            this.getLevel().getChunkSource().move(this);
+            this.serverLevel().getChunkSource().move(this);
         }
         try
         {

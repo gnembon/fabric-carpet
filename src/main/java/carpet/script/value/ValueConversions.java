@@ -40,7 +40,7 @@ import net.minecraft.world.level.block.state.properties.Property;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraft.world.level.levelgen.structure.StructurePiece;
 import net.minecraft.world.level.levelgen.structure.StructureStart;
-import net.minecraft.world.level.material.MaterialColor;
+import net.minecraft.world.level.material.MapColor;
 import net.minecraft.world.level.pathfinder.Node;
 import net.minecraft.world.level.pathfinder.Path;
 import net.minecraft.world.phys.AABB;
@@ -84,7 +84,7 @@ public class ValueConversions
         return of(world.dimension().location());
     }
 
-    public static Value of(MaterialColor color)
+    public static Value of(MapColor color)
     {
         return ListValue.of(StringValue.of(Colors.mapColourName.get(color)), ofRGB(color.col));
     }

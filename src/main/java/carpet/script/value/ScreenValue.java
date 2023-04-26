@@ -265,7 +265,7 @@ public class ScreenValue extends Value
             {
                 Map<Value, Value> data = new HashMap<>();
                 data.put(StringValue.of("slot"), NumericValue.of(slotId));
-                data.put(StringValue.of("stack"), ValueConversions.of(stack, player.level.registryAccess()));
+                data.put(StringValue.of("stack"), ValueConversions.of(stack, player.level().registryAccess()));
                 ScreenValue.this.callListener(ScreenValue.this.player, "slot_update", data);
             }
 

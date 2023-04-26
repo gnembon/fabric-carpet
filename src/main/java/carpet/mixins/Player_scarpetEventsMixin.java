@@ -57,7 +57,7 @@ public abstract class Player_scarpetEventsMixin extends LivingEntity
     @Inject(method = "touch", at = @At("HEAD"))
     private void onEntityCollision(Entity entity, CallbackInfo ci)
     {
-        if (PLAYER_COLLIDES_WITH_ENTITY.isNeeded() && !level.isClientSide)
+        if (PLAYER_COLLIDES_WITH_ENTITY.isNeeded() && !level().isClientSide)
         {
             PLAYER_COLLIDES_WITH_ENTITY.onEntityHandAction((ServerPlayer)(Object)this, entity, null);
         }
@@ -66,7 +66,7 @@ public abstract class Player_scarpetEventsMixin extends LivingEntity
     @Inject(method = "interactOn", cancellable = true, at = @At("HEAD"))
     private void doInteract(Entity entity, InteractionHand hand, CallbackInfoReturnable<InteractionResult> cir)
     {
-        if (!level.isClientSide && PLAYER_INTERACTS_WITH_ENTITY.isNeeded())
+        if (!level().isClientSide && PLAYER_INTERACTS_WITH_ENTITY.isNeeded())
         {
             if(PLAYER_INTERACTS_WITH_ENTITY.onEntityHandAction((ServerPlayer) (Object)this, entity, hand)) {
                 cir.setReturnValue(InteractionResult.PASS);
@@ -78,7 +78,7 @@ public abstract class Player_scarpetEventsMixin extends LivingEntity
     @Inject(method = "attack", at = @At("HEAD"), cancellable = true)
     private void onAttack(Entity target, CallbackInfo ci)
     {
-        if (!level.isClientSide && PLAYER_ATTACKS_ENTITY.isNeeded() && target.isAttackable())
+        if (!level().isClientSide && PLAYER_ATTACKS_ENTITY.isNeeded() && target.isAttackable())
         {
             if(PLAYER_ATTACKS_ENTITY.onEntityHandAction((ServerPlayer) (Object)this, target, null)) {
                 ci.cancel();

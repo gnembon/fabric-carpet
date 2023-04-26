@@ -37,8 +37,8 @@ public abstract class LivingEntity_maxCollisionsMixin extends Entity
         int maxEntityCramming =-1;
         if (CarpetSettings.maxEntityCollisions > 0)
         {
-            maxEntityCramming = this.level.getGameRules().getInt(GameRules.RULE_MAX_ENTITY_CRAMMING);
-            entities = ((LevelInterface) this.level).getOtherEntitiesLimited(
+            maxEntityCramming = this.level().getGameRules().getInt(GameRules.RULE_MAX_ENTITY_CRAMMING);
+            entities = ((LevelInterface) this.level()).getOtherEntitiesLimited(
                     this,
                     this.getBoundingBox(),
                     EntitySelector.pushableBy(this),
@@ -46,11 +46,11 @@ public abstract class LivingEntity_maxCollisionsMixin extends Entity
         }
         else
         {
-            entities = this.level.getEntities(this, this.getBoundingBox(), EntitySelector.pushableBy(this));
+            entities = this.level().getEntities(this, this.getBoundingBox(), EntitySelector.pushableBy(this));
         }
 
         if (!entities.isEmpty()) {
-            if (maxEntityCramming < 0) maxEntityCramming = this.level.getGameRules().getInt(GameRules.RULE_MAX_ENTITY_CRAMMING);
+            if (maxEntityCramming < 0) maxEntityCramming = this.level().getGameRules().getInt(GameRules.RULE_MAX_ENTITY_CRAMMING);
             if (maxEntityCramming > 0 && entities.size() > maxEntityCramming - 1 && this.random.nextInt(4) == 0) {
                 int candidates = 0;
 

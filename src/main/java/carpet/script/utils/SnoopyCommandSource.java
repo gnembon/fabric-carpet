@@ -66,16 +66,16 @@ public class SnoopyCommandSource extends CommandSourceStack
     public SnoopyCommandSource(ServerPlayer player, Component[] error, List<Component> output)
     {
         super(player, player.position(), player.getRotationVector(),
-                player.level instanceof final ServerLevel serverLevel ? serverLevel : null,
+                player.level() instanceof final ServerLevel serverLevel ? serverLevel : null,
                 player.server.getProfilePermissions(player.getGameProfile()), player.getName().getString(), player.getDisplayName(),
-                player.level.getServer(), player);
+                player.level().getServer(), player);
         this.output = player;
         this.position = player.position();
-        this.world = player.level instanceof final ServerLevel serverLevel ? serverLevel : null;
+        this.world = player.level() instanceof final ServerLevel serverLevel ? serverLevel : null;
         this.level = player.server.getProfilePermissions(player.getGameProfile());
         this.simpleName = player.getName().getString();
         this.name = player.getDisplayName();
-        this.server = player.level.getServer();
+        this.server = player.level().getServer();
         this.entity = player;
         this.resultConsumer = (ctx, succ, res) -> {
         };

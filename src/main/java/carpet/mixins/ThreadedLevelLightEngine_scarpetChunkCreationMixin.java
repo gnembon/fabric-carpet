@@ -35,6 +35,8 @@ public abstract class ThreadedLevelLightEngine_scarpetChunkCreationMixin extends
     @Final
     private ChunkMap chunkMap;
 
+    //@Shadow public abstract void propagateLightSources(final ChunkPos chunkPos);
+
     @Override
     @Invoker("updateChunkStatus")
     public abstract void invokeUpdateChunkStatus(ChunkPos pos);
@@ -46,7 +48,7 @@ public abstract class ThreadedLevelLightEngine_scarpetChunkCreationMixin extends
         chunk.setLightCorrect(false);
 
         this.addTask(pos.x, pos.z, () -> 0, ThreadedLevelLightEngine.TaskType.PRE_UPDATE, Util.name(() -> {
-                super.enableLightSources(pos, false);
+                super.setLightEnabled(pos, false);
                 ((Lighting_scarpetChunkCreationInterface) this).removeLightData(SectionPos.getZeroNode(SectionPos.asLong(pos.x, 0, pos.z)));
             },
             () -> "Remove light data " + pos
@@ -58,8 +60,14 @@ public abstract class ThreadedLevelLightEngine_scarpetChunkCreationMixin extends
     {
         final ChunkPos pos = chunk.getPos();
 
-        this.addTask(pos.x, pos.z, () -> 0, ThreadedLevelLightEngine.TaskType.PRE_UPDATE, Util.name(() -> {
-                super.enableLightSources(pos, true);
+        propagateLightSources(pos);
+        /*this.addTask(pos.x, pos.z, () -> 0, ThreadedLevelLightEngine.TaskType.PRE_UPDATE, Util.name(() -> {
+                super.setLightEnabled(pos, true);
+
+                chunk.findBlockLightSources((lightPos, state) -> {
+                        final int lightEmission = state.getLightEmission();
+                        enqueueIncrease(lightPos.asLong(), LightEngine.QueueEntry.increaseLightFromEmission(lightEmission, isEmptyShape(state)));
+                    });
 
                 chunk.getLights().forEach(
                     blockPos -> super.onBlockEmissionIncrease(blockPos, chunk.getLightEmission(blockPos))
@@ -68,7 +76,7 @@ public abstract class ThreadedLevelLightEngine_scarpetChunkCreationMixin extends
                 ((Lighting_scarpetChunkCreationInterface) this).relight(SectionPos.getZeroNode(SectionPos.asLong(pos.x, 0, pos.z)));
             },
             () -> "Relight chunk " + pos
-        ));
+        ));*/
 
         return CompletableFuture.runAsync(
             Util.name(() -> {

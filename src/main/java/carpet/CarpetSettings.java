@@ -842,7 +842,7 @@ public class CarpetSettings
         {
             for (ServerLevel world : server.getAllLevels())
             {
-                world.getChunkSource().getLightEngine().setTaskPerBatch(maxBatchSize);
+                //world.getChunkSource().getLightEngine().setTaskPerBatch(maxBatchSize);
             }
         }
         @Override public Integer validate(CommandSourceStack source, CarpetRule<Integer> currentRule, Integer newValue, String string) {

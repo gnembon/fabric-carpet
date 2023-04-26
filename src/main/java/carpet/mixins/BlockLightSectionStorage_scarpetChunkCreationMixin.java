@@ -12,7 +12,7 @@ import net.minecraft.world.level.chunk.DataLayer;
 import net.minecraft.world.level.chunk.LightChunkGetter;
 import net.minecraft.world.level.lighting.BlockLightSectionStorage;
 import net.minecraft.world.level.lighting.BlockLightSectionStorage.BlockDataLayerStorageMap;
-import net.minecraft.world.level.lighting.LayerLightEngine;
+import net.minecraft.world.level.lighting.LightEngine;
 import net.minecraft.world.level.lighting.LayerLightSectionStorage;
 
 @Mixin(BlockLightSectionStorage.class)
@@ -24,7 +24,7 @@ public abstract class BlockLightSectionStorage_scarpetChunkCreationMixin extends
     }
 
     @Override
-    public void processRelight(final LayerLightEngine<?, ?> lightProvider, final long cPos)
+    public void processRelight(final LightEngine<?, ?> lightProvider, final long cPos)
     {
         final DynamicGraphMinFixedPoint_resetChunkInterface levelPropagator = (DynamicGraphMinFixedPoint_resetChunkInterface) lightProvider;
 
@@ -61,5 +61,11 @@ public abstract class BlockLightSectionStorage_scarpetChunkCreationMixin extends
                     }
             }
         }
+    }
+
+    @Override
+    public int getLightLevelByLong(long blockPos)
+    {
+        return getLightValue(blockPos);
     }
 }

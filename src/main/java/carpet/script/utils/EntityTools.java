@@ -12,12 +12,12 @@ public class EntityTools
      */
     public static void genericJump(Entity e)
     {
-        if (!e.isOnGround() && !e.isInWaterOrBubble() && !e.isInLava())
+        if (!e.onGround() && !e.isInWaterOrBubble() && !e.isInLava())
         {
             return;
         }
-        float m = e.level.getBlockState(e.blockPosition()).getBlock().getJumpFactor();
-        float g = e.level.getBlockState(BlockPos.containing(e.getX(), e.getBoundingBox().minY - 0.5000001D, e.getZ())).getBlock().getJumpFactor();
+        float m = e.level().getBlockState(e.blockPosition()).getBlock().getJumpFactor();
+        float g = e.level().getBlockState(BlockPos.containing(e.getX(), e.getBoundingBox().minY - 0.5000001D, e.getZ())).getBlock().getJumpFactor();
         float jumpVelocityMultiplier = m == 1.0D ? g : m;
         float jumpStrength = (0.42F * jumpVelocityMultiplier);
         Vec3 vec3d = e.getDeltaMovement();

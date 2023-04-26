@@ -18,7 +18,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.material.MaterialColor;
+import net.minecraft.world.level.material.MapColor;
 import net.minecraft.world.phys.Vec3;
 
 import javax.annotation.Nullable;
@@ -32,34 +32,34 @@ import static java.util.Map.entry;
 public class WoolTool
 {
     /**
-     * A map of the {@link MaterialColor} to the {@link DyeColor} which is used in {@link WoolTool#getWoolColorAtPosition}
+     * A map of the {@link net.minecraft.world.level.material.MapColor} to the {@link DyeColor} which is used in {@link WoolTool#getWoolColorAtPosition}
      * to get the colour of wool at a position.
      */
-    private static final Map<MaterialColor,DyeColor> Material2Dye = Arrays.stream(DyeColor.values())
-            .collect(Collectors.toUnmodifiableMap(DyeColor::getMaterialColor, Function.identity()));
+    private static final Map<MapColor,DyeColor> Material2Dye = Arrays.stream(DyeColor.values())
+            .collect(Collectors.toUnmodifiableMap(DyeColor::getMapColor, Function.identity()));
 
     /**
      * A map of all the wool colours to their respective colours in the {@link Messenger#m} format so the name of the counter
      * gets printed in colour.
      */
 
-    public static final Map<MaterialColor,String> Material2DyeName = Map.ofEntries(
-        entry(MaterialColor.SNOW, "w "),
-        entry(MaterialColor.COLOR_ORANGE, "#F9801D "),
-        entry(MaterialColor.COLOR_MAGENTA, "m "),
-        entry(MaterialColor.COLOR_LIGHT_BLUE, "t "),
-        entry(MaterialColor.COLOR_YELLOW, "y "),
-        entry(MaterialColor.COLOR_LIGHT_GREEN, "l "),
-        entry(MaterialColor.COLOR_PINK, "#FFACCB "),
-        entry(MaterialColor.COLOR_GRAY, "f "),
-        entry(MaterialColor.COLOR_LIGHT_GRAY, "g "),
-        entry(MaterialColor.COLOR_CYAN, "c "),
-        entry(MaterialColor.COLOR_PURPLE, "p "),
-        entry(MaterialColor.COLOR_BLUE, "v "),
-        entry(MaterialColor.COLOR_BROWN, "#835432 "),
-        entry(MaterialColor.COLOR_GREEN, "e "),
-        entry(MaterialColor.COLOR_RED, "r "),
-        entry(MaterialColor.COLOR_BLACK, "k ")
+    public static final Map<MapColor,String> Material2DyeName = Map.ofEntries(
+        entry(MapColor.SNOW, "w "),
+        entry(MapColor.COLOR_ORANGE, "#F9801D "),
+        entry(MapColor.COLOR_MAGENTA, "m "),
+        entry(MapColor.COLOR_LIGHT_BLUE, "t "),
+        entry(MapColor.COLOR_YELLOW, "y "),
+        entry(MapColor.COLOR_LIGHT_GREEN, "l "),
+        entry(MapColor.COLOR_PINK, "#FFACCB "),
+        entry(MapColor.COLOR_GRAY, "f "),
+        entry(MapColor.COLOR_LIGHT_GRAY, "g "),
+        entry(MapColor.COLOR_CYAN, "c "),
+        entry(MapColor.COLOR_PURPLE, "p "),
+        entry(MapColor.COLOR_BLUE, "v "),
+        entry(MapColor.COLOR_BROWN, "#835432 "),
+        entry(MapColor.COLOR_GREEN, "e "),
+        entry(MapColor.COLOR_RED, "r "),
+        entry(MapColor.COLOR_BLACK, "k ")
     );
 
     /**
