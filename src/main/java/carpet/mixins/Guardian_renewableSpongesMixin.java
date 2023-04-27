@@ -24,11 +24,11 @@ public abstract class Guardian_renewableSpongesMixin extends Monster
     @Override
     public void thunderHit(ServerLevel serverWorld, LightningBolt lightningEntity)
     {                                // isRemoved()
-        if (!this.level.isClientSide && !this.isRemoved() && CarpetSettings.renewableSponges && !((Object)this instanceof ElderGuardian))
+        if (!this.level().isClientSide && !this.isRemoved() && CarpetSettings.renewableSponges && !((Object)this instanceof ElderGuardian))
         {
-            ElderGuardian elderGuardian = new ElderGuardian(EntityType.ELDER_GUARDIAN ,this.level);
+            ElderGuardian elderGuardian = new ElderGuardian(EntityType.ELDER_GUARDIAN ,this.level());
             elderGuardian.moveTo(this.getX(), this.getY(), this.getZ(), this.getYRot(), this.getXRot());
-            elderGuardian.finalizeSpawn(serverWorld ,this.level.getCurrentDifficultyAt(elderGuardian.blockPosition()), MobSpawnType.CONVERSION, (SpawnGroupData)null, (CompoundTag)null);
+            elderGuardian.finalizeSpawn(serverWorld ,this.level().getCurrentDifficultyAt(elderGuardian.blockPosition()), MobSpawnType.CONVERSION, (SpawnGroupData)null, (CompoundTag)null);
             elderGuardian.setNoAi(this.isNoAi());
             
             if (this.hasCustomName())
@@ -37,7 +37,7 @@ public abstract class Guardian_renewableSpongesMixin extends Monster
                 elderGuardian.setCustomNameVisible(this.isCustomNameVisible());
             }
             
-            this.level.addFreshEntity(elderGuardian);
+            this.level().addFreshEntity(elderGuardian);
             this.discard(); // discard remove();
         }
         else

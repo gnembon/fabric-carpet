@@ -29,7 +29,8 @@ import net.minecraft.world.level.block.AbstractBannerBlock;
 import net.minecraft.world.level.block.BeaconBeamBlock;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.material.MaterialColor;
+import net.minecraft.world.level.material.MapColor;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -231,7 +232,7 @@ public class HopperCounter
      */
     public static int appropriateColor(int color)
     {
-        if (color == 0) return MaterialColor.SNOW.col;
+        if (color == 0) return MapColor.SNOW.col;
         int r = (color >> 16 & 255);
         int g = (color >> 8 & 255);
         int b = (color & 255);
@@ -243,7 +244,7 @@ public class HopperCounter
 
     /**
      * Maps items that don't get a good block to reference for colour, or those that colour is wrong to a number of blocks, so we can get their colours easily with the
-     * {@link Block#defaultMaterialColor()} method as these items have those same colours.
+     * {@link Block#defaultMapColor()} method as these items have those same colours.
      */
     private static final Map<Item, Block> DEFAULTS = Map.ofEntries(
             entry(Items.DANDELION, Blocks.YELLOW_WOOL),
@@ -336,8 +337,8 @@ public class HopperCounter
      */
     public static TextColor fromItem(Item item, RegistryAccess registryAccess)
     {
-        if (DEFAULTS.containsKey(item)) return TextColor.fromRgb(appropriateColor(DEFAULTS.get(item).defaultMaterialColor().col));
-        if (item instanceof DyeItem dye) return TextColor.fromRgb(appropriateColor(dye.getDyeColor().getMaterialColor().col));
+        if (DEFAULTS.containsKey(item)) return TextColor.fromRgb(appropriateColor(DEFAULTS.get(item).defaultMapColor().col));
+        if (item instanceof DyeItem dye) return TextColor.fromRgb(appropriateColor(dye.getDyeColor().getMapColor().col));
         Block block = null;
         final Registry<Item> itemRegistry = registryAccess.registryOrThrow(Registries.ITEM);
         final Registry<Block> blockRegistry = registryAccess.registryOrThrow(Registries.BLOCK);
@@ -352,9 +353,9 @@ public class HopperCounter
         }
         if (block != null)
         {
-            if (block instanceof AbstractBannerBlock) return TextColor.fromRgb(appropriateColor(((AbstractBannerBlock) block).getColor().getMaterialColor().col));
-            if (block instanceof BeaconBeamBlock) return TextColor.fromRgb(appropriateColor( ((BeaconBeamBlock) block).getColor().getMaterialColor().col));
-            return TextColor.fromRgb(appropriateColor( block.defaultMaterialColor().col));
+            if (block instanceof AbstractBannerBlock) return TextColor.fromRgb(appropriateColor(((AbstractBannerBlock) block).getColor().getMapColor().col));
+            if (block instanceof BeaconBeamBlock) return TextColor.fromRgb(appropriateColor( ((BeaconBeamBlock) block).getColor().getMapColor().col));
+            return TextColor.fromRgb(appropriateColor( block.defaultMapColor().col));
         }
         return null;
     }

@@ -174,12 +174,12 @@ public class EntityPlayerActionPack
         List<Entity> entities;
         if (onlyRideables)
         {
-            entities = player.level.getEntities(player, player.getBoundingBox().inflate(3.0D, 1.0D, 3.0D),
+            entities = player.level().getEntities(player, player.getBoundingBox().inflate(3.0D, 1.0D, 3.0D),
                     e -> e instanceof Minecart || e instanceof Boat || e instanceof AbstractHorse);
         }
             else
         {
-            entities = player.level.getEntities(player, player.getBoundingBox().inflate(3.0D, 1.0D, 3.0D));
+            entities = player.level().getEntities(player, player.getBoundingBox().inflate(3.0D, 1.0D, 3.0D));
         }
         if (entities.size()==0)
             return this;
@@ -310,11 +310,11 @@ public class EntityPlayerActionPack
                         case BLOCK:
                         {
                             player.resetLastActionTime();
-                            ServerLevel world = player.getLevel();
+                            ServerLevel world = player.serverLevel();
                             BlockHitResult blockHit = (BlockHitResult) hit;
                             BlockPos pos = blockHit.getBlockPos();
                             Direction side = blockHit.getDirection();
-                            if (pos.getY() < player.getLevel().getMaxBuildHeight() - (side == Direction.UP ? 1 : 0) && world.mayInteract(player, pos))
+                            if (pos.getY() < player.level().getMaxBuildHeight() - (side == Direction.UP ? 1 : 0) && world.mayInteract(player, pos))
                             {
                                 InteractionResult result = player.gameMode.useItemOn(player, world, player.getItemInHand(hand), hand, blockHit);
                                 if (result.consumesAction())
@@ -349,7 +349,7 @@ public class EntityPlayerActionPack
                         }
                     }
                     ItemStack handItem = player.getItemInHand(hand);
-                    if (player.gameMode.useItem(player, player.getLevel(), handItem, hand).consumesAction())
+                    if (player.gameMode.useItem(player, player.level(), handItem, hand).consumesAction())
                     {
                         ap.itemUseCooldown = 3;
                         return true;
@@ -392,17 +392,17 @@ public class EntityPlayerActionPack
                         BlockHitResult blockHit = (BlockHitResult) hit;
                         BlockPos pos = blockHit.getBlockPos();
                         Direction side = blockHit.getDirection();
-                        if (player.blockActionRestricted(player.level, pos, player.gameMode.getGameModeForPlayer())) return false;
-                        if (ap.currentBlock != null && player.level.getBlockState(ap.currentBlock).isAir())
+                        if (player.blockActionRestricted(player.level(), pos, player.gameMode.getGameModeForPlayer())) return false;
+                        if (ap.currentBlock != null && player.level().getBlockState(ap.currentBlock).isAir())
                         {
                             ap.currentBlock = null;
                             return false;
                         }
-                        BlockState state = player.level.getBlockState(pos);
+                        BlockState state = player.level().getBlockState(pos);
                         boolean blockBroken = false;
                         if (player.gameMode.getGameModeForPlayer().isCreative())
                         {
-                            player.gameMode.handleBlockBreakAction(pos, ServerboundPlayerActionPacket.Action.START_DESTROY_BLOCK, side, player.getLevel().getMaxBuildHeight(), -1);
+                            player.gameMode.handleBlockBreakAction(pos, ServerboundPlayerActionPacket.Action.START_DESTROY_BLOCK, side, player.level().getMaxBuildHeight(), -1);
                             ap.blockHitDelay = 5;
                             blockBroken = true;
                         }
@@ -410,15 +410,15 @@ public class EntityPlayerActionPack
                         {
                             if (ap.currentBlock != null)
                             {
-                                player.gameMode.handleBlockBreakAction(ap.currentBlock, ServerboundPlayerActionPacket.Action.ABORT_DESTROY_BLOCK, side, player.getLevel().getMaxBuildHeight(), -1);
+                                player.gameMode.handleBlockBreakAction(ap.currentBlock, ServerboundPlayerActionPacket.Action.ABORT_DESTROY_BLOCK, side, player.level().getMaxBuildHeight(), -1);
                             }
-                            player.gameMode.handleBlockBreakAction(pos, ServerboundPlayerActionPacket.Action.START_DESTROY_BLOCK, side, player.getLevel().getMaxBuildHeight(), -1);
+                            player.gameMode.handleBlockBreakAction(pos, ServerboundPlayerActionPacket.Action.START_DESTROY_BLOCK, side, player.level().getMaxBuildHeight(), -1);
                             boolean notAir = !state.isAir();
                             if (notAir && ap.curBlockDamageMP == 0)
                             {
-                                state.attack(player.level, pos, player);
+                                state.attack(player.level(), pos, player);
                             }
-                            if (notAir && state.getDestroyProgress(player, player.level, pos) >= 1)
+                            if (notAir && state.getDestroyProgress(player, player.level(), pos) >= 1)
                             {
                                 ap.currentBlock = null;
                                 //instamine??
@@ -432,15 +432,15 @@ public class EntityPlayerActionPack
                         }
                         else
                         {
-                            ap.curBlockDamageMP += state.getDestroyProgress(player, player.level, pos);
+                            ap.curBlockDamageMP += state.getDestroyProgress(player, player.level(), pos);
                             if (ap.curBlockDamageMP >= 1)
                             {
-                                player.gameMode.handleBlockBreakAction(pos, ServerboundPlayerActionPacket.Action.STOP_DESTROY_BLOCK, side, player.getLevel().getMaxBuildHeight(), -1);
+                                player.gameMode.handleBlockBreakAction(pos, ServerboundPlayerActionPacket.Action.STOP_DESTROY_BLOCK, side, player.level().getMaxBuildHeight(), -1);
                                 ap.currentBlock = null;
                                 ap.blockHitDelay = 5;
                                 blockBroken = true;
                             }
-                            player.level.destroyBlockProgress(-1, pos, (int) (ap.curBlockDamageMP * 10));
+                            player.level().destroyBlockProgress(-1, pos, (int) (ap.curBlockDamageMP * 10));
 
                         }
                         player.resetLastActionTime();
@@ -456,8 +456,8 @@ public class EntityPlayerActionPack
             {
                 EntityPlayerActionPack ap = ((ServerPlayerInterface) player).getActionPack();
                 if (ap.currentBlock == null) return;
-                player.level.destroyBlockProgress(-1, ap.currentBlock, -1);
-                player.gameMode.handleBlockBreakAction(ap.currentBlock, ServerboundPlayerActionPacket.Action.ABORT_DESTROY_BLOCK, Direction.DOWN, player.getLevel().getMaxBuildHeight(), -1);
+                player.level().destroyBlockProgress(-1, ap.currentBlock, -1);
+                player.gameMode.handleBlockBreakAction(ap.currentBlock, ServerboundPlayerActionPacket.Action.ABORT_DESTROY_BLOCK, Direction.DOWN, player.level().getMaxBuildHeight(), -1);
                 ap.currentBlock = null;
             }
         },
@@ -468,7 +468,7 @@ public class EntityPlayerActionPack
             {
                 if (action.limit == 1)
                 {
-                    if (player.isOnGround()) player.jumpFromGround(); // onGround
+                    if (player.onGround()) player.jumpFromGround(); // onGround
                 }
                 else
                 {

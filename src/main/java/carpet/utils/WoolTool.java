@@ -18,7 +18,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.material.MaterialColor;
+import net.minecraft.world.level.material.MapColor;
 import net.minecraft.world.phys.Vec3;
 
 import javax.annotation.Nullable;
@@ -32,11 +32,11 @@ import static java.util.Map.entry;
 public class WoolTool
 {
     /**
-     * A map of the {@link MaterialColor} to the {@link DyeColor} which is used in {@link WoolTool#getWoolColorAtPosition}
+     * A map of the {@link net.minecraft.world.level.material.MapColor} to the {@link DyeColor} which is used in {@link WoolTool#getWoolColorAtPosition}
      * to get the colour of wool at a position.
      */
-    private static final Map<MaterialColor,DyeColor> Material2Dye = Arrays.stream(DyeColor.values())
-            .collect(Collectors.toUnmodifiableMap(DyeColor::getMaterialColor, Function.identity()));
+    private static final Map<MapColor,DyeColor> Material2Dye = Arrays.stream(DyeColor.values())
+            .collect(Collectors.toUnmodifiableMap(DyeColor::getMapColor, Function.identity()));
 
     /**
      * The method which gets triggered when a player places a carpet, and decides what to do based on the carpet's colour:
