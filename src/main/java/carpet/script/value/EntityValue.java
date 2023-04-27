@@ -434,12 +434,12 @@ public class EntityValue extends Value
         put("motion_x", (e, a) -> new NumericValue(e.getDeltaMovement().x));
         put("motion_y", (e, a) -> new NumericValue(e.getDeltaMovement().y));
         put("motion_z", (e, a) -> new NumericValue(e.getDeltaMovement().z));
-        put("on_ground", (e, a) -> BooleanValue.of(e.isOnGround()));
+        put("on_ground", (e, a) -> BooleanValue.of(e.onGround()));
         put("name", (e, a) -> new StringValue(e.getName().getString()));
         put("display_name", (e, a) -> new FormattedTextValue(e.getDisplayName()));
         put("command_name", (e, a) -> new StringValue(e.getScoreboardName()));
         put("custom_name", (e, a) -> e.hasCustomName() ? new StringValue(e.getCustomName().getString()) : Value.NULL);
-        put("type", (e, a) -> nameFromRegistryId(e.getLevel().registryAccess().registryOrThrow(Registries.ENTITY_TYPE).getKey(e.getType())));
+        put("type", (e, a) -> nameFromRegistryId(e.level().registryAccess().registryOrThrow(Registries.ENTITY_TYPE).getKey(e.getType())));
         put("is_riding", (e, a) -> BooleanValue.of(e.isPassenger()));
         put("is_ridden", (e, a) -> BooleanValue.of(e.isVehicle()));
         put("passengers", (e, a) -> ListValue.wrap(e.getPassengers().stream().map(EntityValue::new)));
@@ -489,7 +489,7 @@ public class EntityValue extends Value
         put("immune_to_frost", (e, a) -> BooleanValue.of(!e.canFreeze()));
 
         put("invulnerable", (e, a) -> BooleanValue.of(e.isInvulnerable()));
-        put("dimension", (e, a) -> nameFromRegistryId(e.level.dimension().location())); // getDimId
+        put("dimension", (e, a) -> nameFromRegistryId(e.level().dimension().location())); // getDimId
         put("height", (e, a) -> new NumericValue(e.getDimensions(Pose.STANDING).height));
         put("width", (e, a) -> new NumericValue(e.getDimensions(Pose.STANDING).width));
         put("eye_height", (e, a) -> new NumericValue(e.getEyeHeight()));
@@ -516,7 +516,7 @@ public class EntityValue extends Value
             }
             return Value.NULL;
         });
-        put("home", (e, a) -> e instanceof final Mob mob ? (mob.getRestrictRadius() > 0) ? new BlockValue(null, (ServerLevel) e.getLevel(), mob.getRestrictCenter()) : Value.FALSE : Value.NULL);
+        put("home", (e, a) -> e instanceof final Mob mob ? (mob.getRestrictRadius() > 0) ? new BlockValue(null, (ServerLevel) e.level(), mob.getRestrictCenter()) : Value.FALSE : Value.NULL);
         put("spawn_point", (e, a) -> {
             if (e instanceof final ServerPlayer spe)
             {
@@ -566,7 +566,7 @@ public class EntityValue extends Value
 
         put("brain", (e, a) -> {
             String module = a.getString();
-            MemoryModuleType<?> moduleType = e.getLevel().registryAccess().registryOrThrow(Registries.MEMORY_MODULE_TYPE).get(InputValidator.identifierOf(module));
+            MemoryModuleType<?> moduleType = e.level().registryAccess().registryOrThrow(Registries.MEMORY_MODULE_TYPE).get(InputValidator.identifierOf(module));
             if (moduleType == MemoryModuleType.DUMMY)
             {
                 return Value.NULL;
@@ -704,7 +704,7 @@ public class EntityValue extends Value
                 {
                     return Value.NULL;
                 }
-                return new BlockValue(null, sp.getLevel(), pos);
+                return new BlockValue(null, sp.serverLevel(), pos);
             }
             return Value.NULL;
         });
@@ -831,7 +831,7 @@ public class EntityValue extends Value
             {
                 return Value.NULL;
             }
-            Registry<Attribute> attributes = e.getLevel().registryAccess().registryOrThrow(Registries.ATTRIBUTE);
+            Registry<Attribute> attributes = e.level().registryAccess().registryOrThrow(Registries.ATTRIBUTE);
             if (a == null)
             {
                 AttributeMap container = el.getAttributes();
@@ -1711,7 +1711,7 @@ public class EntityValue extends Value
 
         });
         put("item", (e, v) -> {
-            ItemStack item = ValueConversions.getItemStackFromValue(v, true, e.level.registryAccess());
+            ItemStack item = ValueConversions.getItemStackFromValue(v, true, e.level().registryAccess());
             if (e instanceof final ItemEntity itementity)
             {
                 itementity.setItem(item);
@@ -1745,7 +1745,7 @@ public class EntityValue extends Value
         }
         CompoundTag tag = new CompoundTag();
         tag.put("Data", getEntity().saveWithoutId(new CompoundTag()));
-        Registry<EntityType<?>> reg = getEntity().level.registryAccess().registryOrThrow(Registries.ENTITY_TYPE);
+        Registry<EntityType<?>> reg = getEntity().level().registryAccess().registryOrThrow(Registries.ENTITY_TYPE);
         tag.put("Name", StringTag.valueOf(reg.getKey(getEntity().getType()).toString()));
         return tag;
     }

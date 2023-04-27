@@ -89,7 +89,7 @@ public class HUDController
                     case "overworld" -> Level.OVERWORLD;
                     case "nether" -> Level.NETHER;
                     case "end" -> Level.END;
-                    default -> player.level.dimension();
+                    default -> player.level().dimension();
                 };
                 return new Component[]{SpawnReporter.printMobcapsForDimension(server.getLevel(dim), false).get(0)};
             });

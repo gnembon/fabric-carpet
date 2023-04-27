@@ -29,7 +29,7 @@ public abstract class ArmorStand_scarpetMarkerMixin extends LivingEntity
     @Inject(method = "readAdditionalSaveData", at = @At("HEAD"))
     private void checkScarpetMarkerUnloaded(CallbackInfo ci)
     {
-        if (!level.isClientSide)
+        if (!level().isClientSide)
         {
             if (getTags().contains(Auxiliary.MARKER_STRING))
             {

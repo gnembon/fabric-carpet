@@ -767,15 +767,15 @@ public class ShapeDispatcher
                     {
                         return;
                     }
-                    particle = getParticleData("block_marker " + blocks.getKey(Block.byItem(this.item.getItem())), p.level.registryAccess());
+                    particle = getParticleData("block_marker " + blocks.getKey(Block.byItem(this.item.getItem())), p.level().registryAccess());
                 }
                 else
                 {
-                    particle = getParticleData("block_marker " + blocks.getKey(this.blockState.getBlock()), p.level.registryAccess());
+                    particle = getParticleData("block_marker " + blocks.getKey(this.blockState.getBlock()), p.level().registryAccess());
                 }
 
-                Vec3 v = relativiseRender(p.level, this.pos, 0);
-                p.getLevel().sendParticles(p, particle, true, v.x, v.y, v.z, 1, 0.0, 0.0, 0.0, 0.0);
+                Vec3 v = relativiseRender(p.level(), this.pos, 0);
+                p.serverLevel().sendParticles(p, particle, true, v.x, v.y, v.z, 1, 0.0, 0.0, 0.0, 0.0);
             };
         }
 
@@ -868,14 +868,14 @@ public class ShapeDispatcher
             double density = Math.max(2.0, from.distanceTo(to) / 50 / (a + 0.1));
             return p ->
             {
-                if (p.level.dimension() == shapeDimension)
+                if (p.level().dimension() == shapeDimension)
                 {
                     particleMesh(
                             Collections.singletonList(p),
-                            replacementParticle(p.level.registryAccess()),
+                            replacementParticle(p.level().registryAccess()),
                             density,
-                            relativiseRender(p.level, from, 0),
-                            relativiseRender(p.level, to, 0)
+                            relativiseRender(p.level(), from, 0),
+                            relativiseRender(p.level(), to, 0)
                     );
                 }
             };
@@ -966,19 +966,19 @@ public class ShapeDispatcher
                         Vec3 vecA = vertexList.get(i);
                         if (relative.get(i))
                         {
-                            vecA = relativiseRender(p.level, vecA, 0);
+                            vecA = relativiseRender(p.level(), vecA, 0);
                         }
                         i++;
                         Vec3 vecB = vertexList.get(i);
                         if (relative.get(i))
                         {
-                            vecB = relativiseRender(p.level, vecB, 0);
+                            vecB = relativiseRender(p.level(), vecB, 0);
                         }
                         i++;
                         Vec3 vecC = vertexList.get(i);
                         if (relative.get(i))
                         {
-                            vecC = relativiseRender(p.level, vecC, 0);
+                            vecC = relativiseRender(p.level(), vecC, 0);
                         }
                         alterDrawTriangles(vecA, vecB, vecC);
                     }
@@ -987,19 +987,19 @@ public class ShapeDispatcher
                     Vec3 vec0 = vertexList.get(0);
                     if (relative.get(0))
                     {
-                        vec0 = relativiseRender(p.level, vec0, 0);
+                        vec0 = relativiseRender(p.level(), vec0, 0);
                     }
                     Vec3 vec1 = vertexList.get(1);
                     if (relative.get(1))
                     {
-                        vec1 = relativiseRender(p.level, vec1, 0);
+                        vec1 = relativiseRender(p.level(), vec1, 0);
                     }
                     for (int i = 2; i < vertexList.size(); i++)
                     {
                         Vec3 vec = vertexList.get(i);
                         if (relative.get(i))
                         {
-                            vec = relativiseRender(p.level, vec, 0);
+                            vec = relativiseRender(p.level(), vec, 0);
                         }
                         alterDrawTriangles(vec0, vec1, vec);
                         vec1 = vec;
@@ -1009,19 +1009,19 @@ public class ShapeDispatcher
                     Vec3 vecA = vertexList.get(0);
                     if (relative.get(0))
                     {
-                        vecA = relativiseRender(p.level, vecA, 0);
+                        vecA = relativiseRender(p.level(), vecA, 0);
                     }
                     Vec3 vecB = vertexList.get(1);
                     if (relative.get(1))
                     {
-                        vecB = relativiseRender(p.level, vecB, 0);
+                        vecB = relativiseRender(p.level(), vecB, 0);
                     }
                     for (int i = 2; i < vertexList.size(); i++)
                     {
                         Vec3 vec = vertexList.get(i);
                         if (relative.get(i))
                         {
-                            vec = relativiseRender(p.level, vec, 0);
+                            vec = relativiseRender(p.level(), vec, 0);
                         }
                         alterDrawTriangles(vecA, vecB, vec);
                         vecA = vecB;
@@ -1061,16 +1061,16 @@ public class ShapeDispatcher
         public Consumer<ServerPlayer> alternative()
         {
             return p -> {
-                if (p.level.dimension() != this.shapeDimension)
+                if (p.level().dimension() != this.shapeDimension)
                 {
                     return;
                 }
                 if (fa > 0.0f)
                 {
-                    ParticleOptions locparticledata = getParticleData(String.format(Locale.ROOT, "dust %.1f %.1f %.1f %.1f", fr, fg, fb, fa), p.level.registryAccess());
+                    ParticleOptions locparticledata = getParticleData(String.format(Locale.ROOT, "dust %.1f %.1f %.1f %.1f", fr, fg, fb, fa), p.level().registryAccess());
                     for (Vec3 v : getAlterPoint(p))
                     {
-                        p.getLevel().sendParticles(p, locparticledata, true,
+                        p.serverLevel().sendParticles(p, locparticledata, true,
                                 v.x, v.y, v.z, 1,
                                 0.0, 0.0, 0.0, 0.0);
                     }
@@ -1205,13 +1205,13 @@ public class ShapeDispatcher
             double density = Math.max(2.0, from.distanceTo(to) / 50) / (a + 0.1);
             return p ->
             {
-                if (p.level.dimension() == shapeDimension)
+                if (p.level().dimension() == shapeDimension)
                 {
                     drawParticleLine(
                             Collections.singletonList(p),
-                            replacementParticle(p.level.registryAccess()),
-                            relativiseRender(p.level, from, 0),
-                            relativiseRender(p.level, to, 0),
+                            replacementParticle(p.level().registryAccess()),
+                            relativiseRender(p.level(), from, 0),
+                            relativiseRender(p.level(), to, 0),
                             density
                     );
                 }
@@ -1279,8 +1279,8 @@ public class ShapeDispatcher
             return p ->
             {
                 int partno = Math.min(1000, 20 * subdivisions);
-                RandomSource rand = p.level.getRandom();
-                ServerLevel world = p.getLevel();
+                RandomSource rand = p.level().getRandom();
+                ServerLevel world = p.serverLevel();
                 ParticleOptions particle = replacementParticle(world.registryAccess());
 
                 Vec3 ccenter = relativiseRender(world, center, 0);
@@ -1376,8 +1376,8 @@ public class ShapeDispatcher
             return p ->
             {
                 int partno = (int) Math.min(1000, Math.sqrt(20 * subdivisions * (1 + height)));
-                RandomSource rand = p.level.getRandom();
-                ServerLevel world = p.getLevel();
+                RandomSource rand = p.level().getRandom();
+                ServerLevel world = p.serverLevel();
                 ParticleOptions particle = replacementParticle(world.registryAccess());
 
                 Vec3 ccenter = relativiseRender(world, center, 0);
@@ -2183,7 +2183,7 @@ public class ShapeDispatcher
         int parts = 0;
         for (ServerPlayer player : playerList)
         {
-            ServerLevel world = player.getLevel();
+            ServerLevel world = player.serverLevel();
             world.sendParticles(player, particle, true,
                     (towards.x) / 2 + from.x, (towards.y) / 2 + from.y, (towards.z) / 2 + from.z, particles / 3,
                     towards.x / 6, towards.y / 6, towards.z / 6, 0.0);
@@ -2200,7 +2200,7 @@ public class ShapeDispatcher
             int dev = 2 * divider;
             for (ServerPlayer player : playerList)
             {
-                ServerLevel world = player.getLevel();
+                ServerLevel world = player.serverLevel();
                 world.sendParticles(player, particle, true,
                         (towards.x) / center + from.x, (towards.y) / center + from.y, (towards.z) / center + from.z, particles / divider,
                         towards.x / dev, towards.y / dev, towards.z / dev, 0.0);
@@ -2224,7 +2224,7 @@ public class ShapeDispatcher
         int pcount = 0;
         if (distance < 100)
         {
-            RandomSource rand = players.get(0).level.random;
+            RandomSource rand = players.get(0).level().random;
             int particles = (int) (distance / density) + 1;
             Vec3 towards = to.subtract(from);
             for (int i = 0; i < particles; i++)
@@ -2232,7 +2232,7 @@ public class ShapeDispatcher
                 Vec3 at = from.add(towards.scale(rand.nextDouble()));
                 for (ServerPlayer player : players)
                 {
-                    player.getLevel().sendParticles(player, particle, true,
+                    player.serverLevel().sendParticles(player, particle, true,
                             at.x, at.y, at.z, 1,
                             0.0, 0.0, 0.0, 0.0);
                     pcount++;
@@ -2253,7 +2253,7 @@ public class ShapeDispatcher
         {
             for (ServerPlayer player : players)
             {
-                player.getLevel().sendParticles(player, particle, true,
+                player.serverLevel().sendParticles(player, particle, true,
                         delta.x + from.x, delta.y + from.y, delta.z + from.z, 1,
                         0.0, 0.0, 0.0, 0.0);
                 pcount++;

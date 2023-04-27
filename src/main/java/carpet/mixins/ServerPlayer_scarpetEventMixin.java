@@ -100,7 +100,7 @@ public abstract class ServerPlayer_scarpetEventMixin extends Player implements S
     private void logPreviousCoordinates(ServerLevel serverWorld, CallbackInfoReturnable<Entity> cir)
     {
         previousLocation = position();
-        previousDimension = level.dimension();  //dimension type
+        previousDimension = level().dimension();  //dimension type
     }
 
     @Inject(method = "changeDimension", at = @At("RETURN"))

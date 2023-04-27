@@ -30,7 +30,7 @@ public abstract class LivingEntity_creativeFlyMixin extends Entity
         if (CarpetSettings.creativeFlyDrag != 0.09 && (Object)this instanceof Player)
         {
             Player self = (Player)(Object)(this);
-            if (self.getAbilities().flying && ! onGround )
+            if (self.getAbilities().flying && ! onGround() )
                 return (float)(1.0-CarpetSettings.creativeFlyDrag);
         }
         return original;
@@ -43,7 +43,7 @@ public abstract class LivingEntity_creativeFlyMixin extends Entity
         if (CarpetSettings.creativeFlySpeed != 1.0D && (Object)this instanceof Player)
         {
             Player self = (Player)(Object)(this);
-            if (self.getAbilities().flying && !onGround)
+            if (self.getAbilities().flying && !onGround())
                 cir.setReturnValue( getFlyingSpeed() * (float)CarpetSettings.creativeFlySpeed);
         }
     }

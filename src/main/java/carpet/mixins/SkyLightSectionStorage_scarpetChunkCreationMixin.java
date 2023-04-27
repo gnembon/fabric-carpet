@@ -14,7 +14,7 @@ import net.minecraft.world.level.LightLayer;
 import net.minecraft.world.level.chunk.DataLayer;
 import net.minecraft.world.level.chunk.LightChunkGetter;
 import net.minecraft.world.level.lighting.BlockLightSectionStorage.BlockDataLayerStorageMap;
-import net.minecraft.world.level.lighting.LayerLightEngine;
+import net.minecraft.world.level.lighting.LightEngine;
 import net.minecraft.world.level.lighting.LayerLightSectionStorage;
 import net.minecraft.world.level.lighting.SkyLightSectionStorage;
 
@@ -26,7 +26,7 @@ public abstract class SkyLightSectionStorage_scarpetChunkCreationMixin extends L
         super(lightType, chunkProvider, lightData);
     }
 
-    @Shadow
+    /*@Shadow
     @Final
     private LongSet sectionsToAddSourcesTo;
 
@@ -37,10 +37,11 @@ public abstract class SkyLightSectionStorage_scarpetChunkCreationMixin extends L
     @Shadow
     @Final
     private LongSet sectionsWithSources;
+     */
 
     @Shadow protected abstract boolean isAboveData(final long pos);
 
-    @Shadow protected abstract boolean lightOnInSection(final long sectionPos);
+    //@Shadow protected abstract boolean lightOnInSection(final long sectionPos);
 
     @Override
     public void processRemoveLightData(final long cPos)
@@ -48,16 +49,18 @@ public abstract class SkyLightSectionStorage_scarpetChunkCreationMixin extends L
         for (int y = -1; y < 17; ++y)
         {
             final long sectionPos = SectionPos.asLong(SectionPos.x(cPos), y, SectionPos.z(cPos));
-
+/* do something with this later
             this.sectionsToAddSourcesTo.remove(sectionPos);
             this.sectionsToRemoveSourcesFrom.remove(sectionPos);
 
             this.sectionsWithSources.remove(sectionPos);
+
+ */
         }
     }
 
     @Override
-    public void processRelight(final LayerLightEngine<?, ?> lightProvider, final long cPos)
+    public void processRelight(final LightEngine<?, ?> lightProvider, final long cPos)
     {
         final DynamicGraphMinFixedPoint_resetChunkInterface levelPropagator = (DynamicGraphMinFixedPoint_resetChunkInterface) lightProvider;
 
@@ -113,5 +116,11 @@ public abstract class SkyLightSectionStorage_scarpetChunkCreationMixin extends L
                     }
             }
         }
+    }
+
+    @Override
+    public int getLightLevelByLong(long blockPos)
+    {
+        return getLightValue(blockPos);
     }
 }

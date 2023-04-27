@@ -165,7 +165,7 @@ public class WorldTools
             List<ServerPlayer> players = world.getChunkSource().chunkMap.getPlayers(chunkPos, false);
             if (!players.isEmpty())
             {
-                ClientboundLevelChunkWithLightPacket packet = new ClientboundLevelChunkWithLightPacket(worldChunk, world.getLightEngine(), null, null, false); // false seems to update neighbours as well.
+                ClientboundLevelChunkWithLightPacket packet = new ClientboundLevelChunkWithLightPacket(worldChunk, world.getLightEngine(), null, null); // false seems to update neighbours as well.
                 players.forEach(p -> p.connection.send(packet));
             }
         }
