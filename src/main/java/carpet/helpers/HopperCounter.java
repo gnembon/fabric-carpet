@@ -3,7 +3,6 @@ package carpet.helpers;
 import carpet.CarpetServer;
 import carpet.fakes.IngredientInterface;
 import carpet.fakes.RecipeManagerInterface;
-import carpet.utils.WoolTool;
 import carpet.utils.Messenger;
 import it.unimi.dsi.fastutil.objects.Object2LongLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2LongMap;
@@ -79,7 +78,7 @@ public class HopperCounter
      * The string which is passed into {@link Messenger#m} which makes each counter name be displayed in the colour of
      * that counter.
      */
-    private final String prettyColour;
+    private final String coloredName;
     /**
      * All the items stored within the counter, as a map of {@link Item} mapped to a {@code long} of the amount of items
      * stored thus far of that item type.
@@ -101,7 +100,10 @@ public class HopperCounter
     {
         startTick = -1;
         this.color = color;
-        this.prettyColour = WoolTool.Material2DyeName.getOrDefault(color.getMapColor(),"w ") + color.getName();
+        String hexColor = Integer.toHexString(color.getTextColor());
+        if (hexColor.length() < 6)
+            hexColor = "0".repeat(hexColor.length() - 4) + hexColor;
+        this.coloredName = '#' + hexColor + ' ' + color.getName();
     }
 
     /**
@@ -179,31 +181,31 @@ public class HopperCounter
         {
             if (brief)
             {
-                return Collections.singletonList(Messenger.c("b"+prettyColour,"w : ","gi -, -/h, - min "));
+                return Collections.singletonList(Messenger.c("b"+coloredName,"w : ","gi -, -/h, - min "));
             }
-            return Collections.singletonList(Messenger.c(prettyColour, "w  hasn't started counting yet"));
+            return Collections.singletonList(Messenger.c(coloredName, "w  hasn't started counting yet"));
         }
         long total = getTotalItems();
         if (total == 0)
         {
             if (brief)
             {
-                return Collections.singletonList(Messenger.c("b"+prettyColour,"w : ","wb 0","w , ","wb 0","w /h, ", String.format("wb %.1f ", ticks / (20.0 * 60.0)), "w min"));
+                return Collections.singletonList(Messenger.c("b"+coloredName,"w : ","wb 0","w , ","wb 0","w /h, ", String.format("wb %.1f ", ticks / (20.0 * 60.0)), "w min"));
             }
-            return Collections.singletonList(Messenger.c("w No items for ", prettyColour, String.format("w  yet (%.2f min.%s)",
+            return Collections.singletonList(Messenger.c("w No items for ", coloredName, String.format("w  yet (%.2f min.%s)",
                     ticks / (20.0 * 60.0), (realTime ? " - real time" : "")),
                     "nb  [X]", "^g reset", "!/counter " + color.getName() +" reset"));
         }
         if (brief)
         {
-            return Collections.singletonList(Messenger.c("b"+prettyColour,"w : ",
+            return Collections.singletonList(Messenger.c("b"+coloredName,"w : ",
                     "wb "+total,"w , ",
                     "wb "+(total * (20 * 60 * 60) / ticks),"w /h, ",
                     String.format("wb %.1f ", ticks / (20.0 * 60.0)), "w min"
             ));
         }
         List<Component> items = new ArrayList<>();
-        items.add(Messenger.c("w Items for ", prettyColour,
+        items.add(Messenger.c("w Items for ", coloredName,
                 "w  (",String.format("wb %.2f", ticks*1.0/(20*60)), "w  min"+(realTime?" - real time":"")+"), ",
                 "w total: ", "wb "+total, "w , (",String.format("wb %.1f",total*1.0*(20*60*60)/ticks),"w /h):",
                 "nb [X]", "^g reset", "!/counter "+color+" reset"
