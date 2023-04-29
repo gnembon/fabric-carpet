@@ -88,12 +88,8 @@ public class CarpetServer // static for now - easier to handle all around the co
         // shoudl not be needed - that bit needs refactoring, but not now.
         SpawnReporter.reset_spawn_stats(server, true);
 
-        settingsManager.attachServer(server);
-        extensions.forEach(e -> {
-        	SettingsManager sm = e.extensionSettingsManager();
-            if (sm != null) sm.attachServer(server);
-            e.onServerLoaded(server);
-        });
+        forEachManager(sm -> sm.attachServer(server));
+        extensions.forEach(e -> e.onServerLoaded(server));
         scriptServer = new CarpetScriptServer(server);
         Carpet.MinecraftServer_addScriptServer(server, scriptServer);
         MobAI.resetTrackers();
