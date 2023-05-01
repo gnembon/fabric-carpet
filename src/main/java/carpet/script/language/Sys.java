@@ -55,7 +55,7 @@ public class Sys
         {
             if (v instanceof final NumericValue num)
             {
-                return new NumericValue(num.isInteger() ? num.getLong() : num.getDouble());
+                return num.clone();
             }
             if (v instanceof ListValue || v instanceof MapValue)
             {
