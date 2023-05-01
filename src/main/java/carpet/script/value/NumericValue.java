@@ -309,7 +309,7 @@ public class NumericValue extends Value
 
     public NumericValue opposite()
     {
-        return new NumericValue(longValue != null ? -longValue : -value);
+        return longValue != null ? new NumericValue(-longValue) : new NumericValue(-value);
     }
 
     public boolean isInteger()

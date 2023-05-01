@@ -102,7 +102,7 @@ public class HopperCounter
         this.color = color;
         String hexColor = Integer.toHexString(color.getTextColor());
         if (hexColor.length() < 6)
-            hexColor = "0".repeat(hexColor.length() - 4) + hexColor;
+            hexColor = "0".repeat(6 - hexColor.length()) + hexColor;
         this.coloredName = '#' + hexColor + ' ' + color.getName();
     }
 
