@@ -82,7 +82,7 @@ public abstract class LayerLightSectionStorage_scarpetChunkCreationMixin impleme
 
                 if (this.storingLightForSection(sectionPos))
                 {
-                    ((Lighting_scarpetChunkCreationInterface)lightProvider).clearQueuedSectionBlocksPublicAccess(sectionPos);
+                    //((Lighting_scarpetChunkCreationInterface)lightProvider).clearQueuedSectionBlocksPublicAccess(sectionPos);
 
                     if (this.changedSections.add(sectionPos))
                         this.updatingSectionData.copyDataLayer(sectionPos);

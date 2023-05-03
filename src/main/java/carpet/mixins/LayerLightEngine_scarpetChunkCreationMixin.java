@@ -18,7 +18,7 @@ public abstract class LayerLightEngine_scarpetChunkCreationMixin implements Ligh
     @Final
     protected LayerLightSectionStorage<?> storage;
 
-    @Shadow protected abstract void clearQueuedSectionBlocks(final long l);
+    //@Shadow protected abstract void clearQueuedSectionBlocks(final long l);
 
     @Override
     public void removeLightData(final long pos)
@@ -40,6 +40,6 @@ public abstract class LayerLightEngine_scarpetChunkCreationMixin implements Ligh
     @Override
     public void clearQueuedSectionBlocksPublicAccess(long sectionPos)
     {
-        clearQueuedSectionBlocks(sectionPos);
+        //clearQueuedSectionBlocks(sectionPos);
     }
 }
