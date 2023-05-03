@@ -35,8 +35,6 @@ public abstract class ThreadedLevelLightEngine_scarpetChunkCreationMixin extends
     @Final
     private ChunkMap chunkMap;
 
-    //@Shadow public abstract void propagateLightSources(final ChunkPos chunkPos);
-
     @Override
     @Invoker("updateChunkStatus")
     public abstract void invokeUpdateChunkStatus(ChunkPos pos);
@@ -61,22 +59,13 @@ public abstract class ThreadedLevelLightEngine_scarpetChunkCreationMixin extends
         final ChunkPos pos = chunk.getPos();
 
         propagateLightSources(pos);
-        /*this.addTask(pos.x, pos.z, () -> 0, ThreadedLevelLightEngine.TaskType.PRE_UPDATE, Util.name(() -> {
-                super.setLightEnabled(pos, true);
+        this.addTask(pos.x, pos.z, () -> 0, ThreadedLevelLightEngine.TaskType.PRE_UPDATE, Util.name(() -> {
 
-                chunk.findBlockLightSources((lightPos, state) -> {
-                        final int lightEmission = state.getLightEmission();
-                        enqueueIncrease(lightPos.asLong(), LightEngine.QueueEntry.increaseLightFromEmission(lightEmission, isEmptyShape(state)));
-                    });
-
-                chunk.getLights().forEach(
-                    blockPos -> super.onBlockEmissionIncrease(blockPos, chunk.getLightEmission(blockPos))
-                );
 
                 ((Lighting_scarpetChunkCreationInterface) this).relight(SectionPos.getZeroNode(SectionPos.asLong(pos.x, 0, pos.z)));
             },
             () -> "Relight chunk " + pos
-        ));*/
+        ));
 
         return CompletableFuture.runAsync(
             Util.name(() -> {

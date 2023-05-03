@@ -26,7 +26,7 @@ public abstract class BlockLightSectionStorage_scarpetChunkCreationMixin extends
     @Override
     public void processRelight(final LightEngine<?, ?> lightProvider, final long cPos)
     {
-        final DynamicGraphMinFixedPoint_resetChunkInterface levelPropagator = (DynamicGraphMinFixedPoint_resetChunkInterface) lightProvider;
+        //final DynamicGraphMinFixedPoint_resetChunkInterface levelPropagator = (DynamicGraphMinFixedPoint_resetChunkInterface) lightProvider.;
 
         for (int y = -1; y < 17; ++y)
         {
@@ -53,11 +53,12 @@ public abstract class BlockLightSectionStorage_scarpetChunkCreationMixin extends
                     for (int dy = 0; dy < 16; ++dy)
                     {
                         final long dst = BlockPos.offset(pos, ox + t * dx, dy, oz + t * dz);
-                        final long src = BlockPos.offset(dst, dir);
+                        lightProvider.checkBlock(BlockPos.of(dst));
+                        //final long src = BlockPos.offset(dst, dir);
 
-                        final int srcLevel = ((ChunkLightProviderInterface) lightProvider).callGetCurrentLevelFromSection(neighborLightArray, src);
+                        //final int srcLevel = ((ChunkLightProviderInterface) lightProvider).callGetCurrentLevelFromSection(neighborLightArray, src);
 
-                        levelPropagator.cmInvokeUpdateLevel(src, dst, levelPropagator.cmCallGetPropagatedLevel(src, dst, srcLevel), true);
+                        //levelPropagator.cmInvokeUpdateLevel(src, dst, levelPropagator.cmCallGetPropagatedLevel(src, dst, srcLevel), true);
                     }
             }
         }

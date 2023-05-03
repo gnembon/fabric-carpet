@@ -62,7 +62,7 @@ public abstract class SkyLightSectionStorage_scarpetChunkCreationMixin extends L
     @Override
     public void processRelight(final LightEngine<?, ?> lightProvider, final long cPos)
     {
-        final DynamicGraphMinFixedPoint_resetChunkInterface levelPropagator = (DynamicGraphMinFixedPoint_resetChunkInterface) lightProvider;
+        //final DynamicGraphMinFixedPoint_resetChunkInterface levelPropagator = (DynamicGraphMinFixedPoint_resetChunkInterface) lightProvider;
 
         for (int y = -1; y < 17; ++y)
         {
@@ -102,17 +102,18 @@ public abstract class SkyLightSectionStorage_scarpetChunkCreationMixin extends L
                     for (int dy = 0; dy < 16; ++dy)
                     {
                         final long dst = BlockPos.offset(pos, ox + t * dx, dy, oz + t * dz);
-                        long src = BlockPos.offset(dst, dir);
+                        //long src = BlockPos.offset(dst, dir);
 
-                        long adj_src = (neighborLightArray != null)
-                            ? src
-                            : BlockPos.asLong(BlockPos.getX(src), neighbourY, BlockPos.getZ(src));
+                        //long adj_src = (neighborLightArray != null)
+                        //    ? src
+                        //    : BlockPos.asLong(BlockPos.getX(src), neighbourY, BlockPos.getZ(src));
 
-                        final int srcLevel = neighborCeilingLightArray != null
-                            ? ((ChunkLightProviderInterface) lightProvider).callGetCurrentLevelFromSection(neighborCeilingLightArray, adj_src)
-                            : emptyLightLevel;
+                        //final int srcLevel = neighborCeilingLightArray != null
+                        //    ? ((ChunkLightProviderInterface) lightProvider).callGetCurrentLevelFromSection(neighborCeilingLightArray, adj_src)
+                        //    : emptyLightLevel;
 
-                        levelPropagator.cmInvokeUpdateLevel(src, dst, levelPropagator.cmCallGetPropagatedLevel(src, dst, srcLevel), true);
+                        lightProvider.checkBlock(BlockPos.of(dst));
+                        //levelPropagator.cmInvokeUpdateLevel(src, dst, levelPropagator.cmCallGetPropagatedLevel(src, dst, srcLevel), true);
                     }
             }
         }
