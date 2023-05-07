@@ -37,6 +37,7 @@ public class NetHandlerPlayServerFake extends ServerGamePacketListenerImpl
     @Override
     public void teleport(double d, double e, double f, float g, float h, Set<RelativeMovement> set)
     {
+        boolean isDimensionChange = player.isChangingDimension();
         super.teleport(d, e, f, g, h, set);
 
         handleAcceptTeleportPacket(
@@ -45,7 +46,7 @@ public class NetHandlerPlayServerFake extends ServerGamePacketListenerImpl
 
         if (!hasSpawned) {
             hasSpawned = true;
-        } else {
+        } else if (!isDimensionChange) {
             handleMovePlayer(
                 new ServerboundMovePlayerPacket.PosRot(player.getX(), player.getY(), player.getZ(), player.getYRot(), player.getXRot(), false)
             );
