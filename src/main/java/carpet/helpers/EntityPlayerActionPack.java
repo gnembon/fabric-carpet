@@ -248,10 +248,14 @@ public class EntityPlayerActionPack
         }
     }
 
-    static HitResult getTarget(ServerPlayer player)
+    static HitResult getTarget(ServerPlayer player) {
+        return getTarget(player, 1.0f);
+    }
+
+    static HitResult getTarget(ServerPlayer player, float tickPart)
     {
         double reach = player.gameMode.isCreative() ? 5 : 4.5f;
-        return Tracer.rayTrace(player, 1, reach, false);
+        return Tracer.rayTrace(player, tickPart, reach, false);
     }
 
     private void dropItemFromSlot(int slot, boolean dropAll)
@@ -302,60 +306,71 @@ public class EntityPlayerActionPack
                 {
                     return true;
                 }
-                HitResult hit = getTarget(player);
-                for (InteractionHand hand : InteractionHand.values())
-                {
-                    switch (hit.getType())
+
+                float sub_tick = 1.0f / action.steps;
+                boolean haveActed = false;
+                for (float pt = sub_tick; pt <= 1.0f; pt += sub_tick) {
+                    HitResult hit = getTarget(player, pt);
+                    for (InteractionHand hand : InteractionHand.values())
                     {
-                        case BLOCK:
+                        switch (hit.getType())
                         {
-                            player.resetLastActionTime();
-                            ServerLevel world = player.getLevel();
-                            BlockHitResult blockHit = (BlockHitResult) hit;
-                            BlockPos pos = blockHit.getBlockPos();
-                            Direction side = blockHit.getDirection();
-                            if (pos.getY() < player.getLevel().getMaxBuildHeight() - (side == Direction.UP ? 1 : 0) && world.mayInteract(player, pos))
+                            case BLOCK:
                             {
-                                InteractionResult result = player.gameMode.useItemOn(player, world, player.getItemInHand(hand), hand, blockHit);
-                                if (result.consumesAction())
+                                player.resetLastActionTime();
+                                ServerLevel world = player.getLevel();
+                                BlockHitResult blockHit = (BlockHitResult) hit;
+                                BlockPos pos = blockHit.getBlockPos();
+                                Direction side = blockHit.getDirection();
+                                if (pos.getY() < player.getLevel().getMaxBuildHeight() - (side == Direction.UP ? 1 : 0) && world.mayInteract(player, pos))
                                 {
-                                    if (result.shouldSwing()) player.swing(hand);
+                                    InteractionResult result = player.gameMode.useItemOn(player, world, player.getItemInHand(hand), hand, blockHit);
+                                    if (result.consumesAction())
+                                    {
+                                        haveActed = true;
+                                        if (result.shouldSwing()) player.swing(hand);
+                                        if (!action.isContinuous) {
+                                            ap.itemUseCooldown = 3;
+                                            return true;
+                                        }
+                                    }
+                                }
+                                break;
+                            }
+                            case ENTITY:
+                            {
+                                player.resetLastActionTime();
+                                EntityHitResult entityHit = (EntityHitResult) hit;
+                                Entity entity = entityHit.getEntity();
+                                boolean handWasEmpty = player.getItemInHand(hand).isEmpty();
+                                boolean itemFrameEmpty = (entity instanceof ItemFrame) && ((ItemFrame) entity).getItem().isEmpty();
+                                Vec3 relativeHitPos = entityHit.getLocation().subtract(entity.getX(), entity.getY(), entity.getZ());
+                                if (entity.interactAt(player, relativeHitPos, hand).consumesAction())
+                                {
                                     ap.itemUseCooldown = 3;
                                     return true;
                                 }
+                                // fix for SS itemframe always returns CONSUME even if no action is performed
+                                if (player.interactOn(entity, hand).consumesAction() && !(handWasEmpty && itemFrameEmpty))
+                                {
+                                    ap.itemUseCooldown = 3;
+                                    return true;
+                                }
+                                break;
                             }
-                            break;
                         }
-                        case ENTITY:
-                        {
-                            player.resetLastActionTime();
-                            EntityHitResult entityHit = (EntityHitResult) hit;
-                            Entity entity = entityHit.getEntity();
-                            boolean handWasEmpty = player.getItemInHand(hand).isEmpty();
-                            boolean itemFrameEmpty = (entity instanceof ItemFrame) && ((ItemFrame) entity).getItem().isEmpty();
-                            Vec3 relativeHitPos = entityHit.getLocation().subtract(entity.getX(), entity.getY(), entity.getZ());
-                            if (entity.interactAt(player, relativeHitPos, hand).consumesAction())
-                            {
+                        if (haveActed) {
+                            break;
+                        } else {
+                            ItemStack handItem = player.getItemInHand(hand);
+                            if (player.gameMode.useItem(player, player.getLevel(), handItem, hand).consumesAction()) {
                                 ap.itemUseCooldown = 3;
                                 return true;
                             }
-                            // fix for SS itemframe always returns CONSUME even if no action is performed
-                            if (player.interactOn(entity, hand).consumesAction() && !(handWasEmpty && itemFrameEmpty))
-                            {
-                                ap.itemUseCooldown = 3;
-                                return true;
-                            }
-                            break;
                         }
-                    }
-                    ItemStack handItem = player.getItemInHand(hand);
-                    if (player.gameMode.useItem(player, player.getLevel(), handItem, hand).consumesAction())
-                    {
-                        ap.itemUseCooldown = 3;
-                        return true;
                     }
                 }
-                return false;
+                return haveActed;
             }
 
             @Override
@@ -539,6 +554,7 @@ public class EntityPlayerActionPack
         public final int interval;
         public final int offset;
         private int count;
+        private int steps;
         private int next;
         private final boolean isContinuous;
 
@@ -556,9 +572,9 @@ public class EntityPlayerActionPack
             return new Action(1, 1, 0, false);
         }
 
-        public static Action continuous()
+        public static Action continuous(int perTick)
         {
-            return new Action(-1, 1, 0, true);
+            return new Action(-1, perTick, 0, true);
         }
 
         public static Action interval(int interval)
@@ -577,6 +593,8 @@ public class EntityPlayerActionPack
             Boolean cancel = null;
             if (next <= 0)
             {
+                this.steps = isContinuous ? interval : 1;
+
                 if (interval == 1 && !isContinuous)
                 {
                     // need to allow entity to tick, otherwise won't have effect (bow)
@@ -598,7 +616,7 @@ public class EntityPlayerActionPack
                     done = true;
                     return cancel;
                 }
-                next = interval;
+                next = isContinuous ? 1 : interval;
             }
             else
             {

@@ -119,9 +119,10 @@ public class PlayerCommand
     private static LiteralArgumentBuilder<CommandSourceStack> makeActionCommand(String actionName, EntityPlayerActionPack.ActionType type)
     {
         return literal(actionName)
-                .executes(c -> action(c, type, EntityPlayerActionPack.Action.once()))
-                .then(literal("once").executes(c -> action(c, type, EntityPlayerActionPack.Action.once())))
-                .then(literal("continuous").executes(c -> action(c, type, EntityPlayerActionPack.Action.continuous())))
+                .executes(manipulation(ap -> ap.start(type, EntityPlayerActionPack.Action.once())))
+                .then(literal("once").executes(manipulation(ap -> ap.start(type, EntityPlayerActionPack.Action.once()))))
+                .then(literal("continuous").then(argument("perTick", IntegerArgumentType.integer(1))
+                        .executes(c -> manipulate(c, ap -> ap.start(type, EntityPlayerActionPack.Action.continuous(IntegerArgumentType.getInteger(c, "perTick")))))))
                 .then(literal("interval").then(argument("ticks", IntegerArgumentType.integer(1))
                         .executes(c -> action(c, type, EntityPlayerActionPack.Action.interval(IntegerArgumentType.getInteger(c, "ticks"))))));
     }
