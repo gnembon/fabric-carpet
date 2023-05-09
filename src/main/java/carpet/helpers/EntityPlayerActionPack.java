@@ -1,6 +1,5 @@
 package carpet.helpers;
 
-import carpet.CarpetSettings;
 import carpet.fakes.ServerPlayerInterface;
 import java.util.HashMap;
 import java.util.List;
@@ -8,6 +7,7 @@ import java.util.Map;
 import java.util.TreeMap;
 
 import carpet.patches.EntityPlayerMPFake;
+import carpet.fakes.ServerPlayerFastClickInterface;
 import carpet.script.utils.Tracer;
 import net.minecraft.commands.arguments.EntityAnchorArgument;
 import net.minecraft.core.BlockPos;
@@ -297,38 +297,24 @@ public class EntityPlayerActionPack
             @Override
             boolean execute(ServerPlayer player, Action action)
             {
-//                CarpetSettings.LOG.info("Use action executing, Tick " + player.getLevel().getGameTime());
                 EntityPlayerActionPack ap = ((ServerPlayerInterface) player).getActionPack();
                 if (ap.itemUseCooldown > 0)
                 {
-//                    CarpetSettings.LOG.info("\tbailing out, itemUseCooldown");
                     ap.itemUseCooldown--;
                     return true;
                 }
                 if (player.isUsingItem())
                 {
-//                    CarpetSettings.LOG.info("\tbailing out, player.isUsingItem()");
                     return true;
                 }
 
-                float sub_tick = 1.0f / action.steps;
+                int clicks = action.isFastClick ? action.interval : 1;
+                float sub_tick = 1.0f / clicks;
                 boolean haveActed = false;
 
-                player.xo = action.prev_pos.x;
-                player.yo = action.prev_pos.y;
-                player.zo = action.prev_pos.z;
-                player.xRotO = action.prev_face.x;
-                player.yRotO = action.prev_face.y;
-
-//                CarpetSettings.LOG.info("\teyepos " + player.getEyePosition(0.0f) + " -> " + player.getEyePosition(1.0f) + ", facing "
-//                    + player.getViewVector(0.0f) + " -> " + player.getViewVector(1.0f));
-
-                for (float pt = sub_tick; pt <= 1.0f; pt += sub_tick) {
-
+                for (int i = 0; i < clicks; ++i) {
+                    float pt = sub_tick + sub_tick * i;
                     HitResult hit = getTarget(player, pt);
-
-//                    StringBuilder lerpResult = new StringBuilder("\t\tlerp: " + pt + ", pos = " + player.getEyePosition(pt) + ", facing = " + player.getViewVector(pt));
-//                    boolean lerpResultAmended = false;
 
                     for (InteractionHand hand : InteractionHand.values())
                     {
@@ -341,10 +327,6 @@ public class EntityPlayerActionPack
                                 BlockHitResult blockHit = (BlockHitResult) hit;
                                 BlockPos pos = blockHit.getBlockPos();
                                 Direction side = blockHit.getDirection();
-//                                if (!lerpResultAmended) {
-//                                    lerpResult.append(" HIT (BLOCK) ").append(pos).append(" ").append(side);
-//                                    lerpResultAmended = true;
-//                                }
                                 if (pos.getY() < player.getLevel().getMaxBuildHeight() - (side == Direction.UP ? 1 : 0) && world.mayInteract(player, pos))
                                 {
                                     InteractionResult result = player.gameMode.useItemOn(player, world, player.getItemInHand(hand), hand, blockHit);
@@ -352,7 +334,7 @@ public class EntityPlayerActionPack
                                     {
                                         haveActed = true;
                                         if (result.shouldSwing()) player.swing(hand);
-                                        if (!action.isContinuous) {
+                                        if (!action.isFastClick) {
                                             ap.itemUseCooldown = 3;
                                             return true;
                                         }
@@ -368,10 +350,6 @@ public class EntityPlayerActionPack
                                 boolean handWasEmpty = player.getItemInHand(hand).isEmpty();
                                 boolean itemFrameEmpty = (entity instanceof ItemFrame) && ((ItemFrame) entity).getItem().isEmpty();
                                 Vec3 relativeHitPos = entityHit.getLocation().subtract(entity.getX(), entity.getY(), entity.getZ());
-//                                if (!lerpResultAmended) {
-//                                    lerpResult.append(" HIT (ENTITY) ").append(entity.getDisplayName());
-//                                    lerpResultAmended = true;
-//                                }
                                 if (entity.interactAt(player, relativeHitPos, hand).consumesAction())
                                 {
                                     ap.itemUseCooldown = 3;
@@ -385,13 +363,6 @@ public class EntityPlayerActionPack
                                 }
                                 break;
                             }
-                            case MISS:
-//                                if (!lerpResultAmended) {
-//                                    lerpResult.append(" MISS");
-//                                    lerpResultAmended = true;
-//                                }
-                                break;
-
                         }
                         if (haveActed) {
                             break;
@@ -403,7 +374,6 @@ public class EntityPlayerActionPack
                             }
                         }
                     }
-//                    CarpetSettings.LOG.info(lerpResult.toString());
                 }
                 return haveActed;
             }
@@ -589,13 +559,9 @@ public class EntityPlayerActionPack
         public final int interval;
         public final int offset;
         private int count;
-        private int steps;
         private int next;
         private final boolean isContinuous;
-
-        public boolean have_prev;
-        public Vec3 prev_pos;
-        public Vec2 prev_face;
+        private final boolean isFastClick;
 
         private Action(int limit, int interval, int offset, boolean continuous)
         {
@@ -603,8 +569,8 @@ public class EntityPlayerActionPack
             this.interval = interval;
             this.offset = offset;
             next = interval + offset;
-            isContinuous = continuous;
-            have_prev = false;
+            isContinuous = continuous && interval == 1;
+            isFastClick = continuous && interval != 1;
         }
 
         public static Action once()
@@ -612,9 +578,9 @@ public class EntityPlayerActionPack
             return new Action(1, 1, 0, false);
         }
 
-        public static Action continuous(int perTick)
+        public static Action continuous()
         {
-            return new Action(-1, perTick, 0, true);
+            return new Action(-1, 1, 0, true);
         }
 
         public static Action interval(int interval)
@@ -627,19 +593,17 @@ public class EntityPlayerActionPack
             return new Action(-1, interval, offset, false);
         }
 
+        public static Action fastclick(int clicksPerTick)
+        {
+            return new Action(-1, clicksPerTick, 0, true);
+        }
+
         Boolean tick(EntityPlayerActionPack actionPack, ActionType type)
         {
-            if (!have_prev) {
-                prev_pos = actionPack.player.position();
-                prev_face = actionPack.player.getRotationVector();
-                have_prev = true;
-            }
             next--;
             Boolean cancel = null;
             if (next <= 0)
             {
-                this.steps = isContinuous ? interval : 1;
-
                 if (interval == 1 && !isContinuous)
                 {
                     // need to allow entity to tick, otherwise won't have effect (bow)
@@ -652,7 +616,9 @@ public class EntityPlayerActionPack
 
                 if (!type.preventSpectator || !actionPack.player.isSpectator())
                 {
+                    ((ServerPlayerFastClickInterface)actionPack.player).swapOldPosRot(true);
                     cancel = type.execute(actionPack.player, this);
+                    ((ServerPlayerFastClickInterface)actionPack.player).swapOldPosRot(false);
                 }
                 count++;
                 if (count == limit)
@@ -661,7 +627,7 @@ public class EntityPlayerActionPack
                     done = true;
                     return cancel;
                 }
-                next = isContinuous ? 1 : interval;
+                next = isFastClick ? 1 : interval;
             }
             else
             {
@@ -670,8 +636,6 @@ public class EntityPlayerActionPack
                     type.inactiveTick(actionPack.player, this);
                 }
             }
-            prev_pos = actionPack.player.position();
-            prev_face = actionPack.player.getRotationVector();
             return cancel;
         }
 
