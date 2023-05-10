@@ -29,7 +29,7 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.material.FluidState;
-import net.minecraft.world.level.storage.loot.LootContext;
+import net.minecraft.world.level.storage.loot.LootParams;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
@@ -246,8 +246,7 @@ public class OptimizedExplosion
                     {
                         BlockEntity blockEntity = state.hasBlockEntity() ? world.getBlockEntity(blockpos) : null;  //hasBlockEntity()
 
-                        LootContext.Builder lootBuilder = (new LootContext.Builder((ServerLevel)eAccess.getLevel()))
-                                .withRandom(eAccess.getLevel().random)
+                        LootParams.Builder lootBuilder = (new LootParams.Builder((ServerLevel)eAccess.getLevel()))
                                 .withParameter(LootContextParams.ORIGIN, Vec3.atCenterOf(blockpos))
                                 .withParameter(LootContextParams.TOOL, ItemStack.EMPTY)
                                 .withOptionalParameter(LootContextParams.BLOCK_ENTITY, blockEntity)

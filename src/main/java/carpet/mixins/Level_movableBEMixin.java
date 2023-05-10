@@ -3,7 +3,7 @@ package carpet.mixins;
 import carpet.fakes.WorldChunkInterface;
 import carpet.fakes.LevelInterface;
 import net.minecraft.core.BlockPos;
-import net.minecraft.server.level.ChunkHolder;
+import net.minecraft.server.level.FullChunkStatus;
 import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
@@ -100,7 +100,7 @@ public abstract class Level_movableBEMixin implements LevelInterface, LevelAcces
                     this.setBlocksDirty(blockPos_1, blockState_2, blockState_3);
                 }
 
-                if ((int_1 & 2) != 0 && (!this.isClientSide || (int_1 & 4) == 0) && (this.isClientSide || worldChunk_1.getFullStatus() != null && worldChunk_1.getFullStatus().isOrAfter(ChunkHolder.FullChunkStatus.TICKING)))
+                if ((int_1 & 2) != 0 && (!this.isClientSide || (int_1 & 4) == 0) && (this.isClientSide || worldChunk_1.getFullStatus() != null && worldChunk_1.getFullStatus().isOrAfter(FullChunkStatus.BLOCK_TICKING)))
                 {
                     this.sendBlockUpdated(blockPos_1, blockState_2, blockState_1, int_1);
                 }
