@@ -12,7 +12,6 @@ import carpet.utils.Messenger;
 import carpet.utils.SpawnChunks;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.commands.CommandSourceStack;
-import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
@@ -21,7 +20,6 @@ import net.minecraft.server.dedicated.DedicatedServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
@@ -34,7 +32,6 @@ import net.minecraft.world.level.border.WorldBorder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Iterator;
 import java.util.Optional;
 
 import static carpet.api.settings.RuleCategory.BUGFIX;
@@ -810,18 +807,6 @@ public class CarpetSettings
     public static int simulationDistance = 0;
 
     public static class ChangeSpawnChunksValidator extends Validator<Integer> {
-        public static void changeSpawnSize(int size)
-        {
-            ServerLevel overworld = CarpetServer.minecraft_server.getLevel(Level.OVERWORLD); // OW
-            if (overworld != null) {
-                ChunkPos centerChunk = new ChunkPos(new BlockPos(
-                        overworld.getLevelData().getXSpawn(),
-                        overworld.getLevelData().getYSpawn(),
-                        overworld.getLevelData().getZSpawn()
-                ));
-                SpawnChunks.changeSpawnChunks(overworld.getChunkSource(), centerChunk, size);
-            }
-        }
         @Override public Integer validate(CommandSourceStack source, CarpetRule<Integer> currentRule, Integer newValue, String string) {
             if (source == null) return newValue;
             if (newValue < 0 || newValue > 32)
@@ -834,11 +819,10 @@ public class CarpetSettings
                 //must been some startup thing
                 return newValue;
             }
-            if (CarpetServer.minecraft_server == null) return newValue;
-            ServerLevel currentOverworld = CarpetServer.minecraft_server.getLevel(Level.OVERWORLD); // OW
+            ServerLevel currentOverworld = source.getServer().overworld();
             if (currentOverworld != null)
             {
-                changeSpawnSize(newValue);
+                SpawnChunks.changeSpawnSize(currentOverworld, newValue);
             }
             return newValue;
         }
@@ -854,14 +838,11 @@ public class CarpetSettings
     public static int spawnChunksSize = MinecraftServer.START_CHUNK_RADIUS;
 
     public static class LightBatchValidator extends Validator<Integer> {
-        public static void applyLightBatchSizes(int maxBatchSize)
+        public static void applyLightBatchSizes(MinecraftServer server, int maxBatchSize)
         {
-            Iterator<ServerLevel> iterator = CarpetServer.minecraft_server.getAllLevels().iterator();
-            
-            while (iterator.hasNext()) 
+            for (ServerLevel world : server.getAllLevels())
             {
-                ServerLevel serverWorld = iterator.next();
-                serverWorld.getChunkSource().getLightEngine().setTaskPerBatch(maxBatchSize);
+                //world.getChunkSource().getLightEngine().setTaskPerBatch(maxBatchSize);
             }
         }
         @Override public Integer validate(CommandSourceStack source, CarpetRule<Integer> currentRule, Integer newValue, String string) {
@@ -876,9 +857,8 @@ public class CarpetSettings
                 //must been some startup thing
                 return newValue;
             }
-            if (CarpetServer.minecraft_server == null) return newValue;
             
-            applyLightBatchSizes(newValue); // Apply new settings
+            applyLightBatchSizes(source.getServer(), newValue); // Apply new settings
             
             return newValue;
         }
@@ -1144,7 +1124,7 @@ public class CarpetSettings
     )
     public static boolean tickSyncedWorldBorders = false;
 
-    public enum FungusFixMode {
+    public enum FungusGrowthMode {
         FALSE, RANDOM, ALL;
     }
 
@@ -1154,5 +1134,5 @@ public class CarpetSettings
             extra = {"Setting to 'all' will make all nether fungi grow into 3x3 trees", "Setting to 'random' will make 6% of all nether fungi grow into 3x3 trees", "(this being consistent with worldgen)"},
             category = {SURVIVAL, FEATURE}
     )
-    public static FungusFixMode thickFungusGrowth = FungusFixMode.FALSE;
+    public static FungusGrowthMode thickFungusGrowth = FungusGrowthMode.FALSE;
 }

@@ -29,7 +29,6 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.material.FluidState;
-import net.minecraft.world.level.material.Material;
 import net.minecraft.world.level.storage.loot.LootContext;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
 import net.minecraft.world.phys.AABB;
@@ -241,7 +240,7 @@ public class OptimizedExplosion
                 BlockState state = world.getBlockState(blockpos);
                 Block block = state.getBlock();
 
-                if (state.getMaterial() != Material.AIR)
+                if (!state.isAir())
                 {
                     if (block.dropFromExplosion(e) && world instanceof ServerLevel serverLevel)
                     {
@@ -281,7 +280,7 @@ public class OptimizedExplosion
 
                 BlockPos down = blockpos1.below(1);
                 if (eAccess.getRandom().nextInt(3) == 0 &&
-                        chunk.getBlockState(blockpos1).getMaterial() == Material.AIR &&
+                        chunk.getBlockState(blockpos1).isAir() &&
                         chunk.getBlockState(down).isSolidRender(world, down)
                         )
                 {
@@ -346,7 +345,7 @@ public class OptimizedExplosion
                             BlockState state = eAccess.getLevel().getBlockState(blockpos);
                             FluidState fluidState = eAccess.getLevel().getFluidState(blockpos);
 
-                            if (state.getMaterial() != Material.AIR) {
+                            if (!state.isAir()) {
                                 float f2 = Math.max(state.getBlock().getExplosionResistance(), fluidState.getExplosionResistance());
                                 if (eAccess.getSource() != null)
                                     f2 = eAccess.getSource().getBlockExplosionResistance(e, eAccess.getLevel(), blockpos, state, fluidState, f2);
@@ -475,7 +474,7 @@ public class OptimizedExplosion
                 fluidCache.put(posImmutable, fluid);
             }
 
-            if (state.getMaterial() != Material.AIR)
+            if (!state.isAir())
             {
                 float resistance = Math.max(state.getBlock().getExplosionResistance(), fluid.getExplosionResistance());
 
@@ -538,7 +537,7 @@ public class OptimizedExplosion
                             BlockState state = eAccess.getLevel().getBlockState(blockpos);
                             FluidState fluidState = eAccess.getLevel().getFluidState(blockpos);
 
-                            if (state.getMaterial() != Material.AIR) {
+                            if (!state.isAir()) {
                                 float f2 = Math.max(state.getBlock().getExplosionResistance(), fluidState.getExplosionResistance());
                                 if (eAccess.getSource() != null)
                                     f2 = eAccess.getSource().getBlockExplosionResistance(e, eAccess.getLevel(), blockpos, state, fluidState, f2);

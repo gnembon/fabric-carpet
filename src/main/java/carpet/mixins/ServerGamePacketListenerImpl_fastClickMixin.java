@@ -27,7 +27,7 @@ public class ServerGamePacketListenerImpl_fastClickMixin
             return;
         }
         // and only the first handleMovePlayer (per player) in a tick
-        var _this_tick = player.getLevel().getGameTime();
+        var _this_tick = player.serverLevel().getGameTime();
         if (_tick_seen == _this_tick) {
             return;
         }

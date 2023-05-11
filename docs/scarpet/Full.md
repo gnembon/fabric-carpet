@@ -1253,13 +1253,14 @@ for(range(1000000,1100000),check_prime(_))  => 7216
 
 From which we can learn that there is 7216 primes between 1M and 1.1M
 
-### `while(cond, limit, expr)`
+### `while(cond, expr)`, `while(cond, limit, expr)`
 
-Evaluates expression `expr` repeatedly until condition `cond` becomes false, but not more than `limit` times. 
+Evaluates expression `expr` repeatedly until condition `cond` becomes false, but not more than `limit` times (if limit is specified). 
 Returns the result of the last `expr` evaluation, or `null` if nothing was successful. Both `expr` and `cond` will 
 received a bound variable `_` indicating current iteration, so its a number.
 
 <pre>
+while(a<100,a=_*_) => 100 // loop stopped at condition
 while(a<100,10,a=_*_)  => 81 // loop exhausted via limit
 while(a<100,20,a=_*_)  => 100 // loop stopped at condition, but a has already been assigned
 while(_*_<100,20,a=_*_)  => 81 // loop stopped at condition, before a was assigned a value
@@ -2814,15 +2815,10 @@ Returns the name of sound type made by the block at position. One of:
 `'candle'`', `'amethyst'`', `'amethyst_cluster'`', `'small_amethyst_bud'`', `'large_amethyst_bud'`', `'medium_amethyst_bud'`',
 `'tuff'`', `'calcite'`', `'copper'`'
 
-### `material(pos)`
+### `(Deprecated) material(pos)`
 
-Returns the name of material of the block at position. very useful to target a group of blocks. One of:
-
-`'air'`, `'void'`, `'portal'`, `'carpet'`, `'plant'`, `'water_plant'`, `'vine'`, `'sea_grass'`, `'water'`, 
-`'bubble_column'`, `'lava'`, `'snow_layer'`, `'fire'`, `'redstone_bits'`, `'cobweb'`, `'redstone_lamp'`, `'clay'`, 
-`'dirt'`, `'grass'`, `'packed_ice'`, `'sand'`, `'sponge'`, `'wood'`, `'wool'`, `'tnt'`, `'leaves'`, `'glass'`, 
-`'ice'`, `'cactus'`, `'stone'`, `'iron'`, `'snow'`, `'anvil'`, `'barrier'`, `'piston'`, `'coral'`, `'gourd'`, 
-`'dragon_egg'`, `'cake'`, `'amethyst'`
+Returns `'unknown'`. The concept of material for blocks is removed. On previous versions it returned the name of the material the block
+was made of.
 
 ### `map_colour(pos)`
 
@@ -5540,6 +5536,7 @@ produce an exception.
 ### `print(expr)`, `print(player/player_list, expr)`
 
 Displays the result of the expression to the chat. Overrides default `scarpet` behaviour of sending everything to stderr.
+For player scoped apps it always by default targets the player for whom the app runs on behalf. 
 Can optionally define player or list of players to send the message to.
 
 ### `format(components, ...)`, `format([components, ...])`

@@ -1,6 +1,7 @@
 package carpet.script.utils;
 
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
+import net.minecraft.util.Mth;
 
 import java.util.Map;
 import java.util.Random;
@@ -52,8 +53,8 @@ public class SimplexNoiseSampler extends PerlinNoiseSampler
         x = x / 2;
         y = y / 2;
         double d = (x + y) * SKEW_FACTOR_2D;
-        int i = PerlinNoiseSampler.floor(x + d);
-        int j = PerlinNoiseSampler.floor(y + d);
+        int i = Mth.floor(x + d);
+        int j = Mth.floor(y + d);
         double e = (i + j) * UNSKEW_FACTOR_2D;
         double f = i - e;
         double g = j - e;
@@ -96,9 +97,9 @@ public class SimplexNoiseSampler extends PerlinNoiseSampler
         f = f / 2;
         //final double g = 0.3333333333333333D;
         double h = (d + e + f) * 0.3333333333333333D;
-        int i = floor(d + h);
-        int j = floor(e + h);
-        int k = floor(f + h);
+        int i = Mth.floor(d + h);
+        int j = Mth.floor(e + h);
+        int k = Mth.floor(f + h);
         //final double l = 0.16666666666666666D;
         double m = (i + j + k) * 0.16666666666666666D;
         double n = i - m;

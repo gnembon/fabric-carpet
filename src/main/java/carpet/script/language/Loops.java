@@ -49,8 +49,42 @@ public class Loops
         });
 
         // lazy
-        expression.addLazyFunction("while", 3, (c, t, lv) ->
+        expression.addLazyFunction("while", -1, (c, t, lv) ->
         {
+            if (lv.size() == 2) { // lets do nasty way so performance is not affected (might be super unnecessary, but hey)
+                LazyValue condition = lv.get(0);
+                LazyValue expr = lv.get(1);
+                long i = 0;
+                Value lastOne = Value.NULL;
+                //scoping
+                LazyValue defaultVal = c.getVariable("_");
+                c.setVariable("_", (cc, tt) -> new NumericValue(0).bindTo("_"));
+                while (condition.evalValue(c, Context.BOOLEAN).getBoolean())
+                {
+                    try
+                    {
+                        lastOne = expr.evalValue(c, t);
+                    }
+                    catch (BreakStatement | ContinueStatement stmt)
+                    {
+                        if (stmt.retval != null)
+                        {
+                            lastOne = stmt.retval;
+                        }
+                        if (stmt instanceof BreakStatement)
+                        {
+                            break;
+                        }
+                    }
+                    i++;
+                    long seriously = i;
+                    c.setVariable("_", (cc, tt) -> new NumericValue(seriously).bindTo("_"));
+                }
+                //revering scope
+                c.setVariable("_", defaultVal);
+                Value lastValueNoKidding = lastOne;
+                return (cc, tt) -> lastValueNoKidding;
+            }
             long limit = NumericValue.asNumber(lv.get(1).evalValue(c)).getLong();
             LazyValue condition = lv.get(0);
             LazyValue expr = lv.get(2);

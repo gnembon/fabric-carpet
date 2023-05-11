@@ -16,7 +16,11 @@ import org.spongepowered.asm.mixin.Shadow;
 @Mixin(ThreadedLevelLightEngine.class)
 public abstract class ThreadedLevelLightEngine_scarpetMixin extends LevelLightEngine implements ServerLightingProviderInterface
 {
-    @Shadow public abstract void checkBlock(BlockPos pos);
+    //@Shadow public abstract void checkBlock(BlockPos pos);
+
+    //@Shadow public abstract void setLightEnabled(final ChunkPos chunkPos, final boolean bl);
+
+    //@Shadow public abstract void propagateLightSources(final ChunkPos chunkPos);
 
     public ThreadedLevelLightEngine_scarpetMixin(LightChunkGetter chunkProvider, boolean hasBlockLight, boolean hasSkyLight)
     {
@@ -34,18 +38,19 @@ public abstract class ThreadedLevelLightEngine_scarpetMixin extends LevelLightEn
                 //ChunkPos pos = new ChunkPos(x, z);
                 int j;
                 for(j = -1; j < 17; ++j) {                                                                 // skip some recomp
-                    super.queueSectionData(LightLayer.BLOCK, SectionPos.of(pos, j), new DataLayer(), false);
-                    super.queueSectionData(LightLayer.SKY, SectionPos.of(pos, j), new DataLayer(), false);
+                    super.queueSectionData(LightLayer.BLOCK, SectionPos.of(pos, j), new DataLayer());
+                    super.queueSectionData(LightLayer.SKY, SectionPos.of(pos, j), new DataLayer());
                 }
                 for(j = 0; j < 16; ++j) {
                     super.updateSectionStatus(SectionPos.of(pos, j), true);
                 }
 
-                super.enableLightSources(pos, true);
+                setLightEnabled(pos, true);
 
-                    chunk.getLights().forEach((blockPos) -> {
-                        super.onBlockEmissionIncrease(blockPos, chunk.getLightEmission(blockPos));
-                    });
+                propagateLightSources(pos);
+                //    chunk.getLights().forEach((blockPos) -> {
+                //        super.onBlockEmissionIncrease(blockPos, chunk.getLightEmission(blockPos));
+                //    });
 
             }
 

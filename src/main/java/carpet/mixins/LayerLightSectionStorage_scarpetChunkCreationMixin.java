@@ -1,10 +1,12 @@
 package carpet.mixins;
 
 import java.util.Arrays;
+
+import carpet.fakes.Lighting_scarpetChunkCreationInterface;
 import net.minecraft.core.SectionPos;
 import net.minecraft.world.level.chunk.DataLayer;
 import net.minecraft.world.level.lighting.DataLayerStorageMap;
-import net.minecraft.world.level.lighting.LayerLightEngine;
+import net.minecraft.world.level.lighting.LightEngine;
 import net.minecraft.world.level.lighting.LayerLightSectionStorage;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -25,8 +27,8 @@ public abstract class LayerLightSectionStorage_scarpetChunkCreationMixin impleme
     @Shadow
     protected abstract DataLayer getDataLayer(final long sectionPos, final boolean cached);
 
-    @Shadow
-    protected abstract void clearQueuedSectionBlocks(final LayerLightEngine<?, ?> storage, final long blockChunkPos);
+    //@Shadow
+    //protected abstract void clearQueuedSectionBlocks(final LightEngine<?, ?> storage, final long blockChunkPos);
 
     @Shadow
     @Final
@@ -42,7 +44,7 @@ public abstract class LayerLightSectionStorage_scarpetChunkCreationMixin impleme
     @Final
     protected Long2ObjectMap<DataLayer> queuedSections;
 
-    @Shadow protected abstract void enableLightSources(final long l, final boolean bl);
+    //@Shadow protected abstract void enableLightSources(final long l, final boolean bl);
 
     @Unique
     private final LongSet removedChunks = new LongOpenHashSet();
@@ -63,10 +65,10 @@ public abstract class LayerLightSectionStorage_scarpetChunkCreationMixin impleme
     }
 
     @Inject(
-        method = "markNewInconsistencies(Lnet/minecraft/world/level/lighting/LayerLightEngine;ZZ)V",
+        method = "markNewInconsistencies",
         at = @At("HEAD")
     )
-    private void processData(final LayerLightEngine<?, ?> lightProvider, final boolean doSkylight, final boolean skipEdgeLightPropagation, final CallbackInfo ci)
+    private void processData(final LightEngine<?, ?> lightProvider, final CallbackInfo ci)
     {
         // Process light removal
 
@@ -80,7 +82,7 @@ public abstract class LayerLightSectionStorage_scarpetChunkCreationMixin impleme
 
                 if (this.storingLightForSection(sectionPos))
                 {
-                    this.clearQueuedSectionBlocks(lightProvider, sectionPos);
+                    //((Lighting_scarpetChunkCreationInterface)lightProvider).clearQueuedSectionBlocksPublicAccess(sectionPos);
 
                     if (this.changedSections.add(sectionPos))
                         this.updatingSectionData.copyDataLayer(sectionPos);
@@ -108,7 +110,7 @@ public abstract class LayerLightSectionStorage_scarpetChunkCreationMixin impleme
     }
 
     @Override
-    public void processRelight(final LayerLightEngine<?, ?> lightProvider, final long pos)
+    public void processRelight(final LightEngine<?, ?> lightProvider, final long pos)
     {
     }
 }

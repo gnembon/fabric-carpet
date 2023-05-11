@@ -45,7 +45,6 @@ import net.minecraft.world.inventory.FurnaceMenu;
 import net.minecraft.world.inventory.GrindstoneMenu;
 import net.minecraft.world.inventory.HopperMenu;
 import net.minecraft.world.inventory.LecternMenu;
-import net.minecraft.world.inventory.LegacySmithingMenu;
 import net.minecraft.world.inventory.LoomMenu;
 import net.minecraft.world.inventory.MerchantMenu;
 import net.minecraft.world.inventory.ShulkerBoxMenu;
@@ -99,7 +98,6 @@ public class ScreenValue extends Value
         screenHandlerFactories.put("loom", LoomMenu::new);
         screenHandlerFactories.put("merchant", MerchantMenu::new);
         screenHandlerFactories.put("shulker_box", (syncId, playerInventory) -> new ShulkerBoxMenu(syncId, playerInventory, new SimpleContainer(9 * 3)));
-        screenHandlerFactories.put("smithing_legacy", LegacySmithingMenu::new);
         screenHandlerFactories.put("smithing", SmithingMenu::new);
         screenHandlerFactories.put("smoker", SmokerMenu::new);
         screenHandlerFactories.put("stonecutter", StonecutterMenu::new);
@@ -267,7 +265,7 @@ public class ScreenValue extends Value
             {
                 Map<Value, Value> data = new HashMap<>();
                 data.put(StringValue.of("slot"), NumericValue.of(slotId));
-                data.put(StringValue.of("stack"), ValueConversions.of(stack, player.level.registryAccess()));
+                data.put(StringValue.of("stack"), ValueConversions.of(stack, player.level().registryAccess()));
                 ScreenValue.this.callListener(ScreenValue.this.player, "slot_update", data);
             }
 

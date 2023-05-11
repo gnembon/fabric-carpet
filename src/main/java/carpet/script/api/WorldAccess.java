@@ -524,10 +524,10 @@ public class WorldAccess
                 booleanStateTest(c, "liquid", lv, (s, p) -> !s.getFluidState().isEmpty()));
 
         expression.addContextFunction("flammable", -1, (c, t, lv) ->
-                booleanStateTest(c, "flammable", lv, (s, p) -> s.getMaterial().isFlammable()));
+                booleanStateTest(c, "flammable", lv, (s, p) -> s.ignitedByLava()));
 
         expression.addContextFunction("transparent", -1, (c, t, lv) ->
-                booleanStateTest(c, "transparent", lv, (s, p) -> !s.getMaterial().isSolid()));
+                booleanStateTest(c, "transparent", lv, (s, p) -> !s.isSolid()));
 
         /*this.expr.addContextFunction("opacity", -1, (c, t, lv) ->
                 genericStateTest(c, "opacity", lv, (s, p, w) -> new NumericValue(s.getOpacity(w, p))));
@@ -1160,14 +1160,14 @@ public class WorldAccess
                 stateStringQuery(c, "block_sound", lv, (s, p) ->
                         Colors.soundName.get(s.getSoundType())));
 
-        expression.addContextFunction("material", -1, (c, t, lv) ->
-                stateStringQuery(c, "material", lv, (s, p) ->
-                        Colors.materialName.get(s.getMaterial())));
+        expression.addContextFunction("material", -1, (c, t, lv) -> {
+            c.host.issueDeprecation("material(...)"); // deprecated for block_state()
+            return StringValue.of("unknown");
+        });
 
         expression.addContextFunction("map_colour", -1, (c, t, lv) ->
                 stateStringQuery(c, "map_colour", lv, (s, p) ->
-                        Colors.materialName.get(s.getMapColor(((CarpetContext) c).level(), p))));
-
+                        Colors.mapColourName.get(s.getMapColor(((CarpetContext) c).level(), p))));
 
         // Deprecated for block_state()
         expression.addContextFunction("property", -1, (c, t, lv) ->

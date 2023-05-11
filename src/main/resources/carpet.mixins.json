@@ -181,10 +181,11 @@
     "TheEndGatewayBlockEntity_creativeNoClipMixin",
     "LivingEntity_creativeFlyMixin",
     "ChunkMap_creativePlayersLoadChunksMixin",
-    "SculkSensorBlock_rangeMixin",
+    "SculkSensorBlockEntityVibrationConfig_sculkSensorRangeMixin",
     "CollectingNeighborUpdaterAccessor",
 
     "BlockBehaviour_customStickyMixin",
+    "BlockBehaviourBlockStateBase_mixin",
     "ChainBlock_customStickyMixin",
     "ChestBlock_customStickyMixin",
     "HoneyBlock_customStickyMixin",

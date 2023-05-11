@@ -1,6 +1,7 @@
 package carpet.script.utils;
 
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
+import net.minecraft.util.Mth;
 
 import java.util.Map;
 import java.util.Random;
@@ -59,9 +60,9 @@ public class PerlinNoiseSampler
         double f = x + this.originX;
         double g = y + this.originY;
         double h = z + this.originZ;
-        int i = floor(f);
-        int j = floor(g);
-        int k = floor(h);
+        int i = Mth.floor(f);
+        int j = Mth.floor(g);
+        int k = Mth.floor(h);
         double l = f - (double) i;
         double m = g - (double) j;
         double n = h - (double) k;
@@ -72,7 +73,7 @@ public class PerlinNoiseSampler
         /*
         if (d != 0.0D) {
             double r = Math.min(e, m);
-            t = (double)floor(r / d) * d;
+            t = (double)Mth.floor(r / d) * d;
         } else {
             t = 0.0D;
         }*/
@@ -120,8 +121,8 @@ public class PerlinNoiseSampler
     {
         double f = x + this.originX;
         double g = y + this.originY;
-        int i = floor(f);
-        int j = floor(g);
+        int i = Mth.floor(f);
+        int j = Mth.floor(g);
         double l = f - (double) i;
         double m = g - (double) j;
         double o = perlinFade(l);
@@ -161,7 +162,7 @@ public class PerlinNoiseSampler
     public double sample1d(double x)
     {
         double f = x + this.originX;
-        int i = floor(f);
+        int i = Mth.floor(f);
         double l = f - i;
         double o = perlinFade(l);
         return this.sample1d(i, l, o) + 0.5;
@@ -193,11 +194,5 @@ public class PerlinNoiseSampler
     public static double perlinFade(double d)
     {
         return d * d * d * (d * (d * 6.0D - 15.0D) + 10.0D);
-    }
-
-    public static int floor(double d)
-    {
-        int i = (int) d;
-        return d < i ? i - 1 : i;
     }
 }

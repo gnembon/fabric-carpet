@@ -26,7 +26,7 @@ public abstract class MerchantResultSlot_scarpetEventMixin {
             target = "Lnet/minecraft/world/item/trading/Merchant;notifyTrade(Lnet/minecraft/world/item/trading/MerchantOffer;)V")
     )
     private void onTrade(Player player, ItemStack stack, CallbackInfo ci) {
-        if(PLAYER_TRADES.isNeeded() && !player.level.isClientSide())
+        if(PLAYER_TRADES.isNeeded() && !player.level().isClientSide())
         {
             PLAYER_TRADES.onTrade((ServerPlayer) player, merchant, slots.getActiveOffer());
         }

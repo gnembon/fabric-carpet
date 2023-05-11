@@ -31,7 +31,7 @@ public class Tracer
         Vec3 pos = source.getEyePosition(partialTicks);
         Vec3 rotation = source.getViewVector(partialTicks);
         Vec3 reachEnd = pos.add(rotation.x * reach, rotation.y * reach, rotation.z * reach);
-        return source.level.clip(new ClipContext(pos, reachEnd, ClipContext.Block.OUTLINE, fluids ?
+        return source.level().clip(new ClipContext(pos, reachEnd, ClipContext.Block.OUTLINE, fluids ?
                 ClipContext.Fluid.ANY : ClipContext.Fluid.NONE, source));
     }
 
@@ -45,7 +45,7 @@ public class Tracer
 
     public static EntityHitResult rayTraceEntities(Entity source, Vec3 start, Vec3 end, AABB box, Predicate<Entity> predicate, double maxSqDistance)
     {
-        Level world = source.level;
+        Level world = source.level();
         double targetDistance = maxSqDistance;
         Entity target = null;
         Vec3 targetHitPos = null;

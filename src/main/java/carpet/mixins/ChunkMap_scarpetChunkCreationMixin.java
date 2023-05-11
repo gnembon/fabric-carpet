@@ -100,11 +100,12 @@ public abstract class ChunkMap_scarpetChunkCreationMixin implements ThreadedAnvi
     protected abstract boolean promoteChunkMap();
 
     @Shadow
-    protected abstract CompletableFuture<Either<List<ChunkAccess>, ChunkLoadingFailure>> getChunkRangeFuture (final ChunkPos centerChunk, final int margin, final IntFunction<ChunkStatus> distanceToStatus);
-
-    @Shadow
     protected abstract Iterable<ChunkHolder> getChunks();
 
+
+    @Shadow protected abstract CompletableFuture<Either<List<ChunkAccess>, ChunkLoadingFailure>> getChunkRangeFuture(final ChunkHolder chunkHolder, final int i, final IntFunction<ChunkStatus> intFunction);
+
+    //@Shadow protected abstract void postLoadProtoChunk(final ServerLevel serverLevel, final List<CompoundTag> list);
 
     ThreadLocal<Boolean> generated = ThreadLocal.withInitial(() -> null);
 
@@ -289,7 +290,8 @@ public abstract class ChunkMap_scarpetChunkCreationMixin implements ThreadedAnvi
         if (!(chunk.getStatus().isOrAfter(ChunkStatus.LIGHT.getParent()))) return;
         ((ServerLightingProviderInterface) this.lightEngine).removeLightData(chunk);
         this.addRelightTicket(pos);
-        final CompletableFuture<?> lightFuture = this.getChunkRangeFuture (pos, 1, (pos_) -> ChunkStatus.LIGHT)
+        ChunkHolder chunkHolder = this.updatingChunkMap.get(pos.toLong());
+        final CompletableFuture<?> lightFuture = this.getChunkRangeFuture(chunkHolder, 1, (pos_) -> ChunkStatus.LIGHT)
                 .thenCompose(
                     either -> either.map(
                             list -> ((ServerLightingProviderInterface) this.lightEngine).relight(chunk),
@@ -414,7 +416,7 @@ public abstract class ChunkMap_scarpetChunkCreationMixin implements ThreadedAnvi
         {
             final ChunkPos pos = chunk.getPos();
 
-            lightFutures.add(this.getChunkRangeFuture (pos, 1, (pos_) -> ChunkStatus.LIGHT).thenCompose(
+            lightFutures.add(this.getChunkRangeFuture (this.updatingChunkMap.get(pos.toLong()), 1, (pos_) -> ChunkStatus.LIGHT).thenCompose(
                 either -> either.map(
                     list -> ((ServerLightingProviderInterface) this.lightEngine).relight(chunk),
                     unloaded -> {

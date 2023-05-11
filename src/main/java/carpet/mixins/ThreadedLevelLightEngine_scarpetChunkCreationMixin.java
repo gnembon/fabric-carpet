@@ -46,7 +46,7 @@ public abstract class ThreadedLevelLightEngine_scarpetChunkCreationMixin extends
         chunk.setLightCorrect(false);
 
         this.addTask(pos.x, pos.z, () -> 0, ThreadedLevelLightEngine.TaskType.PRE_UPDATE, Util.name(() -> {
-                super.enableLightSources(pos, false);
+                super.setLightEnabled(pos, false);
                 ((Lighting_scarpetChunkCreationInterface) this).removeLightData(SectionPos.getZeroNode(SectionPos.asLong(pos.x, 0, pos.z)));
             },
             () -> "Remove light data " + pos
@@ -58,12 +58,9 @@ public abstract class ThreadedLevelLightEngine_scarpetChunkCreationMixin extends
     {
         final ChunkPos pos = chunk.getPos();
 
+        propagateLightSources(pos);
         this.addTask(pos.x, pos.z, () -> 0, ThreadedLevelLightEngine.TaskType.PRE_UPDATE, Util.name(() -> {
-                super.enableLightSources(pos, true);
 
-                chunk.getLights().forEach(
-                    blockPos -> super.onBlockEmissionIncrease(blockPos, chunk.getLightEmission(blockPos))
-                );
 
                 ((Lighting_scarpetChunkCreationInterface) this).relight(SectionPos.getZeroNode(SectionPos.asLong(pos.x, 0, pos.z)));
             },

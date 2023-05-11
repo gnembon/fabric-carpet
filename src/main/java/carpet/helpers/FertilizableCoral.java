@@ -21,7 +21,7 @@ import net.minecraft.world.level.levelgen.feature.CoralFeature;
 import net.minecraft.world.level.levelgen.feature.CoralMushroomFeature;
 import net.minecraft.world.level.levelgen.feature.CoralTreeFeature;
 import net.minecraft.world.level.levelgen.feature.configurations.NoneFeatureConfiguration;
-import net.minecraft.world.level.material.MaterialColor;
+import net.minecraft.world.level.material.MapColor;
 
 /**
  * Deduplicates logic for the different behaviors of the {@code renewableCoral} rule
@@ -56,7 +56,7 @@ public interface FertilizableCoral extends BonemealableBlock {
             default -> new CoralMushroomFeature(NoneFeatureConfiguration.CODEC);
         };
 
-        MaterialColor color = blockUnder.getMapColor(worldIn, pos);
+        MapColor color = blockUnder.getMapColor(worldIn, pos);
         BlockState properBlock = blockUnder;
         HolderSet.Named<Block> coralBlocks = worldIn.registryAccess().registryOrThrow(Registries.BLOCK).getTag(BlockTags.CORAL_BLOCKS).orElseThrow();
         for (Holder<Block> block: coralBlocks)

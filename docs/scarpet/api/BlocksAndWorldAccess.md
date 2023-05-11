@@ -486,15 +486,10 @@ Returns the name of sound type made by the block at position. One of:
 `'candle'`', `'amethyst'`', `'amethyst_cluster'`', `'small_amethyst_bud'`', `'large_amethyst_bud'`', `'medium_amethyst_bud'`',
 `'tuff'`', `'calcite'`', `'copper'`'
 
-### `material(pos)`
+### `(Deprecated) material(pos)`
 
-Returns the name of material of the block at position. very useful to target a group of blocks. One of:
-
-`'air'`, `'void'`, `'portal'`, `'carpet'`, `'plant'`, `'water_plant'`, `'vine'`, `'sea_grass'`, `'water'`, 
-`'bubble_column'`, `'lava'`, `'snow_layer'`, `'fire'`, `'redstone_bits'`, `'cobweb'`, `'redstone_lamp'`, `'clay'`, 
-`'dirt'`, `'grass'`, `'packed_ice'`, `'sand'`, `'sponge'`, `'wood'`, `'wool'`, `'tnt'`, `'leaves'`, `'glass'`, 
-`'ice'`, `'cactus'`, `'stone'`, `'iron'`, `'snow'`, `'anvil'`, `'barrier'`, `'piston'`, `'coral'`, `'gourd'`, 
-`'dragon_egg'`, `'cake'`, `'amethyst'`
+Returns `'unknown'`. The concept of material for blocks is removed. On previous versions it returned the name of the material the block
+was made of.
 
 ### `map_colour(pos)`
 
