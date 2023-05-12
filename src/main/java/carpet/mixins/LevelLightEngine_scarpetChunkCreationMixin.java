@@ -28,14 +28,4 @@ public abstract class LevelLightEngine_scarpetChunkCreationMixin implements Ligh
         if (this.skyEngine != null)
             ((Lighting_scarpetChunkCreationInterface) this.skyEngine).removeLightData(pos);
     }
-
-    @Override
-    public void relight(final long pos)
-    {
-        if (this.blockEngine != null)
-            ((Lighting_scarpetChunkCreationInterface) this.blockEngine).relight(pos);
-
-        if (this.skyEngine != null)
-            ((Lighting_scarpetChunkCreationInterface) this.skyEngine).relight(pos);
-    }
 }

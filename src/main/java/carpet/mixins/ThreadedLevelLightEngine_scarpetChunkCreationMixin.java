@@ -3,6 +3,7 @@ package carpet.mixins;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.IntSupplier;
 import net.minecraft.Util;
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.SectionPos;
 import net.minecraft.server.level.ChunkMap;
 import net.minecraft.server.level.ThreadedLevelLightEngine;
@@ -42,7 +43,7 @@ public abstract class ThreadedLevelLightEngine_scarpetChunkCreationMixin extends
     @Override
     public void removeLightData(final ChunkAccess chunk)
     {
-        final ChunkPos pos = chunk.getPos();
+        ChunkPos pos = chunk.getPos();
         chunk.setLightCorrect(false);
 
         this.addTask(pos.x, pos.z, () -> 0, ThreadedLevelLightEngine.TaskType.PRE_UPDATE, Util.name(() -> {
@@ -54,15 +55,32 @@ public abstract class ThreadedLevelLightEngine_scarpetChunkCreationMixin extends
     }
 
     @Override
-    public CompletableFuture<Void> relight(final ChunkAccess chunk)
+    public CompletableFuture<Void> relight(ChunkAccess chunk)
     {
-        final ChunkPos pos = chunk.getPos();
+        ChunkPos pos = chunk.getPos();
 
-        propagateLightSources(pos);
         this.addTask(pos.x, pos.z, () -> 0, ThreadedLevelLightEngine.TaskType.PRE_UPDATE, Util.name(() -> {
-
-
-                ((Lighting_scarpetChunkCreationInterface) this).relight(SectionPos.getZeroNode(SectionPos.asLong(pos.x, 0, pos.z)));
+                super.propagateLightSources(pos);
+                int minY = chunk.getMinBuildHeight();
+                int maxY = chunk.getMaxBuildHeight();
+                int minX = pos.getMinBlockX();
+                int minZ = pos.getMinBlockZ();
+                BlockPos.MutableBlockPos poss = new BlockPos.MutableBlockPos();
+                for (int x = -1; x < 17; ++x)
+                {
+                    for (int z = -1; z < 17; ++z)
+                    {
+                        if (x > 0 && x < 16 && z > 0 && z < 16)
+                        {// not really efficient way to do it, but hey, we have bigger problems with this
+                            continue;
+                        }
+                        for (int y = minY; y < maxY; ++y)
+                        {
+                            poss.set(x + minX, y, z + minZ);
+                            super.checkBlock(poss);
+                        }
+                    }
+                }
             },
             () -> "Relight chunk " + pos
         ));

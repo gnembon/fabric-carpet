@@ -48,8 +48,6 @@
     "LevelLightEngine_scarpetChunkCreationMixin",
     "LayerLightEngine_scarpetChunkCreationMixin",
     "LayerLightSectionStorage_scarpetChunkCreationMixin",
-    "BlockLightSectionStorage_scarpetChunkCreationMixin",
-    "SkyLightSectionStorage_scarpetChunkCreationMixin",
     "DistanceManager_spawnChunksMixin",
     "ServerLevel_spawnChunksMixin",
     "ThreadedLevelLightEngine_scarpetChunkCreationMixin",
