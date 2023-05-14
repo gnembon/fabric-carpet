@@ -123,13 +123,12 @@ public class HUDController
         }
         double MSPT = Arrays.stream(server.tickTimes).average().getAsDouble() * 1.0E-6D;
         double TPS = 1000.0D / Math.max((TickSpeed.time_warp_start_time != 0)?0.0:TickSpeed.mspt, MSPT);
-        if (TickSpeed.isPaused()) {
-            TPS = 0;
-        }
-        String color = Messenger.heatmap_color(MSPT,TickSpeed.mspt);
+
+        TickSpeed.TickingState state = TickSpeed.getTickingState();
+        String color = Messenger.heatmap_color(MSPT, TickSpeed.mspt);
         return new Component[]{Messenger.c(
-                "g TPS: ", String.format(Locale.US, "%s %.1f",color, TPS),
-                "g  MSPT: ", String.format(Locale.US,"%s %.1f", color, MSPT))};
+                state.statePrefix(), state.tpsPrefix(), state.formatTPS(TPS, color),
+                "g MSPT: ", String.format(Locale.US,"%s %.1f", color, MSPT))};
     }
 
     private static Component[] send_counter_info(MinecraftServer server, String colors)
