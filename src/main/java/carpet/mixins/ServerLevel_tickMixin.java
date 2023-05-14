@@ -159,13 +159,13 @@ public abstract class ServerLevel_tickMixin extends Level
     ))
     private void tickWorldBorder(WorldBorder worldBorder)
     {
-        if (TickSpeed.process_entities) worldBorder.tick();
+        if (TickSpeed.process_entities()) worldBorder.tick();
     }
 
     @Inject(method = "advanceWeatherCycle", cancellable = true, at = @At("HEAD"))
     private void tickWeather(CallbackInfo ci)
     {
-        if (!TickSpeed.process_entities) ci.cancel();
+        if (!TickSpeed.process_entities()) ci.cancel();
     }
 
     @Redirect(method = "tick", at = @At(
@@ -174,7 +174,7 @@ public abstract class ServerLevel_tickMixin extends Level
     ))
     private void tickTimeConditionally(ServerLevel serverWorld)
     {
-        if (TickSpeed.process_entities) tickTime();
+        if (TickSpeed.process_entities()) tickTime();
     }
 
     @Redirect(method = "tick", at = @At(
@@ -183,7 +183,7 @@ public abstract class ServerLevel_tickMixin extends Level
     ))
     private boolean tickPendingBlocks(ServerLevel serverWorld)
     {
-        if (!TickSpeed.process_entities) return true;
+        if (!TickSpeed.process_entities()) return true;
         return serverWorld.isDebug(); // isDebug()
     }
 
@@ -193,7 +193,7 @@ public abstract class ServerLevel_tickMixin extends Level
     ))
     private void tickConditionally(Raids raidManager)
     {
-        if (TickSpeed.process_entities) raidManager.tick();
+        if (TickSpeed.process_entities()) raidManager.tick();
     }
 
     @Redirect(method = "tick", at = @At(
@@ -202,6 +202,6 @@ public abstract class ServerLevel_tickMixin extends Level
     ))
     private void tickConditionally(ServerLevel serverWorld)
     {
-        if (TickSpeed.process_entities) runBlockEvents();
+        if (TickSpeed.process_entities()) runBlockEvents();
     }
 }

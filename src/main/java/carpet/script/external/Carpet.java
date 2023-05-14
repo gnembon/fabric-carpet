@@ -136,7 +136,7 @@ public class Carpet
 
     public static boolean isTickProcessingPaused()
     {
-        return !TickSpeed.process_entities;
+        return !TickSpeed.process_entities();
     }
 
     public static void handleExtensionsAPI(CarpetExpression expression)

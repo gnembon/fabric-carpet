@@ -16,7 +16,7 @@ public class ServerFunctionManager_tickMixin
     @Inject(method = "tick", at = @At("HEAD"), cancellable = true)
     private void beforeDatapacks(CallbackInfo ci)
     {
-    	if (!TickSpeed.process_entities) ci.cancel();
+    	if (!TickSpeed.process_entities()) ci.cancel();
     	else
         currentSection = CarpetProfiler.start_section(null, "Datapacks", CarpetProfiler.TYPE.GENERAL);
     }

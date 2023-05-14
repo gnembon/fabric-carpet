@@ -23,6 +23,7 @@ import net.minecraft.nbt.Tag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundCustomPayloadPacket;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 
 public class ServerNetworkHandler
@@ -144,10 +145,10 @@ public class ServerNetworkHandler
         }
     }
     
-    public static void updateTickSpeedToConnectedPlayers()
+    public static void updateTickSpeedToConnectedPlayers(MinecraftServer server)
     {
         if (CarpetSettings.superSecretSetting) return;
-        for (ServerPlayer player : remoteCarpetPlayers.keySet())
+        for (ServerPlayer player : validCarpetPlayers)
         {
             player.connection.send(new ClientboundCustomPayloadPacket(
                     CarpetClient.CARPET_CHANNEL,
@@ -156,10 +157,10 @@ public class ServerNetworkHandler
         }
     }
 
-    public static void updateFrozenStateToConnectedPlayers()
+    public static void updateFrozenStateToConnectedPlayers(MinecraftServer server)
     {
         if (CarpetSettings.superSecretSetting) return;
-        for (ServerPlayer player : remoteCarpetPlayers.keySet())
+        for (ServerPlayer player : validCarpetPlayers)
         {
             player.connection.send(new ClientboundCustomPayloadPacket(
                     CarpetClient.CARPET_CHANNEL,
@@ -168,10 +169,10 @@ public class ServerNetworkHandler
         }
     }
 
-    public static void updateSuperHotStateToConnectedPlayers()
+    public static void updateSuperHotStateToConnectedPlayers(MinecraftServer server)
     {
         if(CarpetSettings.superSecretSetting) return;
-        for (ServerPlayer player : remoteCarpetPlayers.keySet())
+        for (ServerPlayer player : validCarpetPlayers)
         {
             player.connection.send(new ClientboundCustomPayloadPacket(
                     CarpetClient.CARPET_CHANNEL,
@@ -180,10 +181,10 @@ public class ServerNetworkHandler
         }
     }
 
-    public static void updateTickPlayerActiveTimeoutToConnectedPlayers()
+    public static void updateTickPlayerActiveTimeoutToConnectedPlayers(MinecraftServer server)
     {
         if (CarpetSettings.superSecretSetting) return;
-        for (ServerPlayer player : remoteCarpetPlayers.keySet())
+        for (ServerPlayer player : validCarpetPlayers)
         {
             player.connection.send(new ClientboundCustomPayloadPacket(
                     CarpetClient.CARPET_CHANNEL,
@@ -256,7 +257,7 @@ public class ServerNetworkHandler
         }
         private DataBuilder withTickRate()
         {
-            tag.putFloat("TickRate", TickSpeed.tickrate);
+            tag.putFloat("TickRate", TickSpeed.gTRM().map(trm -> trm.tickrate).orElse(20.0f));
             return this;
         }
         private DataBuilder withFrozenState()
@@ -269,12 +270,12 @@ public class ServerNetworkHandler
         }
         private DataBuilder withSuperHotState()
         {
-        	tag.putBoolean("SuperHotState", TickSpeed.is_superHot);
+        	tag.putBoolean("SuperHotState", TickSpeed.gTRM().map(trm -> trm.is_superHot).orElse(false));
         	return this;
         }
         private DataBuilder withTickPlayerActiveTimeout()
         {
-            tag.putInt("TickPlayerActiveTimeout", TickSpeed.player_active_timeout);
+            tag.putInt("TickPlayerActiveTimeout", TickSpeed.gTRM().map(trm -> trm.player_active_timeout).orElse(0));
             return this;
         }
         private DataBuilder withRule(CarpetRule<?> rule)

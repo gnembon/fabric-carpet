@@ -34,7 +34,7 @@ public class BoundTickingBlockEntity_tickMixin<T extends BlockEntity>
     ))
     private void checkProcessBEs(BlockEntityTicker<T> blockEntityTicker, Level world, BlockPos pos, BlockState state, T blockEntity)
     {
-        if (TickSpeed.process_entities) blockEntityTicker.tick(world, pos, state, blockEntity);
+        if (TickSpeed.process_entities()) blockEntityTicker.tick(world, pos, state, blockEntity);
     }
 
     @Inject(method = "tick()V", at = @At("RETURN"))

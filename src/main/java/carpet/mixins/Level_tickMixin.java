@@ -86,8 +86,18 @@ public abstract class Level_tickMixin implements LevelInterface
     @Inject(method = "guardEntityTick", at = @At("HEAD"), cancellable = true)
     private void startEntity(Consumer<Entity> consumer_1, Entity e, CallbackInfo ci)
     {
-        if (!(TickSpeed.process_entities || (e instanceof Player) || (TickSpeed.is_superHot && isClientSide && e.getControllingPassenger() instanceof Player)))
-            ci.cancel();
+        // this shows that probably tick speed controller needs to be accessible through level referring to servers on server and client on clientLevel
+        if (isClientSide) {
+            if (!(TickSpeed.process_entitiesClient() || (e instanceof Player) || TickSpeed.isIs_superHotClient() && e.getControllingPassenger() instanceof Player))
+            {
+                ci.cancel();
+            }
+        } else {
+            if (!(TickSpeed.gTRM().map(trm -> trm.process_entities).orElse(true) || (e instanceof Player)))
+            {
+                ci.cancel();
+            }
+        }
         entitySection =  CarpetProfiler.start_entity_section((Level) (Object) this, e, CarpetProfiler.TYPE.ENTITY);
     }
 

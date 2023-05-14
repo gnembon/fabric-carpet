@@ -78,7 +78,7 @@ public abstract class ServerChunkCache_tickMixin
     private boolean skipChunkTicking(ServerLevel serverWorld)
     {
         boolean debug = serverWorld.isDebug();
-        if (!TickSpeed.process_entities)
+        if (!TickSpeed.process_entities())
         {
             // simplified chunk tick iteration assuming world is frozen otherwise as suggested by Hadron67
             // to be kept in sync with the original injection source

@@ -26,9 +26,15 @@ public class MinecraftMixin
     @Inject(at = @At("HEAD"), method = "tick")
     private void onClientTick(CallbackInfo info) {
         if (this.level != null) {
-            if (CarpetServer.minecraft_server == null)
-                TickSpeed.tick();
-            if (!TickSpeed.process_entities)
+            TickSpeed.tickClient();
+            if (CarpetServer.minecraft_server == null) // remote client only ? no - now any client
+            {
+
+            } else {
+                // hmm, server should tick, rgiht?
+                //TickSpeed.tick();
+            }
+            if (!TickSpeed.process_entitiesClient())
                 CarpetClient.shapes.renewShapes();
         }
     }

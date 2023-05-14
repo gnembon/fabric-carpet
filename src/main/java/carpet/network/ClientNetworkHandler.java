@@ -65,15 +65,15 @@ public class ClientNetworkHandler
                 }
             }
         });
-        dataHandlers.put("TickRate", (p, t) -> TickSpeed.tickrate(((NumericTag)t).getAsFloat(), false));
+        dataHandlers.put("TickRate", (p, t) -> TickSpeed.tickrateClient(((NumericTag)t).getAsFloat()));
         dataHandlers.put("TickingState", (p, t) -> {
             CompoundTag tickingState = (CompoundTag)t;
-            TickSpeed.setFrozenState(tickingState.getBoolean("is_paused"), tickingState.getBoolean("deepFreeze"));
+            TickSpeed.setFrozenStateClient(tickingState.getBoolean("is_paused"), tickingState.getBoolean("deepFreeze"));
         });
         dataHandlers.put("SuperHotState", (p, t) -> {
-            TickSpeed.is_superHot = ((ByteTag) t).equals(ByteTag.ONE);
+            TickSpeed.setSuperHotClient(((ByteTag) t).equals(ByteTag.ONE));
         });
-        dataHandlers.put("TickPlayerActiveTimeout", (p, t) -> TickSpeed.player_active_timeout = ((NumericTag)t).getAsInt());
+        dataHandlers.put("TickPlayerActiveTimeout", (p, t) -> TickSpeed.setPlayer_active_timeoutClient(((NumericTag)t).getAsInt()));
         dataHandlers.put("scShape", (p, t) -> { // deprecated // and unused // should remove for 1.17
             if (CarpetClient.shapes != null)
                 CarpetClient.shapes.addShape((CompoundTag)t);

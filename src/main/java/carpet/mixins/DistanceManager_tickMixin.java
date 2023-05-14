@@ -18,6 +18,6 @@ public class DistanceManager_tickMixin
     {
         // pausing expiry of tickets
         // that will prevent also chunks from unloading, so require a deep frozen state
-        if (!TickSpeed.process_entities && TickSpeed.deeplyFrozen()) ticketTickCounter--;
+        if (!TickSpeed.process_entities() && TickSpeed.deeplyFrozen()) ticketTickCounter--;
     }
 }

@@ -89,13 +89,13 @@ public class TickSyncedBorderExtent implements WorldBorder.BorderExtent
         double ms;
         if (server == null)
         {
-            ms = TickSpeed.mspt;
+            ms = TickSpeed.mspt();
         }
         else
         {
              ms = Arrays.stream(server.tickTimes).average().orElseThrow(IllegalStateException::new) * 1.0E-6D;
         }
-        double tps = 1_000.0D / Math.max((TickSpeed.time_warp_start_time != 0) ? 0.0 : TickSpeed.mspt, ms);
+        double tps = 1_000.0D / Math.max((TickSpeed.gTRM().map(trm -> trm.time_warp_start_time).orElse(0L) != 0) ? 0.0 : TickSpeed.mspt(), ms);
         return (long) ((this.tickDuration - this.ticks) / tps * 1_000);
     }
 

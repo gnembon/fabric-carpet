@@ -25,7 +25,7 @@ public class LevelRenderer_pausedShakeMixin
     private float changeTickPhase(float previous)
     {
         initial = previous;
-        if (!TickSpeed.process_entities)
+        if (!TickSpeed.process_entitiesClient())
             return ((MinecraftClientInferface)minecraft).getPausedTickDelta();
         return previous;
     }

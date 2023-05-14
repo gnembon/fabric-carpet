@@ -79,8 +79,8 @@ public class TickCommand
 
     private static int queryTps(CommandSourceStack source)
     {
-        Messenger.m(source, "w Current tps is: ",String.format("wb %.1f", TickSpeed.tickrate));
-        return (int)TickSpeed.tickrate;
+        Messenger.m(source, "w Current tps is: ",String.format("wb %.1f", TickSpeed.gTRM().map(trm -> trm.tickrate).orElse(20.0f)));
+        return (int)(float)TickSpeed.gTRM().map(trm -> trm.tickrate).orElse(20.0f);
     }
 
     private static int setWarp(CommandSourceStack source, int advance, String tail_command)
@@ -132,9 +132,9 @@ public class TickCommand
 
     private static int toggleSuperHot(CommandSourceStack source)
     {
-        TickSpeed.is_superHot = !TickSpeed.is_superHot;
-        ServerNetworkHandler.updateSuperHotStateToConnectedPlayers();
-        if (TickSpeed.is_superHot)
+        TickSpeed.gTRM().ifPresent(trm -> trm.is_superHot = !trm.is_superHot);
+        ServerNetworkHandler.updateSuperHotStateToConnectedPlayers(source.getServer());
+        if (TickSpeed.gTRM().map(trm -> trm.is_superHot).orElse(false))
         {
             Messenger.m(source, "gi Superhot enabled");
         }
