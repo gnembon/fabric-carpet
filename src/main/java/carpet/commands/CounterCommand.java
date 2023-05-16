@@ -55,7 +55,7 @@ public class CounterCommand
 
         for (Component message: counter.format(source.getServer(), realtime, false))
         {
-            source.sendSuccess(message, false);
+            source.sendSuccess(() -> message, false);
         }
         return 1;
     }
@@ -88,7 +88,7 @@ public class CounterCommand
     {
         for (Component message: HopperCounter.formatAll(source.getServer(), realtime))
         {
-            source.sendSuccess(message, false);
+            source.sendSuccess(() -> message, false);
         }
         return 1;
     }

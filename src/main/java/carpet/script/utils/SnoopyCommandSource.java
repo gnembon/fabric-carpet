@@ -20,6 +20,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.function.BinaryOperator;
+import java.util.function.Supplier;
 
 public class SnoopyCommandSource extends CommandSourceStack
 {
@@ -196,9 +197,9 @@ public class SnoopyCommandSource extends CommandSourceStack
     }
 
     @Override
-    public void sendSuccess(Component message, boolean broadcastToOps)
+    public void sendSuccess(Supplier<Component> message, boolean broadcastToOps)
     {
-        chatOutput.add(message);
+        chatOutput.add(message.get());
     }
 
 }

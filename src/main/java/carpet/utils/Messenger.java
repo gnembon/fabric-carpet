@@ -231,7 +231,7 @@ public class Messenger
     public static void m(CommandSourceStack source, Object ... fields)
     {
         if (source != null)
-            source.sendSuccess(Messenger.c(fields), source.getServer() != null && source.getServer().overworld() != null);
+            source.sendSuccess(() -> Messenger.c(fields), source.getServer() != null && source.getServer().overworld() != null);
     }
     public static void m(Player player, Object ... fields)
     {
@@ -283,7 +283,7 @@ public class Messenger
     }
     public static void send(CommandSourceStack source, Collection<Component> lines)
     {
-        lines.stream().forEachOrdered((s) -> source.sendSuccess(s, false));
+        lines.stream().forEachOrdered((s) -> source.sendSuccess(() -> s, false));
     }
 
 

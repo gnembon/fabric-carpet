@@ -92,7 +92,7 @@ public class TickCommand
         ServerPlayer player = source.getPlayer(); // may be null
         TickRateManager trm = ((MinecraftServerInterface)source.getServer()).getTickRateManager();
         Component message = trm.tickrate_advance(player, advance, tail_command, source);
-        source.sendSuccess(message, false);
+        source.sendSuccess(() -> message, false);
         return 1;
     }
 

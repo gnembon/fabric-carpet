@@ -533,11 +533,11 @@ public class Auxiliary
             Component message = FormattedTextValue.getTextByValue(res);
             if (targets == null)
             {
-                s.sendSuccess(message, false);
+                s.sendSuccess(() -> message, false);
             }
             else
             {
-                targets.forEach(p -> p.sendSuccess(message, false));
+                targets.forEach(p -> p.sendSuccess(() -> message, false));
             }
             return res; // pass through for variables
         });
