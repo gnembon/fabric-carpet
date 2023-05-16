@@ -1,8 +1,11 @@
 package carpet.mixins;
 
 import carpet.fakes.LevelInterface;
+import carpet.fakes.MinecraftServerInterface;
+import carpet.helpers.TickRateManager;
 import carpet.helpers.TickSpeed;
 import carpet.utils.CarpetProfiler;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.redstone.NeighborUpdater;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -87,13 +90,18 @@ public abstract class Level_tickMixin implements LevelInterface
     private void startEntity(Consumer<Entity> consumer_1, Entity e, CallbackInfo ci)
     {
         // this shows that probably tick speed controller needs to be accessible through level referring to servers on server and client on clientLevel
-        if (isClientSide) {
-            if (!(TickSpeed.process_entitiesClient() || (e instanceof Player) || TickSpeed.isIs_superHotClient() && e.getControllingPassenger() instanceof Player))
+        if (!isClientSide)
+        {
+            ServerLevel serverLevel = (ServerLevel) (Object) this;
+            TickRateManager trm = ((MinecraftServerInterface)serverLevel.getServer()).getTickRateManager();
+            if (!(trm.process_entities() || (e instanceof Player)))
             {
                 ci.cancel();
             }
-        } else {
-            if (!(TickSpeed.gTRM().map(trm -> trm.process_entities).orElse(true) || (e instanceof Player)))
+        }
+        else
+        {
+            if (!(TickSpeed.process_entitiesClient() || (e instanceof Player) || TickSpeed.isIs_superHotClient() && e.getControllingPassenger() instanceof Player))
             {
                 ci.cancel();
             }

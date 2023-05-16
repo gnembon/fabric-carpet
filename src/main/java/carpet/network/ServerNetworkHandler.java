@@ -4,8 +4,9 @@ import carpet.CarpetServer;
 import carpet.CarpetSettings;
 import carpet.api.settings.CarpetRule;
 import carpet.api.settings.RuleHelper;
+import carpet.fakes.MinecraftServerInterface;
 import carpet.fakes.ServerGamePacketListenerImplInterface;
-import carpet.helpers.TickSpeed;
+import carpet.helpers.TickRateManager;
 import carpet.script.utils.SnoopyCommandSource;
 import carpet.api.settings.SettingsManager;
 import io.netty.buffer.Unpooled;
@@ -77,7 +78,7 @@ public class ServerNetworkHandler
             CarpetSettings.LOG.info("Player "+playerEntity.getName().getString()+" joined with a matching carpet client");
         else
             CarpetSettings.LOG.warn("Player "+playerEntity.getName().getString()+" joined with another carpet version: "+clientVersion);
-        DataBuilder data = DataBuilder.create().withTickRate().withFrozenState().withTickPlayerActiveTimeout(); // .withSuperHotState()
+        DataBuilder data = DataBuilder.create(playerEntity.server).withTickRate().withFrozenState().withTickPlayerActiveTimeout(); // .withSuperHotState()
         CarpetServer.settingsManager.getCarpetRules().forEach(data::withRule);
         CarpetServer.extensions.forEach(e -> {
             SettingsManager eManager = e.extensionSettingsManager();
@@ -114,7 +115,7 @@ public class ServerNetworkHandler
         if (!output.isEmpty()) result.put("output", outputResult);
         player.connection.send(new ClientboundCustomPayloadPacket(
                 CarpetClient.CARPET_CHANNEL,
-                DataBuilder.create().withCustomNbt("clientCommand", result).build()
+                DataBuilder.create(player.server).withCustomNbt("clientCommand", result).build()
         ));
         // run command plug to command output,
     }
@@ -140,7 +141,7 @@ public class ServerNetworkHandler
         {
             player.connection.send(new ClientboundCustomPayloadPacket(
                     CarpetClient.CARPET_CHANNEL,
-                    DataBuilder.create().withRule(rule).build()
+                    DataBuilder.create(player.server).withRule(rule).build()
             ));
         }
     }
@@ -152,7 +153,7 @@ public class ServerNetworkHandler
         {
             player.connection.send(new ClientboundCustomPayloadPacket(
                     CarpetClient.CARPET_CHANNEL,
-                    DataBuilder.create().withTickRate().build()
+                    DataBuilder.create(player.server).withTickRate().build()
             ));
         }
     }
@@ -164,7 +165,7 @@ public class ServerNetworkHandler
         {
             player.connection.send(new ClientboundCustomPayloadPacket(
                     CarpetClient.CARPET_CHANNEL,
-                    DataBuilder.create().withFrozenState().build()
+                    DataBuilder.create(player.server).withFrozenState().build()
             ));
         }
     }
@@ -176,7 +177,7 @@ public class ServerNetworkHandler
         {
             player.connection.send(new ClientboundCustomPayloadPacket(
                     CarpetClient.CARPET_CHANNEL,
-                    DataBuilder.create().withSuperHotState().build()
+                    DataBuilder.create(player.server).withSuperHotState().build()
             ));
         }
     }
@@ -188,7 +189,7 @@ public class ServerNetworkHandler
         {
             player.connection.send(new ClientboundCustomPayloadPacket(
                     CarpetClient.CARPET_CHANNEL,
-                    DataBuilder.create().withTickPlayerActiveTimeout().build()
+                    DataBuilder.create(player.server).withTickPlayerActiveTimeout().build()
             ));
         }
     }
@@ -200,7 +201,7 @@ public class ServerNetworkHandler
         {
             player.connection.send(new ClientboundCustomPayloadPacket(
                     CarpetClient.CARPET_CHANNEL,
-                    DataBuilder.create().withCustomNbt(command, data).build()
+                    DataBuilder.create(player.server).withCustomNbt(command, data).build()
             ));
         }
     }
@@ -211,7 +212,7 @@ public class ServerNetworkHandler
         {
             player.connection.send(new ClientboundCustomPayloadPacket(
                     CarpetClient.CARPET_CHANNEL,
-                    DataBuilder.create().withCustomNbt(command, data).build()
+                    DataBuilder.create(player.server).withCustomNbt(command, data).build()
             ));
         }
     }
@@ -247,35 +248,41 @@ public class ServerNetworkHandler
     private static class DataBuilder
     {
         private CompoundTag tag;
-        private static DataBuilder create()
+        private MinecraftServer server;
+        private static DataBuilder create(final MinecraftServer server)
         {
-            return new DataBuilder();
+            return new DataBuilder(server);
         }
-        private DataBuilder()
+        private DataBuilder(MinecraftServer server)
         {
             tag = new CompoundTag();
+            this.server = server;
         }
         private DataBuilder withTickRate()
         {
-            tag.putFloat("TickRate", TickSpeed.gTRM().map(trm -> trm.tickrate).orElse(20.0f));
+            TickRateManager trm = ((MinecraftServerInterface)server).getTickRateManager();
+            tag.putFloat("TickRate", trm.tickrate);
             return this;
         }
         private DataBuilder withFrozenState()
         {
+            TickRateManager trm = ((MinecraftServerInterface)server).getTickRateManager();
             CompoundTag tickingState = new CompoundTag();
-            tickingState.putBoolean("is_paused", TickSpeed.isPaused());
-            tickingState.putBoolean("deepFreeze", TickSpeed.deeplyFrozen());
+            tickingState.putBoolean("is_paused", trm.isPaused());
+            tickingState.putBoolean("deepFreeze", trm.deeplyFrozen());
             tag.put("TickingState", tickingState);
             return this;
         }
         private DataBuilder withSuperHotState()
         {
-        	tag.putBoolean("SuperHotState", TickSpeed.gTRM().map(trm -> trm.is_superHot).orElse(false));
+            TickRateManager trm = ((MinecraftServerInterface)server).getTickRateManager();
+        	tag.putBoolean("SuperHotState", trm.is_superHot);
         	return this;
         }
         private DataBuilder withTickPlayerActiveTimeout()
         {
-            tag.putInt("TickPlayerActiveTimeout", TickSpeed.gTRM().map(trm -> trm.player_active_timeout).orElse(0));
+            TickRateManager trm = ((MinecraftServerInterface)server).getTickRateManager();
+            tag.putInt("TickPlayerActiveTimeout", trm.player_active_timeout);
             return this;
         }
         private DataBuilder withRule(CarpetRule<?> rule)

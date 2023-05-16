@@ -36,7 +36,6 @@
     "BoundTickingBlockEntity_tickMixin",
     "ServerChunkCache_tickMixin",
     "ChunkMap_tickMixin",
-    "DistanceManager_tickMixin",
     "ServerFunctionManager_tickMixin",
     "WorldBorder_tickMixin",
     "ChunkMap_scarpetChunkCreationMixin",

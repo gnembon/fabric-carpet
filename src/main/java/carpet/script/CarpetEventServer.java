@@ -1369,7 +1369,7 @@ public class CarpetEventServer
 
     public void tick()
     {
-        if (Carpet.isTickProcessingPaused())
+        if (Carpet.isTickProcessingPaused(scriptServer.server))
         {
             return;
         }

@@ -134,9 +134,9 @@ public class Carpet
         return null;
     }
 
-    public static boolean isTickProcessingPaused()
+    public static boolean isTickProcessingPaused(MinecraftServer server)
     {
-        return !TickSpeed.process_entities();
+        return !((MinecraftServerInterface)server).getTickRateManager().process_entities();
     }
 
     public static void handleExtensionsAPI(CarpetExpression expression)

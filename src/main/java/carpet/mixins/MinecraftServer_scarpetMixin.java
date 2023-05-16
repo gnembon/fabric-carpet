@@ -1,7 +1,6 @@
 package carpet.mixins;
 
 import carpet.fakes.MinecraftServerInterface;
-import carpet.helpers.TickSpeed;
 import carpet.script.CarpetScriptServer;
 import net.minecraft.Util;
 import net.minecraft.core.RegistryAccess;
@@ -89,8 +88,10 @@ public abstract class MinecraftServer_scarpetMixin extends ReentrantBlockableEve
     ))
     public void tickTasks(BooleanSupplier booleanSupplier_1, CallbackInfo ci)
     {
-        if (!TickSpeed.process_entities())
+        if (!getTickRateManager().process_entities())
+        {
             return;
+        }
         TICK.onTick((MinecraftServer) (Object) this);
         NETHER_TICK.onTick((MinecraftServer) (Object) this);
         ENDER_TICK.onTick((MinecraftServer) (Object) this);

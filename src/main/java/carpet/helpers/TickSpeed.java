@@ -1,22 +1,18 @@
 package carpet.helpers;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Optional;
 import java.util.function.BiConsumer;
 
 import carpet.fakes.MinecraftServerInterface;
 import net.minecraft.commands.CommandSourceStack;
-import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import carpet.CarpetServer;
-import carpet.network.ServerNetworkHandler;
 import carpet.utils.Messenger;
 
 public class TickSpeed
 {
-    public static Optional<TickRateManager> gTRM() {
+    private static Optional<TickRateManager> gTRM() {
         if (CarpetServer.minecraft_server == null) return Optional.empty();
         return Optional.of(((MinecraftServerInterface)CarpetServer.minecraft_server).getTickRateManager());
     }
@@ -29,43 +25,17 @@ public class TickSpeed
         return gTRM().map(trm -> trm.mspt).orElse(50.0f);
     }
 
-    /**
-     * @return Whether or not the game is in a frozen state.
-     *         You should normally use {@link #process_entities()} instead,
-     *         since that one accounts for tick steps and superhot
-     */
     public static boolean isPaused() {
 	    return gTRM().map(TickRateManager::isPaused).orElse(false);
     }
 
-    /**
-     * Whether or not the game is deeply frozen.
-     * This can be used for things that you may not normally want
-     * to freeze, but may need to in some situations.
-     * This should be checked with {@link #process_entities()} to make sure the
-     * current tick is actually frozen, not only the game
-     * @return Whether or not the game is deeply frozen.
-     */
     public static boolean deeplyFrozen() {
         return gTRM().map(TickRateManager::deeplyFrozen).orElse(false);
     }
 
-    /**
-     * Used to update the frozen state of the game.
-     * Handles connected clients as well.
-     * @param isPaused Whether or not the game is paused
-     * @param isDeepFreeze Whether or not the game is deeply frozen
-     */
     public static void setFrozenState(boolean isPaused, boolean isDeepFreeze) {
         gTRM().ifPresent(trm -> trm.setFrozenState(isPaused, isDeepFreeze));
     }
-
-    /**
-     * Functional interface that listens for tickrate changes. This is
-     * implemented to allow tickrate compatibility with other mods etc.
-     */
-    private static final Map<String, BiConsumer<String, Float>> tickrateListeners = new HashMap<>();
-    private static final float MIN_TICKRATE = 0.01f;
     
     public static void reset_player_active_timeout()
     {
@@ -74,7 +44,7 @@ public class TickSpeed
 
     public static void reset()
     {
-        gTRM().ifPresent(TickRateManager::reset);
+        // noop - called on server to reset client
     }
 
     public static void add_ticks_to_run_in_pause(int ticks)
@@ -109,14 +79,10 @@ public class TickSpeed
     }
 
 
-
-    
     public static BiConsumer<String, Float> addTickrateListener(String modId, BiConsumer<String, Float> tickrateListener) 
     {
         return gTRM().map(trm -> trm.addTickrateListener(modId, tickrateListener)).orElse(null);
     }
-
-
 
 
     // client only
@@ -191,6 +157,17 @@ public class TickSpeed
         {
             process_entities = true;
         }
+    }
+
+    public static void resetClient()
+    {
+        tickrate = 20.0f;
+        mspt = 50.0f;
+        player_active_timeout = 0;
+        process_entities = true;
+        deepFreeze = false;
+        is_paused = false;
+        is_superHot = false;
     }
 
 }

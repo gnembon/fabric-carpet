@@ -12,4 +12,6 @@ accessible class net/minecraft/world/level/block/entity/SculkSensorBlockEntity$V
 
 accessible method net/minecraft/world/level/border/WorldBorder getListeners ()Ljava/util/List;
 
+accessible method net/minecraft/server/level/DistanceManager purgeStaleTickets ()V
+
 accessible field net/minecraft/world/level/block/state/BlockBehaviour UPDATE_SHAPE_ORDER [Lnet/minecraft/core/Direction;

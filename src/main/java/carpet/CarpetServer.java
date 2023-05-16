@@ -14,6 +14,8 @@ import carpet.commands.MobAICommand;
 import carpet.commands.PerimeterInfoCommand;
 import carpet.commands.PlayerCommand;
 import carpet.commands.ProfileCommand;
+import carpet.fakes.MinecraftServerInterface;
+import carpet.helpers.TickRateManager;
 import carpet.script.ScriptCommand;
 import carpet.commands.SpawnCommand;
 import carpet.commands.TestCommand;
@@ -127,7 +129,8 @@ public class CarpetServer // static for now - easier to handle all around the co
 
     public static void tick(MinecraftServer server)
     {
-        TickSpeed.tick();
+        TickRateManager trm = ((MinecraftServerInterface)server).getTickRateManager();
+        trm.tick();
         HUDController.update_hud(server, null);
         if (scriptServer != null) scriptServer.tick();
 
@@ -228,7 +231,7 @@ public class CarpetServer // static for now - easier to handle all around the co
         }
 
         // this for whatever reason gets called multiple times even when joining;
-        TickSpeed.reset();
+        TickSpeed.resetClient();
     }
     public static void onServerDoneClosing(MinecraftServer server)
     {

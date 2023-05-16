@@ -126,7 +126,7 @@ public class HUDController
         }
         double MSPT = Arrays.stream(server.tickTimes).average().getAsDouble() * 1.0E-6D;
         double TPS = 1000.0D / Math.max((trm.time_warp_start_time != 0)?0.0:trm.mspt, MSPT);
-        if (TickSpeed.isPaused()) {
+        if (trm.isPaused()) {
             TPS = 0;
         }
         String color = Messenger.heatmap_color(MSPT,trm.mspt);

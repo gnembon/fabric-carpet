@@ -112,7 +112,7 @@ public abstract class MinecraftServer_tickspeedMixin extends ReentrantBlockableE
             long msThisTick = 0L;
             long long_1 = 0L;
             float mspt = tickRateManager.mspt;
-            if (tickRateManager.time_warp_start_time != 0 && TickSpeed.continueWarp())
+            if (tickRateManager.time_warp_start_time != 0 && tickRateManager.continueWarp())
             {
                 //making sure server won't flop after the warp or if the warp is interrupted
                 this.nextTickTime = this.lastOverloadWarning = Util.getMillis();
@@ -151,9 +151,9 @@ public abstract class MinecraftServer_tickspeedMixin extends ReentrantBlockableE
             //this.startMonitor(tickDurationMonitor);
             this.startMetricsRecordingTick();
             this.profiler.push("tick");
-            this.tickServer(TickSpeed.gTRM().map(trm -> trm.time_warp_start_time).orElse(0L) != 0 ? ()->true : this::haveTime);
+            this.tickServer(tickRateManager.time_warp_start_time != 0 ? ()->true : this::haveTime);
             this.profiler.popPush("nextTickWait");
-            if (TickSpeed.gTRM().map(trm -> trm.time_warp_start_time).orElse(0L) != 0) // clearing all hanging tasks no matter what when warping
+            if (tickRateManager.time_warp_start_time != 0) // clearing all hanging tasks no matter what when warping
             {
                 while(this.runEveryTask()) {Thread.yield();}
             }
