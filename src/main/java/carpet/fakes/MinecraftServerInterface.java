@@ -3,7 +3,7 @@ package carpet.fakes;
 import java.util.Map;
 import java.util.function.BooleanSupplier;
 
-import carpet.helpers.TickRateManager;
+import carpet.helpers.ServerTickRateManager;
 import carpet.script.CarpetScriptServer;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.resources.ResourceKey;
@@ -25,5 +25,5 @@ public interface MinecraftServerInterface
     void addScriptServer(CarpetScriptServer scriptServer);
     CarpetScriptServer getScriptServer();
 
-    TickRateManager getTickRateManager();
+    ServerTickRateManager getTickRateManager();
 }

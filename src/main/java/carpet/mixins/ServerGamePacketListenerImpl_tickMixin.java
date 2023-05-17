@@ -27,7 +27,7 @@ public class ServerGamePacketListenerImpl_tickMixin
     {
         if (p.getXxa() != 0.0F || p.getZza() != 0.0F || p.isJumping() || p.isShiftKeyDown())
         {
-            ((MinecraftServerInterface)player.getServer()).getTickRateManager().reset_player_active_timeout();
+            ((MinecraftServerInterface)player.getServer()).getTickRateManager().resetPlayerActivity();
         }
     }
 
@@ -53,7 +53,7 @@ public class ServerGamePacketListenerImpl_tickMixin
         {
             lastMoved = movedBy;
             lastMovedTick = player.getServer().getTickCount();
-            ((MinecraftServerInterface)player.getServer()).getTickRateManager().reset_player_active_timeout();
+            ((MinecraftServerInterface)player.getServer()).getTickRateManager().resetPlayerActivity();
         }
     }
 }

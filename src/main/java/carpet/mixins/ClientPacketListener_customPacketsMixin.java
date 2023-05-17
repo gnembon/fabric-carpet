@@ -1,6 +1,5 @@
 package carpet.mixins;
 
-import carpet.helpers.TickSpeed;
 import carpet.network.CarpetClient;
 import carpet.network.ClientNetworkHandler;
 import net.minecraft.client.Minecraft;
@@ -34,13 +33,11 @@ public abstract class ClientPacketListener_customPacketsMixin
     private void onGameJoined(ClientboundLoginPacket packet, CallbackInfo info)
     {
         CarpetClient.gameJoined(minecraft.player);
-        TickSpeed.resetClient();
     }
 
     @Inject(method = "onDisconnect", at = @At("HEAD"))
     private void onCMDisconnected(Component reason, CallbackInfo ci)
     {
         CarpetClient.disconnect();
-        TickSpeed.resetClient();
     }
 }

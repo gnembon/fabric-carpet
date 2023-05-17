@@ -5,7 +5,8 @@ import carpet.CarpetExtension;
 import carpet.CarpetSettings;
 import carpet.api.settings.CarpetRule;
 import carpet.api.settings.InvalidRuleValueException;
-import carpet.helpers.TickSpeed;
+import carpet.fakes.ClientLevelInterface;
+import carpet.helpers.TickRateManager;
 import carpet.api.settings.SettingsManager;
 import io.netty.buffer.Unpooled;
 import java.util.HashMap;
@@ -65,15 +66,23 @@ public class ClientNetworkHandler
                 }
             }
         });
-        dataHandlers.put("TickRate", (p, t) -> TickSpeed.tickrateClient(((NumericTag)t).getAsFloat()));
+        dataHandlers.put("TickRate", (p, t) -> {
+            TickRateManager tickRateManager = ((ClientLevelInterface)p.clientLevel).getTickRateManager();
+            tickRateManager.setTickRate(((NumericTag) t).getAsFloat());
+        });
         dataHandlers.put("TickingState", (p, t) -> {
             CompoundTag tickingState = (CompoundTag)t;
-            TickSpeed.setFrozenStateClient(tickingState.getBoolean("is_paused"), tickingState.getBoolean("deepFreeze"));
+            TickRateManager tickRateManager = ((ClientLevelInterface)p.clientLevel).getTickRateManager();
+            tickRateManager.setFrozenState(tickingState.getBoolean("is_paused"), tickingState.getBoolean("deepFreeze"));
         });
         dataHandlers.put("SuperHotState", (p, t) -> {
-            TickSpeed.setSuperHotClient(((ByteTag) t).equals(ByteTag.ONE));
+            TickRateManager tickRateManager = ((ClientLevelInterface)p.clientLevel).getTickRateManager();
+            tickRateManager.setSuperHot(((ByteTag) t).equals(ByteTag.ONE));
         });
-        dataHandlers.put("TickPlayerActiveTimeout", (p, t) -> TickSpeed.setPlayer_active_timeoutClient(((NumericTag)t).getAsInt()));
+        dataHandlers.put("TickPlayerActiveTimeout", (p, t) -> {
+            TickRateManager tickRateManager = ((ClientLevelInterface)p.clientLevel).getTickRateManager();
+            tickRateManager.setPlayerActiveTimeout(((NumericTag) t).getAsInt());
+        });
         dataHandlers.put("scShape", (p, t) -> { // deprecated // and unused // should remove for 1.17
             if (CarpetClient.shapes != null)
                 CarpetClient.shapes.addShape((CompoundTag)t);

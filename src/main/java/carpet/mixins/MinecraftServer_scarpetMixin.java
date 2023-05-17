@@ -88,7 +88,7 @@ public abstract class MinecraftServer_scarpetMixin extends ReentrantBlockableEve
     ))
     public void tickTasks(BooleanSupplier booleanSupplier_1, CallbackInfo ci)
     {
-        if (!getTickRateManager().process_entities())
+        if (!getTickRateManager().runsNormally())
         {
             return;
         }

@@ -159,13 +159,13 @@ public abstract class ServerLevel_tickMixin extends Level
     ))
     private void tickWorldBorder(WorldBorder worldBorder)
     {
-        if (((MinecraftServerInterface)getServer()).getTickRateManager().process_entities()) worldBorder.tick();
+        if (((MinecraftServerInterface)getServer()).getTickRateManager().runsNormally()) worldBorder.tick();
     }
 
     @Inject(method = "advanceWeatherCycle", cancellable = true, at = @At("HEAD"))
     private void tickWeather(CallbackInfo ci)
     {
-        if (!((MinecraftServerInterface)getServer()).getTickRateManager().process_entities()) ci.cancel();
+        if (!((MinecraftServerInterface)getServer()).getTickRateManager().runsNormally()) ci.cancel();
     }
 
     @Redirect(method = "tick", at = @At(
@@ -174,7 +174,7 @@ public abstract class ServerLevel_tickMixin extends Level
     ))
     private void tickTimeConditionally(ServerLevel serverWorld)
     {
-        if (((MinecraftServerInterface)getServer()).getTickRateManager().process_entities()) tickTime();
+        if (((MinecraftServerInterface)getServer()).getTickRateManager().runsNormally()) tickTime();
     }
 
     @Redirect(method = "tick", at = @At(
@@ -183,7 +183,7 @@ public abstract class ServerLevel_tickMixin extends Level
     ))
     private boolean tickPendingBlocks(ServerLevel serverWorld)
     {
-        if (!((MinecraftServerInterface)getServer()).getTickRateManager().process_entities()) return true;
+        if (!((MinecraftServerInterface)getServer()).getTickRateManager().runsNormally()) return true;
         return serverWorld.isDebug(); // isDebug()
     }
 
@@ -193,7 +193,7 @@ public abstract class ServerLevel_tickMixin extends Level
     ))
     private void tickConditionally(Raids raidManager)
     {
-        if (((MinecraftServerInterface)getServer()).getTickRateManager().process_entities()) raidManager.tick();
+        if (((MinecraftServerInterface)getServer()).getTickRateManager().runsNormally()) raidManager.tick();
     }
 
     @Redirect(method = "tick", at = @At(
@@ -202,6 +202,6 @@ public abstract class ServerLevel_tickMixin extends Level
     ))
     private void tickConditionally(ServerLevel serverWorld)
     {
-        if (((MinecraftServerInterface)getServer()).getTickRateManager().process_entities()) runBlockEvents();
+        if (((MinecraftServerInterface)getServer()).getTickRateManager().runsNormally()) runBlockEvents();
     }
 }

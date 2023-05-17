@@ -4,7 +4,7 @@ import carpet.CarpetSettings;
 import carpet.fakes.MinecraftServerInterface;
 import carpet.fakes.SpawnGroupInterface;
 import carpet.helpers.HopperCounter;
-import carpet.helpers.TickRateManager;
+import carpet.helpers.ServerTickRateManager;
 import carpet.utils.CommandHelper;
 import carpet.utils.Messenger;
 import carpet.utils.SpawnReporter;
@@ -199,8 +199,8 @@ public class SpawnCommand
 
 
         // tick warp 0
-        TickRateManager trm = ((MinecraftServerInterface)source.getServer()).getTickRateManager();
-        trm.tickrate_advance(null, 0, null, null);
+        ServerTickRateManager trm = ((MinecraftServerInterface)source.getServer()).getTickRateManager();
+        trm.requestGameToWarpSpeed(null, 0, null, null);
         // tick warp given player
         CommandSourceStack csource = null;
         ServerPlayer player = null;
@@ -212,7 +212,7 @@ public class SpawnCommand
         catch (CommandSyntaxException ignored)
         {
         }
-        trm.tickrate_advance(player, ticks, null, csource);
+        trm.requestGameToWarpSpeed(player, ticks, null, csource);
         Messenger.m(source, String.format("gi Started spawn test for %d ticks", ticks));
         return 1;
     }

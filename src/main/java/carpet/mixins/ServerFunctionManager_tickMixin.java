@@ -20,7 +20,7 @@ public class ServerFunctionManager_tickMixin
     @Inject(method = "tick", at = @At("HEAD"), cancellable = true)
     private void beforeDatapacks(CallbackInfo ci)
     {
-    	if (! ((MinecraftServerInterface)server).getTickRateManager().process_entities())
+    	if (! ((MinecraftServerInterface)server).getTickRateManager().runsNormally())
         {
             ci.cancel();
         }

@@ -3,8 +3,7 @@ package carpet.logging;
 import carpet.CarpetServer;
 import carpet.fakes.MinecraftServerInterface;
 import carpet.helpers.HopperCounter;
-import carpet.helpers.TickRateManager;
-import carpet.helpers.TickSpeed;
+import carpet.helpers.ServerTickRateManager;
 import carpet.logging.logHelpers.PacketCounter;
 import carpet.utils.Messenger;
 import carpet.utils.SpawnReporter;
@@ -118,18 +117,18 @@ public class HUDController
     }
     private static Component [] send_tps_display(MinecraftServer server)
     {
-        final OptionalDouble averageTPS = Arrays.stream(server.tickTimes).average();
-        TickRateManager trm = ((MinecraftServerInterface)server).getTickRateManager();
+        OptionalDouble averageTPS = Arrays.stream(server.tickTimes).average();
+        ServerTickRateManager trm = ((MinecraftServerInterface)server).getTickRateManager();
         if (averageTPS.isEmpty())
         {
             return new Component[]{Component.literal("No TPS data available")};
         }
         double MSPT = Arrays.stream(server.tickTimes).average().getAsDouble() * 1.0E-6D;
-        double TPS = 1000.0D / Math.max((trm.time_warp_start_time != 0)?0.0:trm.mspt, MSPT);
-        if (trm.isPaused()) {
+        double TPS = 1000.0D / Math.max(trm.isInWarpSpeed()?0.0:trm.mspt(), MSPT);
+        if (trm.gameIsPaused()) {
             TPS = 0;
         }
-        String color = Messenger.heatmap_color(MSPT,trm.mspt);
+        String color = Messenger.heatmap_color(MSPT,trm.mspt());
         return new Component[]{Messenger.c(
                 "g TPS: ", String.format(Locale.US, "%s %.1f",color, TPS),
                 "g  MSPT: ", String.format(Locale.US,"%s %.1f", color, MSPT))};

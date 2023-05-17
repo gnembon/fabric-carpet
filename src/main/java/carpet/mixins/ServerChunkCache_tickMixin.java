@@ -2,7 +2,7 @@ package carpet.mixins;
 
 import carpet.fakes.MinecraftServerInterface;
 import carpet.fakes.ThreadedAnvilChunkStorageInterface;
-import carpet.helpers.TickRateManager;
+import carpet.helpers.ServerTickRateManager;
 import carpet.utils.CarpetProfiler;
 import net.minecraft.server.level.DistanceManager;
 import org.spongepowered.asm.mixin.Final;
@@ -80,7 +80,7 @@ public abstract class ServerChunkCache_tickMixin
     private boolean skipChunkTicking(ServerLevel serverWorld)
     {
         boolean debug = serverWorld.isDebug();
-        if (!((MinecraftServerInterface)serverWorld.getServer()).getTickRateManager().process_entities())
+        if (!((MinecraftServerInterface)serverWorld.getServer()).getTickRateManager().runsNormally())
         {
             // simplified chunk tick iteration assuming world is frozen otherwise as suggested by Hadron67
             // to be kept in sync with the original injection source
@@ -107,8 +107,8 @@ public abstract class ServerChunkCache_tickMixin
     {
         // pausing expiry of tickets
         // that will prevent also chunks from unloading, so require a deep frozen state
-        TickRateManager trm = ((MinecraftServerInterface) level.getServer()).getTickRateManager();
-        if (!trm.process_entities() && trm.deeplyFrozen()) return;
+        ServerTickRateManager trm = ((MinecraftServerInterface) level.getServer()).getTickRateManager();
+        if (!trm.runsNormally() && trm.deeplyFrozen()) return;
         distanceManager.purgeStaleTickets();
     }
 

@@ -1,10 +1,12 @@
 package carpet.mixins;
 
+import carpet.fakes.ClientLevelInterface;
 import carpet.fakes.LevelInterface;
 import carpet.fakes.MinecraftServerInterface;
 import carpet.helpers.TickRateManager;
-import carpet.helpers.TickSpeed;
+import carpet.helpers.ServerTickRateManager;
 import carpet.utils.CarpetProfiler;
+import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.redstone.NeighborUpdater;
 import org.spongepowered.asm.mixin.Final;
@@ -53,55 +55,26 @@ public abstract class Level_tickMixin implements LevelInterface
     private void endBlockEntities(CallbackInfo ci) {
         CarpetProfiler.end_current_section(currentSection);
     }
-/*
-    @Inject(method = "tickBlockEntities", locals = LocalCapture.CAPTURE_FAILHARD, at = @At(
-            value = "INVOKE",
-            target = "Lnet/minecraft/class_5562;method_31704()Z",
-            shift = At.Shift.BEFORE,
-            ordinal = 0
-    ))
-    private void startTileEntitySection(CallbackInfo ci, Profiler profiler_1, Iterator i, class_5562 lv)
-    {
-        entitySection = CarpetProfiler.start_block_entity_section((World)(Object)this, (BlockEntity) lv, CarpetProfiler.TYPE.TILEENTITY);
-    }
 
-    @Redirect(method = "tickBlockEntities", at = @At(
-            value = "INVOKE",
-            target = "Lnet/minecraft/class_5562;method_31704()Z",
-            ordinal = 0
-    ))   // isRemoved()
-    private boolean checkProcessTEs(class_5562 class_5562)
-    {
-        return class_5562.method_31704() || !TickSpeed.process_entities; // blockEntity can be NULL? happened once with fake player
-    }
-
-    @Inject(method = "tickBlockEntities", at = @At(
-            value = "INVOKE",
-            target = "Lnet/minecraft/class_5562;method_31703()V",
-            shift = At.Shift.AFTER,
-            ordinal = 0
-    ))
-    private void endTileEntitySection(CallbackInfo ci)
-    {
-         CarpetProfiler.end_current_entity_section(entitySection);
-    }
-*/
     @Inject(method = "guardEntityTick", at = @At("HEAD"), cancellable = true)
     private void startEntity(Consumer<Entity> consumer_1, Entity e, CallbackInfo ci)
     {
         // this shows that probably tick speed controller needs to be accessible through level referring to servers on server and client on clientLevel
+        // these two branches could also be merged into one generic for cloent and server
         if (!isClientSide)
         {
             ServerLevel serverLevel = (ServerLevel) (Object) this;
-            TickRateManager trm = ((MinecraftServerInterface)serverLevel.getServer()).getTickRateManager();
-            if (!(trm.process_entities() || (e instanceof Player)))
+            ServerTickRateManager trm = ((MinecraftServerInterface)serverLevel.getServer()).getTickRateManager();
+            if (!(trm.runsNormally() || (e instanceof Player)))
             {
                 ci.cancel();
             }
         }
         else
         {
-            if (!(TickSpeed.process_entitiesClient() || (e instanceof Player) || TickSpeed.isIs_superHotClient() && e.getControllingPassenger() instanceof Player))
+            ClientLevel clientLevel = (ClientLevel) (Object) this;
+            TickRateManager trm = ((ClientLevelInterface)clientLevel).getTickRateManager();
+            if (!(trm.runsNormally() || (e instanceof Player) || trm.isSuperHot() && e.getControllingPassenger() instanceof Player))
             {
                 ci.cancel();
             }

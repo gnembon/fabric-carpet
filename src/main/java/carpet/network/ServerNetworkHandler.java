@@ -6,7 +6,7 @@ import carpet.api.settings.CarpetRule;
 import carpet.api.settings.RuleHelper;
 import carpet.fakes.MinecraftServerInterface;
 import carpet.fakes.ServerGamePacketListenerImplInterface;
-import carpet.helpers.TickRateManager;
+import carpet.helpers.ServerTickRateManager;
 import carpet.script.utils.SnoopyCommandSource;
 import carpet.api.settings.SettingsManager;
 import io.netty.buffer.Unpooled;
@@ -260,29 +260,29 @@ public class ServerNetworkHandler
         }
         private DataBuilder withTickRate()
         {
-            TickRateManager trm = ((MinecraftServerInterface)server).getTickRateManager();
-            tag.putFloat("TickRate", trm.tickrate);
+            ServerTickRateManager trm = ((MinecraftServerInterface)server).getTickRateManager();
+            tag.putFloat("TickRate", trm.tickrate());
             return this;
         }
         private DataBuilder withFrozenState()
         {
-            TickRateManager trm = ((MinecraftServerInterface)server).getTickRateManager();
+            ServerTickRateManager trm = ((MinecraftServerInterface)server).getTickRateManager();
             CompoundTag tickingState = new CompoundTag();
-            tickingState.putBoolean("is_paused", trm.isPaused());
+            tickingState.putBoolean("is_paused", trm.gameIsPaused());
             tickingState.putBoolean("deepFreeze", trm.deeplyFrozen());
             tag.put("TickingState", tickingState);
             return this;
         }
         private DataBuilder withSuperHotState()
         {
-            TickRateManager trm = ((MinecraftServerInterface)server).getTickRateManager();
-        	tag.putBoolean("SuperHotState", trm.is_superHot);
+            ServerTickRateManager trm = ((MinecraftServerInterface)server).getTickRateManager();
+        	tag.putBoolean("SuperHotState", trm.isSuperHot());
         	return this;
         }
         private DataBuilder withTickPlayerActiveTimeout()
         {
-            TickRateManager trm = ((MinecraftServerInterface)server).getTickRateManager();
-            tag.putInt("TickPlayerActiveTimeout", trm.player_active_timeout);
+            ServerTickRateManager trm = ((MinecraftServerInterface)server).getTickRateManager();
+            tag.putInt("TickPlayerActiveTimeout", trm.getPlayerActiveTimeout());
             return this;
         }
         private DataBuilder withRule(CarpetRule<?> rule)

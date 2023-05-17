@@ -10,27 +10,28 @@ import net.minecraft.server.level.ServerPlayer;
 import carpet.CarpetServer;
 import carpet.utils.Messenger;
 
+@Deprecated(forRemoval = true, since = "now")
 public class TickSpeed
 {
-    private static Optional<TickRateManager> gTRM() {
+    private static Optional<ServerTickRateManager> gTRM() {
         if (CarpetServer.minecraft_server == null) return Optional.empty();
         return Optional.of(((MinecraftServerInterface)CarpetServer.minecraft_server).getTickRateManager());
     }
 
     public static boolean process_entities() {
-        return gTRM().map(trm -> trm.process_entities).orElse(true);
+        return gTRM().map(ServerTickRateManager::runsNormally).orElse(true);
     }
 
     public static float mspt() {
-        return gTRM().map(trm -> trm.mspt).orElse(50.0f);
+        return gTRM().map(ServerTickRateManager::mspt).orElse(50.0f);
     }
 
     public static boolean isPaused() {
-	    return gTRM().map(TickRateManager::isPaused).orElse(false);
+	    return gTRM().map(ServerTickRateManager::gameIsPaused).orElse(false);
     }
 
     public static boolean deeplyFrozen() {
-        return gTRM().map(TickRateManager::deeplyFrozen).orElse(false);
+        return gTRM().map(ServerTickRateManager::deeplyFrozen).orElse(false);
     }
 
     public static void setFrozenState(boolean isPaused, boolean isDeepFreeze) {
@@ -39,7 +40,7 @@ public class TickSpeed
     
     public static void reset_player_active_timeout()
     {
-        gTRM().ifPresent(TickRateManager::reset_player_active_timeout);
+        gTRM().ifPresent(ServerTickRateManager::resetPlayerActivity);
     }
 
     public static void reset()
@@ -49,33 +50,33 @@ public class TickSpeed
 
     public static void add_ticks_to_run_in_pause(int ticks)
     {
-        gTRM().ifPresent(trm -> trm.add_ticks_to_run_in_pause(ticks));
+        gTRM().ifPresent(trm -> trm.stepGameIfPaused(ticks));
     }
 
     public static Component tickrate_advance(ServerPlayer player, int advance, String callback, CommandSourceStack source)
     {
-        return gTRM().map(trm -> trm.tickrate_advance(player, advance, callback, source)).orElse(Messenger.c("ri Tickrate management not enabled"));
+        return gTRM().map(trm -> trm.requestGameToWarpSpeed(player, advance, callback, source)).orElse(Messenger.c("ri Tickrate management not enabled"));
     }
 
     public static void finish_time_warp()
     {
-        gTRM().ifPresent(TickRateManager::finish_time_warp);
+        gTRM().ifPresent(ServerTickRateManager::finishTickWarp);
     }
 
     public static boolean continueWarp()
     {
-        return gTRM().map(TickRateManager::continueWarp).orElse(false);
+        return gTRM().map(ServerTickRateManager::continueWarp).orElse(false);
     }
 
     public static void tick()
     {
-        gTRM().ifPresent(TickRateManager::tick);
+        gTRM().ifPresent(ServerTickRateManager::tick);
     }
     //unused - mod compat reasons
     public static void tickrate(float rate) {tickrate(rate, true);}
     public static void tickrate(float rate, boolean update)
     {
-        gTRM().ifPresent(trm -> trm.tickrate(rate, update));
+        gTRM().ifPresent(trm -> trm.setTickRate(rate, update));
     }
 
 
@@ -147,7 +148,7 @@ public class TickSpeed
         }
         if (is_paused)
         {
-            process_entities = player_active_timeout >= TickRateManager.PLAYER_GRACE;
+            process_entities = player_active_timeout >= ServerTickRateManager.PLAYER_GRACE;
         }
         else if (is_superHot)
         {

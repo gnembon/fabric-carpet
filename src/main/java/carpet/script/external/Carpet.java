@@ -7,7 +7,6 @@ import carpet.api.settings.RuleHelper;
 import carpet.api.settings.SettingsManager;
 import carpet.api.settings.Validator;
 import carpet.fakes.MinecraftServerInterface;
-import carpet.helpers.TickSpeed;
 import carpet.logging.HUDController;
 import carpet.network.ServerNetworkHandler;
 import carpet.patches.EntityPlayerMPFake;
@@ -136,7 +135,7 @@ public class Carpet
 
     public static boolean isTickProcessingPaused(MinecraftServer server)
     {
-        return !((MinecraftServerInterface)server).getTickRateManager().process_entities();
+        return !((MinecraftServerInterface)server).getTickRateManager().runsNormally();
     }
 
     public static void handleExtensionsAPI(CarpetExpression expression)

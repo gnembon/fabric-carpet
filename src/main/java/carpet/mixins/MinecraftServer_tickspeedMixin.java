@@ -1,8 +1,7 @@
 package carpet.mixins;
 
 import carpet.fakes.MinecraftServerInterface;
-import carpet.helpers.TickRateManager;
-import carpet.helpers.TickSpeed;
+import carpet.helpers.ServerTickRateManager;
 import carpet.patches.CopyProfilerResult;
 import carpet.utils.CarpetProfiler;
 import net.minecraft.Util;
@@ -69,18 +68,18 @@ public abstract class MinecraftServer_tickspeedMixin extends ReentrantBlockableE
 
     private float carpetMsptAccum = 0.0f;
 
-    private TickRateManager tickRateManager;
+    private ServerTickRateManager serverTickRateManager;
 
     @Inject(method = "<init>", at = @At("RETURN"))
     private void onInit(CallbackInfo ci)
     {
-        tickRateManager = new TickRateManager((MinecraftServer)(Object)this);
+        serverTickRateManager = new ServerTickRateManager((MinecraftServer)(Object)this);
     }
 
     @Override
-    public TickRateManager getTickRateManager()
+    public ServerTickRateManager getTickRateManager()
     {
-        return tickRateManager;
+        return serverTickRateManager;
     }
 
     /**
@@ -111,8 +110,8 @@ public abstract class MinecraftServer_tickspeedMixin extends ReentrantBlockableE
             }
             long msThisTick = 0L;
             long long_1 = 0L;
-            float mspt = tickRateManager.mspt;
-            if (tickRateManager.time_warp_start_time != 0 && tickRateManager.continueWarp())
+            float mspt = serverTickRateManager.mspt();
+            if (serverTickRateManager.isInWarpSpeed() && serverTickRateManager.continueWarp())
             {
                 //making sure server won't flop after the warp or if the warp is interrupted
                 this.nextTickTime = this.lastOverloadWarning = Util.getMillis();
@@ -151,9 +150,9 @@ public abstract class MinecraftServer_tickspeedMixin extends ReentrantBlockableE
             //this.startMonitor(tickDurationMonitor);
             this.startMetricsRecordingTick();
             this.profiler.push("tick");
-            this.tickServer(tickRateManager.time_warp_start_time != 0 ? ()->true : this::haveTime);
+            this.tickServer(serverTickRateManager.isInWarpSpeed() ? ()->true : this::haveTime);
             this.profiler.popPush("nextTickWait");
-            if (tickRateManager.time_warp_start_time != 0) // clearing all hanging tasks no matter what when warping
+            if (serverTickRateManager.isInWarpSpeed()) // clearing all hanging tasks no matter what when warping
             {
                 while(this.runEveryTask()) {Thread.yield();}
             }
