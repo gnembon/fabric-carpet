@@ -1,5 +1,8 @@
 package carpet.helpers;
 
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.player.Player;
+
 public class TickRateManager
 {
     public static final int PLAYER_GRACE = 2;
@@ -92,5 +95,11 @@ public class TickRateManager
         {
             runGameElements = true;
         }
+    }
+
+    public boolean shouldEntityTick(Entity e)
+    {
+        // client
+        return (runsNormally() || (e instanceof Player) || isSuperHot() && e.getControllingPassenger() instanceof Player);
     }
 }

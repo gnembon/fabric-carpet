@@ -1,6 +1,6 @@
 package carpet.mixins;
 
-import carpet.fakes.ClientLevelInterface;
+import carpet.fakes.LevelInterface;
 import carpet.fakes.MinecraftClientInferface;
 import carpet.helpers.TickRateManager;
 import net.minecraft.client.Minecraft;
@@ -28,7 +28,7 @@ public class LevelRenderer_pausedShakeMixin
     private float changeTickPhase(float previous)
     {
         initial = previous;
-        TickRateManager trm = ((ClientLevelInterface)level).getTickRateManager();
+        TickRateManager trm = ((LevelInterface)level).tickRateManager();
         if (!trm.runsNormally())
             return ((MinecraftClientInferface)minecraft).getPausedTickDelta();
         return previous;

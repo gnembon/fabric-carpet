@@ -1,12 +1,9 @@
 package carpet.mixins;
 
-import carpet.fakes.ClientLevelInterface;
-import carpet.fakes.MinecraftServerInterface;
+import carpet.fakes.LevelInterface;
 import carpet.helpers.TickRateManager;
-import carpet.helpers.ServerTickRateManager;
 import carpet.utils.CarpetProfiler;
 import net.minecraft.core.BlockPos;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityTicker;
@@ -38,16 +35,10 @@ public class BoundTickingBlockEntity_tickMixin<T extends BlockEntity>
     ))
     private void checkProcessBEs(BlockEntityTicker<T> blockEntityTicker, Level world, BlockPos pos, BlockState state, T blockEntity)
     {
-        // these two branches are identical, but we need to check the world type and inferfaces
-        if (world.isClientSide()) {
-            // client
-            TickRateManager tickRateManager = ((ClientLevelInterface)world).getTickRateManager();
-            if (tickRateManager.runsNormally()) blockEntityTicker.tick(world, pos, state, blockEntity);
-        } else {
-            // server
-            ServerLevel serverWorld = (ServerLevel) world;
-            ServerTickRateManager serverTickRateManager = ((MinecraftServerInterface)serverWorld.getServer()).getTickRateManager();
-            if (serverTickRateManager.runsNormally()) blockEntityTicker.tick(world, pos, state, blockEntity);
+        TickRateManager tickRateManager = ((LevelInterface)world).tickRateManager();
+        if (tickRateManager.runsNormally())
+        {
+            blockEntityTicker.tick(world, pos, state, blockEntity);
         }
     }
 

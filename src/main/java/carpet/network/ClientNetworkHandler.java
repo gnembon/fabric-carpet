@@ -5,7 +5,7 @@ import carpet.CarpetExtension;
 import carpet.CarpetSettings;
 import carpet.api.settings.CarpetRule;
 import carpet.api.settings.InvalidRuleValueException;
-import carpet.fakes.ClientLevelInterface;
+import carpet.fakes.LevelInterface;
 import carpet.helpers.TickRateManager;
 import carpet.api.settings.SettingsManager;
 import io.netty.buffer.Unpooled;
@@ -67,20 +67,20 @@ public class ClientNetworkHandler
             }
         });
         dataHandlers.put("TickRate", (p, t) -> {
-            TickRateManager tickRateManager = ((ClientLevelInterface)p.clientLevel).getTickRateManager();
+            TickRateManager tickRateManager = ((LevelInterface)p.clientLevel).tickRateManager();
             tickRateManager.setTickRate(((NumericTag) t).getAsFloat());
         });
         dataHandlers.put("TickingState", (p, t) -> {
             CompoundTag tickingState = (CompoundTag)t;
-            TickRateManager tickRateManager = ((ClientLevelInterface)p.clientLevel).getTickRateManager();
+            TickRateManager tickRateManager = ((LevelInterface)p.clientLevel).tickRateManager();
             tickRateManager.setFrozenState(tickingState.getBoolean("is_paused"), tickingState.getBoolean("deepFreeze"));
         });
         dataHandlers.put("SuperHotState", (p, t) -> {
-            TickRateManager tickRateManager = ((ClientLevelInterface)p.clientLevel).getTickRateManager();
+            TickRateManager tickRateManager = ((LevelInterface)p.clientLevel).tickRateManager();
             tickRateManager.setSuperHot(((ByteTag) t).equals(ByteTag.ONE));
         });
         dataHandlers.put("TickPlayerActiveTimeout", (p, t) -> {
-            TickRateManager tickRateManager = ((ClientLevelInterface)p.clientLevel).getTickRateManager();
+            TickRateManager tickRateManager = ((LevelInterface)p.clientLevel).tickRateManager();
             tickRateManager.setPlayerActiveTimeout(((NumericTag) t).getAsInt());
         });
         dataHandlers.put("scShape", (p, t) -> { // deprecated // and unused // should remove for 1.17

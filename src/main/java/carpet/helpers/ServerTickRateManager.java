@@ -8,6 +8,8 @@ import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.player.Player;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -31,6 +33,13 @@ public class ServerTickRateManager extends TickRateManager
     public boolean isInWarpSpeed()
     {
         return tickWarpStartTime != 0;
+    }
+
+
+    @Override
+    public boolean shouldEntityTick(Entity e)
+    {
+        return (runsNormally() || (e instanceof Player));
     }
 
     /**

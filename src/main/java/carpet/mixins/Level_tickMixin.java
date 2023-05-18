@@ -1,13 +1,8 @@
 package carpet.mixins;
 
-import carpet.fakes.ClientLevelInterface;
 import carpet.fakes.LevelInterface;
-import carpet.fakes.MinecraftServerInterface;
 import carpet.helpers.TickRateManager;
-import carpet.helpers.ServerTickRateManager;
 import carpet.utils.CarpetProfiler;
-import net.minecraft.client.multiplayer.ClientLevel;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.redstone.NeighborUpdater;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -22,7 +17,6 @@ import java.util.Map;
 import java.util.function.Consumer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 
 @Mixin(Level.class)
@@ -41,6 +35,7 @@ public abstract class Level_tickMixin implements LevelInterface
         return this.neighborUpdater;
     }
 
+    @Override
     public Map<EntityType<?>, Entity> getPrecookedMobs()
     {
         return precookedMobs;
@@ -59,26 +54,12 @@ public abstract class Level_tickMixin implements LevelInterface
     @Inject(method = "guardEntityTick", at = @At("HEAD"), cancellable = true)
     private void startEntity(Consumer<Entity> consumer_1, Entity e, CallbackInfo ci)
     {
-        // this shows that probably tick speed controller needs to be accessible through level referring to servers on server and client on clientLevel
-        // these two branches could also be merged into one generic for cloent and server
-        if (!isClientSide)
+        TickRateManager trm = tickRateManager();
+        if (!trm.shouldEntityTick(e))
         {
-            ServerLevel serverLevel = (ServerLevel) (Object) this;
-            ServerTickRateManager trm = ((MinecraftServerInterface)serverLevel.getServer()).getTickRateManager();
-            if (!(trm.runsNormally() || (e instanceof Player)))
-            {
-                ci.cancel();
-            }
+            ci.cancel();
         }
-        else
-        {
-            ClientLevel clientLevel = (ClientLevel) (Object) this;
-            TickRateManager trm = ((ClientLevelInterface)clientLevel).getTickRateManager();
-            if (!(trm.runsNormally() || (e instanceof Player) || trm.isSuperHot() && e.getControllingPassenger() instanceof Player))
-            {
-                ci.cancel();
-            }
-        }
+
         entitySection =  CarpetProfiler.start_entity_section((Level) (Object) this, e, CarpetProfiler.TYPE.ENTITY);
     }
 

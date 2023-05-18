@@ -1,7 +1,6 @@
 package carpet.mixins;
 
-import carpet.CarpetServer;
-import carpet.fakes.ClientLevelInterface;
+import carpet.fakes.LevelInterface;
 import carpet.helpers.TickRateManager;
 import carpet.fakes.MinecraftInterface;
 import carpet.network.CarpetClient;
@@ -41,7 +40,7 @@ public class MinecraftMixin implements MinecraftInterface
     public Optional<TickRateManager> getTickRateManager()
     {
         if (this.level != null) {
-            return Optional.of(((ClientLevelInterface)this.level).getTickRateManager());
+            return Optional.of(((LevelInterface)this.level).tickRateManager());
         }
         return Optional.empty();
     }
