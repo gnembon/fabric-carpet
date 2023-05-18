@@ -25,6 +25,7 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundCustomPayloadPacket;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 
 public class ServerNetworkHandler
@@ -70,7 +71,6 @@ public class ServerNetworkHandler
 
     public static void onHello(ServerPlayer playerEntity, FriendlyByteBuf packetData)
     {
-
         validCarpetPlayers.add(playerEntity);
         String clientVersion = packetData.readUtf(64);
         remoteCarpetPlayers.put(playerEntity, clientVersion);
@@ -78,7 +78,8 @@ public class ServerNetworkHandler
             CarpetSettings.LOG.info("Player "+playerEntity.getName().getString()+" joined with a matching carpet client");
         else
             CarpetSettings.LOG.warn("Player "+playerEntity.getName().getString()+" joined with another carpet version: "+clientVersion);
-        DataBuilder data = DataBuilder.create(playerEntity.server).withTickRate().withFrozenState().withTickPlayerActiveTimeout(); // .withSuperHotState()
+
+        DataBuilder data = DataBuilder.create(playerEntity.server);//;.withTickRate().withFrozenState().withTickPlayerActiveTimeout(); // .withSuperHotState()
         CarpetServer.settingsManager.getCarpetRules().forEach(data::withRule);
         CarpetServer.extensions.forEach(e -> {
             SettingsManager eManager = e.extensionSettingsManager();
@@ -86,7 +87,13 @@ public class ServerNetworkHandler
                 eManager.getCarpetRules().forEach(data::withRule);
             }
         });
-        playerEntity.connection.send(new ClientboundCustomPayloadPacket(CarpetClient.CARPET_CHANNEL, data.build() ));
+        playerEntity.connection.send(new ClientboundCustomPayloadPacket(CarpetClient.CARPET_CHANNEL, data.build()));
+    }
+
+    public static void sendPlayerLevelData(ServerPlayer player, ServerLevel level) {
+        DataBuilder data = DataBuilder.create(player.server).withTickRate().withFrozenState().withTickPlayerActiveTimeout(); // .withSuperHotState()
+        player.connection.send(new ClientboundCustomPayloadPacket(CarpetClient.CARPET_CHANNEL, data.build() ));
+
     }
 
     private static void handleClientCommand(ServerPlayer player, CompoundTag commandData)

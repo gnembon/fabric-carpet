@@ -1,7 +1,9 @@
 package carpet.mixins;
 
 import carpet.CarpetServer;
+import carpet.network.ServerNetworkHandler;
 import net.minecraft.network.Connection;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.players.PlayerList;
 import org.spongepowered.asm.mixin.Mixin;
@@ -17,5 +19,11 @@ public class PlayerList_coreMixin
     private void onPlayerConnected(Connection connection, ServerPlayer player, CallbackInfo ci)
     {
         CarpetServer.onPlayerLoggedIn(player);
+    }
+
+    @Inject(method = "sendLevelInfo", at = @At("RETURN"))
+    private void onLevelChanged(final ServerPlayer serverPlayer, final ServerLevel serverLevel, final CallbackInfo ci)
+    {
+        ServerNetworkHandler.sendPlayerLevelData(serverPlayer, serverLevel);
     }
 }
