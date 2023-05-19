@@ -932,7 +932,7 @@ public class WorldAccess
                     }
                     if (DUMMY_ENTITY == null)
                     {
-                        DUMMY_ENTITY = new FallingBlockEntity(EntityType.FALLING_BLOCK, cc.server().overworld());
+                        DUMMY_ENTITY = new FallingBlockEntity(EntityType.FALLING_BLOCK, null);
                     }
                     Block.dropResources(state, world, where, be, DUMMY_ENTITY, tool);
                 }
