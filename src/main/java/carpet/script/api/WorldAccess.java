@@ -38,6 +38,7 @@ import net.minecraft.core.Holder;
 import net.minecraft.core.HolderSet;
 import net.minecraft.core.QuartPos;
 import net.minecraft.core.Registry;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.DistanceManager;
@@ -632,7 +633,7 @@ public class WorldAccess
                 forceLoad = lv.get(blockArgument.offset).getBoolean();
             }
             ChunkAccess chunk = ((CarpetContext) c).level().getChunk(pos.getX() >> 4, pos.getZ() >> 4, ChunkStatus.EMPTY, forceLoad);
-            return chunk == null ? Value.NULL : new StringValue(chunk.getStatus().getName());
+            return chunk == null ? Value.NULL : ValueConversions.of(BuiltInRegistries.CHUNK_STATUS.getKey(chunk.getStatus()));
         });
 
         expression.addContextFunction("chunk_tickets", -1, (c, t, lv) ->

@@ -15,6 +15,7 @@ import java.util.stream.Collectors;
 import carpet.fakes.SimpleEntityLookupInterface;
 import carpet.fakes.ServerWorldInterface;
 import net.minecraft.Util;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.TickTask;
 import net.minecraft.server.level.ChunkHolder;
@@ -439,12 +440,14 @@ public abstract class ChunkMap_scarpetChunkCreationMixin implements ThreadedAnvi
             if (futures == null)
                 continue;
 
-            report.put("layer_count_" + status.getName(), futures.size());
+            String statusName = BuiltInRegistries.CHUNK_STATUS.getKey(status).getPath();
+
+            report.put("layer_count_" + statusName, futures.size());
             final long start = System.currentTimeMillis();
 
             this.waitFor(futures);
 
-            report.put("layer_time_" + status.getName(), (int) (System.currentTimeMillis() - start));
+            report.put("layer_time_" + statusName, (int) (System.currentTimeMillis() - start));
         }
 
 

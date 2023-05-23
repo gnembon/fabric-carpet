@@ -186,7 +186,7 @@ public class EntityPlayerMPFake extends ServerPlayer
 
     @Override
     protected void checkFallDamage(double y, boolean onGround, BlockState state, BlockPos pos) {
-        doCheckFallDamage(y, onGround);
+        doCheckFallDamage(0.0, y, 0.0, onGround);
     }
 
     @Override
