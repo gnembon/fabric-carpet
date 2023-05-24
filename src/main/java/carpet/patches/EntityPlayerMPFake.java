@@ -5,6 +5,7 @@ import com.mojang.authlib.GameProfile;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.UUIDUtil;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.contents.TranslatableContents;
 import net.minecraft.network.protocol.PacketFlow;
 import net.minecraft.network.protocol.game.ClientboundPlayerInfoUpdatePacket;
 import net.minecraft.network.protocol.game.ClientboundRotateHeadPacket;
@@ -131,9 +132,14 @@ public class EntityPlayerMPFake extends ServerPlayer
     public void kill(Component reason)
     {
         shakeOff();
-        this.server.tell(new TickTask(this.server.getTickCount(), () -> {
+
+        if (reason.getContents() instanceof TranslatableContents text && text.getKey().equals("multiplayer.disconnect.duplicate_login")) {
             this.connection.onDisconnect(reason);
-        }));
+        } else {
+            this.server.tell(new TickTask(this.server.getTickCount(), () -> {
+                this.connection.onDisconnect(reason);
+            }));
+        }
     }
 
     @Override
