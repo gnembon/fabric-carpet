@@ -908,10 +908,8 @@ public class CarpetSettings
     }
 
     @Rule(
-            desc = "Makes world borders move based on in game time instead of real time",
-            extra = "This has the effect that when the tick rate changes the world border speed also changes proportional to it",
-            category = FEATURE,
-            validate = WorldBorderValidator.class
+            categories = FEATURE,
+            validators = WorldBorderValidator.class
     )
     public static boolean tickSyncedWorldBorders = false;
 
@@ -920,10 +918,6 @@ public class CarpetSettings
     }
 
     // refers to "[MC-215169](https://bugs.mojang.com/browse/MC-215169)." - unconfirmed yet that its a java bug
-    @Rule(
-            desc = "Allows to grow nether fungi with 3x3 base with bonemeal",
-            extra = {"Setting to 'all' will make all nether fungi grow into 3x3 trees", "Setting to 'random' will make 6% of all nether fungi grow into 3x3 trees", "(this being consistent with worldgen)"},
-            category = {SURVIVAL, FEATURE}
-    )
+    @Rule(categories = {SURVIVAL, FEATURE})
     public static FungusGrowthMode thickFungusGrowth = FungusGrowthMode.FALSE;
 }
