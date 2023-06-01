@@ -176,13 +176,12 @@
   "carpet.rule.fastRedstoneDust.extra.2": "so behaviour of locational vanilla contraptions is not guaranteed",
 
   // fillLimit
-  "carpet.rule.fillLimit.desc": "Customizable fill/clone volume limit",
+  "carpet.rule.fillLimit.desc": "[Deprecated] Customizable fill/fillbiome/clone volume limit",
+
+  "carpet.rule.fillLimit.extra.0": "Use vanilla gamerule instead. This setting will be removed in 1.20.0",
 
   // fillUpdates
   "carpet.rule.fillUpdates.desc": "fill/clone/setblock and structure blocks cause block updates",
-
-  // flatWorldStructureSpawning
-  "carpet.rule.flatWorldStructureSpawning.desc": "Allows structure mobs to spawn in flat worlds",
 
   // flippinCactus
   "carpet.rule.flippinCactus.desc": "Players can flip and rotate blocks when holding cactus",
@@ -223,11 +222,6 @@
 
   // language
   "carpet.rule.language.desc": "Sets the language for Carpet",
-
-  // leadFix
-  "carpet.rule.leadFix.desc": "Fixes leads breaking/becoming invisible in unloaded chunks",
-
-  "carpet.rule.leadFix.extra.0": "You may still get visibly broken leash links on the client side, but server side the link is still there.",
 
   // lightEngineMaxBatchSize
   "carpet.rule.lightEngineMaxBatchSize.desc": "Changes maximum light tasks batch size",
@@ -295,7 +289,9 @@
   "carpet.rule.pushLimit.desc": "Customizable piston push limit",
 
   // quasiConnectivity
-  "carpet.rule.quasiConnectivity.desc": "Pistons, droppers and dispensers react if block above them is powered",
+  "carpet.rule.quasiConnectivity.desc": "Pistons, droppers, and dispensers check for power to the block(s) above them.",
+
+  "carpet.rule.quasiConnectivity.extra.0": "Defines the range at which pistons, droppers, and dispensers check for 'quasi power'.",
 
   // railPowerLimit
   "carpet.rule.railPowerLimit.desc": "Customizable powered rail power range",
@@ -392,6 +388,18 @@
 
   // superSecretSetting
   "carpet.rule.superSecretSetting.desc": "Gbhs sgnf sadsgras fhskdpri!!!",
+
+  // thickFungusGrowth
+  "carpet.rule.thickFungusGrowth.desc": "Allows to grow nether fungi with 3x3 base with bonemeal",
+
+  "carpet.rule.thickFungusGrowth.extra.0": "Setting to 'all' will make all nether fungi grow into 3x3 trees",
+  "carpet.rule.thickFungusGrowth.extra.1": "Setting to 'random' will make 6% of all nether fungi grow into 3x3 trees",
+  "carpet.rule.thickFungusGrowth.extra.2": "(this being consistent with worldgen)",
+
+  // tickSyncedWorldBorders
+  "carpet.rule.tickSyncedWorldBorders.desc": "Makes world borders move based on in game time instead of real time",
+
+  "carpet.rule.tickSyncedWorldBorders.extra.0": "This has the effect that when the tick rate changes the world border speed also changes proportional to it",
 
   // tntDoNotUpdate
   "carpet.rule.tntDoNotUpdate.desc": "TNT doesn't update when placed against a power source",
