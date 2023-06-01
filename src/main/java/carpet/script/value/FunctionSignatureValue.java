@@ -4,10 +4,10 @@ import java.util.List;
 
 public class FunctionSignatureValue extends FrameworkValue
 {
-    private String identifier;
-    private List<String> arguments;
-    private List<String> globals;
-    private String varArgs;
+    private final String identifier;
+    private final List<String> arguments;
+    private final List<String> globals;
+    private final String varArgs;
 
     public FunctionSignatureValue(String name, List<String> args, String varArgs, List<String> globals)
     {
@@ -16,16 +16,14 @@ public class FunctionSignatureValue extends FrameworkValue
         this.varArgs = varArgs;
         this.globals = globals;
     }
-    public String getName()
+    public String identifier()
     {
         return identifier;
     }
-    public List<String> getArgs()
+    public List<String> arguments()
     {
         return arguments;
     }
-    public List<String> getGlobals() {return globals;}
-
-
-    public String getVarArgs() { return varArgs;}
+    public List<String> globals() {return globals;}
+    public String varArgs() { return varArgs;}
 }

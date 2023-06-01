@@ -12,6 +12,7 @@ import java.util.regex.Pattern;
 
 import net.minecraft.commands.CommandBuildContext;
 import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.coordinates.BlockPosArgument;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
@@ -67,6 +68,18 @@ public class InfoCommand
 
     private static int infoBlock(CommandSourceStack source, BlockPos pos, String grep)
     {
+        if (!source.hasPermission(Commands.LEVEL_GAMEMASTERS)) {
+            //check id pos is loaded
+            if (!source.getLevel().hasChunkAt(pos)) {
+                Messenger.m(source, "r Chunk is not loaded");
+                return 0;
+            }
+            // verify it is in world bounds
+            if (!source.getLevel().isInWorldBounds(pos)) {
+                Messenger.m(source, "r Position is outside of world bounds");
+                return 0;
+            }
+        }
         printBlock(BlockInfo.blockInfo(pos, source.getLevel()),source, grep);
         return 1;
     }

@@ -1,29 +1,26 @@
 package carpet.logging;
 
 import carpet.CarpetServer;
+import carpet.fakes.MinecraftServerInterface;
 import carpet.helpers.HopperCounter;
-import carpet.helpers.TickSpeed;
+import carpet.helpers.ServerTickRateManager;
 import carpet.logging.logHelpers.PacketCounter;
 import carpet.utils.Messenger;
 import carpet.utils.SpawnReporter;
-import io.netty.buffer.Unpooled;
-import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundTabListPacket;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.util.Mth;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.OptionalDouble;
 import java.util.Set;
 import java.util.function.Consumer;
 
@@ -64,13 +61,11 @@ public class HUDController
         }
         player_huds.get(player).add(hudMessage);
     }
-    public static void clear_player(Player player)
+
+    public static void clearPlayer(ServerPlayer player)
     {
-        FriendlyByteBuf packetData = new FriendlyByteBuf(Unpooled.buffer()).writeComponent(Component.literal("")).writeComponent(Component.literal(""));
-        ClientboundTabListPacket packet = new ClientboundTabListPacket(packetData);
-        //((PlayerListHeaderS2CPacketMixin)packet).setHeader(new LiteralText(""));
-        //((PlayerListHeaderS2CPacketMixin)packet).setFooter(new LiteralText(""));
-        ((ServerPlayer)player).connection.send(packet);
+        ClientboundTabListPacket packet = new ClientboundTabListPacket(Component.literal(""), Component.literal(""));
+        player.connection.send(packet);
     }
 
 
@@ -95,7 +90,7 @@ public class HUDController
                     case "overworld" -> Level.OVERWORLD;
                     case "nether" -> Level.NETHER;
                     case "end" -> Level.END;
-                    default -> player.level.dimension();
+                    default -> player.level().dimension();
                 };
                 return new Component[]{SpawnReporter.printMobcapsForDimension(server.getLevel(dim), false).get(0)};
             });
@@ -113,34 +108,40 @@ public class HUDController
         if (force!= null) targets.addAll(force);
         for (ServerPlayer player: targets)
         {
-            FriendlyByteBuf packetData = new FriendlyByteBuf(Unpooled.buffer()).
-                    writeComponent(scarpet_headers.getOrDefault(player.getScoreboardName(), Component.literal(""))).
-                    writeComponent(Messenger.c(player_huds.getOrDefault(player, Collections.emptyList()).toArray(new Object[0])));
-            ClientboundTabListPacket packet = new ClientboundTabListPacket(packetData);
-
-            //PlayerListHeaderS2CPacket packet = new PlayerListHeaderS2CPacket();
-            //((PlayerListHeaderS2CPacketMixin)packet).setHeader(scarpet_headers.getOrDefault(player.getEntityName(), new LiteralText("")));
-            //((PlayerListHeaderS2CPacketMixin)packet).setFooter(Messenger.c(player_huds.getOrDefault(player, Collections.emptyList()).toArray(new Object[0])));
+            ClientboundTabListPacket packet = new ClientboundTabListPacket(
+                        scarpet_headers.getOrDefault(player.getScoreboardName(), Component.literal("")),
+                        Messenger.c(player_huds.getOrDefault(player, List.of()).toArray(new Object[0]))
+                    );
             player.connection.send(packet);
         }
     }
     private static Component [] send_tps_display(MinecraftServer server)
     {
-        double MSPT = Mth.average(server.tickTimes) * 1.0E-6D;
-        double TPS = 1000.0D / Math.max((TickSpeed.time_warp_start_time != 0)?0.0:TickSpeed.mspt, MSPT);
-        String color = Messenger.heatmap_color(MSPT,TickSpeed.mspt);
+        OptionalDouble averageTPS = Arrays.stream(server.tickTimes).average();
+        ServerTickRateManager trm = ((MinecraftServerInterface)server).getTickRateManager();
+        if (averageTPS.isEmpty())
+        {
+            return new Component[]{Component.literal("No TPS data available")};
+        }
+        double MSPT = Arrays.stream(server.tickTimes).average().getAsDouble() * 1.0E-6D;
+        double TPS = 1000.0D / Math.max(trm.isInWarpSpeed()?0.0:trm.mspt(), MSPT);
+        if (trm.gameIsPaused()) {
+            TPS = 0;
+        }
+        String color = Messenger.heatmap_color(MSPT,trm.mspt());
         return new Component[]{Messenger.c(
                 "g TPS: ", String.format(Locale.US, "%s %.1f",color, TPS),
                 "g  MSPT: ", String.format(Locale.US,"%s %.1f", color, MSPT))};
     }
 
-    private static Component [] send_counter_info(MinecraftServer server, String color)
+    private static Component[] send_counter_info(MinecraftServer server, String colors)
     {
         List <Component> res = new ArrayList<>();
-        Arrays.asList(color.split(",")).forEach(c ->{
-            HopperCounter counter = HopperCounter.getCounter(c);
+        for (String color : colors.split(","))
+        {
+            HopperCounter counter = HopperCounter.getCounter(color);
             if (counter != null) res.addAll(counter.format(server, false, true));
-        });
+        }
         return res.toArray(new Component[0]);
     }
     private static Component [] packetCounter()

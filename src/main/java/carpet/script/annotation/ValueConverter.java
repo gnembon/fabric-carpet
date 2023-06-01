@@ -9,11 +9,12 @@ import java.util.Objects;
 import java.util.Optional;
 
 import org.apache.commons.lang3.ClassUtils;
-import org.jetbrains.annotations.Nullable;
 
 import carpet.script.Context;
 import carpet.script.annotation.Param.Params;
 import carpet.script.value.Value;
+
+import javax.annotation.Nullable;
 
 /**
  * <p>Classes implementing this interface are able to convert {@link Value} instances into {@code <R>}, in order to easily use them in parameters for
@@ -37,7 +38,8 @@ public interface ValueConverter<R>
      * @apiNote This method is intended to only be called when an error has occurred and therefore there is a need to print a stacktrace with some
      *          helpful usage instructions.
      */
-    public String getTypeName();
+    @Nullable
+    String getTypeName();
 
     /**
      * <p>Converts the given {@link Value} to {@code <R>}, which was defined when being registered.</p>
@@ -49,7 +51,8 @@ public interface ValueConverter<R>
      * <p>Functions using the converter can use {@link #getTypeName()} to get the name of the type this was trying to convert to, in case they are not
      * trying to convert to anything else, where it would be recommended to tell the user the name of the final type instead.</p>
      * 
-     * @param value The {@link Value} to convert
+     * @param value   The {@link Value} to convert
+     * @param context The {@link Context} of the call
      * @return The converted value, or {@code null} if the conversion failed in the process
      * @apiNote <p>While most implementations of this method should and will return the type from this method, implementations that <b>require</b>
      *          parameters from {@link #checkAndConvert(Iterator, Context, Context.Type)} or that require multiple parameters may decide to throw
@@ -59,11 +62,34 @@ public interface ValueConverter<R>
      *          <p>Implementations can also provide different implementations for this and {@link #checkAndConvert(Iterator, Context, Context.Type)}, in case
      *          they can support it in some situations that can't be used else, such as inside of lists or maps, although they should try to provide
      *          in {@link #checkAndConvert(Iterator, Context, Context.Type)} at least the same conversion as the one from this method.</p>
-     *          <p>Even with the above reasons, {@link ValueConverter} users should try to implement {@link #convert(Value)} whenever possible instead of
+     *          <p>Even with the above reasons, {@link ValueConverter} users should try to implement {@link #convert(Value, Context)} whenever possible instead of
      *          {@link #checkAndConvert(Iterator, Context, Context.Type)}, since it allows its usage in generics of lists and maps.</p>
      */
+    @Nullable R convert(Value value, @Nullable Context context);
+
+    /**
+     * Old version of {@link #convert(Value)} without taking a {@link Context}.<p>
+     * 
+     * This shouldn't be used given converters now take a context in the convert function to allow for converting
+     * values in lists or other places without using static state.<p>
+     * 
+     * @param value The value to convert
+     * @return A converted value
+     * @deprecated Calling this method instead of {@link #convert(Value, Context)} may not return values for some converters
+     */
     @Nullable
-    public R convert(Value value);
+    @Deprecated(forRemoval = true)
+    default R convert(Value value)
+    {
+        try
+        {
+            return convert(value, null);
+        }
+        catch (NullPointerException e)
+        {
+            return null;
+        }
+    }
 
     /**
      * <p>Returns whether this {@link ValueConverter} consumes a variable number of elements from the {@link Iterator} passed to it via
@@ -72,7 +98,7 @@ public interface ValueConverter<R>
      * @implNote The default implementation returns {@code false}
      * @see #valueConsumption()
      */
-    default public boolean consumesVariableArgs()
+    default boolean consumesVariableArgs()
     {
         return false;
     }
@@ -87,7 +113,7 @@ public interface ValueConverter<R>
      * @implNote The default implementation returns {@code 1}
      * 
      */
-    default public int valueConsumption()
+    default int valueConsumption()
     {
         return 1;
     }
@@ -107,7 +133,7 @@ public interface ValueConverter<R>
      * @return A usable {@link ValueConverter} to convert from a {@link Value} to {@code <R>}
      */
     @SuppressWarnings("unchecked")
-    public static <R> ValueConverter<R> fromAnnotatedType(AnnotatedType annoType)
+    static <R> ValueConverter<R> fromAnnotatedType(AnnotatedType annoType)
     {
         Class<R> type = annoType.getType() instanceof ParameterizedType ? // We are defining R here.
                 (Class<R>) ((ParameterizedType) annoType.getType()).getRawType() :
@@ -118,33 +144,51 @@ public interface ValueConverter<R>
         // Example: AnnotatedGenericTypeArray (or similar) being (@Paran.KeyValuePairs Map<String, String>... name)
         // Those will just fail with a ClassCastException.
         if (type.isArray())
+        {
             type = (Class<R>) type.getComponentType(); // Varargs
+        }
         type = (Class<R>) ClassUtils.primitiveToWrapper(type); // It will be boxed anyway, this saves unboxing-boxing
         if (type == List.class)
+        {
             return (ValueConverter<R>) ListConverter.fromAnnotatedType(annoType); // Already checked that type is List
+        }
         if (type == Map.class)
+        {
             return (ValueConverter<R>) MapConverter.fromAnnotatedType(annoType); // Already checked that type is Map
+        }
         if (type == Optional.class)
+        {
             return (ValueConverter<R>) OptionalConverter.fromAnnotatedType(annoType);
+        }
         if (annoType.getDeclaredAnnotations().length != 0)
         {
             if (annoType.isAnnotationPresent(Param.Custom.class))
-                return Param.Params.getCustomConverter(annoType, type); // Throws if incorrect usage
+            {
+                return Params.getCustomConverter(annoType, type); // Throws if incorrect usage
+            }
             if (annoType.isAnnotationPresent(Param.Strict.class))
+            {
                 return (ValueConverter<R>) Params.getStrictConverter(annoType); // Throws if incorrect usage
+            }
             if (annoType.getAnnotations()[0].annotationType().getEnclosingClass() == Locator.class)
+            {
                 return Locator.Locators.fromAnnotatedType(annoType, type);
+            }
         }
 
         // Class only checks
         if (Value.class.isAssignableFrom(type))
+        {
             return Objects.requireNonNull(ValueCaster.get(type), "Value subclass " + type + " is not registered. Register it in ValueCaster to use it");
-        // if (type == LazyValue.class) // No longer supported
-        //     return (ValueConverter<R>) Params.LAZY_VALUE_IDENTITY;
+        }
         if (type == Context.class)
+        {
             return (ValueConverter<R>) Params.CONTEXT_PROVIDER;
+        }
         if (type == Context.Type.class)
+        {
             return (ValueConverter<R>) Params.CONTEXT_TYPE_PROVIDER;
+        }
         return Objects.requireNonNull(SimpleTypeConverter.get(type), "Type " + type + " is not registered. Register it in SimpleTypeConverter to use it");
     }
 
@@ -159,19 +203,17 @@ public interface ValueConverter<R>
      *           providers like {@link Context}. <p>Implementations can also use more than a single parameter when being called with this function,
      *           but in such case they must implement {@link #valueConsumption()} to return how many parameters do they consume at minimum, and, if
      *           they may consume variable arguments, implement {@link #consumesVariableArgs()}</p> <p>This method holds the same nullability
-     *           constraints as {@link #convert(Value)}</p>
+     *           constraints as {@link #convert(Value, Context)}</p>
      * @param valueIterator An {@link Iterator} holding the {@link Value} to convert in next position
-     * @param context       The {@link Context} this function has been called with. This was used when this passed lazy values instead in order to
-     *                      evaluate, now it's used to get the context
+     * @param context       The {@link Context} this function has been called with
      * @param contextType   The {@link Context.Type} that the original function was called with
      * @return The next {@link Value} (s) converted to the type {@code <R>} of this {@link ValueConverter}
-     * @implNote This method's default implementation runs the {@link #convert(Value)} function in the next {@link Value} ignoring {@link Context} and
+     * @implNote This method's default implementation runs the {@link #convert(Value, Context)} function in the next {@link Value} ignoring {@link Context} and
      *           {@code theLazyT}.
      */
-    default public R checkAndConvert(Iterator<Value> valueIterator, Context context, Context.Type contextType)
+    @Nullable
+    default R checkAndConvert(Iterator<Value> valueIterator, Context context, Context.Type contextType)
     {
-        if (!valueIterator.hasNext())
-            return null;
-        return convert(valueIterator.next());
+        return !valueIterator.hasNext() ? null : convert(valueIterator.next(), context);
     }
 }

@@ -4,6 +4,14 @@ accessible class net/minecraft/server/level/ChunkMap$DistanceManager
 accessible class net/minecraft/server/level/ThreadedLevelLightEngine$TaskType
 accessible class net/minecraft/world/item/crafting/Ingredient$Value
 accessible class net/minecraft/world/level/lighting/BlockLightSectionStorage$BlockDataLayerStorageMap
+accessible class net/minecraft/world/level/border/WorldBorder$BorderExtent
+accessible class net/minecraft/world/level/border/WorldBorder$StaticBorderExtent
 accessible class net/minecraft/server/MinecraftServer$ReloadableResources
+accessible class net/minecraft/world/level/biome/Biome$ClimateSettings
+accessible class net/minecraft/world/level/block/entity/SculkSensorBlockEntity$VibrationUser
+
+accessible method net/minecraft/world/level/border/WorldBorder getListeners ()Ljava/util/List;
+
+accessible method net/minecraft/server/level/DistanceManager purgeStaleTickets ()V
 
 accessible field net/minecraft/world/level/block/state/BlockBehaviour UPDATE_SHAPE_ORDER [Lnet/minecraft/core/Direction;

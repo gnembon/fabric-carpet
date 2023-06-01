@@ -12,7 +12,7 @@ import com.mojang.brigadier.tree.LiteralCommandNode;
 
 import carpet.fakes.CommandNodeInterface;
 
-@Mixin(CommandNode.class)
+@Mixin(value = CommandNode.class, remap = false)
 public class CommandNode_scarpetCommandsMixin<S> implements CommandNodeInterface {
     @Shadow @Final
     private Map<String, CommandNode<S>> children;

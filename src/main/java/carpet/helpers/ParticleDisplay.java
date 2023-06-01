@@ -1,45 +1,22 @@
 package carpet.helpers;
 
-import com.mojang.brigadier.StringReader;
-import com.mojang.brigadier.exceptions.CommandSyntaxException;
-import java.util.HashMap;
-import java.util.Map;
-import net.minecraft.commands.arguments.ParticleArgument;
+import carpet.script.utils.ParticleParser;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.core.particles.ParticleOptions;
-import net.minecraft.server.level.ServerLevel;
+import net.minecraft.core.particles.ParticleType;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.phys.Vec3;
 
 public class ParticleDisplay
 {
-    private static Map<String, ParticleOptions> particleCache = new HashMap<>();
-
-    private static ParticleOptions parseParticle(String name)
-    {
-        try
-        {
-            return ParticleArgument.readParticle(new StringReader(name));
-        }
-        catch (CommandSyntaxException e)
-        {
-            throw new RuntimeException("No such particle: "+name);
-        }
-    }
-    public static ParticleOptions getEffect(String name)
-    {
-        if (name == null) return null;
-        ParticleOptions res = particleCache.get(name);
-        if (res != null) return res;
-        particleCache.put(name, parseParticle(name));
-        return particleCache.get(name);
-    }
-
     public static void drawParticleLine(ServerPlayer player, Vec3 from, Vec3 to, String main, String accent, int count, double spread)
     {
-        ParticleOptions accentParticle = getEffect(accent);
-        ParticleOptions mainParticle = getEffect(main);
+        HolderLookup<ParticleType<?>> lookup = player.level().holderLookup(Registries.PARTICLE_TYPE);
+        ParticleOptions accentParticle = ParticleParser.getEffect(accent, lookup);
+        ParticleOptions mainParticle = ParticleParser.getEffect(main, lookup);
 
-        if (accentParticle != null) ((ServerLevel)player.level).sendParticles(
+        if (accentParticle != null) player.serverLevel().sendParticles(
                 player,
                 accentParticle,
                 true,
@@ -51,10 +28,10 @@ public class ParticleDisplay
 
         Vec3 incvec = to.subtract(from).normalize();//    multiply(50/sqrt(lineLengthSq));
         for (Vec3 delta = new Vec3(0.0,0.0,0.0);
-             delta.lengthSqr()<lineLengthSq;
-             delta = delta.add(incvec.scale(player.level.random.nextFloat())))
+             delta.lengthSqr() < lineLengthSq;
+             delta = delta.add(incvec.scale(player.level().random.nextFloat())))
         {
-            ((ServerLevel)player.level).sendParticles(
+            player.serverLevel().sendParticles(
                     player,
                     mainParticle,
                     true,

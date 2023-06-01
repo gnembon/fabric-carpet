@@ -59,13 +59,13 @@ global_functions = {
 
 
             entry = query(e, 'brain', 'last_slept');
-            slept = world_time()-entry;
+            slept = system_info('world_time')-entry;
             last_slept = format(if(entry == null, 'rb never', if(slept < 24000, 'e ', 'y ')+slept));
 
             labels = [
                ['golem timer', 'golem:', format(if(last_seen,'rb ','eb ')+last_seen )],
                ['sleep tracker', 'slept:', last_slept],
-               ['attempt', 'attempt in:', format(if( slept < 24000 && last_seen==0,'yb ','gi ')+ (100-(world_time()%100)))],
+               ['attempt', 'attempt in:', format(if( slept < 24000 && last_seen==0,'yb ','gi ')+ (100-(system_info('world_time')%100)))],
             ];
             [visuals, abnoxious_visuals, labels];
          )

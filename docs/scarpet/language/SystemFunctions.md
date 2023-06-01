@@ -76,7 +76,7 @@ str('foo') => 'foo'
 str('3bar') => '3bar'
 str(2)+str(2) => '22'
 str('pi: %.2f',pi) => 'pi: 3.14'
-str('player at: %d %d %d',pos(player())) => 'player at: 567, -2423, 124'
+str('player at: %d, %d, %d',pos(player())) => 'player at: 567, -2423, 124'
 </pre>
 
 * * *
@@ -204,7 +204,7 @@ title('aBc') => 'Abc'
 
 ### `replace(string, regex, repl?); replace_first(string, regex, repl?)`
 
-Replaces all, or first occurence of a regular expression in the string with `repl` expression, 
+Replaces all, or first occurrence of a regular expression in the string with `repl` expression, 
 or nothing, if not specified. To use escape characters (`\(`,`\+`,...), metacharacters (`\d`,`\w`,...), or position anchors (`\b`,`\z`,...) in your regular expression, use two backslashes.
 
 <pre>
@@ -388,8 +388,6 @@ It can affect global variable pool, and local variable set for a particular func
 inc(i) -> i+1; foo = 5; inc(foo) => 6
 inc(i) -> i+1; foo = 5; undef('foo'); inc(foo) => 1
 inc(i) -> i+1; foo = 5; undef('inc'); undef('foo'); inc(foo) => Error: Function inc is not defined yet at pos 53
-undef('pi')  => bad idea - removes hidden variable holding the pi value
-undef('true')  => even worse idea, unbinds global true value, all references to true would now refer to the default 0
 </pre>
 
 ### `vars(prefix)`

@@ -1,7 +1,6 @@
 package carpet.mixins;
 
-
-import carpet.fakes.ScreenHandlerInterface;
+import carpet.fakes.AbstractContainerMenuInterface;
 import carpet.script.value.ScreenValue;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -20,7 +19,7 @@ import net.minecraft.world.inventory.DataSlot;
 import net.minecraft.world.item.crafting.Recipe;
 
 @Mixin(AbstractContainerMenu.class)
-public abstract class AbstractContainerMenu_scarpetMixin implements ScreenHandlerInterface
+public abstract class AbstractContainerMenu_scarpetMixin implements AbstractContainerMenuInterface
 {
     @Shadow @Final private List<ContainerListener> containerListeners;
     @Shadow public abstract void sendAllDataToRemote();
@@ -73,7 +72,7 @@ public abstract class AbstractContainerMenu_scarpetMixin implements ScreenHandle
     }
 
     @Override
-    public DataSlot getProperty(int index) {
+    public DataSlot getDataSlot(int index) {
         return this.dataSlots.get(index);
     }
 }

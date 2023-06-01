@@ -39,7 +39,7 @@ public class HUDLogger extends Logger
     public void removePlayer(String playerName)
     {
         ServerPlayer player = playerFromName(playerName);
-        if (player != null) HUDController.clear_player(player);
+        if (player != null) HUDController.clearPlayer(player);
         super.removePlayer(playerName);
     }
 

@@ -1,8 +1,10 @@
 package carpet.mixins;
 
+import carpet.fakes.MinecraftServerInterface;
 import carpet.fakes.ThreadedAnvilChunkStorageInterface;
-import carpet.helpers.TickSpeed;
+import carpet.helpers.ServerTickRateManager;
 import carpet.utils.CarpetProfiler;
+import net.minecraft.server.level.DistanceManager;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -78,7 +80,7 @@ public abstract class ServerChunkCache_tickMixin
     private boolean skipChunkTicking(ServerLevel serverWorld)
     {
         boolean debug = serverWorld.isDebug();
-        if (!TickSpeed.process_entities)
+        if (!((MinecraftServerInterface)serverWorld.getServer()).getTickRateManager().runsNormally())
         {
             // simplified chunk tick iteration assuming world is frozen otherwise as suggested by Hadron67
             // to be kept in sync with the original injection source
@@ -95,6 +97,19 @@ public abstract class ServerChunkCache_tickMixin
             return true;
         }
         return debug;
+    }
+
+    @Redirect(method = "tick", at = @At(
+            value = "INVOKE",
+            target = "Lnet/minecraft/server/level/DistanceManager;purgeStaleTickets()V"
+    ))
+    private void pauseTicketSystem(DistanceManager distanceManager)
+    {
+        // pausing expiry of tickets
+        // that will prevent also chunks from unloading, so require a deep frozen state
+        ServerTickRateManager trm = ((MinecraftServerInterface) level.getServer()).getTickRateManager();
+        if (!trm.runsNormally() && trm.deeplyFrozen()) return;
+        distanceManager.purgeStaleTickets();
     }
 
 }

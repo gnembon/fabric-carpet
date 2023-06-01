@@ -14,26 +14,33 @@ public class Threading
 {
     public static void apply(Expression expression)
     {
-        //"overidden" native call to cancel if on main thread
+        //"overridden" native call to cancel if on main thread
         expression.addContextFunction("task_join", 1, (c, t, lv) -> {
-            if (((CarpetContext)c).s.getServer().isSameThread())
+            if (((CarpetContext) c).server().isSameThread())
+            {
                 throw new InternalExpressionException("'task_join' cannot be called from main thread to avoid deadlocks");
+            }
             Value v = lv.get(0);
-            if (!(v instanceof ThreadValue))
+            if (!(v instanceof final ThreadValue tv))
+            {
                 throw new InternalExpressionException("'task_join' could only be used with a task value");
-            return ((ThreadValue) v).join();
+            }
+            return tv.join();
         });
 
         // has to be lazy due to deferred execution of the expression
-        expression.addLazyFunctionWithDelegation("task_dock", 1, false,true, (c, t, expr, tok, lv) -> {
-            CarpetContext cc = (CarpetContext)c;
-            MinecraftServer server = cc.s.getServer();
-            if (server.isSameThread()) return lv.get(0); // pass through for on thread tasks
+        expression.addLazyFunctionWithDelegation("task_dock", 1, false, true, (c, t, expr, tok, lv) -> {
+            CarpetContext cc = (CarpetContext) c;
+            MinecraftServer server = cc.server();
+            if (server.isSameThread())
+            {
+                return lv.get(0); // pass through for on thread tasks
+            }
             Value[] result = new Value[]{Value.NULL};
             RuntimeException[] internal = new RuntimeException[]{null};
             try
             {
-                ((CarpetContext) c).s.getServer().executeBlocking(() ->
+                ((CarpetContext) c).server().executeBlocking(() ->
                 {
                     try
                     {
@@ -50,7 +57,7 @@ public class Threading
 
                     catch (ArithmeticException exc)
                     {
-                        internal[0] = new ExpressionException(c, expr, tok, "Your math is wrong, "+exc.getMessage());
+                        internal[0] = new ExpressionException(c, expr, tok, "Your math is wrong, " + exc.getMessage());
                     }
                 });
             }
@@ -63,7 +70,7 @@ public class Threading
                 throw internal[0];
             }
             Value ret = result[0]; // preventing from lazy evaluating of the result in case a future completes later
-            return (_c, _t) -> ret;
+            return (ct, tt) -> ret;
             // pass through placeholder
             // implmenetation should dock the task on the main thread.
         });

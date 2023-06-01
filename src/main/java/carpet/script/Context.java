@@ -1,6 +1,7 @@
 package carpet.script;
 
 import carpet.script.exception.InternalExpressionException;
+import carpet.script.value.ThreadValue;
 import carpet.script.value.Value;
 
 import java.util.HashMap;
@@ -13,6 +14,7 @@ public class Context
     {
         NONE, VOID, BOOLEAN, NUMBER, STRING, LIST, ITERATOR, SIGNATURE, LOCALIZATION, LVALUE, MAPDEF
     }
+
     public static final Type NONE = Type.NONE;
     public static final Type VOID = Type.VOID;
     public static final Type BOOLEAN = Type.BOOLEAN;
@@ -28,6 +30,8 @@ public class Context
     public Map<String, LazyValue> variables = new HashMap<>();
 
     public final ScriptHost host;
+
+    private ThreadValue threadContext = null;
 
     public Context(ScriptHost host)
     {
@@ -68,8 +72,19 @@ public class Context
     public Context recreate()
     {
         Context ctx = duplicate();
+        ctx.threadContext = threadContext;
         ctx.initialize();
         return ctx;
+    }
+
+    public void setThreadContext(ThreadValue callingThread)
+    {
+        this.threadContext = callingThread;
+    }
+
+    public ThreadValue getThreadContext()
+    {
+        return threadContext;
     }
 
     protected void initialize()
@@ -84,11 +99,16 @@ public class Context
     {
         return new Context(this.host);
     }
+
     public ScriptHost.ErrorSnooper getErrorSnooper()
     {
         return host.errorSnooper;
     }
 
+    public ScriptServer scriptServer()
+    {
+        return host.scriptServer();
+    }
 
     /**
      * immutable context only for reason on reporting access violations in evaluating expressions in optimizization
@@ -97,10 +117,11 @@ public class Context
     public static class ContextForErrorReporting extends Context
     {
         public ScriptHost.ErrorSnooper optmizerEerrorSnooper;
+
         public ContextForErrorReporting(Context parent)
         {
             super(null);
-            optmizerEerrorSnooper =  parent.host.errorSnooper;
+            optmizerEerrorSnooper = parent.host.errorSnooper;
         }
 
         @Override
@@ -116,31 +137,64 @@ public class Context
                     "of scarpet authors. Please report this issue directly to the scarpet issue tracker");
 
         }
-        @Override
-        public LazyValue getVariable(String name) { badProgrammer(); return null;}
 
         @Override
-        public void setVariable(String name, LazyValue lv) { badProgrammer(); }
+        public LazyValue getVariable(String name)
+        {
+            badProgrammer();
+            return null;
+        }
 
         @Override
-        public void delVariable(String variable) { badProgrammer(); }
+        public void setVariable(String name, LazyValue lv)
+        {
+            badProgrammer();
+        }
 
         @Override
-        public void removeVariablesMatching(String varname) { badProgrammer(); }
+        public void delVariable(String variable)
+        {
+            badProgrammer();
+        }
 
         @Override
-        public Context with(String variable, LazyValue lv) { badProgrammer(); return this; }
+        public void removeVariablesMatching(String varname)
+        {
+            badProgrammer();
+        }
 
         @Override
-        public Set<String> getAllVariableNames() { badProgrammer(); return null;}
+        public Context with(String variable, LazyValue lv)
+        {
+            badProgrammer();
+            return this;
+        }
 
         @Override
-        public Context recreate() { badProgrammer(); return null;}
+        public Set<String> getAllVariableNames()
+        {
+            badProgrammer();
+            return null;
+        }
 
         @Override
-        protected void initialize() { badProgrammer();}
+        public Context recreate()
+        {
+            badProgrammer();
+            return null;
+        }
 
         @Override
-        public Context duplicate() { badProgrammer(); return null;}
+        protected void initialize()
+        {
+            badProgrammer();
+        }
+
+        @Override
+        public Context duplicate()
+        {
+            badProgrammer();
+            return null;
+        }
     }
 }

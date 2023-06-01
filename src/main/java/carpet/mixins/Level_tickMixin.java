@@ -1,7 +1,7 @@
 package carpet.mixins;
 
 import carpet.fakes.LevelInterface;
-import carpet.helpers.TickSpeed;
+import carpet.helpers.TickRateManager;
 import carpet.utils.CarpetProfiler;
 import net.minecraft.world.level.redstone.NeighborUpdater;
 import org.spongepowered.asm.mixin.Final;
@@ -17,7 +17,6 @@ import java.util.Map;
 import java.util.function.Consumer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 
 @Mixin(Level.class)
@@ -36,6 +35,7 @@ public abstract class Level_tickMixin implements LevelInterface
         return this.neighborUpdater;
     }
 
+    @Override
     public Map<EntityType<?>, Entity> getPrecookedMobs()
     {
         return precookedMobs;
@@ -50,44 +50,16 @@ public abstract class Level_tickMixin implements LevelInterface
     private void endBlockEntities(CallbackInfo ci) {
         CarpetProfiler.end_current_section(currentSection);
     }
-/*
-    @Inject(method = "tickBlockEntities", locals = LocalCapture.CAPTURE_FAILHARD, at = @At(
-            value = "INVOKE",
-            target = "Lnet/minecraft/class_5562;method_31704()Z",
-            shift = At.Shift.BEFORE,
-            ordinal = 0
-    ))
-    private void startTileEntitySection(CallbackInfo ci, Profiler profiler_1, Iterator i, class_5562 lv)
-    {
-        entitySection = CarpetProfiler.start_block_entity_section((World)(Object)this, (BlockEntity) lv, CarpetProfiler.TYPE.TILEENTITY);
-    }
 
-    @Redirect(method = "tickBlockEntities", at = @At(
-            value = "INVOKE",
-            target = "Lnet/minecraft/class_5562;method_31704()Z",
-            ordinal = 0
-    ))   // isRemoved()
-    private boolean checkProcessTEs(class_5562 class_5562)
-    {
-        return class_5562.method_31704() || !TickSpeed.process_entities; // blockEntity can be NULL? happened once with fake player
-    }
-
-    @Inject(method = "tickBlockEntities", at = @At(
-            value = "INVOKE",
-            target = "Lnet/minecraft/class_5562;method_31703()V",
-            shift = At.Shift.AFTER,
-            ordinal = 0
-    ))
-    private void endTileEntitySection(CallbackInfo ci)
-    {
-         CarpetProfiler.end_current_entity_section(entitySection);
-    }
-*/
     @Inject(method = "guardEntityTick", at = @At("HEAD"), cancellable = true)
     private void startEntity(Consumer<Entity> consumer_1, Entity e, CallbackInfo ci)
     {
-        if (!(TickSpeed.process_entities || (e instanceof Player) || (TickSpeed.is_superHot && isClientSide && e.getControllingPassenger() instanceof Player)))
+        TickRateManager trm = tickRateManager();
+        if (!trm.shouldEntityTick(e))
+        {
             ci.cancel();
+        }
+
         entitySection =  CarpetProfiler.start_entity_section((Level) (Object) this, e, CarpetProfiler.TYPE.ENTITY);
     }
 

@@ -85,7 +85,7 @@ public class SpawnReporter
                 return;
             }
         }
-        Pair<ResourceKey<Level>, MobCategory> key = Pair.of(mob.level.dimension(), cat);
+        Pair<ResourceKey<Level>, MobCategory> key = Pair.of(mob.level().dimension(), cat);
         long count = spawn_stats.get(key).getOrDefault(mob.getType(), 0L);
         spawn_stats.get(key).put(mob.getType(), count + 1);
         spawned_mobs.get(key).put(Pair.of(mob.getType(), pos));

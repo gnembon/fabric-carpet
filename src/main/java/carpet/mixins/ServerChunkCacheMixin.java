@@ -1,6 +1,5 @@
 package carpet.mixins;
 
-import carpet.fakes.ServerChunkManagerInterface;
 import carpet.utils.SpawnReporter;
 import org.apache.commons.lang3.tuple.Pair;
 import org.spongepowered.asm.mixin.Final;
@@ -22,17 +21,11 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.storage.LevelData;
 
 @Mixin(ServerChunkCache.class)
-public abstract class ServerChunkCacheMixin implements ServerChunkManagerInterface
+public abstract class ServerChunkCacheMixin
 {
     @Shadow @Final private ServerLevel level;
 
     @Shadow @Final private DistanceManager distanceManager;
-
-    @Override // shared between scarpet and spawnChunks setting
-    public DistanceManager getCMTicketManager()
-    {
-        return distanceManager;
-    }
 
     @Redirect(method = "tickChunks", at = @At(
             value = "INVOKE",

@@ -222,7 +222,7 @@ A set of assignment operators. All require bounded variable on the LHS, `<>` req
 right hand side as well (bounded, meaning being variables). Additionally they can also handle list constructors 
 with all bounded variables, and work then as list assignment operators. When `+=` is used on a list, it extends 
 that list of that element, and returns the list (old == new). `scarpet` doesn't support currently removal of items. 
-Removal of items can be obtaine via `filter` command, and reassigning it fo the same variable. Both operations would 
+Removal of items can be obtained via `filter` command, and reassigning it fo the same variable. Both operations would 
 require rewriting of the array anyways.
 
 <pre>
@@ -276,7 +276,7 @@ args() -> ... [1, 2, 3]; sum(a, b, c) -> a+b+c; sum(args())   => 6
 a = ... [1, 2, 3]; sum(a, b, c) -> a+b+c; sum(a)   => 6
 </pre>
 
-Unpacking mechanics can be used for list and map constriction, not just for function calls.
+Unpacking mechanics can be used for list and map construction, not just for function calls.
 
 <pre>
 [...range(5), pi, ...range(5,-1,-1)]   => [0, 1, 2, 3, 4, 3.14159265359, 5, 4, 3, 2, 1, 0]
@@ -308,7 +308,10 @@ only take integer values, so if the input has a decimal part, it will be discard
 	tend to -1.
  - `bitwise_shift_left(num, amount)` -> Shifts all the bits of the first number `amount` spots to the left. Note that shifting more
 	than 63 positions will result in a 0 (cos you shift out all the bits of the number)
- - `bitwise_shift_right(num, amount)` -> Shifts all the bits of the first number `amount` spots to the right. Like with the above,
+ - `bitwise_shift_right(num, amount)` -> Shifts all the bits of the first number `amount` spots to the right logically. That is, the 
+    `amount` most significant bits will always be set to 0. Like with the above, shifting more than 63 bits results in a 0.
+ - `bitwise_arithmetic_shift_right(num, amount)` -> Shifts all the bits of the first number `amount` spots to the right arithmetically.
+    That is, if the most significant (sign) bit is a 1, it'll propagate the one to the `amount` most significant bits. Like with the above,
 	shifting more than 63 bits results in a 0.
  - `bitwise_roll_left(num, amount)` -> Rolls the bits of the first number `amount` bits to the left. This is basically where you
 	shift out the first `amount` bits and then add them on at the back, essentially 'rolling' the number. Note that unlike with

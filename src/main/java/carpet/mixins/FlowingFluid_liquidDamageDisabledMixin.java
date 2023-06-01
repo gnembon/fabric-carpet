@@ -3,10 +3,10 @@ package carpet.mixins;
 import carpet.CarpetSettings;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.FlowingFluid;
 import net.minecraft.world.level.material.Fluid;
-import net.minecraft.world.level.material.Material;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -19,7 +19,7 @@ public class FlowingFluid_liquidDamageDisabledMixin
             method = "canHoldFluid",
             at = @At(
                     value = "INVOKE",
-                    target = "Lnet/minecraft/world/level/material/Material;blocksMotion()Z"
+                    target = "Lnet/minecraft/world/level/block/state/BlockState;blocksMotion()Z"
             ),
             cancellable = true
     )
@@ -27,8 +27,7 @@ public class FlowingFluid_liquidDamageDisabledMixin
     {
         if (CarpetSettings.liquidDamageDisabled)
         {
-            Material material = state.getMaterial();
-            cir.setReturnValue(material == Material.AIR || material.isLiquid());
+            cir.setReturnValue(state.isAir() || state.is(Blocks.WATER) || state.is(Blocks.LAVA));
         }
     }
 }

@@ -13,6 +13,8 @@ import net.minecraft.world.level.block.ChestBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.ChestType;
 
+import static net.minecraft.world.level.block.ChestBlock.getConnectedDirection;
+
 @Mixin(ChestBlock.class)
 public class ChestBlock_customStickyMixin implements BlockBehaviourInterface {
 
@@ -33,13 +35,6 @@ public class ChestBlock_customStickyMixin implements BlockBehaviourInterface {
         if (type == ChestType.SINGLE || neighborType == ChestType.SINGLE) {
             return false;
         }
-        if (type != neighborType.getOpposite()) {
-            return false;
-        }
-
-        Direction facing = state.getValue(ChestBlock.FACING);
-        Direction neighborFacing = state.getValue(ChestBlock.FACING);
-
-        return facing == neighborFacing;
+        return getConnectedDirection(state) == dir;
     }
 }

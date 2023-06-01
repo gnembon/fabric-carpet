@@ -12,6 +12,7 @@ public abstract class PlayerTabOverlayMixin implements PlayerListHudInterface
 
     @Shadow private Component header;
 
+    @Override
     public boolean hasFooterOrHeader()
     {
         return footer != null || header != null;

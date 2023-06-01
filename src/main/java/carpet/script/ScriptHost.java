@@ -10,6 +10,7 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -41,25 +42,39 @@ public abstract class ScriptHost
     public Random getRandom(long aLong)
     {
         if (randomizers.size() > 65536)
+        {
             randomizers.clear();
+        }
         return randomizers.computeIfAbsent(aLong, Random::new);
     }
 
-    public boolean resetRandom(long aLong) {
+    public boolean resetRandom(long aLong)
+    {
         return randomizers.remove(aLong) != null;
+    }
+
+    public Path resolveScriptFile(String suffix)
+    {
+        return scriptServer.resolveResource(suffix);
+    }
+
+    public boolean canSynchronouslyExecute()
+    {
+        return true;
     }
 
     public static class ModuleData
     {
         Module parent;
-        public Map<String, FunctionValue> globalFunctions = new Object2ObjectOpenHashMap<>();
-        public Map<String, LazyValue> globalVariables = new Object2ObjectOpenHashMap<>();
-        public Map<String, ModuleData> functionImports = new Object2ObjectOpenHashMap<>(); // imported functions string to module
-        public Map<String, ModuleData> globalsImports = new Object2ObjectOpenHashMap<>(); // imported global variables string to module
-        public Map<String, ModuleData> futureImports = new Object2ObjectOpenHashMap<>(); // imports not known before used
+        public final Map<String, FunctionValue> globalFunctions = new Object2ObjectOpenHashMap<>();
+        public final Map<String, LazyValue> globalVariables = new Object2ObjectOpenHashMap<>();
+        public final Map<String, ModuleData> functionImports = new Object2ObjectOpenHashMap<>(); // imported functions string to module
+        public final Map<String, ModuleData> globalsImports = new Object2ObjectOpenHashMap<>(); // imported global variables string to module
+        public final Map<String, ModuleData> futureImports = new Object2ObjectOpenHashMap<>(); // imports not known before used
 
         public ModuleData(Module parent, ModuleData other)
         {
+            super();
             // imports are just pointers, but they still point to the wrong modules (point to the parent)
             this.parent = parent;
             globalFunctions.putAll(other.globalFunctions);
@@ -92,15 +107,19 @@ public abstract class ScriptHost
             this.parent = parent;
         }
     }
+
     protected final Map<String, ScriptHost> userHosts = new Object2ObjectOpenHashMap<>();
-    private Map<Module,ModuleData> moduleData = new HashMap<>(); // marking imports
-    private Map<String,Module> modules = new HashMap<>();
+    private final Map<Module, ModuleData> moduleData = new HashMap<>(); // marking imports
+    private final Map<String, Module> modules = new HashMap<>();
 
     protected ScriptHost parent;
     protected boolean perUser;
     public String user;
 
-    public String getName() {return main ==null?null: main.name();}
+    public String getName()
+    {
+        return main == null ? null : main.name();
+    }
 
     public final Module main;
 
@@ -109,6 +128,7 @@ public abstract class ScriptHost
     {
         List<String> apply(Expression expression, Tokenizer.Token token, Context context, String message);
     }
+
     public ErrorSnooper errorSnooper = null;
 
     protected ScriptHost(Module code, ScriptServer scriptServer, boolean perUser, ScriptHost parent)
@@ -122,7 +142,7 @@ public abstract class ScriptHost
         ModuleData moduleData = new ModuleData(code);
         initializeModuleGlobals(moduleData);
         this.moduleData.put(code, moduleData);
-        this.modules.put(code==null?null:code.name(), code);
+        this.modules.put(code == null ? null : code.name(), code);
         mainThread = Thread.currentThread();
     }
 
@@ -132,9 +152,15 @@ public abstract class ScriptHost
 
     public void importModule(Context c, String moduleName)
     {
-        if (modules.containsKey(moduleName.toLowerCase(Locale.ROOT))) return;  // aready imported
+        if (modules.containsKey(moduleName.toLowerCase(Locale.ROOT)))
+        {
+            return;  // aready imported
+        }
         Module module = getModuleOrLibraryByName(moduleName);
-        if (modules.containsKey(module.name())) return;  // aready imported, once again, in case some discrepancies in names?
+        if (modules.containsKey(module.name()))
+        {
+            return;  // aready imported, once again, in case some discrepancies in names?
+        }
         modules.put(module.name(), module);
         ModuleData data = new ModuleData(module);
         initializeModuleGlobals(data);
@@ -144,7 +170,8 @@ public abstract class ScriptHost
         //modules.remove(module.getName());
         //throw new InternalExpressionException("Failed to import a module "+moduleName);
     }
-    public void importNames(Context c, Module targetModule, String sourceModuleName, List<String> identifiers )
+
+    public void importNames(Context c, Module targetModule, String sourceModuleName, List<String> identifiers)
     {
         if (!moduleData.containsKey(targetModule))
         {
@@ -157,7 +184,7 @@ public abstract class ScriptHost
         {
             throw new InternalExpressionException("Cannot import from module that is not imported");
         }
-        for (String identifier: identifiers)
+        for (String identifier : identifiers)
         {
             if (sourceData.globalFunctions.containsKey(identifier))
             {
@@ -192,35 +219,56 @@ public abstract class ScriptHost
 
     protected abstract void runModuleCode(Context c, Module module); // this should be shell out in the executor
 
-    public FunctionValue getFunction(String name) { return getFunction(main, name); }
+    public FunctionValue getFunction(String name)
+    {
+        return getFunction(main, name);
+    }
+
     public FunctionValue getAssertFunction(Module module, String name)
     {
         FunctionValue ret = getFunction(module, name);
         if (ret == null)
         {
             if (module == main)
-                throw new InternalExpressionException("Function '"+name+"' is not defined yet");
+            {
+                throw new InternalExpressionException("Function '" + name + "' is not defined yet");
+            }
             else
-                throw new InternalExpressionException("Function '"+name+"' is not defined nor visible by its name in the imported module '"+module.name()+"'");
+            {
+                throw new InternalExpressionException("Function '" + name + "' is not defined nor visible by its name in the imported module '" + module.name() + "'");
+            }
         }
         return ret;
     }
+
     private FunctionValue getFunction(Module module, String name)
     {
         ModuleData local = getModuleData(module);
         FunctionValue ret = local.globalFunctions.get(name); // most uses would be from local scope anyways
-        if (ret != null) return ret;
+        if (ret != null)
+        {
+            return ret;
+        }
         ModuleData target = local.functionImports.get(name);
         if (target != null)
         {
             ret = target.globalFunctions.get(name);
-            if (ret != null) return ret;
+            if (ret != null)
+            {
+                return ret;
+            }
         }
         // not in local scope - will need to travel over import links
         target = local.futureImports.get(name);
-        if (target == null) return null;
+        if (target == null)
+        {
+            return null;
+        }
         target = findModuleDataFromFunctionImports(name, target, 0);
-        if (target == null) return null;
+        if (target == null)
+        {
+            return null;
+        }
         local.futureImports.remove(name);
         local.functionImports.put(name, target);
         return target.globalFunctions.get(name);
@@ -228,33 +276,58 @@ public abstract class ScriptHost
 
     private ModuleData findModuleDataFromFunctionImports(String name, ModuleData source, int ttl)
     {
-        if (ttl > 64) throw new InternalExpressionException("Cannot import "+name+", either your imports are too deep or too loopy");
+        if (ttl > 64)
+        {
+            throw new InternalExpressionException("Cannot import " + name + ", either your imports are too deep or too loopy");
+        }
         if (source.globalFunctions.containsKey(name))
+        {
             return source;
+        }
         if (source.functionImports.containsKey(name))
-            return findModuleDataFromFunctionImports(name, source.functionImports.get(name), ttl+1);
+        {
+            return findModuleDataFromFunctionImports(name, source.functionImports.get(name), ttl + 1);
+        }
         if (source.futureImports.containsKey(name))
-            return findModuleDataFromFunctionImports(name, source.futureImports.get(name), ttl+1);
+        {
+            return findModuleDataFromFunctionImports(name, source.futureImports.get(name), ttl + 1);
+        }
         return null;
     }
 
-    public LazyValue getGlobalVariable(String name) { return getGlobalVariable(main, name); }
+    public LazyValue getGlobalVariable(String name)
+    {
+        return getGlobalVariable(main, name);
+    }
+
     public LazyValue getGlobalVariable(Module module, String name)
     {
         ModuleData local = getModuleData(module);
         LazyValue ret = local.globalVariables.get(name); // most uses would be from local scope anyways
-        if (ret != null) return ret;
+        if (ret != null)
+        {
+            return ret;
+        }
         ModuleData target = local.globalsImports.get(name);
         if (target != null)
         {
             ret = target.globalVariables.get(name);
-            if (ret != null) return ret;
+            if (ret != null)
+            {
+                return ret;
+            }
         }
         // not in local scope - will need to travel over import links
         target = local.futureImports.get(name);
-        if (target == null) return null;
+        if (target == null)
+        {
+            return null;
+        }
         target = findModuleDataFromGlobalImports(name, target, 0);
-        if (target == null) return null;
+        if (target == null)
+        {
+            return null;
+        }
         local.futureImports.remove(name);
         local.globalsImports.put(name, target);
         return target.globalVariables.get(name);
@@ -262,13 +335,22 @@ public abstract class ScriptHost
 
     private ModuleData findModuleDataFromGlobalImports(String name, ModuleData source, int ttl)
     {
-        if (ttl > 64) throw new InternalExpressionException("Cannot import "+name+", either your imports are too deep or too loopy");
+        if (ttl > 64)
+        {
+            throw new InternalExpressionException("Cannot import " + name + ", either your imports are too deep or too loopy");
+        }
         if (source.globalVariables.containsKey(name))
+        {
             return source;
+        }
         if (source.globalsImports.containsKey(name))
-            return findModuleDataFromGlobalImports(name, source.globalsImports.get(name), ttl+1);
+        {
+            return findModuleDataFromGlobalImports(name, source.globalsImports.get(name), ttl + 1);
+        }
         if (source.futureImports.containsKey(name))
-            return findModuleDataFromGlobalImports(name, source.futureImports.get(name), ttl+1);
+        {
+            return findModuleDataFromGlobalImports(name, source.futureImports.get(name), ttl + 1);
+        }
         return null;
     }
 
@@ -278,6 +360,7 @@ public abstract class ScriptHost
         data.globalFunctions.entrySet().removeIf(e -> e.getKey().startsWith(prefix));
         data.functionImports.entrySet().removeIf(e -> e.getKey().startsWith(prefix));
     }
+
     public void delFunction(Module module, String funName)
     {
         ModuleData data = getModuleData(module);
@@ -302,7 +385,10 @@ public abstract class ScriptHost
     private ModuleData getModuleData(Module module)
     {
         ModuleData data = moduleData.get(module);
-        if (data == null) throw new IntegrityException("Module structure changed for the app. Did you reload the app with tasks running?");
+        if (data == null)
+        {
+            throw new IntegrityException("Module structure changed for the app. Did you reload the app with tasks running?");
+        }
         return data;
     }
 
@@ -334,14 +420,20 @@ public abstract class ScriptHost
         return Stream.concat(Stream.concat(
                 getModuleData(module).globalFunctions.keySet().stream(),
                 getModuleData(module).functionImports.keySet().stream()
-        ),getModuleData(module).futureImports.keySet().stream().filter(s -> !s.startsWith("global_"))).filter(predicate);
+        ), getModuleData(module).futureImports.keySet().stream().filter(s -> !s.startsWith("global_"))).filter(predicate);
     }
 
     public ScriptHost retrieveForExecution(String /*Nullable*/ user)
     {
-        if (!perUser) return this;
+        if (!perUser)
+        {
+            return this;
+        }
         ScriptHost oldUserHost = userHosts.get(user);
-        if (oldUserHost != null) return oldUserHost;
+        if (oldUserHost != null)
+        {
+            return oldUserHost;
+        }
         ScriptHost userHost = this.duplicate();
         userHost.user = user;
         this.setupUserHost(userHost);
@@ -358,57 +450,65 @@ public abstract class ScriptHost
         host.moduleData.forEach((module, data) -> data.setImportsBasedOn(host, this.moduleData.get(data.parent)));
     }
 
-    synchronized public void handleExpressionException(String msg, ExpressionException exc)
+    public synchronized void handleExpressionException(String msg, ExpressionException exc)
     {
-        System.out.println(msg+": "+exc);
+        System.out.println(msg + ": " + exc);
     }
-
 
     protected abstract ScriptHost duplicate();
 
     public Object getLock(Value name)
     {
-        return locks.computeIfAbsent(name, (n) -> new Object());
+        return locks.computeIfAbsent(name, n -> new Object());
     }
 
     public ThreadPoolExecutor getExecutor(Value pool)
     {
-        if (inTermination) return null;
-        return executorServices.computeIfAbsent(pool, (v) -> (ThreadPoolExecutor) Executors.newCachedThreadPool());
+        if (inTermination)
+        {
+            return null;
+        }
+        return executorServices.computeIfAbsent(pool, v -> (ThreadPoolExecutor) Executors.newCachedThreadPool());
     }
 
     public int taskCount()
     {
         return executorServices.values().stream().map(ThreadPoolExecutor::getActiveCount).reduce(0, Integer::sum);
     }
+
     public int taskCount(Value pool)
     {
-        if (executorServices.containsKey(pool))
-        {
-            return executorServices.get(pool).getActiveCount();
-        }
-        return 0;
+        return executorServices.containsKey(pool) ? executorServices.get(pool).getActiveCount() : 0;
     }
 
     public void onClose()
     {
         inTermination = true;
         executorServices.values().forEach(ThreadPoolExecutor::shutdown);
-        for (ScriptHost uh : userHosts.values()) uh.onClose();
+        for (ScriptHost uh : userHosts.values())
+        {
+            uh.onClose();
+        }
         if (taskCount() > 0)
         {
             executorServices.values().forEach(e -> {
                 ExecutorService stopper = Executors.newSingleThreadExecutor();
-                stopper.submit( () -> {
-                    try {
+                stopper.submit(() -> {
+                    try
+                    {
                         // Wait a while for existing tasks to terminate
-                        if (!e.awaitTermination(1500, TimeUnit.MILLISECONDS)) {
+                        if (!e.awaitTermination(1500, TimeUnit.MILLISECONDS))
+                        {
                             e.shutdownNow(); // Cancel currently executing tasks
                             // Wait a while for tasks to respond to being cancelled
                             if (!e.awaitTermination(1500, TimeUnit.MILLISECONDS))
+                            {
                                 CarpetScriptServer.LOG.error("Failed to stop app's thread");
+                            }
                         }
-                    } catch (InterruptedException ie) {
+                    }
+                    catch (InterruptedException ie)
+                    {
                         // (Re-)Cancel if current thread also interrupted
                         e.shutdownNow();
                         // Preserve interrupt status
@@ -426,7 +526,10 @@ public abstract class ScriptHost
         perUser = isPerUser;
     }
 
-    public boolean isPerUser() {return perUser;}
+    public boolean isPerUser()
+    {
+        return perUser;
+    }
 
     public Set<String> getUserList()
     {
@@ -436,21 +539,24 @@ public abstract class ScriptHost
 
     public void resetErrorSnooper()
     {
-        errorSnooper=null;
+        errorSnooper = null;
     }
 
     public static final Logger DEPRECATION_LOG = LoggerFactory.getLogger("Scarpet Deprecation Warnings");
 
     public boolean issueDeprecation(String feature)
     {
-        if (deprecations.contains(feature)) return false;
+        if (deprecations.contains(feature))
+        {
+            return false;
+        }
         deprecations.add(feature);
-        DEPRECATION_LOG.warn("'"+feature+"' is deprecated and soon will be removed. Please consult the docs for their replacement");
+        DEPRECATION_LOG.warn("'" + feature + "' is deprecated and soon will be removed. Please consult the docs for their replacement");
         return true;
     }
 
-	public ScriptServer scriptServer()
-	{
-		return scriptServer;
-	}
+    public ScriptServer scriptServer()
+    {
+        return scriptServer;
+    }
 }

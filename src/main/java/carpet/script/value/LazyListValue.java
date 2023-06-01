@@ -1,10 +1,12 @@
 package carpet.script.value;
 
 import carpet.script.exception.InternalExpressionException;
+
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
+
 import net.minecraft.nbt.StringTag;
 import net.minecraft.nbt.Tag;
 
@@ -16,16 +18,20 @@ public abstract class LazyListValue extends AbstractListValue implements Iterato
         {
             {
                 if (step == 0)
+                {
                     throw new InternalExpressionException("Range will never end with a zero step");
+                }
                 this.start = from;
                 this.current = this.start;
                 this.limit = to;
                 this.stepp = step;
             }
+
             private final double start;
             private double current;
             private final double limit;
             private final double stepp;
+
             @Override
             public Value next()
             {
@@ -43,32 +49,37 @@ public abstract class LazyListValue extends AbstractListValue implements Iterato
             @Override
             public boolean hasNext()
             {
-                return stepp > 0?(current < limit):(current > limit);
+                return stepp > 0 ? (current < limit) : (current > limit);
             }
 
             @Override
             public String getString()
             {
-                return String.format(Locale.ROOT, "[%s, %s, ..., %s)",NumericValue.of(start).getString(), NumericValue.of(start+stepp).getString(), NumericValue.of( limit).getString());
+                return String.format(Locale.ROOT, "[%s, %s, ..., %s)", NumericValue.of(start).getString(), NumericValue.of(start + stepp).getString(), NumericValue.of(limit).getString());
             }
         };
     }
+
     public static LazyListValue rangeLong(long from, long to, long step)
     {
         return new LazyListValue()
         {
             {
                 if (step == 0)
+                {
                     throw new InternalExpressionException("Range will never end with a zero step");
+                }
                 this.start = from;
                 this.current = this.start;
                 this.limit = to;
                 this.stepp = step;
             }
+
             private final long start;
             private long current;
             private final long limit;
             private final long stepp;
+
             @Override
             public Value next()
             {
@@ -86,13 +97,13 @@ public abstract class LazyListValue extends AbstractListValue implements Iterato
             @Override
             public boolean hasNext()
             {
-                return stepp > 0?(current < limit):(current > limit);
+                return stepp > 0 ? (current < limit) : (current > limit);
             }
 
             @Override
             public String getString()
             {
-                return String.format(Locale.ROOT, "[%s, %s, ..., %s)",NumericValue.of(start).getString(), NumericValue.of(start+stepp).getString(), NumericValue.of( limit).getString());
+                return String.format(Locale.ROOT, "[%s, %s, ..., %s)", NumericValue.of(start).getString(), NumericValue.of(start + stepp).getString(), NumericValue.of(limit).getString());
             }
         };
     }
@@ -108,21 +119,30 @@ public abstract class LazyListValue extends AbstractListValue implements Iterato
     {
         return hasNext();
     }
-    @Override public abstract boolean hasNext();
-
-    @Override public abstract Value next();
 
     @Override
-    public void fatality() {reset();}
+    public void fatality()
+    {
+        reset();
+    }
+
     public abstract void reset();
 
     @Override
-    public Iterator<Value> iterator() {return this;}
+    public Iterator<Value> iterator()
+    {
+        return this;
+    }
 
     public List<Value> unroll()
     {
         List<Value> result = new ArrayList<>();
-        this.forEachRemaining(result::add);
+        this.forEachRemaining(v -> {
+            if (v != Value.EOL)
+            {
+                result.add(v);
+            }
+        });
         fatality();
         return result;
     }
@@ -130,26 +150,38 @@ public abstract class LazyListValue extends AbstractListValue implements Iterato
     @Override
     public Value slice(long from, Long to)
     {
-        if (to == null || to < 0) to = (long) Integer.MAX_VALUE;
-        if (from < 0) from = 0;
+        if (to == null || to < 0)
+        {
+            to = (long) Integer.MAX_VALUE;
+        }
+        if (from < 0)
+        {
+            from = 0;
+        }
         if (from > to)
+        {
             return ListValue.of();
+        }
         List<Value> result = new ArrayList<>();
         int i;
         for (i = 0; i < from; i++)
         {
             if (hasNext())
+            {
                 next();
+            }
             else
             {
                 fatality();
                 return ListValue.wrap(result);
             }
         }
-        for (i = (int)from; i < to; i++)
+        for (i = (int) from; i < to; i++)
         {
             if (hasNext())
+            {
                 result.add(next());
+            }
             else
             {
                 fatality();
@@ -158,6 +190,7 @@ public abstract class LazyListValue extends AbstractListValue implements Iterato
         }
         return ListValue.wrap(result);
     }
+
     @Override
     public Value add(Value other)
     {
@@ -165,7 +198,7 @@ public abstract class LazyListValue extends AbstractListValue implements Iterato
     }
 
     @Override
-    public boolean equals(final Object o)
+    public boolean equals(Object o)
     {
         return false;
     }
@@ -175,6 +208,7 @@ public abstract class LazyListValue extends AbstractListValue implements Iterato
     {
         return "iterator";
     }
+
     @Override
     public Object clone()
     {
@@ -187,25 +221,29 @@ public abstract class LazyListValue extends AbstractListValue implements Iterato
         {
             throw new InternalExpressionException("Cannot copy iterators");
         }
-        ((LazyListValue)copy).reset();
+        ((LazyListValue) copy).reset();
         return copy;
     }
 
     @Override
-    public Value fromConstant() {
-        return (Value)clone();
+    public Value fromConstant()
+    {
+        return (Value) clone();
     }
 
     @Override
     public int hashCode()
     {
-        return ("i"+getString()).hashCode();
+        return ("i" + getString()).hashCode();
     }
 
     @Override
     public Tag toTag(boolean force)
     {
-        if (!force) throw new NBTSerializableValue.IncompatibleTypeException(this);
+        if (!force)
+        {
+            throw new NBTSerializableValue.IncompatibleTypeException(this);
+        }
         return StringTag.valueOf(getString());
     }
 }

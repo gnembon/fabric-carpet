@@ -9,7 +9,7 @@ Collection of other methods that control smaller, yet still important aspects of
 Plays a specific sound `name`, at block or position `pos`, with optional `volume` and modified `pitch`, and under
 optional `mixer`. Default values for `volume`, `pitch` and `mixer` are `1.0`, `1.0`, and `master`. 
 Valid mixer options are `master`, `music`, `record`, `weather`, `block`, `hostile`,`neutral`, `player`, `ambient`
-and `voice`. `pos` can be either a block, triple of coords, or a list of thee numbers. Uses the same options as a
+and `voice`. `pos` can be either a block, triple of coords, or a list of three numbers. Uses the same options as a
  corresponding `playsound` command.
  
 Used with no arguments, return the list of available sound names.
@@ -92,6 +92,10 @@ Optional shared shape attributes:
    instance makes so that the shape follows the entity, but stays at the same, absolute Y coordinate. Preceeding an axis
    with `d`, like `dxdydz` would make so that entity position is treated discretely (rounded down).
  * `debug` - if True, it will only be visible when F3+B entity bounding boxes is enabled.
+ * `facing` - applicable only to `'text'`, `'block'` or '`item'` shapes, where its facing. Possible options are:
+   * `player`: Default. Element always rotates to face the player eye position, 
+   * `camera`: Element is placed on the plane orthogonal to player look vector, 
+   * `north`, `south`, `east`, `west`, `up`, `down`: obvious
 
 Available shapes:
  * `'line'` - draws a straight line between two points.
@@ -141,8 +145,6 @@ Available shapes:
          display smoothly dynamic elements where value of an element is constantly
          changing and updates to it are being sent from the server.
      * `size` - float. Default font size is 10.
-     * `facing` - text direction, where its facing. Possible options are: `player` (default, text
-         always rotates to face the player), `north`, `south`, `east`, `west`, `up`, `down`
      * `doublesided` - if `true` it will make the text visible from the back as well. Default is `false` (1.16+)
      * `align` - text alignment with regards to `pos`. Default is `center` (displayed text is
          centered with respect to `pos`), `left` (`pos` indicates beginning of text), and `right` (`pos`
@@ -157,8 +159,6 @@ Available shapes:
      * `pos` - position of the object.
      * `block` - the object to show. It is a block value or a name of a block with optional NBT data.
    * Optional attributes:
-     * `facing` - object's direction, where its facing. Possible options are: `player` (it
-     rotates to face the player), `north`(default), `south`, `east`, `west`, `up`, `down`
      * `tilt`, `lean`, `turn` - additional rotations along all three axis. It uses the block center as the origin.
      * `scale` - scale of it in 3 axis-direction. should be a number or a list of 3 numbers (x,y,z).
      * `skylight`, `blocklight` - light level. omit it to use local light level. should between 0~15.
@@ -168,14 +168,13 @@ Available shapes:
      * `pos` - position of the object.
      * `item` - the object to show. It is an item tuple or a string identified item that may have NBT data.
    * Optional attributes:
-     * `facing` - object's direction, where its facing. Possible options are: `player` (it
-         always rotates to face the player), `north`(default), `south`, `east`, `west`, `up`, `down`
      * `tilt`, `lean`, `turn` - additional rotations along all three axis. for `block`, it use its block center as the origin.
      * `scale` - scale of it in 3 axis-direction. should be a number or a list of 3 numbers (x,y,z).
      * `skylight`, `blocklight` - light level. omit it to use local light level. should between 0~15.
-     * `variant` - one of `'none'`, `'third_person_left_hand'`, `'third_person_right_hand'`, `'first_person_left_hand'`,
-       `'first_person_right_hand'`, `'head'`, `'gui'`, `'ground'`, `'fixed'`. In addition to the literal meaning,
-       it can also be used to use special models of tridents and telescopes.
+     * `variant` - one of `'none'`, `'thirdperson_lefthand'`, `'thirdperson_righthand'`, `'firstperson_lefthand'`,
+       `'firstperson_righthand'`, `'head'`, `'gui'`, `'ground'`, `'fixed'`. In addition to the literal meaning,
+       it can also be used to use special models of tridents and telescopes. 
+        This attribute is experimental and use of it will change in the future.
 
       
 ### `create_marker(text, pos, rotation?, block?, interactive?)`
@@ -245,7 +244,8 @@ produce an exception.
 
 ### `print(expr)`, `print(player/player_list, expr)`
 
-Displays the result of the expression to the chat. Overrides default `scarpet` behaviour of sending everyting to stderr.
+Displays the result of the expression to the chat. Overrides default `scarpet` behaviour of sending everything to stderr.
+For player scoped apps it always by default targets the player for whom the app runs on behalf. 
 Can optionally define player or list of players to send the message to.
 
 ### `format(components, ...)`, `format([components, ...])`
@@ -635,7 +635,7 @@ to that value. Daytime clocks are shared between all dimensions.
 _**Deprecated**. Use `system_info('server_last_tick_times')` instead._
 
 Returns a 100-long array of recent tick times, in milliseconds. First item on the list is the most recent tick
-If called outside of the main tick (either throgh scheduled tasks, or async execution), then the first item on the
+If called outside of the main tick (either through scheduled tasks, or async execution), then the first item on the
 list may refer to the previous tick performance. In this case the last entry (tick 100) would refer to the most current
 tick. For all intent and purpose, `last_tick_times():0` should be used as last tick execution time, but
 individual tick times may vary greatly, and these need to be taken with the little grain of 
@@ -656,7 +656,7 @@ If you need to break
 up your execution into chunks, you could queue the rest of the work into the next task using `schedule`, or perform your actions
 defining `__on_tick()` event handler, but in case you need to take a full control over the game loop and run some simulations using 
 `game_tick()` as the way to advance the game progress, that might be the simplest way to do it, 
-and triggering the script in a 'proper' way (there is not 'proper' way, but via commmand line, or server chat is the most 'proper'),
+and triggering the script in a 'proper' way (there is not 'proper' way, but via command line, or server chat is the most 'proper'),
 would be the safest way to do it. For instance, running `game_tick()` from a command block triggered with a button, or in an entity
  event triggered in an entity tick, may technically
 cause the game to run and encounter that call again, causing stack to overflow. Thankfully it doesn't happen in vanilla running 
@@ -754,7 +754,8 @@ system calls. In all circumstances, these are only provided as read-only.
   * `world_center` - Returns coordinates of the center of the world with respect of the world border
   * `world_size` - Returns radius of world border for current dimension.
   * `world_max_size` - Returns maximum possible radius of world border for current dimension.
-  * 
+  * `world_min_spawning_light` - Returns minimum light level at which mobs can spawn for current dimension, taking into account datapacks
+
 ##### Relevant gameplay related properties
   * `game_difficulty` - current difficulty of the game: `'peaceful'`, `'easy'`, `'normal'`, or `'hard'`
   * `game_hardcore` - boolean whether the game is in hardcore mode

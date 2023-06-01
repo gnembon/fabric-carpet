@@ -54,7 +54,6 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.level.storage.LevelResource;
 
-import static carpet.script.CarpetEventServer.Event.CARPET_RULE_CHANGES;
 import static carpet.utils.Translations.tr;
 import static java.util.Comparator.comparing;
 import static net.minecraft.commands.Commands.argument;
@@ -264,7 +263,6 @@ public class SettingsManager {
         staticObservers.forEach(observer -> observer.ruleChanged(source, rule, userInput));
         ServerNetworkHandler.updateRuleWithConnectedClients(rule);
         switchScarpetRuleIfNeeded(source, rule); //TODO move into rule
-        if (CARPET_RULE_CHANGES.isNeeded()) CARPET_RULE_CHANGES.onCarpetRuleChanges(rule, source);
     }
 
     /**
