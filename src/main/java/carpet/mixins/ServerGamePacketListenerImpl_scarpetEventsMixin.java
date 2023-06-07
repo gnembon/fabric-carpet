@@ -291,7 +291,7 @@ public class ServerGamePacketListenerImpl_scarpetEventsMixin
     private void onChatCommandMessage(ServerboundChatCommandPacket serverboundChatCommandPacket, CallbackInfo ci) {
         if (PLAYER_COMMAND.isNeeded())
         {
-            PLAYER_COMMAND.onPlayerMessage(player, serverboundChatCommandPacket.command());
+            if(PLAYER_COMMAND.onPlayerMessage(player, serverboundChatCommandPacket.command())) ci.cancel();
         }
     }
 }
