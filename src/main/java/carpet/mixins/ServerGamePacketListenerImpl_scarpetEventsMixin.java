@@ -286,7 +286,8 @@ public class ServerGamePacketListenerImpl_scarpetEventsMixin
     }
 
     @Inject(method = "handleChatCommand(Lnet/minecraft/network/protocol/game/ServerboundChatCommandPacket;)V",
-            at = @At(value = "HEAD")
+            at = @At(value = "HEAD"),
+            cancellable = true
     )
     private void onChatCommandMessage(ServerboundChatCommandPacket serverboundChatCommandPacket, CallbackInfo ci) {
         if (PLAYER_COMMAND.isNeeded())
