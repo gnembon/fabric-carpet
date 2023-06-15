@@ -1,0 +1,36 @@
+{
+  // TODO Rules
+  
+  // Categories:
+
+  "carpet.category.bugfix": "correction de bugs",
+  "carpet.category.survival": "survie",
+  "carpet.category.creative": "créatif",
+  "carpet.category.experimental": "expérimental",
+  "carpet.category.optimization": "optimisation",
+  "carpet.category.feature": "fonctionnalité",
+  "carpet.category.command": "commande",
+  "carpet.category.tnt": "TNT",
+  "carpet.category.dispenser": "distributeur",
+  "carpet.category.scarpet": "tapis",
+  "carpet.category.client": "client",
+  
+  // Settings command UI elements
+
+  "carpet.settings.command.browse_categories": "Parcourir les catégories",
+  "carpet.settings.command.version": "version",
+  "carpet.settings.command.list_all_category": "liste toutes les options de la catégorie %s",
+  "carpet.settings.command.current_settings_header": "Options actuelles de %s",
+  "carpet.settings.command.switch_to": "Passer à %s",
+  "carpet.settings.command.unknown_rule": "Règle inconnue",
+  "carpet.settings.command.current_from_file_header": "Options de démarrage actuelles de %s depuis %s",
+  "carpet.settings.command.mod_settings_matching": "Options de %s correspondant à \"%s\" ",
+  "carpet.settings.command.all_mod_settings": "Toutes les options de %s",
+  "carpet.settings.command.tags": "Balises",
+  "carpet.settings.command.change_permanently": "Changer définitivement",
+  "carpet.settings.command.change_permanently_tooltip": "cliquez pour conserver les options dans %s et les enregistrer entre les redémarrages",
+  "carpet.settings.command.default_set": "La règle %s sera désormais définie par défaut sur %s",
+  "carpet.settings.command.default_removed": "La règle %s ne sera plus définie au redémarrage",
+  "carpet.settings.command.current_value": "valeur actuelle"
+
+}
