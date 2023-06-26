@@ -58,6 +58,10 @@ public class AppStoreManager
         scarpetRepoLink = link;
     }
 
+    public static boolean enabled()
+    {
+        return scarpetRepoLink != null;
+    }
 
     private record AppInfo(String name, String url, StoreNode source)
     {
@@ -123,7 +127,7 @@ public class AppStoreManager
             {
                 return;
             }
-            if (scarpetRepoLink == null)
+            if (!enabled())
             {
                 throw new IOException("Accessing scarpet app repo is disabled");
             }

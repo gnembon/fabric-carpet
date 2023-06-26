@@ -4,7 +4,7 @@ import carpet.api.settings.CarpetRule;
 import carpet.api.settings.RuleCategory;
 import carpet.api.settings.Validators;
 import carpet.api.settings.Validator;
-import carpet.script.external.Carpet;
+import carpet.script.utils.AppStoreManager;
 import carpet.settings.Rule;
 import carpet.utils.Translations;
 import carpet.utils.CommandHelper;
@@ -551,6 +551,32 @@ public class CarpetSettings
     )
     public static boolean scriptsOptimization = true;
 
+    private static class ScarpetAppStore extends Validator<String> {
+        @Override
+        public String validate(CommandSourceStack source, CarpetRule<String> currentRule, String newValue, String stringInput) {
+            if (newValue.equals(currentRule.value())) {
+                // Don't refresh the local repo if it's the same (world change), helps preventing hitting rate limits from github when
+                // getting suggestions. Pending is a way to invalidate the cache when it gets old, and investigating api usage further
+                return newValue;
+            }
+            if (newValue.equals("none")) {
+                AppStoreManager.setScarpetRepoLink(null);
+            } else {
+                if (newValue.endsWith("/"))
+                    newValue = newValue.substring(0, newValue.length() - 1);
+                AppStoreManager.setScarpetRepoLink("https://api.github.com/repos/" + newValue + "/");
+            }
+            if (source != null)
+                CommandHelper.notifyPlayersCommandsChanged(source.getServer());
+            return newValue;
+        }
+
+        @Override
+        public String description() {
+            return "Appstore link should point to a valid github repository";
+        }
+    }
+
     @Rule(
             desc = "Location of the online repository of scarpet apps",
             extra = {
@@ -560,7 +586,7 @@ public class CarpetSettings
             },
             category = SCARPET,
             strict = false,
-            validate= Carpet.ScarpetAppStoreValidator.class
+            validate = ScarpetAppStore.class
     )
     public static String scriptsAppStore = "gnembon/scarpet/contents/programs";
 
