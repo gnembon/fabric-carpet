@@ -1210,7 +1210,7 @@ public class CarpetScriptHost extends ScriptHost
     {
         if (super.issueDeprecation(feature))
         {
-            Carpet.Messenger_message(responsibleSource, "rb App '" +getName() + "' uses '" + feature + "', which is deprecated for removal. Check the docs for their replacement");
+            Carpet.Messenger_message(responsibleSource, "rb App '" +getName() + "' uses '" + feature + "', which is deprecated for removal. Check the docs for a replacement");
             return true;
         }
         return false;

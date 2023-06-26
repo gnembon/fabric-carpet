@@ -551,7 +551,7 @@ public abstract class ScriptHost
             return false;
         }
         deprecations.add(feature);
-        DEPRECATION_LOG.warn("App '" + getName() + "' uses '" + feature + "', which is deprecated for removal. Check the docs for their replacement");
+        DEPRECATION_LOG.warn("App '" + getName() + "' uses '" + feature + "', which is deprecated for removal. Check the docs for a replacement");
         return true;
     }
 
