@@ -4,10 +4,9 @@ import carpet.CarpetServer;
 import com.google.common.collect.Sets;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.core.BlockPos;
@@ -58,23 +57,23 @@ public class MobAI
         aiTrackers.get(e).add(type);
     }
 
-    public static List<String> availbleTypes(CommandSourceStack source)
+    public static Stream<String> availbleTypes(CommandSourceStack source)
     {
         Set<EntityType<?>> types = new HashSet<>();
         for (TrackingType type: TrackingType.values())
         {
             types.addAll(type.types);
         }
-        return types.stream().map(t -> source.registryAccess().registryOrThrow(Registries.ENTITY_TYPE).getKey(t).getPath()).collect(Collectors.toList());
+        return types.stream().map(t -> source.registryAccess().registryOrThrow(Registries.ENTITY_TYPE).getKey(t).getPath());
     }
 
-    public static List<String> availableFor(EntityType<?> entityType)
+    public static Stream<String> availableFor(EntityType<?> entityType)
     {
         Set<TrackingType> availableOptions = new HashSet<>();
         for (TrackingType type: TrackingType.values())
             if (type.types.contains(entityType))
                 availableOptions.add(type);
-        return availableOptions.stream().map(t -> t.name().toLowerCase()).collect(Collectors.toList());
+        return availableOptions.stream().map(t -> t.name().toLowerCase());
     }
 
     public enum TrackingType
