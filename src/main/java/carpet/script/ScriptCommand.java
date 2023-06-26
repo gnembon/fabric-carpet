@@ -8,9 +8,12 @@ import carpet.script.value.FunctionValue;
 import carpet.script.value.Value;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
+import com.mojang.brigadier.builder.ArgumentBuilder;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import net.minecraft.commands.CommandBuildContext;
@@ -18,16 +21,14 @@ import org.apache.commons.lang3.StringUtils;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
-import java.util.TreeSet;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.arguments.blocks.BlockInput;
@@ -35,6 +36,7 @@ import net.minecraft.commands.arguments.blocks.BlockPredicateArgument;
 import net.minecraft.commands.arguments.blocks.BlockStateArgument;
 import net.minecraft.commands.arguments.coordinates.BlockPosArgument;
 import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.Clearable;
 import net.minecraft.world.level.block.Block;
@@ -48,14 +50,15 @@ import static net.minecraft.commands.SharedSuggestionProvider.suggest;
 
 public class ScriptCommand
 {
-    private static final TreeSet<String> scarpetFunctions;
-    private static final TreeSet<String> APIFunctions;
+    private static final List<String> scarpetFunctions;
+    private static final List<String> APIFunctions;
 
     static
     {
-        Set<String> allFunctions = (new CarpetExpression(null, "null", null, null)).getExpr().getFunctionNames();
-        scarpetFunctions = new TreeSet<>(Expression.none.getFunctionNames());
-        APIFunctions = allFunctions.stream().filter(s -> !scarpetFunctions.contains(s)).collect(Collectors.toCollection(TreeSet::new));
+        Set<String> allFunctions = new CarpetExpression(null, "null", null, null).getExpr().getFunctionNames();
+        Set<String> scNames = Expression.none.getFunctionNames();
+        scarpetFunctions = scNames.stream().sorted().toList();
+        APIFunctions = allFunctions.stream().filter(s -> !scNames.contains(s)).sorted().toList();
     }
 
     public static List<String> suggestFunctions(ScriptHost host, String previous, String prefix)
@@ -64,7 +67,7 @@ public class ScriptCommand
         int quoteCount = StringUtils.countMatches(previous, '\'');
         if (quoteCount % 2 == 1)
         {
-            return Collections.emptyList();
+            return List.of();
         }
         int maxLen = prefix.length() < 3 ? (prefix.length() * 2 + 1) : 1234;
         String eventPrefix = prefix.startsWith("__on_") ? prefix.substring(5) : null;
@@ -145,229 +148,241 @@ public class ScriptCommand
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher, CommandBuildContext commandBuildContext)
     {
-        LiteralArgumentBuilder<CommandSourceStack> b = literal("globals").
-                executes(context -> listGlobals(context, false)).
-                then(literal("all").executes(context -> listGlobals(context, true)));
-        LiteralArgumentBuilder<CommandSourceStack> o = literal("stop").
-                executes((cc) -> {
-                    ss(cc).stopAll = true;
-                    return 1;
-                });
-        LiteralArgumentBuilder<CommandSourceStack> u = literal("resume").
-                executes((cc) -> {
-                    ss(cc).stopAll = false;
-                    return 1;
-                });
-        LiteralArgumentBuilder<CommandSourceStack> l = literal("run").
-                requires(Vanilla::ServerPlayer_canScriptACE).
-                then(argument("expr", StringArgumentType.greedyString()).suggests(ScriptCommand::suggestCode).
-                        executes((cc) -> compute(
-                                cc,
-                                StringArgumentType.getString(cc, "expr"))));
-        LiteralArgumentBuilder<CommandSourceStack> s = literal("invoke").
-                then(argument("call", StringArgumentType.word()).suggests((cc, bb) -> suggest(suggestFunctionCalls(cc), bb)).
-                        executes((cc) -> invoke(
-                                cc,
-                                StringArgumentType.getString(cc, "call"),
+        LiteralArgumentBuilder<CommandSourceStack> command = literal("script")
+                .requires(Vanilla::ServerPlayer_canScriptGeneral)
+                .then(literal("resume")
+                        .executes(ctx -> {
+                            ss(ctx).stopAll = false;
+                            return 1;
+                        }))
+                .then(literal("stop")
+                        .executes(ctx -> {
+                            ss(ctx).stopAll = true;
+                            return 1;
+                        }))
+                .then(literal("load")
+                        .then(argument("app", StringArgumentType.word())
+                                .suggests((ctx, bb) -> suggest(ss(ctx).listAvailableModules(true), bb))
+                                .executes(ctx ->
+                                {
+                                    boolean success = ss(ctx).addScriptHost(ctx.getSource(), StringArgumentType.getString(ctx, "app"), null, true, false, false, null);
+                                    return success ? 1 : 0;
+                                })
+                                .then(literal("global")
+                                        .executes(ctx ->
+                                                {
+                                                    boolean success = ss(ctx).addScriptHost(ctx.getSource(), StringArgumentType.getString(ctx, "app"), null, false, false, false, null);
+                                                    return success ? 1 : 0;
+                                                }
+                                        )
+                                )
+                        ))
+                .then(literal("unload")
+                        .then(argument("app", StringArgumentType.word())
+                                .suggests((ctx, bb) -> suggest(ss(ctx).unloadableModules, bb))
+                                .executes(ctx ->
+                                {
+                                    boolean success = ss(ctx).removeScriptHost(ctx.getSource(), StringArgumentType.getString(ctx, "app"), true, false);
+                                    return success ? 1 : 0;
+                                })))
+                .then(literal("event")
+                        .executes(ScriptCommand::listEvents)
+                        .then(literal("add_to")
+                                .then(argument("event", StringArgumentType.word())
+                                        .suggests((ctx, bb) -> suggest(CarpetEventServer.Event.publicEvents(ss(ctx)).stream().map(ev -> ev.name), bb))
+                                        .then(argument("call", StringArgumentType.word())
+                                                .suggests((ctx, bb) -> suggest(suggestFunctionCalls(ctx), bb))
+                                                .executes(ctx -> ss(ctx).events.addEventFromCommand(
+                                                        ctx.getSource(),
+                                                        StringArgumentType.getString(ctx, "event"),
+                                                        null,
+                                                        StringArgumentType.getString(ctx, "call")
+                                                ) ? 1 : 0))
+                                        .then(literal("from")
+                                                .then(argument("app", StringArgumentType.word())
+                                                        .suggests((ctx, bb) -> suggest(ss(ctx).modules.keySet(), bb))
+                                                        .then(argument("call", StringArgumentType.word())
+                                                                .suggests((ctx, bb) -> suggest(suggestFunctionCalls(ctx), bb))
+                                                                .executes(ctx -> ss(ctx).events.addEventFromCommand(
+                                                                        ctx.getSource(),
+                                                                        StringArgumentType.getString(ctx, "event"),
+                                                                        StringArgumentType.getString(ctx, "app"),
+                                                                        StringArgumentType.getString(ctx, "call")
+                                                                ) ? 1 : 0))))))
+                        .then(literal("remove_from")
+                                .then(argument("event", StringArgumentType.word())
+                                        .suggests((ctx, bb) -> suggest(CarpetEventServer.Event.publicEvents(ss(ctx)).stream().filter(CarpetEventServer.Event::isNeeded).map(ev -> ev.name), bb))
+                                        .then(argument("call", StringArgumentType.greedyString())
+                                                .suggests((ctx, bb) -> suggest(CarpetEventServer.Event.getEvent(StringArgumentType.getString(ctx, "event"), ss(ctx)).handler.inspectCurrentCalls().stream().map(CarpetEventServer.Callback::toString), bb))
+                                                .executes(ctx -> ss(ctx).events.removeEventFromCommand(
+                                                        ctx.getSource(),
+                                                        StringArgumentType.getString(ctx, "event"),
+                                                        StringArgumentType.getString(ctx, "call")
+                                                ) ? 1 : 0)))))
+                .then(literal("download")
+                        .requires(ctx -> Vanilla.ServerPlayer_canScriptACE(ctx) && AppStoreManager.enabled())
+                        .then(argument("path", StringArgumentType.greedyString())
+                                .suggests(ScriptCommand::suggestDownloadableApps)
+                                .executes(ctx -> AppStoreManager.downloadScript(ctx.getSource(), StringArgumentType.getString(ctx, "path")))))
+                .then(literal("remove")
+                        .then(argument("app", StringArgumentType.word())
+                                .suggests((ctx, bb) -> suggest(ss(ctx).unloadableModules, bb))
+                                .executes(ctx ->
+                                {
+                                    boolean success = ss(ctx).uninstallApp(ctx.getSource(), StringArgumentType.getString(ctx, "app"));
+                                    return success ? 1 : 0;
+                                })));
+
+        // Add host commands for the global host
+        appendHostCommands(command, commandBuildContext);
+
+        RequiredArgumentBuilder<CommandSourceStack, String> appSpecific = argument("app", StringArgumentType.word())
+                .suggests((ctx, bb) -> suggest(ss(ctx).modules.keySet(), bb));
+
+        // Add host commands for specific apps, under "/script in <app>"
+        appendHostCommands(appSpecific, commandBuildContext);
+
+        command.then(literal("in")
+                .then(appSpecific));
+        
+        dispatcher.register(command);
+    }
+
+    private static void appendHostCommands(ArgumentBuilder<CommandSourceStack, ?> node, CommandBuildContext buildCtx)
+    {
+        node
+        .then(literal("globals")
+                .executes(context -> listGlobals(context, false))
+                .then(literal("all")
+                        .executes(context -> listGlobals(context, true))))
+        .then(literal("run")
+                .then(argument("expr", StringArgumentType.greedyString())
+                        .suggests(ScriptCommand::suggestCode)
+                        .executes(ctx -> compute(ctx, StringArgumentType.getString(ctx, "expr")))))
+        .then(literal("invoke")
+                .then(argument("call", StringArgumentType.word())
+                        .suggests((ctx, bb) -> suggest(suggestFunctionCalls(ctx), bb))
+                        .executes(ctx -> invoke(
+                                ctx,
+                                StringArgumentType.getString(ctx, "call"),
                                 null,
                                 null,
                                 ""
-                        )).
-                        then(argument("arguments", StringArgumentType.greedyString()).
-                                executes((cc) -> invoke(
-                                        cc,
-                                        StringArgumentType.getString(cc, "call"),
+                                ))
+                        .then(argument("arguments", StringArgumentType.greedyString())
+                                .executes(ctx -> invoke(
+                                        ctx,
+                                        StringArgumentType.getString(ctx, "call"),
                                         null,
                                         null,
-                                        StringArgumentType.getString(cc, "arguments")
-                                ))));
-        LiteralArgumentBuilder<CommandSourceStack> c = literal("invokepoint").
-                then(argument("call", StringArgumentType.word()).suggests((cc, bb) -> suggest(suggestFunctionCalls(cc), bb)).
-                        then(argument("origin", BlockPosArgument.blockPos()).
-                                executes((cc) -> invoke(
-                                        cc,
-                                        StringArgumentType.getString(cc, "call"),
-                                        BlockPosArgument.getSpawnablePos(cc, "origin"),
+                                        StringArgumentType.getString(ctx, "arguments")
+                                        )))))
+        .then(literal("invokepoint").
+                then(argument("call", StringArgumentType.word())
+                        .suggests((ctx, bb) -> suggest(suggestFunctionCalls(ctx), bb))
+                        .then(argument("origin", BlockPosArgument.blockPos())
+                                .executes(ctx -> invoke(
+                                        ctx,
+                                        StringArgumentType.getString(ctx, "call"),
+                                        BlockPosArgument.getSpawnablePos(ctx, "origin"),
                                         null,
                                         ""
-                                )).
-                                then(argument("arguments", StringArgumentType.greedyString()).
-                                        executes((cc) -> invoke(
-                                                cc,
-                                                StringArgumentType.getString(cc, "call"),
-                                                BlockPosArgument.getSpawnablePos(cc, "origin"),
+                                        ))
+                                .then(argument("arguments", StringArgumentType.greedyString())
+                                        .executes(ctx -> invoke(
+                                                ctx,
+                                                StringArgumentType.getString(ctx, "call"),
+                                                BlockPosArgument.getSpawnablePos(ctx, "origin"),
                                                 null,
-                                                StringArgumentType.getString(cc, "arguments")
-                                        )))));
-        LiteralArgumentBuilder<CommandSourceStack> h = literal("invokearea").
-                then(argument("call", StringArgumentType.word()).suggests((cc, bb) -> suggest(suggestFunctionCalls(cc), bb)).
-                        then(argument("from", BlockPosArgument.blockPos()).
-                                then(argument("to", BlockPosArgument.blockPos()).
-                                        executes((cc) -> invoke(
-                                                cc,
-                                                StringArgumentType.getString(cc, "call"),
-                                                BlockPosArgument.getSpawnablePos(cc, "from"),
-                                                BlockPosArgument.getSpawnablePos(cc, "to"),
+                                                StringArgumentType.getString(ctx, "arguments")
+                                                ))))))
+        .then(literal("invokearea")
+                .then(argument("call", StringArgumentType.word())
+                        .suggests((ctx, bb) -> suggest(suggestFunctionCalls(ctx), bb))
+                        .then(argument("from", BlockPosArgument.blockPos())
+                                .then(argument("to", BlockPosArgument.blockPos())
+                                        .executes(ctx -> invoke(
+                                                ctx,
+                                                StringArgumentType.getString(ctx, "call"),
+                                                BlockPosArgument.getSpawnablePos(ctx, "from"),
+                                                BlockPosArgument.getSpawnablePos(ctx, "to"),
                                                 ""
-                                        )).
-                                        then(argument("arguments", StringArgumentType.greedyString()).
-                                                executes((cc) -> invoke(
-                                                        cc,
-                                                        StringArgumentType.getString(cc, "call"),
-                                                        BlockPosArgument.getSpawnablePos(cc, "from"),
-                                                        BlockPosArgument.getSpawnablePos(cc, "to"),
-                                                        StringArgumentType.getString(cc, "arguments")
-                                                ))))));
-        LiteralArgumentBuilder<CommandSourceStack> i = literal("scan").requires((player) -> player.hasPermission(2)).
-                then(argument("origin", BlockPosArgument.blockPos()).
-                        then(argument("from", BlockPosArgument.blockPos()).
-                                then(argument("to", BlockPosArgument.blockPos()).
-                                        then(argument("expr", StringArgumentType.greedyString()).
-                                                suggests(ScriptCommand::suggestCode).
-                                                executes((cc) -> scriptScan(
-                                                        cc,
-                                                        BlockPosArgument.getSpawnablePos(cc, "origin"),
-                                                        BlockPosArgument.getSpawnablePos(cc, "from"),
-                                                        BlockPosArgument.getSpawnablePos(cc, "to"),
-                                                        StringArgumentType.getString(cc, "expr")
-                                                ))))));
-        LiteralArgumentBuilder<CommandSourceStack> e = literal("fill").requires((player) -> player.hasPermission(2)).
-                then(argument("origin", BlockPosArgument.blockPos()).
-                        then(argument("from", BlockPosArgument.blockPos()).
-                                then(argument("to", BlockPosArgument.blockPos()).
-                                        then(argument("expr", StringArgumentType.string()).
-                                                then(argument("block", BlockStateArgument.block(commandBuildContext)).
-                                                        executes((cc) -> scriptFill(
-                                                                cc,
-                                                                BlockPosArgument.getSpawnablePos(cc, "origin"),
-                                                                BlockPosArgument.getSpawnablePos(cc, "from"),
-                                                                BlockPosArgument.getSpawnablePos(cc, "to"),
-                                                                StringArgumentType.getString(cc, "expr"),
-                                                                BlockStateArgument.getBlock(cc, "block"),
+                                                ))
+                                        .then(argument("arguments", StringArgumentType.greedyString())
+                                                .executes(ctx -> invoke(
+                                                        ctx,
+                                                        StringArgumentType.getString(ctx, "call"),
+                                                        BlockPosArgument.getSpawnablePos(ctx, "from"),
+                                                        BlockPosArgument.getSpawnablePos(ctx, "to"),
+                                                        StringArgumentType.getString(ctx, "arguments")
+                                                        )))))))
+        .then(literal("scan")
+                .then(argument("origin", BlockPosArgument.blockPos())
+                        .then(argument("from", BlockPosArgument.blockPos())
+                                .then(argument("to", BlockPosArgument.blockPos())
+                                        .then(argument("expr", StringArgumentType.greedyString())
+                                                .suggests(ScriptCommand::suggestCode)
+                                                .executes(ctx -> scriptScan(
+                                                        ctx,
+                                                        BlockPosArgument.getSpawnablePos(ctx, "origin"),
+                                                        BlockPosArgument.getSpawnablePos(ctx, "from"),
+                                                        BlockPosArgument.getSpawnablePos(ctx, "to"),
+                                                        StringArgumentType.getString(ctx, "expr")
+                                                        )))))))
+        .then(literal("fill")
+                .then(argument("origin", BlockPosArgument.blockPos())
+                        .then(argument("from", BlockPosArgument.blockPos())
+                                .then(argument("to", BlockPosArgument.blockPos())
+                                        .then(argument("expr", StringArgumentType.string())
+                                                        .then(argument("block", BlockStateArgument.block(buildCtx))
+                                                        .executes(ctx -> scriptFill(
+                                                                ctx,
+                                                                BlockPosArgument.getSpawnablePos(ctx, "origin"),
+                                                                BlockPosArgument.getSpawnablePos(ctx, "from"),
+                                                                BlockPosArgument.getSpawnablePos(ctx, "to"),
+                                                                StringArgumentType.getString(ctx, "expr"),
+                                                                BlockStateArgument.getBlock(ctx, "block"),
                                                                 null, "solid"
-                                                        )).
-                                                        then(literal("replace").
-                                                                then(argument("filter", BlockPredicateArgument.blockPredicate(commandBuildContext))
-                                                                        .executes((cc) -> scriptFill(
-                                                                                cc,
-                                                                                BlockPosArgument.getSpawnablePos(cc, "origin"),
-                                                                                BlockPosArgument.getSpawnablePos(cc, "from"),
-                                                                                BlockPosArgument.getSpawnablePos(cc, "to"),
-                                                                                StringArgumentType.getString(cc, "expr"),
-                                                                                BlockStateArgument.getBlock(cc, "block"),
-                                                                                BlockPredicateArgument.getBlockPredicate(cc, "filter"),
+                                                                ))
+                                                        .then(literal("replace")
+                                                                        .then(argument("filter", BlockPredicateArgument.blockPredicate(buildCtx))
+                                                                        .executes(ctx -> scriptFill(
+                                                                                ctx,
+                                                                                BlockPosArgument.getSpawnablePos(ctx, "origin"),
+                                                                                BlockPosArgument.getSpawnablePos(ctx, "from"),
+                                                                                BlockPosArgument.getSpawnablePos(ctx, "to"),
+                                                                                StringArgumentType.getString(ctx, "expr"),
+                                                                                BlockStateArgument.getBlock(ctx, "block"),
+                                                                                BlockPredicateArgument.getBlockPredicate(ctx, "filter"),
                                                                                 "solid"
-                                                                        )))))))));
-        LiteralArgumentBuilder<CommandSourceStack> t = literal("outline").requires((player) -> player.hasPermission(2)).
-                then(argument("origin", BlockPosArgument.blockPos()).
-                        then(argument("from", BlockPosArgument.blockPos()).
-                                then(argument("to", BlockPosArgument.blockPos()).
-                                        then(argument("expr", StringArgumentType.string()).
-                                                then(argument("block", BlockStateArgument.block(commandBuildContext)).
-                                                        executes((cc) -> scriptFill(
-                                                                cc,
-                                                                BlockPosArgument.getSpawnablePos(cc, "origin"),
-                                                                BlockPosArgument.getSpawnablePos(cc, "from"),
-                                                                BlockPosArgument.getSpawnablePos(cc, "to"),
-                                                                StringArgumentType.getString(cc, "expr"),
-                                                                BlockStateArgument.getBlock(cc, "block"),
+                                                                                ))))))))))
+        .then(literal("outline")
+                .then(argument("origin", BlockPosArgument.blockPos())
+                        .then(argument("from", BlockPosArgument.blockPos())
+                                .then(argument("to", BlockPosArgument.blockPos())
+                                        .then(argument("expr", StringArgumentType.string())
+                                                        .then(argument("block", BlockStateArgument.block(buildCtx))
+                                                        .executes(ctx -> scriptFill(
+                                                                ctx,
+                                                                BlockPosArgument.getSpawnablePos(ctx, "origin"),
+                                                                BlockPosArgument.getSpawnablePos(ctx, "from"),
+                                                                BlockPosArgument.getSpawnablePos(ctx, "to"),
+                                                                StringArgumentType.getString(ctx, "expr"),
+                                                                BlockStateArgument.getBlock(ctx, "block"),
                                                                 null, "outline"
-                                                        )).
-                                                        then(literal("replace").
-                                                                then(argument("filter", BlockPredicateArgument.blockPredicate(commandBuildContext))
-                                                                        .executes((cc) -> scriptFill(
-                                                                                cc,
-                                                                                BlockPosArgument.getSpawnablePos(cc, "origin"),
-                                                                                BlockPosArgument.getSpawnablePos(cc, "from"),
-                                                                                BlockPosArgument.getSpawnablePos(cc, "to"),
-                                                                                StringArgumentType.getString(cc, "expr"),
-                                                                                BlockStateArgument.getBlock(cc, "block"),
-                                                                                BlockPredicateArgument.getBlockPredicate(cc, "filter"),
+                                                                ))
+                                                        .then(literal("replace")
+                                                                        .then(argument("filter", BlockPredicateArgument.blockPredicate(buildCtx))
+                                                                        .executes(ctx -> scriptFill(
+                                                                                ctx,
+                                                                                BlockPosArgument.getSpawnablePos(ctx, "origin"),
+                                                                                BlockPosArgument.getSpawnablePos(ctx, "from"),
+                                                                                BlockPosArgument.getSpawnablePos(ctx, "to"),
+                                                                                StringArgumentType.getString(ctx, "expr"),
+                                                                                BlockStateArgument.getBlock(ctx, "block"),
+                                                                                BlockPredicateArgument.getBlockPredicate(ctx, "filter"),
                                                                                 "outline"
-                                                                        )))))))));
-        LiteralArgumentBuilder<CommandSourceStack> a = literal("load").requires(Vanilla::ServerPlayer_canScriptACE).
-                then(argument("app", StringArgumentType.word()).
-                        suggests((cc, bb) -> suggest(ss(cc).listAvailableModules(true), bb)).
-                        executes((cc) ->
-                        {
-                            boolean success = ss(cc).addScriptHost(cc.getSource(), StringArgumentType.getString(cc, "app"), null, true, false, false, null);
-                            return success ? 1 : 0;
-                        }).
-                        then(literal("global").
-                                executes((cc) ->
-                                        {
-                                            boolean success = ss(cc).addScriptHost(cc.getSource(), StringArgumentType.getString(cc, "app"), null, false, false, false, null);
-                                            return success ? 1 : 0;
-                                        }
-                                )
-                        )
-                );
-        LiteralArgumentBuilder<CommandSourceStack> f = literal("unload").requires(Vanilla::ServerPlayer_canScriptACE).
-                then(argument("app", StringArgumentType.word()).
-                        suggests((cc, bb) -> suggest(ss(cc).unloadableModules, bb)).
-                        executes((cc) ->
-                        {
-                            boolean success = ss(cc).removeScriptHost(cc.getSource(), StringArgumentType.getString(cc, "app"), true, false);
-                            return success ? 1 : 0;
-                        }));
-
-        LiteralArgumentBuilder<CommandSourceStack> q = literal("event").requires(Vanilla::ServerPlayer_canScriptACE).
-                executes(ScriptCommand::listEvents).
-                then(literal("add_to").
-                        then(argument("event", StringArgumentType.word()).
-                                suggests((cc, bb) -> suggest(CarpetEventServer.Event.publicEvents(ss(cc)).stream().map(ev -> ev.name).collect(Collectors.toList()), bb)).
-                                then(argument("call", StringArgumentType.word()).
-                                        suggests((cc, bb) -> suggest(suggestFunctionCalls(cc), bb)).
-                                        executes((cc) -> ss(cc).events.addEventFromCommand(
-                                                cc.getSource(),
-                                                StringArgumentType.getString(cc, "event"),
-                                                null,
-                                                StringArgumentType.getString(cc, "call")
-                                        ) ? 1 : 0)).
-                                then(literal("from").
-                                        then(argument("app", StringArgumentType.word()).
-                                                suggests((cc, bb) -> suggest(ss(cc).modules.keySet(), bb)).
-                                                then(argument("call", StringArgumentType.word()).
-                                                        suggests((cc, bb) -> suggest(suggestFunctionCalls(cc), bb)).
-                                                        executes((cc) -> ss(cc).events.addEventFromCommand(
-                                                                cc.getSource(),
-                                                                StringArgumentType.getString(cc, "event"),
-                                                                StringArgumentType.getString(cc, "app"),
-                                                                StringArgumentType.getString(cc, "call")
-                                                        ) ? 1 : 0)))))).
-                then(literal("remove_from").
-                        then(argument("event", StringArgumentType.word()).
-                                suggests((cc, bb) -> suggest(CarpetEventServer.Event.publicEvents(ss(cc)).stream().filter(CarpetEventServer.Event::isNeeded).map(ev -> ev.name).collect(Collectors.toList()), bb)).
-                                then(argument("call", StringArgumentType.greedyString()).
-                                        suggests((cc, bb) -> suggest(CarpetEventServer.Event.getEvent(StringArgumentType.getString(cc, "event"), ss(cc)).handler.inspectCurrentCalls().stream().map(CarpetEventServer.Callback::toString), bb)).
-                                        executes((cc) -> ss(cc).events.removeEventFromCommand(
-                                                cc.getSource(),
-                                                StringArgumentType.getString(cc, "event"),
-                                                StringArgumentType.getString(cc, "call")
-                                        ) ? 1 : 0))));
-
-        LiteralArgumentBuilder<CommandSourceStack> d = literal("download").requires(Vanilla::ServerPlayer_canScriptACE).
-                then(argument("path", StringArgumentType.greedyString()).
-                        suggests(ScriptCommand::suggestDownloadableApps).
-                        executes(cc -> AppStoreManager.downloadScript(cc.getSource(), StringArgumentType.getString(cc, "path"))));
-        LiteralArgumentBuilder<CommandSourceStack> r = literal("remove").requires(Vanilla::ServerPlayer_canScriptACE).
-                then(argument("app", StringArgumentType.word()).
-                        suggests((cc, bb) -> suggest(ss(cc).unloadableModules, bb)).
-                        executes((cc) ->
-                        {
-                            boolean success = ss(cc).uninstallApp(cc.getSource(), StringArgumentType.getString(cc, "app"));
-                            return success ? 1 : 0;
-                        }));
-
-        dispatcher.register(literal("script").
-                requires(Vanilla::ServerPlayer_canScriptGeneral).
-                then(b).then(u).then(o).then(l).then(s).then(c).then(h).then(i).then(e).then(t).then(a).then(f).then(q).then(d).then(r));
-        dispatcher.register(literal("script").
-                requires(Vanilla::ServerPlayer_canScriptGeneral).
-                then(literal("in").
-                        then(argument("app", StringArgumentType.word()).
-                                suggests((cc, bb) -> suggest(ss(cc).modules.keySet(), bb)).
-                                then(b).then(u).then(o).then(l).then(s).then(c).then(h).then(i).then(e).then(t))));
+                                                                                ))))))))));
     }
 
     private static CarpetScriptHost getHost(CommandContext<CommandSourceStack> context) throws CommandSyntaxException
@@ -377,10 +392,14 @@ public class ScriptCommand
         try
         {
             String name = StringArgumentType.getString(context, "app").toLowerCase(Locale.ROOT);
-            CarpetScriptHost parentHost = scriptServer.modules.getOrDefault(name, scriptServer.globalHost);
+            CarpetScriptHost parentHost = scriptServer.modules.get(name);
+            if (parentHost == null)
+            {
+                throw new SimpleCommandExceptionType(Component.literal("No app with name '" + name + "' is loaded")).create();
+            }
             host = parentHost.retrieveOwnForExecution(context.getSource());
         }
-        catch (IllegalArgumentException ignored)
+        catch (IllegalArgumentException notPresent)
         {
             host = scriptServer.globalHost;
         }
@@ -388,10 +407,10 @@ public class ScriptCommand
         return host;
     }
 
-    private static Collection<String> suggestFunctionCalls(CommandContext<CommandSourceStack> c) throws CommandSyntaxException
+    private static Stream<String> suggestFunctionCalls(CommandContext<CommandSourceStack> c) throws CommandSyntaxException
     {
         CarpetScriptHost host = getHost(c);
-        return host.globalFunctionNames(host.main, s -> !s.startsWith("_")).sorted().collect(Collectors.toList());
+        return host.globalFunctionNames(host.main, s -> !s.startsWith("_")).sorted();
     }
 
     private static int listEvents(CommandContext<CommandSourceStack> context)

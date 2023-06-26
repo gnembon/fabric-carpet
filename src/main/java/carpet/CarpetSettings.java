@@ -498,7 +498,7 @@ public class CarpetSettings
             extra = "An in-game scripting API for Scarpet programming language",
             category = {COMMAND, SCARPET}
     )
-    public static String commandScript = "true";
+    public static String commandScript = "ops";
 
     private static class ModulePermissionLevel extends Validator<String> {
         @Override public String validate(CommandSourceStack source, CarpetRule<String> currentRule, String newValue, String string) {
