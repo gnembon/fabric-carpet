@@ -675,12 +675,8 @@ public class CarpetScriptHost extends ScriptHost
             return this;
         }
         // user based
-        ServerPlayer player;
-        try
-        {
-            player = source.getPlayerOrException();
-        }
-        catch (CommandSyntaxException ignored)
+        ServerPlayer player = source.getPlayer();
+        if (player == null)
         {
             throw new SimpleCommandExceptionType(Component.literal("Cannot run player based apps without the player context")).create();
         }
@@ -1057,11 +1053,7 @@ public class CarpetScriptHost extends ScriptHost
         responsibleSource = source;
         errorSnooper = (expr, /*Nullable*/ token, ctx, message) ->
         {
-            try
-            {
-                source.getPlayerOrException();
-            }
-            catch (CommandSyntaxException e)
+            if (!source.isPlayer())
             {
                 return null;
             }
