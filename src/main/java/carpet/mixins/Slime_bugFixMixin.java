@@ -2,11 +2,8 @@ package carpet.mixins;
 
 import carpet.CarpetSettings;
 import net.minecraft.network.chat.Component;
-import net.minecraft.sounds.SoundSource;
-import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.Mob;
-import net.minecraft.world.entity.animal.Cow;
 import net.minecraft.world.entity.monster.Slime;
 import net.minecraft.world.level.Level;
 import org.spongepowered.asm.mixin.Mixin;
