@@ -1,14 +1,11 @@
 package carpet.mixins;
 
 import carpet.CarpetSettings;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.LightningBolt;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.animal.Cow;
 import net.minecraft.world.entity.animal.MushroomCow;
-import net.minecraft.world.entity.monster.Witch;
 import net.minecraft.world.level.Level;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -30,6 +27,7 @@ public abstract class MushroomCow_bugFixMixin extends Mob {
             cow.getAttributes().assignValues(this.getAttributes());
             cow.setDeltaMovement(this.getDeltaMovement());
             cow.setRemainingFireTicks(this.getRemainingFireTicks());
+            cow.setNoAi(this.isNoAi());
             cow.setNoGravity(this.isNoGravity());
             cow.setPortalCooldown(this.getPortalCooldown());
             cow.setXRot(this.getXRot());
