@@ -1,158 +1,173 @@
 package carpet.script.api;
 
-import carpet.fakes.IngredientInterface;
-import carpet.fakes.RecipeManagerInterface;
 import carpet.script.CarpetContext;
 import carpet.script.Expression;
+import carpet.script.argument.FunctionArgument;
 import carpet.script.exception.InternalExpressionException;
 import carpet.script.exception.ThrowStatement;
 import carpet.script.exception.Throwables;
+import carpet.script.external.Vanilla;
 import carpet.script.utils.InputValidator;
 import carpet.script.value.BooleanValue;
+import carpet.script.value.EntityValue;
+import carpet.script.value.FormattedTextValue;
+import carpet.script.value.FunctionValue;
 import carpet.script.value.ListValue;
 import carpet.script.value.NBTSerializableValue;
-import carpet.script.value.NullValue;
 import carpet.script.value.NumericValue;
+import carpet.script.value.ScreenValue;
 import carpet.script.value.StringValue;
 import carpet.script.value.Value;
 import carpet.script.value.ValueConversions;
-import com.google.common.collect.Sets;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
-import net.minecraft.command.argument.ItemStackArgument;
-import net.minecraft.entity.ItemEntity;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemGroup;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.network.packet.s2c.play.ScreenHandlerSlotUpdateS2CPacket;
-import net.minecraft.recipe.AbstractCookingRecipe;
-import net.minecraft.recipe.CuttingRecipe;
-import net.minecraft.recipe.Recipe;
-import net.minecraft.recipe.RecipeType;
-import net.minecraft.recipe.ShapedRecipe;
-import net.minecraft.recipe.ShapelessRecipe;
-import net.minecraft.recipe.SpecialCraftingRecipe;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.tag.Tag;
-import net.minecraft.tag.TagManager;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.InvalidIdentifierException;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.util.registry.Registry;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 
-public class Inventories {
+import net.minecraft.commands.arguments.item.ItemInput;
+import net.minecraft.core.HolderSet;
+import net.minecraft.core.Registry;
+import net.minecraft.core.RegistryAccess;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.protocol.game.ClientboundContainerSetSlotPacket;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.tags.TagKey;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.AbstractCookingRecipe;
+import net.minecraft.world.item.crafting.CustomRecipe;
+import net.minecraft.world.item.crafting.Recipe;
+import net.minecraft.world.item.crafting.RecipeType;
+import net.minecraft.world.item.crafting.ShapedRecipe;
+import net.minecraft.world.item.crafting.ShapelessRecipe;
+import net.minecraft.world.item.crafting.SingleItemRecipe;
+import net.minecraft.world.phys.Vec3;
+
+public class Inventories
+{
     public static void apply(Expression expression)
     {
-        expression.addUnaryFunction("stack_limit", v ->
-                new NumericValue(NBTSerializableValue.parseItem(v.getString()).getItem().getMaxCount()));
+        expression.addContextFunction("stack_limit", 1, (c, t, lv) ->
+                new NumericValue(NBTSerializableValue.parseItem(lv.get(0).getString(), ((CarpetContext) c).registryAccess()).getItem().getMaxStackSize()));
 
-        expression.addUnaryFunction("item_category", v ->
-        {
-            ItemStackArgument item = NBTSerializableValue.parseItem(v.getString());
-            ItemGroup ig = item.getItem().getGroup();
-            return (ig==null)?Value.NULL:new StringValue(ig.getName());
+        expression.addContextFunction("item_category", -1, (c, t, lv) -> {
+            c.host.issueDeprecation("item_category in 1.19.3+");
+            return Value.NULL;
         });
 
         expression.addContextFunction("item_list", -1, (c, t, lv) ->
         {
-            if (lv.size() == 0)
-                return ListValue.wrap(Registry.ITEM.getIds().stream().map(ValueConversions::of).collect(Collectors.toList()));
-            CarpetContext cc = (CarpetContext)c;
-            TagManager tagManager = cc.s.getServer().getTagManager();
+            CarpetContext cc = (CarpetContext) c;
+            Registry<Item> items = cc.registry(Registries.ITEM);
+            if (lv.isEmpty())
+            {
+                return ListValue.wrap(items.keySet().stream().map(ValueConversions::of));
+            }
             String tag = lv.get(0).getString();
-            net.minecraft.tag.Tag<Item> itemTag = tagManager.getOrCreateTagGroup(Registry.ITEM_KEY).getTag(InputValidator.identifierOf(tag));
-            if (itemTag == null) return Value.NULL;
-            return ListValue.wrap(itemTag.values().stream().map(b -> ValueConversions.of(Registry.ITEM.getId(b))).collect(Collectors.toList()));
+            Optional<HolderSet.Named<Item>> itemTag = items.getTag(TagKey.create(Registries.ITEM, InputValidator.identifierOf(tag)));
+            return itemTag.isEmpty() ? Value.NULL : ListValue.wrap(itemTag.get().stream().map(b -> items.getKey(b.value())).filter(Objects::nonNull).map(ValueConversions::of));
         });
 
         expression.addContextFunction("item_tags", -1, (c, t, lv) ->
         {
-            CarpetContext cc = (CarpetContext)c;
-            TagManager tagManager = cc.s.getServer().getTagManager();
-            if (lv.size() == 0)
-                return ListValue.wrap(tagManager.getOrCreateTagGroup(Registry.ITEM_KEY).getTagIds().stream().map(ValueConversions::of).collect(Collectors.toList()));
-            Item item = NBTSerializableValue.parseItem(lv.get(0).getString()).getItem();
+            CarpetContext cc = (CarpetContext) c;
+
+            Registry<Item> blocks = cc.registry(Registries.ITEM);
+            if (lv.isEmpty())
+            {
+                return ListValue.wrap(blocks.getTagNames().map(ValueConversions::of));
+            }
+            Item item = NBTSerializableValue.parseItem(lv.get(0).getString(), cc.registryAccess()).getItem();
             if (lv.size() == 1)
-                return ListValue.wrap(tagManager.getOrCreateTagGroup(Registry.ITEM_KEY).getTags().entrySet().stream().filter(e -> e.getValue().contains(item)).map(e -> ValueConversions.of(e.getKey())).collect(Collectors.toList()));
+            {
+                return ListValue.wrap(blocks.getTags().filter(e -> e.getSecond().stream().anyMatch(h -> (h.value() == item))).map(e -> ValueConversions.of(e.getFirst())));
+            }
             String tag = lv.get(1).getString();
-            net.minecraft.tag.Tag<Item> itemTag = tagManager.getOrCreateTagGroup(Registry.ITEM_KEY).getTag(InputValidator.identifierOf(tag));
-            if (itemTag == null) return Value.NULL;
-            return BooleanValue.of(itemTag.contains(item));
+            Optional<HolderSet.Named<Item>> tagSet = blocks.getTag(TagKey.create(Registries.ITEM, InputValidator.identifierOf(tag)));
+            return tagSet.isEmpty() ? Value.NULL : BooleanValue.of(tagSet.get().stream().anyMatch(h -> h.value() == item));
         });
 
         expression.addContextFunction("recipe_data", -1, (c, t, lv) ->
         {
-            CarpetContext cc = (CarpetContext)c;
-            if (lv.size() < 1) throw new InternalExpressionException("'recipe_data' requires at least one argument");
+            CarpetContext cc = (CarpetContext) c;
+            if (lv.size() < 1)
+            {
+                throw new InternalExpressionException("'recipe_data' requires at least one argument");
+            }
             String recipeName = lv.get(0).getString();
-            RecipeType type = RecipeType.CRAFTING;
+            RecipeType<?> type = RecipeType.CRAFTING;
             if (lv.size() > 1)
             {
                 String recipeType = lv.get(1).getString();
-                type = Registry.RECIPE_TYPE.get(InputValidator.identifierOf(recipeType));
+                type = cc.registry(Registries.RECIPE_TYPE).get(InputValidator.identifierOf(recipeType));
+                if (type == null)
+                {
+                    throw new InternalExpressionException("Unknown recipe type: "+recipeType);
+                }
             }
-            List<Recipe<?>> recipes;
-            recipes = ((RecipeManagerInterface) cc.s.getServer().getRecipeManager()).getAllMatching(type, InputValidator.identifierOf(recipeName));
+            List<Recipe<?>> recipes = Vanilla.RecipeManager_getAllMatching(cc.server().getRecipeManager(), type, InputValidator.identifierOf(recipeName), cc.registryAccess());
             if (recipes.isEmpty())
-                return Value.NULL;
-            List<Value> recipesOutput = new ArrayList<>();
-            for (Recipe<?> recipe: recipes)
             {
-                ItemStack result = recipe.getOutput();
+                return Value.NULL;
+            }
+            List<Value> recipesOutput = new ArrayList<>();
+            RegistryAccess regs = cc.registryAccess();
+            for (Recipe<?> recipe : recipes)
+            {
+                ItemStack result = recipe.getResultItem(regs);
                 List<Value> ingredientValue = new ArrayList<>();
-                recipe.getIngredients().forEach(
-                        ingredient ->
-                        {
-                            // I am flattening ingredient lists per slot.
-                            // consider recipe_data('wooden_sword','crafting') and ('iron_nugget', 'blasting') and notice difference
-                            // in depths of lists.
-                            List<Collection<ItemStack>> stacks = ((IngredientInterface) (Object) ingredient).getRecipeStacks();
-                            if (stacks.isEmpty())
-                            {
-                                ingredientValue.add(Value.NULL);
-                            }
-                            else
-                            {
-                                List<Value> alternatives = new ArrayList<>();
-                                stacks.forEach(col -> col.stream().map(ValueConversions::of).forEach(alternatives::add));
-                                ingredientValue.add(ListValue.wrap(alternatives));
-                            }
-                        }
-                );
+                recipe.getIngredients().forEach( ingredient -> {
+                    // I am flattening ingredient lists per slot.
+                    // consider recipe_data('wooden_sword','crafting') and ('iron_nugget', 'blasting') and notice difference
+                    // in depths of lists.
+                    List<Collection<ItemStack>> stacks = Vanilla.Ingredient_getRecipeStacks(ingredient);
+                    if (stacks.isEmpty())
+                    {
+                        ingredientValue.add(Value.NULL);
+                    }
+                    else
+                    {
+                        List<Value> alternatives = new ArrayList<>();
+                        stacks.forEach(col -> col.stream().map(is -> ValueConversions.of(is, regs)).forEach(alternatives::add));
+                        ingredientValue.add(ListValue.wrap(alternatives));
+                    }
+                });
                 Value recipeSpec;
-                if (recipe instanceof ShapedRecipe)
+                if (recipe instanceof final ShapedRecipe shapedRecipe)
                 {
                     recipeSpec = ListValue.of(
                             new StringValue("shaped"),
-                            new NumericValue(((ShapedRecipe) recipe).getWidth()),
-                            new NumericValue(((ShapedRecipe) recipe).getHeight())
+                            new NumericValue(shapedRecipe.getWidth()),
+                            new NumericValue(shapedRecipe.getHeight())
                     );
                 }
                 else if (recipe instanceof ShapelessRecipe)
                 {
                     recipeSpec = ListValue.of(new StringValue("shapeless"));
                 }
-                else if (recipe instanceof AbstractCookingRecipe)
+                else if (recipe instanceof final AbstractCookingRecipe abstractCookingRecipe)
                 {
                     recipeSpec = ListValue.of(
                             new StringValue("smelting"),
-                            new NumericValue(((AbstractCookingRecipe) recipe).getCookTime()),
-                            new NumericValue(((AbstractCookingRecipe) recipe).getExperience())
+                            new NumericValue(abstractCookingRecipe.getCookingTime()),
+                            new NumericValue(abstractCookingRecipe.getExperience())
                     );
                 }
-                else if (recipe instanceof CuttingRecipe)
+                else if (recipe instanceof SingleItemRecipe)
                 {
                     recipeSpec = ListValue.of(new StringValue("cutting"));
                 }
-                else if (recipe instanceof SpecialCraftingRecipe)
+                else if (recipe instanceof CustomRecipe)
                 {
                     recipeSpec = ListValue.of(new StringValue("special"));
                 }
@@ -161,35 +176,33 @@ public class Inventories {
                     recipeSpec = ListValue.of(new StringValue("custom"));
                 }
 
-                recipesOutput.add(ListValue.of(ValueConversions.of(result), ListValue.wrap(ingredientValue), recipeSpec));
+                recipesOutput.add(ListValue.of(ValueConversions.of(result, regs), ListValue.wrap(ingredientValue), recipeSpec));
             }
             return ListValue.wrap(recipesOutput);
         });
 
-        expression.addUnaryFunction("crafting_remaining_item", v ->
+        expression.addContextFunction("crafting_remaining_item", 1, (c, t, v) ->
         {
-            String itemStr = v.getString();
-            Item item;
-            Identifier id = InputValidator.identifierOf(itemStr);
-            item = Registry.ITEM.getOrEmpty(id).orElseThrow(() -> new ThrowStatement(itemStr, Throwables.UNKNOWN_ITEM));
-            if (!item.hasRecipeRemainder()) return Value.NULL;
-            return new StringValue(NBTSerializableValue.nameFromRegistryId(Registry.ITEM.getId(item.getRecipeRemainder())));
+            String itemStr = v.get(0).getString();
+            ResourceLocation id = InputValidator.identifierOf(itemStr);
+            Registry<Item> registry = ((CarpetContext) c).registry(Registries.ITEM);
+            Item item = registry.getOptional(id).orElseThrow(() -> new ThrowStatement(itemStr, Throwables.UNKNOWN_ITEM));
+            Item reminder = item.getCraftingRemainingItem();
+            return reminder == null ? Value.NULL : NBTSerializableValue.nameFromRegistryId(registry.getKey(reminder));
         });
 
         expression.addContextFunction("inventory_size", -1, (c, t, lv) ->
         {
             CarpetContext cc = (CarpetContext) c;
             NBTSerializableValue.InventoryLocator inventoryLocator = NBTSerializableValue.locateInventory(cc, lv, 0);
-            if (inventoryLocator == null) return Value.NULL;
-            return new NumericValue(inventoryLocator.inventory.size());
+            return inventoryLocator == null ? Value.NULL : new NumericValue(inventoryLocator.inventory().getContainerSize());
         });
 
         expression.addContextFunction("inventory_has_items", -1, (c, t, lv) ->
         {
             CarpetContext cc = (CarpetContext) c;
             NBTSerializableValue.InventoryLocator inventoryLocator = NBTSerializableValue.locateInventory(cc, lv, 0);
-            if (inventoryLocator == null) return Value.NULL;
-            return BooleanValue.of(!inventoryLocator.inventory.isEmpty());
+            return inventoryLocator == null ? Value.NULL : BooleanValue.of(!inventoryLocator.inventory().isEmpty());
         });
 
         //inventory_get(<b, e>, <n>) -> item_triple
@@ -197,18 +210,25 @@ public class Inventories {
         {
             CarpetContext cc = (CarpetContext) c;
             NBTSerializableValue.InventoryLocator inventoryLocator = NBTSerializableValue.locateInventory(cc, lv, 0);
-            if (inventoryLocator == null) return Value.NULL;
-            if (lv.size() == inventoryLocator.offset)
+            if (inventoryLocator == null)
+            {
+                return Value.NULL;
+            }
+            RegistryAccess regs = cc.registryAccess();
+            if (lv.size() == inventoryLocator.offset())
             {
                 List<Value> fullInventory = new ArrayList<>();
-                for (int i = 0, maxi = inventoryLocator.inventory.size(); i < maxi; i++)
-                    fullInventory.add(ValueConversions.of(inventoryLocator.inventory.getStack(i)));
+                for (int i = 0, maxi = inventoryLocator.inventory().getContainerSize(); i < maxi; i++)
+                {
+                    fullInventory.add(ValueConversions.of(inventoryLocator.inventory().getItem(i), regs));
+                }
                 return ListValue.wrap(fullInventory);
             }
-            int slot = (int)NumericValue.asNumber(lv.get(inventoryLocator.offset)).getLong();
-            slot = NBTSerializableValue.validateSlot(slot, inventoryLocator.inventory);
-            if (slot == inventoryLocator.inventory.size()) return Value.NULL;
-            return ValueConversions.of(inventoryLocator.inventory.getStack(slot));
+            int slot = (int) NumericValue.asNumber(lv.get(inventoryLocator.offset())).getLong();
+            slot = NBTSerializableValue.validateSlot(slot, inventoryLocator.inventory());
+            return slot == inventoryLocator.inventory().getContainerSize()
+                    ? Value.NULL
+                    : ValueConversions.of(inventoryLocator.inventory().getItem(slot), regs);
         });
 
         //inventory_set(<b,e>, <n>, <count>, <item>, <nbt>)
@@ -216,53 +236,63 @@ public class Inventories {
         {
             CarpetContext cc = (CarpetContext) c;
             NBTSerializableValue.InventoryLocator inventoryLocator = NBTSerializableValue.locateInventory(cc, lv, 0);
-            if (inventoryLocator == null) return Value.NULL;
-            if (lv.size() < inventoryLocator.offset+2)
+            if (inventoryLocator == null)
+            {
+                return Value.NULL;
+            }
+            if (lv.size() < inventoryLocator.offset() + 2)
+            {
                 throw new InternalExpressionException("'inventory_set' requires at least slot number and new stack size, and optional new item");
-            int slot = (int) NumericValue.asNumber(lv.get(inventoryLocator.offset+0)).getLong();
-            slot = NBTSerializableValue.validateSlot(slot, inventoryLocator.inventory);
-            if (slot == inventoryLocator.inventory.size()) return Value.NULL;
-            int count = (int) NumericValue.asNumber(lv.get(inventoryLocator.offset+1)).getLong();
+            }
+            int slot = (int) NumericValue.asNumber(lv.get(inventoryLocator.offset())).getLong();
+            slot = NBTSerializableValue.validateSlot(slot, inventoryLocator.inventory());
+            if (slot == inventoryLocator.inventory().getContainerSize())
+            {
+                return Value.NULL;
+            }
+            int count = (int) NumericValue.asNumber(lv.get(inventoryLocator.offset() + 1)).getLong();
+            RegistryAccess regs = cc.registryAccess();
             if (count == 0)
             {
                 // clear slot
-                ItemStack removedStack = inventoryLocator.inventory.removeStack(slot);
+                ItemStack removedStack = inventoryLocator.inventory().removeItemNoUpdate(slot);
                 syncPlayerInventory(inventoryLocator, slot);
-                //Value res = ListValue.fromItemStack(removedStack); // that tuple will be read only but cheaper if noone cares
-                return ValueConversions.of(removedStack);
+                return ValueConversions.of(removedStack, regs);
             }
-            if (lv.size() < inventoryLocator.offset+3)
+            if (lv.size() < inventoryLocator.offset() + 3)
             {
-                ItemStack previousStack = inventoryLocator.inventory.getStack(slot);
+                ItemStack previousStack = inventoryLocator.inventory().getItem(slot);
                 ItemStack newStack = previousStack.copy();
                 newStack.setCount(count);
-                inventoryLocator.inventory.setStack(slot, newStack);
+                inventoryLocator.inventory().setItem(slot, newStack);
                 syncPlayerInventory(inventoryLocator, slot);
-                return ValueConversions.of(previousStack);
+                return ValueConversions.of(previousStack, regs);
             }
-            NbtCompound nbt = null; // skipping one argument
-            if (lv.size() > inventoryLocator.offset+3)
+            CompoundTag nbt = null; // skipping one argument
+            if (lv.size() > inventoryLocator.offset() + 3)
             {
-                Value nbtValue = lv.get(inventoryLocator.offset+3);
-                if (nbtValue instanceof NBTSerializableValue)
-                    nbt = ((NBTSerializableValue)nbtValue).getCompoundTag();
-                else if (nbtValue instanceof NullValue)
-                    nbt = null;
-                else
+                Value nbtValue = lv.get(inventoryLocator.offset() + 3);
+                if (nbtValue instanceof final NBTSerializableValue nbtsv)
+                {
+                    nbt = nbtsv.getCompoundTag();
+                }
+                else if (!nbtValue.isNull())
+                {
                     nbt = new NBTSerializableValue(nbtValue.getString()).getCompoundTag();
+                }
             }
-            ItemStackArgument newitem = NBTSerializableValue.parseItem(lv.get(inventoryLocator.offset+2).getString(), nbt);
-            ItemStack previousStack = inventoryLocator.inventory.getStack(slot);
+            ItemInput newitem = NBTSerializableValue.parseItem(lv.get(inventoryLocator.offset() + 2).getString(), nbt, cc.registryAccess());
+            ItemStack previousStack = inventoryLocator.inventory().getItem(slot);
             try
             {
-                inventoryLocator.inventory.setStack(slot, newitem.createStack(count, false));
+                inventoryLocator.inventory().setItem(slot, newitem.createItemStack(count, false));
                 syncPlayerInventory(inventoryLocator, slot);
             }
             catch (CommandSyntaxException e)
             {
                 throw new InternalExpressionException(e.getMessage());
             }
-            return ValueConversions.of(previousStack);
+            return ValueConversions.of(previousStack, regs);
         });
 
         //inventory_find(<b, e>, <item> or null (first empty slot), <start_from=0> ) -> <N> or null
@@ -270,25 +300,32 @@ public class Inventories {
         {
             CarpetContext cc = (CarpetContext) c;
             NBTSerializableValue.InventoryLocator inventoryLocator = NBTSerializableValue.locateInventory(cc, lv, 0);
-            if (inventoryLocator == null) return Value.NULL;
-            ItemStackArgument itemArg = null;
-            if (lv.size() > inventoryLocator.offset)
+            if (inventoryLocator == null)
             {
-                Value secondArg = lv.get(inventoryLocator.offset+0);
-                if (!(secondArg instanceof NullValue))
-                    itemArg = NBTSerializableValue.parseItem(secondArg.getString());
+                return Value.NULL;
+            }
+            ItemInput itemArg = null;
+            if (lv.size() > inventoryLocator.offset())
+            {
+                Value secondArg = lv.get(inventoryLocator.offset());
+                if (!secondArg.isNull())
+                {
+                    itemArg = NBTSerializableValue.parseItem(secondArg.getString(), cc.registryAccess());
+                }
             }
             int startIndex = 0;
-            if (lv.size() > inventoryLocator.offset+1)
+            if (lv.size() > inventoryLocator.offset() + 1)
             {
-                startIndex = (int) NumericValue.asNumber(lv.get(inventoryLocator.offset+1)).getLong();
+                startIndex = (int) NumericValue.asNumber(lv.get(inventoryLocator.offset() + 1)).getLong();
             }
-            startIndex = NBTSerializableValue.validateSlot(startIndex, inventoryLocator.inventory);
-            for (int i = startIndex, maxi = inventoryLocator.inventory.size(); i < maxi; i++)
+            startIndex = NBTSerializableValue.validateSlot(startIndex, inventoryLocator.inventory());
+            for (int i = startIndex, maxi = inventoryLocator.inventory().getContainerSize(); i < maxi; i++)
             {
-                ItemStack stack = inventoryLocator.inventory.getStack(i);
-                if ( (itemArg == null && stack.isEmpty()) || (itemArg != null && itemArg.getItem().equals(stack.getItem())) )
+                ItemStack stack = inventoryLocator.inventory().getItem(i);
+                if ((itemArg == null && stack.isEmpty()) || (itemArg != null && itemArg.getItem().equals(stack.getItem())))
+                {
                     return new NumericValue(i);
+                }
             }
             return Value.NULL;
         });
@@ -298,40 +335,49 @@ public class Inventories {
         {
             CarpetContext cc = (CarpetContext) c;
             NBTSerializableValue.InventoryLocator inventoryLocator = NBTSerializableValue.locateInventory(cc, lv, 0);
-            if (inventoryLocator == null) return Value.NULL;
-            if (lv.size() <= inventoryLocator.offset)
-                throw new InternalExpressionException("'inventory_remove' requires at least an item to be removed");
-            ItemStackArgument searchItem = NBTSerializableValue.parseItem(lv.get(inventoryLocator.offset).getString());
-            int amount = 1;
-            if (lv.size() > inventoryLocator.offset+1)
-                amount = (int)NumericValue.asNumber(lv.get(inventoryLocator.offset+1)).getLong();
-            // not enough
-            if (((amount == 1) && (!inventoryLocator.inventory.containsAny(Sets.newHashSet(searchItem.getItem()))))
-                    || (inventoryLocator.inventory.count(searchItem.getItem()) < amount)) return Value.FALSE;
-            for (int i = 0, maxi = inventoryLocator.inventory.size(); i < maxi; i++)
+            if (inventoryLocator == null)
             {
-                ItemStack stack = inventoryLocator.inventory.getStack(i);
-                if (stack.isEmpty())
+                return Value.NULL;
+            }
+            if (lv.size() <= inventoryLocator.offset())
+            {
+                throw new InternalExpressionException("'inventory_remove' requires at least an item to be removed");
+            }
+            ItemInput searchItem = NBTSerializableValue.parseItem(lv.get(inventoryLocator.offset()).getString(), cc.registryAccess());
+            int amount = 1;
+            if (lv.size() > inventoryLocator.offset() + 1)
+            {
+                amount = (int) NumericValue.asNumber(lv.get(inventoryLocator.offset() + 1)).getLong();
+            }
+            // not enough
+            if (((amount == 1) && (!inventoryLocator.inventory().hasAnyOf(Set.of(searchItem.getItem()))))
+                    || (inventoryLocator.inventory().countItem(searchItem.getItem()) < amount))
+            {
+                return Value.FALSE;
+            }
+            for (int i = 0, maxi = inventoryLocator.inventory().getContainerSize(); i < maxi; i++)
+            {
+                ItemStack stack = inventoryLocator.inventory().getItem(i);
+                if (stack.isEmpty() || !stack.getItem().equals(searchItem.getItem()))
+                {
                     continue;
-                if (!stack.getItem().equals(searchItem.getItem()))
-                    continue;
-                int left = stack.getCount()-amount;
+                }
+                int left = stack.getCount() - amount;
                 if (left > 0)
                 {
                     stack.setCount(left);
-                    inventoryLocator.inventory.setStack(i, stack);
+                    inventoryLocator.inventory().setItem(i, stack);
                     syncPlayerInventory(inventoryLocator, i);
                     return Value.TRUE;
                 }
-                else
-                {
-                    inventoryLocator.inventory.removeStack(i);
-                    syncPlayerInventory(inventoryLocator, i);
-                    amount -= stack.getCount();
-                }
+                inventoryLocator.inventory().removeItemNoUpdate(i);
+                syncPlayerInventory(inventoryLocator, i);
+                amount -= stack.getCount();
             }
             if (amount > 0)
+            {
                 throw new InternalExpressionException("Something bad happened - cannot pull all items from inventory");
+            }
             return Value.TRUE;
         });
 
@@ -340,59 +386,136 @@ public class Inventories {
         {
             CarpetContext cc = (CarpetContext) c;
             NBTSerializableValue.InventoryLocator inventoryLocator = NBTSerializableValue.locateInventory(cc, lv, 0);
-            if (inventoryLocator == null) return Value.NULL;
-            if (lv.size() == inventoryLocator.offset)
-                throw new InternalExpressionException("Slot number is required for inventory_drop");
-            int slot = (int)NumericValue.asNumber(lv.get(inventoryLocator.offset)).getLong();
-            slot = NBTSerializableValue.validateSlot(slot, inventoryLocator.inventory);
-            if (slot == inventoryLocator.inventory.size()) return Value.NULL;
-            int amount = 0;
-            if (lv.size() > inventoryLocator.offset+1)
-                amount = (int)NumericValue.asNumber(lv.get(inventoryLocator.offset+1)).getLong();
-            if (amount < 0)
-                throw new InternalExpressionException("Cannot throw negative number of items");
-            ItemStack stack = inventoryLocator.inventory.getStack(slot);
-            if (stack == null || stack.isEmpty()) return Value.ZERO;
-            if (amount == 0) amount = stack.getCount();
-            ItemStack droppedStack = inventoryLocator.inventory.removeStack(slot, amount);
-            if (droppedStack.isEmpty()) return Value.ZERO;
-            Object owner = inventoryLocator.owner;
-            ItemEntity item;
-            if (owner instanceof PlayerEntity)
+            if (inventoryLocator == null)
             {
-                item = ((PlayerEntity) owner).dropItem(droppedStack, false, true);
+                return Value.NULL;
             }
-            else if (owner instanceof LivingEntity)
+            if (lv.size() == inventoryLocator.offset())
             {
-                LivingEntity villager = (LivingEntity)owner;
+                throw new InternalExpressionException("Slot number is required for inventory_drop");
+            }
+            int slot = (int) NumericValue.asNumber(lv.get(inventoryLocator.offset())).getLong();
+            slot = NBTSerializableValue.validateSlot(slot, inventoryLocator.inventory());
+            if (slot == inventoryLocator.inventory().getContainerSize())
+            {
+                return Value.NULL;
+            }
+            int amount = 0;
+            if (lv.size() > inventoryLocator.offset() + 1)
+            {
+                amount = (int) NumericValue.asNumber(lv.get(inventoryLocator.offset() + 1)).getLong();
+            }
+            if (amount < 0)
+            {
+                throw new InternalExpressionException("Cannot throw negative number of items");
+            }
+            ItemStack stack = inventoryLocator.inventory().getItem(slot);
+            if (stack == null || stack.isEmpty())
+            {
+                return Value.ZERO;
+            }
+            if (amount == 0)
+            {
+                amount = stack.getCount();
+            }
+            ItemStack droppedStack = inventoryLocator.inventory().removeItem(slot, amount);
+            if (droppedStack.isEmpty())
+            {
+                return Value.ZERO;
+            }
+            Object owner = inventoryLocator.owner();
+            ItemEntity item;
+            if (owner instanceof final Player player)
+            {
+                item = player.drop(droppedStack, false, true);
+                if (item == null)
+                {
+                    return Value.ZERO;
+                }
+            }
+            else if (owner instanceof LivingEntity livingEntity)
+            {
                 // stolen from LookTargetUtil.give((VillagerEntity)owner, droppedStack, (LivingEntity) owner);
-                double double_1 = villager.getY() - 0.30000001192092896D + (double)villager.getStandingEyeHeight();
-                item = new ItemEntity(villager.world, villager.getX(), double_1, villager.getZ(), droppedStack);
-                Vec3d vec3d_1 = villager.getRotationVec(1.0F).normalize().multiply(0.3);//  new Vec3d(0, 0.3, 0);
-                item.setVelocity(vec3d_1);
-                item.setToDefaultPickupDelay();
-                cc.s.getWorld().spawnEntity(item);
+                double dropY = livingEntity.getY() - 0.30000001192092896D + livingEntity.getEyeHeight();
+                item = new ItemEntity(livingEntity.level(), livingEntity.getX(), dropY, livingEntity.getZ(), droppedStack);
+                Vec3 vec3d = livingEntity.getViewVector(1.0F).normalize().scale(0.3);//  new Vec3d(0, 0.3, 0);
+                item.setDeltaMovement(vec3d);
+                item.setDefaultPickUpDelay();
+                cc.level().addFreshEntity(item);
             }
             else
             {
-                Vec3d point = Vec3d.ofCenter(inventoryLocator.position); //pos+0.5v
-                item = new ItemEntity(cc.s.getWorld(), point.x, point.y, point.z, droppedStack);
-                item.setToDefaultPickupDelay();
-                cc.s.getWorld().spawnEntity(item);
+                Vec3 point = Vec3.atCenterOf(inventoryLocator.position()); //pos+0.5v
+                item = new ItemEntity(cc.level(), point.x, point.y, point.z, droppedStack);
+                item.setDefaultPickUpDelay();
+                cc.level().addFreshEntity(item);
             }
-            return new NumericValue(item.getStack().getCount());
+            return new NumericValue(item.getItem().getCount());
+        });
+
+        expression.addContextFunction("create_screen", -1, (c, t, lv) ->
+        {
+            if (lv.size() < 3)
+            {
+                throw new InternalExpressionException("'create_screen' requires at least three arguments");
+            }
+            Value playerValue = lv.get(0);
+            ServerPlayer player = EntityValue.getPlayerByValue(((CarpetContext) c).server(), playerValue);
+            if (player == null)
+            {
+                throw new InternalExpressionException("'create_screen' requires a valid online player as the first argument.");
+            }
+            String type = lv.get(1).getString();
+            Component name = FormattedTextValue.getTextByValue(lv.get(2));
+            FunctionValue function = null;
+            if (lv.size() > 3)
+            {
+                function = FunctionArgument.findIn(c, expression.module, lv, 3, true, false).function;
+            }
+
+            return new ScreenValue(player, type, name, function, c);
+        });
+
+        expression.addContextFunction("close_screen", 1, (c, t, lv) ->
+        {
+            Value value = lv.get(0);
+            if (!(value instanceof final ScreenValue screenValue))
+            {
+                throw new InternalExpressionException("'close_screen' requires a screen value as the first argument.");
+            }
+            if (!screenValue.isOpen())
+            {
+                return Value.FALSE;
+            }
+            screenValue.close();
+            return Value.TRUE;
+        });
+
+        expression.addContextFunction("screen_property", -1, (c, t, lv) ->
+        {
+            if (lv.size() < 2)
+            {
+                throw new InternalExpressionException("'screen_property' requires at least a screen and a property name");
+            }
+            if (!(lv.get(0) instanceof final ScreenValue screenValue))
+            {
+                throw new InternalExpressionException("'screen_property' requires a screen value as the first argument");
+            }
+            String propertyName = lv.get(1).getString();
+            return lv.size() >= 3
+                    ? screenValue.modifyProperty(propertyName, lv.subList(2, lv.size()))
+                    : screenValue.queryProperty(propertyName);
         });
     }
 
-    private static void syncPlayerInventory(NBTSerializableValue.InventoryLocator inventory, int int_1)
+    private static void syncPlayerInventory(NBTSerializableValue.InventoryLocator inventory, int slot)
     {
-        if (inventory.owner instanceof ServerPlayerEntity && !inventory.isEnder)
+        if (inventory.owner() instanceof final ServerPlayer player && !inventory.isEnder() && !(inventory.inventory() instanceof ScreenValue.ScreenHandlerInventory))
         {
-            ServerPlayerEntity player = (ServerPlayerEntity) inventory.owner;
-            player.networkHandler.sendPacket(new ScreenHandlerSlotUpdateS2CPacket(
+            player.connection.send(new ClientboundContainerSetSlotPacket(
                     -2, 0, // resolve mystery argument
-                    int_1,
-                    inventory.inventory.getStack(int_1)
+                    slot,
+                    inventory.inventory().getItem(slot)
             ));
         }
     }

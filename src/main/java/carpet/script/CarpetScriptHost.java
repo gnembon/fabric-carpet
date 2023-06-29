@@ -1,17 +1,18 @@
 package carpet.script;
 
-import carpet.CarpetServer;
-import carpet.CarpetSettings;
 import carpet.script.api.Auxiliary;
 import carpet.script.argument.FileArgument;
 import carpet.script.argument.FunctionArgument;
-import carpet.script.bundled.Module;
 import carpet.script.command.CommandArgument;
 import carpet.script.command.CommandToken;
 import carpet.script.exception.CarpetExpressionException;
 import carpet.script.exception.ExpressionException;
+import carpet.script.exception.IntegrityException;
 import carpet.script.exception.InternalExpressionException;
 import carpet.script.exception.InvalidCallbackException;
+import carpet.script.exception.LoadException;
+import carpet.script.external.Carpet;
+import carpet.script.external.Vanilla;
 import carpet.script.utils.AppStoreManager;
 import carpet.script.value.EntityValue;
 import carpet.script.value.FunctionValue;
@@ -20,8 +21,6 @@ import carpet.script.value.MapValue;
 import carpet.script.value.NumericValue;
 import carpet.script.value.StringValue;
 import carpet.script.value.Value;
-import carpet.utils.CarpetProfiler;
-import carpet.utils.Messenger;
 
 import com.google.gson.JsonElement;
 import com.mojang.brigadier.arguments.StringArgumentType;
@@ -31,20 +30,14 @@ import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
 
-import net.fabricmc.loader.api.FabricLoader;
-import net.fabricmc.loader.api.ModContainer;
-import net.fabricmc.loader.api.SemanticVersion;
-import net.fabricmc.loader.api.Version;
-import net.fabricmc.loader.api.VersionParsingException;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityType;
-import net.minecraft.nbt.NbtElement;
-import net.minecraft.server.command.ServerCommandSource;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.text.LiteralText;
-import net.minecraft.text.Text;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.Tag;
+import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.math.BigInteger;
@@ -57,46 +50,46 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.function.BiPredicate;
+import java.util.TreeMap;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static java.lang.Math.max;
-import static net.minecraft.server.command.CommandManager.argument;
-import static net.minecraft.server.command.CommandManager.literal;
+import static net.minecraft.commands.Commands.argument;
+import static net.minecraft.commands.Commands.literal;
 
 public class CarpetScriptHost extends ScriptHost
 {
-    private final CarpetScriptServer scriptServer;
-    public ServerCommandSource responsibleSource;
+    public CommandSourceStack responsibleSource;
 
-    private NbtElement globalState;
+    private Tag globalState;
     private int saveTimeout;
     public boolean persistenceRequired;
+    public double eventPriority;
 
     public Map<Value, Value> appConfig;
     public Map<String, CommandArgument> appArgTypes;
 
-    Predicate<ServerCommandSource> commandValidator;
+    Predicate<CommandSourceStack> commandValidator;
     boolean isRuleApp;
     public AppStoreManager.StoreNode storeSource;
+    boolean hasCommand;
 
-    private CarpetScriptHost(CarpetScriptServer server, Module code, boolean perUser, ScriptHost parent, Map<Value, Value> config, Map<String, CommandArgument> argTypes, Predicate<ServerCommandSource> commandValidator, boolean isRuleApp)
+    private CarpetScriptHost(CarpetScriptServer server, Module code, boolean perUser, ScriptHost parent, Map<Value, Value> config, Map<String, CommandArgument> argTypes, Predicate<CommandSourceStack> commandValidator, boolean isRuleApp)
     {
-        super(code, perUser, parent);
+        super(code, server, perUser, parent);
         this.saveTimeout = 0;
-        this.scriptServer = server;
         persistenceRequired = true;
         if (parent == null && code != null) // app, not a global host
         {
-            persistenceRequired = false;
             globalState = loadState();
         }
         else if (parent != null)
         {
-            persistenceRequired = ((CarpetScriptHost)parent).persistenceRequired;
+            persistenceRequired = ((CarpetScriptHost) parent).persistenceRequired;
+            strict = parent.strict;
         }
         appConfig = config;
         appArgTypes = argTypes;
@@ -105,7 +98,7 @@ public class CarpetScriptHost extends ScriptHost
         storeSource = null;
     }
 
-    public static CarpetScriptHost create(CarpetScriptServer scriptServer, Module module, boolean perPlayer, ServerCommandSource source, Predicate<ServerCommandSource> commandValidator, boolean isRuleApp, AppStoreManager.StoreNode storeSource)
+    public static CarpetScriptHost create(CarpetScriptServer scriptServer, Module module, boolean perPlayer, CommandSourceStack source, Predicate<CommandSourceStack> commandValidator, boolean isRuleApp, AppStoreManager.StoreNode storeSource)
     {
         CarpetScriptHost host = new CarpetScriptHost(scriptServer, module, perPlayer, null, Collections.emptyMap(), new HashMap<>(), commandValidator, isRuleApp);
         // parse code and convert to expression
@@ -113,28 +106,21 @@ public class CarpetScriptHost extends ScriptHost
         {
             try
             {
-                String code = module.getCode();
-                if (code == null)
-                {
-                    Messenger.m(source, "r Unable to load "+module.getName()+" app - code not found");
-                    return null;
-                }
                 host.setChatErrorSnooper(source);
-                CarpetExpression ex = new CarpetExpression(host.main, code, source, new BlockPos(0, 0, 0));
+                CarpetExpression ex = new CarpetExpression(host.main, module.code(), source, new BlockPos(0, 0, 0));
                 ex.getExpr().asATextSource();
                 host.storeSource = storeSource;
-                ex.scriptRunCommand(host, new BlockPos(source.getPosition()));
+                ex.scriptRunCommand(host, BlockPos.containing(source.getPosition()));
             }
             catch (CarpetExpressionException e)
             {
                 host.handleErrorWithStack("Error while evaluating expression", e);
-                host.resetErrorSnooper();
-                return null;
+                throw new LoadException();
             }
-            catch (ArithmeticException ae)
+            catch (ArithmeticException ae) // is this branch ever reached? Seems like arithmetic exceptions are converted to CEEs earlier
             {
                 host.handleErrorWithStack("Math doesn't compute", ae);
-                return null;
+                throw new LoadException();
             }
             catch (StackOverflowError soe)
             {
@@ -148,13 +134,16 @@ public class CarpetScriptHost extends ScriptHost
         return host;
     }
 
-    private static int execute(CommandContext<ServerCommandSource> ctx, String hostName, FunctionArgument funcSpec, List<String> paramNames) throws CommandSyntaxException
+    private static int execute(CommandContext<CommandSourceStack> ctx, String hostName, FunctionArgument funcSpec, List<String> paramNames) throws CommandSyntaxException
     {
-        CarpetProfiler.ProfilerToken currentSection = CarpetProfiler.start_section(null, "Scarpet command", CarpetProfiler.TYPE.GENERAL);
-        CarpetScriptHost cHost = CarpetServer.scriptServer.modules.get(hostName).retrieveOwnForExecution(ctx.getSource());
+        Runnable token = Carpet.startProfilerSection("Scarpet command");
+        CarpetScriptServer scriptServer = Vanilla.MinecraftServer_getScriptServer(ctx.getSource().getServer());
+        CarpetScriptHost cHost = scriptServer.modules.get(hostName).retrieveOwnForExecution(ctx.getSource());
         List<String> argNames = funcSpec.function.getArguments();
-        if ((argNames.size()-funcSpec.args.size()) != paramNames.size())
-            throw new SimpleCommandExceptionType(new LiteralText("Target function "+funcSpec.function.getPrettyString()+" as wrong number of arguments, required "+paramNames.size()+", found "+argNames.size()+" with "+funcSpec.args.size()+" provided")).create();
+        if ((argNames.size() - funcSpec.args.size()) != paramNames.size())
+        {
+            throw new SimpleCommandExceptionType(Component.literal("Target function " + funcSpec.function.getPrettyString() + " as wrong number of arguments, required " + paramNames.size() + ", found " + argNames.size() + " with " + funcSpec.args.size() + " provided")).create();
+        }
         List<Value> args = new ArrayList<>(argNames.size());
         for (String s : paramNames)
         {
@@ -162,30 +151,30 @@ public class CarpetScriptHost extends ScriptHost
         }
         args.addAll(funcSpec.args);
         Value response = cHost.handleCommand(ctx.getSource(), funcSpec.function, args);
-        // will skip prints for new
-        //if (!response.isNull()) Messenger.m(ctx.getSource(), "gi " + response.getString());
         int intres = (int) response.readInteger();
-        CarpetProfiler.end_current_section(currentSection);
+        token.run();
         return intres;
     }
 
-    public LiteralArgumentBuilder<ServerCommandSource> addPathToCommand(
-            LiteralArgumentBuilder<ServerCommandSource> command,
+    public LiteralArgumentBuilder<CommandSourceStack> addPathToCommand(
+            LiteralArgumentBuilder<CommandSourceStack> command,
             List<CommandToken> path,
             FunctionArgument functionSpec
     ) throws CommandSyntaxException
     {
-        String hostName = main.getName();
+        String hostName = main.name();
         List<String> commandArgs = path.stream().filter(t -> t.isArgument).map(t -> t.surface).collect(Collectors.toList());
-        if (commandArgs.size() != (functionSpec.function.getNumParams()-functionSpec.args.size()) )
-            throw CommandArgument.error("Number of parameters in function "+functionSpec.function.fullName()+" doesn't match parameters for a command");
+        if (commandArgs.size() != (functionSpec.function.getNumParams() - functionSpec.args.size()))
+        {
+            throw CommandArgument.error("Number of parameters in function " + functionSpec.function.fullName() + " doesn't match parameters for a command");
+        }
         if (path.isEmpty())
         {
             return command.executes((c) -> execute(c, hostName, functionSpec, Collections.emptyList()));
         }
         List<CommandToken> reversedPath = new ArrayList<>(path);
         Collections.reverse(reversedPath);
-        ArgumentBuilder<ServerCommandSource, ?> argChain = reversedPath.get(0).getCommandNode(this).executes(c -> execute(c, hostName, functionSpec, commandArgs));
+        ArgumentBuilder<CommandSourceStack, ?> argChain = reversedPath.get(0).getCommandNode(this).executes(c -> execute(c, hostName, functionSpec, commandArgs));
         for (int i = 1; i < reversedPath.size(); i++)
         {
             argChain = reversedPath.get(i).getCommandNode(this).then(argChain);
@@ -193,62 +182,68 @@ public class CarpetScriptHost extends ScriptHost
         return command.then(argChain);
     }
 
-    public LiteralArgumentBuilder<ServerCommandSource> getNewCommandTree(
-            List<Pair<List<CommandToken>,FunctionArgument>> entries, Predicate<ServerCommandSource> useValidator
+    public LiteralArgumentBuilder<CommandSourceStack> getNewCommandTree(
+            List<Pair<List<CommandToken>, FunctionArgument>> entries, Predicate<CommandSourceStack> useValidator
     ) throws CommandSyntaxException
     {
-        String hostName = main.getName();
-        Predicate<ServerCommandSource> configValidator = getCommandConfigPermissions();
-        LiteralArgumentBuilder<ServerCommandSource> command = literal(hostName).
-               requires((player) -> CarpetServer.scriptServer.modules.containsKey(hostName) && useValidator.test(player) && configValidator.test(player));
-        for (Pair<List<CommandToken>,FunctionArgument> commandData : entries)
+        String hostName = main.name();
+        Predicate<CommandSourceStack> configValidator = getCommandConfigPermissions();
+        LiteralArgumentBuilder<CommandSourceStack> command = literal(hostName).
+                requires((player) -> useValidator.test(player) && configValidator.test(player));
+        for (Pair<List<CommandToken>, FunctionArgument> commandData : entries)
         {
             command = this.addPathToCommand(command, commandData.getKey(), commandData.getValue());
         }
         return command;
     }
 
-    public Predicate<ServerCommandSource> getCommandConfigPermissions() throws CommandSyntaxException
+    public Predicate<CommandSourceStack> getCommandConfigPermissions() throws CommandSyntaxException
     {
         Value confValue = appConfig.get(StringValue.of("command_permission"));
-        if (confValue == null) return s -> true;
-        if (confValue instanceof NumericValue)
+        if (confValue == null)
         {
-            int level = ((NumericValue) confValue).getInt();
-            if (level < 1 || level > 4) throw CommandArgument.error("Numeric permission level for custom commands should be between 1 and 4");
-            return s -> s.hasPermissionLevel(level);
+            return s -> true;
         }
-        if (!(confValue instanceof FunctionValue))
+        if (confValue instanceof final NumericValue number)
+        {
+            int level = number.getInt();
+            if (level < 1 || level > 4)
+            {
+                throw CommandArgument.error("Numeric permission level for custom commands should be between 1 and 4");
+            }
+            return s -> s.hasPermission(level);
+        }
+        if (!(confValue instanceof final FunctionValue fun))
         {
             String perm = confValue.getString().toLowerCase(Locale.ROOT);
-            switch (perm)
-            {
-                case "ops": return s -> s.hasPermissionLevel(2);
-                case "server": return s -> !(s.getEntity() instanceof ServerPlayerEntity);
-                case "players": return s -> s.getEntity() instanceof ServerPlayerEntity;
-                case "all": return s -> true;
-                default: throw CommandArgument.error("Unknown command permission: "+perm);
-            }
+            return switch (perm) {
+                case "ops" -> s -> s.hasPermission(2);
+                case "server" -> s -> !(s.getEntity() instanceof ServerPlayer);
+                case "players" -> s -> s.getEntity() instanceof ServerPlayer;
+                case "all" -> s -> true;
+                default -> throw CommandArgument.error("Unknown command permission: " + perm);
+            };
         }
-        FunctionValue fun = (FunctionValue) confValue;
-        if (fun.getNumParams() != 1) throw CommandArgument.error("Custom command permission function should expect 1 argument");
+        if (fun.getNumParams() != 1)
+        {
+            throw CommandArgument.error("Custom command permission function should expect 1 argument");
+        }
         String hostName = getName();
         return s -> {
             try
             {
-                CarpetProfiler.ProfilerToken currentSection = CarpetProfiler.start_section(null, "Scarpet command", CarpetProfiler.TYPE.GENERAL);
-                CarpetScriptHost cHost = null;
-                cHost = CarpetServer.scriptServer.modules.get(hostName).retrieveOwnForExecution(s);
+                Runnable token = Carpet.startProfilerSection("Scarpet command");
+                CarpetScriptHost cHost = scriptServer().modules.get(hostName).retrieveOwnForExecution(s);
                 Value response = cHost.handleCommand(s, fun, Collections.singletonList(
-                        (s.getEntity() instanceof ServerPlayerEntity)?new EntityValue(s.getEntity()):Value.NULL)
+                        (s.getEntity() instanceof ServerPlayer) ? new EntityValue(s.getEntity()) : Value.NULL)
                 );
                 boolean res = response.getBoolean();
-                CarpetProfiler.end_current_section(currentSection);
+                token.run();
                 return res;
             }
             catch (CommandSyntaxException e)
             {
-                Messenger.m(s, "rb Unable to run app command: "+e.getMessage());
+                Carpet.Messenger_message(s, "rb Unable to run app command: " + e.getMessage());
                 return false;
             }
         };
@@ -257,7 +252,7 @@ public class CarpetScriptHost extends ScriptHost
     @Override
     protected ScriptHost duplicate()
     {
-        return new CarpetScriptHost(scriptServer, main, false, this, appConfig, appArgTypes, commandValidator, isRuleApp);
+        return new CarpetScriptHost(scriptServer(), main, false, this, appConfig, appArgTypes, commandValidator, isRuleApp);
     }
 
     @Override
@@ -268,14 +263,20 @@ public class CarpetScriptHost extends ScriptHost
         CarpetScriptHost child = (CarpetScriptHost) host;
         CarpetEventServer.Event.transferAllHostEventsToChild(child);
         FunctionValue onStart = child.getFunction("__on_start");
-        if (onStart != null) child.callNow(onStart, Collections.emptyList());
+        if (onStart != null)
+        {
+            child.callNow(onStart, Collections.emptyList());
+        }
     }
 
     @Override
     public void addUserDefinedFunction(Context ctx, Module module, String funName, FunctionValue function)
     {
         super.addUserDefinedFunction(ctx, module, funName, function);
-        if (ctx.host.main != module) return; // not dealing with automatic imports / exports /configs / apps from imports
+        if (ctx.host.main != module)
+        {
+            return; // not dealing with automatic imports / exports /configs / apps from imports
+        }
         if (funName.startsWith("__")) // potential fishy activity
         {
             if (funName.startsWith("__on_")) // here we can make a determination if we want to only accept events from main module.
@@ -283,13 +284,17 @@ public class CarpetScriptHost extends ScriptHost
                 // this is nasty, we have the host and function, yet we add it via names, but hey - works for now
                 String event = funName.replaceFirst("__on_", "");
                 if (CarpetEventServer.Event.byName.containsKey(event))
-                    scriptServer.events.addBuiltInEvent(event, this, function, null);
+                {
+                    scriptServer().events.addBuiltInEvent(event, this, function, null);
+                }
             }
             else if (funName.equals("__config"))
             {
                 // needs to be added as we read the code, cause other events may be affected.
                 if (!readConfig())
+                {
                     throw new InternalExpressionException("Invalid app config (via '__config()' function)");
+                }
             }
         }
     }
@@ -299,31 +304,44 @@ public class CarpetScriptHost extends ScriptHost
         try
         {
             FunctionValue configFunction = getFunction("__config");
-            if (configFunction == null) return false;
+            if (configFunction == null)
+            {
+                return false;
+            }
             Value ret = callNow(configFunction, Collections.emptyList());
-            if (!(ret instanceof MapValue)) return false;
-            Map<Value, Value> config = ((MapValue) ret).getMap();
+            if (!(ret instanceof final MapValue map))
+            {
+                return false;
+            }
+            Map<Value, Value> config = map.getMap();
             setPerPlayer(config.getOrDefault(new StringValue("scope"), new StringValue("player")).getString().equalsIgnoreCase("player"));
             persistenceRequired = config.getOrDefault(new StringValue("stay_loaded"), Value.TRUE).getBoolean();
+            strict = config.getOrDefault(StringValue.of("strict"), Value.FALSE).getBoolean();
+            eventPriority = config.getOrDefault(new StringValue("event_priority"), Value.ZERO).readDoubleNumber();
             // check requires
             Value loadRequirements = config.get(new StringValue("requires"));
-            if (loadRequirements instanceof FunctionValue)
+            if (loadRequirements instanceof final FunctionValue functionValue)
             {
-                Value reqResult = callNow((FunctionValue) loadRequirements, Collections.emptyList());
+                Value reqResult = callNow(functionValue, Collections.emptyList());
                 if (reqResult.getBoolean()) // != false or null
-                    throw new InternalExpressionException(reqResult.getString());
+                {
+                    throw new LoadException(reqResult.getString());
+                }
             }
             else
             {
                 checkModVersionRequirements(loadRequirements);
-            };
+            }
             if (storeSource != null)
             {
                 Value resources = config.get(new StringValue("resources"));
                 if (resources != null)
                 {
-                    if (!(resources instanceof ListValue)) throw new InternalExpressionException("App resources not defined as a list");
-                    for (Value resource : ((ListValue) resources).getItems())
+                    if (!(resources instanceof final ListValue list))
+                    {
+                        throw new InternalExpressionException("App resources not defined as a list");
+                    }
+                    for (Value resource : list.getItems())
                     {
                         AppStoreManager.addResource(this, storeSource, resource);
                     }
@@ -331,8 +349,11 @@ public class CarpetScriptHost extends ScriptHost
                 Value libraries = config.get(new StringValue("libraries"));
                 if (libraries != null)
                 {
-                    if (!(libraries instanceof ListValue)) throw new InternalExpressionException("App libraries not defined as a list");
-                    for (Value library : ((ListValue) libraries).getItems())
+                    if (!(libraries instanceof final ListValue list))
+                    {
+                        throw new InternalExpressionException("App libraries not defined as a list");
+                    }
+                    for (Value library : list.getItems())
                     {
                         AppStoreManager.addLibrary(this, storeSource, library);
                     }
@@ -347,20 +368,30 @@ public class CarpetScriptHost extends ScriptHost
         return true;
     }
 
-    static class ListComparator<T extends Comparable<T>> implements Comparator<Pair<List<T>,?>>
+    static class ListComparator<T extends Comparable<T>> implements Comparator<Pair<List<T>, ?>>
     {
         @Override
-        public int compare(Pair<List<T>,?> p1, Pair<List<T>,?> p2) {
+        public int compare(Pair<List<T>, ?> p1, Pair<List<T>, ?> p2)
+        {
             List<T> o1 = p1.getKey();
             List<T> o2 = p2.getKey();
-            for (int i = 0; i < Math.min(o1.size(), o2.size()); i++) {
+            for (int i = 0; i < Math.min(o1.size(), o2.size()); i++)
+            {
                 int c = o1.get(i).compareTo(o2.get(i));
-                if (c != 0) {
+                if (c != 0)
+                {
                     return c;
                 }
             }
             return Integer.compare(o1.size(), o2.size());
         }
+    }
+
+    // Used to ensure app gets marked as holding command from a central place
+    private void registerCommand(LiteralArgumentBuilder<CommandSourceStack> command)
+    {
+        scriptServer().server.getCommands().getDispatcher().register(command);
+        hasCommand = true;
     }
 
     public void readCustomArgumentTypes() throws CommandSyntaxException
@@ -369,21 +400,26 @@ public class CarpetScriptHost extends ScriptHost
         Value arguments = appConfig.get(StringValue.of("arguments"));
         if (arguments != null)
         {
-            if (!(arguments instanceof MapValue))
+            if (!(arguments instanceof final MapValue map))
+            {
                 throw CommandArgument.error("'arguments' element in config should be a map");
+            }
             appArgTypes.clear();
-            for (Map.Entry<Value, Value> typeData : ((MapValue)arguments).getMap().entrySet())
+            for (Map.Entry<Value, Value> typeData : map.getMap().entrySet())
             {
                 String argument = typeData.getKey().getString();
                 Value spec = typeData.getValue();
-                if (!(spec instanceof MapValue)) throw CommandArgument.error("Spec for '"+argument+"' should be a map");
-                Map<String, Value> specData = ((MapValue) spec).getMap().entrySet().stream().collect(Collectors.toMap(e -> e.getKey().getString(), Map.Entry::getValue));
+                if (!(spec instanceof final MapValue specMap))
+                {
+                    throw CommandArgument.error("Spec for '" + argument + "' should be a map");
+                }
+                Map<String, Value> specData = specMap.getMap().entrySet().stream().collect(Collectors.toMap(e -> e.getKey().getString(), Map.Entry::getValue));
                 appArgTypes.put(argument, CommandArgument.buildFromConfig(argument, specData, this));
             }
         }
     }
 
-    public Boolean addAppCommands(Consumer<Text> notifier)
+    public Boolean addAppCommands(Consumer<Component> notifier)
     {
         try
         {
@@ -391,148 +427,97 @@ public class CarpetScriptHost extends ScriptHost
         }
         catch (CommandSyntaxException e)
         {
-            notifier.accept(Messenger.c("r Error when handling of setting up custom argument types: "+e.getMessage()));
+            notifier.accept(Carpet.Messenger_compose("r Error when handling of setting up custom argument types: " + e.getMessage()));
             return false;
         }
         if (appConfig.get(StringValue.of("commands")) != null)
         {
+            if (scriptServer().isInvalidCommandRoot(getName()))
+            {
+                notifier.accept(Carpet.Messenger_compose("g A command with the app's name already exists in vanilla or an installed mod."));
+                return null;
+            }
             try
             {
-                LiteralArgumentBuilder<ServerCommandSource> command = readCommands(commandValidator);
+                LiteralArgumentBuilder<CommandSourceStack> command = readCommands(commandValidator);
                 if (command != null)
                 {
-                    scriptServer.server.getCommandManager().getDispatcher().register(command);
+                    registerCommand(command);
                     return true;
                 }
-                else {
-                    return false;
-                }
+                return false;
             }
             catch (CommandSyntaxException cse)
             {
                 // failed
-                notifier.accept(Messenger.c("r Failed to build command system for "+getName()+" thus failed to load the app: ", cse.getRawMessage()));
+                notifier.accept(Carpet.Messenger_compose("r Failed to build command system: ", cse.getRawMessage()));
                 return null;
             }
 
         }
         return addLegacyCommand(notifier);
     }
-    
-    // Prefixes based on FLoader's SemanticVersionPredicateParser's class prefixes under Apache 2.0, since that's not public API
-    private static final Map<String, BiPredicate<SemanticVersion, SemanticVersion>> VERSION_PREFIXES = new HashMap<String, BiPredicate<SemanticVersion, SemanticVersion>>() {{
-            put(">=", (target, source) -> source.compareTo(target) >= 0);
-            put("<=", (target, source) -> source.compareTo(target) <= 0);
-            put(">", (target, source) -> source.compareTo(target) > 0);
-            put("<", (target, source) -> source.compareTo(target) < 0);
-            put("=", (target, source) -> source.compareTo(target) == 0);
-            put("~", (target, source) -> source.compareTo(target) >= 0
-                    && source.getVersionComponent(0) == target.getVersionComponent(0)
-                    && source.getVersionComponent(1) == target.getVersionComponent(1));
-            put("^", (target, source) -> source.compareTo(target) >= 0
-                    && source.getVersionComponent(0) == target.getVersionComponent(0));
-    }};
-    
-    public void checkModVersionRequirements(Value reqs) {
+
+    public void checkModVersionRequirements(Value reqs)
+    {
         if (reqs == null)
+        {
             return;
-        if (!(reqs instanceof MapValue))
+        }
+        if (!(reqs instanceof final MapValue map))
         {
             throw new InternalExpressionException("`requires` field must be a map of mod dependencies or a function to be executed");
         }
-        Map<Value, Value> requirements = ((MapValue)reqs).getMap();
+
+        Map<Value, Value> requirements = map.getMap();
         for (Entry<Value, Value> requirement : requirements.entrySet())
         {
-            boolean successful = false;
             String requiredModId = requirement.getKey().getString();
-            String requirementString = requirement.getValue().getString();
-            
-            ModContainer mod = FabricLoader.getInstance().getModContainer(requiredModId).orElse(null);
-            if (mod != null)
-            {
-                if (requirementString.equals("*"))
-                    continue;
-                Version presentVersion = mod.getMetadata().getVersion();
-                BiPredicate<SemanticVersion, SemanticVersion> tester = null;
-                String remainingRequirementString = requirementString;
-                for (Entry<String, BiPredicate<SemanticVersion, SemanticVersion>> s : VERSION_PREFIXES.entrySet())
-                {
-                    if (requirementString.startsWith(s.getKey()))
-                    {
-                        tester = s.getValue();
-                        remainingRequirementString = requirementString.substring(s.getKey().length());
-                    }
-                }
-                if (tester == null)
-                    tester = VERSION_PREFIXES.get("=");
-                if (presentVersion instanceof SemanticVersion)
-                {
-                    SemanticVersion requiredVersion = null;
-                    try {
-                        requiredVersion = SemanticVersion.parse(remainingRequirementString);
-                    }
-                    catch (VersionParsingException e)
-                    {
-                        throw new InternalExpressionException("Failed to parse semantic version for '" + requiredModId + "' in 'requires': " + e.getMessage());
-                    }
-                    if (tester.test(requiredVersion, (SemanticVersion) presentVersion))
-                        successful = true;
-                }
-                else
-                {
-                    if (FabricLoader.getInstance().isDevelopmentEnvironment())
-                        successful = true; // Autoversioning breaks semver in dev (loads as ${version})
-                    else
-                    {
-                        if (!(tester == VERSION_PREFIXES.get("=")))
-                            throw new InternalExpressionException("Mod '"+requiredModId+"' doesn't use semversion, thus can only check version equality");
-                        if (presentVersion.getFriendlyString().equals(remainingRequirementString))
-                            successful = true;
-                    }
-                }
-            }
-            if (!successful)
-            {
-                throw new InternalExpressionException(getName()+" requires " + requiredModId + " version " + requirementString + " in order to load");
-            }
+            String stringPredicate = requirement.getValue().getString();
+            Carpet.assertRequirementMet(this, requiredModId, stringPredicate);
         }
     }
 
-    private Boolean addLegacyCommand(Consumer<Text> notifier)
+    private Boolean addLegacyCommand(Consumer<Component> notifier)
     {
-        if (main == null) return false;
-        if (getFunction("__command") == null) return false;
-
-        if (scriptServer.isInvalidCommandRoot(getName()))
+        if (main == null || getFunction("__command") == null)
         {
-            notifier.accept(Messenger.c("gi Tried to mask vanilla command."));
+            return false;
+        }
+
+        if (scriptServer().isInvalidCommandRoot(getName()))
+        {
+            notifier.accept(Carpet.Messenger_compose("g A command with the app's name already exists in vanilla or an installed mod."));
             return null;
         }
 
-        Predicate<ServerCommandSource> configValidator;
+        Predicate<CommandSourceStack> configValidator;
         try
         {
             configValidator = getCommandConfigPermissions();
         }
         catch (CommandSyntaxException e)
         {
-            notifier.accept(Messenger.c("rb "+e.getMessage()));
+            notifier.accept(Carpet.Messenger_compose("rb " + e.getMessage()));
             return null;
         }
         String hostName = getName();
-        LiteralArgumentBuilder<ServerCommandSource> command = literal(hostName).
-                requires((player) -> scriptServer.modules.containsKey(hostName) && commandValidator.test(player) && configValidator.test(player)).
-                executes( (c) ->
+        LiteralArgumentBuilder<CommandSourceStack> command = literal(hostName).
+                requires((player) -> commandValidator.test(player) && configValidator.test(player)).
+                executes((c) ->
                 {
-                    CarpetScriptHost targetHost = scriptServer.modules.get(hostName).retrieveOwnForExecution(c.getSource());
-                    Value response = targetHost.handleCommandLegacy(c.getSource(),"__command", null, "");
-                    if (!response.isNull()) Messenger.m(c.getSource(), "gi "+response.getString());
-                    return (int)response.readInteger();
+                    CarpetScriptHost targetHost = scriptServer().modules.get(hostName).retrieveOwnForExecution(c.getSource());
+                    Value response = targetHost.handleCommandLegacy(c.getSource(), "__command", null, "");
+                    if (!response.isNull())
+                    {
+                        Carpet.Messenger_message(c.getSource(), "gi " + response.getString());
+                    }
+                    return (int) response.readInteger();
                 });
 
         boolean hasTypeSupport = appConfig.getOrDefault(StringValue.of("legacy_command_type_support"), Value.FALSE).getBoolean();
 
-        for (String function : globalFunctionNames(main, s ->  !s.startsWith("_")).sorted().collect(Collectors.toList()))
+        for (String function : globalFunctionNames(main, s -> !s.startsWith("_")).sorted().collect(Collectors.toList()))
         {
             if (hasTypeSupport)
             {
@@ -554,36 +539,47 @@ public class CarpetScriptHost extends ScriptHost
             {
                 command = command.
                         then(literal(function).
-                                requires((player) -> scriptServer.modules.containsKey(hostName) && scriptServer.modules.get(hostName).getFunction(function) != null).
+                                requires((player) -> scriptServer().modules.get(hostName).getFunction(function) != null).
                                 executes((c) -> {
-                                    CarpetScriptHost targetHost = scriptServer.modules.get(hostName).retrieveOwnForExecution(c.getSource());
-                                    Value response = targetHost.handleCommandLegacy(c.getSource(),function, null, "");
-                                    if (!response.isNull()) Messenger.m(c.getSource(), "gi " + response.getString());
+                                    CarpetScriptHost targetHost = scriptServer().modules.get(hostName).retrieveOwnForExecution(c.getSource());
+                                    Value response = targetHost.handleCommandLegacy(c.getSource(), function, null, "");
+                                    if (!response.isNull())
+                                    {
+                                        Carpet.Messenger_message(c.getSource(), "gi " + response.getString());
+                                    }
                                     return (int) response.readInteger();
                                 }).
                                 then(argument("args...", StringArgumentType.greedyString()).
-                                        executes( (c) -> {
-                                            CarpetScriptHost targetHost = scriptServer.modules.get(hostName).retrieveOwnForExecution(c.getSource());
-                                            Value response = targetHost.handleCommandLegacy(c.getSource(),function, null, StringArgumentType.getString(c, "args..."));
-                                            if (!response.isNull()) Messenger.m(c.getSource(), "gi "+response.getString());
-                                            return (int)response.readInteger();
+                                        executes((c) -> {
+                                            CarpetScriptHost targetHost = scriptServer().modules.get(hostName).retrieveOwnForExecution(c.getSource());
+                                            Value response = targetHost.handleCommandLegacy(c.getSource(), function, null, StringArgumentType.getString(c, "args..."));
+                                            if (!response.isNull())
+                                            {
+                                                Carpet.Messenger_message(c.getSource(), "gi " + response.getString());
+                                            }
+                                            return (int) response.readInteger();
                                         })));
             }
         }
-        scriptServer.server.getCommandManager().getDispatcher().register(command);
+        registerCommand(command);
         return true;
     }
 
-    public LiteralArgumentBuilder<ServerCommandSource> readCommands(Predicate<ServerCommandSource> useValidator) throws CommandSyntaxException
+    public LiteralArgumentBuilder<CommandSourceStack> readCommands(Predicate<CommandSourceStack> useValidator) throws CommandSyntaxException
     {
         Value commands = appConfig.get(StringValue.of("commands"));
 
-        if (commands == null) return null;
-        if (!(commands instanceof MapValue))
+        if (commands == null)
+        {
+            return null;
+        }
+        if (!(commands instanceof final MapValue map))
+        {
             throw CommandArgument.error("'commands' element in config should be a map");
-        List<Pair<List<CommandToken>,FunctionArgument>> commandEntries = new ArrayList<>();
+        }
+        List<Pair<List<CommandToken>, FunctionArgument>> commandEntries = new ArrayList<>();
 
-        for (Map.Entry<Value, Value> commandsData : ((MapValue)commands).getMap().entrySet().stream().sorted(Map.Entry.comparingByKey()).collect(Collectors.toList()))
+        for (Map.Entry<Value, Value> commandsData : map.getMap().entrySet().stream().sorted(Entry.comparingByKey()).toList())
         {
             List<CommandToken> elements = CommandToken.parseSpec(commandsData.getKey().getString(), this);
             FunctionArgument funSpec = FunctionArgument.fromCommandSpec(this, commandsData.getValue());
@@ -592,21 +588,25 @@ public class CarpetScriptHost extends ScriptHost
         commandEntries.sort(new ListComparator<>());
         if (!appConfig.getOrDefault(StringValue.of("allow_command_conflicts"), Value.FALSE).getBoolean())
         {
-            for (int i = 0; i < commandEntries.size()-1; i++)
+            for (int i = 0; i < commandEntries.size() - 1; i++)
             {
                 List<CommandToken> first = commandEntries.get(i).getKey();
-                List<CommandToken> other = commandEntries.get(i+1).getKey();
+                List<CommandToken> other = commandEntries.get(i + 1).getKey();
                 int checkSize = Math.min(first.size(), other.size());
                 for (int t = 0; t < checkSize; t++)
                 {
                     CommandToken tik = first.get(t);
                     CommandToken tok = other.get(t);
                     if (tik.isArgument && tok.isArgument && !tik.surface.equals(tok.surface))
-                        throw CommandArgument.error("Conflicting commands: \n"+
-                                " - [" +first.stream().map(tt -> tt.surface).collect(Collectors.joining(" ")) + "] at "+tik.surface+"\n"+
-                                " - [" +other.stream().map(tt -> tt.surface).collect(Collectors.joining(" ")) + "] at "+tok.surface+"\n");
+                    {
+                        throw CommandArgument.error("Conflicting commands: \n" +
+                                " - [" + first.stream().map(tt -> tt.surface).collect(Collectors.joining(" ")) + "] at " + tik.surface + "\n" +
+                                " - [" + other.stream().map(tt -> tt.surface).collect(Collectors.joining(" ")) + "] at " + tok.surface + "\n");
+                    }
                     if (!tik.equals(tok))
+                    {
                         break;
+                    }
                 }
             }
         }
@@ -616,19 +616,21 @@ public class CarpetScriptHost extends ScriptHost
     @Override
     protected Module getModuleOrLibraryByName(String name)
     {
-        Module module = scriptServer.getModule(name, true);
-        if (module == null || module.getCode() == null)
-            throw new InternalExpressionException("Unable to locate package: "+name);
+        Module module = scriptServer().getModule(name, true);
+        if (module == null)
+        {
+            throw new InternalExpressionException("Unable to locate package: " + name);
+        }
         return module;
     }
 
     @Override
     protected void runModuleCode(Context c, Module module)
     {
-        CarpetContext cc = (CarpetContext)c;
-        CarpetExpression ex = new CarpetExpression(module, module.getCode(), cc.s, cc.origin);
+        CarpetContext cc = (CarpetContext) c;
+        CarpetExpression ex = new CarpetExpression(module, module.code(), cc.source(), cc.origin());
         ex.getExpr().asATextSource();
-        ex.scriptRunCommand(this, cc.origin);
+        ex.scriptRunCommand(this, cc.origin());
     }
 
     @Override
@@ -639,73 +641,60 @@ public class CarpetScriptHost extends ScriptHost
         if (funName.startsWith("__on_"))
         {
             // this is nasty, we have the host and function, yet we add it via names, but hey - works for now
-            String event = funName.replaceFirst("__on_","");
-            scriptServer.events.removeBuiltInEvent(event, this, funName);
+            String event = funName.replaceFirst("__on_", "");
+            scriptServer().events.removeBuiltInEvent(event, this, funName);
         }
     }
 
-    public List<CarpetScriptHost> retrieveForExecution(ServerCommandSource source, String optionalTarget)
+    public CarpetScriptHost retrieveForExecution(CommandSourceStack source, ServerPlayer player)
     {
-        List<CarpetScriptHost> targets = new ArrayList<>();
-        if (perUser)
+        CarpetScriptHost target = null;
+        if (!perUser)
         {
-            if (optionalTarget == null)
-            {
-                for (ServerPlayerEntity player : source.getServer().getPlayerManager().getPlayerList())
-                {
-                    CarpetScriptHost host = (CarpetScriptHost) retrieveForExecution(player.getEntityName());
-                    targets.add(host);
-                    if (host.errorSnooper == null) host.setChatErrorSnooper(player.getCommandSource());
-                }
-            }
-            else
-            {
-                ServerPlayerEntity player = source.getServer().getPlayerManager().getPlayer(optionalTarget);
-                if (player != null)
-                {
-                    CarpetScriptHost host = (CarpetScriptHost) retrieveForExecution(player.getEntityName());
-                    targets.add(host);
-                    if (host.errorSnooper == null) host.setChatErrorSnooper(player.getCommandSource());
-                }
-            }
+            target = this;
         }
-        else
+        else if (player != null)
         {
-            targets.add(this);
-            if (this.errorSnooper == null) this.setChatErrorSnooper(source);
+            target = (CarpetScriptHost) retrieveForExecution(player.getScoreboardName());
         }
-        return targets;
+        if (target != null && target.errorSnooper == null)
+        {
+            target.setChatErrorSnooper(source);
+        }
+        return target;
     }
 
-    public CarpetScriptHost retrieveOwnForExecution(ServerCommandSource source) throws CommandSyntaxException
+    public CarpetScriptHost retrieveOwnForExecution(CommandSourceStack source) throws CommandSyntaxException
     {
         if (!perUser)
         {
-            if (errorSnooper == null) setChatErrorSnooper(source);
+            if (errorSnooper == null)
+            {
+                setChatErrorSnooper(source);
+            }
             return this;
         }
         // user based
-        ServerPlayerEntity player;
-        try
+        ServerPlayer player = source.getPlayer();
+        if (player == null)
         {
-            player = source.getPlayer();
+            throw new SimpleCommandExceptionType(Component.literal("Cannot run player based apps without the player context")).create();
         }
-        catch (CommandSyntaxException ignored)
+        CarpetScriptHost userHost = (CarpetScriptHost) retrieveForExecution(player.getScoreboardName());
+        if (userHost.errorSnooper == null)
         {
-            throw new SimpleCommandExceptionType(new LiteralText("Cannot run player based apps without the player context")).create();
+            userHost.setChatErrorSnooper(source);
         }
-        CarpetScriptHost userHost = (CarpetScriptHost)retrieveForExecution(player.getEntityName());
-        if (userHost.errorSnooper == null) userHost.setChatErrorSnooper(source);
         return userHost;
     }
 
-    public Value handleCommandLegacy(ServerCommandSource source, String call, List<Integer> coords, String arg)
+    public Value handleCommandLegacy(CommandSourceStack source, String call, List<Integer> coords, String arg)
     {
         try
         {
-            CarpetProfiler.ProfilerToken currentSection = CarpetProfiler.start_section(null, "Scarpet command", CarpetProfiler.TYPE.GENERAL);
+            Runnable token = Carpet.startProfilerSection("Scarpet command");
             Value res = callLegacy(source, call, coords, arg);
-            CarpetProfiler.end_current_section(currentSection);
+            token.run();
             return res;
         }
         catch (CarpetExpressionException exc)
@@ -723,11 +712,11 @@ public class CarpetScriptHost extends ScriptHost
         return Value.NULL;
     }
 
-    public Value handleCommand(ServerCommandSource source, FunctionValue function, List<Value> args)
+    public Value handleCommand(CommandSourceStack source, FunctionValue function, List<Value> args)
     {
         try
         {
-            return call(source, function, args);
+            return scriptServer().events.handleEvents.getWhileDisabled(() -> call(source, function, args));
         }
         catch (CarpetExpressionException exc)
         {
@@ -744,25 +733,36 @@ public class CarpetScriptHost extends ScriptHost
         return Value.NULL;
     }
 
-    public Value callLegacy(ServerCommandSource source, String call, List<Integer> coords, String arg)
+    public Value callLegacy(CommandSourceStack source, String call, List<Integer> coords, String arg)
     {
-        if (CarpetServer.scriptServer.stopAll)
-            throw new CarpetExpressionException("SCARPET PAUSED", null);
+        if (scriptServer().stopAll)
+        {
+            throw new CarpetExpressionException("SCARPET PAUSED (unpause with /script resume)", null);
+        }
         FunctionValue function = getFunction(call);
         if (function == null)
-            throw new CarpetExpressionException("UNDEFINED", null);
+        {
+            throw new CarpetExpressionException("Couldn't find function '" + call + "' in app '" + this.getName() + "'", null);
+        }
         List<LazyValue> argv = new ArrayList<>();
         if (coords != null)
-            for (Integer i: coords)
-                argv.add( (c, t) -> new NumericValue(i));
+        {
+            for (Integer i : coords)
+            {
+                argv.add((c, t) -> new NumericValue(i));
+            }
+        }
         String sign = "";
         for (Tokenizer.Token tok : Tokenizer.simplepass(arg))
         {
             switch (tok.type)
             {
                 case VARIABLE:
-                    LazyValue var = getGlobalVariable(tok.surface);
-                    if (var != null) argv.add(var);
+                    LazyValue variable = getGlobalVariable(tok.surface);
+                    if (variable != null)
+                    {
+                        argv.add(variable);
+                    }
                     break;
                 case STRINGPARAM:
                     argv.add((c, t) -> new StringValue(tok.surface));
@@ -773,12 +773,12 @@ public class CarpetScriptHost extends ScriptHost
                     try
                     {
                         String finalSign = sign;
-                        argv.add((c, t) ->new NumericValue(finalSign+tok.surface));
+                        argv.add((c, t) -> new NumericValue(finalSign + tok.surface));
                         sign = "";
                     }
                     catch (NumberFormatException exception)
                     {
-                        throw new CarpetExpressionException("Fail: "+sign+tok.surface+" seems like a number but it is" +
+                        throw new CarpetExpressionException("Fail: " + sign + tok.surface + " seems like a number but it is" +
                                 " not a number. Use quotes to ensure its a string", null);
                     }
                     break;
@@ -786,17 +786,16 @@ public class CarpetScriptHost extends ScriptHost
                     try
                     {
                         String finalSign = sign;
-                        argv.add((c, t) -> new NumericValue(new BigInteger(finalSign+tok.surface.substring(2), 16).doubleValue()));
+                        argv.add((c, t) -> new NumericValue(new BigInteger(finalSign + tok.surface.substring(2), 16).doubleValue()));
                         sign = "";
                     }
                     catch (NumberFormatException exception)
                     {
-                        throw new CarpetExpressionException("Fail: "+sign+tok.surface+" seems like a number but it is" +
+                        throw new CarpetExpressionException("Fail: " + sign + tok.surface + " seems like a number but it is" +
                                 " not a number. Use quotes to ensure its a string", null);
                     }
                     break;
-                case OPERATOR:
-                case UNARY_OPERATOR:
+                case OPERATOR, UNARY_OPERATOR:
                     if ((tok.surface.equals("-") || tok.surface.equals("-u")) && sign.isEmpty())
                     {
                         sign = "-";
@@ -808,34 +807,32 @@ public class CarpetScriptHost extends ScriptHost
                     }
                     break;
                 case FUNCTION:
-                    throw new CarpetExpressionException("Fail: passing functions like "+tok.surface+"() to invoke is " +
+                    throw new CarpetExpressionException("Fail: passing functions like " + tok.surface + "() to invoke is " +
                             "not allowed", null);
-                case OPEN_PAREN:
-                case COMMA:
-                case CLOSE_PAREN:
-                case MARKER:
-                    throw new CarpetExpressionException("Fail: "+tok.surface+" is not allowed in invoke", null);
+                case OPEN_PAREN, COMMA, CLOSE_PAREN, MARKER:
+                    throw new CarpetExpressionException("Fail: " + tok.surface + " is not allowed in invoke", null);
             }
         }
         List<String> args = function.getArguments();
         if (argv.size() != args.size())
         {
-            String error = "Fail: stored function "+call+" takes "+args.size()+" arguments, not "+argv.size()+ ":\n";
+            String error = "Fail: stored function " + call + " takes " + args.size() + " arguments, not " + argv.size() + ":\n";
             for (int i = 0; i < max(argv.size(), args.size()); i++)
             {
-                error += (i<args.size()?args.get(i):"??")+" => "+(i<argv.size()?argv.get(i).evalValue(null).getString():"??")+"\n";
+                error += (i < args.size() ? args.get(i) : "??") + " => " + (i < argv.size() ? argv.get(i).evalValue(null).getString() : "??") + "\n";
             }
             throw new CarpetExpressionException(error, null);
         }
         try
         {
             // TODO: this is just for now - invoke would be able to invoke other hosts scripts
-            Context context = new CarpetContext(this, source, BlockPos.ORIGIN);
-            return function.getExpression().evalValue(
+            assertAppIntegrity(function.getModule());
+            Context context = new CarpetContext(this, source);
+            return scriptServer().events.handleEvents.getWhileDisabled(() -> function.getExpression().evalValue(
                     () -> function.lazyEval(context, Context.VOID, function.getExpression(), function.getToken(), argv),
                     context,
                     Context.VOID
-            );
+            ));
         }
         catch (ExpressionException e)
         {
@@ -843,27 +840,29 @@ public class CarpetScriptHost extends ScriptHost
         }
     }
 
-    public Value call(ServerCommandSource source, FunctionValue function, List<Value> argv)
+    public Value call(CommandSourceStack source, FunctionValue function, List<Value> argv)
     {
-        if (CarpetServer.scriptServer.stopAll)
-            throw new CarpetExpressionException("SCARPET PAUSED", null);
+        if (scriptServer().stopAll)
+        {
+            throw new CarpetExpressionException("SCARPET PAUSED (unpause with /script resume)", null);
+        }
 
         List<String> args = function.getArguments();
         if (argv.size() != args.size())
         {
-            String error = "Fail: stored function "+function.getPrettyString()+" takes "+args.size()+" arguments, not "+argv.size()+ ":\n";
+            String error = "Fail: stored function " + function.getPrettyString() + " takes " + args.size() + " arguments, not " + argv.size() + ":\n";
             for (int i = 0; i < max(argv.size(), args.size()); i++)
             {
-                error += (i<args.size()?args.get(i):"??")+" => "+(i<argv.size()?argv.get(i).getString():"??")+"\n";
+                error += (i < args.size() ? args.get(i) : "??") + " => " + (i < argv.size() ? argv.get(i).getString() : "??") + "\n";
             }
             throw new CarpetExpressionException(error, null);
         }
         try
         {
-            // TODO: this is just for now - invoke would be able to invoke other hosts scripts
-            Context context = new CarpetContext(this, source, BlockPos.ORIGIN);
+            assertAppIntegrity(function.getModule());
+            Context context = new CarpetContext(this, source);
             return function.getExpression().evalValue(
-                    () -> function.execute(context, Context.VOID, function.getExpression(), function.getToken(), argv),
+                    () -> function.execute(context, Context.VOID, function.getExpression(), function.getToken(), argv, null),
                     context,
                     Context.VOID
             );
@@ -874,11 +873,19 @@ public class CarpetScriptHost extends ScriptHost
         }
     }
 
-    public Value callUDF(BlockPos pos, ServerCommandSource source, FunctionValue fun, List<Value> argv) throws InvalidCallbackException
+    public Value callUDF(CommandSourceStack source, FunctionValue fun, List<Value> argv) throws InvalidCallbackException, IntegrityException
     {
-        if (CarpetServer.scriptServer.stopAll)
+        return callUDF(BlockPos.ZERO, source, fun, argv);
+    }
+
+    public Value callUDF(BlockPos origin, CommandSourceStack source, FunctionValue fun, List<Value> argv) throws InvalidCallbackException, IntegrityException
+    {
+        if (scriptServer().stopAll)
+        {
             return Value.NULL;
-        try { // cause we can't throw checked exceptions in lambda. Left if be until need to handle these more gracefully
+        }
+        try
+        { // cause we can't throw checked exceptions in lambda. Left if be until need to handle these more gracefully
             fun.assertArgsOk(argv, (b) -> {
                 throw new InternalExpressionException("");
             });
@@ -889,10 +896,10 @@ public class CarpetScriptHost extends ScriptHost
         }
         try
         {
-            // TODO: this is just for now - invoke would be able to invoke other hosts scripts
-            Context context = new CarpetContext(this, source, pos);
+            assertAppIntegrity(fun.getModule());
+            Context context = new CarpetContext(this, source, origin);
             return fun.getExpression().evalValue(
-                    () -> fun.execute(context, Context.VOID, fun.getExpression(), fun.getToken(), argv),
+                    () -> fun.execute(context, Context.VOID, fun.getExpression(), fun.getToken(), argv, null),
                     context,
                     Context.VOID);
         }
@@ -905,16 +912,18 @@ public class CarpetScriptHost extends ScriptHost
 
     public Value callNow(FunctionValue fun, List<Value> arguments)
     {
-        ServerPlayerEntity player = (user==null)?null:scriptServer.server.getPlayerManager().getPlayer(user);
-        ServerCommandSource source = (player != null)?player.getCommandSource():scriptServer.server.getCommandSource();
-        try
-        {
-            return callUDF(BlockPos.ORIGIN, source, fun, arguments);
-        }
-        catch (InvalidCallbackException ignored)
-        {
-            return Value.NULL;
-        }
+        ServerPlayer player = (user == null) ? null : scriptServer().server.getPlayerList().getPlayerByName(user);
+        CommandSourceStack source = (player != null) ? player.createCommandSourceStack() : scriptServer().server.createCommandSourceStack();
+        return scriptServer().events.handleEvents.getWhileDisabled(() -> {
+            try
+            {
+                return callUDF(source, fun, arguments);
+            }
+            catch (InvalidCallbackException ignored)
+            {
+                return Value.NULL;
+            }
+        });
     }
 
 
@@ -924,8 +933,8 @@ public class CarpetScriptHost extends ScriptHost
         super.onClose();
         FunctionValue closing = getFunction("__on_close");
         if (closing != null && (parent != null || !isPerUser()))
-            // either global instance of a global task, or
-            // user host in player scoped app
+        // either global instance of a global task, or
+        // user host in player scoped app
         {
             callNow(closing, Collections.emptyList());
         }
@@ -933,48 +942,60 @@ public class CarpetScriptHost extends ScriptHost
         {
 
             String markerName = Auxiliary.MARKER_STRING + "_" + ((getName() == null) ? "" : getName());
-            for (ServerWorld world : scriptServer.server.getWorlds())
+            for (ServerLevel world : scriptServer().server.getAllLevels())
             {
-                for (Entity e : world.getEntitiesByType(EntityType.ARMOR_STAND, (as) -> as.getScoreboardTags().contains(markerName)))
+                for (Entity e : world.getEntities(EntityType.ARMOR_STAND, (as) -> as.getTags().contains(markerName)))
                 {
                     e.discard();
                 }
             }
             if (this.saveTimeout > 0)
+            {
                 dumpState();
+            }
         }
     }
 
     private void dumpState()
     {
-        Module.saveData(main, globalState);
+        Module.saveData(main, globalState, this.scriptServer());
     }
 
-    private NbtElement loadState()
+    private Tag loadState()
     {
-        return Module.getData(main);
+        return Module.getData(main, this.scriptServer());
     }
 
-    public NbtElement readFileTag(FileArgument fdesc)
+    public Tag readFileTag(FileArgument fdesc)
     {
-        if (getName() == null && !fdesc.isShared) return null;
+        if (getName() == null && !fdesc.isShared)
+        {
+            return null;
+        }
         if (fdesc.resource != null)
+        {
             return fdesc.getNbtData(main);
+        }
         if (parent == null)
+        {
             return globalState;
-        return ((CarpetScriptHost)parent).globalState;
+        }
+        return ((CarpetScriptHost) parent).globalState;
     }
 
-    public boolean writeTagFile(NbtElement tag, FileArgument fdesc)
+    public boolean writeTagFile(Tag tag, FileArgument fdesc)
     {
-        if (getName() == null && !fdesc.isShared) return false; // if belongs to an app, cannot be default host.
+        if (getName() == null && !fdesc.isShared)
+        {
+            return false; // if belongs to an app, cannot be default host.
+        }
 
         if (fdesc.resource != null)
         {
             return fdesc.saveNbtData(main, tag);
         }
 
-        CarpetScriptHost responsibleHost = (parent != null)?(CarpetScriptHost) parent:this;
+        CarpetScriptHost responsibleHost = (parent != null) ? (CarpetScriptHost) parent : this;
         responsibleHost.globalState = tag;
         if (responsibleHost.saveTimeout == 0)
         {
@@ -986,46 +1007,40 @@ public class CarpetScriptHost extends ScriptHost
 
     public boolean removeResourceFile(FileArgument fdesc)
     {
-        if (getName() == null && !fdesc.isShared) return false; //
-        return fdesc.dropExistingFile(main);
+        return (getName() != null || fdesc.isShared) && fdesc.dropExistingFile(main); //
     }
 
     public boolean appendLogFile(FileArgument fdesc, List<String> data)
     {
-        if (getName() == null && !fdesc.isShared) return false; // if belongs to an app, cannot be default host.
-        return fdesc.appendToTextFile(main, data);
+        return (getName() != null || fdesc.isShared) && fdesc.appendToTextFile(main, data); // if belongs to an app, cannot be default host.
     }
 
     public List<String> readTextResource(FileArgument fdesc)
     {
-        if (getName() == null && !fdesc.isShared) return null;
-        return fdesc.listFile(main);
+        return getName() == null && !fdesc.isShared ? null : fdesc.listFile(main);
     }
-    
+
     public JsonElement readJsonFile(FileArgument fdesc)
     {
-        if (getName() == null && !fdesc.isShared) return null;
-        return fdesc.readJsonFile(main);
+        return getName() == null && !fdesc.isShared ? null : fdesc.readJsonFile(main);
     }
 
     public Stream<String> listFolder(FileArgument fdesc)
     {
-        if (getName() == null && !fdesc.isShared) return null; //
-        return fdesc.listFolder(main);
+        return getName() == null && !fdesc.isShared ? null : fdesc.listFolder(main);
     }
 
     public boolean applyActionForResource(String path, boolean shared, Consumer<Path> action)
     {
-        FileArgument fdesc = FileArgument.resourceFromPath(path, FileArgument.Reason.CREATE, shared);
+        FileArgument fdesc = FileArgument.resourceFromPath(this, path, FileArgument.Reason.CREATE, shared);
         return fdesc.findPathAndApply(main, action);
     }
-
 
     public void tick()
     {
         if (this.saveTimeout > 0)
         {
-            this.saveTimeout --;
+            this.saveTimeout--;
             if (this.saveTimeout == 0)
             {
                 dumpState();
@@ -1033,21 +1048,17 @@ public class CarpetScriptHost extends ScriptHost
         }
     }
 
-    public void setChatErrorSnooper(ServerCommandSource source)
+    public void setChatErrorSnooper(CommandSourceStack source)
     {
         responsibleSource = source;
-        errorSnooper = (expr, /*Nullable*/ token, message) ->
+        errorSnooper = (expr, /*Nullable*/ token, ctx, message) ->
         {
-            try
-            {
-                source.getPlayer();
-            }
-            catch (CommandSyntaxException e)
+            if (!source.isPlayer())
             {
                 return null;
             }
 
-            String shebang = message+" in "+expr.getModuleName();
+            String shebang = message + " in " + expr.getModuleName();
             if (token != null)
             {
                 String[] lines = expr.getCodeString().split("\n");
@@ -1060,24 +1071,85 @@ public class CarpetScriptHost extends ScriptHost
                 {
                     shebang += " at pos " + (token.pos + 1);
                 }
-                Messenger.m(source, "r " + shebang);
+                Carpet.Messenger_message(source, "r " + shebang);
                 if (lines.length > 1 && token.lineno > 0)
                 {
-                    Messenger.m(source, "l " + lines[token.lineno - 1]);
+                    Carpet.Messenger_message(source, withLocals("l", lines[token.lineno - 1], ctx));
                 }
-                Messenger.m(source, "l " + lines[token.lineno].substring(0, token.linepos), "r  HERE>> ", "l " +
-                        lines[token.lineno].substring(token.linepos));
+                Carpet.Messenger_message(source, withLocals("l", lines[token.lineno].substring(0, token.linepos), ctx), "r  HERE>> ",
+                        withLocals("l", lines[token.lineno].substring(token.linepos), ctx));
                 if (lines.length > 1 && token.lineno < lines.length - 1)
                 {
-                    Messenger.m(source, "l " + lines[token.lineno + 1]);
+                    Carpet.Messenger_message(source, withLocals("l", lines[token.lineno + 1], ctx));
                 }
             }
             else
             {
-                Messenger.m(source, "r " + shebang);
+                Carpet.Messenger_message(source, "r " + shebang);
             }
             return new ArrayList<>();
         };
+    }
+
+    /**
+     * <p>Creates a {@link Component} using {@link Messenger} that has the locals in the {@code line} snippet with a hover over
+     * tooltip with the value of the local at that location</p>
+     *
+     * @param line    The line to find references to locals on
+     * @param context The {@link Context} to extract the locals from
+     * @param format  The format to apply to each part of the line, without the trailing space
+     * @return A BaseText of the given line with the given format, that is visibly the same as passing those to Messenger, but with references to the
+     * locals in the {@link Context} with a hover over tooltip text
+     * @implNote The implementation of this method is far from perfect, and won't detect actual references to variables, but try to find the strings
+     * and add the hover effect to anything that equals to any variable name, so short variable names may appear on random positions
+     */
+    private static Component withLocals(String format, String line, Context context)
+    {
+        format += " ";
+        List<String> stringsToFormat = new ArrayList<>();
+        TreeMap<Integer, String> posToLocal = new TreeMap<>(); //Holds whether a local variable name is found at a specific index
+        for (String local : context.variables.keySet())
+        {
+            int pos = line.indexOf(local);
+            while (pos != -1)
+            {
+                posToLocal.merge(pos, local, (existingLocal, newLocal) ->
+                {
+                    // Prefer longer variable names at the same position, since else single chars everywhere
+                    return newLocal.length() > existingLocal.length() ? local : existingLocal;
+                });
+                pos = line.indexOf(local, pos + 1);
+            }
+        }
+        int lastPos = 0;
+        for (Entry<Integer, String> foundLocal : posToLocal.entrySet())
+        {
+            if (foundLocal.getKey() < lastPos) // system isn't perfect: part of another local
+            {
+                continue;
+            }
+            stringsToFormat.add(format + line.substring(lastPos, foundLocal.getKey()));
+            stringsToFormat.add(format + foundLocal.getValue());
+            Value val = context.variables.get(foundLocal.getValue()).evalValue(context);
+            String type = val.getTypeString();
+            String value;
+            try
+            {
+                value = val.getPrettyString();
+            }
+            catch (StackOverflowError e)
+            {
+                value = "Exception while rendering variable, there seems to be a recursive reference in there";
+            }
+            stringsToFormat.add("^ Value of '" + foundLocal.getValue() + "' at position (" + type + "): \n"
+                    + value);
+            lastPos = foundLocal.getKey() + foundLocal.getValue().length();
+        }
+        if (line.length() != lastPos)
+        {
+            stringsToFormat.add(format + line.substring(lastPos));
+        }
+        return Carpet.Messenger_compose(stringsToFormat.toArray());
     }
 
     @Override
@@ -1091,35 +1163,54 @@ public class CarpetScriptHost extends ScriptHost
     {
         if (responsibleSource != null)
         {
-            if (exception instanceof CarpetExpressionException) ((CarpetExpressionException) exception).printStack(responsibleSource);
+            if (exception instanceof final CarpetExpressionException cee)
+            {
+                cee.printStack(responsibleSource);
+            }
             String message = exception.getMessage();
-            Messenger.m(responsibleSource, "r "+intro+( (message == null || message.isEmpty())?"":": "+message));
+            Carpet.Messenger_message(responsibleSource, "r " + intro + ((message == null || message.isEmpty()) ? "" : ": " + message));
         }
         else
         {
-            CarpetSettings.LOG.error(intro+": "+exception.getMessage());
+            CarpetScriptServer.LOG.error(intro + ": " + exception.getMessage());
         }
     }
 
     @Override
-    synchronized public void handleExpressionException(String message, ExpressionException exc)
+    public synchronized void handleExpressionException(String message, ExpressionException exc)
     {
         handleErrorWithStack(message, new CarpetExpressionException(exc.getMessage(), exc.stack));
     }
 
+    /**
+     * @deprecated Use {@link #scriptServer()} instead
+     */
+    @Deprecated(forRemoval = true)
     public CarpetScriptServer getScriptServer()
     {
-        return scriptServer;
+        return scriptServer();
+    }
+
+    @Override
+    public CarpetScriptServer scriptServer()
+    {
+        return (CarpetScriptServer) super.scriptServer();
     }
 
     @Override
     public boolean issueDeprecation(String feature)
     {
-        if(super.issueDeprecation(feature))
+        if (super.issueDeprecation(feature))
         {
-            Messenger.m(responsibleSource, "rb '"+feature+"' is deprecated and soon will be removed. Please consult the docs for their replacement");
+            Carpet.Messenger_message(responsibleSource, "rb App '" +getName() + "' uses '" + feature + "', which is deprecated for removal. Check the docs for a replacement");
             return true;
         }
         return false;
+    }
+
+    @Override
+    public boolean canSynchronouslyExecute()
+    {
+        return !scriptServer().server.isSameThread();
     }
 }

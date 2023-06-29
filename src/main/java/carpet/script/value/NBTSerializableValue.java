@@ -1,45 +1,13 @@
 package carpet.script.value;
 
-import carpet.fakes.InventoryBearerInterface;
 import carpet.script.CarpetContext;
-import carpet.script.LazyValue;
 import carpet.script.exception.InternalExpressionException;
 import carpet.script.exception.ThrowStatement;
 import carpet.script.exception.Throwables;
+import carpet.script.external.Vanilla;
 import carpet.script.utils.EquipmentInventory;
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.ChestBlock;
-import net.minecraft.block.InventoryProvider;
-import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.block.entity.ChestBlockEntity;
-import net.minecraft.command.argument.ItemStackArgument;
-import net.minecraft.command.argument.ItemStringReader;
-import net.minecraft.command.argument.NbtPathArgumentType;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.InventoryOwner;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.mob.MobEntity;
-import net.minecraft.entity.passive.MerchantEntity;
-import net.minecraft.entity.passive.VillagerEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.inventory.Inventory;
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.AbstractNbtList;
-import net.minecraft.nbt.AbstractNbtNumber;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.nbt.NbtList;
-import net.minecraft.nbt.StringNbtReader;
-import net.minecraft.nbt.NbtString;
-import net.minecraft.nbt.NbtElement;
-import net.minecraft.predicate.entity.EntityPredicates;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Box;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -50,16 +18,55 @@ import java.util.Map;
 import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
+
+import net.minecraft.commands.arguments.NbtPathArgument;
+import net.minecraft.commands.arguments.item.ItemInput;
+import net.minecraft.commands.arguments.item.ItemParser;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Holder;
+import net.minecraft.core.RegistryAccess;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.nbt.CollectionTag;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.EndTag;
+import net.minecraft.nbt.IntTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.LongTag;
+import net.minecraft.nbt.NumericTag;
+import net.minecraft.nbt.StringTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.nbt.TagParser;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.Container;
+import net.minecraft.world.WorldlyContainerHolder;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntitySelector;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.animal.horse.AbstractHorse;
+import net.minecraft.world.entity.npc.InventoryCarrier;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.ChestBlock;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.ChestBlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.AABB;
+
+import javax.annotation.Nullable;
 
 public class NBTSerializableValue extends Value implements ContainerValueInterface
 {
     private String nbtString = null;
-    private NbtElement nbtTag = null;
-    private Supplier<NbtElement> nbtSupplier = null;
+    private Tag nbtTag = null;
+    private Supplier<Tag> nbtSupplier = null;
     private boolean owned = false;
 
-    private NBTSerializableValue() {}
+    private NBTSerializableValue()
+    {
+    }
 
     public NBTSerializableValue(String nbtString)
     {
@@ -67,68 +74,82 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
         {
             try
             {
-                return (new StringNbtReader(new StringReader(nbtString))).parseElement();
+                return (new TagParser(new StringReader(nbtString))).readValue();
             }
             catch (CommandSyntaxException e)
             {
-                throw new InternalExpressionException("Incorrect NBT data: "+nbtString);
+                throw new InternalExpressionException("Incorrect NBT data: " + nbtString);
             }
         };
         owned = true;
     }
 
-    public NBTSerializableValue(NbtElement tag)
+    public NBTSerializableValue(Tag tag)
     {
         nbtTag = tag;
         owned = true;
     }
 
-    public static Value of(NbtElement tag)
+    public static Value of(Tag tag)
     {
-        if (tag == null) return Value.NULL;
+        if (tag == null)
+        {
+            return Value.NULL;
+        }
         return new NBTSerializableValue(tag);
     }
 
-    public NBTSerializableValue(Supplier<NbtElement> tagSupplier)
+    public NBTSerializableValue(Supplier<Tag> tagSupplier)
     {
         nbtSupplier = tagSupplier;
     }
 
     public static Value fromStack(ItemStack stack)
     {
-        if (stack.hasNbt())
+        if (stack.hasTag())
         {
             NBTSerializableValue value = new NBTSerializableValue();
-            value.nbtSupplier = stack::getNbt;
+            value.nbtSupplier = stack::getTag;
             return value;
         }
         return Value.NULL;
     }
 
-    public static String nameFromRegistryId(Identifier id)
+    public static Value nameFromRegistryId(@Nullable ResourceLocation id)
     {
-        if (id == null) // should be Value.NULL
-            return "";
-        if (id.getNamespace().equals("minecraft"))
-            return id.getPath();
-        return id.toString();
+        return StringValue.of(nameFromResource(id));
     }
 
-    public static NBTSerializableValue parseString(String nbtString, boolean fail)
+    @Nullable
+    public static String nameFromResource(@Nullable ResourceLocation id)
     {
-        NbtElement tag;
+        return id == null ? null : id.getNamespace().equals("minecraft") ? id.getPath() : id.toString();
+    }
+
+    @Nullable
+    public static NBTSerializableValue parseString(String nbtString)
+    {
         try
         {
-            tag = (new StringNbtReader(new StringReader(nbtString))).parseElement();
+            Tag tag = (new TagParser(new StringReader(nbtString))).readValue();
+            NBTSerializableValue value = new NBTSerializableValue(tag);
+            value.nbtString = null;
+            return value;
         }
         catch (CommandSyntaxException e)
         {
-            if (fail) throw new InternalExpressionException("Incorrect NBT tag: "+ nbtString);
             return null;
         }
-        NBTSerializableValue value = new NBTSerializableValue(tag);
-        value.nbtString = null;
-        return value;
+    }
+
+    public static NBTSerializableValue parseStringOrFail(String nbtString)
+    {
+        NBTSerializableValue result = parseString(nbtString);
+        if (result == null)
+        {
+            throw new InternalExpressionException("Incorrect NBT tag: " + nbtString);
+        }
+        return result;
     }
 
 
@@ -153,38 +174,46 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
     }
 
     @Override
-    public Value fromConstant() {
+    public Value fromConstant()
+    {
         return deepcopy();
     }
 
     // stolen from HopperBlockEntity, adjusted for threaded operation
-    public static Inventory getInventoryAt(ServerWorld world, BlockPos blockPos)
+    public static Container getInventoryAt(ServerLevel world, BlockPos blockPos)
     {
-        Inventory inventory = null;
+        Container inventory = null;
         BlockState blockState = world.getBlockState(blockPos);
         Block block = blockState.getBlock();
-        if (block instanceof InventoryProvider) {
-            inventory = ((InventoryProvider)block).getInventory(blockState, world, blockPos);
-        } else if (blockState.hasBlockEntity()) {
+        if (block instanceof final WorldlyContainerHolder containerHolder)
+        {
+            inventory = containerHolder.getContainer(blockState, world, blockPos);
+        }
+        else if (blockState.hasBlockEntity())
+        {
             BlockEntity blockEntity = BlockValue.getBlockEntity(world, blockPos);
-            if (blockEntity instanceof Inventory) {
-                inventory = (Inventory)blockEntity;
-                if (inventory instanceof ChestBlockEntity && block instanceof ChestBlock) {
-                    inventory = ChestBlock.getInventory((ChestBlock)block, blockState, world, blockPos, true);
+            if (blockEntity instanceof final Container inventoryHolder)
+            {
+                inventory = inventoryHolder;
+                if (inventory instanceof ChestBlockEntity && block instanceof final ChestBlock chestBlock)
+                {
+                    inventory = ChestBlock.getContainer(chestBlock, blockState, world, blockPos, true);
                 }
             }
         }
 
-        if (inventory == null) {
-            List<Entity> list = world.getOtherEntities(
-                    null,
-                    new Box(
+        if (inventory == null)
+        {
+            List<Entity> list = world.getEntities(
+                    (Entity) null, //TODO check this matches the correct method
+                    new AABB(
                             blockPos.getX() - 0.5D, blockPos.getY() - 0.5D, blockPos.getZ() - 0.5D,
                             blockPos.getX() + 0.5D, blockPos.getY() + 0.5D, blockPos.getZ() + 0.5D),
-                    EntityPredicates.VALID_INVENTORIES
+                    EntitySelector.CONTAINER_ENTITY_SELECTOR
             );
-            if (!list.isEmpty()) {
-                inventory = (Inventory)list.get(world.random.nextInt(list.size()));
+            if (!list.isEmpty())
+            {
+                inventory = (Container) list.get(world.random.nextInt(list.size()));
             }
         }
 
@@ -198,7 +227,7 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
             Value v1 = params.get(offset);
             if (v1.isNull())
             {
-                offset ++;
+                offset++;
                 v1 = params.get(offset);
             }
             else if (v1 instanceof StringValue)
@@ -207,108 +236,134 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
                 if (strVal.equals("enderchest"))
                 {
                     Value v2 = params.get(1 + offset);
-                    ServerPlayerEntity player = EntityValue.getPlayerByValue(c.s.getServer(), v2);
-                    if (player == null) throw new InternalExpressionException("enderchest inventory requires player argument");
-                    return new InventoryLocator(player, player.getBlockPos(), player.getEnderChestInventory(), offset + 2, true);
+                    ServerPlayer player = EntityValue.getPlayerByValue(c.server(), v2);
+                    if (player == null)
+                    {
+                        throw new InternalExpressionException("enderchest inventory requires player argument");
+                    }
+                    return new InventoryLocator(player, player.blockPosition(), player.getEnderChestInventory(), offset + 2, true);
                 }
                 if (strVal.equals("equipment"))
                 {
                     Value v2 = params.get(1 + offset);
-                    if (!(v2 instanceof EntityValue)) throw new InternalExpressionException("Equipment inventory requires a living entity argument");
-                    Entity e = ((EntityValue) v2).getEntity();
-                    if (!(e instanceof LivingEntity)) throw new InternalExpressionException("Equipment inventory requires a living entity argument");
-                    return new InventoryLocator(e, e.getBlockPos(), new EquipmentInventory((LivingEntity) e), offset + 2);
+                    if (!(v2 instanceof final EntityValue ev))
+                    {
+                        throw new InternalExpressionException("Equipment inventory requires a living entity argument");
+                    }
+                    Entity e = ev.getEntity();
+                    if (!(e instanceof final LivingEntity le))
+                    {
+                        throw new InternalExpressionException("Equipment inventory requires a living entity argument");
+                    }
+                    return new InventoryLocator(e, e.blockPosition(), new EquipmentInventory(le), offset + 2);
                 }
                 boolean isEnder = strVal.startsWith("enderchest_");
-                if (isEnder) strVal = strVal.substring(11); // len("enderchest_")
-                ServerPlayerEntity player = c.s.getServer().getPlayerManager().getPlayer(strVal);
-                if (player == null) throw new InternalExpressionException("String description of an inventory should either denote a player or player's enderchest");
+                if (isEnder)
+                {
+                    strVal = strVal.substring(11); // len("enderchest_")
+                }
+                ServerPlayer player = c.server().getPlayerList().getPlayerByName(strVal);
+                if (player == null)
+                {
+                    throw new InternalExpressionException("String description of an inventory should either denote a player or player's enderchest");
+                }
                 return new InventoryLocator(
                         player,
-                        player.getBlockPos(),
+                        player.blockPosition(),
                         isEnder ? player.getEnderChestInventory() : player.getInventory(),
                         offset + 1,
                         isEnder
                 );
             }
-            if (v1 instanceof EntityValue)
+            if (v1 instanceof final EntityValue ev)
             {
-                Inventory inv = null;
-                Entity e = ((EntityValue) v1).getEntity();
-                if (e instanceof PlayerEntity) inv = ((PlayerEntity) e).getInventory();
-                else if (e instanceof Inventory) inv = (Inventory) e;
-                else if (e instanceof InventoryOwner) inv = ((InventoryOwner) e).getInventory();
-                else if (e instanceof InventoryBearerInterface) inv = ((InventoryBearerInterface)e).getCMInventory(); // horse only
-                else if (e instanceof LivingEntity) return new InventoryLocator(e, e.getBlockPos(), new EquipmentInventory((MobEntity) e), offset+1);
-                if (inv == null)
-                    return null;
+                Container inv = null;
+                Entity e = ev.getEntity();
+                if (e instanceof final Player pe)
+                {
+                    inv = pe.getInventory();
+                }
+                else if (e instanceof final Container container)
+                {
+                    inv = container;
+                }
+                else if (e instanceof final InventoryCarrier io)
+                {
+                    inv = io.getInventory();
+                }
+                else if (e instanceof final AbstractHorse ibi)
+                {
+                    inv = Vanilla.AbstractHorse_getInventory(ibi); // horse only
+                }
+                else if (e instanceof final LivingEntity le)
+                {
+                    return new InventoryLocator(e, e.blockPosition(), new EquipmentInventory(le), offset + 1);
+                }
+                return inv == null ? null : new InventoryLocator(e, e.blockPosition(), inv, offset + 1);
 
-                return new InventoryLocator(e, e.getBlockPos(), inv, offset+1);
             }
-            if (v1 instanceof BlockValue)
+            if (v1 instanceof final BlockValue bv)
             {
-                BlockPos pos = ((BlockValue) v1).getPos();
+                BlockPos pos = bv.getPos();
                 if (pos == null)
+                {
                     throw new InternalExpressionException("Block to access inventory needs to be positioned in the world");
-                Inventory inv = getInventoryAt(c.s.getWorld(), pos);
-                if (inv == null)
-                    return null;
-                return new InventoryLocator(pos, pos, inv, offset+1);
+                }
+                Container inv = getInventoryAt(c.level(), pos);
+                return inv == null ? null : new InventoryLocator(pos, pos, inv, offset + 1);
             }
-            if (v1 instanceof ListValue)
+            if (v1 instanceof final ListValue lv)
             {
-                List<Value> args = ((ListValue) v1).getItems();
-                BlockPos pos = new BlockPos(
+                List<Value> args = lv.getItems();
+                BlockPos pos = BlockPos.containing(
                         NumericValue.asNumber(args.get(0)).getDouble(),
                         NumericValue.asNumber(args.get(1)).getDouble(),
                         NumericValue.asNumber(args.get(2)).getDouble());
-                Inventory inv = getInventoryAt(c.s.getWorld(), pos);
-                if (inv == null)
-                    return null;
-                return new InventoryLocator(pos, pos, inv, offset+1);
+                Container inv = getInventoryAt(c.level(), pos);
+                return inv == null ? null : new InventoryLocator(pos, pos, inv, offset + 1);
             }
-            BlockPos pos = new BlockPos(
+            if (v1 instanceof final ScreenValue screenValue)
+            {
+                return !screenValue.isOpen() ? null : new InventoryLocator(screenValue.getPlayer(), screenValue.getPlayer().blockPosition(), screenValue.getInventory(), offset + 1);
+            }
+            BlockPos pos = BlockPos.containing(
                     NumericValue.asNumber(v1).getDouble(),
                     NumericValue.asNumber(params.get(1 + offset)).getDouble(),
                     NumericValue.asNumber(params.get(2 + offset)).getDouble());
-            Inventory inv = getInventoryAt(c.s.getWorld(), pos);
-            if (inv == null)
-                return null;
-            return new InventoryLocator(pos, pos, inv, offset + 3);
+            Container inv = getInventoryAt(c.level(), pos);
+            return inv == null ? null : new InventoryLocator(pos, pos, inv, offset + 3);
         }
         catch (IndexOutOfBoundsException e)
         {
-            throw new InternalExpressionException("Inventory should be defined either by three coordinates, a block value, or an entity");
+            throw new InternalExpressionException("Inventory should be defined either by three coordinates, a block value, an entity, or a screen");
         }
     }
 
-    private static final Map<String,ItemStackArgument> itemCache = new HashMap<>();
+    private static final Map<String, ItemInput> itemCache = new HashMap<>();
 
-    public static ItemStackArgument parseItem(String itemString)
+    public static ItemInput parseItem(String itemString, RegistryAccess regs)
     {
-        return parseItem(itemString, null);
+        return parseItem(itemString, null, regs);
     }
 
-    public static ItemStackArgument parseItem(String itemString, NbtCompound customTag)
+    public static ItemInput parseItem(String itemString, @Nullable CompoundTag customTag, RegistryAccess regs)
     {
         try
         {
-            ItemStackArgument res = itemCache.get(itemString);
+            ItemInput res = itemCache.get(itemString);  // [SCARY SHIT] persistent caches over server reloads
             if (res != null)
-                if (customTag == null)
-                    return res;
-                else
-                    return new ItemStackArgument(res.getItem(), customTag);
+            {
+                return customTag == null ? res : new ItemInput(Holder.direct(res.getItem()), customTag);
+            }
+            ItemParser.ItemResult parser = ItemParser.parseForItem(regs.lookupOrThrow(Registries.ITEM), new StringReader(itemString));
+            res = new ItemInput(parser.item(), parser.nbt());
 
-            ItemStringReader parser = (new ItemStringReader(new StringReader(itemString), false)).consume();
-            res = new ItemStackArgument(parser.getItem(), parser.getNbt());
             itemCache.put(itemString, res);
-            if (itemCache.size()>64000)
+            if (itemCache.size() > 64000)
+            {
                 itemCache.clear();
-            if (customTag == null)
-                return res;
-            else
-                return new ItemStackArgument(res.getItem(), customTag);
+            }
+            return customTag == null ? res : new ItemInput(Holder.direct(res.getItem()), customTag);
         }
         catch (CommandSyntaxException e)
         {
@@ -316,24 +371,60 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
         }
     }
 
-    public static int validateSlot(int slot, Inventory inv)
+    public static int validateSlot(int slot, Container inv)
     {
-        int invSize = inv.size();
+        int invSize = inv.getContainerSize();
         if (slot < 0)
+        {
             slot = invSize + slot;
-        if (slot < 0 || slot >= invSize)
-            return inv.size(); // outside of inventory
-        return slot;
+        }
+        return slot < 0 || slot >= invSize ? inv.getContainerSize() : slot; // outside of inventory
     }
 
-    private static Value decodeTag(NbtElement t)
+    private static Value decodeSimpleTag(Tag t)
     {
-        if (t instanceof NbtCompound)
-            return new NBTSerializableValue(() -> t);
-        if (t instanceof AbstractNbtNumber)
-            return new NumericValue(((AbstractNbtNumber) t).doubleValue());
-        // more can be done here
-        return new StringValue(t.asString());
+        if (t instanceof final NumericTag number)
+        {
+            // short and byte will never exceed float's precision, even int won't
+            return t instanceof LongTag || t instanceof IntTag ? NumericValue.of(number.getAsLong()) : NumericValue.of(number.getAsNumber());
+        }
+        if (t instanceof StringTag)
+        {
+            return StringValue.of(t.getAsString());
+        }
+        if (t instanceof EndTag)
+        {
+            return Value.NULL;
+        }
+        throw new InternalExpressionException("How did we get here: Unknown nbt element class: " + t.getType().getName());
+    }
+
+    private static Value decodeTag(Tag t)
+    {
+        return t instanceof CompoundTag || t instanceof CollectionTag ? new NBTSerializableValue(() -> t) : decodeSimpleTag(t);
+    }
+
+    private static Value decodeTagDeep(Tag t)
+    {
+        if (t instanceof final CompoundTag ctag)
+        {
+            Map<Value, Value> pairs = new HashMap<>();
+            for (String key : ctag.getAllKeys())
+            {
+                pairs.put(new StringValue(key), decodeTagDeep(ctag.get(key)));
+            }
+            return MapValue.wrap(pairs);
+        }
+        if (t instanceof final CollectionTag<?> ltag)
+        {
+            List<Value> elems = new ArrayList<>();
+            for (Tag elem : ltag)
+            {
+                elems.add(decodeTagDeep(elem));
+            }
+            return ListValue.wrap(elems);
+        }
+        return decodeSimpleTag(t);
     }
 
     public Value toValue()
@@ -344,89 +435,74 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
     public static Value fromValue(Value v)
     {
         if (v instanceof NBTSerializableValue)
+        {
             return v;
-        if (v instanceof NullValue)
+        }
+        if (v.isNull())
+        {
             return Value.NULL;
-        return NBTSerializableValue.parseString(v.getString(), true);
+        }
+        return NBTSerializableValue.parseStringOrFail(v.getString());
     }
 
-
-    private static Value decodeTagDeep(NbtElement t)
-    {
-        if (t instanceof NbtCompound)
-        {
-            Map<Value, Value> pairs = new HashMap<>();
-            NbtCompound ctag = (NbtCompound)t;
-            for (String key: ctag.getKeys())
-            {
-                pairs.put(new StringValue(key), decodeTagDeep(ctag.get(key)));
-            }
-            return MapValue.wrap(pairs);
-        }
-        if (t instanceof AbstractNbtList)
-        {
-            List<Value> elems = new ArrayList<>();
-            AbstractNbtList<? extends NbtElement> ltag = (AbstractNbtList<? extends NbtElement>)t;
-            for (NbtElement elem: ltag)
-            {
-                elems.add(decodeTagDeep(elem));
-            }
-            return ListValue.wrap(elems);
-        }
-        if (t instanceof AbstractNbtNumber)
-            return new NumericValue(((AbstractNbtNumber) t).doubleValue());
-        // more can be done here
-        return new StringValue(t.asString());
-    }
-
-    public NbtElement getTag()
+    public Tag getTag()
     {
         if (nbtTag == null)
+        {
             nbtTag = nbtSupplier.get();
+        }
         return nbtTag;
     }
 
     @Override
-    public boolean equals(final Object o)
+    public boolean equals(Object o)
     {
-        if (o instanceof NBTSerializableValue)
-            return getTag().equals(((NBTSerializableValue) o).getTag());
-        return super.equals(o);
+        return o instanceof final NBTSerializableValue nbtsv ? getTag().equals(nbtsv.getTag()) : super.equals(o);
     }
 
     @Override
     public String getString()
     {
         if (nbtString == null)
+        {
             nbtString = getTag().toString();
+        }
         return nbtString;
     }
 
     @Override
     public boolean getBoolean()
     {
-        NbtElement tag = getTag();
-        if (tag instanceof NbtCompound)
-            return !((NbtCompound) tag).isEmpty();
-        if (tag instanceof AbstractNbtList)
-            return ((AbstractNbtList) tag).isEmpty();
-        if (tag instanceof AbstractNbtNumber)
-            return ((AbstractNbtNumber) tag).doubleValue()!=0.0;
-        if (tag instanceof NbtString)
-            return tag.asString().isEmpty();
+        Tag tag = getTag();
+        if (tag instanceof final CompoundTag ctag)
+        {
+            return !(ctag).isEmpty();
+        }
+        if (tag instanceof final CollectionTag<?> ltag)
+        {
+            return !(ltag).isEmpty();
+        }
+        if (tag instanceof final NumericTag number)
+        {
+            return number.getAsDouble() != 0.0;
+        }
+        if (tag instanceof StringTag)
+        {
+            return !tag.getAsString().isEmpty();
+        }
         return true;
     }
 
-    public NbtCompound getCompoundTag()
+    public CompoundTag getCompoundTag()
     {
         try
         {
             ensureOwnership();
-            return (NbtCompound) getTag();
+            return (CompoundTag) getTag();
         }
         catch (ClassCastException e)
         {
-            throw new InternalExpressionException(getString()+" is not a valid compound tag");
+            throw new InternalExpressionException(getString() + " is not a valid compound tag");
         }
     }
 
@@ -441,48 +517,50 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
     {
         /// WIP
         ensureOwnership();
-        NbtPathArgumentType.NbtPath path = cachePath(where.getString());
-        NbtElement tagToInsert = value instanceof NBTSerializableValue ?
-                ((NBTSerializableValue) value).getTag() :
-                new NBTSerializableValue(value.getString()).getTag();
+        NbtPathArgument.NbtPath path = cachePath(where.getString());
+        Tag tagToInsert = value instanceof final NBTSerializableValue nbtsv
+                ? nbtsv.getTag()
+                : new NBTSerializableValue(value.getString()).getTag();
         boolean modifiedTag;
-        if (conditions instanceof NumericValue)
+        if (conditions instanceof final NumericValue number)
         {
-            modifiedTag = modify_insert((int)((NumericValue) conditions).getLong(), path, tagToInsert);
+            modifiedTag = modifyInsert((int) number.getLong(), path, tagToInsert);
         }
         else
         {
             String ops = conditions.getString();
             if (ops.equalsIgnoreCase("merge"))
             {
-                modifiedTag = modify_merge(path, tagToInsert);
+                modifiedTag = modifyMerge(path, tagToInsert);
             }
             else if (ops.equalsIgnoreCase("replace"))
             {
-                modifiedTag = modify_replace(path, tagToInsert);
+                modifiedTag = modifyReplace(path, tagToInsert);
             }
             else
             {
                 return false;
             }
         }
-        if (modifiedTag) dirty();
+        if (modifiedTag)
+        {
+            dirty();
+        }
         return modifiedTag;
     }
 
 
-
-    private boolean modify_insert(int index, NbtPathArgumentType.NbtPath nbtPath, NbtElement newElement)
+    private boolean modifyInsert(int index, NbtPathArgument.NbtPath nbtPath, Tag newElement)
     {
-        return modify_insert(index, nbtPath, newElement, this.getTag());
+        return modifyInsert(index, nbtPath, newElement, this.getTag());
     }
 
-    private boolean modify_insert(int index, NbtPathArgumentType.NbtPath nbtPath, NbtElement newElement, NbtElement currentTag)
+    private boolean modifyInsert(int index, NbtPathArgument.NbtPath nbtPath, Tag newElement, Tag currentTag)
     {
-        Collection<NbtElement> targets;
+        Collection<Tag> targets;
         try
         {
-            targets = nbtPath.getOrInit(currentTag, NbtList::new);
+            targets = nbtPath.getOrCreate(currentTag, ListTag::new);
         }
         catch (CommandSyntaxException e)
         {
@@ -490,17 +568,18 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
         }
 
         boolean modified = false;
-        for (NbtElement target : targets)
+        for (Tag target : targets)
         {
-            if (!(target instanceof AbstractNbtList))
+            if (!(target instanceof final CollectionTag<?> targetList))
             {
                 continue;
             }
             try
             {
-                AbstractNbtList<?> targetList = (AbstractNbtList) target;
-                if (!targetList.addElement(index < 0 ? targetList.size() + index + 1 : index, newElement.copy()))
+                if (!targetList.addTag(index < 0 ? targetList.size() + index + 1 : index, newElement.copy()))
+                {
                     return false;
+                }
                 modified = true;
             }
             catch (IndexOutOfBoundsException ignored)
@@ -511,22 +590,22 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
     }
 
 
-    private boolean modify_merge(NbtPathArgumentType.NbtPath nbtPath, NbtElement replacement) //nbtPathArgumentType$NbtPath_1, list_1)
+    private boolean modifyMerge(NbtPathArgument.NbtPath nbtPath, Tag replacement) //nbtPathArgumentType$NbtPath_1, list_1)
     {
-        if (!(replacement instanceof NbtCompound))
+        if (!(replacement instanceof final CompoundTag replacementCompound))
         {
             return false;
         }
-        NbtElement ownTag = getTag();
+        Tag ownTag = getTag();
         try
         {
-            for (NbtElement target : nbtPath.getOrInit(ownTag, NbtCompound::new))
+            for (Tag target : nbtPath.getOrCreate(ownTag, CompoundTag::new))
             {
-                if (!(target instanceof NbtCompound))
+                if (!(target instanceof final CompoundTag targetCompound))
                 {
                     continue;
                 }
-                ((NbtCompound) target).copyFrom((NbtCompound) replacement);
+                targetCompound.merge(replacementCompound);
             }
         }
         catch (CommandSyntaxException ignored)
@@ -536,14 +615,16 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
         return true;
     }
 
-    private boolean modify_replace(NbtPathArgumentType.NbtPath nbtPath, NbtElement replacement) //nbtPathArgumentType$NbtPath_1, list_1)
+    private boolean modifyReplace(NbtPathArgument.NbtPath nbtPath, Tag replacement) //nbtPathArgumentType$NbtPath_1, list_1)
     {
-        NbtElement tag = getTag();
+        Tag tag = getTag();
         String pathText = nbtPath.toString();
         if (pathText.endsWith("]")) // workaround for array replacement or item in the array replacement
         {
-            if (nbtPath.remove(tag)==0)
+            if (nbtPath.remove(tag) == 0)
+            {
                 return false;
+            }
             Pattern pattern = Pattern.compile("\\[[^\\[]*]$");
             Matcher matcher = pattern.matcher(pathText);
             if (!matcher.find()) // malformed path
@@ -552,8 +633,10 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
             }
             String arrAccess = matcher.group();
             int pos;
-            if (arrAccess.length()==2) // we just removed entire array
+            if (arrAccess.length() == 2) // we just removed entire array
+            {
                 pos = 0;
+            }
             else
             {
                 try
@@ -565,12 +648,12 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
                     return false;
                 }
             }
-            NbtPathArgumentType.NbtPath newPath = cachePath(pathText.substring(0, pathText.length()-arrAccess.length()));
-            return modify_insert(pos,newPath,replacement, tag);
+            NbtPathArgument.NbtPath newPath = cachePath(pathText.substring(0, pathText.length() - arrAccess.length()));
+            return modifyInsert(pos, newPath, replacement, tag);
         }
         try
         {
-            nbtPath.put(tag, () -> replacement);
+            nbtPath.set(tag, replacement);
         }
         catch (CommandSyntaxException e)
         {
@@ -583,24 +666,30 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
     public Value get(Value value)
     {
         String valString = value.getString();
-        NbtPathArgumentType.NbtPath path = cachePath(valString);
+        NbtPathArgument.NbtPath path = cachePath(valString);
         try
         {
-            List<NbtElement> tags = path.get(getTag());
-            if (tags.size()==0)
+            List<Tag> tags = path.get(getTag());
+            if (tags.isEmpty())
+            {
                 return Value.NULL;
-            if (tags.size()==1 && !valString.endsWith("[]"))
+            }
+            if (tags.size() == 1 && !valString.endsWith("[]"))
+            {
                 return NBTSerializableValue.decodeTag(tags.get(0));
-            return ListValue.wrap(tags.stream().map(NBTSerializableValue::decodeTag).collect(Collectors.toList()));
+            }
+            return ListValue.wrap(tags.stream().map(NBTSerializableValue::decodeTag));
         }
-        catch (CommandSyntaxException ignored) { }
+        catch (CommandSyntaxException ignored)
+        {
+        }
         return Value.NULL;
     }
 
     @Override
     public boolean has(Value where)
     {
-        return cachePath(where.getString()).count(getTag()) > 0;
+        return cachePath(where.getString()).countMatching(getTag()) > 0;
     }
 
     private void ensureOwnership()
@@ -622,7 +711,7 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
     @Override
     public boolean delete(Value where)
     {
-        NbtPathArgumentType.NbtPath path = cachePath(where.getString());
+        NbtPathArgument.NbtPath path = cachePath(where.getString());
         ensureOwnership();
         int removed = path.remove(getTag());
         if (removed > 0)
@@ -633,44 +722,36 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
         return false;
     }
 
-    public static class InventoryLocator
+    public record InventoryLocator(Object owner, BlockPos position, Container inventory, int offset,
+                                   boolean isEnder)
     {
-        public Object owner;
-        public BlockPos position;
-        public Inventory inventory;
-        public int offset;
-        public boolean isEnder;
-        InventoryLocator(Object owner, BlockPos pos, Inventory i, int o)
+        InventoryLocator(Object owner, BlockPos pos, Container i, int o)
         {
             this(owner, pos, i, o, false);
         }
-
-        InventoryLocator(Object owner, BlockPos pos, Inventory i, int o, boolean isEnder)
-        {
-            this.owner = owner;
-            position = pos;
-            inventory = i;
-            offset = o;
-            this.isEnder = isEnder;
-        }
     }
 
-    private static Map<String, NbtPathArgumentType.NbtPath> pathCache = new HashMap<>();
-    private static NbtPathArgumentType.NbtPath cachePath(String arg)
+    private static final Map<String, NbtPathArgument.NbtPath> pathCache = new HashMap<>();
+
+    private static NbtPathArgument.NbtPath cachePath(String arg)
     {
-        NbtPathArgumentType.NbtPath res = pathCache.get(arg);
+        NbtPathArgument.NbtPath res = pathCache.get(arg);
         if (res != null)
+        {
             return res;
+        }
         try
         {
-            res = NbtPathArgumentType.nbtPath().parse(new StringReader(arg));
+            res = NbtPathArgument.nbtPath().parse(new StringReader(arg));
         }
         catch (CommandSyntaxException exc)
         {
-            throw new InternalExpressionException("Incorrect nbt path: "+arg);
+            throw new InternalExpressionException("Incorrect nbt path: " + arg);
         }
         if (pathCache.size() > 1024)
+        {
             pathCache.clear();
+        }
         pathCache.put(arg, res);
         return res;
     }
@@ -683,20 +764,24 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
 
 
     @Override
-    public NbtElement toTag(boolean force)
+    public Tag toTag(boolean force)
     {
-        if (!force) throw new NBTSerializableValue.IncompatibleTypeException(this);
+        if (!force)
+        {
+            throw new NBTSerializableValue.IncompatibleTypeException(this);
+        }
         ensureOwnership();
         return getTag();
     }
 
     public static class IncompatibleTypeException extends RuntimeException
     {
-        private IncompatibleTypeException() {}
-        public Value val;
+        public final Value val;
+
         public IncompatibleTypeException(Value val)
         {
             this.val = val;
         }
-    };
+    }
+
 }

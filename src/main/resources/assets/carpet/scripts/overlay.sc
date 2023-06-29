@@ -1,31 +1,31 @@
 import('math', '_euclidean_sq', '_euclidean');
 
-global_renderers = m(
-    l('structures', m(
-        l('active', false),
-        l('handler', '__structure_renderer'),
-        l('tasks', m()),
-        l('range', 3),
-        l('max_pieces', 6)
-    )),
-    l('chunks', m(
-        l('active', false),
-        l('handler', '__chunk_renderer'),
-        l('tasks', m()),
-        l('range', 6)
-    )),
-    l('shapes', m(
-        l('active', false),
-        l('handler', '__shape_renderer'),
-        l('tasks', m()),
-        l('range', 8)
-    )),
+global_renderers = {
+    'structures' -> {
+        'active' -> false,
+        'handler' -> '__structure_renderer',
+        'tasks' -> {},
+        'range' -> 3,
+        'max_pieces' -> 6
+    },
+    'chunks' -> {
+        'active' -> false,
+        'handler' -> '__chunk_renderer',
+        'tasks' -> {},
+        'range' -> 6
+    },
+    'shapes' -> {
+        'active' -> false,
+        'handler' -> '__shape_renderer',
+        'tasks' -> {},
+        'range' -> 8
+    },
     'portals' -> {
         'active' -> false,
         'handler' -> '__portal_renderer',
         'tasks' -> {}
     }
-);
+};
 
 global_shapes = {'sphere' -> [], 'box' -> []};
 
@@ -44,7 +44,7 @@ __config() ->
         'clear' -> 'clear',
     },
     'arguments' -> {
-        'structure' -> {'type' -> 'term', 'suggest' -> plop():'structures' },
+        'structure' -> {'type' -> 'identifier', 'suggest' -> plop():'structures' },
         'radius' -> {'type' -> 'int', 'min' -> 0, 'max' -> 1024, 'suggest' -> [128, 24, 32]},
         'shape' -> {'type' -> 'term', 'options' -> keys(global_shapes) },
         'color' -> {'type' -> 'teamcolor'}
@@ -88,7 +88,7 @@ clear_shape(shape) ->
 
 clear() ->
 (
-    for(global_renderers, global_renderers:_:'tasks' = m() );
+    for(global_renderers, global_renderers:_:'tasks' = {} );
     for(global_shapes, clear_shape(_));
 );
 
@@ -109,36 +109,33 @@ __toggle(feature, renderer) ->
 __should_run(renderer, player_name) ->
 (
     config = global_renderers:renderer;
-    if (length(config:'tasks')==0, config:'active' = false; return(l(null, null)));
+    if (length(config:'tasks')==0, config:'active' = false; return([null, null]));
     p = player(player_name);
-    if (!p, config:'active' = false; clear(); return(l(null, null)));
+    if (!p, config:'active' = false; clear(); return([null, null]));
     config:'active' = true;
-    l(p, config);
+    [p, config];
 );
-
-
-
 
 __structure_renderer(player_name) ->
 (
-    l(p, config) = __should_run('structures', player_name);
+    [p, config] = __should_run('structures', player_name);
     if (!p, return());
 	in_dimension(p,
 	    ppos = pos(p);
-	    starts = m();
+	    starts = {};
 	    r = config:'range';
 		for(range(-r,r), cx =_;
 			for (range(-r,r), cz = _;
-				ref_pos = ppos + l(16*cx,0,16*cz);
+				ref_pos = ppos + [16*cx,0,16*cz];
 				for(filter(structure_references(ref_pos), has(config:'tasks':_)),
 				    name = _;
 				    for(structure_references(ref_pos, name),
-				        starts += l(_, name);
+				        starts += [_, name];
 				    )
 				)
 			)
 		);
-		for (starts, l(position, name) = _;
+		for (starts, [position, name] = _;
 		    structure_data = structures(position):name;
 		    if (!structure_data, continue()); // messed up references - shouldn't happen
 		    structure_pieces = structures(position, name):'pieces';
@@ -148,7 +145,7 @@ __structure_renderer(player_name) ->
 		    density = max(10, total_size/10);
 		    draw_shape('box', 15, 'from', from, 'to', to+1, 'color', 0x00FFFFFF, 'line', 3, 'fill', 0x00FFFF12);
 		    structure_pieces = slice(sort_key(structure_pieces, _euclidean_sq((_:2+_:3)/2,ppos)), 0, config:'max_pieces');
-		    for (structure_pieces, l(piece, direction, from, to) = _;
+		    for (structure_pieces, [piece, direction, from, to] = _;
 		        r = 255 - floor(128 * _i/config:'max_pieces');
 		        g = r;
 		        b = 255;
@@ -164,7 +161,7 @@ __structure_renderer(player_name) ->
 
 __chunk_renderer(player_name) ->
 (
-    l(p, config) = __should_run('chunks', player_name);
+    [p, config] = __should_run('chunks', player_name);
     if (!p, return());
     in_dimension( p,
         // get lower corner of the chunk
@@ -173,26 +170,26 @@ __chunk_renderer(player_name) ->
         rang = config:'range';
         for(range(-rang,rang), cx =_;
         	for (range(-rang,rang), cz = _;
-        	    ref_pos = ppos + l(16*cx,0,16*cz);
+        	    ref_pos = ppos + [16*cx,0,16*cz];
                 if(has(config:'tasks':'slime_chunks') && in_slime_chunk(ref_pos),
                     player_distance = _euclidean(ppos, ref_pos);
-                    top_00 = ref_pos + l(0, top('terrain', ref_pos)+10, 0);
-                    top_11 = ref_pos + l(16, top('terrain', ref_pos+l(15,0,15))+10, 16);
-                    top_10 = ref_pos + l(16, top('terrain', ref_pos+l(15, 0, 0))+10, 0);
-                    top_01 = ref_pos + l(0, top('terrain', ref_pos+l(0, 0, 15))+10, 16);
+                    top_00 = ref_pos + [0, top('terrain', ref_pos)+10, 0];
+                    top_11 = ref_pos + [16, top('terrain', ref_pos+l(15,0,15))+10, 16];
+                    top_10 = ref_pos + [16, top('terrain', ref_pos+l(15, 0, 0))+10, 0];
+                    top_01 = ref_pos + [0, top('terrain', ref_pos+l(0, 0, 15))+10, 16];
                     r = 30;
                     g = 220;
                     b = 30;
                     a = max(0, 255-player_distance);
                     color = a+256*(b+256*(g+256*r));
-                    draw_shape(l(
-                    l('line', 15, 'from', top_00, 'to', top_10, 'color', color, 'line', 3),
-                    l('line', 15, 'from', top_10, 'to', top_11, 'color', color, 'line', 3),
-                    l('line', 15, 'from', top_11, 'to', top_01, 'color', color, 'line', 3),
-                    l('line', 15, 'from', top_01, 'to', top_00, 'color', color, 'line', 3),
-                    l('line', 15, 'from', top_00, 'to', top_11, 'color', color, 'line', 3),
-                    l('line', 15, 'from', top_01, 'to', top_10, 'color', color, 'line', 3)
-                    ));
+                    draw_shape([
+                        ['line', 15, 'from', top_00, 'to', top_10, 'color', color, 'line', 3],
+                        ['line', 15, 'from', top_10, 'to', top_11, 'color', color, 'line', 3],
+                        ['line', 15, 'from', top_11, 'to', top_01, 'color', color, 'line', 3],
+                        ['line', 15, 'from', top_01, 'to', top_00, 'color', color, 'line', 3],
+                        ['line', 15, 'from', top_00, 'to', top_11, 'color', color, 'line', 3],
+                        ['line', 15, 'from', top_01, 'to', top_10, 'color', color, 'line', 3]
+                    ]);
                 )
         	)
         )
@@ -202,7 +199,7 @@ __chunk_renderer(player_name) ->
 
 __portal_renderer(player_name) ->
 (
-   l(p, config) = __should_run('portals', player_name);
+   [p, config] = __should_run('portals', player_name);
    if (!p, return());
    dim = p~'dimension';
    shapes = [];

@@ -2,23 +2,29 @@ package carpet.script.exception;
 
 import carpet.script.Context;
 import carpet.script.Expression;
-import carpet.script.Fluff;
 import carpet.script.Tokenizer;
+import carpet.script.external.Carpet;
 import carpet.script.value.FunctionValue;
 
+import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Supplier;
 
 /* The expression evaluators exception class. */
-public class ExpressionException extends RuntimeException implements ResolvedException
+public class ExpressionException extends StacklessRuntimeException implements ResolvedException
 {
     public final Context context;
     public final Tokenizer.Token token;
     public final List<FunctionValue> stack = new ArrayList<>();
     private final Supplier<String> lazyMessage;
     private String cachedMessage = null;
+
+    public static void prepareForDoom()
+    {
+        Carpet.Messenger_compose("foo bar");
+    }
 
     public ExpressionException(Context c, Expression e, String message)
     {
@@ -29,6 +35,7 @@ public class ExpressionException extends RuntimeException implements ResolvedExc
     {
         this(c, e, t, message, Collections.emptyList());
     }
+
     public ExpressionException(Context c, Expression e, Tokenizer.Token t, String message, List<FunctionValue> stack)
     {
         super("Error");
@@ -47,11 +54,10 @@ public class ExpressionException extends RuntimeException implements ResolvedExc
         context = c;
     }
 
-    private static final Fluff.TriFunction<Expression, Tokenizer.Token, String, List<String>> errorMaker = (expr, /*Nullable*/ token, errmessage) ->
+    private static List<String> makeError(Expression expr, @Nullable Tokenizer.Token token, String errmessage)
     {
-
         List<String> errMsg = new ArrayList<>();
-        errmessage += expr.getModuleName() == null?"":(" in "+expr.getModuleName());
+        errmessage += expr.getModuleName() == null ? "" : (" in " + expr.getModuleName());
         if (token != null)
         {
             List<String> snippet = expr.getExpressionSnippet(token);
@@ -68,26 +74,27 @@ public class ExpressionException extends RuntimeException implements ResolvedExc
         }
         errMsg.add(errmessage);
         return errMsg;
-    };
+    }
 
-    synchronized static String makeMessage(Context c, Expression e, Tokenizer.Token t, String message) throws ExpressionException
+    static synchronized String makeMessage(Context c, Expression e, Tokenizer.Token t, String message) throws ExpressionException
     {
         if (c.getErrorSnooper() != null)
         {
-            List<String> alternative = c.getErrorSnooper().apply(e, t, message);
-            if (alternative!= null)
+            List<String> alternative = c.getErrorSnooper().apply(e, t, c, message);
+            if (alternative != null)
             {
                 return String.join("\n", alternative);
             }
         }
-        return String.join("\n", errorMaker.apply(e, t, message));
+        return String.join("\n", makeError(e, t, message));
     }
-    
+
     @Override
-    public String getMessage() {
+    public String getMessage()
+    {
         if (cachedMessage == null)
         {
-        	cachedMessage = lazyMessage.get();
+            cachedMessage = lazyMessage.get();
         }
         return cachedMessage;
     }

@@ -3,16 +3,17 @@ package carpet.script.value;
 import carpet.script.exception.InternalExpressionException;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonPrimitive;
-import net.minecraft.nbt.NbtDouble;
-import net.minecraft.nbt.NbtInt;
-import net.minecraft.nbt.NbtLong;
-import net.minecraft.nbt.NbtElement;
 import org.apache.commons.lang3.StringUtils;
 
 import java.math.BigDecimal;
 import java.math.MathContext;
 import java.math.RoundingMode;
 import java.util.Locale;
+
+import net.minecraft.nbt.DoubleTag;
+import net.minecraft.nbt.IntTag;
+import net.minecraft.nbt.LongTag;
+import net.minecraft.nbt.Tag;
 
 import static java.lang.Math.abs;
 import static java.lang.Math.signum;
@@ -21,28 +22,41 @@ public class NumericValue extends Value
 {
     private final double value;
     private Long longValue;
-    private final static double epsilon = abs(32*((7*0.1)*10-7));
-    private final static MathContext displayRounding = new MathContext(12, RoundingMode.HALF_EVEN);
+    private static final double epsilon = abs(32 * ((7 * 0.1) * 10 - 7));
+    private static final MathContext displayRounding = new MathContext(12, RoundingMode.HALF_EVEN);
 
     public static NumericValue asNumber(Value v1, String id)
     {
-        if (!(v1 instanceof NumericValue))
-            throw new InternalExpressionException("Argument "+id+" has to be of a numeric type");
-        return ((NumericValue) v1);
+        if (v1 instanceof final NumericValue nv)
+        {
+            return nv;
+        }
+        throw new InternalExpressionException("Argument " + id + " has to be of a numeric type");
     }
 
     public static NumericValue asNumber(Value v1)
     {
-        if (!(v1 instanceof NumericValue))
-            throw new InternalExpressionException("Operand has to be of a numeric type");
-        return ((NumericValue) v1);
+        if (v1 instanceof final NumericValue nv)
+        {
+            return nv;
+        }
+        throw new InternalExpressionException("Operand has to be of a numeric type");
     }
 
     public static <T extends Number> Value of(T value)
     {
-        if (value == null) return Value.NULL;
-        if (value.doubleValue() == value.longValue()) return new NumericValue(value.longValue());
-        if (value instanceof Float) return new NumericValue(0.000_001D * Math.round(1_000_000.0D*value.doubleValue()));
+        if (value == null)
+        {
+            return Value.NULL;
+        }
+        if (value.doubleValue() == value.longValue())
+        {
+            return new NumericValue(value.longValue());
+        }
+        if (value instanceof Float)
+        {
+            return new NumericValue(0.000_001D * Math.round(1_000_000.0D * value.doubleValue()));
+        }
         return new NumericValue(value.doubleValue());
     }
 
@@ -56,30 +70,33 @@ public class NumericValue extends Value
         }
         try
         {
-            if (Double.isInfinite(value)) return "INFINITY";
-            if (Double.isNaN(value)) return "NaN";
-            if (abs(value) < epsilon) return (signum(value) < 0)?"-0":"0"; //zero rounding fails with big decimals
+            if (Double.isInfinite(value))
+            {
+                return (value > 0) ? "INFINITY" : "-INFINITY";
+            }
+            if (Double.isNaN(value))
+            {
+                return "NaN";
+            }
+            if (abs(value) < epsilon)
+            {
+                return (signum(value) < 0) ? "-0" : "0"; //zero rounding fails with big decimals
+            }
             // dobules have 16 point precision, 12 is plenty to display
             return BigDecimal.valueOf(value).round(displayRounding).stripTrailingZeros().toPlainString();
         }
         catch (NumberFormatException exc)
         {
-            throw new InternalExpressionException("Incorrect number format for "+value);
+            throw new InternalExpressionException("Incorrect number format for " + value);
         }
     }
 
     @Override
     public String getPrettyString()
     {
-
-        if (longValue!= null ||  getDouble() == (double)getLong())
-        {
-            return Long.toString(getLong());
-        }
-        else
-        {
-            return String.format(Locale.ROOT, "%.1f..", getDouble());
-        }
+        return longValue != null || getDouble() == getLong()
+                ? Long.toString(getLong())
+                : String.format(Locale.ROOT, "%.1f..", getDouble());
     }
 
     @Override
@@ -87,77 +104,62 @@ public class NumericValue extends Value
     {
         return abs(value) > epsilon;
     }
+
     public double getDouble()
     {
         return value;
     }
+
     public float getFloat()
     {
         return (float) value;
     }
 
-    private static long floor(double double_1) {
-        long int_1 = (long)double_1;
-        return double_1 < (double)int_1 ? int_1 - 1 : int_1;
+    private static long floor(double v)
+    {
+        long invValue = (long) v;
+        return v < invValue ? invValue - 1 : invValue;
     }
 
     public long getLong()
     {
-        if (longValue != null) return longValue;
-        return floor((value+epsilon));
+        return longValue != null ? longValue : Long.valueOf(floor((value + epsilon)));
     }
 
     @Override
     public Value add(Value v)
     {  // TODO test if definintn add(NumericVlaue) woud solve the casting
-        if (v instanceof NumericValue)
+        if (v instanceof final NumericValue nv)
         {
-            NumericValue nv = (NumericValue)v;
-            if (longValue != null && nv.longValue != null)
-            {
-                return new NumericValue(longValue+nv.longValue);
-            }
-            return new NumericValue(value + nv.value);
+            return longValue != null && nv.longValue != null ? new NumericValue(longValue + nv.longValue) : new NumericValue(value + nv.value);
         }
         return super.add(v);
     }
-    public Value subtract(Value v) {  // TODO test if definintn add(NumericVlaue) woud solve the casting
-        if (v instanceof NumericValue)
+
+    @Override
+    public Value subtract(Value v)
+    {  // TODO test if definintn add(NumericVlaue) woud solve the casting
+        if (v instanceof final NumericValue nv)
         {
-            NumericValue nv = (NumericValue)v;
-            if (longValue != null && nv.longValue != null)
-            {
-                return new NumericValue(longValue-nv.longValue);
-            }
-            return new NumericValue(value - nv.value);
+            return longValue != null && nv.longValue != null ? new NumericValue(longValue - nv.longValue) : new NumericValue(value - nv.value);
         }
         return super.subtract(v);
     }
+
+    @Override
     public Value multiply(Value v)
     {
-        if (v instanceof NumericValue)
+        if (v instanceof final NumericValue nv)
         {
-            NumericValue nv = (NumericValue)v;
-            if (longValue != null && nv.longValue != null)
-            {
-                return new NumericValue(longValue*nv.longValue);
-            }
-            return new NumericValue(value * nv.value);
+            return longValue != null && nv.longValue != null ? new NumericValue(longValue * nv.longValue) : new NumericValue(value * nv.value);
         }
-        if (v instanceof ListValue)
-        {
-            return v.multiply(this);
-        }
-        return new StringValue(StringUtils.repeat(v.getString(), (int) getLong()));
+        return v instanceof ListValue ? v.multiply(this) : new StringValue(StringUtils.repeat(v.getString(), (int) getLong()));
     }
+
+    @Override
     public Value divide(Value v)
     {
-        //if (1+2==3) throw new ArithmeticException("Booyah");
-        if (v instanceof NumericValue)
-        {
-            return new NumericValue(getDouble() / ((NumericValue) v).getDouble() );
-        }
-        return super.divide(v);
+        return v instanceof final NumericValue nv ? new NumericValue(getDouble() / nv.getDouble()) : super.divide(v);
     }
 
     @Override
@@ -169,40 +171,40 @@ public class NumericValue extends Value
     @Override
     public int compareTo(Value o)
     {
-        if (o instanceof NullValue)
+        if (o.isNull())
         {
             return -o.compareTo(this);
         }
-        if (o instanceof NumericValue)
+        if (o instanceof final NumericValue no)
         {
-            NumericValue no = (NumericValue)o;
-            if (longValue != null && no.longValue != null)
-                return longValue.compareTo(no.longValue);
-            return Double.compare(value, no.value);
+            return longValue != null && no.longValue != null ? longValue.compareTo(no.longValue) : Double.compare(value, no.value);
         }
         return getString().compareTo(o.getString());
     }
+
     @Override
     public boolean equals(Object o)
     {
-        if (o instanceof NullValue)
+        if (o instanceof final Value otherValue)
         {
-            return o.equals(this);
+            if (otherValue.isNull())
+            {
+                return o.equals(this);
+            }
+            if (o instanceof final NumericValue no)
+            {
+                return longValue != null && no.longValue != null ? longValue.equals(no.longValue) : !this.subtract(no).getBoolean();
+            }
+            return super.equals(o);
         }
-        if (o instanceof NumericValue)
-        {
-            NumericValue no = (NumericValue)o;
-            if (longValue != null && no.longValue != null)
-                return longValue.equals(no.longValue);
-            return !this.subtract(no).getBoolean();
-        }
-        return super.equals(o);
+        return false;
     }
 
     public NumericValue(double value)
     {
         this.value = value;
     }
+
     private NumericValue(double value, Long longValue)
     {
         this.value = value;
@@ -218,25 +220,17 @@ public class NumericValue extends Value
             {
                 longValue = decimal.longValueExact();
             }
-            catch (ArithmeticException ignored) {}
+            catch (ArithmeticException ignored)
+            {
+            }
         }
         this.value = decimal.doubleValue();
     }
+
     public NumericValue(long value)
     {
         this.longValue = value;
-        this.value = (double)value;
-    }
-
-    /**
-     * Creates a legacy {@link NumericValue} for a {@code boolean}.
-     * @param boolval The boolean to set 1 or 0 for this {@link NumericValue}
-     * @deprecated Use {@link BooleanValue#of(boolean)} instead
-     */
-    @Deprecated
-    public NumericValue(boolean boolval)
-    {
-        this(boolval?1L:0L);
+        this.value = (double) value;
     }
 
     @Override
@@ -266,32 +260,39 @@ public class NumericValue extends Value
     @Override
     public int hashCode()
     {
-        if (longValue!= null || Math.abs(Math.floor(value + 0.5D)-value) < epsilon) // is sufficiently close to the integer value
-            return Long.hashCode(getLong());
-        return Double.hashCode(value);
+        // is sufficiently close to the integer value
+        return longValue != null || Math.abs(Math.floor(value + 0.5D) - value) < epsilon ? Long.hashCode(getLong()) : Double.hashCode(value);
     }
 
 
     public int getInt()
     {
-        return (int)getLong();
+        return (int) getLong();
     }
 
     @Override
-    public NbtElement toTag(boolean force)
+    public Tag toTag(boolean force)
     {
         if (longValue != null)
-            return NbtLong.of(longValue);
-        long lv = getLong();
-        if (value == (double)lv)
         {
-            if (abs(value) < Integer.MAX_VALUE-2)
-                return NbtInt.of((int)lv);
-            return NbtLong.of(getLong());
+            if (abs(longValue) < Integer.MAX_VALUE - 2)
+            {
+                return IntTag.valueOf((int) (long) longValue);
+            }
+            return LongTag.valueOf(longValue);
+        }
+        long lv = getLong();
+        if (value == (double) lv)
+        {
+            if (abs(value) < Integer.MAX_VALUE - 2)
+            {
+                return IntTag.valueOf((int) lv);
+            }
+            return LongTag.valueOf(getLong());
         }
         else
         {
-            return NbtDouble.of(value);
+            return DoubleTag.valueOf(value);
         }
     }
 
@@ -299,35 +300,34 @@ public class NumericValue extends Value
     public JsonElement toJson()
     {
         if (longValue != null)
+        {
             return new JsonPrimitive(longValue);
-        long lv = getLong();
-        if (value == (double)lv)
-        {
-            return new JsonPrimitive(getLong());
         }
-        else
-        {
-            return new JsonPrimitive(value);
-        }
+        return isInteger() ? new JsonPrimitive(getLong()) : new JsonPrimitive(getDouble());
     }
 
-    public NumericValue opposite() {
-        if (longValue != null) return new NumericValue(-longValue);
-        return new NumericValue(-value);
+    public NumericValue opposite()
+    {
+        return longValue != null ? new NumericValue(-longValue) : new NumericValue(-value);
     }
 
     public boolean isInteger()
     {
-        return longValue!= null ||  getDouble() == (double)getLong();
+        return longValue != null || getDouble() == getLong();
     }
 
     public Value mod(NumericValue n2)
     {
         if (this.longValue != null && n2.longValue != null)
+        {
             return new NumericValue(Math.floorMod(longValue, n2.longValue));
+        }
         double x = value;
         double y = n2.value;
-        if (y == 0) throw new ArithmeticException("Division by zero");
-        return new NumericValue( x - Math.floor(x / y) * y);
+        if (y == 0)
+        {
+            throw new ArithmeticException("Division by zero");
+        }
+        return new NumericValue(x - Math.floor(x / y) * y);
     }
 }

@@ -2,22 +2,14 @@ package carpet.network;
 
 import carpet.CarpetServer;
 import carpet.CarpetSettings;
-import carpet.helpers.TickSpeed;
+import carpet.api.settings.CarpetRule;
+import carpet.api.settings.RuleHelper;
+import carpet.fakes.MinecraftServerInterface;
+import carpet.fakes.ServerGamePacketListenerImplInterface;
+import carpet.helpers.ServerTickRateManager;
 import carpet.script.utils.SnoopyCommandSource;
-import carpet.settings.ParsedRule;
-import carpet.settings.SettingsManager;
+import carpet.api.settings.SettingsManager;
 import io.netty.buffer.Unpooled;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.nbt.NbtList;
-import net.minecraft.nbt.NbtString;
-import net.minecraft.nbt.NbtElement;
-import net.minecraft.network.PacketByteBuf;
-import net.minecraft.network.packet.s2c.play.CustomPayloadS2CPacket;
-import net.minecraft.server.network.ServerPlayerEntity;
-
-import net.minecraft.text.LiteralText;
-import net.minecraft.text.Text;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -25,19 +17,29 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.BiConsumer;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.StringTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.protocol.game.ClientboundCustomPayloadPacket;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 
 public class ServerNetworkHandler
 {
-    private static Map<ServerPlayerEntity, String> remoteCarpetPlayers = new HashMap<>();
-    private static Set<ServerPlayerEntity> validCarpetPlayers = new HashSet<>();
+    private static final Map<ServerPlayer, String> remoteCarpetPlayers = new HashMap<>();
+    private static final Set<ServerPlayer> validCarpetPlayers = new HashSet<>();
 
-    private static Map<String, BiConsumer<ServerPlayerEntity, NbtElement>> dataHandlers = new HashMap<String, BiConsumer<ServerPlayerEntity, NbtElement>>(){{
-        put("clientCommand", (p, t) -> {
-            handleClientCommand(p, (NbtCompound)t);
-        });
-    }};
+    private static final Map<String, BiConsumer<ServerPlayer, Tag>> dataHandlers = Map.of(
+        "clientCommand", (p, t) -> {
+            handleClientCommand(p, (CompoundTag)t);
+        }
+    );
 
-    public static void handleData(PacketByteBuf data, ServerPlayerEntity player)
+    public static void handleData(FriendlyByteBuf data, ServerPlayer player)
     {
         if (data != null)
         {
@@ -51,13 +53,13 @@ public class ServerNetworkHandler
 
 
 
-    public static void onPlayerJoin(ServerPlayerEntity playerEntity)
+    public static void onPlayerJoin(ServerPlayer playerEntity)
     {
-        if (!playerEntity.networkHandler.connection.isLocal())
+        if (!((ServerGamePacketListenerImplInterface)playerEntity.connection).getConnection().isMemoryConnection())
         {
-            playerEntity.networkHandler.sendPacket(new CustomPayloadS2CPacket(
+            playerEntity.connection.send(new ClientboundCustomPayloadPacket(
                     CarpetClient.CARPET_CHANNEL,
-                    (new PacketByteBuf(Unpooled.buffer())).writeVarInt(CarpetClient.HI).writeString(CarpetSettings.carpetVersion)
+                    (new FriendlyByteBuf(Unpooled.buffer())).writeVarInt(CarpetClient.HI).writeUtf(CarpetSettings.carpetVersion)
             ));
         }
         else
@@ -67,64 +69,70 @@ public class ServerNetworkHandler
 
     }
 
-    public static void onHello(ServerPlayerEntity playerEntity, PacketByteBuf packetData)
+    public static void onHello(ServerPlayer playerEntity, FriendlyByteBuf packetData)
     {
-
         validCarpetPlayers.add(playerEntity);
-        String clientVersion = packetData.readString(64);
+        String clientVersion = packetData.readUtf(64);
         remoteCarpetPlayers.put(playerEntity, clientVersion);
         if (clientVersion.equals(CarpetSettings.carpetVersion))
             CarpetSettings.LOG.info("Player "+playerEntity.getName().getString()+" joined with a matching carpet client");
         else
             CarpetSettings.LOG.warn("Player "+playerEntity.getName().getString()+" joined with another carpet version: "+clientVersion);
-        DataBuilder data = DataBuilder.create().withTickRate().withFrozenState().withTickPlayerActiveTimeout(); // .withSuperHotState()
-        CarpetServer.settingsManager.getRules().forEach(data::withRule);
+
+        DataBuilder data = DataBuilder.create(playerEntity.server);//;.withTickRate().withFrozenState().withTickPlayerActiveTimeout(); // .withSuperHotState()
+        CarpetServer.settingsManager.getCarpetRules().forEach(data::withRule);
         CarpetServer.extensions.forEach(e -> {
-            SettingsManager eManager = e.customSettingsManager();
+            SettingsManager eManager = e.extensionSettingsManager();
             if (eManager != null) {
-                eManager.getRules().forEach(data::withRule);
+                eManager.getCarpetRules().forEach(data::withRule);
             }
         });
-        playerEntity.networkHandler.sendPacket(new CustomPayloadS2CPacket(CarpetClient.CARPET_CHANNEL, data.build() ));
+        playerEntity.connection.send(new ClientboundCustomPayloadPacket(CarpetClient.CARPET_CHANNEL, data.build()));
     }
 
-    private static void handleClientCommand(ServerPlayerEntity player, NbtCompound commandData)
+    public static void sendPlayerLevelData(ServerPlayer player, ServerLevel level) {
+        DataBuilder data = DataBuilder.create(player.server).withTickRate().withFrozenState().withTickPlayerActiveTimeout(); // .withSuperHotState()
+        player.connection.send(new ClientboundCustomPayloadPacket(CarpetClient.CARPET_CHANNEL, data.build() ));
+
+    }
+
+    private static void handleClientCommand(ServerPlayer player, CompoundTag commandData)
     {
         String command = commandData.getString("command");
         String id = commandData.getString("id");
-        List<Text> output = new ArrayList<>();
-        Text[] error = {null};
+        List<Component> output = new ArrayList<>();
+        Component[] error = {null};
         int resultCode = -1;
         if (player.getServer() == null)
         {
-            error[0] = new LiteralText("No Server");
+            error[0] = Component.literal("No Server");
         }
         else
         {
-            resultCode = player.getServer().getCommandManager().execute(
+            resultCode = player.getServer().getCommands().performPrefixedCommand(
                     new SnoopyCommandSource(player, error, output), command
             );
         }
-        NbtCompound result = new NbtCompound();
+        CompoundTag result = new CompoundTag();
         result.putString("id", id);
         result.putInt("code", resultCode);
-        if (error[0] != null) result.putString("error", error[0].asString());
-        NbtList outputResult = new NbtList();
-        for (Text line: output) outputResult.add(NbtString.of(Text.Serializer.toJson(line)));
+        if (error[0] != null) result.putString("error", error[0].getContents().toString());
+        ListTag outputResult = new ListTag();
+        for (Component line: output) outputResult.add(StringTag.valueOf(Component.Serializer.toJson(line)));
         if (!output.isEmpty()) result.put("output", outputResult);
-        player.networkHandler.sendPacket(new CustomPayloadS2CPacket(
+        player.connection.send(new ClientboundCustomPayloadPacket(
                 CarpetClient.CARPET_CHANNEL,
-                DataBuilder.create().withCustomNbt("clientCommand", result).build()
+                DataBuilder.create(player.server).withCustomNbt("clientCommand", result).build()
         ));
         // run command plug to command output,
     }
 
 
-    private static void onClientData(ServerPlayerEntity player, PacketByteBuf data)
+    private static void onClientData(ServerPlayer player, FriendlyByteBuf data)
     {
-        NbtCompound compound = data.readNbt();
+        CompoundTag compound = data.readNbt();
         if (compound == null) return;
-        for (String key: compound.getKeys())
+        for (String key: compound.getAllKeys())
         {
             if (dataHandlers.containsKey(key))
                 dataHandlers.get(key).accept(player, compound.get(key));
@@ -133,94 +141,94 @@ public class ServerNetworkHandler
         }
     }
 
-    public static void updateRuleWithConnectedClients(ParsedRule<?> rule)
+    public static void updateRuleWithConnectedClients(CarpetRule<?> rule)
     {
         if (CarpetSettings.superSecretSetting) return;
-        for (ServerPlayerEntity player : remoteCarpetPlayers.keySet())
+        for (ServerPlayer player : remoteCarpetPlayers.keySet())
         {
-            player.networkHandler.sendPacket(new CustomPayloadS2CPacket(
+            player.connection.send(new ClientboundCustomPayloadPacket(
                     CarpetClient.CARPET_CHANNEL,
-                    DataBuilder.create().withRule(rule).build()
+                    DataBuilder.create(player.server).withRule(rule).build()
             ));
         }
     }
     
-    public static void updateTickSpeedToConnectedPlayers()
+    public static void updateTickSpeedToConnectedPlayers(MinecraftServer server)
     {
         if (CarpetSettings.superSecretSetting) return;
-        for (ServerPlayerEntity player : remoteCarpetPlayers.keySet())
+        for (ServerPlayer player : validCarpetPlayers)
         {
-            player.networkHandler.sendPacket(new CustomPayloadS2CPacket(
+            player.connection.send(new ClientboundCustomPayloadPacket(
                     CarpetClient.CARPET_CHANNEL,
-                    DataBuilder.create().withTickRate().build()
+                    DataBuilder.create(player.server).withTickRate().build()
             ));
         }
     }
 
-    public static void updateFrozenStateToConnectedPlayers()
+    public static void updateFrozenStateToConnectedPlayers(MinecraftServer server)
     {
         if (CarpetSettings.superSecretSetting) return;
-        for (ServerPlayerEntity player : remoteCarpetPlayers.keySet())
+        for (ServerPlayer player : validCarpetPlayers)
         {
-            player.networkHandler.sendPacket(new CustomPayloadS2CPacket(
+            player.connection.send(new ClientboundCustomPayloadPacket(
                     CarpetClient.CARPET_CHANNEL,
-                    DataBuilder.create().withFrozenState().build()
+                    DataBuilder.create(player.server).withFrozenState().build()
             ));
         }
     }
 
-    public static void updateSuperHotStateToConnectedPlayers()
+    public static void updateSuperHotStateToConnectedPlayers(MinecraftServer server)
     {
         if(CarpetSettings.superSecretSetting) return;
-        for (ServerPlayerEntity player : remoteCarpetPlayers.keySet())
+        for (ServerPlayer player : validCarpetPlayers)
         {
-            player.networkHandler.sendPacket(new CustomPayloadS2CPacket(
+            player.connection.send(new ClientboundCustomPayloadPacket(
                     CarpetClient.CARPET_CHANNEL,
-                    DataBuilder.create().withSuperHotState().build()
+                    DataBuilder.create(player.server).withSuperHotState().build()
             ));
         }
     }
 
-    public static void updateTickPlayerActiveTimeoutToConnectedPlayers()
+    public static void updateTickPlayerActiveTimeoutToConnectedPlayers(MinecraftServer server)
     {
         if (CarpetSettings.superSecretSetting) return;
-        for (ServerPlayerEntity player : remoteCarpetPlayers.keySet())
+        for (ServerPlayer player : validCarpetPlayers)
         {
-            player.networkHandler.sendPacket(new CustomPayloadS2CPacket(
+            player.connection.send(new ClientboundCustomPayloadPacket(
                     CarpetClient.CARPET_CHANNEL,
-                    DataBuilder.create().withTickPlayerActiveTimeout().build()
+                    DataBuilder.create(player.server).withTickPlayerActiveTimeout().build()
             ));
         }
     }
 
-    public static void broadcastCustomCommand(String command, NbtElement data)
+    public static void broadcastCustomCommand(String command, Tag data)
     {
         if (CarpetSettings.superSecretSetting) return;
-        for (ServerPlayerEntity player : validCarpetPlayers)
+        for (ServerPlayer player : validCarpetPlayers)
         {
-            player.networkHandler.sendPacket(new CustomPayloadS2CPacket(
+            player.connection.send(new ClientboundCustomPayloadPacket(
                     CarpetClient.CARPET_CHANNEL,
-                    DataBuilder.create().withCustomNbt(command, data).build()
+                    DataBuilder.create(player.server).withCustomNbt(command, data).build()
             ));
         }
     }
 
-    public static void sendCustomCommand(ServerPlayerEntity player, String command, NbtElement data)
+    public static void sendCustomCommand(ServerPlayer player, String command, Tag data)
     {
         if (isValidCarpetPlayer(player))
         {
-            player.networkHandler.sendPacket(new CustomPayloadS2CPacket(
+            player.connection.send(new ClientboundCustomPayloadPacket(
                     CarpetClient.CARPET_CHANNEL,
-                    DataBuilder.create().withCustomNbt(command, data).build()
+                    DataBuilder.create(player.server).withCustomNbt(command, data).build()
             ));
         }
     }
 
 
-    public static void onPlayerLoggedOut(ServerPlayerEntity player)
+    public static void onPlayerLoggedOut(ServerPlayer player)
     {
         validCarpetPlayers.remove(player);
-        if (!player.networkHandler.connection.isLocal())
+        if (!((ServerGamePacketListenerImplInterface)player.connection).getConnection().isMemoryConnection())
             remoteCarpetPlayers.remove(player);
     }
 
@@ -230,14 +238,14 @@ public class ServerNetworkHandler
         validCarpetPlayers.clear();
     }
 
-    public static boolean isValidCarpetPlayer(ServerPlayerEntity player)
+    public static boolean isValidCarpetPlayer(ServerPlayer player)
     {
         if (CarpetSettings.superSecretSetting) return false;
         return validCarpetPlayers.contains(player);
 
     }
 
-    public static String getPlayerStatus(ServerPlayerEntity player)
+    public static String getPlayerStatus(ServerPlayer player)
     {
         if (remoteCarpetPlayers.containsKey(player)) return "carpet "+remoteCarpetPlayers.get(player);
         if (validCarpetPlayers.contains(player)) return "carpet "+CarpetSettings.carpetVersion;
@@ -246,66 +254,72 @@ public class ServerNetworkHandler
 
     private static class DataBuilder
     {
-        private NbtCompound tag;
-        private static DataBuilder create()
+        private CompoundTag tag;
+        private MinecraftServer server;
+        private static DataBuilder create(final MinecraftServer server)
         {
-            return new DataBuilder();
+            return new DataBuilder(server);
         }
-        private DataBuilder()
+        private DataBuilder(MinecraftServer server)
         {
-            tag = new NbtCompound();
+            tag = new CompoundTag();
+            this.server = server;
         }
         private DataBuilder withTickRate()
         {
-            tag.putFloat("TickRate", TickSpeed.tickrate);
+            ServerTickRateManager trm = ((MinecraftServerInterface)server).getTickRateManager();
+            tag.putFloat("TickRate", trm.tickrate());
             return this;
         }
         private DataBuilder withFrozenState()
         {
-            NbtCompound tickingState = new NbtCompound();
-            tickingState.putBoolean("is_paused", TickSpeed.isPaused());
-            tickingState.putBoolean("deepFreeze", TickSpeed.deeplyFrozen());
+            ServerTickRateManager trm = ((MinecraftServerInterface)server).getTickRateManager();
+            CompoundTag tickingState = new CompoundTag();
+            tickingState.putBoolean("is_paused", trm.gameIsPaused());
+            tickingState.putBoolean("deepFreeze", trm.deeplyFrozen());
             tag.put("TickingState", tickingState);
             return this;
         }
         private DataBuilder withSuperHotState()
         {
-        	tag.putBoolean("SuperHotState", TickSpeed.is_superHot);
+            ServerTickRateManager trm = ((MinecraftServerInterface)server).getTickRateManager();
+        	tag.putBoolean("SuperHotState", trm.isSuperHot());
         	return this;
         }
         private DataBuilder withTickPlayerActiveTimeout()
         {
-            tag.putInt("TickPlayerActiveTimeout", TickSpeed.player_active_timeout);
+            ServerTickRateManager trm = ((MinecraftServerInterface)server).getTickRateManager();
+            tag.putInt("TickPlayerActiveTimeout", trm.getPlayerActiveTimeout());
             return this;
         }
-        private DataBuilder withRule(ParsedRule<?> rule)
+        private DataBuilder withRule(CarpetRule<?> rule)
         {
-            NbtCompound rules = (NbtCompound) tag.get("Rules");
+            CompoundTag rules = (CompoundTag) tag.get("Rules");
             if (rules == null)
             {
-                rules = new NbtCompound();
+                rules = new CompoundTag();
                 tag.put("Rules", rules);
             }
-            String identifier = rule.settingsManager.getIdentifier();
-            String key = rule.name;
+            String identifier = rule.settingsManager().identifier();
+            String key = rule.name();
             while (rules.contains(key)) { key = key+"2";}
-            NbtCompound ruleNBT = new NbtCompound();
-            ruleNBT.putString("Value", rule.getAsString());
-            ruleNBT.putString("Manager",identifier);
-            ruleNBT.putString("Rule",rule.name);
+            CompoundTag ruleNBT = new CompoundTag();
+            ruleNBT.putString("Value", RuleHelper.toRuleString(rule.value()));
+            ruleNBT.putString("Manager", identifier);
+            ruleNBT.putString("Rule", rule.name());
             rules.put(key, ruleNBT);
             return this;
         }
 
-        public DataBuilder withCustomNbt(String key, NbtElement value)
+        public DataBuilder withCustomNbt(String key, Tag value)
         {
             tag.put(key, value);
             return this;
         }
 
-        private PacketByteBuf build()
+        private FriendlyByteBuf build()
         {
-            PacketByteBuf packetBuf = new PacketByteBuf(Unpooled.buffer());
+            FriendlyByteBuf packetBuf = new FriendlyByteBuf(Unpooled.buffer());
             packetBuf.writeVarInt(CarpetClient.DATA);
             packetBuf.writeNbt(tag);
             return packetBuf;

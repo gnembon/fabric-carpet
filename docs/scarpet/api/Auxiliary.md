@@ -9,7 +9,7 @@ Collection of other methods that control smaller, yet still important aspects of
 Plays a specific sound `name`, at block or position `pos`, with optional `volume` and modified `pitch`, and under
 optional `mixer`. Default values for `volume`, `pitch` and `mixer` are `1.0`, `1.0`, and `master`. 
 Valid mixer options are `master`, `music`, `record`, `weather`, `block`, `hostile`,`neutral`, `player`, `ambient`
-and `voice`. `pos` can be either a block, triple of coords, or a list of thee numbers. Uses the same options as a
+and `voice`. `pos` can be either a block, triple of coords, or a list of three numbers. Uses the same options as a
  corresponding `playsound` command.
  
 Used with no arguments, return the list of available sound names.
@@ -91,34 +91,17 @@ Optional shared shape attributes:
    value is `'xyz'`, meaning the shape will be drawn relatively to the entity in all three directions. Using `xz` for 
    instance makes so that the shape follows the entity, but stays at the same, absolute Y coordinate. Preceeding an axis
    with `d`, like `dxdydz` would make so that entity position is treated discretely (rounded down).
+ * `debug` - if True, it will only be visible when F3+B entity bounding boxes is enabled.
+ * `facing` - applicable only to `'text'`, `'block'` or '`item'` shapes, where its facing. Possible options are:
+   * `player`: Default. Element always rotates to face the player eye position, 
+   * `camera`: Element is placed on the plane orthogonal to player look vector, 
+   * `north`, `south`, `east`, `west`, `up`, `down`: obvious
 
 Available shapes:
  * `'line'` - draws a straight line between two points.
    * Required attributes:
      * `from` - triple coordinates, entity, or block value indicating one end of the line
      * `to` - other end of the line, same format as `from`
-     
- * `'label'` - draws a text in the world. Default `line` attribute controls main font color.
-      `fill` controls the color of the background. 
-   * Required attributes:
-     * `pos` - position
-     * `text` - string or formatted text to display
-   * Optional attributes
-     * `value` - string or formatted text to display instead of the main `text`. `value` unlike `text`
-     is not used to determine uniqueness of the drawn text so can be used to 
-     display smoothly dynamic elements where value of an element is constantly
-     changing and updates to it are being sent from the server.
-     * `size` - float. Default font size is 10.
-     * `facing` - text direction, where its facing. Possible options are: `player` (default, text
-     always rotates to face the player), `north`, `south`, `east`, `west`, `up`, `down`
-     * `doublesided` - if `true` it will make the text visible from the back as well. Default is `false` (1.16+)
-     * `align` - text alignment with regards to `pos`. Default is `center` (displayed text is
-     centered with respect to `pos`), `left` (`pos` indicates beginning of text), and `right` (`pos`
-     indicates the end of text).
-     * `tilt`, `lean`, `turn` - additional rotations of the text on the canvas along all three axis
-     * `indent`, `height`, `raise` - offsets for text rendering on X (`indent`), Y (`height`), and Z axis (`raise`) 
-     with regards to the plane of the text. One unit of these corresponds to 1 line spacing, which
-     can be used to display multiple lines of text bound to the same `pos` 
      
  * `'box'` - draws a box with corners in specified points
    * Required attributes:
@@ -142,6 +125,58 @@ Available shapes:
      * `height` - height of the cyllinder, defaults to `0`, so flat disk. Can be negative.
      * `level` - level of details, see `'sphere'`.
 
+ * `'polygon'`:
+   * Required attributes:
+     * `points` - list of points defining vertices of the polygon
+   * Optional attributes:
+     * `relative` - list of bools. vertices of the polygon that affected by 'follow'. Could be a single bools to affact allpoints too. Default means that every point is affacted.
+     * `mode` - how those points are connected. may be "polygon"(default),"strip" or "triangles". "polygon" means that it will be viewed as vertices of a polygon center on the first one. "strip" means that it will be viewed as a triangles strip. "triangles" means that it will be viewed as some triangles that are not related to each other (therefor length of `points` in this mode have to be a multiple of 3).
+     * `inner` - if `true` it will make the inner edges be drawn as well. 
+     * `doublesided` - if `true` it will make the shapes visible from the back as well. Default is `true`. 
+
+ * `'label'` - draws a text in the world. Default `line` attribute controls main font color. 
+ `fill` controls the color of the background.
+   * Required attributes:
+     * `pos` - position
+     * `text` - string or formatted text to display
+   * Optional attributes
+     * `value` - string or formatted text to display instead of the main `text`. `value` unlike `text`
+         is not used to determine uniqueness of the drawn text so can be used to
+         display smoothly dynamic elements where value of an element is constantly
+         changing and updates to it are being sent from the server.
+     * `size` - float. Default font size is 10.
+     * `doublesided` - if `true` it will make the text visible from the back as well. Default is `false` (1.16+)
+     * `align` - text alignment with regards to `pos`. Default is `center` (displayed text is
+         centered with respect to `pos`), `left` (`pos` indicates beginning of text), and `right` (`pos`
+         indicates the end of text).
+     * `tilt`, `lean`, `turn` - additional rotations of the text on the canvas along all three axis
+     * `indent`, `height`, `raise` - offsets for text rendering on X (`indent`), Y (`height`), and Z axis (`raise`)
+         with regards to the plane of the text. One unit of these corresponds to 1 line spacing, which
+         can be used to display multiple lines of text bound to the same `pos`
+
+ * `'block'`: draws a block at the specified position:
+   * Required attributes:
+     * `pos` - position of the object.
+     * `block` - the object to show. It is a block value or a name of a block with optional NBT data.
+   * Optional attributes:
+     * `tilt`, `lean`, `turn` - additional rotations along all three axis. It uses the block center as the origin.
+     * `scale` - scale of it in 3 axis-direction. should be a number or a list of 3 numbers (x,y,z).
+     * `skylight`, `blocklight` - light level. omit it to use local light level. should between 0~15.
+
+ * `'item'`: draws an item at the specified position:
+   * Required attributes:
+     * `pos` - position of the object.
+     * `item` - the object to show. It is an item tuple or a string identified item that may have NBT data.
+   * Optional attributes:
+     * `tilt`, `lean`, `turn` - additional rotations along all three axis. for `block`, it use its block center as the origin.
+     * `scale` - scale of it in 3 axis-direction. should be a number or a list of 3 numbers (x,y,z).
+     * `skylight`, `blocklight` - light level. omit it to use local light level. should between 0~15.
+     * `variant` - one of `'none'`, `'thirdperson_lefthand'`, `'thirdperson_righthand'`, `'firstperson_lefthand'`,
+       `'firstperson_righthand'`, `'head'`, `'gui'`, `'ground'`, `'fixed'`. In addition to the literal meaning,
+       it can also be used to use special models of tridents and telescopes. 
+        This attribute is experimental and use of it will change in the future.
+
+      
 ### `create_marker(text, pos, rotation?, block?, interactive?)`
 
 Spawns a (permanent) marker entity with text or block at position. Returns that entity for further manipulations. 
@@ -209,7 +244,8 @@ produce an exception.
 
 ### `print(expr)`, `print(player/player_list, expr)`
 
-Displays the result of the expression to the chat. Overrides default `scarpet` behaviour of sending everyting to stderr.
+Displays the result of the expression to the chat. Overrides default `scarpet` behaviour of sending everything to stderr.
+For player scoped apps it always by default targets the player for whom the app runs on behalf. 
 Can optionally define player or list of players to send the message to.
 
 ### `format(components, ...)`, `format([components, ...])`
@@ -252,6 +288,8 @@ Decorators (listed as extra argument after the component they would affect):
  * `'^<format> <text>'` - hover over tooltip text, appearing when hovering with your mouse over the text below.
  * `'?<suggestion>` - command suggestion - a message that will be pasted to chat when text below it is clicked.
  * `'!<message>'` - a chat message that will be executed when the text below it is clicked.
+ * `'@<url>'` - a URL that will be opened when the text below it is clicked.
+ * `'&<text>'` - a text that will be copied to clipboard when the text below it is clicked.
  
 Both suggestions and messages can contain a command, which will be executed as a player that clicks it.
 
@@ -265,6 +303,14 @@ Example usages:
   // the reason why I backslash the second space is that otherwise command parser may contract consecutive spaces
   // not a problem in apps
 </pre>
+
+### `item_display_name(item)`
+ Returns the name of the item as a Text Value. `item` should be a list of `[item_name, count, nbt]`, or just an item name.
+ 
+ Please note that it is a translated value. treating it like a string (eg.slicing, breaking, changing its case) will turn it back into a normal string without translatable properties. just like a colorful formatted text loose its color. And the result of it converting to a string will use en-us (in a server) or your single player's language, but when you use print() or others functions that accept a text value to broadcast it to players, it will use each player's own language.
+ 
+ If the item is renamed, it will also be reflected in the results.
+
 
 ### `display_title(players, type, text?, fadeInTicks?, stayTicks?, fadeOutTicks),`
 
@@ -429,13 +475,13 @@ Returns `true` if creation and loading of the datapack was successful. Loading o
 reloading of all other datapacks (vanilla restrictions, identical to /datapack enable), however unlike with `/reload` 
 command, scarpet apps will not be reloaded by adding a datapack using `create_datapack`.
 
-Currently, only json files are supported in the packs. `'pack.mcmeta'` file is added automatically.
+Currently, only json/nbt/mcfunction files are supported in the packs. `'pack.mcmeta'` file is added automatically.
 
 Reloading of datapacks that define new dimensions is not implemented in vanilla. Vanilla game only loads 
 dimension information on server start. `create_datapack` is therefore a direct replacement of manually ploping of the specified 
 file structure in a datapack file and calling `/datapack enable` on the new datapack with all its quirks and sideeffects
 (like no worldgen changes, reloading all other datapacks, etc.). To enable newly added custom dimensions, call much more
-experimental `check_hidden_dimensions()` after adding a datapack if needed.
+experimental `enable_hidden_dimensions()` after adding a datapack if needed.
 
 Synopsis:
 <pre>
@@ -453,6 +499,7 @@ script run create_datapack('foo',
 
 Custom dimension example:
 <pre>
+// 1.17
 script run create_datapack('funky_world',  {
     'data' -> { 'minecraft' -> { 'dimension' -> { 'custom_ow.json' -> { 
         'type' -> 'minecraft:the_end',
@@ -467,7 +514,36 @@ script run create_datapack('funky_world',  {
             'type' -> 'minecraft:noise'
     } } } } }
 });
-check_hidden_dimensions();  => ['funky_world']
+
+// 1.18
+script run a() -> create_datapack('funky_world',  {
+   'data' -> { 'minecraft' -> { 'dimension' -> { 'custom_ow.json' -> { 
+      'type' -> 'minecraft:overworld',
+         'generator' -> {
+            'biome_source' -> {
+               'biomes' -> [
+                  {
+                     'parameters' -> {                        
+                        'erosion' -> [-1.0,1.0], 
+                        'depth' -> 0.0, 
+                        'weirdness' -> [-1.0,1.0],
+                        'offset' -> 0.0,
+                        'temperature' -> [-1.0,1.0],
+                        'humidity' -> [-1.0,1.0],
+                        'continentalness' -> [ -1.2,-1.05]
+                     },
+                     'biome' -> 'minecraft:mushroom_fields'
+                  }
+               ],
+               'type' -> 'minecraft:multi_noise'
+            },
+            'seed' -> 0,
+            'settings' -> 'minecraft:overworld',
+            'type' -> 'minecraft:noise'
+         }
+     } } } }
+});
+enable_hidden_dimensions();  => ['funky_world']
 </pre>
 
 Loot table example:
@@ -516,7 +592,11 @@ script run create_datapack('craftable_cobwebs', {
 });
 </pre>
 
-### `enable_hidden_dimensions()`
+Function example:
+<pre>
+ script run create_datapack('example',{'data/test/functions/talk.mcfunction'->'say 1\nsay 2'})
+</pre>
+### `enable_hidden_dimensions()` (1.18.1 and lower)
 
 The function reads current datapack settings detecting new dimensions defined by these datapacks that have not yet been added
 to the list of current dimensions and adds them so that they can be used and accessed right away. It doesn't matter how the
@@ -524,7 +604,8 @@ datapacks have been added to the game, either with `create_datapack()` or manual
 `/datapack enable` on it. Returns the list of valid dimension names / identifiers that has been added in the process.
 
 Fine print: The function should be
-considered experimental. There 'should not be' (famous last words) any side-effects if no worlds are added. Already connected
+considered experimental. For example: is not supposed to work at all in vanilla, and its doing exactly that in 1.18.2+.
+There 'should not be' (famous last words) any side-effects if no worlds are added. Already connected
 clients will not see suggestions for commands that use dimensions `/execute in <dim>` (vanilla client limitation) 
 but all commands should work just fine with
 the new dimensions. Existing worlds that have gotten modified settings by the datapacks will not be reloaded or replaced.
@@ -540,6 +621,8 @@ Returns server tick counter. Can be used to run certain operations every n-th ti
 
 ### `world_time()`
 
+_**Deprecated**. Use `system_info('world_time')` instead._
+
 Returns dimension-specific tick counter.
 
 ### `day_time(new_time?)`
@@ -549,8 +632,10 @@ to that value. Daytime clocks are shared between all dimensions.
 
 ### `last_tick_times()`
 
+_**Deprecated**. Use `system_info('server_last_tick_times')` instead._
+
 Returns a 100-long array of recent tick times, in milliseconds. First item on the list is the most recent tick
-If called outside of the main tick (either throgh scheduled tasks, or async execution), then the first item on the
+If called outside of the main tick (either through scheduled tasks, or async execution), then the first item on the
 list may refer to the previous tick performance. In this case the last entry (tick 100) would refer to the most current
 tick. For all intent and purpose, `last_tick_times():0` should be used as last tick execution time, but
 individual tick times may vary greatly, and these need to be taken with the little grain of 
@@ -571,7 +656,7 @@ If you need to break
 up your execution into chunks, you could queue the rest of the work into the next task using `schedule`, or perform your actions
 defining `__on_tick()` event handler, but in case you need to take a full control over the game loop and run some simulations using 
 `game_tick()` as the way to advance the game progress, that might be the simplest way to do it, 
-and triggering the script in a 'proper' way (there is not 'proper' way, but via commmand line, or server chat is the most 'proper'),
+and triggering the script in a 'proper' way (there is not 'proper' way, but via command line, or server chat is the most 'proper'),
 would be the safest way to do it. For instance, running `game_tick()` from a command block triggered with a button, or in an entity
  event triggered in an entity tick, may technically
 cause the game to run and encounter that call again, causing stack to overflow. Thankfully it doesn't happen in vanilla running 
@@ -600,6 +685,9 @@ world-localized block, so not `block('stone')`, or a string representing a dimen
 Throws `unknown_dimension` if provided dimension can't be found.
  
 ### `view_distance()`
+
+_**Deprecated**. Use `system_info('game_view_distance')` instead._
+
 Returns the view distance of the server.
 
 ### `get_mob_counts()`, `get_mob_counts(category)` 1.16+
@@ -640,17 +728,18 @@ it could either mean your input is wrong, or statistic effectively has a value o
 
 
 ### `system_info()`, `system_info(property)`
-Fetches the value of a system property or returns all inforation as a map when called without any arguments. It can be used to 
+Fetches the value of one of the following system properties. If called without arguments, it returns a list of 
+available system_info options. It can be used to 
 fetch various information, mostly not changing, or only available via low level
 system calls. In all circumstances, these are only provided as read-only.
 
-Available options in the scarpet app space:
+##### Available options in the scarpet app space:
   * `app_name` - current app name or `null` if its a default app
   * `app_list` - list of all loaded apps excluding default commandline app
   * `app_scope` - scope of the global variables and function. Available options is `player` and `global`
-  * `app_player` - returns a player list that have app run under them. For `global` apps, the list is always empty
+  * `app_players` - returns a player list that have app run under them. For `global` apps, the list is always empty
  
- Relevant world related properties
+##### Relevant world related properties
   * `world_name` - name of the world
   * `world_seed` - a numeric seed of the world
   * `world_dimensions` - a list of dimensions in the world
@@ -658,9 +747,16 @@ Available options in the scarpet app space:
   * `world_folder` - name of the direct folder in the saves that holds world files
   * `world_carpet_rules` - returns all Carpet rules in a map form (`rule`->`value`). Note that the values are always returned as strings, so you can't do boolean comparisons directly. Includes rules from extensions with their namespace (`namespace:rule`->`value`). You can later listen to rule changes with the `on_carpet_rule_changes(rule, newValue)` event.
   * `world_gamerules` - returns all gamerules in a map form (`rule`->`value`). Like carpet rules, values are returned as strings, so you can use appropriate value conversions using `bool()` or `number()` to convert them to other values. Gamerules are read-only to discourage app programmers to mess up with the settings intentionally applied by server admins. Isn't that just super annoying when a datapack messes up with your gamerule settings? It is still possible to change them though using `run('gamerule ...`.
-  * `world_spawn_point` - world spawn point
+  * `world_spawn_point` - world spawn point in the overworld dimension
+  * `world_time` - Returns dimension-specific tick counter.
+  * `world_top` - Returns current dimensions' topmost Y value where one can place blocks.
+  * `world_bottom` - Returns current dimensions' bottommost Y value where one can place blocks.
+  * `world_center` - Returns coordinates of the center of the world with respect of the world border
+  * `world_size` - Returns radius of world border for current dimension.
+  * `world_max_size` - Returns maximum possible radius of world border for current dimension.
+  * `world_min_spawning_light` - Returns minimum light level at which mobs can spawn for current dimension, taking into account datapacks
 
- Relevant gameplay related properties
+##### Relevant gameplay related properties
   * `game_difficulty` - current difficulty of the game: `'peaceful'`, `'easy'`, `'normal'`, or `'hard'`
   * `game_hardcore` - boolean whether the game is in hardcore mode
   * `game_storage_format` - format of the world save files, either `'McRegion'` or `'Anvil'`
@@ -671,13 +767,13 @@ Available options in the scarpet app space:
   * `game_version` - base version of the game
   * `game_target` - target release version
   * `game_major_target` - major release target. For 1.12.2, that would be 12
-  * `game_minor_reease` - minor release target. For 1.12.2, that woudl be 2
+  * `game_minor_release` - minor release target. For 1.12.2, that would be 2
   * `game_protocol` - protocol version number
   * `game_pack_version` - datapack version number
   * `game_data_version` - data version of the game. Returns an integer, so it can be compared.
   * `game_stable` - indicating if its a production release or a snapshot
   
- Server related properties
+##### Server related properties
  * `server_motd` - the motd of the server visible when joining
  * `server_ip` - IP adress of the game hosted
  * `server_whitelisted` - boolean indicating whether the access to the server is only for whitelisted players
@@ -686,8 +782,27 @@ Available options in the scarpet app space:
  * `server_banned_ips` - list of banned IP addresses
  * `server_dev_environment` - boolean indicating whether this server is in a development environment.
  * `server_mods` - map with all loaded mods mapped to their versions as strings
+ * `server_last_tick_times` - Returns a 100-long array of recent tick times, in milliseconds. First item on the list is the most recent tick
+If called outside of the main tick (either throgh scheduled tasks, or async execution), then the first item on the
+list may refer to the previous tick performance. In this case the last entry (tick 100) would refer to the most current
+tick. For all intent and purpose, `system_info('last_tick_times'):0` should be used as last tick execution time, but
+individual tick times may vary greatly, and these need to be taken with the little grain of averaging.
  
- System related properties
+##### Source related properties
+ 
+ The source is what is the cause of the code running, with Carpet using it same way as Minecraft commands use to run. Those are used in
+ some API functions that interact with the game or with commands, and can be manipulated if the execution is caused by an `execute` command, modified
+ by some functions or ran in non-standard ways. This section provides useful information from these cases (like running from a command
+ block, right clicking a sign, etc)
+ * `source_entity` - The entity associated with the execution. This is usually a player (in which case `player()` would get the entity from this),
+                         but it may also be a different entity or `null` if the execution comes from the server console or a command block.
+ * `source_position` - The position associated with the execution. This is usually the position of the entity, but it may have been manipulated or
+                           it could come from a command block (no entity then). If this call comes from the server console, it will be the world spawn.
+ * `source_dimension` - The dimension associated with the execution. Execution from the server console provides `overworld` as the dimension.
+                            This can be manipulated by running code inside `in_dimension()`.
+ * `source_rotation` - The rotation associated with the execution. Usually `[0, 0]` in non-standard situations, the rotation of the entity otherwise.
+ 
+##### System related properties
  * `java_max_memory` - maximum allowed memory accessible by JVM
  * `java_allocated_memory` - currently allocated memory by JVM
  * `java_used_memory` - currently used memory by JVM
@@ -697,7 +812,7 @@ Available options in the scarpet app space:
  * `java_system_cpu_load` - current percentage of CPU used by the system
  * `java_process_cpu_load` - current percentage of CPU used by JVM
  
- Scarpet related properties
+##### Scarpet related properties
  * `scarpet_version` - returns the version of the carpet your scarpet comes with.
 
 ## NBT Storage

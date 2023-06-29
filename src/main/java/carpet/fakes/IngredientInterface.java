@@ -1,9 +1,8 @@
 package carpet.fakes;
 
-import net.minecraft.item.ItemStack;
-
 import java.util.Collection;
 import java.util.List;
+import net.minecraft.world.item.ItemStack;
 
 public interface IngredientInterface
 {

@@ -1,9 +1,11 @@
 package carpet.script;
 
-import carpet.CarpetServer;
-import carpet.CarpetSettings;
-import carpet.helpers.TickSpeed;
+import carpet.script.exception.IntegrityException;
 import carpet.script.exception.InternalExpressionException;
+import carpet.script.exception.InvalidCallbackException;
+import carpet.script.external.Carpet;
+import carpet.script.external.Vanilla;
+import carpet.script.utils.GlocalFlag;
 import carpet.script.value.BlockValue;
 import carpet.script.value.BooleanValue;
 import carpet.script.value.EntityValue;
@@ -14,45 +16,13 @@ import carpet.script.value.NumericValue;
 import carpet.script.value.StringValue;
 import carpet.script.value.Value;
 import carpet.script.value.ValueConversions;
-import carpet.settings.ParsedRule;
-import carpet.utils.CarpetProfiler;
-import carpet.utils.Messenger;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
-import net.minecraft.block.BlockState;
-import net.minecraft.entity.EntityType;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.TntEntity;
-import net.minecraft.entity.damage.DamageSource;
-import net.minecraft.entity.passive.MerchantEntity;
-import net.minecraft.entity.projectile.ProjectileEntity;
-import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.command.ServerCommandSource;
-import net.minecraft.entity.Entity;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.stat.Stat;
-import net.minecraft.stat.Stats;
-import net.minecraft.util.Hand;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.hit.BlockHitResult;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.ChunkPos;
-import net.minecraft.util.math.Direction;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.util.registry.Registry;
-import net.minecraft.util.registry.RegistryKey;
-import net.minecraft.village.Merchant;
-import net.minecraft.village.TradeOffer;
-import net.minecraft.world.World;
-import net.minecraft.world.explosion.Explosion;
-import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -67,91 +37,123 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.core.Registry;
+import net.minecraft.core.RegistryAccess;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.stats.Stat;
+import net.minecraft.stats.StatType;
+import net.minecraft.stats.Stats;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.item.PrimedTnt;
+import net.minecraft.world.entity.npc.AbstractVillager;
+import net.minecraft.world.entity.projectile.Projectile;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.trading.Merchant;
+import net.minecraft.world.item.trading.MerchantOffer;
+import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.level.Explosion;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.Vec3;
+
+import javax.annotation.Nullable;
+
 public class CarpetEventServer
 {
     public final List<ScheduledCall> scheduledCalls = new LinkedList<>();
-    public final MinecraftServer server;
+    public final CarpetScriptServer scriptServer;
     private static final List<Value> NOARGS = Collections.emptyList();
     public final Map<String, Event> customEvents = new HashMap<>();
+    public GlocalFlag handleEvents = new GlocalFlag(true);
+
+    public enum CallbackResult
+    {
+        SUCCESS, PASS, FAIL, CANCEL
+    }
 
     public static class Callback
     {
         public final String host;
+        @Nullable
         public final String optionalTarget;
         public final FunctionValue function;
         public final List<Value> parametrizedArgs;
+        public final CarpetScriptServer scriptServer;
 
-
-        public Callback(String host, String target, FunctionValue function, List<Value> parametrizedArgs)
+        public Callback(String host, @Nullable String target, FunctionValue function, List<Value> parametrizedArgs, CarpetScriptServer scriptServer)
         {
             this.host = host;
             this.function = function;
             this.optionalTarget = target;
-            this.parametrizedArgs = parametrizedArgs==null?NOARGS:parametrizedArgs;
+            this.parametrizedArgs = parametrizedArgs == null ? NOARGS : parametrizedArgs;
+            this.scriptServer = scriptServer;
         }
 
         /**
          * Used also in entity events
-         * @param sender - entity command source
+         *
+         * @param sender      - entity command source
          * @param runtimeArgs = options
          */
-        public boolean execute(ServerCommandSource sender, List<Value> runtimeArgs)
+        public CallbackResult execute(CommandSourceStack sender, List<Value> runtimeArgs)
         {
             if (!this.parametrizedArgs.isEmpty())
             {
                 runtimeArgs = new ArrayList<>(runtimeArgs);
                 runtimeArgs.addAll(this.parametrizedArgs);
             }
-            if (CarpetServer.scriptServer == null) return false; // already stopped
-            return CarpetServer.scriptServer.runEventCall(
-                    sender.withLevel(CarpetSettings.runPermissionLevel),
-                    host, optionalTarget, function, runtimeArgs
-            );
+            if (scriptServer.stopAll)
+            {
+                return CallbackResult.FAIL; // already stopped
+            }
+            return scriptServer.events.runEventCall(
+                    sender.withPermission(Vanilla.MinecraftServer_getRunPermissionLevel(sender.getServer())),
+                    host, optionalTarget, function, runtimeArgs);
         }
 
         /**
          * Used also in entity events
-         * @param sender - sender of the signal
-         * @param optionalRecipient - optional target player argument
-         * @param runtimeArgs = options
+         *
+         * @param sender            - sender of the signal
+         * @param recipient - optional target player argument
+         * @param runtimeArgs       = options
          */
-        public int signal(ServerCommandSource sender, ServerPlayerEntity optionalRecipient, List<Value> runtimeArgs)
+        public CallbackResult signal(CommandSourceStack sender, @Nullable ServerPlayer recipient, List<Value> runtimeArgs)
         {
             // recipent of the call doesn't match the handlingHost
-            if (optionalRecipient != null && !optionalRecipient.getEntityName().equals(optionalTarget))
-                return 0;
-            List<Value> args = runtimeArgs;
-            if (!this.parametrizedArgs.isEmpty())
-            {
-                args = new ArrayList<>(runtimeArgs);
-                args.addAll(this.parametrizedArgs);
-            }
-            return CarpetServer.scriptServer.signal(sender, optionalRecipient, host, function, args, false);
+            return recipient != null && !recipient.getScoreboardName().equals(optionalTarget) ? CallbackResult.FAIL : execute(sender, runtimeArgs);
         }
 
 
         @Override
         public String toString()
         {
-            return function.getString()+((host==null)?"":"(from "+host+(optionalTarget == null?"":"/"+optionalTarget)+")");
+            return function.getString() + ((host == null) ? "" : "(from " + host + (optionalTarget == null ? "" : "/" + optionalTarget) + ")");
         }
-        public static class Signature
+
+        public record Signature(String function, String host, String target)
         {
-            String function;
-            String host;
-            String target;
-            public Signature(String fun, String h, String t)
-            {
-                function = fun;
-                host = h;
-                target = t;
-            }
         }
+
         public static Signature fromString(String str)
         {
             Pattern find = Pattern.compile("(\\w+)(?:\\(from (\\w+)(?:/(\\w+))?\\))?");
             Matcher matcher = find.matcher(str);
-            if(matcher.matches())
+            if (matcher.matches())
             {
                 return new Signature(matcher.group(1), matcher.group(2), matcher.group(3));
             }
@@ -168,8 +170,8 @@ public class CarpetEventServer
         public ScheduledCall(CarpetContext context, FunctionValue function, List<Value> args, long dueTime)
         {
             // ignoring target as we will be always calling self
-            super(context.host.getName(), null, function, args);
-            this.ctx = context;
+            super(context.host.getName(), null, function, args, (CarpetScriptServer) context.scriptServer());
+            this.ctx = context.duplicate();
             this.dueTime = dueTime;
         }
 
@@ -178,86 +180,162 @@ public class CarpetEventServer
          */
         public void execute()
         {
-            CarpetServer.scriptServer.runScheduledCall(ctx.origin, ctx.s, host, (CarpetScriptHost) ctx.host, function, parametrizedArgs);
+            scriptServer.events.runScheduledCall(ctx.origin(), ctx.source(), host, (CarpetScriptHost) ctx.host, function, parametrizedArgs);
         }
-
-
     }
 
     public static class CallbackList
     {
 
-        public final List<Callback> callList;
+        private List<Callback> callList;
+        private final List<Callback> removedCalls;
+        private boolean inCall;
+        private boolean inSignal;
         public final int reqArgs;
         final boolean isSystem;
-        final boolean isGlobalOnly;
         final boolean perPlayerDistribution;
 
         public CallbackList(int reqArgs, boolean isSystem, boolean isGlobalOnly)
         {
             this.callList = new ArrayList<>();
+            this.removedCalls = new ArrayList<>();
+            this.inCall = false;
+            this.inSignal = false;
             this.reqArgs = reqArgs;
             this.isSystem = isSystem;
-            this.isGlobalOnly = isGlobalOnly;
             perPlayerDistribution = isSystem && !isGlobalOnly;
+        }
+
+        public List<Callback> inspectCurrentCalls()
+        {
+            return new ArrayList<>(callList);
+        }
+
+        private void removeCallsIf(Predicate<Callback> when)
+        {
+            if (!inCall && !inSignal)
+            {
+                callList.removeIf(when);
+                return;
+            }
+            // we are ok with list growing in the meantime and parallel access, we are only scanning.
+            for (int i = 0; i < callList.size(); i++)
+            {
+                Callback call = callList.get(i);
+                if (when.test(call))
+                {
+                    removedCalls.add(call);
+                }
+            }
         }
 
         /**
          * Handles only built-in events from the events system
+         *
          * @param argumentSupplier
          * @param cmdSourceSupplier
+         * @return Whether this event call has been cancelled
          */
-        public void call(Supplier<List<Value>> argumentSupplier, Supplier<ServerCommandSource> cmdSourceSupplier)
+        public boolean call(Supplier<List<Value>> argumentSupplier, Supplier<CommandSourceStack> cmdSourceSupplier)
         {
-            if (callList.size() > 0)
+            if (callList.isEmpty())
             {
-                CarpetProfiler.ProfilerToken currentSection = CarpetProfiler.start_section(null, "Scarpet events", CarpetProfiler.TYPE.GENERAL);
+                return false;
+            }
+            CommandSourceStack source;
+            try
+            {
+                source = cmdSourceSupplier.get();
+            }
+            catch (NullPointerException noReference) // todo figure out what happens when closing.
+            {
+                return false;
+            }
+            CarpetScriptServer scriptServer = Vanilla.MinecraftServer_getScriptServer(source.getServer());
+            if (scriptServer.stopAll)
+            {
+                return false;
+            }
+            Boolean isCancelled = scriptServer.events.handleEvents.runIfEnabled(() -> {
+                Runnable profilerToken = Carpet.startProfilerSection("Scarpet events");
                 List<Value> argv = argumentSupplier.get(); // empty for onTickDone
-                ServerCommandSource source;
+                String nameCheck = perPlayerDistribution ? source.getTextName() : null;
+                assert argv.size() == reqArgs;
+                boolean cancelled = false;
                 try
                 {
-                     source = cmdSourceSupplier.get();
+                    // we are ok with list growing in the meantime
+                    // which might happen during inCall or inSignal
+                    inCall = true;
+                    for (int i = 0; i < callList.size(); i++)
+                    {
+                        Callback call = callList.get(i);
+                        // supressing calls where target player hosts simply don't match
+                        // handling global hosts with player targets is left to when the host is resolved (few calls deeper).
+                        if (nameCheck != null && call.optionalTarget != null && !nameCheck.equals(call.optionalTarget))
+                        {
+                            continue;
+                        }
+                        CallbackResult result = call.execute(source, argv);
+                        if (result == CallbackResult.CANCEL)
+                        {
+                            cancelled = true;
+                            break;
+                        }
+                        if (result == CallbackResult.FAIL)
+                        {
+                            removedCalls.add(call);
+                        }
+                    }
                 }
-                catch (NullPointerException noReference) // todo figure out what happens when closing.
+                finally
                 {
-                    return;
+                    inCall = false;
                 }
-                String nameCheck = perPlayerDistribution?source.getName():null;
-                assert argv.size() == reqArgs;
-                List<Callback> fails = new ArrayList<>();
-                for (Callback call: callList)
+                for (Callback call : removedCalls)
                 {
-                    // supressing calls where target player hosts simply don't match
-                    // handling global hosts with player targets is left to when the host is resolved (few calls deeper).
-                    if (nameCheck != null && call.optionalTarget != null && !nameCheck.equals(call.optionalTarget)) continue;
-                    if (!call.execute(source, argv)) fails.add(call);
+                    callList.remove(call);
                 }
-                for (Callback call : fails) callList.remove(call);
-                CarpetProfiler.end_current_section(currentSection);
-            }
+                removedCalls.clear();
+                profilerToken.run();
+                return cancelled;
+            });
+            return isCancelled != null && isCancelled;
         }
 
-        public int signal(ServerCommandSource sender, ServerPlayerEntity optinoalReceipient, List<Value> callArg)
+        public int signal(CommandSourceStack sender, @Nullable ServerPlayer recipient, List<Value> callArg)
         {
-            if (callList.isEmpty()) return 0;
-            //List<Callback> fails = new ArrayList<>();
-            // skipping fails on purpose - its a player induced call.
-            int successes = 0;
-            for (Callback call: callList)
+            if (callList.isEmpty())
             {
-                successes +=  Math.max(0, call.signal(sender, optinoalReceipient, callArg));
+                return 0;
             }
-            //for (Callback call : fails) callList.remove(call);
+            int successes = 0;
+            try
+            {
+                inSignal = true;
+                for (int i = 0; i < callList.size(); i++)
+                {
+                    // skipping tracking of fails, its explicit call
+                    if (callList.get(i).signal(sender, recipient, callArg) == CallbackResult.SUCCESS)
+                    {
+                        successes++;
+                    }
+                }
+            }
+            finally
+            {
+                inSignal = false;
+            }
             return successes;
         }
 
-        public boolean addFromExternal(ServerCommandSource source, String hostName, String funName, Consumer<ScriptHost> hostOnEventHandler)
+        public boolean addFromExternal(CommandSourceStack source, String hostName, String funName, Consumer<ScriptHost> hostOnEventHandler, CarpetScriptServer scriptServer)
         {
-            ScriptHost host = CarpetServer.scriptServer.getHostByName(hostName);
+            ScriptHost host = scriptServer.getAppHostByName(hostName);
             if (host == null)
             {
                 // impossible call to add
-                Messenger.m(source, "r Unknown app "+hostName);
+                Carpet.Messenger_message(source, "r Unknown app " + hostName);
                 return false;
             }
             hostOnEventHandler.accept(host);
@@ -265,7 +343,7 @@ public class CarpetEventServer
             if (udf == null || udf.getArguments().size() != reqArgs)
             {
                 // call won't match arguments
-                Messenger.m(source, "r Callback doesn't expect required number of arguments: "+reqArgs);
+                Carpet.Messenger_message(source, "r Callback doesn't expect required number of arguments: " + reqArgs);
                 return false;
             }
             String target = null;
@@ -273,11 +351,11 @@ public class CarpetEventServer
             {
                 try
                 {
-                    target = source.getPlayer().getEntityName();
+                    target = source.getPlayerOrException().getScoreboardName();
                 }
                 catch (CommandSyntaxException e)
                 {
-                    Messenger.m(source, "r Cannot add event to a player scoped app from a command without a player context");
+                    Carpet.Messenger_message(source, "r Cannot add event to a player scoped app from a command without a player context");
                     return false;
                 }
             }
@@ -285,25 +363,25 @@ public class CarpetEventServer
             //remove duplicates
 
             removeEventCall(hostName, target, udf.getString());
-            callList.add(new Callback(hostName, target, udf, null));
+            callList.add(new Callback(hostName, target, udf, null, scriptServer));
             return true;
         }
+
         public boolean addEventCallInternal(ScriptHost host, FunctionValue function, List<Value> args)
         {
             if (function == null || (function.getArguments().size() - args.size()) != reqArgs)
             {
                 return false;
             }
-            //all clear
-            //remove duplicates
+            //removing duplicates
             removeEventCall(host.getName(), host.user, function.getString());
-            callList.add(new Callback(host.getName(), host.user, function, args));
+            callList.add(new Callback(host.getName(), host.user, function, args, (CarpetScriptServer) host.scriptServer()));
             return true;
         }
 
         public void removeEventCall(String hostName, String target, String funName)
         {
-            callList.removeIf((c)->  c.function.getString().equals(funName)
+            removeCallsIf((c) -> c.function.getString().equals(funName)
                     && (Objects.equals(c.host, hostName))
                     && (Objects.equals(c.optionalTarget, target))
             );
@@ -311,19 +389,19 @@ public class CarpetEventServer
 
         public void removeAllCalls(CarpetScriptHost host)
         {
-            callList.removeIf((c)-> (Objects.equals(c.host, host.getName()))
+            removeCallsIf((c) -> (Objects.equals(c.host, host.getName()))
                     && (Objects.equals(c.optionalTarget, host.user)));
         }
 
         public void createChildEvents(CarpetScriptHost host)
         {
             List<Callback> copyCalls = new ArrayList<>();
-            callList.forEach((c)->
+            callList.forEach((c) ->
             {
-                if ((Objects.equals(c.host, host.getName()))
-                    && c.optionalTarget == null)
+                if ((Objects.equals(c.host, host.getName())) // TODO fix me
+                        && c.optionalTarget == null)
                 {
-                    copyCalls.add(new Callback(c.host, host.user, c.function, c.parametrizedArgs));
+                    copyCalls.add(new Callback(c.host, host.user, c.function, c.parametrizedArgs, host.scriptServer()));
                 }
             });
             callList.addAll(copyCalls);
@@ -331,53 +409,63 @@ public class CarpetEventServer
 
         public void clearEverything()
         {
+            // when some moron puts /reload in an event call.
+            if (inSignal || inCall)
+            {
+                callList = new ArrayList<>();
+            }
             callList.clear();
+        }
+
+        public void sortByPriority(CarpetScriptServer scriptServer)
+        {
+            callList.sort(Comparator.comparingDouble(c -> -scriptServer.getAppHostByName(c.host).eventPriority));
         }
     }
 
     public static class Event
     {
         public static final Map<String, Event> byName = new HashMap<>();
+
         public static List<Event> publicEvents(CarpetScriptServer server)
         {
             List<Event> events = byName.values().stream().filter(e -> e.isPublic).collect(Collectors.toList());
-            if (server != null) events.addAll(server.events.customEvents.values());
+            if (server != null)
+            {
+                events.addAll(server.events.customEvents.values());
+            }
             return events;
+        }
+
+        static
+        {
+            Carpet.initCarpetEvents();
         }
 
         public static final Event START = new Event("server_starts", 0, true)
         {
             @Override
-            public void onTick()
+            public void onTick(MinecraftServer server)
             {
-                handler.call(Collections::emptyList, () ->
-                        CarpetServer.minecraft_server.getCommandSource().
-                                withWorld(CarpetServer.minecraft_server.getWorld(World.OVERWORLD))
-                );
+                handler.call(Collections::emptyList, server::createCommandSourceStack);
             }
         };
 
         public static final Event SHUTDOWN = new Event("server_shuts_down", 0, true)
         {
             @Override
-            public void onTick()
+            public void onTick(MinecraftServer server)
             {
-                handler.call(Collections::emptyList, () ->
-                        CarpetServer.minecraft_server.getCommandSource().
-                                withWorld(CarpetServer.minecraft_server.getWorld(World.OVERWORLD))
-                );
+            handler.call(Collections::emptyList,server::createCommandSourceStack);
             }
         };
 
         public static final Event TICK = new Event("tick", 0, true)
         {
             @Override
-            public void onTick()
+            public void onTick(MinecraftServer server)
             {
-                handler.call(Collections::emptyList, () ->
-                        CarpetServer.minecraft_server.getCommandSource().
-                                withWorld(CarpetServer.minecraft_server.getWorld(World.OVERWORLD))
-                );
+            handler.call(Collections::emptyList,server::createCommandSourceStack);
             }
         };
         public static final Event NETHER_TICK = new Event("tick_nether", 0, true)
@@ -389,11 +477,11 @@ public class CarpetEventServer
             }
 
             @Override
-            public void onTick()
+            public void onTick(MinecraftServer server)
             {
                 handler.call(Collections::emptyList, () ->
-                        CarpetServer.minecraft_server.getCommandSource().
-                                withWorld(CarpetServer.minecraft_server.getWorld(World.NETHER))
+                        server.createCommandSourceStack().
+                                withLevel(server.getLevel(Level.NETHER))
                 );
             }
         };
@@ -404,36 +492,47 @@ public class CarpetEventServer
             {
                 return true;
             }
+
             @Override
-            public void onTick()
+            public void onTick(MinecraftServer server)
             {
                 handler.call(Collections::emptyList, () ->
-                        CarpetServer.minecraft_server.getCommandSource().
-                                withWorld(CarpetServer.minecraft_server.getWorld(World.END))
+                        server.createCommandSourceStack().
+                                withLevel(server.getLevel(Level.END))
                 );
             }
         };
         public static final Event CHUNK_GENERATED = new Event("chunk_generated", 2, true)
         {
             @Override
-            public void onChunkEvent(ServerWorld world, ChunkPos chPos, boolean generated)
+            public void onChunkEvent(ServerLevel world, ChunkPos chPos, boolean generated)
             {
-                handler.call( () ->
-                        {
-                            return Arrays.asList(new NumericValue(chPos.x << 4), new NumericValue(chPos.z << 4));
-                        }, () -> CarpetServer.minecraft_server.getCommandSource().withWorld(world)
+                handler.call(
+                        () -> Arrays.asList(new NumericValue(chPos.x << 4), new NumericValue(chPos.z << 4)),
+                        () -> world.getServer().createCommandSourceStack().withLevel(world)
                 );
             }
         };
         public static final Event CHUNK_LOADED = new Event("chunk_loaded", 2, true)
         {
             @Override
-            public void onChunkEvent(ServerWorld world, ChunkPos chPos, boolean generated)
+            public void onChunkEvent(ServerLevel world, ChunkPos chPos, boolean generated)
             {
-                handler.call( () ->
-                        {
-                            return Arrays.asList(new NumericValue(chPos.x << 4), new NumericValue(chPos.z << 4));
-                        }, () -> CarpetServer.minecraft_server.getCommandSource().withWorld(world)
+                handler.call(
+                        () -> Arrays.asList(new NumericValue(chPos.x << 4), new NumericValue(chPos.z << 4)),
+                        () -> world.getServer().createCommandSourceStack().withLevel(world)
+                );
+            }
+        };
+
+        public static final Event CHUNK_UNLOADED = new Event("chunk_unloaded", 2, true)
+        {
+            @Override
+            public void onChunkEvent(ServerLevel world, ChunkPos chPos, boolean generated)
+            {
+                handler.call(
+                        () -> Arrays.asList(new NumericValue(chPos.x << 4), new NumericValue(chPos.z << 4)),
+                        () -> world.getServer().createCommandSourceStack().withLevel(world)
                 );
             }
         };
@@ -441,92 +540,91 @@ public class CarpetEventServer
         public static final Event PLAYER_JUMPS = new Event("player_jumps", 1, false)
         {
             @Override
-            public void onPlayerEvent(ServerPlayerEntity player)
+            public boolean onPlayerEvent(ServerPlayer player)
             {
-                handler.call( () -> Collections.singletonList(new EntityValue(player)), player::getCommandSource);
+                handler.call(() -> Collections.singletonList(new EntityValue(player)), player::createCommandSourceStack);
+                return false;
             }
         };
         public static final Event PLAYER_DEPLOYS_ELYTRA = new Event("player_deploys_elytra", 1, false)
         {
             @Override
-            public void onPlayerEvent(ServerPlayerEntity player)
+            public boolean onPlayerEvent(ServerPlayer player)
             {
-                handler.call( () -> Collections.singletonList(new EntityValue(player)), player::getCommandSource);
+                handler.call(() -> Collections.singletonList(new EntityValue(player)), player::createCommandSourceStack);
+                return false;
             }
         };
         public static final Event PLAYER_WAKES_UP = new Event("player_wakes_up", 1, false)
         {
             @Override
-            public void onPlayerEvent(ServerPlayerEntity player)
+            public boolean onPlayerEvent(ServerPlayer player)
             {
-                handler.call( () -> Collections.singletonList(new EntityValue(player)), player::getCommandSource);
+                handler.call(() -> Collections.singletonList(new EntityValue(player)), player::createCommandSourceStack);
+                return false;
             }
         };
         public static final Event PLAYER_ESCAPES_SLEEP = new Event("player_escapes_sleep", 1, false)
         {
             @Override
-            public void onPlayerEvent(ServerPlayerEntity player)
+            public boolean onPlayerEvent(ServerPlayer player)
             {
-                handler.call( () -> Collections.singletonList(new EntityValue(player)), player::getCommandSource);
+                handler.call(() -> Collections.singletonList(new EntityValue(player)), player::createCommandSourceStack);
+                return false;
             }
         };
         public static final Event PLAYER_RIDES = new Event("player_rides", 5, false)
         {
             @Override
-            public void onMountControls(ServerPlayerEntity player, float strafeSpeed, float forwardSpeed, boolean jumping, boolean sneaking)
+            public void onMountControls(ServerPlayer player, float strafeSpeed, float forwardSpeed, boolean jumping, boolean sneaking)
             {
-                handler.call( () -> Arrays.asList(new EntityValue(player),
+                handler.call(() -> Arrays.asList(new EntityValue(player),
                         new NumericValue(forwardSpeed), new NumericValue(strafeSpeed), BooleanValue.of(jumping), BooleanValue.of(sneaking)
-                ), player::getCommandSource);
+                ), player::createCommandSourceStack);
             }
         };
         public static final Event PLAYER_USES_ITEM = new Event("player_uses_item", 3, false)
         {
             @Override
-            public void onItemAction(ServerPlayerEntity player, Hand enumhand, ItemStack itemstack)
+            public boolean onItemAction(ServerPlayer player, InteractionHand enumhand, ItemStack itemstack)
             {
-                handler.call( () ->
-                {
-                    //ItemStack itemstack = player.getStackInHand(enumhand);
-                    return Arrays.asList(
-                            new EntityValue(player),
-                            ValueConversions.of(itemstack),
-                            StringValue.of(enumhand == Hand.MAIN_HAND ? "mainhand" : "offhand")
-                    );
-                }, player::getCommandSource);
+                return handler.call(() ->
+                        Arrays.asList(
+                                new EntityValue(player),
+                                ValueConversions.of(itemstack, player.level().registryAccess()),
+                                StringValue.of(enumhand == InteractionHand.MAIN_HAND ? "mainhand" : "offhand")
+                        ), player::createCommandSourceStack);
             }
         };
         public static final Event PLAYER_CLICKS_BLOCK = new Event("player_clicks_block", 3, false)
         {
             @Override
-            public void onBlockAction(ServerPlayerEntity player, BlockPos blockpos, Direction facing)
+            public boolean onBlockAction(ServerPlayer player, BlockPos blockpos, Direction facing)
             {
-                handler.call( () ->
-                {
-                    return Arrays.asList(
-                            new EntityValue(player),
-                            new BlockValue(null, player.getServerWorld(), blockpos),
-                            StringValue.of(facing.getName())
-                    );
-                }, player::getCommandSource);
+                return handler.call(() ->
+                        Arrays.asList(
+                                new EntityValue(player),
+                                new BlockValue(null, player.serverLevel(), blockpos),
+                                StringValue.of(facing.getName())
+                        ), player::createCommandSourceStack);
             }
         };
         public static final Event PLAYER_RIGHT_CLICKS_BLOCK = new Event("player_right_clicks_block", 6, false)
         {
             @Override
-            public void onBlockHit(ServerPlayerEntity player, Hand enumhand, BlockHitResult hitRes)//ItemStack itemstack, Hand enumhand, BlockPos blockpos, Direction enumfacing, Vec3d vec3d)
+            public boolean onBlockHit(ServerPlayer player, InteractionHand enumhand, BlockHitResult hitRes)
             {
-                handler.call( () ->
+                return handler.call(() ->
                 {
-                    ItemStack itemstack = player.getStackInHand(enumhand);
+                    ItemStack itemstack = player.getItemInHand(enumhand);
                     BlockPos blockpos = hitRes.getBlockPos();
-                    Direction enumfacing = hitRes.getSide();
-                    Vec3d vec3d = hitRes.getPos().subtract(blockpos.getX(), blockpos.getY(), blockpos.getZ());
+                    Direction enumfacing = hitRes.getDirection();
+                    Vec3 vec3d = hitRes.getLocation().subtract(blockpos.getX(), blockpos.getY(), blockpos.getZ());
                     return Arrays.asList(
                             new EntityValue(player),
-                            ValueConversions.of(itemstack),
-                            StringValue.of(enumhand == Hand.MAIN_HAND ? "mainhand" : "offhand"),
-                            new BlockValue(null, player.getServerWorld(), blockpos),
+                            ValueConversions.of(itemstack, player.level().registryAccess()),
+                            StringValue.of(enumhand == InteractionHand.MAIN_HAND ? "mainhand" : "offhand"),
+                            new BlockValue(null, player.serverLevel(), blockpos),
                             StringValue.of(enumfacing.getName()),
                             ListValue.of(
                                     new NumericValue(vec3d.x),
@@ -534,23 +632,23 @@ public class CarpetEventServer
                                     new NumericValue(vec3d.z)
                             )
                     );
-                }, player::getCommandSource);
+                }, player::createCommandSourceStack);
             }
         };
         public static final Event PLAYER_INTERACTS_WITH_BLOCK = new Event("player_interacts_with_block", 5, false)
         {
             @Override
-            public void onBlockHit(ServerPlayerEntity player, Hand enumhand, BlockHitResult hitRes)
+            public boolean onBlockHit(ServerPlayer player, InteractionHand enumhand, BlockHitResult hitRes)
             {
-                handler.call( () ->
+                handler.call(() ->
                 {
                     BlockPos blockpos = hitRes.getBlockPos();
-                    Direction enumfacing = hitRes.getSide();
-                    Vec3d vec3d = hitRes.getPos().subtract(blockpos.getX(), blockpos.getY(), blockpos.getZ());
+                    Direction enumfacing = hitRes.getDirection();
+                    Vec3 vec3d = hitRes.getLocation().subtract(blockpos.getX(), blockpos.getY(), blockpos.getZ());
                     return Arrays.asList(
                             new EntityValue(player),
-                            StringValue.of(enumhand == Hand.MAIN_HAND ? "mainhand" : "offhand"),
-                            new BlockValue(null, player.getServerWorld(), blockpos),
+                            StringValue.of(enumhand == InteractionHand.MAIN_HAND ? "mainhand" : "offhand"),
+                            new BlockValue(null, player.serverLevel(), blockpos),
                             StringValue.of(enumfacing.getName()),
                             ListValue.of(
                                     new NumericValue(vec3d.x),
@@ -558,341 +656,394 @@ public class CarpetEventServer
                                     new NumericValue(vec3d.z)
                             )
                     );
-                }, player::getCommandSource);
+                }, player::createCommandSourceStack);
+                return false;
+            }
+        };
+        public static final Event PLAYER_PLACING_BLOCK = new Event("player_placing_block", 4, false)
+        {
+            @Override
+            public boolean onBlockPlaced(ServerPlayer player, BlockPos pos, InteractionHand enumhand, ItemStack itemstack)
+            {
+                return handler.call(() -> Arrays.asList(
+                        new EntityValue(player),
+                        ValueConversions.of(itemstack, player.level().registryAccess()),
+                        StringValue.of(enumhand == InteractionHand.MAIN_HAND ? "mainhand" : "offhand"),
+                        new BlockValue(null, player.serverLevel(), pos)
+                ), player::createCommandSourceStack);
             }
         };
         public static final Event PLAYER_PLACES_BLOCK = new Event("player_places_block", 4, false)
         {
             @Override
-            public void onBlockPlaced(ServerPlayerEntity player, BlockPos pos, Hand enumhand, ItemStack itemstack)
+            public boolean onBlockPlaced(ServerPlayer player, BlockPos pos, InteractionHand enumhand, ItemStack itemstack)
             {
-                handler.call( () -> Arrays.asList(
+                handler.call(() -> Arrays.asList(
                         new EntityValue(player),
-                        ValueConversions.of(itemstack),
-                        StringValue.of(enumhand == Hand.MAIN_HAND ? "mainhand" : "offhand"),
-                        new BlockValue(null, player.getServerWorld(), pos)
-                ), player::getCommandSource);
+                        ValueConversions.of(itemstack, player.level().registryAccess()),
+                        StringValue.of(enumhand == InteractionHand.MAIN_HAND ? "mainhand" : "offhand"),
+                        new BlockValue(null, player.serverLevel(), pos)
+                ), player::createCommandSourceStack);
+                return false;
             }
         };
         public static final Event PLAYER_BREAK_BLOCK = new Event("player_breaks_block", 2, false)
         {
             @Override
-            public void onBlockBroken(ServerPlayerEntity player, BlockPos pos, BlockState previousBS)
+            public boolean onBlockBroken(ServerPlayer player, BlockPos pos, BlockState previousBS)
             {
-                handler.call(
-                        () -> Arrays.asList(new EntityValue(player), new BlockValue(previousBS, player.getServerWorld(), pos)),
-                        player::getCommandSource
+                return handler.call(
+                        () -> Arrays.asList(new EntityValue(player), new BlockValue(previousBS, player.serverLevel(), pos)),
+                        player::createCommandSourceStack
                 );
             }
         };
         public static final Event PLAYER_INTERACTS_WITH_ENTITY = new Event("player_interacts_with_entity", 3, false)
         {
             @Override
-            public void onEntityHandAction(ServerPlayerEntity player, Entity entity, Hand enumhand)
+            public boolean onEntityHandAction(ServerPlayer player, Entity entity, InteractionHand enumhand)
             {
-                handler.call( () -> Arrays.asList(
-                        new EntityValue(player), new EntityValue(entity), StringValue.of(enumhand==Hand.MAIN_HAND?"mainhand":"offhand")
-                ), player::getCommandSource);
+                return handler.call(() -> Arrays.asList(
+                        new EntityValue(player), new EntityValue(entity), StringValue.of(enumhand == InteractionHand.MAIN_HAND ? "mainhand" : "offhand")
+                ), player::createCommandSourceStack);
             }
         };
         public static final Event PLAYER_TRADES = new Event("player_trades", 5, false)
         {
             @Override
-            public void onTrade(ServerPlayerEntity player, Merchant merchant, TradeOffer tradeOffer)
+            public void onTrade(ServerPlayer player, Merchant merchant, MerchantOffer tradeOffer)
             {
-                handler.call( () -> Arrays.asList(
+                RegistryAccess regs = player.level().registryAccess();
+                handler.call(() -> Arrays.asList(
                         new EntityValue(player),
-                        merchant instanceof MerchantEntity ? new EntityValue((MerchantEntity) merchant) : Value.NULL,
-                        ValueConversions.of(tradeOffer.getOriginalFirstBuyItem()),
-                        ValueConversions.of(tradeOffer.getSecondBuyItem()),
-                        ValueConversions.of(tradeOffer.getSellItem())
-                ), player::getCommandSource);
+                        merchant instanceof final AbstractVillager villager ? new EntityValue(villager) : Value.NULL,
+                        ValueConversions.of(tradeOffer.getBaseCostA(), regs),
+                        ValueConversions.of(tradeOffer.getCostB(), regs),
+                        ValueConversions.of(tradeOffer.getResult(), regs)
+                ), player::createCommandSourceStack);
             }
         };
         public static final Event PLAYER_PICKS_UP_ITEM = new Event("player_picks_up_item", 2, false)
         {
             @Override
-            public void onItemAction(ServerPlayerEntity player, Hand enumhand, ItemStack itemstack) {
-                handler.call( () -> Arrays.asList(new EntityValue(player), ValueConversions.of(itemstack)), player::getCommandSource);
+            public boolean onItemAction(ServerPlayer player, InteractionHand enumhand, ItemStack itemstack)
+            {
+                handler.call(() -> Arrays.asList(new EntityValue(player), ValueConversions.of(itemstack, player.level().registryAccess())), player::createCommandSourceStack);
+                return false;
             }
         };
 
         public static final Event PLAYER_ATTACKS_ENTITY = new Event("player_attacks_entity", 2, false)
         {
             @Override
-            public void onEntityHandAction(ServerPlayerEntity player, Entity entity, Hand enumhand)
+            public boolean onEntityHandAction(ServerPlayer player, Entity entity, InteractionHand enumhand)
             {
-                handler.call( () -> Arrays.asList(new EntityValue(player), new EntityValue(entity)), player::getCommandSource);
+                return handler.call(() -> Arrays.asList(new EntityValue(player), new EntityValue(entity)), player::createCommandSourceStack);
             }
         };
         public static final Event PLAYER_STARTS_SNEAKING = new Event("player_starts_sneaking", 1, false)
         {
             @Override
-            public void onPlayerEvent(ServerPlayerEntity player)
+            public boolean onPlayerEvent(ServerPlayer player)
             {
-                handler.call( () -> Collections.singletonList(new EntityValue(player)), player::getCommandSource);
+                handler.call(() -> Collections.singletonList(new EntityValue(player)), player::createCommandSourceStack);
+                return false;
             }
         };
         public static final Event PLAYER_STOPS_SNEAKING = new Event("player_stops_sneaking", 1, false)
         {
             @Override
-            public void onPlayerEvent(ServerPlayerEntity player)
+            public boolean onPlayerEvent(ServerPlayer player)
             {
-                handler.call( () -> Collections.singletonList(new EntityValue(player)), player::getCommandSource);
+                handler.call(() -> Collections.singletonList(new EntityValue(player)), player::createCommandSourceStack);
+                return false;
             }
         };
         public static final Event PLAYER_STARTS_SPRINTING = new Event("player_starts_sprinting", 1, false)
         {
             @Override
-            public void onPlayerEvent(ServerPlayerEntity player)
+            public boolean onPlayerEvent(ServerPlayer player)
             {
-                handler.call( () -> Collections.singletonList(new EntityValue(player)), player::getCommandSource);
+                handler.call(() -> Collections.singletonList(new EntityValue(player)), player::createCommandSourceStack);
+                return false;
             }
         };
         public static final Event PLAYER_STOPS_SPRINTING = new Event("player_stops_sprinting", 1, false)
         {
             @Override
-            public void onPlayerEvent(ServerPlayerEntity player)
+            public boolean onPlayerEvent(ServerPlayer player)
             {
-                handler.call( () -> Collections.singletonList(new EntityValue(player)), player::getCommandSource);
+                handler.call(() -> Collections.singletonList(new EntityValue(player)), player::createCommandSourceStack);
+                return false;
             }
         };
 
         public static final Event PLAYER_RELEASED_ITEM = new Event("player_releases_item", 3, false)
         {
             @Override
-            public void onItemAction(ServerPlayerEntity player, Hand enumhand, ItemStack itemstack)
+            public boolean onItemAction(ServerPlayer player, InteractionHand enumhand, ItemStack itemstack)
             {
                 // this.getStackInHand(this.getActiveHand()), this.activeItemStack)
-                handler.call( () ->
+                handler.call(() ->
                         Arrays.asList(
                                 new EntityValue(player),
-                                ValueConversions.of(itemstack),
-                                StringValue.of(enumhand == Hand.MAIN_HAND ? "mainhand" : "offhand")
-                        ), player::getCommandSource);
+                                ValueConversions.of(itemstack, player.level().registryAccess()),
+                                StringValue.of(enumhand == InteractionHand.MAIN_HAND ? "mainhand" : "offhand")
+                        ), player::createCommandSourceStack);
+                return false;
             }
         };
         public static final Event PLAYER_FINISHED_USING_ITEM = new Event("player_finishes_using_item", 3, false)
         {
             @Override
-            public void onItemAction(ServerPlayerEntity player, Hand enumhand, ItemStack itemstack)
+            public boolean onItemAction(ServerPlayer player, InteractionHand enumhand, ItemStack itemstack)
             {
                 // this.getStackInHand(this.getActiveHand()), this.activeItemStack)
-                handler.call( () ->
+                return handler.call(() ->
                         Arrays.asList(
                                 new EntityValue(player),
-                                ValueConversions.of(itemstack),
-                                new StringValue(enumhand == Hand.MAIN_HAND ? "mainhand" : "offhand")
-                        ), player::getCommandSource);
+                                ValueConversions.of(itemstack, player.level().registryAccess()),
+                                new StringValue(enumhand == InteractionHand.MAIN_HAND ? "mainhand" : "offhand")
+                        ), player::createCommandSourceStack);
             }
         };
         public static final Event PLAYER_DROPS_ITEM = new Event("player_drops_item", 1, false)
         {
             @Override
-            public void onPlayerEvent(ServerPlayerEntity player)
+            public boolean onPlayerEvent(ServerPlayer player)
             {
-                handler.call( () -> Collections.singletonList(new EntityValue(player)), player::getCommandSource);
+                return handler.call(() -> Collections.singletonList(new EntityValue(player)), player::createCommandSourceStack);
             }
         };
         public static final Event PLAYER_DROPS_STACK = new Event("player_drops_stack", 1, false)
         {
             @Override
-            public void onPlayerEvent(ServerPlayerEntity player)
+            public boolean onPlayerEvent(ServerPlayer player)
             {
-                handler.call( () -> Collections.singletonList(new EntityValue(player)), player::getCommandSource);
+                return handler.call(() -> Collections.singletonList(new EntityValue(player)), player::createCommandSourceStack);
             }
         };
         public static final Event PLAYER_CHOOSES_RECIPE = new Event("player_chooses_recipe", 3, false)
         {
             @Override
-            public void onRecipeSelected(ServerPlayerEntity player, Identifier recipe, boolean fullStack)
+            public boolean onRecipeSelected(ServerPlayer player, ResourceLocation recipe, boolean fullStack)
             {
-                handler.call( () ->
+                return handler.call(() ->
                         Arrays.asList(
                                 new EntityValue(player),
-                                StringValue.of(NBTSerializableValue.nameFromRegistryId(recipe)),
+                                NBTSerializableValue.nameFromRegistryId(recipe),
                                 BooleanValue.of(fullStack)
-                        ), player::getCommandSource);
+                        ), player::createCommandSourceStack);
             }
         };
         public static final Event PLAYER_SWITCHES_SLOT = new Event("player_switches_slot", 3, false)
         {
             @Override
-            public void onSlotSwitch(ServerPlayerEntity player, int from, int to)
+            public void onSlotSwitch(ServerPlayer player, int from, int to)
             {
-                if (from == to) return; // initial slot update
-                handler.call( () ->
+                if (from == to)
+                {
+                    return; // initial slot update
+                }
+                handler.call(() ->
                         Arrays.asList(
                                 new EntityValue(player),
                                 new NumericValue(from),
                                 new NumericValue(to)
-                        ), player::getCommandSource);
+                        ), player::createCommandSourceStack);
             }
         };
         public static final Event PLAYER_SWAPS_HANDS = new Event("player_swaps_hands", 1, false)
         {
             @Override
-            public void onPlayerEvent(ServerPlayerEntity player)
+            public boolean onPlayerEvent(ServerPlayer player)
             {
-                handler.call( () -> Collections.singletonList(new EntityValue(player)), player::getCommandSource);
+                return handler.call(() -> Collections.singletonList(new EntityValue(player)), player::createCommandSourceStack);
             }
         };
         public static final Event PLAYER_SWINGS_HAND = new Event("player_swings_hand", 2, false)
         {
             @Override
-            public void onHandAction(ServerPlayerEntity player, Hand hand)
+            public void onHandAction(ServerPlayer player, InteractionHand hand)
             {
-                handler.call( () -> Arrays.asList(
-                            new EntityValue(player),
-                            StringValue.of(hand == Hand.MAIN_HAND ? "mainhand" : "offhand")
+                handler.call(() -> Arrays.asList(
+                                new EntityValue(player),
+                                StringValue.of(hand == InteractionHand.MAIN_HAND ? "mainhand" : "offhand")
                         )
-                        , player::getCommandSource);
+                        , player::createCommandSourceStack);
             }
         };
         public static final Event PLAYER_TAKES_DAMAGE = new Event("player_takes_damage", 4, false)
         {
             @Override
-            public void onDamage(Entity target, float amount, DamageSource source)
+            public boolean onDamage(Entity target, float amount, DamageSource source)
             {
-                handler.call( () ->
+                return handler.call(() ->
                         Arrays.asList(
-                                 new EntityValue(target),
-                                 new NumericValue(amount),
-                                 StringValue.of(source.getName()),
-                                 source.getAttacker()==null?Value.NULL:new EntityValue(source.getAttacker())
-                        ), target::getCommandSource);
+                                new EntityValue(target),
+                                new NumericValue(amount),
+                                StringValue.of(source.getMsgId()),
+                                source.getEntity() == null ? Value.NULL : new EntityValue(source.getEntity())
+                        ), target::createCommandSourceStack);
             }
         };
         public static final Event PLAYER_DEALS_DAMAGE = new Event("player_deals_damage", 3, false)
         {
             @Override
-            public void onDamage(Entity target, float amount, DamageSource source)
+            public boolean onDamage(Entity target, float amount, DamageSource source)
             {
-                handler.call( () ->
-                        Arrays.asList(new EntityValue(source.getAttacker()), new NumericValue(amount), new EntityValue(target)),
-                        () -> source.getAttacker().getCommandSource()
+                return handler.call(() ->
+                                Arrays.asList(new EntityValue(source.getEntity()), new NumericValue(amount), new EntityValue(target)),
+                        () -> source.getEntity().createCommandSourceStack()
                 );
             }
         };
         public static final Event PLAYER_COLLIDES_WITH_ENTITY = new Event("player_collides_with_entity", 2, false)
         {
             @Override
-            public void onEntityHandAction(ServerPlayerEntity player, Entity entity, Hand enumhand) {
-                handler.call( () -> Arrays.asList(new EntityValue(player), new EntityValue(entity)), player::getCommandSource);
+            public boolean onEntityHandAction(ServerPlayer player, Entity entity, InteractionHand enumhand)
+            {
+                handler.call(() -> Arrays.asList(new EntityValue(player), new EntityValue(entity)), player::createCommandSourceStack);
+                return false;
             }
         };
 
         public static final Event PLAYER_DIES = new Event("player_dies", 1, false)
         {
             @Override
-            public void onPlayerEvent(ServerPlayerEntity player)
+            public boolean onPlayerEvent(ServerPlayer player)
             {
-                handler.call( () -> Collections.singletonList(new EntityValue(player)), player::getCommandSource);
+                handler.call(() -> Collections.singletonList(new EntityValue(player)), player::createCommandSourceStack);
+                return false;
             }
         };
         public static final Event PLAYER_RESPAWNS = new Event("player_respawns", 1, false)
         {
             @Override
-            public void onPlayerEvent(ServerPlayerEntity player)
+            public boolean onPlayerEvent(ServerPlayer player)
             {
-                handler.call( () -> Collections.singletonList(new EntityValue(player)), player::getCommandSource);
+                handler.call(() -> Collections.singletonList(new EntityValue(player)), player::createCommandSourceStack);
+                return false;
             }
         };
         public static final Event PLAYER_CHANGES_DIMENSION = new Event("player_changes_dimension", 5, false)
         {
             @Override
-            public void onDimensionChange(ServerPlayerEntity player, Vec3d from, Vec3d to, RegistryKey<World> fromDim, RegistryKey<World> dimTo)
+            public void onDimensionChange(ServerPlayer player, Vec3 from, Vec3 to, ResourceKey<Level> fromDim, ResourceKey<Level> dimTo)
             {
                 // eligibility already checked in mixin
                 Value fromValue = ListValue.fromTriple(from.x, from.y, from.z);
-                Value toValue = (to == null)?Value.NULL:ListValue.fromTriple(to.x, to.y, to.z);
-                Value fromDimStr = new StringValue(NBTSerializableValue.nameFromRegistryId(fromDim.getValue()));
-                Value toDimStr = new StringValue(NBTSerializableValue.nameFromRegistryId(dimTo.getValue()));
+                Value toValue = (to == null) ? Value.NULL : ListValue.fromTriple(to.x, to.y, to.z);
+                Value fromDimStr = NBTSerializableValue.nameFromRegistryId(fromDim.location());
+                Value toDimStr = NBTSerializableValue.nameFromRegistryId(dimTo.location());
 
-                handler.call( () -> Arrays.asList(new EntityValue(player), fromValue, fromDimStr, toValue, toDimStr), player::getCommandSource);
+                handler.call(() -> Arrays.asList(new EntityValue(player), fromValue, fromDimStr, toValue, toDimStr), player::createCommandSourceStack);
             }
         };
-        public static final Event PLAYER_CONNECTS = new Event("player_connects", 1, false) {
+        public static final Event PLAYER_CONNECTS = new Event("player_connects", 1, false)
+        {
             @Override
-            public void onPlayerEvent(ServerPlayerEntity player)
+            public boolean onPlayerEvent(ServerPlayer player)
             {
-                handler.call( () -> Collections.singletonList(new EntityValue(player)), player::getCommandSource);
+                handler.call(() -> Collections.singletonList(new EntityValue(player)), player::createCommandSourceStack);
+                return false;
             }
         };
-        public static final Event PLAYER_DISCONNECTS = new Event("player_disconnects", 2, false) {
+        public static final Event PLAYER_DISCONNECTS = new Event("player_disconnects", 2, false)
+        {
             @Override
-            public void onPlayerMessage(ServerPlayerEntity player, String message)
+            public boolean onPlayerMessage(ServerPlayer player, String message)
             {
-                handler.call( () -> Arrays.asList(new EntityValue(player), new StringValue(message)), player::getCommandSource);
+                handler.call(() -> Arrays.asList(new EntityValue(player), new StringValue(message)), player::createCommandSourceStack);
+                return false;
             }
         };
+
+        public static final Event PLAYER_MESSAGE = new Event("player_message", 2, false)
+        {
+            @Override
+            public boolean onPlayerMessage(ServerPlayer player, String message)
+            {
+                return handler.call(() -> Arrays.asList(new EntityValue(player), new StringValue(message)), player::createCommandSourceStack);
+            }
+        };
+
+        public static final Event PLAYER_COMMAND = new Event("player_command", 2, false)
+        {
+            @Override
+            public boolean onPlayerMessage(ServerPlayer player, String message)
+            {
+                return handler.call(() -> Arrays.asList(new EntityValue(player), new StringValue(message)), player::createCommandSourceStack);
+            }
+        };
+
         public static final Event STATISTICS = new Event("statistic", 4, false)
         {
-            private <T> Identifier getStatId(Stat<T> stat)
+            private <T> ResourceLocation getStatId(Stat<T> stat)
             {
-                return stat.getType().getRegistry().getId(stat.getValue());
+                return stat.getType().getRegistry().getKey(stat.getValue());
             }
-            private final Set<Identifier> skippedStats = new HashSet<Identifier>(){{
-                add(Stats.TIME_SINCE_DEATH);
-                add(Stats.TIME_SINCE_REST);
-                //add(Stats.PLAY_ONE_MINUTE);
-                add(Stats.PLAY_TIME);
-                add(Stats.TOTAL_WORLD_TIME);
-            }};
+
+            private final Set<ResourceLocation> skippedStats = Set.of(
+                    Stats.TIME_SINCE_DEATH,
+                    Stats.TIME_SINCE_REST,
+                    Stats.PLAY_TIME,
+                    Stats.TOTAL_WORLD_TIME
+            );
+
             @Override
-            public void onPlayerStatistic(ServerPlayerEntity player, Stat<?> stat, int amount)
+            public void onPlayerStatistic(ServerPlayer player, Stat<?> stat, int amount)
             {
-                Identifier id = getStatId(stat);
-                if (skippedStats.contains(id)) return;
-                handler.call( () -> Arrays.asList(
+                ResourceLocation id = getStatId(stat);
+                if (skippedStats.contains(id))
+                {
+                    return;
+                }
+                Registry<StatType<?>> registry = player.level().registryAccess().registryOrThrow(Registries.STAT_TYPE);
+                handler.call(() -> Arrays.asList(
                         new EntityValue(player),
-                        StringValue.of(NBTSerializableValue.nameFromRegistryId(Registry.STAT_TYPE.getId(stat.getType()))),
-                        StringValue.of(NBTSerializableValue.nameFromRegistryId(id)),
+                        NBTSerializableValue.nameFromRegistryId(registry.getKey(stat.getType())),
+                        NBTSerializableValue.nameFromRegistryId(id),
                         new NumericValue(amount)
-                ), player::getCommandSource);
+                ), player::createCommandSourceStack);
             }
         };
         public static final Event LIGHTNING = new Event("lightning", 2, true)
         {
             @Override
-            public void onWorldEventFlag(ServerWorld world, BlockPos pos, int flag)
+            public void onWorldEventFlag(ServerLevel world, BlockPos pos, int flag)
             {
                 handler.call(
                         () -> Arrays.asList(
                                 new BlockValue(null, world, pos),
-                                flag>0?Value.TRUE:Value.FALSE
-                        ), () -> CarpetServer.minecraft_server.getCommandSource().withWorld(world)
+                                flag > 0 ? Value.TRUE : Value.FALSE
+                        ), () -> world.getServer().createCommandSourceStack().withLevel(world)
                 );
             }
         };
-        public static final Event CARPET_RULE_CHANGES = new Event("carpet_rule_changes", 2, true)
-        {
-            @Override
-            public void onCarpetRuleChanges(ParsedRule<?> rule, ServerCommandSource source)
-            {
-                String identifier = rule.settingsManager.getIdentifier();
-                final String namespace;
-                if (!identifier.equals("carpet")) 
-                {
-                    namespace = identifier+":";
-                } else { namespace = "";}
-                handler.call(
-                        () -> Arrays.asList(
-                                new StringValue(namespace+rule.name),
-                                new StringValue(rule.getAsString())
-                        ), () -> source
-                );
-            }
-        };
+
         //copy of Explosion.getCausingEntity() #TRACK#
         private static LivingEntity getExplosionCausingEntity(Entity entity)
         {
-            if (entity == null)  return null;
-            else if (entity instanceof TntEntity) return ((TntEntity)entity).getCausingEntity();
-            else if (entity instanceof LivingEntity) return (LivingEntity)entity;
-            else if (entity instanceof ProjectileEntity) {
-                Entity owner = ((ProjectileEntity)entity).getOwner();
-                if (owner instanceof LivingEntity) return (LivingEntity)owner;
+            if (entity == null)
+            {
+                return null;
+            }
+            else if (entity instanceof final PrimedTnt tnt)
+            {
+                return tnt.getOwner();
+            }
+            else if (entity instanceof final LivingEntity le)
+            {
+                return le;
+            }
+            else if (entity instanceof final Projectile p)
+            {
+                Entity owner = p.getOwner();
+                if (owner instanceof final LivingEntity le)
+                {
+                    return le;
+                }
             }
             return null;
         }
@@ -900,21 +1051,21 @@ public class CarpetEventServer
         public static final Event EXPLOSION_OUTCOME = new Event("explosion_outcome", 8, true)
         {
             @Override
-            public void onExplosion(ServerWorld world, Entity e,  Supplier<LivingEntity> attacker, double x, double y, double z, float power, boolean createFire, List<BlockPos> affectedBlocks, List<Entity> affectedEntities, Explosion.DestructionType type)
+            public void onExplosion(ServerLevel world, Entity e, Supplier<LivingEntity> attacker, double x, double y, double z, float power, boolean createFire, List<BlockPos> affectedBlocks, List<Entity> affectedEntities, Explosion.BlockInteraction type)
             {
                 handler.call(
                         () -> Arrays.asList(
                                 ListValue.fromTriple(x, y, z),
                                 NumericValue.of(power),
                                 EntityValue.of(e),
-                                EntityValue.of(attacker!= null?attacker.get():Event.getExplosionCausingEntity(e)),
+                                EntityValue.of(attacker != null ? attacker.get() : Event.getExplosionCausingEntity(e)),
                                 StringValue.of(type.name().toLowerCase(Locale.ROOT)),
                                 BooleanValue.of(createFire),
-                                new ListValue(affectedBlocks.stream().filter(b -> !world.isAir(b)). map( // da heck they send air blocks
-                                        b -> new BlockValue(world.getBlockState(b),world,b)
-                                ).collect(Collectors.toList())),
-                                new ListValue(affectedEntities.stream().map(EntityValue::of).collect(Collectors.toList()))
-                        ), () -> CarpetServer.minecraft_server.getCommandSource().withWorld(world)
+                                ListValue.wrap(affectedBlocks.stream().filter(b -> !world.isEmptyBlock(b)).map( // da heck they send air blocks
+                                        b -> new BlockValue(world.getBlockState(b), world, b)
+                                )),
+                                ListValue.wrap(affectedEntities.stream().map(EntityValue::of))
+                        ), () -> world.getServer().createCommandSourceStack().withLevel(world)
                 );
             }
         };
@@ -923,17 +1074,17 @@ public class CarpetEventServer
         public static final Event EXPLOSION = new Event("explosion", 6, true)
         {
             @Override
-            public void onExplosion(ServerWorld world, Entity e, Supplier<LivingEntity> attacker, double x, double y, double z, float power, boolean createFire, List<BlockPos> affectedBlocks, List<Entity> affectedEntities, Explosion.DestructionType type)
+            public void onExplosion(ServerLevel world, Entity e, Supplier<LivingEntity> attacker, double x, double y, double z, float power, boolean createFire, List<BlockPos> affectedBlocks, List<Entity> affectedEntities, Explosion.BlockInteraction type)
             {
                 handler.call(
                         () -> Arrays.asList(
                                 ListValue.fromTriple(x, y, z),
                                 NumericValue.of(power),
                                 EntityValue.of(e),
-                                EntityValue.of(attacker!= null?attacker.get():Event.getExplosionCausingEntity(e)),
+                                EntityValue.of(attacker != null ? attacker.get() : Event.getExplosionCausingEntity(e)),
                                 StringValue.of(type.name().toLowerCase(Locale.ROOT)),
                                 BooleanValue.of(createFire)
-                        ), () -> CarpetServer.minecraft_server.getCommandSource().withWorld(world)
+                        ), () -> world.getServer().createCommandSourceStack().withLevel(world)
                 );
             }
         };
@@ -941,68 +1092,60 @@ public class CarpetEventServer
         @Deprecated
         public static String getEntityLoadEventName(EntityType<? extends Entity> et)
         {
-            return "entity_loaded_" + ValueConversions.of(Registry.ENTITY_TYPE.getId(et)).getString();
+            return "entity_loaded_" + ValueConversions.of(BuiltInRegistries.ENTITY_TYPE.getKey(et)).getString();
         }
 
         @Deprecated
-        public static final Map<EntityType<? extends Entity>, Event> ENTITY_LOAD= new HashMap<>()
-        {{
-            EntityType.get("zombie");
-            Registry.ENTITY_TYPE.forEach(et -> {
-                put(et, new Event(getEntityLoadEventName(et), 1, true, false)
+        public static final Map<EntityType<? extends Entity>, Event> ENTITY_LOAD = BuiltInRegistries.ENTITY_TYPE
+                .stream()
+                .map(et -> Map.entry(et, new Event(getEntityLoadEventName(et), 1, true, false)
                 {
                     @Override
                     public void onEntityAction(Entity entity, boolean created)
                     {
                         handler.call(
                                 () -> Collections.singletonList(new EntityValue(entity)),
-                                () -> CarpetServer.minecraft_server.getCommandSource().withWorld((ServerWorld) entity.world).withLevel(CarpetSettings.runPermissionLevel)
+                                () -> entity.getServer().createCommandSourceStack().withLevel((ServerLevel) entity.level()).withPermission(Vanilla.MinecraftServer_getRunPermissionLevel(entity.getServer()))
                         );
                     }
-                });
-            });
-        }};
+                })).collect(Collectors.toUnmodifiableMap(Map.Entry::getKey, Map.Entry::getValue));
 
         public static String getEntityHandlerEventName(EntityType<? extends Entity> et)
         {
-            return "entity_handler_" + ValueConversions.of(Registry.ENTITY_TYPE.getId(et)).getString();
+            return "entity_handler_" + ValueConversions.of(BuiltInRegistries.ENTITY_TYPE.getKey(et)).getString();
         }
 
-        public static final Map<EntityType<? extends Entity>, Event> ENTITY_HANDLER= new HashMap<>()
-        {{
-            EntityType.get("zombie");
-            Registry.ENTITY_TYPE.forEach(et -> {
-                put(et, new Event(getEntityHandlerEventName(et), 2, true, false)
+        public static final Map<EntityType<? extends Entity>, Event> ENTITY_HANDLER = BuiltInRegistries.ENTITY_TYPE
+                .stream()
+                .map(et -> Map.entry(et, new Event(getEntityHandlerEventName(et), 2, true, false)
                 {
                     @Override
                     public void onEntityAction(Entity entity, boolean created)
                     {
                         handler.call(
                                 () -> Arrays.asList(new EntityValue(entity), BooleanValue.of(created)),
-                                () -> CarpetServer.minecraft_server.getCommandSource().withWorld((ServerWorld) entity.world).withLevel(CarpetSettings.runPermissionLevel)
+                                () -> entity.getServer().createCommandSourceStack().withLevel((ServerLevel) entity.level()).withPermission(Vanilla.MinecraftServer_getRunPermissionLevel(entity.getServer()))
                         );
                     }
-                });
-            });
-        }};
+                }))
+                .collect(Collectors.toUnmodifiableMap(Map.Entry::getKey, Map.Entry::getValue));
 
         // on projectile thrown (arrow from bows, crossbows, tridents, snoballs, e-pearls
 
         public final String name;
 
         public final CallbackList handler;
-        @Deprecated
-        public final boolean globalOnly;
         public final boolean isPublic; // public events can be targetted with __on_<event> defs
+
         public Event(String name, int reqArgs, boolean isGlobalOnly)
         {
             this(name, reqArgs, isGlobalOnly, true);
         }
+
         public Event(String name, int reqArgs, boolean isGlobalOnly, boolean isPublic)
         {
             this.name = name;
             this.handler = new CallbackList(reqArgs, true, isGlobalOnly);
-            this.globalOnly = isGlobalOnly;
             this.isPublic = isPublic;
             byName.put(name, this);
         }
@@ -1011,33 +1154,42 @@ public class CarpetEventServer
         {
             List<CarpetEventServer.Event> eventList = new ArrayList<>(CarpetEventServer.Event.byName.values());
             eventList.addAll(server.events.customEvents.values());
-            if (predicate == null) return eventList;
-            return eventList.stream().filter(predicate).collect(Collectors.toList());
+            if (predicate == null)
+            {
+                return eventList;
+            }
+            return eventList.stream().filter(predicate).toList();
         }
 
         public static Event getEvent(String name, CarpetScriptServer server)
         {
-            if (byName.containsKey(name)) return byName.get(name);
+            if (byName.containsKey(name))
+            {
+                return byName.get(name);
+            }
             return server.events.customEvents.get(name);
         }
 
         public static Event getOrCreateCustom(String name, CarpetScriptServer server)
         {
             Event event = getEvent(name, server);
-            if (event != null) return event;
+            if (event != null)
+            {
+                return event;
+            }
             return new Event(name, server);
         }
 
         public static void removeAllHostEvents(CarpetScriptHost host)
         {
             byName.values().forEach((e) -> e.handler.removeAllCalls(host));
-            host.getScriptServer().events.customEvents.values().forEach((e) -> e.handler.removeAllCalls(host));
+            host.scriptServer().events.customEvents.values().forEach((e) -> e.handler.removeAllCalls(host));
         }
 
         public static void transferAllHostEventsToChild(CarpetScriptHost host)
         {
             byName.values().forEach((e) -> e.handler.createChildEvents(host));
-            host.getScriptServer().events.customEvents.values().forEach((e) -> e.handler.createChildEvents(host));
+            host.scriptServer().events.customEvents.values().forEach((e) -> e.handler.createChildEvents(host));
         }
 
         public static void clearAllBuiltinEvents()
@@ -1050,7 +1202,6 @@ public class CarpetEventServer
         {
             this.name = name;
             this.handler = new CallbackList(1, false, false);
-            this.globalOnly = false;
             this.isPublic = true;
             server.events.customEvents.put(name, this);
         }
@@ -1062,79 +1213,169 @@ public class CarpetEventServer
         {
             return handler.callList.size() > 0;
         }
-        public boolean deprecated() {return false;}
-        //stubs for calls just to ease calls in vanilla code so they don't need to deal with scarpet value types
-        public void onTick() { }
-        public void onChunkEvent(ServerWorld world, ChunkPos chPos, boolean generated) { }
-        public void onPlayerEvent(ServerPlayerEntity player) { }
-        public void onPlayerMessage(ServerPlayerEntity player, String message) { }
-        public void onPlayerStatistic(ServerPlayerEntity player, Stat<?> stat, int amount) { }
-        public void onMountControls(ServerPlayerEntity player, float strafeSpeed, float forwardSpeed, boolean jumping, boolean sneaking) { }
-        public void onItemAction(ServerPlayerEntity player, Hand enumhand, ItemStack itemstack) { }
-        public void onBlockAction(ServerPlayerEntity player, BlockPos blockpos, Direction facing) { }
-        public void onBlockHit(ServerPlayerEntity player, Hand enumhand, BlockHitResult hitRes) { }
-        public void onBlockBroken(ServerPlayerEntity player, BlockPos pos, BlockState previousBS) { }
-        public void onBlockPlaced(ServerPlayerEntity player, BlockPos pos, Hand enumhand, ItemStack itemstack) { }
-        public void onEntityHandAction(ServerPlayerEntity player, Entity entity, Hand enumhand) { }
-        public void onHandAction(ServerPlayerEntity player, Hand enumhand) { }
-        public void onEntityAction(Entity entity, boolean created) { }
-        public void onDimensionChange(ServerPlayerEntity player, Vec3d from, Vec3d to, RegistryKey<World> fromDim, RegistryKey<World> dimTo) {}
-        public void onDamage(Entity target, float amount, DamageSource source) { }
-        public void onRecipeSelected(ServerPlayerEntity player, Identifier recipe, boolean fullStack) {}
-        public void onSlotSwitch(ServerPlayerEntity player, int from, int to) {}
-        public void onTrade(ServerPlayerEntity player, Merchant merchant, TradeOffer tradeOffer) {}
 
-        public void onExplosion(ServerWorld world, Entity e,  Supplier<LivingEntity> attacker, double x, double y, double z, float power, boolean createFire, List<BlockPos> affectedBlocks, List<Entity> affectedEntities, Explosion.DestructionType type) { }
-        public void onWorldEvent(ServerWorld world, BlockPos pos) { }
-        public void onWorldEventFlag(ServerWorld world, BlockPos pos, int flag) { }
-        public void onCarpetRuleChanges(ParsedRule<?> rule, ServerCommandSource source) { }
-        public void onCustomPlayerEvent(ServerPlayerEntity player, Object ... args)
+        public boolean deprecated()
         {
-            if (handler.reqArgs != (args.length+1))
-                throw new InternalExpressionException("Expected "+handler.reqArgs+" arguments for "+name+", got "+(args.length+1));
+            return false;
+        }
+
+        //stubs for calls just to ease calls in vanilla code so they don't need to deal with scarpet value types
+        public void onTick(MinecraftServer server)
+        {
+        }
+
+        public void onChunkEvent(ServerLevel world, ChunkPos chPos, boolean generated)
+        {
+        }
+
+        public boolean onPlayerEvent(ServerPlayer player)
+        {
+            return false;
+        }
+
+        public boolean onPlayerMessage(ServerPlayer player, String message)
+        {
+            return false;
+        }
+
+        public void onPlayerStatistic(ServerPlayer player, Stat<?> stat, int amount)
+        {
+        }
+
+        public void onMountControls(ServerPlayer player, float strafeSpeed, float forwardSpeed, boolean jumping, boolean sneaking)
+        {
+        }
+
+        public boolean onItemAction(ServerPlayer player, InteractionHand enumhand, ItemStack itemstack)
+        {
+            return false;
+        }
+
+        public boolean onBlockAction(ServerPlayer player, BlockPos blockpos, Direction facing)
+        {
+            return false;
+        }
+
+        public boolean onBlockHit(ServerPlayer player, InteractionHand enumhand, BlockHitResult hitRes)
+        {
+            return false;
+        }
+
+        public boolean onBlockBroken(ServerPlayer player, BlockPos pos, BlockState previousBS)
+        {
+            return false;
+        }
+
+        public boolean onBlockPlaced(ServerPlayer player, BlockPos pos, InteractionHand enumhand, ItemStack itemstack)
+        {
+            return false;
+        }
+
+        public boolean onEntityHandAction(ServerPlayer player, Entity entity, InteractionHand enumhand)
+        {
+            return false;
+        }
+
+        public void onHandAction(ServerPlayer player, InteractionHand enumhand)
+        {
+        }
+
+        public void onEntityAction(Entity entity, boolean created)
+        {
+        }
+
+        public void onDimensionChange(ServerPlayer player, Vec3 from, Vec3 to, ResourceKey<Level> fromDim, ResourceKey<Level> dimTo)
+        {
+        }
+
+        public boolean onDamage(Entity target, float amount, DamageSource source)
+        {
+            return false;
+        }
+
+        public boolean onRecipeSelected(ServerPlayer player, ResourceLocation recipe, boolean fullStack)
+        {
+            return false;
+        }
+
+        public void onSlotSwitch(ServerPlayer player, int from, int to)
+        {
+        }
+
+        public void onTrade(ServerPlayer player, Merchant merchant, MerchantOffer tradeOffer)
+        {
+        }
+
+        public void onExplosion(ServerLevel world, Entity e, Supplier<LivingEntity> attacker, double x, double y, double z, float power, boolean createFire, List<BlockPos> affectedBlocks, List<Entity> affectedEntities, Explosion.BlockInteraction type)
+        {
+        }
+
+        public void onWorldEvent(ServerLevel world, BlockPos pos)
+        {
+        }
+
+        public void onWorldEventFlag(ServerLevel world, BlockPos pos, int flag)
+        {
+        }
+
+        public void handleAny(Object... args)
+        {
+        }
+
+        public void onCustomPlayerEvent(ServerPlayer player, Object... args)
+        {
+            if (handler.reqArgs != (args.length + 1))
+            {
+                throw new InternalExpressionException("Expected " + handler.reqArgs + " arguments for " + name + ", got " + (args.length + 1));
+            }
             handler.call(
                     () -> {
                         List<Value> valArgs = new ArrayList<>();
                         valArgs.add(EntityValue.of(player));
-                        for (Object o: args)
+                        for (Object o : args)
                         {
-                            valArgs.add(ValueConversions.guess(player.getServerWorld(), o));
+                            valArgs.add(ValueConversions.guess(player.serverLevel(), o));
                         }
                         return valArgs;
-                    }, player::getCommandSource
+                    }, player::createCommandSourceStack
             );
         }
-        public void onCustomWorldEvent(ServerWorld world, Object ... args)
+
+        public void onCustomWorldEvent(ServerLevel world, Object... args)
         {
             if (handler.reqArgs != args.length)
-                throw new InternalExpressionException("Expected "+handler.reqArgs+" arguments for "+name+", got "+args.length);
+            {
+                throw new InternalExpressionException("Expected " + handler.reqArgs + " arguments for " + name + ", got " + args.length);
+            }
             handler.call(
                     () -> {
                         List<Value> valArgs = new ArrayList<>();
-                        for (Object o: args)
+                        for (Object o : args)
                         {
                             valArgs.add(ValueConversions.guess(world, o));
                         }
                         return valArgs;
-                    }, () -> CarpetServer.minecraft_server.getCommandSource().withWorld(world)
+                    }, () -> world.getServer().createCommandSourceStack().withLevel(world)
             );
         }
     }
 
 
-    public CarpetEventServer(MinecraftServer server)
+    public CarpetEventServer(CarpetScriptServer scriptServer)
     {
-        this.server = server;
+        this.scriptServer = scriptServer;
         Event.clearAllBuiltinEvents();
     }
 
     public void tick()
     {
-        if (!TickSpeed.process_entities)
+        if (Carpet.isTickProcessingPaused(scriptServer.server))
+        {
             return;
+        }
         Iterator<ScheduledCall> eventIterator = scheduledCalls.iterator();
         List<ScheduledCall> currentCalls = new ArrayList<>();
-        while(eventIterator.hasNext())
+        while (eventIterator.hasNext())
         {
             ScheduledCall call = eventIterator.next();
             call.dueTime--;
@@ -1144,26 +1385,85 @@ public class CarpetEventServer
                 eventIterator.remove();
             }
         }
-        for (ScheduledCall call: currentCalls)
+        for (ScheduledCall call : currentCalls)
         {
             call.execute();
         }
 
     }
+
     public void scheduleCall(CarpetContext context, FunctionValue function, List<Value> args, long due)
     {
         scheduledCalls.add(new ScheduledCall(context, function, args, due));
     }
 
-    public boolean addEventFromCommand(ServerCommandSource source, String event, String host, String funName)
+    public void runScheduledCall(BlockPos origin, CommandSourceStack source, String hostname, CarpetScriptHost host, FunctionValue udf, List<Value> argv)
     {
-        Event ev = Event.getEvent(event, CarpetServer.scriptServer);
+        if (hostname != null && !scriptServer.modules.containsKey(hostname)) // well - scheduled call app got unloaded
+        {
+            return;
+        }
+        try
+        {
+            host.callUDF(origin, source, udf, argv);
+        }
+        catch (NullPointerException | InvalidCallbackException | IntegrityException ignored)
+        {
+        }
+    }
+
+    public CallbackResult runEventCall(CommandSourceStack sender, String hostname, String optionalTarget, FunctionValue udf, List<Value> argv)
+    {
+        CarpetScriptHost appHost = scriptServer.getAppHostByName(hostname);
+        // no such app
+        if (appHost == null)
+        {
+            return CallbackResult.FAIL;
+        }
+        // dummy call for player apps that reside on the global copy - do not run them, but report as passes.
+        if (appHost.isPerUser() && optionalTarget == null)
+        {
+            return CallbackResult.PASS;
+        }
+        ServerPlayer target = null;
+        if (optionalTarget != null)
+        {
+            target = sender.getServer().getPlayerList().getPlayerByName(optionalTarget);
+            if (target == null)
+            {
+                return CallbackResult.FAIL;
+            }
+        }
+        CommandSourceStack source = sender.withPermission(Vanilla.MinecraftServer_getRunPermissionLevel(sender.getServer()));
+        CarpetScriptHost executingHost = appHost.retrieveForExecution(sender, target);
+        if (executingHost == null)
+        {
+            return CallbackResult.FAIL;
+        }
+        try
+        {
+            Value returnValue = executingHost.callUDF(source, udf, argv);
+            return returnValue instanceof StringValue && returnValue.getString().equals("cancel") ? CallbackResult.CANCEL : CallbackResult.SUCCESS;
+        }
+        catch (NullPointerException | InvalidCallbackException | IntegrityException error)
+        {
+            CarpetScriptServer.LOG.error("Got exception when running event call ", error);
+            return CallbackResult.FAIL;
+        }
+    }
+
+    public boolean addEventFromCommand(CommandSourceStack source, String event, String host, String funName)
+    {
+        Event ev = Event.getEvent(event, scriptServer);
         if (ev == null)
         {
             return false;
         }
-        boolean added = ev.handler.addFromExternal(source, host, funName, h -> onEventAddedToHost(ev, h));
-        if (added) Messenger.m(source, "gi Added " + funName + " to " + event);
+        boolean added = ev.handler.addFromExternal(source, host, funName, h -> onEventAddedToHost(ev, h), scriptServer);
+        if (added)
+        {
+            Carpet.Messenger_message(source, "gi Added " + funName + " to " + event);
+        }
         return added;
     }
 
@@ -1172,56 +1472,68 @@ public class CarpetEventServer
         // this is globals only
         Event ev = Event.byName.get(event);
         onEventAddedToHost(ev, host);
-        boolean success =  ev.handler.addEventCallInternal(host, function, args==null?NOARGS:args);
-        if (!success) throw new InternalExpressionException("Global event "+event+" requires "+ev.handler.reqArgs+", not "+(function.getNumParams()-((args==null)?0:args.size())));
+        boolean success = ev.handler.addEventCallInternal(host, function, args == null ? NOARGS : args);
+        if (!success)
+        {
+            throw new InternalExpressionException("Global event " + event + " requires " + ev.handler.reqArgs + ", not " + (function.getNumParams() - ((args == null) ? 0 : args.size())));
+        }
     }
 
     public boolean handleCustomEvent(String event, CarpetScriptHost host, FunctionValue function, List<Value> args)
     {
-        Event ev = Event.getOrCreateCustom(event, host.getScriptServer());
+        Event ev = Event.getOrCreateCustom(event, scriptServer);
         onEventAddedToHost(ev, host);
-        return ev.handler.addEventCallInternal(host, function, args==null?NOARGS:args);
+        return ev.handler.addEventCallInternal(host, function, args == null ? NOARGS : args);
     }
 
-    public int signalEvent(String event, CarpetContext cc, ServerPlayerEntity optionalTarget, List<Value> callArgs)
+    public int signalEvent(String event, CarpetContext cc, @Nullable ServerPlayer target, List<Value> callArgs)
     {
-        Event ev = Event.getEvent(event, ((CarpetScriptHost)cc.host).getScriptServer());
-        if (ev == null) return -1;
-        return ev.handler.signal(cc.s, optionalTarget, callArgs);
+        Event ev = Event.getEvent(event, ((CarpetScriptHost) cc.host).scriptServer());
+        return ev == null ? -1 : ev.handler.signal(cc.source(), target, callArgs);
     }
 
     private void onEventAddedToHost(Event event, ScriptHost host)
     {
-        if (event.deprecated()) host.issueDeprecation(event.name+" event");
-        //return !(event.globalOnly && (host.perUser || host.parent != null));
+        if (event.deprecated())
+        {
+            host.issueDeprecation(event.name + " event");
+        }
+        event.handler.sortByPriority(this.scriptServer);
     }
 
-    public boolean removeEventFromCommand(ServerCommandSource source, String event, String funName)
+    public boolean removeEventFromCommand(CommandSourceStack source, String event, String funName)
     {
-        Event ev = Event.getEvent(event, CarpetServer.scriptServer);
+        Event ev = Event.getEvent(event, scriptServer);
         if (ev == null)
         {
-            Messenger.m(source, "r Unknown event: " + event);
+            Carpet.Messenger_message(source, "r Unknown event: " + event);
             return false;
         }
         Callback.Signature call = Callback.fromString(funName);
         ev.handler.removeEventCall(call.host, call.target, call.function);
         // could verified if actually removed
-        Messenger.m(source, "gi Removed event: " + funName + " from "+event);
+        Carpet.Messenger_message(source, "gi Removed event: " + funName + " from " + event);
         return true;
     }
+
     public boolean removeBuiltInEvent(String event, CarpetScriptHost host)
     {
-        Event ev = Event.getEvent(event, host.getScriptServer());
-        if (ev == null) return false;
+        Event ev = Event.getEvent(event, host.scriptServer());
+        if (ev == null)
+        {
+            return false;
+        }
         ev.handler.removeAllCalls(host);
         return true;
     }
 
     public void removeBuiltInEvent(String event, CarpetScriptHost host, String funName)
     {
-        Event ev = Event.getEvent(event, host.getScriptServer());
-        if (ev != null) ev.handler.removeEventCall(host.getName(), host.user, funName);
+        Event ev = Event.getEvent(event, host.scriptServer());
+        if (ev != null)
+        {
+            ev.handler.removeEventCall(host.getName(), host.user, funName);
+        }
     }
 
     public void removeAllHostEvents(CarpetScriptHost host)
@@ -1229,19 +1541,13 @@ public class CarpetEventServer
         // remove event handlers
         Event.removeAllHostEvents(host);
         if (host.isPerUser())
-            for (ScriptHost child: host.userHosts.values()) Event.removeAllHostEvents((CarpetScriptHost) child);
+        {
+            for (ScriptHost child : host.userHosts.values())
+            {
+                Event.removeAllHostEvents((CarpetScriptHost) child);
+            }
+        }
         // remove scheduled calls
         scheduledCalls.removeIf(sc -> sc.host != null && sc.host.equals(host.getName()));
-    }
-
-    private Pair<String,String> decodeCallback(String funName)
-    {
-        Pattern find = Pattern.compile("(\\w+)\\(from (\\w+)\\)");
-        Matcher matcher = find.matcher(funName);
-        if(matcher.matches())
-        {
-            return Pair.of(matcher.group(2), matcher.group(1));
-        }
-        return Pair.of(null, funName);
     }
 }

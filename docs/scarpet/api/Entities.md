@@ -73,14 +73,14 @@ the center point/area. Uses the same `type` selectors as `entities_list`.
 also be represented as a block, in this case the search box will be centered on the middle of the block, or an entity - in this case
 entire bounding box of the entity serves as a 'center' of search which is then expanded in all directions with the `'distance'` vector.
 
-In any case - returns all entities which bounding box collides with the bounding box defined by `'center'` and `'disteance'`.
+In any case - returns all entities which bounding box collides with the bounding box defined by `'center'` and `'distance'`.
 
 entity_area is simpler than `entity_selector` and runs about 20% faster, but is limited to predefined selectors and 
 cuboid search area.
 
 ### `entity_selector(selector)`
 
-Returns entities satisifying given vanilla entity selector. Most complex among all the methods of selecting entities, 
+Returns entities satisfying given vanilla entity selector. Most complex among all the methods of selecting entities, 
 but the most capable. Selectors are cached so it should be as fast as other methods of selecting entities. Unlike other
 entities fetching / filtering method, this one doesn't guarantee to return entities from current dimension, since
 selectors can return any loaded entity in the world.
@@ -111,7 +111,7 @@ Boolean. True if the entity is removed.
 
 ### `query(e, 'id')`
 
-Returns numerical id of the entity. Most efficient way to keep track of entites in a script. 
+Returns numerical id of the entity. Most efficient way to keep track of entities in a script. 
 Ids are only unique within current game session (ids are not preserved between restarts), 
 and dimension (each dimension has its own ids which can overlap).
 
@@ -161,7 +161,7 @@ Respective component of the entity's motion vector
 
 ### `query(e, 'on_ground')`
 
-Returns `true` if en entity is standing on firm ground and falling down due to that.
+Returns `true` if an entity is standing on firm ground and falling down due to that.
 
 ### `query(e, 'name'), query(e, 'display_name'), query(e, 'custom_name'), query(e, 'type')`
 
@@ -202,11 +202,23 @@ List of entities riding the entity.
 
 Entity that `e` rides.
 
-###  `query(e, 'scoreboard_tags')`, `query(e, 'tags')`(deprecated)
+### `query(e, 'unmountable')`
+
+Boolean, true if the entity cannot be mounted.
+
+### `(deprecated) query(e, 'tags')`
+
+Deprecated by `query(e, 'scoreboard_tags')`
+
+### `query(e, 'scoreboard_tags')`
 
 List of entity's scoreboard tags.
 
-### `query(e, 'has_scoreboard_tag',tag)`, `query(e, 'has_tag',tag)`(deprecated)
+### `(deprecated) query(e, 'has_tag',tag)`
+
+Deprecated by `query(e, 'has_scoreboard_tag',tag)`
+
+### `query(e, 'has_scoreboard_tag',tag)`
 
 Boolean, true if the entity is marked with a `tag` scoreboad tag.
 
@@ -226,6 +238,14 @@ Boolean, true if the entity is burning.
 
 Number of remaining ticks of being on fire.
 
+### `query(e, 'is_freezing')`
+
+Boolean, true if the entity is freezing.
+
+### `query(e, 'frost')`
+
+Number of remaining ticks of being frozen.
+
 ### `query(e, 'silent')`
 
 Boolean, true if the entity is silent.
@@ -241,6 +261,10 @@ Boolean, true if the entity is invulnerable.
 ### `query(e, 'immune_to_fire')`
 
 Boolean, true if the entity is immune to fire.
+
+### `query(e, 'immune_to_frost')`
+
+Boolean, true if the entity is immune to frost.
 
 ### `query(e, 'dimension')`
 
@@ -280,7 +304,17 @@ Number of ticks an entity sits in a portal.
 
 ### `query(e, 'item')`
 
-The item triple (name, count, nbt) if its an item entity, `null` otherwise.
+The item triple (name, count, nbt) if its an item or item frame entity, `null` otherwise.
+
+### `query(e, 'offering_flower')`
+
+Whether the given iron golem has a red flower in their hand. returns null for all other entities
+
+
+### `query(e, 'blue_skull')`
+
+Whether the given wither skull entity is blue. returns null for all other entities
+
 
 ### `query(e, 'count')`
 
@@ -360,7 +394,7 @@ Returns `null` if the argument is not a player, otherwise:
 *   `multiplayer`: for players on a dedicated server
 *   `lan_host`: for singleplayer owner that opened the game to LAN
 *   `lan_player`: for all other players that connected to a LAN host
-*   `fake`: any carpet-spanwed fake player
+*   `fake`: any carpet-spawned fake player
 *   `shadow`: any carpet-shadowed real player
 *   `realms`: ?
 
@@ -400,6 +434,30 @@ query(p,'effect','resistance')  => null
 
 Number indicating remaining entity health, or `null` if not applicable.
 
+### `query(e, 'may_fly')`
+
+Returns a boolean indicating if the player can fly.
+
+### `query(e, 'flying')`
+
+Returns a boolean indicating if the player is flying.
+
+### `query(e, 'may_build')`
+
+Returns a boolean indicating if the player is allowed to place blocks.
+
+### `query(e, 'insta_build')`
+
+Returns a boolean indicating if the player can place blocks without consuming the item and if the player can shoot arrows without having them in the inventory.
+
+### `query(e, 'fly_speed')`
+
+Returns a number indicating the speed at which the player moves while flying.
+
+### `query(e, 'walk_speed')`
+
+Returns a number indicating the speed at which the player moves while walking.
+
 ### `query(e, 'hunger')`
 ### `query(e, 'saturation')`
 ### `query(e, 'exhaustion')`
@@ -408,19 +466,19 @@ Retrieves player hunger related information. For non-players, returns `null`.
 
 ### `query(e, 'absorption')`
 
-Gets the absorption of the player (yellow hearts, e.g when having a golden apple.)
+Gets the absorption of the player (yellow hearts, e.g. when having a golden apple.)
 
-### `query(e,'xp')`
-### `query(e,'xp_level')`
-### `query(e,'xp_progress')`
-### `query(e,'score')`
+### `query(e, 'xp')`
+### `query(e, 'xp_level')`
+### `query(e, 'xp_progress')`
+### `query(e, 'score')`
 
 Numbers related to player's xp. `xp` is the overall xp player has, `xp_level` is the levels seen in the hotbar,
 `xp_progress` is a float between 0 and 1 indicating the percentage of the xp bar filled, and `score` is the number displayed upon death 
 
 ### `query(e, 'air')`
 
-Number indicating remaining entity health, or `null` if not applicable.
+Number indicating remaining entity air, or `null` if not applicable.
 
 ### `query(e, 'language')`
 
@@ -560,10 +618,7 @@ type objects via `get, put, has, delete`, so try to use API calls first for that
 
 ## Entity Modification
 
-Like with entity querying, entity modifications happen through one function. Most position and movements modifications 
-don't work currently on players as their position is controlled by clients.
-
-Currently there is no ability to modify NBT directly, but you could always use `run('data modify entity ...')`.
+Like with entity querying, entity modifications happen through one function.
 
 ### `modify(e, 'remove')`
 
@@ -607,7 +662,7 @@ Moves the entity by a vector from its current location.
 
 Sets the motion vector (where and how much entity is moving).
 
-### `modify(e, 'motion_z', x), modify(e, 'motion_y', y), modify(e, 'motion_z', z)`
+### `modify(e, 'motion_x', x), modify(e, 'motion_y', y), modify(e, 'motion_z', z)`
 
 Sets the corresponding component of the motion vector.
 
@@ -624,6 +679,18 @@ if the custom name is always visible, even through blocks.
 
 Sets the entity persistence tag to `true` (default) or `false`. Only affects mobs. Persistent mobs
 don't despawn and don't count towards the mobcap.
+
+### `modify(e, 'item', item_triple)`
+
+Sets the item for the item or item frame entity. (The item triple is a list of `[item_name, count, nbt]`, or just an item name.)
+
+### `modify(e, 'offering_flower', bool)`
+
+Sets if the iron golem has a red flower in hand.
+
+### `modify(e, 'blue_skull', bool)`
+
+Sets whether the wither skull entity is blue.
 
 ### `modify(e, 'age', number)`
 
@@ -657,6 +724,10 @@ Dismounts riding entity.
 ### `modify(e, 'mount', other)`
 
 Mounts the entity to the `other`.
+
+### `modify(e, 'unmountable', boolean)`
+
+Denies or allows an entity to be mounted.
 
 ### `modify(e, 'drop_passengers')`
 
@@ -692,6 +763,38 @@ players, since they are controlled client side.
 Applies status effect to the living entity. Takes several optional parameters, which default to `0`, `true`, 
 `true` and `false`. If no duration is specified, or if it's null or 0, the effect is removed. If name is not specified,
 it clears all effects.
+
+### `modify(e, 'health', float)`
+
+Modifies the health of an entity.
+
+### `modify(e, 'may_fly', boolean)`
+
+Allows or denies the player the ability to fly. If the player is flying and the ability is removed, the player will stop flying.
+
+### `modify(e, 'flying', boolean)`
+
+Changes the flight status of the player (if it is flying or not).
+
+### `modify(e, 'may_build', boolean)`
+
+Allows or denies the player the ability to place blocks.
+
+### `modify(e, 'insta_build', boolean)`
+
+Allows or denies the player to place blocks without reducing the item count of the used stack and to shoot arrows without having them in the inventory.
+
+### `modify(e, 'fly_speed', float)`
+
+Modifies the value of the speed at which the player moves while flying.
+
+### `modify(e, 'walk_speed', float)`
+
+Modifies the value of the speed at which the player moves while walking.
+
+### `modify(e, 'selected_slot', int)`
+
+Changes player's selected slot.
 
 ### `modify(e, 'home', null), modify(e, 'home', block, distance?), modify(e, 'home', x, y, z, distance?)`
 
@@ -746,6 +849,10 @@ Toggles invulnerability for the entity.
 
 Will set entity on fire for `ticks` ticks. Set to 0 to extinguish.
 
+### `modify(e, 'frost', ticks)`
+
+Will give entity frost for `ticks` ticks. Set to 0 to unfreeze.
+
 ### `modify(e, 'hunger', value)`
 ### `modify(e, 'saturation', value)`
 ### `modify(e, 'exhaustion', value)`
@@ -768,7 +875,7 @@ maybe you will get a double, who knows.
 
 ### `modify(e, 'air', ticks)`
 
-Modifies entity air
+Modifies entity air.
 
 ### `modify(e, 'add_exhaustion', value)`
 
@@ -801,6 +908,7 @@ defining the callback with `entity_event`.
 The following events can be handled by entities:
 
 *   `'on_tick'`: executes every tick right before the entity is ticked in the game. Required arguments: `entity`
+*   `'on_move'`: executes every time an entity changes position, invoked just after it has been moved to the new position. Required arguments: `entity, velocity, pos1, pos2`
 *   `'on_death'`: executes once when a living entity dies. Required arguments: `entity, reason`
 *   `'on_removed'`: execute once when an entity is removed. Required arguments: `entity`
 *   `'on_damaged'`: executed every time a living entity is about to receive damage.
@@ -815,21 +923,24 @@ In case you want to pass an event handler that is not defined in your module, pl
 
 ### `entity_load_handler(descriptor / descriptors, function)`, `entity_load_handler(descriptor / descriptors, call_name, ... args?)`
 
-Attaches a callback to when any entity matching the following type / types is loaded in the game, allowing to grab a handle
+Attaches a callback to trigger when any entity matching the following type / types is loaded in the game, allowing to grab a handle
 to an entity right when it is loaded to the world without querying them every tick. Callback expects two parameters - the entity,
-and a boolean indicating if the entity was newly created(`true`) or just loaded from disk. Single argument functions accepting
+and a boolean value indicating if the entity was newly created(`true`) or just loaded from disk. Single argument functions accepting
 only entities are allowed, but deprecated and will be removed at some point.
 
 If callback is `null`, then the current entity handler, if present, is removed. Consecutive calls to `entity_load_handler` will add / subtract
 of the currently targeted entity types pool.
 
-Like other global events, calls to `entity_load_handler` can only be attached in apps with global scope. Player scope makes so
-that it is not clear which player to use run the load call.
+Like other global events, calls to `entity_load_handler` should only be attached in apps with global scope. For player scope apps,
+it will be called multiple times, once for each player. That's likely not what you want to do.
 
 ```
 // veryfast method of getting rid of all the zombies. Callback is so early, its packets haven't reached yet the clients
 // so to save on log errors, removal of mobs needs to be scheduled for later.
 entity_load_handler('zombie', _(e, new) -> schedule(0, _(outer(e)) -> modify(e, 'remove')))
+
+// another way to do it is to remove the entity when it starts ticking
+entity_load_handler('zombie', _(e, new) -> entity_event(e, 'on_tick', _(e) -> modify(e, 'remove')))
 
 // making all zombies immediately faster and less susceptible to friction of any sort
 entity_load_handler('zombie', _(e, new) -> entity_event(e, 'on_tick', _(e) -> modify(e, 'motion', 1.2*e~'motion')))

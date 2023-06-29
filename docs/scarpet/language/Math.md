@@ -6,11 +6,12 @@ There is bunch of them - they require a number and spit out a number, doing what
 
 ### `fact(n)`
 
-Factorial of a number, a.k.a `n!`, just not in `scarpet`. Gets big... quick...
+Factorial of a number, a.k.a `n!`, just not in `scarpet`. Gets big... quick... Therefore, values larger 
+than `fact(20)` will not return the exact value, but a value with 'double-float' precision.
 
 ### `sqrt(n)`
 
-Square root. For other fancy roots, use `^`, math and yo noggin. Imagine square roots on a tree...
+Square root (not 'a squirt') of a number. For other fancy roots, use `^`, math and yo noggin. Imagine square roots on a tree...
 
 ### `abs(n)`
 
@@ -26,7 +27,7 @@ Highest integer that is still no larger then `n`. Insert a floor pun here.
 
 ### `ceil(n)`
 
-First lucky integer that is not smalller than `n`. As you would expect, ceiling is typically right above the floor.
+First lucky integer that is not smaller than `n`. As you would expect, ceiling is typically right above the floor.
 
 ### `ln(n)`
 

@@ -2,7 +2,8 @@ package carpet.mixins;
 
 import carpet.fakes.EntityInterface;
 import carpet.script.EntityEventsGroup;
-import net.minecraft.entity.Entity;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.phys.Vec3;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
@@ -14,14 +15,18 @@ public abstract class Entity_scarpetEventsMixin implements EntityInterface
 {
     //@Shadow public boolean removed;
 
-    @Shadow protected int netherPortalTime;
-    @Shadow private int netherPortalCooldown;
+    @Shadow protected int portalTime;
+    @Shadow private int portalCooldown;
 
     @Shadow public abstract boolean isRemoved();
+
+    @Shadow private Vec3 position, deltaMovement;
 
     private boolean permanentVehicle;
 
     private final EntityEventsGroup events = new EntityEventsGroup((Entity) (Object)this);
+
+    private Vec3 pos1, motion;
 
     @Override
     public EntityEventsGroup getEventContainer()
@@ -44,25 +49,25 @@ public abstract class Entity_scarpetEventsMixin implements EntityInterface
     @Override
     public int getPublicNetherPortalCooldown()
     {
-        return netherPortalCooldown;
+        return portalCooldown;
     }
 
     @Override
     public void setPublicNetherPortalCooldown(int what)
     {
-        netherPortalCooldown = what;
+        portalCooldown = what;
     }
 
     @Override
     public int getPortalTimer()
     {
-        return netherPortalTime;
+        return portalTime;
     }
 
     @Override
     public void setPortalTimer(int amount)
     {
-        netherPortalTime = amount;
+        portalTime = amount;
     }
 
     @Inject(method = "tick", at = @At("HEAD"))
@@ -79,4 +84,17 @@ public abstract class Entity_scarpetEventsMixin implements EntityInterface
     }
 
 
+    @Inject(method = "setPosRaw", at = @At("HEAD"))
+    private void firstPos(CallbackInfo ci)
+    {
+        pos1 = this.position;
+        motion = this.deltaMovement;
+    }
+
+    @Inject(method = "setPosRaw", at = @At("TAIL"))
+    private void secondPos(CallbackInfo ci)
+    {
+        if(pos1!=this.position)
+            events.onEvent(EntityEventsGroup.Event.ON_MOVE, motion, pos1, this.position);
+    }
 }

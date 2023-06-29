@@ -1,6 +1,5 @@
 package carpet.script;
 
-import carpet.CarpetServer;
 import carpet.script.annotation.AnnotationParser;
 import carpet.script.api.Auxiliary;
 import carpet.script.api.BlockIterators;
@@ -10,28 +9,40 @@ import carpet.script.api.Monitoring;
 import carpet.script.api.Scoreboards;
 import carpet.script.api.Threading;
 import carpet.script.api.WorldAccess;
-import carpet.script.bundled.Module;
 import carpet.script.exception.CarpetExpressionException;
 import carpet.script.exception.ExpressionException;
+import carpet.script.external.Carpet;
 import carpet.script.value.BlockValue;
 import carpet.script.value.EntityValue;
 import carpet.script.value.NumericValue;
 import carpet.script.value.Value;
-import net.minecraft.entity.Entity;
-import net.minecraft.server.command.ServerCommandSource;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.entity.Entity;
 
 public class CarpetExpression
 {
-    private final ServerCommandSource source;
+    private final CommandSourceStack source;
     private final BlockPos origin;
     private final Expression expr;
-    // these are for extensions
-    public Expression getExpr() {return expr;}
-    public ServerCommandSource getSource() {return source;}
-    public BlockPos getOrigin() {return origin;}
 
-    public CarpetExpression(Module module, String expression, ServerCommandSource source, BlockPos origin)
+    // these are for extensions
+    public Expression getExpr()
+    {
+        return expr;
+    }
+
+    public CommandSourceStack getSource()
+    {
+        return source;
+    }
+
+    public BlockPos getOrigin()
+    {
+        return origin;
+    }
+
+    public CarpetExpression(Module module, String expression, CommandSourceStack source, BlockPos origin)
     {
         this.origin = origin;
         this.source = source;
@@ -47,32 +58,35 @@ public class CarpetExpression
         Scoreboards.apply(this.expr);
         Monitoring.apply(this.expr);
         AnnotationParser.apply(this.expr);
-        CarpetServer.extensions.forEach(e -> e.scarpetApi(this));
+        Carpet.handleExtensionsAPI(this);
     }
 
     public boolean fillAndScanCommand(ScriptHost host, int x, int y, int z)
     {
-        if (CarpetServer.scriptServer.stopAll)
+        CarpetScriptServer scriptServer = (CarpetScriptServer) host.scriptServer();
+        if (scriptServer.stopAll)
+        {
             return false;
+        }
         try
         {
             Context context = new CarpetContext(host, source, origin).
                     with("x", (c, t) -> new NumericValue(x - origin.getX()).bindTo("x")).
                     with("y", (c, t) -> new NumericValue(y - origin.getY()).bindTo("y")).
                     with("z", (c, t) -> new NumericValue(z - origin.getZ()).bindTo("z")).
-                    with("_", (c, t) -> new BlockValue(null, source.getWorld(), new BlockPos(x, y, z)).bindTo("_"));
+                    with("_", (c, t) -> new BlockValue(null, source.getLevel(), new BlockPos(x, y, z)).bindTo("_"));
             Entity e = source.getEntity();
-            if (e==null)
+            if (e == null)
             {
                 Value nullPlayer = Value.NULL.reboundedTo("p");
-                context.with("p", (cc, tt) -> nullPlayer );
+                context.with("p", (cc, tt) -> nullPlayer);
             }
             else
             {
                 Value playerValue = new EntityValue(e).bindTo("p");
                 context.with("p", (cc, tt) -> playerValue);
             }
-            return this.expr.eval(context).getBoolean();
+            return scriptServer.events.handleEvents.getWhileDisabled(() -> this.expr.eval(context).getBoolean());
         }
         catch (ExpressionException e)
         {
@@ -80,7 +94,7 @@ public class CarpetExpression
         }
         catch (ArithmeticException ae)
         {
-            throw new CarpetExpressionException("Math doesn't compute... "+ae.getMessage(), null);
+            throw new CarpetExpressionException("Math doesn't compute... " + ae.getMessage(), null);
         }
         catch (StackOverflowError soe)
         {
@@ -90,8 +104,11 @@ public class CarpetExpression
 
     public Value scriptRunCommand(ScriptHost host, BlockPos pos)
     {
-        if (CarpetServer.scriptServer.stopAll)
-            throw new CarpetExpressionException("SCRIPTING PAUSED", null);
+        CarpetScriptServer scriptServer = (CarpetScriptServer) host.scriptServer();
+        if (scriptServer.stopAll)
+        {
+            throw new CarpetExpressionException("SCRIPTING PAUSED (unpause with /script resume)", null);
+        }
         try
         {
             Context context = new CarpetContext(host, source, origin).
@@ -99,17 +116,17 @@ public class CarpetExpression
                     with("y", (c, t) -> new NumericValue(pos.getY() - origin.getY()).bindTo("y")).
                     with("z", (c, t) -> new NumericValue(pos.getZ() - origin.getZ()).bindTo("z"));
             Entity e = source.getEntity();
-            if (e==null)
+            if (e == null)
             {
                 Value nullPlayer = Value.NULL.reboundedTo("p");
-                context.with("p", (cc, tt) -> nullPlayer );
+                context.with("p", (cc, tt) -> nullPlayer);
             }
             else
             {
                 Value playerValue = new EntityValue(e).bindTo("p");
                 context.with("p", (cc, tt) -> playerValue);
             }
-            return this.expr.eval(context);
+            return scriptServer.events.handleEvents.getWhileDisabled(() -> this.expr.eval(context));
         }
         catch (ExpressionException e)
         {
@@ -117,7 +134,7 @@ public class CarpetExpression
         }
         catch (ArithmeticException ae)
         {
-            throw new CarpetExpressionException("Math doesn't compute... "+ae.getMessage(), null);
+            throw new CarpetExpressionException("Math doesn't compute... " + ae.getMessage(), null);
         }
         catch (StackOverflowError soe)
         {

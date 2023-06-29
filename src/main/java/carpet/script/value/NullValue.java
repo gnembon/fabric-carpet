@@ -2,14 +2,15 @@ package carpet.script.value;
 
 import java.util.ArrayList;
 
+import net.minecraft.nbt.StringTag;
+import net.minecraft.nbt.Tag;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonNull;
-import net.minecraft.nbt.NbtString;
-import net.minecraft.nbt.NbtElement;
 
 public class NullValue extends NumericValue // TODO check nonsingleton code
 {
     public static final NullValue NULL = new NullValue();
+
     @Override
     public String getString()
     {
@@ -33,37 +34,45 @@ public class NullValue extends NumericValue // TODO check nonsingleton code
     {
         return new NullValue();
     }
-    private NullValue() {super(false);}
 
-    @Override
-    public boolean equals(final Object o)
+    protected NullValue()
     {
-        return o instanceof NullValue;
+        super(0);
     }
 
     @Override
-    public Value slice(long fromDesc, Long toDesc) {
+    public boolean equals(Object o)
+    {
+        return o instanceof Value value && value.isNull();
+    }
+
+    @Override
+    public Value slice(long fromDesc, Long toDesc)
+    {
         return Value.NULL;
     }
 
     @Override
-    public NumericValue opposite() {
+    public NumericValue opposite()
+    {
         return Value.NULL;
     }
 
     @Override
-    public int length() {
+    public int length()
+    {
         return 0;
     }
 
     @Override
     public int compareTo(Value o)
     {
-        return  o instanceof NullValue ? 0 : -1;
+        return o.isNull() ? 0 : -1;
     }
 
     @Override
-    public Value in(Value value) {
+    public Value in(Value value)
+    {
         return Value.NULL;
     }
 
@@ -80,15 +89,19 @@ public class NullValue extends NumericValue // TODO check nonsingleton code
     }
 
     @Override
-    public NbtElement toTag(boolean force)
+    public Tag toTag(boolean force)
     {
-        if (!force) throw new NBTSerializableValue.IncompatibleTypeException(this);
-        return NbtString.of("null");
+        if (!force)
+        {
+            throw new NBTSerializableValue.IncompatibleTypeException(this);
+        }
+        return StringTag.valueOf("null");
     }
 
     @Override
-    public Value split(Value delimiter) {
-    	return ListValue.wrap(new ArrayList<Value>());
+    public Value split(Value delimiter)
+    {
+        return ListValue.wrap(new ArrayList<>());
     }
 
     @Override
@@ -98,7 +111,8 @@ public class NullValue extends NumericValue // TODO check nonsingleton code
     }
 
     @Override
-    public boolean isNull() {
+    public boolean isNull()
+    {
         return true;
     }
 }

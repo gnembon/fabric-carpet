@@ -1,8 +1,9 @@
 package carpet;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
-import java.util.Random;
+import java.util.Set;
 
 import carpet.commands.CounterCommand;
 import carpet.commands.DistanceCommand;
@@ -13,44 +14,43 @@ import carpet.commands.MobAICommand;
 import carpet.commands.PerimeterInfoCommand;
 import carpet.commands.PlayerCommand;
 import carpet.commands.ProfileCommand;
-import carpet.commands.ScriptCommand;
+import carpet.fakes.MinecraftServerInterface;
+import carpet.helpers.ServerTickRateManager;
+import carpet.script.ScriptCommand;
 import carpet.commands.SpawnCommand;
 import carpet.commands.TestCommand;
 import carpet.commands.TickCommand;
 import carpet.network.ServerNetworkHandler;
 import carpet.helpers.HopperCounter;
-import carpet.helpers.TickSpeed;
 import carpet.logging.LoggerRegistry;
 import carpet.script.CarpetScriptServer;
-import carpet.settings.SettingsManager;
+import carpet.api.settings.CarpetRule;
+import carpet.api.settings.InvalidRuleValueException;
+import carpet.api.settings.SettingsManager;
 import carpet.logging.HUDController;
-import carpet.utils.FabricAPIHooks;
+import carpet.script.external.Carpet;
+import carpet.script.external.Vanilla;
+import carpet.script.utils.ParticleParser;
 import carpet.utils.MobAI;
 import carpet.utils.SpawnReporter;
 import com.mojang.brigadier.CommandDispatcher;
 
-import net.fabricmc.api.ClientModInitializer;
-import net.fabricmc.api.DedicatedServerModInitializer;
 import net.fabricmc.loader.api.FabricLoader;
-import net.minecraft.server.command.CommandManager;
-import net.minecraft.server.command.ServerCommandSource;
+import net.minecraft.commands.CommandBuildContext;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.commands.Commands;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.dedicated.command.PerfCommand;
-import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.server.commands.PerfCommand;
+import net.minecraft.server.level.ServerPlayer;
 
 public class CarpetServer // static for now - easier to handle all around the code, its one anyways
 {
-    public static final ClientModInitializer CLIENT_INITIALIZER = CarpetServer::onGameStarted;
-    public static final DedicatedServerModInitializer SERVER_INITIALIZER = CarpetServer::onGameStarted;
-
-    public static final Random rand = new Random();
     public static MinecraftServer minecraft_server;
-    private static CommandDispatcher<ServerCommandSource> currentCommandDispatcher;
     public static CarpetScriptServer scriptServer;
-    public static SettingsManager settingsManager;
+    public static carpet.settings.SettingsManager settingsManager; // to change type to api type, can't change right now because of binary and source compat
     public static final List<CarpetExtension> extensions = new ArrayList<>();
 
-    // Separate from onServerLoaded, because a server can be loaded multiple times in singleplayer
     /**
      * Registers a {@link CarpetExtension} to be managed by Carpet.<br>
      * Should be called before Carpet's startup, like in Fabric Loader's
@@ -60,21 +60,25 @@ public class CarpetServer // static for now - easier to handle all around the co
     public static void manageExtension(CarpetExtension extension)
     {
         extensions.add(extension);
-        // for extensions that come late to the party, after server is created / loaded
-        // we will handle them now.
-        // that would handle all extensions, even these that add themselves really late to the party
-        if (currentCommandDispatcher != null)
+        // Stop the stupid practice of extensions mixing into Carpet just to register themselves
+        if (StackWalker.getInstance().walk(stream -> stream.skip(1)
+                .anyMatch(el -> el.getClassName() == CarpetServer.class.getName())))
         {
-            extension.registerCommands(currentCommandDispatcher);
+            CarpetSettings.LOG.warn("""
+                    Extension '%s' is registering itself using a mixin into Carpet instead of a regular ModInitializer!
+                    This is stupid and will crash the game in future versions!""".formatted(extension.getClass().getSimpleName()));
         }
     }
 
+    // Separate from onServerLoaded, because a server can be loaded multiple times in singleplayer
+    // Gets called by Fabric Loader from a ServerModInitializer and a ClientModInitializer, in both to allow extensions 
+    // to register before this call in a ModInitializer (declared in fabric.mod.json)
     public static void onGameStarted()
     {
-        settingsManager = new SettingsManager(CarpetSettings.carpetVersion, "carpet", "Carpet Mod");
+        settingsManager = new carpet.settings.SettingsManager(CarpetSettings.carpetVersion, "carpet", "Carpet Mod");
         settingsManager.parseSettingsClass(CarpetSettings.class);
         extensions.forEach(CarpetExtension::onGameStarted);
-        FabricAPIHooks.initialize();
+        //FabricAPIHooks.initialize();
         CarpetScriptServer.parseFunctionClasses();
     }
 
@@ -86,11 +90,12 @@ public class CarpetServer // static for now - easier to handle all around the co
 
         settingsManager.attachServer(server);
         extensions.forEach(e -> {
-            SettingsManager sm = e.customSettingsManager();
+        	SettingsManager sm = e.extensionSettingsManager();
             if (sm != null) sm.attachServer(server);
             e.onServerLoaded(server);
         });
         scriptServer = new CarpetScriptServer(server);
+        Carpet.MinecraftServer_addScriptServer(server, scriptServer);
         MobAI.resetTrackers();
         LoggerRegistry.initLoggers();
         //TickSpeed.reset();
@@ -100,12 +105,31 @@ public class CarpetServer // static for now - easier to handle all around the co
     {
         HopperCounter.resetAll(minecraftServer, true);
         extensions.forEach(e -> e.onServerLoadedWorlds(minecraftServer));
+        // initialize scarpet rules after all extensions are loaded
+        settingsManager.initializeScarpetRules();
+        // run fillLimit rule migration now that gamerules are available
+        @SuppressWarnings("unchecked")
+        CarpetRule<Integer> fillLimit = (CarpetRule<Integer>) settingsManager.getCarpetRule("fillLimit");
+        try
+        {
+            fillLimit.set(minecraftServer.createCommandSourceStack(), fillLimit.value());
+        } catch (InvalidRuleValueException e)
+        {
+            throw new AssertionError();
+        }
+        extensions.forEach(e -> {
+            if (e.extensionSettingsManager() != null)
+            {
+                e.extensionSettingsManager().initializeScarpetRules();
+            }
+        });
         scriptServer.initializeForWorld();
     }
 
     public static void tick(MinecraftServer server)
     {
-        TickSpeed.tick();
+        ServerTickRateManager trm = ((MinecraftServerInterface)server).getTickRateManager();
+        trm.tick();
         HUDController.update_hud(server, null);
         if (scriptServer != null) scriptServer.tick();
 
@@ -115,36 +139,36 @@ public class CarpetServer // static for now - easier to handle all around the co
         extensions.forEach(e -> e.onTick(server));
     }
 
-    @Deprecated
-    public static void registerCarpetCommands(CommandDispatcher<ServerCommandSource> dispatcher) {
-    }
-
-    public static void registerCarpetCommands(CommandDispatcher<ServerCommandSource> dispatcher, CommandManager.RegistrationEnvironment environment)
+    public static void registerCarpetCommands(CommandDispatcher<CommandSourceStack> dispatcher, Commands.CommandSelection environment, CommandBuildContext commandBuildContext)
     {
-        settingsManager.registerCommand(dispatcher);
+        if (settingsManager == null) // bootstrap dev initialization check
+        {
+            return;
+        }
+        settingsManager.registerCommand(dispatcher, commandBuildContext);
         extensions.forEach(e -> {
-            SettingsManager sm = e.customSettingsManager();
-            if (sm != null) sm.registerCommand(dispatcher);
+        	SettingsManager sm = e.extensionSettingsManager();
+            if (sm != null) sm.registerCommand(dispatcher, commandBuildContext);
         });
-        TickCommand.register(dispatcher);
-        ProfileCommand.register(dispatcher);
-        CounterCommand.register(dispatcher);
-        LogCommand.register(dispatcher);
-        SpawnCommand.register(dispatcher);
-        PlayerCommand.register(dispatcher);
-        //CameraModeCommand.register(dispatcher);
-        InfoCommand.register(dispatcher);
-        DistanceCommand.register(dispatcher);
-        PerimeterInfoCommand.register(dispatcher);
-        DrawCommand.register(dispatcher);
-        ScriptCommand.register(dispatcher);
-        MobAICommand.register(dispatcher);
+        TickCommand.register(dispatcher, commandBuildContext);
+        ProfileCommand.register(dispatcher, commandBuildContext);
+        CounterCommand.register(dispatcher, commandBuildContext);
+        LogCommand.register(dispatcher, commandBuildContext);
+        SpawnCommand.register(dispatcher, commandBuildContext);
+        PlayerCommand.register(dispatcher, commandBuildContext);
+        InfoCommand.register(dispatcher, commandBuildContext);
+        DistanceCommand.register(dispatcher, commandBuildContext);
+        PerimeterInfoCommand.register(dispatcher, commandBuildContext);
+        DrawCommand.register(dispatcher, commandBuildContext);
+        ScriptCommand.register(dispatcher, commandBuildContext);
+        MobAICommand.register(dispatcher, commandBuildContext);
         // registering command of extensions that has registered before either server is created
         // for all other, they will have them registered when they add themselves
-        extensions.forEach(e -> e.registerCommands(dispatcher));
-        currentCommandDispatcher = dispatcher;
+        extensions.forEach(e -> {
+            e.registerCommands(dispatcher, commandBuildContext);
+        });
 
-        if (environment != CommandManager.RegistrationEnvironment.DEDICATED)
+        if (environment != Commands.CommandSelection.DEDICATED)
             PerfCommand.register(dispatcher);
         
         if (FabricLoader.getInstance().isDevelopmentEnvironment())
@@ -152,20 +176,29 @@ public class CarpetServer // static for now - easier to handle all around the co
         // todo 1.16 - re-registerer apps if that's a reload operation.
     }
 
-    public static void onPlayerLoggedIn(ServerPlayerEntity player)
+    public static void onPlayerLoggedIn(ServerPlayer player)
     {
         ServerNetworkHandler.onPlayerJoin(player);
         LoggerRegistry.playerConnected(player);
-        scriptServer.onPlayerJoin(player);
         extensions.forEach(e -> e.onPlayerLoggedIn(player));
-
+        scriptServer.onPlayerJoin(player);
     }
 
-    public static void onPlayerLoggedOut(ServerPlayerEntity player)
+    @Deprecated(forRemoval = true)
+    public static void onPlayerLoggedOut(ServerPlayer player)
+    {
+        onPlayerLoggedOut(player, Component.translatable("multiplayer.player.left"));
+    }
+    public static void onPlayerLoggedOut(ServerPlayer player, Component reason)
     {
         ServerNetworkHandler.onPlayerLoggedOut(player);
         LoggerRegistry.playerDisconnected(player);
         extensions.forEach(e -> e.onPlayerLoggedOut(player));
+        // first case client, second case server
+        CarpetScriptServer runningScriptServer = (player.getServer() == null) ? scriptServer : Vanilla.MinecraftServer_getScriptServer(player.getServer());
+        if (runningScriptServer != null && !runningScriptServer.stopAll) {
+            runningScriptServer.onPlayerLoggedOut(player, reason);
+        }
     }
 
     public static void clientPreClosing()
@@ -181,22 +214,28 @@ public class CarpetServer // static for now - easier to handle all around the co
         if (minecraft_server != null)
         {
             if (scriptServer != null) scriptServer.onClose();
+            // this is a mess, will cleanip onlly when global reference is gone
+            if (!Vanilla.MinecraftServer_getScriptServer(server).stopAll) {
+                Vanilla.MinecraftServer_getScriptServer(server).onClose();
+            }
+
             scriptServer = null;
             ServerNetworkHandler.close();
-            currentCommandDispatcher = null;
 
             LoggerRegistry.stopLoggers();
             HUDController.resetScarpetHUDs();
+            ParticleParser.resetCache();
             extensions.forEach(e -> e.onServerClosed(server));
             minecraft_server = null;
         }
-
-        // this for whatever reason gets called multiple times even when joining;
-        TickSpeed.reset();
     }
     public static void onServerDoneClosing(MinecraftServer server)
     {
         settingsManager.detachServer();
+        extensions.forEach(e -> {
+        	SettingsManager manager = e.extensionSettingsManager();
+            if (manager != null) manager.detachServer();
+        });
     }
 
     public static void registerExtensionLoggers()
@@ -208,6 +247,15 @@ public class CarpetServer // static for now - easier to handle all around the co
     {
         scriptServer.reload(server);
         extensions.forEach(e -> e.onReload(server));
+    }
+    
+    private static final Set<CarpetExtension> warnedOutdatedManagerProviders = new HashSet<>();
+    static void warnOutdatedManager(CarpetExtension ext)
+    {
+        if (warnedOutdatedManagerProviders.add(ext))
+            CarpetSettings.LOG.warn("""
+                    %s is providing a SettingsManager from an outdated method in CarpetExtension!
+                    This behaviour will not work in later Carpet versions and the manager won't be registered!""".formatted(ext.getClass().getName()));
     }
 }
 

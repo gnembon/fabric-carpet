@@ -6,11 +6,14 @@ events occur, but app designers can create their own events and trigger them acr
 
 When loading the app, each function that starts 
 with `__on_<event>` and has the required arguments, will be bound automatically to a corresponding built-in event. '`undef`'ying
-of such function would result in unbinding the app from this event.
+of such function would result in unbinding the app from this event. Defining event hanlder via `__on_<event>(... args) -> expr` is
+equivalent of defining it via `handle_event('<event>', _(... args) -> expr)`
 
 In case of `player` scoped apps, 
 all player action events will be directed to the appropriate player hosts. Global events, like `'tick'`, that don't have a specific
-player target will be executed multiple times, once for each player, and once in `'global'` scoped apps.
+player target will be executed multiple times, once for each player app instance. While each player app instance is independent,
+statically defined event handlers will be copied to each players app, but if you want to apply them in more controlled way, 
+defining event handlers for each player in `__on_start()` function is preferred.
 
 Most built-in events strive to report right before they take an effect in the game. The purpose of that is that this give a choice
 for the programmer to handle them right away (as it happens, potentially affect the course of action by changing the
@@ -19,26 +22,53 @@ partially handle the event before it happens and handle the rest after. While in
 confusion (like handling the respawn event still referring to player's original position and dimension), but gives much 
 more control over these events.
 
+Some events also provide the ability to cancel minecraft's processing of the event by returning `'cancel'` from the event handler.
+This only works for particular events that are triggered before they take an effect in the game.
+However, cancelling the event will also stop events from subsequent apps from triggering.
+The order of events being executed can be changed by specifying an `'event_priority'` in the app config,
+with the highest value being executed first.
+Note that cancelling some events might introduce a desynchronization to the client from the server,
+creating ghost items or blocks. This can be solved by updating the inventory or block to the client, by using `inventory_set` or `set`.
+
 Programmers can also define their own events and signal other events, including built-in events, and across all loaded apps.
 
-## Event list
+## App scopes and event distribution
 
-Here is a list of events that are handled by default in scarpet. This list includes prefixes for function names, allowing apps
-to autoload them, but you can always add any function to any event (using `/script event` command)
-if it accepts required number of parameters.
+Events triggered in an app can result in zero, one, or multiple executions, depending on the type of the event, and the app scope.
+ * player targeted events (like `player_breaks_block`) target each app once:
+   * for global scoped apps - targets a single app instance and provides `player` as the first argument.
+   * for player scoped apps - targets only a given player instance, providing player argument for API consistency, 
+     since active player in player scoped apps can always be retrieved using `player()`. 
+ * global events could be handled by multiple players multiple times (like `explosion`, or `tick`):
+   * for global scoped apps - triggered once for the single app instance.
+   * for player scoped apps - triggered N times for each player separately, so they can do something with that information
+ * custom player targeted events (using `signal_event(<event>, <player>, data)`):
+   * for global scoped apps - doesn't trigger at all, since there is no way to pass the required player. 
+     To target global apps with player information, use `null` for player target, and add player information to the `data`
+   * for player scoped apps - triggers once for the specified player and its app instance
+ * custom general events (using `signal_event(<event>, null, data)`) behave same like built-in global events:
+   * for global scoped apps - triggers once for the only global instance
+   * for player scoped apps - triggers N times, once for each player app instance
+
+## Built-in events
+
+Here is the list of events that are handled by default in scarpet. This list includes prefixes for function names, allowing apps
+to register them when the app starts, but you can always add any handler function to any event using `/script event` command,
+if it accepts the required number of parameters for the event.
 
 ## Meta-events
 
 These events are not controlled / triggered by the game per se, but are important for the flow of the apps, however for all 
-intent and purpose can be treated as regular events. Unlike regular events, they cannot be hooked up to with 'handle_event',
-but the apps themselves need to have them defined as distinct function definitions, same they cannot be signalled.
+intent and purpose can be treated as regular events. Unlike regular events, they cannot be hooked up to with `handle_event()`,
+and the apps themselves need to have them defined as distinct function definitions. They also cannot be triggered via `signal_event()`.
 
 ### `__on_start()`
 Called once per app in its logical execution run. For `'global'` scope apps its executed right after the app is loaded. For
 `'player'` scope apps, it is triggered once per player before the app can be used by that player. Since each player app acts
 independently from other player apps, this is probably the best location to include some player specific initializations. Static
 code (i.e. code typed directly in the app code that executes immediately, outside of function definitions), will only execute once
-per app, regardless of scope, `'__on_start()'` allows to reliably call player specific initializations.
+per app, regardless of scope, `'__on_start()'` allows to reliably call player specific initializations. However, most event handlers
+defined in the static body of the app will be copied over to each player scoped instance when they join. 
 
 ### `__on_close()`
 
@@ -50,8 +80,7 @@ the system is closing down exceptionally.
 ## Built-in global events
 
 Global events will be handled once per app that is with `'global'` scope. With `player` scoped apps, each player instance
- is responsible independently from handling their events, so a global event may be executed multiple times for each player.
-
+ will be triggered once for each player, so a global event may be executed multiple times for such apps.
 
 ### `__on_server_starts()`
 Event triggers after world is loaded and after all startup apps have started. It won't be triggered with `/reload`.
@@ -73,14 +102,17 @@ Duplicate of `tick`, just automatically located in the end. Use `__on_tick() -> 
 ### `__on_chunk_generated(x, z)`
 Called right after a chunk at a given coordinate is full generated. `x` and `z` correspond
 to the lowest x and z coords in the chunk. Handling of this event is scheduled as an off-tick task happening after the 
-chunk is confirmed to be generated and loaded to the game, so 
-handling of this event is not technically guaranteed, if the game crashes while players are moving for example, and can
-be missed on the next start, if the game successfully saves it and fails to execute all remaining tasks. In normal operation
-this should not happen, but be warned.
+chunk is confirmed to be generated and loaded to the game, due to the off-thread chunk loading in the game. So 
+handling of this event is not technically guaranteed if the game crashes while players are moving for example, and the game 
+decides to shut down after chunk is fully loaded and before its handler is processed in between ticks. In normal operation
+this should not happen, but let you be warned.
 
 ### `__on_chunk_loaded(x, z)`
-Called right after a chunk at a given coordinate is loaded. All newly generated chunks are loaded as well.
+Called right after a chunk at a given coordinate is loaded. All newly generated chunks are considered loaded as well.
  `x` and `z` correspond to the lowest x and z coordinates in the chunk.
+
+### `__on_chunk_unloaded(x, z)`
+Called right before a chunk at the given coordinates is unloaded. `x` and `z` correspond to the lowest x and z coordinates in the chunk.
 
 ### `__on_lightning(block, mode)`
 Triggered right after a lightning strikes. Lightning entity as well as potential horseman trap would 
@@ -103,7 +135,7 @@ The parameter `entities` contains the list of entities that have been affected b
 Triggered when a carpet mod rule is changed. It includes extension rules, not using default `/carpet` command, 
 which will then be namespaced as `namespace:rule`.
 
-### entity load event -> check `entity_load_handler()`
+### Entity load event -> check in details on `entity_load_handler()`
 
 These will trigger every time an entity of a given type is loaded into the game: spawned, added with a chunks, 
 spawned from commands, anything really. Check `entity_load_handler()` in the entity section for details.
@@ -117,6 +149,8 @@ player. In apps with `global` scope they trigger once as well as a global event.
 Triggers with a right click action. Event is triggered right after a server receives the packet, before the 
 game manages to do anything about it. Event triggers when player starts eating food, or starts drawing a bow.
 Use `player_finishes_using_item`, or `player_releases_item` to capture the end of these events.
+
+This event can be cancelled by returning `'cancel'`, which prevents the item from being used.
 
 Event is not triggered when a player places a block, for that use
 `player_right_clicks_block` or `player_places_block` event.
@@ -132,21 +166,34 @@ Player using of an item is done. This is controlled server side and is responsib
 eating. The event is triggered after confirming that the action is valid, and sending the feedback back
 to the client, but before triggering it and its effects in game.
 
+This event can be cancelled by returning `'cancel'`, which prevents the player from finishing using the item.
+
 ### `__on_player_clicks_block(player, block, face)`
 Representing left-click attack on a block, usually signifying start of breaking of a block. Triggers right after the server
-receives a client packet, before anything happens on the server side.   
+receives a client packet, before anything happens on the server side.
+
+This event can be cancelled by returning `'cancel'`, which stops the player from breaking a block.
   
 
 ### `__on_player_breaks_block(player, block)`
 Called when player breaks a block, right before any changes to the world are done, but the decision is made to remove the block.
 
+This event can be cancelled by returning `'cancel'`, which prevents the block from being placed.
+
 ### `__on_player_right_clicks_block(player, item_tuple, hand, block, face, hitvec)` 
 Called when player right clicks on a block with anything, or interacts with a block. This event is triggered right
 before other interaction events, like `'player_interacts_with_block'` or `'player_places_block'`.
+
+This event can be cancelled by returning `'cancel'`, which prevents the player interaction.
  
 ### `__on_player_interacts_with_block(player, hand, block, face, hitvec)`
 Called when player successfully interacted with a block, which resulted in activation of said block,
 right after this happened.
+
+### `__on_player_placing_block(player, item_tuple, hand, block)`
+Triggered when player places a block, before block is placed in the world.
+
+This event can be cancelled by returning `'cancel'`, which prevents the block from being placed.
   
 ### `__on_player_places_block(player, item_tuple, hand, block)`
 Triggered when player places a block, after block is placed in the world, but before scoreboard is triggered or player inventory
@@ -156,6 +203,8 @@ adjusted.
 Triggered when player right clicks (interacts) with an entity, even if the entity has no vanilla interaction with the player or
 the item they are holding. The event is invoked after receiving a packet from the client, before anything happens server side
 with that interaction.
+
+This event can be cancelled by returning `'cancel'`, which prevents the player interacting with the entity.
 
 ### `__on_player_trades(player, entity, buy_left, buy_right, sell)`
 Triggered when player trades with a merchant. The event is invoked after the server allow the trade, but before the inventory
@@ -171,12 +220,16 @@ on the player.
 Triggered when a player clicks a recipe in the crafting window from the crafting book, after server received
 a client request, but before any items are moved from its inventory to the crafting menu.
 
+This event can be cancelled by returning `'cancel'`, which prevents the recipe from being moved into the crafting grid.
+
 ### `__on_player_switches_slot(player, from, to)`
 Triggered when a player changes their selected hotbar slot. Applied right after the server receives the message to switch 
 the slot.
 
 ### `__on_player_swaps_hands(player)`
 Triggered when a player sends a command to swap their offhand item. Executed before the effect is applied on the server.
+
+This event can be cancelled by returning `'cancel'`, which prevents the hands from being swapped.
 
 ### `__on_player_swings_hand(player, hand)`
 Triggered when a player starts swinging their hand. The event typically triggers after a corresponding event that caused it 
@@ -186,14 +239,20 @@ swinging continues as an effect of an action, no new swinging events will be iss
 ### `__on_player_attacks_entity(player, entity)`
 Triggered when a player attacks entity, right before it happens server side.
 
+This event can be cancelled by returning `'cancel'`, which prevents the player from attacking the entity.
+
 ### `__on_player_takes_damage(player, amount, source, source_entity)`
-Triggered when a player is taking damage. Event is executed right after potential absorbtion was applied and before
+Triggered when a player is taking damage. Event is executed right after potential absorption was applied and before
 the actual damage is applied to the player. 
+
+This event can be cancelled by returning `'cancel'`, which prevents the player from taking damage.
 
 ### `__on_player_deals_damage(player, amount, entity)`
 Triggered when a player deals damage to another entity. Its applied in the same moment as `player_takes_damage` if both
-sides of the event are players, and similar for all other entities, just their absorbtion is taken twice, just noone ever 
+sides of the event are players, and similar for all other entities, just their absorption is taken twice, just noone ever 
 notices that ¯\_(ツ)_/¯
+
+This event can be cancelled by returning `'cancel'`, which prevents the damage from being dealt.
 
 ### `__on_player_dies(player)`
 Triggered when a player dies. Player is already dead, so don't revive them then. Event applied before broadcasting messages
@@ -243,6 +302,8 @@ Four events triggered when player controls for sneaking and sprinting toggle.
 Triggered when the game receives the request from a player to drop one item or full stack from its inventory.
 Event happens before anything is changed server side.
 
+These events can be cancelled by returning `'cancel'`, which prevents the player dropping the items.
+
 ### `__on_player_picks_up_item(player, item)`
 Triggered AFTER a player successfully ingested an item in its inventory. Item represents the total stack of items
 ingested by the player. The exact position of these items is unknown as technically these
@@ -254,6 +315,14 @@ Triggered when the player has successfully logged in and was placed in the game.
 ### `__on_player_disconnects(player, reason)`
 Triggered when a player sends a disconnect package or is forcefully disconnected from the server.
 
+### `__on_player_message(player, message)`
+Triggered when a player sends a chat message.
+
+### `__on_player_command(player, command)`
+Triggered when a player runs a command. Command value is returned without the / in front.
+
+This event can be cancelled by returning `'cancel'`, which prevents the message from being sent.
+
 ### `__on_statistic(player, category, event, value)`
 Triggered when a player statistic changes. Doesn't notify on periodic an rhythmic events, i.e. 
 `time_since_death`, `time_since_rest`, and `played_one_minute` since these are triggered every tick. Event 
@@ -263,7 +332,7 @@ is handled before scoreboard values for these statistics are changed.
 
 App programmers can define and trigger their own custom events. Unlike built-in events, all custom events pass a single value
 as an argument, but this doesn't mean that they cannot pass a complex list, map, or nbt tag as a message. Each event signal is
-either targetting all apps instances for all players, including global apps, if no target player has been identified, 
+either targeting all apps instances for all players, including global apps, if no target player has been identified, 
 or only player scoped apps, if the target player
 is specified, running once for that player app. You cannot target global apps with player-targeted signals. Built-in events
 do target global apps, since their first argument is clearly defined and passed. That may change in the future in case there is 
@@ -307,7 +376,7 @@ to it when the event is triggered. All custom events expect a function that take
 If extra arguments are provided, they will be appended to the argument list of the callback function.
 
 Returns `true` if subscription to the event was successful, or `false` if it failed (for instance wrong scope for built-in event,
-or incorect number of parameters for the event).
+or incorrect number of parameters for the event).
 
 If a callback is specified as `null`, the given app (or player app instance )stops handling that event. 
 
@@ -331,7 +400,7 @@ In case you want to pass an event handler that is not defined in your module, pl
 
 Fires a specific event. If the event does not exist (only `handle_event` creates missing new events), or provided argument list
 was not matching the callee expected arguments, returns `null`, 
-otherwise returns number of apps notified. If `target_player` is specified and not `null` triggers a player specific event, targetting
+otherwise returns number of apps notified. If `target_player` is specified and not `null` triggers a player specific event, targeting
 only `player` scoped apps for that player. Apps with globals scope will not be notified even if they handle this event.
 If the `target_player` is omitted or `null`, it will target `global` scoped apps and all instances of `player` scoped apps.
 Note that all built-in player events have a player as a first argument, so to trigger these events, you need to 

@@ -9,6 +9,15 @@ asinh
 atan
 atan2
 atanh
+bitwise_and
+bitwise_or
+bitwise_xor
+bitwise_shift_left
+bitwise_shift_right
+bitwise_roll_left
+bitwise_roll_right
+bitwise_not
+bitwise_popcount
 bool
 break
 call
@@ -26,6 +35,7 @@ decreasing
 deg
 delete
 difference
+double_to_long_bits
 equal
 exit
 fact
@@ -46,6 +56,7 @@ length
 log
 log10
 log1p
+long_bits_to_double
 loop
 lower
 m

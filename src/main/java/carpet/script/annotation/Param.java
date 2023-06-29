@@ -12,9 +12,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.BiFunction;
 
-import org.apache.commons.lang3.tuple.Pair;
-
-import carpet.CarpetServer;
 import carpet.script.Context;
 import carpet.script.value.BooleanValue;
 import carpet.script.value.EntityValue;
@@ -22,9 +19,11 @@ import carpet.script.value.FormattedTextValue;
 import carpet.script.value.NumericValue;
 import carpet.script.value.StringValue;
 import carpet.script.value.Value;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.text.Text;
+import net.minecraft.server.level.ServerPlayer;
+
+import javax.annotation.Nullable;
 
 import static java.lang.annotation.ElementType.PARAMETER;
 import static java.lang.annotation.ElementType.TYPE_USE;
@@ -53,7 +52,7 @@ public interface Param
     @Documented
     @Retention(RUNTIME)
     @Target({ PARAMETER, TYPE_USE })
-    public @interface AllowSingleton
+    @interface AllowSingleton
     {
 
     }
@@ -73,7 +72,7 @@ public interface Param
     @Documented
     @Retention(RUNTIME)
     @Target({ PARAMETER, TYPE_USE })
-    public @interface KeyValuePairs
+    @interface KeyValuePairs
     {
         /**
          * <p>Whether or not this accepts the key-value pairs directly in the function call as myFunction(..., key, value, key2, value2)</p>
@@ -93,13 +92,13 @@ public interface Param
     @Documented
     @Retention(RUNTIME)
     @Target({ PARAMETER, TYPE_USE })
-    public @interface Custom
+    @interface Custom
     {
 
     }
 
     /**
-     * <p>Defines that a parameter of type {@link String}, {@link Text}, {@link ServerPlayerEntity}, {@link Boolean} or other registered strict type
+     * <p>Defines that a parameter of type {@link String}, {@link Component}, {@link ServerPlayer}, {@link Boolean} or other registered strict type
      * <b>must</b> be of its corresponding {@link Value} in order to be accepted (respectively {@link StringValue}, {@link FormattedTextValue},
      * {@link EntityValue} or {@link BooleanValue}).</p>
      * 
@@ -107,16 +106,16 @@ public interface Param
      * {@code new LiteralText(Value#getString())}, {@link EntityValue#getPlayerByValue(MinecraftServer, Value)} or {@link Value#getBoolean()}.</p>
      * 
      * <p>You can define "shallow strictness" ({@link #shallow()}) if you want to allow passing both a {@link StringValue} or a
-     * {@link FormattedTextValue} to a {@link Text} parameter or a {@link NumericValue} to a {@link BooleanValue}, but not any {@link Value}.</p>
+     * {@link FormattedTextValue} to a {@link Component} parameter or a {@link NumericValue} to a {@link BooleanValue}, but not any {@link Value}.</p>
      *
      */
     @Documented
     @Retention(RUNTIME)
     @Target({ PARAMETER, TYPE_USE })
-    public @interface Strict
+    @interface Strict
     {
         /**
-         * <p>Defines whether this parameter can accept types with "shallow strictness", that is, in order to get a {@link Text}, accepting either a
+         * <p>Defines whether this parameter can accept types with "shallow strictness", that is, in order to get a {@link Component}, accepting either a
          * {@link StringValue} or a {@link FormattedTextValue} as the parameter, or in order to get a {@link Boolean}, accepting either a
          * {@link NumericValue} or a {@link BooleanValue}.</p>
          * 
@@ -139,18 +138,23 @@ public interface Param
      * @see #registerCustomConverterFactory(BiFunction)
      *
      */
-    public static final class Params
+    final class Params
     {
         /**
          * <p>A {@link ValueConverter} that outputs the {@link Context} in which the function has been called, and throws {@link UnsupportedOperationException} when trying to convert a {@link Value}
          * directly.</p>
          */
-        static final ValueConverter<Context> CONTEXT_PROVIDER = new ValueConverter<Context>()
+        static final ValueConverter<Context> CONTEXT_PROVIDER = new ValueConverter<>()
         {
-            @Override public String getTypeName() { return null; }
+            @Nullable
+            @Override
+            public String getTypeName()
+            {
+                return null;
+            }
 
             @Override
-            public Context convert(Value value)
+            public Context convert(Value value, @Nullable Context context)
             {
                 throw new UnsupportedOperationException("Called convert() with Value in Context Provider converter, where only checkAndConvert is supported");
             }
@@ -172,12 +176,17 @@ public interface Param
          * <p>A {@link ValueConverter} that outputs the {@link Context.Type} which the function has been called, or throws {@link UnsupportedOperationException} when trying to convert a {@link Value}
          * directly.</p>
          */
-        static final ValueConverter<Context.Type> CONTEXT_TYPE_PROVIDER = new ValueConverter<Context.Type>()
+        static final ValueConverter<Context.Type> CONTEXT_TYPE_PROVIDER = new ValueConverter<>()
         {
-            @Override public String getTypeName() { return null; }
+            @Nullable
+            @Override
+            public String getTypeName()
+            {
+                return null;
+            }
 
             @Override
-            public Context.Type convert(Value value)
+            public Context.Type convert(Value value, @Nullable Context context)
             {
                 throw new UnsupportedOperationException("Called convert() with a Value in TheLazyT Provider, where only checkAndConvert is supported");
             }
@@ -195,19 +204,15 @@ public interface Param
             }
         };
 
-        /**
-         * <p>Strict converters</p>
-         * 
-         * <p>Stored as {@code <Pair<Type, shallow?>, Converter>}</p>
-         */
-        private static final Map<Pair<Class<?>, Boolean>, ValueConverter<?>> strictParamsByClassAndShallowness = new HashMap<>();
+        record StrictConverterInfo(Class<?> type, boolean shallow) {}
+        private static final Map<StrictConverterInfo, ValueConverter<?>> strictParamsByClassAndShallowness = new HashMap<>();
         static
         { // TODO Specify strictness in name?
             registerStrictConverter(String.class, false, new SimpleTypeConverter<>(StringValue.class, StringValue::getString, "string"));
-            registerStrictConverter(Text.class, false, new SimpleTypeConverter<>(FormattedTextValue.class, FormattedTextValue::getText, "text"));
-            registerStrictConverter(Text.class, true, new SimpleTypeConverter<>(StringValue.class, FormattedTextValue::getTextByValue, "text"));
-            registerStrictConverter(ServerPlayerEntity.class, false, new SimpleTypeConverter<>(EntityValue.class,
-                    v -> EntityValue.getPlayerByValue(CarpetServer.minecraft_server, v), "online player entity"));
+            registerStrictConverter(Component.class, false, new SimpleTypeConverter<>(FormattedTextValue.class, FormattedTextValue::getText, "text"));
+            registerStrictConverter(Component.class, true, new SimpleTypeConverter<>(StringValue.class, FormattedTextValue::getTextByValue, "text"));
+            registerStrictConverter(ServerPlayer.class, false, new SimpleTypeConverter<>(EntityValue.class,
+                    v -> EntityValue.getPlayerByValue(v.getEntity().getServer(), v), "online player entity"));
             registerStrictConverter(Boolean.class, false, new SimpleTypeConverter<>(BooleanValue.class, BooleanValue::getBoolean, "boolean"));
             registerStrictConverter(Boolean.class, true, new SimpleTypeConverter<>(NumericValue.class, NumericValue::getBoolean, "boolean"));
         }
@@ -224,10 +229,12 @@ public interface Param
         {
             boolean shallow = type.getAnnotation(Strict.class).shallow();
             Class<?> clazz = (Class<?>) type.getType();
-            Pair<Class<?>, Boolean> key = Pair.of(clazz, shallow);
+            StrictConverterInfo key = new StrictConverterInfo(clazz, shallow);
             ValueConverter<?> converter = strictParamsByClassAndShallowness.get(key);
             if (converter != null)
+            {
                 return converter;
+            }
             throw new IllegalArgumentException("Incorrect use of @Param.Strict annotation");
         }
 
@@ -245,9 +252,11 @@ public interface Param
          */
         public static <T> void registerStrictConverter(Class<T> type, boolean shallow, ValueConverter<T> converter)
         {
-            Pair<Class<?>, Boolean> key = Pair.of(type, shallow);
+            StrictConverterInfo key = new StrictConverterInfo(type, shallow);
             if (strictParamsByClassAndShallowness.containsKey(key))
+            {
                 throw new IllegalArgumentException(type + " already has a registered " + (shallow ? "" : "non-") + "shallow StrictConverter");
+            }
             strictParamsByClassAndShallowness.put(key, converter);
         }
 
@@ -285,7 +294,9 @@ public interface Param
             for (BiFunction<AnnotatedType, Class<?>, ValueConverter<?>> factory : customFactories)
             {
                 if ((result = (ValueConverter<R>) factory.apply(annoType, type)) != null)
+                {
                     return result;
+                }
             }
             throw new IllegalArgumentException("No custom converter found for Param.Custom annotated param with type " + annoType.getType().getTypeName());
         }

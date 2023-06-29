@@ -15,8 +15,8 @@ import carpet.script.value.Value;
 /**
  * <p>Defines a method that can be used as a function in the Scarpet language.</p>
  * 
- * <p>Methods annotated with this annotation are not required to accept and return the typical {@code Context context, Integer t, List<Value> lv}, but
- * instead can specify whatever parameters they actually need that will be automatically converted from their respective {@link Value}s and passed to
+ * <p>Methods annotated with this annotation are not required to accept and return the implementation {@code Context context, Context.Type t, List<Value> lv}, 
+ * but instead can specify whatever parameters they actually need that will be automatically converted from their respective {@link Value}s and passed to
  * the method as the expected type. Functions will automatically fail if given parameters are not compatible with the specified ones, or if the number
  * of provided arguments is either too large or too small.</p>
  * 
@@ -26,8 +26,7 @@ import carpet.script.value.Value;
  * In order to convert the output of your method to a {@link LazyValue} you will also need to register its conversion in {@link OutputConverter}</p>
  * 
  * <p>In order for Carpet to find methods annotated with this annotation, you must add your function class(es) to Carpet by running
- * {@link AnnotationParser#parseFunctionClass(Class)} ONCE. The provided {@link Class} must be concrete and provide the default constructor or an
- * equivalent to it.</p>
+ * {@link AnnotationParser#parseFunctionClass(Class)} ONCE.</p>
  * 
  * <p>Methods annotated with this annotation must not declare throwing any checked exceptions.</p>
  * 
@@ -52,6 +51,11 @@ import carpet.script.value.Value;
 public @interface ScarpetFunction
 {
     /**
+     * <p>Used to define that this {@link ScarpetFunction} can accept an unlimited number of parameters</p>
+     */
+    int UNLIMITED_PARAMS = -1;
+
+    /**
      * <p>If the function can accept a variable number of parameters, either by declaring its last parameter as a varargs parameter or by having one
      * of their parameters use a converter that consumes a variable number of arguments, this must define the maximum number of parameters this
      * function can take.</p>
@@ -65,11 +69,20 @@ public @interface ScarpetFunction
      * consider that those can take either a single triple of values or 3 independent values, that would be counted in the maximum number of
      * parameters.</p>
      * 
-     * <p>Use -1 to specify an unlimited number of parameters.</p>
+     * <p>Use {@link ScarpetFunction#UNLIMITED_PARAMS} to allow an unlimited number of parameters.</p>
      * 
      * @return The maximum number of parameters this function can accept
      */
-    int maxParams() default -2;
+    int maxParams() default AnnotationParser.UNDEFINED_PARAMS;
+
+    /**
+     * <p>The name of the function in Scarpet, that by default will be the method name.<p>
+     * 
+     * <p>The convention in Scarpet is to use names in snake case.</p>
+     * 
+     * @return The name for this function in Scarpet
+     */
+    String functionName() default AnnotationParser.USE_METHOD_NAME;
 
     /**
      * <p>Defines the Context Type that will be used when evaluating arguments to annotated methods.</p>

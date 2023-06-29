@@ -15,11 +15,13 @@ blocks_movement
 bossbar
 brightness
 chunk_tickets
+close_screen
 convert_date
 crafting_remaining_item
 create_datapack
 create_explosion
 create_marker
+create_screen
 current_dimension
 day_time
 delete_file
@@ -28,8 +30,8 @@ diamond
 display_title
 draw_shape
 drop_item
+effective_light
 emitted_light
-enable_hidden_dimensions
 encode_nbt
 entity_area
 entity_event
@@ -54,7 +56,7 @@ inventory_get
 inventory_remove
 inventory_set
 inventory_size
-item_category
+item_display_name
 item_list
 item_tags
 last_tick_times
@@ -91,6 +93,7 @@ reload_chunk
 remove_all_markers
 reset_chunk
 run
+sample_noise
 save
 scan
 schedule
@@ -99,6 +102,7 @@ scoreboard_add
 scoreboard_remove
 scoreboard_display
 scoreboard_property
+screen_property
 tag_matches
 team_add
 team_leave

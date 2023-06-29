@@ -157,12 +157,11 @@ Throws `unknown_poi` if the provided point of interest doesn't exist
 ### `set_biome(pos, biome_name, update=true)`
 
 Changes the biome at that block position. if update is specified and false, then chunk will not be refreshed
-on the clients. Biome changes can only be send to clients with the entire data from the chunk.
+on the clients. Biome changes can only be sent to clients with the entire data from the chunk.
 
-Setting a biome is now (as of 1.16) dimension specific. In the overworld and the end changing the biome
-is only effective if you set it at y=0, and affects the entire column of. In the nether - you have to use the
-specific Y coordinate of the biome you want to change, and it affects roughly 4x4x4 area (give or take some random
-noise).
+Be aware that depending on the MC version and dimension settings biome can be set either in a 1x1x256
+column or 4x4x4 hyperblock, so for some versions Y will be ignored and for some precision of biome
+setting is less than 1x1x1 block.
 
 Throws `unknown_biome` if the `biome_name` doesn't exist.
 
@@ -346,19 +345,23 @@ poi(x,y,z,5) => []  // nothing around
 poi(x,y,z,5) => [['nether_portal',0,[7,8,9]],['nether_portal',0,[7,9,9]]] // two portal blocks in the range
 </pre>
 
-### `biome()` `biome(name)` `biome(block)` `biome(block/name, feature)`
+### `biome()` `biome(name)` `biome(block)` `biome(block/name, feature)`, `biome(noise_map)`
 
 Without arguments, returns the list of biomes in the world.
 
-With block, or name, returns the name of the biome in that position, or throws `'unknown_biome'` if provided biome or block are not valid. 
+With block, or name, returns the name of the biome in that position, or throws `'unknown_biome'` if provided biome or block are not valid.
+
+(1.18+) if passed a map of `continentalness`, `depth`, `erosion`, `humidity`, `temperature`, `weirdness`, returns the biome that exists at those noise values.  
+Note: Have to pass all 6 of the mentioned noise types and only these noise types for it to evaluate a biome.
 
 With an optional feature, it returns value for the specified attribute for that biome. Available and queryable features include:
-* `'top_material'`: unlocalized block representing the top surface material
-* `'under_material'`: unlocalized block representing what sits below topsoil
-* `'category'`: the parent biome this biome is derived from. Possible values include:
+* `'top_material'`: unlocalized block representing the top surface material (1.17.1 and below only)
+* `'under_material'`: unlocalized block representing what sits below topsoil (1.17.1 and below only)
+* `'category'`: the parent biome this biome is derived from. Possible values include (1.18.2 and below only):
 `'none'`, `'taiga'`, `'extreme_hills'`, `'jungle'`, `'mesa'`, `'plains'`, `'savanna'`,
 `'icy'`, `'the_end'`, `'beach'`, `'forest'`, `'ocean'`, `'desert'`, `'river'`,
-`'swamp'`, `'mushroom'` and  `'nether'`.
+`'swamp'`, `'mushroom'` , `'nether'`, `'underground'` (1.18+) and `'mountain'` (1.18+).
+* `'tags'`: list of biome tags associated with this biome
 * `'temperature'`: temperature from 0 to 1
 * `'fog_color'`: RGBA color value of fog 
 * `'foliage_color'`: RGBA color value of foliage
@@ -367,11 +370,11 @@ With an optional feature, it returns value for the specified attribute for that 
 * `'water_fog_color'`: RGBA color value of water fog
 * `'humidity'`: value from 0 to 1 indicating how wet is the biome
 * `'precipitation'`: `'rain'` `'snot'`, or `'none'`... ok, maybe `'snow'`, but that means snots for sure as well.
-* `'depth'`: (1.17.1 and below) float value indicating how high or low the terrain should generate. Values > 0 indicate generation above sea level
+* `'depth'`: (1.17.1 and below only) float value indicating how high or low the terrain should generate. Values > 0 indicate generation above sea level
 and values < 0, below sea level.
-* `'scale'`: (1.17 and below) float value indicating how flat is the terrain.
+* `'scale'`: (1.17.1 and below only) float value indicating how flat is the terrain.
 * `'features'`: list of features that generate in the biome, grouped by generation steps
-* `'structures'`: list of structures that generate in the biome.
+* `'structures'`: (1.17.1 and below only) list of structures that generate in the biome.
 
 ### `solid(pos)`
 
@@ -416,6 +419,10 @@ Numeric function, returning the block light at position (from torches and other 
 ### `sky_light(pos)`
 
 Numeric function, returning the sky light at position (from sky access).
+
+### `effective_light(pos)`
+
+Numeric function, returning the "real" light at position, which is affected by time and weather. which also affects mobs spawning, frosted ice blocks melting.
 
 ### `see_sky(pos)`
 
@@ -479,15 +486,10 @@ Returns the name of sound type made by the block at position. One of:
 `'candle'`', `'amethyst'`', `'amethyst_cluster'`', `'small_amethyst_bud'`', `'large_amethyst_bud'`', `'medium_amethyst_bud'`',
 `'tuff'`', `'calcite'`', `'copper'`'
 
-### `material(pos)`
+### `(Deprecated) material(pos)`
 
-Returns the name of material of the block at position. very useful to target a group of blocks. One of:
-
-`'air'`, `'void'`, `'portal'`, `'carpet'`, `'plant'`, `'water_plant'`, `'vine'`, `'sea_grass'`, `'water'`, 
-`'bubble_column'`, `'lava'`, `'snow_layer'`, `'fire'`, `'redstone_bits'`, `'cobweb'`, `'redstone_lamp'`, `'clay'`, 
-`'dirt'`, `'grass'`, `'packed_ice'`, `'sand'`, `'sponge'`, `'wood'`, `'wool'`, `'tnt'`, `'leaves'`, `'glass'`, 
-`'ice'`, `'cactus'`, `'stone'`, `'iron'`, `'snow'`, `'anvil'`, `'barrier'`, `'piston'`, `'coral'`, `'gourd'`, 
-`'dragon_egg'`, `'cake'`, `'amethyst'`
+Returns `'unknown'`. The concept of material for blocks is removed. On previous versions it returned the name of the material the block
+was made of.
 
 ### `map_colour(pos)`
 
@@ -495,13 +497,35 @@ Returns the map colour of a block at position. One of:
 
 `'air'`, `'grass'`, `'sand'`, `'wool'`, `'tnt'`, `'ice'`, `'iron'`, `'foliage'`, `'snow'`, `'clay'`, `'dirt'`, 
 `'stone'`, `'water'`, `'wood'`, `'quartz'`, `'adobe'`, `'magenta'`, `'light_blue'`, `'yellow'`, `'lime'`, `'pink'`, 
-`'gray'`, `'light_gray'`, `'cyan'`, `'purple'`, `'blue'`, `'brown'`, `'green'`, `'red'`, `'black'`, `'gold
-'`, `'diamond'`, `'lapis'`, `'emerald'`, `'obsidian'`, `'netherrack'`, `'white_terracotta'`, `'orange_terracotta'`, 
+`'gray'`, `'light_gray'`, `'cyan'`, `'purple'`, `'blue'`, `'brown'`, `'green'`, `'red'`, `'black'`, `'gold'`, 
+`'diamond'`, `'lapis'`, `'emerald'`, `'obsidian'`, `'netherrack'`, `'white_terracotta'`, `'orange_terracotta'`, 
 `'magenta_terracotta'`, `'light_blue_terracotta'`, `'yellow_terracotta'`, `'lime_terracotta'`, `'pink_terracotta'`, 
 `'gray_terracotta'`, `'light_gray_terracotta'`, `'cyan_terracotta'`, `'purple_terracotta'`, `'blue_terracotta'`, 
 `'brown_terracotta'`, `'green_terracotta'`, `'red_terracotta'`, `'black_terracotta'`,
 `'crimson_nylium'`, `'crimson_stem'`, `'crimson_hyphae'`, `'warped_nylium'`, `'warped_stem'`, `'warped_hyphae'`, `'warped_wart'`
 
+### `sample_noise()`, `sample_noise(pos, ... types?)` 1.18+
+
+Samples the world generation noise values / data driven density function(s) at a given position.
+
+If no types are passed in, or no arguments are given, it returns a list of all the available registry defined density functions.
+
+With a single function name passed in, it returns a scalar. With multiple function names passed in, it returns a list of results.
+
+Function accepts any registry defined density functions, both built in, as well as namespaced defined in datapacks. 
+On top of that, scarpet provides the following list of noises sampled directly from the current level (and not returned with no-argument call):
+
+
+`'barrier_noise'`, `'fluid_level_floodedness_noise'`, `'fluid_level_spread_noise'`, `'lava_noise'`,
+`'temperature'`, `'vegetation'`, `'continents'`, `'erosion'`, `'depth'`, `'ridges'`, 
+`'initial_density_without_jaggedness'`, `'final_density'`, `'vein_toggle'`, `'vein_ridged'` and `'vein_gap'`
+
+<pre>
+// requesting single value
+sample_density(pos, 'continents') => 0.211626790923
+// passing type as multiple arguments
+sample_density(pos, 'continents', 'depth', 'overworld/caves/pillars', 'mydatapack:foo/my_function') => [-0.205013844481, 1.04772473438, 0.211626790923, 0.123]
+</pre>
 
 ### `loaded(pos)`
 
@@ -591,9 +615,9 @@ with minecraft 1.16.1 and below or 1.16.2 and above since in 1.16.2 Mojang has a
 meaning that since 1.16.2 - they have official names that can be used by datapacks and scarpet. If you have most recent
 scarpet on 1.16.4, you can use `plop()` to get all available worldgen features including custom features and structures
 controlled by datapacks. It returns a map of lists in the following categories: 
-`'scarpet_custom'`, `'configured_features'`, `'structures'`, `'features'`, `'configured_structures'`
+`'scarpet_custom'`, `'configured_features'`, `'structures'`, `'features'`, `'structure_types'`
 
-### Previous Structure Names, including variants (MC1.16.1 and below)
+### Previous Structure Names, including variants (for MC1.16.1 and below only)
 *   `'monument'`: Ocean Monument. Generates at fixed Y coordinate, surrounds itself with water.
 *   `'fortress'`: Nether Fortress. Altitude varies, but its bounded by the code.
 *   `'mansion'`: Woodland Mansion
@@ -687,28 +711,10 @@ controlled by datapacks. It returns a map of lists in the following categories:
 *   `'twisting_vines'` (1.16)
 *   `'basalt_pillar'` (1.16)
 
-### Standard Structures (as of MC1.16.2+)
 
-Use `plop():'structures'`, but it always returns the following:
+### World Generation Features and Structures (as of MC1.16.2+)
 
-`'bastion_remnant'`, `'buried_treasure'`, `'desert_pyramid'`, `'endcity'`, `'fortress'`, `'igloo'`, 
-`'jungle_pyramid'`, `'mansion'`, `'mineshaft'`, `'monument'`, `'nether_fossil'`, `'ocean_ruin'`, 
-`'pillager_outpost'`, `'ruined_portal'`, `'shipwreck'`, `'stronghold'`, `'swamp_hut'`, `'village'`
-
-### Structure Variants (as of MC1.16.2+)
-
-Use `plop():'configured_structures'`, but it always returns the following:
-
-`'bastion_remnant'`, `'buried_treasure'`, `'desert_pyramid'`, `'end_city'`, `'fortress'`, `'igloo'`, 
-`'jungle_pyramid'`, `'mansion'`, `'mineshaft'`, `'mineshaft_mesa'`, `'monument'`, `'nether_fossil'`,
-`'ocean_ruin_cold'`, `'ocean_ruin_warm'`, `'pillager_outpost'`, `'ruined_portal'`, `'ruined_portal_desert'`, 
-`'ruined_portal_jungle'`, `'ruined_portal_mountain'`, `'ruined_portal_nether'`, `'ruined_portal_ocean'`, 
-`'ruined_portal_swamp'`, `'shipwreck'`, `'shipwreck_beached'`, `'stronghold'`, `'swamp_hut'`, 
-`'village_desert'`, `'village_plains'`, `'village_savanna'`, `'village_snovy'`, `'village_taiga'`
-
-### World Generation Features (as of MC1.16.2+)
-
-Use `plop():'features'` and `plop():'configured_features'` for a list of available options. Your output may vary based on
+Use `plop():'structure_types'`, `plop():'structures'`, `plop():'features'`, and `plop():'configured_features'` for a list of available options. Your output may vary based on
 datapacks installed in your world.
 
 ### Custom Scarpet Features
@@ -727,12 +733,13 @@ These contain some popular features and structures that are impossible or diffic
 * `'coral_mushroom'` - mushroom coral feature
 * `'coral_tree'` - tree coral feature
 * `'fancy_oak_bees'` - large oak tree variant with a mandatory beehive unlike standard that generate with probability
-* `'oak_bees'` - normal oak tree with a manatory beehive unlike standard that generate with probability
+* `'oak_bees'` - normal oak tree with a mandatory beehive unlike standard that generate with probability
 
 
 ### `structure_eligibility(pos, ?structure, ?size_needed)`
 
-Checks wordgen eligibility for a structure in a given chunk. Requires a `Standard Structure` name (see above).
+Checks worldgen eligibility for a structure in a given chunk. Requires a `Structure Variant` name (see above),
+or `Standard Structure` to check structures of this type.
 If no structure is given, or `null`, then it will check
 for all structures. If bounding box of the structures is also requested, it will compute size of potential
 structures. This function, unlike other in the `structure*` category is not using world data nor accesses chunks
@@ -745,7 +752,7 @@ If structure is specified, it will return `null` if a chunk is not eligible or i
 a map with two values: `'box'` for a pair of coordinates indicating bounding box of the structure, and `'pieces'` for 
 list of elements of the structure (as a tuple), with its name, direction, and box coordinates of the piece.
 
-If structure is not specified, it will return a set of structure names that are eligible, or a map with structures
+If structure is not specified, or a `Standard Structure` was specified, like `'village'`,it will return a set of structure names that are eligible, or a map with structures
 as keys, and same type of map values as with a single structure call. An empty set or an empty map would indicate that nothing
 should be generated there.
 
@@ -790,7 +797,7 @@ Throws `unknown_structure` if structure doesn't exist.
 Plops a structure or a feature at a given `pos`, so block, triple position coordinates or a list of coordinates. 
 To `what` gets plopped and exactly where it often depends on the feature or structure itself. 
 
-Requires a `Structure Variant`,  `Standard Structure`, `World Generation Feature` or `Custom Scarpet Feature` name (see
+Requires a `Structure Type`,  `Structure`, `World Generation Feature` or `Custom Scarpet Feature` name (see
 above). If standard name is used, the variant of the structure may depend on the biome, otherwise the default 
 structure for this type will be generated.
 
@@ -806,27 +813,3 @@ which sets it without looking into world blocks, and then use `plop` to fill it 
 All generated structures will retain their properties, like mob spawning, however in many cases the world / dimension 
 itself has certain rules to spawn mobs, like plopping a nether fortress in the overworld will not spawn nether mobs, 
 because nether mobs can spawn only in the nether, but plopped in the nether - will behave like a valid nether fortress.
-
-###  (deprecated) `custom_dimension(name, seed?)`
-
-Deprecated by `create_datapack()` which can be used to setup custom dimensions
-
-Ensures the dimension with the given `'name'` is available and configured with the given seed. It merely sets the world
-generator settings to the overworld, and the optional custom seed (or using current world seed, if not provided). 
-
-If the dimension with this name already exists, returns `false` and does nothing.
-
-Created dimension with `custom_dimension` only exist till the game restart (same with the datapacks, if removed), but
-all the world data should be saved. If custom dimension is re-created next time the app is loaded it will be using
-the existing world content. This means that it is up to the programmer to make sure the custom dimensions settings
-are stored in app data and restored when app reloads and wants to use previous worlds. Since vanilla game only keeps
-track of world data, not the world settings, if the dimension hasn't been yet configured via `custom_dimension` and
-the app hasn't yet initalized their dimension, the players will be positioned in the overworld at the same coordinates.
-
-List of custom dimensions (to be used in the likes of `/execute in <dim>`) is only send to the clients when joining the 
-game, meaning custom worlds created after a player has joined will not be suggested in vanilla commands, but running
-vanilla commands on them will be successful. Its due to the fact that datapacks with dimensions are always loaded
-with the game and assumed not changing.
-
-`custom_dimension` is experimental and considered a WIP. More customization options besides the seed will be added in
-the future.

@@ -1,12 +1,13 @@
 package carpet.script.exception;
 
+import carpet.script.external.Carpet;
 import carpet.script.value.FunctionValue;
-import carpet.utils.Messenger;
-import net.minecraft.server.command.ServerCommandSource;
 
 import java.util.List;
 
-public class CarpetExpressionException extends RuntimeException implements ResolvedException
+import net.minecraft.commands.CommandSourceStack;
+
+public class CarpetExpressionException extends StacklessRuntimeException implements ResolvedException
 {
     public final List<FunctionValue> stack;
 
@@ -15,13 +16,14 @@ public class CarpetExpressionException extends RuntimeException implements Resol
         super(message);
         this.stack = stack;
     }
-    public void printStack(ServerCommandSource source)
+
+    public void printStack(CommandSourceStack source)
     {
         if (stack != null && !stack.isEmpty())
         {
             for (FunctionValue fun : stack)
             {
-                Messenger.m(source, "e  ... in "+fun.fullName(), "e /"+(fun.getToken().lineno+1)+":"+(fun.getToken().linepos+1));
+                Carpet.Messenger_message(source, "e  ... in " + fun.fullName(), "e /" + (fun.getToken().lineno + 1) + ":" + (fun.getToken().linepos + 1));
             }
         }
     }

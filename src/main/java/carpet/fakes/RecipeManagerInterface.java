@@ -1,11 +1,11 @@
 package carpet.fakes;
 
-import net.minecraft.item.Item;
-import net.minecraft.recipe.Recipe;
-import net.minecraft.recipe.RecipeType;
-import net.minecraft.util.Identifier;
-
 import java.util.List;
+
+import net.minecraft.core.RegistryAccess;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.crafting.Recipe;
+import net.minecraft.world.item.crafting.RecipeType;
 
 public interface RecipeManagerInterface
 {
@@ -13,5 +13,5 @@ public interface RecipeManagerInterface
      * Gets all the recipes for a given item. Also used for {@link carpet.helpers.HopperCounter#guessColor} to guess the
      * colour of an item to display it prettily
      */
-    List<Recipe<?>> getAllMatching(RecipeType type, Identifier output);
+    List<Recipe<?>> getAllMatching(final RecipeType<?> type, final ResourceLocation output, final RegistryAccess registryAccess);
 }
