@@ -30,6 +30,7 @@
     "MushroomCow_bugFixMixin",
     "ZombieVillager_bugFixMixin",
     "AbstractPiglin_bugFixMixin",
+    "Tadpole_bugFixMixin",
 
     "MinecraftServer_coreMixin",
 
