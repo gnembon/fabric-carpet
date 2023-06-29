@@ -29,6 +29,7 @@
     "Villager_bugFixMixin",
     "MushroomCow_bugFixMixin",
     "ZombieVillager_bugFixMixin",
+    "AbstractPiglin_bugFixMixin",
 
     "MinecraftServer_coreMixin",
 
