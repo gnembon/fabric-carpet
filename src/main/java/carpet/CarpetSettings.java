@@ -1070,6 +1070,7 @@ public class CarpetSettings
     )
     public static boolean lightningKillsDropsFix = false;
 
+    //Todo figure out how to do death loot tables
     @Rule(
             desc = "Mob conversions keep NBT Tags",
             extra = {"Setting to true will ensure NBT tags are kept when mobs convert (e.g Villager to Witch)", "Fixes [MC-88967](https://bugs.mojang.com/browse/MC-88967)."},

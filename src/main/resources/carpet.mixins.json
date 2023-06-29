@@ -28,6 +28,7 @@
     "HugeFungusFeatureMixin",
     "Villager_bugFixMixin",
     "MushroomCow_bugFixMixin",
+    "ZombieVillager_bugFixMixin",
 
     "MinecraftServer_coreMixin",
 
