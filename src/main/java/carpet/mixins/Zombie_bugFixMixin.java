@@ -1,11 +1,9 @@
 package carpet.mixins;
 
 import carpet.CarpetSettings;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.monster.Zombie;
-import net.minecraft.world.entity.npc.Villager;
 import net.minecraft.world.level.Level;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -19,7 +17,7 @@ public abstract class Zombie_bugFixMixin extends Mob {
         super(entityType, level);
     }
 
-    @Inject(method = "convertToZombieType", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/monster/Zombie;canBreakDoors()Z"), locals = LocalCapture.CAPTURE_FAILSOFT)
+    @Inject(method = "convertToZombieType", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/monster/Zombie;supportsBreakDoorGoal()Z"), locals = LocalCapture.CAPTURE_FAILSOFT)
     private void mixin(EntityType<? extends Zombie> entityType, CallbackInfo ci, Zombie zombie) {
         if (CarpetSettings.mobConvertKeepNBTTags) {
             this.getActiveEffects().forEach(zombie::addEffect);
