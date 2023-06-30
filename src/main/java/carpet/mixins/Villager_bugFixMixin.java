@@ -37,7 +37,6 @@ public abstract class Villager_bugFixMixin extends Mob {
             witch.setYHeadRot(this.getYHeadRot());
             witch.setSilent(this.isSilent());
             this.getTags().forEach(witch::addTag);
-            witch.setUUID(this.getUUID());
         }
     }
 }
