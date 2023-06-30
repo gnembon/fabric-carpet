@@ -38,19 +38,24 @@ public class ServerPlayerGameMode_scarpetEventsMixin implements ServerPlayerInte
 
     @Shadow public ServerLevel level;
 
-    @Inject(method = "destroyBlock", locals = LocalCapture.CAPTURE_FAILHARD, at = @At(
+    @Inject(method = "destroyBlock", locals = LocalCapture.CAPTURE_FAILHARD, cancellable = true, at = @At(
             value = "INVOKE",
             target = "Lnet/minecraft/world/level/block/Block;playerWillDestroy(Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/entity/player/Player;)V",
             shift = At.Shift.BEFORE
     ))
     private void onBlockBroken(BlockPos blockPos_1, CallbackInfoReturnable<Boolean> cir, BlockState blockState_1, BlockEntity be, Block b)
     {
-        PLAYER_BREAK_BLOCK.onBlockBroken(player, blockPos_1, blockState_1);
+        if(PLAYER_BREAK_BLOCK.onBlockBroken(player, blockPos_1, blockState_1)) {
+            this.level.sendBlockUpdated(blockPos_1, blockState_1, blockState_1, 3);
+            cir.setReturnValue(false);
+            cir.cancel();
+        }
     }
 
     @Inject(method = "useItemOn", at = @At(
-            value = "RETURN",
-            ordinal = 2
+            value = "INVOKE",
+            target = "Lnet/minecraft/advancements/critereon/ItemUsedOnLocationTrigger;trigger(Lnet/minecraft/server/level/ServerPlayer;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/item/ItemStack;)V",
+            shift = At.Shift.BEFORE
     ))
     private void onBlockActivated(ServerPlayer serverPlayerEntity, Level world, ItemStack stack, InteractionHand hand, BlockHitResult hitResult, CallbackInfoReturnable<InteractionResult> cir)
     {

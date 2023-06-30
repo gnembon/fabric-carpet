@@ -6,8 +6,11 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import carpet.script.Context;
 import carpet.script.value.ListValue;
 import carpet.script.value.Value;
+
+import javax.annotation.Nullable;
 
 /**
  * <p>Converts a given {@link ListValue} into a {@link List} of values converted to {@code <T>}.</p>
@@ -31,30 +34,37 @@ final class ListConverter<T> implements ValueConverter<List<T>>
         return (allowSingletonCreation ? itemConverter.getTypeName() + " or " : "") + "list of " + itemConverter.getTypeName() + "s";
     }
 
+    @Nullable
     @Override
-    public List<T> convert(Value value)
+    public List<T> convert(Value value, @Nullable Context context)
     {
-        return value instanceof ListValue ? convertListValue((ListValue) value) : allowSingletonCreation ? convertSingleton(value) : null;
+        return value instanceof ListValue ? convertListValue((ListValue) value, context) : allowSingletonCreation ? convertSingleton(value, context) : null;
     }
 
-    private List<T> convertListValue(ListValue values)
+    @Nullable
+    private List<T> convertListValue(ListValue values, @Nullable Context context)
     {
         List<T> list = new ArrayList<>(values.getItems().size());
         for (Value value : values)
         {
-            T converted = itemConverter.convert(value);
+            T converted = itemConverter.convert(value, context);
             if (converted == null)
+            {
                 return null;
+            }
             list.add(converted);
         }
         return list;
     }
 
-    private List<T> convertSingleton(Value val)
+    @Nullable
+    private List<T> convertSingleton(Value val, @Nullable Context context)
     {
-        T converted = itemConverter.convert(val);
+        T converted = itemConverter.convert(val, context);
         if (converted == null)
+        {
             return null;
+        }
         return Collections.singletonList(converted);
 
     }

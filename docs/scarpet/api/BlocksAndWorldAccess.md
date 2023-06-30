@@ -420,6 +420,10 @@ Numeric function, returning the block light at position (from torches and other 
 
 Numeric function, returning the sky light at position (from sky access).
 
+### `effective_light(pos)`
+
+Numeric function, returning the "real" light at position, which is affected by time and weather. which also affects mobs spawning, frosted ice blocks melting.
+
 ### `see_sky(pos)`
 
 Boolean function, returning true if the block can see sky.
@@ -482,15 +486,10 @@ Returns the name of sound type made by the block at position. One of:
 `'candle'`', `'amethyst'`', `'amethyst_cluster'`', `'small_amethyst_bud'`', `'large_amethyst_bud'`', `'medium_amethyst_bud'`',
 `'tuff'`', `'calcite'`', `'copper'`'
 
-### `material(pos)`
+### `(Deprecated) material(pos)`
 
-Returns the name of material of the block at position. very useful to target a group of blocks. One of:
-
-`'air'`, `'void'`, `'portal'`, `'carpet'`, `'plant'`, `'water_plant'`, `'vine'`, `'sea_grass'`, `'water'`, 
-`'bubble_column'`, `'lava'`, `'snow_layer'`, `'fire'`, `'redstone_bits'`, `'cobweb'`, `'redstone_lamp'`, `'clay'`, 
-`'dirt'`, `'grass'`, `'packed_ice'`, `'sand'`, `'sponge'`, `'wood'`, `'wool'`, `'tnt'`, `'leaves'`, `'glass'`, 
-`'ice'`, `'cactus'`, `'stone'`, `'iron'`, `'snow'`, `'anvil'`, `'barrier'`, `'piston'`, `'coral'`, `'gourd'`, 
-`'dragon_egg'`, `'cake'`, `'amethyst'`
+Returns `'unknown'`. The concept of material for blocks is removed. On previous versions it returned the name of the material the block
+was made of.
 
 ### `map_colour(pos)`
 
@@ -498,37 +497,35 @@ Returns the map colour of a block at position. One of:
 
 `'air'`, `'grass'`, `'sand'`, `'wool'`, `'tnt'`, `'ice'`, `'iron'`, `'foliage'`, `'snow'`, `'clay'`, `'dirt'`, 
 `'stone'`, `'water'`, `'wood'`, `'quartz'`, `'adobe'`, `'magenta'`, `'light_blue'`, `'yellow'`, `'lime'`, `'pink'`, 
-`'gray'`, `'light_gray'`, `'cyan'`, `'purple'`, `'blue'`, `'brown'`, `'green'`, `'red'`, `'black'`, `'gold
-'`, `'diamond'`, `'lapis'`, `'emerald'`, `'obsidian'`, `'netherrack'`, `'white_terracotta'`, `'orange_terracotta'`, 
+`'gray'`, `'light_gray'`, `'cyan'`, `'purple'`, `'blue'`, `'brown'`, `'green'`, `'red'`, `'black'`, `'gold'`, 
+`'diamond'`, `'lapis'`, `'emerald'`, `'obsidian'`, `'netherrack'`, `'white_terracotta'`, `'orange_terracotta'`, 
 `'magenta_terracotta'`, `'light_blue_terracotta'`, `'yellow_terracotta'`, `'lime_terracotta'`, `'pink_terracotta'`, 
 `'gray_terracotta'`, `'light_gray_terracotta'`, `'cyan_terracotta'`, `'purple_terracotta'`, `'blue_terracotta'`, 
 `'brown_terracotta'`, `'green_terracotta'`, `'red_terracotta'`, `'black_terracotta'`,
 `'crimson_nylium'`, `'crimson_stem'`, `'crimson_hyphae'`, `'warped_nylium'`, `'warped_stem'`, `'warped_hyphae'`, `'warped_wart'`
 
-### `sample_noise(pos, ...type?)` 1.18+ only
+### `sample_noise()`, `sample_noise(pos, ... types?)` 1.18+
 
- Samples the multi noise value(s) on the given position.  
-If no type is passed, returns a map of `continentalness`, `depth`, `erosion`, `humidity`, `temperature`, `weirdness`.  
-Otherwise, returns the map of that specific noise.
+Samples the world generation noise values / data driven density function(s) at a given position.
+
+If no types are passed in, or no arguments are given, it returns a list of all the available registry defined density functions.
+
+With a single function name passed in, it returns a scalar. With multiple function names passed in, it returns a list of results.
+
+Function accepts any registry defined density functions, both built in, as well as namespaced defined in datapacks. 
+On top of that, scarpet provides the following list of noises sampled directly from the current level (and not returned with no-argument call):
+
+
+`'barrier_noise'`, `'fluid_level_floodedness_noise'`, `'fluid_level_spread_noise'`, `'lava_noise'`,
+`'temperature'`, `'vegetation'`, `'continents'`, `'erosion'`, `'depth'`, `'ridges'`, 
+`'initial_density_without_jaggedness'`, `'final_density'`, `'vein_toggle'`, `'vein_ridged'` and `'vein_gap'`
 
 <pre>
-// without type
-sample_noise(pos) => {continentalness: 0.445300012827, erosion: 0.395399987698, temperature: 0.165399998426, ...}
+// requesting single value
+sample_density(pos, 'continents') => 0.211626790923
 // passing type as multiple arguments
-sample_noise(pos, 'pillarRareness', 'aquiferBarrier') => {aquiferBarrier: -0.205013844481, pillarRareness: 1.04772473438}
-// passing types as a list with unpacking operator
-sample_noise(pos, ...['spaghetti3dFirst', 'spaghetti3dSecond']) => {spaghetti3dFirst: -0.186052125186, spaghetti3dSecond: 0.211626790923}
+sample_density(pos, 'continents', 'depth', 'overworld/caves/pillars', 'mydatapack:foo/my_function') => [-0.205013844481, 1.04772473438, 0.211626790923, 0.123]
 </pre>
-
-Available types:
-
-`aquiferBarrier`, `aquiferFluidLevelFloodedness`, `aquiferFluidLevelSpread`, `aquiferLava`, `caveCheese`,
-`caveEntrance`, `caveLayer`, `continentalness`, `depth`, `erosion`, `humidity`, `island`, `jagged`, `oreGap`,
-`pillar`, `pillarRareness`, `pillarThickness`, `shiftX`, `shiftY`, `shiftZ`, `spaghetti2d`, `spaghetti2dElevation`,
-`spaghetti2dModulator`, `spaghetti2dThickness`, `spaghetti3d`, `spaghetti3dFirst`, `spaghetti3dRarity`,
-`spaghetti3dSecond`, `spaghetti3dThickness`, `spaghettiRoughness`, `spaghettiRoughnessModulator`, `temperature`,
-`terrain`, `terrainFactor`, `terrainOffset`, `terrainPeaks`, `weirdness`
-
 
 ### `loaded(pos)`
 
@@ -736,12 +733,12 @@ These contain some popular features and structures that are impossible or diffic
 * `'coral_mushroom'` - mushroom coral feature
 * `'coral_tree'` - tree coral feature
 * `'fancy_oak_bees'` - large oak tree variant with a mandatory beehive unlike standard that generate with probability
-* `'oak_bees'` - normal oak tree with a manatory beehive unlike standard that generate with probability
+* `'oak_bees'` - normal oak tree with a mandatory beehive unlike standard that generate with probability
 
 
 ### `structure_eligibility(pos, ?structure, ?size_needed)`
 
-Checks wordgen eligibility for a structure in a given chunk. Requires a `Structure Variant` name (see above),
+Checks worldgen eligibility for a structure in a given chunk. Requires a `Structure Variant` name (see above),
 or `Standard Structure` to check structures of this type.
 If no structure is given, or `null`, then it will check
 for all structures. If bounding box of the structures is also requested, it will compute size of potential

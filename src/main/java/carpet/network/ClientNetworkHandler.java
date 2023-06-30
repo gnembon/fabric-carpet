@@ -5,7 +5,8 @@ import carpet.CarpetExtension;
 import carpet.CarpetSettings;
 import carpet.api.settings.CarpetRule;
 import carpet.api.settings.InvalidRuleValueException;
-import carpet.helpers.TickSpeed;
+import carpet.fakes.LevelInterface;
+import carpet.helpers.TickRateManager;
 import carpet.api.settings.SettingsManager;
 import io.netty.buffer.Unpooled;
 import java.util.HashMap;
@@ -65,15 +66,23 @@ public class ClientNetworkHandler
                 }
             }
         });
-        dataHandlers.put("TickRate", (p, t) -> TickSpeed.tickrate(((NumericTag)t).getAsFloat(), false));
+        dataHandlers.put("TickRate", (p, t) -> {
+            TickRateManager tickRateManager = ((LevelInterface)p.clientLevel).tickRateManager();
+            tickRateManager.setTickRate(((NumericTag) t).getAsFloat());
+        });
         dataHandlers.put("TickingState", (p, t) -> {
             CompoundTag tickingState = (CompoundTag)t;
-            TickSpeed.setFrozenState(tickingState.getBoolean("is_paused"), tickingState.getBoolean("deepFreeze"));
+            TickRateManager tickRateManager = ((LevelInterface)p.clientLevel).tickRateManager();
+            tickRateManager.setFrozenState(tickingState.getBoolean("is_paused"), tickingState.getBoolean("deepFreeze"));
         });
         dataHandlers.put("SuperHotState", (p, t) -> {
-            TickSpeed.is_superHot = ((ByteTag) t).equals(ByteTag.ONE);
+            TickRateManager tickRateManager = ((LevelInterface)p.clientLevel).tickRateManager();
+            tickRateManager.setSuperHot(((ByteTag) t).equals(ByteTag.ONE));
         });
-        dataHandlers.put("TickPlayerActiveTimeout", (p, t) -> TickSpeed.player_active_timeout = ((NumericTag)t).getAsInt());
+        dataHandlers.put("TickPlayerActiveTimeout", (p, t) -> {
+            TickRateManager tickRateManager = ((LevelInterface)p.clientLevel).tickRateManager();
+            tickRateManager.setPlayerActiveTimeout(((NumericTag) t).getAsInt());
+        });
         dataHandlers.put("scShape", (p, t) -> { // deprecated // and unused // should remove for 1.17
             if (CarpetClient.shapes != null)
                 CarpetClient.shapes.addShape((CompoundTag)t);
@@ -87,6 +96,7 @@ public class ClientNetworkHandler
         });
     };
 
+    // Ran on the Main Minecraft Thread
     public static void handleData(FriendlyByteBuf data, LocalPlayer player)
     {
         if (data != null)
@@ -101,22 +111,19 @@ public class ClientNetworkHandler
 
     private static void onHi(FriendlyByteBuf data)
     {
-        synchronized (CarpetClient.sync)
+        CarpetClient.setCarpet();
+        CarpetClient.serverCarpetVersion = data.readUtf(64);
+        if (CarpetSettings.carpetVersion.equals(CarpetClient.serverCarpetVersion))
         {
-            CarpetClient.setCarpet();
-            CarpetClient.serverCarpetVersion = data.readUtf(64);
-            if (CarpetSettings.carpetVersion.equals(CarpetClient.serverCarpetVersion))
-            {
-                CarpetSettings.LOG.info("Joined carpet server with matching carpet version");
-            }
-            else
-            {
-                CarpetSettings.LOG.warn("Joined carpet server with another carpet version: "+CarpetClient.serverCarpetVersion);
-            }
-            if (CarpetClient.getPlayer() != null)
-                respondHello();
-
+            CarpetSettings.LOG.info("Joined carpet server with matching carpet version");
         }
+        else
+        {
+            CarpetSettings.LOG.warn("Joined carpet server with another carpet version: "+CarpetClient.serverCarpetVersion);
+        }
+        // We can ensure that this packet is
+        // processed AFTER the player has joined
+        respondHello();
     }
 
     public static void respondHello()

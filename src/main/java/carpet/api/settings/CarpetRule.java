@@ -86,17 +86,28 @@ public interface CarpetRule<T> {
     T defaultValue();
     
     /**
+     * <p>Returns whether this rule is strict.</p>
+     * 
+     * <p>A rule being strict means that it will only accept the suggestions returned by {@link #suggestions()} as valid values.</p>
+     * 
+     * <p>Note that a rule implementation may return {@code false} in this method but still not accept options other than those
+     * returned in {@link #suggestions()}, only the opposite is guaranteed.</p>
+     */
+    default boolean strict() {
+        return false;
+    }
+    
+    /**
      * <p>Sets this rule's value to the provided {@link String}, after first converting the {@link String} into a suitable type.</p>
      * 
-     * <p>This methods run any required validation on the value first, and throws {@link InvalidRuleValueException} if the value is not suitable
-     * for this rule, regardless of whether it was impossible to convert the value to the required type, the rule doesn't accept the
-     * value, or the rule is immutable.</p>
+     * <p>This methods run any required validation on the value first, and throws {@link InvalidRuleValueException} if the value is not suitable for
+     * this rule, regardless of whether it was impossible to convert the value to the required type, the rule doesn't accept the value, or the rule is
+     * immutable.</p>
      * 
      * <p>Implementations of this method must notify their {@link SettingsManager} by calling
-     * {@link SettingsManager#notifyRuleChanged(CommandSourceStack, CarpetRule, String)}, who is responsible for
-     * notifying the {@link ServerNetworkHandler} (if the rule isn't restricted from being synchronized with clients)
-     * and the {@link CarpetEventServer.Event#CARPET_RULE_CHANGES#onCarpetRuleChanges(CarpetRule, CommandSourceStack)} Scarpet event
-     * in case the value of the rule was changed because of the invocation.</p>
+     * {@link SettingsManager#notifyRuleChanged(CommandSourceStack, CarpetRule, String)}, who is responsible for notifying the
+     * {@link ServerNetworkHandler} (if the rule isn't restricted from being synchronized with clients) and other rule observers like the Scarpet
+     * event, in case the value of the rule was changed because of the invocation.</p>
      * 
      * <p>This method must not throw any exception other than the documented {@link InvalidRuleValueException}.</p>
      * 

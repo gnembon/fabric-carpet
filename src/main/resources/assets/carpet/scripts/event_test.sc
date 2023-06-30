@@ -177,6 +177,20 @@ __on_player_interacts_with_block(player, hand, block, face, hitvec) ->
 	print('  - face: '+face);
 	print('  - hitvec: '+map(hitvec, str('%.2f',_)))
 );
+__on_player_placing_block(player, item_tuple, hand, block) ->
+(
+    l(item, count, nbt) = item_tuple || l('None', 0, null);
+	print('');
+	print('__on_player_placing_block(player, item_tuple, hand, block)');
+	print('player about to place a block:');
+	print('  - player: '+player);
+	print('  - block: '+block+' at '+map(pos(block), str('%.2f',_)));
+	print('  - hand: '+hand);
+	print('  - item:');
+    print('    > name: '+item);
+    print('    > count: '+count);
+    print('    > nbt: '+nbt);
+);
 __on_player_places_block(player, item_tuple, hand, block) ->
 (
     l(item, count, nbt) = item_tuple || l('None', 0, null);
@@ -256,6 +270,13 @@ __on_player_message(player, message) ->
     print('');
     print('__on_player_message(player, message)');
     print('Player '+player+' sent message: '+message)
+);
+
+__on_player_command(player, command) ->
+(
+    print('');
+    print('__on_player_command(player, command)');
+    print('Player '+player+' sent command: '+command)
 );
 
 __on_player_chooses_recipe(player, recipe, full_stack) ->

@@ -79,7 +79,7 @@ public abstract class Villager_aiMixin extends AbstractVillager
             //boolean work = false;
             boolean sleep = false;
             boolean panic = this.brain.isActive(Activity.PANIC);
-            long currentTime = this.level.getGameTime();
+            long currentTime = this.level().getGameTime();
             if (optional_11.isPresent()) {
                 sleep = (currentTime - optional_11.get()) < 24000L;
             }
@@ -123,7 +123,7 @@ public abstract class Villager_aiMixin extends AbstractVillager
             if (itemStack_1.getItem() == Items.EMERALD)
             {
                 GlobalPos bedPos = this.brain.getMemory(MemoryModuleType.HOME).orElse(null);
-                if (bedPos == null || bedPos.dimension() != level.dimension()) // get Dimension
+                if (bedPos == null || bedPos.dimension() != level().dimension()) // get Dimension
                 {
                     setUnhappy();
                     ((ServerLevel) getCommandSenderWorld()).sendParticles(new BlockParticleOption(ParticleTypes.BLOCK_MARKER, Blocks.BARRIER.defaultBlockState()), getX(), getY() + getEyeHeight() + 1, getZ(), 1, 0.1, 0.1, 0.1, 0.0);

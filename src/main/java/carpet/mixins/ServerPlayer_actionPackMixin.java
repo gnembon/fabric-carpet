@@ -1,12 +1,11 @@
 package carpet.mixins;
 
-import carpet.fakes.ServerPlayerEntityInterface;
+import carpet.fakes.ServerPlayerInterface;
 import carpet.helpers.EntityPlayerActionPack;
 import com.mojang.authlib.GameProfile;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.entity.player.ProfilePublicKey;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -14,7 +13,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(ServerPlayer.class)
-public abstract class ServerPlayer_actionPackMixin implements ServerPlayerEntityInterface
+public abstract class ServerPlayer_actionPackMixin implements ServerPlayerInterface
 {
     @Unique
     public EntityPlayerActionPack actionPack;
@@ -25,7 +24,7 @@ public abstract class ServerPlayer_actionPackMixin implements ServerPlayerEntity
     }
 
     @Inject(method = "<init>", at = @At(value = "RETURN"))
-    private void onServerPlayerEntityContructor(MinecraftServer foo, ServerLevel bar, GameProfile baz, ProfilePublicKey qux, CallbackInfo ci)
+    private void onServerPlayerEntityContructor(MinecraftServer minecraftServer, ServerLevel serverLevel, GameProfile gameProfile, CallbackInfo ci)
     {
         this.actionPack = new EntityPlayerActionPack((ServerPlayer) (Object) this);
     }

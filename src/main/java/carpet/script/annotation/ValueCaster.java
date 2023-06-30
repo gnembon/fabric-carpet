@@ -3,6 +3,7 @@ package carpet.script.annotation;
 import java.util.HashMap;
 import java.util.Map;
 
+import carpet.script.Context;
 import carpet.script.value.AbstractListValue;
 import carpet.script.value.BlockValue;
 import carpet.script.value.BooleanValue;
@@ -16,6 +17,8 @@ import carpet.script.value.NumericValue;
 import carpet.script.value.StringValue;
 import carpet.script.value.ThreadValue;
 import carpet.script.value.Value;
+
+import javax.annotation.Nullable;
 
 /**
  * <p>Simple {@link ValueConverter} implementation that casts a {@link Value} into one of its subclasses, either for use directly in parameters or
@@ -52,6 +55,7 @@ public final class ValueCaster<R> implements ValueConverter<R> // R always exten
 
     private ValueCaster(Class<R> outputType, String typeName)
     {
+        super();
         this.outputType = outputType;
         this.typeName = typeName;
     }
@@ -76,12 +80,15 @@ public final class ValueCaster<R> implements ValueConverter<R> // R always exten
         return (ValueCaster<R>) byResult.get(outputType);
     }
 
+    @Nullable
     @Override
     @SuppressWarnings("unchecked") // more than checked, see SimpleTypeConverter#converter for reasoning
-    public R convert(Value value)
+    public R convert(Value value, @Nullable Context context)
     {
         if (!outputType.isInstance(value))
+        {
             return null;
+        }
         return (R)value;
     }
 
@@ -96,7 +103,7 @@ public final class ValueCaster<R> implements ValueConverter<R> // R always exten
      */
     public static <R extends Value> void register(Class<R> valueClass, String typeName)
     {
-        ValueCaster<R> caster = new ValueCaster<R>(valueClass, typeName);
+        ValueCaster<R> caster = new ValueCaster<>(valueClass, typeName);
         byResult.putIfAbsent(valueClass, caster);
     }
 }

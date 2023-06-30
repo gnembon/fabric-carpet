@@ -1,14 +1,14 @@
 package carpet.commands;
 
 import carpet.CarpetSettings;
-import carpet.helpers.TickSpeed;
+import carpet.fakes.MinecraftServerInterface;
+import carpet.helpers.ServerTickRateManager;
 import carpet.network.ServerNetworkHandler;
 import carpet.utils.CarpetProfiler;
 import carpet.utils.CommandHelper;
 import carpet.utils.Messenger;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
-import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.minecraft.commands.CommandBuildContext;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.network.chat.Component;
@@ -73,37 +73,35 @@ public class TickCommand
 
     private static int setTps(CommandSourceStack source, float tps)
     {
-        TickSpeed.tickrate(tps, true);
+        ServerTickRateManager trm = ((MinecraftServerInterface)source.getServer()).getTickRateManager();
+        trm.setTickRate(tps, true);
         queryTps(source);
         return (int)tps;
     }
 
     private static int queryTps(CommandSourceStack source)
     {
-        Messenger.m(source, "w Current tps is: ",String.format("wb %.1f", TickSpeed.tickrate));
-        return (int)TickSpeed.tickrate;
+        ServerTickRateManager trm = ((MinecraftServerInterface)source.getServer()).getTickRateManager();
+
+        Messenger.m(source, "w Current tps is: ",String.format("wb %.1f", trm.tickrate()));
+        return (int) trm.tickrate();
     }
 
     private static int setWarp(CommandSourceStack source, int advance, String tail_command)
     {
-        ServerPlayer player = null;
-        try
-        {
-            player = source.getPlayerOrException();
-        }
-        catch (CommandSyntaxException ignored)
-        {
-        }
-        Component message = TickSpeed.tickrate_advance(player, advance, tail_command, source);
-        source.sendSuccess(message, false);
+        ServerPlayer player = source.getPlayer(); // may be null
+        ServerTickRateManager trm = ((MinecraftServerInterface)source.getServer()).getTickRateManager();
+        Component message = trm.requestGameToWarpSpeed(player, advance, tail_command, source);
+        source.sendSuccess(() -> message, false);
         return 1;
     }
 
     private static int freezeStatus(CommandSourceStack source)
     {
-        if(TickSpeed.isPaused())
+        ServerTickRateManager trm = ((MinecraftServerInterface)source.getServer()).getTickRateManager();
+        if(trm.gameIsPaused())
         {
-            Messenger.m(source, "gi Freeze Status: Game is "+(TickSpeed.deeplyFrozen()?"deeply ":"")+"frozen");
+            Messenger.m(source, "gi Freeze Status: Game is "+(trm.deeplyFrozen()?"deeply ":"")+"frozen");
         }
         else
         {
@@ -114,8 +112,9 @@ public class TickCommand
 
     private static int setFreeze(CommandSourceStack source, boolean isDeep, boolean freeze)
     {
-        TickSpeed.setFrozenState(freeze, isDeep);
-        if (TickSpeed.isPaused())
+        ServerTickRateManager trm = ((MinecraftServerInterface)source.getServer()).getTickRateManager();
+        trm.setFrozenState(freeze, isDeep);
+        if (trm.gameIsPaused())
         {
             Messenger.m(source, "gi Game is "+(isDeep?"deeply ":"")+"frozen");
         }
@@ -128,21 +127,24 @@ public class TickCommand
 
     private static int toggleFreeze(CommandSourceStack source, boolean isDeep)
     {
-        return setFreeze(source, isDeep, !TickSpeed.isPaused());
+        ServerTickRateManager trm = ((MinecraftServerInterface)source.getServer()).getTickRateManager();
+        return setFreeze(source, isDeep, !trm.gameIsPaused());
     }
 
     private static int step(CommandSourceStack source, int advance)
     {
-        TickSpeed.add_ticks_to_run_in_pause(advance);
+        ServerTickRateManager trm = ((MinecraftServerInterface)source.getServer()).getTickRateManager();
+        trm.stepGameIfPaused(advance);
         Messenger.m(source, "gi Stepping " + advance + " tick" + (advance != 1 ? "s" : ""));
         return 1;
     }
 
     private static int toggleSuperHot(CommandSourceStack source)
     {
-        TickSpeed.is_superHot = !TickSpeed.is_superHot;
-        ServerNetworkHandler.updateSuperHotStateToConnectedPlayers();
-        if (TickSpeed.is_superHot)
+        ServerTickRateManager trm = ((MinecraftServerInterface)source.getServer()).getTickRateManager();
+        trm.setSuperHot(!trm.isSuperHot());
+        ServerNetworkHandler.updateSuperHotStateToConnectedPlayers(source.getServer());
+        if (trm.isSuperHot())
         {
             Messenger.m(source, "gi Superhot enabled");
         }

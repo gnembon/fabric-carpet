@@ -38,6 +38,7 @@ import org.apache.commons.lang3.ClassUtils;
  * @deprecated Use the type {@link CarpetRule} instead
  */
 @Deprecated(forRemoval = true) // to move to api.settings package and visibility to package private
+@SuppressWarnings("removal") // Gradle needs the explicit suppression
 public final class ParsedRule<T> implements CarpetRule<T>, Comparable<ParsedRule<?>> {
     private static final Map<Class<?>, FromStringConverter<?>> CONVERTER_MAP = Map.ofEntries(
             Map.entry(String.class, str -> str),
@@ -85,9 +86,9 @@ public final class ParsedRule<T> implements CarpetRule<T>, Comparable<ParsedRule
     @Deprecated(forRemoval = true) // to private (and rename?)
     public final List<String> options;
     /**
-     * @deprecated No replacement for this
+     * @deprecated Use {@link CarpetRule#strict()} instead
      */
-    @Deprecated(forRemoval = true) // to pckg private (for printRulesToLog, or get a different way)
+    @Deprecated(forRemoval = true) // to remove or fix
     public boolean isStrict;
     /**
      * @deprecated Use {@link CarpetRule#canBeToggledClientSide()} instead
@@ -148,12 +149,12 @@ public final class ParsedRule<T> implements CarpetRule<T>, Comparable<ParsedRule
     @Deprecated(forRemoval = true)
     public static <T> ParsedRule<T> of(Field field, SettingsManager settingsManager) {
         RuleAnnotation rule;
-        if (settingsManager instanceof carpet.settings.SettingsManager && field.isAnnotationPresent(Rule.class)) { // Legacy path
-            Rule a = field.getAnnotation(Rule.class);
-            rule = new RuleAnnotation(true, a.name(), a.desc(), a.extra(), a.category(), a.options(), a.strict(), a.appSource(), a.validate());
-        } else if (field.isAnnotationPresent(carpet.api.settings.Rule.class)) {
+        if (field.isAnnotationPresent(carpet.api.settings.Rule.class)) {
             carpet.api.settings.Rule a = field.getAnnotation(carpet.api.settings.Rule.class);
             rule = new RuleAnnotation(false, null, null, null, a.categories(), a.options(), a.strict(), a.appSource(), a.validators());
+        } else if (settingsManager instanceof carpet.settings.SettingsManager && field.isAnnotationPresent(Rule.class)) { // Legacy path
+            Rule a = field.getAnnotation(Rule.class);
+            rule = new RuleAnnotation(true, a.name(), a.desc(), a.extra(), a.category(), a.options(), a.strict(), a.appSource(), a.validate());
         } else {
             // Don't allow to use old rule types in custom AND migrated settings manager
             throw new IllegalArgumentException("Old rule annotation is only supported in legacy SettngsManager!");
@@ -216,7 +217,7 @@ public final class ParsedRule<T> implements CarpetRule<T>, Comparable<ParsedRule
         }
         else if (this.type.isEnum())
         {
-            this.options = Arrays.stream(this.type.getEnumConstants()).map(e -> ((Enum<?>) e).name().toLowerCase(Locale.ROOT)).collect(Collectors.toUnmodifiableList());
+            this.options = Arrays.stream(this.type.getEnumConstants()).map(e -> ((Enum<?>) e).name().toLowerCase(Locale.ROOT)).toList();
             converter0 = str -> {
                 try {
                     @SuppressWarnings({"unchecked", "rawtypes"}) // Raw necessary because of signature. Unchecked because compiler doesn't know T extends Enum
@@ -389,6 +390,11 @@ public final class ParsedRule<T> implements CarpetRule<T>, Comparable<ParsedRule
     @Override
     public void set(CommandSourceStack source, T value) throws InvalidRuleValueException {
         set(source, value, RuleHelper.toRuleString(value));
+    }
+
+    @Override
+    public boolean strict() {
+        return !realValidators.isEmpty() && realValidators.get(0) instanceof Validator.StrictValidator;
     }
 
     private static <T> Map.Entry<Class<T>, FromStringConverter<T>> numericalConverter(Class<T> outputClass, Function<String, T> converter) {

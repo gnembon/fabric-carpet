@@ -6,6 +6,8 @@ import net.minecraft.core.Vec3i;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.protocol.game.ServerboundSetStructureBlockPacket;
 import net.minecraft.util.Mth;
+import net.minecraft.world.level.block.entity.StructureBlockEntity;
+
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Mutable;
@@ -39,7 +41,7 @@ public class ServerboundSetStructureBlockPacketMixin {
     )
     private void structureBlockLimitsWrite(FriendlyByteBuf buf, CallbackInfo ci) {
         //client method, only applicable if with carpet is on the server, or running locally
-        if (CarpetSettings.structureBlockLimit != CarpetSettings.vanillaStructureBlockLimit)
+        if (CarpetSettings.structureBlockLimit != StructureBlockEntity.MAX_SIZE_PER_AXIS)
         {
             buf.writeInt(this.offset.getX());
             buf.writeInt(this.offset.getY());

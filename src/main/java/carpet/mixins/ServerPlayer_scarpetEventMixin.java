@@ -1,7 +1,7 @@
 package carpet.mixins;
 
 import carpet.fakes.EntityInterface;
-import carpet.fakes.ServerPlayerEntityInterface;
+import carpet.fakes.ServerPlayerInterface;
 import carpet.script.EntityEventsGroup;
 import com.mojang.authlib.GameProfile;
 import net.minecraft.core.BlockPos;
@@ -14,7 +14,6 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.entity.player.ProfilePublicKey;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 import org.spongepowered.asm.mixin.Mixin;
@@ -32,18 +31,18 @@ import static carpet.script.CarpetEventServer.Event.PLAYER_FINISHED_USING_ITEM;
 import static carpet.script.CarpetEventServer.Event.STATISTICS;
 
 @Mixin(ServerPlayer.class)
-public abstract class ServerPlayer_scarpetEventMixin extends Player implements ServerPlayerEntityInterface
+public abstract class ServerPlayer_scarpetEventMixin extends Player implements ServerPlayerInterface
 {
     // to denote if the player reference is valid
 
     @Unique
     private boolean isInvalidReference = false;
 
-    public ServerPlayer_scarpetEventMixin(Level level, BlockPos blockPos, float f, GameProfile gameProfile, ProfilePublicKey profilePublicKey) {
-        super(level, blockPos, f, gameProfile, profilePublicKey);
+    public ServerPlayer_scarpetEventMixin(Level level, BlockPos blockPos, float f, GameProfile gameProfile) {
+        super(level, blockPos, f, gameProfile);
     }
 
-    @Shadow protected abstract void completeUsingItem();
+    //@Shadow protected abstract void completeUsingItem();
 
     @Shadow public boolean wonGame;
 
@@ -56,9 +55,10 @@ public abstract class ServerPlayer_scarpetEventMixin extends Player implements S
         if (PLAYER_FINISHED_USING_ITEM.isNeeded())
         {
             InteractionHand hand = getUsedItemHand();
-            PLAYER_FINISHED_USING_ITEM.onItemAction((ServerPlayer) (Object)this, hand, getUseItem());
-            // do vanilla
-            super.completeUsingItem();
+            if(!PLAYER_FINISHED_USING_ITEM.onItemAction((ServerPlayer) (Object)this, hand, getUseItem())) {
+                // do vanilla
+                super.completeUsingItem();
+            }
         }
         else
         {
@@ -76,7 +76,7 @@ public abstract class ServerPlayer_scarpetEventMixin extends Player implements S
     @Inject(method = "die", at = @At("HEAD"))
     private void onDeathEvent(DamageSource source, CallbackInfo ci)
     {
-        ((EntityInterface)this).getEventContainer().onEvent(EntityEventsGroup.Event.ON_DEATH, source.msgId);
+        ((EntityInterface)this).getEventContainer().onEvent(EntityEventsGroup.Event.ON_DEATH, source.getMsgId());
         if (PLAYER_DIES.isNeeded())
         {
             PLAYER_DIES.onPlayerEvent((ServerPlayer) (Object)this);
@@ -100,7 +100,7 @@ public abstract class ServerPlayer_scarpetEventMixin extends Player implements S
     private void logPreviousCoordinates(ServerLevel serverWorld, CallbackInfoReturnable<Entity> cir)
     {
         previousLocation = position();
-        previousDimension = level.dimension();  //dimension type
+        previousDimension = level().dimension();  //dimension type
     }
 
     @Inject(method = "changeDimension", at = @At("RETURN"))
@@ -110,7 +110,7 @@ public abstract class ServerPlayer_scarpetEventMixin extends Player implements S
         {
             ServerPlayer player = (ServerPlayer) (Object)this;
             Vec3 to = null;
-            if (!wonGame || previousDimension != Level.END || destination.dimension() != Level.OVERWORLD) // end ow
+            if (!wonGame || previousDimension != Level.END || destination.dimension() != Level.OVERWORLD)
             {
                 to = position();
             }

@@ -4,13 +4,15 @@ import carpet.script.exception.InternalExpressionException;
 import com.google.gson.JsonElement;
 import net.minecraft.nbt.Tag;
 
-public class UndefValue extends NullValue {
+public class UndefValue extends NullValue
+{
     public static final UndefValue UNDEF = new UndefValue();
+    public static final UndefValue EOL = new UndefValue();
 
-    private RuntimeException getError() {
-        return new InternalExpressionException("variable "+boundVariable+" was used before initialization under 'strict' app config");
+    private RuntimeException getError()
+    {
+        return new InternalExpressionException("variable " + boundVariable + " was used before initialization under 'strict' app config");
     }
-
 
     @Override
     public String getString()
@@ -37,23 +39,26 @@ public class UndefValue extends NullValue {
     }
 
     @Override
-    public boolean equals(final Object o)
+    public boolean equals(Object o)
     {
         throw getError();
     }
 
     @Override
-    public Value slice(long fromDesc, Long toDesc) {
+    public Value slice(long fromDesc, Long toDesc)
+    {
         throw getError();
     }
 
     @Override
-    public NumericValue opposite() {
+    public NumericValue opposite()
+    {
         throw getError();
     }
 
     @Override
-    public int length() {
+    public int length()
+    {
         throw getError();
     }
 
@@ -64,7 +69,8 @@ public class UndefValue extends NullValue {
     }
 
     @Override
-    public Value in(Value value) {
+    public Value in(Value value)
+    {
         throw getError();
     }
 
@@ -87,7 +93,8 @@ public class UndefValue extends NullValue {
     }
 
     @Override
-    public Value split(Value delimiter) {
+    public Value split(Value delimiter)
+    {
         throw getError();
     }
 
@@ -98,12 +105,14 @@ public class UndefValue extends NullValue {
     }
 
     @Override
-    public boolean isNull() {
+    public boolean isNull()
+    {
         throw getError();
     }
 
     @Override
-    public Value add(Value v) {
+    public Value add(Value v)
+    {
         throw getError();
     }
 

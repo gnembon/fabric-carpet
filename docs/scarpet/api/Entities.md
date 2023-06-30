@@ -73,14 +73,14 @@ the center point/area. Uses the same `type` selectors as `entities_list`.
 also be represented as a block, in this case the search box will be centered on the middle of the block, or an entity - in this case
 entire bounding box of the entity serves as a 'center' of search which is then expanded in all directions with the `'distance'` vector.
 
-In any case - returns all entities which bounding box collides with the bounding box defined by `'center'` and `'disteance'`.
+In any case - returns all entities which bounding box collides with the bounding box defined by `'center'` and `'distance'`.
 
 entity_area is simpler than `entity_selector` and runs about 20% faster, but is limited to predefined selectors and 
 cuboid search area.
 
 ### `entity_selector(selector)`
 
-Returns entities satisifying given vanilla entity selector. Most complex among all the methods of selecting entities, 
+Returns entities satisfying given vanilla entity selector. Most complex among all the methods of selecting entities, 
 but the most capable. Selectors are cached so it should be as fast as other methods of selecting entities. Unlike other
 entities fetching / filtering method, this one doesn't guarantee to return entities from current dimension, since
 selectors can return any loaded entity in the world.
@@ -111,7 +111,7 @@ Boolean. True if the entity is removed.
 
 ### `query(e, 'id')`
 
-Returns numerical id of the entity. Most efficient way to keep track of entites in a script. 
+Returns numerical id of the entity. Most efficient way to keep track of entities in a script. 
 Ids are only unique within current game session (ids are not preserved between restarts), 
 and dimension (each dimension has its own ids which can overlap).
 
@@ -161,7 +161,7 @@ Respective component of the entity's motion vector
 
 ### `query(e, 'on_ground')`
 
-Returns `true` if en entity is standing on firm ground and falling down due to that.
+Returns `true` if an entity is standing on firm ground and falling down due to that.
 
 ### `query(e, 'name'), query(e, 'display_name'), query(e, 'custom_name'), query(e, 'type')`
 
@@ -304,7 +304,17 @@ Number of ticks an entity sits in a portal.
 
 ### `query(e, 'item')`
 
-The item triple (name, count, nbt) if its an item entity, `null` otherwise.
+The item triple (name, count, nbt) if its an item or item frame entity, `null` otherwise.
+
+### `query(e, 'offering_flower')`
+
+Whether the given iron golem has a red flower in their hand. returns null for all other entities
+
+
+### `query(e, 'blue_skull')`
+
+Whether the given wither skull entity is blue. returns null for all other entities
+
 
 ### `query(e, 'count')`
 
@@ -384,7 +394,7 @@ Returns `null` if the argument is not a player, otherwise:
 *   `multiplayer`: for players on a dedicated server
 *   `lan_host`: for singleplayer owner that opened the game to LAN
 *   `lan_player`: for all other players that connected to a LAN host
-*   `fake`: any carpet-spanwed fake player
+*   `fake`: any carpet-spawned fake player
 *   `shadow`: any carpet-shadowed real player
 *   `realms`: ?
 
@@ -669,6 +679,18 @@ if the custom name is always visible, even through blocks.
 
 Sets the entity persistence tag to `true` (default) or `false`. Only affects mobs. Persistent mobs
 don't despawn and don't count towards the mobcap.
+
+### `modify(e, 'item', item_triple)`
+
+Sets the item for the item or item frame entity. (The item triple is a list of `[item_name, count, nbt]`, or just an item name.)
+
+### `modify(e, 'offering_flower', bool)`
+
+Sets if the iron golem has a red flower in hand.
+
+### `modify(e, 'blue_skull', bool)`
+
+Sets whether the wither skull entity is blue.
 
 ### `modify(e, 'age', number)`
 

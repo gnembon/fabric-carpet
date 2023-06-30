@@ -54,7 +54,6 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.level.storage.LevelResource;
 
-import static carpet.script.CarpetEventServer.Event.CARPET_RULE_CHANGES;
 import static carpet.utils.Translations.tr;
 import static java.util.Comparator.comparing;
 import static net.minecraft.commands.Commands.argument;
@@ -174,6 +173,8 @@ public class SettingsManager {
      */
     public void parseSettingsClass(Class<?> settingsClass)
     {
+        // In the current translation system languages are not loaded this early. Ensure they are loaded
+        Translations.updateLanguage();
         boolean warned = settingsClass == CarpetSettings.class; // don't warn for ourselves
 
         nextRule: for (Field field : settingsClass.getDeclaredFields())
@@ -210,10 +211,6 @@ public class SettingsManager {
             CarpetRule<?> parsed = ParsedRule.of(field, this);
             rules.put(parsed.name(), parsed);
         }
-        // In the current translation system languages are not loaded this early. Ensure they are loaded
-        // after we've added fallbacks, else early systems such as the rule printer won't function for
-        // legacy rules given the validator (that triggers adding fallbacks normally) won't have ran
-        Translations.updateLanguage();
     }
 
     /**
@@ -266,7 +263,6 @@ public class SettingsManager {
         staticObservers.forEach(observer -> observer.ruleChanged(source, rule, userInput));
         ServerNetworkHandler.updateRuleWithConnectedClients(rule);
         switchScarpetRuleIfNeeded(source, rule); //TODO move into rule
-        if (CARPET_RULE_CHANGES.isNeeded()) CARPET_RULE_CHANGES.onCarpetRuleChanges(rule, source);
     }
 
     /**
@@ -331,7 +327,7 @@ public class SettingsManager {
     
     private void switchScarpetRuleIfNeeded(CommandSourceStack source, CarpetRule<?> carpetRule) //TODO remove. This should be handled by the rule
     {
-        if (carpetRule instanceof ParsedRule<?> rule && !rule.scarpetApp.isEmpty())
+        if (carpetRule instanceof ParsedRule<?> rule && !rule.scarpetApp.isEmpty() && CarpetServer.scriptServer != null) // null check because we may be in server init
         {
             if (RuleHelper.getBooleanValue(rule) || (rule.type() == String.class && !rule.value().equals("false")))
             {
@@ -535,7 +531,7 @@ public class SettingsManager {
             ps.println("* Type: `" + rule.type().getSimpleName() + "`  ");
             ps.println("* Default value: `" + RuleHelper.toRuleString(rule.defaultValue()) + "`  ");
             String options = rule.suggestions().stream().map(s -> "`" + s + "`").collect(Collectors.joining(", "));
-            if (!options.isEmpty()) ps.println((rule instanceof ParsedRule<?> pr && pr.isStrict?"* Required":"* Suggested")+" options: " + options + "  ");
+            if (!options.isEmpty()) ps.println((rule.strict() ? "* Allowed" : "* Suggested") + " options: " + options + "  ");
             ps.println("* Categories: " + rule.categories().stream().map(s -> "`" + s.toUpperCase(Locale.ROOT) + "`").collect(Collectors.joining(", ")) + "  ");
             if (rule instanceof ParsedRule<?>)
             {

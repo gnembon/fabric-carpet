@@ -4,7 +4,8 @@ import java.util.List;
 
 public class FunctionUnpackedArgumentsValue extends ListValue
 {
-    public FunctionUnpackedArgumentsValue(List<Value> list) {
+    public FunctionUnpackedArgumentsValue(List<Value> list)
+    {
         super(list);
     }
 
@@ -17,7 +18,6 @@ public class FunctionUnpackedArgumentsValue extends ListValue
     @Override
     public Value deepcopy()
     {
-        ListValue copy = (ListValue)super.deepcopy();
-        return new FunctionUnpackedArgumentsValue(copy.items);
+        return new FunctionUnpackedArgumentsValue(((ListValue) super.deepcopy()).items);
     }
 }

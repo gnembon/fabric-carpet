@@ -18,33 +18,39 @@ import carpet.script.value.Value;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
-import java.util.stream.Collectors;
 
-public class Functions {
+public class Functions
+{
     public static void apply(Expression expression) // public just to get the javadoc right
     {
         // artificial construct to handle user defined functions and function definitions
         expression.addContextFunction("import", -1, (c, t, lv) ->
         {
-            if (lv.size() < 1) throw new InternalExpressionException("'import' needs at least a module name to import, and list of values to import");
+            if (lv.size() < 1)
+            {
+                throw new InternalExpressionException("'import' needs at least a module name to import, and list of values to import");
+            }
             String moduleName = lv.get(0).getString();
             c.host.importModule(c, moduleName);
             moduleName = moduleName.toLowerCase(Locale.ROOT);
             if (lv.size() > 1)
-                c.host.importNames(c, expression.module, moduleName, lv.subList(1, lv.size()).stream().map(Value::getString).collect(Collectors.toList()));
-            if (t == Context.VOID)
-                return Value.NULL;
-            return ListValue.wrap(c.host.availableImports(moduleName).map(StringValue::new).collect(Collectors.toList()));
+            {
+                c.host.importNames(c, expression.module, moduleName, lv.subList(1, lv.size()).stream().map(Value::getString).toList());
+            }
+            return t == Context.VOID ? Value.NULL : ListValue.wrap(c.host.availableImports(moduleName).map(StringValue::new));
         });
 
 
         // needs to be lazy because of custom context of execution of arguments as a signature
-        expression.addCustomFunction("call", new Fluff.AbstractLazyFunction(-1, "call") {
+        expression.addCustomFunction("call", new Fluff.AbstractLazyFunction(-1, "call")
+        {
             @Override
             public LazyValue lazyEval(Context c, Context.Type t, Expression expr, Tokenizer.Token tok, List<LazyValue> lv)
             {
-                if (lv.size() == 0)
+                if (lv.isEmpty())
+                {
                     throw new InternalExpressionException("'call' expects at least function name to call");
+                }
                 //lv.remove(lv.size()-1); // aint gonna cut it // maybe it will because of the eager eval changes
                 if (t != Context.SIGNATURE) // just call the function
                 {
@@ -65,16 +71,18 @@ public class Functions {
                     {
                         throw new InternalExpressionException("Only variables can be used in function signature, not  " + v.getString());
                     }
-                    if (v instanceof FunctionAnnotationValue)
+                    if (v instanceof final FunctionAnnotationValue fav)
                     {
-                        if (((FunctionAnnotationValue) v).type == FunctionAnnotationValue.Type.GLOBAL)
+                        if (fav.type == FunctionAnnotationValue.Type.GLOBAL)
                         {
                             globals.add(v.boundVariable);
                         }
                         else
                         {
                             if (varArgs != null)
-                                throw new InternalExpressionException("Variable argument identifier is already defined as "+varArgs+", trying to overwrite with "+v.boundVariable);
+                            {
+                                throw new InternalExpressionException("Variable argument identifier is already defined as " + varArgs + ", trying to overwrite with " + v.boundVariable);
+                            }
                             varArgs = v.boundVariable;
                         }
                     }
@@ -94,14 +102,15 @@ public class Functions {
             }
 
             @Override
-            public boolean transitive() {
+            public boolean transitive()
+            {
                 return false;
             }
 
             @Override
             public Context.Type staticType(Context.Type outerType)
             {
-                return outerType==Context.SIGNATURE?Context.LOCALIZATION:Context.NONE;
+                return outerType == Context.SIGNATURE ? Context.LOCALIZATION : Context.NONE;
             }
         });
 
@@ -109,7 +118,9 @@ public class Functions {
         expression.addContextFunction("outer", 1, (c, t, lv) ->
         {
             if (t != Context.LOCALIZATION)
+            {
                 throw new InternalExpressionException("Outer scoping of variables is only possible in function signatures.");
+            }
             return new FunctionAnnotationValue(lv.get(0), FunctionAnnotationValue.Type.GLOBAL);
         });
 
@@ -123,12 +134,16 @@ public class Functions {
                 return (cc, tt) -> result;
             }
             Value v1 = lv1.evalValue(c, Context.SIGNATURE);
-            if (!(v1 instanceof FunctionSignatureValue sign))
+            if (!(v1 instanceof final FunctionSignatureValue sign))
+            {
                 throw new InternalExpressionException("'->' operator requires a function signature on the LHS");
-            Value result = expression.createUserDefinedFunction(c, sign.getName(), e, t, sign.getArgs(), sign.getVarArgs(), sign.getGlobals(), lv2);
+            }
+            Value result = expression.createUserDefinedFunction(c, sign.identifier(), e, t, sign.arguments(), sign.varArgs(), sign.globals(), lv2);
             return (cc, tt) -> result;
         });
 
-        expression.addImpureFunction("return", (lv) -> { throw new ReturnStatement(lv.size()==0?Value.NULL:lv.get(0));} );
+        expression.addImpureFunction("return", lv -> {
+            throw new ReturnStatement(lv.size() == 0 ? Value.NULL : lv.get(0));
+        });
     }
 }

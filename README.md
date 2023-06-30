@@ -2,8 +2,9 @@
 
 # Fabric Carpet
 
-[![Development Builds](https://github.com/gnembon/fabric-carpet/workflows/Development%20Builds/badge.svg)](https://github.com/gnembon/fabric-carpet/actions?query=workflow%3A%22Development+Builds%22)
+[![Development Builds](https://github.com/gnembon/fabric-carpet/actions/workflows/devbuild.yml/badge.svg)](https://github.com/gnembon/fabric-carpet/actions/workflows/devbuild.yml)
 [![CurseForge downloads](http://cf.way2muchnoise.eu/full_349239_downloads.svg)](https://www.curseforge.com/minecraft/mc-mods/carpet)
+[![Modrinth downloads](https://img.shields.io/modrinth/dt/carpet?label=Modrinth%20downloads&logo=modrinth)](https://modrinth.com/mod/carpet)
 [![GitHub downloads](https://img.shields.io/github/downloads/gnembon/fabric-carpet/total?label=Github%20downloads&logo=github)](https://github.com/gnembon/fabric-carpet/releases)
 [![GitHub contributors](https://img.shields.io/github/contributors/gnembon/fabric-carpet?label=Contributors&logo=github)](https://github.com/gnembon/fabric-carpet/graphs/contributors)
 [![Discord](https://badgen.net/discord/online-members/gn99m4QRY4?icon=discord&label=Discord&list=what)](https://discord.gg/gn99m4QRY4)
@@ -13,9 +14,9 @@ This is the [Fabric](https://fabricmc.net/) version of Carpet Mod, for Minecraft
 
 Carpet Mod is a mod for vanilla Minecraft that allows you to take full control of what matters from a technical perspective of the game.
 
-* Test your farms over several hours in only a few minutes using [`/tick warp`](https://github.com/gnembon/fabric-carpet/wiki/Current-Available-Settings#commandtick)
+* Test your farms over several hours in only a few minutes using [`/tick warp`](https://github.com/gnembon/fabric-carpet/wiki/Commands#usage-tick-warp-ticks-cmd), as fast as your computer can
 * ...and then see a detailed breakdown of the items they produce using [`hopperCounters`](https://github.com/gnembon/fabric-carpet/wiki/Current-Available-Settings#hoppercounters)
-* See the server mobcap, TPS, etc. update live with [`/log`](https://github.com/gnembon/fabric-carpet/wiki/Current-Available-Settings#commandlog)
+* See the server mobcap, TPS, etc. update live with [`/log`](https://github.com/gnembon/fabric-carpet/wiki/Commands#log)
 * Let pistons push block entities (ie. chests) with [`movableBlockEntities`](https://github.com/gnembon/fabric-carpet/wiki/Current-Available-Settings#movableblockentities)
 * [Fix](https://github.com/gnembon/fabric-carpet/wiki/Current-Available-Settings#leadfix) [many](https://github.com/gnembon/fabric-carpet/wiki/Current-Available-Settings#portalsuffocationfix) [things](https://github.com/gnembon/fabric-carpet/wiki/Current-Available-Settings#unloadedentityfix)
 
@@ -45,7 +46,7 @@ Have problems with the recent snapshot or someone is slacking with releasing the
 
 Here is a [list of other carpet extensions](https://github.com/gnembon/fabric-carpet/wiki/List-of-Carpet-extensions) created by the community.
 
-Everybody can create your own carpet features or extend scarpet language with some new API, by creating a carpet extension using this [carpet extension mod template](https://github.com/gnembon/fabric-carpet-extension-example-mod). 
+Everybody can create their own carpet features or extend scarpet language with some new API, by creating a carpet extension using this [carpet extension mod template](https://github.com/gnembon/fabric-carpet-extension-example-mod). 
 
 # How? Hwat?
 

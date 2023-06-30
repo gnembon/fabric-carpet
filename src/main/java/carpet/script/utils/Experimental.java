@@ -1,7 +1,7 @@
 package carpet.script.utils;
 
-import carpet.fakes.MinecraftServerInterface;
-import carpet.fakes.ServerWorldInterface;
+//import carpet.fakes.MinecraftServerInterface;
+//import carpet.fakes.ServerWorldInterface;
 import carpet.script.CarpetScriptServer;
 import carpet.script.value.ListValue;
 import carpet.script.value.Value;
@@ -48,6 +48,7 @@ import java.util.Objects;
 
 public class Experimental
 {
+    /*
     public static Value reloadOne(MinecraftServer server)
     {
         LevelStorageSource.LevelStorageAccess session = ((MinecraftServerInterface) server).getCMSession();
@@ -146,4 +147,6 @@ public class Experimental
         ((MinecraftServerInterface)server).reloadAfterReload(stem.registryAccess());
         return ListValue.wrap(addeds);
     }
+
+     */
 }

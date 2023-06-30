@@ -1,5 +1,6 @@
 package carpet.script.utils;
 
+import javax.annotation.Nullable;
 import java.util.function.Supplier;
 
 public class GlocalFlag extends ThreadLocal<Boolean>
@@ -19,8 +20,9 @@ public class GlocalFlag extends ThreadLocal<Boolean>
 
     /**
      * Allows to thread-safely wrap a call while disabling a global flag and setting it back up right after.
+     *
      * @param action - callback to invoke when the wrapping is all setup
-     * @param <T> - returned value of that action, whatever that might be
+     * @param <T>    - returned value of that action, whatever that might be
      * @return result of the action
      */
     public <T> T getWhileDisabled(Supplier<T> action)
@@ -48,21 +50,26 @@ public class GlocalFlag extends ThreadLocal<Boolean>
         return result;
     }
 
-    public boolean runIfEnabled(Runnable action)
+    @Nullable
+    public <T> T runIfEnabled(Supplier<T> action)
     {
         synchronized (this)
         {
-            if (get() != initial) return false;
+            if (get() != initial)
+            {
+                return null;
+            }
             set(!initial);
         }
+        T result;
         try
         {
-            action.run();
+            result = action.get();
         }
         finally
         {
             set(initial);
         }
-        return true;
+        return result;
     }
 }

@@ -15,9 +15,11 @@ import carpet.script.value.LazyListValue;
 import carpet.script.value.ListValue;
 import carpet.script.value.NumericValue;
 import carpet.script.value.Value;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Vec3i;
 import net.minecraft.server.level.ServerLevel;
@@ -27,15 +29,19 @@ import static java.lang.Math.abs;
 import static java.lang.Math.max;
 import static java.lang.Math.min;
 
-public class BlockIterators {
+public class BlockIterators
+{
     public static void apply(Expression expression)
     {
         // lazy cause of lazy expression
         expression.addLazyFunction("scan", (c, t, llv) ->
         {
-            if (llv.size() < 3) throw new InternalExpressionException("'scan' needs many more arguments");
-            List<Value> lv = Fluff.AbstractFunction.unpackLazy(llv.subList(0, llv.size()-1), c, Context.NONE);
-            CarpetContext cc = (CarpetContext)c;
+            if (llv.size() < 3)
+            {
+                throw new InternalExpressionException("'scan' needs many more arguments");
+            }
+            List<Value> lv = Fluff.AbstractFunction.unpackLazy(llv.subList(0, llv.size() - 1), c, Context.NONE);
+            CarpetContext cc = (CarpetContext) c;
             BlockArgument centerLocator = BlockArgument.findIn(cc, lv, 0);
             Vector3Argument rangeLocator = Vector3Argument.findIn(lv, centerLocator.offset);
             BlockPos center = centerLocator.block.getPos();
@@ -44,37 +50,42 @@ public class BlockIterators {
             if (rangeLocator.fromBlock)
             {
                 range = new Vec3i(
-                        abs(rangeLocator.vec.x - center.getX()),
-                        abs(rangeLocator.vec.y - center.getY()),
-                        abs(rangeLocator.vec.z - center.getZ())
+                        Mth.floor(abs(rangeLocator.vec.x - center.getX())),
+                        Mth.floor(abs(rangeLocator.vec.y - center.getY())),
+                        Mth.floor(abs(rangeLocator.vec.z - center.getZ()))
                 );
-                //if (lv.size() > rangeLocator.offset+1) throw new InternalExpressionException("'scan' takes two block positions, and the expression")
             }
             else
             {
-                range = new Vec3i(abs(rangeLocator.vec.x), abs(rangeLocator.vec.y), abs(rangeLocator.vec.z));
+                range = new Vec3i(
+                        Mth.floor(abs(rangeLocator.vec.x)),
+                        Mth.floor(abs(rangeLocator.vec.y)),
+                        Mth.floor(abs(rangeLocator.vec.z))
+                );
             }
             Vec3i upperRange = range;
-            if (lv.size() > rangeLocator.offset+1) // +1 cause we still need the expression
+            if (lv.size() > rangeLocator.offset + 1) // +1 cause we still need the expression
             {
                 rangeLocator = Vector3Argument.findIn(lv, rangeLocator.offset);
                 if (rangeLocator.fromBlock)
                 {
                     upperRange = new Vec3i(
-                            abs(rangeLocator.vec.x - center.getX()),
-                            abs(rangeLocator.vec.y - center.getY()),
-                            abs(rangeLocator.vec.z - center.getZ())
+                            Mth.floor(abs(rangeLocator.vec.x - center.getX())),
+                            Mth.floor(abs(rangeLocator.vec.y - center.getY())),
+                            Mth.floor(abs(rangeLocator.vec.z - center.getZ()))
                     );
-                    //if (lv.size() > rangeLocator.offset+1) throw new InternalExpressionException("'scan' takes two block positions, and the expression")
                 }
                 else
                 {
-                    upperRange = new Vec3i(abs(rangeLocator.vec.x), abs(rangeLocator.vec.y), abs(rangeLocator.vec.z));
+                    upperRange = new Vec3i(
+                            Mth.floor(abs(rangeLocator.vec.x)),
+                            Mth.floor(abs(rangeLocator.vec.y)),
+                            Mth.floor(abs(rangeLocator.vec.z)));
                 }
             }
-            if (llv.size() != rangeLocator.offset+1)
+            if (llv.size() != rangeLocator.offset + 1)
             {
-                throw new InternalExpressionException("'scan' takes two, or three block positions, and an expression: "+lv.size()+" "+rangeLocator.offset);
+                throw new InternalExpressionException("'scan' takes two, or three block positions, and an expression: " + lv.size() + " " + rangeLocator.offset);
             }
             LazyValue expr = llv.get(rangeLocator.offset);
 
@@ -89,26 +100,27 @@ public class BlockIterators {
             int zprange = upperRange.getZ();
 
             //saving outer scope
-            LazyValue _x = c.getVariable("_x");
-            LazyValue _y = c.getVariable("_y");
-            LazyValue _z = c.getVariable("_z");
-            LazyValue __ = c.getVariable("_");
+            LazyValue xVal = c.getVariable("_x");
+            LazyValue yVal = c.getVariable("_y");
+            LazyValue zVal = c.getVariable("_z");
+            LazyValue defaultVal = c.getVariable("_");
             int sCount = 0;
-            outer:for (int y=cy-yrange; y <= cy+yprange; y++)
+            outer:
+            for (int y = cy - yrange; y <= cy + yprange; y++)
             {
                 int yFinal = y;
-                c.setVariable("_y", (c_, t_) -> new NumericValue(yFinal).bindTo("_y"));
-                for (int x=cx-xrange; x <= cx+xprange; x++)
+                c.setVariable("_y", (ct, tt) -> new NumericValue(yFinal).bindTo("_y"));
+                for (int x = cx - xrange; x <= cx + xprange; x++)
                 {
                     int xFinal = x;
-                    c.setVariable("_x", (c_, t_) -> new NumericValue(xFinal).bindTo("_x"));
-                    for (int z=cz-zrange; z <= cz+zprange; z++)
+                    c.setVariable("_x", (ct, tt) -> new NumericValue(xFinal).bindTo("_x"));
+                    for (int z = cz - zrange; z <= cz + zprange; z++)
                     {
                         int zFinal = z;
 
-                        c.setVariable("_z", (c_, t_) -> new NumericValue(zFinal).bindTo("_z"));
-                        Value blockValue = BlockValue.fromCoords(((CarpetContext)c), xFinal,yFinal,zFinal).bindTo("_");
-                        c.setVariable( "_", (cc_, t_c) -> blockValue);
+                        c.setVariable("_z", (ct, tt) -> new NumericValue(zFinal).bindTo("_z"));
+                        Value blockValue = BlockValue.fromCoords(((CarpetContext) c), xFinal, yFinal, zFinal).bindTo("_");
+                        c.setVariable("_", (ct, tt) -> blockValue);
                         Value result;
                         try
                         {
@@ -130,20 +142,23 @@ public class BlockIterators {
                 }
             }
             //restoring outer scope
-            c.setVariable("_x", _x);
-            c.setVariable("_y", _y);
-            c.setVariable("_z", _z);
-            c.setVariable("_", __);
+            c.setVariable("_x", xVal);
+            c.setVariable("_y", yVal);
+            c.setVariable("_z", zVal);
+            c.setVariable("_", defaultVal);
             int finalSCount = sCount;
-            return (c_, t_) -> new NumericValue(finalSCount);
+            return (ct, tt) -> new NumericValue(finalSCount);
         });
 
         // must be lazy
         expression.addLazyFunction("volume", (c, t, llv) ->
         {
-            CarpetContext cc = (CarpetContext)c;
-            if (llv.size() < 3) throw new InternalExpressionException("'volume' needs many more arguments");
-            List<Value> lv = Fluff.AbstractFunction.unpackLazy(llv.subList(0, llv.size()-1), c, Context.NONE);
+            CarpetContext cc = (CarpetContext) c;
+            if (llv.size() < 3)
+            {
+                throw new InternalExpressionException("'volume' needs many more arguments");
+            }
+            List<Value> lv = Fluff.AbstractFunction.unpackLazy(llv.subList(0, llv.size() - 1), c, Context.NONE);
 
             BlockArgument pos1Locator = BlockArgument.findIn(cc, lv, 0);
             BlockArgument pos2Locator = BlockArgument.findIn(cc, lv, pos1Locator.offset);
@@ -165,25 +180,26 @@ public class BlockIterators {
             LazyValue expr = llv.get(pos2Locator.offset);
 
             //saving outer scope
-            LazyValue _x = c.getVariable("_x");
-            LazyValue _y = c.getVariable("_y");
-            LazyValue _z = c.getVariable("_z");
-            LazyValue __ = c.getVariable("_");
+            LazyValue xVal = c.getVariable("_x");
+            LazyValue yVal = c.getVariable("_y");
+            LazyValue zVal = c.getVariable("_z");
+            LazyValue defaultVal = c.getVariable("_");
             int sCount = 0;
-            outer:for (int y=miny; y <= maxy; y++)
+            outer:
+            for (int y = miny; y <= maxy; y++)
             {
                 int yFinal = y;
-                c.setVariable("_y", (c_, t_) -> new NumericValue(yFinal).bindTo("_y"));
-                for (int x=minx; x <= maxx; x++)
+                c.setVariable("_y", (ct, tt) -> new NumericValue(yFinal).bindTo("_y"));
+                for (int x = minx; x <= maxx; x++)
                 {
                     int xFinal = x;
-                    c.setVariable("_x", (c_, t_) -> new NumericValue(xFinal).bindTo("_x"));
-                    for (int z=minz; z <= maxz; z++)
+                    c.setVariable("_x", (ct, tt) -> new NumericValue(xFinal).bindTo("_x"));
+                    for (int z = minz; z <= maxz; z++)
                     {
                         int zFinal = z;
-                        c.setVariable("_z", (c_, t_) -> new NumericValue(zFinal).bindTo("_z"));
-                        Value blockValue = BlockValue.fromCoords(((CarpetContext)c), xFinal,yFinal,zFinal).bindTo("_");
-                        c.setVariable( "_", (cc_, t_c) -> blockValue);
+                        c.setVariable("_z", (ct, tt) -> new NumericValue(zFinal).bindTo("_z"));
+                        Value blockValue = BlockValue.fromCoords(((CarpetContext) c), xFinal, yFinal, zFinal).bindTo("_");
+                        c.setVariable("_", (ct, tt) -> blockValue);
                         Value result;
                         try
                         {
@@ -205,35 +221,41 @@ public class BlockIterators {
                 }
             }
             //restoring outer scope
-            c.setVariable("_x", _x);
-            c.setVariable("_y", _y);
-            c.setVariable("_z", _z);
-            c.setVariable("_", __);
+            c.setVariable("_x", xVal);
+            c.setVariable("_y", yVal);
+            c.setVariable("_z", zVal);
+            c.setVariable("_", defaultVal);
             int finalSCount = sCount;
-            return (c_, t_) -> new NumericValue(finalSCount);
+            return (ct, tt) -> new NumericValue(finalSCount);
         });
 
-        expression.addContextFunction("neighbours", -1, (c, t, lv)->
+        expression.addContextFunction("neighbours", -1, (c, t, lv) ->
         {
-            BlockPos center = BlockArgument.findIn((CarpetContext) c, lv,0).block.getPos();
-            ServerLevel world = ((CarpetContext) c).s.getLevel();
+            BlockPos center = BlockArgument.findIn((CarpetContext) c, lv, 0).block.getPos();
+            ServerLevel world = ((CarpetContext) c).level();
 
             List<Value> neighbours = new ArrayList<>();
-            neighbours.add(new BlockValue(null, world, center.above()));
-            neighbours.add(new BlockValue(null, world, center.below()));
-            neighbours.add(new BlockValue(null, world, center.north()));
-            neighbours.add(new BlockValue(null, world, center.south()));
-            neighbours.add(new BlockValue(null, world, center.east()));
-            neighbours.add(new BlockValue(null, world, center.west()));
+            neighbours.add(new BlockValue(world, center.above()));
+            neighbours.add(new BlockValue(world, center.below()));
+            neighbours.add(new BlockValue(world, center.north()));
+            neighbours.add(new BlockValue(world, center.south()));
+            neighbours.add(new BlockValue(world, center.east()));
+            neighbours.add(new BlockValue(world, center.west()));
             return ListValue.wrap(neighbours);
         });
 
-        expression.addContextFunction("rect", -1, (c, t, lv)->
+        expression.addContextFunction("rect", -1, (c, t, lv) ->
         {
             CarpetContext cc = (CarpetContext) c;
-            int cx, cy, cz;
-            int sminx, sminy, sminz;
-            int smaxx, smaxy, smaxz;
+            int cx;
+            int cy;
+            int cz;
+            int sminx;
+            int sminy;
+            int sminz;
+            int smaxx;
+            int smaxy;
+            int smaxz;
             BlockArgument cposLocator = BlockArgument.findIn(cc, lv, 0);
             BlockPos cpos = cposLocator.block.getPos();
             cx = cpos.getX();
@@ -289,19 +311,21 @@ public class BlockIterators {
 
             return new LazyListValue()
             {
-                final int minx = cx-sminx;
-                final int miny = cy-sminy;
-                final int minz = cz-sminz;
-                final int maxx = cx+smaxx;
-                final int maxy = cy+smaxy;
-                final int maxz = cz+smaxz;
+                final int minx = cx - sminx;
+                final int miny = cy - sminy;
+                final int minz = cz - sminz;
+                final int maxx = cx + smaxx;
+                final int maxy = cy + smaxy;
+                final int maxz = cz + smaxz;
 
                 int x;
                 int y;
                 int z;
+
                 {
                     reset();
                 }
+
                 @Override
                 public boolean hasNext()
                 {
@@ -311,7 +335,7 @@ public class BlockIterators {
                 @Override
                 public Value next()
                 {
-                    Value r = BlockValue.fromCoords(cc, x,y,z);
+                    Value r = BlockValue.fromCoords(cc, x, y, z);
                     //possibly reroll context
                     x++;
                     if (x > maxx)
@@ -347,16 +371,16 @@ public class BlockIterators {
                 @Override
                 public String getString()
                 {
-                    return String.format(Locale.ROOT, "rect[(%d,%d,%d),..,(%d,%d,%d)]",minx, miny, minz, maxx, maxy, maxz);
+                    return String.format(Locale.ROOT, "rect[(%d,%d,%d),..,(%d,%d,%d)]", minx, miny, minz, maxx, maxy, maxz);
                 }
             };
         });
 
-        expression.addContextFunction("diamond", -1, (c, t, lv)->
+        expression.addContextFunction("diamond", -1, (c, t, lv) ->
         {
-            CarpetContext cc = (CarpetContext)c;
+            CarpetContext cc = (CarpetContext) c;
 
-            BlockArgument cposLocator=BlockArgument.findIn((CarpetContext)c,lv,0);
+            BlockArgument cposLocator = BlockArgument.findIn((CarpetContext) c, lv, 0);
             BlockPos cpos = cposLocator.block.getPos();
 
             int cx;
@@ -370,33 +394,34 @@ public class BlockIterators {
                 cy = cpos.getY();
                 cz = cpos.getZ();
 
-                if (lv.size()==cposLocator.offset)
+                if (lv.size() == cposLocator.offset)
                 {
-                    Value retval = ListValue.of(
-                            BlockValue.fromCoords(cc, cx, cy-1, cz),
+                    return ListValue.of(
+                            BlockValue.fromCoords(cc, cx, cy - 1, cz),
                             BlockValue.fromCoords(cc, cx, cy, cz),
-                            BlockValue.fromCoords(cc, cx-1, cy, cz),
-                            BlockValue.fromCoords(cc, cx, cy, cz-1),
-                            BlockValue.fromCoords(cc, cx+1, cy, cz),
-                            BlockValue.fromCoords(cc, cx, cy, cz+1),
-                            BlockValue.fromCoords(cc, cx, cy+1, cz)
+                            BlockValue.fromCoords(cc, cx - 1, cy, cz),
+                            BlockValue.fromCoords(cc, cx, cy, cz - 1),
+                            BlockValue.fromCoords(cc, cx + 1, cy, cz),
+                            BlockValue.fromCoords(cc, cx, cy, cz + 1),
+                            BlockValue.fromCoords(cc, cx, cy + 1, cz)
                     );
-                    return retval;
                 }
-                else if (lv.size()==1+cposLocator.offset)
+                else if (lv.size() == 1 + cposLocator.offset)
                 {
                     width = (int) ((NumericValue) lv.get(cposLocator.offset)).getLong();
                     height = 0;
                 }
-                else if(lv.size()==2+cposLocator.offset)
+                else if (lv.size() == 2 + cposLocator.offset)
                 {
                     width = (int) ((NumericValue) lv.get(cposLocator.offset)).getLong();
-                    height = (int) ((NumericValue) lv.get(cposLocator.offset+1)).getLong();
-                } else{
+                    height = (int) ((NumericValue) lv.get(cposLocator.offset + 1)).getLong();
+                }
+                else
+                {
                     throw new InternalExpressionException("Incorrect number of arguments for 'diamond'");
                 }
             }
-            catch (ClassCastException exc)
+            catch (ClassCastException ignored)
             {
                 throw new InternalExpressionException("Attempted to pass a non-number to 'diamond'");
             }
@@ -406,9 +431,11 @@ public class BlockIterators {
                 {
                     int curradius;
                     int curpos;
+
                     {
                         reset();
                     }
+
                     @Override
                     public boolean hasNext()
                     {
@@ -425,9 +452,9 @@ public class BlockIterators {
                         }
                         // x = 3-|i-6|
                         // z = |( (i-3)%12-6|-3
-                        Value block = BlockValue.fromCoords(cc, cx+(curradius-abs(curpos-2*curradius)), cy, cz-curradius+abs( abs(curpos-curradius)%(4*curradius) -2*curradius ));
+                        Value block = BlockValue.fromCoords(cc, cx + (curradius - abs(curpos - 2 * curradius)), cy, cz - curradius + abs(abs(curpos - curradius) % (4 * curradius) - 2 * curradius));
                         curpos++;
-                        if (curpos>=curradius*4)
+                        if (curpos >= curradius * 4)
                         {
                             curradius++;
                             curpos = 0;
@@ -446,7 +473,7 @@ public class BlockIterators {
                     @Override
                     public String getString()
                     {
-                        return String.format(Locale.ROOT, "diamond[(%d,%d,%d),%d,0]",cx, cy, cz, width);
+                        return String.format(Locale.ROOT, "diamond[(%d,%d,%d),%d,0]", cx, cy, cz, width);
                     }
                 };
             }
@@ -457,9 +484,11 @@ public class BlockIterators {
                     int curradius;
                     int curpos;
                     int curheight;
+
                     {
                         reset();
                     }
+
                     @Override
                     public boolean hasNext()
                     {
@@ -471,27 +500,26 @@ public class BlockIterators {
                     {
                         if (curheight == -height || curheight == height)
                         {
-                            return BlockValue.fromCoords(cc, cx, cy+curheight++, cz);
+                            return BlockValue.fromCoords(cc, cx, cy + curheight++, cz);
                         }
                         if (curradius == 0)
                         {
                             curradius++;
-                            return BlockValue.fromCoords(cc, cx, cy+curheight, cz);
+                            return BlockValue.fromCoords(cc, cx, cy + curheight, cz);
                         }
                         // x = 3-|i-6|
                         // z = |( (i-3)%12-6|-3
 
-                        Value block = BlockValue.fromCoords(cc, cx+(curradius-abs(curpos-2*curradius)), cy+curheight, cz-curradius+abs( abs(curpos-curradius)%(4*curradius) -2*curradius ));
+                        Value block = BlockValue.fromCoords(cc, cx + (curradius - abs(curpos - 2 * curradius)), cy + curheight, cz - curradius + abs(abs(curpos - curradius) % (4 * curradius) - 2 * curradius));
                         curpos++;
-                        if (curpos>=curradius*4)
+                        if (curpos >= curradius * 4)
                         {
                             curradius++;
                             curpos = 0;
-                            if (curradius>width -abs(width*curheight/height))
+                            if (curradius > width - abs(width * curheight / height))
                             {
                                 curheight++;
                                 curradius = 0;
-                                curpos = 0;
                             }
                         }
                         return block;
@@ -508,7 +536,7 @@ public class BlockIterators {
                     @Override
                     public String getString()
                     {
-                        return String.format(Locale.ROOT, "diamond[(%d,%d,%d),%d,%d]",cx, cy, cz, width, height);
+                        return String.format(Locale.ROOT, "diamond[(%d,%d,%d),%d,%d]", cx, cy, cz, width, height);
                     }
                 };
             }

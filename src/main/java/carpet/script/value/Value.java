@@ -1,27 +1,31 @@
 package carpet.script.value;
 
-import carpet.CarpetSettings;
+import carpet.script.CarpetScriptServer;
 import carpet.script.exception.InternalExpressionException;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonPrimitive;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
-import java.util.stream.Collectors;
+
 import net.minecraft.nbt.Tag;
+
+import javax.annotation.Nullable;
 
 public abstract class Value implements Comparable<Value>, Cloneable
 {
-    public static NumericValue FALSE = BooleanValue.FALSE;
-    public static NumericValue TRUE = BooleanValue.TRUE;
-    public static NumericValue ZERO = new NumericValue(0);
-    public static NumericValue ONE = new NumericValue(1);
+    public static final NumericValue FALSE = BooleanValue.FALSE;
+    public static final NumericValue TRUE = BooleanValue.TRUE;
+    public static final NumericValue ZERO = new NumericValue(0);
+    public static final NumericValue ONE = new NumericValue(1);
 
-    public static NullValue NULL = NullValue.NULL;
-    public static UndefValue UNDEF = UndefValue.UNDEF;
+    public static final NullValue NULL = NullValue.NULL;
+    public static final UndefValue UNDEF = UndefValue.UNDEF;
+    public static final UndefValue EOL = UndefValue.EOL;
 
     public String boundVariable;
 
@@ -29,29 +33,32 @@ public abstract class Value implements Comparable<Value>, Cloneable
     {
         return boundVariable != null;
     }
+
     public String getVariable()
     {
         return boundVariable;
     }
-    public Value reboundedTo(String var)
+
+    public Value reboundedTo(String value)
     {
         Value copy;
         try
         {
-            copy = (Value)clone();
+            copy = (Value) clone();
         }
         catch (CloneNotSupportedException e)
         {
             // should not happen
-            CarpetSettings.LOG.error("Failed to clone variable", e);
-            throw new InternalExpressionException("Variable of type "+getTypeString()+" is not cloneable. Tell gnembon about it, this shoudn't happen");
+            CarpetScriptServer.LOG.error("Failed to clone variable", e);
+            throw new InternalExpressionException("Variable of type " + getTypeString() + " is not cloneable. Tell gnembon about it, this shoudn't happen");
         }
-        copy.boundVariable = var;
+        copy.boundVariable = value;
         return copy;
     }
-    public Value bindTo(String var)
+
+    public Value bindTo(String value)
     {
-        this.boundVariable = var;
+        this.boundVariable = value;
         return this;
     }
 
@@ -65,41 +72,37 @@ public abstract class Value implements Comparable<Value>, Cloneable
 
     public abstract boolean getBoolean();
 
-    public Value add(Value o) {
-        String lstr = this.getString();
+    public Value add(Value o)
+    {
         if (o instanceof FormattedTextValue)
         {
             return FormattedTextValue.combine(this, o);
         }
-        if (lstr == null) // null
-            return new StringValue(o.getString());
-        String rstr = o.getString();
-        if (rstr == null)
-        {
-            return new StringValue(lstr);
-        }
-        return new StringValue(lstr+rstr);
+        String leftStr = this.getString();
+        String rightStr = o.getString();
+        return new StringValue(leftStr + rightStr);
     }
+
     public Value subtract(Value v)
     {
-        return new StringValue(this.getString().replace(v.getString(),""));
+        return new StringValue(this.getString().replace(v.getString(), ""));
     }
+
     public Value multiply(Value v)
     {
-        if (v instanceof NumericValue || v instanceof ListValue)
-        {
-            return v.multiply(this);
-        }
-        return new StringValue(this.getString()+"."+v.getString());
+        return v instanceof NumericValue || v instanceof ListValue
+                ? v.multiply(this)
+                : new StringValue(this.getString() + "." + v.getString());
     }
+
     public Value divide(Value v)
     {
-        if (v instanceof NumericValue)
+        if (v instanceof final NumericValue number)
         {
             String lstr = getString();
-            return new StringValue(lstr.substring(0, (int)(lstr.length()/ ((NumericValue) v).getDouble())));
+            return new StringValue(lstr.substring(0, (int) (lstr.length() / number.getDouble())));
         }
-        return new StringValue(getString()+"/"+v.getString());
+        return new StringValue(getString() + "/" + v.getString());
     }
 
     public Value()
@@ -108,20 +111,20 @@ public abstract class Value implements Comparable<Value>, Cloneable
     }
 
     @Override
-    public int compareTo(final Value o)
+    public int compareTo(Value o)
     {
-        if (o instanceof NumericValue || o instanceof ListValue || o instanceof ThreadValue)
-        {
-            return -o.compareTo(this);
-        }
-        return getString().compareTo(o.getString());
+        return o instanceof NumericValue || o instanceof ListValue || o instanceof ThreadValue
+                ? -o.compareTo(this)
+                : getString().compareTo(o.getString());
     }
 
     @Override // for hashmap key access, and == operator
-    public boolean equals(final Object o)
+    public boolean equals(Object o)
     {
-        if (o instanceof Value)
-            return this.compareTo((Value) o)==0;
+        if (o instanceof final Value v)
+        {
+            return this.compareTo(v) == 0;
+        }
         return false;
     }
 
@@ -133,51 +136,66 @@ public abstract class Value implements Comparable<Value>, Cloneable
             {
                 throw new InternalExpressionException(boundVariable+ " cannot be assigned a new value");
             }*/
-            throw new InternalExpressionException(getString()+ " is not a variable");
-
+            throw new InternalExpressionException(getString() + " is not a variable");
         }
     }
 
     public Value in(Value value1)
     {
-        final Pattern p;
+        Pattern p;
         try
         {
             p = Pattern.compile(value1.getString());
         }
         catch (PatternSyntaxException pse)
         {
-            throw new InternalExpressionException("Incorrect matching pattern: "+pse.getMessage());
+            throw new InternalExpressionException("Incorrect matching pattern: " + pse.getMessage());
         }
-        final Matcher m = p.matcher(this.getString());
-        if (!m.find()) return Value.NULL;
+        Matcher m = p.matcher(this.getString());
+        if (!m.find())
+        {
+            return Value.NULL;
+        }
         int gc = m.groupCount();
-        if (gc == 0) return new StringValue(m.group());
-        if (gc == 1) return new StringValue(m.group(1));
+        if (gc == 0)
+        {
+            return new StringValue(m.group());
+        }
+        if (gc == 1)
+        {
+            return StringValue.of(m.group(1));
+        }
         List<Value> groups = new ArrayList<>(gc);
         for (int i = 1; i <= gc; i++)
         {
-            groups.add(new StringValue(m.group(i)));
+            groups.add(StringValue.of(m.group(i)));
         }
         return ListValue.wrap(groups);
     }
+
     public int length()
     {
         return getString().length();
     }
 
-    public Value slice(long fromDesc, Long toDesc)
+    public Value slice(long fromDesc, @Nullable Long toDesc)
     {
         String value = this.getString();
         int size = value.length();
         int from = ListValue.normalizeIndex(fromDesc, size);
-        if (toDesc == null) return new StringValue(value.substring(from));
-        int to = ListValue.normalizeIndex(toDesc, size+1);
-        if (from > to) return StringValue.EMPTY;
+        if (toDesc == null)
+        {
+            return new StringValue(value.substring(from));
+        }
+        int to = ListValue.normalizeIndex(toDesc, size + 1);
+        if (from > to)
+        {
+            return StringValue.EMPTY;
+        }
         return new StringValue(value.substring(from, to));
     }
-    
-    public Value split(Value delimiter)
+
+    public Value split(@Nullable Value delimiter)
     {
         if (delimiter == null)
         {
@@ -185,20 +203,20 @@ public abstract class Value implements Comparable<Value>, Cloneable
         }
         try
         {
-            return ListValue.wrap(Arrays.stream(getString().split(delimiter.getString())).map(StringValue::new).collect(Collectors.toList()));
+            return ListValue.wrap(Arrays.stream(getString().split(delimiter.getString())).map(StringValue::new));
         }
         catch (PatternSyntaxException pse)
         {
-            throw new InternalExpressionException("Incorrect pattern for 'split': "+pse.getMessage());
+            throw new InternalExpressionException("Incorrect pattern for 'split': " + pse.getMessage());
         }
     }
-    
+
     public double readDoubleNumber()
     {
         String s = getString();
         try
         {
-            return Double.valueOf(s);
+            return Double.parseDouble(s);
         }
         catch (NumberFormatException e)
         {
@@ -220,20 +238,19 @@ public abstract class Value implements Comparable<Value>, Cloneable
     public int hashCode()
     {
         String stringVal = getString();
-        if (stringVal.isEmpty()) return 0;
-        return ("s"+stringVal).hashCode();
+        return stringVal.isEmpty() ? 0 : ("s" + stringVal).hashCode();
     }
 
     public Value deepcopy()
     {
         try
         {
-            return (Value)this.clone();
+            return (Value) this.clone();
         }
         catch (CloneNotSupportedException e)
         {
             // should never happen
-            throw new InternalExpressionException("Cannot make a copy of value: "+this);
+            throw new InternalExpressionException("Cannot make a copy of value: " + this);
         }
     }
 
@@ -244,12 +261,18 @@ public abstract class Value implements Comparable<Value>, Cloneable
         return new JsonPrimitive(getString());
     }
 
-    public boolean isNull() { return false; }
+    public boolean isNull()
+    {
+        return false;
+    }
 
     /**
      * @return retrieves useful in-run value of an optimized code-base value.
      * For immutable values (most of them) it can return itself,
      * but for mutables, it needs to be its copy or deep copy.
      */
-    public Value fromConstant() { return this; }
+    public Value fromConstant()
+    {
+        return this;
+    }
 }
