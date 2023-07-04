@@ -19,7 +19,7 @@ public abstract class Zombie_bugFixMixin extends Mob {
 
     @Inject(method = "convertToZombieType", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/monster/Zombie;supportsBreakDoorGoal()Z"), locals = LocalCapture.CAPTURE_FAILSOFT)
     private void mixin(EntityType<? extends Zombie> entityType, CallbackInfo ci, Zombie zombie) {
-        if (CarpetSettings.mobConvertKeepNBTTags) {
+        if (CarpetSettings.mobConvertKeepNBTTagsFix) {
             this.getActiveEffects().forEach(zombie::addEffect);
             zombie.setRemainingFireTicks(this.getRemainingFireTicks());
             zombie.setLeftHanded(this.isLeftHanded());

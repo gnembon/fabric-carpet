@@ -20,7 +20,7 @@ public abstract class Slime_bugFixMixin extends Mob {
 
     @Inject(method = "remove", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/Level;addFreshEntity(Lnet/minecraft/world/entity/Entity;)Z"), locals = LocalCapture.CAPTURE_FAILSOFT)
     private void mixin(RemovalReason removalReason, CallbackInfo ci, int i, Component component, boolean bl, float f, int j, int k, int l, float g, float h, Slime slime) {
-        if (CarpetSettings.mobConvertKeepNBTTags) {
+        if (CarpetSettings.mobConvertKeepNBTTagsFix) {
             this.getActiveEffects().forEach(slime::addEffect);
             slime.getAttributes().assignValues(this.getAttributes());
             slime.setDeltaMovement(this.getDeltaMovement());

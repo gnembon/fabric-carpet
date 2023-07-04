@@ -22,7 +22,7 @@ public abstract class MushroomCow_bugFixMixin extends Mob {
 
     @Inject(method = "shear", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/animal/Cow;setInvulnerable(Z)V"), locals = LocalCapture.CAPTURE_FAILSOFT)
     private void mixin(SoundSource soundSource, CallbackInfo ci, Cow cow) {
-        if (CarpetSettings.mobConvertKeepNBTTags) {
+        if (CarpetSettings.mobConvertKeepNBTTagsFix) {
             this.getActiveEffects().forEach(cow::addEffect);
             cow.getAttributes().assignValues(this.getAttributes());
             cow.setDeltaMovement(this.getDeltaMovement());

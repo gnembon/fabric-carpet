@@ -23,7 +23,7 @@ public abstract class ZombieVillager_bugFixMixin extends Mob {
 
     @Inject(method = "finishConversion", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/EquipmentSlot;values()[Lnet/minecraft/world/entity/EquipmentSlot;"), locals = LocalCapture.CAPTURE_FAILSOFT)
     private void mixin(ServerLevel serverLevel, CallbackInfo ci, Villager villager) {
-        if (CarpetSettings.mobConvertKeepNBTTags) {
+        if (CarpetSettings.mobConvertKeepNBTTagsFix) {
             this.getActiveEffects().forEach(villager::addEffect);
             villager.setCanPickUpLoot(this.canPickUpLoot());
             villager.setRemainingFireTicks(this.getRemainingFireTicks());

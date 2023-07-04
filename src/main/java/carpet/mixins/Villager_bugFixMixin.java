@@ -24,7 +24,7 @@ public abstract class Villager_bugFixMixin extends Mob {
 
     @Inject(method = "thunderHit", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/monster/Witch;setPersistenceRequired()V"), locals = LocalCapture.CAPTURE_FAILSOFT)
     private void mixin(ServerLevel serverLevel, LightningBolt lightningBolt, CallbackInfo ci, Witch witch) {
-        if (CarpetSettings.mobConvertKeepNBTTags) {
+        if (CarpetSettings.mobConvertKeepNBTTagsFix) {
             this.getActiveEffects().forEach(witch::addEffect);
             witch.getAttributes().assignValues(this.getAttributes());
             witch.setCanPickUpLoot(this.canPickUpLoot());

@@ -1076,7 +1076,7 @@ public class CarpetSettings
             extra = {"Setting to true will ensure NBT tags are kept when mobs convert (e.g Villager to Witch)", "Fixes [MC-88967](https://bugs.mojang.com/browse/MC-88967)."},
             category = BUGFIX
     )
-    public static boolean mobConvertKeepNBTTags = false;
+    public static boolean mobConvertKeepNBTTagsFix = false;
 
     @Rule(
             desc = "Placing an activator rail on top of a barrier block will fill the neighbor updater stack when the rail turns off.",
