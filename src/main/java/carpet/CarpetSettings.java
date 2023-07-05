@@ -598,7 +598,7 @@ public class CarpetSettings
     public static boolean allowSpawningOfflinePlayers = true;
 
     @Rule(desc = "Allows listing fake players on the multiplayer screen", category = COMMAND)
-    public static boolean allowListingFakePlayers = true;
+    public static boolean allowListingFakePlayers = false;
 
     @Rule(desc = "Allows to track mobs AI via /track command", category = COMMAND)
     public static String commandTrackAI = "ops";
