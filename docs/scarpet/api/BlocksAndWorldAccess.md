@@ -244,7 +244,7 @@ With one arg, (either `'clear'`, `'rain` or `'thunder'`), returns the number of 
 NB: It can thunder without there being a thunderstorm; there has to be both rain and thunder to form a storm. So if
 running `weather()` returns `'thunder'`, you can use `weather('rain')>0` to see if there's a storm going on.
 
-With two args, sets the weather to that `type` for `ticks` ticks.
+With two args, sets the weather to the given `type` for `ticks` ticks.
 
 ## Block and World querying
 
