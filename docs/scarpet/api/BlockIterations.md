@@ -11,7 +11,7 @@ dimensions, you can do `'scan(center, 0, 0, 0, w, h, d, ...)`.
 
 `center` can be defined either as three coordinates, a single tuple of three coords, or a block value.
 `range` and `upper_range` can have the same representations, just if they are block values, it computes the distance to
-the center as range instead of taking the values as is. That way you can iterate from the centre to a box whose surface
+the center as range instead of taking the values as is. That way you can iterate from the center to a box whose surface
 area constains the `range` and/or `upper_range` blocks.
 
 `expr` receives `_x, _y, _z` variables as coords of current analyzed block and `_`, which represents the block itself.
@@ -38,7 +38,7 @@ Returns the list of 6 neighbouring blocks to the argument. Commonly used with ot
 for(neighbours(x,y,z),air(_)) => 4 // number of air blocks around a block
 </pre>
 
-### `rect(centre, range?, upper_range?)`
+### `rect(center, range?, upper_range?)`
 
 Returns an iterator, just like `range` function that iterates over a rectangular area of blocks. If only center
 point is specified, it iterates over 27 blocks (range of 1). If `range` arguments are specified, expands selection by
@@ -49,15 +49,15 @@ Basically the arguments are the same as the first three arguments of `scan`, exc
 blocks that `scan` would evaluate over. If you are going to iterate over these blocks, like `for(rect(args), do_something())`,
 then `scan(args, do_something())` is an equivalent, yet more compute-friendly alternative, especially for very large areas.
 
-`centre` can be defined either as three coordinates, a list of three coords, or a block value.
+`center` can be defined either as three coordinates, a list of three coords, or a block value.
 `range` and `upper_range` can have the same representations, just if they are block values, it computes the distance to the center
 as range instead of taking the values as is.`
 
-### `diamond(centre_pos, radius?, height?)`
+### `diamond(center_pos, radius?, height?)`
 
 Iterates over a diamond like area of blocks. With no radius and height, its 7 blocks centered around the middle 
 (block + neighbours). With a radius specified, it expands shape on x and z coords, and with a custom height, on y. 
 Any of these can be zero as well. radius of 0 makes a stick, height of 0 makes a diamond shape pad.
 
 If radius and height are the same, creats a 3D diamond, of all the blocks which are a manhattan distance of `radius` away
-from the centre.
+from the center.
