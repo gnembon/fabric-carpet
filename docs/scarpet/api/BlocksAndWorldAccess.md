@@ -230,10 +230,14 @@ that block, a block doesn't get destroyed either.
 
 ### `create_explosion(pos, power?, mode?, fire?, source?, attacker?)`
 
-Creates an explosion at a given position. Default values of optional parameters are: `'power'` - `4` (TNT power), 
-`'mode'` (block breaking effect `none`, `destroy` or `break`: `break`, `fire` (whether extra fire blocks should be created) - `false`,
-`source` (exploding entity) - `null` and `attacker` (entity responsible for trigerring) - `null`. Explosions created with this
-endpoint cannot be captured with `__on_explosion` event, however they will be captured by `__on_explosion_outcome`.
+Creates an explosion at a given position. Default values of optional parameters are:
+ - `'power'` - `4` (TNT power)
+ - `'mode'` (block breaking effect `keep`, `destroy` or `destroy_with_decay`): `destroy_with_decay`
+ - `fire` (whether extra fire blocks should be created) - `false`
+ - `source` (exploding entity) - `null`
+ - `attacker` (entity responsible for trigerring) - `null`
+Explosions created with this endpoint cannot be captured with `__on_explosion` event, however they will be captured
+by `__on_explosion_outcome`.
 
 ### `weather()`,`weather(type)`,`weather(type, ticks)`
 
