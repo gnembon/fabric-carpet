@@ -26,7 +26,7 @@
     "ServerStatus_motdMixin",
     "MinecraftServer_pingPlayerSampleLimit",
     "HugeFungusFeatureMixin",
-
+    "PiglinBrute_spawnPlacementsMixin",
     "MinecraftServer_coreMixin",
 
     "MinecraftServer_tickspeedMixin",
