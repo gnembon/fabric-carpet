@@ -2,6 +2,7 @@ package carpet.patches;
 
 import net.minecraft.network.Connection;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.contents.TranslatableContents;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerGamePacketListenerImpl;
@@ -23,6 +24,12 @@ public class NetHandlerPlayServerFake extends ServerGamePacketListenerImpl
     @Override
     public void disconnect(Component message)
     {
+        if (message.getContents() instanceof TranslatableContents text && text.getKey().equals("multiplayer.disconnect.not_whitelisted"))
+        {
+            // Whitelist stuff triggers this in multiple places and we shouldn't let fake players randomly disconnect
+            // as we don't expect them to be whitelisted
+            return;
+        }
         ((EntityPlayerMPFake) player).kill(message);
     }
 
