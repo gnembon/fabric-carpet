@@ -130,7 +130,7 @@ public abstract class MinecraftServer_tickspeedMixin extends ReentrantBlockableE
         {
             CarpetProfiler.start_tick_profiling();
         }
-        //long msThisTick = 0L;
+        msThisTick = 0L;
         long l = 0L;
         float mspt = serverTickRateManager.mspt();
         if (serverTickRateManager.isInWarpSpeed() && serverTickRateManager.continueWarp())
