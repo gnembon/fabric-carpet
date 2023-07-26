@@ -120,7 +120,7 @@ public abstract class MinecraftServer_tickspeedMixin extends ReentrantBlockableE
     	return serverTickRateManager.isInWarpSpeed() ? () -> true : original;
     }
     
-    @Inject(method = "runServer", at = @At(value = "FIELD", target = "net/minecraft/server/MinecraftServer.mayHaveDelayedTasks"))
+    @Inject(method = "runServer", at = @At(value = "FIELD", target = "net/minecraft/server/MinecraftServer.mayHaveDelayedTasks:Z"))
     private void runPendingTasksWhenWarping(CallbackInfo ci) {
     	// clearing all hanging tasks no matter what when warping
     	if (serverTickRateManager.isInWarpSpeed())
