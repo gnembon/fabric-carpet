@@ -1,6 +1,5 @@
 package carpet.script.utils;
 
-import java.util.Arrays;
 import java.util.List;
 
 import net.minecraft.world.Container;
@@ -11,7 +10,7 @@ import net.minecraft.world.item.ItemStack;
 
 public class EquipmentInventory implements Container
 {
-    private static final List<EquipmentSlot> slotToSlot = Arrays.asList(
+    private static final List<EquipmentSlot> slotToSlot = List.of(
             EquipmentSlot.MAINHAND,
             EquipmentSlot.FEET, EquipmentSlot.LEGS, EquipmentSlot.CHEST, EquipmentSlot.HEAD,
             EquipmentSlot.OFFHAND

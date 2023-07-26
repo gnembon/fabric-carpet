@@ -505,33 +505,39 @@ public class Auxiliary
             {
                 throw new InternalExpressionException("'print' takes one or two arguments");
             }
-            CommandSourceStack s = ((CarpetContext) c).source();
+            CarpetContext cc = (CarpetContext) c;
+            CommandSourceStack s = cc.source();
             MinecraftServer server = s.getServer();
             Value res = lv.get(0);
-            List<ServerPlayer> targets = null;
+            List<CommandSourceStack> targets = null;
             if (lv.size() == 2)
             {
                 List<Value> playerValues = (res instanceof ListValue list) ? list.getItems() : Collections.singletonList(res);
-                List<ServerPlayer> playerTargets = new ArrayList<>();
+                List<CommandSourceStack> playerTargets = new ArrayList<>();
                 playerValues.forEach(pv -> {
                     ServerPlayer player = EntityValue.getPlayerByValue(server, pv);
                     if (player == null)
                     {
                         throw new InternalExpressionException("Cannot target player " + pv.getString() + " in print");
                     }
-                    playerTargets.add(player);
+                    playerTargets.add(player.createCommandSourceStack());
                 });
                 targets = playerTargets;
                 res = lv.get(1);
-            }
+            } else if (c.host.user != null) {
+                ServerPlayer player = cc.server().getPlayerList().getPlayerByName(cc.host.user);
+                if (player != null) {
+                    targets = Collections.singletonList(player.createCommandSourceStack());
+                }
+            } // optionally retrieve from CC.host.responsibleSource to print?
             Component message = FormattedTextValue.getTextByValue(res);
             if (targets == null)
             {
-                s.sendSuccess(message, false);
+                s.sendSuccess(() -> message, false);
             }
             else
             {
-                targets.forEach(p -> p.createCommandSourceStack().sendSuccess(message, false));
+                targets.forEach(p -> p.sendSuccess(() -> message, false));
             }
             return res; // pass through for variables
         });

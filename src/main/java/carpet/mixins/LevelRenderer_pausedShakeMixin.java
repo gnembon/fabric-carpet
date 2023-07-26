@@ -1,8 +1,10 @@
 package carpet.mixins;
 
+import carpet.fakes.LevelInterface;
 import carpet.fakes.MinecraftClientInferface;
-import carpet.helpers.TickSpeed;
+import carpet.helpers.TickRateManager;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.LevelRenderer;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -15,6 +17,7 @@ public class LevelRenderer_pausedShakeMixin
 {
     @Shadow @Final private Minecraft minecraft;
 
+    @Shadow private ClientLevel level;
     float initial = -1234.0f;
 
     // require 0 is for optifine being a bitch as it usually is.
@@ -25,7 +28,8 @@ public class LevelRenderer_pausedShakeMixin
     private float changeTickPhase(float previous)
     {
         initial = previous;
-        if (!TickSpeed.process_entities)
+        TickRateManager trm = ((LevelInterface)level).tickRateManager();
+        if (!trm.runsNormally())
             return ((MinecraftClientInferface)minecraft).getPausedTickDelta();
         return previous;
     }

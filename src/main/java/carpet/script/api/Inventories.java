@@ -437,7 +437,7 @@ public class Inventories
             {
                 // stolen from LookTargetUtil.give((VillagerEntity)owner, droppedStack, (LivingEntity) owner);
                 double dropY = livingEntity.getY() - 0.30000001192092896D + livingEntity.getEyeHeight();
-                item = new ItemEntity(livingEntity.level, livingEntity.getX(), dropY, livingEntity.getZ(), droppedStack);
+                item = new ItemEntity(livingEntity.level(), livingEntity.getX(), dropY, livingEntity.getZ(), droppedStack);
                 Vec3 vec3d = livingEntity.getViewVector(1.0F).normalize().scale(0.3);//  new Vec3d(0, 0.3, 0);
                 item.setDeltaMovement(vec3d);
                 item.setDefaultPickUpDelay();

@@ -675,12 +675,8 @@ public class CarpetScriptHost extends ScriptHost
             return this;
         }
         // user based
-        ServerPlayer player;
-        try
-        {
-            player = source.getPlayerOrException();
-        }
-        catch (CommandSyntaxException ignored)
+        ServerPlayer player = source.getPlayer();
+        if (player == null)
         {
             throw new SimpleCommandExceptionType(Component.literal("Cannot run player based apps without the player context")).create();
         }
@@ -1057,11 +1053,7 @@ public class CarpetScriptHost extends ScriptHost
         responsibleSource = source;
         errorSnooper = (expr, /*Nullable*/ token, ctx, message) ->
         {
-            try
-            {
-                source.getPlayerOrException();
-            }
-            catch (CommandSyntaxException e)
+            if (!source.isPlayer())
             {
                 return null;
             }
@@ -1210,7 +1202,7 @@ public class CarpetScriptHost extends ScriptHost
     {
         if (super.issueDeprecation(feature))
         {
-            Carpet.Messenger_message(responsibleSource, "rb '" + feature + "' is deprecated and soon will be removed. Please consult the docs for their replacement");
+            Carpet.Messenger_message(responsibleSource, "rb App '" +getName() + "' uses '" + feature + "', which is deprecated for removal. Check the docs for a replacement");
             return true;
         }
         return false;

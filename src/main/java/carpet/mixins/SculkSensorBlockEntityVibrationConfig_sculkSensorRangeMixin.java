@@ -8,13 +8,13 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-@Mixin(SculkSensorBlockEntity.VibrationConfig.class)
+@Mixin(SculkSensorBlockEntity.VibrationUser.class)
 public class SculkSensorBlockEntityVibrationConfig_sculkSensorRangeMixin
 {
     @Inject(method = "getListenerRadius", at = @At("HEAD"), cancellable = true)
     private void sculkSensorRange(CallbackInfoReturnable<Integer> cir)
     {
-        if (CarpetSettings.sculkSensorRange != SculkSensorBlockEntity.VibrationConfig.LISTENER_RANGE) {
+        if (CarpetSettings.sculkSensorRange != SculkSensorBlockEntity.VibrationUser.LISTENER_RANGE) {
             cir.setReturnValue(CarpetSettings.sculkSensorRange);
         }
     }

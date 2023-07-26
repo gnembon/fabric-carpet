@@ -5,9 +5,7 @@ import carpet.CarpetSettings;
 import carpet.api.settings.CarpetRule;
 import carpet.api.settings.RuleHelper;
 import carpet.api.settings.SettingsManager;
-import carpet.api.settings.Validator;
 import carpet.fakes.MinecraftServerInterface;
-import carpet.helpers.TickSpeed;
 import carpet.logging.HUDController;
 import carpet.network.ServerNetworkHandler;
 import carpet.patches.EntityPlayerMPFake;
@@ -18,7 +16,6 @@ import carpet.script.CarpetScriptServer;
 import carpet.script.Module;
 import carpet.script.exception.InternalExpressionException;
 import carpet.script.exception.LoadException;
-import carpet.script.utils.AppStoreManager;
 import carpet.script.value.MapValue;
 import carpet.script.value.StringValue;
 import carpet.utils.CarpetProfiler;
@@ -134,9 +131,9 @@ public class Carpet
         return null;
     }
 
-    public static boolean isTickProcessingPaused()
+    public static boolean isTickProcessingPaused(MinecraftServer server)
     {
-        return !TickSpeed.process_entities;
+        return !((MinecraftServerInterface)server).getTickRateManager().runsNormally();
     }
 
     public static void handleExtensionsAPI(CarpetExpression expression)
@@ -241,36 +238,5 @@ public class Carpet
             }
         };
         SettingsManager.registerGlobalRuleObserver((source, changedRule, userInput) -> carpetRuleChanges.handleAny(changedRule, source));
-    }
-
-    public static class ScarpetAppStoreValidator extends Validator<String>
-    {
-        @Override
-        public String validate(@Nullable CommandSourceStack source, CarpetRule<String> currentRule, String newValue, String stringInput)
-        {
-            if (newValue.equals(currentRule.value()))
-            {
-                // Don't refresh the local repo if it's the same (world change), helps preventing hitting rate limits from github when
-                // getting suggestions. Pending is a way to invalidate the cache when it gets old, and investigating api usage further
-                return newValue;
-            }
-            if (newValue.equalsIgnoreCase("none"))
-            {
-                AppStoreManager.setScarpetRepoLink(null);
-                return newValue;
-            }
-            if (newValue.endsWith("/"))
-            {
-                newValue = newValue.substring(0, newValue.length() - 1);
-            }
-            AppStoreManager.setScarpetRepoLink("https://api.github.com/repos/" + newValue + "/");
-            return newValue;
-        }
-
-        @Override
-        public String description()
-        {
-            return "Appstore link should point to a valid github repository";
-        }
     }
 }

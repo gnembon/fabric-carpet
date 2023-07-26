@@ -306,13 +306,13 @@ only take integer values, so if the input has a decimal part, it will be discard
  - `bitwise_xor(...)` -> Does the bitwise XOR operation on each number in order.
  - `bitwise_or(...)` -> Does the bitwise AND operation on each number in order. Note that with larger ranges of numbers this will
 	tend to -1.
- - `bitwise_shift_left(num, amount)` -> Shifts all the bits of the first number `amount` spots to the left. Note that shifting more
-	than 63 positions will result in a 0 (cos you shift out all the bits of the number)
+ - `bitwise_shift_left(num, amount)` -> Shifts all the bits of the first number `amount` spots to the left. Note that only the 6 
+	lowest-order bits of the amount are considered.
  - `bitwise_shift_right(num, amount)` -> Shifts all the bits of the first number `amount` spots to the right logically. That is, the 
-    `amount` most significant bits will always be set to 0. Like with the above, shifting more than 63 bits results in a 0.
+    `amount` most significant bits will always be set to 0. Like with the above, only the 6 lowest-order bits of the amount are considered.
  - `bitwise_arithmetic_shift_right(num, amount)` -> Shifts all the bits of the first number `amount` spots to the right arithmetically.
     That is, if the most significant (sign) bit is a 1, it'll propagate the one to the `amount` most significant bits. Like with the above,
-	shifting more than 63 bits results in a 0.
+	only the 6 lowest-order bits of the amount are considered.
  - `bitwise_roll_left(num, amount)` -> Rolls the bits of the first number `amount` bits to the left. This is basically where you
 	shift out the first `amount` bits and then add them on at the back, essentially 'rolling' the number. Note that unlike with
         shifting, you can roll more than 63 bits at a time, as it just makes the number roll over more times, which isn't an issue

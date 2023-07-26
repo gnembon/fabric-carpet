@@ -8,7 +8,6 @@
     "MobCategory_spawnMixin",
     "Commands_customCommandsMixin",
     "ServerGamePacketListenerImplMixin",
-    "ServerGamePacketListenerImplAccessor",
 
     "PerfCommand_permissionMixin",
     "FillCommandMixin",
@@ -27,7 +26,7 @@
     "ServerStatus_motdMixin",
     "MinecraftServer_pingPlayerSampleLimit",
     "HugeFungusFeatureMixin",
-
+    "PiglinBrute_getPlacementTypeMixin",
     "MinecraftServer_coreMixin",
 
     "MinecraftServer_tickspeedMixin",
@@ -36,7 +35,6 @@
     "BoundTickingBlockEntity_tickMixin",
     "ServerChunkCache_tickMixin",
     "ChunkMap_tickMixin",
-    "DistanceManager_tickMixin",
     "ServerFunctionManager_tickMixin",
     "WorldBorder_tickMixin",
     "ChunkMap_scarpetChunkCreationMixin",
@@ -48,8 +46,6 @@
     "LevelLightEngine_scarpetChunkCreationMixin",
     "LayerLightEngine_scarpetChunkCreationMixin",
     "LayerLightSectionStorage_scarpetChunkCreationMixin",
-    "BlockLightSectionStorage_scarpetChunkCreationMixin",
-    "SkyLightSectionStorage_scarpetChunkCreationMixin",
     "DistanceManager_spawnChunksMixin",
     "ServerLevel_spawnChunksMixin",
     "ThreadedLevelLightEngine_scarpetChunkCreationMixin",
@@ -191,6 +187,7 @@
     "SlimeBlock_customStickyMixin"
   ],
   "client": [
+    "ClientLevel_tickSpeedMixin",
     "ShulkerBoxAccessMixin",
     "Timer_tickSpeedMixin",
     "MinecraftMixin",

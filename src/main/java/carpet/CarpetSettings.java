@@ -4,7 +4,7 @@ import carpet.api.settings.CarpetRule;
 import carpet.api.settings.RuleCategory;
 import carpet.api.settings.Validators;
 import carpet.api.settings.Validator;
-import carpet.script.external.Carpet;
+import carpet.script.utils.AppStoreManager;
 import carpet.settings.Rule;
 import carpet.utils.Translations;
 import carpet.utils.CommandHelper;
@@ -12,7 +12,6 @@ import carpet.utils.Messenger;
 import carpet.utils.SpawnChunks;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.commands.CommandSourceStack;
-import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
@@ -21,7 +20,6 @@ import net.minecraft.server.dedicated.DedicatedServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
@@ -34,7 +32,6 @@ import net.minecraft.world.level.border.WorldBorder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Iterator;
 import java.util.Optional;
 
 import static carpet.api.settings.RuleCategory.BUGFIX;
@@ -74,7 +71,7 @@ public class CarpetSettings
     @Rule(
             desc = "Sets the language for Carpet",
             category = FEATURE,
-            options = {"en_us", "pt_br", "zh_cn", "zh_tw"},
+            options = {"en_us", "fr_fr", "pt_br", "zh_cn", "zh_tw"},
             strict = true, // the current system doesn't handle fallbacks and other, not defined languages would make unreadable mess. Change later
             validate = LanguageValidator.class
     )
@@ -245,7 +242,7 @@ public class CarpetSettings
             category = {SURVIVAL, FEATURE}
     )
     public static String stackableShulkerBoxes = "false";
-    public static int shulkerBoxStackSize = 1;
+    public static int shulkerBoxStackSize = 1; // Referenced from Carpet extra
 
     @Rule( desc = "Explosions won't destroy blocks", category = {CREATIVE, TNT} )
     public static boolean explosionNoBlockDamage = false;
@@ -554,6 +551,32 @@ public class CarpetSettings
     )
     public static boolean scriptsOptimization = true;
 
+    private static class ScarpetAppStore extends Validator<String> {
+        @Override
+        public String validate(CommandSourceStack source, CarpetRule<String> currentRule, String newValue, String stringInput) {
+            if (newValue.equals(currentRule.value())) {
+                // Don't refresh the local repo if it's the same (world change), helps preventing hitting rate limits from github when
+                // getting suggestions. Pending is a way to invalidate the cache when it gets old, and investigating api usage further
+                return newValue;
+            }
+            if (newValue.equals("none")) {
+                AppStoreManager.setScarpetRepoLink(null);
+            } else {
+                if (newValue.endsWith("/"))
+                    newValue = newValue.substring(0, newValue.length() - 1);
+                AppStoreManager.setScarpetRepoLink("https://api.github.com/repos/" + newValue + "/");
+            }
+            if (source != null)
+                CommandHelper.notifyPlayersCommandsChanged(source.getServer());
+            return newValue;
+        }
+
+        @Override
+        public String description() {
+            return "Appstore link should point to a valid github repository";
+        }
+    }
+
     @Rule(
             desc = "Location of the online repository of scarpet apps",
             extra = {
@@ -563,7 +586,7 @@ public class CarpetSettings
             },
             category = SCARPET,
             strict = false,
-            validate= Carpet.ScarpetAppStoreValidator.class
+            validate = ScarpetAppStore.class
     )
     public static String scriptsAppStore = "gnembon/scarpet/contents/programs";
 
@@ -810,18 +833,6 @@ public class CarpetSettings
     public static int simulationDistance = 0;
 
     public static class ChangeSpawnChunksValidator extends Validator<Integer> {
-        public static void changeSpawnSize(int size)
-        {
-            ServerLevel overworld = CarpetServer.minecraft_server.getLevel(Level.OVERWORLD); // OW
-            if (overworld != null) {
-                ChunkPos centerChunk = new ChunkPos(new BlockPos(
-                        overworld.getLevelData().getXSpawn(),
-                        overworld.getLevelData().getYSpawn(),
-                        overworld.getLevelData().getZSpawn()
-                ));
-                SpawnChunks.changeSpawnChunks(overworld.getChunkSource(), centerChunk, size);
-            }
-        }
         @Override public Integer validate(CommandSourceStack source, CarpetRule<Integer> currentRule, Integer newValue, String string) {
             if (source == null) return newValue;
             if (newValue < 0 || newValue > 32)
@@ -834,11 +845,10 @@ public class CarpetSettings
                 //must been some startup thing
                 return newValue;
             }
-            if (CarpetServer.minecraft_server == null) return newValue;
-            ServerLevel currentOverworld = CarpetServer.minecraft_server.getLevel(Level.OVERWORLD); // OW
+            ServerLevel currentOverworld = source.getServer().overworld();
             if (currentOverworld != null)
             {
-                changeSpawnSize(newValue);
+                SpawnChunks.changeSpawnSize(currentOverworld, newValue);
             }
             return newValue;
         }
@@ -854,14 +864,11 @@ public class CarpetSettings
     public static int spawnChunksSize = MinecraftServer.START_CHUNK_RADIUS;
 
     public static class LightBatchValidator extends Validator<Integer> {
-        public static void applyLightBatchSizes(int maxBatchSize)
+        public static void applyLightBatchSizes(MinecraftServer server, int maxBatchSize)
         {
-            Iterator<ServerLevel> iterator = CarpetServer.minecraft_server.getAllLevels().iterator();
-            
-            while (iterator.hasNext()) 
+            for (ServerLevel world : server.getAllLevels())
             {
-                ServerLevel serverWorld = iterator.next();
-                serverWorld.getChunkSource().getLightEngine().setTaskPerBatch(maxBatchSize);
+                //world.getChunkSource().getLightEngine().setTaskPerBatch(maxBatchSize);
             }
         }
         @Override public Integer validate(CommandSourceStack source, CarpetRule<Integer> currentRule, Integer newValue, String string) {
@@ -876,9 +883,8 @@ public class CarpetSettings
                 //must been some startup thing
                 return newValue;
             }
-            if (CarpetServer.minecraft_server == null) return newValue;
             
-            applyLightBatchSizes(newValue); // Apply new settings
+            applyLightBatchSizes(source.getServer(), newValue); // Apply new settings
             
             return newValue;
         }

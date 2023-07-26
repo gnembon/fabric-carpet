@@ -15,13 +15,14 @@ import carpet.commands.MobAICommand;
 import carpet.commands.PerimeterInfoCommand;
 import carpet.commands.PlayerCommand;
 import carpet.commands.ProfileCommand;
+import carpet.fakes.MinecraftServerInterface;
+import carpet.helpers.ServerTickRateManager;
 import carpet.script.ScriptCommand;
 import carpet.commands.SpawnCommand;
 import carpet.commands.TestCommand;
 import carpet.commands.TickCommand;
 import carpet.network.ServerNetworkHandler;
 import carpet.helpers.HopperCounter;
-import carpet.helpers.TickSpeed;
 import carpet.logging.LoggerRegistry;
 import carpet.script.CarpetScriptServer;
 import carpet.api.settings.CarpetRule;
@@ -118,7 +119,8 @@ public class CarpetServer // static for now - easier to handle all around the co
 
     public static void tick(MinecraftServer server)
     {
-        TickSpeed.tick();
+        ServerTickRateManager trm = ((MinecraftServerInterface)server).getTickRateManager();
+        trm.tick();
         HUDController.update_hud(server, null);
         if (scriptServer != null) scriptServer.tick();
 
@@ -214,9 +216,6 @@ public class CarpetServer // static for now - easier to handle all around the co
             extensions.forEach(e -> e.onServerClosed(server));
             minecraft_server = null;
         }
-
-        // this for whatever reason gets called multiple times even when joining;
-        TickSpeed.reset();
     }
     public static void onServerDoneClosing(MinecraftServer server)
     {

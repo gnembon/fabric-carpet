@@ -15,7 +15,7 @@
   "carpet.settings.command.change_permanently_tooltip": "clique para manter as configurações em %s para salvar nas reinicializações",
   "carpet.settings.command.default_set": "A regra %s agora será padronizada para %s",
   "carpet.settings.command.default_removed": "A regra %s não será mais definida na reinicialização",
-  "carpet.settings.command.current_value": "valor atual"
+  "carpet.settings.command.current_value": "valor atual",
   
   // Categories
 

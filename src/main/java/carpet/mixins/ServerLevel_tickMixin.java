@@ -1,6 +1,8 @@
 package carpet.mixins;
 
-import carpet.helpers.TickSpeed;
+import carpet.fakes.LevelInterface;
+import carpet.fakes.MinecraftServerInterface;
+import carpet.helpers.TickRateManager;
 import carpet.utils.CarpetProfiler;
 import net.minecraft.core.Holder;
 import net.minecraft.core.RegistryAccess;
@@ -23,11 +25,17 @@ import net.minecraft.world.level.dimension.DimensionType;
 import net.minecraft.world.level.storage.WritableLevelData;
 
 @Mixin(ServerLevel.class)
-public abstract class ServerLevel_tickMixin extends Level
+public abstract class ServerLevel_tickMixin extends Level implements LevelInterface
 {
     protected ServerLevel_tickMixin(final WritableLevelData writableLevelData, final ResourceKey<Level> resourceKey, final RegistryAccess registryAccess, final Holder<DimensionType> holder, final Supplier<ProfilerFiller> supplier, final boolean bl, final boolean bl2, final long l, final int i)
     {
         super(writableLevelData, resourceKey, registryAccess, holder, supplier, bl, bl2, l, i);
+    }
+
+    @Override
+    public TickRateManager tickRateManager()
+    {
+        return ((MinecraftServerInterface)getServer()).getTickRateManager();
     }
 
     @Shadow protected abstract void runBlockEvents();
@@ -159,13 +167,13 @@ public abstract class ServerLevel_tickMixin extends Level
     ))
     private void tickWorldBorder(WorldBorder worldBorder)
     {
-        if (TickSpeed.process_entities) worldBorder.tick();
+        if (tickRateManager().runsNormally()) worldBorder.tick();
     }
 
     @Inject(method = "advanceWeatherCycle", cancellable = true, at = @At("HEAD"))
     private void tickWeather(CallbackInfo ci)
     {
-        if (!TickSpeed.process_entities) ci.cancel();
+        if (!tickRateManager().runsNormally()) ci.cancel();
     }
 
     @Redirect(method = "tick", at = @At(
@@ -174,7 +182,7 @@ public abstract class ServerLevel_tickMixin extends Level
     ))
     private void tickTimeConditionally(ServerLevel serverWorld)
     {
-        if (TickSpeed.process_entities) tickTime();
+        if (tickRateManager().runsNormally()) tickTime();
     }
 
     @Redirect(method = "tick", at = @At(
@@ -183,7 +191,7 @@ public abstract class ServerLevel_tickMixin extends Level
     ))
     private boolean tickPendingBlocks(ServerLevel serverWorld)
     {
-        if (!TickSpeed.process_entities) return true;
+        if (!tickRateManager().runsNormally()) return true;
         return serverWorld.isDebug(); // isDebug()
     }
 
@@ -193,7 +201,7 @@ public abstract class ServerLevel_tickMixin extends Level
     ))
     private void tickConditionally(Raids raidManager)
     {
-        if (TickSpeed.process_entities) raidManager.tick();
+        if (tickRateManager().runsNormally()) raidManager.tick();
     }
 
     @Redirect(method = "tick", at = @At(
@@ -202,6 +210,6 @@ public abstract class ServerLevel_tickMixin extends Level
     ))
     private void tickConditionally(ServerLevel serverWorld)
     {
-        if (TickSpeed.process_entities) runBlockEvents();
+        if (tickRateManager().runsNormally()) runBlockEvents();
     }
 }

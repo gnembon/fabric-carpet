@@ -131,7 +131,7 @@ public class NumericValue extends Value
     {  // TODO test if definintn add(NumericVlaue) woud solve the casting
         if (v instanceof final NumericValue nv)
         {
-            return new NumericValue(longValue != null && nv.longValue != null ? (longValue + nv.longValue) : (value + nv.value));
+            return longValue != null && nv.longValue != null ? new NumericValue(longValue + nv.longValue) : new NumericValue(value + nv.value);
         }
         return super.add(v);
     }
@@ -141,7 +141,7 @@ public class NumericValue extends Value
     {  // TODO test if definintn add(NumericVlaue) woud solve the casting
         if (v instanceof final NumericValue nv)
         {
-            return new NumericValue(longValue != null && nv.longValue != null ? (longValue - nv.longValue) : (value - nv.value));
+            return longValue != null && nv.longValue != null ? new NumericValue(longValue - nv.longValue) : new NumericValue(value - nv.value);
         }
         return super.subtract(v);
     }
@@ -151,7 +151,7 @@ public class NumericValue extends Value
     {
         if (v instanceof final NumericValue nv)
         {
-            return new NumericValue(longValue != null && nv.longValue != null ? (longValue * nv.longValue) : (value * nv.value));
+            return longValue != null && nv.longValue != null ? new NumericValue(longValue * nv.longValue) : new NumericValue(value * nv.value);
         }
         return v instanceof ListValue ? v.multiply(this) : new StringValue(StringUtils.repeat(v.getString(), (int) getLong()));
     }
@@ -303,13 +303,12 @@ public class NumericValue extends Value
         {
             return new JsonPrimitive(longValue);
         }
-        long lv = getLong();
-        return new JsonPrimitive(value == lv ? getLong() : value);
+        return isInteger() ? new JsonPrimitive(getLong()) : new JsonPrimitive(getDouble());
     }
 
     public NumericValue opposite()
     {
-        return new NumericValue(longValue != null ? -longValue : -value);
+        return longValue != null ? new NumericValue(-longValue) : new NumericValue(-value);
     }
 
     public boolean isInteger()

@@ -38,6 +38,7 @@ import net.minecraft.core.Holder;
 import net.minecraft.core.HolderSet;
 import net.minecraft.core.QuartPos;
 import net.minecraft.core.Registry;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.DistanceManager;
@@ -527,7 +528,7 @@ public class WorldAccess
                 booleanStateTest(c, "flammable", lv, (s, p) -> s.ignitedByLava()));
 
         expression.addContextFunction("transparent", -1, (c, t, lv) ->
-                booleanStateTest(c, "transparent", lv, (s, p) -> !s.getMaterial().isSolid()));
+                booleanStateTest(c, "transparent", lv, (s, p) -> !s.isSolid()));
 
         /*this.expr.addContextFunction("opacity", -1, (c, t, lv) ->
                 genericStateTest(c, "opacity", lv, (s, p, w) -> new NumericValue(s.getOpacity(w, p))));
@@ -632,7 +633,7 @@ public class WorldAccess
                 forceLoad = lv.get(blockArgument.offset).getBoolean();
             }
             ChunkAccess chunk = ((CarpetContext) c).level().getChunk(pos.getX() >> 4, pos.getZ() >> 4, ChunkStatus.EMPTY, forceLoad);
-            return chunk == null ? Value.NULL : new StringValue(chunk.getStatus().getName());
+            return chunk == null ? Value.NULL : ValueConversions.of(BuiltInRegistries.CHUNK_STATUS.getKey(chunk.getStatus()));
         });
 
         expression.addContextFunction("chunk_tickets", -1, (c, t, lv) ->
@@ -932,7 +933,7 @@ public class WorldAccess
                     }
                     if (DUMMY_ENTITY == null)
                     {
-                        DUMMY_ENTITY = new FallingBlockEntity(EntityType.FALLING_BLOCK, cc.server().overworld());
+                        DUMMY_ENTITY = new FallingBlockEntity(EntityType.FALLING_BLOCK, null);
                     }
                     Block.dropResources(state, world, where, be, DUMMY_ENTITY, tool);
                 }
@@ -1160,14 +1161,14 @@ public class WorldAccess
                 stateStringQuery(c, "block_sound", lv, (s, p) ->
                         Colors.soundName.get(s.getSoundType())));
 
-        expression.addContextFunction("material", -1, (c, t, lv) ->
-                stateStringQuery(c, "material", lv, (s, p) ->
-                        Colors.materialName.get(s.getMaterial())));
+        expression.addContextFunction("material", -1, (c, t, lv) -> {
+            c.host.issueDeprecation("material(...)"); // deprecated for block_state()
+            return StringValue.of("unknown");
+        });
 
         expression.addContextFunction("map_colour", -1, (c, t, lv) ->
                 stateStringQuery(c, "map_colour", lv, (s, p) ->
-                        Colors.materialName.get(s.getMapColor(((CarpetContext) c).level(), p))));
-
+                        Colors.mapColourName.get(s.getMapColor(((CarpetContext) c).level(), p))));
 
         // Deprecated for block_state()
         expression.addContextFunction("property", -1, (c, t, lv) ->

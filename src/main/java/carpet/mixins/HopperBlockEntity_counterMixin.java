@@ -40,17 +40,17 @@ public abstract class HopperBlockEntity_counterMixin extends RandomizableContain
     private static void onInsert(Level world, BlockPos blockPos, BlockState blockState, Container inventory, CallbackInfoReturnable<Boolean> cir)
     {
         if (CarpetSettings.hopperCounters) {
-            DyeColor wool_color = WoolTool.getWoolColorAtPosition(
+            DyeColor woolColor = WoolTool.getWoolColorAtPosition(
                     world,
-                    blockPos.relative(blockState.getValue(HopperBlock.FACING))); // offset
-            if (wool_color != null)
+                    blockPos.relative(blockState.getValue(HopperBlock.FACING)));
+            if (woolColor != null)
             {
                 for (int i = 0; i < inventory.getContainerSize(); ++i)
                 {
                     if (!inventory.getItem(i).isEmpty())
                     {
                         ItemStack itemstack = inventory.getItem(i);//.copy();
-                        HopperCounter.COUNTERS.get(wool_color).add(world.getServer(), itemstack);
+                        HopperCounter.getCounter(woolColor).add(world.getServer(), itemstack);
                         inventory.setItem(i, ItemStack.EMPTY);
                     }
                 }
