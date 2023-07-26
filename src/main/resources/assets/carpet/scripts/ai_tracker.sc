@@ -1,4 +1,4 @@
-_command() -> '
+print_info() -> print('
 ai_tracker allows to display
 some extra information about
 various entities AI activity
@@ -22,7 +22,7 @@ Settings you may want to change
  - update_frequency: changes update speed
  - clear: removes all options
  - transparency: default opacity of shapes, 8 for start
-';
+');
 
 
 global_functions = {
@@ -373,7 +373,7 @@ global_hostile_to_villager = {
 
 __config() ->{
     'commands'->{
-        ''->'_command',
+        ''->'print_info',
         'clear'->'clear',
         'toggle_boxes'->_()->global_display_boxes = !global_display_boxes,
         '<display>'->['__toggle',null],
