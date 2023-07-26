@@ -2,7 +2,6 @@ package carpet.mixins;
 
 import carpet.CarpetServer;
 import carpet.network.CarpetClient;
-import carpet.api.settings.SettingsManager;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientPacketListener;
 import net.minecraft.client.player.LocalPlayer;
@@ -29,11 +28,7 @@ public class ClientPacketListener_clientCommandMixin
         if (CarpetServer.minecraft_server == null && !CarpetClient.isCarpet() && minecraft.player != null)
         {
             LocalPlayer playerSource = minecraft.player;
-            CarpetServer.settingsManager.inspectClientsideCommand(playerSource.createCommandSourceStack(),  "/"+string);
-            CarpetServer.extensions.forEach(e -> {
-                SettingsManager sm = e.extensionSettingsManager();
-                if (sm != null) sm.inspectClientsideCommand(playerSource.createCommandSourceStack(), "/"+string);
-            });
+            CarpetServer.forEachManager(sm -> sm.inspectClientsideCommand(playerSource.createCommandSourceStack(), "/" + string));
         }
     }
 }

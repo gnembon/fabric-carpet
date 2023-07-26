@@ -8,7 +8,6 @@ import carpet.fakes.MinecraftServerInterface;
 import carpet.fakes.ServerGamePacketListenerImplInterface;
 import carpet.helpers.ServerTickRateManager;
 import carpet.script.utils.SnoopyCommandSource;
-import carpet.api.settings.SettingsManager;
 import io.netty.buffer.Unpooled;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -78,16 +77,9 @@ public class ServerNetworkHandler
             CarpetSettings.LOG.info("Player "+playerEntity.getName().getString()+" joined with a matching carpet client");
         else
             CarpetSettings.LOG.warn("Player "+playerEntity.getName().getString()+" joined with another carpet version: "+clientVersion);
-
         DataBuilder data = DataBuilder.create(playerEntity.server); // tickrate related settings are sent on world change
-        CarpetServer.settingsManager.getCarpetRules().forEach(data::withRule);
-        CarpetServer.extensions.forEach(e -> {
-            SettingsManager eManager = e.extensionSettingsManager();
-            if (eManager != null) {
-                eManager.getCarpetRules().forEach(data::withRule);
-            }
-        });
-        playerEntity.connection.send(new ClientboundCustomPayloadPacket(CarpetClient.CARPET_CHANNEL, data.build()));
+        CarpetServer.forEachManager(sm -> sm.getCarpetRules().forEach(data::withRule));
+        playerEntity.connection.send(new ClientboundCustomPayloadPacket(CarpetClient.CARPET_CHANNEL, data.build() ));
     }
 
     public static void sendPlayerLevelData(ServerPlayer player, ServerLevel level) {
