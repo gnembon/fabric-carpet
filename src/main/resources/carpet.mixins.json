@@ -26,6 +26,13 @@
     "ServerStatus_motdMixin",
     "MinecraftServer_pingPlayerSampleLimit",
     "HugeFungusFeatureMixin",
+    "Villager_bugFixMixin",
+    "MushroomCow_bugFixMixin",
+    "ZombieVillager_bugFixMixin",
+    "AbstractPiglin_bugFixMixin",
+    "Tadpole_bugFixMixin",
+    "Slime_bugFixMixin",
+    "Zombie_bugFixMixin",
 
     "MinecraftServer_coreMixin",
 
