@@ -863,43 +863,6 @@ public class CarpetSettings
     )
     public static int spawnChunksSize = MinecraftServer.START_CHUNK_RADIUS;
 
-    public static class LightBatchValidator extends Validator<Integer> {
-        public static void applyLightBatchSizes(MinecraftServer server, int maxBatchSize)
-        {
-            for (ServerLevel world : server.getAllLevels())
-            {
-                //world.getChunkSource().getLightEngine().setTaskPerBatch(maxBatchSize);
-            }
-        }
-        @Override public Integer validate(CommandSourceStack source, CarpetRule<Integer> currentRule, Integer newValue, String string) {
-            if (source == null) return newValue;
-            if (newValue < 0)
-            {
-                Messenger.m(source, "r light batch size has to be at least 0");
-                return null;
-            }
-            if (currentRule.value().intValue() == newValue.intValue())
-            {
-                //must been some startup thing
-                return newValue;
-            }
-            
-            applyLightBatchSizes(source.getServer(), newValue); // Apply new settings
-            
-            return newValue;
-        }
-    }
-    
-    @Rule(
-            desc = "Changes maximum light tasks batch size",
-            extra = {"Allows for a higher light suppression tolerance", "setting it to 5 - Default limit defined by the game"},
-            category = {EXPERIMENTAL, OPTIMIZATION},
-            strict = false,
-            options = {"5", "50", "100", "200"},
-            validate = LightBatchValidator.class
-    )
-    public static int lightEngineMaxBatchSize = 5;
-
     public enum RenewableCoralMode {
         FALSE,
         EXPANDED,
