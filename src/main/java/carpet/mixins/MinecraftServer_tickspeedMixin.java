@@ -60,31 +60,31 @@ public abstract class MinecraftServer_tickspeedMixin extends ReentrantBlockableE
     
     @ModifyConstant(method = "runServer", constant = @Constant(longValue = 2000L), allow = 1)
     private long modifyCantKeepUpLengthCheck(long original) {
-    	return (long)(1000L + 20 * serverTickRateManager.mspt());
+        return (long)(1000L + 20 * serverTickRateManager.mspt());
     }
 
     @ModifyConstant(method = "runServer", constant = @Constant(longValue = 15000L), allow = 1)
     private long modifyCantKeepUpRecentCheck(long original) {
-    	return (long)(10000L + 100 * serverTickRateManager.mspt());
+        return (long)(10000L + 100 * serverTickRateManager.mspt());
     }
     
     @ModifyConstant(method = "runServer", constant = @Constant(longValue = 50L),
-    		slice = @Slice(to = @At(value = "NEW", target = "net/minecraft/server/MinecraftServer$TimeProfiler")))
+            slice = @Slice(to = @At(value = "NEW", target = "net/minecraft/server/MinecraftServer$TimeProfiler")))
     private long modifyMsptConstantWithMsptDirectly(long original) {
-    	return (long)serverTickRateManager.mspt();
+        return (long)serverTickRateManager.mspt();
     }
     
     @ModifyConstant(method = "runServer", constant = @Constant(longValue = 50L),
-    		slice = @Slice(from = @At(value = "NEW", target = "net/minecraft/server/MinecraftServer$TimeProfiler")))
+            slice = @Slice(from = @At(value = "NEW", target = "net/minecraft/server/MinecraftServer$TimeProfiler")))
     private long modifyMsptConstantWithMsThisTick(long original) {
-    	return msThisTick; // TODO figure out why this and the previous one are different
+        return msThisTick; // TODO figure out why this and the previous one are different
     }
     
     private long msThisTick; // only ever accessed by same thread, ideally would've been local
     
     @Inject(method = "runServer", at = @At(value = "INVOKE", target = "net/minecraft/Util.getMillis()J", ordinal = 1))
     private void preTick(CallbackInfo ci) {
-    	// CM deciding on tick speed
+        // CM deciding on tick speed
         if (CarpetProfiler.tick_health_requested != 0L)
         {
             CarpetProfiler.start_tick_profiling();
@@ -102,8 +102,8 @@ public abstract class MinecraftServer_tickspeedMixin extends ReentrantBlockableE
         {
             if (Math.abs(carpetMsptAccum - mspt) > 1.0f)
             {
-            	// Tickrate changed. Ensure that we use the correct value.
-            	carpetMsptAccum = mspt;
+                // Tickrate changed. Ensure that we use the correct value.
+                carpetMsptAccum = mspt;
             }
 
             msThisTick = (long)carpetMsptAccum; // regular tick
@@ -115,18 +115,18 @@ public abstract class MinecraftServer_tickspeedMixin extends ReentrantBlockableE
     }
     
     @ModifyArg(method = "runServer", at = @At(value = "INVOKE",
-    		target = "net/minecraft/server/MinecraftServer.tickServer(Ljava/util/function/BooleanSupplier;)V"))
+            target = "net/minecraft/server/MinecraftServer.tickServer(Ljava/util/function/BooleanSupplier;)V"))
     private BooleanSupplier alwaysRunTasksIfWarping(BooleanSupplier original) {
-    	return serverTickRateManager.isInWarpSpeed() ? () -> true : original;
+        return serverTickRateManager.isInWarpSpeed() ? () -> true : original;
     }
     
     @Inject(method = "runServer", at = @At(value = "FIELD", target = "net/minecraft/server/MinecraftServer.mayHaveDelayedTasks:Z"))
     private void runPendingTasksWhenWarping(CallbackInfo ci) {
-    	// clearing all hanging tasks no matter what when warping
-    	if (serverTickRateManager.isInWarpSpeed())
+        // clearing all hanging tasks no matter what when warping
+        if (serverTickRateManager.isInWarpSpeed())
         {
             while (this.runEveryTask()) {
-            	Thread.yield(); // TODO check
+                Thread.yield(); // TODO check
             }
         }
     }
