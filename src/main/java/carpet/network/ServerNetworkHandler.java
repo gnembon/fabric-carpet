@@ -79,7 +79,7 @@ public class ServerNetworkHandler
         else
             CarpetSettings.LOG.warn("Player "+playerEntity.getName().getString()+" joined with another carpet version: "+clientVersion);
 
-        DataBuilder data = DataBuilder.create(playerEntity.server);//;.withTickRate().withFrozenState().withTickPlayerActiveTimeout(); // .withSuperHotState()
+        DataBuilder data = DataBuilder.create(playerEntity.server); // tickrate related settings are sent on world change
         CarpetServer.settingsManager.getCarpetRules().forEach(data::withRule);
         CarpetServer.extensions.forEach(e -> {
             SettingsManager eManager = e.extensionSettingsManager();
@@ -91,6 +91,7 @@ public class ServerNetworkHandler
     }
 
     public static void sendPlayerLevelData(ServerPlayer player, ServerLevel level) {
+        if (CarpetSettings.superSecretSetting || !validCarpetPlayers.contains(player)) return;
         DataBuilder data = DataBuilder.create(player.server).withTickRate().withFrozenState().withTickPlayerActiveTimeout(); // .withSuperHotState()
         player.connection.send(new ClientboundCustomPayloadPacket(CarpetClient.CARPET_CHANNEL, data.build() ));
 
