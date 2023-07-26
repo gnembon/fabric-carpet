@@ -35,7 +35,7 @@ global_functions = {
             villager_height = e~'height';
             __create_box(abnoxious_visuals, e,
                   [-8,-6,-8],
-                  [8,7,8],
+                  [9,7,9],
                   0x00dd0000, 'golem spawning', true
             );
             __create_box(abnoxious_visuals, e,
