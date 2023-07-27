@@ -1256,7 +1256,7 @@ public class WorldAccess
             ServerLevel world = cc.level();
             if (lv.isEmpty())
             {
-                return ListValue.wrap(world.registryAccess().registryOrThrow(Registries.BIOME).keySet().stream().map(ValueConversions::of));
+                return ListValue.wrap(cc.registry(Registries.BIOME).holders().map(biomeReference -> ValueConversions.of(biomeReference.key().location())));
             }
 
             Biome biome;
