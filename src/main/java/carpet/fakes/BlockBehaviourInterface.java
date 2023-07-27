@@ -8,13 +8,18 @@ import net.minecraft.world.level.block.state.BlockState;
 public interface BlockBehaviourInterface {
 
     /**
-     * @return whether this block is sticky in any way when moved by pistons
+     * Use {@link BlockPistonBehaviourInterface#isSticky(BlockState)} instead
      */
-    public boolean isSticky(BlockState state);
+    @Deprecated(forRemoval = true)
+    default boolean isSticky(BlockState state){
+        return false;
+    }
 
     /**
-     * @return whether the neighboring block is pulled along if this block is moved by pistons
+     * Use {@link BlockPistonBehaviourInterface#isStickyToNeighbor(Level, BlockPos, BlockState, BlockPos, BlockState, Direction, Direction)} instead
      */
-    public boolean isStickyToNeighbor(Level level, BlockPos pos, BlockState state, BlockPos neighborPos, BlockState neighborState, Direction dir, Direction moveDir);
-
+    @Deprecated(forRemoval = true)
+    default boolean isStickyToNeighbor(Level level, BlockPos pos, BlockState state, BlockPos neighborPos, BlockState neighborState, Direction dir, Direction moveDir){
+        return false;
+    }
 }

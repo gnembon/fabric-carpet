@@ -1,9 +1,9 @@
 package carpet.mixins;
 
+import carpet.fakes.BlockPistonBehaviourInterface;
 import org.spongepowered.asm.mixin.Mixin;
 
 import carpet.CarpetSettings;
-import carpet.fakes.BlockBehaviourInterface;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -16,7 +16,7 @@ import net.minecraft.world.level.block.state.properties.ChestType;
 import static net.minecraft.world.level.block.ChestBlock.getConnectedDirection;
 
 @Mixin(ChestBlock.class)
-public class ChestBlock_customStickyMixin implements BlockBehaviourInterface {
+public class ChestBlock_customStickyMixin implements BlockPistonBehaviourInterface {
 
     @Override
     public boolean isSticky(BlockState state) {
@@ -25,16 +25,13 @@ public class ChestBlock_customStickyMixin implements BlockBehaviourInterface {
 
     @Override
     public boolean isStickyToNeighbor(Level level, BlockPos pos, BlockState state, BlockPos neighborPos, BlockState neighborState, Direction dir, Direction moveDir) {
-        if (!neighborState.is((Block)(Object)this)) {
-            return false;
-        }
+        if (!neighborState.is((Block)(Object)this)) return false;
 
         ChestType type = state.getValue(ChestBlock.TYPE);
         ChestType neighborType = neighborState.getValue(ChestBlock.TYPE);
 
-        if (type == ChestType.SINGLE || neighborType == ChestType.SINGLE) {
-            return false;
-        }
+        if (type == ChestType.SINGLE || neighborType == ChestType.SINGLE) return false;
+
         return getConnectedDirection(state) == dir;
     }
 }

@@ -182,9 +182,8 @@
     "BlockBehaviourBlockStateBase_mixin",
     "ChainBlock_customStickyMixin",
     "ChestBlock_customStickyMixin",
-    "HoneyBlock_customStickyMixin",
-    "PistonStructureResolver_customStickyMixin",
-    "SlimeBlock_customStickyMixin"
+    "PistonStructureResolver_customStickyMixin"
+
   ],
   "client": [
     "ClientLevel_tickSpeedMixin",
