@@ -73,7 +73,7 @@ public class Inventories
             Registry<Item> items = cc.registry(Registries.ITEM);
             if (lv.isEmpty())
             {
-                return ListValue.wrap(items.holders().map(Holder.Reference::key).map(ResourceKey::location).map(ValueConversions::of));
+                return ListValue.wrap(items.holders().map(itemReference -> ValueConversions.of(itemReference.key().location())));
             }
             String tag = lv.get(0).getString();
             Optional<HolderSet.Named<Item>> itemTag = items.getTag(TagKey.create(Registries.ITEM, InputValidator.identifierOf(tag)));

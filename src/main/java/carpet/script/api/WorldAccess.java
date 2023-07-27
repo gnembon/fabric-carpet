@@ -1225,7 +1225,7 @@ public class WorldAccess
             Registry<Block> blocks = cc.registry(Registries.BLOCK);
             if (lv.isEmpty())
             {
-                return ListValue.wrap(blocks.holders().map(Holder.Reference::key).map(ResourceKey::location).map(ValueConversions::of));
+                return ListValue.wrap(blocks.holders().map(blockReference -> ValueConversions.of(blockReference.key().location())));
             }
             ResourceLocation tag = InputValidator.identifierOf(lv.get(0).getString());
             Optional<HolderSet.Named<Block>> tagset = blocks.getTag(TagKey.create(Registries.BLOCK, tag));
