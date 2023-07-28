@@ -28,6 +28,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.item.DyeColor;
+import net.minecraft.world.level.levelgen.structure.BoundingBox;
 
 import static com.mojang.brigadier.arguments.IntegerArgumentType.getInteger;
 import static com.mojang.brigadier.arguments.IntegerArgumentType.integer;
@@ -52,17 +53,18 @@ public class SpawnCommand
                 then(literal("tracking").
                         executes( (c) -> printTrackingReport(c.getSource())).
                         then(literal("start").
-                                executes( (c) -> startTracking(c.getSource(), null, null)).
+                                executes( (c) -> startTracking(c.getSource(), null)).
                                 then(argument("from", BlockPosArgument.blockPos()).
                                         then(argument("to", BlockPosArgument.blockPos()).
                                                 executes( (c) -> startTracking(
                                                         c.getSource(),
-                                                        BlockPosArgument.getSpawnablePos(c, "from"),
-                                                        BlockPosArgument.getSpawnablePos(c, "to")))))).
+                                                        BoundingBox.fromCorners(
+                                                                BlockPosArgument.getSpawnablePos(c, "from"),
+                                                                BlockPosArgument.getSpawnablePos(c, "to"))))))).
                         then(literal("stop").
                                 executes( (c) -> stopTracking(c.getSource()))).
                         then(argument("type", word()).
-                                suggests( (c, b) -> suggest(Arrays.stream(MobCategory.values()).map(MobCategory::getName),b)).
+                                suggests( (c, b) -> suggest(Arrays.stream(SpawnReporter.cachedMobCategories()).map(MobCategory::getName),b)).
                                 executes( (c) -> recentSpawnsForType(c.getSource(), getString(c, "type"))))).
                 then(literal("test").
                         executes( (c)-> runTest(c.getSource(), 72000, null)).
@@ -85,7 +87,7 @@ public class SpawnCommand
                         then(literal("reset").
                                 executes( (c) -> resetSpawnRates(c.getSource()))).
                         then(argument("type", word()).
-                                suggests( (c, b) -> suggest(Arrays.stream(MobCategory.values()).map(MobCategory::getName),b)).
+                                suggests( (c, b) -> suggest(Arrays.stream(SpawnReporter.cachedMobCategories()).map(MobCategory::getName),b)).
                                 then(argument("rounds", integer(0)).
                                         suggests( (c, b) -> suggest(new String[]{"1"},b)).
                                         executes( (c) -> setSpawnRates(
@@ -102,20 +104,20 @@ public class SpawnCommand
                 then(literal("entities").
                         executes( (c) -> generalMobcaps(c.getSource()) ).
                         then(argument("type", string()).
-                                suggests( (c, b)->suggest(Arrays.stream(MobCategory.values()).map(MobCategory::getName), b)).
+                                suggests( (c, b)->suggest(Arrays.stream(SpawnReporter.cachedMobCategories()).map(MobCategory::getName), b)).
                                 executes( (c) -> listEntitiesOfType(c.getSource(), getString(c, "type"), false)).
                                 then(literal("all").executes( (c) -> listEntitiesOfType(c.getSource(), getString(c, "type"), true)))));
 
         dispatcher.register(literalargumentbuilder);
     }
 
-    private static final Map<String, MobCategory> MOB_CATEGORY_MAP = Arrays.stream(MobCategory.values()).collect(Collectors.toMap(MobCategory::getName, Function.identity()));
+    private static final Map<String, MobCategory> MOB_CATEGORY_MAP = Arrays.stream(SpawnReporter.cachedMobCategories()).collect(Collectors.toMap(MobCategory::getName, Function.identity()));
 
     private static MobCategory getCategory(String string) throws CommandSyntaxException
     {
-        if (!Arrays.stream(MobCategory.values()).map(MobCategory::getName).collect(Collectors.toSet()).contains(string))
+        if (!Arrays.stream(SpawnReporter.cachedMobCategories()).map(MobCategory::getName).collect(Collectors.toSet()).contains(string))
         {
-            throw new SimpleCommandExceptionType(Messenger.c("r Wrong mob type: "+string+" should be "+ Arrays.stream(MobCategory.values()).map(MobCategory::getName).collect(Collectors.joining(", ")))).create();
+            throw new SimpleCommandExceptionType(Messenger.c("r Wrong mob type: "+string+" should be "+ Arrays.stream(SpawnReporter.cachedMobCategories()).map(MobCategory::getName).collect(Collectors.joining(", ")))).create();
         }
         return MOB_CATEGORY_MAP.get(string.toLowerCase(Locale.ROOT));
     }
@@ -129,45 +131,26 @@ public class SpawnCommand
 
     private static int printTrackingReport(CommandSourceStack source)
     {
-        Messenger.send(source, SpawnReporter.tracking_report(source.getLevel()));
+        Messenger.send(source, SpawnReporter.makeTrackingReport(source.getLevel()));
         return 1;
     }
 
-    private static int startTracking(CommandSourceStack source, BlockPos a, BlockPos b)
+    private static int startTracking(CommandSourceStack source, BoundingBox filter)
     {
-        if (SpawnReporter.track_spawns != 0L)
+        if (SpawnReporter.trackingSpawns())
         {
             Messenger.m(source, "r You are already tracking spawning.");
             return 0;
         }
-        BlockPos lsl = null;
-        BlockPos usl = null;
-        if (a != null && b != null)
-        {
-            lsl = new BlockPos(
-                    Math.min(a.getX(), b.getX()),
-                    Math.min(a.getY(), b.getY()),
-                    Math.min(a.getZ(), b.getZ()) );
-            usl = new BlockPos(
-                    Math.max(a.getX(), b.getX()),
-                    Math.max(a.getY(), b.getY()),
-                    Math.max(a.getZ(), b.getZ()) );
-        }
-        SpawnReporter.reset_spawn_stats(source.getServer(), false);
-        SpawnReporter.track_spawns = (long) source.getServer().getTickCount();
-        SpawnReporter.lower_spawning_limit = lsl;
-        SpawnReporter.upper_spawning_limit = usl;
+        SpawnReporter.startTracking(source.getServer(), filter);
         Messenger.m(source, "gi Spawning tracking started.");
         return 1;
     }
 
     private static int stopTracking(CommandSourceStack source)
     {
-        Messenger.send(source, SpawnReporter.tracking_report(source.getLevel()));
-        SpawnReporter.reset_spawn_stats(source.getServer(),false);
-        SpawnReporter.track_spawns = 0L;
-        SpawnReporter.lower_spawning_limit = null;
-        SpawnReporter.upper_spawning_limit = null;
+        Messenger.send(source, SpawnReporter.makeTrackingReport(source.getLevel()));
+        SpawnReporter.stopTracking(source.getServer());
         Messenger.m(source, "gi Spawning tracking stopped.");
         return 1;
     }
@@ -175,17 +158,15 @@ public class SpawnCommand
     private static int recentSpawnsForType(CommandSourceStack source, String mob_type) throws CommandSyntaxException
     {
         MobCategory cat = getCategory(mob_type);
-        Messenger.send(source, SpawnReporter.recent_spawns(source.getLevel(), cat));
+        Messenger.send(source, SpawnReporter.getRecentSpawns(source.getLevel(), cat));
         return 1;
     }
 
     private static int runTest(CommandSourceStack source, int ticks, String counter)
     {
-        //stop tracking
-        SpawnReporter.reset_spawn_stats(source.getServer(),false);
-        //start tracking
-        SpawnReporter.track_spawns = (long) source.getServer().getTickCount();
-        //counter reset
+        // Start tracking
+        SpawnReporter.startTracking(source.getServer(), null);
+        // Reset counter
         if (counter == null)
         {
             HopperCounter.resetAll(source.getServer(), false);
@@ -221,12 +202,12 @@ public class SpawnCommand
     {
         if (domock)
         {
-            SpawnReporter.initialize_mocking();
+            SpawnReporter.initializeMocking();
             Messenger.m(source, "gi Mob spawns will now be mocked.");
         }
         else
         {
-            SpawnReporter.stop_mocking();
+            SpawnReporter.stopMocking();
             Messenger.m(source, "gi Normal mob spawning.");
         }
         return 1;

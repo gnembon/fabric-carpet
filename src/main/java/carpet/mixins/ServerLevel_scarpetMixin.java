@@ -25,6 +25,7 @@ import net.minecraft.world.level.storage.WritableLevelData;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
@@ -36,7 +37,6 @@ import java.util.function.Supplier;
 import static carpet.script.CarpetEventServer.Event.EXPLOSION;
 import static carpet.script.CarpetEventServer.Event.LIGHTNING;
 import static carpet.script.CarpetEventServer.Event.CHUNK_UNLOADED;
-
 
 @Mixin(ServerLevel.class)
 public abstract class ServerLevel_scarpetMixin extends Level implements ServerWorldInterface
@@ -94,11 +94,13 @@ public abstract class ServerLevel_scarpetMixin extends Level implements ServerWo
     private ServerLevelData serverLevelData;
     @Shadow @Final private PersistentEntitySectionManager<Entity> entityManager;
 
+    @Unique
     @Override
     public ServerLevelData getWorldPropertiesCM(){
         return serverLevelData;
     }
 
+    @Unique
     @Override
     public LevelEntityGetter<Entity> getEntityLookupCMPublic() {
         return entityManager.getEntityGetter();
