@@ -70,10 +70,6 @@ public class SpawnReporter
     public static Object2LongOpenHashMap<MobCategory> local_spawns = null; // per world
     public static HashSet<MobCategory> first_chunk_marker = null;
 
-    static {
-        resetSpawnStats(null, true);
-    }
-
     public static void registerSpawn(Mob mob, MobCategory cat, BlockPos pos)
     {
         if (trackedSpawningArea != null && !trackedSpawningArea.isInside(pos))
@@ -281,16 +277,14 @@ public class SpawnReporter
         spawn_ticks_succ.clear();
         spawn_ticks_spawns.clear();
         spawn_cap_count.clear();
-        
-        spawn_stats.replaceAll((k, v) -> new Object2LongOpenHashMap<>());
-        spawned_mobs.replaceAll((k, v) -> new EvictingQueue<>());
-        if (server != null && spawn_stats.size() == 0) { // Only need to do full init once, the rest of times we use the replaceAll fast path above
-        	for (MobCategory category : cachedMobCategories())
-        		for (ResourceKey<Level> world : server.levelKeys()) {
-        			Pair<ResourceKey<Level>, MobCategory> key = Pair.of(world, category);
-        			spawn_stats.put(key, new Object2LongOpenHashMap<>());
-        			spawned_mobs.put(key, new EvictingQueue<>());
-        		}
+
+        // can't fast-path to clear given different worlds could have different amount of worlds
+        for (MobCategory category : cachedMobCategories()) {
+            for (ResourceKey<Level> world : server.levelKeys()) {
+                Pair<ResourceKey<Level>, MobCategory> key = Pair.of(world, category);
+                spawn_stats.put(key, new Object2LongOpenHashMap<>());
+                spawned_mobs.put(key, new EvictingQueue<>());
+                }
         }
         spawnTrackingStartTime = 0;
     }
