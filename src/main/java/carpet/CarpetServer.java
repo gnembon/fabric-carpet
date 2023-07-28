@@ -172,11 +172,6 @@ public class CarpetServer // static for now - easier to handle all around the co
         scriptServer.onPlayerJoin(player);
     }
 
-    @Deprecated(forRemoval = true)
-    public static void onPlayerLoggedOut(ServerPlayer player)
-    {
-        onPlayerLoggedOut(player, Component.translatable("multiplayer.player.left"));
-    }
     public static void onPlayerLoggedOut(ServerPlayer player, Component reason)
     {
         ServerNetworkHandler.onPlayerLoggedOut(player);
