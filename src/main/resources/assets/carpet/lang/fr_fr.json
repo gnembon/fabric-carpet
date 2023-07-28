@@ -223,12 +223,6 @@
   // language
   "carpet.rule.language.desc": "Définit la langue pour Carpet",
   
-  // lightEngineMaxBatchSize
-  "carpet.rule.lightEngineMaxBatchSize.desc": "Modifie la taille maximale du lot de tâches d'éclairage",
-  
-  "carpet.rule.lightEngineMaxBatchSize.extra.0": "Permet une tolérance supérieure à l'extinction de la lumière",
-  "carpet.rule.lightEngineMaxBatchSize.extra.1": "en le réglant sur 5 - Limite par défaut définie par le jeu",
-  
   // lightningKillsDropsFix
   "carpet.rule.lightningKillsDropsFix.desc": "La foudre détruit les objets qui tombent lorsque la foudre tue une entité",
   

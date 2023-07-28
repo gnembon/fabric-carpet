@@ -229,12 +229,6 @@
 
   "carpet.rule.leadFix.extra.0": "Você ainda pode obter links de trela visivelmente quebrados no lado do cliente, mas no lado do servidor o link ainda está lá.",
 
-  // lightEngineMaxBatchSize
-  "carpet.rule.lightEngineMaxBatchSize.desc": "Altera o tamanho máximo do lote de tarefas leves",
-
-  "carpet.rule.lightEngineMaxBatchSize.extra.0": "Permite uma maior tolerância de supressão de luz",
-  "carpet.rule.lightEngineMaxBatchSize.extra.1": "configurando para 5 - Limite padrão definido pelo jogo",
-
   // lightningKillsDropsFix
   "carpet.rule.lightningKillsDropsFix.desc": "O relâmpago mata os itens que caem quando o relâmpago mata uma entidade",
 
