@@ -114,7 +114,7 @@ public class SpawnReporter
         }
 
         List<String> shortCodes = new ArrayList<>();
-        for (MobCategory category : cachedMobCategoryValues())
+        for (MobCategory category : cachedMobCategories())
         {
             int cur = dimCounts.getOrDefault(category, -1);
             int max = (int)(chunkcount * ((double)category.getMaxInstancesPerChunk() / MAGIC_NUMBER)); // from ServerChunkManager.CHUNKS_ELIGIBLE_FOR_SPAWNING
@@ -271,7 +271,7 @@ public class SpawnReporter
     {
         if (full)
         {
-            for (MobCategory category : cachedMobCategoryValues())
+            for (MobCategory category : cachedMobCategories())
                 spawn_tries.put(category, 1);
         }
         overall_spawn_ticks.clear();
@@ -285,7 +285,7 @@ public class SpawnReporter
         spawn_stats.replaceAll((k, v) -> new Object2LongOpenHashMap<>());
         spawned_mobs.replaceAll((k, v) -> new EvictingQueue<>());
         if (server != null && spawn_stats.size() == 0) { // Only need to do full init once, the rest of times we use the replaceAll fast path above
-        	for (MobCategory category : cachedMobCategoryValues())
+        	for (MobCategory category : cachedMobCategories())
         		for (ResourceKey<Level> world : server.levelKeys()) {
         			Pair<ResourceKey<Level>, MobCategory> key = Pair.of(world, category);
         			spawn_stats.put(key, new Object2LongOpenHashMap<>());
@@ -295,7 +295,7 @@ public class SpawnReporter
         spawnTrackingStartTime = 0;
     }
 
-    public static MobCategory[] cachedMobCategoryValues() {
+    public static MobCategory[] cachedMobCategories() {
         return CACHED_MOBCATEGORY_VALUES;
     }
 
@@ -340,7 +340,7 @@ public class SpawnReporter
         		trackedSpawningArea.maxX(), trackedSpawningArea.maxY(), trackedSpawningArea.maxZ() ):"";
         report.add(Messenger.s(String.format("%sSpawn statistics %s: for %.1f min", simulated, location, (duration/72000.0)*60)));
 
-        for (MobCategory category : cachedMobCategoryValues())
+        for (MobCategory category : cachedMobCategories())
         {
             for (ResourceKey<Level> dim : worldIn.getServer().levelKeys())
             {
@@ -410,7 +410,7 @@ public class SpawnReporter
         String relativeHeight = (y == lc) ? "right at it." : String.format("%d blocks %s it.", Mth.abs(y - lc), (y >= lc) ? "above" : "below");
         rep.add(Messenger.s(String.format("Maximum spawn Y value for (%+d, %+d) is %d. You are " + relativeHeight, x, z, lc)));
         rep.add(Messenger.s("Spawns:"));
-        for (MobCategory category : cachedMobCategoryValues())
+        for (MobCategory category : cachedMobCategories())
         {
             String categoryCode = String.valueOf(category).substring(0, 3);
             List<MobSpawnSettings.SpawnerData> lst = getSpawnEntries(worldIn, worldIn.structureManager(), worldIn.getChunkSource().getGenerator(), category, pos, worldIn.getBiome(pos));

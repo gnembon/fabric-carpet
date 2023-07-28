@@ -44,7 +44,7 @@ public abstract class ServerChunkCacheMixin
             //local spawns now need to be tracked globally cause each calll is just for chunk
             SpawnReporter.local_spawns = new Object2LongOpenHashMap<>();
             SpawnReporter.first_chunk_marker = new HashSet<>();
-            for (MobCategory cat : SpawnReporter.cachedMobCategoryValues())
+            for (MobCategory cat : SpawnReporter.cachedMobCategories())
             {
                 Pair<ResourceKey<Level>, MobCategory> key = Pair.of(dim, cat);
                 SpawnReporter.overall_spawn_ticks.addTo(key, SpawnReporter.spawn_tries.get(cat));
@@ -61,7 +61,7 @@ public abstract class ServerChunkCacheMixin
         boolean boolean_3 = levelData.getGameTime() % 400L == 0L;
         if (SpawnReporter.trackingSpawns() && SpawnReporter.local_spawns != null)
         {
-            for (MobCategory cat: SpawnReporter.cachedMobCategoryValues())
+            for (MobCategory cat: SpawnReporter.cachedMobCategories())
             {
                 ResourceKey<Level> dim = level.dimension(); // getDimensionType;
                 Pair<ResourceKey<Level>, MobCategory> key = Pair.of(dim, cat);
