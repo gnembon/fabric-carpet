@@ -18,7 +18,7 @@ import carpet.fakes.RecipeManagerInterface;
 import carpet.fakes.AbstractContainerMenuInterface;
 import carpet.fakes.ServerPlayerInterface;
 import carpet.fakes.ServerPlayerInteractionManagerInterface;
-import carpet.fakes.ServerLevelInterface;
+import carpet.fakes.ServerWorldInterface;
 import carpet.fakes.SpawnHelperInnerInterface;
 import carpet.fakes.ThreadedAnvilChunkStorageInterface;
 import carpet.mixins.Objective_scarpetMixin;
@@ -140,7 +140,7 @@ public class Vanilla
 
     public static ServerLevelData ServerLevel_getWorldProperties(ServerLevel world)
     {
-        return ((ServerLevelInterface) world).getWorldPropertiesCM();
+        return ((ServerWorldInterface) world).getWorldPropertiesCM();
     }
 
     public static Long2ObjectOpenHashMap<SortedArraySet<Ticket<?>>> ChunkTicketManager_getTicketsByPosition(DistanceManager ticketManager)

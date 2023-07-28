@@ -13,7 +13,7 @@ import java.util.function.IntFunction;
 import java.util.stream.Collectors;
 
 import carpet.fakes.SimpleEntityLookupInterface;
-import carpet.fakes.ServerLevelInterface;
+import carpet.fakes.ServerWorldInterface;
 import net.minecraft.Util;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.server.MinecraftServer;
@@ -366,7 +366,7 @@ public abstract class ChunkMap_scarpetChunkCreationMixin implements ThreadedAnvi
             // remove entities
             long longPos = pos.toLong();
             if (this.entitiesInLevel.contains(longPos) && chunk instanceof LevelChunk)
-                ((SimpleEntityLookupInterface<Entity>)((ServerLevelInterface)level).getEntityLookupCMPublic()).getChunkEntities(pos).forEach(entity -> { if (!(entity instanceof Player)) entity.discard();});
+                ((SimpleEntityLookupInterface<Entity>)((ServerWorldInterface)level).getEntityLookupCMPublic()).getChunkEntities(pos).forEach(entity -> { if (!(entity instanceof Player)) entity.discard();});
 
 
             if (chunk instanceof LevelChunk)
