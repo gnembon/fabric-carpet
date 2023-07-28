@@ -284,7 +284,7 @@ public class SpawnReporter
                 Pair<ResourceKey<Level>, MobCategory> key = Pair.of(world, category);
                 spawn_stats.put(key, new Object2LongOpenHashMap<>());
                 spawned_mobs.put(key, new EvictingQueue<>());
-                }
+            }
         }
         spawnTrackingStartTime = 0;
     }
@@ -294,7 +294,7 @@ public class SpawnReporter
     }
 
     public static boolean trackingSpawns() {
-    	return spawnTrackingStartTime != 0L;
+        return spawnTrackingStartTime != 0L;
     }
 
     public static void startTracking(MinecraftServer server, BoundingBox trackedArea) {
@@ -306,7 +306,7 @@ public class SpawnReporter
     public static void stopTracking(MinecraftServer server) {
         resetSpawnStats(server, false);
         SpawnReporter.spawnTrackingStartTime = 0;
-    	trackedSpawningArea = null;
+        trackedSpawningArea = null;
     }
 
     private static String getWorldCode(ResourceKey<Level> world)
@@ -330,8 +330,8 @@ public class SpawnReporter
         report.add(Messenger.c("bw --------------------"));
         String simulated = mockSpawns ? "[SIMULATED] " : "";
         String location = (trackedSpawningArea != null) ? String.format("[in (%d, %d, %d)x(%d, %d, %d)]",
-        		trackedSpawningArea.minX(), trackedSpawningArea.minY(), trackedSpawningArea.minZ(),
-        		trackedSpawningArea.maxX(), trackedSpawningArea.maxY(), trackedSpawningArea.maxZ() ):"";
+                trackedSpawningArea.minX(), trackedSpawningArea.minY(), trackedSpawningArea.minZ(),
+                trackedSpawningArea.maxX(), trackedSpawningArea.maxY(), trackedSpawningArea.maxZ() ):"";
         report.add(Messenger.s(String.format("%sSpawn statistics %s: for %.1f min", simulated, location, (duration/72000.0)*60)));
 
         for (MobCategory category : cachedMobCategories())
