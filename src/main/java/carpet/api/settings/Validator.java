@@ -1,5 +1,7 @@
 package carpet.api.settings;
 
+import org.jetbrains.annotations.Nullable;
+
 import carpet.utils.Messenger;
 import net.minecraft.commands.CommandSourceStack;
 
@@ -35,7 +37,7 @@ public abstract class Validator<T>
      * @return The new value to set the rule to instead, can return the {@code newValue} if the given value is correct.
      *         Returns {@code null} if the given value is not correct.
      */
-    public abstract T validate(CommandSourceStack source, CarpetRule<T> changingRule, T newValue, String userInput);
+    public abstract T validate(@Nullable CommandSourceStack source, CarpetRule<T> changingRule, T newValue, String userInput);
 
     /**
      * @return A description of this {@link Validator}. It is used in the default {@link #notifyFailure(CommandSourceStack, CarpetRule, String)}

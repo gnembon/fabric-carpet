@@ -1,9 +1,8 @@
 package carpet.mixins;
 
-import carpet.fakes.ServerPlayerEntityInterface;
+import carpet.fakes.ServerPlayerInterface;
 import carpet.helpers.EntityPlayerActionPack;
 import com.mojang.authlib.GameProfile;
-import net.minecraft.network.chat.RemoteChatSession;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -14,7 +13,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(ServerPlayer.class)
-public abstract class ServerPlayer_actionPackMixin implements ServerPlayerEntityInterface
+public abstract class ServerPlayer_actionPackMixin implements ServerPlayerInterface
 {
     @Unique
     public EntityPlayerActionPack actionPack;

@@ -18,7 +18,8 @@ public class CarpetContext extends Context
     public CommandSourceStack s;
     private final BlockPos origin;
 
-    public CarpetContext(CarpetScriptHost host, CommandSourceStack source) {
+    public CarpetContext(CarpetScriptHost host, CommandSourceStack source)
+    {
         this(host, source, BlockPos.ZERO);
     }
 
@@ -59,7 +60,8 @@ public class CarpetContext extends Context
         return s.getLevel().registryAccess();
     }
 
-    public <T> Registry<T> registry(ResourceKey<? extends Registry<? extends T>> resourceKey) {
+    public <T> Registry<T> registry(ResourceKey<? extends Registry<? extends T>> resourceKey)
+    {
         return registryAccess().registryOrThrow(resourceKey);
     }
 

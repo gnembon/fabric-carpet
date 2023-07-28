@@ -26,11 +26,6 @@ public class BuddingAmethystBlock_movableAmethystMixin extends Block {
         super(settings);
     }
 
-    @Inject(at = @At("HEAD"), method = "getPistonPushReaction(Lnet/minecraft/world/level/block/state/BlockState;)Lnet/minecraft/world/level/material/PushReaction;", cancellable = true)
-    void getPistonBehavior(BlockState state, CallbackInfoReturnable<PushReaction> cir) {
-        if (CarpetSettings.movableAmethyst) cir.setReturnValue(PushReaction.NORMAL);
-    }
-
     @Override
     public void playerDestroy(Level world, Player player, BlockPos pos, BlockState state, @Nullable BlockEntity blockEntity, ItemStack stack) {
         super.playerDestroy(world, player, pos, state, blockEntity, stack);

@@ -53,7 +53,7 @@ public @interface ScarpetFunction
     /**
      * <p>Used to define that this {@link ScarpetFunction} can accept an unlimited number of parameters</p>
      */
-    public static final int UNLIMITED_PARAMS = -1;
+    int UNLIMITED_PARAMS = -1;
 
     /**
      * <p>If the function can accept a variable number of parameters, either by declaring its last parameter as a varargs parameter or by having one
@@ -74,6 +74,15 @@ public @interface ScarpetFunction
      * @return The maximum number of parameters this function can accept
      */
     int maxParams() default AnnotationParser.UNDEFINED_PARAMS;
+
+    /**
+     * <p>The name of the function in Scarpet, that by default will be the method name.<p>
+     * 
+     * <p>The convention in Scarpet is to use names in snake case.</p>
+     * 
+     * @return The name for this function in Scarpet
+     */
+    String functionName() default AnnotationParser.USE_METHOD_NAME;
 
     /**
      * <p>Defines the Context Type that will be used when evaluating arguments to annotated methods.</p>

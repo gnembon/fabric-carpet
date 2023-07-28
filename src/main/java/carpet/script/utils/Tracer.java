@@ -1,7 +1,8 @@
-package carpet.helpers;
+package carpet.script.utils;
 
 import java.util.Optional;
 import java.util.function.Predicate;
+
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
@@ -30,7 +31,7 @@ public class Tracer
         Vec3 pos = source.getEyePosition(partialTicks);
         Vec3 rotation = source.getViewVector(partialTicks);
         Vec3 reachEnd = pos.add(rotation.x * reach, rotation.y * reach, rotation.z * reach);
-        return source.level.clip(new ClipContext(pos, reachEnd, ClipContext.Block.OUTLINE, fluids ?
+        return source.level().clip(new ClipContext(pos, reachEnd, ClipContext.Block.OUTLINE, fluids ?
                 ClipContext.Fluid.ANY : ClipContext.Fluid.NONE, source));
     }
 
@@ -44,7 +45,7 @@ public class Tracer
 
     public static EntityHitResult rayTraceEntities(Entity source, Vec3 start, Vec3 end, AABB box, Predicate<Entity> predicate, double maxSqDistance)
     {
-        Level world = source.level;
+        Level world = source.level();
         double targetDistance = maxSqDistance;
         Entity target = null;
         Vec3 targetHitPos = null;
@@ -84,7 +85,6 @@ public class Tracer
                 }
             }
         }
-        if (target == null) return null;
-        return new EntityHitResult(target, targetHitPos);
+        return target == null ? null : new EntityHitResult(target, targetHitPos);
     }
 }

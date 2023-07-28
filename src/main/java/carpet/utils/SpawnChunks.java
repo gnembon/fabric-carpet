@@ -1,16 +1,21 @@
 package carpet.utils;
 
 import carpet.fakes.ChunkTicketManagerInterface;
-import carpet.fakes.ServerChunkManagerInterface;
+import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.DistanceManager;
-import net.minecraft.server.level.ServerChunkCache;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.ChunkPos;
 
 public class SpawnChunks
 {
-    public static void changeSpawnChunks(ServerChunkCache chunkManager, ChunkPos pos, int size)
+    public static void changeSpawnSize(ServerLevel overworld, int size)
     {
-        DistanceManager ticketManager = ((ServerChunkManagerInterface)chunkManager).getCMTicketManager();
-        ((ChunkTicketManagerInterface)ticketManager).changeSpawnChunks(pos, size);
+        ChunkPos centerChunk = new ChunkPos(new BlockPos(
+                overworld.getLevelData().getXSpawn(),
+                overworld.getLevelData().getYSpawn(),
+                overworld.getLevelData().getZSpawn()
+        ));
+        DistanceManager ticketManager = overworld.getChunkSource().chunkMap.getDistanceManager();
+        ((ChunkTicketManagerInterface)ticketManager).changeSpawnChunks(centerChunk, size);
     }
 }

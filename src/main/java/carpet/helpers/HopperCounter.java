@@ -3,14 +3,12 @@ package carpet.helpers;
 import carpet.CarpetServer;
 import carpet.fakes.IngredientInterface;
 import carpet.fakes.RecipeManagerInterface;
-import carpet.utils.WoolTool;
 import carpet.utils.Messenger;
 import it.unimi.dsi.fastutil.objects.Object2LongLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2LongMap;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.Registry;
 import net.minecraft.core.RegistryAccess;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
@@ -27,12 +25,12 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.RecipeType;
-import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.AbstractBannerBlock;
 import net.minecraft.world.level.block.BeaconBeamBlock;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.material.MaterialColor;
+import net.minecraft.world.level.material.MapColor;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -54,7 +52,7 @@ public class HopperCounter
     /**
      * A map of all the {@link HopperCounter} counters.
      */
-    public static final Map<DyeColor, HopperCounter> COUNTERS;
+    private static final Map<DyeColor, HopperCounter> COUNTERS;
 
     /**
      * The default display colour of each item, which makes them look nicer when printing the counter contents to the chat
@@ -80,7 +78,7 @@ public class HopperCounter
      * The string which is passed into {@link Messenger#m} which makes each counter name be displayed in the colour of
      * that counter.
      */
-    private final String prettyColour;
+    private final String coloredName;
     /**
      * All the items stored within the counter, as a map of {@link Item} mapped to a {@code long} of the amount of items
      * stored thus far of that item type.
@@ -102,7 +100,10 @@ public class HopperCounter
     {
         startTick = -1;
         this.color = color;
-        this.prettyColour = WoolTool.Material2DyeName.getOrDefault(color.getMaterialColor(),"w ") + color.getName();
+        String hexColor = Integer.toHexString(color.getTextColor());
+        if (hexColor.length() < 6)
+            hexColor = "0".repeat(6 - hexColor.length()) + hexColor;
+        this.coloredName = '#' + hexColor + ' ' + color.getName();
     }
 
     /**
@@ -114,7 +115,7 @@ public class HopperCounter
     {
         if (startTick < 0)
         {
-            startTick = server.getLevel(Level.OVERWORLD).getGameTime();  //OW
+            startTick = server.overworld().getGameTime();
             startMillis = System.currentTimeMillis();
         }
         Item item = stack.getItem();
@@ -128,7 +129,7 @@ public class HopperCounter
     public void reset(MinecraftServer server)
     {
         counter.clear();
-        startTick = server.getLevel(Level.OVERWORLD).getGameTime();  //OW
+        startTick = server.overworld().getGameTime();
         startMillis = System.currentTimeMillis();
         // pubSubProvider.publish();
     }
@@ -175,36 +176,36 @@ public class HopperCounter
      */
     public List<Component> format(MinecraftServer server, boolean realTime, boolean brief)
     {
-        long ticks = Math.max(realTime ? (System.currentTimeMillis() - startMillis) / 50 : server.getLevel(Level.OVERWORLD).getGameTime() - startTick, 1);  //OW
+        long ticks = Math.max(realTime ? (System.currentTimeMillis() - startMillis) / 50 : server.overworld().getGameTime() - startTick, 1);
         if (startTick < 0 || ticks == 0)
         {
             if (brief)
             {
-                return Collections.singletonList(Messenger.c("b"+prettyColour,"w : ","gi -, -/h, - min "));
+                return Collections.singletonList(Messenger.c("b"+coloredName,"w : ","gi -, -/h, - min "));
             }
-            return Collections.singletonList(Messenger.c(prettyColour, "w  hasn't started counting yet"));
+            return Collections.singletonList(Messenger.c(coloredName, "w  hasn't started counting yet"));
         }
         long total = getTotalItems();
         if (total == 0)
         {
             if (brief)
             {
-                return Collections.singletonList(Messenger.c("b"+prettyColour,"w : ","wb 0","w , ","wb 0","w /h, ", String.format("wb %.1f ", ticks / (20.0 * 60.0)), "w min"));
+                return Collections.singletonList(Messenger.c("b"+coloredName,"w : ","wb 0","w , ","wb 0","w /h, ", String.format("wb %.1f ", ticks / (20.0 * 60.0)), "w min"));
             }
-            return Collections.singletonList(Messenger.c("w No items for ", prettyColour, String.format("w  yet (%.2f min.%s)",
+            return Collections.singletonList(Messenger.c("w No items for ", coloredName, String.format("w  yet (%.2f min.%s)",
                     ticks / (20.0 * 60.0), (realTime ? " - real time" : "")),
                     "nb  [X]", "^g reset", "!/counter " + color.getName() +" reset"));
         }
         if (brief)
         {
-            return Collections.singletonList(Messenger.c("b"+prettyColour,"w : ",
+            return Collections.singletonList(Messenger.c("b"+coloredName,"w : ",
                     "wb "+total,"w , ",
                     "wb "+(total * (20 * 60 * 60) / ticks),"w /h, ",
                     String.format("wb %.1f ", ticks / (20.0 * 60.0)), "w min"
             ));
         }
         List<Component> items = new ArrayList<>();
-        items.add(Messenger.c("w Items for ", prettyColour,
+        items.add(Messenger.c("w Items for ", coloredName,
                 "w  (",String.format("wb %.2f", ticks*1.0/(20*60)), "w  min"+(realTime?" - real time":"")+"), ",
                 "w total: ", "wb "+total, "w , (",String.format("wb %.1f",total*1.0*(20*60*60)/ticks),"w /h):",
                 "nb [X]", "^g reset", "!/counter "+color+" reset"
@@ -231,7 +232,7 @@ public class HopperCounter
      */
     public static int appropriateColor(int color)
     {
-        if (color == 0) return MaterialColor.SNOW.col;
+        if (color == 0) return MapColor.SNOW.col;
         int r = (color >> 16 & 255);
         int g = (color >> 8 & 255);
         int b = (color & 255);
@@ -243,7 +244,7 @@ public class HopperCounter
 
     /**
      * Maps items that don't get a good block to reference for colour, or those that colour is wrong to a number of blocks, so we can get their colours easily with the
-     * {@link Block#defaultMaterialColor()} method as these items have those same colours.
+     * {@link Block#defaultMapColor()} method as these items have those same colours.
      */
     private static final Map<Item, Block> DEFAULTS = Map.ofEntries(
             entry(Items.DANDELION, Blocks.YELLOW_WOOL),
@@ -336,8 +337,8 @@ public class HopperCounter
      */
     public static TextColor fromItem(Item item, RegistryAccess registryAccess)
     {
-        if (DEFAULTS.containsKey(item)) return TextColor.fromRgb(appropriateColor(DEFAULTS.get(item).defaultMaterialColor().col));
-        if (item instanceof DyeItem dye) return TextColor.fromRgb(appropriateColor(dye.getDyeColor().getMaterialColor().col));
+        if (DEFAULTS.containsKey(item)) return TextColor.fromRgb(appropriateColor(DEFAULTS.get(item).defaultMapColor().col));
+        if (item instanceof DyeItem dye) return TextColor.fromRgb(appropriateColor(dye.getDyeColor().getMapColor().col));
         Block block = null;
         final Registry<Item> itemRegistry = registryAccess.registryOrThrow(Registries.ITEM);
         final Registry<Block> blockRegistry = registryAccess.registryOrThrow(Registries.BLOCK);
@@ -352,9 +353,9 @@ public class HopperCounter
         }
         if (block != null)
         {
-            if (block instanceof AbstractBannerBlock) return TextColor.fromRgb(appropriateColor(((AbstractBannerBlock) block).getColor().getMaterialColor().col));
-            if (block instanceof BeaconBeamBlock) return TextColor.fromRgb(appropriateColor( ((BeaconBeamBlock) block).getColor().getMaterialColor().col));
-            return TextColor.fromRgb(appropriateColor( block.defaultMaterialColor().col));
+            if (block instanceof AbstractBannerBlock) return TextColor.fromRgb(appropriateColor(((AbstractBannerBlock) block).getColor().getMapColor().col));
+            if (block instanceof BeaconBeamBlock) return TextColor.fromRgb(appropriateColor( ((BeaconBeamBlock) block).getColor().getMapColor().col));
+            return TextColor.fromRgb(appropriateColor( block.defaultMapColor().col));
         }
         return null;
     }
@@ -389,6 +390,13 @@ public class HopperCounter
             }
         }
         return null;
+    }
+
+    /**
+     * Returns the hopper counter for the given color
+     */
+    public static HopperCounter getCounter(DyeColor color) {
+        return COUNTERS.get(color);
     }
 
     /**

@@ -1,6 +1,7 @@
 package carpet.mixins;
 
-import carpet.helpers.TickSpeed;
+import carpet.fakes.MinecraftServerInterface;
+import carpet.helpers.ServerTickRateManager;
 import carpet.patches.CopyProfilerResult;
 import carpet.utils.CarpetProfiler;
 import net.minecraft.Util;
@@ -24,8 +25,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import java.util.function.BooleanSupplier;
 
-@Mixin(MinecraftServer.class)
-public abstract class MinecraftServer_tickspeedMixin extends ReentrantBlockableEventLoop<TickTask>
+@Mixin(value = MinecraftServer.class, priority = Integer.MAX_VALUE - 10)
+public abstract class MinecraftServer_tickspeedMixin extends ReentrantBlockableEventLoop<TickTask> implements MinecraftServerInterface
 {
     @Shadow private volatile boolean running;
 
@@ -67,6 +68,20 @@ public abstract class MinecraftServer_tickspeedMixin extends ReentrantBlockableE
 
     private float carpetMsptAccum = 0.0f;
 
+    private ServerTickRateManager serverTickRateManager;
+
+    @Inject(method = "<init>", at = @At("RETURN"))
+    private void onInit(CallbackInfo ci)
+    {
+        serverTickRateManager = new ServerTickRateManager((MinecraftServer)(Object)this);
+    }
+
+    @Override
+    public ServerTickRateManager getTickRateManager()
+    {
+        return serverTickRateManager;
+    }
+
     /**
      * To ensure compatibility with other mods we should allow milliseconds
      */
@@ -82,7 +97,7 @@ public abstract class MinecraftServer_tickspeedMixin extends ReentrantBlockableE
     // could possibly just inject that mspt selection at the beginning of the loop, but then adding all mspt's to
     // replace 50L will be a hassle
     @Inject(method = "runServer", at = @At(value = "INVOKE", shift = At.Shift.AFTER,
-            target = "Lnet/minecraft/server/MinecraftServer;updateStatusIcon(Lnet/minecraft/network/protocol/status/ServerStatus;)V"))
+            target = "Lnet/minecraft/server/MinecraftServer;buildServerStatus()Lnet/minecraft/network/protocol/status/ServerStatus;"))
     private void modifiedRunLoop(CallbackInfo ci)
     {
         while (this.running)
@@ -95,32 +110,33 @@ public abstract class MinecraftServer_tickspeedMixin extends ReentrantBlockableE
             }
             long msThisTick = 0L;
             long long_1 = 0L;
-            if (TickSpeed.time_warp_start_time != 0 && TickSpeed.continueWarp())
+            float mspt = serverTickRateManager.mspt();
+            if (serverTickRateManager.isInWarpSpeed() && serverTickRateManager.continueWarp())
             {
                 //making sure server won't flop after the warp or if the warp is interrupted
                 this.nextTickTime = this.lastOverloadWarning = Util.getMillis();
-                carpetMsptAccum = TickSpeed.mspt;
+                carpetMsptAccum = mspt;
             }
             else
             {
-                if (Math.abs(carpetMsptAccum - TickSpeed.mspt) > 1.0f)
+                if (Math.abs(carpetMsptAccum - mspt) > 1.0f)
                 {
                 	// Tickrate changed. Ensure that we use the correct value.
-                	carpetMsptAccum = TickSpeed.mspt;
+                	carpetMsptAccum = mspt;
                 }
 
                 msThisTick = (long)carpetMsptAccum; // regular tick
-                carpetMsptAccum += TickSpeed.mspt - msThisTick;
+                carpetMsptAccum += mspt - msThisTick;
 
                 long_1 = Util.getMillis() - this.nextTickTime;
             }
             //end tick deciding
             //smoothed out delay to include mcpt component. With 50L gives defaults.
-            if (long_1 > /*2000L*/1000L+20*TickSpeed.mspt && this.nextTickTime - this.lastOverloadWarning >= /*15000L*/10000L+100*TickSpeed.mspt)
+            if (long_1 > /*2000L*/1000L+20*mspt && this.nextTickTime - this.lastOverloadWarning >= /*15000L*/10000L+100*mspt)
             {
-                long long_2 = (long)(long_1 / TickSpeed.mspt);//50L;
+                long long_2 = (long)(long_1 / mspt);//50L;
                 LOGGER.warn("Can't keep up! Is the server overloaded? Running {}ms or {} ticks behind", long_1, long_2);
-                this.nextTickTime += (long)(long_2 * TickSpeed.mspt);//50L;
+                this.nextTickTime += (long)(long_2 * mspt);//50L;
                 this.lastOverloadWarning = this.nextTickTime;
             }
 
@@ -134,9 +150,9 @@ public abstract class MinecraftServer_tickspeedMixin extends ReentrantBlockableE
             //this.startMonitor(tickDurationMonitor);
             this.startMetricsRecordingTick();
             this.profiler.push("tick");
-            this.tickServer(TickSpeed.time_warp_start_time != 0 ? ()->true : this::haveTime);
+            this.tickServer(serverTickRateManager.isInWarpSpeed() ? ()->true : this::haveTime);
             this.profiler.popPush("nextTickWait");
-            if (TickSpeed.time_warp_start_time != 0) // clearing all hanging tasks no matter what when warping
+            if (serverTickRateManager.isInWarpSpeed()) // clearing all hanging tasks no matter what when warping
             {
                 while(this.runEveryTask()) {Thread.yield();}
             }

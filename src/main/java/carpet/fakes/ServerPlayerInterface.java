@@ -2,7 +2,7 @@ package carpet.fakes;
 
 import carpet.helpers.EntityPlayerActionPack;
 
-public interface ServerPlayerEntityInterface
+public interface ServerPlayerInterface
 {
     EntityPlayerActionPack getActionPack();
     void invalidateEntityObjectReference();

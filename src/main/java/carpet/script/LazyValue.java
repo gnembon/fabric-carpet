@@ -2,7 +2,9 @@ package carpet.script;
 
 import carpet.script.value.Value;
 
-/** LazyNumber interface created for lazily evaluated functions */
+/**
+ * LazyNumber interface created for lazily evaluated functions
+ */
 @FunctionalInterface
 public interface LazyValue
 {
@@ -11,13 +13,15 @@ public interface LazyValue
     LazyValue NULL = (c, t) -> Value.NULL;
     LazyValue ZERO = (c, t) -> Value.ZERO;
 
-    public static LazyValue ofConstant(Value val) {
+    static LazyValue ofConstant(Value val)
+    {
         return new Constant(val);
     }
 
     Value evalValue(Context c, Context.Type type);
 
-    default Value evalValue(Context c){
+    default Value evalValue(Context c)
+    {
         return evalValue(c, Context.Type.NONE);
     }
 
@@ -28,7 +32,8 @@ public interface LazyValue
         Value evalType(Context.Type type);
 
         @Override
-        default Value evalValue(Context c, Context.Type type) {
+        default Value evalValue(Context c, Context.Type type)
+        {
             return evalType(type);
         }
     }
@@ -43,16 +48,21 @@ public interface LazyValue
             result = value;
         }
 
-        public Value get() {return result;}
+        public Value get()
+        {
+            return result;
+        }
 
         @Override
-        public Value evalType(Context.Type type) {
+        public Value evalType(Context.Type type)
+        {
 
             return result.fromConstant();
         }
 
         @Override
-        public Value evalValue(Context c, Context.Type type) {
+        public Value evalValue(Context c, Context.Type type)
+        {
             return result.fromConstant();
         }
     }

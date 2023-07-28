@@ -1,7 +1,7 @@
 package carpet.script.utils;
 
-import carpet.fakes.MinecraftServerInterface;
-import carpet.fakes.ServerLevelInterface;
+//import carpet.fakes.MinecraftServerInterface;
+//import carpet.fakes.ServerLevelInterface;
 import carpet.script.CarpetScriptServer;
 import carpet.script.value.ListValue;
 import carpet.script.value.Value;

@@ -34,7 +34,7 @@ public abstract class LivingEntity_scarpetEventsMixin extends Entity implements 
     @Inject(method = "die", at = @At("HEAD"))
     private void onDeathCall(DamageSource damageSource_1, CallbackInfo ci)
     {
-        ((EntityInterface)this).getEventContainer().onEvent(EntityEventsGroup.Event.ON_DEATH, damageSource_1.msgId);
+        ((EntityInterface)this).getEventContainer().onEvent(EntityEventsGroup.Event.ON_DEATH, damageSource_1.getMsgId());
     }
 
     @Inject(method = "actuallyHurt", cancellable = true, locals = LocalCapture.CAPTURE_FAILHARD, at = @At(

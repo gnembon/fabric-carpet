@@ -1,8 +1,10 @@
 package carpet.mixins;
 
+import com.mojang.authlib.GameProfile;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.Connection;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.network.ServerGamePacketListenerImpl;
 import net.minecraft.server.players.PlayerList;
@@ -43,5 +45,14 @@ public abstract class PlayerList_fakePlayersMixin
         {
             return new ServerGamePacketListenerImpl(this.server, clientConnection, playerIn);
         }
+    }
+
+    @Redirect(method = "respawn", at = @At(value = "NEW", target = "net/minecraft/server/level/ServerPlayer"))
+    public ServerPlayer makePlayerForRespawn(MinecraftServer minecraftServer, ServerLevel serverLevel, GameProfile gameProfile, ServerPlayer serverPlayer, boolean bl)
+    {
+        if (serverPlayer instanceof EntityPlayerMPFake) {
+            return EntityPlayerMPFake.respawnFake(minecraftServer, serverLevel, gameProfile);
+        }
+        return new ServerPlayer(minecraftServer, serverLevel, gameProfile);
     }
 }

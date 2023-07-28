@@ -20,15 +20,17 @@ import carpet.script.value.NumericValue;
 import carpet.script.value.StringValue;
 import carpet.script.value.Value;
 
-public class ScarpetJsonDeserializer implements JsonDeserializer<Value>{
+public class ScarpetJsonDeserializer implements JsonDeserializer<Value>
+{
 
     @Override
-    public Value deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context)
-            throws JsonParseException {
+    public Value deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException
+    {
         return parseElement(json);
     }
-    
-    private Value parseElement(JsonElement element) throws JsonParseException {
+
+    private Value parseElement(JsonElement element) throws JsonParseException
+    {
         if (element.isJsonObject())
         {
             return parseMap(element.getAsJsonObject());
@@ -44,23 +46,22 @@ public class ScarpetJsonDeserializer implements JsonDeserializer<Value>{
         return Value.NULL;
     }
 
-    private Value parseMap(JsonObject jsonMap) throws JsonParseException {
-        Map<Value, Value> map = new HashMap<Value, Value>();
-        jsonMap.entrySet().forEach(entry -> {
-            map.put(new StringValue(entry.getKey()), parseElement(entry.getValue()));
-        });
+    private Value parseMap(JsonObject jsonMap) throws JsonParseException
+    {
+        Map<Value, Value> map = new HashMap<>();
+        jsonMap.entrySet().forEach(entry -> map.put(new StringValue(entry.getKey()), parseElement(entry.getValue())));
         return MapValue.wrap(map);
     }
 
-    private Value parseList(JsonArray jsonList) throws JsonParseException {
-        List<Value> list = new ArrayList<Value>();
-        jsonList.forEach(elem -> {
-            list.add(parseElement(elem));
-        });
+    private Value parseList(JsonArray jsonList) throws JsonParseException
+    {
+        List<Value> list = new ArrayList<>();
+        jsonList.forEach(elem -> list.add(parseElement(elem)));
         return new ListValue(list);
     }
-    
-    private Value parsePrimitive(JsonPrimitive primitive) throws JsonParseException {
+
+    private Value parsePrimitive(JsonPrimitive primitive) throws JsonParseException
+    {
         if (primitive.isString())
         {
             return new StringValue(primitive.getAsString());

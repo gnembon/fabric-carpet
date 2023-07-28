@@ -80,7 +80,7 @@ public class SpawnReporter
         {
             return;
         }
-        Pair<ResourceKey<Level>, MobCategory> key = Pair.of(mob.level.dimension(), cat);
+        Pair<ResourceKey<Level>, MobCategory> key = Pair.of(mob.level().dimension(), cat);
         spawn_stats.get(key).addTo(mob.getType(), 1);
         spawned_mobs.get(key).put(Pair.of(mob.getType(), pos));
         if (!local_spawns.containsKey(cat))

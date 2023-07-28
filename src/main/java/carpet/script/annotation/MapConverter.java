@@ -13,6 +13,8 @@ import carpet.script.value.ListValue;
 import carpet.script.value.MapValue;
 import carpet.script.value.Value;
 
+import javax.annotation.Nullable;
+
 /**
  * <p>Converts a {@link MapValue} to a {@link Map}, converting all of its contents to their respective types.</p>
  * 
@@ -37,17 +39,19 @@ class MapConverter<K, V> implements ValueConverter<Map<K, V>>
     }
 
     @Override
-    public Map<K, V> convert(Value value)
+    public Map<K, V> convert(Value value, @Nullable Context context)
     {
         Map<K, V> result = new HashMap<>();
         if (value instanceof MapValue)
         {
             for (Entry<Value, Value> entry : ((MapValue) value).getMap().entrySet())
             {
-                K key = keyConverter.convert(entry.getKey());
-                V val = valueConverter.convert(entry.getValue());
+                K key = keyConverter.convert(entry.getKey(), context);
+                V val = valueConverter.convert(entry.getValue(), context);
                 if (key == null || val == null)
+                {
                     return null;
+                }
                 result.put(key, val);
             }
             return result;
@@ -57,6 +61,7 @@ class MapConverter<K, V> implements ValueConverter<Map<K, V>>
 
     private MapConverter(AnnotatedType keyType, AnnotatedType valueType)
     {
+        super();
         keyConverter = ValueConverter.fromAnnotatedType(keyType);
         valueConverter = ValueConverter.fromAnnotatedType(valueType);
     }
@@ -101,52 +106,67 @@ class MapConverter<K, V> implements ValueConverter<Map<K, V>>
             return acceptMultiParam;
         }
 
+        @Nullable
         @Override
-        public Map<K, V> convert(Value value) {
-            return value instanceof MapValue ? super.convert(value)
-                    : value instanceof ListValue ? convertList(((ListValue)value).getItems())
+        public Map<K, V> convert(Value value, @Nullable Context context) {
+            return value instanceof MapValue ? super.convert(value, context)
+                    : value instanceof ListValue ? convertList(((ListValue)value).getItems(), context)
                             : null; // Multiparam mode can only be used in evalAndConvert 
         }
 
 
-        private Map<K, V> convertList(List<Value> valueList)
+        @Nullable
+        private Map<K, V> convertList(List<Value> valueList, @Nullable Context context)
         {
             if (valueList.size() % 2 == 1)
+            {
                 return null;
+            }
             Map<K, V> map = new HashMap<>();
             Iterator<Value> val = valueList.iterator();
             while (val.hasNext())
             {
-                K key = keyConverter.convert(val.next());
-                V value = valueConverter.convert(val.next());
+                K key = keyConverter.convert(val.next(), context);
+                V value = valueConverter.convert(val.next(), context);
                 if (key == null || value == null)
+                {
                     return null;
+                }
                 map.put(key, value);
             }
             return map;
         }
 
+        @Nullable
         @Override
         public Map<K, V> checkAndConvert(Iterator<Value> valueIterator, Context context, Context.Type theLazyT)
         {
             if (!valueIterator.hasNext())
+            {
                 return null;
+            }
             Value val = valueIterator.next();
             if (!acceptMultiParam || val instanceof MapValue || (val instanceof ListValue && !(keyConverter instanceof ListConverter)))
-                return convert(val);                              // @KeyValuePairs Map<List<Something>, Boolean> will not support list consumption
+            {
+                return convert(val, context);                              // @KeyValuePairs Map<List<Something>, Boolean> will not support list consumption
+            }
             
             Map<K, V> map = new HashMap<>();
-            K key = keyConverter.convert(val); //First pair is manual since we got it to check for a different conversion mode
+            K key = keyConverter.convert(val, context); //First pair is manual since we got it to check for a different conversion mode
             V value = valueConverter.checkAndConvert(valueIterator, context, theLazyT);
             if (key == null || value == null)
+            {
                 return null;
+            }
             map.put(key, value);
             while (valueIterator.hasNext())
             {
                 key = keyConverter.checkAndConvert(valueIterator, context, theLazyT);
                 value = valueConverter.checkAndConvert(valueIterator, context, theLazyT);
                 if (key == null || value == null)
+                {
                     return null;
+                }
                 map.put(key, value);
             }
             return map;

@@ -12,21 +12,23 @@ import java.util.List;
 public class InternalExpressionException extends StacklessRuntimeException
 {
     public List<FunctionValue> stack = new ArrayList<>();
+
     public InternalExpressionException(String message)
     {
         super(message);
     }
-    
+
     /**
      * <p>Promotes this simple exception into one with context and extra information.
-     * 
+     *
      * <p>Provides a cleaner way of handling similar exceptions, in this case
-     * {@link InternalExpressionException} and {@link ThrowStatement} 
-     * @param c Context
-     * @param e Expression
+     * {@link InternalExpressionException} and {@link ThrowStatement}
+     *
+     * @param c     Context
+     * @param e     Expression
      * @param token Token
      * @return The new {@link ExpressionException} (or {@link ProcessedThrowStatement}),
-     *         depending on the implementation.
+     * depending on the implementation.
      */
     public ExpressionException promote(Context c, Expression e, Tokenizer.Token token)
     {

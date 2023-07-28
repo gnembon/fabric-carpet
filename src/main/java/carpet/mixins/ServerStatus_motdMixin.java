@@ -11,7 +11,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 @Mixin(ServerStatus.class)
 public class ServerStatus_motdMixin
 {
-    @Inject(method = "getDescription", at = @At("HEAD"), cancellable = true)
+    @Inject(method = "description", at = @At("HEAD"), cancellable = true)
     private void getDescriptionAlternative(CallbackInfoReturnable<Component> cir)
     {
         if (!CarpetSettings.customMOTD.equals("_"))

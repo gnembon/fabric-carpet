@@ -1,6 +1,6 @@
 package carpet.mixins;
 
-import carpet.fakes.ScreenHandlerInterface;
+import carpet.fakes.AbstractContainerMenuInterface;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.EnchantmentMenu;
@@ -23,7 +23,7 @@ public abstract class AbstractContainerMenuSubclasses_scarpetMixin extends Abstr
 
     @Inject(method = "clickMenuButton", at = @At("HEAD"), cancellable = true)
     private void buttonClickCallback(Player player, int id, CallbackInfoReturnable<Boolean> cir) {
-        if(((ScreenHandlerInterface) this).callButtonClickListener(id,player))
+        if(((AbstractContainerMenuInterface) this).callButtonClickListener(id,player))
             cir.cancel();
     }
 }

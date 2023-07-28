@@ -15,6 +15,7 @@ import java.util.stream.Collectors;
 import carpet.fakes.SimpleEntityLookupInterface;
 import carpet.fakes.ServerLevelInterface;
 import net.minecraft.Util;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.TickTask;
 import net.minecraft.server.level.ChunkHolder;
@@ -100,11 +101,12 @@ public abstract class ChunkMap_scarpetChunkCreationMixin implements ThreadedAnvi
     protected abstract boolean promoteChunkMap();
 
     @Shadow
-    protected abstract CompletableFuture<Either<List<ChunkAccess>, ChunkLoadingFailure>> getChunkRangeFuture (final ChunkPos centerChunk, final int margin, final IntFunction<ChunkStatus> distanceToStatus);
-
-    @Shadow
     protected abstract Iterable<ChunkHolder> getChunks();
 
+
+    @Shadow protected abstract CompletableFuture<Either<List<ChunkAccess>, ChunkLoadingFailure>> getChunkRangeFuture(final ChunkHolder chunkHolder, final int i, final IntFunction<ChunkStatus> intFunction);
+
+    //@Shadow protected abstract void postLoadProtoChunk(final ServerLevel serverLevel, final List<CompoundTag> list);
 
     ThreadLocal<Boolean> generated = ThreadLocal.withInitial(() -> null);
 
@@ -289,7 +291,8 @@ public abstract class ChunkMap_scarpetChunkCreationMixin implements ThreadedAnvi
         if (!(chunk.getStatus().isOrAfter(ChunkStatus.LIGHT.getParent()))) return;
         ((ServerLightingProviderInterface) this.lightEngine).removeLightData(chunk);
         this.addRelightTicket(pos);
-        final CompletableFuture<?> lightFuture = this.getChunkRangeFuture (pos, 1, (pos_) -> ChunkStatus.LIGHT)
+        ChunkHolder chunkHolder = this.updatingChunkMap.get(pos.toLong());
+        final CompletableFuture<?> lightFuture = this.getChunkRangeFuture(chunkHolder, 1, (pos_) -> ChunkStatus.LIGHT)
                 .thenCompose(
                     either -> either.map(
                             list -> ((ServerLightingProviderInterface) this.lightEngine).relight(chunk),
@@ -396,34 +399,8 @@ public abstract class ChunkMap_scarpetChunkCreationMixin implements ThreadedAnvi
         this.modified = true;
         this.promoteChunkMap();
 
-        // Remove light for affected neighbors
 
-        for (final ChunkAccess chunk : affectedNeighbors)
-            ((ServerLightingProviderInterface) this.lightEngine).removeLightData(chunk);
 
-        // Schedule relighting of neighbors
-
-        for (final ChunkAccess chunk : affectedNeighbors)
-            this.addRelightTicket(chunk.getPos());
-
-        this.tickTicketManager();
-
-        final List<CompletableFuture<?>> lightFutures = new ArrayList<>();
-
-        for (final ChunkAccess chunk : affectedNeighbors)
-        {
-            final ChunkPos pos = chunk.getPos();
-
-            lightFutures.add(this.getChunkRangeFuture (pos, 1, (pos_) -> ChunkStatus.LIGHT).thenCompose(
-                either -> either.map(
-                    list -> ((ServerLightingProviderInterface) this.lightEngine).relight(chunk),
-                    unloaded -> {
-                        this.releaseRelightTicket(pos);
-                        return CompletableFuture.completedFuture(null);
-                    }
-                )
-            ));
-        }
 
         // Force generation to previous states
         // This ensures that the world is in a consistent state after this method
@@ -463,15 +440,52 @@ public abstract class ChunkMap_scarpetChunkCreationMixin implements ThreadedAnvi
             if (futures == null)
                 continue;
 
-            report.put("layer_count_" + status.getName(), futures.size());
+            String statusName = BuiltInRegistries.CHUNK_STATUS.getKey(status).getPath();
+
+            report.put("layer_count_" + statusName, futures.size());
             final long start = System.currentTimeMillis();
 
             this.waitFor(futures);
 
-            report.put("layer_time_" + status.getName(), (int) (System.currentTimeMillis() - start));
+            report.put("layer_time_" + statusName, (int) (System.currentTimeMillis() - start));
         }
 
-        report.put("relight_count", lightFutures.size());
+
+
+
+
+        report.put("relight_count", affectedNeighbors.size());
+
+        // Remove light for affected neighbors
+
+        for (final ChunkAccess chunk : affectedNeighbors)
+            ((ServerLightingProviderInterface) this.lightEngine).removeLightData(chunk);
+
+        // Schedule relighting of neighbors
+
+        for (final ChunkAccess chunk : affectedNeighbors)
+            this.addRelightTicket(chunk.getPos());
+
+        this.tickTicketManager();
+
+        final List<CompletableFuture<?>> lightFutures = new ArrayList<>();
+
+        for (final ChunkAccess chunk : affectedNeighbors)
+        {
+            final ChunkPos pos = chunk.getPos();
+
+            lightFutures.add(this.getChunkRangeFuture (this.updatingChunkMap.get(pos.toLong()), 1, (pos_) -> ChunkStatus.LIGHT).thenCompose(
+                    either -> either.map(
+                            list -> ((ServerLightingProviderInterface) this.lightEngine).relight(chunk),
+                            unloaded -> {
+                                this.releaseRelightTicket(pos);
+                                return CompletableFuture.completedFuture(null);
+                            }
+                    )
+            ));
+        }
+
+
         final long relightStart = System.currentTimeMillis();
 
         this.waitFor(lightFutures);

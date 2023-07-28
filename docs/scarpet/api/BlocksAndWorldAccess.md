@@ -241,9 +241,10 @@ If called with no args, returns `'clear'`, `'rain` or `'thunder'` based on the c
 always return `'thunder'`, if not will return `'rain'` or `'clear'` based on the current weather.
 
 With one arg, (either `'clear'`, `'rain` or `'thunder'`), returns the number of remaining ticks for that weather type.
-NB: It can thunder without there being a thunderstorm, there has to be both rain and thunder to form a storm.
+NB: It can thunder without there being a thunderstorm; there has to be both rain and thunder to form a storm. So if
+running `weather()` returns `'thunder'`, you can use `weather('rain')>0` to see if there's a storm going on.
 
-With two args, sets the weather to `type` for `ticks` ticks.
+With two args, sets the weather to the given `type` for `ticks` ticks.
 
 ## Block and World querying
 
@@ -292,6 +293,7 @@ back in state definition in various applications where block properties are requ
 Throws `unknown_block` if the provided input is not valid.
 
 <pre>
+set(x,y,z,'iron_block'); block_state(x,y,z)  => {}
 set(x,y,z,'iron_trapdoor','half','top'); block_state(x,y,z)  => {waterlogged: false, half: top, open: false, ...}
 set(x,y,z,'iron_trapdoor','half','top'); block_state(x,y,z,'half')  => top
 block_state('iron_trapdoor','half')  => top
@@ -303,7 +305,14 @@ bool(block_state(block('iron_trapdoor[half=top]'),'powered'))  => 0
 
 ### `block_list()`, `block_list(tag)`
 
-Returns list of all blocks. If tag is provided, returns list of blocks that belong to this block tag.
+Returns list of all blocks in the game. If `tag` is provided, returns list of all blocks that belong to this block tag.
+<pre>
+block_list() => [dark_oak_button, wall_torch, structure_block, polished_blackstone_brick_slab, cherry_sapling... ]
+block_list('impermeable') => [glass, white_stained_glass, orange_stained_glass, magenta_stained_glass... ] //All da glass
+block_list('rails') => [rail, powered_rail, detector_rail, activator_rail]
+block_list('not_a_valid_block_tag') => null //Not a valid block tag
+</pre>
+
 
 ### `block_tags()`, `block_tags(block)`, `block_tags(block, tag)`
 
@@ -313,12 +322,21 @@ to this tag, and `true` if the block belongs to the tag.
 
 Throws `unknown_block` if `block` doesn't exist
 
+<pre>
+block_tags() => [geode_invalid_blocks, wall_post_override, ice, wooden_stairs, bamboo_blocks, stone_bricks... ]
+block_tags('iron_block') => [mineable/pickaxe, needs_stone_tool, beacon_base_blocks]
+block_tags('glass') => [impermeable]
+block_tags('glass', 'impermeable') => true
+block_tags('glass', 'beacon_base_blocks') => false
+</pre>
+
 ### `block_data(pos)`
 
 Return NBT string associated with specific location, or null if the block does not carry block data. Can be currently 
 used to match specific information from it, or use it to copy to another block
 
-<pre>    block_data(x,y,z) => '{TransferCooldown:0,x:450,y:68, ... }'
+<pre>
+block_data(x,y,z) => '{TransferCooldown:0,x:450,y:68, ... }'
 </pre>
 
 ### `poi(pos), poi(pos, radius?, type?, status?, column_search?)`
@@ -486,15 +504,10 @@ Returns the name of sound type made by the block at position. One of:
 `'candle'`', `'amethyst'`', `'amethyst_cluster'`', `'small_amethyst_bud'`', `'large_amethyst_bud'`', `'medium_amethyst_bud'`',
 `'tuff'`', `'calcite'`', `'copper'`'
 
-### `material(pos)`
+### `(Deprecated) material(pos)`
 
-Returns the name of material of the block at position. very useful to target a group of blocks. One of:
-
-`'air'`, `'void'`, `'portal'`, `'carpet'`, `'plant'`, `'water_plant'`, `'vine'`, `'sea_grass'`, `'water'`, 
-`'bubble_column'`, `'lava'`, `'snow_layer'`, `'fire'`, `'redstone_bits'`, `'cobweb'`, `'redstone_lamp'`, `'clay'`, 
-`'dirt'`, `'grass'`, `'packed_ice'`, `'sand'`, `'sponge'`, `'wood'`, `'wool'`, `'tnt'`, `'leaves'`, `'glass'`, 
-`'ice'`, `'cactus'`, `'stone'`, `'iron'`, `'snow'`, `'anvil'`, `'barrier'`, `'piston'`, `'coral'`, `'gourd'`, 
-`'dragon_egg'`, `'cake'`, `'amethyst'`
+Returns `'unknown'`. The concept of material for blocks is removed. On previous versions it returned the name of the material the block
+was made of.
 
 ### `map_colour(pos)`
 
@@ -509,30 +522,28 @@ Returns the map colour of a block at position. One of:
 `'brown_terracotta'`, `'green_terracotta'`, `'red_terracotta'`, `'black_terracotta'`,
 `'crimson_nylium'`, `'crimson_stem'`, `'crimson_hyphae'`, `'warped_nylium'`, `'warped_stem'`, `'warped_hyphae'`, `'warped_wart'`
 
-### `sample_noise(pos, ...type?)` 1.18+ only
+### `sample_noise()`, `sample_noise(pos, ... types?)` 1.18+
 
- Samples the multi noise value(s) on the given position.  
-If no type is passed, returns a map of `continentalness`, `depth`, `erosion`, `humidity`, `temperature`, `weirdness`.  
-Otherwise, returns the map of that specific noise.
+Samples the world generation noise values / data driven density function(s) at a given position.
+
+If no types are passed in, or no arguments are given, it returns a list of all the available registry defined density functions.
+
+With a single function name passed in, it returns a scalar. With multiple function names passed in, it returns a list of results.
+
+Function accepts any registry defined density functions, both built in, as well as namespaced defined in datapacks. 
+On top of that, scarpet provides the following list of noises sampled directly from the current level (and not returned with no-argument call):
+
+
+`'barrier_noise'`, `'fluid_level_floodedness_noise'`, `'fluid_level_spread_noise'`, `'lava_noise'`,
+`'temperature'`, `'vegetation'`, `'continents'`, `'erosion'`, `'depth'`, `'ridges'`, 
+`'initial_density_without_jaggedness'`, `'final_density'`, `'vein_toggle'`, `'vein_ridged'` and `'vein_gap'`
 
 <pre>
-// without type
-sample_noise(pos) => {continentalness: 0.445300012827, erosion: 0.395399987698, temperature: 0.165399998426, ...}
+// requesting single value
+sample_density(pos, 'continents') => 0.211626790923
 // passing type as multiple arguments
-sample_noise(pos, 'pillarRareness', 'aquiferBarrier') => {aquiferBarrier: -0.205013844481, pillarRareness: 1.04772473438}
-// passing types as a list with unpacking operator
-sample_noise(pos, ...['spaghetti3dFirst', 'spaghetti3dSecond']) => {spaghetti3dFirst: -0.186052125186, spaghetti3dSecond: 0.211626790923}
+sample_density(pos, 'continents', 'depth', 'overworld/caves/pillars', 'mydatapack:foo/my_function') => [-0.205013844481, 1.04772473438, 0.211626790923, 0.123]
 </pre>
-
-Available types:
-
-`aquiferBarrier`, `aquiferFluidLevelFloodedness`, `aquiferFluidLevelSpread`, `aquiferLava`, `caveCheese`,
-`caveEntrance`, `caveLayer`, `continentalness`, `depth`, `erosion`, `humidity`, `island`, `jagged`, `oreGap`,
-`pillar`, `pillarRareness`, `pillarThickness`, `shiftX`, `shiftY`, `shiftZ`, `spaghetti2d`, `spaghetti2dElevation`,
-`spaghetti2dModulator`, `spaghetti2dThickness`, `spaghetti3d`, `spaghetti3dFirst`, `spaghetti3dRarity`,
-`spaghetti3dSecond`, `spaghetti3dThickness`, `spaghettiRoughness`, `spaghettiRoughnessModulator`, `temperature`,
-`terrain`, `terrainFactor`, `terrainOffset`, `terrainPeaks`, `weirdness`
-
 
 ### `loaded(pos)`
 

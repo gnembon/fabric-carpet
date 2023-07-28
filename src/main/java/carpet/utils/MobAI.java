@@ -4,15 +4,15 @@ import carpet.CarpetServer;
 import com.google.common.collect.Sets;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
@@ -38,10 +38,10 @@ public class MobAI
         return currentTrackers.contains(type);
     }
 
-    public static void clearTracking(EntityType<? extends Entity> etype)
+    public static void clearTracking(final MinecraftServer server, EntityType<? extends Entity> etype)
     {
         aiTrackers.remove(etype);
-        for(ServerLevel world : CarpetServer.minecraft_server.getAllLevels() )
+        for(ServerLevel world : server.getAllLevels() )
         {
             for (Entity e: world.getEntities(etype, Entity::hasCustomName))
             {
@@ -57,23 +57,23 @@ public class MobAI
         aiTrackers.get(e).add(type);
     }
 
-    public static List<String> availbleTypes(CommandSourceStack source)
+    public static Stream<String> availbleTypes(CommandSourceStack source)
     {
         Set<EntityType<?>> types = new HashSet<>();
         for (TrackingType type: TrackingType.values())
         {
             types.addAll(type.types);
         }
-        return types.stream().map(t -> source.registryAccess().registryOrThrow(Registries.ENTITY_TYPE).getKey(t).getPath()).collect(Collectors.toList());
+        return types.stream().map(t -> source.registryAccess().registryOrThrow(Registries.ENTITY_TYPE).getKey(t).getPath());
     }
 
-    public static List<String> availableFor(EntityType<?> entityType)
+    public static Stream<String> availableFor(EntityType<?> entityType)
     {
         Set<TrackingType> availableOptions = new HashSet<>();
         for (TrackingType type: TrackingType.values())
             if (type.types.contains(entityType))
                 availableOptions.add(type);
-        return availableOptions.stream().map(t -> t.name().toLowerCase()).collect(Collectors.toList());
+        return availableOptions.stream().map(t -> t.name().toLowerCase());
     }
 
     public enum TrackingType
@@ -86,26 +86,4 @@ public class MobAI
             types = applicableTypes;
         }
     }
-
-    /**
-     * Not a replacement for living entity jump() - this barely is to allow other entities that can't jump in vanilla to 'jump'
-     * @param e
-     */
-    public static void genericJump(Entity e)
-    {
-        if (!e.isOnGround() && !e.isInWaterOrBubble() && !e.isInLava()) return;
-        float m = e.level.getBlockState(e.blockPosition()).getBlock().getJumpFactor();
-        float g = e.level.getBlockState(new BlockPos(e.getX(), e.getBoundingBox().minY - 0.5000001D, e.getZ())).getBlock().getJumpFactor();
-        float jumpVelocityMultiplier = (double) m == 1.0D ? g : m;
-        float jumpStrength = (0.42F * jumpVelocityMultiplier);
-        Vec3 vec3d = e.getDeltaMovement();
-        e.setDeltaMovement(vec3d.x, jumpStrength, vec3d.z);
-        if (e.isSprinting())
-        {
-            float u = e.getYRot() * 0.017453292F; // yaw
-            e.setDeltaMovement(e.getDeltaMovement().add((-Mth.sin(g) * 0.2F), 0.0D, (Mth.cos(u) * 0.2F)));
-        }
-        e.hasImpulse = true;
-    }
-
 }

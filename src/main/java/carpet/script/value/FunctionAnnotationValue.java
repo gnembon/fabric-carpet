@@ -9,11 +9,15 @@ public class FunctionAnnotationValue extends Value
     {
         GLOBAL, VARARG
     }
+
     public Type type;
+
     public FunctionAnnotationValue(Value variable, Type type)
     {
         if (variable.boundVariable == null)
+        {
             throw new InternalExpressionException("You can only borrow variables from the outer scope");
+        }
         this.boundVariable = variable.boundVariable;
         this.type = type;
     }

@@ -1,4 +1,4 @@
-_command() -> '
+print_info() -> print('
 ai_tracker allows to display
 some extra information about
 various entities AI activity
@@ -22,7 +22,7 @@ Settings you may want to change
  - update_frequency: changes update speed
  - clear: removes all options
  - transparency: default opacity of shapes, 8 for start
-';
+');
 
 
 global_functions = {
@@ -35,7 +35,7 @@ global_functions = {
             villager_height = e~'height';
             __create_box(abnoxious_visuals, e,
                   [-8,-6,-8],
-                  [8,7,8],
+                  [9,7,9],
                   0x00dd0000, 'golem spawning', true
             );
             __create_box(abnoxious_visuals, e,
@@ -59,13 +59,13 @@ global_functions = {
 
 
             entry = query(e, 'brain', 'last_slept');
-            slept = world_time()-entry;
+            slept = system_info('world_time')-entry;
             last_slept = format(if(entry == null, 'rb never', if(slept < 24000, 'e ', 'y ')+slept));
 
             labels = [
                ['golem timer', 'golem:', format(if(last_seen,'rb ','eb ')+last_seen )],
                ['sleep tracker', 'slept:', last_slept],
-               ['attempt', 'attempt in:', format(if( slept < 24000 && last_seen==0,'yb ','gi ')+ (100-(world_time()%100)))],
+               ['attempt', 'attempt in:', format(if( slept < 24000 && last_seen==0,'yb ','gi ')+ (100-(system_info('world_time')%100)))],
             ];
             [visuals, abnoxious_visuals, labels];
          )
@@ -373,7 +373,7 @@ global_hostile_to_villager = {
 
 __config() ->{
     'commands'->{
-        ''->'_command',
+        ''->'print_info',
         'clear'->'clear',
         'toggle_boxes'->_()->global_display_boxes = !global_display_boxes,
         '<display>'->['__toggle',null],

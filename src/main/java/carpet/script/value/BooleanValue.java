@@ -11,7 +11,9 @@ public class BooleanValue extends NumericValue
     public static final BooleanValue TRUE = new BooleanValue(true);
 
     boolean boolValue;
-    private BooleanValue(boolean boolval) {
+
+    private BooleanValue(boolean boolval)
+    {
         super(boolval ? 1L : 0L);
         boolValue = boolval;
     }
@@ -22,42 +24,50 @@ public class BooleanValue extends NumericValue
     }
 
     @Override
-    public String getString() {
-        return boolValue?"true":"false";
+    public String getString()
+    {
+        return boolValue ? "true" : "false";
     }
 
     @Override
-    public String getPrettyString() {
+    public String getPrettyString()
+    {
         return getString();
     }
 
     @Override
-    public String getTypeString() {
+    public String getTypeString()
+    {
         return "bool";
     }
 
     @Override
-    public Value clone() {
+    public Value clone()
+    {
         return new BooleanValue(boolValue);
     }
 
     @Override
-    public int hashCode() {
+    public int hashCode()
+    {
         return Boolean.hashCode(boolValue);
     }
 
     @Override
-    public Tag toTag(boolean force) {
+    public Tag toTag(boolean force)
+    {
         return ByteTag.valueOf(boolValue);
     }
 
     @Override
-    public JsonElement toJson() {
+    public JsonElement toJson()
+    {
         return new JsonPrimitive(boolValue);
     }
 
     @Override
-    public boolean isInteger() {
+    public boolean isInteger()
+    {
         return true;
     }
 }

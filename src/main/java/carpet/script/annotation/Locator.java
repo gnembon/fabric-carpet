@@ -20,6 +20,8 @@ import carpet.script.value.BlockValue;
 import carpet.script.value.FunctionValue;
 import carpet.script.value.Value;
 
+import javax.annotation.Nullable;
+
 import static java.lang.annotation.ElementType.PARAMETER;
 import static java.lang.annotation.ElementType.TYPE_USE;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
@@ -37,7 +39,7 @@ public interface Locator
     @Documented
     @Retention(RUNTIME)
     @Target({ PARAMETER, TYPE_USE })
-    public @interface Block
+    @interface Block
     {
         /**
          * <p>Whether or not should the locator accept a single {@link String} as the parameter and let parsing to {@link BlockValue}.</p>
@@ -66,7 +68,7 @@ public interface Locator
     @Documented
     @Retention(RUNTIME)
     @Target({ PARAMETER, TYPE_USE })
-    public @interface Vec3d
+    @interface Vec3d
     {
         /**
          * <p>Whether or not should the {@link Vector3Argument} locator accept an optional direction aside from the
@@ -94,7 +96,7 @@ public interface Locator
     @Documented
     @Retention(RUNTIME)
     @Target({ PARAMETER, TYPE_USE })
-    public @interface Function
+    @interface Function
     {
         /**
          * <p>Whether this Locator should allow no function to be passed.</p> <p>This is not compatible with {@link FunctionValue} type, since a
@@ -115,18 +117,27 @@ public interface Locator
      * 
      * <p>Not part of the public API, just that interfaces must have all members public</p>
      */
-    static final class Locators
+    final class Locators
     {
-        private Locators() {}
+        private Locators()
+        {
+            super();
+        }
 
         static <R> ValueConverter<R> fromAnnotatedType(AnnotatedType annoType, Class<R> type)
         {
             if (annoType.isAnnotationPresent(Block.class))
-                return new BlockLocator<R>(annoType.getAnnotation(Block.class), type);
+            {
+                return new BlockLocator<>(annoType.getAnnotation(Block.class), type);
+            }
             if (annoType.isAnnotationPresent(Function.class))
-                return new FunctionLocator<R>(annoType.getAnnotation(Function.class), type);
+            {
+                return new FunctionLocator<>(annoType.getAnnotation(Function.class), type);
+            }
             if (annoType.isAnnotationPresent(Vec3d.class))
-                return new Vec3dLocator<R>(annoType.getAnnotation(Vec3d.class), type);
+            {
+                return new Vec3dLocator<>(annoType.getAnnotation(Vec3d.class), type);
+            }
             throw new IllegalStateException("Locator#fromAnnotatedType got called with an incompatible AnnotatedType");
         }
 
@@ -139,26 +150,41 @@ public interface Locator
 
             public BlockLocator(Block annotation, Class<R> type)
             {
+                super();
                 this.acceptString = annotation.acceptString();
                 this.anyString = annotation.anyString();
                 this.optional = annotation.optional();
                 if (type != BlockArgument.class && (anyString || optional))
+                {
                     throw new IllegalArgumentException("Can only use anyString or optional parameters of Locator.Block if targeting a BlockArgument");
+                }
                 this.returnFunction = getReturnFunction(type);
                 if (returnFunction == null)
+                {
                     throw new IllegalArgumentException("Locator.Block can only be used against BlockArgument, BlockValue, BlockPos or BlockState types!");
+                }
             }
 
+            @Nullable
             @SuppressWarnings("unchecked")
-            private static <R> java.util.function.Function<BlockArgument, R> getReturnFunction(Class<R> type) {
+            private static <R> java.util.function.Function<BlockArgument, R> getReturnFunction(Class<R> type)
+            {
                 if (type == BlockArgument.class)
+                {
                     return r -> (R) r;
+                }
                 if (type == BlockValue.class)
+                {
                     return r -> (R) r.block;
+                }
                 if (type == BlockPos.class)
+                {
                     return r -> (R) r.block.getPos();
+                }
                 if (type == BlockState.class)
+                {
                     return r -> (R) r.block.getBlockState();
+                }
                 return null;
             }
 
@@ -188,9 +214,13 @@ public interface Locator
                 this.optionalEntity = annotation.optionalEntity();
                 this.returnVec3d = type == net.minecraft.world.phys.Vec3.class; // Because of the locator
                 if (returnVec3d && optionalDirection)
+                {
                     throw new IllegalArgumentException("optionalDirection Locator.Vec3d cannot be used for Vec3d type, use Vector3Argument instead");
+                }
                 if (!returnVec3d && type != Vector3Argument.class)
+                {
                     throw new IllegalArgumentException("Locator.Vec3d can only be used in Vector3Argument or Vec3d types");
+                }
             }
 
             @Override
@@ -203,8 +233,7 @@ public interface Locator
             public R checkAndConvert(Iterator<Value> valueIterator, Context context, Context.Type theLazyT)
             {
                 Vector3Argument locator = Vector3Argument.findIn(valueIterator, 0, optionalDirection, optionalEntity);
-                @SuppressWarnings("unchecked")
-                R ret = (R) (returnVec3d ? locator.vec : locator);
+                @SuppressWarnings("unchecked") R ret = (R) (returnVec3d ? locator.vec : locator);
                 return ret;
             }
         }
@@ -217,13 +246,18 @@ public interface Locator
 
             FunctionLocator(Function annotation, Class<R> type)
             {
+                super();
                 this.returnFunctionValue = type == FunctionValue.class;
                 if (!returnFunctionValue && type != FunctionArgument.class)
+                {
                     throw new IllegalArgumentException("Params annotated with Locator.Function must be of either FunctionArgument or FunctionValue type");
+                }
                 this.allowNone = annotation.allowNone();
                 this.checkArgs = annotation.checkArgs();
                 if (returnFunctionValue && allowNone)
+                {
                     throw new IllegalArgumentException("Cannot use allowNone of Locator.Function in FunctionValue types, use FunctionArgument");
+                }
             }
 
             @Override
@@ -231,8 +265,7 @@ public interface Locator
             {
                 Module module = context.host.main;
                 FunctionArgument locator = FunctionArgument.findIn(context, module, Lists.newArrayList(valueIterator), 0, allowNone, checkArgs);
-                @SuppressWarnings("unchecked")
-                R ret = (R) (returnFunctionValue ? locator.function : locator);
+                @SuppressWarnings("unchecked") R ret = (R) (returnFunctionValue ? locator.function : locator);
                 return ret;
             }
 
@@ -243,10 +276,10 @@ public interface Locator
             }
         }
 
-        private static abstract class AbstractLocator<R> implements ValueConverter<R>, Locator
+        private abstract static class AbstractLocator<R> implements ValueConverter<R>, Locator
         {
             @Override
-            public R convert(Value value)
+            public R convert(Value value, @Nullable Context context)
             {
                 throw new UnsupportedOperationException("Cannot call a locator in a parameter that doesn't contain a context!");
             }

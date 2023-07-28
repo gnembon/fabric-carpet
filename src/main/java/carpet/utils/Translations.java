@@ -6,14 +6,13 @@ import carpet.CarpetSettings;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
-import org.apache.commons.io.IOUtils;
 
-import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
 
 public class Translations
 {
@@ -46,17 +45,14 @@ public class Translations
 
     public static Map<String, String> getTranslationFromResourcePath(String path)
     {
-        String dataJSON;
-        try
-        {
-            dataJSON = IOUtils.toString(
-                    Objects.requireNonNull(Translations.class.getClassLoader().getResourceAsStream(path)),
-                    StandardCharsets.UTF_8);
-        } catch (NullPointerException | IOException e) {
-            return Map.of();
+        InputStream langFile = Translations.class.getClassLoader().getResourceAsStream(path);
+        if (langFile == null) {
+            // we don't have that language
+            return Collections.emptyMap();
         }
         Gson gson = new GsonBuilder().setLenient().create();
-        return gson.fromJson(dataJSON, new TypeToken<Map<String, String>>() {}.getType());
+        return gson.fromJson(new InputStreamReader(langFile, StandardCharsets.UTF_8),
+                new TypeToken<Map<String, String>>() {});
     }
 
     public static void updateLanguage()

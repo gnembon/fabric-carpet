@@ -31,7 +31,7 @@ public abstract class ExperienceOrb_xpNoCooldownMixin extends Entity
 
     @Inject(method = "playerTouch", at = @At("HEAD"))
     private void addXP(Player player, CallbackInfo ci) {
-        if (CarpetSettings.xpNoCooldown && !level.isClientSide) {
+        if (CarpetSettings.xpNoCooldown && !level().isClientSide) {
             player.takeXpDelay = 0;
             // reducing the count to 1 and leaving vanilla to deal with it
             while (this.count > 1) {
