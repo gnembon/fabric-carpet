@@ -34,9 +34,9 @@ public abstract class PistonStructureResolver_customStickyMixin {
         )
     )
     private static void isSticky(BlockState state, CallbackInfoReturnable<Boolean> cir) {
-        if(!(state.getBlock() instanceof BlockPistonBehaviourInterface behaviourInterface)) return;
-
-        cir.setReturnValue(behaviourInterface.isSticky(state));
+        if(state.getBlock() instanceof BlockPistonBehaviourInterface behaviourInterface){
+            cir.setReturnValue(behaviourInterface.isSticky(state));
+        }
     }
 
     // fields that are needed because @Redirects cannot capture locals
@@ -65,9 +65,11 @@ public abstract class PistonStructureResolver_customStickyMixin {
         )
     )
     private boolean onAddBlockLineCanStickToEachOther(BlockState state, BlockState behindState) {
-        if(!(state.getBlock() instanceof BlockPistonBehaviourInterface behaviourInterface)) return canStickToEachOther(state, behindState);
+        if (state.getBlock() instanceof BlockPistonBehaviourInterface behaviourInterface) {
+            return behaviourInterface.isStickyToNeighbor(level, pos_addBlockLine, state, behindPos_addBlockLine, behindState, pushDirection.getOpposite(), pushDirection);
+        }
 
-        return behaviourInterface.isStickyToNeighbor(level, pos_addBlockLine, state, behindPos_addBlockLine, behindState, pushDirection.getOpposite(), pushDirection);
+        return canStickToEachOther(state, behindState);
     }
 
     // fields that are needed because @Redirects cannot capture locals
@@ -96,8 +98,10 @@ public abstract class PistonStructureResolver_customStickyMixin {
         )
     )
     private boolean onAddBranchingBlocksCanStickToEachOther(BlockState neighborState, BlockState state, BlockPos pos) {
-        if(!(state.getBlock() instanceof BlockPistonBehaviourInterface behaviourInterface)) return canStickToEachOther(neighborState, state);
+        if (state.getBlock() instanceof BlockPistonBehaviourInterface behaviourInterface) {
+            return behaviourInterface.isStickyToNeighbor(level, pos, state, neighborPos_addBranchingBlocks, neighborState, dir_addBranchingBlocks, pushDirection);
+        }
 
-        return behaviourInterface.isStickyToNeighbor(level, pos, state, neighborPos_addBranchingBlocks, neighborState, dir_addBranchingBlocks, pushDirection);
+        return canStickToEachOther(neighborState, state);
     }
 }
