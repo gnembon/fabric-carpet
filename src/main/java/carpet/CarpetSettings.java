@@ -1127,4 +1127,11 @@ public class CarpetSettings
             category = {SURVIVAL, FEATURE}
     )
     public static FungusGrowthMode thickFungusGrowth = FungusGrowthMode.FALSE;
+
+    @Rule(
+            desc = "Reset a dimension's weather in every tick if it has no sky light",
+            extra = {"This is intended to fix MC-168329"},
+            category = BUGFIX
+    )
+    public static boolean noWeatherInSkylightlessDimension = false;
 }

@@ -184,7 +184,8 @@
     "ChestBlock_customStickyMixin",
     "HoneyBlock_customStickyMixin",
     "PistonStructureResolver_customStickyMixin",
-    "SlimeBlock_customStickyMixin"
+    "SlimeBlock_customStickyMixin",
+    "ServerLevel_noWeatherMixin"
   ],
   "client": [
     "ClientLevel_tickSpeedMixin",
