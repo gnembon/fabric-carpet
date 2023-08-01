@@ -15,14 +15,10 @@ public interface BlockPistonBehaviourInterface {
     /**
      * @return whether this block is sticky in any way when moved by pistons
      */
-    default boolean isSticky(BlockState state) {
-        return false;
-    }
+    boolean isSticky(BlockState state);
 
     /**
      * @return whether the neighboring block is pulled along if this block is moved by pistons
      */
-    default boolean isStickyToNeighbor(Level level, BlockPos pos, BlockState state, BlockPos neighborPos, BlockState neighborState, Direction dir, Direction moveDir) {
-        return false;
-    }
+    boolean isStickyToNeighbor(Level level, BlockPos pos, BlockState state, BlockPos neighborPos, BlockState neighborState, Direction dir, Direction moveDir);
 }

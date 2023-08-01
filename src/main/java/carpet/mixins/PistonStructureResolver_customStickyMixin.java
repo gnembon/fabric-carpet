@@ -19,12 +19,14 @@ import net.minecraft.world.level.block.piston.PistonStructureResolver;
 import net.minecraft.world.level.block.state.BlockState;
 
 @Mixin(PistonStructureResolver.class)
-public abstract class PistonStructureResolver_customStickyMixin {
+public class PistonStructureResolver_customStickyMixin {
 
     @Shadow @Final private Level level;
     @Shadow @Final private Direction pushDirection;
 
-    @Shadow private static boolean canStickToEachOther(BlockState blockState, BlockState blockState2) { return false; }
+    @Shadow private static boolean canStickToEachOther(BlockState blockState, BlockState blockState2) {
+        throw new AssertionError();
+    }
 
     @Inject(
         method = "isSticky",
@@ -34,7 +36,7 @@ public abstract class PistonStructureResolver_customStickyMixin {
         )
     )
     private static void isSticky(BlockState state, CallbackInfoReturnable<Boolean> cir) {
-        if(state.getBlock() instanceof BlockPistonBehaviourInterface behaviourInterface){
+        if (state.getBlock() instanceof BlockPistonBehaviourInterface behaviourInterface){
             cir.setReturnValue(behaviourInterface.isSticky(state));
         }
     }
