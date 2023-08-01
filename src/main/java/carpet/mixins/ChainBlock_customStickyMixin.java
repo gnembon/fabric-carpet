@@ -1,10 +1,10 @@
 package carpet.mixins;
 
+import carpet.fakes.BlockPistonBehaviourInterface;
 import org.spongepowered.asm.mixin.Mixin;
 
 import carpet.CarpetSettings;
 import carpet.CarpetSettings.ChainStoneMode;
-import carpet.fakes.BlockBehaviourInterface;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -17,7 +17,7 @@ import net.minecraft.world.level.block.EndRodBlock;
 import net.minecraft.world.level.block.state.BlockState;
 
 @Mixin(ChainBlock.class)
-public class ChainBlock_customStickyMixin implements BlockBehaviourInterface {
+public class ChainBlock_customStickyMixin implements BlockPistonBehaviourInterface {
 
     @Override
     public boolean isSticky(BlockState state) {
