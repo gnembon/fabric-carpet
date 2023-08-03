@@ -357,8 +357,8 @@ based on the `type` of the file. A path can have one `'.zip'` component indicati
 zip files, although you cannot nest zip files in other zip files. 
  
 Resources can be located in the app specific space, or a shared space for all the apps. Accessing of app-specific
-resources is guaranteed to be isolated from other apps. Shared resources are... well, shared across all apes, meaning
-they can eat of each others file, however all access to files is synchronized, and files are never left open, so
+resources is guaranteed to be isolated from other apps. Shared resources are... well, shared across all apps, meaning
+they can access each others' files, however all access to files is synchronized, and files are never left open, so
 this should not lead to any access problems.
 
 If the app's name is `'foo'`, the script location would
