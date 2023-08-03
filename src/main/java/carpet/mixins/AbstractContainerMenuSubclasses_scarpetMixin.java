@@ -1,6 +1,5 @@
 package carpet.mixins;
 
-import carpet.fakes.AbstractContainerMenuInterface;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.EnchantmentMenu;
@@ -16,14 +15,17 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 //classes that override onButtonClick
 @Mixin({EnchantmentMenu.class, LecternMenu.class, LoomMenu.class, StonecutterMenu.class})
-public abstract class AbstractContainerMenuSubclasses_scarpetMixin extends AbstractContainerMenu {
-    protected AbstractContainerMenuSubclasses_scarpetMixin(MenuType<?> type, int syncId) {
+public abstract class AbstractContainerMenuSubclasses_scarpetMixin extends AbstractContainerMenu
+{
+    private AbstractContainerMenuSubclasses_scarpetMixin(MenuType<?> type, int syncId)
+    {
         super(type, syncId);
     }
 
     @Inject(method = "clickMenuButton", at = @At("HEAD"), cancellable = true)
-    private void buttonClickCallback(Player player, int id, CallbackInfoReturnable<Boolean> cir) {
-        if(((AbstractContainerMenuInterface) this).callButtonClickListener(id,player))
+    private void buttonClickCallback(Player player, int id, CallbackInfoReturnable<Boolean> cir)
+    {
+        if(carpet$notifyButtonClickListeners(id,player))
             cir.cancel();
     }
 }

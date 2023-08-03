@@ -31,12 +31,12 @@ public abstract class Level_tickMixin implements LevelInterface
 
     @Override
     @Unique
-    public NeighborUpdater getNeighborUpdater() {
+    public NeighborUpdater carpet$getNeighborUpdater() {
         return this.neighborUpdater;
     }
 
     @Override
-    public Map<EntityType<?>, Entity> getPrecookedMobs()
+    public Map<EntityType<?>, Entity> carpet$getPrecookedMobs()
     {
         return precookedMobs;
     }
@@ -54,7 +54,7 @@ public abstract class Level_tickMixin implements LevelInterface
     @Inject(method = "guardEntityTick", at = @At("HEAD"), cancellable = true)
     private void startEntity(Consumer<Entity> consumer_1, Entity e, CallbackInfo ci)
     {
-        TickRateManager trm = tickRateManager();
+        TickRateManager trm = carpet$getTickRateManager();
         if (!trm.shouldEntityTick(e))
         {
             ci.cancel();
@@ -67,6 +67,4 @@ public abstract class Level_tickMixin implements LevelInterface
     private void endEntity(Consumer<Entity> call, Entity e, CallbackInfo ci) {
         CarpetProfiler.end_current_entity_section(entitySection);
     }
-
-
 }

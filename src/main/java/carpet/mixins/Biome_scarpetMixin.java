@@ -11,7 +11,7 @@ public class Biome_scarpetMixin implements BiomeInterface {
     private Biome.ClimateSettings climateSettings;
 
     @Override
-    public Biome.ClimateSettings getClimateSettings() {
+    public Biome.ClimateSettings carpet$getClimateSettings() {
         return climateSettings;
     }
 }

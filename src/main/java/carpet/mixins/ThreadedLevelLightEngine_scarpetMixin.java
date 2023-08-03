@@ -28,7 +28,7 @@ public abstract class ThreadedLevelLightEngine_scarpetMixin extends LevelLightEn
     }
 
     @Override
-    public void resetLight(ChunkAccess chunk, ChunkPos pos)
+    public void carpet$resetLight(ChunkAccess chunk, ChunkPos pos)
     {
         //super.setRetainData(pos, false);
         //super.setLightEnabled(pos, false);

@@ -2,5 +2,5 @@ package carpet.fakes;
 
 public interface ItemEntityInterface
 {
-    int getPickupDelayCM();
+    default int carpet$getPickupDelay() { throw new UnsupportedOperationException(); }
 }

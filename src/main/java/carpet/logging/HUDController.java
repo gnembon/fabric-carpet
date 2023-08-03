@@ -1,7 +1,6 @@
 package carpet.logging;
 
 import carpet.CarpetServer;
-import carpet.fakes.MinecraftServerInterface;
 import carpet.helpers.HopperCounter;
 import carpet.helpers.ServerTickRateManager;
 import carpet.logging.logHelpers.PacketCounter;
@@ -118,7 +117,7 @@ public class HUDController
     private static Component [] send_tps_display(MinecraftServer server)
     {
         OptionalDouble averageTPS = Arrays.stream(server.tickTimes).average();
-        ServerTickRateManager trm = ((MinecraftServerInterface)server).getTickRateManager();
+        ServerTickRateManager trm = server.carpet$getTickRateManager();
         if (averageTPS.isEmpty())
         {
             return new Component[]{Component.literal("No TPS data available")};

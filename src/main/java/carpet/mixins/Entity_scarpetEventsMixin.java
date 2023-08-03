@@ -29,43 +29,43 @@ public abstract class Entity_scarpetEventsMixin implements EntityInterface
     private Vec3 pos1, motion;
 
     @Override
-    public EntityEventsGroup getEventContainer()
+    public EntityEventsGroup carpet$getEventContainer()
     {
         return events;
     }
 
     @Override
-    public boolean isPermanentVehicle()
+    public boolean carpet$isPermanentVehicle()
     {
         return permanentVehicle;
     }
 
     @Override
-    public void setPermanentVehicle(boolean permanent)
+    public void carpet$setPermanentVehicle(boolean permanent)
     {
         permanentVehicle = permanent;
     }
 
     @Override
-    public int getPublicNetherPortalCooldown()
+    public int carpet$getPublicNetherPortalCooldown()
     {
         return portalCooldown;
     }
 
     @Override
-    public void setPublicNetherPortalCooldown(int what)
+    public void carpet$setPublicNetherPortalCooldown(int what)
     {
         portalCooldown = what;
     }
 
     @Override
-    public int getPortalTimer()
+    public int carpet$getPortalTimer()
     {
         return portalTime;
     }
 
     @Override
-    public void setPortalTimer(int amount)
+    public void carpet$setPortalTimer(int amount)
     {
         portalTime = amount;
     }

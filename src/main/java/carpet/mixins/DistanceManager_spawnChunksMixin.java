@@ -1,6 +1,6 @@
 package carpet.mixins;
 
-import carpet.fakes.ChunkTicketManagerInterface;
+import carpet.fakes.DistanceManagerInterface;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import net.minecraft.server.level.DistanceManager;
 import net.minecraft.server.level.Ticket;
@@ -15,7 +15,7 @@ import org.spongepowered.asm.mixin.Shadow;
 import java.util.Iterator;
 
 @Mixin(DistanceManager.class)
-public abstract class DistanceManager_spawnChunksMixin implements ChunkTicketManagerInterface
+public abstract class DistanceManager_spawnChunksMixin implements DistanceManagerInterface
 {
     @Shadow @Final private Long2ObjectOpenHashMap<SortedArraySet<Ticket<?>>> tickets;
 
@@ -24,7 +24,7 @@ public abstract class DistanceManager_spawnChunksMixin implements ChunkTicketMan
     @Shadow public abstract <T> void addRegionTicket(TicketType<T> type, ChunkPos pos, int radius, T argument);
 
     @Override
-    public void changeSpawnChunks(ChunkPos chunkPos,  int distance)
+    public void carpet$changeSpawnChunks(ChunkPos chunkPos,  int distance)
     {
         long pos = chunkPos.toLong();
         SortedArraySet<Ticket<?>> set = tickets.get(pos);

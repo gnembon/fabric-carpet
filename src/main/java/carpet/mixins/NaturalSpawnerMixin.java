@@ -1,7 +1,6 @@
 package carpet.mixins;
 
 import carpet.CarpetSettings;
-import carpet.fakes.LevelInterface;
 import carpet.utils.SpawnReporter;
 import org.apache.commons.lang3.tuple.Pair;
 import org.spongepowered.asm.mixin.Final;
@@ -135,31 +134,31 @@ public class NaturalSpawnerMixin
             value = "INVOKE",
             target = "Lnet/minecraft/world/entity/EntityType;create(Lnet/minecraft/world/level/Level;)Lnet/minecraft/world/entity/Entity;"
     ))
-    private static Entity create(EntityType<?> entityType, Level world_1)
+    private static Entity create(EntityType<?> entityType, Level level)
     {
         if (CarpetSettings.lagFreeSpawning)
         {
-            Map<EntityType<?>, Entity> precookedMobs = ((LevelInterface)world_1).getPrecookedMobs();
+            Map<EntityType<?>, Entity> precookedMobs = level.carpet$getPrecookedMobs();
             if (precookedMobs.containsKey(entityType))
                 //this mob has been <init>'s but not used yet
                 return precookedMobs.get(entityType);
-            Entity e = entityType.create(world_1);
+            Entity e = entityType.create(level);
             precookedMobs.put(entityType, e);
             return e;
         }
-        return entityType.create(world_1);
+        return entityType.create(level);
     }
 
     @Redirect(method = "spawnCategoryForPosition(Lnet/minecraft/world/entity/MobCategory;Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/level/chunk/ChunkAccess;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/NaturalSpawner$SpawnPredicate;Lnet/minecraft/world/level/NaturalSpawner$AfterSpawnCallback;)V", at = @At(
             value = "INVOKE",
             target = "Lnet/minecraft/server/level/ServerLevel;addFreshEntityWithPassengers(Lnet/minecraft/world/entity/Entity;)V"
     ))
-    private static void spawnEntity(ServerLevel world, Entity entity_1,
+    private static void spawnEntity(ServerLevel level, Entity entity_1,
                                     MobCategory group, ServerLevel world2, ChunkAccess chunk, BlockPos pos, NaturalSpawner.SpawnPredicate checker, NaturalSpawner.AfterSpawnCallback runner)
     {
         if (CarpetSettings.lagFreeSpawning)
             // we used the mob - next time we will create a new one when needed
-            ((LevelInterface) world).getPrecookedMobs().remove(entity_1.getType());
+            level.carpet$getPrecookedMobs().remove(entity_1.getType());
 
         if (SpawnReporter.trackingSpawns() && SpawnReporter.local_spawns != null)
         {
@@ -170,7 +169,7 @@ public class NaturalSpawnerMixin
                     entity_1.blockPosition());
         }
         if (!SpawnReporter.mockSpawns)
-            world.addFreshEntityWithPassengers(entity_1);
+            level.addFreshEntityWithPassengers(entity_1);
             //world.spawnEntity(entity_1);
     }
 

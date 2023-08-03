@@ -17,9 +17,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.gen.Invoker;
 
-import carpet.fakes.Lighting_scarpetChunkCreationInterface;
 import carpet.fakes.ServerLightingProviderInterface;
-import carpet.fakes.ThreadedAnvilChunkStorageInterface;
 
 @Mixin(ThreadedLevelLightEngine.class)
 public abstract class ThreadedLevelLightEngine_scarpetChunkCreationMixin extends LevelLightEngine implements ServerLightingProviderInterface
@@ -38,24 +36,24 @@ public abstract class ThreadedLevelLightEngine_scarpetChunkCreationMixin extends
 
     @Override
     @Invoker("updateChunkStatus")
-    public abstract void invokeUpdateChunkStatus(ChunkPos pos);
+    public abstract void carpet$updateChunkStatus(ChunkPos pos);
 
     @Override
-    public void removeLightData(final ChunkAccess chunk)
+    public void carpet$removeLightData(final ChunkAccess chunk)
     {
         ChunkPos pos = chunk.getPos();
         chunk.setLightCorrect(false);
 
         this.addTask(pos.x, pos.z, () -> 0, ThreadedLevelLightEngine.TaskType.PRE_UPDATE, Util.name(() -> {
                 super.setLightEnabled(pos, false);
-                ((Lighting_scarpetChunkCreationInterface) this).removeLightData(SectionPos.getZeroNode(SectionPos.asLong(pos.x, 0, pos.z)));
+                carpet$removeLightData(SectionPos.getZeroNode(SectionPos.asLong(pos.x, 0, pos.z)));
             },
             () -> "Remove light data " + pos
         ));
     }
 
     @Override
-    public CompletableFuture<Void> relight(ChunkAccess chunk)
+    public CompletableFuture<Void> carpet$relight(ChunkAccess chunk)
     {
         ChunkPos pos = chunk.getPos();
 
@@ -88,7 +86,7 @@ public abstract class ThreadedLevelLightEngine_scarpetChunkCreationMixin extends
         return CompletableFuture.runAsync(
             Util.name(() -> {
                     chunk.setLightCorrect(true);
-                    ((ThreadedAnvilChunkStorageInterface) this.chunkMap).releaseRelightTicket(pos);
+                    this.chunkMap.carpet$releaseRelightTicket(pos);
                 },
                 () -> "Release relight ticket " + pos
             ),

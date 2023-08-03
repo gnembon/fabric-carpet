@@ -21,7 +21,7 @@ public abstract class ClientLevel_tickSpeedMixin implements LevelInterface
     }
 
     @Override
-    public TickRateManager tickRateManager()
+    public TickRateManager carpet$getTickRateManager()
     {
         return tickRateManager;
     }

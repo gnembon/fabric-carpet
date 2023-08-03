@@ -25,20 +25,20 @@ public class TagPredicate_scarpetMixin implements BlockPredicateInterface
     @Shadow @Final /*@Nullable*/ private CompoundTag nbt;
 
     @Override
-    public BlockState getCMBlockState()
+    public BlockState carpet$getBlockState()
     {
         return null;
     }
 
     @Override
-    public TagKey<Block> getCMBlockTagKey()
+    public TagKey<Block> carpet$getTagKey()
     {
         // might be good to explose the holder set nature of it.
         return tag.unwrap().left().orElse(null);
     }
 
     @Override
-    public Map<Value, Value> getCMProperties()
+    public Map<Value, Value> carpet$getProperties()
     {
         return vagueProperties.entrySet().stream().collect(Collectors.toMap(
                 e -> new StringValue(e.getKey()),
@@ -47,7 +47,7 @@ public class TagPredicate_scarpetMixin implements BlockPredicateInterface
     }
 
     @Override
-    public CompoundTag getCMDataTag()
+    public CompoundTag carpet$getDataTag()
     {
         return nbt;
     }

@@ -1,7 +1,6 @@
 package carpet.mixins;
 
 import carpet.CarpetSettings;
-import carpet.fakes.EntityInterface;
 import carpet.helpers.BlockRotator;
 import net.minecraft.core.Direction;
 import net.minecraft.world.entity.Entity;
@@ -22,7 +21,7 @@ public abstract class DirectionMixin
         }
         else
         {
-            yaw = ((EntityInterface) entity).getMainYaw(float_1);
+            yaw = entity.carpet$getMainYaw(float_1);
         }
         if (BlockRotator.flippinEligibility(entity))
         {

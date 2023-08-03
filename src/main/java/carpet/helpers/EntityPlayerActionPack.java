@@ -1,6 +1,5 @@
 package carpet.helpers;
 
-import carpet.fakes.ServerPlayerInterface;
 import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.List;
@@ -292,7 +291,7 @@ public class EntityPlayerActionPack
             @Override
             boolean execute(ServerPlayer player, Action action)
             {
-                EntityPlayerActionPack ap = ((ServerPlayerInterface) player).getActionPack();
+                EntityPlayerActionPack ap = player.carpet$getActionPack();
                 if (ap.itemUseCooldown > 0)
                 {
                     ap.itemUseCooldown--;
@@ -361,7 +360,7 @@ public class EntityPlayerActionPack
             @Override
             void inactiveTick(ServerPlayer player, Action action)
             {
-                EntityPlayerActionPack ap = ((ServerPlayerInterface) player).getActionPack();
+                EntityPlayerActionPack ap = player.carpet$getActionPack();
                 ap.itemUseCooldown = 0;
                 player.releaseUsingItem();
             }
@@ -383,7 +382,7 @@ public class EntityPlayerActionPack
                         return true;
                     }
                     case BLOCK: {
-                        EntityPlayerActionPack ap = ((ServerPlayerInterface) player).getActionPack();
+                        EntityPlayerActionPack ap = player.carpet$getActionPack();
                         if (ap.blockHitDelay > 0)
                         {
                             ap.blockHitDelay--;
@@ -454,7 +453,7 @@ public class EntityPlayerActionPack
             @Override
             void inactiveTick(ServerPlayer player, Action action)
             {
-                EntityPlayerActionPack ap = ((ServerPlayerInterface) player).getActionPack();
+                EntityPlayerActionPack ap = player.carpet$getActionPack();
                 if (ap.currentBlock == null) return;
                 player.level().destroyBlockProgress(-1, ap.currentBlock, -1);
                 player.gameMode.handleBlockBreakAction(ap.currentBlock, ServerboundPlayerActionPacket.Action.ABORT_DESTROY_BLOCK, Direction.DOWN, player.level().getMaxBuildHeight(), -1);

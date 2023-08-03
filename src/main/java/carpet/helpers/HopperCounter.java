@@ -1,8 +1,6 @@
 package carpet.helpers;
 
 import carpet.CarpetServer;
-import carpet.fakes.IngredientInterface;
-import carpet.fakes.RecipeManagerInterface;
 import carpet.utils.Messenger;
 import it.unimi.dsi.fastutil.objects.Object2LongLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2LongMap;
@@ -373,11 +371,11 @@ public class HopperCounter
         ResourceLocation id = registryAccess.registryOrThrow(Registries.ITEM).getKey(item);
         for (RecipeType<?> type: registryAccess.registryOrThrow(Registries.RECIPE_TYPE))
         {
-            for (Recipe<?> r: ((RecipeManagerInterface) CarpetServer.minecraft_server.getRecipeManager()).getAllMatching(type, id, registryAccess))
+            for (Recipe<?> r: CarpetServer.minecraft_server.getRecipeManager().carpet$getAllMatching(type, id, registryAccess))
             {
                 for (Ingredient ingredient: r.getIngredients())
                 {
-                    for (Collection<ItemStack> stacks : ((IngredientInterface) (Object) ingredient).getRecipeStacks())
+                    for (Collection<ItemStack> stacks : ingredient.carpet$getRecipeStacks())
                     {
                         for (ItemStack iStak : stacks)
                         {

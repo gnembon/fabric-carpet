@@ -36,5 +36,127 @@
     "minecraft": ">1.19.4",
     "fabricloader": ">=0.14.18",
     "java": ">=17"
+  },
+
+  "custom": {
+    "loom:injected_interfaces": {
+      "net/minecraft/class_1703": [
+        "carpet/fakes/AbstractContainerMenuInterface"
+      ],
+      "net/minecraft/class_1496": [
+        "carpet/fakes/AbstractHorseInterface"
+      ],
+      "net/minecraft/class_1959": [
+        "carpet/fakes/BiomeInterface"
+      ],
+      "net/minecraft/class_2586": [
+        "carpet/fakes/BlockEntityInterface"
+      ],
+      "net/minecraft/class_2247": [
+        "carpet/fakes/BlockInputInterface"
+      ],
+      "net/minecraft/class_2252\u0024class_2253": [
+        "carpet/fakes/BlockPredicateInterface"
+      ],
+      "net/minecraft/class_2252\u0024class_2255": [
+        "carpet/fakes/BlockPredicateInterface"
+      ],
+      "net/minecraft/class_3193": [
+        "carpet/fakes/ChunkHolderInterface"
+      ],
+      "net/minecraft/class_3898": [
+        "carpet/fakes/ChunkMapInterface"
+      ],
+      "net/minecraft/class_2535": [
+        "carpet/fakes/ConnectionInterface"
+      ],
+      "net/minecraft/class_2978": [
+        "carpet/fakes/CoralFeatureInterface"
+      ],
+      "net/minecraft/class_3204": [
+        "carpet/fakes/DistanceManagerInterface"
+      ],
+      "net/minecraft/class_1297": [
+        "carpet/fakes/EntityInterface"
+      ],
+      "net/minecraft/class_1856": [
+        "carpet/fakes/IngredientInterface"
+      ],
+      "net/minecraft/class_1542": [
+        "carpet/fakes/ItemEntityInterface"
+      ],
+      "net/minecraft/class_2818": [
+        "carpet/fakes/LevelChunkInterface"
+      ],
+      "net/minecraft/class_638": [
+        "carpet/fakes/LevelInterface"
+      ],
+      "net/minecraft/class_1937": [
+        "carpet/fakes/LevelInterface"
+      ],
+      "net/minecraft/class_3558": [
+        "carpet/fakes/Lighting_scarpetChunkCreationInterface"
+      ],
+      "net/minecraft/class_3560": [
+        "carpet/fakes/Lighting_scarpetChunkCreationInterface"
+      ],
+      "net/minecraft/class_3568": [
+        "carpet/fakes/Lighting_scarpetChunkCreationInterface"
+      ],
+      "net/minecraft/class_1309": [
+        "carpet/fakes/LivingEntityInterface"
+      ],
+      "net/minecraft/class_310": [
+        "carpet/fakes/MinecraftInterface"
+      ],
+      "net/minecraft/class_1311": [
+        "carpet/fakes/MobCategoryInterface"
+      ],
+      "net/minecraft/class_1308": [
+        "carpet/fakes/MobInterface"
+      ],
+      "net/minecraft/class_2665": [
+        "carpet/fakes/PistonBaseBlockInterface"
+      ],
+      "net/minecraft/class_2669": [
+        "carpet/fakes/PistonMovingBlockEntityInterface"
+      ],
+      "net/minecraft/class_355": [
+        "carpet/fakes/PlayerTabOverlayInterface"
+      ],
+      "net/minecraft/class_1541": [
+        "carpet/fakes/PrimedTntInterface"
+      ],
+      "net/minecraft/class_7138": [
+        "carpet/fakes/RandomStateInterface"
+      ],
+      "net/minecraft/class_1863": [
+        "carpet/fakes/RecipeManagerInterface"
+      ],
+      "net/minecraft/class_2457": [
+        "carpet/fakes/RedStoneWireBlockInterface"
+      ],
+      "net/minecraft/class_3244": [
+        "carpet/fakes/ServerGamePacketListenerImplInterface"
+      ],
+      "net/minecraft/class_3218": [
+        "carpet/fakes/ServerLevelInterface"
+      ],
+      "net/minecraft/class_1948\u0024class_5262": [
+        "carpet/fakes/SpawnStateInterface"
+      ],
+      "net/minecraft/class_3227": [
+        "carpet/fakes/ServerLightingProviderInterface"
+      ],
+      "net/minecraft/class_3225": [
+        "carpet/fakes/ServerPlayerGameModeInterface"
+      ],
+      "net/minecraft/class_3222": [
+        "carpet/fakes/ServerPlayerInterface"
+      ],
+      "net/minecraft/server/MinecraftServer": [
+        "carpet/fakes/MinecraftServerInterface"
+      ]
+    }
   }
 }

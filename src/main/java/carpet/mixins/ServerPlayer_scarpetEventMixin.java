@@ -1,6 +1,5 @@
 package carpet.mixins;
 
-import carpet.fakes.EntityInterface;
 import carpet.fakes.ServerPlayerInterface;
 import carpet.script.EntityEventsGroup;
 import com.mojang.authlib.GameProfile;
@@ -76,7 +75,7 @@ public abstract class ServerPlayer_scarpetEventMixin extends Player implements S
     @Inject(method = "die", at = @At("HEAD"))
     private void onDeathEvent(DamageSource source, CallbackInfo ci)
     {
-        ((EntityInterface)this).getEventContainer().onEvent(EntityEventsGroup.Event.ON_DEATH, source.getMsgId());
+        carpet$getEventContainer().onEvent(EntityEventsGroup.Event.ON_DEATH, source.getMsgId());
         if (PLAYER_DIES.isNeeded())
         {
             PLAYER_DIES.onPlayerEvent((ServerPlayer) (Object)this);
@@ -89,7 +88,7 @@ public abstract class ServerPlayer_scarpetEventMixin extends Player implements S
     ))
     private void setSneakingConditionally(ServerPlayer serverPlayerEntity, boolean sneaking)
     {
-        if (!((EntityInterface)serverPlayerEntity.getVehicle()).isPermanentVehicle()) // won't since that method makes sure its not null
+        if (!serverPlayerEntity.getVehicle().carpet$isPermanentVehicle()) // won't since that method makes sure its not null
             serverPlayerEntity.setShiftKeyDown(sneaking);
     }
 
@@ -119,13 +118,13 @@ public abstract class ServerPlayer_scarpetEventMixin extends Player implements S
     };
 
     @Override
-    public void invalidateEntityObjectReference()
+    public void carpet$invalidateEntityObjectReference()
     {
         isInvalidReference = true;
     }
 
     @Override
-    public boolean isInvalidEntityObject()
+    public boolean carpet$isInvalidEntityObject()
     {
         return isInvalidReference;
     }
@@ -135,7 +134,7 @@ public abstract class ServerPlayer_scarpetEventMixin extends Player implements S
     private String language;
 
     @Override
-    public String getLanguage()
+    public String carpet$getLanguage()
     {
         return this.language;
     }

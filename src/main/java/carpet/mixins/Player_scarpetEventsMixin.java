@@ -1,6 +1,5 @@
 package carpet.mixins;
 
-import carpet.fakes.EntityInterface;
 import carpet.script.EntityEventsGroup;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
@@ -39,7 +38,7 @@ public abstract class Player_scarpetEventsMixin extends LivingEntity
     private void playerTakingDamage(DamageSource source, float amount, CallbackInfo ci)
     {
         // version of LivingEntity_scarpetEventsMixin::entityTakingDamage
-        ((EntityInterface)this).getEventContainer().onEvent(EntityEventsGroup.Event.ON_DAMAGE, amount, source);
+        carpet$getEventContainer().onEvent(EntityEventsGroup.Event.ON_DAMAGE, amount, source);
         if (PLAYER_TAKES_DAMAGE.isNeeded())
         {
             if(PLAYER_TAKES_DAMAGE.onDamage(this, amount, source)) {

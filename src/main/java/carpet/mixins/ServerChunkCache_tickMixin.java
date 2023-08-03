@@ -1,7 +1,5 @@
 package carpet.mixins;
 
-import carpet.fakes.MinecraftServerInterface;
-import carpet.fakes.ThreadedAnvilChunkStorageInterface;
 import carpet.helpers.ServerTickRateManager;
 import carpet.utils.CarpetProfiler;
 import net.minecraft.server.level.DistanceManager;
@@ -77,15 +75,15 @@ public abstract class ServerChunkCache_tickMixin
             value = "INVOKE",
             target = "Lnet/minecraft/server/level/ServerLevel;isDebug()Z"
     ))
-    private boolean skipChunkTicking(ServerLevel serverWorld)
+    private boolean skipChunkTicking(ServerLevel level)
     {
-        boolean debug = serverWorld.isDebug();
-        if (!((MinecraftServerInterface)serverWorld.getServer()).getTickRateManager().runsNormally())
+        boolean debug = level.isDebug();
+        if (!level.getServer().carpet$getTickRateManager().runsNormally())
         {
             // simplified chunk tick iteration assuming world is frozen otherwise as suggested by Hadron67
             // to be kept in sync with the original injection source
             if (!debug){
-                List<ChunkHolder> holders = Lists.newArrayList(((ThreadedAnvilChunkStorageInterface)chunkMap).getChunksCM());
+                List<ChunkHolder> holders = Lists.newArrayList(chunkMap.carpet$getChunks());
                 Collections.shuffle(holders);
                 for (ChunkHolder holder: holders){
                     Optional<LevelChunk> optional = holder.getTickingChunkFuture().getNow(ChunkHolder.UNLOADED_LEVEL_CHUNK).left();
@@ -107,7 +105,7 @@ public abstract class ServerChunkCache_tickMixin
     {
         // pausing expiry of tickets
         // that will prevent also chunks from unloading, so require a deep frozen state
-        ServerTickRateManager trm = ((MinecraftServerInterface) level.getServer()).getTickRateManager();
+        ServerTickRateManager trm = level.getServer().carpet$getTickRateManager();
         if (!trm.runsNormally() && trm.deeplyFrozen()) return;
         distanceManager.purgeStaleTickets();
     }

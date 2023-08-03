@@ -1,6 +1,5 @@
 package carpet.mixins;
 
-import carpet.fakes.MinecraftServerInterface;
 import carpet.utils.CarpetProfiler;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.ServerFunctionManager;
@@ -20,7 +19,7 @@ public class ServerFunctionManager_tickMixin
     @Inject(method = "tick", at = @At("HEAD"), cancellable = true)
     private void beforeDatapacks(CallbackInfo ci)
     {
-    	if (! ((MinecraftServerInterface)server).getTickRateManager().runsNormally())
+    	if (!server.carpet$getTickRateManager().runsNormally())
         {
             ci.cancel();
         }

@@ -1,7 +1,6 @@
 package carpet.patches;
 
 import carpet.CarpetServer;
-import carpet.fakes.MinecraftServerInterface;
 import carpet.helpers.ServerTickRateManager;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.Mth;
@@ -96,7 +95,7 @@ public class TickSyncedBorderExtent implements WorldBorder.BorderExtent
         else
         {
              ms = Arrays.stream(server.tickTimes).average().orElseThrow(IllegalStateException::new) * 1.0E-6D;
-             ServerTickRateManager trm = ((MinecraftServerInterface)server).getTickRateManager();
+             ServerTickRateManager trm = server.carpet$getTickRateManager();
              if (!trm.isInWarpSpeed())
              {
                  ms = Math.max(ms, trm.mspt());

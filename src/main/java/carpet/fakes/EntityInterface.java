@@ -4,19 +4,19 @@ import carpet.script.EntityEventsGroup;
 
 public interface EntityInterface
 {
-    float getMainYaw(float partialTicks);
+    default float carpet$getMainYaw(float partialTicks) { throw new UnsupportedOperationException(); }
 
-    EntityEventsGroup getEventContainer();
+    default EntityEventsGroup carpet$getEventContainer() { throw new UnsupportedOperationException(); }
 
-    boolean isPermanentVehicle();
+    default boolean carpet$isPermanentVehicle() { throw new UnsupportedOperationException(); }
 
-    void setPermanentVehicle(boolean permanent);
+    default void carpet$setPermanentVehicle(boolean permanent) { throw new UnsupportedOperationException(); }
 
-    int getPortalTimer();
+    default int carpet$getPortalTimer() { throw new UnsupportedOperationException(); }
 
-    void setPortalTimer(int amount);
+    default void carpet$setPortalTimer(int amount) { throw new UnsupportedOperationException(); }
 
-    int getPublicNetherPortalCooldown();
-    void setPublicNetherPortalCooldown(int what);
+    default int carpet$getPublicNetherPortalCooldown() { throw new UnsupportedOperationException(); }
 
+    default void carpet$setPublicNetherPortalCooldown(int what) { throw new UnsupportedOperationException(); }
 }

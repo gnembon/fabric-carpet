@@ -1,7 +1,7 @@
 package carpet.mixins;
 
 import carpet.CarpetSettings;
-import carpet.fakes.WorldChunkInterface;
+import carpet.fakes.LevelChunkInterface;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Registry;
 import net.minecraft.world.level.ChunkPos;
@@ -27,7 +27,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
 @Mixin(LevelChunk.class)
-public abstract class LevelChunk_movableBEMixin extends ChunkAccess implements WorldChunkInterface
+public abstract class LevelChunk_movableBEMixin extends ChunkAccess implements LevelChunkInterface
 {
     @Shadow
     @Final
@@ -72,49 +72,48 @@ public abstract class LevelChunk_movableBEMixin extends ChunkAccess implements W
      */
     /* @Nullable */
     // todo update me to the new version
-    public BlockState setBlockStateWithBlockEntity(BlockPos blockPos_1, BlockState newBlockState, BlockEntity newBlockEntity,
-            boolean boolean_1)
+    public BlockState carpet$setBlockStateWithBlockEntity(BlockPos pos, BlockState state, BlockEntity blockEntity, boolean movedByPiston)
     {
-        int x = blockPos_1.getX() & 15;
-        int y = blockPos_1.getY();
-        int z = blockPos_1.getZ() & 15;
+        int x = pos.getX() & 15;
+        int y = pos.getY();
+        int z = pos.getZ() & 15;
         LevelChunkSection chunkSection = this.getSection(this.getSectionIndex(y));
         if (chunkSection.hasOnlyAir())
         {
-            if (newBlockState.isAir())
+            if (state.isAir())
             {
                 return null;
             }
         }
         
         boolean boolean_2 = chunkSection.hasOnlyAir();
-        BlockState oldBlockState = chunkSection.setBlockState(x, y & 15, z, newBlockState);
-        if (oldBlockState == newBlockState)
+        BlockState oldBlockState = chunkSection.setBlockState(x, y & 15, z, state);
+        if (oldBlockState == state)
         {
             return null;
         }
         else
         {
-            Block newBlock = newBlockState.getBlock();
+            Block newBlock = state.getBlock();
             Block oldBlock = oldBlockState.getBlock();
-            ((Heightmap) this.heightmaps.get(Heightmap.Types.MOTION_BLOCKING)).update(x, y, z, newBlockState);
-            ((Heightmap) this.heightmaps.get(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES)).update(x, y, z, newBlockState);
-            ((Heightmap) this.heightmaps.get(Heightmap.Types.OCEAN_FLOOR)).update(x, y, z, newBlockState);
-            ((Heightmap) this.heightmaps.get(Heightmap.Types.WORLD_SURFACE)).update(x, y, z, newBlockState);
+            ((Heightmap) this.heightmaps.get(Heightmap.Types.MOTION_BLOCKING)).update(x, y, z, state);
+            ((Heightmap) this.heightmaps.get(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES)).update(x, y, z, state);
+            ((Heightmap) this.heightmaps.get(Heightmap.Types.OCEAN_FLOOR)).update(x, y, z, state);
+            ((Heightmap) this.heightmaps.get(Heightmap.Types.WORLD_SURFACE)).update(x, y, z, state);
             boolean boolean_3 = chunkSection.hasOnlyAir();
             if (boolean_2 != boolean_3)
             {
-                this.level.getChunkSource().getLightEngine().updateSectionStatus(blockPos_1, boolean_3);
+                this.level.getChunkSource().getLightEngine().updateSectionStatus(pos, boolean_3);
             }
             
             if (!this.level.isClientSide)
             {
                 if (!(oldBlock instanceof MovingPistonBlock))//this is a movableTE special case, if condition wasn't there it would remove the blockentity that was carried for some reason
-                    oldBlockState.onRemove(this.level, blockPos_1, newBlockState, boolean_1);//this kills it
+                    oldBlockState.onRemove(this.level, pos, state, movedByPiston);//this kills it
             }
             else if (oldBlock != newBlock && oldBlock instanceof EntityBlock)
             {
-                this.level.removeBlockEntity(blockPos_1);
+                this.level.removeBlockEntity(pos);
             }
             
             if (chunkSection.getBlockState(x, y & 15, z).getBlock() != newBlock)
@@ -126,7 +125,7 @@ public abstract class LevelChunk_movableBEMixin extends ChunkAccess implements W
                 BlockEntity oldBlockEntity = null;
                 if (oldBlockState.hasBlockEntity())
                 {
-                    oldBlockEntity = this.getBlockEntity(blockPos_1, LevelChunk.EntityCreationType.CHECK);
+                    oldBlockEntity = this.getBlockEntity(pos, LevelChunk.EntityCreationType.CHECK);
                     if (oldBlockEntity != null)
                     {
                         oldBlockEntity.setBlockState(oldBlockState);
@@ -136,22 +135,22 @@ public abstract class LevelChunk_movableBEMixin extends ChunkAccess implements W
 
                 if (oldBlockState.hasBlockEntity())
                 {
-                    if (newBlockEntity == null)
+                    if (blockEntity == null)
                     {
-                        newBlockEntity = ((EntityBlock) newBlock).newBlockEntity(blockPos_1, newBlockState);
+                        blockEntity = ((EntityBlock) newBlock).newBlockEntity(pos, state);
                     }
-                    if (newBlockEntity != oldBlockEntity && newBlockEntity != null)
+                    if (blockEntity != oldBlockEntity && blockEntity != null)
                     {
-                        newBlockEntity.clearRemoved();
-                        this.level.setBlockEntity(newBlockEntity);
-                        newBlockEntity.setBlockState(newBlockState);
-                        updateBlockEntityTicker(newBlockEntity);
+                        blockEntity.clearRemoved();
+                        this.level.setBlockEntity(blockEntity);
+                        blockEntity.setBlockState(state);
+                        updateBlockEntityTicker(blockEntity);
                     }
                 }
 
                 if (!this.level.isClientSide)
                 {
-                    newBlockState.onPlace(this.level, blockPos_1, oldBlockState, boolean_1); //This can call setblockstate! (e.g. hopper does)
+                    state.onPlace(this.level, pos, oldBlockState, movedByPiston); //This can call setblockstate! (e.g. hopper does)
                 }
                 
                 this.unsaved = true; // shouldSave

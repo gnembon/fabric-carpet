@@ -31,7 +31,7 @@ public abstract class ServerGamePacketListenerImpl_coreMixin extends ServerCommo
     }
 
     @Override
-    public Connection getConnection() {
+    public Connection carpet$getConnection() {
         return connection;
     }
 }

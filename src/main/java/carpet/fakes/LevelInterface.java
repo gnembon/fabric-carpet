@@ -16,13 +16,13 @@ import net.minecraft.world.phys.AABB;
 
 public interface LevelInterface
 {
-    Map<EntityType<?>, Entity> getPrecookedMobs();
-    
-    boolean setBlockStateWithBlockEntity(BlockPos blockPos, BlockState blockState, BlockEntity newBlockEntity, int int1);
+    default Map<EntityType<?>, Entity> carpet$getPrecookedMobs() { throw new UnsupportedOperationException(); }
 
-    List<Entity> getOtherEntitiesLimited(@Nullable Entity except, AABB box, Predicate<? super Entity> predicate, int limit);
+    default boolean carpet$setBlockStateWithBlockEntity(BlockPos pos, BlockState state, BlockEntity blockEntity, int flags) { throw new UnsupportedOperationException(); }
 
-    NeighborUpdater getNeighborUpdater();
+    default List<Entity> carpet$getOtherEntitiesLimited(@Nullable Entity except, AABB box, Predicate<? super Entity> predicate, int limit) { throw new UnsupportedOperationException(); }
 
-    TickRateManager tickRateManager();
+    default NeighborUpdater carpet$getNeighborUpdater() { throw new UnsupportedOperationException(); }
+
+    default TickRateManager carpet$getTickRateManager() { throw new UnsupportedOperationException(); }
 }

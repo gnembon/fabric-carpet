@@ -19,12 +19,12 @@ import static net.minecraft.world.level.block.ChestBlock.getConnectedDirection;
 public class ChestBlock_customStickyMixin implements BlockPistonBehaviourInterface {
 
     @Override
-    public boolean isSticky(BlockState state) {
+    public boolean carpet$isSticky(BlockState state) {
         return CarpetSettings.movableBlockEntities;
     }
 
     @Override
-    public boolean isStickyToNeighbor(Level level, BlockPos pos, BlockState state, BlockPos neighborPos, BlockState neighborState, Direction dir, Direction moveDir) {
+    public boolean carpet$isStickyToNeighbor(Level level, BlockPos pos, BlockState state, BlockPos neighborPos, BlockState neighborState, Direction dir, Direction moveDir) {
         if (!neighborState.is((Block)(Object)this)) {
             return false;
         }

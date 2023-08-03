@@ -10,5 +10,5 @@ import net.minecraft.world.level.chunk.ChunkAccess;
 
 public interface ChunkHolderInterface
 {
-    CompletableFuture<Either<ChunkAccess, ChunkHolder.ChunkLoadingFailure>> setDefaultProtoChunk(ChunkPos chpos, BlockableEventLoop<Runnable> executor, ServerLevel world);
+    default CompletableFuture<Either<ChunkAccess, ChunkHolder.ChunkLoadingFailure>> carpet$setDefaultProtoChunk(ChunkPos pos, BlockableEventLoop<Runnable> executor, ServerLevel level) { throw new UnsupportedOperationException(); }
 }

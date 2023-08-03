@@ -1,6 +1,5 @@
 package carpet.helpers;
 
-import carpet.fakes.CoralFeatureInterface;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.core.HolderSet;
@@ -69,7 +68,7 @@ public interface FertilizableCoral extends BonemealableBlock {
         }
         worldIn.setBlock(pos, Blocks.WATER.defaultBlockState(), Block.UPDATE_NONE);
 
-        if (!((CoralFeatureInterface)coral).growSpecific(worldIn, random, pos, properBlock))
+        if (!coral.carpet$growSpecific(worldIn, random, pos, properBlock))
         {
             worldIn.setBlock(pos, blockUnder, 3);
         }

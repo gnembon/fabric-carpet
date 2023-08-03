@@ -1,8 +1,6 @@
 package carpet.commands;
 
 import carpet.CarpetSettings;
-import carpet.fakes.MinecraftServerInterface;
-import carpet.fakes.SpawnGroupInterface;
 import carpet.helpers.HopperCounter;
 import carpet.helpers.ServerTickRateManager;
 import carpet.utils.CommandHelper;
@@ -180,7 +178,7 @@ public class SpawnCommand
 
 
         // tick warp 0
-        ServerTickRateManager trm = ((MinecraftServerInterface)source.getServer()).getTickRateManager();
+        ServerTickRateManager trm = source.getServer().carpet$getTickRateManager();
         trm.requestGameToWarpSpeed(null, 0, null, null);
         // tick warp given player
         CommandSourceStack csource = null;
@@ -240,7 +238,7 @@ public class SpawnCommand
 
     private static int setMobcaps(CommandSourceStack source, int hostile_cap)
     {
-        double desired_ratio = (double)hostile_cap/ ((SpawnGroupInterface)(Object)MobCategory.MONSTER).getInitialSpawnCap();
+        double desired_ratio = (double)hostile_cap/ MobCategory.MONSTER.carpet$getInitialSpawnCap();
         SpawnReporter.mobcap_exponent = 4.0*Math.log(desired_ratio)/Math.log(2.0);
         Messenger.m(source, String.format("gi Mobcaps for hostile mobs changed to %d, other groups will follow", hostile_cap));
         return 1;

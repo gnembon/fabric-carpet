@@ -15,15 +15,19 @@ import net.minecraft.world.level.storage.LevelStorageSource;
 
 public interface MinecraftServerInterface
 {
-    void forceTick(BooleanSupplier sup);
-    LevelStorageSource.LevelStorageAccess getCMSession();
-    Map<ResourceKey<Level>, ServerLevel> getCMWorlds();
-    void reloadAfterReload(RegistryAccess newRegs);
+    default void carpet$forceTick(BooleanSupplier isAhead) { throw new UnsupportedOperationException(); }
 
-    MinecraftServer.ReloadableResources getResourceManager();
+    default LevelStorageSource.LevelStorageAccess carpet$getStorageSource() { throw new UnsupportedOperationException(); }
 
-    void addScriptServer(CarpetScriptServer scriptServer);
-    CarpetScriptServer getScriptServer();
+    default Map<ResourceKey<Level>, ServerLevel> carpet$getLevels() { throw new UnsupportedOperationException(); }
 
-    ServerTickRateManager getTickRateManager();
+    default void carpet$reloadAfterReload(RegistryAccess newRegs) { throw new UnsupportedOperationException(); }
+
+    default MinecraftServer.ReloadableResources carpet$getResources() { throw new UnsupportedOperationException(); }
+
+    default void carpet$addScriptServer(CarpetScriptServer scriptServer) { throw new UnsupportedOperationException(); }
+
+    default CarpetScriptServer carpet$getScriptServer() { throw new UnsupportedOperationException(); }
+
+    default ServerTickRateManager carpet$getTickRateManager() { throw new UnsupportedOperationException(); }
 }

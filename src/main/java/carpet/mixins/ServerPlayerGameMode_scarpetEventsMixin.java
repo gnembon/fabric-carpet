@@ -1,6 +1,6 @@
 package carpet.mixins;
 
-import carpet.fakes.ServerPlayerInteractionManagerInterface;
+import carpet.fakes.ServerPlayerGameModeInterface;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -24,9 +24,8 @@ import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 import static carpet.script.CarpetEventServer.Event.PLAYER_BREAK_BLOCK;
 import static carpet.script.CarpetEventServer.Event.PLAYER_INTERACTS_WITH_BLOCK;
 
-
 @Mixin(ServerPlayerGameMode.class)
-public class ServerPlayerGameMode_scarpetEventsMixin implements ServerPlayerInteractionManagerInterface
+public class ServerPlayerGameMode_scarpetEventsMixin implements ServerPlayerGameModeInterface
 {
     @Shadow public ServerPlayer player;
 
@@ -63,21 +62,21 @@ public class ServerPlayerGameMode_scarpetEventsMixin implements ServerPlayerInte
     }
 
     @Override
-    public BlockPos getCurrentBreakingBlock()
+    public BlockPos carpet$getCurrentBreakingBlock()
     {
         if (!isDestroyingBlock) return null;
         return destroyPos;
     }
 
     @Override
-    public int getCurrentBlockBreakingProgress()
+    public int carpet$getCurrentBlockBreakingProgress()
     {
         if (!isDestroyingBlock) return -1;
         return lastSentState;
     }
 
     @Override
-    public void setBlockBreakingProgress(int progress)
+    public void carpet$setBlockBreakingProgress(int progress)
     {
         lastSentState = Mth.clamp(progress, -1, 10);
         level.destroyBlockProgress(-1*this.player.getId(), destroyPos, lastSentState);

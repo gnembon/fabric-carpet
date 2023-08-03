@@ -1,7 +1,6 @@
 package carpet.mixins;
 
 import carpet.fakes.LevelInterface;
-import carpet.fakes.MinecraftServerInterface;
 import carpet.helpers.TickRateManager;
 import carpet.utils.CarpetProfiler;
 import net.minecraft.core.Holder;
@@ -33,9 +32,9 @@ public abstract class ServerLevel_tickMixin extends Level implements LevelInterf
     }
 
     @Override
-    public TickRateManager tickRateManager()
+    public TickRateManager carpet$getTickRateManager()
     {
-        return ((MinecraftServerInterface)getServer()).getTickRateManager();
+        return getServer().carpet$getTickRateManager();
     }
 
     @Shadow protected abstract void runBlockEvents();
@@ -167,13 +166,13 @@ public abstract class ServerLevel_tickMixin extends Level implements LevelInterf
     ))
     private void tickWorldBorder(WorldBorder worldBorder)
     {
-        if (tickRateManager().runsNormally()) worldBorder.tick();
+        if (carpet$getTickRateManager().runsNormally()) worldBorder.tick();
     }
 
     @Inject(method = "advanceWeatherCycle", cancellable = true, at = @At("HEAD"))
     private void tickWeather(CallbackInfo ci)
     {
-        if (!tickRateManager().runsNormally()) ci.cancel();
+        if (!carpet$getTickRateManager().runsNormally()) ci.cancel();
     }
 
     @Redirect(method = "tick", at = @At(
@@ -182,7 +181,7 @@ public abstract class ServerLevel_tickMixin extends Level implements LevelInterf
     ))
     private void tickTimeConditionally(ServerLevel serverWorld)
     {
-        if (tickRateManager().runsNormally()) tickTime();
+        if (carpet$getTickRateManager().runsNormally()) tickTime();
     }
 
     @Redirect(method = "tick", at = @At(
@@ -191,7 +190,7 @@ public abstract class ServerLevel_tickMixin extends Level implements LevelInterf
     ))
     private boolean tickPendingBlocks(ServerLevel serverWorld)
     {
-        if (!tickRateManager().runsNormally()) return true;
+        if (!carpet$getTickRateManager().runsNormally()) return true;
         return serverWorld.isDebug(); // isDebug()
     }
 
@@ -201,7 +200,7 @@ public abstract class ServerLevel_tickMixin extends Level implements LevelInterf
     ))
     private void tickConditionally(Raids raidManager)
     {
-        if (tickRateManager().runsNormally()) raidManager.tick();
+        if (carpet$getTickRateManager().runsNormally()) raidManager.tick();
     }
 
     @Redirect(method = "tick", at = @At(
@@ -210,6 +209,6 @@ public abstract class ServerLevel_tickMixin extends Level implements LevelInterf
     ))
     private void tickConditionally(ServerLevel serverWorld)
     {
-        if (tickRateManager().runsNormally()) runBlockEvents();
+        if (carpet$getTickRateManager().runsNormally()) runBlockEvents();
     }
 }

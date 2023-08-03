@@ -1,6 +1,5 @@
 package carpet.mixins;
 
-import carpet.fakes.ServerPlayerInterface;
 import carpet.script.external.Vanilla;
 import net.minecraft.network.chat.ChatType;
 import net.minecraft.network.chat.PlayerChatMessage;
@@ -46,7 +45,7 @@ public class PlayerList_scarpetEventsMixin
     ))
     private void invalidatePreviousInstance(ServerPlayer player, boolean alive, CallbackInfoReturnable<ServerPlayer> cir)
     {
-        ((ServerPlayerInterface)player).invalidateEntityObjectReference();
+        player.carpet$invalidateEntityObjectReference();
     }
 
     @Inject(method = "reloadResources", at = @At("HEAD"))

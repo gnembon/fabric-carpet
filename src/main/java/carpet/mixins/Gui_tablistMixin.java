@@ -1,6 +1,5 @@
 package carpet.mixins;
 
-import carpet.fakes.PlayerListHudInterface;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.components.PlayerTabOverlay;
@@ -22,7 +21,7 @@ public abstract class Gui_tablistMixin
     @Redirect(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/Minecraft;isLocalServer()Z"))
     private boolean onDraw(Minecraft minecraftClient)
     {
-        return this.minecraft.isLocalServer() && !((PlayerListHudInterface) tabList).hasFooterOrHeader();
+        return this.minecraft.isLocalServer() && !tabList.carpet$hasFooterOrHeader();
     }
 
 }

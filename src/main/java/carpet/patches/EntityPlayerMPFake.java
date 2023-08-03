@@ -28,7 +28,6 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.SkullBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
-import carpet.fakes.ServerPlayerInterface;
 import carpet.utils.Messenger;
 
 import java.util.concurrent.atomic.AtomicReference;
@@ -68,7 +67,7 @@ public class EntityPlayerMPFake extends ServerPlayer
         }
         EntityPlayerMPFake instance = new EntityPlayerMPFake(server, worldIn, gameprofile, false);
         instance.fixStartingPosition = () -> instance.moveTo(pos.x, pos.y, pos.z, (float) yaw, (float) pitch);
-        server.getPlayerList().placeNewPlayer(new FakeClientConnection(PacketFlow.SERVERBOUND), instance, 0);
+        server.getPlayerList().placeNewPlayer(new FakeConnection(PacketFlow.SERVERBOUND), instance, 0);
         instance.teleportTo(worldIn, pos.x, pos.y, pos.z, (float) yaw, (float) pitch);
         instance.setHealth(20.0F);
         instance.unsetRemoved();
@@ -90,12 +89,12 @@ public class EntityPlayerMPFake extends ServerPlayer
         GameProfile gameprofile = player.getGameProfile();
         EntityPlayerMPFake playerShadow = new EntityPlayerMPFake(server, worldIn, gameprofile, true);
         playerShadow.setChatSession(player.getChatSession());
-        server.getPlayerList().placeNewPlayer(new FakeClientConnection(PacketFlow.SERVERBOUND), playerShadow, 0);
+        server.getPlayerList().placeNewPlayer(new FakeConnection(PacketFlow.SERVERBOUND), playerShadow, 0);
 
         playerShadow.setHealth(player.getHealth());
         playerShadow.connection.teleport(player.getX(), player.getY(), player.getZ(), player.getYRot(), player.getXRot());
         playerShadow.gameMode.changeGameModeForPlayer(player.gameMode.getGameModeForPlayer());
-        ((ServerPlayerInterface) playerShadow).getActionPack().copyFrom(((ServerPlayerInterface) player).getActionPack());
+        playerShadow.carpet$getActionPack().copyFrom(player.carpet$getActionPack());
         playerShadow.setMaxUpStep(0.6F);
         playerShadow.entityData.set(DATA_PLAYER_MODE_CUSTOMISATION, player.getEntityData().get(DATA_PLAYER_MODE_CUSTOMISATION));
 

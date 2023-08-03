@@ -1,6 +1,5 @@
 package carpet.mixins;
 
-import carpet.fakes.MinecraftServerInterface;
 import net.minecraft.network.protocol.game.ServerboundMovePlayerPacket;
 import net.minecraft.network.protocol.game.ServerboundPlayerInputPacket;
 import net.minecraft.server.level.ServerPlayer;
@@ -27,7 +26,7 @@ public class ServerGamePacketListenerImpl_tickMixin
     {
         if (p.getXxa() != 0.0F || p.getZza() != 0.0F || p.isJumping() || p.isShiftKeyDown())
         {
-            ((MinecraftServerInterface)player.getServer()).getTickRateManager().resetPlayerActivity();
+            player.getServer().carpet$getTickRateManager().resetPlayerActivity();
         }
     }
 
@@ -53,7 +52,7 @@ public class ServerGamePacketListenerImpl_tickMixin
         {
             lastMoved = movedBy;
             lastMovedTick = player.getServer().getTickCount();
-            ((MinecraftServerInterface)player.getServer()).getTickRateManager().resetPlayerActivity();
+            player.getServer().carpet$getTickRateManager().resetPlayerActivity();
         }
     }
 }

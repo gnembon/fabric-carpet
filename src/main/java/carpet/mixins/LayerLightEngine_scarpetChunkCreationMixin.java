@@ -16,8 +16,8 @@ public abstract class LayerLightEngine_scarpetChunkCreationMixin implements Ligh
     protected LayerLightSectionStorage<?> storage;
 
     @Override
-    public void removeLightData(final long pos)
+    public void carpet$removeLightData(final long pos)
     {
-        ((Lighting_scarpetChunkCreationInterface) this.storage).removeLightData(pos);
+        this.storage.carpet$removeLightData(pos);
     }
 }

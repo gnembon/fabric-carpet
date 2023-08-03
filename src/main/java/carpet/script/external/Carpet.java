@@ -5,7 +5,6 @@ import carpet.CarpetSettings;
 import carpet.api.settings.CarpetRule;
 import carpet.api.settings.RuleHelper;
 import carpet.api.settings.SettingsManager;
-import carpet.fakes.MinecraftServerInterface;
 import carpet.logging.HUDController;
 import carpet.network.ServerNetworkHandler;
 import carpet.patches.EntityPlayerMPFake;
@@ -87,7 +86,7 @@ public class Carpet
 
     public static void MinecraftServer_addScriptServer(MinecraftServer server, CarpetScriptServer scriptServer)
     {
-        ((MinecraftServerInterface) server).addScriptServer(scriptServer);
+        server.carpet$addScriptServer(scriptServer);
     }
 
     public static boolean isValidCarpetPlayer(ServerPlayer player)
@@ -133,7 +132,7 @@ public class Carpet
 
     public static boolean isTickProcessingPaused(MinecraftServer server)
     {
-        return !((MinecraftServerInterface)server).getTickRateManager().runsNormally();
+        return !server.carpet$getTickRateManager().runsNormally();
     }
 
     public static void handleExtensionsAPI(CarpetExpression expression)

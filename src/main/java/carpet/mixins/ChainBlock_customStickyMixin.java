@@ -20,12 +20,12 @@ import net.minecraft.world.level.block.state.BlockState;
 public class ChainBlock_customStickyMixin implements BlockPistonBehaviourInterface {
 
     @Override
-    public boolean isSticky(BlockState state) {
+    public boolean carpet$isSticky(BlockState state) {
         return CarpetSettings.chainStone.enabled();
     }
 
     @Override
-    public boolean isStickyToNeighbor(Level level, BlockPos pos, BlockState state, BlockPos neighborPos, BlockState neighborState, Direction dir, Direction moveDir) {
+    public boolean carpet$isStickyToNeighbor(Level level, BlockPos pos, BlockState state, BlockPos neighborPos, BlockState neighborState, Direction dir, Direction moveDir) {
         Axis axis = state.getValue(ChainBlock.AXIS);
 
         if (axis != dir.getAxis()) {

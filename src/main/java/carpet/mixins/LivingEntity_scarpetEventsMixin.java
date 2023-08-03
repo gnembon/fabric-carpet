@@ -1,6 +1,5 @@
 package carpet.mixins;
 
-import carpet.fakes.EntityInterface;
 import carpet.fakes.LivingEntityInterface;
 import carpet.script.EntityEventsGroup;
 import net.minecraft.server.level.ServerPlayer;
@@ -34,7 +33,7 @@ public abstract class LivingEntity_scarpetEventsMixin extends Entity implements 
     @Inject(method = "die", at = @At("HEAD"))
     private void onDeathCall(DamageSource damageSource_1, CallbackInfo ci)
     {
-        ((EntityInterface)this).getEventContainer().onEvent(EntityEventsGroup.Event.ON_DEATH, damageSource_1.getMsgId());
+        carpet$getEventContainer().onEvent(EntityEventsGroup.Event.ON_DEATH, damageSource_1.getMsgId());
     }
 
     @Inject(method = "actuallyHurt", cancellable = true, locals = LocalCapture.CAPTURE_FAILHARD, at = @At(
@@ -44,7 +43,7 @@ public abstract class LivingEntity_scarpetEventsMixin extends Entity implements 
     ))
     private void entityTakingDamage(DamageSource source, float amount, CallbackInfo ci)
     {
-        ((EntityInterface)this).getEventContainer().onEvent(EntityEventsGroup.Event.ON_DAMAGE, amount, source);
+        carpet$getEventContainer().onEvent(EntityEventsGroup.Event.ON_DAMAGE, amount, source);
         // this is not applicable since its not a playr for sure
         //if (entity instanceof ServerPlayerEntity && PLAYER_TAKES_DAMAGE.isNeeded())
         //{
@@ -59,13 +58,13 @@ public abstract class LivingEntity_scarpetEventsMixin extends Entity implements 
     }
 
     @Override
-    public void doJumpCM()
+    public void carpet$doJump()
     {
         jumpFromGround();
     }
 
     @Override
-    public boolean isJumpingCM()
+    public boolean carpet$isJumping()
     {
         return jumping;
     }

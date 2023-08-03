@@ -1,26 +1,8 @@
 package carpet.script.external;
 
 import carpet.CarpetSettings;
-import carpet.fakes.BiomeInterface;
 import carpet.fakes.BlockPredicateInterface;
-import carpet.fakes.BlockStateArgumentInterface;
-import carpet.fakes.ChunkTicketManagerInterface;
 import carpet.fakes.CommandDispatcherInterface;
-import carpet.fakes.EntityInterface;
-import carpet.fakes.IngredientInterface;
-import carpet.fakes.InventoryBearerInterface;
-import carpet.fakes.ItemEntityInterface;
-import carpet.fakes.LivingEntityInterface;
-import carpet.fakes.MinecraftServerInterface;
-import carpet.fakes.MobEntityInterface;
-import carpet.fakes.RandomStateVisitorAccessor;
-import carpet.fakes.RecipeManagerInterface;
-import carpet.fakes.AbstractContainerMenuInterface;
-import carpet.fakes.ServerPlayerInterface;
-import carpet.fakes.ServerPlayerInteractionManagerInterface;
-import carpet.fakes.ServerWorldInterface;
-import carpet.fakes.SpawnHelperInnerInterface;
-import carpet.fakes.ThreadedAnvilChunkStorageInterface;
 import carpet.mixins.Objective_scarpetMixin;
 import carpet.mixins.PoiRecord_scarpetMixin;
 import carpet.mixins.Scoreboard_scarpetMixin;
@@ -95,27 +77,27 @@ public class Vanilla
 {
     public static void MinecraftServer_forceTick(MinecraftServer server, BooleanSupplier sup)
     {
-        ((MinecraftServerInterface) server).forceTick(sup);
+        server.carpet$forceTick(sup);
     }
 
     public static void ChunkMap_relightChunk(ChunkMap chunkMap, ChunkPos pos)
     {
-        ((ThreadedAnvilChunkStorageInterface) chunkMap).relightChunk(pos);
+        chunkMap.carpet$relightChunk(pos);
     }
 
     public static Map<String, Integer> ChunkMap_regenerateChunkRegion(ChunkMap chunkMap, List<ChunkPos> requestedChunks)
     {
-        return ((ThreadedAnvilChunkStorageInterface) chunkMap).regenerateChunkRegion(requestedChunks);
+        return chunkMap.carpet$regenerateChunkRegion(requestedChunks);
     }
 
     public static List<Collection<ItemStack>> Ingredient_getRecipeStacks(Ingredient ingredient)
     {
-        return ((IngredientInterface) (Object) ingredient).getRecipeStacks();
+        return ingredient.carpet$getRecipeStacks();
     }
 
     public static List<Recipe<?>> RecipeManager_getAllMatching(RecipeManager recipeManager, RecipeType<?> type, ResourceLocation output, RegistryAccess registryAccess)
     {
-        return ((RecipeManagerInterface) recipeManager).getAllMatching(type, output, registryAccess);
+        return recipeManager.carpet$getAllMatching(type, output, registryAccess);
     }
 
     public static int NaturalSpawner_MAGIC_NUMBER()
@@ -125,7 +107,7 @@ public class Vanilla
 
     public static PotentialCalculator SpawnState_getPotentialCalculator(NaturalSpawner.SpawnState spawnState)
     {
-        return ((SpawnHelperInnerInterface) spawnState).getPotentialCalculator();
+        return spawnState.carpet$getPotentialCalculator();
     }
 
     public static void Objective_setCriterion(Objective objective, ObjectiveCriteria criterion)
@@ -138,34 +120,34 @@ public class Vanilla
         return ((Scoreboard_scarpetMixin) scoreboard).getObjectivesByCriterion();
     }
 
-    public static ServerLevelData ServerLevel_getWorldProperties(ServerLevel world)
+    public static ServerLevelData ServerLevel_getLevelData(ServerLevel level)
     {
-        return ((ServerWorldInterface) world).getWorldPropertiesCM();
+        return level.carpet$getLevelData();
     }
 
-    public static Long2ObjectOpenHashMap<SortedArraySet<Ticket<?>>> ChunkTicketManager_getTicketsByPosition(DistanceManager ticketManager)
+    public static Long2ObjectOpenHashMap<SortedArraySet<Ticket<?>>> DistanceManager_getTicketsByPosition(DistanceManager distanceManager)
     {
-        return ((ChunkTicketManagerInterface) ticketManager).getTicketsByPosition();
+        return distanceManager.carpet$getTicketsByPosition();
     }
 
     public static DensityFunction.Visitor RandomState_getVisitor(RandomState randomState)
     {
-        return ((RandomStateVisitorAccessor) (Object) randomState).getVisitor();
+        return randomState.carpet$getVisitor();
     }
 
     public static CompoundTag BlockInput_getTag(BlockInput blockInput)
     {
-        return ((BlockStateArgumentInterface) blockInput).getCMTag();
+        return blockInput.carpet$getTag();
     }
 
     public static CarpetScriptServer MinecraftServer_getScriptServer(MinecraftServer server)
     {
-        return ((MinecraftServerInterface) server).getScriptServer();
+        return server.carpet$getScriptServer();
     }
 
     public static Biome.ClimateSettings Biome_getClimateSettings(Biome biome)
     {
-        return ((BiomeInterface) (Object) biome).getClimateSettings();
+        return biome.carpet$getClimateSettings();
     }
 
     public static ThreadLocal<Boolean> skipGenerationChecks(ServerLevel level)
@@ -205,107 +187,107 @@ public class Vanilla
 
     public static LevelStorageSource.LevelStorageAccess MinecraftServer_storageSource(MinecraftServer server)
     {
-        return ((MinecraftServerInterface) server).getCMSession();
+        return server.carpet$getStorageSource();
     }
 
     public static BlockPos ServerPlayerGameMode_getCurrentBlockPosition(ServerPlayerGameMode gameMode)
     {
-        return ((ServerPlayerInteractionManagerInterface) gameMode).getCurrentBreakingBlock();
+        return gameMode.carpet$getCurrentBreakingBlock();
     }
 
     public static int ServerPlayerGameMode_getCurrentBlockBreakingProgress(ServerPlayerGameMode gameMode)
     {
-        return ((ServerPlayerInteractionManagerInterface) gameMode).getCurrentBlockBreakingProgress();
+        return gameMode.carpet$getCurrentBlockBreakingProgress();
     }
 
     public static void ServerPlayerGameMode_setBlockBreakingProgress(ServerPlayerGameMode gameMode, int progress)
     {
-        ((ServerPlayerInteractionManagerInterface) gameMode).setBlockBreakingProgress(progress);
+        gameMode.carpet$setBlockBreakingProgress(progress);
     }
 
     public static boolean ServerPlayer_isInvalidEntityObject(ServerPlayer player)
     {
-        return ((ServerPlayerInterface) player).isInvalidEntityObject();
+        return player.carpet$isInvalidEntityObject();
     }
 
     public static String ServerPlayer_getLanguage(ServerPlayer player)
     {
-        return ((ServerPlayerInterface) player).getLanguage();
+        return player.carpet$getLanguage();
     }
 
     public static GoalSelector Mob_getAI(Mob mob, boolean target)
     {
-        return ((MobEntityInterface) mob).getAI(target);
+        return mob.carpet$getAi(target);
     }
 
     public static Map<String, Goal> Mob_getTemporaryTasks(Mob mob)
     {
-        return ((MobEntityInterface) mob).getTemporaryTasks();
+        return mob.carpet$getTemporaryTasks();
     }
 
     public static void Mob_setPersistence(Mob mob, boolean what)
     {
-        ((MobEntityInterface) mob).setPersistence(what);
+        mob.carpet$setPersistence(what);
     }
 
     public static EntityEventsGroup Entity_getEventContainer(Entity entity)
     {
-        return ((EntityInterface) entity).getEventContainer();
+        return entity.carpet$getEventContainer();
     }
 
     public static boolean Entity_isPermanentVehicle(Entity entity)
     {
-        return ((EntityInterface) entity).isPermanentVehicle();
+        return entity.carpet$isPermanentVehicle();
     }
 
     public static void Entity_setPermanentVehicle(Entity entity, boolean permanent)
     {
-        ((EntityInterface) entity).setPermanentVehicle(permanent);
+        entity.carpet$setPermanentVehicle(permanent);
     }
 
     public static int Entity_getPortalTimer(Entity entity)
     {
-        return ((EntityInterface) entity).getPortalTimer();
+        return entity.carpet$getPortalTimer();
     }
 
     public static void Entity_setPortalTimer(Entity entity, int amount)
     {
-        ((EntityInterface) entity).setPortalTimer(amount);
+        entity.carpet$setPortalTimer(amount);
     }
 
     public static int Entity_getPublicNetherPortalCooldown(Entity entity)
     {
-        return ((EntityInterface) entity).getPublicNetherPortalCooldown();
+        return entity.carpet$getPublicNetherPortalCooldown();
     }
 
     public static void Entity_setPublicNetherPortalCooldown(Entity entity, int what)
     {
-        ((EntityInterface) entity).setPublicNetherPortalCooldown(what);
+        entity.carpet$setPublicNetherPortalCooldown(what);
     }
 
     public static int ItemEntity_getPickupDelay(ItemEntity entity)
     {
-        return ((ItemEntityInterface) entity).getPickupDelayCM();
+        return entity.carpet$getPickupDelay();
     }
 
     public static boolean LivingEntity_isJumping(LivingEntity entity)
     {
-        return ((LivingEntityInterface) entity).isJumpingCM();
+        return entity.carpet$isJumping();
     }
 
     public static void LivingEntity_setJumping(LivingEntity entity)
     {
-        ((LivingEntityInterface) entity).doJumpCM();
+        entity.carpet$doJump();
     }
 
     public static Container AbstractHorse_getInventory(AbstractHorse horse)
     {
-        return ((InventoryBearerInterface) horse).getCMInventory();
+        return horse.carpet$getInventory();
     }
 
-    public static DataSlot AbstractContainerMenu_getDataSlot(AbstractContainerMenu handler, int index)
+    public static DataSlot AbstractContainerMenu_getDataSlot(AbstractContainerMenu menu, int index)
     {
-        return ((AbstractContainerMenuInterface) handler).getDataSlot(index);
+        return menu.carpet$getDataSlot(index);
     }
 
     public static void CommandDispatcher_unregisterCommand(CommandDispatcher<CommandSourceStack> dispatcher, String name)
@@ -362,8 +344,7 @@ public class Vanilla
         public static BlockPredicatePayload of(Predicate<BlockInWorld> blockPredicate)
         {
             BlockPredicateInterface predicateData = (BlockPredicateInterface) blockPredicate;
-            return new BlockPredicatePayload(predicateData.getCMBlockState(), predicateData.getCMBlockTagKey(), predicateData.getCMProperties(), predicateData.getCMDataTag());
+            return new BlockPredicatePayload(predicateData.carpet$getBlockState(), predicateData.carpet$getTagKey(), predicateData.carpet$getProperties(), predicateData.carpet$getDataTag());
         }
     }
-
 }

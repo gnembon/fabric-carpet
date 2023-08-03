@@ -439,7 +439,7 @@ public class WorldAccess
             }
 
             Value weather = lv.get(0);
-            ServerLevelData worldProperties = Vanilla.ServerLevel_getWorldProperties(world);
+            ServerLevelData worldProperties = Vanilla.ServerLevel_getLevelData(world);
             if (lv.size() == 1)
             {
                 return new NumericValue(switch (weather.getString().toLowerCase(Locale.ROOT))
@@ -640,7 +640,7 @@ public class WorldAccess
         {
             ServerLevel world = ((CarpetContext) c).level();
             DistanceManager foo = world.getChunkSource().chunkMap.getDistanceManager();
-            Long2ObjectOpenHashMap<SortedArraySet<Ticket<?>>> levelTickets = Vanilla.ChunkTicketManager_getTicketsByPosition(foo);
+            Long2ObjectOpenHashMap<SortedArraySet<Ticket<?>>> levelTickets = Vanilla.DistanceManager_getTicketsByPosition(foo);
 
             List<Value> res = new ArrayList<>();
             if (lv.isEmpty())

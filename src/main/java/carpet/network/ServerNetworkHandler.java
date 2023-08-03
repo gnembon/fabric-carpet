@@ -4,12 +4,8 @@ import carpet.CarpetServer;
 import carpet.CarpetSettings;
 import carpet.api.settings.CarpetRule;
 import carpet.api.settings.RuleHelper;
-import carpet.fakes.CarpetPacketPayload;
-import carpet.fakes.MinecraftServerInterface;
-import carpet.fakes.ServerGamePacketListenerImplInterface;
 import carpet.helpers.ServerTickRateManager;
 import carpet.script.utils.SnoopyCommandSource;
-import io.netty.buffer.Unpooled;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -89,7 +85,7 @@ public class ServerNetworkHandler
     public static void onPlayerJoin(ServerPlayer playerEntity)
     {
         if (true) return;
-        if (!((ServerGamePacketListenerImplInterface)playerEntity.connection).getConnection().isMemoryConnection())
+        if (!playerEntity.connection.carpet$getConnection().isMemoryConnection())
         {
             playerEntity.connection.send( make( output -> {
                         output.writeVarInt(CarpetClient.HI);
@@ -249,7 +245,7 @@ public class ServerNetworkHandler
     public static void onPlayerLoggedOut(ServerPlayer player)
     {
         validCarpetPlayers.remove(player);
-        if (!((ServerGamePacketListenerImplInterface)player.connection).getConnection().isMemoryConnection())
+        if (!player.connection.carpet$getConnection().isMemoryConnection())
             remoteCarpetPlayers.remove(player);
     }
 
@@ -288,13 +284,13 @@ public class ServerNetworkHandler
         }
         private DataBuilder withTickRate()
         {
-            ServerTickRateManager trm = ((MinecraftServerInterface)server).getTickRateManager();
+            ServerTickRateManager trm = server.carpet$getTickRateManager();
             tag.putFloat("TickRate", trm.tickrate());
             return this;
         }
         private DataBuilder withFrozenState()
         {
-            ServerTickRateManager trm = ((MinecraftServerInterface)server).getTickRateManager();
+            ServerTickRateManager trm = server.carpet$getTickRateManager();
             CompoundTag tickingState = new CompoundTag();
             tickingState.putBoolean("is_paused", trm.gameIsPaused());
             tickingState.putBoolean("deepFreeze", trm.deeplyFrozen());
@@ -303,13 +299,13 @@ public class ServerNetworkHandler
         }
         private DataBuilder withSuperHotState()
         {
-            ServerTickRateManager trm = ((MinecraftServerInterface)server).getTickRateManager();
+            ServerTickRateManager trm = server.carpet$getTickRateManager();
         	tag.putBoolean("SuperHotState", trm.isSuperHot());
         	return this;
         }
         private DataBuilder withTickPlayerActiveTimeout()
         {
-            ServerTickRateManager trm = ((MinecraftServerInterface)server).getTickRateManager();
+            ServerTickRateManager trm = server.carpet$getTickRateManager();
             tag.putInt("TickPlayerActiveTimeout", trm.getPlayerActiveTimeout());
             return this;
         }

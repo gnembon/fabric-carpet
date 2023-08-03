@@ -26,7 +26,7 @@ public class RecipeManager_scarpetMixin implements RecipeManagerInterface
     @Shadow private Map<RecipeType<?>, Map<ResourceLocation, Recipe<?>>> recipes;
 
     @Override
-    public List<Recipe<?>> getAllMatching(RecipeType<?> type, ResourceLocation output, final RegistryAccess registryAccess)
+    public List<Recipe<?>> carpet$getAllMatching(RecipeType<?> type, ResourceLocation output, final RegistryAccess registryAccess)
     {
         Map<ResourceLocation, Recipe<?>> typeRecipes = recipes.get(type);
         // happens when mods add recipe to the registry without updating recipe manager

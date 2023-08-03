@@ -14,8 +14,8 @@ public abstract class BlockEntity_movableBEMixin implements BlockEntityInterface
     @Mutable
     @Shadow @Final protected BlockPos worldPosition;
 
-    public void setCMPos(BlockPos newPos)
+    public void carpet$setPos(BlockPos newPos)
     {
         worldPosition = newPos;
-    };
+    }
 }
