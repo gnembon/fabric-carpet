@@ -1,6 +1,6 @@
 package carpet.mixins;
 
-import carpet.fakes.SpawnGroupInterface;
+import carpet.fakes.MobCategoryInterface;
 import carpet.utils.SpawnReporter;
 import net.minecraft.world.entity.MobCategory;
 import org.spongepowered.asm.mixin.Final;
@@ -11,7 +11,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(MobCategory.class)
-public class MobCategory_spawnMixin implements SpawnGroupInterface
+public class MobCategory_spawnMixin implements MobCategoryInterface
 {
     @Shadow @Final private int max;
 
@@ -22,7 +22,7 @@ public class MobCategory_spawnMixin implements SpawnGroupInterface
     }
 
     @Override
-    public int getInitialSpawnCap()
+    public int carpet$getInitialSpawnCap()
     {
         return max;
     }

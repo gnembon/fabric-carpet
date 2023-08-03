@@ -1,6 +1,6 @@
 package carpet.mixins;
 
-import carpet.fakes.RandomStateVisitorAccessor;
+import carpet.fakes.RandomStateInterface;
 import net.minecraft.world.level.levelgen.DensityFunction;
 import net.minecraft.world.level.levelgen.RandomState;
 import org.spongepowered.asm.mixin.Mixin;
@@ -9,7 +9,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyArg;
 
 @Mixin(RandomState.class)
-public class RandomState_ScarpetMixin implements RandomStateVisitorAccessor {
+public class RandomState_ScarpetMixin implements RandomStateInterface {
     @Unique
     private DensityFunction.Visitor visitor;
 
@@ -27,7 +27,7 @@ public class RandomState_ScarpetMixin implements RandomStateVisitorAccessor {
     }
 
     @Override
-    public DensityFunction.Visitor getVisitor() {
+    public DensityFunction.Visitor carpet$getVisitor() {
         return this.visitor;
     }
 }

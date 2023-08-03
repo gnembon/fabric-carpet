@@ -1,6 +1,5 @@
 package carpet.mixins;
 
-import carpet.fakes.LevelInterface;
 import carpet.helpers.TickRateManager;
 import carpet.fakes.MinecraftInterface;
 import carpet.network.CarpetClient;
@@ -29,18 +28,18 @@ public class MinecraftMixin implements MinecraftInterface
     @Inject(at = @At("HEAD"), method = "tick")
     private void onClientTick(CallbackInfo info) {
         if (this.level != null) {
-            getTickRateManager().ifPresent(TickRateManager::tick);
+            carpet$getTickRateManager().ifPresent(TickRateManager::tick);
             // hope server doesn't need to tick - should be handled by the server on its own
-            if (!getTickRateManager().map(TickRateManager::runsNormally).orElse(true))
+            if (!carpet$getTickRateManager().map(TickRateManager::runsNormally).orElse(true))
                 CarpetClient.shapes.renewShapes();
         }
     }
 
     @Override
-    public Optional<TickRateManager> getTickRateManager()
+    public Optional<TickRateManager> carpet$getTickRateManager()
     {
         if (this.level != null) {
-            return Optional.of(((LevelInterface)this.level).tickRateManager());
+            return Optional.of(this.level.carpet$getTickRateManager());
         }
         return Optional.empty();
     }

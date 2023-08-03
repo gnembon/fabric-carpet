@@ -1,7 +1,6 @@
 package carpet.mixins;
 
 import carpet.CarpetSettings;
-import carpet.fakes.PistonBlockEntityInterface;
 import com.google.common.collect.Lists;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -13,6 +12,7 @@ import net.minecraft.world.level.block.DirectionalBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.piston.MovingPistonBlock;
 import net.minecraft.world.level.block.piston.PistonBaseBlock;
+import net.minecraft.world.level.block.piston.PistonMovingBlockEntity;
 import net.minecraft.world.level.block.piston.PistonStructureResolver;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.PushReaction;
@@ -114,10 +114,10 @@ public abstract class PistonBaseBlock_movableBEMixin extends DirectionalBlock
                                            List<BlockState> list_2, List<?> list_3, BlockState[] blockStates_1, Direction direction_2, int int_2,
                                            int int_3, BlockPos blockPos_4, BlockState blockState9, BlockState blockState4)
     {
-        BlockEntity blockEntityPiston = MovingPistonBlock.newMovingBlockEntity(blockPos_4, blockState4, list_2.get(int_3),
-                direction_1, boolean_1, false);
+        PistonMovingBlockEntity blockEntityPiston = (PistonMovingBlockEntity)MovingPistonBlock.newMovingBlockEntity(
+                blockPos_4, blockState4, list_2.get(int_3), direction_1, boolean_1, false);
         if (CarpetSettings.movableBlockEntities)
-            ((PistonBlockEntityInterface) blockEntityPiston).setCarriedBlockEntity(list1_BlockEntities.get().get(int_3));
+            blockEntityPiston.carpet$setCarriedBlockEntity(list1_BlockEntities.get().get(int_3));
         world_1.setBlockEntity(blockEntityPiston);
         //world_1.setBlockEntity(blockPos_4, blockEntityPiston);
     }

@@ -1,6 +1,5 @@
 package carpet.mixins;
 
-import carpet.fakes.EntityInterface;
 import carpet.script.EntityEventsGroup;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
@@ -23,6 +22,6 @@ public abstract class EndCrystal_scarpetEventsMixin extends Entity
     private void onTickCall(CallbackInfo ci)
     {
         // calling extra on_tick because falling blocks do not fall back to super tick call
-        ((EntityInterface)this).getEventContainer().onEvent(EntityEventsGroup.Event.ON_TICK);
+        carpet$getEventContainer().onEvent(EntityEventsGroup.Event.ON_TICK);
     }
 }

@@ -4,5 +4,5 @@ import net.minecraft.core.BlockPos;
 
 public interface BlockEntityInterface
 {
-    void setCMPos(BlockPos pos);
+    default void carpet$setPos(BlockPos pos) { throw new UnsupportedOperationException(); }
 }

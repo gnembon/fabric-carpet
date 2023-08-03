@@ -23,7 +23,7 @@ public abstract class Level_getOtherEntitiesLimited implements LevelInterface {
     private static final RuntimeException CONTROL_FLOW_EXCEPTION = new RuntimeException("Should be caught for control flow in World_getOtherEntitiesLimited!");
 
     @Override
-    public List<Entity> getOtherEntitiesLimited(@Nullable Entity except, AABB box, Predicate<? super Entity> predicate, int limit) {
+    public List<Entity> carpet$getOtherEntitiesLimited(@Nullable Entity except, AABB box, Predicate<? super Entity> predicate, int limit) {
         this.getProfiler().incrementCounter("getEntities"); // visit
         AtomicInteger checkedEntities = new AtomicInteger();
         List<Entity> list = Lists.newArrayList();

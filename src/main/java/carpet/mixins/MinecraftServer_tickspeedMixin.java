@@ -77,7 +77,7 @@ public abstract class MinecraftServer_tickspeedMixin extends ReentrantBlockableE
     }
 
     @Override
-    public ServerTickRateManager getTickRateManager()
+    public ServerTickRateManager carpet$getTickRateManager()
     {
         return serverTickRateManager;
     }

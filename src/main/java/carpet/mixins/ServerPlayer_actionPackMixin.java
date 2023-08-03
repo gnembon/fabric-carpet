@@ -18,7 +18,7 @@ public abstract class ServerPlayer_actionPackMixin implements ServerPlayerInterf
     @Unique
     public EntityPlayerActionPack actionPack;
     @Override
-    public EntityPlayerActionPack getActionPack()
+    public EntityPlayerActionPack carpet$getActionPack()
     {
         return actionPack;
     }

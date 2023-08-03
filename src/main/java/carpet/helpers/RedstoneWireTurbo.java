@@ -13,7 +13,6 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.RedStoneWireBlock;
 import net.minecraft.world.level.block.state.BlockState;
-import carpet.fakes.RedstoneWireBlockInterface;
 
 public class RedstoneWireTurbo
 {
@@ -438,7 +437,7 @@ public class RedstoneWireTurbo
         // UpdateNode object.  
         BlockState newState;
         if (old_current_change) {
-            newState = ((RedstoneWireBlockInterface)wire).updateLogicPublic(worldIn, pos, oldState);
+            newState = wire.carpet$updateLogicPublic(worldIn, pos, oldState);
         } else {
             // Looking up block state is slow.  This accelerator includes a version of
             // calculateCurrentChanges that uses cahed wire values for a
@@ -780,7 +779,7 @@ public class RedstoneWireTurbo
         // Check this block's neighbors and see if its power level needs to change
         // Use the calculateCurrentChanges method in RedstoneWireBlock since we have no
         // cached block states at this point.
-        final BlockState newState = ((RedstoneWireBlockInterface)wire).updateLogicPublic(worldIn, pos, state);
+        final BlockState newState = wire.carpet$updateLogicPublic(worldIn, pos, state);
          
         // If no change, exit
         if (newState == state) {
@@ -853,14 +852,14 @@ public class RedstoneWireTurbo
         j = getMaxCurrentStrength(upd, j);
         int l = 0;
  
-        ((RedstoneWireBlockInterface)wire).setWiresGivePower(false);
+        wire.carpet$setShouldSignal(false);
         // Unfortunately, World.isBlockIndirectlyGettingPowered is complicated,
         // and I'm not ready to try to replicate even more functionality from
         // elsewhere in Minecraft into this accelerator.  So sadly, we must
         // suffer the performance hit of this very expensive call.  If there
         // is consistency to what this call returns, we may be able to cache it.
         final int k = worldIn.getBestNeighborSignal(upd.self);
-        ((RedstoneWireBlockInterface)wire).setWiresGivePower(true);
+        wire.carpet$setShouldSignal(true);
  
         // The variable 'k' holds the maximum redstone power value of any adjacent blocks.
         // If 'k' has the highest level of all neighbors, then the power level of this 

@@ -49,7 +49,7 @@ public abstract class AbstractContainerMenu_scarpetMixin implements AbstractCont
     }
 
     @Override
-    public boolean callButtonClickListener(int button, Player player) {
+    public boolean carpet$notifyButtonClickListeners(int button, Player player) {
         if(!(player instanceof ServerPlayer serverPlayerEntity)) return false;
         for(ContainerListener screenHandlerListener : containerListeners) {
             if(screenHandlerListener instanceof ScreenValue.ScarpetScreenHandlerListener scarpetScreenHandlerListener) {
@@ -61,7 +61,7 @@ public abstract class AbstractContainerMenu_scarpetMixin implements AbstractCont
     }
 
     @Override
-    public boolean callSelectRecipeListener(ServerPlayer player, Recipe<?> recipe, boolean craftAll) {
+    public boolean carpet$notifySelectRecipeListeners(ServerPlayer player, Recipe<?> recipe, boolean craftAll) {
         for(ContainerListener screenHandlerListener : containerListeners) {
             if(screenHandlerListener instanceof ScreenValue.ScarpetScreenHandlerListener scarpetScreenHandlerListener) {
                 if(scarpetScreenHandlerListener.onSelectRecipe(player, recipe, craftAll))
@@ -72,7 +72,7 @@ public abstract class AbstractContainerMenu_scarpetMixin implements AbstractCont
     }
 
     @Override
-    public DataSlot getDataSlot(int index) {
+    public DataSlot carpet$getDataSlot(int index) {
         return this.dataSlots.get(index);
     }
 }

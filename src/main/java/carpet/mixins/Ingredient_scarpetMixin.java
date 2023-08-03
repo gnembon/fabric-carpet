@@ -17,7 +17,7 @@ public class Ingredient_scarpetMixin implements IngredientInterface
     @Shadow @Final private Ingredient.Value[] values;
 
     @Override
-    public List<Collection<ItemStack>> getRecipeStacks()
+    public List<Collection<ItemStack>> carpet$getRecipeStacks()
     {
         return Arrays.stream(values).map(Ingredient.Value::getItems).toList();
     }

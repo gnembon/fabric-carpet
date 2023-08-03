@@ -7,17 +7,17 @@ import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 
-import carpet.fakes.ChunkTicketManagerInterface;
+import carpet.fakes.DistanceManagerInterface;
 
 @Mixin(DistanceManager.class)
-public abstract class DistanceManager_scarpetChunkCreationMixin implements ChunkTicketManagerInterface
+public abstract class DistanceManager_scarpetChunkCreationMixin implements DistanceManagerInterface
 {
     @Shadow
     @Final
     private Set<ChunkHolder> chunksToUpdateFutures;
 
     @Override
-    public void replaceHolder(final ChunkHolder oldHolder, final ChunkHolder newHolder)
+    public void carpet$replaceHolder(final ChunkHolder oldHolder, final ChunkHolder newHolder)
     {
         this.chunksToUpdateFutures.remove(oldHolder);
         this.chunksToUpdateFutures.add(newHolder);

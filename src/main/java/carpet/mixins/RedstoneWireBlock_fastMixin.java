@@ -1,7 +1,7 @@
 package carpet.mixins;
 
 import carpet.CarpetSettings;
-import carpet.fakes.RedstoneWireBlockInterface;
+import carpet.fakes.RedStoneWireBlockInterface;
 import carpet.helpers.RedstoneWireTurbo;
 import com.google.common.collect.Sets;
 import org.spongepowered.asm.mixin.Mixin;
@@ -24,21 +24,21 @@ import net.minecraft.world.level.block.state.BlockState;
 import static net.minecraft.world.level.block.RedStoneWireBlock.POWER;
 
 @Mixin(RedStoneWireBlock.class)
-public abstract class RedstoneWireBlock_fastMixin implements RedstoneWireBlockInterface {
+public abstract class RedstoneWireBlock_fastMixin implements RedStoneWireBlockInterface {
 
     @Shadow
-    private void updatePowerStrength(Level world_1, BlockPos blockPos_1, BlockState blockState_1) { }
+    private void updatePowerStrength(Level level, BlockPos pos, BlockState state) { }
 
     @Shadow
     private int calculateTargetStrength(Level world, BlockPos pos) { return 0; }
 
     @Override
     @Accessor("shouldSignal")
-    public abstract void setWiresGivePower(boolean wiresGivePower);
+    public abstract void carpet$setShouldSignal(boolean shouldSignal);
 
     @Override
     @Accessor("shouldSignal")
-    public abstract boolean getWiresGivePower();
+    public abstract boolean carpet$getShouldSignal();
 
     // =
 
@@ -52,56 +52,56 @@ public abstract class RedstoneWireBlock_fastMixin implements RedstoneWireBlockIn
 
     // =
 
-    public void fastUpdate(Level world, BlockPos pos, BlockState state, BlockPos source) {
+    public void fastUpdate(Level level, BlockPos pos, BlockState state, BlockPos source) {
         // [CM] fastRedstoneDust -- update based on carpet rule
         if (CarpetSettings.fastRedstoneDust) {
-            wireTurbo.updateSurroundingRedstone(world, pos, state, source);
+            wireTurbo.updateSurroundingRedstone(level, pos, state, source);
             return;
         }
-        updatePowerStrength(world, pos, state);
+        updatePowerStrength(level, pos, state);
     }
 
     /**
      * @author theosib, soykaf, gnembon
      */
     @Inject(method = "updatePowerStrength", at = @At("HEAD"), cancellable = true)
-    private void updateLogicAlternative(Level world, BlockPos pos, BlockState state, CallbackInfo cir) {
+    private void updateLogicAlternative(Level level, BlockPos pos, BlockState state, CallbackInfo cir) {
         if (CarpetSettings.fastRedstoneDust) {
-            updateLogicPublic(world, pos, state);
+            carpet$updateLogicPublic(level, pos, state);
             cir.cancel();
         }
     }
 
     @Override
-    public BlockState updateLogicPublic(Level world_1, BlockPos blockPos_1, BlockState blockState_1) {
-        int i = this.calculateTargetStrength(world_1, blockPos_1);
-        BlockState blockState = blockState_1;
-        if (blockState_1.getValue(POWER) != i) {
-            blockState_1 = blockState_1.setValue(POWER, i);
-            if (world_1.getBlockState(blockPos_1) == blockState) {
+    public BlockState carpet$updateLogicPublic(Level level, BlockPos pos, BlockState state) {
+        int i = this.calculateTargetStrength(level, pos);
+        BlockState prevState = state;
+        if (state.getValue(POWER) != i) {
+            state = state.setValue(POWER, i);
+            if (level.getBlockState(pos) == prevState) {
                 // [Space Walker] suppress shape updates and emit those manually to
                 // bypass the new neighbor update stack.
-                if (world_1.setBlock(blockPos_1, blockState_1, Block.UPDATE_KNOWN_SHAPE | Block.UPDATE_CLIENTS))
-                    wireTurbo.updateNeighborShapes(world_1, blockPos_1, blockState_1);
+                if (level.setBlock(pos, state, Block.UPDATE_KNOWN_SHAPE | Block.UPDATE_CLIENTS))
+                    wireTurbo.updateNeighborShapes(level, pos, state);
             }
 
             if (!CarpetSettings.fastRedstoneDust) {
                 Set<BlockPos> set = Sets.newHashSet();
-                set.add(blockPos_1);
+                set.add(pos);
                 Direction[] var6 = Direction.values();
                 int var7 = var6.length;
 
                 for (int var8 = 0; var8 < var7; ++var8) {
                     Direction direction = var6[var8];
-                    set.add(blockPos_1.relative(direction));
+                    set.add(pos.relative(direction));
                 }
 
                 for (BlockPos blockPos : set) {
-                    world_1.updateNeighborsAt(blockPos, blockState_1.getBlock());
+                    level.updateNeighborsAt(blockPos, state.getBlock());
                 }
             }
         }
-        return blockState_1;
+        return state;
     }
 
     // =

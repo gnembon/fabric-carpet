@@ -3,7 +3,6 @@ package carpet.helpers;
 import java.util.Optional;
 import java.util.function.BiConsumer;
 
-import carpet.fakes.MinecraftServerInterface;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
@@ -15,7 +14,7 @@ public class TickSpeed
 {
     private static Optional<ServerTickRateManager> gTRM() {
         if (CarpetServer.minecraft_server == null) return Optional.empty();
-        return Optional.of(((MinecraftServerInterface)CarpetServer.minecraft_server).getTickRateManager());
+        return Optional.of(CarpetServer.minecraft_server.carpet$getTickRateManager());
     }
 
     public static boolean process_entities() {

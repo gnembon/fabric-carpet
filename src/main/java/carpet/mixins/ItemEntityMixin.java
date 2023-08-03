@@ -42,7 +42,7 @@ public abstract class ItemEntityMixin extends Entity implements ItemEntityInterf
     }
 
     @Override
-    public int getPickupDelayCM() {
+    public int carpet$getPickupDelay() {
         return this.pickupDelay;
     }
 
@@ -96,7 +96,7 @@ public abstract class ItemEntityMixin extends Entity implements ItemEntityInterf
             selfStack.grow(amount);
             self.setItem(selfStack);
 
-            this.pickupDelay = Math.max(((ItemEntityInterface)other).getPickupDelayCM(), this.pickupDelay);
+            this.pickupDelay = Math.max(other.carpet$getPickupDelay(), this.pickupDelay);
             this.age = Math.min(other.getAge(), this.age);
 
             otherStack.shrink(amount);

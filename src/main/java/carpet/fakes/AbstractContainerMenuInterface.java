@@ -7,7 +7,9 @@ import net.minecraft.world.item.crafting.Recipe;
 
 public interface AbstractContainerMenuInterface
 {
-    DataSlot getDataSlot(int index);
-    boolean callButtonClickListener(int button, Player player);
-    boolean callSelectRecipeListener(ServerPlayer player, Recipe<?> recipe, boolean craftAll);
+    default DataSlot carpet$getDataSlot(int index) { throw new UnsupportedOperationException(); }
+
+    default boolean carpet$notifyButtonClickListeners(int button, Player player) { throw new UnsupportedOperationException(); }
+
+    default boolean carpet$notifySelectRecipeListeners(ServerPlayer player, Recipe<?> recipe, boolean craftAll) { throw new UnsupportedOperationException(); }
 }

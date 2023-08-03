@@ -1,6 +1,6 @@
 package carpet.mixins;
 
-import carpet.fakes.MobEntityInterface;
+import carpet.fakes.MobInterface;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -12,7 +12,7 @@ import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.ai.goal.GoalSelector;
 
 @Mixin(Mob.class)
-public abstract class MobMixin implements MobEntityInterface
+public abstract class MobMixin implements MobInterface
 {
     @Shadow @Final protected GoalSelector targetSelector;
     @Shadow @Final protected GoalSelector goalSelector;
@@ -20,19 +20,19 @@ public abstract class MobMixin implements MobEntityInterface
     public final Map<String, Goal> temporaryTasks = new HashMap<>();
 
     @Override
-    public GoalSelector getAI(boolean target)
+    public GoalSelector carpet$getAi(boolean target)
     {
         return target?targetSelector:goalSelector;
     }
 
     @Override
-    public Map<String, Goal> getTemporaryTasks()
+    public Map<String, Goal> carpet$getTemporaryTasks()
     {
         return temporaryTasks;
     }
 
     @Override
-    public void setPersistence(boolean what)
+    public void carpet$setPersistence(boolean what)
     {
         persistenceRequired = what;
     }

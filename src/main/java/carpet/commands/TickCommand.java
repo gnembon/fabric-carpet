@@ -1,7 +1,6 @@
 package carpet.commands;
 
 import carpet.CarpetSettings;
-import carpet.fakes.MinecraftServerInterface;
 import carpet.helpers.ServerTickRateManager;
 import carpet.network.ServerNetworkHandler;
 import carpet.utils.CarpetProfiler;
@@ -73,7 +72,7 @@ public class TickCommand
 
     private static int setTps(CommandSourceStack source, float tps)
     {
-        ServerTickRateManager trm = ((MinecraftServerInterface)source.getServer()).getTickRateManager();
+        ServerTickRateManager trm = source.getServer().carpet$getTickRateManager();
         trm.setTickRate(tps, true);
         queryTps(source);
         return (int)tps;
@@ -81,7 +80,7 @@ public class TickCommand
 
     private static int queryTps(CommandSourceStack source)
     {
-        ServerTickRateManager trm = ((MinecraftServerInterface)source.getServer()).getTickRateManager();
+        ServerTickRateManager trm = source.getServer().carpet$getTickRateManager();
 
         Messenger.m(source, "w Current tps is: ",String.format("wb %.1f", trm.tickrate()));
         return (int) trm.tickrate();
@@ -90,7 +89,7 @@ public class TickCommand
     private static int setWarp(CommandSourceStack source, int advance, String tail_command)
     {
         ServerPlayer player = source.getPlayer(); // may be null
-        ServerTickRateManager trm = ((MinecraftServerInterface)source.getServer()).getTickRateManager();
+        ServerTickRateManager trm = source.getServer().carpet$getTickRateManager();
         Component message = trm.requestGameToWarpSpeed(player, advance, tail_command, source);
         source.sendSuccess(() -> message, false);
         return 1;
@@ -98,7 +97,7 @@ public class TickCommand
 
     private static int freezeStatus(CommandSourceStack source)
     {
-        ServerTickRateManager trm = ((MinecraftServerInterface)source.getServer()).getTickRateManager();
+        ServerTickRateManager trm = source.getServer().carpet$getTickRateManager();
         if(trm.gameIsPaused())
         {
             Messenger.m(source, "gi Freeze Status: Game is "+(trm.deeplyFrozen()?"deeply ":"")+"frozen");
@@ -112,7 +111,7 @@ public class TickCommand
 
     private static int setFreeze(CommandSourceStack source, boolean isDeep, boolean freeze)
     {
-        ServerTickRateManager trm = ((MinecraftServerInterface)source.getServer()).getTickRateManager();
+        ServerTickRateManager trm = source.getServer().carpet$getTickRateManager();
         trm.setFrozenState(freeze, isDeep);
         if (trm.gameIsPaused())
         {
@@ -127,13 +126,13 @@ public class TickCommand
 
     private static int toggleFreeze(CommandSourceStack source, boolean isDeep)
     {
-        ServerTickRateManager trm = ((MinecraftServerInterface)source.getServer()).getTickRateManager();
+        ServerTickRateManager trm = source.getServer().carpet$getTickRateManager();
         return setFreeze(source, isDeep, !trm.gameIsPaused());
     }
 
     private static int step(CommandSourceStack source, int advance)
     {
-        ServerTickRateManager trm = ((MinecraftServerInterface)source.getServer()).getTickRateManager();
+        ServerTickRateManager trm = source.getServer().carpet$getTickRateManager();
         trm.stepGameIfPaused(advance);
         Messenger.m(source, "gi Stepping " + advance + " tick" + (advance != 1 ? "s" : ""));
         return 1;
@@ -141,7 +140,7 @@ public class TickCommand
 
     private static int toggleSuperHot(CommandSourceStack source)
     {
-        ServerTickRateManager trm = ((MinecraftServerInterface)source.getServer()).getTickRateManager();
+        ServerTickRateManager trm = source.getServer().carpet$getTickRateManager();
         trm.setSuperHot(!trm.isSuperHot());
         ServerNetworkHandler.updateSuperHotStateToConnectedPlayers(source.getServer());
         if (trm.isSuperHot())

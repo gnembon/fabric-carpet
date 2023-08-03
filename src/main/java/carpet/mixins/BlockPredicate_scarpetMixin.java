@@ -28,19 +28,19 @@ public class BlockPredicate_scarpetMixin implements BlockPredicateInterface
     @Shadow @Final private Set<Property<?>> properties;
 
     @Override
-    public BlockState getCMBlockState()
+    public BlockState carpet$getBlockState()
     {
         return state;
     }
 
     @Override
-    public TagKey<Block> getCMBlockTagKey()
+    public TagKey<Block> carpet$getTagKey()
     {
         return null;
     }
 
     @Override
-    public Map<Value, Value> getCMProperties()
+    public Map<Value, Value> carpet$getProperties()
     {
         return properties.stream().collect(Collectors.toMap(
                 p -> StringValue.of(p.getName()),
@@ -50,7 +50,7 @@ public class BlockPredicate_scarpetMixin implements BlockPredicateInterface
     }
 
     @Override
-    public CompoundTag getCMDataTag()
+    public CompoundTag carpet$getDataTag()
     {
         return nbt;
     }

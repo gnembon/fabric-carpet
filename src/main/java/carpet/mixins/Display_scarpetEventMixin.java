@@ -1,6 +1,5 @@
 package carpet.mixins;
 
-import carpet.fakes.EntityInterface;
 import carpet.script.EntityEventsGroup;
 import net.minecraft.world.entity.Display;
 import net.minecraft.world.entity.Entity;
@@ -23,6 +22,6 @@ public abstract class Display_scarpetEventMixin extends Entity
     private void onTickCall(CallbackInfo ci)
     {
         // calling extra on_tick because displays don't tick
-        ((EntityInterface)this).getEventContainer().onEvent(EntityEventsGroup.Event.ON_TICK);
+        carpet$getEventContainer().onEvent(EntityEventsGroup.Event.ON_TICK);
     }
 }

@@ -26,11 +26,11 @@ public abstract class ChunkHolder_scarpetChunkCreationMixin implements ChunkHold
     @Shadow @Final private AtomicReferenceArray<CompletableFuture<Either<ChunkAccess, ChunkHolder.ChunkLoadingFailure>>> futures;
 
     @Override
-    public CompletableFuture<Either<ChunkAccess, ChunkHolder.ChunkLoadingFailure>> setDefaultProtoChunk(ChunkPos chpos, BlockableEventLoop<Runnable> executor, ServerLevel world)
+    public CompletableFuture<Either<ChunkAccess, ChunkHolder.ChunkLoadingFailure>> carpet$setDefaultProtoChunk(ChunkPos pos, BlockableEventLoop<Runnable> executor, ServerLevel level)
     {
         int i = ChunkStatus.EMPTY.getIndex();
         CompletableFuture<Either<ChunkAccess, ChunkHolder.ChunkLoadingFailure>> completableFuture2 = CompletableFuture.supplyAsync(
-                () -> Either.left(new ProtoChunk(chpos, UpgradeData.EMPTY, world,  world.registryAccess().registryOrThrow(Registries.BIOME), null)), // todo figure out what that does - maybe add an option to reset with blending enabled..?
+                () -> Either.left(new ProtoChunk(pos, UpgradeData.EMPTY, level,  level.registryAccess().registryOrThrow(Registries.BIOME), null)), // todo figure out what that does - maybe add an option to reset with blending enabled..?
                 executor
         );
         updateChunkToSave(completableFuture2, "unfull"); // possible debug data

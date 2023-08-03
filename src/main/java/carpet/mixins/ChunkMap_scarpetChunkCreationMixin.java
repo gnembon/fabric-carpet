@@ -12,8 +12,7 @@ import java.util.concurrent.Future;
 import java.util.function.IntFunction;
 import java.util.stream.Collectors;
 
-import carpet.fakes.SimpleEntityLookupInterface;
-import carpet.fakes.ServerWorldInterface;
+import carpet.fakes.LevelEntityGetterAdapterInterface;
 import net.minecraft.Util;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.server.MinecraftServer;
@@ -46,10 +45,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import com.mojang.datafixers.util.Either;
 
-import carpet.fakes.ChunkHolderInterface;
-import carpet.fakes.ChunkTicketManagerInterface;
-import carpet.fakes.ServerLightingProviderInterface;
-import carpet.fakes.ThreadedAnvilChunkStorageInterface;
+import carpet.fakes.ChunkMapInterface;
 import carpet.script.utils.WorldTools;
 import it.unimi.dsi.fastutil.longs.Long2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.longs.LongSet;
@@ -60,7 +56,7 @@ import static carpet.script.CarpetEventServer.Event.CHUNK_GENERATED;
 import static carpet.script.CarpetEventServer.Event.CHUNK_LOADED;
 
 @Mixin(ChunkMap.class)
-public abstract class ChunkMap_scarpetChunkCreationMixin implements ThreadedAnvilChunkStorageInterface
+public abstract class ChunkMap_scarpetChunkCreationMixin implements ChunkMapInterface
 {
     @Shadow
     @Final
@@ -180,7 +176,7 @@ public abstract class ChunkMap_scarpetChunkCreationMixin implements ThreadedAnvi
     }
 
     @Override
-    public void releaseRelightTicket(final ChunkPos pos)
+    public void carpet$releaseRelightTicket(final ChunkPos pos)
     {
         this.mainThreadExecutor.tell(Util.name(
             () -> this.distanceManager.removeRegionTicket(TicketType.LIGHT, pos, 1, pos),
@@ -280,7 +276,7 @@ public abstract class ChunkMap_scarpetChunkCreationMixin implements ThreadedAnvi
     }
 
     @Override
-    public void relightChunk(ChunkPos pos)
+    public void carpet$relightChunk(ChunkPos pos)
     {
         this.addTicket(pos);
         this.tickTicketManager();
@@ -289,15 +285,15 @@ public abstract class ChunkMap_scarpetChunkCreationMixin implements ThreadedAnvi
                 this.updatingChunkMap.get(pos.toLong()).getOrScheduleFuture(ChunkStatus.EMPTY, (ChunkMap) (Object) this);
         final ChunkAccess chunk = this.getCurrentChunk(pos);
         if (!(chunk.getStatus().isOrAfter(ChunkStatus.LIGHT.getParent()))) return;
-        ((ServerLightingProviderInterface) this.lightEngine).removeLightData(chunk);
+        this.lightEngine.carpet$removeLightData(chunk);
         this.addRelightTicket(pos);
         ChunkHolder chunkHolder = this.updatingChunkMap.get(pos.toLong());
         final CompletableFuture<?> lightFuture = this.getChunkRangeFuture(chunkHolder, 1, (pos_) -> ChunkStatus.LIGHT)
                 .thenCompose(
                     either -> either.map(
-                            list -> ((ServerLightingProviderInterface) this.lightEngine).relight(chunk),
+                            list -> this.lightEngine.carpet$relight(chunk),
                             unloaded -> {
-                                this.releaseRelightTicket(pos);
+                                this.carpet$releaseRelightTicket(pos);
                                 return CompletableFuture.completedFuture(null);
                             }
                     )
@@ -306,7 +302,7 @@ public abstract class ChunkMap_scarpetChunkCreationMixin implements ThreadedAnvi
     }
 
     @Override
-    public Map<String, Integer> regenerateChunkRegion(final List<ChunkPos> requestedChunksList)
+    public Map<String, Integer> carpet$regenerateChunkRegion(final List<ChunkPos> requestedChunksList)
     {
         final Object2IntMap<String> report = new Object2IntOpenHashMap<>();
         final Set<ChunkPos> requestedChunks = new HashSet<>(requestedChunksList);
@@ -366,7 +362,7 @@ public abstract class ChunkMap_scarpetChunkCreationMixin implements ThreadedAnvi
             // remove entities
             long longPos = pos.toLong();
             if (this.entitiesInLevel.contains(longPos) && chunk instanceof LevelChunk)
-                ((SimpleEntityLookupInterface<Entity>)((ServerWorldInterface)level).getEntityLookupCMPublic()).getChunkEntities(pos).forEach(entity -> { if (!(entity instanceof Player)) entity.discard();});
+                ((LevelEntityGetterAdapterInterface<Entity>)level.carpet$getEntityGetter()).carpet$getChunkEntities(pos).forEach(entity -> { if (!(entity instanceof Player)) entity.discard();});
 
 
             if (chunk instanceof LevelChunk)
@@ -375,8 +371,8 @@ public abstract class ChunkMap_scarpetChunkCreationMixin implements ThreadedAnvi
             if (this.entitiesInLevel.remove(pos.toLong()) && chunk instanceof LevelChunk)
                 this.level.unload((LevelChunk) chunk); // block entities only
 
-            ((ServerLightingProviderInterface) this.lightEngine).invokeUpdateChunkStatus(pos);
-            ((ServerLightingProviderInterface) this.lightEngine).removeLightData(chunk);
+            this.lightEngine.carpet$updateChunkStatus(pos);
+            this.lightEngine.carpet$removeLightData(chunk);
 
             this.progressListener.onStatusChange(pos, null);
         }
@@ -390,10 +386,10 @@ public abstract class ChunkMap_scarpetChunkCreationMixin implements ThreadedAnvi
 
             final ChunkHolder oldHolder = this.updatingChunkMap.remove(pos);
             final ChunkHolder newHolder = new ChunkHolder(cPos, oldHolder.getTicketLevel(), level, this.lightEngine, this.queueSorter, (ChunkHolder.PlayerProvider) this);
-            ((ChunkHolderInterface) newHolder).setDefaultProtoChunk(cPos, this.mainThreadExecutor, level); // enable chunk blending?
+            newHolder.carpet$setDefaultProtoChunk(cPos, this.mainThreadExecutor, level); // enable chunk blending?
             this.updatingChunkMap.put(pos, newHolder);
 
-            ((ChunkTicketManagerInterface) this.distanceManager).replaceHolder(oldHolder, newHolder);
+            this.distanceManager.carpet$replaceHolder(oldHolder, newHolder);
         }
 
         this.modified = true;
@@ -459,7 +455,7 @@ public abstract class ChunkMap_scarpetChunkCreationMixin implements ThreadedAnvi
         // Remove light for affected neighbors
 
         for (final ChunkAccess chunk : affectedNeighbors)
-            ((ServerLightingProviderInterface) this.lightEngine).removeLightData(chunk);
+            this.lightEngine.carpet$removeLightData(chunk);
 
         // Schedule relighting of neighbors
 
@@ -476,9 +472,9 @@ public abstract class ChunkMap_scarpetChunkCreationMixin implements ThreadedAnvi
 
             lightFutures.add(this.getChunkRangeFuture (this.updatingChunkMap.get(pos.toLong()), 1, (pos_) -> ChunkStatus.LIGHT).thenCompose(
                     either -> either.map(
-                            list -> ((ServerLightingProviderInterface) this.lightEngine).relight(chunk),
+                            list -> this.lightEngine.carpet$relight(chunk),
                             unloaded -> {
-                                this.releaseRelightTicket(pos);
+                                this.carpet$releaseRelightTicket(pos);
                                 return CompletableFuture.completedFuture(null);
                             }
                     )
@@ -496,7 +492,7 @@ public abstract class ChunkMap_scarpetChunkCreationMixin implements ThreadedAnvi
     }
 
     @Override
-    public Iterable<ChunkHolder> getChunksCM() {
+    public Iterable<ChunkHolder> carpet$getChunks() {
         return getChunks();
     }
 }

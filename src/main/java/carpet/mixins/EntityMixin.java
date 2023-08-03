@@ -27,7 +27,7 @@ public abstract class EntityMixin implements EntityInterface
     @Shadow public Level level;
 
     @Override
-    public float getMainYaw(float partialTicks)
+    public float carpet$getMainYaw(float partialTicks)
     {
         return partialTicks == 1.0F ? this.yRot : Mth.lerp(partialTicks, this.yRotO, this.yRot);
     }

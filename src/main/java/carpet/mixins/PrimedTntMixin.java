@@ -1,6 +1,6 @@
 package carpet.mixins;
 
-import carpet.fakes.TntEntityInterface;
+import carpet.fakes.PrimedTntInterface;
 import carpet.CarpetSettings;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -13,12 +13,11 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.item.PrimedTnt;
-import net.minecraft.world.level.Explosion;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 
 @Mixin(PrimedTnt.class)
-public abstract class PrimedTntMixin extends Entity implements TntEntityInterface
+public abstract class PrimedTntMixin extends Entity implements PrimedTntInterface
 {
     @Shadow public abstract int getFuse();
 
@@ -99,7 +98,7 @@ public abstract class PrimedTntMixin extends Entity implements TntEntityInterfac
                         if(tntVelocity.x == 0 && tntVelocity.y == 0 && tntVelocity.z == 0
                                 && this.getX() == entityTNTPrimed.getX() && this.getZ() == entityTNTPrimed.getZ() && this.getY() == entityTNTPrimed.getY()
                                 && getFuse() == entityTNTPrimed.getFuse()){
-                            mergedTNT += ((TntEntityInterface) entityTNTPrimed).getMergedTNT();
+                            mergedTNT += entityTNTPrimed.carpet$getMergedTnt();
                             entityTNTPrimed.discard(); // discard remove();
                         }
                     }
@@ -119,7 +118,7 @@ public abstract class PrimedTntMixin extends Entity implements TntEntityInterfac
     }
 
     @Override
-    public int getMergedTNT() {
+    public int carpet$getMergedTnt() {
         return mergedTNT;
     }
 }

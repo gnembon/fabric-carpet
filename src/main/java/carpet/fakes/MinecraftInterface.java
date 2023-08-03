@@ -6,5 +6,7 @@ import java.util.Optional;
 
 public interface MinecraftInterface
 {
-    Optional<TickRateManager> getTickRateManager();
+    default Optional<TickRateManager> carpet$getTickRateManager() { throw new UnsupportedOperationException(); }
+
+    default float carpet$getPausePartialTick() { throw new UnsupportedOperationException(); }
 }

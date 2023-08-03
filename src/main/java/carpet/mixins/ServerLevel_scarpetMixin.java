@@ -1,6 +1,6 @@
 package carpet.mixins;
 
-import carpet.fakes.ServerWorldInterface;
+import carpet.fakes.ServerLevelInterface;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.core.RegistryAccess;
@@ -39,7 +39,7 @@ import static carpet.script.CarpetEventServer.Event.LIGHTNING;
 import static carpet.script.CarpetEventServer.Event.CHUNK_UNLOADED;
 
 @Mixin(ServerLevel.class)
-public abstract class ServerLevel_scarpetMixin extends Level implements ServerWorldInterface
+public abstract class ServerLevel_scarpetMixin extends Level implements ServerLevelInterface
 {
     protected ServerLevel_scarpetMixin(WritableLevelData writableLevelData, ResourceKey<Level> resourceKey, RegistryAccess registryAccess, Holder<DimensionType> holder, Supplier<ProfilerFiller> supplier, boolean bl, boolean bl2, long l, int i)
     {
@@ -96,13 +96,13 @@ public abstract class ServerLevel_scarpetMixin extends Level implements ServerWo
 
     @Unique
     @Override
-    public ServerLevelData getWorldPropertiesCM(){
+    public ServerLevelData carpet$getLevelData(){
         return serverLevelData;
     }
 
     @Unique
     @Override
-    public LevelEntityGetter<Entity> getEntityLookupCMPublic() {
+    public LevelEntityGetter<Entity> carpet$getEntityGetter() {
         return entityManager.getEntityGetter();
     }
 }

@@ -1,6 +1,5 @@
 package carpet.mixins;
 
-import carpet.fakes.MinecraftInterface;
 import carpet.helpers.TickRateManager;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.Timer;
@@ -17,10 +16,10 @@ public class Timer_tickSpeedMixin {
             value = "FIELD",
             target = "Lnet/minecraft/client/Timer;msPerTick:F"
     ))
-    private float adjustTickSpeed(Timer counter) {
+    private float adjustTickSpeed(Timer timer) {
         if (CarpetSettings.smoothClientAnimations)
         {
-            Optional<TickRateManager> trm = ((MinecraftInterface)Minecraft.getInstance()).getTickRateManager();
+            Optional<TickRateManager> trm = Minecraft.getInstance().carpet$getTickRateManager();
             if (trm.isPresent() && trm.get().runsNormally())
             {
                 return Math.max(50.0f, trm.get().mspt());

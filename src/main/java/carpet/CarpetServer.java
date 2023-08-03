@@ -15,7 +15,6 @@ import carpet.commands.MobAICommand;
 import carpet.commands.PerimeterInfoCommand;
 import carpet.commands.PlayerCommand;
 import carpet.commands.ProfileCommand;
-import carpet.fakes.MinecraftServerInterface;
 import carpet.helpers.ServerTickRateManager;
 import carpet.script.ScriptCommand;
 import carpet.commands.SpawnCommand;
@@ -119,7 +118,7 @@ public class CarpetServer // static for now - easier to handle all around the co
 
     public static void tick(MinecraftServer server)
     {
-        ServerTickRateManager trm = ((MinecraftServerInterface)server).getTickRateManager();
+        ServerTickRateManager trm = server.carpet$getTickRateManager();
         trm.tick();
         HUDController.update_hud(server, null);
         if (scriptServer != null) scriptServer.tick();

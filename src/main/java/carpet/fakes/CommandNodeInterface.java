@@ -1,5 +1,6 @@
 package carpet.fakes;
 
-public interface CommandNodeInterface {
+public interface CommandNodeInterface
+{
     void carpet$removeChild(String name);
 }

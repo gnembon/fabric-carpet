@@ -63,7 +63,7 @@ public abstract class MinecraftServer_scarpetMixin extends ReentrantBlockableEve
     @Shadow @Final private StructureTemplateManager structureTemplateManager;
 
     @Override
-    public void forceTick(BooleanSupplier isAhead)
+    public void carpet$forceTick(BooleanSupplier isAhead)
     {
         nextTickTime = lastOverloadWarning = Util.getMillis();
         tickServer(isAhead);
@@ -71,13 +71,13 @@ public abstract class MinecraftServer_scarpetMixin extends ReentrantBlockableEve
     }
 
     @Override
-    public LevelStorageSource.LevelStorageAccess getCMSession()
+    public LevelStorageSource.LevelStorageAccess carpet$getStorageSource()
     {
         return storageSource;
     }
 
     @Override
-    public Map<ResourceKey<Level>, ServerLevel> getCMWorlds()
+    public Map<ResourceKey<Level>, ServerLevel> carpet$getLevels()
     {
         return levels;
     }
@@ -88,7 +88,7 @@ public abstract class MinecraftServer_scarpetMixin extends ReentrantBlockableEve
     ))
     public void tickTasks(BooleanSupplier booleanSupplier_1, CallbackInfo ci)
     {
-        if (!getTickRateManager().runsNormally())
+        if (!carpet$getTickRateManager().runsNormally())
         {
             return;
         }
@@ -98,7 +98,7 @@ public abstract class MinecraftServer_scarpetMixin extends ReentrantBlockableEve
     }
 
     @Override
-    public void reloadAfterReload(RegistryAccess newRegs)
+    public void carpet$reloadAfterReload(RegistryAccess newRegs)
     {
         resources.managers().updateRegistryTags(newRegs);
         getPlayerList().saveAll();
@@ -108,19 +108,19 @@ public abstract class MinecraftServer_scarpetMixin extends ReentrantBlockableEve
     }
 
     @Override
-    public MinecraftServer.ReloadableResources getResourceManager()
+    public MinecraftServer.ReloadableResources carpet$getResources()
     {
         return resources;
     }
 
     @Override
-    public void addScriptServer(final CarpetScriptServer scriptServer)
+    public void carpet$addScriptServer(final CarpetScriptServer scriptServer)
     {
         this.scriptServer = scriptServer;
     }
 
     @Override
-    public CarpetScriptServer getScriptServer()
+    public CarpetScriptServer carpet$getScriptServer()
     {
         return scriptServer;
     }

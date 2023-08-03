@@ -1,6 +1,5 @@
 package carpet.helpers;
 
-import carpet.fakes.PistonBlockInterface;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.BlockSource;
 import net.minecraft.core.Direction;
@@ -61,9 +60,9 @@ public class BlockRotator
         if (block instanceof DirectionalBlock || block instanceof DispenserBlock)
         {
             Direction face = blockstate.getValue(DirectionalBlock.FACING);
-            if (block instanceof PistonBaseBlock && (
+            if (block instanceof PistonBaseBlock piston && (
                     blockstate.getValue(PistonBaseBlock.EXTENDED)
-                    || ( ((PistonBlockInterface)block).publicShouldExtend(world, blockpos, face) && (new PistonStructureResolver(world, blockpos, face, true)).resolve() )
+                    || (piston.carpet$getNeighborSignal(world, blockpos, face) && (new PistonStructureResolver(world, blockpos, face, true)).resolve() )
                     )
             )
             {

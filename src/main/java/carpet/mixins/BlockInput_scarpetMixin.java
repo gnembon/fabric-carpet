@@ -1,6 +1,6 @@
 package carpet.mixins;
 
-import carpet.fakes.BlockStateArgumentInterface;
+import carpet.fakes.BlockInputInterface;
 import net.minecraft.commands.arguments.blocks.BlockInput;
 import net.minecraft.nbt.CompoundTag;
 import org.jetbrains.annotations.Nullable;
@@ -9,12 +9,12 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 
 @Mixin(BlockInput.class)
-public class BlockInput_scarpetMixin implements BlockStateArgumentInterface
+public class BlockInput_scarpetMixin implements BlockInputInterface
 {
     @Shadow @Final private @Nullable CompoundTag tag;
 
     @Override
-    public CompoundTag getCMTag()
+    public CompoundTag carpet$getTag()
     {
         return tag;
     }

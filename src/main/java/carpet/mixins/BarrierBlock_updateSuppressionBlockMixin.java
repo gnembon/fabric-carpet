@@ -1,7 +1,6 @@
 package carpet.mixins;
 
 import carpet.CarpetSettings;
-import carpet.fakes.LevelInterface;
 import net.minecraft.world.level.redstone.NeighborUpdater;
 import net.minecraft.util.RandomSource;
 import org.spongepowered.asm.mixin.Mixin;
@@ -35,7 +34,7 @@ public class BarrierBlock_updateSuppressionBlockMixin extends Block {
                 BlockState stateAbove = level.getBlockState(fromPos);
                 if (stateAbove.is(Blocks.ACTIVATOR_RAIL) && !stateAbove.getValue(PoweredRailBlock.POWERED)) {
                     level.scheduleTick(pos, this, 1);
-                    NeighborUpdater updater = ((LevelInterface)level).getNeighborUpdater();
+                    NeighborUpdater updater = level.carpet$getNeighborUpdater();
                     if (updater instanceof CollectingNeighborUpdaterAccessor cnua)
                         cnua.setCount(cnua.getMaxChainedNeighborUpdates()-CarpetSettings.updateSuppressionBlock);
                 }

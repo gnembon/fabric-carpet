@@ -6,11 +6,11 @@ import net.minecraft.world.level.chunk.ChunkAccess;
 
 public interface ServerLightingProviderInterface
 {
-    void invokeUpdateChunkStatus(ChunkPos pos);
+    default void carpet$updateChunkStatus(ChunkPos pos) { throw new UnsupportedOperationException(); }
 
-    void removeLightData(ChunkAccess chunk);
+    default void carpet$removeLightData(ChunkAccess chunk) { throw new UnsupportedOperationException(); }
 
-    CompletableFuture<Void> relight(ChunkAccess chunk);
+    default CompletableFuture<Void> carpet$relight(ChunkAccess chunk) { throw new UnsupportedOperationException(); }
 
-    void resetLight(ChunkAccess chunk, ChunkPos pos);
+    default void carpet$resetLight(ChunkAccess chunk, ChunkPos pos) { throw new UnsupportedOperationException(); }
 }

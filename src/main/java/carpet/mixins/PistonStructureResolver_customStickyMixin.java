@@ -37,7 +37,7 @@ public class PistonStructureResolver_customStickyMixin {
     )
     private static void isSticky(BlockState state, CallbackInfoReturnable<Boolean> cir) {
         if (state.getBlock() instanceof BlockPistonBehaviourInterface behaviourInterface){
-            cir.setReturnValue(behaviourInterface.isSticky(state));
+            cir.setReturnValue(behaviourInterface.carpet$isSticky(state));
         }
     }
 
@@ -68,7 +68,7 @@ public class PistonStructureResolver_customStickyMixin {
     )
     private boolean onAddBlockLineCanStickToEachOther(BlockState state, BlockState behindState) {
         if (state.getBlock() instanceof BlockPistonBehaviourInterface behaviourInterface) {
-            return behaviourInterface.isStickyToNeighbor(level, pos_addBlockLine, state, behindPos_addBlockLine, behindState, pushDirection.getOpposite(), pushDirection);
+            return behaviourInterface.carpet$isStickyToNeighbor(level, pos_addBlockLine, state, behindPos_addBlockLine, behindState, pushDirection.getOpposite(), pushDirection);
         }
 
         return canStickToEachOther(state, behindState);
@@ -101,7 +101,7 @@ public class PistonStructureResolver_customStickyMixin {
     )
     private boolean onAddBranchingBlocksCanStickToEachOther(BlockState neighborState, BlockState state, BlockPos pos) {
         if (state.getBlock() instanceof BlockPistonBehaviourInterface behaviourInterface) {
-            return behaviourInterface.isStickyToNeighbor(level, pos, state, neighborPos_addBranchingBlocks, neighborState, dir_addBranchingBlocks, pushDirection);
+            return behaviourInterface.carpet$isStickyToNeighbor(level, pos, state, neighborPos_addBranchingBlocks, neighborState, dir_addBranchingBlocks, pushDirection);
         }
 
         return canStickToEachOther(neighborState, state);

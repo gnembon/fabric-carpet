@@ -4,8 +4,11 @@ import carpet.helpers.EntityPlayerActionPack;
 
 public interface ServerPlayerInterface
 {
-    EntityPlayerActionPack getActionPack();
-    void invalidateEntityObjectReference();
-    boolean isInvalidEntityObject();
-    String getLanguage();
+    default EntityPlayerActionPack carpet$getActionPack() { throw new UnsupportedOperationException(); }
+
+    default void carpet$invalidateEntityObjectReference() { throw new UnsupportedOperationException(); }
+
+    default boolean carpet$isInvalidEntityObject() { throw new UnsupportedOperationException(); }
+
+    default String carpet$getLanguage() { throw new UnsupportedOperationException(); }
 }

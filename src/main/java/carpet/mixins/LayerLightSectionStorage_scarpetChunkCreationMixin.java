@@ -35,7 +35,7 @@ public abstract class LayerLightSectionStorage_scarpetChunkCreationMixin impleme
     protected Long2ObjectMap<DataLayer> queuedSections;
 
     @Override
-    public void removeLightData(long cPos)
+    public void carpet$removeLightData(long cPos)
     {
 
         for (int y = -1; y < 17; ++y)

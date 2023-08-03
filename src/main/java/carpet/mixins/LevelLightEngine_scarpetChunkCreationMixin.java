@@ -20,12 +20,12 @@ public abstract class LevelLightEngine_scarpetChunkCreationMixin implements Ligh
     private LightEngine<?, ?> skyEngine;
 
     @Override
-    public void removeLightData(final long pos)
+    public void carpet$removeLightData(final long pos)
     {
         if (this.blockEngine != null)
-            ((Lighting_scarpetChunkCreationInterface) this.blockEngine).removeLightData(pos);
+            this.blockEngine.carpet$removeLightData(pos);
 
         if (this.skyEngine != null)
-            ((Lighting_scarpetChunkCreationInterface) this.skyEngine).removeLightData(pos);
+            this.skyEngine.carpet$removeLightData(pos);
     }
 }
