@@ -81,6 +81,8 @@
     "PieceGeneratorSupplier_plopMixin",
     "ServerGamePacketListenerImpl_scarpetEventsMixin",
     "ServerPlayerGameMode_scarpetEventsMixin",
+    "ItemCooldowns_scarpetEntityMixin",
+    "CooldownInstance_scarpetEntityMixin",
     "Player_parrotMixin",
     "SaplingBlock_desertShrubsMixin",
     "EntityMixin",

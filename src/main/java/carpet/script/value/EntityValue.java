@@ -1,5 +1,7 @@
 package carpet.script.value;
 
+import carpet.fakes.ItemCooldownsInterface;
+import carpet.mixins.ItemCooldowns_scarpetEntityMixin;
 import carpet.script.external.Vanilla;
 import carpet.script.utils.Tracer;
 import carpet.script.CarpetContext;
@@ -10,6 +12,7 @@ import carpet.script.exception.InternalExpressionException;
 import carpet.script.external.Carpet;
 import carpet.script.utils.EntityTools;
 import carpet.script.utils.InputValidator;
+import carpet.utils.Messenger;
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.minecraft.commands.CommandSourceStack;
@@ -65,6 +68,7 @@ import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.entity.projectile.WitherSkull;
 import net.minecraft.world.entity.vehicle.AbstractMinecart;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemCooldowns;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.Level;
@@ -511,7 +515,10 @@ public class EntityValue extends Value
             Item item = NBTSerializableValue.parseItem(a.getString(), e.getServer().registryAccess()).getItem();
 
             //The 0.0f here is because for some reason, the method does weird maths distorting the percentage
-            return NumericValue.of(player.getCooldowns().getCooldownPercent(item, 0.0f));
+            float perc = player.getCooldowns().getCooldownPercent(item, 0.0f);
+            int ticks = ((ItemCooldownsInterface) player.getCooldowns()).getCooldownTicks(item);
+            Messenger.m(player, "c perc: "+perc);
+            return NumericValue.of(ticks);
         });
         // ItemEntity -> despawn timer via ssGetAge
         put("is_baby", (e, a) -> (e instanceof final LivingEntity le) ? BooleanValue.of(le.isBaby()) : Value.NULL);

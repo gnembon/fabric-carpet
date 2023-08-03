@@ -9,6 +9,7 @@ accessible class net/minecraft/world/level/border/WorldBorder$StaticBorderExtent
 accessible class net/minecraft/server/MinecraftServer$ReloadableResources
 accessible class net/minecraft/world/level/biome/Biome$ClimateSettings
 accessible class net/minecraft/world/level/block/entity/SculkSensorBlockEntity$VibrationUser
+accessible class net/minecraft/world/item/ItemCooldowns$CooldownInstance
 
 accessible method net/minecraft/world/level/border/WorldBorder getListeners ()Ljava/util/List;
 
