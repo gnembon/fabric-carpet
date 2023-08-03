@@ -20,7 +20,7 @@ public class MinecraftMixin implements MinecraftInterface
 {
     @Shadow public ClientLevel level;
     
-    @Inject(method = "clearLevel(Lnet/minecraft/client/gui/screens/Screen;)V", at = @At("HEAD"))
+    @Inject(method = "disconnect(Lnet/minecraft/client/gui/screens/Screen;)V", at = @At("HEAD"))
     private void onCloseGame(Screen screen, CallbackInfo ci)
     {
         CarpetClient.disconnect();

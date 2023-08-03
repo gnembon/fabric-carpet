@@ -63,12 +63,12 @@ public class EntityPlayerMPFake extends ServerPlayer
         if (gameprofile.getProperties().containsKey("textures"))
         {
             AtomicReference<GameProfile> result = new AtomicReference<>();
-            SkullBlockEntity.updateGameprofile(gameprofile, result::set);
-            gameprofile = result.get();
+            //SkullBlockEntity.updateGameprofile(gameprofile, result::set);
+            //gameprofile = result.get();
         }
         EntityPlayerMPFake instance = new EntityPlayerMPFake(server, worldIn, gameprofile, false);
         instance.fixStartingPosition = () -> instance.moveTo(pos.x, pos.y, pos.z, (float) yaw, (float) pitch);
-        server.getPlayerList().placeNewPlayer(new FakeClientConnection(PacketFlow.SERVERBOUND), instance);
+        server.getPlayerList().placeNewPlayer(new FakeClientConnection(PacketFlow.SERVERBOUND), instance, 0);
         instance.teleportTo(worldIn, pos.x, pos.y, pos.z, (float) yaw, (float) pitch);
         instance.setHealth(20.0F);
         instance.unsetRemoved();
@@ -90,7 +90,7 @@ public class EntityPlayerMPFake extends ServerPlayer
         GameProfile gameprofile = player.getGameProfile();
         EntityPlayerMPFake playerShadow = new EntityPlayerMPFake(server, worldIn, gameprofile, true);
         playerShadow.setChatSession(player.getChatSession());
-        server.getPlayerList().placeNewPlayer(new FakeClientConnection(PacketFlow.SERVERBOUND), playerShadow);
+        server.getPlayerList().placeNewPlayer(new FakeClientConnection(PacketFlow.SERVERBOUND), playerShadow, 0);
 
         playerShadow.setHealth(player.getHealth());
         playerShadow.connection.teleport(player.getX(), player.getY(), player.getZ(), player.getYRot(), player.getXRot());

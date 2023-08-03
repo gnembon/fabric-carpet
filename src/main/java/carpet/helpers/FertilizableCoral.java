@@ -33,7 +33,7 @@ public interface FertilizableCoral extends BonemealableBlock {
     boolean isEnabled();
 
     @Override
-    public default boolean isValidBonemealTarget(LevelReader world, BlockPos pos, BlockState state, boolean var4)
+    public default boolean isValidBonemealTarget(LevelReader world, BlockPos pos, BlockState state)
     {
         return isEnabled()
                 && state.getValue(BaseCoralPlantTypeBlock.WATERLOGGED)

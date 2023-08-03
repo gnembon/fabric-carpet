@@ -19,7 +19,9 @@ import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.NumericTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.network.protocol.game.ServerboundCustomPayloadPacket;
+import net.minecraft.network.protocol.common.ServerboundCustomPayloadPacket;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.ResourceLocation;
 
 public class ClientNetworkHandler
 {
@@ -129,8 +131,20 @@ public class ClientNetworkHandler
     public static void respondHello()
     {
         CarpetClient.getPlayer().connection.send(new ServerboundCustomPayloadPacket(
-                CarpetClient.CARPET_CHANNEL,
-                (new FriendlyByteBuf(Unpooled.buffer())).writeVarInt(CarpetClient.HELLO).writeUtf(CarpetSettings.carpetVersion)
+                new CustomPacketPayload()
+                {
+                    @Override
+                    public void write(final FriendlyByteBuf friendlyByteBuf)
+                    {
+                        friendlyByteBuf.writeVarInt(CarpetClient.HELLO).writeUtf(CarpetSettings.carpetVersion);
+                    }
+
+                    @Override
+                    public ResourceLocation id()
+                    {
+                        return CarpetClient.CARPET_CHANNEL;
+                    }
+                }
         ));
     }
 
@@ -162,8 +176,20 @@ public class ClientNetworkHandler
         CompoundTag outer = new CompoundTag();
         outer.put("clientCommand", tag);
         CarpetClient.getPlayer().connection.send(new ServerboundCustomPayloadPacket(
-                CarpetClient.CARPET_CHANNEL,
-                (new FriendlyByteBuf(Unpooled.buffer())).writeVarInt(CarpetClient.DATA).writeNbt(outer)
+                new CustomPacketPayload()
+                {
+                    @Override
+                    public void write( FriendlyByteBuf friendlyByteBuf)
+                    {
+                        friendlyByteBuf.writeVarInt(CarpetClient.DATA).writeNbt(outer);
+                    }
+
+                    @Override
+                    public ResourceLocation id()
+                    {
+                        return CarpetClient.CARPET_CHANNEL;
+                    }
+                }
         ));
     }
 }

@@ -61,7 +61,7 @@ public class Scoreboards
                 return ListValue.wrap(scoreboard.getObjectiveNames().stream().map(StringValue::new));
             }
             String objectiveName = lv.get(0).getString();
-            Objective objective = scoreboard.getOrCreateObjective(objectiveName);
+            Objective objective = scoreboard.getObjective(objectiveName);
             if (objective == null)
             {
                 return Value.NULL;
@@ -103,7 +103,7 @@ public class Scoreboards
             CarpetContext cc = (CarpetContext) c;
             Scoreboard scoreboard = cc.server().getScoreboard();
             String objectiveName = lv.get(0).getString();
-            Objective objective = scoreboard.getOrCreateObjective(objectiveName);
+            Objective objective = scoreboard.getObjective(objectiveName);
             if (objective == null)
             {
                 return Value.FALSE;
@@ -151,7 +151,7 @@ public class Scoreboards
                 }
             }
 
-            Objective objective = scoreboard.getOrCreateObjective(objectiveName);
+            Objective objective = scoreboard.getObjective(objectiveName);
             if (objective != null)
             {
                 c.host.issueDeprecation("reading or modifying an objective's criterion with scoreboard_add");
@@ -181,7 +181,7 @@ public class Scoreboards
             }
             CarpetContext cc = (CarpetContext) c;
             Scoreboard scoreboard = cc.server().getScoreboard();
-            Objective objective = scoreboard.getOrCreateObjective(lv.get(0).getString());
+            Objective objective = scoreboard.getObjective(lv.get(0).getString());
             if (objective == null)
             {
                 return Value.NULL;
@@ -225,7 +225,7 @@ public class Scoreboards
                     }
                     return new FormattedTextValue(objective.getDisplayName());
                 }
-                case "display_slot" -> {
+                case "display_slot" -> { /*
                     if (modify)
                     {
                         int slotId = Scoreboard.getDisplaySlotByName(setValue.getString());
@@ -249,7 +249,8 @@ public class Scoreboards
                             slots.add(StringValue.of(slotName));
                         }
                     }
-                    return ListValue.wrap(slots);
+                    return ListValue.wrap(slots); */
+                    return Value.NULL;
                 }
                 case "render_type" -> {
                     if (modify)
@@ -269,7 +270,7 @@ public class Scoreboards
         });
 
         expression.addContextFunction("scoreboard_display", 2, (c, t, lv) ->
-        {
+        { /*
             CarpetContext cc = (CarpetContext) c;
             Scoreboard scoreboard = cc.server().getScoreboard();
             String location = lv.get(0).getString();
@@ -291,7 +292,8 @@ public class Scoreboards
                 return Value.NULL;
             }
             scoreboard.setDisplayObjective(slot, objective);
-            return new NumericValue(slot);
+            return new NumericValue(slot); */
+            return Value.NULL;
         });
 
         expression.addContextFunction("team_list", -1, (c, t, lv) ->

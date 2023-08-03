@@ -258,9 +258,9 @@ public abstract class CommandArgument
                     true
             ),
             new ScoreholderArgument(),
-            new VanillaUnconfigurableArgument("scoreboardslot", ScoreboardSlotArgument::displaySlot,
-                    (c, p) -> StringValue.of(Scoreboard.getDisplaySlotName(ScoreboardSlotArgument.getDisplaySlot(c, p))), false
-            ),
+            //new VanillaUnconfigurableArgument("scoreboardslot", ScoreboardSlotArgument::displaySlot,
+            //        (c, p) -> StringValue.of(Scoreboard.getDisplaySlotName(ScoreboardSlotArgument.getDisplaySlot(c, p))), false
+            //),
             new VanillaUnconfigurableArgument("swizzle", SwizzleArgument::swizzle,
                     (c, p) -> StringValue.of(SwizzleArgument.getSwizzle(c, p).stream().map(Direction.Axis::getSerializedName).collect(Collectors.joining())), true
             ),

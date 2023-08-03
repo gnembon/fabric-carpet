@@ -4,6 +4,7 @@ import carpet.CarpetServer;
 import carpet.CarpetSettings;
 import carpet.api.settings.CarpetRule;
 import carpet.api.settings.RuleHelper;
+import carpet.fakes.CarpetPacketPayload;
 import carpet.fakes.MinecraftServerInterface;
 import carpet.fakes.ServerGamePacketListenerImplInterface;
 import carpet.helpers.ServerTickRateManager;
@@ -16,19 +17,39 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
+
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.StringTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.protocol.game.ClientboundCustomPayloadPacket;
+import net.minecraft.network.protocol.common.ClientboundCustomPayloadPacket;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 
 public class ServerNetworkHandler
 {
+    @FunctionalInterface
+    public interface CarpetCustomPayload extends CustomPacketPayload
+    {
+        void writeData(FriendlyByteBuf output);
+
+        @Override
+        default void write(FriendlyByteBuf output) {
+            writeData(output);
+        }
+
+        @Override
+        default ResourceLocation id()
+        {
+            return CarpetClient.CARPET_CHANNEL;
+        }
+    }
     private static final Map<ServerPlayer, String> remoteCarpetPlayers = new HashMap<>();
     private static final Set<ServerPlayer> validCarpetPlayers = new HashSet<>();
 
@@ -52,24 +73,39 @@ public class ServerNetworkHandler
 
 
 
+    private static ClientboundCustomPayloadPacket make(Consumer<FriendlyByteBuf> accepter) {
+        return new ClientboundCustomPayloadPacket(
+                new CarpetCustomPayload()
+                {
+                    @Override
+                    public void writeData(final FriendlyByteBuf t)
+                    {
+                        accepter.accept(t);
+                    }
+                }
+        );
+    }
+
     public static void onPlayerJoin(ServerPlayer playerEntity)
     {
+        if (true) return;
         if (!((ServerGamePacketListenerImplInterface)playerEntity.connection).getConnection().isMemoryConnection())
         {
-            playerEntity.connection.send(new ClientboundCustomPayloadPacket(
-                    CarpetClient.CARPET_CHANNEL,
-                    (new FriendlyByteBuf(Unpooled.buffer())).writeVarInt(CarpetClient.HI).writeUtf(CarpetSettings.carpetVersion)
+            playerEntity.connection.send( make( output -> {
+                        output.writeVarInt(CarpetClient.HI);
+                        output.writeUtf(CarpetSettings.carpetVersion);
+                    }
             ));
         }
         else
         {
             validCarpetPlayers.add(playerEntity);
         }
-
     }
 
     public static void onHello(ServerPlayer playerEntity, FriendlyByteBuf packetData)
     {
+        if (true) return;
         validCarpetPlayers.add(playerEntity);
         String clientVersion = packetData.readUtf(64);
         remoteCarpetPlayers.put(playerEntity, clientVersion);
@@ -79,13 +115,13 @@ public class ServerNetworkHandler
             CarpetSettings.LOG.warn("Player "+playerEntity.getName().getString()+" joined with another carpet version: "+clientVersion);
         DataBuilder data = DataBuilder.create(playerEntity.server); // tickrate related settings are sent on world change
         CarpetServer.forEachManager(sm -> sm.getCarpetRules().forEach(data::withRule));
-        playerEntity.connection.send(new ClientboundCustomPayloadPacket(CarpetClient.CARPET_CHANNEL, data.build() ));
+        playerEntity.connection.send(make(data::build));
     }
 
     public static void sendPlayerLevelData(ServerPlayer player, ServerLevel level) {
         if (CarpetSettings.superSecretSetting || !validCarpetPlayers.contains(player)) return;
         DataBuilder data = DataBuilder.create(player.server).withTickRate().withFrozenState().withTickPlayerActiveTimeout(); // .withSuperHotState()
-        player.connection.send(new ClientboundCustomPayloadPacket(CarpetClient.CARPET_CHANNEL, data.build() ));
+        player.connection.send(make(data::build));
 
     }
 
@@ -113,9 +149,8 @@ public class ServerNetworkHandler
         ListTag outputResult = new ListTag();
         for (Component line: output) outputResult.add(StringTag.valueOf(Component.Serializer.toJson(line)));
         if (!output.isEmpty()) result.put("output", outputResult);
-        player.connection.send(new ClientboundCustomPayloadPacket(
-                CarpetClient.CARPET_CHANNEL,
-                DataBuilder.create(player.server).withCustomNbt("clientCommand", result).build()
+        player.connection.send(make( butebuf ->
+                DataBuilder.create(player.server).withCustomNbt("clientCommand", result).build(butebuf)
         ));
         // run command plug to command output,
     }
@@ -139,9 +174,8 @@ public class ServerNetworkHandler
         if (CarpetSettings.superSecretSetting) return;
         for (ServerPlayer player : remoteCarpetPlayers.keySet())
         {
-            player.connection.send(new ClientboundCustomPayloadPacket(
-                    CarpetClient.CARPET_CHANNEL,
-                    DataBuilder.create(player.server).withRule(rule).build()
+            player.connection.send(make( output ->
+                    DataBuilder.create(player.server).withRule(rule).build(output)
             ));
         }
     }
@@ -151,9 +185,8 @@ public class ServerNetworkHandler
         if (CarpetSettings.superSecretSetting) return;
         for (ServerPlayer player : validCarpetPlayers)
         {
-            player.connection.send(new ClientboundCustomPayloadPacket(
-                    CarpetClient.CARPET_CHANNEL,
-                    DataBuilder.create(player.server).withTickRate().build()
+            player.connection.send(make( output ->
+                    DataBuilder.create(player.server).withTickRate().build(output)
             ));
         }
     }
@@ -163,9 +196,8 @@ public class ServerNetworkHandler
         if (CarpetSettings.superSecretSetting) return;
         for (ServerPlayer player : validCarpetPlayers)
         {
-            player.connection.send(new ClientboundCustomPayloadPacket(
-                    CarpetClient.CARPET_CHANNEL,
-                    DataBuilder.create(player.server).withFrozenState().build()
+            player.connection.send(make( output ->
+                    DataBuilder.create(player.server).withFrozenState().build(output)
             ));
         }
     }
@@ -175,9 +207,8 @@ public class ServerNetworkHandler
         if(CarpetSettings.superSecretSetting) return;
         for (ServerPlayer player : validCarpetPlayers)
         {
-            player.connection.send(new ClientboundCustomPayloadPacket(
-                    CarpetClient.CARPET_CHANNEL,
-                    DataBuilder.create(player.server).withSuperHotState().build()
+            player.connection.send(make(output ->
+                    DataBuilder.create(player.server).withSuperHotState().build(output)
             ));
         }
     }
@@ -187,9 +218,8 @@ public class ServerNetworkHandler
         if (CarpetSettings.superSecretSetting) return;
         for (ServerPlayer player : validCarpetPlayers)
         {
-            player.connection.send(new ClientboundCustomPayloadPacket(
-                    CarpetClient.CARPET_CHANNEL,
-                    DataBuilder.create(player.server).withTickPlayerActiveTimeout().build()
+            player.connection.send(make(output ->
+                    DataBuilder.create(player.server).withTickPlayerActiveTimeout().build(output)
             ));
         }
     }
@@ -199,9 +229,8 @@ public class ServerNetworkHandler
         if (CarpetSettings.superSecretSetting) return;
         for (ServerPlayer player : validCarpetPlayers)
         {
-            player.connection.send(new ClientboundCustomPayloadPacket(
-                    CarpetClient.CARPET_CHANNEL,
-                    DataBuilder.create(player.server).withCustomNbt(command, data).build()
+            player.connection.send(make(output ->
+                    DataBuilder.create(player.server).withCustomNbt(command, data).build(output)
             ));
         }
     }
@@ -210,9 +239,8 @@ public class ServerNetworkHandler
     {
         if (isValidCarpetPlayer(player))
         {
-            player.connection.send(new ClientboundCustomPayloadPacket(
-                    CarpetClient.CARPET_CHANNEL,
-                    DataBuilder.create(player.server).withCustomNbt(command, data).build()
+            player.connection.send(make(output ->
+                    DataBuilder.create(player.server).withCustomNbt(command, data).build(output)
             ));
         }
     }
@@ -310,12 +338,10 @@ public class ServerNetworkHandler
             return this;
         }
 
-        private FriendlyByteBuf build()
+        private void build(FriendlyByteBuf packetBuf)
         {
-            FriendlyByteBuf packetBuf = new FriendlyByteBuf(Unpooled.buffer());
             packetBuf.writeVarInt(CarpetClient.DATA);
             packetBuf.writeNbt(tag);
-            return packetBuf;
         }
 
 

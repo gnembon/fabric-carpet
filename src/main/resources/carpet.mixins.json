@@ -181,7 +181,11 @@
     "BlockBehaviourBlockStateBase_mixin",
     "ChainBlock_customStickyMixin",
     "ChestBlock_customStickyMixin",
-    "PistonStructureResolver_customStickyMixin"
+    "PistonStructureResolver_customStickyMixin",
+
+    "ServerboundCustomPayloadPacket_mixin",
+    "ServerCommonPacketListenerimpl_connectionMixin",
+    "ClientboundCustomPayloadPacket_customPacketMixin"
 
   ],
   "client": [
@@ -200,7 +204,10 @@
     "LevelRenderer_creativeNoClipMixin",
     "ClientPacketListener_customPacketsMixin",
     "DebugRenderer_scarpetRenderMixin",
-    "LevelRenderer_scarpetRenderMixin"
+    "LevelRenderer_scarpetRenderMixin",
+
+
+    "ClientCommonPacketListenerImpl_customPacketMixin"
   ],
   "injectors": {
     "defaultRequire": 1
