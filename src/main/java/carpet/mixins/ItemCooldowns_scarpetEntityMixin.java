@@ -13,9 +13,11 @@ import java.util.Map;
 public class ItemCooldowns_scarpetEntityMixin implements ItemCooldownsInterface {
     @Shadow @Final private Map<Item, ItemCooldowns.CooldownInstance> cooldowns;
 
+    @Shadow private int tickCount;
+
     @Override
     public int getCooldownTicks(Item item) {
         var cooldown = ((CooldownInstanceAccessor) cooldowns.get(item));
-        return cooldown.getEndTime()-cooldown.getStartTime();
+        return cooldown.getEndTime()-tickCount;
     }
 }
