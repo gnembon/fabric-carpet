@@ -17,6 +17,8 @@ public class ItemCooldowns_scarpetEntityMixin implements ItemCooldownsInterface 
 
     @Override
     public int getCooldownTicks(Item item) {
+        if(!cooldowns.containsKey(item)) return 0;
+
         var cooldown = ((CooldownInstanceAccessor) cooldowns.get(item));
         return cooldown.getEndTime()-tickCount;
     }
