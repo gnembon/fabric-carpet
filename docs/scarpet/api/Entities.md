@@ -304,7 +304,7 @@ Number of ticks an entity sits in a portal.
 
 ### `query(e, 'item_cooldown', item)`
 
-Percentage remaining of item cooldown, e.g., from pearl throwing or horn blowing.
+Ticks remaining of item usage cooldown, e.g., from pearl throwing or horn blowing.
 
 ### `query(e, 'item')`
 

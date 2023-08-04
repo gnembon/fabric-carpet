@@ -5,7 +5,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Accessor;
 
 @Mixin(ItemCooldowns.CooldownInstance.class)
-public interface CooldownInstance_scarpetEntityMixin {
+public interface CooldownInstanceAccessor {
     @Accessor("startTime")
     int getStartTime();
 

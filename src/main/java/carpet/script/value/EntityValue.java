@@ -513,11 +513,8 @@ public class EntityValue extends Value
                 throw new InternalExpressionException("Can only query 'item_cooldown' for players");
 
             Item item = NBTSerializableValue.parseItem(a.getString(), e.getServer().registryAccess()).getItem();
-
-            //The 0.0f here is because for some reason, the method does weird maths distorting the percentage
-            float perc = player.getCooldowns().getCooldownPercent(item, 0.0f);
             int ticks = ((ItemCooldownsInterface) player.getCooldowns()).getCooldownTicks(item);
-            Messenger.m(player, "c perc: "+perc);
+
             return NumericValue.of(ticks);
         });
         // ItemEntity -> despawn timer via ssGetAge
