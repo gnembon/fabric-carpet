@@ -1,5 +1,6 @@
 package carpet.script.api;
 
+import carpet.CarpetServer;
 import carpet.script.external.Vanilla;
 import carpet.script.utils.FeatureGenerator;
 import carpet.script.argument.FileArgument;
@@ -1240,6 +1241,10 @@ public class Auxiliary
             cc.host.issueDeprecation("enable_hidden_dimensions in 1.18.2 and 1.19+");
             return Value.NULL;
         });
+
+        expression.addUnaryFunction("item_nutrition", v-> NumericValue.of(NBTSerializableValue.parseItem(v.getString(), CarpetServer.minecraft_server.registryAccess()).getItem().getFoodProperties().getNutrition()));
+        expression.addUnaryFunction("item_saturation", v-> NumericValue.of(NBTSerializableValue.parseItem(v.getString(), CarpetServer.minecraft_server.registryAccess()).getItem().getFoodProperties().getSaturationModifier()));
+
     }
 
     private static void zipValueToJson(Path path, Value output) throws IOException
