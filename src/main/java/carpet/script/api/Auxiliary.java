@@ -71,6 +71,8 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.decoration.ArmorStand;
+import net.minecraft.world.food.FoodProperties;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
@@ -1245,6 +1247,37 @@ public class Auxiliary
         expression.addUnaryFunction("item_nutrition", v-> NumericValue.of(NBTSerializableValue.parseItem(v.getString(), CarpetServer.minecraft_server.registryAccess()).getItem().getFoodProperties().getNutrition()));
         expression.addUnaryFunction("item_saturation", v-> NumericValue.of(NBTSerializableValue.parseItem(v.getString(), CarpetServer.minecraft_server.registryAccess()).getItem().getFoodProperties().getSaturationModifier()));
 
+        expression.addContextFunction("food_properties", -1, (c, t, lv)->{
+            if(lv.size()==0) throw new InternalExpressionException("'food_properties' requires at least an item name");
+            if(lv.size()>2) throw new InternalExpressionException("'food_properties' takes at most an item name and a property");
+
+            Item item = NBTSerializableValue.parseItem(lv.get(0).getString(), CarpetServer.minecraft_server.registryAccess()).getItem();
+            if(item.isEdible()){
+                FoodProperties foodProperties = item.getFoodProperties();
+                if(lv.size()==1){ //Return map of all food properties
+                    Map<Value, Value> propertyMap = new HashMap<>();
+                    propertyMap.put(StringValue.of("nutrition"), NumericValue.of(foodProperties.getNutrition()));
+                    propertyMap.put(StringValue.of("saturation"), NumericValue.of(foodProperties.getSaturationModifier()));
+                    propertyMap.put(StringValue.of("is_meat"), BooleanValue.of(foodProperties.isMeat()));
+                    propertyMap.put(StringValue.of("can_always_eat"), BooleanValue.of(foodProperties.canAlwaysEat()));
+                    propertyMap.put(StringValue.of("fast_food"), BooleanValue.of(foodProperties.isFastFood()));
+                    propertyMap.put(StringValue.of("effects"), Value.NULL); //todo food effects
+
+                    return MapValue.wrap(propertyMap);
+                } else { //Return specific food property
+                    String property = lv.get(1).getString();
+                    return switch (property) {
+                        case "nutrition" -> NumericValue.of(foodProperties.getNutrition());
+                        case "saturation" -> NumericValue.of(foodProperties.getSaturationModifier());
+                        case "is_meat" -> BooleanValue.of(foodProperties.isMeat());
+                        case "can_always_eat" -> BooleanValue.of(foodProperties.canAlwaysEat());
+                        case "fast_food" -> BooleanValue.of(foodProperties.isFastFood());
+                        case "effects" -> Value.NULL; //todo food effects
+                        default -> throw new InternalExpressionException("Invalid food property '"+property+"'");
+                    };
+                }
+            } else return Value.NULL;
+        });
     }
 
     private static void zipValueToJson(Path path, Value output) throws IOException
