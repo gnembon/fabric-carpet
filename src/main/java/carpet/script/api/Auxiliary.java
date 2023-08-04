@@ -67,6 +67,7 @@ import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.stats.Stat;
 import net.minecraft.stats.StatType;
+import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.EquipmentSlot;
@@ -1261,20 +1262,41 @@ public class Auxiliary
                     propertyMap.put(StringValue.of("is_meat"), BooleanValue.of(foodProperties.isMeat()));
                     propertyMap.put(StringValue.of("can_always_eat"), BooleanValue.of(foodProperties.canAlwaysEat()));
                     propertyMap.put(StringValue.of("fast_food"), BooleanValue.of(foodProperties.isFastFood()));
-                    propertyMap.put(StringValue.of("effects"), Value.NULL); //todo food effects
+
+                    Map<Value, Value> effectsMap = new HashMap<>();
+                    var effectsList = foodProperties.getEffects();
+                    for (var effect : effectsList) {
+                        MobEffectInstance mei = effect.getFirst();
+                        effectsMap.put(StringValue.of("name"), StringValue.of(mei.getEffect().getDisplayName().getString()));
+                        effectsMap.put(StringValue.of("duration"), NumericValue.of(mei.getDuration()));
+                        effectsMap.put(StringValue.of("amplifier"), NumericValue.of(mei.getAmplifier()));
+                        effectsMap.put(StringValue.of("probability"), NumericValue.of(effect.getSecond()));
+                    }
+                    propertyMap.put(StringValue.of("effects"), MapValue.wrap(effectsMap));
 
                     return MapValue.wrap(propertyMap);
                 } else { //Return specific food property
                     String property = lv.get(1).getString();
-                    return switch (property) {
-                        case "nutrition" -> NumericValue.of(foodProperties.getNutrition());
-                        case "saturation" -> NumericValue.of(foodProperties.getSaturationModifier());
-                        case "is_meat" -> BooleanValue.of(foodProperties.isMeat());
-                        case "can_always_eat" -> BooleanValue.of(foodProperties.canAlwaysEat());
-                        case "fast_food" -> BooleanValue.of(foodProperties.isFastFood());
-                        case "effects" -> Value.NULL; //todo food effects
-                        default -> throw new InternalExpressionException("Invalid food property '"+property+"'");
-                    };
+                    switch (property) {
+                        case "nutrition": return NumericValue.of(foodProperties.getNutrition());
+                        case "saturation": return NumericValue.of(foodProperties.getSaturationModifier());
+                        case "is_meat": return BooleanValue.of(foodProperties.isMeat());
+                        case "can_always_eat": return BooleanValue.of(foodProperties.canAlwaysEat());
+                        case "fast_food": return BooleanValue.of(foodProperties.isFastFood());
+                        case "effects":
+                            Map<Value, Value> effectsMap = new HashMap<>();
+                            var effectsList = foodProperties.getEffects();
+                            for (var effect : effectsList) {
+                                MobEffectInstance mei = effect.getFirst();
+                                effectsMap.put(StringValue.of("name"), StringValue.of(mei.getEffect().getDisplayName().getString()));
+                                effectsMap.put(StringValue.of("duration"), NumericValue.of(mei.getDuration()));
+                                effectsMap.put(StringValue.of("amplifier"), NumericValue.of(mei.getAmplifier()));
+                                effectsMap.put(StringValue.of("probability"), NumericValue.of(effect.getSecond()));
+                            }
+                            return MapValue.wrap(effectsMap);
+
+                        default: throw new InternalExpressionException("Invalid food property '" + property + "'");
+                    }
                 }
             } else return Value.NULL;
         });
