@@ -1,7 +1,6 @@
 package carpet.script.value;
 
 import carpet.fakes.ItemCooldownsInterface;
-import carpet.mixins.ItemCooldowns_scarpetEntityMixin;
 import carpet.script.external.Vanilla;
 import carpet.script.utils.Tracer;
 import carpet.script.CarpetContext;
@@ -12,7 +11,6 @@ import carpet.script.exception.InternalExpressionException;
 import carpet.script.external.Carpet;
 import carpet.script.utils.EntityTools;
 import carpet.script.utils.InputValidator;
-import carpet.utils.Messenger;
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.minecraft.commands.CommandSourceStack;
@@ -68,7 +66,6 @@ import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.entity.projectile.WitherSkull;
 import net.minecraft.world.entity.vehicle.AbstractMinecart;
 import net.minecraft.world.item.Item;
-import net.minecraft.world.item.ItemCooldowns;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.Level;
