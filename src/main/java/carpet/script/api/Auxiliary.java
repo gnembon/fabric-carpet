@@ -1250,7 +1250,7 @@ public class Auxiliary
 
         expression.addContextFunction("food_properties", -1, (c, t, lv)->{
             if(lv.size()==0) throw new InternalExpressionException("'food_properties' requires at least an item name");
-            if(lv.size()>2) throw new InternalExpressionException("'food_properties' takes at most an item name and a property");
+            if(lv.size()>2) throw new InternalExpressionException("'food_properties' takes at most an item name and a food property to query");
 
             Item item = NBTSerializableValue.parseItem(lv.get(0).getString(), CarpetServer.minecraft_server.registryAccess()).getItem();
             if(item.isEdible()){
