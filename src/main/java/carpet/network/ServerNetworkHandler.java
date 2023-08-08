@@ -34,12 +34,12 @@ public class ServerNetworkHandler
 
     private static final Map<String, BiConsumer<ServerPlayer, Tag>> dataHandlers = Map.of(
             CarpetClient.HELLO, (p, t) -> onHello(p, t.getAsString()),
-            "clientCommand", (p, t) -> handleClientCommand(p, (CompoundTag)t)
+            "clientCommand", (p, t) -> handleClientCommand(p, (CompoundTag) t)
     );
 
     public static void onPlayerJoin(ServerPlayer playerEntity)
     {
-        if (!((ServerGamePacketListenerImplInterface)playerEntity.connection).getConnection().isMemoryConnection())
+        if (!((ServerGamePacketListenerImplInterface) playerEntity.connection).getConnection().isMemoryConnection())
         {
             CompoundTag data = new CompoundTag();
             data.putString(CarpetClient.HI, CarpetSettings.carpetVersion);
@@ -56,16 +56,24 @@ public class ServerNetworkHandler
         validCarpetPlayers.add(playerEntity);
         remoteCarpetPlayers.put(playerEntity, version);
         if (version.equals(CarpetSettings.carpetVersion))
-            CarpetSettings.LOG.info("Player "+playerEntity.getName().getString()+" joined with a matching carpet client");
+        {
+            CarpetSettings.LOG.info("Player " + playerEntity.getName().getString() + " joined with a matching carpet client");
+        }
         else
-            CarpetSettings.LOG.warn("Player "+playerEntity.getName().getString()+" joined with another carpet version: "+ version);
+        {
+            CarpetSettings.LOG.warn("Player " + playerEntity.getName().getString() + " joined with another carpet version: " + version);
+        }
         DataBuilder data = DataBuilder.create(playerEntity.server); // tickrate related settings are sent on world change
         CarpetServer.forEachManager(sm -> sm.getCarpetRules().forEach(data::withRule));
         playerEntity.connection.send(data.build());
     }
 
-    public static void sendPlayerLevelData(ServerPlayer player, ServerLevel level) {
-        if (CarpetSettings.superSecretSetting || !validCarpetPlayers.contains(player)) return;
+    public static void sendPlayerLevelData(ServerPlayer player, ServerLevel level)
+    {
+        if (CarpetSettings.superSecretSetting || !validCarpetPlayers.contains(player))
+        {
+            return;
+        }
         DataBuilder data = DataBuilder.create(player.server).withTickRate().withFrozenState().withTickPlayerActiveTimeout(); // .withSuperHotState()
         player.connection.send(data.build());
     }
@@ -90,28 +98,44 @@ public class ServerNetworkHandler
         CompoundTag result = new CompoundTag();
         result.putString("id", id);
         result.putInt("code", resultCode);
-        if (error[0] != null) result.putString("error", error[0].getContents().toString());
+        if (error[0] != null)
+        {
+            result.putString("error", error[0].getContents().toString());
+        }
         ListTag outputResult = new ListTag();
-        for (Component line: output) outputResult.add(StringTag.valueOf(Component.Serializer.toJson(line)));
-        if (!output.isEmpty()) result.put("output", outputResult);
+        for (Component line : output)
+        {
+            outputResult.add(StringTag.valueOf(Component.Serializer.toJson(line)));
+        }
+        if (!output.isEmpty())
+        {
+            result.put("output", outputResult);
+        }
         player.connection.send(DataBuilder.create(player.server).withCustomNbt("clientCommand", result).build());
         // run command plug to command output,
     }
 
     public static void onClientData(ServerPlayer player, CompoundTag compound)
     {
-        for (String key: compound.getAllKeys())
+        for (String key : compound.getAllKeys())
         {
             if (dataHandlers.containsKey(key))
+            {
                 dataHandlers.get(key).accept(player, compound.get(key));
+            }
             else
-                CarpetSettings.LOG.warn("Unknown carpet client data: "+key);
+            {
+                CarpetSettings.LOG.warn("Unknown carpet client data: " + key);
+            }
         }
     }
 
     public static void updateRuleWithConnectedClients(CarpetRule<?> rule)
     {
-        if (CarpetSettings.superSecretSetting) return;
+        if (CarpetSettings.superSecretSetting)
+        {
+            return;
+        }
         for (ServerPlayer player : remoteCarpetPlayers.keySet())
         {
             player.connection.send(DataBuilder.create(player.server).withRule(rule).build());
@@ -120,7 +144,10 @@ public class ServerNetworkHandler
 
     public static void updateTickSpeedToConnectedPlayers(MinecraftServer server)
     {
-        if (CarpetSettings.superSecretSetting) return;
+        if (CarpetSettings.superSecretSetting)
+        {
+            return;
+        }
         for (ServerPlayer player : validCarpetPlayers)
         {
             player.connection.send(DataBuilder.create(player.server).withTickRate().build());
@@ -129,7 +156,10 @@ public class ServerNetworkHandler
 
     public static void updateFrozenStateToConnectedPlayers(MinecraftServer server)
     {
-        if (CarpetSettings.superSecretSetting) return;
+        if (CarpetSettings.superSecretSetting)
+        {
+            return;
+        }
         for (ServerPlayer player : validCarpetPlayers)
         {
             player.connection.send(DataBuilder.create(player.server).withFrozenState().build());
@@ -138,7 +168,10 @@ public class ServerNetworkHandler
 
     public static void updateSuperHotStateToConnectedPlayers(MinecraftServer server)
     {
-        if(CarpetSettings.superSecretSetting) return;
+        if (CarpetSettings.superSecretSetting)
+        {
+            return;
+        }
         for (ServerPlayer player : validCarpetPlayers)
         {
             player.connection.send(DataBuilder.create(player.server).withSuperHotState().build());
@@ -147,7 +180,10 @@ public class ServerNetworkHandler
 
     public static void updateTickPlayerActiveTimeoutToConnectedPlayers(MinecraftServer server)
     {
-        if (CarpetSettings.superSecretSetting) return;
+        if (CarpetSettings.superSecretSetting)
+        {
+            return;
+        }
         for (ServerPlayer player : validCarpetPlayers)
         {
             player.connection.send(DataBuilder.create(player.server).withTickPlayerActiveTimeout().build());
@@ -156,7 +192,10 @@ public class ServerNetworkHandler
 
     public static void broadcastCustomCommand(String command, Tag data)
     {
-        if (CarpetSettings.superSecretSetting) return;
+        if (CarpetSettings.superSecretSetting)
+        {
+            return;
+        }
         for (ServerPlayer player : validCarpetPlayers)
         {
             player.connection.send(DataBuilder.create(player.server).withCustomNbt(command, data).build());
@@ -174,8 +213,10 @@ public class ServerNetworkHandler
     public static void onPlayerLoggedOut(ServerPlayer player)
     {
         validCarpetPlayers.remove(player);
-        if (!((ServerGamePacketListenerImplInterface)player.connection).getConnection().isMemoryConnection())
+        if (!((ServerGamePacketListenerImplInterface) player.connection).getConnection().isMemoryConnection())
+        {
             remoteCarpetPlayers.remove(player);
+        }
     }
 
     public static void close()
@@ -186,15 +227,24 @@ public class ServerNetworkHandler
 
     public static boolean isValidCarpetPlayer(ServerPlayer player)
     {
-        if (CarpetSettings.superSecretSetting) return false;
+        if (CarpetSettings.superSecretSetting)
+        {
+            return false;
+        }
         return validCarpetPlayers.contains(player);
 
     }
 
     public static String getPlayerStatus(ServerPlayer player)
     {
-        if (remoteCarpetPlayers.containsKey(player)) return "carpet "+remoteCarpetPlayers.get(player);
-        if (validCarpetPlayers.contains(player)) return "carpet "+CarpetSettings.carpetVersion;
+        if (remoteCarpetPlayers.containsKey(player))
+        {
+            return "carpet " + remoteCarpetPlayers.get(player);
+        }
+        if (validCarpetPlayers.contains(player))
+        {
+            return "carpet " + CarpetSettings.carpetVersion;
+        }
         return "vanilla";
     }
 
@@ -202,42 +252,49 @@ public class ServerNetworkHandler
     {
         private CompoundTag tag;
         private MinecraftServer server;
+
         private static DataBuilder create(final MinecraftServer server)
         {
             return new DataBuilder(server);
         }
+
         private DataBuilder(MinecraftServer server)
         {
             tag = new CompoundTag();
             this.server = server;
         }
+
         private DataBuilder withTickRate()
         {
-            ServerTickRateManager trm = ((MinecraftServerInterface)server).getTickRateManager();
+            ServerTickRateManager trm = ((MinecraftServerInterface) server).getTickRateManager();
             tag.putFloat("TickRate", trm.tickrate());
             return this;
         }
+
         private DataBuilder withFrozenState()
         {
-            ServerTickRateManager trm = ((MinecraftServerInterface)server).getTickRateManager();
+            ServerTickRateManager trm = ((MinecraftServerInterface) server).getTickRateManager();
             CompoundTag tickingState = new CompoundTag();
             tickingState.putBoolean("is_paused", trm.gameIsPaused());
             tickingState.putBoolean("deepFreeze", trm.deeplyFrozen());
             tag.put("TickingState", tickingState);
             return this;
         }
+
         private DataBuilder withSuperHotState()
         {
-            ServerTickRateManager trm = ((MinecraftServerInterface)server).getTickRateManager();
-        	tag.putBoolean("SuperHotState", trm.isSuperHot());
-        	return this;
+            ServerTickRateManager trm = ((MinecraftServerInterface) server).getTickRateManager();
+            tag.putBoolean("SuperHotState", trm.isSuperHot());
+            return this;
         }
+
         private DataBuilder withTickPlayerActiveTimeout()
         {
-            ServerTickRateManager trm = ((MinecraftServerInterface)server).getTickRateManager();
+            ServerTickRateManager trm = ((MinecraftServerInterface) server).getTickRateManager();
             tag.putInt("TickPlayerActiveTimeout", trm.getPlayerActiveTimeout());
             return this;
         }
+
         private DataBuilder withRule(CarpetRule<?> rule)
         {
             CompoundTag rules = (CompoundTag) tag.get("Rules");
@@ -248,7 +305,10 @@ public class ServerNetworkHandler
             }
             String identifier = rule.settingsManager().identifier();
             String key = rule.name();
-            while (rules.contains(key)) { key = key+"2";}
+            while (rules.contains(key))
+            {
+                key = key + "2";
+            }
             CompoundTag ruleNBT = new CompoundTag();
             ruleNBT.putString("Value", RuleHelper.toRuleString(rule.value()));
             ruleNBT.putString("Manager", identifier);

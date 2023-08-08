@@ -16,17 +16,20 @@ public class CarpetClient
 {
     public record CarpetPayload(CompoundTag data) implements CustomPacketPayload
     {
-        public CarpetPayload(FriendlyByteBuf input) {
+        public CarpetPayload(FriendlyByteBuf input)
+        {
             this(input.readNbt());
         }
 
         @Override
-        public void write(FriendlyByteBuf output) {
+        public void write(FriendlyByteBuf output)
+        {
             output.writeNbt(data);
         }
 
         @Override
-        public ResourceLocation id() {
+        public ResourceLocation id()
+        {
             return CARPET_CHANNEL;
         }
     }
@@ -78,7 +81,10 @@ public class CarpetClient
 
     public static boolean sendClientCommand(String command)
     {
-        if (!isServerCarpet && CarpetServer.minecraft_server == null) return false;
+        if (!isServerCarpet && CarpetServer.minecraft_server == null)
+        {
+            return false;
+        }
         ClientNetworkHandler.clientCommand(command);
         return true;
     }
@@ -86,15 +92,20 @@ public class CarpetClient
     public static void onClientCommand(Tag t)
     {
         CarpetSettings.LOG.info("Server Response:");
-        CompoundTag tag = (CompoundTag)t;
-        CarpetSettings.LOG.info(" - id: "+tag.getString("id"));
-        CarpetSettings.LOG.info(" - code: "+tag.getInt("code"));
-        if (tag.contains("error")) CarpetSettings.LOG.warn(" - error: "+tag.getString("error"));
+        CompoundTag tag = (CompoundTag) t;
+        CarpetSettings.LOG.info(" - id: " + tag.getString("id"));
+        CarpetSettings.LOG.info(" - code: " + tag.getInt("code"));
+        if (tag.contains("error"))
+        {
+            CarpetSettings.LOG.warn(" - error: " + tag.getString("error"));
+        }
         if (tag.contains("output"))
         {
             ListTag outputTag = (ListTag) tag.get("output");
             for (int i = 0; i < outputTag.size(); i++)
+            {
                 CarpetSettings.LOG.info(" - response: " + Component.Serializer.fromJson(outputTag.getString(i)).getString());
+            }
         }
     }
 }

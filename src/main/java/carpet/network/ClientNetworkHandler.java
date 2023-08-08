@@ -8,9 +8,11 @@ import carpet.api.settings.InvalidRuleValueException;
 import carpet.fakes.LevelInterface;
 import carpet.helpers.TickRateManager;
 import carpet.api.settings.SettingsManager;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.BiConsumer;
+
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.nbt.ByteTag;
 import net.minecraft.nbt.CompoundTag;
@@ -22,12 +24,13 @@ import net.minecraft.network.protocol.common.ServerboundCustomPayloadPacket;
 public class ClientNetworkHandler
 {
     private static final Map<String, BiConsumer<LocalPlayer, Tag>> dataHandlers = new HashMap<String, BiConsumer<LocalPlayer, Tag>>();
+
     static
     {
         dataHandlers.put(CarpetClient.HI, (p, t) -> onHi(t.getAsString()));
         dataHandlers.put("Rules", (p, t) -> {
-            CompoundTag ruleset = (CompoundTag)t;
-            for (String ruleKey: ruleset.getAllKeys())
+            CompoundTag ruleset = (CompoundTag) t;
+            for (String ruleKey : ruleset.getAllKeys())
             {
                 CompoundTag ruleNBT = (CompoundTag) ruleset.get(ruleKey);
                 SettingsManager manager = null;
@@ -42,7 +45,8 @@ public class ClientNetworkHandler
                     }
                     else
                     {
-                        for (CarpetExtension extension: CarpetServer.extensions) {
+                        for (CarpetExtension extension : CarpetServer.extensions)
+                        {
                             SettingsManager eManager = extension.extensionSettingsManager();
                             if (eManager != null && managerName.equals(eManager.identifier()))
                             {
@@ -61,38 +65,46 @@ public class ClientNetworkHandler
                 if (rule != null)
                 {
                     String value = ruleNBT.getString("Value");
-                    try { rule.set(null, value); } catch (InvalidRuleValueException ignored) { }
+                    try
+                    {
+                        rule.set(null, value);
+                    }
+                    catch (InvalidRuleValueException ignored)
+                    {
+                    }
                 }
             }
         });
         dataHandlers.put("TickRate", (p, t) -> {
-            TickRateManager tickRateManager = ((LevelInterface)p.clientLevel).tickRateManager();
+            TickRateManager tickRateManager = ((LevelInterface) p.clientLevel).tickRateManager();
             tickRateManager.setTickRate(((NumericTag) t).getAsFloat());
         });
         dataHandlers.put("TickingState", (p, t) -> {
-            CompoundTag tickingState = (CompoundTag)t;
-            TickRateManager tickRateManager = ((LevelInterface)p.clientLevel).tickRateManager();
+            CompoundTag tickingState = (CompoundTag) t;
+            TickRateManager tickRateManager = ((LevelInterface) p.clientLevel).tickRateManager();
             tickRateManager.setFrozenState(tickingState.getBoolean("is_paused"), tickingState.getBoolean("deepFreeze"));
         });
         dataHandlers.put("SuperHotState", (p, t) -> {
-            TickRateManager tickRateManager = ((LevelInterface)p.clientLevel).tickRateManager();
-            tickRateManager.setSuperHot(((ByteTag) t).equals(ByteTag.ONE));
+            TickRateManager tickRateManager = ((LevelInterface) p.clientLevel).tickRateManager();
+            tickRateManager.setSuperHot(t.equals(ByteTag.ONE));
         });
         dataHandlers.put("TickPlayerActiveTimeout", (p, t) -> {
-            TickRateManager tickRateManager = ((LevelInterface)p.clientLevel).tickRateManager();
+            TickRateManager tickRateManager = ((LevelInterface) p.clientLevel).tickRateManager();
             tickRateManager.setPlayerActiveTimeout(((NumericTag) t).getAsInt());
         });
         dataHandlers.put("scShape", (p, t) -> { // deprecated // and unused // should remove for 1.17
             if (CarpetClient.shapes != null)
-                CarpetClient.shapes.addShape((CompoundTag)t);
+            {
+                CarpetClient.shapes.addShape((CompoundTag) t);
+            }
         });
         dataHandlers.put("scShapes", (p, t) -> {
             if (CarpetClient.shapes != null)
+            {
                 CarpetClient.shapes.addShapes((ListTag) t);
+            }
         });
-        dataHandlers.put("clientCommand", (p, t) -> {
-            CarpetClient.onClientCommand(t);
-        });
+        dataHandlers.put("clientCommand", (p, t) -> CarpetClient.onClientCommand(t));
     }
 
     // Ran on the Main Minecraft Thread
@@ -107,7 +119,7 @@ public class ClientNetworkHandler
         }
         else
         {
-            CarpetSettings.LOG.warn("Joined carpet server with another carpet version: "+CarpetClient.serverCarpetVersion);
+            CarpetSettings.LOG.warn("Joined carpet server with another carpet version: " + CarpetClient.serverCarpetVersion);
         }
         // We can ensure that this packet is
         // processed AFTER the player has joined
@@ -125,19 +137,23 @@ public class ClientNetworkHandler
 
     public static void onServerData(CompoundTag compound, LocalPlayer player)
     {
-        for (String key: compound.getAllKeys())
+        for (String key : compound.getAllKeys())
         {
-            if (dataHandlers.containsKey(key)) {
-                try {
+            if (dataHandlers.containsKey(key))
+            {
+                try
+                {
                     dataHandlers.get(key).accept(player, compound.get(key));
                 }
                 catch (Exception exc)
                 {
-                    CarpetSettings.LOG.info("Corrupt carpet data for "+key);
+                    CarpetSettings.LOG.info("Corrupt carpet data for " + key);
                 }
             }
             else
-                CarpetSettings.LOG.error("Unknown carpet data: "+key);
+            {
+                CarpetSettings.LOG.error("Unknown carpet data: " + key);
+            }
         }
     }
 
