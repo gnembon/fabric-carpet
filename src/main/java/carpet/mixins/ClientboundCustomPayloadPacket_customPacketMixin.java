@@ -17,7 +17,10 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 @Mixin(ClientboundCustomPayloadPacket.class)
 public class ClientboundCustomPayloadPacket_customPacketMixin
 {
-    @Inject(method = "readUnknownPayload", at = @At("HEAD"), cancellable = true)
+    @Inject(method = "readPayload", at = @At(
+            value = "INVOKE",
+            target = "Lnet/minecraft/network/protocol/common/ClientboundCustomPayloadPacket;readUnknownPayload(Lnet/minecraft/resources/ResourceLocation;Lnet/minecraft/network/FriendlyByteBuf;)Lnet/minecraft/network/protocol/common/custom/DiscardedPayload;"),
+            cancellable = true)
     private static void onOnCustomPayloadR(ResourceLocation resourceLocation, FriendlyByteBuf friendlyByteBuf, CallbackInfoReturnable<CustomPacketPayload> cir)
     {
         if (resourceLocation.equals(CarpetClient.CARPET_CHANNEL))
