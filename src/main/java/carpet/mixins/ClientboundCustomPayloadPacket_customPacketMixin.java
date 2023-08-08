@@ -17,19 +17,12 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 @Mixin(ClientboundCustomPayloadPacket.class)
 public class ClientboundCustomPayloadPacket_customPacketMixin
 {
-    @Inject(method = "readPayload", at = @At("HEAD"))
-    private static void onOnCustomPayloadR(final ResourceLocation resourceLocation, final FriendlyByteBuf friendlyByteBuf, final CallbackInfoReturnable<CustomPacketPayload> cir)
+    @Inject(method = "readUnknownPayload", at = @At("HEAD"), cancellable = true)
+    private static void onOnCustomPayloadR(ResourceLocation resourceLocation, FriendlyByteBuf friendlyByteBuf, CallbackInfoReturnable<CustomPacketPayload> cir)
     {
-    }
-
-    @Inject(method = "readUnknownPayload", at = @At(value = "HEAD"), cancellable = true)
-    private static void onOnCustomPayload(ResourceLocation resourceLocation, FriendlyByteBuf friendlyByteBuf, CallbackInfoReturnable<DiscardedPayload> cir)
-    {
-        if (true) return;
-        if (CarpetClient.CARPET_CHANNEL.equals(resourceLocation) && Minecraft.getInstance().isSameThread())
+        if (resourceLocation.equals(CarpetClient.CARPET_CHANNEL))
         {
-            ClientNetworkHandler.handleData(friendlyByteBuf, Minecraft.getInstance().player);
-            cir.setReturnValue(new DiscardedPayload(resourceLocation));
+            cir.setReturnValue(new CarpetClient.CarpetPayload(friendlyByteBuf));
         }
     }
 }

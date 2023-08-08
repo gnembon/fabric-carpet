@@ -1,6 +1,6 @@
 package carpet.mixins;
 
-import carpet.fakes.CarpetPacketPayload;
+import carpet.network.CarpetClient;
 import carpet.network.ServerNetworkHandler;
 import net.minecraft.network.protocol.PacketUtils;
 import net.minecraft.network.protocol.common.ServerboundCustomPayloadPacket;
@@ -18,16 +18,14 @@ public class ServerCommonPacketListenerimpl_connectionMixin
     @Inject(method = "handleCustomPayload", at = @At("HEAD"), cancellable = true)
     private void onCustomCarpetPayload(ServerboundCustomPayloadPacket serverboundCustomPayloadPacket, CallbackInfo ci)
     {
-        if (true) return;
         Object thiss = this;
-        if (thiss instanceof ServerGamePacketListenerImpl impl && serverboundCustomPayloadPacket.payload() instanceof CarpetPacketPayload cpp) {
+        if (thiss instanceof ServerGamePacketListenerImpl impl && serverboundCustomPayloadPacket.payload() instanceof CarpetClient.CarpetPayload cpp) {
             // We should force onto the main thread here
             // ServerNetworkHandler.handleData can possibly mutate data that isn't
             // thread safe, and also allows for client commands to be executed
             PacketUtils.ensureRunningOnSameThread(serverboundCustomPayloadPacket, (ServerGamePacketListener) this, impl.player.serverLevel());
-            ServerNetworkHandler.handleData(cpp.data(), impl.player);
+            ServerNetworkHandler.handleData(cpp, impl.player);
             ci.cancel();
         }
-        ci.cancel();
     }
 }

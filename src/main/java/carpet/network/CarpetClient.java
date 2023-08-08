@@ -14,22 +14,21 @@ import net.minecraft.resources.ResourceLocation;
 
 public class CarpetClient
 {
-    public record CarpetPayload(CompoundTag data) implements CustomPacketPayload
+    public record CarpetPayload(int command, CompoundTag data) implements CustomPacketPayload
     {
-        public static final ResourceLocation ID = CARPET_CHANNEL;
-
-        public CarpetPayload(final FriendlyByteBuf input) {
-            this(input.readNbt());
+        public CarpetPayload(FriendlyByteBuf input) {
+            this(input.readInt(), input.readNbt());
         }
 
         @Override
-        public void write(final FriendlyByteBuf output) {
+        public void write(FriendlyByteBuf output) {
+            output.writeInt(command);
             output.writeNbt(data);
         }
 
         @Override
         public ResourceLocation id() {
-            return ID;
+            return CARPET_CHANNEL;
         }
     }
 

@@ -99,22 +99,18 @@ public class ClientNetworkHandler
     };
 
     // Ran on the Main Minecraft Thread
-    public static void handleData(FriendlyByteBuf data, LocalPlayer player)
+    public static void handleData(CarpetClient.CarpetPayload data, LocalPlayer player)
     {
-        if (data != null)
-        {
-            int id = data.readVarInt();
-            if (id == CarpetClient.HI)
-                onHi(data);
-            if (id == CarpetClient.DATA)
-                onSyncData(data, player);
-        }
+        if (data.command() == CarpetClient.HI)
+            onHi(data.data());
+        if (data.command() == CarpetClient.DATA)
+            onSyncData(data.data(), player);
     }
 
-    private static void onHi(FriendlyByteBuf data)
+    private static void onHi(CompoundTag data)
     {
         CarpetClient.setCarpet();
-        CarpetClient.serverCarpetVersion = data.readUtf(64);
+        CarpetClient.serverCarpetVersion = data.getString("version");
         if (CarpetSettings.carpetVersion.equals(CarpetClient.serverCarpetVersion))
         {
             CarpetSettings.LOG.info("Joined carpet server with matching carpet version");
@@ -130,28 +126,15 @@ public class ClientNetworkHandler
 
     public static void respondHello()
     {
+        CompoundTag data = new CompoundTag();
+        data.putString("version", CarpetSettings.carpetVersion);
         CarpetClient.getPlayer().connection.send(new ServerboundCustomPayloadPacket(
-                new CustomPacketPayload()
-                {
-                    @Override
-                    public void write(final FriendlyByteBuf friendlyByteBuf)
-                    {
-                        friendlyByteBuf.writeVarInt(CarpetClient.HELLO).writeUtf(CarpetSettings.carpetVersion);
-                    }
-
-                    @Override
-                    public ResourceLocation id()
-                    {
-                        return CarpetClient.CARPET_CHANNEL;
-                    }
-                }
+                new CarpetClient.CarpetPayload(CarpetClient.HELLO, data)
         ));
     }
 
-    private static void onSyncData(FriendlyByteBuf data, LocalPlayer player)
+    private static void onSyncData(CompoundTag compound, LocalPlayer player)
     {
-        CompoundTag compound = data.readNbt();
-        if (compound == null) return;
         for (String key: compound.getAllKeys())
         {
             if (dataHandlers.containsKey(key)) {
@@ -176,20 +159,7 @@ public class ClientNetworkHandler
         CompoundTag outer = new CompoundTag();
         outer.put("clientCommand", tag);
         CarpetClient.getPlayer().connection.send(new ServerboundCustomPayloadPacket(
-                new CustomPacketPayload()
-                {
-                    @Override
-                    public void write( FriendlyByteBuf friendlyByteBuf)
-                    {
-                        friendlyByteBuf.writeVarInt(CarpetClient.DATA).writeNbt(outer);
-                    }
-
-                    @Override
-                    public ResourceLocation id()
-                    {
-                        return CarpetClient.CARPET_CHANNEL;
-                    }
-                }
+                new CarpetClient.CarpetPayload(CarpetClient.DATA, outer)
         ));
     }
 }
