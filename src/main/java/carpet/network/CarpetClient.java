@@ -14,15 +14,14 @@ import net.minecraft.resources.ResourceLocation;
 
 public class CarpetClient
 {
-    public record CarpetPayload(int command, CompoundTag data) implements CustomPacketPayload
+    public record CarpetPayload(CompoundTag data) implements CustomPacketPayload
     {
         public CarpetPayload(FriendlyByteBuf input) {
-            this(input.readInt(), input.readNbt());
+            this(input.readNbt());
         }
 
         @Override
         public void write(FriendlyByteBuf output) {
-            output.writeInt(command);
             output.writeNbt(data);
         }
 
@@ -34,7 +33,7 @@ public class CarpetClient
 
     public static final String HI = "69";
     public static final String HELLO = "420";
-    public static final int DATA = 1;
+
     public static ShapesRenderer shapes = null;
 
     private static LocalPlayer clientPlayer = null;

@@ -96,11 +96,6 @@ public class ClientNetworkHandler
     }
 
     // Ran on the Main Minecraft Thread
-    public static void handleData(CarpetClient.CarpetPayload data, LocalPlayer player)
-    {
-        if (data.command() == CarpetClient.DATA)
-            onSyncData(data.data(), player);
-    }
 
     private static void onHi(String version)
     {
@@ -124,11 +119,11 @@ public class ClientNetworkHandler
         CompoundTag data = new CompoundTag();
         data.putString(CarpetClient.HELLO, CarpetSettings.carpetVersion);
         CarpetClient.getPlayer().connection.send(new ServerboundCustomPayloadPacket(
-                new CarpetClient.CarpetPayload(CarpetClient.DATA, data)
+                new CarpetClient.CarpetPayload(data)
         ));
     }
 
-    private static void onSyncData(CompoundTag compound, LocalPlayer player)
+    public static void onServerData(CompoundTag compound, LocalPlayer player)
     {
         for (String key: compound.getAllKeys())
         {
@@ -154,7 +149,7 @@ public class ClientNetworkHandler
         CompoundTag outer = new CompoundTag();
         outer.put("clientCommand", tag);
         CarpetClient.getPlayer().connection.send(new ServerboundCustomPayloadPacket(
-                new CarpetClient.CarpetPayload(CarpetClient.DATA, outer)
+                new CarpetClient.CarpetPayload(outer)
         ));
     }
 }

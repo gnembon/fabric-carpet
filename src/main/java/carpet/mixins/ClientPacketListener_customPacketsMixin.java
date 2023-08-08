@@ -36,7 +36,7 @@ public abstract class ClientPacketListener_customPacketsMixin extends ClientComm
     {
         if (packet instanceof CarpetClient.CarpetPayload cpp)
         {
-            ClientNetworkHandler.handleData(cpp, minecraft.player);
+            ClientNetworkHandler.onServerData(cpp.data(), minecraft.player);
             ci.cancel();
         }
     }
