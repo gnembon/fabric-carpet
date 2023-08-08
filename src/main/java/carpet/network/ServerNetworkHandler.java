@@ -21,11 +21,8 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.StringTag;
 import net.minecraft.nbt.Tag;
-import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.common.ClientboundCustomPayloadPacket;
-import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -36,16 +33,13 @@ public class ServerNetworkHandler
     private static final Set<ServerPlayer> validCarpetPlayers = new HashSet<>();
 
     private static final Map<String, BiConsumer<ServerPlayer, Tag>> dataHandlers = Map.of(
-        "clientCommand", (p, t) -> {
-            handleClientCommand(p, (CompoundTag)t);
-        }
+            CarpetClient.HELLO, (p, t) -> onHello(p, t.getAsString()),
+            "clientCommand", (p, t) -> handleClientCommand(p, (CompoundTag)t)
     );
 
     public static void handleData(CarpetClient.CarpetPayload data, ServerPlayer player)
     {
         int id = data.command();
-        if (id == CarpetClient.HELLO)
-            onHello(player, data.data());
         if (id == CarpetClient.DATA)
             onClientData(player, data.data());
     }
@@ -64,8 +58,8 @@ public class ServerNetworkHandler
         if (!((ServerGamePacketListenerImplInterface)playerEntity.connection).getConnection().isMemoryConnection())
         {
             CompoundTag data = new CompoundTag();
-            data.putString("version", CarpetSettings.carpetVersion);
-            playerEntity.connection.send( make( CarpetClient.HI,  data));
+            data.putString(CarpetClient.HI, CarpetSettings.carpetVersion);
+            playerEntity.connection.send( make( CarpetClient.DATA, data));
         }
         else
         {
@@ -73,15 +67,14 @@ public class ServerNetworkHandler
         }
     }
 
-    public static void onHello(ServerPlayer playerEntity, CompoundTag packetData)
+    public static void onHello(ServerPlayer playerEntity, String version)
     {
         validCarpetPlayers.add(playerEntity);
-        String clientVersion = packetData.getString("version");
-        remoteCarpetPlayers.put(playerEntity, clientVersion);
-        if (clientVersion.equals(CarpetSettings.carpetVersion))
+        remoteCarpetPlayers.put(playerEntity, version);
+        if (version.equals(CarpetSettings.carpetVersion))
             CarpetSettings.LOG.info("Player "+playerEntity.getName().getString()+" joined with a matching carpet client");
         else
-            CarpetSettings.LOG.warn("Player "+playerEntity.getName().getString()+" joined with another carpet version: "+clientVersion);
+            CarpetSettings.LOG.warn("Player "+playerEntity.getName().getString()+" joined with another carpet version: "+ version);
         DataBuilder data = DataBuilder.create(playerEntity.server); // tickrate related settings are sent on world change
         CarpetServer.forEachManager(sm -> sm.getCarpetRules().forEach(data::withRule));
         playerEntity.connection.send(make(data));

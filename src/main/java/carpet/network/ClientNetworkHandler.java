@@ -8,7 +8,6 @@ import carpet.api.settings.InvalidRuleValueException;
 import carpet.fakes.LevelInterface;
 import carpet.helpers.TickRateManager;
 import carpet.api.settings.SettingsManager;
-import io.netty.buffer.Unpooled;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.BiConsumer;
@@ -18,16 +17,14 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.NumericTag;
 import net.minecraft.nbt.Tag;
-import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.protocol.common.ServerboundCustomPayloadPacket;
-import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.ResourceLocation;
 
 public class ClientNetworkHandler
 {
     private static final Map<String, BiConsumer<LocalPlayer, Tag>> dataHandlers = new HashMap<String, BiConsumer<LocalPlayer, Tag>>();
     static
     {
+        dataHandlers.put(CarpetClient.HI, (p, t) -> onHi(t.getAsString()));
         dataHandlers.put("Rules", (p, t) -> {
             CompoundTag ruleset = (CompoundTag)t;
             for (String ruleKey: ruleset.getAllKeys())
@@ -96,21 +93,19 @@ public class ClientNetworkHandler
         dataHandlers.put("clientCommand", (p, t) -> {
             CarpetClient.onClientCommand(t);
         });
-    };
+    }
 
     // Ran on the Main Minecraft Thread
     public static void handleData(CarpetClient.CarpetPayload data, LocalPlayer player)
     {
-        if (data.command() == CarpetClient.HI)
-            onHi(data.data());
         if (data.command() == CarpetClient.DATA)
             onSyncData(data.data(), player);
     }
 
-    private static void onHi(CompoundTag data)
+    private static void onHi(String version)
     {
         CarpetClient.setCarpet();
-        CarpetClient.serverCarpetVersion = data.getString("version");
+        CarpetClient.serverCarpetVersion = version;
         if (CarpetSettings.carpetVersion.equals(CarpetClient.serverCarpetVersion))
         {
             CarpetSettings.LOG.info("Joined carpet server with matching carpet version");
@@ -127,9 +122,9 @@ public class ClientNetworkHandler
     public static void respondHello()
     {
         CompoundTag data = new CompoundTag();
-        data.putString("version", CarpetSettings.carpetVersion);
+        data.putString(CarpetClient.HELLO, CarpetSettings.carpetVersion);
         CarpetClient.getPlayer().connection.send(new ServerboundCustomPayloadPacket(
-                new CarpetClient.CarpetPayload(CarpetClient.HELLO, data)
+                new CarpetClient.CarpetPayload(CarpetClient.DATA, data)
         ));
     }
 

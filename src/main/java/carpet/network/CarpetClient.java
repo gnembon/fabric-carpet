@@ -32,8 +32,8 @@ public class CarpetClient
         }
     }
 
-    public static final int HI = 69;
-    public static final int HELLO = 420;
+    public static final String HI = "69";
+    public static final String HELLO = "420";
     public static final int DATA = 1;
     public static ShapesRenderer shapes = null;
 
