@@ -92,7 +92,7 @@ public class ValueConversions
     {
         return ListValue.of(
                 range.min().map(NumericValue::of).orElse(Value.NULL),
-                range.min().map(NumericValue::of).orElse(Value.NULL)
+                range.max().map(NumericValue::of).orElse(Value.NULL)
         );
     }
 
