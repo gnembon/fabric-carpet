@@ -67,6 +67,7 @@
     "PistonStructureResolver_pushLimitMixin",
     "PoweredRailBlock_powerLimitMixin",
     "LivingEntity_maxCollisionsMixin",
+    "LivingEntity_tickSpeedMixin",
     "Level_getOtherEntitiesLimited",
     "CoralPlantBlock_renewableCoralMixin",
     "CoralFanBlock_renewableCoralMixin",
