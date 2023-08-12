@@ -187,6 +187,7 @@ public class EntityPlayerMPFake extends ServerPlayer
         shakeOff();
         super.die(cause);
         setHealth(20);
+        giveExperienceLevels(-(experienceLevel + 1));
         this.foodData = new FoodData();
         kill(this.getCombatTracker().getDeathMessage());
     }
