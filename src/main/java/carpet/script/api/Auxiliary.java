@@ -1,5 +1,6 @@
 package carpet.script.api;
 
+import carpet.CarpetServer;
 import carpet.script.external.Vanilla;
 import carpet.script.utils.FeatureGenerator;
 import carpet.script.argument.FileArgument;
