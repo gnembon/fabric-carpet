@@ -1,6 +1,5 @@
 package carpet.script.api;
 
-import carpet.CarpetServer;
 import carpet.script.external.Vanilla;
 import carpet.script.utils.FeatureGenerator;
 import carpet.script.argument.FileArgument;
@@ -1252,7 +1251,8 @@ public class Auxiliary
             if(lv.size()==0) throw new InternalExpressionException("'food_properties' requires at least an item name");
             if(lv.size()>2) throw new InternalExpressionException("'food_properties' takes at most an item name and a food property to query");
 
-            Item item = NBTSerializableValue.parseItem(lv.get(0).getString(), CarpetServer.minecraft_server.registryAccess()).getItem();
+            Item item = NBTSerializableValue.parseItem(lv.get(0).getString(), ((CarpetContext) c).registryAccess()).getItem();
+
             if(item.isEdible()){
                 FoodProperties foodProperties = item.getFoodProperties();
                 if(lv.size()==1){ //Return map of all food properties
