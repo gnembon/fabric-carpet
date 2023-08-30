@@ -54,7 +54,7 @@ import net.minecraft.world.inventory.SmithingMenu;
 import net.minecraft.world.inventory.SmokerMenu;
 import net.minecraft.world.inventory.StonecutterMenu;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.crafting.Recipe;
+import net.minecraft.world.item.crafting.RecipeHolder;
 
 import javax.annotation.Nullable;
 
@@ -252,10 +252,10 @@ public class ScreenValue extends Value
             }
 
             @Override
-            public boolean onSelectRecipe(ServerPlayer player, Recipe<?> recipe, boolean craftAll)
+            public boolean onSelectRecipe(ServerPlayer player, RecipeHolder<?> recipe, boolean craftAll)
             {
                 Map<Value, Value> data = new HashMap<>();
-                data.put(StringValue.of("recipe"), StringValue.of(recipe.getId().toString()));
+                data.put(StringValue.of("recipe"), ValueConversions.of(recipe.id()));
                 data.put(StringValue.of("craft_all"), BooleanValue.of(craftAll));
                 return ScreenValue.this.callListener(player, "select_recipe", data);
             }
@@ -398,7 +398,7 @@ public class ScreenValue extends Value
 
         void onClose(ServerPlayer player);
 
-        boolean onSelectRecipe(ServerPlayer player, Recipe<?> recipe, boolean craftAll);
+        boolean onSelectRecipe(ServerPlayer player, RecipeHolder<?> recipe, boolean craftAll);
     }
 
     public static class ScreenHandlerInventory implements Container

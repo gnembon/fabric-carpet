@@ -2,6 +2,7 @@ package carpet.mixins;
 
 import carpet.fakes.AbstractContainerMenuInterface;
 import carpet.script.value.ScreenValue;
+import net.minecraft.world.item.crafting.RecipeHolder;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -16,7 +17,6 @@ import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.ClickType;
 import net.minecraft.world.inventory.ContainerListener;
 import net.minecraft.world.inventory.DataSlot;
-import net.minecraft.world.item.crafting.Recipe;
 
 @Mixin(AbstractContainerMenu.class)
 public abstract class AbstractContainerMenu_scarpetMixin implements AbstractContainerMenuInterface
@@ -61,7 +61,7 @@ public abstract class AbstractContainerMenu_scarpetMixin implements AbstractCont
     }
 
     @Override
-    public boolean callSelectRecipeListener(ServerPlayer player, Recipe<?> recipe, boolean craftAll) {
+    public boolean callSelectRecipeListener(ServerPlayer player, RecipeHolder<?> recipe, boolean craftAll) {
         for(ContainerListener screenHandlerListener : containerListeners) {
             if(screenHandlerListener instanceof ScreenValue.ScarpetScreenHandlerListener scarpetScreenHandlerListener) {
                 if(scarpetScreenHandlerListener.onSelectRecipe(player, recipe, craftAll))

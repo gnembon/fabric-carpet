@@ -55,7 +55,7 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import net.minecraft.ChatFormatting;
-import net.minecraft.advancements.Advancement;
+import net.minecraft.advancements.AdvancementHolder;
 import net.minecraft.advancements.critereon.MinMaxBounds;
 import net.minecraft.commands.CommandBuildContext;
 import net.minecraft.commands.CommandSourceStack;
@@ -205,10 +205,10 @@ public abstract class CommandArgument
             // resource / identifier section
 
             new VanillaUnconfigurableArgument("recipe", ResourceLocationArgument::id,
-                    (c, p) -> ValueConversions.of(ResourceLocationArgument.getRecipe(c, p).getId()), SuggestionProviders.ALL_RECIPES
+                    (c, p) -> ValueConversions.of(ResourceLocationArgument.getRecipe(c, p).id()), SuggestionProviders.ALL_RECIPES
             ),
             new VanillaUnconfigurableArgument("advancement", ResourceLocationArgument::id,
-                    (c, p) -> ValueConversions.of(ResourceLocationArgument.getAdvancement(c, p).getId()), (ctx, builder) -> SharedSuggestionProvider.suggestResource(ctx.getSource().getServer().getAdvancements().getAllAdvancements().stream().map(Advancement::getId), builder)
+                    (c, p) -> ValueConversions.of(ResourceLocationArgument.getAdvancement(c, p).id()), (ctx, builder) -> SharedSuggestionProvider.suggestResource(ctx.getSource().getServer().getAdvancements().getAllAdvancements().stream().map(AdvancementHolder::id), builder)
             ),
             new VanillaUnconfigurableArgument("lootcondition", ResourceLocationArgument::id,
                     (c, p) -> ValueConversions.of(c.getSource().registryAccess().registryOrThrow(Registries.LOOT_CONDITION_TYPE).getKey(ResourceLocationArgument.getPredicate(c, p).getType())), (ctx, builder) -> SharedSuggestionProvider.suggestResource(ctx.getSource().getServer().getLootData().getKeys(LootDataType.PREDICATE), builder)
