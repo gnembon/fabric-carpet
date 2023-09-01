@@ -633,7 +633,7 @@ public class EntityValue extends Value
 
         put("client_brand", (e, a) -> e instanceof final ServerPlayer sp ? StringValue.of(Carpet.getPlayerStatus(sp)) : Value.NULL);
         put("team", (e, a) -> e.getTeam() == null ? Value.NULL : new StringValue(e.getTeam().getName()));
-        put("ping", (e, a) -> e instanceof final ServerPlayer sp ? new NumericValue(sp.latency) : Value.NULL);
+        put("ping", (e, a) -> e instanceof final ServerPlayer sp ? new NumericValue(sp.connection.latency()) : Value.NULL);
 
         //spectating_entity
         // isGlowing

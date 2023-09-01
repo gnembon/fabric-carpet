@@ -71,7 +71,7 @@ public class CarpetSettings
     @Rule(
             desc = "Sets the language for Carpet",
             category = FEATURE,
-            options = {"en_us", "pt_br", "zh_cn", "zh_tw"},
+            options = {"en_us", "fr_fr", "pt_br", "zh_cn", "zh_tw"},
             strict = true, // the current system doesn't handle fallbacks and other, not defined languages would make unreadable mess. Change later
             validate = LanguageValidator.class
     )
@@ -597,6 +597,9 @@ public class CarpetSettings
     @Rule(desc = "Spawn offline players in online mode if online-mode player with specified name does not exist", category = COMMAND)
     public static boolean allowSpawningOfflinePlayers = true;
 
+    @Rule(desc = "Allows listing fake players on the multiplayer screen", category = COMMAND)
+    public static boolean allowListingFakePlayers = false;
+
     @Rule(desc = "Allows to track mobs AI via /track command", category = COMMAND)
     public static String commandTrackAI = "ops";
 
@@ -862,43 +865,6 @@ public class CarpetSettings
             validate = ChangeSpawnChunksValidator.class
     )
     public static int spawnChunksSize = MinecraftServer.START_CHUNK_RADIUS;
-
-    public static class LightBatchValidator extends Validator<Integer> {
-        public static void applyLightBatchSizes(MinecraftServer server, int maxBatchSize)
-        {
-            for (ServerLevel world : server.getAllLevels())
-            {
-                //world.getChunkSource().getLightEngine().setTaskPerBatch(maxBatchSize);
-            }
-        }
-        @Override public Integer validate(CommandSourceStack source, CarpetRule<Integer> currentRule, Integer newValue, String string) {
-            if (source == null) return newValue;
-            if (newValue < 0)
-            {
-                Messenger.m(source, "r light batch size has to be at least 0");
-                return null;
-            }
-            if (currentRule.value().intValue() == newValue.intValue())
-            {
-                //must been some startup thing
-                return newValue;
-            }
-            
-            applyLightBatchSizes(source.getServer(), newValue); // Apply new settings
-            
-            return newValue;
-        }
-    }
-    
-    @Rule(
-            desc = "Changes maximum light tasks batch size",
-            extra = {"Allows for a higher light suppression tolerance", "setting it to 5 - Default limit defined by the game"},
-            category = {EXPERIMENTAL, OPTIMIZATION},
-            strict = false,
-            options = {"5", "50", "100", "200"},
-            validate = LightBatchValidator.class
-    )
-    public static int lightEngineMaxBatchSize = 5;
 
     public enum RenewableCoralMode {
         FALSE,

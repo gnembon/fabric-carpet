@@ -7,20 +7,42 @@ import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
 
 public class CarpetClient
 {
-    public static final int HI = 69;
-    public static final int HELLO = 420;
-    public static final int DATA = 1;
+    public record CarpetPayload(CompoundTag data) implements CustomPacketPayload
+    {
+        public CarpetPayload(FriendlyByteBuf input)
+        {
+            this(input.readNbt());
+        }
+
+        @Override
+        public void write(FriendlyByteBuf output)
+        {
+            output.writeNbt(data);
+        }
+
+        @Override
+        public ResourceLocation id()
+        {
+            return CARPET_CHANNEL;
+        }
+    }
+
+    public static final String HI = "69";
+    public static final String HELLO = "420";
+
     public static ShapesRenderer shapes = null;
 
     private static LocalPlayer clientPlayer = null;
     private static boolean isServerCarpet = false;
     public static String serverCarpetVersion;
-    public static final ResourceLocation CARPET_CHANNEL = new ResourceLocation("carpet:hello");
+    public static final ResourceLocation CARPET_CHANNEL = new ResourceLocation("carpet", "hello");
 
     public static void gameJoined(LocalPlayer player)
     {
@@ -59,7 +81,10 @@ public class CarpetClient
 
     public static boolean sendClientCommand(String command)
     {
-        if (!isServerCarpet && CarpetServer.minecraft_server == null) return false;
+        if (!isServerCarpet && CarpetServer.minecraft_server == null)
+        {
+            return false;
+        }
         ClientNetworkHandler.clientCommand(command);
         return true;
     }
@@ -67,15 +92,20 @@ public class CarpetClient
     public static void onClientCommand(Tag t)
     {
         CarpetSettings.LOG.info("Server Response:");
-        CompoundTag tag = (CompoundTag)t;
-        CarpetSettings.LOG.info(" - id: "+tag.getString("id"));
-        CarpetSettings.LOG.info(" - code: "+tag.getInt("code"));
-        if (tag.contains("error")) CarpetSettings.LOG.warn(" - error: "+tag.getString("error"));
+        CompoundTag tag = (CompoundTag) t;
+        CarpetSettings.LOG.info(" - id: " + tag.getString("id"));
+        CarpetSettings.LOG.info(" - code: " + tag.getInt("code"));
+        if (tag.contains("error"))
+        {
+            CarpetSettings.LOG.warn(" - error: " + tag.getString("error"));
+        }
         if (tag.contains("output"))
         {
             ListTag outputTag = (ListTag) tag.get("output");
             for (int i = 0; i < outputTag.size(); i++)
+            {
                 CarpetSettings.LOG.info(" - response: " + Component.Serializer.fromJson(outputTag.getString(i)).getString());
+            }
         }
     }
 }

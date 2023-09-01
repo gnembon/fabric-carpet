@@ -3,7 +3,6 @@ package carpet.script.value;
 import carpet.script.exception.InternalExpressionException;
 import carpet.script.exception.ThrowStatement;
 import carpet.script.exception.Throwables;
-import carpet.script.external.Carpet;
 import carpet.script.external.Vanilla;
 import carpet.script.utils.Colors;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
@@ -91,7 +90,10 @@ public class ValueConversions
 
     public static <T extends Number> Value of(MinMaxBounds<T> range)
     {
-        return ListValue.of(NumericValue.of(range.getMin()), NumericValue.of(range.getMax()));
+        return ListValue.of(
+                range.min().map(NumericValue::of).orElse(Value.NULL),
+                range.max().map(NumericValue::of).orElse(Value.NULL)
+        );
     }
 
     @Deprecated

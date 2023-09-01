@@ -29,6 +29,7 @@ import java.util.Optional;
 import java.util.Set;
 
 import net.minecraft.commands.arguments.item.ItemInput;
+import net.minecraft.core.Holder;
 import net.minecraft.core.HolderSet;
 import net.minecraft.core.Registry;
 import net.minecraft.core.RegistryAccess;
@@ -36,6 +37,7 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundContainerSetSlotPacket;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.tags.TagKey;
@@ -71,7 +73,7 @@ public class Inventories
             Registry<Item> items = cc.registry(Registries.ITEM);
             if (lv.isEmpty())
             {
-                return ListValue.wrap(items.keySet().stream().map(ValueConversions::of));
+                return ListValue.wrap(items.holders().map(itemReference -> ValueConversions.of(itemReference.key().location())));
             }
             String tag = lv.get(0).getString();
             Optional<HolderSet.Named<Item>> itemTag = items.getTag(TagKey.create(Registries.ITEM, InputValidator.identifierOf(tag)));

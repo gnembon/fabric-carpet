@@ -28,7 +28,7 @@ public abstract class Connection_packetCounterMixin implements ClientConnectionI
     
     // Add to the packet counter whenever a packet is sent.
     @Inject(method = "sendPacket", at = @At("HEAD"))
-    private void packetOutCount(Packet<?> packet, @Nullable PacketSendListener packetSendListener, CallbackInfo ci)
+    private void packetOutCount(final Packet<?> packet, final PacketSendListener packetSendListener, final boolean bl, final CallbackInfo ci)
     {
         PacketCounter.totalOut++;
     }

@@ -3,7 +3,7 @@ package carpet.mixins;
 import org.spongepowered.asm.mixin.Mixin;
 
 import carpet.CarpetSettings;
-import carpet.fakes.BlockBehaviourInterface;
+import carpet.fakes.BlockPistonBehaviourInterface;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -16,7 +16,7 @@ import net.minecraft.world.level.block.state.properties.ChestType;
 import static net.minecraft.world.level.block.ChestBlock.getConnectedDirection;
 
 @Mixin(ChestBlock.class)
-public class ChestBlock_customStickyMixin implements BlockBehaviourInterface {
+public class ChestBlock_customStickyMixin implements BlockPistonBehaviourInterface {
 
     @Override
     public boolean isSticky(BlockState state) {
@@ -35,6 +35,7 @@ public class ChestBlock_customStickyMixin implements BlockBehaviourInterface {
         if (type == ChestType.SINGLE || neighborType == ChestType.SINGLE) {
             return false;
         }
+
         return getConnectedDirection(state) == dir;
     }
 }

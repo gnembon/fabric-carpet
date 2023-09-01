@@ -35,7 +35,7 @@ public class CarpetRulePrinter implements DedicatedServerModInitializer {
         // Prepare an OptionParser for our parameters
         OptionParser parser = new OptionParser();
         OptionSpec<Void> shouldDump = parser.accepts("carpetDumpRules");
-        OptionSpec<Path> pathSpec = parser.accepts("dumpPath").withRequiredArg().withValuesConvertedBy(new PathConverter(PathProperties.WRITABLE));
+        OptionSpec<Path> pathSpec = parser.accepts("dumpPath").withRequiredArg().withValuesConvertedBy(new PathConverter());
         OptionSpec<String> filterSpec = parser.accepts("dumpFilter").withRequiredArg();
         parser.allowsUnrecognizedOptions(); // minecraft may need more stuff later that we don't want to special-case
         OptionSet options = parser.parse(args);

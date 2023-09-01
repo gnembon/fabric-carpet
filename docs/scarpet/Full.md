@@ -633,13 +633,13 @@ only take integer values, so if the input has a decimal part, it will be discard
  - `bitwise_xor(...)` -> Does the bitwise XOR operation on each number in order.
  - `bitwise_or(...)` -> Does the bitwise AND operation on each number in order. Note that with larger ranges of numbers this will
 	tend to -1.
- - `bitwise_shift_left(num, amount)` -> Shifts all the bits of the first number `amount` spots to the left. Note that shifting more
-	than 63 positions will result in a 0 (cos you shift out all the bits of the number)
+ - `bitwise_shift_left(num, amount)` -> Shifts all the bits of the first number `amount` spots to the left. Note that only the 6 
+	lowest-order bits of the amount are considered.
  - `bitwise_shift_right(num, amount)` -> Shifts all the bits of the first number `amount` spots to the right logically. That is, the 
-    `amount` most significant bits will always be set to 0. Like with the above, shifting more than 63 bits results in a 0.
+    `amount` most significant bits will always be set to 0. Like with the above, only the 6 lowest-order bits of the amount are considered.
  - `bitwise_arithmetic_shift_right(num, amount)` -> Shifts all the bits of the first number `amount` spots to the right arithmetically.
     That is, if the most significant (sign) bit is a 1, it'll propagate the one to the `amount` most significant bits. Like with the above,
-	shifting more than 63 bits results in a 0.
+	only the 6 lowest-order bits of the amount are considered.
  - `bitwise_roll_left(num, amount)` -> Rolls the bits of the first number `amount` bits to the left. This is basically where you
 	shift out the first `amount` bits and then add them on at the back, essentially 'rolling' the number. Note that unlike with
         shifting, you can roll more than 63 bits at a time, as it just makes the number roll over more times, which isn't an issue
@@ -2559,10 +2559,14 @@ that block, a block doesn't get destroyed either.
 
 ### `create_explosion(pos, power?, mode?, fire?, source?, attacker?)`
 
-Creates an explosion at a given position. Default values of optional parameters are: `'power'` - `4` (TNT power), 
-`'mode'` (block breaking effect `none`, `destroy` or `break`: `break`, `fire` (whether extra fire blocks should be created) - `false`,
-`source` (exploding entity) - `null` and `attacker` (entity responsible for trigerring) - `null`. Explosions created with this
-endpoint cannot be captured with `__on_explosion` event, however they will be captured by `__on_explosion_outcome`.
+Creates an explosion at a given position. Parameters work as follows:
+ - `'power'` - how strong the blast is, negative values count as 0 (default: `4` (TNT power))
+ - `'mode'` - how to deal with broken blocks: `keep` keeps them, `destroy` destroys them and drops items, and `destroy_with_decay` destroys them, but doesn't always drop the items (default: `destroy_with_decay`)
+ - `fire` - whether extra fire blocks should be created (default: `false`)
+ - `source` - entity that is exploding. Note that it will not take explosion damage from this explosion (default: `null`)
+ - `attacker` - entity responsible for triggering, this will be displayed in death messages, and count towards kill counts, and can be damaged by the explosion (default: `null`)
+Explosions created with this endpoint cannot be captured with `__on_explosion` event, however they will be captured
+by `__on_explosion_outcome`.
 
 ### `weather()`,`weather(type)`,`weather(type, ticks)`
 
@@ -2570,9 +2574,10 @@ If called with no args, returns `'clear'`, `'rain` or `'thunder'` based on the c
 always return `'thunder'`, if not will return `'rain'` or `'clear'` based on the current weather.
 
 With one arg, (either `'clear'`, `'rain` or `'thunder'`), returns the number of remaining ticks for that weather type.
-NB: It can thunder without there being a thunderstorm, there has to be both rain and thunder to form a storm.
+NB: It can thunder without there being a thunderstorm; there has to be both rain and thunder to form a storm. So if
+running `weather()` returns `'thunder'`, you can use `weather('rain')>0` to see if there's a storm going on.
 
-With two args, sets the weather to `type` for `ticks` ticks.
+With two args, sets the weather to the given `type` for `ticks` ticks.
 
 ## Block and World querying
 
@@ -2621,6 +2626,7 @@ back in state definition in various applications where block properties are requ
 Throws `unknown_block` if the provided input is not valid.
 
 <pre>
+set(x,y,z,'iron_block'); block_state(x,y,z)  => {}
 set(x,y,z,'iron_trapdoor','half','top'); block_state(x,y,z)  => {waterlogged: false, half: top, open: false, ...}
 set(x,y,z,'iron_trapdoor','half','top'); block_state(x,y,z,'half')  => top
 block_state('iron_trapdoor','half')  => top
@@ -2632,7 +2638,14 @@ bool(block_state(block('iron_trapdoor[half=top]'),'powered'))  => 0
 
 ### `block_list()`, `block_list(tag)`
 
-Returns list of all blocks. If tag is provided, returns list of blocks that belong to this block tag.
+Returns list of all blocks in the game. If `tag` is provided, returns list of all blocks that belong to this block tag.
+<pre>
+block_list() => [dark_oak_button, wall_torch, structure_block, polished_blackstone_brick_slab, cherry_sapling... ]
+block_list('impermeable') => [glass, white_stained_glass, orange_stained_glass, magenta_stained_glass... ] //All da glass
+block_list('rails') => [rail, powered_rail, detector_rail, activator_rail]
+block_list('not_a_valid_block_tag') => null //Not a valid block tag
+</pre>
+
 
 ### `block_tags()`, `block_tags(block)`, `block_tags(block, tag)`
 
@@ -2642,12 +2655,21 @@ to this tag, and `true` if the block belongs to the tag.
 
 Throws `unknown_block` if `block` doesn't exist
 
+<pre>
+block_tags() => [geode_invalid_blocks, wall_post_override, ice, wooden_stairs, bamboo_blocks, stone_bricks... ]
+block_tags('iron_block') => [mineable/pickaxe, needs_stone_tool, beacon_base_blocks]
+block_tags('glass') => [impermeable]
+block_tags('glass', 'impermeable') => true
+block_tags('glass', 'beacon_base_blocks') => false
+</pre>
+
 ### `block_data(pos)`
 
 Return NBT string associated with specific location, or null if the block does not carry block data. Can be currently 
 used to match specific information from it, or use it to copy to another block
 
-<pre>    block_data(x,y,z) => '{TransferCooldown:0,x:450,y:68, ... }'
+<pre>
+block_data(x,y,z) => '{TransferCooldown:0,x:450,y:68, ... }'
 </pre>
 
 ### `poi(pos), poi(pos, radius?, type?, status?, column_search?)`
@@ -3150,13 +3172,15 @@ These functions help scan larger areas of blocks without using generic loop func
 
 Evaluates expression over area of blocks defined by its center `center = (cx, cy, cz)`, expanded in all directions 
 by `range = (dx, dy, dz)` blocks, or optionally in negative with `range` coords, and `upper_range` coords in 
-positive values, so you can use that if you know the lower coord, and dimension by calling `'scan(center, 0, 0, 0, w, h, d, ...)`.
+positive values. That means that if you want a box starting at the northwest coord with given base, width and height
+dimensions, you can do `'scan(center, 0, 0, 0, w, h, d, ...)`.
 
 `center` can be defined either as three coordinates, a single tuple of three coords, or a block value.
-`range` and `upper_range` can have the same representations, just if they are block values, it computes the distance to the center
-as range instead of taking the values as is.
+`range` and `upper_range` can have the same representations, just if they are block values, it computes the distance to
+the center as range instead of taking the values as is. That way you can iterate from the center to a box whose surface
+area constains the `range` and/or `upper_range` blocks.
 
-`expr` receives `_x, _y, _z` as coords of current analyzed block and `_`, which represents the block itself.
+`expr` receives `_x, _y, _z` variables as coords of current analyzed block and `_`, which represents the block itself.
 
 Returns number of successful evaluations of `expr` (with `true` boolean result) unless called in void context, 
 which would cause the expression not be evaluated for their boolean value.
@@ -3180,22 +3204,29 @@ Returns the list of 6 neighbouring blocks to the argument. Commonly used with ot
 for(neighbours(x,y,z),air(_)) => 4 // number of air blocks around a block
 </pre>
 
-### `rect(centre, range?, upper_range?)`
+### `rect(center, range?, upper_range?)`
 
 Returns an iterator, just like `range` function that iterates over a rectangular area of blocks. If only center
-point is specified, it iterates over 27 blocks. If `range` arguments are specified, expands selection by the  respective 
-number of blocks in each direction. If `positive_range` arguments are specified,
- it uses `range` for negative offset, and `positive_range` for positive.
+point is specified, it iterates over 27 blocks (range of 1). If `range` arguments are specified, expands selection by
+the respective number of blocks in each direction. If `upper_range` arguments are specified, it uses `range` for
+negative offset, and `upper_range` for positive, similar to `scan`.
 
-`centre` can be defined either as three coordinates, a list of three coords, or a block value.
-`range` and `positive_range` can have the same representations, just if they are block values, it computes the distance to the center
+Basically the arguments are the same as the first three arguments of `scan`, except this function returns the list of
+blocks that `scan` would evaluate over. If you are going to iterate over these blocks, like `for(rect(args), do_something())`,
+then `scan(args, do_something())` is an equivalent, yet more compute-friendly alternative, especially for very large areas.
+
+`center` can be defined either as three coordinates, a list of three coords, or a block value.
+`range` and `upper_range` can have the same representations, just if they are block values, it computes the distance to the center
 as range instead of taking the values as is.`
 
-### `diamond(centre_pos, radius?, height?)`
+### `diamond(center_pos, radius?, height?)`
 
 Iterates over a diamond like area of blocks. With no radius and height, its 7 blocks centered around the middle 
 (block + neighbours). With a radius specified, it expands shape on x and z coords, and with a custom height, on y. 
 Any of these can be zero as well. radius of 0 makes a stick, height of 0 makes a diamond shape pad.
+
+If radius and height are the same, creats a 3D diamond, of all the blocks which are a manhattan distance of `radius` away
+from the center.
 # Entity API
 
 ## Entity Selection

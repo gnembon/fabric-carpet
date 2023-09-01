@@ -253,11 +253,6 @@
   "carpet.rule.renewableBlackstone.desc": "地獄玄武岩生成機，但在下方沒有靈魂沙",
   "carpet.rule.renewableBlackstone.extra.0": "..將會轉換成黑石",
 
-  "carpet.rule.lightEngineMaxBatchSize.name": "光照引擎最大批次大小",
-  "carpet.rule.lightEngineMaxBatchSize.desc": "更改光照引擎最大批次大小",
-  "carpet.rule.lightEngineMaxBatchSize.extra.0": "允許更高光照抑制容限",
-  "carpet.rule.lightEngineMaxBatchSize.extra.1": "設置成5-遊戲預設容限",
-
   "carpet.rule.cleanLogs.name": "清除數據追蹤器",
   "carpet.rule.cleanLogs.desc": "從數據追蹤器中刪除令人討厭的信息",
   "carpet.rule.cleanLogs.extra.0": "在'達到最大聲音對象池247'時將不再顯示",

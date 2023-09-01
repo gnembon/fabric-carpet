@@ -1,0 +1,426 @@
+{
+  // Settings command UI elements
+
+  "carpet.settings.command.browse_categories": "Parcourir les catégories",
+  "carpet.settings.command.version": "version",
+  "carpet.settings.command.list_all_category": "liste toutes les options de la catégorie %s",
+  "carpet.settings.command.current_settings_header": "Options actuelles de %s",
+  "carpet.settings.command.switch_to": "Passer à %s",
+  "carpet.settings.command.unknown_rule": "Règle inconnue",
+  "carpet.settings.command.current_from_file_header": "Options de démarrage actuelles de %s depuis %s",
+  "carpet.settings.command.mod_settings_matching": "Options de %s correspondant à \"%s\" ",
+  "carpet.settings.command.all_mod_settings": "Toutes les options de %s",
+  "carpet.settings.command.tags": "Balises",
+  "carpet.settings.command.change_permanently": "Changer définitivement",
+  "carpet.settings.command.change_permanently_tooltip": "cliquez pour conserver les options dans %s et les enregistrer entre les redémarrages",
+  "carpet.settings.command.default_set": "La règle %s sera désormais définie par défaut sur %s",
+  "carpet.settings.command.default_removed": "La règle %s ne sera plus définie au redémarrage",
+  "carpet.settings.command.current_value": "valeur actuelle",
+
+  // Categories:
+
+  "carpet.category.bugfix": "correction de bugs",
+  "carpet.category.survival": "survie",
+  "carpet.category.creative": "créatif",
+  "carpet.category.experimental": "expérimental",
+  "carpet.category.optimization": "optimisation",
+  "carpet.category.feature": "fonctionnalité",
+  "carpet.category.command": "commande",
+  "carpet.category.tnt": "TNT",
+  "carpet.category.dispenser": "distributeur",
+  "carpet.category.scarpet": "scarpet",
+  "carpet.category.client": "client",
+
+  // Rules
+  
+  // allowSpawningOfflinePlayers
+  "carpet.rule.allowSpawningOfflinePlayers.desc": "Fait apparaître les joueurs hors ligne en mode en ligne si le joueur en online-mode avec le nom spécifié n'existe pas",
+
+  // antiCheatDisabled
+  "carpet.rule.antiCheatDisabled.desc": "Empêche les joueurs de se téléporter en arrière lorsqu'ils se déplacent trop rapidement",
+
+  "carpet.rule.antiCheatDisabled.extra.0": "... ou d'être expulsé pour 'vol'",
+  "carpet.rule.antiCheatDisabled.extra.1": "Fait davantage confiance au positionnement des clients",
+  "carpet.rule.antiCheatDisabled.extra.2": "Augmente la distance de minage autorisée du joueur à 32 blocs",
+
+  // carpetCommandPermissionLevel
+  "carpet.rule.carpetCommandPermissionLevel.desc": "Niveau de permission pour les commandes Carpet. Peut être défini uniquement via le fichier .conf",
+  
+  // carpets
+  "carpet.rule.carpets.desc": "Placer des tapis peut entraîner l'exécution de commandes Carpet pour les joueurs non-opérateurs",
+  
+  // chainStone
+  "carpet.rule.chainStone.desc": "Les chaînes se colleront les unes aux autres sur les extrémités longues",
+  
+  "carpet.rule.chainStone.extra.0": "et se colleront aux autres blocs qui y sont directement connectés.",
+  "carpet.rule.chainStone.extra.1": "Avec stick_to_all : elles colleront même si elles ne sont pas connectées visuellement",
+  
+  // cleanLogs
+  "carpet.rule.cleanLogs.desc": "Supprime les messages indésirables des journaux",
+  
+  "carpet.rule.cleanLogs.extra.0": "N'affiche pas 'Maximum sound pool size 247 reached'",
+  "carpet.rule.cleanLogs.extra.1": "Ce qui est normal avec de bonnes fermes et mécanismes",
+
+  // commandDistance
+  "carpet.rule.commandDistance.desc": "Active la commande /distance pour mesurer la distance en jeu entre deux points",
+  
+  "carpet.rule.commandDistance.extra.0": "Active également l'action de pose de tapis marron si la règle 'carpets' est également activée",
+  
+  // commandDraw
+  "carpet.rule.commandDraw.desc": "Active les commandes /draw",
+  
+  "carpet.rule.commandDraw.extra.0": "... permet de dessiner des formes simples ou",
+  "carpet.rule.commandDraw.extra.1": "d'autres formes qui sont un peu difficiles à réaliser normalement",
+  
+  // commandInfo
+  "carpet.rule.commandInfo.desc": "Active la commande /info pour les blocs",
+  
+  "carpet.rule.commandInfo.extra.0": "Active également l'action de pose de tapis gris",
+  "carpet.rule.commandInfo.extra.1": "si la règle 'carpets' est également activée",
+  
+  // commandLog
+  "carpet.rule.commandLog.desc": "Active la commande /log pour surveiller les événements via le chat et les superpositions",
+  
+  // commandPerimeterInfo
+  "carpet.rule.commandPerimeterInfo.desc": "Active la commande /perimeterinfo",
+  
+  "carpet.rule.commandPerimeterInfo.extra.0": "... qui analyse la zone autour du bloc pour trouver des emplacements potentiellement exploitables",
+  
+  // commandPlayer
+  "carpet.rule.commandPlayer.desc": "Active la commande /player pour contrôler/faire apparaître des joueurs",
+  
+  // commandProfile
+  "carpet.rule.commandProfile.desc": "Active la commande /profile pour surveiller les performances du jeu",
+  
+  "carpet.rule.commandProfile.extra.0": "sous-ensemble des capacités de la commande /tick",
+  
+  // commandScript
+  "carpet.rule.commandScript.desc": "Active la commande /script",
+  
+  "carpet.rule.commandScript.extra.0": "Une API de scripting en jeu pour le langage de programmation Scarpet",
+  
+  // commandScriptACE
+  "carpet.rule.commandScriptACE.desc": "Active les restrictions pour l'exécution de code arbitraire avec Scarpet",
+  
+  "carpet.rule.commandScriptACE.extra.0": "Les utilisateurs qui n'ont pas ce niveau de permission",
+  "carpet.rule.commandScriptACE.extra.1": "ne pourront pas charger d'applications ou exécuter /script run.",
+  "carpet.rule.commandScriptACE.extra.2": "C'est également le niveau de permission que les applications",
+  "carpet.rule.commandScriptACE.extra.3": "auront lors de l'exécution de commandes avec run()",
+  
+  // commandSpawn
+  "carpet.rule.commandSpawn.desc": "Active la commande /spawn pour le suivi des points d'apparition",
+  
+  // commandTick
+  "carpet.rule.commandTick.desc": "Active la commande /tick pour contrôler les horloges du jeu",
+  
+  // commandTrackAI
+  "carpet.rule.commandTrackAI.desc": "Permet de suivre l'IA des mobs via la commande /track",
+
+  // creativeFlyDrag
+  "carpet.rule.creativeFlyDrag.desc": "Résistance de l'air en mode créatif",
+  
+  "carpet.rule.creativeFlyDrag.extra.0": "Une résistance accrue ralentira votre vol",
+  "carpet.rule.creativeFlyDrag.extra.1": "Vous devrez donc ajuster votre vitesse en conséquence",
+  "carpet.rule.creativeFlyDrag.extra.2": "Avec une résistance de 1.0, une vitesse de 11 semble correspondre aux vitesses normales de base.",
+  "carpet.rule.creativeFlyDrag.extra.3": "Paramètre purement côté client, ce qui signifie que",
+  "carpet.rule.creativeFlyDrag.extra.4": "le configurer sur le serveur dédié n'a aucun effet",
+  "carpet.rule.creativeFlyDrag.extra.5": "mais cela signifie également que cela fonctionnera également sur les serveurs vanilla",
+  
+  // creativeFlySpeed
+  "carpet.rule.creativeFlySpeed.desc": "Multiplicateur de vitesse de vol en mode créatif",
+  
+  "carpet.rule.creativeFlySpeed.extra.0": "Paramètre purement côté client, ce qui signifie que",
+  "carpet.rule.creativeFlySpeed.extra.1": "le configurer sur le serveur dédié n'a aucun effet",
+  "carpet.rule.creativeFlySpeed.extra.2": "mais cela signifie également que cela fonctionnera également sur les serveurs vanilla",
+  
+  // creativeNoClip
+  "carpet.rule.creativeNoClip.desc": "Mode créatif sans collision",
+  
+  "carpet.rule.creativeNoClip.extra.0": "Sur les serveurs, cela doit être configuré à la fois",
+  "carpet.rule.creativeNoClip.extra.1": "sur le client et sur le serveur pour fonctionner correctement.",
+  "carpet.rule.creativeNoClip.extra.2": "Aucun effet lorsqu'il est configuré uniquement sur le serveur",
+  "carpet.rule.creativeNoClip.extra.3": "Peut permettre de traverser les murs",
+  "carpet.rule.creativeNoClip.extra.4": "s'il est uniquement configuré côté client Carpet",
+  "carpet.rule.creativeNoClip.extra.5": "mais nécessite un peu de magie avec des trappes",
+  "carpet.rule.creativeNoClip.extra.6": "pour permettre au joueur d'entrer dans les blocs",
+  
+  // creativePlayersLoadChunks
+  "carpet.rule.creativePlayersLoadChunks.desc": "Les joueurs en mode créatif chargent les chunks, ou non ! Tout comme les spectateurs !",
+  
+  "carpet.rule.creativePlayersLoadChunks.extra.0": "La bascule se comporte exactement comme si le joueur était en mode spectateur et basculait le gamerule spectatorsGenerateChunks.",
+  
+  // ctrlQCraftingFix
+  "carpet.rule.ctrlQCraftingFix.desc": "Jeter des piles entières fonctionne également depuis l'interface de fabrication",
+  
+  // customMOTD
+  "carpet.rule.customMOTD.desc": "Définit un message MOTD différent lorsqu'un client essaie de se connecter au serveur",
+  
+  "carpet.rule.customMOTD.extra.0": "utilisez '_' pour utiliser le paramètre de démarrage de server.properties",
+  
+  // defaultLoggers
+  "carpet.rule.defaultLoggers.desc": "Définit ces loggers avec leurs configurations par défaut pour tous les nouveaux joueurs",
+  
+  "carpet.rule.defaultLoggers.extra.0": "utilisez une liste séparée par des virgules, comme 'tps,mobcaps' pour plusieurs loggers, aucun pour rien",
+  
+  // desertShrubs
+  "carpet.rule.desertShrubs.desc": "Les pousses se transforment en buissons morts dans les climats chauds et sans accès à l'eau",
+  
+  // explosionNoBlockDamage
+  "carpet.rule.explosionNoBlockDamage.desc": "Les explosions ne détruisent pas les blocs",
+
+  // fastRedstoneDust
+  "carpet.rule.fastRedstoneDust.desc": "Optimisations de performances pour la poussière de redstone",
+  
+  "carpet.rule.fastRedstoneDust.extra.0": "par Theosib",
+  "carpet.rule.fastRedstoneDust.extra.1": ".. corrige également certains comportements de localisation de la redstone vanille MC-11193",
+  "carpet.rule.fastRedstoneDust.extra.2": "donc le comportement des dispositifs de localisation vanille n'est pas garanti",
+  
+  // fillLimit
+  "carpet.rule.fillLimit.desc": "[Obsolète] Limite personnalisable du volume de remplissage/clone/biomereplace",
+  
+  "carpet.rule.fillLimit.extra.0": "Utilisez la règle de jeu vanilla à la place. Ce paramètre sera supprimé dans la version 1.20.0",
+  
+  // fillUpdates
+  "carpet.rule.fillUpdates.desc": "Les commandes fill/clone/setblock et les blocs de structure provoquent des mises à jour de blocs",
+  
+  // flippinCactus
+  "carpet.rule.flippinCactus.desc": "Les joueurs peuvent retourner et faire pivoter les blocs lorsqu'ils tiennent un cactus",
+  
+  "carpet.rule.flippinCactus.extra.0": "Ne provoque pas de mises à jour de blocs lorsqu'il est retourné/faire pivoter",
+  "carpet.rule.flippinCactus.extra.1": "S'applique aux pistons, observateurs, distributeurs, répéteurs, escaliers, terracotta émaillée, etc.",
+  
+  // fogOff
+  "carpet.rule.fogOff.desc": "Supprime le brouillard du client dans le Nether et l'End",
+  
+  "carpet.rule.fogOff.extra.0": "Améliore la visibilité, mais l'apparence est étrange",
+  
+  // forceloadLimit
+  "carpet.rule.forceloadLimit.desc": "Limite personnalisable des chunks de chargement forcé",
+  
+  // hardcodeTNTangle
+  "carpet.rule.hardcodeTNTangle.desc": "Définit l'angle aléatoire horizontal de la TNT pour le débogage des dispositifs TNT",
+  
+  "carpet.rule.hardcodeTNTangle.extra.0": "Définir sur -1 pour un comportement par défaut",
+  
+  // hopperCounters
+  "carpet.rule.hopperCounters.desc": "Les entonnoirs pointant vers de la laine comptent les objets qui passent à travers eux",
+  
+  "carpet.rule.hopperCounters.extra.0": "Active la commande /counter et les actions lors de la pose de tapis rouge et vert sur des blocs de laine",
+  "carpet.rule.hopperCounters.extra.1": "Utilisez /counter <couleur?> reset pour réinitialiser le compteur et /counter <couleur?> pour interroger",
+  "carpet.rule.hopperCounters.extra.2": "En mode survie, placez un tapis vert sur de la laine de même couleur pour interroger, rouge pour réinitialiser les compteurs",
+  "carpet.rule.hopperCounters.extra.3": "Les compteurs sont globaux et partagés entre les joueurs, 16 canaux disponibles",
+  "carpet.rule.hopperCounters.extra.4": "Les objets comptés sont détruits, comptez jusqu'à une pile par tick par entonnoir",
+
+  // huskSpawningInTemples
+  "carpet.rule.huskSpawningInTemples.desc": "Seuls les Husks apparaissent dans les temples du désert",
+  
+  // interactionUpdates
+  "carpet.rule.interactionUpdates.desc": "La pose de blocs provoque des mises à jour de blocs",
+  
+  // lagFreeSpawning
+  "carpet.rule.lagFreeSpawning.desc": "L'apparition nécessite beaucoup moins de CPU et de mémoire",
+  
+  // language
+  "carpet.rule.language.desc": "Définit la langue pour Carpet",
+  
+  // lightningKillsDropsFix
+  "carpet.rule.lightningKillsDropsFix.desc": "La foudre détruit les objets qui tombent lorsque la foudre tue une entité",
+  
+  "carpet.rule.lightningKillsDropsFix.extra.0": "En le réglant sur true, la foudre ne détruira pas les objets",
+  "carpet.rule.lightningKillsDropsFix.extra.1": "Corrige MC-206922.",
+  
+  // liquidDamageDisabled
+  "carpet.rule.liquidDamageDisabled.desc": "Désactive la destruction de blocs causée par les liquides en mouvement",
+  
+  // maxEntityCollisions
+  "carpet.rule.maxEntityCollisions.desc": "Limites personnalisables de collisions d'entités maximales, 0 pour aucune limite",
+  
+  // mergeTNT
+  "carpet.rule.mergeTNT.desc": "Fusionne les entités TNT amorcées immobiles",
+  
+  // missingTools
+  "carpet.rule.missingTools.desc": "Le verre peut être cassé plus rapidement avec des pioches",
+  
+  // moreBlueSkulls
+  "carpet.rule.moreBlueSkulls.desc": "Augmente à des fins de test le nombre de têtes bleues tirées par l'Wither",
+  
+  // movableAmethyst
+  "carpet.rule.movableAmethyst.desc": "Permet aux blocs d'améthystes en bourgeonnement d'être déplacés",
+  
+  "carpet.rule.movableAmethyst.extra.0": "Permet de les déplacer avec des pistons",
+  "carpet.rule.movableAmethyst.extra.1": "et ajoute un drop supplémentaire lors de l'extraction avec une pioche enchantée avec Soie Toucher",
+  
+  // movableBlockEntities
+  "carpet.rule.movableBlockEntities.desc": "Les pistons peuvent pousser des blocs entités, comme des entonnoirs, des coffres, etc.",
+  
+  // optimizedTNT
+  "carpet.rule.optimizedTNT.desc": "Le TNT provoque moins de lag lorsqu'il explose au même endroit et dans des liquides",
+  
+  // perfPermissionLevel
+  "carpet.rule.perfPermissionLevel.desc": "Niveau de permission requis pour la commande /perf",
+
+  // persistentParrots
+  "carpet.rule.persistentParrots.desc": "Les perroquets ne quittent pas vos épaules tant que vous ne subissez pas de dégâts appropriés",
+  
+  // piglinsSpawningInBastions
+  "carpet.rule.piglinsSpawningInBastions.desc": "Les Piglins réapparaissent dans les vestiges des bastions",
+  
+  "carpet.rule.piglinsSpawningInBastions.extra.0": "Comprend les piglins, les brutes et quelques hoglins",
+  
+  // pingPlayerListLimit
+  "carpet.rule.pingPlayerListLimit.desc": "Limite d'échantillonnage de la liste des joueurs pour la liste de serveurs ping (menu multijoueur)",
+  
+  // placementRotationFix
+  "carpet.rule.placementRotationFix.desc": "Corrige le problème de rotation de placement de bloc lorsqu'un joueur fait rapidement tourner les blocs en les plaçant",
+  
+  // portalCreativeDelay
+  "carpet.rule.portalCreativeDelay.desc": "Nombre de ticks de délai pour utiliser un portail du Nether en mode Créatif",
+  
+  // portalSurvivalDelay
+  "carpet.rule.portalSurvivalDelay.desc": "Nombre de ticks de délai pour utiliser un portail du Nether en mode Survie",
+  
+  // pushLimit
+  "carpet.rule.pushLimit.desc": "Limite de poussée personnalisable des pistons",
+  
+  // quasiConnectivity
+  "carpet.rule.quasiConnectivity.desc": "Les pistons, les droppers et les distributeurs vérifient la puissance du ou des blocs situés au-dessus d'eux.",
+  
+  "carpet.rule.quasiConnectivity.extra.0": "Définit la portée à laquelle les pistons, les droppers et les distributeurs vérifient la 'quasi puissance'.",
+  
+  // railPowerLimit
+  "carpet.rule.railPowerLimit.desc": "Portée personnalisable de puissance des rails alimentés",
+  
+  // renewableBlackstone
+  "carpet.rule.renewableBlackstone.desc": "Générateur de basalte du Nether sans sable des âmes en dessous",
+  
+  "carpet.rule.renewableBlackstone.extra.0": ".. se transformera en blackstone à la place",
+  
+  // renewableCoral
+  "carpet.rule.renewableCoral.desc": "Les structures de corail poussent avec de l'engrais à partir de plantes de corail",
+  
+  "carpet.rule.renewableCoral.extra.0": "L'extension permet également de faire pousser à partir de ventilateurs de corail pour une culture durable en dehors des océans chauds",
+  
+  // renewableDeepslate
+  "carpet.rule.renewableDeepslate.desc": "La lave et l'eau génèrent de la pierre profonde et de la pierre profonde ciselée en dessous de Y0",
+  
+  // renewableSponges
+  "carpet.rule.renewableSponges.desc": "Les gardiens se transforment en gardiens anciens lorsqu'ils sont frappés par la foudre",
+  
+  // rotatorBlock
+  "carpet.rule.rotatorBlock.desc": "Les cactus dans les distributeurs font tourner les blocs.",
+  
+  "carpet.rule.rotatorBlock.extra.0": "Tourne les blocs dans le sens antihoraire si possible",
+
+  // scriptsAppStore
+  "carpet.rule.scriptsAppStore.desc": "Emplacement du dépôt en ligne des applications scarpet",
+  
+  "carpet.rule.scriptsAppStore.extra.0": "Définissez sur 'none' pour désactiver.",
+  "carpet.rule.scriptsAppStore.extra.1": "Indiquez n'importe quel référentiel github avec des applications scarpet",
+  "carpet.rule.scriptsAppStore.extra.2": "en utilisant <utilisateur>/<repo>/contents/<chemin...>",
+  
+  // scriptsAutoload
+  "carpet.rule.scriptsAutoload.desc": "Les scripts scarpet des fichiers du monde se chargeront automatiquement au démarrage du serveur/monde",
+  
+  "carpet.rule.scriptsAutoload.extra.0": "si /script est activé",
+  
+  // scriptsDebugging
+  "carpet.rule.scriptsDebugging.desc": "Active les messages de débogage des scripts dans le journal système",
+  
+  // scriptsOptimization
+  "carpet.rule.scriptsOptimization.desc": "Active l'optimisation des scripts",
+  
+  // sculkSensorRange
+  "carpet.rule.sculkSensorRange.desc": "Portée personnalisable du capteur sculk",
+  
+  // shulkerSpawningInEndCities
+  "carpet.rule.shulkerSpawningInEndCities.desc": "Les Shulkers réapparaissent dans les cités de l'End",
+  
+  // silverFishDropGravel
+  "carpet.rule.silverFishDropGravel.desc": "Les poissons d'argent laissent tomber un objet gravier lorsqu'ils sortent d'un bloc",
+  
+  // simulationDistance
+  "carpet.rule.simulationDistance.desc": "Modifie la distance de simulation du serveur.",
+  
+  "carpet.rule.simulationDistance.extra.0": "Définir sur 0 pour ne pas remplacer la valeur dans les paramètres du serveur.",
+  
+  // smoothClientAnimations
+  "carpet.rule.smoothClientAnimations.desc": "Animation fluide du client avec des paramètres faibles de TPS",
+  
+  "carpet.rule.smoothClientAnimations.extra.0": "Fonctionne uniquement en mode un joueur et ralentit les joueurs",
+  
+  // spawnChunksSize
+  "carpet.rule.spawnChunksSize.desc": "Modifie la taille des tronçons de génération",
+  
+  "carpet.rule.spawnChunksSize.extra.0": "Définit le nouveau rayon",
+  "carpet.rule.spawnChunksSize.extra.1": "Définir sur 0 - désactive les tronçons de génération",
+  
+  // stackableShulkerBoxes
+  "carpet.rule.stackableShulkerBoxes.desc": "Les boîtes de shulker vides peuvent s'empiler lorsqu'elles sont jetées au sol.",
+  
+  "carpet.rule.stackableShulkerBoxes.extra.0": ".. ou lorsqu'elles sont manipulées à l'intérieur des inventaires",
+  
+  // structureBlockIgnored
+  "carpet.rule.structureBlockIgnored.desc": "Modifie le bloc ignoré par le bloc de structure",
+  
+  // structureBlockLimit
+  "carpet.rule.structureBlockLimit.desc": "Limite personnalisable du bloc de structure sur chaque axe",
+  
+  "carpet.rule.structureBlockLimit.extra.0": "AVERTISSEMENT : doit être permanent pour un chargement correct.",
+  "carpet.rule.structureBlockLimit.extra.1": "Il est recommandé de définir 'structureBlockIgnored' sur 'air'",
+  "carpet.rule.structureBlockLimit.extra.2": "lors de l'enregistrement de structures massives.",
+  "carpet.rule.structureBlockLimit.extra.3": "Nécessaire sur le client du joueur qui édite le bloc de structure.",
+  "carpet.rule.structureBlockLimit.extra.4": "'structureBlockOutlineDistance' peut être nécessaire pour",
+  "carpet.rule.structureBlockLimit.extra.5": "un rendu correct des structures longues.",
+
+  // structureBlockOutlineDistance
+  "carpet.rule.structureBlockOutlineDistance.desc": "Distance de rendu personnalisable de l'aperçu du bloc de structure",
+  
+  "carpet.rule.structureBlockOutlineDistance.extra.0": "Nécessaire sur le client pour fonctionner correctement",
+  
+  // summonNaturalLightning
+  "carpet.rule.summonNaturalLightning.desc": "L'invocation d'un éclair a tous les effets secondaires d'un éclair naturel",
+  
+  // superSecretSetting
+  "carpet.rule.superSecretSetting.desc": "Gbhs sgnf sadsgras fhskdpri !!!",
+  
+  // thickFungusGrowth
+  "carpet.rule.thickFungusGrowth.desc": "Permet de faire pousser des champignons du Nether avec une base de 3x3 avec de l'engrais",
+  
+  "carpet.rule.thickFungusGrowth.extra.0": "Le réglage sur 'all' fera pousser tous les champignons du Nether en arbres de 3x3",
+  "carpet.rule.thickFungusGrowth.extra.1": "Le réglage sur 'random' fera pousser 6% de tous les champignons du Nether en arbres de 3x3",
+  "carpet.rule.thickFungusGrowth.extra.2": "(ceci est cohérent avec la génération du monde)",
+  
+  // tickSyncedWorldBorders
+  "carpet.rule.tickSyncedWorldBorders.desc": "Déplace les limites du monde en fonction du temps de jeu plutôt que du temps réel",
+  
+  "carpet.rule.tickSyncedWorldBorders.extra.0": "Cela a pour effet que lorsque le taux de ticks change, la vitesse des limites du monde change également proportionnellement",
+  
+  // tntDoNotUpdate
+  "carpet.rule.tntDoNotUpdate.desc": "La TNT ne se met pas à jour lorsqu'elle est placée contre une source de courant",
+  
+  // tntPrimerMomentumRemoved
+  "carpet.rule.tntPrimerMomentumRemoved.desc": "Supprime l'élan aléatoire de la TNT lorsqu'elle est amorcée",
+  
+  // tntRandomRange
+  "carpet.rule.tntRandomRange.desc": "Définit la plage d'explosion aléatoire de la TNT sur une valeur fixe",
+  
+  "carpet.rule.tntRandomRange.extra.0": "Définir sur -1 pour le comportement par défaut",
+  
+  // updateSuppressionBlock
+  "carpet.rule.updateSuppressionBlock.desc": "Placer un rail d'activation sur le dessus d'un bloc de barrière remplira la pile de mise à jour des voisins lorsque le rail s'éteint.",
+  
+  "carpet.rule.updateSuppressionBlock.extra.0": "L'entier saisi correspond au nombre de mises à jour qui doivent rester dans la pile",
+  "carpet.rule.updateSuppressionBlock.extra.1": "-1 pour le désactiver",
+  
+  // viewDistance
+  "carpet.rule.viewDistance.desc": "Modifie la distance de vue du serveur.",
+  
+  "carpet.rule.viewDistance.extra.0": "Définir sur 0 pour ne pas remplacer la valeur dans les paramètres du serveur.",
+  
+  // xpFromExplosions
+  "carpet.rule.xpFromExplosions.desc": "L'expérience tombera de tous les blocs qui produisent de l'expérience lors d'une explosion de tout type",
+  
+  // xpNoCooldown
+  "carpet.rule.xpNoCooldown.desc": "Les joueurs absorbent instantanément l'expérience, sans délai"
+
+}

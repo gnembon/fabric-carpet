@@ -26,7 +26,7 @@
     "ServerStatus_motdMixin",
     "MinecraftServer_pingPlayerSampleLimit",
     "HugeFungusFeatureMixin",
-
+    "PiglinBrute_getPlacementTypeMixin",
     "MinecraftServer_coreMixin",
 
     "MinecraftServer_tickspeedMixin",
@@ -178,13 +178,15 @@
     "SculkSensorBlockEntityVibrationConfig_sculkSensorRangeMixin",
     "CollectingNeighborUpdaterAccessor",
 
-    "BlockBehaviour_customStickyMixin",
     "BlockBehaviourBlockStateBase_mixin",
     "ChainBlock_customStickyMixin",
     "ChestBlock_customStickyMixin",
-    "HoneyBlock_customStickyMixin",
     "PistonStructureResolver_customStickyMixin",
-    "SlimeBlock_customStickyMixin"
+
+    "ServerboundCustomPayloadPacket_mixin",
+    "ServerCommonPacketListenerimpl_connectionMixin",
+    "ClientboundCustomPayloadPacket_customPacketMixin"
+
   ],
   "client": [
     "ClientLevel_tickSpeedMixin",
@@ -202,7 +204,10 @@
     "LevelRenderer_creativeNoClipMixin",
     "ClientPacketListener_customPacketsMixin",
     "DebugRenderer_scarpetRenderMixin",
-    "LevelRenderer_scarpetRenderMixin"
+    "LevelRenderer_scarpetRenderMixin",
+
+
+    "ClientCommonPacketListenerImpl_customPacketMixin"
   ],
   "injectors": {
     "defaultRequire": 1

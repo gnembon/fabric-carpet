@@ -16,7 +16,7 @@ public class PlayerList_coreMixin
 {
 
     @Inject(method = "placeNewPlayer", at = @At("RETURN"))
-    private void onPlayerConnected(Connection connection, ServerPlayer player, CallbackInfo ci)
+    private void onPlayerConnected(Connection connection, ServerPlayer player, int i, CallbackInfo ci)
     {
         CarpetServer.onPlayerLoggedIn(player);
     }

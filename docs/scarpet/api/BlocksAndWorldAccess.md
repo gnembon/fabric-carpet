@@ -230,10 +230,14 @@ that block, a block doesn't get destroyed either.
 
 ### `create_explosion(pos, power?, mode?, fire?, source?, attacker?)`
 
-Creates an explosion at a given position. Default values of optional parameters are: `'power'` - `4` (TNT power), 
-`'mode'` (block breaking effect `none`, `destroy` or `break`: `break`, `fire` (whether extra fire blocks should be created) - `false`,
-`source` (exploding entity) - `null` and `attacker` (entity responsible for trigerring) - `null`. Explosions created with this
-endpoint cannot be captured with `__on_explosion` event, however they will be captured by `__on_explosion_outcome`.
+Creates an explosion at a given position. Parameters work as follows:
+ - `'power'` - how strong the blast is, negative values count as 0 (default: `4` (TNT power))
+ - `'mode'` - how to deal with broken blocks: `keep` keeps them, `destroy` destroys them and drops items, and `destroy_with_decay` destroys them, but doesn't always drop the items (default: `destroy_with_decay`)
+ - `fire` - whether extra fire blocks should be created (default: `false`)
+ - `source` - entity that is exploding. Note that it will not take explosion damage from this explosion (default: `null`)
+ - `attacker` - entity responsible for triggering, this will be displayed in death messages, and count towards kill counts, and can be damaged by the explosion (default: `null`)
+Explosions created with this endpoint cannot be captured with `__on_explosion` event, however they will be captured
+by `__on_explosion_outcome`.
 
 ### `weather()`,`weather(type)`,`weather(type, ticks)`
 
@@ -241,9 +245,10 @@ If called with no args, returns `'clear'`, `'rain` or `'thunder'` based on the c
 always return `'thunder'`, if not will return `'rain'` or `'clear'` based on the current weather.
 
 With one arg, (either `'clear'`, `'rain` or `'thunder'`), returns the number of remaining ticks for that weather type.
-NB: It can thunder without there being a thunderstorm, there has to be both rain and thunder to form a storm.
+NB: It can thunder without there being a thunderstorm; there has to be both rain and thunder to form a storm. So if
+running `weather()` returns `'thunder'`, you can use `weather('rain')>0` to see if there's a storm going on.
 
-With two args, sets the weather to `type` for `ticks` ticks.
+With two args, sets the weather to the given `type` for `ticks` ticks.
 
 ## Block and World querying
 
@@ -292,6 +297,7 @@ back in state definition in various applications where block properties are requ
 Throws `unknown_block` if the provided input is not valid.
 
 <pre>
+set(x,y,z,'iron_block'); block_state(x,y,z)  => {}
 set(x,y,z,'iron_trapdoor','half','top'); block_state(x,y,z)  => {waterlogged: false, half: top, open: false, ...}
 set(x,y,z,'iron_trapdoor','half','top'); block_state(x,y,z,'half')  => top
 block_state('iron_trapdoor','half')  => top
@@ -303,7 +309,14 @@ bool(block_state(block('iron_trapdoor[half=top]'),'powered'))  => 0
 
 ### `block_list()`, `block_list(tag)`
 
-Returns list of all blocks. If tag is provided, returns list of blocks that belong to this block tag.
+Returns list of all blocks in the game. If `tag` is provided, returns list of all blocks that belong to this block tag.
+<pre>
+block_list() => [dark_oak_button, wall_torch, structure_block, polished_blackstone_brick_slab, cherry_sapling... ]
+block_list('impermeable') => [glass, white_stained_glass, orange_stained_glass, magenta_stained_glass... ] //All da glass
+block_list('rails') => [rail, powered_rail, detector_rail, activator_rail]
+block_list('not_a_valid_block_tag') => null //Not a valid block tag
+</pre>
+
 
 ### `block_tags()`, `block_tags(block)`, `block_tags(block, tag)`
 
@@ -313,12 +326,21 @@ to this tag, and `true` if the block belongs to the tag.
 
 Throws `unknown_block` if `block` doesn't exist
 
+<pre>
+block_tags() => [geode_invalid_blocks, wall_post_override, ice, wooden_stairs, bamboo_blocks, stone_bricks... ]
+block_tags('iron_block') => [mineable/pickaxe, needs_stone_tool, beacon_base_blocks]
+block_tags('glass') => [impermeable]
+block_tags('glass', 'impermeable') => true
+block_tags('glass', 'beacon_base_blocks') => false
+</pre>
+
 ### `block_data(pos)`
 
 Return NBT string associated with specific location, or null if the block does not carry block data. Can be currently 
 used to match specific information from it, or use it to copy to another block
 
-<pre>    block_data(x,y,z) => '{TransferCooldown:0,x:450,y:68, ... }'
+<pre>
+block_data(x,y,z) => '{TransferCooldown:0,x:450,y:68, ... }'
 </pre>
 
 ### `poi(pos), poi(pos, radius?, type?, status?, column_search?)`

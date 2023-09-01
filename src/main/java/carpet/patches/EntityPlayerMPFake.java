@@ -31,7 +31,8 @@ import net.minecraft.world.phys.Vec3;
 import carpet.fakes.ServerPlayerInterface;
 import carpet.utils.Messenger;
 
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 
 @SuppressWarnings("EntityConstructor")
 public class EntityPlayerMPFake extends ServerPlayer
@@ -39,7 +40,7 @@ public class EntityPlayerMPFake extends ServerPlayer
     public Runnable fixStartingPosition = () -> {};
     public boolean isAShadow;
 
-    public static EntityPlayerMPFake createFake(String username, MinecraftServer server, Vec3 pos, double yaw, double pitch, ResourceKey<Level> dimensionId, GameType gamemode, boolean flying)
+    public static void createFake(String username, MinecraftServer server, Vec3 pos, double yaw, double pitch, ResourceKey<Level> dimensionId, GameType gamemode, boolean flying, Runnable onError)
     {
         //prolly half of that crap is not necessary, but it works
         ServerLevel worldIn = server.getLevel(dimensionId);
@@ -55,32 +56,38 @@ public class EntityPlayerMPFake extends ServerPlayer
         {
             if (!CarpetSettings.allowSpawningOfflinePlayers)
             {
-                return null;
+                onError.run();
+                return;
             } else {
                 gameprofile = new GameProfile(UUIDUtil.createOfflinePlayerUUID(username), username);
             }
         }
-        if (gameprofile.getProperties().containsKey("textures"))
-        {
-            AtomicReference<GameProfile> result = new AtomicReference<>();
-            SkullBlockEntity.updateGameprofile(gameprofile, result::set);
-            gameprofile = result.get();
-        }
-        EntityPlayerMPFake instance = new EntityPlayerMPFake(server, worldIn, gameprofile, false);
-        instance.fixStartingPosition = () -> instance.moveTo(pos.x, pos.y, pos.z, (float) yaw, (float) pitch);
-        server.getPlayerList().placeNewPlayer(new FakeClientConnection(PacketFlow.SERVERBOUND), instance);
-        instance.teleportTo(worldIn, pos.x, pos.y, pos.z, (float) yaw, (float) pitch);
-        instance.setDeltaMovement(Vec3.ZERO);
-        instance.setHealth(20.0F);
-        instance.unsetRemoved();
-        instance.setMaxUpStep(0.6F);
-        instance.gameMode.changeGameModeForPlayer(gamemode);
-        server.getPlayerList().broadcastAll(new ClientboundRotateHeadPacket(instance, (byte) (instance.yHeadRot * 256 / 360)), dimensionId);//instance.dimension);
-        server.getPlayerList().broadcastAll(new ClientboundTeleportEntityPacket(instance), dimensionId);//instance.dimension);
-        //instance.world.getChunkManager(). updatePosition(instance);
-        instance.entityData.set(DATA_PLAYER_MODE_CUSTOMISATION, (byte) 0x7f); // show all model layers (incl. capes)
-        instance.getAbilities().flying = flying;
-        return instance;
+        GameProfile finalGP = gameprofile;
+        fetchGameProfile(gameprofile.getName()).thenAccept(p -> {
+            GameProfile current = finalGP;
+            if (p.isPresent())
+            {
+                current = p.get();
+            }
+            EntityPlayerMPFake instance = new EntityPlayerMPFake(server, worldIn, current, false);
+            instance.fixStartingPosition = () -> instance.moveTo(pos.x, pos.y, pos.z, (float) yaw, (float) pitch);
+            server.getPlayerList().placeNewPlayer(new FakeClientConnection(PacketFlow.SERVERBOUND), instance, 0);
+            instance.teleportTo(worldIn, pos.x, pos.y, pos.z, (float) yaw, (float) pitch);
+            instance.setDeltaMovement(Vec3.ZERO);
+            instance.setHealth(20.0F);
+            instance.unsetRemoved();
+            instance.setMaxUpStep(0.6F);
+            instance.gameMode.changeGameModeForPlayer(gamemode);
+            server.getPlayerList().broadcastAll(new ClientboundRotateHeadPacket(instance, (byte) (instance.yHeadRot * 256 / 360)), dimensionId);//instance.dimension);
+            server.getPlayerList().broadcastAll(new ClientboundTeleportEntityPacket(instance), dimensionId);//instance.dimension);
+            //instance.world.getChunkManager(). updatePosition(instance);
+            instance.entityData.set(DATA_PLAYER_MODE_CUSTOMISATION, (byte) 0x7f); // show all model layers (incl. capes)
+            instance.getAbilities().flying = flying;
+        });
+    }
+
+    private static CompletableFuture<Optional<GameProfile>> fetchGameProfile(final String name) {
+        return SkullBlockEntity.fetchGameProfile(name);
     }
 
     public static EntityPlayerMPFake createShadow(MinecraftServer server, ServerPlayer player)
@@ -91,7 +98,7 @@ public class EntityPlayerMPFake extends ServerPlayer
         GameProfile gameprofile = player.getGameProfile();
         EntityPlayerMPFake playerShadow = new EntityPlayerMPFake(server, worldIn, gameprofile, true);
         playerShadow.setChatSession(player.getChatSession());
-        server.getPlayerList().placeNewPlayer(new FakeClientConnection(PacketFlow.SERVERBOUND), playerShadow);
+        server.getPlayerList().placeNewPlayer(new FakeClientConnection(PacketFlow.SERVERBOUND), playerShadow, 0);
 
         playerShadow.setHealth(player.getHealth());
         playerShadow.connection.teleport(player.getX(), player.getY(), player.getZ(), player.getYRot(), player.getXRot());
@@ -189,6 +196,11 @@ public class EntityPlayerMPFake extends ServerPlayer
     public String getIpAddress()
     {
         return "127.0.0.1";
+    }
+
+    @Override
+    public boolean allowsListing() {
+        return CarpetSettings.allowListingFakePlayers;
     }
 
     @Override
