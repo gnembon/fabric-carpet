@@ -5,7 +5,6 @@ import carpet.fakes.ServerPlayerInterface;
 import carpet.script.EntityEventsGroup;
 import com.mojang.authlib.GameProfile;
 import net.minecraft.core.BlockPos;
-import net.minecraft.network.protocol.game.ServerboundClientInformationPacket;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -128,21 +127,5 @@ public abstract class ServerPlayer_scarpetEventMixin extends Player implements S
     public boolean isInvalidEntityObject()
     {
         return isInvalidReference;
-    }
-
-    //getting player language
-    @Unique
-    private String language;
-
-    @Override
-    public String getLanguage()
-    {
-        return this.language;
-    }
-
-    @Inject(method = "updateOptions", at = @At("HEAD"))
-    public void setLanguage(ServerboundClientInformationPacket packet, CallbackInfo ci)
-    {
-        this.language = packet.language();
     }
 }

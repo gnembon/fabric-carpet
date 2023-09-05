@@ -4,6 +4,7 @@ import carpet.CarpetSettings;
 import net.minecraft.network.Connection;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.network.CommonListenerCookie;
 import net.minecraft.server.network.ServerCommonPacketListenerImpl;
 import net.minecraft.server.network.ServerGamePacketListenerImpl;
 import org.spongepowered.asm.mixin.Mixin;
@@ -20,9 +21,9 @@ public abstract class ServerGamePacketListenerImpl_antiCheatDisabledMixin extend
 
     @Shadow private int aboveGroundVehicleTickCount;
 
-    public ServerGamePacketListenerImpl_antiCheatDisabledMixin(final MinecraftServer minecraftServer, final Connection connection, final int i)
+    public ServerGamePacketListenerImpl_antiCheatDisabledMixin(final MinecraftServer minecraftServer, final Connection connection, CommonListenerCookie cci)
     {
-        super(minecraftServer, connection, i);
+        super(minecraftServer, connection, cci);
     }
 
     //@Shadow protected abstract boolean isSingleplayerOwner();

@@ -4,8 +4,10 @@ import com.mojang.authlib.GameProfile;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.Connection;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ClientInformation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.network.CommonListenerCookie;
 import net.minecraft.server.network.ServerGamePacketListenerImpl;
 import net.minecraft.server.players.PlayerList;
 import org.spongepowered.asm.mixin.Final;
@@ -34,25 +36,25 @@ public abstract class PlayerList_fakePlayersMixin
         }
     }
 
-    @Redirect(method = "placeNewPlayer", at = @At(value = "NEW", target = "(Lnet/minecraft/server/MinecraftServer;Lnet/minecraft/network/Connection;Lnet/minecraft/server/level/ServerPlayer;I)Lnet/minecraft/server/network/ServerGamePacketListenerImpl;"))
-    private ServerGamePacketListenerImpl replaceNetworkHandler( MinecraftServer server,  Connection clientConnection,  ServerPlayer playerIn,  int i)
+    @Redirect(method = "placeNewPlayer", at = @At(value = "NEW", target = "(Lnet/minecraft/server/MinecraftServer;Lnet/minecraft/network/Connection;Lnet/minecraft/server/level/ServerPlayer;Lnet/minecraft/server/network/CommonListenerCookie;)Lnet/minecraft/server/network/ServerGamePacketListenerImpl;"))
+    private ServerGamePacketListenerImpl replaceNetworkHandler(MinecraftServer server, Connection clientConnection, ServerPlayer playerIn, CommonListenerCookie cookie)
     {
         if (playerIn instanceof EntityPlayerMPFake fake)
         {
-            return new NetHandlerPlayServerFake(this.server, clientConnection, fake, i);
+            return new NetHandlerPlayServerFake(this.server, clientConnection, fake, cookie);
         }
         else
         {
-            return new ServerGamePacketListenerImpl(this.server, clientConnection, playerIn, i);
+            return new ServerGamePacketListenerImpl(this.server, clientConnection, playerIn, cookie);
         }
     }
 
-    @Redirect(method = "respawn", at = @At(value = "NEW", target = "(Lnet/minecraft/server/MinecraftServer;Lnet/minecraft/server/level/ServerLevel;Lcom/mojang/authlib/GameProfile;)Lnet/minecraft/server/level/ServerPlayer;"))
-    public ServerPlayer makePlayerForRespawn(MinecraftServer minecraftServer, ServerLevel serverLevel, GameProfile gameProfile, ServerPlayer serverPlayer, boolean i)
+    @Redirect(method = "respawn", at = @At(value = "NEW", target = "(Lnet/minecraft/server/MinecraftServer;Lnet/minecraft/server/level/ServerLevel;Lcom/mojang/authlib/GameProfile;Lnet/minecraft/server/level/ClientInformation;)Lnet/minecraft/server/level/ServerPlayer;"))
+    public ServerPlayer makePlayerForRespawn(MinecraftServer minecraftServer, ServerLevel serverLevel, GameProfile gameProfile, ClientInformation cli, ServerPlayer serverPlayer, boolean i)
     {
         if (serverPlayer instanceof EntityPlayerMPFake) {
-            return EntityPlayerMPFake.respawnFake(minecraftServer, serverLevel, gameProfile);
+            return EntityPlayerMPFake.respawnFake(minecraftServer, serverLevel, gameProfile, cli);
         }
-        return new ServerPlayer(minecraftServer, serverLevel, gameProfile);
+        return new ServerPlayer(minecraftServer, serverLevel, gameProfile, cli);
     }
 }

@@ -230,7 +230,7 @@ public class Vanilla
 
     public static String ServerPlayer_getLanguage(ServerPlayer player)
     {
-        return ((ServerPlayerInterface) player).getLanguage();
+        return player.clientInformation().language();
     }
 
     public static GoalSelector Mob_getAI(Mob mob, boolean target)
