@@ -526,11 +526,13 @@ __tick_tracker() ->
       return()
    );
    p = player();
-   in_dimension(p,
-      for (entity_area('valid', p, global_range, global_range, global_range),
-         __handle_entity(_)
-      )
-   );
+   if (p == null, (clear()), (
+      in_dimension(p,
+         for (entity_area('valid', p, global_range, global_range, global_range),
+            __handle_entity(_)
+         )
+      );
+   ));
    schedule(global_interval, '__tick_tracker');
 );
 
