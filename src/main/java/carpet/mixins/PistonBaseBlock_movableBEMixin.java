@@ -80,7 +80,7 @@ public abstract class PistonBaseBlock_movableBEMixin extends DirectionalBlock
     }
 
     @Inject(method = "moveBlocks", at = @At(value = "INVOKE", shift = At.Shift.BEFORE,
-            target = "Ljava/util/List;size()I", ordinal = 4),locals = LocalCapture.CAPTURE_FAILHARD)
+            target = "Ljava/util/List;size()I", ordinal = 3),locals = LocalCapture.CAPTURE_FAILHARD)
     private void onMove(Level world_1, BlockPos blockPos_1, Direction direction_1, boolean boolean_1,
                         CallbackInfoReturnable<Boolean> cir, BlockPos blockPos_2, PistonStructureResolver pistonHandler_1, Map<?, ?> map_1,
                         List<BlockPos> list_1, List<BlockState> list_2, List<?> list_3, BlockState[] blockStates_1,
