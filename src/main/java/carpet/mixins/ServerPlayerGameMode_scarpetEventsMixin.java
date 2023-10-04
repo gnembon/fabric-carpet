@@ -40,13 +40,13 @@ public class ServerPlayerGameMode_scarpetEventsMixin implements ServerPlayerInte
 
     @Inject(method = "destroyBlock", locals = LocalCapture.CAPTURE_FAILHARD, cancellable = true, at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/world/level/block/Block;playerWillDestroy(Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/entity/player/Player;)V",
+            target = "Lnet/minecraft/server/level/ServerLevel;removeBlock(Lnet/minecraft/core/BlockPos;Z)Z",
             shift = At.Shift.BEFORE
     ))
-    private void onBlockBroken(BlockPos blockPos_1, CallbackInfoReturnable<Boolean> cir, BlockState blockState_1, BlockEntity be, Block b)
+    private void onBlockBroken(final BlockPos blockPos, final CallbackInfoReturnable<Boolean> cir, final BlockEntity blockEntity, final Block block, final BlockState blockState)
     {
-        if(PLAYER_BREAK_BLOCK.onBlockBroken(player, blockPos_1, blockState_1)) {
-            this.level.sendBlockUpdated(blockPos_1, blockState_1, blockState_1, 3);
+        if(PLAYER_BREAK_BLOCK.onBlockBroken(player, blockPos, blockState)) {
+            this.level.sendBlockUpdated(blockPos, blockState, blockState, 3);
             cir.setReturnValue(false);
             cir.cancel();
         }
