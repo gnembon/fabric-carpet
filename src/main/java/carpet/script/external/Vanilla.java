@@ -183,6 +183,7 @@ public class Vanilla
         return CarpetSettings.runPermissionLevel;
     }
 
+    @Deprecated
     public static String MinecraftServer_getReleaseTarget(MinecraftServer server)
     {
         return CarpetSettings.releaseTarget;
