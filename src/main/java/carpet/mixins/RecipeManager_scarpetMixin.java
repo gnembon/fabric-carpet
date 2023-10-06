@@ -28,9 +28,9 @@ public class RecipeManager_scarpetMixin implements RecipeManagerInterface
         Map<ResourceLocation, RecipeHolder<?>> typeRecipes = recipes.get(type);
         // happens when mods add recipe to the registry without updating recipe manager
         if (typeRecipes == null) return List.of();
-        RecipeHolder<?> recipeByType = typeRecipes.get(itemId);
-        if (recipeByType != null)
-            return List.of(recipeByType.value());
+        RecipeHolder<?> recipeFromMap = typeRecipes.get(itemId);
+        if (recipeFromMap != null)
+            return List.of(recipeFromMap.value());
         Registry<Item> regs = registryAccess.registryOrThrow(Registries.ITEM);
         Item item = regs.get(itemId);
         return typeRecipes.values()
