@@ -23,17 +23,19 @@ public class RecipeManager_scarpetMixin implements RecipeManagerInterface
     @Shadow private Map<RecipeType<?>, Map<ResourceLocation, RecipeHolder<?>>> recipes;
 
     @Override
-    public List<Recipe<?>> getAllMatching(RecipeType<?> type, ResourceLocation output, final RegistryAccess registryAccess)
+    public List<Recipe<?>> getAllMatching(RecipeType<?> type, ResourceLocation itemId, final RegistryAccess registryAccess)
     {
         Map<ResourceLocation, RecipeHolder<?>> typeRecipes = recipes.get(type);
         // happens when mods add recipe to the registry without updating recipe manager
         if (typeRecipes == null) return List.of();
-        if (typeRecipes.containsKey(output)) return List.of(typeRecipes.get(output).value());
+        RecipeHolder<?> recipeByType = typeRecipes.get(itemId);
+        if (recipeByType != null)
+            return List.of(typeRecipes.get(itemId).value());
         final Registry<Item> regs = registryAccess.registryOrThrow(Registries.ITEM);
         return typeRecipes.values()
                 .stream()
                 .<Recipe<?>>map(RecipeHolder::value)
-                .filter(r -> regs.getKey(r.getResultItem(registryAccess).getItem()).equals(output))
+                .filter(r -> regs.getKey(r.getResultItem(registryAccess).getItem()).equals(itemId))
                 .toList();
     }
 }
