@@ -31,11 +31,12 @@ public class RecipeManager_scarpetMixin implements RecipeManagerInterface
         RecipeHolder<?> recipeByType = typeRecipes.get(itemId);
         if (recipeByType != null)
             return List.of(typeRecipes.get(itemId).value());
-        final Registry<Item> regs = registryAccess.registryOrThrow(Registries.ITEM);
+        Registry<Item> regs = registryAccess.registryOrThrow(Registries.ITEM);
+        Item item = regs.get(itemId);
         return typeRecipes.values()
                 .stream()
                 .<Recipe<?>>map(RecipeHolder::value)
-                .filter(r -> regs.getKey(r.getResultItem(registryAccess).getItem()).equals(itemId))
+                .filter(r -> r.getResultItem(registryAccess).getItem() == item)
                 .toList();
     }
 }
