@@ -5227,7 +5227,7 @@ Reads the `property` of the `team` if no `value` is specified. If a `value` is a
     
 * `color`
   * Type: String
-  * Options: See [team command](https://minecraft.gamepedia.com/Commands/team#Arguments) (same strings as `'teamcolor'` [command argument](https://github.com/gnembon/fabric-carpet/blob/master/docs/scarpet/Full.md#command-argument-types) options)
+  * Options: See [team command](https://minecraft.wiki/w/Commands/team#Arguments) (same strings as `'teamcolor'` [command argument](https://github.com/gnembon/fabric-carpet/blob/master/docs/scarpet/Full.md#command-argument-types) options)
 
 * `displayName`
   * Type: String or FormattedText, when querying returns FormattedText
