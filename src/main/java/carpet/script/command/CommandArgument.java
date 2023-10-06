@@ -122,7 +122,7 @@ public abstract class CommandArgument
     private static final List<? extends CommandArgument> baseTypes = Lists.newArrayList(
             // default
             new StringArgument(),
-            // vanilla arguments as per https://minecraft.gamepedia.com/Argument_types
+            // vanilla arguments as per https://minecraft.wiki/w/Argument_types
             new VanillaUnconfigurableArgument("bool", BoolArgumentType::bool,
                     (c, p) -> BooleanValue.of(BoolArgumentType.getBool(c, p)), false
             ),
