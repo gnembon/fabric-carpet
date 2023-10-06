@@ -30,7 +30,7 @@ public class RecipeManager_scarpetMixin implements RecipeManagerInterface
         if (typeRecipes == null) return List.of();
         RecipeHolder<?> recipeByType = typeRecipes.get(itemId);
         if (recipeByType != null)
-            return List.of(typeRecipes.get(itemId).value());
+            return List.of(recipeByType.value());
         Registry<Item> regs = registryAccess.registryOrThrow(Registries.ITEM);
         Item item = regs.get(itemId);
         return typeRecipes.values()
