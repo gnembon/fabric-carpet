@@ -4,7 +4,6 @@ import carpet.fakes.RecipeManagerInterface;
 import com.google.common.collect.Lists;
 import net.minecraft.core.Registry;
 import net.minecraft.core.RegistryAccess;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.item.Item;
 import org.spongepowered.asm.mixin.Mixin;
@@ -16,6 +15,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.crafting.Recipe;
+import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.item.crafting.RecipeManager;
 import net.minecraft.world.item.crafting.RecipeType;
 
@@ -23,17 +23,17 @@ import net.minecraft.world.item.crafting.RecipeType;
 public class RecipeManager_scarpetMixin implements RecipeManagerInterface
 {
 
-    @Shadow private Map<RecipeType<?>, Map<ResourceLocation, Recipe<?>>> recipes;
+    @Shadow private Map<RecipeType<?>, Map<ResourceLocation, RecipeHolder<?>>> recipes;
 
     @Override
     public List<Recipe<?>> getAllMatching(RecipeType<?> type, ResourceLocation output, final RegistryAccess registryAccess)
     {
-        Map<ResourceLocation, Recipe<?>> typeRecipes = recipes.get(type);
+        Map<ResourceLocation, RecipeHolder<?>> typeRecipes = recipes.get(type);
         // happens when mods add recipe to the registry without updating recipe manager
         if (typeRecipes == null) return Collections.emptyList();
-        if (typeRecipes.containsKey(output)) return Collections.singletonList(typeRecipes.get(output));
+        if (typeRecipes.containsKey(output)) return Collections.singletonList(typeRecipes.get(output).value());
         final Registry<Item> regs = registryAccess.registryOrThrow(Registries.ITEM);
-        return Lists.newArrayList(typeRecipes.values().stream().filter(
+        return Lists.newArrayList(typeRecipes.values().stream().map(RecipeHolder::value).filter(
                 r -> regs.getKey(r.getResultItem(registryAccess).getItem()).equals(output)).collect(Collectors.toList()));
     }
 }
