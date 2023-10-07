@@ -5,6 +5,7 @@ import java.math.RoundingMode;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 
 import net.minecraft.Util;
@@ -71,7 +72,7 @@ public class OptimizedExplosion
 
     public static void doExplosionA(Explosion e, ExplosionLogHelper eLogger) {
         ExplosionAccessor eAccess = (ExplosionAccessor) e;
-        
+
         entityList.clear();
         boolean eventNeeded = EXPLOSION_OUTCOME.isNeeded() && !eAccess.getLevel().isClientSide();
         blastCalc(e);
@@ -111,80 +112,84 @@ public class OptimizedExplosion
         explosionSound++;
 
         Entity explodingEntity = eAccess.getSource();
+
+        // Only skip accelerating if explodingEntity is onGround
+        if (explodingEntity != null && explodingEntity instanceof PrimedTnt && explodingEntity.onGround()) {
+            for (int k2 = 0; k2 < entitylist.size(); ++k2) {
+                Entity entity = entitylist.get(k2);
+                if (entity instanceof PrimedTnt &&
+                        entity.getX() == explodingEntity.getX() &&
+                        entity.getY() == explodingEntity.getY() &&
+                        entity.getZ() == explodingEntity.getZ()) {
+                    if (eLogger != null)
+                        eLogger.onEntityImpacted(entity, new Vec3(0, -0.9923437498509884d, 0));
+
+                    removeFast(entitylist, k2);
+                    --k2;
+                }
+            }
+        }
+
         for (int k2 = 0; k2 < entitylist.size(); ++k2) {
             Entity entity = entitylist.get(k2);
 
-
-            if (entity == explodingEntity) {
-                // entitylist.remove(k2);
+            if (entity == explodingEntity || entity.ignoreExplosion()) {
                 removeFast(entitylist, k2);
-                k2--;
+                --k2;
                 continue;
             }
 
-            if (entity instanceof PrimedTnt && explodingEntity != null &&
-                    entity.getX() == explodingEntity.getX() &&
-                    entity.getY() == explodingEntity.getY() &&
-                    entity.getZ() == explodingEntity.getZ()) {
-                if (eLogger != null) {
-                    eLogger.onEntityImpacted(entity, new Vec3(0,-0.9923437498509884d, 0));
-                }
-                continue;
-            }
+            double d12 = Math.sqrt(entity.distanceToSqr(eAccess.getX(), eAccess.getY(), eAccess.getZ())) / (double) f3;
 
-            if (!entity.ignoreExplosion()) {
-                double d12 = Math.sqrt(entity.distanceToSqr(eAccess.getX(), eAccess.getY(), eAccess.getZ())) / (double) f3;
+            if (d12 <= 1.0D) {
+                double d5 = entity.getX() - eAccess.getX();
+                // Change in 1.16 snapshots to fix a bug with TNT jumping
+                double d7 = (entity instanceof PrimedTnt ? entity.getY() : entity.getEyeY()) - eAccess.getY();
+                double d9 = entity.getZ() - eAccess.getZ();
+                double d13 = (double) Math.sqrt(d5 * d5 + d7 * d7 + d9 * d9);
 
-                if (d12 <= 1.0D) {
-                    double d5 = entity.getX() - eAccess.getX();
-                    // Change in 1.16 snapshots to fix a bug with TNT jumping
-                    double d7 = (entity instanceof PrimedTnt ? entity.getY() : entity.getEyeY()) - eAccess.getY();
-                    double d9 = entity.getZ() - eAccess.getZ();
-                    double d13 = (double) Math.sqrt(d5 * d5 + d7 * d7 + d9 * d9);
+                if (d13 != 0.0D) {
+                    d5 = d5 / d13;
+                    d7 = d7 / d13;
+                    d9 = d9 / d13;
+                    double density;
 
-                    if (d13 != 0.0D) {
-                        d5 = d5 / d13;
-                        d7 = d7 / d13;
-                        d9 = d9 / d13;
-                        double density;
+                    pairMutable.setLeft(vec3d);
+                    pairMutable.setRight(entity.getBoundingBox());
+                    density = densityCache.getOrDefault(pairMutable, Double.MAX_VALUE);
 
-                        pairMutable.setLeft(vec3d);
-                        pairMutable.setRight(entity.getBoundingBox());
-                        density = densityCache.getOrDefault(pairMutable, Double.MAX_VALUE);
+                    if (density == Double.MAX_VALUE)
+                    {
+                        Pair<Vec3, AABB> pair = Pair.of(vec3d, entity.getBoundingBox());
+                        density = Explosion.getSeenPercent(vec3d, entity);
+                        densityCache.put(pair, density);
+                    }
 
-                        if (density == Double.MAX_VALUE)
-                        {
-                            Pair<Vec3, AABB> pair = Pair.of(vec3d, entity.getBoundingBox());
-                            density = Explosion.getSeenPercent(vec3d, entity);
-                            densityCache.put(pair, density);
-                        }
+                    // If it is needed, it saves the entity
+                    if (eventNeeded) {
+                        entityList.add(entity);
+                    }
 
-                        // If it is needed, it saves the entity
-                        if (eventNeeded) {
-                            entityList.add(entity);
-                        }
+                    double d10 = (1.0D - d12) * density;
+                    entity.hurt(e.getDamageSource(),
+                            (float) ((int) ((d10 * d10 + d10) / 2.0D * 7.0D * (double) f3 + 1.0D)));
+                    double d11 = d10;
 
-                        double d10 = (1.0D - d12) * density;
-                        entity.hurt(e.getDamageSource(),
-                                (float) ((int) ((d10 * d10 + d10) / 2.0D * 7.0D * (double) f3 + 1.0D)));
-                        double d11 = d10;
+                    if (entity instanceof LivingEntity) {
+                        d11 = ProtectionEnchantment.getExplosionKnockbackAfterDampener((LivingEntity) entity, d10);
+                    }
 
-                        if (entity instanceof LivingEntity) {
-                            d11 = ProtectionEnchantment.getExplosionKnockbackAfterDampener((LivingEntity) entity, d10);
-                        }
+                    if (eLogger != null) {
+                        eLogger.onEntityImpacted(entity, new Vec3(d5 * d11, d7 * d11, d9 * d11));
+                    }
 
-                        if (eLogger != null) {
-                            eLogger.onEntityImpacted(entity, new Vec3(d5 * d11, d7 * d11, d9 * d11));
-                        }
+                    entity.setDeltaMovement(entity.getDeltaMovement().add(d5 * d11, d7 * d11, d9 * d11));
 
-                        entity.setDeltaMovement(entity.getDeltaMovement().add(d5 * d11, d7 * d11, d9 * d11));
+                    if (entity instanceof Player player) {
 
-                        if (entity instanceof Player player) {
-
-                            if (!player.isSpectator()
-                                    && (!player.isCreative() || !player.getAbilities().flying)) {  //getAbilities
-                                e.getHitPlayers().put(player, new Vec3(d5 * d10, d7 * d10, d9 * d10));
-                            }
+                        if (!player.isSpectator()
+                                && (!player.isCreative() || !player.getAbilities().flying)) {  //getAbilities
+                            e.getHitPlayers().put(player, new Vec3(d5 * d10, d7 * d10, d9 * d10));
                         }
                     }
                 }
