@@ -5,8 +5,10 @@ import java.math.RoundingMode;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 
 import net.minecraft.Util;
 import net.minecraft.core.BlockPos;
@@ -50,6 +52,8 @@ import static carpet.script.CarpetEventServer.Event.EXPLOSION_OUTCOME;
 public class OptimizedExplosion
 {
     private static List<Entity> entitylist;
+    private static Set<Entity> skippedEntities;
+    private static final Vec3 SAME_POSITION_VELOCITY = new Vec3(0d, -0.9923437498509884d, 0d);
     private static Vec3 vec3dmem;
     private static long tickmem;
     // For disabling the explosion particles and sound
@@ -102,33 +106,40 @@ public class OptimizedExplosion
         int j1 = Mth.floor(eAccess.getZ() + (double) radius + 1.0D);
         Vec3 vec3d = new Vec3(eAccess.getX(), eAccess.getY(), eAccess.getZ());
 
+        Entity explodingEntity = eAccess.getSource();
+
         if (vec3dmem == null || !vec3dmem.equals(vec3d) || tickmem != eAccess.getLevel().getGameTime()) {
             vec3dmem = vec3d;
             tickmem = eAccess.getLevel().getGameTime();
             entitylist = eAccess.getLevel().getEntities(null, new AABB(k1, i2, j2, l1, i1, j1));
             explosionSound = 0;
-        }
 
-        explosionSound++;
+            skippedEntities = new HashSet<Entity>();
+            // Only skip accelerating if explodingEntity is onGround
+            if (explodingEntity != null && explodingEntity instanceof PrimedTnt && explodingEntity.onGround()) {
+                for (int k2 = 0; k2 < entitylist.size(); ++k2) {
+                    Entity entity = entitylist.get(k2);
+                    if (entity instanceof PrimedTnt &&
+                            entity.getX() == explodingEntity.getX() &&
+                            entity.getY() == explodingEntity.getY() &&
+                            entity.getZ() == explodingEntity.getZ()) {
+                        if (eLogger != null)
+                            skippedEntities.add(entity);
 
-        Entity explodingEntity = eAccess.getSource();
-
-        // Only skip accelerating if explodingEntity is onGround
-        if (explodingEntity != null && explodingEntity instanceof PrimedTnt && explodingEntity.onGround()) {
-            for (int k2 = 0; k2 < entitylist.size(); ++k2) {
-                Entity entity = entitylist.get(k2);
-                if (entity instanceof PrimedTnt &&
-                        entity.getX() == explodingEntity.getX() &&
-                        entity.getY() == explodingEntity.getY() &&
-                        entity.getZ() == explodingEntity.getZ()) {
-                    if (eLogger != null)
-                        eLogger.onEntityImpacted(entity, new Vec3(0, -0.9923437498509884d, 0));
-
-                    removeFast(entitylist, k2);
-                    --k2;
+                        removeFast(entitylist, k2);
+                        --k2;
+                    }
                 }
             }
         }
+
+        // "/log explosions full" parity
+        skippedEntities.remove(explodingEntity);
+        if (eLogger != null)
+            for (Entity entity : skippedEntities)
+                eLogger.onEntityImpacted(entity, SAME_POSITION_VELOCITY);
+
+        explosionSound++;
 
         for (int k2 = 0; k2 < entitylist.size(); ++k2) {
             Entity entity = entitylist.get(k2);
