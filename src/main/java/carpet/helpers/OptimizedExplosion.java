@@ -93,13 +93,13 @@ public class OptimizedExplosion
             affectedBlockPositionsSet.clear();
         }
 
-        float f3 = eAccess.getRadius() * 2.0F;
-        int k1 = Mth.floor(eAccess.getX() - (double) f3 - 1.0D);
-        int l1 = Mth.floor(eAccess.getX() + (double) f3 + 1.0D);
-        int i2 = Mth.floor(eAccess.getY() - (double) f3 - 1.0D);
-        int i1 = Mth.floor(eAccess.getY() + (double) f3 + 1.0D);
-        int j2 = Mth.floor(eAccess.getZ() - (double) f3 - 1.0D);
-        int j1 = Mth.floor(eAccess.getZ() + (double) f3 + 1.0D);
+        float radius = eAccess.getRadius() * 2.0F;
+        int k1 = Mth.floor(eAccess.getX() - (double) radius - 1.0D);
+        int l1 = Mth.floor(eAccess.getX() + (double) radius + 1.0D);
+        int i2 = Mth.floor(eAccess.getY() - (double) radius - 1.0D);
+        int i1 = Mth.floor(eAccess.getY() + (double) radius + 1.0D);
+        int j2 = Mth.floor(eAccess.getZ() - (double) radius - 1.0D);
+        int j1 = Mth.floor(eAccess.getZ() + (double) radius + 1.0D);
         Vec3 vec3d = new Vec3(eAccess.getX(), eAccess.getY(), eAccess.getZ());
 
         if (vec3dmem == null || !vec3dmem.equals(vec3d) || tickmem != eAccess.getLevel().getGameTime()) {
@@ -139,59 +139,61 @@ public class OptimizedExplosion
                 continue;
             }
 
-            double d12 = Math.sqrt(entity.distanceToSqr(eAccess.getX(), eAccess.getY(), eAccess.getZ())) / (double) f3;
+            double distance = Math.sqrt(entity.distanceToSqr(eAccess.getX(), eAccess.getY(), eAccess.getZ())) / (double) radius;
 
-            if (d12 <= 1.0D) {
-                double d5 = entity.getX() - eAccess.getX();
-                // Change in 1.16 snapshots to fix a bug with TNT jumping
-                double d7 = (entity instanceof PrimedTnt ? entity.getY() : entity.getEyeY()) - eAccess.getY();
-                double d9 = entity.getZ() - eAccess.getZ();
-                double d13 = (double) Math.sqrt(d5 * d5 + d7 * d7 + d9 * d9);
+            if (distance > 1.0D)
+                continue;
 
-                if (d13 != 0.0D) {
-                    d5 = d5 / d13;
-                    d7 = d7 / d13;
-                    d9 = d9 / d13;
-                    double density;
+            double dx = entity.getX() - eAccess.getX();
+            // Change in 1.16 snapshots to fix a bug with TNT jumping
+            double dy = (entity instanceof PrimedTnt ? entity.getY() : entity.getEyeY()) - eAccess.getY();
+            double dz = entity.getZ() - eAccess.getZ();
+            double length = (double) Math.sqrt(dx * dx + dy * dy + dz * dz);
 
-                    pairMutable.setLeft(vec3d);
-                    pairMutable.setRight(entity.getBoundingBox());
-                    density = densityCache.getOrDefault(pairMutable, Double.MAX_VALUE);
+            if (length == 0.0D)
+                continue;
 
-                    if (density == Double.MAX_VALUE)
-                    {
-                        Pair<Vec3, AABB> pair = Pair.of(vec3d, entity.getBoundingBox());
-                        density = Explosion.getSeenPercent(vec3d, entity);
-                        densityCache.put(pair, density);
-                    }
+            dx = dx / length;
+            dy = dy / length;
+            dz = dz / length;
+            double density;
 
-                    // If it is needed, it saves the entity
-                    if (eventNeeded) {
-                        entityList.add(entity);
-                    }
+            pairMutable.setLeft(vec3d);
+            pairMutable.setRight(entity.getBoundingBox());
+            density = densityCache.getOrDefault(pairMutable, Double.MAX_VALUE);
 
-                    double d10 = (1.0D - d12) * density;
-                    entity.hurt(e.getDamageSource(),
-                            (float) ((int) ((d10 * d10 + d10) / 2.0D * 7.0D * (double) f3 + 1.0D)));
-                    double d11 = d10;
+            if (density == Double.MAX_VALUE)
+            {
+                Pair<Vec3, AABB> pair = Pair.of(vec3d, entity.getBoundingBox());
+                density = Explosion.getSeenPercent(vec3d, entity);
+                densityCache.put(pair, density);
+            }
 
-                    if (entity instanceof LivingEntity) {
-                        d11 = ProtectionEnchantment.getExplosionKnockbackAfterDampener((LivingEntity) entity, d10);
-                    }
+            // If it is needed, it saves the entity
+            if (eventNeeded) {
+                entityList.add(entity);
+            }
 
-                    if (eLogger != null) {
-                        eLogger.onEntityImpacted(entity, new Vec3(d5 * d11, d7 * d11, d9 * d11));
-                    }
+            double d10 = (1.0D - distance) * density;
+            entity.hurt(e.getDamageSource(),
+                    (float) ((int) ((d10 * d10 + d10) / 2.0D * 7.0D * (double) radius + 1.0D)));
+            double d11 = d10;
 
-                    entity.setDeltaMovement(entity.getDeltaMovement().add(d5 * d11, d7 * d11, d9 * d11));
+            if (entity instanceof LivingEntity) {
+                d11 = ProtectionEnchantment.getExplosionKnockbackAfterDampener((LivingEntity) entity, d10);
+            }
 
-                    if (entity instanceof Player player) {
+            if (eLogger != null) {
+                eLogger.onEntityImpacted(entity, new Vec3(dx * d11, dy * d11, dz * d11));
+            }
 
-                        if (!player.isSpectator()
-                                && (!player.isCreative() || !player.getAbilities().flying)) {  //getAbilities
-                            e.getHitPlayers().put(player, new Vec3(d5 * d10, d7 * d10, d9 * d10));
-                        }
-                    }
+            entity.setDeltaMovement(entity.getDeltaMovement().add(dx * d11, dy * d11, dz * d11));
+
+            if (entity instanceof Player player) {
+
+                if (!player.isSpectator()
+                        && (!player.isCreative() || !player.getAbilities().flying)) {  //getAbilities
+                    e.getHitPlayers().put(player, new Vec3(dx * d10, dy * d10, dz * d10));
                 }
             }
         }
