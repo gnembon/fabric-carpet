@@ -193,7 +193,15 @@ public class NumericValue extends Value
             }
             if (o instanceof final NumericValue no)
             {
-                return longValue != null && no.longValue != null ? longValue.equals(no.longValue) : !this.subtract(no).getBoolean();
+                if (longValue != null && no.longValue != null)
+                {
+                    return longValue.equals(no.longValue);
+                }
+                if (Double.isNaN(this.value) || Double.isNaN(no.value))
+                {
+                    return false;
+                }
+                return !this.subtract(no).getBoolean();
             }
             return super.equals(o);
         }
