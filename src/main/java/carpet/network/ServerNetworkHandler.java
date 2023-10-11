@@ -84,20 +84,18 @@ public class ServerNetworkHandler
         String id = commandData.getString("id");
         List<Component> output = new ArrayList<>();
         Component[] error = {null};
-        int resultCode = -1;
         if (player.getServer() == null)
         {
             error[0] = Component.literal("No Server");
         }
         else
         {
-            resultCode = player.getServer().getCommands().performPrefixedCommand(
+            player.getServer().getCommands().performPrefixedCommand(
                     new SnoopyCommandSource(player, error, output), command
             );
         }
         CompoundTag result = new CompoundTag();
         result.putString("id", id);
-        result.putInt("code", resultCode);
         if (error[0] != null)
         {
             result.putString("error", error[0].getContents().toString());

@@ -94,7 +94,6 @@ public class CarpetClient
         CarpetSettings.LOG.info("Server Response:");
         CompoundTag tag = (CompoundTag) t;
         CarpetSettings.LOG.info(" - id: " + tag.getString("id"));
-        CarpetSettings.LOG.info(" - code: " + tag.getInt("code"));
         if (tag.contains("error"))
         {
             CarpetSettings.LOG.warn(" - error: " + tag.getString("error"));

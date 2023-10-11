@@ -1,7 +1,7 @@
 package carpet.script.utils;
 
 import carpet.script.external.Vanilla;
-import com.mojang.brigadier.ResultConsumer;
+import net.minecraft.commands.CommandResultConsumer;
 import net.minecraft.commands.CommandSigningContext;
 import net.minecraft.commands.CommandSource;
 import net.minecraft.commands.CommandSourceStack;
@@ -33,7 +33,7 @@ public class SnoopyCommandSource extends CommandSourceStack
     private final MinecraftServer server;
     // skipping silent since snooper is never silent
     private final Entity entity;
-    private final ResultConsumer<CommandSourceStack> resultConsumer;
+    private final CommandResultConsumer<CommandSourceStack> resultConsumer;
     private final EntityAnchorArgument.Anchor entityAnchor;
     private final Vec2 rotation;
     // good stuff
@@ -91,7 +91,7 @@ public class SnoopyCommandSource extends CommandSourceStack
         this.taskChainer = TaskChainer.immediate(player.server);
     }
 
-    private SnoopyCommandSource(CommandSource output, Vec3 pos, Vec2 rot, ServerLevel world, int level, String simpleName, Component name, MinecraftServer server, @Nullable Entity entity, ResultConsumer<CommandSourceStack> consumer, EntityAnchorArgument.Anchor entityAnchor, CommandSigningContext context, TaskChainer chainer,
+    private SnoopyCommandSource(CommandSource output, Vec3 pos, Vec2 rot, ServerLevel world, int level, String simpleName, Component name, MinecraftServer server, @Nullable Entity entity, CommandResultConsumer<CommandSourceStack> consumer, EntityAnchorArgument.Anchor entityAnchor, CommandSigningContext context, TaskChainer chainer,
                                 Component[] error, List<Component> chatOutput
     )
     {
@@ -134,15 +134,15 @@ public class SnoopyCommandSource extends CommandSourceStack
     }
 
     @Override
-    public CommandSourceStack withCallback(ResultConsumer<CommandSourceStack> consumer)
+    public CommandSourceStack withCallback(CommandResultConsumer<CommandSourceStack> consumer)
     {
         return new SnoopyCommandSource(output, position, rotation, world, level, simpleName, name, server, entity, consumer, entityAnchor, signingContext, taskChainer, error, chatOutput);
     }
 
     @Override
-    public CommandSourceStack withCallback(ResultConsumer<CommandSourceStack> consumer, BinaryOperator<ResultConsumer<CommandSourceStack>> binaryOperator)
+    public CommandSourceStack withCallback(CommandResultConsumer<CommandSourceStack> consumer, BinaryOperator<CommandResultConsumer<CommandSourceStack>> binaryOperator)
     {
-        ResultConsumer<CommandSourceStack> resultConsumer = binaryOperator.apply(this.resultConsumer, consumer);
+        CommandResultConsumer<CommandSourceStack> resultConsumer = binaryOperator.apply(this.resultConsumer, consumer);
         return this.withCallback(resultConsumer);
     }
 

@@ -690,12 +690,11 @@ public class Auxiliary
             {
                 Component[] error = {null};
                 List<Component> output = new ArrayList<>();
-                Value retval = new NumericValue(s.getServer().getCommands().performPrefixedCommand(
+                s.getServer().getCommands().performPrefixedCommand(
                         new SnoopyCommandSource(s, error, output),
-                        lv.get(0).getString())
-                );
+                        lv.get(0).getString());
                 return ListValue.of(
-                        retval,
+                        NumericValue.ZERO,
                         ListValue.wrap(output.stream().map(FormattedTextValue::new)),
                         FormattedTextValue.of(error[0])
                 );
