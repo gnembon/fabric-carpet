@@ -29,15 +29,12 @@ import java.util.Optional;
 import java.util.Set;
 
 import net.minecraft.commands.arguments.item.ItemInput;
-import net.minecraft.core.Holder;
 import net.minecraft.core.HolderSet;
 import net.minecraft.core.Registry;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.protocol.game.ClientboundContainerSetSlotPacket;
-import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.tags.TagKey;
@@ -258,7 +255,7 @@ public class Inventories
             {
                 // clear slot
                 ItemStack removedStack = inventoryLocator.inventory().removeItemNoUpdate(slot);
-                syncPlayerInventory(inventoryLocator, slot);
+                syncPlayerInventory(inventoryLocator);
                 return ValueConversions.of(removedStack, regs);
             }
             if (lv.size() < inventoryLocator.offset() + 3)
@@ -267,7 +264,7 @@ public class Inventories
                 ItemStack newStack = previousStack.copy();
                 newStack.setCount(count);
                 inventoryLocator.inventory().setItem(slot, newStack);
-                syncPlayerInventory(inventoryLocator, slot);
+                syncPlayerInventory(inventoryLocator);
                 return ValueConversions.of(previousStack, regs);
             }
             CompoundTag nbt = null; // skipping one argument
@@ -288,7 +285,7 @@ public class Inventories
             try
             {
                 inventoryLocator.inventory().setItem(slot, newitem.createItemStack(count, false));
-                syncPlayerInventory(inventoryLocator, slot);
+                syncPlayerInventory(inventoryLocator);
             }
             catch (CommandSyntaxException e)
             {
@@ -369,11 +366,11 @@ public class Inventories
                 {
                     stack.setCount(left);
                     inventoryLocator.inventory().setItem(i, stack);
-                    syncPlayerInventory(inventoryLocator, i);
+                    syncPlayerInventory(inventoryLocator);
                     return Value.TRUE;
                 }
                 inventoryLocator.inventory().removeItemNoUpdate(i);
-                syncPlayerInventory(inventoryLocator, i);
+                syncPlayerInventory(inventoryLocator);
                 amount -= stack.getCount();
             }
             if (amount > 0)
@@ -510,15 +507,11 @@ public class Inventories
         });
     }
 
-    private static void syncPlayerInventory(NBTSerializableValue.InventoryLocator inventory, int slot)
+    private static void syncPlayerInventory(NBTSerializableValue.InventoryLocator inventory)
     {
-        if (inventory.owner() instanceof final ServerPlayer player && !inventory.isEnder() && !(inventory.inventory() instanceof ScreenValue.ScreenHandlerInventory))
+        if (inventory.owner() instanceof ServerPlayer player && !inventory.isEnder() && !(inventory.inventory() instanceof ScreenValue.ScreenHandlerInventory))
         {
-            player.connection.send(new ClientboundContainerSetSlotPacket(
-                    -2, 0, // resolve mystery argument
-                    slot,
-                    inventory.inventory().getItem(slot)
-            ));
+            player.containerMenu.broadcastChanges();
         }
     }
 }
