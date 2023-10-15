@@ -270,7 +270,7 @@ public class WorldAccess
             if (lv.size() > locator.offset)
             {
                 var rl = find_blockstate_extra_args(lv, locator.offset, retval.getBlockState(), retval.getString());
-                return new BlockValue((BlockState) rl[1], (CompoundTag) (rl[0] == null ? retval.getData():rl[0]));
+                return new BlockValue((BlockState) rl[1], cc.level(), (CompoundTag) (rl[0] == null ? retval.getData():rl[0]));
             }
             // fixing block state and data
             retval.getBlockState();
