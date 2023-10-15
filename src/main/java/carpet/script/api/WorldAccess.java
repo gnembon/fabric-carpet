@@ -264,7 +264,14 @@ public class WorldAccess
             {
                 throw new InternalExpressionException("Block requires at least one parameter");
             }
-            BlockValue retval = BlockArgument.findIn(cc, lv, 0, true).block;
+
+            BlockArgument locator = BlockArgument.findIn(cc, lv, 0, true);
+            BlockValue retval = locator.block;
+            if (lv.size() > locator.offset)
+            {
+                var rl = find_blockstate_extra_args(lv, locator.offset, retval.getBlockState(), retval.getString());
+                return new BlockValue((BlockState) rl[1], (CompoundTag) (rl[0] == null ? retval.getData():rl[0]));
+            }
             // fixing block state and data
             retval.getBlockState();
             retval.getData();
@@ -750,52 +757,8 @@ public class WorldAccess
             CompoundTag data = null;
             if (lv.size() > sourceLocator.offset)
             {
-                List<Value> args = new ArrayList<>();
-                for (int i = sourceLocator.offset, m = lv.size(); i < m; i++)
-                {
-                    args.add(lv.get(i));
-                }
-                if (args.get(0) instanceof final ListValue list)
-                {
-                    if (args.size() == 2 && NBTSerializableValue.fromValue(args.get(1)) instanceof final NBTSerializableValue nbtsv)
-                    {
-                        data = nbtsv.getCompoundTag();
-                    }
-                    args = list.getItems();
-                }
-                else if (args.get(0) instanceof final MapValue map)
-                {
-                    if (args.size() == 2 && NBTSerializableValue.fromValue(args.get(1)) instanceof final NBTSerializableValue nbtsv)
-                    {
-                        data = nbtsv.getCompoundTag();
-                    }
-                    Map<Value, Value> state = map.getMap();
-                    List<Value> mapargs = new ArrayList<>();
-                    state.forEach((k, v) -> {
-                        mapargs.add(k);
-                        mapargs.add(v);
-                    });
-                    args = mapargs;
-                }
-                else
-                {
-                    if ((args.size() & 1) == 1 && NBTSerializableValue.fromValue(args.get(args.size() - 1)) instanceof final NBTSerializableValue nbtsv)
-                    {
-                        data = nbtsv.getCompoundTag();
-                    }
-                }
-                StateDefinition<Block, BlockState> states = sourceBlockState.getBlock().getStateDefinition();
-                for (int i = 0; i < args.size() - 1; i += 2)
-                {
-                    String paramString = args.get(i).getString();
-                    Property<?> property = states.getProperty(paramString);
-                    if (property == null)
-                    {
-                        throw new InternalExpressionException("Property " + paramString + " doesn't apply to " + sourceLocator.block.getString());
-                    }
-                    String paramValue = args.get(i + 1).getString();
-                    sourceBlockState = setProperty(property, paramString, paramValue, sourceBlockState);
-                }
+                var rl = find_blockstate_extra_args(lv,sourceLocator.offset,sourceBlockState,sourceLocator.block.getString());
+                data=(CompoundTag) rl[0];sourceBlockState=(BlockState) rl[1];
             }
 
             if (data == null)
@@ -1797,4 +1760,62 @@ public class WorldAccess
         }
         return DensityFunctions.zero();
     });
+
+    private static Object[] find_blockstate_extra_args(List<Value> lv, int start,BlockState sourceBlockState,String name_in_exception){
+        CompoundTag data = null;
+        List<Value> args = new ArrayList<>();
+        for (int i = start, m = lv.size(); i < m; i++)
+        {
+            args.add(lv.get(i));
+        }
+        if (args.get(0) instanceof ListValue)
+        {
+            if (args.size() == 2)
+            {
+                Value dataValue = NBTSerializableValue.fromValue( args.get(1));
+                if (dataValue instanceof NBTSerializableValue)
+                {
+                    data = ((NBTSerializableValue) dataValue).getCompoundTag();
+                }
+            }
+            args = ((ListValue) args.get(0)).getItems();
+        }
+        else if (args.get(0) instanceof MapValue)
+        {
+            if (args.size() == 2)
+            {
+                Value dataValue = NBTSerializableValue.fromValue( args.get(1));
+                if (dataValue instanceof NBTSerializableValue)
+                {
+                    data = ((NBTSerializableValue) dataValue).getCompoundTag();
+                }
+            }
+            Map<Value, Value> state = ((MapValue) args.get(0)).getMap();
+            List<Value> mapargs = new ArrayList<>();
+            state.forEach( (k, v) -> {mapargs.add(k); mapargs.add(v);});
+            args = mapargs;
+        }
+        else
+        {
+            if ((args.size() & 1) == 1)
+            {
+                Value dataValue = NBTSerializableValue.fromValue( args.get(args.size()-1));
+                if (dataValue instanceof NBTSerializableValue)
+                {
+                    data = ((NBTSerializableValue) dataValue).getCompoundTag();
+                }
+            }
+        }
+        StateDefinition<Block, BlockState> states = sourceBlockState.getBlock().getStateDefinition();
+        for (int i = 0; i < args.size()-1; i += 2)
+        {
+            String paramString = args.get(i).getString();
+            Property<?> property = states.getProperty(paramString);
+            if (property == null)
+                throw new InternalExpressionException("Property " + paramString + " doesn't apply to " + name_in_exception);
+            String paramValue = args.get(i + 1).getString();
+            sourceBlockState = setProperty(property, paramString, paramValue, sourceBlockState);
+        }
+        return new Object[]{data,sourceBlockState};
+        };
 }
