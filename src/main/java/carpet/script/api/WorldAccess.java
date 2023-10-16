@@ -269,8 +269,8 @@ public class WorldAccess
             BlockValue retval = locator.block;
             if (lv.size() > locator.offset)
             {
-                var rl = find_blockstate_extra_args(lv, locator.offset, retval.getBlockState(), retval.getString());
-                return new BlockValue((BlockState) rl[1], cc.level(), (CompoundTag) (rl[0] == null ? retval.getData():rl[0]));
+                var rl = findBlockstateExtraArgs(lv, locator.offset, retval.getBlockState(), retval.getString());
+                return new BlockValue(rl.getRight(), cc.level(), (rl.getLeft() == null ? retval.getData():rl.getLeft()));
             }
             // fixing block state and data
             retval.getBlockState();
@@ -757,8 +757,9 @@ public class WorldAccess
             CompoundTag data = null;
             if (lv.size() > sourceLocator.offset)
             {
-                var rl = find_blockstate_extra_args(lv,sourceLocator.offset,sourceBlockState,sourceLocator.block.getString());
-                data=(CompoundTag) rl[0];sourceBlockState=(BlockState) rl[1];
+                var rl = findBlockstateExtraArgs(lv,sourceLocator.offset,sourceBlockState,sourceLocator.block.getString());
+                data = rl.getLeft();
+                sourceBlockState = rl.getRight();
             }
 
             if (data == null)
@@ -1761,7 +1762,7 @@ public class WorldAccess
         return DensityFunctions.zero();
     });
 
-    private static Pair<CompoundTag, BlockState> find_blockstate_extra_args(List<Value> lv, int start, BlockState sourceBlockState,
+    private static Pair<CompoundTag, BlockState> findBlockstateExtraArgs(List<Value> lv, int start, BlockState sourceBlockState,
             String name_in_exception) {
         CompoundTag data = null;
         List<Value> args = new ArrayList<>();
