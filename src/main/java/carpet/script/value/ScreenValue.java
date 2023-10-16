@@ -17,6 +17,7 @@ import java.util.Map;
 import java.util.OptionalInt;
 
 import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
@@ -127,6 +128,26 @@ public class ScreenValue extends Value
             throw new ThrowStatement(type, Throwables.UNKNOWN_SCREEN);
         }
         this.openScreen(factory);
+        this.inventory = new ScreenHandlerInventory(this.screenHandler);
+    }
+
+    public ScreenValue(ServerPlayer player, @Nullable FunctionValue callback, Context c)
+    {
+        this.screenHandler = player.containerMenu;
+        
+        this.name = Component.literal("seems that the game forgot that");//should i make something like a weak map to remember it?
+        this.typestring =  player.hasContainerOpen()? ValueConversions.simplify(BuiltInRegistries.MENU.getKey(screenHandler.getType())):"inventory";
+
+        if (callback != null)
+        {
+            callback.checkArgs(4);
+        }
+        this.callback = callback;
+        this.hostname = c.host.getName();
+        this.scriptServer = (CarpetScriptServer) c.host.scriptServer();
+        this.player = player;
+        
+        addListenerCallback(screenHandler);
         this.inventory = new ScreenHandlerInventory(this.screenHandler);
     }
 
