@@ -1761,61 +1761,53 @@ public class WorldAccess
         return DensityFunctions.zero();
     });
 
-    private static Object[] find_blockstate_extra_args(List<Value> lv, int start,BlockState sourceBlockState,String name_in_exception){
+    private static Pair<CompoundTag, BlockState> find_blockstate_extra_args(List<Value> lv, int start, BlockState sourceBlockState,
+            String name_in_exception) {
         CompoundTag data = null;
         List<Value> args = new ArrayList<>();
-        for (int i = start, m = lv.size(); i < m; i++)
-        {
+        for (int i = start, m = lv.size(); i < m; i++) {
             args.add(lv.get(i));
         }
-        if (args.get(0) instanceof ListValue)
-        {
-            if (args.size() == 2)
-            {
-                Value dataValue = NBTSerializableValue.fromValue( args.get(1));
-                if (dataValue instanceof NBTSerializableValue)
-                {
+        if (args.get(0) instanceof ListValue) {
+            if (args.size() == 2) {
+                Value dataValue = NBTSerializableValue.fromValue(args.get(1));
+                if (dataValue instanceof NBTSerializableValue) {
                     data = ((NBTSerializableValue) dataValue).getCompoundTag();
                 }
             }
             args = ((ListValue) args.get(0)).getItems();
-        }
-        else if (args.get(0) instanceof MapValue)
-        {
-            if (args.size() == 2)
-            {
-                Value dataValue = NBTSerializableValue.fromValue( args.get(1));
-                if (dataValue instanceof NBTSerializableValue)
-                {
+        } else if (args.get(0) instanceof MapValue) {
+            if (args.size() == 2) {
+                Value dataValue = NBTSerializableValue.fromValue(args.get(1));
+                if (dataValue instanceof NBTSerializableValue) {
                     data = ((NBTSerializableValue) dataValue).getCompoundTag();
                 }
             }
             Map<Value, Value> state = ((MapValue) args.get(0)).getMap();
             List<Value> mapargs = new ArrayList<>();
-            state.forEach( (k, v) -> {mapargs.add(k); mapargs.add(v);});
+            state.forEach((k, v) -> {
+                mapargs.add(k);
+                mapargs.add(v);
+            });
             args = mapargs;
-        }
-        else
-        {
-            if ((args.size() & 1) == 1)
-            {
-                Value dataValue = NBTSerializableValue.fromValue( args.get(args.size()-1));
-                if (dataValue instanceof NBTSerializableValue)
-                {
+        } else {
+            if ((args.size() & 1) == 1) {
+                Value dataValue = NBTSerializableValue.fromValue(args.get(args.size() - 1));
+                if (dataValue instanceof NBTSerializableValue) {
                     data = ((NBTSerializableValue) dataValue).getCompoundTag();
                 }
             }
         }
         StateDefinition<Block, BlockState> states = sourceBlockState.getBlock().getStateDefinition();
-        for (int i = 0; i < args.size()-1; i += 2)
-        {
+        for (int i = 0; i < args.size() - 1; i += 2) {
             String paramString = args.get(i).getString();
             Property<?> property = states.getProperty(paramString);
             if (property == null)
-                throw new InternalExpressionException("Property " + paramString + " doesn't apply to " + name_in_exception);
+                throw new InternalExpressionException(
+                        "Property " + paramString + " doesn't apply to " + name_in_exception);
             String paramValue = args.get(i + 1).getString();
             sourceBlockState = setProperty(property, paramString, paramValue, sourceBlockState);
         }
-        return new Object[]{data,sourceBlockState};
-        };
+        return Pair.of(data, sourceBlockState);
+    };
 }
