@@ -853,6 +853,17 @@ public class CarpetEventServer
                         ), player::createCommandSourceStack);
             }
         };
+        public static final Event PLAYER_OPEN_SCREEN = new Event("player_open_screen", 1, false)
+        {
+            @Override
+            public boolean onPlayerEvent(ServerPlayer player)
+            {
+                return handler.call(() ->
+                        Arrays.asList(
+                                new EntityValue(player)
+                        ), player::createCommandSourceStack);
+            }
+        };
         public static final Event PLAYER_SWAPS_HANDS = new Event("player_swaps_hands", 1, false)
         {
             @Override

@@ -2,6 +2,7 @@ package carpet.mixins;
 
 import carpet.fakes.EntityInterface;
 import carpet.fakes.ServerPlayerInterface;
+import carpet.script.CarpetEventServer;
 import carpet.script.EntityEventsGroup;
 import com.mojang.authlib.GameProfile;
 import net.minecraft.core.BlockPos;
@@ -10,6 +11,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.stats.Stat;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.MenuProvider;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
@@ -44,6 +46,14 @@ public abstract class ServerPlayer_scarpetEventMixin extends Player implements S
     //@Shadow protected abstract void completeUsingItem();
 
     @Shadow public boolean wonGame;
+
+    @Inject(method = "openMenu", at = @At("RETURN"))
+    private void grabStat(MenuProvider menuProvider, CallbackInfoReturnable<java.util.OptionalInt> cir)
+    {
+        if (cir.getReturnValue().isPresent()) {
+            CarpetEventServer.Event.PLAYER_OPEN_SCREEN.onPlayerEvent((ServerPlayer)(Object)this);
+        };
+    }
 
     @Redirect(method = "completeUsingItem", at = @At(
             value = "INVOKE",
