@@ -2,7 +2,6 @@ package carpet.mixins;
 
 import carpet.fakes.EntityInterface;
 import carpet.fakes.ServerPlayerInterface;
-import carpet.script.CarpetEventServer;
 import carpet.script.EntityEventsGroup;
 import com.mojang.authlib.GameProfile;
 import net.minecraft.core.BlockPos;
@@ -29,6 +28,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import static carpet.script.CarpetEventServer.Event.PLAYER_CHANGES_DIMENSION;
 import static carpet.script.CarpetEventServer.Event.PLAYER_DIES;
 import static carpet.script.CarpetEventServer.Event.PLAYER_FINISHED_USING_ITEM;
+import static carpet.script.CarpetEventServer.Event.PLAYER_OPEN_SCREEN;
 import static carpet.script.CarpetEventServer.Event.STATISTICS;
 
 @Mixin(ServerPlayer.class)
@@ -48,10 +48,10 @@ public abstract class ServerPlayer_scarpetEventMixin extends Player implements S
     @Shadow public boolean wonGame;
 
     @Inject(method = "openMenu", at = @At("RETURN"))
-    private void grabStat(MenuProvider menuProvider, CallbackInfoReturnable<java.util.OptionalInt> cir)
+    private void onOpenScreen(MenuProvider menuProvider, CallbackInfoReturnable<java.util.OptionalInt> cir)
     {
         if (cir.getReturnValue().isPresent()) {
-            CarpetEventServer.Event.PLAYER_OPEN_SCREEN.onPlayerEvent((ServerPlayer)(Object)this);
+            PLAYER_OPEN_SCREEN.onPlayerEvent((ServerPlayer)(Object)this);
         };
     }
 

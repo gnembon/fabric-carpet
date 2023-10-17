@@ -135,7 +135,7 @@ public class ScreenValue extends Value
     {
         this.screenHandler = player.containerMenu;
         
-        this.name = Component.literal("seems that the game forgot that");//should i make something like a weak map to remember it?
+        this.name = null; //seems that the game forgot that. should i make something like a weak map to remember it?
         this.typestring =  player.hasContainerOpen()? ValueConversions.simplify(BuiltInRegistries.MENU.getKey(screenHandler.getType())):"inventory";
 
         if (callback != null)
