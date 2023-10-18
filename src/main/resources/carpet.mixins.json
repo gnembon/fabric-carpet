@@ -119,7 +119,6 @@
     "PathNavigation_pathfindingMixin",
 
     "InfestedBlock_gravelMixin",
-    "Player_portalDelayMixin",
     "PistonBaseBlock_qcMixin",
     "DispenserBlock_qcMixin",
 

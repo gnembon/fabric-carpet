@@ -147,36 +147,8 @@ public class CarpetSettings
     public static String carpetCommandPermissionLevel = "ops";
 
 
-
     @Rule(desc = "Gbhs sgnf sadsgras fhskdpri!!!", category = EXPERIMENTAL)
     public static boolean superSecretSetting = false;
-
-    @Rule(
-            desc = "Amount of delay ticks to use a nether portal in creative",
-            options = {"1", "40", "80", "72000"},
-            category = CREATIVE,
-            strict = false,
-            validate = OneHourMaxDelayLimit.class
-    )
-    public static int portalCreativeDelay = 1;
-
-    @Rule(
-            desc = "Amount of delay ticks to use a nether portal in survival",
-            options = {"1", "40", "80", "72000"},
-            category = SURVIVAL,
-            strict = false,
-            validate = OneHourMaxDelayLimit.class
-    )
-    public static int portalSurvivalDelay = 80;
-
-
-    private static class OneHourMaxDelayLimit extends Validator<Integer> {
-        @Override public Integer validate(CommandSourceStack source, CarpetRule<Integer> currentRule, Integer newValue, String string) {
-            return (newValue > 0 && newValue <= 72000) ? newValue : null;
-        }
-        @Override
-        public String description() { return "You must choose a value from 1 to 72000";}
-    }
 
     @Rule(desc = "Dropping entire stacks works also from on the crafting UI result slot", category = {RuleCategory.BUGFIX, SURVIVAL})
     public static boolean ctrlQCraftingFix = false;

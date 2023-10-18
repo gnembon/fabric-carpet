@@ -435,7 +435,7 @@ public class FileArgument
     {
         try
         {
-            return NbtIo.readCompressed(Files.newInputStream(path));
+            return NbtIo.readCompressed(Files.newInputStream(path), NbtAccounter.unlimitedHeap());
         }
         catch (IOException e)
         {
