@@ -47,7 +47,7 @@ public abstract class ServerPlayer_scarpetEventMixin extends Player implements S
 
     @Shadow public boolean wonGame;
 
-    @Inject(method = "openMenu", at = @At("RETURN"))
+    @Inject(method = "openMenu", at = @At("RETURN"))//"at return" so that the screen can be get by scarpet.
     private void onOpenScreen(MenuProvider menuProvider, CallbackInfoReturnable<java.util.OptionalInt> cir)
     {
         if (cir.getReturnValue().isPresent()) {

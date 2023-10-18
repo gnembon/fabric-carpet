@@ -136,7 +136,7 @@ public class ScreenValue extends Value
         this.screenHandler = player.containerMenu;
         
         this.name = null; //seems that the game forgot that. should i make something like a weak map to remember it?
-        this.typestring =  player.hasContainerOpen()? ValueConversions.simplify(BuiltInRegistries.MENU.getKey(screenHandler.getType())):"inventory";
+        this.typestring =  playerScreenTypeName(player);
 
         if (callback != null)
         {
@@ -149,6 +149,10 @@ public class ScreenValue extends Value
         
         addListenerCallback(screenHandler);
         this.inventory = new ScreenHandlerInventory(this.screenHandler);
+    }
+
+    public String playerScreenTypeName(ServerPlayer player) {
+        return player.hasContainerOpen()? ValueConversions.simplify(BuiltInRegistries.MENU.getKey(screenHandler.getType())):"inventory";
     }
 
     private MenuProvider createScreenHandlerFactory()

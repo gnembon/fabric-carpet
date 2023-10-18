@@ -28,6 +28,7 @@ import static carpet.script.CarpetEventServer.Event.PLAYER_SWITCHES_SLOT;
 import static carpet.script.CarpetEventServer.Event.PLAYER_COMMAND;
 import static carpet.script.CarpetEventServer.Event.PLAYER_USES_ITEM;
 import static carpet.script.CarpetEventServer.Event.PLAYER_WAKES_UP;
+import static carpet.script.CarpetEventServer.Event.PLAYER_OPEN_SCREEN;
 
 import net.minecraft.network.protocol.game.ServerboundContainerButtonClickPacket;
 import net.minecraft.network.protocol.game.ServerboundMovePlayerPacket;
@@ -233,6 +234,15 @@ public class ServerGamePacketListenerImpl_scarpetEventsMixin
     private void onElytraEngage(ServerboundPlayerCommandPacket clientCommandC2SPacket_1, CallbackInfo ci)
     {
         PLAYER_DEPLOYS_ELYTRA.onPlayerEvent(player);
+    }
+
+    @Inject(method = "handlePlayerCommand", at = @At("RETURN"))//"at return" so that the screen can be get by scarpet.
+    private void onOpenScreen(ServerboundPlayerCommandPacket clientCommandC2SPacket_1, CallbackInfo ci)
+    {
+        // doesn't feel efficient..... is "At jump" stable to be use?
+        if (clientCommandC2SPacket_1.getAction()==net.minecraft.network.protocol.game.ServerboundPlayerCommandPacket.Action.OPEN_INVENTORY) {
+            PLAYER_OPEN_SCREEN.onPlayerEvent(player);
+        }
     }
 
     @Inject(method = "handleContainerButtonClick", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/level/ServerPlayer;resetLastActionTime()V"))
