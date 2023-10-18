@@ -151,8 +151,8 @@ public class ScreenValue extends Value
         this.inventory = new ScreenHandlerInventory(this.screenHandler);
     }
 
-    public String playerScreenTypeName(ServerPlayer player) {
-        return player.hasContainerOpen()? ValueConversions.simplify(BuiltInRegistries.MENU.getKey(screenHandler.getType())):"inventory";
+    public static String playerScreenTypeName(ServerPlayer player) {
+        return player.hasContainerOpen()? ValueConversions.simplify(BuiltInRegistries.MENU.getKey(player.containerMenu.getType())):"inventory";
     }
 
     private MenuProvider createScreenHandlerFactory()

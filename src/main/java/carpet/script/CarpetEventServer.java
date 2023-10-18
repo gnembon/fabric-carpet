@@ -13,6 +13,7 @@ import carpet.script.value.FunctionValue;
 import carpet.script.value.ListValue;
 import carpet.script.value.NBTSerializableValue;
 import carpet.script.value.NumericValue;
+import carpet.script.value.ScreenValue;
 import carpet.script.value.StringValue;
 import carpet.script.value.Value;
 import carpet.script.value.ValueConversions;
@@ -853,7 +854,7 @@ public class CarpetEventServer
                         ), player::createCommandSourceStack);
             }
         };
-        public static final Event PLAYER_OPEN_SCREEN = new Event("player_open_screen", 1, false)
+        public static final Event PLAYER_OPEN_SCREEN = new Event("player_open_screen", 2, false)
         {
             @Override
             public boolean onPlayerEvent(ServerPlayer player)
@@ -861,6 +862,7 @@ public class CarpetEventServer
                 return handler.call(() ->
                         Arrays.asList(
                                 new EntityValue(player)
+                                , StringValue.of(ScreenValue.playerScreenTypeName(player))
                         ), player::createCommandSourceStack);
             }
         };
