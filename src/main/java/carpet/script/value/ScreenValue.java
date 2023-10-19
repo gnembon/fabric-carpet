@@ -152,7 +152,14 @@ public class ScreenValue extends Value
     }
 
     public static String playerScreenTypeName(ServerPlayer player) {
-        return player.hasContainerOpen()? ValueConversions.simplify(BuiltInRegistries.MENU.getKey(player.containerMenu.getType())):"inventory";
+        if (!player.hasContainerOpen()) {
+            return "inventory";    
+        }
+        try {
+            return ValueConversions.simplify(BuiltInRegistries.MENU.getKey(player.containerMenu.getType()));
+        } catch (java.lang.UnsupportedOperationException e) {
+            return "unknown";
+        }
     }
 
     private MenuProvider createScreenHandlerFactory()
