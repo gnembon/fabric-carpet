@@ -54,6 +54,11 @@ public abstract class ServerPlayer_scarpetEventMixin extends Player implements S
             PLAYER_OPEN_SCREEN.onPlayerEvent((ServerPlayer)(Object)this);
         };
     }
+    @Inject(method = "openHorseInventory", at = @At("RETURN"))//"at return" so that the screen can be get by scarpet.
+    private void onOpenScreen(CallbackInfo ci)
+    {
+            PLAYER_OPEN_SCREEN.onPlayerEvent((ServerPlayer)(Object)this);
+    }
 
     @Redirect(method = "completeUsingItem", at = @At(
             value = "INVOKE",
