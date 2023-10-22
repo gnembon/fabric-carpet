@@ -653,43 +653,6 @@ public class CarpetSettings
     )
     public static int railPowerLimit = 9;
 
-    private static class FillLimitMigrator extends Validator<Integer>
-    {
-        @Override
-        public Integer validate(CommandSourceStack source, CarpetRule<Integer> changingRule, Integer newValue, String userInput)
-        {
-            if (source != null && source.getServer().overworld() != null)
-            {
-                GameRules.IntegerValue gamerule = source.getServer().getGameRules().getRule(GameRules.RULE_COMMAND_MODIFICATION_BLOCK_LIMIT);
-                if (gamerule.get() != newValue)
-                {
-                    if (newValue == 32768 && changingRule.value() == newValue) // migration call, gamerule is different, update rule
-                    {
-                        Messenger.m(source, "g Syncing fillLimit rule with gamerule");
-                        newValue = gamerule.get();
-                    } else if (newValue != 32768 && gamerule.get() == 32768)
-                    {
-                        Messenger.m(source, "g Migrated value of fillLimit carpet rule to commandModificationBlockLimit gamerule");
-                        gamerule.set(newValue, source.getServer());
-                    }
-                }
-            }
-            return newValue;
-        }
-        @Override
-        public String description() { return "The value of this rule will be migrated to the gamerule";}
-    }
-
-    @Rule(
-            desc = "[Deprecated] Customizable fill/fillbiome/clone volume limit",
-            extra = "Use vanilla gamerule instead. This setting will be removed in 1.20.0",
-            options = {"32768", "250000", "1000000"},
-            category = CREATIVE,
-            strict = false,
-            validate = FillLimitMigrator.class
-    )
-    public static int fillLimit = 32768;
-
     private static class ForceloadLimitValidator extends Validator<Integer>
     {
         @Override

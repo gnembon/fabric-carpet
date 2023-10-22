@@ -25,8 +25,6 @@ import carpet.network.ServerNetworkHandler;
 import carpet.helpers.HopperCounter;
 import carpet.logging.LoggerRegistry;
 import carpet.script.CarpetScriptServer;
-import carpet.api.settings.CarpetRule;
-import carpet.api.settings.InvalidRuleValueException;
 import carpet.api.settings.SettingsManager;
 import carpet.logging.HUDController;
 import carpet.script.external.Carpet;
@@ -104,16 +102,6 @@ public class CarpetServer // static for now - easier to handle all around the co
         extensions.forEach(e -> e.onServerLoadedWorlds(minecraftServer));
         // initialize scarpet rules after all extensions are loaded
         forEachManager(SettingsManager::initializeScarpetRules);
-        // run fillLimit rule migration now that gamerules are available
-        @SuppressWarnings("unchecked")
-        CarpetRule<Integer> fillLimit = (CarpetRule<Integer>) settingsManager.getCarpetRule("fillLimit");
-        try
-        {
-            fillLimit.set(minecraftServer.createCommandSourceStack(), fillLimit.value());
-        } catch (InvalidRuleValueException e)
-        {
-            throw new AssertionError();
-        }
         scriptServer.initializeForWorld();
     }
 
