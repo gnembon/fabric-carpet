@@ -14,6 +14,7 @@ and `voice`. `pos` can be either a block, triple of coords, or a list of three n
  
 Used with no arguments, return the list of available sound names.
  
+However, the client may still play the sound normally, even if the name of the sound to be played is not in that list above.
 
 ## Particles
 
