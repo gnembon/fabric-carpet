@@ -14,7 +14,6 @@ and `voice`. `pos` can be either a block, triple of coords, or a list of three n
  
 Used with no arguments, return the list of available sound names.
  
-Throws `unknown_sound` if sound doesn't exist.
 
 ## Particles
 
