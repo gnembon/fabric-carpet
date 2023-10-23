@@ -10,7 +10,6 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.stats.Stat;
 import net.minecraft.world.InteractionHand;
-import net.minecraft.world.MenuProvider;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
@@ -48,7 +47,7 @@ public abstract class ServerPlayer_scarpetEventMixin extends Player implements S
     @Shadow public boolean wonGame;
 
     @Inject(method = "openMenu", at = @At("RETURN"))//"at return" so that the screen can be get by scarpet.
-    private void onOpenScreen(MenuProvider menuProvider, CallbackInfoReturnable<java.util.OptionalInt> cir)
+    private void onOpenScreen(CallbackInfoReturnable<java.util.OptionalInt> cir)
     {
         if (cir.getReturnValue().isPresent()) {
             PLAYER_OPEN_SCREEN.onPlayerEvent((ServerPlayer)(Object)this);
