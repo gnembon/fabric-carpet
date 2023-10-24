@@ -593,6 +593,7 @@ public class CarpetSettings
     @Rule(desc = "Disables breaking of blocks caused by flowing liquids", category = CREATIVE)
     public static boolean liquidDamageDisabled = false;
 
+
     @Rule(
             desc = "smooth client animations with low tps settings",
             extra = "works only in SP, and will slow down players",

@@ -367,4 +367,9 @@ public class Vanilla
         }
     }
 
+    public static boolean isTickProcessingPaused(MinecraftServer server)
+    {
+        return !((MinecraftServerInterface)server).getTickRateManager().runsNormally();
+    }
+
 }

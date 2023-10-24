@@ -7,10 +7,8 @@ import carpet.utils.CarpetProfiler;
 import net.minecraft.core.Holder;
 import net.minecraft.core.RegistryAccess;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.util.function.BooleanSupplier;
@@ -18,9 +16,7 @@ import java.util.function.Supplier;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.profiling.ProfilerFiller;
-import net.minecraft.world.entity.raid.Raids;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.border.WorldBorder;
 import net.minecraft.world.level.dimension.DimensionType;
 import net.minecraft.world.level.storage.WritableLevelData;
 
@@ -37,10 +33,6 @@ public abstract class ServerLevel_tickMixin extends Level implements LevelInterf
     {
         return ((MinecraftServerInterface)getServer()).getTickRateManager();
     }
-
-    @Shadow protected abstract void runBlockEvents();
-
-    @Shadow protected abstract void tickTime();
 
     private CarpetProfiler.ProfilerToken currentSection;
 
@@ -159,57 +151,4 @@ public abstract class ServerLevel_tickMixin extends Level implements LevelInterf
         }
     }
 
-    //// freeze
-
-    @Redirect(method = "tick", at = @At(
-            value = "INVOKE",
-            target = "Lnet/minecraft/world/level/border/WorldBorder;tick()V"
-    ))
-    private void tickWorldBorder(WorldBorder worldBorder)
-    {
-        if (tickRateManager().runsNormally()) worldBorder.tick();
-    }
-
-    @Inject(method = "advanceWeatherCycle", cancellable = true, at = @At("HEAD"))
-    private void tickWeather(CallbackInfo ci)
-    {
-        if (!tickRateManager().runsNormally()) ci.cancel();
-    }
-
-    @Redirect(method = "tick", at = @At(
-            value = "INVOKE",
-            target = "Lnet/minecraft/server/level/ServerLevel;tickTime()V"
-    ))
-    private void tickTimeConditionally(ServerLevel serverWorld)
-    {
-        if (tickRateManager().runsNormally()) tickTime();
-    }
-
-    @Redirect(method = "tick", at = @At(
-            value = "INVOKE",
-            target = "Lnet/minecraft/server/level/ServerLevel;isDebug()Z"
-    ))
-    private boolean tickPendingBlocks(ServerLevel serverWorld)
-    {
-        if (!tickRateManager().runsNormally()) return true;
-        return serverWorld.isDebug(); // isDebug()
-    }
-
-    @Redirect(method = "tick", at = @At(
-            value = "INVOKE",
-            target = "Lnet/minecraft/world/entity/raid/Raids;tick()V"
-    ))
-    private void tickConditionally(Raids raidManager)
-    {
-        if (tickRateManager().runsNormally()) raidManager.tick();
-    }
-
-    @Redirect(method = "tick", at = @At(
-            value = "INVOKE",
-            target = "Lnet/minecraft/server/level/ServerLevel;runBlockEvents()V"
-    ))
-    private void tickConditionally(ServerLevel serverWorld)
-    {
-        if (tickRateManager().runsNormally()) runBlockEvents();
-    }
 }

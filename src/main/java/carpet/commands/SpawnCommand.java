@@ -25,7 +25,6 @@ import net.minecraft.commands.arguments.DimensionArgument;
 import net.minecraft.commands.arguments.coordinates.BlockPosArgument;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
@@ -181,19 +180,10 @@ public class SpawnCommand
 
         // tick warp 0
         ServerTickRateManager trm = ((MinecraftServerInterface)source.getServer()).getTickRateManager();
-        trm.requestGameToWarpSpeed(null, 0, null, null);
-        // tick warp given player
-        CommandSourceStack csource = null;
-        ServerPlayer player = null;
-        try
-        {
-            player = source.getPlayerOrException();
-            csource = source;
-        }
-        catch (CommandSyntaxException ignored)
-        {
-        }
-        trm.requestGameToWarpSpeed(player, ticks, null, csource);
+        // stop warp
+        // unnecessary
+        // start warp
+        trm.requestGameToSprint(ticks);
         Messenger.m(source, String.format("gi Started spawn test for %d ticks", ticks));
         return 1;
     }
