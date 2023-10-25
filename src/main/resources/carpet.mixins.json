@@ -187,11 +187,9 @@
 
   ],
   "client": [
-    "ClientLevel_tickSpeedMixin",
+    "Minecraft_tickMixin",
     "ShulkerBoxAccessMixin",
     "MinecraftMixin",
-    "Minecraft_pausedShakeMixin",
-    "LevelRenderer_pausedShakeMixin",
     "Gui_tablistMixin",
     "PlayerTabOverlayMixin",
     "PistonHeadRenderer_movableBEMixin",

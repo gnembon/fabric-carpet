@@ -1,8 +1,6 @@
 package carpet.mixins;
 
 import carpet.fakes.LevelInterface;
-import carpet.fakes.MinecraftServerInterface;
-import carpet.helpers.TickRateManager;
 import carpet.utils.CarpetProfiler;
 import net.minecraft.core.Holder;
 import net.minecraft.core.RegistryAccess;
@@ -26,12 +24,6 @@ public abstract class ServerLevel_tickMixin extends Level implements LevelInterf
     protected ServerLevel_tickMixin(final WritableLevelData writableLevelData, final ResourceKey<Level> resourceKey, final RegistryAccess registryAccess, final Holder<DimensionType> holder, final Supplier<ProfilerFiller> supplier, final boolean bl, final boolean bl2, final long l, final int i)
     {
         super(writableLevelData, resourceKey, registryAccess, holder, supplier, bl, bl2, l, i);
-    }
-
-    @Override
-    public TickRateManager tickRateManager()
-    {
-        return ((MinecraftServerInterface)getServer()).getTickRateManager();
     }
 
     private CarpetProfiler.ProfilerToken currentSection;

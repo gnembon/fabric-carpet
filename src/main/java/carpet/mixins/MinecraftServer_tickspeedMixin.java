@@ -1,7 +1,6 @@
 package carpet.mixins;
 
 import carpet.fakes.MinecraftServerInterface;
-import carpet.helpers.ServerTickRateManager;
 import carpet.utils.CarpetProfiler;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.TickTask;
@@ -22,20 +21,6 @@ public abstract class MinecraftServer_tickspeedMixin extends ReentrantBlockableE
     }
 
     CarpetProfiler.ProfilerToken currentSection;
-
-    private ServerTickRateManager serverTickRateManager;
-
-    @Inject(method = "<init>", at = @At("RETURN"))
-    private void onInit(CallbackInfo ci)
-    {
-        serverTickRateManager = new ServerTickRateManager((MinecraftServer)(Object)this);
-    }
-
-    @Override
-    public ServerTickRateManager getTickRateManager()
-    {
-        return serverTickRateManager;
-    }
 
     // Replaced the above cancelled while statement with this one
     // could possibly just inject that mspt selection at the beginning of the loop, but then adding all mspt's to

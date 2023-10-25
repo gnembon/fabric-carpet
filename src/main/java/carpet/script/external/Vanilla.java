@@ -366,10 +366,4 @@ public class Vanilla
             return new BlockPredicatePayload(predicateData.getCMBlockState(), predicateData.getCMBlockTagKey(), predicateData.getCMProperties(), predicateData.getCMDataTag());
         }
     }
-
-    public static boolean isTickProcessingPaused(MinecraftServer server)
-    {
-        return !((MinecraftServerInterface)server).getTickRateManager().runsNormally();
-    }
-
 }

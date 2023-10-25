@@ -5,7 +5,7 @@ import carpet.logging.logHelpers.TrajectoryLogHelper;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.projectile.AbstractArrow;
-import net.minecraft.world.entity.projectile.Projectile;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
@@ -20,10 +20,10 @@ public abstract class AbstractArrowMixin extends Entity
     private TrajectoryLogHelper logHelper;
     public AbstractArrowMixin(EntityType<?> entityType_1, Level world_1) { super(entityType_1, world_1); }
 
-    @Inject(method = "<init>(Lnet/minecraft/world/entity/EntityType;Lnet/minecraft/world/level/Level;)V", at = @At("RETURN"))
-    private void addLogger(EntityType<? extends Projectile> entityType_1, Level world_1, CallbackInfo ci)
+    @Inject(method = "<init>(Lnet/minecraft/world/entity/EntityType;Lnet/minecraft/world/level/Level;Lnet/minecraft/world/item/ItemStack;)V", at = @At("RETURN"))
+    private void addLogger(final EntityType entityType, final Level level, final ItemStack itemStack, final CallbackInfo ci)
     {
-        if (LoggerRegistry.__projectiles && !world_1.isClientSide)
+        if (LoggerRegistry.__projectiles && !level.isClientSide)
             logHelper = new TrajectoryLogHelper("projectiles");
     }
 

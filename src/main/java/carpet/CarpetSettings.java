@@ -20,7 +20,6 @@ import net.minecraft.server.dedicated.DedicatedServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
@@ -599,7 +598,7 @@ public class CarpetSettings
             extra = "works only in SP, and will slow down players",
             category = {CREATIVE, SURVIVAL, CLIENT}
     )
-    public static boolean smoothClientAnimations;
+    public static boolean smoothClientAnimations = true;
 
     private static class PushLimitLimits extends Validator<Integer> {
         @Override public Integer validate(CommandSourceStack source, CarpetRule<Integer> currentRule, Integer newValue, String string) {

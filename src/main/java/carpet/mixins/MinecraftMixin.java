@@ -1,6 +1,5 @@
 package carpet.mixins;
 
-import carpet.fakes.LevelInterface;
 import carpet.network.CarpetClient;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
@@ -25,7 +24,7 @@ public class MinecraftMixin
     @Inject(at = @At("HEAD"), method = "tick")
     private void onClientTick(CallbackInfo info) {
         if (this.level != null) {
-            boolean runsNormally = ((LevelInterface)this.level).tickRateManager().runsNormally();
+            boolean runsNormally = level.tickRateManager().runsNormally();
             // hope server doesn't need to tick - should be handled by the server on its own
             if (!runsNormally)
                 CarpetClient.shapes.renewShapes();

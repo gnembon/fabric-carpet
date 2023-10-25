@@ -1,10 +1,8 @@
 package carpet.commands;
 
 import carpet.CarpetSettings;
-import carpet.fakes.MinecraftServerInterface;
 import carpet.fakes.SpawnGroupInterface;
 import carpet.helpers.HopperCounter;
-import carpet.helpers.ServerTickRateManager;
 import carpet.utils.CommandHelper;
 import carpet.utils.Messenger;
 import carpet.utils.SpawnReporter;
@@ -24,6 +22,7 @@ import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.arguments.DimensionArgument;
 import net.minecraft.commands.arguments.coordinates.BlockPosArgument;
 import net.minecraft.core.BlockPos;
+import net.minecraft.server.ServerTickRateManager;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.item.DyeColor;
@@ -179,7 +178,7 @@ public class SpawnCommand
 
 
         // tick warp 0
-        ServerTickRateManager trm = ((MinecraftServerInterface)source.getServer()).getTickRateManager();
+        ServerTickRateManager trm = source.getServer().tickRateManager();
         // stop warp
         // unnecessary
         // start warp
