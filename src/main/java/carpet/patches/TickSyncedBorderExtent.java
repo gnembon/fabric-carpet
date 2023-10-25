@@ -1,10 +1,10 @@
 package carpet.patches;
 
 import carpet.CarpetServer;
-import carpet.fakes.MinecraftServerInterface;
-import carpet.helpers.ServerTickRateManager;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.ServerTickRateManager;
 import net.minecraft.util.Mth;
+import net.minecraft.util.TimeUtil;
 import net.minecraft.world.level.border.BorderChangeListener;
 import net.minecraft.world.level.border.BorderStatus;
 import net.minecraft.world.level.border.WorldBorder;
@@ -12,8 +12,6 @@ import net.minecraft.world.phys.shapes.BooleanOp;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.Arrays;
 
 /**
  * This class is essentially a copy of {@link net.minecraft.world.level.border.WorldBorder.MovingBorderExtent}
@@ -95,11 +93,11 @@ public class TickSyncedBorderExtent implements WorldBorder.BorderExtent
         }
         else
         {
-             ms = Arrays.stream(server.tickTimes).average().orElseThrow(IllegalStateException::new) * 1.0E-6D;
-             ServerTickRateManager trm = ((MinecraftServerInterface)server).getTickRateManager();
-             if (!trm.isInWarpSpeed())
+             ms = ((double)server.getAverageTickTimeNanos())/ TimeUtil.NANOSECONDS_PER_MILLISECOND;
+             ServerTickRateManager trm = server.tickRateManager();
+             if (!trm.isSprinting())
              {
-                 ms = Math.max(ms, trm.mspt());
+                 ms = Math.max(ms, trm.millisecondsPerTick());
              }
         }
         double tps = 1_000.0D / ms;

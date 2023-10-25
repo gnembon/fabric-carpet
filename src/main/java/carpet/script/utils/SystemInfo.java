@@ -134,7 +134,7 @@ public class SystemInfo
             // might be off one tick when run in the off tasks or asynchronously.
             int currentReportedTick = c.server().getTickCount() - 1;
             List<Value> ticks = new ArrayList<>(100);
-            long[] tickArray = c.server().tickTimes;
+            long[] tickArray = c.server().getTickTimesNanos();
             for (int i = currentReportedTick + 100; i > currentReportedTick; i--)
             {
                 ticks.add(new NumericValue((tickArray[i % 100]) / 1000000.0));

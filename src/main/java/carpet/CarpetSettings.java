@@ -20,7 +20,6 @@ import net.minecraft.server.dedicated.DedicatedServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
@@ -147,36 +146,8 @@ public class CarpetSettings
     public static String carpetCommandPermissionLevel = "ops";
 
 
-
     @Rule(desc = "Gbhs sgnf sadsgras fhskdpri!!!", category = EXPERIMENTAL)
     public static boolean superSecretSetting = false;
-
-    @Rule(
-            desc = "Amount of delay ticks to use a nether portal in creative",
-            options = {"1", "40", "80", "72000"},
-            category = CREATIVE,
-            strict = false,
-            validate = OneHourMaxDelayLimit.class
-    )
-    public static int portalCreativeDelay = 1;
-
-    @Rule(
-            desc = "Amount of delay ticks to use a nether portal in survival",
-            options = {"1", "40", "80", "72000"},
-            category = SURVIVAL,
-            strict = false,
-            validate = OneHourMaxDelayLimit.class
-    )
-    public static int portalSurvivalDelay = 80;
-
-
-    private static class OneHourMaxDelayLimit extends Validator<Integer> {
-        @Override public Integer validate(CommandSourceStack source, CarpetRule<Integer> currentRule, Integer newValue, String string) {
-            return (newValue > 0 && newValue <= 72000) ? newValue : null;
-        }
-        @Override
-        public String description() { return "You must choose a value from 1 to 72000";}
-    }
 
     @Rule(desc = "Dropping entire stacks works also from on the crafting UI result slot", category = {RuleCategory.BUGFIX, SURVIVAL})
     public static boolean ctrlQCraftingFix = false;
@@ -621,12 +592,13 @@ public class CarpetSettings
     @Rule(desc = "Disables breaking of blocks caused by flowing liquids", category = CREATIVE)
     public static boolean liquidDamageDisabled = false;
 
+
     @Rule(
             desc = "smooth client animations with low tps settings",
             extra = "works only in SP, and will slow down players",
             category = {CREATIVE, SURVIVAL, CLIENT}
     )
-    public static boolean smoothClientAnimations;
+    public static boolean smoothClientAnimations = true;
 
     private static class PushLimitLimits extends Validator<Integer> {
         @Override public Integer validate(CommandSourceStack source, CarpetRule<Integer> currentRule, Integer newValue, String string) {
@@ -652,43 +624,6 @@ public class CarpetSettings
             validate = PushLimitLimits.class
     )
     public static int railPowerLimit = 9;
-
-    private static class FillLimitMigrator extends Validator<Integer>
-    {
-        @Override
-        public Integer validate(CommandSourceStack source, CarpetRule<Integer> changingRule, Integer newValue, String userInput)
-        {
-            if (source != null && source.getServer().overworld() != null)
-            {
-                GameRules.IntegerValue gamerule = source.getServer().getGameRules().getRule(GameRules.RULE_COMMAND_MODIFICATION_BLOCK_LIMIT);
-                if (gamerule.get() != newValue)
-                {
-                    if (newValue == 32768 && changingRule.value() == newValue) // migration call, gamerule is different, update rule
-                    {
-                        Messenger.m(source, "g Syncing fillLimit rule with gamerule");
-                        newValue = gamerule.get();
-                    } else if (newValue != 32768 && gamerule.get() == 32768)
-                    {
-                        Messenger.m(source, "g Migrated value of fillLimit carpet rule to commandModificationBlockLimit gamerule");
-                        gamerule.set(newValue, source.getServer());
-                    }
-                }
-            }
-            return newValue;
-        }
-        @Override
-        public String description() { return "The value of this rule will be migrated to the gamerule";}
-    }
-
-    @Rule(
-            desc = "[Deprecated] Customizable fill/fillbiome/clone volume limit",
-            extra = "Use vanilla gamerule instead. This setting will be removed in 1.20.0",
-            options = {"32768", "250000", "1000000"},
-            category = CREATIVE,
-            strict = false,
-            validate = FillLimitMigrator.class
-    )
-    public static int fillLimit = 32768;
 
     private static class ForceloadLimitValidator extends Validator<Integer>
     {

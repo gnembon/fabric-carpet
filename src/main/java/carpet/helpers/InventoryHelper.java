@@ -3,7 +3,8 @@ package carpet.helpers;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.item.ItemStack;
 
-import static net.minecraft.nbt.Tag.*;
+import static net.minecraft.nbt.Tag.TAG_COMPOUND;
+import static net.minecraft.nbt.Tag.TAG_LIST;
 
 public class InventoryHelper
 {

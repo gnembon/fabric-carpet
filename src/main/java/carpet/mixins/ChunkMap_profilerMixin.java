@@ -13,7 +13,7 @@ import net.minecraft.server.level.ChunkMap;
 import net.minecraft.server.level.ServerLevel;
 
 @Mixin(ChunkMap.class)
-public class ChunkMap_tickMixin
+public class ChunkMap_profilerMixin
 {
     @Shadow @Final ServerLevel level;
     CarpetProfiler.ProfilerToken currentSection;
