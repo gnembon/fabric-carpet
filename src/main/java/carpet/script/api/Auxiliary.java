@@ -448,6 +448,50 @@ public class Auxiliary
 
         expression.addUnaryFunction("nbt", NBTSerializableValue::fromValue);
 
+        expression.addFunction("nbt_type",  lv -> {
+            if (lv.isEmpty()) {
+                throw new InternalExpressionException("'nbt_type' requires parameters");
+            }
+
+            Value resulttTag;    
+
+            if (lv.size() == 1) {
+                resulttTag = lv.get(0);
+            } else {
+                Value source = lv.get(0);
+                if (!(source instanceof NBTSerializableValue)){
+                    source = new NBTSerializableValue(source.getString());
+                }
+                resulttTag=((NBTSerializableValue)source).get_nocast(lv.get(1));
+            }
+
+            if(resulttTag instanceof NBTSerializableValue nbttag){
+                return new StringValue(nbttag.getTag().getType().getPrettyName().substring(4).toLowerCase());
+            }
+            if (resulttTag instanceof ListValue listOfNbt) {
+                return ListValue.wrap(listOfNbt.getItems().stream().map(nbttag->new StringValue(((NBTSerializableValue)nbttag).getTag().getType().getPrettyName().substring(4).toLowerCase())));
+            }
+            if(resulttTag.isNull()){
+                return resulttTag;
+            }
+            throw new InternalExpressionException("'nbt_type' requires parameter of NBT Value.");
+        });
+        
+        expression.addFunction("get_as_nbt", lv -> {
+            if (lv.size()<2) {
+                throw new InternalExpressionException("'get_as_nbt' requires 2 parameters");
+            }
+
+            Value source = lv.get(0);
+            if (!(source instanceof NBTSerializableValue)){
+                source = new NBTSerializableValue(source.getString());
+            }
+            Value resulttTag=((NBTSerializableValue)source).get_nocast(lv.get(1));
+
+            return resulttTag;
+            
+        });
+
         expression.addUnaryFunction("escape_nbt", v -> new StringValue(StringTag.quoteAndEscape(v.getString())));
 
         expression.addUnaryFunction("parse_nbt", v -> {
@@ -485,6 +529,40 @@ public class Auxiliary
                 throw new InternalExpressionException("'encode_nbt' requires 1 or 2 parameters");
             }
             Value v = lv.get(0);
+            if(argSize > 1){
+                Tag res = null;
+                try {
+                    res = switch (lv.get(1).getString().toLowerCase()) {
+                        case "byte":
+                            yield net.minecraft.nbt.ByteTag.valueOf((byte)NumericValue.asNumber(v).getLong());
+                        case "short":
+                            yield net.minecraft.nbt.ShortTag.valueOf((short)NumericValue.asNumber(v).getLong());
+                        case "int":
+                            yield net.minecraft.nbt.IntTag.valueOf((int)NumericValue.asNumber(v).getLong());
+                        case "long":
+                            yield net.minecraft.nbt.LongTag.valueOf(NumericValue.asNumber(v).getLong());
+                        case "string":
+                            yield net.minecraft.nbt.StringTag.valueOf(v.getString());
+                        case "byte_array":
+                            yield new net.minecraft.nbt.ByteArrayTag(((carpet.script.value.AbstractListValue)v).unpack().stream().map(x->(byte)NumericValue.asNumber(x).getLong()).toList());
+                        case "int_array":
+                            yield new net.minecraft.nbt.IntArrayTag(((carpet.script.value.AbstractListValue)v).unpack().stream().map(x->(int)NumericValue.asNumber(x).getLong()).toList());
+                        case "long_array":
+                            yield new net.minecraft.nbt.LongArrayTag(((carpet.script.value.AbstractListValue)v).unpack().stream().map(x->NumericValue.asNumber(x).getLong()).toList());
+                        case "float":
+                            yield net.minecraft.nbt.FloatTag.valueOf((float)NumericValue.asNumber(v).getDouble());
+                        case "double":
+                            yield net.minecraft.nbt.DoubleTag.valueOf(NumericValue.asNumber(v).getDouble());
+                        default:
+                            yield null;
+                    };
+                } catch (ClassCastException e) {
+                    // fall back to the old method?
+                }
+                if (res != null) {
+                    return NBTSerializableValue.of(res);
+                }
+            }
             boolean force = (argSize > 1) && lv.get(1).getBoolean();
             Tag tag;
             try
