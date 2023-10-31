@@ -1,6 +1,7 @@
 package carpet.mixins;
 
-import carpet.network.CarpetClient;
+import carpet.CarpetSettings;
+import carpet.network.CarpetPayload;
 import carpet.network.ServerNetworkHandler;
 import net.minecraft.network.protocol.PacketUtils;
 import net.minecraft.network.protocol.common.ServerboundCustomPayloadPacket;
@@ -19,12 +20,16 @@ public class ServerCommonPacketListenerimpl_connectionMixin
     private void onCustomCarpetPayload(ServerboundCustomPayloadPacket serverboundCustomPayloadPacket, CallbackInfo ci)
     {
         Object thiss = this;
-        if (thiss instanceof ServerGamePacketListenerImpl impl && serverboundCustomPayloadPacket.payload() instanceof CarpetClient.CarpetPayload cpp) {
+        if (thiss instanceof ServerGamePacketListenerImpl impl && serverboundCustomPayloadPacket.payload() instanceof CarpetPayload cpp) {
             // We should force onto the main thread here
             // ServerNetworkHandler.handleData can possibly mutate data that isn't
             // thread safe, and also allows for client commands to be executed
             PacketUtils.ensureRunningOnSameThread(serverboundCustomPayloadPacket, (ServerGamePacketListener) this, impl.player.serverLevel());
-            ServerNetworkHandler.onClientData(impl.player, cpp.data());
+            if (cpp.command() == CarpetPayload.DATA) {
+                ServerNetworkHandler.onClientData(impl.player, cpp.data());
+            } else {
+                CarpetSettings.LOG.info("Invalid carpet-like packet received");
+            }
             ci.cancel();
         }
     }

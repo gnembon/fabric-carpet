@@ -110,7 +110,7 @@ public class ClientNetworkHandler
         CompoundTag data = new CompoundTag();
         data.putString(CarpetClient.HELLO, CarpetSettings.carpetVersion);
         CarpetClient.getPlayer().connection.send(new ServerboundCustomPayloadPacket(
-                new CarpetClient.CarpetPayload(data)
+                new CarpetPayload(data)
         ));
     }
 
@@ -144,7 +144,7 @@ public class ClientNetworkHandler
         CompoundTag outer = new CompoundTag();
         outer.put("clientCommand", tag);
         CarpetClient.getPlayer().connection.send(new ServerboundCustomPayloadPacket(
-                new CarpetClient.CarpetPayload(outer)
+                new CarpetPayload(CarpetPayload.DATA, outer)
         ));
     }
 }
