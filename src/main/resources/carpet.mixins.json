@@ -54,6 +54,7 @@
     "Villager_aiMixin",
     "Player_fakePlayersMixin",
     "ServerGamePacketListenerImpl_coreMixin",
+    "ServerGamePacketListenerImpl_scarpetCrafterScreen",
     "MinecraftServer_scarpetMixin",
     "ExperienceOrb_xpNoCooldownMixin",
     "Player_xpNoCooldownMixin",
