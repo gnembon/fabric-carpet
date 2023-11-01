@@ -1,7 +1,7 @@
 package carpet.script.utils;
 
 import carpet.script.external.Vanilla;
-import net.minecraft.commands.CommandResultConsumer;
+import net.minecraft.commands.CommandResultCallback;
 import net.minecraft.commands.CommandSigningContext;
 import net.minecraft.commands.CommandSource;
 import net.minecraft.commands.CommandSourceStack;
@@ -33,7 +33,7 @@ public class SnoopyCommandSource extends CommandSourceStack
     private final MinecraftServer server;
     // skipping silent since snooper is never silent
     private final Entity entity;
-    private final CommandResultConsumer<CommandSourceStack> resultConsumer;
+    private final CommandResultCallback resultConsumer;
     private final EntityAnchorArgument.Anchor entityAnchor;
     private final Vec2 rotation;
     // good stuff
@@ -47,8 +47,7 @@ public class SnoopyCommandSource extends CommandSourceStack
     {
         super(CommandSource.NULL, original.getPosition(), original.getRotation(), original.getLevel(), Vanilla.MinecraftServer_getRunPermissionLevel(original.getServer()),
                 original.getTextName(), original.getDisplayName(), original.getServer(), original.getEntity(), false,
-                (ctx, succ, res) -> {
-                }, EntityAnchorArgument.Anchor.FEET, CommandSigningContext.ANONYMOUS, TaskChainer.immediate(original.getServer()), i -> {});
+                CommandResultCallback.EMPTY, EntityAnchorArgument.Anchor.FEET, CommandSigningContext.ANONYMOUS, TaskChainer.immediate(original.getServer()));
         this.output = CommandSource.NULL;
         this.position = original.getPosition();
         this.world = original.getLevel();
@@ -57,8 +56,7 @@ public class SnoopyCommandSource extends CommandSourceStack
         this.name = original.getDisplayName();
         this.server = original.getServer();
         this.entity = original.getEntity();
-        this.resultConsumer = (ctx, succ, res) -> {
-        };
+        this.resultConsumer = CommandResultCallback.EMPTY;
         this.entityAnchor = original.getAnchor();
         this.rotation = original.getRotation();
         this.error = error;
@@ -81,8 +79,7 @@ public class SnoopyCommandSource extends CommandSourceStack
         this.name = player.getDisplayName();
         this.server = player.level().getServer();
         this.entity = player;
-        this.resultConsumer = (ctx, succ, res) -> {
-        };
+        this.resultConsumer = CommandResultCallback.EMPTY;
         this.entityAnchor = EntityAnchorArgument.Anchor.FEET;
         this.rotation = player.getRotationVector(); // not a client call really
         this.error = error;
@@ -91,13 +88,13 @@ public class SnoopyCommandSource extends CommandSourceStack
         this.taskChainer = TaskChainer.immediate(player.server);
     }
 
-    private SnoopyCommandSource(CommandSource output, Vec3 pos, Vec2 rot, ServerLevel world, int level, String simpleName, Component name, MinecraftServer server, @Nullable Entity entity, CommandResultConsumer<CommandSourceStack> consumer, EntityAnchorArgument.Anchor entityAnchor, CommandSigningContext context, TaskChainer chainer,
+    private SnoopyCommandSource(CommandSource output, Vec3 pos, Vec2 rot, ServerLevel world, int level, String simpleName, Component name, MinecraftServer server, @Nullable Entity entity, CommandResultCallback consumer, EntityAnchorArgument.Anchor entityAnchor, CommandSigningContext context, TaskChainer chainer,
                                 Component[] error, List<Component> chatOutput
     )
     {
         super(output, pos, rot, world, level,
                 simpleName, name, server, entity, false,
-                consumer, entityAnchor, context, chainer, i -> {});
+                consumer, entityAnchor, context, chainer);
         this.output = output;
         this.position = pos;
         this.rotation = rot;
@@ -134,15 +131,15 @@ public class SnoopyCommandSource extends CommandSourceStack
     }
 
     @Override
-    public CommandSourceStack withCallback(CommandResultConsumer<CommandSourceStack> consumer)
+    public CommandSourceStack withCallback(CommandResultCallback consumer)
     {
         return new SnoopyCommandSource(output, position, rotation, world, level, simpleName, name, server, entity, consumer, entityAnchor, signingContext, taskChainer, error, chatOutput);
     }
 
     @Override
-    public CommandSourceStack withCallback(CommandResultConsumer<CommandSourceStack> consumer, BinaryOperator<CommandResultConsumer<CommandSourceStack>> binaryOperator)
+    public CommandSourceStack withCallback(CommandResultCallback consumer, BinaryOperator<CommandResultCallback> binaryOperator)
     {
-        CommandResultConsumer<CommandSourceStack> resultConsumer = binaryOperator.apply(this.resultConsumer, consumer);
+        CommandResultCallback resultConsumer = binaryOperator.apply(this.resultConsumer, consumer);
         return this.withCallback(resultConsumer);
     }
 

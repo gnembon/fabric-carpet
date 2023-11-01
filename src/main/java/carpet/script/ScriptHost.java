@@ -10,6 +10,7 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nullable;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -121,6 +122,17 @@ public abstract class ScriptHost
         return main == null ? null : main.name();
     }
 
+    public String getVisualName()
+    {
+        return main == null ? "built-in default app" : main.name();
+    }
+
+    public boolean isDefaultApp()
+    {
+        return main == null;
+    }
+
+    @Nullable
     public final Module main;
 
     @FunctionalInterface
@@ -131,7 +143,7 @@ public abstract class ScriptHost
 
     public ErrorSnooper errorSnooper = null;
 
-    protected ScriptHost(Module code, ScriptServer scriptServer, boolean perUser, ScriptHost parent)
+    protected ScriptHost(@Nullable Module code, ScriptServer scriptServer, boolean perUser, ScriptHost parent)
     {
         this.parent = parent;
         this.main = code;
@@ -551,7 +563,7 @@ public abstract class ScriptHost
             return false;
         }
         deprecations.add(feature);
-        DEPRECATION_LOG.warn("App '" + getName() + "' uses '" + feature + "', which is deprecated for removal. Check the docs for a replacement");
+        DEPRECATION_LOG.warn("App '" + getVisualName() + "' uses '" + feature + "', which is deprecated for removal. Check the docs for a replacement");
         return true;
     }
 

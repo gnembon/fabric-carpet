@@ -421,7 +421,7 @@ public class ScriptCommand
         CommandSourceStack source = context.getSource();
         CarpetScriptServer scriptServer = ss(context);
 
-        Carpet.Messenger_message(source, "lb Stored functions" + ((host == scriptServer.globalHost) ? ":" : " in " + host.getName() + ":"));
+        Carpet.Messenger_message(source, "lb Stored functions" + ((host == scriptServer.globalHost) ? ":" : " in " + host.getVisualName() + ":"));
         host.globalFunctionNames(host.main, (str) -> all || !str.startsWith("__")).sorted().forEach((s) -> {
             FunctionValue fun = host.getFunction(s);
             if (fun == null)
@@ -442,7 +442,7 @@ public class ScriptCommand
         });
         //Messenger.m(source, "w "+code);
         Carpet.Messenger_message(source, "w  ");
-        Carpet.Messenger_message(source, "lb Global variables" + ((host == scriptServer.globalHost) ? ":" : " in " + host.getName() + ":"));
+        Carpet.Messenger_message(source, "lb Global variables" + ((host == scriptServer.globalHost) ? ":" : " in " + host.getVisualName() + ":"));
         host.globalVariableNames(host.main, (s) -> s.startsWith("global_")).sorted().forEach((s) -> {
             LazyValue variable = host.getGlobalVariable(s);
             if (variable == null)

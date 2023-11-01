@@ -40,6 +40,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import org.apache.commons.lang3.tuple.Pair;
 
+import javax.annotation.Nullable;
 import java.math.BigInteger;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -77,7 +78,7 @@ public class CarpetScriptHost extends ScriptHost
     public AppStoreManager.StoreNode storeSource;
     boolean hasCommand;
 
-    private CarpetScriptHost(CarpetScriptServer server, Module code, boolean perUser, ScriptHost parent, Map<Value, Value> config, Map<String, CommandArgument> argTypes, Predicate<CommandSourceStack> commandValidator, boolean isRuleApp)
+    private CarpetScriptHost(CarpetScriptServer server, @Nullable Module code, boolean perUser, ScriptHost parent, Map<Value, Value> config, Map<String, CommandArgument> argTypes, Predicate<CommandSourceStack> commandValidator, boolean isRuleApp)
     {
         super(code, server, perUser, parent);
         this.saveTimeout = 0;
@@ -98,7 +99,7 @@ public class CarpetScriptHost extends ScriptHost
         storeSource = null;
     }
 
-    public static CarpetScriptHost create(CarpetScriptServer scriptServer, Module module, boolean perPlayer, CommandSourceStack source, Predicate<CommandSourceStack> commandValidator, boolean isRuleApp, AppStoreManager.StoreNode storeSource)
+    public static CarpetScriptHost create(CarpetScriptServer scriptServer, @Nullable Module module, boolean perPlayer, CommandSourceStack source, Predicate<CommandSourceStack> commandValidator, boolean isRuleApp, AppStoreManager.StoreNode storeSource)
     {
         CarpetScriptHost host = new CarpetScriptHost(scriptServer, module, perPlayer, null, Collections.emptyMap(), new HashMap<>(), commandValidator, isRuleApp);
         // parse code and convert to expression
@@ -742,7 +743,7 @@ public class CarpetScriptHost extends ScriptHost
         FunctionValue function = getFunction(call);
         if (function == null)
         {
-            throw new CarpetExpressionException("Couldn't find function '" + call + "' in app '" + this.getName() + "'", null);
+            throw new CarpetExpressionException("Couldn't find function '" + call + "' in app '" + this.getVisualName() + "'", null);
         }
         List<LazyValue> argv = new ArrayList<>();
         if (coords != null)
@@ -968,7 +969,7 @@ public class CarpetScriptHost extends ScriptHost
 
     public Tag readFileTag(FileArgument fdesc)
     {
-        if (getName() == null && !fdesc.isShared)
+        if (isDefaultApp() && !fdesc.isShared)
         {
             return null;
         }
@@ -985,7 +986,7 @@ public class CarpetScriptHost extends ScriptHost
 
     public boolean writeTagFile(Tag tag, FileArgument fdesc)
     {
-        if (getName() == null && !fdesc.isShared)
+        if (isDefaultApp() && !fdesc.isShared)
         {
             return false; // if belongs to an app, cannot be default host.
         }
@@ -1007,27 +1008,27 @@ public class CarpetScriptHost extends ScriptHost
 
     public boolean removeResourceFile(FileArgument fdesc)
     {
-        return (getName() != null || fdesc.isShared) && fdesc.dropExistingFile(main); //
+        return (!isDefaultApp() || fdesc.isShared) && fdesc.dropExistingFile(main); //
     }
 
     public boolean appendLogFile(FileArgument fdesc, List<String> data)
     {
-        return (getName() != null || fdesc.isShared) && fdesc.appendToTextFile(main, data); // if belongs to an app, cannot be default host.
+        return (!isDefaultApp() || fdesc.isShared) && fdesc.appendToTextFile(main, data); // if belongs to an app, cannot be default host.
     }
 
     public List<String> readTextResource(FileArgument fdesc)
     {
-        return getName() == null && !fdesc.isShared ? null : fdesc.listFile(main);
+        return isDefaultApp() && !fdesc.isShared ? null : fdesc.listFile(main);
     }
 
     public JsonElement readJsonFile(FileArgument fdesc)
     {
-        return getName() == null && !fdesc.isShared ? null : fdesc.readJsonFile(main);
+        return isDefaultApp() && !fdesc.isShared ? null : fdesc.readJsonFile(main);
     }
 
     public Stream<String> listFolder(FileArgument fdesc)
     {
-        return getName() == null && !fdesc.isShared ? null : fdesc.listFolder(main);
+        return isDefaultApp() && !fdesc.isShared ? null : fdesc.listFolder(main);
     }
 
     public boolean applyActionForResource(String path, boolean shared, Consumer<Path> action)
@@ -1202,7 +1203,7 @@ public class CarpetScriptHost extends ScriptHost
     {
         if (super.issueDeprecation(feature))
         {
-            Carpet.Messenger_message(responsibleSource, "rb App '" +getName() + "' uses '" + feature + "', which is deprecated for removal. Check the docs for a replacement");
+            Carpet.Messenger_message(responsibleSource, "rb App '" +getVisualName() + "' uses '" + feature + "', which is deprecated for removal. Check the docs for a replacement");
             return true;
         }
         return false;
