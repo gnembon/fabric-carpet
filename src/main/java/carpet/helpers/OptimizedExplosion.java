@@ -4,8 +4,9 @@ package carpet.helpers;
 import java.math.RoundingMode;
 import java.text.NumberFormat;
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import net.minecraft.Util;
 import net.minecraft.core.BlockPos;
@@ -49,6 +50,8 @@ import static carpet.script.CarpetEventServer.Event.EXPLOSION_OUTCOME;
 public class OptimizedExplosion
 {
     private static List<Entity> entitylist;
+    private static Set<Entity> skippedEntities;
+    private static final Vec3 SAME_POSITION_VELOCITY = new Vec3(0d, -0.9923437498509884d, 0d);
     private static Vec3 vec3dmem;
     private static long tickmem;
     // For disabling the explosion particles and sound
@@ -71,7 +74,7 @@ public class OptimizedExplosion
 
     public static void doExplosionA(Explosion e, ExplosionLogHelper eLogger) {
         ExplosionAccessor eAccess = (ExplosionAccessor) e;
-        
+
         entityList.clear();
         boolean eventNeeded = EXPLOSION_OUTCOME.isNeeded() && !eAccess.getLevel().isClientSide();
         blastCalc(e);
@@ -92,101 +95,114 @@ public class OptimizedExplosion
             affectedBlockPositionsSet.clear();
         }
 
-        float f3 = eAccess.getRadius() * 2.0F;
-        int k1 = Mth.floor(eAccess.getX() - (double) f3 - 1.0D);
-        int l1 = Mth.floor(eAccess.getX() + (double) f3 + 1.0D);
-        int i2 = Mth.floor(eAccess.getY() - (double) f3 - 1.0D);
-        int i1 = Mth.floor(eAccess.getY() + (double) f3 + 1.0D);
-        int j2 = Mth.floor(eAccess.getZ() - (double) f3 - 1.0D);
-        int j1 = Mth.floor(eAccess.getZ() + (double) f3 + 1.0D);
+        float radius = eAccess.getRadius() * 2.0F;
+        int k1 = Mth.floor(eAccess.getX() - (double) radius - 1.0D);
+        int l1 = Mth.floor(eAccess.getX() + (double) radius + 1.0D);
+        int i2 = Mth.floor(eAccess.getY() - (double) radius - 1.0D);
+        int i1 = Mth.floor(eAccess.getY() + (double) radius + 1.0D);
+        int j2 = Mth.floor(eAccess.getZ() - (double) radius - 1.0D);
+        int j1 = Mth.floor(eAccess.getZ() + (double) radius + 1.0D);
         Vec3 vec3d = new Vec3(eAccess.getX(), eAccess.getY(), eAccess.getZ());
+
+        Entity explodingEntity = eAccess.getSource();
 
         if (vec3dmem == null || !vec3dmem.equals(vec3d) || tickmem != eAccess.getLevel().getGameTime()) {
             vec3dmem = vec3d;
             tickmem = eAccess.getLevel().getGameTime();
             entitylist = eAccess.getLevel().getEntities(null, new AABB(k1, i2, j2, l1, i1, j1));
             explosionSound = 0;
+
+            skippedEntities = new HashSet<Entity>();
+            // Only skip accelerating if explodingEntity is onGround
+            if (explodingEntity != null && explodingEntity instanceof PrimedTnt && explodingEntity.onGround()) {
+                for (int k2 = 0; k2 < entitylist.size(); ++k2) {
+                    Entity entity = entitylist.get(k2);
+                    if (entity instanceof PrimedTnt &&
+                            entity.getX() == explodingEntity.getX() &&
+                            entity.getY() == explodingEntity.getY() &&
+                            entity.getZ() == explodingEntity.getZ()) {
+                        if (eLogger != null)
+                            skippedEntities.add(entity);
+
+                        removeFast(entitylist, k2);
+                        --k2;
+                    }
+                }
+            }
         }
+
+        // "/log explosions full" parity
+        skippedEntities.remove(explodingEntity);
+        if (eLogger != null)
+            for (Entity entity : skippedEntities)
+                eLogger.onEntityImpacted(entity, SAME_POSITION_VELOCITY);
 
         explosionSound++;
 
-        Entity explodingEntity = eAccess.getSource();
         for (int k2 = 0; k2 < entitylist.size(); ++k2) {
             Entity entity = entitylist.get(k2);
 
-
-            if (entity == explodingEntity) {
-                // entitylist.remove(k2);
+            if (entity == explodingEntity || entity.ignoreExplosion()) {
                 removeFast(entitylist, k2);
-                k2--;
+                --k2;
                 continue;
             }
 
-            if (entity instanceof PrimedTnt && explodingEntity != null &&
-                    entity.getX() == explodingEntity.getX() &&
-                    entity.getY() == explodingEntity.getY() &&
-                    entity.getZ() == explodingEntity.getZ()) {
-                if (eLogger != null) {
-                    eLogger.onEntityImpacted(entity, new Vec3(0,-0.9923437498509884d, 0));
-                }
+            double distance = Math.sqrt(entity.distanceToSqr(eAccess.getX(), eAccess.getY(), eAccess.getZ())) / (double) radius;
+
+            if (distance > 1.0D)
                 continue;
+
+            double dx = entity.getX() - eAccess.getX();
+            // Change in 1.16 snapshots to fix a bug with TNT jumping
+            double dy = (entity instanceof PrimedTnt ? entity.getY() : entity.getEyeY()) - eAccess.getY();
+            double dz = entity.getZ() - eAccess.getZ();
+            double length = (double) Math.sqrt(dx * dx + dy * dy + dz * dz);
+
+            if (length == 0.0D)
+                continue;
+
+            dx = dx / length;
+            dy = dy / length;
+            dz = dz / length;
+            double density;
+
+            pairMutable.setLeft(vec3d);
+            pairMutable.setRight(entity.getBoundingBox());
+            density = densityCache.getOrDefault(pairMutable, Double.MAX_VALUE);
+
+            if (density == Double.MAX_VALUE)
+            {
+                Pair<Vec3, AABB> pair = Pair.of(vec3d, entity.getBoundingBox());
+                density = Explosion.getSeenPercent(vec3d, entity);
+                densityCache.put(pair, density);
             }
 
-            if (!entity.ignoreExplosion()) {
-                double d12 = Math.sqrt(entity.distanceToSqr(eAccess.getX(), eAccess.getY(), eAccess.getZ())) / (double) f3;
+            // If it is needed, it saves the entity
+            if (eventNeeded) {
+                entityList.add(entity);
+            }
 
-                if (d12 <= 1.0D) {
-                    double d5 = entity.getX() - eAccess.getX();
-                    // Change in 1.16 snapshots to fix a bug with TNT jumping
-                    double d7 = (entity instanceof PrimedTnt ? entity.getY() : entity.getEyeY()) - eAccess.getY();
-                    double d9 = entity.getZ() - eAccess.getZ();
-                    double d13 = (double) Math.sqrt(d5 * d5 + d7 * d7 + d9 * d9);
+            double d10 = (1.0D - distance) * density;
+            entity.hurt(e.getDamageSource(),
+                    (float) ((int) ((d10 * d10 + d10) / 2.0D * 7.0D * (double) radius + 1.0D)));
+            double d11 = d10;
 
-                    if (d13 != 0.0D) {
-                        d5 = d5 / d13;
-                        d7 = d7 / d13;
-                        d9 = d9 / d13;
-                        double density;
+            if (entity instanceof LivingEntity) {
+                d11 = ProtectionEnchantment.getExplosionKnockbackAfterDampener((LivingEntity) entity, d10);
+            }
 
-                        pairMutable.setLeft(vec3d);
-                        pairMutable.setRight(entity.getBoundingBox());
-                        density = densityCache.getOrDefault(pairMutable, Double.MAX_VALUE);
+            if (eLogger != null) {
+                eLogger.onEntityImpacted(entity, new Vec3(dx * d11, dy * d11, dz * d11));
+            }
 
-                        if (density == Double.MAX_VALUE)
-                        {
-                            Pair<Vec3, AABB> pair = Pair.of(vec3d, entity.getBoundingBox());
-                            density = Explosion.getSeenPercent(vec3d, entity);
-                            densityCache.put(pair, density);
-                        }
+            entity.setDeltaMovement(entity.getDeltaMovement().add(dx * d11, dy * d11, dz * d11));
 
-                        // If it is needed, it saves the entity
-                        if (eventNeeded) {
-                            entityList.add(entity);
-                        }
+            if (entity instanceof Player player) {
 
-                        double d10 = (1.0D - d12) * density;
-                        entity.hurt(e.getDamageSource(),
-                                (float) ((int) ((d10 * d10 + d10) / 2.0D * 7.0D * (double) f3 + 1.0D)));
-                        double d11 = d10;
-
-                        if (entity instanceof LivingEntity) {
-                            d11 = ProtectionEnchantment.getExplosionKnockbackAfterDampener((LivingEntity) entity, d10);
-                        }
-
-                        if (eLogger != null) {
-                            eLogger.onEntityImpacted(entity, new Vec3(d5 * d11, d7 * d11, d9 * d11));
-                        }
-
-                        entity.setDeltaMovement(entity.getDeltaMovement().add(d5 * d11, d7 * d11, d9 * d11));
-
-                        if (entity instanceof Player player) {
-
-                            if (!player.isSpectator()
-                                    && (!player.isCreative() || !player.getAbilities().flying)) {  //getAbilities
-                                e.getHitPlayers().put(player, new Vec3(d5 * d10, d7 * d10, d9 * d10));
-                            }
-                        }
-                    }
+                if (!player.isSpectator()
+                        && (!player.isCreative() || !player.getAbilities().flying)) {  //getAbilities
+                    e.getHitPlayers().put(player, new Vec3(dx * d10, dy * d10, dz * d10));
                 }
             }
         }
