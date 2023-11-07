@@ -1,5 +1,6 @@
 package carpet.helpers;
 
+import carpet.CarpetSettings;
 import carpet.fakes.PistonBlockInterface;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -12,20 +13,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.BaseRailBlock;
-import net.minecraft.world.level.block.BedBlock;
-import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.DirectionalBlock;
-import net.minecraft.world.level.block.DispenserBlock;
-import net.minecraft.world.level.block.EndRodBlock;
-import net.minecraft.world.level.block.HopperBlock;
-import net.minecraft.world.level.block.HorizontalDirectionalBlock;
-import net.minecraft.world.level.block.ObserverBlock;
-import net.minecraft.world.level.block.RotatedPillarBlock;
-import net.minecraft.world.level.block.Rotation;
-import net.minecraft.world.level.block.SlabBlock;
-import net.minecraft.world.level.block.StairBlock;
+import net.minecraft.world.level.block.*;
 import net.minecraft.world.level.block.piston.PistonBaseBlock;
 import net.minecraft.world.level.block.piston.PistonStructureResolver;
 import net.minecraft.world.level.block.state.BlockState;
@@ -33,7 +21,6 @@ import net.minecraft.world.level.block.state.properties.Half;
 import net.minecraft.world.level.block.state.properties.SlabType;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
-import carpet.CarpetSettings;
 
 public class BlockRotator
 {
@@ -205,11 +192,11 @@ public class BlockRotator
     }
 
     private static boolean isHorizontallyRotatable(Block block){
-        return block instanceof HorizontalDirectionalBlock 
+        return block instanceof HorizontalDirectionalBlock
                || block instanceof BaseRailBlock
                || block instanceof BeehiveBlock
                || block instanceof ChiseledBookshelfBlock
                || block instanceof DecoratedPotBlock
-               || block instanceof CalibratedSculkSensorBlock
+               || block instanceof CalibratedSculkSensorBlock;
     }
 }
