@@ -195,7 +195,7 @@ public class BlockRotator
         return block instanceof HorizontalDirectionalBlock
                || block instanceof BaseRailBlock
                || block instanceof BeehiveBlock
-               || block instanceof ChiseledBookshelfBlock
+               || block instanceof ChiseledBookShelfBlock
                || block instanceof DecoratedPotBlock
                || block instanceof CalibratedSculkSensorBlock;
     }
