@@ -116,7 +116,7 @@ public class BlockRotator
         {
             newState = state.rotate(Rotation.CLOCKWISE_90);
         }
-        else if (block instanceof ObserverBlock || block instanceof EndRodBlock)
+        else if (block instanceof ObserverBlock || block instanceof RodBlock)
         {
             newState = state.setValue(DirectionalBlock.FACING, state.getValue(DirectionalBlock.FACING).getOpposite());
         }
