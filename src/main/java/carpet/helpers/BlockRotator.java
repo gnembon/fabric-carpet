@@ -112,7 +112,7 @@ public class BlockRotator
         Vec3 hitVec = hit.getLocation().subtract(pos.getX(), pos.getY(), pos.getZ());
         Direction facing = hit.getDirection();
         BlockState newState = null;
-        if ((block instanceof HorizontalDirectionalBlock || block instanceof BaseRailBlock) && !(block instanceof BedBlock))
+        if (isHorizontallyRotatable(block) && !(block instanceof BedBlock))
         {
             newState = state.rotate(Rotation.CLOCKWISE_90);
         }
@@ -202,5 +202,14 @@ public class BlockRotator
                 return super.execute(source, stack);
             }
         }
+    }
+
+    private static boolean isHorizontallyRotatable(Block block){
+        return block instanceof HorizontalDirectionalBlock 
+               || block instanceof BaseRailBlock
+               || block instanceof BeehiveBlock
+               || block instanceof ChiseledBookshelfBlock
+               || block instanceof DecoratedPotBlock
+               || block instanceof CalibratedSculkSensorBlock
     }
 }
