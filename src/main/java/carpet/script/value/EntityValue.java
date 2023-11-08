@@ -1483,7 +1483,7 @@ public class EntityValue extends Value
                         return;
                     }
                     int duration = (int) NumericValue.asNumber(list.get(1)).getLong();
-                    if (duration <= 0)
+                    if (duration <= 0 && duration != -1)
                     {
                         le.removeEffect(effect);
                         return;
