@@ -421,7 +421,7 @@ version indicates the version of the connected carpet client.
 ### `query(e, 'effect', name?)`
 
 Without extra arguments, it returns list of effect active on a living entity. Each entry is a triple of short 
-effect name, amplifier, and remaining duration in ticks. With an argument, if the living entity has not that potion active, 
+effect name, amplifier, and remaining duration in ticks (-1 if it has infinity duration). With an argument, if the living entity has not that potion active, 
 returns `null`, otherwise return a tuple of amplifier and remaining duration.
 
 <pre>
