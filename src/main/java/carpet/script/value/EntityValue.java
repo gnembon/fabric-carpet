@@ -1488,7 +1488,7 @@ public class EntityValue extends Value
                         le.removeEffect(effect);
                         return;
                     }
-                    if (duration < 0 || Float.isInfinite(NumericValue.asNumber(list.get(1)).getFloat())){
+                    if (duration < 0){
                         duration = -1;
                     }
                     int amplifier = 0;
