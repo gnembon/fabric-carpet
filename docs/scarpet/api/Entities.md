@@ -761,7 +761,7 @@ players, since they are controlled client side.
 ### `modify(e, 'effect', name?, duration?, amplifier?, show_particles?, show_icon?, ambient?)`
 
 Applies status effect to the living entity. Takes several optional parameters, which default to `0`, `true`, 
-`true` and `false`. If no duration is specified, or if it's null or 0, the effect is removed. If duration is -1, it will represent infinity. If name is not specified,
+`true` and `false`. If no duration is specified, or if it's null or 0, the effect is removed. If duration is less than 0, or it is infinity, it will represent infinity. If name is not specified,
 it clears all effects.
 
 ### `modify(e, 'health', float)`
