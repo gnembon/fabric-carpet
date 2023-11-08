@@ -407,7 +407,7 @@ public class ShapesRenderer
                     float red = (color >> 16 & 0xFF) / 255.0F;
                     float green = (color >> 8 & 0xFF) / 255.0F;
                     float blue = (color & 0xFF) / 255.0F;
-                    client.getBlockRenderer().getModelRenderer().renderModel(matrices.last(), immediate.getBuffer(ItemBlockRenderTypes.getRenderType(blockState, false)), blockState, bakedModel, red, green, blue, light, OverlayTexture.NO_OVERLAY);
+                    client.getBlockRenderer().getModelRenderer().renderModel(matrices.last(), immediate.getBuffer(ItemBlockRenderTypes.getChunkRenderType(blockState)), blockState, bakedModel, red, green, blue, light, OverlayTexture.NO_OVERLAY);
                 }
 
                 // draw the block`s entity part
