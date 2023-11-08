@@ -340,7 +340,7 @@ public class ScreenValue extends Value
         DataSlot property = getProperty(propertyName);
         int intValue = NumericValue.asNumber(lv.get(0)).getInt();
         property.set(intValue);
-        this.screenHandler.sendAllDataToRemote();
+        this.screenHandler.broadcastChanges();
         return Value.TRUE;
     }
 
