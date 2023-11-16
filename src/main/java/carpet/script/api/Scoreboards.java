@@ -27,26 +27,22 @@ import net.minecraft.server.bossevents.CustomBossEvent;
 import net.minecraft.server.bossevents.CustomBossEvents;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.BossEvent;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.scores.DisplaySlot;
 import net.minecraft.world.scores.Objective;
 import net.minecraft.world.scores.PlayerTeam;
-import net.minecraft.world.scores.Score;
+import net.minecraft.world.scores.ScoreAccess;
+import net.minecraft.world.scores.ScoreHolder;
 import net.minecraft.world.scores.Scoreboard;
 import net.minecraft.world.scores.Team;
 import net.minecraft.world.scores.criteria.ObjectiveCriteria;
 
 public class Scoreboards
 {
-    private static String getScoreboardKeyFromValue(Value keyValue)
+    private static ScoreHolder getScoreboardKeyFromValue(Value keyValue)
     {
-        if (keyValue instanceof final EntityValue ev)
-        {
-            Entity e = ev.getEntity();
-            return e instanceof Player ? e.getName().getString() : e.getStringUUID();
-        }
-        return keyValue.getString();
+        return keyValue instanceof EntityValue ev
+                ? ev.getEntity()
+                : ScoreHolder.forNameOnly(keyValue.getString());
     }
 
     public static void apply(Expression expression)
@@ -69,28 +65,29 @@ public class Scoreboards
             }
             if (lv.size() == 1)
             {
-                return ListValue.wrap(scoreboard.getPlayerScores(objective).stream().map(s -> new StringValue(s.getOwner())));
+                return ListValue.wrap(scoreboard.listPlayerScores(objective).stream().map(s -> new StringValue(s.owner())));
             }
-            String key = getScoreboardKeyFromValue(lv.get(1));
+            ScoreHolder key = getScoreboardKeyFromValue(lv.get(1));
             if (lv.size() == 2)
             {
-                return !scoreboard.hasPlayerScore(key, objective)
+                return scoreboard.getPlayerScoreInfo(key, objective) == null
                         ? Value.NULL
-                        : NumericValue.of(scoreboard.getOrCreatePlayerScore(key, objective).getScore());
+                        : NumericValue.of(scoreboard.getOrCreatePlayerScore(key, objective).get());
             }
 
             Value value = lv.get(2);
             if (value.isNull())
             {
-                Score score = scoreboard.getOrCreatePlayerScore(key, objective);
-                scoreboard.resetPlayerScore(key, objective);
-                return NumericValue.of(score.getScore());
+                int score = scoreboard.getOrCreatePlayerScore(key, objective).get();
+                scoreboard.resetSinglePlayerScore(key, objective);
+                return NumericValue.of(score);
             }
             if (value instanceof NumericValue)
             {
-                Score score = scoreboard.getOrCreatePlayerScore(key, objective);
-                score.setScore(NumericValue.asNumber(value).getInt());
-                return NumericValue.of(score.getScore());
+                ScoreAccess score = scoreboard.getOrCreatePlayerScore(key, objective);
+                int previous = score.get();
+                score.set(NumericValue.asNumber(value).getInt());
+                return NumericValue.of(previous);
             }
             throw new InternalExpressionException("'scoreboard' requires a number or null as the third parameter");
         });
@@ -114,14 +111,14 @@ public class Scoreboards
                 scoreboard.removeObjective(objective);
                 return Value.TRUE;
             }
-            String key = getScoreboardKeyFromValue(lv.get(1));
-            if (!scoreboard.hasPlayerScore(key, objective))
+            ScoreHolder key = getScoreboardKeyFromValue(lv.get(1));
+            if (scoreboard.getPlayerScoreInfo(key, objective) == null)
             {
                 return Value.NULL;
             }
-            Score scoreboardPlayerScore = scoreboard.getOrCreatePlayerScore(key, objective);
-            Value previous = new NumericValue(scoreboardPlayerScore.getScore());
-            scoreboard.resetPlayerScore(key, objective);
+            ScoreAccess scoreboardPlayerScore = scoreboard.getOrCreatePlayerScore(key, objective);
+            Value previous = new NumericValue(scoreboardPlayerScore.get());
+            scoreboard.resetSinglePlayerScore(key, objective);
             return previous;
         });
 
@@ -170,7 +167,7 @@ public class Scoreboards
                 scoreboard.onObjectiveAdded(objective);
                 return Value.FALSE;
             }
-            scoreboard.addObjective(objectiveName, criterion, Component.literal(objectiveName), criterion.getDefaultRenderType());
+            scoreboard.addObjective(objectiveName, criterion, Component.literal(objectiveName), criterion.getDefaultRenderType(), false, null);
             return Value.TRUE;
         });
 
