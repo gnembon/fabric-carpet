@@ -346,7 +346,7 @@ public class Vanilla
 
     public static int MinecraftServer_getFillLimit(MinecraftServer server)
     {
-        return Math.max(server.getGameRules().getInt(GameRules.RULE_COMMAND_MODIFICATION_BLOCK_LIMIT), CarpetSettings.fillLimit);
+        return server.getGameRules().getInt(GameRules.RULE_COMMAND_MODIFICATION_BLOCK_LIMIT);
     }
 
     public static int PoiRecord_getFreeTickets(PoiRecord record)
@@ -366,5 +366,4 @@ public class Vanilla
             return new BlockPredicatePayload(predicateData.getCMBlockState(), predicateData.getCMBlockTagKey(), predicateData.getCMProperties(), predicateData.getCMDataTag());
         }
     }
-
 }

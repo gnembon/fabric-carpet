@@ -15,18 +15,13 @@ import carpet.commands.MobAICommand;
 import carpet.commands.PerimeterInfoCommand;
 import carpet.commands.PlayerCommand;
 import carpet.commands.ProfileCommand;
-import carpet.fakes.MinecraftServerInterface;
-import carpet.helpers.ServerTickRateManager;
 import carpet.script.ScriptCommand;
 import carpet.commands.SpawnCommand;
 import carpet.commands.TestCommand;
-import carpet.commands.TickCommand;
 import carpet.network.ServerNetworkHandler;
 import carpet.helpers.HopperCounter;
 import carpet.logging.LoggerRegistry;
 import carpet.script.CarpetScriptServer;
-import carpet.api.settings.CarpetRule;
-import carpet.api.settings.InvalidRuleValueException;
 import carpet.api.settings.SettingsManager;
 import carpet.logging.HUDController;
 import carpet.script.external.Carpet;
@@ -104,23 +99,11 @@ public class CarpetServer // static for now - easier to handle all around the co
         extensions.forEach(e -> e.onServerLoadedWorlds(minecraftServer));
         // initialize scarpet rules after all extensions are loaded
         forEachManager(SettingsManager::initializeScarpetRules);
-        // run fillLimit rule migration now that gamerules are available
-        @SuppressWarnings("unchecked")
-        CarpetRule<Integer> fillLimit = (CarpetRule<Integer>) settingsManager.getCarpetRule("fillLimit");
-        try
-        {
-            fillLimit.set(minecraftServer.createCommandSourceStack(), fillLimit.value());
-        } catch (InvalidRuleValueException e)
-        {
-            throw new AssertionError();
-        }
         scriptServer.initializeForWorld();
     }
 
     public static void tick(MinecraftServer server)
     {
-        ServerTickRateManager trm = ((MinecraftServerInterface)server).getTickRateManager();
-        trm.tick();
         HUDController.update_hud(server, null);
         if (scriptServer != null) scriptServer.tick();
 
@@ -138,7 +121,6 @@ public class CarpetServer // static for now - easier to handle all around the co
         }
         forEachManager(sm -> sm.registerCommand(dispatcher, commandBuildContext));
 
-        TickCommand.register(dispatcher, commandBuildContext);
         ProfileCommand.register(dispatcher, commandBuildContext);
         CounterCommand.register(dispatcher, commandBuildContext);
         LogCommand.register(dispatcher, commandBuildContext);

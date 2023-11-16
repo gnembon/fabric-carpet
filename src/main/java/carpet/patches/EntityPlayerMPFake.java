@@ -42,7 +42,8 @@ public class EntityPlayerMPFake extends ServerPlayer
     public Runnable fixStartingPosition = () -> {};
     public boolean isAShadow;
 
-    public static void createFake(String username, MinecraftServer server, Vec3 pos, double yaw, double pitch, ResourceKey<Level> dimensionId, GameType gamemode, boolean flying, Runnable onError)
+    // Returns true if it was successful, false if couldn't spawn due to the player not existing in Mojang servers
+    public static boolean createFake(String username, MinecraftServer server, Vec3 pos, double yaw, double pitch, ResourceKey<Level> dimensionId, GameType gamemode, boolean flying)
     {
         //prolly half of that crap is not necessary, but it works
         ServerLevel worldIn = server.getLevel(dimensionId);
@@ -58,8 +59,7 @@ public class EntityPlayerMPFake extends ServerPlayer
         {
             if (!CarpetSettings.allowSpawningOfflinePlayers)
             {
-                onError.run();
-                return;
+                return false;
             } else {
                 gameprofile = new GameProfile(UUIDUtil.createOfflinePlayerUUID(username), username);
             }
@@ -85,6 +85,7 @@ public class EntityPlayerMPFake extends ServerPlayer
             instance.entityData.set(DATA_PLAYER_MODE_CUSTOMISATION, (byte) 0x7f); // show all model layers (incl. capes)
             instance.getAbilities().flying = flying;
         });
+        return true;
     }
 
     private static CompletableFuture<Optional<GameProfile>> fetchGameProfile(final String name) {

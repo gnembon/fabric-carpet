@@ -10,7 +10,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(WorldBorder.class)
-public class WorldBorder_tickMixin
+public class WorldBorder_syncedWorldBorderMixin
 {
     @Shadow private WorldBorder.BorderExtent extent;
 

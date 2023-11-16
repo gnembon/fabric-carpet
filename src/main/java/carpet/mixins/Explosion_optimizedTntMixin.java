@@ -5,6 +5,11 @@ import carpet.CarpetSettings;
 import carpet.logging.LoggerRegistry;
 import carpet.logging.logHelpers.ExplosionLogHelper;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import net.minecraft.core.particles.ParticleOptions;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.monster.breeze.Breeze;
+import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -32,13 +37,15 @@ public abstract class Explosion_optimizedTntMixin
 
     @Shadow @Final private Level level;
 
+    @Shadow @Nullable public abstract LivingEntity getIndirectSourceEntity();
+
     private ExplosionLogHelper eLogger;
 
     @Inject(method = "explode", at = @At("HEAD"),
             cancellable = true)
     private void onExplosionA(CallbackInfo ci)
     {
-        if (CarpetSettings.optimizedTNT)
+        if (CarpetSettings.optimizedTNT && !level.isClientSide && !(getIndirectSourceEntity() instanceof Breeze))
         {
             OptimizedExplosion.doExplosionA((Explosion) (Object) this, eLogger);
             ci.cancel();
@@ -58,7 +65,7 @@ public abstract class Explosion_optimizedTntMixin
         {
             toBlow.clear();
         }
-        if (CarpetSettings.optimizedTNT)
+        if (CarpetSettings.optimizedTNT && !level.isClientSide && !(getIndirectSourceEntity() instanceof Breeze))
         {
             OptimizedExplosion.doExplosionB((Explosion) (Object) this, spawnParticles);
             ci.cancel();
@@ -74,9 +81,9 @@ public abstract class Explosion_optimizedTntMixin
         return world.getBlockState(pos);
     }
 
-    @Inject(method = "<init>(Lnet/minecraft/world/level/Level;Lnet/minecraft/world/entity/Entity;Lnet/minecraft/world/damagesource/DamageSource;Lnet/minecraft/world/level/ExplosionDamageCalculator;DDDFZLnet/minecraft/world/level/Explosion$BlockInteraction;)V",
+    @Inject(method = "<init>(Lnet/minecraft/world/level/Level;Lnet/minecraft/world/entity/Entity;Lnet/minecraft/world/damagesource/DamageSource;Lnet/minecraft/world/level/ExplosionDamageCalculator;DDDFZLnet/minecraft/world/level/Explosion$BlockInteraction;Lnet/minecraft/core/particles/ParticleOptions;Lnet/minecraft/core/particles/ParticleOptions;Lnet/minecraft/sounds/SoundEvent;)V",
             at = @At(value = "RETURN"))
-    private void onExplosionCreated(Level world, Entity entity, DamageSource damageSource, ExplosionDamageCalculator explosionBehavior, double x, double y, double z, float power, boolean createFire, Explosion.BlockInteraction destructionType, CallbackInfo ci)
+    private void onExplosionCreated(Level world, Entity entity, DamageSource damageSource, ExplosionDamageCalculator explosionBehavior, double x, double y, double z, float power, boolean createFire, Explosion.BlockInteraction destructionType, ParticleOptions particleOptions, ParticleOptions particleOptions2, SoundEvent soundEvent, CallbackInfo ci)
     {
         if (LoggerRegistry.__explosions && ! world.isClientSide)
         {

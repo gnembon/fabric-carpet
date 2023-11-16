@@ -1,6 +1,5 @@
 package carpet.fakes;
 
-import carpet.helpers.TickRateManager;
 import net.minecraft.world.level.redstone.NeighborUpdater;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,6 +22,4 @@ public interface LevelInterface
     List<Entity> getOtherEntitiesLimited(@Nullable Entity except, AABB box, Predicate<? super Entity> predicate, int limit);
 
     NeighborUpdater getNeighborUpdater();
-
-    TickRateManager tickRateManager();
 }

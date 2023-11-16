@@ -131,11 +131,6 @@ public class Carpet
         return null;
     }
 
-    public static boolean isTickProcessingPaused(MinecraftServer server)
-    {
-        return !((MinecraftServerInterface)server).getTickRateManager().runsNormally();
-    }
-
     public static void handleExtensionsAPI(CarpetExpression expression)
     {
         CarpetServer.extensions.forEach(e -> e.scarpetApi(expression));
@@ -210,7 +205,7 @@ public class Carpet
                 return;
             }
         }
-        throw new LoadException(String.format("%s requires a version of mod '%s' matching '%s', which is missing!", host.getName(), requiredModId, stringPredicate));
+        throw new LoadException(String.format("%s requires a version of mod '%s' matching '%s', which is missing!", host.getVisualName(), requiredModId, stringPredicate));
     }
 
     // to be ran once during CarpetEventServer.Event static init
