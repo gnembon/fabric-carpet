@@ -45,6 +45,7 @@ import net.minecraft.world.level.pathfinder.Path;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.scores.Objective;
+import net.minecraft.world.scores.ScoreHolder;
 import net.minecraft.world.scores.criteria.ObjectiveCriteria;
 
 import java.util.ArrayList;
@@ -382,6 +383,11 @@ public class ValueConversions
         }
         ret.put(new StringValue("pieces"), ListValue.wrap(pieces));
         return MapValue.wrap(ret);
+    }
+
+    public static Value of(final ScoreHolder scoreHolder)
+    {
+        return FormattedTextValue.of(scoreHolder.getFeedbackDisplayName());
     }
 
     public static Value fromProperty(BlockState state, Property<?> p)

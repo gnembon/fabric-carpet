@@ -1,10 +1,10 @@
 package carpet.mixins;
 
 import net.minecraft.util.RandomSource;
+import net.minecraft.world.damagesource.DamageSource;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Accessor;
 
-import java.util.Random;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.Explosion;
 import net.minecraft.world.level.Level;
@@ -38,5 +38,8 @@ public interface ExplosionAccessor {
 
     @Accessor
     Entity getSource();
+
+    @Accessor
+    DamageSource getDamageSource();
 
 }

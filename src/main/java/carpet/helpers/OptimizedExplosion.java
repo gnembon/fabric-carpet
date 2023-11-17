@@ -76,7 +76,7 @@ public class OptimizedExplosion
         boolean eventNeeded = EXPLOSION_OUTCOME.isNeeded() && !eAccess.getLevel().isClientSide();
         blastCalc(e);
 
-        if (!CarpetSettings.explosionNoBlockDamage) {
+        if (!CarpetSettings.explosionNoBlockDamage && eAccess.getDamageSource() != null) {
             rayCalcDone = false;
             firstRay = true;
             getAffectedPositionsOnPlaneY(e,  0,  0, 15,  0, 15); // bottom
@@ -132,7 +132,7 @@ public class OptimizedExplosion
                 continue;
             }
 
-            if (!entity.ignoreExplosion()) {
+            if (!entity.ignoreExplosion(e)) {
                 double d12 = Math.sqrt(entity.distanceToSqr(eAccess.getX(), eAccess.getY(), eAccess.getZ())) / (double) f3;
 
                 if (d12 <= 1.0D) {
@@ -165,8 +165,11 @@ public class OptimizedExplosion
                         }
 
                         double d10 = (1.0D - d12) * density;
-                        entity.hurt(e.getDamageSource(),
-                                (float) ((int) ((d10 * d10 + d10) / 2.0D * 7.0D * (double) f3 + 1.0D)));
+                        if (eAccess.getDamageSource() != null)
+                        {
+                            entity.hurt(eAccess.getDamageSource(),
+                                    (float) ((int) ((d10 * d10 + d10) / 2.0D * 7.0D * (double) f3 + 1.0D)));
+                        }
                         double d11 = d10;
 
                         if (entity instanceof LivingEntity) {

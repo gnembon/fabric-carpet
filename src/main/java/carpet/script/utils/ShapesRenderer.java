@@ -47,6 +47,7 @@ import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LightLayer;
 import net.minecraft.world.level.block.EntityBlock;
+import net.minecraft.world.level.block.LeavesBlock;
 import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.ShulkerBoxBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -407,7 +408,13 @@ public class ShapesRenderer
                     float red = (color >> 16 & 0xFF) / 255.0F;
                     float green = (color >> 8 & 0xFF) / 255.0F;
                     float blue = (color & 0xFF) / 255.0F;
-                    client.getBlockRenderer().getModelRenderer().renderModel(matrices.last(), immediate.getBuffer(ItemBlockRenderTypes.getRenderType(blockState, false)), blockState, bakedModel, red, green, blue, light, OverlayTexture.NO_OVERLAY);
+                    RenderType type;
+                    if (blockState.getBlock() instanceof LeavesBlock && !Minecraft.useFancyGraphics()) {
+                        type = RenderType.solid();
+                    } else {
+                        type = ItemBlockRenderTypes.getRenderType(blockState, false);
+                    }
+                    client.getBlockRenderer().getModelRenderer().renderModel(matrices.last(), immediate.getBuffer(type), blockState, bakedModel, red, green, blue, light, OverlayTexture.NO_OVERLAY);
                 }
 
                 // draw the block`s entity part
