@@ -372,7 +372,7 @@ Here is a list of built-in types, with their return value formats, as well as a 
   * `'uuid'` - string of a valid uuid.
   * `'surfacelocation'` - pair of x and z coordinates, floating point numbers.
   * `'location'` - triple of x, y and z coordinates, optionally centered on the block if 
-  interger coordinates are provided and `'block_centered'` optional modifier is `true`.   
+  integer coordinates are provided and `'block_centered'` optional modifier is `true`.   
 
 ## Dimension warning
 
