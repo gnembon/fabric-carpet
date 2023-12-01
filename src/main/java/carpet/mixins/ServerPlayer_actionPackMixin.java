@@ -5,6 +5,7 @@ import carpet.fakes.ServerPlayerInterface;
 import carpet.helpers.EntityPlayerActionPack;
 import com.mojang.authlib.GameProfile;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.TickTask;
 import net.minecraft.server.level.ClientInformation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -43,7 +44,7 @@ public abstract class ServerPlayer_actionPackMixin implements ServerPlayerInterf
         }
         else {
             // submit to main thread like other s2c packets
-            server.execute(() -> actionPack.onUpdate());
+            server.tell(new TickTask(server.getTickCount(), actionPack::onUpdate));
         }
     }
 
