@@ -43,13 +43,8 @@ public abstract class ServerPlayer_actionPackMixin implements ServerPlayerInterf
             actionPack.onUpdate();
         }
         else {
-            // submit to main thread like other s2c packets
+            // submit to main thread like other c2s packets
             server.tell(new TickTask(server.getTickCount(), actionPack::onUpdate));
         }
-    }
-
-    @Inject(method = "doTick", at = @At(value = "HEAD"))
-    private void tickActionPack(CallbackInfo ci) {
-        actionPack.onUpdate();
     }
 }
