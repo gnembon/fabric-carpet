@@ -1062,4 +1062,11 @@ public class CarpetSettings
             category = {SURVIVAL, FEATURE}
     )
     public static FungusGrowthMode thickFungusGrowth = FungusGrowthMode.FALSE;
+
+
+    @Rule(
+            desc = "make fake players ticked in entity update phase, like legacy carpet.",
+            category = CREATIVE
+    )
+    public static boolean fakePlayerTicksInEU = false;
 }

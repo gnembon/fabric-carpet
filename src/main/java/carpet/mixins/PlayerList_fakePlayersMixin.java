@@ -1,5 +1,6 @@
 package carpet.mixins;
 
+import carpet.patches.FakePlayerManager;
 import com.mojang.authlib.GameProfile;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.Connection;
@@ -41,7 +42,9 @@ public abstract class PlayerList_fakePlayersMixin
     {
         if (playerIn instanceof EntityPlayerMPFake fake)
         {
-            return new NetHandlerPlayServerFake(this.server, clientConnection, fake, cookie);
+            var handler = new NetHandlerPlayServerFake(this.server, clientConnection, fake, cookie);
+            FakePlayerManager.connections.add(handler);
+            return handler;
         }
         else
         {
