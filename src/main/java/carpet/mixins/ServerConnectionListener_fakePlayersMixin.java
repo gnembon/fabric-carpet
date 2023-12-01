@@ -15,7 +15,7 @@ public class ServerConnectionListener_fakePlayersMixin {
             at = @At("RETURN")
     )
     private void tickFakePlayers(CallbackInfo ci) {
-        if (!CarpetSettings.fakePlayerTicksInEU) {
+        if (!CarpetSettings.fakePlayerTicksLikeEntities) {
             FakePlayerManager.tick();
         }
     }

@@ -1065,8 +1065,8 @@ public class CarpetSettings
 
 
     @Rule(
-            desc = "make fake players ticked in entity update phase, like legacy carpet.",
+            desc = "make fake players ticked in entity phase, like legacy carpet.",
             category = CREATIVE
     )
-    public static boolean fakePlayerTicksInEU = true;
+    public static boolean fakePlayerTicksLikeEntities = true;
 }

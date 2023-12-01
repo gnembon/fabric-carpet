@@ -164,7 +164,7 @@ public class EntityPlayerMPFake extends ServerPlayer
         try
         {
             super.tick();
-            if (CarpetSettings.fakePlayerTicksInEU) {
+            if (CarpetSettings.fakePlayerTicksLikeEntities) {
                 this.doTick();
             }
         }

@@ -39,7 +39,7 @@ public abstract class ServerPlayer_actionPackMixin implements ServerPlayerInterf
     @Inject(method = "tick", at = @At(value = "HEAD"))
     private void onTick(CallbackInfo ci)
     {
-        if (CarpetSettings.fakePlayerTicksInEU) {
+        if (CarpetSettings.fakePlayerTicksLikeEntities) {
             actionPack.onUpdate();
         }
         else {
