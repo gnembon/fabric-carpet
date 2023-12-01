@@ -1,5 +1,6 @@
 package carpet.mixins;
 
+import carpet.CarpetSettings;
 import carpet.fakes.ServerPlayerInterface;
 import carpet.helpers.EntityPlayerActionPack;
 import com.mojang.authlib.GameProfile;
@@ -33,6 +34,8 @@ public abstract class ServerPlayer_actionPackMixin implements ServerPlayerInterf
     @Inject(method = "tick", at = @At(value = "HEAD"))
     private void onTick(CallbackInfo ci)
     {
-        actionPack.onUpdate();
+        if (CarpetSettings.fakePlayerTicksInEU) {
+            actionPack.onUpdate();
+        }
     }
 }

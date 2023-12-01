@@ -1,11 +1,6 @@
 package carpet.helpers;
 
 import carpet.fakes.ServerPlayerInterface;
-import java.util.EnumMap;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 import carpet.patches.EntityPlayerMPFake;
 import carpet.script.utils.Tracer;
 import net.minecraft.commands.arguments.EntityAnchorArgument;
@@ -26,11 +21,12 @@ import net.minecraft.world.entity.vehicle.Boat;
 import net.minecraft.world.entity.vehicle.Minecart;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.phys.BlockHitResult;
-import net.minecraft.world.phys.EntityHitResult;
-import net.minecraft.world.phys.HitResult;
-import net.minecraft.world.phys.Vec2;
-import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.phys.*;
+
+import java.util.EnumMap;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class EntityPlayerActionPack
 {

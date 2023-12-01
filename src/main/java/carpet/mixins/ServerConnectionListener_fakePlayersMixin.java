@@ -1,6 +1,7 @@
 package carpet.mixins;
 
 import carpet.CarpetSettings;
+import carpet.fakes.ServerPlayerInterface;
 import carpet.patches.FakePlayerManager;
 import net.minecraft.server.network.ServerConnectionListener;
 import net.minecraft.server.network.ServerGamePacketListenerImpl;
@@ -23,6 +24,9 @@ public class ServerConnectionListener_fakePlayersMixin {
                 connection.player.xo = connection.player.getX();
                 connection.player.yo = connection.player.getY();
                 connection.player.zo = connection.player.getZ();
+
+                // action packet update
+                ((ServerPlayerInterface) connection.player).getActionPack().onUpdate();
 
                 connection.player.doTick();
                 //  connection.player.absMoveTo(connection.firstGoodX, connection.firstGoodY, connection.firstGoodZ, connection.player.getYRot(), connection.player.getXRot());
