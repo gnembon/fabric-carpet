@@ -3,6 +3,7 @@ package carpet.mixins;
 import carpet.CarpetSettings;
 import carpet.fakes.ServerPlayerInterface;
 import carpet.helpers.EntityPlayerActionPack;
+import carpet.patches.EntityPlayerMPFake;
 import com.mojang.authlib.GameProfile;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ClientInformation;
@@ -19,6 +20,7 @@ public abstract class ServerPlayer_actionPackMixin implements ServerPlayerInterf
 {
     @Unique
     public EntityPlayerActionPack actionPack;
+
     @Override
     public EntityPlayerActionPack getActionPack()
     {
@@ -35,6 +37,14 @@ public abstract class ServerPlayer_actionPackMixin implements ServerPlayerInterf
     private void onTick(CallbackInfo ci)
     {
         if (CarpetSettings.fakePlayerTicksInEU) {
+            actionPack.onUpdate();
+        }
+    }
+
+    @Inject(method = "doTick", at = @At(value = "HEAD"))
+    private void tickActionPack(CallbackInfo ci)
+    {
+        if (!((Object) this instanceof EntityPlayerMPFake)) {
             actionPack.onUpdate();
         }
     }
