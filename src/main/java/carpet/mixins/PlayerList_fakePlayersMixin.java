@@ -43,7 +43,7 @@ public abstract class PlayerList_fakePlayersMixin
         if (playerIn instanceof EntityPlayerMPFake fake)
         {
             var handler = new NetHandlerPlayServerFake(this.server, clientConnection, fake, cookie);
-            FakePlayerManager.connections.add(handler);
+            FakePlayerManager.add(handler);
             return handler;
         }
         else
