@@ -1068,5 +1068,5 @@ public class CarpetSettings
             desc = "make fake players ticked in entity update phase, like legacy carpet.",
             category = CREATIVE
     )
-    public static boolean fakePlayerTicksInEU = false;
+    public static boolean fakePlayerTicksInEU = true;
 }
