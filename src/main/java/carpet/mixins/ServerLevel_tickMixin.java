@@ -4,12 +4,6 @@ import carpet.fakes.LevelInterface;
 import carpet.utils.CarpetProfiler;
 import net.minecraft.core.Holder;
 import net.minecraft.core.RegistryAccess;
-import net.minecraft.resources.ResourceKey;
-import net.minecraft.server.level.ServerLevel;
-import net.minecraft.util.profiling.ProfilerFiller;
-import net.minecraft.world.level.Level;
-import net.minecraft.world.level.dimension.DimensionType;
-import net.minecraft.world.level.storage.WritableLevelData;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -17,6 +11,12 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.profiling.ProfilerFiller;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.dimension.DimensionType;
+import net.minecraft.world.level.storage.WritableLevelData;
 
 @Mixin(ServerLevel.class)
 public abstract class ServerLevel_tickMixin extends Level implements LevelInterface
@@ -42,7 +42,6 @@ public abstract class ServerLevel_tickMixin extends Level implements LevelInterf
     ))
     private void stopWeatherStartTileTicks(BooleanSupplier booleanSupplier_1, CallbackInfo ci)
     {
-        System.out.println("NTE start");
         if (currentSection != null)
         {
             CarpetProfiler.end_current_section(currentSection);
@@ -102,7 +101,6 @@ public abstract class ServerLevel_tickMixin extends Level implements LevelInterf
     ))
     private void endEntitySection(BooleanSupplier booleanSupplier_1, CallbackInfo ci)
     {
-        System.out.println("EU end");
         CarpetProfiler.end_current_section(currentSection);
         currentSection = null;
     }
