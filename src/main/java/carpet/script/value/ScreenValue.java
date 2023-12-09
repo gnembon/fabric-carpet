@@ -46,6 +46,7 @@ import net.minecraft.world.inventory.EnchantmentMenu;
 import net.minecraft.world.inventory.FurnaceMenu;
 import net.minecraft.world.inventory.GrindstoneMenu;
 import net.minecraft.world.inventory.HopperMenu;
+import net.minecraft.world.inventory.HorseInventoryMenu;
 import net.minecraft.world.inventory.LecternMenu;
 import net.minecraft.world.inventory.LoomMenu;
 import net.minecraft.world.inventory.MerchantMenu;
@@ -166,6 +167,9 @@ public class ScreenValue extends Value
         try {
             return ValueConversions.simplify(BuiltInRegistries.MENU.getKey(player.containerMenu.getType()));
         } catch (java.lang.UnsupportedOperationException e) {
+            if (player.containerMenu instanceof HorseInventoryMenu) {
+                return "horse";
+            }
             return "unknown";
         }
     }
