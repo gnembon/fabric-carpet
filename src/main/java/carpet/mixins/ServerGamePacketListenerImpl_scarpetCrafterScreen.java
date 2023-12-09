@@ -12,6 +12,8 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+import carpet.script.value.ScreenValue.CarpetCrafterMenu;
+
 @Mixin(ServerGamePacketListenerImpl.class)
 public abstract class ServerGamePacketListenerImpl_scarpetCrafterScreen
 {
@@ -23,7 +25,7 @@ public abstract class ServerGamePacketListenerImpl_scarpetCrafterScreen
 
     private void injected(ServerboundContainerSlotStateChangedPacket serverboundContainerSlotStateChangedPacket,CallbackInfo ci) {
         CrafterMenu cm =(CrafterMenu)this.player.containerMenu;
-        if(!(cm.getContainer() instanceof CrafterBlockEntity)){
+        if(cm instanceof CarpetCrafterMenu && !(cm.getContainer() instanceof CrafterBlockEntity)){
             cm.setSlotState(serverboundContainerSlotStateChangedPacket.slotId(), serverboundContainerSlotStateChangedPacket.newState());
         };
     }

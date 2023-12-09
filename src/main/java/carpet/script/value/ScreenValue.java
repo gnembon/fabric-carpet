@@ -103,10 +103,16 @@ public class ScreenValue extends Value
         screenHandlerFactories.put("smithing", SmithingMenu::new);
         screenHandlerFactories.put("smoker", SmokerMenu::new);
         screenHandlerFactories.put("stonecutter", StonecutterMenu::new);
-        screenHandlerFactories.put("crafter_3x3", (x,y)->{var m =new CrafterMenu(x,y);m.addSlotListener(m);return m;});
+        screenHandlerFactories.put("crafter_3x3", CarpetCrafterMenu::new);
     }
 
 
+    public static class CarpetCrafterMenu extends CrafterMenu{
+        public CarpetCrafterMenu(int i, Inventory inventory) {
+            super(i, inventory);
+            addSlotListener(this);
+        }    
+    }
     protected interface ScarpetScreenHandlerFactory
     {
         AbstractContainerMenu create(int syncId, Inventory playerInventory);
