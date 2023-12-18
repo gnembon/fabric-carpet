@@ -490,8 +490,8 @@ public class EntityValue extends Value
 
         put("invulnerable", (e, a) -> BooleanValue.of(e.isInvulnerable()));
         put("dimension", (e, a) -> nameFromRegistryId(e.level().dimension().location())); // getDimId
-        put("height", (e, a) -> new NumericValue(e.getDimensions(Pose.STANDING).height));
-        put("width", (e, a) -> new NumericValue(e.getDimensions(Pose.STANDING).width));
+        put("height", (e, a) -> new NumericValue(e.getDimensions(Pose.STANDING).height()));
+        put("width", (e, a) -> new NumericValue(e.getDimensions(Pose.STANDING).width()));
         put("eye_height", (e, a) -> new NumericValue(e.getEyeHeight()));
         put("age", (e, a) -> new NumericValue(e.tickCount));
         put("breeding_age", (e, a) -> e instanceof final AgeableMob am ? new NumericValue(am.getAge()) : Value.NULL);
@@ -657,11 +657,7 @@ public class EntityValue extends Value
                 return ListValue.wrap(effects);
             }
             String effectName = a.getString();
-            MobEffect potion = BuiltInRegistries.MOB_EFFECT.get(InputValidator.identifierOf(effectName));
-            if (potion == null)
-            {
-                throw new InternalExpressionException("No such an effect: " + effectName);
-            }
+            Holder<MobEffect> potion = BuiltInRegistries.MOB_EFFECT.getHolder(ResourceKey.create(Registries.MOB_EFFECT, InputValidator.identifierOf(effectName))).orElseThrow( () -> new InternalExpressionException("No such an effect: " + effectName));
             if (!le.hasEffect(potion))
             {
                 return Value.NULL;
@@ -835,10 +831,10 @@ public class EntityValue extends Value
             if (a == null)
             {
                 AttributeMap container = el.getAttributes();
-                return MapValue.wrap(attributes.stream().filter(container::hasAttribute).collect(Collectors.toMap(aa -> ValueConversions.of(attributes.getKey(aa)), aa -> NumericValue.of(container.getValue(aa)))));
+                return MapValue.wrap(attributes.holders().filter(container::hasAttribute).collect(Collectors.toMap(aa -> ValueConversions.of(aa.key()), aa -> NumericValue.of(container.getValue(aa)))));
             }
             ResourceLocation id = InputValidator.identifierOf(a.getString());
-            Attribute attrib = attributes.getOptional(id).orElseThrow(
+            Holder<Attribute> attrib = attributes.getHolder(id).orElseThrow(
                     () -> new InternalExpressionException("Unknown attribute: " + a.getString())
             );
             if (!el.getAttributes().hasAttribute(attrib))
@@ -1472,11 +1468,7 @@ public class EntityValue extends Value
                 if (list.size() >= 1 && list.size() <= 6)
                 {
                     String effectName = list.get(0).getString();
-                    MobEffect effect = BuiltInRegistries.MOB_EFFECT.get(InputValidator.identifierOf(effectName));
-                    if (effect == null)
-                    {
-                        throw new InternalExpressionException("Wrong effect name: " + effectName);
-                    }
+                    Holder<MobEffect> effect = BuiltInRegistries.MOB_EFFECT.getHolder(InputValidator.identifierOf(effectName)).orElseThrow( () -> new InternalExpressionException("No such an effect: " + effectName));
                     if (list.size() == 1)
                     {
                         le.removeEffect(effect);
@@ -1518,11 +1510,7 @@ public class EntityValue extends Value
             else
             {
                 String effectName = v.getString();
-                MobEffect effect = BuiltInRegistries.MOB_EFFECT.get(InputValidator.identifierOf(effectName));
-                if (effect == null)
-                {
-                    throw new InternalExpressionException("Wrong effect name: " + effectName);
-                }
+                Holder<MobEffect> effect = BuiltInRegistries.MOB_EFFECT.getHolder(InputValidator.identifierOf(effectName)).orElseThrow( () -> new InternalExpressionException("No such an effect: " + effectName));
                 le.removeEffect(effect);
                 return;
             }
