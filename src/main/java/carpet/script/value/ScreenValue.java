@@ -113,6 +113,7 @@ public class ScreenValue extends Value
             super(i, inventory);
             addSlotListener(this);
         }    
+        //public void setSlotState(int i, boolean bl) {}   //Still slightly different from the real thing.
     }
     protected interface ScarpetScreenHandlerFactory
     {
