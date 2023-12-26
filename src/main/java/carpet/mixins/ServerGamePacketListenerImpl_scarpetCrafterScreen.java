@@ -3,7 +3,6 @@ package carpet.mixins;
 import net.minecraft.network.protocol.game.ServerboundContainerSlotStateChangedPacket;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.network.ServerGamePacketListenerImpl;
-import net.minecraft.world.inventory.CrafterMenu;
 import net.minecraft.world.level.block.entity.CrafterBlockEntity;
 
 import org.spongepowered.asm.mixin.Mixin;
@@ -22,10 +21,8 @@ public abstract class ServerGamePacketListenerImpl_scarpetCrafterScreen
     public ServerPlayer player;
 
     @Inject(method = "handleContainerSlotStateChanged", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/inventory/CrafterMenu;getContainer()Lnet/minecraft/world/Container;"))
-
     private void injected(ServerboundContainerSlotStateChangedPacket serverboundContainerSlotStateChangedPacket,CallbackInfo ci) {
-        CrafterMenu cm =(CrafterMenu)this.player.containerMenu;
-        if(cm instanceof CarpetCrafterMenu && !(cm.getContainer() instanceof CrafterBlockEntity)){
+        if(player.containerMenu instanceof CarpetCrafterMenu cm && !(cm.getContainer() instanceof CrafterBlockEntity)){
             cm.setSlotState(serverboundContainerSlotStateChangedPacket.slotId(), serverboundContainerSlotStateChangedPacket.newState());
         };
     }
