@@ -106,15 +106,15 @@ public class ScreenValue extends Value
         screenHandlerFactories.put("smithing", SmithingMenu::new);
         screenHandlerFactories.put("smoker", SmokerMenu::new);
         screenHandlerFactories.put("stonecutter", StonecutterMenu::new);
-        screenHandlerFactories.put("crafter_3x3", CarpetCrafterMenu::new);
+        screenHandlerFactories.put("crafter_3x3", ScarpetCrafterMenu::new);
     }
 
 
-    public static class CarpetCrafterMenu extends CrafterMenu{
+    public static class ScarpetCrafterMenu extends CrafterMenu{
         private boolean suppress = false;
-        public CarpetCrafterMenu(int i, Inventory inventory) {
+        public ScarpetCrafterMenu(int i, Inventory inventory) {
             super(i, inventory);
-            addSlotListener(this);
+            addSlotListener(this);// this line it to make the result item can be generated in the output slot.
         }    
         public void broadcastChanges(){
             if(!suppress)super.broadcastChanges();
