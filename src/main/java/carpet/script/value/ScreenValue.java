@@ -9,6 +9,8 @@ import carpet.script.exception.InvalidCallbackException;
 import carpet.script.exception.ThrowStatement;
 import carpet.script.exception.Throwables;
 import carpet.script.external.Vanilla;
+import carpet.script.value.ScreenValue.ScarpetScreenHandlerFactory;
+import carpet.script.value.ScreenValue.ScreenHandlerInventory;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -109,11 +111,19 @@ public class ScreenValue extends Value
 
 
     public static class CarpetCrafterMenu extends CrafterMenu{
+        private boolean suppress = false;
         public CarpetCrafterMenu(int i, Inventory inventory) {
             super(i, inventory);
             addSlotListener(this);
         }    
-        //public void setSlotState(int i, boolean bl) {}   //Still slightly different from the real thing.
+        public void broadcastChanges(){
+            if(!suppress)super.broadcastChanges();
+        }
+        public void setSlotState(int i, boolean bl) {
+            suppress = true;
+            super.setSlotState(i, bl);
+            suppress = false;
+        }   //Do I really need to go to this point to make them similar?
     }
     protected interface ScarpetScreenHandlerFactory
     {
