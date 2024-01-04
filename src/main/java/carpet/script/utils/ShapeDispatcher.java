@@ -306,6 +306,7 @@ public class ShapeDispatcher
         protected boolean discreteX, discreteY, discreteZ;
         protected ResourceKey<Level> shapeDimension;
         protected boolean debug;
+        protected boolean hud;
 
 
         protected ExpiringShape()
@@ -373,6 +374,11 @@ public class ShapeDispatcher
                 debug = options.get("debug").getBoolean();
             }
 
+            hud = false;
+            if (options.containsKey("hud"))
+            {
+                debug = options.get("hud").getBoolean();
+            }
             key = 0;
             followEntity = -1;
             shapeDimension = ResourceKey.create(Registries.DIMENSION, new ResourceLocation(options.get("dim").getString()));
@@ -494,6 +500,7 @@ public class ShapeDispatcher
                 "follow", new NumericValue(-1),
                 "line", new NumericValue(2.0),
                 "debug", Value.FALSE,
+                "hud", Value.FALSE,
                 "fill", new NumericValue(0xffffff00),
                 "snap", new StringValue("xyz")
         );
@@ -1522,6 +1529,7 @@ public class ShapeDispatcher
             put("facing", new StringChoiceParam("facing", "player", "camera", "north", "south", "east", "west", "up", "down"));
             put("doublesided", new BoolParam("doublesided"));
             put("debug", new BoolParam("debug"));
+            put("hud", new BoolParam("hud"));
 
         }};
         protected String id;

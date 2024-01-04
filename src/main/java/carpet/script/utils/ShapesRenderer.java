@@ -159,7 +159,7 @@ public class ShapesRenderer
             // lines
             RenderSystem.lineWidth(0.5F);
             shapes.get(dimensionType).values().forEach(s -> {
-                if ((!s.shape.debug || entityBoxes) && s.shouldRender(dimensionType))
+                if ((!s.shape.debug || entityBoxes) && s.shouldRender(dimensionType) && !s.shape.hud)
                 {
                     s.renderLines(matrices, tessellator, bufferBuilder, cameraX, cameraY, cameraZ, partialTick);
                 }
@@ -167,7 +167,30 @@ public class ShapesRenderer
             // faces
             RenderSystem.lineWidth(0.1F);
             shapes.get(dimensionType).values().forEach(s -> {
-                if ((!s.shape.debug || entityBoxes) && s.shouldRender(dimensionType))
+                if ((!s.shape.debug || entityBoxes) && s.shouldRender(dimensionType) && !s.shape.hud)
+                {
+                    s.renderFaces(tessellator, bufferBuilder, cameraX, cameraY, cameraZ, partialTick);
+                }
+            });
+            RenderSystem.lineWidth(1.0F);
+            matrixStack.popPose();
+            //==================
+            matrixStack.pushPose();
+            //matrixStack.mulPoseMatrix(matrices.last().pose());
+            //RenderSystem.applyModelViewMatrix();
+
+            // lines
+            RenderSystem.lineWidth(0.5F);
+            shapes.get(dimensionType).values().forEach(s -> {
+                if ((!s.shape.debug || entityBoxes) && s.shouldRender(dimensionType) && s.shape.hud)
+                {
+                    s.renderLines(matrices, tessellator, bufferBuilder, cameraX, cameraY, cameraZ, partialTick);
+                }
+            });
+            // faces
+            RenderSystem.lineWidth(0.1F);
+            shapes.get(dimensionType).values().forEach(s -> {
+                if ((!s.shape.debug || entityBoxes) && s.shouldRender(dimensionType) && s.shape.hud)
                 {
                     s.renderFaces(tessellator, bufferBuilder, cameraX, cameraY, cameraZ, partialTick);
                 }
