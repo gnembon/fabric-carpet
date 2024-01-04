@@ -177,14 +177,14 @@ public class ShapesRenderer
             //==================
             matrixStack.pushPose();
             //matrixStack.mulPoseMatrix(matrices.last().pose());
-            //RenderSystem.applyModelViewMatrix();
+            RenderSystem.applyModelViewMatrix();
 
             // lines
             RenderSystem.lineWidth(0.5F);
             shapes.get(dimensionType).values().forEach(s -> {
                 if ((!s.shape.debug || entityBoxes) && s.shouldRender(dimensionType) && s.shape.hud)
                 {
-                    s.renderLines(matrices, tessellator, bufferBuilder, cameraX, cameraY, cameraZ, partialTick);
+                    s.renderLines(matrices, tessellator, bufferBuilder, 0, 0, 0, partialTick);
                 }
             });
             // faces
@@ -192,7 +192,7 @@ public class ShapesRenderer
             shapes.get(dimensionType).values().forEach(s -> {
                 if ((!s.shape.debug || entityBoxes) && s.shouldRender(dimensionType) && s.shape.hud)
                 {
-                    s.renderFaces(tessellator, bufferBuilder, cameraX, cameraY, cameraZ, partialTick);
+                    s.renderFaces(tessellator, bufferBuilder, 0, 0, 0, partialTick);
                 }
             });
             RenderSystem.lineWidth(1.0F);

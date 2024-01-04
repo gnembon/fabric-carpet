@@ -377,7 +377,7 @@ public class ShapeDispatcher
             hud = false;
             if (options.containsKey("hud"))
             {
-                debug = options.get("hud").getBoolean();
+                hud = options.get("hud").getBoolean();
             }
             key = 0;
             followEntity = -1;
@@ -468,6 +468,8 @@ public class ShapeDispatcher
             hash ^= followEntity;
             hash *= 1099511628211L;
             hash ^= Boolean.hashCode(debug);
+            hash *= 1099511628211L;
+            hash ^= Boolean.hashCode(hud);
             hash *= 1099511628211L;
             if (followEntity >= 0)
             {
