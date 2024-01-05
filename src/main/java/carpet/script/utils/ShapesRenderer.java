@@ -60,7 +60,7 @@ import net.minecraft.world.phys.Vec3;
 
 public class ShapesRenderer
 {
-    private static final Matrix4f IMATRIX = new Matrix4f();
+    private static final Matrix4f ORTHOMAT = new Matrix4f().m22(-1);
     private final Map<ResourceKey<Level>, Long2ObjectOpenHashMap<RenderedShape<? extends ShapeDispatcher.ExpiringShape>>> shapes;
     private final Map<ResourceKey<Level>, Long2ObjectOpenHashMap<RenderedShape<? extends ShapeDispatcher.ExpiringShape>>> labels;
     private final Minecraft client;
@@ -182,7 +182,7 @@ public class ShapesRenderer
             matrixStack.pushPose();
             RenderSystem.applyModelViewMatrix();
             var ori=RenderSystem.getProjectionMatrix();
-            RenderSystem.setProjectionMatrix(IMATRIX,VertexSorting.ORTHOGRAPHIC_Z);
+            RenderSystem.setProjectionMatrix(ORTHOMAT,VertexSorting.ORTHOGRAPHIC_Z);
 
             // lines
             RenderSystem.lineWidth(0.5F);
@@ -222,7 +222,7 @@ public class ShapesRenderer
             matrices.setIdentity();
             //RenderSystem.applyModelViewMatrix();
             var ori=RenderSystem.getProjectionMatrix();
-            RenderSystem.setProjectionMatrix(IMATRIX,VertexSorting.ORTHOGRAPHIC_Z);
+            RenderSystem.setProjectionMatrix(ORTHOMAT,VertexSorting.ORTHOGRAPHIC_Z);
             labels.get(dimensionType).values().forEach(s -> {
                 if ((!s.shape.debug || entityBoxes) && s.shouldRender(dimensionType)&& s.shape.hud)
                 {
