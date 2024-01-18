@@ -1,6 +1,5 @@
 package carpet.helpers;
 
-import carpet.CarpetSettings;
 import carpet.fakes.PistonBlockInterface;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -21,6 +20,7 @@ import net.minecraft.world.level.block.state.properties.Half;
 import net.minecraft.world.level.block.state.properties.SlabType;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
+import carpet.CarpetSettings;
 
 public class BlockRotator
 {
@@ -191,7 +191,7 @@ public class BlockRotator
         }
     }
 
-    private static boolean isHorizontallyRotatable(Block block){
+    private static boolean isHorizontallyRotatable(Block block) {
         return block instanceof HorizontalDirectionalBlock
                || block instanceof BaseRailBlock
                || block instanceof BeehiveBlock
