@@ -66,7 +66,7 @@ public class EntityPlayerMPFake extends ServerPlayer
             }
         }
         GameProfile finalGP = gameprofile;
-        fetchGameProfile(gameprofile.getName()).thenAccept(p -> {
+        fetchGameProfile(gameprofile.getName()).thenAcceptAsync(p -> {
             GameProfile current = finalGP;
             if (p.isPresent())
             {
@@ -85,7 +85,7 @@ public class EntityPlayerMPFake extends ServerPlayer
             //instance.world.getChunkManager(). updatePosition(instance);
             instance.entityData.set(DATA_PLAYER_MODE_CUSTOMISATION, (byte) 0x7f); // show all model layers (incl. capes)
             instance.getAbilities().flying = flying;
-        });
+        }, server);
         return true;
     }
 
