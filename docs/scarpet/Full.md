@@ -5334,9 +5334,8 @@ Valid mixer options are `master`, `music`, `record`, `weather`, `block`, `hostil
 and `voice`. `pos` can be either a block, triple of coords, or a list of three numbers. Uses the same options as a
  corresponding `playsound` command.
  
-Used with no arguments, return the list of available sound names.
- 
-Throws `unknown_sound` if sound doesn't exist.
+Used with no arguments, returns a list of available sound names. Note that this list may not include all sounds that
+clients will actually be able to receive (they may have more available via resourcepacks for example).
 
 ## Particles
 
