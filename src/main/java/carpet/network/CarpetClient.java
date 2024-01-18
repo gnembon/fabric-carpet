@@ -9,6 +9,7 @@ import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
 
@@ -16,21 +17,23 @@ public class CarpetClient
 {
     public record CarpetPayload(CompoundTag data) implements CustomPacketPayload
     {
+        public static final StreamCodec<FriendlyByteBuf, CarpetPayload> STREAM_CODEC = CustomPacketPayload.codec(CarpetPayload::write, CarpetPayload::new);
+
+        public static final Type<CarpetPayload> TYPE = new CustomPacketPayload.Type<>(CARPET_CHANNEL);
+
         public CarpetPayload(FriendlyByteBuf input)
         {
             this(input.readNbt());
         }
 
-        @Override
         public void write(FriendlyByteBuf output)
         {
             output.writeNbt(data);
         }
 
-        @Override
-        public ResourceLocation id()
+        @Override public Type<CarpetPayload> type()
         {
-            return CARPET_CHANNEL;
+            return TYPE;
         }
     }
 

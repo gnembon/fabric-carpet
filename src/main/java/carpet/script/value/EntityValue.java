@@ -34,6 +34,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.tags.EntityTypeTags;
 import net.minecraft.tags.TagKey;
 import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
@@ -46,7 +47,6 @@ import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.MobCategory;
-import net.minecraft.world.entity.MobType;
 import net.minecraft.world.entity.PathfinderMob;
 import net.minecraft.world.entity.Pose;
 import net.minecraft.world.entity.RelativeMovement;
@@ -359,20 +359,26 @@ public class EntityValue extends Value
 
             // combat groups
 
-            put("arthropod", new EntityClassDescriptor(EntityTypeTest.forClass(LivingEntity.class), e -> (((LivingEntity) e).getMobType() == MobType.ARTHROPOD && e.isAlive()), allTypes.stream().filter(arthropods::contains)));
-            put("!arthropod", new EntityClassDescriptor(EntityTypeTest.forClass(LivingEntity.class), e -> (((LivingEntity) e).getMobType() != MobType.ARTHROPOD && e.isAlive()), allTypes.stream().filter(et -> !arthropods.contains(et) && living.contains(et))));
+            put("arthropod", new EntityClassDescriptor(EntityTypeTest.forClass(LivingEntity.class), e -> (e.getType().is(EntityTypeTags.ARTHROPOD) && e.isAlive()), allTypes.stream().filter(arthropods::contains)));
+            put("!arthropod", new EntityClassDescriptor(EntityTypeTest.forClass(LivingEntity.class), e -> (!e.getType().is(EntityTypeTags.ARTHROPOD) && e.isAlive()), allTypes.stream().filter(et -> !arthropods.contains(et) && living.contains(et))));
 
-            put("undead", new EntityClassDescriptor(EntityTypeTest.forClass(LivingEntity.class), e -> (((LivingEntity) e).getMobType() == MobType.UNDEAD && e.isAlive()), allTypes.stream().filter(undeads::contains)));
-            put("!undead", new EntityClassDescriptor(EntityTypeTest.forClass(LivingEntity.class), e -> (((LivingEntity) e).getMobType() != MobType.UNDEAD && e.isAlive()), allTypes.stream().filter(et -> !undeads.contains(et) && living.contains(et))));
+            put("undead", new EntityClassDescriptor(EntityTypeTest.forClass(LivingEntity.class), e -> (e.getType().is(EntityTypeTags.UNDEAD) && e.isAlive()), allTypes.stream().filter(undeads::contains)));
+            put("!undead", new EntityClassDescriptor(EntityTypeTest.forClass(LivingEntity.class), e -> (!e.getType().is(EntityTypeTags.UNDEAD) && e.isAlive()), allTypes.stream().filter(et -> !undeads.contains(et) && living.contains(et))));
 
-            put("aquatic", new EntityClassDescriptor(EntityTypeTest.forClass(LivingEntity.class), e -> (((LivingEntity) e).getMobType() == MobType.WATER && e.isAlive()), allTypes.stream().filter(aquatique::contains)));
-            put("!aquatic", new EntityClassDescriptor(EntityTypeTest.forClass(LivingEntity.class), e -> (((LivingEntity) e).getMobType() != MobType.WATER && e.isAlive()), allTypes.stream().filter(et -> !aquatique.contains(et) && living.contains(et))));
+            put("aquatic", new EntityClassDescriptor(EntityTypeTest.forClass(LivingEntity.class), e -> (e.getType().is(EntityTypeTags.AQUATIC) && e.isAlive()), allTypes.stream().filter(aquatique::contains)));
+            put("!aquatic", new EntityClassDescriptor(EntityTypeTest.forClass(LivingEntity.class), e -> (!e.getType().is(EntityTypeTags.AQUATIC) && e.isAlive()), allTypes.stream().filter(et -> !aquatique.contains(et) && living.contains(et))));
 
-            put("illager", new EntityClassDescriptor(EntityTypeTest.forClass(LivingEntity.class), e -> (((LivingEntity) e).getMobType() == MobType.ILLAGER && e.isAlive()), allTypes.stream().filter(illagers::contains)));
-            put("!illager", new EntityClassDescriptor(EntityTypeTest.forClass(LivingEntity.class), e -> (((LivingEntity) e).getMobType() != MobType.ILLAGER && e.isAlive()), allTypes.stream().filter(et -> !illagers.contains(et) && living.contains(et))));
+            put("illager", new EntityClassDescriptor(EntityTypeTest.forClass(LivingEntity.class), e -> (e.getType().is(EntityTypeTags.ILLAGER) && e.isAlive()), allTypes.stream().filter(illagers::contains)));
+            put("!illager", new EntityClassDescriptor(EntityTypeTest.forClass(LivingEntity.class), e -> (!e.getType().is(EntityTypeTags.ILLAGER) && e.isAlive()), allTypes.stream().filter(et -> !illagers.contains(et) && living.contains(et))));
 
-            put("regular", new EntityClassDescriptor(EntityTypeTest.forClass(LivingEntity.class), e -> (((LivingEntity) e).getMobType() == MobType.UNDEFINED && e.isAlive()), allTypes.stream().filter(regular::contains)));
-            put("!regular", new EntityClassDescriptor(EntityTypeTest.forClass(LivingEntity.class), e -> (((LivingEntity) e).getMobType() != MobType.UNDEFINED && e.isAlive()), allTypes.stream().filter(et -> !regular.contains(et) && living.contains(et))));
+            put("regular", new EntityClassDescriptor(EntityTypeTest.forClass(LivingEntity.class), e -> {
+                EntityType<?> type = e.getType();
+                return !illagers.contains(type) && !arthropods.contains(type) && !undeads.contains(type) && !aquatique.contains(type) && living.contains(type) && e.isAlive();
+            }, allTypes.stream().filter(regular::contains)));
+            put("!regular", new EntityClassDescriptor(EntityTypeTest.forClass(LivingEntity.class), e -> {
+                EntityType<?> type = e.getType();
+                return (illagers.contains(type) || arthropods.contains(type) || undeads.contains(type) || aquatique.contains(type)) && e.isAlive();
+            }, allTypes.stream().filter(et -> !regular.contains(et) && living.contains(et))));
 
             for (ResourceLocation typeId : BuiltInRegistries.ENTITY_TYPE.keySet())
             {

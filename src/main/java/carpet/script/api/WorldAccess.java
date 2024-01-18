@@ -58,6 +58,7 @@ import net.minecraft.world.level.levelgen.NoiseRouter;
 import net.minecraft.world.level.levelgen.RandomState;
 import net.minecraft.world.level.levelgen.structure.Structure;
 import net.minecraft.world.level.levelgen.structure.StructureType;
+import org.apache.commons.lang3.mutable.MutableBoolean;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.ArrayList;
@@ -898,7 +899,7 @@ public class WorldAccess
             }
             world.levelEvent(null, 2001, where, Block.getId(state));
 
-            boolean toolBroke = false;
+            final MutableBoolean toolBroke = new MutableBoolean(false);
             boolean dropLoot = true;
             if (playerBreak)
             {
@@ -914,7 +915,8 @@ public class WorldAccess
                 {
                     damageAmount = 2;
                 }
-                toolBroke = damageAmount > 0 && tool.hurt(damageAmount, world.getRandom(), null);
+                final int finalDamageAmount = damageAmount;
+                tool.hurtAndBreak(damageAmount, world.getRandom(), null, () ->  { if (finalDamageAmount > 0) toolBroke.setTrue(); } );
                 if (!isUsingEffectiveTool)
                 {
                     dropLoot = false;
@@ -931,7 +933,7 @@ public class WorldAccess
                 {
                     if (how > 0)
                     {
-                        tool.enchant(Enchantments.BLOCK_FORTUNE, (int) how);
+                        tool.enchant(Enchantments.FORTUNE, (int) how);
                     }
                     if (DUMMY_ENTITY == null)
                     {
@@ -944,7 +946,7 @@ public class WorldAccess
             {
                 return Value.TRUE;
             }
-            if (toolBroke)
+            if (toolBroke.booleanValue())
             {
                 return Value.NULL;
             }

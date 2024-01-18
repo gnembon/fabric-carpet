@@ -21,7 +21,7 @@ public class PickaxeItem_missingToolsMixin extends DiggerItem
 
     @Override
     public float getDestroySpeed(ItemStack stack, BlockState state) {
-        if (CarpetSettings.missingTools && state.getBlock().getSoundType(state) == SoundType.GLASS)
+        if (CarpetSettings.missingTools && state.getSoundType() == SoundType.GLASS)
         {
             return speed;
         }

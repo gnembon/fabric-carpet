@@ -5,8 +5,8 @@ import carpet.CarpetSettings;
 import carpet.logging.LoggerRegistry;
 import carpet.logging.logHelpers.ExplosionLogHelper;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import net.minecraft.core.Holder;
 import net.minecraft.core.particles.ParticleOptions;
-import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.monster.breeze.Breeze;
 import org.jetbrains.annotations.Nullable;
@@ -81,9 +81,9 @@ public abstract class Explosion_optimizedTntMixin
         return world.getBlockState(pos);
     }
 
-    @Inject(method = "<init>(Lnet/minecraft/world/level/Level;Lnet/minecraft/world/entity/Entity;Lnet/minecraft/world/damagesource/DamageSource;Lnet/minecraft/world/level/ExplosionDamageCalculator;DDDFZLnet/minecraft/world/level/Explosion$BlockInteraction;Lnet/minecraft/core/particles/ParticleOptions;Lnet/minecraft/core/particles/ParticleOptions;Lnet/minecraft/sounds/SoundEvent;)V",
+    @Inject(method = "<init>(Lnet/minecraft/world/level/Level;Lnet/minecraft/world/entity/Entity;Lnet/minecraft/world/damagesource/DamageSource;Lnet/minecraft/world/level/ExplosionDamageCalculator;DDDFZLnet/minecraft/world/level/Explosion$BlockInteraction;Lnet/minecraft/core/particles/ParticleOptions;Lnet/minecraft/core/particles/ParticleOptions;Lnet/minecraft/core/Holder;)V",
             at = @At(value = "RETURN"))
-    private void onExplosionCreated(Level world, Entity entity, DamageSource damageSource, ExplosionDamageCalculator explosionBehavior, double x, double y, double z, float power, boolean createFire, Explosion.BlockInteraction destructionType, ParticleOptions particleOptions, ParticleOptions particleOptions2, SoundEvent soundEvent, CallbackInfo ci)
+    private void onExplosionCreated(Level world, Entity entity, DamageSource damageSource, ExplosionDamageCalculator explosionBehavior, double x, double y, double z, float power, boolean createFire, Explosion.BlockInteraction destructionType, ParticleOptions particleOptions, ParticleOptions particleOptions2, Holder soundEvent, CallbackInfo ci)
     {
         if (LoggerRegistry.__explosions && ! world.isClientSide)
         {
