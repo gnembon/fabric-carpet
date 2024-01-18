@@ -179,7 +179,7 @@ public class ShapesRenderer
             RenderSystem.lineWidth(1.0F);
             matrixStack.popPose();
             //==================
-            matrixStack.pushPose();
+            
             RenderSystem.applyModelViewMatrix();
             var ori=RenderSystem.getProjectionMatrix();
             RenderSystem.setProjectionMatrix(ORTHOMAT,VertexSorting.ORTHOGRAPHIC_Z);
@@ -202,8 +202,6 @@ public class ShapesRenderer
             });
             RenderSystem.lineWidth(1.0F);
             RenderSystem.setProjectionMatrix(ori,VertexSorting.DISTANCE_TO_ORIGIN);
-            matrixStack.popPose();
-            RenderSystem.applyModelViewMatrix();
 
         }
         if (!labels.isEmpty())
@@ -230,7 +228,7 @@ public class ShapesRenderer
                 }
             });
             matrices.popPose();
-            RenderSystem.applyModelViewMatrix();
+            //RenderSystem.applyModelViewMatrix();
             RenderSystem.setProjectionMatrix(ori,VertexSorting.DISTANCE_TO_ORIGIN);
         }
         RenderSystem.enableCull();
