@@ -12,20 +12,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.BaseRailBlock;
-import net.minecraft.world.level.block.BedBlock;
-import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.DirectionalBlock;
-import net.minecraft.world.level.block.DispenserBlock;
-import net.minecraft.world.level.block.EndRodBlock;
-import net.minecraft.world.level.block.HopperBlock;
-import net.minecraft.world.level.block.HorizontalDirectionalBlock;
-import net.minecraft.world.level.block.ObserverBlock;
-import net.minecraft.world.level.block.RotatedPillarBlock;
-import net.minecraft.world.level.block.Rotation;
-import net.minecraft.world.level.block.SlabBlock;
-import net.minecraft.world.level.block.StairBlock;
+import net.minecraft.world.level.block.*;
 import net.minecraft.world.level.block.piston.PistonBaseBlock;
 import net.minecraft.world.level.block.piston.PistonStructureResolver;
 import net.minecraft.world.level.block.state.BlockState;
@@ -112,11 +99,11 @@ public class BlockRotator
         Vec3 hitVec = hit.getLocation().subtract(pos.getX(), pos.getY(), pos.getZ());
         Direction facing = hit.getDirection();
         BlockState newState = null;
-        if ((block instanceof HorizontalDirectionalBlock || block instanceof BaseRailBlock) && !(block instanceof BedBlock))
+        if (isHorizontallyRotatable(block) && !(block instanceof BedBlock))
         {
             newState = state.rotate(Rotation.CLOCKWISE_90);
         }
-        else if (block instanceof ObserverBlock || block instanceof EndRodBlock)
+        else if (block instanceof ObserverBlock || block instanceof RodBlock)
         {
             newState = state.setValue(DirectionalBlock.FACING, state.getValue(DirectionalBlock.FACING).getOpposite());
         }
@@ -202,5 +189,14 @@ public class BlockRotator
                 return super.execute(source, stack);
             }
         }
+    }
+
+    private static boolean isHorizontallyRotatable(Block block) {
+        return block instanceof HorizontalDirectionalBlock
+               || block instanceof BaseRailBlock
+               || block instanceof BeehiveBlock
+               || block instanceof ChiseledBookShelfBlock
+               || block instanceof DecoratedPotBlock
+               || block instanceof CalibratedSculkSensorBlock;
     }
 }
