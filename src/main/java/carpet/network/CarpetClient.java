@@ -7,33 +7,11 @@ import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
-import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
 
 public class CarpetClient
 {
-    public record CarpetPayload(CompoundTag data) implements CustomPacketPayload
-    {
-        public CarpetPayload(FriendlyByteBuf input)
-        {
-            this(input.readNbt());
-        }
-
-        @Override
-        public void write(FriendlyByteBuf output)
-        {
-            output.writeNbt(data);
-        }
-
-        @Override
-        public ResourceLocation id()
-        {
-            return CARPET_CHANNEL;
-        }
-    }
-
     public static final String HI = "69";
     public static final String HELLO = "420";
 

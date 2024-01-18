@@ -1,6 +1,7 @@
 package carpet.mixins;
 
 import carpet.network.CarpetClient;
+import carpet.network.CarpetPayload;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.protocol.common.ServerboundCustomPayloadPacket;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
@@ -21,7 +22,7 @@ public class ServerboundCustomPayloadPacket_mixin
     {
         if (CarpetClient.CARPET_CHANNEL.equals(resourceLocation))
         {
-            cir.setReturnValue(new CarpetClient.CarpetPayload(friendlyByteBuf));
+            cir.setReturnValue(new CarpetPayload(friendlyByteBuf));
         }
     }
 }

@@ -41,7 +41,7 @@ public class ServerNetworkHandler
         {
             CompoundTag data = new CompoundTag();
             data.putString(CarpetClient.HI, CarpetSettings.carpetVersion);
-            playerEntity.connection.send(new ClientboundCustomPayloadPacket(new CarpetClient.CarpetPayload(data)));
+            playerEntity.connection.send(new ClientboundCustomPayloadPacket(new CarpetPayload(data)));
         }
         else
         {
@@ -244,7 +244,7 @@ public class ServerNetworkHandler
 
         private ClientboundCustomPayloadPacket build()
         {
-            return new ClientboundCustomPayloadPacket(new CarpetClient.CarpetPayload(tag));
+            return new ClientboundCustomPayloadPacket(new CarpetPayload(tag));
         }
     }
 }
