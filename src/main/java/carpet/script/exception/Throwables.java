@@ -21,7 +21,6 @@ public class Throwables
     public static final Throwables UNKNOWN_ITEM = register("unknown_item", VALUE_EXCEPTION);
     public static final Throwables UNKNOWN_BLOCK = register("unknown_block", VALUE_EXCEPTION);
     public static final Throwables UNKNOWN_BIOME = register("unknown_biome", VALUE_EXCEPTION);
-    public static final Throwables UNKNOWN_SOUND = register("unknown_sound", VALUE_EXCEPTION);
     public static final Throwables UNKNOWN_PARTICLE = register("unknown_particle", VALUE_EXCEPTION);
     public static final Throwables UNKNOWN_POI = register("unknown_poi", VALUE_EXCEPTION);
     public static final Throwables UNKNOWN_DIMENSION = register("unknown_dimension", VALUE_EXCEPTION);
