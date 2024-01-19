@@ -36,7 +36,18 @@ public final class CommandHelper {
             }
         }));
     }
-    
+
+    /**
+     * Whether the given source has the given Permissions API permission if the api is installed, or otherwise the given 
+     * permission level as returned by {@link #canUseCommand(CommandSourceStack, Object)}  
+     */
+    public static boolean hasPermission(CommandSourceStack source, String permission, Object fallbackLevel) {
+        if (FabricAPIHooks.PERMISSIONS_API) {
+            return FabricAPIHooks.checkPermission(source, permission);
+        }
+        return canUseCommand(source, fallbackLevel);
+    }
+
     /**
      * Whether the given source has enough permission level to run a command that requires the given commandLevel
      */
