@@ -318,7 +318,7 @@ public class CarpetSettings
             int minRange = 0;
             int maxRange = 1;
 
-            if (source == null) {
+            if (source == null || !source.getServer().isReady()) {
                 maxRange = Integer.MAX_VALUE;
             } else {
                 for (Level level : source.getServer().getAllLevels()) {
