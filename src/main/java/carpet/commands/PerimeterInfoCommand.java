@@ -27,7 +27,7 @@ public class PerimeterInfoCommand
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher, CommandBuildContext commandBuildContext)
     {
         LiteralArgumentBuilder<CommandSourceStack> command = literal("perimeterinfo").
-                requires((player) -> CommandHelper.canUseCommand(player, CarpetSettings.commandPerimeterInfo)).
+                requires((player) -> CommandHelper.hasPermission(player, "carpet.commands.perimeterinfo", CarpetSettings.commandPerimeterInfo)).
                 executes( (c) -> perimeterDiagnose(
                         c.getSource(),
                         BlockPos.containing(c.getSource().getPosition()),

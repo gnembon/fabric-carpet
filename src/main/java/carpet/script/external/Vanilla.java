@@ -336,12 +336,12 @@ public class Vanilla
 
     public static boolean ServerPlayer_canScriptACE(CommandSourceStack player)
     {
-        return CommandHelper.canUseCommand(player, CarpetSettings.commandScriptACE);
+        return CommandHelper.hasPermission(player, "carpet.commands.script.run", CarpetSettings.commandScriptACE);
     }
 
     public static boolean ServerPlayer_canScriptGeneral(CommandSourceStack player)
     {
-        return CommandHelper.canUseCommand(player, CarpetSettings.commandScript);
+        return CommandHelper.hasPermission(player, "carpet.commands.script", CarpetSettings.commandScript);
     }
 
     public static int MinecraftServer_getFillLimit(MinecraftServer server)

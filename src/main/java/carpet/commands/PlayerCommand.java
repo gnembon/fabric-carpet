@@ -50,7 +50,7 @@ public class PlayerCommand
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher, CommandBuildContext commandBuildContext)
     {
         LiteralArgumentBuilder<CommandSourceStack> command = literal("player")
-                .requires((player) -> CommandHelper.canUseCommand(player, CarpetSettings.commandPlayer))
+                .requires((player) -> CommandHelper.hasPermission(player, "carpet.commands.player", CarpetSettings.commandPlayer))
                 .then(argument("player", StringArgumentType.word())
                         .suggests((c, b) -> suggest(getPlayerSuggestions(c.getSource()), b))
                         .then(literal("stop").executes(manipulation(EntityPlayerActionPack::stopAll)))
