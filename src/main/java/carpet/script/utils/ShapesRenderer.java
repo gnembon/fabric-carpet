@@ -1,4 +1,4 @@
-package carpet.script.utils;
+package carpet.script.utils; 
 
 import carpet.script.CarpetScriptServer;
 import carpet.script.external.Carpet;
@@ -12,6 +12,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.Tesselator;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.blaze3d.vertex.VertexFormat;
+import com.mojang.blaze3d.vertex.VertexSorting;
 import com.mojang.blaze3d.vertex.VertexFormat.Mode;
 import com.mojang.math.Axis;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
@@ -20,6 +21,8 @@ import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.function.BiFunction;
+
+import org.joml.Matrix4f;
 
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
@@ -57,6 +60,7 @@ import net.minecraft.world.phys.Vec3;
 
 public class ShapesRenderer
 {
+    private static final Matrix4f ORTHOMAT = new Matrix4f().m22(-1);
     private final Map<ResourceKey<Level>, Long2ObjectOpenHashMap<RenderedShape<? extends ShapeDispatcher.ExpiringShape>>> shapes;
     private final Map<ResourceKey<Level>, Long2ObjectOpenHashMap<RenderedShape<? extends ShapeDispatcher.ExpiringShape>>> labels;
     private final Minecraft client;
@@ -159,7 +163,7 @@ public class ShapesRenderer
             // lines
             RenderSystem.lineWidth(0.5F);
             shapes.get(dimensionType).values().forEach(s -> {
-                if ((!s.shape.debug || entityBoxes) && s.shouldRender(dimensionType))
+                if ((!s.shape.debug || entityBoxes) && s.shouldRender(dimensionType) && !s.shape.hud)
                 {
                     s.renderLines(matrices, tessellator, bufferBuilder, cameraX, cameraY, cameraZ, partialTick);
                 }
@@ -167,14 +171,37 @@ public class ShapesRenderer
             // faces
             RenderSystem.lineWidth(0.1F);
             shapes.get(dimensionType).values().forEach(s -> {
-                if ((!s.shape.debug || entityBoxes) && s.shouldRender(dimensionType))
+                if ((!s.shape.debug || entityBoxes) && s.shouldRender(dimensionType) && !s.shape.hud)
                 {
                     s.renderFaces(tessellator, bufferBuilder, cameraX, cameraY, cameraZ, partialTick);
                 }
             });
             RenderSystem.lineWidth(1.0F);
             matrixStack.popPose();
+            //==================
+            
             RenderSystem.applyModelViewMatrix();
+            var ori=RenderSystem.getProjectionMatrix();
+            RenderSystem.setProjectionMatrix(ORTHOMAT,VertexSorting.ORTHOGRAPHIC_Z);
+
+            // lines
+            RenderSystem.lineWidth(0.5F);
+            shapes.get(dimensionType).values().forEach(s -> {
+                if ((!s.shape.debug || entityBoxes) && s.shouldRender(dimensionType) && s.shape.hud)
+                {
+                    s.renderLines(matrices, tessellator, bufferBuilder, 0, 0, 0, partialTick);
+                }
+            });
+            // faces
+            RenderSystem.lineWidth(0.1F);
+            shapes.get(dimensionType).values().forEach(s -> {
+                if ((!s.shape.debug || entityBoxes) && s.shouldRender(dimensionType) && s.shape.hud)
+                {
+                    s.renderFaces(tessellator, bufferBuilder, 0, 0, 0, partialTick);
+                }
+            });
+            RenderSystem.lineWidth(1.0F);
+            RenderSystem.setProjectionMatrix(ori,VertexSorting.DISTANCE_TO_ORIGIN);
 
         }
         if (!labels.isEmpty())
@@ -183,11 +210,26 @@ public class ShapesRenderer
                     entry -> entry.getValue().isExpired(currentTime)
             );
             labels.get(dimensionType).values().forEach(s -> {
-                if ((!s.shape.debug || entityBoxes) && s.shouldRender(dimensionType))
+                if ((!s.shape.debug || entityBoxes) && s.shouldRender(dimensionType)&& !s.shape.hud)
                 {
                     s.renderLines(matrices, tessellator, bufferBuilder, cameraX, cameraY, cameraZ, partialTick);
                 }
             });
+            //PoseStack matrixStack = RenderSystem.getModelViewStack();
+            matrices.pushPose();
+            matrices.setIdentity();
+            //RenderSystem.applyModelViewMatrix();
+            var ori=RenderSystem.getProjectionMatrix();
+            RenderSystem.setProjectionMatrix(ORTHOMAT,VertexSorting.ORTHOGRAPHIC_Z);
+            labels.get(dimensionType).values().forEach(s -> {
+                if ((!s.shape.debug || entityBoxes) && s.shouldRender(dimensionType)&& s.shape.hud)
+                {
+                    s.renderLines(matrices, tessellator, bufferBuilder, 0, 0, 0, partialTick);
+                }
+            });
+            matrices.popPose();
+            //RenderSystem.applyModelViewMatrix();
+            RenderSystem.setProjectionMatrix(ori,VertexSorting.DISTANCE_TO_ORIGIN);
         }
         RenderSystem.enableCull();
         RenderSystem.depthMask(true);
