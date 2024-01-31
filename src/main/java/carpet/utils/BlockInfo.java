@@ -39,7 +39,7 @@ public class BlockInfo
         lst.add(Messenger.s("====================================="));
         lst.add(Messenger.s(String.format("Block info for %s%s (id %d%s):", blocks.getKey(block),metastring, blocks.getId(block), metastring )));
         lst.add(Messenger.s(String.format(" - Map colour: %s", Colors.mapColourName.get(state.getMapColor(world, pos)))));
-        lst.add(Messenger.s(String.format(" - Sound type: %s", Colors.soundName.get(block.getSoundType(state)))));
+        lst.add(Messenger.s(String.format(" - Sound type: %s", Colors.soundName.get(state.getSoundType()))));
         lst.add(Messenger.s(""));
         lst.add(Messenger.s(String.format(" - Full block: %s", state.isCollisionShapeFullBlock(world, pos)))); //  isFullCube() )));
         lst.add(Messenger.s(String.format(" - Normal cube: %s", state.isRedstoneConductor(world, pos)))); //isNormalCube()))); isSimpleFullBlock
@@ -61,7 +61,7 @@ public class BlockInfo
         lst.add(Messenger.s(String.format(" - Can burn: %s", state.ignitedByLava())));
         lst.add(Messenger.s(String.format(" - Hardness: %.2f", state.getDestroySpeed(world, pos))));
         lst.add(Messenger.s(String.format(" - Blast resistance: %.2f", block.getExplosionResistance())));
-        lst.add(Messenger.s(String.format(" - Ticks randomly: %s", block.isRandomlyTicking(state))));
+        lst.add(Messenger.s(String.format(" - Ticks randomly: %s", state.isRandomlyTicking())));
         lst.add(Messenger.s(""));
         lst.add(Messenger.s(String.format(" - Can provide power: %s", state.isSignalSource())));
         lst.add(Messenger.s(String.format(" - Strong power level: %d", world.getDirectSignalTo(pos))));

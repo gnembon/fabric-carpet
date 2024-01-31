@@ -47,7 +47,6 @@
     "LayerLightEngine_scarpetChunkCreationMixin",
     "LayerLightSectionStorage_scarpetChunkCreationMixin",
     "DistanceManager_spawnChunksMixin",
-    "ServerLevel_spawnChunksMixin",
     "ThreadedLevelLightEngine_scarpetChunkCreationMixin",
     "LivingEntity_cleanLogsMixin",
     "MobMixin",
@@ -182,9 +181,8 @@
     "ChestBlock_customStickyMixin",
     "PistonStructureResolver_customStickyMixin",
 
-    "ServerboundCustomPayloadPacket_mixin",
-    "ServerCommonPacketListenerimpl_connectionMixin",
-    "ClientboundCustomPayloadPacket_customPacketMixin"
+    "CustomPacketPayload_networkStuffMixin",
+    "ServerCommonPacketListenerimpl_connectionMixin"
 
   ],
   "client": [

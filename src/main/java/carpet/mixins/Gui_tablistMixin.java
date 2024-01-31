@@ -19,7 +19,7 @@ public abstract class Gui_tablistMixin
 
     @Shadow @Final private PlayerTabOverlay tabList;
 
-    @Redirect(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/Minecraft;isLocalServer()Z"))
+    @Redirect(method = "renderTabList", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/Minecraft;isLocalServer()Z"))
     private boolean onDraw(Minecraft minecraftClient)
     {
         return this.minecraft.isLocalServer() && !((PlayerListHudInterface) tabList).hasFooterOrHeader();

@@ -414,7 +414,7 @@ public class SpawnReporter
                 {
                     if (SpawnPlacements.getPlacementType(spawnEntry.type) == null)
                         continue; // vanilla bug
-                    boolean canSpawn = NaturalSpawner.isSpawnPositionOk(SpawnPlacements.getPlacementType(spawnEntry.type), worldIn, pos, spawnEntry.type);
+                    boolean canSpawn = SpawnPlacements.isSpawnPositionOk(spawnEntry.type, worldIn, pos);
                     int willSpawn = -1;
                     boolean fits = false;
                     
@@ -444,7 +444,7 @@ public class SpawnReporter
                             {
                                 if (
                                         SpawnPlacements.checkSpawnRules(etype,worldIn, MobSpawnType.NATURAL, pos, worldIn.random) &&
-                                        NaturalSpawner.isSpawnPositionOk(SpawnPlacements.getPlacementType(etype), worldIn, pos, etype) &&
+                                        SpawnPlacements.isSpawnPositionOk(etype, worldIn, pos) &&
                                         mob.checkSpawnRules(worldIn, MobSpawnType.NATURAL)
                                     // && mob.canSpawn(worldIn) // entity collisions // mostly - except ocelots
                                 )

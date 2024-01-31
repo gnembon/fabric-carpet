@@ -138,10 +138,7 @@ public class Auxiliary
             String rawString = lv.get(0).getString();
             ResourceLocation soundName = InputValidator.identifierOf(rawString);
             Vector3Argument locator = Vector3Argument.findIn(lv, 1);
-            if (cc.registry(Registries.SOUND_EVENT).get(soundName) == null)
-            {
-                throw new ThrowStatement(rawString, Throwables.UNKNOWN_SOUND);
-            }
+
             Holder<SoundEvent> soundHolder = Holder.direct(SoundEvent.createVariableRangeEvent(soundName));
             float volume = 1.0F;
             float pitch = 1.0F;

@@ -34,6 +34,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.tags.EntityTypeTags;
 import net.minecraft.tags.TagKey;
 import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
@@ -46,7 +47,6 @@ import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.MobCategory;
-import net.minecraft.world.entity.MobType;
 import net.minecraft.world.entity.PathfinderMob;
 import net.minecraft.world.entity.Pose;
 import net.minecraft.world.entity.RelativeMovement;
@@ -359,20 +359,26 @@ public class EntityValue extends Value
 
             // combat groups
 
-            put("arthropod", new EntityClassDescriptor(EntityTypeTest.forClass(LivingEntity.class), e -> (((LivingEntity) e).getMobType() == MobType.ARTHROPOD && e.isAlive()), allTypes.stream().filter(arthropods::contains)));
-            put("!arthropod", new EntityClassDescriptor(EntityTypeTest.forClass(LivingEntity.class), e -> (((LivingEntity) e).getMobType() != MobType.ARTHROPOD && e.isAlive()), allTypes.stream().filter(et -> !arthropods.contains(et) && living.contains(et))));
+            put("arthropod", new EntityClassDescriptor(EntityTypeTest.forClass(LivingEntity.class), e -> (e.getType().is(EntityTypeTags.ARTHROPOD) && e.isAlive()), allTypes.stream().filter(arthropods::contains)));
+            put("!arthropod", new EntityClassDescriptor(EntityTypeTest.forClass(LivingEntity.class), e -> (!e.getType().is(EntityTypeTags.ARTHROPOD) && e.isAlive()), allTypes.stream().filter(et -> !arthropods.contains(et) && living.contains(et))));
 
-            put("undead", new EntityClassDescriptor(EntityTypeTest.forClass(LivingEntity.class), e -> (((LivingEntity) e).getMobType() == MobType.UNDEAD && e.isAlive()), allTypes.stream().filter(undeads::contains)));
-            put("!undead", new EntityClassDescriptor(EntityTypeTest.forClass(LivingEntity.class), e -> (((LivingEntity) e).getMobType() != MobType.UNDEAD && e.isAlive()), allTypes.stream().filter(et -> !undeads.contains(et) && living.contains(et))));
+            put("undead", new EntityClassDescriptor(EntityTypeTest.forClass(LivingEntity.class), e -> (e.getType().is(EntityTypeTags.UNDEAD) && e.isAlive()), allTypes.stream().filter(undeads::contains)));
+            put("!undead", new EntityClassDescriptor(EntityTypeTest.forClass(LivingEntity.class), e -> (!e.getType().is(EntityTypeTags.UNDEAD) && e.isAlive()), allTypes.stream().filter(et -> !undeads.contains(et) && living.contains(et))));
 
-            put("aquatic", new EntityClassDescriptor(EntityTypeTest.forClass(LivingEntity.class), e -> (((LivingEntity) e).getMobType() == MobType.WATER && e.isAlive()), allTypes.stream().filter(aquatique::contains)));
-            put("!aquatic", new EntityClassDescriptor(EntityTypeTest.forClass(LivingEntity.class), e -> (((LivingEntity) e).getMobType() != MobType.WATER && e.isAlive()), allTypes.stream().filter(et -> !aquatique.contains(et) && living.contains(et))));
+            put("aquatic", new EntityClassDescriptor(EntityTypeTest.forClass(LivingEntity.class), e -> (e.getType().is(EntityTypeTags.AQUATIC) && e.isAlive()), allTypes.stream().filter(aquatique::contains)));
+            put("!aquatic", new EntityClassDescriptor(EntityTypeTest.forClass(LivingEntity.class), e -> (!e.getType().is(EntityTypeTags.AQUATIC) && e.isAlive()), allTypes.stream().filter(et -> !aquatique.contains(et) && living.contains(et))));
 
-            put("illager", new EntityClassDescriptor(EntityTypeTest.forClass(LivingEntity.class), e -> (((LivingEntity) e).getMobType() == MobType.ILLAGER && e.isAlive()), allTypes.stream().filter(illagers::contains)));
-            put("!illager", new EntityClassDescriptor(EntityTypeTest.forClass(LivingEntity.class), e -> (((LivingEntity) e).getMobType() != MobType.ILLAGER && e.isAlive()), allTypes.stream().filter(et -> !illagers.contains(et) && living.contains(et))));
+            put("illager", new EntityClassDescriptor(EntityTypeTest.forClass(LivingEntity.class), e -> (e.getType().is(EntityTypeTags.ILLAGER) && e.isAlive()), allTypes.stream().filter(illagers::contains)));
+            put("!illager", new EntityClassDescriptor(EntityTypeTest.forClass(LivingEntity.class), e -> (!e.getType().is(EntityTypeTags.ILLAGER) && e.isAlive()), allTypes.stream().filter(et -> !illagers.contains(et) && living.contains(et))));
 
-            put("regular", new EntityClassDescriptor(EntityTypeTest.forClass(LivingEntity.class), e -> (((LivingEntity) e).getMobType() == MobType.UNDEFINED && e.isAlive()), allTypes.stream().filter(regular::contains)));
-            put("!regular", new EntityClassDescriptor(EntityTypeTest.forClass(LivingEntity.class), e -> (((LivingEntity) e).getMobType() != MobType.UNDEFINED && e.isAlive()), allTypes.stream().filter(et -> !regular.contains(et) && living.contains(et))));
+            put("regular", new EntityClassDescriptor(EntityTypeTest.forClass(LivingEntity.class), e -> {
+                EntityType<?> type = e.getType();
+                return !illagers.contains(type) && !arthropods.contains(type) && !undeads.contains(type) && !aquatique.contains(type) && living.contains(type) && e.isAlive();
+            }, allTypes.stream().filter(regular::contains)));
+            put("!regular", new EntityClassDescriptor(EntityTypeTest.forClass(LivingEntity.class), e -> {
+                EntityType<?> type = e.getType();
+                return (illagers.contains(type) || arthropods.contains(type) || undeads.contains(type) || aquatique.contains(type)) && e.isAlive();
+            }, allTypes.stream().filter(et -> !regular.contains(et) && living.contains(et))));
 
             for (ResourceLocation typeId : BuiltInRegistries.ENTITY_TYPE.keySet())
             {
@@ -490,8 +496,8 @@ public class EntityValue extends Value
 
         put("invulnerable", (e, a) -> BooleanValue.of(e.isInvulnerable()));
         put("dimension", (e, a) -> nameFromRegistryId(e.level().dimension().location())); // getDimId
-        put("height", (e, a) -> new NumericValue(e.getDimensions(Pose.STANDING).height));
-        put("width", (e, a) -> new NumericValue(e.getDimensions(Pose.STANDING).width));
+        put("height", (e, a) -> new NumericValue(e.getDimensions(Pose.STANDING).height()));
+        put("width", (e, a) -> new NumericValue(e.getDimensions(Pose.STANDING).width()));
         put("eye_height", (e, a) -> new NumericValue(e.getEyeHeight()));
         put("age", (e, a) -> new NumericValue(e.tickCount));
         put("breeding_age", (e, a) -> e instanceof final AgeableMob am ? new NumericValue(am.getAge()) : Value.NULL);
@@ -657,11 +663,7 @@ public class EntityValue extends Value
                 return ListValue.wrap(effects);
             }
             String effectName = a.getString();
-            MobEffect potion = BuiltInRegistries.MOB_EFFECT.get(InputValidator.identifierOf(effectName));
-            if (potion == null)
-            {
-                throw new InternalExpressionException("No such an effect: " + effectName);
-            }
+            Holder<MobEffect> potion = BuiltInRegistries.MOB_EFFECT.getHolder(ResourceKey.create(Registries.MOB_EFFECT, InputValidator.identifierOf(effectName))).orElseThrow( () -> new InternalExpressionException("No such an effect: " + effectName));
             if (!le.hasEffect(potion))
             {
                 return Value.NULL;
@@ -835,10 +837,10 @@ public class EntityValue extends Value
             if (a == null)
             {
                 AttributeMap container = el.getAttributes();
-                return MapValue.wrap(attributes.stream().filter(container::hasAttribute).collect(Collectors.toMap(aa -> ValueConversions.of(attributes.getKey(aa)), aa -> NumericValue.of(container.getValue(aa)))));
+                return MapValue.wrap(attributes.holders().filter(container::hasAttribute).collect(Collectors.toMap(aa -> ValueConversions.of(aa.key()), aa -> NumericValue.of(container.getValue(aa)))));
             }
             ResourceLocation id = InputValidator.identifierOf(a.getString());
-            Attribute attrib = attributes.getOptional(id).orElseThrow(
+            Holder<Attribute> attrib = attributes.getHolder(id).orElseThrow(
                     () -> new InternalExpressionException("Unknown attribute: " + a.getString())
             );
             if (!el.getAttributes().hasAttribute(attrib))
@@ -1472,21 +1474,20 @@ public class EntityValue extends Value
                 if (list.size() >= 1 && list.size() <= 6)
                 {
                     String effectName = list.get(0).getString();
-                    MobEffect effect = BuiltInRegistries.MOB_EFFECT.get(InputValidator.identifierOf(effectName));
-                    if (effect == null)
-                    {
-                        throw new InternalExpressionException("Wrong effect name: " + effectName);
-                    }
+                    Holder<MobEffect> effect = BuiltInRegistries.MOB_EFFECT.getHolder(InputValidator.identifierOf(effectName)).orElseThrow( () -> new InternalExpressionException("No such an effect: " + effectName));
                     if (list.size() == 1)
                     {
                         le.removeEffect(effect);
                         return;
                     }
                     int duration = (int) NumericValue.asNumber(list.get(1)).getLong();
-                    if (duration <= 0)
+                    if (duration == 0)
                     {
                         le.removeEffect(effect);
                         return;
+                    }
+                    if (duration < 0){
+                        duration = -1;
                     }
                     int amplifier = 0;
                     if (list.size() > 2)
@@ -1515,11 +1516,7 @@ public class EntityValue extends Value
             else
             {
                 String effectName = v.getString();
-                MobEffect effect = BuiltInRegistries.MOB_EFFECT.get(InputValidator.identifierOf(effectName));
-                if (effect == null)
-                {
-                    throw new InternalExpressionException("Wrong effect name: " + effectName);
-                }
+                Holder<MobEffect> effect = BuiltInRegistries.MOB_EFFECT.getHolder(InputValidator.identifierOf(effectName)).orElseThrow( () -> new InternalExpressionException("No such an effect: " + effectName));
                 le.removeEffect(effect);
                 return;
             }
