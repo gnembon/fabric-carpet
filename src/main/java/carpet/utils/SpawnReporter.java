@@ -459,7 +459,7 @@ public class SpawnReporter
                                     willSpawn += 1;
                                 }
                             }
-                            mob.finalizeSpawn(worldIn, worldIn.getCurrentDifficultyAt(mob.blockPosition()), MobSpawnType.NATURAL, null, null);
+                            mob.finalizeSpawn(worldIn, worldIn.getCurrentDifficultyAt(mob.blockPosition()), MobSpawnType.NATURAL, null);
                             // the code invokes onInitialSpawn after getCanSpawHere
                             fits = fits && worldIn.noCollision(mob);
                             

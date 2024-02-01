@@ -5,6 +5,7 @@ import carpet.fakes.BlockEntityInterface;
 import carpet.fakes.PistonBlockEntityInterface;
 import carpet.fakes.LevelInterface;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
@@ -41,6 +42,7 @@ public abstract class PistonMovingBlockEntity_movableBEMixin extends BlockEntity
     /**
      * @author 2No2Name
      */
+    @Override
     public BlockEntity getCarriedBlockEntity()
     {
         return carriedBlockEntity;
@@ -52,6 +54,7 @@ public abstract class PistonMovingBlockEntity_movableBEMixin extends BlockEntity
         if (carriedBlockEntity != null) carriedBlockEntity.setLevel(world);
     }
 
+    @Override
     public void setCarriedBlockEntity(BlockEntity blockEntity)
     {
         this.carriedBlockEntity = blockEntity;
@@ -63,17 +66,20 @@ public abstract class PistonMovingBlockEntity_movableBEMixin extends BlockEntity
         }
         //    this.carriedBlockEntity.setPos(this.pos);
     }
-    
+
+    @Override
     public boolean isRenderModeSet()
     {
         return renderSet;
     }
-    
+
+    @Override
     public boolean getRenderCarriedBlockEntity()
     {
         return renderCarriedBlockEntity;
     }
-    
+
+    @Override
     public void setRenderCarriedBlockEntity(boolean b)
     {
         renderCarriedBlockEntity = b;
@@ -128,25 +134,25 @@ public abstract class PistonMovingBlockEntity_movableBEMixin extends BlockEntity
     }
     
     @Inject(method = "load", at = @At(value = "TAIL"))
-    private void onFromTag(CompoundTag NbtCompound_1, CallbackInfo ci)
+    private void onFromTag(CompoundTag NbtCompound_1, HolderLookup.Provider registries, CallbackInfo ci)
     {
         if (CarpetSettings.movableBlockEntities && NbtCompound_1.contains("carriedTileEntityCM", 10))
         {
             if (this.movedState.getBlock() instanceof EntityBlock)
                 this.carriedBlockEntity = ((EntityBlock) (this.movedState.getBlock())).newBlockEntity(worldPosition, movedState);//   this.world);
             if (carriedBlockEntity != null) //Can actually be null, as BlockPistonMoving.createNewTileEntity(...) returns null
-                this.carriedBlockEntity.load(NbtCompound_1.getCompound("carriedTileEntityCM"));
+                this.carriedBlockEntity.load(NbtCompound_1.getCompound("carriedTileEntityCM"), registries);
             setCarriedBlockEntity(carriedBlockEntity);
         }
     }
     
     @Inject(method = "saveAdditional", at = @At(value = "RETURN", shift = At.Shift.BEFORE))
-    private void onToTag(CompoundTag NbtCompound_1, CallbackInfo ci)
+    private void onToTag(CompoundTag NbtCompound_1, HolderLookup.Provider registries, CallbackInfo ci)
     {
         if (CarpetSettings.movableBlockEntities && this.carriedBlockEntity != null)
         {
             //Leave name "carriedTileEntityCM" instead of "carriedBlockEntityCM" for upgrade compatibility with 1.13.2 movable TE
-            NbtCompound_1.put("carriedTileEntityCM", this.carriedBlockEntity.saveWithoutMetadata());
+            NbtCompound_1.put("carriedTileEntityCM", this.carriedBlockEntity.saveWithoutMetadata(registries));
         }
     }
 }

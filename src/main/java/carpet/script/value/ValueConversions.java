@@ -134,9 +134,9 @@ public class ValueConversions
     }
 
 
-    public static Value of(ParticleOptions particle)
+    public static Value of(ParticleOptions particle, RegistryAccess regs)
     {
-        String repr = particle.writeToString();
+        String repr = particle.writeToString(regs);
         return StringValue.of(repr.startsWith("minecraft:") ? repr.substring(10) : repr);
     }
 

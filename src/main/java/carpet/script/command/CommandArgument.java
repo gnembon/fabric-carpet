@@ -199,7 +199,7 @@ public abstract class CommandArgument
             ),
             // operation // not sure if we need it, you have scarpet for that
             new VanillaUnconfigurableArgument("particle", ParticleArgument::particle,
-                    (c, p) -> ValueConversions.of(ParticleArgument.getParticle(c, p)), (c, b) -> SharedSuggestionProvider.suggestResource(c.getSource().getServer().registryAccess().registryOrThrow(Registries.PARTICLE_TYPE).keySet(), b)
+                    (c, p) -> ValueConversions.of(ParticleArgument.getParticle(c, p), c.getSource().registryAccess()), (c, b) -> SharedSuggestionProvider.suggestResource(c.getSource().getServer().registryAccess().registryOrThrow(Registries.PARTICLE_TYPE).keySet(), b)
             ),
 
             // resource / identifier section

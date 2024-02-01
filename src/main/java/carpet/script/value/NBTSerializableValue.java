@@ -355,7 +355,7 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
             {
                 return customTag == null ? res : new ItemInput(Holder.direct(res.getItem()), customTag);
             }
-            ItemParser.ItemResult parser = ItemParser.parseForItem(regs.lookupOrThrow(Registries.ITEM), new StringReader(itemString));
+            ItemParser.ItemResult parser = (new ItemParser(regs)).parse(new StringReader(itemString));
             res = new ItemInput(parser.item(), parser.nbt());
 
             itemCache.put(itemString, res);
