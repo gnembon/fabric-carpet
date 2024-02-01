@@ -152,7 +152,7 @@ public class Entities
             }
             if (!hasTag && entity instanceof final Mob mob)
             {
-                mob.finalizeSpawn(serverWorld, serverWorld.getCurrentDifficultyAt(entity.blockPosition()), MobSpawnType.COMMAND, null, null);
+                mob.finalizeSpawn(serverWorld, serverWorld.getCurrentDifficultyAt(entity.blockPosition()), MobSpawnType.COMMAND, null);
             }
             if (!serverWorld.tryAddFreshEntityWithPassengers(entity))
             {

@@ -54,6 +54,8 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.ShulkerBoxBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
+import org.joml.Matrix4f;
+import org.joml.Matrix4fStack;
 
 public class ShapesRenderer
 {
@@ -110,9 +112,12 @@ public class ShapesRenderer
         labels = new HashMap<>();
     }
 
-    public void render(PoseStack matrices, Camera camera, float partialTick)
+    public void render(Matrix4f modelViewMatrix, Camera camera, float partialTick)
     {
         Runnable token = Carpet.startProfilerSection("Scarpet client");
+        // posestack is not needed anymore - left as TODO to cleanup later
+        PoseStack matrices = new PoseStack();
+
         //Camera camera = this.client.gameRenderer.getCamera();
         ClientLevel iWorld = this.client.level;
         ResourceKey<Level> dimensionType = iWorld.dimension();
@@ -151,9 +156,9 @@ public class ShapesRenderer
             shapes.get(dimensionType).long2ObjectEntrySet().removeIf(
                     entry -> entry.getValue().isExpired(currentTime)
             );
-            PoseStack matrixStack = RenderSystem.getModelViewStack();
-            matrixStack.pushPose();
-            matrixStack.mulPoseMatrix(matrices.last().pose());
+            Matrix4fStack matrixStack = RenderSystem.getModelViewStack();
+            matrixStack.pushMatrix();
+            matrixStack.mul(matrices.last().pose());
             RenderSystem.applyModelViewMatrix();
 
             // lines
@@ -173,7 +178,7 @@ public class ShapesRenderer
                 }
             });
             RenderSystem.lineWidth(1.0F);
-            matrixStack.popPose();
+            matrixStack.popMatrix();
             RenderSystem.applyModelViewMatrix();
 
         }
@@ -428,7 +433,7 @@ public class ShapesRenderer
                             BlockEntity.setLevel(client.level);
                             if (shape.blockEntity != null)
                             {
-                                BlockEntity.load(shape.blockEntity);
+                                BlockEntity.load(shape.blockEntity, client.level.registryAccess());
                             }
                         }
                     }

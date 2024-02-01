@@ -75,7 +75,7 @@ public class BlockInfo
     private static Component wander_chances(BlockPos pos, ServerLevel worldIn)
     {
         PathfinderMob creature = new ZombifiedPiglin(EntityType.ZOMBIFIED_PIGLIN, worldIn);
-        creature.finalizeSpawn(worldIn, worldIn.getCurrentDifficultyAt(pos), MobSpawnType.NATURAL, null, null);
+        creature.finalizeSpawn(worldIn, worldIn.getCurrentDifficultyAt(pos), MobSpawnType.NATURAL, null);
         creature.moveTo(pos, 0.0F, 0.0F);
         RandomStrollGoal wander = new RandomStrollGoal(creature, 0.8D);
         int success = 0;

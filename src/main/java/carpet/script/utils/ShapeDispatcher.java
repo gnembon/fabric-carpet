@@ -185,7 +185,7 @@ public class ShapeDispatcher
     {
         try
         {
-            return ParticleParser.getEffect(name, regs.lookupOrThrow(Registries.PARTICLE_TYPE));
+            return ParticleParser.getEffect(name, regs);
         }
         catch (IllegalArgumentException e)
         {

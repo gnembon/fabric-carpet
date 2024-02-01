@@ -140,7 +140,7 @@ public class BlockValue extends Value
                 data = new CompoundTag();
                 return null;
             }
-            data = be.saveWithoutMetadata();
+            data = be.saveWithoutMetadata(be.getLevel().registryAccess());
             return data;
         }
         return null;
