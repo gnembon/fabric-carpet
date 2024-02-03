@@ -12,17 +12,18 @@
 English version of this [docs](https://github.com/gnembon/fabric-carpet/blob/master/README.md)  
 
 Cause all carpets are made of fabric?
+
 Esto es la [Fabric](https://fabricmc.net/) version del Carpet Mod, para Minecraft 1.14.X, 1.15.X, 1.16.X y siguientes.  
 
 Carpet Mod es un mod para Minecraft Vanilla que permite tener un control total de lo que importa desde la perspectiva tecnica del juego.
 
 * Prueba tus granjas durante varias horas en tan solo unos minutos con el comando [`/tick warp`](https://github.com/gnembon/fabric-carpet/wiki/Commands#usage-tick-warp-ticks-cmd), tan rapido como tu computadora pueda
-* ...da un informe detallado de los items producido usando el comando [`hopperCounters`](https://github.com/gnembon/fabric-carpet/wiki/Current-Available-Settings#hoppercounters)
+* ...da un informe detallado de los items producido usando el comando [`/hopperCounters`](https://github.com/gnembon/fabric-carpet/wiki/Current-Available-Settings#hoppercounters)
 * Ve la mobcap del server, TPS, etc. con actualizaciones en vivo con [`/log`](https://github.com/gnembon/fabric-carpet/wiki/Commands#log)
-* Permite a los pistones mover entidades (por ejemplo. cofres) con [`movableBlockEntities`](https://github.com/gnembon/fabric-carpet/wiki/Current-Available-Settings#movableblockentities)
+* Permite a los pistones mover entidades (por ejemplo. cofres) con [`/movableBlockEntities`](https://github.com/gnembon/fabric-carpet/wiki/Current-Available-Settings#movableblockentities)
 * [Arregla](https://github.com/gnembon/fabric-carpet/wiki/Current-Available-Settings#leadfix) [muchas](https://github.com/gnembon/fabric-carpet/wiki/Current-Available-Settings#portalsuffocationfix) [cosas](https://github.com/gnembon/fabric-carpet/wiki/Current-Available-Settings#unloadedentityfix)
 
-# ecosistema de Carpet
+# ecosistema carpet
 
 Para funcionalidades del ecosistema de carpet este el lugar correcto. Ve las descargas disponibles en [pagina de descargas](https://github.com/gnembon/fabric-carpet/releases)
 
@@ -31,7 +32,7 @@ Para funcionalidades del ecosistema de carpet este el lugar correcto. Ve las des
 
 ## carpet-extra
 
-Mira [carpet-extra](https://github.com/gnembon/carpet-extra/) addon mod para mas locas y divertidas funcionalidades, incluyendo mesas de crafteo automaticas, dispensers que ponen bloques, hasta trasquilado de pollos!
+Mira [carpet-extra](https://github.com/gnembon/carpet-extra/) mod para mas locas y divertidas funcionalidades, incluyendo mesas de crafteo automaticas, dispensers que ponen bloques, hasta trasquilado de pollos!
 
 ## mesa de crafteo automatica
 
@@ -39,7 +40,7 @@ Debido a problemas de compatibildias con vanilla y otros mods, descarga [mesa de
 
 ## scarpet app store
 
-Si quieres buscar o contribuir a las app store de scarpet mira las aplicaciones disponibles, ve[aqui](https://github.com/gnembon/scarpet), es gratis!
+Si quieres buscar o contribuir a las app store de scarpet mira las aplicaciones disponibles, ve [aqui](https://github.com/gnembon/scarpet), es gratis!
 
 ## quick-carpet
 
