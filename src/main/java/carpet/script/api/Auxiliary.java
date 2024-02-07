@@ -1201,7 +1201,7 @@ public class Auxiliary
                         throw new IOException();
                     }
                     List<Pack> list = Lists.newArrayList(packManager.getSelectedPacks());
-                    resourcePackProfile.getDefaultPosition().insert(list, resourcePackProfile, p -> p, false);
+                    resourcePackProfile.getDefaultPosition().insert(list, resourcePackProfile, Pack::selectionConfig, false);
 
 
                     server.reloadResources(list.stream().map(Pack::getId).collect(Collectors.toList())).
