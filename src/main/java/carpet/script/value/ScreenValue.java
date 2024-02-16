@@ -9,6 +9,8 @@ import carpet.script.exception.InvalidCallbackException;
 import carpet.script.exception.ThrowStatement;
 import carpet.script.exception.Throwables;
 import carpet.script.external.Vanilla;
+import carpet.script.value.ScreenValue.ScarpetScreenHandlerFactory;
+import carpet.script.value.ScreenValue.ScreenHandlerInventory;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -17,6 +19,7 @@ import java.util.Map;
 import java.util.OptionalInt;
 
 import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
@@ -39,11 +42,13 @@ import net.minecraft.world.inventory.ChestMenu;
 import net.minecraft.world.inventory.ClickType;
 import net.minecraft.world.inventory.ContainerListener;
 import net.minecraft.world.inventory.CraftingMenu;
+import net.minecraft.world.inventory.CrafterMenu;
 import net.minecraft.world.inventory.DataSlot;
 import net.minecraft.world.inventory.EnchantmentMenu;
 import net.minecraft.world.inventory.FurnaceMenu;
 import net.minecraft.world.inventory.GrindstoneMenu;
 import net.minecraft.world.inventory.HopperMenu;
+import net.minecraft.world.inventory.HorseInventoryMenu;
 import net.minecraft.world.inventory.LecternMenu;
 import net.minecraft.world.inventory.LoomMenu;
 import net.minecraft.world.inventory.MerchantMenu;
@@ -101,9 +106,25 @@ public class ScreenValue extends Value
         screenHandlerFactories.put("smithing", SmithingMenu::new);
         screenHandlerFactories.put("smoker", SmokerMenu::new);
         screenHandlerFactories.put("stonecutter", StonecutterMenu::new);
+        screenHandlerFactories.put("crafter_3x3", ScarpetCrafterMenu::new);
     }
 
 
+    public static class ScarpetCrafterMenu extends CrafterMenu{
+        private boolean suppress = false;
+        public ScarpetCrafterMenu(int i, Inventory inventory) {
+            super(i, inventory);
+            addSlotListener(this);// this line it to make the result item can be generated in the output slot.
+        }    
+        public void broadcastChanges(){
+            if(!suppress)super.broadcastChanges();
+        }
+        public void setSlotState(int i, boolean bl) {
+            suppress = true;
+            super.setSlotState(i, bl);
+            suppress = false;
+        }   //Do I really need to go to this point to make them similar?
+    }
     protected interface ScarpetScreenHandlerFactory
     {
         AbstractContainerMenu create(int syncId, Inventory playerInventory);
@@ -128,6 +149,40 @@ public class ScreenValue extends Value
         }
         this.openScreen(factory);
         this.inventory = new ScreenHandlerInventory(this.screenHandler);
+    }
+
+    public ScreenValue(ServerPlayer player, @Nullable FunctionValue callback, Context c)
+    {
+        this.screenHandler = player.containerMenu;
+        
+        this.name = null; //seems that the game forgot that. should i make something like a weak map to remember it?
+        this.typestring =  playerScreenTypeName(player);
+
+        if (callback != null)
+        {
+            callback.checkArgs(4);
+        }
+        this.callback = callback;
+        this.hostname = c.host.getName();
+        this.scriptServer = (CarpetScriptServer) c.host.scriptServer();
+        this.player = player;
+        
+        addListenerCallback(screenHandler);
+        this.inventory = new ScreenHandlerInventory(this.screenHandler);
+    }
+
+    public static String playerScreenTypeName(ServerPlayer player) {
+        if (!player.hasContainerOpen()) {
+            return "inventory";    
+        }
+        try {
+            return ValueConversions.simplify(BuiltInRegistries.MENU.getKey(player.containerMenu.getType()));
+        } catch (java.lang.UnsupportedOperationException e) {
+            if (player.containerMenu instanceof HorseInventoryMenu) {
+                return "horse";
+            }
+            return "unknown";
+        }
     }
 
     private MenuProvider createScreenHandlerFactory()
@@ -316,6 +371,17 @@ public class ScreenValue extends Value
             case "enchantment_level_3" -> getPropertyForType(EnchantmentMenu.class, "enchantment", 9, propertyName);
             case "banner_pattern" -> getPropertyForType(LoomMenu.class, "loom", 0, propertyName);
             case "stonecutter_recipe" -> getPropertyForType(StonecutterMenu.class, "stonecutter", 0, propertyName);
+            case "crafter_slot_disable_0" -> getPropertyForType(CrafterMenu.class, "crafter_3x3", 0, propertyName);
+            case "crafter_slot_disable_1" -> getPropertyForType(CrafterMenu.class, "crafter_3x3", 1, propertyName);
+            case "crafter_slot_disable_2" -> getPropertyForType(CrafterMenu.class, "crafter_3x3", 2, propertyName);
+            case "crafter_slot_disable_3" -> getPropertyForType(CrafterMenu.class, "crafter_3x3", 3, propertyName);
+            case "crafter_slot_disable_4" -> getPropertyForType(CrafterMenu.class, "crafter_3x3", 4, propertyName);
+            case "crafter_slot_disable_5" -> getPropertyForType(CrafterMenu.class, "crafter_3x3", 5, propertyName);
+            case "crafter_slot_disable_6" -> getPropertyForType(CrafterMenu.class, "crafter_3x3", 6, propertyName);
+            case "crafter_slot_disable_7" -> getPropertyForType(CrafterMenu.class, "crafter_3x3", 7, propertyName);
+            case "crafter_slot_disable_8" -> getPropertyForType(CrafterMenu.class, "crafter_3x3", 8, propertyName);
+            case "crafter_enable" -> getPropertyForType(CrafterMenu.class, "crafter_3x3", 9, propertyName);
+            
             default -> throw new InternalExpressionException("Invalid screen property: " + propertyName);
         };
 

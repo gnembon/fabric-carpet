@@ -27,6 +27,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import static carpet.script.CarpetEventServer.Event.PLAYER_CHANGES_DIMENSION;
 import static carpet.script.CarpetEventServer.Event.PLAYER_DIES;
 import static carpet.script.CarpetEventServer.Event.PLAYER_FINISHED_USING_ITEM;
+import static carpet.script.CarpetEventServer.Event.PLAYER_OPEN_SCREEN;
 import static carpet.script.CarpetEventServer.Event.STATISTICS;
 
 @Mixin(ServerPlayer.class)
@@ -44,6 +45,19 @@ public abstract class ServerPlayer_scarpetEventMixin extends Player implements S
     //@Shadow protected abstract void completeUsingItem();
 
     @Shadow public boolean wonGame;
+
+    @Inject(method = "openMenu", at = @At("RETURN"))//"at return" so that the screen can be get by scarpet.
+    private void onOpenScreen(CallbackInfoReturnable<java.util.OptionalInt> cir)
+    {
+        if (cir.getReturnValue().isPresent()) {
+            PLAYER_OPEN_SCREEN.onPlayerEvent((ServerPlayer)(Object)this);
+        };
+    }
+    @Inject(method = "openHorseInventory", at = @At("RETURN"))//"at return" so that the screen can be get by scarpet.
+    private void onOpenScreen(CallbackInfo ci)
+    {
+            PLAYER_OPEN_SCREEN.onPlayerEvent((ServerPlayer)(Object)this);
+    }
 
     @Redirect(method = "completeUsingItem", at = @At(
             value = "INVOKE",

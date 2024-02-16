@@ -475,6 +475,27 @@ public class Inventories
             return new ScreenValue(player, type, name, function, c);
         });
 
+        expression.addContextFunction("get_current_screen", -1, (c, t, lv) ->
+        {
+            if (lv.size() < 1)
+            {
+                throw new InternalExpressionException("'get_current_screen' requires at least 1 argument");
+            }
+            Value playerValue = lv.get(0);
+            ServerPlayer player = EntityValue.getPlayerByValue(((CarpetContext) c).server(), playerValue);
+            if (player == null)
+            {
+                throw new InternalExpressionException("'get_current_screen' requires a valid online player as the first argument.");
+            }
+            FunctionValue function = null;
+            if (lv.size() > 1)
+            {
+                function = FunctionArgument.findIn(c, expression.module, lv, 1, true, false).function;
+            }
+
+            return new ScreenValue(player, function, c);
+        });
+
         expression.addContextFunction("close_screen", 1, (c, t, lv) ->
         {
             Value value = lv.get(0);
