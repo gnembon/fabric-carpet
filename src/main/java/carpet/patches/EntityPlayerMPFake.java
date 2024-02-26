@@ -1,6 +1,7 @@
 package carpet.patches;
 
 import carpet.CarpetSettings;
+import carpet.fakes.ServerPlayerFastClickInterface;
 import com.mojang.authlib.GameProfile;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.UUIDUtil;
@@ -166,6 +167,7 @@ public class EntityPlayerMPFake extends ServerPlayer
         try
         {
             super.tick();
+            ((ServerPlayerFastClickInterface)this).saveOldPosRot(position(), getRotationVector());
             this.doTick();
         }
         catch (NullPointerException ignored)
