@@ -25,7 +25,7 @@ import net.minecraft.commands.arguments.item.ItemParser;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.core.RegistryAccess;
-import net.minecraft.core.registries.Registries;
+import net.minecraft.core.particles.ItemParticleOption;
 import net.minecraft.nbt.CollectionTag;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.EndTag;
@@ -104,15 +104,11 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
         nbtSupplier = tagSupplier;
     }
 
-    public static Value fromStack(ItemStack stack)
+    public static Value fromStack(ItemStack stack, RegistryAccess regs)
     {
-        if (stack.hasTag())
-        {
-            NBTSerializableValue value = new NBTSerializableValue();
-            value.nbtSupplier = stack::getTag;
-            return value;
-        }
-        return Value.NULL;
+        NBTSerializableValue value = new NBTSerializableValue();
+        value.nbtSupplier = () -> stack.saveOptional(regs);
+        return value;
     }
 
     public static Value nameFromRegistryId(@Nullable ResourceLocation id)
@@ -341,29 +337,32 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
 
     private static final Map<String, ItemInput> itemCache = new HashMap<>();
 
-    public static ItemInput parseItem(String itemString, RegistryAccess regs)
+    public static ItemStack parseItem(String itemString, RegistryAccess regs)
     {
         return parseItem(itemString, null, regs);
     }
 
-    public static ItemInput parseItem(String itemString, @Nullable CompoundTag customTag, RegistryAccess regs)
+    public static ItemStack parseItem(String itemString, @Nullable CompoundTag customTag, RegistryAccess regs)
     {
+        if (customTag != null) {
+            return ItemStack.parseOptional(regs, customTag);
+        }
         try
         {
             ItemInput res = itemCache.get(itemString);  // [SCARY SHIT] persistent caches over server reloads
             if (res != null)
             {
-                return customTag == null ? res : new ItemInput(Holder.direct(res.getItem()), customTag);
+                return res.createItemStack(1, false);
             }
             ItemParser.ItemResult parser = (new ItemParser(regs)).parse(new StringReader(itemString));
-            res = new ItemInput(parser.item(), parser.nbt());
+            res = new ItemInput(parser.item(), parser.components());
 
             itemCache.put(itemString, res);
             if (itemCache.size() > 64000)
             {
                 itemCache.clear();
             }
-            return customTag == null ? res : new ItemInput(Holder.direct(res.getItem()), customTag);
+            return res.createItemStack(1, false);
         }
         catch (CommandSyntaxException e)
         {
@@ -764,7 +763,7 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
 
 
     @Override
-    public Tag toTag(boolean force)
+    public Tag toTag(boolean force, RegistryAccess regs)
     {
         if (!force)
         {

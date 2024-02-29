@@ -1,5 +1,6 @@
 package carpet.script.value;
 
+import net.minecraft.core.RegistryAccess;
 import net.minecraft.nbt.StringTag;
 import net.minecraft.nbt.Tag;
 
@@ -46,7 +47,7 @@ public class StringValue extends Value
     }
 
     @Override
-    public Tag toTag(boolean force)
+    public Tag toTag(boolean force, RegistryAccess regs)
     {
         return StringTag.valueOf(str);
     }

@@ -38,6 +38,7 @@ import net.minecraft.core.Holder;
 import net.minecraft.core.HolderSet;
 import net.minecraft.core.QuartPos;
 import net.minecraft.core.Registry;
+import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
@@ -51,6 +52,7 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.level.chunk.ChunkGenerator;
 import net.minecraft.world.level.chunk.PalettedContainer;
+import net.minecraft.world.level.chunk.status.ChunkStatus;
 import net.minecraft.world.level.levelgen.DensityFunction;
 import net.minecraft.world.level.levelgen.DensityFunctions;
 import net.minecraft.world.level.levelgen.NoiseBasedChunkGenerator;
@@ -121,7 +123,6 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.Property;
 import net.minecraft.world.level.chunk.ChunkAccess;
-import net.minecraft.world.level.chunk.ChunkStatus;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.levelgen.WorldgenRandom;
@@ -840,6 +841,7 @@ public class WorldAccess
         expression.addContextFunction("destroy", -1, (c, t, lv) ->
         {
             CarpetContext cc = (CarpetContext) c;
+            RegistryAccess regs = cc.registryAccess();
             ServerLevel world = cc.level();
             BlockArgument locator = BlockArgument.findIn(cc, lv, 0);
             BlockState state = locator.block.getBlockState();
@@ -882,11 +884,14 @@ public class WorldAccess
                             : NBTSerializableValue.parseStringOrFail(tagValue.getString()).getCompoundTag();
                 }
             }
-
-            ItemStack tool = new ItemStack(item, 1);
+            ItemStack tool;
             if (tag != null)
             {
-                tool.setTag(tag);
+                tool = ItemStack.parseOptional(regs, tag);
+            }
+            else
+            {
+                tool = new ItemStack(item, 1);
             }
             if (playerBreak && state.getDestroySpeed(world, where) < 0.0)
             {
@@ -950,8 +955,7 @@ public class WorldAccess
             {
                 return Value.NULL;
             }
-            Tag outtag = tool.getTag();
-            return outtag == null ? Value.TRUE : new NBTSerializableValue(() -> outtag);
+            return new NBTSerializableValue(() -> tool.saveOptional(regs));
 
         });
 
@@ -1106,7 +1110,7 @@ public class WorldAccess
             CarpetContext cc = (CarpetContext) c;
             String itemString = lv.get(0).getString();
             Vector3Argument locator = Vector3Argument.findIn(lv, 1);
-            ItemInput stackArg = NBTSerializableValue.parseItem(itemString, cc.registryAccess());
+            ItemStack stackArg = NBTSerializableValue.parseItem(itemString, cc.registryAccess());
             BlockPos where = BlockPos.containing(locator.vec);
             // Paintings throw an exception if their direction is vertical, therefore we change the default here
             String facing = lv.size() > locator.offset
@@ -1118,15 +1122,7 @@ public class WorldAccess
                 sneakPlace = lv.get(locator.offset + 1).getBoolean();
             }
 
-            BlockValue.PlacementContext ctx;
-            try
-            {
-                ctx = BlockValue.PlacementContext.from(cc.level(), where, facing, sneakPlace, stackArg.createItemStack(1, false));
-            }
-            catch (CommandSyntaxException e)
-            {
-                throw new InternalExpressionException(e.getMessage());
-            }
+            BlockValue.PlacementContext ctx = BlockValue.PlacementContext.from(cc.level(), where, facing, sneakPlace, stackArg);
 
             if (!(stackArg.getItem() instanceof final BlockItem blockItem))
             {
@@ -1160,7 +1156,7 @@ public class WorldAccess
 
         expression.addContextFunction("blocks_movement", -1, (c, t, lv) ->
                 booleanStateTest(c, "blocks_movement", lv, (s, p) ->
-                        !s.isPathfindable(((CarpetContext) c).level(), p, PathComputationType.LAND)));
+                        !s.isPathfindable(PathComputationType.LAND)));
 
         expression.addContextFunction("block_sound", -1, (c, t, lv) ->
                 stateStringQuery(c, "block_sound", lv, (s, p) ->

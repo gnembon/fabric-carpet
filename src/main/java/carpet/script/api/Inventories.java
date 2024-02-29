@@ -19,16 +19,15 @@ import carpet.script.value.ScreenValue;
 import carpet.script.value.StringValue;
 import carpet.script.value.Value;
 import carpet.script.value.ValueConversions;
-import com.mojang.brigadier.exceptions.CommandSyntaxException;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.OptionalInt;
 import java.util.Set;
 
-import net.minecraft.commands.arguments.item.ItemInput;
 import net.minecraft.core.HolderSet;
 import net.minecraft.core.Registry;
 import net.minecraft.core.RegistryAccess;
@@ -111,7 +110,7 @@ public class Inventories
                 type = cc.registry(Registries.RECIPE_TYPE).get(InputValidator.identifierOf(recipeType));
                 if (type == null)
                 {
-                    throw new InternalExpressionException("Unknown recipe type: "+recipeType);
+                    throw new InternalExpressionException("Unknown recipe type: " + recipeType);
                 }
             }
             List<Recipe<?>> recipes = Vanilla.RecipeManager_getAllMatching(cc.server().getRecipeManager(), type, InputValidator.identifierOf(recipeName), cc.registryAccess());
@@ -125,7 +124,7 @@ public class Inventories
             {
                 ItemStack result = recipe.getResultItem(regs);
                 List<Value> ingredientValue = new ArrayList<>();
-                recipe.getIngredients().forEach( ingredient -> {
+                recipe.getIngredients().forEach(ingredient -> {
                     // I am flattening ingredient lists per slot.
                     // consider recipe_data('wooden_sword','crafting') and ('iron_nugget', 'blasting') and notice difference
                     // in depths of lists.
@@ -142,7 +141,7 @@ public class Inventories
                     }
                 });
                 Value recipeSpec;
-                if (recipe instanceof final ShapedRecipe shapedRecipe)
+                if (recipe instanceof ShapedRecipe shapedRecipe)
                 {
                     recipeSpec = ListValue.of(
                             new StringValue("shaped"),
@@ -154,7 +153,7 @@ public class Inventories
                 {
                     recipeSpec = ListValue.of(new StringValue("shapeless"));
                 }
-                else if (recipe instanceof final AbstractCookingRecipe abstractCookingRecipe)
+                else if (recipe instanceof AbstractCookingRecipe abstractCookingRecipe)
                 {
                     recipeSpec = ListValue.of(
                             new StringValue("smelting"),
@@ -249,9 +248,15 @@ public class Inventories
             {
                 return Value.NULL;
             }
-            int count = (int) NumericValue.asNumber(lv.get(inventoryLocator.offset() + 1)).getLong();
+            OptionalInt count = OptionalInt.empty();
+
+            Value countVal = lv.get(inventoryLocator.offset() + 1);
+            if (!countVal.isNull())
+            {
+                count = OptionalInt.of((int) NumericValue.asNumber(countVal).getLong());
+            }
             RegistryAccess regs = cc.registryAccess();
-            if (count == 0)
+            if (count.isPresent() && count.getAsInt() == 0)
             {
                 // clear slot
                 ItemStack removedStack = inventoryLocator.inventory().removeItemNoUpdate(slot);
@@ -262,16 +267,16 @@ public class Inventories
             {
                 ItemStack previousStack = inventoryLocator.inventory().getItem(slot);
                 ItemStack newStack = previousStack.copy();
-                newStack.setCount(count);
+                count.ifPresent(newStack::setCount);
                 inventoryLocator.inventory().setItem(slot, newStack);
                 syncPlayerInventory(inventoryLocator);
                 return ValueConversions.of(previousStack, regs);
             }
-            CompoundTag nbt = null; // skipping one argument
+            CompoundTag nbt = null; // skipping one argument, item name
             if (lv.size() > inventoryLocator.offset() + 3)
             {
                 Value nbtValue = lv.get(inventoryLocator.offset() + 3);
-                if (nbtValue instanceof final NBTSerializableValue nbtsv)
+                if (nbtValue instanceof NBTSerializableValue nbtsv)
                 {
                     nbt = nbtsv.getCompoundTag();
                 }
@@ -280,17 +285,12 @@ public class Inventories
                     nbt = new NBTSerializableValue(nbtValue.getString()).getCompoundTag();
                 }
             }
-            ItemInput newitem = NBTSerializableValue.parseItem(lv.get(inventoryLocator.offset() + 2).getString(), nbt, cc.registryAccess());
+            ItemStack newitem = NBTSerializableValue.parseItem(lv.get(inventoryLocator.offset() + 2).getString(), nbt, cc.registryAccess());
+            count.ifPresent(newitem::setCount);
             ItemStack previousStack = inventoryLocator.inventory().getItem(slot);
-            try
-            {
-                inventoryLocator.inventory().setItem(slot, newitem.createItemStack(count, false));
-                syncPlayerInventory(inventoryLocator);
-            }
-            catch (CommandSyntaxException e)
-            {
-                throw new InternalExpressionException(e.getMessage());
-            }
+            inventoryLocator.inventory().setItem(slot, newitem);
+            syncPlayerInventory(inventoryLocator);
+
             return ValueConversions.of(previousStack, regs);
         });
 
@@ -303,7 +303,7 @@ public class Inventories
             {
                 return Value.NULL;
             }
-            ItemInput itemArg = null;
+            ItemStack itemArg = null;
             if (lv.size() > inventoryLocator.offset())
             {
                 Value secondArg = lv.get(inventoryLocator.offset());
@@ -342,7 +342,7 @@ public class Inventories
             {
                 throw new InternalExpressionException("'inventory_remove' requires at least an item to be removed");
             }
-            ItemInput searchItem = NBTSerializableValue.parseItem(lv.get(inventoryLocator.offset()).getString(), cc.registryAccess());
+            ItemStack searchItem = NBTSerializableValue.parseItem(lv.get(inventoryLocator.offset()).getString(), cc.registryAccess());
             int amount = 1;
             if (lv.size() > inventoryLocator.offset() + 1)
             {
@@ -424,7 +424,7 @@ public class Inventories
             }
             Object owner = inventoryLocator.owner();
             ItemEntity item;
-            if (owner instanceof final Player player)
+            if (owner instanceof Player player)
             {
                 item = player.drop(droppedStack, false, true);
                 if (item == null)
@@ -478,7 +478,7 @@ public class Inventories
         expression.addContextFunction("close_screen", 1, (c, t, lv) ->
         {
             Value value = lv.get(0);
-            if (!(value instanceof final ScreenValue screenValue))
+            if (!(value instanceof ScreenValue screenValue))
             {
                 throw new InternalExpressionException("'close_screen' requires a screen value as the first argument.");
             }
@@ -496,7 +496,7 @@ public class Inventories
             {
                 throw new InternalExpressionException("'screen_property' requires at least a screen and a property name");
             }
-            if (!(lv.get(0) instanceof final ScreenValue screenValue))
+            if (!(lv.get(0) instanceof ScreenValue screenValue))
             {
                 throw new InternalExpressionException("'screen_property' requires a screen value as the first argument");
             }

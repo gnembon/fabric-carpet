@@ -15,6 +15,8 @@ import java.util.Optional;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
+import carpet.script.CarpetContext;
+import net.minecraft.core.RegistryAccess;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.ClassUtils;
 
@@ -32,31 +34,31 @@ import carpet.script.value.Value;
 /**
  * <p>This class parses methods annotated with the {@link ScarpetFunction} annotation in a given {@link Class}, generating
  * fully-featured, automatically parsed and converted functions to be used in the Scarpet language.</p>
- * 
+ *
  * <p>This class and the rest in this package will try to ensure that the annotated method receives the proper parameters
  * directly, without all the always-repeated code of evaluating {@link Value}s, checking and casting them to their respective
  * types, and converting them to the final needed object.</p>
- * 
+ *
  * <p>To do that, functions will save a list of {@link ValueConverter}s to convert all their parameters. {@link ValueConverter}s
  * are able to convert from any compatible {@link Value} instance into the requested parameter type, as long as they are registered
  * using their respective {@code register} functions.</p>
- * 
- * <p>Built-in {@link ValueConverter}s include but are not limited to converters to convert {@link List}s to actual Java lists while also 
+ *
+ * <p>Built-in {@link ValueConverter}s include but are not limited to converters to convert {@link List}s to actual Java lists while also
  * converting every item inside of the {@link List} to the specified generic parameter ({@code <>}), with the same applying for maps</p>
- * 
- * <p>Parameters can be given the annotations (present in the  {@link Locator} and {@link Param} interfaces) in order to restrict them or 
+ *
+ * <p>Parameters can be given the annotations (present in the  {@link Locator} and {@link Param} interfaces) in order to restrict them or
  * make them more permissive to accept types, such as {@link Param.AllowSingleton} for lists.</p>
- * 
+ *
  * <p>You can also declare optional parameters by using Java's {@link Optional} as the type of one of your parameters, though it must be
  * at the end of the function, just before varargs if present and/or any other {@link Optional} parameters.</p>
- * 
+ *
  * <p>Output of the annotated methods will also be converted to a compatible {@link LazyValue} using the registered {@link OutputConverter}s,
  * allowing to remove the need of explicitly converting to a {@link Value} and then to a {@link LazyValue} just to end the method (though you can
  * return a {@link LazyValue} if you want.</p>
- * 
+ *
  * <p>For a variable argument count, the Java varargs notation can be used in the last parameter, converting the function into a variable argument
  * function that will pass all the rest of parameters to that last varargs parameter, also converted into the specified type.</p>
- * 
+ *
  * <p>To begin, use the {@link #parseFunctionClass(Class)} method in a class with methods annotated with the {@link ScarpetFunction} annotation.</p>
  *
  * @see ScarpetFunction
@@ -83,26 +85,26 @@ public final class AnnotationParser
     /**
      * <p>Parses a given {@link Class} and registers its annotated methods, the ones with the {@link ScarpetFunction} annotation,
      * to be used in the Scarpet language.</p>
-     * 
+     *
      * <p><b>Only call this method once per class per lifetime of the JVM!</b> (for example, at {@link carpet.CarpetExtension#onGameStarted()} or
      * {@link net.fabricmc.api.ModInitializer#onInitialize()}).</p>
-     * 
+     *
      * <p>There is a set of requirements for the class and its methods:</p>
      * <ul>
-     * <li>Annotated methods must not throw checked exceptions. They can throw regular {@link RuntimeException}s (including but not limited to 
+     * <li>Annotated methods must not throw checked exceptions. They can throw regular {@link RuntimeException}s (including but not limited to
      * {@link InternalExpressionException}).
      * Basically, it's fine as long as you don't add a {@code throws} declaration to your methods.</li>
-     * <li>Varargs (or effectively varargs) annotated methods must explicitly declare a maximum number of parameters to ingest in the {@link ScarpetFunction} 
+     * <li>Varargs (or effectively varargs) annotated methods must explicitly declare a maximum number of parameters to ingest in the {@link ScarpetFunction}
      * annotation. They can still declare an unlimited amount by setting that maximum to {@link ScarpetFunction#UNLIMITED_PARAMS}. "Effectively varargs"
      * means a function that has at least a parameter requiring a {@link ValueConverter} that has declared {@link ValueConverter#consumesVariableArgs()}.</li>
-     * <li>Annotated methods must not have a parameter with generics as the varargs parameter. This is just because it was painful for me (altrisi) and 
+     * <li>Annotated methods must not have a parameter with generics as the varargs parameter. This is just because it was painful for me (altrisi) and
      * didn't want to support it. Those will crash with a {@code ClassCastException}</li>
      * </ul>
      * <p>Additionally, if the class contains annotated instance (non-static) methods, the class must be concrete and provide a no-arg constructor
      * to instantiate it.</p>
-     * 
-     * @see ScarpetFunction
+     *
      * @param clazz The class to parse
+     * @see ScarpetFunction
      */
     public static void parseFunctionClass(Class<?> clazz)
     {
@@ -119,7 +121,7 @@ public final class AnnotationParser
             catch (ReflectiveOperationException e)
             {
                 throw new IllegalArgumentException(
-                    "Couldn't create instance of given " + clazz + ". This is needed for non-static methods. Make sure default constructor is available", e);
+                        "Couldn't create instance of given " + clazz + ". This is needed for non-static methods. Make sure default constructor is available", e);
             }
         });
         Method[] methodz = clazz.getDeclaredMethods();
@@ -132,7 +134,7 @@ public final class AnnotationParser
 
             if (method.getExceptionTypes().length != 0)
             {
-                throw new IllegalArgumentException("Annotated method '" + method.getName() +"', provided in '"+clazz+"' must not declare checked exceptions");
+                throw new IllegalArgumentException("Annotated method '" + method.getName() + "', provided in '" + clazz + "' must not declare checked exceptions");
             }
 
             ParsedFunction function = new ParsedFunction(method, clazz, instanceSupplier);
@@ -143,7 +145,7 @@ public final class AnnotationParser
     /**
      * <p>Adds all parsed functions to the given {@link Expression}.</p>
      * <p>This is handled automatically by Carpet</p>
-     * 
+     *
      * @param expr The expression to add every function to
      */
     public static void apply(Expression expr)
@@ -190,7 +192,7 @@ public final class AnnotationParser
             }
             Class<?> originalVarArgsType = isMethodVarArgs ? methodParameters[methodParamCount - 1].getType().getComponentType() : null;
             this.varArgsType = ClassUtils.primitiveToWrapper(originalVarArgsType); // Primitive array cannot be cast to Obj[]
-            this.primitiveVarArgs = originalVarArgsType != null && originalVarArgsType.isPrimitive(); 
+            this.primitiveVarArgs = originalVarArgsType != null && originalVarArgsType.isPrimitive();
             this.varArgsConverter = isMethodVarArgs ? ValueConverter.fromAnnotatedType(methodParameters[methodParamCount - 1].getAnnotatedType()) : null;
             @SuppressWarnings("unchecked") // Yes. Making a T is not worth
             OutputConverter<Object> converter = OutputConverter.get((Class<Object>) method.getReturnType());
@@ -233,7 +235,8 @@ public final class AnnotationParser
                 MethodHandle tempHandle = MethodHandles.publicLookup().unreflect(method).asFixedArity().asSpreader(Object[].class, this.methodParamCount);
                 tempHandle = tempHandle.asType(tempHandle.type().changeReturnType(Object.class));
                 this.handle = Modifier.isStatic(method.getModifiers()) ? tempHandle : tempHandle.bindTo(instance.get());
-            } catch (IllegalAccessException e)
+            }
+            catch (IllegalAccessException e)
             {
                 throw new IllegalArgumentException(e);
             }
@@ -245,6 +248,8 @@ public final class AnnotationParser
         @Override
         public LazyValue apply(Context context, Context.Type t, List<LazyValue> lazyValues)
         {
+            // yes we are making a minecraft dependency, because of the stupid registry access required to parse stuff
+            RegistryAccess regs = ((CarpetContext) context).registryAccess();
             List<Value> lv = AbstractLazyFunction.unpackLazy(lazyValues, context, contextType);
             if (isEffectivelyVarArgs)
             {
@@ -262,7 +267,7 @@ public final class AnnotationParser
             Object[] params = getMethodParams(lv, context, t);
             try
             {
-                Value result = outputConverter.convert(handle.invokeExact(params));
+                Value result = outputConverter.convert(handle.invokeExact(params), regs);
                 return (cc, tt) -> result;
             }
             catch (Throwable e)
@@ -306,8 +311,9 @@ public final class AnnotationParser
                         }
                         varArgsList.add(obj);
                     }
-                    varArgs = varArgsList.toArray((Object[])Array.newInstance(varArgsType, 0));
-                } else
+                    varArgs = varArgsList.toArray((Object[]) Array.newInstance(varArgsType, 0));
+                }
+                else
                 {
                     varArgs = (Object[]) Array.newInstance(varArgsType, remaining / varArgsConverter.valueConsumption());
                     for (int i = 0; lvIterator.hasNext(); i++)
@@ -337,7 +343,8 @@ public final class AnnotationParser
                 builder.append(", ");
                 builder.append(varArgsConverter.getTypeName());
                 builder.append("s...)");
-            } else
+            }
+            else
             {
                 builder.append(')');
             }
@@ -346,5 +353,7 @@ public final class AnnotationParser
         }
     }
 
-    private AnnotationParser() {}
+    private AnnotationParser()
+    {
+    }
 }

@@ -12,6 +12,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
+import net.minecraft.core.RegistryAccess;
 import net.minecraft.nbt.Tag;
 
 import javax.annotation.Nullable;
@@ -97,7 +98,7 @@ public abstract class Value implements Comparable<Value>, Cloneable
 
     public Value divide(Value v)
     {
-        if (v instanceof final NumericValue number)
+        if (v instanceof NumericValue number)
         {
             String lstr = getString();
             return new StringValue(lstr.substring(0, (int) (lstr.length() / number.getDouble())));
@@ -121,7 +122,7 @@ public abstract class Value implements Comparable<Value>, Cloneable
     @Override // for hashmap key access, and == operator
     public boolean equals(Object o)
     {
-        if (o instanceof final Value v)
+        if (o instanceof Value v)
         {
             return this.compareTo(v) == 0;
         }
@@ -254,7 +255,7 @@ public abstract class Value implements Comparable<Value>, Cloneable
         }
     }
 
-    public abstract Tag toTag(boolean force);
+    public abstract Tag toTag(boolean force, RegistryAccess regs);
 
     public JsonElement toJson()
     {

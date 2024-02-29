@@ -14,8 +14,6 @@ import carpet.script.argument.FunctionArgument;
 import carpet.script.argument.Vector3Argument;
 import carpet.script.exception.ExitStatement;
 import carpet.script.exception.InternalExpressionException;
-import carpet.script.exception.ThrowStatement;
-import carpet.script.exception.Throwables;
 import carpet.script.external.Carpet;
 import carpet.script.utils.SnoopyCommandSource;
 import carpet.script.utils.SystemInfo;
@@ -348,7 +346,7 @@ public class Auxiliary
 
             ShapeDispatcher.sendShape(
                     (playerTargets.isEmpty()) ? cc.level().players() : playerTargets,
-                    shapes
+                    shapes, cc.registryAccess()
             );
             return Value.TRUE;
         });
@@ -475,7 +473,7 @@ public class Auxiliary
             return BooleanValue.of(NbtUtils.compareNbt(match, source, numParam == 2 || lv.get(2).getBoolean()));
         });
 
-        expression.addFunction("encode_nbt", lv -> {
+        expression.addContextFunction("encode_nbt", -1, (c, t, lv) -> {
             int argSize = lv.size();
             if (argSize == 0 || argSize > 2)
             {
@@ -486,7 +484,7 @@ public class Auxiliary
             Tag tag;
             try
             {
-                tag = v.toTag(force);
+                tag = v.toTag(force, ((CarpetContext)c).registryAccess());
             }
             catch (NBTSerializableValue.IncompatibleTypeException exception)
             {

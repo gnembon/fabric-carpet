@@ -13,6 +13,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import net.minecraft.core.RegistryAccess;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 
@@ -104,11 +105,11 @@ public class MapValue extends AbstractListValue implements ContainerValueInterfa
     public Value add(Value o)
     {
         Map<Value, Value> newItems = new HashMap<>(map);
-        if (o instanceof final MapValue mapValue)
+        if (o instanceof MapValue mapValue)
         {
             newItems.putAll(mapValue.map);
         }
-        else if (o instanceof final AbstractListValue alv)
+        else if (o instanceof AbstractListValue alv)
         {
             for (Value value : alv)
             {
@@ -142,7 +143,7 @@ public class MapValue extends AbstractListValue implements ContainerValueInterfa
 
     public void put(Value v)
     {
-        if (!(v instanceof final ListValue pair))
+        if (!(v instanceof ListValue pair))
         {
             map.put(v, Value.NULL);
             return;
@@ -169,7 +170,7 @@ public class MapValue extends AbstractListValue implements ContainerValueInterfa
     @Override
     public boolean equals(Object o)
     {
-        return o instanceof final MapValue mapValue && map.equals(mapValue.map);
+        return o instanceof MapValue mapValue && map.equals(mapValue.map);
     }
 
     public Map<Value, Value> getMap()
@@ -249,7 +250,7 @@ public class MapValue extends AbstractListValue implements ContainerValueInterfa
     }
 
     @Override
-    public Tag toTag(boolean force)
+    public Tag toTag(boolean force, RegistryAccess regs)
     {
         CompoundTag tag = new CompoundTag();
         map.forEach((k, v) ->
@@ -258,7 +259,7 @@ public class MapValue extends AbstractListValue implements ContainerValueInterfa
             {
                 throw new NBTSerializableValue.IncompatibleTypeException(k);
             }
-            tag.put(k.getString(), v.toTag(force));
+            tag.put(k.getString(), v.toTag(force, regs));
         });
         return tag;
     }
