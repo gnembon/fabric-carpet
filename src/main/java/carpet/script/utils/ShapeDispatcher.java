@@ -1661,7 +1661,7 @@ public class ShapeDispatcher
         public Value validate(Map<String, Value> options, MinecraftServer server, Value value)
         {
             ItemStack item = ValueConversions.getItemStackFromValue(value, true, server.registryAccess());
-            return new NBTSerializableValue(item.save(server.registryAccess()));
+            return new NBTSerializableValue(item.saveOptional(server.registryAccess()));
         }
 
         @Override
