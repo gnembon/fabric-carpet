@@ -56,7 +56,7 @@ public class Inventories
     public static void apply(Expression expression)
     {
         expression.addContextFunction("stack_limit", 1, (c, t, lv) ->
-                new NumericValue(NBTSerializableValue.parseItem(lv.get(0).getString(), ((CarpetContext) c).registryAccess()).getItem().getMaxStackSize()));
+                new NumericValue(NBTSerializableValue.parseItem(lv.get(0).getString(), ((CarpetContext) c).registryAccess()).getMaxStackSize()));
 
         expression.addContextFunction("item_category", -1, (c, t, lv) -> {
             c.host.issueDeprecation("item_category in 1.19.3+");
