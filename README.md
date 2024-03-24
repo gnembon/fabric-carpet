@@ -9,6 +9,8 @@
 [![GitHub contributors](https://img.shields.io/github/contributors/gnembon/fabric-carpet?label=Contributors&logo=github)](https://github.com/gnembon/fabric-carpet/graphs/contributors)
 [![Discord](https://badgen.net/discord/online-members/gn99m4QRY4?icon=discord&label=Discord&list=what)](https://discord.gg/gn99m4QRY4)
 
+Version en español de esta [documentacion](https://github.com/gnembon/fabric-carpet/blob/master/README-ES.md)  
+
 Cause all carpets are made of fabric?  
 This is the [Fabric](https://fabricmc.net/) version of Carpet Mod, for Minecraft 1.14.X, 1.15.X, 1.16.X and above.  
 
