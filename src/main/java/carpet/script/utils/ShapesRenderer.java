@@ -433,7 +433,7 @@ public class ShapesRenderer
                             BlockEntity.setLevel(client.level);
                             if (shape.blockEntity != null)
                             {
-                                BlockEntity.load(shape.blockEntity, client.level.registryAccess());
+                                BlockEntity.loadWithComponents(shape.blockEntity, client.level.registryAccess());
                             }
                         }
                     }

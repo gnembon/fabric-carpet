@@ -55,7 +55,15 @@ public class Messenger
         BLACK       ('k', (s, f) -> s.withColor(ChatFormatting.BLACK)),
 
         COLOR       ('#', (s, f) -> {
-            TextColor color = TextColor.parseColor("#"+f).getOrThrow(false, LOG::warn);
+            TextColor color;
+            try
+            {
+                color = TextColor.parseColor("#" + f).getOrThrow(RuntimeException::new);
+            }
+            catch (RuntimeException e)
+            {
+                return s;
+            }
             return color == null ? s : s.withColor(color);
         }, s -> {
             Matcher m = colorExtract.matcher(s);

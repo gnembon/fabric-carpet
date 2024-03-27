@@ -133,7 +133,7 @@ public abstract class PistonMovingBlockEntity_movableBEMixin extends BlockEntity
         }
     }
     
-    @Inject(method = "load", at = @At(value = "TAIL"))
+    @Inject(method = "loadAdditional", at = @At(value = "TAIL"))
     private void onFromTag(CompoundTag NbtCompound_1, HolderLookup.Provider registries, CallbackInfo ci)
     {
         if (CarpetSettings.movableBlockEntities && NbtCompound_1.contains("carriedTileEntityCM", 10))
@@ -141,7 +141,7 @@ public abstract class PistonMovingBlockEntity_movableBEMixin extends BlockEntity
             if (this.movedState.getBlock() instanceof EntityBlock)
                 this.carriedBlockEntity = ((EntityBlock) (this.movedState.getBlock())).newBlockEntity(worldPosition, movedState);//   this.world);
             if (carriedBlockEntity != null) //Can actually be null, as BlockPistonMoving.createNewTileEntity(...) returns null
-                this.carriedBlockEntity.load(NbtCompound_1.getCompound("carriedTileEntityCM"), registries);
+                this.carriedBlockEntity.loadWithComponents(NbtCompound_1.getCompound("carriedTileEntityCM"), registries);
             setCarriedBlockEntity(carriedBlockEntity);
         }
     }

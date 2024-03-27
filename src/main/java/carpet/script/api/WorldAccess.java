@@ -828,7 +828,7 @@ public class WorldAccess
                         destTag.putInt("x", targetPos.getX());
                         destTag.putInt("y", targetPos.getY());
                         destTag.putInt("z", targetPos.getZ());
-                        be.load(destTag, world.registryAccess());
+                        be.loadWithComponents(destTag, world.registryAccess());
                         be.setChanged();
                         success = true;
                     }
