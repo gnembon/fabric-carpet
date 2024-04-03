@@ -1,11 +1,11 @@
 plugins {
-	id 'fabric-loom' version '1.0-SNAPSHOT'
+	id 'fabric-loom' version '1.6-SNAPSHOT'
 	id 'io.github.juuxel.loom-quiltflower' version '1.7.3'
 	id 'maven-publish'
 }
 
-sourceCompatibility = JavaVersion.VERSION_17
-targetCompatibility = JavaVersion.VERSION_17
+sourceCompatibility = JavaVersion.VERSION_21
+targetCompatibility = JavaVersion.VERSION_21
 
 archivesBaseName = project.archives_base_name
 version = project.minecraft_version+'-'+project.mod_version+'+v'+new Date().format('yyMMdd')
@@ -47,8 +47,8 @@ tasks.withType(JavaCompile).configureEach {
 	// If Javadoc is generated, this must be specified in that task too.
 	it.options.encoding = "UTF-8"
 
-	// Minecraft 1.18 upwards uses Java 17.
-	it.options.release = 17
+	// Minecraft 1.20.5 upwards uses Java 21.
+	it.options.release = 21
 }
 
 java {
