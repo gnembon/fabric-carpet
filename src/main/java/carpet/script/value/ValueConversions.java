@@ -14,8 +14,10 @@ import net.minecraft.core.Registry;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.Vec3i;
 import net.minecraft.core.particles.ParticleOptions;
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtOps;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
@@ -122,7 +124,7 @@ public class ValueConversions
 
     public static Value of(ParticleOptions particle, RegistryAccess regs)
     {
-        String repr = particle.writeToString(regs);
+        String repr = ParticleTypes.CODEC.encodeStart(regs.createSerializationContext(NbtOps.INSTANCE), particle).toString();
         return StringValue.of(repr.startsWith("minecraft:") ? repr.substring(10) : repr);
     }
 
