@@ -180,7 +180,7 @@ public class CarpetSettings
         {
             if (newValue.matches("^[0-9]+$")) {
                 int value = Integer.parseInt(newValue);
-                if (value <= 64 && value >= 2) {
+                if (value <= 99 && value >= 2) {
                     shulkerBoxStackSize = value;
                     return newValue;
                 }
@@ -199,7 +199,7 @@ public class CarpetSettings
         @Override
         public String description()
         {
-            return "Value must either be true, false, or a number between 2-64";
+            return "Value must either be true, false, or a number between 2-99";
         }
     }
 
