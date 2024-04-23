@@ -56,7 +56,7 @@ public class Inventories
     public static void apply(Expression expression)
     {
         expression.addContextFunction("stack_limit", 1, (c, t, lv) ->
-                new NumericValue(NBTSerializableValue.parseItem(lv.get(0).getString(), ((CarpetContext) c).registryAccess()).getMaxStackSize()));
+                new NumericValue(NBTSerializableValue.parseItem(lv.getFirst().getString(), ((CarpetContext) c).registryAccess()).getMaxStackSize()));
 
         expression.addContextFunction("item_category", -1, (c, t, lv) -> {
             c.host.issueDeprecation("item_category in 1.19.3+");
@@ -71,7 +71,7 @@ public class Inventories
             {
                 return ListValue.wrap(items.holders().map(itemReference -> ValueConversions.of(itemReference.key().location())));
             }
-            String tag = lv.get(0).getString();
+            String tag = lv.getFirst().getString();
             Optional<HolderSet.Named<Item>> itemTag = items.getTag(TagKey.create(Registries.ITEM, InputValidator.identifierOf(tag)));
             return itemTag.isEmpty() ? Value.NULL : ListValue.wrap(itemTag.get().stream().map(b -> items.getKey(b.value())).filter(Objects::nonNull).map(ValueConversions::of));
         });
@@ -85,7 +85,7 @@ public class Inventories
             {
                 return ListValue.wrap(blocks.getTagNames().map(ValueConversions::of));
             }
-            Item item = NBTSerializableValue.parseItem(lv.get(0).getString(), cc.registryAccess()).getItem();
+            Item item = NBTSerializableValue.parseItem(lv.getFirst().getString(), cc.registryAccess()).getItem();
             if (lv.size() == 1)
             {
                 return ListValue.wrap(blocks.getTags().filter(e -> e.getSecond().stream().anyMatch(h -> (h.value() == item))).map(e -> ValueConversions.of(e.getFirst())));
@@ -102,7 +102,7 @@ public class Inventories
             {
                 throw new InternalExpressionException("'recipe_data' requires at least one argument");
             }
-            String recipeName = lv.get(0).getString();
+            String recipeName = lv.getFirst().getString();
             RecipeType<?> type = RecipeType.CRAFTING;
             if (lv.size() > 1)
             {
@@ -128,15 +128,17 @@ public class Inventories
                     // I am flattening ingredient lists per slot.
                     // consider recipe_data('wooden_sword','crafting') and ('iron_nugget', 'blasting') and notice difference
                     // in depths of lists.
-                    List<Collection<ItemStack>> stacks = Vanilla.Ingredient_getRecipeStacks(ingredient);
-                    if (stacks.isEmpty())
+                    ItemStack[] items = ingredient.getItems();
+                    if (items.length == 0)
                     {
                         ingredientValue.add(Value.NULL);
                     }
                     else
                     {
                         List<Value> alternatives = new ArrayList<>();
-                        stacks.forEach(col -> col.stream().map(is -> ValueConversions.of(is, regs)).forEach(alternatives::add));
+                        for (ItemStack item : items) {
+                            alternatives.add(ValueConversions.of(item, regs));
+                        }
                         ingredientValue.add(ListValue.wrap(alternatives));
                     }
                 });
@@ -181,7 +183,7 @@ public class Inventories
 
         expression.addContextFunction("crafting_remaining_item", 1, (c, t, v) ->
         {
-            String itemStr = v.get(0).getString();
+            String itemStr = v.getFirst().getString();
             ResourceLocation id = InputValidator.identifierOf(itemStr);
             Registry<Item> registry = ((CarpetContext) c).registry(Registries.ITEM);
             Item item = registry.getOptional(id).orElseThrow(() -> new ThrowStatement(itemStr, Throwables.UNKNOWN_ITEM));
@@ -458,7 +460,7 @@ public class Inventories
             {
                 throw new InternalExpressionException("'create_screen' requires at least three arguments");
             }
-            Value playerValue = lv.get(0);
+            Value playerValue = lv.getFirst();
             ServerPlayer player = EntityValue.getPlayerByValue(((CarpetContext) c).server(), playerValue);
             if (player == null)
             {
@@ -477,7 +479,7 @@ public class Inventories
 
         expression.addContextFunction("close_screen", 1, (c, t, lv) ->
         {
-            Value value = lv.get(0);
+            Value value = lv.getFirst();
             if (!(value instanceof ScreenValue screenValue))
             {
                 throw new InternalExpressionException("'close_screen' requires a screen value as the first argument.");
@@ -496,7 +498,7 @@ public class Inventories
             {
                 throw new InternalExpressionException("'screen_property' requires at least a screen and a property name");
             }
-            if (!(lv.get(0) instanceof ScreenValue screenValue))
+            if (!(lv.getFirst() instanceof ScreenValue screenValue))
             {
                 throw new InternalExpressionException("'screen_property' requires a screen value as the first argument");
             }

@@ -138,7 +138,7 @@ public class FileArgument
         {
             throw new InternalExpressionException("Unsupported file type: " + origtype);
         }
-        Pair<String, String> resource = recognizeResource(lv.get(0).getString(), isFolder, type);
+        Pair<String, String> resource = recognizeResource(lv.getFirst().getString(), isFolder, type);
         if (type == Type.FOLDER && !isFolder)
         {
             throw new InternalExpressionException("Folder types are no supported for this IO function");

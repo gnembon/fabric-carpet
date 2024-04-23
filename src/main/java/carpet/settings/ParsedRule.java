@@ -234,7 +234,7 @@ public final class ParsedRule<T> implements CarpetRule<T>, Comparable<ParsedRule
         }
         if (isStrict && !this.options.isEmpty())
         {
-            this.realValidators.add(0, new Validator.StrictValidator<>()); // at 0 prevents validators with side effects from running when invalid
+            this.realValidators.addFirst(new Validator.StrictValidator<>()); // at 0 prevents validators with side effects from running when invalid
         }
         if (converter0 == null) {
             @SuppressWarnings("unchecked")
@@ -394,7 +394,7 @@ public final class ParsedRule<T> implements CarpetRule<T>, Comparable<ParsedRule
 
     @Override
     public boolean strict() {
-        return !realValidators.isEmpty() && realValidators.get(0) instanceof Validator.StrictValidator;
+        return !realValidators.isEmpty() && realValidators.getFirst() instanceof Validator.StrictValidator;
     }
 
     private static <T> Map.Entry<Class<T>, FromStringConverter<T>> numericalConverter(Class<T> outputClass, Function<String, T> converter) {

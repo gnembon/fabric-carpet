@@ -249,7 +249,7 @@ public class AppStoreManager
         List<String> filteredSuggestions = appKiosk.createPathSuggestions(source).stream().filter(s -> s.startsWith(currentPath)).toList();
         if (filteredSuggestions.size() == 1 && !appKiosk.isLeaf())
         {
-            return suggestionsFromPath(filteredSuggestions.get(0), source); // Start suggesting directory contents
+            return suggestionsFromPath(filteredSuggestions.getFirst(), source); // Start suggesting directory contents
         }
         return filteredSuggestions;
     }

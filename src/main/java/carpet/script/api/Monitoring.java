@@ -37,7 +37,7 @@ public class Monitoring
             }
             if (lv.size() == 1)
             {
-                String what = lv.get(0).getString();
+                String what = lv.getFirst().getString();
                 Value res = SystemInfo.get(what, (CarpetContext) c);
                 if (res == null)
                 {
@@ -74,7 +74,7 @@ public class Monitoring
                 }
                 return MapValue.wrap(retDict);
             }
-            String catString = lv.get(0).getString();
+            String catString = lv.getFirst().getString();
             MobCategory cat = MOB_CATEGORY_MAP.get(catString.toLowerCase(Locale.ROOT));
             if (cat == null)
             {

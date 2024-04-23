@@ -46,7 +46,6 @@
     "LevelLightEngine_scarpetChunkCreationMixin",
     "LayerLightEngine_scarpetChunkCreationMixin",
     "LayerLightSectionStorage_scarpetChunkCreationMixin",
-    "DistanceManager_spawnChunksMixin",
     "ThreadedLevelLightEngine_scarpetChunkCreationMixin",
     "LivingEntity_cleanLogsMixin",
     "MobMixin",
@@ -150,7 +149,6 @@
     "CommandDispatcher_scarpetCommandsMixin",
 
     "RecipeManager_scarpetMixin",
-    "Ingredient_scarpetMixin",
     "BlockInput_scarpetMixin",
     "BlockPredicate_scarpetMixin",
     "TagPredicate_scarpetMixin",

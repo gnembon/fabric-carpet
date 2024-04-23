@@ -74,7 +74,7 @@ public class CarpetProfiler
         TILEENTITY
     }
 
-    public static record ProfilerToken(TYPE type, Object section, long start, Level world)
+    public record ProfilerToken(TYPE type, Object section, long start, Level world)
     {
         public ProfilerToken(TYPE type, Object section, Level world)
         {

@@ -429,7 +429,7 @@ public class CarpetEventServer
 
         public static List<Event> publicEvents(CarpetScriptServer server)
         {
-            List<Event> events = byName.values().stream().filter(e -> e.isPublic).collect(Collectors.toList());
+            List<Event> events = byName.values().stream().filter(e -> e.isPublic).toList();
             if (server != null)
             {
                 events.addAll(server.events.customEvents.values());

@@ -285,7 +285,7 @@ public abstract class CommandArgument
 
     public static final Map<String, CommandArgument> builtIns = baseTypes.stream().collect(Collectors.toMap(CommandArgument::getTypeSuffix, a -> a));
 
-    public static final CommandArgument DEFAULT = baseTypes.get(0);
+    public static final CommandArgument DEFAULT = baseTypes.getFirst();
 
     public static CommandArgument getTypeForArgument(String argument, CarpetScriptHost host)
     {
@@ -423,7 +423,7 @@ public abstract class CommandArgument
 
     protected List<String> suggestFor(CommandContext<CommandSourceStack> context, String prefix, CarpetScriptHost host) throws CommandSyntaxException
     {
-        return getOptions(context, host).stream().filter(s -> optionMatchesPrefix(prefix, s)).collect(Collectors.toList());
+        return getOptions(context, host).stream().filter(s -> optionMatchesPrefix(prefix, s)).toList();
     }
 
     protected Collection<String> getOptions(CommandContext<CommandSourceStack> context, CarpetScriptHost host) throws CommandSyntaxException
@@ -448,7 +448,7 @@ public abstract class CommandArgument
             {
                 throw error("Custom suggester should return a list of options" + " for custom type " + suffix);
             }
-            Collection<String> res = ((ListValue) response).getItems().stream().map(Value::getString).collect(Collectors.toList());
+            Collection<String> res = ((ListValue) response).getItems().stream().map(Value::getString).toList();
             currentSection.run();
             return res;
         }

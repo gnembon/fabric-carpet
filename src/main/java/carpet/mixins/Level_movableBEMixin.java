@@ -31,9 +31,6 @@ public abstract class Level_movableBEMixin implements LevelInterface, LevelAcces
     @Shadow
     public abstract BlockState getBlockState(BlockPos blockPos_1);
     
-    //@Shadow
-    //public abstract ChunkManager getChunkManager();
-    
     @Shadow
     public abstract void setBlocksDirty(BlockPos blockPos_1, BlockState s1, BlockState s2);
     
@@ -49,8 +46,6 @@ public abstract class Level_movableBEMixin implements LevelInterface, LevelAcces
     @Shadow public abstract ProfilerFiller getProfiler();
 
     @Shadow public abstract void updateNeighbourForOutputSignal(BlockPos pos, Block block);
-
-    //@Shadow public abstract boolean setBlockState(BlockPos pos, BlockState state, int flags);
 
     @Shadow public abstract boolean isDebug();
 

@@ -963,6 +963,6 @@ public class RedstoneWireTurbo
     private static int getMaxCurrentStrength(final UpdateNode upd, final int strength) {   
         if (upd.type != UpdateNode.Type.REDSTONE) return strength;
         final int i = upd.currentState.getValue(RedStoneWireBlock.POWER);
-        return i > strength ? i : strength;
+        return Math.max(i, strength);
     }
 }

@@ -197,7 +197,7 @@ public class EntityValue extends Value
         if (v instanceof ListValue lv)
         {
             List<Value> values = lv.getItems();
-            String what = values.get(0).getString();
+            String what = values.getFirst().getString();
             Value arg = null;
             if (values.size() == 2)
             {
@@ -756,7 +756,7 @@ public class EntityValue extends Value
                     {
                         throw new InternalExpressionException("'trace' needs more arguments");
                     }
-                    reach = (float) NumericValue.asNumber(args.get(0)).getDouble();
+                    reach = (float) NumericValue.asNumber(args.getFirst()).getDouble();
                     if (args.size() > 1)
                     {
                         entities = false;
@@ -1047,7 +1047,7 @@ public class EntityValue extends Value
             }
             List<Value> coords = lv.getItems();
             updatePosition(e,
-                    NumericValue.asNumber(coords.get(0)).getDouble(),
+                    NumericValue.asNumber(coords.getFirst()).getDouble(),
                     NumericValue.asNumber(coords.get(1)).getDouble(),
                     NumericValue.asNumber(coords.get(2)).getDouble(),
                     (float) NumericValue.asNumber(coords.get(3)).getDouble(),
@@ -1062,7 +1062,7 @@ public class EntityValue extends Value
             }
             List<Value> coords = lv.getItems();
             updatePosition(e,
-                    NumericValue.asNumber(coords.get(0)).getDouble(),
+                    NumericValue.asNumber(coords.getFirst()).getDouble(),
                     NumericValue.asNumber(coords.get(1)).getDouble(),
                     NumericValue.asNumber(coords.get(2)).getDouble(),
                     e.getYRot(),
@@ -1096,7 +1096,7 @@ public class EntityValue extends Value
                 throw new InternalExpressionException("Expected a list of 3 parameters as a second argument");
             }
             List<Value> vec = lv.getItems();
-            float x = NumericValue.asNumber(vec.get(0)).getFloat();
+            float x = NumericValue.asNumber(vec.getFirst()).getFloat();
             float y = NumericValue.asNumber(vec.get(1)).getFloat();
             float z = NumericValue.asNumber(vec.get(2)).getFloat();
             float l = Mth.sqrt(x * x + y * y + z * z);
@@ -1123,7 +1123,7 @@ public class EntityValue extends Value
             }
             List<Value> coords = lv.getItems();
             updatePosition(e,
-                    e.getX() + NumericValue.asNumber(coords.get(0)).getDouble(),
+                    e.getX() + NumericValue.asNumber(coords.getFirst()).getDouble(),
                     e.getY() + NumericValue.asNumber(coords.get(1)).getDouble(),
                     e.getZ() + NumericValue.asNumber(coords.get(2)).getDouble(),
                     e.getYRot(),
@@ -1138,7 +1138,7 @@ public class EntityValue extends Value
                 throw new InternalExpressionException("Expected a list of 3 parameters as a second argument");
             }
             List<Value> coords = lv.getItems();
-            double dx = NumericValue.asNumber(coords.get(0)).getDouble();
+            double dx = NumericValue.asNumber(coords.getFirst()).getDouble();
             double dy = NumericValue.asNumber(coords.get(1)).getDouble();
             double dz = NumericValue.asNumber(coords.get(2)).getDouble();
             e.setDeltaMovement(dx, dy, dz);
@@ -1174,7 +1174,7 @@ public class EntityValue extends Value
             }
             List<Value> coords = lv.getItems();
             e.push(
-                    NumericValue.asNumber(coords.get(0)).getDouble(),
+                    NumericValue.asNumber(coords.getFirst()).getDouble(),
                     NumericValue.asNumber(coords.get(1)).getDouble(),
                     NumericValue.asNumber(coords.get(2)).getDouble()
             );
@@ -1192,7 +1192,7 @@ public class EntityValue extends Value
             if (v instanceof ListValue lv)
             {
                 showName = lv.getItems().get(1).getBoolean();
-                v = lv.getItems().get(0);
+                v = lv.getItems().getFirst();
             }
             e.setCustomNameVisible(showName);
             e.setCustomName(FormattedTextValue.getTextByValue(v));
@@ -1473,7 +1473,7 @@ public class EntityValue extends Value
                 List<Value> list = lv.getItems();
                 if (list.size() >= 1 && list.size() <= 6)
                 {
-                    String effectName = list.get(0).getString();
+                    String effectName = list.getFirst().getString();
                     Holder<MobEffect> effect = BuiltInRegistries.MOB_EFFECT.getHolder(InputValidator.identifierOf(effectName)).orElseThrow(() -> new InternalExpressionException("No such an effect: " + effectName));
                     if (list.size() == 1)
                     {

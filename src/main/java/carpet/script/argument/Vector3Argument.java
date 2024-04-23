@@ -81,7 +81,7 @@ public class Vector3Argument extends Argument
             {
                 List<Value> args = ((ListValue) v1).getItems();
                 Vec3 pos = new Vec3(
-                        NumericValue.asNumber(args.get(0)).getDouble(),
+                        NumericValue.asNumber(args.getFirst()).getDouble(),
                         NumericValue.asNumber(args.get(1)).getDouble(),
                         NumericValue.asNumber(args.get(2)).getDouble());
                 double yaw = 0.0D;

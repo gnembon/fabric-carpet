@@ -39,7 +39,7 @@ public class Sys
 
         expression.addTypedContextFunction("bool", 1, Context.BOOLEAN, (c, t, lv) ->
         {
-            Value v = lv.get(0);
+            Value v = lv.getFirst();
             if (v instanceof StringValue)
             {
                 String str = v.getString().toLowerCase(Locale.ROOT);
@@ -77,7 +77,7 @@ public class Sys
             {
                 throw new InternalExpressionException("'str' requires at least one argument");
             }
-            String format = lv.get(0).getString();
+            String format = lv.getFirst().getString();
             if (lv.size() == 1)
             {
                 return new StringValue(format);
@@ -173,7 +173,7 @@ public class Sys
             {
                 throw new InternalExpressionException("'replace' expects string to read, pattern regex, and optional replacement string");
             }
-            String data = lv.get(0).getString();
+            String data = lv.getFirst().getString();
             String regex = lv.get(1).getString();
             String replacement = "";
             if (lv.size() == 3)
@@ -196,7 +196,7 @@ public class Sys
             {
                 throw new InternalExpressionException("'replace_first' expects string to read, pattern regex, and optional replacement string");
             }
-            String data = lv.get(0).getString();
+            String data = lv.getFirst().getString();
             String regex = lv.get(1).getString();
             String replacement = "";
             if (lv.size() == 3)
@@ -220,7 +220,7 @@ public class Sys
             {
                 randomizer = c.host.getRandom(NumericValue.asNumber(lv.get(1)).getLong());
             }
-            Value argument = lv.get(0);
+            Value argument = lv.getFirst();
             if (argument instanceof final ListValue listValue)
             {
                 List<Value> list = listValue.getItems();
@@ -230,7 +230,7 @@ public class Sys
             return t == Context.BOOLEAN ? BooleanValue.of(value >= 1.0D) : new NumericValue(value);
         });
         expression.addContextFunction("reset_seed", 1, (c, t, lv) -> {
-            boolean gotIt = c.host.resetRandom(NumericValue.asNumber(lv.get(0)).getLong());
+            boolean gotIt = c.host.resetRandom(NumericValue.asNumber(lv.getFirst()).getLong());
             return BooleanValue.of(gotIt);
         });
 
@@ -257,7 +257,7 @@ public class Sys
                 {
                     throw new InternalExpressionException("'perlin' requires at least one dimension to sample from");
                 }
-                x = NumericValue.asNumber(lv.get(0));
+                x = NumericValue.asNumber(lv.getFirst());
                 if (lv.size() > 1)
                 {
                     y = NumericValue.asNumber(lv.get(1));
@@ -295,7 +295,7 @@ public class Sys
 
             if (lv.size() >= 4)
             {
-                x = lv.get(0);
+                x = lv.getFirst();
                 y = lv.get(1);
                 z = lv.get(2);
                 sampler = SimplexNoiseSampler.getSimplex(NumericValue.asNumber(lv.get(3)).getLong());
@@ -308,7 +308,7 @@ public class Sys
                 {
                     throw new InternalExpressionException("'simplex' requires at least two dimensions to sample from");
                 }
-                x = NumericValue.asNumber(lv.get(0));
+                x = NumericValue.asNumber(lv.getFirst());
                 y = NumericValue.asNumber(lv.get(1));
                 if (lv.size() > 2)
                 {
@@ -350,7 +350,7 @@ public class Sys
             {
                 throw new InternalExpressionException("'convert_date' requires at least one parameter");
             }
-            Value value = lv.get(0);
+            Value value = lv.getFirst();
             if (argsize == 1 && !(value instanceof ListValue))
             {
                 Calendar cal = new GregorianCalendar(Locale.ROOT);
@@ -382,7 +382,7 @@ public class Sys
             if (argsize == 3)
             {
                 cal.set(
-                        NumericValue.asNumber(lv.get(0)).getInt(),
+                        NumericValue.asNumber(lv.getFirst()).getInt(),
                         NumericValue.asNumber(lv.get(1)).getInt() - 1,
                         NumericValue.asNumber(lv.get(2)).getInt()
                 );
@@ -390,7 +390,7 @@ public class Sys
             else if (argsize == 6)
             {
                 cal.set(
-                        NumericValue.asNumber(lv.get(0)).getInt(),
+                        NumericValue.asNumber(lv.getFirst()).getInt(),
                         NumericValue.asNumber(lv.get(1)).getInt() - 1,
                         NumericValue.asNumber(lv.get(2)).getInt(),
                         NumericValue.asNumber(lv.get(3)).getInt(),
@@ -408,7 +408,7 @@ public class Sys
         // lazy cause evaluates expression multiple times
         expression.addLazyFunction("profile_expr", 1, (c, t, lv) ->
         {
-            LazyValue lazy = lv.get(0);
+            LazyValue lazy = lv.getFirst();
             long end = System.nanoTime() + 50000000L;
             long it = 0;
             while (System.nanoTime() < end)
@@ -421,11 +421,11 @@ public class Sys
         });
 
         expression.addContextFunction("var", 1, (c, t, lv) ->
-                expression.getOrSetAnyVariable(c, lv.get(0).getString()).evalValue(c));
+                expression.getOrSetAnyVariable(c, lv.getFirst().getString()).evalValue(c));
 
         expression.addContextFunction("undef", 1, (c, t, lv) ->
         {
-            Value remove = lv.get(0);
+            Value remove = lv.getFirst();
             if (remove instanceof FunctionValue)
             {
                 c.host.delFunction(expression.module, remove.getString());
@@ -467,7 +467,7 @@ public class Sys
         //deprecate
         expression.addContextFunction("vars", 1, (c, t, lv) ->
         {
-            String prefix = lv.get(0).getString();
+            String prefix = lv.getFirst().getString();
             List<Value> values = new ArrayList<>();
             if (prefix.startsWith("global"))
             {
@@ -487,7 +487,7 @@ public class Sys
             {
                 throw new InternalExpressionException("'system_variable_get' expects at least a key to be fetched");
             }
-            Value key = lv.get(0).evalValue(c);
+            Value key = lv.getFirst().evalValue(c);
             if (lv.size() > 1)
             {
                 c.host.scriptServer().systemGlobals.computeIfAbsent(key, k -> lv.get(1).evalValue(c));
@@ -498,7 +498,7 @@ public class Sys
 
         expression.addContextFunction("system_variable_set", 2, (c, t, lv) ->
         {
-            Value res = c.host.scriptServer().systemGlobals.put(lv.get(0), lv.get(1));
+            Value res = c.host.scriptServer().systemGlobals.put(lv.getFirst(), lv.get(1));
             return res == null ? Value.NULL : res;
         });
     }

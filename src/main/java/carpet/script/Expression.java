@@ -135,7 +135,7 @@ public class Expression
         String code = this.getCodeString();
         List<String> output = new ArrayList<>(getExpressionSnippetLeftContext(token, code, 1));
         List<String> context = getExpressionSnippetContext(token, code);
-        output.add(context.get(0) + " HERE>> " + context.get(1));
+        output.add(context.getFirst() + " HERE>> " + context.get(1));
         output.addAll(getExpressionSnippetRightContext(token, code, 1));
         return output;
     }
@@ -463,7 +463,7 @@ public class Expression
             @Override
             public Value eval(List<Value> parameters)
             {
-                return fun.apply(parameters.get(0));
+                return fun.apply(parameters.getFirst());
             }
         });
     }
@@ -481,7 +481,7 @@ public class Expression
             @Override
             public Value eval(List<Value> parameters)
             {
-                return fun.apply(parameters.get(0));
+                return fun.apply(parameters.getFirst());
             }
         });
     }
@@ -493,7 +493,7 @@ public class Expression
             @Override
             public Value eval(List<Value> parameters)
             {
-                return fun.apply(parameters.get(0), parameters.get(1));
+                return fun.apply(parameters.getFirst(), parameters.get(1));
             }
         });
     }
@@ -1143,7 +1143,7 @@ public class Expression
                     {
                         nodeStack.pop();
                     }
-                    List<LazyValue> params = p.stream().map(n -> n.op).collect(Collectors.toList());
+                    List<LazyValue> params = p.stream().map(n -> n.op).toList();
                     nodeStack.push(new ExpressionNode(
                             (c, t) -> f.lazyEval(c, t, this, token, params).evalValue(c, t),
                             p, token
@@ -1308,10 +1308,10 @@ public class Expression
             {
                 if (!returnNode.args.isEmpty())
                 {
-                    returnNode.op = returnNode.args.get(0).op;
-                    returnNode.token = returnNode.args.get(0).token;
-                    returnNode.range = returnNode.args.get(0).range;
-                    returnNode.args = returnNode.args.get(0).args;
+                    returnNode.op = returnNode.args.getFirst().op;
+                    returnNode.token = returnNode.args.getFirst().token;
+                    returnNode.range = returnNode.args.getFirst().range;
+                    returnNode.args = returnNode.args.getFirst().args;
                     if (scriptsDebugging)
                     {
                         CarpetScriptServer.LOG.info(" - Removed unnecessary tail return of " + returnNode.token.surface + " from function body at line " + (returnNode.token.lineno + 1) + ", node depth " + indent);
@@ -1454,11 +1454,11 @@ public class Expression
         }
         else if (args.size() == 1)
         {
-            result = ((ILazyOperator) operation).lazyEval(ctx, expectedType, this, node.token, args.get(0), null).evalValue(null, expectedType);
+            result = ((ILazyOperator) operation).lazyEval(ctx, expectedType, this, node.token, args.getFirst(), null).evalValue(null, expectedType);
         }
         else // args == 2
         {
-            result = ((ILazyOperator) operation).lazyEval(ctx, expectedType, this, node.token, args.get(0), args.get(1)).evalValue(null, expectedType);
+            result = ((ILazyOperator) operation).lazyEval(ctx, expectedType, this, node.token, args.getFirst(), args.get(1)).evalValue(null, expectedType);
         }
         node.op = LazyValue.ofConstant(result);
         if (scriptsDebugging)
@@ -1492,14 +1492,14 @@ public class Expression
             {
                 ILazyOperator op = operators.get(token.surface);
                 Context.Type requestedType = op.staticType(expectedType);
-                LazyValue arg = extractOp(ctx, node.args.get(0), requestedType);
+                LazyValue arg = extractOp(ctx, node.args.getFirst(), requestedType);
                 return (c, t) -> op.lazyEval(c, t, this, token, arg, null).evalValue(c, t);
             }
             case OPERATOR:
             {
                 ILazyOperator op = operators.get(token.surface);
                 Context.Type requestedType = op.staticType(expectedType);
-                LazyValue arg = extractOp(ctx, node.args.get(0), requestedType);
+                LazyValue arg = extractOp(ctx, node.args.getFirst(), requestedType);
                 LazyValue arh = extractOp(ctx, node.args.get(1), requestedType);
                 return (c, t) -> op.lazyEval(c, t, this, token, arg, arh).evalValue(c, t);
             }
@@ -1509,7 +1509,7 @@ public class Expression
             {
                 ILazyFunction f = functions.get(token.surface);
                 Context.Type requestedType = f.staticType(expectedType);
-                List<LazyValue> params = node.args.stream().map(n -> extractOp(ctx, n, requestedType)).collect(Collectors.toList());
+                List<LazyValue> params = node.args.stream().map(n -> extractOp(ctx, n, requestedType)).toList();
                 return (c, t) -> f.lazyEval(c, t, this, token, params).evalValue(c, t);
             }
             case CONSTANT:

@@ -51,7 +51,7 @@ public class TrajectoryLogHelper
                         line.add(String.format("^w Tick: %d\nx: %f\ny: %f\nz: %f\n------------\nmx: %f\nmy: %f\nmz: %f",
                                 i, pos.x, pos.y, pos.z, mot.x, mot.y, mot.z));
                         if ((((i + 1) % MAX_TICKS_PER_LINE) == 0) || i == positions.size() - 1) {
-                            comp.add(Messenger.c(line.toArray(new Object[0])));
+                            comp.add(Messenger.c(line.toArray()));
                             line.clear();
                         }
                     }

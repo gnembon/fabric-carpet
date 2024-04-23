@@ -547,10 +547,4 @@ public abstract class ChunkMap_scarpetChunkCreationMixin implements ThreadedAnvi
 
         return report;
     }
-
-    @Override
-    public Iterable<ChunkHolder> getChunksCM()
-    {
-        return getChunks();
-    }
 }

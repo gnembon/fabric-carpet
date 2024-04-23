@@ -675,7 +675,7 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
             }
             if (tags.size() == 1 && !valString.endsWith("[]"))
             {
-                return NBTSerializableValue.decodeTag(tags.get(0));
+                return NBTSerializableValue.decodeTag(tags.getFirst());
             }
             return ListValue.wrap(tags.stream().map(NBTSerializableValue::decodeTag));
         }

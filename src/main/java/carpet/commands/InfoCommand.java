@@ -49,16 +49,14 @@ public class InfoCommand
         if (grep != null)
         {
             Pattern p = Pattern.compile(grep);
-            Messenger.m(source, messages.get(0));
-            for (int i = 1; i<messages.size(); i++)
-            {
-                Component line = messages.get(i);
+            Messenger.m(source, messages.getFirst());
+            messages.forEach(line -> {
                 Matcher m = p.matcher(line.getString());
                 if (m.find())
                 {
                     Messenger.m(source, line);
                 }
-            }
+            });
         }
         else
         {

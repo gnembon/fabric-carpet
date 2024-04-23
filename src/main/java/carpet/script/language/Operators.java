@@ -48,7 +48,7 @@ public class Operators
             {
                 return Value.NULL;
             }
-            Value accumulator = lv.get(0);
+            Value accumulator = lv.getFirst();
             for (Value v : lv.subList(1, size))
             {
                 accumulator = accumulator.add(v);
@@ -64,7 +64,7 @@ public class Operators
             {
                 return Value.NULL;
             }
-            Value accumulator = lv.get(0);
+            Value accumulator = lv.getFirst();
             for (Value v : lv.subList(1, size))
             {
                 accumulator = accumulator.subtract(v);
@@ -80,7 +80,7 @@ public class Operators
             {
                 return Value.NULL;
             }
-            Value accumulator = lv.get(0);
+            Value accumulator = lv.getFirst();
             for (Value v : lv.subList(1, size))
             {
                 accumulator = accumulator.multiply(v);
@@ -96,7 +96,7 @@ public class Operators
             {
                 return Value.NULL;
             }
-            Value accumulator = lv.get(0);
+            Value accumulator = lv.getFirst();
             for (Value v : lv.subList(1, size))
             {
                 accumulator = accumulator.divide(v);
@@ -116,7 +116,7 @@ public class Operators
             {
                 return Value.NULL;
             }
-            long accumulator = NumericValue.asNumber(lv.get(0)).getLong();
+            long accumulator = NumericValue.asNumber(lv.getFirst()).getLong();
             for (Value v : lv.subList(1, size))
             {
                 accumulator = accumulator & NumericValue.asNumber(v).getLong();
@@ -130,7 +130,7 @@ public class Operators
             {
                 return Value.NULL;
             }
-            long accumulator = NumericValue.asNumber(lv.get(0)).getLong();
+            long accumulator = NumericValue.asNumber(lv.getFirst()).getLong();
             for (Value v : lv.subList(1, size))
             {
                 accumulator = accumulator ^ NumericValue.asNumber(v).getLong();
@@ -144,7 +144,7 @@ public class Operators
             {
                 return Value.NULL;
             }
-            long accumulator = NumericValue.asNumber(lv.get(0)).getLong();
+            long accumulator = NumericValue.asNumber(lv.getFirst()).getLong();
             for (Value v : lv.subList(1, size))
             {
                 accumulator = accumulator | NumericValue.asNumber(v).getLong();
@@ -238,7 +238,7 @@ public class Operators
             {
                 return Value.TRUE;
             }
-            Value prev = lv.get(0);
+            Value prev = lv.getFirst();
             for (Value next : lv.subList(1, size))
             {
                 if (prev.compareTo(next) <= 0)
@@ -259,7 +259,7 @@ public class Operators
             {
                 return Value.TRUE;
             }
-            Value prev = lv.get(0);
+            Value prev = lv.getFirst();
             for (Value next : lv.subList(1, size))
             {
                 if (prev.compareTo(next) < 0)
@@ -280,7 +280,7 @@ public class Operators
             {
                 return Value.TRUE;
             }
-            Value prev = lv.get(0);
+            Value prev = lv.getFirst();
             for (Value next : lv.subList(1, size))
             {
                 if (prev.compareTo(next) >= 0)
@@ -301,7 +301,7 @@ public class Operators
             {
                 return Value.TRUE;
             }
-            Value prev = lv.get(0);
+            Value prev = lv.getFirst();
             for (Value next : lv.subList(1, size))
             {
                 if (prev.compareTo(next) > 0)
@@ -334,7 +334,7 @@ public class Operators
             {
                 return Value.TRUE;
             }
-            Value prev = lv.get(0);
+            Value prev = lv.getFirst();
             for (Value next : lv.subList(1, size))
             {
                 if (!prev.equals(next))
@@ -356,7 +356,7 @@ public class Operators
             }
             // need to order them so same obejects will be next to each other.
             lv.sort(Comparator.comparingInt(Value::hashCode));
-            Value prev = lv.get(0);
+            Value prev = lv.getFirst();
             for (Value next : lv.subList(1, size))
             {
                 if (prev.equals(next))

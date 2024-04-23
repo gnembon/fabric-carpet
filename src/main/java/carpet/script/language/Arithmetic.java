@@ -15,7 +15,7 @@ public class Arithmetic
 
     public static void apply(Expression expression)
     {
-        expression.addTypedContextFunction("not", 1, Context.Type.BOOLEAN, (c, t, lv) -> BooleanValue.of(lv.get(0).getBoolean()));
+        expression.addTypedContextFunction("not", 1, Context.Type.BOOLEAN, (c, t, lv) -> BooleanValue.of(lv.getFirst().getBoolean()));
         expression.addUnaryFunction("fact", v ->
         {
             long number = NumericValue.asNumber(v).getLong();
@@ -82,7 +82,7 @@ public class Arithmetic
         expression.addMathematicalUnaryIntFunction("ceil", n -> (long) Math.ceil(n));
 
         expression.addContextFunction("mandelbrot", 3, (c, t, lv) -> {
-            double a0 = NumericValue.asNumber(lv.get(0)).getDouble();
+            double a0 = NumericValue.asNumber(lv.getFirst()).getDouble();
             double b0 = NumericValue.asNumber(lv.get(1)).getDouble();
             long maxiter = NumericValue.asNumber(lv.get(2)).getLong();
             double a = 0.0D;
@@ -106,9 +106,9 @@ public class Arithmetic
                 throw new InternalExpressionException("'max' requires at least one parameter");
             }
             Value max = null;
-            if (lv.size() == 1 && lv.get(0) instanceof ListValue)
+            if (lv.size() == 1 && lv.getFirst() instanceof ListValue)
             {
-                lv = ((ListValue) lv.get(0)).getItems();
+                lv = ((ListValue) lv.getFirst()).getItems();
             }
             for (Value parameter : lv)
             {
@@ -127,9 +127,9 @@ public class Arithmetic
                 throw new InternalExpressionException("'min' requires at least one parameter");
             }
             Value min = null;
-            if (lv.size() == 1 && lv.get(0) instanceof ListValue)
+            if (lv.size() == 1 && lv.getFirst() instanceof ListValue)
             {
-                lv = ((ListValue) lv.get(0)).getItems();
+                lv = ((ListValue) lv.getFirst()).getItems();
             }
             for (Value parameter : lv)
             {

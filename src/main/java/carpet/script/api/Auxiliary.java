@@ -133,7 +133,7 @@ public class Auxiliary
             {
                 return ListValue.wrap(cc.registry(Registries.SOUND_EVENT).holders().map(soundEventReference -> ValueConversions.of(soundEventReference.key().location())));
             }
-            String rawString = lv.get(0).getString();
+            String rawString = lv.getFirst().getString();
             ResourceLocation soundName = InputValidator.identifierOf(rawString);
             Vector3Argument locator = Vector3Argument.findIn(lv, 1);
 
@@ -181,7 +181,7 @@ public class Auxiliary
             MinecraftServer ms = cc.server();
             ServerLevel world = cc.level();
             Vector3Argument locator = Vector3Argument.findIn(lv, 1);
-            String particleName = lv.get(0).getString();
+            String particleName = lv.getFirst().getString();
             int count = 10;
             double speed = 0;
             float spread = 0.5f;
@@ -226,7 +226,7 @@ public class Auxiliary
         {
             CarpetContext cc = (CarpetContext) c;
             ServerLevel world = cc.level();
-            String particleName = lv.get(0).getString();
+            String particleName = lv.getFirst().getString();
             ParticleOptions particle = ShapeDispatcher.getParticleData(particleName, world.registryAccess());
             Vector3Argument pos1 = Vector3Argument.findIn(lv, 1);
             Vector3Argument pos2 = Vector3Argument.findIn(lv, pos1.offset);
@@ -264,13 +264,13 @@ public class Auxiliary
             ));
         });
 
-        expression.addContextFunction("item_display_name", 1, (c, t, lv) -> new FormattedTextValue(ValueConversions.getItemStackFromValue(lv.get(0), false, ((CarpetContext) c).registryAccess()).getHoverName()));
+        expression.addContextFunction("item_display_name", 1, (c, t, lv) -> new FormattedTextValue(ValueConversions.getItemStackFromValue(lv.getFirst(), false, ((CarpetContext) c).registryAccess()).getHoverName()));
 
         expression.addContextFunction("particle_box", -1, (c, t, lv) ->
         {
             CarpetContext cc = (CarpetContext) c;
             ServerLevel world = cc.level();
-            String particleName = lv.get(0).getString();
+            String particleName = lv.getFirst().getString();
             ParticleOptions particle = ShapeDispatcher.getParticleData(particleName, world.registryAccess());
             Vector3Argument pos1 = Vector3Argument.findIn(lv, 1);
             Vector3Argument pos2 = Vector3Argument.findIn(lv, pos1.offset);
@@ -325,7 +325,7 @@ public class Auxiliary
             List<ShapeDispatcher.ShapeWithConfig> shapes = new ArrayList<>();
             if (lv.size() == 1) // bulk
             {
-                Value specLoad = lv.get(0);
+                Value specLoad = lv.getFirst();
                 if (!(specLoad instanceof final ListValue spec))
                 {
                     throw new InternalExpressionException("In bulk mode - shapes need to be provided as a list of shape specs");
@@ -359,7 +359,7 @@ public class Auxiliary
             Component name;
             try
             {
-                Value nameValue = lv.get(0);
+                Value nameValue = lv.getFirst();
                 name = nameValue.isNull() ? null : FormattedTextValue.getTextByValue(nameValue);
                 pointLocator = Vector3Argument.findIn(lv, 1, true, false);
                 if (lv.size() > pointLocator.offset)
@@ -464,11 +464,11 @@ public class Auxiliary
             {
                 return Value.TRUE;
             }
-            if (lv.get(0).isNull())
+            if (lv.getFirst().isNull())
             {
                 return Value.FALSE;
             }
-            Tag source = ((NBTSerializableValue) (NBTSerializableValue.fromValue(lv.get(0)))).getTag();
+            Tag source = ((NBTSerializableValue) (NBTSerializableValue.fromValue(lv.getFirst()))).getTag();
             Tag match = ((NBTSerializableValue) (NBTSerializableValue.fromValue(lv.get(1)))).getTag();
             return BooleanValue.of(NbtUtils.compareNbt(match, source, numParam == 2 || lv.get(2).getBoolean()));
         });
@@ -479,7 +479,7 @@ public class Auxiliary
             {
                 throw new InternalExpressionException("'encode_nbt' requires 1 or 2 parameters");
             }
-            Value v = lv.get(0);
+            Value v = lv.getFirst();
             boolean force = (argSize > 1) && lv.get(1).getBoolean();
             Tag tag;
             try
@@ -503,7 +503,7 @@ public class Auxiliary
             CarpetContext cc = (CarpetContext) c;
             CommandSourceStack s = cc.source();
             MinecraftServer server = s.getServer();
-            Value res = lv.get(0);
+            Value res = lv.getFirst();
             List<CommandSourceStack> targets = null;
             if (lv.size() == 2)
             {
@@ -542,7 +542,7 @@ public class Auxiliary
             {
                 throw new InternalExpressionException("'display_title' needs at least a target, type and message, and optionally times");
             }
-            Value pVal = lv.get(0);
+            Value pVal = lv.getFirst();
             if (!(pVal instanceof ListValue))
             {
                 pVal = ListValue.of(pVal);
@@ -618,7 +618,7 @@ public class Auxiliary
                 }
 
                 AtomicInteger total = new AtomicInteger(0);
-                List<ServerPlayer> targetList = targets.collect(Collectors.toList());
+                List<ServerPlayer> targetList = targets.toList();
                 if (!soundsTrue) // null or empty string
                 {
                     targetList.forEach(target -> {
@@ -671,7 +671,7 @@ public class Auxiliary
             {
                 throw new InternalExpressionException("'format' requires at least one component");
             }
-            if (values.get(0) instanceof final ListValue list && values.size() == 1)
+            if (values.getFirst() instanceof final ListValue list && values.size() == 1)
             {
                 values = list.getItems();
             }
@@ -687,7 +687,7 @@ public class Auxiliary
                 List<Component> output = new ArrayList<>();
                 s.getServer().getCommands().performPrefixedCommand(
                         new SnoopyCommandSource(s, error, output),
-                        lv.get(0).getString());
+                        lv.getFirst().getString());
                 return ListValue.of(
                         NumericValue.ZERO,
                         ListValue.wrap(output.stream().map(FormattedTextValue::new)),
@@ -726,7 +726,7 @@ public class Auxiliary
             Value time = new NumericValue(((CarpetContext) c).level().getDayTime());
             if (!lv.isEmpty())
             {
-                long newTime = NumericValue.asNumber(lv.get(0)).getLong();
+                long newTime = NumericValue.asNumber(lv.getFirst()).getLong();
                 if (newTime < 0)
                 {
                     newTime = 0;
@@ -765,7 +765,7 @@ public class Auxiliary
                 Vanilla.MinecraftServer_forceTick(server, () -> System.nanoTime() - scriptServer.tickStart < 50000000L);
                 if (!lv.isEmpty())
                 {
-                    long msTotal = NumericValue.asNumber(lv.get(0)).getLong();
+                    long msTotal = NumericValue.asNumber(lv.getFirst()).getLong();
                     long endExpected = scriptServer.tickStart + msTotal * 1000000L;
                     long wait = endExpected - System.nanoTime();
                     if (wait > 0L)
@@ -825,7 +825,7 @@ public class Auxiliary
         // lazy due to passthrough and context changing ability
         expression.addLazyFunction("in_dimension", 2, (c, t, lv) -> {
             CommandSourceStack outerSource = ((CarpetContext) c).source();
-            Value dimensionValue = lv.get(0).evalValue(c);
+            Value dimensionValue = lv.getFirst().evalValue(c);
             Level world = ValueConversions.dimFromValue(dimensionValue, outerSource.getServer());
             if (world == outerSource.getLevel())
             {
@@ -886,7 +886,7 @@ public class Auxiliary
             {
                 throw new InternalExpressionException("'schedule' should have at least 2 arguments, delay and call name");
             }
-            long delay = NumericValue.asNumber(lv.get(0)).getLong();
+            long delay = NumericValue.asNumber(lv.getFirst()).getLong();
 
             FunctionArgument functionArgument = FunctionArgument.findIn(c, expression.module, lv, 1, false, false);
             ((CarpetScriptServer)c.host.scriptServer()).events.scheduleCall(
@@ -904,12 +904,12 @@ public class Auxiliary
 
             if (lv.size() == 1)
             {
-                res = lv.get(0);
+                res = lv.getFirst();
                 CarpetScriptServer.LOG.info(res.getString());
             }
             else if (lv.size() == 2)
             {
-                String level = lv.get(0).getString().toLowerCase(Locale.ROOT);
+                String level = lv.getFirst().getString().toLowerCase(Locale.ROOT);
                 res = lv.get(1);
                 switch (level)
                 {
@@ -1018,7 +1018,7 @@ public class Auxiliary
             if (!lv.isEmpty())
             {
                 c.host.issueDeprecation("load_app_data(...) with arguments");
-                String resource = recognizeResource(lv.get(0), false);
+                String resource = recognizeResource(lv.getFirst(), false);
                 boolean shared = lv.size() > 1 && lv.get(1).getBoolean();
                 fdesc = new FileArgument(resource, FileArgument.Type.NBT, null, false, shared, FileArgument.Reason.READ, c.host);
             }
@@ -1031,7 +1031,7 @@ public class Auxiliary
             {
                 throw new InternalExpressionException("'store_app_data' needs NBT tag and an optional file");
             }
-            Value val = lv.get(0);
+            Value val = lv.getFirst();
             FileArgument fdesc = new FileArgument(null, FileArgument.Type.NBT, null, false, false, FileArgument.Reason.CREATE, c.host);
             if (lv.size() > 1)
             {
@@ -1049,7 +1049,7 @@ public class Auxiliary
         expression.addContextFunction("statistic", 3, (c, t, lv) ->
         {
             CarpetContext cc = (CarpetContext) c;
-            ServerPlayer player = EntityValue.getPlayerByValue(cc.server(), lv.get(0));
+            ServerPlayer player = EntityValue.getPlayerByValue(cc.server(), lv.getFirst());
             if (player == null)
             {
                 return Value.NULL;
@@ -1078,7 +1078,7 @@ public class Auxiliary
             {
                 throw new InternalExpressionException("'handle_event' requires at least two arguments, event name, and a callback");
             }
-            String event = lv.get(0).getString();
+            String event = lv.getFirst().getString();
             FunctionArgument callback = FunctionArgument.findIn(c, expression.module, lv, 1, true, false);
             CarpetScriptHost host = ((CarpetScriptHost) c.host);
             if (callback.function == null)
@@ -1097,7 +1097,7 @@ public class Auxiliary
             }
             CarpetContext cc = (CarpetContext) c;
             CarpetScriptServer server = ((CarpetScriptHost) c.host).scriptServer();
-            String eventName = lv.get(0).getString();
+            String eventName = lv.getFirst().getString();
             // no such event yet
             if (CarpetEventServer.Event.getEvent(eventName, server) == null)
             {
@@ -1135,7 +1135,7 @@ public class Auxiliary
             {
                 return ListValue.wrap(storage.keys().map(NBTSerializableValue::nameFromRegistryId));
             }
-            String key = lv.get(0).getString();
+            String key = lv.getFirst().getString();
             CompoundTag oldNbt = storage.get(InputValidator.identifierOf(key));
             if (lv.size() == 2)
             {
@@ -1151,7 +1151,7 @@ public class Auxiliary
         // script run create_datapack('foo', {'foo' -> {'bar.json' -> {'c' -> true,'d' -> false,'e' -> {'foo' -> [1,2,3]},'a' -> 'foobar','b' -> 5}}})
         expression.addContextFunction("create_datapack", 2, (c, t, lv) -> {
             CarpetContext cc = (CarpetContext) c;
-            String origName = lv.get(0).getString();
+            String origName = lv.getFirst().getString();
             String name = InputValidator.validateSimpleString(origName, true);
             MinecraftServer server = cc.server();
             for (String dpName : server.getPackRepository().getAvailableIds())
@@ -1202,7 +1202,7 @@ public class Auxiliary
                     resourcePackProfile.getDefaultPosition().insert(list, resourcePackProfile, Pack::selectionConfig, false);
 
 
-                    server.reloadResources(list.stream().map(Pack::getId).collect(Collectors.toList())).
+                    server.reloadResources(list.stream().map(Pack::getId).toList()).
                             exceptionally(exc -> {
                                 successful[0] = false;
                                 return null;

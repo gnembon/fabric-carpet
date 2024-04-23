@@ -7,7 +7,6 @@ import carpet.fakes.BlockStateArgumentInterface;
 import carpet.fakes.ChunkTicketManagerInterface;
 import carpet.fakes.CommandDispatcherInterface;
 import carpet.fakes.EntityInterface;
-import carpet.fakes.IngredientInterface;
 import carpet.fakes.InventoryBearerInterface;
 import carpet.fakes.ItemEntityInterface;
 import carpet.fakes.LivingEntityInterface;
@@ -63,8 +62,6 @@ import net.minecraft.world.entity.animal.horse.AbstractHorse;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.DataSlot;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.RecipeManager;
 import net.minecraft.world.item.crafting.RecipeType;
@@ -84,7 +81,6 @@ import net.minecraft.world.scores.Objective;
 import net.minecraft.world.scores.Scoreboard;
 import net.minecraft.world.scores.criteria.ObjectiveCriteria;
 
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -106,11 +102,6 @@ public class Vanilla
     public static Map<String, Integer> ChunkMap_regenerateChunkRegion(ChunkMap chunkMap, List<ChunkPos> requestedChunks)
     {
         return ((ThreadedAnvilChunkStorageInterface) chunkMap).regenerateChunkRegion(requestedChunks);
-    }
-
-    public static List<Collection<ItemStack>> Ingredient_getRecipeStacks(Ingredient ingredient)
-    {
-        return ((IngredientInterface) (Object) ingredient).getRecipeStacks();
     }
 
     public static List<Recipe<?>> RecipeManager_getAllMatching(RecipeManager recipeManager, RecipeType<?> type, ResourceLocation output, RegistryAccess registryAccess)

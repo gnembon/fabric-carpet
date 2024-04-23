@@ -13,7 +13,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.GlobalPos;
 import net.minecraft.core.particles.BlockParticleOption;
@@ -27,7 +26,6 @@ import net.minecraft.world.entity.ai.memory.ExpirableValue;
 import net.minecraft.world.entity.ai.memory.MemoryModuleType;
 import net.minecraft.world.entity.ai.village.poi.PoiManager;
 import net.minecraft.world.entity.ai.village.poi.PoiRecord;
-import net.minecraft.world.entity.ai.village.poi.PoiType;
 import net.minecraft.world.entity.npc.AbstractVillager;
 import net.minecraft.world.entity.npc.Villager;
 import net.minecraft.world.entity.player.Player;
@@ -65,14 +63,7 @@ public abstract class Villager_aiMixin extends AbstractVillager
         {
             long time;
             Optional<? extends ExpirableValue<?>> last_seen = this.brain.getMemories().get(MemoryModuleType.GOLEM_DETECTED_RECENTLY);
-            if (!last_seen.isPresent())
-            {
-                time = 0;
-            }
-            else
-            {
-                time = last_seen.get().getTimeToLive();
-            }
+            time = last_seen.map(ExpirableValue::getTimeToLive).orElse(0L);
             boolean recentlySeen = time > 0;
             Optional<Long> optional_11 = this.brain.getMemory(MemoryModuleType.LAST_SLEPT);
             //Optional<Timestamp> optional_22 = this.brain.getOptionalMemory(MemoryModuleType.LAST_WORKED_AT_POI);

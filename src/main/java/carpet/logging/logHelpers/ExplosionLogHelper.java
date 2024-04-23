@@ -96,7 +96,7 @@ public class ExplosionLogHelper
     }
 
 
-    public static record EntityChangedStatusWithCount(Vec3 pos, EntityType<?> type, Vec3 accel)
+    public record EntityChangedStatusWithCount(Vec3 pos, EntityType<?> type, Vec3 accel)
     {
         public EntityChangedStatusWithCount(Entity e, Vec3 accel)
         {

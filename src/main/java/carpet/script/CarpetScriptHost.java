@@ -164,7 +164,7 @@ public class CarpetScriptHost extends ScriptHost
     ) throws CommandSyntaxException
     {
         String hostName = main.name();
-        List<String> commandArgs = path.stream().filter(t -> t.isArgument).map(t -> t.surface).collect(Collectors.toList());
+        List<String> commandArgs = path.stream().filter(t -> t.isArgument).map(t -> t.surface).toList();
         if (commandArgs.size() != (functionSpec.function.getNumParams() - functionSpec.args.size()))
         {
             throw CommandArgument.error("Number of parameters in function " + functionSpec.function.fullName() + " doesn't match parameters for a command");
@@ -175,7 +175,7 @@ public class CarpetScriptHost extends ScriptHost
         }
         List<CommandToken> reversedPath = new ArrayList<>(path);
         Collections.reverse(reversedPath);
-        ArgumentBuilder<CommandSourceStack, ?> argChain = reversedPath.get(0).getCommandNode(this).executes(c -> execute(c, hostName, functionSpec, commandArgs));
+        ArgumentBuilder<CommandSourceStack, ?> argChain = reversedPath.getFirst().getCommandNode(this).executes(c -> execute(c, hostName, functionSpec, commandArgs));
         for (int i = 1; i < reversedPath.size(); i++)
         {
             argChain = reversedPath.get(i).getCommandNode(this).then(argChain);
@@ -518,7 +518,7 @@ public class CarpetScriptHost extends ScriptHost
 
         boolean hasTypeSupport = appConfig.getOrDefault(StringValue.of("legacy_command_type_support"), Value.FALSE).getBoolean();
 
-        for (String function : globalFunctionNames(main, s -> !s.startsWith("_")).sorted().collect(Collectors.toList()))
+        for (String function : globalFunctionNames(main, s -> !s.startsWith("_")).sorted().toList())
         {
             if (hasTypeSupport)
             {
