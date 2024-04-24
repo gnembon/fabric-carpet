@@ -82,7 +82,7 @@ public class Arithmetic
         expression.addMathematicalUnaryIntFunction("ceil", n -> (long) Math.ceil(n));
 
         expression.addContextFunction("mandelbrot", 3, (c, t, lv) -> {
-            double a0 = NumericValue.asNumber(lv.getFirst()).getDouble();
+            double a0 = NumericValue.asNumber(lv.get(0)).getDouble();
             double b0 = NumericValue.asNumber(lv.get(1)).getDouble();
             long maxiter = NumericValue.asNumber(lv.get(2)).getLong();
             double a = 0.0D;

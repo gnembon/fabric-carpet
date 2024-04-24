@@ -295,7 +295,7 @@ public class Sys
 
             if (lv.size() >= 4)
             {
-                x = lv.getFirst();
+                x = lv.get(0);
                 y = lv.get(1);
                 z = lv.get(2);
                 sampler = SimplexNoiseSampler.getSimplex(NumericValue.asNumber(lv.get(3)).getLong());
@@ -382,7 +382,7 @@ public class Sys
             if (argsize == 3)
             {
                 cal.set(
-                        NumericValue.asNumber(lv.getFirst()).getInt(),
+                        NumericValue.asNumber(lv.get(0)).getInt(),
                         NumericValue.asNumber(lv.get(1)).getInt() - 1,
                         NumericValue.asNumber(lv.get(2)).getInt()
                 );
@@ -390,7 +390,7 @@ public class Sys
             else if (argsize == 6)
             {
                 cal.set(
-                        NumericValue.asNumber(lv.getFirst()).getInt(),
+                        NumericValue.asNumber(lv.get(0)).getInt(),
                         NumericValue.asNumber(lv.get(1)).getInt() - 1,
                         NumericValue.asNumber(lv.get(2)).getInt(),
                         NumericValue.asNumber(lv.get(3)).getInt(),
