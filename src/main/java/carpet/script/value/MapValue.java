@@ -47,7 +47,7 @@ public class MapValue extends AbstractListValue implements ContainerValueInterfa
     @Override
     public List<Value> unpack()
     {
-        return map.entrySet().stream().map(e -> ListValue.of(e.getKey(), e.getValue())).toList();
+        return map.entrySet().stream().map(e -> ListValue.of(e.getKey(), e.getValue())).collect(Collectors.toList());
     }
 
     @Override
