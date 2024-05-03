@@ -921,7 +921,7 @@ public class WorldAccess
                     damageAmount = 2;
                 }
                 final int finalDamageAmount = damageAmount;
-                tool.hurtAndBreak(damageAmount, world.getRandom(), null, () ->  { if (finalDamageAmount > 0) toolBroke.setTrue(); } );
+                tool.hurtAndBreak(damageAmount, world, null, () ->  { if (finalDamageAmount > 0) toolBroke.setTrue(); } );
                 if (!isUsingEffectiveTool)
                 {
                     dropLoot = false;
@@ -930,7 +930,7 @@ public class WorldAccess
 
             if (dropLoot)
             {
-                if (how < 0 || (tag != null && EnchantmentHelper.getItemEnchantmentLevel(Enchantments.SILK_TOUCH, tool) > 0))
+                if (how < 0 || (tag != null && EnchantmentHelper.getItemEnchantmentLevel(world.registryAccess().registryOrThrow(Registries.ENCHANTMENT).getHolderOrThrow(Enchantments.SILK_TOUCH), tool) > 0))
                 {
                     Block.popResource(world, where, new ItemStack(state.getBlock()));
                 }
@@ -938,7 +938,7 @@ public class WorldAccess
                 {
                     if (how > 0)
                     {
-                        tool.enchant(Enchantments.FORTUNE, (int) how);
+                        tool.enchant(world.registryAccess().registryOrThrow(Registries.ENCHANTMENT).getHolderOrThrow(Enchantments.FORTUNE), (int) how);
                     }
                     if (DUMMY_ENTITY == null)
                     {
