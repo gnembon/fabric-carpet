@@ -92,7 +92,7 @@ public class ListValue extends AbstractListValue implements ContainerValueInterf
 
     public static ListValue wrap(Stream<Value> stream)
     {
-        return wrap(stream.toList());
+        return wrap(stream.collect(Collectors.toList()));
     }
 
     public static ListValue wrap(List<Value> list)
