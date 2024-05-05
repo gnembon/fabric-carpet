@@ -178,7 +178,7 @@
     "PistonStructureResolver_customStickyMixin",
 
     "CustomPacketPayload_networkStuffMixin",
-    "ServerCommonPacketListenerimpl_connectionMixin"
+    "ServerGamePacketListenerimpl_connectionMixin"
 
   ],
   "client": [
