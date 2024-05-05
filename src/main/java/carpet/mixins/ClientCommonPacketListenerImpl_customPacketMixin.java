@@ -12,6 +12,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(ClientCommonPacketListenerImpl.class)
 public class ClientCommonPacketListenerImpl_customPacketMixin
 {
+    // this doesn't seem to ever be called anymore, the MinecraftClient mixin seems enough
     @Inject(method = "onDisconnect", at = @At("HEAD"))
     private void onCMDisconnected(Component reason, CallbackInfo ci)
     {
