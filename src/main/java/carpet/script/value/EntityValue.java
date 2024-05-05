@@ -457,7 +457,7 @@ public class EntityValue extends Value
         put("scoreboard_tags", (e, a) -> ListValue.wrap(e.getTags().stream().map(StringValue::new)));
         put("entity_tags", (e, a) -> {
             EntityType<?> type = e.getType();
-            return ListValue.wrap(e.getServer().registryAccess().registryOrThrow(Registries.ENTITY_TYPE).getTags().filter(entry -> entry.getSecond().stream().anyMatch(h -> h.value() == type)).map(entry -> ValueConversions.of(entry.get(0))));
+            return ListValue.wrap(e.getServer().registryAccess().registryOrThrow(Registries.ENTITY_TYPE).getTags().filter(entry -> entry.getSecond().stream().anyMatch(h -> h.value() == type)).map(entry -> ValueConversions.of(entry.getFirst())));
         });
         // deprecated
         put("has_tag", (e, a) -> BooleanValue.of(e.getTags().contains(a.getString())));
