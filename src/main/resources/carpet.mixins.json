@@ -41,7 +41,6 @@
     "LevelEntityGetterAdapter_scarpetMixin",
     "ChunkHolder_scarpetChunkCreationMixin",
     "ThreadedLevelLightEngine_scarpetMixin",
-    "DynamicGraphMinFixedPoint_resetChunkInterface",
     "DistanceManager_scarpetChunkCreationMixin",
     "LevelLightEngine_scarpetChunkCreationMixin",
     "LayerLightEngine_scarpetChunkCreationMixin",
