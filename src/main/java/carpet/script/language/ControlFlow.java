@@ -65,7 +65,7 @@ public class ControlFlow
         });
 
         expression.addImpureFunction("exit", lv -> {
-            throw new ExitStatement(lv.isEmpty() ? Value.NULL : lv.getFirst());
+            throw new ExitStatement(lv.isEmpty() ? Value.NULL : lv.get(0));
         });
 
         expression.addImpureFunction("throw", lv ->
@@ -75,7 +75,7 @@ public class ControlFlow
                 case 0 -> throw new ThrowStatement(Value.NULL, Throwables.USER_DEFINED);
                 case 1 -> throw new ThrowStatement(lv.get(0), Throwables.USER_DEFINED);
                 case 2 -> throw new ThrowStatement(lv.get(1), Throwables.getTypeForException(lv.get(0).getString()));
-                case 3 -> throw new ThrowStatement(lv.get(2), Throwables.getTypeForException(lv.get(1).getString()), lv.getFirst().getString());
+                case 3 -> throw new ThrowStatement(lv.get(2), Throwables.getTypeForException(lv.get(1).getString()), lv.get(0).getString());
                 default -> throw new InternalExpressionException("throw() can't accept more than 3 parameters");
             }
         });
@@ -89,7 +89,7 @@ public class ControlFlow
             }
             try
             {
-                Value retval = lv.getFirst().evalValue(c, t);
+                Value retval = lv.get(0).evalValue(c, t);
                 return (ct, tt) -> retval;
             }
             catch (ProcessedThrowStatement ret)

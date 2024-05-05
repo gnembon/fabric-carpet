@@ -57,7 +57,7 @@ public class Scoreboards
             {
                 return ListValue.wrap(scoreboard.getObjectiveNames().stream().map(StringValue::new));
             }
-            String objectiveName = lv.getFirst().getString();
+            String objectiveName = lv.get(0).getString();
             Objective objective = scoreboard.getObjective(objectiveName);
             if (objective == null)
             {
@@ -100,7 +100,7 @@ public class Scoreboards
             }
             CarpetContext cc = (CarpetContext) c;
             Scoreboard scoreboard = cc.server().getScoreboard();
-            String objectiveName = lv.getFirst().getString();
+            String objectiveName = lv.get(0).getString();
             Objective objective = scoreboard.getObjective(objectiveName);
             if (objective == null)
             {
@@ -133,7 +133,7 @@ public class Scoreboards
             {
                 throw new InternalExpressionException("'scoreboard_add' should have one or two parameters");
             }
-            String objectiveName = lv.getFirst().getString();
+            String objectiveName = lv.get(0).getString();
             ObjectiveCriteria criterion;
             if (lv.size() == 1)
             {
@@ -179,7 +179,7 @@ public class Scoreboards
             }
             CarpetContext cc = (CarpetContext) c;
             Scoreboard scoreboard = cc.server().getScoreboard();
-            Objective objective = scoreboard.getObjective(lv.getFirst().getString());
+            Objective objective = scoreboard.getObjective(lv.get(0).getString());
             if (objective == null)
             {
                 return Value.NULL;
@@ -269,7 +269,7 @@ public class Scoreboards
         {
             CarpetContext cc = (CarpetContext) c;
             Scoreboard scoreboard = cc.server().getScoreboard();
-            String location = lv.getFirst().getString();
+            String location = lv.get(0).getString();
             DisplaySlot slot = DisplaySlot.CODEC.byName(location);
             if (slot == null)
             {
@@ -307,7 +307,7 @@ public class Scoreboards
             {
                 return Value.NULL;
             }
-            PlayerTeam team = scoreboard.getPlayerTeam(lv.getFirst().getString());
+            PlayerTeam team = scoreboard.getPlayerTeam(lv.get(0).getString());
             return team == null ? Value.NULL : ListValue.wrap(team.getPlayers().stream().map(StringValue::of));
         });
 
@@ -321,7 +321,7 @@ public class Scoreboards
 
             CarpetContext cc = (CarpetContext) c;
             ServerScoreboard scoreboard = cc.server().getScoreboard();
-            String teamName = lv.getFirst().getString();
+            String teamName = lv.get(0).getString();
 
             if (lv.size() == 1)
             {
@@ -359,7 +359,7 @@ public class Scoreboards
         {
             CarpetContext cc = (CarpetContext) c;
             ServerScoreboard scoreboard = cc.server().getScoreboard();
-            Value teamVal = lv.getFirst();
+            Value teamVal = lv.get(0);
             PlayerTeam team = scoreboard.getPlayerTeam(teamVal.getString());
             if (team == null)
             {
@@ -374,7 +374,7 @@ public class Scoreboards
         {
             CarpetContext cc = (CarpetContext) c;
             ServerScoreboard scoreboard = cc.server().getScoreboard();
-            Value playerVal = lv.getFirst();
+            Value playerVal = lv.get(0);
             String player = EntityValue.getPlayerNameByValue(playerVal);
             return player == null ? Value.NULL : BooleanValue.of(scoreboard.removePlayerFromTeam(player));
         });
@@ -387,7 +387,7 @@ public class Scoreboards
             {
                 throw new InternalExpressionException("'team_property' requires two or three arguments");
             }
-            Value teamVal = lv.getFirst();
+            Value teamVal = lv.get(0);
             Value propertyVal = lv.get(1);
 
             Value settingVal = null;
@@ -548,7 +548,7 @@ public class Scoreboards
                 return ListValue.wrap(bossBarManager.getEvents().stream().map(CustomBossEvent::getTextId).map(ResourceLocation::toString).map(StringValue::of));
             }
 
-            String id = lv.getFirst().getString();
+            String id = lv.get(0).getString();
             ResourceLocation identifier = InputValidator.identifierOf(id);
 
             if (lv.size() == 1)

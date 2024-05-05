@@ -20,7 +20,7 @@ public class Threading
             {
                 throw new InternalExpressionException("'task_join' cannot be called from main thread to avoid deadlocks");
             }
-            Value v = lv.getFirst();
+            Value v = lv.get(0);
             if (!(v instanceof final ThreadValue tv))
             {
                 throw new InternalExpressionException("'task_join' could only be used with a task value");
@@ -34,7 +34,7 @@ public class Threading
             MinecraftServer server = cc.server();
             if (server.isSameThread())
             {
-                return lv.getFirst(); // pass through for on thread tasks
+                return lv.get(0); // pass through for on thread tasks
             }
             Value[] result = new Value[]{Value.NULL};
             RuntimeException[] internal = new RuntimeException[]{null};
@@ -44,7 +44,7 @@ public class Threading
                 {
                     try
                     {
-                        result[0] = lv.getFirst().evalValue(c, t);
+                        result[0] = lv.get(0).evalValue(c, t);
                     }
                     catch (ExpressionException exc)
                     {

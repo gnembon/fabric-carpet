@@ -76,7 +76,7 @@ public class Entities
                 Player closestPlayer = ((CarpetContext) c).level().getNearestPlayer(pos.x, pos.y, pos.z, -1.0, EntitySelector.ENTITY_STILL_ALIVE);
                 return EntityValue.of(closestPlayer);
             }
-            String playerName = lv.getFirst().getString();
+            String playerName = lv.get(0).getString();
             return switch (playerName)
                     {
                         case "all" -> {
@@ -106,7 +106,7 @@ public class Entities
             {
                 throw new InternalExpressionException("'spawn' function takes mob name, and position to spawn");
             }
-            String entityString = lv.getFirst().getString();
+            String entityString = lv.get(0).getString();
             ResourceLocation entityId;
             try
             {
@@ -164,7 +164,7 @@ public class Entities
 
         expression.addContextFunction("entity_id", 1, (c, t, lv) ->
         {
-            Value who = lv.getFirst();
+            Value who = lv.get(0);
             if (who instanceof final NumericValue numericValue)
             {
                 return EntityValue.of(((CarpetContext) c).level().getEntity((int) numericValue.getLong()));
@@ -174,7 +174,7 @@ public class Entities
 
         expression.addContextFunction("entity_list", 1, (c, t, lv) ->
         {
-            String who = lv.getFirst().getString();
+            String who = lv.get(0).getString();
             CommandSourceStack source = ((CarpetContext) c).source();
             EntityValue.EntityClassDescriptor eDesc = EntityValue.getEntityDescriptor(who, source.getServer());
             List<? extends Entity> entityList = source.getLevel().getEntities(eDesc.directType, eDesc.filteringPredicate);
@@ -187,7 +187,7 @@ public class Entities
             {
                 throw new InternalExpressionException("'entity_area' requires entity type, center and range arguments");
             }
-            String who = lv.getFirst().getString();
+            String who = lv.get(0).getString();
             CarpetContext cc = (CarpetContext) c;
             Vector3Argument centerLocator = Vector3Argument.findIn(lv, 1, false, true);
 
@@ -219,7 +219,7 @@ public class Entities
 
         expression.addContextFunction("entity_selector", -1, (c, t, lv) ->
         {
-            String selector = lv.getFirst().getString();
+            String selector = lv.get(0).getString();
             List<Value> retlist = new ArrayList<>();
             for (Entity e : EntityValue.getEntitiesFromSelector(((CarpetContext) c).source(), selector))
             {
@@ -234,7 +234,7 @@ public class Entities
             {
                 throw new InternalExpressionException("'query' takes entity as a first argument, and queried feature as a second");
             }
-            Value v = lv.getFirst();
+            Value v = lv.get(0);
             if (!(v instanceof final EntityValue ev))
             {
                 throw new InternalExpressionException("First argument to query should be an entity");
@@ -259,7 +259,7 @@ public class Entities
             {
                 throw new InternalExpressionException("'modify' takes entity as a first argument, and queried feature as a second");
             }
-            Value v = lv.getFirst();
+            Value v = lv.get(0);
             if (!(v instanceof final EntityValue ev))
             {
                 throw new InternalExpressionException("First argument to modify should be an entity");
@@ -280,7 +280,7 @@ public class Entities
             {
                 throw new InternalExpressionException("'entity_types' requires one or no arguments");
             }
-            String desc = (lv.size() == 1) ? lv.getFirst().getString() : "*";
+            String desc = (lv.size() == 1) ? lv.get(0).getString() : "*";
             return EntityValue.getEntityDescriptor(desc, ((CarpetContext) c).server()).listValue(((CarpetContext) c).registryAccess());
         });
 
@@ -290,7 +290,7 @@ public class Entities
             {
                 throw new InternalExpressionException("'entity_load_handler' required the entity type, and a function to call");
             }
-            Value entityValue = lv.getFirst();
+            Value entityValue = lv.get(0);
             List<String> descriptors = (entityValue instanceof final ListValue list)
                     ? list.getItems().stream().map(Value::getString).toList()
                     : Collections.singletonList(entityValue.getString());
@@ -327,7 +327,7 @@ public class Entities
             {
                 throw new InternalExpressionException("'entity_event' requires at least 3 arguments, entity, event to be handled, and function name, with optional arguments");
             }
-            Value v = lv.getFirst();
+            Value v = lv.get(0);
             if (!(v instanceof final EntityValue ev))
             {
                 throw new InternalExpressionException("First argument to entity_event should be an entity");

@@ -65,7 +65,7 @@ public class MapValue extends AbstractListValue implements ContainerValueInterfa
         }
         List<Value> keys = new ArrayList<>(map.keySet());
         int max = keys.size();
-        return "{" + keys.getFirst().getPrettyString() + ": " + map.get(keys.getFirst()).getPrettyString() + ", " +
+        return "{" + keys.get(0).getPrettyString() + ": " + map.get(keys.get(0)).getPrettyString() + ", " +
                 keys.get(1).getPrettyString() + ": " + map.get(keys.get(1)).getPrettyString() + ", ..., " +
                 keys.get(max - 2).getPrettyString() + ": " + map.get(keys.get(max - 2)).getPrettyString() + ", " +
                 keys.get(max - 1).getPrettyString() + ": " + map.get(keys.get(max - 1)).getPrettyString() + "}";
@@ -152,7 +152,7 @@ public class MapValue extends AbstractListValue implements ContainerValueInterfa
         {
             throw new InternalExpressionException("Map constructor requires elements that have two items");
         }
-        map.put(pair.getItems().getFirst(), pair.getItems().get(1));
+        map.put(pair.getItems().get(0), pair.getItems().get(1));
     }
 
     @Override

@@ -30,7 +30,7 @@ public class Loops
             }
             if (lv.size() == 1)
             {
-                throw new BreakStatement(lv.getFirst());
+                throw new BreakStatement(lv.get(0));
             }
             throw new InternalExpressionException("'break' can only be called with zero or one argument");
         });
@@ -43,7 +43,7 @@ public class Loops
             }
             if (lv.size() == 1)
             {
-                throw new ContinueStatement(lv.getFirst());
+                throw new ContinueStatement(lv.get(0));
             }
             throw new InternalExpressionException("'continue' can only be called with zero or one argument");
         });
@@ -52,7 +52,7 @@ public class Loops
         expression.addLazyFunction("while", -1, (c, t, lv) ->
         {
             if (lv.size() == 2) { // lets do nasty way so performance is not affected (might be super unnecessary, but hey)
-                LazyValue condition = lv.getFirst();
+                LazyValue condition = lv.get(0);
                 LazyValue expr = lv.get(1);
                 long i = 0;
                 Value lastOne = Value.NULL;
@@ -86,7 +86,7 @@ public class Loops
                 return (cc, tt) -> lastValueNoKidding;
             }
             long limit = NumericValue.asNumber(lv.get(1).evalValue(c)).getLong();
-            LazyValue condition = lv.getFirst();
+            LazyValue condition = lv.get(0);
             LazyValue expr = lv.get(2);
             long i = 0;
             Value lastOne = Value.NULL;
@@ -124,7 +124,7 @@ public class Loops
         // expr receives bounded variable '_' indicating iteration
         expression.addLazyFunction("loop", 2, (c, t, lv) ->
         {
-            long limit = NumericValue.asNumber(lv.getFirst().evalValue(c, Context.NONE)).getLong();
+            long limit = NumericValue.asNumber(lv.get(0).evalValue(c, Context.NONE)).getLong();
             Value lastOne = Value.NULL;
             LazyValue expr = lv.get(1);
             //scoping
@@ -159,7 +159,7 @@ public class Loops
         // receives bounded variable '_' with the expression
         expression.addLazyFunction("map", 2, (c, t, lv) ->
         {
-            Value rval = lv.getFirst().evalValue(c, Context.NONE);
+            Value rval = lv.get(0).evalValue(c, Context.NONE);
             if (rval.isNull())
             {
                 return ListValue.lazyEmpty();
@@ -216,7 +216,7 @@ public class Loops
         // produces list of values for which the expression is true
         expression.addLazyFunction("filter", 2, (c, t, lv) ->
         {
-            Value rval = lv.getFirst().evalValue(c, Context.NONE);
+            Value rval = lv.get(0).evalValue(c, Context.NONE);
             if (rval.isNull())
             {
                 return ListValue.lazyEmpty();
@@ -276,7 +276,7 @@ public class Loops
         // returns first element on the list for which the expr is true
         expression.addLazyFunction("first", 2, (c, t, lv) ->
         {
-            Value rval = lv.getFirst().evalValue(c, Context.NONE);
+            Value rval = lv.get(0).evalValue(c, Context.NONE);
             if (rval.isNull())
             {
                 return LazyValue.NULL;
@@ -336,7 +336,7 @@ public class Loops
         // returns true if expr is true for all items
         expression.addLazyFunction("all", 2, (c, t, lv) ->
         {
-            Value rval = lv.getFirst().evalValue(c, Context.NONE);
+            Value rval = lv.get(0).evalValue(c, Context.NONE);
             if (rval.isNull())
             {
                 return LazyValue.TRUE;
@@ -380,7 +380,7 @@ public class Loops
         // runs traditional for(init, condition, increment, body) tri-argument for loop with body in between
         expression.addLazyFunction("c_for", 4, (c, t, lv) ->
         {
-            LazyValue initial = lv.getFirst();
+            LazyValue initial = lv.get(0);
             LazyValue condition = lv.get(1);
             LazyValue increment = lv.get(2);
             LazyValue body = lv.get(3);
@@ -409,7 +409,7 @@ public class Loops
         // can be substituted for first and all, but first is more efficient and all doesn't require knowing list size
         expression.addLazyFunction("for", 2, (c, t, lv) ->
         {
-            Value rval = lv.getFirst().evalValue(c, Context.NONE);
+            Value rval = lv.get(0).evalValue(c, Context.NONE);
             if (rval.isNull())
             {
                 return LazyValue.ZERO;
@@ -474,7 +474,7 @@ public class Loops
         expression.addLazyFunction("reduce", 3, (c, t, lv) ->
         {
 
-            Value rval = lv.getFirst().evalValue(c, Context.NONE);
+            Value rval = lv.get(0).evalValue(c, Context.NONE);
             if (rval.isNull())
             {
                 return ListValue.lazyEmpty();

@@ -175,7 +175,7 @@ public class CarpetScriptHost extends ScriptHost
         }
         List<CommandToken> reversedPath = new ArrayList<>(path);
         Collections.reverse(reversedPath);
-        ArgumentBuilder<CommandSourceStack, ?> argChain = reversedPath.getFirst().getCommandNode(this).executes(c -> execute(c, hostName, functionSpec, commandArgs));
+        ArgumentBuilder<CommandSourceStack, ?> argChain = reversedPath.get(0).getCommandNode(this).executes(c -> execute(c, hostName, functionSpec, commandArgs));
         for (int i = 1; i < reversedPath.size(); i++)
         {
             argChain = reversedPath.get(i).getCommandNode(this).then(argChain);

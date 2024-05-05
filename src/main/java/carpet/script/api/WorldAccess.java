@@ -164,7 +164,7 @@ public class WorldAccess
         {
             throw new InternalExpressionException("'" + name + "' requires at least one parameter");
         }
-        if (params.getFirst() instanceof final BlockValue bv)
+        if (params.get(0) instanceof final BlockValue bv)
         {
             return BooleanValue.of(test.test(bv.getBlockState(), bv.getPos()));
         }
@@ -184,7 +184,7 @@ public class WorldAccess
         {
             throw new InternalExpressionException("'" + name + "' requires at least one parameter");
         }
-        if (params.getFirst() instanceof final BlockValue bv)
+        if (params.get(0) instanceof final BlockValue bv)
         {
             return StringValue.of(test.apply(bv.getBlockState(), bv.getPos()));
         }
@@ -204,7 +204,7 @@ public class WorldAccess
         {
             throw new InternalExpressionException("'" + name + "' requires at least one parameter");
         }
-        if (params.getFirst() instanceof final BlockValue bv)
+        if (params.get(0) instanceof final BlockValue bv)
         {
             try
             {
@@ -439,7 +439,7 @@ public class WorldAccess
                 return new StringValue(world.isThundering() ? "thunder" : (world.isRaining() ? "rain" : "clear"));
             }
 
-            Value weather = lv.getFirst();
+            Value weather = lv.get(0);
             ServerLevelData worldProperties = Vanilla.ServerLevel_getWorldProperties(world);
             if (lv.size() == 1)
             {
@@ -577,7 +577,7 @@ public class WorldAccess
 
         expression.addContextFunction("top", -1, (c, t, lv) ->
         {
-            String type = lv.getFirst().getString().toLowerCase(Locale.ROOT);
+            String type = lv.get(0).getString().toLowerCase(Locale.ROOT);
             Heightmap.Types htype = switch (type)
             {
                 //case "light": htype = Heightmap.Type.LIGHT_BLOCKING; break;  //investigate
@@ -720,7 +720,7 @@ public class WorldAccess
         {
             if (Carpet.getImpendingFillSkipUpdates().get())
             {
-                return lv.getFirst();
+                return lv.get(0);
             }
             Value[] result = new Value[]{Value.NULL};
             ((CarpetContext) c).server().executeBlocking(() ->
@@ -730,7 +730,7 @@ public class WorldAccess
                 try
                 {
                     skipUpdates.set(true);
-                    result[0] = lv.getFirst().evalValue(c, t);
+                    result[0] = lv.get(0).evalValue(c, t);
                 }
                 finally
                 {
@@ -756,7 +756,7 @@ public class WorldAccess
                 {
                     args.add(lv.get(i));
                 }
-                if (args.getFirst() instanceof final ListValue list)
+                if (args.get(0) instanceof final ListValue list)
                 {
                     if (args.size() == 2 && NBTSerializableValue.fromValue(args.get(1)) instanceof final NBTSerializableValue nbtsv)
                     {
@@ -764,7 +764,7 @@ public class WorldAccess
                     }
                     args = list.getItems();
                 }
-                else if (args.getFirst() instanceof final MapValue map)
+                else if (args.get(0) instanceof final MapValue map)
                 {
                     if (args.size() == 2 && NBTSerializableValue.fromValue(args.get(1)) instanceof final NBTSerializableValue nbtsv)
                     {
@@ -964,7 +964,7 @@ public class WorldAccess
             }
             CarpetContext cc = (CarpetContext) c;
             Level world = cc.level();
-            Value entityValue = lv.getFirst();
+            Value entityValue = lv.get(0);
             if (!(entityValue instanceof final EntityValue ev))
             {
                 return Value.FALSE;
@@ -1105,7 +1105,7 @@ public class WorldAccess
                 throw new InternalExpressionException("'place_item' takes at least 2 parameters: item and block, or position, to place onto");
             }
             CarpetContext cc = (CarpetContext) c;
-            String itemString = lv.getFirst().getString();
+            String itemString = lv.get(0).getString();
             Vector3Argument locator = Vector3Argument.findIn(lv, 1);
             ItemStack stackArg = NBTSerializableValue.parseItem(itemString, cc.registryAccess());
             BlockPos where = BlockPos.containing(locator.vec);
@@ -1225,7 +1225,7 @@ public class WorldAccess
             {
                 return ListValue.wrap(blocks.holders().map(blockReference -> ValueConversions.of(blockReference.key().location())));
             }
-            ResourceLocation tag = InputValidator.identifierOf(lv.getFirst().getString());
+            ResourceLocation tag = InputValidator.identifierOf(lv.get(0).getString());
             Optional<HolderSet.Named<Block>> tagset = blocks.getTag(TagKey.create(Registries.BLOCK, tag));
             return tagset.isEmpty() ? Value.NULL : ListValue.wrap(tagset.get().stream().map(b -> ValueConversions.of(blocks.getKey(b.value()))));
         });
@@ -1248,7 +1248,6 @@ public class WorldAccess
             Optional<HolderSet.Named<Block>> tagSet = blocks.getTag(TagKey.create(Registries.BLOCK, InputValidator.identifierOf(tag)));
             return tagSet.isEmpty() ? Value.NULL : BooleanValue.of(blockLocator.block.getBlockState().is(tagSet.get()));
         });
-
         expression.addContextFunction("biome", -1, (c, t, lv) -> {
             CarpetContext cc = (CarpetContext) c;
             ServerLevel world = cc.level();
@@ -1260,7 +1259,7 @@ public class WorldAccess
             Biome biome;
             BiomeSource biomeSource = world.getChunkSource().getGenerator().getBiomeSource();
             if (lv.size() == 1
-                    && lv.getFirst() instanceof final MapValue map
+                    && lv.get(0) instanceof final MapValue map
                     && biomeSource instanceof final MultiNoiseBiomeSource mnbs
             )
             {
@@ -1461,7 +1460,7 @@ public class WorldAccess
             }
             if (singleOutput)
             {
-                StructureStart start = FeatureGenerator.shouldStructureStartAt(world, pos, structure.getFirst(), needSize);
+                StructureStart start = FeatureGenerator.shouldStructureStartAt(world, pos, structure.get(0), needSize);
                 return start == null ? Value.NULL : !needSize ? Value.TRUE : ValueConversions.of(start, cc.registryAccess());
             }
             Map<Value, Value> ret = new HashMap<>();
@@ -1588,7 +1587,7 @@ public class WorldAccess
             if (lv.size() == 1)
             {
                 //either one block or list of chunks
-                Value first = lv.getFirst();
+                Value first = lv.get(0);
                 if (first instanceof final ListValue list)
                 {
                     List<Value> listVal = list.getItems();

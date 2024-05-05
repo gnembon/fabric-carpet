@@ -285,7 +285,7 @@ public abstract class CommandArgument
 
     public static final Map<String, CommandArgument> builtIns = baseTypes.stream().collect(Collectors.toMap(CommandArgument::getTypeSuffix, a -> a));
 
-    public static final CommandArgument DEFAULT = baseTypes.getFirst();
+    public static final CommandArgument DEFAULT = baseTypes.get(0);
 
     public static CommandArgument getTypeForArgument(String argument, CarpetScriptHost host)
     {

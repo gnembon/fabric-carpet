@@ -32,7 +32,7 @@ public class Threading
             {
                 throw new InternalExpressionException("'task' requires at least function to call as a parameter");
             }
-            Value queue = lv.getFirst();
+            Value queue = lv.get(0);
             FunctionArgument functionArgument = FunctionArgument.findIn(c, expression.module, lv, 1, false, true);
             ThreadValue thread = new ThreadValue(queue, functionArgument.function, expr, tok, c, functionArgument.checkedArgs());
             Thread.yield();
@@ -41,7 +41,7 @@ public class Threading
 
 
         expression.addContextFunction("task_count", -1, (c, t, lv) ->
-                (!lv.isEmpty()) ? new NumericValue(c.host.taskCount(lv.getFirst())) : new NumericValue(c.host.taskCount()));
+                (!lv.isEmpty()) ? new NumericValue(c.host.taskCount(lv.get(0))) : new NumericValue(c.host.taskCount()));
 
         expression.addUnaryFunction("task_value", v ->
         {
@@ -64,7 +64,7 @@ public class Threading
         expression.addLazyFunction("task_dock", 1, (c, t, lv) ->
             // pass through placeholder
             // implmenetation should dock the task on the main thread.
-            lv.getFirst()
+            lv.get(0)
         );
 
         expression.addUnaryFunction("task_completed", v ->
@@ -87,7 +87,7 @@ public class Threading
             int ind = 0;
             if (lv.size() == 2)
             {
-                lockValue = lv.getFirst().evalValue(c);
+                lockValue = lv.get(0).evalValue(c);
                 ind = 1;
             }
             synchronized (c.host.getLock(lockValue))
@@ -100,7 +100,7 @@ public class Threading
         // lazy since exception expression is very conditional
         expression.addLazyFunction("sleep", (c, t, lv) ->
         {
-            long time = lv.isEmpty() ? 0L : NumericValue.asNumber(lv.getFirst().evalValue(c)).getLong();
+            long time = lv.isEmpty() ? 0L : NumericValue.asNumber(lv.get(0).evalValue(c)).getLong();
             boolean interrupted = false;
             try
             {
@@ -141,14 +141,14 @@ public class Threading
                 throw new InternalExpressionException("'yield' requires at least one argument");
             }
             boolean lock = lv.size() > 1 && lv.get(1).evalValue(c, Context.BOOLEAN).getBoolean();
-            Value value = lv.getFirst().evalValue(c);
+            Value value = lv.get(0).evalValue(c);
             Value ret = c.getThreadContext().ping(value, lock);
             return (cc, tt) -> ret;
         });
 
         expression.addLazyFunction("task_send", 2, (c, t, lv) ->
         {
-            Value threadValue = lv.getFirst().evalValue(c);
+            Value threadValue = lv.get(0).evalValue(c);
             if (!(threadValue instanceof ThreadValue thread))
             {
                 throw new InternalExpressionException("'task_next' requires a task value");
@@ -164,7 +164,7 @@ public class Threading
 
         expression.addLazyFunction("task_await", 1, (c, t, lv) ->
         {
-            Value threadValue = lv.getFirst().evalValue(c);
+            Value threadValue = lv.get(0).evalValue(c);
             if (!(threadValue instanceof ThreadValue thread))
             {
                 throw new InternalExpressionException("'task_await' requires a task value");
@@ -179,7 +179,7 @@ public class Threading
 
         expression.addLazyFunction("task_ready", 1, (c, t, lv) ->
         {
-            Value threadValue = lv.getFirst().evalValue(c);
+            Value threadValue = lv.get(0).evalValue(c);
             if (!(threadValue instanceof ThreadValue thread))
             {
                 throw new InternalExpressionException("'task_ready' requires a task value");

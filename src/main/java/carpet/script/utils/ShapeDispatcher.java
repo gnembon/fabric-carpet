@@ -86,7 +86,7 @@ public class ShapeDispatcher
         {
             throw new InternalExpressionException("'draw_shape' takes at least three parameters, shape name, duration, and its params");
         }
-        String shapeType = lv.getFirst().getString();
+        String shapeType = lv.get(0).getString();
         Value duration = NumericValue.asNumber(lv.get(1), "duration");
         Map<String, Value> params;
         if (lv.size() == 3)
@@ -425,7 +425,7 @@ public class ShapeDispatcher
             }
             List<Value> elements = list.getItems();
             return new Vec3(
-                    NumericValue.asNumber(elements.getFirst()).getDouble(),
+                    NumericValue.asNumber(elements.get(0)).getDouble(),
                     NumericValue.asNumber(elements.get(1)).getDouble(),
                     NumericValue.asNumber(elements.get(2)).getDouble()
             );
@@ -751,7 +751,7 @@ public class ShapeDispatcher
             turn = NumericValue.asNumber(options.getOrDefault("turn", optional.get("turn"))).getFloat();
             List<Value> scale = ((ListValue) options.getOrDefault("scale", optional.get("scale"))).unpack();
             scaleY = NumericValue.asNumber(scale.get(1)).getFloat();
-            scaleX = NumericValue.asNumber(scale.getFirst()).getFloat();
+            scaleX = NumericValue.asNumber(scale.get(0)).getFloat();
             scaleZ = NumericValue.asNumber(scale.get(2)).getFloat();
         }
 
@@ -984,8 +984,8 @@ public class ShapeDispatcher
                     }
                     break;
                 case 6:
-                    Vec3 vec0 = vertexList.getFirst();
-                    if (relative.getFirst())
+                    Vec3 vec0 = vertexList.get(0);
+                    if (relative.get(0))
                     {
                         vec0 = relativiseRender(p.level(), vec0, 0);
                     }
@@ -1006,8 +1006,8 @@ public class ShapeDispatcher
                     }
                     break;
                 case 5:
-                    Vec3 vecA = vertexList.getFirst();
-                    if (relative.getFirst())
+                    Vec3 vecA = vertexList.get(0);
+                    if (relative.get(0))
                     {
                         vecA = relativiseRender(p.level(), vecA, 0);
                     }
@@ -2045,7 +2045,7 @@ public class ShapeDispatcher
         {
             List<Value> lv = ((ListValue) value).getItems();
             ListTag tag = new ListTag();
-            tag.add(DoubleTag.valueOf(NumericValue.asNumber(lv.getFirst(), "x").getDouble()));
+            tag.add(DoubleTag.valueOf(NumericValue.asNumber(lv.get(0), "x").getDouble()));
             tag.add(DoubleTag.valueOf(NumericValue.asNumber(lv.get(1), "y").getDouble()));
             tag.add(DoubleTag.valueOf(NumericValue.asNumber(lv.get(2), "z").getDouble()));
             return tag;
@@ -2100,7 +2100,7 @@ public class ShapeDispatcher
             {
                 List<Value> coords = ((ListValue) value).getItems();
                 ListTag tag = new ListTag();
-                tag.add(DoubleTag.valueOf(NumericValue.asNumber(coords.getFirst(), "x").getDouble()));
+                tag.add(DoubleTag.valueOf(NumericValue.asNumber(coords.get(0), "x").getDouble()));
                 tag.add(DoubleTag.valueOf(NumericValue.asNumber(coords.get(1), "y").getDouble()));
                 tag.add(DoubleTag.valueOf(NumericValue.asNumber(coords.get(2), "z").getDouble()));
                 ltag.add(tag);
@@ -2224,7 +2224,7 @@ public class ShapeDispatcher
         int pcount = 0;
         if (distance < 100)
         {
-            RandomSource rand = players.getFirst().level().random;
+            RandomSource rand = players.get(0).level().random;
             int particles = (int) (distance / density) + 1;
             Vec3 towards = to.subtract(from);
             for (int i = 0; i < particles; i++)

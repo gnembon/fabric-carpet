@@ -304,7 +304,7 @@ public class ValueConversions
             {
                 return ListValue.of();
             }
-            Object el = l.getFirst();
+            Object el = l.get(0);
             if (el instanceof final Entity entity)
             {
                 return ListValue.wrap(l.stream().map(o -> new EntityValue(entity)));
@@ -476,7 +476,7 @@ public class ValueConversions
                 throw new ThrowStatement("item definition from list of size " + list.length(), Throwables.UNKNOWN_ITEM);
             }
             List<Value> items = list.getItems();
-            name = items.getFirst().getString();
+            name = items.get(0).getString();
             if (withCount)
             {
                 count = NumericValue.asNumber(items.get(1)).getInt();

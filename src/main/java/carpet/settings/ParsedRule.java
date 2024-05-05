@@ -394,7 +394,7 @@ public final class ParsedRule<T> implements CarpetRule<T>, Comparable<ParsedRule
 
     @Override
     public boolean strict() {
-        return !realValidators.isEmpty() && realValidators.getFirst() instanceof Validator.StrictValidator;
+        return !realValidators.isEmpty() && realValidators.get(0) instanceof Validator.StrictValidator;
     }
 
     private static <T> Map.Entry<Class<T>, FromStringConverter<T>> numericalConverter(Class<T> outputClass, Function<String, T> converter) {

@@ -43,7 +43,7 @@ public class ListValue extends AbstractListValue implements ContainerValueInterf
     {
         return items.size() < 8
                 ? "[" + items.stream().map(Value::getPrettyString).collect(Collectors.joining(", ")) + "]"
-                : "[" + items.getFirst().getPrettyString() + ", " + items.get(1).getPrettyString() + ", ..., " + items.get(items.size() - 2).getPrettyString() + ", " + items.get(items.size() - 1).getPrettyString() + "]";
+                : "[" + items.get(0).getPrettyString() + ", " + items.get(1).getPrettyString() + ", ..., " + items.get(items.size() - 2).getPrettyString() + ", " + items.get(items.size() - 1).getPrettyString() + "]";
     }
 
     @Override
@@ -566,7 +566,7 @@ public class ListValue extends AbstractListValue implements ContainerValueInterf
         ListTag tag = new ListTag();
         if (argSize == 1)
         {
-            tag.add(items.getFirst().toTag(force, regs));
+            tag.add(items.get(0).toTag(force, regs));
             return tag;
         }
         // figuring out the types

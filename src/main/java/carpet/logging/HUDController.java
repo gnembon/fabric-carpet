@@ -90,7 +90,7 @@ public class HUDController
                     case "end" -> Level.END;
                     default -> player.level().dimension();
                 };
-                return new Component[]{SpawnReporter.printMobcapsForDimension(server.getLevel(dim), false).getFirst()};
+                return new Component[]{SpawnReporter.printMobcapsForDimension(server.getLevel(dim), false).get(0)};
             });
 
         if(LoggerRegistry.__counter)

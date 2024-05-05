@@ -30,7 +30,7 @@ public class Functions
             {
                 throw new InternalExpressionException("'import' needs at least a module name to import, and list of values to import");
             }
-            String moduleName = lv.getFirst().getString();
+            String moduleName = lv.get(0).getString();
             c.host.importModule(c, moduleName);
             moduleName = moduleName.toLowerCase(Locale.ROOT);
             if (lv.size() > 1)
@@ -60,7 +60,7 @@ public class Functions
                     return fun.callInContext(c, t, functionArgument.args);
                 }
                 // gimme signature
-                String name = lv.getFirst().evalValue(c, Context.NONE).getString();
+                String name = lv.get(0).evalValue(c, Context.NONE).getString();
                 List<String> args = new ArrayList<>();
                 List<String> globals = new ArrayList<>();
                 String varArgs = null;
@@ -121,7 +121,7 @@ public class Functions
             {
                 throw new InternalExpressionException("Outer scoping of variables is only possible in function signatures.");
             }
-            return new FunctionAnnotationValue(lv.getFirst(), FunctionAnnotationValue.Type.GLOBAL);
+            return new FunctionAnnotationValue(lv.get(0), FunctionAnnotationValue.Type.GLOBAL);
         });
 
         //assigns const procedure to the lhs, returning its previous value
@@ -143,7 +143,7 @@ public class Functions
         });
 
         expression.addImpureFunction("return", lv -> {
-            throw new ReturnStatement(lv.size() == 0 ? Value.NULL : lv.getFirst());
+            throw new ReturnStatement(lv.size() == 0 ? Value.NULL : lv.get(0));
         });
     }
 }

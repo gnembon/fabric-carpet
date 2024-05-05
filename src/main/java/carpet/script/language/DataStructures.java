@@ -30,7 +30,7 @@ public class DataStructures
     public static void apply(Expression expression)
     {
         expression.addFunction("l", lv ->
-                lv.size() == 1 && lv.getFirst() instanceof final LazyListValue llv
+                lv.size() == 1 && lv.get(0) instanceof final LazyListValue llv
                         ? ListValue.wrap(llv.unroll())
                         : new ListValue.ListConstructorValue(lv));
 
@@ -40,7 +40,7 @@ public class DataStructures
             {
                 throw new InternalExpressionException("'join' takes at least 2 arguments");
             }
-            String delimiter = lv.getFirst().getString();
+            String delimiter = lv.get(0).getString();
             List<Value> toJoin;
             if (lv.size() == 2 && lv.get(1) instanceof final LazyListValue llv)
             {
@@ -63,12 +63,12 @@ public class DataStructures
             Value hwat;
             if (lv.size() == 1)
             {
-                hwat = lv.getFirst();
+                hwat = lv.get(0);
                 delimiter = null;
             }
             else if (lv.size() == 2)
             {
-                delimiter = lv.getFirst();
+                delimiter = lv.get(0);
                 hwat = lv.get(1);
             }
             else
@@ -84,7 +84,7 @@ public class DataStructures
             {
                 throw new InternalExpressionException("'slice' takes 2 or 3 arguments");
             }
-            Value hwat = lv.getFirst();
+            Value hwat = lv.get(0);
             long from = NumericValue.asNumber(lv.get(1)).getLong();
             Long to = null;
             if (lv.size() == 3)
@@ -97,7 +97,7 @@ public class DataStructures
         expression.addFunction("sort", lv ->
         {
             List<Value> toSort = lv;
-            if (lv.size() == 1 && lv.getFirst() instanceof final ListValue llv)
+            if (lv.size() == 1 && lv.get(0) instanceof final ListValue llv)
             {
                 toSort = new ArrayList<>(llv.getItems());
             }
@@ -112,7 +112,7 @@ public class DataStructures
             {
                 throw new InternalExpressionException("First argument for 'sort_key' should be a List");
             }
-            Value v = lv.getFirst().evalValue(c);
+            Value v = lv.get(0).evalValue(c);
             if (!(v instanceof final ListValue list))
             {
                 throw new InternalExpressionException("First argument for 'sort_key' should be a List");
@@ -150,7 +150,7 @@ public class DataStructures
             {
                 throw new InternalExpressionException("'range' accepts from 1 to 3 arguments, not " + argsize);
             }
-            to = NumericValue.asNumber(lv.getFirst());
+            to = NumericValue.asNumber(lv.get(0));
             if (lv.size() > 1)
             {
                 from = to;
@@ -166,7 +166,7 @@ public class DataStructures
         });
 
         expression.addTypedContextFunction("m", -1, Context.MAPDEF, (c, t, lv) ->
-                lv.size() == 1 && lv.getFirst() instanceof final LazyListValue llv
+                lv.size() == 1 && lv.get(0) instanceof final LazyListValue llv
                         ? new MapValue(llv.unroll())
                         : new MapValue(lv)
         );
@@ -217,7 +217,7 @@ public class DataStructures
             }
             if (lv.size() == 1)
             {
-                Value v = lv.getFirst().evalValue(c, Context.LVALUE);
+                Value v = lv.get(0).evalValue(c, Context.LVALUE);
                 if (!(v instanceof final LContainerValue lcv))
                 {
                     return LazyValue.NULL;
@@ -230,7 +230,7 @@ public class DataStructures
                 Value ret = container.get(lcv.address());
                 return (cc, tt) -> ret;
             }
-            Value container = lv.getFirst().evalValue(c);
+            Value container = lv.get(0).evalValue(c);
             for (int i = 1; i < lv.size(); i++)
             {
                 if (!(container instanceof final ContainerValueInterface cvi))
@@ -256,7 +256,7 @@ public class DataStructures
             }
             if (lv.size() == 1)
             {
-                Value v = lv.getFirst().evalValue(c, Context.LVALUE);
+                Value v = lv.get(0).evalValue(c, Context.LVALUE);
                 if (!(v instanceof final LContainerValue lcv))
                 {
                     return LazyValue.NULL;
@@ -269,7 +269,7 @@ public class DataStructures
                 Value ret = BooleanValue.of(container.has(lcv.address()));
                 return (cc, tt) -> ret;
             }
-            Value container = lv.getFirst().evalValue(c);
+            Value container = lv.get(0).evalValue(c);
             for (int i = 1; i < lv.size() - 1; i++)
             {
                 if (!(container instanceof final ContainerValueInterface cvi))
@@ -293,7 +293,7 @@ public class DataStructures
             {
                 throw new InternalExpressionException("'put' takes at least three arguments, a container, address, and values to insert at that index");
             }
-            Value container = lv.getFirst().evalValue(c, Context.LVALUE);
+            Value container = lv.get(0).evalValue(c, Context.LVALUE);
             if (container instanceof final LContainerValue lcv)
             {
                 ContainerValueInterface internalContainer = lcv.container();
@@ -334,7 +334,7 @@ public class DataStructures
             }
             if (lv.size() == 1)
             {
-                Value v = lv.getFirst().evalValue(c, Context.LVALUE);
+                Value v = lv.get(0).evalValue(c, Context.LVALUE);
                 if (!(v instanceof final LContainerValue lcv))
                 {
                     return LazyValue.NULL;
@@ -347,7 +347,7 @@ public class DataStructures
                 Value ret = BooleanValue.of(container.delete(lcv.address()));
                 return (cc, tt) -> ret;
             }
-            Value container = lv.getFirst().evalValue(c);
+            Value container = lv.get(0).evalValue(c);
             for (int i = 1; i < lv.size() - 1; i++)
             {
                 if (!(container instanceof final ContainerValueInterface cvi))

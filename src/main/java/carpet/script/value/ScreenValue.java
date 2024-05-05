@@ -339,7 +339,7 @@ public class ScreenValue extends Value
     public Value modifyProperty(String propertyName, List<Value> lv)
     {
         DataSlot property = getProperty(propertyName);
-        int intValue = NumericValue.asNumber(lv.getFirst()).getInt();
+        int intValue = NumericValue.asNumber(lv.get(0)).getInt();
         property.set(intValue);
         this.screenHandler.broadcastChanges();
         return Value.TRUE;
