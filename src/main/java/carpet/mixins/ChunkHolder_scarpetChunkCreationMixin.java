@@ -21,10 +21,11 @@ import net.minecraft.world.level.chunk.UpgradeData;
 @Mixin(ChunkHolder.class)
 public abstract class ChunkHolder_scarpetChunkCreationMixin implements ChunkHolderInterface
 {
-    @Shadow protected abstract void updateChunkToSave(CompletableFuture<? extends ChunkResult<? extends ChunkAccess>> newChunkFuture, String type);
+    //@Shadow protected abstract void updateChunkToSave(CompletableFuture<? extends ChunkResult<? extends ChunkAccess>> newChunkFuture, String type);
 
-    @Shadow @Final private AtomicReferenceArray<CompletableFuture<ChunkResult<ChunkAccess>>> futures;
+    //@Shadow @Final private AtomicReferenceArray<CompletableFuture<ChunkResult<ChunkAccess>>> futures;
 
+    /*
     @Override
     public CompletableFuture<ChunkResult<ChunkAccess>> setDefaultProtoChunk(ChunkPos chpos, BlockableEventLoop<Runnable> executor, ServerLevel world)
     {
@@ -37,4 +38,5 @@ public abstract class ChunkHolder_scarpetChunkCreationMixin implements ChunkHold
         futures.set(i, completableFuture2);
         return completableFuture2;
     }
+     */
 }

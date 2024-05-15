@@ -100,12 +100,12 @@ public class Vanilla
 
     public static void ChunkMap_relightChunk(ChunkMap chunkMap, ChunkPos pos)
     {
-        ((ThreadedAnvilChunkStorageInterface) chunkMap).relightChunk(pos);
+        //((ThreadedAnvilChunkStorageInterface) chunkMap).relightChunk(pos);
     }
 
     public static Map<String, Integer> ChunkMap_regenerateChunkRegion(ChunkMap chunkMap, List<ChunkPos> requestedChunks)
     {
-        return ((ThreadedAnvilChunkStorageInterface) chunkMap).regenerateChunkRegion(requestedChunks);
+        return Map.of(); //return ((ThreadedAnvilChunkStorageInterface) chunkMap).regenerateChunkRegion(requestedChunks);
     }
 
     public static List<Collection<ItemStack>> Ingredient_getRecipeStacks(Ingredient ingredient)

@@ -9,5 +9,5 @@ import net.minecraft.world.level.chunk.ChunkAccess;
 
 public interface ChunkHolderInterface
 {
-    CompletableFuture<ChunkResult<ChunkAccess>> setDefaultProtoChunk(ChunkPos chpos, BlockableEventLoop<Runnable> executor, ServerLevel world);
+    //CompletableFuture<ChunkResult<ChunkAccess>> setDefaultProtoChunk(ChunkPos chpos, BlockableEventLoop<Runnable> executor, ServerLevel world);
 }

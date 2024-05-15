@@ -19,6 +19,7 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.TickTask;
 import net.minecraft.server.level.ChunkHolder;
+import net.minecraft.server.level.ChunkLevel;
 import net.minecraft.server.level.ChunkMap;
 import net.minecraft.server.level.ChunkMap.DistanceManager;
 import net.minecraft.server.level.ChunkResult;
@@ -66,10 +67,6 @@ public abstract class ChunkMap_scarpetChunkCreationMixin implements ThreadedAnvi
 
     @Shadow
     @Final
-    private LongSet entitiesInLevel;
-
-    @Shadow
-    @Final
     private Long2ObjectLinkedOpenHashMap<ChunkHolder> updatingChunkMap;
 
     @Shadow
@@ -111,6 +108,10 @@ public abstract class ChunkMap_scarpetChunkCreationMixin implements ThreadedAnvi
 
     // in protoChunkToFullChunk
     // fancier version of the one below, ensuring that the event is triggered when the chunk is actually loaded.
+
+    /*
+
+
     @Inject(method = "method_17227", at = @At("HEAD"), remap = false)
     private void onChunkGeneratedStart(ChunkHolder chunkHolder, ChunkAccess chunkAccess, CallbackInfoReturnable<ChunkAccess> cir)
     {
@@ -146,6 +147,8 @@ public abstract class ChunkMap_scarpetChunkCreationMixin implements ThreadedAnvi
         }
     }
 
+     */
+
     /* simple but a version that doesn't guarantee that the chunk is actually loaded
     @Inject(method = "convertToFullChunk", at = @At("HEAD"))
     private void onChunkGeneratedEnd(ChunkHolder chunkHolder, CallbackInfoReturnable<CompletableFuture<ChunkResult<ChunkAccess>>> cir)
@@ -167,7 +170,7 @@ public abstract class ChunkMap_scarpetChunkCreationMixin implements ThreadedAnvi
     @Unique
     private void addTicket(ChunkPos pos, ChunkStatus status)
     {  // UNKNOWN
-        this.distanceManager.addTicket(TicketType.UNKNOWN, pos, 33 + ChunkStatus.getDistance(status), pos);
+        this.distanceManager.addTicket(TicketType.UNKNOWN, pos, 33 + ChunkLevel.byStatus(status), pos);
     }
 
     @Unique
@@ -176,6 +179,8 @@ public abstract class ChunkMap_scarpetChunkCreationMixin implements ThreadedAnvi
         this.addTicket(pos, ChunkStatus.EMPTY);
     }
 
+
+    /*
     @Unique
     private void addRelightTicket(ChunkPos pos)
     {
@@ -190,7 +195,7 @@ public abstract class ChunkMap_scarpetChunkCreationMixin implements ThreadedAnvi
                 () -> "release relight ticket " + pos
         ));
     }
-
+     */
     @Unique
     private void tickTicketManager()
     {
@@ -214,6 +219,8 @@ public abstract class ChunkMap_scarpetChunkCreationMixin implements ThreadedAnvi
         return ret;
     }
 
+
+    /*
     @Unique
     private Set<ChunkPos> loadExistingChunksFromDisk(Set<ChunkPos> requestedChunks)
     {
@@ -329,6 +336,8 @@ public abstract class ChunkMap_scarpetChunkCreationMixin implements ThreadedAnvi
         this.waitFor(lightFuture);
     }
 
+    /*
+
     @Override
     public Map<String, Integer> regenerateChunkRegion(List<ChunkPos> requestedChunksList)
     {
@@ -385,7 +394,7 @@ public abstract class ChunkMap_scarpetChunkCreationMixin implements ThreadedAnvi
         {
             ChunkAccess chunk = this.getCurrentChunk(pos);
 
-            if (chunk.getStatus().isOrAfter(ChunkStatus.LIGHT.getParent()))
+            if (chunk.getPersistedStatus().isOrAfter(ChunkStatus.LIGHT.getParent()))
             {
                 affectedNeighbors.add(chunk);
             }
@@ -399,7 +408,7 @@ public abstract class ChunkMap_scarpetChunkCreationMixin implements ThreadedAnvi
 
             // remove entities
             long longPos = pos.toLong();
-            if (this.entitiesInLevel.contains(longPos) && chunk instanceof LevelChunk)
+            if (chunk instanceof LevelChunk)
             {
                 ((SimpleEntityLookupInterface<Entity>) ((ServerWorldInterface) level).getEntityLookupCMPublic()).getChunkEntities(pos).forEach(entity -> {
                     if (!(entity instanceof Player))
@@ -415,7 +424,7 @@ public abstract class ChunkMap_scarpetChunkCreationMixin implements ThreadedAnvi
                 ((LevelChunk) chunk).setLoaded(false);
             }
 
-            if (this.entitiesInLevel.remove(pos.toLong()) && chunk instanceof LevelChunk)
+            if (chunk instanceof LevelChunk)
             {
                 this.level.unload((LevelChunk) chunk); // block entities only
             }
@@ -450,7 +459,7 @@ public abstract class ChunkMap_scarpetChunkCreationMixin implements ThreadedAnvi
         // Also, this is needed to ensure chunks are saved to disk
 
         Map<ChunkPos, ChunkStatus> targetGenerationStatus = affectedChunks.stream().collect(
-                Collectors.toMap(ChunkAccess::getPos, ChunkAccess::getStatus)
+                Collectors.toMap(ChunkAccess::getPos, ChunkAccess::getPersistedStatus)
         );
 
         for (Entry<ChunkPos, ChunkStatus> entry : targetGenerationStatus.entrySet())
@@ -548,9 +557,13 @@ public abstract class ChunkMap_scarpetChunkCreationMixin implements ThreadedAnvi
         return report;
     }
 
+
+
     @Override
     public Iterable<ChunkHolder> getChunksCM()
     {
         return getChunks();
     }
+
+     */
 }

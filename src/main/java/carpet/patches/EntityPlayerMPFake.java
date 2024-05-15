@@ -213,7 +213,7 @@ public class EntityPlayerMPFake extends ServerPlayer
     }
 
     @Override
-    public Entity changeDimension(ServerLevel serverLevel)
+    public Entity changeDimension(DimensionTransitionSupplier serverLevel)
     {
         super.changeDimension(serverLevel);
         if (wonGame) {
