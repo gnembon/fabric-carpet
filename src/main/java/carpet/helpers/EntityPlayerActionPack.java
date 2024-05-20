@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import carpet.logging.Logger;
 import carpet.patches.EntityPlayerMPFake;
 import carpet.script.utils.Tracer;
 import net.minecraft.commands.arguments.EntityAnchorArgument;
@@ -24,7 +25,9 @@ import net.minecraft.world.entity.decoration.ItemFrame;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.vehicle.Boat;
 import net.minecraft.world.entity.vehicle.Minecart;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
@@ -110,6 +113,7 @@ public class EntityPlayerActionPack
         strafing = value;
         return this;
     }
+
     public EntityPlayerActionPack look(Direction direction)
     {
         return switch (direction)
@@ -238,7 +242,12 @@ public class EntityPlayerActionPack
                 }
             }
         }
-        float vel = sneaking?0.3F:1.0F;
+
+        boolean slowedByItem = player.isUsingItem();
+
+        float vel = sneaking?0.30F:1.0F;
+        vel *= slowedByItem?0.20F:1.0F;
+
         // The != 0.0F checks are needed given else real players can't control minecarts, however it works with fakes and else they don't stop immediately
         if (forward != 0.0F || player instanceof EntityPlayerMPFake) {
             player.zza = forward * vel;
@@ -250,8 +259,13 @@ public class EntityPlayerActionPack
 
     static HitResult getTarget(ServerPlayer player)
     {
-        double reach = player.gameMode.isCreative() ? 5 : 4.5f;
-        return Tracer.rayTrace(player, 1, reach, false);
+        double blockReach = player.gameMode.isCreative() ? 5 : 4.5f;
+        double entityReach = player.gameMode.isCreative() ? 5 : 3f;
+
+        HitResult hit = Tracer.rayTrace(player, 1, blockReach, false);
+
+        if (hit.getType() == HitResult.Type.BLOCK) return hit;
+        return Tracer.rayTrace(player, 1, entityReach, false);
     }
 
     private void dropItemFromSlot(int slot, boolean dropAll)
@@ -378,8 +392,6 @@ public class EntityPlayerActionPack
                             player.attack(entityHit.getEntity());
                             player.swing(InteractionHand.MAIN_HAND);
                         }
-                        player.resetAttackStrengthTicker();
-                        player.resetLastActionTime();
                         return true;
                     }
                     case BLOCK: {
@@ -443,11 +455,13 @@ public class EntityPlayerActionPack
                             player.level().destroyBlockProgress(-1, pos, (int) (ap.curBlockDamageMP * 10));
 
                         }
-                        player.resetLastActionTime();
                         player.swing(InteractionHand.MAIN_HAND);
                         return blockBroken;
                     }
                 }
+                if (!action.isContinuous) player.swing(InteractionHand.MAIN_HAND);
+                player.resetAttackStrengthTicker();
+                player.resetLastActionTime();
                 return false;
             }
 
