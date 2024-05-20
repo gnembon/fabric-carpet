@@ -48,7 +48,6 @@ public class EntityPlayerActionPack
 
     private boolean sneaking;
     private boolean sprinting;
-    private boolean slowed;
     private float forward;
     private float strafing;
 
@@ -71,7 +70,6 @@ public class EntityPlayerActionPack
         sprinting = other.sprinting;
         forward = other.forward;
         strafing = other.strafing;
-        slowed = other.slowed;
 
         itemUseCooldown = other.itemUseCooldown;
     }
@@ -113,12 +111,6 @@ public class EntityPlayerActionPack
     public EntityPlayerActionPack setStrafing(float value)
     {
         strafing = value;
-        return this;
-    }
-
-    public EntityPlayerActionPack setSlowed(boolean value)
-    {
-        slowed = value;
         return this;
     }
 
@@ -251,15 +243,11 @@ public class EntityPlayerActionPack
             }
         }
 
-        if (player.isUsingItem())
-        {
-            ItemStack item = player.getUseItem();
-            ((ServerPlayerInterface) player).getActionPack().setSlowed(item.isEdible() || item.is(Items.SHIELD) || item.is(Items.BRUSH) || item.is(Items.BOW) || item.is(Items.CROSSBOW) || item.is(Items.TRIDENT) || item.is(Items.GOAT_HORN) || item.is(Items.SPYGLASS));
-        }
-        else {setSlowed(false);}
+        boolean slowedByItem = player.isUsingItem();
 
         float vel = sneaking?0.30F:1.0F;
-        vel *= slowed?0.20F:1.0F;
+        vel *= slowedByItem?0.20F:1.0F;
+
         // The != 0.0F checks are needed given else real players can't control minecarts, however it works with fakes and else they don't stop immediately
         if (forward != 0.0F || player instanceof EntityPlayerMPFake) {
             player.zza = forward * vel;
