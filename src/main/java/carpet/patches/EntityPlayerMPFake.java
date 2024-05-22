@@ -4,6 +4,7 @@ import carpet.CarpetSettings;
 import com.mojang.authlib.GameProfile;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.UUIDUtil;
+import net.minecraft.network.DisconnectionDetails;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.contents.TranslatableContents;
 import net.minecraft.network.protocol.PacketFlow;
@@ -30,6 +31,7 @@ import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.SkullBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.portal.DimensionTransition;
 import net.minecraft.world.phys.Vec3;
 import carpet.fakes.ServerPlayerInterface;
 import carpet.utils.Messenger;
@@ -147,10 +149,10 @@ public class EntityPlayerMPFake extends ServerPlayer
         shakeOff();
 
         if (reason.getContents() instanceof TranslatableContents text && text.getKey().equals("multiplayer.disconnect.duplicate_login")) {
-            this.connection.onDisconnect(reason);
+            this.connection.onDisconnect(new DisconnectionDetails(reason));
         } else {
             this.server.tell(new TickTask(this.server.getTickCount(), () -> {
-                this.connection.onDisconnect(reason);
+                this.connection.onDisconnect(new DisconnectionDetails(reason));
             }));
         }
     }
@@ -213,7 +215,7 @@ public class EntityPlayerMPFake extends ServerPlayer
     }
 
     @Override
-    public Entity changeDimension(DimensionTransitionSupplier serverLevel)
+    public Entity changeDimension(DimensionTransition serverLevel)
     {
         super.changeDimension(serverLevel);
         if (wonGame) {

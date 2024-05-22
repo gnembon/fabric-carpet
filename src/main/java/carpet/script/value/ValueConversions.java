@@ -159,7 +159,7 @@ public class ValueConversions
                 case "overworld", "over_world" -> server.getLevel(Level.OVERWORLD);
                 default -> {
                     ResourceKey<Level> dim = null;
-                    ResourceLocation id = new ResourceLocation(dimString);
+                    ResourceLocation id = ResourceLocation.parse(dimString);
                     // not using RegistryKey.of since that one creates on check
                     for (ResourceKey<Level> world : (server.levelKeys()))
                     {

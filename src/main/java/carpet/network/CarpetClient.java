@@ -45,7 +45,7 @@ public class CarpetClient
     private static LocalPlayer clientPlayer = null;
     private static boolean isServerCarpet = false;
     public static String serverCarpetVersion;
-    public static final ResourceLocation CARPET_CHANNEL = new ResourceLocation("carpet", "hello");
+    public static final ResourceLocation CARPET_CHANNEL = ResourceLocation.fromNamespaceAndPath("carpet", "hello");
 
     public static void gameJoined(LocalPlayer player)
     {

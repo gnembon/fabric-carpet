@@ -97,20 +97,20 @@ public abstract class ServerPlayer_scarpetEventMixin extends Player implements S
     private ResourceKey<Level> previousDimension;
 
     @Inject(method = "changeDimension", at = @At("HEAD"))
-    private void logPreviousCoordinates(DimensionTransitionSupplier serverWorld, CallbackInfoReturnable<Entity> cir)
+    private void logPreviousCoordinates(DimensionTransition serverWorld, CallbackInfoReturnable<Entity> cir)
     {
         previousLocation = position();
         previousDimension = level().dimension();  //dimension type
     }
 
     @Inject(method = "changeDimension", at = @At("RETURN"))
-    private void atChangeDimension(DimensionTransitionSupplier destinationP, CallbackInfoReturnable<Entity> cir)
+    private void atChangeDimension(DimensionTransition destinationP, CallbackInfoReturnable<Entity> cir)
     {
         if (PLAYER_CHANGES_DIMENSION.isNeeded())
         {
             ServerPlayer player = (ServerPlayer) (Object)this;
-            DimensionTransition destinationTransition = destinationP.get();
-            ServerLevel destination = destinationTransition.newDimension();
+            DimensionTransition destinationTransition = destinationP;
+            ServerLevel destination = destinationTransition.newLevel();
             Vec3 to = null;
             if (!wonGame || previousDimension != Level.END || destination.dimension() != Level.OVERWORLD)
             {

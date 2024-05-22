@@ -157,6 +157,7 @@
     "HorseBaseEntity_scarpetMixin",
     "RandomState_ScarpetMixin",
     "Biome_scarpetMixin",
+    "PortalProcessor_scarpetMixin",
 
     "BlockEntity_movableBEMixin",
     "PistonBaseBlock_movableBEMixin",

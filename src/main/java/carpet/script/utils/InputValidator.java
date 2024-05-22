@@ -23,7 +23,7 @@ public class InputValidator
     {
         try
         {
-            return new ResourceLocation(string);
+            return ResourceLocation.parse(string);
         }
         catch (ResourceLocationException iie)
         {
