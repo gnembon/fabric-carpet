@@ -1,7 +1,6 @@
 package carpet.mixins;
 
 import carpet.CarpetSettings;
-import carpet.patches.EntityPlayerMPFake;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
@@ -49,8 +48,8 @@ public abstract class LivingEntity_creativeFlyMixin extends Entity
         }
     }
 
-    @Inject(method = "canChangeDimensions", at = @At("HEAD"), cancellable = true)
-    private void canChangeDimensions(CallbackInfoReturnable<Boolean> cir)
+    @Inject(method = "canUsePortal", at = @At("HEAD"), cancellable = true)
+    private void canUsePortal(CallbackInfoReturnable<Boolean> cir)
     {
         if (CarpetSettings.isCreativeFlying(this)) {
                 cir.setReturnValue(false);
