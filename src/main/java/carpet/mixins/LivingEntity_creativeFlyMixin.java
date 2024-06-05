@@ -49,7 +49,7 @@ public abstract class LivingEntity_creativeFlyMixin extends Entity
         }
     }
 
-    @Inject(method = "canChangeDimensions", at = @At("HEAD"), cancellable = true)
+    @Inject(method = "canUsePortal", at = @At("HEAD"), cancellable = true)
     private void canChangeDimensions(CallbackInfoReturnable<Boolean> cir)
     {
         if (CarpetSettings.isCreativeFlying(this)) {
