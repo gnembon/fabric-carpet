@@ -24,6 +24,8 @@ import net.minecraft.world.entity.decoration.ItemFrame;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.vehicle.Boat;
 import net.minecraft.world.entity.vehicle.Minecart;
+import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
@@ -31,6 +33,8 @@ import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec2;
 import net.minecraft.world.phys.Vec3;
+
+import static carpet.script.CarpetEventServer.Event.*;
 
 public class EntityPlayerActionPack
 {
@@ -87,6 +91,12 @@ public class EntityPlayerActionPack
     {
         sneaking = doSneak;
         player.setShiftKeyDown(doSneak);
+		if(doSneak){
+			PLAYER_STARTS_SNEAKING.onPlayerEvent(player);
+		}
+		else {
+			PLAYER_STOPS_SNEAKING.onPlayerEvent(player);
+		}
         if (sprinting && sneaking)
             setSprinting(false);
         return this;
@@ -94,6 +104,12 @@ public class EntityPlayerActionPack
     public EntityPlayerActionPack setSprinting(boolean doSprint)
     {
         sprinting = doSprint;
+	    if(sprinting){
+		    PLAYER_STARTS_SPRINTING.onPlayerEvent(player);
+	    }
+	    else {
+		    PLAYER_STOPS_SPRINTING.onPlayerEvent(player);
+	    }
         player.setSprinting(doSprint);
         if (sneaking && sprinting)
             setSneaking(false);
@@ -257,10 +273,11 @@ public class EntityPlayerActionPack
     private void dropItemFromSlot(int slot, boolean dropAll)
     {
         Inventory inv = player.getInventory(); // getInventory;
-        if (!inv.getItem(slot).isEmpty())
-            player.drop(inv.removeItem(slot,
-                    dropAll ? inv.getItem(slot).getCount() : 1
-            ), false, true); // scatter, keep owner
+        if (!inv.getItem(slot).isEmpty()) {
+	        player.drop(inv.removeItem(slot,
+		        dropAll ? inv.getItem(slot).getCount() : 1
+	        ), false, true); // scatter, keep owner
+        }
     }
 
     public void drop(int selectedSlot, boolean dropAll)
@@ -281,6 +298,7 @@ public class EntityPlayerActionPack
 
     public void setSlot(int slot)
     {
+		PLAYER_SWITCHES_SLOT.onPlayerEvent(player);
         player.getInventory().selected = slot-1;
         player.connection.send(new ClientboundSetCarriedItemPacket(slot-1));
     }
@@ -314,12 +332,26 @@ public class EntityPlayerActionPack
                             BlockHitResult blockHit = (BlockHitResult) hit;
                             BlockPos pos = blockHit.getBlockPos();
                             Direction side = blockHit.getDirection();
+	                        ItemStack stack = player.getItemInHand(hand);
                             if (pos.getY() < player.level().getMaxBuildHeight() - (side == Direction.UP ? 1 : 0) && world.mayInteract(player, pos))
                             {
-                                InteractionResult result = player.gameMode.useItemOn(player, world, player.getItemInHand(hand), hand, blockHit);
+	                            if (PLAYER_RIGHT_CLICKS_BLOCK.isNeeded())
+	                            {
+		                            PLAYER_RIGHT_CLICKS_BLOCK.onBlockHit(player, hand, blockHit);
+	                            }
+                                InteractionResult result = player.gameMode.useItemOn(player, world, stack, hand, blockHit);
                                 if (result.consumesAction())
                                 {
-                                    if (result.shouldSwing()) player.swing(hand);
+									if (PLAYER_INTERACTS_WITH_BLOCK.isNeeded())
+	                                    PLAYER_INTERACTS_WITH_BLOCK.onBlockHit(player, hand, blockHit);
+									if (PLAYER_PLACES_BLOCK.isNeeded()&& stack.getItem() instanceof BlockItem)
+										PLAYER_PLACES_BLOCK.onBlockPlaced(player, pos, hand, stack);
+                                    if (result.shouldSwing()) {
+										player.swing(hand);
+	                                    if (PLAYER_SWINGS_HAND.isNeeded()){
+		                                    PLAYER_SWINGS_HAND.onHandAction(player , InteractionHand.MAIN_HAND);
+	                                    }
+                                    }
                                     ap.itemUseCooldown = 3;
                                     return true;
                                 }
@@ -334,14 +366,20 @@ public class EntityPlayerActionPack
                             boolean handWasEmpty = player.getItemInHand(hand).isEmpty();
                             boolean itemFrameEmpty = (entity instanceof ItemFrame) && ((ItemFrame) entity).getItem().isEmpty();
                             Vec3 relativeHitPos = entityHit.getLocation().subtract(entity.getX(), entity.getY(), entity.getZ());
+							if (PLAYER_INTERACTS_WITH_ENTITY.isNeeded())
+	                            PLAYER_INTERACTS_WITH_ENTITY.onEntityHandAction(player, entity, hand);
                             if (entity.interactAt(player, relativeHitPos, hand).consumesAction())
                             {
+	                            if (PLAYER_USES_ITEM.isNeeded())
+		                            PLAYER_USES_ITEM.onItemAction(player, hand, player.getItemInHand(hand));
                                 ap.itemUseCooldown = 3;
                                 return true;
                             }
                             // fix for SS itemframe always returns CONSUME even if no action is performed
                             if (player.interactOn(entity, hand).consumesAction() && !(handWasEmpty && itemFrameEmpty))
                             {
+	                            if (PLAYER_USES_ITEM.isNeeded())
+		                            PLAYER_USES_ITEM.onItemAction(player, hand, player.getItemInHand(hand));
                                 ap.itemUseCooldown = 3;
                                 return true;
                             }
@@ -351,6 +389,8 @@ public class EntityPlayerActionPack
                     ItemStack handItem = player.getItemInHand(hand);
                     if (player.gameMode.useItem(player, player.level(), handItem, hand).consumesAction())
                     {
+	                    if (PLAYER_USES_ITEM.isNeeded())
+		                    PLAYER_USES_ITEM.onItemAction(player, hand, handItem);
                         ap.itemUseCooldown = 3;
                         return true;
                     }
@@ -375,8 +415,14 @@ public class EntityPlayerActionPack
                         EntityHitResult entityHit = (EntityHitResult) hit;
                         if (!action.isContinuous)
                         {
+
                             player.attack(entityHit.getEntity());
+	                        if (PLAYER_ATTACKS_ENTITY.isNeeded()&& entityHit.getEntity().isAttackable())
+		                        PLAYER_ATTACKS_ENTITY.onEntityHandAction(player, entityHit.getEntity(), null);
                             player.swing(InteractionHand.MAIN_HAND);
+							if (PLAYER_SWINGS_HAND.isNeeded()){
+								PLAYER_SWINGS_HAND.onHandAction(player , InteractionHand.MAIN_HAND);
+							}
                         }
                         player.resetAttackStrengthTicker();
                         player.resetLastActionTime();
@@ -402,7 +448,11 @@ public class EntityPlayerActionPack
                         boolean blockBroken = false;
                         if (player.gameMode.getGameModeForPlayer().isCreative())
                         {
+	                        if (PLAYER_CLICKS_BLOCK.isNeeded())
+		                        PLAYER_CLICKS_BLOCK.onBlockAction(player, pos, blockHit.getDirection());
                             player.gameMode.handleBlockBreakAction(pos, ServerboundPlayerActionPacket.Action.START_DESTROY_BLOCK, side, player.level().getMaxBuildHeight(), -1);
+							if (PLAYER_BREAK_BLOCK.isNeeded())
+								PLAYER_BREAK_BLOCK.onBlockBroken(player ,pos, state);
                             ap.blockHitDelay = 5;
                             blockBroken = true;
                         }
@@ -412,6 +462,8 @@ public class EntityPlayerActionPack
                             {
                                 player.gameMode.handleBlockBreakAction(ap.currentBlock, ServerboundPlayerActionPacket.Action.ABORT_DESTROY_BLOCK, side, player.level().getMaxBuildHeight(), -1);
                             }
+	                        if (PLAYER_CLICKS_BLOCK.isNeeded())
+		                        PLAYER_CLICKS_BLOCK.onBlockAction(player, pos, blockHit.getDirection());
                             player.gameMode.handleBlockBreakAction(pos, ServerboundPlayerActionPacket.Action.START_DESTROY_BLOCK, side, player.level().getMaxBuildHeight(), -1);
                             boolean notAir = !state.isAir();
                             if (notAir && ap.curBlockDamageMP == 0)
@@ -420,6 +472,8 @@ public class EntityPlayerActionPack
                             }
                             if (notAir && state.getDestroyProgress(player, player.level(), pos) >= 1)
                             {
+	                            if (PLAYER_BREAK_BLOCK.isNeeded())
+		                            PLAYER_BREAK_BLOCK.onBlockBroken(player ,pos, state);
                                 ap.currentBlock = null;
                                 //instamine??
                                 blockBroken = true;
@@ -435,6 +489,8 @@ public class EntityPlayerActionPack
                             ap.curBlockDamageMP += state.getDestroyProgress(player, player.level(), pos);
                             if (ap.curBlockDamageMP >= 1)
                             {
+	                            if (PLAYER_BREAK_BLOCK.isNeeded())
+		                            PLAYER_BREAK_BLOCK.onBlockBroken(player ,pos, state);
                                 player.gameMode.handleBlockBreakAction(pos, ServerboundPlayerActionPacket.Action.STOP_DESTROY_BLOCK, side, player.level().getMaxBuildHeight(), -1);
                                 ap.currentBlock = null;
                                 ap.blockHitDelay = 5;
@@ -445,6 +501,8 @@ public class EntityPlayerActionPack
                         }
                         player.resetLastActionTime();
                         player.swing(InteractionHand.MAIN_HAND);
+						if (PLAYER_SWINGS_HAND.isNeeded())
+							PLAYER_SWINGS_HAND.onHandAction(player, InteractionHand.MAIN_HAND);
                         return blockBroken;
                     }
                 }
@@ -466,6 +524,8 @@ public class EntityPlayerActionPack
             @Override
             boolean execute(ServerPlayer player, Action action)
             {
+				if (PLAYER_JUMPS.isNeeded())
+					PLAYER_JUMPS.onPlayerEvent(player);
                 if (action.limit == 1)
                 {
                     if (player.onGround()) player.jumpFromGround(); // onGround
@@ -488,6 +548,8 @@ public class EntityPlayerActionPack
             @Override
             boolean execute(ServerPlayer player, Action action)
             {
+	            if (PLAYER_DROPS_ITEM.isNeeded())
+					PLAYER_DROPS_ITEM.onPlayerEvent(player);
                 player.resetLastActionTime();
                 player.drop(false); // dropSelectedItem
                 return false;
@@ -498,6 +560,8 @@ public class EntityPlayerActionPack
             @Override
             boolean execute(ServerPlayer player, Action action)
             {
+	            if (PLAYER_DROPS_ITEM.isNeeded())
+		            PLAYER_DROPS_ITEM.onPlayerEvent(player);
                 player.resetLastActionTime();
                 player.drop(true); // dropSelectedItem
                 return false;
@@ -508,6 +572,8 @@ public class EntityPlayerActionPack
             @Override
             boolean execute(ServerPlayer player, Action action)
             {
+				if (PLAYER_SWAPS_HANDS.isNeeded())
+					PLAYER_SWAPS_HANDS.onPlayerEvent(player);
                 player.resetLastActionTime();
                 ItemStack itemStack_1 = player.getItemInHand(InteractionHand.OFF_HAND);
                 player.setItemInHand(InteractionHand.OFF_HAND, player.getItemInHand(InteractionHand.MAIN_HAND));

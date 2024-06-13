@@ -104,7 +104,8 @@ public class ServerGamePacketListenerImpl_scarpetEventsMixin
     ))
     private void onJump(ServerboundMovePlayerPacket playerMoveC2SPacket_1, CallbackInfo ci)
     {
-        PLAYER_JUMPS.onPlayerEvent(player);
+		if (PLAYER_JUMPS.isNeeded())
+            PLAYER_JUMPS.onPlayerEvent(player);
     }
 
     @Inject(method = "handlePlayerAction", cancellable = true, at = @At(
