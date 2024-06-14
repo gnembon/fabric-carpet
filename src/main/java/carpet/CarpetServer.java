@@ -15,6 +15,7 @@ import carpet.commands.MobAICommand;
 import carpet.commands.PerimeterInfoCommand;
 import carpet.commands.PlayerCommand;
 import carpet.commands.ProfileCommand;
+import carpet.patches.FakePlayerManager;
 import carpet.script.ScriptCommand;
 import carpet.commands.SpawnCommand;
 import carpet.commands.TestCommand;
@@ -190,6 +191,7 @@ public class CarpetServer // static for now - easier to handle all around the co
             LoggerRegistry.stopLoggers();
             HUDController.resetScarpetHUDs();
             ParticleParser.resetCache();
+            FakePlayerManager.reset();
             extensions.forEach(e -> e.onServerClosed(server));
             minecraft_server = null;
         }

@@ -1,6 +1,8 @@
 package carpet.patches;
 
 import carpet.CarpetSettings;
+import carpet.fakes.ServerPlayerInterface;
+import carpet.utils.Messenger;
 import com.mojang.authlib.GameProfile;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.UUIDUtil;
@@ -33,8 +35,6 @@ import net.minecraft.world.level.block.entity.SkullBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.portal.DimensionTransition;
 import net.minecraft.world.phys.Vec3;
-import carpet.fakes.ServerPlayerInterface;
-import carpet.utils.Messenger;
 
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -168,7 +168,9 @@ public class EntityPlayerMPFake extends ServerPlayer
         try
         {
             super.tick();
-            this.doTick();
+            if (CarpetSettings.fakePlayerTicksLikeEntities) {
+                this.doTick();
+            }
         }
         catch (NullPointerException ignored)
         {
