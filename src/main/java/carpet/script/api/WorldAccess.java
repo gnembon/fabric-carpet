@@ -634,7 +634,7 @@ public class WorldAccess
                 forceLoad = lv.get(blockArgument.offset).getBoolean();
             }
             ChunkAccess chunk = ((CarpetContext) c).level().getChunk(pos.getX() >> 4, pos.getZ() >> 4, ChunkStatus.EMPTY, forceLoad);
-            return chunk == null ? Value.NULL : ValueConversions.of(BuiltInRegistries.CHUNK_STATUS.getKey(chunk.getStatus()));
+            return chunk == null ? Value.NULL : ValueConversions.of(BuiltInRegistries.CHUNK_STATUS.getKey(chunk.getPersistedStatus()));
         });
 
         expression.addContextFunction("chunk_tickets", -1, (c, t, lv) ->
@@ -918,7 +918,7 @@ public class WorldAccess
                     damageAmount = 2;
                 }
                 final int finalDamageAmount = damageAmount;
-                tool.hurtAndBreak(damageAmount, world, null, () ->  { if (finalDamageAmount > 0) toolBroke.setTrue(); } );
+                tool.hurtAndBreak(damageAmount, world, null, (i) ->  { if (finalDamageAmount > 0) toolBroke.setTrue(); } );
                 if (!isUsingEffectiveTool)
                 {
                     dropLoot = false;
@@ -1582,6 +1582,8 @@ public class WorldAccess
         // todo maybe enable chunk blending?
         expression.addContextFunction("reset_chunk", -1, (c, t, lv) ->
         {
+            return Value.NULL;
+            /*
             CarpetContext cc = (CarpetContext) c;
             List<ChunkPos> requestedChunks = new ArrayList<>();
             if (lv.size() == 1)
@@ -1639,6 +1641,8 @@ public class WorldAccess
                 )));
             });
             return result[0];
+
+             */
         });
 
         expression.addContextFunction("inhabited_time", -1, (c, t, lv) ->

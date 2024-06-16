@@ -88,7 +88,7 @@ public abstract class ThreadedLevelLightEngine_scarpetChunkCreationMixin extends
         return CompletableFuture.runAsync(
             Util.name(() -> {
                     chunk.setLightCorrect(true);
-                    ((ThreadedAnvilChunkStorageInterface) this.chunkMap).releaseRelightTicket(pos);
+                    //((ThreadedAnvilChunkStorageInterface) this.chunkMap).releaseRelightTicket(pos);
                 },
                 () -> "Release relight ticket " + pos
             ),

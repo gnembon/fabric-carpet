@@ -96,12 +96,12 @@ public class Vanilla
 
     public static void ChunkMap_relightChunk(ChunkMap chunkMap, ChunkPos pos)
     {
-        ((ThreadedAnvilChunkStorageInterface) chunkMap).relightChunk(pos);
+        //((ThreadedAnvilChunkStorageInterface) chunkMap).relightChunk(pos);
     }
 
     public static Map<String, Integer> ChunkMap_regenerateChunkRegion(ChunkMap chunkMap, List<ChunkPos> requestedChunks)
     {
-        return ((ThreadedAnvilChunkStorageInterface) chunkMap).regenerateChunkRegion(requestedChunks);
+        return Map.of(); //return ((ThreadedAnvilChunkStorageInterface) chunkMap).regenerateChunkRegion(requestedChunks);
     }
 
     public static List<Recipe<?>> RecipeManager_getAllMatching(RecipeManager recipeManager, RecipeType<?> type, ResourceLocation output, RegistryAccess registryAccess)
@@ -174,8 +174,7 @@ public class Vanilla
         return CarpetSettings.runPermissionLevel;
     }
 
-    @Deprecated
-    public static String MinecraftServer_getReleaseTarget(MinecraftServer server)
+    public static int [] MinecraftServer_getReleaseTarget(MinecraftServer server)
     {
         return CarpetSettings.releaseTarget;
     }

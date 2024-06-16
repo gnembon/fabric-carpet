@@ -75,7 +75,7 @@ public class FeatureGenerator
         {
             return custom.apply(world).plop(world, pos);
         }
-        ResourceLocation id = new ResourceLocation(featureName);
+        ResourceLocation id = ResourceLocation.parse(featureName);
         Structure structure = world.registryAccess().registryOrThrow(Registries.STRUCTURE).get(id);
         if (structure != null)
         {
@@ -129,7 +129,7 @@ public class FeatureGenerator
     @Nullable
     public static Structure resolveConfiguredStructure(String name, ServerLevel world, BlockPos pos)
     {
-        ResourceLocation id = new ResourceLocation(name);
+        ResourceLocation id = ResourceLocation.parse(name);
         Structure configuredStructureFeature = world.registryAccess().registryOrThrow(Registries.STRUCTURE).get(id);
         if (configuredStructureFeature != null)
         {

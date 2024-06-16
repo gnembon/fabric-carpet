@@ -804,6 +804,8 @@ public class Auxiliary
 
         expression.addContextFunction("relight", -1, (c, t, lv) ->
         {
+            return Value.NULL;
+            /*
             CarpetContext cc = (CarpetContext) c;
             BlockArgument locator = BlockArgument.findIn(cc, lv, 0);
             BlockPos pos = locator.block.getPos();
@@ -811,6 +813,8 @@ public class Auxiliary
             Vanilla.ChunkMap_relightChunk(world.getChunkSource().chunkMap, new ChunkPos(pos));
             WorldTools.forceChunkUpdate(pos, world);
             return Value.TRUE;
+
+             */
         });
 
         // Should this be deprecated for system_info('source_dimension')?

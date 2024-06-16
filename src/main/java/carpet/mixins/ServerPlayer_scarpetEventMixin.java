@@ -14,6 +14,7 @@ import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.portal.DimensionTransition;
 import net.minecraft.world.phys.Vec3;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -96,18 +97,20 @@ public abstract class ServerPlayer_scarpetEventMixin extends Player implements S
     private ResourceKey<Level> previousDimension;
 
     @Inject(method = "changeDimension", at = @At("HEAD"))
-    private void logPreviousCoordinates(ServerLevel serverWorld, CallbackInfoReturnable<Entity> cir)
+    private void logPreviousCoordinates(DimensionTransition serverWorld, CallbackInfoReturnable<Entity> cir)
     {
         previousLocation = position();
         previousDimension = level().dimension();  //dimension type
     }
 
     @Inject(method = "changeDimension", at = @At("RETURN"))
-    private void atChangeDimension(ServerLevel destination, CallbackInfoReturnable<Entity> cir)
+    private void atChangeDimension(DimensionTransition destinationP, CallbackInfoReturnable<Entity> cir)
     {
         if (PLAYER_CHANGES_DIMENSION.isNeeded())
         {
             ServerPlayer player = (ServerPlayer) (Object)this;
+            DimensionTransition destinationTransition = destinationP;
+            ServerLevel destination = destinationTransition.newLevel();
             Vec3 to = null;
             if (!wonGame || previousDimension != Level.END || destination.dimension() != Level.OVERWORLD)
             {

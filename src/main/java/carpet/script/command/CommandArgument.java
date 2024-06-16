@@ -890,7 +890,7 @@ public abstract class CommandArgument
                 {
                     throw error("Custom sting type requires options passed as a list" + " for custom type " + suffix);
                 }
-                validOptions = ((ListValue) optionsValue).getItems().stream().map(v -> new ResourceLocation(v.getString())).collect(Collectors.toSet());
+                validOptions = ((ListValue) optionsValue).getItems().stream().map(v -> ResourceLocation.parse(v.getString())).collect(Collectors.toSet());
             }
         }
     }

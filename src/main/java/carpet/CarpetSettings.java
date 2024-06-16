@@ -10,6 +10,7 @@ import carpet.utils.Translations;
 import carpet.utils.CommandHelper;
 import carpet.utils.Messenger;
 import net.fabricmc.loader.api.FabricLoader;
+import net.fabricmc.loader.api.SemanticVersion;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
@@ -48,7 +49,10 @@ import static carpet.api.settings.RuleCategory.CLIENT;
 public class CarpetSettings
 {
     public static final String carpetVersion = FabricLoader.getInstance().getModContainer("carpet").orElseThrow().getMetadata().getVersion().toString();
-    public static final String releaseTarget = "1.20.5";
+    public static final int [] releaseTarget =  {
+            ((SemanticVersion)FabricLoader.getInstance().getModContainer("minecraft").orElseThrow().getMetadata().getVersion()).getVersionComponent(1),
+            ((SemanticVersion)FabricLoader.getInstance().getModContainer("minecraft").orElseThrow().getMetadata().getVersion()).getVersionComponent(2)
+    };
     public static final Logger LOG = LoggerFactory.getLogger("carpet");
     public static final ThreadLocal<Boolean> skipGenerationChecks = ThreadLocal.withInitial(() -> false);
     public static final ThreadLocal<Boolean> impendingFillSkipUpdates = ThreadLocal.withInitial(() -> false);
