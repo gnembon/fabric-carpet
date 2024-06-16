@@ -41,7 +41,7 @@ public class MapValue extends AbstractListValue implements ContainerValueInterfa
     @Override
     public Iterator<Value> iterator()
     {
-        return new ArrayList<>(map.keySet()).iterator();
+        return map.keySet().iterator();
     }
 
     @Override
@@ -53,7 +53,7 @@ public class MapValue extends AbstractListValue implements ContainerValueInterfa
     @Override
     public String getString()
     {
-        return "{" + map.entrySet().stream().map(p -> p.getKey().getString() + ": " + p.getValue().getString()).collect(Collectors.joining(", ")) + "}";
+        return map.toString();
     }
 
     @Override

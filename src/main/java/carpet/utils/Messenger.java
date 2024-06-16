@@ -215,7 +215,7 @@ public class Messenger
         }
         //components.remove(components.size()-1);
         components.add(style+"  ]");
-        return c(components.toArray(new Object[0]));
+        return c(components.toArray());
     }
 
     private static Component getCoordsTextComponent(String style, float x, float y, float z, boolean isInt)

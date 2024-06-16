@@ -98,7 +98,7 @@ public class Inventories
         expression.addContextFunction("recipe_data", -1, (c, t, lv) ->
         {
             CarpetContext cc = (CarpetContext) c;
-            if (lv.size() < 1)
+            if (lv.isEmpty())
             {
                 throw new InternalExpressionException("'recipe_data' requires at least one argument");
             }
@@ -128,15 +128,17 @@ public class Inventories
                     // I am flattening ingredient lists per slot.
                     // consider recipe_data('wooden_sword','crafting') and ('iron_nugget', 'blasting') and notice difference
                     // in depths of lists.
-                    List<Collection<ItemStack>> stacks = Vanilla.Ingredient_getRecipeStacks(ingredient);
-                    if (stacks.isEmpty())
+                    ItemStack[] items = ingredient.getItems();
+                    if (items.length == 0)
                     {
                         ingredientValue.add(Value.NULL);
                     }
                     else
                     {
                         List<Value> alternatives = new ArrayList<>();
-                        stacks.forEach(col -> col.stream().map(is -> ValueConversions.of(is, regs)).forEach(alternatives::add));
+                        for (ItemStack item : items) {
+                            alternatives.add(ValueConversions.of(item, regs));
+                        }
                         ingredientValue.add(ListValue.wrap(alternatives));
                     }
                 });

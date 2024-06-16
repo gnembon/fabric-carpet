@@ -56,12 +56,12 @@ public class Tokenizer implements Iterator<Tokenizer.Token>
     public List<Token> postProcess()
     {
         Iterable<Token> iterable = () -> this;
-        List<Token> originalTokens = StreamSupport.stream(iterable.spliterator(), false).collect(Collectors.toList());
+        List<Token> originalTokens = StreamSupport.stream(iterable.spliterator(), false).toList();
         List<Token> cleanedTokens = new ArrayList<>();
         Token last = null;
         while (!originalTokens.isEmpty())
         {
-            Token current = originalTokens.remove(originalTokens.size() - 1);
+            Token current = originalTokens.removeLast();
             if (current.type == Token.TokenType.MARKER && current.surface.startsWith("//"))
             {
                 continue;

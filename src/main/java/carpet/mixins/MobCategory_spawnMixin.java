@@ -1,6 +1,5 @@
 package carpet.mixins;
 
-import carpet.fakes.SpawnGroupInterface;
 import carpet.utils.SpawnReporter;
 import net.minecraft.world.entity.MobCategory;
 import org.spongepowered.asm.mixin.Final;
@@ -11,7 +10,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(MobCategory.class)
-public class MobCategory_spawnMixin implements SpawnGroupInterface
+public class MobCategory_spawnMixin
 {
     @Shadow @Final private int max;
 
@@ -19,11 +18,5 @@ public class MobCategory_spawnMixin implements SpawnGroupInterface
     private void getModifiedCapacity(CallbackInfoReturnable<Integer> cir)
     {
         cir.setReturnValue ((int) ((double)max*(Math.pow(2.0,(SpawnReporter.mobcap_exponent/4)))));
-    }
-
-    @Override
-    public int getInitialSpawnCap()
-    {
-        return max;
     }
 }

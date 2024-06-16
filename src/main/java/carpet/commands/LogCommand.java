@@ -129,7 +129,7 @@ public class LogCommand
                 comp.add("^w Click to unsubscribe");
                 comp.add("!/log "+lname);
             }
-            Messenger.m(player,comp.toArray(new Object[0]));
+            Messenger.m(player,comp.toArray());
         }
         return 1;
     }

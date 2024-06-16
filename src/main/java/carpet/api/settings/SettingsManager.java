@@ -78,7 +78,7 @@ public class SettingsManager {
     private MinecraftServer server;
     private final List<RuleObserver> observers = new ArrayList<>();
     private static final List<RuleObserver> staticObservers = new ArrayList<>();
-    static record ConfigReadResult(Map<String, String> ruleMap, boolean locked) {}
+    record ConfigReadResult(Map<String, String> ruleMap, boolean locked) {}
     
     /**
      * <p>Defines a class that can be notified about a {@link CarpetRule} changing.</p>
@@ -88,7 +88,7 @@ public class SettingsManager {
      * @see SettingsManager#registerGlobalRuleObserver(RuleObserver)
      */
     @FunctionalInterface
-    public static interface RuleObserver {
+    public interface RuleObserver {
         /**
          * <p>Notifies this {@link RuleObserver} about the change of a {@link CarpetRule}.</p>
          * 
@@ -362,7 +362,7 @@ public class SettingsManager {
                 if (rule.suggestions().contains("false"))
                     rule.set(server.createCommandSourceStack(), "false");
                 else
-                    CarpetSettings.LOG.warn("Couldn't disable command rule "+ rule.name() + ": it doesn't suggest false as a valid option");
+                    CarpetSettings.LOG.warn("Couldn't disable command rule {}: it doesn't suggest false as a valid option", rule.name());
             } catch (InvalidRuleValueException e) {
                 throw new IllegalStateException(e); // contract of CarpetRule.suggestions()
             }
@@ -569,7 +569,7 @@ public class SettingsManager {
         String query = suggestionsBuilder.getRemaining().toLowerCase(Locale.ROOT);
         stream.forEach((listItem) -> {
             // Regex camelCase Search
-            var words = Arrays.stream(listItem.split("(?<!^)(?=[A-Z])")).map(s -> s.toLowerCase(Locale.ROOT)).collect(Collectors.toList());
+            var words = Arrays.stream(listItem.split("(?<!^)(?=[A-Z])")).map(s -> s.toLowerCase(Locale.ROOT)).toList();
             var prefixes = new ArrayList<String>(words.size());
             for (int i = 0; i < words.size(); i++)
                 prefixes.add(String.join("", words.subList(i, words.size())));
@@ -658,8 +658,8 @@ public class SettingsManager {
             tags.add(Messenger.c("c ["+ translated +"]", "^g "+ String.format(tr(TranslationKeys.LIST_ALL_CATEGORY), translated),"!/"+identifier+" list "+t));
             tags.add(Messenger.c("w , "));
         }
-        tags.remove(tags.size() - 1);
-        Messenger.m(source, tags.toArray(new Object[0]));
+        tags.removeLast();
+        Messenger.m(source, tags.toArray());
 
         Messenger.m(source, "w "+ tr(TranslationKeys.CURRENT_VALUE)+": ", String.format("%s %s (%s value)", RuleHelper.getBooleanValue(rule) ? "lb" : "nb", RuleHelper.toRuleString(rule.value()), RuleHelper.isInDefaultValue(rule) ? "default" : "modified"));
         List<Component> options = new ArrayList<>();
@@ -669,9 +669,9 @@ public class SettingsManager {
             options.add(makeSetRuleButton(rule, o, false));
             options.add(Messenger.c("w  "));
         }
-        options.remove(options.size()-1);
+        options.removeLast();
         options.add(Messenger.c("y  ]"));
-        Messenger.m(source, options.toArray(new Object[0]));
+        Messenger.m(source, options.toArray());
 
         return 1;
     }
@@ -736,8 +736,8 @@ public class SettingsManager {
             args.add(makeSetRuleButton(rule, RuleHelper.toRuleString(rule.value()), true));
             args.add("w  ");
         }
-        args.remove(args.size()-1);
-        return Messenger.c(args.toArray(new Object[0]));
+        args.removeLast();
+        return Messenger.c(args.toArray());
     }
 
     private Component makeSetRuleButton(CarpetRule<?> rule, String option, boolean brackets)
@@ -780,8 +780,8 @@ public class SettingsManager {
             tags.add("!/"+identifier+" list " + t);
             tags.add("w  ");
         }
-        tags.remove(tags.size() - 1);
-        Messenger.m(source, tags.toArray(new Object[0]));
+        tags.removeLast();
+        Messenger.m(source, tags.toArray());
 
         return count;
     }

@@ -58,7 +58,7 @@ public class ControlFlow
             }
             if (lv.size() % 2 == 1)
             {
-                Value ret = lv.get(lv.size() - 1).evalValue(c, t);
+                Value ret = lv.getLast().evalValue(c, t);
                 return (cc, tt) -> ret;
             }
             return (cc, tt) -> Value.NULL;

@@ -102,8 +102,8 @@ public class SpawnReporter
             lst.add(Messenger.s(String.format("Mobcaps for %s:",name)));
         NaturalSpawner.SpawnState lastSpawner = world.getChunkSource().getLastSpawnState();
         Object2IntMap<MobCategory> dimCounts = lastSpawner.getMobCategoryCounts();
-        int chunkcount = chunkCounts.getOrDefault(dim, -1);
-        if (dimCounts == null || chunkcount < 0)
+        int chunkCount = chunkCounts.getOrDefault(dim, -1);
+        if (chunkCount < 0)
         {
             lst.add(Messenger.c("g   --UNAVAILABLE--"));
             return lst;
@@ -113,7 +113,7 @@ public class SpawnReporter
         for (MobCategory category : cachedMobCategories())
         {
             int cur = dimCounts.getOrDefault(category, -1);
-            int max = (int)(chunkcount * ((double)category.getMaxInstancesPerChunk() / MAGIC_NUMBER)); // from ServerChunkManager.CHUNKS_ELIGIBLE_FOR_SPAWNING
+            int max = (int)(chunkCount * ((double)category.getMaxInstancesPerChunk() / MAGIC_NUMBER)); // from ServerChunkManager.CHUNKS_ELIGIBLE_FOR_SPAWNING
             String color = Messenger.heatmap_color(cur, max);
             String mobColor = Messenger.creatureTypeColor(category);
             if (multiline)
@@ -136,8 +136,8 @@ public class SpawnReporter
         {
             if (shortCodes.size() > 0)
             {
-                shortCodes.remove(shortCodes.size() - 1);
-                lst.add(Messenger.c(shortCodes.toArray(new Object[0])));
+                shortCodes.removeLast();
+                lst.add(Messenger.c(shortCodes.toArray()));
             }
             else
             {

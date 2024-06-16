@@ -472,7 +472,7 @@ public class ListValue extends AbstractListValue implements ContainerValueInterf
             if (extend && value instanceof AbstractListValue)
             {
                 Iterable<Value> iterable = ((AbstractListValue) value)::iterator;
-                List<Value> appendix = StreamSupport.stream(iterable.spliterator(), false).collect(Collectors.toList());
+                List<Value> appendix = StreamSupport.stream(iterable.spliterator(), false).toList();
                 items.addAll(index, appendix);
                 return true;
             }

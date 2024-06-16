@@ -1,7 +1,6 @@
 package carpet.commands;
 
 import carpet.CarpetSettings;
-import carpet.fakes.SpawnGroupInterface;
 import carpet.helpers.HopperCounter;
 import carpet.utils.CommandHelper;
 import carpet.utils.Messenger;
@@ -210,10 +209,7 @@ public class SpawnCommand
 
     private static int resetSpawnRates(CommandSourceStack source)
     {
-        for (MobCategory s: SpawnReporter.spawn_tries.keySet())
-        {
-            SpawnReporter.spawn_tries.put(s,1);
-        }
+        SpawnReporter.spawn_tries.replaceAll((s, v) -> 1);
         Messenger.m(source, "gi Spawn rates brought to 1 round per tick for all groups.");
 
         return 1;
@@ -229,7 +225,7 @@ public class SpawnCommand
 
     private static int setMobcaps(CommandSourceStack source, int hostile_cap)
     {
-        double desired_ratio = (double)hostile_cap/ ((SpawnGroupInterface)(Object)MobCategory.MONSTER).getInitialSpawnCap();
+        double desired_ratio = (double)hostile_cap/ MobCategory.MONSTER.getMaxInstancesPerChunk();
         SpawnReporter.mobcap_exponent = 4.0*Math.log(desired_ratio)/Math.log(2.0);
         Messenger.m(source, String.format("gi Mobcaps for hostile mobs changed to %d, other groups will follow", hostile_cap));
         return 1;

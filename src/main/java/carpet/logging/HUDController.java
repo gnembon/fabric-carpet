@@ -108,7 +108,7 @@ public class HUDController
         {
             ClientboundTabListPacket packet = new ClientboundTabListPacket(
                         scarpet_headers.getOrDefault(player.getScoreboardName(), Component.literal("")),
-                        Messenger.c(player_huds.getOrDefault(player, List.of()).toArray(new Object[0]))
+                        Messenger.c(player_huds.getOrDefault(player, List.of()).toArray())
                     );
             player.connection.send(packet);
         }

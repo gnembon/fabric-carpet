@@ -1,7 +1,6 @@
 package carpet.helpers;
 
 import carpet.CarpetServer;
-import carpet.fakes.IngredientInterface;
 import carpet.fakes.RecipeManagerInterface;
 import carpet.utils.Messenger;
 import it.unimi.dsi.fastutil.objects.Object2LongLinkedOpenHashMap;
@@ -32,13 +31,11 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.material.MapColor;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import static java.util.Map.entry;
 
@@ -177,7 +174,7 @@ public class HopperCounter
     public List<Component> format(MinecraftServer server, boolean realTime, boolean brief)
     {
         long ticks = Math.max(realTime ? (System.currentTimeMillis() - startMillis) / 50 : server.overworld().getGameTime() - startTick, 1);
-        if (startTick < 0 || ticks == 0)
+        if (startTick < 0)
         {
             if (brief)
             {
@@ -222,7 +219,7 @@ public class HopperCounter
                     "g : ","wb "+count,"g , ",
                     String.format("wb %.1f", count * (20.0 * 60.0 * 60.0) / ticks), "w /h"
             );
-        }).collect(Collectors.toList()));
+        }).toList());
         return items;
     }
 
@@ -378,14 +375,11 @@ public class HopperCounter
             {
                 for (Ingredient ingredient: r.getIngredients())
                 {
-                    for (Collection<ItemStack> stacks : ((IngredientInterface) (Object) ingredient).getRecipeStacks())
+                    for (ItemStack iStak : ingredient.getItems())
                     {
-                        for (ItemStack iStak : stacks)
-                        {
-                            TextColor cand = fromItem(iStak.getItem(), registryAccess);
-                            if (cand != null)
-                                return cand;
-                        }
+                        TextColor cand = fromItem(iStak.getItem(), registryAccess);
+                        if (cand != null)
+                            return cand;
                     }
                 }
             }

@@ -1143,7 +1143,7 @@ public class Expression
                     {
                         nodeStack.pop();
                     }
-                    List<LazyValue> params = p.stream().map(n -> n.op).collect(Collectors.toList());
+                    List<LazyValue> params = p.stream().map(n -> n.op).toList();
                     nodeStack.push(new ExpressionNode(
                             (c, t) -> f.lazyEval(c, t, this, token, params).evalValue(c, t),
                             p, token
@@ -1509,7 +1509,7 @@ public class Expression
             {
                 ILazyFunction f = functions.get(token.surface);
                 Context.Type requestedType = f.staticType(expectedType);
-                List<LazyValue> params = node.args.stream().map(n -> extractOp(ctx, n, requestedType)).collect(Collectors.toList());
+                List<LazyValue> params = node.args.stream().map(n -> extractOp(ctx, n, requestedType)).toList();
                 return (c, t) -> f.lazyEval(c, t, this, token, params).evalValue(c, t);
             }
             case CONSTANT:
