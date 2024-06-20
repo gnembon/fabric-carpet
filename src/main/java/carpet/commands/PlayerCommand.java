@@ -122,7 +122,9 @@ public class PlayerCommand
                 .then(literal("once").executes(manipulation(ap -> ap.start(type, Action.once()))))
                 .then(literal("continuous").executes(manipulation(ap -> ap.start(type, Action.continuous()))))
                 .then(literal("interval").then(argument("ticks", IntegerArgumentType.integer(1))
-                        .executes(c -> manipulate(c, ap -> ap.start(type, Action.interval(IntegerArgumentType.getInteger(c, "ticks")))))));
+                        .executes(c -> manipulate(c, ap -> ap.start(type, Action.interval(IntegerArgumentType.getInteger(c, "ticks")))))))
+                .then(literal("fastclick").then(argument("clicksPerTick", IntegerArgumentType.integer(2, 32))
+                        .executes(c -> manipulate(c, ap -> ap.start(type, Action.fastclick(IntegerArgumentType.getInteger(c, "clicksPerTick")))))));
     }
 
     private static LiteralArgumentBuilder<CommandSourceStack> makeDropCommand(String actionName, boolean dropAll)

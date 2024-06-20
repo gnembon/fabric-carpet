@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 
 import carpet.patches.EntityPlayerMPFake;
+import carpet.fakes.ServerPlayerFastClickInterface;
 import carpet.script.utils.Tracer;
 import net.minecraft.commands.arguments.EntityAnchorArgument;
 import net.minecraft.core.BlockPos;
@@ -248,10 +249,14 @@ public class EntityPlayerActionPack
         }
     }
 
-    static HitResult getTarget(ServerPlayer player)
+    static HitResult getTarget(ServerPlayer player) {
+        return getTarget(player, 1.0f);
+    }
+
+    static HitResult getTarget(ServerPlayer player, float tickPart)
     {
         double reach = player.gameMode.isCreative() ? 5 : 4.5f;
-        return Tracer.rayTrace(player, 1, reach, false);
+        return Tracer.rayTrace(player, tickPart, reach, false);
     }
 
     private void dropItemFromSlot(int slot, boolean dropAll)
@@ -302,60 +307,75 @@ public class EntityPlayerActionPack
                 {
                     return true;
                 }
-                HitResult hit = getTarget(player);
-                for (InteractionHand hand : InteractionHand.values())
-                {
-                    switch (hit.getType())
+
+                int clicks = action.isFastClick ? action.interval : 1;
+                float sub_tick = 1.0f / clicks;
+                boolean haveActed = false;
+
+                for (int i = 0; i < clicks; ++i) {
+                    float pt = sub_tick + sub_tick * i;
+                    HitResult hit = getTarget(player, pt);
+
+                    for (InteractionHand hand : InteractionHand.values())
                     {
-                        case BLOCK:
+                        switch (hit.getType())
                         {
-                            player.resetLastActionTime();
-                            ServerLevel world = player.serverLevel();
-                            BlockHitResult blockHit = (BlockHitResult) hit;
-                            BlockPos pos = blockHit.getBlockPos();
-                            Direction side = blockHit.getDirection();
-                            if (pos.getY() < player.level().getMaxBuildHeight() - (side == Direction.UP ? 1 : 0) && world.mayInteract(player, pos))
+                            case BLOCK:
                             {
-                                InteractionResult result = player.gameMode.useItemOn(player, world, player.getItemInHand(hand), hand, blockHit);
-                                if (result.consumesAction())
+                                player.resetLastActionTime();
+                                ServerLevel world = player.serverLevel();
+                                BlockHitResult blockHit = (BlockHitResult) hit;
+                                BlockPos pos = blockHit.getBlockPos();
+                                Direction side = blockHit.getDirection();
+                                if (pos.getY() < player.level().getMaxBuildHeight() - (side == Direction.UP ? 1 : 0) && world.mayInteract(player, pos))
                                 {
-                                    if (result.shouldSwing()) player.swing(hand);
+                                    InteractionResult result = player.gameMode.useItemOn(player, world, player.getItemInHand(hand), hand, blockHit);
+                                    if (result.consumesAction())
+                                    {
+                                        haveActed = true;
+                                        if (result.shouldSwing()) player.swing(hand);
+                                        if (!action.isFastClick) {
+                                            ap.itemUseCooldown = 3;
+                                            return true;
+                                        }
+                                    }
+                                }
+                                break;
+                            }
+                            case ENTITY:
+                            {
+                                player.resetLastActionTime();
+                                EntityHitResult entityHit = (EntityHitResult) hit;
+                                Entity entity = entityHit.getEntity();
+                                boolean handWasEmpty = player.getItemInHand(hand).isEmpty();
+                                boolean itemFrameEmpty = (entity instanceof ItemFrame) && ((ItemFrame) entity).getItem().isEmpty();
+                                Vec3 relativeHitPos = entityHit.getLocation().subtract(entity.getX(), entity.getY(), entity.getZ());
+                                if (entity.interactAt(player, relativeHitPos, hand).consumesAction())
+                                {
                                     ap.itemUseCooldown = 3;
                                     return true;
                                 }
+                                // fix for SS itemframe always returns CONSUME even if no action is performed
+                                if (player.interactOn(entity, hand).consumesAction() && !(handWasEmpty && itemFrameEmpty))
+                                {
+                                    ap.itemUseCooldown = 3;
+                                    return true;
+                                }
+                                break;
                             }
-                            break;
                         }
-                        case ENTITY:
-                        {
-                            player.resetLastActionTime();
-                            EntityHitResult entityHit = (EntityHitResult) hit;
-                            Entity entity = entityHit.getEntity();
-                            boolean handWasEmpty = player.getItemInHand(hand).isEmpty();
-                            boolean itemFrameEmpty = (entity instanceof ItemFrame) && ((ItemFrame) entity).getItem().isEmpty();
-                            Vec3 relativeHitPos = entityHit.getLocation().subtract(entity.getX(), entity.getY(), entity.getZ());
-                            if (entity.interactAt(player, relativeHitPos, hand).consumesAction())
-                            {
+                        if (haveActed) {
+                            break;
+                        } else {
+                            ItemStack handItem = player.getItemInHand(hand);
+                            if (player.gameMode.useItem(player, player.level(), handItem, hand).consumesAction()) {
                                 ap.itemUseCooldown = 3;
                                 return true;
                             }
-                            // fix for SS itemframe always returns CONSUME even if no action is performed
-                            if (player.interactOn(entity, hand).consumesAction() && !(handWasEmpty && itemFrameEmpty))
-                            {
-                                ap.itemUseCooldown = 3;
-                                return true;
-                            }
-                            break;
                         }
-                    }
-                    ItemStack handItem = player.getItemInHand(hand);
-                    if (player.gameMode.useItem(player, player.level(), handItem, hand).consumesAction())
-                    {
-                        ap.itemUseCooldown = 3;
-                        return true;
                     }
                 }
-                return false;
+                return haveActed;
             }
 
             @Override
@@ -541,6 +561,7 @@ public class EntityPlayerActionPack
         private int count;
         private int next;
         private final boolean isContinuous;
+        private final boolean isFastClick;
 
         private Action(int limit, int interval, int offset, boolean continuous)
         {
@@ -548,7 +569,8 @@ public class EntityPlayerActionPack
             this.interval = interval;
             this.offset = offset;
             next = interval + offset;
-            isContinuous = continuous;
+            isContinuous = continuous && interval == 1;
+            isFastClick = continuous && interval != 1;
         }
 
         public static Action once()
@@ -571,6 +593,11 @@ public class EntityPlayerActionPack
             return new Action(-1, interval, offset, false);
         }
 
+        public static Action fastclick(int clicksPerTick)
+        {
+            return new Action(-1, clicksPerTick, 0, true);
+        }
+
         Boolean tick(EntityPlayerActionPack actionPack, ActionType type)
         {
             next--;
@@ -589,7 +616,9 @@ public class EntityPlayerActionPack
 
                 if (!type.preventSpectator || !actionPack.player.isSpectator())
                 {
+                    ((ServerPlayerFastClickInterface)actionPack.player).swapOldPosRot(true);
                     cancel = type.execute(actionPack.player, this);
+                    ((ServerPlayerFastClickInterface)actionPack.player).swapOldPosRot(false);
                 }
                 count++;
                 if (count == limit)
@@ -598,7 +627,7 @@ public class EntityPlayerActionPack
                     done = true;
                     return cancel;
                 }
-                next = interval;
+                next = isFastClick ? 1 : interval;
             }
             else
             {
