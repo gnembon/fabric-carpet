@@ -1,5 +1,6 @@
 package carpet.mixins;
 
+import com.llamalad7.mixinextras.sugar.Local;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.minecraft.core.Holder;
 import net.minecraft.core.particles.ParticleOptions;
@@ -9,7 +10,6 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.util.ArrayList;
@@ -22,7 +22,6 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.Explosion;
 import net.minecraft.world.level.ExplosionDamageCalculator;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.phys.Vec3;
 
 import static carpet.script.CarpetEventServer.Event.EXPLOSION_OUTCOME;
 
@@ -41,8 +40,6 @@ public abstract class Explosion_scarpetEventMixin
 
     @Shadow /*@Nullable*/ public abstract /*@Nullable*/ LivingEntity getIndirectSourceEntity();
 
-    @Shadow public static float getSeenPercent(Vec3 source, Entity entity) {return 0.0f;}
-
     private List<Entity> affectedEntities;
 
     @Inject(method = "<init>(Lnet/minecraft/world/level/Level;Lnet/minecraft/world/entity/Entity;Lnet/minecraft/world/damagesource/DamageSource;Lnet/minecraft/world/level/ExplosionDamageCalculator;DDDFZLnet/minecraft/world/level/Explosion$BlockInteraction;Lnet/minecraft/core/particles/ParticleOptions;Lnet/minecraft/core/particles/ParticleOptions;Lnet/minecraft/core/Holder;)V",
@@ -55,17 +52,16 @@ public abstract class Explosion_scarpetEventMixin
         }
     }
 
-    @Redirect(method = "explode", at=@At(
+    @Inject(method = "explode", at=@At(
             value = "INVOKE",
             target = "Lnet/minecraft/world/level/Explosion;getSeenPercent(Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/world/entity/Entity;)F")
     )
-    private float onExplosion(Vec3 source, Entity entity)
+    private void onExplosion(CallbackInfo ci, @Local Entity entity)
     {
         if (affectedEntities != null)
         {
             affectedEntities.add(entity);
         }
-        return getSeenPercent(source, entity);
     }
 
     @Inject(method = "finalizeExplosion", at = @At("HEAD"))
