@@ -434,8 +434,8 @@ public class ShapeDispatcher
         protected ParticleOptions replacementParticle(RegistryAccess regs)
         {
             String particleName = fa == 0 ?
-                    String.format(Locale.ROOT, "dust %.1f %.1f %.1f 1.0", r, g, b) :
-                    String.format(Locale.ROOT, "dust %.1f %.1f %.1f 1.0", fr, fg, fb);
+                    String.format(Locale.ROOT, "dust{color:[%.1f,%.1f,%.1f],scale:1.0}", r, g, b) :
+                    String.format(Locale.ROOT, "dust{color:[%.1f,%.1f,%.1f],scale:1.0}", fr, fg, fb);
             return getParticleData(particleName, regs);
         }
 
@@ -1067,7 +1067,7 @@ public class ShapeDispatcher
                 }
                 if (fa > 0.0f)
                 {
-                    ParticleOptions locparticledata = getParticleData(String.format(Locale.ROOT, "dust %.1f %.1f %.1f %.1f", fr, fg, fb, fa), p.level().registryAccess());
+                    ParticleOptions locparticledata = getParticleData(String.format(Locale.ROOT, "dust{color:[%.1f,%.1f,%.1f],scale:%.1f}", fr, fg, fb, fa), p.level().registryAccess());
                     for (Vec3 v : getAlterPoint(p))
                     {
                         p.serverLevel().sendParticles(p, locparticledata, true,

@@ -32,7 +32,7 @@ public class PathfindingVisualizer
                 minDuration = 1;
 
             String accent = successful ? "happy_villager" : "angry_villager";
-            String color = (miliseconds/minDuration < 2)? "dust 1 1 0 1" : ((miliseconds/minDuration < 4)?"dust 1 0.5 0 1":"dust 1 0 0 1");
+            String color = (miliseconds/minDuration < 2)? "dust{color:[1,1,0],scale:1.0}" : ((miliseconds/minDuration < 4)?"dust{color:[1,0.5,0],scale:1}":"dust{color:[1,0,0],scale:1}");
             ParticleDisplay.drawParticleLine((ServerPlayer) player, entity.position(), target, color, accent, 5, 0.5);
             return null;
         });
