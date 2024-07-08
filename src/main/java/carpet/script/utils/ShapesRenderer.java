@@ -24,8 +24,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.function.BiFunction;
 
-import org.joml.Matrix4f;
-
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
@@ -195,7 +193,7 @@ public class ShapesRenderer
             shapes.get(dimensionType).values().forEach(s -> {
                 if ((!s.shape.debug || entityBoxes) && s.shouldRender(dimensionType) && s.shape.hud)
                 {
-                    s.renderLines(matrices, tessellator, bufferBuilder, 0, 0, 0, partialTick);
+                    s.renderLines(matrices, tesselator, 0, 0, 0, partialTick);
                 }
             });
             // faces
@@ -203,7 +201,7 @@ public class ShapesRenderer
             shapes.get(dimensionType).values().forEach(s -> {
                 if ((!s.shape.debug || entityBoxes) && s.shouldRender(dimensionType) && s.shape.hud)
                 {
-                    s.renderFaces(tessellator, bufferBuilder, 0, 0, 0, partialTick);
+                    s.renderFaces(tesselator, 0, 0, 0, partialTick);
                 }
             });
             RenderSystem.lineWidth(1.0F);
@@ -230,7 +228,7 @@ public class ShapesRenderer
             labels.get(dimensionType).values().forEach(s -> {
                 if ((!s.shape.debug || entityBoxes) && s.shouldRender(dimensionType)&& s.shape.hud)
                 {
-                    s.renderLines(matrices, tessellator, bufferBuilder, 0, 0, 0, partialTick);
+                    s.renderLines(matrices, tesselator, 0, 0, 0, partialTick);
                 }
             });
             matrices.popPose();
