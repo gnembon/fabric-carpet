@@ -524,7 +524,7 @@ public class Auxiliary
                 throw new InternalExpressionException("'encode_nbt' requires 1 or 2 parameters");
             }
             Value v = lv.get(0);
-            if(argSize > 1){
+            if(argSize > 1 && !(lv.get(1) instanceof BooleanValue)){
                 Tag res = null;
                 try {
                     res = switch (lv.get(1).getString().toLowerCase()) {
