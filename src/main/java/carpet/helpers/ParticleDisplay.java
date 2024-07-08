@@ -12,9 +12,8 @@ public class ParticleDisplay
 {
     public static void drawParticleLine(ServerPlayer player, Vec3 from, Vec3 to, String main, String accent, int count, double spread)
     {
-        HolderLookup<ParticleType<?>> lookup = player.level().holderLookup(Registries.PARTICLE_TYPE);
-        ParticleOptions accentParticle = ParticleParser.getEffect(accent, lookup);
-        ParticleOptions mainParticle = ParticleParser.getEffect(main, lookup);
+        ParticleOptions accentParticle = ParticleParser.getEffect(accent, player.server.registryAccess());
+        ParticleOptions mainParticle = ParticleParser.getEffect(main, player.server.registryAccess());
 
         if (accentParticle != null) player.serverLevel().sendParticles(
                 player,

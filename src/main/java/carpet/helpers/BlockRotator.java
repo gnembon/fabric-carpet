@@ -131,7 +131,7 @@ public class BlockRotator
         }
         else if (block instanceof SlabBlock)
         {
-            if (((SlabBlock) block).useShapeForLightOcclusion(state))
+            if (state.getValue(SlabBlock.TYPE) != SlabType.DOUBLE)
             {
                 newState = state.setValue(SlabBlock.TYPE, state.getValue(SlabBlock.TYPE) == SlabType.TOP ? SlabType.BOTTOM : SlabType.TOP);
             }

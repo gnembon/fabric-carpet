@@ -1,6 +1,7 @@
 package carpet.mixins;
 
 import carpet.CarpetSettings;
+import net.minecraft.core.Direction;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
@@ -29,22 +30,26 @@ public abstract class HopperBlockEntity_counterMixin extends RandomizableContain
         super(blockEntityType, blockPos, blockState);
     }
 
-    @Shadow public abstract int getContainerSize();
+    //@Shadow public abstract int getContainerSize();
 
-    @Shadow public abstract void setItem(int slot, ItemStack stack);
+    //@Shadow public abstract void setItem(int slot, ItemStack stack);
+
+    @Shadow private Direction facing;
 
     /**
      * A method to remove items from hoppers pointing into wool and count them via {@link HopperCounter#add} method
      */
     @Inject(method = "ejectItems", at = @At("HEAD"), cancellable = true)
-    private static void onInsert(Level world, BlockPos blockPos, BlockState blockState, Container inventory, CallbackInfoReturnable<Boolean> cir)
+    private static void onInsert(Level world, BlockPos blockPos, HopperBlockEntity hopperBlockEntity, CallbackInfoReturnable<Boolean> cir)
     {
         if (CarpetSettings.hopperCounters) {
+            Direction hopperFacing = world.getBlockState(blockPos).getValue(HopperBlock.FACING);
             DyeColor woolColor = WoolTool.getWoolColorAtPosition(
                     world,
-                    blockPos.relative(blockState.getValue(HopperBlock.FACING)));
+                    blockPos.relative(hopperFacing));
             if (woolColor != null)
             {
+                Container inventory = HopperBlockEntity.getContainerAt(world, blockPos);
                 for (int i = 0; i < inventory.getContainerSize(); ++i)
                 {
                     if (!inventory.getItem(i).isEmpty())

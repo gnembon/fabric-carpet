@@ -14,8 +14,6 @@ import carpet.script.argument.FunctionArgument;
 import carpet.script.argument.Vector3Argument;
 import carpet.script.exception.ExitStatement;
 import carpet.script.exception.InternalExpressionException;
-import carpet.script.exception.ThrowStatement;
-import carpet.script.exception.Throwables;
 import carpet.script.external.Carpet;
 import carpet.script.utils.SnoopyCommandSource;
 import carpet.script.utils.SystemInfo;
@@ -138,10 +136,7 @@ public class Auxiliary
             String rawString = lv.get(0).getString();
             ResourceLocation soundName = InputValidator.identifierOf(rawString);
             Vector3Argument locator = Vector3Argument.findIn(lv, 1);
-            if (cc.registry(Registries.SOUND_EVENT).get(soundName) == null)
-            {
-                throw new ThrowStatement(rawString, Throwables.UNKNOWN_SOUND);
-            }
+
             Holder<SoundEvent> soundHolder = Holder.direct(SoundEvent.createVariableRangeEvent(soundName));
             float volume = 1.0F;
             float pitch = 1.0F;
@@ -351,7 +346,7 @@ public class Auxiliary
 
             ShapeDispatcher.sendShape(
                     (playerTargets.isEmpty()) ? cc.level().players() : playerTargets,
-                    shapes
+                    shapes, cc.registryAccess()
             );
             return Value.TRUE;
         });
@@ -478,7 +473,7 @@ public class Auxiliary
             return BooleanValue.of(NbtUtils.compareNbt(match, source, numParam == 2 || lv.get(2).getBoolean()));
         });
 
-        expression.addFunction("encode_nbt", lv -> {
+        expression.addContextFunction("encode_nbt", -1, (c, t, lv) -> {
             int argSize = lv.size();
             if (argSize == 0 || argSize > 2)
             {
@@ -489,7 +484,7 @@ public class Auxiliary
             Tag tag;
             try
             {
-                tag = v.toTag(force);
+                tag = v.toTag(force, ((CarpetContext)c).registryAccess());
             }
             catch (NBTSerializableValue.IncompatibleTypeException exception)
             {
@@ -809,6 +804,8 @@ public class Auxiliary
 
         expression.addContextFunction("relight", -1, (c, t, lv) ->
         {
+            return Value.NULL;
+            /*
             CarpetContext cc = (CarpetContext) c;
             BlockArgument locator = BlockArgument.findIn(cc, lv, 0);
             BlockPos pos = locator.block.getPos();
@@ -816,6 +813,8 @@ public class Auxiliary
             Vanilla.ChunkMap_relightChunk(world.getChunkSource().chunkMap, new ChunkPos(pos));
             WorldTools.forceChunkUpdate(pos, world);
             return Value.TRUE;
+
+             */
         });
 
         // Should this be deprecated for system_info('source_dimension')?
@@ -1204,7 +1203,7 @@ public class Auxiliary
                         throw new IOException();
                     }
                     List<Pack> list = Lists.newArrayList(packManager.getSelectedPacks());
-                    resourcePackProfile.getDefaultPosition().insert(list, resourcePackProfile, p -> p, false);
+                    resourcePackProfile.getDefaultPosition().insert(list, resourcePackProfile, Pack::selectionConfig, false);
 
 
                     server.reloadResources(list.stream().map(Pack::getId).collect(Collectors.toList())).

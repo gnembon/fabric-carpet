@@ -23,9 +23,10 @@ import net.minecraft.world.level.biome.BiomeManager;
 import net.minecraft.world.level.biome.MultiNoiseBiomeSource;
 import net.minecraft.world.level.border.BorderChangeListener;
 import net.minecraft.world.level.chunk.ChunkGenerator;
-import net.minecraft.world.level.chunk.ChunkStatus;
 import net.minecraft.world.level.chunk.LevelChunk;
+import net.minecraft.world.level.chunk.status.ChunkStatus;
 import net.minecraft.world.level.chunk.storage.RegionFile;
+import net.minecraft.world.level.chunk.storage.RegionStorageInfo;
 import net.minecraft.world.level.dimension.DimensionType;
 import net.minecraft.world.level.dimension.LevelStem;
 import net.minecraft.world.level.levelgen.NoiseBasedChunkGenerator;
@@ -77,7 +78,8 @@ public class WorldTools
         }
         try
         {
-            RegionFile region = new RegionFile(regionPath, regionsFolder, true);
+            RegionStorageInfo levelStorageInfo = new RegionStorageInfo(Vanilla.MinecraftServer_storageSource(world.getServer()).getLevelId(), world.dimension(), "chunk");
+            RegionFile region = new RegionFile(levelStorageInfo, regionPath, regionsFolder, true);
             if (regionCache != null)
             {
                 regionCache.put(currentRegionName, region);

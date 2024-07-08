@@ -176,9 +176,7 @@ public class PerimeterDiagnostics
             }
         }
 
-        SpawnPlacements.Type  spt = SpawnPlacements.getPlacementType(sle.type);
-
-        if (NaturalSpawner.isSpawnPositionOk(spt, worldServer, pos, sle.type))
+        if (SpawnPlacements.isSpawnPositionOk(sle.type, worldServer, pos))
         {
             el.moveTo(pos.getX() + 0.5F, pos.getY(), pos.getZ()+0.5F, 0.0F, 0.0F);
             return el.checkSpawnObstruction(worldServer) && el.checkSpawnRules(worldServer, MobSpawnType.NATURAL) &&

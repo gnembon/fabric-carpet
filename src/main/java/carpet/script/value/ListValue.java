@@ -16,6 +16,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
+import net.minecraft.core.RegistryAccess;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.DoubleTag;
 import net.minecraft.nbt.IntTag;
@@ -129,7 +130,7 @@ public class ListValue extends AbstractListValue implements ContainerValueInterf
     public Value add(Value other)
     {
         ListValue output = new ListValue();
-        if (other instanceof final ListValue list)
+        if (other instanceof ListValue list)
         {
             List<Value> otherItems = list.items;
             if (otherItems.size() == items.size())
@@ -164,7 +165,7 @@ public class ListValue extends AbstractListValue implements ContainerValueInterf
     public Value subtract(Value other)
     {
         ListValue output = new ListValue();
-        if (other instanceof final ListValue list)
+        if (other instanceof ListValue list)
         {
             List<Value> otherItems = list.items;
             if (otherItems.size() == items.size())
@@ -199,7 +200,7 @@ public class ListValue extends AbstractListValue implements ContainerValueInterf
     public Value multiply(Value other)
     {
         ListValue output = new ListValue();
-        if (other instanceof final ListValue list)
+        if (other instanceof ListValue list)
         {
             List<Value> otherItems = list.items;
             if (otherItems.size() == items.size())
@@ -228,7 +229,7 @@ public class ListValue extends AbstractListValue implements ContainerValueInterf
     public Value divide(Value other)
     {
         ListValue output = new ListValue();
-        if (other instanceof final ListValue list)
+        if (other instanceof ListValue list)
         {
             List<Value> otherItems = list.items;
             if (otherItems.size() == items.size())
@@ -256,7 +257,7 @@ public class ListValue extends AbstractListValue implements ContainerValueInterf
     @Override
     public int compareTo(Value o)
     {
-        if (o instanceof final ListValue ol)
+        if (o instanceof ListValue ol)
         {
             int size = this.getItems().size();
             int otherSize = ol.getItems().size();
@@ -284,7 +285,7 @@ public class ListValue extends AbstractListValue implements ContainerValueInterf
     @Override
     public boolean equals(Object o)
     {
-        return o instanceof final ListValue list && getItems().equals(list.getItems());
+        return o instanceof ListValue list && getItems().equals(list.getItems());
     }
 
     public List<Value> getItems()
@@ -555,7 +556,7 @@ public class ListValue extends AbstractListValue implements ContainerValueInterf
 
 
     @Override
-    public Tag toTag(boolean force)
+    public Tag toTag(boolean force, RegistryAccess regs)
     {
         int argSize = items.size();
         if (argSize == 0)
@@ -565,12 +566,12 @@ public class ListValue extends AbstractListValue implements ContainerValueInterf
         ListTag tag = new ListTag();
         if (argSize == 1)
         {
-            tag.add(items.get(0).toTag(force));
+            tag.add(items.get(0).toTag(force, regs));
             return tag;
         }
         // figuring out the types
         List<Tag> tags = new ArrayList<>();
-        items.forEach(v -> tags.add(v.toTag(force)));
+        items.forEach(v -> tags.add(v.toTag(force, regs)));
         Set<TagTypeCompat> cases = EnumSet.noneOf(TagTypeCompat.class);
         tags.forEach(t -> cases.add(TagTypeCompat.getType(t)));
         if (cases.size() == 1) // well, one type of items

@@ -66,7 +66,7 @@ public abstract class ServerLevel_scarpetMixin extends Level implements ServerWo
     }
 
     @Inject(method = "explode", at = @At("HEAD"))
-    private void handleExplosion(/*@Nullable*/ Entity entity, /*@Nullable*/ DamageSource damageSource, /*@Nullable*/ ExplosionDamageCalculator explosionBehavior, double d, double e, double f, float g, boolean bl, ExplosionInteraction explosionInteraction, ParticleOptions particleOptions, ParticleOptions particleOptions2, SoundEvent soundEvent, CallbackInfoReturnable<Explosion> cir)
+    private void handleExplosion(/*@Nullable*/ Entity entity, /*@Nullable*/ DamageSource damageSource, /*@Nullable*/ ExplosionDamageCalculator explosionBehavior, double d, double e, double f, float g, boolean bl, ExplosionInteraction explosionInteraction, ParticleOptions particleOptions, ParticleOptions particleOptions2, Holder<SoundEvent> soundEvent, CallbackInfoReturnable<Explosion> cir)
     {
         if (EXPLOSION.isNeeded()) {
             Explosion.BlockInteraction var10000 = switch (explosionInteraction) {

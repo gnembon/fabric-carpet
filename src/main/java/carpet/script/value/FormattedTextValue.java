@@ -1,6 +1,6 @@
 package carpet.script.value;
 
-import com.google.gson.JsonElement;
+import net.minecraft.core.RegistryAccess;
 import net.minecraft.nbt.StringTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
@@ -19,7 +19,7 @@ public class FormattedTextValue extends StringValue
     public static Value combine(Value left, Value right)
     {
         MutableComponent text;
-        if (left instanceof final FormattedTextValue ftv)
+        if (left instanceof FormattedTextValue ftv)
         {
             text = ftv.getText().copy();
         }
@@ -32,7 +32,7 @@ public class FormattedTextValue extends StringValue
             text = Component.literal(left.getString());
         }
 
-        if (right instanceof final FormattedTextValue ftv)
+        if (right instanceof FormattedTextValue ftv)
         {
             text.append(ftv.getText().copy());
             return new FormattedTextValue(text);
@@ -80,19 +80,13 @@ public class FormattedTextValue extends StringValue
     }
 
     @Override
-    public Tag toTag(boolean force)
+    public Tag toTag(boolean force, RegistryAccess regs)
     {
         if (!force)
         {
             throw new NBTSerializableValue.IncompatibleTypeException(this);
         }
-        return StringTag.valueOf(Component.Serializer.toJson(text));
-    }
-
-    @Override
-    public JsonElement toJson()
-    {
-        return Component.Serializer.toJsonTree(text);
+        return StringTag.valueOf(Component.Serializer.toJson(text, regs));
     }
 
     @Override
@@ -101,19 +95,19 @@ public class FormattedTextValue extends StringValue
         return combine(this, o);
     }
 
-    public String serialize()
+    public String serialize(RegistryAccess regs)
     {
-        return Component.Serializer.toJson(text);
+        return Component.Serializer.toJson(text, regs);
     }
 
-    public static FormattedTextValue deserialize(String serialized)
+    public static FormattedTextValue deserialize(String serialized, RegistryAccess regs)
     {
-        return new FormattedTextValue(Component.Serializer.fromJson(serialized));
+        return new FormattedTextValue(Component.Serializer.fromJson(serialized, regs));
     }
 
     public static Component getTextByValue(Value value)
     {
-        return (value instanceof final FormattedTextValue ftv) ? ftv.getText() : Component.literal(value.getString());
+        return (value instanceof FormattedTextValue ftv) ? ftv.getText() : Component.literal(value.getString());
     }
 
 }

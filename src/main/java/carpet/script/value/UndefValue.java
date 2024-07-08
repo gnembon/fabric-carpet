@@ -2,6 +2,7 @@ package carpet.script.value;
 
 import carpet.script.exception.InternalExpressionException;
 import com.google.gson.JsonElement;
+import net.minecraft.core.RegistryAccess;
 import net.minecraft.nbt.Tag;
 
 public class UndefValue extends NullValue
@@ -87,7 +88,7 @@ public class UndefValue extends NullValue
     }
 
     @Override
-    public Tag toTag(boolean force)
+    public Tag toTag(boolean force, RegistryAccess regs)
     {
         throw getError();
     }

@@ -1,5 +1,6 @@
 package carpet.script.value;
 
+import net.minecraft.core.RegistryAccess;
 import net.minecraft.nbt.Tag;
 
 public abstract class FrameworkValue extends Value
@@ -29,7 +30,7 @@ public abstract class FrameworkValue extends Value
     }
 
     @Override
-    public Tag toTag(boolean force)
+    public Tag toTag(boolean force, RegistryAccess regs)
     {
         throw new UnsupportedOperationException("Scarpet language component cannot be serialized to the tag");
     }

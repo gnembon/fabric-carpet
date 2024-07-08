@@ -3,6 +3,7 @@ package carpet.script.value;
 import carpet.script.exception.InternalExpressionException;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonPrimitive;
+import net.minecraft.core.RegistryAccess;
 import org.apache.commons.lang3.StringUtils;
 
 import java.math.BigDecimal;
@@ -27,7 +28,7 @@ public class NumericValue extends Value
 
     public static NumericValue asNumber(Value v1, String id)
     {
-        if (v1 instanceof final NumericValue nv)
+        if (v1 instanceof NumericValue nv)
         {
             return nv;
         }
@@ -36,7 +37,7 @@ public class NumericValue extends Value
 
     public static NumericValue asNumber(Value v1)
     {
-        if (v1 instanceof final NumericValue nv)
+        if (v1 instanceof NumericValue nv)
         {
             return nv;
         }
@@ -129,7 +130,7 @@ public class NumericValue extends Value
     @Override
     public Value add(Value v)
     {  // TODO test if definintn add(NumericVlaue) woud solve the casting
-        if (v instanceof final NumericValue nv)
+        if (v instanceof NumericValue nv)
         {
             return longValue != null && nv.longValue != null ? new NumericValue(longValue + nv.longValue) : new NumericValue(value + nv.value);
         }
@@ -139,7 +140,7 @@ public class NumericValue extends Value
     @Override
     public Value subtract(Value v)
     {  // TODO test if definintn add(NumericVlaue) woud solve the casting
-        if (v instanceof final NumericValue nv)
+        if (v instanceof NumericValue nv)
         {
             return longValue != null && nv.longValue != null ? new NumericValue(longValue - nv.longValue) : new NumericValue(value - nv.value);
         }
@@ -149,7 +150,7 @@ public class NumericValue extends Value
     @Override
     public Value multiply(Value v)
     {
-        if (v instanceof final NumericValue nv)
+        if (v instanceof NumericValue nv)
         {
             return longValue != null && nv.longValue != null ? new NumericValue(longValue * nv.longValue) : new NumericValue(value * nv.value);
         }
@@ -159,7 +160,7 @@ public class NumericValue extends Value
     @Override
     public Value divide(Value v)
     {
-        return v instanceof final NumericValue nv ? new NumericValue(getDouble() / nv.getDouble()) : super.divide(v);
+        return v instanceof NumericValue nv ? new NumericValue(getDouble() / nv.getDouble()) : super.divide(v);
     }
 
     @Override
@@ -175,7 +176,7 @@ public class NumericValue extends Value
         {
             return -o.compareTo(this);
         }
-        if (o instanceof final NumericValue no)
+        if (o instanceof NumericValue no)
         {
             return longValue != null && no.longValue != null ? longValue.compareTo(no.longValue) : Double.compare(value, no.value);
         }
@@ -185,13 +186,13 @@ public class NumericValue extends Value
     @Override
     public boolean equals(Object o)
     {
-        if (o instanceof final Value otherValue)
+        if (o instanceof Value otherValue)
         {
             if (otherValue.isNull())
             {
                 return o.equals(this);
             }
-            if (o instanceof final NumericValue no)
+            if (o instanceof NumericValue no)
             {
                 if (longValue != null && no.longValue != null)
                 {
@@ -279,7 +280,7 @@ public class NumericValue extends Value
     }
 
     @Override
-    public Tag toTag(boolean force)
+    public Tag toTag(boolean force, RegistryAccess regs)
     {
         if (longValue != null)
         {

@@ -102,9 +102,9 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.commands.BossBarCommands;
+import net.minecraft.server.commands.LootCommand;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.biome.Biome;
-import net.minecraft.world.level.storage.loot.LootDataType;
 import net.minecraft.world.phys.Vec2;
 import net.minecraft.world.scores.ScoreHolder;
 
@@ -199,7 +199,7 @@ public abstract class CommandArgument
             ),
             // operation // not sure if we need it, you have scarpet for that
             new VanillaUnconfigurableArgument("particle", ParticleArgument::particle,
-                    (c, p) -> ValueConversions.of(ParticleArgument.getParticle(c, p)), (c, b) -> SharedSuggestionProvider.suggestResource(c.getSource().getServer().registryAccess().registryOrThrow(Registries.PARTICLE_TYPE).keySet(), b)
+                    (c, p) -> ValueConversions.of(ParticleArgument.getParticle(c, p), c.getSource().registryAccess()), (c, b) -> SharedSuggestionProvider.suggestResource(c.getSource().getServer().registryAccess().registryOrThrow(Registries.PARTICLE_TYPE).keySet(), b)
             ),
 
             // resource / identifier section
@@ -211,10 +211,10 @@ public abstract class CommandArgument
                     (c, p) -> ValueConversions.of(ResourceLocationArgument.getAdvancement(c, p).id()), (ctx, builder) -> SharedSuggestionProvider.suggestResource(ctx.getSource().getServer().getAdvancements().getAllAdvancements().stream().map(AdvancementHolder::id), builder)
             ),
             new VanillaUnconfigurableArgument("lootcondition", ResourceLocationArgument::id,
-                    (c, p) -> ValueConversions.of(c.getSource().registryAccess().registryOrThrow(Registries.LOOT_CONDITION_TYPE).getKey(ResourceLocationArgument.getPredicate(c, p).getType())), (ctx, builder) -> SharedSuggestionProvider.suggestResource(ctx.getSource().getServer().getLootData().getKeys(LootDataType.PREDICATE), builder)
+                    (c, p) -> ValueConversions.of(ResourceLocationArgument.getId(c, p)), (ctx, builder) -> SharedSuggestionProvider.suggestResource(ctx.getSource().getServer().reloadableRegistries().getKeys(Registries.LOOT_CONDITION_TYPE), builder)
             ),
             new VanillaUnconfigurableArgument("loottable", ResourceLocationArgument::id,
-                    (c, p) -> ValueConversions.of(ResourceLocationArgument.getId(c, p)), (ctx, builder) -> SharedSuggestionProvider.suggestResource(ctx.getSource().getServer().getLootData().getKeys(LootDataType.TABLE), builder)
+                    (c, p) -> ValueConversions.of(ResourceLocationArgument.getId(c, p)), LootCommand.SUGGEST_LOOT_TABLE
             ),
             new VanillaUnconfigurableArgument("attribute", Registries.ATTRIBUTE),
 
@@ -890,7 +890,7 @@ public abstract class CommandArgument
                 {
                     throw error("Custom sting type requires options passed as a list" + " for custom type " + suffix);
                 }
-                validOptions = ((ListValue) optionsValue).getItems().stream().map(v -> new ResourceLocation(v.getString())).collect(Collectors.toSet());
+                validOptions = ((ListValue) optionsValue).getItems().stream().map(v -> ResourceLocation.parse(v.getString())).collect(Collectors.toSet());
             }
         }
     }

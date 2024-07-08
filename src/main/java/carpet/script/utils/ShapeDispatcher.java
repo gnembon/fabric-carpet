@@ -144,7 +144,7 @@ public class ShapeDispatcher
         return new ShapeWithConfig(ShapeDispatcher.create(server, shapeType, params), params);
     }
 
-    public static void sendShape(Collection<ServerPlayer> players, List<ShapeWithConfig> shapes)
+    public static void sendShape(Collection<ServerPlayer> players, List<ShapeWithConfig> shapes, RegistryAccess regs)
     {
         List<ServerPlayer> clientPlayers = new ArrayList<>();
         List<ServerPlayer> alternativePlayers = new ArrayList<>();
@@ -158,7 +158,7 @@ public class ShapeDispatcher
             int tagcount = 0;
             for (ShapeWithConfig s : shapes)
             {
-                tag.add(ExpiringShape.toTag(s.config()));  // 4000 shapes limit boxes
+                tag.add(ExpiringShape.toTag(s.config(), regs));  // 4000 shapes limit boxes
                 if (tagcount++ > 1000)
                 {
                     tagcount = 0;
@@ -185,7 +185,7 @@ public class ShapeDispatcher
     {
         try
         {
-            return ParticleParser.getEffect(name, regs.lookupOrThrow(Registries.PARTICLE_TYPE));
+            return ParticleParser.getEffect(name, regs);
         }
         catch (IllegalArgumentException e)
         {
@@ -313,11 +313,11 @@ public class ShapeDispatcher
         {
         }
 
-        public static CompoundTag toTag(Map<String, Value> params)
+        public static CompoundTag toTag(Map<String, Value> params, RegistryAccess regs)
         {
             CompoundTag tag = new CompoundTag();
             params.forEach((k, v) -> {
-                Tag valTag = Param.of.get(k).toTag(v);
+                Tag valTag = Param.of.get(k).toTag(v, regs);
                 if (valTag != null)
                 {
                     tag.put(k, valTag);
@@ -381,7 +381,7 @@ public class ShapeDispatcher
             }
             key = 0;
             followEntity = -1;
-            shapeDimension = ResourceKey.create(Registries.DIMENSION, new ResourceLocation(options.get("dim").getString()));
+            shapeDimension = ResourceKey.create(Registries.DIMENSION, ResourceLocation.parse(options.get("dim").getString()));
             if (options.containsKey("follow"))
             {
                 followEntity = NumericValue.asNumber(options.getOrDefault("follow", optional.get("follow"))).getInt();
@@ -733,7 +733,7 @@ public class ShapeDispatcher
             }
             else
             {
-                this.item = ItemStack.of(((NBTSerializableValue) options.get("item")).getCompoundTag());
+                this.item = ItemStack.parseOptional(regs, ((NBTSerializableValue) options.get("item")).getCompoundTag());
             }
             blockLight = NumericValue.asNumber(options.getOrDefault("blocklight", optional.get("blocklight"))).getInt();
             if (blockLight > 15)
@@ -1542,7 +1542,7 @@ public class ShapeDispatcher
         }
 
         @Nullable
-        public abstract Tag toTag(Value value); //validates value, returning null if not necessary to keep it and serialize
+        public abstract Tag toTag(Value value, final RegistryAccess regs); //validates value, returning null if not necessary to keep it and serialize
 
         public abstract Value validate(Map<String, Value> options, MinecraftServer server, Value value); // makes sure the value is proper
 
@@ -1557,9 +1557,9 @@ public class ShapeDispatcher
         }
 
         @Override
-        public Tag toTag(Value value)
+        public Tag toTag(Value value, final RegistryAccess regs)
         {
-            return value.toTag(true);
+            return value.toTag(true, regs);
         }
 
         @Override
@@ -1599,7 +1599,7 @@ public class ShapeDispatcher
         }
 
         @Override
-        public Tag toTag(Value value)
+        public Tag toTag(Value value, final RegistryAccess regs)
         {
             return StringTag.valueOf(value.getString());
         }
@@ -1631,7 +1631,7 @@ public class ShapeDispatcher
 
         @Nullable
         @Override
-        public Tag toTag(Value value)
+        public Tag toTag(Value value, final RegistryAccess regs)
         {
             if (value instanceof final BlockValue blv)
             {
@@ -1671,11 +1671,11 @@ public class ShapeDispatcher
         public Value validate(Map<String, Value> options, MinecraftServer server, Value value)
         {
             ItemStack item = ValueConversions.getItemStackFromValue(value, true, server.registryAccess());
-            return new NBTSerializableValue(item.save(new CompoundTag()));
+            return new NBTSerializableValue(item.saveOptional(server.registryAccess()));
         }
 
         @Override
-        public Tag toTag(Value value)
+        public Tag toTag(Value value, final RegistryAccess regs)
         {
             return ((NBTSerializableValue) value).getTag();
         }
@@ -1720,19 +1720,19 @@ public class ShapeDispatcher
         }
 
         @Override
-        public Tag toTag(Value value)
+        public Tag toTag(Value value, final RegistryAccess regs)
         {
             if (!(value instanceof FormattedTextValue))
             {
                 value = new FormattedTextValue(Component.literal(value.getString()));
             }
-            return StringTag.valueOf(((FormattedTextValue) value).serialize());
+            return StringTag.valueOf(((FormattedTextValue) value).serialize(regs));
         }
 
         @Override
         public Value decode(Tag tag, Level level)
         {
-            return FormattedTextValue.deserialize(tag.getAsString());
+            return FormattedTextValue.deserialize(tag.getAsString(), level.registryAccess());
         }
     }
 
@@ -1818,7 +1818,7 @@ public class ShapeDispatcher
         }
 
         @Override
-        public Tag toTag(Value value)
+        public Tag toTag(Value value, final RegistryAccess regs)
         {
             return ByteTag.valueOf(value.getBoolean());
         }
@@ -1844,7 +1844,7 @@ public class ShapeDispatcher
         }
 
         @Override
-        public Tag toTag(Value value)
+        public Tag toTag(Value value, final RegistryAccess regs)
         {
             return FloatTag.valueOf(NumericValue.asNumber(value, id).getFloat());
         }
@@ -1883,7 +1883,7 @@ public class ShapeDispatcher
         }
 
         @Override
-        public Tag toTag(Value value)
+        public Tag toTag(Value value, final RegistryAccess regs)
         {
             return FloatTag.valueOf(NumericValue.asNumber(value, id).getFloat());
         }
@@ -1904,7 +1904,7 @@ public class ShapeDispatcher
         }
 
         @Override
-        public Tag toTag(Value value)
+        public Tag toTag(Value value, final RegistryAccess regs)
         {
             return IntTag.valueOf(NumericValue.asNumber(value, id).getInt());
         }
@@ -1925,7 +1925,7 @@ public class ShapeDispatcher
         }
 
         @Override
-        public Tag toTag(Value value)
+        public Tag toTag(Value value, final RegistryAccess regs)
         {
             return IntTag.valueOf(NumericValue.asNumber(value, id).getInt());
         }
@@ -1956,7 +1956,7 @@ public class ShapeDispatcher
         }
 
         @Override
-        public Tag toTag(Value value)
+        public Tag toTag(Value value, final RegistryAccess regs)
         {
             return FloatTag.valueOf(NumericValue.asNumber(value, id).getFloat());
         }
@@ -2051,7 +2051,7 @@ public class ShapeDispatcher
         }
 
         @Override
-        public Tag toTag(Value value)
+        public Tag toTag(Value value, final RegistryAccess regs)
         {
             List<Value> lv = ((ListValue) value).getItems();
             ListTag tag = new ListTag();
@@ -2102,7 +2102,7 @@ public class ShapeDispatcher
         }
 
         @Override
-        public Tag toTag(Value pointsValue)
+        public Tag toTag(Value pointsValue, final RegistryAccess regs)
         {
             List<Value> lv = ((ListValue) pointsValue).getItems();
             ListTag ltag = new ListTag();
@@ -2134,7 +2134,7 @@ public class ShapeDispatcher
         }
 
         @Override
-        public Tag toTag(Value value)
+        public Tag toTag(Value value, final RegistryAccess regs)
         {
             return IntTag.valueOf(NumericValue.asNumber(value, id).getInt());
         }
@@ -2149,7 +2149,7 @@ public class ShapeDispatcher
         }
 
         @Override
-        public Tag toTag(Value value)
+        public Tag toTag(Value value, final RegistryAccess regs)
         {
             return IntTag.valueOf(NumericValue.asNumber(value, id).getInt());
         }

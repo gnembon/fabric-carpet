@@ -16,11 +16,11 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.item.PrimedTnt;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.enchantment.ProtectionEnchantment;
 import net.minecraft.world.level.Explosion;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
@@ -172,8 +172,8 @@ public class OptimizedExplosion
                         }
                         double d11 = d10;
 
-                        if (entity instanceof LivingEntity) {
-                            d11 = ProtectionEnchantment.getExplosionKnockbackAfterDampener((LivingEntity) entity, d10);
+                        if (entity instanceof LivingEntity lev) {
+                            d11 = d10 * Mth.clamp(1.0 - lev.getAttributeValue(Attributes.EXPLOSION_KNOCKBACK_RESISTANCE), 0.0, 1.0);
                         }
 
                         if (eLogger != null) {
@@ -215,7 +215,7 @@ public class OptimizedExplosion
         // explosionSound incremented till disabling the explosion particles and sound
         if (explosionSound < 100 || explosionSound % 100 == 0)
         {
-            world.playSound(null, posX, posY, posZ, SoundEvents.GENERIC_EXPLODE, SoundSource.BLOCKS, 4.0F,
+            world.playSound(null, posX, posY, posZ, SoundEvents.GENERIC_EXPLODE.value(), SoundSource.BLOCKS, 4.0F,
                     (1.0F + (world.random.nextFloat() - world.random.nextFloat()) * 0.2F) * 0.7F);
 
             if (spawnParticles)

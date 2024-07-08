@@ -3,9 +3,8 @@ package carpet.script.utils;
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.minecraft.commands.arguments.ParticleArgument;
-import net.minecraft.core.HolderLookup;
+import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.particles.ParticleOptions;
-import net.minecraft.core.particles.ParticleType;
 
 import javax.annotation.Nullable;
 import java.util.HashMap;
@@ -15,7 +14,7 @@ public class ParticleParser
 {
     private static final Map<String, ParticleOptions> particleCache = new HashMap<>(); // we reset this on reloads, but probably need something better
 
-    private static ParticleOptions parseParticle(String name, HolderLookup<ParticleType<?>> lookup)
+    private static ParticleOptions parseParticle(String name, RegistryAccess lookup)
     {
         try
         {
@@ -28,7 +27,7 @@ public class ParticleParser
     }
 
     @Nullable
-    public static ParticleOptions getEffect(@Nullable String name, HolderLookup<ParticleType<?>> lookup)
+    public static ParticleOptions getEffect(@Nullable String name, RegistryAccess lookup)
     {
         if (name == null)
         {

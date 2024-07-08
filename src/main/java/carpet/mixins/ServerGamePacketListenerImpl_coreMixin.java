@@ -3,6 +3,7 @@ package carpet.mixins;
 import carpet.CarpetServer;
 import carpet.fakes.ServerGamePacketListenerImplInterface;
 import net.minecraft.network.Connection;
+import net.minecraft.network.DisconnectionDetails;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
@@ -26,8 +27,8 @@ public abstract class ServerGamePacketListenerImpl_coreMixin extends ServerCommo
     }
 
     @Inject(method = "onDisconnect", at = @At("HEAD"))
-    private void onPlayerDisconnect(Component reason, CallbackInfo ci) {
-        CarpetServer.onPlayerLoggedOut(this.player, reason);
+    private void onPlayerDisconnect(DisconnectionDetails reason, CallbackInfo ci) {
+        CarpetServer.onPlayerLoggedOut(this.player, reason.reason());
     }
 
     @Override
