@@ -12,8 +12,8 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import net.minecraft.commands.CommandRuntimeException;
 import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.level.storage.LevelResource;
 
 import java.io.BufferedWriter;
@@ -472,5 +472,18 @@ public class AppStoreManager
             throw new InternalExpressionException("Error when installing app dependencies: " + e);
         }
         CarpetScriptServer.LOG.info("Downloaded app " + target + " from " + contentUrl);
+    }
+
+    public static class CommandRuntimeException extends RuntimeException {
+        private final Component message;
+
+        public CommandRuntimeException(Component message) {
+            super(message.getString(), null, false, false);
+            this.message = message;
+        }
+
+        public Component getComponent() {
+            return message;
+        }
     }
 }

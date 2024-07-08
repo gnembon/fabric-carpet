@@ -2,6 +2,7 @@ package carpet.script.value;
 
 import java.util.ArrayList;
 
+import net.minecraft.core.RegistryAccess;
 import net.minecraft.nbt.StringTag;
 import net.minecraft.nbt.Tag;
 import com.google.gson.JsonElement;
@@ -89,7 +90,7 @@ public class NullValue extends NumericValue // TODO check nonsingleton code
     }
 
     @Override
-    public Tag toTag(boolean force)
+    public Tag toTag(boolean force, RegistryAccess regs)
     {
         if (!force)
         {

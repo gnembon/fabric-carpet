@@ -20,8 +20,8 @@ public abstract class AbstractArrowMixin extends Entity
     private TrajectoryLogHelper logHelper;
     public AbstractArrowMixin(EntityType<?> entityType_1, Level world_1) { super(entityType_1, world_1); }
 
-    @Inject(method = "<init>(Lnet/minecraft/world/entity/EntityType;Lnet/minecraft/world/level/Level;Lnet/minecraft/world/item/ItemStack;)V", at = @At("RETURN"))
-    private void addLogger(final EntityType entityType, final Level level, final ItemStack itemStack, final CallbackInfo ci)
+    @Inject(method = "<init>(Lnet/minecraft/world/entity/EntityType;DDDLnet/minecraft/world/level/Level;Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/item/ItemStack;)V", at = @At("RETURN"))
+    private void addLogger(final EntityType entityType, final double x, final double y, final double z, final Level level, final ItemStack itemStack, final ItemStack weapon, final CallbackInfo ci)
     {
         if (LoggerRegistry.__projectiles && !level.isClientSide)
             logHelper = new TrajectoryLogHelper("projectiles");

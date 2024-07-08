@@ -21,6 +21,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.Direction.Axis;
 import net.minecraft.core.GlobalPos;
 import net.minecraft.core.Registry;
+import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.StringTag;
@@ -41,7 +42,6 @@ import net.minecraft.world.phys.Vec3;
 
 import javax.annotation.Nullable;
 
-import static carpet.script.value.NBTSerializableValue.nameFromRegistryId;
 import static carpet.script.value.NBTSerializableValue.nameFromResource;
 
 public class BlockValue extends Value
@@ -140,7 +140,7 @@ public class BlockValue extends Value
                 data = new CompoundTag();
                 return null;
             }
-            data = be.saveWithoutMetadata();
+            data = be.saveWithoutMetadata(be.getLevel().registryAccess());
             return data;
         }
         return null;
@@ -240,7 +240,7 @@ public class BlockValue extends Value
     }
 
     @Override
-    public Tag toTag(boolean force)
+    public Tag toTag(boolean force, RegistryAccess regs)
     {
         if (!force)
         {

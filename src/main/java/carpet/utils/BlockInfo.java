@@ -39,7 +39,7 @@ public class BlockInfo
         lst.add(Messenger.s("====================================="));
         lst.add(Messenger.s(String.format("Block info for %s%s (id %d%s):", blocks.getKey(block),metastring, blocks.getId(block), metastring )));
         lst.add(Messenger.s(String.format(" - Map colour: %s", Colors.mapColourName.get(state.getMapColor(world, pos)))));
-        lst.add(Messenger.s(String.format(" - Sound type: %s", Colors.soundName.get(block.getSoundType(state)))));
+        lst.add(Messenger.s(String.format(" - Sound type: %s", Colors.soundName.get(state.getSoundType()))));
         lst.add(Messenger.s(""));
         lst.add(Messenger.s(String.format(" - Full block: %s", state.isCollisionShapeFullBlock(world, pos)))); //  isFullCube() )));
         lst.add(Messenger.s(String.format(" - Normal cube: %s", state.isRedstoneConductor(world, pos)))); //isNormalCube()))); isSimpleFullBlock
@@ -55,13 +55,13 @@ public class BlockInfo
         //lst.add(Messenger.s(String.format(" - Picks neighbour light value: %s", state.useNeighborBrightness(world, pos))));
         lst.add(Messenger.s(""));
         lst.add(Messenger.s(String.format(" - Causes suffocation: %s", state.isSuffocating(world, pos)))); //canSuffocate
-        lst.add(Messenger.s(String.format(" - Blocks movement on land: %s", !state.isPathfindable(world,pos, PathComputationType.LAND))));
-        lst.add(Messenger.s(String.format(" - Blocks movement in air: %s", !state.isPathfindable(world,pos, PathComputationType.AIR))));
-        lst.add(Messenger.s(String.format(" - Blocks movement in liquids: %s", !state.isPathfindable(world,pos, PathComputationType.WATER))));
+        lst.add(Messenger.s(String.format(" - Blocks movement on land: %s", !state.isPathfindable(PathComputationType.LAND))));
+        lst.add(Messenger.s(String.format(" - Blocks movement in air: %s", !state.isPathfindable(PathComputationType.AIR))));
+        lst.add(Messenger.s(String.format(" - Blocks movement in liquids: %s", !state.isPathfindable(PathComputationType.WATER))));
         lst.add(Messenger.s(String.format(" - Can burn: %s", state.ignitedByLava())));
         lst.add(Messenger.s(String.format(" - Hardness: %.2f", state.getDestroySpeed(world, pos))));
         lst.add(Messenger.s(String.format(" - Blast resistance: %.2f", block.getExplosionResistance())));
-        lst.add(Messenger.s(String.format(" - Ticks randomly: %s", block.isRandomlyTicking(state))));
+        lst.add(Messenger.s(String.format(" - Ticks randomly: %s", state.isRandomlyTicking())));
         lst.add(Messenger.s(""));
         lst.add(Messenger.s(String.format(" - Can provide power: %s", state.isSignalSource())));
         lst.add(Messenger.s(String.format(" - Strong power level: %d", world.getDirectSignalTo(pos))));
@@ -75,7 +75,7 @@ public class BlockInfo
     private static Component wander_chances(BlockPos pos, ServerLevel worldIn)
     {
         PathfinderMob creature = new ZombifiedPiglin(EntityType.ZOMBIFIED_PIGLIN, worldIn);
-        creature.finalizeSpawn(worldIn, worldIn.getCurrentDifficultyAt(pos), MobSpawnType.NATURAL, null, null);
+        creature.finalizeSpawn(worldIn, worldIn.getCurrentDifficultyAt(pos), MobSpawnType.NATURAL, null);
         creature.moveTo(pos, 0.0F, 0.0F);
         RandomStrollGoal wander = new RandomStrollGoal(creature, 0.8D);
         int success = 0;

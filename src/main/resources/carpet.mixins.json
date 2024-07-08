@@ -47,7 +47,6 @@
     "LayerLightEngine_scarpetChunkCreationMixin",
     "LayerLightSectionStorage_scarpetChunkCreationMixin",
     "DistanceManager_spawnChunksMixin",
-    "ServerLevel_spawnChunksMixin",
     "ThreadedLevelLightEngine_scarpetChunkCreationMixin",
     "LivingEntity_cleanLogsMixin",
     "MobMixin",
@@ -102,8 +101,7 @@
     "AbstractContainerMenu_ctrlQCraftingMixin",
     "Connection_packetCounterMixin",
     "AbstractCauldronBlock_stackableSBoxesMixin",
-    "Slot_stackableSBoxesMixin",
-    "AbstractContainerMenu_stackableSBoxesMixin",
+    "ItemStack_stackableShulkerBoxesMixin",
     "ItemEntityMixin",
     "TntBlock_noUpdateMixin",
     "Explosion_optimizedTntMixin",
@@ -159,6 +157,7 @@
     "HorseBaseEntity_scarpetMixin",
     "RandomState_ScarpetMixin",
     "Biome_scarpetMixin",
+    "PortalProcessor_scarpetMixin",
 
     "BlockEntity_movableBEMixin",
     "PistonBaseBlock_movableBEMixin",
@@ -181,9 +180,8 @@
     "ChestBlock_customStickyMixin",
     "PistonStructureResolver_customStickyMixin",
 
-    "ServerboundCustomPayloadPacket_mixin",
-    "ServerCommonPacketListenerimpl_connectionMixin",
-    "ClientboundCustomPayloadPacket_customPacketMixin"
+    "CustomPacketPayload_networkStuffMixin",
+    "ServerGamePacketListenerimpl_connectionMixin"
 
   ],
   "client": [

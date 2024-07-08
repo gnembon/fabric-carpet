@@ -16,6 +16,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicReference;
 
+import net.minecraft.core.RegistryAccess;
 import net.minecraft.nbt.Tag;
 
 public class ThreadValue extends LazyListValue
@@ -108,13 +109,13 @@ public class ThreadValue extends LazyListValue
     @Override
     public boolean equals(Object o)
     {
-        return o instanceof final ThreadValue tv && tv.id == this.id;
+        return o instanceof ThreadValue tv && tv.id == this.id;
     }
 
     @Override
     public int compareTo(Value o)
     {
-        if (!(o instanceof final ThreadValue tv))
+        if (!(o instanceof ThreadValue tv))
         {
             throw new InternalExpressionException("Cannot compare tasks to other types");
         }
@@ -128,13 +129,13 @@ public class ThreadValue extends LazyListValue
     }
 
     @Override
-    public Tag toTag(boolean force)
+    public Tag toTag(boolean force, RegistryAccess regs)
     {
         if (!force)
         {
             throw new NBTSerializableValue.IncompatibleTypeException(this);
         }
-        return getValue().toTag(true);
+        return getValue().toTag(true, regs);
     }
 
     @Override

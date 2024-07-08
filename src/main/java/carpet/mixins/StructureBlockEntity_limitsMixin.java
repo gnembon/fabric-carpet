@@ -13,7 +13,7 @@ import org.spongepowered.asm.mixin.injection.ModifyConstant;
 public abstract class StructureBlockEntity_limitsMixin
 {
     @ModifyConstant(
-            method = "load",
+            method = "loadAdditional",
             constant = @Constant(intValue = StructureBlockEntity.MAX_SIZE_PER_AXIS)
     )
     private int positiveLimit(int original) {
@@ -21,7 +21,7 @@ public abstract class StructureBlockEntity_limitsMixin
     }
 
     @ModifyConstant(
-            method = "load",
+            method = "loadAdditional",
             constant = @Constant(intValue = -StructureBlockEntity.MAX_SIZE_PER_AXIS)
     )
     private int negativeLimit(int original) {

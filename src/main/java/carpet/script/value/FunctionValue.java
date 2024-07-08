@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
+import net.minecraft.core.RegistryAccess;
 import net.minecraft.nbt.StringTag;
 import net.minecraft.nbt.Tag;
 
@@ -112,13 +113,13 @@ public class FunctionValue extends Value implements Fluff.ILazyFunction
     @Override
     public boolean equals(Object o)
     {
-        return o instanceof final FunctionValue fv && name.equals(fv.name) && variant == fv.variant;
+        return o instanceof FunctionValue fv && name.equals(fv.name) && variant == fv.variant;
     }
 
     @Override
     public int compareTo(Value o)
     {
-        if (o instanceof final FunctionValue fv)
+        if (o instanceof FunctionValue fv)
         {
             int nameSame = this.name.compareTo(fv.name);
             return nameSame != 0 ? nameSame : (int) (variant - fv.variant);
@@ -303,7 +304,7 @@ public class FunctionValue extends Value implements Fluff.ILazyFunction
     }
 
     @Override
-    public Tag toTag(boolean force)
+    public Tag toTag(boolean force, RegistryAccess regs)
     {
         if (!force)
         {

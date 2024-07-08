@@ -1,6 +1,7 @@
 package carpet.mixins;
 
 import carpet.CarpetSettings;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.ExperienceOrb;
@@ -27,7 +28,7 @@ public abstract class ExperienceOrb_xpNoCooldownMixin extends Entity
     }
 
     @Shadow
-    protected abstract int repairPlayerItems(Player player, int amount);
+    protected abstract int repairPlayerItems(ServerPlayer player, int amount);
 
     @Inject(method = "playerTouch", at = @At("HEAD"))
     private void addXP(Player player, CallbackInfo ci) {
@@ -35,7 +36,7 @@ public abstract class ExperienceOrb_xpNoCooldownMixin extends Entity
             player.takeXpDelay = 0;
             // reducing the count to 1 and leaving vanilla to deal with it
             while (this.count > 1) {
-                int remainder = this.repairPlayerItems(player, this.value);
+                int remainder = this.repairPlayerItems((ServerPlayer) player, this.value);
                 if (remainder > 0) {
                     player.giveExperiencePoints(remainder);
                 }

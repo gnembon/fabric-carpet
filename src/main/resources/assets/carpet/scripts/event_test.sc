@@ -313,11 +313,16 @@ __on_player_swaps_hands(player) -> (
 //    print(' Player '+player+' collides with '+entity);
 //);
 
-__on_player_picks_up_item(player, item) ->
+__on_player_picks_up_item(player, item_tuple) ->
 (
+    l(item, count, nbt) = item_tuple || l('None', 0, null);
     print('');
     print('__on_player_picks_up_item(player, item)');
-    print(' Player '+player+' injects '+item);
+    print('  - player: '+player);
+    print('  - item:');
+    print('    > name: '+item);
+    print('    > count: '+count);
+    print('    > nbt: '+nbt);
 );
 
 __on_player_trades(player, entity, buy_left, buy_right, sell) ->

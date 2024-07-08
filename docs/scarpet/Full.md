@@ -3650,7 +3650,7 @@ version indicates the version of the connected carpet client.
 ### `query(e, 'effect', name?)`
 
 Without extra arguments, it returns list of effect active on a living entity. Each entry is a triple of short 
-effect name, amplifier, and remaining duration in ticks. With an argument, if the living entity has not that potion active, 
+effect name, amplifier, and remaining duration in ticks (-1 if it has infinity duration). With an argument, if the living entity has not that potion active, 
 returns `null`, otherwise return a tuple of amplifier and remaining duration.
 
 <pre>
@@ -3990,7 +3990,7 @@ players, since they are controlled client side.
 ### `modify(e, 'effect', name?, duration?, amplifier?, show_particles?, show_icon?, ambient?)`
 
 Applies status effect to the living entity. Takes several optional parameters, which default to `0`, `true`, 
-`true` and `false`. If no duration is specified, or if it's null or 0, the effect is removed. If name is not specified,
+`true` and `false`. If no duration is specified, or if it's null or 0, the effect is removed. If duration is less than 0, it will represent infinity. If name is not specified,
 it clears all effects.
 
 ### `modify(e, 'health', float)`
@@ -4257,7 +4257,8 @@ use the same scheme.
  If the entity or a block doesn't have 
 an inventory, all API functions typically do nothing and return null.
 
-Most items returned are in the form of a triple of item name, count, and nbt or the extra data associated with an item. 
+Most items returned are in the form of a triple of item name, count, and the full nbt of an item. When saving an item, if the
+nbt is provided, it overrides the item type provided in the name.
 
 ### `item_list(tag?)`
 
@@ -4370,20 +4371,22 @@ negative numbers to indicate slots counted from 'the back'.
 
 <pre>
 inventory_get(player(), 0) => null // nothing in first hotbar slot
-inventory_get(x,y,z, 5) => ['stone', 1, {}]
-inventory_get(player(), -1) => ['diamond_pickaxe', 1, {Damage:4}] // slightly damaged diamond pick in the offhand
+inventory_get(x,y,z, 5) => ['stone', 1, {id:"minecraft:stone"}]
+inventory_get(player(), -1) => ['diamond_pickaxe', 1, {components:{"minecraft:damage":4},id:"minecraft:diamond_pickaxe"}] // slightly damaged diamond pick in the offhand
 </pre>
 
 ### `inventory_set(inventory, slot, count, item?, nbt?)`
 
 Modifies or sets a stack in inventory. specify count 0 to empty the slot. If item is not specified, keeps existing 
-item, just modifies the count. If item is provided - replaces current item. If nbt is provided - adds a tag to the 
-stack at slot. Returns previous stack in that slot.
+item, just modifies the count. If item is provided - replaces current item. If nbt is provided - uses the tag to create the item fully
+ignoring the item name. If nbt is provided and count is not null, the sets the custom count on the tag from the count parameter.
+If count is `null` and item is `null`, an item is entirely defined by the `nbt` parameter. Returns previous stack in that slot.
 
 <pre>
-inventory_set(player(), 0, 0) => ['stone', 64, {}] // player had a stack of stone in first hotbar slot
-inventory_set(player(), 0, 6) => ['diamond', 64, {}] // changed stack of diamonds in player slot to 6
-inventory_set(player(), 0, 1, 'diamond_axe','{Damage:5}') => null //added slightly damaged diamond axe to first player slot
+inventory_set(player(), 0, 0) => ['stone', 64, {id:"minecraft:stone"}] // player had a stack of stone in first hotbar slot
+inventory_set(player(), 0, 6) => ['diamond', 64, {id:"minecraft:diamond"}] // changed stack of diamonds in player slot to 6
+inventory_set(player(), 0, 1, 'diamond_axe','{components:{"minecraft:damage":5},id:"minecraft:diamond_axe"}') => null //added slightly damaged diamond axe to first player slot
+inventory_set(player(), 0, null, null, '{components:{"minecraft:damage":5},id:"minecraft:diamond_axe"}') => null // same effect as above
 </pre>
 
 ### `inventory_find(inventory, item, start_slot?, ), inventory_find(inventory, null, start_slot?)`
@@ -5334,9 +5337,8 @@ Valid mixer options are `master`, `music`, `record`, `weather`, `block`, `hostil
 and `voice`. `pos` can be either a block, triple of coords, or a list of three numbers. Uses the same options as a
  corresponding `playsound` command.
  
-Used with no arguments, return the list of available sound names.
- 
-Throws `unknown_sound` if sound doesn't exist.
+Used with no arguments, returns a list of available sound names. Note that this list may not include all sounds that
+clients will actually be able to receive (they may have more available via resourcepacks for example).
 
 ## Particles
 

@@ -84,7 +84,7 @@ public abstract class PrimedTntMixin extends Entity implements TntEntityInterfac
 
     @Inject(method = "tick", at = @At(value = "INVOKE",
                                         target = "Lnet/minecraft/world/entity/item/PrimedTnt;setDeltaMovement(Lnet/minecraft/world/phys/Vec3;)V",
-                                        ordinal = 2))
+                                        ordinal = 1))
     private void tryMergeTnt(CallbackInfo ci)
     {
         // Merge code for combining tnt into a single entity if they happen to exist in the same spot, same fuse, no motion CARPET-XCOM

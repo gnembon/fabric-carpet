@@ -2,31 +2,43 @@ package carpet.mixins;
 
 import carpet.CarpetSettings;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
-import net.minecraft.network.protocol.game.ServerboundPlayerActionPacket;
-import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.server.level.ServerPlayerGameMode;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Redirect;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-@Mixin(value = ServerPlayerGameMode.class, priority = 69420) // not that important for carpet
-public class ServerPlayerGameMode_antiCheatMixin
+@Mixin(value = Player.class)
+public abstract class ServerPlayerGameMode_antiCheatMixin extends LivingEntity
 {
-    // that shoudn't've been a constant at the first place
-    // resolves problems with mobs using reach entity attributes.
+    @Shadow public abstract double entityInteractionRange();
 
-    @Redirect(method = "handleBlockBreakAction", at = @At(
-            value = "INVOKE",
-            target = "Lnet/minecraft/server/level/ServerPlayer;getEyePosition()Lnet/minecraft/world/phys/Vec3;"
-    ))
-    private Vec3 getEyePos(ServerPlayer instance,
-                           final BlockPos pos, final ServerboundPlayerActionPacket.Action action, final Direction direction, final int maxBuildHeight, final int sequence)
+    @Shadow public abstract double blockInteractionRange();
+
+    protected ServerPlayerGameMode_antiCheatMixin(final EntityType<? extends LivingEntity> entityType, final Level level)
     {
-        if (CarpetSettings.antiCheatDisabled &&
-                instance.getEyePosition().distanceToSqr(Vec3.atCenterOf(pos)) < 1024
-        ) return Vec3.atCenterOf(pos);
-        return instance.getEyePosition();
+        super(entityType, level);
+    }
+
+    @Inject(method = "canInteractWithBlock", at = @At("HEAD"), cancellable = true)
+    private void canInteractLongRangeBlock(BlockPos pos, double d, CallbackInfoReturnable<Boolean> cir)
+    {
+        double maxRange = blockInteractionRange() + d;
+        maxRange = maxRange * maxRange;
+        if (CarpetSettings.antiCheatDisabled && maxRange < 1024 && getEyePosition().distanceToSqr(Vec3.atCenterOf(pos)) < 1024) cir.setReturnValue(true);
+    }
+
+    @Inject(method = "canInteractWithEntity(Lnet/minecraft/world/phys/AABB;D)Z", at = @At("HEAD"), cancellable = true)
+    private void canInteractLongRangeEntity(AABB aabb, double d, CallbackInfoReturnable<Boolean> cir)
+    {
+        double maxRange = entityInteractionRange() + d;
+        maxRange = maxRange * maxRange;
+        if (CarpetSettings.antiCheatDisabled && maxRange < 1024 && aabb.distanceToSqr(getEyePosition()) < 1024) cir.setReturnValue(true);
     }
 }

@@ -17,6 +17,7 @@ import java.util.Map;
 import java.util.OptionalInt;
 
 import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.core.RegistryAccess;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
@@ -340,7 +341,7 @@ public class ScreenValue extends Value
         DataSlot property = getProperty(propertyName);
         int intValue = NumericValue.asNumber(lv.get(0)).getInt();
         property.set(intValue);
-        this.screenHandler.sendAllDataToRemote();
+        this.screenHandler.broadcastChanges();
         return Value.TRUE;
     }
 
@@ -373,18 +374,25 @@ public class ScreenValue extends Value
     }
 
     @Override
-    public Tag toTag(boolean force)
+    public Tag toTag(boolean force, RegistryAccess regs)
     {
         if (this.screenHandler == null)
         {
-            return Value.NULL.toTag(true);
+            return Value.NULL.toTag(true, regs);
         }
 
         ListTag nbtList = new ListTag();
         for (int i = 0; i < this.screenHandler.slots.size(); i++)
         {
             ItemStack itemStack = this.screenHandler.getSlot(i).getItem();
-            nbtList.add(itemStack.save(new CompoundTag()));
+            if (itemStack.isEmpty())
+            {
+                nbtList.add(new CompoundTag());
+            }
+            else
+            {
+                nbtList.add(itemStack.save(regs));
+            }
         }
         return nbtList;
     }
