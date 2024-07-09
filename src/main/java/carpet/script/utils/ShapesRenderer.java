@@ -209,6 +209,7 @@ public class ShapesRenderer
             RenderSystem.lineWidth(1.0F);
             RenderSystem.setProjectionMatrix(ori,VertexSorting.DISTANCE_TO_ORIGIN);
             matrixStack.popMatrix();
+            RenderSystem.applyModelViewMatrix();
 
         }
         if (!labels.isEmpty())
@@ -216,6 +217,12 @@ public class ShapesRenderer
             labels.get(dimensionType).long2ObjectEntrySet().removeIf(
                     entry -> entry.getValue().isExpired(currentTime)
             );
+            Matrix4fStack matrixStack = RenderSystem.getModelViewStack();
+            matrixStack.pushMatrix();
+            matrixStack.identity();
+            RenderSystem.applyModelViewMatrix();
+            matrices.pushPose();
+            matrices.mulPose(modelViewMatrix);
             labels.get(dimensionType).values().forEach(s -> {
                 if ((!s.shape.debug || entityBoxes) && s.shouldRender(dimensionType)&& !s.shape.hud)
                 {
@@ -223,7 +230,7 @@ public class ShapesRenderer
                 }
             });
             //PoseStack matrixStack = RenderSystem.getModelViewStack();
-            matrices.pushPose();
+            //matrices.pushPose();
             matrices.setIdentity();
             //RenderSystem.applyModelViewMatrix();
             var ori=RenderSystem.getProjectionMatrix();
@@ -237,6 +244,8 @@ public class ShapesRenderer
             matrices.popPose();
             //RenderSystem.applyModelViewMatrix();
             RenderSystem.setProjectionMatrix(ori,VertexSorting.DISTANCE_TO_ORIGIN);
+            matrixStack.popMatrix();
+            RenderSystem.applyModelViewMatrix();
         }
         RenderSystem.enableCull();
         RenderSystem.depthMask(true);
