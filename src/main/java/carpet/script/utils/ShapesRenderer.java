@@ -183,6 +183,8 @@ public class ShapesRenderer
             RenderSystem.lineWidth(1.0F);
 
             matrixStack.popMatrix();
+            matrixStack.pushMatrix();
+            matrixStack.identity();
 
             RenderSystem.applyModelViewMatrix();
             var ori=RenderSystem.getProjectionMatrix();
@@ -206,6 +208,7 @@ public class ShapesRenderer
             });
             RenderSystem.lineWidth(1.0F);
             RenderSystem.setProjectionMatrix(ori,VertexSorting.DISTANCE_TO_ORIGIN);
+            matrixStack.popMatrix();
 
         }
         if (!labels.isEmpty())

@@ -1516,7 +1516,7 @@ public class ShapeDispatcher
             put("points", new PointsParam("points"));
             put("text", new FormattedTextParam("text"));
             put("value", new FormattedTextParam("value"));
-            put("size", new PositiveIntParam("size"));
+            put("size", new PositiveFloatParam("size"));
             put("align", new StringChoiceParam("align", "center", "left", "right"));
 
             put("block", new BlockParam("block"));
