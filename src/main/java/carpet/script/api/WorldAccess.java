@@ -28,7 +28,6 @@ import carpet.script.value.StringValue;
 import carpet.script.value.Value;
 import carpet.script.value.ValueConversions;
 
-import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.longs.LongSet;
 import net.minecraft.Util;
@@ -79,9 +78,7 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import net.minecraft.commands.arguments.item.ItemInput;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.Tag;
 import net.minecraft.network.protocol.game.ClientboundExplodePacket;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundSource;
@@ -1251,7 +1248,6 @@ public class WorldAccess
             Optional<HolderSet.Named<Block>> tagSet = blocks.getTag(TagKey.create(Registries.BLOCK, InputValidator.identifierOf(tag)));
             return tagSet.isEmpty() ? Value.NULL : BooleanValue.of(blockLocator.block.getBlockState().is(tagSet.get()));
         });
-
         expression.addContextFunction("biome", -1, (c, t, lv) -> {
             CarpetContext cc = (CarpetContext) c;
             ServerLevel world = cc.level();

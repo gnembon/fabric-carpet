@@ -69,7 +69,7 @@ public class ScriptCommand
         int maxLen = prefix.length() < 3 ? (prefix.length() * 2 + 1) : 1234;
         String eventPrefix = prefix.startsWith("__on_") ? prefix.substring(5) : null;
         List<String> scarpetMatches = scarpetFunctions.stream().
-                filter(s -> s.startsWith(prefix) && s.length() <= maxLen).map(s -> s + "(").collect(Collectors.toList());
+                filter(s -> s.startsWith(prefix) && s.length() <= maxLen).map(s -> s + "(").toList();
         scarpetMatches.addAll(APIFunctions.stream().
                 filter(s -> s.startsWith(prefix) && s.length() <= maxLen).map(s -> s + "(").toList());
         // not that useful in commandline, more so in external scripts, so skipping here
@@ -315,7 +315,7 @@ public class ScriptCommand
                 executes(ScriptCommand::listEvents).
                 then(literal("add_to").
                         then(argument("event", StringArgumentType.word()).
-                                suggests((cc, bb) -> suggest(CarpetEventServer.Event.publicEvents(ss(cc)).stream().map(ev -> ev.name).collect(Collectors.toList()), bb)).
+                                suggests((cc, bb) -> suggest(CarpetEventServer.Event.publicEvents(ss(cc)).stream().map(ev -> ev.name).toList(), bb)).
                                 then(argument("call", StringArgumentType.word()).
                                         suggests((cc, bb) -> suggest(suggestFunctionCalls(cc), bb)).
                                         executes((cc) -> ss(cc).events.addEventFromCommand(
@@ -337,7 +337,7 @@ public class ScriptCommand
                                                         ) ? 1 : 0)))))).
                 then(literal("remove_from").
                         then(argument("event", StringArgumentType.word()).
-                                suggests((cc, bb) -> suggest(CarpetEventServer.Event.publicEvents(ss(cc)).stream().filter(CarpetEventServer.Event::isNeeded).map(ev -> ev.name).collect(Collectors.toList()), bb)).
+                                suggests((cc, bb) -> suggest(CarpetEventServer.Event.publicEvents(ss(cc)).stream().filter(CarpetEventServer.Event::isNeeded).map(ev -> ev.name).toList(), bb)).
                                 then(argument("call", StringArgumentType.greedyString()).
                                         suggests((cc, bb) -> suggest(CarpetEventServer.Event.getEvent(StringArgumentType.getString(cc, "event"), ss(cc)).handler.inspectCurrentCalls().stream().map(CarpetEventServer.Callback::toString), bb)).
                                         executes((cc) -> ss(cc).events.removeEventFromCommand(
@@ -391,7 +391,7 @@ public class ScriptCommand
     private static Collection<String> suggestFunctionCalls(CommandContext<CommandSourceStack> c) throws CommandSyntaxException
     {
         CarpetScriptHost host = getHost(c);
-        return host.globalFunctionNames(host.main, s -> !s.startsWith("_")).sorted().collect(Collectors.toList());
+        return host.globalFunctionNames(host.main, s -> !s.startsWith("_")).sorted().toList();
     }
 
     private static int listEvents(CommandContext<CommandSourceStack> context)

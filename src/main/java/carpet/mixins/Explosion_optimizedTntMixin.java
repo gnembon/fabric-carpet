@@ -28,7 +28,7 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 
-@Mixin(value = Explosion.class)
+@Mixin(Explosion.class)
 public abstract class Explosion_optimizedTntMixin
 {
     @Shadow

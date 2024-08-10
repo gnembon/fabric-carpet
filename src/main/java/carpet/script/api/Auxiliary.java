@@ -618,7 +618,7 @@ public class Auxiliary
                 }
 
                 AtomicInteger total = new AtomicInteger(0);
-                List<ServerPlayer> targetList = targets.collect(Collectors.toList());
+                List<ServerPlayer> targetList = targets.toList();
                 if (!soundsTrue) // null or empty string
                 {
                     targetList.forEach(target -> {
@@ -1206,7 +1206,7 @@ public class Auxiliary
                     resourcePackProfile.getDefaultPosition().insert(list, resourcePackProfile, Pack::selectionConfig, false);
 
 
-                    server.reloadResources(list.stream().map(Pack::getId).collect(Collectors.toList())).
+                    server.reloadResources(list.stream().map(Pack::getId).toList()).
                             exceptionally(exc -> {
                                 successful[0] = false;
                                 return null;

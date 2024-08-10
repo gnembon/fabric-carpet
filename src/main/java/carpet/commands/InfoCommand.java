@@ -50,15 +50,13 @@ public class InfoCommand
         {
             Pattern p = Pattern.compile(grep);
             Messenger.m(source, messages.get(0));
-            for (int i = 1; i<messages.size(); i++)
-            {
-                Component line = messages.get(i);
+            messages.forEach(line -> {
                 Matcher m = p.matcher(line.getString());
                 if (m.find())
                 {
                     Messenger.m(source, line);
                 }
-            }
+            });
         }
         else
         {

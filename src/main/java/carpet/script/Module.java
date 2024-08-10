@@ -26,7 +26,7 @@ public record Module(String name, String code, boolean library)
         try
         {
             String name = path.getFileName().toString().replaceFirst("\\.scl?", "").toLowerCase(Locale.ROOT);
-            String code = new String(Files.readAllBytes(path), StandardCharsets.UTF_8);
+            String code = Files.readString(path);
             return new Module(name, code, library);
         }
         catch (IOException e)

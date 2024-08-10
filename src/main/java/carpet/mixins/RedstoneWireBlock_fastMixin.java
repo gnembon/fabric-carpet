@@ -36,10 +36,6 @@ public abstract class RedstoneWireBlock_fastMixin implements RedstoneWireBlockIn
     @Accessor("shouldSignal")
     public abstract void setWiresGivePower(boolean wiresGivePower);
 
-    @Override
-    @Accessor("shouldSignal")
-    public abstract boolean getWiresGivePower();
-
     // =
 
     private RedstoneWireTurbo wireTurbo = null;
