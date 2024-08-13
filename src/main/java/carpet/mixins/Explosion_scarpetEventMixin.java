@@ -1,6 +1,6 @@
 package carpet.mixins;
 
-import com.llamalad7.mixinextras.sugar.Local;
+import org.spongepowered.asm.mixin.injection.ModifyArg;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.minecraft.core.Holder;
 import net.minecraft.core.particles.ParticleOptions;
@@ -52,16 +52,17 @@ public abstract class Explosion_scarpetEventMixin
         }
     }
 
-    @Inject(method = "explode", at=@At(
+    @ModifyArg(method = "explode", at=@At(
             value = "INVOKE",
             target = "Lnet/minecraft/world/level/Explosion;getSeenPercent(Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/world/entity/Entity;)F")
     )
-    private void onExplosion(CallbackInfo ci, @Local Entity entity)
+    private Entity onExplosion(Entity entity)
     {
         if (affectedEntities != null)
         {
             affectedEntities.add(entity);
         }
+        return entity;
     }
 
     @Inject(method = "finalizeExplosion", at = @At("HEAD"))
