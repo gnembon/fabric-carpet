@@ -10,6 +10,7 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import net.minecraft.advancements.critereon.MinMaxBounds;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.GlobalPos;
+import net.minecraft.core.HolderSet;
 import net.minecraft.core.Registry;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.Vec3i;
@@ -187,6 +188,11 @@ public class ValueConversions
     public static Value of(TagKey<?> tagKey)
     {
         return of(tagKey.location());
+    }
+
+    public static Value of(HolderSet.Named<?> tagKey)
+    {
+        return of(tagKey.key().location());
     }
 
     public static Value of(@Nullable ResourceLocation id)

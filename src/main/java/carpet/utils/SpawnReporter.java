@@ -13,11 +13,11 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.MobCategory;
-import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.entity.SpawnPlacements;
 import net.minecraft.world.entity.animal.Ocelot;
 import net.minecraft.world.item.DyeColor;
@@ -421,7 +421,7 @@ public class SpawnReporter
                     Mob mob;
                     try
                     {
-                        mob = (Mob) spawnEntry.type.create(worldIn);
+                        mob = (Mob) spawnEntry.type.create(worldIn, EntitySpawnReason.NATURAL);
                     }
                     catch (Exception e)
                     {
@@ -443,9 +443,9 @@ public class SpawnReporter
                             for (int i = 0; i < 20; ++i)
                             {
                                 if (
-                                        SpawnPlacements.checkSpawnRules(etype,worldIn, MobSpawnType.NATURAL, pos, worldIn.random) &&
+                                        SpawnPlacements.checkSpawnRules(etype,worldIn, EntitySpawnReason.NATURAL, pos, worldIn.random) &&
                                         SpawnPlacements.isSpawnPositionOk(etype, worldIn, pos) &&
-                                        mob.checkSpawnRules(worldIn, MobSpawnType.NATURAL)
+                                        mob.checkSpawnRules(worldIn, EntitySpawnReason.NATURAL)
                                     // && mob.canSpawn(worldIn) // entity collisions // mostly - except ocelots
                                 )
                                 {
@@ -459,7 +459,7 @@ public class SpawnReporter
                                     willSpawn += 1;
                                 }
                             }
-                            mob.finalizeSpawn(worldIn, worldIn.getCurrentDifficultyAt(mob.blockPosition()), MobSpawnType.NATURAL, null);
+                            mob.finalizeSpawn(worldIn, worldIn.getCurrentDifficultyAt(mob.blockPosition()), EntitySpawnReason.NATURAL, null);
                             // the code invokes onInitialSpawn after getCanSpawHere
                             fits = fits && worldIn.noCollision(mob);
                             
@@ -467,7 +467,7 @@ public class SpawnReporter
                             
                             try
                             {
-                                mob = (Mob) spawnEntry.type.create(worldIn);
+                                mob = (Mob) spawnEntry.type.create(worldIn, EntitySpawnReason.NATURAL);
                             }
                             catch (Exception e)
                             {

@@ -100,7 +100,7 @@ public class BlockRotator
             }
         }
         // Send block update to the block that just have been rotated.
-        world.neighborChanged(blockpos, block, source.pos());
+        world.neighborChanged(blockpos, block, null);
 
         return stack;
     }

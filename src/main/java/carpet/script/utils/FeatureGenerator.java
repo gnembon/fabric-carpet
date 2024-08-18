@@ -304,8 +304,7 @@ public class FeatureGenerator
 
 
             return spawnCustomStructure(
-                    new JigsawStructure(new Structure.StructureSettings(
-                            l.registryAccess().registryOrThrow(Registries.BIOME).getOrCreateTag(BiomeTags.HAS_BASTION_REMNANT),
+                    new JigsawStructure(new Structure.StructureSettings(l.registryAccess().lookup(Registries.BIOME).orElseThrow().getOrThrow(BiomeTags.HAS_BASTION_REMNANT),
                             Map.of(),
                             GenerationStep.Decoration.SURFACE_STRUCTURES,
                             TerrainAdjustment.NONE
@@ -334,7 +333,7 @@ public class FeatureGenerator
 
             return spawnCustomStructure(
                     new JigsawStructure(new Structure.StructureSettings(
-                            l.registryAccess().registryOrThrow(Registries.BIOME).getOrCreateTag(BiomeTags.HAS_BASTION_REMNANT),
+                            l.registryAccess().lookup(Registries.BIOME).orElseThrow().getOrThrow(BiomeTags.HAS_BASTION_REMNANT),
                             Map.of(),
                             GenerationStep.Decoration.SURFACE_STRUCTURES,
                             TerrainAdjustment.NONE
@@ -363,7 +362,7 @@ public class FeatureGenerator
 
             return spawnCustomStructure(
                     new JigsawStructure(new Structure.StructureSettings(
-                            l.registryAccess().registryOrThrow(Registries.BIOME).getOrCreateTag(BiomeTags.HAS_BASTION_REMNANT),
+                            l.registryAccess().lookup(Registries.BIOME).orElseThrow().getOrThrow(BiomeTags.HAS_BASTION_REMNANT),
                             Map.of(),
                             GenerationStep.Decoration.SURFACE_STRUCTURES,
                             TerrainAdjustment.NONE
@@ -392,7 +391,7 @@ public class FeatureGenerator
 
             return spawnCustomStructure(
                     new JigsawStructure(new Structure.StructureSettings(
-                            l.registryAccess().registryOrThrow(Registries.BIOME).getOrCreateTag(BiomeTags.HAS_BASTION_REMNANT),
+                            l.registryAccess().lookup(Registries.BIOME).orElseThrow().getOrThrow(BiomeTags.HAS_BASTION_REMNANT),
                             Map.of(),
                             GenerationStep.Decoration.SURFACE_STRUCTURES,
                             TerrainAdjustment.NONE

@@ -1,5 +1,6 @@
 package carpet.mixins;
 
+import carpet.fakes.EntityInterface;
 import net.minecraft.network.protocol.game.ServerboundChatCommandPacket;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -51,9 +52,14 @@ public class ServerGamePacketListenerImpl_scarpetEventsMixin
 {
     @Shadow public ServerPlayer player;
 
-    @Inject(method = "handlePlayerInput", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/level/ServerPlayer;setPlayerInput(FFZZ)V"))
+    @Inject(method = "handlePlayerInput", at = @At("HEAD"))
     private void checkMoves(ServerboundPlayerInputPacket p, CallbackInfo ci)
     {
+        // todo this may not ride on the right thread moment, so needs to be checked
+
+        if (!((EntityInterface)player.getVehicle()).isPermanentVehicle()) // won't since that method makes sure its not null
+            player.setShiftKeyDown(p.isShiftKeyDown());
+
         if (PLAYER_RIDES.isNeeded() && (p.getXxa() != 0.0F || p.getZza() != 0.0F || p.isJumping() || p.isShiftKeyDown()))
         {
             PLAYER_RIDES.onMountControls(player, p.getXxa(), p.getZza(), p.isJumping(), p.isShiftKeyDown());
@@ -246,7 +252,7 @@ public class ServerGamePacketListenerImpl_scarpetEventsMixin
     {
         if (PLAYER_CHOOSES_RECIPE.isNeeded())
         {
-            if(PLAYER_CHOOSES_RECIPE.onRecipeSelected(player, packet.getRecipe(), packet.isShiftDown())) ci.cancel();
+            if(PLAYER_CHOOSES_RECIPE.onRecipeSelected(player, packet.getRecipe(), packet.isUseMaxItems())) ci.cancel();
         }
     }
 

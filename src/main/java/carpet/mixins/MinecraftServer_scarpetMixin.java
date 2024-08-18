@@ -102,7 +102,7 @@ public abstract class MinecraftServer_scarpetMixin extends ReentrantBlockableEve
     @Override
     public void reloadAfterReload(RegistryAccess newRegs)
     {
-        resources.managers().updateRegistryTags();
+        resources.managers().updateStaticRegistryTags();
         getPlayerList().saveAll();
         getPlayerList().reloadResources();
         functionManager.replaceLibrary(this.resources.managers().getFunctionLibrary());

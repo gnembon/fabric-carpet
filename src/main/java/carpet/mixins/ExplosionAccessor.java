@@ -1,37 +1,22 @@
 package carpet.mixins;
 
-import net.minecraft.util.RandomSource;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.level.ServerExplosion;
+import net.minecraft.world.phys.Vec3;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Accessor;
 
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.level.Explosion;
-import net.minecraft.world.level.Level;
 
-@Mixin(Explosion.class)
+@Mixin(ServerExplosion.class)
 public interface ExplosionAccessor {
 
     @Accessor
-    boolean isFire();
+    ServerLevel getLevel();
 
     @Accessor
-    Explosion.BlockInteraction getBlockInteraction();
-
-    @Accessor
-    Level getLevel();
-
-    @Accessor
-    RandomSource getRandom();
-
-    @Accessor
-    double getX();
-
-    @Accessor
-    double getY();
-
-    @Accessor
-    double getZ();
+    Vec3 getCenter();
 
     @Accessor
     float getRadius();

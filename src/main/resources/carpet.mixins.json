@@ -139,7 +139,8 @@
     "MerchantResultSlot_scarpetEventMixin",
     "AbstractContainerMenu_scarpetMixin",
     "AbstractContainerMenuSubclasses_scarpetMixin",
-    "RecipeBookMenu_scarpetMixin",
+    "AbstractCraftingMenu_scarpetMixin",
+    "AbstractFurnaceMenu_scarpetMixin",
     "DistanceManager_scarpetMixin",
     "PoiRecord_scarpetMixin",
     "ServerLevel_scarpetMixin",
@@ -150,7 +151,6 @@
     "CommandDispatcher_scarpetCommandsMixin",
 
     "RecipeManager_scarpetMixin",
-    "Ingredient_scarpetMixin",
     "BlockInput_scarpetMixin",
     "BlockPredicate_scarpetMixin",
     "TagPredicate_scarpetMixin",
@@ -180,19 +180,21 @@
     "ChestBlock_customStickyMixin",
     "PistonStructureResolver_customStickyMixin",
 
+    "DefaultRedstoneWireEvaluator_redstoneMixin",
+
     "CustomPacketPayload_networkStuffMixin",
     "ServerGamePacketListenerimpl_connectionMixin"
 
   ],
   "client": [
     "Minecraft_tickMixin",
-    "ShulkerBoxAccessMixin",
     "MinecraftMixin",
     "Gui_tablistMixin",
     "PlayerTabOverlayMixin",
     "PistonHeadRenderer_movableBEMixin",
     "StructureBlockRenderer_mixin",
     "ClientPacketListener_clientCommandMixin",
+    "ClientPacketListener_explosionMixin",
     "LevelRenderer_fogOffMixin",
     "LevelRenderer_creativeNoClipMixin",
     "ClientPacketListener_customPacketsMixin",

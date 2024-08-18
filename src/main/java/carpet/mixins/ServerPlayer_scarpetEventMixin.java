@@ -83,16 +83,6 @@ public abstract class ServerPlayer_scarpetEventMixin extends Player implements S
         }
     }
 
-    @Redirect(method = "setPlayerInput", at = @At(
-            value = "INVOKE",
-            target = "Lnet/minecraft/server/level/ServerPlayer;setShiftKeyDown(Z)V"
-    ))
-    private void setSneakingConditionally(ServerPlayer serverPlayerEntity, boolean sneaking)
-    {
-        if (!((EntityInterface)serverPlayerEntity.getVehicle()).isPermanentVehicle()) // won't since that method makes sure its not null
-            serverPlayerEntity.setShiftKeyDown(sneaking);
-    }
-
     private Vec3 previousLocation;
     private ResourceKey<Level> previousDimension;
 

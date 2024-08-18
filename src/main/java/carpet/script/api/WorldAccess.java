@@ -39,6 +39,7 @@ import net.minecraft.core.HolderSet;
 import net.minecraft.core.QuartPos;
 import net.minecraft.core.Registry;
 import net.minecraft.core.RegistryAccess;
+import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
@@ -50,6 +51,7 @@ import net.minecraft.server.level.Ticket;
 import net.minecraft.server.level.TicketType;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.tags.TagKey;
+import net.minecraft.world.level.ServerExplosion;
 import net.minecraft.world.level.chunk.ChunkGenerator;
 import net.minecraft.world.level.chunk.PalettedContainer;
 import net.minecraft.world.level.chunk.status.ChunkStatus;
@@ -695,7 +697,7 @@ public class WorldAccess
         expression.addContextFunction("update", -1, (c, t, lv) ->
                 booleanStateTest(c, "update", lv, (s, p) ->
                 {
-                    ((CarpetContext) c).level().neighborChanged(p, s.getBlock(), p);
+                    ((CarpetContext) c).level().neighborChanged(p, s.getBlock(), null);
                     return true;
                 }));
 
@@ -1071,10 +1073,9 @@ public class WorldAccess
                 }
             }
             LivingEntity theAttacker = attacker;
-            float thePowah = powah;
 
             // copy of ServerWorld.createExplosion #TRACK#
-            Explosion explosion = new Explosion(cc.level(), source, null, null, pos.x, pos.y, pos.z, powah, createFire, mode,  ParticleTypes.EXPLOSION, ParticleTypes.EXPLOSION_EMITTER, SoundEvents.GENERIC_EXPLODE)
+            ServerExplosion explosion = new ServerExplosion(cc.level(), source, null, null, pos, powah, createFire, mode)
             {
                 @Override
                 @Nullable
@@ -1085,16 +1086,11 @@ public class WorldAccess
                 }
             };
             explosion.explode();
-            explosion.finalizeExplosion(false);
-            if (mode == Explosion.BlockInteraction.KEEP)
-            {
-                explosion.clearToBlow();
-            }
-            Explosion.BlockInteraction finalMode = mode;
+            ParticleOptions explosionParticle = explosion.isSmall() ? ParticleTypes.EXPLOSION : ParticleTypes.EXPLOSION_EMITTER;
             cc.level().players().forEach(spe -> {
                 if (spe.distanceToSqr(pos) < 4096.0D)
                 {
-                    spe.connection.send(new ClientboundExplodePacket(pos.x, pos.y, pos.z, thePowah, explosion.getToBlow(), explosion.getHitPlayers().get(spe), finalMode, ParticleTypes.EXPLOSION, ParticleTypes.EXPLOSION_EMITTER, SoundEvents.GENERIC_EXPLODE));
+                    spe.connection.send(new ClientboundExplodePacket(pos, Optional.ofNullable(explosion.getHitPlayers().get(spe)), explosionParticle, SoundEvents.GENERIC_EXPLODE));
                 }
             });
             return Value.TRUE;
@@ -1239,13 +1235,13 @@ public class WorldAccess
             Registry<Block> blocks = cc.registry(Registries.BLOCK);
             if (lv.isEmpty())
             {
-                return ListValue.wrap(blocks.getTagNames().map(ValueConversions::of));
+                return ListValue.wrap(blocks.getTags().map(ValueConversions::of));
             }
             BlockArgument blockLocator = BlockArgument.findIn(cc, lv, 0, true);
             if (blockLocator.offset == lv.size())
             {
                 Block target = blockLocator.block.getBlockState().getBlock();
-                return ListValue.wrap(blocks.getTags().filter(e -> e.getSecond().stream().anyMatch(h -> (h.value() == target))).map(e -> ValueConversions.of(e.getFirst())));
+                return ListValue.wrap(blocks.getTags().filter(e -> e.stream().anyMatch(h -> (h.value() == target))).map(ValueConversions::of));
             }
             String tag = lv.get(blockLocator.offset).getString();
             Optional<HolderSet.Named<Block>> tagSet = blocks.getTag(TagKey.create(Registries.BLOCK, InputValidator.identifierOf(tag)));

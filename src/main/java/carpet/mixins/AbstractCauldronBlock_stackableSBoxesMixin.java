@@ -4,7 +4,7 @@ import carpet.CarpetSettings;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.cauldron.CauldronInteraction;
 import net.minecraft.world.InteractionHand;
-import net.minecraft.world.ItemInteractionResult;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
@@ -21,14 +21,14 @@ public class AbstractCauldronBlock_stackableSBoxesMixin
 {
     @Redirect(method = "useItemOn", at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/core/cauldron/CauldronInteraction;interact(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/entity/player/Player;Lnet/minecraft/world/InteractionHand;Lnet/minecraft/world/item/ItemStack;)Lnet/minecraft/world/ItemInteractionResult;"
+            target = "Lnet/minecraft/core/cauldron/CauldronInteraction;interact(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/entity/player/Player;Lnet/minecraft/world/InteractionHand;Lnet/minecraft/world/item/ItemStack;)Lnet/minecraft/world/InteractionResult;"
     ))
-    private ItemInteractionResult wrapInteractor(final CauldronInteraction cauldronBehavior, final BlockState blockState, final Level world, final BlockPos blockPos, final Player playerEntity, final InteractionHand hand, final ItemStack itemStack)
+    private InteractionResult wrapInteractor(final CauldronInteraction cauldronBehavior, final BlockState blockState, final Level world, final BlockPos blockPos, final Player playerEntity, final InteractionHand hand, final ItemStack itemStack)
     {
         int count = -1;
         if (CarpetSettings.shulkerBoxStackSize > 1 && itemStack.getItem() instanceof BlockItem && ((BlockItem)itemStack.getItem()).getBlock() instanceof ShulkerBoxBlock)
             count = itemStack.getCount();
-        ItemInteractionResult result = cauldronBehavior.interact(blockState, world, blockPos, playerEntity, hand, itemStack);
+        InteractionResult result = cauldronBehavior.interact(blockState, world, blockPos, playerEntity, hand, itemStack);
         if (count > 0 && result.consumesAction())
         {
             ItemStack current = playerEntity.getItemInHand(hand);

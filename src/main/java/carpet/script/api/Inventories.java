@@ -21,7 +21,6 @@ import carpet.script.value.Value;
 import carpet.script.value.ValueConversions;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -44,6 +43,7 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.AbstractCookingRecipe;
 import net.minecraft.world.item.crafting.CustomRecipe;
+import net.minecraft.world.item.crafting.PlacementInfo;
 import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.item.crafting.ShapedRecipe;
@@ -83,12 +83,12 @@ public class Inventories
             Registry<Item> blocks = cc.registry(Registries.ITEM);
             if (lv.isEmpty())
             {
-                return ListValue.wrap(blocks.getTagNames().map(ValueConversions::of));
+                return ListValue.wrap(blocks.getTags().map(ValueConversions::of));
             }
             Item item = NBTSerializableValue.parseItem(lv.get(0).getString(), cc.registryAccess()).getItem();
             if (lv.size() == 1)
             {
-                return ListValue.wrap(blocks.getTags().filter(e -> e.getSecond().stream().anyMatch(h -> (h.value() == item))).map(e -> ValueConversions.of(e.getFirst())));
+                return ListValue.wrap(blocks.getTags().filter(e -> e.stream().anyMatch(h -> (h.value() == item))).map(ValueConversions::of));
             }
             String tag = lv.get(1).getString();
             Optional<HolderSet.Named<Item>> tagSet = blocks.getTag(TagKey.create(Registries.ITEM, InputValidator.identifierOf(tag)));
@@ -124,22 +124,20 @@ public class Inventories
             {
                 ItemStack result = recipe.getResultItem(regs);
                 List<Value> ingredientValue = new ArrayList<>();
-                recipe.getIngredients().forEach(ingredient -> {
-                    // I am flattening ingredient lists per slot.
-                    // consider recipe_data('wooden_sword','crafting') and ('iron_nugget', 'blasting') and notice difference
-                    // in depths of lists.
-                    List<Collection<ItemStack>> stacks = Vanilla.Ingredient_getRecipeStacks(ingredient);
-                    if (stacks.isEmpty())
+                recipe.placementInfo().slotInfo().forEach(ingredient -> {
+                    if (ingredient.isEmpty())
                     {
                         ingredientValue.add(Value.NULL);
+                        return;
                     }
-                    else
-                    {
-                        List<Value> alternatives = new ArrayList<>();
-                        stacks.forEach(col -> col.stream().map(is -> ValueConversions.of(is, regs)).forEach(alternatives::add));
-                        ingredientValue.add(ListValue.wrap(alternatives));
-                    }
+                    PlacementInfo.SlotInfo value = ingredient.get();
+                    int position = value.placerOutputPosition();
+
+                    List<Value> alternatives = new ArrayList<>();
+                    value.possibleItems().stream().map(is -> ValueConversions.of(is, regs)).forEach(alternatives::add);
+                    ingredientValue.add(ListValue.wrap(alternatives));
                 });
+
                 Value recipeSpec;
                 if (recipe instanceof ShapedRecipe shapedRecipe)
                 {

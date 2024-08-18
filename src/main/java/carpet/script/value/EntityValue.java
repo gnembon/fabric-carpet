@@ -25,8 +25,8 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.StringTag;
-import net.minecraft.network.protocol.game.ClientboundSetCarriedItemPacket;
 import net.minecraft.network.protocol.game.ClientboundSetExperiencePacket;
+import net.minecraft.network.protocol.game.ClientboundSetHeldSlotPacket;
 import net.minecraft.network.protocol.game.ClientboundSetPassengersPacket;
 import net.minecraft.network.protocol.game.ClientboundTeleportEntityPacket;
 import net.minecraft.resources.ResourceKey;
@@ -457,7 +457,7 @@ public class EntityValue extends Value
         put("scoreboard_tags", (e, a) -> ListValue.wrap(e.getTags().stream().map(StringValue::new)));
         put("entity_tags", (e, a) -> {
             EntityType<?> type = e.getType();
-            return ListValue.wrap(e.getServer().registryAccess().registryOrThrow(Registries.ENTITY_TYPE).getTags().filter(entry -> entry.getSecond().stream().anyMatch(h -> h.value() == type)).map(entry -> ValueConversions.of(entry.getFirst())));
+            return ListValue.wrap(e.getServer().registryAccess().registryOrThrow(Registries.ENTITY_TYPE).getTags().filter(entry -> entry.stream().anyMatch(h -> h.value() == type)).map(entry -> ValueConversions.of(entry)));
         });
         // deprecated
         put("has_tag", (e, a) -> BooleanValue.of(e.getTags().contains(a.getString())));
@@ -1019,7 +1019,7 @@ public class EntityValue extends Value
             if (e instanceof ServerPlayer player)
             {
                 int slot = NumericValue.asNumber(v).getInt();
-                player.connection.send(new ClientboundSetCarriedItemPacket(slot));
+                player.connection.send(new ClientboundSetHeldSlotPacket(slot));
             }
         });
 

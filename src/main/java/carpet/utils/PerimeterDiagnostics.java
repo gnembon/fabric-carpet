@@ -6,10 +6,10 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.tags.FluidTags;
 import net.minecraft.world.entity.AgeableMob;
+import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.MobCategory;
-import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.entity.SpawnPlacements;
 import net.minecraft.world.entity.ambient.AmbientCreature;
 import net.minecraft.world.entity.animal.WaterAnimal;
@@ -179,8 +179,8 @@ public class PerimeterDiagnostics
         if (SpawnPlacements.isSpawnPositionOk(sle.type, worldServer, pos))
         {
             el.moveTo(pos.getX() + 0.5F, pos.getY(), pos.getZ()+0.5F, 0.0F, 0.0F);
-            return el.checkSpawnObstruction(worldServer) && el.checkSpawnRules(worldServer, MobSpawnType.NATURAL) &&
-                    SpawnPlacements.checkSpawnRules(el.getType(),(ServerLevel)el.getCommandSenderWorld(), MobSpawnType.NATURAL, el.blockPosition(), el.getCommandSenderWorld().random) &&
+            return el.checkSpawnObstruction(worldServer) && el.checkSpawnRules(worldServer, EntitySpawnReason.NATURAL) &&
+                    SpawnPlacements.checkSpawnRules(el.getType(),(ServerLevel)el.getCommandSenderWorld(), EntitySpawnReason.NATURAL, el.blockPosition(), el.getCommandSenderWorld().random) &&
                     worldServer.noCollision(el); // check collision rules once they stop fiddling with them after 1.14.1
         }
         return false;

@@ -11,7 +11,7 @@ import carpet.script.utils.Tracer;
 import net.minecraft.commands.arguments.EntityAnchorArgument;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.network.protocol.game.ClientboundSetCarriedItemPacket;
+import net.minecraft.network.protocol.game.ClientboundSetHeldSlotPacket;
 import net.minecraft.network.protocol.game.ServerboundPlayerActionPacket;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -282,7 +282,7 @@ public class EntityPlayerActionPack
     public void setSlot(int slot)
     {
         player.getInventory().selected = slot-1;
-        player.connection.send(new ClientboundSetCarriedItemPacket(slot-1));
+        player.connection.send(new ClientboundSetHeldSlotPacket(slot-1));
     }
 
     public enum ActionType
@@ -317,9 +317,9 @@ public class EntityPlayerActionPack
                             if (pos.getY() < player.level().getMaxBuildHeight() - (side == Direction.UP ? 1 : 0) && world.mayInteract(player, pos))
                             {
                                 InteractionResult result = player.gameMode.useItemOn(player, world, player.getItemInHand(hand), hand, blockHit);
-                                if (result.consumesAction())
+                                if (result instanceof InteractionResult.Success success)
                                 {
-                                    if (result.shouldSwing()) player.swing(hand);
+                                    if (success.swingSource() == InteractionResult.SwingSource.SERVER) player.swing(hand);
                                     ap.itemUseCooldown = 3;
                                     return true;
                                 }
