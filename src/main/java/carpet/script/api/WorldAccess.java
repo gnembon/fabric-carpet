@@ -1348,7 +1348,7 @@ public class WorldAccess
             int biomeZ = QuartPos.fromBlock(pos.getZ());
             try
             {
-                int i = QuartPos.fromBlock(chunk.getMinBuildHeight());
+                int i = QuartPos.fromBlock(chunk.getMinY());
                 int j = i + QuartPos.fromBlock(chunk.getHeight()) - 1;
                 int k = Mth.clamp(biomeY, i, j);
                 int l = chunk.getSectionIndex(QuartPos.toBlock(k));

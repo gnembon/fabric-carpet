@@ -87,8 +87,8 @@ public class PerimeterDiagnostics
         PerimeterDiagnostics diagnostic = new PerimeterDiagnostics(worldserver,ctype,el);
         EntityType<?> type = EntityType.ZOMBIE;
         if (el != null) type = el.getType();
-        int minY = worldserver.getMinBuildHeight();
-        int maxY = worldserver.getMaxBuildHeight();
+        int minY = worldserver.getMinY();
+        int maxY = worldserver.getMaxY();
         for (int x = -128; x <= 128; ++x)
         {
             for (int z = -128; z <= 128; ++z)

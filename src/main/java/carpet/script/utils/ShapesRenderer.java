@@ -25,6 +25,7 @@ import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.client.renderer.CoreShaders;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.ItemBlockRenderTypes;
 import net.minecraft.client.renderer.LightTexture;
@@ -121,7 +122,7 @@ public class ShapesRenderer
         }
         long currentTime = client.level.getGameTime();
         RenderSystem.enableDepthTest();
-        RenderSystem.setShader(GameRenderer::getPositionColorShader);
+        RenderSystem.setShader(CoreShaders.POSITION_COLOR);
         RenderSystem.depthFunc(515);
         RenderSystem.enableBlend();
         RenderSystem.defaultBlendFunc();
@@ -407,7 +408,7 @@ public class ShapesRenderer
                     if (blockState.getBlock() instanceof LeavesBlock && !Minecraft.useFancyGraphics()) {
                         type = RenderType.solid();
                     } else {
-                        type = ItemBlockRenderTypes.getRenderType(blockState, false);
+                        type = ItemBlockRenderTypes.getRenderType(blockState);
                     }
                     client.getBlockRenderer().getModelRenderer().renderModel(matrices.last(), immediate.getBuffer(type), blockState, bakedModel, red, green, blue, light, OverlayTexture.NO_OVERLAY);
                 }
