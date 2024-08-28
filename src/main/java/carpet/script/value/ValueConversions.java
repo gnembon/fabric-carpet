@@ -99,7 +99,7 @@ public class ValueConversions
     public static Value of(ItemStack stack, RegistryAccess regs)
     {
         return stack == null || stack.isEmpty() ? Value.NULL : ListValue.of(
-                of(regs.registryOrThrow(Registries.ITEM).getKey(stack.getItem())),
+                of(regs.lookupOrThrow(Registries.ITEM).getKey(stack.getItem())),
                 new NumericValue(stack.getCount()),
                 NBTSerializableValue.fromStack(stack, regs)
         );
@@ -368,7 +368,7 @@ public class ValueConversions
             if (box.maxX() >= box.minX() && box.maxY() >= box.minY() && box.maxZ() >= box.minZ())
             {
                 pieces.add(ListValue.of(
-                        NBTSerializableValue.nameFromRegistryId(regs.registryOrThrow(Registries.STRUCTURE_PIECE).getKey(piece.getType())),
+                        NBTSerializableValue.nameFromRegistryId(regs.lookupOrThrow(Registries.STRUCTURE_PIECE).getKey(piece.getType())),
                         (piece.getOrientation() == null) ? Value.NULL : new StringValue(piece.getOrientation().getName()),
                         ListValue.fromTriple(box.minX(), box.minY(), box.minZ()),
                         ListValue.fromTriple(box.maxX(), box.maxY(), box.maxZ())
@@ -457,10 +457,10 @@ public class ValueConversions
     public static Value ofBlockPredicate(RegistryAccess registryAccess, Predicate<BlockInWorld> blockPredicate)
     {
         Vanilla.BlockPredicatePayload payload = Vanilla.BlockPredicatePayload.of(blockPredicate);
-        Registry<Block> blocks = registryAccess.registryOrThrow(Registries.BLOCK);
+        Registry<Block> blocks = registryAccess.lookupOrThrow(Registries.BLOCK);
         return ListValue.of(
                 payload.state() == null ? Value.NULL : of(blocks.getKey(payload.state().getBlock())),
-                payload.tagKey() == null ? Value.NULL : of(blocks.getTag(payload.tagKey()).get().key()),
+                payload.tagKey() == null ? Value.NULL : of(blocks.get(payload.tagKey()).get().key()),
                 MapValue.wrap(payload.properties()),
                 payload.tag() == null ? Value.NULL : new NBTSerializableValue(payload.tag())
         );

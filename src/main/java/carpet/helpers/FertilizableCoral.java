@@ -58,7 +58,7 @@ public interface FertilizableCoral extends BonemealableBlock {
 
         MapColor color = blockUnder.getMapColor(worldIn, pos);
         BlockState properBlock = blockUnder;
-        HolderSet.Named<Block> coralBlocks = worldIn.registryAccess().registryOrThrow(Registries.BLOCK).getTag(BlockTags.CORAL_BLOCKS).orElseThrow();
+        HolderSet.Named<Block> coralBlocks = worldIn.registryAccess().lookupOrThrow(Registries.BLOCK).get(BlockTags.CORAL_BLOCKS).orElseThrow();
         for (Holder<Block> block: coralBlocks)
         {
             properBlock = block.value().defaultBlockState();

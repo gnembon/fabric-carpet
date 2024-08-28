@@ -69,10 +69,10 @@ public class Inventories
             Registry<Item> items = cc.registry(Registries.ITEM);
             if (lv.isEmpty())
             {
-                return ListValue.wrap(items.holders().map(itemReference -> ValueConversions.of(itemReference.key().location())));
+                return ListValue.wrap(items.listElements().map(itemReference -> ValueConversions.of(itemReference.key().location())));
             }
             String tag = lv.get(0).getString();
-            Optional<HolderSet.Named<Item>> itemTag = items.getTag(TagKey.create(Registries.ITEM, InputValidator.identifierOf(tag)));
+            Optional<HolderSet.Named<Item>> itemTag = items.get(TagKey.create(Registries.ITEM, InputValidator.identifierOf(tag)));
             return itemTag.isEmpty() ? Value.NULL : ListValue.wrap(itemTag.get().stream().map(b -> items.getKey(b.value())).filter(Objects::nonNull).map(ValueConversions::of));
         });
 
@@ -91,7 +91,7 @@ public class Inventories
                 return ListValue.wrap(blocks.getTags().filter(e -> e.stream().anyMatch(h -> (h.value() == item))).map(ValueConversions::of));
             }
             String tag = lv.get(1).getString();
-            Optional<HolderSet.Named<Item>> tagSet = blocks.getTag(TagKey.create(Registries.ITEM, InputValidator.identifierOf(tag)));
+            Optional<HolderSet.Named<Item>> tagSet = blocks.get(TagKey.create(Registries.ITEM, InputValidator.identifierOf(tag)));
             return tagSet.isEmpty() ? Value.NULL : BooleanValue.of(tagSet.get().stream().anyMatch(h -> h.value() == item));
         });
 
@@ -107,7 +107,7 @@ public class Inventories
             if (lv.size() > 1)
             {
                 String recipeType = lv.get(1).getString();
-                type = cc.registry(Registries.RECIPE_TYPE).get(InputValidator.identifierOf(recipeType));
+                type = cc.registry(Registries.RECIPE_TYPE).getValue(InputValidator.identifierOf(recipeType));
                 if (type == null)
                 {
                     throw new InternalExpressionException("Unknown recipe type: " + recipeType);

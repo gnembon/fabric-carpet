@@ -199,7 +199,7 @@ public abstract class CommandArgument
             ),
             // operation // not sure if we need it, you have scarpet for that
             new VanillaUnconfigurableArgument("particle", ParticleArgument::particle,
-                    (c, p) -> ValueConversions.of(ParticleArgument.getParticle(c, p), c.getSource().registryAccess()), (c, b) -> SharedSuggestionProvider.suggestResource(c.getSource().getServer().registryAccess().registryOrThrow(Registries.PARTICLE_TYPE).keySet(), b)
+                    (c, p) -> ValueConversions.of(ParticleArgument.getParticle(c, p), c.getSource().registryAccess()), (c, b) -> SharedSuggestionProvider.suggestResource(c.getSource().getServer().registryAccess().lookupOrThrow(Registries.PARTICLE_TYPE).keySet(), b)
             ),
 
             // resource / identifier section
@@ -235,7 +235,7 @@ public abstract class CommandArgument
                             return ValueConversions.of(res.right().get().key());
                         }
                         return Value.NULL;
-                    }, (ctx, builder) -> SharedSuggestionProvider.suggestResource(ctx.getSource().getServer().registryAccess().registryOrThrow(Registries.BIOME).keySet(), builder)
+                    }, (ctx, builder) -> SharedSuggestionProvider.suggestResource(ctx.getSource().getServer().registryAccess().lookupOrThrow(Registries.BIOME).keySet(), builder)
             ),
             new VanillaUnconfigurableArgument("sound", ResourceLocationArgument::id,
                     (c, p) -> ValueConversions.of(ResourceLocationArgument.getId(c, p)), SuggestionProviders.AVAILABLE_SOUNDS
@@ -1278,7 +1278,7 @@ public abstract class CommandArgument
                     suffix,
                     c -> ResourceArgument.resource(c, registry),
                     (c, p) -> ValueConversions.of(ResourceArgument.getResource(c, p, registry).key()),
-                    (c, b) -> SharedSuggestionProvider.suggestResource(c.getSource().getServer().registryAccess().registryOrThrow(registry).keySet(), b)
+                    (c, b) -> SharedSuggestionProvider.suggestResource(c.getSource().getServer().registryAccess().lookupOrThrow(registry).keySet(), b)
             );
         }
 

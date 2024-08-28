@@ -29,7 +29,7 @@ public class BlockInfo
         BlockState state = world.getBlockState(pos);
         Block block = state.getBlock();
         String metastring = "";
-        final Registry<Block> blocks = world.registryAccess().registryOrThrow(Registries.BLOCK);
+        final Registry<Block> blocks = world.registryAccess().lookupOrThrow(Registries.BLOCK);
         for (net.minecraft.world.level.block.state.properties.Property<?> iproperty : state.getProperties())
         {
             metastring += ", "+iproperty.getName() + '='+state.getValue(iproperty);

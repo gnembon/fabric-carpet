@@ -80,7 +80,7 @@ public class ExplosionLogHelper
                         messages.add(c((k.pos.equals(pos))?"r   - TNT":"w   - ",
                                 Messenger.dblt((k.pos.equals(pos))?"r":"y", k.pos.x, k.pos.y, k.pos.z), "w  dV",
                                 Messenger.dblt("d", k.accel.x, k.accel.y, k.accel.z),
-                                "w  "+ regs.registryOrThrow(Registries.ENTITY_TYPE).getKey(k.type).getPath(), (v>1)?"l ("+v+")":""
+                                "w  "+ regs.lookupOrThrow(Registries.ENTITY_TYPE).getKey(k.type).getPath(), (v>1)?"l ("+v+")":""
                         ));
                     });
                 }

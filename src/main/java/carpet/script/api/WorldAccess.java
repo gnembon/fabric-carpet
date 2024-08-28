@@ -403,7 +403,7 @@ public class WorldAccess
             Registry<PoiType> poiReg = cc.registry(Registries.POINT_OF_INTEREST_TYPE);
             PoiType type = poiReg.getOptional(resource)
                     .orElseThrow(() -> new ThrowStatement(poiTypeString, Throwables.UNKNOWN_POI));
-            Holder<PoiType> holder = poiReg.getHolderOrThrow(ResourceKey.create(Registries.POINT_OF_INTEREST_TYPE, resource));
+            Holder<PoiType> holder = poiReg.getOrThrow(ResourceKey.create(Registries.POINT_OF_INTEREST_TYPE, resource));
 
             int occupancy = 0;
             if (locator.offset + 1 < lv.size())
@@ -932,7 +932,7 @@ public class WorldAccess
 
             if (dropLoot)
             {
-                if (how < 0 || (tag != null && EnchantmentHelper.getItemEnchantmentLevel(world.registryAccess().registryOrThrow(Registries.ENCHANTMENT).getHolderOrThrow(Enchantments.SILK_TOUCH), tool) > 0))
+                if (how < 0 || (tag != null && EnchantmentHelper.getItemEnchantmentLevel(world.registryAccess().lookupOrThrow(Registries.ENCHANTMENT).getOrThrow(Enchantments.SILK_TOUCH), tool) > 0))
                 {
                     Block.popResource(world, where, new ItemStack(state.getBlock()));
                 }
@@ -940,7 +940,7 @@ public class WorldAccess
                 {
                     if (how > 0)
                     {
-                        tool.enchant(world.registryAccess().registryOrThrow(Registries.ENCHANTMENT).getHolderOrThrow(Enchantments.FORTUNE), (int) how);
+                        tool.enchant(world.registryAccess().lookupOrThrow(Registries.ENCHANTMENT).getOrThrow(Enchantments.FORTUNE), (int) how);
                     }
                     if (DUMMY_ENTITY == null)
                     {
@@ -1222,10 +1222,10 @@ public class WorldAccess
             Registry<Block> blocks = cc.registry(Registries.BLOCK);
             if (lv.isEmpty())
             {
-                return ListValue.wrap(blocks.holders().map(blockReference -> ValueConversions.of(blockReference.key().location())));
+                return ListValue.wrap(blocks.listElements().map(blockReference -> ValueConversions.of(blockReference.key().location())));
             }
             ResourceLocation tag = InputValidator.identifierOf(lv.get(0).getString());
-            Optional<HolderSet.Named<Block>> tagset = blocks.getTag(TagKey.create(Registries.BLOCK, tag));
+            Optional<HolderSet.Named<Block>> tagset = blocks.get(TagKey.create(Registries.BLOCK, tag));
             return tagset.isEmpty() ? Value.NULL : ListValue.wrap(tagset.get().stream().map(b -> ValueConversions.of(blocks.getKey(b.value()))));
         });
 
@@ -1244,7 +1244,7 @@ public class WorldAccess
                 return ListValue.wrap(blocks.getTags().filter(e -> e.stream().anyMatch(h -> (h.value() == target))).map(ValueConversions::of));
             }
             String tag = lv.get(blockLocator.offset).getString();
-            Optional<HolderSet.Named<Block>> tagSet = blocks.getTag(TagKey.create(Registries.BLOCK, InputValidator.identifierOf(tag)));
+            Optional<HolderSet.Named<Block>> tagSet = blocks.get(TagKey.create(Registries.BLOCK, InputValidator.identifierOf(tag)));
             return tagSet.isEmpty() ? Value.NULL : BooleanValue.of(blockLocator.block.getBlockState().is(tagSet.get()));
         });
 
@@ -1253,7 +1253,7 @@ public class WorldAccess
             ServerLevel world = cc.level();
             if (lv.isEmpty())
             {
-                return ListValue.wrap(cc.registry(Registries.BIOME).holders().map(biomeReference -> ValueConversions.of(biomeReference.key().location())));
+                return ListValue.wrap(cc.registry(Registries.BIOME).listElements().map(biomeReference -> ValueConversions.of(biomeReference.key().location())));
             }
 
             Biome biome;
@@ -1298,7 +1298,7 @@ public class WorldAccess
 
             if (locator.replacement != null)
             {
-                biome = world.registryAccess().registryOrThrow(Registries.BIOME).get(InputValidator.identifierOf(locator.replacement));
+                biome = world.registryAccess().lookupOrThrow(Registries.BIOME).getValue(InputValidator.identifierOf(locator.replacement));
                 if (biome == null)
                 {
                     throw new ThrowStatement(locator.replacement, Throwables.UNKNOWN_BIOME);
@@ -1333,7 +1333,7 @@ public class WorldAccess
             }
             String biomeName = lv.get(locator.offset).getString();
             // from locatebiome command code
-            Holder<Biome> biome = cc.registry(Registries.BIOME).getHolder(ResourceKey.create(Registries.BIOME, InputValidator.identifierOf(biomeName)))
+            Holder<Biome> biome = cc.registry(Registries.BIOME).get(ResourceKey.create(Registries.BIOME, InputValidator.identifierOf(biomeName)))
                     .orElseThrow(() -> new ThrowStatement(biomeName, Throwables.UNKNOWN_BIOME));
             boolean doImmediateUpdate = true;
             if (lv.size() > locator.offset + 1)
@@ -1390,7 +1390,7 @@ public class WorldAccess
                 );
             }
             String simpleStructureName = lv.get(locator.offset).getString().toLowerCase(Locale.ROOT);
-            Structure structureName = reg.get(InputValidator.identifierOf(simpleStructureName));
+            Structure structureName = reg.getValue(InputValidator.identifierOf(simpleStructureName));
             if (structureName == null)
             {
                 return Value.NULL;
@@ -1428,7 +1428,7 @@ public class WorldAccess
                 {
                     String reqString = requested.getString();
                     ResourceLocation id = InputValidator.identifierOf(reqString);
-                    Structure requestedStructure = reg.get(id);
+                    Structure requestedStructure = reg.getValue(id);
                     if (requestedStructure != null)
                     {
                         singleOutput = true;
@@ -1436,7 +1436,7 @@ public class WorldAccess
                     }
                     else
                     {
-                        StructureType<?> sss = cc.registry(Registries.STRUCTURE_TYPE).get(id);
+                        StructureType<?> sss = cc.registry(Registries.STRUCTURE_TYPE).getValue(id);
                         reg.entrySet().stream().filter(e -> e.getValue().type() == sss).forEach(e -> structure.add(e.getValue()));
                     }
                     if (structure.isEmpty())
@@ -1515,7 +1515,7 @@ public class WorldAccess
                 return MapValue.wrap(structureList);
             }
             String structureName = lv.get(locator.offset).getString().toLowerCase(Locale.ROOT);
-            return ValueConversions.of(structures.get(reg.get(InputValidator.identifierOf(structureName))), cc.registryAccess());
+            return ValueConversions.of(structures.get(reg.getValue(InputValidator.identifierOf(structureName))), cc.registryAccess());
         });
 
         expression.addContextFunction("set_structure", -1, (c, t, lv) ->
@@ -1759,7 +1759,7 @@ public class WorldAccess
 
         if (generator instanceof final NoiseBasedChunkGenerator noiseBasedChunkGenerator)
         {
-            Registry<DensityFunction> densityFunctionRegistry = level.registryAccess().registryOrThrow(Registries.DENSITY_FUNCTION);
+            Registry<DensityFunction> densityFunctionRegistry = level.registryAccess().lookupOrThrow(Registries.DENSITY_FUNCTION);
             NoiseRouter router = noiseBasedChunkGenerator.generatorSettings().value().noiseRouter();
             DensityFunction densityFunction = switch (densityFunctionQuery)
                     {
@@ -1779,7 +1779,7 @@ public class WorldAccess
                         case "vein_ridged" -> router.veinRidged();
                         case "vein_gap" -> router.veinGap();
                         default -> {
-                            DensityFunction result = densityFunctionRegistry.get(InputValidator.identifierOf(densityFunctionQuery));
+                            DensityFunction result = densityFunctionRegistry.getValue(InputValidator.identifierOf(densityFunctionQuery));
                             if (result == null)
                             {
                                 throw new InternalExpressionException("Density function '" + densityFunctionQuery + "' is not defined in the registies.");

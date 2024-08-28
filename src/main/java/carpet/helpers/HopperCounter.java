@@ -340,8 +340,8 @@ public class HopperCounter
         if (DEFAULTS.containsKey(item)) return TextColor.fromRgb(appropriateColor(DEFAULTS.get(item).defaultMapColor().col));
         if (item instanceof DyeItem dye) return TextColor.fromRgb(appropriateColor(dye.getDyeColor().getMapColor().col));
         Block block = null;
-        final Registry<Item> itemRegistry = registryAccess.registryOrThrow(Registries.ITEM);
-        final Registry<Block> blockRegistry = registryAccess.registryOrThrow(Registries.BLOCK);
+        final Registry<Item> itemRegistry = registryAccess.lookupOrThrow(Registries.ITEM);
+        final Registry<Block> blockRegistry = registryAccess.lookupOrThrow(Registries.BLOCK);
         ResourceLocation id = itemRegistry.getKey(item);
         if (item instanceof BlockItem blockItem)
         {
@@ -349,7 +349,7 @@ public class HopperCounter
         }
         else if (blockRegistry.getOptional(id).isPresent())
         {
-            block = blockRegistry.get(id);
+            block = blockRegistry.getValue(id);
         }
         if (block != null)
         {
@@ -370,8 +370,8 @@ public class HopperCounter
         if (direct != null) return direct;
         if (CarpetServer.minecraft_server == null) return WHITE;
 
-        ResourceLocation id = registryAccess.registryOrThrow(Registries.ITEM).getKey(item);
-        for (RecipeType<?> type: registryAccess.registryOrThrow(Registries.RECIPE_TYPE))
+        ResourceLocation id = registryAccess.lookupOrThrow(Registries.ITEM).getKey(item);
+        for (RecipeType<?> type: registryAccess.lookupOrThrow(Registries.RECIPE_TYPE))
         {
             for (Recipe<?> r: ((RecipeManagerInterface) CarpetServer.minecraft_server.getRecipeManager()).getAllMatching(type, id, registryAccess))
             {

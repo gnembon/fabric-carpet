@@ -760,7 +760,7 @@ public class ShapeDispatcher
         {
             return p -> {
                 ParticleOptions particle;
-                Registry<Block> blocks = p.getServer().registryAccess().registryOrThrow(Registries.BLOCK);
+                Registry<Block> blocks = p.getServer().registryAccess().lookupOrThrow(Registries.BLOCK);
                 if (this.isitem)
                 {
                     if (Block.byItem(this.item.getItem()).defaultBlockState().isAir())

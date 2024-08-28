@@ -239,8 +239,8 @@ public class EntityValue extends Value
                 who = who.substring(1);
             }
             String booWho = who;
-            HolderSet.Named<EntityType<?>> eTagValue = server.registryAccess().registryOrThrow(Registries.ENTITY_TYPE)
-                    .getTag(TagKey.create(Registries.ENTITY_TYPE, InputValidator.identifierOf(who)))
+            HolderSet.Named<EntityType<?>> eTagValue = server.registryAccess().lookupOrThrow(Registries.ENTITY_TYPE)
+                    .get(TagKey.create(Registries.ENTITY_TYPE, InputValidator.identifierOf(who)))
                     .orElseThrow(() -> new InternalExpressionException(booWho + " is not a valid entity descriptor"));
             Set<EntityType<?>> eTag = eTagValue.stream().map(Holder::value).collect(Collectors.toUnmodifiableSet());
             if (positive)
@@ -257,7 +257,7 @@ public class EntityValue extends Value
             }
             else
             {
-                return new EntityClassDescriptor(ANY, e -> !eTag.contains(e.getType()) && e.isAlive(), server.registryAccess().registryOrThrow(Registries.ENTITY_TYPE).stream().filter(et -> !eTag.contains(et)));
+                return new EntityClassDescriptor(ANY, e -> !eTag.contains(e.getType()) && e.isAlive(), server.registryAccess().lookupOrThrow(Registries.ENTITY_TYPE).stream().filter(et -> !eTag.contains(et)));
             }
         }
         return eDesc;
@@ -285,7 +285,7 @@ public class EntityValue extends Value
 
         public Value listValue(RegistryAccess regs)
         {
-            Registry<EntityType<?>> entityRegs = regs.registryOrThrow(Registries.ENTITY_TYPE);
+            Registry<EntityType<?>> entityRegs = regs.lookupOrThrow(Registries.ENTITY_TYPE);
             return ListValue.wrap(types.stream().map(et -> nameFromRegistryId(entityRegs.getKey(et))));
         }
 
@@ -382,7 +382,7 @@ public class EntityValue extends Value
 
             for (ResourceLocation typeId : BuiltInRegistries.ENTITY_TYPE.keySet())
             {
-                EntityType<?> type = BuiltInRegistries.ENTITY_TYPE.get(typeId);
+                EntityType<?> type = BuiltInRegistries.ENTITY_TYPE.getValue(typeId);
                 String mobType = ValueConversions.simplify(typeId);
                 put(mobType, new EntityClassDescriptor(type, net.minecraft.world.entity.EntitySelector.ENTITY_STILL_ALIVE, Stream.of(type)));
                 put("!" + mobType, new EntityClassDescriptor(ANY, (e) -> e.getType() != type && e.isAlive(), allTypes.stream().filter(et -> et != type)));
@@ -445,7 +445,7 @@ public class EntityValue extends Value
         put("display_name", (e, a) -> new FormattedTextValue(e.getDisplayName()));
         put("command_name", (e, a) -> new StringValue(e.getScoreboardName()));
         put("custom_name", (e, a) -> e.hasCustomName() ? new StringValue(e.getCustomName().getString()) : Value.NULL);
-        put("type", (e, a) -> nameFromRegistryId(e.level().registryAccess().registryOrThrow(Registries.ENTITY_TYPE).getKey(e.getType())));
+        put("type", (e, a) -> nameFromRegistryId(e.level().registryAccess().lookupOrThrow(Registries.ENTITY_TYPE).getKey(e.getType())));
         put("is_riding", (e, a) -> BooleanValue.of(e.isPassenger()));
         put("is_ridden", (e, a) -> BooleanValue.of(e.isVehicle()));
         put("passengers", (e, a) -> ListValue.wrap(e.getPassengers().stream().map(EntityValue::new)));
@@ -457,14 +457,14 @@ public class EntityValue extends Value
         put("scoreboard_tags", (e, a) -> ListValue.wrap(e.getTags().stream().map(StringValue::new)));
         put("entity_tags", (e, a) -> {
             EntityType<?> type = e.getType();
-            return ListValue.wrap(e.getServer().registryAccess().registryOrThrow(Registries.ENTITY_TYPE).getTags().filter(entry -> entry.stream().anyMatch(h -> h.value() == type)).map(entry -> ValueConversions.of(entry)));
+            return ListValue.wrap(e.getServer().registryAccess().lookupOrThrow(Registries.ENTITY_TYPE).getTags().filter(entry -> entry.stream().anyMatch(h -> h.value() == type)).map(entry -> ValueConversions.of(entry)));
         });
         // deprecated
         put("has_tag", (e, a) -> BooleanValue.of(e.getTags().contains(a.getString())));
 
         put("has_scoreboard_tag", (e, a) -> BooleanValue.of(e.getTags().contains(a.getString())));
         put("has_entity_tag", (e, a) -> {
-            Optional<HolderSet.Named<EntityType<?>>> tag = e.getServer().registryAccess().registryOrThrow(Registries.ENTITY_TYPE).getTag(TagKey.create(Registries.ENTITY_TYPE, InputValidator.identifierOf(a.getString())));
+            Optional<HolderSet.Named<EntityType<?>>> tag = e.getServer().registryAccess().lookupOrThrow(Registries.ENTITY_TYPE).get(TagKey.create(Registries.ENTITY_TYPE, InputValidator.identifierOf(a.getString())));
             if (tag.isEmpty())
             {
                 return Value.NULL;
@@ -572,7 +572,7 @@ public class EntityValue extends Value
 
         put("brain", (e, a) -> {
             String module = a.getString();
-            MemoryModuleType<?> moduleType = e.level().registryAccess().registryOrThrow(Registries.MEMORY_MODULE_TYPE).get(InputValidator.identifierOf(module));
+            MemoryModuleType<?> moduleType = e.level().registryAccess().lookupOrThrow(Registries.MEMORY_MODULE_TYPE).getValue(InputValidator.identifierOf(module));
             if (moduleType == MemoryModuleType.DUMMY)
             {
                 return Value.NULL;
@@ -663,7 +663,7 @@ public class EntityValue extends Value
                 return ListValue.wrap(effects);
             }
             String effectName = a.getString();
-            Holder<MobEffect> potion = BuiltInRegistries.MOB_EFFECT.getHolder(ResourceKey.create(Registries.MOB_EFFECT, InputValidator.identifierOf(effectName))).orElseThrow(() -> new InternalExpressionException("No such an effect: " + effectName));
+            Holder<MobEffect> potion = BuiltInRegistries.MOB_EFFECT.get(ResourceKey.create(Registries.MOB_EFFECT, InputValidator.identifierOf(effectName))).orElseThrow(() -> new InternalExpressionException("No such an effect: " + effectName));
             if (!le.hasEffect(potion))
             {
                 return Value.NULL;
@@ -833,14 +833,14 @@ public class EntityValue extends Value
             {
                 return Value.NULL;
             }
-            Registry<Attribute> attributes = e.level().registryAccess().registryOrThrow(Registries.ATTRIBUTE);
+            Registry<Attribute> attributes = e.level().registryAccess().lookupOrThrow(Registries.ATTRIBUTE);
             if (a == null)
             {
                 AttributeMap container = el.getAttributes();
-                return MapValue.wrap(attributes.holders().filter(container::hasAttribute).collect(Collectors.toMap(aa -> ValueConversions.of(aa.key()), aa -> NumericValue.of(container.getValue(aa)))));
+                return MapValue.wrap(attributes.listElements().filter(container::hasAttribute).collect(Collectors.toMap(aa -> ValueConversions.of(aa.key()), aa -> NumericValue.of(container.getValue(aa)))));
             }
             ResourceLocation id = InputValidator.identifierOf(a.getString());
-            Holder<Attribute> attrib = attributes.getHolder(id).orElseThrow(
+            Holder<Attribute> attrib = attributes.get(id).orElseThrow(
                     () -> new InternalExpressionException("Unknown attribute: " + a.getString())
             );
             if (!el.getAttributes().hasAttribute(attrib))
@@ -1474,7 +1474,7 @@ public class EntityValue extends Value
                 if (list.size() >= 1 && list.size() <= 6)
                 {
                     String effectName = list.get(0).getString();
-                    Holder<MobEffect> effect = BuiltInRegistries.MOB_EFFECT.getHolder(InputValidator.identifierOf(effectName)).orElseThrow(() -> new InternalExpressionException("No such an effect: " + effectName));
+                    Holder<MobEffect> effect = BuiltInRegistries.MOB_EFFECT.get(InputValidator.identifierOf(effectName)).orElseThrow(() -> new InternalExpressionException("No such an effect: " + effectName));
                     if (list.size() == 1)
                     {
                         le.removeEffect(effect);
@@ -1517,7 +1517,7 @@ public class EntityValue extends Value
             else
             {
                 String effectName = v.getString();
-                Holder<MobEffect> effect = BuiltInRegistries.MOB_EFFECT.getHolder(InputValidator.identifierOf(effectName)).orElseThrow(() -> new InternalExpressionException("No such an effect: " + effectName));
+                Holder<MobEffect> effect = BuiltInRegistries.MOB_EFFECT.get(InputValidator.identifierOf(effectName)).orElseThrow(() -> new InternalExpressionException("No such an effect: " + effectName));
                 le.removeEffect(effect);
                 return;
             }
@@ -1743,7 +1743,7 @@ public class EntityValue extends Value
         }
         CompoundTag tag = new CompoundTag();
         tag.put("Data", getEntity().saveWithoutId(new CompoundTag()));
-        Registry<EntityType<?>> reg = getEntity().level().registryAccess().registryOrThrow(Registries.ENTITY_TYPE);
+        Registry<EntityType<?>> reg = getEntity().level().registryAccess().lookupOrThrow(Registries.ENTITY_TYPE);
         tag.put("Name", StringTag.valueOf(reg.getKey(getEntity().getType()).toString()));
         return tag;
     }

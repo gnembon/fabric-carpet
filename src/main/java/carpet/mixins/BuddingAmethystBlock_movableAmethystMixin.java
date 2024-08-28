@@ -34,7 +34,7 @@ public class BuddingAmethystBlock_movableAmethystMixin extends Block {
         // drawback - not controlled via loottables, but hey
         if (CarpetSettings.movableAmethyst &&
                 stack.getItem() instanceof PickaxeItem &&
-                EnchantmentHelper.getItemEnchantmentLevel(world.registryAccess().registryOrThrow(Registries.ENCHANTMENT).getHolderOrThrow(Enchantments.SILK_TOUCH), stack) > 0
+                EnchantmentHelper.getItemEnchantmentLevel(world.registryAccess().lookupOrThrow(Registries.ENCHANTMENT).getOrThrow(Enchantments.SILK_TOUCH), stack) > 0
         )
             popResource(world, pos, Items.BUDDING_AMETHYST.getDefaultInstance());
     }

@@ -999,7 +999,7 @@ public class CarpetEventServer
                 {
                     return;
                 }
-                Registry<StatType<?>> registry = player.level().registryAccess().registryOrThrow(Registries.STAT_TYPE);
+                Registry<StatType<?>> registry = player.level().registryAccess().lookupOrThrow(Registries.STAT_TYPE);
                 handler.call(() -> Arrays.asList(
                         new EntityValue(player),
                         NBTSerializableValue.nameFromRegistryId(registry.getKey(stat.getType())),
