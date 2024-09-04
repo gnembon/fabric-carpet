@@ -2,6 +2,7 @@ package carpet.mixins;
 
 import carpet.fakes.EntityInterface;
 import net.minecraft.network.protocol.game.ServerboundChatCommandPacket;
+import net.minecraft.world.entity.player.Input;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
@@ -57,12 +58,14 @@ public class ServerGamePacketListenerImpl_scarpetEventsMixin
     {
         // todo this may not ride on the right thread moment, so needs to be checked
 
-        if (!((EntityInterface)player.getVehicle()).isPermanentVehicle()) // won't since that method makes sure its not null
-            player.setShiftKeyDown(p.isShiftKeyDown());
+        Input input = p.input();
 
-        if (PLAYER_RIDES.isNeeded() && (p.getXxa() != 0.0F || p.getZza() != 0.0F || p.isJumping() || p.isShiftKeyDown()))
+        if (player.getVehicle() != null && !((EntityInterface)player.getVehicle()).isPermanentVehicle()) // won't since that method makes sure its not null
+            player.setShiftKeyDown(p.input().shift());
+
+        if (PLAYER_RIDES.isNeeded() && (input.jump() || input.shift() || input.forward() || input.backward() || input.left() || input.right()))
         {
-            PLAYER_RIDES.onMountControls(player, p.getXxa(), p.getZza(), p.isJumping(), p.isShiftKeyDown());
+            PLAYER_RIDES.onMountControls(player, input.left() == input.right() ? 0 : (input.left() ? -1 : 1 ), input.forward() == input.backward() ? 0 : (input.forward() ? 1 : -1), input.jump(), input.shift());
         }
     }
 

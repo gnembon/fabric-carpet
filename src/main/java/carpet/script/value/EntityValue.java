@@ -49,7 +49,8 @@ import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.entity.PathfinderMob;
 import net.minecraft.world.entity.Pose;
-import net.minecraft.world.entity.RelativeMovement;
+import net.minecraft.world.entity.PositionMoveRotation;
+import net.minecraft.world.entity.Relative;
 import net.minecraft.world.entity.ai.Brain;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeMap;
@@ -899,10 +900,11 @@ public class EntityValue extends Value
         if (e instanceof ServerPlayer sp)
         {
             // this forces position but doesn't angles for some reason. Need both in the API in the future.
-            EnumSet<RelativeMovement> set = EnumSet.noneOf(RelativeMovement.class);
-            set.add(RelativeMovement.X_ROT);
-            set.add(RelativeMovement.Y_ROT);
-            sp.connection.teleport(x, y, z, yaw, pitch, set);
+            EnumSet<Relative> set = EnumSet.noneOf(Relative.class);
+            set.add(Relative.X_ROT);
+            set.add(Relative.Y_ROT);
+
+            sp.connection.teleport(new PositionMoveRotation(new Vec3(x, y, z), Vec3.ZERO, yaw, pitch), set);
         }
         else
         {
