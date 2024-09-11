@@ -10,8 +10,6 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import java.util.function.BooleanSupplier;
-
 @Mixin(value = MinecraftServer.class, priority = Integer.MAX_VALUE - 10)
 public abstract class MinecraftServer_tickspeedMixin extends ReentrantBlockableEventLoop<TickTask> implements MinecraftServerInterface
 {
@@ -26,7 +24,7 @@ public abstract class MinecraftServer_tickspeedMixin extends ReentrantBlockableE
     // could possibly just inject that mspt selection at the beginning of the loop, but then adding all mspt's to
     // replace 50L will be a hassle
     @Inject(method = "runServer", at = @At(value = "INVOKE", shift = At.Shift.AFTER,
-            target = "Lnet/minecraft/server/MinecraftServer;startMetricsRecordingTick()V"))
+            target = "Lnet/minecraft/util/profiling/Profiler;get()Lnet/minecraft/util/profiling/ProfilerFiller;"))
     private void modifiedRunLoop(CallbackInfo ci)
     {
         if (CarpetProfiler.tick_health_requested != 0L)
@@ -86,6 +84,4 @@ public abstract class MinecraftServer_tickspeedMixin extends ReentrantBlockableE
             CarpetProfiler.end_tick_profiling((MinecraftServer) (Object)this);
         }
     }
-
-
 }

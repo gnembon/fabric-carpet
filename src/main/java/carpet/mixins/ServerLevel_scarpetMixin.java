@@ -43,9 +43,10 @@ import static carpet.script.CarpetEventServer.Event.CHUNK_UNLOADED;
 @Mixin(ServerLevel.class)
 public abstract class ServerLevel_scarpetMixin extends Level implements ServerWorldInterface
 {
-    protected ServerLevel_scarpetMixin(WritableLevelData writableLevelData, ResourceKey<Level> resourceKey, RegistryAccess registryAccess, Holder<DimensionType> holder, Supplier<ProfilerFiller> supplier, boolean bl, boolean bl2, long l, int i)
+
+    protected ServerLevel_scarpetMixin(WritableLevelData writableLevelData, ResourceKey<Level> resourceKey, RegistryAccess registryAccess, Holder<DimensionType> holder, boolean bl, boolean bl2, long l, int i)
     {
-        super(writableLevelData, resourceKey, registryAccess, holder, supplier, bl, bl2, l, i);
+        super(writableLevelData, resourceKey, registryAccess, holder, bl, bl2, l, i);
     }
 
     @Inject(method = "tickChunk", locals = LocalCapture.CAPTURE_FAILHARD, at = @At(
