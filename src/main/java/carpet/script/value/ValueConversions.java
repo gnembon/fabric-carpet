@@ -14,11 +14,14 @@ import net.minecraft.core.HolderSet;
 import net.minecraft.core.Registry;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.Vec3i;
+import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtOps;
+import net.minecraft.nbt.Tag;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
@@ -49,14 +52,9 @@ import net.minecraft.world.scores.Objective;
 import net.minecraft.world.scores.ScoreHolder;
 import net.minecraft.world.scores.criteria.ObjectiveCriteria;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 import javax.annotation.Nullable;
@@ -101,7 +99,8 @@ public class ValueConversions
         return stack == null || stack.isEmpty() ? Value.NULL : ListValue.of(
                 of(regs.lookupOrThrow(Registries.ITEM).getKey(stack.getItem())),
                 new NumericValue(stack.getCount()),
-                NBTSerializableValue.fromStack(stack, regs)
+                getComponentsFromItemStack(stack, regs)
+//                NBTSerializableValue.fromStack(stack, regs)
         );
     }
 
@@ -491,6 +490,7 @@ public class ValueConversions
             if (!nbtValue.isNull())
             {
                 nbtTag = ((NBTSerializableValue) NBTSerializableValue.fromValue(nbtValue)).getCompoundTag();
+                System.out.println("Test: " + nbtTag);
             }
         }
         else
@@ -499,7 +499,32 @@ public class ValueConversions
         }
         ItemStack itemInput = NBTSerializableValue.parseItem(name, nbtTag, regs);
         itemInput.setCount(count);
+        System.out.println("itemInput: " + itemInput);
         return itemInput;
+    }
+
+    public static Value getComponentsFromItemStack(ItemStack stack, RegistryAccess regs) {
+        var lst = stack.getComponents().keySet().stream().filter(Predicate.not(DataComponentType::isTransient))
+                .collect(Collectors.toMap(
+                        ck -> ValueConversions.of(BuiltInRegistries.DATA_COMPONENT_TYPE.getKey(ck)),
+                        (DataComponentType ck) -> {
+                            var cvalue = stack.get(ck);
+                            return switch (cvalue) {
+                                case Number n -> NumericValue.of(n);
+                                case Boolean b -> BooleanValue.of(b);
+                                default -> {
+                                    Tag res = (Tag) ck.codec()
+                                            .encodeStart(
+                                                    regs.createSerializationContext(NbtOps.INSTANCE),
+                                                    cvalue)
+                                            .result().orElse(null);
+                                    yield NBTSerializableValue.of(res);
+                                }
+                            };
+                        }));
+
+        MapValue mapValue = MapValue.wrap(Map.of(StringValue.of("components"), MapValue.wrap(lst), StringValue.of("id"), StringValue.of(stack.getItem().toString()), StringValue.of("count"), NumericValue.of(stack.getCount())));
+        return new NBTSerializableValue(mapValue.toTag(true, regs));
     }
 
     public static Value guess(ServerLevel serverWorld, Object o)

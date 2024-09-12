@@ -107,7 +107,7 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
     public static Value fromStack(ItemStack stack, RegistryAccess regs)
     {
         NBTSerializableValue value = new NBTSerializableValue();
-        value.nbtSupplier = () -> stack.saveOptional(regs);
+        value.nbtSupplier = () -> (Tag) stack.saveOptional(regs);
         return value;
     }
 
