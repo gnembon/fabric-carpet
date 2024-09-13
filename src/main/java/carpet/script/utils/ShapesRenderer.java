@@ -177,7 +177,7 @@ public class ShapesRenderer
             matrixStack.pushMatrix();
             matrixStack.identity();
 
-            RenderSystem.applyModelViewMatrix();
+            //RenderSystem.applyModelViewMatrix();
             var ori=RenderSystem.getProjectionMatrix();
             RenderSystem.setProjectionMatrix(ORTHOMAT,VertexSorting.ORTHOGRAPHIC_Z);
 
@@ -218,7 +218,7 @@ public class ShapesRenderer
             Matrix4fStack matrixStack = RenderSystem.getModelViewStack();
             matrixStack.pushMatrix();
             matrixStack.identity();
-            RenderSystem.applyModelViewMatrix();
+            //RenderSystem.applyModelViewMatrix();
             matrices.pushPose();
             matrices.setIdentity();
             //RenderSystem.applyModelViewMatrix();
@@ -234,7 +234,7 @@ public class ShapesRenderer
             //RenderSystem.applyModelViewMatrix();
             RenderSystem.setProjectionMatrix(ori,VertexSorting.DISTANCE_TO_ORIGIN);
             matrixStack.popMatrix();
-            RenderSystem.applyModelViewMatrix();
+            //RenderSystem.applyModelViewMatrix();
         }
         RenderSystem.enableCull();
         RenderSystem.depthMask(true);
