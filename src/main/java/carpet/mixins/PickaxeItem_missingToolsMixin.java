@@ -6,7 +6,7 @@ import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.DiggerItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.PickaxeItem;
-import net.minecraft.world.item.Tier;
+import net.minecraft.world.item.ToolMaterial;
 import net.minecraft.world.item.component.Tool;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
@@ -18,8 +18,10 @@ import org.spongepowered.asm.mixin.Mixin;
 public class PickaxeItem_missingToolsMixin extends DiggerItem
 {
 
-    protected PickaxeItem_missingToolsMixin(Tier material, TagKey<Block> tag, Properties settings) {
-        super(material, tag, settings);
+
+    protected PickaxeItem_missingToolsMixin(final ToolMaterial toolMaterial, final TagKey<Block> tagKey, final float f, final float g, final Properties properties)
+    {
+        super(toolMaterial, tagKey, f, g, properties);
     }
 
     @Override

@@ -61,9 +61,9 @@ public class SystemInfo
         put("world_dimensions", c -> ListValue.wrap(c.server().levelKeys().stream().map(k -> ValueConversions.of(k.location()))));
         put("world_spawn_point", c -> ValueConversions.of(c.server().overworld().getLevelData().getSpawnPos()));
 
-        put("world_bottom", c -> new NumericValue(c.level().getMinBuildHeight()));
+        put("world_bottom", c -> new NumericValue(c.level().getMinY()));
 
-        put("world_top", c -> new NumericValue(c.level().getMaxBuildHeight()));
+        put("world_top", c -> new NumericValue(c.level().getMaxY()));
 
         put("world_center", c -> {
             WorldBorder worldBorder = c.level().getWorldBorder();
@@ -165,7 +165,7 @@ public class SystemInfo
         put("world_gamerules", c -> {
             Map<Value, Value> rules = new HashMap<>();
             GameRules gameRules = c.level().getGameRules();
-            GameRules.visitGameRuleTypes(new GameRules.GameRuleTypeVisitor()
+            gameRules.visitGameRuleTypes(new GameRules.GameRuleTypeVisitor()
             {
                 @Override
                 public <T extends GameRules.Value<T>> void visit(GameRules.Key<T> key, GameRules.Type<T> type)

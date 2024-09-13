@@ -4,8 +4,8 @@ import carpet.fakes.WorldChunkInterface;
 import carpet.fakes.LevelInterface;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.FullChunkStatus;
+import net.minecraft.util.profiling.Profiler;
 import net.minecraft.util.profiling.ProfilerFiller;
-import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.block.Block;
@@ -29,12 +29,6 @@ public abstract class Level_movableBEMixin implements LevelInterface, LevelAcces
     public abstract LevelChunk getChunkAt(BlockPos blockPos_1);
     
     @Shadow
-    public abstract BlockState getBlockState(BlockPos blockPos_1);
-    
-    //@Shadow
-    //public abstract ChunkManager getChunkManager();
-    
-    @Shadow
     public abstract void setBlocksDirty(BlockPos blockPos_1, BlockState s1, BlockState s2);
     
     @Shadow
@@ -46,11 +40,7 @@ public abstract class Level_movableBEMixin implements LevelInterface, LevelAcces
     @Shadow
     public abstract void onBlockStateChange(BlockPos blockPos_1, BlockState blockState_1, BlockState blockState_2);
 
-    @Shadow public abstract ProfilerFiller getProfiler();
-
     @Shadow public abstract void updateNeighbourForOutputSignal(BlockPos pos, Block block);
-
-    //@Shadow public abstract boolean setBlockState(BlockPos pos, BlockState state, int flags);
 
     @Shadow public abstract boolean isDebug();
 
@@ -86,9 +76,9 @@ public abstract class Level_movableBEMixin implements LevelInterface, LevelAcces
         {
             BlockState blockState_3 = this.getBlockState(blockPos_1);
 
-            if (blockState_3 != blockState_2 && (blockState_3.getLightBlock((BlockGetter) this, blockPos_1) != blockState_2.getLightBlock((BlockGetter) this, blockPos_1) || blockState_3.getLightEmission() != blockState_2.getLightEmission() || blockState_3.useShapeForLightOcclusion() || blockState_2.useShapeForLightOcclusion()))
+            if (blockState_3 != blockState_2 && (blockState_3.getLightBlock() != blockState_2.getLightBlock() || blockState_3.getLightEmission() != blockState_2.getLightEmission() || blockState_3.useShapeForLightOcclusion() || blockState_2.useShapeForLightOcclusion()))
             {
-                ProfilerFiller profiler = getProfiler();
+                ProfilerFiller profiler = Profiler.get();
                 profiler.push("queueCheckLight");
                 this.getChunkSource().getLightEngine().checkBlock(blockPos_1);
                 profiler.pop();

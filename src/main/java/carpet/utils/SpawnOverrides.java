@@ -54,7 +54,7 @@ public class SpawnOverrides {
 
     public static WeightedRandomList<MobSpawnSettings.SpawnerData> test(StructureManager structureFeatureManager, LongSet foo,
                                                                         MobCategory cat, Structure confExisting, BlockPos where) {
-        ResourceLocation resource = structureFeatureManager.registryAccess().registryOrThrow(Registries.STRUCTURE).getKey(confExisting);
+        ResourceLocation resource = structureFeatureManager.registryAccess().lookupOrThrow(Registries.STRUCTURE).getKey(confExisting);
         ResourceKey<Structure> key = ResourceKey.create(Registries.STRUCTURE, resource);
         final Pair<BooleanSupplier, StructureSpawnOverride> spawnData = carpetOverrides.get(Pair.of(cat, key));
         if (spawnData == null || !spawnData.getKey().getAsBoolean()) return null;
@@ -76,7 +76,7 @@ public class SpawnOverrides {
 
     public static boolean isStructureAtPosition(ServerLevel level, ResourceKey<Structure> structureKey, BlockPos pos)
     {
-        final Structure fortressFeature = level.registryAccess().registryOrThrow(Registries.STRUCTURE).get(structureKey);
+        final Structure fortressFeature = level.registryAccess().lookupOrThrow(Registries.STRUCTURE).getValue(structureKey);
         if (fortressFeature == null) {
             return false;
         }

@@ -33,7 +33,7 @@
   "accessWidener" : "carpet.accesswidener",
 
   "depends": {
-    "minecraft": ">1.20.1",
+    "minecraft": ">1.21.1",
     "fabricloader": ">=0.14.18",
     "java": ">=21"
   }

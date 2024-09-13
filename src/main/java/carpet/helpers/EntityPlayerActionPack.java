@@ -11,7 +11,7 @@ import carpet.script.utils.Tracer;
 import net.minecraft.commands.arguments.EntityAnchorArgument;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.network.protocol.game.ClientboundSetCarriedItemPacket;
+import net.minecraft.network.protocol.game.ClientboundSetHeldSlotPacket;
 import net.minecraft.network.protocol.game.ServerboundPlayerActionPacket;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -282,7 +282,7 @@ public class EntityPlayerActionPack
     public void setSlot(int slot)
     {
         player.getInventory().selected = slot-1;
-        player.connection.send(new ClientboundSetCarriedItemPacket(slot-1));
+        player.connection.send(new ClientboundSetHeldSlotPacket(slot-1));
     }
 
     public enum ActionType
@@ -314,12 +314,12 @@ public class EntityPlayerActionPack
                             BlockHitResult blockHit = (BlockHitResult) hit;
                             BlockPos pos = blockHit.getBlockPos();
                             Direction side = blockHit.getDirection();
-                            if (pos.getY() < player.level().getMaxBuildHeight() - (side == Direction.UP ? 1 : 0) && world.mayInteract(player, pos))
+                            if (pos.getY() < player.level().getMaxY() - (side == Direction.UP ? 1 : 0) && world.mayInteract(player, pos))
                             {
                                 InteractionResult result = player.gameMode.useItemOn(player, world, player.getItemInHand(hand), hand, blockHit);
-                                if (result.consumesAction())
+                                if (result instanceof InteractionResult.Success success)
                                 {
-                                    if (result.shouldSwing()) player.swing(hand);
+                                    if (success.swingSource() == InteractionResult.SwingSource.SERVER) player.swing(hand);
                                     ap.itemUseCooldown = 3;
                                     return true;
                                 }
@@ -402,7 +402,7 @@ public class EntityPlayerActionPack
                         boolean blockBroken = false;
                         if (player.gameMode.getGameModeForPlayer().isCreative())
                         {
-                            player.gameMode.handleBlockBreakAction(pos, ServerboundPlayerActionPacket.Action.START_DESTROY_BLOCK, side, player.level().getMaxBuildHeight(), -1);
+                            player.gameMode.handleBlockBreakAction(pos, ServerboundPlayerActionPacket.Action.START_DESTROY_BLOCK, side, player.level().getMaxY(), -1);
                             ap.blockHitDelay = 5;
                             blockBroken = true;
                         }
@@ -410,9 +410,9 @@ public class EntityPlayerActionPack
                         {
                             if (ap.currentBlock != null)
                             {
-                                player.gameMode.handleBlockBreakAction(ap.currentBlock, ServerboundPlayerActionPacket.Action.ABORT_DESTROY_BLOCK, side, player.level().getMaxBuildHeight(), -1);
+                                player.gameMode.handleBlockBreakAction(ap.currentBlock, ServerboundPlayerActionPacket.Action.ABORT_DESTROY_BLOCK, side, player.level().getMaxY(), -1);
                             }
-                            player.gameMode.handleBlockBreakAction(pos, ServerboundPlayerActionPacket.Action.START_DESTROY_BLOCK, side, player.level().getMaxBuildHeight(), -1);
+                            player.gameMode.handleBlockBreakAction(pos, ServerboundPlayerActionPacket.Action.START_DESTROY_BLOCK, side, player.level().getMaxY(), -1);
                             boolean notAir = !state.isAir();
                             if (notAir && ap.curBlockDamageMP == 0)
                             {
@@ -435,7 +435,7 @@ public class EntityPlayerActionPack
                             ap.curBlockDamageMP += state.getDestroyProgress(player, player.level(), pos);
                             if (ap.curBlockDamageMP >= 1)
                             {
-                                player.gameMode.handleBlockBreakAction(pos, ServerboundPlayerActionPacket.Action.STOP_DESTROY_BLOCK, side, player.level().getMaxBuildHeight(), -1);
+                                player.gameMode.handleBlockBreakAction(pos, ServerboundPlayerActionPacket.Action.STOP_DESTROY_BLOCK, side, player.level().getMaxY(), -1);
                                 ap.currentBlock = null;
                                 ap.blockHitDelay = 5;
                                 blockBroken = true;
@@ -457,7 +457,7 @@ public class EntityPlayerActionPack
                 EntityPlayerActionPack ap = ((ServerPlayerInterface) player).getActionPack();
                 if (ap.currentBlock == null) return;
                 player.level().destroyBlockProgress(-1, ap.currentBlock, -1);
-                player.gameMode.handleBlockBreakAction(ap.currentBlock, ServerboundPlayerActionPacket.Action.ABORT_DESTROY_BLOCK, Direction.DOWN, player.level().getMaxBuildHeight(), -1);
+                player.gameMode.handleBlockBreakAction(ap.currentBlock, ServerboundPlayerActionPacket.Action.ABORT_DESTROY_BLOCK, Direction.DOWN, player.level().getMaxY(), -1);
                 ap.currentBlock = null;
             }
         },

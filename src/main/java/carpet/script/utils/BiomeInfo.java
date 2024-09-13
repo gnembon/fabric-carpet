@@ -23,7 +23,7 @@ public class BiomeInfo
 {
     public static final Map<String, BiFunction<ServerLevel, Biome, Value>> biomeFeatures = new HashMap<>()
     {{
-        put("tags", (w, b) -> ListValue.wrap(w.registryAccess().registryOrThrow(Registries.BIOME).getTags().filter(p -> p.getSecond().stream().anyMatch(h -> h.value() == b)).map(p -> p.getFirst().location()).map(ValueConversions::of)));
+        put("tags", (w, b) -> ListValue.wrap(w.registryAccess().lookupOrThrow(Registries.BIOME).getTags().filter(p -> p.stream().anyMatch(h -> h.value() == b)).map(ValueConversions::of)));
         put("temperature", (w, b) -> NumericValue.of(b.getBaseTemperature()));
         put("fog_color", (w, b) -> ValueConversions.ofRGB(b.getSpecialEffects().getFogColor()));
         put("foliage_color", (w, b) -> ValueConversions.ofRGB(b.getSpecialEffects().getFoliageColorOverride().orElse(4764952))); // client Biome.getDefaultFoliageColor
@@ -31,9 +31,9 @@ public class BiomeInfo
         put("water_color", (w, b) -> ValueConversions.ofRGB(b.getSpecialEffects().getWaterColor()));
         put("water_fog_color", (w, b) -> ValueConversions.ofRGB(b.getSpecialEffects().getWaterFogColor()));
         put("humidity", (w, b) -> NumericValue.of(Vanilla.Biome_getClimateSettings(b).downfall()));
-        put("precipitation", (w, b) -> StringValue.of(b.getPrecipitationAt(new BlockPos(0, w.getSeaLevel(), 0)).name().toLowerCase(Locale.ROOT)));
+        put("precipitation", (w, b) -> StringValue.of(b.getPrecipitationAt(new BlockPos(0, w.getSeaLevel(), 0), w.getSeaLevel()).name().toLowerCase(Locale.ROOT)));
         put("features", (w, b) -> {
-            Registry<ConfiguredFeature<?, ?>> registry = w.registryAccess().registryOrThrow(Registries.CONFIGURED_FEATURE);
+            Registry<ConfiguredFeature<?, ?>> registry = w.registryAccess().lookupOrThrow(Registries.CONFIGURED_FEATURE);
             return ListValue.wrap(
                     b.getGenerationSettings().features().stream().map(step ->
                             ListValue.wrap(step.stream().map(cfp ->

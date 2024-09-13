@@ -279,11 +279,11 @@ public class CarpetProfiler
         final RegistryAccess regs = section.getKey().registryAccess();
         if (section.getValue() instanceof EntityType)
         {
-            id = regs.registryOrThrow(Registries.ENTITY_TYPE).getKey((EntityType<?>) section.getValue());
+            id = regs.lookupOrThrow(Registries.ENTITY_TYPE).getKey((EntityType<?>) section.getValue());
         }
         else
         {
-            id = regs.registryOrThrow(Registries.BLOCK_ENTITY_TYPE).getKey((BlockEntityType<?>) section.getValue());
+            id = regs.lookupOrThrow(Registries.BLOCK_ENTITY_TYPE).getKey((BlockEntityType<?>) section.getValue());
         }
         String name = "minecraft".equals(id.getNamespace())?id.getPath():id.toString();
         if (section.getKey().isClientSide)

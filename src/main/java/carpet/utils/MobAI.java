@@ -64,7 +64,7 @@ public class MobAI
         {
             types.addAll(type.types);
         }
-        return types.stream().map(t -> source.registryAccess().registryOrThrow(Registries.ENTITY_TYPE).getKey(t).getPath());
+        return types.stream().map(t -> source.registryAccess().lookupOrThrow(Registries.ENTITY_TYPE).getKey(t).getPath());
     }
 
     public static Stream<String> availableFor(EntityType<?> entityType)

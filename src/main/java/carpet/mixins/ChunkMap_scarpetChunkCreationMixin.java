@@ -23,7 +23,7 @@ import net.minecraft.server.level.ChunkLevel;
 import net.minecraft.server.level.ChunkMap;
 import net.minecraft.server.level.ChunkMap.DistanceManager;
 import net.minecraft.server.level.ChunkResult;
-import net.minecraft.server.level.ChunkTaskPriorityQueueSorter;
+//import net.minecraft.server.level.ChunkTaskPriorityQueueSorter;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ThreadedLevelLightEngine;
 import net.minecraft.server.level.TicketType;
@@ -76,9 +76,9 @@ public abstract class ChunkMap_scarpetChunkCreationMixin implements ThreadedAnvi
     @Final
     private ThreadedLevelLightEngine lightEngine;
 
-    @Shadow
-    @Final
-    private ChunkTaskPriorityQueueSorter queueSorter;
+    //@Shadow
+    //@Final
+    //private ChunkTaskPriorityQueueSorter queueSorter;
 
     @Shadow
     @Final

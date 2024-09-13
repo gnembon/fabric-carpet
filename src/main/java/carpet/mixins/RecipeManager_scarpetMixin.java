@@ -6,6 +6,7 @@ import net.minecraft.core.Registry;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.Items;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 
@@ -40,11 +41,15 @@ public class RecipeManager_scarpetMixin implements RecipeManagerInterface
             return List.of();
         }
         Collection<RecipeHolder<?>> typeRecipes = byType.get(type);
-        Registry<Item> regs = registryAccess.registryOrThrow(Registries.ITEM);
-        Item item = regs.get(itemId);
+        Registry<Item> regs = registryAccess.lookupOrThrow(Registries.ITEM);
+        Item item = regs.getValue(itemId);
+        if (item == Items.AIR)
+        {
+            return List.of();
+        }
         return typeRecipes.stream()
                 .<Recipe<?>>map(RecipeHolder::value)
-                .filter(r -> r.getResultItem(registryAccess).getItem() == item)
+                .filter(r -> r.getResultItem(registryAccess).is(item))
                 .toList();
     }
 }

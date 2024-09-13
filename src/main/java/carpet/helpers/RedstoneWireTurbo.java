@@ -676,7 +676,7 @@ public class RedstoneWireTurbo
                     // call BlockStateBase#neighborChanged directly. This change mostly
                     // restores old behavior, at the cost of bypassing the
                     // max-chained-neighbor-updates server property.
-                    worldIn.getBlockState(upd.self).handleNeighborChanged(worldIn, upd.self, wire, upd.parent, false);
+                    worldIn.getBlockState(upd.self).handleNeighborChanged(worldIn, upd.self, wire, null, false);
                 }
             }
  

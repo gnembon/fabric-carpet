@@ -10,8 +10,6 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import java.util.function.BooleanSupplier;
-
 @Mixin(value = MinecraftServer.class, priority = Integer.MAX_VALUE - 10)
 public abstract class MinecraftServer_tickspeedMixin extends ReentrantBlockableEventLoop<TickTask> implements MinecraftServerInterface
 {
@@ -26,7 +24,7 @@ public abstract class MinecraftServer_tickspeedMixin extends ReentrantBlockableE
     // could possibly just inject that mspt selection at the beginning of the loop, but then adding all mspt's to
     // replace 50L will be a hassle
     @Inject(method = "runServer", at = @At(value = "INVOKE", shift = At.Shift.AFTER,
-            target = "Lnet/minecraft/server/MinecraftServer;startMetricsRecordingTick()V"))
+            target = "Lnet/minecraft/util/profiling/Profiler;get()Lnet/minecraft/util/profiling/ProfilerFiller;"))
     private void modifiedRunLoop(CallbackInfo ci)
     {
         if (CarpetProfiler.tick_health_requested != 0L)
@@ -36,42 +34,34 @@ public abstract class MinecraftServer_tickspeedMixin extends ReentrantBlockableE
     }
 
 
-    @Inject(method = "tickServer", at = @At(
+    @Inject(method = "autoSave", at = @At(
             value = "INVOKE",
             target = "Lnet/minecraft/server/MinecraftServer;saveEverything(ZZZ)Z", // save
             shift = At.Shift.BEFORE
     ))
-    private void startAutosave(BooleanSupplier booleanSupplier_1, CallbackInfo ci)
+    private void startAutosave(final CallbackInfo ci)
     {
         currentSection = CarpetProfiler.start_section(null, "Autosave", CarpetProfiler.TYPE.GENERAL);
     }
 
-    @Inject(method = "tickServer", at = @At(
+    @Inject(method = "autoSave", at = @At(
             value = "INVOKE",
             target = "Lnet/minecraft/server/MinecraftServer;saveEverything(ZZZ)Z",
             shift = At.Shift.AFTER
     ))
-    private void finishAutosave(BooleanSupplier booleanSupplier_1, CallbackInfo ci)
+    private void finishAutosave(final CallbackInfo ci)
     {
         CarpetProfiler.end_current_section(currentSection);
     }
 
-    @Inject(method = "tickChildren", at = @At(
-            value = "INVOKE",
-            target = "Lnet/minecraft/server/MinecraftServer;getConnection()Lnet/minecraft/server/network/ServerConnectionListener;",
-            shift = At.Shift.BEFORE
-    ))
-    private void startNetwork(BooleanSupplier booleanSupplier_1, CallbackInfo ci)
+    @Inject(method = "tickConnection", at = @At("HEAD"))
+    private void startNetwork(final CallbackInfo ci)
     {
         currentSection = CarpetProfiler.start_section(null, "Network", CarpetProfiler.TYPE.GENERAL);
     }
 
-    @Inject(method = "tickChildren", at = @At(
-            value = "INVOKE",
-            target = "Lnet/minecraft/server/players/PlayerList;tick()V",
-            shift = At.Shift.AFTER
-    ))
-    private void finishNetwork(BooleanSupplier booleanSupplier_1, CallbackInfo ci)
+    @Inject(method = "tickConnection", at = @At("RETURN"))
+    private void finishNetwork(final CallbackInfo ci)
     {
         CarpetProfiler.end_current_section(currentSection);
     }
@@ -94,6 +84,4 @@ public abstract class MinecraftServer_tickspeedMixin extends ReentrantBlockableE
             CarpetProfiler.end_tick_profiling((MinecraftServer) (Object)this);
         }
     }
-
-
 }

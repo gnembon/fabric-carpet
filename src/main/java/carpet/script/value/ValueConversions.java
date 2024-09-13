@@ -10,6 +10,7 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import net.minecraft.advancements.critereon.MinMaxBounds;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.GlobalPos;
+import net.minecraft.core.HolderSet;
 import net.minecraft.core.Registry;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.Vec3i;
@@ -98,7 +99,7 @@ public class ValueConversions
     public static Value of(ItemStack stack, RegistryAccess regs)
     {
         return stack == null || stack.isEmpty() ? Value.NULL : ListValue.of(
-                of(regs.registryOrThrow(Registries.ITEM).getKey(stack.getItem())),
+                of(regs.lookupOrThrow(Registries.ITEM).getKey(stack.getItem())),
                 new NumericValue(stack.getCount()),
                 NBTSerializableValue.fromStack(stack, regs)
         );
@@ -187,6 +188,11 @@ public class ValueConversions
     public static Value of(TagKey<?> tagKey)
     {
         return of(tagKey.location());
+    }
+
+    public static Value of(HolderSet.Named<?> tagKey)
+    {
+        return of(tagKey.key().location());
     }
 
     public static Value of(@Nullable ResourceLocation id)
@@ -362,7 +368,7 @@ public class ValueConversions
             if (box.maxX() >= box.minX() && box.maxY() >= box.minY() && box.maxZ() >= box.minZ())
             {
                 pieces.add(ListValue.of(
-                        NBTSerializableValue.nameFromRegistryId(regs.registryOrThrow(Registries.STRUCTURE_PIECE).getKey(piece.getType())),
+                        NBTSerializableValue.nameFromRegistryId(regs.lookupOrThrow(Registries.STRUCTURE_PIECE).getKey(piece.getType())),
                         (piece.getOrientation() == null) ? Value.NULL : new StringValue(piece.getOrientation().getName()),
                         ListValue.fromTriple(box.minX(), box.minY(), box.minZ()),
                         ListValue.fromTriple(box.maxX(), box.maxY(), box.maxZ())
@@ -451,10 +457,10 @@ public class ValueConversions
     public static Value ofBlockPredicate(RegistryAccess registryAccess, Predicate<BlockInWorld> blockPredicate)
     {
         Vanilla.BlockPredicatePayload payload = Vanilla.BlockPredicatePayload.of(blockPredicate);
-        Registry<Block> blocks = registryAccess.registryOrThrow(Registries.BLOCK);
+        Registry<Block> blocks = registryAccess.lookupOrThrow(Registries.BLOCK);
         return ListValue.of(
                 payload.state() == null ? Value.NULL : of(blocks.getKey(payload.state().getBlock())),
-                payload.tagKey() == null ? Value.NULL : of(blocks.getTag(payload.tagKey()).get().key()),
+                payload.tagKey() == null ? Value.NULL : of(blocks.get(payload.tagKey()).get().key()),
                 MapValue.wrap(payload.properties()),
                 payload.tag() == null ? Value.NULL : new NBTSerializableValue(payload.tag())
         );

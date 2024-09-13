@@ -16,14 +16,14 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public class FlowingFluid_liquidDamageDisabledMixin
 {
     @Inject(
-            method = "canHoldFluid",
+            method = "canHoldAnyFluid",
             at = @At(
                     value = "INVOKE",
                     target = "Lnet/minecraft/world/level/block/state/BlockState;blocksMotion()Z"
             ),
             cancellable = true
     )
-    private void stopBreakingBlock(BlockGetter world, BlockPos pos, BlockState state, Fluid fluid, CallbackInfoReturnable<Boolean> cir)
+    private static void stopBreakingBlock(final BlockState state, final CallbackInfoReturnable<Boolean> cir)
     {
         if (CarpetSettings.liquidDamageDisabled)
         {

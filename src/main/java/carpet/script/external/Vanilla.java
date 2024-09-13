@@ -7,7 +7,6 @@ import carpet.fakes.BlockStateArgumentInterface;
 import carpet.fakes.ChunkTicketManagerInterface;
 import carpet.fakes.CommandDispatcherInterface;
 import carpet.fakes.EntityInterface;
-import carpet.fakes.IngredientInterface;
 import carpet.fakes.InventoryBearerInterface;
 import carpet.fakes.ItemEntityInterface;
 import carpet.fakes.LivingEntityInterface;
@@ -106,11 +105,6 @@ public class Vanilla
     public static Map<String, Integer> ChunkMap_regenerateChunkRegion(ChunkMap chunkMap, List<ChunkPos> requestedChunks)
     {
         return Map.of(); //return ((ThreadedAnvilChunkStorageInterface) chunkMap).regenerateChunkRegion(requestedChunks);
-    }
-
-    public static List<Collection<ItemStack>> Ingredient_getRecipeStacks(Ingredient ingredient)
-    {
-        return ((IngredientInterface) (Object) ingredient).getRecipeStacks();
     }
 
     public static List<Recipe<?>> RecipeManager_getAllMatching(RecipeManager recipeManager, RecipeType<?> type, ResourceLocation output, RegistryAccess registryAccess)

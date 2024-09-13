@@ -39,6 +39,7 @@ import net.minecraft.core.HolderSet;
 import net.minecraft.core.QuartPos;
 import net.minecraft.core.Registry;
 import net.minecraft.core.RegistryAccess;
+import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
@@ -50,6 +51,7 @@ import net.minecraft.server.level.Ticket;
 import net.minecraft.server.level.TicketType;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.tags.TagKey;
+import net.minecraft.world.level.ServerExplosion;
 import net.minecraft.world.level.chunk.ChunkGenerator;
 import net.minecraft.world.level.chunk.PalettedContainer;
 import net.minecraft.world.level.chunk.status.ChunkStatus;
@@ -401,7 +403,7 @@ public class WorldAccess
             Registry<PoiType> poiReg = cc.registry(Registries.POINT_OF_INTEREST_TYPE);
             PoiType type = poiReg.getOptional(resource)
                     .orElseThrow(() -> new ThrowStatement(poiTypeString, Throwables.UNKNOWN_POI));
-            Holder<PoiType> holder = poiReg.getHolderOrThrow(ResourceKey.create(Registries.POINT_OF_INTEREST_TYPE, resource));
+            Holder<PoiType> holder = poiReg.getOrThrow(ResourceKey.create(Registries.POINT_OF_INTEREST_TYPE, resource));
 
             int occupancy = 0;
             if (locator.offset + 1 < lv.size())
@@ -695,7 +697,7 @@ public class WorldAccess
         expression.addContextFunction("update", -1, (c, t, lv) ->
                 booleanStateTest(c, "update", lv, (s, p) ->
                 {
-                    ((CarpetContext) c).level().neighborChanged(p, s.getBlock(), p);
+                    ((CarpetContext) c).level().neighborChanged(p, s.getBlock(), null);
                     return true;
                 }));
 
@@ -930,7 +932,7 @@ public class WorldAccess
 
             if (dropLoot)
             {
-                if (how < 0 || (tag != null && EnchantmentHelper.getItemEnchantmentLevel(world.registryAccess().registryOrThrow(Registries.ENCHANTMENT).getHolderOrThrow(Enchantments.SILK_TOUCH), tool) > 0))
+                if (how < 0 || (tag != null && EnchantmentHelper.getItemEnchantmentLevel(world.registryAccess().lookupOrThrow(Registries.ENCHANTMENT).getOrThrow(Enchantments.SILK_TOUCH), tool) > 0))
                 {
                     Block.popResource(world, where, new ItemStack(state.getBlock()));
                 }
@@ -938,7 +940,7 @@ public class WorldAccess
                 {
                     if (how > 0)
                     {
-                        tool.enchant(world.registryAccess().registryOrThrow(Registries.ENCHANTMENT).getHolderOrThrow(Enchantments.FORTUNE), (int) how);
+                        tool.enchant(world.registryAccess().lookupOrThrow(Registries.ENCHANTMENT).getOrThrow(Enchantments.FORTUNE), (int) how);
                     }
                     if (DUMMY_ENTITY == null)
                     {
@@ -1071,10 +1073,9 @@ public class WorldAccess
                 }
             }
             LivingEntity theAttacker = attacker;
-            float thePowah = powah;
 
             // copy of ServerWorld.createExplosion #TRACK#
-            Explosion explosion = new Explosion(cc.level(), source, null, null, pos.x, pos.y, pos.z, powah, createFire, mode,  ParticleTypes.EXPLOSION, ParticleTypes.EXPLOSION_EMITTER, SoundEvents.GENERIC_EXPLODE)
+            ServerExplosion explosion = new ServerExplosion(cc.level(), source, null, null, pos, powah, createFire, mode)
             {
                 @Override
                 @Nullable
@@ -1085,16 +1086,11 @@ public class WorldAccess
                 }
             };
             explosion.explode();
-            explosion.finalizeExplosion(false);
-            if (mode == Explosion.BlockInteraction.KEEP)
-            {
-                explosion.clearToBlow();
-            }
-            Explosion.BlockInteraction finalMode = mode;
+            ParticleOptions explosionParticle = explosion.isSmall() ? ParticleTypes.EXPLOSION : ParticleTypes.EXPLOSION_EMITTER;
             cc.level().players().forEach(spe -> {
                 if (spe.distanceToSqr(pos) < 4096.0D)
                 {
-                    spe.connection.send(new ClientboundExplodePacket(pos.x, pos.y, pos.z, thePowah, explosion.getToBlow(), explosion.getHitPlayers().get(spe), finalMode, ParticleTypes.EXPLOSION, ParticleTypes.EXPLOSION_EMITTER, SoundEvents.GENERIC_EXPLODE));
+                    spe.connection.send(new ClientboundExplodePacket(pos, Optional.ofNullable(explosion.getHitPlayers().get(spe)), explosionParticle, SoundEvents.GENERIC_EXPLODE));
                 }
             });
             return Value.TRUE;
@@ -1226,10 +1222,10 @@ public class WorldAccess
             Registry<Block> blocks = cc.registry(Registries.BLOCK);
             if (lv.isEmpty())
             {
-                return ListValue.wrap(blocks.holders().map(blockReference -> ValueConversions.of(blockReference.key().location())));
+                return ListValue.wrap(blocks.listElements().map(blockReference -> ValueConversions.of(blockReference.key().location())));
             }
             ResourceLocation tag = InputValidator.identifierOf(lv.get(0).getString());
-            Optional<HolderSet.Named<Block>> tagset = blocks.getTag(TagKey.create(Registries.BLOCK, tag));
+            Optional<HolderSet.Named<Block>> tagset = blocks.get(TagKey.create(Registries.BLOCK, tag));
             return tagset.isEmpty() ? Value.NULL : ListValue.wrap(tagset.get().stream().map(b -> ValueConversions.of(blocks.getKey(b.value()))));
         });
 
@@ -1239,16 +1235,16 @@ public class WorldAccess
             Registry<Block> blocks = cc.registry(Registries.BLOCK);
             if (lv.isEmpty())
             {
-                return ListValue.wrap(blocks.getTagNames().map(ValueConversions::of));
+                return ListValue.wrap(blocks.getTags().map(ValueConversions::of));
             }
             BlockArgument blockLocator = BlockArgument.findIn(cc, lv, 0, true);
             if (blockLocator.offset == lv.size())
             {
                 Block target = blockLocator.block.getBlockState().getBlock();
-                return ListValue.wrap(blocks.getTags().filter(e -> e.getSecond().stream().anyMatch(h -> (h.value() == target))).map(e -> ValueConversions.of(e.getFirst())));
+                return ListValue.wrap(blocks.getTags().filter(e -> e.stream().anyMatch(h -> (h.value() == target))).map(ValueConversions::of));
             }
             String tag = lv.get(blockLocator.offset).getString();
-            Optional<HolderSet.Named<Block>> tagSet = blocks.getTag(TagKey.create(Registries.BLOCK, InputValidator.identifierOf(tag)));
+            Optional<HolderSet.Named<Block>> tagSet = blocks.get(TagKey.create(Registries.BLOCK, InputValidator.identifierOf(tag)));
             return tagSet.isEmpty() ? Value.NULL : BooleanValue.of(blockLocator.block.getBlockState().is(tagSet.get()));
         });
 
@@ -1257,7 +1253,7 @@ public class WorldAccess
             ServerLevel world = cc.level();
             if (lv.isEmpty())
             {
-                return ListValue.wrap(cc.registry(Registries.BIOME).holders().map(biomeReference -> ValueConversions.of(biomeReference.key().location())));
+                return ListValue.wrap(cc.registry(Registries.BIOME).listElements().map(biomeReference -> ValueConversions.of(biomeReference.key().location())));
             }
 
             Biome biome;
@@ -1302,7 +1298,7 @@ public class WorldAccess
 
             if (locator.replacement != null)
             {
-                biome = world.registryAccess().registryOrThrow(Registries.BIOME).get(InputValidator.identifierOf(locator.replacement));
+                biome = world.registryAccess().lookupOrThrow(Registries.BIOME).getValue(InputValidator.identifierOf(locator.replacement));
                 if (biome == null)
                 {
                     throw new ThrowStatement(locator.replacement, Throwables.UNKNOWN_BIOME);
@@ -1337,7 +1333,7 @@ public class WorldAccess
             }
             String biomeName = lv.get(locator.offset).getString();
             // from locatebiome command code
-            Holder<Biome> biome = cc.registry(Registries.BIOME).getHolder(ResourceKey.create(Registries.BIOME, InputValidator.identifierOf(biomeName)))
+            Holder<Biome> biome = cc.registry(Registries.BIOME).get(ResourceKey.create(Registries.BIOME, InputValidator.identifierOf(biomeName)))
                     .orElseThrow(() -> new ThrowStatement(biomeName, Throwables.UNKNOWN_BIOME));
             boolean doImmediateUpdate = true;
             if (lv.size() > locator.offset + 1)
@@ -1352,7 +1348,7 @@ public class WorldAccess
             int biomeZ = QuartPos.fromBlock(pos.getZ());
             try
             {
-                int i = QuartPos.fromBlock(chunk.getMinBuildHeight());
+                int i = QuartPos.fromBlock(chunk.getMinY());
                 int j = i + QuartPos.fromBlock(chunk.getHeight()) - 1;
                 int k = Mth.clamp(biomeY, i, j);
                 int l = chunk.getSectionIndex(QuartPos.toBlock(k));
@@ -1394,7 +1390,7 @@ public class WorldAccess
                 );
             }
             String simpleStructureName = lv.get(locator.offset).getString().toLowerCase(Locale.ROOT);
-            Structure structureName = reg.get(InputValidator.identifierOf(simpleStructureName));
+            Structure structureName = reg.getValue(InputValidator.identifierOf(simpleStructureName));
             if (structureName == null)
             {
                 return Value.NULL;
@@ -1432,7 +1428,7 @@ public class WorldAccess
                 {
                     String reqString = requested.getString();
                     ResourceLocation id = InputValidator.identifierOf(reqString);
-                    Structure requestedStructure = reg.get(id);
+                    Structure requestedStructure = reg.getValue(id);
                     if (requestedStructure != null)
                     {
                         singleOutput = true;
@@ -1440,7 +1436,7 @@ public class WorldAccess
                     }
                     else
                     {
-                        StructureType<?> sss = cc.registry(Registries.STRUCTURE_TYPE).get(id);
+                        StructureType<?> sss = cc.registry(Registries.STRUCTURE_TYPE).getValue(id);
                         reg.entrySet().stream().filter(e -> e.getValue().type() == sss).forEach(e -> structure.add(e.getValue()));
                     }
                     if (structure.isEmpty())
@@ -1519,7 +1515,7 @@ public class WorldAccess
                 return MapValue.wrap(structureList);
             }
             String structureName = lv.get(locator.offset).getString().toLowerCase(Locale.ROOT);
-            return ValueConversions.of(structures.get(reg.get(InputValidator.identifierOf(structureName))), cc.registryAccess());
+            return ValueConversions.of(structures.get(reg.getValue(InputValidator.identifierOf(structureName))), cc.registryAccess());
         });
 
         expression.addContextFunction("set_structure", -1, (c, t, lv) ->
@@ -1763,7 +1759,7 @@ public class WorldAccess
 
         if (generator instanceof final NoiseBasedChunkGenerator noiseBasedChunkGenerator)
         {
-            Registry<DensityFunction> densityFunctionRegistry = level.registryAccess().registryOrThrow(Registries.DENSITY_FUNCTION);
+            Registry<DensityFunction> densityFunctionRegistry = level.registryAccess().lookupOrThrow(Registries.DENSITY_FUNCTION);
             NoiseRouter router = noiseBasedChunkGenerator.generatorSettings().value().noiseRouter();
             DensityFunction densityFunction = switch (densityFunctionQuery)
                     {
@@ -1783,7 +1779,7 @@ public class WorldAccess
                         case "vein_ridged" -> router.veinRidged();
                         case "vein_gap" -> router.veinGap();
                         default -> {
-                            DensityFunction result = densityFunctionRegistry.get(InputValidator.identifierOf(densityFunctionQuery));
+                            DensityFunction result = densityFunctionRegistry.getValue(InputValidator.identifierOf(densityFunctionQuery));
                             if (result == null)
                             {
                                 throw new InternalExpressionException("Density function '" + densityFunctionQuery + "' is not defined in the registies.");

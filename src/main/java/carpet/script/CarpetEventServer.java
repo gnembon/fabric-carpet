@@ -999,7 +999,7 @@ public class CarpetEventServer
                 {
                     return;
                 }
-                Registry<StatType<?>> registry = player.level().registryAccess().registryOrThrow(Registries.STAT_TYPE);
+                Registry<StatType<?>> registry = player.level().registryAccess().lookupOrThrow(Registries.STAT_TYPE);
                 handler.call(() -> Arrays.asList(
                         new EntityValue(player),
                         NBTSerializableValue.nameFromRegistryId(registry.getKey(stat.getType())),
@@ -1051,11 +1051,11 @@ public class CarpetEventServer
         public static final Event EXPLOSION_OUTCOME = new Event("explosion_outcome", 8, true)
         {
             @Override
-            public void onExplosion(ServerLevel world, Entity e, Supplier<LivingEntity> attacker, double x, double y, double z, float power, boolean createFire, List<BlockPos> affectedBlocks, List<Entity> affectedEntities, Explosion.BlockInteraction type)
+            public boolean onExplosion(ServerLevel world, Entity e, Supplier<LivingEntity> attacker, Vec3 center, float power, boolean createFire, List<BlockPos> affectedBlocks, List<Entity> affectedEntities, Explosion.BlockInteraction type)
             {
                 handler.call(
                         () -> Arrays.asList(
-                                ListValue.fromTriple(x, y, z),
+                                ValueConversions.of(center),
                                 NumericValue.of(power),
                                 EntityValue.of(e),
                                 EntityValue.of(attacker != null ? attacker.get() : Event.getExplosionCausingEntity(e)),
@@ -1067,6 +1067,7 @@ public class CarpetEventServer
                                 ListValue.wrap(affectedEntities.stream().map(EntityValue::of))
                         ), () -> world.getServer().createCommandSourceStack().withLevel(world)
                 );
+                return false;
             }
         };
 
@@ -1074,11 +1075,11 @@ public class CarpetEventServer
         public static final Event EXPLOSION = new Event("explosion", 6, true)
         {
             @Override
-            public void onExplosion(ServerLevel world, Entity e, Supplier<LivingEntity> attacker, double x, double y, double z, float power, boolean createFire, List<BlockPos> affectedBlocks, List<Entity> affectedEntities, Explosion.BlockInteraction type)
+            public boolean onExplosion(ServerLevel world, Entity e, Supplier<LivingEntity> attacker, Vec3 center, float power, boolean createFire, List<BlockPos> affectedBlocks, List<Entity> affectedEntities, Explosion.BlockInteraction type)
             {
-                handler.call(
+                return handler.call(
                         () -> Arrays.asList(
-                                ListValue.fromTriple(x, y, z),
+                                ValueConversions.of(center),
                                 NumericValue.of(power),
                                 EntityValue.of(e),
                                 EntityValue.of(attacker != null ? attacker.get() : Event.getExplosionCausingEntity(e)),
@@ -1306,8 +1307,9 @@ public class CarpetEventServer
         {
         }
 
-        public void onExplosion(ServerLevel world, Entity e, Supplier<LivingEntity> attacker, double x, double y, double z, float power, boolean createFire, List<BlockPos> affectedBlocks, List<Entity> affectedEntities, Explosion.BlockInteraction type)
+        public boolean onExplosion(ServerLevel world, Entity e, Supplier<LivingEntity> attacker, Vec3 center, float power, boolean createFire, List<BlockPos> affectedBlocks, List<Entity> affectedEntities, Explosion.BlockInteraction type)
         {
+            return false;
         }
 
         public void onWorldEvent(ServerLevel world, BlockPos pos)

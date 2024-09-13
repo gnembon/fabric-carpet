@@ -25,8 +25,8 @@ public abstract class LivingEntity_creativeFlyMixin extends Entity
         super(type, world);
     }
 
-    @ModifyConstant(method = "travel", constant = @Constant(floatValue = 0.91F), expect = 2)
-    private float drag(float original)
+    @ModifyConstant(method = "travelInAir", constant = @Constant(floatValue = 0.91F), expect = 1)
+    private float dragAir(float original)
     {
         if (CarpetSettings.creativeFlyDrag != 0.09 && (Object)this instanceof Player)
         {
@@ -36,7 +36,6 @@ public abstract class LivingEntity_creativeFlyMixin extends Entity
         }
         return original;
     }
-
 
     @Inject(method = "getFrictionInfluencedSpeed(F)F", at = @At("HEAD"), cancellable = true)
     private void flyingAltSpeed(float slipperiness, CallbackInfoReturnable<Float> cir)

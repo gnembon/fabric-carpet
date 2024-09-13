@@ -2,7 +2,6 @@ package carpet.script.utils;
 
 import carpet.script.CarpetScriptServer;
 import carpet.script.external.Carpet;
-import carpet.script.external.VanillaClient;
 import carpet.script.utils.shapes.ShapeDirection;
 
 import com.mojang.blaze3d.systems.RenderSystem;
@@ -12,7 +11,6 @@ import com.mojang.blaze3d.vertex.ByteBufferBuilder;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.Tesselator;
-import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import com.mojang.blaze3d.vertex.VertexSorting;
 import com.mojang.blaze3d.vertex.VertexFormat.Mode;
@@ -27,34 +25,28 @@ import java.util.function.BiFunction;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.model.ShulkerModel;
-import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.client.renderer.CoreShaders;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.ItemBlockRenderTypes;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
-import net.minecraft.client.renderer.Sheets;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.texture.OverlayTexture;
-import net.minecraft.client.resources.model.Material;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.util.Mth;
-import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LightLayer;
 import net.minecraft.world.level.block.EntityBlock;
 import net.minecraft.world.level.block.LeavesBlock;
 import net.minecraft.world.level.block.RenderShape;
-import net.minecraft.world.level.block.ShulkerBoxBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraft.world.level.block.entity.ShulkerBoxBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
@@ -132,7 +124,7 @@ public class ShapesRenderer
         }
         long currentTime = client.level.getGameTime();
         RenderSystem.enableDepthTest();
-        RenderSystem.setShader(GameRenderer::getPositionColorShader);
+        RenderSystem.setShader(CoreShaders.POSITION_COLOR);
         RenderSystem.depthFunc(515);
         RenderSystem.enableBlend();
         RenderSystem.defaultBlendFunc();
@@ -162,7 +154,6 @@ public class ShapesRenderer
             Matrix4fStack matrixStack = RenderSystem.getModelViewStack();
             matrixStack.pushMatrix();
             matrixStack.mul(matrices.last().pose());
-            RenderSystem.applyModelViewMatrix();
 
             // lines
             RenderSystem.lineWidth(0.5F);
@@ -209,7 +200,6 @@ public class ShapesRenderer
             RenderSystem.lineWidth(1.0F);
             RenderSystem.setProjectionMatrix(ori,VertexSorting.DISTANCE_TO_ORIGIN);
             matrixStack.popMatrix();
-            RenderSystem.applyModelViewMatrix();
 
         }
         if (!labels.isEmpty())
@@ -469,7 +459,7 @@ public class ShapesRenderer
                     if (blockState.getBlock() instanceof LeavesBlock && !Minecraft.useFancyGraphics()) {
                         type = RenderType.solid();
                     } else {
-                        type = ItemBlockRenderTypes.getRenderType(blockState, false);
+                        type = ItemBlockRenderTypes.getRenderType(blockState);
                     }
                     client.getBlockRenderer().getModelRenderer().renderModel(matrices.last(), immediate.getBuffer(type), blockState, bakedModel, red, green, blue, light, OverlayTexture.NO_OVERLAY);
                 }
@@ -490,15 +480,8 @@ public class ShapesRenderer
                         }
                     }
                 }
-                if (BlockEntity instanceof ShulkerBoxBlockEntity sbBlockEntity)
+                if (BlockEntity != null)
                 {
-                    sbrender(sbBlockEntity, partialTick,
-                            matrices, immediate, light, OverlayTexture.NO_OVERLAY);
-                }
-                else
-                {
-                    if (BlockEntity != null)
-                    {
                         BlockEntityRenderer<BlockEntity> blockEntityRenderer = client.getBlockEntityRenderDispatcher().getRenderer(BlockEntity);
                         if (blockEntityRenderer != null)
                         {
@@ -506,7 +489,6 @@ public class ShapesRenderer
                                     matrices, immediate, light, OverlayTexture.NO_OVERLAY);
 
                         }
-                    }
                 }
             }
             else
@@ -530,44 +512,6 @@ public class ShapesRenderer
         public boolean stageDeux()
         {
             return true;
-        }
-
-        // copy and modifiy a bit from net.minecraft.client.renderer.blockentity.ShulkerBoxRenderer.render
-        public void sbrender(ShulkerBoxBlockEntity shulkerBoxBlockEntity, float f, PoseStack poseStack, MultiBufferSource multiBufferSource, int i, int j)
-        {
-            Direction direction = Direction.UP;
-            if (shulkerBoxBlockEntity.hasLevel())
-            {
-                BlockState blockState = shulkerBoxBlockEntity.getBlockState();
-                if (blockState.getBlock() instanceof ShulkerBoxBlock)
-                {
-                    direction = blockState.getValue(ShulkerBoxBlock.FACING);
-                }
-            }
-            DyeColor dyeColor = shulkerBoxBlockEntity.getColor();
-            Material material;
-            if (dyeColor == null)
-            {
-                material = Sheets.DEFAULT_SHULKER_TEXTURE_LOCATION;
-            }
-            else
-            {
-                material = Sheets.SHULKER_TEXTURE_LOCATION.get(dyeColor.getId());
-            }
-
-            poseStack.pushPose();
-            poseStack.translate(0.5, 0.5, 0.5);
-            poseStack.scale(0.9995F, 0.9995F, 0.9995F);
-            poseStack.mulPose(direction.getRotation());
-            poseStack.scale(1.0F, -1.0F, -1.0F);
-            poseStack.translate(0.0, -1.0, 0.0);
-            ShulkerModel<?> model = VanillaClient.ShulkerBoxRenderer_model(client.getBlockEntityRenderDispatcher().getRenderer(shulkerBoxBlockEntity));
-            ModelPart modelPart = model.getLid();
-            modelPart.setPos(0.0F, 24.0F - shulkerBoxBlockEntity.getProgress(f) * 0.5F * 16.0F, 0.0F);
-            modelPart.yRot = 270.0F * shulkerBoxBlockEntity.getProgress(f) * (float) (Math.PI / 180.0);
-            VertexConsumer vertexConsumer = material.buffer(multiBufferSource, RenderType::entityCutoutNoCull);
-            model.renderToBuffer(poseStack, vertexConsumer, i, j, 0xffffffff);
-            poseStack.popPose();
         }
     }
 

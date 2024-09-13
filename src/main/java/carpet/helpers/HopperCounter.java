@@ -1,7 +1,6 @@
 package carpet.helpers;
 
 import carpet.CarpetServer;
-import carpet.fakes.IngredientInterface;
 import carpet.fakes.RecipeManagerInterface;
 import carpet.utils.Messenger;
 import it.unimi.dsi.fastutil.objects.Object2LongLinkedOpenHashMap;
@@ -22,7 +21,7 @@ import net.minecraft.world.item.DyeItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
-import net.minecraft.world.item.crafting.Ingredient;
+import net.minecraft.world.item.crafting.PlacementInfo;
 import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.level.block.AbstractBannerBlock;
@@ -32,12 +31,12 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.material.MapColor;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static java.util.Map.entry;
@@ -341,8 +340,8 @@ public class HopperCounter
         if (DEFAULTS.containsKey(item)) return TextColor.fromRgb(appropriateColor(DEFAULTS.get(item).defaultMapColor().col));
         if (item instanceof DyeItem dye) return TextColor.fromRgb(appropriateColor(dye.getDyeColor().getMapColor().col));
         Block block = null;
-        final Registry<Item> itemRegistry = registryAccess.registryOrThrow(Registries.ITEM);
-        final Registry<Block> blockRegistry = registryAccess.registryOrThrow(Registries.BLOCK);
+        final Registry<Item> itemRegistry = registryAccess.lookupOrThrow(Registries.ITEM);
+        final Registry<Block> blockRegistry = registryAccess.lookupOrThrow(Registries.BLOCK);
         ResourceLocation id = itemRegistry.getKey(item);
         if (item instanceof BlockItem blockItem)
         {
@@ -350,7 +349,7 @@ public class HopperCounter
         }
         else if (blockRegistry.getOptional(id).isPresent())
         {
-            block = blockRegistry.get(id);
+            block = blockRegistry.getValue(id);
         }
         if (block != null)
         {
@@ -371,21 +370,18 @@ public class HopperCounter
         if (direct != null) return direct;
         if (CarpetServer.minecraft_server == null) return WHITE;
 
-        ResourceLocation id = registryAccess.registryOrThrow(Registries.ITEM).getKey(item);
-        for (RecipeType<?> type: registryAccess.registryOrThrow(Registries.RECIPE_TYPE))
+        ResourceLocation id = registryAccess.lookupOrThrow(Registries.ITEM).getKey(item);
+        for (RecipeType<?> type: registryAccess.lookupOrThrow(Registries.RECIPE_TYPE))
         {
             for (Recipe<?> r: ((RecipeManagerInterface) CarpetServer.minecraft_server.getRecipeManager()).getAllMatching(type, id, registryAccess))
             {
-                for (Ingredient ingredient: r.getIngredients())
+                for (Optional<PlacementInfo.SlotInfo> ingredient: r.placementInfo().slotInfo())
                 {
-                    for (Collection<ItemStack> stacks : ((IngredientInterface) (Object) ingredient).getRecipeStacks())
+                    for(ItemStack stack : ingredient.get().possibleItems())
                     {
-                        for (ItemStack iStak : stacks)
-                        {
-                            TextColor cand = fromItem(iStak.getItem(), registryAccess);
-                            if (cand != null)
-                                return cand;
-                        }
+                        TextColor cand = fromItem(stack.getItem(), registryAccess);
+                        if (cand != null)
+                            return cand;
                     }
                 }
             }

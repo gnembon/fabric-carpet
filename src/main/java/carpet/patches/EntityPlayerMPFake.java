@@ -37,6 +37,7 @@ import carpet.fakes.ServerPlayerInterface;
 import carpet.utils.Messenger;
 
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
 @SuppressWarnings("EntityConstructor")
@@ -77,7 +78,7 @@ public class EntityPlayerMPFake extends ServerPlayer
             EntityPlayerMPFake instance = new EntityPlayerMPFake(server, worldIn, current, ClientInformation.createDefault(), false);
             instance.fixStartingPosition = () -> instance.moveTo(pos.x, pos.y, pos.z, (float) yaw, (float) pitch);
             server.getPlayerList().placeNewPlayer(new FakeClientConnection(PacketFlow.SERVERBOUND), instance, new CommonListenerCookie(current, 0, instance.clientInformation(), false));
-            instance.teleportTo(worldIn, pos.x, pos.y, pos.z, (float) yaw, (float) pitch);
+            instance.teleportTo(worldIn, pos.x, pos.y, pos.z, Set.of(), (float) yaw, (float) pitch, true);
             instance.setHealth(20.0F);
             instance.unsetRemoved();
             instance.getAttribute(Attributes.STEP_HEIGHT).setBaseValue(0.6F);
@@ -151,7 +152,7 @@ public class EntityPlayerMPFake extends ServerPlayer
         if (reason.getContents() instanceof TranslatableContents text && text.getKey().equals("multiplayer.disconnect.duplicate_login")) {
             this.connection.onDisconnect(new DisconnectionDetails(reason));
         } else {
-            this.server.tell(new TickTask(this.server.getTickCount(), () -> {
+            this.server.schedule(new TickTask(this.server.getTickCount(), () -> {
                 this.connection.onDisconnect(new DisconnectionDetails(reason));
             }));
         }
@@ -215,7 +216,7 @@ public class EntityPlayerMPFake extends ServerPlayer
     }
 
     @Override
-    public Entity changeDimension(DimensionTransition serverLevel)
+    public Player changeDimension(DimensionTransition serverLevel)
     {
         super.changeDimension(serverLevel);
         if (wonGame) {

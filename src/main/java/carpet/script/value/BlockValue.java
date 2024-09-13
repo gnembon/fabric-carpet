@@ -199,7 +199,7 @@ public class BlockValue extends Value
     @Override
     public String getString()
     {
-        Registry<Block> blockRegistry = world.registryAccess().registryOrThrow(Registries.BLOCK);
+        Registry<Block> blockRegistry = world.registryAccess().lookupOrThrow(Registries.BLOCK);
         return nameFromResource(blockRegistry.getKey(getBlockState().getBlock()));
     }
 
@@ -250,7 +250,7 @@ public class BlockValue extends Value
         CompoundTag tag = new CompoundTag();
         CompoundTag state = new CompoundTag();
         BlockState s = getBlockState();
-        state.put("Name", StringTag.valueOf(world.registryAccess().registryOrThrow(Registries.BLOCK).getKey(s.getBlock()).toString()));
+        state.put("Name", StringTag.valueOf(world.registryAccess().lookupOrThrow(Registries.BLOCK).getKey(s.getBlock()).toString()));
         Collection<Property<?>> properties = s.getProperties();
         if (!properties.isEmpty())
         {

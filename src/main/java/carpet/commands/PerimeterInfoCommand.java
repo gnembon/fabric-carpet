@@ -14,6 +14,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.Mob;
 
@@ -54,8 +55,8 @@ public class PerimeterInfoCommand
         if (mobId != null)
         {
             nbttagcompound.putString("id", mobId);
-            Entity baseEntity = EntityType.loadEntityRecursive(nbttagcompound, source.getLevel(), (entity_1x) -> {
-                entity_1x.moveTo(new BlockPos(pos.getX(), source.getLevel().getMinBuildHeight()-10, pos.getZ()), entity_1x.getYRot(), entity_1x. getXRot());
+            Entity baseEntity = EntityType.loadEntityRecursive(nbttagcompound, source.getLevel(), EntitySpawnReason.COMMAND, (entity_1x) -> {
+                entity_1x.moveTo(new BlockPos(pos.getX(), source.getLevel().getMinY()-10, pos.getZ()), entity_1x.getYRot(), entity_1x. getXRot());
                 return !source.getLevel().addWithUUID(entity_1x) ? null : entity_1x;
             });
             if (!(baseEntity instanceof  Mob))

@@ -2,18 +2,20 @@ package carpet.mixins;
 
 import carpet.network.CarpetClient;
 import carpet.script.utils.ShapesRenderer;
-import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.framegraph.FrameGraphBuilder;
+import com.mojang.blaze3d.framegraph.FramePass;
 import net.minecraft.client.Camera;
-import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.GameRenderer;
+import net.minecraft.client.renderer.FogParameters;
 import net.minecraft.client.renderer.LevelRenderer;
+import net.minecraft.client.renderer.LevelTargetBundle;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.RenderBuffers;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderDispatcher;
 import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
-import org.joml.Matrix4f;
+import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
@@ -21,30 +23,25 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(LevelRenderer.class)
 public class LevelRenderer_scarpetRenderMixin
 {
+    @Shadow @Final private LevelTargetBundle targets;
+
     @Inject(method = "<init>", at = @At("RETURN"))
     private void addRenderers(Minecraft minecraft, EntityRenderDispatcher entityRenderDispatcher, BlockEntityRenderDispatcher blockEntityRenderDispatcher, RenderBuffers renderBuffers, CallbackInfo ci)
     {
         CarpetClient.shapes = new ShapesRenderer(minecraft);
     }
 
-    @Inject(method = "renderLevel", at =  @At(
-            value = "INVOKE",
-            target = "Lnet/minecraft/client/renderer/Sheets;translucentCullBlockSheet()Lnet/minecraft/client/renderer/RenderType;", shift = At.Shift.BEFORE
-            //target = "Lnet/minecraft/client/render/RenderLayer;getWaterMask()Lnet/minecraft/client/render/RenderLayer;", shift = At.Shift.AFTER
-            //target = "Lnet/minecraft/client/render/BufferBuilderStorage;getEffectVertexConsumers()Lnet/minecraft/client/render/VertexConsumerProvider$Immediate;", shift = At.Shift.BEFORE
-            //target = "Lnet/minecraft/client/render/WorldRenderer;renderChunkDebugInfo(Lnet/minecraft/client/render/Camera;)V", shift = At.Shift.AFTER
-            //target = "Lnet/minecraft/client/render/BackgroundRenderer;method_23792()V", shift = At.Shift.AFTER
-            //target = "Lnet/minecraft/client/render/BufferBuilderStorage;getEntityVertexConsumers()Lnet/minecraft/client/render/VertexConsumerProvider$Immediate;", shift = At.Shift.AFTER
-            //target = "Lnet/minecraft/client/render/WorldRenderer;renderChunkDebugInfo(Lnet/minecraft/client/render/Camera;)V", shift = At.Shift.AFTER // before return
-    ))
-    private void renderScarpetThings(final DeltaTracker deltaTracker, final boolean renderBlockOutline, Camera camera, GameRenderer gameRenderer, LightTexture lightmapTextureManager, Matrix4f modelViewMatrix, Matrix4f matrix4f, CallbackInfo ci)
+    @Inject(method = "addParticlesPass", at = @At("RETURN"))
+    private void renderScarpetThingsLate(FrameGraphBuilder frameGraphBuilder, Camera camera, LightTexture lightTexture, float f, FogParameters fogParameters, CallbackInfo ci)
     {
         // in normal circumstances we want to render shapes at the very end so it appears correctly behind stuff.
         // we might actually not need to play with render hooks here.
         //if (!FabricAPIHooks.WORLD_RENDER_EVENTS && CarpetClient.shapes != null )
         if (CarpetClient.shapes != null)
         {
-            CarpetClient.shapes.render(modelViewMatrix, camera, deltaTracker.getGameTimeDeltaPartialTick(false));
+            FramePass pass = frameGraphBuilder.addPass("scarpet_shapes");
+            targets.main = pass.readsAndWrites(targets.main);
+            pass.executes(() -> CarpetClient.shapes.render(null, camera, f));
         }
     }
 }

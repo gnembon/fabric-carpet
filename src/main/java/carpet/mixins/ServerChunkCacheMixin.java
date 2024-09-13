@@ -27,7 +27,7 @@ public abstract class ServerChunkCacheMixin
 
     @Shadow @Final private DistanceManager distanceManager;
 
-    @Redirect(method = "tickChunks", at = @At(
+    @Redirect(method = "tickChunks(Lnet/minecraft/util/profiling/ProfilerFiller;JLjava/util/List;)V", at = @At(
             value = "INVOKE",
             target = "Lnet/minecraft/server/level/DistanceManager;getNaturalSpawnChunkCount()I"
     ))
@@ -54,7 +54,7 @@ public abstract class ServerChunkCacheMixin
     }
 
 
-    @Inject(method = "tickChunks", at = @At("RETURN"))
+    @Inject(method = "tickChunks(Lnet/minecraft/util/profiling/ProfilerFiller;JLjava/util/List;)V", at = @At("RETURN"))
     private void onFinishSpawnWorldCycle(CallbackInfo ci)
     {
         LevelData levelData = this.level.getLevelData(); // levelProperies class
