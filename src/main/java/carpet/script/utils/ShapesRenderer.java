@@ -217,12 +217,6 @@ public class ShapesRenderer
             labels.get(dimensionType).long2ObjectEntrySet().removeIf(
                     entry -> entry.getValue().isExpired(currentTime)
             );
-            Matrix4fStack matrixStack = RenderSystem.getModelViewStack();
-            matrixStack.pushMatrix();
-            matrixStack.identity();
-            RenderSystem.applyModelViewMatrix();
-            matrices.pushPose();
-            matrices.mulPose(modelViewMatrix);
             labels.get(dimensionType).values().forEach(s -> {
                 if ((!s.shape.debug || entityBoxes) && s.shouldRender(dimensionType)&& !s.shape.hud)
                 {
@@ -231,6 +225,11 @@ public class ShapesRenderer
             });
             //PoseStack matrixStack = RenderSystem.getModelViewStack();
             //matrices.pushPose();
+            Matrix4fStack matrixStack = RenderSystem.getModelViewStack();
+            matrixStack.pushMatrix();
+            matrixStack.identity();
+            RenderSystem.applyModelViewMatrix();
+            matrices.pushPose();
             matrices.setIdentity();
             //RenderSystem.applyModelViewMatrix();
             var ori=RenderSystem.getProjectionMatrix();
