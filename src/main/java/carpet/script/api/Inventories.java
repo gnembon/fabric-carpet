@@ -9,12 +9,29 @@ import carpet.script.exception.Throwables;
 import carpet.script.external.Vanilla;
 import carpet.script.utils.InputValidator;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.OptionalInt;
+import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import carpet.script.value.*;
+import carpet.script.value.BooleanValue;
+import carpet.script.value.EntityValue;
+import carpet.script.value.FormattedTextValue;
+import carpet.script.value.FunctionValue;
+import carpet.script.value.ListValue;
+import carpet.script.value.MapValue;
+import carpet.script.value.NBTSerializableValue;
+import carpet.script.value.NumericValue;
+import carpet.script.value.ScreenValue;
+import carpet.script.value.StringValue;
+import carpet.script.value.Value;
+import carpet.script.value.ValueConversions;
 import net.minecraft.core.HolderSet;
 import net.minecraft.core.Registry;
 import net.minecraft.core.RegistryAccess;
@@ -86,7 +103,7 @@ public class Inventories
             return tagSet.isEmpty() ? Value.NULL : BooleanValue.of(tagSet.get().stream().anyMatch(h -> h.value() == item));
         });
 
-        expression.addContextFunction("__item_component_map", -1, (c, t, lv) -> {
+        expression.addContextFunction("item_components", 1, (c, t, lv) -> {
             CarpetContext cc = (CarpetContext) c;
             ItemStack stack = ValueConversions.getItemStackFromValue(lv.getFirst(), true, cc.registryAccess());
 
