@@ -9,29 +9,20 @@ import carpet.script.exception.Throwables;
 import carpet.script.external.Vanilla;
 import carpet.script.utils.InputValidator;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.OptionalInt;
-import java.util.Set;
+import java.util.*;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
-import carpet.script.value.BooleanValue;
-import carpet.script.value.EntityValue;
-import carpet.script.value.FormattedTextValue;
-import carpet.script.value.FunctionValue;
-import carpet.script.value.ListValue;
-import carpet.script.value.NBTSerializableValue;
-import carpet.script.value.NumericValue;
-import carpet.script.value.ScreenValue;
-import carpet.script.value.StringValue;
-import carpet.script.value.Value;
-import carpet.script.value.ValueConversions;
+import carpet.script.value.*;
 import net.minecraft.core.HolderSet;
 import net.minecraft.core.Registry;
 import net.minecraft.core.RegistryAccess;
+import net.minecraft.core.component.DataComponentType;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtOps;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
@@ -93,6 +84,31 @@ public class Inventories
             String tag = lv.get(1).getString();
             Optional<HolderSet.Named<Item>> tagSet = blocks.get(TagKey.create(Registries.ITEM, InputValidator.identifierOf(tag)));
             return tagSet.isEmpty() ? Value.NULL : BooleanValue.of(tagSet.get().stream().anyMatch(h -> h.value() == item));
+        });
+
+        expression.addContextFunction("__item_component_map", -1, (c, t, lv) -> {
+            CarpetContext cc = (CarpetContext) c;
+            ItemStack stack = ValueConversions.getItemStackFromValue(lv.getFirst(), true, cc.registryAccess());
+
+            Stream<DataComponentType<Object>> stream = (Stream<DataComponentType<Object>>)(Object)stack.getComponents().keySet().stream();
+            Map<Value, Value> lst = stream.filter(Predicate.not(DataComponentType::isTransient))
+                    .collect(Collectors.toMap(
+                            ck -> ValueConversions.of(BuiltInRegistries.DATA_COMPONENT_TYPE.getKey(ck)),
+                            ck -> {
+                                var cvalue = stack.get(ck);
+                                return switch (cvalue) {
+                                    case Number n -> NumericValue.of(n);
+                                    case Boolean b -> BooleanValue.of(b);
+                                    default -> NBTSerializableValue.of(ck.codec()
+                                            .encodeStart(
+                                                    cc.registryAccess().createSerializationContext(NbtOps.INSTANCE),
+                                                    cvalue)
+                                            .result().orElse(null));
+                                };
+
+                            }));
+
+            return MapValue.wrap(lst);
         });
 
         expression.addContextFunction("recipe_data", -1, (c, t, lv) ->
