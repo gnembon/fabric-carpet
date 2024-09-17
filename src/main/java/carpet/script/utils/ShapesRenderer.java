@@ -14,6 +14,7 @@ import com.mojang.blaze3d.vertex.Tesselator;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import com.mojang.blaze3d.vertex.VertexSorting;
 import com.mojang.blaze3d.vertex.VertexFormat.Mode;
+import com.mojang.datafixers.util.Pair;
 import com.mojang.math.Axis;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 
@@ -58,6 +59,8 @@ public class ShapesRenderer
     private final Map<ResourceKey<Level>, Long2ObjectOpenHashMap<RenderedShape<? extends ShapeDispatcher.ExpiringShape>>> shapes;
     private final Map<ResourceKey<Level>, Long2ObjectOpenHashMap<RenderedShape<? extends ShapeDispatcher.ExpiringShape>>> labels;
     private final Minecraft client;
+
+    public static ThreadLocal<Pair<PoseStack.Pose, BlockPos>> DrawingShape = new ThreadLocal<>();
 
     private final Map<String, BiFunction<Minecraft, ShapeDispatcher.ExpiringShape, RenderedShape<? extends ShapeDispatcher.ExpiringShape>>> renderedShapes
             = new HashMap<>()
@@ -489,6 +492,13 @@ public class ShapesRenderer
                                     matrices, immediate, light, OverlayTexture.NO_OVERLAY);
 
                         }
+                }
+                var fluidstate = blockState.getFluidState();
+                try {
+                    DrawingShape.set(Pair.of(matrices.last(),blockPos));
+                    client.getBlockRenderer().renderLiquid(blockPos, client.level, immediate.getBuffer(ItemBlockRenderTypes.getRenderLayer(fluidstate)), blockState, fluidstate);
+                }finally {
+                    DrawingShape.remove();
                 }
             }
             else
