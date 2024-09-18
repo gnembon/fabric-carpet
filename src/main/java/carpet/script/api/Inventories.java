@@ -116,6 +116,7 @@ public class Inventories
                                 return switch (cvalue) {
                                     case Number n -> NumericValue.of(n);
                                     case Boolean b -> BooleanValue.of(b);
+                                    case Component ft -> FormattedTextValue.of(ft);
                                     default -> NBTSerializableValue.of(ck.codec()
                                             .encodeStart(
                                                     cc.registryAccess().createSerializationContext(NbtOps.INSTANCE),
