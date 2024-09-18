@@ -951,7 +951,7 @@ public class RedstoneWireTurbo
             BlockPos neighborPos = pos.relative(dir);
             BlockState neighborState = level.getBlockState(neighborPos);
 
-            BlockState newState = neighborState.updateShape(dir.getOpposite(), state, level, neighborPos, pos);
+            BlockState newState = neighborState.updateShape(level, level, neighborPos, dir.getOpposite(), pos, state, level.getRandom());
             Block.updateOrDestroy(neighborState, newState, level, neighborPos, Block.UPDATE_CLIENTS);
         }
     }
