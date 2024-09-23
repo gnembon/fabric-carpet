@@ -41,7 +41,10 @@ public class LevelRenderer_scarpetRenderMixin
         {
             FramePass pass = frameGraphBuilder.addPass("scarpet_shapes");
             targets.main = pass.readsAndWrites(targets.main);
-            pass.executes(() -> CarpetClient.shapes.render(null, camera, f));
+            pass.executes(() -> CarpetClient.shapes.render(0, camera, f));
+            pass = frameGraphBuilder.addPass("scarpet_shapes-fluid");
+            targets.main = pass.readsAndWrites(targets.main);
+            pass.executes(() -> CarpetClient.shapes.render(1, camera, f));
         }
     }
 }

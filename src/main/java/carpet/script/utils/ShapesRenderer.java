@@ -111,7 +111,7 @@ public class ShapesRenderer
         labels = new HashMap<>();
     }
 
-    public void render(Matrix4f modelViewMatrix, Camera camera, float partialTick)
+    public void render(int passid, Camera camera, float partialTick)
     {
         Runnable token = Carpet.startProfilerSection("Scarpet client");
         // posestack is not needed anymore - left as TODO to cleanup later
@@ -213,7 +213,7 @@ public class ShapesRenderer
             labels.get(dimensionType).values().forEach(s -> {
                 if ((!s.shape.debug || entityBoxes) && s.shouldRender(dimensionType)&& !s.shape.hud)
                 {
-                    s.renderLines(matrices, tesselator, cameraX, cameraY, cameraZ, partialTick);
+                    s.renderLines(matrices, tesselator, cameraX, cameraY, cameraZ, partialTick, passid);
                 }
             });
             //PoseStack matrixStack = RenderSystem.getModelViewStack();
@@ -230,7 +230,7 @@ public class ShapesRenderer
             labels.get(dimensionType).values().forEach(s -> {
                 if ((!s.shape.debug || entityBoxes) && s.shouldRender(dimensionType)&& s.shape.hud)
                 {
-                    s.renderLines(matrices, tesselator, 0, 0, 0, partialTick);
+                    s.renderLines(matrices, tesselator, 0, 0, 0, partialTick, passid);
                 }
             });
             matrices.popPose();
@@ -311,6 +311,9 @@ public class ShapesRenderer
         long expiryTick;
         double renderEpsilon;
 
+        public void renderLines(PoseStack matrices, Tesselator tesselator, double cx, double cy, double cz, float partialTick, int passid){
+            if(passid==0) renderLines( matrices,  tesselator,  cx,  cy,  cz,  partialTick);
+        };
         public abstract void renderLines(PoseStack matrices, Tesselator tesselator, double cx, double cy, double cz, float partialTick);
 
         public void renderFaces(Tesselator tesselator, double cx, double cy, double cz, float partialTick)
@@ -385,7 +388,7 @@ public class ShapesRenderer
 
         @Override
         public void renderLines(PoseStack matrices, Tesselator tesselator, double cx, double cy,
-                                double cz, float partialTick)
+                                double cz, float partialTick, int passindex)
         {
             if (shape.a == 0.0)
             {
@@ -447,58 +450,61 @@ public class ShapesRenderer
             MultiBufferSource.BufferSource immediate = client.renderBuffers().bufferSource();
             if (!isitem)
             {
-                // draw the block itself
-                if (blockState.getRenderShape() == RenderShape.MODEL)
-                {
-
-                    var bakedModel = client.getBlockRenderer().getBlockModel(blockState);
-                    int color = client.getBlockColors().getColor(blockState, client.level, blockPos, 0);
-                    //dont know why there is a 0. 
-                    //see https://github.com/senseiwells/EssentialClient/blob/4db1f291936f502304791ee323f369c206b3021d/src/main/java/me/senseiwells/essentialclient/utils/render/RenderHelper.java#L464
-                    float red = (color >> 16 & 0xFF) / 255.0F;
-                    float green = (color >> 8 & 0xFF) / 255.0F;
-                    float blue = (color & 0xFF) / 255.0F;
-                    RenderType type;
-                    if (blockState.getBlock() instanceof LeavesBlock && !Minecraft.useFancyGraphics()) {
-                        type = RenderType.solid();
-                    } else {
-                        type = ItemBlockRenderTypes.getRenderType(blockState);
-                    }
-                    client.getBlockRenderer().getModelRenderer().renderModel(matrices.last(), immediate.getBuffer(type), blockState, bakedModel, red, green, blue, light, OverlayTexture.NO_OVERLAY);
-                }
-
-                // draw the block`s entity part
-                if (BlockEntity == null)
-                {
-                    if (blockState.getBlock() instanceof EntityBlock eb)
+                if(passindex==0){
+                    // draw the block itself
+                    if (blockState.getRenderShape() == RenderShape.MODEL)
                     {
-                        BlockEntity = eb.newBlockEntity(blockPos, blockState);
-                        if (BlockEntity != null)
+
+                        var bakedModel = client.getBlockRenderer().getBlockModel(blockState);
+                        int color = client.getBlockColors().getColor(blockState, client.level, blockPos, 0);
+                        //dont know why there is a 0.
+                        //see https://github.com/senseiwells/EssentialClient/blob/4db1f291936f502304791ee323f369c206b3021d/src/main/java/me/senseiwells/essentialclient/utils/render/RenderHelper.java#L464
+                        float red = (color >> 16 & 0xFF) / 255.0F;
+                        float green = (color >> 8 & 0xFF) / 255.0F;
+                        float blue = (color & 0xFF) / 255.0F;
+                        RenderType type;
+                        if (blockState.getBlock() instanceof LeavesBlock && !Minecraft.useFancyGraphics()) {
+                            type = RenderType.solid();
+                        } else {
+                            type = ItemBlockRenderTypes.getRenderType(blockState);
+                        }
+                        client.getBlockRenderer().getModelRenderer().renderModel(matrices.last(), immediate.getBuffer(type), blockState, bakedModel, red, green, blue, light, OverlayTexture.NO_OVERLAY);
+                    }
+
+                    // draw the block`s entity part
+                    if (BlockEntity == null)
+                    {
+                        if (blockState.getBlock() instanceof EntityBlock eb)
                         {
-                            BlockEntity.setLevel(client.level);
-                            if (shape.blockEntity != null)
+                            BlockEntity = eb.newBlockEntity(blockPos, blockState);
+                            if (BlockEntity != null)
                             {
-                                BlockEntity.loadWithComponents(shape.blockEntity, client.level.registryAccess());
+                                BlockEntity.setLevel(client.level);
+                                if (shape.blockEntity != null)
+                                {
+                                    BlockEntity.loadWithComponents(shape.blockEntity, client.level.registryAccess());
+                                }
                             }
                         }
                     }
-                }
-                if (BlockEntity != null)
-                {
-                        BlockEntityRenderer<BlockEntity> blockEntityRenderer = client.getBlockEntityRenderDispatcher().getRenderer(BlockEntity);
-                        if (blockEntityRenderer != null)
-                        {
-                            blockEntityRenderer.render(BlockEntity, partialTick,
-                                    matrices, immediate, light, OverlayTexture.NO_OVERLAY);
+                    if (BlockEntity != null)
+                    {
+                            BlockEntityRenderer<BlockEntity> blockEntityRenderer = client.getBlockEntityRenderDispatcher().getRenderer(BlockEntity);
+                            if (blockEntityRenderer != null)
+                            {
+                                blockEntityRenderer.render(BlockEntity, partialTick,
+                                        matrices, immediate, light, OverlayTexture.NO_OVERLAY);
 
-                        }
-                }
-                var fluidstate = blockState.getFluidState();
-                try {
-                    DrawingShape.set(Pair.of(matrices.last(),blockPos));
-                    client.getBlockRenderer().renderLiquid(blockPos, client.level, immediate.getBuffer(ItemBlockRenderTypes.getRenderLayer(fluidstate)), blockState, fluidstate);
-                }finally {
-                    DrawingShape.remove();
+                            }
+                    }
+                }else{
+                    var fluidstate = blockState.getFluidState();
+                    try {
+                        DrawingShape.set(Pair.of(matrices.last(),blockPos));
+                        client.getBlockRenderer().renderLiquid(blockPos, client.level, immediate.getBuffer(ItemBlockRenderTypes.getRenderLayer(fluidstate)), blockState, fluidstate);
+                    }finally {
+                        DrawingShape.remove();
+                    }
                 }
             }
             else
@@ -515,6 +521,11 @@ public class ShapesRenderer
             RenderSystem.disableCull();
             RenderSystem.disableDepthTest();
             RenderSystem.depthMask(false);
+
+        }
+
+        @Override
+        public void renderLines(PoseStack matrices, Tesselator tesselator, double cx, double cy, double cz, float partialTick) {
 
         }
 
