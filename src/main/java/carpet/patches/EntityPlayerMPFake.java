@@ -140,7 +140,7 @@ public class EntityPlayerMPFake extends ServerPlayer
     }
 
     @Override
-    public void kill()
+    public void kill(ServerLevel level)
     {
         kill(Messenger.s("Killed"));
     }

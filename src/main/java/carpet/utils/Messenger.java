@@ -10,6 +10,7 @@ import net.minecraft.network.chat.HoverEvent;
 import net.minecraft.network.chat.Style;
 import net.minecraft.network.chat.TextColor;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec3;
@@ -243,7 +244,7 @@ public class Messenger
     }
     public static void m(Player player, Object ... fields)
     {
-        player.sendSystemMessage(Messenger.c(fields));
+        ((ServerPlayer)player).sendSystemMessage(Messenger.c(fields));
     }
 
     /*
@@ -287,7 +288,7 @@ public class Messenger
 
     public static void send(Player player, Collection<Component> lines)
     {
-        lines.forEach(message -> player.sendSystemMessage(message));
+        lines.forEach(message -> ((ServerPlayer)player).sendSystemMessage(message));
     }
     public static void send(CommandSourceStack source, Collection<Component> lines)
     {
@@ -301,7 +302,7 @@ public class Messenger
             LOG.error("Message not delivered: "+message);
         server.sendSystemMessage(Component.literal(message));
         Component txt = c("gi "+message);
-        for (Player entityplayer : server.getPlayerList().getPlayers())
+        for (ServerPlayer entityplayer : server.getPlayerList().getPlayers())
         {
             entityplayer.sendSystemMessage(txt);
         }
@@ -311,7 +312,7 @@ public class Messenger
         if (server == null)
             LOG.error("Message not delivered: "+message.getString());
         server.sendSystemMessage(message);
-        for (Player entityplayer : server.getPlayerList().getPlayers())
+        for (ServerPlayer entityplayer : server.getPlayerList().getPlayers())
         {
             entityplayer.sendSystemMessage(message);
         }

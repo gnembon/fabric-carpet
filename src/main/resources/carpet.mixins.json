@@ -149,6 +149,7 @@
     "SystemReport_addScarpetAppsMixin",
     "CommandNode_scarpetCommandsMixin",
     "CommandDispatcher_scarpetCommandsMixin",
+    "FoodData_scarpetMixin",
 
     "RecipeManager_scarpetMixin",
     "BlockInput_scarpetMixin",

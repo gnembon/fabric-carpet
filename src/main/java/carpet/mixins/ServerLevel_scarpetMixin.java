@@ -44,6 +44,8 @@ import static carpet.script.CarpetEventServer.Event.CHUNK_UNLOADED;
 public abstract class ServerLevel_scarpetMixin extends Level implements ServerWorldInterface
 {
 
+    @Shadow public abstract GameRules getGameRules();
+
     protected ServerLevel_scarpetMixin(WritableLevelData writableLevelData, ResourceKey<Level> resourceKey, RegistryAccess registryAccess, Holder<DimensionType> holder, boolean bl, boolean bl2, long l, int i)
     {
         super(writableLevelData, resourceKey, registryAccess, holder, bl, bl2, l, i);

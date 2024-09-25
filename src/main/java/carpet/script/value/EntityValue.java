@@ -1,5 +1,6 @@
 package carpet.script.value;
 
+import carpet.fakes.FoodDataInterface;
 import carpet.script.external.Vanilla;
 import carpet.script.utils.Tracer;
 import carpet.script.CarpetContext;
@@ -302,11 +303,11 @@ public class EntityValue extends Value
                     EntityType.TRIDENT, EntityType.WITHER_SKULL, EntityType.FISHING_BOBBER, EntityType.SHULKER_BULLET
             );
             Set<EntityType<?>> deads = Set.of(
-                    EntityType.AREA_EFFECT_CLOUD, EntityType.MARKER, EntityType.BOAT, EntityType.END_CRYSTAL,
+                    EntityType.AREA_EFFECT_CLOUD, EntityType.MARKER, EntityType.END_CRYSTAL,
                     EntityType.EVOKER_FANGS, EntityType.EXPERIENCE_ORB, EntityType.EYE_OF_ENDER,
                     EntityType.FALLING_BLOCK, EntityType.ITEM, EntityType.ITEM_FRAME, EntityType.GLOW_ITEM_FRAME,
                     EntityType.LEASH_KNOT, EntityType.LIGHTNING_BOLT, EntityType.PAINTING,
-                    EntityType.TNT, EntityType.ARMOR_STAND, EntityType.CHEST_BOAT
+                    EntityType.TNT, EntityType.ARMOR_STAND
 
             );
             Set<EntityType<?>> minecarts = Set.of(
@@ -336,7 +337,7 @@ public class EntityValue extends Value
             );
 
             Set<EntityType<?>> living = allTypes.stream().filter(et ->
-                    !deads.contains(et) && !projectiles.contains(et) && !minecarts.contains(et)
+                    !deads.contains(et) && !projectiles.contains(et) && !minecarts.contains(et) && !et.is(EntityTypeTags.BOAT)
             ).collect(Collectors.toSet());
 
             Set<EntityType<?>> regular = allTypes.stream().filter(et ->
@@ -550,7 +551,7 @@ public class EntityValue extends Value
         put("persistence", (e, a) -> e instanceof Mob mob ? BooleanValue.of(mob.isPersistenceRequired()) : Value.NULL);
         put("hunger", (e, a) -> e instanceof Player player ? new NumericValue(player.getFoodData().getFoodLevel()) : Value.NULL);
         put("saturation", (e, a) -> e instanceof Player player ? new NumericValue(player.getFoodData().getSaturationLevel()) : Value.NULL);
-        put("exhaustion", (e, a) -> e instanceof Player player ? new NumericValue(player.getFoodData().getExhaustionLevel()) : Value.NULL);
+        put("exhaustion", (e, a) -> e instanceof Player player ? new NumericValue(((FoodDataInterface)player.getFoodData()).getCMExhaustionLevel()) : Value.NULL);
         put("absorption", (e, a) -> e instanceof Player player ? new NumericValue(player.getAbsorptionAmount()) : Value.NULL);
         put("xp", (e, a) -> e instanceof Player player ? new NumericValue(player.totalExperience) : Value.NULL);
         put("xp_level", (e, a) -> e instanceof Player player ? new NumericValue(player.experienceLevel) : Value.NULL);
@@ -1040,7 +1041,7 @@ public class EntityValue extends Value
 
             }
         });*/
-        put("kill", (e, v) -> e.kill());
+        put("kill", (e, v) -> e.kill((ServerLevel) e.level()));
         put("location", (e, v) ->
         {
             if (!(v instanceof ListValue lv))
@@ -1605,7 +1606,7 @@ public class EntityValue extends Value
         put("exhaustion", (e, v) -> {
             if (e instanceof Player p)
             {
-                p.getFoodData().setExhaustion(NumericValue.asNumber(v).getFloat());
+                ((FoodDataInterface)p.getFoodData()).setExhaustion(NumericValue.asNumber(v).getFloat());
             }
         });
 
