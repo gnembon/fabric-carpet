@@ -304,7 +304,7 @@ public class SettingsManager {
     /**
      * Calling this method is not supported.
      */
-    public void inspectClientsideCommand(CommandSourceStack source, String string)
+    public void inspectClientsideCommand(String string)
     {
         if (string.startsWith("/" + identifier + " "))
         {
@@ -316,9 +316,9 @@ public class SettingsManager {
                 if (rules.containsKey(rule) && rules.get(rule).canBeToggledClientSide())
                 {
                     try {
-                        rules.get(rule).set(source, strOption);
+                        rules.get(rule).set(null, strOption);
                     } catch (InvalidRuleValueException e) {
-                        e.notifySource(rule, source);
+                        //e.notifySource(rule, source);
                     }
                 }
             }

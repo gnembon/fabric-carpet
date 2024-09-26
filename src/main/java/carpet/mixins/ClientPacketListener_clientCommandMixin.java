@@ -35,7 +35,7 @@ public abstract class ClientPacketListener_clientCommandMixin extends ClientComm
         if (CarpetServer.minecraft_server == null && !CarpetClient.isCarpet() && minecraft.player != null)
         {
             LocalPlayer playerSource = minecraft.player;
-            CarpetServer.forEachManager(sm -> sm.inspectClientsideCommand(playerSource.createCommandSourceStack(), "/" + string));
+            CarpetServer.forEachManager(sm -> sm.inspectClientsideCommand("/" + string));
         }
     }
 }

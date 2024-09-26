@@ -10,6 +10,7 @@ import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.DyeColor;
@@ -60,7 +61,7 @@ public class WoolTool
      *     <li>Green - Prints the contents of the counter of the colour of wool underneath the carpet</li>
      * </ul>
      */
-    public static void carpetPlacedAction(DyeColor color, Player placer, BlockPos pos, ServerLevel worldIn)
+    public static void carpetPlacedAction(DyeColor color, ServerPlayer placer, BlockPos pos, ServerLevel worldIn)
     {
         if (!CarpetSettings.carpets)
         {

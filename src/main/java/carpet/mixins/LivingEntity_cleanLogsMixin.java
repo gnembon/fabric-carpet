@@ -1,6 +1,7 @@
 package carpet.mixins;
 
 import carpet.CarpetSettings;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
@@ -22,6 +23,6 @@ public abstract class LivingEntity_cleanLogsMixin extends Entity
     @Redirect(method = "die", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/LivingEntity;hasCustomName()Z"))
     private boolean shouldLogDeaths(LivingEntity livingEntity)
     {
-        return livingEntity.hasCustomName() && CarpetSettings.cleanLogs && level().getGameRules().getBoolean(GameRules.RULE_SHOWDEATHMESSAGES);
+        return livingEntity.hasCustomName() && CarpetSettings.cleanLogs && livingEntity.getServer().getGameRules().getBoolean(GameRules.RULE_SHOWDEATHMESSAGES);
     }
 }

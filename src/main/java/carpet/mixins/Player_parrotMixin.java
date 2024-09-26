@@ -2,6 +2,7 @@ package carpet.mixins;
 
 import carpet.CarpetSettings;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
@@ -57,7 +58,7 @@ public abstract class Player_parrotMixin extends LivingEntity
         }
     }
     
-    @Redirect(method = "hurt", at = @At(value = "INVOKE",
+    @Redirect(method = "hurtServer", at = @At(value = "INVOKE",
               target = "Lnet/minecraft/world/entity/player/Player;removeEntitiesOnShoulder()V"))
     private void cancelDropShoulderEntities2(Player playerEntity)
     {
@@ -76,9 +77,9 @@ public abstract class Player_parrotMixin extends LivingEntity
         this.setShoulderEntityRight(new CompoundTag());
     }
     
-    @Inject(method = "hurt", at = @At(value = "INVOKE", shift = At.Shift.BEFORE,
+    @Inject(method = "hurtServer", at = @At(value = "INVOKE", shift = At.Shift.BEFORE,
             target = "Lnet/minecraft/world/entity/player/Player;removeEntitiesOnShoulder()V"))
-    private void onDamage(DamageSource damageSource_1, float float_1, CallbackInfoReturnable<Boolean> cir)
+    private void onDamage(ServerLevel serverLevel, DamageSource damageSource_1, float float_1, CallbackInfoReturnable<Boolean> cir)
     {
         if (CarpetSettings.persistentParrots && !this.isShiftKeyDown())
         {

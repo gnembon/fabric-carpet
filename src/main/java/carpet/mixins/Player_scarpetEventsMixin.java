@@ -2,6 +2,7 @@ package carpet.mixins;
 
 import carpet.fakes.EntityInterface;
 import carpet.script.EntityEventsGroup;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -36,7 +37,7 @@ public abstract class Player_scarpetEventsMixin extends LivingEntity
             value = "INVOKE",
             target = "Lnet/minecraft/world/entity/player/Player;getDamageAfterArmorAbsorb(Lnet/minecraft/world/damagesource/DamageSource;F)F"
     ))
-    private void playerTakingDamage(DamageSource source, float amount, CallbackInfo ci)
+    private void playerTakingDamage(ServerLevel serverLevel, DamageSource source, float amount, CallbackInfo ci)
     {
         // version of LivingEntity_scarpetEventsMixin::entityTakingDamage
         ((EntityInterface)this).getEventContainer().onEvent(EntityEventsGroup.Event.ON_DAMAGE, amount, source);

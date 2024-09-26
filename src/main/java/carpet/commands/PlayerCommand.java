@@ -223,7 +223,8 @@ public class PlayerCommand
     private static int kill(CommandContext<CommandSourceStack> context)
     {
         if (cantReMove(context)) return 0;
-        getPlayer(context).kill();
+        ServerPlayer player = getPlayer(context);
+        player.kill(player.serverLevel());
         return 1;
     }
 
