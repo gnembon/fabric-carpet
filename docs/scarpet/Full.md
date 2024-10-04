@@ -4301,8 +4301,8 @@ Recipe type can take one of the following options:
  * `'smithing'` - smithing table (1.16+)
  
  The return value is a list of available recipes (even if there is only one recipe available). Each recipe contains of
- an item triple of the crafting result, list of ingredients, each containing a list of possible variants of the
- ingredients in this slot, as item triples, or `null` if its a shaped recipe and a given slot in the patterns is left
+ an item triple of the crafting results as a list of item stacks, list of ingredients, each containing a list of possible variants of the
+ ingredients in this slot, as item ids, or `null` if it is a shaped recipe and a given slot in the patterns is left
  empty, and recipe specification as another list. Possible recipe specs is:
   * `['shaped', width, height]` - shaped crafting. `width` and `height` can be 1, 2 or 3.
   * `['shapeless']` - shapeless crafting
@@ -4310,10 +4310,6 @@ Recipe type can take one of the following options:
   * `['cutting']` - stonecutter recipe
   * `['special']` - special crafting recipe, typically not present in the crafting menu
   * `['custom']` - other recipe types
-  
-Note that ingredients are specified as tripes, with count and nbt information. Currently all recipes require always one
-of the ingredients, and for some recipes, even if the nbt data for the ingredient is specified (e.g. `dispenser`), it
-can accept items of any tags.
 
 Also note that some recipes leave some products in the crafting window, and these can be determined using
  `crafting_remaining_item()` function 
@@ -4328,7 +4324,7 @@ Also note that some recipes leave some products in the crafting window, and thes
 ### `crafting_remaining_item(item)`
 
 returns `null` if the item has no remaining item in the crafting window when used as a crafting ingredient, or an
-item name that serves as a replacement after crafting is done. Currently it can only be buckets and glass bottles.
+item tuple that serves as a replacement after crafting is done. Currently, it can only be buckets and glass bottles.
 
 ### `inventory_size(inventory)`
 
