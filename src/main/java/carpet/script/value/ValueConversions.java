@@ -31,6 +31,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.ai.behavior.PositionTracker;
 import net.minecraft.world.entity.ai.memory.NearestVisibleLivingEntities;
 import net.minecraft.world.entity.ai.memory.WalkTarget;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
@@ -99,10 +100,15 @@ public class ValueConversions
     public static Value of(ItemStack stack, RegistryAccess regs)
     {
         return stack == null || stack.isEmpty() ? Value.NULL : ListValue.of(
-                of(regs.lookupOrThrow(Registries.ITEM).getKey(stack.getItem())),
+                of(stack.getItem(), regs),
                 new NumericValue(stack.getCount()),
                 NBTSerializableValue.fromStack(stack, regs)
         );
+    }
+
+    public static Value of(Item item, RegistryAccess regs)
+    {
+        return of(regs.lookupOrThrow(Registries.ITEM).getKey(item));
     }
 
     public static Value of(Objective objective)

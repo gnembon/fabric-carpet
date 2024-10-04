@@ -6,8 +6,8 @@ import carpet.script.argument.FunctionArgument;
 import carpet.script.exception.InternalExpressionException;
 import carpet.script.exception.ThrowStatement;
 import carpet.script.exception.Throwables;
-import carpet.script.external.Vanilla;
 import carpet.script.utils.InputValidator;
+import carpet.script.utils.RecipeHelper;
 import carpet.script.value.BooleanValue;
 import carpet.script.value.EntityValue;
 import carpet.script.value.FormattedTextValue;
@@ -49,6 +49,7 @@ import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.item.crafting.ShapedRecipe;
 import net.minecraft.world.item.crafting.ShapelessRecipe;
 import net.minecraft.world.item.crafting.SingleItemRecipe;
+import net.minecraft.world.item.crafting.display.SlotDisplay;
 import net.minecraft.world.phys.Vec3;
 
 public class Inventories
@@ -103,7 +104,7 @@ public class Inventories
                 throw new InternalExpressionException("'recipe_data' requires at least one argument");
             }
             String recipeName = lv.get(0).getString();
-            RecipeType<?> type = RecipeType.CRAFTING;
+            RecipeType<? extends Recipe<?>> type = RecipeType.CRAFTING;
             if (lv.size() > 1)
             {
                 String recipeType = lv.get(1).getString();
@@ -113,30 +114,44 @@ public class Inventories
                     throw new InternalExpressionException("Unknown recipe type: " + recipeType);
                 }
             }
-            List<Recipe<?>> recipes = Vanilla.RecipeManager_getAllMatching(cc.server().getRecipeManager(), type, InputValidator.identifierOf(recipeName), cc.registryAccess());
+            List<Recipe<?>> recipes = RecipeHelper.getRecipesForOutput(cc.server().getRecipeManager(), type, InputValidator.identifierOf(recipeName), cc.level());
             if (recipes.isEmpty())
             {
                 return Value.NULL;
             }
             List<Value> recipesOutput = new ArrayList<>();
             RegistryAccess regs = cc.registryAccess();
+            SlotDisplay.ResolutionContext context = SlotDisplay.ResolutionContext.forLevel(cc.level());
             for (Recipe<?> recipe : recipes)
             {
-                ItemStack result = recipe.getResultItem(regs);
+                List<Value> results = new ArrayList<>();
+                //ItemStack result = recipe.display().forEach(); getResultItem(regs);
+                recipe.display().forEach(rd -> rd.result().resolveForStacks(context).forEach(is -> results.add(ValueConversions.of(is, regs))));
+
+
                 List<Value> ingredientValue = new ArrayList<>();
-                recipe.placementInfo().slotInfo().forEach(ingredient -> {
-                    if (ingredient.isEmpty())
+                for (Optional<PlacementInfo.SlotInfo> info : recipe.placementInfo().slotInfo())
+                {
+                    if (info.isEmpty())
                     {
                         ingredientValue.add(Value.NULL);
-                        return;
+                        continue;
                     }
-                    PlacementInfo.SlotInfo value = ingredient.get();
-                    int position = value.placerOutputPosition();
+                    PlacementInfo.SlotInfo value = info.get();
+                    int ingredientIndex = value.placerOutputPosition();
 
                     List<Value> alternatives = new ArrayList<>();
-                    value.possibleItems().stream().map(is -> ValueConversions.of(is, regs)).forEach(alternatives::add);
-                    ingredientValue.add(ListValue.wrap(alternatives));
-                });
+                    recipe.placementInfo().ingredients().get(ingredientIndex).items().forEach(item -> alternatives.add(ValueConversions.of(item.value(), regs)));
+                    if (alternatives.isEmpty())
+                    {
+                        ingredientValue.add(Value.NULL);
+                    }
+                    else
+                    {
+                        ingredientValue.add(ListValue.wrap(alternatives));
+                    }
+                }
+
 
                 Value recipeSpec;
                 if (recipe instanceof ShapedRecipe shapedRecipe)
@@ -155,8 +170,8 @@ public class Inventories
                 {
                     recipeSpec = ListValue.of(
                             new StringValue("smelting"),
-                            new NumericValue(abstractCookingRecipe.getCookingTime()),
-                            new NumericValue(abstractCookingRecipe.getExperience())
+                            new NumericValue(abstractCookingRecipe.cookingTime()),
+                            new NumericValue(abstractCookingRecipe.experience())
                     );
                 }
                 else if (recipe instanceof SingleItemRecipe)
@@ -172,7 +187,7 @@ public class Inventories
                     recipeSpec = ListValue.of(new StringValue("custom"));
                 }
 
-                recipesOutput.add(ListValue.of(ValueConversions.of(result, regs), ListValue.wrap(ingredientValue), recipeSpec));
+                recipesOutput.add(ListValue.of(ListValue.wrap(results), ListValue.wrap(ingredientValue), recipeSpec));
             }
             return ListValue.wrap(recipesOutput);
         });
@@ -181,10 +196,11 @@ public class Inventories
         {
             String itemStr = v.get(0).getString();
             ResourceLocation id = InputValidator.identifierOf(itemStr);
-            Registry<Item> registry = ((CarpetContext) c).registry(Registries.ITEM);
+            CarpetContext cc = (CarpetContext) c;
+            Registry<Item> registry = cc.registry(Registries.ITEM);
             Item item = registry.getOptional(id).orElseThrow(() -> new ThrowStatement(itemStr, Throwables.UNKNOWN_ITEM));
-            Item reminder = item.getCraftingRemainingItem();
-            return reminder == null ? Value.NULL : NBTSerializableValue.nameFromRegistryId(registry.getKey(reminder));
+            ItemStack reminder = item.getCraftingRemainder();
+            return reminder.isEmpty() ? Value.NULL : ValueConversions.of(reminder, cc.registryAccess());
         });
 
         expression.addContextFunction("inventory_size", -1, (c, t, lv) ->
