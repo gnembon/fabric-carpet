@@ -36,6 +36,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.tags.TagKey;
+import net.minecraft.util.context.ContextMap;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
@@ -50,6 +51,7 @@ import net.minecraft.world.item.crafting.ShapedRecipe;
 import net.minecraft.world.item.crafting.ShapelessRecipe;
 import net.minecraft.world.item.crafting.SingleItemRecipe;
 import net.minecraft.world.item.crafting.display.SlotDisplay;
+import net.minecraft.world.item.crafting.display.SlotDisplayContext;
 import net.minecraft.world.phys.Vec3;
 
 public class Inventories
@@ -121,7 +123,7 @@ public class Inventories
             }
             List<Value> recipesOutput = new ArrayList<>();
             RegistryAccess regs = cc.registryAccess();
-            SlotDisplay.ResolutionContext context = SlotDisplay.ResolutionContext.forLevel(cc.level());
+            ContextMap context = SlotDisplayContext.fromLevel(cc.level());
             for (Recipe<?> recipe : recipes)
             {
                 List<Value> results = new ArrayList<>();
