@@ -72,6 +72,7 @@ public abstract class LevelChunk_movableBEMixin extends ChunkAccess implements W
      */
     /* @Nullable */
     // todo update me to the new version
+    @Override
     public BlockState setBlockStateWithBlockEntity(BlockPos blockPos_1, BlockState newBlockState, BlockEntity newBlockEntity,
             boolean boolean_1)
     {
@@ -154,7 +155,7 @@ public abstract class LevelChunk_movableBEMixin extends ChunkAccess implements W
                     newBlockState.onPlace(this.level, blockPos_1, oldBlockState, boolean_1); //This can call setblockstate! (e.g. hopper does)
                 }
                 
-                this.unsaved = true; // shouldSave
+                markUnsaved();
                 return oldBlockState;
             }
         }

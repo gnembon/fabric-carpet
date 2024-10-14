@@ -1363,7 +1363,7 @@ public class WorldAccess
             {
                 WorldTools.forceChunkUpdate(pos, world);
             }
-            chunk.setUnsaved(true);
+            chunk.markUnsaved();
             return Value.TRUE;
         });
 
