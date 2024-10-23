@@ -190,6 +190,11 @@ public class PlayerCommand
         MinecraftServer server = context.getSource().getServer();
         PlayerList manager = server.getPlayerList();
 
+        if (EntityPlayerMPFake.isSpawningPlayer(playerName))
+        {
+            Messenger.m(context.getSource(), "r Player ", "rb " + playerName, "r  is currently logging on");
+            return true;
+        }
         if (manager.getPlayerByName(playerName) != null)
         {
             Messenger.m(context.getSource(), "r Player ", "rb " + playerName, "r  is already logged on");

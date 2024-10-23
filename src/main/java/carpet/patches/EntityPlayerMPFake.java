@@ -36,6 +36,7 @@ import net.minecraft.world.phys.Vec3;
 import carpet.fakes.ServerPlayerInterface;
 import carpet.utils.Messenger;
 
+import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -43,6 +44,8 @@ import java.util.concurrent.CompletableFuture;
 @SuppressWarnings("EntityConstructor")
 public class EntityPlayerMPFake extends ServerPlayer
 {
+    private static final Set<String> spawning = new HashSet<>();
+
     public Runnable fixStartingPosition = () -> {};
     public boolean isAShadow;
 
@@ -69,7 +72,21 @@ public class EntityPlayerMPFake extends ServerPlayer
             }
         }
         GameProfile finalGP = gameprofile;
-        fetchGameProfile(gameprofile.getName()).thenAcceptAsync(p -> {
+
+        // We need to mark this player as spawning so that we do not
+        // try to spawn another player with the name while the profile
+        // is being fetched - preventing multiple players spawning
+        String name = gameprofile.getName();
+        spawning.add(name);
+
+        fetchGameProfile(name).whenCompleteAsync((p, t) -> {
+            // Always remove the name, even if exception occurs
+            spawning.remove(name);
+            if (t != null)
+            {
+                return;
+            }
+
             GameProfile current = finalGP;
             if (p.isPresent())
             {
@@ -125,6 +142,11 @@ public class EntityPlayerMPFake extends ServerPlayer
     public static EntityPlayerMPFake respawnFake(MinecraftServer server, ServerLevel level, GameProfile profile, ClientInformation cli)
     {
         return new EntityPlayerMPFake(server, level, profile, cli, false);
+    }
+
+    public static boolean isSpawningPlayer(String username)
+    {
+        return spawning.contains(username);
     }
 
     private EntityPlayerMPFake(MinecraftServer server, ServerLevel worldIn, GameProfile profile, ClientInformation cli, boolean shadow)
