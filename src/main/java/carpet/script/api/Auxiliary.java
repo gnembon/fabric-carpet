@@ -208,14 +208,14 @@ public class Auxiliary
             {
                 for (ServerPlayer p : (world.players()))
                 {
-                    world.sendParticles(p, particle, true, vec.x, vec.y, vec.z, count,
+                    world.sendParticles(p, particle, true, true, vec.x, vec.y, vec.z, count,
                             spread, spread, spread, speed);
                 }
             }
             else
             {
                 world.sendParticles(player,
-                        particle, true, vec.x, vec.y, vec.z, count,
+                        particle, true, true, vec.x, vec.y, vec.z, count,
                         spread, spread, spread, speed);
             }
 
