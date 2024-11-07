@@ -13,13 +13,11 @@ import carpet.fakes.LivingEntityInterface;
 import carpet.fakes.MinecraftServerInterface;
 import carpet.fakes.MobEntityInterface;
 import carpet.fakes.RandomStateVisitorAccessor;
-import carpet.fakes.RecipeManagerInterface;
 import carpet.fakes.AbstractContainerMenuInterface;
 import carpet.fakes.ServerPlayerInterface;
 import carpet.fakes.ServerPlayerInteractionManagerInterface;
 import carpet.fakes.ServerWorldInterface;
 import carpet.fakes.SpawnHelperInnerInterface;
-import carpet.fakes.ThreadedAnvilChunkStorageInterface;
 import carpet.mixins.Objective_scarpetMixin;
 import carpet.mixins.PoiRecord_scarpetMixin;
 import carpet.mixins.Scoreboard_scarpetMixin;
@@ -38,10 +36,8 @@ import net.fabricmc.loader.api.ModContainer;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.arguments.blocks.BlockInput;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.RegistryAccess;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ChunkMap;
 import net.minecraft.server.level.DistanceManager;
@@ -62,11 +58,6 @@ import net.minecraft.world.entity.animal.horse.AbstractHorse;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.DataSlot;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.crafting.Ingredient;
-import net.minecraft.world.item.crafting.Recipe;
-import net.minecraft.world.item.crafting.RecipeManager;
-import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.NaturalSpawner;
@@ -83,7 +74,6 @@ import net.minecraft.world.scores.Objective;
 import net.minecraft.world.scores.Scoreboard;
 import net.minecraft.world.scores.criteria.ObjectiveCriteria;
 
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -105,11 +95,6 @@ public class Vanilla
     public static Map<String, Integer> ChunkMap_regenerateChunkRegion(ChunkMap chunkMap, List<ChunkPos> requestedChunks)
     {
         return Map.of(); //return ((ThreadedAnvilChunkStorageInterface) chunkMap).regenerateChunkRegion(requestedChunks);
-    }
-
-    public static List<Recipe<?>> RecipeManager_getAllMatching(RecipeManager recipeManager, RecipeType<?> type, ResourceLocation output, RegistryAccess registryAccess)
-    {
-        return ((RecipeManagerInterface) recipeManager).getAllMatching(type, output, registryAccess);
     }
 
     public static int NaturalSpawner_MAGIC_NUMBER()

@@ -26,6 +26,8 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.StringTag;
+import net.minecraft.network.protocol.game.ClientboundEntityPositionSyncPacket;
+import net.minecraft.network.protocol.game.ClientboundMoveEntityPacket;
 import net.minecraft.network.protocol.game.ClientboundSetExperiencePacket;
 import net.minecraft.network.protocol.game.ClientboundSetHeldSlotPacket;
 import net.minecraft.network.protocol.game.ClientboundSetPassengersPacket;
@@ -922,7 +924,7 @@ public class EntityValue extends Value
             }
             else
             {
-                ((ServerLevel) e.getCommandSenderWorld()).getChunkSource().broadcastAndSend(e, new ClientboundTeleportEntityPacket(e));
+                ((ServerLevel) e.getCommandSenderWorld()).getChunkSource().broadcastAndSend(e, ClientboundEntityPositionSyncPacket.of(e));
             }
         }
     }

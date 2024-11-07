@@ -1,6 +1,7 @@
 package carpet.mixins;
 
 import carpet.fakes.AbstractContainerMenuInterface;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.AbstractCraftingMenu;
@@ -15,7 +16,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public class AbstractCraftingMenu_scarpetMixin
 {
     @Inject(method = "handlePlacement",at = @At("HEAD"), cancellable = true)
-    private void selectRecipeCallback(boolean craftAll, boolean b, RecipeHolder<?> recipe, Inventory player, CallbackInfoReturnable<RecipeBookMenu.PostPlaceAction> cir) {
+    private void selectRecipeCallback(boolean craftAll, boolean b, RecipeHolder<?> recipe, ServerLevel serverLevel, Inventory player, CallbackInfoReturnable<RecipeBookMenu.PostPlaceAction> cir) {
         if(((AbstractContainerMenuInterface) this).callSelectRecipeListener((ServerPlayer) player.player ,recipe,craftAll))
             cir.setReturnValue(RecipeBookMenu.PostPlaceAction.NOTHING);
     }

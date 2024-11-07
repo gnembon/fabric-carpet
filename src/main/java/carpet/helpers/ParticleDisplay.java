@@ -18,7 +18,7 @@ public class ParticleDisplay
         if (accentParticle != null) player.serverLevel().sendParticles(
                 player,
                 accentParticle,
-                true,
+                true, true,
                 to.x, to.y, to.z, count,
                 spread, spread, spread, 0.0);
 
@@ -33,7 +33,7 @@ public class ParticleDisplay
             player.serverLevel().sendParticles(
                     player,
                     mainParticle,
-                    true,
+                    true, true,
                     delta.x+from.x, delta.y+from.y, delta.z+from.z, 1,
                     0.0, 0.0, 0.0, 0.0);
         }

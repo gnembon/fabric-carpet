@@ -261,7 +261,7 @@ public class FeatureGenerator
         }
         else
         {
-            StructureStart filledStructure = structure.generate(
+            StructureStart filledStructure = structure.generate(Holder.direct(structure), world.dimension(),
                     world.registryAccess(), generator, generator.getBiomeSource(), seed, world.getStructureManager(),
                     world.getSeed(), chunkPos, 0, world, structureBiomes::contains);
             if (filledStructure != null && filledStructure.isValid())
@@ -418,7 +418,7 @@ public class FeatureGenerator
         checks.set(true);
         try
         {
-            StructureStart start = structure.generate(world.registryAccess(), generator, generator.getBiomeSource(), world.getChunkSource().randomState(), world.getStructureManager(), world.getSeed(), new ChunkPos(pos), 0, world, b -> true);
+            StructureStart start = structure.generate(Holder.direct(structure), world.dimension(), world.registryAccess(), generator, generator.getBiomeSource(), world.getChunkSource().randomState(), world.getStructureManager(), world.getSeed(), new ChunkPos(pos), 0, world, b -> true);
             if (start == StructureStart.INVALID_START)
             {
                 return false;

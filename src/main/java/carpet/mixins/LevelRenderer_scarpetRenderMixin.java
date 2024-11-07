@@ -32,7 +32,7 @@ public class LevelRenderer_scarpetRenderMixin
     }
 
     @Inject(method = "addParticlesPass", at = @At("RETURN"))
-    private void renderScarpetThingsLate(FrameGraphBuilder frameGraphBuilder, Camera camera, LightTexture lightTexture, float f, FogParameters fogParameters, CallbackInfo ci)
+    private void renderScarpetThingsLate(FrameGraphBuilder frameGraphBuilder, Camera camera, float f, FogParameters fogParameters, CallbackInfo ci)
     {
         // in normal circumstances we want to render shapes at the very end so it appears correctly behind stuff.
         // we might actually not need to play with render hooks here.

@@ -3,6 +3,7 @@ package carpet.mixins;
 import carpet.fakes.EntityInterface;
 import net.minecraft.network.protocol.game.ServerboundChatCommandPacket;
 import net.minecraft.world.entity.player.Input;
+import net.minecraft.world.item.crafting.RecipeManager;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
@@ -255,7 +256,11 @@ public class ServerGamePacketListenerImpl_scarpetEventsMixin
     {
         if (PLAYER_CHOOSES_RECIPE.isNeeded())
         {
-            if(PLAYER_CHOOSES_RECIPE.onRecipeSelected(player, packet.getRecipe(), packet.isUseMaxItems())) ci.cancel();
+            RecipeManager.ServerDisplayInfo displayInfo = player.server.getRecipeManager().getRecipeFromDisplay(packet.recipe());
+            if (displayInfo == null) {
+                return;
+            }
+            if(PLAYER_CHOOSES_RECIPE.onRecipeSelected(player, displayInfo.parent().id().location(), packet.useMaxItems())) ci.cancel();
         }
     }
 

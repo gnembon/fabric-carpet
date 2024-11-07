@@ -784,7 +784,7 @@ public class ShapeDispatcher
                 }
 
                 Vec3 v = relativiseRender(p.level(), this.pos, 0);
-                p.serverLevel().sendParticles(p, particle, true, v.x, v.y, v.z, 1, 0.0, 0.0, 0.0, 0.0);
+                p.serverLevel().sendParticles(p, particle, true, true, v.x, v.y, v.z, 1, 0.0, 0.0, 0.0, 0.0);
             };
         }
 
@@ -1079,7 +1079,7 @@ public class ShapeDispatcher
                     ParticleOptions locparticledata = getParticleData(String.format(Locale.ROOT, "dust %.1f %.1f %.1f %.1f", fr, fg, fb, fa), p.level().registryAccess());
                     for (Vec3 v : getAlterPoint(p))
                     {
-                        p.serverLevel().sendParticles(p, locparticledata, true,
+                        p.serverLevel().sendParticles(p, locparticledata, true, true,
                                 v.x, v.y, v.z, 1,
                                 0.0, 0.0, 0.0, 0.0);
                     }
@@ -1306,7 +1306,7 @@ public class ShapeDispatcher
                     double x = radius * Mth.cos(theta) * Mth.cos(phi);
                     double y = radius * Mth.cos(theta) * Mth.sin(phi);
                     double z = radius * Mth.sin(theta);
-                    world.sendParticles(p, particle, true,
+                    world.sendParticles(p, particle, true, true,
                             x + ccx, y + ccy, z + ccz, 1,
                             0.0, 0.0, 0.0, 0.0);
                 }
@@ -1404,7 +1404,7 @@ public class ShapeDispatcher
                         double x = radius * Mth.cos(phi);
                         double y = d;
                         double z = radius * Mth.sin(phi);
-                        world.sendParticles(p, particle, true, x + ccx, y + ccy, z + ccz, 1, 0.0, 0.0, 0.0, 0.0);
+                        world.sendParticles(p, particle, true, true,x + ccx, y + ccy, z + ccz, 1, 0.0, 0.0, 0.0, 0.0);
                     }
                 }
                 else if (axis == Direction.Axis.X)
@@ -1416,7 +1416,7 @@ public class ShapeDispatcher
                         double x = d;
                         double y = radius * Mth.cos(phi);
                         double z = radius * Mth.sin(phi);
-                        world.sendParticles(p, particle, true, x + ccx, y + ccy, z + ccz, 1, 0.0, 0.0, 0.0, 0.0);
+                        world.sendParticles(p, particle, true, true, x + ccx, y + ccy, z + ccz, 1, 0.0, 0.0, 0.0, 0.0);
                     }
                 }
                 else  // Z
@@ -1428,7 +1428,7 @@ public class ShapeDispatcher
                         double x = radius * Mth.sin(phi);
                         double y = radius * Mth.cos(phi);
                         double z = d;
-                        world.sendParticles(p, particle, true, x + ccx, y + ccy, z + ccz, 1, 0.0, 0.0, 0.0, 0.0);
+                        world.sendParticles(p, particle, true, true, x + ccx, y + ccy, z + ccz, 1, 0.0, 0.0, 0.0, 0.0);
                     }
                 }
             };
@@ -2194,12 +2194,12 @@ public class ShapeDispatcher
         for (ServerPlayer player : playerList)
         {
             ServerLevel world = player.serverLevel();
-            world.sendParticles(player, particle, true,
+            world.sendParticles(player, particle, true, true,
                     (towards.x) / 2 + from.x, (towards.y) / 2 + from.y, (towards.z) / 2 + from.z, particles / 3,
                     towards.x / 6, towards.y / 6, towards.z / 6, 0.0);
-            world.sendParticles(player, particle, true,
+            world.sendParticles(player, particle, true, true,
                     from.x, from.y, from.z, 1, 0.0, 0.0, 0.0, 0.0);
-            world.sendParticles(player, particle, true,
+            world.sendParticles(player, particle, true, true,
                     to.x, to.y, to.z, 1, 0.0, 0.0, 0.0, 0.0);
             parts += particles / 3 + 2;
         }
@@ -2211,10 +2211,10 @@ public class ShapeDispatcher
             for (ServerPlayer player : playerList)
             {
                 ServerLevel world = player.serverLevel();
-                world.sendParticles(player, particle, true,
+                world.sendParticles(player, particle, true, true,
                         (towards.x) / center + from.x, (towards.y) / center + from.y, (towards.z) / center + from.z, particles / divider,
                         towards.x / dev, towards.y / dev, towards.z / dev, 0.0);
-                world.sendParticles(player, particle, true,
+                world.sendParticles(player, particle, true, true,
                         (towards.x) * (1.0 - 1.0 / center) + from.x, (towards.y) * (1.0 - 1.0 / center) + from.y, (towards.z) * (1.0 - 1.0 / center) + from.z, particles / divider,
                         towards.x / dev, towards.y / dev, towards.z / dev, 0.0);
             }
@@ -2242,7 +2242,7 @@ public class ShapeDispatcher
                 Vec3 at = from.add(towards.scale(rand.nextDouble()));
                 for (ServerPlayer player : players)
                 {
-                    player.serverLevel().sendParticles(player, particle, true,
+                    player.serverLevel().sendParticles(player, particle, true, true,
                             at.x, at.y, at.z, 1,
                             0.0, 0.0, 0.0, 0.0);
                     pcount++;
@@ -2263,7 +2263,7 @@ public class ShapeDispatcher
         {
             for (ServerPlayer player : players)
             {
-                player.serverLevel().sendParticles(player, particle, true,
+                player.serverLevel().sendParticles(player, particle, true, true,
                         delta.x + from.x, delta.y + from.y, delta.z + from.z, 1,
                         0.0, 0.0, 0.0, 0.0);
                 pcount++;
