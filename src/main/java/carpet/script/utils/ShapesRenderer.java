@@ -4,6 +4,7 @@ import carpet.script.CarpetScriptServer;
 import carpet.script.external.Carpet;
 import carpet.script.utils.shapes.ShapeDirection;
 
+import com.mojang.blaze3d.ProjectionType;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.BufferBuilder;
 import com.mojang.blaze3d.vertex.BufferUploader;
@@ -55,7 +56,7 @@ import org.joml.Matrix4fStack;
 
 public class ShapesRenderer
 {
-    private static final Matrix4f ORTHOMAT = new Matrix4f().m22(-1);
+    private static final Matrix4f ORTHOMAT = new Matrix4f().m22(-1);//need to check if it should be that, or a simple identity matrix.
     private final Map<ResourceKey<Level>, Long2ObjectOpenHashMap<RenderedShape<? extends ShapeDispatcher.ExpiringShape>>> shapes;
     private final Map<ResourceKey<Level>, Long2ObjectOpenHashMap<RenderedShape<? extends ShapeDispatcher.ExpiringShape>>> labels;
     private final Minecraft client;
@@ -182,7 +183,7 @@ public class ShapesRenderer
 
             //RenderSystem.applyModelViewMatrix();
             var ori=RenderSystem.getProjectionMatrix();
-            RenderSystem.setProjectionMatrix(ORTHOMAT,VertexSorting.ORTHOGRAPHIC_Z);
+            RenderSystem.setProjectionMatrix(ORTHOMAT, ProjectionType.ORTHOGRAPHIC);
 
             // lines
             RenderSystem.lineWidth(0.5F);
@@ -201,7 +202,7 @@ public class ShapesRenderer
                 }
             });
             RenderSystem.lineWidth(1.0F);
-            RenderSystem.setProjectionMatrix(ori,VertexSorting.DISTANCE_TO_ORIGIN);
+            RenderSystem.setProjectionMatrix(ori,ProjectionType.PERSPECTIVE);
             matrixStack.popMatrix();
 
         }
@@ -226,7 +227,7 @@ public class ShapesRenderer
             matrices.setIdentity();
             //RenderSystem.applyModelViewMatrix();
             var ori=RenderSystem.getProjectionMatrix();
-            RenderSystem.setProjectionMatrix(ORTHOMAT,VertexSorting.ORTHOGRAPHIC_Z);
+            RenderSystem.setProjectionMatrix(ORTHOMAT,ProjectionType.ORTHOGRAPHIC);
             labels.get(dimensionType).values().forEach(s -> {
                 if ((!s.shape.debug || entityBoxes) && s.shouldRender(dimensionType)&& s.shape.hud)
                 {
@@ -235,7 +236,7 @@ public class ShapesRenderer
             });
             matrices.popPose();
             //RenderSystem.applyModelViewMatrix();
-            RenderSystem.setProjectionMatrix(ori,VertexSorting.DISTANCE_TO_ORIGIN);
+            RenderSystem.setProjectionMatrix(ori,ProjectionType.PERSPECTIVE);
             matrixStack.popMatrix();
             //RenderSystem.applyModelViewMatrix();
         }
