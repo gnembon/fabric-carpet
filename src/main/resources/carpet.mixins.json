@@ -200,6 +200,7 @@
     "ClientPacketListener_customPacketsMixin",
     "DebugRenderer_scarpetRenderMixin",
     "LevelRenderer_scarpetRenderMixin",
+    "FluidRenderingMixin",
 
 
     "ClientCommonPacketListenerImpl_customPacketMixin"
