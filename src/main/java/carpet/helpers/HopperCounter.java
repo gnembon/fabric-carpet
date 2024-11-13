@@ -37,6 +37,7 @@ import java.util.EnumMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static java.util.Map.entry;
@@ -420,13 +421,10 @@ public class HopperCounter
         {
             for (Ingredient ingredient : r.placementInfo().ingredients())
             {
-                for (Holder<Item> stack : ingredient.items())
+                Optional<Holder<Item>> match = ingredient.items().filter(stack -> fromItem(stack.value(), registryAccess) != null).findFirst();
+                if (match.isPresent())
                 {
-                    TextColor cand = fromItem(stack.value(), registryAccess);
-                    if (cand != null)
-                    {
-                        return cand;
-                    }
+                    return fromItem(match.get().value(), registryAccess);
                 }
             }
         }
