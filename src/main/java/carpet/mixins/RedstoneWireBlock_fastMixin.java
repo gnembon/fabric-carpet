@@ -119,7 +119,7 @@ public abstract class RedstoneWireBlock_fastMixin implements RedstoneWireBlockIn
         fastUpdate(world_1, blockPos_1, blockState_1, o, sup);
     }
 
-    @Redirect(method = "onRemove", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/block/RedStoneWireBlock;updatePowerStrength(Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/redstone/Orientation;Z)V"))
+    @Redirect(method = "affectNeighborsAfterRemoval", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/block/RedStoneWireBlock;updatePowerStrength(Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/redstone/Orientation;Z)V"))
     private void redirectOnStateReplacedUpdate(RedStoneWireBlock self, Level world_1, BlockPos blockPos_1, BlockState blockState_1, Orientation o, boolean sup) {
         fastUpdate(world_1, blockPos_1, blockState_1, o, sup);
     }

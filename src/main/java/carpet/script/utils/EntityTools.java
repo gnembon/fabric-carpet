@@ -12,7 +12,7 @@ public class EntityTools
      */
     public static void genericJump(Entity e)
     {
-        if (!e.onGround() && !e.isInWaterOrBubble() && !e.isInLava())
+        if (!e.onGround() && !e.isInLiquid())
         {
             return;
         }

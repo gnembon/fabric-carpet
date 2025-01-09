@@ -15,12 +15,12 @@ public class StructureTemplate_fillUpdatesMixin
 {
     @Redirect( method = "placeInWorld", at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/world/level/ServerLevelAccessor;blockUpdated(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/Block;)V"
+            target =  "Lnet/minecraft/world/level/ServerLevelAccessor;updateNeighborsAt(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/Block;)V"
     ))
     private void skipUpdateNeighbours(ServerLevelAccessor serverWorldAccess, BlockPos pos, Block block)
     {
         if (!CarpetSettings.impendingFillSkipUpdates.get())
-            serverWorldAccess.blockUpdated(pos, block);
+            serverWorldAccess.updateNeighborsAt(pos, block);
     }
 
     @Redirect(method = "placeInWorld", at = @At(

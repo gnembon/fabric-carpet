@@ -17,6 +17,7 @@ import net.minecraft.world.phys.Vec3;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -147,11 +148,11 @@ public class Messenger
         Style previousStyle = previousMessage.getStyle();
         MutableComponent ret = previousMessage;
         previousMessage.setStyle(switch (desc.charAt(0)) {
-            case '?' -> previousStyle.withClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, message.substring(1)));
-            case '!' -> previousStyle.withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, message.substring(1)));
-            case '^' -> previousStyle.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, c(message.substring(1))));
-            case '@' -> previousStyle.withClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, message.substring(1)));
-            case '&' -> previousStyle.withClickEvent(new ClickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD, message.substring(1)));
+            case '?' -> previousStyle.withClickEvent(new ClickEvent.SuggestCommand(message.substring(1)));
+            case '!' -> previousStyle.withClickEvent(new ClickEvent.RunCommand(message.substring(1)));
+            case '^' -> previousStyle.withHoverEvent(new HoverEvent.ShowText(c(message.substring(1))));
+            case '@' -> previousStyle.withClickEvent(new ClickEvent.OpenUrl(URI.create(message.substring(1))));
+            case '&' -> previousStyle.withClickEvent(new ClickEvent.CopyToClipboard(message.substring(1)));
             default  -> { // Create a new component
                 ret = Component.literal(str);
                 ret.setStyle(parseStyle(desc));

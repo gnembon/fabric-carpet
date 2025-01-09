@@ -4,7 +4,7 @@ import carpet.CarpetSettings;
 import carpet.fakes.BiomeInterface;
 import carpet.fakes.BlockPredicateInterface;
 import carpet.fakes.BlockStateArgumentInterface;
-import carpet.fakes.ChunkTicketManagerInterface;
+import carpet.fakes.TicketsFetcherInterface;
 import carpet.fakes.CommandDispatcherInterface;
 import carpet.fakes.EntityInterface;
 import carpet.fakes.InventoryBearerInterface;
@@ -122,9 +122,9 @@ public class Vanilla
         return ((ServerWorldInterface) world).getWorldPropertiesCM();
     }
 
-    public static Long2ObjectOpenHashMap<SortedArraySet<Ticket<?>>> ChunkTicketManager_getTicketsByPosition(DistanceManager ticketManager)
+    public static Long2ObjectOpenHashMap<List<Ticket>> ChunkTicketManager_getTicketsByPosition(DistanceManager ticketManager)
     {
-        return ((ChunkTicketManagerInterface) ticketManager).getTicketsByPosition();
+        return ((TicketsFetcherInterface) ticketManager).getTicketsByPosition();
     }
 
     public static DensityFunction.Visitor RandomState_getVisitor(RandomState randomState)

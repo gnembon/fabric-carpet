@@ -13,7 +13,6 @@ accessible class net/minecraft/world/level/block/entity/SculkSensorBlockEntity$V
 accessible method net/minecraft/world/level/border/WorldBorder getListeners ()Ljava/util/List;
 accessible method net/minecraft/world/level/redstone/DefaultRedstoneWireEvaluator calculateTargetStrength (Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;)I
 
-accessible method net/minecraft/server/level/DistanceManager purgeStaleTickets ()V
 #cause I don't want to deal with the interfaces until stuff is stable
 accessible method net/minecraft/world/level/block/entity/SkullBlockEntity fetchGameProfile (Ljava/lang/String;)Ljava/util/concurrent/CompletableFuture;
 

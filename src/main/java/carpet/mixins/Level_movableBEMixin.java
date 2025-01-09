@@ -33,16 +33,12 @@ public abstract class Level_movableBEMixin implements LevelInterface, LevelAcces
     
     @Shadow
     public abstract void sendBlockUpdated(BlockPos var1, BlockState var2, BlockState var3, int var4);
-    
-    @Shadow
-    public abstract void updateNeighborsAt(BlockPos blockPos_1, Block block_1);
-    
-    @Shadow
-    public abstract void onBlockStateChange(BlockPos blockPos_1, BlockState blockState_1, BlockState blockState_2);
 
     @Shadow public abstract void updateNeighbourForOutputSignal(BlockPos pos, Block block);
 
     @Shadow public abstract boolean isDebug();
+
+    @Shadow public abstract void updatePOIOnBlockStateChange(final BlockPos blockPos, final BlockState blockState, final BlockState blockState2);
 
     /**
      * @author 2No2Name
@@ -57,7 +53,7 @@ public abstract class Level_movableBEMixin implements LevelInterface, LevelAcces
         BlockState blockState_2;
         if (newBlockEntity != null && block_1 instanceof EntityBlock)
         {
-            blockState_2 = ((WorldChunkInterface) worldChunk_1).setBlockStateWithBlockEntity(blockPos_1, blockState_1, newBlockEntity, (int_1 & 64) != 0);
+            blockState_2 = ((WorldChunkInterface) worldChunk_1).setBlockStateWithBlockEntity(blockPos_1, blockState_1, newBlockEntity, int_1);
             if (newBlockEntity instanceof LidBlockEntity)
             {
                 scheduleTick(blockPos_1, block_1, 5);
@@ -65,56 +61,46 @@ public abstract class Level_movableBEMixin implements LevelInterface, LevelAcces
         }
         else
         {
-            blockState_2 = worldChunk_1.setBlockState(blockPos_1, blockState_1, (int_1 & 64) != 0);
+            blockState_2 = worldChunk_1.setBlockState(blockPos_1, blockState_1, int_1);
         }
 
         if (blockState_2 == null)
         {
             return false;
         }
-        else
+
+        BlockState blockState_3 = this.getBlockState(blockPos_1);
+
+        if (blockState_3 == blockState_1)
         {
-            BlockState blockState_3 = this.getBlockState(blockPos_1);
-
-            if (blockState_3 != blockState_2 && (blockState_3.getLightBlock() != blockState_2.getLightBlock() || blockState_3.getLightEmission() != blockState_2.getLightEmission() || blockState_3.useShapeForLightOcclusion() || blockState_2.useShapeForLightOcclusion()))
+            if (blockState_2 != blockState_3)
             {
-                ProfilerFiller profiler = Profiler.get();
-                profiler.push("queueCheckLight");
-                this.getChunkSource().getLightEngine().checkBlock(blockPos_1);
-                profiler.pop();
+                this.setBlocksDirty(blockPos_1, blockState_2, blockState_3);
             }
 
-            if (blockState_3 == blockState_1)
+            if ((int_1 & 2) != 0 && (!this.isClientSide || (int_1 & 4) == 0) && (this.isClientSide || worldChunk_1.getFullStatus() != null && worldChunk_1.getFullStatus().isOrAfter(FullChunkStatus.BLOCK_TICKING)))
             {
-                if (blockState_2 != blockState_3)
-                {
-                    this.setBlocksDirty(blockPos_1, blockState_2, blockState_3);
-                }
-
-                if ((int_1 & 2) != 0 && (!this.isClientSide || (int_1 & 4) == 0) && (this.isClientSide || worldChunk_1.getFullStatus() != null && worldChunk_1.getFullStatus().isOrAfter(FullChunkStatus.BLOCK_TICKING)))
-                {
-                    this.sendBlockUpdated(blockPos_1, blockState_2, blockState_1, int_1);
-                }
-
-                if (!this.isClientSide && (int_1 & 1) != 0)
-                {
-                    this.updateNeighborsAt(blockPos_1, blockState_2.getBlock());
-                    if (blockState_1.hasAnalogOutputSignal())
-                    {
-                        updateNeighbourForOutputSignal(blockPos_1, block_1);
-                    }
-                }
-
-                if ((int_1 & 16) == 0)
-                {
-                    int int_2 = int_1 & -34;
-                    blockState_2.updateIndirectNeighbourShapes(this, blockPos_1, int_2); // prepare
-                    blockState_1.updateNeighbourShapes(this, blockPos_1, int_2); // updateNeighbours
-                    blockState_1.updateIndirectNeighbourShapes(this, blockPos_1, int_2); // prepare
-                }
-                this.onBlockStateChange(blockPos_1, blockState_2, blockState_3);
+                this.sendBlockUpdated(blockPos_1, blockState_2, blockState_1, int_1);
             }
-            return true;
+
+            if (!this.isClientSide && (int_1 & 1) != 0)
+            {
+                this.updateNeighborsAt(blockPos_1, blockState_2.getBlock());
+                if (blockState_1.hasAnalogOutputSignal())
+                {
+                    updateNeighbourForOutputSignal(blockPos_1, block_1);
+                }
+            }
+
+            if ((int_1 & 16) == 0)
+            {
+                int int_2 = int_1 & -34;
+                blockState_2.updateIndirectNeighbourShapes(this, blockPos_1, int_2); // prepare
+                blockState_1.updateNeighbourShapes(this, blockPos_1, int_2); // updateNeighbours
+                blockState_1.updateIndirectNeighbourShapes(this, blockPos_1, int_2); // prepare
+            }
+            updatePOIOnBlockStateChange(blockPos_1, blockState_2, blockState_3);
         }
+        return true;
     }
 }

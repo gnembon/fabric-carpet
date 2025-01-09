@@ -23,11 +23,11 @@ public abstract class Level_fillUpdatesMixin
 
     @Redirect(method = "setBlock(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;II)Z", at = @At( //setBlockState main
             value = "INVOKE",
-            target = "Lnet/minecraft/world/level/Level;blockUpdated(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/Block;)V"
+            target  = "Lnet/minecraft/world/level/Level;updateNeighborsAt(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/Block;)V"
     ))
     private void updateNeighborsMaybe(Level world, BlockPos blockPos, Block block)
     {
-        if (!CarpetSettings.impendingFillSkipUpdates.get()) world.blockUpdated(blockPos, block);
+        if (!CarpetSettings.impendingFillSkipUpdates.get()) world.updateNeighborsAt(blockPos, block);
     }
 
 }

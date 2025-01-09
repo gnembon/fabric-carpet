@@ -14,10 +14,10 @@ public class SetBlockCommand_fillUpdatesMixin
 {
     @Redirect(method = "setBlock", at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/server/level/ServerLevel;blockUpdated(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/Block;)V"
+            target =  "Lnet/minecraft/server/level/ServerLevel;updateNeighborsAt(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/Block;)V"
     ))
     private static void conditionalUpdating(ServerLevel serverWorld, BlockPos blockPos_1, Block block_1)
     {
-        if (CarpetSettings.fillUpdates) serverWorld.blockUpdated(blockPos_1, block_1);
+        if (CarpetSettings.fillUpdates) serverWorld.updateNeighborsAt(blockPos_1, block_1);
     }
 }

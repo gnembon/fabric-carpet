@@ -8,7 +8,7 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.util.random.WeightedRandomList;
+import net.minecraft.util.random.WeightedList;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.level.StructureManager;
@@ -32,28 +32,28 @@ public class SpawnOverrides {
 
     static {
         addOverride(() -> CarpetSettings.huskSpawningInTemples, MobCategory.MONSTER, BuiltinStructures.DESERT_PYRAMID, StructureSpawnOverride.BoundingBoxType.STRUCTURE,
-                WeightedRandomList.create(new MobSpawnSettings.SpawnerData(EntityType.HUSK, 1, 1, 1))
+                WeightedList.of(new MobSpawnSettings.SpawnerData(EntityType.HUSK, 1, 1))
         );
         addOverride(() -> CarpetSettings.shulkerSpawningInEndCities, MobCategory.MONSTER, BuiltinStructures.END_CITY, StructureSpawnOverride.BoundingBoxType.PIECE,
-                WeightedRandomList.create(new MobSpawnSettings.SpawnerData(EntityType.SHULKER, 10, 4, 4))
+                WeightedList.of(new MobSpawnSettings.SpawnerData(EntityType.SHULKER, 4, 4))
         );
         addOverride(() -> CarpetSettings.piglinsSpawningInBastions, MobCategory.MONSTER, BuiltinStructures.BASTION_REMNANT, StructureSpawnOverride.BoundingBoxType.PIECE,
-                WeightedRandomList.create(
-                        new MobSpawnSettings.SpawnerData(EntityType.PIGLIN_BRUTE, 5, 1, 2),
-                        new MobSpawnSettings.SpawnerData(EntityType.PIGLIN, 10, 2, 4),
-                        new MobSpawnSettings.SpawnerData(EntityType.HOGLIN, 2, 1, 2)
-                )
+                WeightedList.<MobSpawnSettings.SpawnerData>builder()
+                        .add(new MobSpawnSettings.SpawnerData(EntityType.PIGLIN_BRUTE,1, 2), 5)
+                        .add(new MobSpawnSettings.SpawnerData(EntityType.PIGLIN, 2, 4), 10)
+                        .add(new MobSpawnSettings.SpawnerData(EntityType.HOGLIN, 1, 2), 2)
+                        .build()
         );
 
     }
 
     public static void addOverride(BooleanSupplier when, MobCategory cat, ResourceKey<Structure> poo,
-                                   StructureSpawnOverride.BoundingBoxType type, WeightedRandomList<MobSpawnSettings.SpawnerData> spawns) {
+                                   StructureSpawnOverride.BoundingBoxType type, WeightedList<MobSpawnSettings.SpawnerData> spawns) {
         carpetOverrides.put(Pair.of(cat, poo), Pair.of(when, new StructureSpawnOverride(type, spawns)));
     }
 
-    public static WeightedRandomList<MobSpawnSettings.SpawnerData> test(StructureManager structureFeatureManager, LongSet foo,
-                                                                        MobCategory cat, Structure confExisting, BlockPos where) {
+    public static WeightedList<MobSpawnSettings.SpawnerData> test(StructureManager structureFeatureManager, LongSet foo,
+                                                                  MobCategory cat, Structure confExisting, BlockPos where) {
         ResourceLocation resource = structureFeatureManager.registryAccess().lookupOrThrow(Registries.STRUCTURE).getKey(confExisting);
         ResourceKey<Structure> key = ResourceKey.create(Registries.STRUCTURE, resource);
         final Pair<BooleanSupplier, StructureSpawnOverride> spawnData = carpetOverrides.get(Pair.of(cat, key));

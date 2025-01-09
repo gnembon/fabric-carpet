@@ -46,7 +46,6 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import carpet.fakes.ChunkHolderInterface;
-import carpet.fakes.ChunkTicketManagerInterface;
 import carpet.fakes.ServerLightingProviderInterface;
 import carpet.fakes.ThreadedAnvilChunkStorageInterface;
 import carpet.script.utils.WorldTools;
@@ -165,7 +164,6 @@ public abstract class ChunkMap_scarpetChunkCreationMixin implements ThreadedAnvi
             this.world.getServer().execute(() -> CHUNK_LOADED.onChunkEvent(this.world, chpos, generated));
         }
     }
-     */
 
     @Unique
     private void addTicket(ChunkPos pos, ChunkStatus status)
@@ -180,7 +178,6 @@ public abstract class ChunkMap_scarpetChunkCreationMixin implements ThreadedAnvi
     }
 
 
-    /*
     @Unique
     private void addRelightTicket(ChunkPos pos)
     {
@@ -195,7 +192,7 @@ public abstract class ChunkMap_scarpetChunkCreationMixin implements ThreadedAnvi
                 () -> "release relight ticket " + pos
         ));
     }
-     */
+
     @Unique
     private void tickTicketManager()
     {
@@ -220,7 +217,7 @@ public abstract class ChunkMap_scarpetChunkCreationMixin implements ThreadedAnvi
     }
 
 
-    /*
+
     @Unique
     private Set<ChunkPos> loadExistingChunksFromDisk(Set<ChunkPos> requestedChunks)
     {
