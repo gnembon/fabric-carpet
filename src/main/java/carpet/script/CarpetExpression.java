@@ -141,4 +141,41 @@ public class CarpetExpression
             throw new CarpetExpressionException("Your thoughts are too deep", null);
         }
     }
+
+    public Value explain(ScriptHost host, BlockPos pos)
+    {
+        // convert to explain
+        CarpetScriptServer scriptServer = (CarpetScriptServer) host.scriptServer();
+        try
+        {
+            Context context = new CarpetContext(host, source, origin).
+                    with("x", (c, t) -> new NumericValue(pos.getX() - origin.getX()).bindTo("x")).
+                    with("y", (c, t) -> new NumericValue(pos.getY() - origin.getY()).bindTo("y")).
+                    with("z", (c, t) -> new NumericValue(pos.getZ() - origin.getZ()).bindTo("z"));
+            Entity e = source.getEntity();
+            if (e == null)
+            {
+                Value nullPlayer = Value.NULL.reboundedTo("p");
+                context.with("p", (cc, tt) -> nullPlayer);
+            }
+            else
+            {
+                Value playerValue = new EntityValue(e).bindTo("p");
+                context.with("p", (cc, tt) -> playerValue);
+            }
+            return scriptServer.events.handleEvents.getWhileDisabled(() -> this.expr.explain(context));
+        }
+        catch (ExpressionException e)
+        {
+            throw new CarpetExpressionException(e.getMessage(), e.stack);
+        }
+        catch (ArithmeticException ae)
+        {
+            throw new CarpetExpressionException("Math doesn't compute... " + ae.getMessage(), null);
+        }
+        catch (StackOverflowError soe)
+        {
+            throw new CarpetExpressionException("Your thoughts are too deep", null);
+        }
+    }
 }

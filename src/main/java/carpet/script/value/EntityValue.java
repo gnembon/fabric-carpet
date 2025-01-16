@@ -911,7 +911,7 @@ public class EntityValue extends Value
         }
         else
         {
-            e.moveTo(x, y, z, yaw, pitch);
+            e.snapTo(x, y, z, yaw, pitch);
             // we were sending to players for not-living entites, that were untracked. Living entities should be tracked.
             //((ServerWorld) e.getEntityWorld()).getChunkManager().sendToNearbyPlayers(e, new EntityS2CPacket.(e));
             if (e instanceof LivingEntity le)

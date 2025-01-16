@@ -29,14 +29,14 @@ public abstract class StructureBlockEntity_limitsMixin
     }
 
     @ModifyArg(
-            method = "saveStructure(Z)Z",
+            method = "saveStructure(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/resources/ResourceLocation;Lnet/minecraft/core/BlockPos;Lnet/minecraft/core/Vec3i;ZLjava/lang/String;Z)Z",
             at = @At(
                     value = "INVOKE",
                     target = "Lnet/minecraft/world/level/levelgen/structure/templatesystem/StructureTemplate;fillFromWorld(Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/core/Vec3i;ZLnet/minecraft/world/level/block/Block;)V"
             ),
             index = 4
     )
-    private Block ignoredBlock(Block original) {
+    private static Block ignoredBlock(Block original) {
         return CarpetSettings.structureBlockIgnoredBlock;
     }
 }

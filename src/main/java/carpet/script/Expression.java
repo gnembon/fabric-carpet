@@ -1251,6 +1251,12 @@ public class Expression
         return extractOp(optimizeOnlyContext, root, Context.Type.NONE);
     }
 
+    public Value explain(Context context)
+    {
+        //todo convert to explain
+        return Value.NULL;
+    }
+
     private int treeSize(ExpressionNode node)
     {
         return node.op instanceof LazyValue.ContextFreeLazyValue ? 1 : node.args.stream().mapToInt(this::treeSize).sum() + 1;

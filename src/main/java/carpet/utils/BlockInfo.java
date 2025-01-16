@@ -76,7 +76,7 @@ public class BlockInfo
     {
         PathfinderMob creature = new ZombifiedPiglin(EntityType.ZOMBIFIED_PIGLIN, worldIn);
         creature.finalizeSpawn(worldIn, worldIn.getCurrentDifficultyAt(pos), EntitySpawnReason.NATURAL, null);
-        creature.moveTo(pos, 0.0F, 0.0F);
+        creature.snapTo(pos, 0.0F, 0.0F);
         RandomStrollGoal wander = new RandomStrollGoal(creature, 0.8D);
         int success = 0;
         for (int i=0; i<1000; i++)

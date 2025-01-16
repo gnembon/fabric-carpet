@@ -56,7 +56,7 @@ public class PerimeterInfoCommand
         {
             nbttagcompound.putString("id", mobId);
             Entity baseEntity = EntityType.loadEntityRecursive(nbttagcompound, source.getLevel(), EntitySpawnReason.COMMAND, (entity_1x) -> {
-                entity_1x.moveTo(new BlockPos(pos.getX(), source.getLevel().getMinY()-10, pos.getZ()), entity_1x.getYRot(), entity_1x. getXRot());
+                entity_1x.snapTo(new BlockPos(pos.getX(), source.getLevel().getMinY()-10, pos.getZ()), entity_1x.getYRot(), entity_1x. getXRot());
                 return !source.getLevel().addWithUUID(entity_1x) ? null : entity_1x;
             });
             if (!(baseEntity instanceof  Mob))

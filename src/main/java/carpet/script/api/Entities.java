@@ -143,7 +143,7 @@ public class Entities
 
             ServerLevel serverWorld = cc.level();
             Entity entity = EntityType.loadEntityRecursive(tag, serverWorld, EntitySpawnReason.COMMAND, e -> {
-                e.moveTo(vec3d.x, vec3d.y, vec3d.z, e.getYRot(), e.getXRot());
+                e.snapTo(vec3d.x, vec3d.y, vec3d.z, e.getYRot(), e.getXRot());
                 return e;
             });
             if (entity == null)

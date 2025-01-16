@@ -180,7 +180,7 @@ public class PerimeterDiagnostics
 
         if (SpawnPlacements.isSpawnPositionOk(sle.type(), worldServer, pos))
         {
-            el.moveTo(pos.getX() + 0.5F, pos.getY(), pos.getZ()+0.5F, 0.0F, 0.0F);
+            el.snapTo(pos.getX() + 0.5F, pos.getY(), pos.getZ()+0.5F, 0.0F, 0.0F);
             return el.checkSpawnObstruction(worldServer) && el.checkSpawnRules(worldServer, EntitySpawnReason.NATURAL) &&
                     SpawnPlacements.checkSpawnRules(el.getType(),(ServerLevel)el.getCommandSenderWorld(), EntitySpawnReason.NATURAL, el.blockPosition(), el.getCommandSenderWorld().random) &&
                     worldServer.noCollision(el); // check collision rules once they stop fiddling with them after 1.14.1

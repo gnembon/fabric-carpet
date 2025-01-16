@@ -12,6 +12,7 @@ import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelHeightAccessor;
 import net.minecraft.world.level.biome.Biome;
+import net.minecraft.world.level.block.BaseRailBlock;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.EntityBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -81,7 +82,7 @@ public abstract class LevelChunk_movableBEMixin extends ChunkAccess implements W
     public BlockState setBlockStateWithBlockEntity(BlockPos blockPos_1, BlockState newBlockState, BlockEntity newBlockEntity,
             int flags)
     {
-        boolean boolean_1 = (flags & 64) != 0;
+
         int y = blockPos_1.getY();
 
         LevelChunkSection chunkSection = this.getSection(this.getSectionIndex(y));
@@ -122,37 +123,35 @@ public abstract class LevelChunk_movableBEMixin extends ChunkAccess implements W
             profiler.pop();
         }
 
-        boolean hadBlockEntity = oldBlockState.hasBlockEntity();
         boolean blockChanged = !oldBlockState.is(newBlock);
-
+        boolean boolean_1 = (flags & 64) != 0; // moved by pistons
         boolean sideEffects = (flags & Block.UPDATE_SKIP_BLOCK_ENTITY_SIDEEFFECTS) == 0;
 
-        if (blockChanged) {
+        if (blockChanged && oldBlockState.hasBlockEntity()) {
             if (level instanceof ServerLevel serverLevel && !(oldBlockState.getBlock() instanceof MovingPistonBlock)) {
-                if (hadBlockEntity && sideEffects) {
-                    final BlockEntity blockEntity = level.getBlockEntity(blockPos_1);
+                if (sideEffects) {
+                    BlockEntity blockEntity = level.getBlockEntity(blockPos_1);
                     if (blockEntity != null) {
-                        blockEntity.preRemoveSideEffects(blockPos_1, oldBlockState, boolean_1);
+                        blockEntity.preRemoveSideEffects(blockPos_1, oldBlockState);
                     }
                 }
+            }
+            removeBlockEntity(blockPos_1);
+        }
 
-                if (hadBlockEntity) {
-                    removeBlockEntity(blockPos_1);
-                }
-                if ((flags & Block.UPDATE_NEIGHBORS) != 0) { // scary change // so many other places that used to call this regardless if the UPDATE_NEIGHBORS flag was set
+        if (blockChanged || newBlock instanceof BaseRailBlock)
+        {
+            if (level instanceof ServerLevel serverLevel && !(oldBlockState.getBlock() instanceof MovingPistonBlock))
+            {
+                if ((flags & Block.UPDATE_NEIGHBORS) != 0 || boolean_1)
+                {
                     oldBlockState.affectNeighborsAfterRemoval(serverLevel, blockPos_1, boolean_1);
                 }
-            } else if (hadBlockEntity) {
-                removeBlockEntity(blockPos_1);
             }
         }
 
 
-
-
-
-
-        if (chunkSection.getBlockState(x, chunkY, z).getBlock() != newBlock)
+                if (chunkSection.getBlockState(x, chunkY, z).getBlock() != newBlock)
         {
             return null;
         }

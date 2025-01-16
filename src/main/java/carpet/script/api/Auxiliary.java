@@ -401,7 +401,7 @@ public class Auxiliary
                     yoffset = -armorstand.getBbHeight() + 0.3;
                 }
             }
-            armorstand.moveTo(
+            armorstand.snapTo(
                     pointLocator.vec.x,
                     //pointLocator.vec.y - ((!interactable && targetBlock == null)?0.41f:((targetBlock==null)?(armorstand.getHeight()+0.41):(armorstand.getHeight()-0.3))),
                     pointLocator.vec.y + yoffset,

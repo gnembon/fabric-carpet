@@ -27,13 +27,13 @@ public class LevelChunk_fillUpdatesMixin
 
     @Redirect(method = "setBlockState", at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/world/level/block/entity/BlockEntity;preRemoveSideEffects(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;Z)V"
+            target = "Lnet/minecraft/world/level/block/entity/BlockEntity;preRemoveSideEffects(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;)V"
     ))
-    private void onPreRemoveSideEffects(BlockEntity blockEntity, BlockPos blockPos_1, BlockState blockState_1, boolean boolean_1)
+    private void onPreRemoveSideEffects(BlockEntity blockEntity, BlockPos blockPos_1, BlockState blockState_1)
     {
         if (!CarpetSettings.impendingFillSkipUpdates.get())
         {
-            blockEntity.preRemoveSideEffects(blockPos_1, blockState_1, boolean_1);
+            blockEntity.preRemoveSideEffects(blockPos_1, blockState_1);
         }
     }
 

@@ -439,7 +439,7 @@ public class SpawnReporter
                         {
                             float f = x + 0.5F;
                             float f1 = z + 0.5F;
-                            mob.moveTo(f, y, f1, worldIn.random.nextFloat() * 360.0F, 0.0F);
+                            mob.snapTo(f, y, f1, worldIn.random.nextFloat() * 360.0F, 0.0F);
                             fits = worldIn.noCollision(mob);
                             EntityType<?> etype = mob.getType();
 

@@ -5,6 +5,7 @@ import carpet.script.external.Vanilla;
 import carpet.script.utils.AppStoreManager;
 import carpet.script.exception.CarpetExpressionException;
 import carpet.script.value.FunctionValue;
+import carpet.script.value.NumericValue;
 import carpet.script.value.Value;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
@@ -358,6 +359,12 @@ public class ScriptCommand
                             boolean success = ss(cc).uninstallApp(cc.getSource(), StringArgumentType.getString(cc, "app"));
                             return success ? 1 : 0;
                         }));
+        LiteralArgumentBuilder<CommandSourceStack> x = literal("explain").
+                requires(Vanilla::ServerPlayer_canScriptACE).
+                then(argument("expr", StringArgumentType.greedyString()).suggests(ScriptCommand::suggestCode).
+                        executes((cc) -> explain(
+                                cc,
+                                StringArgumentType.getString(cc, "expr"))));
 
         dispatcher.register(literal("script").
                 requires(Vanilla::ServerPlayer_canScriptGeneral).
@@ -533,6 +540,19 @@ public class ScriptCommand
         return handleCall(source, host, () -> {
             CarpetExpression ex = new CarpetExpression(host.main, expr, source, new BlockPos(0, 0, 0));
             return ex.scriptRunCommand(host, BlockPos.containing(source.getPosition()));
+        });
+    }
+
+    private static int explain(CommandContext<CommandSourceStack> context, String expr) throws CommandSyntaxException
+    {
+        CommandSourceStack source = context.getSource();
+        CarpetScriptHost host = getHost(context);
+        return handleCall(source, host, () -> {
+            CarpetExpression ex = new CarpetExpression(host.main, expr, source, new BlockPos(0, 0, 0));
+            ex.explain(host, BlockPos.containing(source.getPosition()));
+            Carpet.Messenger_message(source, "w Expression: ", "wb " + expr);
+            Carpet.Messenger_message(source, "w Tokens: ", "wb " + ex.getExpr().toString());
+            return NumericValue.ONE;
         });
     }
 
