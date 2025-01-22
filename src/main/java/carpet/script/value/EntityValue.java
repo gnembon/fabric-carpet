@@ -301,7 +301,7 @@ public class EntityValue extends Value
                     EntityType.ARROW, EntityType.DRAGON_FIREBALL, EntityType.FIREWORK_ROCKET,
                     EntityType.FIREBALL, EntityType.LLAMA_SPIT, EntityType.SMALL_FIREBALL,
                     EntityType.SNOWBALL, EntityType.SPECTRAL_ARROW, EntityType.EGG,
-                    EntityType.ENDER_PEARL, EntityType.EXPERIENCE_BOTTLE, EntityType.POTION,
+                    EntityType.ENDER_PEARL, EntityType.EXPERIENCE_BOTTLE, EntityType.SPLASH_POTION, EntityType.LINGERING_POTION,
                     EntityType.TRIDENT, EntityType.WITHER_SKULL, EntityType.FISHING_BOBBER, EntityType.SHULKER_BULLET
             );
             Set<EntityType<?>> deads = Set.of(
