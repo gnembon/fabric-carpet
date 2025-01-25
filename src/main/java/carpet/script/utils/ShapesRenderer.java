@@ -1,9 +1,10 @@
-package carpet.script.utils;
+package carpet.script.utils; 
 
 import carpet.script.CarpetScriptServer;
 import carpet.script.external.Carpet;
 import carpet.script.utils.shapes.ShapeDirection;
 
+import com.mojang.blaze3d.ProjectionType;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.BufferBuilder;
 import com.mojang.blaze3d.vertex.BufferUploader;
@@ -12,7 +13,9 @@ import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.Tesselator;
 import com.mojang.blaze3d.vertex.VertexFormat;
+import com.mojang.blaze3d.vertex.VertexSorting;
 import com.mojang.blaze3d.vertex.VertexFormat.Mode;
+import com.mojang.datafixers.util.Pair;
 import com.mojang.math.Axis;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 
@@ -53,9 +56,12 @@ import org.joml.Matrix4fStack;
 
 public class ShapesRenderer
 {
+    private static final Matrix4f ORTHOMAT = new Matrix4f().m22(-1);//need to check if it should be that, or a simple identity matrix.
     private final Map<ResourceKey<Level>, Long2ObjectOpenHashMap<RenderedShape<? extends ShapeDispatcher.ExpiringShape>>> shapes;
     private final Map<ResourceKey<Level>, Long2ObjectOpenHashMap<RenderedShape<? extends ShapeDispatcher.ExpiringShape>>> labels;
     private final Minecraft client;
+
+    public static ThreadLocal<Pair<PoseStack.Pose, BlockPos>> DrawingShape = new ThreadLocal<>();
 
     private final Map<String, BiFunction<Minecraft, ShapeDispatcher.ExpiringShape, RenderedShape<? extends ShapeDispatcher.ExpiringShape>>> renderedShapes
             = new HashMap<>()
@@ -106,7 +112,7 @@ public class ShapesRenderer
         labels = new HashMap<>();
     }
 
-    public void render(Matrix4f modelViewMatrix, Camera camera, float partialTick)
+    public void render(int passid, Camera camera, float partialTick)
     {
         Runnable token = Carpet.startProfilerSection("Scarpet client");
         // posestack is not needed anymore - left as TODO to cleanup later
@@ -156,7 +162,7 @@ public class ShapesRenderer
             // lines
             RenderSystem.lineWidth(0.5F);
             shapes.get(dimensionType).values().forEach(s -> {
-                if ((!s.shape.debug || entityBoxes) && s.shouldRender(dimensionType))
+                if ((!s.shape.debug || entityBoxes) && s.shouldRender(dimensionType) && !s.shape.hud)
                 {
                     s.renderLines(matrices, tesselator, cameraX, cameraY, cameraZ, partialTick);
                 }
@@ -164,12 +170,39 @@ public class ShapesRenderer
             // faces
             RenderSystem.lineWidth(0.1F);
             shapes.get(dimensionType).values().forEach(s -> {
-                if ((!s.shape.debug || entityBoxes) && s.shouldRender(dimensionType))
+                if ((!s.shape.debug || entityBoxes) && s.shouldRender(dimensionType) && !s.shape.hud)
                 {
                     s.renderFaces(tesselator, cameraX, cameraY, cameraZ, partialTick);
                 }
             });
             RenderSystem.lineWidth(1.0F);
+
+            matrixStack.popMatrix();
+            matrixStack.pushMatrix();
+            matrixStack.identity();
+
+            //RenderSystem.applyModelViewMatrix();
+            var ori=RenderSystem.getProjectionMatrix();
+            RenderSystem.setProjectionMatrix(ORTHOMAT, ProjectionType.ORTHOGRAPHIC);
+
+            // lines
+            RenderSystem.lineWidth(0.5F);
+            shapes.get(dimensionType).values().forEach(s -> {
+                if ((!s.shape.debug || entityBoxes) && s.shouldRender(dimensionType) && s.shape.hud)
+                {
+                    s.renderLines(matrices, tesselator, 0, 0, 0, partialTick);
+                }
+            });
+            // faces
+            RenderSystem.lineWidth(0.1F);
+            shapes.get(dimensionType).values().forEach(s -> {
+                if ((!s.shape.debug || entityBoxes) && s.shouldRender(dimensionType) && s.shape.hud)
+                {
+                    s.renderFaces(tesselator, 0, 0, 0, partialTick);
+                }
+            });
+            RenderSystem.lineWidth(1.0F);
+            RenderSystem.setProjectionMatrix(ori,ProjectionType.PERSPECTIVE);
             matrixStack.popMatrix();
 
         }
@@ -179,11 +212,33 @@ public class ShapesRenderer
                     entry -> entry.getValue().isExpired(currentTime)
             );
             labels.get(dimensionType).values().forEach(s -> {
-                if ((!s.shape.debug || entityBoxes) && s.shouldRender(dimensionType))
+                if ((!s.shape.debug || entityBoxes) && s.shouldRender(dimensionType)&& !s.shape.hud)
                 {
-                    s.renderLines(matrices, tesselator, cameraX, cameraY, cameraZ, partialTick);
+                    s.renderLines(matrices, tesselator, cameraX, cameraY, cameraZ, partialTick, passid);
                 }
             });
+            //PoseStack matrixStack = RenderSystem.getModelViewStack();
+            //matrices.pushPose();
+            Matrix4fStack matrixStack = RenderSystem.getModelViewStack();
+            matrixStack.pushMatrix();
+            matrixStack.identity();
+            //RenderSystem.applyModelViewMatrix();
+            matrices.pushPose();
+            matrices.setIdentity();
+            //RenderSystem.applyModelViewMatrix();
+            var ori=RenderSystem.getProjectionMatrix();
+            RenderSystem.setProjectionMatrix(ORTHOMAT,ProjectionType.ORTHOGRAPHIC);
+            labels.get(dimensionType).values().forEach(s -> {
+                if ((!s.shape.debug || entityBoxes) && s.shouldRender(dimensionType)&& s.shape.hud)
+                {
+                    s.renderLines(matrices, tesselator, 0, 0, 0, partialTick, passid);
+                }
+            });
+            matrices.popPose();
+            //RenderSystem.applyModelViewMatrix();
+            RenderSystem.setProjectionMatrix(ori,ProjectionType.PERSPECTIVE);
+            matrixStack.popMatrix();
+            //RenderSystem.applyModelViewMatrix();
         }
         RenderSystem.enableCull();
         RenderSystem.depthMask(true);
@@ -257,6 +312,9 @@ public class ShapesRenderer
         long expiryTick;
         double renderEpsilon;
 
+        public void renderLines(PoseStack matrices, Tesselator tesselator, double cx, double cy, double cz, float partialTick, int passid){
+            if(passid==0) renderLines( matrices,  tesselator,  cx,  cy,  cz,  partialTick);
+        };
         public abstract void renderLines(PoseStack matrices, Tesselator tesselator, double cx, double cy, double cz, float partialTick);
 
         public void renderFaces(Tesselator tesselator, double cx, double cy, double cz, float partialTick)
@@ -331,7 +389,7 @@ public class ShapesRenderer
 
         @Override
         public void renderLines(PoseStack matrices, Tesselator tesselator, double cx, double cy,
-                                double cz, float partialTick)
+                                double cz, float partialTick, int passindex)
         {
             if (shape.a == 0.0)
             {
@@ -393,51 +451,61 @@ public class ShapesRenderer
             MultiBufferSource.BufferSource immediate = client.renderBuffers().bufferSource();
             if (!isitem)
             {
-                // draw the block itself
-                if (blockState.getRenderShape() == RenderShape.MODEL)
-                {
-
-                    var bakedModel = client.getBlockRenderer().getBlockModel(blockState);
-                    int color = client.getBlockColors().getColor(blockState, client.level, blockPos, 0);
-                    //dont know why there is a 0. 
-                    //see https://github.com/senseiwells/EssentialClient/blob/4db1f291936f502304791ee323f369c206b3021d/src/main/java/me/senseiwells/essentialclient/utils/render/RenderHelper.java#L464
-                    float red = (color >> 16 & 0xFF) / 255.0F;
-                    float green = (color >> 8 & 0xFF) / 255.0F;
-                    float blue = (color & 0xFF) / 255.0F;
-                    RenderType type;
-                    if (blockState.getBlock() instanceof LeavesBlock && !Minecraft.useFancyGraphics()) {
-                        type = RenderType.solid();
-                    } else {
-                        type = ItemBlockRenderTypes.getRenderType(blockState);
-                    }
-                    client.getBlockRenderer().getModelRenderer().renderModel(matrices.last(), immediate.getBuffer(type), blockState, bakedModel, red, green, blue, light, OverlayTexture.NO_OVERLAY);
-                }
-
-                // draw the block`s entity part
-                if (BlockEntity == null)
-                {
-                    if (blockState.getBlock() instanceof EntityBlock eb)
+                if(passindex==0){
+                    // draw the block itself
+                    if (blockState.getRenderShape() == RenderShape.MODEL)
                     {
-                        BlockEntity = eb.newBlockEntity(blockPos, blockState);
-                        if (BlockEntity != null)
+
+                        var bakedModel = client.getBlockRenderer().getBlockModel(blockState);
+                        int color = client.getBlockColors().getColor(blockState, client.level, blockPos, 0);
+                        //dont know why there is a 0.
+                        //see https://github.com/senseiwells/EssentialClient/blob/4db1f291936f502304791ee323f369c206b3021d/src/main/java/me/senseiwells/essentialclient/utils/render/RenderHelper.java#L464
+                        float red = (color >> 16 & 0xFF) / 255.0F;
+                        float green = (color >> 8 & 0xFF) / 255.0F;
+                        float blue = (color & 0xFF) / 255.0F;
+                        RenderType type;
+                        if (blockState.getBlock() instanceof LeavesBlock && !Minecraft.useFancyGraphics()) {
+                            type = RenderType.solid();
+                        } else {
+                            type = ItemBlockRenderTypes.getRenderType(blockState);
+                        }
+                        client.getBlockRenderer().getModelRenderer().renderModel(matrices.last(), immediate.getBuffer(type), blockState, bakedModel, red, green, blue, light, OverlayTexture.NO_OVERLAY);
+                    }
+
+                    // draw the block`s entity part
+                    if (BlockEntity == null)
+                    {
+                        if (blockState.getBlock() instanceof EntityBlock eb)
                         {
-                            BlockEntity.setLevel(client.level);
-                            if (shape.blockEntity != null)
+                            BlockEntity = eb.newBlockEntity(blockPos, blockState);
+                            if (BlockEntity != null)
                             {
-                                BlockEntity.loadWithComponents(shape.blockEntity, client.level.registryAccess());
+                                BlockEntity.setLevel(client.level);
+                                if (shape.blockEntity != null)
+                                {
+                                    BlockEntity.loadWithComponents(shape.blockEntity, client.level.registryAccess());
+                                }
                             }
                         }
                     }
-                }
-                if (BlockEntity != null)
-                {
-                        BlockEntityRenderer<BlockEntity> blockEntityRenderer = client.getBlockEntityRenderDispatcher().getRenderer(BlockEntity);
-                        if (blockEntityRenderer != null)
-                        {
-                            blockEntityRenderer.render(BlockEntity, partialTick,
-                                    matrices, immediate, light, OverlayTexture.NO_OVERLAY);
+                    if (BlockEntity != null)
+                    {
+                            BlockEntityRenderer<BlockEntity> blockEntityRenderer = client.getBlockEntityRenderDispatcher().getRenderer(BlockEntity);
+                            if (blockEntityRenderer != null)
+                            {
+                                blockEntityRenderer.render(BlockEntity, partialTick,
+                                        matrices, immediate, light, OverlayTexture.NO_OVERLAY);
 
-                        }
+                            }
+                    }
+                }else{
+                    var fluidstate = blockState.getFluidState();
+                    try {
+                        DrawingShape.set(Pair.of(matrices.last(),blockPos));
+                        client.getBlockRenderer().renderLiquid(blockPos, client.level, immediate.getBuffer(ItemBlockRenderTypes.getRenderLayer(fluidstate)), blockState, fluidstate);
+                    }finally {
+                        DrawingShape.remove();
+                    }
                 }
             }
             else
@@ -454,6 +522,11 @@ public class ShapesRenderer
             RenderSystem.disableCull();
             RenderSystem.disableDepthTest();
             RenderSystem.depthMask(false);
+
+        }
+
+        @Override
+        public void renderLines(PoseStack matrices, Tesselator tesselator, double cx, double cy, double cz, float partialTick) {
 
         }
 
