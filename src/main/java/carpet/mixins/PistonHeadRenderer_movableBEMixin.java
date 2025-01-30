@@ -10,6 +10,7 @@ import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.client.renderer.blockentity.PistonHeadRenderer;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.piston.PistonMovingBlockEntity;
+import net.minecraft.world.phys.Vec3;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -27,8 +28,9 @@ public abstract class PistonHeadRenderer_movableBEMixin implements BlockEntityRe
     }
 
     @Inject(method = "render", at = @At(value = "INVOKE",
-            target = "Lnet/minecraft/client/renderer/blockentity/PistonHeadRenderer;renderBlock(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;Lnet/minecraft/world/level/Level;ZI)V", ordinal = 3))
-    private void updateRenderBool(PistonMovingBlockEntity pistonBlockEntity_1, float float_1, PoseStack matrixStack_1, MultiBufferSource layeredVertexConsumerStorage_1, int int_1, int int_2, CallbackInfo ci)
+            target = "Lnet/minecraft/client/renderer/blockentity/PistonHeadRenderer;renderBlock(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;Lnet/minecraft/world/level/Level;ZI)V",
+            ordinal = 3))
+    private void updateRenderBool(PistonMovingBlockEntity pistonBlockEntity_1, float float_1, PoseStack matrixStack_1, MultiBufferSource layeredVertexConsumerStorage_1, int int_1, int int_2, Vec3 cameraPos, CallbackInfo ci)
     //private void updateRenderBool(PistonBlockEntity pistonBlockEntity_1, double double_1, double double_2, double double_3, float float_1, class_4587 class_4587_1, class_4597 class_4597_1, int int_1, CallbackInfo ci)
     {
         if (!((PistonBlockEntityInterface) pistonBlockEntity_1).isRenderModeSet())
@@ -37,7 +39,7 @@ public abstract class PistonHeadRenderer_movableBEMixin implements BlockEntityRe
 
 
     @Inject(method = "render", at = @At("RETURN"), locals = LocalCapture.NO_CAPTURE)
-    private void endMethod3576(PistonMovingBlockEntity pistonBlockEntity_1, float partialTicks, PoseStack matrixStack_1, MultiBufferSource layeredVertexConsumerStorage_1, int int_1, int init_2, CallbackInfo ci)
+    private void endMethod3576(PistonMovingBlockEntity pistonBlockEntity_1, float partialTicks, PoseStack matrixStack_1, MultiBufferSource layeredVertexConsumerStorage_1, int int_1, int init_2, Vec3 cameraPos, CallbackInfo ci)
     {
         if (((PistonBlockEntityInterface) pistonBlockEntity_1).getRenderCarriedBlockEntity())
         {

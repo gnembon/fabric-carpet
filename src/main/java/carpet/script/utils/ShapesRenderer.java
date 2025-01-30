@@ -435,7 +435,7 @@ public class ShapesRenderer
                         if (blockEntityRenderer != null)
                         {
                             blockEntityRenderer.render(BlockEntity, partialTick,
-                                    matrices, immediate, light, OverlayTexture.NO_OVERLAY);
+                                    matrices, immediate, light, OverlayTexture.NO_OVERLAY, camera1.getPosition());
 
                         }
                 }

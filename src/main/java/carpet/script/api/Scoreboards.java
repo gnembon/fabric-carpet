@@ -35,6 +35,7 @@ import net.minecraft.world.scores.ScoreHolder;
 import net.minecraft.world.scores.Scoreboard;
 import net.minecraft.world.scores.Team;
 import net.minecraft.world.scores.criteria.ObjectiveCriteria;
+import org.jetbrains.annotations.Nullable;
 
 public class Scoreboards
 {
@@ -420,7 +421,7 @@ public class Scoreboards
                     {
                         throw new InternalExpressionException("'team_property' requires a string as the third argument for the property " + propertyVal.getString());
                     }
-                    Team.CollisionRule collisionRule = Team.CollisionRule.byName(settingVal.getString());
+                    Team.CollisionRule collisionRule = getCollisionRule(settingVal);
                     if (collisionRule == null)
                     {
                         throw new InternalExpressionException("Unknown value for property " + propertyVal.getString() + ": " + settingVal.getString());
@@ -452,7 +453,7 @@ public class Scoreboards
                     {
                         throw new InternalExpressionException("'team_property' requires a string as the third argument for the property " + propertyVal.getString());
                     }
-                    Team.Visibility deathMessageVisibility = Team.Visibility.byName(settingVal.getString());
+                    Team.Visibility deathMessageVisibility = getVisibility(settingVal);
                     if (deathMessageVisibility == null)
                     {
                         throw new InternalExpressionException("Unknown value for property " + propertyVal.getString() + ": " + settingVal.getString());
@@ -490,7 +491,7 @@ public class Scoreboards
                     {
                         throw new InternalExpressionException("'team_property' requires a string as the third argument for the property " + propertyVal.getString());
                     }
-                    Team.Visibility nametagVisibility = Team.Visibility.byName(settingVal.getString());
+                    Team.Visibility nametagVisibility = getVisibility(settingVal);
                     if (nametagVisibility == null)
                     {
                         throw new InternalExpressionException("Unknown value for property " + propertyVal.getString() + ": " + settingVal.getString());
@@ -696,6 +697,36 @@ public class Scoreboards
                 default -> throw new InternalExpressionException("Unknown bossbar property " + property);
             }
         });
+    }
+
+    @Nullable
+    private static Team.CollisionRule getCollisionRule(Value settingVal)
+    {
+
+        final String string = settingVal.getString();
+        for (Team.CollisionRule rule : Team.CollisionRule.values())
+        {
+            if (rule.getSerializedName().equalsIgnoreCase(string))
+            {
+                return rule;
+            }
+        }
+        return null;
+    }
+
+    @Nullable
+    private static Team.Visibility getVisibility(Value settingVal)
+    {
+
+        final String string = settingVal.getString();
+        for (Team.Visibility rule : Team.Visibility.values())
+        {
+            if (rule.getSerializedName().equalsIgnoreCase(string))
+            {
+                return rule;
+            }
+        }
+        return null;
     }
 }
 
