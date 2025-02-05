@@ -274,14 +274,14 @@ public class EntityPlayerActionPack
         else // one slot
         {
             if (selectedSlot == -1)
-                selectedSlot = inv.selected;
+                selectedSlot = inv.getSelectedSlot();
             dropItemFromSlot(selectedSlot, dropAll);
         }
     }
 
     public void setSlot(int slot)
     {
-        player.getInventory().selected = slot-1;
+        player.getInventory().setSelectedSlot(slot-1);
         player.connection.send(new ClientboundSetHeldSlotPacket(slot-1));
     }
 

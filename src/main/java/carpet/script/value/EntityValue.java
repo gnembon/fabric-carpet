@@ -700,7 +700,7 @@ public class EntityValue extends Value
             return Value.NULL;
         });
 
-        put("selected_slot", (e, a) -> e instanceof Player p ? new NumericValue(p.getInventory().selected) : Value.NULL);
+        put("selected_slot", (e, a) -> e instanceof Player p ? new NumericValue(p.getInventory().getSelectedSlot()) : Value.NULL);
 
         put("active_block", (e, a) -> {
             if (e instanceof ServerPlayer sp)

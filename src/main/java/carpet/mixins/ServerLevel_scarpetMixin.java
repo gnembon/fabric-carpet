@@ -51,13 +51,13 @@ public abstract class ServerLevel_scarpetMixin extends Level implements ServerWo
         super(writableLevelData, resourceKey, registryAccess, holder, bl, bl2, l, i);
     }
 
-    @Inject(method = "tickChunk", locals = LocalCapture.CAPTURE_FAILHARD, at = @At(
+    @Inject(method = "tickThunder", locals = LocalCapture.CAPTURE_FAILHARD, at = @At(
             value = "INVOKE",
             target = "Lnet/minecraft/server/level/ServerLevel;addFreshEntity(Lnet/minecraft/world/entity/Entity;)Z",
             shift = At.Shift.BEFORE,
             ordinal = 1
     ))
-    private void onNaturalLightinig(LevelChunk chunk, int randomTickSpeed, CallbackInfo ci,
+    private void onNaturalLightinig(LevelChunk chunk, CallbackInfo ci,
                                     //ChunkPos chunkPos, boolean bl, int i, int j, Profiler profiler, BlockPos blockPos, boolean bl2)
                                     ChunkPos chunkPos, boolean bl, int i, int j, ProfilerFiller profiler, BlockPos blockPos, DifficultyInstance localDifficulty, boolean bl2, LightningBolt lightningEntity)
     {

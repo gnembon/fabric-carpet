@@ -269,7 +269,7 @@ public class ServerGamePacketListenerImpl_scarpetEventsMixin
     {
         if (PLAYER_SWITCHES_SLOT.isNeeded() && player.getServer() != null && player.getServer().isSameThread())
         {
-            PLAYER_SWITCHES_SLOT.onSlotSwitch(player, player.getInventory().selected, packet.getSlot());
+            PLAYER_SWITCHES_SLOT.onSlotSwitch(player, player.getInventory().getSelectedSlot(), packet.getSlot());
         }
     }
 
