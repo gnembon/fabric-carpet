@@ -210,7 +210,8 @@ public class SnoopyCommandSource extends CommandSourceStack
     }
 
     /**
-     * Added for the new queue system for commands, since some errors being thrown don't trigger the resultConsumer and some errors get put after call to resultConsumer.
+     * Added for the new queue system for commands, since some early errors don't trigger the resultConsumer and all sendFailures calls are executed after
+     * the call resultConsumer when they do.
      * @param errorCallback A consumer that will be called upon sendFailure
      * @return Self For chaining
      */
