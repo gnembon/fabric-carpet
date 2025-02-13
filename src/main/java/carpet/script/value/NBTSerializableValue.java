@@ -108,7 +108,7 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
     public static Value fromStack(ItemStack stack, RegistryAccess regs)
     {
         NBTSerializableValue value = new NBTSerializableValue();
-        value.nbtSupplier = () -> stack.saveOptional(regs);
+        value.nbtSupplier = () -> ItemStack.CODEC.encodeStart(regs.createSerializationContext(NbtOps.INSTANCE), stack).getOrThrow();
         return value;
     }
 
@@ -346,7 +346,7 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
     public static ItemStack parseItem(String itemString, @Nullable CompoundTag customTag, RegistryAccess regs)
     {
         if (customTag != null) {
-            return ItemStack.parseOptional(regs, customTag);
+            return ItemStack.CODEC.parse(regs.createSerializationContext(NbtOps.INSTANCE), customTag).resultOrPartial().orElse(null);
         }
         try
         {

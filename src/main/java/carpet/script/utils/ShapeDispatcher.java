@@ -34,11 +34,13 @@ import net.minecraft.nbt.DoubleTag;
 import net.minecraft.nbt.FloatTag;
 import net.minecraft.nbt.IntTag;
 import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.NbtOps;
 import net.minecraft.nbt.NbtUtils;
 import net.minecraft.nbt.StringTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.nbt.NumericTag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.RegistryOps;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
@@ -724,7 +726,7 @@ public class ShapeDispatcher
             }
             else
             {
-                this.item = ItemStack.parseOptional(regs, ((NBTSerializableValue) options.get("item")).getCompoundTag());
+                this.item = ItemStack.CODEC.parse(regs.createSerializationContext(NbtOps.INSTANCE), ((NBTSerializableValue) options.get("item")).getCompoundTag() ).result().orElse(null);
             }
             blockLight = NumericValue.asNumber(options.getOrDefault("blocklight", optional.get("blocklight"))).getInt();
             if (blockLight > 15)
@@ -1661,7 +1663,7 @@ public class ShapeDispatcher
         public Value validate(Map<String, Value> options, MinecraftServer server, Value value)
         {
             ItemStack item = ValueConversions.getItemStackFromValue(value, true, server.registryAccess());
-            return new NBTSerializableValue(item.saveOptional(server.registryAccess()));
+            return new NBTSerializableValue(ItemStack.CODEC.encodeStart(server.registryAccess().createSerializationContext(NbtOps.INSTANCE), item).result().orElse(null));
         }
 
         @Override

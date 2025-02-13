@@ -26,8 +26,6 @@ import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.multiplayer.ClientLevel;
-import net.minecraft.client.renderer.CoreShaders;
-import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.ItemBlockRenderTypes;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -123,7 +121,7 @@ public class ShapesRenderer
         }
         long currentTime = client.level.getGameTime();
         RenderSystem.enableDepthTest();
-        RenderSystem.setShader(CoreShaders.POSITION_COLOR);
+        //RenderSystem.setShader(CoreShaders.POSITION_COLOR);
         RenderSystem.depthFunc(515);
         RenderSystem.enableBlend();
         RenderSystem.defaultBlendFunc();
@@ -619,10 +617,11 @@ public class ShapesRenderer
     }
 
     private static void drawWithShader(MeshData mesh) {
-        VertexBuffer buffre = mesh.drawState().format().getImmediateDrawVertexBuffer();
-        buffre.bind();
-        buffre.upload(mesh);
-        buffre.drawWithShader(RenderSystem.getModelViewMatrix(), RenderSystem.getProjectionMatrix(), RenderSystem.getShader());
+        RenderType.debugTriangleFan().draw(mesh);
+        //VertexBuffer buffre = mesh.drawState().format().getImmediateDrawVertexBuffer();
+        //buffre.bind();
+        //buffre.upload(mesh);
+        //buffre.drawWithShader(RenderSystem.getModelViewMatrix(), RenderSystem.getProjectionMatrix(), RenderType. RenderSystem.getShader());
     }
 
 
