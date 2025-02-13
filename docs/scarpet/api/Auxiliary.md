@@ -406,15 +406,42 @@ read_file('foo', 'shared_text')     => ['one', 'two', 'three', '', 'four', '', '
   
 ### `run(expr)`
 
-Runs a vanilla command from the string result of the `expr` and returns a triple of 0 (unused after success count removal), 
-intercepted list of output messages, and error message if the command resulted in a failure. 
-Successful commands return `null` as their error.
+Runs a vanilla command from the string result of the `expr` with no return value.
+See `run_cb(expr, callback)` or `run_wait(expr)` below to get the return value.
 
 <pre>
-run('fill 1 1 1 10 10 10 air') -> [0, ["Successfully filled 123 blocks"], null]
-run('give @s stone 4') -> [0, ["Gave 4 [Stone] to gnembon"], null]
-run('seed') -> [0, ["Seed: [4031384495743822299]"], null]
-run('sed') -> [0, [], "sed<--[HERE]"] // wrong command
+run('give @s stone 4')
+</pre>
+
+### `run_cb(expr, callback)`
+
+Runs a vanilla command from the string result of the `expr` and calls `callback` with a triple of the exit code (usually 0 or 1) or null, 
+intercepted list of output messages, and the ***first*** error message if the command resulted in a failure.
+Syntax exceptions and other pre-command execution errors will return `null` as their exit code.
+Calling this function with a callback set to null is the same as calling `run(expr)`.
+
+<pre>
+run_cb('fill 1 1 1 10 10 10 air', _(result) -> print(result)) // printed: "[919, [Successfully filled 919 block(s)], null]"
+                                                              // or: "[0, [], No blocks were filled]"
+run_cb('give @s dirt 4', _(result) -> print(result)) // printed: "[1, [Gave 4 [Dirt] to Oxtaly], null]"
+run_cb('seed', _(result) -> print(result)) // printed: "[-232310922, [Seed: [-529719512511596682]], null]"
+run_cb('sed', _(result) -> print(result)) // printed: "[null, [], Unknown or incomplete command, see below for error]"
+// Additionally, the error value is always set to the first value, in contrast to `run_wait` which takes the last synchronous error value. 
+</pre>
+
+### `run_wait(expr)`
+
+Runs a vanilla command from the string result of the `expr` and returns a triple of the exit code (usually 0 or 1) or null,
+intercepted list of output messages, and the last synchronous error message if the command resulted in a failure.
+Syntax exceptions and other pre-command execution errors will return `null` as their exit code.
+This operation is blocking and since commands now work on a queue system, would completely lock the server if run on the main thread,
+and thus is only allowed in different threads. See [Threading and Parallel Execution](/docs/scarpet/language/SystemFunctions.md#threading-and-parallel-execution).
+
+<pre>
+task(_() -> print(run_wait('execute if entity @e'))) // printed: "[247, [Test passed, count: 247], null]"
+task(_() -> print(run_wait('execute unless entity @e'))) // printed: "[0, [], Test failed, count: 247]"
+task(_() -> print(run_wait('sed'))) // printed: "[null, [], sed<--[HERE]]"
+// Additionally, the error value is always set to the last synchronous value, in contrast to `run_cb` which always take the first error value. 
 </pre>
 
 ### `save()`

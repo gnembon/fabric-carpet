@@ -98,6 +98,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -681,23 +682,166 @@ public class Auxiliary
         expression.addContextFunction("run", 1, (c, t, lv) ->
         {
             CommandSourceStack s = ((CarpetContext) c).source();
+            Component[] error = {null};
+            List<Component> output = new ArrayList<>();
+            s.getServer().getCommands().performPrefixedCommand(
+                    new SnoopyCommandSource(s, error, output),
+                    lv.get(0).getString());
+            return Value.NULL;
+        });
+
+        expression.addContextFunction("run_wait", 1, (c, t, lv) ->
+        {
+            if (((CarpetContext) c).server().isSameThread())
+            {
+                throw new InternalExpressionException("'run_wait' cannot be called from main thread to avoid deadlocks");
+            }
+            CommandSourceStack source = ((CarpetContext) c).source();
+            String command = lv.get(0).getString();
             try
             {
-                Component[] error = {null};
+                CompletableFuture<Integer> commandCompletion = new CompletableFuture<>();
+                Component[] errorOutput = {null};
                 List<Component> output = new ArrayList<>();
-                s.getServer().getCommands().performPrefixedCommand(
-                        new SnoopyCommandSource(s, error, output),
-                        lv.get(0).getString());
+                boolean[] executedCallback = {false};
+                SnoopyCommandSource snoopyCommandSource = (SnoopyCommandSource) new SnoopyCommandSource(source, errorOutput, output)
+                        .withCallback((success, exitCode) -> {
+                            executedCallback[0] = true;
+                            commandCompletion.complete(exitCode);
+                        });
+                // To catch errors that don't call the resultConsumer from withCallback
+                snoopyCommandSource.setErrorCallback((caughtError) -> {
+                    if(executedCallback[0])
+                    {
+                        return;
+                    }
+                    commandCompletion.complete(null);
+                });
+
+                source.getServer().getCommands().performPrefixedCommand(snoopyCommandSource, command);
+                // Possible timeout, but this is not run on the main thread so not fully necessary
+                // commandCompletion.orTimeout(30, TimeUnit.SECONDS);
+                Integer commandOutput = commandCompletion.join();
+                if(commandOutput == null)
+                {
+                    return ListValue.of(
+                            Value.NULL,
+                            ListValue.of(),
+                            FormattedTextValue.of(errorOutput[0])
+                    );
+                }
                 return ListValue.of(
-                        NumericValue.ZERO,
+                        NumericValue.of(commandOutput),
                         ListValue.wrap(output.stream().map(FormattedTextValue::new)),
-                        FormattedTextValue.of(error[0])
+                        FormattedTextValue.of(errorOutput[0])
                 );
             }
-            catch (Exception exc)
+            catch (Exception exc) // Should in theory never get called (if no timeout error is set) as errors are no longer thrown from .performPrefixedCommand directly.
             {
+                // if(exc instanceof TimeoutException)
+                // {
+                //     return ListValue.of(Value.NULL, ListValue.of(), new FormattedTextValue(Component.literal("Command execution exceeded the 30 seconds timeout!")));
+                // }
                 return ListValue.of(Value.NULL, ListValue.of(), new FormattedTextValue(Component.literal(exc.getMessage())));
             }
+        });
+
+        expression.addContextFunction("run_cb", 2, (c, t, lv) ->
+        {
+            CommandSourceStack source = ((CarpetContext) c).source();
+            FunctionArgument functionArgument = FunctionArgument.findIn(c, expression.module, lv, 1, true, false);
+            String command = lv.get(0).getString();
+            if(functionArgument.function == null)
+            {
+                try
+                {
+                    Component[] errorOutput = {null};
+                    List<Component> output = new ArrayList<>();
+                    source.getServer().getCommands().performPrefixedCommand(
+                            new SnoopyCommandSource(source, errorOutput, output),
+                            command
+                    );
+                }
+                catch (Exception ignored)
+                {
+                }
+                return Value.NULL;
+            }
+            else if (functionArgument.function.getArguments().size() < 1)
+            {
+                throw new InternalExpressionException("callback requires 1 argument for command output");
+            }
+            boolean[] consumed = {false};
+            try
+            {
+                boolean[] hasRuntimeError = {false};
+                Integer[] commandExitCode = {null};
+                Component[] errorOutput = {null};
+                List<Component> output = new ArrayList<>();
+
+                SnoopyCommandSource snoopyCommandSource = (SnoopyCommandSource) new SnoopyCommandSource(source, errorOutput, output)
+                        .withCallback((success, exitCode) -> {
+                            if(consumed[0])
+                            {
+                                return;
+                            }
+                            consumed[0] = true;
+                            // The CommandSourceStack.sendFailure are sent after the resultConsumer from .withCallback, so the error output is always
+                            // empty in this consumer. To prevent this, just pass the relevant information over to the next in line errorCallback
+                            if(!success)
+                            {
+                                commandExitCode[0] = exitCode;
+                                hasRuntimeError[0] = true;
+                                return;
+                            }
+                            List<Value> args = Arrays.asList(ListValue.of(
+                                    NumericValue.of(exitCode),
+                                    ListValue.wrap(output.stream().map(FormattedTextValue::new)),
+                                    FormattedTextValue.of(errorOutput[0])
+                            ));
+                            functionArgument.function.callInContext(c, t, args);
+                        });
+                // To catch errors that don't call the resultConsumer from withCallback and make sure the error output is set for those that do
+                snoopyCommandSource.setErrorCallback((caughtError) -> {
+                    if(consumed[0] && !hasRuntimeError[0])
+                    {
+                        return;
+                    }
+                    if(hasRuntimeError[0])
+                    {
+                        List<Value> args = List.of(ListValue.of(
+                                NumericValue.of(commandExitCode[0]),
+                                ListValue.wrap(output.stream().map(FormattedTextValue::new)),
+                                FormattedTextValue.of(errorOutput[0])
+                        ));
+                        functionArgument.function.callInContext(c, t, args);
+                        return;
+                    }
+                    consumed[0] = true;
+                    List<Value> args = List.of(ListValue.of(
+                            Value.NULL,
+                            ListValue.of(),
+                            FormattedTextValue.of(errorOutput[0])
+                    ));
+                    functionArgument.function.callInContext(c, t, args);
+                });
+
+                source.getServer().getCommands().performPrefixedCommand(snoopyCommandSource, command);
+            }
+            catch (Exception exc) // Should in theory never get called as errors are no longer thrown from .performPrefixedCommand directly.
+            {
+                if(!consumed[0])
+                {
+                    consumed[0] = true;
+                    List<Value> args = Arrays.asList(ListValue.of(
+                            Value.NULL,
+                            ListValue.of(),
+                            new FormattedTextValue(Component.literal(exc.getMessage()))
+                    ));
+                    functionArgument.function.callInContext(c, t, args);
+                }
+            }
+            return Value.NULL;
         });
 
         expression.addContextFunction("save", 0, (c, t, lv) ->
