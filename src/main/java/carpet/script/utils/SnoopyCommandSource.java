@@ -19,6 +19,7 @@ import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.OptionalLong;
 import java.util.function.BinaryOperator;
 import java.util.function.Supplier;
 
@@ -43,11 +44,11 @@ public class SnoopyCommandSource extends CommandSourceStack
 
     private final TaskChainer taskChainer;
 
-    public SnoopyCommandSource(CommandSourceStack original, Component[] error, List<Component> chatOutput)
+    public SnoopyCommandSource(CommandSourceStack original, Component[] error, List<Component> chatOutput, OptionalLong[] returnValue)
     {
         super(CommandSource.NULL, original.getPosition(), original.getRotation(), original.getLevel(), Vanilla.MinecraftServer_getRunPermissionLevel(original.getServer()),
                 original.getTextName(), original.getDisplayName(), original.getServer(), original.getEntity(), false,
-                CommandResultCallback.EMPTY, EntityAnchorArgument.Anchor.FEET, CommandSigningContext.ANONYMOUS, TaskChainer.immediate(original.getServer()));
+                (b, i) -> returnValue[0] = OptionalLong.of(i), EntityAnchorArgument.Anchor.FEET, CommandSigningContext.ANONYMOUS, TaskChainer.immediate(original.getServer()));
         this.output = CommandSource.NULL;
         this.position = original.getPosition();
         this.world = original.getLevel();
@@ -56,7 +57,7 @@ public class SnoopyCommandSource extends CommandSourceStack
         this.name = original.getDisplayName();
         this.server = original.getServer();
         this.entity = original.getEntity();
-        this.resultConsumer = CommandResultCallback.EMPTY;
+        this.resultConsumer = (b, i) -> returnValue[0] = OptionalLong.of(i);
         this.entityAnchor = original.getAnchor();
         this.rotation = original.getRotation();
         this.error = error;
@@ -65,7 +66,7 @@ public class SnoopyCommandSource extends CommandSourceStack
         this.taskChainer = TaskChainer.immediate(original.getServer());
     }
 
-    public SnoopyCommandSource(ServerPlayer player, Component[] error, List<Component> output)
+    public SnoopyCommandSource(ServerPlayer player, Component[] error, List<Component> output, int [] result)
     {
         super(player.commandSource(), player.position(), player.getRotationVector(),
                 player.level() instanceof final ServerLevel serverLevel ? serverLevel : null,
@@ -79,7 +80,7 @@ public class SnoopyCommandSource extends CommandSourceStack
         this.name = player.getDisplayName();
         this.server = player.level().getServer();
         this.entity = player;
-        this.resultConsumer = CommandResultCallback.EMPTY;
+        this.resultConsumer = (b, i) -> result[0] = i;
         this.entityAnchor = EntityAnchorArgument.Anchor.FEET;
         this.rotation = player.getRotationVector(); // not a client call really
         this.error = error;
@@ -203,5 +204,4 @@ public class SnoopyCommandSource extends CommandSourceStack
     {
         chatOutput.add(message.get());
     }
-
 }
