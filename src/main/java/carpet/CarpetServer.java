@@ -81,7 +81,7 @@ public class CarpetServer // static for now - easier to handle all around the co
     public static void onServerLoaded(MinecraftServer server)
     {
         CarpetServer.minecraft_server = server;
-        // shoudl not be needed - that bit needs refactoring, but not now.
+        // should not be needed - that bit needs refactoring, but not now.
         SpawnReporter.resetSpawnStats(server, true);
 
         forEachManager(sm -> sm.attachServer(server));
@@ -179,7 +179,7 @@ public class CarpetServer // static for now - easier to handle all around the co
         if (minecraft_server != null)
         {
             if (scriptServer != null) scriptServer.onClose();
-            // this is a mess, will cleanip onlly when global reference is gone
+            // this is a mess, will clean up only when global reference is gone
             if (!Vanilla.MinecraftServer_getScriptServer(server).stopAll) {
                 Vanilla.MinecraftServer_getScriptServer(server).onClose();
             }
