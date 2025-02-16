@@ -130,7 +130,7 @@ public class Expression
         return constants.get(surface);
     }
 
-    public List<String> getExpressionSnippet(Tokenizer.Token token)
+    public List<String> getExpressionSnippet(Token token)
     {
         String code = this.getCodeString();
         List<String> output = new ArrayList<>(getExpressionSnippetLeftContext(token, code, 1));
@@ -140,7 +140,7 @@ public class Expression
         return output;
     }
 
-    private static List<String> getExpressionSnippetLeftContext(Tokenizer.Token token, String expr, int contextsize)
+    private static List<String> getExpressionSnippetLeftContext(Token token, String expr, int contextsize)
     {
         List<String> output = new ArrayList<>();
         String[] lines = expr.split("\n");
@@ -156,7 +156,7 @@ public class Expression
         return output;
     }
 
-    private static List<String> getExpressionSnippetContext(Tokenizer.Token token, String expr)
+    private static List<String> getExpressionSnippetContext(Token token, String expr)
     {
         List<String> output = new ArrayList<>();
         String[] lines = expr.split("\n");
@@ -173,7 +173,7 @@ public class Expression
         return output;
     }
 
-    private static List<String> getExpressionSnippetRightContext(Tokenizer.Token token, String expr, int contextsize)
+    private static List<String> getExpressionSnippetRightContext(Token token, String expr, int contextsize)
     {
         List<String> output = new ArrayList<>();
         String[] lines = expr.split("\n");
@@ -213,7 +213,7 @@ public class Expression
             }
 
             @Override
-            public LazyValue lazyEval(Context c, Context.Type t, Expression e, Tokenizer.Token token, LazyValue v, LazyValue v2)
+            public LazyValue lazyEval(Context c, Context.Type t, Expression e, Token token, LazyValue v, LazyValue v2)
             {
                 try
                 {
@@ -229,7 +229,7 @@ public class Expression
 
 
     public void addLazyBinaryOperatorWithDelegation(String surface, int precedence, boolean leftAssoc, boolean pure,
-                                                    SexFunction<Context, Context.Type, Expression, Tokenizer.Token, LazyValue, LazyValue, LazyValue> lazyfun)
+                                                    SexFunction<Context, Context.Type, Expression, Token, LazyValue, LazyValue, LazyValue> lazyfun)
     {
         operators.put(surface, new AbstractLazyOperator(precedence, leftAssoc)
         {
@@ -246,7 +246,7 @@ public class Expression
             }
 
             @Override
-            public LazyValue lazyEval(Context c, Context.Type type, Expression e, Tokenizer.Token t, LazyValue v1, LazyValue v2)
+            public LazyValue lazyEval(Context c, Context.Type type, Expression e, Token t, LazyValue v1, LazyValue v2)
             {
                 try
                 {
@@ -266,7 +266,7 @@ public class Expression
     }
 
     public void addLazyFunctionWithDelegation(String name, int numpar, boolean pure, boolean transitive,
-                                              QuinnFunction<Context, Context.Type, Expression, Tokenizer.Token, List<LazyValue>, LazyValue> lazyfun)
+                                              QuinnFunction<Context, Context.Type, Expression, Token, List<LazyValue>, LazyValue> lazyfun)
     {
         functions.put(name, new AbstractLazyFunction(numpar, name)
         {
@@ -283,7 +283,7 @@ public class Expression
             }
 
             @Override
-            public LazyValue lazyEval(Context c, Context.Type type, Expression e, Tokenizer.Token t, List<LazyValue> lv)
+            public LazyValue lazyEval(Context c, Context.Type type, Expression e, Token t, List<LazyValue> lv)
             {
                 ILazyFunction.checkInterrupts();
                 try
@@ -299,7 +299,7 @@ public class Expression
     }
 
     public void addFunctionWithDelegation(String name, int numpar, boolean pure, boolean transitive,
-                                          QuinnFunction<Context, Context.Type, Expression, Tokenizer.Token, List<Value>, Value> fun)
+                                          QuinnFunction<Context, Context.Type, Expression, Token, List<Value>, Value> fun)
     {
         functions.put(name, new AbstractLazyFunction(numpar, name)
         {
@@ -316,7 +316,7 @@ public class Expression
             }
 
             @Override
-            public LazyValue lazyEval(Context c, Context.Type type, Expression e, Tokenizer.Token t, List<LazyValue> lv)
+            public LazyValue lazyEval(Context c, Context.Type type, Expression e, Token t, List<LazyValue> lv)
             {
                 try
                 {
@@ -356,7 +356,7 @@ public class Expression
             }
 
             @Override
-            public LazyValue lazyEval(Context c, Context.Type t, Expression e, Tokenizer.Token token, LazyValue v1, LazyValue v2)
+            public LazyValue lazyEval(Context c, Context.Type t, Expression e, Token token, LazyValue v1, LazyValue v2)
             {
                 ILazyFunction.checkInterrupts();
                 try
@@ -389,7 +389,7 @@ public class Expression
             }
 
             @Override
-            public LazyValue lazyEval(Context c, Context.Type t, Expression e, Tokenizer.Token token, LazyValue v1, LazyValue v2)
+            public LazyValue lazyEval(Context c, Context.Type t, Expression e, Token token, LazyValue v1, LazyValue v2)
             {
                 try
                 {
@@ -404,7 +404,7 @@ public class Expression
         });
     }
 
-    public static RuntimeException handleCodeException(Context c, RuntimeException exc, Expression e, Tokenizer.Token token)
+    public static RuntimeException handleCodeException(Context c, RuntimeException exc, Expression e, Token token)
     {
         if (exc instanceof ExitStatement)
         {
@@ -568,7 +568,7 @@ public class Expression
             }
 
             @Override
-            public LazyValue lazyEval(Context c, Context.Type i, Expression e, Tokenizer.Token t, List<LazyValue> lazyParams)
+            public LazyValue lazyEval(Context c, Context.Type i, Expression e, Token t, List<LazyValue> lazyParams)
             {
                 ILazyFunction.checkInterrupts();
                 if (numParams >= 0 && lazyParams.size() != numParams)
@@ -606,7 +606,7 @@ public class Expression
             }
 
             @Override
-            public LazyValue lazyEval(Context c, Context.Type i, Expression e, Tokenizer.Token t, List<LazyValue> lazyParams)
+            public LazyValue lazyEval(Context c, Context.Type i, Expression e, Token t, List<LazyValue> lazyParams)
             {
                 ILazyFunction.checkInterrupts();
                 try
@@ -644,7 +644,7 @@ public class Expression
             }
 
             @Override
-            public LazyValue lazyEval(Context c, Context.Type i, Expression e, Tokenizer.Token t, List<LazyValue> lazyParams)
+            public LazyValue lazyEval(Context c, Context.Type i, Expression e, Token t, List<LazyValue> lazyParams)
             {
                 ILazyFunction.checkInterrupts();
                 try
@@ -676,7 +676,7 @@ public class Expression
             }
 
             @Override
-            public LazyValue lazyEval(Context c, Context.Type i, Expression e, Tokenizer.Token t, List<LazyValue> lazyParams)
+            public LazyValue lazyEval(Context c, Context.Type i, Expression e, Token t, List<LazyValue> lazyParams)
             {
                 ILazyFunction.checkInterrupts();
                 try
@@ -715,7 +715,7 @@ public class Expression
             }
 
             @Override
-            public LazyValue lazyEval(Context c, Context.Type i, Expression e, Tokenizer.Token t, List<LazyValue> lazyParams)
+            public LazyValue lazyEval(Context c, Context.Type i, Expression e, Token t, List<LazyValue> lazyParams)
             {
                 try
                 {
@@ -730,7 +730,7 @@ public class Expression
         });
     }
 
-    public FunctionValue createUserDefinedFunction(Context context, String name, Expression expr, Tokenizer.Token token, List<String> arguments, String varArgs, List<String> outers, LazyValue code)
+    public FunctionValue createUserDefinedFunction(Context context, String name, Expression expr, Token token, List<String> arguments, String varArgs, List<String> outers, LazyValue code)
     {
         if (functions.containsKey(name))
         {
@@ -799,7 +799,7 @@ public class Expression
             }
 
             @Override
-            public LazyValue lazyEval(Context c, Context.Type type, Expression expr, Tokenizer.Token token, List<LazyValue> lazyParams)
+            public LazyValue lazyEval(Context c, Context.Type type, Expression expr, Token token, List<LazyValue> lazyParams)
             {
                 c.host.issueDeprecation(copy + "(...)");
                 return originalFunction.lazyEval(c, type, expr, token, lazyParams);
@@ -860,18 +860,18 @@ public class Expression
     }
 
 
-    private List<Tokenizer.Token> shuntingYard(Context c)
+    private List<Token> shuntingYard(Context c)
     {
-        List<Tokenizer.Token> outputQueue = new ArrayList<>();
-        Stack<Tokenizer.Token> stack = new ObjectArrayList<>();
+        List<Token> outputQueue = new ArrayList<>();
+        Stack<Token> stack = new ObjectArrayList<>();
 
         Tokenizer tokenizer = new Tokenizer(c, this, expression, allowComments, allowNewlineSubstitutions);
         // stripping lousy but acceptable semicolons
-        List<Tokenizer.Token> cleanedTokens = tokenizer.postProcess();
+        List<Token> cleanedTokens = tokenizer.postProcess();
 
-        Tokenizer.Token lastFunction = null;
-        Tokenizer.Token previousToken = null;
-        for (Tokenizer.Token token : cleanedTokens)
+        Token lastFunction = null;
+        Token previousToken = null;
+        for (Token token : cleanedTokens)
         {
             switch (token.type)
             {
@@ -880,9 +880,9 @@ public class Expression
                     //break;
                 case LITERAL, HEX_LITERAL:
                     if (previousToken != null && (
-                            previousToken.type == Tokenizer.Token.TokenType.LITERAL ||
-                                    previousToken.type == Tokenizer.Token.TokenType.HEX_LITERAL ||
-                                    previousToken.type == Tokenizer.Token.TokenType.STRINGPARAM))
+                            previousToken.type == Token.TokenType.LITERAL ||
+                                    previousToken.type == Token.TokenType.HEX_LITERAL ||
+                                    previousToken.type == Token.TokenType.STRINGPARAM))
                     {
                         throw new ExpressionException(c, this, token, "Missing operator");
                     }
@@ -896,11 +896,11 @@ public class Expression
                     lastFunction = token;
                     break;
                 case COMMA:
-                    if (previousToken != null && previousToken.type == Tokenizer.Token.TokenType.OPERATOR)
+                    if (previousToken != null && previousToken.type == Token.TokenType.OPERATOR)
                     {
                         throw new ExpressionException(c, this, previousToken, "Missing parameter(s) for operator ");
                     }
-                    while (!stack.isEmpty() && stack.top().type != Tokenizer.Token.TokenType.OPEN_PAREN)
+                    while (!stack.isEmpty() && stack.top().type != Token.TokenType.OPEN_PAREN)
                     {
                         outputQueue.add(stack.pop());
                     }
@@ -919,7 +919,7 @@ public class Expression
                 case OPERATOR:
                 {
                     if (previousToken != null
-                            && (previousToken.type == Tokenizer.Token.TokenType.COMMA || previousToken.type == Tokenizer.Token.TokenType.OPEN_PAREN))
+                            && (previousToken.type == Token.TokenType.COMMA || previousToken.type == Token.TokenType.OPEN_PAREN))
                     {
                         throw new ExpressionException(c, this, token, "Missing parameter(s) for operator '" + token + "'");
                     }
@@ -935,8 +935,8 @@ public class Expression
                 }
                 case UNARY_OPERATOR:
                 {
-                    if (previousToken != null && previousToken.type != Tokenizer.Token.TokenType.OPERATOR
-                            && previousToken.type != Tokenizer.Token.TokenType.COMMA && previousToken.type != Tokenizer.Token.TokenType.OPEN_PAREN)
+                    if (previousToken != null && previousToken.type != Token.TokenType.OPERATOR
+                            && previousToken.type != Token.TokenType.COMMA && previousToken.type != Token.TokenType.OPEN_PAREN)
                     {
                         throw new ExpressionException(c, this, token, "Invalid position for unary operator " + token);
                     }
@@ -952,18 +952,18 @@ public class Expression
                 }
                 case OPEN_PAREN:
                     // removed implicit multiplication in this missing code block
-                    if (previousToken != null && previousToken.type == Tokenizer.Token.TokenType.FUNCTION)
+                    if (previousToken != null && previousToken.type == Token.TokenType.FUNCTION)
                     {
                         outputQueue.add(token);
                     }
                     stack.push(token);
                     break;
                 case CLOSE_PAREN:
-                    if (previousToken != null && previousToken.type == Tokenizer.Token.TokenType.OPERATOR)
+                    if (previousToken != null && previousToken.type == Token.TokenType.OPERATOR)
                     {
                         throw new ExpressionException(c, this, previousToken, "Missing parameter(s) for operator " + previousToken);
                     }
-                    while (!stack.isEmpty() && stack.top().type != Tokenizer.Token.TokenType.OPEN_PAREN)
+                    while (!stack.isEmpty() && stack.top().type != Token.TokenType.OPEN_PAREN)
                     {
                         outputQueue.add(stack.pop());
                     }
@@ -972,7 +972,7 @@ public class Expression
                         throw new ExpressionException(c, this, "Mismatched parentheses");
                     }
                     stack.pop();
-                    if (!stack.isEmpty() && stack.top().type == Tokenizer.Token.TokenType.FUNCTION)
+                    if (!stack.isEmpty() && stack.top().type == Token.TokenType.FUNCTION)
                     {
                         outputQueue.add(stack.pop());
                     }
@@ -986,7 +986,7 @@ public class Expression
                     }
                     break;
             }
-            if (token.type != Tokenizer.Token.TokenType.MARKER)
+            if (token.type != Token.TokenType.MARKER)
             {
                 previousToken = token;
             }
@@ -994,8 +994,8 @@ public class Expression
 
         while (!stack.isEmpty())
         {
-            Tokenizer.Token element = stack.pop();
-            if (element.type == Tokenizer.Token.TokenType.OPEN_PAREN || element.type == Tokenizer.Token.TokenType.CLOSE_PAREN)
+            Token element = stack.pop();
+            if (element.type == Token.TokenType.OPEN_PAREN || element.type == Token.TokenType.CLOSE_PAREN)
             {
                 throw new ExpressionException(c, this, element, "Mismatched parentheses");
             }
@@ -1004,12 +1004,12 @@ public class Expression
         return outputQueue;
     }
 
-    private void shuntOperators(List<Tokenizer.Token> outputQueue, Stack<Tokenizer.Token> stack, ILazyOperator o1)
+    private void shuntOperators(List<Token> outputQueue, Stack<Token> stack, ILazyOperator o1)
     {
-        Tokenizer.Token nextToken = stack.isEmpty() ? null : stack.top();
+        Token nextToken = stack.isEmpty() ? null : stack.top();
         while (nextToken != null
-                && (nextToken.type == Tokenizer.Token.TokenType.OPERATOR
-                || nextToken.type == Tokenizer.Token.TokenType.UNARY_OPERATOR)
+                && (nextToken.type == Token.TokenType.OPERATOR
+                || nextToken.type == Token.TokenType.UNARY_OPERATOR)
                 && ((o1.isLeftAssoc() && o1.getPrecedence() <= operators.get(nextToken.surface).getPrecedence())
                 || (o1.getPrecedence() < operators.get(nextToken.surface).getPrecedence())))
         {
@@ -1059,15 +1059,15 @@ public class Expression
     {
         public LazyValue op;
         public List<ExpressionNode> args;
-        public Tokenizer.Token token;
-        public List<Tokenizer.Token> range;
+        public Token token;
+        public List<Token> range;
         /**
          * The Value representation of the left parenthesis, used for parsing
          * varying numbers of function parameters.
          */
-        public static final ExpressionNode PARAMS_START = new ExpressionNode(null, null, Tokenizer.Token.NONE);
+        public static final ExpressionNode PARAMS_START = new ExpressionNode(null, null, Token.NONE);
 
-        public ExpressionNode(LazyValue op, List<ExpressionNode> args, Tokenizer.Token token)
+        public ExpressionNode(LazyValue op, List<ExpressionNode> args, Token token)
         {
             this.op = op;
             this.args = args;
@@ -1076,17 +1076,17 @@ public class Expression
             range.add(token);
         }
 
-        public static ExpressionNode ofConstant(Value val, Tokenizer.Token token)
+        public static ExpressionNode ofConstant(Value val, Token token)
         {
             return new ExpressionNode(new LazyValue.Constant(val), Collections.emptyList(), token);
         }
     }
 
 
-    private ExpressionNode RPNToParseTree(List<Tokenizer.Token> tokens, Context context)
+    private ExpressionNode RPNToParseTree(List<Token> tokens, Context context)
     {
         Stack<ExpressionNode> nodeStack = new ObjectArrayList<>();
-        for (Tokenizer.Token token : tokens)
+        for (Token token : tokens)
         {
             switch (token.type) {
                 case UNARY_OPERATOR -> {
@@ -1104,7 +1104,7 @@ public class Expression
                     Value constant = getConstantFor(token.surface);
                     if (constant != null)
                     {
-                        token.morph(Tokenizer.Token.TokenType.CONSTANT, token.surface);
+                        token.morph(Token.TokenType.CONSTANT, token.surface);
                         nodeStack.push(new ExpressionNode(LazyValue.ofConstant(constant), Collections.emptyList(), token));
                     }
                     else
@@ -1135,8 +1135,8 @@ public class Expression
                     }
                     if (!isKnown)
                     {
-                        p.add(ExpressionNode.ofConstant(new StringValue(name), token.morphedInto(Tokenizer.Token.TokenType.STRINGPARAM, token.surface)));
-                        token.morph(Tokenizer.Token.TokenType.FUNCTION, "call");
+                        p.add(ExpressionNode.ofConstant(new StringValue(name), token.morphedInto(Token.TokenType.STRINGPARAM, token.surface)));
+                        token.morph(Token.TokenType.FUNCTION, "call");
                     }
                     Collections.reverse(p);
                     if (nodeStack.top() == ExpressionNode.PARAMS_START)
@@ -1160,11 +1160,11 @@ public class Expression
                     {
                         throw new ExpressionException(context, this, token, "Not a number");
                     }
-                    token.morph(Tokenizer.Token.TokenType.CONSTANT, token.surface);
+                    token.morph(Token.TokenType.CONSTANT, token.surface);
                     nodeStack.push(ExpressionNode.ofConstant(number, token));
                 }
                 case STRINGPARAM -> {
-                    token.morph(Tokenizer.Token.TokenType.CONSTANT, token.surface);
+                    token.morph(Token.TokenType.CONSTANT, token.surface);
                     nodeStack.push(ExpressionNode.ofConstant(new StringValue(token.surface), token));
                 }
                 case HEX_LITERAL -> {
@@ -1177,7 +1177,7 @@ public class Expression
                     {
                         throw new ExpressionException(context, this, token, "Not a number");
                     }
-                    token.morph(Tokenizer.Token.TokenType.CONSTANT, token.surface);
+                    token.morph(Token.TokenType.CONSTANT, token.surface);
                     nodeStack.push(ExpressionNode.ofConstant(hexNumber, token));
                 }
                 default -> throw new ExpressionException(context, this, token, "Unexpected token '" + token.surface + "'");
@@ -1188,7 +1188,7 @@ public class Expression
 
     private LazyValue getAST(Context context)
     {
-        List<Tokenizer.Token> rpn = shuntingYard(context);
+        List<Token> rpn = shuntingYard(context);
         validate(context, rpn);
         ExpressionNode root = RPNToParseTree(rpn, context);
         if (!Vanilla.ScriptServer_scriptOptimizations(((CarpetScriptServer)context.scriptServer()).server))
@@ -1272,7 +1272,7 @@ public class Expression
     {
         // ctx is just to report errors, not values evaluation
         boolean optimized = false;
-        Tokenizer.Token.TokenType token = node.token.type;
+        Token.TokenType token = node.token.type;
         if (!token.isFunctional())
         {
             return false;
@@ -1284,7 +1284,7 @@ public class Expression
         }
         // function or operator
         String symbol = node.token.surface;
-        Fluff.EvalNode operation = ((token == Tokenizer.Token.TokenType.FUNCTION) ? functions : operators).get(symbol);
+        Fluff.EvalNode operation = ((token == Token.TokenType.FUNCTION) ? functions : operators).get(symbol);
         Context.Type requestedType = operation.staticType(expectedType);
         for (ExpressionNode arg : node.args)
         {
@@ -1326,7 +1326,7 @@ public class Expression
                 else
                 {
                     returnNode.op = LazyValue.ofConstant(Value.NULL);
-                    returnNode.token.morph(Tokenizer.Token.TokenType.CONSTANT, "");
+                    returnNode.token.morph(Token.TokenType.CONSTANT, "");
                     returnNode.args = Collections.emptyList();
                     if (scriptsDebugging)
                     {
@@ -1370,7 +1370,7 @@ public class Expression
                     {
                         CarpetScriptServer.LOG.info(" - " + symbol + "(" + node.args.size() + ") => " + function + "(" + newargs.size() + ") at line " + (node.token.lineno + 1) + ", node depth " + indent);
                     }
-                    node.token.morph(Tokenizer.Token.TokenType.FUNCTION, function);
+                    node.token.morph(Token.TokenType.FUNCTION, function);
                     node.args = newargs;
                 }
             }
@@ -1382,7 +1382,7 @@ public class Expression
     {
         // ctx is just to report errors, not values evaluation
         boolean optimized = false;
-        Tokenizer.Token.TokenType token = node.token.type;
+        Token.TokenType token = node.token.type;
         if (!token.isFunctional())
         {
             return false;
@@ -1396,7 +1396,7 @@ public class Expression
         }
         // function or operator
 
-        Fluff.EvalNode operation = ((token == Tokenizer.Token.TokenType.FUNCTION) ? functions : operators).get(symbol);
+        Fluff.EvalNode operation = ((token == Token.TokenType.FUNCTION) ? functions : operators).get(symbol);
         Context.Type requestedType = operation.staticType(expectedType);
         for (ExpressionNode arg : node.args)
         {
@@ -1491,7 +1491,7 @@ public class Expression
             Value ret = ((LazyValue.ContextFreeLazyValue) node.op).evalType(expectedType);
             return (c, t) -> ret;
         }
-        Tokenizer.Token token = node.token;
+        Token token = node.token;
         switch (token.type)
         {
             case UNARY_OPERATOR:
@@ -1526,7 +1526,7 @@ public class Expression
         }
     }
 
-    private void validate(Context c, List<Tokenizer.Token> rpn)
+    private void validate(Context c, List<Token> rpn)
     {
         /*-
          * Thanks to Norman Ramsey:
@@ -1541,7 +1541,7 @@ public class Expression
         // push the 'global' scope
         stack.push(0);
 
-        for (Tokenizer.Token token : rpn)
+        for (Token token : rpn)
         {
             switch (token.type)
             {

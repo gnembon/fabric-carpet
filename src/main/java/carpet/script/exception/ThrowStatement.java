@@ -2,7 +2,7 @@ package carpet.script.exception;
 
 import carpet.script.Context;
 import carpet.script.Expression;
-import carpet.script.Tokenizer.Token;
+import carpet.script.Token;
 import carpet.script.value.StringValue;
 import carpet.script.value.Value;
 

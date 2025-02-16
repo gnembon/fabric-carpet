@@ -37,9 +37,7 @@ import net.minecraft.commands.arguments.blocks.BlockStateArgument;
 import net.minecraft.commands.arguments.coordinates.BlockPosArgument;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.Clearable;
 import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.pattern.BlockInWorld;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
 
@@ -438,7 +436,7 @@ public class ScriptCommand
                 return;
             }
             Expression expr = fun.getExpression();
-            Tokenizer.Token tok = fun.getToken();
+            Token tok = fun.getToken();
             List<String> snippet = expr.getExpressionSnippet(tok);
             Carpet.Messenger_message(source, "wb " + fun.fullName(), "t  defined at: line " + (tok.lineno + 1) + " pos " + (tok.linepos + 1));
             for (String snippetLine : snippet)

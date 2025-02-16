@@ -70,7 +70,7 @@ public abstract class Fluff
 
         boolean numParamsVaries();
 
-        LazyValue lazyEval(Context c, Context.Type type, Expression expr, Tokenizer.Token token, List<LazyValue> lazyParams);
+        LazyValue lazyEval(Context c, Context.Type type, Expression expr, Token token, List<LazyValue> lazyParams);
 
         static void checkInterrupts()
         {
@@ -93,7 +93,7 @@ public abstract class Fluff
 
         boolean isLeftAssoc();
 
-        LazyValue lazyEval(Context c, Context.Type type, Expression e, Tokenizer.Token t, LazyValue v1, LazyValue v2);
+        LazyValue lazyEval(Context c, Context.Type type, Expression e, Token t, LazyValue v1, LazyValue v2);
     }
 
     public interface IOperator extends ILazyOperator
@@ -187,7 +187,7 @@ public abstract class Fluff
         }
 
         @Override
-        public LazyValue lazyEval(Context cc, Context.Type type, Expression e, Tokenizer.Token t, List<LazyValue> lazyParams)
+        public LazyValue lazyEval(Context cc, Context.Type type, Expression e, Token t, List<LazyValue> lazyParams)
         {
 
             return new LazyValue()
@@ -273,7 +273,7 @@ public abstract class Fluff
         }
 
         @Override
-        public LazyValue lazyEval(Context cc, Context.Type type, Expression e, Tokenizer.Token t, LazyValue v1, LazyValue v2)
+        public LazyValue lazyEval(Context cc, Context.Type type, Expression e, Token t, LazyValue v1, LazyValue v2)
         {
             return (c, typeIgnored) -> {
                 try
@@ -308,7 +308,7 @@ public abstract class Fluff
         }
 
         @Override
-        public LazyValue lazyEval(Context cc, Context.Type type, Expression e, Tokenizer.Token t, LazyValue v1, LazyValue v2)
+        public LazyValue lazyEval(Context cc, Context.Type type, Expression e, Token t, LazyValue v1, LazyValue v2)
         {
             if (v2 != null)
             {

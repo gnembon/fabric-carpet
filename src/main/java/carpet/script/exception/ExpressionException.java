@@ -2,7 +2,7 @@ package carpet.script.exception;
 
 import carpet.script.Context;
 import carpet.script.Expression;
-import carpet.script.Tokenizer;
+import carpet.script.Token;
 import carpet.script.external.Carpet;
 import carpet.script.value.FunctionValue;
 
@@ -16,7 +16,7 @@ import java.util.function.Supplier;
 public class ExpressionException extends StacklessRuntimeException implements ResolvedException
 {
     public final Context context;
-    public final Tokenizer.Token token;
+    public final Token token;
     public final List<FunctionValue> stack = new ArrayList<>();
     private final Supplier<String> lazyMessage;
     private String cachedMessage = null;
@@ -28,15 +28,15 @@ public class ExpressionException extends StacklessRuntimeException implements Re
 
     public ExpressionException(Context c, Expression e, String message)
     {
-        this(c, e, Tokenizer.Token.NONE, message);
+        this(c, e, Token.NONE, message);
     }
 
-    public ExpressionException(Context c, Expression e, Tokenizer.Token t, String message)
+    public ExpressionException(Context c, Expression e, Token t, String message)
     {
         this(c, e, t, message, Collections.emptyList());
     }
 
-    public ExpressionException(Context c, Expression e, Tokenizer.Token t, String message, List<FunctionValue> stack)
+    public ExpressionException(Context c, Expression e, Token t, String message, List<FunctionValue> stack)
     {
         super("Error");
         this.stack.addAll(stack);
@@ -45,7 +45,7 @@ public class ExpressionException extends StacklessRuntimeException implements Re
         context = c;
     }
 
-    public ExpressionException(Context c, Expression e, Tokenizer.Token t, Supplier<String> messageSupplier, List<FunctionValue> stack)
+    public ExpressionException(Context c, Expression e, Token t, Supplier<String> messageSupplier, List<FunctionValue> stack)
     {
         super("Error");
         this.stack.addAll(stack);
@@ -54,7 +54,7 @@ public class ExpressionException extends StacklessRuntimeException implements Re
         context = c;
     }
 
-    private static List<String> makeError(Expression expr, @Nullable Tokenizer.Token token, String errmessage)
+    private static List<String> makeError(Expression expr, @Nullable Token token, String errmessage)
     {
         List<String> errMsg = new ArrayList<>();
         errmessage += expr.getModuleName() == null ? "" : (" in " + expr.getModuleName());
@@ -76,7 +76,7 @@ public class ExpressionException extends StacklessRuntimeException implements Re
         return errMsg;
     }
 
-    static synchronized String makeMessage(Context c, Expression e, Tokenizer.Token t, String message) throws ExpressionException
+    static synchronized String makeMessage(Context c, Expression e, Token t, String message) throws ExpressionException
     {
         if (c.getErrorSnooper() != null)
         {

@@ -754,7 +754,7 @@ public class CarpetScriptHost extends ScriptHost
             }
         }
         String sign = "";
-        for (Tokenizer.Token tok : Tokenizer.simplepass(arg))
+        for (Token tok : Tokenizer.simplepass(arg))
         {
             switch (tok.type)
             {

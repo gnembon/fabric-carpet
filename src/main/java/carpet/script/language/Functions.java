@@ -4,7 +4,7 @@ import carpet.script.Context;
 import carpet.script.Expression;
 import carpet.script.Fluff;
 import carpet.script.LazyValue;
-import carpet.script.Tokenizer;
+import carpet.script.Token;
 import carpet.script.argument.FunctionArgument;
 import carpet.script.exception.InternalExpressionException;
 import carpet.script.exception.ReturnStatement;
@@ -45,7 +45,7 @@ public class Functions
         expression.addCustomFunction("call", new Fluff.AbstractLazyFunction(-1, "call")
         {
             @Override
-            public LazyValue lazyEval(Context c, Context.Type t, Expression expr, Tokenizer.Token tok, List<LazyValue> lv)
+            public LazyValue lazyEval(Context c, Context.Type t, Expression expr, Token tok, List<LazyValue> lv)
             {
                 if (lv.isEmpty())
                 {

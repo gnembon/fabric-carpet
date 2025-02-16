@@ -2,7 +2,7 @@ package carpet.script.exception;
 
 import carpet.script.Context;
 import carpet.script.Expression;
-import carpet.script.Tokenizer;
+import carpet.script.Token;
 import carpet.script.value.FunctionValue;
 
 import java.util.ArrayList;
@@ -30,7 +30,7 @@ public class InternalExpressionException extends StacklessRuntimeException
      * @return The new {@link ExpressionException} (or {@link ProcessedThrowStatement}),
      * depending on the implementation.
      */
-    public ExpressionException promote(Context c, Expression e, Tokenizer.Token token)
+    public ExpressionException promote(Context c, Expression e, Token token)
     {
         return new ExpressionException(c, e, token, getMessage(), stack);
     }
