@@ -860,18 +860,13 @@ public class Expression
     }
 
 
-    private List<Token> shuntingYard(Context c)
+    private List<Token> shuntingYard(Context c, List<Token> tokens)
     {
         List<Token> outputQueue = new ArrayList<>();
         Stack<Token> stack = new ObjectArrayList<>();
-
-        Tokenizer tokenizer = new Tokenizer(c, this, expression, allowComments, allowNewlineSubstitutions);
-        // stripping lousy but acceptable semicolons
-        List<Token> cleanedTokens = tokenizer.postProcess();
-
         Token lastFunction = null;
         Token previousToken = null;
-        for (Token token : cleanedTokens)
+        for (Token token : tokens)
         {
             switch (token.type)
             {
@@ -1188,7 +1183,11 @@ public class Expression
 
     private LazyValue getAST(Context context)
     {
-        List<Token> rpn = shuntingYard(context);
+        Tokenizer tokenizer = new Tokenizer(context, this, expression, allowComments, allowNewlineSubstitutions);
+        // stripping lousy but acceptable semicolons
+        List<Token> cleanedTokens = Tokenizer.postProcess(tokenizer.parseTokens());
+
+        List<Token> rpn = shuntingYard(context, cleanedTokens);
         validate(context, rpn);
         ExpressionNode root = RPNToParseTree(rpn, context);
         if (!Vanilla.ScriptServer_scriptOptimizations(((CarpetScriptServer)context.scriptServer()).server))
@@ -1197,7 +1196,12 @@ public class Expression
         }
 
         Context optimizeOnlyContext = new Context.ContextForErrorReporting(context);
-        boolean scriptsDebugging = Vanilla.ScriptServer_scriptDebugging(((CarpetScriptServer)context.scriptServer()).server);
+        optimizeTree(context, root, optimizeOnlyContext);
+        return extractOp(optimizeOnlyContext, root, Context.Type.NONE);
+    }
+
+    private void optimizeTree(Context context, ExpressionNode root, Context optimizeOnlyContext) {
+        boolean scriptsDebugging = Vanilla.ScriptServer_scriptDebugging(((CarpetScriptServer) context.scriptServer()).server);
         if (scriptsDebugging)
         {
             CarpetScriptServer.LOG.info("Input code size for " + getModuleName() + ": " + treeSize(root) + " nodes, " + treeDepth(root) + " deep");
@@ -1236,7 +1240,7 @@ public class Expression
                     prevTreeSize = treeSize(root);
                     prevTreeDepth = treeDepth(root);
                 }
-                boolean optimized = optimizeTree(optimizeOnlyContext, root, Context.Type.NONE, 0, scriptsDebugging);
+                boolean optimized = optimizeConstantsAndPureFunctions(optimizeOnlyContext, root, Context.Type.NONE, 0, scriptsDebugging);
                 if (!optimized)
                 {
                     break;
@@ -1248,7 +1252,6 @@ public class Expression
                 }
             }
         }
-        return extractOp(optimizeOnlyContext, root, Context.Type.NONE);
     }
 
     public Value explain(Context context)
@@ -1378,7 +1381,7 @@ public class Expression
         return optimized;
     }
 
-    private boolean optimizeTree(Context ctx, ExpressionNode node, Context.Type expectedType, int indent, boolean scriptsDebugging)
+    private boolean optimizeConstantsAndPureFunctions(Context ctx, ExpressionNode node, Context.Type expectedType, int indent, boolean scriptsDebugging)
     {
         // ctx is just to report errors, not values evaluation
         boolean optimized = false;
@@ -1400,7 +1403,7 @@ public class Expression
         Context.Type requestedType = operation.staticType(expectedType);
         for (ExpressionNode arg : node.args)
         {
-            if (optimizeTree(ctx, arg, requestedType, indent + 1, scriptsDebugging))
+            if (optimizeConstantsAndPureFunctions(ctx, arg, requestedType, indent + 1, scriptsDebugging))
             {
                 optimized = true;
             }

@@ -1,20 +1,16 @@
 package carpet.script;
 
 import carpet.script.exception.ExpressionException;
-import carpet.script.exception.InternalExpressionException;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
 
 /**
  * Expression tokenizer that allows to iterate over a {@link String}
  * expression token by token. Blank characters will be skipped.
  */
-public class Tokenizer implements Iterator<Token>
+public class Tokenizer
 {
     /**
      * What character to use for decimal separators.
@@ -53,15 +49,18 @@ public class Tokenizer implements Iterator<Token>
         this.newLinesMarkers = allowNewLineMakers;
     }
 
-    public List<Token> postProcess()
+    public static Tokenizer simple(String input)
     {
-        Iterable<Token> iterable = () -> this;
-        List<Token> originalTokens = StreamSupport.stream(iterable.spliterator(), false).collect(Collectors.toList());
+        return new Tokenizer(null, null, input, false, false);
+    }
+
+    public static List<Token> postProcess(List<Token> originalTokens)
+    {
         List<Token> cleanedTokens = new ArrayList<>();
         Token last = null;
-        while (!originalTokens.isEmpty())
+        for (int i = originalTokens.size() - 1; i >= 0; i--)
         {
-            Token current = originalTokens.remove(originalTokens.size() - 1);
+            Token current = originalTokens.get(i);
             if (current.type == Token.TokenType.MARKER && current.surface.startsWith("//"))
             {
                 continue;
@@ -104,7 +103,16 @@ public class Tokenizer implements Iterator<Token>
         return cleanedTokens;
     }
 
-    @Override
+    public List<Token> parseTokens()
+    {
+        List<Token> tokens = new ArrayList<>();
+        while (hasNext())
+        {
+            tokens.add(next());
+        }
+        return tokens;
+    }
+
     public boolean hasNext()
     {
         return (pos < input.length());
@@ -132,18 +140,6 @@ public class Tokenizer implements Iterator<Token>
                 || (tok.type == Token.TokenType.UNARY_OPERATOR && tok.surface.equals(";u"));
     }
 
-    public static List<Token> simplepass(String input)
-    {
-        Tokenizer tok = new Tokenizer(null, null, input, false, false);
-        List<Token> res = new ArrayList<>();
-        while (tok.hasNext())
-        {
-            res.add(tok.next());
-        }
-        return res;
-    }
-
-    @Override
     public Token next()
     {
         Token token = new Token();
@@ -414,11 +410,4 @@ public class Tokenizer implements Iterator<Token>
         }
         return previousToken = token;
     }
-
-    @Override
-    public void remove()
-    {
-        throw new InternalExpressionException("remove() not supported");
-    }
-
 }
