@@ -15,14 +15,17 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import net.minecraft.commands.CommandBuildContext;
+import net.minecraft.network.chat.Component;
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.CompletableFuture;
@@ -40,6 +43,8 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.pattern.BlockInWorld;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
+
+import javax.annotation.Nullable;
 
 import static net.minecraft.commands.Commands.argument;
 import static net.minecraft.commands.Commands.literal;
@@ -359,6 +364,9 @@ public class ScriptCommand
                         }));
         LiteralArgumentBuilder<CommandSourceStack> x = literal("explain").
                 requires(Vanilla::ServerPlayer_canScriptACE).
+                executes((cc) -> explain(
+                        cc,
+                        null)).
                 then(argument("expr", StringArgumentType.greedyString()).suggests(ScriptCommand::suggestCode).
                         executes((cc) -> explain(
                                 cc,
@@ -541,17 +549,86 @@ public class ScriptCommand
         });
     }
 
-    private static int explain(CommandContext<CommandSourceStack> context, String expr) throws CommandSyntaxException
+    private static int explain(CommandContext<CommandSourceStack> context, @Nullable String expr) throws CommandSyntaxException
     {
         CommandSourceStack source = context.getSource();
         CarpetScriptHost host = getHost(context);
         return handleCall(source, host, () -> {
-            CarpetExpression ex = new CarpetExpression(host.main, expr, source, new BlockPos(0, 0, 0));
-            ex.explain(host, BlockPos.containing(source.getPosition()));
-            Carpet.Messenger_message(source, "w Expression: ", "wb " + expr);
-            Carpet.Messenger_message(source, "w Tokens: ", "wb " + ex.getExpr().toString());
-            return NumericValue.ONE;
+            CarpetExpression ex = new CarpetExpression(host.main, expr == null ? ( host.main == null ? "" : host.main.code() ) : expr, source, new BlockPos(0, 0, 0));
+            List<Token> results = ex.explain(host, BlockPos.containing(source.getPosition()));
+            prettyPrintTokens(source, results);
+            return NumericValue.of(results.size());
         });
+    }
+
+    private static void prettyPrintTokens(CommandSourceStack source, List<Token> tokens) {
+        //Collections.sort(tokens);
+        // indentations per line
+        Map<Integer, Integer> indents = new HashMap<>();
+        for (Token token : tokens)
+        {
+            indents.put(token.lineno, Math.min(indents.getOrDefault(token.lineno, token.linepos), token.linepos));
+        }
+
+
+        int lastLine = 0;
+        int lastPos = 0;
+        List<Component> elements = new ArrayList<>();
+        for (Token token : tokens)
+        {
+            if (token.lineno != lastLine)
+            {
+                flushElements(source, elements);
+                lastLine = token.lineno;
+                lastPos = indents.getOrDefault(token.lineno, 0);
+                elements.add(Carpet.Messenger_compose("w " + " ".repeat(lastPos)));
+            }
+            //else if (token.linepos > lastPos)
+            //{
+            //    lastPos = token.linepos;
+            //}
+            elements.add(tokenToComponent(token));
+            lastPos += token.surface.length() + 1;
+        }
+        flushElements(source, elements);
+    }
+
+    private static Component tokenToComponent(Token token)
+    {
+        String surface = token.surface;
+        if (!token.display.isEmpty())
+        {
+            surface = token.display;
+        }
+        if (token.comment.isEmpty()) {
+            return Carpet.Messenger_compose(styleForToken(token) + " " + surface);
+        }
+        return Carpet.Messenger_compose(styleForToken(token)+"br " + surface, "^gi " + token.comment);
+    }
+
+    private static String styleForToken(Token token)
+    {
+        return switch (token.type) {
+            case Token.TokenType.LITERAL -> "l";
+            case Token.TokenType.HEX_LITERAL -> "e";
+            case Token.TokenType.CONSTANT -> "q";
+            case Token.TokenType.OPEN_PAREN, Token.TokenType.CLOSE_PAREN, Token.TokenType.COMMA,
+                 Token.TokenType.OPERATOR, Token.TokenType.UNARY_OPERATOR -> "w";
+            case Token.TokenType.FUNCTION -> "y";
+            case Token.TokenType.VARIABLE -> "y";
+            case Token.TokenType.STRINGPARAM -> "c";
+            default -> // marker
+                    "w";
+        };
+    }
+
+    private static void flushElements(CommandSourceStack source, List<Component> elements)
+    {
+        if (elements.size() > 0)
+        {
+            Carpet.Messenger_message(source, elements.toArray(new Component[0]));
+            elements.clear();
+        }
     }
 
     private static int scriptScan(CommandContext<CommandSourceStack> context, BlockPos origin, BlockPos a, BlockPos b, String expr) throws CommandSyntaxException

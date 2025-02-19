@@ -153,9 +153,8 @@ public class CarpetExpression
         }
     }
 
-    public Value explain(ScriptHost host, BlockPos pos)
+    public List<Token> explain(ScriptHost host, BlockPos pos)
     {
-        // convert to explain
         CarpetScriptServer scriptServer = (CarpetScriptServer) host.scriptServer();
         try
         {
