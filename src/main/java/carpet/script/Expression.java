@@ -1378,11 +1378,11 @@ public class Expression
                     {
                         throw new ExpressionException(context, this, token, "Not a number");
                     }
-                    token.morph(Token.TokenType.CONSTANT, token.surface);
+                    //token.morph(Token.TokenType.CONSTANT, token.surface);
                     nodeStack.push(ExpressionNode.ofConstant(number, token));
                 }
                 case STRINGPARAM -> {
-                    token.morph(Token.TokenType.CONSTANT, token.surface);
+                    //token.morph(Token.TokenType.CONSTANT, token.surface);
                     nodeStack.push(ExpressionNode.ofConstant(new StringValue(token.surface), token));
                 }
                 case HEX_LITERAL -> {
@@ -1395,7 +1395,7 @@ public class Expression
                     {
                         throw new ExpressionException(context, this, token, "Not a number");
                     }
-                    token.morph(Token.TokenType.CONSTANT, token.surface);
+                    //token.morph(Token.TokenType.CONSTANT, token.surface);
                     nodeStack.push(ExpressionNode.ofConstant(hexNumber, token));
                 }
                 default -> throw new ExpressionException(context, this, token, "Unexpected token '" + token.surface + "'");
@@ -1553,7 +1553,7 @@ public class Expression
                 else
                 {
                     returnNode.op = LazyValue.ofConstant(Value.NULL);
-                    returnNode.token.morph(Token.TokenType.CONSTANT, "");
+                    returnNode.token.morph(Token.TokenType.CONSTANT, "null");
                     returnNode.args = Collections.emptyList();
                     if (logger != null)
                     {
