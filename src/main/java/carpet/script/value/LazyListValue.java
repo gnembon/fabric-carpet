@@ -56,7 +56,7 @@ public abstract class LazyListValue extends AbstractListValue implements Iterato
             @Override
             public String getString()
             {
-                return String.format(Locale.ROOT, "[%s, %s, ..., %s)", NumericValue.of(start).getString(), NumericValue.of(start + stepp).getString(), NumericValue.of(limit).getString());
+                return String.format(Locale.ROOT, "<%s, %s, ..., %s)", NumericValue.of(start).getString(), NumericValue.of(start + stepp).getString(), NumericValue.of(limit).getString());
             }
         };
     }
@@ -104,7 +104,7 @@ public abstract class LazyListValue extends AbstractListValue implements Iterato
             @Override
             public String getString()
             {
-                return String.format(Locale.ROOT, "[%s, %s, ..., %s)", NumericValue.of(start).getString(), NumericValue.of(start + stepp).getString(), NumericValue.of(limit).getString());
+                return String.format(Locale.ROOT, "<%s, %s, ..., %s)", NumericValue.of(start).getString(), NumericValue.of(start + stepp).getString(), NumericValue.of(limit).getString());
             }
         };
     }

@@ -346,6 +346,7 @@ public class Operators
             return Value.TRUE;
         });
         expression.addFunctionalEquivalence("==", "equal");
+
         expression.addBinaryOperator("!=", precedence.get("equal==!="), false, (v1, v2) ->
                 v1.equals(v2) ? Value.FALSE : Value.TRUE);
         expression.addFunction("unique", lv -> {

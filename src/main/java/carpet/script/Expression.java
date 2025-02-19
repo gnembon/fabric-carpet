@@ -1346,14 +1346,13 @@ public class Expression
         {
             String operator = pair.getKey();
             String function = pair.getValue();
-            if ((symbol.equals(operator) || symbol.equals(function)) && node.args.size() > 0)
+            if ((symbol.equals(operator) || symbol.equals(function)) && !node.args.isEmpty())
             {
                 boolean leftOptimizable = operators.get(operator).isLeftAssoc();
                 ExpressionNode optimizedChild = node.args.get(leftOptimizable ? 0 : (node.args.size() - 1));
                 String type = optimizedChild.token.surface;
                 if ((type.equals(operator) || type.equals(function)) && (!(optimizedChild.op instanceof LazyValue.ContextFreeLazyValue)))
                 {
-                    optimized = true;
                     List<ExpressionNode> newargs = new ArrayList<>();
                     if (leftOptimizable)
                     {
@@ -1378,6 +1377,7 @@ public class Expression
                     }
                     node.token.morph(Token.TokenType.FUNCTION, function);
                     node.args = newargs;
+                    return true;
                 }
             }
         }
