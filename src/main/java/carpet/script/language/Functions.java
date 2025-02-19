@@ -126,7 +126,7 @@ public class Functions
 
         //assigns const procedure to the lhs, returning its previous value
         // must be lazy due to RHS being an expression to save to execute
-        expression.addLazyBinaryOperatorWithDelegation("->", Operators.precedence.get("def->"), false, false, (c, type, e, t, lv1, lv2) ->
+        expression.addLazyBinaryOperatorWithDelegation("->", "define", Operators.precedence.get("def->"), false, false, (c, type, e, t, lv1, lv2) ->
         {
             if (type == Context.MAPDEF)
             {

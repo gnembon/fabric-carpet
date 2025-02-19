@@ -111,12 +111,20 @@ public class Expression
     }
 
     private final Map<String, String> functionalEquivalence = new Object2ObjectOpenHashMap<>();
+    private final Map<String, String> functionalAliases = new Object2ObjectOpenHashMap<>();
 
-    public void addFunctionalEquivalence(String operator, String function)
+    private void addFunctionalEquivalence(String operator, String function)
     {
         assert operators.containsKey(operator);
         assert functions.containsKey(function);
         functionalEquivalence.put(operator, function);
+        functionalAliases.put(operator, function);
+    }
+    private void addFunctionalAlias(String operator, String function)
+    {
+        assert operators.containsKey(operator);
+        assert functions.containsKey(function);
+        functionalAliases.put(operator, function);
     }
 
     private final Map<String, Value> constants = Map.of(
@@ -191,7 +199,7 @@ public class Expression
     }
 
 
-    public void addLazyUnaryOperator(String surface, int precedence, boolean leftAssoc, boolean pure, Function<Context.Type, Context.Type> staticTyper,
+    public void addLazyUnaryOperator(String surface, String function, int precedence, boolean leftAssoc, boolean pure, Function<Context.Type, Context.Type> staticTyper,
                                      TriFunction<Context, Context.Type, LazyValue, LazyValue> lazyfun)
     {
         operators.put(surface + "u", new AbstractLazyOperator(precedence, leftAssoc)
@@ -227,10 +235,45 @@ public class Expression
                 }
             }
         });
+
+        functions.put(function, new AbstractLazyFunction(1, function)
+        {
+            @Override
+            public boolean pure()
+            {
+                return pure;
+            }
+
+            @Override
+            public boolean transitive()
+            {
+                return false;
+            }
+
+            @Override
+            public Context.Type staticType(Context.Type outerType)
+            {
+                return staticTyper.apply(outerType);
+            }
+
+            @Override
+            public LazyValue lazyEval(Context c, Context.Type t, Expression e, Token token, List<LazyValue> v)
+            {
+                try
+                {
+                    return lazyfun.apply(c, t, v.get(0));
+                }
+                catch (RuntimeException exc)
+                {
+                    throw handleCodeException(c, exc, e, token);
+                }
+            }
+        });
+        addFunctionalAlias(surface + "u", function);
     }
 
 
-    public void addLazyBinaryOperatorWithDelegation(String surface, int precedence, boolean leftAssoc, boolean pure,
+    public void addLazyBinaryOperatorWithDelegation(String surface, String function, int precedence, boolean leftAssoc, boolean pure,
                                                     SexFunction<Context, Context.Type, Expression, Token, LazyValue, LazyValue, LazyValue> lazyfun)
     {
         operators.put(surface, new AbstractLazyOperator(precedence, leftAssoc)
@@ -260,6 +303,36 @@ public class Expression
                 }
             }
         });
+
+        functions.put(function, new AbstractLazyFunction(2, function)
+        {
+            @Override
+            public boolean pure()
+            {
+                return pure;
+            }
+
+            @Override
+            public boolean transitive()
+            {
+                return false;
+            }
+
+            @Override
+            public LazyValue lazyEval(Context c, Context.Type type, Expression e, Token t, List<LazyValue> v)
+            {
+                try
+                {
+                    return lazyfun.apply(c, type, e, t, v.get(0), v.get(1));
+                }
+                catch (RuntimeException exc)
+                {
+                    throw handleCodeException(c, exc, e, t);
+                }
+            }
+        });
+
+        addFunctionalAlias(surface, function);
     }
 
     public void addCustomFunction(String name, ILazyFunction fun)
@@ -333,7 +406,84 @@ public class Expression
         });
     }
 
-    public void addLazyBinaryOperator(String surface, int precedence, boolean leftAssoc, boolean pure, Function<Context.Type, Context.Type> typer,
+    public void addLazyBinaryOperator(String surface, String function, int precedence, boolean leftAssoc, boolean pure, Function<Context.Type, Context.Type> typer,
+                                      QuadFunction<Context, Context.Type, LazyValue, LazyValue, LazyValue> lazyfun, TriFunction<Context, Context.Type, List<LazyValue>, LazyValue> multiFun)
+    {
+        operators.put(surface, new AbstractLazyOperator(precedence, leftAssoc)
+        {
+
+            @Override
+            public boolean pure()
+            {
+                return pure;
+            }
+
+            @Override
+            public boolean transitive()
+            {
+                return false;
+            }
+
+            @Override
+            public Context.Type staticType(Context.Type outerType)
+            {
+                return typer.apply(outerType);
+            }
+
+            @Override
+            public LazyValue lazyEval(Context c, Context.Type t, Expression e, Token token, LazyValue v1, LazyValue v2)
+            {
+                ILazyFunction.checkInterrupts();
+                try
+                {
+                    return lazyfun.apply(c, t, v1, v2);
+                }
+                catch (RuntimeException exc)
+                {
+                    throw handleCodeException(c, exc, e, token);
+                }
+            }
+        });
+
+        functions.put(function, new AbstractLazyFunction(-1, function)
+        {
+            @Override
+            public boolean pure()
+            {
+                return true;
+            }
+
+            @Override
+            public boolean transitive()
+            {
+                return false;
+            }
+
+            @Override
+            public Context.Type staticType(Context.Type outerType)
+            {
+                return typer.apply(outerType);
+            }
+
+            @Override
+            public LazyValue lazyEval(Context c, Context.Type i, Expression e, Token t, List<LazyValue> lazyParams)
+            {
+                ILazyFunction.checkInterrupts();
+                try
+                {
+                    return multiFun.apply(c, i, lazyParams);
+                }
+                catch (RuntimeException exc)
+                {
+                    throw handleCodeException(c, exc, e, t);
+                }
+            }
+        });
+
+        addFunctionalEquivalence(surface, function);
+    }
+
+    public void addLazyBinaryOperator(String surface, String function, int precedence, boolean leftAssoc, boolean pure, Function<Context.Type, Context.Type> typer,
                                       QuadFunction<Context, Context.Type, LazyValue, LazyValue, LazyValue> lazyfun)
     {
         operators.put(surface, new AbstractLazyOperator(precedence, leftAssoc)
@@ -371,9 +521,45 @@ public class Expression
                 }
             }
         });
+
+        functions.put(function, new AbstractLazyFunction(2, function)
+        {
+            @Override
+            public boolean pure()
+            {
+                return pure;
+            }
+
+            @Override
+            public boolean transitive()
+            {
+                return false;
+            }
+
+            @Override
+            public Context.Type staticType(Context.Type outerType)
+            {
+                return typer.apply(outerType);
+            }
+
+            @Override
+            public LazyValue lazyEval(Context c, Context.Type t, Expression e, Token token, List<LazyValue> v)
+            {
+                try
+                {
+                    return lazyfun.apply(c, t, v.get(0), v.get(1));
+                }
+                catch (RuntimeException exc)
+                {
+                    throw handleCodeException(c, exc, e, token);
+                }
+            }
+        });
+
+        addFunctionalAlias(surface, function);
     }
 
-    public void addBinaryContextOperator(String surface, int precedence, boolean leftAssoc, boolean pure, boolean transitive,
+    public void addBinaryContextOperator(String surface, String function, int precedence, boolean leftAssoc, boolean pure, boolean transitive,
                                          QuadFunction<Context, Context.Type, Value, Value, Value> fun)
     {
         operators.put(surface, new AbstractLazyOperator(precedence, leftAssoc)
@@ -404,6 +590,37 @@ public class Expression
                 }
             }
         });
+
+        functions.put(function, new AbstractLazyFunction(2, function)
+        {
+            @Override
+            public boolean pure()
+            {
+                return pure;
+            }
+
+            @Override
+            public boolean transitive()
+            {
+                return transitive;
+            }
+
+            @Override
+            public LazyValue lazyEval(Context c, Context.Type t, Expression e, Token token, List<LazyValue> v)
+            {
+                try
+                {
+                    Value ret = fun.apply(c, t, v.get(0).evalValue(c, Context.NONE), v.get(1).evalValue(c, Context.NONE));
+                    return (cc, tt) -> ret;
+                }
+                catch (RuntimeException exc)
+                {
+                    throw handleCodeException(c, exc, e, token);
+                }
+            }
+        });
+
+        addFunctionalAlias(surface, function);
     }
 
     public static RuntimeException handleCodeException(Context c, RuntimeException exc, Expression e, Token token)
@@ -433,7 +650,7 @@ public class Expression
         return new ExpressionException(c, e, token, "Internal error (please report this issue to Carpet) while evaluating: " + exc);
     }
 
-    public void addUnaryOperator(String surface, boolean leftAssoc, Function<Value, Value> fun)
+    public void addUnaryOperator(String surface, String function, boolean leftAssoc, Function<Value, Value> fun)
     {
         operators.put(surface + "u", new AbstractUnaryOperator(Operators.precedence.get("unary+-!..."), leftAssoc)
         {
@@ -443,18 +660,57 @@ public class Expression
                 return fun.apply(v1);
             }
         });
+        functions.put(function, new AbstractFunction(1, function)
+        {
+            @Override
+            public Value eval(List<Value> v1)
+            {
+                return fun.apply(v1.get(0));
+            }
+        });
+        addFunctionalAlias(surface + "u", function);
     }
 
-    public void addBinaryOperator(String surface, int precedence, boolean leftAssoc, BiFunction<Value, Value, Value> fun)
+    public void addBinaryOperator(String surface, String function, int precedence, boolean leftAssoc, BiFunction<Value, Value, Value> fun, Function<List<Value>, Value> multiFun)
     {
         operators.put(surface, new AbstractOperator(precedence, leftAssoc)
         {
             @Override
-            public Value eval(Value v1, Value v2)
-            {
+            public Value eval(Value v1, Value v2) {
                 return fun.apply(v1, v2);
             }
         });
+
+        functions.put(function, new AbstractFunction(-1, function)
+        {
+            @Override
+            public Value eval(List<Value> parameters)
+            {
+                return multiFun.apply(parameters);
+            }
+        });
+        addFunctionalEquivalence(surface, function);
+    }
+
+    public void addBinaryOperator(String surface, String name, int precedence, boolean leftAssoc, BiFunction<Value, Value, Value> fun)
+    {
+        operators.put(surface, new AbstractOperator(precedence, leftAssoc)
+        {
+            @Override
+            public Value eval(Value v1, Value v2) {
+                return fun.apply(v1, v2);
+            }
+        });
+        functions.put(name, new AbstractFunction(2, name)
+        {
+            @Override
+            public Value eval(List<Value> parameters)
+            {
+                return fun.apply(parameters.get(0), parameters.get(1));
+            }
+        });
+
+        addFunctionalAlias(surface, name);
     }
 
 
@@ -605,44 +861,6 @@ public class Expression
             public boolean transitive()
             {
                 return false;
-            }
-
-            @Override
-            public LazyValue lazyEval(Context c, Context.Type i, Expression e, Token t, List<LazyValue> lazyParams)
-            {
-                ILazyFunction.checkInterrupts();
-                try
-                {
-                    return fun.apply(c, i, lazyParams);
-                }
-                catch (RuntimeException exc)
-                {
-                    throw handleCodeException(c, exc, e, t);
-                }
-            }
-        });
-    }
-
-    public void addPureLazyFunction(String name, int num_params, Function<Context.Type, Context.Type> typer, TriFunction<Context, Context.Type, List<LazyValue>, LazyValue> fun)
-    {
-        functions.put(name, new AbstractLazyFunction(num_params, name)
-        {
-            @Override
-            public boolean pure()
-            {
-                return true;
-            }
-
-            @Override
-            public boolean transitive()
-            {
-                return false;
-            }
-
-            @Override
-            public Context.Type staticType(Context.Type outerType)
-            {
-                return typer.apply(outerType);
             }
 
             @Override
@@ -859,6 +1077,9 @@ public class Expression
         Threading.apply(this);
         Loops.apply(this);
         DataStructures.apply(this);
+        for(String op : operators.keySet()) {
+            assert functionalAliases.containsKey(op) : "Missing function for operator " + op;
+        }
     }
 
 
@@ -1381,6 +1602,13 @@ public class Expression
                 }
             }
         }
+
+        if (toFunctional && functionalAliases.containsKey(symbol) && !node.args.isEmpty())
+        {
+            optimized = true;
+            node.token.morph(Token.TokenType.FUNCTION, functionalAliases.get(symbol));
+        }
+
         return optimized;
     }
 
