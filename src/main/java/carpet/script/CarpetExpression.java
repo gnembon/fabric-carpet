@@ -12,6 +12,7 @@ import carpet.script.api.WorldAccess;
 import carpet.script.exception.CarpetExpressionException;
 import carpet.script.exception.ExpressionException;
 import carpet.script.external.Carpet;
+import carpet.script.external.Vanilla;
 import carpet.script.value.BlockValue;
 import carpet.script.value.EntityValue;
 import carpet.script.value.NumericValue;
@@ -19,6 +20,8 @@ import carpet.script.value.Value;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.Entity;
+
+import java.util.List;
 
 public class CarpetExpression
 {
@@ -86,7 +89,11 @@ public class CarpetExpression
                 Value playerValue = new EntityValue(e).bindTo("p");
                 context.with("p", (cc, tt) -> playerValue);
             }
-            return scriptServer.events.handleEvents.getWhileDisabled(() -> this.expr.eval(context).getBoolean());
+            return scriptServer.events.handleEvents.getWhileDisabled(() -> this.expr.executeAndEvaluate(
+                    context,
+                    Vanilla.ScriptServer_scriptOptimizations(scriptServer.server),
+                    Vanilla.ScriptServer_scriptDebugging(scriptServer.server) ? CarpetScriptServer.LOG::info : null
+            ).getBoolean());
         }
         catch (ExpressionException e)
         {
@@ -126,7 +133,11 @@ public class CarpetExpression
                 Value playerValue = new EntityValue(e).bindTo("p");
                 context.with("p", (cc, tt) -> playerValue);
             }
-            return scriptServer.events.handleEvents.getWhileDisabled(() -> this.expr.eval(context));
+            return scriptServer.events.handleEvents.getWhileDisabled(() -> this.expr.executeAndEvaluate(
+                    context,
+                    Vanilla.ScriptServer_scriptOptimizations(scriptServer.server),
+                    Vanilla.ScriptServer_scriptDebugging(scriptServer.server) ? CarpetScriptServer.LOG::info : null
+            ));
         }
         catch (ExpressionException e)
         {

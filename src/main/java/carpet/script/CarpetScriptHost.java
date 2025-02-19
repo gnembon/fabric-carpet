@@ -829,7 +829,7 @@ public class CarpetScriptHost extends ScriptHost
             // TODO: this is just for now - invoke would be able to invoke other hosts scripts
             assertAppIntegrity(function.getModule());
             Context context = new CarpetContext(this, source);
-            return scriptServer().events.handleEvents.getWhileDisabled(() -> function.getExpression().evalValue(
+            return scriptServer().events.handleEvents.getWhileDisabled(() -> function.getExpression().evaluatePartial(
                     () -> function.lazyEval(context, Context.VOID, function.getExpression(), function.getToken(), argv),
                     context,
                     Context.VOID
@@ -862,7 +862,7 @@ public class CarpetScriptHost extends ScriptHost
         {
             assertAppIntegrity(function.getModule());
             Context context = new CarpetContext(this, source);
-            return function.getExpression().evalValue(
+            return function.getExpression().evaluatePartial(
                     () -> function.execute(context, Context.VOID, function.getExpression(), function.getToken(), argv, null),
                     context,
                     Context.VOID
@@ -899,7 +899,7 @@ public class CarpetScriptHost extends ScriptHost
         {
             assertAppIntegrity(fun.getModule());
             Context context = new CarpetContext(this, source, origin);
-            return fun.getExpression().evalValue(
+            return fun.getExpression().evaluatePartial(
                     () -> fun.execute(context, Context.VOID, fun.getExpression(), fun.getToken(), argv, null),
                     context,
                     Context.VOID);
