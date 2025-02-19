@@ -19,9 +19,11 @@ import net.minecraft.network.chat.Component;
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.IOException;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -561,34 +563,43 @@ public class ScriptCommand
         });
     }
 
-    private static void prettyPrintTokens(CommandSourceStack source, List<Token> tokens) {
-        //Collections.sort(tokens);
-        // indentations per line
+    private static void prettyPrintTokens(CommandSourceStack source, List<Token> tokens)
+    {
         Map<Integer, Integer> indents = new HashMap<>();
         for (Token token : tokens)
         {
             indents.put(token.lineno, Math.min(indents.getOrDefault(token.lineno, token.linepos), token.linepos));
         }
+        List<Integer> lines = new ArrayList<>(indents.keySet());
+        Collections.sort(lines);
+        Deque<Integer> indentsStack = new ArrayDeque<>(lines);
 
-
-        int lastLine = 0;
-        int lastPos = 0;
         List<Component> elements = new ArrayList<>();
-        for (Token token : tokens)
+        for (int i = 0; i < tokens.size(); i++)
         {
-            if (token.lineno != lastLine)
+            Token token = tokens.get(i);
+            if (!indentsStack.isEmpty() && token.lineno == indentsStack.peekFirst())
             {
                 flushElements(source, elements);
-                lastLine = token.lineno;
-                lastPos = indents.getOrDefault(token.lineno, 0);
+                indentsStack.pollFirst();
+                // remove all elements of intendStack that don't have any more tokens
+                outer: while (!indentsStack.isEmpty())
+                {
+                    int nextLineNo = indentsStack.peekFirst();
+                    for (int j = i + 1; j < tokens.size(); j++)
+                    {
+                        if (tokens.get(j).lineno == nextLineNo)
+                        {
+                            break outer;
+                        }
+                    }
+                    indentsStack.pollFirst();
+                }
+
+                int lastPos = indents.getOrDefault(token.lineno, 0);
                 elements.add(Carpet.Messenger_compose("w " + " ".repeat(lastPos)));
             }
-            //else if (token.linepos > lastPos)
-            //{
-            //    lastPos = token.linepos;
-            //}
             elements.add(tokenToComponent(token));
-            lastPos += token.surface.length() + 1;
         }
         flushElements(source, elements);
     }
@@ -600,7 +611,8 @@ public class ScriptCommand
         {
             surface = token.display;
         }
-        if (token.comment.isEmpty()) {
+        if (token.comment.isEmpty())
+        {
             return Carpet.Messenger_compose(styleForToken(token) + " " + surface);
         }
         return Carpet.Messenger_compose(styleForToken(token)+"br " + surface, "^gi " + token.comment);
@@ -610,21 +622,21 @@ public class ScriptCommand
     {
         return switch (token.type) {
             case Token.TokenType.LITERAL -> "l";
-            case Token.TokenType.HEX_LITERAL -> "e";
+            case Token.TokenType.HEX_LITERAL -> "m";
             case Token.TokenType.CONSTANT -> "q";
             case Token.TokenType.OPEN_PAREN, Token.TokenType.CLOSE_PAREN, Token.TokenType.COMMA,
                  Token.TokenType.OPERATOR, Token.TokenType.UNARY_OPERATOR -> "w";
-            case Token.TokenType.FUNCTION -> "y";
+            case Token.TokenType.FUNCTION -> "d";
             case Token.TokenType.VARIABLE -> "y";
             case Token.TokenType.STRINGPARAM -> "c";
             default -> // marker
-                    "w";
+                    "f";
         };
     }
 
     private static void flushElements(CommandSourceStack source, List<Component> elements)
     {
-        if (elements.size() > 0)
+        if (!elements.isEmpty())
         {
             Carpet.Messenger_message(source, elements.toArray(new Component[0]));
             elements.clear();

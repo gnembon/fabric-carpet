@@ -70,6 +70,7 @@ public class Expression
     private boolean allowNewlineSubstitutions = true;
     private boolean allowComments = false;
 
+    @Nullable
     public Module module = null;
 
     public String getModuleName()
@@ -83,7 +84,7 @@ public class Expression
         allowComments = true;
     }
 
-    public void asAModule(Module mi)
+    public void asAModule(@Nullable Module mi)
     {
         module = mi;
     }
@@ -91,6 +92,7 @@ public class Expression
     /**
      * Cached AST (Abstract Syntax Tree) (root) of the expression
      */
+    @Nullable
     private LazyValue ast = null;
 
     /**

@@ -21,6 +21,7 @@ import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.Entity;
 
+import javax.annotation.Nullable;
 import java.util.List;
 
 public class CarpetExpression
@@ -45,7 +46,7 @@ public class CarpetExpression
         return origin;
     }
 
-    public CarpetExpression(Module module, String expression, CommandSourceStack source, BlockPos origin)
+    public CarpetExpression(@Nullable Module module, String expression, CommandSourceStack source, BlockPos origin)
     {
         this.origin = origin;
         this.source = source;
