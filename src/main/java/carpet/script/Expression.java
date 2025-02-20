@@ -1727,7 +1727,7 @@ public class Expression
         // a few exceptions which we don't implement in the framework for simplicity for now
         if (!operation.pure())
         {
-            if (!symbol.equals("->") || expectedType != Context.Type.MAPDEF)
+            if (!(symbol.equals("->") || symbol.equals("define")) || expectedType != Context.Type.MAPDEF)
             {
                 return optimized;
             }
@@ -1772,7 +1772,7 @@ public class Expression
         {
             result = ((ILazyOperator) operation).lazyEval(ctx, expectedType, this, node.token, args.get(0), args.get(1)).evalValue(null, expectedType);
         }
-        node.token.disguiseAs(null, "=>"+result.getString());
+        node.token.disguiseAs(null, "=> "+result.getString());
         node.op = LazyValue.ofConstant(result);
         if (logger != null)
         {

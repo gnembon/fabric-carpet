@@ -615,7 +615,7 @@ public class ScriptCommand
         {
             return Carpet.Messenger_compose(styleForToken(token) + " " + surface);
         }
-        return Carpet.Messenger_compose(styleForToken(token)+"br " + surface, "^gi " + token.comment);
+        return Carpet.Messenger_compose(styleForToken(token)+"u " + surface, "^gi " + token.comment);
     }
 
     private static String styleForToken(Token token)
