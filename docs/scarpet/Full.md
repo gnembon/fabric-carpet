@@ -5731,11 +5731,21 @@ Runs a vanilla command from the string result of the `expr` and returns a triple
 intercepted list of output messages, and error message if the command resulted in a failure. 
 Successful commands return `null` as their error.
 
+The command return `null` if the command was not run immediately, but was scheduled for later execution 
+due to being requested while command was executed. This happens most commonly
+when running `run` from a `/script run/invoke` command since that always results in piling up command to run while `script` is being executed.
+
+The mitigation for this is to use `run` in a separate scheduled function, or use `run` in a `tick` event, or literally in 
+any other way than directly from a `/script` command, which will ensure that the command runs immediately.
+
 <pre>
-run('fill 1 1 1 10 10 10 air') -> [0, ["Successfully filled 123 blocks"], null]
-run('give @s stone 4') -> [0, ["Gave 4 [Stone] to gnembon"], null]
-run('seed') -> [0, ["Seed: [4031384495743822299]"], null]
-run('sed') -> [0, [], "sed<--[HERE]"] // wrong command
+run('fill 1 1 1 10 10 10 air') -> [123, ["Successfully filled 123 blocks"], null]
+run('give @s stone 4') -> [1, ["Gave 4 [Stone] to gnembon"], null]
+run('seed') -> [-170661413, [Seed: [4031384495743822299]], null]
+run('sed') -> [-1, [], "sed<--[HERE]"] // wrong command
+
+/script run run('setblock 0 0 0 stone') -> null
+/script run schedule(0, _() -> print(run('setblock 0 0 0 stone'))) -> [1, [Changed the block at 0, 0, 0], null]
 </pre>
 
 ### `save()`
