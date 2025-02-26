@@ -587,13 +587,13 @@ public class ListValue extends AbstractListValue implements ContainerValueInterf
             {
                 throw new NBTSerializableValue.IncompatibleTypeException(this);
             }
-            tags.forEach(t -> tag.add(StringTag.valueOf(t.getAsString())));
+            tags.forEach(t -> tag.add(StringTag.valueOf(t.asString().orElseThrow())));
             return tag;
         }
         // only numbers / mixed types
         tags.forEach(cases.contains(TagTypeCompat.DBL)
-                ? (t -> tag.add(DoubleTag.valueOf(((NumericTag) t).getAsDouble())))
-                : (t -> tag.add(LongTag.valueOf(((NumericTag) t).getAsLong()))));
+                ? (t -> tag.add(DoubleTag.valueOf(((NumericTag) t).doubleValue())))
+                : (t -> tag.add(LongTag.valueOf(((NumericTag) t).longValue()))));
         return tag;
     }
 

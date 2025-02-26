@@ -31,7 +31,7 @@ public class ServerNetworkHandler
     private static final Set<ServerPlayer> validCarpetPlayers = new HashSet<>();
 
     private static final Map<String, BiConsumer<ServerPlayer, Tag>> dataHandlers = Map.of(
-            CarpetClient.HELLO, (p, t) -> onHello(p, t.getAsString()),
+            CarpetClient.HELLO, (p, t) -> onHello(p, t.asString().orElseThrow()),
             "clientCommand", (p, t) -> handleClientCommand(p, (CompoundTag) t)
     );
 
@@ -79,8 +79,8 @@ public class ServerNetworkHandler
 
     private static void handleClientCommand(ServerPlayer player, CompoundTag commandData)
     {
-        String command = commandData.getString("command");
-        String id = commandData.getString("id");
+        String command = commandData.getString("command").orElseThrow();
+        String id = commandData.getString("id").orElseThrow();
         List<Component> output = new ArrayList<>();
         Component[] error = {null};
         int[] returnValue = {0};
@@ -116,7 +116,7 @@ public class ServerNetworkHandler
 
     public static void onClientData(ServerPlayer player, CompoundTag compound)
     {
-        for (String key : compound.getAllKeys())
+        for (String key : compound.keySet())
         {
             if (dataHandlers.containsKey(key))
             {

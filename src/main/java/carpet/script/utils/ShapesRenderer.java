@@ -11,7 +11,7 @@ import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.MeshData;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.Tesselator;
-import com.mojang.blaze3d.vertex.VertexBuffer;
+//import com.mojang.blaze3d.vertex.VertexBuffer;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import com.mojang.blaze3d.vertex.VertexFormat.Mode;
 import com.mojang.math.Axis;
@@ -120,18 +120,18 @@ public class ShapesRenderer
             return;
         }
         long currentTime = client.level.getGameTime();
-        RenderSystem.enableDepthTest();
+        ////RenderSystem.enableDepthTest();
         //RenderSystem.setShader(CoreShaders.POSITION_COLOR);
-        RenderSystem.depthFunc(515);
-        RenderSystem.enableBlend();
-        RenderSystem.defaultBlendFunc();
+        ////RenderSystem.depthFunc(515);
+        ////RenderSystem.enableBlend();
+        ////RenderSystem.defaultBlendFunc();
         // too bright
         //RenderSystem.blendFuncSeparate(GlStateManager.SrcFactor.SRC_ALPHA, GlStateManager.DstFactor.ONE, GlStateManager.SrcFactor.ONE, GlStateManager.DstFactor.ZERO);
         // meh
         //RenderSystem.blendFuncSeparate(GlStateManager.SrcFactor.SRC_ALPHA, GlStateManager.DstFactor.ONE_MINUS_SRC_ALPHA, GlStateManager.SrcFactor.ONE, GlStateManager.DstFactor.ONE_MINUS_SRC_ALPHA);
 
-        RenderSystem.disableCull();
-        RenderSystem.depthMask(false);
+        ////RenderSystem.disableCull();
+        ////RenderSystem.depthMask(false);
         //RenderSystem.polygonOffset(-3f, -3f);
         //RenderSystem.enablePolygonOffset();
 
@@ -184,10 +184,10 @@ public class ShapesRenderer
                 }
             });
         }
-        RenderSystem.enableCull();
-        RenderSystem.depthMask(true);
-        RenderSystem.enableBlend();
-        RenderSystem.defaultBlendFunc();
+        ////RenderSystem.enableCull();
+        ////RenderSystem.depthMask(true);
+        ////RenderSystem.enableBlend();
+        ////RenderSystem.defaultBlendFunc();
         token.run();
     }
 
@@ -196,7 +196,7 @@ public class ShapesRenderer
         Runnable token = Carpet.startProfilerSection("Scarpet client");
         for (int i = 0, count = tag.size(); i < count; i++)
         {
-            addShape(tag.getCompound(i));
+            addShape(tag.getCompound(i).orElseThrow());
         }
         token.run();
     }
@@ -209,7 +209,7 @@ public class ShapesRenderer
             return;
         }
         BiFunction<Minecraft, ShapeDispatcher.ExpiringShape, RenderedShape<? extends ShapeDispatcher.ExpiringShape>> shapeFactory;
-        shapeFactory = renderedShapes.get(tag.getString("shape"));
+        shapeFactory = renderedShapes.get(tag.getString("shape").orElseThrow());
         if (shapeFactory == null)
         {
             CarpetScriptServer.LOG.info("Unrecognized shape: " + tag.getString("shape"));
@@ -373,9 +373,9 @@ public class ShapesRenderer
                 matrices.mulPose(Axis.YP.rotationDegrees(180));
             }
 
-            RenderSystem.depthMask(true);
-            RenderSystem.enableCull();
-            RenderSystem.enableDepthTest();
+            ////RenderSystem.depthMask(true);
+            ////RenderSystem.enableCull();
+            ////RenderSystem.enableDepthTest();
 
             blockPos = BlockPos.containing(v1);
             int light = 0;
@@ -409,7 +409,7 @@ public class ShapesRenderer
                     } else {
                         type = ItemBlockRenderTypes.getRenderType(blockState);
                     }
-                    client.getBlockRenderer().getModelRenderer().renderModel(matrices.last(), immediate.getBuffer(type), blockState, bakedModel, red, green, blue, light, OverlayTexture.NO_OVERLAY);
+                    client.getBlockRenderer().getModelRenderer().renderModel(matrices.last(), immediate.getBuffer(type), bakedModel, red, green, blue, light, OverlayTexture.NO_OVERLAY);
                 }
 
                 // draw the block`s entity part
@@ -450,9 +450,9 @@ public class ShapesRenderer
             }
             matrices.popPose();
             immediate.endBatch();
-            RenderSystem.disableCull();
-            RenderSystem.disableDepthTest();
-            RenderSystem.depthMask(false);
+            ////RenderSystem.disableCull();
+            ////RenderSystem.disableDepthTest();
+            ////RenderSystem.depthMask(false);
 
         }
 
@@ -484,11 +484,11 @@ public class ShapesRenderer
             Font textRenderer = client.font;
             if (shape.doublesided)
             {
-                RenderSystem.disableCull();
+                //// RenderSystem.disableCull(); TODO culling
             }
             else
             {
-                RenderSystem.enableCull();
+                //// RenderSystem.enableCull();
             }
             matrices.pushPose();
             matrices.translate(v1.x - cx, v1.y - cy, v1.z - cz);
@@ -527,7 +527,7 @@ public class ShapesRenderer
             textRenderer.drawInBatch(shape.value, text_x, 0.0F, shape.textcolor, false, matrices.last().pose(), immediate, Font.DisplayMode.NORMAL, shape.textbck, 15728880);
             immediate.endBatch();
             matrices.popPose();
-            RenderSystem.enableCull();
+            ////RenderSystem.enableCull();
         }
 
         @Override
@@ -617,7 +617,7 @@ public class ShapesRenderer
     }
 
     private static void drawWithShader(MeshData mesh) {
-        RenderType.debugTriangleFan().draw(mesh);
+        RenderType.debugLineStrip(1.0).draw(mesh);
         //VertexBuffer buffre = mesh.drawState().format().getImmediateDrawVertexBuffer();
         //buffre.bind();
         //buffre.upload(mesh);
@@ -645,11 +645,11 @@ public class ShapesRenderer
 
             if (shape.doublesided)
             {
-                RenderSystem.disableCull();
+                ////RenderSystem.disableCull(); // todo culling
             }
             else
             {
-                RenderSystem.enableCull();
+                ////RenderSystem.enableCull();
             }
 
             BufferBuilder builder = tesselator.begin(faceIndices[shape.mode], DefaultVertexFormat.POSITION_COLOR);
@@ -664,8 +664,8 @@ public class ShapesRenderer
             }
             drawWithShader(builder.buildOrThrow());
 
-            RenderSystem.disableCull();
-            RenderSystem.depthMask(false);
+            ////RenderSystem.disableCull();
+            ////RenderSystem.depthMask(false);
             //RenderSystem.enableDepthTest();
 
 

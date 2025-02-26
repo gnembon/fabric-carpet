@@ -238,7 +238,7 @@ public class ShapeDispatcher
     public static ExpiringShape fromTag(CompoundTag tag, Level level)
     {
         Map<String, Value> options = new HashMap<>();
-        for (String key : tag.getAllKeys())
+        for (String key : tag.keySet())
         {
             Param decoder = Param.of.get(key);
             if (decoder == null)
@@ -252,7 +252,7 @@ public class ShapeDispatcher
         Value shapeValue = options.get("shape");
         if (shapeValue == null)
         {
-            CarpetScriptServer.LOG.info("Shape id missing in " + String.join(", ", tag.getAllKeys()));
+            CarpetScriptServer.LOG.info("Shape id missing in " + String.join(", ", tag.keySet()));
             return null;
         }
         BiFunction<Map<String, Value>, RegistryAccess, ExpiringShape> factory = ExpiringShape.shapeProviders.get(shapeValue.getString());
@@ -1559,11 +1559,11 @@ public class ShapeDispatcher
         {
             if (tag instanceof final ListTag list)
             {
-                return ListValue.wrap(list.stream().map(x -> BooleanValue.of(((NumericTag) x).getAsNumber().doubleValue() != 0)));
+                return ListValue.wrap(list.stream().map(x -> BooleanValue.of(((NumericTag) x).doubleValue() != 0)));
             }
             if (tag instanceof final ByteTag booltag)
             {
-                return BooleanValue.of(booltag.getAsByte() != 0);
+                return BooleanValue.of(booltag.byteValue() != 0);
             }
             return Value.NULL;
         }
@@ -1599,7 +1599,7 @@ public class ShapeDispatcher
         @Override
         public Value decode(Tag tag, Level level)
         {
-            return new StringValue(tag.getAsString());
+            return new StringValue(tag.asString().get());
         }
     }
 
@@ -1643,9 +1643,9 @@ public class ShapeDispatcher
         {
             BlockState bs = NbtUtils.readBlockState(level.holderLookup(Registries.BLOCK), (CompoundTag) tag);
             CompoundTag compoundTag2 = null;
-            if (((CompoundTag) tag).contains("TileEntityData", 10))
+            if (((CompoundTag) tag).contains("TileEntityData"))
             {
-                compoundTag2 = ((CompoundTag) tag).getCompound("TileEntityData");
+                compoundTag2 = ((CompoundTag) tag).getCompound("TileEntityData").get();
             }
             return new BlockValue(bs, compoundTag2);
         }
@@ -1724,7 +1724,7 @@ public class ShapeDispatcher
         @Override
         public Value decode(Tag tag, Level level)
         {
-            return FormattedTextValue.deserialize(tag.getAsString(), level.registryAccess());
+            return FormattedTextValue.deserialize(tag.asString().get(), level.registryAccess());
         }
     }
 
@@ -1818,7 +1818,7 @@ public class ShapeDispatcher
         @Override
         public Value decode(Tag tag, Level level)
         {
-            return BooleanValue.of(((ByteTag) tag).getAsByte() > 0);
+            return BooleanValue.of(((ByteTag) tag).byteValue() > 0);
         }
     }
 
@@ -1832,7 +1832,7 @@ public class ShapeDispatcher
         @Override
         public Value decode(Tag tag, Level level)
         {
-            return new NumericValue(((FloatTag) tag).getAsFloat());
+            return new NumericValue(((FloatTag) tag).floatValue());
         }
 
         @Override
@@ -1871,7 +1871,7 @@ public class ShapeDispatcher
         @Override
         public Value decode(Tag tag, Level level)
         {
-            return new NumericValue(((FloatTag) tag).getAsFloat());
+            return new NumericValue(((FloatTag) tag).floatValue());
         }
 
         @Override
@@ -1892,7 +1892,7 @@ public class ShapeDispatcher
         @Override
         public Value decode(Tag tag, Level level)
         {
-            return new NumericValue(((IntTag) tag).getAsInt());
+            return new NumericValue(((IntTag) tag).intValue());
         }
 
         @Override
@@ -1913,7 +1913,7 @@ public class ShapeDispatcher
         @Override
         public Value decode(Tag tag, Level level)
         {
-            return new NumericValue(((IntTag) tag).getAsInt());
+            return new NumericValue(((IntTag) tag).intValue());
         }
 
         @Override
@@ -1944,7 +1944,7 @@ public class ShapeDispatcher
         @Override
         public Value decode(Tag tag, Level level)
         {
-            return new NumericValue(((FloatTag) tag).getAsFloat());
+            return new NumericValue(((FloatTag) tag).floatValue());
         }
 
         @Override
@@ -2036,9 +2036,9 @@ public class ShapeDispatcher
         {
             ListTag ctag = (ListTag) tag;
             return ListValue.of(
-                    new NumericValue(ctag.getDouble(0)),
-                    new NumericValue(ctag.getDouble(1)),
-                    new NumericValue(ctag.getDouble(2))
+                    new NumericValue(ctag.getDouble(0).orElseThrow()),
+                    new NumericValue(ctag.getDouble(1).orElseThrow()),
+                    new NumericValue(ctag.getDouble(2).orElseThrow())
             );
         }
 
@@ -2083,11 +2083,11 @@ public class ShapeDispatcher
             List<Value> points = new ArrayList<>();
             for (int i = 0, ll = ltag.size(); i < ll; i++)
             {
-                ListTag ptag = ltag.getList(i);
+                ListTag ptag = ltag.getList(i).orElseThrow();
                 points.add(ListValue.of(
-                        new NumericValue(ptag.getDouble(0)),
-                        new NumericValue(ptag.getDouble(1)),
-                        new NumericValue(ptag.getDouble(2))
+                        new NumericValue(ptag.getDouble(0).orElseThrow()),
+                        new NumericValue(ptag.getDouble(1).orElseThrow()),
+                        new NumericValue(ptag.getDouble(2).orElseThrow())
                 ));
             }
             return ListValue.wrap(points);
@@ -2122,7 +2122,7 @@ public class ShapeDispatcher
         @Override
         public Value decode(Tag tag, Level level)
         {
-            return new NumericValue(((IntTag) tag).getAsInt());
+            return new NumericValue(((IntTag) tag).intValue());
         }
 
         @Override
@@ -2164,7 +2164,7 @@ public class ShapeDispatcher
         @Override
         public Value decode(Tag tag, Level level)
         {
-            return new NumericValue(((IntTag) tag).getAsInt());
+            return new NumericValue(((IntTag) tag).intValue());
         }
     }
 
