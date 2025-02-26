@@ -364,15 +364,27 @@ public class ScriptCommand
                             boolean success = ss(cc).uninstallApp(cc.getSource(), StringArgumentType.getString(cc, "app"));
                             return success ? 1 : 0;
                         }));
-        LiteralArgumentBuilder<CommandSourceStack> x = literal("explain").
-                requires(Vanilla::ServerPlayer_canScriptACE).
-                executes((cc) -> explain(
-                        cc,
-                        null)).
-                then(argument("expr", StringArgumentType.greedyString()).suggests(ScriptCommand::suggestCode).
+
+        LiteralArgumentBuilder<CommandSourceStack> x = literal("explain").requires(Vanilla::ServerPlayer_canScriptACE).
+                then(argument("style", StringArgumentType.word()).suggests((cc, bb) -> suggest(List.of("raw", "clean", "functional", "canonical", "optimized"), bb)).
                         executes((cc) -> explain(
                                 cc,
-                                StringArgumentType.getString(cc, "expr"))));
+                                null, null, StringArgumentType.getString(cc, "style"))).
+                        then(literal("run").then(argument("expr", StringArgumentType.greedyString()).suggests(ScriptCommand::suggestCode).
+                                executes((cc) -> explain(
+                                        cc,
+                                        StringArgumentType.getString(cc, "expr"), null, StringArgumentType.getString(cc, "style"))))).
+                        then(literal("invoke").
+                                then(argument("call", StringArgumentType.word()).suggests((cc, bb) -> suggest(suggestFunctionCalls(cc), bb)).
+                                        executes((cc) -> explain(
+                                                cc,
+                                                null,
+                                                StringArgumentType.getString(cc, "call"),
+                                                StringArgumentType.getString(cc, "style")
+                                        ))
+                                )
+                        )
+                );
 
         dispatcher.register(literal("script").
                 requires(Vanilla::ServerPlayer_canScriptGeneral).
@@ -551,13 +563,13 @@ public class ScriptCommand
         });
     }
 
-    private static int explain(CommandContext<CommandSourceStack> context, @Nullable String expr) throws CommandSyntaxException
+    private static int explain(CommandContext<CommandSourceStack> context, @Nullable String expr, @Nullable String method, String style) throws CommandSyntaxException
     {
         CommandSourceStack source = context.getSource();
         CarpetScriptHost host = getHost(context);
         return handleCall(source, host, () -> {
-            CarpetExpression ex = new CarpetExpression(host.main, expr == null ? ( host.main == null ? "" : host.main.code() ) : expr, source, new BlockPos(0, 0, 0));
-            List<Token> results = ex.explain(host, BlockPos.containing(source.getPosition()));
+            CarpetExpression ex = new CarpetExpression(host.main, expr == null ? ( host.main == null ? "" : host.main.code() ) : expr, source, BlockPos.ZERO);
+            List<Token> results = ex.explain(host, method, style, BlockPos.containing(source.getPosition()));
             prettyPrintTokens(source, results);
             return NumericValue.of(results.size());
         });

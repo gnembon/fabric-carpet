@@ -255,6 +255,7 @@ public class Tokenizer
             }
             pos++;
             linepos++;
+            token.disguiseAs("'"+token.surface+"'", null);
 
         }
         else if (Character.isLetter(ch) || "_".indexOf(ch) >= 0)
@@ -298,6 +299,7 @@ public class Tokenizer
             else if (ch == ',')
             {
                 token.type = Token.TokenType.COMMA;
+                token.disguiseAs(", ", null);
             }
             else
             {
@@ -379,12 +381,21 @@ public class Tokenizer
                     || (previousToken.type == Token.TokenType.MARKER && (previousToken.surface.equals("{") || previousToken.surface.equals("[")))
             )
             {
+                token.disguiseAs(token.surface, null);
                 token.surface += "u";
                 token.type = Token.TokenType.UNARY_OPERATOR;
             }
             else
             {
                 token.type = Token.TokenType.OPERATOR;
+                if (token.surface.equals(";"))
+                {
+                    token.disguiseAs(token.surface + " ", null);
+                }
+                else
+                {
+                    token.disguiseAs(" " + token.surface + " ", null);
+                }
             }
         }
         if (expression != null && context != null && previousToken != null &&

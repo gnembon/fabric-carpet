@@ -154,7 +154,7 @@ public class CarpetExpression
         }
     }
 
-    public List<Token> explain(ScriptHost host, BlockPos pos)
+    public List<Token> explain(ScriptHost host, @Nullable String method, @Nullable String style, BlockPos pos)
     {
         CarpetScriptServer scriptServer = (CarpetScriptServer) host.scriptServer();
         try
@@ -174,7 +174,7 @@ public class CarpetExpression
                 Value playerValue = new EntityValue(e).bindTo("p");
                 context.with("p", (cc, tt) -> playerValue);
             }
-            return scriptServer.events.handleEvents.getWhileDisabled(() -> this.expr.explain(context));
+            return scriptServer.events.handleEvents.getWhileDisabled(() -> this.expr.explain(context, method, style));
         }
         catch (ExpressionException e)
         {

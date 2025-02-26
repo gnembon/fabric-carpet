@@ -1535,22 +1535,31 @@ public class Expression
         }
     }
 
-    public List<Token> explain(Context context)
+    public List<Token> explain(Context context, @Nullable String method, @Nullable String style)
     {
         //todo convert to explain
         Tokenizer tokenizer = new Tokenizer(context, this, expression, true, true);
         // stripping lousy but acceptable semicolons
         List<Token> input = tokenizer.parseTokens();
+        if (style.equalsIgnoreCase("raw")) {
+            return input;
+        }
         List<Token> cleanedTokens = Tokenizer.postProcess(input);
+        if (style.equalsIgnoreCase("clean")) {
+            return cleanedTokens;
+        }
 
         List<Token> rpn = shuntingYard(context, cleanedTokens);
         validate(context, rpn);
         ExpressionNode root = RPNToParseTree(rpn, context);
         List<Token> parsedTokens = root.tokensRecursive(this);
+        if (style.equalsIgnoreCase("canonical")) {
+            return parsedTokens;
+        }
 
         Context optimizeOnlyContext = new Context.ContextForErrorReporting(context);
         // pure functional
-        optimizeTree(root, optimizeOnlyContext, null, true);
+        optimizeTree(root, optimizeOnlyContext, null,  style.equalsIgnoreCase("functional"));
         List<Token> compileTimeOptimized = root.tokensRecursive(this);
 
         return compileTimeOptimized;
