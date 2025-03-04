@@ -21,6 +21,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.OptionalLong;
 import java.util.function.BinaryOperator;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 public class SnoopyCommandSource extends CommandSourceStack
@@ -43,6 +44,9 @@ public class SnoopyCommandSource extends CommandSourceStack
     private final CommandSigningContext signingContext;
 
     private final TaskChainer taskChainer;
+
+    // sendFailure() callback
+    @Nullable private Consumer<Component> errorCallback = null;
 
     public SnoopyCommandSource(CommandSourceStack original, Component[] error, List<Component> chatOutput, OptionalLong[] returnValue)
     {
@@ -197,6 +201,10 @@ public class SnoopyCommandSource extends CommandSourceStack
     public void sendFailure(Component message)
     {
         error[0] = message;
+        if(this.errorCallback != null)
+        {
+            this.errorCallback.accept(message);
+        }
     }
 
     @Override
@@ -204,4 +212,15 @@ public class SnoopyCommandSource extends CommandSourceStack
     {
         chatOutput.add(message.get());
     }
+
+    /**
+     * Added for the new queue system for commands, since some early errors don't trigger the resultConsumer and all sendFailures calls
+     * are executed after the call resultConsumer when they do.
+     * @param errorCallback A consumer that will be called upon sendFailure
+     */
+    public void setErrorCallback(Consumer<Component> errorCallback)
+    {
+        this.errorCallback = errorCallback;
+    }
+
 }
