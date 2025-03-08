@@ -706,9 +706,12 @@ public class Auxiliary
             }
         });
 
-        expression.addContextFunction("run_async", 1, (c, t, lv) ->
+        expression.addContextFunction("run_async", 2, (c, t, lv) ->
         {
             CommandSourceStack source = ((CarpetContext) c).source();
+            if(lv.size() < 2) {
+                throw new InternalExpressionException("run_async(expr, callback) requires two arguments!");
+            }
             FunctionArgument callback = FunctionArgument.findIn(c, expression.module, lv, 1, true, false);
             String command = lv.get(0).getString();
             if(callback.function == null)
@@ -730,7 +733,7 @@ public class Auxiliary
             }
             else if (callback.function.getArguments().size() < 1)
             {
-                throw new InternalExpressionException("callback requires 1 argument for command output");
+                throw new InternalExpressionException("callback requires 1 argument for command output!");
             }
             boolean[] isCallbackConsumed = {false};
             try
