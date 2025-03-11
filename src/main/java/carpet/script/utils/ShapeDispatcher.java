@@ -26,6 +26,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Registry;
 import net.minecraft.core.RegistryAccess;
+import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.ByteTag;
@@ -46,6 +47,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.ARGB;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.Entity;
@@ -435,10 +437,8 @@ public class ShapeDispatcher
 
         protected ParticleOptions replacementParticle(RegistryAccess regs)
         {
-            String particleName = fa == 0 ?
-                    String.format(Locale.ROOT, "dust %.1f %.1f %.1f 1.0", r, g, b) :
-                    String.format(Locale.ROOT, "dust %.1f %.1f %.1f 1.0", fr, fg, fb);
-            return getParticleData(particleName, regs);
+            boolean bg = fa == 0;
+            return new DustParticleOptions(ARGB.colorFromFloat(1.0f, (bg ?r:fr), (bg ?r:fr), (bg ?r:fr)), 1);
         }
 
 
@@ -1069,7 +1069,7 @@ public class ShapeDispatcher
                 }
                 if (fa > 0.0f)
                 {
-                    ParticleOptions locparticledata = getParticleData(String.format(Locale.ROOT, "dust %.1f %.1f %.1f %.1f", fr, fg, fb, fa), p.level().registryAccess());
+                    ParticleOptions locparticledata = new DustParticleOptions(ARGB.colorFromFloat(1.0f, fr, fg, fb), 1);
                     for (Vec3 v : getAlterPoint(p))
                     {
                         p.serverLevel().sendParticles(p, locparticledata, true, true,

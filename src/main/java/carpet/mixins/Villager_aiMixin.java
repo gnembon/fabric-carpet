@@ -3,6 +3,7 @@ package carpet.mixins;
 import carpet.helpers.ParticleDisplay;
 import carpet.utils.Messenger;
 import carpet.utils.MobAI;
+import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.world.entity.ai.village.poi.PoiTypes;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -131,7 +132,7 @@ public abstract class Villager_aiMixin extends AbstractVillager
                 else
                 {
 
-                    ParticleDisplay.drawParticleLine((ServerPlayer) playerEntity_1, position(), Vec3.atCenterOf(bedPos.pos()), "dust 0 0 0 1", "happy_villager", 100, 0.2); // pos+0.5v
+                    ParticleDisplay.drawParticleLine((ServerPlayer) playerEntity_1, position(), Vec3.atCenterOf(bedPos.pos()), new DustParticleOptions(0xff000000, 1),  ParticleTypes.HAPPY_VILLAGER, 100, 0.2); // pos+0.5v
                 }
             }
             else if (itemStack_1.getItem() == Items.ROTTEN_FLESH)
