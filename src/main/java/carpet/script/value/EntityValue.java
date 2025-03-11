@@ -903,12 +903,7 @@ public class EntityValue extends Value
         }
         if (e instanceof ServerPlayer sp)
         {
-            // this forces position but doesn't angles for some reason. Need both in the API in the future.
-            EnumSet<Relative> set = EnumSet.noneOf(Relative.class);
-            set.add(Relative.X_ROT);
-            set.add(Relative.Y_ROT);
-
-            sp.connection.teleport(new PositionMoveRotation(new Vec3(x, y, z), Vec3.ZERO, yaw, pitch), set);
+            sp.connection.teleport(x, y, z, yaw, pitch);
         }
         else
         {
