@@ -98,7 +98,6 @@
     "HopperBlockEntity_counterMixin",
     "AbstractContainerMenu_ctrlQCraftingMixin",
     "Connection_packetCounterMixin",
-    "AbstractCauldronBlock_stackableSBoxesMixin",
     "ItemStack_stackableShulkerBoxesMixin",
     "ItemEntityMixin",
     "TntBlock_noUpdateMixin",
