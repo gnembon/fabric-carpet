@@ -225,7 +225,7 @@ public class CarpetSettings
             extra = "Even inside hoppers or in comparator calculations.",
             category = {FEATURE, EXPERIMENTAL}
     )
-    public static boolean emptyShulkerBoxStackAlways = false; // WIP to move from Extra
+    public static boolean emptyShulkerBoxStackAlways = false;
 
     @Rule( desc = "Explosions won't destroy blocks", category = {CREATIVE, TNT} )
     public static boolean explosionNoBlockDamage = false;
