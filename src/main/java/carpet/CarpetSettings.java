@@ -209,7 +209,9 @@ public class CarpetSettings
 
     @Rule(
             desc = "Empty shulker boxes can stack when thrown on the ground.",
-            extra = ".. or when manipulated inside the inventories",
+            extra = {".. or when manipulated inside the inventories. ",
+                     "For hoppers and comparators to also use the modified value,",
+                     "set emptyShulkerBoxStackAlways to true as well"},
             validate = StackableShulkerBoxValidator.class,
             options = {"false", "true", "16"},
             strict = false,
@@ -218,7 +220,12 @@ public class CarpetSettings
     public static String stackableShulkerBoxes = "false";
     public static int shulkerBoxStackSize = 1; // Referenced from Carpet extra
 
-	public static boolean emptyShulkerBoxStackAlways = false; // WIP to move from Extra
+    @Rule(
+            desc = "Empty Shulker Boxes will always stack to the size set in stackableShulkerBoxes.",
+            extra = "Even inside hoppers or in comparator calculations.",
+            category = {FEATURE, EXPERIMENTAL}
+    )
+    public static boolean emptyShulkerBoxStackAlways = false; // WIP to move from Extra
 
     @Rule( desc = "Explosions won't destroy blocks", category = {CREATIVE, TNT} )
     public static boolean explosionNoBlockDamage = false;
