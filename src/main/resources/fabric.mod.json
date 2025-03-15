@@ -36,5 +36,9 @@
     "minecraft": ">1.21.4",
     "fabricloader": ">=0.16.10",
     "java": ">=21"
+  },
+
+  "breaks": {
+	"carpet-extra": "<=1.4.161"
   }
 }
