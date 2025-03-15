@@ -218,6 +218,8 @@ public class CarpetSettings
     public static String stackableShulkerBoxes = "false";
     public static int shulkerBoxStackSize = 1; // Referenced from Carpet extra
 
+	public static boolean emptyShulkerBoxStackAlways = false; // WIP to move from Extra
+
     @Rule( desc = "Explosions won't destroy blocks", category = {CREATIVE, TNT} )
     public static boolean explosionNoBlockDamage = false;
 
