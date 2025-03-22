@@ -36,6 +36,7 @@ import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
 
 import javax.annotation.Nullable;
 import java.math.BigInteger;
@@ -94,6 +95,9 @@ public class Expression
      */
     @Nullable
     private LazyValue ast = null;
+
+    @Nullable
+    private ExpressionNode root = null;
 
     /**
      * script specific operatos and built-in functions
@@ -1070,7 +1074,7 @@ public class Expression
      */
     public Expression(String expression)
     {
-        this.expression = expression.stripTrailing().replaceAll("\\r\\n?", "\n").replaceAll("\\t", "   ");
+        this.expression = stripExpression(expression);
         Operators.apply(this);
         ControlFlow.apply(this);
         Functions.apply(this);
@@ -1082,6 +1086,11 @@ public class Expression
         for(String op : operators.keySet()) {
             assert functionalAliases.containsKey(op) : "Missing function for operator " + op;
         }
+    }
+
+    private String stripExpression(String expression)
+    {
+        return expression.stripTrailing().replaceAll("\\r\\n?", "\n").replaceAll("\\t", "   ");
     }
 
 
@@ -1238,13 +1247,29 @@ public class Expression
         }
     }
 
-    public Value executeAndEvaluate(Context c, boolean optimize, @Nullable Consumer<String> logger)
+    public enum LoadOverride {
+        DEFAULT("clean"), CANONICAL("canonical"), OPTIMIZED("optimized"), FUNCTIONAL("functional"), FUNCTIONAL_OPTIMIZED("functional_optimized");
+        public String equivalent;
+        LoadOverride(String equivalent) {
+            this.equivalent = equivalent;
+        }
+    }
+
+    public Pair<Value, ExpressionNode> executeAndEvaluate(Context c, boolean optimize, LoadOverride override, @Nullable Consumer<String> logger)
     {
         if (ast == null)
         {
-            ast = getAST(c, optimize, logger);
+            boolean functions = false;
+            if (override != LoadOverride.DEFAULT) {
+                optimize = override == LoadOverride.OPTIMIZED || override == LoadOverride.FUNCTIONAL_OPTIMIZED;
+                functions = override == LoadOverride.FUNCTIONAL || override == LoadOverride.FUNCTIONAL_OPTIMIZED;
+            }
+
+            Pair<ExpressionNode, LazyValue> ret = getAST(c, optimize, functions, logger);
+            ast = ret.getRight();
+            root = ret.getLeft();
         }
-        return evaluatePartial(() -> ast, c, Context.Type.NONE);
+        return Pair.of(evaluatePartial(() -> ast, c, Context.Type.NONE), root);
     }
 
     public Value evaluatePartial(Supplier<LazyValue> exprProvider, Context c, Context.Type expectedType)
@@ -1301,30 +1326,30 @@ public class Expression
             return new ExpressionNode(new LazyValue.Constant(val), Collections.emptyList(), token);
         }
 
-        public List<Token> tokensRecursive(Expression expression) {
+        public List<Token> tokensRecursive(Expression expression, List<Token> reference, Map<Pair<Integer, Integer>, List<Integer>> referencePointers){
             List<Token> tokens = new ArrayList<>();
             switch (token.type) {
                 case FUNCTION -> {
                     tokens.add(token);
-                    tokens.add(token.morphedInto(Token.TokenType.OPEN_PAREN, "("));
+                    tokens.add(findToken(token, Token.TokenType.OPEN_PAREN, "(", reference, referencePointers));
                     if (!args.isEmpty()) {
                         for (ExpressionNode arg : args) {
-                            List<Token> argTokens = arg.tokensRecursive(expression);
+                            List<Token> argTokens = arg.tokensRecursive(expression, reference, referencePointers);
                             tokens.addAll(argTokens);
-                            tokens.add(argTokens.getLast().morphedInto(Token.TokenType.COMMA, ",").disguiseAs(", ", null));
+                            tokens.add(findToken(argTokens.getLast(), Token.TokenType.COMMA, ",", reference, referencePointers).disguiseAs(", ", null));
                         }
                         tokens.removeLast();
                     }
-                    tokens.add(tokens.getLast().morphedInto(Token.TokenType.CLOSE_PAREN, ")"));
+                    tokens.add(findToken(tokens.getLast(), Token.TokenType.CLOSE_PAREN, ")", reference, referencePointers));
                 }
                 case OPERATOR -> {
-                    tokens.addAll(createOperatorArgumentTokens(expression, args.get(0)));
-                    tokens.add(token.disguiseAs(" "+token.surface+" ", null));
-                    tokens.addAll(createOperatorArgumentTokens(expression, args.get(1)));
+                    tokens.addAll(createOperatorArgumentTokens(expression, args.get(0), reference, referencePointers));
+                    tokens.add(token.disguiseAs(token.surface.equals(";") ? (token.surface+" ") : (" "+token.surface+" "), null));
+                    tokens.addAll(createOperatorArgumentTokens(expression, args.get(1), reference, referencePointers));
                 }
                 case UNARY_OPERATOR -> {
                     tokens.add(token.disguiseAs(" "+StringUtils.chop(token.surface),null));
-                    tokens.addAll(createOperatorArgumentTokens(expression, args.get(0)));
+                    tokens.addAll(createOperatorArgumentTokens(expression, args.get(0), reference, referencePointers));
                 }
                 case VARIABLE, LITERAL, HEX_LITERAL, CONSTANT -> tokens.add(token);
                 case STRINGPARAM -> tokens.add(token.disguiseAs("'"+token.surface+"'", null));
@@ -1336,7 +1361,29 @@ public class Expression
             return tokens;
         }
 
-        public List<Token> createOperatorArgumentTokens(Expression expression, ExpressionNode operand) {
+        public Token findToken(Token previous, Token.TokenType type, String expectedSurface, List<Token> reference, Map<Pair<Integer, Integer>, List<Integer>> referencePointers)
+        {
+            List<Integer> indices = referencePointers.get(Pair.of(previous.lineno, previous.linepos));
+            if (indices == null)
+            {
+                return previous.morphedInto(type, expectedSurface);
+            }
+            for (int index : indices)
+            {
+                if (index + 1 == reference.size())
+                {
+                    continue;
+                }
+                Token token = reference.get(index + 1);
+                if (token.type == type)
+                {
+                    return token.morphedInto(type, expectedSurface);
+                }
+            }
+            return previous.morphedInto(type, expectedSurface);
+        }
+
+        public List<Token> createOperatorArgumentTokens(Expression expression, ExpressionNode operand, List<Token> reference, Map<Pair<Integer, Integer>, List<Integer>> referencePointers) {
             boolean needsBrackets = false;
             var operators = expression.operators;
             if (operators.containsKey(operand.token.surface) && operators.containsKey(token.surface)) {
@@ -1344,15 +1391,15 @@ public class Expression
                     needsBrackets = true;
                 }
             }
-            List<Token> argumentTokens = operand.tokensRecursive(expression);
+            List<Token> argumentTokens = operand.tokensRecursive(expression, reference, referencePointers);
             if (!needsBrackets) {
                 return argumentTokens;
             }
             List<Token> bracketed = new ArrayList<>();
-            bracketed.add(argumentTokens.getFirst().morphedInto(Token.TokenType.OPEN_PAREN, "("));
+            bracketed.add(findToken(argumentTokens.getFirst(), Token.TokenType.OPEN_PAREN, "(", reference, referencePointers));
             bracketed.get(0).swapPlace(argumentTokens.getFirst());
             bracketed.addAll(argumentTokens);
-            bracketed.add(argumentTokens.getLast().morphedInto(Token.TokenType.CLOSE_PAREN, ")"));
+            bracketed.add(findToken(argumentTokens.getLast(), Token.TokenType.CLOSE_PAREN, ")", reference, referencePointers));
             return bracketed;
         }
     }
@@ -1367,24 +1414,32 @@ public class Expression
                 case UNARY_OPERATOR -> {
                     ExpressionNode node = nodeStack.pop();
                     LazyValue result = (c, t) -> operators.get(token.surface).lazyEval(c, t, this, token, node.op, null).evalValue(c, t);
-                    nodeStack.push(new ExpressionNode(result, Collections.singletonList(node), token));
+                    ExpressionNode newNode = new ExpressionNode(result, Collections.singletonList(node), token);
+                    token.node = newNode;
+                    nodeStack.push(newNode);
                 }
                 case OPERATOR -> {
                     ExpressionNode v1 = nodeStack.pop();
                     ExpressionNode v2 = nodeStack.pop();
                     LazyValue result = (c, t) -> operators.get(token.surface).lazyEval(c, t, this, token, v2.op, v1.op).evalValue(c, t);
-                    nodeStack.push(new ExpressionNode(result, List.of(v2, v1), token));
+                    ExpressionNode newNode = new ExpressionNode(result, List.of(v2, v1), token);
+                    token.node = newNode;
+                    nodeStack.push(newNode);
                 }
                 case VARIABLE -> {
                     Value constant = getConstantFor(token.surface);
                     if (constant != null)
                     {
                         token.morph(Token.TokenType.CONSTANT, token.surface);
-                        nodeStack.push(new ExpressionNode(LazyValue.ofConstant(constant), Collections.emptyList(), token));
+                        ExpressionNode newNode = new ExpressionNode(LazyValue.ofConstant(constant), Collections.emptyList(), token);
+                        token.node = newNode;
+                        nodeStack.push(newNode);
                     }
                     else
                     {
-                        nodeStack.push(new ExpressionNode(((c, t) -> getOrSetAnyVariable(c, token.surface).evalValue(c, t)), Collections.emptyList(), token));
+                        ExpressionNode newNode = new ExpressionNode(((c, t) -> getOrSetAnyVariable(c, token.surface).evalValue(c, t)), Collections.emptyList(), token);
+                        token.node = newNode;
+                        nodeStack.push(newNode);
                     }
                 }
                 case FUNCTION -> {
@@ -1419,12 +1474,17 @@ public class Expression
                         nodeStack.pop();
                     }
                     List<LazyValue> params = p.stream().map(n -> n.op).collect(Collectors.toList());
-                    nodeStack.push(new ExpressionNode(
+                    ExpressionNode newNode = new ExpressionNode(
                             (c, t) -> f.lazyEval(c, t, this, token, params).evalValue(c, t),
                             p, token
-                    ));
+                    );
+                    token.node = newNode;
+                    nodeStack.push(newNode);
                 }
-                case OPEN_PAREN -> nodeStack.push(ExpressionNode.PARAMS_START);
+                case OPEN_PAREN -> {
+                    token.node = ExpressionNode.PARAMS_START;
+                    nodeStack.push(ExpressionNode.PARAMS_START);
+                }
                 case LITERAL -> {
                     Value number;
                     try
@@ -1436,11 +1496,15 @@ public class Expression
                         throw new ExpressionException(context, this, token, "Not a number");
                     }
                     //token.morph(Token.TokenType.CONSTANT, token.surface);
-                    nodeStack.push(ExpressionNode.ofConstant(number, token));
+                    ExpressionNode newNode = ExpressionNode.ofConstant(number, token);
+                    token.node = newNode;
+                    nodeStack.push(newNode);
                 }
                 case STRINGPARAM -> {
                     //token.morph(Token.TokenType.CONSTANT, token.surface);
-                    nodeStack.push(ExpressionNode.ofConstant(new StringValue(token.surface), token));
+                    ExpressionNode newNode = ExpressionNode.ofConstant(new StringValue(token.surface), token);
+                    token.node = newNode;
+                    nodeStack.push(newNode);
                 }
                 case HEX_LITERAL -> {
                     Value hexNumber;
@@ -1453,7 +1517,9 @@ public class Expression
                         throw new ExpressionException(context, this, token, "Not a number");
                     }
                     //token.morph(Token.TokenType.CONSTANT, token.surface);
-                    nodeStack.push(ExpressionNode.ofConstant(hexNumber, token));
+                    ExpressionNode newNode = ExpressionNode.ofConstant(hexNumber, token);
+                    token.node = newNode;
+                    nodeStack.push(newNode);
                 }
                 default -> throw new ExpressionException(context, this, token, "Unexpected token '" + token.surface + "'");
             }
@@ -1461,7 +1527,7 @@ public class Expression
         return nodeStack.pop();
     }
 
-    private LazyValue getAST(Context context, boolean optimize, @Nullable Consumer<String> logger)
+    private Pair<ExpressionNode, LazyValue> getAST(Context context, boolean optimize, boolean functional, @Nullable Consumer<String> logger)
     {
         Tokenizer tokenizer = new Tokenizer(context, this, expression, allowComments, allowNewlineSubstitutions);
         // stripping lousy but acceptable semicolons
@@ -1470,19 +1536,22 @@ public class Expression
         List<Token> rpn = shuntingYard(context, cleanedTokens);
         validate(context, rpn);
         ExpressionNode root = RPNToParseTree(rpn, context);
-        if (!optimize)
+        if (!optimize && !functional)
         {
-            return root.op;
+            return Pair.of(root, root.op);
         }
 
         Context optimizeOnlyContext = new Context.ContextForErrorReporting(context);
         // flipping to full functional representation makes it little underperforming, might be related
         // to the fact that operators are running from a bigger pool or function execution is slower
-        optimizeTree(root, optimizeOnlyContext, logger, false);
-        return extractOp(optimizeOnlyContext, root, Context.Type.NONE);
+        optimizeTree(root, optimizeOnlyContext, logger, optimize, functional);
+        if (!optimize) {
+            return Pair.of(root, root.op);
+        }
+        return Pair.of(root, extractOp(optimizeOnlyContext, root, Context.Type.NONE));
     }
 
-    private void optimizeTree(ExpressionNode root, Context optimizeOnlyContext, @Nullable Consumer<String> logger, boolean toFunctional) {
+    private void optimizeTree(ExpressionNode root, Context optimizeOnlyContext, @Nullable Consumer<String> logger, boolean optimize, boolean toFunctional) {
         if (logger != null)
         {
             logger.accept("Input code size for " + getModuleName() + ": " + treeSize(root) + " nodes, " + treeDepth(root) + " deep");
@@ -1503,7 +1572,7 @@ public class Expression
                     prevTreeSize = treeSize(root);
                     prevTreeDepth = treeDepth(root);
                 }
-                boolean optimized = compactTree(root, Context.Type.NONE, 0, logger, toFunctional);
+                boolean optimized = compactTree(root, Context.Type.NONE, 0, logger, optimize, toFunctional);
                 if (!optimized)
                 {
                     break;
@@ -1514,7 +1583,7 @@ public class Expression
                     logger.accept("Compacted from " + prevTreeSize + " nodes, " + prevTreeDepth + " code depth to " + treeSize(root) + " nodes, " + treeDepth(root) + " code depth");
                 }
             }
-            while (true)
+            while (optimize)
             {
                 if (logger != null)
                 {
@@ -1535,10 +1604,48 @@ public class Expression
         }
     }
 
-    public List<Token> explain(Context context, @Nullable String method, @Nullable String style)
+    public List<Token> explain(Context context, @Nullable String code, @Nullable String method, @Nullable String style)
     {
+        if (code == null)
+        {
+            ExpressionNode node;
+            if (method != null)
+            {
+                FunctionValue function = context.host.getFunction(method);
+                if (function == null) {
+                    throw new ExpressionException(context, this, "Unknown function " + method);
+                }
+                node = function.getToken().node;
+                if (node == null) {
+                    throw new ExpressionException(context, this, "Function " + method + " is not a compiled function");
+                }
+            } else
+            {
+                node = context.host.root;
+            }
+            if (node == null || node.token.type == null) {
+                throw new ExpressionException(context, this, "No code to explain");
+            }
+
+            // grab source reference
+            Tokenizer tokenizer = new Tokenizer(context, this, context.host.main == null ? "" : stripExpression(context.host.main.code()) , true, true);
+            List<Token> input = tokenizer.parseTokens();
+            List<Token> cleanedTokens = Tokenizer.postProcess(input);
+
+            Map<Pair<Integer, Integer>, List<Integer>> tokenPointers = new HashMap<>();
+            for (int i = 0; i < cleanedTokens.size(); i++) {
+                Token token = cleanedTokens.get(i);
+                tokenPointers.computeIfAbsent(Pair.of(token.lineno, token.linepos), k -> new ArrayList<>()).add(i);
+            }
+
+            return node.tokensRecursive(this, cleanedTokens, tokenPointers);
+        }
+        if (style == null) {
+            style = context.host.loadOverrides.equivalent;
+        }
+
         //todo convert to explain
-        Tokenizer tokenizer = new Tokenizer(context, this, expression, true, true);
+        Tokenizer tokenizer = new Tokenizer(context, this, stripExpression(code), true, true);
         // stripping lousy but acceptable semicolons
         List<Token> input = tokenizer.parseTokens();
         if (style.equalsIgnoreCase("raw")) {
@@ -1552,15 +1659,22 @@ public class Expression
         List<Token> rpn = shuntingYard(context, cleanedTokens);
         validate(context, rpn);
         ExpressionNode root = RPNToParseTree(rpn, context);
-        List<Token> parsedTokens = root.tokensRecursive(this);
+
+        Map<Pair<Integer, Integer>, List<Integer>> tokenPointers = new HashMap<>();
+        for (int i = 0; i < cleanedTokens.size(); i++) {
+            Token token = cleanedTokens.get(i);
+            tokenPointers.computeIfAbsent(Pair.of(token.lineno, token.linepos), k -> new ArrayList<>()).add(i);
+        }
+
+        List<Token> parsedTokens = root.tokensRecursive(this, cleanedTokens, tokenPointers);
         if (style.equalsIgnoreCase("canonical")) {
             return parsedTokens;
         }
 
         Context optimizeOnlyContext = new Context.ContextForErrorReporting(context);
         // pure functional
-        optimizeTree(root, optimizeOnlyContext, null,  style.equalsIgnoreCase("functional"));
-        List<Token> compileTimeOptimized = root.tokensRecursive(this);
+        optimizeTree(root, optimizeOnlyContext, null, style.contains("optimized"), style.contains("functional"));
+        List<Token> compileTimeOptimized = root.tokensRecursive(this, cleanedTokens, tokenPointers);
 
         return compileTimeOptimized;
     }
@@ -1576,7 +1690,7 @@ public class Expression
     }
 
 
-    private boolean compactTree(ExpressionNode node, Context.Type expectedType, int indent, @Nullable Consumer<String> logger, boolean toFunctional)
+    private boolean compactTree(ExpressionNode node, Context.Type expectedType, int indent, @Nullable Consumer<String> logger, boolean optimize, boolean toFunctional)
     {
         // ctx is just to report errors, not values evaluation
         boolean optimized = false;
@@ -1596,13 +1710,13 @@ public class Expression
         Context.Type requestedType = operation.staticType(expectedType);
         for (ExpressionNode arg : node.args)
         {
-            if (compactTree(arg, requestedType, indent + 1, logger, toFunctional))
+            if (compactTree(arg, requestedType, indent + 1, logger, optimize, toFunctional))
             {
                 optimized = true;
             }
         }
 
-        if (expectedType != Context.Type.MAPDEF && symbol.equals("->") && node.args.size() == 2)
+        if (optimize && expectedType != Context.Type.MAPDEF && (symbol.equals("->") || symbol.equals("define") ) && node.args.size() == 2)
         {
             String rop = node.args.get(1).token.surface;
             ExpressionNode returnNode = null;
@@ -1648,7 +1762,7 @@ public class Expression
         {
             String operator = pair.getKey();
             String function = pair.getValue();
-            if ((symbol.equals(operator) || symbol.equals(function)) && !node.args.isEmpty())
+            if (optimize && (symbol.equals(operator) || symbol.equals(function)) && !node.args.isEmpty())
             {
                 boolean leftOptimizable = operators.get(operator).isLeftAssoc();
                 ExpressionNode optimizedChild = node.args.get(leftOptimizable ? 0 : (node.args.size() - 1));

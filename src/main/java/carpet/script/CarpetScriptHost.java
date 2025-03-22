@@ -78,9 +78,9 @@ public class CarpetScriptHost extends ScriptHost
     public AppStoreManager.StoreNode storeSource;
     boolean hasCommand;
 
-    private CarpetScriptHost(CarpetScriptServer server, @Nullable Module code, boolean perUser, ScriptHost parent, Map<Value, Value> config, Map<String, CommandArgument> argTypes, Predicate<CommandSourceStack> commandValidator, boolean isRuleApp)
+    private CarpetScriptHost(CarpetScriptServer server, @Nullable Module code, boolean perUser, ScriptHost parent, Map<Value, Value> config, Map<String, CommandArgument> argTypes, Predicate<CommandSourceStack> commandValidator, boolean isRuleApp, Expression.LoadOverride override)
     {
-        super(code, server, perUser, parent);
+        super(code, server, perUser, parent, override);
         this.saveTimeout = 0;
         persistenceRequired = true;
         if (parent == null && code != null) // app, not a global host
@@ -99,9 +99,9 @@ public class CarpetScriptHost extends ScriptHost
         storeSource = null;
     }
 
-    public static CarpetScriptHost create(CarpetScriptServer scriptServer, @Nullable Module module, boolean perPlayer, CommandSourceStack source, Predicate<CommandSourceStack> commandValidator, boolean isRuleApp, AppStoreManager.StoreNode storeSource)
+    public static CarpetScriptHost create(CarpetScriptServer scriptServer, @Nullable Module module, boolean perPlayer, CommandSourceStack source, Predicate<CommandSourceStack> commandValidator, boolean isRuleApp, AppStoreManager.StoreNode storeSource, Expression.LoadOverride override)
     {
-        CarpetScriptHost host = new CarpetScriptHost(scriptServer, module, perPlayer, null, Collections.emptyMap(), new HashMap<>(), commandValidator, isRuleApp);
+        CarpetScriptHost host = new CarpetScriptHost(scriptServer, module, perPlayer, null, Collections.emptyMap(), new HashMap<>(), commandValidator, isRuleApp, override);
         // parse code and convert to expression
         if (module != null)
         {
@@ -111,7 +111,7 @@ public class CarpetScriptHost extends ScriptHost
                 CarpetExpression ex = new CarpetExpression(host.main, module.code(), source, new BlockPos(0, 0, 0));
                 ex.getExpr().asATextSource();
                 host.storeSource = storeSource;
-                ex.scriptRunCommand(host, BlockPos.containing(source.getPosition()));
+                host.root = ex.scriptRunCommand(host, BlockPos.containing(source.getPosition())).getRight();
             }
             catch (CarpetExpressionException e)
             {
@@ -131,6 +131,10 @@ public class CarpetScriptHost extends ScriptHost
             {
                 host.storeSource = null;
             }
+        }
+        else
+        {
+            host.root = Expression.ExpressionNode.ofConstant(Value.NULL, new Token());
         }
         return host;
     }
@@ -253,7 +257,7 @@ public class CarpetScriptHost extends ScriptHost
     @Override
     protected ScriptHost duplicate()
     {
-        return new CarpetScriptHost(scriptServer(), main, false, this, appConfig, appArgTypes, commandValidator, isRuleApp);
+        return new CarpetScriptHost(scriptServer(), main, false, this, appConfig, appArgTypes, commandValidator, isRuleApp, loadOverrides);
     }
 
     @Override

@@ -121,7 +121,7 @@ public class CarpetScriptServer extends ScriptServer
         tickStart = 0L;
         stopAll = false;
         holyMoly = server.getCommands().getDispatcher().getRoot().getChildren().stream().map(CommandNode::getName).collect(Collectors.toSet());
-        globalHost = CarpetScriptHost.create(this, null, false, null, p -> true, false, null);
+        globalHost = CarpetScriptHost.create(this, null, false, null, p -> true, false, null, Expression.LoadOverride.DEFAULT);
     }
 
     public void initializeForWorld()
@@ -130,7 +130,7 @@ public class CarpetScriptServer extends ScriptServer
         {
             for (String moduleName : listAvailableModules(false))
             {
-                addScriptHost(server.createCommandSourceStack(), moduleName, null, true, true, false, null);
+                addScriptHost(server.createCommandSourceStack(), moduleName, null, true, true, false, null, Expression.LoadOverride.DEFAULT);
             }
         }
         CarpetEventServer.Event.START.onTick(server);
@@ -232,8 +232,8 @@ public class CarpetScriptServer extends ScriptServer
         return name == null ? globalHost : modules.get(name);
     }
 
-    public boolean addScriptHost(CommandSourceStack source, String name, @Nullable Predicate<CommandSourceStack> commandValidator,
-                                 boolean perPlayer, boolean autoload, boolean isRuleApp, AppStoreManager.StoreNode installer)
+    public int addScriptHost(CommandSourceStack source, String name, @Nullable Predicate<CommandSourceStack> commandValidator,
+                                 boolean perPlayer, boolean autoload, boolean isRuleApp, AppStoreManager.StoreNode installer, Expression.LoadOverride override)
     {
         Runnable token = Carpet.startProfilerSection("Scarpet load");
         if (commandValidator == null)
@@ -247,7 +247,7 @@ public class CarpetScriptServer extends ScriptServer
         {
             if (isRuleApp)
             {
-                return false;
+                return 0;
             }
             removeScriptHost(source, name, false, isRuleApp);
             reload = true;
@@ -256,17 +256,17 @@ public class CarpetScriptServer extends ScriptServer
         if (module == null)
         {
             Carpet.Messenger_message(source, "r Failed to add " + name + " app: App not found");
-            return false;
+            return 0;
         }
         CarpetScriptHost newHost;
         try
         {
-            newHost = CarpetScriptHost.create(this, module, perPlayer, source, commandValidator, isRuleApp, installer);
+            newHost = CarpetScriptHost.create(this, module, perPlayer, source, commandValidator, isRuleApp, installer, override);
         }
         catch (LoadException e)
         {
             Carpet.Messenger_message(source, "r Failed to add " + name + " app" + (e.getMessage() == null ? "" : ": " + e.getMessage()));
-            return false;
+            return 0;
         }
 
         modules.put(name, newHost);
@@ -278,7 +278,7 @@ public class CarpetScriptServer extends ScriptServer
         if (autoload && !newHost.persistenceRequired)
         {
             removeScriptHost(source, name, false, false);
-            return false;
+            return 0;
         }
         String action = (installer != null) ? (reload ? "reinstalled" : "installed") : (reload ? "reloaded" : "loaded");
 
@@ -292,7 +292,7 @@ public class CarpetScriptServer extends ScriptServer
         if (isCommandAdded == null) // error should be dispatched
         {
             removeScriptHost(source, name, false, isRuleApp);
-            return false;
+            return 0;
         }
         else if (isCommandAdded)
         {
@@ -330,7 +330,7 @@ public class CarpetScriptServer extends ScriptServer
         token.run();
         long end = System.nanoTime();
         LOG.info("App " + name + " loaded in " + (end - start) / 1000000 + " ms");
-        return true;
+        return 1;
     }
 
     public boolean isInvalidCommandRoot(String appName)
@@ -458,11 +458,11 @@ public class CarpetScriptServer extends ScriptServer
     }
 
     private record TransferData(boolean perUser, Predicate<CommandSourceStack> commandValidator,
-                                boolean isRuleApp)
+                                boolean isRuleApp, Expression.LoadOverride override)
     {
         private TransferData(CarpetScriptHost host)
         {
-            this(host.perUser, host.commandValidator, host.isRuleApp);
+            this(host.perUser, host.commandValidator, host.isRuleApp, host.loadOverrides);
         }
     }
 
@@ -473,7 +473,7 @@ public class CarpetScriptServer extends ScriptServer
         apps.keySet().forEach(s -> removeScriptHost(server.createCommandSourceStack(), s, false, false));
         CarpetEventServer.Event.clearAllBuiltinEvents();
         init();
-        apps.forEach((s, data) -> addScriptHost(server.createCommandSourceStack(), s, data.commandValidator, data.perUser, false, data.isRuleApp, null));
+        apps.forEach((s, data) -> addScriptHost(server.createCommandSourceStack(), s, data.commandValidator, data.perUser, false, data.isRuleApp, null, data.override));
     }
 
     public void reAddCommands()

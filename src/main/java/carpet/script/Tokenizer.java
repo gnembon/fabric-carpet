@@ -388,14 +388,8 @@ public class Tokenizer
             else
             {
                 token.type = Token.TokenType.OPERATOR;
-                if (token.surface.equals(";"))
-                {
-                    token.disguiseAs(token.surface + " ", null);
-                }
-                else
-                {
-                    token.disguiseAs(" " + token.surface + " ", null);
-                }
+                token.disguiseAs(token.surface.equals(";") ? (token.surface + " ") : (" " + token.surface + " "), null);
+
             }
         }
         if (expression != null && context != null && previousToken != null &&

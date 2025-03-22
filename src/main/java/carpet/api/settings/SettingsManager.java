@@ -25,6 +25,7 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import carpet.script.Expression;
 import com.google.common.collect.Sets;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
@@ -331,7 +332,7 @@ public class SettingsManager {
         {
             if (RuleHelper.getBooleanValue(rule) || (rule.type() == String.class && !rule.value().equals("false")))
             {
-                CarpetServer.scriptServer.addScriptHost(source, rule.scarpetApp, s -> CommandHelper.canUseCommand(s, rule.value()), false, false, true, null);
+                CarpetServer.scriptServer.addScriptHost(source, rule.scarpetApp, s -> CommandHelper.canUseCommand(s, rule.value()), false, false, true, null, Expression.LoadOverride.DEFAULT);
             } else {
                 CarpetServer.scriptServer.removeScriptHost(source, rule.scarpetApp, false, true);
             }

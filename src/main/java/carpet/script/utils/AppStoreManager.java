@@ -2,6 +2,7 @@ package carpet.script.utils;
 
 import carpet.script.CarpetScriptHost;
 import carpet.script.CarpetScriptServer;
+import carpet.script.Expression;
 import carpet.script.exception.InternalExpressionException;
 import carpet.script.external.Carpet;
 import carpet.script.external.Vanilla;
@@ -283,8 +284,7 @@ public class AppStoreManager
         {
             return 0;
         }
-        boolean success = Vanilla.MinecraftServer_getScriptServer(source.getServer()).addScriptHost(source, nodeInfo.name().replaceFirst("\\.sc$", ""), null, true, false, false, nodeInfo.source());
-        return success ? 1 : 0;
+        return Vanilla.MinecraftServer_getScriptServer(source.getServer()).addScriptHost(source, nodeInfo.name().replaceFirst("\\.sc$", ""), null, true, false, false, nodeInfo.source(), Expression.LoadOverride.DEFAULT);
     }
 
     /**

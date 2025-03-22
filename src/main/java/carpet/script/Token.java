@@ -35,6 +35,10 @@ public class Token implements Comparable<Token> {
     public int ordinal = 0;
     public int linepos;
     public int lineno;
+
+    @Nullable
+    public Expression.ExpressionNode node = null;
+
     public static final Token NONE = new Token();
 
     public Token morphedInto(TokenType newType, String newSurface) {
@@ -44,6 +48,7 @@ public class Token implements Comparable<Token> {
         created.pos = pos;
         created.linepos = linepos;
         created.lineno = lineno;
+        created.node = node;
         created.ordinal = ordinal + 1;
         return created;
     }
