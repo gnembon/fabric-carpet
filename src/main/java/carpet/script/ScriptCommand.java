@@ -653,7 +653,7 @@ public class ScriptCommand
     {
         if (!elements.isEmpty())
         {
-            Carpet.Messenger_message(source, elements.toArray(new Component[0]));
+            Carpet.Messenger_message(source, (Object []) elements.toArray(new Component[0]));
             elements.clear();
         }
     }
