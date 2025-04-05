@@ -888,7 +888,7 @@ public class WorldAccess
             ItemStack tool;
             if (tag != null)
             {
-                tool = ItemStack.CODEC.parse(regs.createSerializationContext(NbtOps.INSTANCE), tag).result().orElse(null);
+                tool = ItemStack.CODEC.parse(regs.createSerializationContext(NbtOps.INSTANCE), tag).getOrThrow(s -> new InternalExpressionException("Failed to parse item stack data: " + s));
             }
             else
             {
@@ -956,7 +956,7 @@ public class WorldAccess
             {
                 return Value.NULL;
             }
-            return new NBTSerializableValue(() -> ItemStack.CODEC.encodeStart(regs.createSerializationContext(NbtOps.INSTANCE), tool).getOrThrow());
+            return new NBTSerializableValue(() -> ItemStack.CODEC.encodeStart(regs.createSerializationContext(NbtOps.INSTANCE), tool).getOrThrow(s -> new InternalExpressionException("Failed to parse item stack data: " + s)));
 
         });
 

@@ -726,7 +726,7 @@ public class ShapeDispatcher
             }
             else
             {
-                this.item = ItemStack.CODEC.parse(regs.createSerializationContext(NbtOps.INSTANCE), ((NBTSerializableValue) options.get("item")).getCompoundTag() ).result().orElse(null);
+                this.item = ItemStack.CODEC.parse(regs.createSerializationContext(NbtOps.INSTANCE), ((NBTSerializableValue) options.get("item")).getCompoundTag() ).getOrThrow(s -> new InternalExpressionException("Failed to parse item stack data: " + s));
             }
             blockLight = NumericValue.asNumber(options.getOrDefault("blocklight", optional.get("blocklight"))).getInt();
             if (blockLight > 15)
@@ -1663,7 +1663,7 @@ public class ShapeDispatcher
         public Value validate(Map<String, Value> options, MinecraftServer server, Value value)
         {
             ItemStack item = ValueConversions.getItemStackFromValue(value, true, server.registryAccess());
-            return new NBTSerializableValue(ItemStack.CODEC.encodeStart(server.registryAccess().createSerializationContext(NbtOps.INSTANCE), item).result().orElse(null));
+            return new NBTSerializableValue(ItemStack.CODEC.encodeStart(server.registryAccess().createSerializationContext(NbtOps.INSTANCE), item).getOrThrow(s -> new InternalExpressionException("Failed to parse item stack data: " + s)));
         }
 
         @Override
