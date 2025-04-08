@@ -90,9 +90,9 @@ public class SystemInfo
         put("game_protocol", c -> NumericValue.of(SharedConstants.getProtocolVersion()));
         put("game_major_target", c -> NumericValue.of(Vanilla.MinecraftServer_getReleaseTarget(c.server())[0]));
         put("game_minor_target", c -> NumericValue.of(Vanilla.MinecraftServer_getReleaseTarget(c.server())[1]));
-        put("game_stable", c -> BooleanValue.of(SharedConstants.getCurrentVersion().isStable()));
-        put("game_data_version", c -> NumericValue.of(SharedConstants.getCurrentVersion().getDataVersion().getVersion()));
-        put("game_pack_version", c -> NumericValue.of(SharedConstants.getCurrentVersion().getPackVersion(PackType.SERVER_DATA)));
+        put("game_stable", c -> BooleanValue.of(SharedConstants.getCurrentVersion().stable()));
+        put("game_data_version", c -> NumericValue.of(SharedConstants.getCurrentVersion().dataVersion().version()));
+        put("game_pack_version", c -> NumericValue.of(SharedConstants.getCurrentVersion().packVersion(PackType.SERVER_DATA)));
 
         put("server_ip", c -> StringValue.of(c.server().getLocalIp()));
         put("server_whitelisted", c -> BooleanValue.of(c.server().isEnforceWhitelist()));
