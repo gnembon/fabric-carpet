@@ -180,24 +180,25 @@ public class ServerGamePacketListenerImpl_scarpetEventsMixin
         }
     }
 
-    @Inject(method = "handlePlayerCommand", at = @At(
+    @Inject(method = "handlePlayerInput", at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/server/level/ServerPlayer;setShiftKeyDown(Z)V",
-            ordinal = 0
+            target = "Lnet/minecraft/server/level/ServerPlayer;setLastClientInput(Lnet/minecraft/world/entity/player/Input;)V"
     ))
-    private void onStartSneaking(ServerboundPlayerCommandPacket clientCommandC2SPacket_1, CallbackInfo ci)
+    private void onStartSneaking(ServerboundPlayerInputPacket serverboundPlayerInputPacket, CallbackInfo ci)
     {
-        PLAYER_STARTS_SNEAKING.onPlayerEvent(player);
-    }
-
-    @Inject(method = "handlePlayerCommand", at = @At(
-            value = "INVOKE",
-            target = "Lnet/minecraft/server/level/ServerPlayer;setShiftKeyDown(Z)V",
-            ordinal = 1
-    ))
-    private void onStopSneaking(ServerboundPlayerCommandPacket clientCommandC2SPacket_1, CallbackInfo ci)
-    {
-        PLAYER_STOPS_SNEAKING.onPlayerEvent(player);
+        boolean wasDown = player.isShiftKeyDown();
+        boolean isDown = serverboundPlayerInputPacket.input().shift();
+        if (wasDown != isDown)
+        {
+            if (isDown)
+            {
+                PLAYER_STARTS_SNEAKING.onPlayerEvent(player);
+            }
+            else
+            {
+                PLAYER_STOPS_SNEAKING.onPlayerEvent(player);
+            }
+        }
     }
 
     @Inject(method = "handlePlayerCommand", at = @At(

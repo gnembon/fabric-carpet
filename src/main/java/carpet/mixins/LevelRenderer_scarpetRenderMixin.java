@@ -2,11 +2,11 @@ package carpet.mixins;
 
 import carpet.network.CarpetClient;
 import carpet.script.utils.ShapesRenderer;
+import com.mojang.blaze3d.buffers.GpuBufferSlice;
 import com.mojang.blaze3d.framegraph.FrameGraphBuilder;
 import com.mojang.blaze3d.framegraph.FramePass;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.FogParameters;
 import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.LevelTargetBundle;
 import net.minecraft.client.renderer.LightTexture;
@@ -32,7 +32,7 @@ public class LevelRenderer_scarpetRenderMixin
     }
 
     @Inject(method = "addParticlesPass", at = @At("RETURN"))
-    private void renderScarpetThingsLate(FrameGraphBuilder frameGraphBuilder, Camera camera, float f, FogParameters fogParameters, CallbackInfo ci)
+    private void renderScarpetThingsLate(FrameGraphBuilder frameGraphBuilder, Camera camera, float f, GpuBufferSlice fogParameters, CallbackInfo ci)
     {
         // in normal circumstances we want to render shapes at the very end so it appears correctly behind stuff.
         // we might actually not need to play with render hooks here.
