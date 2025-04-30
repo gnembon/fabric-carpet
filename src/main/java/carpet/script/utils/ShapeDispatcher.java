@@ -1718,13 +1718,13 @@ public class ShapeDispatcher
             {
                 value = new FormattedTextValue(Component.literal(value.getString()));
             }
-            return StringTag.valueOf(((FormattedTextValue) value).serialize(regs));
+            return ((FormattedTextValue) value).serialize(regs);
         }
 
         @Override
         public Value decode(Tag tag, Level level)
         {
-            return FormattedTextValue.deserialize(tag.asString().get(), level.registryAccess());
+            return FormattedTextValue.deserialize(tag, level.registryAccess());
         }
     }
 

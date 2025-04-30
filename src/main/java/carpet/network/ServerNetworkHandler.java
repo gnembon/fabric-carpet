@@ -104,7 +104,7 @@ public class ServerNetworkHandler
         ListTag outputResult = new ListTag();
         for (Component line : output)
         {
-            outputResult.add(StringTag.valueOf(Component.Serializer.toJson(line, player.registryAccess())));
+            outputResult.add(StringTag.valueOf(line.getString()));
         }
         if (!output.isEmpty())
         {

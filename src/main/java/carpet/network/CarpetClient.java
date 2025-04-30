@@ -106,7 +106,7 @@ public class CarpetClient
             ListTag outputTag = (ListTag) tag.get("output");
             for (int i = 0; i < outputTag.size(); i++)
             {
-                CarpetSettings.LOG.info(" - response: " + Component.Serializer.fromJson(outputTag.getString(i).orElseThrow(), clientPlayer.registryAccess()).getString());
+                CarpetSettings.LOG.info(" - response: " + outputTag.getString(i).orElseThrow());
             }
         }
     }

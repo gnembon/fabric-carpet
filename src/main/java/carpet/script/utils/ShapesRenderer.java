@@ -38,6 +38,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.util.Mth;
+import net.minecraft.util.ProblemReporter;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LightLayer;
@@ -46,6 +47,7 @@ import net.minecraft.world.level.block.LeavesBlock;
 import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.storage.TagValueInput;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
 import org.joml.Matrix4fStack;
@@ -423,7 +425,9 @@ public class ShapesRenderer
                             BlockEntity.setLevel(client.level);
                             if (shape.blockEntity != null)
                             {
-                                BlockEntity.loadWithComponents(shape.blockEntity, client.level.registryAccess());
+                                try (final ProblemReporter.ScopedCollector reporter = new ProblemReporter.ScopedCollector(BlockEntity.problemPath(), CarpetScriptServer.LOG)) {
+                                    BlockEntity.loadWithComponents(TagValueInput.create(reporter, client.level.registryAccess(), shape.blockEntity));
+                                }
                             }
                         }
                     }

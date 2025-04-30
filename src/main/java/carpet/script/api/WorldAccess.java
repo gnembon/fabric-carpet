@@ -53,6 +53,7 @@ import net.minecraft.server.level.TicketType;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.tags.ItemTags;
 import net.minecraft.tags.TagKey;
+import net.minecraft.util.ProblemReporter;
 import net.minecraft.world.level.ServerExplosion;
 import net.minecraft.world.level.chunk.ChunkGenerator;
 import net.minecraft.world.level.chunk.PalettedContainer;
@@ -64,6 +65,7 @@ import net.minecraft.world.level.levelgen.NoiseRouter;
 import net.minecraft.world.level.levelgen.RandomState;
 import net.minecraft.world.level.levelgen.structure.Structure;
 import net.minecraft.world.level.levelgen.structure.StructureType;
+import net.minecraft.world.level.storage.TagValueInput;
 import org.apache.commons.lang3.mutable.MutableBoolean;
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -829,7 +831,9 @@ public class WorldAccess
                         destTag.putInt("x", targetPos.getX());
                         destTag.putInt("y", targetPos.getY());
                         destTag.putInt("z", targetPos.getZ());
-                        be.loadWithComponents(destTag, world.registryAccess());
+                        try (final ProblemReporter.ScopedCollector reporter = new ProblemReporter.ScopedCollector(be.problemPath(), CarpetScriptServer.LOG)) {
+                            be.loadWithComponents(TagValueInput.create(reporter, world.registryAccess(), destTag));
+                        }
                         be.setChanged();
                         success = true;
                     }

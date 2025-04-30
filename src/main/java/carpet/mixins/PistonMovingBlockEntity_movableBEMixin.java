@@ -15,6 +15,10 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.piston.PistonMovingBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.storage.TagValueInput;
+import net.minecraft.world.level.storage.TagValueOutput;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
@@ -134,25 +138,25 @@ public abstract class PistonMovingBlockEntity_movableBEMixin extends BlockEntity
     }
     
     @Inject(method = "loadAdditional", at = @At(value = "TAIL"))
-    private void onFromTag(CompoundTag NbtCompound_1, HolderLookup.Provider registries, CallbackInfo ci)
+    private void onFromTag(ValueInput valueInput, CallbackInfo ci)
     {
-        if (CarpetSettings.movableBlockEntities && NbtCompound_1.contains("carriedTileEntityCM"))
-        {
-            if (this.movedState.getBlock() instanceof EntityBlock)
-                this.carriedBlockEntity = ((EntityBlock) (this.movedState.getBlock())).newBlockEntity(worldPosition, movedState);//   this.world);
-            if (carriedBlockEntity != null) //Can actually be null, as BlockPistonMoving.createNewTileEntity(...) returns null
-                this.carriedBlockEntity.loadWithComponents(NbtCompound_1.getCompound("carriedTileEntityCM").orElseThrow(), registries);
-            setCarriedBlockEntity(carriedBlockEntity);
-        }
+        if (CarpetSettings.movableBlockEntities)
+            valueInput.child("carriedTileEntityCM").ifPresent(tag -> {
+                if (this.movedState.getBlock() instanceof EntityBlock)
+                    this.carriedBlockEntity = ((EntityBlock) (this.movedState.getBlock())).newBlockEntity(worldPosition, movedState);//   this.world);
+                if (carriedBlockEntity != null) //Can actually be null, as BlockPistonMoving.createNewTileEntity(...) returns null
+                    this.carriedBlockEntity.loadWithComponents(tag);
+                setCarriedBlockEntity(carriedBlockEntity);
+            });
     }
     
     @Inject(method = "saveAdditional", at = @At(value = "RETURN", shift = At.Shift.BEFORE))
-    private void onToTag(CompoundTag NbtCompound_1, HolderLookup.Provider registries, CallbackInfo ci)
+    private void onToTag(ValueOutput valueOutput, CallbackInfo ci)
     {
-        if (CarpetSettings.movableBlockEntities && this.carriedBlockEntity != null)
+        if (CarpetSettings.movableBlockEntities && this.carriedBlockEntity != null && valueOutput instanceof TagValueOutput output)
         {
             //Leave name "carriedTileEntityCM" instead of "carriedBlockEntityCM" for upgrade compatibility with 1.13.2 movable TE
-            NbtCompound_1.put("carriedTileEntityCM", this.carriedBlockEntity.saveWithoutMetadata(registries));
+            this.carriedBlockEntity.saveWithoutMetadata(output.child("carriedTileEntityCM"));
         }
     }
 }

@@ -40,6 +40,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.tags.EntityTypeTags;
 import net.minecraft.tags.TagKey;
 import net.minecraft.util.Mth;
+import net.minecraft.util.ProblemReporter;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectInstance;
@@ -73,6 +74,8 @@ import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.entity.EntityTypeTest;
 import net.minecraft.world.level.pathfinder.Path;
+import net.minecraft.world.level.storage.TagValueInput;
+import net.minecraft.world.level.storage.TagValueOutput;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
@@ -526,7 +529,7 @@ public class EntityValue extends Value
             }
             return Value.NULL;
         });
-        put("home", (e, a) -> e instanceof Mob mob ? (mob.getRestrictRadius() > 0) ? new BlockValue(null, (ServerLevel) e.level(), mob.getRestrictCenter()) : Value.FALSE : Value.NULL);
+        put("home", (e, a) -> e instanceof Mob mob ? (mob.getHomeRadius() > 0) ? new BlockValue(null, (ServerLevel) e.level(), mob.getHomePosition()) : Value.FALSE : Value.NULL);
         put("spawn_point", (e, a) -> {
             if (e instanceof ServerPlayer spe)
             {
@@ -856,12 +859,16 @@ public class EntityValue extends Value
         });
 
         put("nbt", (e, a) -> {
-            CompoundTag nbttagcompound = e.saveWithoutId((new CompoundTag()));
-            if (a == null)
-            {
-                return new NBTSerializableValue(nbttagcompound);
+            try (final ProblemReporter.ScopedCollector reporter = new ProblemReporter.ScopedCollector(e.problemPath(), CarpetScriptServer.LOG)) {
+                final TagValueOutput output = TagValueOutput.createWithContext(reporter, e.registryAccess());
+                e.saveWithoutId(output);
+                CompoundTag nbttagcompound = output.buildResult();
+                if (a == null)
+                {
+                    return new NBTSerializableValue(nbttagcompound);
+                }
+                return new NBTSerializableValue(nbttagcompound).get(a);
             }
-            return new NBTSerializableValue(nbttagcompound).get(a);
         });
 
         put("category", (e, a) -> {
@@ -1312,7 +1319,7 @@ public class EntityValue extends Value
             }
             if (v.isNull())
             {
-                ec.restrictTo(BlockPos.ZERO, -1);
+                ec.setHomeTo(BlockPos.ZERO, -1);
                 Map<String, Goal> tasks = Vanilla.Mob_getTemporaryTasks(ec);
                 Vanilla.Mob_getAI(ec, false).removeGoal(tasks.get("home"));
                 tasks.remove("home");
@@ -1345,7 +1352,7 @@ public class EntityValue extends Value
                 throw new InternalExpressionException("'home' requires at least one position argument, and optional distance");
             }
 
-            ec.restrictTo(pos, distance);
+            ec.setHomeTo(pos, distance);
             Map<String, Goal> tasks = Vanilla.Mob_getTemporaryTasks(ec);
             if (!tasks.containsKey("home"))
             {
@@ -1675,7 +1682,9 @@ public class EntityValue extends Value
                 Value tagValue = NBTSerializableValue.fromValue(v);
                 if (tagValue instanceof NBTSerializableValue nbtsv)
                 {
-                    e.load(nbtsv.getCompoundTag());
+                    try (final ProblemReporter.ScopedCollector reporter = new ProblemReporter.ScopedCollector(e.problemPath(), CarpetScriptServer.LOG)) {
+                        e.load(TagValueInput.create(reporter, e.registryAccess(), nbtsv.getCompoundTag()));
+                    }
                     e.setUUID(uUID);
                 }
             }
@@ -1687,9 +1696,16 @@ public class EntityValue extends Value
                 Value tagValue = NBTSerializableValue.fromValue(v);
                 if (tagValue instanceof NBTSerializableValue nbtsv)
                 {
-                    CompoundTag nbttagcompound = e.saveWithoutId((new CompoundTag()));
+                    CompoundTag nbttagcompound;
+                    try (final ProblemReporter.ScopedCollector reporter = new ProblemReporter.ScopedCollector(e.problemPath(), CarpetScriptServer.LOG)) {
+                        final TagValueOutput output = TagValueOutput.createWithContext(reporter, e.registryAccess());
+                        e.saveWithoutId(output);
+                        nbttagcompound = output.buildResult();
+                    }
                     nbttagcompound.merge(nbtsv.getCompoundTag());
-                    e.load(nbttagcompound);
+                    try (final ProblemReporter.ScopedCollector reporter = new ProblemReporter.ScopedCollector(e.problemPath(), CarpetScriptServer.LOG)) {
+                        e.load(TagValueInput.create(reporter, e.registryAccess(), nbttagcompound));
+                    }
                     e.setUUID(uUID);
                 }
             }
@@ -1742,10 +1758,18 @@ public class EntityValue extends Value
         {
             throw new NBTSerializableValue.IncompatibleTypeException(this);
         }
-        CompoundTag tag = new CompoundTag();
-        tag.put("Data", getEntity().saveWithoutId(new CompoundTag()));
-        Registry<EntityType<?>> reg = getEntity().level().registryAccess().lookupOrThrow(Registries.ENTITY_TYPE);
-        tag.put("Name", StringTag.valueOf(reg.getKey(getEntity().getType()).toString()));
+        CompoundTag tag;
+        Entity entity = getEntity();
+        try (final ProblemReporter.ScopedCollector reporter = new ProblemReporter.ScopedCollector(entity.problemPath(), CarpetScriptServer.LOG)) {
+            final TagValueOutput output = TagValueOutput.createWithContext(reporter, entity.registryAccess());
+            entity.save(output);
+            tag = output.buildResult();
+        }
+
+        tag.put("Data", tag);
+
+        Registry<EntityType<?>> reg = entity.level().registryAccess().lookupOrThrow(Registries.ENTITY_TYPE);
+        tag.put("Name", StringTag.valueOf(reg.getKey(entity.getType()).toString()));
         return tag;
     }
 }
