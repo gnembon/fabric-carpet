@@ -1758,16 +1758,13 @@ public class EntityValue extends Value
         {
             throw new NBTSerializableValue.IncompatibleTypeException(this);
         }
-        CompoundTag tag;
+        CompoundTag tag = new CompoundTag();
         Entity entity = getEntity();
         try (final ProblemReporter.ScopedCollector reporter = new ProblemReporter.ScopedCollector(entity.problemPath(), CarpetScriptServer.LOG)) {
             final TagValueOutput output = TagValueOutput.createWithContext(reporter, entity.registryAccess());
             entity.save(output);
-            tag = output.buildResult();
+            tag.put("Data", output.buildResult());
         }
-
-        tag.put("Data", tag);
-
         Registry<EntityType<?>> reg = entity.level().registryAccess().lookupOrThrow(Registries.ENTITY_TYPE);
         tag.put("Name", StringTag.valueOf(reg.getKey(entity.getType()).toString()));
         return tag;
