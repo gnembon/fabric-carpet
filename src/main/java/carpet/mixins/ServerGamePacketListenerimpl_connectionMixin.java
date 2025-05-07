@@ -26,7 +26,7 @@ public class ServerGamePacketListenerimpl_connectionMixin
             // We should force onto the main thread here
             // ServerNetworkHandler.handleData can possibly mutate data that isn't
             // thread safe, and also allows for client commands to be executed
-            PacketUtils.ensureRunningOnSameThread(serverboundCustomPayloadPacket, (ServerGamePacketListener) this, player.serverLevel());
+            PacketUtils.ensureRunningOnSameThread(serverboundCustomPayloadPacket, (ServerGamePacketListener) this, player.level());
             ServerNetworkHandler.onClientData(player, cpp.data());
             ci.cancel();
         }

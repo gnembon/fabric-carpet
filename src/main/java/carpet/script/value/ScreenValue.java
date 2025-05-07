@@ -200,7 +200,7 @@ public class ScreenValue extends Value
             this.screenHandler = null;
             return false;
         }
-        int runPermissionLevel = Vanilla.MinecraftServer_getRunPermissionLevel(player.server);
+        int runPermissionLevel = Vanilla.MinecraftServer_getRunPermissionLevel(player.getServer());
         CommandSourceStack source = player.createCommandSourceStack().withPermission(runPermissionLevel);
         CarpetScriptHost executingHost = appHost.retrieveForExecution(source, player);
         try

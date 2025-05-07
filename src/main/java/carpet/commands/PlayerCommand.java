@@ -229,7 +229,7 @@ public class PlayerCommand
     {
         if (cantReMove(context)) return 0;
         ServerPlayer player = getPlayer(context);
-        player.kill(player.serverLevel());
+        player.kill(player.level());
         return 1;
     }
 
@@ -342,7 +342,7 @@ public class PlayerCommand
             return 0;
         }
 
-        EntityPlayerMPFake.createShadow(player.server, player);
+        EntityPlayerMPFake.createShadow(player.getServer(), player);
         return 1;
     }
 }

@@ -257,7 +257,7 @@ public class ServerGamePacketListenerImpl_scarpetEventsMixin
     {
         if (PLAYER_CHOOSES_RECIPE.isNeeded())
         {
-            RecipeManager.ServerDisplayInfo displayInfo = player.server.getRecipeManager().getRecipeFromDisplay(packet.recipe());
+            RecipeManager.ServerDisplayInfo displayInfo = player.getServer().getRecipeManager().getRecipeFromDisplay(packet.recipe());
             if (displayInfo == null) {
                 return;
             }

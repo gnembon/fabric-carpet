@@ -117,7 +117,7 @@ public class EntityPlayerMPFake extends ServerPlayer
     {
         player.getServer().getPlayerList().remove(player);
         player.connection.disconnect(Component.translatable("multiplayer.disconnect.duplicate_login"));
-        ServerLevel worldIn = player.serverLevel();//.getWorld(player.dimension);
+        ServerLevel worldIn = player.level();//.getWorld(player.dimension);
         GameProfile gameprofile = player.getGameProfile();
         EntityPlayerMPFake playerShadow = new EntityPlayerMPFake(server, worldIn, gameprofile, player.clientInformation(), true);
         playerShadow.setChatSession(player.getChatSession());
@@ -174,7 +174,7 @@ public class EntityPlayerMPFake extends ServerPlayer
         if (reason.getContents() instanceof TranslatableContents text && text.getKey().equals("multiplayer.disconnect.duplicate_login")) {
             this.connection.onDisconnect(new DisconnectionDetails(reason));
         } else {
-            this.server.schedule(new TickTask(this.server.getTickCount(), () -> {
+            this.getServer().schedule(new TickTask(this.getServer().getTickCount(), () -> {
                 this.connection.onDisconnect(new DisconnectionDetails(reason));
             }));
         }
@@ -186,7 +186,7 @@ public class EntityPlayerMPFake extends ServerPlayer
         if (this.getServer().getTickCount() % 10 == 0)
         {
             this.connection.resetPosition();
-            this.serverLevel().getChunkSource().move(this);
+            this.level().getChunkSource().move(this);
         }
         try
         {

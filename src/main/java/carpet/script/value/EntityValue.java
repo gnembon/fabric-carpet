@@ -714,7 +714,7 @@ public class EntityValue extends Value
                 {
                     return Value.NULL;
                 }
-                return new BlockValue(null, sp.serverLevel(), pos);
+                return new BlockValue(null, sp.level(), pos);
             }
             return Value.NULL;
         });

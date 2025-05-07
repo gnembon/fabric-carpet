@@ -61,7 +61,7 @@ public class ServerNetworkHandler
         {
             CarpetSettings.LOG.warn("Player " + playerEntity.getName().getString() + " joined with another carpet version: " + version);
         }
-        DataBuilder data = DataBuilder.create(playerEntity.server); // tickrate related settings are sent on world change
+        DataBuilder data = DataBuilder.create(playerEntity.getServer()); // tickrate related settings are sent on world change
         CarpetServer.forEachManager(sm -> sm.getCarpetRules().forEach(data::withRule));
         playerEntity.connection.send(data.build());
     }
@@ -110,7 +110,7 @@ public class ServerNetworkHandler
         {
             result.put("output", outputResult);
         }
-        player.connection.send(DataBuilder.create(player.server).withCustomNbt("clientCommand", result).build());
+        player.connection.send(DataBuilder.create(player.getServer()).withCustomNbt("clientCommand", result).build());
         // run command plug to command output,
     }
 
@@ -137,7 +137,7 @@ public class ServerNetworkHandler
         }
         for (ServerPlayer player : remoteCarpetPlayers.keySet())
         {
-            player.connection.send(DataBuilder.create(player.server).withRule(rule).build());
+            player.connection.send(DataBuilder.create(player.getServer()).withRule(rule).build());
         }
     }
 
@@ -149,7 +149,7 @@ public class ServerNetworkHandler
         }
         for (ServerPlayer player : validCarpetPlayers)
         {
-            player.connection.send(DataBuilder.create(player.server).withCustomNbt(command, data).build());
+            player.connection.send(DataBuilder.create(player.getServer()).withCustomNbt(command, data).build());
         }
     }
 
@@ -157,7 +157,7 @@ public class ServerNetworkHandler
     {
         if (isValidCarpetPlayer(player))
         {
-            player.connection.send(DataBuilder.create(player.server).withCustomNbt(command, data).build());
+            player.connection.send(DataBuilder.create(player.getServer()).withCustomNbt(command, data).build());
         }
     }
 
