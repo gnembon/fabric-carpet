@@ -1035,6 +1035,11 @@ public class CarpetScriptHost extends ScriptHost
         return isDefaultApp() && !fdesc.isShared ? null : fdesc.listFolder(main);
     }
 
+    public boolean makeFolder(FileArgument fdesc)
+    {
+        return isDefaultApp() && !fdesc.isShared ? false : fdesc.makeFolder(main);
+    }
+
     public boolean applyActionForResource(String path, boolean shared, Consumer<Path> action)
     {
         FileArgument fdesc = FileArgument.resourceFromPath(this, path, FileArgument.Reason.CREATE, shared);
