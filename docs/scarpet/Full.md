@@ -5665,6 +5665,7 @@ Available output types:
 ### `delete_file(resource, type)`
 ### `write_file(resource, type, data, ...)`
 ### `list_files(resource, type)`
+### `make_folder(resource, type)`
 
 With the specified `resource` in the scripts folder, of a specific `type`, writes/appends `data` to it, reads its
  content, deletes the resource, or lists other files under this resource.
@@ -5688,8 +5689,8 @@ specific data directory is under `world/scripts/foo.data/...`, and shared data s
 
 The default no-name app, via `/script run` command can only save/load/read files from the shared space.
 
-Functions return `null` if no file is present (for read, list and delete operations). Returns `true`
-for success writes and deletes, and requested data, based on the file type, for read operations. It returns list of files 
+Functions return `null` if no file is present (for read, list, make and delete operations). Returns `true`
+for successful writes, folder creation, and deletes, and requested data, based on the file type, for read operations. It returns list of files 
 for folder listing.
  
 Supported values for resource `type` are:
@@ -5697,7 +5698,7 @@ Supported values for resource `type` are:
  * `json` - JSON file
  * `text` - text resource with automatic newlines added
  * `raw` - text resource without implied newlines
- * `folder` - for `list_files` only - indicating folder listing instead of files
+ * `folder` - for `list_files` and `make_folder` - indicating folder listing instead of files or the type of folder
  * `shared_nbt`, `shared_text`, `shared_raw`, `shared_folder`, `shared_json` - shared versions of the above
  
 NBT files have extension `.nbt`, store one NBT tag, and return a NBT type value. JSON files have `.json` extension, store 
