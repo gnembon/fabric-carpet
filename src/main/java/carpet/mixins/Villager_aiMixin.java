@@ -127,7 +127,7 @@ public abstract class Villager_aiMixin extends AbstractVillager
                 if (bedPos == null || bedPos.dimension() != level().dimension()) // get Dimension
                 {
                     setUnhappy();
-                    ((ServerLevel) getCommandSenderWorld()).sendParticles(new BlockParticleOption(ParticleTypes.BLOCK_MARKER, Blocks.BARRIER.defaultBlockState()), getX(), getY() + getEyeHeight() + 1, getZ(), 1, 0.1, 0.1, 0.1, 0.0);
+                    ((ServerLevel) level()).sendParticles(new BlockParticleOption(ParticleTypes.BLOCK_MARKER, Blocks.BARRIER.defaultBlockState()), getX(), getY() + getEyeHeight() + 1, getZ(), 1, 0.1, 0.1, 0.1, 0.0);
                 }
                 else
                 {
@@ -142,7 +142,7 @@ public abstract class Villager_aiMixin extends AbstractVillager
             }
             else if (itemStack_1.getItem() instanceof BedItem)
             {
-                List<PoiRecord> list_1 = ((ServerLevel) getCommandSenderWorld()).getPoiManager().getInRange(
+                List<PoiRecord> list_1 = ((ServerLevel) level()).getPoiManager().getInRange(
                         type -> type.is(PoiTypes.HOME),
                         blockPosition(),
                         48, PoiManager.Occupancy.ANY).toList();
@@ -151,16 +151,16 @@ public abstract class Villager_aiMixin extends AbstractVillager
                     Vec3 pv = Vec3.atCenterOf(poi.getPos());
                     if (!poi.hasSpace())
                     {
-                        ((ServerLevel) getCommandSenderWorld()).sendParticles(ParticleTypes.HAPPY_VILLAGER,
+                        ((ServerLevel) level()).sendParticles(ParticleTypes.HAPPY_VILLAGER,
                                 pv.x, pv.y+1.5, pv.z,
                                 50, 0.1, 0.3, 0.1, 0.0);
                     }
                     else if (canReachHome((Villager)(Object)this, poi.getPos(), poi))
-                        ((ServerLevel) getCommandSenderWorld()).sendParticles(ParticleTypes.END_ROD,
+                        ((ServerLevel) level()).sendParticles(ParticleTypes.END_ROD,
                                 pv.x, pv.y+1, pv.z,
                                 50, 0.1, 0.3, 0.1, 0.0);
                     else
-                        ((ServerLevel) getCommandSenderWorld()).sendParticles(new BlockParticleOption(ParticleTypes.BLOCK_MARKER, Blocks.BARRIER.defaultBlockState()),
+                        ((ServerLevel) level()).sendParticles(new BlockParticleOption(ParticleTypes.BLOCK_MARKER, Blocks.BARRIER.defaultBlockState()),
                                 pv.x, pv.y+1, pv.z,
                                 1, 0.1, 0.1, 0.1, 0.0);
                 }
@@ -186,7 +186,7 @@ public abstract class Villager_aiMixin extends AbstractVillager
     {
         if (MobAI.isTracking(this, MobAI.TrackingType.IRON_GOLEM_SPAWNING))
         {
-            ((ServerLevel) getCommandSenderWorld()).sendParticles(new BlockParticleOption(ParticleTypes.BLOCK_MARKER, Blocks.BARRIER.defaultBlockState()), getX(), getY()+3, getZ(), 1, 0.1, 0.1, 0.1, 0.0);
+            ((ServerLevel) level()).sendParticles(new BlockParticleOption(ParticleTypes.BLOCK_MARKER, Blocks.BARRIER.defaultBlockState()), getX(), getY()+3, getZ(), 1, 0.1, 0.1, 0.1, 0.0);
         }
     }
 
