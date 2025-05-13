@@ -501,7 +501,7 @@ public class EntityValue extends Value
         put("immune_to_fire", (e, a) -> BooleanValue.of(e.fireImmune()));
         put("immune_to_frost", (e, a) -> BooleanValue.of(!e.canFreeze()));
 
-        put("invulnerable", (e, a) -> BooleanValue.of(e.isInvulnerable()));
+        put("invulnerable", (e, a) -> BooleanValue.of(e instanceof Player player ? player.getAbilities().invulnerable : e.isInvulnerable()));
         put("dimension", (e, a) -> nameFromRegistryId(e.level().dimension().location())); // getDimId
         put("height", (e, a) -> new NumericValue(e.getDimensions(Pose.STANDING).height()));
         put("width", (e, a) -> new NumericValue(e.getDimensions(Pose.STANDING).width()));
