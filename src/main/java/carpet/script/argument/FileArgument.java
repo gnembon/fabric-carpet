@@ -33,18 +33,8 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.FileSystem;
-import java.nio.file.FileSystemNotFoundException;
-import java.nio.file.FileSystems;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
+import java.nio.file.*;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -554,6 +544,68 @@ public class FileArgument
                     return false;
                 }
                 return Files.deleteIfExists(dataFile);
+            }
+        }
+        catch (IOException e)
+        {
+            CarpetScriptServer.LOG.warn("IOException when removing file", e);
+            throw new ThrowStatement("Error while removing file: " + getDisplayPath(), Throwables.IO_EXCEPTION);
+        }
+        finally
+        {
+            close();
+        }
+    }
+
+    public boolean dropExistingFolder(Module module, boolean recursive)
+    {
+        try {
+            synchronized (writeIOSync) {
+                Path dataFile = toPath(module);
+                if (dataFile == null) {
+                    return false;
+                }
+
+                if (Files.notExists(dataFile)) {
+                    return false;
+                }
+
+                if (zfs != null && dataFile.toString().equals("/")) {
+                    if (recursive) {
+                        close();
+                        return Files.deleteIfExists(zipPath);
+                    } else {
+                        try (Stream<Path> files = Files.list(dataFile)) {
+                            if (files.findFirst().isEmpty()) {
+                                close();
+                                return Files.deleteIfExists(zipPath);
+                            } else {
+                                throw new ThrowStatement("Folder is not empty", Throwables.FOLDER_NOT_EMPTY);
+                            }
+                        }
+                    }
+                }
+
+                if (recursive) {
+                    try (Stream<Path> paths = Files.walk(dataFile)) {
+                        paths.sorted(Comparator.reverseOrder())
+                                .forEach(path -> {
+                                    try {
+                                        Files.deleteIfExists(path);
+                                    } catch (IOException e) {
+                                        CarpetScriptServer.LOG.warn("IOException when removing file", e);
+                                        throw new ThrowStatement("Error while removing file: " + getDisplayPath(), Throwables.IO_EXCEPTION);
+                                    }
+                                });
+                        return true;
+                    }
+                } else {
+                    try {
+                        return Files.deleteIfExists(dataFile);
+                    } catch (DirectoryNotEmptyException e) {
+                        throw new ThrowStatement("Folder is not empty", Throwables.FOLDER_NOT_EMPTY);
+                    }
+                }
             }
         }
         catch (IOException e)
