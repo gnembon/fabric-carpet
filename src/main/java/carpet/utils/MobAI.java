@@ -30,7 +30,7 @@ public class MobAI
 
     public static boolean isTracking(Entity e, TrackingType type)
     {
-        if (e.getCommandSenderWorld().isClientSide())
+        if (e.level().isClientSide())
             return false;
         Set<TrackingType> currentTrackers = aiTrackers.get(e.getType());
         if (currentTrackers == null)
