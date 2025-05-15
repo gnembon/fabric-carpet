@@ -144,7 +144,7 @@ public class ValueConversions
     {
         if (dimensionValue instanceof EntityValue)
         {
-            return ((EntityValue) dimensionValue).getEntity().getCommandSenderWorld();
+            return ((EntityValue) dimensionValue).getEntity().level();
         }
         else if (dimensionValue instanceof BlockValue bv)
         {
@@ -265,7 +265,7 @@ public class ValueConversions
         }
         if (v instanceof final BlockPos pos)
         {
-            return new BlockValue(null, (ServerLevel) e.getCommandSenderWorld(), pos);
+            return new BlockValue(null, (ServerLevel) e.level(), pos);
         }
         if (v instanceof final Number number)
         {
@@ -277,7 +277,7 @@ public class ValueConversions
         }
         if (v instanceof final UUID uuid)
         {
-            return ofUUID((ServerLevel) e.getCommandSenderWorld(), uuid);
+            return ofUUID((ServerLevel) e.level(), uuid);
         }
         if (v instanceof final DamageSource source)
         {
@@ -288,16 +288,16 @@ public class ValueConversions
         }
         if (v instanceof final Path path)
         {
-            return fromPath((ServerLevel) e.getCommandSenderWorld(), path);
+            return fromPath((ServerLevel) e.level(), path);
         }
         if (v instanceof final PositionTracker tracker)
         {
-            return new BlockValue(null, (ServerLevel) e.getCommandSenderWorld(), tracker.currentBlockPosition());
+            return new BlockValue(null, (ServerLevel) e.level(), tracker.currentBlockPosition());
         }
         if (v instanceof final WalkTarget target)
         {
             return ListValue.of(
-                    new BlockValue(null, (ServerLevel) e.getCommandSenderWorld(), target.getTarget().currentBlockPosition()),
+                    new BlockValue(null, (ServerLevel) e.level(), target.getTarget().currentBlockPosition()),
                     new NumericValue(target.getSpeedModifier()),
                     new NumericValue(target.getCloseEnoughDist())
             );

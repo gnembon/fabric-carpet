@@ -25,9 +25,9 @@ public class SummonCommand_lightningMixin
     private static BlockPos addRiders(Entity entity)
     {
         // [CM] SummonNaturalLightning - if statement around
-        if (CarpetSettings.summonNaturalLightning && entity instanceof LightningBolt && !entity.getCommandSenderWorld().isClientSide)
+        if (CarpetSettings.summonNaturalLightning && entity instanceof LightningBolt && !entity.level().isClientSide)
         {
-            ServerLevel world = (ServerLevel) entity.getCommandSenderWorld();
+            ServerLevel world = (ServerLevel) entity.level();
             BlockPos at = entity.blockPosition();
             DifficultyInstance localDifficulty_1 =  world.getCurrentDifficultyAt(at);
             boolean boolean_2 = world.getGameRules().getBoolean(GameRules.RULE_DOMOBSPAWNING) && world.random.nextDouble() < (double)localDifficulty_1.getEffectiveDifficulty() * 0.01D;
