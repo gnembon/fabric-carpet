@@ -27,6 +27,7 @@ import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.food.FoodData;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.SkullBlockEntity;
@@ -217,6 +218,9 @@ public class EntityPlayerMPFake extends ServerPlayer
         shakeOff();
         super.die(cause);
         setHealth(20);
+        if (!this.level().getGameRules().getBoolean(GameRules.RULE_KEEPINVENTORY)) {
+            giveExperienceLevels(-(experienceLevel + 1));
+        }
         this.foodData = new FoodData();
         kill(this.getCombatTracker().getDeathMessage());
     }
