@@ -26,6 +26,7 @@ current_dimension
 day_time
 delete_file
 destroy
+dialog
 diamond
 display_title
 draw_shape

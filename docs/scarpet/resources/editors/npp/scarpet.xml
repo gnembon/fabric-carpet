@@ -65,7 +65,7 @@
 
                 convert_date unix_time
 
-                display_title
+                display_title dialog
 
                 scoreboard scoreboard_add scoreboard_remove scoreboard_display scoreboard_property
 
