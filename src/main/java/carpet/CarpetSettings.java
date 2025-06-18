@@ -182,42 +182,34 @@ public class CarpetSettings
         @Override
         public String validate(CommandSourceStack source, CarpetRule<String> currentRule, String newValue, String string)
         {
-            bannerPatternStackSize = 1;
-            if ("true".equalsIgnoreCase(newValue))
-            {
-                bannerPatternStackSize = 64;
-                return "true";
-            }
-            if ("false".equalsIgnoreCase(newValue))
-            {
-                return "false";
-            }
-            try
-            {
+            if (newValue.matches("^[0-9]+$")) {
                 int value = Integer.parseInt(newValue);
-                if (value <= 1)
-                {
-                    bannerPatternStackSize = 1;
-                    return "false";
+                if (value <= 64 && value >= 2) {
+                    bannerPatternStackSize = value;
+                    return newValue;
                 }
-                bannerPatternStackSize = value;
-                return value + "";
             }
-            catch (NumberFormatException e)
-            {
-                return "false";
+            if (newValue.equalsIgnoreCase("false")) {
+                bannerPatternStackSize = 1;
+                return newValue;
             }
+            if (newValue.equalsIgnoreCase("true")) {
+                bannerPatternStackSize = 64;
+                return newValue;
+            }
+            return null;
         }
 
         @Override
         public String description()
         {
-            return "Allows banner patterns to stack to the specified size (up to 64)";
+            return "Value must either be true, false, or a number between 2-64";
         }
     }
 
     @Rule(
-            desc = "Banner patterns can stack when thrown on the ground or manipulated in inventories",
+            desc = "Banner patterns can stack when thrown on the ground",
+            extra = ".. or manipulated in inventories",
             validate = StackableBannerPatternValidator.class,
             options = {"false", "true", "16"},
             strict = false,
