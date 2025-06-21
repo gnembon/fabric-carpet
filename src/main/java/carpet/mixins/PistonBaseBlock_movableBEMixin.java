@@ -56,7 +56,8 @@ public abstract class PistonBaseBlock_movableBEMixin extends DirectionalBlock
         //Making PISTON_EXTENSION (BlockPistonMoving) pushable would not work as its createNewTileEntity()-method returns null
         return block != Blocks.ENDER_CHEST && block != Blocks.ENCHANTING_TABLE &&
                        block != Blocks.END_GATEWAY && block != Blocks.END_PORTAL && block != Blocks.MOVING_PISTON  &&
-                       block != Blocks.SPAWNER;
+                       block != Blocks.SPAWNER
+                       && block != Blocks.SCULK_SENSOR && block != Blocks.CALIBRATED_SCULK_SENSOR; // these have weird behaviour and crashes, #1473, also #1885
     }
     
     @Redirect(method = "isPushable", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/block/state/BlockState;hasBlockEntity()Z"))
