@@ -6,6 +6,9 @@ import com.google.common.collect.Lists;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.llamalad7.mixinextras.sugar.Local;
+import com.llamalad7.mixinextras.sugar.Share;
+import com.llamalad7.mixinextras.sugar.ref.LocalRef;
+
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.Level;
@@ -35,8 +38,6 @@ public abstract class PistonBaseBlock_movableBEMixin extends DirectionalBlock
     {
         super(block$Settings_1);
     }
-    
-    private ThreadLocal<List<BlockEntity>> list1_BlockEntities = new ThreadLocal<>(); //Unneccessary ThreadLocal if client and server use different PistonBlock instances
 
     @Inject(method = "isPushable", cancellable = true, at = @At(value = "RETURN", ordinal = 3, shift = At.Shift.BEFORE))
     private static void movableCMD(BlockState blockState_1, Level world_1, BlockPos blockPos_1,
@@ -86,17 +87,17 @@ public abstract class PistonBaseBlock_movableBEMixin extends DirectionalBlock
     private void onMove(Level world_1, BlockPos blockPos_1, Direction direction_1, boolean boolean_1,
                         CallbackInfoReturnable<Boolean> cir, BlockPos blockPos_2, PistonStructureResolver pistonHandler_1, Map<?, ?> map_1,
                         List<BlockPos> list_1, List<BlockState> list_2, List<?> list_3, BlockState[] blockStates_1,
-                        Direction direction_2, int int_2)
+                        Direction direction_2, int int_2, @Share("blockEntities") LocalRef<List<BlockEntity>> blockEntities)
     {
         //Get the blockEntities and remove them from the world before any magic starts to happen
         if (CarpetSettings.movableBlockEntities)
         {
-            list1_BlockEntities.set(Lists.newArrayList());
+            blockEntities.set(Lists.newArrayList());
             for (int i = 0; i < list_1.size(); ++i)
             {
                 BlockPos blockpos = list_1.get(i);
                 BlockEntity blockEntity = (list_2.get(i).hasBlockEntity()) ? world_1.getBlockEntity(blockpos) : null;
-                list1_BlockEntities.get().add(blockEntity);
+                blockEntities.get().add(blockEntity);
                 if (blockEntity != null)
                 {
                     //hopefully this call won't have any side effects in the future, such as dropping all the BlockEntity's items
@@ -111,10 +112,11 @@ public abstract class PistonBaseBlock_movableBEMixin extends DirectionalBlock
     @WrapOperation(method = "moveBlocks", at = @At(value = "INVOKE",
             target = "Lnet/minecraft/world/level/Level;setBlockEntity(Lnet/minecraft/world/level/block/entity/BlockEntity;)V",
             ordinal = 0))
-    private void setCarriedOnMove(Level instance, BlockEntity blockEntity, Operation<Void> original, @Local(ordinal = 1) int int_3)
+    private void setCarriedOnMove(Level instance, BlockEntity blockEntity, Operation<Void> original,
+            @Local(ordinal = 1) int index, @Share("blockEntities") LocalRef<List<BlockEntity>> blockEntities)
     {
         if (CarpetSettings.movableBlockEntities)
-            ((PistonBlockEntityInterface) blockEntity).setCarriedBlockEntity(list1_BlockEntities.get().get(int_3));
+            ((PistonBlockEntityInterface) blockEntity).setCarriedBlockEntity(blockEntities.get().get(index));
         original.call(instance, blockEntity);
     }
 }
