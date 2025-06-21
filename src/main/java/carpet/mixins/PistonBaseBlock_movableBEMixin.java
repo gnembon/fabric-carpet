@@ -3,6 +3,9 @@ package carpet.mixins;
 import carpet.CarpetSettings;
 import carpet.fakes.PistonBlockEntityInterface;
 import com.google.common.collect.Lists;
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
+import com.llamalad7.mixinextras.sugar.Local;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.Level;
@@ -11,7 +14,6 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.CommandBlock;
 import net.minecraft.world.level.block.DirectionalBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraft.world.level.block.piston.MovingPistonBlock;
 import net.minecraft.world.level.block.piston.PistonBaseBlock;
 import net.minecraft.world.level.block.piston.PistonStructureResolver;
 import net.minecraft.world.level.block.state.BlockState;
@@ -105,35 +107,14 @@ public abstract class PistonBaseBlock_movableBEMixin extends DirectionalBlock
             }
         }
     }
-    
-    @Inject(method = "moveBlocks", at = @At(value = "INVOKE", shift = At.Shift.BEFORE,
-            target = "Lnet/minecraft/world/level/Level;setBlockEntity(Lnet/minecraft/world/level/block/entity/BlockEntity;)V", ordinal = 0),
-            locals = LocalCapture.CAPTURE_FAILHARD)
-    private void setBlockEntityWithCarried(Level world_1, BlockPos blockPos_1, Direction direction_1, boolean boolean_1,
-                                           CallbackInfoReturnable<Boolean> cir, BlockPos blockPos_2, PistonStructureResolver pistonHandler_1, Map<?, ?> map_1, List<?> list_1,
-                                           List<BlockState> list_2, List<?> list_3, BlockState[] blockStates_1, Direction direction_2, int int_2,
-                                           int int_3, BlockPos blockPos_4, BlockState blockState9, BlockState blockState4)
-    {
-        BlockEntity blockEntityPiston = MovingPistonBlock.newMovingBlockEntity(blockPos_4, blockState4, list_2.get(int_3),
-                direction_1, boolean_1, false);
-        if (CarpetSettings.movableBlockEntities)
-            ((PistonBlockEntityInterface) blockEntityPiston).setCarriedBlockEntity(list1_BlockEntities.get().get(int_3));
-        world_1.setBlockEntity(blockEntityPiston);
-        //world_1.setBlockEntity(blockPos_4, blockEntityPiston);
-    }
-    
-    @Redirect(method = "moveBlocks", at = @At(value = "INVOKE",
+
+    @WrapOperation(method = "moveBlocks", at = @At(value = "INVOKE",
             target = "Lnet/minecraft/world/level/Level;setBlockEntity(Lnet/minecraft/world/level/block/entity/BlockEntity;)V",
             ordinal = 0))
-    private void dontDoAnything(Level world, BlockEntity blockEntity)
+    private void setCarriedOnMove(Level instance, BlockEntity blockEntity, Operation<Void> original, @Local(ordinal = 1) int int_3)
     {
-    }
-    
-    @Redirect(method = "moveBlocks", at = @At(value = "INVOKE",
-            target = "Lnet/minecraft/world/level/block/piston/MovingPistonBlock;newMovingBlockEntity(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/core/Direction;ZZ)Lnet/minecraft/world/level/block/entity/BlockEntity;",
-            ordinal = 0))
-    private BlockEntity returnNull(BlockPos blockPos, BlockState blockState, BlockState blockState2, Direction direction, boolean bl, boolean bl2)
-    {
-        return null;
+        if (CarpetSettings.movableBlockEntities)
+            ((PistonBlockEntityInterface) blockEntity).setCarriedBlockEntity(list1_BlockEntities.get().get(int_3));
+        original.call(instance, blockEntity);
     }
 }
