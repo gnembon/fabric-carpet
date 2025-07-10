@@ -1,6 +1,5 @@
 package carpet.script.value;
 
-import carpet.fakes.FoodDataInterface;
 import carpet.script.external.Vanilla;
 import carpet.script.utils.Tracer;
 import carpet.script.CarpetContext;
@@ -27,11 +26,9 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.StringTag;
 import net.minecraft.network.protocol.game.ClientboundEntityPositionSyncPacket;
-import net.minecraft.network.protocol.game.ClientboundMoveEntityPacket;
 import net.minecraft.network.protocol.game.ClientboundSetExperiencePacket;
 import net.minecraft.network.protocol.game.ClientboundSetHeldSlotPacket;
 import net.minecraft.network.protocol.game.ClientboundSetPassengersPacket;
-import net.minecraft.network.protocol.game.ClientboundTeleportEntityPacket;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
@@ -53,8 +50,6 @@ import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.entity.PathfinderMob;
 import net.minecraft.world.entity.Pose;
-import net.minecraft.world.entity.PositionMoveRotation;
-import net.minecraft.world.entity.Relative;
 import net.minecraft.world.entity.ai.Brain;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeMap;
@@ -84,7 +79,6 @@ import net.minecraft.world.phys.Vec3;
 import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -553,11 +547,11 @@ public class EntityValue extends Value
         put("swimming", (e, a) -> e.isSwimming() ? Value.TRUE : Value.FALSE);
         put("swinging", (e, a) -> e instanceof LivingEntity le ? BooleanValue.of(le.swinging) : Value.NULL);
         put("air", (e, a) -> new NumericValue(e.getAirSupply()));
-        put("language", (e, a) -> !(e instanceof ServerPlayer p) ? NULL : StringValue.of(Vanilla.ServerPlayer_getLanguage(p)));
+        put("language", (e, a) -> !(e instanceof ServerPlayer p) ? NULL : StringValue.of(p.clientInformation().language()));
         put("persistence", (e, a) -> e instanceof Mob mob ? BooleanValue.of(mob.isPersistenceRequired()) : Value.NULL);
         put("hunger", (e, a) -> e instanceof Player player ? new NumericValue(player.getFoodData().getFoodLevel()) : Value.NULL);
         put("saturation", (e, a) -> e instanceof Player player ? new NumericValue(player.getFoodData().getSaturationLevel()) : Value.NULL);
-        put("exhaustion", (e, a) -> e instanceof Player player ? new NumericValue(((FoodDataInterface)player.getFoodData()).getCMExhaustionLevel()) : Value.NULL);
+        put("exhaustion", (e, a) -> e instanceof Player player ? new NumericValue(Vanilla.FoodData_getExhaustion(player.getFoodData())) : Value.NULL);
         put("absorption", (e, a) -> e instanceof Player player ? new NumericValue(player.getAbsorptionAmount()) : Value.NULL);
         put("xp", (e, a) -> e instanceof Player player ? new NumericValue(player.totalExperience) : Value.NULL);
         put("xp_level", (e, a) -> e instanceof Player player ? new NumericValue(player.experienceLevel) : Value.NULL);
@@ -1611,7 +1605,10 @@ public class EntityValue extends Value
         put("exhaustion", (e, v) -> {
             if (e instanceof Player p)
             {
-                ((FoodDataInterface)p.getFoodData()).setExhaustion(NumericValue.asNumber(v).getFloat());
+                Vanilla.FoodData_setExhaustion(
+                        p.getFoodData(),
+                        NumericValue.asNumber(v, "exhaustion").getFloat()
+                );
             }
         });
 

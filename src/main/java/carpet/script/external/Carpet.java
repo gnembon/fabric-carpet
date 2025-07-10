@@ -85,6 +85,7 @@ public class Carpet
         return () -> CarpetProfiler.end_current_section(token);
     }
 
+    // not needed in vanilla
     public static void MinecraftServer_addScriptServer(MinecraftServer server, CarpetScriptServer scriptServer)
     {
         ((MinecraftServerInterface) server).addScriptServer(scriptServer);

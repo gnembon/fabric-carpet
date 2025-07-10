@@ -16,6 +16,7 @@ import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import net.minecraft.commands.CommandBuildContext;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.level.GameRules;
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.IOException;
@@ -665,7 +666,7 @@ public class ScriptCommand
         BoundingBox area = BoundingBox.fromCorners(a, b);
         CarpetExpression cexpr = new CarpetExpression(host.main, expr, source, origin);
         int int_1 = area.getXSpan() * area.getYSpan() * area.getZSpan(); // X Y Z
-        if (int_1 > Vanilla.MinecraftServer_getFillLimit(source.getServer()) )
+        if (int_1 > source.getServer().getGameRules().getInt(GameRules.RULE_COMMAND_MODIFICATION_BLOCK_LIMIT))
         {
             Carpet.Messenger_message(source, "r too many blocks to evaluate: " + int_1);
             return 1;
@@ -717,7 +718,7 @@ public class ScriptCommand
         BoundingBox area = BoundingBox.fromCorners(a, b);
         CarpetExpression cexpr = new CarpetExpression(host.main, expr, source, origin);
         int int_1 = area.getXSpan() * area.getYSpan() * area.getZSpan();
-        if (int_1 > Vanilla.MinecraftServer_getFillLimit(source.getServer()))
+        if (int_1 > source.getServer().getGameRules().getInt(GameRules.RULE_COMMAND_MODIFICATION_BLOCK_LIMIT))
         {
             Carpet.Messenger_message(source, "r too many blocks to evaluate: " + int_1);
             return 1;

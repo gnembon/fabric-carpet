@@ -78,7 +78,6 @@ public abstract class ServerLevel_scarpetMixin extends Level implements ServerWo
                 case MOB -> this.getGameRules().getBoolean(GameRules.RULE_MOBGRIEFING) ? this.getCMDestroyType(GameRules.RULE_MOB_EXPLOSION_DROP_DECAY) : Explosion.BlockInteraction.KEEP;
                 case TNT -> this.getCMDestroyType(GameRules.RULE_TNT_EXPLOSION_DROP_DECAY);
                 case TRIGGER -> Explosion.BlockInteraction.TRIGGER_BLOCK;
-                default -> throw new IncompatibleClassChangeError();
             };
 
             boolean cancelled = EXPLOSION.onExplosion((ServerLevel) (Object) this, entity, null, new Vec3(x, y, z), g, bl, null, null, var10000);

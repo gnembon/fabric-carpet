@@ -1,23 +1,7 @@
 package carpet.script.external;
 
 import carpet.CarpetSettings;
-import carpet.fakes.BiomeInterface;
-import carpet.fakes.BlockPredicateInterface;
-import carpet.fakes.BlockStateArgumentInterface;
-import carpet.fakes.TicketsFetcherInterface;
-import carpet.fakes.CommandDispatcherInterface;
-import carpet.fakes.EntityInterface;
-import carpet.fakes.InventoryBearerInterface;
-import carpet.fakes.ItemEntityInterface;
-import carpet.fakes.LivingEntityInterface;
-import carpet.fakes.MinecraftServerInterface;
-import carpet.fakes.MobEntityInterface;
-import carpet.fakes.RandomStateVisitorAccessor;
-import carpet.fakes.AbstractContainerMenuInterface;
-import carpet.fakes.ServerPlayerInterface;
-import carpet.fakes.ServerPlayerInteractionManagerInterface;
-import carpet.fakes.ServerWorldInterface;
-import carpet.fakes.SpawnHelperInnerInterface;
+import carpet.fakes.*;
 import carpet.mixins.Objective_scarpetMixin;
 import carpet.mixins.PoiRecord_scarpetMixin;
 import carpet.mixins.Scoreboard_scarpetMixin;
@@ -46,7 +30,6 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.level.ServerPlayerGameMode;
 import net.minecraft.server.level.Ticket;
 import net.minecraft.tags.TagKey;
-import net.minecraft.util.SortedArraySet;
 import net.minecraft.world.Container;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
@@ -56,10 +39,10 @@ import net.minecraft.world.entity.ai.goal.GoalSelector;
 import net.minecraft.world.entity.ai.village.poi.PoiRecord;
 import net.minecraft.world.entity.animal.horse.AbstractHorse;
 import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.food.FoodData;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.DataSlot;
 import net.minecraft.world.level.ChunkPos;
-import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.NaturalSpawner;
 import net.minecraft.world.level.PotentialCalculator;
 import net.minecraft.world.level.biome.Biome;
@@ -207,11 +190,6 @@ public class Vanilla
         return ((ServerPlayerInterface) player).isInvalidEntityObject();
     }
 
-    public static String ServerPlayer_getLanguage(ServerPlayer player)
-    {
-        return player.clientInformation().language();
-    }
-
     public static GoalSelector Mob_getAI(Mob mob, boolean target)
     {
         return ((MobEntityInterface) mob).getAI(target);
@@ -322,11 +300,6 @@ public class Vanilla
         return CommandHelper.canUseCommand(player, CarpetSettings.commandScript);
     }
 
-    public static int MinecraftServer_getFillLimit(MinecraftServer server)
-    {
-        return server.getGameRules().getInt(GameRules.RULE_COMMAND_MODIFICATION_BLOCK_LIMIT);
-    }
-
     public static int PoiRecord_getFreeTickets(PoiRecord record)
     {
         return ((PoiRecord_scarpetMixin) record).getFreeTickets();
@@ -335,6 +308,14 @@ public class Vanilla
     public static void PoiRecord_callAcquireTicket(PoiRecord record)
     {
         ((PoiRecord_scarpetMixin) record).callAcquireTicket();
+    }
+
+    public static double FoodData_getExhaustion(FoodData foodData) {
+        return ((FoodDataInterface)foodData).getCMExhaustionLevel();
+    }
+
+    public static void FoodData_setExhaustion(FoodData foodData, float exhaustion) {
+        ((FoodDataInterface)foodData).setExhaustion(exhaustion);
     }
 
     public record BlockPredicatePayload(BlockState state, TagKey<Block> tagKey, Map<Value, Value> properties, CompoundTag tag) {
