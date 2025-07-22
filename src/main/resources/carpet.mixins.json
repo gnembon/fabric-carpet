@@ -76,6 +76,7 @@
     "StructurePiece_scarpetPlopMixin",
     "PieceGeneratorSupplier_plopMixin",
     "ServerGamePacketListenerImpl_scarpetEventsMixin",
+    "ServerCommonPacketListenerImpl_scarpetEventsMixin",
     "ServerPlayerGameMode_scarpetEventsMixin",
     "Player_parrotMixin",
     "SaplingBlock_desertShrubsMixin",
