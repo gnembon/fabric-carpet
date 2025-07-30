@@ -502,6 +502,7 @@ public class CarpetEventServer
                 );
             }
         };
+        // fixme
         public static final Event CHUNK_GENERATED = new Event("chunk_generated", 2, true)
         {
             @Override
@@ -513,6 +514,7 @@ public class CarpetEventServer
                 );
             }
         };
+        // fixme
         public static final Event CHUNK_LOADED = new Event("chunk_loaded", 2, true)
         {
             @Override
