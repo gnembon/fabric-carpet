@@ -29,6 +29,7 @@ import net.minecraft.core.UUIDUtil;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.players.NameAndId;
 import net.minecraft.server.players.PlayerList;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.GameType;
@@ -164,7 +165,7 @@ public class PlayerCommand
             return false;
         }
 
-        if (!source.getServer().getPlayerList().isOp(sender.getGameProfile()))
+        if (!source.getServer().getPlayerList().isOp(sender.nameAndId()))
         {
             if (sender != player && !(player instanceof EntityPlayerMPFake))
             {
@@ -200,7 +201,7 @@ public class PlayerCommand
             Messenger.m(context.getSource(), "r Player ", "rb " + playerName, "r  is already logged on");
             return true;
         }
-        GameProfile profile = server.getProfileCache().get(playerName).orElse(null);
+        NameAndId profile = server.nameToIdCache().get(playerName).orElse(null);
         if (profile == null)
         {
             if (!CarpetSettings.allowSpawningOfflinePlayers)
@@ -209,7 +210,7 @@ public class PlayerCommand
                         "Banned players can only be summoned in Singleplayer and in servers in off-line mode.");
                 return true;
             } else {
-                profile = new GameProfile(UUIDUtil.createOfflinePlayerUUID(playerName), playerName);
+                profile = new NameAndId(UUIDUtil.createOfflinePlayerUUID(playerName), playerName);
             }
         }
         if (manager.getBans().isBanned(profile))
@@ -337,7 +338,7 @@ public class PlayerCommand
             Messenger.m(context.getSource(), "r Cannot shadow fake players");
             return 0;
         }
-        if (player.getServer().isSingleplayerOwner(player.getGameProfile())) {
+        if (player.getServer().isSingleplayerOwner(player.nameAndId())) {
             Messenger.m(context.getSource(), "r Cannot shadow single-player server owner");
             return 0;
         }

@@ -27,7 +27,7 @@ import net.minecraft.server.level.ChunkResult;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ThreadedLevelLightEngine;
 import net.minecraft.server.level.TicketType;
-import net.minecraft.server.level.progress.ChunkProgressListener;
+
 import net.minecraft.util.thread.BlockableEventLoop;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
@@ -83,9 +83,9 @@ public abstract class ChunkMap_scarpetChunkCreationMixin implements ThreadedAnvi
     @Final
     private BlockableEventLoop<Runnable> mainThreadExecutor;
 
-    @Shadow
-    @Final
-    private ChunkProgressListener progressListener;
+    //@Shadow
+    //@Final
+    //private ChunkProgressListener progressListener;
 
     @Shadow
     @Final

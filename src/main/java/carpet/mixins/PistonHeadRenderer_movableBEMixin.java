@@ -24,7 +24,7 @@ public abstract class PistonHeadRenderer_movableBEMixin implements BlockEntityRe
     @Inject(method = "<init>", at = @At("TAIL"))
     private void onInitCM(BlockEntityRendererProvider.Context arguments, CallbackInfo ci)
     {
-        dispatcher = arguments.getBlockEntityRenderDispatcher();
+        dispatcher = arguments.blockEntityRenderDispatcher();
     }
 
     @Inject(method = "render", at = @At(value = "INVOKE",

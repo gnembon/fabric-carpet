@@ -628,7 +628,7 @@ public class EntityValue extends Value
                 {
                     return new StringValue("singleplayer");
                 }
-                boolean isowner = server.isSingleplayerOwner(p.getGameProfile());
+                boolean isowner = server.isSingleplayerOwner(p.nameAndId());
                 if (isowner)
                 {
                     return new StringValue("lan_host");
@@ -1217,7 +1217,7 @@ public class EntityValue extends Value
         put("mount", (e, v) -> {
             if (v instanceof EntityValue ev)
             {
-                e.startRiding(ev.getEntity(), true);
+                e.startRiding(ev.getEntity(), true, true);
             }
             if (e instanceof ServerPlayer sp)
             {
@@ -1233,7 +1233,7 @@ public class EntityValue extends Value
             }
             if (v instanceof EntityValue ev)
             {
-                ev.getEntity().startRiding(e);
+                ev.getEntity().startRiding(e, true, true);
             }
             else if (v instanceof ListValue lv)
             {
@@ -1241,7 +1241,7 @@ public class EntityValue extends Value
                 {
                     if (element instanceof EntityValue ev)
                     {
-                        ev.getEntity().startRiding(e);
+                        ev.getEntity().startRiding(e, true, true);
                     }
                 }
             }

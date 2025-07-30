@@ -70,12 +70,12 @@ public class SnoopyCommandSource extends CommandSourceStack
     {
         super(player.commandSource(), player.position(), player.getRotationVector(),
                 player.level() instanceof final ServerLevel serverLevel ? serverLevel : null,
-                player.getServer().getProfilePermissions(player.getGameProfile()), player.getName().getString(), player.getDisplayName(),
+                player.getServer().getProfilePermissions(player.nameAndId()), player.getName().getString(), player.getDisplayName(),
                 player.level().getServer(), player);
         this.output = player.commandSource();
         this.position = player.position();
         this.world = player.level() instanceof final ServerLevel serverLevel ? serverLevel : null;
-        this.level = player.getServer().getProfilePermissions(player.getGameProfile());
+        this.level = player.getServer().getProfilePermissions(player.nameAndId());
         this.simpleName = player.getName().getString();
         this.name = player.getDisplayName();
         this.server = player.level().getServer();

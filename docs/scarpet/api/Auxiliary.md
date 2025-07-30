@@ -778,7 +778,8 @@ system calls. In all circumstances, these are only provided as read-only.
   * `game_major_target` - major release target. For 1.12.2, that would be 12
   * `game_minor_release` - minor release target. For 1.12.2, that would be 2
   * `game_protocol` - protocol version number
-  * `game_pack_version` - datapack version number
+  * `game_pack_version` - datapack version number as a version string
+  * `game_pack_minor_version` - datapack format minor version number
   * `game_data_version` - data version of the game. Returns an integer, so it can be compared.
   * `game_stable` - indicating if its a production release or a snapshot
   

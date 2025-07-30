@@ -2,8 +2,10 @@ package carpet.patches;
 
 import carpet.CarpetSettings;
 import com.mojang.authlib.GameProfile;
+import com.mojang.authlib.properties.PropertyMap;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.UUIDUtil;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.DisconnectionDetails;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.contents.TranslatableContents;
@@ -19,7 +21,8 @@ import net.minecraft.server.level.ClientInformation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.network.CommonListenerCookie;
-import net.minecraft.server.players.GameProfileCache;
+import net.minecraft.server.players.CachedUserNameToIdResolver;
+import net.minecraft.server.players.NameAndId;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EquipmentSlot;
@@ -27,6 +30,7 @@ import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.food.FoodData;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.component.ResolvableProfile;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.SkullBlockEntity;
@@ -54,13 +58,14 @@ public class EntityPlayerMPFake extends ServerPlayer
     {
         //prolly half of that crap is not necessary, but it works
         ServerLevel worldIn = server.getLevel(dimensionId);
-        GameProfileCache.setUsesAuthentication(false);
+        server.nameToIdCache().resolveOfflineUsers(false);
         GameProfile gameprofile;
         try {
-            gameprofile = server.getProfileCache().get(username).orElse(null); //findByName  .orElse(null)
+            NameAndId res = server.nameToIdCache().get(username).orElseThrow(); //findByName  .orElse(null)
+            gameprofile = new GameProfile(res.id(), res.name());
         }
         finally {
-            GameProfileCache.setUsesAuthentication(server.isDedicatedServer() && server.usesAuthentication());
+            server.nameToIdCache().resolveOfflineUsers(server.isDedicatedServer() && server.usesAuthentication());
         }
         if (gameprofile == null)
         {
@@ -71,7 +76,7 @@ public class EntityPlayerMPFake extends ServerPlayer
                 gameprofile = new GameProfile(UUIDUtil.createOfflinePlayerUUID(username), username);
             }
         }
-        GameProfile finalGP = gameprofile;
+        //GameProfile finalGP = gameprofile;
 
         // We need to mark this player as spawning so that we do not
         // try to spawn another player with the name while the profile
@@ -87,11 +92,8 @@ public class EntityPlayerMPFake extends ServerPlayer
                 return;
             }
 
-            GameProfile current = finalGP;
-            if (p.isPresent())
-            {
-                current = p.get();
-            }
+            GameProfile current = p.gameProfile();
+
             EntityPlayerMPFake instance = new EntityPlayerMPFake(server, worldIn, current, ClientInformation.createDefault(), false);
             instance.fixStartingPosition = () -> instance.snapTo(pos.x, pos.y, pos.z, (float) yaw, (float) pitch);
             server.getPlayerList().placeNewPlayer(new FakeClientConnection(PacketFlow.SERVERBOUND), instance, new CommonListenerCookie(current, 0, instance.clientInformation(), false));
@@ -109,8 +111,9 @@ public class EntityPlayerMPFake extends ServerPlayer
         return true;
     }
 
-    private static CompletableFuture<Optional<GameProfile>> fetchGameProfile(final String name) {
-        return SkullBlockEntity.fetchGameProfile(name);
+    private static CompletableFuture<ResolvableProfile> fetchGameProfile(final String name) {
+        final ResolvableProfile resolvableProfile = new ResolvableProfile(Optional.of(name), Optional.empty(), new PropertyMap());
+        return resolvableProfile.resolve();
     }
 
     public static EntityPlayerMPFake createShadow(MinecraftServer server, ServerPlayer player)

@@ -1744,7 +1744,7 @@ public class WorldAccess
             case "erosion" -> router.erosion();
             case "depth" -> router.depth();
             case "ridges" -> router.ridges();
-            case "initial_density_without_jaggedness" -> router.initialDensityWithoutJaggedness();
+            case "preliminary_surface_level" -> router.preliminarySurfaceLevel();
             case "final_density" -> router.finalDensity();
             case "vein_toggle" -> router.veinToggle();
             case "vein_ridged" -> router.veinRidged();
@@ -1776,7 +1776,7 @@ public class WorldAccess
                         case "erosion" -> router.erosion();
                         case "depth" -> router.depth();
                         case "ridges" -> router.ridges();
-                        case "initial_density_without_jaggedness" -> router.initialDensityWithoutJaggedness();
+                        case "preliminary_surface_level" -> router.preliminarySurfaceLevel();
                         case "final_density" -> router.finalDensity();
                         case "vein_toggle" -> router.veinToggle();
                         case "vein_ridged" -> router.veinRidged();
