@@ -140,7 +140,7 @@ public class CarpetProfiler
             Level world = tok.world;
             String current_section = (world == null) ?
                     (String) tok.section :
-                    String.format("%s.%s%s", world.dimension().location(), tok.section, world.isClientSide ? " (Client)" : "");
+                    String.format("%s.%s%s", world.dimension().location(), tok.section, world.isClientSide() ? " (Client)" : "");
             SECTION_STATS.addTo(current_section, end_time - tok.start);
         }
     }
@@ -286,7 +286,7 @@ public class CarpetProfiler
             id = regs.lookupOrThrow(Registries.BLOCK_ENTITY_TYPE).getKey((BlockEntityType<?>) section.getValue());
         }
         String name = "minecraft".equals(id.getNamespace())?id.getPath():id.toString();
-        if (section.getKey().isClientSide)
+        if (section.getKey().isClientSide())
         {
             name += " (client)";
         }
@@ -311,7 +311,7 @@ public class CarpetProfiler
         {
             if (++total > 10) break;
             Pair<Level,Object> section = sectionEntry.getKey();
-            boolean cli = section.getKey().isClientSide;
+            boolean cli = section.getKey().isClientSide();
             Messenger.m(currentRequester, String.format(
                     "%s - %s: ", cli?"gi":"w",
                     sectionName(section)),
@@ -325,7 +325,7 @@ public class CarpetProfiler
         {
             if (++total > 10) break;
             Pair<Level,Object> section = sectionEntry.getKey();
-            boolean cli = section.getKey().isClientSide;
+            boolean cli = section.getKey().isClientSide();
             Messenger.m(currentRequester, String.format(
                     "%s - %s: ", cli?"gi":"w",
                     sectionName(section)),

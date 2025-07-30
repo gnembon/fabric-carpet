@@ -156,7 +156,7 @@ public abstract class LevelChunk_movableBEMixin extends ChunkAccess implements W
             return null;
         }
 
-        if (!level.isClientSide && sideEffects) {
+        if (!level.isClientSide() && sideEffects) {
             // this updates stuff, schedule ticks - do we want that since its only be called from MovingPistonBlock really?
             newBlockState.onPlace(level, blockPos_1, oldBlockState, boolean_1);
         }
