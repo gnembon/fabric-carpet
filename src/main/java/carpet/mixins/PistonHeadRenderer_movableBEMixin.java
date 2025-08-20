@@ -4,10 +4,12 @@ import carpet.CarpetSettings;
 import carpet.fakes.PistonBlockEntityInterface;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderDispatcher;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.client.renderer.blockentity.PistonHeadRenderer;
+import net.minecraft.client.renderer.feature.ModelFeatureRenderer;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.piston.PistonMovingBlockEntity;
 import net.minecraft.world.phys.Vec3;
@@ -27,10 +29,10 @@ public abstract class PistonHeadRenderer_movableBEMixin implements BlockEntityRe
         dispatcher = arguments.blockEntityRenderDispatcher();
     }
 
-    @Inject(method = "render", at = @At(value = "INVOKE",
-            target = "Lnet/minecraft/client/renderer/blockentity/PistonHeadRenderer;renderBlock(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;Lnet/minecraft/world/level/Level;ZI)V",
+    @Inject(method = "submit(Lnet/minecraft/world/level/block/piston/PistonMovingBlockEntity;FLcom/mojang/blaze3d/vertex/PoseStack;IILnet/minecraft/world/phys/Vec3;Lnet/minecraft/client/renderer/feature/ModelFeatureRenderer$CrumblingOverlay;Lnet/minecraft/client/renderer/SubmitNodeCollector;)V", at = @At(value = "INVOKE",
+            target = "Lnet/minecraft/client/renderer/blockentity/PistonHeadRenderer;submitMovingBlock(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/SubmitNodeCollector;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/core/Holder;Lnet/minecraft/world/level/Level;)V",
             ordinal = 3))
-    private void updateRenderBool(PistonMovingBlockEntity pistonBlockEntity_1, float float_1, PoseStack matrixStack_1, MultiBufferSource layeredVertexConsumerStorage_1, int int_1, int int_2, Vec3 cameraPos, CallbackInfo ci)
+    private void updateRenderBool(PistonMovingBlockEntity pistonBlockEntity_1, float f, PoseStack poseStack, int i, int j, Vec3 vec3, ModelFeatureRenderer.CrumblingOverlay crumblingOverlay, SubmitNodeCollector submitNodeCollector, CallbackInfo ci)
     //private void updateRenderBool(PistonBlockEntity pistonBlockEntity_1, double double_1, double double_2, double double_3, float float_1, class_4587 class_4587_1, class_4597 class_4597_1, int int_1, CallbackInfo ci)
     {
         if (!((PistonBlockEntityInterface) pistonBlockEntity_1).isRenderModeSet())
@@ -38,8 +40,9 @@ public abstract class PistonHeadRenderer_movableBEMixin implements BlockEntityRe
     }
 
 
-    @Inject(method = "render", at = @At("RETURN"), locals = LocalCapture.NO_CAPTURE)
-    private void endMethod3576(PistonMovingBlockEntity pistonBlockEntity_1, float partialTicks, PoseStack matrixStack_1, MultiBufferSource layeredVertexConsumerStorage_1, int int_1, int init_2, Vec3 cameraPos, CallbackInfo ci)
+    @Inject(method = "submit(Lnet/minecraft/world/level/block/piston/PistonMovingBlockEntity;FLcom/mojang/blaze3d/vertex/PoseStack;IILnet/minecraft/world/phys/Vec3;Lnet/minecraft/client/renderer/feature/ModelFeatureRenderer$CrumblingOverlay;Lnet/minecraft/client/renderer/SubmitNodeCollector;)V", at = @At("RETURN"), locals = LocalCapture.NO_CAPTURE)
+    private void endMethod(PistonMovingBlockEntity pistonBlockEntity_1, float partialTicks, PoseStack matrixStack_1, int i, int j, Vec3 vec3, ModelFeatureRenderer.CrumblingOverlay crumblingOverlay, SubmitNodeCollector submitNodeCollector, CallbackInfo ci)
+    //private void endMethod3576(PistonMovingBlockEntity pistonBlockEntity_1, float partialTicks, PoseStack matrixStack_1, MultiBufferSource layeredVertexConsumerStorage_1, int int_1, int init_2, Vec3 cameraPos, CallbackInfo ci)
     {
         if (((PistonBlockEntityInterface) pistonBlockEntity_1).getRenderCarriedBlockEntity())
         {
@@ -53,7 +56,7 @@ public abstract class PistonHeadRenderer_movableBEMixin implements BlockEntityRe
                         pistonBlockEntity_1.getYOff(partialTicks),
                         pistonBlockEntity_1.getZOff(partialTicks)
                 );
-                dispatcher.render(carriedBlockEntity, partialTicks, matrixStack_1, layeredVertexConsumerStorage_1);
+                dispatcher.submit(carriedBlockEntity, partialTicks, matrixStack_1, crumblingOverlay, submitNodeCollector);
 
             }
         }

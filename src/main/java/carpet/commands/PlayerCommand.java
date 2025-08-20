@@ -30,16 +30,15 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.players.NameAndId;
+import net.minecraft.server.players.OldUsersConverter;
 import net.minecraft.server.players.PlayerList;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec2;
 import net.minecraft.world.phys.Vec3;
-import java.util.Collection;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Set;
+
+import java.util.*;
 import java.util.function.Consumer;
 
 import static net.minecraft.commands.Commands.argument;
@@ -201,7 +200,20 @@ public class PlayerCommand
             Messenger.m(context.getSource(), "r Player ", "rb " + playerName, "r  is already logged on");
             return true;
         }
-        NameAndId profile = server.nameToIdCache().get(playerName).orElse(null);
+        UUID uuid = OldUsersConverter.convertMobOwnerIfNecessary(server, playerName);
+        if (uuid == null)
+        {
+            if (!CarpetSettings.allowSpawningOfflinePlayers)
+            {
+                Messenger.m(context.getSource(), "r Player "+playerName+" is either banned by Mojang, or auth servers are down. " +
+                        "Banned players can only be summoned in Singleplayer and in servers in off-line mode.");
+                return true;
+            } else {
+                uuid = UUIDUtil.createOfflinePlayerUUID(playerName);
+            }
+        }
+        //GameProfile profile = new GameProfile(uuid, playerName);
+        NameAndId profile = server.services().nameToIdCache().get(uuid).orElse(null);
         if (profile == null)
         {
             if (!CarpetSettings.allowSpawningOfflinePlayers)
