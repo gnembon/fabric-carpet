@@ -302,6 +302,10 @@ Number of ticks remaining until an entity can use a portal again.
 
 Number of ticks an entity sits in a portal.
 
+### `query(e, 'item_cooldown', item)`
+
+Ticks remaining of item usage cooldown, e.g., from pearl throwing or horn blowing.
+
 ### `query(e, 'item')`
 
 The item triple (name, count, nbt) if its an item or item frame entity, `null` otherwise.
@@ -716,6 +720,11 @@ Sets a custom number of ticks remaining until an entity can use a portal again.
 ### `modify(e, 'portal_timer', number)`
 
 Sets a custom number of ticks an entity sits in a portal.
+
+### `modify(e, 'item_cooldown', item, ticks)`
+
+Sets a custom number of cooldown ticks before the item can be used again.
+Gives white overlay, like pearl shooting/horn blowing cooldown
 
 ### `modify(e, 'dismount')`
 

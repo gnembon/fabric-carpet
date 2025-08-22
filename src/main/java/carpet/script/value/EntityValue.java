@@ -1,5 +1,6 @@
 package carpet.script.value;
 
+import carpet.fakes.ItemCooldownsInterface;
 import carpet.script.external.Vanilla;
 import carpet.script.utils.Tracer;
 import carpet.script.CarpetContext;
@@ -64,6 +65,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.entity.projectile.WitherSkull;
 import net.minecraft.world.entity.vehicle.AbstractMinecart;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.Level;
@@ -510,6 +512,15 @@ public class EntityValue extends Value
         put("pickup_delay", (e, a) -> (e instanceof ItemEntity ie) ? new NumericValue(Vanilla.ItemEntity_getPickupDelay(ie)) : Value.NULL);
         put("portal_cooldown", (e, a) -> new NumericValue(Vanilla.Entity_getPublicNetherPortalCooldown(e)));
         put("portal_timer", (e, a) -> new NumericValue(Vanilla.Entity_getPortalTimer(e)));
+        put("item_cooldown", (e, a)->{
+            if(!(e instanceof ServerPlayer player))
+                throw new InternalExpressionException("Can only query 'item_cooldown' for players");
+
+            Item item = NBTSerializableValue.parseItem(a.getString(), e.getServer().registryAccess()).getItem();
+            int ticks = ((ItemCooldownsInterface) player.getCooldowns()).getCooldownTicks(item);
+
+            return NumericValue.of(ticks);
+        });
         // ItemEntity -> despawn timer via ssGetAge
         put("is_baby", (e, a) -> (e instanceof LivingEntity le) ? BooleanValue.of(le.isBaby()) : Value.NULL);
         put("target", (e, a) -> {
@@ -1438,6 +1449,20 @@ public class EntityValue extends Value
                 throw new InternalExpressionException("'portal_timer' requires a value to set");
             }
             Vanilla.Entity_setPortalTimer(e, NumericValue.asNumber(v).getInt());
+        });
+
+        put("item_cooldown", (e, v)->{
+            if(!(e instanceof ServerPlayer player))
+                throw new InternalExpressionException("Can only modify 'item_cooldown' for players");
+
+            if(!(v instanceof ListValue lv) || lv.length()!=2)
+                throw new InternalExpressionException("'item_cooldown' requires 2 parameters, an item and a cooldown duration");
+
+            List<Value> values = lv.getItems();
+            Item item = NBTSerializableValue.parseItem(values.get(0).getString(), e.getServer().registryAccess()).getItem();
+            int ticks = NumericValue.asNumber(values.get(1), "item cooldown duration").getInt();
+
+            player.getCooldowns().addCooldown(item, ticks);
         });
 
         put("ai", (e, v) ->
