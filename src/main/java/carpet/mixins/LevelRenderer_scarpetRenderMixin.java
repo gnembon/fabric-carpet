@@ -26,6 +26,10 @@ public class LevelRenderer_scarpetRenderMixin
 {
     @Shadow @Final private LevelTargetBundle targets;
 
+    @Shadow @Final private FeatureRenderDispatcher featureRenderDispatcher;
+
+    @Shadow @Final private RenderBuffers renderBuffers;
+
     @Inject(method = "<init>", at = @At("RETURN"))
     private void addRenderers(Minecraft minecraft, EntityRenderDispatcher entityRenderDispatcher, BlockEntityRenderDispatcher blockEntityRenderDispatcher, RenderBuffers renderBuffers, LevelRenderState levelRenderState, FeatureRenderDispatcher featureRenderDispatcher, CallbackInfo ci)
     {
@@ -43,6 +47,8 @@ public class LevelRenderer_scarpetRenderMixin
             FramePass pass = frameGraphBuilder.addPass("scarpet_shapes");
             targets.main = pass.readsAndWrites(targets.main);
             pass.executes(() -> CarpetClient.shapes.render(null, camera, f));
+            featureRenderDispatcher.renderAllFeatures();
+            renderBuffers.bufferSource().endLastBatch();
         }
     }
 }
