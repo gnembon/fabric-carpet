@@ -80,10 +80,10 @@ public class EntityPlayerMPFake extends ServerPlayer
         // We need to mark this player as spawning so that we do not
         // try to spawn another player with the name while the profile
         // is being fetched - preventing multiple players spawning
-        String name = gameprofile.getName();
+        String name = gameprofile.name();
         spawning.add(name);
 
-        fetchGameProfile(server, gameprofile.getId()).whenCompleteAsync((p, t) -> {
+        fetchGameProfile(server, gameprofile.id()).whenCompleteAsync((p, t) -> {
             // Always remove the name, even if exception occurs
             spawning.remove(name);
             if (t != null)
@@ -92,7 +92,7 @@ public class EntityPlayerMPFake extends ServerPlayer
             }
 
             GameProfile current;
-            if (p.getName().isEmpty()) {
+            if (p.name().isEmpty()) {
                 current = gameprofile;
             }
             else {

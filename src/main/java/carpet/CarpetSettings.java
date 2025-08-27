@@ -708,7 +708,7 @@ public class CarpetSettings
 
             if (server.isDedicatedServer())
             {
-                int vd = (newValue >= 2)?newValue:((ServerInterface) server).getProperties().viewDistance;
+                int vd = (newValue >= 2)?newValue:((ServerInterface) server).getProperties().viewDistance.get();
                 if (vd != server.getPlayerList().getViewDistance())
                     server.getPlayerList().setViewDistance(vd);
                 return newValue;
@@ -749,7 +749,7 @@ public class CarpetSettings
 
             if (server.isDedicatedServer())
             {
-                int vd = (newValue >= 2)?newValue:((DedicatedServer) server).getProperties().simulationDistance;
+                int vd = (newValue >= 2)?newValue:((DedicatedServer) server).getProperties().simulationDistance.get();
                 if (vd != server.getPlayerList().getSimulationDistance())
                     server.getPlayerList().setSimulationDistance(vd);
                 return newValue;
