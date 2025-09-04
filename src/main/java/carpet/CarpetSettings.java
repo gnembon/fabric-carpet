@@ -1006,7 +1006,7 @@ public class CarpetSettings
                     {
                         double from = worldBorder.getSize();
                         double to = worldBorder.getLerpTarget();
-                        long time = worldBorder.getLerpRemainingTime();
+                        long time = worldBorder.getLerpTime();
                         worldBorder.lerpSizeBetween(from, to, time);
                     }
                 }

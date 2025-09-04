@@ -134,7 +134,7 @@ public class EntityValue extends Value
     {
         if (entity instanceof ServerPlayer serverPlayer && Vanilla.ServerPlayer_isInvalidEntityObject(serverPlayer))
         {
-            ServerPlayer newPlayer = entity.getServer().getPlayerList().getPlayer(entity.getUUID());
+            ServerPlayer newPlayer = entity.level().getServer().getPlayerList().getPlayer(entity.getUUID());
             if (newPlayer != null)
             {
                 entity = newPlayer;
@@ -458,14 +458,14 @@ public class EntityValue extends Value
         put("scoreboard_tags", (e, a) -> ListValue.wrap(e.getTags().stream().map(StringValue::new)));
         put("entity_tags", (e, a) -> {
             EntityType<?> type = e.getType();
-            return ListValue.wrap(e.getServer().registryAccess().lookupOrThrow(Registries.ENTITY_TYPE).getTags().filter(entry -> entry.stream().anyMatch(h -> h.value() == type)).map(entry -> ValueConversions.of(entry)));
+            return ListValue.wrap(e.level().getServer().registryAccess().lookupOrThrow(Registries.ENTITY_TYPE).getTags().filter(entry -> entry.stream().anyMatch(h -> h.value() == type)).map(entry -> ValueConversions.of(entry)));
         });
         // deprecated
         put("has_tag", (e, a) -> BooleanValue.of(e.getTags().contains(a.getString())));
 
         put("has_scoreboard_tag", (e, a) -> BooleanValue.of(e.getTags().contains(a.getString())));
         put("has_entity_tag", (e, a) -> {
-            Optional<HolderSet.Named<EntityType<?>>> tag = e.getServer().registryAccess().lookupOrThrow(Registries.ENTITY_TYPE).get(TagKey.create(Registries.ENTITY_TYPE, InputValidator.identifierOf(a.getString())));
+            Optional<HolderSet.Named<EntityType<?>>> tag = e.level().getServer().registryAccess().lookupOrThrow(Registries.ENTITY_TYPE).get(TagKey.create(Registries.ENTITY_TYPE, InputValidator.identifierOf(a.getString())));
             if (tag.isEmpty())
             {
                 return Value.NULL;
@@ -505,7 +505,7 @@ public class EntityValue extends Value
         put("despawn_timer", (e, a) -> e instanceof LivingEntity le ? new NumericValue(le.getNoActionTime()) : Value.NULL);
         put("blue_skull", (e, a) -> e instanceof WitherSkull w ? BooleanValue.of(w.isDangerous()) : Value.NULL);
         put("offering_flower", (e, a) -> e instanceof IronGolem ig ? BooleanValue.of(ig.getOfferFlowerTick() > 0) : Value.NULL);
-        put("item", (e, a) -> e instanceof ItemEntity ie ? ValueConversions.of(ie.getItem(), e.getServer().registryAccess()) : e instanceof ItemFrame frame ? ValueConversions.of(frame.getItem(), e.getServer().registryAccess()) : Value.NULL);
+        put("item", (e, a) -> e instanceof ItemEntity ie ? ValueConversions.of(ie.getItem(), e.level().getServer().registryAccess()) : e instanceof ItemFrame frame ? ValueConversions.of(frame.getItem(), e.level().getServer().registryAccess()) : Value.NULL);
         put("count", (e, a) -> (e instanceof ItemEntity ie) ? new NumericValue(ie.getItem().getCount()) : Value.NULL);
         put("pickup_delay", (e, a) -> (e instanceof ItemEntity ie) ? new NumericValue(Vanilla.ItemEntity_getPickupDelay(ie)) : Value.NULL);
         put("portal_cooldown", (e, a) -> new NumericValue(Vanilla.Entity_getPublicNetherPortalCooldown(e)));
@@ -693,7 +693,7 @@ public class EntityValue extends Value
             }
             if (e instanceof LivingEntity le)
             {
-                return ValueConversions.of(le.getItemBySlot(where), e.getServer().registryAccess());
+                return ValueConversions.of(le.getItemBySlot(where), e.level().getServer().registryAccess());
             }
             return Value.NULL;
         });
@@ -1376,7 +1376,7 @@ public class EntityValue extends Value
                 if (params.size() > blockLocator.offset)
                 {
                     Value worldValue = params.get(blockLocator.offset);
-                    world = ValueConversions.dimFromValue(worldValue, spe.getServer()).dimension();
+                    world = ValueConversions.dimFromValue(worldValue, spe.level().getServer()).dimension();
                     if (params.size() > blockLocator.offset + 1)
                     {
                         angle = NumericValue.asNumber(params.get(blockLocator.offset + 1), "angle").getFloat();

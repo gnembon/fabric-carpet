@@ -123,7 +123,7 @@ public class EntityPlayerMPFake extends ServerPlayer
 
     public static EntityPlayerMPFake createShadow(MinecraftServer server, ServerPlayer player)
     {
-        player.getServer().getPlayerList().remove(player);
+        player.level().getServer().getPlayerList().remove(player);
         player.connection.disconnect(Component.translatable("multiplayer.disconnect.duplicate_login"));
         ServerLevel worldIn = player.level();//.getWorld(player.dimension);
         GameProfile gameprofile = player.getGameProfile();
@@ -182,7 +182,7 @@ public class EntityPlayerMPFake extends ServerPlayer
         if (reason.getContents() instanceof TranslatableContents text && text.getKey().equals("multiplayer.disconnect.duplicate_login")) {
             this.connection.onDisconnect(new DisconnectionDetails(reason));
         } else {
-            this.getServer().schedule(new TickTask(this.getServer().getTickCount(), () -> {
+            this.level().getServer().schedule(new TickTask(this.level().getServer().getTickCount(), () -> {
                 this.connection.onDisconnect(new DisconnectionDetails(reason));
             }));
         }
@@ -191,7 +191,7 @@ public class EntityPlayerMPFake extends ServerPlayer
     @Override
     public void tick()
     {
-        if (this.getServer().getTickCount() % 10 == 0)
+        if (this.level().getServer().getTickCount() % 10 == 0)
         {
             this.connection.resetPosition();
             this.level().getChunkSource().move(this);

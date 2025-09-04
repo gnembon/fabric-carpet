@@ -89,7 +89,7 @@ public class ValueConversions
         return ListValue.of(StringValue.of(Colors.mapColourName.get(color)), ofRGB(color.col));
     }
 
-    public static <T extends Number> Value of(MinMaxBounds<T> range)
+    public static <T extends Number & Comparable<T>> Value of(MinMaxBounds<T> range)
     {
         return ListValue.of(
                 range.min().map(NumericValue::of).orElse(Value.NULL),

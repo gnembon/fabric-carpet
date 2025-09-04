@@ -162,7 +162,7 @@ public class CarpetServer // static for now - easier to handle all around the co
         LoggerRegistry.playerDisconnected(player);
         extensions.forEach(e -> e.onPlayerLoggedOut(player));
         // first case client, second case server
-        CarpetScriptServer runningScriptServer = (player.getServer() == null) ? scriptServer : Vanilla.MinecraftServer_getScriptServer(player.getServer());
+        CarpetScriptServer runningScriptServer = (player.level().getServer() == null) ? scriptServer : Vanilla.MinecraftServer_getScriptServer(player.level().getServer());
         if (runningScriptServer != null && !runningScriptServer.stopAll) {
             runningScriptServer.onPlayerLoggedOut(player, reason);
         }
