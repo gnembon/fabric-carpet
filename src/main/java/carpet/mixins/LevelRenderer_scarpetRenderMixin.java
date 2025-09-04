@@ -36,7 +36,7 @@ public class LevelRenderer_scarpetRenderMixin
         CarpetClient.shapes = new ShapesRenderer(minecraft);
     }
 
-    @Inject(method = "addParticlesPass", at = @At("RETURN"))
+    @Inject(method = "addMainPass", at = @At("RETURN"))
     private void renderScarpetThingsLate(FrameGraphBuilder frameGraphBuilder, Camera camera, float f, GpuBufferSlice fogParameters, CallbackInfo ci)
     {
         // in normal circumstances we want to render shapes at the very end so it appears correctly behind stuff.
