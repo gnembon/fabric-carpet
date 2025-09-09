@@ -9,6 +9,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
+import java.util.function.Consumer;
 import java.util.function.IntFunction;
 import java.util.stream.Collectors;
 
@@ -94,8 +95,8 @@ public abstract class ChunkMap_scarpetChunkCreationMixin implements ThreadedAnvi
     @Shadow
     protected abstract boolean promoteChunkMap();
 
-    @Shadow
-    protected abstract Iterable<ChunkHolder> getChunks();
+    //@Shadow
+    //protected abstract void forEachReadyToSendChunk(Consumer<LevelChunk> consumer); // for getChunks()
 
 
     @Shadow

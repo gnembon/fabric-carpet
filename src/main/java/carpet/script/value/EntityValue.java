@@ -921,7 +921,7 @@ public class EntityValue extends Value
             }
             else
             {
-                ((ServerLevel) e.level()).getChunkSource().broadcastAndSend(e, ClientboundEntityPositionSyncPacket.of(e));
+                ((ServerLevel) e.level()).getChunkSource().sendToTrackingPlayersAndSelf(e, ClientboundEntityPositionSyncPacket.of(e));
             }
         }
     }
