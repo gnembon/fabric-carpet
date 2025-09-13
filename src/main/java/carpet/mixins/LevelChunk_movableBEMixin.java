@@ -114,7 +114,8 @@ public abstract class LevelChunk_movableBEMixin extends ChunkAccess implements W
         if (LightEngine.hasDifferentLightProperties(oldBlockState, newBlockState)) {
             ProfilerFiller profiler = Profiler.get();
             profiler.push("updateSkyLightSources");
-            skyLightSources.update(this, x, chunkY, z);
+            if (skyLightSources != null)
+                skyLightSources.update(this, x, chunkY, z);
             profiler.popPush("queueCheckLight");
             level.getChunkSource().getLightEngine().checkBlock(blockPos_1);
             profiler.pop();
