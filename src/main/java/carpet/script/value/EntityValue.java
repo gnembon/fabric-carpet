@@ -17,6 +17,7 @@ import net.minecraft.commands.arguments.selector.EntitySelector;
 import net.minecraft.commands.arguments.selector.EntitySelectorParser;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.GlobalPos;
 import net.minecraft.core.Holder;
 import net.minecraft.core.HolderSet;
 import net.minecraft.core.Registry;
@@ -69,6 +70,7 @@ import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.entity.EntityTypeTest;
 import net.minecraft.world.level.pathfinder.Path;
+import net.minecraft.world.level.storage.LevelData;
 import net.minecraft.world.level.storage.TagValueInput;
 import net.minecraft.world.level.storage.TagValueOutput;
 import net.minecraft.world.phys.BlockHitResult;
@@ -533,9 +535,9 @@ public class EntityValue extends Value
                 }
                 ServerPlayer.RespawnConfig spec = spe.getRespawnConfig();
                 return ListValue.of(
-                        ValueConversions.of(spec.pos()),
-                        ValueConversions.of(spec.dimension()),
-                        new NumericValue(spec.angle()),
+                        ValueConversions.of(spec.respawnData().pos()),
+                        ValueConversions.of(spec.respawnData().dimension()),
+                        new NumericValue(spec.respawnData().yaw()),
                         BooleanValue.of(spec.forced())
                 );
             }
@@ -1386,7 +1388,7 @@ public class EntityValue extends Value
                         }
                     }
                 }
-                spe.setRespawnPosition(new ServerPlayer.RespawnConfig(world, pos, angle, forced), false);
+                spe.setRespawnPosition(new ServerPlayer.RespawnConfig(new LevelData.RespawnData(new GlobalPos(world, pos), angle, 0), forced), false);
             }
             else if (a instanceof BlockValue bv)
             {
@@ -1394,7 +1396,7 @@ public class EntityValue extends Value
                 {
                     throw new InternalExpressionException("block for spawn modification should be localised in the world");
                 }
-                spe.setRespawnPosition(new ServerPlayer.RespawnConfig(bv.getWorld().dimension(), bv.getPos(), e.getYRot(), true), false); // yaw
+                spe.setRespawnPosition(new ServerPlayer.RespawnConfig(new LevelData.RespawnData(new GlobalPos(bv.getWorld().dimension(), bv.getPos()), e.getYRot(), 0), true), false); // yaw
             }
             else if (a.isNull())
             {

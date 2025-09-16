@@ -4,7 +4,6 @@ import carpet.script.CarpetScriptServer;
 import carpet.script.external.Carpet;
 import carpet.script.utils.shapes.ShapeDirection;
 
-import com.mojang.blaze3d.platform.Lighting;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.BufferBuilder;
 import com.mojang.blaze3d.vertex.ByteBufferBuilder;
@@ -36,6 +35,7 @@ import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.state.BlockEntityRenderState;
 import net.minecraft.client.renderer.entity.state.EntityRenderState;
 import net.minecraft.client.renderer.item.ItemStackRenderState;
+import net.minecraft.client.renderer.state.LevelRenderState;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -112,13 +112,13 @@ public class ShapesRenderer
         labels = new HashMap<>();
     }
 
-    public void render(Matrix4f modelViewMatrix, Camera camera, float partialTick)
+    public void render(Matrix4f modelViewMatrix, LevelRenderState cameraa, float partialTick)
     {
         Runnable token = Carpet.startProfilerSection("Scarpet client");
         // posestack is not needed anymore - left as TODO to cleanup later
         PoseStack matrices = new PoseStack();
 
-        //Camera camera = this.client.gameRenderer.getCamera();
+        Camera camera = this.client.gameRenderer.getMainCamera();
         ClientLevel iWorld = this.client.level;
         ResourceKey<Level> dimensionType = iWorld.dimension();
         if ((shapes.get(dimensionType) == null || shapes.get(dimensionType).isEmpty()) &&
@@ -164,7 +164,7 @@ public class ShapesRenderer
             shapes.get(dimensionType).values().forEach(s -> {
                 if ((!s.shape.debug || entityBoxes) && s.shouldRender(dimensionType))
                 {
-                    s.renderLines(matrices, tesselator, cameraX, cameraY, cameraZ, partialTick);
+                    s.renderLines(matrices, tesselator, cameraX, cameraY, cameraZ, partialTick, cameraa);
                 }
             });
             // faces
@@ -187,7 +187,7 @@ public class ShapesRenderer
             labels.get(dimensionType).values().forEach(s -> {
                 if ((!s.shape.debug || entityBoxes) && s.shouldRender(dimensionType))
                 {
-                    s.renderLines(matrices, tesselator, cameraX, cameraY, cameraZ, partialTick);
+                    s.renderLines(matrices, tesselator, cameraX, cameraY, cameraZ, partialTick, cameraa);
                 }
             });
         }
@@ -263,7 +263,7 @@ public class ShapesRenderer
         long expiryTick;
         double renderEpsilon;
 
-        public abstract void renderLines(PoseStack matrices, Tesselator tesselator, double cx, double cy, double cz, float partialTick);
+        public abstract void renderLines(PoseStack matrices, Tesselator tesselator, double cx, double cy, double cz, float partialTick, LevelRenderState levelRenderState);
 
         public void renderFaces(Tesselator tesselator, double cx, double cy, double cz, float partialTick)
         {
@@ -337,7 +337,7 @@ public class ShapesRenderer
 
         @Override
         public void renderLines(PoseStack matrices, Tesselator tesselator, double cx, double cy,
-                                double cz, float partialTick)
+                                double cz, float partialTick, LevelRenderState levelRenderState)
         {
             if (shape.a == 0.0)
             {
@@ -447,7 +447,7 @@ public class ShapesRenderer
                         if (blockEntityRenderer != null && state != null)
                         {
                             // testme partial positions
-                            blockEntityRenderer.submit(state, matrices,client.gameRenderer.getFeatureRenderDispatcher().getSubmitNodeStorage());
+                            blockEntityRenderer.submit(state, matrices,client.gameRenderer.getFeatureRenderDispatcher().getSubmitNodeStorage(), levelRenderState.cameraRenderState);
                             //blockEntityRenderer.submit(BlockEntity, partialTick,
                             //        matrices, light, OverlayTexture.NO_OVERLAY, camera1.getPosition(), null, client.gameRenderer.getFeatureRenderDispatcher().getSubmitNodeStorage());
 
@@ -493,7 +493,7 @@ public class ShapesRenderer
         }
 
         @Override
-        public void renderLines(PoseStack matrices, Tesselator tesselator, double cx, double cy, double cz, float partialTick)
+        public void renderLines(PoseStack matrices, Tesselator tesselator, double cx, double cy, double cz, float partialTick, LevelRenderState levelRenderState)
         {
             if (shape.a == 0.0)
             {
@@ -582,7 +582,7 @@ public class ShapesRenderer
         }
 
         @Override
-        public void renderLines(PoseStack matrices, Tesselator tesselator, double cx, double cy, double cz, float partialTick)
+        public void renderLines(PoseStack matrices, Tesselator tesselator, double cx, double cy, double cz, float partialTick, LevelRenderState levelRenderState)
         {
             if (shape.a == 0.0)
             {
@@ -626,7 +626,7 @@ public class ShapesRenderer
         }
 
         @Override
-        public void renderLines(PoseStack matrices, Tesselator tesselator, double cx, double cy, double cz, float partialTick)
+        public void renderLines(PoseStack matrices, Tesselator tesselator, double cx, double cy, double cz, float partialTick, LevelRenderState levelRenderState)
         {
             Vec3 v1 = shape.relativiseRender(client.level, shape.from, partialTick);
             Vec3 v2 = shape.relativiseRender(client.level, shape.to, partialTick);
@@ -707,7 +707,7 @@ public class ShapesRenderer
 
         @Override
         public void renderLines(PoseStack matrices, Tesselator tesselator, double cx, double cy,
-                                double cz, float partialTick)
+                                double cz, float partialTick, LevelRenderState levelRenderState)
         {
             if (shape.a == 0)
             {
@@ -842,7 +842,7 @@ public class ShapesRenderer
         }
 
         @Override
-        public void renderLines(PoseStack matrices, Tesselator tesselator, double cx, double cy, double cz, float partialTick)
+        public void renderLines(PoseStack matrices, Tesselator tesselator, double cx, double cy, double cz, float partialTick, LevelRenderState levelRenderState)
         {
             if (shape.a == 0.0)
             {
@@ -878,7 +878,7 @@ public class ShapesRenderer
         }
 
         @Override
-        public void renderLines(PoseStack matrices, Tesselator tesselator, double cx, double cy, double cz, float partialTick)
+        public void renderLines(PoseStack matrices, Tesselator tesselator, double cx, double cy, double cz, float partialTick, LevelRenderState levelRenderState)
         {
             if (shape.a == 0.0)
             {

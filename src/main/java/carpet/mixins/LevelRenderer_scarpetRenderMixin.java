@@ -8,7 +8,6 @@ import com.mojang.blaze3d.framegraph.FramePass;
 import net.minecraft.client.Camera;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.LevelRenderState;
 import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.LevelTargetBundle;
 import net.minecraft.client.renderer.RenderBuffers;
@@ -16,6 +15,7 @@ import net.minecraft.client.renderer.blockentity.BlockEntityRenderDispatcher;
 import net.minecraft.client.renderer.culling.Frustum;
 import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
 import net.minecraft.client.renderer.feature.FeatureRenderDispatcher;
+import net.minecraft.client.renderer.state.LevelRenderState;
 import net.minecraft.util.profiling.ProfilerFiller;
 import org.joml.Matrix4f;
 import org.spongepowered.asm.mixin.Final;
@@ -41,7 +41,7 @@ public class LevelRenderer_scarpetRenderMixin
     }
 
     @Inject(method = "addMainPass", at = @At("RETURN"))
-    private void renderScarpetThingsLate(FrameGraphBuilder frameGraphBuilder, Frustum frustum, Camera camera, Matrix4f matrix4f, GpuBufferSlice gpuBufferSlice, boolean bl, LevelRenderState levelRenderState, DeltaTracker deltaTracker, ProfilerFiller profilerFiller, CallbackInfo ci)
+    private void renderScarpetThingsLate(FrameGraphBuilder frameGraphBuilder, Frustum frustum, Matrix4f matrix4f, GpuBufferSlice gpuBufferSlice, boolean bl, LevelRenderState levelRenderState, DeltaTracker deltaTracker, ProfilerFiller profilerFiller, CallbackInfo ci)
     {
         // in normal circumstances we want to render shapes at the very end so it appears correctly behind stuff.
         // we might actually not need to play with render hooks here.
@@ -51,7 +51,7 @@ public class LevelRenderer_scarpetRenderMixin
             final float deltaPartialTick = deltaTracker.getGameTimeDeltaPartialTick(false);
             FramePass pass = frameGraphBuilder.addPass("scarpet_shapes");
             targets.main = pass.readsAndWrites(targets.main);
-            pass.executes(() -> CarpetClient.shapes.render(null, camera, deltaPartialTick));
+            pass.executes(() -> CarpetClient.shapes.render(null, levelRenderState, deltaPartialTick));
             featureRenderDispatcher.renderAllFeatures();
             renderBuffers.bufferSource().endLastBatch();
         }

@@ -12,6 +12,7 @@ import net.minecraft.client.renderer.blockentity.PistonHeadRenderer;
 import net.minecraft.client.renderer.blockentity.state.BlockEntityRenderState;
 import net.minecraft.client.renderer.blockentity.state.PistonHeadRenderState;
 import net.minecraft.client.renderer.feature.ModelFeatureRenderer;
+import net.minecraft.client.renderer.state.CameraRenderState;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.piston.PistonMovingBlockEntity;
 import net.minecraft.world.phys.Vec3;
@@ -51,10 +52,10 @@ public abstract class PistonHeadRenderer_movableBEMixin implements BlockEntityRe
         }
     }
 
-    @Inject(method = "submit(Lnet/minecraft/client/renderer/blockentity/state/PistonHeadRenderState;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/SubmitNodeCollector;)V",
+    @Inject(method = "submit(Lnet/minecraft/client/renderer/blockentity/state/PistonHeadRenderState;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/SubmitNodeCollector;Lnet/minecraft/client/renderer/state/CameraRenderState;)V",
             at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/SubmitNodeCollector;submitMovingBlock(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/block/MovingBlockRenderState;)V",
             ordinal = 0))
-    private void endMethod(PistonHeadRenderState pistonHeadRenderState, PoseStack poseStack, SubmitNodeCollector submitNodeCollector, CallbackInfo ci)
+    private void endMethod(PistonHeadRenderState pistonHeadRenderState, PoseStack poseStack, SubmitNodeCollector submitNodeCollector, CameraRenderState cameraRenderState, CallbackInfo ci)
     //private void endMethod(PistonMovingBlockEntity pistonBlockEntity_1, float partialTicks, PoseStack matrixStack_1, int i, int j, Vec3 vec3, ModelFeatureRenderer.CrumblingOverlay crumblingOverlay, SubmitNodeCollector submitNodeCollector, CallbackInfo ci)
     //private void endMethod3576(PistonMovingBlockEntity pistonBlockEntity_1, float partialTicks, PoseStack matrixStack_1, MultiBufferSource layeredVertexConsumerStorage_1, int int_1, int init_2, Vec3 cameraPos, CallbackInfo ci)
     {
@@ -62,7 +63,7 @@ public abstract class PistonHeadRenderer_movableBEMixin implements BlockEntityRe
             if (mbrsi.getMovedBERenderState() != null) {
                 BlockEntityRenderState res = mbrsi.getMovedBERenderState();
                 if (res != null) {
-                    dispatcher.submit(res, poseStack, submitNodeCollector);
+                    dispatcher.submit(res, poseStack, submitNodeCollector, cameraRenderState);
                 }
             }
     }
