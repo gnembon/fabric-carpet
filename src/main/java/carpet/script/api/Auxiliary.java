@@ -1,5 +1,6 @@
 package carpet.script.api;
 
+import carpet.CarpetServer;
 import carpet.script.external.Vanilla;
 import carpet.script.utils.FeatureGenerator;
 import carpet.script.argument.FileArgument;
@@ -64,10 +65,13 @@ import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.stats.Stat;
 import net.minecraft.stats.StatType;
+import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.decoration.ArmorStand;
+import net.minecraft.world.food.FoodProperties;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
@@ -1244,6 +1248,63 @@ public class Auxiliary
             CarpetContext cc = (CarpetContext) c;
             cc.host.issueDeprecation("enable_hidden_dimensions in 1.18.2 and 1.19+");
             return Value.NULL;
+        });
+
+        expression.addUnaryFunction("item_nutrition", v-> NumericValue.of(NBTSerializableValue.parseItem(v.getString(), CarpetServer.minecraft_server.registryAccess()).getItem().getFoodProperties().getNutrition()));
+        expression.addUnaryFunction("item_saturation", v-> NumericValue.of(NBTSerializableValue.parseItem(v.getString(), CarpetServer.minecraft_server.registryAccess()).getItem().getFoodProperties().getSaturationModifier()));
+
+        expression.addContextFunction("food_properties", -1, (c, t, lv)->{
+            if(lv.size()==0) throw new InternalExpressionException("'food_properties' requires at least an item name");
+            if(lv.size()>2) throw new InternalExpressionException("'food_properties' takes at most an item name and a food property to query");
+
+            Item item = NBTSerializableValue.parseItem(lv.get(0).getString(), ((CarpetContext) c).registryAccess()).getItem();
+
+            if(item.isEdible()){
+                FoodProperties foodProperties = item.getFoodProperties();
+                if(lv.size()==1){ //Return map of all food properties
+                    Map<Value, Value> propertyMap = new HashMap<>();
+                    propertyMap.put(StringValue.of("nutrition"), NumericValue.of(foodProperties.getNutrition()));
+                    propertyMap.put(StringValue.of("saturation"), NumericValue.of(foodProperties.getSaturationModifier()));
+                    propertyMap.put(StringValue.of("is_meat"), BooleanValue.of(foodProperties.isMeat()));
+                    propertyMap.put(StringValue.of("can_always_eat"), BooleanValue.of(foodProperties.canAlwaysEat()));
+                    propertyMap.put(StringValue.of("fast_food"), BooleanValue.of(foodProperties.isFastFood()));
+
+                    Map<Value, Value> effectsMap = new HashMap<>();
+                    var effectsList = foodProperties.getEffects();
+                    for (var effect : effectsList) {
+                        MobEffectInstance mei = effect.getFirst();
+                        effectsMap.put(StringValue.of("name"), StringValue.of(mei.getEffect().getDisplayName().getString()));
+                        effectsMap.put(StringValue.of("duration"), NumericValue.of(mei.getDuration()));
+                        effectsMap.put(StringValue.of("amplifier"), NumericValue.of(mei.getAmplifier()));
+                        effectsMap.put(StringValue.of("probability"), NumericValue.of(effect.getSecond()));
+                    }
+                    propertyMap.put(StringValue.of("effects"), MapValue.wrap(effectsMap));
+
+                    return MapValue.wrap(propertyMap);
+                } else { //Return specific food property
+                    String property = lv.get(1).getString();
+                    switch (property) {
+                        case "nutrition": return NumericValue.of(foodProperties.getNutrition());
+                        case "saturation": return NumericValue.of(foodProperties.getSaturationModifier());
+                        case "is_meat": return BooleanValue.of(foodProperties.isMeat());
+                        case "can_always_eat": return BooleanValue.of(foodProperties.canAlwaysEat());
+                        case "fast_food": return BooleanValue.of(foodProperties.isFastFood());
+                        case "effects":
+                            Map<Value, Value> effectsMap = new HashMap<>();
+                            var effectsList = foodProperties.getEffects();
+                            for (var effect : effectsList) {
+                                MobEffectInstance mei = effect.getFirst();
+                                effectsMap.put(StringValue.of("name"), StringValue.of(mei.getEffect().getDisplayName().getString()));
+                                effectsMap.put(StringValue.of("duration"), NumericValue.of(mei.getDuration()));
+                                effectsMap.put(StringValue.of("amplifier"), NumericValue.of(mei.getAmplifier()));
+                                effectsMap.put(StringValue.of("probability"), NumericValue.of(effect.getSecond()));
+                            }
+                            return MapValue.wrap(effectsMap);
+
+                        default: throw new InternalExpressionException("Invalid food property '" + property + "'");
+                    }
+                }
+            } else return Value.NULL;
         });
     }
 
