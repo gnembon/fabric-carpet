@@ -19,6 +19,7 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.minecraft.SharedConstants;
 import net.minecraft.commands.CommandBuildContext;
 import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.DimensionArgument;
 import net.minecraft.commands.arguments.GameModeArgument;
 import net.minecraft.commands.arguments.coordinates.RotationArgument;
@@ -98,13 +99,13 @@ public class PlayerCommand
                                 .then(literal("left").executes(manipulation(ap -> ap.setStrafing(1))))
                                 .then(literal("right").executes(manipulation(ap -> ap.setStrafing(-1))))
                         ).then(literal("spawn").executes(PlayerCommand::spawn)
-                                .then(literal("in").requires((player) -> player.hasPermission(2))
+                                .then(literal("in").requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
                                         .then(argument("gamemode", GameModeArgument.gameMode())
                                         .executes(PlayerCommand::spawn)))
                                 .then(literal("at").then(argument("position", Vec3Argument.vec3()).executes(PlayerCommand::spawn)
                                         .then(literal("facing").then(argument("direction", RotationArgument.rotation()).executes(PlayerCommand::spawn)
                                                 .then(literal("in").then(argument("dimension", DimensionArgument.dimension()).executes(PlayerCommand::spawn)
-                                                        .then(literal("in").requires((player) -> player.hasPermission(2))
+                                                        .then(literal("in").requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
                                                                 .then(argument("gamemode", GameModeArgument.gameMode())
                                                                 .executes(PlayerCommand::spawn)
                                                         )))
@@ -230,7 +231,7 @@ public class PlayerCommand
             Messenger.m(context.getSource(), "r Player ", "rb " + playerName, "r  is banned on this server");
             return true;
         }
-        if (manager.isUsingWhitelist() && manager.isWhiteListed(profile) && !context.getSource().hasPermission(2))
+        if (manager.isUsingWhitelist() && manager.isWhiteListed(profile) && !Commands.LEVEL_GAMEMASTERS.check(context.getSource().permissions()))
         {
             Messenger.m(context.getSource(), "r Whitelisted players can only be spawned by operators");
             return true;

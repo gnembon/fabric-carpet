@@ -29,6 +29,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.level.ServerPlayerGameMode;
 import net.minecraft.server.level.Ticket;
+import net.minecraft.server.permissions.PermissionSet;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.Container;
 import net.minecraft.world.entity.Entity;
@@ -140,7 +141,7 @@ public class Vanilla
         ServerNetworkHandler.sendCustomCommand(player, "scShapes", data);
     }
 
-    public static int MinecraftServer_getRunPermissionLevel(MinecraftServer server)
+    public static PermissionSet MinecraftServer_getRunPermissionLevel(MinecraftServer server)
     {
         return CarpetSettings.runPermissionLevel;
     }

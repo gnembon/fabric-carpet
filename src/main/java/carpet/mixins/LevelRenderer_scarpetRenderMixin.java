@@ -51,7 +51,7 @@ public class LevelRenderer_scarpetRenderMixin
             final float deltaPartialTick = deltaTracker.getGameTimeDeltaPartialTick(false);
             FramePass pass = frameGraphBuilder.addPass("scarpet_shapes");
             targets.main = pass.readsAndWrites(targets.main);
-            pass.executes(() -> CarpetClient.shapes.render(null, levelRenderState, deltaPartialTick));
+            pass.executes(() -> CarpetClient.shapes.render(renderBuffers, levelRenderState, matrix4f, deltaPartialTick));
             featureRenderDispatcher.renderAllFeatures();
             renderBuffers.bufferSource().endLastBatch();
         }

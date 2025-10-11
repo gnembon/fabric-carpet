@@ -10,6 +10,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.permissions.PermissionSet;
 import net.minecraft.util.Mth;
 import net.minecraft.util.TaskChainer;
 import net.minecraft.world.entity.Entity;
@@ -28,7 +29,7 @@ public class SnoopyCommandSource extends CommandSourceStack
     private final CommandSource output;
     private final Vec3 position;
     private final ServerLevel world;
-    private final int level;
+    private final PermissionSet level;
     private final String simpleName;
     private final Component name;
     private final MinecraftServer server;
@@ -47,8 +48,9 @@ public class SnoopyCommandSource extends CommandSourceStack
     public SnoopyCommandSource(CommandSourceStack original, Component[] error, List<Component> chatOutput, OptionalLong[] returnValue)
     {
         super(CommandSource.NULL, original.getPosition(), original.getRotation(), original.getLevel(), Vanilla.MinecraftServer_getRunPermissionLevel(original.getServer()),
-                original.getTextName(), original.getDisplayName(), original.getServer(), original.getEntity(), false,
-                (b, i) -> returnValue[0] = OptionalLong.of(i), EntityAnchorArgument.Anchor.FEET, CommandSigningContext.ANONYMOUS, TaskChainer.immediate(original.getServer()));
+                original.getTextName(), original.getDisplayName(), original.getServer(), original.getEntity()
+                //,false ,(b, i) -> returnValue[0] = OptionalLong.of(i), EntityAnchorArgument.Anchor.FEET, CommandSigningContext.ANONYMOUS, TaskChainer.immediate(original.getServer())
+        );
         this.output = CommandSource.NULL;
         this.position = original.getPosition();
         this.world = original.getLevel();
@@ -89,13 +91,14 @@ public class SnoopyCommandSource extends CommandSourceStack
         this.taskChainer = TaskChainer.immediate(player.level().getServer());
     }
 
-    private SnoopyCommandSource(CommandSource output, Vec3 pos, Vec2 rot, ServerLevel world, int level, String simpleName, Component name, MinecraftServer server, @Nullable Entity entity, CommandResultCallback consumer, EntityAnchorArgument.Anchor entityAnchor, CommandSigningContext context, TaskChainer chainer,
+    private SnoopyCommandSource(CommandSource output, Vec3 pos, Vec2 rot, ServerLevel world, PermissionSet level, String simpleName, Component name, MinecraftServer server, @Nullable Entity entity, CommandResultCallback consumer, EntityAnchorArgument.Anchor entityAnchor, CommandSigningContext context, TaskChainer chainer,
                                 Component[] error, List<Component> chatOutput
     )
     {
         super(output, pos, rot, world, level,
-                simpleName, name, server, entity, false,
-                consumer, entityAnchor, context, chainer);
+                simpleName, name, server, entity
+               // , false, consumer, entityAnchor, context, chainer
+        );
         this.output = output;
         this.position = pos;
         this.rotation = rot;
@@ -149,13 +152,13 @@ public class SnoopyCommandSource extends CommandSourceStack
     //public ServerCommandSource withSilent() { return this; }
 
     @Override
-    public CommandSourceStack withPermission(int level)
+    public CommandSourceStack withPermission(PermissionSet level)
     {
         return this;
     }
 
     @Override
-    public CommandSourceStack withMaximumPermission(int level)
+    public CommandSourceStack withMaximumPermission(PermissionSet level)
     {
         return this;
     }

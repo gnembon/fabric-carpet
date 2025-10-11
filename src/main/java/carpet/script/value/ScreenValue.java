@@ -24,6 +24,7 @@ import net.minecraft.nbt.NbtOps;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.permissions.PermissionSet;
 import net.minecraft.world.Container;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.SimpleContainer;
@@ -200,7 +201,7 @@ public class ScreenValue extends Value
             this.screenHandler = null;
             return false;
         }
-        int runPermissionLevel = Vanilla.MinecraftServer_getRunPermissionLevel(player.level().getServer());
+        PermissionSet runPermissionLevel = Vanilla.MinecraftServer_getRunPermissionLevel(player.level().getServer());
         CommandSourceStack source = player.createCommandSourceStack().withPermission(runPermissionLevel);
         CarpetScriptHost executingHost = appHost.retrieveForExecution(source, player);
         try

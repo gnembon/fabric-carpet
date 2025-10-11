@@ -13,6 +13,7 @@ import carpet.script.utils.InputValidator;
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.selector.EntitySelector;
 import net.minecraft.commands.arguments.selector.EntitySelectorParser;
 import net.minecraft.core.BlockPos;
@@ -35,6 +36,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.permissions.LevelBasedPermissionSet;
 import net.minecraft.tags.EntityTypeTags;
 import net.minecraft.tags.TagKey;
 import net.minecraft.util.Mth;
@@ -120,11 +122,11 @@ public class EntityValue extends Value
             EntitySelector entitySelector = selectorCache.get(selector);
             if (entitySelector != null)
             {
-                return entitySelector.findEntities(source.withMaximumPermission(4));
+                return entitySelector.findEntities(source.withMaximumPermission(LevelBasedPermissionSet.OWNER));
             }
             entitySelector = new EntitySelectorParser(new StringReader(selector), true).parse();
             selectorCache.put(selector, entitySelector);
-            return entitySelector.findEntities(source.withMaximumPermission(4));
+            return entitySelector.findEntities(source.withMaximumPermission(LevelBasedPermissionSet.OWNER));
         }
         catch (CommandSyntaxException e)
         {
@@ -599,13 +601,21 @@ public class EntityValue extends Value
         put("permission_level", (e, a) -> {
             if (e instanceof ServerPlayer spe)
             {
-                for (int i = 4; i >= 0; i--)
+                if (Commands.LEVEL_OWNERS.check(spe.permissions()))
                 {
-                    if (spe.hasPermissions(i))
-                    {
-                        return new NumericValue(i);
-                    }
-
+                    return new NumericValue(4);
+                }
+                if (Commands.LEVEL_ADMINS.check(spe.permissions()))
+                {
+                    return new NumericValue(3);
+                }
+                if (Commands.LEVEL_GAMEMASTERS.check(spe.permissions()))
+                {
+                    return new NumericValue(2);
+                }
+                if (Commands.LEVEL_MODERATORS.check(spe.permissions()))
+                {
+                    return new NumericValue(1);
                 }
                 return new NumericValue(0);
             }

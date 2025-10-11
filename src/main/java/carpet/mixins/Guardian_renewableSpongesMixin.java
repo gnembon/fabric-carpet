@@ -26,7 +26,7 @@ public abstract class Guardian_renewableSpongesMixin extends Monster
         {
             ElderGuardian elderGuardian = new ElderGuardian(EntityType.ELDER_GUARDIAN ,this.level());
             elderGuardian.snapTo(this.getX(), this.getY(), this.getZ(), this.getYRot(), this.getXRot());
-            elderGuardian.finalizeSpawn(serverWorld ,this.level().getCurrentDifficultyAt(elderGuardian.blockPosition()), EntitySpawnReason.CONVERSION, null);
+            elderGuardian.finalizeSpawn(serverWorld ,serverWorld.getCurrentDifficultyAt(elderGuardian.blockPosition()), EntitySpawnReason.CONVERSION, null);
             elderGuardian.setNoAi(this.isNoAi());
             
             if (this.hasCustomName())
