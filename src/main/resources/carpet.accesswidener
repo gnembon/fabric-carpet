@@ -8,11 +8,8 @@ accessible class net/minecraft/world/level/border/WorldBorder$StaticBorderExtent
 accessible class net/minecraft/server/MinecraftServer$ReloadableResources
 accessible class net/minecraft/world/level/biome/Biome$ClimateSettings
 accessible class net/minecraft/world/level/block/entity/SculkSensorBlockEntity$VibrationUser
-#accessible class net/minecraft/commands/CommandSourceStack
 
 #TODO fields and methods should be fetched via interfaces unless there is a good reason not to
-#accessible method net/minecraft/commands/CommandSourceStack <init> (Lnet/minecraft/commands/CommandSource;Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/world/phys/Vec2;Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/server/permissions/PermissionSet;Ljava/lang/String;Lnet/minecraft/network/chat/Component;Lnet/minecraft/server/MinecraftServer;Lnet/minecraft/world/entity/Entity;BLnet/minecraft/commands/CommandResultCallback;Lnet/minecraft/commands/arguments/EntityAnchorArgument$Anchor;Lnet/minecraft/commands/CommandSigningContext;Lnet/minecraft/util/TaskChainer;)V
 accessible method net/minecraft/world/level/border/WorldBorder getListeners ()Ljava/util/List;
 accessible method net/minecraft/world/level/redstone/DefaultRedstoneWireEvaluator calculateTargetStrength (Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;)I
-
 accessible field net/minecraft/world/level/block/state/BlockBehaviour UPDATE_SHAPE_ORDER [Lnet/minecraft/core/Direction;
