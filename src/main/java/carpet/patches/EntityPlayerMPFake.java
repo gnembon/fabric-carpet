@@ -40,6 +40,7 @@ import net.minecraft.world.level.block.entity.SkullBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.portal.TeleportTransition;
 import net.minecraft.world.level.storage.TagValueInput;
+import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.phys.Vec3;
 import carpet.fakes.ServerPlayerInterface;
 import carpet.utils.Messenger;
@@ -125,9 +126,17 @@ public class EntityPlayerMPFake extends ServerPlayer
         return resolvableProfile.resolveProfile(server.services().profileResolver());
     }
 
-    private static void loadPlayerData(EntityPlayerMPFake player) {
-        Optional<CompoundTag> playerData = player.level().getServer().getPlayerList().loadPlayerData(player.nameAndId());
-        playerData.ifPresent(compoundTag -> player.readAdditionalSaveData(TagValueInput.create(ProblemReporter.DISCARDING, player.level().registryAccess(), compoundTag)));
+    private static void loadPlayerData(EntityPlayerMPFake player)
+    {
+        try (ProblemReporter.ScopedCollector scopedCollector = new ProblemReporter.ScopedCollector(player.problemPath(), CarpetSettings.LOG))
+        {
+            Optional<ValueInput> optional = player.level().getServer().getPlayerList().loadPlayerData(player.nameAndId()).map((compoundTag) -> TagValueInput.create(scopedCollector, player.registryAccess(), compoundTag));
+            optional.ifPresent( valueInput -> {
+                player.readAdditionalSaveData(valueInput);
+                player.loadAndSpawnEnderPearls(valueInput);
+                player.loadAndSpawnParentVehicle(valueInput);
+            });
+        }
     }
 
     public static EntityPlayerMPFake createShadow(MinecraftServer server, ServerPlayer player)
