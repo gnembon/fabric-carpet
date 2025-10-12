@@ -6,6 +6,7 @@ import com.mojang.authlib.properties.PropertyMap;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.UUIDUtil;
 import net.minecraft.core.component.DataComponents;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.DisconnectionDetails;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.contents.TranslatableContents;
@@ -24,6 +25,7 @@ import net.minecraft.server.network.CommonListenerCookie;
 import net.minecraft.server.players.CachedUserNameToIdResolver;
 import net.minecraft.server.players.NameAndId;
 import net.minecraft.server.players.OldUsersConverter;
+import net.minecraft.util.ProblemReporter;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EquipmentSlot;
@@ -37,6 +39,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.SkullBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.portal.TeleportTransition;
+import net.minecraft.world.level.storage.TagValueInput;
 import net.minecraft.world.phys.Vec3;
 import carpet.fakes.ServerPlayerInterface;
 import carpet.utils.Messenger;
@@ -100,6 +103,7 @@ public class EntityPlayerMPFake extends ServerPlayer
             }
 
             EntityPlayerMPFake instance = new EntityPlayerMPFake(server, worldIn, current, ClientInformation.createDefault(), false);
+            loadPlayerData(instance);
             instance.fixStartingPosition = () -> instance.snapTo(pos.x, pos.y, pos.z, (float) yaw, (float) pitch);
             server.getPlayerList().placeNewPlayer(new FakeClientConnection(PacketFlow.SERVERBOUND), instance, new CommonListenerCookie(current, 0, instance.clientInformation(), false));
             instance.teleportTo(worldIn, pos.x, pos.y, pos.z, Set.of(), (float) yaw, (float) pitch, true);
@@ -121,6 +125,11 @@ public class EntityPlayerMPFake extends ServerPlayer
         return resolvableProfile.resolveProfile(server.services().profileResolver());
     }
 
+    private static void loadPlayerData(EntityPlayerMPFake player) {
+        Optional<CompoundTag> playerData = player.level().getServer().getPlayerList().loadPlayerData(player.nameAndId());
+        playerData.ifPresent(compoundTag -> player.readAdditionalSaveData(TagValueInput.create(ProblemReporter.DISCARDING, player.level().registryAccess(), compoundTag)));
+    }
+
     public static EntityPlayerMPFake createShadow(MinecraftServer server, ServerPlayer player)
     {
         player.level().getServer().getPlayerList().remove(player);
@@ -129,6 +138,7 @@ public class EntityPlayerMPFake extends ServerPlayer
         GameProfile gameprofile = player.getGameProfile();
         EntityPlayerMPFake playerShadow = new EntityPlayerMPFake(server, worldIn, gameprofile, player.clientInformation(), true);
         playerShadow.setChatSession(player.getChatSession());
+        loadPlayerData(playerShadow);
         server.getPlayerList().placeNewPlayer(new FakeClientConnection(PacketFlow.SERVERBOUND), playerShadow, new CommonListenerCookie(gameprofile, 0, player.clientInformation(), true));
 
         playerShadow.setHealth(player.getHealth());
