@@ -25,7 +25,7 @@ public class SummonCommand_lightningMixin
     private static BlockPos addRiders(Entity entity)
     {
         // [CM] SummonNaturalLightning - if statement around
-        if (CarpetSettings.summonNaturalLightning && entity instanceof LightningBolt && !entity.level().isClientSide)
+        if (CarpetSettings.summonNaturalLightning && entity instanceof LightningBolt && !entity.level().isClientSide())
         {
             ServerLevel world = (ServerLevel) entity.level();
             BlockPos at = entity.blockPosition();

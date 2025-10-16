@@ -28,7 +28,6 @@ import carpet.script.value.StringValue;
 import carpet.script.value.Value;
 import carpet.script.value.ValueConversions;
 
-import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.longs.LongSet;
 import net.minecraft.Util;
@@ -39,6 +38,7 @@ import net.minecraft.core.HolderSet;
 import net.minecraft.core.QuartPos;
 import net.minecraft.core.Registry;
 import net.minecraft.core.RegistryAccess;
+import net.minecraft.core.particles.ExplosionParticleInfo;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -54,6 +54,7 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.tags.ItemTags;
 import net.minecraft.tags.TagKey;
 import net.minecraft.util.ProblemReporter;
+import net.minecraft.util.random.WeightedList;
 import net.minecraft.world.level.ServerExplosion;
 import net.minecraft.world.level.chunk.ChunkGenerator;
 import net.minecraft.world.level.chunk.PalettedContainer;
@@ -71,7 +72,6 @@ import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -85,15 +85,11 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import net.minecraft.commands.arguments.item.ItemInput;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.Tag;
 import net.minecraft.network.protocol.game.ClientboundExplodePacket;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
-import net.minecraft.util.SortedArraySet;
-import net.minecraft.world.Clearable;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
@@ -998,6 +994,12 @@ public class WorldAccess
             return BooleanValue.of(success);
         });
 
+        // from ServerLevel = don't wanna mixin this in, as it is PITA
+        WeightedList<ExplosionParticleInfo> DEFAULT_EXPLOSION_BLOCK_PARTICLES = WeightedList.<ExplosionParticleInfo>builder()
+                .add(new ExplosionParticleInfo(ParticleTypes.POOF, 0.5F, 1.0F))
+                .add(new ExplosionParticleInfo(ParticleTypes.SMOKE, 1.0F, 1.0F))
+                .build();
+
         expression.addContextFunction("create_explosion", -1, (c, t, lv) ->
         {
             if (lv.isEmpty())
@@ -1078,7 +1080,7 @@ public class WorldAccess
             LivingEntity theAttacker = attacker;
 
             // copy of ServerWorld.createExplosion #TRACK#
-            ServerExplosion explosion = new ServerExplosion(cc.level(), source, null, null, pos, powah, createFire, mode)
+            ServerExplosion serverExplosion = new ServerExplosion(cc.level(), source, null, null, pos, powah, createFire, mode)
             {
                 @Override
                 @Nullable
@@ -1088,14 +1090,15 @@ public class WorldAccess
                     return theAttacker;
                 }
             };
-            explosion.explode();
-            ParticleOptions explosionParticle = explosion.isSmall() ? ParticleTypes.EXPLOSION : ParticleTypes.EXPLOSION_EMITTER;
-            cc.level().players().forEach(spe -> {
-                if (spe.distanceToSqr(pos) < 4096.0D)
-                {
-                    spe.connection.send(new ClientboundExplodePacket(pos, Optional.ofNullable(explosion.getHitPlayers().get(spe)), explosionParticle, SoundEvents.GENERIC_EXPLODE));
+            int i = serverExplosion.explode();
+            ParticleOptions particleOptions3 = serverExplosion.isSmall() ? ParticleTypes.EXPLOSION : ParticleTypes.EXPLOSION_EMITTER;
+
+            for (ServerPlayer serverPlayer : cc.level().players()) {
+                if (serverPlayer.distanceToSqr(pos) < 4096.0) {
+                    Optional<Vec3> optional = Optional.ofNullable((Vec3)serverExplosion.getHitPlayers().get(serverPlayer));
+                    serverPlayer.connection.send(new ClientboundExplodePacket(pos, powah, i, optional, particleOptions3, SoundEvents.GENERIC_EXPLODE, DEFAULT_EXPLOSION_BLOCK_PARTICLES));
                 }
-            });
+            }
             return Value.TRUE;
         });
 
@@ -1744,7 +1747,7 @@ public class WorldAccess
             case "erosion" -> router.erosion();
             case "depth" -> router.depth();
             case "ridges" -> router.ridges();
-            case "initial_density_without_jaggedness" -> router.initialDensityWithoutJaggedness();
+            case "preliminary_surface_level" -> router.preliminarySurfaceLevel();
             case "final_density" -> router.finalDensity();
             case "vein_toggle" -> router.veinToggle();
             case "vein_ridged" -> router.veinRidged();
@@ -1776,7 +1779,7 @@ public class WorldAccess
                         case "erosion" -> router.erosion();
                         case "depth" -> router.depth();
                         case "ridges" -> router.ridges();
-                        case "initial_density_without_jaggedness" -> router.initialDensityWithoutJaggedness();
+                        case "preliminary_surface_level" -> router.preliminarySurfaceLevel();
                         case "final_density" -> router.finalDensity();
                         case "vein_toggle" -> router.veinToggle();
                         case "vein_ridged" -> router.veinRidged();

@@ -78,6 +78,7 @@
     "ServerGamePacketListenerImpl_scarpetEventsMixin",
     "ServerPlayerGameMode_scarpetEventsMixin",
     "Player_parrotMixin",
+    "ServerPlayer_parrotMixin",
     "SaplingBlock_desertShrubsMixin",
     "EntityMixin",
     "Guardian_renewableSpongesMixin",
@@ -147,6 +148,7 @@
     "CommandNode_scarpetCommandsMixin",
     "CommandDispatcher_scarpetCommandsMixin",
     "FoodData_scarpetMixin",
+    "CommandSourceStack_scarpetMixin",
 
     "BlockInput_scarpetMixin",
     "BlockPredicate_scarpetMixin",
@@ -189,6 +191,7 @@
     "Gui_tablistMixin",
     "PlayerTabOverlayMixin",
     "PistonHeadRenderer_movableBEMixin",
+    "PistonHeadRenderState_movableBEMixin",
     "StructureBlockRenderer_mixin",
     "ClientPacketListener_clientCommandMixin",
     "ClientPacketListener_explosionMixin",

@@ -19,6 +19,7 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.minecraft.SharedConstants;
 import net.minecraft.commands.CommandBuildContext;
 import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.DimensionArgument;
 import net.minecraft.commands.arguments.GameModeArgument;
 import net.minecraft.commands.arguments.coordinates.RotationArgument;
@@ -29,16 +30,16 @@ import net.minecraft.core.UUIDUtil;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.players.NameAndId;
+import net.minecraft.server.players.OldUsersConverter;
 import net.minecraft.server.players.PlayerList;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec2;
 import net.minecraft.world.phys.Vec3;
-import java.util.Collection;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Set;
+
+import java.util.*;
 import java.util.function.Consumer;
 
 import static net.minecraft.commands.Commands.argument;
@@ -98,13 +99,13 @@ public class PlayerCommand
                                 .then(literal("left").executes(manipulation(ap -> ap.setStrafing(1))))
                                 .then(literal("right").executes(manipulation(ap -> ap.setStrafing(-1))))
                         ).then(literal("spawn").executes(PlayerCommand::spawn)
-                                .then(literal("in").requires((player) -> player.hasPermission(2))
+                                .then(literal("in").requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
                                         .then(argument("gamemode", GameModeArgument.gameMode())
                                         .executes(PlayerCommand::spawn)))
                                 .then(literal("at").then(argument("position", Vec3Argument.vec3()).executes(PlayerCommand::spawn)
                                         .then(literal("facing").then(argument("direction", RotationArgument.rotation()).executes(PlayerCommand::spawn)
                                                 .then(literal("in").then(argument("dimension", DimensionArgument.dimension()).executes(PlayerCommand::spawn)
-                                                        .then(literal("in").requires((player) -> player.hasPermission(2))
+                                                        .then(literal("in").requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
                                                                 .then(argument("gamemode", GameModeArgument.gameMode())
                                                                 .executes(PlayerCommand::spawn)
                                                         )))
@@ -164,7 +165,7 @@ public class PlayerCommand
             return false;
         }
 
-        if (!source.getServer().getPlayerList().isOp(sender.getGameProfile()))
+        if (!source.getServer().getPlayerList().isOp(sender.nameAndId()))
         {
             if (sender != player && !(player instanceof EntityPlayerMPFake))
             {
@@ -200,7 +201,20 @@ public class PlayerCommand
             Messenger.m(context.getSource(), "r Player ", "rb " + playerName, "r  is already logged on");
             return true;
         }
-        GameProfile profile = server.getProfileCache().get(playerName).orElse(null);
+        UUID uuid = OldUsersConverter.convertMobOwnerIfNecessary(server, playerName);
+        if (uuid == null)
+        {
+            if (!CarpetSettings.allowSpawningOfflinePlayers)
+            {
+                Messenger.m(context.getSource(), "r Player "+playerName+" is either banned by Mojang, or auth servers are down. " +
+                        "Banned players can only be summoned in Singleplayer and in servers in off-line mode.");
+                return true;
+            } else {
+                uuid = UUIDUtil.createOfflinePlayerUUID(playerName);
+            }
+        }
+        //GameProfile profile = new GameProfile(uuid, playerName);
+        NameAndId profile = server.services().nameToIdCache().get(uuid).orElse(null);
         if (profile == null)
         {
             if (!CarpetSettings.allowSpawningOfflinePlayers)
@@ -209,7 +223,7 @@ public class PlayerCommand
                         "Banned players can only be summoned in Singleplayer and in servers in off-line mode.");
                 return true;
             } else {
-                profile = new GameProfile(UUIDUtil.createOfflinePlayerUUID(playerName), playerName);
+                profile = new NameAndId(UUIDUtil.createOfflinePlayerUUID(playerName), playerName);
             }
         }
         if (manager.getBans().isBanned(profile))
@@ -217,7 +231,7 @@ public class PlayerCommand
             Messenger.m(context.getSource(), "r Player ", "rb " + playerName, "r  is banned on this server");
             return true;
         }
-        if (manager.isUsingWhitelist() && manager.isWhiteListed(profile) && !context.getSource().hasPermission(2))
+        if (manager.isUsingWhitelist() && manager.isWhiteListed(profile) && !Commands.LEVEL_GAMEMASTERS.check(context.getSource().permissions()))
         {
             Messenger.m(context.getSource(), "r Whitelisted players can only be spawned by operators");
             return true;
@@ -337,12 +351,12 @@ public class PlayerCommand
             Messenger.m(context.getSource(), "r Cannot shadow fake players");
             return 0;
         }
-        if (player.getServer().isSingleplayerOwner(player.getGameProfile())) {
+        if (player.level().getServer().isSingleplayerOwner(player.nameAndId())) {
             Messenger.m(context.getSource(), "r Cannot shadow single-player server owner");
             return 0;
         }
 
-        EntityPlayerMPFake.createShadow(player.getServer(), player);
+        EntityPlayerMPFake.createShadow(player.level().getServer(), player);
         return 1;
     }
 }

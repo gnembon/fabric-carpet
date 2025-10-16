@@ -23,6 +23,6 @@ public abstract class LivingEntity_cleanLogsMixin extends Entity
     @Redirect(method = "die", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/LivingEntity;hasCustomName()Z"))
     private boolean shouldLogDeaths(LivingEntity livingEntity)
     {
-        return livingEntity.hasCustomName() && CarpetSettings.cleanLogs && livingEntity.getServer().getGameRules().getBoolean(GameRules.RULE_SHOWDEATHMESSAGES);
+        return livingEntity.hasCustomName() && livingEntity.level() instanceof ServerLevel serverLevel &&  CarpetSettings.cleanLogs && serverLevel.getGameRules().getBoolean(GameRules.RULE_SHOWDEATHMESSAGES);
     }
 }

@@ -125,7 +125,7 @@ public abstract class PistonMovingBlockEntity_movableBEMixin extends BlockEntity
         //Handle TNT Explosions or other ways the moving Block is broken
         //Also /setblock will cause this to be called, and drop e.g. a moving chest's contents.
         // This is MC-40380 (BlockEntities that aren't Inventories drop stuff when setblock is called )
-        if (CarpetSettings.movableBlockEntities && this.carriedBlockEntity != null && !this.level.isClientSide && this.level.getBlockState(this.worldPosition).getBlock() == Blocks.AIR)
+        if (CarpetSettings.movableBlockEntities && this.carriedBlockEntity != null && !this.level.isClientSide() && this.level.getBlockState(this.worldPosition).getBlock() == Blocks.AIR)
         {
             BlockState blockState_2;
             if (this.isSourcePiston)

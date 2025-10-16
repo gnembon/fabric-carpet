@@ -502,6 +502,7 @@ public class CarpetEventServer
                 );
             }
         };
+        // fixme
         public static final Event CHUNK_GENERATED = new Event("chunk_generated", 2, true)
         {
             @Override
@@ -513,6 +514,7 @@ public class CarpetEventServer
                 );
             }
         };
+        // fixme
         public static final Event CHUNK_LOADED = new Event("chunk_loaded", 2, true)
         {
             @Override
@@ -884,7 +886,7 @@ public class CarpetEventServer
                                 new NumericValue(amount),
                                 StringValue.of(source.getMsgId()),
                                 source.getEntity() == null ? Value.NULL : new EntityValue(source.getEntity())
-                        ), () -> target.getServer().createCommandSourceStack());
+                        ), () -> target.level().getServer().createCommandSourceStack());
             }
         };
         public static final Event PLAYER_DEALS_DAMAGE = new Event("player_deals_damage", 3, false)
@@ -894,7 +896,7 @@ public class CarpetEventServer
             {
                 return handler.call(() ->
                                 Arrays.asList(new EntityValue(source.getEntity()), new NumericValue(amount), new EntityValue(target)),
-                        () -> source.getEntity().getServer().createCommandSourceStack()
+                        () -> source.getEntity().level().getServer().createCommandSourceStack()
                 );
             }
         };
@@ -1106,7 +1108,7 @@ public class CarpetEventServer
                     {
                         handler.call(
                                 () -> Collections.singletonList(new EntityValue(entity)),
-                                () -> entity.getServer().createCommandSourceStack().withLevel((ServerLevel) entity.level()).withPermission(Vanilla.MinecraftServer_getRunPermissionLevel(entity.getServer()))
+                                () -> entity.level().getServer().createCommandSourceStack().withLevel((ServerLevel) entity.level()).withPermission(Vanilla.MinecraftServer_getRunPermissionLevel(entity.level().getServer()))
                         );
                     }
                 })).collect(Collectors.toUnmodifiableMap(Map.Entry::getKey, Map.Entry::getValue));
@@ -1125,7 +1127,7 @@ public class CarpetEventServer
                     {
                         handler.call(
                                 () -> Arrays.asList(new EntityValue(entity), BooleanValue.of(created)),
-                                () -> entity.getServer().createCommandSourceStack().withLevel((ServerLevel) entity.level()).withPermission(Vanilla.MinecraftServer_getRunPermissionLevel(entity.getServer()))
+                                () -> entity.level().getServer().createCommandSourceStack().withLevel((ServerLevel) entity.level()).withPermission(Vanilla.MinecraftServer_getRunPermissionLevel(entity.level().getServer()))
                         );
                     }
                 }))

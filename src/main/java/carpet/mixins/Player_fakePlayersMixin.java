@@ -14,7 +14,7 @@ public abstract class Player_fakePlayersMixin
      * To make sure player attacks are able to knockback fake players
      */
     @Redirect(
-            method = "attack",
+            method = "causeExtraKnockback",
             at = @At(
                     value = "FIELD",
                     target = "Lnet/minecraft/world/entity/Entity;hurtMarked:Z",

@@ -9,6 +9,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
+import java.util.function.Consumer;
 import java.util.function.IntFunction;
 import java.util.stream.Collectors;
 
@@ -27,7 +28,7 @@ import net.minecraft.server.level.ChunkResult;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ThreadedLevelLightEngine;
 import net.minecraft.server.level.TicketType;
-import net.minecraft.server.level.progress.ChunkProgressListener;
+
 import net.minecraft.util.thread.BlockableEventLoop;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
@@ -83,9 +84,9 @@ public abstract class ChunkMap_scarpetChunkCreationMixin implements ThreadedAnvi
     @Final
     private BlockableEventLoop<Runnable> mainThreadExecutor;
 
-    @Shadow
-    @Final
-    private ChunkProgressListener progressListener;
+    //@Shadow
+    //@Final
+    //private ChunkProgressListener progressListener;
 
     @Shadow
     @Final
@@ -94,8 +95,8 @@ public abstract class ChunkMap_scarpetChunkCreationMixin implements ThreadedAnvi
     @Shadow
     protected abstract boolean promoteChunkMap();
 
-    @Shadow
-    protected abstract Iterable<ChunkHolder> getChunks();
+    //@Shadow
+    //protected abstract void forEachReadyToSendChunk(Consumer<LevelChunk> consumer); // for getChunks()
 
 
     @Shadow

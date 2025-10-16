@@ -18,6 +18,7 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import carpet.patches.NetHandlerPlayServerFake;
 import carpet.patches.EntityPlayerMPFake;
@@ -31,8 +32,9 @@ public abstract class PlayerList_fakePlayersMixin
     @Final
     private MinecraftServer server;
 
-    @Inject(method = "load", at = @At(value = "RETURN", shift = At.Shift.BEFORE))
-    private void fixStartingPos(ServerPlayer serverPlayer, ProblemReporter problemReporter, CallbackInfoReturnable<Optional<ValueInput>> cir)
+    // may need to be invoked in the configuration phase on prepareSpawn Task
+    @Inject(method = "placeNewPlayer", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/level/ServerPlayer;level()Lnet/minecraft/server/level/ServerLevel;"))
+    private void fixStartingPos(Connection connection, ServerPlayer serverPlayer, CommonListenerCookie commonListenerCookie, CallbackInfo ci)
     {
         if (serverPlayer instanceof EntityPlayerMPFake)
         {

@@ -1198,7 +1198,8 @@ public class Auxiliary
                         Path zipRoot = zipfs.getPath("/");
                         zipValueToJson(zipRoot.resolve("pack.mcmeta"), MapValue.wrap(
                                 Map.of(StringValue.of("pack"), MapValue.wrap(Map.of(
-                                        StringValue.of("pack_format"), new NumericValue(SharedConstants.getCurrentVersion().packVersion(PackType.SERVER_DATA)),
+                                        StringValue.of("min_format"), new NumericValue(SharedConstants.getCurrentVersion().packVersion(PackType.SERVER_DATA).major()),
+                                        StringValue.of("max_format"), new NumericValue(SharedConstants.getCurrentVersion().packVersion(PackType.SERVER_DATA).major()),
                                         StringValue.of("description"), StringValue.of(name),
                                         StringValue.of("source"), StringValue.of("scarpet")
                                 )))
