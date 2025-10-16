@@ -104,7 +104,6 @@ public class CarpetScriptServer extends ScriptServer
         registerBuiltInApp(Module.carpetNative("ai_tracker", false));
         registerBuiltInApp(Module.carpetNative("draw_beta", false));
         registerBuiltInApp(Module.carpetNative("shapes", true));
-        //registerBuiltInApp(Module.carpetNative("sctest", false));
         registerBuiltInApp(Module.carpetNative("distance_beta", false));
     }
 
