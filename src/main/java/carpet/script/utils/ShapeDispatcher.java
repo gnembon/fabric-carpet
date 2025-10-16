@@ -300,9 +300,7 @@ public class ShapeDispatcher
         float lineWidth;
         protected float r, g, b, a;
         protected int color;
-        protected int argb;
         protected float fr, fg, fb, fa;
-        protected int fargb;
         protected int fillColor;
         protected int duration = 0;
         private long key;
@@ -312,7 +310,6 @@ public class ShapeDispatcher
         protected boolean discreteX, discreteY, discreteZ;
         protected ResourceKey<Level> shapeDimension;
         protected boolean debug;
-        protected boolean seethrough;
 
 
         protected ExpiringShape()
@@ -354,11 +351,6 @@ public class ShapeDispatcher
             init(options, regs);
         }
 
-        private int rgba2argb(int color) {
-            // return shift bits from alpha
-            return ((color & 0xFF) << 24) + (color >> 8 & 0xFFFFFF);
-        }
-
 
         protected void init(Map<String, Value> options, RegistryAccess regs)
         {
@@ -368,14 +360,12 @@ public class ShapeDispatcher
             lineWidth = NumericValue.asNumber(options.getOrDefault("line", optional.get("line"))).getFloat();
 
             fillColor = NumericValue.asNumber(options.getOrDefault("fill", optional.get("fill"))).getInt();
-            this.fargb = rgba2argb(fillColor);
             this.fr = (fillColor >> 24 & 0xFF) / 255.0F;
             this.fg = (fillColor >> 16 & 0xFF) / 255.0F;
             this.fb = (fillColor >> 8 & 0xFF) / 255.0F;
             this.fa = (fillColor & 0xFF) / 255.0F;
 
             color = NumericValue.asNumber(options.getOrDefault("color", optional.get("color"))).getInt();
-            this.argb = rgba2argb(color);
             this.r = (color >> 24 & 0xFF) / 255.0F;
             this.g = (color >> 16 & 0xFF) / 255.0F;
             this.b = (color >> 8 & 0xFF) / 255.0F;
@@ -385,12 +375,6 @@ public class ShapeDispatcher
             if (options.containsKey("debug"))
             {
                 debug = options.get("debug").getBoolean();
-            }
-
-            seethrough = false;
-            if (options.containsKey("debug"))
-            {
-                seethrough = options.get("seethrough").getBoolean();
             }
 
             key = 0;
@@ -480,7 +464,6 @@ public class ShapeDispatcher
             hash ^= followEntity;
             hash *= 1099511628211L;
             hash ^= Boolean.hashCode(debug);
-            hash ^= Boolean.hashCode(seethrough);
             hash *= 1099511628211L;
             if (followEntity >= 0)
             {
@@ -513,7 +496,6 @@ public class ShapeDispatcher
                 "follow", new NumericValue(-1),
                 "line", new NumericValue(2.0),
                 "debug", Value.FALSE,
-                "seethrough", Value.FALSE,
                 "fill", new NumericValue(0xffffff00),
                 "snap", new StringValue("xyz")
         );

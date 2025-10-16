@@ -68,7 +68,7 @@ public class InfoCommand
 
     private static int infoBlock(CommandSourceStack source, BlockPos pos, String grep)
     {
-        if (!Commands.LEVEL_GAMEMASTERS.check(source.permissions())) {
+        if (!source.hasPermission(Commands.LEVEL_GAMEMASTERS)) {
             //check id pos is loaded
             if (!source.getLevel().hasChunkAt(pos)) {
                 Messenger.m(source, "r Chunk is not loaded");

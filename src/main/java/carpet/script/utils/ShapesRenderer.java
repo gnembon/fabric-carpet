@@ -4,11 +4,14 @@ import carpet.script.CarpetScriptServer;
 import carpet.script.external.Carpet;
 import carpet.script.utils.shapes.ShapeDirection;
 
-import com.mojang.blaze3d.pipeline.RenderTarget;
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.vertex.BufferBuilder;
 import com.mojang.blaze3d.vertex.ByteBufferBuilder;
+import com.mojang.blaze3d.vertex.DefaultVertexFormat;
+import com.mojang.blaze3d.vertex.MeshData;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.Tesselator;
+//import com.mojang.blaze3d.vertex.VertexBuffer;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import com.mojang.blaze3d.vertex.VertexFormat.Mode;
 import com.mojang.math.Axis;
@@ -27,12 +30,10 @@ import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.ItemBlockRenderTypes;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.RenderBuffers;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.state.BlockEntityRenderState;
 import net.minecraft.client.renderer.entity.state.EntityRenderState;
-import net.minecraft.client.renderer.gizmos.DrawableGizmoPrimitives;
 import net.minecraft.client.renderer.item.ItemStackRenderState;
 import net.minecraft.client.renderer.state.LevelRenderState;
 import net.minecraft.client.renderer.texture.OverlayTexture;
@@ -87,7 +88,7 @@ public class ShapesRenderer
             case DOWN -> poseStack.mulPose(Axis.XP.rotationDegrees(-90));
             case CAMERA -> poseStack.mulPose(camera.rotation());
             case PLAYER -> {
-                Vec3 vector = objectPos.subtract(camera.position());
+                Vec3 vector = objectPos.subtract(camera.getPosition());
                 double x = vector.x;
                 double y = vector.y;
                 double z = vector.z;
@@ -111,7 +112,7 @@ public class ShapesRenderer
         labels = new HashMap<>();
     }
 
-    public void render(RenderBuffers renderBuffers, LevelRenderState cameraa, Matrix4f matrix4f, float partialTick)
+    public void render(Matrix4f modelViewMatrix, LevelRenderState cameraa, float partialTick)
     {
         Runnable token = Carpet.startProfilerSection("Scarpet client");
         // posestack is not needed anymore - left as TODO to cleanup later
@@ -144,13 +145,10 @@ public class ShapesRenderer
         Tesselator tesselator = Tesselator.getInstance();
 
         // render
-        double cameraX = camera.position().x;
-        double cameraY = camera.position().y;
-        double cameraZ = camera.position().z;
+        double cameraX = camera.getPosition().x;
+        double cameraY = camera.getPosition().y;
+        double cameraZ = camera.getPosition().z;
         boolean entityBoxes = client.debugEntries.isCurrentlyEnabled(DebugScreenEntries.ENTITY_HITBOXES);
-
-        final DrawableGizmoPrimitives normal = new DrawableGizmoPrimitives();
-        final DrawableGizmoPrimitives onTop = new DrawableGizmoPrimitives();
 
         if (!shapes.isEmpty())
         {
@@ -162,21 +160,22 @@ public class ShapesRenderer
             matrixStack.mul(matrices.last().pose());
 
             // lines
-            //RenderSystem.lineWidth(0.5F);
+            RenderSystem.lineWidth(0.5F);
             shapes.get(dimensionType).values().forEach(s -> {
                 if ((!s.shape.debug || entityBoxes) && s.shouldRender(dimensionType))
                 {
-                    s.renderLines(matrices, tesselator, cameraX, cameraY, cameraZ, partialTick, cameraa, s.shape.seethrough ? onTop : normal);
+                    s.renderLines(matrices, tesselator, cameraX, cameraY, cameraZ, partialTick, cameraa);
                 }
             });
             // faces
+            RenderSystem.lineWidth(0.1F);
             shapes.get(dimensionType).values().forEach(s -> {
                 if ((!s.shape.debug || entityBoxes) && s.shouldRender(dimensionType))
                 {
-                    s.renderFaces(tesselator, cameraX, cameraY, cameraZ, partialTick, s.shape.seethrough ? onTop : normal);
+                    s.renderFaces(tesselator, cameraX, cameraY, cameraZ, partialTick);
                 }
             });
-            //RenderSystem.lineWidth(1.0F);
+            RenderSystem.lineWidth(1.0F);
             matrixStack.popMatrix();
 
         }
@@ -188,29 +187,10 @@ public class ShapesRenderer
             labels.get(dimensionType).values().forEach(s -> {
                 if ((!s.shape.debug || entityBoxes) && s.shouldRender(dimensionType))
                 {
-                    s.renderLines(matrices, tesselator, cameraX, cameraY, cameraZ, partialTick, cameraa, s.shape.seethrough ? onTop : normal);
+                    s.renderLines(matrices, tesselator, cameraX, cameraY, cameraZ, partialTick, cameraa);
                 }
             });
         }
-        MultiBufferSource.BufferSource bufferSource = renderBuffers.bufferSource();
-        bufferSource.endLastBatch();
-
-
-
-        normal.render(matrices, bufferSource, cameraa.cameraRenderState, matrix4f);
-        bufferSource.endLastBatch();
-
-        if (false) {
-            final RenderTarget mainRenderTarget = Minecraft.getInstance().getMainRenderTarget();
-            RenderSystem.getDevice().createCommandEncoder().clearDepthTexture(mainRenderTarget.getDepthTexture(), 1.0);
-            onTop.render(matrices, bufferSource, cameraa.cameraRenderState, matrix4f);
-            bufferSource.endLastBatch();
-
-            RenderSystem.getDevice().createCommandEncoder().clearDepthTexture(Minecraft.getInstance().getMainRenderTarget().getDepthTexture(), 1.0);
-
-        }
-
-
         ////RenderSystem.enableCull();
         ////RenderSystem.depthMask(true);
         ////RenderSystem.enableBlend();
@@ -283,9 +263,9 @@ public class ShapesRenderer
         long expiryTick;
         double renderEpsilon;
 
-        public abstract void renderLines(PoseStack matrices, Tesselator tesselator, double cx, double cy, double cz, float partialTick, LevelRenderState levelRenderState, DrawableGizmoPrimitives primitives);
+        public abstract void renderLines(PoseStack matrices, Tesselator tesselator, double cx, double cy, double cz, float partialTick, LevelRenderState levelRenderState);
 
-        public void renderFaces(Tesselator tesselator, double cx, double cy, double cz, float partialTick, DrawableGizmoPrimitives primitives)
+        public void renderFaces(Tesselator tesselator, double cx, double cy, double cz, float partialTick)
         {
         }
 
@@ -357,7 +337,7 @@ public class ShapesRenderer
 
         @Override
         public void renderLines(PoseStack matrices, Tesselator tesselator, double cx, double cy,
-                                double cz, float partialTick, LevelRenderState levelRenderState, DrawableGizmoPrimitives primitives)
+                                double cz, float partialTick, LevelRenderState levelRenderState)
         {
             if (shape.a == 0.0)
             {
@@ -431,7 +411,7 @@ public class ShapesRenderer
                     float green = (color >> 8 & 0xFF) / 255.0F;
                     float blue = (color & 0xFF) / 255.0F;
                     RenderType type;
-                    if (blockState.getBlock() instanceof LeavesBlock && !Minecraft.getInstance().options.cutoutLeaves().get()) {
+                    if (blockState.getBlock() instanceof LeavesBlock && !Minecraft.useFancyGraphics()) {
                         type = RenderType.solid();
                     } else {
                         type = ItemBlockRenderTypes.getRenderType(blockState);
@@ -513,7 +493,7 @@ public class ShapesRenderer
         }
 
         @Override
-        public void renderLines(PoseStack matrices, Tesselator tesselator, double cx, double cy, double cz, float partialTick, LevelRenderState levelRenderState, DrawableGizmoPrimitives primitives)
+        public void renderLines(PoseStack matrices, Tesselator tesselator, double cx, double cy, double cz, float partialTick, LevelRenderState levelRenderState)
         {
             if (shape.a == 0.0)
             {
@@ -602,7 +582,7 @@ public class ShapesRenderer
         }
 
         @Override
-        public void renderLines(PoseStack matrices, Tesselator tesselator, double cx, double cy, double cz, float partialTick, LevelRenderState levelRenderState, DrawableGizmoPrimitives primitives)
+        public void renderLines(PoseStack matrices, Tesselator tesselator, double cx, double cy, double cz, float partialTick, LevelRenderState levelRenderState)
         {
             if (shape.a == 0.0)
             {
@@ -610,16 +590,16 @@ public class ShapesRenderer
             }
             Vec3 v1 = shape.relativiseRender(client.level, shape.from, partialTick);
             Vec3 v2 = shape.relativiseRender(client.level, shape.to, partialTick);
-            drawBoxWireGLLines(primitives,
-                    (float) (v1.x - renderEpsilon), (float) (v1.y - renderEpsilon), (float) (v1.z - renderEpsilon),
-                    (float) (v2.x + renderEpsilon), (float) (v2.y + renderEpsilon), (float) (v2.z + renderEpsilon),
+            drawBoxWireGLLines(tesselator,
+                    (float) (v1.x - cx - renderEpsilon), (float) (v1.y - cy - renderEpsilon), (float) (v1.z - cz - renderEpsilon),
+                    (float) (v2.x - cx + renderEpsilon), (float) (v2.y - cy + renderEpsilon), (float) (v2.z - cz + renderEpsilon),
                     v1.x != v2.x, v1.y != v2.y, v1.z != v2.z,
-                    shape.argb, shape.lineWidth
+                    shape.r, shape.g, shape.b, shape.a, shape.r, shape.g, shape.b
             );
         }
 
         @Override
-        public void renderFaces(Tesselator tesselator, double cx, double cy, double cz, float partialTick, DrawableGizmoPrimitives primitives)
+        public void renderFaces(Tesselator tesselator, double cx, double cy, double cz, float partialTick)
         {
             if (shape.fa == 0.0)
             {
@@ -629,11 +609,11 @@ public class ShapesRenderer
             Vec3 v2 = shape.relativiseRender(client.level, shape.to, partialTick);
             // consider using built-ins
             //DebugRenderer.drawBox(new Box(v1.x, v1.y, v1.z, v2.x, v2.y, v2.z), 0.5f, 0.5f, 0.5f, 0.5f);//shape.r, shape.g, shape.b, shape.a);
-            drawBoxFaces(primitives,
-                    (float) (v1.x  - renderEpsilon), (float) (v1.y  - renderEpsilon), (float) (v1.z  - renderEpsilon),
-                    (float) (v2.x  + renderEpsilon), (float) (v2.y  + renderEpsilon), (float) (v2.z  + renderEpsilon),
+            drawBoxFaces(tesselator,
+                    (float) (v1.x - cx - renderEpsilon), (float) (v1.y - cy - renderEpsilon), (float) (v1.z - cz - renderEpsilon),
+                    (float) (v2.x - cx + renderEpsilon), (float) (v2.y - cy + renderEpsilon), (float) (v2.z - cz + renderEpsilon),
                     v1.x != v2.x, v1.y != v2.y, v1.z != v2.z,
-                    shape.fargb
+                    shape.fr, shape.fg, shape.fb, shape.fa
             );
         }
     }
@@ -646,29 +626,38 @@ public class ShapesRenderer
         }
 
         @Override
-        public void renderLines(PoseStack matrices, Tesselator tesselator, double cx, double cy, double cz, float partialTick, LevelRenderState levelRenderState, DrawableGizmoPrimitives primitives)
+        public void renderLines(PoseStack matrices, Tesselator tesselator, double cx, double cy, double cz, float partialTick, LevelRenderState levelRenderState)
         {
             Vec3 v1 = shape.relativiseRender(client.level, shape.from, partialTick);
             Vec3 v2 = shape.relativiseRender(client.level, shape.to, partialTick);
-            primitives.addLine(
-                    new Vec3((v1.x - renderEpsilon), (v1.y - renderEpsilon), (v1.z - renderEpsilon)),
-                    new Vec3((v2.x + renderEpsilon), (v2.y + renderEpsilon), (v2.z + renderEpsilon)),
-                    shape.argb, shape.lineWidth
+            drawLine(tesselator,
+                    (float) (v1.x - cx - renderEpsilon), (float) (v1.y - cy - renderEpsilon), (float) (v1.z - cz - renderEpsilon),
+                    (float) (v2.x - cx + renderEpsilon), (float) (v2.y - cy + renderEpsilon), (float) (v2.z - cz + renderEpsilon),
+                    shape.r, shape.g, shape.b, shape.a
             );
         }
     }
+
+    private static void drawWithShader(MeshData mesh, RenderType type) {
+        type.draw(mesh);
+        //VertexBuffer buffre = mesh.drawState().format().getImmediateDrawVertexBuffer();
+        //buffre.bind();
+        //buffre.upload(mesh);
+        //buffre.drawWithShader(RenderSystem.getModelViewMatrix(), RenderSystem.getProjectionMatrix(), RenderType. RenderSystem.getShader());
+    }
+
 
     public static class RenderedPolyface extends RenderedShape<ShapeDispatcher.Polyface>
     {
         // mode now can only be 4, 5, or 6
         private static final VertexFormat.Mode[] faceIndices = new VertexFormat.Mode[]{
-                Mode.LINES, Mode.LINES, Mode.DEBUG_LINES, Mode.DEBUG_LINE_STRIP, Mode.TRIANGLES, Mode.TRIANGLE_STRIP, Mode.TRIANGLE_FAN, Mode.QUADS};
+                Mode.LINES, Mode.LINE_STRIP, Mode.DEBUG_LINES, Mode.DEBUG_LINE_STRIP, Mode.TRIANGLES, Mode.TRIANGLE_STRIP, Mode.TRIANGLE_FAN, Mode.QUADS};
 
         private static final RenderType [] renderTypes = new RenderType[] {
-                RenderType.lines(),
-                RenderType.lines(),
-                RenderType.lines(),
-                RenderType.lines(),
+                RenderType.debugLineStrip(1),
+                RenderType.debugLineStrip(1),
+                RenderType.debugLineStrip(1),
+                RenderType.debugLineStrip(1),
                 RenderType.debugTriangleFan(), // TODO wrong
                 RenderType.debugTriangleFan(), // TODO wrong
                 RenderType.debugTriangleFan(),
@@ -681,7 +670,7 @@ public class ShapesRenderer
         }
 
         @Override
-        public void renderFaces(Tesselator tesselator, double cx, double cy, double cz, float partialTick, DrawableGizmoPrimitives primitives)
+        public void renderFaces(Tesselator tesselator, double cx, double cy, double cz, float partialTick)
         {
             if (shape.fa == 0)
             {
@@ -697,7 +686,7 @@ public class ShapesRenderer
                 ////RenderSystem.enableCull();
             }
 
-            //BufferBuilder builder = tesselator.begin(faceIndices[shape.mode], DefaultVertexFormat.POSITION_COLOR);
+            BufferBuilder builder = tesselator.begin(faceIndices[shape.mode], DefaultVertexFormat.POSITION_COLOR);
             for (int i = 0; i < shape.vertexList.size(); i++)
             {
                 Vec3 vec = shape.vertexList.get(i);
@@ -705,9 +694,9 @@ public class ShapesRenderer
                 {
                     vec = shape.relativiseRender(client.level, vec, partialTick);
                 }
-                //builder.addVertex((float) (vec.x() - cx), (float) (vec.y() - cy), (float) (vec.z() - cz)).setColor(shape.fr, shape.fg, shape.fb, shape.fa);
+                builder.addVertex((float) (vec.x() - cx), (float) (vec.y() - cy), (float) (vec.z() - cz)).setColor(shape.fr, shape.fg, shape.fb, shape.fa);
             }
-            //drawWithShader(builder.buildOrThrow(), renderTypes[shape.mode]);
+            drawWithShader(builder.buildOrThrow(), renderTypes[shape.mode]);
 
             ////RenderSystem.disableCull();
             ////RenderSystem.depthMask(false);
@@ -718,7 +707,7 @@ public class ShapesRenderer
 
         @Override
         public void renderLines(PoseStack matrices, Tesselator tesselator, double cx, double cy,
-                                double cz, float partialTick, LevelRenderState levelRenderState, DrawableGizmoPrimitives primitives)
+                                double cz, float partialTick, LevelRenderState levelRenderState)
         {
             if (shape.a == 0)
             {
@@ -727,7 +716,7 @@ public class ShapesRenderer
 
             if (shape.mode == 6)
             {
-                //BufferBuilder builder = tesselator.begin(VertexFormat.Mode.DEBUG_LINE_STRIP, DefaultVertexFormat.POSITION_COLOR);
+                BufferBuilder builder = tesselator.begin(VertexFormat.Mode.DEBUG_LINE_STRIP, DefaultVertexFormat.POSITION_COLOR);
                 Vec3 vec0 = null;
                 for (int i = 0; i < shape.vertexList.size(); i++)
                 {
@@ -740,13 +729,13 @@ public class ShapesRenderer
                     {
                         vec0 = vec;
                     }
-                    //builder.addVertex((float) (vec.x() - cx), (float) (vec.y() - cy), (float) (vec.z() - cz)).setColor(shape.r, shape.g, shape.b, shape.a);
+                    builder.addVertex((float) (vec.x() - cx), (float) (vec.y() - cy), (float) (vec.z() - cz)).setColor(shape.r, shape.g, shape.b, shape.a);
                 }
-                //builder.addVertex((float) (vec0.x() - cx), (float) (vec0.y() - cy), (float) (vec0.z() - cz)).setColor(shape.r, shape.g, shape.b, shape.a);
-                //drawWithShader(builder.buildOrThrow(), RenderType.debugLineStrip(1));
+                builder.addVertex((float) (vec0.x() - cx), (float) (vec0.y() - cy), (float) (vec0.z() - cz)).setColor(shape.r, shape.g, shape.b, shape.a);
+                drawWithShader(builder.buildOrThrow(), RenderType.debugLineStrip(1));
                 if (shape.inneredges)
                 {
-                    //BufferBuilder builderr = tesselator.begin(Mode.DEBUG_LINE_STRIP, DefaultVertexFormat.POSITION_COLOR);
+                    BufferBuilder builderr = tesselator.begin(Mode.DEBUG_LINE_STRIP, DefaultVertexFormat.POSITION_COLOR);
                     for (int i = 1; i < shape.vertexList.size() - 1; i++)
                     {
                         Vec3 vec = shape.vertexList.get(i);
@@ -754,23 +743,23 @@ public class ShapesRenderer
                         {
                             vec = shape.relativiseRender(client.level, vec, partialTick);
                         }
-                        //builderr.addVertex((float) (vec0.x() - cx), (float) (vec0.y() - cy), (float) (vec0.z() - cz)).setColor(shape.r, shape.g, shape.b, shape.a);
-                        //builderr.addVertex((float) (vec.x() - cx), (float) (vec.y() - cy), (float) (vec.z() - cz)).setColor(shape.r, shape.g, shape.b, shape.a);
-                        //builderr.addVertex((float) (vec0.x() - cx), (float) (vec0.y() - cy), (float) (vec0.z() - cz)).setColor(shape.r, shape.g, shape.b, shape.a);
+                        builderr.addVertex((float) (vec0.x() - cx), (float) (vec0.y() - cy), (float) (vec0.z() - cz)).setColor(shape.r, shape.g, shape.b, shape.a);
+                        builderr.addVertex((float) (vec.x() - cx), (float) (vec.y() - cy), (float) (vec.z() - cz)).setColor(shape.r, shape.g, shape.b, shape.a);
+                        builderr.addVertex((float) (vec0.x() - cx), (float) (vec0.y() - cy), (float) (vec0.z() - cz)).setColor(shape.r, shape.g, shape.b, shape.a);
                     }
-                    //drawWithShader(builderr.buildOrThrow(), RenderType.debugLineStrip(1));
+                    drawWithShader(builderr.buildOrThrow(), RenderType.debugLineStrip(1));
                 }
                 return;
             }
             if (shape.mode == 5)
             {
-                //BufferBuilder builder = tesselator.begin(VertexFormat.Mode.DEBUG_LINE_STRIP, DefaultVertexFormat.POSITION_COLOR);
+                BufferBuilder builder = tesselator.begin(VertexFormat.Mode.DEBUG_LINE_STRIP, DefaultVertexFormat.POSITION_COLOR);
                 Vec3 vec = shape.vertexList.get(1);
                 if (shape.relative.get(1))
                 {
                     vec = shape.relativiseRender(client.level, vec, partialTick);
                 }
-                //builder.addVertex((float) (vec.x() - cx), (float) (vec.y() - cy), (float) (vec.z() - cz)).setColor(shape.r, shape.g, shape.b, shape.a);
+                builder.addVertex((float) (vec.x() - cx), (float) (vec.y() - cy), (float) (vec.z() - cz)).setColor(shape.r, shape.g, shape.b, shape.a);
                 int i;
                 for (i = 0; i < shape.vertexList.size(); i += 2)
                 {
@@ -779,7 +768,7 @@ public class ShapesRenderer
                     {
                         vec = shape.relativiseRender(client.level, vec, partialTick);
                     }
-                    //builder.addVertex((float) (vec.x() - cx), (float) (vec.y() - cy), (float) (vec.z() - cz)).setColor(shape.r, shape.g, shape.b, shape.a);
+                    builder.addVertex((float) (vec.x() - cx), (float) (vec.y() - cy), (float) (vec.z() - cz)).setColor(shape.r, shape.g, shape.b, shape.a);
                 }
                 i = shape.vertexList.size() - 1;
                 for (i -= 1 - i % 2; i > 0; i -= 2)
@@ -789,7 +778,7 @@ public class ShapesRenderer
                     {
                         vec = shape.relativiseRender(client.level, vec, partialTick);
                     }
-                    //builder.addVertex((float) (vec.x() - cx), (float) (vec.y() - cy), (float) (vec.z() - cz)).setColor(shape.r, shape.g, shape.b, shape.a);
+                    builder.addVertex((float) (vec.x() - cx), (float) (vec.y() - cy), (float) (vec.z() - cz)).setColor(shape.r, shape.g, shape.b, shape.a);
                 }
                 if (shape.inneredges)
                 {
@@ -800,10 +789,10 @@ public class ShapesRenderer
                         {
                             vec = shape.relativiseRender(client.level, vec, partialTick);
                         }
-                        //builder.addVertex((float) (vec.x() - cx), (float) (vec.y() - cy), (float) (vec.z() - cz)).setColor(shape.r, shape.g, shape.b, shape.a);
+                        builder.addVertex((float) (vec.x() - cx), (float) (vec.y() - cy), (float) (vec.z() - cz)).setColor(shape.r, shape.g, shape.b, shape.a);
                     }
                 }
-                //drawWithShader(builder.buildOrThrow(), RenderType.debugLineStrip(1));
+                drawWithShader(builder.buildOrThrow(), RenderType.debugLineStrip(1));
                 return;
             }
             if (shape.mode == 4)
@@ -811,7 +800,7 @@ public class ShapesRenderer
                 //
                 for (int i = 0; i < shape.vertexList.size(); i++)
                 {
-                    //BufferBuilder builder = tesselator.begin(Mode.DEBUG_LINE_STRIP, DefaultVertexFormat.POSITION_COLOR);
+                    BufferBuilder builder = tesselator.begin(Mode.DEBUG_LINE_STRIP, DefaultVertexFormat.POSITION_COLOR);
                     Vec3 vecA = shape.vertexList.get(i);
                     if (shape.relative.get(i))
                     {
@@ -829,16 +818,16 @@ public class ShapesRenderer
                     {
                         vecC = shape.relativiseRender(client.level, vecC, partialTick);
                     }
-                    //builder.addVertex((float) (vecA.x() - cx), (float) (vecA.y() - cy), (float) (vecA.z() - cz)).setColor(shape.r, shape.g, shape.b, shape.a);
-                    //builder.addVertex((float) (vecB.x() - cx), (float) (vecB.y() - cy), (float) (vecB.z() - cz)).setColor(shape.r, shape.g, shape.b, shape.a);
+                    builder.addVertex((float) (vecA.x() - cx), (float) (vecA.y() - cy), (float) (vecA.z() - cz)).setColor(shape.r, shape.g, shape.b, shape.a);
+                    builder.addVertex((float) (vecB.x() - cx), (float) (vecB.y() - cy), (float) (vecB.z() - cz)).setColor(shape.r, shape.g, shape.b, shape.a);
 
                     //builder.addVertex((float) (vecB.x() - cx), (float) (vecB.y() - cy), (float) (vecB.z() - cz)).setColor(shape.r, shape.g, shape.b, shape.a);
-                    //builder.addVertex((float) (vecC.x() - cx), (float) (vecC.y() - cy), (float) (vecC.z() - cz)).setColor(shape.r, shape.g, shape.b, shape.a);
+                    builder.addVertex((float) (vecC.x() - cx), (float) (vecC.y() - cy), (float) (vecC.z() - cz)).setColor(shape.r, shape.g, shape.b, shape.a);
 
                     //builder.addVertex((float) (vecC.x() - cx), (float) (vecC.y() - cy), (float) (vecC.z() - cz)).setColor(shape.r, shape.g, shape.b, shape.a);
-                    //builder.addVertex((float) (vecA.x() - cx), (float) (vecA.y() - cy), (float) (vecA.z() - cz)).setColor(shape.r, shape.g, shape.b, shape.a);
+                    builder.addVertex((float) (vecA.x() - cx), (float) (vecA.y() - cy), (float) (vecA.z() - cz)).setColor(shape.r, shape.g, shape.b, shape.a);
 
-                    //drawWithShader(builder.buildOrThrow(), RenderType.debugLineStrip(1));
+                    drawWithShader(builder.buildOrThrow(), RenderType.debugLineStrip(1));
                 }
                 //drawWithShader(builder.buildOrThrow(), RenderType.debugLineStrip(1));
             }
@@ -853,31 +842,31 @@ public class ShapesRenderer
         }
 
         @Override
-        public void renderLines(PoseStack matrices, Tesselator tesselator, double cx, double cy, double cz, float partialTick, LevelRenderState levelRenderState, DrawableGizmoPrimitives primitives)
+        public void renderLines(PoseStack matrices, Tesselator tesselator, double cx, double cy, double cz, float partialTick, LevelRenderState levelRenderState)
         {
             if (shape.a == 0.0)
             {
                 return;
             }
             Vec3 vc = shape.relativiseRender(client.level, shape.center, partialTick);
-            drawSphereWireframe(primitives,
-                    (float) (vc.x), (float) (vc.y), (float) (vc.z),
+            drawSphereWireframe(tesselator,
+                    (float) (vc.x - cx), (float) (vc.y - cy), (float) (vc.z - cz),
                     (float) (shape.radius + renderEpsilon), shape.subdivisions,
-                    shape.argb, shape.lineWidth);
+                    shape.r, shape.g, shape.b, shape.a);
         }
 
         @Override
-        public void renderFaces(Tesselator tesselator, double cx, double cy, double cz, float partialTick, DrawableGizmoPrimitives primitives)
+        public void renderFaces(Tesselator tesselator, double cx, double cy, double cz, float partialTick)
         {
             if (shape.fa == 0.0)
             {
                 return;
             }
             Vec3 vc = shape.relativiseRender(client.level, shape.center, partialTick);
-            drawSphereFaces(primitives,
-                    (float) (vc.x ), (float) (vc.y ), (float) (vc.z ),
+            drawSphereFaces(tesselator,
+                    (float) (vc.x - cx), (float) (vc.y - cy), (float) (vc.z - cz),
                     (float) (shape.radius + renderEpsilon), shape.subdivisions,
-                    shape.fargb);
+                    shape.fr, shape.fg, shape.fb, shape.fa);
         }
     }
 
@@ -889,7 +878,7 @@ public class ShapesRenderer
         }
 
         @Override
-        public void renderLines(PoseStack matrices, Tesselator tesselator, double cx, double cy, double cz, float partialTick, LevelRenderState levelRenderState, DrawableGizmoPrimitives primitives)
+        public void renderLines(PoseStack matrices, Tesselator tesselator, double cx, double cy, double cz, float partialTick, LevelRenderState levelRenderState)
         {
             if (shape.a == 0.0)
             {
@@ -897,16 +886,16 @@ public class ShapesRenderer
             }
             Vec3 vc = shape.relativiseRender(client.level, shape.center, partialTick);
             double dir = Mth.sign(shape.height);
-            drawCylinderWireframe(primitives,
-                    (float) (vc.x  - dir * renderEpsilon), (float) (vc.y  - dir * renderEpsilon), (float) (vc.z  - dir * renderEpsilon),
+            drawCylinderWireframe(tesselator,
+                    (float) (vc.x - cx - dir * renderEpsilon), (float) (vc.y - cy - dir * renderEpsilon), (float) (vc.z - cz - dir * renderEpsilon),
                     (float) (shape.radius + renderEpsilon), (float) (shape.height + 2 * dir * renderEpsilon), shape.axis,
                     shape.subdivisions, shape.height == 0,
-                    shape.argb, shape.lineWidth);
+                    shape.r, shape.g, shape.b, shape.a);
 
         }
 
         @Override
-        public void renderFaces(Tesselator tesselator, double cx, double cy, double cz, float partialTick, DrawableGizmoPrimitives primitives)
+        public void renderFaces(Tesselator tesselator, double cx, double cy, double cz, float partialTick)
         {
             if (shape.fa == 0.0)
             {
@@ -914,87 +903,188 @@ public class ShapesRenderer
             }
             Vec3 vc = shape.relativiseRender(client.level, shape.center, partialTick);
             double dir = Mth.sign(shape.height);
-            drawCylinderFaces(primitives,
-                    (float) (vc.x - dir * renderEpsilon), (float) (vc.y - dir * renderEpsilon), (float) (vc.z - dir * renderEpsilon),
+            drawCylinderFaces(tesselator,
+                    (float) (vc.x - cx - dir * renderEpsilon), (float) (vc.y - cy - dir * renderEpsilon), (float) (vc.z - cz - dir * renderEpsilon),
                     (float) (shape.radius + renderEpsilon), (float) (shape.height + 2 * dir * renderEpsilon), shape.axis,
                     shape.subdivisions, shape.radius == 0,
-                    shape.fargb);
+                    shape.fr, shape.fg, shape.fb, shape.fa);
         }
     }
 
     // some raw shit
 
+    public static void drawLine(Tesselator tesselator, float x1, float y1, float z1, float x2, float y2, float z2, float red1, float grn1, float blu1, float alpha)
+    {
+        BufferBuilder builder = tesselator.begin(Mode.DEBUG_LINE_STRIP, DefaultVertexFormat.POSITION_COLOR);
+        builder.addVertex(x1, y1, z1).setColor(red1, grn1, blu1, alpha);
+        builder.addVertex(x2, y2, z2).setColor(red1, grn1, blu1, alpha);
+        drawWithShader(builder.buildOrThrow(), RenderType.debugLineStrip(1));
+    }
+
     public static void drawBoxWireGLLines(
-            DrawableGizmoPrimitives primitives,
+            Tesselator tesselator,
             float x1, float y1, float z1,
             float x2, float y2, float z2,
             boolean xthick, boolean ythick, boolean zthick,
-            int color, float width)
+            float red1, float grn1, float blu1, float alpha, float red2, float grn2, float blu2)
     {
+        BufferBuilder builder = tesselator.begin(Mode.DEBUG_LINE_STRIP, DefaultVertexFormat.POSITION_COLOR);
+        /* old lines not using strip
         if (xthick)
         {
-            primitives.addLine(new Vec3(x1, y1, z1), new Vec3(x2, y1, z1), color, width);
-            primitives.addLine(new Vec3(x2, y2, z1), new Vec3(x1, y2, z1), color, width);
-            primitives.addLine(new Vec3(x1, y1, z2), new Vec3(x2, y1, z2), color, width);
-            primitives.addLine(new Vec3(x1, y2, z2), new Vec3(x2, y2, z2), color, width);
+            builder.addVertex(x1, y1, z1).setColor(red1, grn2, blu2, alpha);
+            builder.addVertex(x2, y1, z1).setColor(red1, grn2, blu2, alpha);
+
+            builder.addVertex(x2, y2, z1).setColor(red1, grn1, blu1, alpha);
+            builder.addVertex(x1, y2, z1).setColor(red1, grn1, blu1, alpha);
+
+            builder.addVertex(x1, y1, z2).setColor(red1, grn1, blu1, alpha);
+            builder.addVertex(x2, y1, z2).setColor(red1, grn1, blu1, alpha);
+
+            builder.addVertex(x1, y2, z2).setColor(red1, grn1, blu1, alpha);
+            builder.addVertex(x2, y2, z2).setColor(red1, grn1, blu1, alpha);
         }
         if (ythick)
         {
-            primitives.addLine(new Vec3(x1, y1, z1), new Vec3(x1, y2, z1), color, width);
-            primitives.addLine(new Vec3(x2, y1, z1), new Vec3(x2, y2, z1), color, width);
-            primitives.addLine(new Vec3(x1, y2, z2), new Vec3(x1, y1, z2), color, width);
-            primitives.addLine(new Vec3(x2, y1, z2), new Vec3(x2, y2, z2), color, width);
+            builder.addVertex(x1, y1, z1).setColor(red2, grn1, blu2, alpha);
+            builder.addVertex(x1, y2, z1).setColor(red2, grn1, blu2, alpha);
+
+            builder.addVertex(x2, y1, z1).setColor(red1, grn1, blu1, alpha);
+            builder.addVertex(x2, y2, z1).setColor(red1, grn1, blu1, alpha);
+
+            builder.addVertex(x1, y2, z2).setColor(red1, grn1, blu1, alpha);
+            builder.addVertex(x1, y1, z2).setColor(red1, grn1, blu1, alpha);
+
+            builder.addVertex(x2, y1, z2).setColor(red1, grn1, blu1, alpha);
+            builder.addVertex(x2, y2, z2).setColor(red1, grn1, blu1, alpha);
         }
         if (zthick)
         {
-            primitives.addLine(new Vec3(x1, y1, z1), new Vec3(x1, y1, z2), color, width);
-            primitives.addLine(new Vec3(x1, y2, z1), new Vec3(x1, y2, z2), color, width);
-            primitives.addLine(new Vec3(x2, y1, z2), new Vec3(x2, y1, z1), color, width);
-            primitives.addLine(new Vec3(x2, y2, z1), new Vec3(x2, y2, z2), color, width);
+            builder.addVertex(x1, y1, z1).setColor(red2, grn2, blu1, alpha);
+            builder.addVertex(x1, y1, z2).setColor(red2, grn2, blu1, alpha);
+
+            builder.addVertex(x1, y2, z1).setColor(red1, grn1, blu1, alpha);
+            builder.addVertex(x1, y2, z2).setColor(red1, grn1, blu1, alpha);
+
+            builder.addVertex(x2, y1, z2).setColor(red1, grn1, blu1, alpha);
+            builder.addVertex(x2, y1, z1).setColor(red1, grn1, blu1, alpha);
+
+            builder.addVertex(x2, y2, z1).setColor(red1, grn1, blu1, alpha);
+            builder.addVertex(x2, y2, z2).setColor(red1, grn1, blu1, alpha);
         }
+         */
+
+        if (xthick)
+
+        {
+            builder.addVertex(x1, y1, z1).setColor(red1, grn2, blu2, alpha);
+            builder.addVertex(x2, y1, z1).setColor(red1, grn2, blu2, alpha);
+
+            builder.addVertex(x2, y2, z1).setColor(red1, grn1, blu1, alpha);
+            builder.addVertex(x1, y2, z1).setColor(red1, grn1, blu1, alpha);
+
+            builder.addVertex(x1, y2, z2).setColor(red1, grn1, blu1, alpha);
+            builder.addVertex(x2, y2, z2).setColor(red1, grn1, blu1, alpha);
+
+            builder.addVertex(x2, y1, z2).setColor(red1, grn1, blu1, alpha);
+            builder.addVertex(x1, y1, z2).setColor(red1, grn1, blu1, alpha);
+        }
+        if (ythick)
+        {
+            builder.addVertex(x1, y1, z1).setColor(red2, grn1, blu2, alpha);
+            builder.addVertex(x1, y2, z1).setColor(red2, grn1, blu2, alpha);
+
+            builder.addVertex(x2, y2, z1).setColor(red1, grn1, blu1, alpha);
+            builder.addVertex(x2, y1, z1).setColor(red1, grn1, blu1, alpha);
+
+            builder.addVertex(x2, y1, z2).setColor(red1, grn1, blu1, alpha);
+            builder.addVertex(x2, y2, z2).setColor(red1, grn1, blu1, alpha);
+
+            builder.addVertex(x1, y2, z2).setColor(red1, grn1, blu1, alpha);
+            builder.addVertex(x1, y1, z2).setColor(red1, grn1, blu1, alpha);
+        }
+        if (zthick)
+        {
+            builder.addVertex(x1, y1, z1).setColor(red2, grn2, blu1, alpha);
+            builder.addVertex(x1, y1, z2).setColor(red2, grn2, blu1, alpha);
+
+            builder.addVertex(x1, y2, z2).setColor(red1, grn1, blu1, alpha);
+            builder.addVertex(x1, y2, z1).setColor(red1, grn1, blu1, alpha);
+
+            builder.addVertex(x2, y2, z1).setColor(red1, grn1, blu1, alpha);
+            builder.addVertex(x2, y2, z2).setColor(red1, grn1, blu1, alpha);
+
+            builder.addVertex(x2, y1, z2).setColor(red1, grn1, blu1, alpha);
+            builder.addVertex(x2, y1, z1).setColor(red1, grn1, blu1, alpha);
+        }
+        drawWithShader(builder.buildOrThrow(), RenderType.debugLineStrip(1));
     }
 
     public static void drawBoxFaces(
-            DrawableGizmoPrimitives primitives,
+            Tesselator tesselator,
             float x1, float y1, float z1,
             float x2, float y2, float z2,
             boolean xthick, boolean ythick, boolean zthick,
-            int argb)
+            float red1, float grn1, float blu1, float alpha)
     {
+        BufferBuilder builder = tesselator.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
+
         if (xthick && ythick)
         {
-            primitives.addQuad(new Vec3(x1, y1, z1), new Vec3(x2, y1, z1), new Vec3(x2, y2, z1), new Vec3(x1, y2, z1), argb);
+            builder.addVertex(x1, y1, z1).setColor(red1, grn1, blu1, alpha);
+            builder.addVertex(x2, y1, z1).setColor(red1, grn1, blu1, alpha);
+            builder.addVertex(x2, y2, z1).setColor(red1, grn1, blu1, alpha);
+            builder.addVertex(x1, y2, z1).setColor(red1, grn1, blu1, alpha);
             if (zthick)
             {
-                primitives.addQuad(new Vec3(x1, y1, z2), new Vec3(x1, y2, z2), new Vec3(x2, y2, z2), new Vec3(x2, y1, z2), argb);
+                builder.addVertex(x1, y1, z2).setColor(red1, grn1, blu1, alpha);
+                builder.addVertex(x1, y2, z2).setColor(red1, grn1, blu1, alpha);
+                builder.addVertex(x2, y2, z2).setColor(red1, grn1, blu1, alpha);
+                builder.addVertex(x2, y1, z2).setColor(red1, grn1, blu1, alpha);
             }
         }
 
+
         if (zthick && ythick)
         {
-            primitives.addQuad(new Vec3(x1, y1, z1), new Vec3(x1, y2, z1), new Vec3(x1, y2, z2), new Vec3(x1, y1, z2), argb);
+            builder.addVertex(x1, y1, z1).setColor(red1, grn1, blu1, alpha);
+            builder.addVertex(x1, y2, z1).setColor(red1, grn1, blu1, alpha);
+            builder.addVertex(x1, y2, z2).setColor(red1, grn1, blu1, alpha);
+            builder.addVertex(x1, y1, z2).setColor(red1, grn1, blu1, alpha);
 
             if (xthick)
             {
-                primitives.addQuad(new Vec3(x2, y1, z1), new Vec3(x2, y1, z2), new Vec3(x2, y2, z2), new Vec3(x2, y2, z1), argb);
+                builder.addVertex(x2, y1, z1).setColor(red1, grn1, blu1, alpha);
+                builder.addVertex(x2, y1, z2).setColor(red1, grn1, blu1, alpha);
+                builder.addVertex(x2, y2, z2).setColor(red1, grn1, blu1, alpha);
+                builder.addVertex(x2, y2, z1).setColor(red1, grn1, blu1, alpha);
             }
         }
 
         // now at least drawing one
         if (zthick && xthick)
         {
-            primitives.addQuad(new Vec3(x1, y1, z1), new Vec3(x2, y1, z1), new Vec3(x2, y1, z2), new Vec3(x1, y1, z2), argb);
+            builder.addVertex(x1, y1, z1).setColor(red1, grn1, blu1, alpha);
+            builder.addVertex(x2, y1, z1).setColor(red1, grn1, blu1, alpha);
+            builder.addVertex(x2, y1, z2).setColor(red1, grn1, blu1, alpha);
+            builder.addVertex(x1, y1, z2).setColor(red1, grn1, blu1, alpha);
+
+
             if (ythick)
             {
-                primitives.addQuad(new Vec3(x1, y2, z1), new Vec3(x1, y2, z2), new Vec3(x2, y2, z2), new Vec3(x2, y2, z1), argb);
+                builder.addVertex(x1, y2, z1).setColor(red1, grn1, blu1, alpha);
+                builder.addVertex(x2, y2, z1).setColor(red1, grn1, blu1, alpha);
+                builder.addVertex(x2, y2, z2).setColor(red1, grn1, blu1, alpha);
+                builder.addVertex(x1, y2, z2).setColor(red1, grn1, blu1, alpha);
             }
         }
+        drawWithShader(builder.buildOrThrow(), RenderType.debugQuads());
     }
 
-    public static void drawCylinderWireframe(DrawableGizmoPrimitives primitives,
+    public static void drawCylinderWireframe(Tesselator tesselator,
                                              float cx, float cy, float cz,
                                              float r, float h, Direction.Axis axis, int subd, boolean isFlat,
-                                             int argb, float width)
+                                             float red, float grn, float blu, float alpha)
     {
         float step = (float) Math.PI / (subd / 2);
         int num_steps180 = (int) (Math.PI / step) + 1;
@@ -1012,35 +1102,34 @@ public class ShapesRenderer
             for (int dh = 0; dh < hsteps; dh++)
             {
                 float hh = dh * hstep;
-                Vec3 from = null;
+                BufferBuilder builder = tesselator.begin(VertexFormat.Mode.DEBUG_LINE_STRIP, DefaultVertexFormat.POSITION_COLOR);  // line loop to line strip
                 for (int i = 0; i <= num_steps360 + 1; i++)
                 {
                     float theta = step * i;
                     float x = r * Mth.cos(theta);
                     float y = hh;
                     float z = r * Mth.sin(theta);
-                    Vec3 to = new Vec3(x + cx, y + cy, z + cz);
-                    if (from != null) {
-                        primitives.addLine(from, to, argb, width);
-                    }
-                    from = to;
+                    builder.addVertex(x + cx, y + cy, z + cz).setColor(red, grn, blu, alpha);
                 }
+                drawWithShader(builder.buildOrThrow(), RenderType.debugLineStrip(1));
             }
 
             if (!isFlat)
             {
                 for (int i = 0; i <= num_steps180; i++)
                 {
+                    BufferBuilder builder = tesselator.begin(VertexFormat.Mode.DEBUG_LINE_STRIP, DefaultVertexFormat.POSITION_COLOR); // line loop to line strip
                     float theta = step * i;
                     float x = r * Mth.cos(theta);
 
                     float z = r * Mth.sin(theta);
 
-                    primitives.addLine(new Vec3(cx- x, cy+ 0,cz + z), new Vec3(cx + x, cy + 0, cz - z), argb, width);
-                    primitives.addLine(new Vec3(cx + x, cy + 0, cz - z), new Vec3(cx + x, cy + h, cz - z), argb, width);
-                    primitives.addLine(new Vec3(cx + x, cy + h, cz - z), new Vec3(cx - x, cy + h, cz + z), argb, width);
-                    primitives.addLine(new Vec3(cx - x, cy + h, cz + z), new Vec3(cx - x, cy + 0, cz + z), argb, width);
-
+                    builder.addVertex(cx - x, cy + 0, cz + z).setColor(red, grn, blu, alpha);
+                    builder.addVertex(cx + x, cy + 0, cz - z).setColor(red, grn, blu, alpha);
+                    builder.addVertex(cx + x, cy + h, cz - z).setColor(red, grn, blu, alpha);
+                    builder.addVertex(cx - x, cy + h, cz + z).setColor(red, grn, blu, alpha);
+                    builder.addVertex(cx - x, cy + 0, cz + z).setColor(red, grn, blu, alpha);
+                    drawWithShader(builder.buildOrThrow(), RenderType.debugLineStrip(1));
                 }
             }
             /* else
@@ -1063,35 +1152,33 @@ public class ShapesRenderer
             for (int dh = 0; dh < hsteps; dh++)
             {
                 float hh = dh * hstep;
-                Vec3 from = null;
+                BufferBuilder builder = tesselator.begin(VertexFormat.Mode.DEBUG_LINE_STRIP, DefaultVertexFormat.POSITION_COLOR); // line loop to line strip
                 for (int i = 0; i <= num_steps360; i++)
                 {
                     float theta = step * i;
                     float z = r * Mth.cos(theta);
                     float x = hh;
                     float y = r * Mth.sin(theta);
-                    Vec3 to = new Vec3(x + cx, y + cy, z + cz);
-                    if (from != null) {
-                        primitives.addLine(from, to, argb, width);
-                    }
-                    from = to;
+                    builder.addVertex(x + cx, y + cy, z + cz).setColor(red, grn, blu, alpha);
                 }
+                drawWithShader(builder.buildOrThrow(), RenderType.debugLineStrip(1));
             }
 
             if (!isFlat)
             {
                 for (int i = 0; i <= num_steps180; i++)
                 {
+                    BufferBuilder builder = tesselator.begin(VertexFormat.Mode.DEBUG_LINE_STRIP, DefaultVertexFormat.POSITION_COLOR); // line loop to line strip
                     float theta = step * i;
                     float y = r * Mth.cos(theta);
 
                     float z = r * Mth.sin(theta);
 
-                    primitives.addLine(new Vec3(cx + 0, cy - y, cz + z), new Vec3(cx + 0, cy + y, cz - z), argb, width);
-                    primitives.addLine(new Vec3(cx + 0, cy + y, cz - z), new Vec3(cx + h, cy + y, cz - z), argb, width);
-                    primitives.addLine(new Vec3(cx + h, cy + y, cz - z), new Vec3(cx + h, cy - y, cz + z), argb, width);
-                    primitives.addLine(new Vec3(cx + h, cy - y, cz + z), new Vec3(cx + 0, cy - y, cz + z), argb, width);
-
+                    builder.addVertex(cx + 0, cy - y, cz + z).setColor(red, grn, blu, alpha);
+                    builder.addVertex(cx + 0, cy + y, cz - z).setColor(red, grn, blu, alpha);
+                    builder.addVertex(cx + h, cy + y, cz - z).setColor(red, grn, blu, alpha);
+                    builder.addVertex(cx + h, cy - y, cz + z).setColor(red, grn, blu, alpha);
+                    drawWithShader(builder.buildOrThrow(), RenderType.debugLineStrip(1));
                 }
             }
             /*else
@@ -1113,33 +1200,32 @@ public class ShapesRenderer
             for (int dh = 0; dh < hsteps; dh++)
             {
                 float hh = dh * hstep;
-                Vec3 from = null;
+                BufferBuilder builder = tesselator.begin(VertexFormat.Mode.DEBUG_LINE_STRIP, DefaultVertexFormat.POSITION_COLOR); // line loop to line strip
                 for (int i = 0; i <= num_steps360; i++)
                 {
                     float theta = step * i;
                     float y = r * Mth.cos(theta);
                     float z = hh;
                     float x = r * Mth.sin(theta);
-                    Vec3 to = new Vec3(x + cx, y + cy, z + cz);
-                    if (from != null) {
-                        primitives.addLine(from, to, argb, width);
-                    }
-                    from = to;
+                    builder.addVertex(x + cx, y + cy, z + cz).setColor(red, grn, blu, alpha);
                 }
+                drawWithShader(builder.buildOrThrow(), RenderType.debugLineStrip(1));
             }
             if (!isFlat)
             {
                 for (int i = 0; i <= num_steps180; i++)
                 {
+                    BufferBuilder builder = tesselator.begin(VertexFormat.Mode.DEBUG_LINE_STRIP, DefaultVertexFormat.POSITION_COLOR); // line loop to line strip
                     float theta = step * i;
                     float x = r * Mth.cos(theta);
 
                     float y = r * Mth.sin(theta);
 
-                    primitives.addLine(new Vec3(cx + x, cy - y, cz + 0), new Vec3(cx - x, cy + y, cz + 0), argb, width);
-                    primitives.addLine(new Vec3(cx - x, cy + y, cz + 0), new Vec3(cx - x, cy + y, cz + h), argb, width);
-                    primitives.addLine(new Vec3(cx - x, cy + y, cz + h), new Vec3(cx + x, cy - y, cz + h), argb, width);
-                    primitives.addLine(new Vec3(cx + x, cy - y, cz + h), new Vec3(cx + x, cy - y, cz + 0), argb, width);
+                    builder.addVertex(cx + x, cy - y, cz + 0).setColor(red, grn, blu, alpha);
+                    builder.addVertex(cx - x, cy + y, cz + 0).setColor(red, grn, blu, alpha);
+                    builder.addVertex(cx - x, cy + y, cz + h).setColor(red, grn, blu, alpha);
+                    builder.addVertex(cx + x, cy - y, cz + h).setColor(red, grn, blu, alpha);
+                    drawWithShader(builder.buildOrThrow(), RenderType.debugLineStrip(1));
                 }
             }
             /*else
@@ -1158,10 +1244,10 @@ public class ShapesRenderer
         }
     }
 
-    public static void drawCylinderFaces(DrawableGizmoPrimitives primitives,
+    public static void drawCylinderFaces(Tesselator tesselator,
                                          float cx, float cy, float cz,
                                          float r, float h, Direction.Axis axis, int subd, boolean isFlat,
-                                         int argb)
+                                         float red, float grn, float blu, float alpha)
     {
         float step = (float) Math.PI / (subd / 2);
         //final int num_steps180 = (int) (Math.PI / step) + 1;
@@ -1169,31 +1255,31 @@ public class ShapesRenderer
 
         if (axis == Direction.Axis.Y)
         {
-            {
-                final Vec3[] points = new Vec3[num_steps360 + 2];
-                points[0] = new Vec3(cx, cy, cz);
-                for (int i = 0; i <= num_steps360; i++) {
-                    float theta = step * i;
-                    float x = r * Mth.cos(theta);
-                    float z = r * Mth.sin(theta);
-                    points[i + 1] = new Vec3(x + cx, cy, z + cz);
-                }
-                primitives.addTriangleFan(points, argb);
-            }
 
+            BufferBuilder builder = tesselator.begin(VertexFormat.Mode.TRIANGLE_FAN, DefaultVertexFormat.POSITION_COLOR);
+            builder.addVertex(cx, cy, cz).setColor(red, grn, blu, alpha);
+            for (int i = 0; i <= num_steps360; i++)
+            {
+                float theta = step * i;
+                float x = r * Mth.cos(theta);
+                float z = r * Mth.sin(theta);
+                builder.addVertex(x + cx, cy, z + cz).setColor(red, grn, blu, alpha);
+            }
+            drawWithShader(builder.buildOrThrow(), RenderType.debugTriangleFan());
             if (!isFlat)
             {
-                final Vec3[] points = new Vec3[num_steps360 + 2];
-                points[0] = new Vec3(cx, cy + h, cz);
+                BufferBuilder builderr = tesselator.begin(VertexFormat.Mode.TRIANGLE_FAN, DefaultVertexFormat.POSITION_COLOR);
+                builderr.addVertex(cx, cy + h, cz).setColor(red, grn, blu, alpha);
                 for (int i = 0; i <= num_steps360; i++)
                 {
                     float theta = step * i;
                     float x = r * Mth.cos(theta);
                     float z = r * Mth.sin(theta);
-                    points[i + 1] = new Vec3(x + cx, cy + h, z + cz);
+                    builderr.addVertex(x + cx, cy + h, z + cz).setColor(red, grn, blu, alpha);
                 }
-                primitives.addTriangleFan(points, argb);
+                drawWithShader(builderr.buildOrThrow(), RenderType.debugTriangleFan());
 
+                BufferBuilder builderrr = tesselator.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);  // quad strip to quads
                 float xp = r * 1;
                 float zp = r * 0;
                 for (int i = 1; i <= num_steps360; i++)
@@ -1201,42 +1287,43 @@ public class ShapesRenderer
                     float theta = step * i;
                     float x = r * Mth.cos(theta);
                     float z = r * Mth.sin(theta);
-                    primitives.addQuad(new Vec3(cx + xp, cy + 0, cz + zp), new Vec3(cx + xp, cy + h, cz + zp),
-                            new Vec3(cx + x, cy + h, cz + z), new Vec3(cx - x, cy + h, cz + z), argb);
+                    builderrr.addVertex(cx + xp, cy + 0, cz + zp).setColor(red, grn, blu, alpha);
+                    builderrr.addVertex(cx + xp, cy + h, cz + zp).setColor(red, grn, blu, alpha);
+                    builderrr.addVertex(cx + x, cy + h, cz + z).setColor(red, grn, blu, alpha);
+                    builderrr.addVertex(cx + x, cy + 0, cz + z).setColor(red, grn, blu, alpha);
                     xp = x;
                     zp = z;
                 }
+                drawWithShader(builderrr.buildOrThrow(), RenderType.debugQuads());
             }
 
         }
         else if (axis == Direction.Axis.X)
         {
+            BufferBuilder builder = tesselator.begin(VertexFormat.Mode.TRIANGLE_FAN, DefaultVertexFormat.POSITION_COLOR);
+            builder.addVertex(cx, cy, cz).setColor(red, grn, blu, alpha);
+            for (int i = 0; i <= num_steps360; i++)
             {
-                Vec3[] points = new Vec3[num_steps360 + 2];
-                points[0] = new Vec3(cx, cy, cz);
-                for (int i = 0; i <= num_steps360; i++) {
-                    float theta = step * i;
-                    float y = r * Mth.cos(theta);
-                    float z = r * Mth.sin(theta);
-                    points[i + 1] = new Vec3(cx, cy + y, cz + z);
-
-                }
-                primitives.addTriangleFan(points, argb);
+                float theta = step * i;
+                float y = r * Mth.cos(theta);
+                float z = r * Mth.sin(theta);
+                builder.addVertex(cx, cy + y, z + cz).setColor(red, grn, blu, alpha);
             }
-
+            drawWithShader(builder.buildOrThrow(), RenderType.debugTriangleFan());
             if (!isFlat)
             {
-                Vec3[] points = new Vec3[num_steps360 + 2];
-                points[0] = new Vec3(cx + h, cy, cz);
+                BufferBuilder builderr = tesselator.begin(VertexFormat.Mode.TRIANGLE_FAN, DefaultVertexFormat.POSITION_COLOR);
+                builderr.addVertex(cx + h, cy, cz).setColor(red, grn, blu, alpha);
                 for (int i = 0; i <= num_steps360; i++)
                 {
                     float theta = step * i;
                     float y = r * Mth.cos(theta);
                     float z = r * Mth.sin(theta);
-                    points[i + 1] = new Vec3(cx, cy + y, cz + z);
+                    builderr.addVertex(cx + h, cy + y, cz + z).setColor(red, grn, blu, alpha);
                 }
-                primitives.addTriangleFan(points, argb);
+                drawWithShader(builderr.buildOrThrow(), RenderType.debugTriangleFan());
 
+                BufferBuilder builderrr = tesselator.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);  // quad strip to quads
                 float yp = r * 1;
                 float zp = r * 0;
                 for (int i = 1; i <= num_steps360; i++)
@@ -1244,40 +1331,42 @@ public class ShapesRenderer
                     float theta = step * i;
                     float y = r * Mth.cos(theta);
                     float z = r * Mth.sin(theta);
-
-                    primitives.addQuad(new Vec3(cx + 0, cy + yp, cz + zp), new Vec3(cx + h, cy + yp, cz + zp),
-                            new Vec3(cx + h, cy + y, cz + z), new Vec3(cx + 0, cy + y, cz + z), argb);
+                    builderrr.addVertex(cx + 0, cy + yp, cz + zp).setColor(red, grn, blu, alpha);
+                    builderrr.addVertex(cx + h, cy + yp, cz + zp).setColor(red, grn, blu, alpha);
+                    builderrr.addVertex(cx + h, cy + y, cz + z).setColor(red, grn, blu, alpha);
+                    builderrr.addVertex(cx + 0, cy + y, cz + z).setColor(red, grn, blu, alpha);
                     yp = y;
                     zp = z;
                 }
+                drawWithShader(builderrr.buildOrThrow(), RenderType.debugQuads());
             }
         }
         else if (axis == Direction.Axis.Z)
         {
+            BufferBuilder builder = tesselator.begin(VertexFormat.Mode.TRIANGLE_FAN, DefaultVertexFormat.POSITION_COLOR);
+            builder.addVertex(cx, cy, cz).setColor(red, grn, blu, alpha);
+            for (int i = 0; i <= num_steps360; i++)
             {
-                Vec3[] points = new Vec3[num_steps360 + 2];
-                points[0] = new Vec3(cx, cy, cz);
-                for (int i = 0; i <= num_steps360; i++) {
-                    float theta = step * i;
-                    float x = r * Mth.cos(theta);
-                    float y = r * Mth.sin(theta);
-                    points[i + 1] = new Vec3(x + cx, cy + y, cz);
-                }
-                primitives.addTriangleFan(points, argb);
+                float theta = step * i;
+                float x = r * Mth.cos(theta);
+                float y = r * Mth.sin(theta);
+                builder.addVertex(x + cx, cy + y, cz).setColor(red, grn, blu, alpha);
             }
+            drawWithShader(builder.buildOrThrow(), RenderType.debugTriangleFan());
             if (!isFlat)
             {
-                Vec3 [] points = new Vec3[num_steps360 + 2];
-                points[0] = new Vec3(cx, cy, cz + h);
+                BufferBuilder builderr = tesselator.begin(VertexFormat.Mode.TRIANGLE_FAN, DefaultVertexFormat.POSITION_COLOR);
+                builderr.addVertex(cx, cy, cz + h).setColor(red, grn, blu, alpha);
                 for (int i = 0; i <= num_steps360; i++)
                 {
                     float theta = step * i;
                     float x = r * Mth.cos(theta);
                     float y = r * Mth.sin(theta);
-                    points[i + 1] = new Vec3(x + cx, cy + y, cz + h);
+                    builderr.addVertex(x + cx, cy + y, cz + h).setColor(red, grn, blu, alpha);
                 }
-                primitives.addTriangleFan(points, argb);
+                drawWithShader(builderr.buildOrThrow(), RenderType.debugTriangleFan());
 
+                BufferBuilder builderrr = tesselator.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);  // quad strip to quads
                 float xp = r;
                 float yp = 0;
                 for (int i = 1; i <= num_steps360; i++)
@@ -1285,26 +1374,29 @@ public class ShapesRenderer
                     float theta = step * i;
                     float x = r * Mth.cos(theta);
                     float y = r * Mth.sin(theta);
-                    primitives.addQuad(new Vec3(cx + xp, cy + yp, cz + 0), new Vec3(cx + xp, cy + yp, cz + h),
-                            new Vec3(cx + x, cy + y, cz + h), new Vec3(cx + x, cy + y, cz + 0), argb);
+                    builderrr.addVertex(cx + xp, cy + yp, cz + 0).setColor(red, grn, blu, alpha);
+                    builderrr.addVertex(cx + xp, cy + yp, cz + h).setColor(red, grn, blu, alpha);
+                    builderrr.addVertex(cx + x, cy + y, cz + h).setColor(red, grn, blu, alpha);
+                    builderrr.addVertex(cx + x, cy + y, cz + 0).setColor(red, grn, blu, alpha);
                     xp = x;
                     yp = y;
                 }
+                drawWithShader(builderrr.buildOrThrow(), RenderType.debugQuads());
             }
         }
     }
 
-    public static void drawSphereWireframe(DrawableGizmoPrimitives primitives,
+    public static void drawSphereWireframe(Tesselator tesselator,
                                            float cx, float cy, float cz,
                                            float r, int subd,
-                                           int argb, float width)
+                                           float red, float grn, float blu, float alpha)
     {
         float step = (float) Math.PI / (subd / 2);
         int num_steps180 = (int) (Math.PI / step) + 1;
         int num_steps360 = (int) (2 * Math.PI / step) + 1;
         for (int i = 0; i <= num_steps360; i++)
         {
-            Vec3 from = null;
+            BufferBuilder builder = tesselator.begin(VertexFormat.Mode.DEBUG_LINE_STRIP, DefaultVertexFormat.POSITION_COLOR);
             float theta = step * i;
             for (int j = 0; j <= num_steps180; j++)
             {
@@ -1312,16 +1404,13 @@ public class ShapesRenderer
                 float x = r * Mth.sin(phi) * Mth.cos(theta);
                 float z = r * Mth.sin(phi) * Mth.sin(theta);
                 float y = r * Mth.cos(phi);
-                Vec3 to = new Vec3(x + cx, y + cy, z + cz);
-                if (from != null) {
-                    primitives.addLine(from, to, argb, width);
-                }
-                from = to;
+                builder.addVertex(x + cx, y + cy, z + cz).setColor(red, grn, blu, alpha);
             }
+            drawWithShader(builder.buildOrThrow(), RenderType.debugLineStrip(1));
         }
         for (int j = 0; j <= num_steps180; j++)
         {
-            Vec3 from = null;
+            BufferBuilder builder = tesselator.begin(VertexFormat.Mode.DEBUG_LINE_STRIP, DefaultVertexFormat.POSITION_COLOR); // line loop to line strip
             float phi = step * j;
 
             for (int i = 0; i <= num_steps360; i++)
@@ -1330,20 +1419,17 @@ public class ShapesRenderer
                 float x = r * Mth.sin(phi) * Mth.cos(theta);
                 float z = r * Mth.sin(phi) * Mth.sin(theta);
                 float y = r * Mth.cos(phi);
-                Vec3 to = new Vec3(x + cx, y + cy, z + cz);
-                if (from != null) {
-                    primitives.addLine(from, to, argb, width);
-                }
-                from = to;
+                builder.addVertex(x + cx, y + cy, z + cz).setColor(red, grn, blu, alpha);
             }
+            drawWithShader(builder.buildOrThrow(), RenderType.debugLineStrip(1));
         }
 
     }
 
-    public static void drawSphereFaces(DrawableGizmoPrimitives primitives,
+    public static void drawSphereFaces(Tesselator tesselator,
                                        float cx, float cy, float cz,
                                        float r, int subd,
-                                       int argb)
+                                       float red, float grn, float blu, float alpha)
     {
 
         float step = (float) Math.PI / (subd / 2);
@@ -1353,6 +1439,7 @@ public class ShapesRenderer
         {
             float theta = i * step;
             float thetaprime = theta + step;
+            BufferBuilder builder = tesselator.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);  // quad strip to quads
             float xb = 0;
             float zb = 0;
             float xbp = 0;
@@ -1366,16 +1453,17 @@ public class ShapesRenderer
                 float y = r * Mth.cos(phi);
                 float xp = r * Mth.sin(phi) * Mth.cos(thetaprime);
                 float zp = r * Mth.sin(phi) * Mth.sin(thetaprime);
-
-                primitives.addQuad(new Vec3(xb + cx, yp + cy, zb + cz), new Vec3(xbp + cx, yp + cy, zbp + cz),
-                        new Vec3(xp + cx, y + cy, zp + cz), new Vec3(x + cx, y + cy, z + cz), argb);
-
+                builder.addVertex(xb + cx, yp + cy, zb + cz).setColor(red, grn, blu, alpha);
+                builder.addVertex(xbp + cx, yp + cy, zbp + cz).setColor(red, grn, blu, alpha);
+                builder.addVertex(xp + cx, y + cy, zp + cz).setColor(red, grn, blu, alpha);
+                builder.addVertex(x + cx, y + cy, z + cz).setColor(red, grn, blu, alpha);
                 xb = x;
                 zb = z;
                 xbp = xp;
                 zbp = zp;
                 yp = y;
             }
+            drawWithShader(builder.buildOrThrow(), RenderType.debugQuads());
         }
     }
 }

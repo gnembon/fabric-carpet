@@ -31,7 +31,6 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
 
 import net.minecraft.commands.CommandSourceStack;
-import net.minecraft.commands.Commands;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
@@ -203,17 +202,6 @@ public class CarpetScriptHost extends ScriptHost
         return command;
     }
 
-    private static boolean sourceHasPermissionLevel(CommandSourceStack source, int level) {
-        return switch (level) {
-            case 0 -> Commands.LEVEL_ALL.check(source.permissions());
-            case 1 -> Commands.LEVEL_MODERATORS.check(source.permissions());
-            case 2 -> Commands.LEVEL_GAMEMASTERS.check(source.permissions());
-            case 3 -> Commands.LEVEL_ADMINS.check(source.permissions());
-            case 4 -> Commands.LEVEL_OWNERS.check(source.permissions());
-            default -> false;
-        };
-    }
-
     public Predicate<CommandSourceStack> getCommandConfigPermissions() throws CommandSyntaxException
     {
         Value confValue = appConfig.get(StringValue.of("command_permission"));
@@ -228,13 +216,13 @@ public class CarpetScriptHost extends ScriptHost
             {
                 throw CommandArgument.error("Numeric permission level for custom commands should be between 1 and 4");
             }
-            return s -> sourceHasPermissionLevel(s, level);
+            return s -> s.hasPermission(level);
         }
         if (!(confValue instanceof final FunctionValue fun))
         {
             String perm = confValue.getString().toLowerCase(Locale.ROOT);
             return switch (perm) {
-                case "ops" -> s -> sourceHasPermissionLevel(s, 2);
+                case "ops" -> s -> s.hasPermission(2);
                 case "server" -> s -> !(s.getEntity() instanceof ServerPlayer);
                 case "players" -> s -> s.getEntity() instanceof ServerPlayer;
                 case "all" -> s -> true;

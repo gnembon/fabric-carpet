@@ -12,16 +12,12 @@ import carpet.utils.Messenger;
 import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.loader.api.SemanticVersion;
 import net.minecraft.commands.CommandSourceStack;
-import net.minecraft.commands.Commands;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.ServerInterface;
 import net.minecraft.server.dedicated.DedicatedServer;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.server.permissions.LevelBasedPermissionSet;
-import net.minecraft.server.permissions.PermissionCheck;
-import net.minecraft.server.permissions.PermissionSet;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
@@ -60,7 +56,7 @@ public class CarpetSettings
     public static final Logger LOG = LoggerFactory.getLogger("carpet");
     public static final ThreadLocal<Boolean> skipGenerationChecks = ThreadLocal.withInitial(() -> false);
     public static final ThreadLocal<Boolean> impendingFillSkipUpdates = ThreadLocal.withInitial(() -> false);
-    public static PermissionSet runPermissionLevel = LevelBasedPermissionSet.GAMEMASTER;
+    public static int runPermissionLevel = 2;
     public static Block structureBlockIgnoredBlock = Blocks.STRUCTURE_VOID;
     private static class LanguageValidator extends Validator<String> {
         @Override public String validate(CommandSourceStack source, CarpetRule<String> currentRule, String newValue, String string) {
@@ -133,7 +129,7 @@ public class CarpetSettings
 
     private static class CarpetPermissionLevel extends Validator<String> {
         @Override public String validate(CommandSourceStack source, CarpetRule<String> currentRule, String newValue, String string) {
-            if (source == null || Commands.LEVEL_OWNERS.check(source.permissions()))
+            if (source == null || source.hasPermission(4))
                 return newValue;
             return null;
         }
@@ -427,31 +423,9 @@ public class CarpetSettings
     @Rule(
             desc = "Required permission level for /perf command",
             options = {"2", "4"},
-            category = CREATIVE,
-            validate = PermissionValidator.class
+            category = CREATIVE
     )
     public static int perfPermissionLevel = 4;
-
-    public static class PermissionValidator extends Validator<Integer> {
-        @Override
-        public Integer validate(CommandSourceStack source, CarpetRule<Integer> currentRule, Integer newValue, String string) {
-            if (newValue == 2) {
-                perfPermissionCheck = Commands.LEVEL_GAMEMASTERS;
-
-            } else if (newValue == 4) {
-                perfPermissionCheck = Commands.LEVEL_OWNERS;
-
-            }
-            return newValue;
-        }
-
-        @Override
-        public String description() {
-            return "You must have the permission level you are trying to set";
-        }
-    }
-    public static PermissionCheck perfPermissionCheck = Commands.LEVEL_OWNERS;
-
 
     @Rule(desc = "Enables /log command to monitor events via chat and overlays", category = COMMAND)
     public static String commandLog = "true";
@@ -502,21 +476,17 @@ public class CarpetSettings
 
     private static class ModulePermissionLevel extends Validator<String> {
         @Override public String validate(CommandSourceStack source, CarpetRule<String> currentRule, String newValue, String string) {
-            PermissionCheck permissionLevel = switch (newValue) {
-                    case "0", "false" -> Commands.LEVEL_ALL;
-                    case "1" -> Commands.LEVEL_MODERATORS;
-                    case "2", "true", "ops" -> Commands.LEVEL_GAMEMASTERS;
-                    case "3" -> Commands.LEVEL_ADMINS;
-                    case "4" -> Commands.LEVEL_OWNERS;
+            int permissionLevel = switch (newValue) {
+                    case "false" -> 0;
+                    case "true", "ops" -> 2;
+                    case "0", "1", "2", "3", "4" -> Integer.parseInt(newValue);
                     default -> throw new IllegalArgumentException(); // already checked by previous validator
             	};
-            if (source != null && !permissionLevel.check(source.permissions()))
+            if (source != null && !source.hasPermission(permissionLevel))
                 return null;
-            CarpetSettings.runPermissionLevel = LevelBasedPermissionSet.GAMEMASTER;
-            if (source != null) {
+            CarpetSettings.runPermissionLevel = permissionLevel;
+            if (source != null)
                 CommandHelper.notifyPlayersCommandsChanged(source.getServer());
-                CarpetSettings.runPermissionLevel =source.permissions();
-            }
             return newValue;
         }
         @Override
