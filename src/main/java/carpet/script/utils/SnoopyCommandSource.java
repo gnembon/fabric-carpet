@@ -1,6 +1,5 @@
 package carpet.script.utils;
 
-import carpet.fakes.CommandSourceStackInterface;
 import carpet.script.external.Vanilla;
 import net.minecraft.commands.CommandResultCallback;
 import net.minecraft.commands.CommandSigningContext;
@@ -67,7 +66,6 @@ public class SnoopyCommandSource extends CommandSourceStack
         this.chatOutput = chatOutput;
         this.signingContext = original.getSigningContext();
         this.taskChainer = TaskChainer.immediate(original.getServer());
-        ((CommandSourceStackInterface) this).setupPrivates(false, (b, i) -> returnValue[0] = OptionalLong.of(i), EntityAnchorArgument.Anchor.FEET, CommandSigningContext.ANONYMOUS, TaskChainer.immediate(original.getServer()));
     }
 
     public SnoopyCommandSource(ServerPlayer player, Component[] error, List<Component> output, int [] result)
@@ -91,7 +89,6 @@ public class SnoopyCommandSource extends CommandSourceStack
         this.chatOutput = output;
         this.signingContext = CommandSigningContext.ANONYMOUS;
         this.taskChainer = TaskChainer.immediate(player.level().getServer());
-        ((CommandSourceStackInterface) this).setupPrivates(false, (b, i) -> result[0] = i, EntityAnchorArgument.Anchor.FEET, CommandSigningContext.ANONYMOUS, TaskChainer.immediate(player.level().getServer()));
     }
 
     private SnoopyCommandSource(CommandSource output, Vec3 pos, Vec2 rot, ServerLevel world, PermissionSet level, String simpleName, Component name, MinecraftServer server, @Nullable Entity entity, CommandResultCallback consumer, EntityAnchorArgument.Anchor entityAnchor, CommandSigningContext context, TaskChainer chainer,
@@ -117,7 +114,6 @@ public class SnoopyCommandSource extends CommandSourceStack
         this.chatOutput = chatOutput;
         this.signingContext = context;
         this.taskChainer = chainer;
-        ((CommandSourceStackInterface) this).setupPrivates(false, consumer, entityAnchor, context, chainer);
     }
 
     @Override
