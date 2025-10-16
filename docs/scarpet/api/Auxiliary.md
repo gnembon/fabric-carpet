@@ -330,6 +330,20 @@ Changes the header or footer of the player list for the specified targets.
 If `text` is `null` or an empty string it will remove the header or footer for the specified targets.
 In case the player has Carpet loggers running, the footer specified by Scarpet will appear above the loggers.
 
+### `dialog(players, dialog)`
+
+Displays a dialog to the player (or players if `players` is a list).
+The `dialog` can be the ID of a dialog defined by a datapack.
+It also accepts inline dialog data from, just like in the `/dialog` command.
+Providing `null` as the `dialog` will clear the currently displayed dialog for the players.
+
+Example usages:
+<pre>
+dialog(player, 'minecraft:server_links') // using dialog defined in datapack
+dialog(player, {'type' -> 'minecraft:notice', 'title' -> 'Example'}) // inline dialog definition
+dialog(player, null) // clears the dialog
+</pre>
+
 ### `logger(msg), logger(type, msg)`
 
 Prints the message to system logs, and not to chat.
