@@ -4,11 +4,13 @@ import carpet.fakes.ServerWorldInterface;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.core.RegistryAccess;
+import net.minecraft.core.particles.ExplosionParticleInfo;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.util.profiling.ProfilerFiller;
+import net.minecraft.util.random.WeightedList;
 import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
@@ -69,7 +71,7 @@ public abstract class ServerLevel_scarpetMixin extends Level implements ServerWo
     }
 
     @Inject(method = "explode", at = @At("HEAD"), cancellable = true)
-    private void handleExplosion(final Entity entity, final DamageSource damageSource, final ExplosionDamageCalculator explosionDamageCalculator, final double x, final double y, final double z, final float g, final boolean bl, final ExplosionInteraction explosionInteraction, final ParticleOptions particleOptions, final ParticleOptions particleOptions2, final Holder<SoundEvent> holder, final CallbackInfo ci)
+    private void handleExplosion(Entity entity, DamageSource damageSource, ExplosionDamageCalculator explosionDamageCalculator, double x, double y, double z, float g, boolean bl, ExplosionInteraction explosionInteraction, ParticleOptions particleOptions, ParticleOptions particleOptions2, WeightedList<ExplosionParticleInfo> weightedList, Holder<SoundEvent> holder, CallbackInfo ci)
     {
         if (EXPLOSION.isNeeded()) {
             Explosion.BlockInteraction var10000 = switch (explosionInteraction) {
@@ -78,7 +80,6 @@ public abstract class ServerLevel_scarpetMixin extends Level implements ServerWo
                 case MOB -> this.getGameRules().getBoolean(GameRules.RULE_MOBGRIEFING) ? this.getCMDestroyType(GameRules.RULE_MOB_EXPLOSION_DROP_DECAY) : Explosion.BlockInteraction.KEEP;
                 case TNT -> this.getCMDestroyType(GameRules.RULE_TNT_EXPLOSION_DROP_DECAY);
                 case TRIGGER -> Explosion.BlockInteraction.TRIGGER_BLOCK;
-                default -> throw new IncompatibleClassChangeError();
             };
 
             boolean cancelled = EXPLOSION.onExplosion((ServerLevel) (Object) this, entity, null, new Vec3(x, y, z), g, bl, null, null, var10000);

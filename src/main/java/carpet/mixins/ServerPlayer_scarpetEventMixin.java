@@ -38,8 +38,8 @@ public abstract class ServerPlayer_scarpetEventMixin extends Player implements S
     @Unique
     private boolean isInvalidReference = false;
 
-    public ServerPlayer_scarpetEventMixin(Level level, BlockPos blockPos, float f, GameProfile gameProfile) {
-        super(level, blockPos, f, gameProfile);
+    public ServerPlayer_scarpetEventMixin(Level level, GameProfile gameProfile) {
+        super(level, gameProfile);
     }
 
     //@Shadow protected abstract void completeUsingItem();

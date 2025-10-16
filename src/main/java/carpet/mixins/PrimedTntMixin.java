@@ -43,7 +43,7 @@ public abstract class PrimedTntMixin extends Entity implements TntEntityInterfac
     @Inject(method = "<init>(Lnet/minecraft/world/entity/EntityType;Lnet/minecraft/world/level/Level;)V", at = @At("RETURN"))
     private void initTNTLoggerPrime(EntityType<? extends PrimedTnt> entityType_1, Level world_1, CallbackInfo ci)
     {
-        if (LoggerRegistry.__tnt && !world_1.isClientSide)
+        if (LoggerRegistry.__tnt && !world_1.isClientSide())
         {
             logHelper = new TNTLogHelper();
         }
@@ -90,7 +90,7 @@ public abstract class PrimedTntMixin extends Entity implements TntEntityInterfac
         // Merge code for combining tnt into a single entity if they happen to exist in the same spot, same fuse, no motion CARPET-XCOM
         if(CarpetSettings.mergeTNT){
             Vec3 velocity = getDeltaMovement();
-            if(!level().isClientSide && mergeBool && velocity.x == 0 && velocity.y == 0 && velocity.z == 0){
+            if(!level().isClientSide() && mergeBool && velocity.x == 0 && velocity.y == 0 && velocity.z == 0){
                 mergeBool = false;
                 for(Entity entity : level().getEntities(this, this.getBoundingBox())){
                     if(entity instanceof PrimedTnt && !entity.isRemoved()){
@@ -113,7 +113,7 @@ public abstract class PrimedTntMixin extends Entity implements TntEntityInterfac
     {
         // Merge code, merge only tnt that have had a chance to move CARPET-XCOM
         Vec3 velocity = getDeltaMovement();
-        if(!level().isClientSide && (velocity.y != 0 || velocity.x != 0 || velocity.z != 0)){
+        if(!level().isClientSide() && (velocity.y != 0 || velocity.x != 0 || velocity.z != 0)){
             mergeBool = true;
         }
     }

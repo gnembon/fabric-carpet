@@ -257,7 +257,7 @@ public class ServerGamePacketListenerImpl_scarpetEventsMixin
     {
         if (PLAYER_CHOOSES_RECIPE.isNeeded())
         {
-            RecipeManager.ServerDisplayInfo displayInfo = player.getServer().getRecipeManager().getRecipeFromDisplay(packet.recipe());
+            RecipeManager.ServerDisplayInfo displayInfo = player.level().getServer().getRecipeManager().getRecipeFromDisplay(packet.recipe());
             if (displayInfo == null) {
                 return;
             }
@@ -268,7 +268,7 @@ public class ServerGamePacketListenerImpl_scarpetEventsMixin
     @Inject(method = "handleSetCarriedItem", at = @At("HEAD"))
     private void onUpdatedSelectedSLot(ServerboundSetCarriedItemPacket packet, CallbackInfo ci)
     {
-        if (PLAYER_SWITCHES_SLOT.isNeeded() && player.getServer() != null && player.getServer().isSameThread())
+        if (PLAYER_SWITCHES_SLOT.isNeeded() && player.level().getServer() != null && player.level().getServer().isSameThread())
         {
             PLAYER_SWITCHES_SLOT.onSlotSwitch(player, player.getInventory().getSelectedSlot(), packet.getSlot());
         }

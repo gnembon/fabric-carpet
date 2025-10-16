@@ -19,7 +19,8 @@ import net.minecraft.server.level.ClientInformation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.network.CommonListenerCookie;
-import net.minecraft.server.players.GameProfileCache;
+import net.minecraft.server.players.OldUsersConverter;
+import net.minecraft.util.ProblemReporter;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EquipmentSlot;
@@ -27,11 +28,13 @@ import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.food.FoodData;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.component.ResolvableProfile;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.entity.SkullBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.portal.TeleportTransition;
+import net.minecraft.world.level.storage.TagValueInput;
+import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.phys.Vec3;
 import carpet.fakes.ServerPlayerInterface;
 import carpet.utils.Messenger;
@@ -39,6 +42,7 @@ import carpet.utils.Messenger;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
 @SuppressWarnings("EntityConstructor")
@@ -54,32 +58,30 @@ public class EntityPlayerMPFake extends ServerPlayer
     {
         //prolly half of that crap is not necessary, but it works
         ServerLevel worldIn = server.getLevel(dimensionId);
-        GameProfileCache.setUsesAuthentication(false);
+        server.services().nameToIdCache().resolveOfflineUsers(false);
         GameProfile gameprofile;
-        try {
-            gameprofile = server.getProfileCache().get(username).orElse(null); //findByName  .orElse(null)
-        }
-        finally {
-            GameProfileCache.setUsesAuthentication(server.isDedicatedServer() && server.usesAuthentication());
-        }
-        if (gameprofile == null)
-        {
-            if (!CarpetSettings.allowSpawningOfflinePlayers)
-            {
-                return false;
-            } else {
-                gameprofile = new GameProfile(UUIDUtil.createOfflinePlayerUUID(username), username);
+
+            UUID uuid = OldUsersConverter.convertMobOwnerIfNecessary(server, username);
+            //NameAndId res = server.services().nameToIdCache().get(username).orElseThrow(); //findByName  .orElse(null)
+            if (uuid == null && CarpetSettings.allowSpawningOfflinePlayers) {
+                server.services().nameToIdCache().resolveOfflineUsers(server.isDedicatedServer() && server.usesAuthentication());
+                uuid = UUIDUtil.createOfflinePlayerUUID(username);
             }
-        }
-        GameProfile finalGP = gameprofile;
+            if (uuid == null) {
+                return false; // no uuid, no player
+            }
+            gameprofile = new GameProfile(uuid, username);
+
+
+        //GameProfile finalGP = gameprofile;
 
         // We need to mark this player as spawning so that we do not
         // try to spawn another player with the name while the profile
         // is being fetched - preventing multiple players spawning
-        String name = gameprofile.getName();
+        String name = gameprofile.name();
         spawning.add(name);
 
-        fetchGameProfile(name).whenCompleteAsync((p, t) -> {
+        fetchGameProfile(server, gameprofile.id()).whenCompleteAsync((p, t) -> {
             // Always remove the name, even if exception occurs
             spawning.remove(name);
             if (t != null)
@@ -87,14 +89,19 @@ public class EntityPlayerMPFake extends ServerPlayer
                 return;
             }
 
-            GameProfile current = finalGP;
-            if (p.isPresent())
-            {
-                current = p.get();
+            GameProfile current;
+            if (p.name().isEmpty()) {
+                current = gameprofile;
             }
+            else {
+                current = p;
+            }
+
             EntityPlayerMPFake instance = new EntityPlayerMPFake(server, worldIn, current, ClientInformation.createDefault(), false);
             instance.fixStartingPosition = () -> instance.snapTo(pos.x, pos.y, pos.z, (float) yaw, (float) pitch);
             server.getPlayerList().placeNewPlayer(new FakeClientConnection(PacketFlow.SERVERBOUND), instance, new CommonListenerCookie(current, 0, instance.clientInformation(), false));
+            loadPlayerData(instance);
+            instance.stopRiding(); // otherwise the created fake player will be on the vehicle
             instance.teleportTo(worldIn, pos.x, pos.y, pos.z, Set.of(), (float) yaw, (float) pitch, true);
             instance.setHealth(20.0F);
             instance.unsetRemoved();
@@ -109,19 +116,34 @@ public class EntityPlayerMPFake extends ServerPlayer
         return true;
     }
 
-    private static CompletableFuture<Optional<GameProfile>> fetchGameProfile(final String name) {
-        return SkullBlockEntity.fetchGameProfile(name);
+    private static CompletableFuture<GameProfile> fetchGameProfile(MinecraftServer server, final UUID name) {
+        final ResolvableProfile resolvableProfile = ResolvableProfile.createUnresolved(name);
+        return resolvableProfile.resolveProfile(server.services().profileResolver());
+    }
+
+    private static void loadPlayerData(EntityPlayerMPFake player)
+    {
+        try (ProblemReporter.ScopedCollector scopedCollector = new ProblemReporter.ScopedCollector(player.problemPath(), CarpetSettings.LOG))
+        {
+            Optional<ValueInput> optional = player.level().getServer().getPlayerList().loadPlayerData(player.nameAndId()).map((compoundTag) -> TagValueInput.create(scopedCollector, player.registryAccess(), compoundTag));
+            optional.ifPresent( valueInput -> {
+                player.load(valueInput);
+                player.loadAndSpawnEnderPearls(valueInput);
+                player.loadAndSpawnParentVehicle(valueInput);
+            });
+        }
     }
 
     public static EntityPlayerMPFake createShadow(MinecraftServer server, ServerPlayer player)
     {
-        player.getServer().getPlayerList().remove(player);
+        player.level().getServer().getPlayerList().remove(player);
         player.connection.disconnect(Component.translatable("multiplayer.disconnect.duplicate_login"));
         ServerLevel worldIn = player.level();//.getWorld(player.dimension);
         GameProfile gameprofile = player.getGameProfile();
         EntityPlayerMPFake playerShadow = new EntityPlayerMPFake(server, worldIn, gameprofile, player.clientInformation(), true);
         playerShadow.setChatSession(player.getChatSession());
         server.getPlayerList().placeNewPlayer(new FakeClientConnection(PacketFlow.SERVERBOUND), playerShadow, new CommonListenerCookie(gameprofile, 0, player.clientInformation(), true));
+        loadPlayerData(playerShadow);
 
         playerShadow.setHealth(player.getHealth());
         playerShadow.connection.teleport(player.getX(), player.getY(), player.getZ(), player.getYRot(), player.getXRot());
@@ -152,7 +174,7 @@ public class EntityPlayerMPFake extends ServerPlayer
     private EntityPlayerMPFake(MinecraftServer server, ServerLevel worldIn, GameProfile profile, ClientInformation cli, boolean shadow)
     {
         super(server, worldIn, profile, cli);
-        isAShadow = shadow;
+        this.isAShadow = shadow;
     }
 
     @Override
@@ -174,7 +196,7 @@ public class EntityPlayerMPFake extends ServerPlayer
         if (reason.getContents() instanceof TranslatableContents text && text.getKey().equals("multiplayer.disconnect.duplicate_login")) {
             this.connection.onDisconnect(new DisconnectionDetails(reason));
         } else {
-            this.getServer().schedule(new TickTask(this.getServer().getTickCount(), () -> {
+            this.level().getServer().schedule(new TickTask(this.level().getServer().getTickCount(), () -> {
                 this.connection.onDisconnect(new DisconnectionDetails(reason));
             }));
         }
@@ -183,7 +205,7 @@ public class EntityPlayerMPFake extends ServerPlayer
     @Override
     public void tick()
     {
-        if (this.getServer().getTickCount() % 10 == 0)
+        if (this.level().getServer().getTickCount() % 10 == 0)
         {
             this.connection.resetPosition();
             this.level().getChunkSource().move(this);

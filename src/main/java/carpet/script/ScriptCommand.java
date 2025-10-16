@@ -15,7 +15,9 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import net.minecraft.commands.CommandBuildContext;
+import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.level.GameRules;
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.IOException;
@@ -224,7 +226,7 @@ public class ScriptCommand
                                                         BlockPosArgument.getSpawnablePos(cc, "to"),
                                                         StringArgumentType.getString(cc, "arguments")
                                                 ))))));
-        LiteralArgumentBuilder<CommandSourceStack> i = literal("scan").requires((player) -> player.hasPermission(2)).
+        LiteralArgumentBuilder<CommandSourceStack> i = literal("scan").requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS)).
                 then(argument("origin", BlockPosArgument.blockPos()).
                         then(argument("from", BlockPosArgument.blockPos()).
                                 then(argument("to", BlockPosArgument.blockPos()).
@@ -237,7 +239,7 @@ public class ScriptCommand
                                                         BlockPosArgument.getSpawnablePos(cc, "to"),
                                                         StringArgumentType.getString(cc, "expr")
                                                 ))))));
-        LiteralArgumentBuilder<CommandSourceStack> e = literal("fill").requires((player) -> player.hasPermission(2)).
+        LiteralArgumentBuilder<CommandSourceStack> e = literal("fill").requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS)).
                 then(argument("origin", BlockPosArgument.blockPos()).
                         then(argument("from", BlockPosArgument.blockPos()).
                                 then(argument("to", BlockPosArgument.blockPos()).
@@ -264,7 +266,7 @@ public class ScriptCommand
                                                                                 BlockPredicateArgument.getBlockPredicate(cc, "filter"),
                                                                                 "solid"
                                                                         )))))))));
-        LiteralArgumentBuilder<CommandSourceStack> t = literal("outline").requires((player) -> player.hasPermission(2)).
+        LiteralArgumentBuilder<CommandSourceStack> t = literal("outline").requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS)).
                 then(argument("origin", BlockPosArgument.blockPos()).
                         then(argument("from", BlockPosArgument.blockPos()).
                                 then(argument("to", BlockPosArgument.blockPos()).
@@ -665,7 +667,7 @@ public class ScriptCommand
         BoundingBox area = BoundingBox.fromCorners(a, b);
         CarpetExpression cexpr = new CarpetExpression(host.main, expr, source, origin);
         int int_1 = area.getXSpan() * area.getYSpan() * area.getZSpan(); // X Y Z
-        if (int_1 > Vanilla.MinecraftServer_getFillLimit(source.getServer()) )
+        if (int_1 > source.getLevel().getGameRules().getInt(GameRules.RULE_COMMAND_MODIFICATION_BLOCK_LIMIT))
         {
             Carpet.Messenger_message(source, "r too many blocks to evaluate: " + int_1);
             return 1;
@@ -717,7 +719,7 @@ public class ScriptCommand
         BoundingBox area = BoundingBox.fromCorners(a, b);
         CarpetExpression cexpr = new CarpetExpression(host.main, expr, source, origin);
         int int_1 = area.getXSpan() * area.getYSpan() * area.getZSpan();
-        if (int_1 > Vanilla.MinecraftServer_getFillLimit(source.getServer()))
+        if (int_1 > source.getLevel().getGameRules().getInt(GameRules.RULE_COMMAND_MODIFICATION_BLOCK_LIMIT))
         {
             Carpet.Messenger_message(source, "r too many blocks to evaluate: " + int_1);
             return 1;

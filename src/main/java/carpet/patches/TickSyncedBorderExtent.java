@@ -81,7 +81,7 @@ public class TickSyncedBorderExtent implements WorldBorder.BorderExtent
     }
 
     @Override
-    public long getLerpRemainingTime()
+    public long getLerpTime()
     {
         // Rough estimation
         MinecraftServer server = CarpetServer.minecraft_server;
@@ -143,10 +143,7 @@ public class TickSyncedBorderExtent implements WorldBorder.BorderExtent
             {
                 // We do not want to update DelegateBorderChangeListener
                 // This updates borders in other dimensions
-                if (!(listener instanceof BorderChangeListener.DelegateBorderChangeListener))
-                {
-                    listener.onBorderSizeLerping(this.border, this.from, this.to, this.realDuration);
-                }
+                listener.onLerpSize(this.border, this.from, this.to, this.realDuration);
             }
         }
 
