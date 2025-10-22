@@ -36,7 +36,6 @@
     "ServerChunkCache_profilerMixin",
     "ChunkMap_profilerMixin",
     "ServerFunctionManager_profilerMixin",
-    "WorldBorder_syncedWorldBorderMixin",
     "ChunkMap_scarpetChunkCreationMixin",
     "LevelEntityGetterAdapter_scarpetMixin",
     "ChunkHolder_scarpetChunkCreationMixin",

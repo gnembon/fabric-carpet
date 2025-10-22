@@ -17,6 +17,7 @@ import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Random;
 import java.util.function.BiFunction;
 
 import net.minecraft.client.Camera;
@@ -28,12 +29,13 @@ import net.minecraft.client.renderer.ItemBlockRenderTypes;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderBuffers;
-import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.state.BlockEntityRenderState;
 import net.minecraft.client.renderer.entity.state.EntityRenderState;
 import net.minecraft.client.renderer.gizmos.DrawableGizmoPrimitives;
 import net.minecraft.client.renderer.item.ItemStackRenderState;
+import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.client.renderer.state.LevelRenderState;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.core.BlockPos;
@@ -428,7 +430,7 @@ public class ShapesRenderer
                     float blue = (color & 0xFF) / 255.0F;
                     RenderType type;
                     if (blockState.getBlock() instanceof LeavesBlock && !Minecraft.getInstance().options.cutoutLeaves().get()) {
-                        type = RenderType.solid();
+                        type = RenderTypes.solid();
                     } else {
                         type = ItemBlockRenderTypes.getRenderType(blockState);
                     }
@@ -661,14 +663,14 @@ public class ShapesRenderer
                 Mode.LINES, Mode.LINES, Mode.DEBUG_LINES, Mode.DEBUG_LINE_STRIP, Mode.TRIANGLES, Mode.TRIANGLE_STRIP, Mode.TRIANGLE_FAN, Mode.QUADS};
 
         private static final RenderType [] renderTypes = new RenderType[] {
-                RenderType.lines(),
-                RenderType.lines(),
-                RenderType.lines(),
-                RenderType.lines(),
-                RenderType.debugTriangleFan(), // TODO wrong
-                RenderType.debugTriangleFan(), // TODO wrong
-                RenderType.debugTriangleFan(),
-                RenderType.debugQuads()
+                RenderTypes.lines(),
+                RenderTypes.lines(),
+                RenderTypes.lines(),
+                RenderTypes.lines(),
+                RenderTypes.debugTriangleFan(), // TODO wrong
+                RenderTypes.debugTriangleFan(), // TODO wrong
+                RenderTypes.debugTriangleFan(),
+                RenderTypes.debugQuads()
         };
 
         public RenderedPolyface(Minecraft client, ShapeDispatcher.ExpiringShape shape)
@@ -957,32 +959,46 @@ public class ShapesRenderer
             boolean xthick, boolean ythick, boolean zthick,
             int argb)
     {
+        Vec3 v111 = new Vec3(x1, y1, z1);
+        Vec3 v211 = new Vec3(x2, y1, z1);
+        Vec3 v221 = new Vec3(x2, y2, z1);
+        Vec3 v121 = new Vec3(x1, y2, z1);
+        Vec3 v112 = new Vec3(x1, y1, z2);
+        Vec3 v122 = new Vec3(x1, y2, z2);
+        Vec3 v222 = new Vec3(x2, y2, z2);
+        Vec3 v212 = new Vec3(x2, y1, z2);
         if (xthick && ythick)
         {
-            primitives.addQuad(new Vec3(x1, y1, z1), new Vec3(x2, y1, z1), new Vec3(x2, y2, z1), new Vec3(x1, y2, z1), argb);
+            primitives.addQuad(v111, v211, v221, v121, argb);
+            primitives.addQuad(v111, v121, v221, v211, argb);
             if (zthick)
             {
-                primitives.addQuad(new Vec3(x1, y1, z2), new Vec3(x1, y2, z2), new Vec3(x2, y2, z2), new Vec3(x2, y1, z2), argb);
+                primitives.addQuad(v112, v122, v222, v212, argb);
+                primitives.addQuad(v112, v212, v222, v122, argb);
             }
         }
 
         if (zthick && ythick)
         {
-            primitives.addQuad(new Vec3(x1, y1, z1), new Vec3(x1, y2, z1), new Vec3(x1, y2, z2), new Vec3(x1, y1, z2), argb);
+            primitives.addQuad(v111, v121, v122, v112, argb);
+            primitives.addQuad(v111, v112, v122, v121, argb);
 
             if (xthick)
             {
-                primitives.addQuad(new Vec3(x2, y1, z1), new Vec3(x2, y1, z2), new Vec3(x2, y2, z2), new Vec3(x2, y2, z1), argb);
+                primitives.addQuad(v211, v212, v222, v221, argb);
+                primitives.addQuad(v211, v221, v222, v212, argb);
             }
         }
 
         // now at least drawing one
         if (zthick && xthick)
         {
-            primitives.addQuad(new Vec3(x1, y1, z1), new Vec3(x2, y1, z1), new Vec3(x2, y1, z2), new Vec3(x1, y1, z2), argb);
+            primitives.addQuad(v111, v211, v212, v112, argb);
+            primitives.addQuad(v111, v112, v212, v211, argb);
             if (ythick)
             {
-                primitives.addQuad(new Vec3(x1, y2, z1), new Vec3(x1, y2, z2), new Vec3(x2, y2, z2), new Vec3(x2, y2, z1), argb);
+                primitives.addQuad(v121, v122, v222, v221, argb);
+                primitives.addQuad(v121, v221, v222, v122, argb);
             }
         }
     }
@@ -1174,6 +1190,7 @@ public class ShapesRenderer
                     float z = r * Mth.sin(theta);
                     points[i + 1] = new Vec3(x + cx, cy, z + cz);
                 }
+                // for some reason triangle fans are double sided
                 primitives.addTriangleFan(points, argb);
             }
 
@@ -1188,19 +1205,25 @@ public class ShapesRenderer
                     float z = r * Mth.sin(theta);
                     points[i + 1] = new Vec3(x + cx, cy + h, z + cz);
                 }
+                // for some reason triangle fans are double sided
                 primitives.addTriangleFan(points, argb);
 
                 float xp = r * 1;
                 float zp = r * 0;
+                Vec3 previousBottom = new Vec3(cx + xp, cy + 0, cz + zp);
+                Vec3 previousTop = new Vec3(cx + xp, cy + h, cz + zp);
                 for (int i = 1; i <= num_steps360; i++)
                 {
                     float theta = step * i;
                     float x = r * Mth.cos(theta);
                     float z = r * Mth.sin(theta);
-                    primitives.addQuad(new Vec3(cx + xp, cy + 0, cz + zp), new Vec3(cx + xp, cy + h, cz + zp),
-                            new Vec3(cx + x, cy + h, cz + z), new Vec3(cx - x, cy + h, cz + z), argb);
-                    xp = x;
-                    zp = z;
+
+                    Vec3 nextTop = new Vec3(cx + x, cy + h, cz + z);
+                    Vec3 nextBottom = new Vec3(cx + x, cy + 0, cz + z);
+                    primitives.addQuad(previousBottom, previousTop, nextTop, nextBottom, argb);
+                    primitives.addQuad(previousBottom, nextBottom, nextTop,  previousTop, argb);
+                    previousTop = nextTop;
+                    previousBottom = nextBottom;
                 }
             }
 
@@ -1235,16 +1258,20 @@ public class ShapesRenderer
 
                 float yp = r * 1;
                 float zp = r * 0;
+                Vec3 previousBottom = new Vec3(cx + 0, cy + yp, cz + zp);
+                Vec3 previousTop = new Vec3(cx + h, cy + yp, cz + zp);
                 for (int i = 1; i <= num_steps360; i++)
                 {
                     float theta = step * i;
                     float y = r * Mth.cos(theta);
                     float z = r * Mth.sin(theta);
 
-                    primitives.addQuad(new Vec3(cx + 0, cy + yp, cz + zp), new Vec3(cx + h, cy + yp, cz + zp),
-                            new Vec3(cx + h, cy + y, cz + z), new Vec3(cx + 0, cy + y, cz + z), argb);
-                    yp = y;
-                    zp = z;
+                    Vec3 nextTop = new Vec3(cx + h, cy + y, cz + z);
+                    Vec3 nextBottom = new Vec3(cx + 0, cy + y, cz + z);
+                    primitives.addQuad(previousBottom, previousTop, nextTop, nextBottom, argb);
+                    primitives.addQuad(previousBottom, nextBottom, nextTop, previousTop, argb);
+                    previousTop = nextTop;
+                    previousBottom = nextBottom;
                 }
             }
         }
@@ -1276,18 +1303,30 @@ public class ShapesRenderer
 
                 float xp = r;
                 float yp = 0;
+                Vec3 previousBottom = new Vec3(cx + xp, cy + yp, cz + 0);
+                Vec3 previousTop = new Vec3(cx + xp, cy + yp, cz + h);
                 for (int i = 1; i <= num_steps360; i++)
                 {
                     float theta = step * i;
                     float x = r * Mth.cos(theta);
                     float y = r * Mth.sin(theta);
-                    primitives.addQuad(new Vec3(cx + xp, cy + yp, cz + 0), new Vec3(cx + xp, cy + yp, cz + h),
-                            new Vec3(cx + x, cy + y, cz + h), new Vec3(cx + x, cy + y, cz + 0), argb);
-                    xp = x;
-                    yp = y;
+
+                    Vec3 nextTop = new Vec3(cx + x, cy + y, cz + h);
+                    Vec3 nextBottom = new Vec3(cx + x, cy + y, cz + 0);
+                    primitives.addQuad(previousBottom, previousTop, nextTop, nextBottom, argb);
+                    primitives.addQuad(previousBottom, nextBottom, nextTop, previousTop, argb);
+                    previousTop = nextTop;
+                    previousBottom = nextBottom;
                 }
             }
         }
+    }
+
+    private static int shuffleColor(int argb) {
+        int a = 0xff000000 & argb;
+        argb = (new Random(argb)).nextInt();
+        argb = (a) | (0x00ffffff & argb);
+        return argb;
     }
 
     public static void drawSphereWireframe(DrawableGizmoPrimitives primitives,
@@ -1363,8 +1402,13 @@ public class ShapesRenderer
                 float xp = r * Mth.sin(phi) * Mth.cos(thetaprime);
                 float zp = r * Mth.sin(phi) * Mth.sin(thetaprime);
 
-                primitives.addQuad(new Vec3(xb + cx, yp + cy, zb + cz), new Vec3(xbp + cx, yp + cy, zbp + cz),
-                        new Vec3(xp + cx, y + cy, zp + cz), new Vec3(x + cx, y + cy, z + cz), argb);
+                Vec3 v1 = new Vec3(xb + cx, yp + cy, zb + cz);
+                Vec3 v2 = new Vec3(xbp + cx, yp + cy, zbp + cz);
+                Vec3 v3 = new Vec3(xp + cx, y + cy, zp + cz);
+                Vec3 v4 = new Vec3(x + cx, y + cy, z + cz);
+
+                primitives.addQuad(v1, v2, v3, v4, argb);
+                primitives.addQuad(v1, v4, v3, v2, argb);
 
                 xb = x;
                 zb = z;
