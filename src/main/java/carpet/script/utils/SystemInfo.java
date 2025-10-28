@@ -15,7 +15,9 @@ import carpet.script.value.ValueConversions;
 import com.sun.management.OperatingSystemMXBean;
 import net.minecraft.SharedConstants;
 import net.minecraft.server.packs.PackType;
-import net.minecraft.world.level.GameRules;
+import net.minecraft.world.level.gamerules.GameRule;
+import net.minecraft.world.level.gamerules.GameRuleTypeVisitor;
+import net.minecraft.world.level.gamerules.GameRules;
 import net.minecraft.world.level.border.WorldBorder;
 import net.minecraft.world.level.storage.LevelData;
 import net.minecraft.world.level.storage.LevelResource;
@@ -166,12 +168,15 @@ public class SystemInfo
         put("world_gamerules", c -> {
             Map<Value, Value> rules = new HashMap<>();
             GameRules gameRules = c.level().getGameRules();
-            gameRules.visitGameRuleTypes(new GameRules.GameRuleTypeVisitor()
+            gameRules.visitGameRuleTypes(new GameRuleTypeVisitor()
             {
                 @Override
-                public <T extends GameRules.Value<T>> void visit(GameRules.Key<T> key, GameRules.Type<T> type)
-                {
-                    rules.put(StringValue.of(key.getId()), StringValue.of(gameRules.getRule(key).toString()));
+                public void visitBoolean(GameRule<Boolean> gameRule) {
+                    rules.put(StringValue.of(gameRule.id()), BooleanValue.of(gameRules.get(gameRule)));
+                }
+                @Override
+                public void visitInteger(GameRule<Integer> gameRule) {
+                    rules.put(StringValue.of(gameRule.id()), NumericValue.of(gameRules.get(gameRule)));
                 }
             });
             return MapValue.wrap(rules);

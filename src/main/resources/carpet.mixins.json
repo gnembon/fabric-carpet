@@ -81,7 +81,7 @@
     "SaplingBlock_desertShrubsMixin",
     "EntityMixin",
     "Guardian_renewableSpongesMixin",
-    "Husk_templesMixin",
+    "Monster_templesMixin",
     "ChunkGenerator_customMobSpawnsMixin",
     "ServerChunkCacheMixin",
     "NaturalSpawnerMixin",

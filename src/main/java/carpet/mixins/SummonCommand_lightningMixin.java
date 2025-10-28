@@ -10,7 +10,7 @@ import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LightningBolt;
 import net.minecraft.world.entity.animal.horse.SkeletonHorse;
-import net.minecraft.world.level.GameRules;
+import net.minecraft.world.level.gamerules.GameRules;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
@@ -30,7 +30,7 @@ public class SummonCommand_lightningMixin
             ServerLevel world = (ServerLevel) entity.level();
             BlockPos at = entity.blockPosition();
             DifficultyInstance localDifficulty_1 =  world.getCurrentDifficultyAt(at);
-            boolean boolean_2 = world.getGameRules().getBoolean(GameRules.RULE_DOMOBSPAWNING) && world.random.nextDouble() < (double)localDifficulty_1.getEffectiveDifficulty() * 0.01D;
+            boolean boolean_2 = world.getGameRules().get(GameRules.SPAWN_MOBS) && world.random.nextDouble() < (double)localDifficulty_1.getEffectiveDifficulty() * 0.01D;
             if (boolean_2) {
                 SkeletonHorse skeletonHorseEntity_1 = EntityType.SKELETON_HORSE.create(world, EntitySpawnReason.EVENT);
                 skeletonHorseEntity_1.setTrap(true);

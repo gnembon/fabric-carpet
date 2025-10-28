@@ -29,9 +29,9 @@ public class BiomeInfo
         put("temperature", (w, b) -> NumericValue.of(b.getBaseTemperature()));
         // todo add per postion query for environmental attributes as well
         put("fog_color", (w, b) -> fromEnvironmentalAttribute(w, b, EnvironmentAttributes.FOG_COLOR));
-        put("foliage_color", (w, b) -> ValueConversions.ofRGB(b.getSpecialEffects().getFoliageColorOverride().orElse(4764952))); // client Biome.getDefaultFoliageColor
+        put("foliage_color", (w, b) -> ValueConversions.ofRGB(b.getSpecialEffects().foliageColorOverride().orElse(4764952))); // client Biome.getDefaultFoliageColor
         put("sky_color", (w, b) -> fromEnvironmentalAttribute(w, b, EnvironmentAttributes.SKY_COLOR));
-        put("water_color", (w, b) -> ValueConversions.ofRGB(b.getSpecialEffects().getWaterColor()));
+        put("water_color", (w, b) ->  ValueConversions.ofRGB(b.getSpecialEffects().waterColor()));
         put("water_fog_color", (w, b) -> fromEnvironmentalAttribute(w, b, EnvironmentAttributes.WATER_FOG_COLOR));
         put("humidity", (w, b) -> NumericValue.of(Vanilla.Biome_getClimateSettings(b).downfall()));
         put("precipitation", (w, b) -> StringValue.of(b.getPrecipitationAt(new BlockPos(0, w.getSeaLevel(), 0), w.getSeaLevel()).name().toLowerCase(Locale.ROOT)));

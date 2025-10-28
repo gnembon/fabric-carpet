@@ -18,7 +18,8 @@ import net.minecraft.world.entity.LightningBolt;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Explosion;
 import net.minecraft.world.level.ExplosionDamageCalculator;
-import net.minecraft.world.level.GameRules;
+import net.minecraft.world.level.gamerules.GameRule;
+import net.minecraft.world.level.gamerules.GameRules;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.dimension.DimensionType;
@@ -66,8 +67,8 @@ public abstract class ServerLevel_scarpetMixin extends Level implements ServerWo
         if (LIGHTNING.isNeeded()) LIGHTNING.onWorldEventFlag((ServerLevel) (Object)this, blockPos, bl2?1:0);
     }
 
-    private Explosion.BlockInteraction getCMDestroyType(final GameRules.Key<GameRules.BooleanValue> rule) {
-        return getGameRules().getBoolean(rule) ? Explosion.BlockInteraction.DESTROY_WITH_DECAY : Explosion.BlockInteraction.DESTROY;
+    private Explosion.BlockInteraction getCMDestroyType(final GameRule<Boolean> rule) {
+        return getGameRules().get(rule) ? Explosion.BlockInteraction.DESTROY_WITH_DECAY : Explosion.BlockInteraction.DESTROY;
     }
 
     @Inject(method = "explode", at = @At("HEAD"), cancellable = true)
@@ -76,9 +77,9 @@ public abstract class ServerLevel_scarpetMixin extends Level implements ServerWo
         if (EXPLOSION.isNeeded()) {
             Explosion.BlockInteraction var10000 = switch (explosionInteraction) {
                 case NONE -> Explosion.BlockInteraction.KEEP;
-                case BLOCK -> this.getCMDestroyType(GameRules.RULE_BLOCK_EXPLOSION_DROP_DECAY);
-                case MOB -> this.getGameRules().getBoolean(GameRules.RULE_MOBGRIEFING) ? this.getCMDestroyType(GameRules.RULE_MOB_EXPLOSION_DROP_DECAY) : Explosion.BlockInteraction.KEEP;
-                case TNT -> this.getCMDestroyType(GameRules.RULE_TNT_EXPLOSION_DROP_DECAY);
+                case BLOCK -> this.getCMDestroyType(GameRules.BLOCK_EXPLOSION_DROP_DECAY);
+                case MOB -> this.getGameRules().get(GameRules.MOB_GRIEFING) ? this.getCMDestroyType(GameRules.MOB_EXPLOSION_DROP_DECAY) : Explosion.BlockInteraction.KEEP;
+                case TNT -> this.getCMDestroyType(GameRules.TNT_EXPLOSION_DROP_DECAY);
                 case TRIGGER -> Explosion.BlockInteraction.TRIGGER_BLOCK;
             };
 
