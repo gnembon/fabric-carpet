@@ -64,6 +64,7 @@ jobs:
             }
   Build-And-Publish:
     runs-on: ubuntu-latest
+    environment: Modrinth
     needs: [Get-Properties]
     strategy:
       matrix:
@@ -129,7 +130,6 @@ jobs:
       #     release_type: ${{ needs.Get-Properties.outputs.release-type }}
       - name: Upload to Modrinth
         uses: cloudnode-pro/modrinth-publish@v2
-        env: Modrinth
         with:
           token: ${{ secrets.MODRINTH_TOKEN}} # Action requires modrinth token, not github token
           project: TQTTVgYE
