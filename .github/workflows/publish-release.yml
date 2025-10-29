@@ -64,7 +64,7 @@ jobs:
             }
   Build-And-Publish:
     runs-on: ubuntu-latest
-    environment: Modrinth
+    environment: publish
     needs: [Get-Properties]
     strategy:
       matrix:
@@ -138,9 +138,11 @@ jobs:
           # ternary: https://docs.github.com/en/actions/writing-workflows/choosing-what-your-workflow-does/evaluate-expressions-in-workflows-and-actions#example
           # works because javascript
           # version = (branch != Snapshots) ? tag_name : (tag_name + '-' + version)
-          version: ${{ matrix.branch != 'Snapshots' && github.event.release.tag_name || format('{0}-{1}', github.event.release.tag_name, steps.getbranchinfo.outputs.version) }}
+
+          #Didnt implement the ternary because its never been used and its a headache
+          version: ${{ needs.Get-Properties.outputs.carpet-version }}
           changelog: ${{ github.event.release.body }}
-          # release_type: ${{ needs.Get-Properties.outputs.release-type }} #github action currently doesn't support this field
+          channel: ${{ needs.Get-Properties.outputs.release-type }} #release or beta
           loaders: fabric
           game-versions: ${{ steps.getbranchinfo.outputs.version }} # modrinth uses normal minecraft versions
           files: build/libs/${{ steps.findjar.outputs.jarname }}
