@@ -132,7 +132,8 @@ jobs:
         uses: cloudnode-pro/modrinth-publish@v2
         with:
           token: ${{ secrets.MODRINTH_TOKEN}} # Action requires modrinth token, not github token
-          project: TQTTVgYE
+          # project: TQTTVgYE
+          prokect: HFpbSWL3 #test project
           name: Carpet ${{ needs.Get-Properties.outputs.carpet-version }} for Minecraft ${{ steps.getbranchinfo.outputs.version }}
           # ternary: https://docs.github.com/en/actions/writing-workflows/choosing-what-your-workflow-does/evaluate-expressions-in-workflows-and-actions#example
           # works because javascript
