@@ -122,6 +122,21 @@ jobs:
           display_name: Carpet v${{ needs.Get-Properties.outputs.carpet-version }} for ${{ steps.getbranchinfo.outputs.version }}
           game_versions: 7499,4458,${{ steps.getbranchinfo.outputs.curse-versions }} #Fabric,Java 8,[version (s) for the branch]
           release_type: ${{ needs.Get-Properties.outputs.release-type }}
+      - name: Upload to Modrinth
+        uses: cloudnode-pro/modrinth-publish@v2
+        with:
+          token: ${{ secrets.MODRINTH_TOKEN}} # Action requires modrinth token, not github token
+          project: TQTTVgYE
+          name: Carpet ${{ needs.Get-Properties.outputs.carpet-version }} for Minecraft ${{ steps.getbranchinfo.outputs.version }}
+          # ternary: https://docs.github.com/en/actions/writing-workflows/choosing-what-your-workflow-does/evaluate-expressions-in-workflows-and-actions#example
+          # works because javascript
+          # version = (branch != Snapshots) ? tag_name : (tag_name + '-' + version)
+          version: ${{ matrix.branch != 'Snapshots' && github.event.release.tag_name || join([github.event.release.tag_name, steps.getbranchinfo.outputs.version], '-') }}
+          changelog: ${{ github.event.release.body }}
+          # release_type: ${{ needs.Get-Properties.outputs.release-type }} #github action currently doesn't support this field
+          loaders: fabric
+          game_versions: ${{ steps.getbranchinfo.outputs.version }} # modrinth uses normal minecraft versions
+          files: build/libs/${{ steps.findjar.outputs.jarname }}
       - name: Ask Gradle to publish
         run: ./gradlew publish
       - name: Save publish folder in action's artifacts # Remove when automated
