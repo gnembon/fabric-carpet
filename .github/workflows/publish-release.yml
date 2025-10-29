@@ -132,7 +132,7 @@ jobs:
           # ternary: https://docs.github.com/en/actions/writing-workflows/choosing-what-your-workflow-does/evaluate-expressions-in-workflows-and-actions#example
           # works because javascript
           # version = (branch != Snapshots) ? tag_name : (tag_name + '-' + version)
-          version: ${{ matrix.branch != 'Snapshots' && github.event.release.tag_name || join([github.event.release.tag_name, steps.getbranchinfo.outputs.version], '-') }}
+          version: ${{ matrix.branch != 'Snapshots' && github.event.release.tag_name || join([(github.event.release.tag_name, steps.getbranchinfo.outputs.version]), '-') }}
           changelog: ${{ github.event.release.body }}
           # release_type: ${{ needs.Get-Properties.outputs.release-type }} #github action currently doesn't support this field
           loaders: fabric
