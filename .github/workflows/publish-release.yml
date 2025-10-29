@@ -39,7 +39,7 @@ jobs:
       - name: Process property for matrix
         id: processmatrix
         run: |
-          if ! ${{ steps.properties.outputs.release-extra-branch }}; then
+          if ! [[ "${{ steps.properties.outputs.release-extra-branch" }}" == "true" ]] ; then
             echo "matrix-to-exclude=Snapshots" >> $GITHUB_OUTPUT
           fi
       - uses: actions/github-script@v7
