@@ -140,7 +140,7 @@ jobs:
           changelog: ${{ github.event.release.body }}
           # release_type: ${{ needs.Get-Properties.outputs.release-type }} #github action currently doesn't support this field
           loaders: fabric
-          game_versions: ${{ steps.getbranchinfo.outputs.version }} # modrinth uses normal minecraft versions
+          game-versions: ${{ steps.getbranchinfo.outputs.version }} # modrinth uses normal minecraft versions
           files: build/libs/${{ steps.findjar.outputs.jarname }}
       - name: Ask Gradle to publish
         run: ./gradlew publish
