@@ -22,7 +22,7 @@ clients will actually be able to receive (they may have more available via resou
 Renders a cloud of particles `name` centered around `pos` position, by default `count` 10 of them, default `speed` 
 of 0, and to all players nearby, but these options can be changed via optional arguments. Follow vanilla `/particle` 
 command on details on those options. Valid particle names are 
-for example `'angry_villager', 'item diamond', 'block stone', 'dust 0.8 0.1 0.1 4'`.
+for example `'angry_villager', 'item diamond', 'block stone', 'dust{"scale": 4, "color": [0.8, 0.1, 0.1]}'`.
 
 Used with no arguments, return the list of available particle names. Note that some of the names do not correspond to a valid
 particle that can be fed to `particle(...)` function due to a fact that some particles need more configuration
@@ -410,11 +410,21 @@ Runs a vanilla command from the string result of the `expr` and returns a triple
 intercepted list of output messages, and error message if the command resulted in a failure. 
 Successful commands return `null` as their error.
 
+The command return `null` if the command was not run immediately, but was scheduled for later execution 
+due to being requested while command was executed. This happens most commonly
+when running `run` from a `/script run/invoke` command since that always results in piling up command to run while `script` is being executed.
+
+The mitigation for this is to use `run` in a separate scheduled function, or use `run` in a `tick` event, or literally in 
+any other way than directly from a `/script` command, which will ensure that the command runs immediately.
+
 <pre>
-run('fill 1 1 1 10 10 10 air') -> [0, ["Successfully filled 123 blocks"], null]
-run('give @s stone 4') -> [0, ["Gave 4 [Stone] to gnembon"], null]
-run('seed') -> [0, ["Seed: [4031384495743822299]"], null]
-run('sed') -> [0, [], "sed<--[HERE]"] // wrong command
+run('fill 1 1 1 10 10 10 air') -> [123, ["Successfully filled 123 blocks"], null]
+run('give @s stone 4') -> [1, ["Gave 4 [Stone] to gnembon"], null]
+run('seed') -> [-170661413, [Seed: [4031384495743822299]], null]
+run('sed') -> [-1, [], "sed<--[HERE]"] // wrong command
+
+/script run run('setblock 0 0 0 stone') -> null
+/script run schedule(0, _() -> print(run('setblock 0 0 0 stone'))) -> [1, [Changed the block at 0, 0, 0], null]
 </pre>
 
 ### `save()`
@@ -768,7 +778,8 @@ system calls. In all circumstances, these are only provided as read-only.
   * `game_major_target` - major release target. For 1.12.2, that would be 12
   * `game_minor_release` - minor release target. For 1.12.2, that would be 2
   * `game_protocol` - protocol version number
-  * `game_pack_version` - datapack version number
+  * `game_pack_version` - datapack version number as a version string
+  * `game_pack_minor_version` - datapack format minor version number
   * `game_data_version` - data version of the game. Returns an integer, so it can be compared.
   * `game_stable` - indicating if its a production release or a snapshot
   

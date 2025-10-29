@@ -201,7 +201,7 @@ public class EntityPlayerActionPack
         if (closest instanceof AbstractHorse && onlyRideables)
             ((AbstractHorse) closest).mobInteract(player, InteractionHand.MAIN_HAND);
         else
-            player.startRiding(closest,true);
+            player.startRiding(closest,true, true);
         return this;
     }
     public EntityPlayerActionPack dismount()
@@ -274,14 +274,14 @@ public class EntityPlayerActionPack
         else // one slot
         {
             if (selectedSlot == -1)
-                selectedSlot = inv.selected;
+                selectedSlot = inv.getSelectedSlot();
             dropItemFromSlot(selectedSlot, dropAll);
         }
     }
 
     public void setSlot(int slot)
     {
-        player.getInventory().selected = slot-1;
+        player.getInventory().setSelectedSlot(slot-1);
         player.connection.send(new ClientboundSetHeldSlotPacket(slot-1));
     }
 
@@ -310,7 +310,7 @@ public class EntityPlayerActionPack
                         case BLOCK:
                         {
                             player.resetLastActionTime();
-                            ServerLevel world = player.serverLevel();
+                            ServerLevel world = player.level();
                             BlockHitResult blockHit = (BlockHitResult) hit;
                             BlockPos pos = blockHit.getBlockPos();
                             Direction side = blockHit.getDirection();

@@ -15,14 +15,21 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import net.minecraft.commands.CommandBuildContext;
+import net.minecraft.commands.Commands;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.level.gamerules.GameRules;
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.IOException;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Deque;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.CompletableFuture;
@@ -37,11 +44,11 @@ import net.minecraft.commands.arguments.blocks.BlockStateArgument;
 import net.minecraft.commands.arguments.coordinates.BlockPosArgument;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.Clearable;
 import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.pattern.BlockInWorld;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
+
+import javax.annotation.Nullable;
 
 import static net.minecraft.commands.Commands.argument;
 import static net.minecraft.commands.Commands.literal;
@@ -219,7 +226,7 @@ public class ScriptCommand
                                                         BlockPosArgument.getSpawnablePos(cc, "to"),
                                                         StringArgumentType.getString(cc, "arguments")
                                                 ))))));
-        LiteralArgumentBuilder<CommandSourceStack> i = literal("scan").requires((player) -> player.hasPermission(2)).
+        LiteralArgumentBuilder<CommandSourceStack> i = literal("scan").requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS)).
                 then(argument("origin", BlockPosArgument.blockPos()).
                         then(argument("from", BlockPosArgument.blockPos()).
                                 then(argument("to", BlockPosArgument.blockPos()).
@@ -232,7 +239,7 @@ public class ScriptCommand
                                                         BlockPosArgument.getSpawnablePos(cc, "to"),
                                                         StringArgumentType.getString(cc, "expr")
                                                 ))))));
-        LiteralArgumentBuilder<CommandSourceStack> e = literal("fill").requires((player) -> player.hasPermission(2)).
+        LiteralArgumentBuilder<CommandSourceStack> e = literal("fill").requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS)).
                 then(argument("origin", BlockPosArgument.blockPos()).
                         then(argument("from", BlockPosArgument.blockPos()).
                                 then(argument("to", BlockPosArgument.blockPos()).
@@ -259,7 +266,7 @@ public class ScriptCommand
                                                                                 BlockPredicateArgument.getBlockPredicate(cc, "filter"),
                                                                                 "solid"
                                                                         )))))))));
-        LiteralArgumentBuilder<CommandSourceStack> t = literal("outline").requires((player) -> player.hasPermission(2)).
+        LiteralArgumentBuilder<CommandSourceStack> t = literal("outline").requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS)).
                 then(argument("origin", BlockPosArgument.blockPos()).
                         then(argument("from", BlockPosArgument.blockPos()).
                                 then(argument("to", BlockPosArgument.blockPos()).
@@ -289,18 +296,18 @@ public class ScriptCommand
         LiteralArgumentBuilder<CommandSourceStack> a = literal("load").requires(Vanilla::ServerPlayer_canScriptACE).
                 then(argument("app", StringArgumentType.word()).
                         suggests((cc, bb) -> suggest(ss(cc).listAvailableModules(true), bb)).
-                        executes((cc) ->
-                        {
-                            boolean success = ss(cc).addScriptHost(cc.getSource(), StringArgumentType.getString(cc, "app"), null, true, false, false, null);
-                            return success ? 1 : 0;
-                        }).
+                        executes((cc) -> ss(cc).addScriptHost(cc.getSource(), StringArgumentType.getString(cc, "app"), null, true, false, false, null, Expression.LoadOverride.DEFAULT)).
+                        //then(literal("canonical").executes((cc) -> ss(cc).addScriptHost(cc.getSource(), StringArgumentType.getString(cc, "app"), null, true, false, false, null, Expression.LoadOverride.CANONICAL))).
+                        //then(literal("optimized").executes((cc) -> ss(cc).addScriptHost(cc.getSource(), StringArgumentType.getString(cc, "app"), null, true, false, false, null, Expression.LoadOverride.OPTIMIZED))).
+                        //then(literal("functional").executes((cc) -> ss(cc).addScriptHost(cc.getSource(), StringArgumentType.getString(cc, "app"), null, true, false, false, null, Expression.LoadOverride.FUNCTIONAL))).
+                        //then(literal("functional_optimized").executes((cc) -> ss(cc).addScriptHost(cc.getSource(), StringArgumentType.getString(cc, "app"), null, true, false, false, null, Expression.LoadOverride.FUNCTIONAL_OPTIMIZED))).
                         then(literal("global").
-                                executes((cc) ->
-                                        {
-                                            boolean success = ss(cc).addScriptHost(cc.getSource(), StringArgumentType.getString(cc, "app"), null, false, false, false, null);
-                                            return success ? 1 : 0;
-                                        }
-                                )
+                                executes((cc) -> ss(cc).addScriptHost(cc.getSource(), StringArgumentType.getString(cc, "app"), null, false, false, false, null, Expression.LoadOverride.DEFAULT))
+                                        //.
+                                //then(literal("canonical").executes((cc) -> ss(cc).addScriptHost(cc.getSource(), StringArgumentType.getString(cc, "app"), null, false, false, false, null, Expression.LoadOverride.CANONICAL))).
+                                //then(literal("optimized").executes((cc) -> ss(cc).addScriptHost(cc.getSource(), StringArgumentType.getString(cc, "app"), null, false, false, false, null, Expression.LoadOverride.OPTIMIZED))).
+                                //then(literal("functional").executes((cc) -> ss(cc).addScriptHost(cc.getSource(), StringArgumentType.getString(cc, "app"), null, false, false, false, null, Expression.LoadOverride.FUNCTIONAL))).
+                                //then(literal("functional_optimized").executes((cc) -> ss(cc).addScriptHost(cc.getSource(), StringArgumentType.getString(cc, "app"), null, false, false, false, null, Expression.LoadOverride.FUNCTIONAL_OPTIMIZED)))
                         )
                 );
         LiteralArgumentBuilder<CommandSourceStack> f = literal("unload").requires(Vanilla::ServerPlayer_canScriptACE).
@@ -359,12 +366,26 @@ public class ScriptCommand
                             boolean success = ss(cc).uninstallApp(cc.getSource(), StringArgumentType.getString(cc, "app"));
                             return success ? 1 : 0;
                         }));
-        LiteralArgumentBuilder<CommandSourceStack> x = literal("explain").
-                requires(Vanilla::ServerPlayer_canScriptACE).
-                then(argument("expr", StringArgumentType.greedyString()).suggests(ScriptCommand::suggestCode).
-                        executes((cc) -> explain(
-                                cc,
-                                StringArgumentType.getString(cc, "expr"))));
+
+        LiteralArgumentBuilder<CommandSourceStack> x = literal("explain").requires(Vanilla::ServerPlayer_canScriptACE).
+                        executes((cc) -> explain(cc, null, null, null)).
+                        then(literal("expression").
+                                then(argument("style", StringArgumentType.word()).suggests((cc, bb) -> suggest(List.of("raw", "clean", "functional", "canonical", "optimized", "functional_optimized"), bb)).
+                                        then(argument("expr", StringArgumentType.greedyString()).suggests(ScriptCommand::suggestCode).
+                                                executes((cc) -> explain(cc, StringArgumentType.getString(cc, "expr"), null, StringArgumentType.getString(cc, "style")))
+                                        )
+                                )
+                        ).
+                        then(literal("invoke").
+                                then(argument("call", StringArgumentType.word()).suggests((cc, bb) -> suggest(suggestFunctionCalls(cc), bb)).
+                                        executes((cc) -> explain(cc, null, StringArgumentType.getString(cc, "call"), null))
+                                )
+                        ).
+                        then(literal("source").
+                                then(argument("style", StringArgumentType.word()).suggests((cc, bb) -> suggest(List.of("raw", "clean", "functional", "canonical", "optimized", "functional_optimized"), bb)).
+                                        executes((cc) -> explain(cc, null, null, StringArgumentType.getString(cc, "style")))
+                                )
+                        );
 
         dispatcher.register(literal("script").
                 requires(Vanilla::ServerPlayer_canScriptGeneral).
@@ -438,7 +459,7 @@ public class ScriptCommand
                 return;
             }
             Expression expr = fun.getExpression();
-            Tokenizer.Token tok = fun.getToken();
+            Token tok = fun.getToken();
             List<String> snippet = expr.getExpressionSnippet(tok);
             Carpet.Messenger_message(source, "wb " + fun.fullName(), "t  defined at: line " + (tok.lineno + 1) + " pos " + (tok.linepos + 1));
             for (String snippetLine : snippet)
@@ -539,21 +560,104 @@ public class ScriptCommand
         CarpetScriptHost host = getHost(context);
         return handleCall(source, host, () -> {
             CarpetExpression ex = new CarpetExpression(host.main, expr, source, new BlockPos(0, 0, 0));
-            return ex.scriptRunCommand(host, BlockPos.containing(source.getPosition()));
+            return ex.scriptRunCommand(host, BlockPos.containing(source.getPosition())).getLeft();
         });
     }
 
-    private static int explain(CommandContext<CommandSourceStack> context, String expr) throws CommandSyntaxException
+    private static int explain(CommandContext<CommandSourceStack> context, @Nullable String expr, @Nullable String method, @Nullable String style) throws CommandSyntaxException
     {
         CommandSourceStack source = context.getSource();
         CarpetScriptHost host = getHost(context);
         return handleCall(source, host, () -> {
-            CarpetExpression ex = new CarpetExpression(host.main, expr, source, new BlockPos(0, 0, 0));
-            ex.explain(host, BlockPos.containing(source.getPosition()));
-            Carpet.Messenger_message(source, "w Expression: ", "wb " + expr);
-            Carpet.Messenger_message(source, "w Tokens: ", "wb " + ex.getExpr().toString());
-            return NumericValue.ONE;
+            // expression is irrelevant as we pass approprirate strings for parsing directly
+            // we only really need access to operators and functions?
+            CarpetExpression ex = new CarpetExpression(host.main, "", source, BlockPos.ZERO);
+            List<Token> results = ex.explain(host, expr != null ? expr : (style != null? (host.main != null ? host.main.code() : "") :null), method, style, BlockPos.containing(source.getPosition()));
+            prettyPrintTokens(source, results);
+            return NumericValue.of(results.size());
         });
+    }
+
+    private static void prettyPrintTokens(CommandSourceStack source, List<Token> tokens)
+    {
+        Map<Integer, Integer> indents = new HashMap<>();
+        for (Token token : tokens)
+        {
+            indents.put(token.lineno, Math.min(indents.getOrDefault(token.lineno, token.linepos), token.linepos));
+        }
+        List<Integer> lines = new ArrayList<>(indents.keySet());
+        Collections.sort(lines);
+        int lineMax = String.valueOf(lines.getLast()).length();
+        Deque<Integer> indentsStack = new ArrayDeque<>(lines);
+
+        List<Component> elements = new ArrayList<>();
+        for (int i = 0; i < tokens.size(); i++)
+        {
+            Token token = tokens.get(i);
+            if (!indentsStack.isEmpty() && token.lineno == indentsStack.peekFirst())
+            {
+                flushElements(source, elements);
+                indentsStack.pollFirst();
+                // remove all elements of intendStack that don't have any more tokens
+                outer: while (!indentsStack.isEmpty())
+                {
+                    int nextLineNo = indentsStack.peekFirst();
+                    for (int j = i + 1; j < tokens.size(); j++)
+                    {
+                        if (tokens.get(j).lineno == nextLineNo)
+                        {
+                            break outer;
+                        }
+                    }
+                    indentsStack.pollFirst();
+                }
+
+                int lastPos = indents.getOrDefault(token.lineno, 0);
+                elements.add(Carpet.Messenger_compose("fi " + " ".repeat(lineMax - String.valueOf(token.lineno).length()) + token.lineno));
+                elements.add(Carpet.Messenger_compose("g | " + " ".repeat(lastPos)));
+            }
+            elements.add(tokenToComponent(token));
+        }
+        flushElements(source, elements);
+    }
+
+    private static Component tokenToComponent(Token token)
+    {
+        String surface = token.surface;
+        if (!token.display.isEmpty())
+        {
+            surface = token.display;
+        }
+        if (token.comment.isEmpty())
+        {
+            return Carpet.Messenger_compose(styleForToken(token) + " " + surface);//, "^gi " + String.format("%s: line %s, pos %s", token.surface, token.lineno, token.linepos));
+        }
+        return Carpet.Messenger_compose(styleForToken(token)+"u " + surface, "^gi " + token.comment);
+    }
+
+    private static String styleForToken(Token token)
+    {
+        return switch (token.type) {
+            case Token.TokenType.LITERAL -> "l";
+            case Token.TokenType.HEX_LITERAL -> "m";
+            case Token.TokenType.CONSTANT -> "q";
+            case Token.TokenType.OPEN_PAREN, Token.TokenType.CLOSE_PAREN, Token.TokenType.COMMA,
+                 Token.TokenType.OPERATOR, Token.TokenType.UNARY_OPERATOR -> "w";
+            case Token.TokenType.FUNCTION -> "d";
+            case Token.TokenType.VARIABLE -> "y";
+            case Token.TokenType.STRINGPARAM -> "c";
+            default -> // marker
+                    "r";
+        };
+    }
+
+    private static void flushElements(CommandSourceStack source, List<Component> elements)
+    {
+        if (!elements.isEmpty())
+        {
+            Carpet.Messenger_message(source, (Object []) elements.toArray(new Component[0]));
+            elements.clear();
+        }
     }
 
     private static int scriptScan(CommandContext<CommandSourceStack> context, BlockPos origin, BlockPos a, BlockPos b, String expr) throws CommandSyntaxException
@@ -563,7 +667,7 @@ public class ScriptCommand
         BoundingBox area = BoundingBox.fromCorners(a, b);
         CarpetExpression cexpr = new CarpetExpression(host.main, expr, source, origin);
         int int_1 = area.getXSpan() * area.getYSpan() * area.getZSpan(); // X Y Z
-        if (int_1 > Vanilla.MinecraftServer_getFillLimit(source.getServer()) )
+        if (int_1 > source.getLevel().getGameRules().get(GameRules.MAX_BLOCK_MODIFICATIONS))
         {
             Carpet.Messenger_message(source, "r too many blocks to evaluate: " + int_1);
             return 1;
@@ -615,7 +719,7 @@ public class ScriptCommand
         BoundingBox area = BoundingBox.fromCorners(a, b);
         CarpetExpression cexpr = new CarpetExpression(host.main, expr, source, origin);
         int int_1 = area.getXSpan() * area.getYSpan() * area.getZSpan();
-        if (int_1 > Vanilla.MinecraftServer_getFillLimit(source.getServer()))
+        if (int_1 > source.getLevel().getGameRules().get(GameRules.MAX_BLOCK_MODIFICATIONS))
         {
             Carpet.Messenger_message(source, "r too many blocks to evaluate: " + int_1);
             return 1;

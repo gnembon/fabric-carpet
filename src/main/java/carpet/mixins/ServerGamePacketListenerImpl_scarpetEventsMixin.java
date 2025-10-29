@@ -180,24 +180,25 @@ public class ServerGamePacketListenerImpl_scarpetEventsMixin
         }
     }
 
-    @Inject(method = "handlePlayerCommand", at = @At(
+    @Inject(method = "handlePlayerInput", at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/server/level/ServerPlayer;setShiftKeyDown(Z)V",
-            ordinal = 0
+            target = "Lnet/minecraft/server/level/ServerPlayer;setLastClientInput(Lnet/minecraft/world/entity/player/Input;)V"
     ))
-    private void onStartSneaking(ServerboundPlayerCommandPacket clientCommandC2SPacket_1, CallbackInfo ci)
+    private void onStartSneaking(ServerboundPlayerInputPacket serverboundPlayerInputPacket, CallbackInfo ci)
     {
-        PLAYER_STARTS_SNEAKING.onPlayerEvent(player);
-    }
-
-    @Inject(method = "handlePlayerCommand", at = @At(
-            value = "INVOKE",
-            target = "Lnet/minecraft/server/level/ServerPlayer;setShiftKeyDown(Z)V",
-            ordinal = 1
-    ))
-    private void onStopSneaking(ServerboundPlayerCommandPacket clientCommandC2SPacket_1, CallbackInfo ci)
-    {
-        PLAYER_STOPS_SNEAKING.onPlayerEvent(player);
+        boolean wasDown = player.isShiftKeyDown();
+        boolean isDown = serverboundPlayerInputPacket.input().shift();
+        if (wasDown != isDown)
+        {
+            if (isDown)
+            {
+                PLAYER_STARTS_SNEAKING.onPlayerEvent(player);
+            }
+            else
+            {
+                PLAYER_STOPS_SNEAKING.onPlayerEvent(player);
+            }
+        }
     }
 
     @Inject(method = "handlePlayerCommand", at = @At(
@@ -256,7 +257,7 @@ public class ServerGamePacketListenerImpl_scarpetEventsMixin
     {
         if (PLAYER_CHOOSES_RECIPE.isNeeded())
         {
-            RecipeManager.ServerDisplayInfo displayInfo = player.server.getRecipeManager().getRecipeFromDisplay(packet.recipe());
+            RecipeManager.ServerDisplayInfo displayInfo = player.level().getServer().getRecipeManager().getRecipeFromDisplay(packet.recipe());
             if (displayInfo == null) {
                 return;
             }
@@ -267,9 +268,9 @@ public class ServerGamePacketListenerImpl_scarpetEventsMixin
     @Inject(method = "handleSetCarriedItem", at = @At("HEAD"))
     private void onUpdatedSelectedSLot(ServerboundSetCarriedItemPacket packet, CallbackInfo ci)
     {
-        if (PLAYER_SWITCHES_SLOT.isNeeded() && player.getServer() != null && player.getServer().isSameThread())
+        if (PLAYER_SWITCHES_SLOT.isNeeded() && player.level().getServer() != null && player.level().getServer().isSameThread())
         {
-            PLAYER_SWITCHES_SLOT.onSlotSwitch(player, player.getInventory().selected, packet.getSlot());
+            PLAYER_SWITCHES_SLOT.onSlotSwitch(player, player.getInventory().getSelectedSlot(), packet.getSlot());
         }
     }
 

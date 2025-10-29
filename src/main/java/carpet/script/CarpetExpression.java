@@ -12,6 +12,7 @@ import carpet.script.api.WorldAccess;
 import carpet.script.exception.CarpetExpressionException;
 import carpet.script.exception.ExpressionException;
 import carpet.script.external.Carpet;
+import carpet.script.external.Vanilla;
 import carpet.script.value.BlockValue;
 import carpet.script.value.EntityValue;
 import carpet.script.value.NumericValue;
@@ -19,6 +20,10 @@ import carpet.script.value.Value;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.Entity;
+import org.apache.commons.lang3.tuple.Pair;
+
+import javax.annotation.Nullable;
+import java.util.List;
 
 public class CarpetExpression
 {
@@ -42,7 +47,7 @@ public class CarpetExpression
         return origin;
     }
 
-    public CarpetExpression(Module module, String expression, CommandSourceStack source, BlockPos origin)
+    public CarpetExpression(@Nullable Module module, String expression, CommandSourceStack source, BlockPos origin)
     {
         this.origin = origin;
         this.source = source;
@@ -86,7 +91,12 @@ public class CarpetExpression
                 Value playerValue = new EntityValue(e).bindTo("p");
                 context.with("p", (cc, tt) -> playerValue);
             }
-            return scriptServer.events.handleEvents.getWhileDisabled(() -> this.expr.eval(context).getBoolean());
+            return scriptServer.events.handleEvents.getWhileDisabled(() -> this.expr.executeAndEvaluate(
+                    context,
+                    Vanilla.ScriptServer_scriptOptimizations(scriptServer.server),
+                    host.loadOverrides,
+                    Vanilla.ScriptServer_scriptDebugging(scriptServer.server) ? CarpetScriptServer.LOG::info : null
+            ).getLeft().getBoolean());
         }
         catch (ExpressionException e)
         {
@@ -102,7 +112,7 @@ public class CarpetExpression
         }
     }
 
-    public Value scriptRunCommand(ScriptHost host, BlockPos pos)
+    public Pair<Value, Expression.ExpressionNode> scriptRunCommand(ScriptHost host, BlockPos pos)
     {
         CarpetScriptServer scriptServer = (CarpetScriptServer) host.scriptServer();
         if (scriptServer.stopAll)
@@ -126,7 +136,12 @@ public class CarpetExpression
                 Value playerValue = new EntityValue(e).bindTo("p");
                 context.with("p", (cc, tt) -> playerValue);
             }
-            return scriptServer.events.handleEvents.getWhileDisabled(() -> this.expr.eval(context));
+            return scriptServer.events.handleEvents.getWhileDisabled(() -> this.expr.executeAndEvaluate(
+                    context,
+                    Vanilla.ScriptServer_scriptOptimizations(scriptServer.server),
+                    host.loadOverrides,
+                    Vanilla.ScriptServer_scriptDebugging(scriptServer.server) ? CarpetScriptServer.LOG::info : null
+            ));
         }
         catch (ExpressionException e)
         {
@@ -142,9 +157,8 @@ public class CarpetExpression
         }
     }
 
-    public Value explain(ScriptHost host, BlockPos pos)
+    public List<Token> explain(ScriptHost host, @Nullable String code, @Nullable String method, @Nullable String style, BlockPos pos)
     {
-        // convert to explain
         CarpetScriptServer scriptServer = (CarpetScriptServer) host.scriptServer();
         try
         {
@@ -163,7 +177,7 @@ public class CarpetExpression
                 Value playerValue = new EntityValue(e).bindTo("p");
                 context.with("p", (cc, tt) -> playerValue);
             }
-            return scriptServer.events.handleEvents.getWhileDisabled(() -> this.expr.explain(context));
+            return scriptServer.events.handleEvents.getWhileDisabled(() -> this.expr.explain(context, code, method, style));
         }
         catch (ExpressionException e)
         {

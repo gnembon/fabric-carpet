@@ -4,11 +4,13 @@ import carpet.fakes.ServerWorldInterface;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.core.RegistryAccess;
+import net.minecraft.core.particles.ExplosionParticleInfo;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.util.profiling.ProfilerFiller;
+import net.minecraft.util.random.WeightedList;
 import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
@@ -16,7 +18,8 @@ import net.minecraft.world.entity.LightningBolt;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Explosion;
 import net.minecraft.world.level.ExplosionDamageCalculator;
-import net.minecraft.world.level.GameRules;
+import net.minecraft.world.level.gamerules.GameRule;
+import net.minecraft.world.level.gamerules.GameRules;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.dimension.DimensionType;
@@ -51,34 +54,33 @@ public abstract class ServerLevel_scarpetMixin extends Level implements ServerWo
         super(writableLevelData, resourceKey, registryAccess, holder, bl, bl2, l, i);
     }
 
-    @Inject(method = "tickChunk", locals = LocalCapture.CAPTURE_FAILHARD, at = @At(
+    @Inject(method = "tickThunder", locals = LocalCapture.CAPTURE_FAILHARD, at = @At(
             value = "INVOKE",
             target = "Lnet/minecraft/server/level/ServerLevel;addFreshEntity(Lnet/minecraft/world/entity/Entity;)Z",
             shift = At.Shift.BEFORE,
             ordinal = 1
     ))
-    private void onNaturalLightinig(LevelChunk chunk, int randomTickSpeed, CallbackInfo ci,
+    private void onNaturalLightinig(LevelChunk chunk, CallbackInfo ci,
                                     //ChunkPos chunkPos, boolean bl, int i, int j, Profiler profiler, BlockPos blockPos, boolean bl2)
                                     ChunkPos chunkPos, boolean bl, int i, int j, ProfilerFiller profiler, BlockPos blockPos, DifficultyInstance localDifficulty, boolean bl2, LightningBolt lightningEntity)
     {
         if (LIGHTNING.isNeeded()) LIGHTNING.onWorldEventFlag((ServerLevel) (Object)this, blockPos, bl2?1:0);
     }
 
-    private Explosion.BlockInteraction getCMDestroyType(final GameRules.Key<GameRules.BooleanValue> rule) {
-        return getGameRules().getBoolean(rule) ? Explosion.BlockInteraction.DESTROY_WITH_DECAY : Explosion.BlockInteraction.DESTROY;
+    private Explosion.BlockInteraction getCMDestroyType(final GameRule<Boolean> rule) {
+        return getGameRules().get(rule) ? Explosion.BlockInteraction.DESTROY_WITH_DECAY : Explosion.BlockInteraction.DESTROY;
     }
 
     @Inject(method = "explode", at = @At("HEAD"), cancellable = true)
-    private void handleExplosion(final Entity entity, final DamageSource damageSource, final ExplosionDamageCalculator explosionDamageCalculator, final double x, final double y, final double z, final float g, final boolean bl, final ExplosionInteraction explosionInteraction, final ParticleOptions particleOptions, final ParticleOptions particleOptions2, final Holder<SoundEvent> holder, final CallbackInfo ci)
+    private void handleExplosion(Entity entity, DamageSource damageSource, ExplosionDamageCalculator explosionDamageCalculator, double x, double y, double z, float g, boolean bl, ExplosionInteraction explosionInteraction, ParticleOptions particleOptions, ParticleOptions particleOptions2, WeightedList<ExplosionParticleInfo> weightedList, Holder<SoundEvent> holder, CallbackInfo ci)
     {
         if (EXPLOSION.isNeeded()) {
             Explosion.BlockInteraction var10000 = switch (explosionInteraction) {
                 case NONE -> Explosion.BlockInteraction.KEEP;
-                case BLOCK -> this.getCMDestroyType(GameRules.RULE_BLOCK_EXPLOSION_DROP_DECAY);
-                case MOB -> this.getGameRules().getBoolean(GameRules.RULE_MOBGRIEFING) ? this.getCMDestroyType(GameRules.RULE_MOB_EXPLOSION_DROP_DECAY) : Explosion.BlockInteraction.KEEP;
-                case TNT -> this.getCMDestroyType(GameRules.RULE_TNT_EXPLOSION_DROP_DECAY);
+                case BLOCK -> this.getCMDestroyType(GameRules.BLOCK_EXPLOSION_DROP_DECAY);
+                case MOB -> this.getGameRules().get(GameRules.MOB_GRIEFING) ? this.getCMDestroyType(GameRules.MOB_EXPLOSION_DROP_DECAY) : Explosion.BlockInteraction.KEEP;
+                case TNT -> this.getCMDestroyType(GameRules.TNT_EXPLOSION_DROP_DECAY);
                 case TRIGGER -> Explosion.BlockInteraction.TRIGGER_BLOCK;
-                default -> throw new IncompatibleClassChangeError();
             };
 
             boolean cancelled = EXPLOSION.onExplosion((ServerLevel) (Object) this, entity, null, new Vec3(x, y, z), g, bl, null, null, var10000);

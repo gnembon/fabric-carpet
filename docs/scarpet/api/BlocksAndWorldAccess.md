@@ -540,7 +540,7 @@ On top of that, scarpet provides the following list of noises sampled directly f
 
 `'barrier_noise'`, `'fluid_level_floodedness_noise'`, `'fluid_level_spread_noise'`, `'lava_noise'`,
 `'temperature'`, `'vegetation'`, `'continents'`, `'erosion'`, `'depth'`, `'ridges'`, 
-`'initial_density_without_jaggedness'`, `'final_density'`, `'vein_toggle'`, `'vein_ridged'` and `'vein_gap'`
+`'preliminary_surface_level'`, `'final_density'`, `'vein_toggle'`, `'vein_ridged'` and `'vein_gap'`
 
 <pre>
 // requesting single value

@@ -2,7 +2,7 @@ package carpet.script.value;
 
 import carpet.script.Context;
 import carpet.script.Expression;
-import carpet.script.Tokenizer;
+import carpet.script.Token;
 import carpet.script.exception.ExitStatement;
 import carpet.script.exception.ExpressionException;
 import carpet.script.exception.InternalExpressionException;
@@ -28,7 +28,7 @@ public class ThreadValue extends LazyListValue
     private final AtomicReference<Value> coLock = new AtomicReference<>(Value.EOL);
     public final boolean isCoroutine;
 
-    public ThreadValue(Value pool, FunctionValue function, Expression expr, Tokenizer.Token token, Context ctx, List<Value> args)
+    public ThreadValue(Value pool, FunctionValue function, Expression expr, Token token, Context ctx, List<Value> args)
     {
         this.id = sequence++;
         this.isCoroutine = ctx.host.canSynchronouslyExecute();
@@ -37,7 +37,7 @@ public class ThreadValue extends LazyListValue
         Thread.yield();
     }
 
-    public CompletableFuture<Value> getCompletableFutureFromFunction(Value pool, FunctionValue function, Expression expr, Tokenizer.Token token, Context ctx, List<Value> args)
+    public CompletableFuture<Value> getCompletableFutureFromFunction(Value pool, FunctionValue function, Expression expr, Token token, Context ctx, List<Value> args)
     {
         ExecutorService executor = ctx.host.getExecutor(pool);
         ThreadValue callingThread = isCoroutine ? this : null;

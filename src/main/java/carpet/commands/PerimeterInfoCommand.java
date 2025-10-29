@@ -39,7 +39,7 @@ public class PerimeterInfoCommand
                                 BlockPosArgument.getSpawnablePos(c, "center position"),
                                 null)).
                         then(argument("mob", resource(commandBuildContext, Registries.ENTITY_TYPE)).
-                                suggests(SuggestionProviders.SUMMONABLE_ENTITIES).
+                                suggests(SuggestionProviders.cast(SuggestionProviders.SUMMONABLE_ENTITIES)).
                                 executes( (c) -> perimeterDiagnose(
                                         c.getSource(),
                                         BlockPosArgument.getSpawnablePos(c, "center position"),

@@ -37,6 +37,9 @@ public abstract class ScriptHost
     private final ScriptServer scriptServer;
     protected boolean inTermination = false;
     public boolean strict;
+    public Expression.LoadOverride loadOverrides;
+    @Nullable
+    public Expression.ExpressionNode root;
 
     private final Set<String> deprecations = new HashSet<>();
 
@@ -138,18 +141,19 @@ public abstract class ScriptHost
     @FunctionalInterface
     public interface ErrorSnooper
     {
-        List<String> apply(Expression expression, Tokenizer.Token token, Context context, String message);
+        List<String> apply(Expression expression, Token token, Context context, String message);
     }
 
     public ErrorSnooper errorSnooper = null;
 
-    protected ScriptHost(@Nullable Module code, ScriptServer scriptServer, boolean perUser, ScriptHost parent)
+    protected ScriptHost(@Nullable Module code, ScriptServer scriptServer, boolean perUser, ScriptHost parent, Expression.LoadOverride loadOverrides)
     {
         this.parent = parent;
         this.main = code;
         this.perUser = perUser;
         this.user = null;
         this.strict = false;
+        this.loadOverrides = loadOverrides;
         this.scriptServer = scriptServer;
         ModuleData moduleData = new ModuleData(code);
         initializeModuleGlobals(moduleData);
@@ -231,6 +235,7 @@ public abstract class ScriptHost
 
     protected abstract void runModuleCode(Context c, Module module); // this should be shell out in the executor
 
+    @Nullable
     public FunctionValue getFunction(String name)
     {
         return getFunction(main, name);
@@ -253,6 +258,7 @@ public abstract class ScriptHost
         return ret;
     }
 
+    @Nullable
     private FunctionValue getFunction(Module module, String name)
     {
         ModuleData local = getModuleData(module);
@@ -286,6 +292,7 @@ public abstract class ScriptHost
         return target.globalFunctions.get(name);
     }
 
+    @Nullable
     private ModuleData findModuleDataFromFunctionImports(String name, ModuleData source, int ttl)
     {
         if (ttl > 64)
@@ -460,6 +467,7 @@ public abstract class ScriptHost
         this.moduleData.forEach((key, value) -> host.moduleData.put(key, new ModuleData(key, value)));
         // fixing imports
         host.moduleData.forEach((module, data) -> data.setImportsBasedOn(host, this.moduleData.get(data.parent)));
+        host.root = this.root;
     }
 
     public synchronized void handleExpressionException(String msg, ExpressionException exc)

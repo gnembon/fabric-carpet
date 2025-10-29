@@ -31,7 +31,7 @@ public class ServerNetworkHandler
     private static final Set<ServerPlayer> validCarpetPlayers = new HashSet<>();
 
     private static final Map<String, BiConsumer<ServerPlayer, Tag>> dataHandlers = Map.of(
-            CarpetClient.HELLO, (p, t) -> onHello(p, t.getAsString()),
+            CarpetClient.HELLO, (p, t) -> onHello(p, t.asString().orElseThrow()),
             "clientCommand", (p, t) -> handleClientCommand(p, (CompoundTag) t)
     );
 
@@ -61,7 +61,7 @@ public class ServerNetworkHandler
         {
             CarpetSettings.LOG.warn("Player " + playerEntity.getName().getString() + " joined with another carpet version: " + version);
         }
-        DataBuilder data = DataBuilder.create(playerEntity.server); // tickrate related settings are sent on world change
+        DataBuilder data = DataBuilder.create(playerEntity.level().getServer()); // tickrate related settings are sent on world change
         CarpetServer.forEachManager(sm -> sm.getCarpetRules().forEach(data::withRule));
         playerEntity.connection.send(data.build());
     }
@@ -79,18 +79,19 @@ public class ServerNetworkHandler
 
     private static void handleClientCommand(ServerPlayer player, CompoundTag commandData)
     {
-        String command = commandData.getString("command");
-        String id = commandData.getString("id");
+        String command = commandData.getString("command").orElseThrow();
+        String id = commandData.getString("id").orElseThrow();
         List<Component> output = new ArrayList<>();
         Component[] error = {null};
-        if (player.getServer() == null)
+        int[] returnValue = {0};
+        if (player.level().getServer() == null)
         {
             error[0] = Component.literal("No Server");
         }
         else
         {
-            player.getServer().getCommands().performPrefixedCommand(
-                    new SnoopyCommandSource(player, error, output), command
+            player.level().getServer().getCommands().performPrefixedCommand(
+                    new SnoopyCommandSource(player, error, output, returnValue), command
             );
         }
         CompoundTag result = new CompoundTag();
@@ -99,22 +100,23 @@ public class ServerNetworkHandler
         {
             result.putString("error", error[0].getContents().toString());
         }
+        result.putInt("return", returnValue[0]);
         ListTag outputResult = new ListTag();
         for (Component line : output)
         {
-            outputResult.add(StringTag.valueOf(Component.Serializer.toJson(line, player.registryAccess())));
+            outputResult.add(StringTag.valueOf(line.getString()));
         }
         if (!output.isEmpty())
         {
             result.put("output", outputResult);
         }
-        player.connection.send(DataBuilder.create(player.server).withCustomNbt("clientCommand", result).build());
+        player.connection.send(DataBuilder.create(player.level().getServer()).withCustomNbt("clientCommand", result).build());
         // run command plug to command output,
     }
 
     public static void onClientData(ServerPlayer player, CompoundTag compound)
     {
-        for (String key : compound.getAllKeys())
+        for (String key : compound.keySet())
         {
             if (dataHandlers.containsKey(key))
             {
@@ -135,7 +137,7 @@ public class ServerNetworkHandler
         }
         for (ServerPlayer player : remoteCarpetPlayers.keySet())
         {
-            player.connection.send(DataBuilder.create(player.server).withRule(rule).build());
+            player.connection.send(DataBuilder.create(player.level().getServer()).withRule(rule).build());
         }
     }
 
@@ -147,7 +149,7 @@ public class ServerNetworkHandler
         }
         for (ServerPlayer player : validCarpetPlayers)
         {
-            player.connection.send(DataBuilder.create(player.server).withCustomNbt(command, data).build());
+            player.connection.send(DataBuilder.create(player.level().getServer()).withCustomNbt(command, data).build());
         }
     }
 
@@ -155,7 +157,7 @@ public class ServerNetworkHandler
     {
         if (isValidCarpetPlayer(player))
         {
-            player.connection.send(DataBuilder.create(player.server).withCustomNbt(command, data).build());
+            player.connection.send(DataBuilder.create(player.level().getServer()).withCustomNbt(command, data).build());
         }
     }
 

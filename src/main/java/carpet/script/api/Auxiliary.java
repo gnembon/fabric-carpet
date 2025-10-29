@@ -97,6 +97,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.OptionalLong;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
@@ -684,12 +685,17 @@ public class Auxiliary
             try
             {
                 Component[] error = {null};
+                OptionalLong[] returnValue = {OptionalLong.empty()};
                 List<Component> output = new ArrayList<>();
                 s.getServer().getCommands().performPrefixedCommand(
-                        new SnoopyCommandSource(s, error, output),
+                        new SnoopyCommandSource(s, error, output, returnValue),
                         lv.get(0).getString());
+                if (returnValue[0].isEmpty())
+                {
+                    return Value.NULL;
+                }
                 return ListValue.of(
-                        NumericValue.ZERO,
+                        NumericValue.of(returnValue[0].getAsLong()),
                         ListValue.wrap(output.stream().map(FormattedTextValue::new)),
                         FormattedTextValue.of(error[0])
                 );
@@ -1189,7 +1195,8 @@ public class Auxiliary
                         Path zipRoot = zipfs.getPath("/");
                         zipValueToJson(zipRoot.resolve("pack.mcmeta"), MapValue.wrap(
                                 Map.of(StringValue.of("pack"), MapValue.wrap(Map.of(
-                                        StringValue.of("pack_format"), new NumericValue(SharedConstants.getCurrentVersion().getPackVersion(PackType.SERVER_DATA)),
+                                        StringValue.of("min_format"), new NumericValue(SharedConstants.getCurrentVersion().packVersion(PackType.SERVER_DATA).major()),
+                                        StringValue.of("max_format"), new NumericValue(SharedConstants.getCurrentVersion().packVersion(PackType.SERVER_DATA).major()),
                                         StringValue.of("description"), StringValue.of(name),
                                         StringValue.of("source"), StringValue.of("scarpet")
                                 )))

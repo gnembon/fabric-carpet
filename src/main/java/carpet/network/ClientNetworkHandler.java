@@ -23,18 +23,18 @@ public class ClientNetworkHandler
 
     static
     {
-        dataHandlers.put(CarpetClient.HI, (p, t) -> onHi(t.getAsString()));
+        dataHandlers.put(CarpetClient.HI, (p, t) -> onHi(t.asString().orElseThrow()));
         dataHandlers.put("Rules", (p, t) -> {
             CompoundTag ruleset = (CompoundTag) t;
-            for (String ruleKey : ruleset.getAllKeys())
+            for (String ruleKey : ruleset.keySet())
             {
                 CompoundTag ruleNBT = (CompoundTag) ruleset.get(ruleKey);
                 SettingsManager manager = null;
                 String ruleName;
                 if (ruleNBT.contains("Manager"))
                 {
-                    ruleName = ruleNBT.getString("Rule");
-                    String managerName = ruleNBT.getString("Manager");
+                    ruleName = ruleNBT.getString("Rule").orElseThrow();
+                    String managerName = ruleNBT.getString("Manager").orElseThrow();
                     if (managerName.equals("carpet"))
                     {
                         manager = CarpetServer.settingsManager;
@@ -60,7 +60,7 @@ public class ClientNetworkHandler
                 CarpetRule<?> rule = (manager != null) ? manager.getCarpetRule(ruleName) : null;
                 if (rule != null)
                 {
-                    String value = ruleNBT.getString("Value");
+                    String value = ruleNBT.getString("Value").orElseThrow();
                     try
                     {
                         rule.set(null, value);
@@ -116,7 +116,7 @@ public class ClientNetworkHandler
 
     public static void onServerData(CompoundTag compound, LocalPlayer player)
     {
-        for (String key : compound.getAllKeys())
+        for (String key : compound.keySet())
         {
             if (dataHandlers.containsKey(key))
             {

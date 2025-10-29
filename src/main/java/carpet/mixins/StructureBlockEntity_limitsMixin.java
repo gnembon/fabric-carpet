@@ -9,6 +9,9 @@ import org.spongepowered.asm.mixin.injection.Constant;
 import org.spongepowered.asm.mixin.injection.ModifyArg;
 import org.spongepowered.asm.mixin.injection.ModifyConstant;
 
+import java.util.List;
+import java.util.stream.Stream;
+
 @Mixin(StructureBlockEntity.class)
 public abstract class StructureBlockEntity_limitsMixin
 {
@@ -29,14 +32,16 @@ public abstract class StructureBlockEntity_limitsMixin
     }
 
     @ModifyArg(
-            method = "saveStructure(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/resources/ResourceLocation;Lnet/minecraft/core/BlockPos;Lnet/minecraft/core/Vec3i;ZLjava/lang/String;Z)Z",
+            method = "saveStructure(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/resources/ResourceLocation;Lnet/minecraft/core/BlockPos;Lnet/minecraft/core/Vec3i;ZLjava/lang/String;ZLjava/util/List;)Z",
             at = @At(
                     value = "INVOKE",
-                    target = "Lnet/minecraft/world/level/levelgen/structure/templatesystem/StructureTemplate;fillFromWorld(Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/core/Vec3i;ZLnet/minecraft/world/level/block/Block;)V"
+                    target = "Lnet/minecraft/world/level/levelgen/structure/templatesystem/StructureTemplate;fillFromWorld(Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/core/Vec3i;ZLjava/util/List;)V"
             ),
             index = 4
     )
-    private static Block ignoredBlock(Block original) {
-        return CarpetSettings.structureBlockIgnoredBlock;
+    private static List<Block> ignoredBlock(List<Block> original) {
+        if (original.contains(CarpetSettings.structureBlockIgnoredBlock))
+            return original;
+        return Stream.concat(original.stream(), Stream.of(CarpetSettings.structureBlockIgnoredBlock)).toList();
     }
 }

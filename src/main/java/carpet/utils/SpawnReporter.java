@@ -382,7 +382,7 @@ public class SpawnReporter
         }
         if (entity instanceof Ocelot)
         {
-            for (Entity e: entity.getCommandSenderWorld().getEntities(entity, entity.getBoundingBox()))
+            for (Entity e: entity.level().getEntities(entity, entity.getBoundingBox()))
             {
                 e.discard();
             }

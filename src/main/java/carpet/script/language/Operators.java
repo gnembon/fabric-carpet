@@ -41,8 +41,7 @@ public class Operators
 
     public static void apply(Expression expression)
     {
-        expression.addBinaryOperator("+", precedence.get("addition+-"), true, Value::add);
-        expression.addFunction("sum", lv -> {
+        expression.addBinaryOperator("+", "sum", precedence.get("addition+-"), true, Value::add, lv -> {
             int size = lv.size();
             if (size == 0)
             {
@@ -55,10 +54,8 @@ public class Operators
             }
             return accumulator;
         });
-        expression.addFunctionalEquivalence("+", "sum");
 
-        expression.addBinaryOperator("-", precedence.get("addition+-"), true, Value::subtract);
-        expression.addFunction("difference", lv -> {
+        expression.addBinaryOperator("-", "difference", precedence.get("addition+-"), true, Value::subtract, lv -> {
             int size = lv.size();
             if (size == 0)
             {
@@ -71,10 +68,8 @@ public class Operators
             }
             return accumulator;
         });
-        expression.addFunctionalEquivalence("-", "difference");
 
-        expression.addBinaryOperator("*", precedence.get("multiplication*/%"), true, Value::multiply);
-        expression.addFunction("product", lv -> {
+        expression.addBinaryOperator("*", "product", precedence.get("multiplication*/%"), true, Value::multiply, lv -> {
             int size = lv.size();
             if (size == 0)
             {
@@ -87,10 +82,8 @@ public class Operators
             }
             return accumulator;
         });
-        expression.addFunctionalEquivalence("*", "product");
 
-        expression.addBinaryOperator("/", precedence.get("multiplication*/%"), true, Value::divide);
-        expression.addFunction("quotient", lv -> {
+        expression.addBinaryOperator("/", "quotient", precedence.get("multiplication*/%"), true, Value::divide, lv -> {
             int size = lv.size();
             if (size == 0)
             {
@@ -103,11 +96,11 @@ public class Operators
             }
             return accumulator;
         });
-        expression.addFunctionalEquivalence("/", "quotient");
 
-        expression.addBinaryOperator("%", precedence.get("multiplication*/%"), true, (v1, v2) ->
+        expression.addBinaryOperator("%", "modulo", precedence.get("multiplication*/%"), true, (v1, v2) ->
                 NumericValue.asNumber(v1).mod(NumericValue.asNumber(v2)));
-        expression.addBinaryOperator("^", precedence.get("exponent^"), false, (v1, v2) ->
+
+        expression.addBinaryOperator("^", "exponent", precedence.get("exponent^"), false, (v1, v2) ->
                 new NumericValue(java.lang.Math.pow(NumericValue.asNumber(v1).getDouble(), NumericValue.asNumber(v2).getDouble())));
 
         expression.addFunction("bitwise_and", lv -> {
@@ -153,13 +146,11 @@ public class Operators
         });
 
         // lazy cause RHS is only conditional
-        expression.addLazyBinaryOperator("&&", precedence.get("and&&"), false, true, t -> Context.Type.BOOLEAN, (c, t, lv1, lv2) ->
+        expression.addLazyBinaryOperator("&&", "and", precedence.get("and&&"), false, true, t -> Context.Type.BOOLEAN, (c, t, lv1, lv2) ->
         { // todo check how is optimizations going
             Value v1 = lv1.evalValue(c, Context.BOOLEAN);
             return v1.getBoolean() ? lv2 : ((cc, tt) -> v1);
-        });
-
-        expression.addPureLazyFunction("and", -1, t -> Context.Type.BOOLEAN, (c, t, lv) -> {
+        }, (c, t, lv) -> {
             int last = lv.size() - 1;
             if (last == -1)
             {
@@ -168,7 +159,7 @@ public class Operators
             for (LazyValue l : lv.subList(0, last))
             {
                 Value val = l.evalValue(c, Context.Type.BOOLEAN);
-                if (val instanceof final FunctionUnpackedArgumentsValue fuav)
+                if (val instanceof FunctionUnpackedArgumentsValue fuav)
                 {
                     for (Value it : fuav)
                     {
@@ -188,16 +179,13 @@ public class Operators
             }
             return lv.get(last);
         });
-        expression.addFunctionalEquivalence("&&", "and");
 
         // lazy cause RHS is only conditional
-        expression.addLazyBinaryOperator("||", precedence.get("or||"), false, true, t -> Context.Type.BOOLEAN, (c, t, lv1, lv2) ->
+        expression.addLazyBinaryOperator("||", "or", precedence.get("or||"), false, true, t -> Context.Type.BOOLEAN, (c, t, lv1, lv2) ->
         {
             Value v1 = lv1.evalValue(c, Context.BOOLEAN);
             return v1.getBoolean() ? ((cc, tt) -> v1) : lv2;
-        });
-
-        expression.addPureLazyFunction("or", -1, t -> Context.Type.BOOLEAN, (c, t, lv) -> {
+        }, (c, t, lv) -> {
             int last = lv.size() - 1;
             if (last == -1)
             {
@@ -226,13 +214,10 @@ public class Operators
             }
             return lv.get(last);
         });
-        expression.addFunctionalEquivalence("||", "or");
 
-        expression.addBinaryOperator("~", precedence.get("attribute~:"), true, Value::in);
+        expression.addBinaryOperator("~", "match", precedence.get("attribute~:"), true, Value::in);
 
-        expression.addBinaryOperator(">", precedence.get("compare>=><=<"), false, (v1, v2) ->
-                BooleanValue.of(v1.compareTo(v2) > 0));
-        expression.addFunction("decreasing", lv -> {
+        expression.addBinaryOperator(">", "decreasing", precedence.get("compare>=><=<"), false, (v1, v2) -> BooleanValue.of(v1.compareTo(v2) > 0), lv -> {
             int size = lv.size();
             if (size < 2)
             {
@@ -249,11 +234,8 @@ public class Operators
             }
             return Value.TRUE;
         });
-        expression.addFunctionalEquivalence(">", "decreasing");
 
-        expression.addBinaryOperator(">=", precedence.get("compare>=><=<"), false, (v1, v2) ->
-                BooleanValue.of(v1.compareTo(v2) >= 0));
-        expression.addFunction("nonincreasing", lv -> {
+        expression.addBinaryOperator(">=", "nonincreasing", precedence.get("compare>=><=<"), false, (v1, v2) -> BooleanValue.of(v1.compareTo(v2) >= 0), lv -> {
             int size = lv.size();
             if (size < 2)
             {
@@ -270,11 +252,8 @@ public class Operators
             }
             return Value.TRUE;
         });
-        expression.addFunctionalEquivalence(">=", "nonincreasing");
 
-        expression.addBinaryOperator("<", precedence.get("compare>=><=<"), false, (v1, v2) ->
-                BooleanValue.of(v1.compareTo(v2) < 0));
-        expression.addFunction("increasing", lv -> {
+        expression.addBinaryOperator("<", "increasing", precedence.get("compare>=><=<"), false, (v1, v2) -> BooleanValue.of(v1.compareTo(v2) < 0), lv -> {
             int size = lv.size();
             if (size < 2)
             {
@@ -291,11 +270,8 @@ public class Operators
             }
             return Value.TRUE;
         });
-        expression.addFunctionalEquivalence("<", "increasing");
 
-        expression.addBinaryOperator("<=", precedence.get("compare>=><=<"), false, (v1, v2) ->
-                BooleanValue.of(v1.compareTo(v2) <= 0));
-        expression.addFunction("nondecreasing", lv -> {
+        expression.addBinaryOperator("<=", "nondecreasing", precedence.get("compare>=><=<"), false, (v1, v2) -> BooleanValue.of(v1.compareTo(v2) <= 0), lv -> {
             int size = lv.size();
             if (size < 2)
             {
@@ -312,7 +288,7 @@ public class Operators
             }
             return Value.TRUE;
         });
-        expression.addFunctionalEquivalence("<=", "nondecreasing");
+
         expression.addMathematicalBinaryIntFunction("bitwise_shift_left", (num, amount) -> num << amount);
         expression.addMathematicalBinaryIntFunction("bitwise_shift_right", (num, amount) -> num >>> amount);
         expression.addMathematicalBinaryIntFunction("bitwise_arithmetic_shift_right", (num, amount) -> num >> amount);
@@ -326,9 +302,7 @@ public class Operators
         expression.addMathematicalUnaryIntFunction("double_to_long_bits", Double::doubleToLongBits);
         expression.addUnaryFunction("long_to_double_bits", v ->
                 new NumericValue(Double.longBitsToDouble(NumericValue.asNumber(v).getLong())));
-        expression.addBinaryOperator("==", precedence.get("equal==!="), false, (v1, v2) ->
-                v1.equals(v2) ? Value.TRUE : Value.FALSE);
-        expression.addFunction("equal", lv -> {
+        expression.addBinaryOperator("==", "equal", precedence.get("equal==!="), false, (v1, v2) -> v1.equals(v2) ? Value.TRUE : Value.FALSE, lv -> {
             int size = lv.size();
             if (size < 2)
             {
@@ -345,10 +319,8 @@ public class Operators
             }
             return Value.TRUE;
         });
-        expression.addFunctionalEquivalence("==", "equal");
-        expression.addBinaryOperator("!=", precedence.get("equal==!="), false, (v1, v2) ->
-                v1.equals(v2) ? Value.FALSE : Value.TRUE);
-        expression.addFunction("unique", lv -> {
+
+        expression.addBinaryOperator("!=", "unique", precedence.get("equal==!="), false, (v1, v2) -> v1.equals(v2) ? Value.FALSE : Value.TRUE, lv -> {
             int size = lv.size();
             if (size < 2)
             {
@@ -367,10 +339,9 @@ public class Operators
             }
             return Value.TRUE;
         });
-        expression.addFunctionalEquivalence("!=", "unique");
 
         // lazy cause of assignment which is non-trivial
-        expression.addLazyBinaryOperator("=", precedence.get("assign=<>"), false, false, t -> Context.Type.LVALUE, (c, t, lv1, lv2) ->
+        expression.addLazyBinaryOperator("=", "assign", precedence.get("assign=<>"), false, false, t -> Context.Type.LVALUE, (c, t, lv1, lv2) ->
         {
             Value v1 = lv1.evalValue(c, Context.LVALUE);
             Value v2 = lv2.evalValue(c);
@@ -423,7 +394,7 @@ public class Operators
         });
 
         // lazy due to assignment
-        expression.addLazyBinaryOperator("+=", precedence.get("assign=<>"), false, false, t -> Context.Type.LVALUE, (c, t, lv1, lv2) ->
+        expression.addLazyBinaryOperator("+=", "append", precedence.get("assign=<>"), false, false, t -> Context.Type.LVALUE, (c, t, lv1, lv2) ->
         {
             Value v1 = lv1.evalValue(c, Context.LVALUE);
             Value v2 = lv2.evalValue(c);
@@ -492,7 +463,7 @@ public class Operators
             return boundedLHS;
         });
 
-        expression.addBinaryContextOperator("<>", precedence.get("assign=<>"), false, false, false, (c, t, v1, v2) ->
+        expression.addBinaryContextOperator("<>", "swap", precedence.get("assign=<>"), false, false, false, (c, t, v1, v2) ->
         {
             if (v1 instanceof final ListValue.ListConstructorValue lcv1 && v2 instanceof final ListValue.ListConstructorValue lcv2)
             {
@@ -540,17 +511,17 @@ public class Operators
             return lval;
         });
 
-        expression.addUnaryOperator("-", false, v -> NumericValue.asNumber(v).opposite());
+        expression.addUnaryOperator("-", "opposite", false, v -> NumericValue.asNumber(v).opposite());
 
-        expression.addUnaryOperator("+", false, NumericValue::asNumber);
+        expression.addUnaryOperator("+", "identity", false, NumericValue::asNumber);
 
         // could be non-lazy, but who cares - its a small one.
-        expression.addLazyUnaryOperator("!", precedence.get("unary+-!..."), false, true, x -> Context.Type.BOOLEAN, (c, t, lv) ->
+        expression.addLazyUnaryOperator("!", "not", precedence.get("unary+-!..."), false, true, x -> Context.Type.BOOLEAN, (c, t, lv) ->
                 lv.evalValue(c, Context.BOOLEAN).getBoolean() ? (cc, tt) -> Value.FALSE : (cc, tt) -> Value.TRUE
         ); // might need context boolean
 
         // lazy because of typed evaluation of the argument
-        expression.addLazyUnaryOperator("...", Operators.precedence.get("unary+-!..."), false, true, t -> t == Context.Type.LOCALIZATION ? Context.NONE : t, (c, t, lv) ->
+        expression.addLazyUnaryOperator("...", "unpack", Operators.precedence.get("unary+-!..."), false, true, t -> t == Context.Type.LOCALIZATION ? Context.NONE : t, (c, t, lv) ->
         {
             if (t == Context.LOCALIZATION)
             {

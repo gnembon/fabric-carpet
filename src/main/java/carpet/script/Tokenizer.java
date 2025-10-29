@@ -1,20 +1,16 @@
 package carpet.script;
 
 import carpet.script.exception.ExpressionException;
-import carpet.script.exception.InternalExpressionException;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
 
 /**
  * Expression tokenizer that allows to iterate over a {@link String}
  * expression token by token. Blank characters will be skipped.
  */
-public class Tokenizer implements Iterator<Tokenizer.Token>
+public class Tokenizer
 {
     /**
      * What character to use for decimal separators.
@@ -53,15 +49,18 @@ public class Tokenizer implements Iterator<Tokenizer.Token>
         this.newLinesMarkers = allowNewLineMakers;
     }
 
-    public List<Token> postProcess()
+    public static Tokenizer simple(String input)
     {
-        Iterable<Token> iterable = () -> this;
-        List<Token> originalTokens = StreamSupport.stream(iterable.spliterator(), false).collect(Collectors.toList());
+        return new Tokenizer(null, null, input, false, false);
+    }
+
+    public static List<Token> postProcess(List<Token> originalTokens)
+    {
         List<Token> cleanedTokens = new ArrayList<>();
         Token last = null;
-        while (!originalTokens.isEmpty())
+        for (int i = originalTokens.size() - 1; i >= 0; i--)
         {
-            Token current = originalTokens.remove(originalTokens.size() - 1);
+            Token current = originalTokens.get(i);
             if (current.type == Token.TokenType.MARKER && current.surface.startsWith("//"))
             {
                 continue;
@@ -104,7 +103,16 @@ public class Tokenizer implements Iterator<Tokenizer.Token>
         return cleanedTokens;
     }
 
-    @Override
+    public List<Token> parseTokens()
+    {
+        List<Token> tokens = new ArrayList<>();
+        while (hasNext())
+        {
+            tokens.add(next());
+        }
+        return tokens;
+    }
+
     public boolean hasNext()
     {
         return (pos < input.length());
@@ -132,18 +140,6 @@ public class Tokenizer implements Iterator<Tokenizer.Token>
                 || (tok.type == Token.TokenType.UNARY_OPERATOR && tok.surface.equals(";u"));
     }
 
-    public static List<Token> simplepass(String input)
-    {
-        Tokenizer tok = new Tokenizer(null, null, input, false, false);
-        List<Token> res = new ArrayList<>();
-        while (tok.hasNext())
-        {
-            res.add(tok.next());
-        }
-        return res;
-    }
-
-    @Override
     public Token next()
     {
         Token token = new Token();
@@ -259,6 +255,7 @@ public class Tokenizer implements Iterator<Tokenizer.Token>
             }
             pos++;
             linepos++;
+            token.disguiseAs("'"+token.surface+"'", null);
 
         }
         else if (Character.isLetter(ch) || "_".indexOf(ch) >= 0)
@@ -302,6 +299,7 @@ public class Tokenizer implements Iterator<Tokenizer.Token>
             else if (ch == ',')
             {
                 token.type = Token.TokenType.COMMA;
+                token.disguiseAs(", ", null);
             }
             else
             {
@@ -383,12 +381,15 @@ public class Tokenizer implements Iterator<Tokenizer.Token>
                     || (previousToken.type == Token.TokenType.MARKER && (previousToken.surface.equals("{") || previousToken.surface.equals("[")))
             )
             {
+                token.disguiseAs(token.surface, null);
                 token.surface += "u";
                 token.type = Token.TokenType.UNARY_OPERATOR;
             }
             else
             {
                 token.type = Token.TokenType.OPERATOR;
+                token.disguiseAs(token.surface.equals(";") ? (token.surface + " ") : (" " + token.surface + " "), null);
+
             }
         }
         if (expression != null && context != null && previousToken != null &&
@@ -413,91 +414,5 @@ public class Tokenizer implements Iterator<Tokenizer.Token>
             throw new ExpressionException(context, this.expression, previousToken, "'" + token.surface + "' is not allowed after '" + previousToken.surface + "'");
         }
         return previousToken = token;
-    }
-
-    @Override
-    public void remove()
-    {
-        throw new InternalExpressionException("remove() not supported");
-    }
-
-    public static class Token
-    {
-        enum TokenType
-        {
-            FUNCTION(true, false), OPERATOR(true, false), UNARY_OPERATOR(true, false),
-            VARIABLE(false, false), CONSTANT(false, true),
-            LITERAL(false, true), HEX_LITERAL(false, true), STRINGPARAM(false, true),
-            OPEN_PAREN(false, true), COMMA(false, true), CLOSE_PAREN(false, true), MARKER(false, true);
-
-            final boolean functional;
-            final boolean constant;
-
-            TokenType(boolean functional, boolean constant)
-            {
-                this.functional = functional;
-                this.constant = constant;
-            }
-
-            public boolean isFunctional()
-            {
-                return functional;
-            }
-
-            public boolean isConstant()
-            {
-                return constant;
-            }
-        }
-
-        public String surface = "";
-        public TokenType type;
-        public int pos;
-        public int linepos;
-        public int lineno;
-        public static final Token NONE = new Token();
-
-        public Token morphedInto(TokenType newType, String newSurface)
-        {
-            Token created = new Token();
-            created.surface = newSurface;
-            created.type = newType;
-            created.pos = pos;
-            created.linepos = linepos;
-            created.lineno = lineno;
-            return created;
-        }
-
-        public void morph(TokenType type, String s)
-        {
-            this.type = type;
-            this.surface = s;
-        }
-
-        public void append(char c)
-        {
-            surface += c;
-        }
-
-        public void append(String s)
-        {
-            surface += s;
-        }
-
-        public char charAt(int pos)
-        {
-            return surface.charAt(pos);
-        }
-
-        public int length()
-        {
-            return surface.length();
-        }
-
-        @Override
-        public String toString()
-        {
-            return surface;
-        }
     }
 }

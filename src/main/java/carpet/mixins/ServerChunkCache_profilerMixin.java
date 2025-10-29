@@ -19,13 +19,13 @@ public abstract class ServerChunkCache_profilerMixin
 
     CarpetProfiler.ProfilerToken currentSection;
 
-    @Inject(method = "tickChunks(Lnet/minecraft/util/profiling/ProfilerFiller;JLjava/util/List;)V", at = @At("HEAD"))
+    @Inject(method = "tickChunks(Lnet/minecraft/util/profiling/ProfilerFiller;J)V", at = @At("HEAD"))
     private void startSpawningSection(CallbackInfo ci)
     {
         currentSection = CarpetProfiler.start_section(level, "Spawning", CarpetProfiler.TYPE.GENERAL);
     }
 
-    @Inject(method = "tickChunks(Lnet/minecraft/util/profiling/ProfilerFiller;JLjava/util/List;)V", at = @At("RETURN"))
+    @Inject(method = "tickChunks(Lnet/minecraft/util/profiling/ProfilerFiller;J)V", at = @At("RETURN"))
     private void stopSpawningSection(CallbackInfo ci)
     {
         if (currentSection != null)

@@ -21,7 +21,7 @@ public abstract class ThrowableProjectileMixin extends Entity
     @Inject(method = "<init>(Lnet/minecraft/world/entity/EntityType;Lnet/minecraft/world/level/Level;)V", at = @At("RETURN"))
     private void addLogger(EntityType<? extends Projectile> entityType_1, Level world_1, CallbackInfo ci)
     {
-        if (LoggerRegistry.__projectiles && !world_1.isClientSide)
+        if (LoggerRegistry.__projectiles && !world_1.isClientSide())
             logHelper = new TrajectoryLogHelper("projectiles");
     }
 

@@ -5,8 +5,8 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.gamerules.GameRules;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
@@ -23,6 +23,6 @@ public abstract class LivingEntity_cleanLogsMixin extends Entity
     @Redirect(method = "die", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/LivingEntity;hasCustomName()Z"))
     private boolean shouldLogDeaths(LivingEntity livingEntity)
     {
-        return livingEntity.hasCustomName() && CarpetSettings.cleanLogs && livingEntity.getServer().getGameRules().getBoolean(GameRules.RULE_SHOWDEATHMESSAGES);
+        return livingEntity.hasCustomName() && livingEntity.level() instanceof ServerLevel serverLevel &&  CarpetSettings.cleanLogs && serverLevel.getGameRules().get(GameRules.SHOW_DEATH_MESSAGES);
     }
 }

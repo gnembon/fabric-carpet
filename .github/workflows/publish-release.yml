@@ -3,6 +3,7 @@ name: Publish Release
 on:
   release:
     types: [published]
+  workflow_dispatch:
 jobs:
   Get-Properties:
     runs-on: ubuntu-latest
@@ -20,7 +21,7 @@ jobs:
       - name: Determine release type
         id: type
         run: |
-          if ${{ github.event.release.prerelease }}; then
+          if ! [[ "${{ github.event.release.prerelease }}" == "true" ]]; then
             echo "release-type=beta" >> $GITHUB_OUTPUT
           else
             echo "release-type=release" >> $GITHUB_OUTPUT
@@ -38,7 +39,7 @@ jobs:
       - name: Process property for matrix
         id: processmatrix
         run: |
-          if ! ${{ steps.properties.outputs.release-extra-branch }}; then
+          if ! [[ "${{ steps.properties.outputs['release-extra-branch'] }}" == "true" ]] ; then
             echo "matrix-to-exclude=Snapshots" >> $GITHUB_OUTPUT
           fi
       - uses: actions/github-script@v7
@@ -52,6 +53,10 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo
             })).data;
+            if (releases.length < 2) {
+              console.log('No previous releases found, skipping check.');
+              return;
+            }
             console.log('Previous release was: ' + releases[1].name);
             for (let release of releases.slice(1)) {
               if (release.name.includes(READ_VERSION))
@@ -59,6 +64,7 @@ jobs:
             }
   Build-And-Publish:
     runs-on: ubuntu-latest
+    environment: publish
     needs: [Get-Properties]
     strategy:
       matrix:
@@ -122,6 +128,24 @@ jobs:
           display_name: Carpet v${{ needs.Get-Properties.outputs.carpet-version }} for ${{ steps.getbranchinfo.outputs.version }}
           game_versions: 7499,4458,${{ steps.getbranchinfo.outputs.curse-versions }} #Fabric,Java 8,[version (s) for the branch]
           release_type: ${{ needs.Get-Properties.outputs.release-type }}
+      - name: Upload to Modrinth
+        uses: cloudnode-pro/modrinth-publish@v2
+        with:
+          token: ${{ secrets.MODRINTH_TOKEN}} # Action requires modrinth token, not github token
+          # project: TQTTVgYE
+          project: HFpbSWL3 #test project
+          name: Carpet ${{ needs.Get-Properties.outputs.carpet-version }} for Minecraft ${{ steps.getbranchinfo.outputs.version }}
+          # ternary: https://docs.github.com/en/actions/writing-workflows/choosing-what-your-workflow-does/evaluate-expressions-in-workflows-and-actions#example
+          # works because javascript
+          # version = (branch != Snapshots) ? tag_name : (tag_name + '-' + version)
+
+          #Didnt implement the ternary because its never been used and its a headache
+          version: ${{ needs.Get-Properties.outputs.carpet-version }}
+          changelog: ${{ github.event.release.body }}
+          channel: ${{ needs.Get-Properties.outputs.release-type }} #release or beta
+          loaders: fabric
+          game-versions: ${{ steps.getbranchinfo.outputs.version }} # modrinth uses normal minecraft versions
+          files: build/libs/${{ steps.findjar.outputs.jarname }}
       - name: Ask Gradle to publish
         run: ./gradlew publish
       - name: Save publish folder in action's artifacts # Remove when automated

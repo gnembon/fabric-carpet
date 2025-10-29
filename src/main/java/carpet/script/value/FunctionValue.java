@@ -6,7 +6,7 @@ import carpet.script.Expression;
 import carpet.script.Fluff;
 import carpet.script.LazyValue;
 import carpet.script.Module;
-import carpet.script.Tokenizer;
+import carpet.script.Token;
 import carpet.script.exception.BreakStatement;
 import carpet.script.exception.ContinueStatement;
 import carpet.script.exception.ExpressionException;
@@ -28,7 +28,7 @@ import javax.annotation.Nullable;
 public class FunctionValue extends Value implements Fluff.ILazyFunction
 {
     private final Expression expression;
-    private final Tokenizer.Token token;
+    private final Token token;
     private final String name;
     private final LazyValue body;
     private Map<String, LazyValue> outerState;
@@ -37,7 +37,7 @@ public class FunctionValue extends Value implements Fluff.ILazyFunction
     private static long variantCounter = 1;
     private long variant;
 
-    private FunctionValue(Expression expression, Tokenizer.Token token, String name, LazyValue body, List<String> args, String varArgs)
+    private FunctionValue(Expression expression, Token token, String name, LazyValue body, List<String> args, String varArgs)
     {
         this.expression = expression;
         this.token = token;
@@ -49,7 +49,7 @@ public class FunctionValue extends Value implements Fluff.ILazyFunction
         variant = 0L;
     }
 
-    public FunctionValue(Expression expression, Tokenizer.Token token, String name, LazyValue body, List<String> args, String varArgs, Map<String, LazyValue> outerState)
+    public FunctionValue(Expression expression, Token token, String name, LazyValue body, List<String> args, String varArgs, Map<String, LazyValue> outerState)
     {
         this.expression = expression;
         this.token = token;
@@ -214,13 +214,13 @@ public class FunctionValue extends Value implements Fluff.ILazyFunction
     }
 
     @Override
-    public LazyValue lazyEval(Context c, Context.Type type, Expression e, Tokenizer.Token t, List<LazyValue> lazyParams)
+    public LazyValue lazyEval(Context c, Context.Type type, Expression e, Token t, List<LazyValue> lazyParams)
     {
         List<Value> resolvedParams = unpackArgs(lazyParams, c);
         return execute(c, type, e, t, resolvedParams, null);
     }
 
-    public LazyValue execute(Context c, Context.Type type, Expression e, Tokenizer.Token t, List<Value> params, @Nullable ThreadValue freshNewCallingThread)
+    public LazyValue execute(Context c, Context.Type type, Expression e, Token t, List<Value> params, @Nullable ThreadValue freshNewCallingThread)
     {
         assertArgsOk(params, fixedArgs -> {
             if (fixedArgs)  // wrong number of args for fixed args
@@ -288,7 +288,7 @@ public class FunctionValue extends Value implements Fluff.ILazyFunction
         return expression;
     }
 
-    public Tokenizer.Token getToken()
+    public Token getToken()
     {
         return token;
     }

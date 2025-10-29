@@ -1,9 +1,13 @@
 package carpet.script.value;
 
+import carpet.script.exception.InternalExpressionException;
+import com.mojang.serialization.DynamicOps;
 import net.minecraft.core.RegistryAccess;
+import net.minecraft.nbt.NbtOps;
 import net.minecraft.nbt.StringTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.ComponentSerialization;
 import net.minecraft.network.chat.MutableComponent;
 
 public class FormattedTextValue extends StringValue
@@ -86,7 +90,7 @@ public class FormattedTextValue extends StringValue
         {
             throw new NBTSerializableValue.IncompatibleTypeException(this);
         }
-        return StringTag.valueOf(Component.Serializer.toJson(text, regs));
+        return serialize(regs);
     }
 
     @Override
@@ -95,14 +99,14 @@ public class FormattedTextValue extends StringValue
         return combine(this, o);
     }
 
-    public String serialize(RegistryAccess regs)
+    public Tag serialize(RegistryAccess regs)
     {
-        return Component.Serializer.toJson(text, regs);
+        return ComponentSerialization.CODEC.encodeStart(regs.createSerializationContext(NbtOps.INSTANCE), text).getOrThrow(InternalExpressionException::new);// text.getContents() Component.Serializer.toJson(text, regs);
     }
 
-    public static FormattedTextValue deserialize(String serialized, RegistryAccess regs)
+    public static FormattedTextValue deserialize(Tag tag, RegistryAccess regs)
     {
-        return new FormattedTextValue(Component.Serializer.fromJson(serialized, regs));
+        return new FormattedTextValue(ComponentSerialization.CODEC.decode(regs.createSerializationContext(NbtOps.INSTANCE), tag).getOrThrow(InternalExpressionException::new).getFirst());
     }
 
     public static Component getTextByValue(Value value)

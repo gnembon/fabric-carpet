@@ -102,6 +102,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.commands.BossBarCommands;
 import net.minecraft.server.commands.LootCommand;
+import net.minecraft.server.players.NameAndId;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.phys.Vec2;
@@ -162,7 +163,7 @@ public abstract class CommandArgument
                     (c, p) -> StringValue.of(EntityAnchorArgument.getAnchor(c, p).name()), false
             ),
             new VanillaUnconfigurableArgument("entitytype", c -> ResourceArgument.resource(c, Registries.ENTITY_TYPE),
-                    (c, p) -> ValueConversions.of(ResourceArgument.getSummonableEntityType(c, p).key()), SuggestionProviders.SUMMONABLE_ENTITIES
+                    (c, p) -> ValueConversions.of(ResourceArgument.getSummonableEntityType(c, p).key()), SuggestionProviders.cast(SuggestionProviders.SUMMONABLE_ENTITIES)
             ),
             new VanillaUnconfigurableArgument("floatrange", RangeArgument::floatRange,
                     (c, p) -> ValueConversions.of(c.getArgument(p, MinMaxBounds.Doubles.class)), true
@@ -205,12 +206,8 @@ public abstract class CommandArgument
 
             new VanillaUnconfigurableArgument("recipe", Registries.RECIPE),
             new VanillaUnconfigurableArgument("advancement", Registries.ADVANCEMENT),
-            new VanillaUnconfigurableArgument("lootcondition", ResourceLocationArgument::id,
-                    (c, p) -> ValueConversions.of(ResourceLocationArgument.getId(c, p)), (ctx, builder) -> SharedSuggestionProvider.suggestResource(ctx.getSource().getServer().reloadableRegistries().getKeys(Registries.LOOT_CONDITION_TYPE), builder)
-            ),
-            new VanillaUnconfigurableArgument("loottable", ResourceLocationArgument::id,
-                    (c, p) -> ValueConversions.of(ResourceLocationArgument.getId(c, p)), LootCommand.SUGGEST_LOOT_TABLE
-            ),
+            new VanillaUnconfigurableArgument("lootcondition", Registries.LOOT_CONDITION_TYPE),
+            new VanillaUnconfigurableArgument("loottable", Registries.LOOT_TABLE),
             new VanillaUnconfigurableArgument("attribute", Registries.ATTRIBUTE),
 
             new VanillaUnconfigurableArgument("boss", ResourceLocationArgument::id,
@@ -233,7 +230,7 @@ public abstract class CommandArgument
                     }, (ctx, builder) -> SharedSuggestionProvider.suggestResource(ctx.getSource().getServer().registryAccess().lookupOrThrow(Registries.BIOME).keySet(), builder)
             ),
             new VanillaUnconfigurableArgument("sound", ResourceLocationArgument::id,
-                    (c, p) -> ValueConversions.of(ResourceLocationArgument.getId(c, p)), SuggestionProviders.AVAILABLE_SOUNDS
+                    (c, p) -> ValueConversions.of(ResourceLocationArgument.getId(c, p)), SuggestionProviders.cast(SuggestionProviders.AVAILABLE_SOUNDS)
             ),
             new VanillaUnconfigurableArgument("storekey", ResourceLocationArgument::id,
                     (c, p) -> ValueConversions.of(ResourceLocationArgument.getId(c, p)), (ctx, builder) -> SharedSuggestionProvider.suggestResource(ctx.getSource().getServer().getCommandStorage().keys(), builder)
@@ -722,10 +719,10 @@ public abstract class CommandArgument
         @Override
         protected Value getValueFromContext(CommandContext<CommandSourceStack> context, String param) throws CommandSyntaxException
         {
-            Collection<GameProfile> profiles = GameProfileArgument.getGameProfiles(context, param);
+            Collection<NameAndId> profiles = GameProfileArgument.getGameProfiles(context, param);
             if (!single)
             {
-                return ListValue.wrap(profiles.stream().map(p -> StringValue.of(p.getName())));
+                return ListValue.wrap(profiles.stream().map(p -> StringValue.of(p.name())));
             }
             int size = profiles.size();
             if (size == 0)
@@ -734,7 +731,7 @@ public abstract class CommandArgument
             }
             if (size == 1)
             {
-                return StringValue.of(profiles.iterator().next().getName());
+                return StringValue.of(profiles.iterator().next().name());
             }
             throw new SimpleCommandExceptionType(Component.literal("Multiple game profiles returned while only one was requested" + " for custom type " + suffix)).create();
         }

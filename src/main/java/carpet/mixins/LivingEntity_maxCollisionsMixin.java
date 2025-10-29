@@ -2,6 +2,8 @@ package carpet.mixins;
 
 import carpet.CarpetSettings;
 import carpet.fakes.LevelInterface;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.gamerules.GameRules;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
@@ -13,7 +15,6 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntitySelector;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.Level;
 
 @Mixin(LivingEntity.class)
@@ -33,12 +34,18 @@ public abstract class LivingEntity_maxCollisionsMixin extends Entity
         {
             return;
         }
+
+        if (!(this.level() instanceof ServerLevel serverLevel))
+        {
+            return;
+        }
+
         List<Entity> entities;
         int maxEntityCramming =-1;
         if (CarpetSettings.maxEntityCollisions > 0)
         {
-            maxEntityCramming = this.getServer().getGameRules().getInt(GameRules.RULE_MAX_ENTITY_CRAMMING);
-            entities = ((LevelInterface) this.level()).getOtherEntitiesLimited(
+            maxEntityCramming = serverLevel.getGameRules().get(GameRules.MAX_ENTITY_CRAMMING);
+            entities = ((LevelInterface) serverLevel).getOtherEntitiesLimited(
                     this,
                     this.getBoundingBox(),
                     EntitySelector.pushableBy(this),
@@ -46,11 +53,11 @@ public abstract class LivingEntity_maxCollisionsMixin extends Entity
         }
         else
         {
-            entities = this.level().getEntities(this, this.getBoundingBox(), EntitySelector.pushableBy(this));
+            entities = serverLevel.getEntities(this, this.getBoundingBox(), EntitySelector.pushableBy(this));
         }
 
         if (!entities.isEmpty()) {
-            if (maxEntityCramming < 0) maxEntityCramming = this.getServer().getGameRules().getInt(GameRules.RULE_MAX_ENTITY_CRAMMING);
+            if (maxEntityCramming < 0) maxEntityCramming = serverLevel.getGameRules().get(GameRules.MAX_ENTITY_CRAMMING);
             if (maxEntityCramming > 0 && entities.size() > maxEntityCramming - 1 && this.random.nextInt(4) == 0) {
                 int candidates = 0;
 
