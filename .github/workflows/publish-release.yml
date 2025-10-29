@@ -5,11 +5,11 @@ on:
     types: [published]
   workflow_dispatch:
     secrets:
-      DISCORD_BOT_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
+      DISCORD_BOT_TOKEN:
         required: false
-      MODRINTH_TOKEN: ${{ secrets.MODRINTH_TOKEN }}
+      MODRINTH_TOKEN:
         required: true
-      CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+      CF_API_TOKEN:
         required: false
 jobs:
   Get-Properties:
