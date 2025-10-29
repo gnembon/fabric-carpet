@@ -107,27 +107,27 @@ jobs:
         with:
           name: Artifacts for ${{ matrix.branch }}
           path: build/libs
-      # - name: Upload to the Github release
-      #   uses: actions/upload-release-asset@v1
-      #   env:
-      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      #   with:
-      #     upload_url: ${{ github.event.release.upload_url }}
-      #     asset_path: build/libs/${{ steps.findjar.outputs.jarname }}
-      #     asset_name: ${{ steps.findjar.outputs.jarname }}
-      #     asset_content_type: application/java-archive
-      # - name: Upload to Curseforge
-      #   uses: itsmeow/curseforge-upload@v3.1.2
-      #   with:
-      #     token: ${{ secrets.CF_API_TOKEN }}
-      #     project_id: 349239
-      #     game_endpoint: minecraft
-      #     file_path: build/libs/${{ steps.findjar.outputs.jarname }}
-      #     changelog_type: markdown
-      #     changelog: ${{ github.event.release.body }}
-      #     display_name: Carpet v${{ needs.Get-Properties.outputs.carpet-version }} for ${{ steps.getbranchinfo.outputs.version }}
-      #     game_versions: 7499,4458,${{ steps.getbranchinfo.outputs.curse-versions }} #Fabric,Java 8,[version (s) for the branch]
-      #     release_type: ${{ needs.Get-Properties.outputs.release-type }}
+      - name: Upload to the Github release
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: build/libs/${{ steps.findjar.outputs.jarname }}
+          asset_name: ${{ steps.findjar.outputs.jarname }}
+          asset_content_type: application/java-archive
+      - name: Upload to Curseforge
+        uses: itsmeow/curseforge-upload@v3.1.2
+        with:
+          token: ${{ secrets.CF_API_TOKEN }}
+          project_id: 349239
+          game_endpoint: minecraft
+          file_path: build/libs/${{ steps.findjar.outputs.jarname }}
+          changelog_type: markdown
+          changelog: ${{ github.event.release.body }}
+          display_name: Carpet v${{ needs.Get-Properties.outputs.carpet-version }} for ${{ steps.getbranchinfo.outputs.version }}
+          game_versions: 7499,4458,${{ steps.getbranchinfo.outputs.curse-versions }} #Fabric,Java 8,[version (s) for the branch]
+          release_type: ${{ needs.Get-Properties.outputs.release-type }}
       - name: Upload to Modrinth
         uses: cloudnode-pro/modrinth-publish@v2
         with:
