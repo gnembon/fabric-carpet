@@ -4,6 +4,13 @@ on:
   release:
     types: [published]
   workflow_dispatch:
+    secrets:
+      DISCORD_BOT_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
+        required: false
+      MODRINTH_TOKEN: ${{ secrets.MODRINTH_TOKEN }}
+        required: true
+      CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+        required: false
 jobs:
   Get-Properties:
     runs-on: ubuntu-latest
