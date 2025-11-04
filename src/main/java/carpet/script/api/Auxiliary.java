@@ -53,7 +53,7 @@ import net.minecraft.network.protocol.game.ClientboundSetSubtitleTextPacket;
 import net.minecraft.network.protocol.game.ClientboundSetTitleTextPacket;
 import net.minecraft.network.protocol.game.ClientboundSetTitlesAnimationPacket;
 import net.minecraft.network.protocol.game.ClientboundSoundPacket;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -132,10 +132,10 @@ public class Auxiliary
             CarpetContext cc = (CarpetContext) c;
             if (lv.isEmpty())
             {
-                return ListValue.wrap(cc.registry(Registries.SOUND_EVENT).listElements().map(soundEventReference -> ValueConversions.of(soundEventReference.key().location())));
+                return ListValue.wrap(cc.registry(Registries.SOUND_EVENT).listElements().map(soundEventReference -> ValueConversions.of(soundEventReference.key().identifier())));
             }
             String rawString = lv.get(0).getString();
-            ResourceLocation soundName = InputValidator.identifierOf(rawString);
+            Identifier soundName = InputValidator.identifierOf(rawString);
             Vector3Argument locator = Vector3Argument.findIn(lv, 1);
 
             Holder<SoundEvent> soundHolder = Holder.direct(SoundEvent.createVariableRangeEvent(soundName));
@@ -177,7 +177,7 @@ public class Auxiliary
             CarpetContext cc = (CarpetContext) c;
             if (lv.isEmpty())
             {
-                return ListValue.wrap(cc.registry(Registries.PARTICLE_TYPE).listElements().map(particleTypeReference -> ValueConversions.of(particleTypeReference.key().location())));
+                return ListValue.wrap(cc.registry(Registries.PARTICLE_TYPE).listElements().map(particleTypeReference -> ValueConversions.of(particleTypeReference.key().identifier())));
             }
             MinecraftServer ms = cc.server();
             ServerLevel world = cc.level();
@@ -1064,8 +1064,8 @@ public class Auxiliary
             {
                 return Value.NULL;
             }
-            ResourceLocation category;
-            ResourceLocation statName;
+            Identifier category;
+            Identifier statName;
             category = InputValidator.identifierOf(lv.get(1).getString());
             statName = InputValidator.identifierOf(lv.get(2).getString());
             StatType<?> type = cc.registry(Registries.STAT_TYPE).getValue(category);
@@ -1387,7 +1387,7 @@ public class Auxiliary
     }
 
     @Nullable
-    private static <T> Stat<T> getStat(StatType<T> type, ResourceLocation id)
+    private static <T> Stat<T> getStat(StatType<T> type, Identifier id)
     {
         T key = type.getRegistry().getValue(id);
         if (key == null || !type.contains(key))

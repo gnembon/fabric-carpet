@@ -23,7 +23,7 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.data.worldgen.Pools;
 import net.minecraft.data.worldgen.ProcessorLists;
 import net.minecraft.data.worldgen.placement.PlacementUtils;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerChunkCache;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.tags.BiomeTags;
@@ -75,7 +75,7 @@ public class FeatureGenerator
         {
             return custom.apply(world).plop(world, pos);
         }
-        ResourceLocation id = ResourceLocation.parse(featureName);
+        Identifier id = Identifier.parse(featureName);
         Structure structure = world.registryAccess().lookupOrThrow(Registries.STRUCTURE).getValue(id);
         if (structure != null)
         {
@@ -129,7 +129,7 @@ public class FeatureGenerator
     @Nullable
     public static Structure resolveConfiguredStructure(String name, ServerLevel world, BlockPos pos)
     {
-        ResourceLocation id = ResourceLocation.parse(name);
+        Identifier id = Identifier.parse(name);
         Structure configuredStructureFeature = world.registryAccess().lookupOrThrow(Registries.STRUCTURE).getValue(id);
         if (configuredStructureFeature != null)
         {

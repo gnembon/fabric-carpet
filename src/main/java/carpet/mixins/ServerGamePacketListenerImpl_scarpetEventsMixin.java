@@ -72,7 +72,7 @@ public class ServerGamePacketListenerImpl_scarpetEventsMixin
 
     @Inject(method = "handlePlayerAction", cancellable = true, at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/server/level/ServerPlayer;drop(Z)Z", // dropSelectedItem
+            target = "Lnet/minecraft/server/level/ServerPlayer;drop(Z)V", // dropSelectedItem
             ordinal = 0,
             shift = At.Shift.BEFORE
     ))
@@ -96,7 +96,7 @@ public class ServerGamePacketListenerImpl_scarpetEventsMixin
 
     @Inject(method = "handlePlayerAction", cancellable = true, at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/server/level/ServerPlayer;drop(Z)Z", // dropSelectedItem
+            target = "Lnet/minecraft/server/level/ServerPlayer;drop(Z)V", // dropSelectedItem
             ordinal = 1,
             shift = At.Shift.BEFORE
     ))
@@ -261,7 +261,7 @@ public class ServerGamePacketListenerImpl_scarpetEventsMixin
             if (displayInfo == null) {
                 return;
             }
-            if(PLAYER_CHOOSES_RECIPE.onRecipeSelected(player, displayInfo.parent().id().location(), packet.useMaxItems())) ci.cancel();
+            if(PLAYER_CHOOSES_RECIPE.onRecipeSelected(player, displayInfo.parent().id().identifier(), packet.useMaxItems())) ci.cancel();
         }
     }
 

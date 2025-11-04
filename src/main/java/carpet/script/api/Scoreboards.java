@@ -21,7 +21,7 @@ import java.util.List;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.ServerScoreboard;
 import net.minecraft.server.bossevents.CustomBossEvent;
 import net.minecraft.server.bossevents.CustomBossEvents;
@@ -547,11 +547,11 @@ public class Scoreboards
 
             if (lv.isEmpty())
             {
-                return ListValue.wrap(bossBarManager.getEvents().stream().map(CustomBossEvent::getTextId).map(ResourceLocation::toString).map(StringValue::of));
+                return ListValue.wrap(bossBarManager.getEvents().stream().map(CustomBossEvent::getTextId).map(Identifier::toString).map(StringValue::of));
             }
 
             String id = lv.get(0).getString();
-            ResourceLocation identifier = InputValidator.identifierOf(id);
+            Identifier identifier = InputValidator.identifierOf(id);
 
             if (lv.size() == 1)
             {

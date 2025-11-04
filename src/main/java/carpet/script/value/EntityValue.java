@@ -32,7 +32,7 @@ import net.minecraft.network.protocol.game.ClientboundSetExperiencePacket;
 import net.minecraft.network.protocol.game.ClientboundSetHeldSlotPacket;
 import net.minecraft.network.protocol.game.ClientboundSetPassengersPacket;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -385,7 +385,7 @@ public class EntityValue extends Value
                 return (illagers.contains(type) || arthropods.contains(type) || undeads.contains(type) || aquatique.contains(type)) && e.isAlive();
             }, allTypes.stream().filter(et -> !regular.contains(et) && living.contains(et))));
 
-            for (ResourceLocation typeId : BuiltInRegistries.ENTITY_TYPE.keySet())
+            for (Identifier typeId : BuiltInRegistries.ENTITY_TYPE.keySet())
             {
                 EntityType<?> type = BuiltInRegistries.ENTITY_TYPE.getValue(typeId);
                 String mobType = ValueConversions.simplify(typeId);
@@ -500,7 +500,7 @@ public class EntityValue extends Value
         put("immune_to_frost", (e, a) -> BooleanValue.of(!e.canFreeze()));
 
         put("invulnerable", (e, a) -> BooleanValue.of(e instanceof Player player ? player.getAbilities().invulnerable : e.isInvulnerable()));
-        put("dimension", (e, a) -> nameFromRegistryId(e.level().dimension().location())); // getDimId
+        put("dimension", (e, a) -> nameFromRegistryId(e.level().dimension().identifier())); // getDimId
         put("height", (e, a) -> new NumericValue(e.getDimensions(Pose.STANDING).height()));
         put("width", (e, a) -> new NumericValue(e.getDimensions(Pose.STANDING).width()));
         put("eye_height", (e, a) -> new NumericValue(e.getEyeHeight()));
@@ -853,7 +853,7 @@ public class EntityValue extends Value
                 AttributeMap container = el.getAttributes();
                 return MapValue.wrap(attributes.listElements().filter(container::hasAttribute).collect(Collectors.toMap(aa -> ValueConversions.of(aa.key()), aa -> NumericValue.of(container.getValue(aa)))));
             }
-            ResourceLocation id = InputValidator.identifierOf(a.getString());
+            Identifier id = InputValidator.identifierOf(a.getString());
             Holder<Attribute> attrib = attributes.get(id).orElseThrow(
                     () -> new InternalExpressionException("Unknown attribute: " + a.getString())
             );

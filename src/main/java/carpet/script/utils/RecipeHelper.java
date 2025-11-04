@@ -2,7 +2,7 @@ package carpet.script.utils;
 
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.context.ContextMap;
 import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.RecipeManager;
@@ -16,7 +16,7 @@ import java.util.List;
 
 public class RecipeHelper
 {
-    public static List<Recipe<?>> getRecipesForOutput(RecipeManager recipeManager, RecipeType<?> type, ResourceLocation id, Level level)
+    public static List<Recipe<?>> getRecipesForOutput(RecipeManager recipeManager, RecipeType<?> type, Identifier id, Level level)
     {
         List<Recipe<?>> results = new ArrayList<>();
 
@@ -28,7 +28,7 @@ public class RecipeHelper
                 for (RecipeDisplay recipeDisplay : r.value().display())
                 {
                     recipeDisplay.result().resolveForStacks(context).forEach(stack -> {
-                        if (BuiltInRegistries.ITEM.wrapAsHolder(stack.getItem()).unwrapKey().map(ResourceKey::location).orElseThrow(IllegalStateException::new).equals(id))
+                        if (BuiltInRegistries.ITEM.wrapAsHolder(stack.getItem()).unwrapKey().map(ResourceKey::identifier).orElseThrow(IllegalStateException::new).equals(id))
                         {
                             results.add(r.value());
                         }
@@ -39,7 +39,7 @@ public class RecipeHelper
         return results;
     }
 
-    public static List<Recipe<?>> getRecipesForOutput(RecipeManager recipeManager, ResourceLocation id, Level level)
+    public static List<Recipe<?>> getRecipesForOutput(RecipeManager recipeManager, Identifier id, Level level)
     {
         List<Recipe<?>> results = new ArrayList<>();
 
@@ -48,7 +48,7 @@ public class RecipeHelper
             for (RecipeDisplay recipeDisplay : r.value().display())
             {
                 recipeDisplay.result().resolveForStacks(context).forEach(stack -> {
-                    if (BuiltInRegistries.ITEM.wrapAsHolder(stack.getItem()).unwrapKey().map(ResourceKey::location).orElseThrow(IllegalStateException::new).equals(id))
+                    if (BuiltInRegistries.ITEM.wrapAsHolder(stack.getItem()).unwrapKey().map(ResourceKey::identifier).orElseThrow(IllegalStateException::new).equals(id))
                     {
                         results.add(r.value());
                     }

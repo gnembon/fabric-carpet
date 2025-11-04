@@ -98,7 +98,7 @@ public class SpawnReporter
     public static List<Component> printMobcapsForDimension(ServerLevel world, boolean multiline)
     {
         ResourceKey<Level> dim = world.dimension();
-        String name = dim.location().getPath();
+        String name = dim.identifier().getPath();
         List<Component> lst = new ArrayList<>();
         if (multiline)
             lst.add(Messenger.s(String.format("Mobcaps for %s:",name)));
@@ -314,7 +314,7 @@ public class SpawnReporter
     private static String getWorldCode(ResourceKey<Level> world)
     {
         if (world == Level.OVERWORLD) return "";
-        return "("+Character.toUpperCase(world.location().getPath().charAt("THE_".length()))+")";
+        return "("+Character.toUpperCase(world.identifier().getPath().charAt("THE_".length()))+")";
     }
     
     public static List<Component> makeTrackingReport(Level worldIn)

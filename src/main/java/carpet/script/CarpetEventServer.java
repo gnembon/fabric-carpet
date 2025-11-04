@@ -45,7 +45,7 @@ import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -828,7 +828,7 @@ public class CarpetEventServer
         public static final Event PLAYER_CHOOSES_RECIPE = new Event("player_chooses_recipe", 3, false)
         {
             @Override
-            public boolean onRecipeSelected(ServerPlayer player, ResourceLocation recipe, boolean fullStack)
+            public boolean onRecipeSelected(ServerPlayer player, Identifier recipe, boolean fullStack)
             {
                 return handler.call(() ->
                         Arrays.asList(
@@ -936,8 +936,8 @@ public class CarpetEventServer
                 // eligibility already checked in mixin
                 Value fromValue = ListValue.fromTriple(from.x, from.y, from.z);
                 Value toValue = (to == null) ? Value.NULL : ListValue.fromTriple(to.x, to.y, to.z);
-                Value fromDimStr = NBTSerializableValue.nameFromRegistryId(fromDim.location());
-                Value toDimStr = NBTSerializableValue.nameFromRegistryId(dimTo.location());
+                Value fromDimStr = NBTSerializableValue.nameFromRegistryId(fromDim.identifier());
+                Value toDimStr = NBTSerializableValue.nameFromRegistryId(dimTo.identifier());
 
                 handler.call(() -> Arrays.asList(new EntityValue(player), fromValue, fromDimStr, toValue, toDimStr), player::createCommandSourceStack);
             }
@@ -981,12 +981,12 @@ public class CarpetEventServer
 
         public static final Event STATISTICS = new Event("statistic", 4, false)
         {
-            private <T> ResourceLocation getStatId(Stat<T> stat)
+            private <T> Identifier getStatId(Stat<T> stat)
             {
                 return stat.getType().getRegistry().getKey(stat.getValue());
             }
 
-            private final Set<ResourceLocation> skippedStats = Set.of(
+            private final Set<Identifier> skippedStats = Set.of(
                     Stats.TIME_SINCE_DEATH,
                     Stats.TIME_SINCE_REST,
                     Stats.PLAY_TIME,
@@ -996,7 +996,7 @@ public class CarpetEventServer
             @Override
             public void onPlayerStatistic(ServerPlayer player, Stat<?> stat, int amount)
             {
-                ResourceLocation id = getStatId(stat);
+                Identifier id = getStatId(stat);
                 if (skippedStats.contains(id))
                 {
                     return;
@@ -1296,7 +1296,7 @@ public class CarpetEventServer
             return false;
         }
 
-        public boolean onRecipeSelected(ServerPlayer player, ResourceLocation recipe, boolean fullStack)
+        public boolean onRecipeSelected(ServerPlayer player, Identifier recipe, boolean fullStack)
         {
             return false;
         }

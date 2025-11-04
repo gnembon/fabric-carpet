@@ -7,7 +7,7 @@ import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
@@ -140,7 +140,7 @@ public class CarpetProfiler
             Level world = tok.world;
             String current_section = (world == null) ?
                     (String) tok.section :
-                    String.format("%s.%s%s", world.dimension().location(), tok.section, world.isClientSide() ? " (Client)" : "");
+                    String.format("%s.%s%s", world.dimension().identifier(), tok.section, world.isClientSide() ? " (Client)" : "");
             SECTION_STATS.addTo(current_section, end_time - tok.start);
         }
     }
@@ -234,7 +234,7 @@ public class CarpetProfiler
 
         for (ResourceKey<Level> dim : server.levelKeys())
         {
-            ResourceLocation dimensionId = dim.location();
+            Identifier dimensionId = dim.identifier();
             boolean hasSomethin = false;
             for (String section : SECTIONS.keySet())
             {
@@ -275,7 +275,7 @@ public class CarpetProfiler
 
     private static String sectionName(Pair<Level,Object> section)
     {
-        ResourceLocation id;
+        Identifier id;
         final RegistryAccess regs = section.getKey().registryAccess();
         if (section.getValue() instanceof EntityType)
         {
@@ -290,7 +290,7 @@ public class CarpetProfiler
         {
             name += " (client)";
         }
-        ResourceLocation dimkey = section.getKey().dimension().location();
+        Identifier dimkey = section.getKey().dimension().identifier();
         String dim = "minecraft".equals(dimkey.getNamespace())?dimkey.getPath():dimkey.toString();
         return name+" in "+dim;
     }

@@ -43,7 +43,7 @@ public class PerimeterInfoCommand
                                 executes( (c) -> perimeterDiagnose(
                                         c.getSource(),
                                         BlockPosArgument.getSpawnablePos(c, "center position"),
-                                        getSummonableEntityType(c, "mob").key().location().toString()
+                                        getSummonableEntityType(c, "mob").key().identifier().toString()
                                 ))));
         dispatcher.register(command);
     }

@@ -7,7 +7,7 @@ import carpet.script.external.Vanilla;
 import carpet.script.utils.Colors;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
-import net.minecraft.advancements.critereon.MinMaxBounds;
+import net.minecraft.advancements.criterion.MinMaxBounds;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.GlobalPos;
 import net.minecraft.core.HolderSet;
@@ -20,7 +20,7 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtOps;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ColumnPos;
 import net.minecraft.server.level.ServerLevel;
@@ -81,7 +81,7 @@ public class ValueConversions
 
     public static Value of(ServerLevel world)
     {
-        return of(world.dimension().location());
+        return of(world.dimension().identifier());
     }
 
     public static Value of(MapColor color)
@@ -166,11 +166,11 @@ public class ValueConversions
                 case "overworld", "over_world" -> server.getLevel(Level.OVERWORLD);
                 default -> {
                     ResourceKey<Level> dim = null;
-                    ResourceLocation id = ResourceLocation.parse(dimString);
+                    Identifier id = Identifier.parse(dimString);
                     // not using RegistryKey.of since that one creates on check
                     for (ResourceKey<Level> world : (server.levelKeys()))
                     {
-                        if (id.equals(world.location()))
+                        if (id.equals(world.identifier()))
                         {
                             dim = world;
                             break;
@@ -188,7 +188,7 @@ public class ValueConversions
 
     public static Value of(ResourceKey<?> dim)
     {
-        return of(dim.location());
+        return of(dim.identifier());
     }
 
     public static Value of(TagKey<?> tagKey)
@@ -201,7 +201,7 @@ public class ValueConversions
         return of(tagKey.key().location());
     }
 
-    public static Value of(@Nullable ResourceLocation id)
+    public static Value of(@Nullable Identifier id)
     {
         if (id == null) // should be Value.NULL
         {
@@ -210,7 +210,7 @@ public class ValueConversions
         return new StringValue(simplify(id));
     }
 
-    public static String simplify(ResourceLocation id)
+    public static String simplify(Identifier id)
     {
         if (id == null) // should be Value.NULL
         {
@@ -554,7 +554,7 @@ public class ValueConversions
         {
             return NumericValue.of(number);
         }
-        if (o instanceof final ResourceLocation resourceLocation)
+        if (o instanceof final Identifier resourceLocation)
         {
             return of(resourceLocation);
         }

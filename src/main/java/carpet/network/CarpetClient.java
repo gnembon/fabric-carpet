@@ -11,7 +11,7 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 public class CarpetClient
 {
@@ -45,7 +45,7 @@ public class CarpetClient
     private static LocalPlayer clientPlayer = null;
     private static boolean isServerCarpet = false;
     public static String serverCarpetVersion;
-    public static final ResourceLocation CARPET_CHANNEL = ResourceLocation.fromNamespaceAndPath("carpet", "hello");
+    public static final Identifier CARPET_CHANNEL = Identifier.fromNamespaceAndPath("carpet", "hello");
 
     public static void gameJoined(LocalPlayer player)
     {

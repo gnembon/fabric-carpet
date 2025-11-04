@@ -55,7 +55,7 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import net.minecraft.ChatFormatting;
-import net.minecraft.advancements.critereon.MinMaxBounds;
+import net.minecraft.advancements.criterion.MinMaxBounds;
 import net.minecraft.commands.CommandBuildContext;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.SharedSuggestionProvider;
@@ -73,7 +73,7 @@ import net.minecraft.commands.arguments.ObjectiveCriteriaArgument;
 import net.minecraft.commands.arguments.ParticleArgument;
 import net.minecraft.commands.arguments.RangeArgument;
 import net.minecraft.commands.arguments.ResourceArgument;
-import net.minecraft.commands.arguments.ResourceLocationArgument;
+import net.minecraft.commands.arguments.IdentifierArgument;
 import net.minecraft.commands.arguments.ResourceOrTagArgument;
 import net.minecraft.commands.arguments.ScoreHolderArgument;
 import net.minecraft.commands.arguments.ScoreboardSlotArgument;
@@ -98,7 +98,7 @@ import net.minecraft.core.Registry;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.commands.BossBarCommands;
 import net.minecraft.server.commands.LootCommand;
@@ -210,8 +210,8 @@ public abstract class CommandArgument
             new VanillaUnconfigurableArgument("loottable", Registries.LOOT_TABLE),
             new VanillaUnconfigurableArgument("attribute", Registries.ATTRIBUTE),
 
-            new VanillaUnconfigurableArgument("boss", ResourceLocationArgument::id,
-                    (c, p) -> ValueConversions.of(ResourceLocationArgument.getId(c, p)), BossBarCommands.SUGGEST_BOSS_BAR
+            new VanillaUnconfigurableArgument("boss", IdentifierArgument::id,
+                    (c, p) -> ValueConversions.of(IdentifierArgument.getId(c, p)), BossBarCommands.SUGGEST_BOSS_BAR
             ),
 
             new VanillaUnconfigurableArgument("biome", c -> ResourceOrTagArgument.resourceOrTag(c, Registries.BIOME),
@@ -229,11 +229,11 @@ public abstract class CommandArgument
                         return Value.NULL;
                     }, (ctx, builder) -> SharedSuggestionProvider.suggestResource(ctx.getSource().getServer().registryAccess().lookupOrThrow(Registries.BIOME).keySet(), builder)
             ),
-            new VanillaUnconfigurableArgument("sound", ResourceLocationArgument::id,
-                    (c, p) -> ValueConversions.of(ResourceLocationArgument.getId(c, p)), SuggestionProviders.cast(SuggestionProviders.AVAILABLE_SOUNDS)
+            new VanillaUnconfigurableArgument("sound", IdentifierArgument::id,
+                    (c, p) -> ValueConversions.of(IdentifierArgument.getId(c, p)), SuggestionProviders.cast(SuggestionProviders.AVAILABLE_SOUNDS)
             ),
-            new VanillaUnconfigurableArgument("storekey", ResourceLocationArgument::id,
-                    (c, p) -> ValueConversions.of(ResourceLocationArgument.getId(c, p)), (ctx, builder) -> SharedSuggestionProvider.suggestResource(ctx.getSource().getServer().getCommandStorage().keys(), builder)
+            new VanillaUnconfigurableArgument("storekey", IdentifierArgument::id,
+                    (c, p) -> ValueConversions.of(IdentifierArgument.getId(c, p)), (ctx, builder) -> SharedSuggestionProvider.suggestResource(ctx.getSource().getServer().getCommandStorage().keys(), builder)
             ),
 
             // default
@@ -841,7 +841,7 @@ public abstract class CommandArgument
 
     private static class CustomIdentifierArgument extends CommandArgument
     {
-        Set<ResourceLocation> validOptions = Collections.emptySet();
+        Set<Identifier> validOptions = Collections.emptySet();
 
         protected CustomIdentifierArgument()
         {
@@ -851,13 +851,13 @@ public abstract class CommandArgument
         @Override
         protected ArgumentType<?> getArgumentType(CarpetScriptHost host)
         {
-            return ResourceLocationArgument.id();
+            return IdentifierArgument.id();
         }
 
         @Override
         protected Value getValueFromContext(CommandContext<CommandSourceStack> context, String param) throws CommandSyntaxException
         {
-            ResourceLocation choseValue = ResourceLocationArgument.getId(context, param);
+            Identifier choseValue = IdentifierArgument.getId(context, param);
             if (!validOptions.isEmpty() && !validOptions.contains(choseValue))
             {
                 throw new SimpleCommandExceptionType(Component.literal("Incorrect value for " + param + ": " + choseValue + " for custom type " + suffix)).create();
@@ -882,7 +882,7 @@ public abstract class CommandArgument
                 {
                     throw error("Custom sting type requires options passed as a list" + " for custom type " + suffix);
                 }
-                validOptions = ((ListValue) optionsValue).getItems().stream().map(v -> ResourceLocation.parse(v.getString())).collect(Collectors.toSet());
+                validOptions = ((ListValue) optionsValue).getItems().stream().map(v -> Identifier.parse(v.getString())).collect(Collectors.toSet());
             }
         }
     }

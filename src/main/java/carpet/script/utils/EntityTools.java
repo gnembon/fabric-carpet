@@ -27,6 +27,6 @@ public class EntityTools
             float u = e.getYRot() * 0.017453292F; // yaw
             e.setDeltaMovement(e.getDeltaMovement().add((-Mth.sin(g) * 0.2F), 0.0D, (Mth.cos(u) * 0.2F)));
         }
-        e.hasImpulse = true;
+        e.needsSync = true;
     }
 }

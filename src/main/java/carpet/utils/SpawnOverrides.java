@@ -6,7 +6,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.SectionPos;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.random.WeightedList;
 import net.minecraft.world.entity.EntityType;
@@ -54,7 +54,7 @@ public class SpawnOverrides {
 
     public static WeightedList<MobSpawnSettings.SpawnerData> test(StructureManager structureFeatureManager, LongSet foo,
                                                                   MobCategory cat, Structure confExisting, BlockPos where) {
-        ResourceLocation resource = structureFeatureManager.registryAccess().lookupOrThrow(Registries.STRUCTURE).getKey(confExisting);
+        Identifier resource = structureFeatureManager.registryAccess().lookupOrThrow(Registries.STRUCTURE).getKey(confExisting);
         ResourceKey<Structure> key = ResourceKey.create(Registries.STRUCTURE, resource);
         final Pair<BooleanSupplier, StructureSpawnOverride> spawnData = carpetOverrides.get(Pair.of(cat, key));
         if (spawnData == null || !spawnData.getKey().getAsBoolean()) return null;

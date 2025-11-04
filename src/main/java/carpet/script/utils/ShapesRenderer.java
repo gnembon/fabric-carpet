@@ -430,7 +430,7 @@ public class ShapesRenderer
                     float blue = (color & 0xFF) / 255.0F;
                     RenderType type;
                     if (blockState.getBlock() instanceof LeavesBlock && !Minecraft.getInstance().options.cutoutLeaves().get()) {
-                        type = RenderTypes.solid();
+                        type = RenderTypes.solidMovingBlock();
                     } else {
                         type = ItemBlockRenderTypes.getRenderType(blockState);
                     }

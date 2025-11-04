@@ -33,7 +33,7 @@ import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.tags.TagKey;
 import net.minecraft.util.context.ContextMap;
@@ -72,7 +72,7 @@ public class Inventories
             Registry<Item> items = cc.registry(Registries.ITEM);
             if (lv.isEmpty())
             {
-                return ListValue.wrap(items.listElements().map(itemReference -> ValueConversions.of(itemReference.key().location())));
+                return ListValue.wrap(items.listElements().map(itemReference -> ValueConversions.of(itemReference.key().identifier())));
             }
             String tag = lv.get(0).getString();
             Optional<HolderSet.Named<Item>> itemTag = items.get(TagKey.create(Registries.ITEM, InputValidator.identifierOf(tag)));
@@ -196,7 +196,7 @@ public class Inventories
         expression.addContextFunction("crafting_remaining_item", 1, (c, t, v) ->
         {
             String itemStr = v.get(0).getString();
-            ResourceLocation id = InputValidator.identifierOf(itemStr);
+            Identifier id = InputValidator.identifierOf(itemStr);
             CarpetContext cc = (CarpetContext) c;
             Registry<Item> registry = cc.registry(Registries.ITEM);
             Item item = registry.getOptional(id).orElseThrow(() -> new ThrowStatement(itemStr, Throwables.UNKNOWN_ITEM));

@@ -2,7 +2,7 @@ package carpet.mixins;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.function.IntSupplier;
-import net.minecraft.Util;
+import net.minecraft.util.Util;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.SectionPos;
 import net.minecraft.server.level.ChunkMap;

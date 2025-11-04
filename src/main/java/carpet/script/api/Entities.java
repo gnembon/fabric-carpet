@@ -28,7 +28,7 @@ import java.util.function.Predicate;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
@@ -107,10 +107,10 @@ public class Entities
                 throw new InternalExpressionException("'spawn' function takes mob name, and position to spawn");
             }
             String entityString = lv.get(0).getString();
-            ResourceLocation entityId;
+            Identifier entityId;
             try
             {
-                entityId = ResourceLocation.read(new StringReader(entityString));
+                entityId = Identifier.read(new StringReader(entityString));
                 EntityType<? extends Entity> type = cc.registry(Registries.ENTITY_TYPE).getOptional(entityId).orElse(null);
                 if (type == null || !type.canSummon())
                 {

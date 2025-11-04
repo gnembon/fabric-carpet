@@ -37,7 +37,7 @@ import net.minecraft.nbt.NumericTag;
 import net.minecraft.nbt.StringTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.nbt.TagParser;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.Container;
@@ -113,13 +113,13 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
         return value;
     }
 
-    public static Value nameFromRegistryId(@Nullable ResourceLocation id)
+    public static Value nameFromRegistryId(@Nullable Identifier id)
     {
         return StringValue.of(nameFromResource(id));
     }
 
     @Nullable
-    public static String nameFromResource(@Nullable ResourceLocation id)
+    public static String nameFromResource(@Nullable Identifier id)
     {
         return id == null ? null : id.getNamespace().equals("minecraft") ? id.getPath() : id.toString();
     }

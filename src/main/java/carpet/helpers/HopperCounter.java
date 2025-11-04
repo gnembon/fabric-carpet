@@ -14,7 +14,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.Style;
 import net.minecraft.network.chat.TextColor;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.DyeColor;
@@ -370,7 +370,7 @@ public class HopperCounter
         Block block = null;
         final Registry<Item> itemRegistry = registryAccess.lookupOrThrow(Registries.ITEM);
         final Registry<Block> blockRegistry = registryAccess.lookupOrThrow(Registries.BLOCK);
-        ResourceLocation id = itemRegistry.getKey(item);
+        Identifier id = itemRegistry.getKey(item);
         if (item instanceof BlockItem blockItem)
         {
             block = blockItem.getBlock();
@@ -411,7 +411,7 @@ public class HopperCounter
             return WHITE;
         }
 
-        ResourceLocation id = registryAccess.lookupOrThrow(Registries.ITEM).getKey(item);
+        Identifier id = registryAccess.lookupOrThrow(Registries.ITEM).getKey(item);
         if (id == null)
         {
             return null;
