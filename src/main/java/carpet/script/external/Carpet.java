@@ -142,6 +142,11 @@ public class Carpet
         return CarpetSettings.fillUpdates;
     }
 
+    public static boolean isDebugEnabled()
+    {
+        return CarpetSettings.superSecretSetting;
+    }
+
     @Nullable
     public static Module fetchGlobalModule(String name, boolean allowLibraries) throws IOException
     {
