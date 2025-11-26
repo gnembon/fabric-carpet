@@ -96,7 +96,6 @@
     "Player_antiCheatDisabledMixin",
     "ServerPlayerGameMode_antiCheatMixin",
     "HopperBlockEntity_counterMixin",
-    "AbstractContainerMenu_ctrlQCraftingMixin",
     "Connection_packetCounterMixin",
     "ItemStack_stackableShulkerBoxesMixin",
     "ItemEntityMixin",
