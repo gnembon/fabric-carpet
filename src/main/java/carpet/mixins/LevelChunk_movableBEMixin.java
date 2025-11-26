@@ -114,18 +114,21 @@ public abstract class LevelChunk_movableBEMixin extends ChunkAccess implements W
         if (LightEngine.hasDifferentLightProperties(oldBlockState, newBlockState)) {
             ProfilerFiller profiler = Profiler.get();
             profiler.push("updateSkyLightSources");
-            skyLightSources.update(this, x, chunkY, z);
+            if (skyLightSources != null) // compat with ScalableLux aka Starlight port
+            {
+                skyLightSources.update(this, x, chunkY, z);
+            }
             profiler.popPush("queueCheckLight");
             level.getChunkSource().getLightEngine().checkBlock(blockPos_1);
             profiler.pop();
         }
 
         boolean blockChanged = !oldBlockState.is(newBlock);
-        boolean boolean_1 = (flags & 64) != 0; // moved by pistons
+        boolean movedByPiston = (flags & Block.UPDATE_MOVE_BY_PISTON) != 0; // moved by pistons
         boolean sideEffects = (flags & Block.UPDATE_SKIP_BLOCK_ENTITY_SIDEEFFECTS) == 0;
 
         if (blockChanged && oldBlockState.hasBlockEntity()) {
-            if (level instanceof ServerLevel serverLevel && !(oldBlockState.getBlock() instanceof MovingPistonBlock)) {
+            if (level instanceof ServerLevel && !(oldBlockState.getBlock() instanceof MovingPistonBlock)) {
                 if (sideEffects) {
                     BlockEntity blockEntity = level.getBlockEntity(blockPos_1);
                     if (blockEntity != null) {
@@ -140,9 +143,9 @@ public abstract class LevelChunk_movableBEMixin extends ChunkAccess implements W
         {
             if (level instanceof ServerLevel serverLevel && !(oldBlockState.getBlock() instanceof MovingPistonBlock))
             {
-                if ((flags & Block.UPDATE_NEIGHBORS) != 0 || boolean_1)
+                if ((flags & Block.UPDATE_NEIGHBORS) != 0 || movedByPiston)
                 {
-                    oldBlockState.affectNeighborsAfterRemoval(serverLevel, blockPos_1, boolean_1);
+                    oldBlockState.affectNeighborsAfterRemoval(serverLevel, blockPos_1, movedByPiston);
                 }
             }
         }
@@ -155,7 +158,7 @@ public abstract class LevelChunk_movableBEMixin extends ChunkAccess implements W
 
         if (!level.isClientSide() && sideEffects) {
             // this updates stuff, schedule ticks - do we want that since its only be called from MovingPistonBlock really?
-            newBlockState.onPlace(level, blockPos_1, oldBlockState, boolean_1);
+            newBlockState.onPlace(level, blockPos_1, oldBlockState, movedByPiston);
         }
 
         BlockEntity oldBlockEntity = null;
