@@ -695,16 +695,16 @@ public class SettingsManager {
     {
         if (locked()) return 0;
         if (!rules.containsKey(rule.name())) return 0;
-        ConfigReadResult conf = readSettingsFromConf(getFile());
-        conf.ruleMap().put(rule.name(), stringValue);
-        writeSettingsToConf(conf); // this may feels weird, but if conf
-        // is locked, it will never reach this point.
         try {
             rule.set(source, stringValue);
             Messenger.m(source ,"gi "+String.format(tr(TranslationKeys.DEFAULT_SET), RuleHelper.translatedName(rule), stringValue));
         } catch (InvalidRuleValueException e) {
             e.notifySource(rule.name(), source);
+            return 0;
         }
+        ConfigReadResult conf = readSettingsFromConf(getFile());
+        conf.ruleMap().put(rule.name(), stringValue);
+        writeSettingsToConf(conf);
         return 1;
     }
     // removes overrides of the default values in the file
