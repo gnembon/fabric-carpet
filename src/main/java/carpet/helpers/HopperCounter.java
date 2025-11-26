@@ -100,7 +100,7 @@ public class HopperCounter
     {
         startTick = -1;
         this.color = color;
-        String hexColor = Integer.toHexString(color.getTextColor());
+        String hexColor = Integer.toHexString(color.getTextColor() & 0xFFFFFF); // don't get alpha
         if (hexColor.length() < 6)
         {
             hexColor = "0".repeat(6 - hexColor.length()) + hexColor;
