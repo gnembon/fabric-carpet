@@ -3,33 +3,42 @@ package carpet.commands;
 import carpet.helpers.EntityPlayerActionPack;
 import carpet.helpers.EntityPlayerActionPack.Action;
 import carpet.helpers.EntityPlayerActionPack.ActionType;
+import carpet.mixins.EntitySelectorAccessor;
 import carpet.CarpetSettings;
 import carpet.fakes.ServerPlayerInterface;
 import carpet.patches.EntityPlayerMPFake;
 import carpet.utils.CommandHelper;
 import carpet.utils.Messenger;
-import com.mojang.authlib.GameProfile;
+
+import com.google.common.collect.Iterables;
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.CommandDispatcher;
+import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
-import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import com.mojang.brigadier.suggestion.Suggestions;
+import com.mojang.brigadier.suggestion.SuggestionsBuilder;
+
 import net.minecraft.SharedConstants;
 import net.minecraft.commands.CommandBuildContext;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.DimensionArgument;
+import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.commands.arguments.GameModeArgument;
 import net.minecraft.commands.arguments.coordinates.RotationArgument;
 import net.minecraft.commands.arguments.coordinates.Vec3Argument;
+import net.minecraft.commands.arguments.selector.EntitySelector;
+import net.minecraft.commands.arguments.selector.EntitySelectorParser;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.UUIDUtil;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.permissions.Permissions;
 import net.minecraft.server.players.NameAndId;
 import net.minecraft.server.players.OldUsersConverter;
 import net.minecraft.server.players.PlayerList;
@@ -40,6 +49,7 @@ import net.minecraft.world.phys.Vec2;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 
 import static net.minecraft.commands.Commands.argument;
@@ -51,10 +61,11 @@ public class PlayerCommand
     // TODO: allow any order like execute
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher, CommandBuildContext commandBuildContext)
     {
+        EntityArgument playerArgument = EntityArgument.player();
         LiteralArgumentBuilder<CommandSourceStack> command = literal("player")
                 .requires((player) -> CommandHelper.canUseCommand(player, CarpetSettings.commandPlayer))
-                .then(argument("player", StringArgumentType.word())
-                        .suggests((c, b) -> suggest(getPlayerSuggestions(c.getSource()), b))
+                .then(argument("player", playerArgument)
+                        .suggests((c, b) -> composeNameSuggestions(c, b, playerArgument))
                         .then(literal("stop").executes(manipulation(EntityPlayerActionPack::stopAll)))
                         .then(makeActionCommand("use", ActionType.USE))
                         .then(makeActionCommand("jump", ActionType.JUMP))
@@ -116,6 +127,51 @@ public class PlayerCommand
         dispatcher.register(command);
     }
 
+    private static CompletableFuture<Suggestions> composeNameSuggestions(CommandContext<CommandSourceStack> ctx, SuggestionsBuilder sb, EntityArgument argument) {
+        // Don't show default of so many (often useless for a one player) selectors
+        if (sb.getRemaining().isEmpty())
+            return suggest(Iterables.concat(Arrays.asList("@a", "@p", "@r"), playerNameSuggestions(ctx)), sb);
+
+        // Adapted from EntityArgument.listSuggestions to add Steve and Alex
+        StringReader reader = new StringReader(sb.getInput());
+        reader.setCursor(sb.getStart());
+        EntitySelectorParser selectorParser = new EntitySelectorParser(
+            reader, ctx.getSource().permissions().hasPermission(Permissions.COMMANDS_ENTITY_SELECTORS)
+        );
+
+        try
+        {
+            selectorParser.parse();
+        } catch (CommandSyntaxException var7) {}
+
+        return selectorParser.fillSuggestions(sb, sb2 -> suggest(playerNameSuggestions(ctx), sb2));
+    }
+
+    private static Iterable<String> playerNameSuggestions(CommandContext<CommandSourceStack> ctx) {
+        return Iterables.concat(Arrays.asList("Steve", "Alex"), ctx.getSource().getOnlinePlayerNames());
+    }
+    
+    private static String getName(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
+        EntitySelector selector = context.getArgument("player", EntitySelector.class);
+        List<ServerPlayer> players = selector.findPlayers(context.getSource());
+
+        if (players.isEmpty() && !selector.usesSelector())
+        {
+            // A player name
+            return ((EntitySelectorAccessor) selector).cm$getPlayerName();
+        }
+        else
+        {
+            // handles selector not matching anything
+            return selector.findSinglePlayer(context.getSource()).getPlainTextName();
+        }
+    }
+
+    private static ServerPlayer getPlayer(CommandContext<CommandSourceStack> context) throws CommandSyntaxException
+    {
+        return EntityArgument.getPlayer(context, "player");
+    }
+
     private static LiteralArgumentBuilder<CommandSourceStack> makeActionCommand(String actionName, ActionType type)
     {
         return literal(actionName)
@@ -136,25 +192,11 @@ public class PlayerCommand
                         executes(c -> manipulate(c, ap -> ap.drop(IntegerArgumentType.getInteger(c, "slot"), dropAll))));
     }
 
-    private static Collection<String> getPlayerSuggestions(CommandSourceStack source)
-    {
-        Set<String> players = new LinkedHashSet<>(List.of("Steve", "Alex"));
-        players.addAll(source.getOnlinePlayerNames());
-        return players;
-    }
-
-    private static ServerPlayer getPlayer(CommandContext<CommandSourceStack> context)
-    {
-        String playerName = StringArgumentType.getString(context, "player");
-        MinecraftServer server = context.getSource().getServer();
-        return server.getPlayerList().getPlayerByName(playerName);
-    }
-
-    private static boolean cantManipulate(CommandContext<CommandSourceStack> context)
+    private static boolean cantManipulate(CommandContext<CommandSourceStack> context) throws CommandSyntaxException
     {
         Player player = getPlayer(context);
         CommandSourceStack source = context.getSource();
-        if (player == null)
+        if (player == null) // can be removed
         {
             Messenger.m(source, "r Can only manipulate existing players");
             return true;
@@ -176,7 +218,7 @@ public class PlayerCommand
         return false;
     }
 
-    private static boolean cantReMove(CommandContext<CommandSourceStack> context)
+    private static boolean cantReMove(CommandContext<CommandSourceStack> context) throws CommandSyntaxException
     {
         if (cantManipulate(context)) return true;
         Player player = getPlayer(context);
@@ -185,9 +227,9 @@ public class PlayerCommand
         return true;
     }
 
-    private static boolean cantSpawn(CommandContext<CommandSourceStack> context)
+    private static boolean cantSpawn(CommandContext<CommandSourceStack> context) throws CommandSyntaxException
     {
-        String playerName = StringArgumentType.getString(context, "player");
+        String playerName = getName(context);
         MinecraftServer server = context.getSource().getServer();
         PlayerList manager = server.getPlayerList();
 
@@ -239,7 +281,7 @@ public class PlayerCommand
         return false;
     }
 
-    private static int kill(CommandContext<CommandSourceStack> context)
+    private static int kill(CommandContext<CommandSourceStack> context) throws CommandSyntaxException
     {
         if (cantReMove(context)) return 0;
         ServerPlayer player = getPlayer(context);
@@ -302,8 +344,8 @@ public class PlayerCommand
             // Force override flying to false for survival-like players, or they will fly too
             flying = false;
         }
-        String playerName = StringArgumentType.getString(context, "player");
-        if (playerName.length() > maxNameLength(source.getServer()))
+        String playerName = getName(context);
+        if (playerName.length() > maxNameLength(source.getServer())) // possibly handled by selector
         {
             Messenger.m(source, "rb Player name: " + playerName + " is too long");
             return 0;
@@ -328,7 +370,7 @@ public class PlayerCommand
         return server.getPort() >= 0 ? SharedConstants.MAX_PLAYER_NAME_LENGTH : 40;
     }
 
-    private static int manipulate(CommandContext<CommandSourceStack> context, Consumer<EntityPlayerActionPack> action)
+    private static int manipulate(CommandContext<CommandSourceStack> context, Consumer<EntityPlayerActionPack> action) throws CommandSyntaxException
     {
         if (cantManipulate(context)) return 0;
         ServerPlayer player = getPlayer(context);
@@ -341,7 +383,7 @@ public class PlayerCommand
         return c -> manipulate(c, action);
     }
 
-    private static int shadow(CommandContext<CommandSourceStack> context)
+    private static int shadow(CommandContext<CommandSourceStack> context) throws CommandSyntaxException
     {
         if (cantManipulate(context)) return 0;
 
