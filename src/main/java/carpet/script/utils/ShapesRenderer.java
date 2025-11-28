@@ -561,11 +561,14 @@ public class ShapesRenderer
             {
                 text_x = (float) (-textRenderer.width(shape.value.getString()));
             }
-            MultiBufferSource.BufferSource immediate = MultiBufferSource.immediate(new ByteBufferBuilder(RenderType.TRANSIENT_BUFFER_SIZE));
-            // text doesn't appear if backgroud is set
-            ///script run draw_shape('label', 100, 'pos', [200, 100, 200], 'text', 'Hewwo World!', 'color', 0xffffffff, 'fill', 0x33333333)
-            textRenderer.drawInBatch(shape.value, text_x, 0.0F, shape.textcolor, false, matrices.last().pose(), immediate, Font.DisplayMode.SEE_THROUGH, shape.textbck, 15728880);
-            immediate.endBatch();
+            try (ByteBufferBuilder bbb = new ByteBufferBuilder(RenderType.TRANSIENT_BUFFER_SIZE))
+            {
+	            MultiBufferSource.BufferSource immediate = MultiBufferSource.immediate(bbb);
+	            // text doesn't appear if backgroud is set
+	            ///script run draw_shape('label', 100, 'pos', [200, 100, 200], 'text', 'Hewwo World!', 'color', 0xffffffff, 'fill', 0x33333333)
+	            textRenderer.drawInBatch(shape.value, text_x, 0.0F, shape.textcolor, false, matrices.last().pose(), immediate, Font.DisplayMode.SEE_THROUGH, shape.textbck, 15728880);
+	            immediate.endBatch();
+            }
             matrices.popPose();
             ////RenderSystem.enableCull();
         }
