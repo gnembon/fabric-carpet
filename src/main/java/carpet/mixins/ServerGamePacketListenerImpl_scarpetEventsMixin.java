@@ -280,7 +280,7 @@ public class ServerGamePacketListenerImpl_scarpetEventsMixin
         }
     }
 
-    @Inject(method = "handleChatCommand(Lnet/minecraft/network/protocol/game/ServerboundChatCommandPacket;)V",
+    @Inject(method = "method_44356", // lambda of handleChatCommand(ServerboundChatCommandPacket)
             at = @At(value = "HEAD")
     )
     private void onChatCommandMessage(ServerboundChatCommandPacket serverboundChatCommandPacket, CallbackInfo ci) {
