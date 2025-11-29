@@ -1,6 +1,5 @@
 package carpet.mixins;
 
-import carpet.fakes.EntityInterface;
 import net.minecraft.network.protocol.game.ServerboundChatCommandPacket;
 import net.minecraft.world.entity.player.Input;
 import net.minecraft.world.item.crafting.RecipeManager;
@@ -48,22 +47,37 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.BlockHitResult;
 
-
 @Mixin(ServerGamePacketListenerImpl.class)
 public class ServerGamePacketListenerImpl_scarpetEventsMixin
 {
     @Shadow public ServerPlayer player;
 
-    @Inject(method = "handlePlayerInput", at = @At("HEAD"))
-    private void checkMoves(ServerboundPlayerInputPacket p, CallbackInfo ci)
+
+
+    @Inject(method = "handlePlayerInput", at = @At(
+            value = "INVOKE",
+            target = "Lnet/minecraft/server/level/ServerPlayer;setLastClientInput(Lnet/minecraft/world/entity/player/Input;)V"
+    ))
+    private void checkMovement(ServerboundPlayerInputPacket packet, CallbackInfo ci)
     {
-        // todo this may not ride on the right thread moment, so needs to be checked
+        Input input = packet.input();
+        
+        // sneak events
+        boolean wasDown = player.isShiftKeyDown();
+        boolean isDown = input.shift();
+        if (wasDown != isDown)
+        {
+            if (isDown)
+            {
+                PLAYER_STARTS_SNEAKING.onPlayerEvent(player);
+            }
+            else
+            {
+                PLAYER_STOPS_SNEAKING.onPlayerEvent(player);
+            }
+        }
 
-        Input input = p.input();
-
-        if (player.getVehicle() != null && !((EntityInterface)player.getVehicle()).isPermanentVehicle()) // won't since that method makes sure its not null
-            player.setShiftKeyDown(p.input().shift());
-
+        // ride event, which should check for mount?
         if (PLAYER_RIDES.isNeeded() && (input.jump() || input.shift() || input.forward() || input.backward() || input.left() || input.right()))
         {
             PLAYER_RIDES.onMountControls(player, input.left() == input.right() ? 0 : (input.left() ? -1 : 1 ), input.forward() == input.backward() ? 0 : (input.forward() ? 1 : -1), input.jump(), input.shift());
@@ -176,27 +190,6 @@ public class ServerGamePacketListenerImpl_scarpetEventsMixin
             InteractionHand hand = playerInteractItemC2SPacket_1.getHand();
             if(PLAYER_USES_ITEM.onItemAction(player, hand, player.getItemInHand(hand).copy())) {
                 ci.cancel();
-            }
-        }
-    }
-
-    @Inject(method = "handlePlayerInput", at = @At(
-            value = "INVOKE",
-            target = "Lnet/minecraft/server/level/ServerPlayer;setLastClientInput(Lnet/minecraft/world/entity/player/Input;)V"
-    ))
-    private void onStartSneaking(ServerboundPlayerInputPacket serverboundPlayerInputPacket, CallbackInfo ci)
-    {
-        boolean wasDown = player.isShiftKeyDown();
-        boolean isDown = serverboundPlayerInputPacket.input().shift();
-        if (wasDown != isDown)
-        {
-            if (isDown)
-            {
-                PLAYER_STARTS_SNEAKING.onPlayerEvent(player);
-            }
-            else
-            {
-                PLAYER_STOPS_SNEAKING.onPlayerEvent(player);
             }
         }
     }
