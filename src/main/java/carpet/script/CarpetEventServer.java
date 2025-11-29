@@ -886,7 +886,7 @@ public class CarpetEventServer
                                 new NumericValue(amount),
                                 StringValue.of(source.getMsgId()),
                                 source.getEntity() == null ? Value.NULL : new EntityValue(source.getEntity())
-                        ), () -> target.level().getServer().createCommandSourceStack());
+                        ), () -> ((ServerPlayer) target).createCommandSourceStack());
             }
         };
         public static final Event PLAYER_DEALS_DAMAGE = new Event("player_deals_damage", 3, false)
@@ -896,7 +896,7 @@ public class CarpetEventServer
             {
                 return handler.call(() ->
                                 Arrays.asList(new EntityValue(source.getEntity()), new NumericValue(amount), new EntityValue(target)),
-                        () -> source.getEntity().level().getServer().createCommandSourceStack()
+                        () -> ((ServerPlayer) source.getEntity()).createCommandSourceStack()
                 );
             }
         };
