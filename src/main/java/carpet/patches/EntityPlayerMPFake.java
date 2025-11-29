@@ -26,6 +26,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.vehicle.boat.AbstractBoat;
 import net.minecraft.world.food.FoodData;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.ResolvableProfile;
@@ -219,8 +220,21 @@ public class EntityPlayerMPFake extends ServerPlayer
             // happens with that paper port thingy - not sure what that would fix, but hey
             // the game not gonna crash violently.
         }
+    }
 
-
+    @Override
+    public boolean startRiding(Entity entityToRide, boolean force, boolean sendEventAndTriggers) {
+        if (super.startRiding(entityToRide, force, sendEventAndTriggers)) {
+            // from ClientPacketListener.handleSetEntityPassengersPacket
+            if (entityToRide instanceof AbstractBoat) {
+                this.yRotO = entityToRide.getYRot();
+                this.setYRot(entityToRide.getYRot());
+                this.setYHeadRot(entityToRide.getYRot());
+            }
+            return true;
+        } else {
+            return false;
+        }
     }
 
     private void shakeOff()
