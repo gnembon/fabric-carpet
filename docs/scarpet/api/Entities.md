@@ -204,7 +204,7 @@ Entity that `e` rides.
 
 ### `query(e, 'unmountable')`
 
-Boolean, true if the entity cannot be mounted.
+Boolean, true if the entity cannot be unmounted.
 
 ### `(deprecated) query(e, 'tags')`
 
@@ -727,7 +727,7 @@ Mounts the entity to the `other`.
 
 ### `modify(e, 'unmountable', boolean)`
 
-Denies or allows an entity to be mounted.
+Denies or allows an entity to be unmounted.
 
 ### `modify(e, 'drop_passengers')`
 
