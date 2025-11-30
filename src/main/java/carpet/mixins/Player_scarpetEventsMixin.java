@@ -18,6 +18,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
+import com.llamalad7.mixinextras.injector.ModifyReturnValue;
 
 import static carpet.script.CarpetEventServer.Event.PLAYER_ATTACKS_ENTITY;
 import static carpet.script.CarpetEventServer.Event.PLAYER_DEALS_DAMAGE;
@@ -85,5 +86,11 @@ public abstract class Player_scarpetEventsMixin extends LivingEntity
                 ci.cancel();
             }
         }
+    }
+
+    @ModifyReturnValue(method = "wantsToStopRiding", at = @At("TAIL"))
+    private boolean dontUnmountFromIfPermanentVehicle(boolean original)
+    {
+        return original && !((EntityInterface) this.getVehicle()).isPermanentVehicle();
     }
 }

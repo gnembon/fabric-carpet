@@ -1485,7 +1485,8 @@ public class ShapeDispatcher
                     "HEAD",
                     "GUI",
                     "GROUND",
-                    "FIXED")
+                    "FIXED",
+                    "ON_SHELF")
             {
                 @Override
                 public Value validate(Map<String, Value> o, MinecraftServer s, Value v)
