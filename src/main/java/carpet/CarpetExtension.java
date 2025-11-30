@@ -71,12 +71,6 @@ public interface CarpetExtension
     }
 
     /**
-     * @deprecated Implement {@link #extensionSettingsManager()} instead
-     */
-    @Deprecated(forRemoval = true)
-    default carpet.settings.SettingsManager customSettingsManager() {return null;}
-
-    /**
      * Provide your own custom settings manager managed in the same way as base /carpet
      * command, but separated to its own command as defined in SettingsManager.
      * 
