@@ -27,10 +27,13 @@ public class NetHandlerPlayServerFake extends ServerGamePacketListenerImpl
     @Override
     public void disconnect(Component message)
     {
-        if (message.getContents() instanceof TranslatableContents text && (text.getKey().equals("multiplayer.disconnect.idling") || text.getKey().equals("multiplayer.disconnect.duplicate_login")))
+        if (message.getContents() instanceof TranslatableContents text && text.getKey().equals("multiplayer.disconnect.not_whitelisted"))
         {
-            ((EntityPlayerMPFake) player).kill(message);
+            // Whitelist stuff triggers this in multiple places and we shouldn't let fake players randomly disconnect
+            // as we don't expect them to be whitelisted
+            return;
         }
+        ((EntityPlayerMPFake) player).kill(message);
     }
 
     @Override
@@ -44,6 +47,3 @@ public class NetHandlerPlayServerFake extends ServerGamePacketListenerImpl
     }
 
 }
-
-
-
