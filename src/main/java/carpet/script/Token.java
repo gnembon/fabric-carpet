@@ -1,6 +1,6 @@
 package carpet.script;
 
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 
 public class Token implements Comparable<Token> {
 
@@ -36,8 +36,7 @@ public class Token implements Comparable<Token> {
     public int linepos;
     public int lineno;
 
-    @Nullable
-    public Expression.ExpressionNode node = null;
+    public Expression.@Nullable ExpressionNode node = null;
 
     public static final Token NONE = new Token();
 

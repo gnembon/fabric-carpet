@@ -63,7 +63,7 @@ import net.minecraft.world.level.levelgen.structure.placement.StructurePlacement
 import net.minecraft.world.level.levelgen.structure.structures.JigsawStructure;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureProcessorList;
 
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 
 public class FeatureGenerator
 {

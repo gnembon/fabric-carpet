@@ -13,7 +13,7 @@ import carpet.script.value.ListValue;
 import carpet.script.value.MapValue;
 import carpet.script.value.Value;
 
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 
 /**
  * <p>Converts a {@link MapValue} to a {@link Map}, converting all of its contents to their respective types.</p>

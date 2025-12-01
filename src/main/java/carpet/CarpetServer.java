@@ -40,7 +40,7 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.commands.PerfCommand;
 import net.minecraft.server.level.ServerPlayer;
 
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 
 public class CarpetServer // static for now - easier to handle all around the code, its one anyways
 {

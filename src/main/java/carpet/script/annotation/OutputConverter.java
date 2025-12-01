@@ -25,7 +25,7 @@ import carpet.script.value.StringValue;
 import carpet.script.value.Value;
 import carpet.script.value.ValueConversions;
 
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 
 /**
  * <p>A converter from a given {@link Object} of type T into a {@link Value}, used in order to convert the outputs of methods into usable Scarpet

@@ -20,7 +20,7 @@ import carpet.script.value.BlockValue;
 import carpet.script.value.FunctionValue;
 import carpet.script.value.Value;
 
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import static java.lang.annotation.ElementType.PARAMETER;
 import static java.lang.annotation.ElementType.TYPE_USE;
@@ -165,9 +165,8 @@ public interface Locator
                 }
             }
 
-            @Nullable
             @SuppressWarnings("unchecked")
-            private static <R> java.util.function.Function<BlockArgument, R> getReturnFunction(Class<R> type)
+            private static <R> java.util.function.@Nullable Function<BlockArgument, R> getReturnFunction(Class<R> type)
             {
                 if (type == BlockArgument.class)
                 {

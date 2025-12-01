@@ -10,7 +10,7 @@ import carpet.script.Context;
 import carpet.script.value.ListValue;
 import carpet.script.value.Value;
 
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 
 /**
  * <p>Converts a given {@link ListValue} into a {@link List} of values converted to {@code <T>}.</p>

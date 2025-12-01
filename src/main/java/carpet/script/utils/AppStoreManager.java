@@ -34,7 +34,7 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.io.IOUtils;
 
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 
 /**
  * A class used to save scarpet app store scripts to disk

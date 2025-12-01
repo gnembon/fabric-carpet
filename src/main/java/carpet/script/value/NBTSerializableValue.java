@@ -56,7 +56,7 @@ import net.minecraft.world.level.block.entity.ChestBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 
 public class NBTSerializableValue extends Value implements ContainerValueInterface
 {

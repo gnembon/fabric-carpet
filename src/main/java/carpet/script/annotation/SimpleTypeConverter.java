@@ -18,7 +18,7 @@ import carpet.script.value.NumericValue;
 import carpet.script.value.Value;
 import carpet.script.value.ValueConversions;
 
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 
 /**
  * <p>A simple {@link ValueConverter} implementation that converts from a specified subclass of {@link Value} into {@code <R>} by using a given

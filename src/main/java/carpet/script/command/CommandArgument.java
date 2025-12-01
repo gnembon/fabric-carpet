@@ -108,7 +108,7 @@ import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.phys.Vec2;
 import net.minecraft.world.scores.ScoreHolder;
 
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import static net.minecraft.commands.Commands.argument;
 
