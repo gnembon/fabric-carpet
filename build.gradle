@@ -1,5 +1,5 @@
 plugins {
-	id 'fabric-loom' version '1.11-SNAPSHOT'
+	id 'fabric-loom' version '1.13-SNAPSHOT'
 	id 'maven-publish'
 }
 
@@ -25,8 +25,6 @@ dependencies {
 	//modImplementation "net.fabricmc:fabric:${project.fabric_version}"
 	//modCompileOnly fabricApi.module("fabric-rendering-v1", project.fabric_version)
 
-	// PSA: Some older mods, compiled on Loom 0.2.1, might have outdated Maven POMs.
-	// You may need to force-disable transitiveness on them.
 	compileOnly "com.google.code.findbugs:jsr305:${project.jsr305_version}"
 }
 
@@ -79,7 +77,7 @@ publishing {
 	repositories {
 		// See https://docs.gradle.org/current/userguide/publishing_maven.html for information on how to set up publishing.
 		maven {
-			url "$projectDir/publish"
+			url = "$projectDir/publish"
 		}
 	}
 }
