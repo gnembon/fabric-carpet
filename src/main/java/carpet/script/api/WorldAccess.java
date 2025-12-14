@@ -28,10 +28,9 @@ import carpet.script.value.StringValue;
 import carpet.script.value.Value;
 import carpet.script.value.ValueConversions;
 
-import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.longs.LongSet;
-import net.minecraft.Util;
+import net.minecraft.util.Util;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Holder;
@@ -39,6 +38,7 @@ import net.minecraft.core.HolderSet;
 import net.minecraft.core.QuartPos;
 import net.minecraft.core.Registry;
 import net.minecraft.core.RegistryAccess;
+import net.minecraft.core.particles.ExplosionParticleInfo;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -54,6 +54,7 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.tags.ItemTags;
 import net.minecraft.tags.TagKey;
 import net.minecraft.util.ProblemReporter;
+import net.minecraft.util.random.WeightedList;
 import net.minecraft.world.level.ServerExplosion;
 import net.minecraft.world.level.chunk.ChunkGenerator;
 import net.minecraft.world.level.chunk.PalettedContainer;
@@ -71,7 +72,6 @@ import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -85,15 +85,11 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import net.minecraft.commands.arguments.item.ItemInput;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.Tag;
 import net.minecraft.network.protocol.game.ClientboundExplodePacket;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
-import net.minecraft.util.SortedArraySet;
-import net.minecraft.world.Clearable;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
@@ -136,7 +132,7 @@ import net.minecraft.world.level.pathfinder.PathComputationType;
 import net.minecraft.world.level.storage.ServerLevelData;
 import net.minecraft.world.phys.Vec3;
 
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import static carpet.script.utils.WorldTools.canHasChunk;
 
@@ -401,7 +397,7 @@ public class WorldAccess
                 return Value.TRUE;
             }
             String poiTypeString = poi.getString().toLowerCase(Locale.ROOT);
-            ResourceLocation resource = InputValidator.identifierOf(poiTypeString);
+            Identifier resource = InputValidator.identifierOf(poiTypeString);
             Registry<PoiType> poiReg = cc.registry(Registries.POINT_OF_INTEREST_TYPE);
             PoiType type = poiReg.getOptional(resource)
                     .orElseThrow(() -> new ThrowStatement(poiTypeString, Throwables.UNKNOWN_POI));
@@ -998,6 +994,12 @@ public class WorldAccess
             return BooleanValue.of(success);
         });
 
+        // from ServerLevel = don't wanna mixin this in, as it is PITA
+        WeightedList<ExplosionParticleInfo> DEFAULT_EXPLOSION_BLOCK_PARTICLES = WeightedList.<ExplosionParticleInfo>builder()
+                .add(new ExplosionParticleInfo(ParticleTypes.POOF, 0.5F, 1.0F))
+                .add(new ExplosionParticleInfo(ParticleTypes.SMOKE, 1.0F, 1.0F))
+                .build();
+
         expression.addContextFunction("create_explosion", -1, (c, t, lv) ->
         {
             if (lv.isEmpty())
@@ -1078,7 +1080,7 @@ public class WorldAccess
             LivingEntity theAttacker = attacker;
 
             // copy of ServerWorld.createExplosion #TRACK#
-            ServerExplosion explosion = new ServerExplosion(cc.level(), source, null, null, pos, powah, createFire, mode)
+            ServerExplosion serverExplosion = new ServerExplosion(cc.level(), source, null, null, pos, powah, createFire, mode)
             {
                 @Override
                 @Nullable
@@ -1088,14 +1090,15 @@ public class WorldAccess
                     return theAttacker;
                 }
             };
-            explosion.explode();
-            ParticleOptions explosionParticle = explosion.isSmall() ? ParticleTypes.EXPLOSION : ParticleTypes.EXPLOSION_EMITTER;
-            cc.level().players().forEach(spe -> {
-                if (spe.distanceToSqr(pos) < 4096.0D)
-                {
-                    spe.connection.send(new ClientboundExplodePacket(pos, Optional.ofNullable(explosion.getHitPlayers().get(spe)), explosionParticle, SoundEvents.GENERIC_EXPLODE));
+            int i = serverExplosion.explode();
+            ParticleOptions particleOptions3 = serverExplosion.isSmall() ? ParticleTypes.EXPLOSION : ParticleTypes.EXPLOSION_EMITTER;
+
+            for (ServerPlayer serverPlayer : cc.level().players()) {
+                if (serverPlayer.distanceToSqr(pos) < 4096.0) {
+                    Optional<Vec3> optional = Optional.ofNullable((Vec3)serverExplosion.getHitPlayers().get(serverPlayer));
+                    serverPlayer.connection.send(new ClientboundExplodePacket(pos, powah, i, optional, particleOptions3, SoundEvents.GENERIC_EXPLODE, DEFAULT_EXPLOSION_BLOCK_PARTICLES));
                 }
-            });
+            }
             return Value.TRUE;
         });
 
@@ -1225,9 +1228,9 @@ public class WorldAccess
             Registry<Block> blocks = cc.registry(Registries.BLOCK);
             if (lv.isEmpty())
             {
-                return ListValue.wrap(blocks.listElements().map(blockReference -> ValueConversions.of(blockReference.key().location())));
+                return ListValue.wrap(blocks.listElements().map(blockReference -> ValueConversions.of(blockReference.key().identifier())));
             }
-            ResourceLocation tag = InputValidator.identifierOf(lv.get(0).getString());
+            Identifier tag = InputValidator.identifierOf(lv.get(0).getString());
             Optional<HolderSet.Named<Block>> tagset = blocks.get(TagKey.create(Registries.BLOCK, tag));
             return tagset.isEmpty() ? Value.NULL : ListValue.wrap(tagset.get().stream().map(b -> ValueConversions.of(blocks.getKey(b.value()))));
         });
@@ -1256,7 +1259,7 @@ public class WorldAccess
             ServerLevel world = cc.level();
             if (lv.isEmpty())
             {
-                return ListValue.wrap(cc.registry(Registries.BIOME).listElements().map(biomeReference -> ValueConversions.of(biomeReference.key().location())));
+                return ListValue.wrap(cc.registry(Registries.BIOME).listElements().map(biomeReference -> ValueConversions.of(biomeReference.key().identifier())));
             }
 
             Biome biome;
@@ -1293,7 +1296,7 @@ public class WorldAccess
                         Climate.quantizeCoord(numberGetOrThrow(weirdness))
                 );
                 biome = mnbs.getNoiseBiome(point).value();
-                ResourceLocation biomeId = cc.registry(Registries.BIOME).getKey(biome);
+                Identifier biomeId = cc.registry(Registries.BIOME).getKey(biome);
                 return NBTSerializableValue.nameFromRegistryId(biomeId);
             }
 
@@ -1314,7 +1317,7 @@ public class WorldAccess
             // in locatebiome
             if (locator.offset == lv.size())
             {
-                ResourceLocation biomeId = cc.registry(Registries.BIOME).getKey(biome);
+                Identifier biomeId = cc.registry(Registries.BIOME).getKey(biome);
                 return NBTSerializableValue.nameFromRegistryId(biomeId);
             }
             String biomeFeature = lv.get(locator.offset).getString();
@@ -1430,7 +1433,7 @@ public class WorldAccess
                 if (!requested.isNull())
                 {
                     String reqString = requested.getString();
-                    ResourceLocation id = InputValidator.identifierOf(reqString);
+                    Identifier id = InputValidator.identifierOf(reqString);
                     Structure requestedStructure = reg.getValue(id);
                     if (requestedStructure != null)
                     {
@@ -1744,7 +1747,7 @@ public class WorldAccess
             case "erosion" -> router.erosion();
             case "depth" -> router.depth();
             case "ridges" -> router.ridges();
-            case "initial_density_without_jaggedness" -> router.initialDensityWithoutJaggedness();
+            case "preliminary_surface_level" -> router.preliminarySurfaceLevel();
             case "final_density" -> router.finalDensity();
             case "vein_toggle" -> router.veinToggle();
             case "vein_ridged" -> router.veinRidged();
@@ -1776,7 +1779,7 @@ public class WorldAccess
                         case "erosion" -> router.erosion();
                         case "depth" -> router.depth();
                         case "ridges" -> router.ridges();
-                        case "initial_density_without_jaggedness" -> router.initialDensityWithoutJaggedness();
+                        case "preliminary_surface_level" -> router.preliminarySurfaceLevel();
                         case "final_density" -> router.finalDensity();
                         case "vein_toggle" -> router.veinToggle();
                         case "vein_ridged" -> router.veinRidged();

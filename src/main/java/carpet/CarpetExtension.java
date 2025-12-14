@@ -71,12 +71,6 @@ public interface CarpetExtension
     }
 
     /**
-     * @deprecated Implement {@link #extensionSettingsManager()} instead
-     */
-    @Deprecated(forRemoval = true)
-    default carpet.settings.SettingsManager customSettingsManager() {return null;}
-
-    /**
      * Provide your own custom settings manager managed in the same way as base /carpet
      * command, but separated to its own command as defined in SettingsManager.
      * 
@@ -84,13 +78,7 @@ public interface CarpetExtension
      * 
      */
     default SettingsManager extensionSettingsManager() {
-        // Warn extensions overriding the other (deprecated) method, go ahead and override this if you want to provide a custom SettingsManager
-        SettingsManager deprecatedManager = customSettingsManager();
-        if (deprecatedManager != null) {
-            // Extension is providing a manager via the old method (and also hasn't overriden this)
-            CarpetServer.warnOutdatedManager(this);
-        }
-        return customSettingsManager();
+        return null;
     }
 
     /**

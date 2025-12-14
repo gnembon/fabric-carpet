@@ -4,7 +4,7 @@ import net.minecraft.core.RegistryAccess;
 import net.minecraft.nbt.StringTag;
 import net.minecraft.nbt.Tag;
 
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 
 public class StringValue extends Value
 {

@@ -4,8 +4,8 @@ import carpet.script.exception.InternalExpressionException;
 
 import java.util.Locale;
 
-import net.minecraft.ResourceLocationException;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.IdentifierException;
+import net.minecraft.resources.Identifier;
 
 public class InputValidator
 {
@@ -19,13 +19,13 @@ public class InputValidator
         return simplified;
     }
 
-    public static ResourceLocation identifierOf(String string)
+    public static Identifier identifierOf(String string)
     {
         try
         {
-            return ResourceLocation.parse(string);
+            return Identifier.parse(string);
         }
-        catch (ResourceLocationException iie)
+        catch (IdentifierException iie)
         {
             throw new InternalExpressionException("Incorrect identifier format '" + string + "': " + iie.getMessage());
         }

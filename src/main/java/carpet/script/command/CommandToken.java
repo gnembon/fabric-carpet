@@ -14,7 +14,7 @@ import java.util.Objects;
 
 import net.minecraft.commands.CommandSourceStack;
 
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import static net.minecraft.commands.Commands.literal;
 

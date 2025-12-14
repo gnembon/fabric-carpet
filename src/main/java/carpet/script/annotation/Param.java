@@ -23,7 +23,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import static java.lang.annotation.ElementType.PARAMETER;
 import static java.lang.annotation.ElementType.TYPE_USE;
@@ -212,7 +212,7 @@ public interface Param
             registerStrictConverter(Component.class, false, new SimpleTypeConverter<>(FormattedTextValue.class, FormattedTextValue::getText, "text"));
             registerStrictConverter(Component.class, true, new SimpleTypeConverter<>(StringValue.class, FormattedTextValue::getTextByValue, "text"));
             registerStrictConverter(ServerPlayer.class, false, new SimpleTypeConverter<>(EntityValue.class,
-                    v -> EntityValue.getPlayerByValue(v.getEntity().getServer(), v), "online player entity"));
+                    v -> EntityValue.getPlayerByValue(v.getEntity().level().getServer(), v), "online player entity"));
             registerStrictConverter(Boolean.class, false, new SimpleTypeConverter<>(BooleanValue.class, BooleanValue::getBoolean, "boolean"));
             registerStrictConverter(Boolean.class, true, new SimpleTypeConverter<>(NumericValue.class, NumericValue::getBoolean, "boolean"));
         }

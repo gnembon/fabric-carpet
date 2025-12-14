@@ -43,7 +43,7 @@ import net.minecraft.nbt.NumericTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.RegistryOps;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -57,7 +57,7 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -119,7 +119,7 @@ public class ShapeDispatcher
             }
             params = ShapeDispatcher.parseParams(paramList);
         }
-        params.putIfAbsent("dim", new StringValue(world.dimension().location().toString()));
+        params.putIfAbsent("dim", new StringValue(world.dimension().identifier().toString()));
         params.putIfAbsent("duration", duration);
 
         if (params.containsKey("player"))
@@ -300,7 +300,9 @@ public class ShapeDispatcher
         float lineWidth;
         protected float r, g, b, a;
         protected int color;
+        protected int argb;
         protected float fr, fg, fb, fa;
+        protected int fargb;
         protected int fillColor;
         protected int duration = 0;
         private long key;
@@ -310,6 +312,7 @@ public class ShapeDispatcher
         protected boolean discreteX, discreteY, discreteZ;
         protected ResourceKey<Level> shapeDimension;
         protected boolean debug;
+        protected boolean seethrough;
 
 
         protected ExpiringShape()
@@ -351,6 +354,11 @@ public class ShapeDispatcher
             init(options, regs);
         }
 
+        private int rgba2argb(int color) {
+            // return shift bits from alpha
+            return ((color & 0xFF) << 24) + (color >> 8 & 0xFFFFFF);
+        }
+
 
         protected void init(Map<String, Value> options, RegistryAccess regs)
         {
@@ -360,12 +368,14 @@ public class ShapeDispatcher
             lineWidth = NumericValue.asNumber(options.getOrDefault("line", optional.get("line"))).getFloat();
 
             fillColor = NumericValue.asNumber(options.getOrDefault("fill", optional.get("fill"))).getInt();
+            this.fargb = rgba2argb(fillColor);
             this.fr = (fillColor >> 24 & 0xFF) / 255.0F;
             this.fg = (fillColor >> 16 & 0xFF) / 255.0F;
             this.fb = (fillColor >> 8 & 0xFF) / 255.0F;
             this.fa = (fillColor & 0xFF) / 255.0F;
 
             color = NumericValue.asNumber(options.getOrDefault("color", optional.get("color"))).getInt();
+            this.argb = rgba2argb(color);
             this.r = (color >> 24 & 0xFF) / 255.0F;
             this.g = (color >> 16 & 0xFF) / 255.0F;
             this.b = (color >> 8 & 0xFF) / 255.0F;
@@ -377,9 +387,15 @@ public class ShapeDispatcher
                 debug = options.get("debug").getBoolean();
             }
 
+            seethrough = false;
+            if (options.containsKey("debug"))
+            {
+                seethrough = options.get("seethrough").getBoolean();
+            }
+
             key = 0;
             followEntity = -1;
-            shapeDimension = ResourceKey.create(Registries.DIMENSION, ResourceLocation.parse(options.get("dim").getString()));
+            shapeDimension = ResourceKey.create(Registries.DIMENSION, Identifier.parse(options.get("dim").getString()));
             if (options.containsKey("follow"))
             {
                 followEntity = NumericValue.asNumber(options.getOrDefault("follow", optional.get("follow"))).getInt();
@@ -464,6 +480,7 @@ public class ShapeDispatcher
             hash ^= followEntity;
             hash *= 1099511628211L;
             hash ^= Boolean.hashCode(debug);
+            hash ^= Boolean.hashCode(seethrough);
             hash *= 1099511628211L;
             if (followEntity >= 0)
             {
@@ -496,6 +513,7 @@ public class ShapeDispatcher
                 "follow", new NumericValue(-1),
                 "line", new NumericValue(2.0),
                 "debug", Value.FALSE,
+                "seethrough", Value.FALSE,
                 "fill", new NumericValue(0xffffff00),
                 "snap", new StringValue("xyz")
         );
@@ -762,7 +780,7 @@ public class ShapeDispatcher
         {
             return p -> {
                 ParticleOptions particle;
-                Registry<Block> blocks = p.getServer().registryAccess().lookupOrThrow(Registries.BLOCK);
+                Registry<Block> blocks = p.level().getServer().registryAccess().lookupOrThrow(Registries.BLOCK);
                 if (this.isitem)
                 {
                     if (Block.byItem(this.item.getItem()).defaultBlockState().isAir())
@@ -1467,7 +1485,8 @@ public class ShapeDispatcher
                     "HEAD",
                     "GUI",
                     "GROUND",
-                    "FIXED")
+                    "FIXED",
+                    "ON_SHELF")
             {
                 @Override
                 public Value validate(Map<String, Value> o, MinecraftServer s, Value v)

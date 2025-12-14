@@ -2,9 +2,9 @@ package carpet.mixins;
 
 import carpet.CarpetSettings;
 import net.minecraft.commands.Commands;
-import net.minecraft.commands.PermissionSource;
 import net.minecraft.server.commands.PerfCommand;
-import net.minecraft.server.commands.PermissionCheck;
+import net.minecraft.server.permissions.PermissionCheck;
+import net.minecraft.server.permissions.PermissionProviderCheck;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
@@ -14,11 +14,11 @@ public class PerfCommand_permissionMixin
 {
     @Redirect(method = "register", at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/commands/Commands;hasPermission(I)Lnet/minecraft/server/commands/PermissionCheck;"
+            target = "Lnet/minecraft/commands/Commands;hasPermission(Lnet/minecraft/server/permissions/PermissionCheck;)Lnet/minecraft/server/permissions/PermissionProviderCheck;"
     ))
-    private static PermissionCheck<PermissionSource> canRun(int i)
+    private static PermissionProviderCheck canRun(PermissionCheck permissionCheck)
     {
-        return Commands.hasPermission(CarpetSettings.perfPermissionLevel);
+        return Commands.hasPermission(CarpetSettings.perfPermissionCheck);
     }
 
 }

@@ -22,7 +22,7 @@ public abstract class WoolCarpetBlock_placeMixin extends Block
     public BlockState getStateForPlacement(BlockPlaceContext context)
     {
         BlockState state = super.getStateForPlacement(context);
-        if (context.getPlayer() != null && !context.getLevel().isClientSide)
+        if (context.getPlayer() != null && !context.getLevel().isClientSide())
         { // getColor()
             WoolTool.carpetPlacedAction(((WoolCarpetBlock)(Object)this).getColor(), (ServerPlayer) context.getPlayer(), context.getClickedPos(), (ServerLevel) context.getLevel());
         }

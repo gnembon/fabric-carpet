@@ -6,7 +6,7 @@ import carpet.script.Token;
 import carpet.script.external.Carpet;
 import carpet.script.value.FunctionValue;
 
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;

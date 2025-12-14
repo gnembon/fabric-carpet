@@ -10,7 +10,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(DebugRenderer.class)
 public class DebugRenderer_scarpetRenderMixin
 {
-    @Inject(method = "clear", at = @At("HEAD"))
+    @Inject(method = "refreshRendererList", at = @At("HEAD"))
     private void resetScarpetRenderes(CallbackInfo ci)
     {
         if (CarpetClient.shapes != null)

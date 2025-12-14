@@ -1,5 +1,6 @@
 package carpet.fakes;
 
+import net.minecraft.world.level.redstone.CollectingNeighborUpdater;
 import net.minecraft.world.level.redstone.NeighborUpdater;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,5 +22,5 @@ public interface LevelInterface
 
     List<Entity> getOtherEntitiesLimited(@Nullable Entity except, AABB box, Predicate<? super Entity> predicate, int limit);
 
-    NeighborUpdater getNeighborUpdater();
+    CollectingNeighborUpdater getNeighborUpdater();
 }

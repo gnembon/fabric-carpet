@@ -1,13 +1,12 @@
 plugins {
-	id 'fabric-loom' version '1.9-SNAPSHOT'
-	id 'io.github.juuxel.loom-quiltflower' version '1.7.3'
+	id 'fabric-loom' version '1.13-SNAPSHOT'
 	id 'maven-publish'
 }
 
-sourceCompatibility = JavaVersion.VERSION_21
-targetCompatibility = JavaVersion.VERSION_21
+base {
+	archivesName = project.archives_base_name
+}
 
-archivesBaseName = project.archives_base_name
 version = project.minecraft_version+'-'+project.mod_version+'+v'+new Date().format('yyMMdd')
 group = project.maven_group
 
@@ -25,10 +24,6 @@ dependencies {
 	// Fabric API. This is technically optional, but you probably want it anyway.
 	//modImplementation "net.fabricmc:fabric:${project.fabric_version}"
 	//modCompileOnly fabricApi.module("fabric-rendering-v1", project.fabric_version)
-
-	// PSA: Some older mods, compiled on Loom 0.2.1, might have outdated Maven POMs.
-	// You may need to force-disable transitiveness on them.
-	compileOnly "com.google.code.findbugs:jsr305:${project.jsr305_version}"
 }
 
 processResources {
@@ -56,11 +51,14 @@ java {
 	// if it is present.
 	// If you remove this line, sources will not be generated.
 	withSourcesJar()
+
+	sourceCompatibility = JavaVersion.VERSION_21
+	targetCompatibility = JavaVersion.VERSION_21
 }
 
 jar {
 	from("LICENSE") {
-		rename { "${it}_${project.archivesBaseName}"}
+		rename { "${it}_${project.archives_base_name}"}
 	}
 }
 
@@ -77,7 +75,7 @@ publishing {
 	repositories {
 		// See https://docs.gradle.org/current/userguide/publishing_maven.html for information on how to set up publishing.
 		maven {
-			url "$projectDir/publish"
+			url = "$projectDir/publish"
 		}
 	}
 }

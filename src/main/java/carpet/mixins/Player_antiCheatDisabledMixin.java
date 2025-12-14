@@ -32,7 +32,7 @@ public abstract class Player_antiCheatDisabledMixin extends LivingEntity
     @Inject(method = "tryToStartFallFlying", at = @At("HEAD"), cancellable = true)
     private void allowDeploys(CallbackInfoReturnable<Boolean> cir)
     {
-        if (CarpetSettings.antiCheatDisabled && (Object)this instanceof ServerPlayer sp && sp.getServer().isDedicatedServer())
+        if (CarpetSettings.antiCheatDisabled && (Object)this instanceof ServerPlayer sp && sp.level().getServer().isDedicatedServer())
         {
             ItemStack itemStack_1 = equipment.get(EquipmentSlot.CHEST);
             if (itemStack_1.getItem() == Items.ELYTRA && !itemStack_1.nextDamageWillBreak()) {

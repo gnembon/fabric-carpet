@@ -10,7 +10,7 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -38,8 +38,7 @@ public abstract class ScriptHost
     protected boolean inTermination = false;
     public boolean strict;
     public Expression.LoadOverride loadOverrides;
-    @Nullable
-    public Expression.ExpressionNode root;
+    public Expression.@Nullable ExpressionNode root;
 
     private final Set<String> deprecations = new HashSet<>();
 

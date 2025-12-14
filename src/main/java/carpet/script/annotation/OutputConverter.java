@@ -10,7 +10,7 @@ import net.minecraft.core.GlobalPos;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec3;
@@ -25,7 +25,7 @@ import carpet.script.value.StringValue;
 import carpet.script.value.Value;
 import carpet.script.value.ValueConversions;
 
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 
 /**
  * <p>A converter from a given {@link Object} of type T into a {@link Value}, used in order to convert the outputs of methods into usable Scarpet
@@ -54,7 +54,7 @@ public final class OutputConverter<T>
         register(BlockPos.class, (v, r) -> ValueConversions.of(v));
         register(Vec3.class, (v, r) -> ValueConversions.of(v));
         register(ItemStack.class, (v, r) -> ValueConversions.of(v, r));
-        register(ResourceLocation.class, (v, r) -> ValueConversions.of(v));
+        register(Identifier.class, (v, r) -> ValueConversions.of(v));
         register(GlobalPos.class, (v, r) -> ValueConversions.of(v));
     }
 

@@ -45,7 +45,7 @@ public abstract class Explosion_optimizedTntMixin
             cancellable = true)
     private void calculateExplodedPositionsCM(final CallbackInfoReturnable<List<BlockPos>> cir)
     {
-        if (CarpetSettings.optimizedTNT && !level.isClientSide && !(getIndirectSourceEntity() instanceof Breeze))
+        if (CarpetSettings.optimizedTNT && !level.isClientSide() && !(getIndirectSourceEntity() instanceof Breeze))
         {
             cir.setReturnValue(OptimizedExplosion.doExplosionA((Explosion) (Object) this, eLogger));
         }
@@ -79,7 +79,7 @@ public abstract class Explosion_optimizedTntMixin
             at = @At(value = "RETURN"))
     private void onExplostion(ServerLevel world, Entity entity, DamageSource damageSource, final ExplosionDamageCalculator explosionBehavior, final Vec3 vec3, final float power, final boolean createFire, final Explosion.BlockInteraction destructionType, final CallbackInfo ci)
     {
-        if (LoggerRegistry.__explosions && ! world.isClientSide)
+        if (LoggerRegistry.__explosions && ! world.isClientSide())
         {
             eLogger = new ExplosionLogHelper(vec3.x, vec3.y, vec3.z, power, createFire, destructionType, level.registryAccess());
         }

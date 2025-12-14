@@ -2,7 +2,7 @@ package carpet.mixins;
 
 import carpet.fakes.MinecraftServerInterface;
 import carpet.script.CarpetScriptServer;
-import net.minecraft.Util;
+import net.minecraft.util.Util;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;

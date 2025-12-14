@@ -21,7 +21,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.MapColor;
 import net.minecraft.world.phys.Vec3;
 
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import static java.util.Map.entry;
 
@@ -109,7 +109,7 @@ public class WoolTool
                     DyeColor under = getWoolColorAtPosition(worldIn, pos.below());
                     if (under == null) return;
                     HopperCounter counter = HopperCounter.getCounter(under);
-                    counter.reset(placer.getServer());
+                    counter.reset(placer.level().getServer());
                     List<Component> res = new ArrayList<>();
                     res.add(Messenger.s(String.format("%s counter reset",under.toString())));
                     Messenger.send(placer, res);

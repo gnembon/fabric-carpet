@@ -46,7 +46,7 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.Tag;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -59,7 +59,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.item.PrimedTnt;
-import net.minecraft.world.entity.npc.AbstractVillager;
+import net.minecraft.world.entity.npc.villager.AbstractVillager;
 import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.trading.Merchant;
@@ -71,7 +71,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 
 public class CarpetEventServer
 {
@@ -503,6 +503,7 @@ public class CarpetEventServer
                 );
             }
         };
+        // fixme
         public static final Event CHUNK_GENERATED = new Event("chunk_generated", 2, true)
         {
             @Override
@@ -514,6 +515,7 @@ public class CarpetEventServer
                 );
             }
         };
+        // fixme
         public static final Event CHUNK_LOADED = new Event("chunk_loaded", 2, true)
         {
             @Override
@@ -827,7 +829,7 @@ public class CarpetEventServer
         public static final Event PLAYER_CHOOSES_RECIPE = new Event("player_chooses_recipe", 3, false)
         {
             @Override
-            public boolean onRecipeSelected(ServerPlayer player, ResourceLocation recipe, boolean fullStack)
+            public boolean onRecipeSelected(ServerPlayer player, Identifier recipe, boolean fullStack)
             {
                 return handler.call(() ->
                         Arrays.asList(
@@ -885,7 +887,7 @@ public class CarpetEventServer
                                 new NumericValue(amount),
                                 StringValue.of(source.getMsgId()),
                                 source.getEntity() == null ? Value.NULL : new EntityValue(source.getEntity())
-                        ), () -> target.getServer().createCommandSourceStack());
+                        ), () -> ((ServerPlayer) target).createCommandSourceStack());
             }
         };
         public static final Event PLAYER_DEALS_DAMAGE = new Event("player_deals_damage", 3, false)
@@ -895,7 +897,7 @@ public class CarpetEventServer
             {
                 return handler.call(() ->
                                 Arrays.asList(new EntityValue(source.getEntity()), new NumericValue(amount), new EntityValue(target)),
-                        () -> source.getEntity().getServer().createCommandSourceStack()
+                        () -> ((ServerPlayer) source.getEntity()).createCommandSourceStack()
                 );
             }
         };
@@ -935,8 +937,8 @@ public class CarpetEventServer
                 // eligibility already checked in mixin
                 Value fromValue = ListValue.fromTriple(from.x, from.y, from.z);
                 Value toValue = (to == null) ? Value.NULL : ListValue.fromTriple(to.x, to.y, to.z);
-                Value fromDimStr = NBTSerializableValue.nameFromRegistryId(fromDim.location());
-                Value toDimStr = NBTSerializableValue.nameFromRegistryId(dimTo.location());
+                Value fromDimStr = NBTSerializableValue.nameFromRegistryId(fromDim.identifier());
+                Value toDimStr = NBTSerializableValue.nameFromRegistryId(dimTo.identifier());
 
                 handler.call(() -> Arrays.asList(new EntityValue(player), fromValue, fromDimStr, toValue, toDimStr), player::createCommandSourceStack);
             }
@@ -993,12 +995,12 @@ public class CarpetEventServer
 
         public static final Event STATISTICS = new Event("statistic", 4, false)
         {
-            private <T> ResourceLocation getStatId(Stat<T> stat)
+            private <T> Identifier getStatId(Stat<T> stat)
             {
                 return stat.getType().getRegistry().getKey(stat.getValue());
             }
 
-            private final Set<ResourceLocation> skippedStats = Set.of(
+            private final Set<Identifier> skippedStats = Set.of(
                     Stats.TIME_SINCE_DEATH,
                     Stats.TIME_SINCE_REST,
                     Stats.PLAY_TIME,
@@ -1008,7 +1010,7 @@ public class CarpetEventServer
             @Override
             public void onPlayerStatistic(ServerPlayer player, Stat<?> stat, int amount)
             {
-                ResourceLocation id = getStatId(stat);
+                Identifier id = getStatId(stat);
                 if (skippedStats.contains(id))
                 {
                     return;
@@ -1120,7 +1122,7 @@ public class CarpetEventServer
                     {
                         handler.call(
                                 () -> Collections.singletonList(new EntityValue(entity)),
-                                () -> entity.getServer().createCommandSourceStack().withLevel((ServerLevel) entity.level()).withPermission(Vanilla.MinecraftServer_getRunPermissionLevel(entity.getServer()))
+                                () -> entity.level().getServer().createCommandSourceStack().withLevel((ServerLevel) entity.level()).withPermission(Vanilla.MinecraftServer_getRunPermissionLevel(entity.level().getServer()))
                         );
                     }
                 })).collect(Collectors.toUnmodifiableMap(Map.Entry::getKey, Map.Entry::getValue));
@@ -1139,7 +1141,7 @@ public class CarpetEventServer
                     {
                         handler.call(
                                 () -> Arrays.asList(new EntityValue(entity), BooleanValue.of(created)),
-                                () -> entity.getServer().createCommandSourceStack().withLevel((ServerLevel) entity.level()).withPermission(Vanilla.MinecraftServer_getRunPermissionLevel(entity.getServer()))
+                                () -> entity.level().getServer().createCommandSourceStack().withLevel((ServerLevel) entity.level()).withPermission(Vanilla.MinecraftServer_getRunPermissionLevel(entity.level().getServer()))
                         );
                     }
                 }))
@@ -1313,7 +1315,7 @@ public class CarpetEventServer
             return false;
         }
 
-        public boolean onRecipeSelected(ServerPlayer player, ResourceLocation recipe, boolean fullStack)
+        public boolean onRecipeSelected(ServerPlayer player, Identifier recipe, boolean fullStack)
         {
             return false;
         }

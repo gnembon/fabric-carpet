@@ -40,7 +40,7 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.commands.PerfCommand;
 import net.minecraft.server.level.ServerPlayer;
 
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 
 public class CarpetServer // static for now - easier to handle all around the code, its one anyways
 {
@@ -162,7 +162,7 @@ public class CarpetServer // static for now - easier to handle all around the co
         LoggerRegistry.playerDisconnected(player);
         extensions.forEach(e -> e.onPlayerLoggedOut(player));
         // first case client, second case server
-        CarpetScriptServer runningScriptServer = (player.getServer() == null) ? scriptServer : Vanilla.MinecraftServer_getScriptServer(player.getServer());
+        CarpetScriptServer runningScriptServer = (player.level().getServer() == null) ? scriptServer : Vanilla.MinecraftServer_getScriptServer(player.level().getServer());
         if (runningScriptServer != null && !runningScriptServer.stopAll) {
             runningScriptServer.onPlayerLoggedOut(player, reason);
         }
@@ -225,15 +225,6 @@ public class CarpetServer // static for now - easier to handle all around the co
     {
         scriptServer.reload(server);
         extensions.forEach(e -> e.onReload(server));
-    }
-    
-    private static final Set<CarpetExtension> warnedOutdatedManagerProviders = new HashSet<>();
-    static void warnOutdatedManager(CarpetExtension ext)
-    {
-        if (warnedOutdatedManagerProviders.add(ext))
-            CarpetSettings.LOG.warn("""
-                    %s is providing a SettingsManager from an outdated method in CarpetExtension!
-                    This behaviour will not work in later Carpet versions and the manager won't be registered!""".formatted(ext.getClass().getName()));
     }
 }
 

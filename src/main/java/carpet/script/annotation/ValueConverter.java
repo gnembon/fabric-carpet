@@ -14,7 +14,7 @@ import carpet.script.Context;
 import carpet.script.annotation.Param.Params;
 import carpet.script.value.Value;
 
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 
 /**
  * <p>Classes implementing this interface are able to convert {@link Value} instances into {@code <R>}, in order to easily use them in parameters for

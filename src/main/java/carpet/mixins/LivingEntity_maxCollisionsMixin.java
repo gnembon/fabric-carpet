@@ -3,6 +3,7 @@ package carpet.mixins;
 import carpet.CarpetSettings;
 import carpet.fakes.LevelInterface;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.gamerules.GameRules;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
@@ -14,7 +15,6 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntitySelector;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.Level;
 
 @Mixin(LivingEntity.class)
@@ -44,7 +44,7 @@ public abstract class LivingEntity_maxCollisionsMixin extends Entity
         int maxEntityCramming =-1;
         if (CarpetSettings.maxEntityCollisions > 0)
         {
-            maxEntityCramming = serverLevel.getGameRules().getInt(GameRules.RULE_MAX_ENTITY_CRAMMING);
+            maxEntityCramming = serverLevel.getGameRules().get(GameRules.MAX_ENTITY_CRAMMING);
             entities = ((LevelInterface) serverLevel).getOtherEntitiesLimited(
                     this,
                     this.getBoundingBox(),
@@ -57,7 +57,7 @@ public abstract class LivingEntity_maxCollisionsMixin extends Entity
         }
 
         if (!entities.isEmpty()) {
-            if (maxEntityCramming < 0) maxEntityCramming = serverLevel.getGameRules().getInt(GameRules.RULE_MAX_ENTITY_CRAMMING);
+            if (maxEntityCramming < 0) maxEntityCramming = serverLevel.getGameRules().get(GameRules.MAX_ENTITY_CRAMMING);
             if (maxEntityCramming > 0 && entities.size() > maxEntityCramming - 1 && this.random.nextInt(4) == 0) {
                 int candidates = 0;
 

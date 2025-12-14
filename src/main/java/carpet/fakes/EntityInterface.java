@@ -1,6 +1,9 @@
 package carpet.fakes;
 
+import java.util.stream.Stream;
+
 import carpet.script.EntityEventsGroup;
+import net.minecraft.world.entity.Entity;
 
 public interface EntityInterface
 {
@@ -19,4 +22,5 @@ public interface EntityInterface
     int getPublicNetherPortalCooldown();
     void setPublicNetherPortalCooldown(int what);
 
+    Stream<Entity> cm$getIndirectPassengersStream();
 }

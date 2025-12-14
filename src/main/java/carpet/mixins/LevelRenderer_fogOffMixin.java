@@ -1,24 +1,25 @@
 package carpet.mixins;
 
 import carpet.CarpetSettings;
-import net.minecraft.client.renderer.DimensionSpecialEffects;
-import net.minecraft.client.renderer.LevelRenderer;
+import net.minecraft.client.renderer.GameRenderer;
 //import net.minecraft.world.dimension.Dimension;
+import net.minecraft.world.attribute.EnvironmentAttribute;
+import net.minecraft.world.attribute.EnvironmentAttributeProbe;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
-@Mixin(value = LevelRenderer.class, priority = 69420)
+@Mixin(value = GameRenderer.class, priority = 69420)
 public class LevelRenderer_fogOffMixin
 {
     @Redirect(method = "renderLevel", require = 0, expect = 0, at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/client/renderer/DimensionSpecialEffects;isFoggyAt(II)Z"
+            target = "Lnet/minecraft/world/attribute/EnvironmentAttributeProbe;getValue(Lnet/minecraft/world/attribute/EnvironmentAttribute;F)Ljava/lang/Object;"
     ))
-    private boolean isReallyThick(DimensionSpecialEffects skyProperties, int x, int z)
+    private <Value> Value isReallyThick(EnvironmentAttributeProbe instance, EnvironmentAttribute<Value> environmentAttribute, float f)
     {
-        if (CarpetSettings.fogOff) return false;
-        return skyProperties.isFoggyAt(x, z);
+        if (CarpetSettings.fogOff) return (Value) Boolean.FALSE;
+        return instance.getValue(environmentAttribute, f);
     }
 
 }

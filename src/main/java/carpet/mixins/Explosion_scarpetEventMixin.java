@@ -8,7 +8,6 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -17,6 +16,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.Explosion;
 import net.minecraft.world.phys.Vec3;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 
 import static carpet.script.CarpetEventServer.Event.EXPLOSION_OUTCOME;
@@ -36,7 +36,7 @@ public abstract class Explosion_scarpetEventMixin
     private List<Entity> affectedEntities = new ArrayList<>();
 
     @Inject(method = "explode", at = @At("HEAD"))
-    private void explodeCM(CallbackInfo ci)
+    private void explodeCM(CallbackInfoReturnable<Integer> cir)
     {
         affectedEntities.clear();
     }
@@ -49,7 +49,7 @@ public abstract class Explosion_scarpetEventMixin
     }
 
     @Inject(method = "explode", locals = LocalCapture.CAPTURE_FAILHARD, at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/ServerExplosion;hurtEntities()V", shift = At.Shift.AFTER))
-    private void onExplosionDone(CallbackInfo ci, List list)
+    private void onExplosionDone(CallbackInfoReturnable<Integer> cir, List list)
     {
         if (EXPLOSION_OUTCOME.isNeeded() && !level.isClientSide())
         {
