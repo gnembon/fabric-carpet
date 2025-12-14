@@ -983,11 +983,11 @@ public class CarpetEventServer
         public static final Event PLAYER_CUSTOM_CLICK_ACTION = new Event("player_custom_click_action", 3, false)
         {
             @Override
-            public boolean onPlayerCustomClickAction(ServerPlayer player, ResourceLocation resourceLocation, @Nullable Tag payload)
+            public boolean onPlayerCustomClickAction(ServerPlayer player, Identifier identifier, @Nullable Tag payload)
             {
                 return handler.call(() -> Arrays.asList(
                         EntityValue.of(player),
-                        StringValue.of(resourceLocation.toString()),
+                        StringValue.of(identifier.toString()),
                         NBTSerializableValue.of(payload)
                 ), player::createCommandSourceStack);
             }
@@ -1255,7 +1255,7 @@ public class CarpetEventServer
             return false;
         }
         
-        public boolean onPlayerCustomClickAction(ServerPlayer player, ResourceLocation resourceLocation, @Nullable Tag payload)
+        public boolean onPlayerCustomClickAction(ServerPlayer player, Identifier identifier, @Nullable Tag payload)
         {
             return false;
         }
