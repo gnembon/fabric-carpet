@@ -694,9 +694,9 @@ public class Auxiliary
                 Holder<Dialog> dialogHolder;
                 if (dialogValue instanceof StringValue stringValue)
                 {
-                    ResourceLocation dialogLocation;
-                    dialogLocation = InputValidator.identifierOf(stringValue.getString());
-                    Optional<Holder.Reference<Dialog>> dialogReference = cc.registry(Registries.DIALOG).get(dialogLocation);
+                    Identifier dialogIdentifier;
+                    dialogIdentifier = InputValidator.identifierOf(stringValue.getString());
+                    Optional<Holder.Reference<Dialog>> dialogReference = cc.registry(Registries.DIALOG).get(dialogIdentifier);
                     if(dialogReference.isEmpty()) return Value.NULL;
                     dialogHolder = dialogReference.get();
                 }
