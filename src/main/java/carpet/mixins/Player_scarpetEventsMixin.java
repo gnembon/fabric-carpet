@@ -91,6 +91,10 @@ public abstract class Player_scarpetEventsMixin extends LivingEntity
     @ModifyReturnValue(method = "wantsToStopRiding", at = @At("TAIL"))
     private boolean dontUnmountFromIfPermanentVehicle(boolean original)
     {
+        if (this.getVehicle() == null) {
+            // may also be called when leaving entity camera in spectator
+            return original;
+        }
         return original && !((EntityInterface) this.getVehicle()).isPermanentVehicle();
     }
 }
