@@ -1,11 +1,8 @@
 package carpet.mixins;
 
 import carpet.CarpetSettings;
-import net.minecraft.core.component.DataComponents;
-import net.minecraft.world.item.BlockItem;
+import carpet.helpers.ShulkerHelper;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.component.ItemContainerContents;
-import net.minecraft.world.level.block.ShulkerBoxBlock;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -17,11 +14,8 @@ public class ItemStack_stackableShulkerBoxesMixin
     @Inject(method = "getMaxStackSize", at = @At("HEAD"), cancellable = true)
     private void getCMMAxStackSize(CallbackInfoReturnable<Integer> cir)
     {
-        if (CarpetSettings.shulkerBoxStackSize > 1
-                && ((ItemStack)((Object)this)).getItem() instanceof BlockItem blockItem
-                && blockItem.getBlock() instanceof ShulkerBoxBlock
-                && ((ItemStack) ((Object) this)).getOrDefault(DataComponents.CONTAINER, ItemContainerContents.EMPTY).stream().findAny().isEmpty()
-        ) {
+        if (CarpetSettings.shulkerBoxStackSize > 1 && ShulkerHelper.isEmptyBox((ItemStack)(Object)this))
+        {
             cir.setReturnValue(CarpetSettings.shulkerBoxStackSize);
         }
     }

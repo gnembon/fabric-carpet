@@ -99,6 +99,8 @@
     "HopperBlockEntity_counterMixin",
     "Connection_packetCounterMixin",
     "ItemStack_stackableShulkerBoxesMixin",
+	"HopperBlockEntity_shulkerBoxMixin",
+	"AbstractContainerMenu_shulkerBoxesMixin",
     "ItemEntityMixin",
     "TntBlock_noUpdateMixin",
     "Explosion_optimizedTntMixin",
