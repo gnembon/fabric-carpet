@@ -30,7 +30,7 @@ public class SummonCommand_lightningMixin
             ServerLevel world = (ServerLevel) entity.level();
             BlockPos at = entity.blockPosition();
             DifficultyInstance localDifficulty_1 =  world.getCurrentDifficultyAt(at);
-            boolean boolean_2 = world.getGameRules().get(GameRules.SPAWN_MOBS) && world.random.nextDouble() < (double)localDifficulty_1.getEffectiveDifficulty() * 0.01D;
+            boolean boolean_2 = world.getGameRules().get(GameRules.SPAWN_MOBS) && world.getRandom().nextDouble() < (double)localDifficulty_1.getEffectiveDifficulty() * 0.01D;
             if (boolean_2) {
                 SkeletonHorse skeletonHorseEntity_1 = EntityType.SKELETON_HORSE.create(world, EntitySpawnReason.EVENT);
                 skeletonHorseEntity_1.setTrap(true);

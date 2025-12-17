@@ -434,7 +434,7 @@ public class Auxiliary
             CarpetContext cc = (CarpetContext) c;
             int total = 0;
             String markerName = MARKER_STRING + "_" + ((cc.host.getName() == null) ? "" : cc.host.getName());
-            for (Entity e : cc.level().getEntities(EntityType.ARMOR_STAND, as -> as.getTags().contains(markerName)))
+            for (Entity e : cc.level().getEntities(EntityType.ARMOR_STAND, as -> as.entityTags().contains(markerName)))
             {
                 total++;
                 e.discard();

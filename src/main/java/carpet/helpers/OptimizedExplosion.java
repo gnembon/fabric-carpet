@@ -133,7 +133,7 @@ public class OptimizedExplosion
         double xInc = (xRel / len) * 0.3;
         double yInc = (yRel / len) * 0.3;
         double zInc = (zRel / len) * 0.3;
-        float rand = eAccess.getLevel().random.nextFloat();
+        float rand = eAccess.getLevel().getRandom().nextFloat();
         float sizeRand = (CarpetSettings.tntRandomRange >= 0 ? (float) CarpetSettings.tntRandomRange : rand);
         float size = eAccess.getRadius() * (0.7F + sizeRand * 0.6F);
         Vec3 vec3 = eAccess.getCenter();

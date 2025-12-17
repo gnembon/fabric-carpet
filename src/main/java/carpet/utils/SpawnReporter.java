@@ -439,14 +439,14 @@ public class SpawnReporter
                         {
                             float f = x + 0.5F;
                             float f1 = z + 0.5F;
-                            mob.snapTo(f, y, f1, worldIn.random.nextFloat() * 360.0F, 0.0F);
+                            mob.snapTo(f, y, f1, worldIn.getRandom().nextFloat() * 360.0F, 0.0F);
                             fits = worldIn.noCollision(mob);
                             EntityType<?> etype = mob.getType();
 
                             for (int i = 0; i < 20; ++i)
                             {
                                 if (
-                                        SpawnPlacements.checkSpawnRules(etype,worldIn, EntitySpawnReason.NATURAL, pos, worldIn.random) &&
+                                        SpawnPlacements.checkSpawnRules(etype,worldIn, EntitySpawnReason.NATURAL, pos, worldIn.getRandom()) &&
                                         SpawnPlacements.isSpawnPositionOk(etype, worldIn, pos) &&
                                         mob.checkSpawnRules(worldIn, EntitySpawnReason.NATURAL)
                                     // && mob.canSpawn(worldIn) // entity collisions // mostly - except ocelots

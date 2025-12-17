@@ -703,7 +703,7 @@ public class WorldAccess
                 booleanStateTest(c, "block_tick", lv, (s, p) ->
                 {
                     ServerLevel w = ((CarpetContext) c).level();
-                    s.randomTick(w, p, w.random);
+                    s.randomTick(w, p, w.getRandom());
                     return true;
                 }));
 
@@ -713,7 +713,7 @@ public class WorldAccess
                     ServerLevel w = ((CarpetContext) c).level();
                     if (s.isRandomlyTicking() || s.getFluidState().isRandomlyTicking())
                     {
-                        s.randomTick(w, p, w.random);
+                        s.randomTick(w, p, w.getRandom());
                     }
                     return true;
                 }));

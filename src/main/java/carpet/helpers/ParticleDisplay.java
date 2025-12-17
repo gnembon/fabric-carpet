@@ -22,7 +22,7 @@ public class ParticleDisplay
         Vec3 incvec = to.subtract(from).normalize();//    multiply(50/sqrt(lineLengthSq));
         for (Vec3 delta = new Vec3(0.0,0.0,0.0);
              delta.lengthSqr() < lineLengthSq;
-             delta = delta.add(incvec.scale(player.level().random.nextFloat())))
+             delta = delta.add(incvec.scale(player.level().getRandom().nextFloat())))
         {
             player.level().sendParticles(
                     player,

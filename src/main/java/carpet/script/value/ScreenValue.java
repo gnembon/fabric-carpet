@@ -39,7 +39,7 @@ import net.minecraft.world.inventory.BlastFurnaceMenu;
 import net.minecraft.world.inventory.BrewingStandMenu;
 import net.minecraft.world.inventory.CartographyTableMenu;
 import net.minecraft.world.inventory.ChestMenu;
-import net.minecraft.world.inventory.ClickType;
+import net.minecraft.world.inventory.ContainerInput;
 import net.minecraft.world.inventory.ContainerListener;
 import net.minecraft.world.inventory.CraftingMenu;
 import net.minecraft.world.inventory.DataSlot;
@@ -226,11 +226,11 @@ public class ScreenValue extends Value
         screenHandler.addSlotListener(new ScarpetScreenHandlerListener()
         {
             @Override
-            public boolean onSlotClick(ServerPlayer player, ClickType actionType, int slot, int button)
+            public boolean onSlotClick(ServerPlayer player, ContainerInput actionType, int slot, int button)
             {
                 Map<Value, Value> data = new HashMap<>();
                 data.put(StringValue.of("slot"), slot == AbstractContainerMenu.SLOT_CLICKED_OUTSIDE ? Value.NULL : NumericValue.of(slot));
-                if (actionType == ClickType.QUICK_CRAFT)
+                if (actionType == ContainerInput.QUICK_CRAFT)
                 {
                     data.put(StringValue.of("quick_craft_stage"), NumericValue.of(AbstractContainerMenu.getQuickcraftHeader(button)));
                     button = AbstractContainerMenu.getQuickcraftType(button);
@@ -402,7 +402,7 @@ public class ScreenValue extends Value
 
     public interface ScarpetScreenHandlerListener extends ContainerListener
     {
-        boolean onSlotClick(ServerPlayer player, ClickType actionType, int slot, int button);
+        boolean onSlotClick(ServerPlayer player, ContainerInput actionType, int slot, int button);
 
         boolean onButtonClick(ServerPlayer player, int button);
 
@@ -546,7 +546,7 @@ public class ScreenValue extends Value
         }
     }
 
-    private static String actionTypeToString(ClickType actionType)
+    private static String actionTypeToString(ContainerInput actionType)
     {
         return switch (actionType)
         {

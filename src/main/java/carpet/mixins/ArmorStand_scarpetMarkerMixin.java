@@ -31,10 +31,10 @@ public abstract class ArmorStand_scarpetMarkerMixin extends LivingEntity
     {
         if (!level().isClientSide())
         {
-            if (getTags().contains(Auxiliary.MARKER_STRING))
+            if (entityTags().contains(Auxiliary.MARKER_STRING))
             {
                 String prefix = Auxiliary.MARKER_STRING+"_";
-                Optional<String> owner = getTags().stream().filter(s -> s.startsWith(prefix)).findFirst();
+                Optional<String> owner = entityTags().stream().filter(s -> s.startsWith(prefix)).findFirst();
                 if (owner.isPresent())
                 {
                     String hostName = StringUtils.removeStart(owner.get(),prefix);

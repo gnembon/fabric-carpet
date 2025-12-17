@@ -211,7 +211,7 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
             );
             if (!list.isEmpty())
             {
-                inventory = (Container) list.get(world.random.nextInt(list.size()));
+                inventory = (Container) list.get(world.getRandom().nextInt(list.size()));
             }
         }
 

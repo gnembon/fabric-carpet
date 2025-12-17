@@ -280,7 +280,7 @@ public class ServerGamePacketListenerImpl_scarpetEventsMixin
         }
     }
 
-    @Inject(method = "method_44356", // lambda of handleChatCommand(ServerboundChatCommandPacket)
+    @Inject(method = "lambda$handleChatCommand$0", // lambda of handleChatCommand(ServerboundChatCommandPacket)
             at = @At(value = "HEAD")
     )
     private void onChatCommandMessage(ServerboundChatCommandPacket serverboundChatCommandPacket, CallbackInfo ci) {

@@ -961,7 +961,7 @@ public class CarpetScriptHost extends ScriptHost
             String markerName = Auxiliary.MARKER_STRING + "_" + ((getName() == null) ? "" : getName());
             for (ServerLevel world : scriptServer().server.getAllLevels())
             {
-                for (Entity e : world.getEntities(EntityType.ARMOR_STAND, (as) -> as.getTags().contains(markerName)))
+                for (Entity e : world.getEntities(EntityType.ARMOR_STAND, (as) -> as.entityTags().contains(markerName)))
                 {
                     e.discard();
                 }
@@ -1109,7 +1109,7 @@ public class CarpetScriptHost extends ScriptHost
     }
 
     /**
-     * <p>Creates a {@link Component} using {@link Messenger} that has the locals in the {@code line} snippet with a hover over
+     * <p>Creates a {@link Component} using {@link carper.utils.Messenger} that has the locals in the {@code line} snippet with a hover over
      * tooltip with the value of the local at that location</p>
      *
      * @param line    The line to find references to locals on

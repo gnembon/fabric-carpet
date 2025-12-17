@@ -89,7 +89,7 @@ public class FeatureGenerator
             checks.set(true);
             try
             {
-                return configuredFeature.place(world, world.getChunkSource().getGenerator(), world.random, pos);
+                return configuredFeature.place(world, world.getChunkSource().getGenerator(), world.getRandom(), pos);
             }
             finally
             {
@@ -115,7 +115,7 @@ public class FeatureGenerator
                 checks.set(true);
                 try
                 {
-                    return configuredStandard.place(world, world.getChunkSource().getGenerator(), world.random, pos);
+                    return configuredStandard.place(world, world.getChunkSource().getGenerator(), world.getRandom(), pos);
                 }
                 finally
                 {
@@ -161,7 +161,7 @@ public class FeatureGenerator
             checks.set(true);
             try
             {
-                return feature.place(w, w.getChunkSource().getGenerator(), w.random, p);
+                return feature.place(w, w.getChunkSource().getGenerator(), w.getRandom(), p);
             }
             finally
             {
