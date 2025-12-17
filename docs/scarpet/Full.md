@@ -5012,10 +5012,10 @@ Triggered when a player sends a disconnect package or is forcefully disconnected
 ### `__on_player_message(player, message)`
 Triggered when a player sends a chat message.
 
+This event can be cancelled by returning `'cancel'`, which prevents the message from being sent.
+
 ### `__on_player_command(player, command)`
 Triggered when a player runs a command. Command value is returned without the / in front.
-
-This event can be cancelled by returning `'cancel'`, which prevents the message from being sent.
 
 ### `__on_statistic(player, category, event, value)`
 Triggered when a player statistic changes. Doesn't notify on periodic an rhythmic events, i.e. 
