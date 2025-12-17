@@ -7,7 +7,7 @@ base {
 	archivesName = project.archives_base_name
 }
 
-version = project.minecraft_version+'-'+project.mod_version+'+v'+new Date().format('yyMMdd')
+version = project.mod_version+'+v'+new Date().format('yyMMdd')
 group = project.maven_group
 
 loom {
@@ -26,10 +26,10 @@ dependencies {
 }
 
 processResources {
-	inputs.property "version", project.version+'+v'+new Date().format('yyMMdd')
-
+	inputs.property "version", project.version
+	print("\nBuilding version: " + project.version + "\n")
 	filesMatching("fabric.mod.json") {
-		expand "version": project.mod_version+'+v'+new Date().format('yyMMdd')
+		expand "version": project.version
 	}
 }
 
