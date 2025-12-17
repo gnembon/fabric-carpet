@@ -12,11 +12,11 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
-    - name: Set up JDK 21
+    - name: Set up JDK
       uses: actions/setup-java@v4
       with:
-        distribution: 'temurin'
-        java-version: 21
+        distribution: microsoft
+        java-version: 25
         cache: 'gradle'
     - name: Grant execute permission to gradlew
       run: chmod +x gradlew

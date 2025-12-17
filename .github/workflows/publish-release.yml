@@ -81,11 +81,11 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: ${{ steps.getbranchinfo.outputs.branchname }}
-      - name: Set up JDK 21
+      - name: Set up JDK
         uses: actions/setup-java@v4
         with:
-          distribution: 'temurin'
-          java-version: 21
+          distribution: microsoft
+          java-version: 25
           cache: 'gradle'
       - name: Grant execute permission to gradlew
         run: chmod +x gradlew
@@ -167,11 +167,11 @@ jobs:
     steps:
       - name: Checkout Carpet sources
         uses: actions/checkout@v4
-      - name: Set up JDK 21
+      - name: Set up JDK
         uses: actions/setup-java@v4
         with:
-          distribution: 'temurin'
-          java-version: 21
+          distribution: microsoft
+          java-version: 25
           cache: 'gradle'
       - name: Checkout wiki
         uses: actions/checkout@v4
