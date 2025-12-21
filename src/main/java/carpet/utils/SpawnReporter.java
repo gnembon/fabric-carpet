@@ -37,6 +37,9 @@ import net.minecraft.world.level.entity.EntityTypeTest;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraft.world.level.levelgen.structure.structures.NetherFortressStructure;
+import net.minecraft.world.level.material.FluidState;
+import net.minecraft.world.level.material.Fluids;
+
 import org.apache.commons.lang3.tuple.Pair;
 import org.jetbrains.annotations.Nullable;
 
@@ -370,25 +373,30 @@ public class SpawnReporter
 
     public static void killEntity(LivingEntity entity)
     {
+        List<Entity> list = new ArrayList<>();
         if (entity.isPassenger())
         {
-            entity.getVehicle().discard();
+            Entity vehicle = entity.getVehicle();
+            vehicle.getPassengers().forEach(e -> list.add(e));
+            list.add(vehicle);
         }
         if (entity.isVehicle())
         {
-            for (Entity e: entity.getPassengers())
-            {
-                e.discard();
-            }
+            entity.getPassengers().forEach(e -> list.add(e));
+            list.add(entity);
         }
-        if (entity instanceof Ocelot || entity instanceof Parched)
+        if (entity instanceof Ocelot)
         {
             for (Entity e: entity.level().getEntities(entity, entity.getBoundingBox()))
             {
                 e.discard();
-            }
+            } // Parched and the Warm Chicken Variant also requires special treatment due to new multi-passenger Jockeys (Camel Husk, etc)
         }
         entity.discard();
+        if (list.size() > 0)
+        {
+            list.forEach(entry -> killEntity((LivingEntity) entry));
+        }
     }
 
     // yeeted from NaturalSpawner - temporary access fix
@@ -402,6 +410,11 @@ public class SpawnReporter
         int x = pos.getX();
         int y = pos.getY();
         int z = pos.getZ();
+        if (worldIn.getFluidState(pos).getType() == Fluids.WATER &&
+            worldIn.getFluidState(pos.below()).getType() == Fluids.EMPTY)
+        {
+            pos = pos.above();
+        }   // 1 block of offset above() is required to properly detect aquatic mob spawn conditions; ignore for lava and flowing water
         ChunkAccess chunk = worldIn.getChunk(pos);
         int lc = chunk.getHeight(Heightmap.Types.WORLD_SURFACE, x, z) + 1;
         String relativeHeight = (y == lc) ? "right at it." : String.format("%d blocks %s it.", Mth.abs(y - lc), (y >= lc) ? "above" : "below");
