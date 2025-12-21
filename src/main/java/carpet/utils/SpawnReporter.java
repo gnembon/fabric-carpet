@@ -22,6 +22,7 @@ import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.entity.SpawnPlacements;
 import net.minecraft.world.entity.animal.feline.Ocelot;
+import net.minecraft.world.entity.monster.skeleton.Parched;
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.NaturalSpawner;
@@ -380,7 +381,7 @@ public class SpawnReporter
                 e.discard();
             }
         }
-        if (entity instanceof Ocelot)
+        if (entity instanceof Ocelot || entity instanceof Parched)
         {
             for (Entity e: entity.level().getEntities(entity, entity.getBoundingBox()))
             {
