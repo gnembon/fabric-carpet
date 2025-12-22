@@ -21,6 +21,7 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.entity.SpawnPlacements;
+import net.minecraft.world.entity.animal.chicken.Chicken;
 import net.minecraft.world.entity.animal.feline.Ocelot;
 import net.minecraft.world.entity.monster.skeleton.Parched;
 import net.minecraft.world.item.DyeColor;
@@ -373,30 +374,27 @@ public class SpawnReporter
 
     public static void killEntity(LivingEntity entity)
     {
-        List<Entity> list = new ArrayList<>();
         if (entity.isPassenger())
         {
-            Entity vehicle = entity.getVehicle();
-            vehicle.getPassengers().forEach(e -> list.add(e));
-            list.add(vehicle);
+            entity.getVehicle().discard();
         }
         if (entity.isVehicle())
         {
-            entity.getPassengers().forEach(e -> list.add(e));
-            list.add(entity);
+            for (Entity e: entity.getPassengers())
+            {
+                e.discard();
+            }
         }
-        if (entity instanceof Ocelot)
+        // Parched and the Warm Chicken Variant also requires special treatment due to new multi-passenger Jockeys (Camel Husk, etc)
+        if (entity instanceof Ocelot || entity instanceof Parched ||
+            entity instanceof Chicken)
         {
             for (Entity e: entity.level().getEntities(entity, entity.getBoundingBox()))
             {
                 e.discard();
-            } // Parched and the Warm Chicken Variant also requires special treatment due to new multi-passenger Jockeys (Camel Husk, etc)
+            }
         }
         entity.discard();
-        if (list.size() > 0)
-        {
-            list.forEach(entry -> killEntity((LivingEntity) entry));
-        }
     }
 
     // yeeted from NaturalSpawner - temporary access fix
@@ -410,11 +408,6 @@ public class SpawnReporter
         int x = pos.getX();
         int y = pos.getY();
         int z = pos.getZ();
-        if (worldIn.getFluidState(pos).getType() == Fluids.WATER &&
-            worldIn.getFluidState(pos.below()).getType() == Fluids.EMPTY)
-        {
-            pos = pos.above();
-        }   // 1 block of offset above() is required to properly detect aquatic mob spawn conditions; ignore for lava and flowing water
         ChunkAccess chunk = worldIn.getChunk(pos);
         int lc = chunk.getHeight(Heightmap.Types.WORLD_SURFACE, x, z) + 1;
         String relativeHeight = (y == lc) ? "right at it." : String.format("%d blocks %s it.", Mth.abs(y - lc), (y >= lc) ? "above" : "below");
