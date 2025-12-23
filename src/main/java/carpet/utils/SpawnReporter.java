@@ -406,11 +406,6 @@ public class SpawnReporter
         int x = pos.getX();
         int y = pos.getY();
         int z = pos.getZ();
-        if (worldIn.getFluidState(pos).getType() == Fluids.WATER &&
-            worldIn.getFluidState(pos.below()).getType() == Fluids.EMPTY)
-        {
-            pos = pos.above();
-        }   // 1 block of offset above() is required to properly detect aquatic mob spawn conditions; ignore for lava and flowing water
         ChunkAccess chunk = worldIn.getChunk(pos);
         int lc = chunk.getHeight(Heightmap.Types.WORLD_SURFACE, x, z) + 1;
         String relativeHeight = (y == lc) ? "right at it." : String.format("%d blocks %s it.", Mth.abs(y - lc), (y >= lc) ? "above" : "below");
