@@ -17,12 +17,10 @@ import net.minecraft.util.random.WeightedList;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.entity.SpawnPlacements;
-import net.minecraft.world.entity.animal.feline.Ocelot;
-import net.minecraft.world.entity.monster.skeleton.Parched;
+import net.minecraft.world.entity.animal.chicken.Chicken;
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.NaturalSpawner;
@@ -368,20 +366,22 @@ public class SpawnReporter
         return report;
     }
 
-    public static void killEntity(LivingEntity entity)
+    public static void killEntity(Entity entity)
     {
+        // Some entities, like Parched and the Warm Chicken Variant also 
+    	// require special treatment due to new multi-passenger Jockeys (Camel Husk, etc)
+        List<Entity> toRemove = new ArrayList<>();
         if (entity.isPassenger())
         {
-            entity.getVehicle().discard();
+            Entity vehicle = entity.getVehicle();
+            toRemove.addAll(vehicle.getPassengers());
+            toRemove.add(vehicle);
         }
         if (entity.isVehicle())
         {
-            for (Entity e: entity.getPassengers())
-            {
-                e.discard();
-            }
+            toRemove.addAll(entity.getPassengers());
         }
-        if (entity instanceof Ocelot || entity instanceof Parched)
+        if (entity instanceof Chicken) // TODO why is the warm chicken special
         {
             for (Entity e: entity.level().getEntities(entity, entity.getBoundingBox()))
             {
@@ -389,6 +389,7 @@ public class SpawnReporter
             }
         }
         entity.discard();
+        toRemove.forEach(entry -> killEntity(entry));
     }
 
     // yeeted from NaturalSpawner - temporary access fix
