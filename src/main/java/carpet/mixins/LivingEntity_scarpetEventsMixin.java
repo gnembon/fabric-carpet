@@ -15,8 +15,7 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
-
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import static carpet.script.CarpetEventServer.Event.PLAYER_DEALS_DAMAGE;
 
 @Mixin(LivingEntity.class)
@@ -38,12 +37,13 @@ public abstract class LivingEntity_scarpetEventsMixin extends Entity implements 
         ((EntityInterface)this).getEventContainer().onEvent(EntityEventsGroup.Event.ON_DEATH, damageSource_1.getMsgId());
     }
 
-    @Inject(method = "actuallyHurt", cancellable = true, locals = LocalCapture.CAPTURE_FAILHARD, at = @At(
-            value = "INVOKE",
-            target = "Lnet/minecraft/world/entity/LivingEntity;getDamageAfterArmorAbsorb(Lnet/minecraft/world/damagesource/DamageSource;F)F",
-            shift = At.Shift.BEFORE
-    ))
-    private void entityTakingDamage(ServerLevel serverLevel, DamageSource source, float amount, CallbackInfo ci)
+    @Inject(
+        method = "hurtServer",
+        cancellable = true,
+        at = @At("HEAD")
+    )
+
+    private void entityTakingDamage(ServerLevel serverLevel, DamageSource source, float amount, CallbackInfoReturnable<Boolean> ci) 
     {
         ((EntityInterface)this).getEventContainer().onEvent(EntityEventsGroup.Event.ON_DAMAGE, amount, source);
         // this is not applicable since its not a playr for sure
@@ -54,7 +54,7 @@ public abstract class LivingEntity_scarpetEventsMixin extends Entity implements 
         if (source.getEntity() instanceof ServerPlayer && PLAYER_DEALS_DAMAGE.isNeeded())
         {
             if(PLAYER_DEALS_DAMAGE.onDamage(this, amount, source)) {
-                ci.cancel();
+                ci.setReturnValue(false);;
             }
         }
     }
