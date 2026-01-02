@@ -32,5 +32,4 @@
   "carpet.settings.command.default_set": "Rule %s will now default to %s",
   "carpet.settings.command.default_removed": "Rule %s will no longer be set on restart",
   "carpet.settings.command.current_value": "current value"
-
 }
