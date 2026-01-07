@@ -46,9 +46,9 @@ public abstract class ThreadedLevelLightEngine_scarpetChunkCreationMixin extends
         ChunkPos pos = chunk.getPos();
         chunk.setLightCorrect(false);
 
-        this.addTask(pos.x, pos.z, () -> 0, ThreadedLevelLightEngine.TaskType.PRE_UPDATE, Util.name(() -> {
+        this.addTask(pos.x(), pos.z(), () -> 0, ThreadedLevelLightEngine.TaskType.PRE_UPDATE, Util.name(() -> {
                 super.setLightEnabled(pos, false);
-                ((Lighting_scarpetChunkCreationInterface) this).removeLightData(SectionPos.getZeroNode(SectionPos.asLong(pos.x, 0, pos.z)));
+                ((Lighting_scarpetChunkCreationInterface) this).removeLightData(SectionPos.getZeroNode(SectionPos.asLong(pos.x(), 0, pos.z())));
             },
             () -> "Remove light data " + pos
         ));
@@ -59,7 +59,7 @@ public abstract class ThreadedLevelLightEngine_scarpetChunkCreationMixin extends
     {
         ChunkPos pos = chunk.getPos();
 
-        this.addTask(pos.x, pos.z, () -> 0, ThreadedLevelLightEngine.TaskType.PRE_UPDATE, Util.name(() -> {
+        this.addTask(pos.x(), pos.z(), () -> 0, ThreadedLevelLightEngine.TaskType.PRE_UPDATE, Util.name(() -> {
                 super.propagateLightSources(pos);
                 int minY = chunk.getMinY();
                 int maxY = chunk.getMaxY();
@@ -92,7 +92,7 @@ public abstract class ThreadedLevelLightEngine_scarpetChunkCreationMixin extends
                 },
                 () -> "Release relight ticket " + pos
             ),
-            runnable -> this.addTask(pos.x, pos.z, () -> 0, ThreadedLevelLightEngine.TaskType.POST_UPDATE, runnable)
+            runnable -> this.addTask(pos.x(), pos.z(), () -> 0, ThreadedLevelLightEngine.TaskType.POST_UPDATE, runnable)
         );
     }
 }

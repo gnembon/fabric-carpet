@@ -47,7 +47,7 @@ public class WorldTools
 
     public static boolean canHasChunk(ServerLevel world, ChunkPos chpos, @Nullable Map<String, RegionFile> regionCache, boolean deepcheck)
     {
-        if (world.getChunk(chpos.x, chpos.z, ChunkStatus.STRUCTURE_STARTS, false) != null)
+        if (world.getChunk(chpos.x(), chpos.z(), ChunkStatus.STRUCTURE_STARTS, false) != null)
         {
             return true;
         }
@@ -159,8 +159,8 @@ public class WorldTools
 
     public static void forceChunkUpdate(BlockPos pos, ServerLevel world)
     {
-        ChunkPos chunkPos = new ChunkPos(pos);
-        LevelChunk worldChunk = world.getChunkSource().getChunk(chunkPos.x, chunkPos.z, false);
+        ChunkPos chunkPos = ChunkPos.containing(pos);
+        LevelChunk worldChunk = world.getChunkSource().getChunk(chunkPos.x(), chunkPos.z(), false);
         if (worldChunk != null)
         {
             List<ServerPlayer> players = world.getChunkSource().chunkMap.getPlayers(chunkPos, false);

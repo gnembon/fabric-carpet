@@ -570,9 +570,9 @@ public class WorldAccess
         expression.addContextFunction("in_slime_chunk", -1, (c, t, lv) ->
         {
             BlockPos pos = BlockArgument.findIn((CarpetContext) c, lv, 0).block.getPos();
-            ChunkPos chunkPos = new ChunkPos(pos);
+            ChunkPos chunkPos = ChunkPos.containing(pos);
             return BooleanValue.of(WorldgenRandom.seedSlimeChunk(
-                    chunkPos.x, chunkPos.z,
+                    chunkPos.x(), chunkPos.z(),
                     ((CarpetContext) c).level().getSeed(),
                     987234911L
             ).nextInt(10) == 0);
@@ -624,7 +624,7 @@ public class WorldAccess
             {
                 force = lv.get(locator.offset).getBoolean();
             }
-            return BooleanValue.of(canHasChunk(((CarpetContext) c).level(), new ChunkPos(pos), null, force));
+            return BooleanValue.of(canHasChunk(((CarpetContext) c).level(), ChunkPos.containing(pos), null, force));
         });
 
         expression.addContextFunction("generation_status", -1, (c, t, lv) ->
@@ -651,14 +651,14 @@ public class WorldAccess
             {
                 for (long key : levelTickets.keySet())
                 {
-                    ChunkPos chpos = new ChunkPos(key);
+                    ChunkPos chpos = ChunkPos.unpack(key);
                     for (Ticket ticket : levelTickets.get(key))
                     {
                         res.add(ListValue.of(
                                 new StringValue(ticket.getType().toString()),
                                 new NumericValue(33 - ticket.getTicketLevel()),
-                                new NumericValue(chpos.x),
-                                new NumericValue(chpos.z)
+                                new NumericValue(chpos.x()),
+                                new NumericValue(chpos.z())
                         ));
                     }
                 }
@@ -667,7 +667,7 @@ public class WorldAccess
             {
                 BlockArgument blockArgument = BlockArgument.findIn((CarpetContext) c, lv, 0);
                 BlockPos pos = blockArgument.block.getPos();
-                List<Ticket> tickets = levelTickets.get(new ChunkPos(pos).toLong());
+                List<Ticket> tickets = levelTickets.get(ChunkPos.containing(pos).pack());
                 if (tickets != null)
                 {
                     for (Ticket ticket : tickets)
@@ -1574,7 +1574,7 @@ public class WorldAccess
                                     world.getChunk(chpos.getWorldPosition()).getAllReferences();
                             if (references.containsKey(configuredStructure) && references.get(configuredStructure) != null)
                             {
-                                references.get(configuredStructure).remove(structureChunkPos.toLong());
+                                references.get(configuredStructure).remove(structureChunkPos.pack());
                             }
                         }
                     }
@@ -1695,7 +1695,7 @@ public class WorldAccess
                 throw new InternalExpressionException("Ticket radius should be between 1 and 32 chunks");
             }
             // due to types we will wing it:
-            ChunkPos target = new ChunkPos(pos);
+            ChunkPos target = ChunkPos.containing(pos);
             if (ticket == TicketType.PORTAL) // portal
             {
                 cc.level().getChunkSource().addTicketWithRadius(TicketType.PORTAL, target, radius);

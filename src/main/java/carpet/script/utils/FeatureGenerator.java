@@ -239,8 +239,8 @@ public class FeatureGenerator
         ChunkGenerator generator = chunkSource.getGenerator();
         ChunkGeneratorStructureState structureState = chunkSource.getGeneratorState();
         List<StructurePlacement> structureConfig = structureState.getPlacementsForStructure(Holder.direct(structure));
-        ChunkPos chunkPos = new ChunkPos(pos);
-        boolean couldPlace = structureConfig.stream().anyMatch(p -> p.isStructureChunk(structureState, chunkPos.x, chunkPos.z));
+        ChunkPos chunkPos = ChunkPos.containing(pos);
+        boolean couldPlace = structureConfig.stream().anyMatch(p -> p.isStructureChunk(structureState, chunkPos.x(), chunkPos.z()));
         if (!couldPlace)
         {
             return null;
@@ -418,7 +418,7 @@ public class FeatureGenerator
         checks.set(true);
         try
         {
-            StructureStart start = structure.generate(Holder.direct(structure), world.dimension(), world.registryAccess(), generator, generator.getBiomeSource(), world.getChunkSource().randomState(), world.getStructureManager(), world.getSeed(), new ChunkPos(pos), 0, world, b -> true);
+            StructureStart start = structure.generate(Holder.direct(structure), world.dimension(), world.registryAccess(), generator, generator.getBiomeSource(), world.getChunkSource().randomState(), world.getStructureManager(), world.getSeed(), ChunkPos.containing(pos), 0, world, b -> true);
             if (start == StructureStart.INVALID_START)
             {
                 return false;
@@ -426,7 +426,7 @@ public class FeatureGenerator
             RandomSource rand = RandomSource.create(world.getRandom().nextInt());
             int j = pos.getX() >> 4;
             int k = pos.getZ() >> 4;
-            long chId = ChunkPos.asLong(j, k);
+            long chId = ChunkPos.pack(j, k);
             world.getChunk(j, k).setStartForStructure(structure, start);
             world.getChunk(j, k).addReferenceForStructure(structure, chId);
 
