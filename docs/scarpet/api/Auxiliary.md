@@ -406,25 +406,42 @@ read_file('foo', 'shared_text')     => ['one', 'two', 'three', '', 'four', '', '
   
 ### `run(expr)`
 
-Runs a vanilla command from the string result of the `expr` and returns a triple of 0 (unused after success count removal), 
-intercepted list of output messages, and error message if the command resulted in a failure. 
-Successful commands return `null` as their error.
+Runs a vanilla command from the string result of the `expr` and returns a triple of the exit code (usually 0 or 1), 
+intercepted list of output messages, and last synchronous error message if the command resulted in a failure.
+The exit code may be null if a non command caused error occurred while running the command, 
+with the error message field giving the error message.
 
 The command return `null` if the command was not run immediately, but was scheduled for later execution 
-due to being requested while command was executed. This happens most commonly
-when running `run` from a `/script run/invoke` command since that always results in piling up command to run while `script` is being executed.
+due to being requested while command was executed. This happens most commonly when running `run` from a `/script run/invoke`
+command or from a custom app command callback function since that always results in piling up command to run while `script` is being executed.
 
-The mitigation for this is to use `run` in a separate scheduled function, or use `run` in a `tick` event, or literally in 
-any other way than directly from a `/script` command, which will ensure that the command runs immediately.
+The mitigation for this is to use `run` in a separate scheduled function, or use `run` in a `tick` event, or in other ways than
+directly from a `/script` command or custom app command callback, which will ensure that the command runs immediately.
 
 <pre>
-run('fill 1 1 1 10 10 10 air') -> [123, ["Successfully filled 123 blocks"], null]
+run('fill 1 1 1 10 10 10 air') -> [123, ["Successfully filled 123 block(s)"], null]
 run('give @s stone 4') -> [1, ["Gave 4 [Stone] to gnembon"], null]
 run('seed') -> [-170661413, [Seed: [4031384495743822299]], null]
 run('sed') -> [-1, [], "sed<--[HERE]"] // wrong command
 
 /script run run('setblock 0 0 0 stone') -> null
 /script run schedule(0, _() -> print(run('setblock 0 0 0 stone'))) -> [1, [Changed the block at 0, 0, 0], null]
+</pre>
+
+### `run_async(expr, callback)`
+
+Runs a vanilla command from the string result of the `expr` and calls `callback` with a triple of the exit code (usually 0 or 1),
+intercepted list of output messages, and first synchronous error message if the command resulted in a failure.
+The exit code may be null if a non command caused error occurred while running the command,
+with the error message field giving the error message.
+
+<pre>
+run_async('fill 1 1 1 10 10 10 air', _(result) -> print(result)) -> [123, ["Successfully filled 123 block(s)"], null]
+run_async('give @s stone 4', _(result) -> print(result)) -> [1, ["Gave 4 [Stone] to gnembon"], null]
+run_async('seed', _(result) -> print(result)) -> [-170661413, [Seed: [4031384495743822299]], null]
+run_async('sed', _(result) -> print(result)) -> [-1, [], "sed<--[HERE]"] // wrong command
+
+/script run run_async('setblock 0 0 0 stone', _(result) -> print(result)) -> [1, [Changed the block at 0, 0, 0], null]
 </pre>
 
 ### `save()`
