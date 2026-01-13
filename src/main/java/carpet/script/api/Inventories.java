@@ -200,7 +200,7 @@ public class Inventories
             CarpetContext cc = (CarpetContext) c;
             Registry<Item> registry = cc.registry(Registries.ITEM);
             Item item = registry.getOptional(id).orElseThrow(() -> new ThrowStatement(itemStr, Throwables.UNKNOWN_ITEM));
-            ItemStack reminder = item.getCraftingRemainder();
+            ItemStack reminder = item.getCraftingRemainder().create();
             return reminder.isEmpty() ? Value.NULL : ValueConversions.of(reminder, cc.registryAccess());
         });
 

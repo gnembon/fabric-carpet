@@ -12,6 +12,7 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.Vec3;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -66,10 +67,11 @@ public abstract class Player_scarpetEventsMixin extends LivingEntity
     }
 
     @Inject(method = "interactOn", cancellable = true, at = @At("HEAD"))
-    private void doInteract(Entity entity, InteractionHand hand, CallbackInfoReturnable<InteractionResult> cir)
+    private void doInteract(Entity entity, InteractionHand hand, Vec3 pos, CallbackInfoReturnable<InteractionResult> cir)
     {
         if (!level().isClientSide() && PLAYER_INTERACTS_WITH_ENTITY.isNeeded())
         {
+            // consider using pos now?
             if(PLAYER_INTERACTS_WITH_ENTITY.onEntityHandAction((ServerPlayer) (Object)this, entity, hand)) {
                 cir.setReturnValue(InteractionResult.PASS);
                 cir.cancel();

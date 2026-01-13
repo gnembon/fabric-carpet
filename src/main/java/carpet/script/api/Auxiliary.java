@@ -64,6 +64,7 @@ import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.stats.Stat;
 import net.minecraft.stats.StatType;
+import net.minecraft.world.clock.WorldClocks;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.EquipmentSlot;
@@ -729,7 +730,7 @@ public class Auxiliary
 
         expression.addContextFunction("day_time", -1, (c, t, lv) ->
         {
-            Value time = new NumericValue(((CarpetContext) c).level().getDayTime());
+            Value time = new NumericValue(((CarpetContext) c).level().getOverworldClockTime());
             if (!lv.isEmpty())
             {
                 long newTime = NumericValue.asNumber(lv.get(0)).getLong();
@@ -737,7 +738,7 @@ public class Auxiliary
                 {
                     newTime = 0;
                 }
-                ((CarpetContext) c).level().setDayTime(newTime);
+                ((CarpetContext) c).level().clockManager().setTotalTicks(((CarpetContext) c).registryAccess().getOrThrow(WorldClocks.OVERWORLD), newTime);
             }
             return time;
         });
