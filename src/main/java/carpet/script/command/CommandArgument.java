@@ -179,7 +179,7 @@ public abstract class CommandArgument
             // item_predicate  ?? //same as item but accepts tags, not sure right now
             new SlotArgument(),
             new VanillaUnconfigurableArgument("item", ItemArgument::item,
-                    (c, p) -> ValueConversions.of(ItemArgument.getItem(c, p).createItemStack(1, false), c.getSource().registryAccess()),
+                    (c, p) -> ValueConversions.of(ItemArgument.getItem(c, p).createItemStack(1), c.getSource().registryAccess()),
                     param -> (ctx, builder) -> ctx.getArgument(param, ItemArgument.class).listSuggestions(ctx, builder)
             ),
             new VanillaUnconfigurableArgument("message", MessageArgument::message,

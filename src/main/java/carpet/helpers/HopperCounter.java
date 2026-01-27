@@ -9,6 +9,7 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.core.Holder;
 import net.minecraft.core.Registry;
 import net.minecraft.core.RegistryAccess;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
@@ -365,7 +366,7 @@ public class HopperCounter
         }
         if (item instanceof DyeItem dye)
         {
-            return TextColor.fromRgb(appropriateColor(dye.getDyeColor().getMapColor().col));
+            return TextColor.fromRgb(appropriateColor(Optional.ofNullable(dye.getDefaultInstance().get(DataComponents.DYE)).orElse(DyeColor.WHITE).getMapColor().col));
         }
         Block block = null;
         final Registry<Item> itemRegistry = registryAccess.lookupOrThrow(Registries.ITEM);

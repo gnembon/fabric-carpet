@@ -354,9 +354,9 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
             ItemInput res = itemCache.get(itemString);  // [SCARY SHIT] persistent caches over server reloads
             if (res != null)
             {
-                return res.createItemStack(1, false);
+                return res.createItemStack(1);
             }
-            ItemParser.ItemResult parser = (new ItemParser(regs)).parse(new StringReader(itemString));
+            ItemInput parser = (new ItemParser(regs)).parse(new StringReader(itemString));
             res = new ItemInput(parser.item(), parser.components());
 
             itemCache.put(itemString, res);
@@ -364,7 +364,7 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
             {
                 itemCache.clear();
             }
-            return res.createItemStack(1, false);
+            return res.createItemStack(1);
         }
         catch (CommandSyntaxException e)
         {
