@@ -1,6 +1,5 @@
 package carpet.mixins;
 
-import carpet.fakes.ServerWorldInterface;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.core.RegistryAccess;
@@ -37,14 +36,12 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 
-import java.util.function.Supplier;
-
 import static carpet.script.CarpetEventServer.Event.EXPLOSION;
 import static carpet.script.CarpetEventServer.Event.LIGHTNING;
 import static carpet.script.CarpetEventServer.Event.CHUNK_UNLOADED;
 
 @Mixin(ServerLevel.class)
-public abstract class ServerLevel_scarpetMixin extends Level implements ServerWorldInterface
+public abstract class ServerLevel_scarpetMixin extends Level
 {
 
     @Shadow public abstract GameRules getGameRules();
@@ -96,22 +93,5 @@ public abstract class ServerLevel_scarpetMixin extends Level implements ServerWo
             ServerLevel level = (ServerLevel)((Object)this);
             CHUNK_UNLOADED.onChunkEvent(level, levelChunk.getPos(), false);
         }
-    }
-
-    @Final
-    @Shadow
-    private ServerLevelData serverLevelData;
-    @Shadow @Final private PersistentEntitySectionManager<Entity> entityManager;
-
-    @Unique
-    @Override
-    public ServerLevelData getWorldPropertiesCM(){
-        return serverLevelData;
-    }
-
-    @Unique
-    @Override
-    public LevelEntityGetter<Entity> getEntityLookupCMPublic() {
-        return entityManager.getEntityGetter();
     }
 }

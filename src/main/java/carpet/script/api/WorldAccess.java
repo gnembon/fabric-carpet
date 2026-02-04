@@ -30,6 +30,7 @@ import carpet.script.value.ValueConversions;
 
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.longs.LongSet;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.Util;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -66,6 +67,7 @@ import net.minecraft.world.level.levelgen.NoiseRouter;
 import net.minecraft.world.level.levelgen.RandomState;
 import net.minecraft.world.level.levelgen.structure.Structure;
 import net.minecraft.world.level.levelgen.structure.StructureType;
+import net.minecraft.world.level.saveddata.WeatherData;
 import net.minecraft.world.level.storage.TagValueInput;
 import org.apache.commons.lang3.mutable.MutableBoolean;
 import org.apache.commons.lang3.tuple.Pair;
@@ -436,6 +438,7 @@ public class WorldAccess
 
         expression.addContextFunction("weather", -1, (c, t, lv) -> {
             ServerLevel world = ((CarpetContext) c).level();
+            MinecraftServer server = world.getServer();
 
             if (lv.isEmpty())//cos it can thunder when raining or when clear.
             {
@@ -443,7 +446,7 @@ public class WorldAccess
             }
 
             Value weather = lv.get(0);
-            ServerLevelData worldProperties = Vanilla.ServerLevel_getWorldProperties(world);
+            WeatherData worldProperties = server.getWeatherData();
             if (lv.size() == 1)
             {
                 return new NumericValue(switch (weather.getString().toLowerCase(Locale.ROOT))
@@ -459,9 +462,9 @@ public class WorldAccess
                 int ticks = NumericValue.asNumber(lv.get(1), "tick_time in 'weather'").getInt();
                 switch (weather.getString().toLowerCase(Locale.ROOT))
                 {
-                    case "clear" -> world.setWeatherParameters(ticks, 0, false, false);
-                    case "rain" -> world.setWeatherParameters(0, ticks, true, false);
-                    case "thunder" -> world.setWeatherParameters(
+                    case "clear" -> server.setWeatherParameters(ticks, 0, false, false);
+                    case "rain" -> server.setWeatherParameters(0, ticks, true, false);
+                    case "thunder" -> server.setWeatherParameters(
                             0,
                             ticks,//this is used to set thunder time, idk why...
                             true,

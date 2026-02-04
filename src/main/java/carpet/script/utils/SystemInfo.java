@@ -78,7 +78,7 @@ public class SystemInfo
 
         put("world_time", c -> new NumericValue(c.level().getGameTime()));
 
-        put("game_difficulty", c -> StringValue.of(c.server().getWorldData().getDifficulty().getKey()));
+        put("game_difficulty", c -> StringValue.of(c.server().getWorldData().getDifficulty().getSerializedName()));
         put("game_hardcore", c -> BooleanValue.of(c.server().getWorldData().isHardcore()));
         put("game_storage_format", c -> StringValue.of(c.server().getWorldData().getStorageVersionName(c.server().getWorldData().getVersion())));
         put("game_default_gamemode", c -> StringValue.of(c.server().getDefaultGameType().getName()));

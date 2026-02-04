@@ -22,6 +22,7 @@ import java.util.List;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.ServerScoreboard;
 import net.minecraft.server.bossevents.CustomBossEvent;
 import net.minecraft.server.bossevents.CustomBossEvents;
@@ -539,7 +540,8 @@ public class Scoreboards
 
         expression.addContextFunction("bossbar", -1, (c, t, lv) ->
         {
-            CustomBossEvents bossBarManager = ((CarpetContext) c).server().getCustomBossEvents();
+            MinecraftServer server = ((CarpetContext) c).server();
+            CustomBossEvents bossBarManager = server.getCustomBossEvents();
             if (lv.size() > 3)
             {
                 throw new InternalExpressionException("'bossbar' accepts max three arguments");
@@ -547,7 +549,7 @@ public class Scoreboards
 
             if (lv.isEmpty())
             {
-                return ListValue.wrap(bossBarManager.getEvents().stream().map(CustomBossEvent::getTextId).map(Identifier::toString).map(StringValue::of));
+                return ListValue.wrap(bossBarManager.getEvents().stream().map(CustomBossEvent::customId).map(Identifier::toString).map(StringValue::of));
             }
 
             String id = lv.get(0).getString();
@@ -559,7 +561,7 @@ public class Scoreboards
                 {
                     return Value.FALSE;
                 }
-                return StringValue.of(bossBarManager.create(identifier, Component.literal(id)).getTextId().toString());
+                return StringValue.of(bossBarManager.create(server.overworld().getRandom(), identifier, Component.literal(id)).customId().toString());
             }
 
             String property = lv.get(1).getString();
@@ -591,7 +593,7 @@ public class Scoreboards
                 case "max" -> {
                     if (propertyValue == null)
                     {
-                        return NumericValue.of(bossBar.getMax());
+                        return NumericValue.of(bossBar.max());
                     }
                     if (!(propertyValue instanceof final NumericValue number))
                     {
@@ -616,7 +618,7 @@ public class Scoreboards
                     if (propertyValue instanceof final ListValue list)
                     {
                         list.getItems().forEach(v -> {
-                            ServerPlayer player = EntityValue.getPlayerByValue(((CarpetContext) c).server(), propertyValue);
+                            ServerPlayer player = EntityValue.getPlayerByValue(server, propertyValue);
                             if (player != null)
                             {
                                 bossBar.addPlayer(player);
@@ -624,7 +626,7 @@ public class Scoreboards
                         });
                         return Value.TRUE;
                     }
-                    ServerPlayer player = EntityValue.getPlayerByValue(((CarpetContext) c).server(), propertyValue);
+                    ServerPlayer player = EntityValue.getPlayerByValue(server, propertyValue);
                     if (player != null)
                     {
                         bossBar.addPlayer(player);
@@ -641,7 +643,7 @@ public class Scoreboards
                     {
                         bossBar.removeAllPlayers();
                         list.getItems().forEach(v -> {
-                            ServerPlayer p = EntityValue.getPlayerByValue(((CarpetContext) c).server(), v);
+                            ServerPlayer p = EntityValue.getPlayerByValue(server, v);
                             if (p != null)
                             {
                                 bossBar.addPlayer(p);
@@ -649,7 +651,7 @@ public class Scoreboards
                         });
                         return Value.TRUE;
                     }
-                    ServerPlayer p = EntityValue.getPlayerByValue(((CarpetContext) c).server(), propertyValue);
+                    ServerPlayer p = EntityValue.getPlayerByValue(server, propertyValue);
                     bossBar.removeAllPlayers();
                     if (p != null)
                     {
@@ -674,7 +676,7 @@ public class Scoreboards
                 case "value" -> {
                     if (propertyValue == null)
                     {
-                        return NumericValue.of(bossBar.getValue());
+                        return NumericValue.of(bossBar.value());
                     }
                     if (!(propertyValue instanceof final NumericValue number))
                     {

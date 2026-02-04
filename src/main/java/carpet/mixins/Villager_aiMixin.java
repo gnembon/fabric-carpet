@@ -65,14 +65,14 @@ public abstract class Villager_aiMixin extends AbstractVillager
         if (MobAI.isTracking(this, MobAI.TrackingType.IRON_GOLEM_SPAWNING))
         {
             long time;
-            Optional<? extends ExpirableValue<?>> last_seen = this.brain.getMemories().get(MemoryModuleType.GOLEM_DETECTED_RECENTLY);
+            Optional<Boolean> last_seen = this.brain.getMemory(MemoryModuleType.GOLEM_DETECTED_RECENTLY);
             if (!last_seen.isPresent())
             {
                 time = 0;
             }
             else
             {
-                time = last_seen.get().getTimeToLive();
+                time = this.brain.getTimeUntilExpiry(MemoryModuleType.GOLEM_DETECTED_RECENTLY);
             }
             boolean recentlySeen = time > 0;
             Optional<Long> optional_11 = this.brain.getMemory(MemoryModuleType.LAST_SLEPT);

@@ -14,7 +14,6 @@ import java.util.function.IntFunction;
 import java.util.stream.Collectors;
 
 import carpet.fakes.SimpleEntityLookupInterface;
-import carpet.fakes.ServerWorldInterface;
 import net.minecraft.util.Util;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.server.MinecraftServer;

@@ -148,6 +148,7 @@
     "CommandDispatcher_scarpetCommandsMixin",
     "FoodData_scarpetMixin",
     "CommandSourceStack_scarpetMixin",
+    "Brain_scarpetMixin",
 
     "BlockInput_scarpetMixin",
     "BlockPredicate_scarpetMixin",

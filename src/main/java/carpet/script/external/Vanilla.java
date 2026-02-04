@@ -35,8 +35,11 @@ import net.minecraft.world.Container;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.ai.Brain;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.ai.goal.GoalSelector;
+import net.minecraft.world.entity.ai.memory.MemoryModuleType;
+import net.minecraft.world.entity.ai.memory.MemorySlot;
 import net.minecraft.world.entity.ai.village.poi.PoiRecord;
 import net.minecraft.world.entity.animal.equine.AbstractHorse;
 import net.minecraft.world.entity.item.ItemEntity;
@@ -101,11 +104,6 @@ public class Vanilla
         return ((Scoreboard_scarpetMixin) scoreboard).getObjectivesByCriterion();
     }
 
-    public static ServerLevelData ServerLevel_getWorldProperties(ServerLevel world)
-    {
-        return ((ServerWorldInterface) world).getWorldPropertiesCM();
-    }
-
     public static Long2ObjectOpenHashMap<List<Ticket>> ChunkTicketManager_getTicketsByPosition(DistanceManager ticketManager)
     {
         return ((TicketsFetcherInterface) ticketManager).getTicketsByPosition();
@@ -164,6 +162,10 @@ public class Vanilla
             ret.put(new StringValue(mod.getMetadata().getId()), new StringValue(mod.getMetadata().getVersion().getFriendlyString()));
         }
         return MapValue.wrap(ret);
+    }
+
+    public static Map<MemoryModuleType<?>, MemorySlot<?>> Brain_getMemories(Brain brain) {
+        return ((BrainInterface) brain).getMemoriesCM();
     }
 
     public static LevelStorageSource.LevelStorageAccess MinecraftServer_storageSource(MinecraftServer server)

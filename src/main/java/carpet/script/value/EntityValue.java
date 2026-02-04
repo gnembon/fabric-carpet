@@ -60,6 +60,7 @@ import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.ai.goal.MoveTowardsRestrictionGoal;
 import net.minecraft.world.entity.ai.memory.ExpirableValue;
 import net.minecraft.world.entity.ai.memory.MemoryModuleType;
+import net.minecraft.world.entity.ai.memory.MemorySlot;
 import net.minecraft.world.entity.animal.golem.IronGolem;
 import net.minecraft.world.entity.decoration.ItemFrame;
 import net.minecraft.world.entity.item.ItemEntity;
@@ -589,15 +590,13 @@ public class EntityValue extends Value
             if (e instanceof LivingEntity livingEntity)
             {
                 Brain<?> brain = livingEntity.getBrain();
-                Map<MemoryModuleType<?>, Optional<? extends ExpirableValue<?>>> memories = brain.getMemories();
-                Optional<? extends ExpirableValue<?>> optmemory = memories.get(moduleType);
-                if (optmemory == null || !optmemory.isPresent())
+                Map<MemoryModuleType<?>, MemorySlot<?>> memories = Vanilla.Brain_getMemories(brain);
+                MemorySlot<?> optmemory = memories.get(moduleType);
+                if (optmemory == null)
                 {
                     return Value.NULL;
                 }
-                ExpirableValue<?> memory = optmemory.get();
-                return ValueConversions.fromTimedMemory(e, memory.getTimeToLive(), memory.getValue());
-            }
+                return ValueConversions.fromTimedMemory(e, optmemory.timeToLive(), optmemory.value());         }
             return Value.NULL;
         });
         put("gamemode_id", (e, a) -> e instanceof ServerPlayer sp ? new NumericValue(sp.gameMode.getGameModeForPlayer().getId()) : Value.NULL);
