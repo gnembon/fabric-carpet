@@ -18,7 +18,6 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
-import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 import com.llamalad7.mixinextras.injector.ModifyReturnValue;
 
 import static carpet.script.CarpetEventServer.Event.PLAYER_ATTACKS_ENTITY;
@@ -35,24 +34,28 @@ public abstract class Player_scarpetEventsMixin extends LivingEntity
         super(type, world);
     }
 
-    @Inject(method = "actuallyHurt", cancellable = true, locals = LocalCapture.CAPTURE_FAILHARD, at = @At(
-            value = "INVOKE",
-            target = "Lnet/minecraft/world/entity/player/Player;getDamageAfterArmorAbsorb(Lnet/minecraft/world/damagesource/DamageSource;F)F"
-    ))
-    private void playerTakingDamage(ServerLevel serverLevel, DamageSource source, float amount, CallbackInfo ci)
-    {
+//    @Inject(method = "hurtServer", cancellable = true, locals = LocalCapture.CAPTURE_FAILHARD, at = @At(
+//            value = "INVOKE",
+//
+//    ))
+    @Inject(
+        method = "hurtServer",
+        cancellable = true,
+        at = @At("HEAD")
+    )
+    private void playerTakingDamage(ServerLevel serverLevel, DamageSource source, float amount, CallbackInfoReturnable<Boolean> ci) {
         // version of LivingEntity_scarpetEventsMixin::entityTakingDamage
         ((EntityInterface)this).getEventContainer().onEvent(EntityEventsGroup.Event.ON_DAMAGE, amount, source);
         if (PLAYER_TAKES_DAMAGE.isNeeded())
         {
             if(PLAYER_TAKES_DAMAGE.onDamage(this, amount, source)) {
-                ci.cancel();
+                ci.setReturnValue(false);
             }
         }
         if (source.getEntity() instanceof ServerPlayer && PLAYER_DEALS_DAMAGE.isNeeded())
         {
             if(PLAYER_DEALS_DAMAGE.onDamage(this, amount, source)) {
-                ci.cancel();
+                ci.setReturnValue(false);
             }
         }
     }
