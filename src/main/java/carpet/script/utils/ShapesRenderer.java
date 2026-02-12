@@ -28,6 +28,7 @@ import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.ItemBlockRenderTypes;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderBuffers;
+import net.minecraft.client.renderer.block.model.BlockStateModel;
 import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.state.BlockEntityRenderState;
@@ -428,13 +429,14 @@ public class ShapesRenderer
                     float red = (color >> 16 & 0xFF) / 255.0F;
                     float green = (color >> 8 & 0xFF) / 255.0F;
                     float blue = (color & 0xFF) / 255.0F;
-                    RenderType type;
-                    if (blockState.getBlock() instanceof LeavesBlock && !Minecraft.getInstance().options.cutoutLeaves().get()) {
-                        type = RenderTypes.solidMovingBlock();
-                    } else {
-                        type = ItemBlockRenderTypes.getRenderType(blockState);
-                    }
-                    client.getBlockRenderer().getModelRenderer().renderModel(matrices.last(), immediate.getBuffer(type), bakedModel, red, green, blue, light, OverlayTexture.NO_OVERLAY);
+                    int overlay = OverlayTexture.NO_OVERLAY;
+                    client.getBlockRenderer().renderSingleBlock(
+                        blockState,
+                        matrices,
+                        immediate,
+                        light,
+                        overlay
+                    );
                 }
 
                 // draw the block`s entity part

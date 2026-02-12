@@ -15,7 +15,7 @@ public abstract class MinecraftServer_tickspeedMixin extends ReentrantBlockableE
 {
     public MinecraftServer_tickspeedMixin(String name)
     {
-        super(name);
+        super(name, true);
     }
 
     CarpetProfiler.ProfilerToken currentSection;

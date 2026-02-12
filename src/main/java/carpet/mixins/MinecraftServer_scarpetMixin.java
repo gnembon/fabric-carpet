@@ -36,7 +36,7 @@ public abstract class MinecraftServer_scarpetMixin extends ReentrantBlockableEve
 
     public MinecraftServer_scarpetMixin(String string_1)
     {
-        super(string_1);
+        super(string_1, true);
     }
 
     @Shadow protected abstract void tickServer(BooleanSupplier booleanSupplier_1);
