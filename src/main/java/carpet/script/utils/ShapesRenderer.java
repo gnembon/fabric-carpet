@@ -420,21 +420,7 @@ public class ShapesRenderer
                 // draw the block itself
                 if (blockState.getRenderShape() == RenderShape.MODEL)
                 {
-
-                    var bakedModel = client.getBlockRenderer().getBlockModel(blockState);
-                    int color = client.getBlockColors().getColor(blockState, client.level, blockPos, 0);
-                    //dont know why there is a 0. 
-                    //see https://github.com/senseiwells/EssentialClient/blob/4db1f291936f502304791ee323f369c206b3021d/src/main/java/me/senseiwells/essentialclient/utils/render/RenderHelper.java#L464
-                    float red = (color >> 16 & 0xFF) / 255.0F;
-                    float green = (color >> 8 & 0xFF) / 255.0F;
-                    float blue = (color & 0xFF) / 255.0F;
-                    RenderType type;
-                    if (blockState.getBlock() instanceof LeavesBlock && !Minecraft.getInstance().options.cutoutLeaves().get()) {
-                        type = RenderTypes.solidMovingBlock();
-                    } else {
-                        type = ItemBlockRenderTypes.getRenderType(blockState);
-                    }
-                    client.getBlockRenderer().getModelRenderer().renderModel(matrices.last(), immediate.getBuffer(type), bakedModel, red, green, blue, light, OverlayTexture.NO_OVERLAY);
+                    client.getBlockRenderer().renderSingleBlock(blockState, matrices, immediate, light, OverlayTexture.NO_OVERLAY);
                 }
 
                 // draw the block`s entity part
@@ -461,10 +447,19 @@ public class ShapesRenderer
                         BlockEntityRenderState state = client.getBlockEntityRenderDispatcher().tryExtractRenderState(BlockEntity, partialTick, null);
 
 
+                        // levelRenderer;;submitBlockEntities does a weird transpose
 
                         if (blockEntityRenderer != null && state != null)
                         {
                             // testme partial positions
+                            //final Vec3 cameraPos = levelRenderState.cameraRenderState.pos;
+                            //final double camX = cameraPos.x();
+                            //final double camY = cameraPos.y();
+                            //final double camZ = cameraPos.z();
+                            //matrices.translate(blockPos.getX() - camX, blockPos.getY() - camY, blockPos.getZ() - camZ);
+                            //matrices.mulPose(levelRenderState.cameraRenderState.);
+
+
                             blockEntityRenderer.submit(state, matrices,client.gameRenderer.getFeatureRenderDispatcher().getSubmitNodeStorage(), levelRenderState.cameraRenderState);
                             //blockEntityRenderer.submit(BlockEntity, partialTick,
                             //        matrices, light, OverlayTexture.NO_OVERLAY, camera1.getPosition(), null, client.gameRenderer.getFeatureRenderDispatcher().getSubmitNodeStorage());
@@ -477,6 +472,7 @@ public class ShapesRenderer
                 if (shape.item != null)
                 {
                     // draw the item
+                    // this seems to not work now
 
                     final ItemStackRenderState itemState = new ItemStackRenderState();
                     client.getItemModelResolver().updateForTopItem(itemState, shape.item, ItemDisplayContext.FIXED, client.level, null, 0);

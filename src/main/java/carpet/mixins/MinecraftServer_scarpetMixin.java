@@ -34,9 +34,8 @@ public abstract class MinecraftServer_scarpetMixin extends ReentrantBlockableEve
 {
     private CarpetScriptServer scriptServer;
 
-    public MinecraftServer_scarpetMixin(String string_1)
-    {
-        super(string_1);
+    public MinecraftServer_scarpetMixin(String name, boolean propagatesCrashes) {
+        super(name, propagatesCrashes);
     }
 
     @Shadow protected abstract void tickServer(BooleanSupplier booleanSupplier_1);

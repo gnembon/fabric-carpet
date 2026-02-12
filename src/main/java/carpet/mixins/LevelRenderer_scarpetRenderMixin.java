@@ -7,15 +7,16 @@ import com.mojang.blaze3d.buffers.GpuBufferSlice;
 import com.mojang.blaze3d.framegraph.FrameGraphBuilder;
 import com.mojang.blaze3d.framegraph.FramePass;
 import com.mojang.blaze3d.resource.GraphicsResourceAllocator;
-import net.minecraft.client.Camera;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.LevelTargetBundle;
 import net.minecraft.client.renderer.RenderBuffers;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderDispatcher;
+import net.minecraft.client.renderer.chunk.ChunkSectionsToRender;
 import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
 import net.minecraft.client.renderer.feature.FeatureRenderDispatcher;
+import net.minecraft.client.renderer.state.CameraRenderState;
 import net.minecraft.client.renderer.state.LevelRenderState;
 import org.joml.Matrix4f;
 import org.joml.Vector4f;
@@ -48,7 +49,7 @@ public class LevelRenderer_scarpetRenderMixin
             target = "Lnet/minecraft/client/renderer/LevelRenderer;addLateDebugPass(Lcom/mojang/blaze3d/framegraph/FrameGraphBuilder;Lnet/minecraft/client/renderer/state/CameraRenderState;Lcom/mojang/blaze3d/buffers/GpuBufferSlice;Lorg/joml/Matrix4f;)V",
             shift = At.Shift.AFTER
     ))
-    private void renderStarpetThingsLate(GraphicsResourceAllocator graphicsResourceAllocator, DeltaTracker deltaTracker, boolean bl, Camera camera, Matrix4f matrix4f, Matrix4f arg5, Matrix4f matrix4f3, GpuBufferSlice gpuBufferSlice, Vector4f vector4f, boolean bl2, CallbackInfo ci, @Local FrameGraphBuilder frameGraphBuilder)
+    private void renderScarpetThinsLate(GraphicsResourceAllocator resourceAllocator, DeltaTracker deltaTracker, boolean renderOutline, CameraRenderState cameraState, Matrix4f modelViewMatrix, GpuBufferSlice terrainFog, Vector4f fogColor, boolean shouldRenderSky, ChunkSectionsToRender chunkSectionsToRender, CallbackInfo ci, @Local FrameGraphBuilder frameGraphBuilder)
     {
         // in normal circumstances we want to render shapes at the very end so it appears correctly behind stuff.
         // we might actually not need to play with render hooks here.
@@ -58,7 +59,7 @@ public class LevelRenderer_scarpetRenderMixin
             final float deltaPartialTick = deltaTracker.getGameTimeDeltaPartialTick(false);
             FramePass pass = frameGraphBuilder.addPass("scarpet_shapes");
             targets.main = pass.readsAndWrites(targets.main);
-            pass.executes(() -> CarpetClient.shapes.render(renderBuffers, levelRenderState, matrix4f, deltaPartialTick));
+            pass.executes(() -> CarpetClient.shapes.render(renderBuffers, levelRenderState, modelViewMatrix, deltaPartialTick));
             featureRenderDispatcher.renderAllFeatures();
             renderBuffers.bufferSource().endLastBatch();
         }

@@ -13,12 +13,13 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(value = MinecraftServer.class, priority = Integer.MAX_VALUE - 10)
 public abstract class MinecraftServer_tickspeedMixin extends ReentrantBlockableEventLoop<TickTask> implements MinecraftServerInterface
 {
-    public MinecraftServer_tickspeedMixin(String name)
-    {
-        super(name);
-    }
+
 
     CarpetProfiler.ProfilerToken currentSection;
+
+    public MinecraftServer_tickspeedMixin(String name, boolean propagatesCrashes) {
+        super(name, propagatesCrashes);
+    }
 
     // Replaced the above cancelled while statement with this one
     // could possibly just inject that mspt selection at the beginning of the loop, but then adding all mspt's to
