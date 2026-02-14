@@ -464,14 +464,17 @@ public class EntityPlayerActionPack
         JUMP(true)
         {
             @Override
-            boolean execute(ServerPlayer player, Action action)
-            {
-                if (action.limit == 1)
-                {
-                    if (player.onGround()) player.jumpFromGround(); // onGround
-                }
-                else
-                {
+            boolean execute(ServerPlayer player, Action action) {
+                if (action.limit == 1) {
+                    if (player.onGround()) player.jumpFromGround();
+
+                    if (!player.onGround())
+                        player.tryToStartFallFlying();
+
+                } else {
+                    if (!player.onGround())
+                        player.tryToStartFallFlying();
+
                     player.setJumping(true);
                 }
                 return false;
