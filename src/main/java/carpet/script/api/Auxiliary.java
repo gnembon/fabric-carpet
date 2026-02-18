@@ -707,6 +707,109 @@ public class Auxiliary
             }
         });
 
+        expression.addContextFunction("run_async", 2, (c, t, lv) ->
+        {
+            CommandSourceStack source = ((CarpetContext) c).source();
+            if(lv.size() < 2) {
+                throw new InternalExpressionException("run_async(expr, callback) requires two arguments!");
+            }
+            FunctionArgument callback = FunctionArgument.findIn(c, expression.module, lv, 1, true, false);
+            String command = lv.get(0).getString();
+            if(callback.function == null)
+            {
+                try
+                {
+                    Component[] errorOutput = {null};
+                    List<Component> output = new ArrayList<>();
+                    OptionalLong[] returnValue = {OptionalLong.empty()};
+                    source.getServer().getCommands().performPrefixedCommand(
+                            new SnoopyCommandSource(source, errorOutput, output, returnValue),
+                            command
+                    );
+                }
+                catch (Exception ignored)
+                {
+                }
+                return Value.NULL;
+            }
+            else if (callback.function.getArguments().size() < 1)
+            {
+                throw new InternalExpressionException("callback requires 1 argument for command output!");
+            }
+            boolean[] isCallbackConsumed = {false};
+            try
+            {
+                boolean[] hasCommandError = {false};
+                Integer[] commandExitCode = {null};
+                Component[] errorOutput = {null};
+                List<Component> output = new ArrayList<>();
+                OptionalLong[] ignoredReturnedValue = {OptionalLong.empty()};
+
+                SnoopyCommandSource snoopyCommandSource = (SnoopyCommandSource) new SnoopyCommandSource(source, errorOutput, output, ignoredReturnedValue)
+                        .withCallback((success, exitCode) -> {
+                            if(isCallbackConsumed[0])
+                            {
+                                return;
+                            }
+                            isCallbackConsumed[0] = true;
+                            // The CommandSourceStack.sendFailure are sent after the resultConsumer, so the error output is always empty in
+                            // this resultConsumer. This workaround is using the resultConsumer in tandem with an errorCallback.
+                            if(!success)
+                            {
+                                hasCommandError[0] = true;
+                                commandExitCode[0] = exitCode;
+                                return;
+                            }
+                            List<Value> args = List.of(ListValue.of(
+                                    NumericValue.of(exitCode),
+                                    ListValue.wrap(output.stream().map(FormattedTextValue::new)),
+                                    FormattedTextValue.of(errorOutput[0])
+                            ));
+                            callback.function.callInContext(c, t, args);
+                        });
+                // To catch errors that don't call the resultConsumer and make sure the error output is set for those that do.
+                snoopyCommandSource.setErrorCallback((ignored) -> {
+                    if(isCallbackConsumed[0])
+                    {
+                        if(!hasCommandError[0])
+                        {
+                            return;
+                        }
+                        List<Value> args = List.of(ListValue.of(
+                                NumericValue.of(commandExitCode[0]),
+                                ListValue.wrap(output.stream().map(FormattedTextValue::new)),
+                                FormattedTextValue.of(errorOutput[0])
+                        ));
+                        callback.function.callInContext(c, t, args);
+                        return;
+                    }
+                    isCallbackConsumed[0] = true;
+                    List<Value> args = List.of(ListValue.of(
+                            Value.NULL,
+                            ListValue.of(),
+                            FormattedTextValue.of(errorOutput[0])
+                    ));
+                    callback.function.callInContext(c, t, args);
+                });
+
+                source.getServer().getCommands().performPrefixedCommand(snoopyCommandSource, command);
+            }
+            catch (Exception exc)
+            {
+                if(!isCallbackConsumed[0])
+                {
+                    isCallbackConsumed[0] = true;
+                    List<Value> args = List.of(ListValue.of(
+                            Value.NULL,
+                            ListValue.of(),
+                            new FormattedTextValue(Component.literal(exc.getMessage()))
+                    ));
+                    callback.function.callInContext(c, t, args);
+                }
+            }
+            return Value.NULL;
+        });
+
         expression.addContextFunction("save", 0, (c, t, lv) ->
         {
             CommandSourceStack s = ((CarpetContext) c).source();
