@@ -20,7 +20,6 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.piston.PistonBaseBlock;
 import net.minecraft.world.level.block.piston.PistonStructureResolver;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.material.PushReaction;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -71,16 +70,6 @@ public abstract class PistonBaseBlock_movableBEMixin extends DirectionalBlock
         {
             return !(CarpetSettings.movableBlockEntities && isPushableBlockEntity(blockState.getBlock()));
         }
-    }
-
-    @Redirect(method = "isPushable", at = @At(
-            value = "INVOKE",
-            target = "Lnet/minecraft/world/level/block/state/BlockState;getPistonPushReaction()Lnet/minecraft/world/level/material/PushReaction;"
-    ))
-    private static PushReaction moveGrindstones(BlockState blockState)
-    {
-        if (CarpetSettings.movableBlockEntities && blockState.getBlock() == Blocks.GRINDSTONE) return PushReaction.NORMAL;
-        return blockState.getPistonPushReaction();
     }
 
     @Inject(method = "moveBlocks", at = @At(value = "INVOKE", shift = At.Shift.BEFORE,
