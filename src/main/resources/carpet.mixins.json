@@ -98,6 +98,7 @@
     "ServerPlayerGameMode_antiCheatMixin",
     "HopperBlockEntity_counterMixin",
     "Connection_packetCounterMixin",
+    "ItemStack_stackableBannerPatternMixin",
     "ItemStack_stackableShulkerBoxesMixin",
     "ItemEntityMixin",
     "TntBlock_noUpdateMixin",
