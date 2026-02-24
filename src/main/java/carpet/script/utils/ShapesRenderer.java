@@ -25,9 +25,9 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.components.debug.DebugScreenEntries;
 import net.minecraft.client.multiplayer.ClientLevel;
-import net.minecraft.client.renderer.ItemBlockRenderTypes;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderBuffers;
+import net.minecraft.client.renderer.block.BlockModelRenderState;
 import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.state.BlockEntityRenderState;
@@ -49,7 +49,6 @@ import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LightLayer;
 import net.minecraft.world.level.block.EntityBlock;
-import net.minecraft.world.level.block.LeavesBlock;
 import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
@@ -420,7 +419,17 @@ public class ShapesRenderer
                 // draw the block itself
                 if (blockState.getRenderShape() == RenderShape.MODEL)
                 {
-                    client.getBlockRenderer().renderSingleBlock(blockState, matrices, immediate, light, OverlayTexture.NO_OVERLAY);
+                    // this is equally wrong position wise as the BE type - need to investigate
+                    var blockRenderDispatcher = client.getBlockRenderer();
+                    var state = blockRenderDispatcher.getBlockModel(blockState);
+                    BlockModelRenderState renderState = new BlockModelRenderState();
+                    renderState.model = state;
+                    renderState.block = blockState.getBlock();
+
+                    renderState.submit(matrices, client.gameRenderer.getFeatureRenderDispatcher().getSubmitNodeStorage(), light, OverlayTexture.NO_OVERLAY, EntityRenderState.NO_OUTLINE);
+
+
+                    //client.getBlockRenderer().renderSingleBlock(blockState, matrices, immediate, light, OverlayTexture.NO_OVERLAY);
                 }
 
                 // draw the block`s entity part
