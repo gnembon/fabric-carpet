@@ -127,7 +127,7 @@ public class EntityPlayerMPFake extends ServerPlayer
         try (ProblemReporter.ScopedCollector scopedCollector = new ProblemReporter.ScopedCollector(player.problemPath(), CarpetSettings.LOG))
         {
             Optional<ValueInput> optional = player.level().getServer().getPlayerList().loadPlayerData(player.nameAndId()).map((compoundTag) -> TagValueInput.create(scopedCollector, player.registryAccess(), compoundTag));
-            optional.ifPresent( valueInput -> {
+            optional.ifPresent(valueInput -> {
                 player.load(valueInput);
                 player.loadAndSpawnEnderPearls(valueInput);
                 player.loadAndSpawnParentVehicle(valueInput);
@@ -143,7 +143,7 @@ public class EntityPlayerMPFake extends ServerPlayer
         EntityPlayerMPFake playerShadow = new EntityPlayerMPFake(server, worldIn, gameprofile, player.clientInformation(), true);
         playerShadow.setChatSession(player.getChatSession());
         server.getPlayerList().placeNewPlayer(new FakeClientConnection(PacketFlow.SERVERBOUND), playerShadow, new CommonListenerCookie(gameprofile, 0, player.clientInformation(), true));
-        loadPlayerData(playerShadow);
+        server.schedule(server.wrapRunnable(() -> loadPlayerData(playerShadow)));
 
         playerShadow.setHealth(player.getHealth());
         playerShadow.connection.teleport(player.getX(), player.getY(), player.getZ(), player.getYRot(), player.getXRot());
