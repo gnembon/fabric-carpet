@@ -20,7 +20,6 @@ import carpet.script.utils.SystemInfo;
 import carpet.script.utils.InputValidator;
 import carpet.script.utils.ScarpetJsonDeserializer;
 import carpet.script.utils.ShapeDispatcher;
-import carpet.script.utils.WorldTools;
 import carpet.script.value.BooleanValue;
 import carpet.script.value.EntityValue;
 import carpet.script.value.FormattedTextValue;
@@ -35,18 +34,19 @@ import carpet.script.value.ValueConversions;
 import com.google.common.collect.Lists;
 import net.minecraft.SharedConstants;
 import net.minecraft.commands.CommandSourceStack;
-import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.core.Rotations;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtIo;
+import net.minecraft.nbt.NbtOps;
 import net.minecraft.nbt.NbtUtils;
 import net.minecraft.nbt.StringTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.Packet;
+import net.minecraft.network.protocol.common.ClientboundClearDialogPacket;
 import net.minecraft.network.protocol.game.ClientboundClearTitlesPacket;
 import net.minecraft.network.protocol.game.ClientboundSetActionBarTextPacket;
 import net.minecraft.network.protocol.game.ClientboundSetSubtitleTextPacket;
@@ -55,6 +55,7 @@ import net.minecraft.network.protocol.game.ClientboundSetTitlesAnimationPacket;
 import net.minecraft.network.protocol.game.ClientboundSoundPacket;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.dialog.Dialog;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.packs.PackType;
@@ -70,7 +71,6 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.decoration.ArmorStand;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.storage.CommandStorage;
@@ -98,6 +98,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -667,6 +668,51 @@ public class Auxiliary
             });
             return NumericValue.of(total.get());
         });
+
+        expression.addContextFunction("dialog", 2, (c, t, lv) -> {
+            CarpetContext cc = (CarpetContext) c;
+            MinecraftServer server = cc.server();
+            List<ServerPlayer> players = (
+                    lv.get(0) instanceof ListValue listValue ?
+                            listValue.getItems().stream() :
+                            Stream.of(lv.get(0))
+            ).map(playerValue ->
+            {
+                ServerPlayer player = EntityValue.getPlayerByValue(server, playerValue);
+                if (player == null)
+                {
+                    throw new InternalExpressionException("'dialog' requires a valid online player or a list of players as first argument. " + playerValue.getString() + " is not a player.");
+                }
+                return player;
+            }).toList();
+            Value dialogValue = lv.get(1);
+            if(dialogValue.isNull())
+            {
+                players.forEach(serverPlayer -> serverPlayer.connection.send(ClientboundClearDialogPacket.INSTANCE));
+            }
+            else
+            {
+                Holder<Dialog> dialogHolder;
+                if (dialogValue instanceof StringValue stringValue)
+                {
+                    Identifier dialogIdentifier;
+                    dialogIdentifier = InputValidator.identifierOf(stringValue.getString());
+                    Optional<Holder.Reference<Dialog>> dialogReference = cc.registry(Registries.DIALOG).get(dialogIdentifier);
+                    if(dialogReference.isEmpty()) return Value.NULL;
+                    dialogHolder = dialogReference.get();
+                }
+                else
+                {
+                    Tag tag = dialogValue.toTag(true, cc.registryAccess());
+                    Dialog dialog = Dialog.DIRECT_CODEC.parse(NbtOps.INSTANCE, tag)
+                            .getOrThrow(s -> new InternalExpressionException("Invalid dialog data: " + s));
+                    dialogHolder = Holder.direct(dialog);
+                }
+                players.forEach(serverPlayer -> serverPlayer.openDialog(dialogHolder));
+            }
+            return NumericValue.of(players.size());
+        });
+
 
         expression.addFunction("format", values -> {
             if (values.isEmpty())
