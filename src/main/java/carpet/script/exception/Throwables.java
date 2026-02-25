@@ -31,6 +31,7 @@ public class Throwables
     public static final Throwables NBT_ERROR = register("nbt_error", IO_EXCEPTION);
     public static final Throwables JSON_ERROR = register("json_error", IO_EXCEPTION);
     public static final Throwables B64_ERROR = register("b64_error", IO_EXCEPTION);
+    public static final Throwables FOLDER_NOT_EMPTY = register("folder_not_empty", IO_EXCEPTION);
     public static final Throwables USER_DEFINED = register("user_exception", THROWN_EXCEPTION_TYPE);
 
     /**

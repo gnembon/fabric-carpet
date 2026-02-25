@@ -972,6 +972,17 @@ public class Auxiliary
         expression.addContextFunction("delete_file", 2, (c, t, lv) ->
                 BooleanValue.of(((CarpetScriptHost) c.host).removeResourceFile(FileArgument.from(c, lv, false, FileArgument.Reason.DELETE))));
 
+        expression.addContextFunction("delete_folder", -1, (c, t, lv) -> {
+                if (lv.size() != 2 && lv.size() != 3)
+                {
+                    throw new InternalExpressionException("'delete_folder' takes 2 or 3 arguments");
+                }
+                boolean recursive = lv.size() == 3 ? lv.get(2).getBoolean() : false;
+
+                FileArgument fdesc = FileArgument.from(c, lv, true, FileArgument.Reason.DELETE);
+                return BooleanValue.of(((CarpetScriptHost) c.host).removeResourceFolder(fdesc, recursive));
+        });
+
         expression.addContextFunction("write_file", -1, (c, t, lv) -> {
             if (lv.size() < 3)
             {
