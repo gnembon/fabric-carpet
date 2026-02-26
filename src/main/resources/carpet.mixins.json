@@ -49,6 +49,7 @@
     "MobMixin",
     "Villager_aiMixin",
     "Player_fakePlayersMixin",
+    "EntitySelectorAccessor",
     "TickRateManager_fakePlayersMixin",
     "ServerGamePacketListenerImpl_coreMixin",
     "MinecraftServer_scarpetMixin",
