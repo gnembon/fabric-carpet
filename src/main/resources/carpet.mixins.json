@@ -182,7 +182,8 @@
     "DefaultRedstoneWireEvaluator_redstoneMixin",
 
     "CustomPacketPayload_networkStuffMixin",
-    "ServerGamePacketListenerimpl_connectionMixin"
+    "ServerGamePacketListenerimpl_connectionMixin",
+    "BlockBehaviour_easyBUDMixin"
 
   ],
   "client": [
