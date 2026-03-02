@@ -1,7 +1,6 @@
 package carpet.mixins;
 
 import carpet.fakes.EntityInterface;
-import carpet.script.EntityEventsGroup;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
