@@ -28,6 +28,7 @@ import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderBuffers;
 import net.minecraft.client.renderer.block.BlockModelRenderState;
+import net.minecraft.client.renderer.entity.DisplayRenderer;
 import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.state.BlockEntityRenderState;
@@ -35,7 +36,7 @@ import net.minecraft.client.renderer.entity.state.EntityRenderState;
 import net.minecraft.client.renderer.gizmos.DrawableGizmoPrimitives;
 import net.minecraft.client.renderer.item.ItemStackRenderState;
 import net.minecraft.client.renderer.rendertype.RenderTypes;
-import net.minecraft.client.renderer.state.LevelRenderState;
+import net.minecraft.client.renderer.state.level.LevelRenderState;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -421,10 +422,13 @@ public class ShapesRenderer
                 {
                     // this is equally wrong position wise as the BE type - need to investigate
                     var blockRenderDispatcher = client.getBlockRenderer();
+
+
                     var state = blockRenderDispatcher.getBlockModel(blockState);
                     BlockModelRenderState renderState = new BlockModelRenderState();
-                    renderState.model = state;
-                    renderState.block = blockState.getBlock();
+                    client.getBlockEntityRenderDispatcher().blockModelResolver.update(renderState, blockState, DisplayRenderer.BLOCK_DISPLAY_CONTEXT );
+                    //renderState.model = state;
+                    //renderState.block = blockState.getBlock();
 
                     renderState.submit(matrices, client.gameRenderer.getFeatureRenderDispatcher().getSubmitNodeStorage(), light, OverlayTexture.NO_OVERLAY, EntityRenderState.NO_OUTLINE);
 
