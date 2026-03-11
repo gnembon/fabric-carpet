@@ -55,8 +55,9 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.storage.TagValueInput;
 import net.minecraft.world.phys.Vec3;
-import org.joml.Matrix4f;
 import org.joml.Matrix4fStack;
+import org.joml.Matrix4fc;
+import org.joml.Quaternionf;
 
 public class ShapesRenderer
 {
@@ -113,7 +114,7 @@ public class ShapesRenderer
         labels = new HashMap<>();
     }
 
-    public void render(RenderBuffers renderBuffers, LevelRenderState cameraa, Matrix4f matrix4f, float partialTick)
+    public void render(RenderBuffers renderBuffers, LevelRenderState cameraa, Matrix4fc matrix4f, float partialTick)
     {
         Runnable token = Carpet.startProfilerSection("Scarpet client");
         // posestack is not needed anymore - left as TODO to cleanup later
@@ -161,7 +162,8 @@ public class ShapesRenderer
             );
             Matrix4fStack matrixStack = RenderSystem.getModelViewStack();
             matrixStack.pushMatrix();
-            matrixStack.mul(matrices.last().pose());
+            //matrixStack.mul(matrices.last().pose());
+            matrixStack.mul(matrix4f);
 
             // lines
             //RenderSystem.lineWidth(0.5F);
@@ -375,6 +377,8 @@ public class ShapesRenderer
                 matrices.translate(0.5, 0.5, 0.5);
             }
 
+            matrices.mulPose(camera1.rotation().conjugate(new Quaternionf()));
+
             matrices.translate(v1.x - cx, v1.y - cy, v1.z - cz);
             rotatePoseStackByShapeDirection(matrices, shape.facing, camera1, isitem ? v1 : v1.add(0.5, 0.5, 0.5));
             if (shape.tilt != 0.0f)
@@ -421,10 +425,10 @@ public class ShapesRenderer
                 if (blockState.getRenderShape() == RenderShape.MODEL)
                 {
                     // this is equally wrong position wise as the BE type - need to investigate
-                    var blockRenderDispatcher = client.getBlockRenderer();
+                    //var blockRenderDispatcher = client.getBlockRenderer();
 
 
-                    var state = blockRenderDispatcher.getBlockModel(blockState);
+                    //var state = blockRenderDispatcher.getBlockModel(blockState);
                     BlockModelRenderState renderState = new BlockModelRenderState();
                     client.getBlockEntityRenderDispatcher().blockModelResolver.update(renderState, blockState, DisplayRenderer.BLOCK_DISPLAY_CONTEXT );
                     //renderState.model = state;
