@@ -468,7 +468,8 @@ public class EntityPlayerActionPack
             {
                 if (action.limit == 1)
                 {
-                    if (player.onGround()) player.jumpFromGround(); // onGround
+                    if (player.onGround()) player.jumpFromGround();
+                    else if (!player.onClimbable()) player.tryToStartFallFlying();
                 }
                 else
                 {
