@@ -10,6 +10,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.util.Mth;
 import net.minecraft.util.random.Weighted;
@@ -385,7 +386,8 @@ public class SpawnReporter
         {
             for (Entity e: entity.level().getEntities(entity, entity.getBoundingBox()))
             {
-                e.discard();
+                if (!(e instanceof ServerPlayer))
+                    e.discard();
             }
         }
         entity.discard();
