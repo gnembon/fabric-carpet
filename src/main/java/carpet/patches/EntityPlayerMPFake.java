@@ -223,9 +223,6 @@ public class EntityPlayerMPFake extends ServerPlayer
             // Fixes getKnownMovement/getKnownSpeed and in turn spears
             Vec3 movement = new Vec3(this.getX() - startX, this.getY() - startY, this.getZ() - startZ);
             this.setKnownMovement(movement);
-            if (movement.lengthSqr() > 0.00001F) {
-                this.resetLastActionTime();
-            }
         }
         catch (NullPointerException ignored)
         {
