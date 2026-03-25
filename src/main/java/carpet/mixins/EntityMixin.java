@@ -38,7 +38,8 @@ public abstract class EntityMixin implements EntityInterface
     @Inject(method = "isLocalInstanceAuthoritative", at = @At("HEAD"), cancellable = true)
     private void isFakePlayer(CallbackInfoReturnable<Boolean> cir)
     {
-        if (getControllingPassenger() instanceof EntityPlayerMPFake) cir.setReturnValue(!level.isClientSide());
+        // getControllingPassenger() does not return the EntityPlayerMPFake if there are no passengers involved with it
+        if ((Object) this instanceof EntityPlayerMPFake || getControllingPassenger() instanceof EntityPlayerMPFake) cir.setReturnValue(!level.isClientSide());
     }
 
     @Shadow
