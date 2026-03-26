@@ -1023,6 +1023,9 @@ public class Auxiliary
             return BooleanValue.of(success);
         });
 
+        expression.addContextFunction("make_folder", 2, (c, t, lv) ->
+                BooleanValue.of(((CarpetScriptHost) c.host).makeFolder(FileArgument.from(c, lv, true, FileArgument.Reason.CREATE))));
+
         expression.addContextFunction("load_app_data", -1, (c, t, lv) ->
         {
             FileArgument fdesc = new FileArgument(null, FileArgument.Type.NBT, null, false, false, FileArgument.Reason.READ, c.host);
