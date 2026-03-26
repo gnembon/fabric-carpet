@@ -971,6 +971,13 @@ public class CarpetSettings
     public static boolean lightningKillsDropsFix = false;
 
     @Rule(
+            desc = "Makes the velocity of items going through end portals preserved.",
+            extra = "As of 1.21, the item entity velocity is rotated based on the yaw, which is random.",
+            category = {BUGFIX, FEATURE}
+    )
+    public static boolean endPortalItemVelocityRotationFix = false;
+
+    @Rule(
             desc = "Placing an activator rail on top of a barrier block will fill the neighbor updater stack when the rail turns off.",
             extra = {"The integer entered is the amount of updates that should be left in the stack", "-1 turns it off"},
             category = CREATIVE,

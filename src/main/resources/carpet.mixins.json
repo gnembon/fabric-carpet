@@ -181,7 +181,9 @@
     "DefaultRedstoneWireEvaluator_redstoneMixin",
 
     "CustomPacketPayload_networkStuffMixin",
-    "ServerGamePacketListenerimpl_connectionMixin"
+    "ServerGamePacketListenerimpl_connectionMixin",
+
+    "EndPortalBlockMixin_itemRotation"
 
   ],
   "client": [
