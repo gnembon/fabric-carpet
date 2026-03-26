@@ -3,7 +3,6 @@ package carpet.patches;
 import net.minecraft.network.Connection;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.contents.TranslatableContents;
-import net.minecraft.network.protocol.Packet;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.network.CommonListenerCookie;
@@ -17,11 +16,6 @@ public class NetHandlerPlayServerFake extends ServerGamePacketListenerImpl
     public NetHandlerPlayServerFake(final MinecraftServer minecraftServer, final Connection connection, final ServerPlayer serverPlayer, final CommonListenerCookie i)
     {
         super(minecraftServer, connection, serverPlayer, i);
-    }
-
-    @Override
-    public void send(final Packet<?> packetIn)
-    {
     }
 
     @Override
