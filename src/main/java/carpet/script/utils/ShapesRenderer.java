@@ -8,7 +8,6 @@ import com.mojang.blaze3d.pipeline.RenderTarget;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.ByteBufferBuilder;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.Tesselator;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import com.mojang.blaze3d.vertex.VertexFormat.Mode;
 import com.mojang.math.Axis;
@@ -144,8 +143,6 @@ public class ShapesRenderer
         //RenderSystem.polygonOffset(-3f, -3f);
         //RenderSystem.enablePolygonOffset();
 
-        Tesselator tesselator = Tesselator.getInstance();
-
         // render
         double cameraX = camera.position().x;
         double cameraY = camera.position().y;
@@ -177,7 +174,7 @@ public class ShapesRenderer
             shapes.get(dimensionType).values().forEach(s -> {
                 if ((!s.shape.debug || entityBoxes) && s.shouldRender(dimensionType))
                 {
-                    s.renderFaces(tesselator, cameraX, cameraY, cameraZ, partialTick, s.shape.seethrough ? onTop : normal);
+                    s.renderFaces(cameraX, cameraY, cameraZ, partialTick, s.shape.seethrough ? onTop : normal);
                 }
             });
             //RenderSystem.lineWidth(1.0F);
@@ -289,7 +286,7 @@ public class ShapesRenderer
 
         public abstract void renderLines(PoseStack matrices, double cx, double cy, double cz, float partialTick, LevelRenderState levelRenderState, DrawableGizmoPrimitives primitives);
 
-        public void renderFaces(Tesselator tesselator, double cx, double cy, double cz, float partialTick, DrawableGizmoPrimitives primitives)
+        public void renderFaces(double cx, double cy, double cz, float partialTick, DrawableGizmoPrimitives primitives)
         {
         }
 
@@ -633,7 +630,7 @@ public class ShapesRenderer
         }
 
         @Override
-        public void renderFaces(Tesselator tesselator, double cx, double cy, double cz, float partialTick, DrawableGizmoPrimitives primitives)
+        public void renderFaces(double cx, double cy, double cz, float partialTick, DrawableGizmoPrimitives primitives)
         {
             if (shape.fa == 0.0)
             {
@@ -695,7 +692,7 @@ public class ShapesRenderer
         }
 
         @Override
-        public void renderFaces(Tesselator tesselator, double cx, double cy, double cz, float partialTick, DrawableGizmoPrimitives primitives)
+        public void renderFaces(double cx, double cy, double cz, float partialTick, DrawableGizmoPrimitives primitives)
         {
             if (shape.fa == 0)
             {
@@ -881,7 +878,7 @@ public class ShapesRenderer
         }
 
         @Override
-        public void renderFaces(Tesselator tesselator, double cx, double cy, double cz, float partialTick, DrawableGizmoPrimitives primitives)
+        public void renderFaces(double cx, double cy, double cz, float partialTick, DrawableGizmoPrimitives primitives)
         {
             if (shape.fa == 0.0)
             {
@@ -920,7 +917,7 @@ public class ShapesRenderer
         }
 
         @Override
-        public void renderFaces(Tesselator tesselator, double cx, double cy, double cz, float partialTick, DrawableGizmoPrimitives primitives)
+        public void renderFaces(double cx, double cy, double cz, float partialTick, DrawableGizmoPrimitives primitives)
         {
             if (shape.fa == 0.0)
             {

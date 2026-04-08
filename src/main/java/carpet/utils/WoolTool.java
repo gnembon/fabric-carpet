@@ -3,8 +3,10 @@ package carpet.utils;
 import carpet.CarpetSettings;
 import carpet.helpers.HopperCounter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.core.BlockPos;
@@ -17,6 +19,7 @@ import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.ColorCollection;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.MapColor;
 import net.minecraft.world.phys.Vec3;
@@ -35,24 +38,11 @@ public class WoolTool
      * A map from a wool {@link Block} to its {@link DyeColor} which is used in {@link WoolTool#getWoolColorAtPosition}
      * to get the colour of wool at a position.
      */
-    private static final Map<Block, DyeColor> WOOL_BLOCK_TO_DYE = Map.ofEntries(
-            entry(Blocks.WHITE_WOOL, DyeColor.WHITE),
-            entry(Blocks.ORANGE_WOOL, DyeColor.ORANGE),
-            entry(Blocks.MAGENTA_WOOL, DyeColor.MAGENTA),
-            entry(Blocks.LIGHT_BLUE_WOOL, DyeColor.LIGHT_BLUE),
-            entry(Blocks.YELLOW_WOOL, DyeColor.YELLOW),
-            entry(Blocks.LIME_WOOL, DyeColor.LIME),
-            entry(Blocks.PINK_WOOL, DyeColor.PINK),
-            entry(Blocks.GRAY_WOOL, DyeColor.GRAY),
-            entry(Blocks.LIGHT_GRAY_WOOL, DyeColor.LIGHT_GRAY),
-            entry(Blocks.CYAN_WOOL, DyeColor.CYAN),
-            entry(Blocks.PURPLE_WOOL, DyeColor.PURPLE),
-            entry(Blocks.BLUE_WOOL, DyeColor.BLUE),
-            entry(Blocks.BROWN_WOOL, DyeColor.BROWN),
-            entry(Blocks.GREEN_WOOL, DyeColor.GREEN),
-            entry(Blocks.RED_WOOL, DyeColor.RED),
-            entry(Blocks.BLACK_WOOL, DyeColor.BLACK)
-    );
+    private static final Map<Block, DyeColor> WOOL_BLOCK_TO_DYE = Arrays.stream(DyeColor.values()).collect(Collectors.toUnmodifiableMap(
+            Blocks.WOOL::pick, // gets the wool block of the colour
+            color -> color // the value is just the colour itself))
+            ));
+
 
     /**
      * The method which gets triggered when a player places a carpet, and decides what to do based on the carpet's colour:
