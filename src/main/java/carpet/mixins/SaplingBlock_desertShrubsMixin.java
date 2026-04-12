@@ -23,7 +23,7 @@ import net.minecraft.world.level.block.state.BlockState;
 public abstract class SaplingBlock_desertShrubsMixin
 {
     @Inject(method = "advanceTree", at = @At(value = "INVOKE", shift = At.Shift.BEFORE,
-            target = "Lnet/minecraft/world/level/block/grower/AbstractTreeGrower;growTree(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/level/chunk/ChunkGenerator;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/util/RandomSource;)Z"),
+            target = "Lnet/minecraft/world/level/block/grower/TreeGrower;growTree(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/level/chunk/ChunkGenerator;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/util/RandomSource;)Z"),
             cancellable = true)
     private void onGenerate(ServerLevel level, BlockPos pos, BlockState blockState, RandomSource random, CallbackInfo ci)
     {

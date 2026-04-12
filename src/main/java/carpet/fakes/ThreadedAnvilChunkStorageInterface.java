@@ -7,11 +7,11 @@ import net.minecraft.world.level.ChunkPos;
 
 public interface ThreadedAnvilChunkStorageInterface
 {
-    Map<String, Integer> regenerateChunkRegion(List<ChunkPos> requestedChunks);
+    //Map<String, Integer> regenerateChunkRegion(List<ChunkPos> requestedChunks);
 
-    void relightChunk(ChunkPos pos);
+    //void relightChunk(ChunkPos pos);
 
-    void releaseRelightTicket(ChunkPos pos);
+    //void releaseRelightTicket(ChunkPos pos);
 
-    Iterable<ChunkHolder> getChunksCM();
+    //Iterable<ChunkHolder> getChunksCM();
 }

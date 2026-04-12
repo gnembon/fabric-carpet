@@ -5,8 +5,6 @@ import carpet.CarpetExtension;
 import carpet.CarpetSettings;
 import carpet.api.settings.CarpetRule;
 import carpet.api.settings.InvalidRuleValueException;
-import carpet.fakes.LevelInterface;
-import carpet.helpers.TickRateManager;
 import carpet.api.settings.SettingsManager;
 
 import java.util.HashMap;
@@ -14,10 +12,8 @@ import java.util.Map;
 import java.util.function.BiConsumer;
 
 import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.nbt.ByteTag;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
-import net.minecraft.nbt.NumericTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.protocol.common.ServerboundCustomPayloadPacket;
 
@@ -27,18 +23,18 @@ public class ClientNetworkHandler
 
     static
     {
-        dataHandlers.put(CarpetClient.HI, (p, t) -> onHi(t.getAsString()));
+        dataHandlers.put(CarpetClient.HI, (p, t) -> onHi(t.asString().orElseThrow()));
         dataHandlers.put("Rules", (p, t) -> {
             CompoundTag ruleset = (CompoundTag) t;
-            for (String ruleKey : ruleset.getAllKeys())
+            for (String ruleKey : ruleset.keySet())
             {
                 CompoundTag ruleNBT = (CompoundTag) ruleset.get(ruleKey);
                 SettingsManager manager = null;
                 String ruleName;
                 if (ruleNBT.contains("Manager"))
                 {
-                    ruleName = ruleNBT.getString("Rule");
-                    String managerName = ruleNBT.getString("Manager");
+                    ruleName = ruleNBT.getString("Rule").orElseThrow();
+                    String managerName = ruleNBT.getString("Manager").orElseThrow();
                     if (managerName.equals("carpet"))
                     {
                         manager = CarpetServer.settingsManager;
@@ -64,7 +60,7 @@ public class ClientNetworkHandler
                 CarpetRule<?> rule = (manager != null) ? manager.getCarpetRule(ruleName) : null;
                 if (rule != null)
                 {
-                    String value = ruleNBT.getString("Value");
+                    String value = ruleNBT.getString("Value").orElseThrow();
                     try
                     {
                         rule.set(null, value);
@@ -74,23 +70,6 @@ public class ClientNetworkHandler
                     }
                 }
             }
-        });
-        dataHandlers.put("TickRate", (p, t) -> {
-            TickRateManager tickRateManager = ((LevelInterface) p.clientLevel).tickRateManager();
-            tickRateManager.setTickRate(((NumericTag) t).getAsFloat());
-        });
-        dataHandlers.put("TickingState", (p, t) -> {
-            CompoundTag tickingState = (CompoundTag) t;
-            TickRateManager tickRateManager = ((LevelInterface) p.clientLevel).tickRateManager();
-            tickRateManager.setFrozenState(tickingState.getBoolean("is_paused"), tickingState.getBoolean("deepFreeze"));
-        });
-        dataHandlers.put("SuperHotState", (p, t) -> {
-            TickRateManager tickRateManager = ((LevelInterface) p.clientLevel).tickRateManager();
-            tickRateManager.setSuperHot(t.equals(ByteTag.ONE));
-        });
-        dataHandlers.put("TickPlayerActiveTimeout", (p, t) -> {
-            TickRateManager tickRateManager = ((LevelInterface) p.clientLevel).tickRateManager();
-            tickRateManager.setPlayerActiveTimeout(((NumericTag) t).getAsInt());
         });
         dataHandlers.put("scShape", (p, t) -> { // deprecated // and unused // should remove for 1.17
             if (CarpetClient.shapes != null)
@@ -137,7 +116,7 @@ public class ClientNetworkHandler
 
     public static void onServerData(CompoundTag compound, LocalPlayer player)
     {
-        for (String key : compound.getAllKeys())
+        for (String key : compound.keySet())
         {
             if (dataHandlers.containsKey(key))
             {

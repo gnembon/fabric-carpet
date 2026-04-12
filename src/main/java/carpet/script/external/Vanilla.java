@@ -1,26 +1,7 @@
 package carpet.script.external;
 
 import carpet.CarpetSettings;
-import carpet.fakes.BiomeInterface;
-import carpet.fakes.BlockPredicateInterface;
-import carpet.fakes.BlockStateArgumentInterface;
-import carpet.fakes.ChunkTicketManagerInterface;
-import carpet.fakes.CommandDispatcherInterface;
-import carpet.fakes.EntityInterface;
-import carpet.fakes.IngredientInterface;
-import carpet.fakes.InventoryBearerInterface;
-import carpet.fakes.ItemEntityInterface;
-import carpet.fakes.LivingEntityInterface;
-import carpet.fakes.MinecraftServerInterface;
-import carpet.fakes.MobEntityInterface;
-import carpet.fakes.RandomStateVisitorAccessor;
-import carpet.fakes.RecipeManagerInterface;
-import carpet.fakes.AbstractContainerMenuInterface;
-import carpet.fakes.ServerPlayerInterface;
-import carpet.fakes.ServerPlayerInteractionManagerInterface;
-import carpet.fakes.ServerWorldInterface;
-import carpet.fakes.SpawnHelperInnerInterface;
-import carpet.fakes.ThreadedAnvilChunkStorageInterface;
+import carpet.fakes.*;
 import carpet.mixins.Objective_scarpetMixin;
 import carpet.mixins.PoiRecord_scarpetMixin;
 import carpet.mixins.Scoreboard_scarpetMixin;
@@ -39,10 +20,8 @@ import net.fabricmc.loader.api.ModContainer;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.arguments.blocks.BlockInput;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.RegistryAccess;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ChunkMap;
 import net.minecraft.server.level.DistanceManager;
@@ -50,26 +29,24 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.level.ServerPlayerGameMode;
 import net.minecraft.server.level.Ticket;
+import net.minecraft.server.permissions.PermissionSet;
 import net.minecraft.tags.TagKey;
-import net.minecraft.util.SortedArraySet;
 import net.minecraft.world.Container;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.ai.Brain;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.ai.goal.GoalSelector;
+import net.minecraft.world.entity.ai.memory.MemoryModuleType;
+import net.minecraft.world.entity.ai.memory.MemorySlot;
 import net.minecraft.world.entity.ai.village.poi.PoiRecord;
-import net.minecraft.world.entity.animal.horse.AbstractHorse;
+import net.minecraft.world.entity.animal.equine.AbstractHorse;
 import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.food.FoodData;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.DataSlot;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.crafting.Ingredient;
-import net.minecraft.world.item.crafting.Recipe;
-import net.minecraft.world.item.crafting.RecipeManager;
-import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.level.ChunkPos;
-import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.NaturalSpawner;
 import net.minecraft.world.level.PotentialCalculator;
 import net.minecraft.world.level.biome.Biome;
@@ -84,7 +61,6 @@ import net.minecraft.world.scores.Objective;
 import net.minecraft.world.scores.Scoreboard;
 import net.minecraft.world.scores.criteria.ObjectiveCriteria;
 
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -100,22 +76,12 @@ public class Vanilla
 
     public static void ChunkMap_relightChunk(ChunkMap chunkMap, ChunkPos pos)
     {
-        ((ThreadedAnvilChunkStorageInterface) chunkMap).relightChunk(pos);
+        //((ThreadedAnvilChunkStorageInterface) chunkMap).relightChunk(pos);
     }
 
     public static Map<String, Integer> ChunkMap_regenerateChunkRegion(ChunkMap chunkMap, List<ChunkPos> requestedChunks)
     {
-        return ((ThreadedAnvilChunkStorageInterface) chunkMap).regenerateChunkRegion(requestedChunks);
-    }
-
-    public static List<Collection<ItemStack>> Ingredient_getRecipeStacks(Ingredient ingredient)
-    {
-        return ((IngredientInterface) (Object) ingredient).getRecipeStacks();
-    }
-
-    public static List<Recipe<?>> RecipeManager_getAllMatching(RecipeManager recipeManager, RecipeType<?> type, ResourceLocation output, RegistryAccess registryAccess)
-    {
-        return ((RecipeManagerInterface) recipeManager).getAllMatching(type, output, registryAccess);
+        return Map.of(); //return ((ThreadedAnvilChunkStorageInterface) chunkMap).regenerateChunkRegion(requestedChunks);
     }
 
     public static int NaturalSpawner_MAGIC_NUMBER()
@@ -138,14 +104,9 @@ public class Vanilla
         return ((Scoreboard_scarpetMixin) scoreboard).getObjectivesByCriterion();
     }
 
-    public static ServerLevelData ServerLevel_getWorldProperties(ServerLevel world)
+    public static Long2ObjectOpenHashMap<List<Ticket>> ChunkTicketManager_getTicketsByPosition(DistanceManager ticketManager)
     {
-        return ((ServerWorldInterface) world).getWorldPropertiesCM();
-    }
-
-    public static Long2ObjectOpenHashMap<SortedArraySet<Ticket<?>>> ChunkTicketManager_getTicketsByPosition(DistanceManager ticketManager)
-    {
-        return ((ChunkTicketManagerInterface) ticketManager).getTicketsByPosition();
+        return ((TicketsFetcherInterface) ticketManager).getTicketsByPosition();
     }
 
     public static DensityFunction.Visitor RandomState_getVisitor(RandomState randomState)
@@ -178,12 +139,12 @@ public class Vanilla
         ServerNetworkHandler.sendCustomCommand(player, "scShapes", data);
     }
 
-    public static int MinecraftServer_getRunPermissionLevel(MinecraftServer server)
+    public static PermissionSet MinecraftServer_getRunPermissionLevel(MinecraftServer server)
     {
         return CarpetSettings.runPermissionLevel;
     }
 
-    public static String MinecraftServer_getReleaseTarget(MinecraftServer server)
+    public static int [] MinecraftServer_getReleaseTarget(MinecraftServer server)
     {
         return CarpetSettings.releaseTarget;
     }
@@ -201,6 +162,10 @@ public class Vanilla
             ret.put(new StringValue(mod.getMetadata().getId()), new StringValue(mod.getMetadata().getVersion().getFriendlyString()));
         }
         return MapValue.wrap(ret);
+    }
+
+    public static Map<MemoryModuleType<?>, MemorySlot<?>> Brain_getMemories(Brain brain) {
+        return ((BrainInterface) brain).getMemoriesCM();
     }
 
     public static LevelStorageSource.LevelStorageAccess MinecraftServer_storageSource(MinecraftServer server)
@@ -226,11 +191,6 @@ public class Vanilla
     public static boolean ServerPlayer_isInvalidEntityObject(ServerPlayer player)
     {
         return ((ServerPlayerInterface) player).isInvalidEntityObject();
-    }
-
-    public static String ServerPlayer_getLanguage(ServerPlayer player)
-    {
-        return ((ServerPlayerInterface) player).getLanguage();
     }
 
     public static GoalSelector Mob_getAI(Mob mob, boolean target)
@@ -343,11 +303,6 @@ public class Vanilla
         return CommandHelper.canUseCommand(player, CarpetSettings.commandScript);
     }
 
-    public static int MinecraftServer_getFillLimit(MinecraftServer server)
-    {
-        return Math.max(server.getGameRules().getInt(GameRules.RULE_COMMAND_MODIFICATION_BLOCK_LIMIT), CarpetSettings.fillLimit);
-    }
-
     public static int PoiRecord_getFreeTickets(PoiRecord record)
     {
         return ((PoiRecord_scarpetMixin) record).getFreeTickets();
@@ -358,6 +313,14 @@ public class Vanilla
         ((PoiRecord_scarpetMixin) record).callAcquireTicket();
     }
 
+    public static double FoodData_getExhaustion(FoodData foodData) {
+        return ((FoodDataInterface)foodData).getCMExhaustionLevel();
+    }
+
+    public static void FoodData_setExhaustion(FoodData foodData, float exhaustion) {
+        ((FoodDataInterface)foodData).setExhaustion(exhaustion);
+    }
+
     public record BlockPredicatePayload(BlockState state, TagKey<Block> tagKey, Map<Value, Value> properties, CompoundTag tag) {
         public static BlockPredicatePayload of(Predicate<BlockInWorld> blockPredicate)
         {
@@ -365,5 +328,4 @@ public class Vanilla
             return new BlockPredicatePayload(predicateData.getCMBlockState(), predicateData.getCMBlockTagKey(), predicateData.getCMProperties(), predicateData.getCMDataTag());
         }
     }
-
 }

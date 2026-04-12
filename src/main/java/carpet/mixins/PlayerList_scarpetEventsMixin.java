@@ -7,6 +7,7 @@ import net.minecraft.network.chat.PlayerChatMessage;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.players.PlayerList;
+import net.minecraft.world.entity.Entity;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -24,9 +25,9 @@ public class PlayerList_scarpetEventsMixin
     @Shadow @Final private MinecraftServer server;
 
     @Inject(method = "respawn", at = @At("HEAD"))
-    private void onRespawn(ServerPlayer player, boolean olive, CallbackInfoReturnable<ServerPlayer> cir)
+    private void onResp(ServerPlayer serverPlayer, boolean olive, Entity.RemovalReason removalReason, CallbackInfoReturnable<ServerPlayer> cir)
     {
-        PLAYER_RESPAWNS.onPlayerEvent(player);
+        PLAYER_RESPAWNS.onPlayerEvent(serverPlayer);
     }
 
     @Inject(method = "broadcastChatMessage(Lnet/minecraft/network/chat/PlayerChatMessage;Lnet/minecraft/server/level/ServerPlayer;Lnet/minecraft/network/chat/ChatType$Bound;)V",
@@ -44,7 +45,7 @@ public class PlayerList_scarpetEventsMixin
             value = "INVOKE",
             target = "Lnet/minecraft/server/level/ServerPlayer;initInventoryMenu()V"
     ))
-    private void invalidatePreviousInstance(ServerPlayer player, boolean alive, CallbackInfoReturnable<ServerPlayer> cir)
+    private void invalidatePreviousInstance(ServerPlayer player, boolean alive, Entity.RemovalReason removalReason, CallbackInfoReturnable<ServerPlayer> cir)
     {
         ((ServerPlayerInterface)player).invalidateEntityObjectReference();
     }

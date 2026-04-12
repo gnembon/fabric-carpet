@@ -3,24 +3,28 @@ package carpet.utils;
 import carpet.CarpetSettings;
 import carpet.helpers.HopperCounter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.ColorCollection;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.MapColor;
 import net.minecraft.world.phys.Vec3;
 
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import static java.util.Map.entry;
 
@@ -34,24 +38,11 @@ public class WoolTool
      * A map from a wool {@link Block} to its {@link DyeColor} which is used in {@link WoolTool#getWoolColorAtPosition}
      * to get the colour of wool at a position.
      */
-    private static final Map<Block, DyeColor> WOOL_BLOCK_TO_DYE = Map.ofEntries(
-            entry(Blocks.WHITE_WOOL, DyeColor.WHITE),
-            entry(Blocks.ORANGE_WOOL, DyeColor.ORANGE),
-            entry(Blocks.MAGENTA_WOOL, DyeColor.MAGENTA),
-            entry(Blocks.LIGHT_BLUE_WOOL, DyeColor.LIGHT_BLUE),
-            entry(Blocks.YELLOW_WOOL, DyeColor.YELLOW),
-            entry(Blocks.LIME_WOOL, DyeColor.LIME),
-            entry(Blocks.PINK_WOOL, DyeColor.PINK),
-            entry(Blocks.GRAY_WOOL, DyeColor.GRAY),
-            entry(Blocks.LIGHT_GRAY_WOOL, DyeColor.LIGHT_GRAY),
-            entry(Blocks.CYAN_WOOL, DyeColor.CYAN),
-            entry(Blocks.PURPLE_WOOL, DyeColor.PURPLE),
-            entry(Blocks.BLUE_WOOL, DyeColor.BLUE),
-            entry(Blocks.BROWN_WOOL, DyeColor.BROWN),
-            entry(Blocks.GREEN_WOOL, DyeColor.GREEN),
-            entry(Blocks.RED_WOOL, DyeColor.RED),
-            entry(Blocks.BLACK_WOOL, DyeColor.BLACK)
-    );
+    private static final Map<Block, DyeColor> WOOL_BLOCK_TO_DYE = Arrays.stream(DyeColor.values()).collect(Collectors.toUnmodifiableMap(
+            Blocks.WOOL::pick, // gets the wool block of the colour
+            color -> color // the value is just the colour itself))
+            ));
+
 
     /**
      * The method which gets triggered when a player places a carpet, and decides what to do based on the carpet's colour:
@@ -60,7 +51,7 @@ public class WoolTool
      *     <li>Green - Prints the contents of the counter of the colour of wool underneath the carpet</li>
      * </ul>
      */
-    public static void carpetPlacedAction(DyeColor color, Player placer, BlockPos pos, ServerLevel worldIn)
+    public static void carpetPlacedAction(DyeColor color, ServerPlayer placer, BlockPos pos, ServerLevel worldIn)
     {
         if (!CarpetSettings.carpets)
         {
@@ -108,7 +99,7 @@ public class WoolTool
                     DyeColor under = getWoolColorAtPosition(worldIn, pos.below());
                     if (under == null) return;
                     HopperCounter counter = HopperCounter.getCounter(under);
-                    counter.reset(placer.getServer());
+                    counter.reset(placer.level().getServer());
                     List<Component> res = new ArrayList<>();
                     res.add(Messenger.s(String.format("%s counter reset",under.toString())));
                     Messenger.send(placer, res);

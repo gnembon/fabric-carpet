@@ -1,9 +1,12 @@
 package carpet.mixins;
 
 import carpet.fakes.EntityInterface;
+import carpet.fakes.PortalProcessorInterface;
 import carpet.script.EntityEventsGroup;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.PortalProcessor;
 import net.minecraft.world.phys.Vec3;
+import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
@@ -15,13 +18,13 @@ public abstract class Entity_scarpetEventsMixin implements EntityInterface
 {
     //@Shadow public boolean removed;
 
-    @Shadow protected int portalTime;
     @Shadow private int portalCooldown;
 
     @Shadow public abstract boolean isRemoved();
 
     @Shadow private Vec3 position, deltaMovement;
 
+    @Shadow @Nullable public PortalProcessor portalProcess;
     private boolean permanentVehicle;
 
     private final EntityEventsGroup events = new EntityEventsGroup((Entity) (Object)this);
@@ -61,13 +64,13 @@ public abstract class Entity_scarpetEventsMixin implements EntityInterface
     @Override
     public int getPortalTimer()
     {
-        return portalTime;
+        return portalProcess.getPortalTime();
     }
 
     @Override
     public void setPortalTimer(int amount)
     {
-        portalTime = amount;
+        ((PortalProcessorInterface)portalProcess).setPortalTime(amount);
     }
 
     @Inject(method = "tick", at = @At("HEAD"))

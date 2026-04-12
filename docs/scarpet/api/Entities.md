@@ -204,7 +204,7 @@ Entity that `e` rides.
 
 ### `query(e, 'unmountable')`
 
-Boolean, true if the entity cannot be mounted.
+Boolean, true if the entity cannot be unmounted.
 
 ### `(deprecated) query(e, 'tags')`
 
@@ -421,7 +421,7 @@ version indicates the version of the connected carpet client.
 ### `query(e, 'effect', name?)`
 
 Without extra arguments, it returns list of effect active on a living entity. Each entry is a triple of short 
-effect name, amplifier, and remaining duration in ticks. With an argument, if the living entity has not that potion active, 
+effect name, amplifier, and remaining duration in ticks (-1 if it has infinity duration). With an argument, if the living entity has not that potion active, 
 returns `null`, otherwise return a tuple of amplifier and remaining duration.
 
 <pre>
@@ -727,7 +727,7 @@ Mounts the entity to the `other`.
 
 ### `modify(e, 'unmountable', boolean)`
 
-Denies or allows an entity to be mounted.
+Denies or allows an entity to be unmounted.
 
 ### `modify(e, 'drop_passengers')`
 
@@ -761,7 +761,7 @@ players, since they are controlled client side.
 ### `modify(e, 'effect', name?, duration?, amplifier?, show_particles?, show_icon?, ambient?)`
 
 Applies status effect to the living entity. Takes several optional parameters, which default to `0`, `true`, 
-`true` and `false`. If no duration is specified, or if it's null or 0, the effect is removed. If name is not specified,
+`true` and `false`. If no duration is specified, or if it's null or 0, the effect is removed. If duration is less than 0, it will represent infinity. If name is not specified,
 it clears all effects.
 
 ### `modify(e, 'health', float)`

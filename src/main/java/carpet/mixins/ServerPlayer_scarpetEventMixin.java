@@ -5,7 +5,6 @@ import carpet.fakes.ServerPlayerInterface;
 import carpet.script.EntityEventsGroup;
 import com.mojang.authlib.GameProfile;
 import net.minecraft.core.BlockPos;
-import net.minecraft.network.protocol.game.ServerboundClientInformationPacket;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -15,6 +14,7 @@ import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.portal.TeleportTransition;
 import net.minecraft.world.phys.Vec3;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -38,8 +38,8 @@ public abstract class ServerPlayer_scarpetEventMixin extends Player implements S
     @Unique
     private boolean isInvalidReference = false;
 
-    public ServerPlayer_scarpetEventMixin(Level level, BlockPos blockPos, float f, GameProfile gameProfile) {
-        super(level, blockPos, f, gameProfile);
+    public ServerPlayer_scarpetEventMixin(Level level, GameProfile gameProfile) {
+        super(level, gameProfile);
     }
 
     //@Shadow protected abstract void completeUsingItem();
@@ -83,32 +83,24 @@ public abstract class ServerPlayer_scarpetEventMixin extends Player implements S
         }
     }
 
-    @Redirect(method = "setPlayerInput", at = @At(
-            value = "INVOKE",
-            target = "Lnet/minecraft/server/level/ServerPlayer;setShiftKeyDown(Z)V"
-    ))
-    private void setSneakingConditionally(ServerPlayer serverPlayerEntity, boolean sneaking)
-    {
-        if (!((EntityInterface)serverPlayerEntity.getVehicle()).isPermanentVehicle()) // won't since that method makes sure its not null
-            serverPlayerEntity.setShiftKeyDown(sneaking);
-    }
-
     private Vec3 previousLocation;
     private ResourceKey<Level> previousDimension;
 
-    @Inject(method = "changeDimension", at = @At("HEAD"))
-    private void logPreviousCoordinates(ServerLevel serverWorld, CallbackInfoReturnable<Entity> cir)
+    @Inject(method = "teleport", at = @At("HEAD"))
+    private void logPreviousCoordinates(TeleportTransition serverWorld, CallbackInfoReturnable<Entity> cir)
     {
         previousLocation = position();
         previousDimension = level().dimension();  //dimension type
     }
 
-    @Inject(method = "changeDimension", at = @At("RETURN"))
-    private void atChangeDimension(ServerLevel destination, CallbackInfoReturnable<Entity> cir)
+    @Inject(method = "teleport", at = @At("RETURN"))
+    private void atChangeDimension(TeleportTransition destinationP, CallbackInfoReturnable<Entity> cir)
     {
         if (PLAYER_CHANGES_DIMENSION.isNeeded())
         {
             ServerPlayer player = (ServerPlayer) (Object)this;
+            TeleportTransition destinationTransition = destinationP;
+            ServerLevel destination = destinationTransition.newLevel();
             Vec3 to = null;
             if (!wonGame || previousDimension != Level.END || destination.dimension() != Level.OVERWORLD)
             {
@@ -128,21 +120,5 @@ public abstract class ServerPlayer_scarpetEventMixin extends Player implements S
     public boolean isInvalidEntityObject()
     {
         return isInvalidReference;
-    }
-
-    //getting player language
-    @Unique
-    private String language;
-
-    @Override
-    public String getLanguage()
-    {
-        return this.language;
-    }
-
-    @Inject(method = "updateOptions", at = @At("HEAD"))
-    public void setLanguage(ServerboundClientInformationPacket packet, CallbackInfo ci)
-    {
-        this.language = packet.language();
     }
 }

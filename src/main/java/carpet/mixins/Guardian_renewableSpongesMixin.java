@@ -1,12 +1,10 @@
 package carpet.mixins;
 
 import carpet.CarpetSettings;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LightningBolt;
-import net.minecraft.world.entity.MobSpawnType;
-import net.minecraft.world.entity.SpawnGroupData;
 import net.minecraft.world.entity.monster.ElderGuardian;
 import net.minecraft.world.entity.monster.Guardian;
 import net.minecraft.world.entity.monster.Monster;
@@ -24,11 +22,11 @@ public abstract class Guardian_renewableSpongesMixin extends Monster
     @Override
     public void thunderHit(ServerLevel serverWorld, LightningBolt lightningEntity)
     {                                // isRemoved()
-        if (!this.level().isClientSide && !this.isRemoved() && CarpetSettings.renewableSponges && !((Object)this instanceof ElderGuardian))
+        if (!this.level().isClientSide() && !this.isRemoved() && CarpetSettings.renewableSponges && !((Object)this instanceof ElderGuardian))
         {
             ElderGuardian elderGuardian = new ElderGuardian(EntityType.ELDER_GUARDIAN ,this.level());
-            elderGuardian.moveTo(this.getX(), this.getY(), this.getZ(), this.getYRot(), this.getXRot());
-            elderGuardian.finalizeSpawn(serverWorld ,this.level().getCurrentDifficultyAt(elderGuardian.blockPosition()), MobSpawnType.CONVERSION, (SpawnGroupData)null, (CompoundTag)null);
+            elderGuardian.snapTo(this.getX(), this.getY(), this.getZ(), this.getYRot(), this.getXRot());
+            elderGuardian.finalizeSpawn(serverWorld ,serverWorld.getCurrentDifficultyAt(elderGuardian.blockPosition()), EntitySpawnReason.CONVERSION, null);
             elderGuardian.setNoAi(this.isNoAi());
             
             if (this.hasCustomName())

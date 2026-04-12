@@ -1,6 +1,6 @@
 package carpet.script.utils;
 
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import java.util.function.Supplier;
 
 public class GlocalFlag extends ThreadLocal<Boolean>

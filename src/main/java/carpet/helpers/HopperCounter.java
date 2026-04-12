@@ -1,20 +1,21 @@
 package carpet.helpers;
 
 import carpet.CarpetServer;
-import carpet.fakes.IngredientInterface;
-import carpet.fakes.RecipeManagerInterface;
+import carpet.script.utils.RecipeHelper;
 import carpet.utils.Messenger;
 import it.unimi.dsi.fastutil.objects.Object2LongLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2LongMap;
 import net.minecraft.ChatFormatting;
+import net.minecraft.core.Holder;
 import net.minecraft.core.Registry;
 import net.minecraft.core.RegistryAccess;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.Style;
 import net.minecraft.network.chat.TextColor;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.DyeColor;
@@ -24,7 +25,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.Recipe;
-import net.minecraft.world.item.crafting.RecipeType;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.AbstractBannerBlock;
 import net.minecraft.world.level.block.BeaconBeamBlock;
 import net.minecraft.world.level.block.Block;
@@ -32,12 +33,12 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.material.MapColor;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static java.util.Map.entry;
@@ -100,9 +101,11 @@ public class HopperCounter
     {
         startTick = -1;
         this.color = color;
-        String hexColor = Integer.toHexString(color.getTextColor());
+        String hexColor = Integer.toHexString(color.getTextColor() & 0xFFFFFF); // don't get alpha
         if (hexColor.length() < 6)
+        {
             hexColor = "0".repeat(6 - hexColor.length()) + hexColor;
+        }
         this.coloredName = '#' + hexColor + ' ' + color.getName();
     }
 
@@ -136,6 +139,7 @@ public class HopperCounter
 
     /**
      * Resets all counters, clearing their items.
+     *
      * @param fresh Whether or not to start the clocks going immediately or later.
      */
     public static void resetAll(MinecraftServer server, boolean fresh)
@@ -143,7 +147,10 @@ public class HopperCounter
         for (HopperCounter counter : COUNTERS.values())
         {
             counter.reset(server);
-            if (fresh) counter.startTick = -1;
+            if (fresh)
+            {
+                counter.startTick = -1;
+            }
         }
     }
 
@@ -159,7 +166,10 @@ public class HopperCounter
             List<Component> temp = counter.format(server, realtime, false);
             if (temp.size() > 1)
             {
-                if (!text.isEmpty()) text.add(Messenger.s(""));
+                if (!text.isEmpty())
+                {
+                    text.add(Messenger.s(""));
+                }
                 text.addAll(temp);
             }
         }
@@ -181,7 +191,7 @@ public class HopperCounter
         {
             if (brief)
             {
-                return Collections.singletonList(Messenger.c("b"+coloredName,"w : ","gi -, -/h, - min "));
+                return Collections.singletonList(Messenger.c("b" + coloredName, "w : ", "gi -, -/h, - min "));
             }
             return Collections.singletonList(Messenger.c(coloredName, "w  hasn't started counting yet"));
         }
@@ -190,36 +200,36 @@ public class HopperCounter
         {
             if (brief)
             {
-                return Collections.singletonList(Messenger.c("b"+coloredName,"w : ","wb 0","w , ","wb 0","w /h, ", String.format("wb %.1f ", ticks / (20.0 * 60.0)), "w min"));
+                return Collections.singletonList(Messenger.c("b" + coloredName, "w : ", "wb 0", "w , ", "wb 0", "w /h, ", String.format("wb %.1f ", ticks / (20.0 * 60.0)), "w min"));
             }
             return Collections.singletonList(Messenger.c("w No items for ", coloredName, String.format("w  yet (%.2f min.%s)",
-                    ticks / (20.0 * 60.0), (realTime ? " - real time" : "")),
-                    "nb  [X]", "^g reset", "!/counter " + color.getName() +" reset"));
+                            ticks / (20.0 * 60.0), (realTime ? " - real time" : "")),
+                    "nb  [X]", "^g reset", "!/counter " + color.getName() + " reset"));
         }
         if (brief)
         {
-            return Collections.singletonList(Messenger.c("b"+coloredName,"w : ",
-                    "wb "+total,"w , ",
-                    "wb "+(total * (20 * 60 * 60) / ticks),"w /h, ",
+            return Collections.singletonList(Messenger.c("b" + coloredName, "w : ",
+                    "wb " + total, "w , ",
+                    "wb " + (total * (20 * 60 * 60) / ticks), "w /h, ",
                     String.format("wb %.1f ", ticks / (20.0 * 60.0)), "w min"
             ));
         }
         List<Component> items = new ArrayList<>();
         items.add(Messenger.c("w Items for ", coloredName,
-                "w  (",String.format("wb %.2f", ticks*1.0/(20*60)), "w  min"+(realTime?" - real time":"")+"), ",
-                "w total: ", "wb "+total, "w , (",String.format("wb %.1f",total*1.0*(20*60*60)/ticks),"w /h):",
-                "nb [X]", "^g reset", "!/counter "+color+" reset"
+                "w  (", String.format("wb %.2f", ticks * 1.0 / (20 * 60)), "w  min" + (realTime ? " - real time" : "") + "), ",
+                "w total: ", "wb " + total, "w , (", String.format("wb %.1f", total * 1.0 * (20 * 60 * 60) / ticks), "w /h):",
+                "nb [X]", "^g reset", "!/counter " + color + " reset"
         ));
         items.addAll(counter.object2LongEntrySet().stream().sorted((e, f) -> Long.compare(f.getLongValue(), e.getLongValue())).map(e ->
         {
             Item item = e.getKey();
             MutableComponent itemName = Component.translatable(item.getDescriptionId());
             Style itemStyle = itemName.getStyle();
-            TextColor color = guessColor(item, server.registryAccess());
+            TextColor color = guessColor(item, server.overworld());
             itemName.setStyle((color != null) ? itemStyle.withColor(color) : itemStyle.withItalic(true));
             long count = e.getLongValue();
             return Messenger.c("g - ", itemName,
-                    "g : ","wb "+count,"g , ",
+                    "g : ", "wb " + count, "g , ",
                     String.format("wb %.1f", count * (20.0 * 60.0 * 60.0) / ticks), "w /h"
             );
         }).collect(Collectors.toList()));
@@ -232,13 +242,25 @@ public class HopperCounter
      */
     public static int appropriateColor(int color)
     {
-        if (color == 0) return MapColor.SNOW.col;
+        if (color == 0)
+        {
+            return MapColor.SNOW.col;
+        }
         int r = (color >> 16 & 255);
         int g = (color >> 8 & 255);
         int b = (color & 255);
-        if (r < 70) r = 70;
-        if (g < 70) g = 70;
-        if (b < 70) b = 70;
+        if (r < 70)
+        {
+            r = 70;
+        }
+        if (g < 70)
+        {
+            g = 70;
+        }
+        if (b < 70)
+        {
+            b = 70;
+        }
         return (r << 16) + (g << 8) + b;
     }
 
@@ -247,19 +269,19 @@ public class HopperCounter
      * {@link Block#defaultMapColor()} method as these items have those same colours.
      */
     private static final Map<Item, Block> DEFAULTS = Map.ofEntries(
-            entry(Items.DANDELION, Blocks.YELLOW_WOOL),
-            entry(Items.POPPY, Blocks.RED_WOOL),
-            entry(Items.BLUE_ORCHID, Blocks.LIGHT_BLUE_WOOL),
-            entry(Items.ALLIUM, Blocks.MAGENTA_WOOL),
+            entry(Items.DANDELION, Blocks.WOOL.yellow()),
+            entry(Items.POPPY, Blocks.WOOL.red()),
+            entry(Items.BLUE_ORCHID, Blocks.WOOL.lightBlue()),
+            entry(Items.ALLIUM, Blocks.WOOL.magenta()),
             entry(Items.AZURE_BLUET, Blocks.SNOW_BLOCK),
-            entry(Items.RED_TULIP, Blocks.RED_WOOL),
-            entry(Items.ORANGE_TULIP, Blocks.ORANGE_WOOL),
+            entry(Items.RED_TULIP, Blocks.WOOL.red()),
+            entry(Items.ORANGE_TULIP, Blocks.WOOL.orange()),
             entry(Items.WHITE_TULIP, Blocks.SNOW_BLOCK),
-            entry(Items.PINK_TULIP, Blocks.PINK_WOOL),
+            entry(Items.PINK_TULIP, Blocks.WOOL.pink()),
             entry(Items.OXEYE_DAISY, Blocks.SNOW_BLOCK),
-            entry(Items.CORNFLOWER, Blocks.BLUE_WOOL),
-            entry(Items.WITHER_ROSE, Blocks.BLACK_WOOL),
-            entry(Items.LILY_OF_THE_VALLEY, Blocks.WHITE_WOOL),
+            entry(Items.CORNFLOWER, Blocks.WOOL.blue()),
+            entry(Items.WITHER_ROSE, Blocks.WOOL.black()),
+            entry(Items.LILY_OF_THE_VALLEY, Blocks.WOOL.white()),
             entry(Items.BROWN_MUSHROOM, Blocks.BROWN_MUSHROOM_BLOCK),
             entry(Items.RED_MUSHROOM, Blocks.RED_MUSHROOM_BLOCK),
             entry(Items.STICK, Blocks.OAK_PLANKS),
@@ -267,69 +289,70 @@ public class HopperCounter
             entry(Items.IRON_INGOT, Blocks.IRON_BLOCK),
             entry(Items.DIAMOND, Blocks.DIAMOND_BLOCK),
             entry(Items.NETHERITE_INGOT, Blocks.NETHERITE_BLOCK),
-            entry(Items.SUNFLOWER, Blocks.YELLOW_WOOL),
-            entry(Items.LILAC, Blocks.MAGENTA_WOOL),
-            entry(Items.ROSE_BUSH, Blocks.RED_WOOL),
-            entry(Items.PEONY, Blocks.PINK_WOOL),
-            entry(Items.CARROT, Blocks.ORANGE_WOOL),
-            entry(Items.APPLE,Blocks.RED_WOOL),
-            entry(Items.WHEAT,Blocks.HAY_BLOCK),
-            entry(Items.PORKCHOP, Blocks.PINK_WOOL),
-            entry(Items.RABBIT,Blocks.PINK_WOOL),
-            entry(Items.CHICKEN,Blocks.WHITE_TERRACOTTA),
-            entry(Items.BEEF,Blocks.NETHERRACK),
-            entry(Items.ENCHANTED_GOLDEN_APPLE,Blocks.GOLD_BLOCK),
-            entry(Items.COD,Blocks.WHITE_TERRACOTTA),
-            entry(Items.SALMON,Blocks.ACACIA_PLANKS),
-            entry(Items.ROTTEN_FLESH,Blocks.BROWN_WOOL),
-            entry(Items.PUFFERFISH,Blocks.YELLOW_TERRACOTTA),
-            entry(Items.TROPICAL_FISH,Blocks.ORANGE_WOOL),
-            entry(Items.POTATO,Blocks.WHITE_TERRACOTTA),
-            entry(Items.MUTTON, Blocks.RED_WOOL),
-            entry(Items.BEETROOT,Blocks.NETHERRACK),
-            entry(Items.MELON_SLICE,Blocks.MELON),
-            entry(Items.POISONOUS_POTATO,Blocks.SLIME_BLOCK),
-            entry(Items.SPIDER_EYE,Blocks.NETHERRACK),
-            entry(Items.GUNPOWDER,Blocks.GRAY_WOOL),
-            entry(Items.SCUTE,Blocks.LIME_WOOL),
-            entry(Items.FEATHER,Blocks.WHITE_WOOL),
-            entry(Items.FLINT,Blocks.BLACK_WOOL),
-            entry(Items.LEATHER,Blocks.SPRUCE_PLANKS),
-            entry(Items.GLOWSTONE_DUST,Blocks.GLOWSTONE),
-            entry(Items.PAPER,Blocks.WHITE_WOOL),
-            entry(Items.BRICK,Blocks.BRICKS),
-            entry(Items.INK_SAC,Blocks.BLACK_WOOL),
-            entry(Items.SNOWBALL,Blocks.SNOW_BLOCK),
-            entry(Items.WATER_BUCKET,Blocks.WATER),
-            entry(Items.LAVA_BUCKET,Blocks.LAVA),
-            entry(Items.MILK_BUCKET,Blocks.WHITE_WOOL),
+            entry(Items.SUNFLOWER, Blocks.WOOL.yellow()),
+            entry(Items.LILAC, Blocks.WOOL.magenta()),
+            entry(Items.ROSE_BUSH, Blocks.WOOL.red()),
+            entry(Items.PEONY, Blocks.WOOL.pink()),
+            entry(Items.CARROT, Blocks.WOOL.orange()),
+            entry(Items.APPLE, Blocks.WOOL.red()),
+            entry(Items.WHEAT, Blocks.HAY_BLOCK),
+            entry(Items.PORKCHOP, Blocks.WOOL.pink()),
+            entry(Items.RABBIT, Blocks.WOOL.pink()),
+            entry(Items.CHICKEN, Blocks.DYED_TERRACOTTA.white()),
+            entry(Items.BEEF, Blocks.NETHERRACK),
+            entry(Items.ENCHANTED_GOLDEN_APPLE, Blocks.GOLD_BLOCK),
+            entry(Items.COD, Blocks.DYED_TERRACOTTA.white()),
+            entry(Items.SALMON, Blocks.ACACIA_PLANKS),
+            entry(Items.ROTTEN_FLESH, Blocks.WOOL.brown()),
+            entry(Items.PUFFERFISH, Blocks.DYED_TERRACOTTA.orange()),
+            entry(Items.TROPICAL_FISH, Blocks.WOOL.orange()),
+            entry(Items.POTATO, Blocks.DYED_TERRACOTTA.white()),
+            entry(Items.MUTTON, Blocks.WOOL.red()),
+            entry(Items.BEETROOT, Blocks.NETHERRACK),
+            entry(Items.MELON_SLICE, Blocks.MELON),
+            entry(Items.POISONOUS_POTATO, Blocks.SLIME_BLOCK),
+            entry(Items.SPIDER_EYE, Blocks.NETHERRACK),
+            entry(Items.GUNPOWDER, Blocks.WOOL.gray()),
+            entry(Items.TURTLE_SCUTE, Blocks.WOOL.lime()),
+            entry(Items.ARMADILLO_SCUTE, Blocks.ANCIENT_DEBRIS),
+            entry(Items.FEATHER, Blocks.WOOL.white()),
+            entry(Items.FLINT, Blocks.WOOL.black()),
+            entry(Items.LEATHER, Blocks.SPRUCE_PLANKS),
+            entry(Items.GLOWSTONE_DUST, Blocks.GLOWSTONE),
+            entry(Items.PAPER, Blocks.WOOL.white()),
+            entry(Items.BRICK, Blocks.BRICKS),
+            entry(Items.INK_SAC, Blocks.WOOL.black()),
+            entry(Items.SNOWBALL, Blocks.SNOW_BLOCK),
+            entry(Items.WATER_BUCKET, Blocks.WATER),
+            entry(Items.LAVA_BUCKET, Blocks.LAVA),
+            entry(Items.MILK_BUCKET, Blocks.WOOL.white()),
             entry(Items.CLAY_BALL, Blocks.CLAY),
-            entry(Items.COCOA_BEANS,Blocks.COCOA),
-            entry(Items.BONE,Blocks.BONE_BLOCK),
-            entry(Items.COD_BUCKET,Blocks.BROWN_TERRACOTTA),
-            entry(Items.PUFFERFISH_BUCKET,Blocks.YELLOW_TERRACOTTA),
-            entry(Items.SALMON_BUCKET,Blocks.PINK_TERRACOTTA),
-            entry(Items.TROPICAL_FISH_BUCKET,Blocks.ORANGE_TERRACOTTA),
-            entry(Items.SUGAR,Blocks.WHITE_WOOL),
-            entry(Items.BLAZE_POWDER,Blocks.GOLD_BLOCK),
-            entry(Items.ENDER_PEARL,Blocks.WARPED_PLANKS),
-            entry(Items.NETHER_STAR,Blocks.DIAMOND_BLOCK),
-            entry(Items.PRISMARINE_CRYSTALS,Blocks.SEA_LANTERN),
-            entry(Items.PRISMARINE_SHARD,Blocks.PRISMARINE),
-            entry(Items.RABBIT_HIDE,Blocks.OAK_PLANKS),
-            entry(Items.CHORUS_FRUIT,Blocks.PURPUR_BLOCK),
-            entry(Items.SHULKER_SHELL,Blocks.SHULKER_BOX),
-            entry(Items.NAUTILUS_SHELL,Blocks.BONE_BLOCK),
-            entry(Items.HEART_OF_THE_SEA,Blocks.CONDUIT),
-            entry(Items.HONEYCOMB,Blocks.HONEYCOMB_BLOCK),
-            entry(Items.NAME_TAG,Blocks.BONE_BLOCK),
-            entry(Items.TOTEM_OF_UNDYING,Blocks.YELLOW_TERRACOTTA),
-            entry(Items.TRIDENT,Blocks.PRISMARINE),
-            entry(Items.GHAST_TEAR,Blocks.WHITE_WOOL),
-            entry(Items.PHANTOM_MEMBRANE,Blocks.BONE_BLOCK),
-            entry(Items.EGG,Blocks.BONE_BLOCK),
+            entry(Items.COCOA_BEANS, Blocks.COCOA),
+            entry(Items.BONE, Blocks.BONE_BLOCK),
+            entry(Items.COD_BUCKET, Blocks.DYED_TERRACOTTA.brown()),
+            entry(Items.PUFFERFISH_BUCKET, Blocks.DYED_TERRACOTTA.yellow()),
+            entry(Items.SALMON_BUCKET, Blocks.DYED_TERRACOTTA.pink()),
+            entry(Items.TROPICAL_FISH_BUCKET, Blocks.DYED_TERRACOTTA.orange()),
+            entry(Items.SUGAR, Blocks.WOOL.white()),
+            entry(Items.BLAZE_POWDER, Blocks.GOLD_BLOCK),
+            entry(Items.ENDER_PEARL, Blocks.WARPED_PLANKS),
+            entry(Items.NETHER_STAR, Blocks.DIAMOND_BLOCK),
+            entry(Items.PRISMARINE_CRYSTALS, Blocks.SEA_LANTERN),
+            entry(Items.PRISMARINE_SHARD, Blocks.PRISMARINE),
+            entry(Items.RABBIT_HIDE, Blocks.OAK_PLANKS),
+            entry(Items.CHORUS_FRUIT, Blocks.PURPUR_BLOCK),
+            entry(Items.SHULKER_SHELL, Blocks.SHULKER_BOX),
+            entry(Items.NAUTILUS_SHELL, Blocks.BONE_BLOCK),
+            entry(Items.HEART_OF_THE_SEA, Blocks.CONDUIT),
+            entry(Items.HONEYCOMB, Blocks.HONEYCOMB_BLOCK),
+            entry(Items.NAME_TAG, Blocks.BONE_BLOCK),
+            entry(Items.TOTEM_OF_UNDYING, Blocks.DYED_TERRACOTTA.yellow()),
+            entry(Items.TRIDENT, Blocks.PRISMARINE),
+            entry(Items.GHAST_TEAR, Blocks.WOOL.white()),
+            entry(Items.PHANTOM_MEMBRANE, Blocks.BONE_BLOCK),
+            entry(Items.EGG, Blocks.BONE_BLOCK),
             //entry(Items.,Blocks.),
-            entry(Items.COPPER_INGOT,Blocks.COPPER_BLOCK),
+            entry(Items.COPPER_INGOT, Blocks.COPPER_BLOCK.unaffected()),
             entry(Items.AMETHYST_SHARD, Blocks.AMETHYST_BLOCK));
 
     /**
@@ -337,25 +360,37 @@ public class HopperCounter
      */
     public static TextColor fromItem(Item item, RegistryAccess registryAccess)
     {
-        if (DEFAULTS.containsKey(item)) return TextColor.fromRgb(appropriateColor(DEFAULTS.get(item).defaultMapColor().col));
-        if (item instanceof DyeItem dye) return TextColor.fromRgb(appropriateColor(dye.getDyeColor().getMapColor().col));
+        if (DEFAULTS.containsKey(item))
+        {
+            return TextColor.fromRgb(appropriateColor(DEFAULTS.get(item).defaultMapColor().col));
+        }
+        if (item instanceof DyeItem dye)
+        {
+            return TextColor.fromRgb(appropriateColor(Optional.ofNullable(dye.getDefaultInstance().get(DataComponents.DYE)).orElse(DyeColor.WHITE).getMapColor().col));
+        }
         Block block = null;
-        final Registry<Item> itemRegistry = registryAccess.registryOrThrow(Registries.ITEM);
-        final Registry<Block> blockRegistry = registryAccess.registryOrThrow(Registries.BLOCK);
-        ResourceLocation id = itemRegistry.getKey(item);
+        final Registry<Item> itemRegistry = registryAccess.lookupOrThrow(Registries.ITEM);
+        final Registry<Block> blockRegistry = registryAccess.lookupOrThrow(Registries.BLOCK);
+        Identifier id = itemRegistry.getKey(item);
         if (item instanceof BlockItem blockItem)
         {
             block = blockItem.getBlock();
         }
         else if (blockRegistry.getOptional(id).isPresent())
         {
-            block = blockRegistry.get(id);
+            block = blockRegistry.getValue(id);
         }
         if (block != null)
         {
-            if (block instanceof AbstractBannerBlock) return TextColor.fromRgb(appropriateColor(((AbstractBannerBlock) block).getColor().getMapColor().col));
-            if (block instanceof BeaconBeamBlock) return TextColor.fromRgb(appropriateColor( ((BeaconBeamBlock) block).getColor().getMapColor().col));
-            return TextColor.fromRgb(appropriateColor( block.defaultMapColor().col));
+            if (block instanceof AbstractBannerBlock)
+            {
+                return TextColor.fromRgb(appropriateColor(((AbstractBannerBlock) block).getColor().getMapColor().col));
+            }
+            if (block instanceof BeaconBeamBlock)
+            {
+                return TextColor.fromRgb(appropriateColor(((BeaconBeamBlock) block).getColor().getMapColor().col));
+            }
+            return TextColor.fromRgb(appropriateColor(block.defaultMapColor().col));
         }
         return null;
     }
@@ -364,38 +399,45 @@ public class HopperCounter
      * Guesses the item's colour from the item itself. It first calls {@link HopperCounter#fromItem} to see if it has a
      * valid colour there, if not just makes a guess, and if that fails just returns null
      */
-    public static TextColor guessColor(Item item, RegistryAccess registryAccess)
+    public static TextColor guessColor(Item item, Level level)
     {
+        RegistryAccess registryAccess = level.registryAccess();
         TextColor direct = fromItem(item, registryAccess);
-        if (direct != null) return direct;
-        if (CarpetServer.minecraft_server == null) return WHITE;
-
-        ResourceLocation id = registryAccess.registryOrThrow(Registries.ITEM).getKey(item);
-        for (RecipeType<?> type: registryAccess.registryOrThrow(Registries.RECIPE_TYPE))
+        if (direct != null)
         {
-            for (Recipe<?> r: ((RecipeManagerInterface) CarpetServer.minecraft_server.getRecipeManager()).getAllMatching(type, id, registryAccess))
+            return direct;
+        }
+        if (CarpetServer.minecraft_server == null)
+        {
+            return WHITE;
+        }
+
+        Identifier id = registryAccess.lookupOrThrow(Registries.ITEM).getKey(item);
+        if (id == null)
+        {
+            return null;
+        }
+
+        for (Recipe<?> r : RecipeHelper.getRecipesForOutput(CarpetServer.minecraft_server.getRecipeManager(), id, level))
+        {
+            for (Ingredient ingredient : r.placementInfo().ingredients())
             {
-                for (Ingredient ingredient: r.getIngredients())
+                Optional<Holder<Item>> match = ingredient.items().filter(stack -> fromItem(stack.value(), registryAccess) != null).findFirst();
+                if (match.isPresent())
                 {
-                    for (Collection<ItemStack> stacks : ((IngredientInterface) (Object) ingredient).getRecipeStacks())
-                    {
-                        for (ItemStack iStak : stacks)
-                        {
-                            TextColor cand = fromItem(iStak.getItem(), registryAccess);
-                            if (cand != null)
-                                return cand;
-                        }
-                    }
+                    return fromItem(match.get().value(), registryAccess);
                 }
             }
         }
+
         return null;
     }
 
     /**
      * Returns the hopper counter for the given color
      */
-    public static HopperCounter getCounter(DyeColor color) {
+    public static HopperCounter getCounter(DyeColor color)
+    {
         return COUNTERS.get(color);
     }
 
@@ -420,6 +462,6 @@ public class HopperCounter
      */
     public long getTotalItems()
     {
-        return counter.isEmpty()?0:counter.values().longStream().sum();
+        return counter.isEmpty() ? 0 : counter.values().longStream().sum();
     }
 }

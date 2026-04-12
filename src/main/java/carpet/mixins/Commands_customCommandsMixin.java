@@ -15,8 +15,6 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
-
 
 @Mixin(Commands.class)
 public abstract class Commands_customCommandsMixin
@@ -32,14 +30,14 @@ public abstract class Commands_customCommandsMixin
     }
 
     @Inject(method = "performCommand", at = @At("HEAD"))
-    private void onExecuteBegin(ParseResults<CommandSourceStack> parseResults, String string, CallbackInfoReturnable<Integer> cir)
+    private void onExecuteBegin(ParseResults<CommandSourceStack> parseResults, String string, CallbackInfo ci)
     {
         if (!CarpetSettings.fillUpdates)
             CarpetSettings.impendingFillSkipUpdates.set(true);
     }
 
     @Inject(method = "performCommand", at = @At("RETURN"))
-    private void onExecuteEnd(ParseResults<CommandSourceStack> parseResults, String string, CallbackInfoReturnable<Integer> cir)
+    private void onExecuteEnd(ParseResults<CommandSourceStack> parseResults, String string, CallbackInfo ci)
     {
         CarpetSettings.impendingFillSkipUpdates.set(false);
     }

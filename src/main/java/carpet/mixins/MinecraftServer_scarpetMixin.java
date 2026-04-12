@@ -2,11 +2,12 @@ package carpet.mixins;
 
 import carpet.fakes.MinecraftServerInterface;
 import carpet.script.CarpetScriptServer;
-import net.minecraft.Util;
+import net.minecraft.util.Util;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.ServerFunctionManager;
+import net.minecraft.server.ServerTickRateManager;
 import net.minecraft.server.TickTask;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.players.PlayerList;
@@ -33,18 +34,11 @@ public abstract class MinecraftServer_scarpetMixin extends ReentrantBlockableEve
 {
     private CarpetScriptServer scriptServer;
 
-    public MinecraftServer_scarpetMixin(String string_1)
-    {
-        super(string_1);
+    public MinecraftServer_scarpetMixin(String name, boolean propagatesCrashes) {
+        super(name, propagatesCrashes);
     }
 
     @Shadow protected abstract void tickServer(BooleanSupplier booleanSupplier_1);
-
-    @Shadow private long nextTickTime;
-
-    @Shadow private long lastOverloadWarning;
-
-    @Shadow public abstract boolean pollTask();
 
     @Shadow @Final protected LevelStorageSource.LevelStorageAccess storageSource;
 
@@ -62,11 +56,18 @@ public abstract class MinecraftServer_scarpetMixin extends ReentrantBlockableEve
 
     @Shadow @Final private StructureTemplateManager structureTemplateManager;
 
+    @Shadow public abstract ServerTickRateManager tickRateManager();
+
+    @Shadow private long nextTickTimeNanos;
+
+    @Shadow private long lastOverloadWarningNanos;
+
     @Override
     public void forceTick(BooleanSupplier isAhead)
     {
-        nextTickTime = lastOverloadWarning = Util.getMillis();
+        nextTickTimeNanos = lastOverloadWarningNanos = Util.getNanos();
         tickServer(isAhead);
+        pollTask();
         while(pollTask()) {Thread.yield();}
     }
 
@@ -88,7 +89,7 @@ public abstract class MinecraftServer_scarpetMixin extends ReentrantBlockableEve
     ))
     public void tickTasks(BooleanSupplier booleanSupplier_1, CallbackInfo ci)
     {
-        if (!getTickRateManager().runsNormally())
+        if (!tickRateManager().runsNormally())
         {
             return;
         }
@@ -100,7 +101,7 @@ public abstract class MinecraftServer_scarpetMixin extends ReentrantBlockableEve
     @Override
     public void reloadAfterReload(RegistryAccess newRegs)
     {
-        resources.managers().updateRegistryTags(newRegs);
+        resources.managers().updateComponentsAndStaticRegistryTags();
         getPlayerList().saveAll();
         getPlayerList().reloadResources();
         functionManager.replaceLibrary(this.resources.managers().getFunctionLibrary());

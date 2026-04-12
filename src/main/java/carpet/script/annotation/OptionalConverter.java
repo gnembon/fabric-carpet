@@ -9,7 +9,7 @@ import java.util.Optional;
 import carpet.script.Context;
 import carpet.script.value.Value;
 
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 
 /**
  * <p>{@link ValueConverter} that accepts a parameter to not be present on function call.</p>

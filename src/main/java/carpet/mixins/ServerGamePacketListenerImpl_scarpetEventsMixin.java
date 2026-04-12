@@ -1,6 +1,8 @@
 package carpet.mixins;
 
 import net.minecraft.network.protocol.game.ServerboundChatCommandPacket;
+import net.minecraft.world.entity.player.Input;
+import net.minecraft.world.item.crafting.RecipeManager;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
@@ -45,24 +47,46 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.BlockHitResult;
 
-
 @Mixin(ServerGamePacketListenerImpl.class)
 public class ServerGamePacketListenerImpl_scarpetEventsMixin
 {
     @Shadow public ServerPlayer player;
 
-    @Inject(method = "handlePlayerInput", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/level/ServerPlayer;setPlayerInput(FFZZ)V"))
-    private void checkMoves(ServerboundPlayerInputPacket p, CallbackInfo ci)
+
+
+    @Inject(method = "handlePlayerInput", at = @At(
+            value = "INVOKE",
+            target = "Lnet/minecraft/server/level/ServerPlayer;setLastClientInput(Lnet/minecraft/world/entity/player/Input;)V"
+    ))
+    private void checkMovement(ServerboundPlayerInputPacket packet, CallbackInfo ci)
     {
-        if (PLAYER_RIDES.isNeeded() && (p.getXxa() != 0.0F || p.getZza() != 0.0F || p.isJumping() || p.isShiftKeyDown()))
+        Input input = packet.input();
+        
+        // sneak events
+        boolean wasDown = player.isShiftKeyDown();
+        boolean isDown = input.shift();
+        if (wasDown != isDown)
         {
-            PLAYER_RIDES.onMountControls(player, p.getXxa(), p.getZza(), p.isJumping(), p.isShiftKeyDown());
+            if (isDown)
+            {
+                PLAYER_STARTS_SNEAKING.onPlayerEvent(player);
+            }
+            else
+            {
+                PLAYER_STOPS_SNEAKING.onPlayerEvent(player);
+            }
+        }
+
+        // ride event, which should check for mount?
+        if (PLAYER_RIDES.isNeeded() && (input.jump() || input.shift() || input.forward() || input.backward() || input.left() || input.right()))
+        {
+            PLAYER_RIDES.onMountControls(player, input.left() == input.right() ? 0 : (input.left() ? -1 : 1 ), input.forward() == input.backward() ? 0 : (input.forward() ? 1 : -1), input.jump(), input.shift());
         }
     }
 
     @Inject(method = "handlePlayerAction", cancellable = true, at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/server/level/ServerPlayer;drop(Z)Z", // dropSelectedItem
+            target = "Lnet/minecraft/server/level/ServerPlayer;drop(Z)V", // dropSelectedItem
             ordinal = 0,
             shift = At.Shift.BEFORE
     ))
@@ -76,7 +100,7 @@ public class ServerGamePacketListenerImpl_scarpetEventsMixin
     @Inject(method = "handlePlayerAction", cancellable = true, at = @At(
             value = "INVOKE",
             target = "Lnet/minecraft/server/level/ServerPlayer;getItemInHand(Lnet/minecraft/world/InteractionHand;)Lnet/minecraft/world/item/ItemStack;",
-            ordinal = 0,
+            ordinal = 1, // not very robust, see spear
             shift = At.Shift.BEFORE
     ))
     private void onHandSwap(ServerboundPlayerActionPacket playerActionC2SPacket_1, CallbackInfo ci)
@@ -86,7 +110,7 @@ public class ServerGamePacketListenerImpl_scarpetEventsMixin
 
     @Inject(method = "handlePlayerAction", cancellable = true, at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/server/level/ServerPlayer;drop(Z)Z", // dropSelectedItem
+            target = "Lnet/minecraft/server/level/ServerPlayer;drop(Z)V", // dropSelectedItem
             ordinal = 1,
             shift = At.Shift.BEFORE
     ))
@@ -172,26 +196,6 @@ public class ServerGamePacketListenerImpl_scarpetEventsMixin
 
     @Inject(method = "handlePlayerCommand", at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/server/level/ServerPlayer;setShiftKeyDown(Z)V",
-            ordinal = 0
-    ))
-    private void onStartSneaking(ServerboundPlayerCommandPacket clientCommandC2SPacket_1, CallbackInfo ci)
-    {
-        PLAYER_STARTS_SNEAKING.onPlayerEvent(player);
-    }
-
-    @Inject(method = "handlePlayerCommand", at = @At(
-            value = "INVOKE",
-            target = "Lnet/minecraft/server/level/ServerPlayer;setShiftKeyDown(Z)V",
-            ordinal = 1
-    ))
-    private void onStopSneaking(ServerboundPlayerCommandPacket clientCommandC2SPacket_1, CallbackInfo ci)
-    {
-        PLAYER_STOPS_SNEAKING.onPlayerEvent(player);
-    }
-
-    @Inject(method = "handlePlayerCommand", at = @At(
-            value = "INVOKE",
             target = "Lnet/minecraft/server/level/ServerPlayer;setSprinting(Z)V",
             ordinal = 0
     ))
@@ -246,16 +250,20 @@ public class ServerGamePacketListenerImpl_scarpetEventsMixin
     {
         if (PLAYER_CHOOSES_RECIPE.isNeeded())
         {
-            if(PLAYER_CHOOSES_RECIPE.onRecipeSelected(player, packet.getRecipe(), packet.isShiftDown())) ci.cancel();
+            RecipeManager.ServerDisplayInfo displayInfo = player.level().getServer().getRecipeManager().getRecipeFromDisplay(packet.recipe());
+            if (displayInfo == null) {
+                return;
+            }
+            if(PLAYER_CHOOSES_RECIPE.onRecipeSelected(player, displayInfo.parent().id().identifier(), packet.useMaxItems())) ci.cancel();
         }
     }
 
     @Inject(method = "handleSetCarriedItem", at = @At("HEAD"))
     private void onUpdatedSelectedSLot(ServerboundSetCarriedItemPacket packet, CallbackInfo ci)
     {
-        if (PLAYER_SWITCHES_SLOT.isNeeded() && player.getServer() != null && player.getServer().isSameThread())
+        if (PLAYER_SWITCHES_SLOT.isNeeded() && player.level().getServer() != null && player.level().getServer().isSameThread())
         {
-            PLAYER_SWITCHES_SLOT.onSlotSwitch(player, player.getInventory().selected, packet.getSlot());
+            PLAYER_SWITCHES_SLOT.onSlotSwitch(player, player.getInventory().getSelectedSlot(), packet.getSlot());
         }
     }
 
@@ -272,7 +280,7 @@ public class ServerGamePacketListenerImpl_scarpetEventsMixin
         }
     }
 
-    @Inject(method = "handleChatCommand(Lnet/minecraft/network/protocol/game/ServerboundChatCommandPacket;)V",
+    @Inject(method = "lambda$handleChatCommand$0", // lambda of handleChatCommand(ServerboundChatCommandPacket)
             at = @At(value = "HEAD")
     )
     private void onChatCommandMessage(ServerboundChatCommandPacket serverboundChatCommandPacket, CallbackInfo ci) {

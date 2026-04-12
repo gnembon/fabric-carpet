@@ -14,8 +14,6 @@ import carpet.script.argument.FunctionArgument;
 import carpet.script.argument.Vector3Argument;
 import carpet.script.exception.ExitStatement;
 import carpet.script.exception.InternalExpressionException;
-import carpet.script.exception.ThrowStatement;
-import carpet.script.exception.Throwables;
 import carpet.script.external.Carpet;
 import carpet.script.utils.SnoopyCommandSource;
 import carpet.script.utils.SystemInfo;
@@ -55,7 +53,7 @@ import net.minecraft.network.protocol.game.ClientboundSetSubtitleTextPacket;
 import net.minecraft.network.protocol.game.ClientboundSetTitleTextPacket;
 import net.minecraft.network.protocol.game.ClientboundSetTitlesAnimationPacket;
 import net.minecraft.network.protocol.game.ClientboundSoundPacket;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -66,6 +64,7 @@ import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.stats.Stat;
 import net.minecraft.stats.StatType;
+import net.minecraft.world.clock.WorldClocks;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.EquipmentSlot;
@@ -83,7 +82,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.net.URI;
@@ -99,6 +98,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.OptionalLong;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
@@ -133,15 +133,12 @@ public class Auxiliary
             CarpetContext cc = (CarpetContext) c;
             if (lv.isEmpty())
             {
-                return ListValue.wrap(cc.registry(Registries.SOUND_EVENT).holders().map(soundEventReference -> ValueConversions.of(soundEventReference.key().location())));
+                return ListValue.wrap(cc.registry(Registries.SOUND_EVENT).listElements().map(soundEventReference -> ValueConversions.of(soundEventReference.key().identifier())));
             }
             String rawString = lv.get(0).getString();
-            ResourceLocation soundName = InputValidator.identifierOf(rawString);
+            Identifier soundName = InputValidator.identifierOf(rawString);
             Vector3Argument locator = Vector3Argument.findIn(lv, 1);
-            if (cc.registry(Registries.SOUND_EVENT).get(soundName) == null)
-            {
-                throw new ThrowStatement(rawString, Throwables.UNKNOWN_SOUND);
-            }
+
             Holder<SoundEvent> soundHolder = Holder.direct(SoundEvent.createVariableRangeEvent(soundName));
             float volume = 1.0F;
             float pitch = 1.0F;
@@ -181,7 +178,7 @@ public class Auxiliary
             CarpetContext cc = (CarpetContext) c;
             if (lv.isEmpty())
             {
-                return ListValue.wrap(cc.registry(Registries.PARTICLE_TYPE).holders().map(particleTypeReference -> ValueConversions.of(particleTypeReference.key().location())));
+                return ListValue.wrap(cc.registry(Registries.PARTICLE_TYPE).listElements().map(particleTypeReference -> ValueConversions.of(particleTypeReference.key().identifier())));
             }
             MinecraftServer ms = cc.server();
             ServerLevel world = cc.level();
@@ -213,14 +210,14 @@ public class Auxiliary
             {
                 for (ServerPlayer p : (world.players()))
                 {
-                    world.sendParticles(p, particle, true, vec.x, vec.y, vec.z, count,
+                    world.sendParticles(p, particle, true, true, vec.x, vec.y, vec.z, count,
                             spread, spread, spread, speed);
                 }
             }
             else
             {
                 world.sendParticles(player,
-                        particle, true, vec.x, vec.y, vec.z, count,
+                        particle, true, true, vec.x, vec.y, vec.z, count,
                         spread, spread, spread, speed);
             }
 
@@ -351,7 +348,7 @@ public class Auxiliary
 
             ShapeDispatcher.sendShape(
                     (playerTargets.isEmpty()) ? cc.level().players() : playerTargets,
-                    shapes
+                    shapes, cc.registryAccess()
             );
             return Value.TRUE;
         });
@@ -406,7 +403,7 @@ public class Auxiliary
                     yoffset = -armorstand.getBbHeight() + 0.3;
                 }
             }
-            armorstand.moveTo(
+            armorstand.snapTo(
                     pointLocator.vec.x,
                     //pointLocator.vec.y - ((!interactable && targetBlock == null)?0.41f:((targetBlock==null)?(armorstand.getHeight()+0.41):(armorstand.getHeight()-0.3))),
                     pointLocator.vec.y + yoffset,
@@ -438,7 +435,7 @@ public class Auxiliary
             CarpetContext cc = (CarpetContext) c;
             int total = 0;
             String markerName = MARKER_STRING + "_" + ((cc.host.getName() == null) ? "" : cc.host.getName());
-            for (Entity e : cc.level().getEntities(EntityType.ARMOR_STAND, as -> as.getTags().contains(markerName)))
+            for (Entity e : cc.level().getEntities(EntityType.ARMOR_STAND, as -> as.entityTags().contains(markerName)))
             {
                 total++;
                 e.discard();
@@ -478,7 +475,7 @@ public class Auxiliary
             return BooleanValue.of(NbtUtils.compareNbt(match, source, numParam == 2 || lv.get(2).getBoolean()));
         });
 
-        expression.addFunction("encode_nbt", lv -> {
+        expression.addContextFunction("encode_nbt", -1, (c, t, lv) -> {
             int argSize = lv.size();
             if (argSize == 0 || argSize > 2)
             {
@@ -489,7 +486,7 @@ public class Auxiliary
             Tag tag;
             try
             {
-                tag = v.toTag(force);
+                tag = v.toTag(force, ((CarpetContext)c).registryAccess());
             }
             catch (NBTSerializableValue.IncompatibleTypeException exception)
             {
@@ -689,13 +686,17 @@ public class Auxiliary
             try
             {
                 Component[] error = {null};
+                OptionalLong[] returnValue = {OptionalLong.empty()};
                 List<Component> output = new ArrayList<>();
-                Value retval = new NumericValue(s.getServer().getCommands().performPrefixedCommand(
-                        new SnoopyCommandSource(s, error, output),
-                        lv.get(0).getString())
-                );
+                s.getServer().getCommands().performPrefixedCommand(
+                        new SnoopyCommandSource(s, error, output, returnValue),
+                        lv.get(0).getString());
+                if (returnValue[0].isEmpty())
+                {
+                    return Value.NULL;
+                }
                 return ListValue.of(
-                        retval,
+                        NumericValue.of(returnValue[0].getAsLong()),
                         ListValue.wrap(output.stream().map(FormattedTextValue::new)),
                         FormattedTextValue.of(error[0])
                 );
@@ -729,7 +730,7 @@ public class Auxiliary
 
         expression.addContextFunction("day_time", -1, (c, t, lv) ->
         {
-            Value time = new NumericValue(((CarpetContext) c).level().getDayTime());
+            Value time = new NumericValue(((CarpetContext) c).level().getOverworldClockTime());
             if (!lv.isEmpty())
             {
                 long newTime = NumericValue.asNumber(lv.get(0)).getLong();
@@ -737,7 +738,7 @@ public class Auxiliary
                 {
                     newTime = 0;
                 }
-                ((CarpetContext) c).level().setDayTime(newTime);
+                ((CarpetContext) c).level().clockManager().setTotalTicks(((CarpetContext) c).registryAccess().getOrThrow(WorldClocks.OVERWORLD), newTime);
             }
             return time;
         });
@@ -810,6 +811,8 @@ public class Auxiliary
 
         expression.addContextFunction("relight", -1, (c, t, lv) ->
         {
+            return Value.NULL;
+            /*
             CarpetContext cc = (CarpetContext) c;
             BlockArgument locator = BlockArgument.findIn(cc, lv, 0);
             BlockPos pos = locator.block.getPos();
@@ -817,6 +820,8 @@ public class Auxiliary
             Vanilla.ChunkMap_relightChunk(world.getChunkSource().chunkMap, new ChunkPos(pos));
             WorldTools.forceChunkUpdate(pos, world);
             return Value.TRUE;
+
+             */
         });
 
         // Should this be deprecated for system_info('source_dimension')?
@@ -1060,11 +1065,11 @@ public class Auxiliary
             {
                 return Value.NULL;
             }
-            ResourceLocation category;
-            ResourceLocation statName;
+            Identifier category;
+            Identifier statName;
             category = InputValidator.identifierOf(lv.get(1).getString());
             statName = InputValidator.identifierOf(lv.get(2).getString());
-            StatType<?> type = cc.registry(Registries.STAT_TYPE).get(category);
+            StatType<?> type = cc.registry(Registries.STAT_TYPE).getValue(category);
             if (type == null)
             {
                 return Value.NULL;
@@ -1191,7 +1196,8 @@ public class Auxiliary
                         Path zipRoot = zipfs.getPath("/");
                         zipValueToJson(zipRoot.resolve("pack.mcmeta"), MapValue.wrap(
                                 Map.of(StringValue.of("pack"), MapValue.wrap(Map.of(
-                                        StringValue.of("pack_format"), new NumericValue(SharedConstants.getCurrentVersion().getPackVersion(PackType.SERVER_DATA)),
+                                        StringValue.of("min_format"), new NumericValue(SharedConstants.getCurrentVersion().packVersion(PackType.SERVER_DATA).major()),
+                                        StringValue.of("max_format"), new NumericValue(SharedConstants.getCurrentVersion().packVersion(PackType.SERVER_DATA).major()),
                                         StringValue.of("description"), StringValue.of(name),
                                         StringValue.of("source"), StringValue.of("scarpet")
                                 )))
@@ -1205,7 +1211,7 @@ public class Auxiliary
                         throw new IOException();
                     }
                     List<Pack> list = Lists.newArrayList(packManager.getSelectedPacks());
-                    resourcePackProfile.getDefaultPosition().insert(list, resourcePackProfile, p -> p, false);
+                    resourcePackProfile.getDefaultPosition().insert(list, resourcePackProfile, Pack::selectionConfig, false);
 
 
                     server.reloadResources(list.stream().map(Pack::getId).collect(Collectors.toList())).
@@ -1382,9 +1388,9 @@ public class Auxiliary
     }
 
     @Nullable
-    private static <T> Stat<T> getStat(StatType<T> type, ResourceLocation id)
+    private static <T> Stat<T> getStat(StatType<T> type, Identifier id)
     {
-        T key = type.getRegistry().get(id);
+        T key = type.getRegistry().getValue(id);
         if (key == null || !type.contains(key))
         {
             return null;

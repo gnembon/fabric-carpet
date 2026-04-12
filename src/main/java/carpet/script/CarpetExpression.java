@@ -12,6 +12,7 @@ import carpet.script.api.WorldAccess;
 import carpet.script.exception.CarpetExpressionException;
 import carpet.script.exception.ExpressionException;
 import carpet.script.external.Carpet;
+import carpet.script.external.Vanilla;
 import carpet.script.value.BlockValue;
 import carpet.script.value.EntityValue;
 import carpet.script.value.NumericValue;
@@ -19,6 +20,10 @@ import carpet.script.value.Value;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.Entity;
+import org.apache.commons.lang3.tuple.Pair;
+
+import org.jspecify.annotations.Nullable;
+import java.util.List;
 
 public class CarpetExpression
 {
@@ -42,7 +47,7 @@ public class CarpetExpression
         return origin;
     }
 
-    public CarpetExpression(Module module, String expression, CommandSourceStack source, BlockPos origin)
+    public CarpetExpression(@Nullable Module module, String expression, CommandSourceStack source, BlockPos origin)
     {
         this.origin = origin;
         this.source = source;
@@ -86,7 +91,12 @@ public class CarpetExpression
                 Value playerValue = new EntityValue(e).bindTo("p");
                 context.with("p", (cc, tt) -> playerValue);
             }
-            return scriptServer.events.handleEvents.getWhileDisabled(() -> this.expr.eval(context).getBoolean());
+            return scriptServer.events.handleEvents.getWhileDisabled(() -> this.expr.executeAndEvaluate(
+                    context,
+                    Vanilla.ScriptServer_scriptOptimizations(scriptServer.server),
+                    host.loadOverrides,
+                    Vanilla.ScriptServer_scriptDebugging(scriptServer.server) ? CarpetScriptServer.LOG::info : null
+            ).getLeft().getBoolean());
         }
         catch (ExpressionException e)
         {
@@ -102,7 +112,7 @@ public class CarpetExpression
         }
     }
 
-    public Value scriptRunCommand(ScriptHost host, BlockPos pos)
+    public Pair<Value, Expression.ExpressionNode> scriptRunCommand(ScriptHost host, BlockPos pos)
     {
         CarpetScriptServer scriptServer = (CarpetScriptServer) host.scriptServer();
         if (scriptServer.stopAll)
@@ -126,7 +136,48 @@ public class CarpetExpression
                 Value playerValue = new EntityValue(e).bindTo("p");
                 context.with("p", (cc, tt) -> playerValue);
             }
-            return scriptServer.events.handleEvents.getWhileDisabled(() -> this.expr.eval(context));
+            return scriptServer.events.handleEvents.getWhileDisabled(() -> this.expr.executeAndEvaluate(
+                    context,
+                    Vanilla.ScriptServer_scriptOptimizations(scriptServer.server),
+                    host.loadOverrides,
+                    Vanilla.ScriptServer_scriptDebugging(scriptServer.server) ? CarpetScriptServer.LOG::info : null
+            ));
+        }
+        catch (ExpressionException e)
+        {
+            throw new CarpetExpressionException(e.getMessage(), e.stack);
+        }
+        catch (ArithmeticException ae)
+        {
+            throw new CarpetExpressionException("Math doesn't compute... " + ae.getMessage(), null);
+        }
+        catch (StackOverflowError soe)
+        {
+            throw new CarpetExpressionException("Your thoughts are too deep", null);
+        }
+    }
+
+    public List<Token> explain(ScriptHost host, @Nullable String code, @Nullable String method, @Nullable String style, BlockPos pos)
+    {
+        CarpetScriptServer scriptServer = (CarpetScriptServer) host.scriptServer();
+        try
+        {
+            Context context = new CarpetContext(host, source, origin).
+                    with("x", (c, t) -> new NumericValue(pos.getX() - origin.getX()).bindTo("x")).
+                    with("y", (c, t) -> new NumericValue(pos.getY() - origin.getY()).bindTo("y")).
+                    with("z", (c, t) -> new NumericValue(pos.getZ() - origin.getZ()).bindTo("z"));
+            Entity e = source.getEntity();
+            if (e == null)
+            {
+                Value nullPlayer = Value.NULL.reboundedTo("p");
+                context.with("p", (cc, tt) -> nullPlayer);
+            }
+            else
+            {
+                Value playerValue = new EntityValue(e).bindTo("p");
+                context.with("p", (cc, tt) -> playerValue);
+            }
+            return scriptServer.events.handleEvents.getWhileDisabled(() -> this.expr.explain(context, code, method, style));
         }
         catch (ExpressionException e)
         {

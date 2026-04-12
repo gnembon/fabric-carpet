@@ -2,7 +2,7 @@ package carpet.script.value;
 
 import carpet.script.Context;
 import carpet.script.Expression;
-import carpet.script.Tokenizer;
+import carpet.script.Token;
 import carpet.script.exception.ExitStatement;
 import carpet.script.exception.ExpressionException;
 import carpet.script.exception.InternalExpressionException;
@@ -16,6 +16,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicReference;
 
+import net.minecraft.core.RegistryAccess;
 import net.minecraft.nbt.Tag;
 
 public class ThreadValue extends LazyListValue
@@ -27,7 +28,7 @@ public class ThreadValue extends LazyListValue
     private final AtomicReference<Value> coLock = new AtomicReference<>(Value.EOL);
     public final boolean isCoroutine;
 
-    public ThreadValue(Value pool, FunctionValue function, Expression expr, Tokenizer.Token token, Context ctx, List<Value> args)
+    public ThreadValue(Value pool, FunctionValue function, Expression expr, Token token, Context ctx, List<Value> args)
     {
         this.id = sequence++;
         this.isCoroutine = ctx.host.canSynchronouslyExecute();
@@ -36,7 +37,7 @@ public class ThreadValue extends LazyListValue
         Thread.yield();
     }
 
-    public CompletableFuture<Value> getCompletableFutureFromFunction(Value pool, FunctionValue function, Expression expr, Tokenizer.Token token, Context ctx, List<Value> args)
+    public CompletableFuture<Value> getCompletableFutureFromFunction(Value pool, FunctionValue function, Expression expr, Token token, Context ctx, List<Value> args)
     {
         ExecutorService executor = ctx.host.getExecutor(pool);
         ThreadValue callingThread = isCoroutine ? this : null;
@@ -108,13 +109,13 @@ public class ThreadValue extends LazyListValue
     @Override
     public boolean equals(Object o)
     {
-        return o instanceof final ThreadValue tv && tv.id == this.id;
+        return o instanceof ThreadValue tv && tv.id == this.id;
     }
 
     @Override
     public int compareTo(Value o)
     {
-        if (!(o instanceof final ThreadValue tv))
+        if (!(o instanceof ThreadValue tv))
         {
             throw new InternalExpressionException("Cannot compare tasks to other types");
         }
@@ -128,13 +129,13 @@ public class ThreadValue extends LazyListValue
     }
 
     @Override
-    public Tag toTag(boolean force)
+    public Tag toTag(boolean force, RegistryAccess regs)
     {
         if (!force)
         {
             throw new NBTSerializableValue.IncompatibleTypeException(this);
         }
-        return getValue().toTag(true);
+        return getValue().toTag(true, regs);
     }
 
     @Override

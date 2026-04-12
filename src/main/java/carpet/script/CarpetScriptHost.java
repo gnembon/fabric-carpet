@@ -31,6 +31,7 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
 
 import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.commands.Commands;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
@@ -40,6 +41,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import org.apache.commons.lang3.tuple.Pair;
 
+import org.jspecify.annotations.Nullable;
 import java.math.BigInteger;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -77,9 +79,9 @@ public class CarpetScriptHost extends ScriptHost
     public AppStoreManager.StoreNode storeSource;
     boolean hasCommand;
 
-    private CarpetScriptHost(CarpetScriptServer server, Module code, boolean perUser, ScriptHost parent, Map<Value, Value> config, Map<String, CommandArgument> argTypes, Predicate<CommandSourceStack> commandValidator, boolean isRuleApp)
+    private CarpetScriptHost(CarpetScriptServer server, @Nullable Module code, boolean perUser, ScriptHost parent, Map<Value, Value> config, Map<String, CommandArgument> argTypes, Predicate<CommandSourceStack> commandValidator, boolean isRuleApp, Expression.LoadOverride override)
     {
-        super(code, server, perUser, parent);
+        super(code, server, perUser, parent, override);
         this.saveTimeout = 0;
         persistenceRequired = true;
         if (parent == null && code != null) // app, not a global host
@@ -98,9 +100,9 @@ public class CarpetScriptHost extends ScriptHost
         storeSource = null;
     }
 
-    public static CarpetScriptHost create(CarpetScriptServer scriptServer, Module module, boolean perPlayer, CommandSourceStack source, Predicate<CommandSourceStack> commandValidator, boolean isRuleApp, AppStoreManager.StoreNode storeSource)
+    public static CarpetScriptHost create(CarpetScriptServer scriptServer, @Nullable Module module, boolean perPlayer, CommandSourceStack source, Predicate<CommandSourceStack> commandValidator, boolean isRuleApp, AppStoreManager.StoreNode storeSource, Expression.LoadOverride override)
     {
-        CarpetScriptHost host = new CarpetScriptHost(scriptServer, module, perPlayer, null, Collections.emptyMap(), new HashMap<>(), commandValidator, isRuleApp);
+        CarpetScriptHost host = new CarpetScriptHost(scriptServer, module, perPlayer, null, Collections.emptyMap(), new HashMap<>(), commandValidator, isRuleApp, override);
         // parse code and convert to expression
         if (module != null)
         {
@@ -110,7 +112,7 @@ public class CarpetScriptHost extends ScriptHost
                 CarpetExpression ex = new CarpetExpression(host.main, module.code(), source, new BlockPos(0, 0, 0));
                 ex.getExpr().asATextSource();
                 host.storeSource = storeSource;
-                ex.scriptRunCommand(host, BlockPos.containing(source.getPosition()));
+                host.root = ex.scriptRunCommand(host, BlockPos.containing(source.getPosition())).getRight();
             }
             catch (CarpetExpressionException e)
             {
@@ -130,6 +132,10 @@ public class CarpetScriptHost extends ScriptHost
             {
                 host.storeSource = null;
             }
+        }
+        else
+        {
+            host.root = Expression.ExpressionNode.ofConstant(Value.NULL, new Token());
         }
         return host;
     }
@@ -197,6 +203,17 @@ public class CarpetScriptHost extends ScriptHost
         return command;
     }
 
+    private static boolean sourceHasPermissionLevel(CommandSourceStack source, int level) {
+        return switch (level) {
+            case 0 -> Commands.LEVEL_ALL.check(source.permissions());
+            case 1 -> Commands.LEVEL_MODERATORS.check(source.permissions());
+            case 2 -> Commands.LEVEL_GAMEMASTERS.check(source.permissions());
+            case 3 -> Commands.LEVEL_ADMINS.check(source.permissions());
+            case 4 -> Commands.LEVEL_OWNERS.check(source.permissions());
+            default -> false;
+        };
+    }
+
     public Predicate<CommandSourceStack> getCommandConfigPermissions() throws CommandSyntaxException
     {
         Value confValue = appConfig.get(StringValue.of("command_permission"));
@@ -211,13 +228,13 @@ public class CarpetScriptHost extends ScriptHost
             {
                 throw CommandArgument.error("Numeric permission level for custom commands should be between 1 and 4");
             }
-            return s -> s.hasPermission(level);
+            return s -> sourceHasPermissionLevel(s, level);
         }
         if (!(confValue instanceof final FunctionValue fun))
         {
             String perm = confValue.getString().toLowerCase(Locale.ROOT);
             return switch (perm) {
-                case "ops" -> s -> s.hasPermission(2);
+                case "ops" -> s -> sourceHasPermissionLevel(s, 2);
                 case "server" -> s -> !(s.getEntity() instanceof ServerPlayer);
                 case "players" -> s -> s.getEntity() instanceof ServerPlayer;
                 case "all" -> s -> true;
@@ -252,7 +269,7 @@ public class CarpetScriptHost extends ScriptHost
     @Override
     protected ScriptHost duplicate()
     {
-        return new CarpetScriptHost(scriptServer(), main, false, this, appConfig, appArgTypes, commandValidator, isRuleApp);
+        return new CarpetScriptHost(scriptServer(), main, false, this, appConfig, appArgTypes, commandValidator, isRuleApp, loadOverrides);
     }
 
     @Override
@@ -742,7 +759,7 @@ public class CarpetScriptHost extends ScriptHost
         FunctionValue function = getFunction(call);
         if (function == null)
         {
-            throw new CarpetExpressionException("Couldn't find function '" + call + "' in app '" + this.getName() + "'", null);
+            throw new CarpetExpressionException("Couldn't find function '" + call + "' in app '" + this.getVisualName() + "'", null);
         }
         List<LazyValue> argv = new ArrayList<>();
         if (coords != null)
@@ -753,7 +770,7 @@ public class CarpetScriptHost extends ScriptHost
             }
         }
         String sign = "";
-        for (Tokenizer.Token tok : Tokenizer.simplepass(arg))
+        for (Token tok : Tokenizer.simple(arg).parseTokens())
         {
             switch (tok.type)
             {
@@ -828,7 +845,7 @@ public class CarpetScriptHost extends ScriptHost
             // TODO: this is just for now - invoke would be able to invoke other hosts scripts
             assertAppIntegrity(function.getModule());
             Context context = new CarpetContext(this, source);
-            return scriptServer().events.handleEvents.getWhileDisabled(() -> function.getExpression().evalValue(
+            return scriptServer().events.handleEvents.getWhileDisabled(() -> function.getExpression().evaluatePartial(
                     () -> function.lazyEval(context, Context.VOID, function.getExpression(), function.getToken(), argv),
                     context,
                     Context.VOID
@@ -861,7 +878,7 @@ public class CarpetScriptHost extends ScriptHost
         {
             assertAppIntegrity(function.getModule());
             Context context = new CarpetContext(this, source);
-            return function.getExpression().evalValue(
+            return function.getExpression().evaluatePartial(
                     () -> function.execute(context, Context.VOID, function.getExpression(), function.getToken(), argv, null),
                     context,
                     Context.VOID
@@ -898,7 +915,7 @@ public class CarpetScriptHost extends ScriptHost
         {
             assertAppIntegrity(fun.getModule());
             Context context = new CarpetContext(this, source, origin);
-            return fun.getExpression().evalValue(
+            return fun.getExpression().evaluatePartial(
                     () -> fun.execute(context, Context.VOID, fun.getExpression(), fun.getToken(), argv, null),
                     context,
                     Context.VOID);
@@ -944,7 +961,7 @@ public class CarpetScriptHost extends ScriptHost
             String markerName = Auxiliary.MARKER_STRING + "_" + ((getName() == null) ? "" : getName());
             for (ServerLevel world : scriptServer().server.getAllLevels())
             {
-                for (Entity e : world.getEntities(EntityType.ARMOR_STAND, (as) -> as.getTags().contains(markerName)))
+                for (Entity e : world.getEntities(EntityType.ARMOR_STAND, (as) -> as.entityTags().contains(markerName)))
                 {
                     e.discard();
                 }
@@ -968,7 +985,7 @@ public class CarpetScriptHost extends ScriptHost
 
     public Tag readFileTag(FileArgument fdesc)
     {
-        if (getName() == null && !fdesc.isShared)
+        if (isDefaultApp() && !fdesc.isShared)
         {
             return null;
         }
@@ -985,7 +1002,7 @@ public class CarpetScriptHost extends ScriptHost
 
     public boolean writeTagFile(Tag tag, FileArgument fdesc)
     {
-        if (getName() == null && !fdesc.isShared)
+        if (isDefaultApp() && !fdesc.isShared)
         {
             return false; // if belongs to an app, cannot be default host.
         }
@@ -1007,27 +1024,27 @@ public class CarpetScriptHost extends ScriptHost
 
     public boolean removeResourceFile(FileArgument fdesc)
     {
-        return (getName() != null || fdesc.isShared) && fdesc.dropExistingFile(main); //
+        return (!isDefaultApp() || fdesc.isShared) && fdesc.dropExistingFile(main); //
     }
 
     public boolean appendLogFile(FileArgument fdesc, List<String> data)
     {
-        return (getName() != null || fdesc.isShared) && fdesc.appendToTextFile(main, data); // if belongs to an app, cannot be default host.
+        return (!isDefaultApp() || fdesc.isShared) && fdesc.appendToTextFile(main, data); // if belongs to an app, cannot be default host.
     }
 
     public List<String> readTextResource(FileArgument fdesc)
     {
-        return getName() == null && !fdesc.isShared ? null : fdesc.listFile(main);
+        return isDefaultApp() && !fdesc.isShared ? null : fdesc.listFile(main);
     }
 
     public JsonElement readJsonFile(FileArgument fdesc)
     {
-        return getName() == null && !fdesc.isShared ? null : fdesc.readJsonFile(main);
+        return isDefaultApp() && !fdesc.isShared ? null : fdesc.readJsonFile(main);
     }
 
     public Stream<String> listFolder(FileArgument fdesc)
     {
-        return getName() == null && !fdesc.isShared ? null : fdesc.listFolder(main);
+        return isDefaultApp() && !fdesc.isShared ? null : fdesc.listFolder(main);
     }
 
     public boolean applyActionForResource(String path, boolean shared, Consumer<Path> action)
@@ -1092,7 +1109,7 @@ public class CarpetScriptHost extends ScriptHost
     }
 
     /**
-     * <p>Creates a {@link Component} using {@link Messenger} that has the locals in the {@code line} snippet with a hover over
+     * <p>Creates a {@link Component} using {@link carper.utils.Messenger} that has the locals in the {@code line} snippet with a hover over
      * tooltip with the value of the local at that location</p>
      *
      * @param line    The line to find references to locals on
@@ -1202,7 +1219,7 @@ public class CarpetScriptHost extends ScriptHost
     {
         if (super.issueDeprecation(feature))
         {
-            Carpet.Messenger_message(responsibleSource, "rb App '" +getName() + "' uses '" + feature + "', which is deprecated for removal. Check the docs for a replacement");
+            Carpet.Messenger_message(responsibleSource, "rb App '" +getVisualName() + "' uses '" + feature + "', which is deprecated for removal. Check the docs for a replacement");
             return true;
         }
         return false;

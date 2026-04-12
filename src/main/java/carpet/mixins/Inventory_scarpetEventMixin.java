@@ -11,7 +11,6 @@ import static carpet.script.CarpetEventServer.Event.PLAYER_PICKS_UP_ITEM;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 
 @Mixin(Inventory.class)
@@ -27,13 +26,12 @@ public abstract class Inventory_scarpetEventMixin
     {
         if (!PLAYER_PICKS_UP_ITEM.isNeeded() || !(player instanceof ServerPlayer))
             return playerInventory.add(-1, stack);
-        Item item = stack.getItem();
         int count = stack.getCount();
+        ItemStack previous = stack.copy();
         boolean res = playerInventory.add(-1, stack);
         if (count != stack.getCount()) // res returns false for larger item adding to a almost full ineventory
         {
-            ItemStack diffStack = new ItemStack(item, count - stack.getCount());
-            diffStack.setTag(stack.getTag());
+            ItemStack diffStack = previous.copyWithCount(count - stack.getCount());
             PLAYER_PICKS_UP_ITEM.onItemAction((ServerPlayer) player, null, diffStack);
         }
         return res;

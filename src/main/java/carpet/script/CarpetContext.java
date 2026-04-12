@@ -62,7 +62,7 @@ public class CarpetContext extends Context
 
     public <T> Registry<T> registry(ResourceKey<? extends Registry<? extends T>> resourceKey)
     {
-        return registryAccess().registryOrThrow(resourceKey);
+        return registryAccess().lookupOrThrow(resourceKey);
     }
 
     public CommandSourceStack source()

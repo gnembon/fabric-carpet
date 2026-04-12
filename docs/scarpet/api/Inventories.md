@@ -26,7 +26,8 @@ use the same scheme.
  If the entity or a block doesn't have 
 an inventory, all API functions typically do nothing and return null.
 
-Most items returned are in the form of a triple of item name, count, and nbt or the extra data associated with an item. 
+Most items returned are in the form of a triple of item name, count, and the full nbt of an item. When saving an item, if the
+nbt is provided, it overrides the item type provided in the name.
 
 ### `item_list(tag?)`
 
@@ -69,8 +70,8 @@ Recipe type can take one of the following options:
  * `'smithing'` - smithing table (1.16+)
  
  The return value is a list of available recipes (even if there is only one recipe available). Each recipe contains of
- an item triple of the crafting result, list of ingredients, each containing a list of possible variants of the
- ingredients in this slot, as item triples, or `null` if its a shaped recipe and a given slot in the patterns is left
+ an item triple of the crafting results as a list of item stacks, list of ingredients, each containing a list of possible variants of the
+ ingredients in this slot, as item ids, or `null` if it is a shaped recipe and a given slot in the patterns is left
  empty, and recipe specification as another list. Possible recipe specs is:
   * `['shaped', width, height]` - shaped crafting. `width` and `height` can be 1, 2 or 3.
   * `['shapeless']` - shapeless crafting
@@ -78,10 +79,6 @@ Recipe type can take one of the following options:
   * `['cutting']` - stonecutter recipe
   * `['special']` - special crafting recipe, typically not present in the crafting menu
   * `['custom']` - other recipe types
-  
-Note that ingredients are specified as tripes, with count and nbt information. Currently all recipes require always one
-of the ingredients, and for some recipes, even if the nbt data for the ingredient is specified (e.g. `dispenser`), it
-can accept items of any tags.
 
 Also note that some recipes leave some products in the crafting window, and these can be determined using
  `crafting_remaining_item()` function 
@@ -96,7 +93,7 @@ Also note that some recipes leave some products in the crafting window, and thes
 ### `crafting_remaining_item(item)`
 
 returns `null` if the item has no remaining item in the crafting window when used as a crafting ingredient, or an
-item name that serves as a replacement after crafting is done. Currently it can only be buckets and glass bottles.
+item tuple that serves as a replacement after crafting is done. Currently, it can only be buckets and glass bottles.
 
 ### `inventory_size(inventory)`
 
@@ -139,20 +136,22 @@ negative numbers to indicate slots counted from 'the back'.
 
 <pre>
 inventory_get(player(), 0) => null // nothing in first hotbar slot
-inventory_get(x,y,z, 5) => ['stone', 1, {}]
-inventory_get(player(), -1) => ['diamond_pickaxe', 1, {Damage:4}] // slightly damaged diamond pick in the offhand
+inventory_get(x,y,z, 5) => ['stone', 1, {id:"minecraft:stone"}]
+inventory_get(player(), -1) => ['diamond_pickaxe', 1, {components:{"minecraft:damage":4},id:"minecraft:diamond_pickaxe"}] // slightly damaged diamond pick in the offhand
 </pre>
 
 ### `inventory_set(inventory, slot, count, item?, nbt?)`
 
 Modifies or sets a stack in inventory. specify count 0 to empty the slot. If item is not specified, keeps existing 
-item, just modifies the count. If item is provided - replaces current item. If nbt is provided - adds a tag to the 
-stack at slot. Returns previous stack in that slot.
+item, just modifies the count. If item is provided - replaces current item. If nbt is provided - uses the tag to create the item fully
+ignoring the item name. If nbt is provided and count is not null, the sets the custom count on the tag from the count parameter.
+If count is `null` and item is `null`, an item is entirely defined by the `nbt` parameter. Returns previous stack in that slot.
 
 <pre>
-inventory_set(player(), 0, 0) => ['stone', 64, {}] // player had a stack of stone in first hotbar slot
-inventory_set(player(), 0, 6) => ['diamond', 64, {}] // changed stack of diamonds in player slot to 6
-inventory_set(player(), 0, 1, 'diamond_axe','{Damage:5}') => null //added slightly damaged diamond axe to first player slot
+inventory_set(player(), 0, 0) => ['stone', 64, {id:"minecraft:stone"}] // player had a stack of stone in first hotbar slot
+inventory_set(player(), 0, 6) => ['diamond', 64, {id:"minecraft:diamond"}] // changed stack of diamonds in player slot to 6
+inventory_set(player(), 0, 1, 'diamond_axe','{components:{"minecraft:damage":5},id:"minecraft:diamond_axe"}') => null //added slightly damaged diamond axe to first player slot
+inventory_set(player(), 0, null, null, '{components:{"minecraft:damage":5},id:"minecraft:diamond_axe"}') => null // same effect as above
 </pre>
 
 ### `inventory_find(inventory, item, start_slot?, ), inventory_find(inventory, null, start_slot?)`

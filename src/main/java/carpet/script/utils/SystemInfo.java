@@ -15,7 +15,9 @@ import carpet.script.value.ValueConversions;
 import com.sun.management.OperatingSystemMXBean;
 import net.minecraft.SharedConstants;
 import net.minecraft.server.packs.PackType;
-import net.minecraft.world.level.GameRules;
+import net.minecraft.world.level.gamerules.GameRule;
+import net.minecraft.world.level.gamerules.GameRuleTypeVisitor;
+import net.minecraft.world.level.gamerules.GameRules;
 import net.minecraft.world.level.border.WorldBorder;
 import net.minecraft.world.level.storage.LevelData;
 import net.minecraft.world.level.storage.LevelResource;
@@ -58,15 +60,12 @@ public class SystemInfo
             String tlf = serverPath.getName(nodeCount - 2).toString();
             return StringValue.of(tlf);
         });
-        put("world_dimensions", c -> ListValue.wrap(c.server().levelKeys().stream().map(k -> ValueConversions.of(k.location()))));
-        put("world_spawn_point", c -> {
-            LevelData prop = c.server().overworld().getLevelData();
-            return ListValue.of(NumericValue.of(prop.getXSpawn()), NumericValue.of(prop.getYSpawn()), NumericValue.of(prop.getZSpawn()));
-        });
+        put("world_dimensions", c -> ListValue.wrap(c.server().levelKeys().stream().map(k -> ValueConversions.of(k.identifier()))));
+        put("world_spawn_point", c -> ValueConversions.of(c.server().overworld().getLevelData().getRespawnData().pos()));
 
-        put("world_bottom", c -> new NumericValue(c.level().getMinBuildHeight()));
+        put("world_bottom", c -> new NumericValue(c.level().getMinY()));
 
-        put("world_top", c -> new NumericValue(c.level().getMaxBuildHeight()));
+        put("world_top", c -> new NumericValue(c.level().getMaxY()));
 
         put("world_center", c -> {
             WorldBorder worldBorder = c.level().getWorldBorder();
@@ -79,7 +78,7 @@ public class SystemInfo
 
         put("world_time", c -> new NumericValue(c.level().getGameTime()));
 
-        put("game_difficulty", c -> StringValue.of(c.server().getWorldData().getDifficulty().getKey()));
+        put("game_difficulty", c -> StringValue.of(c.server().getWorldData().getDifficulty().getSerializedName()));
         put("game_hardcore", c -> BooleanValue.of(c.server().getWorldData().isHardcore()));
         put("game_storage_format", c -> StringValue.of(c.server().getWorldData().getStorageVersionName(c.server().getWorldData().getVersion())));
         put("game_default_gamemode", c -> StringValue.of(c.server().getDefaultGameType().getName()));
@@ -87,19 +86,16 @@ public class SystemInfo
         put("game_view_distance", c -> new NumericValue(c.server().getPlayerList().getViewDistance()));
         put("game_mod_name", c -> StringValue.of(c.server().getServerModName()));
         put("game_version", c -> StringValue.of(c.server().getServerVersion()));
-        put("game_target", c -> StringValue.of(Vanilla.MinecraftServer_getReleaseTarget(c.server())));
+        put("game_target", c -> StringValue.of(String.format("1.%d.%d",
+                Vanilla.MinecraftServer_getReleaseTarget(c.server())[0],
+                Vanilla.MinecraftServer_getReleaseTarget(c.server())[1])));
         put("game_protocol", c -> NumericValue.of(SharedConstants.getProtocolVersion()));
-        put("game_major_target", c -> {
-            String[] vers = Vanilla.MinecraftServer_getReleaseTarget(c.server()).split("\\.");
-            return NumericValue.of((vers.length > 1) ? Integer.parseInt(vers[1]) : 0);
-        });
-        put("game_minor_target", c -> {
-            String[] vers = Vanilla.MinecraftServer_getReleaseTarget(c.server()).split("\\.");
-            return NumericValue.of((vers.length > 2) ? Integer.parseInt(vers[2]) : 0);
-        });
-        put("game_stable", c -> BooleanValue.of(SharedConstants.getCurrentVersion().isStable()));
-        put("game_data_version", c -> NumericValue.of(SharedConstants.getCurrentVersion().getDataVersion().getVersion()));
-        put("game_pack_version", c -> NumericValue.of(SharedConstants.getCurrentVersion().getPackVersion(PackType.SERVER_DATA)));
+        put("game_major_target", c -> NumericValue.of(Vanilla.MinecraftServer_getReleaseTarget(c.server())[0]));
+        put("game_minor_target", c -> NumericValue.of(Vanilla.MinecraftServer_getReleaseTarget(c.server())[1]));
+        put("game_stable", c -> BooleanValue.of(SharedConstants.getCurrentVersion().stable()));
+        put("game_data_version", c -> NumericValue.of(SharedConstants.getCurrentVersion().dataVersion().version()));
+        put("game_pack_version", c -> NumericValue.of(SharedConstants.getCurrentVersion().packVersion(PackType.SERVER_DATA).major()));
+        put("game_pack_minor_version", c -> NumericValue.of(SharedConstants.getCurrentVersion().packVersion(PackType.SERVER_DATA).minor()));
 
         put("server_ip", c -> StringValue.of(c.server().getLocalIp()));
         put("server_whitelisted", c -> BooleanValue.of(c.server().isEnforceWhitelist()));
@@ -134,7 +130,7 @@ public class SystemInfo
             // might be off one tick when run in the off tasks or asynchronously.
             int currentReportedTick = c.server().getTickCount() - 1;
             List<Value> ticks = new ArrayList<>(100);
-            long[] tickArray = c.server().tickTimes;
+            long[] tickArray = c.server().getTickTimesNanos();
             for (int i = currentReportedTick + 100; i > currentReportedTick; i--)
             {
                 ticks.add(new NumericValue((tickArray[i % 100]) / 1000000.0));
@@ -172,12 +168,15 @@ public class SystemInfo
         put("world_gamerules", c -> {
             Map<Value, Value> rules = new HashMap<>();
             GameRules gameRules = c.level().getGameRules();
-            GameRules.visitGameRuleTypes(new GameRules.GameRuleTypeVisitor()
+            gameRules.visitGameRuleTypes(new GameRuleTypeVisitor()
             {
                 @Override
-                public <T extends GameRules.Value<T>> void visit(GameRules.Key<T> key, GameRules.Type<T> type)
-                {
-                    rules.put(StringValue.of(key.getId()), StringValue.of(gameRules.getRule(key).toString()));
+                public void visitBoolean(GameRule<Boolean> gameRule) {
+                    rules.put(StringValue.of(gameRule.id()), BooleanValue.of(gameRules.get(gameRule)));
+                }
+                @Override
+                public void visitInteger(GameRule<Integer> gameRule) {
+                    rules.put(StringValue.of(gameRule.id()), NumericValue.of(gameRules.get(gameRule)));
                 }
             });
             return MapValue.wrap(rules);

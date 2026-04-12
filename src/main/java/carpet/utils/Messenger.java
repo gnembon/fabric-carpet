@@ -10,12 +10,14 @@ import net.minecraft.network.chat.HoverEvent;
 import net.minecraft.network.chat.Style;
 import net.minecraft.network.chat.TextColor;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec3;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -55,7 +57,15 @@ public class Messenger
         BLACK       ('k', (s, f) -> s.withColor(ChatFormatting.BLACK)),
 
         COLOR       ('#', (s, f) -> {
-            TextColor color = TextColor.parseColor("#"+f);
+            TextColor color;
+            try
+            {
+                color = TextColor.parseColor("#" + f).getOrThrow(RuntimeException::new);
+            }
+            catch (RuntimeException e)
+            {
+                return s;
+            }
             return color == null ? s : s.withColor(color);
         }, s -> {
             Matcher m = colorExtract.matcher(s);
@@ -138,11 +148,11 @@ public class Messenger
         Style previousStyle = previousMessage.getStyle();
         MutableComponent ret = previousMessage;
         previousMessage.setStyle(switch (desc.charAt(0)) {
-            case '?' -> previousStyle.withClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, message.substring(1)));
-            case '!' -> previousStyle.withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, message.substring(1)));
-            case '^' -> previousStyle.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, c(message.substring(1))));
-            case '@' -> previousStyle.withClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, message.substring(1)));
-            case '&' -> previousStyle.withClickEvent(new ClickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD, message.substring(1)));
+            case '?' -> previousStyle.withClickEvent(new ClickEvent.SuggestCommand(message.substring(1)));
+            case '!' -> previousStyle.withClickEvent(new ClickEvent.RunCommand(message.substring(1)));
+            case '^' -> previousStyle.withHoverEvent(new HoverEvent.ShowText(c(message.substring(1))));
+            case '@' -> previousStyle.withClickEvent(new ClickEvent.OpenUrl(URI.create(message.substring(1))));
+            case '&' -> previousStyle.withClickEvent(new ClickEvent.CopyToClipboard(message.substring(1)));
             default  -> { // Create a new component
                 ret = Component.literal(str);
                 ret.setStyle(parseStyle(desc));
@@ -235,7 +245,7 @@ public class Messenger
     }
     public static void m(Player player, Object ... fields)
     {
-        player.sendSystemMessage(Messenger.c(fields));
+        ((ServerPlayer)player).sendSystemMessage(Messenger.c(fields));
     }
 
     /*
@@ -279,7 +289,7 @@ public class Messenger
 
     public static void send(Player player, Collection<Component> lines)
     {
-        lines.forEach(message -> player.sendSystemMessage(message));
+        lines.forEach(message -> ((ServerPlayer)player).sendSystemMessage(message));
     }
     public static void send(CommandSourceStack source, Collection<Component> lines)
     {
@@ -293,7 +303,7 @@ public class Messenger
             LOG.error("Message not delivered: "+message);
         server.sendSystemMessage(Component.literal(message));
         Component txt = c("gi "+message);
-        for (Player entityplayer : server.getPlayerList().getPlayers())
+        for (ServerPlayer entityplayer : server.getPlayerList().getPlayers())
         {
             entityplayer.sendSystemMessage(txt);
         }
@@ -303,7 +313,7 @@ public class Messenger
         if (server == null)
             LOG.error("Message not delivered: "+message.getString());
         server.sendSystemMessage(message);
-        for (Player entityplayer : server.getPlayerList().getPlayers())
+        for (ServerPlayer entityplayer : server.getPlayerList().getPlayers())
         {
             entityplayer.sendSystemMessage(message);
         }

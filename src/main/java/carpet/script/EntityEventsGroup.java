@@ -16,8 +16,11 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec3;
 
 public class EntityEventsGroup
@@ -46,7 +49,7 @@ public class EntityEventsGroup
         {
             return;
         }
-        CarpetScriptServer scriptServer = Vanilla.MinecraftServer_getScriptServer(entity.getServer());
+        CarpetScriptServer scriptServer = Vanilla.MinecraftServer_getScriptServer(entity.level().getServer());
         if (scriptServer.stopAll)
         {
             return; // executed after world is closin down
@@ -61,7 +64,7 @@ public class EntityEventsGroup
                 iterator.remove();
                 continue;
             }
-            if (key.user() != null && entity.getServer().getPlayerList().getPlayerByName(key.user()) == null)
+            if (key.user() != null && entity.level().getServer().getPlayerList().getPlayerByName(key.user()) == null)
             {
                 iterator.remove();
                 continue;
@@ -167,7 +170,7 @@ public class EntityEventsGroup
         public CarpetEventServer.CallbackResult call(CarpetEventServer.Callback tickCall, Entity entity, Object... args)
         {
             assert args.length == argcount - 1;
-            return tickCall.execute(entity.createCommandSourceStack(), makeArgs(entity, args));
+            return tickCall.execute((entity instanceof ServerPlayer player ? player.createCommandSourceStack() : entity.level().getServer().createCommandSourceStack()), makeArgs(entity, args));
         }
 
         protected List<Value> makeArgs(Entity entity, Object... args)

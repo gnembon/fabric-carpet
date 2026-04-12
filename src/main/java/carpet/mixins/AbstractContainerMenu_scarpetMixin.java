@@ -14,7 +14,7 @@ import java.util.List;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
-import net.minecraft.world.inventory.ClickType;
+import net.minecraft.world.inventory.ContainerInput;
 import net.minecraft.world.inventory.ContainerListener;
 import net.minecraft.world.inventory.DataSlot;
 
@@ -26,7 +26,7 @@ public abstract class AbstractContainerMenu_scarpetMixin implements AbstractCont
     @Shadow @Final private List<DataSlot> dataSlots;
 
     @Inject(method = "doClick", at = @At("HEAD"), cancellable = true)
-    private void callSlotClickListener(int slotIndex, int button, ClickType actionType, Player player, CallbackInfo ci) {
+    private void callSlotClickListener(int slotIndex, int button, ContainerInput actionType, Player player, CallbackInfo ci) {
         if(!(player instanceof ServerPlayer serverPlayerEntity)) return;
         for(ContainerListener screenHandlerListener : this.containerListeners) {
             if(screenHandlerListener instanceof ScreenValue.ScarpetScreenHandlerListener scarpetScreenHandlerListener) {

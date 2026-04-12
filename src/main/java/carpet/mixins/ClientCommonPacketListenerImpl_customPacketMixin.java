@@ -2,6 +2,7 @@ package carpet.mixins;
 
 import carpet.network.CarpetClient;
 import net.minecraft.client.multiplayer.ClientCommonPacketListenerImpl;
+import net.minecraft.network.DisconnectionDetails;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.common.ClientboundCustomPayloadPacket;
 import org.spongepowered.asm.mixin.Mixin;
@@ -13,7 +14,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public class ClientCommonPacketListenerImpl_customPacketMixin
 {
     @Inject(method = "onDisconnect", at = @At("HEAD"))
-    private void onCMDisconnected(Component reason, CallbackInfo ci)
+    private void onCMDisconnected(DisconnectionDetails reason, CallbackInfo ci)
     {
         CarpetClient.disconnect();
     }

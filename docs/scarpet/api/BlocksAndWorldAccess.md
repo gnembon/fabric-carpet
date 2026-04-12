@@ -540,7 +540,7 @@ On top of that, scarpet provides the following list of noises sampled directly f
 
 `'barrier_noise'`, `'fluid_level_floodedness_noise'`, `'fluid_level_spread_noise'`, `'lava_noise'`,
 `'temperature'`, `'vegetation'`, `'continents'`, `'erosion'`, `'depth'`, `'ridges'`, 
-`'initial_density_without_jaggedness'`, `'final_density'`, `'vein_toggle'`, `'vein_ridged'` and `'vein_gap'`
+`'preliminary_surface_level'`, `'final_density'`, `'vein_toggle'`, `'vein_ridged'` and `'vein_gap'`
 
 <pre>
 // requesting single value
@@ -625,7 +625,7 @@ It returns a `map` with a report indicating how many chunks were affected, and h
 
 Adds a chunk ticket at a position, which makes the game to keep the designated area centered around
 `pos` with radius of `radius` loaded for a predefined amount of ticks, defined by `type`. Allowed types
-are `portal`: 300 ticks, `teleport`: 5 ticks, and `unknown`: 1 tick. Radius can be from 1 to 32 ticks.
+are `portal`: 300 ticks, `teleport`: 40 ticks, and `unknown`: 1 tick. Radius can be from 1 to 32 ticks.
 
 This function is tentative - will likely change when chunk ticket API is properly fleshed out.
 

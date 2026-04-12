@@ -58,7 +58,7 @@ public interface FertilizableCoral extends BonemealableBlock {
 
         MapColor color = blockUnder.getMapColor(worldIn, pos);
         BlockState properBlock = blockUnder;
-        HolderSet.Named<Block> coralBlocks = worldIn.registryAccess().registryOrThrow(Registries.BLOCK).getTag(BlockTags.CORAL_BLOCKS).orElseThrow();
+        HolderSet.Named<Block> coralBlocks = worldIn.registryAccess().lookupOrThrow(Registries.BLOCK).get(BlockTags.CORAL_BLOCKS).orElseThrow();
         for (Holder<Block> block: coralBlocks)
         {
             properBlock = block.value().defaultBlockState();
@@ -75,10 +75,10 @@ public interface FertilizableCoral extends BonemealableBlock {
         }
         else
         {
-            if (worldIn.random.nextInt(10) == 0)
+            if (worldIn.getRandom().nextInt(10) == 0)
             {
-                BlockPos randomPos = pos.offset(worldIn.random.nextInt(16) - 8, worldIn.random.nextInt(8), worldIn.random.nextInt(16) - 8);
-                if (coralBlocks.contains(worldIn.getBlockState(randomPos).getBlockHolder()))
+                BlockPos randomPos = pos.offset(worldIn.getRandom().nextInt(16) - 8, worldIn.getRandom().nextInt(8), worldIn.getRandom().nextInt(16) - 8);
+                if (worldIn.getBlockState(randomPos).is(BlockTags.CORAL_BLOCKS))
                 {
                     worldIn.setBlock(randomPos, Blocks.WET_SPONGE.defaultBlockState(), Block.UPDATE_ALL);
                 }

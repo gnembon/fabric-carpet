@@ -21,32 +21,31 @@ import java.util.List;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.ServerScoreboard;
 import net.minecraft.server.bossevents.CustomBossEvent;
 import net.minecraft.server.bossevents.CustomBossEvents;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.StringRepresentable;
 import net.minecraft.world.BossEvent;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.scores.DisplaySlot;
 import net.minecraft.world.scores.Objective;
 import net.minecraft.world.scores.PlayerTeam;
-import net.minecraft.world.scores.Score;
+import net.minecraft.world.scores.ScoreAccess;
+import net.minecraft.world.scores.ScoreHolder;
 import net.minecraft.world.scores.Scoreboard;
 import net.minecraft.world.scores.Team;
 import net.minecraft.world.scores.criteria.ObjectiveCriteria;
+import org.jetbrains.annotations.Nullable;
 
 public class Scoreboards
 {
-    private static String getScoreboardKeyFromValue(Value keyValue)
+    private static ScoreHolder getScoreboardKeyFromValue(Value keyValue)
     {
-        if (keyValue instanceof final EntityValue ev)
-        {
-            Entity e = ev.getEntity();
-            return e instanceof Player ? e.getName().getString() : e.getStringUUID();
-        }
-        return keyValue.getString();
+        return keyValue instanceof EntityValue ev
+                ? ev.getEntity()
+                : ScoreHolder.forNameOnly(keyValue.getString());
     }
 
     public static void apply(Expression expression)
@@ -69,28 +68,29 @@ public class Scoreboards
             }
             if (lv.size() == 1)
             {
-                return ListValue.wrap(scoreboard.getPlayerScores(objective).stream().map(s -> new StringValue(s.getOwner())));
+                return ListValue.wrap(scoreboard.listPlayerScores(objective).stream().map(s -> new StringValue(s.owner())));
             }
-            String key = getScoreboardKeyFromValue(lv.get(1));
+            ScoreHolder key = getScoreboardKeyFromValue(lv.get(1));
             if (lv.size() == 2)
             {
-                return !scoreboard.hasPlayerScore(key, objective)
+                return scoreboard.getPlayerScoreInfo(key, objective) == null
                         ? Value.NULL
-                        : NumericValue.of(scoreboard.getOrCreatePlayerScore(key, objective).getScore());
+                        : NumericValue.of(scoreboard.getOrCreatePlayerScore(key, objective).get());
             }
 
             Value value = lv.get(2);
             if (value.isNull())
             {
-                Score score = scoreboard.getOrCreatePlayerScore(key, objective);
-                scoreboard.resetPlayerScore(key, objective);
-                return NumericValue.of(score.getScore());
+                int score = scoreboard.getOrCreatePlayerScore(key, objective).get();
+                scoreboard.resetSinglePlayerScore(key, objective);
+                return NumericValue.of(score);
             }
             if (value instanceof NumericValue)
             {
-                Score score = scoreboard.getOrCreatePlayerScore(key, objective);
-                score.setScore(NumericValue.asNumber(value).getInt());
-                return NumericValue.of(score.getScore());
+                ScoreAccess score = scoreboard.getOrCreatePlayerScore(key, objective);
+                int previous = score.get();
+                score.set(NumericValue.asNumber(value).getInt());
+                return NumericValue.of(previous);
             }
             throw new InternalExpressionException("'scoreboard' requires a number or null as the third parameter");
         });
@@ -114,14 +114,14 @@ public class Scoreboards
                 scoreboard.removeObjective(objective);
                 return Value.TRUE;
             }
-            String key = getScoreboardKeyFromValue(lv.get(1));
-            if (!scoreboard.hasPlayerScore(key, objective))
+            ScoreHolder key = getScoreboardKeyFromValue(lv.get(1));
+            if (scoreboard.getPlayerScoreInfo(key, objective) == null)
             {
                 return Value.NULL;
             }
-            Score scoreboardPlayerScore = scoreboard.getOrCreatePlayerScore(key, objective);
-            Value previous = new NumericValue(scoreboardPlayerScore.getScore());
-            scoreboard.resetPlayerScore(key, objective);
+            ScoreAccess scoreboardPlayerScore = scoreboard.getOrCreatePlayerScore(key, objective);
+            Value previous = new NumericValue(scoreboardPlayerScore.get());
+            scoreboard.resetSinglePlayerScore(key, objective);
             return previous;
         });
 
@@ -170,7 +170,7 @@ public class Scoreboards
                 scoreboard.onObjectiveAdded(objective);
                 return Value.FALSE;
             }
-            scoreboard.addObjective(objectiveName, criterion, Component.literal(objectiveName), criterion.getDefaultRenderType());
+            scoreboard.addObjective(objectiveName, criterion, Component.literal(objectiveName), criterion.getDefaultRenderType(), false, null);
             return Value.TRUE;
         });
 
@@ -423,7 +423,7 @@ public class Scoreboards
                     {
                         throw new InternalExpressionException("'team_property' requires a string as the third argument for the property " + propertyVal.getString());
                     }
-                    Team.CollisionRule collisionRule = Team.CollisionRule.byName(settingVal.getString());
+                    Team.CollisionRule collisionRule = getCollisionRule(settingVal);
                     if (collisionRule == null)
                     {
                         throw new InternalExpressionException("Unknown value for property " + propertyVal.getString() + ": " + settingVal.getString());
@@ -455,7 +455,7 @@ public class Scoreboards
                     {
                         throw new InternalExpressionException("'team_property' requires a string as the third argument for the property " + propertyVal.getString());
                     }
-                    Team.Visibility deathMessageVisibility = Team.Visibility.byName(settingVal.getString());
+                    Team.Visibility deathMessageVisibility = getVisibility(settingVal);
                     if (deathMessageVisibility == null)
                     {
                         throw new InternalExpressionException("Unknown value for property " + propertyVal.getString() + ": " + settingVal.getString());
@@ -493,7 +493,7 @@ public class Scoreboards
                     {
                         throw new InternalExpressionException("'team_property' requires a string as the third argument for the property " + propertyVal.getString());
                     }
-                    Team.Visibility nametagVisibility = Team.Visibility.byName(settingVal.getString());
+                    Team.Visibility nametagVisibility = getVisibility(settingVal);
                     if (nametagVisibility == null)
                     {
                         throw new InternalExpressionException("Unknown value for property " + propertyVal.getString() + ": " + settingVal.getString());
@@ -540,7 +540,8 @@ public class Scoreboards
 
         expression.addContextFunction("bossbar", -1, (c, t, lv) ->
         {
-            CustomBossEvents bossBarManager = ((CarpetContext) c).server().getCustomBossEvents();
+            MinecraftServer server = ((CarpetContext) c).server();
+            CustomBossEvents bossBarManager = server.getCustomBossEvents();
             if (lv.size() > 3)
             {
                 throw new InternalExpressionException("'bossbar' accepts max three arguments");
@@ -548,11 +549,11 @@ public class Scoreboards
 
             if (lv.isEmpty())
             {
-                return ListValue.wrap(bossBarManager.getEvents().stream().map(CustomBossEvent::getTextId).map(ResourceLocation::toString).map(StringValue::of));
+                return ListValue.wrap(bossBarManager.getEvents().stream().map(CustomBossEvent::customId).map(Identifier::toString).map(StringValue::of));
             }
 
             String id = lv.get(0).getString();
-            ResourceLocation identifier = InputValidator.identifierOf(id);
+            Identifier identifier = InputValidator.identifierOf(id);
 
             if (lv.size() == 1)
             {
@@ -560,7 +561,7 @@ public class Scoreboards
                 {
                     return Value.FALSE;
                 }
-                return StringValue.of(bossBarManager.create(identifier, Component.literal(id)).getTextId().toString());
+                return StringValue.of(bossBarManager.create(server.overworld().getRandom(), identifier, Component.literal(id)).customId().toString());
             }
 
             String property = lv.get(1).getString();
@@ -581,18 +582,18 @@ public class Scoreboards
                         BossEvent.BossBarColor color = (bossBar).getColor();
                         return color == null ? Value.NULL : StringValue.of(color.getName());
                     }
-                    BossEvent.BossBarColor color = BossEvent.BossBarColor.byName(propertyValue.getString());
+                    BossEvent.BossBarColor color = ((StringRepresentable.EnumCodec<BossEvent.BossBarColor>)BossEvent.BossBarColor.CODEC).byName(propertyValue.getString());
                     if (color == null)
                     {
                         return Value.NULL;
                     }
-                    bossBar.setColor(BossEvent.BossBarColor.byName(propertyValue.getString()));
+                    bossBar.setColor(color);
                     return Value.TRUE;
                 }
                 case "max" -> {
                     if (propertyValue == null)
                     {
-                        return NumericValue.of(bossBar.getMax());
+                        return NumericValue.of(bossBar.max());
                     }
                     if (!(propertyValue instanceof final NumericValue number))
                     {
@@ -617,7 +618,7 @@ public class Scoreboards
                     if (propertyValue instanceof final ListValue list)
                     {
                         list.getItems().forEach(v -> {
-                            ServerPlayer player = EntityValue.getPlayerByValue(((CarpetContext) c).server(), propertyValue);
+                            ServerPlayer player = EntityValue.getPlayerByValue(server, propertyValue);
                             if (player != null)
                             {
                                 bossBar.addPlayer(player);
@@ -625,7 +626,7 @@ public class Scoreboards
                         });
                         return Value.TRUE;
                     }
-                    ServerPlayer player = EntityValue.getPlayerByValue(((CarpetContext) c).server(), propertyValue);
+                    ServerPlayer player = EntityValue.getPlayerByValue(server, propertyValue);
                     if (player != null)
                     {
                         bossBar.addPlayer(player);
@@ -642,7 +643,7 @@ public class Scoreboards
                     {
                         bossBar.removeAllPlayers();
                         list.getItems().forEach(v -> {
-                            ServerPlayer p = EntityValue.getPlayerByValue(((CarpetContext) c).server(), v);
+                            ServerPlayer p = EntityValue.getPlayerByValue(server, v);
                             if (p != null)
                             {
                                 bossBar.addPlayer(p);
@@ -650,7 +651,7 @@ public class Scoreboards
                         });
                         return Value.TRUE;
                     }
-                    ServerPlayer p = EntityValue.getPlayerByValue(((CarpetContext) c).server(), propertyValue);
+                    ServerPlayer p = EntityValue.getPlayerByValue(server, propertyValue);
                     bossBar.removeAllPlayers();
                     if (p != null)
                     {
@@ -664,7 +665,7 @@ public class Scoreboards
                     {
                         return StringValue.of(bossBar.getOverlay().getName());
                     }
-                    BossEvent.BossBarOverlay style = BossEvent.BossBarOverlay.byName(propertyValue.getString());
+                    BossEvent.BossBarOverlay style = ((StringRepresentable.EnumCodec<BossEvent.BossBarOverlay>)BossEvent.BossBarOverlay.CODEC).byName(propertyValue.getString());
                     if (style == null)
                     {
                         throw new InternalExpressionException("'" + propertyValue.getString() + "' is not a valid value for property " + property);
@@ -675,7 +676,7 @@ public class Scoreboards
                 case "value" -> {
                     if (propertyValue == null)
                     {
-                        return NumericValue.of(bossBar.getValue());
+                        return NumericValue.of(bossBar.value());
                     }
                     if (!(propertyValue instanceof final NumericValue number))
                     {
@@ -699,6 +700,36 @@ public class Scoreboards
                 default -> throw new InternalExpressionException("Unknown bossbar property " + property);
             }
         });
+    }
+
+    @Nullable
+    private static Team.CollisionRule getCollisionRule(Value settingVal)
+    {
+
+        final String string = settingVal.getString();
+        for (Team.CollisionRule rule : Team.CollisionRule.values())
+        {
+            if (rule.getSerializedName().equalsIgnoreCase(string))
+            {
+                return rule;
+            }
+        }
+        return null;
+    }
+
+    @Nullable
+    private static Team.Visibility getVisibility(Value settingVal)
+    {
+
+        final String string = settingVal.getString();
+        for (Team.Visibility rule : Team.Visibility.values())
+        {
+            if (rule.getSerializedName().equalsIgnoreCase(string))
+            {
+                return rule;
+            }
+        }
+        return null;
     }
 }
 

@@ -15,18 +15,13 @@ import carpet.commands.MobAICommand;
 import carpet.commands.PerimeterInfoCommand;
 import carpet.commands.PlayerCommand;
 import carpet.commands.ProfileCommand;
-import carpet.fakes.MinecraftServerInterface;
-import carpet.helpers.ServerTickRateManager;
 import carpet.script.ScriptCommand;
 import carpet.commands.SpawnCommand;
 import carpet.commands.TestCommand;
-import carpet.commands.TickCommand;
 import carpet.network.ServerNetworkHandler;
 import carpet.helpers.HopperCounter;
 import carpet.logging.LoggerRegistry;
 import carpet.script.CarpetScriptServer;
-import carpet.api.settings.CarpetRule;
-import carpet.api.settings.InvalidRuleValueException;
 import carpet.api.settings.SettingsManager;
 import carpet.logging.HUDController;
 import carpet.script.external.Carpet;
@@ -44,6 +39,8 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.commands.PerfCommand;
 import net.minecraft.server.level.ServerPlayer;
+
+import org.jspecify.annotations.Nullable;
 
 public class CarpetServer // static for now - easier to handle all around the code, its one anyways
 {
@@ -104,23 +101,11 @@ public class CarpetServer // static for now - easier to handle all around the co
         extensions.forEach(e -> e.onServerLoadedWorlds(minecraftServer));
         // initialize scarpet rules after all extensions are loaded
         forEachManager(SettingsManager::initializeScarpetRules);
-        // run fillLimit rule migration now that gamerules are available
-        @SuppressWarnings("unchecked")
-        CarpetRule<Integer> fillLimit = (CarpetRule<Integer>) settingsManager.getCarpetRule("fillLimit");
-        try
-        {
-            fillLimit.set(minecraftServer.createCommandSourceStack(), fillLimit.value());
-        } catch (InvalidRuleValueException e)
-        {
-            throw new AssertionError();
-        }
         scriptServer.initializeForWorld();
     }
 
     public static void tick(MinecraftServer server)
     {
-        ServerTickRateManager trm = ((MinecraftServerInterface)server).getTickRateManager();
-        trm.tick();
         HUDController.update_hud(server, null);
         if (scriptServer != null) scriptServer.tick();
 
@@ -138,7 +123,6 @@ public class CarpetServer // static for now - easier to handle all around the co
         }
         forEachManager(sm -> sm.registerCommand(dispatcher, commandBuildContext));
 
-        TickCommand.register(dispatcher, commandBuildContext);
         ProfileCommand.register(dispatcher, commandBuildContext);
         CounterCommand.register(dispatcher, commandBuildContext);
         LogCommand.register(dispatcher, commandBuildContext);
@@ -178,7 +162,7 @@ public class CarpetServer // static for now - easier to handle all around the co
         LoggerRegistry.playerDisconnected(player);
         extensions.forEach(e -> e.onPlayerLoggedOut(player));
         // first case client, second case server
-        CarpetScriptServer runningScriptServer = (player.getServer() == null) ? scriptServer : Vanilla.MinecraftServer_getScriptServer(player.getServer());
+        CarpetScriptServer runningScriptServer = (player.level().getServer() == null) ? scriptServer : Vanilla.MinecraftServer_getScriptServer(player.level().getServer());
         if (runningScriptServer != null && !runningScriptServer.stopAll) {
             runningScriptServer.onPlayerLoggedOut(player, reason);
         }
@@ -190,7 +174,7 @@ public class CarpetServer // static for now - easier to handle all around the co
         scriptServer = null;
     }
 
-    public static void onServerClosed(MinecraftServer server)
+    public static void onServerClosed(@Nullable MinecraftServer server)
     {
         // this for whatever reason gets called multiple times even when joining on SP
         // so we allow to pass multiple times gating it only on existing server ref
@@ -198,7 +182,7 @@ public class CarpetServer // static for now - easier to handle all around the co
         {
             if (scriptServer != null) scriptServer.onClose();
             // this is a mess, will cleanip onlly when global reference is gone
-            if (!Vanilla.MinecraftServer_getScriptServer(server).stopAll) {
+            if (server != null && !Vanilla.MinecraftServer_getScriptServer(server).stopAll) {
                 Vanilla.MinecraftServer_getScriptServer(server).onClose();
             }
 
@@ -241,15 +225,6 @@ public class CarpetServer // static for now - easier to handle all around the co
     {
         scriptServer.reload(server);
         extensions.forEach(e -> e.onReload(server));
-    }
-    
-    private static final Set<CarpetExtension> warnedOutdatedManagerProviders = new HashSet<>();
-    static void warnOutdatedManager(CarpetExtension ext)
-    {
-        if (warnedOutdatedManagerProviders.add(ext))
-            CarpetSettings.LOG.warn("""
-                    %s is providing a SettingsManager from an outdated method in CarpetExtension!
-                    This behaviour will not work in later Carpet versions and the manager won't be registered!""".formatted(ext.getClass().getName()));
     }
 }
 

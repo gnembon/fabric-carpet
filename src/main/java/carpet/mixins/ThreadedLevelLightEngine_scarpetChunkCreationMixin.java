@@ -2,7 +2,7 @@ package carpet.mixins;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.function.IntSupplier;
-import net.minecraft.Util;
+import net.minecraft.util.Util;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.SectionPos;
 import net.minecraft.server.level.ChunkMap;
@@ -46,9 +46,9 @@ public abstract class ThreadedLevelLightEngine_scarpetChunkCreationMixin extends
         ChunkPos pos = chunk.getPos();
         chunk.setLightCorrect(false);
 
-        this.addTask(pos.x, pos.z, () -> 0, ThreadedLevelLightEngine.TaskType.PRE_UPDATE, Util.name(() -> {
+        this.addTask(pos.x(), pos.z(), () -> 0, ThreadedLevelLightEngine.TaskType.PRE_UPDATE, Util.name(() -> {
                 super.setLightEnabled(pos, false);
-                ((Lighting_scarpetChunkCreationInterface) this).removeLightData(SectionPos.getZeroNode(SectionPos.asLong(pos.x, 0, pos.z)));
+                ((Lighting_scarpetChunkCreationInterface) this).removeLightData(SectionPos.getZeroNode(SectionPos.asLong(pos.x(), 0, pos.z())));
             },
             () -> "Remove light data " + pos
         ));
@@ -59,10 +59,10 @@ public abstract class ThreadedLevelLightEngine_scarpetChunkCreationMixin extends
     {
         ChunkPos pos = chunk.getPos();
 
-        this.addTask(pos.x, pos.z, () -> 0, ThreadedLevelLightEngine.TaskType.PRE_UPDATE, Util.name(() -> {
+        this.addTask(pos.x(), pos.z(), () -> 0, ThreadedLevelLightEngine.TaskType.PRE_UPDATE, Util.name(() -> {
                 super.propagateLightSources(pos);
-                int minY = chunk.getMinBuildHeight();
-                int maxY = chunk.getMaxBuildHeight();
+                int minY = chunk.getMinY();
+                int maxY = chunk.getMaxY();
                 int minX = pos.getMinBlockX();
                 int minZ = pos.getMinBlockZ();
                 BlockPos.MutableBlockPos poss = new BlockPos.MutableBlockPos();
@@ -88,11 +88,11 @@ public abstract class ThreadedLevelLightEngine_scarpetChunkCreationMixin extends
         return CompletableFuture.runAsync(
             Util.name(() -> {
                     chunk.setLightCorrect(true);
-                    ((ThreadedAnvilChunkStorageInterface) this.chunkMap).releaseRelightTicket(pos);
+                    //((ThreadedAnvilChunkStorageInterface) this.chunkMap).releaseRelightTicket(pos);
                 },
                 () -> "Release relight ticket " + pos
             ),
-            runnable -> this.addTask(pos.x, pos.z, () -> 0, ThreadedLevelLightEngine.TaskType.POST_UPDATE, runnable)
+            runnable -> this.addTask(pos.x(), pos.z(), () -> 0, ThreadedLevelLightEngine.TaskType.POST_UPDATE, runnable)
         );
     }
 }

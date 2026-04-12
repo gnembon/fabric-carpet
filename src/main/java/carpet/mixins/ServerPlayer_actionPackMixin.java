@@ -4,6 +4,7 @@ import carpet.fakes.ServerPlayerInterface;
 import carpet.helpers.EntityPlayerActionPack;
 import com.mojang.authlib.GameProfile;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ClientInformation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import org.spongepowered.asm.mixin.Mixin;
@@ -24,7 +25,7 @@ public abstract class ServerPlayer_actionPackMixin implements ServerPlayerInterf
     }
 
     @Inject(method = "<init>", at = @At(value = "RETURN"))
-    private void onServerPlayerEntityContructor(MinecraftServer minecraftServer, ServerLevel serverLevel, GameProfile gameProfile, CallbackInfo ci)
+    private void onServerPlayerEntityContructor(MinecraftServer minecraftServer, ServerLevel serverLevel, GameProfile gameProfile, ClientInformation cli, CallbackInfo ci)
     {
         this.actionPack = new EntityPlayerActionPack((ServerPlayer) (Object) this);
     }

@@ -11,7 +11,7 @@ import net.minecraft.world.level.levelgen.structure.pieces.PieceGeneratorSupplie
 @Mixin(PieceGeneratorSupplier.class)
 public interface PieceGeneratorSupplier_plopMixin
 {
-    @Redirect(method = "method_39845", at = @At(
+    @Redirect(method = "lambda$simple$0", at = @At(
             value = "INVOKE",
             target = "java/util/function/Predicate.test(Ljava/lang/Object;)Z"
     ), remap = false)

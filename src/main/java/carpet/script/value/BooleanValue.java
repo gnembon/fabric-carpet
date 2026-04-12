@@ -2,6 +2,7 @@ package carpet.script.value;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonPrimitive;
+import net.minecraft.core.RegistryAccess;
 import net.minecraft.nbt.ByteTag;
 import net.minecraft.nbt.Tag;
 
@@ -54,7 +55,7 @@ public class BooleanValue extends NumericValue
     }
 
     @Override
-    public Tag toTag(boolean force)
+    public Tag toTag(boolean force, RegistryAccess regs)
     {
         return ByteTag.valueOf(boolValue);
     }

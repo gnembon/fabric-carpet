@@ -188,7 +188,7 @@ public class DataStructures
                         ? ListValue.wrap(map.getMap().entrySet().stream().map(p -> ListValue.of(p.getKey(), p.getValue())))
                         : Value.NULL);
 
-        expression.addBinaryContextOperator(":", Operators.precedence.get("attribute~:"), true, true, false, (ctx, t, container, address) ->
+        expression.addBinaryContextOperator(":", "element",  Operators.precedence.get("attribute~:"), true, true, false, (ctx, t, container, address) ->
         {
             if (container instanceof final LContainerValue lcv)
             {

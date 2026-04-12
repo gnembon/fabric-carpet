@@ -1,6 +1,7 @@
 package carpet.commands;
 
 import carpet.CarpetSettings;
+import carpet.utils.CarpetProfiler;
 import carpet.utils.CommandHelper;
 
 import com.mojang.brigadier.CommandDispatcher;
@@ -8,8 +9,6 @@ import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import net.minecraft.commands.CommandBuildContext;
 import net.minecraft.commands.CommandSourceStack;
 
-import static carpet.commands.TickCommand.healthEntities;
-import static carpet.commands.TickCommand.healthReport;
 import static com.mojang.brigadier.arguments.IntegerArgumentType.getInteger;
 import static com.mojang.brigadier.arguments.IntegerArgumentType.integer;
 import static net.minecraft.commands.Commands.argument;
@@ -31,5 +30,17 @@ public class ProfileCommand
                         then(argument("ticks", integer(20,24000)).
                                 executes((c) -> healthEntities(c.getSource(), getInteger(c, "ticks")))));
         dispatcher.register(literalargumentbuilder);
+    }
+
+    public static int healthReport(CommandSourceStack source, int ticks)
+    {
+        CarpetProfiler.prepare_tick_report(source, ticks);
+        return 1;
+    }
+
+    public static int healthEntities(CommandSourceStack source, int ticks)
+    {
+        CarpetProfiler.prepare_entity_report(source, ticks);
+        return 1;
     }
 }

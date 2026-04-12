@@ -2,6 +2,7 @@ package carpet.script.utils;
 
 import carpet.script.CarpetScriptHost;
 import carpet.script.CarpetScriptServer;
+import carpet.script.Expression;
 import carpet.script.exception.InternalExpressionException;
 import carpet.script.external.Carpet;
 import carpet.script.external.Vanilla;
@@ -12,8 +13,8 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import net.minecraft.commands.CommandRuntimeException;
 import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.level.storage.LevelResource;
 
 import java.io.BufferedWriter;
@@ -33,7 +34,7 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.io.IOUtils;
 
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 
 /**
  * A class used to save scarpet app store scripts to disk
@@ -283,8 +284,7 @@ public class AppStoreManager
         {
             return 0;
         }
-        boolean success = Vanilla.MinecraftServer_getScriptServer(source.getServer()).addScriptHost(source, nodeInfo.name().replaceFirst("\\.sc$", ""), null, true, false, false, nodeInfo.source());
-        return success ? 1 : 0;
+        return Vanilla.MinecraftServer_getScriptServer(source.getServer()).addScriptHost(source, nodeInfo.name().replaceFirst("\\.sc$", ""), null, true, false, false, nodeInfo.source(), Expression.LoadOverride.DEFAULT);
     }
 
     /**
@@ -472,5 +472,18 @@ public class AppStoreManager
             throw new InternalExpressionException("Error when installing app dependencies: " + e);
         }
         CarpetScriptServer.LOG.info("Downloaded app " + target + " from " + contentUrl);
+    }
+
+    public static class CommandRuntimeException extends RuntimeException {
+        private final Component message;
+
+        public CommandRuntimeException(Component message) {
+            super(message.getString(), null, false, false);
+            this.message = message;
+        }
+
+        public Component getComponent() {
+            return message;
+        }
     }
 }

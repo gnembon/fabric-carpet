@@ -17,11 +17,14 @@ import java.util.Map;
 import java.util.OptionalInt;
 
 import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.core.RegistryAccess;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.NbtOps;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.permissions.PermissionSet;
 import net.minecraft.world.Container;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.SimpleContainer;
@@ -36,7 +39,7 @@ import net.minecraft.world.inventory.BlastFurnaceMenu;
 import net.minecraft.world.inventory.BrewingStandMenu;
 import net.minecraft.world.inventory.CartographyTableMenu;
 import net.minecraft.world.inventory.ChestMenu;
-import net.minecraft.world.inventory.ClickType;
+import net.minecraft.world.inventory.ContainerInput;
 import net.minecraft.world.inventory.ContainerListener;
 import net.minecraft.world.inventory.CraftingMenu;
 import net.minecraft.world.inventory.DataSlot;
@@ -56,7 +59,7 @@ import net.minecraft.world.inventory.StonecutterMenu;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.RecipeHolder;
 
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import static net.minecraft.world.inventory.MenuType.*;
 
@@ -198,7 +201,7 @@ public class ScreenValue extends Value
             this.screenHandler = null;
             return false;
         }
-        int runPermissionLevel = Vanilla.MinecraftServer_getRunPermissionLevel(player.server);
+        PermissionSet runPermissionLevel = Vanilla.MinecraftServer_getRunPermissionLevel(player.level().getServer());
         CommandSourceStack source = player.createCommandSourceStack().withPermission(runPermissionLevel);
         CarpetScriptHost executingHost = appHost.retrieveForExecution(source, player);
         try
@@ -223,11 +226,11 @@ public class ScreenValue extends Value
         screenHandler.addSlotListener(new ScarpetScreenHandlerListener()
         {
             @Override
-            public boolean onSlotClick(ServerPlayer player, ClickType actionType, int slot, int button)
+            public boolean onSlotClick(ServerPlayer player, ContainerInput actionType, int slot, int button)
             {
                 Map<Value, Value> data = new HashMap<>();
                 data.put(StringValue.of("slot"), slot == AbstractContainerMenu.SLOT_CLICKED_OUTSIDE ? Value.NULL : NumericValue.of(slot));
-                if (actionType == ClickType.QUICK_CRAFT)
+                if (actionType == ContainerInput.QUICK_CRAFT)
                 {
                     data.put(StringValue.of("quick_craft_stage"), NumericValue.of(AbstractContainerMenu.getQuickcraftHeader(button)));
                     button = AbstractContainerMenu.getQuickcraftType(button);
@@ -340,7 +343,7 @@ public class ScreenValue extends Value
         DataSlot property = getProperty(propertyName);
         int intValue = NumericValue.asNumber(lv.get(0)).getInt();
         property.set(intValue);
-        this.screenHandler.sendAllDataToRemote();
+        this.screenHandler.broadcastChanges();
         return Value.TRUE;
     }
 
@@ -373,18 +376,25 @@ public class ScreenValue extends Value
     }
 
     @Override
-    public Tag toTag(boolean force)
+    public Tag toTag(boolean force, RegistryAccess regs)
     {
         if (this.screenHandler == null)
         {
-            return Value.NULL.toTag(true);
+            return Value.NULL.toTag(true, regs);
         }
 
         ListTag nbtList = new ListTag();
         for (int i = 0; i < this.screenHandler.slots.size(); i++)
         {
             ItemStack itemStack = this.screenHandler.getSlot(i).getItem();
-            nbtList.add(itemStack.save(new CompoundTag()));
+            if (itemStack.isEmpty())
+            {
+                nbtList.add(new CompoundTag());
+            }
+            else
+            {
+                nbtList.add(ItemStack.CODEC.encodeStart(regs.createSerializationContext(NbtOps.INSTANCE), itemStack).getOrThrow(InternalExpressionException::new));
+            }
         }
         return nbtList;
     }
@@ -392,7 +402,7 @@ public class ScreenValue extends Value
 
     public interface ScarpetScreenHandlerListener extends ContainerListener
     {
-        boolean onSlotClick(ServerPlayer player, ClickType actionType, int slot, int button);
+        boolean onSlotClick(ServerPlayer player, ContainerInput actionType, int slot, int button);
 
         boolean onButtonClick(ServerPlayer player, int button);
 
@@ -536,7 +546,7 @@ public class ScreenValue extends Value
         }
     }
 
-    private static String actionTypeToString(ClickType actionType)
+    private static String actionTypeToString(ContainerInput actionType)
     {
         return switch (actionType)
         {

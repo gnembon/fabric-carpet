@@ -127,8 +127,9 @@ _start_with(points_supplier) ->
     global_dimension = p~'dimension';
 
     code = abs(hash_code(str(p))-123456);
-    global_color_a = str('dust %.1f %.1f %.1f 1',(code%10)/10,(((code/10)%10)/10), (((code/100)%10)/10) ); //    'dust 0.1 0.9 0.1 1',
-    global_color_b = str('dust %.1f %.1f %.1f 1',(((code/1000)%10)/10),(((code/10000)%10)/10), (((code/100000)%10)/10) );// 'dust 0.6 0.6 0.6 1'
+
+    global_color_a = str('dust{"scale": 1, "color": [%.1f, %.1f, %.1f]}',(code%10)/10,(((code/10)%10)/10), (((code/100)%10)/10) ); //    'dust 0.1 0.9 0.1 1',
+    global_color_b = str('dust{"scale": 1, "color": [%.1f, %.1f, %.1f]}',(((code/1000)%10)/10),(((code/10000)%10)/10), (((code/100000)%10)/10) );// 'dust 0.6 0.6 0.6 1'
 
     global_points = call(points_supplier);
     global_selected_point = null;

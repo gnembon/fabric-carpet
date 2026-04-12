@@ -3,6 +3,7 @@ package carpet.mixins;
 import carpet.fakes.EntityInterface;
 import carpet.fakes.LivingEntityInterface;
 import carpet.script.EntityEventsGroup;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
@@ -42,7 +43,7 @@ public abstract class LivingEntity_scarpetEventsMixin extends Entity implements 
             target = "Lnet/minecraft/world/entity/LivingEntity;getDamageAfterArmorAbsorb(Lnet/minecraft/world/damagesource/DamageSource;F)F",
             shift = At.Shift.BEFORE
     ))
-    private void entityTakingDamage(DamageSource source, float amount, CallbackInfo ci)
+    private void entityTakingDamage(ServerLevel serverLevel, DamageSource source, float amount, CallbackInfo ci)
     {
         ((EntityInterface)this).getEventContainer().onEvent(EntityEventsGroup.Event.ON_DAMAGE, amount, source);
         // this is not applicable since its not a playr for sure

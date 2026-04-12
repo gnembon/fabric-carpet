@@ -1,9 +1,7 @@
 package carpet.logging;
 
 import carpet.CarpetServer;
-import carpet.fakes.MinecraftServerInterface;
 import carpet.helpers.HopperCounter;
-import carpet.helpers.ServerTickRateManager;
 import carpet.logging.logHelpers.PacketCounter;
 import carpet.utils.Messenger;
 import carpet.utils.SpawnReporter;
@@ -11,16 +9,16 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundTabListPacket;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.ServerTickRateManager;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.TimeUtil;
 import net.minecraft.world.level.Level;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.OptionalDouble;
 import java.util.Set;
 import java.util.function.Consumer;
 
@@ -117,18 +115,14 @@ public class HUDController
     }
     private static Component [] send_tps_display(MinecraftServer server)
     {
-        OptionalDouble averageTPS = Arrays.stream(server.tickTimes).average();
-        ServerTickRateManager trm = ((MinecraftServerInterface)server).getTickRateManager();
-        if (averageTPS.isEmpty())
-        {
-            return new Component[]{Component.literal("No TPS data available")};
-        }
-        double MSPT = Arrays.stream(server.tickTimes).average().getAsDouble() * 1.0E-6D;
-        double TPS = 1000.0D / Math.max(trm.isInWarpSpeed()?0.0:trm.mspt(), MSPT);
-        if (trm.gameIsPaused()) {
+        double MSPT = ((double)server.getAverageTickTimeNanos())/ TimeUtil.NANOSECONDS_PER_MILLISECOND;
+        ServerTickRateManager trm = server.tickRateManager();
+
+        double TPS = 1000.0D / Math.max(trm.isSprinting()?0.0:trm.millisecondsPerTick(), MSPT);
+        if (trm.isFrozen()) {
             TPS = 0;
         }
-        String color = Messenger.heatmap_color(MSPT,trm.mspt());
+        String color = Messenger.heatmap_color(MSPT,trm.millisecondsPerTick());
         return new Component[]{Messenger.c(
                 "g TPS: ", String.format(Locale.US, "%s %.1f",color, TPS),
                 "g  MSPT: ", String.format(Locale.US,"%s %.1f", color, MSPT))};

@@ -10,6 +10,7 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import org.jspecify.annotations.Nullable;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -36,6 +37,8 @@ public abstract class ScriptHost
     private final ScriptServer scriptServer;
     protected boolean inTermination = false;
     public boolean strict;
+    public Expression.LoadOverride loadOverrides;
+    public Expression.@Nullable ExpressionNode root;
 
     private final Set<String> deprecations = new HashSet<>();
 
@@ -121,23 +124,35 @@ public abstract class ScriptHost
         return main == null ? null : main.name();
     }
 
+    public String getVisualName()
+    {
+        return main == null ? "built-in default app" : main.name();
+    }
+
+    public boolean isDefaultApp()
+    {
+        return main == null;
+    }
+
+    @Nullable
     public final Module main;
 
     @FunctionalInterface
     public interface ErrorSnooper
     {
-        List<String> apply(Expression expression, Tokenizer.Token token, Context context, String message);
+        List<String> apply(Expression expression, Token token, Context context, String message);
     }
 
     public ErrorSnooper errorSnooper = null;
 
-    protected ScriptHost(Module code, ScriptServer scriptServer, boolean perUser, ScriptHost parent)
+    protected ScriptHost(@Nullable Module code, ScriptServer scriptServer, boolean perUser, ScriptHost parent, Expression.LoadOverride loadOverrides)
     {
         this.parent = parent;
         this.main = code;
         this.perUser = perUser;
         this.user = null;
         this.strict = false;
+        this.loadOverrides = loadOverrides;
         this.scriptServer = scriptServer;
         ModuleData moduleData = new ModuleData(code);
         initializeModuleGlobals(moduleData);
@@ -219,6 +234,7 @@ public abstract class ScriptHost
 
     protected abstract void runModuleCode(Context c, Module module); // this should be shell out in the executor
 
+    @Nullable
     public FunctionValue getFunction(String name)
     {
         return getFunction(main, name);
@@ -241,6 +257,7 @@ public abstract class ScriptHost
         return ret;
     }
 
+    @Nullable
     private FunctionValue getFunction(Module module, String name)
     {
         ModuleData local = getModuleData(module);
@@ -274,6 +291,7 @@ public abstract class ScriptHost
         return target.globalFunctions.get(name);
     }
 
+    @Nullable
     private ModuleData findModuleDataFromFunctionImports(String name, ModuleData source, int ttl)
     {
         if (ttl > 64)
@@ -448,6 +466,7 @@ public abstract class ScriptHost
         this.moduleData.forEach((key, value) -> host.moduleData.put(key, new ModuleData(key, value)));
         // fixing imports
         host.moduleData.forEach((module, data) -> data.setImportsBasedOn(host, this.moduleData.get(data.parent)));
+        host.root = this.root;
     }
 
     public synchronized void handleExpressionException(String msg, ExpressionException exc)
@@ -551,7 +570,7 @@ public abstract class ScriptHost
             return false;
         }
         deprecations.add(feature);
-        DEPRECATION_LOG.warn("App '" + getName() + "' uses '" + feature + "', which is deprecated for removal. Check the docs for a replacement");
+        DEPRECATION_LOG.warn("App '" + getVisualName() + "' uses '" + feature + "', which is deprecated for removal. Check the docs for a replacement");
         return true;
     }
 

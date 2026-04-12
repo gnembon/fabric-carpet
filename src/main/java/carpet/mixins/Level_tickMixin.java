@@ -1,9 +1,8 @@
 package carpet.mixins;
 
 import carpet.fakes.LevelInterface;
-import carpet.helpers.TickRateManager;
 import carpet.utils.CarpetProfiler;
-import net.minecraft.world.level.redstone.NeighborUpdater;
+import net.minecraft.world.level.redstone.CollectingNeighborUpdater;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -23,7 +22,7 @@ import net.minecraft.world.level.Level;
 public abstract class Level_tickMixin implements LevelInterface
 {
     @Shadow @Final public boolean isClientSide;
-    @Shadow @Final protected NeighborUpdater neighborUpdater;
+    @Shadow @Final protected CollectingNeighborUpdater neighborUpdater;
     CarpetProfiler.ProfilerToken currentSection;
     CarpetProfiler.ProfilerToken entitySection;
 
@@ -31,7 +30,7 @@ public abstract class Level_tickMixin implements LevelInterface
 
     @Override
     @Unique
-    public NeighborUpdater getNeighborUpdater() {
+    public CollectingNeighborUpdater getNeighborUpdater() {
         return this.neighborUpdater;
     }
 
@@ -54,12 +53,6 @@ public abstract class Level_tickMixin implements LevelInterface
     @Inject(method = "guardEntityTick", at = @At("HEAD"), cancellable = true)
     private void startEntity(Consumer<Entity> consumer_1, Entity e, CallbackInfo ci)
     {
-        TickRateManager trm = tickRateManager();
-        if (!trm.shouldEntityTick(e))
-        {
-            ci.cancel();
-        }
-
         entitySection =  CarpetProfiler.start_entity_section((Level) (Object) this, e, CarpetProfiler.TYPE.ENTITY);
     }
 

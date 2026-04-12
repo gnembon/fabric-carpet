@@ -4,7 +4,7 @@ import java.util.List;
 
 import carpet.script.Context;
 import carpet.script.Expression;
-import carpet.script.Tokenizer.Token;
+import carpet.script.Token;
 import carpet.script.value.FunctionValue;
 import carpet.script.value.Value;
 

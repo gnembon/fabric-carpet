@@ -25,6 +25,7 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import carpet.script.Expression;
 import com.google.common.collect.Sets;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
@@ -304,7 +305,7 @@ public class SettingsManager {
     /**
      * Calling this method is not supported.
      */
-    public void inspectClientsideCommand(CommandSourceStack source, String string)
+    public void inspectClientsideCommand(String string)
     {
         if (string.startsWith("/" + identifier + " "))
         {
@@ -316,9 +317,9 @@ public class SettingsManager {
                 if (rules.containsKey(rule) && rules.get(rule).canBeToggledClientSide())
                 {
                     try {
-                        rules.get(rule).set(source, strOption);
+                        rules.get(rule).set(null, strOption);
                     } catch (InvalidRuleValueException e) {
-                        e.notifySource(rule, source);
+                        //e.notifySource(rule, source);
                     }
                 }
             }
@@ -331,7 +332,7 @@ public class SettingsManager {
         {
             if (RuleHelper.getBooleanValue(rule) || (rule.type() == String.class && !rule.value().equals("false")))
             {
-                CarpetServer.scriptServer.addScriptHost(source, rule.scarpetApp, s -> CommandHelper.canUseCommand(s, rule.value()), false, false, true, null);
+                CarpetServer.scriptServer.addScriptHost(source, rule.scarpetApp, s -> CommandHelper.canUseCommand(s, rule.value()), false, false, true, null, Expression.LoadOverride.DEFAULT);
             } else {
                 CarpetServer.scriptServer.removeScriptHost(source, rule.scarpetApp, false, true);
             }
@@ -694,16 +695,16 @@ public class SettingsManager {
     {
         if (locked()) return 0;
         if (!rules.containsKey(rule.name())) return 0;
-        ConfigReadResult conf = readSettingsFromConf(getFile());
-        conf.ruleMap().put(rule.name(), stringValue);
-        writeSettingsToConf(conf); // this may feels weird, but if conf
-        // is locked, it will never reach this point.
         try {
             rule.set(source, stringValue);
             Messenger.m(source ,"gi "+String.format(tr(TranslationKeys.DEFAULT_SET), RuleHelper.translatedName(rule), stringValue));
         } catch (InvalidRuleValueException e) {
             e.notifySource(rule.name(), source);
+            return 0;
         }
+        ConfigReadResult conf = readSettingsFromConf(getFile());
+        conf.ruleMap().put(rule.name(), stringValue);
+        writeSettingsToConf(conf);
         return 1;
     }
     // removes overrides of the default values in the file

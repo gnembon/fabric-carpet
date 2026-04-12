@@ -11,7 +11,7 @@ import net.minecraft.server.MinecraftServer;
 public abstract class MinecraftServer_pingPlayerSampleLimit
 {
 
-	@ModifyConstant(method = "tickServer", constant = @Constant(intValue = 12), require = 0, allow = 1)
+	@ModifyConstant(method = "buildPlayerStatus", constant = @Constant(intValue = 12), require = 1)
 	private int modifyPlayerSampleLimit(int value)
 	{
 		return CarpetSettings.pingPlayerListLimit;

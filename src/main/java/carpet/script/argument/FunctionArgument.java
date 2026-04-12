@@ -10,7 +10,7 @@ import carpet.script.value.ListValue;
 import carpet.script.value.Value;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;

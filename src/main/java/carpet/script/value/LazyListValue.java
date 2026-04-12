@@ -7,6 +7,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 
+import net.minecraft.core.RegistryAccess;
 import net.minecraft.nbt.StringTag;
 import net.minecraft.nbt.Tag;
 
@@ -55,7 +56,7 @@ public abstract class LazyListValue extends AbstractListValue implements Iterato
             @Override
             public String getString()
             {
-                return String.format(Locale.ROOT, "[%s, %s, ..., %s)", NumericValue.of(start).getString(), NumericValue.of(start + stepp).getString(), NumericValue.of(limit).getString());
+                return String.format(Locale.ROOT, "<%s, %s, ..., %s)", NumericValue.of(start).getString(), NumericValue.of(start + stepp).getString(), NumericValue.of(limit).getString());
             }
         };
     }
@@ -103,7 +104,7 @@ public abstract class LazyListValue extends AbstractListValue implements Iterato
             @Override
             public String getString()
             {
-                return String.format(Locale.ROOT, "[%s, %s, ..., %s)", NumericValue.of(start).getString(), NumericValue.of(start + stepp).getString(), NumericValue.of(limit).getString());
+                return String.format(Locale.ROOT, "<%s, %s, ..., %s)", NumericValue.of(start).getString(), NumericValue.of(start + stepp).getString(), NumericValue.of(limit).getString());
             }
         };
     }
@@ -238,7 +239,7 @@ public abstract class LazyListValue extends AbstractListValue implements Iterato
     }
 
     @Override
-    public Tag toTag(boolean force)
+    public Tag toTag(boolean force, RegistryAccess regs)
     {
         if (!force)
         {

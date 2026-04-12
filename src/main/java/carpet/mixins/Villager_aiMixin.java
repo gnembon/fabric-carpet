@@ -3,6 +3,7 @@ package carpet.mixins;
 import carpet.helpers.ParticleDisplay;
 import carpet.utils.Messenger;
 import carpet.utils.MobAI;
+import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.world.entity.ai.village.poi.PoiTypes;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -28,8 +29,8 @@ import net.minecraft.world.entity.ai.memory.MemoryModuleType;
 import net.minecraft.world.entity.ai.village.poi.PoiManager;
 import net.minecraft.world.entity.ai.village.poi.PoiRecord;
 import net.minecraft.world.entity.ai.village.poi.PoiType;
-import net.minecraft.world.entity.npc.AbstractVillager;
-import net.minecraft.world.entity.npc.Villager;
+import net.minecraft.world.entity.npc.villager.AbstractVillager;
+import net.minecraft.world.entity.npc.villager.Villager;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.schedule.Activity;
 import net.minecraft.world.item.BedItem;
@@ -64,14 +65,14 @@ public abstract class Villager_aiMixin extends AbstractVillager
         if (MobAI.isTracking(this, MobAI.TrackingType.IRON_GOLEM_SPAWNING))
         {
             long time;
-            Optional<? extends ExpirableValue<?>> last_seen = this.brain.getMemories().get(MemoryModuleType.GOLEM_DETECTED_RECENTLY);
+            Optional<Boolean> last_seen = this.brain.getMemory(MemoryModuleType.GOLEM_DETECTED_RECENTLY);
             if (!last_seen.isPresent())
             {
                 time = 0;
             }
             else
             {
-                time = last_seen.get().getTimeToLive();
+                time = this.brain.getTimeUntilExpiry(MemoryModuleType.GOLEM_DETECTED_RECENTLY);
             }
             boolean recentlySeen = time > 0;
             Optional<Long> optional_11 = this.brain.getMemory(MemoryModuleType.LAST_SLEPT);
@@ -126,12 +127,12 @@ public abstract class Villager_aiMixin extends AbstractVillager
                 if (bedPos == null || bedPos.dimension() != level().dimension()) // get Dimension
                 {
                     setUnhappy();
-                    ((ServerLevel) getCommandSenderWorld()).sendParticles(new BlockParticleOption(ParticleTypes.BLOCK_MARKER, Blocks.BARRIER.defaultBlockState()), getX(), getY() + getEyeHeight() + 1, getZ(), 1, 0.1, 0.1, 0.1, 0.0);
+                    ((ServerLevel) level()).sendParticles(new BlockParticleOption(ParticleTypes.BLOCK_MARKER, Blocks.BARRIER.defaultBlockState()), getX(), getY() + getEyeHeight() + 1, getZ(), 1, 0.1, 0.1, 0.1, 0.0);
                 }
                 else
                 {
 
-                    ParticleDisplay.drawParticleLine((ServerPlayer) playerEntity_1, position(), Vec3.atCenterOf(bedPos.pos()), "dust 0 0 0 1", "happy_villager", 100, 0.2); // pos+0.5v
+                    ParticleDisplay.drawParticleLine((ServerPlayer) playerEntity_1, position(), Vec3.atCenterOf(bedPos.pos()), new DustParticleOptions(0xff000000, 1),  ParticleTypes.HAPPY_VILLAGER, 100, 0.2); // pos+0.5v
                 }
             }
             else if (itemStack_1.getItem() == Items.ROTTEN_FLESH)
@@ -141,7 +142,7 @@ public abstract class Villager_aiMixin extends AbstractVillager
             }
             else if (itemStack_1.getItem() instanceof BedItem)
             {
-                List<PoiRecord> list_1 = ((ServerLevel) getCommandSenderWorld()).getPoiManager().getInRange(
+                List<PoiRecord> list_1 = ((ServerLevel) level()).getPoiManager().getInRange(
                         type -> type.is(PoiTypes.HOME),
                         blockPosition(),
                         48, PoiManager.Occupancy.ANY).toList();
@@ -150,16 +151,16 @@ public abstract class Villager_aiMixin extends AbstractVillager
                     Vec3 pv = Vec3.atCenterOf(poi.getPos());
                     if (!poi.hasSpace())
                     {
-                        ((ServerLevel) getCommandSenderWorld()).sendParticles(ParticleTypes.HAPPY_VILLAGER,
+                        ((ServerLevel) level()).sendParticles(ParticleTypes.HAPPY_VILLAGER,
                                 pv.x, pv.y+1.5, pv.z,
                                 50, 0.1, 0.3, 0.1, 0.0);
                     }
                     else if (canReachHome((Villager)(Object)this, poi.getPos(), poi))
-                        ((ServerLevel) getCommandSenderWorld()).sendParticles(ParticleTypes.END_ROD,
+                        ((ServerLevel) level()).sendParticles(ParticleTypes.END_ROD,
                                 pv.x, pv.y+1, pv.z,
                                 50, 0.1, 0.3, 0.1, 0.0);
                     else
-                        ((ServerLevel) getCommandSenderWorld()).sendParticles(new BlockParticleOption(ParticleTypes.BLOCK_MARKER, Blocks.BARRIER.defaultBlockState()),
+                        ((ServerLevel) level()).sendParticles(new BlockParticleOption(ParticleTypes.BLOCK_MARKER, Blocks.BARRIER.defaultBlockState()),
                                 pv.x, pv.y+1, pv.z,
                                 1, 0.1, 0.1, 0.1, 0.0);
                 }
@@ -185,7 +186,7 @@ public abstract class Villager_aiMixin extends AbstractVillager
     {
         if (MobAI.isTracking(this, MobAI.TrackingType.IRON_GOLEM_SPAWNING))
         {
-            ((ServerLevel) getCommandSenderWorld()).sendParticles(new BlockParticleOption(ParticleTypes.BLOCK_MARKER, Blocks.BARRIER.defaultBlockState()), getX(), getY()+3, getZ(), 1, 0.1, 0.1, 0.1, 0.0);
+            ((ServerLevel) level()).sendParticles(new BlockParticleOption(ParticleTypes.BLOCK_MARKER, Blocks.BARRIER.defaultBlockState()), getX(), getY()+3, getZ(), 1, 0.1, 0.1, 0.1, 0.0);
         }
     }
 

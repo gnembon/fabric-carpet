@@ -21,7 +21,7 @@ public class LevelEntityGetterAdapter_scarpetMixin<T extends EntityAccess> imple
 
     @Override
     public List<T> getChunkEntities(ChunkPos chpos) {
-        return this.sectionStorage.getExistingSectionsInChunk(chpos.toLong()).flatMap(EntitySection::getEntities).collect(Collectors.toList());
+        return this.sectionStorage.getExistingSectionsInChunk(chpos.pack()).flatMap(EntitySection::getEntities).collect(Collectors.toList());
     }
 }
 

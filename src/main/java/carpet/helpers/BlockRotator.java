@@ -2,8 +2,8 @@ package carpet.helpers;
 
 import carpet.fakes.PistonBlockInterface;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.BlockSource;
 import net.minecraft.core.Direction;
+import net.minecraft.core.dispenser.BlockSource;
 import net.minecraft.core.dispenser.DispenseItemBehavior;
 import net.minecraft.core.dispenser.OptionalDispenseItemBehavior;
 import net.minecraft.world.InteractionHand;
@@ -51,9 +51,9 @@ public class BlockRotator
 
     public static ItemStack dispenserRotate(BlockSource source, ItemStack stack)
     {
-        Direction sourceFace = source.getBlockState().getValue(DispenserBlock.FACING);
-        Level world = source.getLevel();
-        BlockPos blockpos = source.getPos().relative(sourceFace); // offset
+        Direction sourceFace = source.state().getValue(DispenserBlock.FACING);
+        Level world = source.level();
+        BlockPos blockpos = source.pos().relative(sourceFace); // offset
         BlockState blockstate = world.getBlockState(blockpos);
         Block block = blockstate.getBlock();
 
@@ -100,7 +100,7 @@ public class BlockRotator
             }
         }
         // Send block update to the block that just have been rotated.
-        world.neighborChanged(blockpos, block, source.getPos());
+        world.neighborChanged(blockpos, block, null);
 
         return stack;
     }
@@ -131,7 +131,7 @@ public class BlockRotator
         }
         else if (block instanceof SlabBlock)
         {
-            if (((SlabBlock) block).useShapeForLightOcclusion(state))
+            if (state.getValue(SlabBlock.TYPE) != SlabType.DOUBLE)
             {
                 newState = state.setValue(SlabBlock.TYPE, state.getValue(SlabBlock.TYPE) == SlabType.TOP ? SlabType.BOTTOM : SlabType.TOP);
             }

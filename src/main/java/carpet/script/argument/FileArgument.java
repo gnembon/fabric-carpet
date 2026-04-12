@@ -22,7 +22,7 @@ import net.minecraft.nbt.TagTypes;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.tuple.Pair;
 
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -435,7 +435,7 @@ public class FileArgument
     {
         try
         {
-            return NbtIo.readCompressed(Files.newInputStream(path));
+            return NbtIo.readCompressed(Files.newInputStream(path), NbtAccounter.unlimitedHeap());
         }
         catch (IOException e)
         {
@@ -461,7 +461,7 @@ public class FileArgument
                     else
                     {
                         dataInputStream.readUTF();
-                        return TagTypes.getType(b).load(dataInputStream, 0, NbtAccounter.UNLIMITED);
+                        return TagTypes.getType(b).load(dataInputStream, NbtAccounter.unlimitedHeap());
                     }
                 }
                 catch (IOException secondIO)

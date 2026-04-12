@@ -33,7 +33,7 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import java.io.IOException;
 import java.nio.file.FileVisitOption;
 import java.nio.file.Files;
@@ -85,6 +85,7 @@ public class Carpet
         return () -> CarpetProfiler.end_current_section(token);
     }
 
+    // not needed in vanilla
     public static void MinecraftServer_addScriptServer(MinecraftServer server, CarpetScriptServer scriptServer)
     {
         ((MinecraftServerInterface) server).addScriptServer(scriptServer);
@@ -131,11 +132,6 @@ public class Carpet
         return null;
     }
 
-    public static boolean isTickProcessingPaused(MinecraftServer server)
-    {
-        return !((MinecraftServerInterface)server).getTickRateManager().runsNormally();
-    }
-
     public static void handleExtensionsAPI(CarpetExpression expression)
     {
         CarpetServer.extensions.forEach(e -> e.scarpetApi(expression));
@@ -144,6 +140,11 @@ public class Carpet
     public static boolean getFillUpdates()
     {
         return CarpetSettings.fillUpdates;
+    }
+
+    public static boolean isDebugEnabled()
+    {
+        return CarpetSettings.superSecretSetting;
     }
 
     @Nullable
@@ -210,7 +211,7 @@ public class Carpet
                 return;
             }
         }
-        throw new LoadException(String.format("%s requires a version of mod '%s' matching '%s', which is missing!", host.getName(), requiredModId, stringPredicate));
+        throw new LoadException(String.format("%s requires a version of mod '%s' matching '%s', which is missing!", host.getVisualName(), requiredModId, stringPredicate));
     }
 
     // to be ran once during CarpetEventServer.Event static init

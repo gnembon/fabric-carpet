@@ -4,9 +4,7 @@ import carpet.CarpetServer;
 import carpet.CarpetSettings;
 import carpet.api.settings.CarpetRule;
 import carpet.api.settings.RuleHelper;
-import carpet.fakes.MinecraftServerInterface;
 import carpet.fakes.ServerGamePacketListenerImplInterface;
-import carpet.helpers.ServerTickRateManager;
 import carpet.script.utils.SnoopyCommandSource;
 
 import java.util.ArrayList;
@@ -33,7 +31,7 @@ public class ServerNetworkHandler
     private static final Set<ServerPlayer> validCarpetPlayers = new HashSet<>();
 
     private static final Map<String, BiConsumer<ServerPlayer, Tag>> dataHandlers = Map.of(
-            CarpetClient.HELLO, (p, t) -> onHello(p, t.getAsString()),
+            CarpetClient.HELLO, (p, t) -> onHello(p, t.asString().orElseThrow()),
             "clientCommand", (p, t) -> handleClientCommand(p, (CompoundTag) t)
     );
 
@@ -63,7 +61,7 @@ public class ServerNetworkHandler
         {
             CarpetSettings.LOG.warn("Player " + playerEntity.getName().getString() + " joined with another carpet version: " + version);
         }
-        DataBuilder data = DataBuilder.create(playerEntity.server); // tickrate related settings are sent on world change
+        DataBuilder data = DataBuilder.create(playerEntity.level().getServer()); // tickrate related settings are sent on world change
         CarpetServer.forEachManager(sm -> sm.getCarpetRules().forEach(data::withRule));
         playerEntity.connection.send(data.build());
     }
@@ -72,52 +70,53 @@ public class ServerNetworkHandler
     {
         if (CarpetSettings.superSecretSetting || !validCarpetPlayers.contains(player))
         {
-            return;
+            //return;
         }
-        DataBuilder data = DataBuilder.create(player.server).withTickRate().withFrozenState().withTickPlayerActiveTimeout(); // .withSuperHotState()
-        player.connection.send(data.build());
+        // noop, used to send ticking information
+        //DataBuilder data = DataBuilder.create(player.server);//.withTickRate().withFrozenState().withTickPlayerActiveTimeout(); // .withSuperHotState()
+        //player.connection.send(data.build());
     }
 
     private static void handleClientCommand(ServerPlayer player, CompoundTag commandData)
     {
-        String command = commandData.getString("command");
-        String id = commandData.getString("id");
+        String command = commandData.getString("command").orElseThrow();
+        String id = commandData.getString("id").orElseThrow();
         List<Component> output = new ArrayList<>();
         Component[] error = {null};
-        int resultCode = -1;
-        if (player.getServer() == null)
+        int[] returnValue = {0};
+        if (player.level().getServer() == null)
         {
             error[0] = Component.literal("No Server");
         }
         else
         {
-            resultCode = player.getServer().getCommands().performPrefixedCommand(
-                    new SnoopyCommandSource(player, error, output), command
+            player.level().getServer().getCommands().performPrefixedCommand(
+                    new SnoopyCommandSource(player, error, output, returnValue), command
             );
         }
         CompoundTag result = new CompoundTag();
         result.putString("id", id);
-        result.putInt("code", resultCode);
         if (error[0] != null)
         {
             result.putString("error", error[0].getContents().toString());
         }
+        result.putInt("return", returnValue[0]);
         ListTag outputResult = new ListTag();
         for (Component line : output)
         {
-            outputResult.add(StringTag.valueOf(Component.Serializer.toJson(line)));
+            outputResult.add(StringTag.valueOf(line.getString()));
         }
         if (!output.isEmpty())
         {
             result.put("output", outputResult);
         }
-        player.connection.send(DataBuilder.create(player.server).withCustomNbt("clientCommand", result).build());
+        player.connection.send(DataBuilder.create(player.level().getServer()).withCustomNbt("clientCommand", result).build());
         // run command plug to command output,
     }
 
     public static void onClientData(ServerPlayer player, CompoundTag compound)
     {
-        for (String key : compound.getAllKeys())
+        for (String key : compound.keySet())
         {
             if (dataHandlers.containsKey(key))
             {
@@ -138,55 +137,7 @@ public class ServerNetworkHandler
         }
         for (ServerPlayer player : remoteCarpetPlayers.keySet())
         {
-            player.connection.send(DataBuilder.create(player.server).withRule(rule).build());
-        }
-    }
-
-    public static void updateTickSpeedToConnectedPlayers(MinecraftServer server)
-    {
-        if (CarpetSettings.superSecretSetting)
-        {
-            return;
-        }
-        for (ServerPlayer player : validCarpetPlayers)
-        {
-            player.connection.send(DataBuilder.create(player.server).withTickRate().build());
-        }
-    }
-
-    public static void updateFrozenStateToConnectedPlayers(MinecraftServer server)
-    {
-        if (CarpetSettings.superSecretSetting)
-        {
-            return;
-        }
-        for (ServerPlayer player : validCarpetPlayers)
-        {
-            player.connection.send(DataBuilder.create(player.server).withFrozenState().build());
-        }
-    }
-
-    public static void updateSuperHotStateToConnectedPlayers(MinecraftServer server)
-    {
-        if (CarpetSettings.superSecretSetting)
-        {
-            return;
-        }
-        for (ServerPlayer player : validCarpetPlayers)
-        {
-            player.connection.send(DataBuilder.create(player.server).withSuperHotState().build());
-        }
-    }
-
-    public static void updateTickPlayerActiveTimeoutToConnectedPlayers(MinecraftServer server)
-    {
-        if (CarpetSettings.superSecretSetting)
-        {
-            return;
-        }
-        for (ServerPlayer player : validCarpetPlayers)
-        {
-            player.connection.send(DataBuilder.create(player.server).withTickPlayerActiveTimeout().build());
+            player.connection.send(DataBuilder.create(player.level().getServer()).withRule(rule).build());
         }
     }
 
@@ -198,7 +149,7 @@ public class ServerNetworkHandler
         }
         for (ServerPlayer player : validCarpetPlayers)
         {
-            player.connection.send(DataBuilder.create(player.server).withCustomNbt(command, data).build());
+            player.connection.send(DataBuilder.create(player.level().getServer()).withCustomNbt(command, data).build());
         }
     }
 
@@ -206,7 +157,7 @@ public class ServerNetworkHandler
     {
         if (isValidCarpetPlayer(player))
         {
-            player.connection.send(DataBuilder.create(player.server).withCustomNbt(command, data).build());
+            player.connection.send(DataBuilder.create(player.level().getServer()).withCustomNbt(command, data).build());
         }
     }
 
@@ -251,6 +202,7 @@ public class ServerNetworkHandler
     private static class DataBuilder
     {
         private CompoundTag tag;
+        // unused now, but hey
         private MinecraftServer server;
 
         private static DataBuilder create(final MinecraftServer server)
@@ -262,37 +214,6 @@ public class ServerNetworkHandler
         {
             tag = new CompoundTag();
             this.server = server;
-        }
-
-        private DataBuilder withTickRate()
-        {
-            ServerTickRateManager trm = ((MinecraftServerInterface) server).getTickRateManager();
-            tag.putFloat("TickRate", trm.tickrate());
-            return this;
-        }
-
-        private DataBuilder withFrozenState()
-        {
-            ServerTickRateManager trm = ((MinecraftServerInterface) server).getTickRateManager();
-            CompoundTag tickingState = new CompoundTag();
-            tickingState.putBoolean("is_paused", trm.gameIsPaused());
-            tickingState.putBoolean("deepFreeze", trm.deeplyFrozen());
-            tag.put("TickingState", tickingState);
-            return this;
-        }
-
-        private DataBuilder withSuperHotState()
-        {
-            ServerTickRateManager trm = ((MinecraftServerInterface) server).getTickRateManager();
-            tag.putBoolean("SuperHotState", trm.isSuperHot());
-            return this;
-        }
-
-        private DataBuilder withTickPlayerActiveTimeout()
-        {
-            ServerTickRateManager trm = ((MinecraftServerInterface) server).getTickRateManager();
-            tag.putInt("TickPlayerActiveTimeout", trm.getPlayerActiveTimeout());
-            return this;
         }
 
         private DataBuilder withRule(CarpetRule<?> rule)
