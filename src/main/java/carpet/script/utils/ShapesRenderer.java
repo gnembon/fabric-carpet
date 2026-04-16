@@ -119,7 +119,7 @@ public class ShapesRenderer
         // posestack is not needed anymore - left as TODO to cleanup later
         PoseStack matrices = new PoseStack();
 
-        Camera camera = this.client.gameRenderer.getMainCamera();
+        Camera camera = this.client.gameRenderer.mainCamera();
         ClientLevel iWorld = this.client.level;
         ResourceKey<Level> dimensionType = iWorld.dimension();
         if ((shapes.get(dimensionType) == null || shapes.get(dimensionType).isEmpty()) &&
@@ -194,20 +194,20 @@ public class ShapesRenderer
             });
         }
         MultiBufferSource.BufferSource bufferSource = renderBuffers.bufferSource();
-        bufferSource.endLastBatch();
+        bufferSource.uploadAndDraw();
 
 
 
         normal.render(matrices, bufferSource, cameraa.cameraRenderState, matrix4f);
-        bufferSource.endLastBatch();
+        bufferSource.uploadAndDraw();
 
         if (false) {
-            final RenderTarget mainRenderTarget = Minecraft.getInstance().getMainRenderTarget();
+            final RenderTarget mainRenderTarget = Minecraft.getInstance().gameRenderer.mainRenderTarget();
             RenderSystem.getDevice().createCommandEncoder().clearDepthTexture(mainRenderTarget.getDepthTexture(), 1.0);
             onTop.render(matrices, bufferSource, cameraa.cameraRenderState, matrix4f);
-            bufferSource.endLastBatch();
+            bufferSource.uploadAndDraw();
 
-            RenderSystem.getDevice().createCommandEncoder().clearDepthTexture(Minecraft.getInstance().getMainRenderTarget().getDepthTexture(), 1.0);
+            RenderSystem.getDevice().createCommandEncoder().clearDepthTexture(Minecraft.getInstance().gameRenderer.mainRenderTarget().getDepthTexture(), 1.0);
 
         }
 
@@ -366,7 +366,7 @@ public class ShapesRenderer
             }
 
             Vec3 v1 = shape.relativiseRender(client.level, shape.pos, partialTick);
-            Camera camera1 = client.gameRenderer.getMainCamera();
+            Camera camera1 = client.gameRenderer.mainCamera();
 
             matrices.pushPose();
             if (!isitem)// blocks should use its center as the origin
@@ -415,7 +415,7 @@ public class ShapesRenderer
 
             blockState = shape.blockState;
 
-            MultiBufferSource.BufferSource immediate = client.renderBuffers().bufferSource();
+            MultiBufferSource.BufferSource immediate = client.gameRenderer.renderBuffers().bufferSource();
             if (!isitem)
             {
                 // draw the block itself
@@ -431,7 +431,7 @@ public class ShapesRenderer
                     //renderState.model = state;
                     //renderState.block = blockState.getBlock();
 
-                    renderState.submit(matrices, client.gameRenderer.getFeatureRenderDispatcher().getSubmitNodeStorage(), light, OverlayTexture.NO_OVERLAY, EntityRenderState.NO_OUTLINE);
+                    renderState.submit(matrices, client.gameRenderer.featureRenderDispatcher().getSubmitNodeStorage(), light, OverlayTexture.NO_OVERLAY, EntityRenderState.NO_OUTLINE);
 
 
                     //client.getBlockRenderer().renderSingleBlock(blockState, matrices, immediate, light, OverlayTexture.NO_OVERLAY);
@@ -458,7 +458,7 @@ public class ShapesRenderer
                 if (BlockEntity != null)
                 {
                         BlockEntityRenderer<BlockEntity, BlockEntityRenderState> blockEntityRenderer = client.getBlockEntityRenderDispatcher().getRenderer(BlockEntity);
-                        BlockEntityRenderState state = client.getBlockEntityRenderDispatcher().tryExtractRenderState(BlockEntity, partialTick, null);
+                        BlockEntityRenderState state = client.getBlockEntityRenderDispatcher().tryExtractRenderState(BlockEntity, partialTick, null, true);
 
 
                         // levelRenderer;;submitBlockEntities does a weird transpose
@@ -474,7 +474,7 @@ public class ShapesRenderer
                             //matrices.mulPose(levelRenderState.cameraRenderState.);
 
 
-                            blockEntityRenderer.submit(state, matrices,client.gameRenderer.getFeatureRenderDispatcher().getSubmitNodeStorage(), levelRenderState.cameraRenderState);
+                            blockEntityRenderer.submit(state, matrices,client.gameRenderer.featureRenderDispatcher().getSubmitNodeStorage(), levelRenderState.cameraRenderState);
                             //blockEntityRenderer.submit(BlockEntity, partialTick,
                             //        matrices, light, OverlayTexture.NO_OVERLAY, camera1.getPosition(), null, client.gameRenderer.getFeatureRenderDispatcher().getSubmitNodeStorage());
 
@@ -490,14 +490,14 @@ public class ShapesRenderer
 
                     final ItemStackRenderState itemState = new ItemStackRenderState();
                     client.getItemModelResolver().updateForTopItem(itemState, shape.item, ItemDisplayContext.FIXED, client.level, null, 0);
-                    itemState.submit(matrices, client.gameRenderer.getFeatureRenderDispatcher().getSubmitNodeStorage(), light, OverlayTexture.NO_OVERLAY, EntityRenderState.NO_OUTLINE);
+                    itemState.submit(matrices, client.gameRenderer.featureRenderDispatcher().getSubmitNodeStorage(), light, OverlayTexture.NO_OVERLAY, EntityRenderState.NO_OUTLINE);
 
                     //client.getItemRenderer().renderStatic(shape.item, transformType, light,
                     //        OverlayTexture.NO_OVERLAY, matrices, immediate, client.level, (int) shape.key(client.level.registryAccess()));
                 }
             }
             matrices.popPose();
-            immediate.endBatch();
+            immediate.uploadAndDraw();
             ////RenderSystem.disableCull();
             ////RenderSystem.disableDepthTest();
             ////RenderSystem.depthMask(false);
@@ -528,7 +528,7 @@ public class ShapesRenderer
                 return;
             }
             Vec3 v1 = shape.relativiseRender(client.level, shape.pos, partialTick);
-            Camera camera1 = client.gameRenderer.getMainCamera();
+            Camera camera1 = client.gameRenderer.mainCamera();
             Font textRenderer = client.font;
             if (shape.doublesided)
             {
@@ -571,14 +571,15 @@ public class ShapesRenderer
             {
                 text_x = (float) (-textRenderer.width(shape.value.getString()));
             }
-            try (ByteBufferBuilder bbb = new ByteBufferBuilder(RenderType.TRANSIENT_BUFFER_SIZE))
-            {
-	            MultiBufferSource.BufferSource immediate = MultiBufferSource.immediate(bbb);
+            //try (ByteBufferBuilder bbb = new ByteBufferBuilder(RenderType.TRANSIENT_BUFFER_SIZE))
+            //{
+	            MultiBufferSource.BufferSource immediate = Minecraft.getInstance().gameRenderer.renderBuffers().bufferSource();
+
 	            // text doesn't appear if backgroud is set
 	            ///script run draw_shape('label', 100, 'pos', [200, 100, 200], 'text', 'Hewwo World!', 'color', 0xffffffff, 'fill', 0x33333333)
 	            textRenderer.drawInBatch(shape.value, text_x, 0.0F, shape.textcolor, false, matrices.last().pose(), immediate, Font.DisplayMode.SEE_THROUGH, shape.textbck, 15728880);
-	            immediate.endBatch();
-            }
+	            immediate.uploadAndDraw();
+            //}
             matrices.popPose();
             ////RenderSystem.enableCull();
         }

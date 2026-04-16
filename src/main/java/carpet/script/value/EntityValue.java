@@ -47,6 +47,7 @@ import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.AgeableMob;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.EntityTypes;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
@@ -303,44 +304,44 @@ public class EntityValue extends Value
 
             // nonliving types
             Set<EntityType<?>> projectiles = Set.of(
-                    EntityType.ARROW, EntityType.DRAGON_FIREBALL, EntityType.FIREWORK_ROCKET,
-                    EntityType.FIREBALL, EntityType.LLAMA_SPIT, EntityType.SMALL_FIREBALL,
-                    EntityType.SNOWBALL, EntityType.SPECTRAL_ARROW, EntityType.EGG,
-                    EntityType.ENDER_PEARL, EntityType.EXPERIENCE_BOTTLE, EntityType.SPLASH_POTION, EntityType.LINGERING_POTION,
-                    EntityType.TRIDENT, EntityType.WITHER_SKULL, EntityType.FISHING_BOBBER, EntityType.SHULKER_BULLET
+                    EntityTypes.ARROW, EntityTypes.DRAGON_FIREBALL, EntityTypes.FIREWORK_ROCKET,
+                    EntityTypes.FIREBALL, EntityTypes.LLAMA_SPIT, EntityTypes.SMALL_FIREBALL,
+                    EntityTypes.SNOWBALL, EntityTypes.SPECTRAL_ARROW, EntityTypes.EGG,
+                    EntityTypes.ENDER_PEARL, EntityTypes.EXPERIENCE_BOTTLE, EntityTypes.SPLASH_POTION, EntityTypes.LINGERING_POTION,
+                    EntityTypes.TRIDENT, EntityTypes.WITHER_SKULL, EntityTypes.FISHING_BOBBER, EntityTypes.SHULKER_BULLET
             );
             Set<EntityType<?>> deads = Set.of(
-                    EntityType.AREA_EFFECT_CLOUD, EntityType.MARKER, EntityType.END_CRYSTAL,
-                    EntityType.EVOKER_FANGS, EntityType.EXPERIENCE_ORB, EntityType.EYE_OF_ENDER,
-                    EntityType.FALLING_BLOCK, EntityType.ITEM, EntityType.ITEM_FRAME, EntityType.GLOW_ITEM_FRAME,
-                    EntityType.LEASH_KNOT, EntityType.LIGHTNING_BOLT, EntityType.PAINTING,
-                    EntityType.TNT, EntityType.ARMOR_STAND
+                    EntityTypes.AREA_EFFECT_CLOUD, EntityTypes.MARKER, EntityTypes.END_CRYSTAL,
+                    EntityTypes.EVOKER_FANGS, EntityTypes.EXPERIENCE_ORB, EntityTypes.EYE_OF_ENDER,
+                    EntityTypes.FALLING_BLOCK, EntityTypes.ITEM, EntityTypes.ITEM_FRAME, EntityTypes.GLOW_ITEM_FRAME,
+                    EntityTypes.LEASH_KNOT, EntityTypes.LIGHTNING_BOLT, EntityTypes.PAINTING,
+                    EntityTypes.TNT, EntityTypes.ARMOR_STAND
 
             );
             Set<EntityType<?>> minecarts = Set.of(
-                    EntityType.MINECART, EntityType.CHEST_MINECART, EntityType.COMMAND_BLOCK_MINECART,
-                    EntityType.FURNACE_MINECART, EntityType.HOPPER_MINECART,
-                    EntityType.SPAWNER_MINECART, EntityType.TNT_MINECART
+                    EntityTypes.MINECART, EntityTypes.CHEST_MINECART, EntityTypes.COMMAND_BLOCK_MINECART,
+                    EntityTypes.FURNACE_MINECART, EntityTypes.HOPPER_MINECART,
+                    EntityTypes.SPAWNER_MINECART, EntityTypes.TNT_MINECART
             );
             // living mob groups - non-defeault
             Set<EntityType<?>> undeads = Set.of(
-                    EntityType.STRAY, EntityType.SKELETON, EntityType.WITHER_SKELETON,
-                    EntityType.ZOMBIE, EntityType.DROWNED, EntityType.ZOMBIE_VILLAGER,
-                    EntityType.ZOMBIE_HORSE, EntityType.SKELETON_HORSE, EntityType.PHANTOM,
-                    EntityType.WITHER, EntityType.ZOGLIN, EntityType.HUSK, EntityType.ZOMBIFIED_PIGLIN
+                    EntityTypes.STRAY, EntityTypes.SKELETON, EntityTypes.WITHER_SKELETON,
+                    EntityTypes.ZOMBIE, EntityTypes.DROWNED, EntityTypes.ZOMBIE_VILLAGER,
+                    EntityTypes.ZOMBIE_HORSE, EntityTypes.SKELETON_HORSE, EntityTypes.PHANTOM,
+                    EntityTypes.WITHER, EntityTypes.ZOGLIN, EntityTypes.HUSK, EntityTypes.ZOMBIFIED_PIGLIN
 
             );
             Set<EntityType<?>> arthropods = Set.of(
-                    EntityType.BEE, EntityType.ENDERMITE, EntityType.SILVERFISH, EntityType.SPIDER,
-                    EntityType.CAVE_SPIDER
+                    EntityTypes.BEE, EntityTypes.ENDERMITE, EntityTypes.SILVERFISH, EntityTypes.SPIDER,
+                    EntityTypes.CAVE_SPIDER
             );
             Set<EntityType<?>> aquatique = Set.of(
-                    EntityType.GUARDIAN, EntityType.TURTLE, EntityType.COD, EntityType.DOLPHIN, EntityType.PUFFERFISH,
-                    EntityType.SALMON, EntityType.SQUID, EntityType.TROPICAL_FISH
+                    EntityTypes.GUARDIAN, EntityTypes.TURTLE, EntityTypes.COD, EntityTypes.DOLPHIN, EntityTypes.PUFFERFISH,
+                    EntityTypes.SALMON, EntityTypes.SQUID, EntityTypes.TROPICAL_FISH
             );
             Set<EntityType<?>> illagers = Set.of(
-                    EntityType.PILLAGER, EntityType.ILLUSIONER, EntityType.VINDICATOR, EntityType.EVOKER,
-                    EntityType.RAVAGER, EntityType.WITCH
+                    EntityTypes.PILLAGER, EntityTypes.ILLUSIONER, EntityTypes.VINDICATOR, EntityTypes.EVOKER,
+                    EntityTypes.RAVAGER, EntityTypes.WITCH
             );
 
             Set<EntityType<?>> living = allTypes.stream().filter(et ->

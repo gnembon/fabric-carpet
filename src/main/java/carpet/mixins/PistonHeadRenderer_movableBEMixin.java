@@ -43,7 +43,7 @@ public abstract class PistonHeadRenderer_movableBEMixin implements BlockEntityRe
                 float progress = pistonMovingBlockEntity.getProgress(f);
                 //System.out.println("progress: " + progress);
                 //if (progress != 0) {
-                    BlockEntityRenderState res = dispatcher.tryExtractRenderState(be, f, crumblingOverlay);
+                    BlockEntityRenderState res = dispatcher.tryExtractRenderState(be, f, crumblingOverlay, true);
                     if (res != null) {
                         ((PistonHeadRenderStateInterface) pistonHeadRenderState).setMovedBERenderState(res);
                     }

@@ -10,7 +10,7 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.EntitySpawnReason;
-import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.EntityTypes;
 import net.minecraft.world.entity.PathfinderMob;
 import net.minecraft.world.entity.ai.goal.RandomStrollGoal;
 import net.minecraft.world.entity.ai.util.DefaultRandomPos;
@@ -74,7 +74,7 @@ public class BlockInfo
 
     private static Component wander_chances(BlockPos pos, ServerLevel worldIn)
     {
-        PathfinderMob creature = new ZombifiedPiglin(EntityType.ZOMBIFIED_PIGLIN, worldIn);
+        PathfinderMob creature = new ZombifiedPiglin(EntityTypes.ZOMBIFIED_PIGLIN, worldIn);
         creature.finalizeSpawn(worldIn, worldIn.getCurrentDifficultyAt(pos), EntitySpawnReason.NATURAL, null);
         creature.snapTo(pos, 0.0F, 0.0F);
         RandomStrollGoal wander = new RandomStrollGoal(creature, 0.8D);

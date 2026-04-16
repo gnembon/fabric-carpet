@@ -352,7 +352,7 @@ public class HopperCounter
             entry(Items.PHANTOM_MEMBRANE, Blocks.BONE_BLOCK),
             entry(Items.EGG, Blocks.BONE_BLOCK),
             //entry(Items.,Blocks.),
-            entry(Items.COPPER_INGOT, Blocks.COPPER_BLOCK.unaffected()),
+            entry(Items.COPPER_INGOT, Blocks.COPPER_BLOCK.weathering().unaffected()),
             entry(Items.AMETHYST_SHARD, Blocks.AMETHYST_BLOCK));
 
     /**

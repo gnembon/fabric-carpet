@@ -66,11 +66,10 @@ import net.minecraft.stats.Stat;
 import net.minecraft.stats.StatType;
 import net.minecraft.world.clock.WorldClocks;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.EntityTypes;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.decoration.ArmorStand;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.storage.CommandStorage;
@@ -382,7 +381,7 @@ public class Auxiliary
                 throw new InternalExpressionException("'create_marker' requires a name and three coordinates, with optional direction, and optional block on its head");
             }
             Level level = cc.level();
-            ArmorStand armorstand = new ArmorStand(EntityType.ARMOR_STAND, level);
+            ArmorStand armorstand = new ArmorStand(EntityTypes.ARMOR_STAND, level);
             double yoffset;
             if (targetBlock == null && name == null)
             {
@@ -435,7 +434,7 @@ public class Auxiliary
             CarpetContext cc = (CarpetContext) c;
             int total = 0;
             String markerName = MARKER_STRING + "_" + ((cc.host.getName() == null) ? "" : cc.host.getName());
-            for (Entity e : cc.level().getEntities(EntityType.ARMOR_STAND, as -> as.entityTags().contains(markerName)))
+            for (Entity e : cc.level().getEntities(EntityTypes.ARMOR_STAND, as -> as.entityTags().contains(markerName)))
             {
                 total++;
                 e.discard();

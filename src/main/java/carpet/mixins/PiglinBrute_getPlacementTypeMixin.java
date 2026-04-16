@@ -2,6 +2,7 @@ package carpet.mixins;
 
 import carpet.CarpetSettings;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.EntityTypes;
 import net.minecraft.world.entity.SpawnPlacementType;
 import net.minecraft.world.entity.SpawnPlacementTypes;
 import net.minecraft.world.entity.SpawnPlacements;
@@ -14,7 +15,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public class PiglinBrute_getPlacementTypeMixin {
 	@Inject(method = "getPlacementType", at = @At("HEAD"), cancellable = true)
 	private static void getPlacementType(final EntityType<?> entityType, final CallbackInfoReturnable<SpawnPlacementType> cir) {
-		if (CarpetSettings.piglinsSpawningInBastions && entityType == EntityType.PIGLIN_BRUTE) {
+		if (CarpetSettings.piglinsSpawningInBastions && entityType == EntityTypes.PIGLIN_BRUTE) {
 			cir.setReturnValue(SpawnPlacementTypes.ON_GROUND);
 		}
 	}
