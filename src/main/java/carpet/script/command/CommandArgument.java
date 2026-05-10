@@ -60,7 +60,7 @@ import net.minecraft.commands.CommandBuildContext;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.commands.arguments.AngleArgument;
-import net.minecraft.commands.arguments.ColorArgument;
+import net.minecraft.commands.arguments.TeamColorArgument;
 import net.minecraft.commands.arguments.CompoundTagArgument;
 import net.minecraft.commands.arguments.DimensionArgument;
 import net.minecraft.commands.arguments.EntityAnchorArgument;
@@ -108,6 +108,7 @@ import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.phys.Vec2;
 import net.minecraft.world.scores.ScoreHolder;
 
+import net.minecraft.world.scores.TeamColor;
 import org.jspecify.annotations.Nullable;
 
 import static net.minecraft.commands.Commands.argument;
@@ -144,10 +145,10 @@ public abstract class CommandArgument
                     (c, p) -> ValueConversions.ofBlockPredicate(c.getSource().getServer().registryAccess(), BlockPredicateArgument.getBlockPredicate(c, p)),
                     param -> (ctx, builder) -> ctx.getArgument(param, BlockPredicateArgument.class).listSuggestions(ctx, builder)
             ),
-            new VanillaUnconfigurableArgument("teamcolor", ColorArgument::color,
+            new VanillaUnconfigurableArgument("teamcolor", TeamColorArgument::teamColor,
                     (c, p) -> {
-                        ChatFormatting format = ColorArgument.getColor(c, p);
-                        return ListValue.of(StringValue.of(format.getName()), ValueConversions.ofRGB(format.getColor()));
+                        TeamColor format = TeamColorArgument.getTeamColor(c, p);
+                        return ListValue.of(StringValue.of(format.getSerializedName()), ValueConversions.ofRGB(format.rgb()));
                     },
                     false
             ),

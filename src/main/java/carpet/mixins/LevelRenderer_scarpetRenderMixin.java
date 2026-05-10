@@ -14,6 +14,8 @@ import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.LevelTargetBundle;
 import net.minecraft.client.renderer.RenderBuffers;
 import net.minecraft.client.renderer.ShaderManager;
+import net.minecraft.client.renderer.SubmitNodeCollector;
+import net.minecraft.client.renderer.SubmitNodeStorage;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderDispatcher;
 import net.minecraft.client.renderer.chunk.ChunkSectionsToRender;
 import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
@@ -44,6 +46,8 @@ public class LevelRenderer_scarpetRenderMixin
 
     @Shadow @Final private LevelRenderState levelRenderState;
 
+    @Shadow @Final private SubmitNodeStorage submitNodeStorage;
+
     @Inject(method = "<init>", at = @At("RETURN"))
     private void addRenderers(EntityRenderDispatcher entityRenderDispatcher, BlockEntityRenderDispatcher blockEntityRenderDispatcher, ModelManager modelManager, TextureManager textureManager, AtlasManager atlasManager, ShaderManager shaderManager, GameRenderer gameRenderer, int width, int height, CallbackInfo ci)
     {
@@ -52,10 +56,10 @@ public class LevelRenderer_scarpetRenderMixin
 
     @Inject(method = "render", at = @At(
             value = "INVOKE",
-
+target = "Lnet/minecraft/client/renderer/LevelRenderer;addMainPass(Lcom/mojang/blaze3d/framegraph/FrameGraphBuilder;Lnet/minecraft/client/renderer/feature/FeatureRenderDispatcher$PreparedFrame;Lcom/mojang/blaze3d/buffers/GpuBufferSlice;Lnet/minecraft/client/renderer/state/level/LevelRenderState;Lnet/minecraft/util/profiling/ProfilerFiller;Lnet/minecraft/client/renderer/chunk/ChunkSectionsToRender;)V",
             //target = "Lnet/minecraft/client/renderer/LevelRenderer;addAlwaysOnTopPass(Lcom/mojang/blaze3d/framegraph/FrameGraphBuilder;Lcom/mojang/blaze3d/buffers/GpuBufferSlice;)V",
             //target = "Lnet/minecraft/client/renderer/LevelRenderer;submitFeatures(Lnet/minecraft/client/renderer/state/level/LevelRenderState;Lnet/minecraft/client/renderer/SubmitNodeCollector;Z)V",
-            target = "Lnet/minecraft/client/renderer/LevelRenderer;addMainPass(Lcom/mojang/blaze3d/framegraph/FrameGraphBuilder;Lcom/mojang/blaze3d/buffers/GpuBufferSlice;Lnet/minecraft/client/renderer/state/level/LevelRenderState;Lnet/minecraft/util/profiling/ProfilerFiller;Lnet/minecraft/client/renderer/chunk/ChunkSectionsToRender;)V",
+            //target = "Lnet/minecraft/client/renderer/LevelRenderer;addMainPass(Lcom/mojang/blaze3d/framegraph/FrameGraphBuilder;Lcom/mojang/blaze3d/buffers/GpuBufferSlice;Lnet/minecraft/client/renderer/state/level/LevelRenderState;Lnet/minecraft/util/profiling/ProfilerFiller;Lnet/minecraft/client/renderer/chunk/ChunkSectionsToRender;)V",
             //target = "Lnet/minecraft/client/renderer/LevelRenderer;addLateDebugPass(Lcom/mojang/blaze3d/framegraph/FrameGraphBuilder;Lnet/minecraft/client/renderer/state/level/CameraRenderState;Lcom/mojang/blaze3d/buffers/GpuBufferSlice;Lorg/joml/Matrix4fc;)V",
             shift = At.Shift.AFTER
     ))
@@ -70,9 +74,9 @@ public class LevelRenderer_scarpetRenderMixin
             final float deltaPartialTick = deltaTracker.getGameTimeDeltaPartialTick(false);
             FramePass pass = frameGraphBuilder.addPass("scarpet_shapes");
             targets.main = pass.readsAndWrites(targets.main);
-            pass.executes(() -> CarpetClient.shapes.render(renderBuffers, levelRenderState, modelViewMatrix, deltaPartialTick));
-            featureRenderDispatcher.renderAllFeatures();
-            renderBuffers.bufferSource().uploadAndDraw();
+            pass.executes(() -> CarpetClient.shapes.render(submitNodeStorage, levelRenderState, modelViewMatrix, deltaPartialTick));
+            //featureRenderDispatcher.renderAllFeatures(submitNodeStorage);
+            //renderBuffers.bufferSource().uploadAndDraw();
         }
     }
 }

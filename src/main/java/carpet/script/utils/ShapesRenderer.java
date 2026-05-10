@@ -6,11 +6,10 @@ import carpet.script.utils.shapes.ShapeDirection;
 
 import com.mojang.blaze3d.pipeline.RenderTarget;
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.ByteBufferBuilder;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.blaze3d.vertex.VertexFormat;
-import com.mojang.blaze3d.vertex.VertexFormat.Mode;
+//import com.mojang.blaze3d.vertex.VertexFormat.Mode;
 import com.mojang.math.Axis;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 
@@ -26,8 +25,8 @@ import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.components.debug.DebugScreenEntries;
 import net.minecraft.client.gui.font.TextRenderable;
 import net.minecraft.client.multiplayer.ClientLevel;
-import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.RenderBuffers;
+//import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.SubmitNodeStorage;
 import net.minecraft.client.renderer.block.BlockModelRenderState;
 import net.minecraft.client.renderer.entity.DisplayRenderer;
 import net.minecraft.client.renderer.rendertype.RenderType;
@@ -115,7 +114,7 @@ public class ShapesRenderer
         labels = new HashMap<>();
     }
 
-    public void render(RenderBuffers renderBuffers, LevelRenderState cameraa, Matrix4fc matrix4f, float partialTick)
+    public void render(SubmitNodeStorage submitNodeStorage, LevelRenderState cameraa, Matrix4fc matrix4f, float partialTick)
     {
         Runnable token = Carpet.startProfilerSection("Scarpet client");
         // posestack is not needed anymore - left as TODO to cleanup later
@@ -169,7 +168,7 @@ public class ShapesRenderer
             shapes.get(dimensionType).values().forEach(s -> {
                 if ((!s.shape.debug || entityBoxes) && s.shouldRender(dimensionType))
                 {
-                    s.renderLines(matrices, cameraX, cameraY, cameraZ, partialTick, cameraa, s.shape.seethrough ? onTop : normal);
+                    s.renderLines(matrices, cameraX, cameraY, cameraZ, partialTick, cameraa, s.shape.seethrough ? onTop : normal, submitNodeStorage );
                 }
             });
             // faces
@@ -191,23 +190,23 @@ public class ShapesRenderer
             labels.get(dimensionType).values().forEach(s -> {
                 if ((!s.shape.debug || entityBoxes) && s.shouldRender(dimensionType))
                 {
-                    s.renderLines(matrices, cameraX, cameraY, cameraZ, partialTick, cameraa, s.shape.seethrough ? onTop : normal);
+                    s.renderLines(matrices, cameraX, cameraY, cameraZ, partialTick, cameraa, s.shape.seethrough ? onTop : normal, submitNodeStorage );
                 }
             });
         }
-        MultiBufferSource.BufferSource bufferSource = renderBuffers.bufferSource();
-        bufferSource.uploadAndDraw();
+        //MultiBufferSource.BufferSource bufferSource = renderBuffers. bufferSource();
+        //bufferSource.uploadAndDraw();
 
 
 
-        normal.submit(client.gameRenderer.featureRenderDispatcher().getSubmitNodeStorage(), cameraa.cameraRenderState, false);
-        bufferSource.uploadAndDraw();
+        normal.submit(submitNodeStorage, cameraa.cameraRenderState, false);
+        //bufferSource.uploadAndDraw();
 
         if (false) {
             final RenderTarget mainRenderTarget = Minecraft.getInstance().gameRenderer.mainRenderTarget();
             RenderSystem.getDevice().createCommandEncoder().clearDepthTexture(mainRenderTarget.getDepthTexture(), 1.0);
-            onTop.submit(client.gameRenderer.featureRenderDispatcher().getSubmitNodeStorage(), cameraa.cameraRenderState, true);
-            bufferSource.uploadAndDraw();
+            onTop.submit(submitNodeStorage, cameraa.cameraRenderState, true);
+            //bufferSource.uploadAndDraw();
 
             RenderSystem.getDevice().createCommandEncoder().clearDepthTexture(Minecraft.getInstance().gameRenderer.mainRenderTarget().getDepthTexture(), 1.0);
 
@@ -286,7 +285,7 @@ public class ShapesRenderer
         long expiryTick;
         double renderEpsilon;
 
-        public abstract void renderLines(PoseStack matrices, double cx, double cy, double cz, float partialTick, LevelRenderState levelRenderState, DrawableGizmoPrimitives primitives);
+        public abstract void renderLines(PoseStack matrices, double cx, double cy, double cz, float partialTick, LevelRenderState levelRenderState, DrawableGizmoPrimitives primitives, SubmitNodeStorage submitNodeStorage);
 
         public void renderFaces(double cx, double cy, double cz, float partialTick, DrawableGizmoPrimitives primitives)
         {
@@ -360,7 +359,7 @@ public class ShapesRenderer
 
         @Override
         public void renderLines(PoseStack matrices, double cx, double cy,
-                                double cz, float partialTick, LevelRenderState levelRenderState, DrawableGizmoPrimitives primitives)
+                                double cz, float partialTick, LevelRenderState levelRenderState, DrawableGizmoPrimitives primitives, SubmitNodeStorage submitNodeStorage)
         {
             if (shape.a == 0.0)
             {
@@ -417,7 +416,7 @@ public class ShapesRenderer
 
             blockState = shape.blockState;
 
-            MultiBufferSource.BufferSource immediate = client.gameRenderer.renderBuffers().bufferSource();
+            //MultiBufferSource.BufferSource immediate = client.gameRenderer.renderBuffers().bufferSource();
             if (!isitem)
             {
                 // draw the block itself
@@ -433,7 +432,7 @@ public class ShapesRenderer
                     //renderState.model = state;
                     //renderState.block = blockState.getBlock();
 
-                    renderState.submit(matrices, client.gameRenderer.featureRenderDispatcher().getSubmitNodeStorage(), light, OverlayTexture.NO_OVERLAY, EntityRenderState.NO_OUTLINE);
+                    renderState.submit(matrices, submitNodeStorage, light, OverlayTexture.NO_OVERLAY, EntityRenderState.NO_OUTLINE);
 
 
                     //client.getBlockRenderer().renderSingleBlock(blockState, matrices, immediate, light, OverlayTexture.NO_OVERLAY);
@@ -476,7 +475,7 @@ public class ShapesRenderer
                             //matrices.mulPose(levelRenderState.cameraRenderState.);
 
 
-                            blockEntityRenderer.submit(state, matrices,client.gameRenderer.featureRenderDispatcher().getSubmitNodeStorage(), levelRenderState.cameraRenderState);
+                            blockEntityRenderer.submit(state, matrices,submitNodeStorage, levelRenderState.cameraRenderState);
                             //blockEntityRenderer.submit(BlockEntity, partialTick,
                             //        matrices, light, OverlayTexture.NO_OVERLAY, camera1.getPosition(), null, client.gameRenderer.getFeatureRenderDispatcher().getSubmitNodeStorage());
 
@@ -492,14 +491,14 @@ public class ShapesRenderer
 
                     final ItemStackRenderState itemState = new ItemStackRenderState();
                     client.getItemModelResolver().updateForTopItem(itemState, shape.item, ItemDisplayContext.FIXED, client.level, null, 0);
-                    itemState.submit(matrices, client.gameRenderer.featureRenderDispatcher().getSubmitNodeStorage(), light, OverlayTexture.NO_OVERLAY, EntityRenderState.NO_OUTLINE);
+                    itemState.submit(matrices, submitNodeStorage, light, OverlayTexture.NO_OVERLAY, EntityRenderState.NO_OUTLINE);
 
                     //client.getItemRenderer().renderStatic(shape.item, transformType, light,
                     //        OverlayTexture.NO_OVERLAY, matrices, immediate, client.level, (int) shape.key(client.level.registryAccess()));
                 }
             }
             matrices.popPose();
-            immediate.uploadAndDraw();
+            //immediate.uploadAndDraw();
             ////RenderSystem.disableCull();
             ////RenderSystem.disableDepthTest();
             ////RenderSystem.depthMask(false);
@@ -523,7 +522,7 @@ public class ShapesRenderer
         }
 
         @Override
-        public void renderLines(PoseStack matrices, double cx, double cy, double cz, float partialTick, LevelRenderState levelRenderState, DrawableGizmoPrimitives primitives)
+        public void renderLines(PoseStack matrices, double cx, double cy, double cz, float partialTick, LevelRenderState levelRenderState, DrawableGizmoPrimitives primitives, SubmitNodeStorage submitNodeStorage)
         {
             if (shape.a == 0.0)
             {
@@ -575,22 +574,33 @@ public class ShapesRenderer
             }
             //try (ByteBufferBuilder bbb = new ByteBufferBuilder(RenderType.TRANSIENT_BUFFER_SIZE))
             //{
-	            MultiBufferSource.BufferSource immediate = Minecraft.getInstance().gameRenderer.renderBuffers().bufferSource();
+	            //MultiBufferSource.BufferSource immediate = Minecraft.getInstance().gameRenderer.renderBuffers().bufferSource();
 
 	            // text doesn't appear if backgroud is set
 	            ///script run draw_shape('label', 100, 'pos', [200, 100, 200], 'text', 'Hewwo World!', 'color', 0xffffffff, 'fill', 0x33333333)
 	            //textRenderer.drawInBatch(shape.value, text_x, 0.0F, shape.textcolor, false, matrices.last().pose(), immediate, Font.DisplayMode.SEE_THROUGH, shape.textbck, 15728880);
 
             final Font.PreparedText preparedText = textRenderer.prepareText(shape.value.getVisualOrderText(), text_x, 0.0F, shape.textcolor, false, false,0);
-            preparedText.visit(new Font.GlyphVisitor() {
+
+            /*preparedText.visit(new Font.GlyphVisitor() {
                 @Override
                 public void acceptRenderable(final TextRenderable renderable) {
-                    final VertexConsumer buffer = immediate.getBuffer(renderable.renderType(Font.DisplayMode.NORMAL));
+                    final VertexConsumer buffer = getVertexBuilder(renderable.renderType(Font.DisplayMode.NORMAL));
                     renderable.render(matrices.last().pose(), buffer, LightCoordsUtil.FULL_BRIGHT, false);
                 }
             });
 
-                immediate.uploadAndDraw();
+                preparedText.visit(new Font.GlyphVisitor() {
+                @Override
+                public void acceptRenderable(final TextRenderable renderable) {
+                    //final VertexConsumer buffer = immediate.getBuffer(renderable.renderType(Font.DisplayMode.NORMAL));
+                    renderable.render(matrices.last().pose(), buffer, LightCoordsUtil.FULL_BRIGHT, false);
+                }
+            });
+
+             */
+
+                //immediate.uploadAndDraw();
             //}
             matrices.popPose();
             ////RenderSystem.enableCull();
@@ -626,7 +636,7 @@ public class ShapesRenderer
         }
 
         @Override
-        public void renderLines(PoseStack matrices, double cx, double cy, double cz, float partialTick, LevelRenderState levelRenderState, DrawableGizmoPrimitives primitives)
+        public void renderLines(PoseStack matrices, double cx, double cy, double cz, float partialTick, LevelRenderState levelRenderState, DrawableGizmoPrimitives primitives, SubmitNodeStorage submitNodeStorage)
         {
             if (shape.a == 0.0)
             {
@@ -670,7 +680,7 @@ public class ShapesRenderer
         }
 
         @Override
-        public void renderLines(PoseStack matrices, double cx, double cy, double cz, float partialTick, LevelRenderState levelRenderState, DrawableGizmoPrimitives primitives)
+        public void renderLines(PoseStack matrices, double cx, double cy, double cz, float partialTick, LevelRenderState levelRenderState, DrawableGizmoPrimitives primitives, SubmitNodeStorage submitNodeStorage)
         {
             Vec3 v1 = shape.relativiseRender(client.level, shape.from, partialTick);
             Vec3 v2 = shape.relativiseRender(client.level, shape.to, partialTick);
@@ -685,8 +695,8 @@ public class ShapesRenderer
     public static class RenderedPolyface extends RenderedShape<ShapeDispatcher.Polyface>
     {
         // mode now can only be 4, 5, or 6
-        private static final VertexFormat.Mode[] faceIndices = new VertexFormat.Mode[]{
-                Mode.LINES, Mode.LINES, Mode.DEBUG_LINES, Mode.DEBUG_LINE_STRIP, Mode.TRIANGLES, Mode.TRIANGLE_STRIP, Mode.TRIANGLE_FAN, Mode.QUADS};
+        //private static final VertexFormat.Mode[] faceIndices = new VertexFormat.Mode[]{
+        //        Mode.LINES, Mode.LINES, Mode.DEBUG_LINES, Mode.DEBUG_LINE_STRIP, Mode.TRIANGLES, Mode.TRIANGLE_STRIP, Mode.TRIANGLE_FAN, Mode.QUADS};
 
         private static final RenderType [] renderTypes = new RenderType[] {
                 RenderTypes.lines(),
@@ -742,7 +752,7 @@ public class ShapesRenderer
 
         @Override
         public void renderLines(PoseStack matrices, double cx, double cy,
-                                double cz, float partialTick, LevelRenderState levelRenderState, DrawableGizmoPrimitives primitives)
+                                double cz, float partialTick, LevelRenderState levelRenderState, DrawableGizmoPrimitives primitives, SubmitNodeStorage submitNodeStorage)
         {
             if (shape.a == 0)
             {
@@ -877,7 +887,7 @@ public class ShapesRenderer
         }
 
         @Override
-        public void renderLines(PoseStack matrices, double cx, double cy, double cz, float partialTick, LevelRenderState levelRenderState, DrawableGizmoPrimitives primitives)
+        public void renderLines(PoseStack matrices, double cx, double cy, double cz, float partialTick, LevelRenderState levelRenderState, DrawableGizmoPrimitives primitives, SubmitNodeStorage submitNodeStorage)
         {
             if (shape.a == 0.0)
             {
@@ -913,7 +923,7 @@ public class ShapesRenderer
         }
 
         @Override
-        public void renderLines(PoseStack matrices, double cx, double cy, double cz, float partialTick, LevelRenderState levelRenderState, DrawableGizmoPrimitives primitives)
+        public void renderLines(PoseStack matrices, double cx, double cy, double cz, float partialTick, LevelRenderState levelRenderState, DrawableGizmoPrimitives primitives, SubmitNodeStorage submitNodeStorage)
         {
             if (shape.a == 0.0)
             {

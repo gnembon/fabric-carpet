@@ -18,9 +18,12 @@ import com.google.common.collect.Lists;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
+import com.mojang.serialization.DataResult;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.TextColor;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.ServerScoreboard;
@@ -36,6 +39,7 @@ import net.minecraft.world.scores.ScoreAccess;
 import net.minecraft.world.scores.ScoreHolder;
 import net.minecraft.world.scores.Scoreboard;
 import net.minecraft.world.scores.Team;
+import net.minecraft.world.scores.TeamColor;
 import net.minecraft.world.scores.criteria.ObjectiveCriteria;
 import org.jetbrains.annotations.Nullable;
 
@@ -433,18 +437,20 @@ public class Scoreboards
                 case "color" -> {
                     if (!modifying)
                     {
-                        return new StringValue(team.getColor().getName());
+                        return new StringValue(team.getColor().get().getSerializedName());
                     }
                     if (!(settingVal instanceof StringValue))
                     {
                         throw new InternalExpressionException("'team_property' requires a string as the third argument for the property " + propertyVal.getString());
                     }
-                    ChatFormatting color = ChatFormatting.getByName(settingVal.getString().toUpperCase());
-                    if (color == null || !color.isColor())
+                    TeamColor teamColor = TeamColor.byName(settingVal.getString().toLowerCase());
+                    //DataResult<TextColor> color = TextColor.parseColor(settingVal.getString().toUpperCase());
+                    //ChatFormatting color = ChatFormatting.valueOf(settingVal.getString().toUpperCase());;
+                    if (teamColor == null)
                     {
                         throw new InternalExpressionException("Unknown value for property " + propertyVal.getString() + ": " + settingVal.getString());
                     }
-                    team.setColor(color);
+                    team.setColor(Optional.of(teamColor));
                 }
                 case "deathMessageVisibility" -> {
                     if (!modifying)
