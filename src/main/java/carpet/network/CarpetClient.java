@@ -13,6 +13,9 @@ import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+
 public class CarpetClient
 {
     public record CarpetPayload(CompoundTag data) implements CustomPacketPayload
@@ -44,8 +47,45 @@ public class CarpetClient
 
     private static LocalPlayer clientPlayer = null;
     private static boolean isServerCarpet = false;
+    private static boolean payloadRegistered = false;
     public static String serverCarpetVersion;
     public static final ResourceLocation CARPET_CHANNEL = ResourceLocation.fromNamespaceAndPath("carpet", "hello");
+
+    public static void registerPayloadType()
+    {
+        if (payloadRegistered) return;
+        try
+        {
+            Class<?> payloadTypeRegistry = Class.forName("net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry");
+            registerPayloadType(payloadTypeRegistry, "playS2C");
+            registerPayloadType(payloadTypeRegistry, "playC2S");
+            payloadRegistered = true;
+        }
+        catch (ClassNotFoundException ignored)
+        {
+            // Fabric API is optional. The CustomPacketPayload mixin still handles vanilla registration.
+        }
+        catch (ReflectiveOperationException | RuntimeException e)
+        {
+            CarpetSettings.LOG.warn("Failed to register Carpet custom payload type with Fabric API", e);
+        }
+    }
+
+    private static void registerPayloadType(Class<?> payloadTypeRegistry, String registryGetter) throws ReflectiveOperationException
+    {
+        Object registry = payloadTypeRegistry.getMethod(registryGetter).invoke(null);
+        Method register = payloadTypeRegistry.getMethod("register", CustomPacketPayload.Type.class, StreamCodec.class);
+        try
+        {
+            register.invoke(registry, CarpetPayload.TYPE, CarpetPayload.STREAM_CODEC);
+        }
+        catch (InvocationTargetException e)
+        {
+            Throwable cause = e.getCause();
+            if (cause instanceof IllegalArgumentException && cause.getMessage() != null && cause.getMessage().contains("already registered")) return;
+            throw e;
+        }
+    }
 
     public static void gameJoined(LocalPlayer player)
     {

@@ -21,7 +21,7 @@ public interface CustomPacketPayload_networkStuffMixin
         // this is stupid hack to make sure carpet payloads are always registered
         // that might collide with other mods that do the same thing
         // so we may need to adjust this in the future
-        if (!(list instanceof CarpetTaintedList))
+        if (!(list instanceof CarpetTaintedList) && list.stream().noneMatch(typeAndCodec -> typeAndCodec.type().equals(CarpetClient.CarpetPayload.TYPE)))
         {
             List<CustomPacketPayload.TypeAndCodec<? super B, ?>> extendedList = new CarpetTaintedList<>(list);
             extendedList.add(new CustomPacketPayload.TypeAndCodec<>(CarpetClient.CarpetPayload.TYPE, CarpetClient.CarpetPayload.STREAM_CODEC));
