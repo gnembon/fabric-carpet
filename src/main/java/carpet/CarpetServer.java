@@ -18,6 +18,7 @@ import carpet.commands.ProfileCommand;
 import carpet.script.ScriptCommand;
 import carpet.commands.SpawnCommand;
 import carpet.commands.TestCommand;
+import carpet.network.CarpetClient;
 import carpet.network.ServerNetworkHandler;
 import carpet.helpers.HopperCounter;
 import carpet.logging.LoggerRegistry;
@@ -73,6 +74,7 @@ public class CarpetServer // static for now - easier to handle all around the co
     // to register before this call in a ModInitializer (declared in fabric.mod.json)
     public static void onGameStarted()
     {
+        CarpetClient.registerPayloadType();
         settingsManager = new carpet.settings.SettingsManager(CarpetSettings.carpetVersion, "carpet", "Carpet Mod");
         settingsManager.parseSettingsClass(CarpetSettings.class);
         extensions.forEach(CarpetExtension::onGameStarted);
