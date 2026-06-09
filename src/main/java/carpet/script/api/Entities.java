@@ -34,6 +34,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntitySelector;
 import net.minecraft.world.entity.EntitySpawnReason;
+import net.minecraft.world.entity.EntitySpawnRequest;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.player.Player;
@@ -142,7 +143,7 @@ public class Entities
             Vec3 vec3d = position.vec;
 
             ServerLevel serverWorld = cc.level();
-            Entity entity = EntityType.loadEntityRecursive(tag, serverWorld, EntitySpawnReason.COMMAND, e -> {
+            Entity entity = EntityType.loadEntityRecursive(tag, serverWorld, new EntitySpawnRequest(EntitySpawnReason.COMMAND, true), e -> {
                 e.snapTo(vec3d.x, vec3d.y, vec3d.z, e.getYRot(), e.getXRot());
                 return e;
             });
