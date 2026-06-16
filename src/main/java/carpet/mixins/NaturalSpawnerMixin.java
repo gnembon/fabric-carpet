@@ -4,6 +4,8 @@ import carpet.CarpetSettings;
 import carpet.fakes.LevelInterface;
 import carpet.utils.SpawnReporter;
 import net.minecraft.world.entity.EntitySpawnReason;
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import org.apache.commons.lang3.tuple.Pair;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -46,12 +48,12 @@ public class NaturalSpawnerMixin
 
     @Shadow @Final private static MobCategory[] SPAWNING_CATEGORIES;
 
-    @Redirect(method = "isValidSpawnPostitionForType",
-            at = @At(
+    @WrapOperation(method = "isValidSpawnPostitionForType",
+                   at = @At(
             value = "INVOKE",
             target = "Lnet/minecraft/server/level/ServerLevel;noCollision(Lnet/minecraft/world/phys/AABB;)Z"
     ))
-    private static boolean doesNotCollide(ServerLevel world, AABB bb)
+    private static boolean doesNotCollide(ServerLevel world, AABB bb, Operation<Boolean> original)
     {
         //.doesNotCollide is VERY expensive. On the other side - most worlds are not made of trapdoors in
         // various configurations, but solid and 'passable' blocks, like air, water grass, etc.
@@ -59,7 +61,7 @@ public class NaturalSpawnerMixin
         // in case something more complex happens - we default to full block collision check
         if (!CarpetSettings.lagFreeSpawning)
         {
-            return world.noCollision(bb);
+            return original.call(world, bb);
         }
         int minX = Mth.floor(bb.minX);
         int minY = Mth.floor(bb.minY);
