@@ -82,7 +82,7 @@ public class NaturalSpawnerMixin
                     }
                     else
                     {
-                        return world.noCollision(bb);
+                        return original.call(world, bb);
                     }
                 }
             }
@@ -105,7 +105,7 @@ public class NaturalSpawnerMixin
                         }
                         else
                         {
-                            return world.noCollision(bb);
+                            return original.call(world, bb);
                         }
                     }
                 }
@@ -125,7 +125,7 @@ public class NaturalSpawnerMixin
                         ((block instanceof FenceGateBlock) && !state.getValue(FenceGateBlock.OPEN))
                 )
                 {
-                    if (x == minX || x == maxX || z == minZ || z == maxZ) return world.noCollision(bb);
+                    if (x == minX || x == maxX || z == minZ || z == maxZ) return original.call(world, bb);
                     return false;
                 }
             }
@@ -137,7 +137,7 @@ public class NaturalSpawnerMixin
             value = "INVOKE",
             target = "Lnet/minecraft/world/entity/EntityType;create(Lnet/minecraft/world/level/Level;Lnet/minecraft/world/entity/EntitySpawnReason;)Lnet/minecraft/world/entity/Entity;"
     ))
-    private static Entity create(final EntityType entityType, final Level world_1, final EntitySpawnReason entitySpawnReason)
+    private static Entity create(final EntityType<?> entityType, final Level world_1, final EntitySpawnReason entitySpawnReason)
     {
         if (CarpetSettings.lagFreeSpawning)
         {
