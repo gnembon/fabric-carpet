@@ -178,7 +178,8 @@ public class Entities
             String who = lv.get(0).getString();
             CommandSourceStack source = ((CarpetContext) c).source();
             EntityValue.EntityClassDescriptor eDesc = EntityValue.getEntityDescriptor(who, source.getServer());
-            List<? extends Entity> entityList = source.getLevel().getEntities(eDesc.directType, eDesc.filteringPredicate);
+            @SuppressWarnings("unchecked") // Eclipse's compiler finds an error if the cast isn't there (TODO report to ECJ)
+            List<? extends Entity> entityList = (List<? extends Entity>) source.getLevel().getEntities(eDesc.directType, eDesc.filteringPredicate);
             return ListValue.wrap(entityList.stream().map(EntityValue::new));
         });
 
