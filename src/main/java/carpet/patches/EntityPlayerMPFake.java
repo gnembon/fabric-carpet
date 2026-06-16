@@ -212,17 +212,8 @@ public class EntityPlayerMPFake extends ServerPlayer
         }
         try
         {
-            // Movement pretick stuff
-            double startX = this.getX();
-            double startY = this.getY();
-            double startZ = this.getZ();
-
             super.tick();
             this.doTick();
-
-            // Fixes getKnownMovement/getKnownSpeed and in turn spears
-            Vec3 movement = new Vec3(this.getX() - startX, this.getY() - startY, this.getZ() - startZ);
-            this.setKnownMovement(movement);
         }
         catch (NullPointerException ignored)
         {
