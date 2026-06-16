@@ -56,6 +56,7 @@ import net.minecraft.tags.ItemTags;
 import net.minecraft.tags.TagKey;
 import net.minecraft.util.ProblemReporter;
 import net.minecraft.util.random.WeightedList;
+import net.minecraft.world.entity.EntityTypes;
 import net.minecraft.world.level.ServerExplosion;
 import net.minecraft.world.level.chunk.ChunkGenerator;
 import net.minecraft.world.level.chunk.PalettedContainer;
@@ -946,7 +947,7 @@ public class WorldAccess
                     }
                     if (DUMMY_ENTITY == null)
                     {
-                        DUMMY_ENTITY = new FallingBlockEntity(EntityType.FALLING_BLOCK, null);
+                        DUMMY_ENTITY = new FallingBlockEntity(EntityTypes.FALLING_BLOCK, null);
                     }
                     Block.dropResources(state, world, where, be, DUMMY_ENTITY, tool);
                 }

@@ -17,6 +17,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.EntityTypes;
 import net.minecraft.world.phys.Vec3;
 
 public class MobAI
@@ -78,8 +79,8 @@ public class MobAI
 
     public enum TrackingType
     {
-        IRON_GOLEM_SPAWNING(Set.of(EntityType.VILLAGER)),
-        BREEDING(Set.of(EntityType.VILLAGER));
+        IRON_GOLEM_SPAWNING(Set.of(EntityTypes.VILLAGER)),
+        BREEDING(Set.of(EntityTypes.VILLAGER));
         public final Set<EntityType<?>> types;
         TrackingType(Set<EntityType<?>> applicableTypes)
         {

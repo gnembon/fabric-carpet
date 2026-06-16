@@ -4,6 +4,7 @@ import carpet.CarpetSettings;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.EntityTypes;
 import net.minecraft.world.entity.LightningBolt;
 import net.minecraft.world.entity.monster.ElderGuardian;
 import net.minecraft.world.entity.monster.Guardian;
@@ -24,7 +25,7 @@ public abstract class Guardian_renewableSpongesMixin extends Monster
     {                                // isRemoved()
         if (!this.level().isClientSide() && !this.isRemoved() && CarpetSettings.renewableSponges && !((Object)this instanceof ElderGuardian))
         {
-            ElderGuardian elderGuardian = new ElderGuardian(EntityType.ELDER_GUARDIAN ,this.level());
+            ElderGuardian elderGuardian = new ElderGuardian(EntityTypes.ELDER_GUARDIAN ,this.level());
             elderGuardian.snapTo(this.getX(), this.getY(), this.getZ(), this.getYRot(), this.getXRot());
             elderGuardian.finalizeSpawn(serverWorld ,serverWorld.getCurrentDifficultyAt(elderGuardian.blockPosition()), EntitySpawnReason.CONVERSION, null);
             elderGuardian.setNoAi(this.isNoAi());

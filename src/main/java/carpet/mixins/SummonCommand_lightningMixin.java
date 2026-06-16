@@ -7,7 +7,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntitySpawnReason;
-import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.EntityTypes;
 import net.minecraft.world.entity.LightningBolt;
 import net.minecraft.world.entity.animal.equine.SkeletonHorse;
 import net.minecraft.world.level.gamerules.GameRules;
@@ -32,7 +32,7 @@ public class SummonCommand_lightningMixin
             DifficultyInstance localDifficulty_1 =  world.getCurrentDifficultyAt(at);
             boolean boolean_2 = world.getGameRules().get(GameRules.SPAWN_MOBS) && world.getRandom().nextDouble() < (double)localDifficulty_1.getEffectiveDifficulty() * 0.01D;
             if (boolean_2) {
-                SkeletonHorse skeletonHorseEntity_1 = EntityType.SKELETON_HORSE.create(world, EntitySpawnReason.EVENT);
+                SkeletonHorse skeletonHorseEntity_1 = EntityTypes.SKELETON_HORSE.create(world, EntitySpawnReason.EVENT);
                 skeletonHorseEntity_1.setTrap(true);
                 skeletonHorseEntity_1.setAge(0);
                 skeletonHorseEntity_1.setPos(entity.getX(), entity.getY(), entity.getZ());

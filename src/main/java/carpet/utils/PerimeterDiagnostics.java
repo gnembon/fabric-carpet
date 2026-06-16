@@ -9,6 +9,7 @@ import net.minecraft.util.random.Weighted;
 import net.minecraft.world.entity.AgeableMob;
 import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.EntityTypes;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.entity.SpawnPlacements;
@@ -86,7 +87,7 @@ public class PerimeterDiagnostics
             }
         }
         PerimeterDiagnostics diagnostic = new PerimeterDiagnostics(worldserver,ctype,el);
-        EntityType<?> type = EntityType.ZOMBIE;
+        EntityType<?> type = EntityTypes.ZOMBIE;
         if (el != null) type = el.getType();
         int minY = worldserver.getMinY();
         int maxY = worldserver.getMaxY();

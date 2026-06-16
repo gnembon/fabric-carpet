@@ -34,6 +34,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntitySelector;
 import net.minecraft.world.entity.EntitySpawnReason;
+import net.minecraft.world.entity.EntitySpawnRequest;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.player.Player;
@@ -142,7 +143,7 @@ public class Entities
             Vec3 vec3d = position.vec;
 
             ServerLevel serverWorld = cc.level();
-            Entity entity = EntityType.loadEntityRecursive(tag, serverWorld, EntitySpawnReason.COMMAND, e -> {
+            Entity entity = EntityType.loadEntityRecursive(tag, serverWorld, new EntitySpawnRequest(EntitySpawnReason.COMMAND, true), e -> {
                 e.snapTo(vec3d.x, vec3d.y, vec3d.z, e.getYRot(), e.getXRot());
                 return e;
             });
@@ -177,7 +178,8 @@ public class Entities
             String who = lv.get(0).getString();
             CommandSourceStack source = ((CarpetContext) c).source();
             EntityValue.EntityClassDescriptor eDesc = EntityValue.getEntityDescriptor(who, source.getServer());
-            List<? extends Entity> entityList = source.getLevel().getEntities(eDesc.directType, eDesc.filteringPredicate);
+            @SuppressWarnings("unchecked") // Eclipse's compiler finds an error if the cast isn't there (TODO report to ECJ)
+            List<? extends Entity> entityList = (List<? extends Entity>) source.getLevel().getEntities(eDesc.directType, eDesc.filteringPredicate);
             return ListValue.wrap(entityList.stream().map(EntityValue::new));
         });
 

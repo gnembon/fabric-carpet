@@ -1,7 +1,8 @@
 package carpet.mixins;
 
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
+
+import net.minecraft.CrashReportDetail;
 import net.minecraft.SystemReport;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -14,7 +15,7 @@ import carpet.CarpetServer;
 @Mixin(SystemReport.class)
 public abstract class SystemReport_addScarpetAppsMixin
 {
-    @Shadow public abstract void setDetail(String name, Supplier<String> valueSupplier);
+    @Shadow public abstract void setDetail(String name, CrashReportDetail<Object> valueSupplier);
 
     @Inject(method = "<init>", at = @At("RETURN"))
     private void fillSystemDetails(CallbackInfo info) {

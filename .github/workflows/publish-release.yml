@@ -54,7 +54,7 @@ jobs:
             })).data;
             console.log('Previous release was: ' + releases[1].name);
             for (let release of releases.slice(1)) {
-              if (release.name.includes(READ_VERSION))
+              if (release.name.includes(' ' + READ_VERSION + ' '))
                 core.setFailed('Version number is the same as a previous release!')
             }
   Build-And-Publish:

@@ -38,7 +38,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.EntityTypes;
 import org.apache.commons.lang3.tuple.Pair;
 
 import org.jspecify.annotations.Nullable;
@@ -961,7 +961,7 @@ public class CarpetScriptHost extends ScriptHost
             String markerName = Auxiliary.MARKER_STRING + "_" + ((getName() == null) ? "" : getName());
             for (ServerLevel world : scriptServer().server.getAllLevels())
             {
-                for (Entity e : world.getEntities(EntityType.ARMOR_STAND, (as) -> as.entityTags().contains(markerName)))
+                for (Entity e : world.getEntities(EntityTypes.ARMOR_STAND, (as) -> as.entityTags().contains(markerName)))
                 {
                     e.discard();
                 }
