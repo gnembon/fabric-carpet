@@ -1,7 +1,6 @@
 package carpet.mixins;
 
 import org.objectweb.asm.Opcodes;
-import org.spongepowered.asm.mixin.Debug;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 
@@ -15,7 +14,6 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 
 @Mixin(ServerPlayer.class)
-@Debug(export = true)
 public abstract class ServerPlayer_fakeLastMovementMixin extends Player {
     public ServerPlayer_fakeLastMovementMixin(Level level, GameProfile gameProfile) {
         super(level, gameProfile);
@@ -24,7 +22,7 @@ public abstract class ServerPlayer_fakeLastMovementMixin extends Player {
 
     @ModifyExpressionValue(
         method = {"getKnownMovement", "getKnownSpeed"}, // both because ServerPlayer overrides both to the same "movement" field
-        at = @At(value = "FIELD", target = "lastKnownClientMovement", opcode = Opcodes.GETFIELD),
+        at = @At(value = "FIELD", target = "Lnet/minecraft/server/level/ServerPlayer;lastKnownClientMovement:Lnet/minecraft/world/phys/Vec3;", opcode = Opcodes.GETFIELD),
         require = 2
     )
     private Vec3 bypassClientMovementInfo(Vec3 original) {
