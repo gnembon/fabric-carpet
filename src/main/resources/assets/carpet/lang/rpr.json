@@ -1,0 +1,35 @@
+{
+  // TODO Rules
+  
+  // Categories:
+
+  "carpet.category.bugfix": "исправленiе баговъ",
+  "carpet.category.survival": "выживанiе",
+  "carpet.category.creative": "креативъ",
+  "carpet.category.experimental": "экспериментальные",
+  "carpet.category.optimization": "оптимизацiя",
+  "carpet.category.feature": "функцiональность",
+  "carpet.category.command": "команды",
+  "carpet.category.tnt": "TNT",
+  "carpet.category.dispenser": "раздатчики",
+  "carpet.category.scarpet": "scarpet",
+  "carpet.category.client": "клiентъ",
+
+  // Settings command UI elements
+
+  "carpet.settings.command.browse_categories": "Просмотръ категорiй",
+  "carpet.settings.command.version": "версiя",
+  "carpet.settings.command.list_all_category": "показать всѣ настройки %s",
+  "carpet.settings.command.current_settings_header": "Текущiя настройки %s",
+  "carpet.settings.command.switch_to": "Переключиться на %s",
+  "carpet.settings.command.unknown_rule": "Неизвѣстное правило",
+  "carpet.settings.command.current_from_file_header": "Текущiя стартовыя настройки %s изъ %s",
+  "carpet.settings.command.mod_settings_matching": "Настройки %s, соотвѣтствующія \"%s\"",
+  "carpet.settings.command.all_mod_settings": "Всѣ настройки %s",
+  "carpet.settings.command.tags": "Теги",
+  "carpet.settings.command.change_permanently": "Измѣнить постоянно",
+  "carpet.settings.command.change_permanently_tooltip": "нажмите, чтобы сохранить настройки въ %s для сохраненiя между перезапусками",
+  "carpet.settings.command.default_set": "Правило %s теперь по умолчанiю установлено на %s",
+  "carpet.settings.command.default_removed": "Правило %s больше не будетъ устанавливаться при перезапускѣ",
+  "carpet.settings.command.current_value": "текущее значенiе"
+}
