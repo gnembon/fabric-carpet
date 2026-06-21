@@ -1019,4 +1019,7 @@ public class CarpetSettings
             category = {SURVIVAL, FEATURE}
     )
     public static FungusGrowthMode thickFungusGrowth = FungusGrowthMode.FALSE;
+
+    @Rule( desc = "Allows you to BUD rail lines by right clicking them on the top with redstone dust.", category = CREATIVE )
+    public static boolean easyBUD = false;
 }
