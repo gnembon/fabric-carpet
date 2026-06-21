@@ -273,6 +273,7 @@ but like everywhere else, doing that sounds like a bad idea.
     - `nbt_error`: Incorrect input/output NBT file.
     - `json_error`: Incorrect input/output JSON data.
     - `b64_error`: Incorrect input/output b64 (base 64) string
+    - `folder_not_empty`: Folder is not empty when using `delete_folder` without `recursive` set to `true`.
   - `user_exception`: Exception thrown by default with `throw` function.
   
 Synopsis:
