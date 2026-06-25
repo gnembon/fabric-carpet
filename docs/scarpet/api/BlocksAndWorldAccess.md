@@ -2,7 +2,7 @@
 
 ## Specifying blocks
 
-### `block(x, y, z)`, `block([x,y,z])`, `block(state)`
+### `block(x, y, z)`, `block([x,y,z])`, `block(state, property?, value?, ..., block_data?)`, `block(state, [property?, value?, ...], block_data?)`, `block(state, {property? -> value?, ...}, block_data?)`
 
 Returns either a block from specified location, or block with a specific state (as used by `/setblock` command), 
 so allowing for block properties, block entity data etc. Blocks otherwise can be referenced everywhere by its simple 
@@ -11,8 +11,12 @@ string name, but its only used in its default state.
 <pre>
 block('air')  => air
 block('iron_trapdoor[half=top]')  => iron_trapdoor
+block('iron_trapdoor','half','top') // same
+block('iron_trapdoor',['half','top']) // same
+block('iron_trapdoor',{'half'->'top'}) // same
 block(0,0,0) == block('bedrock')  => 1
 block('hopper[facing=north]{Items:[{Slot:1b,id:"minecraft:slime_ball",Count:16b}]}') => hopper
+block('hopper', {'facing' -> 'north'}, nbt('{Items:[{Slot:1b,id:"minecraft:slime_ball",Count:16b}]}') ) // same
 </pre>
 
 Retrieving a block with `block` function has also a side-effect of evaluating its current state and data. 
