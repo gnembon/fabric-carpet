@@ -1799,8 +1799,7 @@ public class WorldAccess
                     };
 
             RandomState randomState = RandomState.create(
-                    noiseBasedChunkGenerator.generatorSettings().value(),
-                    level.registryAccess().lookupOrThrow(Registries.NOISE), level.getSeed()
+                    level.registryAccess().lookupOrThrow(Registries.NOISE), level.getSeed(), noiseBasedChunkGenerator.generatorSettings().value()
             );
             DensityFunction.Visitor visitor = Vanilla.RandomState_getVisitor(randomState);
 

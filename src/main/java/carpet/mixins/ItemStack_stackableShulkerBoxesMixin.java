@@ -22,7 +22,7 @@ public interface ItemStack_stackableShulkerBoxesMixin
                 && ((ItemInstance)((Object)this)) instanceof final ItemStack itemStack
                 && itemStack.getItem() instanceof BlockItem blockItem
                 && blockItem.getBlock() instanceof ShulkerBoxBlock
-                && ((ItemStack) ((Object) this)).getOrDefault(DataComponents.CONTAINER, ItemContainerContents.EMPTY).allItemsCopyStream().findAny().isEmpty()
+                && ((ItemStack) ((Object) this)).getOrDefault(DataComponents.CONTAINER, ItemContainerContents.EMPTY).itemCopies().findAny().isEmpty()
         ) {
             cir.setReturnValue(CarpetSettings.shulkerBoxStackSize);
         }

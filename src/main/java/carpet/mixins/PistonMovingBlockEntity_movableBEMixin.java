@@ -106,14 +106,14 @@ public abstract class PistonMovingBlockEntity_movableBEMixin extends BlockEntity
     }
     
     @Redirect(method = "finalTick", at = @At(value = "INVOKE",
-              target = "Lnet/minecraft/world/level/Level;setBlock(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;I)Z"))
-    private boolean movableTEsetBlockState1(Level world, BlockPos blockPos_1, BlockState blockState_2, int int_1)
+              target = "Lnet/minecraft/world/level/Level;setBlockAndUpdate(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;)Z"))
+    private boolean movableTESetBlockState1(Level world, BlockPos blockPos_1, BlockState blockState_2)
     {
         if (!CarpetSettings.movableBlockEntities)
-            return world.setBlock(blockPos_1, blockState_2, int_1);
+            return world.setBlockAndUpdate(blockPos_1, blockState_2);
         else
         {
-            boolean ret = ((LevelInterface) (world)).setBlockStateWithBlockEntity(blockPos_1, blockState_2, this.carriedBlockEntity, int_1);
+            boolean ret = ((LevelInterface) (world)).setBlockStateWithBlockEntity(blockPos_1, blockState_2, this.carriedBlockEntity, Block.UPDATE_ALL);
             this.carriedBlockEntity = null; //this will cancel the finishHandleBroken
             return ret;
         }

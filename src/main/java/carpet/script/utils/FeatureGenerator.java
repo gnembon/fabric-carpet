@@ -38,11 +38,12 @@ import net.minecraft.world.level.chunk.ChunkGeneratorStructureState;
 import net.minecraft.world.level.levelgen.GenerationStep;
 import net.minecraft.world.level.levelgen.RandomState;
 import net.minecraft.world.level.levelgen.VerticalAnchor;
-import net.minecraft.world.level.levelgen.feature.ConfiguredFeature;
+import net.minecraft.world.level.levelgen.feature.CoralClawFeature;
+import net.minecraft.world.level.levelgen.feature.CoralMushroomFeature;
+import net.minecraft.world.level.levelgen.feature.CoralTreeFeature;
 import net.minecraft.world.level.levelgen.feature.Feature;
-import net.minecraft.world.level.levelgen.feature.configurations.CompositeFeatureConfiguration;
-import net.minecraft.world.level.levelgen.feature.configurations.FeatureConfiguration;
-import net.minecraft.world.level.levelgen.feature.configurations.TreeConfiguration;
+import net.minecraft.world.level.levelgen.feature.SimpleRandomSelectorFeature;
+import net.minecraft.world.level.levelgen.feature.TreeFeature;
 import net.minecraft.world.level.levelgen.feature.featuresize.TwoLayersFeatureSize;
 import net.minecraft.world.level.levelgen.feature.foliageplacers.BlobFoliagePlacer;
 import net.minecraft.world.level.levelgen.feature.foliageplacers.FancyFoliagePlacer;
@@ -66,7 +67,7 @@ import net.minecraft.world.level.levelgen.structure.templatesystem.StructureProc
 
 import org.jspecify.annotations.Nullable;
 
-import static net.minecraft.world.level.levelgen.feature.configurations.TreeConfiguration.CAN_PLACE_BELOW_TREE_TRUNKS;
+import static net.minecraft.world.level.levelgen.feature.TreeFeature.CAN_PLACE_BELOW_TREE_TRUNKS;
 
 public class FeatureGenerator
 {
@@ -85,7 +86,7 @@ public class FeatureGenerator
             return plopAnywhere(structure, world, pos, world.getChunkSource().getGenerator(), false);
         }
 
-        ConfiguredFeature<?, ?> configuredFeature = world.registryAccess().lookupOrThrow(Registries.CONFIGURED_FEATURE).getValue(id);
+        Feature configuredFeature = world.registryAccess().lookupOrThrow(Registries.FEATURE).getValue(id);
         if (configuredFeature != null)
         {
             ThreadLocal<Boolean> checks = Vanilla.skipGenerationChecks(world);
@@ -108,10 +109,10 @@ public class FeatureGenerator
                 return plopAnywhere(configuredStandard, world, pos, world.getChunkSource().getGenerator(), false);
             }
         }
-        Feature<?> feature = world.registryAccess().lookupOrThrow(Registries.FEATURE).getValue(id);
+        Feature feature = world.registryAccess().lookupOrThrow(Registries.FEATURE).getValue(id);
         if (feature != null)
         {
-            ConfiguredFeature<?, ?> configuredStandard = getDefaultFeature(feature, world, pos, true);
+            Feature configuredStandard = getDefaultFeature(feature, world, pos, true);
             if (configuredStandard != null)
             {
                 ThreadLocal<Boolean> checks = Vanilla.skipGenerationChecks(world);
@@ -157,7 +158,7 @@ public class FeatureGenerator
         Boolean plop(ServerLevel world, BlockPos pos);
     }
 
-    private static Thing simplePlop(ConfiguredFeature<?, ?> feature)
+    private static Thing simplePlop(Feature feature)
     {
         return (w, p) -> {
             ThreadLocal<Boolean> checks = Vanilla.skipGenerationChecks(w);
@@ -173,15 +174,10 @@ public class FeatureGenerator
         };
     }
 
-    private static <FC extends FeatureConfiguration, F extends Feature<FC>> Thing simplePlop(F feature, FC config)
-    {
-        return simplePlop(new ConfiguredFeature<>(feature, config));
-    }
-
-    private static Thing simpleTree(TreeConfiguration config)
+    private static Thing simpleTree(TreeFeature.Builder config)
     {
         //config.ignoreFluidCheck();
-        return simplePlop(new ConfiguredFeature<>(Feature.TREE, config));
+        return simplePlop(config.build());
     }
 
     private static Thing spawnCustomStructure(Structure structure)
@@ -212,14 +208,14 @@ public class FeatureGenerator
         return result;
     }
 
-    private static ConfiguredFeature<?, ?> getDefaultFeature(Feature<?> feature, ServerLevel world, BlockPos pos, boolean tryHard)
+    private static @Nullable Feature getDefaultFeature(Feature feature, ServerLevel world, BlockPos pos, boolean tryHard)
     {
         List<HolderSet<PlacedFeature>> configuredStepFeatures = world.getBiome(pos).value().getGenerationSettings().features();
         for (HolderSet<PlacedFeature> step : configuredStepFeatures)
         {
             for (Holder<PlacedFeature> provider : step)
             {
-                if (provider.value().feature().value().feature() == feature)
+                if (provider.value().feature().value() == feature)
                 {
                     return provider.value().feature().value();
                 }
@@ -229,13 +225,13 @@ public class FeatureGenerator
         {
             return null;
         }
-        return world.registryAccess().lookupOrThrow(Registries.CONFIGURED_FEATURE).entrySet().stream().
-                filter(cS -> cS.getValue().feature() == feature).
+        return world.registryAccess().lookupOrThrow(Registries.FEATURE).entrySet().stream().
+                filter(cS -> cS.getValue() == feature).
                 findFirst().map(Map.Entry::getValue).orElse(null);
     }
 
 
-    public static <T extends FeatureConfiguration> StructureStart shouldStructureStartAt(ServerLevel world, BlockPos pos, Structure structure, boolean computeBox)
+    public static StructureStart shouldStructureStartAt(ServerLevel world, BlockPos pos, Structure structure, boolean computeBox)
     {
         ServerChunkCache chunkSource = world.getChunkSource();
         RandomState seed = chunkSource.randomState();
@@ -277,28 +273,30 @@ public class FeatureGenerator
 
     private static RuleBasedStateProvider belowTrees = RuleBasedStateProvider.ifTrueThenProvide(CAN_PLACE_BELOW_TREE_TRUNKS, Blocks.DIRT);
 
-    private static TreeConfiguration.TreeConfigurationBuilder createTree(Block block, Block block2, int i, int j, int k, int l)
+    private static TreeFeature.Builder createTree(Block block, Block block2, int i, int j, int k, int l)
     {
-        return new TreeConfiguration.TreeConfigurationBuilder(BlockStateProvider.simple(block), new StraightTrunkPlacer(i, j, k), BlockStateProvider.simple(block2), new BlobFoliagePlacer(ConstantInt.of(l), ConstantInt.of(0), 3), new TwoLayersFeatureSize(1, 0, 1), belowTrees);
+        return new TreeFeature.Builder(BlockStateProvider.simple(block), new StraightTrunkPlacer(i, j, k), BlockStateProvider.simple(block2), new BlobFoliagePlacer(ConstantInt.of(l), ConstantInt.of(0), 3), new TwoLayersFeatureSize(1, 0, 1), belowTrees);
     }
 
     public static final Map<String, Function<ServerLevel, Thing>> featureMap = new HashMap<>()
     {{
 
         // TODO remove this using what place feature is using
-        put("oak_bees", l -> simpleTree(createTree(Blocks.OAK_LOG, Blocks.OAK_LEAVES, 4, 2, 0, 2).ignoreVines().decorators(List.of(new BeehiveDecorator(1.00F))).build()));
-        put("fancy_oak_bees", l -> simpleTree((new TreeConfiguration.TreeConfigurationBuilder(BlockStateProvider.simple(Blocks.OAK_LOG), new FancyTrunkPlacer(3, 11, 0), BlockStateProvider.simple(Blocks.OAK_LEAVES), new FancyFoliagePlacer(ConstantInt.of(2), ConstantInt.of(4), 4), new TwoLayersFeatureSize(0, 0, 0, OptionalInt.of(4)), belowTrees)).ignoreVines().decorators(List.of(new BeehiveDecorator(1.00F))).build()));
-        put("birch_bees", l -> simpleTree(createTree(Blocks.BIRCH_LOG, Blocks.BIRCH_LEAVES, 5, 2, 0, 2).ignoreVines().decorators(List.of(new BeehiveDecorator(1.00F))).build()));
+        put("oak_bees", l -> simpleTree(createTree(Blocks.OAK_LOG, Blocks.OAK_LEAVES, 4, 2, 0, 2).ignoreVines().decorators(List.of(new BeehiveDecorator(1.00F)))));
+        put("fancy_oak_bees", l -> simpleTree(new TreeFeature.Builder(BlockStateProvider.simple(Blocks.OAK_LOG), new FancyTrunkPlacer(3, 11, 0), BlockStateProvider.simple(Blocks.OAK_LEAVES), new FancyFoliagePlacer(ConstantInt.of(2), ConstantInt.of(4), 4), new TwoLayersFeatureSize(0, 0, 0, OptionalInt.of(4)), belowTrees).ignoreVines().decorators(List.of(new BeehiveDecorator(1.00F)))));
+        put("birch_bees", l -> simpleTree(createTree(Blocks.BIRCH_LOG, Blocks.BIRCH_LEAVES, 5, 2, 0, 2).ignoreVines().decorators(List.of(new BeehiveDecorator(1.00F)))));
 
-        put("coral_tree", l -> simplePlop(Feature.CORAL_TREE, FeatureConfiguration.NONE));
+        put("coral_tree", l -> simplePlop(new CoralTreeFeature()));
 
-        put("coral_claw", l -> simplePlop(Feature.CORAL_CLAW, FeatureConfiguration.NONE));
-        put("coral_mushroom", l -> simplePlop(Feature.CORAL_MUSHROOM, FeatureConfiguration.NONE));
-        put("coral", l -> simplePlop(Feature.SIMPLE_RANDOM_SELECTOR, new CompositeFeatureConfiguration(HolderSet.direct(
-                PlacementUtils.inlinePlaced(Feature.CORAL_TREE, FeatureConfiguration.NONE),
-                PlacementUtils.inlinePlaced(Feature.CORAL_CLAW, FeatureConfiguration.NONE),
-                PlacementUtils.inlinePlaced(Feature.CORAL_MUSHROOM, FeatureConfiguration.NONE)
-        ))));
+        put("coral_claw", l -> simplePlop(new CoralClawFeature()));
+        put("coral_mushroom", l -> simplePlop(new CoralMushroomFeature()));
+        put("coral", l -> simplePlop(new SimpleRandomSelectorFeature(
+                HolderSet.direct(
+                        PlacementUtils.inlinePlaced(new CoralTreeFeature()),
+                        PlacementUtils.inlinePlaced(new CoralClawFeature()),
+                        PlacementUtils.inlinePlaced(new CoralMushroomFeature())
+                )
+        )));
         put("bastion_remnant_units", l -> {
             RegistryAccess regs = l.registryAccess();
 

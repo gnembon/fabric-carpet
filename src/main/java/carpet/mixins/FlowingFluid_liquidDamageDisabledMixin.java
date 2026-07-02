@@ -19,7 +19,7 @@ public class FlowingFluid_liquidDamageDisabledMixin
             method = "canHoldAnyFluid",
             at = @At(
                     value = "INVOKE",
-                    target = "Lnet/minecraft/world/level/block/state/BlockState;blocksMotion()Z"
+                    target = "Lnet/minecraft/world/level/block/state/BlockState;is(Lnet/minecraft/tags/TagKey;)Z"
             ),
             cancellable = true
     )
@@ -27,7 +27,7 @@ public class FlowingFluid_liquidDamageDisabledMixin
     {
         if (CarpetSettings.liquidDamageDisabled)
         {
-            cir.setReturnValue(state.isAir() || state.is(Blocks.WATER) || state.is(Blocks.LAVA));
+            cir.setReturnValue((state.isAir() || state.is(Blocks.WATER) || state.is(Blocks.LAVA)));
         }
     }
 }

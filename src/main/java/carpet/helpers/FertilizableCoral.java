@@ -1,6 +1,5 @@
 package carpet.helpers;
 
-import carpet.fakes.CoralFeatureInterface;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.core.HolderSet;
@@ -20,7 +19,6 @@ import net.minecraft.world.level.levelgen.feature.CoralClawFeature;
 import net.minecraft.world.level.levelgen.feature.CoralFeature;
 import net.minecraft.world.level.levelgen.feature.CoralMushroomFeature;
 import net.minecraft.world.level.levelgen.feature.CoralTreeFeature;
-import net.minecraft.world.level.levelgen.feature.configurations.NoneFeatureConfiguration;
 import net.minecraft.world.level.material.MapColor;
 
 /**
@@ -51,9 +49,9 @@ public interface FertilizableCoral extends BonemealableBlock {
     {
         int variant = random.nextInt(3);
         CoralFeature coral = switch (variant) {
-            case 0 -> new CoralClawFeature(NoneFeatureConfiguration.CODEC);
-            case 1 -> new CoralTreeFeature(NoneFeatureConfiguration.CODEC);
-            default -> new CoralMushroomFeature(NoneFeatureConfiguration.CODEC);
+            case 0 -> new CoralClawFeature();
+            case 1 -> new CoralTreeFeature();
+            default -> new CoralMushroomFeature();
         };
 
         MapColor color = blockUnder.getMapColor(worldIn, pos);
@@ -69,7 +67,7 @@ public interface FertilizableCoral extends BonemealableBlock {
         }
         worldIn.setBlock(pos, Blocks.WATER.defaultBlockState(), Block.UPDATE_NONE);
 
-        if (!((CoralFeatureInterface)coral).growSpecific(worldIn, random, pos, properBlock))
+        if (!coral.placeFeature(worldIn, random, pos, properBlock))
         {
             worldIn.setBlock(pos, blockUnder, 3);
         }

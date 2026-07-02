@@ -4,6 +4,7 @@ import carpet.helpers.ParticleDisplay;
 import carpet.utils.Messenger;
 import carpet.utils.MobAI;
 import net.minecraft.core.particles.DustParticleOptions;
+import net.minecraft.tags.ItemTags;
 import net.minecraft.world.entity.ai.village.poi.PoiTypes;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -33,7 +34,6 @@ import net.minecraft.world.entity.npc.villager.AbstractVillager;
 import net.minecraft.world.entity.npc.villager.Villager;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.schedule.Activity;
-import net.minecraft.world.item.BedItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
@@ -140,7 +140,7 @@ public abstract class Villager_aiMixin extends AbstractVillager
                 while(countFoodPointsInInventory() >= 12) eatAndDigestFood();
 
             }
-            else if (itemStack_1.getItem() instanceof BedItem)
+            else if (itemStack_1.is(ItemTags.BEDS))
             {
                 List<PoiRecord> list_1 = ((ServerLevel) level()).getPoiManager().getInRange(
                         type -> type.is(PoiTypes.HOME),

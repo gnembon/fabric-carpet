@@ -943,7 +943,7 @@ public class EntityValue extends Value
 
     private static void updateVelocity(Entity e, double scale)
     {
-        e.hurtMarked = true;
+        e.syncVelocity = true;
         if (Math.abs(scale) > 10000)
         {
             CarpetScriptServer.LOG.warn("Moved entity " + e.getScoreboardName() + " " + e.getName() + " at " + e.position() + " extremely fast: " + e.getDeltaMovement());

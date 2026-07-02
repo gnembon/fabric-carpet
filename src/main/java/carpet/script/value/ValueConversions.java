@@ -532,7 +532,7 @@ public class ValueConversions
         }
         if (o instanceof final Vec3i vec3i)
         {
-            return of(new BlockPos(vec3i));
+            return of(new BlockPos(vec3i.getX(), vec3i.getY(), vec3i.getZ()));
         }
         if (o instanceof final AABB aabb)
         {

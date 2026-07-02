@@ -17,12 +17,12 @@ public abstract class Player_fakePlayersMixin
             method = "causeExtraKnockback",
             at = @At(
                     value = "FIELD",
-                    target = "Lnet/minecraft/world/entity/Entity;hurtMarked:Z",
+                    target = "Lnet/minecraft/world/entity/Entity;syncVelocity:Z",
                     ordinal = 0
             )
     )
     private boolean velocityModifiedAndNotCarpetFakePlayer(Entity target)
     {
-        return target.hurtMarked && !(target instanceof EntityPlayerMPFake);
+        return target.syncVelocity && !(target instanceof EntityPlayerMPFake);
     }
 }
