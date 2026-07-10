@@ -11,6 +11,7 @@ import carpet.script.utils.Tracer;
 import net.minecraft.commands.arguments.EntityAnchorArgument;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.protocol.game.ClientboundSetHeldSlotPacket;
 import net.minecraft.network.protocol.game.ServerboundPlayerActionPacket;
 import net.minecraft.server.level.ServerLevel;
@@ -19,12 +20,14 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.animal.equine.AbstractHorse;
 import net.minecraft.world.entity.decoration.ItemFrame;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.vehicle.boat.Boat;
 import net.minecraft.world.entity.vehicle.minecart.Minecart;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.component.PiercingWeapon;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
@@ -369,6 +372,18 @@ public class EntityPlayerActionPack
         ATTACK(true) {
             @Override
             boolean execute(ServerPlayer player, Action action) {
+                ItemStack stack = player.getMainHandItem();
+                PiercingWeapon piercingWeapon = stack.get(DataComponents.PIERCING_WEAPON);
+                if (piercingWeapon != null)
+                {
+                    if (action.isContinuous) return true;
+                    if (!stack.isItemEnabled(player.level().enabledFeatures()) || player.cannotAttackWithItem(stack, 0)) return false;
+
+                    player.resetLastActionTime();
+                    piercingWeapon.attack(player, EquipmentSlot.MAINHAND);
+                    return true;
+                }
+
                 HitResult hit = getTarget(player);
                 switch (hit.getType()) {
                     case ENTITY: {
