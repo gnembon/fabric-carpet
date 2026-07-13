@@ -1,26 +1,18 @@
 package carpet.mixins;
 
 import carpet.network.CarpetClient;
+import carpet.script.utils.PostEffectDispatcher;
 import carpet.script.utils.ShapesRenderer;
-import com.llamalad7.mixinextras.sugar.Local;
-import com.mojang.blaze3d.framegraph.FrameGraphBuilder;
-import com.mojang.blaze3d.framegraph.FramePass;
 import com.mojang.blaze3d.resource.GraphicsResourceAllocator;
 import com.mojang.renderpearl.api.buffers.GpuBufferSlice;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.LevelRenderer;
-import net.minecraft.client.renderer.LevelTargetBundle;
-import net.minecraft.client.renderer.RenderBuffers;
 import net.minecraft.client.renderer.ShaderManager;
-import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.SubmitNodeStorage;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderDispatcher;
-import net.minecraft.client.renderer.chunk.ChunkSectionsToRender;
 import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
-import net.minecraft.client.renderer.feature.FeatureRenderDispatcher;
-import net.minecraft.client.renderer.state.GameRenderState;
 import net.minecraft.client.renderer.state.level.CameraRenderState;
 import net.minecraft.client.renderer.state.level.LevelRenderState;
 import net.minecraft.client.renderer.texture.TextureManager;
@@ -38,12 +30,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(LevelRenderer.class)
 public class LevelRenderer_scarpetRenderMixin
 {
-    @Shadow @Final private LevelTargetBundle targets;
-
-    @Shadow @Final private FeatureRenderDispatcher featureRenderDispatcher;
-
-    @Shadow @Final private RenderBuffers renderBuffers;
-
     @Shadow @Final private LevelRenderState levelRenderState;
 
     @Shadow @Final private SubmitNodeStorage submitNodeStorage;
@@ -54,31 +40,28 @@ public class LevelRenderer_scarpetRenderMixin
         CarpetClient.shapes = new ShapesRenderer(Minecraft.getInstance());
     }
 
+    // Scarpet shapes must be submitted in the same phase where vanilla submits its features, i.e. before
+    // featureRenderDispatcher.prepareFrame drains submitNodeStorage for this frame. Submitting later (the
+    // previous approach used a dedicated FramePass, which executes only during frame-graph execution, after
+    // the drain) means the submissions are only picked up by the NEXT frame's prepareFrame - and since
+    // block/item/text submissions bake the camera-relative translation into their PoseStack at submit time,
+    // they got drawn with a one-frame-stale camera offset, visibly drifting whenever the camera moved.
     @Inject(method = "render", at = @At(
             value = "INVOKE",
-target = "Lnet/minecraft/client/renderer/LevelRenderer;addMainPass(Lcom/mojang/blaze3d/framegraph/FrameGraphBuilder;Lnet/minecraft/client/renderer/feature/FeatureRenderDispatcher$PreparedFrame;Lcom/mojang/renderpearl/api/buffers/GpuBufferSlice;Lnet/minecraft/client/renderer/chunk/ChunkSectionsToRender;F)V",
-            //target = "Lnet/minecraft/client/renderer/LevelRenderer;addMainPass(Lcom/mojang/blaze3d/framegraph/FrameGraphBuilder;Lnet/minecraft/client/renderer/feature/FeatureRenderDispatcher$PreparedFrame;Lcom/mojang/blaze3d/buffers/GpuBufferSlice;Lnet/minecraft/client/renderer/chunk/ChunkSectionsToRender;F)V",
-            //target = "Lnet/minecraft/client/renderer/LevelRenderer;addMainPass(Lcom/mojang/blaze3d/framegraph/FrameGraphBuilder;Lnet/minecraft/client/renderer/feature/FeatureRenderDispatcher$PreparedFrame;Lcom/mojang/blaze3d/buffers/GpuBufferSlice;Lnet/minecraft/client/renderer/chunk/ChunkSectionsToRender;)V",
-            //target = "Lnet/minecraft/client/renderer/LevelRenderer;addAlwaysOnTopPass(Lcom/mojang/blaze3d/framegraph/FrameGraphBuilder;Lcom/mojang/blaze3d/buffers/GpuBufferSlice;)V",
-            //target = "Lnet/minecraft/client/renderer/LevelRenderer;submitFeatures(Lnet/minecraft/client/renderer/state/level/LevelRenderState;Lnet/minecraft/client/renderer/SubmitNodeCollector;Z)V",
-            //target = "Lnet/minecraft/client/renderer/LevelRenderer;addMainPass(Lcom/mojang/blaze3d/framegraph/FrameGraphBuilder;Lcom/mojang/blaze3d/buffers/GpuBufferSlice;Lnet/minecraft/client/renderer/state/level/LevelRenderState;Lnet/minecraft/util/profiling/ProfilerFiller;Lnet/minecraft/client/renderer/chunk/ChunkSectionsToRender;)V",
-            //target = "Lnet/minecraft/client/renderer/LevelRenderer;addLateDebugPass(Lcom/mojang/blaze3d/framegraph/FrameGraphBuilder;Lnet/minecraft/client/renderer/state/level/CameraRenderState;Lcom/mojang/blaze3d/buffers/GpuBufferSlice;Lorg/joml/Matrix4fc;)V",
+            target = "Lnet/minecraft/client/renderer/LevelRenderer;submitFeatures(Lnet/minecraft/client/renderer/state/level/LevelRenderState;Lnet/minecraft/client/renderer/SubmitNodeCollector;Z)V",
             shift = At.Shift.AFTER
     ))
-            private void renderScarpetThingsLate(GraphicsResourceAllocator resourceAllocator, DeltaTracker deltaTracker, boolean renderOutline, CameraRenderState cameraState, Matrix4fc modelViewMatrix, GpuBufferSlice terrainFog, Vector4f fogColor, boolean shouldRenderSky, CallbackInfo ci, @Local FrameGraphBuilder frameGraphBuilder)
-    //private void renderScarpetThinsLate(GraphicsResourceAllocator resourceAllocator, DeltaTracker deltaTracker, boolean renderOutline, CameraRenderState cameraState, Matrix4fc modelViewMatrix, GpuBufferSlice terrainFog, Vector4f fogColor, boolean shouldRenderSky, CallbackInfo ci, @Local FrameGraphBuilder frameGraphBuilder)
+    private void submitScarpetShapes(GraphicsResourceAllocator resourceAllocator, DeltaTracker deltaTracker, boolean renderOutline, CameraRenderState cameraState, Matrix4fc modelViewMatrix, GpuBufferSlice terrainFog, Vector4f fogColor, boolean shouldRenderSky, CallbackInfo ci)
     {
-        // in normal circumstances we want to render shapes at the very end so it appears correctly behind stuff.
-        // we might actually not need to play with render hooks here.
-        //if (!FabricAPIHooks.WORLD_RENDER_EVENTS && CarpetClient.shapes != null )
+        if (Minecraft.getInstance().level != null)
+        {
+            PostEffectDispatcher.purge(Minecraft.getInstance().level.getGameTime());
+        }
+
         if (CarpetClient.shapes != null)
         {
             final float deltaPartialTick = deltaTracker.getGameTimeDeltaPartialTick(false);
-            FramePass pass = frameGraphBuilder.addPass("scarpet_shapes");
-            targets.main = pass.readsAndWrites(targets.main);
-            pass.executes(() -> CarpetClient.shapes.render(submitNodeStorage, levelRenderState, modelViewMatrix, deltaPartialTick));
-            //featureRenderDispatcher.renderAllFeatures(submitNodeStorage);
-            //renderBuffers.bufferSource().uploadAndDraw();
+            CarpetClient.shapes.render(submitNodeStorage, levelRenderState, modelViewMatrix, deltaPartialTick);
         }
     }
 }

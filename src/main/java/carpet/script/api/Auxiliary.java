@@ -352,6 +352,46 @@ public class Auxiliary
             return Value.TRUE;
         });
 
+        expression.addContextFunction("apply_post_effect", -1, (c, t, lv) ->
+        {
+            if (lv.size() < 2)
+            {
+                throw new InternalExpressionException("'apply_post_effect' requires a target and a shader (or null)");
+            }
+            CarpetContext cc = (CarpetContext) c;
+            MinecraftServer server = cc.server();
+            Value pVal = lv.get(0);
+            List<Value> targets = (pVal instanceof final ListValue list) ? list.getItems() : Collections.singletonList(pVal);
+            Value shaderVal = lv.get(1);
+            boolean clearing = shaderVal.isNull();
+            Identifier shaderId = clearing ? null : Identifier.parse(shaderVal.getString());
+            long duration = 0;
+            if (!clearing)
+            {
+                if (lv.size() < 3)
+                {
+                    throw new InternalExpressionException("'apply_post_effect' requires a duration in ticks when applying a shader");
+                }
+                duration = NumericValue.asNumber(lv.get(2)).getLong();
+            }
+            CompoundTag data = new CompoundTag();
+            if (!clearing)
+            {
+                data.putString("shader", shaderId.toString());
+                data.putLong("duration", duration);
+            }
+            for (Value v : targets)
+            {
+                ServerPlayer player = EntityValue.getPlayerByValue(server, v);
+                if (player == null)
+                {
+                    throw new InternalExpressionException("'apply_post_effect' target must be a valid online player, not " + v.getString());
+                }
+                Vanilla.sendScarpetPostEffectDataToPlayer(player, data);
+            }
+            return Value.TRUE;
+        });
+
         expression.addContextFunction("create_marker", -1, (c, t, lv) -> {
             CarpetContext cc = (CarpetContext) c;
             BlockState targetBlock = null;

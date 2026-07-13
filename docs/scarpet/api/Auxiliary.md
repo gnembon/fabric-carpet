@@ -114,6 +114,8 @@ Available shapes:
    * Optional attributes:
      * `level` - level of details, or grid size. The more the denser your sphere. Default level of 0, means that the
       level of detail will be selected automatically based on radius.
+     * `wireframe` - if `false`, the mesh segments used to indicate the level of detail won't be drawn, leaving only
+      the filled faces (if `fill` is set) visible. Defaults to `true`.
       
  * `'cylinder'`:
    * Required attributes:
@@ -123,6 +125,7 @@ Available shapes:
      * `axis` - cylinder direction, one of `'x'`, `'y'`, `'z'` defaults to `'y'`
      * `height` - height of the cyllinder, defaults to `0`, so flat disk. Can be negative.
      * `level` - level of details, see `'sphere'`.
+     * `wireframe` - see `'sphere'`. Defaults to `true`.
 
  * `'polygon'`:
    * Required attributes:
@@ -175,7 +178,22 @@ Available shapes:
        it can also be used to use special models of tridents and telescopes. 
         This attribute is experimental and use of it will change in the future.
 
-      
+### `apply_post_effect(players, shader, duration?)`
+
+Applies a client-side post-processing shader (the same mechanism vanilla uses for the vision effect you get while
+spectating a creeper, spider, or enderman) to the screen of `players` (a single online player or a list of them) for
+`duration` ticks, after which it expires automatically. Like `draw_shape`, this only works for players that have carpet
+installed on their client - it's a no-op for vanilla clients.
+
+ * `shader` - an identifier naming the post-chain shader to apply, e.g. `'minecraft:invert'`, `'minecraft:creeper'`,
+   `'minecraft:spider'`, or a custom shader identifier provided by a resource/data pack. Pass `null` to remove any
+   currently applied effect early, in which case `duration` is not required and is ignored.
+ * `duration` - how many ticks the shader stays applied for. Required unless `shader` is `null`.
+
+Unlike vanilla's own creeper/spider/enderman effect, an effect applied with `apply_post_effect` stays applied when the
+player toggles perspective (F5) between first and third person, and reapplies itself if the player looks away and back
+through their own eyes; it only stops when it expires or is explicitly cleared.
+
 ### `create_marker(text, pos, rotation?, block?, interactive?)`
 
 Spawns a (permanent) marker entity with text or block at position. Returns that entity for further manipulations. 

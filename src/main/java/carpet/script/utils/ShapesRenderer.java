@@ -17,15 +17,16 @@ import java.util.Map;
 import java.util.Random;
 import java.util.function.BiFunction;
 
-import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.components.debug.DebugScreenEntries;
-import net.minecraft.client.gui.font.TextRenderable;
 import net.minecraft.client.multiplayer.ClientLevel;
 //import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.SubmitNodeStorage;
+import net.minecraft.client.renderer.block.BlockAndTintGetter;
 import net.minecraft.client.renderer.block.BlockModelRenderState;
+import net.minecraft.client.renderer.block.FluidRenderer;
+import net.minecraft.client.renderer.block.FluidStateModelSet;
 import net.minecraft.client.renderer.entity.DisplayRenderer;
 import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
@@ -34,6 +35,7 @@ import net.minecraft.client.renderer.entity.state.EntityRenderState;
 import net.minecraft.client.renderer.gizmos.DrawableGizmoPrimitives;
 import net.minecraft.client.renderer.item.ItemStackRenderState;
 import net.minecraft.client.renderer.rendertype.RenderTypes;
+import net.minecraft.client.renderer.state.level.CameraRenderState;
 import net.minecraft.client.renderer.state.level.LevelRenderState;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.core.BlockPos;
@@ -45,17 +47,20 @@ import net.minecraft.util.LightCoordsUtil;
 import net.minecraft.util.Mth;
 import net.minecraft.util.ProblemReporter;
 import net.minecraft.world.item.ItemDisplayContext;
+import net.minecraft.world.level.CardinalLighting;
+import net.minecraft.world.level.ColorResolver;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LightLayer;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.EntityBlock;
 import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.lighting.LevelLightEngine;
+import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.level.storage.TagValueInput;
 import net.minecraft.world.phys.Vec3;
-import org.joml.Matrix4fStack;
 import org.joml.Matrix4fc;
-import org.joml.Quaternionf;
 
 public class ShapesRenderer
 {
@@ -76,7 +81,10 @@ public class ShapesRenderer
         put("item", (c, s) -> new RenderedSprite(c, s, true));
     }};
 
-    public static void rotatePoseStackByShapeDirection(PoseStack poseStack, ShapeDirection shapeDirection, Camera camera, Vec3 objectPos)
+    // Camera orientation/position must come from this frame's CameraRenderState (the same sample used for
+    // the camera-relative translation) - re-querying gameRenderer.mainCamera() here would mix two different
+    // interpolation samples and make camera/player-facing shapes wobble while the camera moves.
+    public static void rotatePoseStackByShapeDirection(PoseStack poseStack, ShapeDirection shapeDirection, CameraRenderState camera, Vec3 objectPos)
     {
         switch (shapeDirection)
         {
@@ -86,9 +94,9 @@ public class ShapesRenderer
             case WEST -> poseStack.mulPose(Axis.YP.rotationDegrees(90));
             case UP -> poseStack.mulPose(Axis.XP.rotationDegrees(90));
             case DOWN -> poseStack.mulPose(Axis.XP.rotationDegrees(-90));
-            case CAMERA -> poseStack.mulPose(camera.rotation());
+            case CAMERA -> poseStack.mulPose(camera.orientation);
             case PLAYER -> {
-                Vec3 vector = objectPos.subtract(camera.position());
+                Vec3 vector = objectPos.subtract(camera.pos);
                 double x = vector.x;
                 double y = vector.y;
                 double z = vector.z;
@@ -118,7 +126,6 @@ public class ShapesRenderer
         // posestack is not needed anymore - left as TODO to cleanup later
         PoseStack matrices = new PoseStack();
 
-        Camera camera = this.client.gameRenderer.mainCamera();
         ClientLevel iWorld = this.client.level;
         ResourceKey<Level> dimensionType = iWorld.dimension();
         if ((shapes.get(dimensionType) == null || shapes.get(dimensionType).isEmpty()) &&
@@ -143,9 +150,14 @@ public class ShapesRenderer
         //RenderSystem.enablePolygonOffset();
 
         // render
-        double cameraX = camera.position().x;
-        double cameraY = camera.position().y;
-        double cameraZ = camera.position().z;
+        // Use the camera position baked into this frame's LevelRenderState (matching what vanilla uses to
+        // position block entities in LevelRenderer#submitBlockEntities) rather than re-querying
+        // gameRenderer.mainCamera() here, which samples a slightly different point in the interpolation
+        // timeline and causes submitted models (block/item) to visibly lag behind while the camera moves.
+        Vec3 cameraPos = cameraa.cameraRenderState.pos;
+        double cameraX = cameraPos.x;
+        double cameraY = cameraPos.y;
+        double cameraZ = cameraPos.z;
         boolean entityBoxes = client.debugEntries.isCurrentlyEnabled(DebugScreenEntries.ENTITY_HITBOXES);
 
         final DrawableGizmoPrimitives normal = new DrawableGizmoPrimitives();
@@ -156,13 +168,8 @@ public class ShapesRenderer
             shapes.get(dimensionType).long2ObjectEntrySet().removeIf(
                     entry -> entry.getValue().isExpired(currentTime)
             );
-            Matrix4fStack matrixStack = RenderSystem.getModelViewStack();
-            matrixStack.pushMatrix();
-            //matrixStack.mul(matrices.last().pose());
-            matrixStack.mul(matrix4f);
 
             // lines
-            //RenderSystem.lineWidth(0.5F);
             shapes.get(dimensionType).values().forEach(s -> {
                 if ((!s.shape.debug || entityBoxes) && s.shouldRender(dimensionType))
                 {
@@ -176,9 +183,6 @@ public class ShapesRenderer
                     s.renderFaces(cameraX, cameraY, cameraZ, partialTick, s.shape.seethrough ? onTop : normal);
                 }
             });
-            //RenderSystem.lineWidth(1.0F);
-            matrixStack.popMatrix();
-
         }
         if (!labels.isEmpty())
         {
@@ -345,6 +349,11 @@ public class ShapesRenderer
         private BlockState blockState;
         private BlockEntity BlockEntity = null;
 
+        // cached across frames; refreshed when the model set instance changes (resource reload)
+        private FluidStateModelSet fluidModelSet = null;
+        private FluidRenderer fluidRenderer = null;
+        private RenderType fluidRenderType = null;
+
         protected RenderedSprite(Minecraft client, ShapeDispatcher.ExpiringShape shape, boolean isitem)
         {
             super(client, (ShapeDispatcher.DisplayedSprite) shape);
@@ -365,7 +374,6 @@ public class ShapesRenderer
             }
 
             Vec3 v1 = shape.relativiseRender(client.level, shape.pos, partialTick);
-            Camera camera1 = client.gameRenderer.mainCamera();
 
             matrices.pushPose();
             if (!isitem)// blocks should use its center as the origin
@@ -373,10 +381,8 @@ public class ShapesRenderer
                 matrices.translate(0.5, 0.5, 0.5);
             }
 
-            matrices.mulPose(camera1.rotation().conjugate(new Quaternionf()));
-
             matrices.translate(v1.x - cx, v1.y - cy, v1.z - cz);
-            rotatePoseStackByShapeDirection(matrices, shape.facing, camera1, isitem ? v1 : v1.add(0.5, 0.5, 0.5));
+            rotatePoseStackByShapeDirection(matrices, shape.facing, levelRenderState.cameraRenderState, isitem ? v1 : v1.add(0.5, 0.5, 0.5));
             if (shape.tilt != 0.0f)
             {
                 matrices.mulPose(Axis.ZP.rotationDegrees(-shape.tilt));
@@ -403,37 +409,60 @@ public class ShapesRenderer
             }
 
             blockPos = BlockPos.containing(v1);
+            int blockLight = shape.blockLight;
+            int skyLight = shape.skyLight;
             int light = 0;
             if (client.level != null)
             {
-                light = LightCoordsUtil.pack(
-                        shape.blockLight < 0 ? client.level.getBrightness(LightLayer.BLOCK, blockPos) : shape.blockLight,
-                        shape.skyLight < 0 ? client.level.getBrightness(LightLayer.SKY, blockPos) : shape.skyLight
-                );
+                if (blockLight < 0)
+                {
+                    blockLight = client.level.getBrightness(LightLayer.BLOCK, blockPos);
+                }
+                if (skyLight < 0)
+                {
+                    skyLight = client.level.getBrightness(LightLayer.SKY, blockPos);
+                }
+                light = LightCoordsUtil.pack(blockLight, skyLight);
             }
 
             blockState = shape.blockState;
 
-            //MultiBufferSource.BufferSource immediate = client.gameRenderer.renderBuffers().bufferSource();
             if (!isitem)
             {
                 // draw the block itself
                 if (blockState.getRenderShape() == RenderShape.MODEL)
                 {
-                    // this is equally wrong position wise as the BE type - need to investigate
-                    //var blockRenderDispatcher = client.getBlockRenderer();
-
-
-                    //var state = blockRenderDispatcher.getBlockModel(blockState);
                     BlockModelRenderState renderState = new BlockModelRenderState();
                     client.getBlockEntityRenderDispatcher().blockModelResolver.update(renderState, blockState, DisplayRenderer.BLOCK_DISPLAY_CONTEXT );
-                    //renderState.model = state;
-                    //renderState.block = blockState.getBlock();
-
                     renderState.submit(matrices, submitNodeStorage, light, OverlayTexture.NO_OVERLAY, EntityRenderState.NO_OUTLINE);
+                }
 
-
-                    //client.getBlockRenderer().renderSingleBlock(blockState, matrices, immediate, light, OverlayTexture.NO_OVERLAY);
+                // draw the fluid part, if any (fluid blocks like water/lava, or the fluid of waterlogged states)
+                FluidState fluidState = blockState.getFluidState();
+                if (!fluidState.isEmpty() && client.level != null)
+                {
+                    FluidStateModelSet fluidModels = client.getModelManager().getFluidStateModelSet();
+                    if (fluidRenderer == null || fluidModelSet != fluidModels)
+                    {
+                        // fluid models can change on resource reload, so key the cache on the set instance
+                        fluidModelSet = fluidModels;
+                        fluidRenderer = new FluidRenderer(fluidModels);
+                        fluidRenderType = switch (fluidModels.get(fluidState).layer())
+                        {
+                            case SOLID -> RenderTypes.solidMovingBlock();
+                            case CUTOUT -> RenderTypes.cutoutMovingBlock();
+                            case TRANSLUCENT -> RenderTypes.translucentMovingBlock();
+                        };
+                    }
+                    // tesselate against an isolated single-fluid-block view: neighbour queries see air so all
+                    // visible faces render, light comes from the shape and biome tint from the real position
+                    BlockAndTintGetter fluidGetter = new ShapeFluidGetter(client.level, blockState, blockPos, blockLight, skyLight);
+                    FluidRenderer renderer = fluidRenderer;
+                    // FluidRenderer emits section-local (pos & 15) coordinates, so tesselate at ZERO to get 0..1
+                    submitNodeStorage.submitCustomGeometry(matrices, fluidRenderType, (pose, vertexConsumer) ->
+                            renderer.tesselate(fluidGetter, BlockPos.ZERO,
+                                    layer -> new PoseAwareVertexConsumer(vertexConsumer, pose),
+                                    blockState, fluidState));
                 }
 
                 // draw the block`s entity part
@@ -459,24 +488,9 @@ public class ShapesRenderer
                         BlockEntityRenderer<BlockEntity, BlockEntityRenderState> blockEntityRenderer = client.getBlockEntityRenderDispatcher().getRenderer(BlockEntity);
                         BlockEntityRenderState state = client.getBlockEntityRenderDispatcher().tryExtractRenderState(BlockEntity, partialTick, null, true);
 
-
-                        // levelRenderer;;submitBlockEntities does a weird transpose
-
                         if (blockEntityRenderer != null && state != null)
                         {
-                            // testme partial positions
-                            //final Vec3 cameraPos = levelRenderState.cameraRenderState.pos;
-                            //final double camX = cameraPos.x();
-                            //final double camY = cameraPos.y();
-                            //final double camZ = cameraPos.z();
-                            //matrices.translate(blockPos.getX() - camX, blockPos.getY() - camY, blockPos.getZ() - camZ);
-                            //matrices.mulPose(levelRenderState.cameraRenderState.);
-
-
-                            blockEntityRenderer.submit(state, matrices,submitNodeStorage, levelRenderState.cameraRenderState);
-                            //blockEntityRenderer.submit(BlockEntity, partialTick,
-                            //        matrices, light, OverlayTexture.NO_OVERLAY, camera1.getPosition(), null, client.gameRenderer.getFeatureRenderDispatcher().getSubmitNodeStorage());
-
+                            blockEntityRenderer.submit(state, matrices, submitNodeStorage, levelRenderState.cameraRenderState);
                         }
                 }
             }
@@ -485,14 +499,9 @@ public class ShapesRenderer
                 if (shape.item != null)
                 {
                     // draw the item
-                    // this seems to not work now
-
                     final ItemStackRenderState itemState = new ItemStackRenderState();
-                    client.getItemModelResolver().updateForTopItem(itemState, shape.item, ItemDisplayContext.FIXED, client.level, null, 0);
+                    client.getItemModelResolver().updateForTopItem(itemState, shape.item, transformType, client.level, null, 0);
                     itemState.submit(matrices, submitNodeStorage, light, OverlayTexture.NO_OVERLAY, EntityRenderState.NO_OUTLINE);
-
-                    //client.getItemRenderer().renderStatic(shape.item, transformType, light,
-                    //        OverlayTexture.NO_OVERLAY, matrices, immediate, client.level, (int) shape.key(client.level.registryAccess()));
                 }
             }
             matrices.popPose();
@@ -507,6 +516,132 @@ public class ShapesRenderer
         public boolean stageDeux()
         {
             return true;
+        }
+
+        // a single fluid block floating in a void: the shape's block state at ZERO, air everywhere else,
+        // fixed light levels, and biome tint sampled at the shape's real world position
+        private record ShapeFluidGetter(ClientLevel level, BlockState state, BlockPos worldPos, int blockLight, int skyLight) implements BlockAndTintGetter
+        {
+            @Override
+            public BlockEntity getBlockEntity(BlockPos pos)
+            {
+                return null;
+            }
+
+            @Override
+            public BlockState getBlockState(BlockPos pos)
+            {
+                return pos.equals(BlockPos.ZERO) ? state : Blocks.AIR.defaultBlockState();
+            }
+
+            @Override
+            public FluidState getFluidState(BlockPos pos)
+            {
+                return getBlockState(pos).getFluidState();
+            }
+
+            @Override
+            public LevelLightEngine getLightEngine()
+            {
+                return level.getLightEngine();
+            }
+
+            @Override
+            public int getBrightness(LightLayer layer, BlockPos pos)
+            {
+                return layer == LightLayer.BLOCK ? blockLight : skyLight;
+            }
+
+            @Override
+            public CardinalLighting cardinalLighting()
+            {
+                return level.cardinalLighting();
+            }
+
+            @Override
+            public int getBlockTint(BlockPos pos, ColorResolver resolver)
+            {
+                return level.getBlockTint(worldPos, resolver);
+            }
+
+            @Override
+            public int getHeight()
+            {
+                return level.getHeight();
+            }
+
+            @Override
+            public int getMinY()
+            {
+                return level.getMinY();
+            }
+        }
+
+        // FluidRenderer adds raw untransformed vertices, so route them through the submitted pose
+        private record PoseAwareVertexConsumer(VertexConsumer delegate, PoseStack.Pose pose) implements VertexConsumer
+        {
+            @Override
+            public VertexConsumer addVertex(float x, float y, float z)
+            {
+                delegate.addVertex(pose, x, y, z);
+                return this;
+            }
+
+            @Override
+            public VertexConsumer setColor(int red, int green, int blue, int alpha)
+            {
+                delegate.setColor(red, green, blue, alpha);
+                return this;
+            }
+
+            @Override
+            public VertexConsumer setColor(int color)
+            {
+                delegate.setColor(color);
+                return this;
+            }
+
+            @Override
+            public VertexConsumer setUv(float u, float v)
+            {
+                delegate.setUv(u, v);
+                return this;
+            }
+
+            @Override
+            public VertexConsumer setUv1(int u, int v)
+            {
+                delegate.setUv1(u, v);
+                return this;
+            }
+
+            @Override
+            public VertexConsumer setUv2(int u, int v)
+            {
+                delegate.setUv2(u, v);
+                return this;
+            }
+
+            @Override
+            public VertexConsumer setUv3(float u, float v)
+            {
+                delegate.setUv3(u, v);
+                return this;
+            }
+
+            @Override
+            public VertexConsumer setNormal(float x, float y, float z)
+            {
+                delegate.setNormal(pose, x, y, z);
+                return this;
+            }
+
+            @Override
+            public VertexConsumer setLineWidth(float width)
+            {
+                delegate.setLineWidth(width);
+                return this;
+            }
         }
     }
 
@@ -527,7 +662,6 @@ public class ShapesRenderer
                 return;
             }
             Vec3 v1 = shape.relativiseRender(client.level, shape.pos, partialTick);
-            Camera camera1 = client.gameRenderer.mainCamera();
             Font textRenderer = client.font;
             if (shape.doublesided)
             {
@@ -540,7 +674,7 @@ public class ShapesRenderer
             matrices.pushPose();
             matrices.translate(v1.x - cx, v1.y - cy, v1.z - cz);
 
-            rotatePoseStackByShapeDirection(matrices, shape.facing, camera1, v1);
+            rotatePoseStackByShapeDirection(matrices, shape.facing, levelRenderState.cameraRenderState, v1);
 
             matrices.scale(shape.size * 0.0025f, -shape.size * 0.0025f, shape.size * 0.0025f);
             //RenderSystem.scalef(shape.size* 0.0025f, -shape.size*0.0025f, shape.size*0.0025f);
@@ -570,36 +704,17 @@ public class ShapesRenderer
             {
                 text_x = (float) (-textRenderer.width(shape.value.getString()));
             }
-            //try (ByteBufferBuilder bbb = new ByteBufferBuilder(RenderType.TRANSIENT_BUFFER_SIZE))
-            //{
-	            //MultiBufferSource.BufferSource immediate = Minecraft.getInstance().gameRenderer.renderBuffers().bufferSource();
-
-	            // text doesn't appear if backgroud is set
-	            ///script run draw_shape('label', 100, 'pos', [200, 100, 200], 'text', 'Hewwo World!', 'color', 0xffffffff, 'fill', 0x33333333)
-	            //textRenderer.drawInBatch(shape.value, text_x, 0.0F, shape.textcolor, false, matrices.last().pose(), immediate, Font.DisplayMode.SEE_THROUGH, shape.textbck, 15728880);
-
-            final Font.PreparedText preparedText = textRenderer.prepareText(shape.value.getVisualOrderText(), text_x, 0.0F, shape.textcolor, false, false,0);
-
-            /*preparedText.visit(new Font.GlyphVisitor() {
-                @Override
-                public void acceptRenderable(final TextRenderable renderable) {
-                    final VertexConsumer buffer = getVertexBuilder(renderable.renderType(Font.DisplayMode.NORMAL));
-                    renderable.render(matrices.last().pose(), buffer, LightCoordsUtil.FULL_BRIGHT, false);
-                }
-            });
-
-                preparedText.visit(new Font.GlyphVisitor() {
-                @Override
-                public void acceptRenderable(final TextRenderable renderable) {
-                    //final VertexConsumer buffer = immediate.getBuffer(renderable.renderType(Font.DisplayMode.NORMAL));
-                    renderable.render(matrices.last().pose(), buffer, LightCoordsUtil.FULL_BRIGHT, false);
-                }
-            });
-
-             */
-
-                //immediate.uploadAndDraw();
-            //}
+            // text doesn't appear if backgroud is set
+            ///script run draw_shape('label', 100, 'pos', [200, 100, 200], 'text', 'Hewwo World!', 'color', 0xffffffff, 'fill', 0x33333333)
+            submitNodeStorage.submitText(
+                    matrices, text_x, 0.0F, shape.value.getVisualOrderText(),
+                    false,
+                    Font.DisplayMode.POLYGON_OFFSET,
+                    LightCoordsUtil.FULL_BRIGHT,
+                    shape.textcolor,
+                    shape.textbck,
+                    0
+            );
             matrices.popPose();
             ////RenderSystem.enableCull();
         }
@@ -887,7 +1002,7 @@ public class ShapesRenderer
         @Override
         public void renderLines(PoseStack matrices, double cx, double cy, double cz, float partialTick, LevelRenderState levelRenderState, DrawableGizmoPrimitives primitives, SubmitNodeStorage submitNodeStorage)
         {
-            if (shape.a == 0.0)
+            if (shape.a == 0.0 || !shape.wireframe)
             {
                 return;
             }
@@ -923,7 +1038,7 @@ public class ShapesRenderer
         @Override
         public void renderLines(PoseStack matrices, double cx, double cy, double cz, float partialTick, LevelRenderState levelRenderState, DrawableGizmoPrimitives primitives, SubmitNodeStorage submitNodeStorage)
         {
-            if (shape.a == 0.0)
+            if (shape.a == 0.0 || !shape.wireframe)
             {
                 return;
             }
