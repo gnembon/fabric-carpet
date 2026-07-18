@@ -139,11 +139,6 @@ public class Vanilla
         ServerNetworkHandler.sendCustomCommand(player, "scShapes", data);
     }
 
-    public static void sendScarpetPostEffectDataToPlayer(ServerPlayer player, Tag data)
-    {
-        ServerNetworkHandler.sendCustomCommand(player, "scPostFx", data);
-    }
-
     public static PermissionSet MinecraftServer_getRunPermissionLevel(MinecraftServer server)
     {
         return CarpetSettings.runPermissionLevel;

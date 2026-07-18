@@ -1,7 +1,6 @@
 package carpet.mixins;
 
 import carpet.network.CarpetClient;
-import carpet.script.utils.PostEffectDispatcher;
 import carpet.script.utils.ShapesRenderer;
 import com.mojang.blaze3d.resource.GraphicsResourceAllocator;
 import com.mojang.renderpearl.api.buffers.GpuBufferSlice;
@@ -53,11 +52,6 @@ public class LevelRenderer_scarpetRenderMixin
     ))
     private void submitScarpetShapes(GraphicsResourceAllocator resourceAllocator, DeltaTracker deltaTracker, boolean renderOutline, CameraRenderState cameraState, Matrix4fc modelViewMatrix, GpuBufferSlice terrainFog, Vector4f fogColor, boolean shouldRenderSky, CallbackInfo ci)
     {
-        if (Minecraft.getInstance().level != null)
-        {
-            PostEffectDispatcher.purge(Minecraft.getInstance().level.getGameTime());
-        }
-
         if (CarpetClient.shapes != null)
         {
             final float deltaPartialTick = deltaTracker.getGameTimeDeltaPartialTick(false);

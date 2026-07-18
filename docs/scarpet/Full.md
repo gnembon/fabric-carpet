@@ -5524,21 +5524,32 @@ Available shapes:
        it can also be used to use special models of tridents and telescopes. 
         This attribute is experimental and use of it will change in the future.
 
-### `apply_post_effect(players, shader, duration?)`
+### `post_effect(players, action, effect?)`
 
-Applies a client-side post-processing shader (the same mechanism vanilla uses for the vision effect you get while
-spectating a creeper, spider, or enderman) to the screen of `players` (a single online player or a list of them) for
-`duration` ticks, after which it expires automatically. Like `draw_shape`, this only works for players that have carpet
-installed on their client - it's a no-op for vanilla clients.
+Manages the post-processing effects applied to the screen of `players` (a single online player or a list of them),
+using the same per-player effect list as the vanilla `/posteffect` command. Since this drives the vanilla mechanism,
+it works for every client, carpet or not, and the applied effects persist - they survive perspective changes, relogs,
+and restarts - until they are explicitly removed.
 
- * `shader` - an identifier naming the post-chain shader to apply, e.g. `'minecraft:invert'`, `'minecraft:creeper'`,
-   `'minecraft:spider'`, or a custom shader identifier provided by a resource/data pack. Pass `null` to remove any
-   currently applied effect early, in which case `duration` is not required and is ignored.
- * `duration` - how many ticks the shader stays applied for. Required unless `shader` is `null`.
+ * `action` - one of the following:
+   * `'add'` - adds `effect` to the player's post effect list, unless already present.
+   * `'remove'` - removes `effect` from the player's post effect list.
+   * `'clear'` - removes all post effects from the player's list; `effect` is not required.
+   * `'list'` - returns the list of post effect identifiers currently applied to a (single) player;
+     `effect` is not required.
+ * `effect` - an identifier naming the post-chain effect, e.g. `'minecraft:invert'`, `'minecraft:creeper'`,
+   `'minecraft:spider'`, or a custom effect identifier provided by a resource pack. Required for `'add'` and
+   `'remove'`.
 
-Unlike vanilla's own creeper/spider/enderman effect, an effect applied with `apply_post_effect` stays applied when the
-player toggles perspective (F5) between first and third person, and reapplies itself if the player looks away and back
-through their own eyes; it only stops when it expires or is explicitly cleared.
+For `'add'`, `'remove'` and `'clear'`, returns the number of players whose effect list changed as a result of the
+call, mirroring the result of the corresponding `/posteffect` command.
+
+<pre>
+post_effect(player(), 'add', 'minecraft:invert');   // 1
+post_effect(player(), 'list');                      // ['minecraft:invert']
+post_effect(player(), 'remove', 'minecraft:invert');// 1
+post_effect(player(), 'clear');                     // 0 - list was already empty
+</pre>
 
 ### `create_marker(text, pos, rotation?, block?, interactive?)`
 

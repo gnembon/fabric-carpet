@@ -205,7 +205,6 @@
     "ClientPacketListener_customPacketsMixin",
     "DebugRenderer_scarpetRenderMixin",
     "LevelRenderer_scarpetRenderMixin",
-    "GameRenderer_scarpetPostEffectMixin",
 
 
     "ClientCommonPacketListenerImpl_customPacketMixin"

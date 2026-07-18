@@ -6,7 +6,6 @@ import carpet.CarpetSettings;
 import carpet.api.settings.CarpetRule;
 import carpet.api.settings.InvalidRuleValueException;
 import carpet.api.settings.SettingsManager;
-import carpet.script.utils.PostEffectDispatcher;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -17,7 +16,6 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.protocol.common.ServerboundCustomPayloadPacket;
-import net.minecraft.resources.Identifier;
 
 public class ClientNetworkHandler
 {
@@ -84,11 +82,6 @@ public class ClientNetworkHandler
             {
                 CarpetClient.shapes.addShapes((ListTag) t);
             }
-        });
-        dataHandlers.put("scPostFx", (p, t) -> {
-            CompoundTag tag = (CompoundTag) t;
-            Identifier shaderId = tag.getString("shader").map(Identifier::parse).orElse(null);
-            PostEffectDispatcher.set(shaderId, tag.getLongOr("duration", 0L));
         });
         dataHandlers.put("clientCommand", (p, t) -> CarpetClient.onClientCommand(t));
     }
