@@ -20,6 +20,7 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.animal.equine.AbstractHorse;
+import net.minecraft.world.entity.animal.equine.SkeletonHorse;
 import net.minecraft.world.entity.decoration.ItemFrame;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.vehicle.boat.Boat;
@@ -331,8 +332,14 @@ public class EntityPlayerActionPack
                             player.resetLastActionTime();
                             EntityHitResult entityHit = (EntityHitResult) hit;
                             Entity entity = entityHit.getEntity();
-                            boolean handWasEmpty = player.getItemInHand(hand).isEmpty();
+                            ItemStack handItem = player.getItemInHand(hand);
+                            boolean handWasEmpty = handItem.isEmpty();
                             boolean itemFrameEmpty = (entity instanceof ItemFrame) && ((ItemFrame) entity).getItem().isEmpty();
+                            // client always consumes action with food on a horse, unless it's a skeleton horse.
+                            boolean isFeedingHorse = entity instanceof AbstractHorse horse
+                                    && horse.isAlive()
+                                    && horse.isFood(handItem)
+                                    && !(horse instanceof SkeletonHorse);
                             Vec3 relativeHitPos = entityHit.getLocation().subtract(entity.getX(), entity.getY(), entity.getZ());
                             if (entity.interact(player,  hand, relativeHitPos).consumesAction())
                             {
@@ -340,7 +347,9 @@ public class EntityPlayerActionPack
                                 return true;
                             }
                             // fix for SS itemframe always returns CONSUME even if no action is performed
-                            if (player.interactOn(entity, hand, relativeHitPos).consumesAction() && !(handWasEmpty && itemFrameEmpty))
+                            InteractionResult interactionResult = player.interactOn(entity, hand, relativeHitPos);
+                            if ((interactionResult.consumesAction() && !(handWasEmpty && itemFrameEmpty))
+                                    || isFeedingHorse)
                             {
                                 ap.itemUseCooldown = 3;
                                 return true;
