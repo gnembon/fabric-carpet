@@ -3,6 +3,7 @@ package carpet.helpers;
 import carpet.fakes.PistonBlockInterface;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.FrontAndTop;
 import net.minecraft.core.dispenser.BlockSource;
 import net.minecraft.core.dispenser.DispenseItemBehavior;
 import net.minecraft.core.dispenser.OptionalDispenseItemBehavior;
@@ -18,6 +19,7 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.DirectionalBlock;
 import net.minecraft.world.level.block.DispenserBlock;
+import net.minecraft.world.level.block.CrafterBlock;
 import net.minecraft.world.level.block.EndRodBlock;
 import net.minecraft.world.level.block.HopperBlock;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
@@ -29,6 +31,8 @@ import net.minecraft.world.level.block.StairBlock;
 import net.minecraft.world.level.block.piston.PistonBaseBlock;
 import net.minecraft.world.level.block.piston.PistonStructureResolver;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.level.block.state.properties.EnumProperty;
 import net.minecraft.world.level.block.state.properties.Half;
 import net.minecraft.world.level.block.state.properties.SlabType;
 import net.minecraft.world.phys.BlockHitResult;
@@ -123,6 +127,12 @@ public class BlockRotator
         else if (block instanceof DispenserBlock)
         {
             newState = state.setValue(DispenserBlock.FACING, state.getValue(DispenserBlock.FACING).getOpposite());
+        }
+        else if (block instanceof CrafterBlock)
+        {
+            EnumProperty<FrontAndTop> orientation = BlockStateProperties.ORIENTATION;
+            FrontAndTop frontAndTop = state.getValue(orientation);
+            newState = state.setValue(orientation, FrontAndTop.fromFrontAndTop(frontAndTop.front().getOpposite(), frontAndTop.top()));
         }
         else if (block instanceof PistonBaseBlock)
         {
