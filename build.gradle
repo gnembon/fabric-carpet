@@ -11,7 +11,7 @@ version = project.mod_version+'+v'+new Date().format('yyMMdd')
 group = project.maven_group
 
 loom {
-	accessWidenerPath = file("src/main/resources/carpet.accesswidener")
+	accessWidenerPath = file("src/main/resources/carpet.classtweaker")
 	runtimeOnlyLog4j = true
 }
 
