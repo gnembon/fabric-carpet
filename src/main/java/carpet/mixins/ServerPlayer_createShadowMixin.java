@@ -12,7 +12,7 @@ public abstract class ServerPlayer_createShadowMixin implements ServerPlayerInte
     private boolean shouldShadow = false;
 
     @Override
-    public void fabric_carpet$shadowBeforeDisconnect()
+    public void fabric_carpet$shadowAfterDisconnect()
     {
         this.shouldShadow = true;
     }

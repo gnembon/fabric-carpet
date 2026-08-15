@@ -10,7 +10,7 @@ public interface ServerPlayerInterface
 
     interface ShadowPlayerInterface
     {
-        default void fabric_carpet$shadowBeforeDisconnect()
+        default void fabric_carpet$shadowAfterDisconnect()
         {
             throw new AssertionError();
         }

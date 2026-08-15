@@ -136,7 +136,7 @@ public class EntityPlayerMPFake extends ServerPlayer
 
     public static void createShadow(ServerPlayer player)
     {
-        player.fabric_carpet$shadowBeforeDisconnect();
+        player.fabric_carpet$shadowAfterDisconnect();
         player.connection.disconnect(Component.translatable("multiplayer.disconnect.duplicate_login"));
     }
 
