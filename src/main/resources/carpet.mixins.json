@@ -1,7 +1,7 @@
 {
   "required": true,
   "package": "carpet.mixins",
-  "compatibilityLevel": "JAVA_17",
+  "compatibilityLevel": "JAVA_25",
   "mixins": [
     "BarrierBlock_updateSuppressionBlockMixin",
     "SpawnState_scarpetMixin",
@@ -56,6 +56,7 @@
     "ExperienceOrb_xpNoCooldownMixin",
     "Player_xpNoCooldownMixin",
     "ServerPlayer_actionPackMixin",
+    "ServerPlayer_createShadowMixin",
     "PlayerList_coreMixin",
     "PlayerList_fakePlayersMixin",
     "RedstoneWireBlock_fastMixin",
