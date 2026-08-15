@@ -323,6 +323,14 @@ This event can be cancelled by returning `'cancel'`, which prevents the message 
 ### `__on_player_command(player, command)`
 Triggered when a player runs a command. Command value is returned without the / in front.
 
+### `__on_player_custom_click_action(player, id, payload)`
+Triggered when a player uses a custom click action in a text component or dialog.
+The `id` is the is specified in the click action.
+The `payload` is the payload specified in the click action,
+or the NBT data from the input components of the dialog for the `minecraft:dynamic/custom` action type.
+
+This event can be cancelled by returning `'cancel'`, which prevents other apps or mods from receiving it.
+
 ### `__on_statistic(player, category, event, value)`
 Triggered when a player statistic changes. Doesn't notify on periodic an rhythmic events, i.e. 
 `time_since_death`, `time_since_rest`, and `played_one_minute` since these are triggered every tick. Event 

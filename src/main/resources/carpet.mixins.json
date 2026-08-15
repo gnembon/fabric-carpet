@@ -75,6 +75,7 @@
     "WorldGenRegion_scarpetPlopMixin",
     "StructurePiece_scarpetPlopMixin",
     "ServerGamePacketListenerImpl_scarpetEventsMixin",
+    "ServerCommonPacketListenerImpl_scarpetEventsMixin",
     "ServerPlayerGameMode_scarpetEventsMixin",
     "Player_parrotMixin",
     "ServerPlayer_parrotMixin",
