@@ -390,3 +390,44 @@ __on_explosion_outcome(pos, power, source, causer, mode, fire, blocks, entities)
     print('  - number or affected blocks: '+length(blocks));
     print('  - number of affected entities: '+length(entities));
 );
+
+__on_piston_extends(block, facing, blocks) ->
+(
+    print('');
+    print('__on_piston_extends(block, facing, blocks)');
+    print('piston extends:');
+    print('  - block: '+block);
+    print('  - facing: '+facing);
+    print('  - number of blocks pushed: '+length(blocks));
+);
+
+__on_piston_retracts(block, facing, blocks) ->
+(
+    print('');
+    print('__on_piston_retracts(block, facing, blocks)');
+    print('piston retracts:');
+    print('  - block: '+block);
+    print('  - facing: '+facing);
+    print('  - number of blocks pulled: '+length(blocks));
+);
+
+__on_block_forms(previous_block, new_block) ->
+(
+    print('');
+    print('__on_block_forms(previous_block, new_block)');
+    print('block forms:');
+    print('  - previous_block: '+previous_block);
+    print('  - new_block: '+new_block);
+);
+
+__on_block_dispenses(block, item_tuple) ->
+(
+    l(item, count, nbt) = item_tuple;
+    print('');
+    print('__on_block_dispenses(block, item_tuple)');
+    print('block dispenses:');
+    print('  - block: '+block);
+    print('  - item: '+item);
+    print('  - count: '+count);
+    print('  - nbt: '+nbt);
+);

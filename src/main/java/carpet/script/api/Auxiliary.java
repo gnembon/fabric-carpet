@@ -352,6 +352,68 @@ public class Auxiliary
             return Value.TRUE;
         });
 
+        expression.addContextFunction("post_effect", -1, (c, t, lv) ->
+        {
+            if (lv.size() < 2)
+            {
+                throw new InternalExpressionException("'post_effect' requires a target and an action");
+            }
+            CarpetContext cc = (CarpetContext) c;
+            MinecraftServer server = cc.server();
+            Value pVal = lv.get(0);
+            List<Value> targets = (pVal instanceof final ListValue list) ? list.getItems() : Collections.singletonList(pVal);
+            List<ServerPlayer> players = new ArrayList<>();
+            for (Value v : targets)
+            {
+                ServerPlayer player = EntityValue.getPlayerByValue(server, v);
+                if (player == null)
+                {
+                    throw new InternalExpressionException("'post_effect' target must be a valid online player, not " + v.getString());
+                }
+                players.add(player);
+            }
+            String action = lv.get(1).getString();
+            switch (action)
+            {
+                case "add", "remove" -> {
+                    if (lv.size() < 3)
+                    {
+                        throw new InternalExpressionException("'post_effect' requires a post effect id to " + action);
+                    }
+                    Identifier effectId = Identifier.parse(lv.get(2).getString());
+                    int count = 0;
+                    for (ServerPlayer player : players)
+                    {
+                        boolean changed = action.equals("add") ? player.addPostEffect(effectId) : player.removePostEffect(effectId);
+                        if (changed)
+                        {
+                            count++;
+                        }
+                    }
+                    return new NumericValue(count);
+                }
+                case "clear" -> {
+                    int count = 0;
+                    for (ServerPlayer player : players)
+                    {
+                        if (player.clearPostEffects())
+                        {
+                            count++;
+                        }
+                    }
+                    return new NumericValue(count);
+                }
+                case "list" -> {
+                    if (players.size() != 1)
+                    {
+                        throw new InternalExpressionException("'post_effect' can only list post effects of a single player");
+                    }
+                    return ListValue.wrap(players.get(0).getPostEffects().stream().map(id -> (Value) new StringValue(id.toString())));
+                }
+                default -> throw new InternalExpressionException("Unknown 'post_effect' action: " + action + ", must be one of: 'add', 'remove', 'clear', 'list'");
+            }
+        });
+
         expression.addContextFunction("create_marker", -1, (c, t, lv) -> {
             CarpetContext cc = (CarpetContext) c;
             BlockState targetBlock = null;

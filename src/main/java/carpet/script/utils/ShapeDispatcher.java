@@ -388,7 +388,7 @@ public class ShapeDispatcher
             }
 
             seethrough = false;
-            if (options.containsKey("debug"))
+            if (options.containsKey("seethrough"))
             {
                 seethrough = options.get("seethrough").getBoolean();
             }
@@ -1255,7 +1255,10 @@ public class ShapeDispatcher
     public static class Sphere extends ExpiringShape
     {
         private final Set<String> required = Set.of("center", "radius");
-        private final Map<String, Value> optional = Map.of("level", Value.ZERO);
+        private final Map<String, Value> optional = Map.of(
+                "level", Value.ZERO,
+                "wireframe", Value.TRUE
+        );
 
         @Override
         protected Set<String> requiredParams()
@@ -1278,6 +1281,7 @@ public class ShapeDispatcher
         float radius;
         int level;
         int subdivisions;
+        boolean wireframe;
 
         @Override
         protected void init(Map<String, Value> options, RegistryAccess regs)
@@ -1291,6 +1295,7 @@ public class ShapeDispatcher
             {
                 subdivisions = Math.max(10, (int) (10 * Math.sqrt(radius)));
             }
+            wireframe = options.getOrDefault("wireframe", optional.get("wireframe")).getBoolean();
         }
 
         @Override
@@ -1336,6 +1341,8 @@ public class ShapeDispatcher
             hash *= 1099511628211L;
             hash ^= level;
             hash *= 1099511628211L;
+            hash ^= Boolean.hashCode(wireframe);
+            hash *= 1099511628211L;
             return hash;
         }
     }
@@ -1346,7 +1353,8 @@ public class ShapeDispatcher
         private final Map<String, Value> optional = Map.of(
                 "level", Value.ZERO,
                 "height", Value.ZERO,
-                "axis", new StringValue("y")
+                "axis", new StringValue("y"),
+                "wireframe", Value.TRUE
         );
 
         @Override
@@ -1367,6 +1375,7 @@ public class ShapeDispatcher
         int level;
         int subdivisions;
         Direction.Axis axis;
+        boolean wireframe;
 
         private Cylinder()
         {
@@ -1387,6 +1396,7 @@ public class ShapeDispatcher
             }
             height = NumericValue.asNumber(options.getOrDefault("height", optional.get("height"))).getFloat();
             axis = Direction.Axis.byName(options.getOrDefault("axis", optional.get("axis")).getString());
+            wireframe = options.getOrDefault("wireframe", optional.get("wireframe")).getBoolean();
         }
 
 
@@ -1458,6 +1468,8 @@ public class ShapeDispatcher
             hash ^= Double.hashCode(height);
             hash *= 1099511628211L;
             hash ^= level;
+            hash *= 1099511628211L;
+            hash ^= Boolean.hashCode(wireframe);
             hash *= 1099511628211L;
             return hash;
         }
@@ -1543,6 +1555,8 @@ public class ShapeDispatcher
             put("facing", new StringChoiceParam("facing", "player", "camera", "north", "south", "east", "west", "up", "down"));
             put("doublesided", new BoolParam("doublesided"));
             put("debug", new BoolParam("debug"));
+            put("seethrough", new BoolParam("seethrough"));
+            put("wireframe", new BoolParam("wireframe"));
 
         }};
         protected String id;

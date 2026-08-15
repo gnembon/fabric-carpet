@@ -114,6 +114,8 @@ Available shapes:
    * Optional attributes:
      * `level` - level of details, or grid size. The more the denser your sphere. Default level of 0, means that the
       level of detail will be selected automatically based on radius.
+     * `wireframe` - if `false`, the mesh segments used to indicate the level of detail won't be drawn, leaving only
+      the filled faces (if `fill` is set) visible. Defaults to `true`.
       
  * `'cylinder'`:
    * Required attributes:
@@ -123,6 +125,7 @@ Available shapes:
      * `axis` - cylinder direction, one of `'x'`, `'y'`, `'z'` defaults to `'y'`
      * `height` - height of the cyllinder, defaults to `0`, so flat disk. Can be negative.
      * `level` - level of details, see `'sphere'`.
+     * `wireframe` - see `'sphere'`. Defaults to `true`.
 
  * `'polygon'`:
    * Required attributes:
@@ -175,7 +178,33 @@ Available shapes:
        it can also be used to use special models of tridents and telescopes. 
         This attribute is experimental and use of it will change in the future.
 
-      
+### `post_effect(players, action, effect?)`
+
+Manages the post-processing effects applied to the screen of `players` (a single online player or a list of them),
+using the same per-player effect list as the vanilla `/posteffect` command. Since this drives the vanilla mechanism,
+it works for every client, carpet or not, and the applied effects persist - they survive perspective changes, relogs,
+and restarts - until they are explicitly removed.
+
+ * `action` - one of the following:
+   * `'add'` - adds `effect` to the player's post effect list, unless already present.
+   * `'remove'` - removes `effect` from the player's post effect list.
+   * `'clear'` - removes all post effects from the player's list; `effect` is not required.
+   * `'list'` - returns the list of post effect identifiers currently applied to a (single) player;
+     `effect` is not required.
+ * `effect` - an identifier naming the post-chain effect, e.g. `'minecraft:invert'`, `'minecraft:creeper'`,
+   `'minecraft:spider'`, or a custom effect identifier provided by a resource pack. Required for `'add'` and
+   `'remove'`.
+
+For `'add'`, `'remove'` and `'clear'`, returns the number of players whose effect list changed as a result of the
+call, mirroring the result of the corresponding `/posteffect` command.
+
+<pre>
+post_effect(player(), 'add', 'minecraft:invert');   // 1
+post_effect(player(), 'list');                      // ['minecraft:invert']
+post_effect(player(), 'remove', 'minecraft:invert');// 1
+post_effect(player(), 'clear');                     // 0 - list was already empty
+</pre>
+
 ### `create_marker(text, pos, rotation?, block?, interactive?)`
 
 Spawns a (permanent) marker entity with text or block at position. Returns that entity for further manipulations. 

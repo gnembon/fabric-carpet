@@ -131,6 +131,31 @@ but the decision to blow up is already made and entities are already affected.
 The parameter `blocks` contains the list of blocks that will blow up (empty if `explosionNoBlockDamage` is set to `true`).
 The parameter `entities` contains the list of entities that have been affected by the explosion. Triggered even with `create_explosion()`.
 
+### `__on_piston_extends(piston_block, facing, blocks)`
+Triggered right before a piston extends, after vanilla has resolved which blocks will move but before any block
+changes happen. `blocks` is the list of blocks that would be pushed.
+
+This event can be cancelled by returning `'cancel'`, which prevents the piston from extending.
+
+### `__on_piston_retracts(piston_block, facing, blocks)`
+Triggered right before a piston retracts, whether or not it actually has anything to pull back - `blocks` is the
+(possibly empty) list of blocks that would be pulled.
+
+This event can be cancelled by returning `'cancel'`, which prevents the piston from retracting.
+
+### `__on_block_forms(previous_block, new_block)`
+Triggered when a block passively forms due to environmental causes: ice forming over water, snow layers forming
+or accumulating during weather, concrete powder hardening into concrete when touched by water, and lava/water
+interactions producing obsidian, cobblestone, stone or basalt. Not triggered by player or dispenser actions.
+
+This event can be cancelled by returning `'cancel'`, which prevents the block from forming.
+
+### `__on_block_dispenses(dispenser_block, item_tuple)`
+Triggered right before a dispenser dispenses an item, after the item to dispense has been selected but before its
+dispense behavior runs.
+
+This event can be cancelled by returning `'cancel'`, which prevents the item from being dispensed.
+
 ### `__on_carpet_rule_changes(rule, new_value)`
 Triggered when a carpet mod rule is changed. It includes extension rules, not using default `/carpet` command, 
 which will then be namespaced as `namespace:rule`.

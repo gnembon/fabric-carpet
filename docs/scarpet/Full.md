@@ -4825,6 +4825,31 @@ but the decision to blow up is already made and entities are already affected.
 The parameter `blocks` contains the list of blocks that will blow up (empty if `explosionNoBlockDamage` is set to `true`).
 The parameter `entities` contains the list of entities that have been affected by the explosion. Triggered even with `create_explosion()`.
 
+### `__on_piston_extends(piston_block, facing, blocks)`
+Triggered right before a piston extends, after vanilla has resolved which blocks will move but before any block
+changes happen. `blocks` is the list of blocks that would be pushed.
+
+This event can be cancelled by returning `'cancel'`, which prevents the piston from extending.
+
+### `__on_piston_retracts(piston_block, facing, blocks)`
+Triggered right before a piston retracts, whether or not it actually has anything to pull back - `blocks` is the
+(possibly empty) list of blocks that would be pulled.
+
+This event can be cancelled by returning `'cancel'`, which prevents the piston from retracting.
+
+### `__on_block_forms(previous_block, new_block)`
+Triggered when a block passively forms due to environmental causes: ice forming over water, snow layers forming
+or accumulating during weather, concrete powder hardening into concrete when touched by water, and lava/water
+interactions producing obsidian, cobblestone, stone or basalt. Not triggered by player or dispenser actions.
+
+This event can be cancelled by returning `'cancel'`, which prevents the block from forming.
+
+### `__on_block_dispenses(dispenser_block, item_tuple)`
+Triggered right before a dispenser dispenses an item, after the item to dispense has been selected but before its
+dispense behavior runs.
+
+This event can be cancelled by returning `'cancel'`, which prevents the item from being dispensed.
+
 ### `__on_carpet_rule_changes(rule, new_value)`
 Triggered when a carpet mod rule is changed. It includes extension rules, not using default `/carpet` command, 
 which will then be namespaced as `namespace:rule`.
@@ -5435,6 +5460,8 @@ Available shapes:
    * Optional attributes:
      * `level` - level of details, or grid size. The more the denser your sphere. Default level of 0, means that the
       level of detail will be selected automatically based on radius.
+     * `wireframe` - if `false`, the mesh segments used to indicate the level of detail won't be drawn, leaving only
+      the filled faces (if `fill` is set) visible. Defaults to `true`.
       
  * `'cylinder'`:
    * Required attributes:
@@ -5444,6 +5471,7 @@ Available shapes:
      * `axis` - cylinder direction, one of `'x'`, `'y'`, `'z'` defaults to `'y'`
      * `height` - height of the cyllinder, defaults to `0`, so flat disk. Can be negative.
      * `level` - level of details, see `'sphere'`.
+     * `wireframe` - see `'sphere'`. Defaults to `true`.
 
  * `'polygon'`:
    * Required attributes:
@@ -5496,7 +5524,33 @@ Available shapes:
        it can also be used to use special models of tridents and telescopes. 
         This attribute is experimental and use of it will change in the future.
 
-      
+### `post_effect(players, action, effect?)`
+
+Manages the post-processing effects applied to the screen of `players` (a single online player or a list of them),
+using the same per-player effect list as the vanilla `/posteffect` command. Since this drives the vanilla mechanism,
+it works for every client, carpet or not, and the applied effects persist - they survive perspective changes, relogs,
+and restarts - until they are explicitly removed.
+
+ * `action` - one of the following:
+   * `'add'` - adds `effect` to the player's post effect list, unless already present.
+   * `'remove'` - removes `effect` from the player's post effect list.
+   * `'clear'` - removes all post effects from the player's list; `effect` is not required.
+   * `'list'` - returns the list of post effect identifiers currently applied to a (single) player;
+     `effect` is not required.
+ * `effect` - an identifier naming the post-chain effect, e.g. `'minecraft:invert'`, `'minecraft:creeper'`,
+   `'minecraft:spider'`, or a custom effect identifier provided by a resource pack. Required for `'add'` and
+   `'remove'`.
+
+For `'add'`, `'remove'` and `'clear'`, returns the number of players whose effect list changed as a result of the
+call, mirroring the result of the corresponding `/posteffect` command.
+
+<pre>
+post_effect(player(), 'add', 'minecraft:invert');   // 1
+post_effect(player(), 'list');                      // ['minecraft:invert']
+post_effect(player(), 'remove', 'minecraft:invert');// 1
+post_effect(player(), 'clear');                     // 0 - list was already empty
+</pre>
+
 ### `create_marker(text, pos, rotation?, block?, interactive?)`
 
 Spawns a (permanent) marker entity with text or block at position. Returns that entity for further manipulations. 

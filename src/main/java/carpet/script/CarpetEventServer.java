@@ -1092,6 +1092,64 @@ public class CarpetEventServer
             }
         };
 
+        public static final Event PISTON_EXTENDS = new Event("piston_extends", 3, true)
+        {
+            @Override
+            public boolean onPistonAction(ServerLevel world, BlockPos pistonPos, Direction direction, List<BlockPos> toMove)
+            {
+                return handler.call(
+                        () -> Arrays.asList(
+                                new BlockValue(null, world, pistonPos),
+                                StringValue.of(direction.getName()),
+                                ListValue.wrap(toMove.stream().map(p -> new BlockValue(null, world, p)))
+                        ), () -> world.getServer().createCommandSourceStack().withLevel(world)
+                );
+            }
+        };
+
+        public static final Event PISTON_RETRACTS = new Event("piston_retracts", 3, true)
+        {
+            @Override
+            public boolean onPistonAction(ServerLevel world, BlockPos pistonPos, Direction direction, List<BlockPos> toMove)
+            {
+                return handler.call(
+                        () -> Arrays.asList(
+                                new BlockValue(null, world, pistonPos),
+                                StringValue.of(direction.getName()),
+                                ListValue.wrap(toMove.stream().map(p -> new BlockValue(null, world, p)))
+                        ), () -> world.getServer().createCommandSourceStack().withLevel(world)
+                );
+            }
+        };
+
+        public static final Event BLOCK_FORMS = new Event("block_forms", 2, true)
+        {
+            @Override
+            public boolean onBlockForms(ServerLevel world, BlockPos pos, BlockState previousBS, BlockState newBS)
+            {
+                return handler.call(
+                        () -> Arrays.asList(
+                                new BlockValue(previousBS, world, pos),
+                                new BlockValue(newBS, world, pos)
+                        ), () -> world.getServer().createCommandSourceStack().withLevel(world)
+                );
+            }
+        };
+
+        public static final Event BLOCK_DISPENSES = new Event("block_dispenses", 2, true)
+        {
+            @Override
+            public boolean onBlockDispensed(ServerLevel world, BlockPos pos, ItemStack itemstack)
+            {
+                return handler.call(
+                        () -> Arrays.asList(
+                                new BlockValue(null, world, pos),
+                                ValueConversions.of(itemstack, world.registryAccess())
+                        ), () -> world.getServer().createCommandSourceStack().withLevel(world)
+                );
+            }
+        };
+
         @Deprecated
         public static String getEntityLoadEventName(EntityType<? extends Entity> et)
         {
@@ -1320,6 +1378,21 @@ public class CarpetEventServer
 
         public void onWorldEventFlag(ServerLevel world, BlockPos pos, int flag)
         {
+        }
+
+        public boolean onPistonAction(ServerLevel world, BlockPos pistonPos, Direction direction, List<BlockPos> toMove)
+        {
+            return false;
+        }
+
+        public boolean onBlockForms(ServerLevel world, BlockPos pos, BlockState previousBS, BlockState newBS)
+        {
+            return false;
+        }
+
+        public boolean onBlockDispensed(ServerLevel world, BlockPos pos, ItemStack itemstack)
+        {
+            return false;
         }
 
         public void handleAny(Object... args)
