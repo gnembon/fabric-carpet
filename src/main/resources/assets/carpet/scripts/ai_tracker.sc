@@ -40,7 +40,7 @@ global_functions = {
             );
             __create_box(abnoxious_visuals, e,
                   [-16-half_width,-16,-16-half_width],
-                  [16+half_width,16+height,16+half_width],
+                  [16+half_width,16+villager_height,16+half_width],
                   0xdddddd00, 'golem detection', false
             );
 
