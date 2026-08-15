@@ -687,6 +687,29 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
         return Value.NULL;
     }
 
+    public Value get_nocast(Value value)
+    {
+        String valString = value.getString();
+        NbtPathArgument.NbtPath path = cachePath(valString);
+        try
+        {
+            List<Tag> tags = path.get(getTag());
+            if (tags.isEmpty())
+            {
+                return Value.NULL;
+            }
+            if (tags.size() == 1 && !valString.endsWith("[]"))
+            {
+                return NBTSerializableValue.of(tags.get(0));
+            }
+            return ListValue.wrap(tags.stream().filter(x->x!=null).map(NBTSerializableValue::new));
+        }
+        catch (CommandSyntaxException ignored)
+        {
+        }
+        return Value.NULL;
+    }
+
     @Override
     public boolean has(Value where)
     {
