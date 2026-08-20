@@ -1027,6 +1027,11 @@ public class CarpetScriptHost extends ScriptHost
         return (!isDefaultApp() || fdesc.isShared) && fdesc.dropExistingFile(main); //
     }
 
+    public boolean removeResourceFolder(FileArgument fdesc, boolean recursive)
+    {
+        return (!isDefaultApp() || fdesc.isShared) && fdesc.dropExistingFolder(main, recursive);
+    }
+
     public boolean appendLogFile(FileArgument fdesc, List<String> data)
     {
         return (!isDefaultApp() || fdesc.isShared) && fdesc.appendToTextFile(main, data); // if belongs to an app, cannot be default host.

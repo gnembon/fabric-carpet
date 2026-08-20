@@ -344,13 +344,14 @@ Available output types:
 ### `delete_file(resource, type)`
 ### `write_file(resource, type, data, ...)`
 ### `list_files(resource, type)`
+### `delete_folder(resource, type, recursive?)`
 
 With the specified `resource` in the scripts folder, of a specific `type`, writes/appends `data` to it, reads its
  content, deletes the resource, or lists other files under this resource.
 
 Resource is identified by a path to the file.  
 A path can contain letters, numbers, characters `-`, `+`, or `_`, and a folder separator: `'/'`. Any other characters are stripped
-from the name. Empty descriptors are invalid, except for `list_files` where it means the root folder.
+from the name. Empty descriptors are invalid, except for `list_files` and `delete_folder` where it means the root folder.
  Do not add file extensions to the descriptor - extensions are inferred
 based on the `type` of the file. A path can have one `'.zip'` component indicating a zip folder allowing to read / write to and from
 zip files, although you cannot nest zip files in other zip files. 
@@ -376,7 +377,7 @@ Supported values for resource `type` are:
  * `json` - JSON file
  * `text` - text resource with automatic newlines added
  * `raw` - text resource without implied newlines
- * `folder` - for `list_files` only - indicating folder listing instead of files
+ * `folder` - for `list_files` and `delete_folder` - indicating folder listing instead of files or the type of folder to delete
  * `shared_nbt`, `shared_text`, `shared_raw`, `shared_folder`, `shared_json` - shared versions of the above
  
 NBT files have extension `.nbt`, store one NBT tag, and return a NBT type value. JSON files have `.json` extension, store 
@@ -392,6 +393,7 @@ Throws:
 - `nbt_read_error`: When failed to read NBT file.
 - `json_read_error`: When failed to read JSON file. The exception data will contain details about the problem.
 - `io_exception`: For all other errors when handling data on disk not related to encoding issues
+- `folder_not_empty`: When attempting to delete a non-empty folder without setting `recursive` to `true`
 
 All other errors resulting of improper use of input arguments should result in `null` returned from the function, rather than exception
 thrown.
