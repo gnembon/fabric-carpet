@@ -143,6 +143,10 @@ public class FileArgument
         {
             throw new InternalExpressionException("Folder types are no supported for this IO function");
         }
+        if (isFolder && type != Type.FOLDER && reason == Reason.CREATE)
+        {
+            throw new InternalExpressionException("File types are no supported for this IO function");
+        }
         return new FileArgument(resource.getLeft(), type, resource.getRight(), isFolder, shared, reason, context.host);
 
     }
@@ -661,4 +665,23 @@ public class FileArgument
         }
     }
 
+    public boolean makeFolder(Module module) {
+        try {
+            synchronized (writeIOSync) {
+                Path dirPath = toPath(module);
+                if (dirPath == null) {
+                    return false;
+                }
+                if (!Files.exists(dirPath)) {
+                    Files.createDirectories(dirPath);
+                }
+                return true;
+            }
+        } catch (IOException e) {
+            CarpetScriptServer.LOG.warn("IOException when creating folder", e);
+            throw new ThrowStatement("Unable to create folder: " + getDisplayPath(), Throwables.IO_EXCEPTION);
+        } finally {
+            close();
+        }
+    }
 }
