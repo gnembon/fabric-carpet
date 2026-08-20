@@ -61,8 +61,9 @@ import net.minecraft.world.level.ServerExplosion;
 import net.minecraft.world.level.chunk.ChunkGenerator;
 import net.minecraft.world.level.chunk.PalettedContainer;
 import net.minecraft.world.level.chunk.status.ChunkStatus;
-import net.minecraft.world.level.levelgen.DensityFunction;
-import net.minecraft.world.level.levelgen.DensityFunctions;
+import net.minecraft.world.level.levelgen.Aquifer;
+import net.minecraft.world.level.levelgen.densityfunction.DensityFunction;
+import net.minecraft.world.level.levelgen.densityfunction.DensityFunctions;
 import net.minecraft.world.level.levelgen.NoiseBasedChunkGenerator;
 import net.minecraft.world.level.levelgen.NoiseRouter;
 import net.minecraft.world.level.levelgen.RandomState;
@@ -1730,33 +1731,41 @@ public class WorldAccess
             {
                 return ListValue.wrap(cc.registry(Registries.DENSITY_FUNCTION).keySet().stream().map(ValueConversions::of));
             }
-            NoiseRouter router = level.getChunkSource().randomState().router();
+            RandomState router = level.getChunkSource().randomState();
             return densityFunctionQueries.length == 1
                     ? NumericValue.of(sampleNoise(router, level, densityFunctionQueries[0], pos))
                     : ListValue.wrap(Arrays.stream(densityFunctionQueries).map(s -> NumericValue.of(sampleNoise(router, level, s, pos))));
         });
     }
 
-    public static double sampleNoise(NoiseRouter router, ServerLevel level, String what, BlockPos pos)
+    public static double sampleNoise(RandomState router, ServerLevel level, String what, BlockPos pos)
     {
         DensityFunction densityFunction = switch (what)
         {
-            case "barrier_noise" -> router.barrierNoise();
-            case "fluid_level_floodedness_noise" -> router.fluidLevelFloodednessNoise();
-            case "fluid_level_spread_noise" -> router.fluidLevelSpreadNoise();
-            case "lava_noise" -> router.lavaNoise();
-            case "temperature" -> router.temperature();
-            case "vegetation" -> router.vegetation();
-            case "continents" -> router.continents();
-            case "erosion" -> router.erosion();
-            case "depth" -> router.depth();
-            case "ridges" -> router.ridges();
-            case "preliminary_surface_level" -> router.preliminarySurfaceLevel();
-            case "final_density" -> router.finalDensity();
-            case "vein_toggle" -> router.veinToggle();
-            case "vein_ridged" -> router.veinRidged();
-            case "vein_gap" -> router.veinGap();
-            default -> stupidWorldgenNoiseCacheGetter.apply(Pair.of(level, what));
+            case "temperature" -> router.router().temperature();
+            case "vegetation" -> router.router().vegetation();
+            case "continents" -> router.router().continents();
+            case "erosion" -> router.router().erosion();
+            case "depth" -> router.router().depth();
+            case "ridges" -> router.router().ridges();
+            case "preliminary_surface_level" -> router.router().preliminarySurfaceLevel();
+            case "final_density" -> router.router().finalDensity();
+            //case "vein_toggle" -> router. router(). veinToggle();
+            //case "vein_ridged" -> router.router().veinRidged();
+            //case "vein_gap" -> router.router().veinGap();
+            default -> {
+                Aquifer.Config aquifer = router.aquifers().orElse(null);
+                if (aquifer != null) {
+                    yield switch (what) {
+                        case "barrier_noise" -> aquifer.barrierNoise();
+                        case "fluid_level_floodedness_noise" -> aquifer.fluidLevelFloodednessNoise();
+                        case "fluid_level_spread_noise" -> aquifer.fluidLevelSpreadNoise();
+                        case "lava_noise" -> aquifer.lavaNoise();
+                        default -> stupidWorldgenNoiseCacheGetter.apply(Pair.of(level, what));
+                    };
+                }
+                yield stupidWorldgenNoiseCacheGetter.apply(Pair.of(level, what));
+            }
         };
         return densityFunction.compute(new DensityFunction.SinglePointContext(pos.getX(), pos.getY(), pos.getZ()));
     }
@@ -1773,10 +1782,6 @@ public class WorldAccess
             NoiseRouter router = noiseBasedChunkGenerator.generatorSettings().value().noiseRouter();
             DensityFunction densityFunction = switch (densityFunctionQuery)
                     {
-                        case "barrier_noise" -> router.barrierNoise();
-                        case "fluid_level_floodedness_noise" -> router.fluidLevelFloodednessNoise();
-                        case "fluid_level_spread_noise" -> router.fluidLevelSpreadNoise();
-                        case "lava_noise" -> router.lavaNoise();
                         case "temperature" -> router.temperature();
                         case "vegetation" -> router.vegetation();
                         case "continents" -> router.continents();
@@ -1785,10 +1790,29 @@ public class WorldAccess
                         case "ridges" -> router.ridges();
                         case "preliminary_surface_level" -> router.preliminarySurfaceLevel();
                         case "final_density" -> router.finalDensity();
-                        case "vein_toggle" -> router.veinToggle();
-                        case "vein_ridged" -> router.veinRidged();
-                        case "vein_gap" -> router.veinGap();
+                        //case "vein_toggle" -> router.veinToggle();
+                        //case "vein_ridged" -> router.veinRidged();
+                        //case "vein_gap" -> router.veinGap();
                         default -> {
+                            Aquifer.Config aquifers = noiseBasedChunkGenerator.generatorSettings().value().aquifers().orElse(null);
+                            if (aquifers != null) {
+                                yield switch (densityFunctionQuery) {
+                                    case "barrier_noise" -> aquifers.barrierNoise();
+                                    case "fluid_level_floodedness_noise" -> aquifers.fluidLevelFloodednessNoise();
+                                    case "fluid_level_spread_noise" -> aquifers.fluidLevelSpreadNoise();
+                                    case "lava_noise" -> aquifers.lavaNoise();
+                                    default -> {
+                                        DensityFunction result = densityFunctionRegistry.getValue(InputValidator.identifierOf(densityFunctionQuery));
+                                        if (result == null)
+                                        {
+                                            throw new InternalExpressionException("Density function '" + densityFunctionQuery + "' is not defined in the registies.");
+                                        }
+                                        yield result;
+                                    }
+                                };
+                            }
+
+
                             DensityFunction result = densityFunctionRegistry.getValue(InputValidator.identifierOf(densityFunctionQuery));
                             if (result == null)
                             {

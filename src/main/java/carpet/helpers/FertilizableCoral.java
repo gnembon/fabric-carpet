@@ -16,6 +16,7 @@ import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.BaseCoralPlantTypeBlock;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.BonemealSource;
 import net.minecraft.world.level.block.BonemealableBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.feature.CoralClawFeature;
@@ -39,7 +40,7 @@ public interface FertilizableCoral extends BonemealableBlock {
     boolean isEnabled();
 
     @Override
-    public default boolean isValidBonemealTarget(LevelReader world, BlockPos pos, BlockState state)
+    public default boolean isValidBonemealTarget(LevelReader world, BlockPos pos, BlockState state, BonemealSource bonemealSource)
     {
         return isEnabled()
                 && state.getValue(BaseCoralPlantTypeBlock.WATERLOGGED)
@@ -47,13 +48,13 @@ public interface FertilizableCoral extends BonemealableBlock {
     }
 
     @Override
-    public default boolean isBonemealSuccess(Level world, RandomSource random, BlockPos pos, BlockState state)
+    public default boolean isBonemealSuccess(Level world, RandomSource random, BlockPos pos, BlockState state, BonemealSource bonemealSource)
     {
         return random.nextFloat() < 0.15D;
     }
 
     @Override
-    public default void performBonemeal(ServerLevel worldIn, RandomSource random, BlockPos pos, BlockState blockUnder)
+    public default void performBonemeal(ServerLevel worldIn, RandomSource random, BlockPos pos, BlockState blockUnder, BonemealSource bonemealSource)
     {
         MapColor color = blockUnder.getMapColor(worldIn, pos);
         BlockState properBlock = blockUnder;

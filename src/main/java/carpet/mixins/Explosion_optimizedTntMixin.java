@@ -86,7 +86,7 @@ public abstract class Explosion_optimizedTntMixin
     }
 
     @Redirect(method = "hurtEntities",
-            at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/Entity;push(Lnet/minecraft/world/phys/Vec3;)V"))
+            at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/Entity;pushFromExplosion(Lnet/minecraft/world/phys/Vec3;)V"))
     private void setVelocityAndUpdateLogging(Entity entity, Vec3 velocity)
     {
         if (eLogger != null) {

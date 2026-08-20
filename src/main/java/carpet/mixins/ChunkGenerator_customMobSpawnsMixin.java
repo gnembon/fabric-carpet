@@ -4,6 +4,7 @@ import carpet.utils.SpawnOverrides;
 import it.unimi.dsi.fastutil.longs.LongSet;
 import net.minecraft.core.Holder;
 import net.minecraft.util.random.WeightedList;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.StructureManager;
 import net.minecraft.world.level.levelgen.structure.Structure;
 import org.spongepowered.asm.mixin.Mixin;
@@ -30,7 +31,7 @@ public abstract class ChunkGenerator_customMobSpawnsMixin
                     value = "INVOKE",
                    target = "Ljava/util/Map$Entry;getKey()Ljava/lang/Object;"
             ), cancellable = true)
-    private void checkCMSpawns(Holder<Biome> holder, StructureManager structureFeatureManager, MobCategory mobCategory, BlockPos blockPos,
+    private void checkCMSpawns(Level holder, StructureManager structureFeatureManager, MobCategory mobCategory, BlockPos blockPos,
                                CallbackInfoReturnable<WeightedList<MobSpawnSettings.SpawnerData>> cir,
                                Map<Structure, LongSet> map, Iterator<?> var6, Map.Entry<Structure, LongSet> entry)
     {

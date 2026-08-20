@@ -424,7 +424,7 @@ public class Auxiliary
             armorstand.setHeadPose(new Rotations((int) pointLocator.pitch, 0, 0));
             armorstand.setNoGravity(true);
             armorstand.setInvisible(true);
-            armorstand.setInvulnerable(true);
+            armorstand.setPermanentlyInvulnerable(true);
             armorstand.getEntityData().set(ArmorStand.DATA_CLIENT_FLAGS, (byte) (interactable ? 8 : 16 | 8));
             level.addFreshEntity(armorstand);
             return new EntityValue(armorstand);

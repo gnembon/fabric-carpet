@@ -1,7 +1,7 @@
 package carpet.mixins;
 
 import carpet.fakes.RandomStateVisitorAccessor;
-import net.minecraft.world.level.levelgen.DensityFunction;
+import net.minecraft.world.level.levelgen.densityfunction.DensityFunction;
 import net.minecraft.world.level.levelgen.RandomState;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
@@ -17,7 +17,7 @@ public class RandomState_ScarpetMixin implements RandomStateVisitorAccessor {
             method = "<init>",
             at = @At(
                     value = "INVOKE",
-                    target = "Lnet/minecraft/world/level/levelgen/NoiseRouter;mapAll(Lnet/minecraft/world/level/levelgen/DensityFunction$Visitor;)Lnet/minecraft/world/level/levelgen/NoiseRouter;"
+                    target = "Lnet/minecraft/world/level/levelgen/NoiseRouter;mapAll(Lnet/minecraft/world/level/levelgen/densityfunction/DensityFunction$Visitor;)Lnet/minecraft/world/level/levelgen/NoiseRouter;"
             ),
             index = 0
     )

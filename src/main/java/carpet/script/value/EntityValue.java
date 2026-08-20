@@ -70,6 +70,7 @@ import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.entity.projectile.hurtingprojectile.WitherSkull;
 import net.minecraft.world.entity.vehicle.minecart.AbstractMinecart;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.component.SwingAnimation;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.entity.EntityTypeTest;
@@ -554,7 +555,7 @@ public class EntityValue extends Value
         put("sneaking", (e, a) -> e.isShiftKeyDown() ? Value.TRUE : Value.FALSE);
         put("sprinting", (e, a) -> e.isSprinting() ? Value.TRUE : Value.FALSE);
         put("swimming", (e, a) -> e.isSwimming() ? Value.TRUE : Value.FALSE);
-        put("swinging", (e, a) -> e instanceof LivingEntity le ? BooleanValue.of(le.swinging) : Value.NULL);
+        put("swinging", (e, a) -> e instanceof LivingEntity le ? BooleanValue.of(le.isSwinging()) : Value.NULL);
         put("air", (e, a) -> new NumericValue(e.getAirSupply()));
         put("language", (e, a) -> !(e instanceof ServerPlayer p) ? NULL : StringValue.of(p.clientInformation().language()));
         put("persistence", (e, a) -> e instanceof Mob mob ? BooleanValue.of(mob.isPersistenceRequired()) : Value.NULL);
@@ -1586,7 +1587,7 @@ public class EntityValue extends Value
                         hand = InteractionHand.OFF_HAND;
                     }
                 }
-                le.swing(hand, true);
+                le.swing(hand, SwingAnimation.DEFAULT, true);
             }
         });
 
@@ -1603,7 +1604,7 @@ public class EntityValue extends Value
             }
             else
             {
-                e.setInvulnerable(invulnerable);
+                e.setPermanentlyInvulnerable(invulnerable);
             }
         });
 

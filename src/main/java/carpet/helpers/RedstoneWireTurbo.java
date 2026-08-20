@@ -11,7 +11,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.RedStoneWireBlock;
+import net.minecraft.world.level.block.RedstoneWireBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import carpet.fakes.RedstoneWireBlockInterface;
 
@@ -79,7 +79,7 @@ public class RedstoneWireTurbo
      
      
     /* Reference to RedstoneWireBlock object, which uses this accelerator */
-    private final RedStoneWireBlock wire;
+    private final RedstoneWireBlock wire;
      
      
     /*
@@ -115,7 +115,7 @@ public class RedstoneWireTurbo
     private List<UpdateNode> updateQueue2 = new ArrayList<>();
      
      
-    public RedstoneWireTurbo(RedStoneWireBlock wire) {
+    public RedstoneWireTurbo(RedstoneWireBlock wire) {
         this.wire = wire;
     }
  
@@ -848,7 +848,7 @@ public class RedstoneWireTurbo
     private BlockState calculateCurrentChanges(final Level worldIn, final UpdateNode upd)
     {
         BlockState state = upd.currentState;
-        final int i = state.getValue(RedStoneWireBlock.POWER);
+        final int i = state.getValue(RedstoneWireBlock.POWER);
         int j = 0;
         j = getMaxCurrentStrength(upd, j);
         int l = 0;
@@ -918,7 +918,7 @@ public class RedstoneWireTurbo
             // and set it in the world.  
             // Possible optimization:  Don't commit state changes to the world until they
             // need to be known by some nearby non-redstone-wire block.
-            state = state.setValue(RedStoneWireBlock.POWER, j);
+            state = state.setValue(RedstoneWireBlock.POWER, j);
             // [gnembon] added state check cause other things in the tick may have popped it up already
             // https://github.com/gnembon/fabric-carpet/issues/117
             if (worldIn.getBlockState(upd.self).getBlock() == Blocks.REDSTONE_WIRE)
@@ -962,7 +962,7 @@ public class RedstoneWireTurbo
      */
     private static int getMaxCurrentStrength(final UpdateNode upd, final int strength) {   
         if (upd.type != UpdateNode.Type.REDSTONE) return strength;
-        final int i = upd.currentState.getValue(RedStoneWireBlock.POWER);
+        final int i = upd.currentState.getValue(RedstoneWireBlock.POWER);
         return i > strength ? i : strength;
     }
 }

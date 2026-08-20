@@ -397,7 +397,7 @@ public class SpawnReporter
 
     // yeeted from NaturalSpawner - temporary access fix
     private static WeightedList<MobSpawnSettings.SpawnerData> getSpawnEntries(ServerLevel serverLevel, StructureManager structureManager, ChunkGenerator chunkGenerator, MobCategory mobCategory, BlockPos blockPos, @Nullable Holder<Biome> holder) {
-        return NaturalSpawner.isInNetherFortressBounds(blockPos, serverLevel, mobCategory, structureManager) ? NetherFortressStructure.FORTRESS_ENEMIES : chunkGenerator.getMobsAt(holder != null ? holder : serverLevel.getBiome(blockPos), structureManager, mobCategory, blockPos);
+        return NaturalSpawner.isInNetherFortressBounds(blockPos, serverLevel, mobCategory, structureManager) ? NetherFortressStructure.FORTRESS_ENEMIES : chunkGenerator.getMobsAt(serverLevel, structureManager, mobCategory, blockPos);
     }
 
     public static List<Component> report(BlockPos pos, ServerLevel worldIn)
@@ -492,7 +492,7 @@ public class SpawnReporter
                     {
                         String color = (fits && willSpawn > 0) ? "e" : "gi";
                         rep.add(Messenger.c(
-                                String.format("%s %s: %s (%d:%d-%d/%d), can: ", color, categoryCode, mobTypeName, weight, spawnEntry.minCount(), spawnEntry.maxCount(),  mob.getMaxSpawnClusterSize()),
+                                String.format("%s %s: %s (%d:%d-%d/%d), can: ", color, categoryCode, mobTypeName, weight, spawnEntry.count().minInclusive(), spawnEntry.count().maxInclusive(),  mob.getMaxSpawnClusterSize()),
                                 "l YES",
                                 color + " , fit: ",
                                 (fits ? "l YES" : "r NO"),
@@ -502,7 +502,7 @@ public class SpawnReporter
                     }
                     else
                     {
-                        rep.add(Messenger.c(String.format("gi %s: %s (%d:%d-%d/%d), can: ", categoryCode, mobTypeName, weight, spawnEntry.minCount(), spawnEntry.maxCount(), mob.getMaxSpawnClusterSize()), "n NO"));
+                        rep.add(Messenger.c(String.format("gi %s: %s (%d:%d-%d/%d), can: ", categoryCode, mobTypeName, weight, spawnEntry.count().minInclusive(), spawnEntry.count().maxInclusive(), mob.getMaxSpawnClusterSize()), "n NO"));
                     }
                     killEntity(mob);
                 }

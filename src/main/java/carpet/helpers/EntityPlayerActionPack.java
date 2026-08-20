@@ -16,6 +16,7 @@ import net.minecraft.network.protocol.game.ServerboundPlayerActionPacket;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
+import net.minecraft.util.Prediction;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.Entity;
@@ -26,6 +27,7 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.vehicle.boat.Boat;
 import net.minecraft.world.entity.vehicle.minecart.Minecart;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.component.SwingAnimation;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
@@ -261,7 +263,7 @@ public class EntityPlayerActionPack
         if (!inv.getItem(slot).isEmpty())
             player.drop(inv.removeItem(slot,
                     dropAll ? inv.getItem(slot).getCount() : 1
-            ), false, true); // scatter, keep owner
+            ), false, Prediction.SERVER_ONLY); // scatter, keep owner
     }
 
     public void drop(int selectedSlot, boolean dropAll)
@@ -320,7 +322,7 @@ public class EntityPlayerActionPack
                                 InteractionResult result = player.gameMode.useItemOn(player, world, player.getItemInHand(hand), hand, blockHit);
                                 if (result instanceof InteractionResult.Success success)
                                 {
-                                    if (success.swingSource() == InteractionResult.SwingSource.SERVER) player.swing(hand);
+                                    if (success.swingSource() == InteractionResult.SwingSource.SERVER_ONLY) player.swing(hand, SwingAnimation.DEFAULT, true);
                                     ap.itemUseCooldown = 3;
                                     return true;
                                 }
@@ -385,7 +387,7 @@ public class EntityPlayerActionPack
                         if (!action.isContinuous)
                         {
                             player.attack(entityHit.getEntity());
-                            player.swing(InteractionHand.MAIN_HAND);
+                            player.swing(InteractionHand.MAIN_HAND, SwingAnimation.DEFAULT, true);
                         }
                         player.resetAttackStrengthTicker();
                         player.resetLastActionTime();
@@ -453,7 +455,7 @@ public class EntityPlayerActionPack
 
                         }
                         player.resetLastActionTime();
-                        player.swing(InteractionHand.MAIN_HAND);
+                        player.swing(InteractionHand.MAIN_HAND, SwingAnimation.DEFAULT, true);
                         return blockBroken;
                     }
                 }

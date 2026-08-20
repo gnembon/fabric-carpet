@@ -38,7 +38,7 @@ import net.minecraft.network.protocol.game.ServerboundPlayerActionPacket;
 import net.minecraft.network.protocol.game.ServerboundPlayerCommandPacket;
 import net.minecraft.network.protocol.game.ServerboundPlayerInputPacket;
 import net.minecraft.network.protocol.game.ServerboundSetCarriedItemPacket;
-import net.minecraft.network.protocol.game.ServerboundSwingPacket;
+import net.minecraft.network.protocol.game.ServerboundPunchPacket;
 import net.minecraft.network.protocol.game.ServerboundUseItemOnPacket;
 import net.minecraft.network.protocol.game.ServerboundUseItemPacket;
 import net.minecraft.server.level.ServerPlayer;
@@ -171,8 +171,8 @@ public class ServerGamePacketListenerImpl_scarpetEventsMixin
     {
         if (PLAYER_RIGHT_CLICKS_BLOCK.isNeeded())
         {
-            InteractionHand hand = playerInteractBlockC2SPacket_1.getHand();
-            BlockHitResult hitRes = playerInteractBlockC2SPacket_1.getHitResult();
+            InteractionHand hand = playerInteractBlockC2SPacket_1.hand();
+            BlockHitResult hitRes = playerInteractBlockC2SPacket_1.hitResult();
             if(PLAYER_RIGHT_CLICKS_BLOCK.onBlockHit(player, hand, hitRes)) {
                 ci.cancel();
             }
@@ -187,7 +187,7 @@ public class ServerGamePacketListenerImpl_scarpetEventsMixin
     {
         if (PLAYER_USES_ITEM.isNeeded())
         {
-            InteractionHand hand = playerInteractItemC2SPacket_1.getHand();
+            InteractionHand hand = playerInteractItemC2SPacket_1.hand();
             if(PLAYER_USES_ITEM.onItemAction(player, hand, player.getItemInHand(hand).copy())) {
                 ci.cancel();
             }
@@ -267,16 +267,16 @@ public class ServerGamePacketListenerImpl_scarpetEventsMixin
         }
     }
 
-    @Inject(method = "handleAnimate", at = @At(
+    @Inject(method = "handlePunch", at = @At(
             value = "INVOKE", target =
             "Lnet/minecraft/server/level/ServerPlayer;resetLastActionTime()V",
             shift = At.Shift.BEFORE)
     )
-    private void onSwing(ServerboundSwingPacket packet, CallbackInfo ci)
+    private void onSwing(ServerboundPunchPacket packet, CallbackInfo ci)
     {
-        if (PLAYER_SWINGS_HAND.isNeeded() && !player.swinging)
+        if (PLAYER_SWINGS_HAND.isNeeded() && !player.isSwinging())
         {
-            PLAYER_SWINGS_HAND.onHandAction(player, packet.getHand());
+            PLAYER_SWINGS_HAND.onHandAction(player, InteractionHand.MAIN_HAND);
         }
     }
 

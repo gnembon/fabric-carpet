@@ -21,15 +21,15 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.RedStoneWireBlock;
+import net.minecraft.world.level.block.RedstoneWireBlock;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
 
 import org.jspecify.annotations.Nullable;
 
-import static net.minecraft.world.level.block.RedStoneWireBlock.POWER;
+import static net.minecraft.world.level.block.RedstoneWireBlock.POWER;
 
-@Mixin(RedStoneWireBlock.class)
+@Mixin(RedstoneWireBlock.class)
 public abstract class RedstoneWireBlock_fastMixin implements RedstoneWireBlockInterface {
 
     @Shadow
@@ -43,7 +43,7 @@ public abstract class RedstoneWireBlock_fastMixin implements RedstoneWireBlockIn
     @Accessor("shouldSignal")
     public abstract boolean getWiresGivePower();
 
-    private RedstoneWireEvaluator legacy = new DefaultRedstoneWireEvaluator((RedStoneWireBlock)(Object) this);
+    private RedstoneWireEvaluator legacy = new DefaultRedstoneWireEvaluator((RedstoneWireBlock)(Object) this);
 
     // =
 
@@ -52,7 +52,7 @@ public abstract class RedstoneWireBlock_fastMixin implements RedstoneWireBlockIn
     @Inject(method = "<init>", at = @At("RETURN"))
     private void onRedstoneWireBlockCTOR(BlockBehaviour.Properties settings, CallbackInfo ci) {
         //noinspection ConstantConditions
-        wireTurbo = new RedstoneWireTurbo((RedStoneWireBlock) (Object) this);
+        wireTurbo = new RedstoneWireTurbo((RedstoneWireBlock) (Object) this);
     }
 
     // =
@@ -114,24 +114,24 @@ public abstract class RedstoneWireBlock_fastMixin implements RedstoneWireBlockIn
     // =
 
 
-    @Redirect(method = "onPlace", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/block/RedStoneWireBlock;updatePowerStrength(Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/redstone/Orientation;Z)V"))
-    private void redirectOnBlockAddedUpdate(RedStoneWireBlock self, Level world_1, BlockPos blockPos_1, BlockState blockState_1, Orientation o, boolean sup) {
+    @Redirect(method = "onPlace", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/block/RedstoneWireBlock;updatePowerStrength(Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/redstone/Orientation;Z)V"))
+    private void redirectOnBlockAddedUpdate(RedstoneWireBlock self, Level world_1, BlockPos blockPos_1, BlockState blockState_1, Orientation o, boolean sup) {
         fastUpdate(world_1, blockPos_1, blockState_1, o, sup);
     }
 
-    @Redirect(method = "affectNeighborsAfterRemoval", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/block/RedStoneWireBlock;updatePowerStrength(Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/redstone/Orientation;Z)V"))
-    private void redirectOnStateReplacedUpdate(RedStoneWireBlock self, Level world_1, BlockPos blockPos_1, BlockState blockState_1, Orientation o, boolean sup) {
+    @Redirect(method = "affectNeighborsAfterRemoval", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/block/RedstoneWireBlock;updatePowerStrength(Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/redstone/Orientation;Z)V"))
+    private void redirectOnStateReplacedUpdate(RedstoneWireBlock self, Level world_1, BlockPos blockPos_1, BlockState blockState_1, Orientation o, boolean sup) {
         fastUpdate(world_1, blockPos_1, blockState_1, o, sup);
     }
 
     @Redirect(method = "neighborChanged", at = @At(value = "INVOKE", target =
-            "Lnet/minecraft/world/level/block/RedStoneWireBlock;updatePowerStrength(Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/redstone/Orientation;Z)V"
-            //"Lnet/minecraft/world/level/block/RedStoneWireBlock;updatePowerStrength(Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/redstone/Orientation;)V"
+            "Lnet/minecraft/world/level/block/RedstoneWireBlock;updatePowerStrength(Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/redstone/Orientation;Z)V"
+            //"Lnet/minecraft/world/level/block/RedstoneWireBlock;updatePowerStrength(Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/redstone/Orientation;)V"
     ))
     //private void red(final RedStoneWireBlock instance, final Level level,
     //                 final BlockPos blockPos, final BlockState blockState, final Orientation orientation)
     private void redirectNeighborUpdateUpdate(
-            RedStoneWireBlock self,
+            RedstoneWireBlock self,
             Level world_1,
             BlockPos blockPos_1,
             BlockState blockState_1,

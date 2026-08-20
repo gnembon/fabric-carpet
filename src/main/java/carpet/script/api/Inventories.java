@@ -36,6 +36,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.tags.TagKey;
+import net.minecraft.util.Prediction;
 import net.minecraft.util.context.ContextMap;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.item.ItemEntity;
@@ -441,7 +442,7 @@ public class Inventories
             ItemEntity item;
             if (owner instanceof Player player)
             {
-                item = player.drop(droppedStack, false, true);
+                item = player.drop(droppedStack, false, Prediction.SERVER_ONLY);
                 if (item == null)
                 {
                     return Value.ZERO;

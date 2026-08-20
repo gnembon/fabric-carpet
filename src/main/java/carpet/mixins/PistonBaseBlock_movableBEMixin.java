@@ -79,7 +79,7 @@ public abstract class PistonBaseBlock_movableBEMixin extends DirectionalBlock
     ))
     private static PushReaction moveGrindstones(BlockState blockState)
     {
-        if (CarpetSettings.movableBlockEntities && blockState.getBlock() == Blocks.GRINDSTONE) return PushReaction.NORMAL;
+        if (CarpetSettings.movableBlockEntities && blockState.getBlock() == Blocks.GRINDSTONE) return PushReaction.PUSH_PULL;
         return blockState.getPistonPushReaction();
     }
 

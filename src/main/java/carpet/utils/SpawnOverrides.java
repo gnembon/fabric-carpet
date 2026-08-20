@@ -9,6 +9,9 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.random.WeightedList;
+import net.minecraft.util.valueproviders.ConstantInt;
+import net.minecraft.util.valueproviders.IntProvider;
+import net.minecraft.util.valueproviders.UniformInt;
 import net.minecraft.world.entity.EntityTypes;
 import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.level.StructureManager;
@@ -32,16 +35,16 @@ public class SpawnOverrides {
 
     static {
         addOverride(() -> CarpetSettings.huskSpawningInTemples, MobCategory.MONSTER, BuiltinStructures.DESERT_PYRAMID, StructureSpawnOverride.BoundingBoxType.STRUCTURE,
-                WeightedList.of(new MobSpawnSettings.SpawnerData(EntityTypes.HUSK, 1, 1))
+                WeightedList.of(new MobSpawnSettings.SpawnerData(EntityTypes.HUSK, ConstantInt.of(1)))
         );
         addOverride(() -> CarpetSettings.shulkerSpawningInEndCities, MobCategory.MONSTER, BuiltinStructures.END_CITY, StructureSpawnOverride.BoundingBoxType.PIECE,
-                WeightedList.of(new MobSpawnSettings.SpawnerData(EntityTypes.SHULKER, 4, 4))
+                WeightedList.of(new MobSpawnSettings.SpawnerData(EntityTypes.SHULKER,  ConstantInt.of(4)))
         );
         addOverride(() -> CarpetSettings.piglinsSpawningInBastions, MobCategory.MONSTER, BuiltinStructures.BASTION_REMNANT, StructureSpawnOverride.BoundingBoxType.PIECE,
                 WeightedList.<MobSpawnSettings.SpawnerData>builder()
-                        .add(new MobSpawnSettings.SpawnerData(EntityTypes.PIGLIN_BRUTE,1, 2), 5)
-                        .add(new MobSpawnSettings.SpawnerData(EntityTypes.PIGLIN, 2, 4), 10)
-                        .add(new MobSpawnSettings.SpawnerData(EntityTypes.HOGLIN, 1, 2), 2)
+                        .add(new MobSpawnSettings.SpawnerData(EntityTypes.PIGLIN_BRUTE, UniformInt.of(1, 2)), 5)
+                        .add(new MobSpawnSettings.SpawnerData(EntityTypes.PIGLIN, UniformInt.of(2, 4)), 10)
+                        .add(new MobSpawnSettings.SpawnerData(EntityTypes.HOGLIN, UniformInt.of(1, 2)), 2)
                         .build()
         );
 

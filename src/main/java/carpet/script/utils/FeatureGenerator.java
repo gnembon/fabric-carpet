@@ -269,7 +269,7 @@ public class FeatureGenerator
         {
             //Holder<Biome> genBiome = generator.getBiomeSource().getNoiseBiome(QuartPos.fromBlock(pos.getX()), QuartPos.fromBlock(pos.getY()), QuartPos.fromBlock(pos.getZ()), seed.sampler());
             if (structure.findValidGenerationPoint(new Structure.GenerationContext(
-                    world.registryAccess(), generator, generator.getBiomeSource(),
+                    world.registryAccess(), generator, world.uncachedBiomeResolver(),
                     seed, world.getStructureManager(), world.getSeed(), chunkPos, world, structureBiomes::contains
             )).isPresent())
             {
@@ -279,7 +279,7 @@ public class FeatureGenerator
         else
         {
             StructureStart filledStructure = structure.generate(Holder.direct(structure), world.dimension(),
-                    world.registryAccess(), generator, generator.getBiomeSource(), seed, world.getStructureManager(),
+                    world.registryAccess(), generator, world.uncachedBiomeResolver(), seed, world.getStructureManager(),
                     world.getSeed(), chunkPos, 0, world, structureBiomes::contains);
             if (filledStructure != null && filledStructure.isValid())
             {
@@ -508,7 +508,7 @@ public class FeatureGenerator
         checks.set(true);
         try
         {
-            StructureStart start = structure.generate(Holder.direct(structure), world.dimension(), world.registryAccess(), generator, generator.getBiomeSource(), world.getChunkSource().randomState(), world.getStructureManager(), world.getSeed(), ChunkPos.containing(pos), 0, world, b -> true);
+            StructureStart start = structure.generate(Holder.direct(structure), world.dimension(), world.registryAccess(), generator, world.uncachedBiomeResolver(), world.getChunkSource().randomState(), world.getStructureManager(), world.getSeed(), ChunkPos.containing(pos), 0, world, b -> true);
             if (start == StructureStart.INVALID_START)
             {
                 return false;
