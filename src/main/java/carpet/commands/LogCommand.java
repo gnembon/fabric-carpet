@@ -29,7 +29,7 @@ public class LogCommand
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher, CommandBuildContext commandBuildContext)
     {
         LiteralArgumentBuilder<CommandSourceStack> literalargumentbuilder = Commands.literal("log").
-                requires((player) -> CommandHelper.canUseCommand(player, CarpetSettings.commandLog)).
+                requires((player) -> CommandHelper.hasPermission(player, "carpet.commands.log", CarpetSettings.commandLog)).
                 executes((context) -> listLogs(context.getSource())).
                 then(Commands.literal("clear").
                         executes( (c) -> unsubFromAll(c.getSource(), c.getSource().getTextName())).
