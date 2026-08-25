@@ -356,7 +356,7 @@ public class PlayerCommand
             return 0;
         }
 
-        EntityPlayerMPFake.createShadow(player.level().getServer(), player);
+        EntityPlayerMPFake.createShadow(player);
         return 1;
     }
 }
