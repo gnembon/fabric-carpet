@@ -104,6 +104,7 @@ public class EntityPlayerMPFake extends ServerPlayer
             loadPlayerData(instance);
             instance.stopRiding(); // otherwise the created fake player will be on the vehicle
             instance.teleportTo(worldIn, pos.x, pos.y, pos.z, Set.of(), (float) yaw, (float) pitch, true);
+            instance.setDeltaMovement(Vec3.ZERO);
             instance.setHealth(20.0F);
             instance.unsetRemoved();
             instance.getAttribute(Attributes.STEP_HEIGHT).setBaseValue(0.6F);
