@@ -100,7 +100,21 @@ public class EntityPlayerMPFake extends ServerPlayer
 
             EntityPlayerMPFake instance = new EntityPlayerMPFake(server, worldIn, current, ClientInformation.createDefault(), false);
             instance.fixStartingPosition = () -> instance.snapTo(pos.x, pos.y, pos.z, (float) yaw, (float) pitch);
-            server.getPlayerList().placeNewPlayer(new FakeClientConnection(PacketFlow.SERVERBOUND), instance, new CommonListenerCookie(current, 0, instance.clientInformation(), false));
+            try
+            {
+                server.getPlayerList().placeNewPlayer(new FakeClientConnection(PacketFlow.SERVERBOUND), instance, new CommonListenerCookie(current, 0, instance.clientInformation(), false));
+            }
+            catch (Exception e)
+            {
+                if (server.getPlayerList().getPlayer(instance.getUUID()) == null)
+                {
+                    throw e; // never got registered, nothing in the world to finish setting up
+                }
+                // it did get registered, so this came from after that - whether to let a player in
+                // is decided earlier in canPlayerLogin, which returns a reason instead of throwing,
+                // so bailing now would just strand it here with no data loaded
+                CarpetSettings.LOG.error("Something threw while placing fake player " + username + ", continuing initialization", e);
+            }
             loadPlayerData(instance);
             instance.stopRiding(); // otherwise the created fake player will be on the vehicle
             instance.teleportTo(worldIn, pos.x, pos.y, pos.z, Set.of(), (float) yaw, (float) pitch, true);
@@ -113,7 +127,12 @@ public class EntityPlayerMPFake extends ServerPlayer
             //instance.world.getChunkManager(). updatePosition(instance);
             instance.entityData.set(DATA_PLAYER_MODE_CUSTOMISATION, (byte) 0x7f); // show all model layers (incl. capes)
             instance.getAbilities().flying = flying;
-        }, server);
+        }, server).exceptionally(e -> {
+            // nothing observes this future, so without this anything thrown above is swallowed
+            // and the player is left half set up with no clue why
+            CarpetSettings.LOG.error("Failed to fully initialize fake player " + username, e);
+            return null;
+        });
         return true;
     }
 
