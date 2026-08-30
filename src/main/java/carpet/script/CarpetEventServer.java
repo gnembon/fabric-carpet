@@ -44,6 +44,7 @@ import net.minecraft.core.Registry;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
+import net.minecraft.nbt.Tag;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.MinecraftServer;
@@ -979,6 +980,19 @@ public class CarpetEventServer
             }
         };
 
+        public static final Event PLAYER_CUSTOM_CLICK_ACTION = new Event("player_custom_click_action", 3, false)
+        {
+            @Override
+            public boolean onPlayerCustomClickAction(ServerPlayer player, Identifier identifier, @Nullable Tag payload)
+            {
+                return handler.call(() -> Arrays.asList(
+                        EntityValue.of(player),
+                        StringValue.of(identifier.toString()),
+                        NBTSerializableValue.of(payload)
+                ), player::createCommandSourceStack);
+            }
+        };
+
         public static final Event STATISTICS = new Event("statistic", 4, false)
         {
             private <T> Identifier getStatId(Stat<T> stat)
@@ -1237,6 +1251,11 @@ public class CarpetEventServer
         }
 
         public boolean onPlayerMessage(ServerPlayer player, String message)
+        {
+            return false;
+        }
+        
+        public boolean onPlayerCustomClickAction(ServerPlayer player, Identifier identifier, @Nullable Tag payload)
         {
             return false;
         }
