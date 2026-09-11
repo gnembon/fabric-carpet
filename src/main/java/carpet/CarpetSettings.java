@@ -595,6 +595,16 @@ public class CarpetSettings
     @Rule(desc = "Enables /player command to control/spawn players", category = COMMAND)
     public static String commandPlayer = "ops";
 
+    @Rule(
+            desc = "Ignores fake players when counting players for sleeping",
+            extra = {
+                    "The players_sleeping_percentage gamerule still applies to real players.",
+                    "Sleeping fake players cannot contribute to skipping the night."
+            },
+            category = {SURVIVAL}
+    )
+    public static boolean fakePlayerSleepIgnore = false;
+
     @Rule(desc = "Spawn offline players in online mode if online-mode player with specified name does not exist", category = COMMAND)
     public static boolean allowSpawningOfflinePlayers = true;
 
