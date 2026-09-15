@@ -48,7 +48,7 @@ public abstract class ServerGamePacketListenerImpl_antiCheatDisabledMixin extend
         return isSingleplayerOwner() || CarpetSettings.antiCheatDisabled;
     }
 
-    @Redirect(method = "handleMovePlayer", require = 0, // don't crash with immersive portals,
+    @Redirect(method = "handlePlayerPositionChange", require = 0, // don't crash with immersive portals,
              at = @At(
             value = "INVOKE",
             target = "Lnet/minecraft/server/level/ServerPlayer;isChangingDimension()Z"))

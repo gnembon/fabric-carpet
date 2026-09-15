@@ -81,12 +81,12 @@ public class ShapesRenderer
         switch (shapeDirection)
         {
             case NORTH -> {}
-            case SOUTH -> poseStack.mulPose(Axis.YP.rotationDegrees(180));
-            case EAST -> poseStack.mulPose(Axis.YP.rotationDegrees(270));
-            case WEST -> poseStack.mulPose(Axis.YP.rotationDegrees(90));
-            case UP -> poseStack.mulPose(Axis.XP.rotationDegrees(90));
-            case DOWN -> poseStack.mulPose(Axis.XP.rotationDegrees(-90));
-            case CAMERA -> poseStack.mulPose(camera.rotation());
+            case SOUTH -> poseStack.rotate(Axis.YP.rotationDegrees(180));
+            case EAST -> poseStack.rotate(Axis.YP.rotationDegrees(270));
+            case WEST -> poseStack.rotate(Axis.YP.rotationDegrees(90));
+            case UP -> poseStack.rotate(Axis.XP.rotationDegrees(90));
+            case DOWN -> poseStack.rotate(Axis.XP.rotationDegrees(-90));
+            case CAMERA -> poseStack.rotate(camera.rotation());
             case PLAYER -> {
                 Vec3 vector = objectPos.subtract(camera.position());
                 double x = vector.x;
@@ -99,8 +99,8 @@ public class ShapesRenderer
                 // that should work somehow but it doesn't for some reason
                 //matrices.mulPose(new Quaternion( -rotY, rotX, 0, false));
 
-                poseStack.mulPose(Axis.YP.rotation(rotX));
-                poseStack.mulPose(Axis.XP.rotation(-rotY));
+                poseStack.rotate(Axis.YP.rotation(rotX));
+                poseStack.rotate(Axis.XP.rotation(-rotY));
             }
         }
     }
@@ -373,21 +373,21 @@ public class ShapesRenderer
                 matrices.translate(0.5, 0.5, 0.5);
             }
 
-            matrices.mulPose(camera1.rotation().conjugate(new Quaternionf()));
+            matrices.rotate(camera1.rotation().conjugate(new Quaternionf()));
 
             matrices.translate(v1.x - cx, v1.y - cy, v1.z - cz);
             rotatePoseStackByShapeDirection(matrices, shape.facing, camera1, isitem ? v1 : v1.add(0.5, 0.5, 0.5));
             if (shape.tilt != 0.0f)
             {
-                matrices.mulPose(Axis.ZP.rotationDegrees(-shape.tilt));
+                matrices.rotate(Axis.ZP.rotationDegrees(-shape.tilt));
             }
             if (shape.lean != 0.0f)
             {
-                matrices.mulPose(Axis.XP.rotationDegrees(-shape.lean));
+                matrices.rotate(Axis.XP.rotationDegrees(-shape.lean));
             }
             if (shape.turn != 0.0f)
             {
-                matrices.mulPose(Axis.YP.rotationDegrees(shape.turn));
+                matrices.rotate(Axis.YP.rotationDegrees(shape.turn));
             }
             matrices.scale(shape.scaleX, shape.scaleY, shape.scaleZ);
 
@@ -399,7 +399,7 @@ public class ShapesRenderer
             else
             {
                 // items seems to be flipped by default
-                matrices.mulPose(Axis.YP.rotationDegrees(180));
+                matrices.rotate(Axis.YP.rotationDegrees(180));
             }
 
             blockPos = BlockPos.containing(v1);
@@ -546,15 +546,15 @@ public class ShapesRenderer
             //RenderSystem.scalef(shape.size* 0.0025f, -shape.size*0.0025f, shape.size*0.0025f);
             if (shape.tilt != 0.0f)
             {
-                matrices.mulPose(Axis.ZP.rotationDegrees(shape.tilt));
+                matrices.rotate(Axis.ZP.rotationDegrees(shape.tilt));
             }
             if (shape.lean != 0.0f)
             {
-                matrices.mulPose(Axis.XP.rotationDegrees(shape.lean));
+                matrices.rotate(Axis.XP.rotationDegrees(shape.lean));
             }
             if (shape.turn != 0.0f)
             {
-                matrices.mulPose(Axis.YP.rotationDegrees(shape.turn));
+                matrices.rotate(Axis.YP.rotationDegrees(shape.turn));
             }
             matrices.translate(-10 * shape.indent, -10 * shape.height - 9, (-10 * renderEpsilon) - 10 * shape.raise);
             //if (visibleThroughWalls) RenderSystem.disableDepthTest();

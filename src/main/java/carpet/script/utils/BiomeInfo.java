@@ -20,6 +20,7 @@ import net.minecraft.world.attribute.EnvironmentAttribute;
 import net.minecraft.world.attribute.EnvironmentAttributes;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.levelgen.feature.Feature;
+import org.joml.Vector3fc;
 
 public class BiomeInfo
 {
@@ -47,7 +48,7 @@ public class BiomeInfo
         });
     }};
 
-    private static  Value fromEnvironmentalAttribute(ServerLevel w, Biome b, EnvironmentAttribute<Integer> fogColor) {
+    private static  Value fromEnvironmentalAttribute(ServerLevel w, Biome b, EnvironmentAttribute<Vector3fc> fogColor) {
         return ValueConversions.ofRGB(b.getAttributes().applyModifier(fogColor, w.dimensionType().attributes().applyModifier(fogColor, fogColor.defaultValue())));
     }
 }

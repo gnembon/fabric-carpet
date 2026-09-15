@@ -122,11 +122,11 @@ public class ServerGamePacketListenerImpl_scarpetEventsMixin
     }
 
 
-    @Inject(method = "handleMovePlayer", at = @At(
+    @Inject(method = "handlePlayerPositionChange", at = @At(
             value = "INVOKE",
             target = "Lnet/minecraft/server/level/ServerPlayer;jumpFromGround()V"
     ))
-    private void onJump(ServerboundMovePlayerPacket playerMoveC2SPacket_1, CallbackInfo ci)
+    private void onJump(double requestedX, double requestedY, double requestedZ, float requestedYRot, float requestedXRot, boolean isOnGround, boolean horizontalCollision, CallbackInfo ci)
     {
         PLAYER_JUMPS.onPlayerEvent(player);
     }

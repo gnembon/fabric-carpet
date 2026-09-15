@@ -31,7 +31,7 @@ import carpet.script.value.ValueConversions;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.longs.LongSet;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.util.Util;
+import net.minecraft.server.level.ServerChunkCache;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Holder;
@@ -58,21 +58,20 @@ import net.minecraft.util.ProblemReporter;
 import net.minecraft.util.random.WeightedList;
 import net.minecraft.world.entity.EntityTypes;
 import net.minecraft.world.level.ServerExplosion;
-import net.minecraft.world.level.chunk.ChunkGenerator;
 import net.minecraft.world.level.chunk.PalettedContainer;
 import net.minecraft.world.level.chunk.status.ChunkStatus;
 import net.minecraft.world.level.levelgen.Aquifer;
+import net.minecraft.world.level.levelgen.NoiseRouterData;
 import net.minecraft.world.level.levelgen.densityfunction.DensityFunction;
-import net.minecraft.world.level.levelgen.densityfunction.DensityFunctions;
 import net.minecraft.world.level.levelgen.NoiseBasedChunkGenerator;
-import net.minecraft.world.level.levelgen.NoiseRouter;
 import net.minecraft.world.level.levelgen.RandomState;
+import net.minecraft.world.level.levelgen.densityfunction.DensitySamplerSet;
+import net.minecraft.world.level.levelgen.densityfunction.SamplerContext;
 import net.minecraft.world.level.levelgen.structure.Structure;
 import net.minecraft.world.level.levelgen.structure.StructureType;
 import net.minecraft.world.level.saveddata.WeatherData;
 import net.minecraft.world.level.storage.TagValueInput;
 import org.apache.commons.lang3.mutable.MutableBoolean;
-import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -96,7 +95,6 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.village.poi.PoiManager;
 import net.minecraft.world.entity.ai.village.poi.PoiRecord;
@@ -133,7 +131,6 @@ import net.minecraft.world.level.levelgen.WorldgenRandom;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraft.world.level.levelgen.structure.StructureStart;
 import net.minecraft.world.level.pathfinder.PathComputationType;
-import net.minecraft.world.level.storage.ServerLevelData;
 import net.minecraft.world.phys.Vec3;
 
 import org.jspecify.annotations.Nullable;
@@ -1731,104 +1728,68 @@ public class WorldAccess
             {
                 return ListValue.wrap(cc.registry(Registries.DENSITY_FUNCTION).keySet().stream().map(ValueConversions::of));
             }
-            RandomState router = level.getChunkSource().randomState();
             return densityFunctionQueries.length == 1
-                    ? NumericValue.of(sampleNoise(router, level, densityFunctionQueries[0], pos))
-                    : ListValue.wrap(Arrays.stream(densityFunctionQueries).map(s -> NumericValue.of(sampleNoise(router, level, s, pos))));
+                    ? NumericValue.of(sampleNoise(level, densityFunctionQueries[0], pos))
+                    : ListValue.wrap(Arrays.stream(densityFunctionQueries).map(s -> NumericValue.of(sampleNoise(level, s, pos))));
         });
     }
 
-    public static double sampleNoise(RandomState router, ServerLevel level, String what, BlockPos pos)
+
+    @Nullable static DensitySamplerSet samplersCache = null;
+    @Nullable static ServerLevel samplerLevel = null;
+
+    public static double sampleNoise(ServerLevel level, String what, BlockPos pos)
     {
-        DensityFunction densityFunction = switch (what)
-        {
-            case "temperature" -> router.router().temperature();
-            case "vegetation" -> router.router().vegetation();
-            case "continents" -> router.router().continents();
-            case "erosion" -> router.router().erosion();
-            case "depth" -> router.router().depth();
-            case "ridges" -> router.router().ridges();
-            case "preliminary_surface_level" -> router.router().preliminarySurfaceLevel();
-            case "final_density" -> router.router().finalDensity();
-            //case "vein_toggle" -> router. router(). veinToggle();
-            //case "vein_ridged" -> router.router().veinRidged();
-            //case "vein_gap" -> router.router().veinGap();
-            default -> {
-                Aquifer.Config aquifer = router.aquifers().orElse(null);
-                if (aquifer != null) {
-                    yield switch (what) {
-                        case "barrier_noise" -> aquifer.barrierNoise();
-                        case "fluid_level_floodedness_noise" -> aquifer.fluidLevelFloodednessNoise();
-                        case "fluid_level_spread_noise" -> aquifer.fluidLevelSpreadNoise();
-                        case "lava_noise" -> aquifer.lavaNoise();
-                        default -> stupidWorldgenNoiseCacheGetter.apply(Pair.of(level, what));
-                    };
-                }
-                yield stupidWorldgenNoiseCacheGetter.apply(Pair.of(level, what));
-            }
-        };
-        return densityFunction.compute(new DensityFunction.SinglePointContext(pos.getX(), pos.getY(), pos.getZ()));
-    }
-
-    // to be used with future seedable noise
-    public static final Function<Pair<ServerLevel, String>, DensityFunction> stupidWorldgenNoiseCacheGetter = Util.memoize(pair -> {
-        ServerLevel level = pair.getKey();
-        String densityFunctionQuery = pair.getValue();
-        ChunkGenerator generator = level.getChunkSource().getGenerator();
-
-        if (generator instanceof final NoiseBasedChunkGenerator noiseBasedChunkGenerator)
-        {
-            Registry<DensityFunction> densityFunctionRegistry = level.registryAccess().lookupOrThrow(Registries.DENSITY_FUNCTION);
-            NoiseRouter router = noiseBasedChunkGenerator.generatorSettings().value().noiseRouter();
-            DensityFunction densityFunction = switch (densityFunctionQuery)
-                    {
-                        case "temperature" -> router.temperature();
-                        case "vegetation" -> router.vegetation();
-                        case "continents" -> router.continents();
-                        case "erosion" -> router.erosion();
-                        case "depth" -> router.depth();
-                        case "ridges" -> router.ridges();
-                        case "preliminary_surface_level" -> router.preliminarySurfaceLevel();
-                        case "final_density" -> router.finalDensity();
-                        //case "vein_toggle" -> router.veinToggle();
-                        //case "vein_ridged" -> router.veinRidged();
-                        //case "vein_gap" -> router.veinGap();
-                        default -> {
-                            Aquifer.Config aquifers = noiseBasedChunkGenerator.generatorSettings().value().aquifers().orElse(null);
-                            if (aquifers != null) {
-                                yield switch (densityFunctionQuery) {
-                                    case "barrier_noise" -> aquifers.barrierNoise();
-                                    case "fluid_level_floodedness_noise" -> aquifers.fluidLevelFloodednessNoise();
-                                    case "fluid_level_spread_noise" -> aquifers.fluidLevelSpreadNoise();
-                                    case "lava_noise" -> aquifers.lavaNoise();
-                                    default -> {
-                                        DensityFunction result = densityFunctionRegistry.getValue(InputValidator.identifierOf(densityFunctionQuery));
-                                        if (result == null)
-                                        {
-                                            throw new InternalExpressionException("Density function '" + densityFunctionQuery + "' is not defined in the registies.");
-                                        }
-                                        yield result;
-                                    }
-                                };
-                            }
-
-
-                            DensityFunction result = densityFunctionRegistry.getValue(InputValidator.identifierOf(densityFunctionQuery));
-                            if (result == null)
-                            {
-                                throw new InternalExpressionException("Density function '" + densityFunctionQuery + "' is not defined in the registies.");
-                            }
-                            yield result;
-                        }
-                    };
-
-            RandomState randomState = RandomState.create(
-                    level.registryAccess().lookupOrThrow(Registries.NOISE), level.getSeed(), noiseBasedChunkGenerator.generatorSettings().value()
-            );
-            DensityFunction.Visitor visitor = Vanilla.RandomState_getVisitor(randomState);
-
-            return densityFunction.mapAll(visitor);
+        if (samplersCache == null || samplerLevel != level) {
+            final ServerChunkCache chunkSource = level.getChunkSource();
+            final RandomState randomState = chunkSource.randomState();
+            final SamplerContext samplerContext = SamplerContext.builder().enableCaches().build();
+            samplersCache = randomState.samplersWithContext(samplerContext);
+            samplerLevel = level;
         }
-        return DensityFunctions.zero();
-    });
+
+        ResourceKey<DensityFunction> key =  switch (what) {
+            case "temperature" -> NoiseRouterData.OVERWORLD_FUNCTIONS.temperature();
+            case "vegetation" -> NoiseRouterData.OVERWORLD_FUNCTIONS.vegetation();
+            case "continents" -> NoiseRouterData.OVERWORLD_FUNCTIONS.continents();
+            case "erosion" -> NoiseRouterData.OVERWORLD_FUNCTIONS.erosion();
+            case "depth" -> NoiseRouterData.OVERWORLD_FUNCTIONS.depth();
+            case "ridges" -> NoiseRouterData.RIDGES;
+            case "preliminary_height" -> NoiseRouterData.OVERWORLD_FUNCTIONS.preliminarySurfaceLevel();
+            case "final_density" -> NoiseRouterData.OVERWORLD_FUNCTIONS.finalDensity();
+            default -> null;
+        };
+        final DensityFunction df;
+        if (key != null) {
+            df = level.registryAccess().lookupOrThrow(Registries.DENSITY_FUNCTION).get(key).get().value();
+        } else {
+            df = level.registryAccess().lookupOrThrow(Registries.DENSITY_FUNCTION).getValue(InputValidator.identifierOf(what));
+        }
+        if (df == null)
+        {
+            // last call, maybe its the aquifers
+            DensityFunction dfa;
+            if (level.getChunkSource().getGenerator() instanceof NoiseBasedChunkGenerator noiseBasedChunkGenerator) {
+                Aquifer.Config aquifers = noiseBasedChunkGenerator.generatorSettings().value().aquifers().orElse(null);
+                if (aquifers != null) {
+                    dfa = switch (what) {
+                        case "barrier_noise" -> aquifers.barrierNoise();
+                        case "fluid_level_floodedness_noise" -> aquifers.fluidLevelFloodednessNoise();
+                        case "fluid_level_spread_noise" -> aquifers.fluidLevelSpreadNoise();
+                        case "lava_noise" -> aquifers.lavaNoise();
+                        default -> null;
+                    };
+                    if (dfa != null) {
+                        return samplersCache.sampleValue(dfa, pos.getX(), pos.getY(), pos.getZ());
+                    }
+                }
+            } else if (what.equalsIgnoreCase("barrier_noise") || what.equalsIgnoreCase("fluid_level_floodedness_noise") || what.equalsIgnoreCase("fluid_level_spread_noise") || what.equalsIgnoreCase("lava_noise")) {
+                // querying for aquifers outside of noise based level should not result in an invalid exception, but rather a 0 value, as the aquifers are not present in that world.
+                return 0;
+            }
+
+            throw new InternalExpressionException("Density function '" + what + "' is not defined in the registries.");
+        }
+        return samplersCache.sampleValue(df, pos.getX(), pos.getY(), pos.getZ());
+    }
 }

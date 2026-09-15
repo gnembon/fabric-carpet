@@ -47,6 +47,7 @@ import net.minecraft.world.level.levelgen.GenerationStep;
 import net.minecraft.world.level.levelgen.RandomState;
 import net.minecraft.world.level.levelgen.VerticalAnchor;
 import net.minecraft.world.level.levelgen.blockpredicates.BlockPredicate;
+import net.minecraft.world.level.levelgen.densityfunction.SamplerContext;
 import net.minecraft.world.level.levelgen.feature.CoralClawFeature;
 import net.minecraft.world.level.levelgen.feature.CoralTreeFeature;
 import net.minecraft.world.level.levelgen.feature.CuboidPlacement;
@@ -84,8 +85,6 @@ import net.minecraft.world.level.levelgen.structure.structures.JigsawStructure;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureProcessorList;
 
 import org.jspecify.annotations.Nullable;
-
-import static net.minecraft.world.level.levelgen.feature.TreeFeature.CAN_PLACE_BELOW_TREE_TRUNKS;
 
 public class FeatureGenerator
 {
@@ -269,8 +268,8 @@ public class FeatureGenerator
         {
             //Holder<Biome> genBiome = generator.getBiomeSource().getNoiseBiome(QuartPos.fromBlock(pos.getX()), QuartPos.fromBlock(pos.getY()), QuartPos.fromBlock(pos.getZ()), seed.sampler());
             if (structure.findValidGenerationPoint(new Structure.GenerationContext(
-                    world.registryAccess(), generator, world.uncachedBiomeResolver(),
-                    seed, world.getStructureManager(), world.getSeed(), chunkPos, world, structureBiomes::contains
+                    world.registryAccess(), generator, generator.getBiomeSource(), seed.createClimateSampler(SamplerContext.EMPTY_UNCACHED),
+                    seed, world.getStructureTemplateManager(), world.getSeed(), chunkPos, world, structureBiomes::contains
             )).isPresent())
             {
                 return StructureStart.INVALID_START;
@@ -279,7 +278,7 @@ public class FeatureGenerator
         else
         {
             StructureStart filledStructure = structure.generate(Holder.direct(structure), world.dimension(),
-                    world.registryAccess(), generator, world.uncachedBiomeResolver(), seed, world.getStructureManager(),
+                    world.registryAccess(), generator, generator.getBiomeSource(), seed.createClimateSampler(SamplerContext.EMPTY_UNCACHED), seed, world.getStructureTemplateManager(),
                     world.getSeed(), chunkPos, 0, world, structureBiomes::contains);
             if (filledStructure != null && filledStructure.isValid())
             {
@@ -289,17 +288,17 @@ public class FeatureGenerator
         return null;
     }
 
-    private static RuleBasedStateProvider belowTrees = RuleBasedStateProvider.ifTrueThenProvide(CAN_PLACE_BELOW_TREE_TRUNKS, Blocks.DIRT);
+    private static RuleBasedStateProvider belowTrees = RuleBasedStateProvider.ifTrueThenProvide(BlockPredicate.not(BlockPredicate.matchesTag(BlockTags.CANNOT_REPLACE_BELOW_TREE_TRUNK)), Blocks.DIRT);
 
     private static TreeFeature.Builder createTree(Block block, Block block2, int i, int j, int k, int l)
     {
-        return new TreeFeature.Builder(BlockStateProvider.simple(block), new StraightTrunkPlacer(i, j, k), BlockStateProvider.simple(block2), new BlobFoliagePlacer(ConstantInt.of(l), ConstantInt.of(0), 3), new TwoLayersFeatureSize(1, 0, 1), belowTrees);
+        return new TreeFeature.Builder(BlockStateProvider.of(block), new StraightTrunkPlacer(i, j, k), BlockStateProvider.of(block2), new BlobFoliagePlacer(ConstantInt.of(l), ConstantInt.of(0), 3), new TwoLayersFeatureSize(1, 0, 1), Holder.direct( belowTrees));
     }
 
     // from AquaticFeatures
     private static Holder<PlacedFeature> wallCoral(final HolderGetter<Block> blocks, final Direction direction) {
         return PlacementUtils.inlinePlaced(
-                new SimpleBlockFeature(new RotatedBlockProvider(new RandomBlockProvider(blocks.getOrThrow(BlockTags.WALL_CORALS)), Optional.of(direction))),
+                new SimpleBlockFeature(new RotatedBlockProvider(Holder.direct(new RandomBlockProvider(blocks.getOrThrow(BlockTags.WALL_CORALS))), Optional.of(direction))),
                 new RandomChancePlacement(0.2f),
                 OffsetPlacement.of(direction),
                 BlockPredicateFilter.forPredicate(BlockPredicate.matchesBlocks(Blocks.WATER))
@@ -308,7 +307,7 @@ public class FeatureGenerator
 
     public static Feature coral(final HolderGetter<Feature> features, final HolderGetter<Block> blocks, final Block block) {
         return new OverlayFeature(HolderSet.direct(
-                PlacementUtils.inlinePlaced(new SimpleBlockFeature(BlockStateProvider.simple(block))),
+                PlacementUtils.inlinePlaced(new SimpleBlockFeature(BlockStateProvider.of(block))),
                 PlacementUtils.inlinePlaced(
                         new WeightedRandomSelectorFeature(WeightedList.of(
                                 new Weighted<>(PlacementUtils.inlinePlaced(new SimpleBlockFeature(new RandomBlockProvider(blocks.getOrThrow(BlockTags.CORALS)))), 20),
@@ -373,7 +372,7 @@ public class FeatureGenerator
 
         // TODO remove this using what place feature is using
         put("oak_bees", l -> simpleTree(createTree(Blocks.OAK_LOG, Blocks.OAK_LEAVES, 4, 2, 0, 2).ignoreVines().decorators(List.of(new BeehiveDecorator(1.00F)))));
-        put("fancy_oak_bees", l -> simpleTree(new TreeFeature.Builder(BlockStateProvider.simple(Blocks.OAK_LOG), new FancyTrunkPlacer(3, 11, 0), BlockStateProvider.simple(Blocks.OAK_LEAVES), new FancyFoliagePlacer(ConstantInt.of(2), ConstantInt.of(4), 4), new TwoLayersFeatureSize(0, 0, 0, OptionalInt.of(4)), belowTrees).ignoreVines().decorators(List.of(new BeehiveDecorator(1.00F)))));
+        put("fancy_oak_bees", l -> simpleTree(new TreeFeature.Builder(BlockStateProvider.of(Blocks.OAK_LOG), new FancyTrunkPlacer(3, 11, 0), BlockStateProvider.of(Blocks.OAK_LEAVES), new FancyFoliagePlacer(ConstantInt.of(2), ConstantInt.of(4), 4), new TwoLayersFeatureSize(0, 0, 0, OptionalInt.of(4)), Holder.direct(belowTrees)).ignoreVines().decorators(List.of(new BeehiveDecorator(1.00F)))));
         put("birch_bees", l -> simpleTree(createTree(Blocks.BIRCH_LOG, Blocks.BIRCH_LEAVES, 5, 2, 0, 2).ignoreVines().decorators(List.of(new BeehiveDecorator(1.00F)))));
 
         put("coral_tree", l -> simplePlop(coral(l, 0)));
@@ -508,7 +507,7 @@ public class FeatureGenerator
         checks.set(true);
         try
         {
-            StructureStart start = structure.generate(Holder.direct(structure), world.dimension(), world.registryAccess(), generator, world.uncachedBiomeResolver(), world.getChunkSource().randomState(), world.getStructureManager(), world.getSeed(), ChunkPos.containing(pos), 0, world, b -> true);
+            StructureStart start = structure.generate(Holder.direct(structure), world.dimension(), world.registryAccess(), generator, generator.getBiomeSource(), world.getChunkSource().randomState().createClimateSampler(SamplerContext.EMPTY_UNCACHED), world.getChunkSource().randomState(), world.getStructureTemplateManager(), world.getSeed(), ChunkPos.containing(pos), 0, world, b -> true);
             if (start == StructureStart.INVALID_START)
             {
                 return false;

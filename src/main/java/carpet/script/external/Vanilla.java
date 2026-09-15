@@ -109,11 +109,6 @@ public class Vanilla
         return ((TicketsFetcherInterface) ticketManager).getTicketsByPosition();
     }
 
-    public static DensityFunction.Visitor RandomState_getVisitor(RandomState randomState)
-    {
-        return ((RandomStateVisitorAccessor) (Object) randomState).getVisitor();
-    }
-
     public static CompoundTag BlockInput_getTag(BlockInput blockInput)
     {
         return ((BlockStateArgumentInterface) blockInput).getCMTag();
