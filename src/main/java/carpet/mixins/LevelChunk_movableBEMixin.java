@@ -165,7 +165,7 @@ public abstract class LevelChunk_movableBEMixin extends ChunkAccess implements W
         if (oldBlockState.hasBlockEntity())
         {
             oldBlockEntity = this.getBlockEntity(blockPos_1, LevelChunk.EntityCreationType.CHECK);
-            if (oldBlockEntity != null && !oldBlockEntity.isValidBlockState(oldBlockState))
+            if (oldBlockEntity != null && oldBlockEntity.isValidBlockState(oldBlockState))
             {
                 oldBlockEntity.setBlockState(oldBlockState);
                 updateBlockEntityTicker(oldBlockEntity);
