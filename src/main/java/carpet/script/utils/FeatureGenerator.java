@@ -88,8 +88,7 @@ import org.jspecify.annotations.Nullable;
 
 public class FeatureGenerator
 {
-    @Nullable
-    public static synchronized Boolean plop(String featureName, ServerLevel world, BlockPos pos)
+    public static synchronized @Nullable Boolean plop(String featureName, ServerLevel world, BlockPos pos)
     {
         Function<ServerLevel, Thing> custom = featureMap.get(featureName);
         if (custom != null)
@@ -147,8 +146,7 @@ public class FeatureGenerator
         return null;
     }
 
-    @Nullable
-    public static Structure resolveConfiguredStructure(String name, ServerLevel world, BlockPos pos)
+    public static @Nullable Structure resolveConfiguredStructure(String name, ServerLevel world, BlockPos pos)
     {
         Identifier id = Identifier.parse(name);
         Structure configuredStructureFeature = world.registryAccess().lookupOrThrow(Registries.STRUCTURE).getValue(id);
@@ -365,8 +363,7 @@ public class FeatureGenerator
         );
     }
 
-
-
+    @SuppressWarnings("DoubleBraceInitialization")
     public static final Map<String, Function<ServerLevel, Thing>> featureMap = new HashMap<>()
     {{
 
@@ -551,7 +548,7 @@ public class FeatureGenerator
         }
         catch (Exception booboo)
         {
-            CarpetScriptServer.LOG.error("Unknown Exception while plopping structure: " + booboo, booboo);
+            CarpetScriptServer.LOG.error("Unknown Exception while plopping structure: {}", booboo, booboo);
             return false;
         }
         finally

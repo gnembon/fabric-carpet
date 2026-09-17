@@ -146,9 +146,8 @@ public interface Param
          */
         static final ValueConverter<Context> CONTEXT_PROVIDER = new ValueConverter<>()
         {
-            @Nullable
             @Override
-            public String getTypeName()
+            public @Nullable String getTypeName()
             {
                 return null;
             }
@@ -178,9 +177,8 @@ public interface Param
          */
         static final ValueConverter<Context.Type> CONTEXT_TYPE_PROVIDER = new ValueConverter<>()
         {
-            @Nullable
             @Override
-            public String getTypeName()
+            public @Nullable String getTypeName()
             {
                 return null;
             }

@@ -40,7 +40,7 @@ public record Module(String name, String code, boolean library)
      *
      * @param scriptName A {@link String} being the name of the script. The extension will be autocompleted
      * @param isLibrary  A {@link boolean} indicating whether or not the script is a library
-     * @return The created {@link BundledModule}
+     * @return The created BundledModule
      */
     public static Module carpetNative(String scriptName, boolean isLibrary)
     {
@@ -53,7 +53,7 @@ public record Module(String name, String code, boolean library)
      * @param path       A {@link String} being the path to the directory where the app is located.
      * @param scriptName A {@link String} being the name of the script. The extension will be autocompleted
      * @param isLibrary  A {@link boolean} indicating whether or not the script is a library
-     * @return The created {@link BundledModule}
+     * @return The created BundledModule
      * @see #fromJarPathWithCustomName(String, String, boolean)
      */
     public static Module fromJarPath(String path, String scriptName, boolean isLibrary)
@@ -90,7 +90,7 @@ public record Module(String name, String code, boolean library)
     public static Tag getData(Module module, ScriptServer scriptServer)
     {
         Path dataFile = resolveResource(module, scriptServer);
-        if (dataFile == null || !Files.exists(dataFile) || !(Files.isRegularFile(dataFile)))
+        if (dataFile == null || !Files.exists(dataFile) || !Files.isRegularFile(dataFile))
         {
             return null;
         }

@@ -11,8 +11,7 @@ import java.util.Map;
 public class Throwables
 {
     private final String id;
-    @Nullable
-    private final Throwables parent;
+    private final @Nullable Throwables parent;
 
     private static final Map<String, Throwables> byId = new HashMap<>();
 

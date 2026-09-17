@@ -17,7 +17,10 @@ import com.mojang.brigadier.CommandDispatcher;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.loader.api.ModContainer;
+import net.minecraft.commands.CommandResultCallback;
+import net.minecraft.commands.CommandSigningContext;
 import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.commands.arguments.EntityAnchorArgument;
 import net.minecraft.commands.arguments.blocks.BlockInput;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
@@ -31,6 +34,7 @@ import net.minecraft.server.level.ServerPlayerGameMode;
 import net.minecraft.server.level.Ticket;
 import net.minecraft.server.permissions.PermissionSet;
 import net.minecraft.tags.TagKey;
+import net.minecraft.util.TaskChainer;
 import net.minecraft.world.Container;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
@@ -64,6 +68,7 @@ import net.minecraft.world.scores.criteria.ObjectiveCriteria;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.OptionalLong;
 import java.util.function.BooleanSupplier;
 import java.util.function.Predicate;
 
@@ -138,6 +143,10 @@ public class Vanilla
     {
         return CarpetSettings.runPermissionLevel;
     }
+
+    public static void CommandSourceStack_setupPrivates(CommandSourceStack css, boolean bl, CommandResultCallback commandResultCallback, EntityAnchorArgument.Anchor anchor, CommandSigningContext commandSigningContext, TaskChainer taskChainer) {
+        ((CommandSourceStackInterface) css).setupPrivates(bl, commandResultCallback, anchor, commandSigningContext, taskChainer);
+    };
 
     public static int [] MinecraftServer_getReleaseTarget(MinecraftServer server)
     {

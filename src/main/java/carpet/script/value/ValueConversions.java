@@ -149,9 +149,9 @@ public class ValueConversions
 
     public static Level dimFromValue(Value dimensionValue, MinecraftServer server)
     {
-        if (dimensionValue instanceof EntityValue)
+        if (dimensionValue instanceof final EntityValue entityValue)
         {
-            return ((EntityValue) dimensionValue).getEntity().level();
+            return entityValue.getEntity().level();
         }
         else if (dimensionValue instanceof BlockValue bv)
         {
@@ -175,7 +175,7 @@ public class ValueConversions
                     ResourceKey<Level> dim = null;
                     Identifier id = Identifier.parse(dimString);
                     // not using RegistryKey.of since that one creates on check
-                    for (ResourceKey<Level> world : (server.levelKeys()))
+                    for (ResourceKey<Level> world : server.levelKeys())
                     {
                         if (id.equals(world.identifier()))
                         {
@@ -419,6 +419,7 @@ public class ValueConversions
         }
     }
 
+    @SuppressWarnings("DoubleBraceInitialization")
     private static final Int2ObjectMap<SlotParam> slotIdsToSlotParams = new Int2ObjectOpenHashMap<>()
     {{
         int n;

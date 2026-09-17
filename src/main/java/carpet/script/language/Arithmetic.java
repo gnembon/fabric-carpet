@@ -58,8 +58,8 @@ public class Arithmetic
         expression.addMathematicalUnaryFunction("cot", d -> 1.0 / Math.tan(Math.toRadians(d))); // Formula: cot(x) = cos(x) / sin(x) = 1 / tan(x)
         expression.addMathematicalUnaryFunction("acot", d -> Math.toDegrees(Math.atan(1.0 / d)));// Formula: acot(x) = atan(1/x)
         expression.addMathematicalUnaryFunction("coth", d -> 1.0 / Math.tanh(d));                // Formula: coth(x) = 1 / tanh(x)
-        expression.addMathematicalUnaryFunction("asinh", d -> Math.log(d + (Math.sqrt(Math.pow(d, 2) + 1))));  // Formula: asinh(x) = ln(x + sqrt(x^2 + 1))
-        expression.addMathematicalUnaryFunction("acosh", d -> Math.log(d + (Math.sqrt(Math.pow(d, 2) - 1))));  // Formula: acosh(x) = ln(x + sqrt(x^2 - 1))
+        expression.addMathematicalUnaryFunction("asinh", d -> Math.log(d + Math.sqrt(Math.pow(d, 2) + 1)));  // Formula: asinh(x) = ln(x + sqrt(x^2 + 1))
+        expression.addMathematicalUnaryFunction("acosh", d -> Math.log(d + Math.sqrt(Math.pow(d, 2) - 1)));  // Formula: acosh(x) = ln(x + sqrt(x^2 - 1))
         expression.addMathematicalUnaryFunction("atanh", d ->                                       // Formula: atanh(x) = 0.5*ln((1 + x)/(1 - x))
         {
             if (Math.abs(d) > 1 || Math.abs(d) == 1)

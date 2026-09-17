@@ -83,7 +83,7 @@ public class CarpetScriptServer extends ScriptServer
 
     /**
      * Registers a Scarpet App to be used as a Rule App (to be controlled with the value of a Carpet rule).
-     * Libraries should be registered with {@link #registerBuiltInScript(BundledModule)} instead
+     * Libraries should be registered with #registerBuiltInScript(BundledModule) instead
      *
      * @param app The {@link Module} of the app.
      * @see Module#fromJarPath(String, String, boolean)
@@ -330,7 +330,7 @@ public class CarpetScriptServer extends ScriptServer
         }
         token.run();
         long end = System.nanoTime();
-        LOG.info("App " + name + " loaded in " + (end - start) / 1000000 + " ms");
+        LOG.info("App {} loaded in {} ms", name, (end - start) / 1000000);
         return 1;
     }
 

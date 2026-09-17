@@ -50,8 +50,7 @@ public class GlocalFlag extends ThreadLocal<Boolean>
         return result;
     }
 
-    @Nullable
-    public <T> T runIfEnabled(Supplier<T> action)
+    public <T> @Nullable T runIfEnabled(Supplier<T> action)
     {
         synchronized (this)
         {

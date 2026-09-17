@@ -41,7 +41,7 @@ public class Threading
 
 
         expression.addContextFunction("task_count", -1, (c, t, lv) ->
-                (!lv.isEmpty()) ? new NumericValue(c.host.taskCount(lv.get(0))) : new NumericValue(c.host.taskCount()));
+                !lv.isEmpty() ? new NumericValue(c.host.taskCount(lv.get(0))) : new NumericValue(c.host.taskCount()));
 
         expression.addUnaryFunction("task_value", v ->
         {
@@ -174,7 +174,7 @@ public class Threading
                 throw new InternalExpressionException("'task_await' requires a coroutine task value");
             }
             Value ret = thread.next();
-            return ret == Value.EOL ? ((cc, tt) -> Value.NULL) : ((cc, tt) -> ret);
+            return ret == Value.EOL ? (cc, tt) -> Value.NULL : (cc, tt) -> ret;
         });
 
         expression.addLazyFunction("task_ready", 1, (c, t, lv) ->

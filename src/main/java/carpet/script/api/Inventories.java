@@ -365,7 +365,7 @@ public class Inventories
                 amount = (int) NumericValue.asNumber(lv.get(inventoryLocator.offset() + 1)).getLong();
             }
             // not enough
-            if (((amount == 1) && (!inventoryLocator.inventory().hasAnyOf(Set.of(searchItem.getItem()))))
+            if (((amount == 1) && !inventoryLocator.inventory().hasAnyOf(Set.of(searchItem.getItem())))
                     || (inventoryLocator.inventory().countItem(searchItem.getItem()) < amount))
             {
                 return Value.FALSE;

@@ -30,7 +30,7 @@ public class PersistentEntitySectionManager_scarpetMixin
         }
         else
         {
-            CarpetScriptServer.LOG.error("Failed to handle entity type " + entity.getType().getDescriptionId());
+            CarpetScriptServer.LOG.error("Failed to handle entity type {}", entity.getType().getDescriptionId());
         }
 
         event = CarpetEventServer.Event.ENTITY_LOAD.get(entity.getType());
@@ -43,7 +43,7 @@ public class PersistentEntitySectionManager_scarpetMixin
         }
         else
         {
-            CarpetScriptServer.LOG.error("Failed to handle entity type " + entity.getType().getDescriptionId());
+            CarpetScriptServer.LOG.error("Failed to handle entity type {}", entity.getType().getDescriptionId());
         }
 
     }

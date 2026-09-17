@@ -71,8 +71,7 @@ public class Expression
     private boolean allowNewlineSubstitutions = true;
     private boolean allowComments = false;
 
-    @Nullable
-    public Module module = null;
+    public @Nullable Module module = null;
 
     public String getModuleName()
     {
@@ -93,11 +92,9 @@ public class Expression
     /**
      * Cached AST (Abstract Syntax Tree) (root) of the expression
      */
-    @Nullable
-    private LazyValue ast = null;
+    private @Nullable LazyValue ast = null;
 
-    @Nullable
-    private ExpressionNode root = null;
+    private @Nullable ExpressionNode root = null;
 
     /**
      * script specific operatos and built-in functions
@@ -1102,118 +1099,94 @@ public class Expression
         Token previousToken = null;
         for (Token token : tokens)
         {
-            switch (token.type)
-            {
-                case STRINGPARAM:
-                    //stack.push(token); // changed that so strings are treated like literals
-                    //break;
-                case LITERAL, HEX_LITERAL:
+            switch (token.type) {
+                case STRINGPARAM,
+                     //stack.push(token); // changed that so strings are treated like literals
+                     //break;
+                     LITERAL, HEX_LITERAL -> {
                     if (previousToken != null && (
                             previousToken.type == Token.TokenType.LITERAL ||
                                     previousToken.type == Token.TokenType.HEX_LITERAL ||
-                                    previousToken.type == Token.TokenType.STRINGPARAM))
-                    {
+                                    previousToken.type == Token.TokenType.STRINGPARAM)) {
                         throw new ExpressionException(c, this, token, "Missing operator");
                     }
                     outputQueue.add(token);
-                    break;
-                case VARIABLE:
-                    outputQueue.add(token);
-                    break;
-                case FUNCTION:
+                }
+                case VARIABLE -> outputQueue.add(token);
+                case FUNCTION -> {
                     stack.push(token);
                     lastFunction = token;
-                    break;
-                case COMMA:
-                    if (previousToken != null && previousToken.type == Token.TokenType.OPERATOR)
-                    {
+                }
+                case COMMA -> {
+                    if (previousToken != null && previousToken.type == Token.TokenType.OPERATOR) {
                         throw new ExpressionException(c, this, previousToken, "Missing parameter(s) for operator ");
                     }
-                    while (!stack.isEmpty() && stack.top().type != Token.TokenType.OPEN_PAREN)
-                    {
+                    while (!stack.isEmpty() && stack.top().type != Token.TokenType.OPEN_PAREN) {
                         outputQueue.add(stack.pop());
                     }
-                    if (stack.isEmpty())
-                    {
-                        if (lastFunction == null)
-                        {
+                    if (stack.isEmpty()) {
+                        if (lastFunction == null) {
                             throw new ExpressionException(c, this, token, "Unexpected comma");
-                        }
-                        else
-                        {
+                        } else {
                             throw new ExpressionException(c, this, lastFunction, "Parse error for function");
                         }
                     }
-                    break;
-                case OPERATOR:
-                {
+                }
+                case OPERATOR -> {
                     if (previousToken != null
-                            && (previousToken.type == Token.TokenType.COMMA || previousToken.type == Token.TokenType.OPEN_PAREN))
-                    {
+                            && (previousToken.type == Token.TokenType.COMMA || previousToken.type == Token.TokenType.OPEN_PAREN)) {
                         throw new ExpressionException(c, this, token, "Missing parameter(s) for operator '" + token + "'");
                     }
                     ILazyOperator o1 = operators.get(token.surface);
-                    if (o1 == null)
-                    {
+                    if (o1 == null) {
                         throw new ExpressionException(c, this, token, "Unknown operator '" + token + "'");
                     }
 
                     shuntOperators(outputQueue, stack, o1);
                     stack.push(token);
-                    break;
                 }
-                case UNARY_OPERATOR:
-                {
+                case UNARY_OPERATOR -> {
                     if (previousToken != null && previousToken.type != Token.TokenType.OPERATOR
-                            && previousToken.type != Token.TokenType.COMMA && previousToken.type != Token.TokenType.OPEN_PAREN)
-                    {
+                            && previousToken.type != Token.TokenType.COMMA && previousToken.type != Token.TokenType.OPEN_PAREN) {
                         throw new ExpressionException(c, this, token, "Invalid position for unary operator " + token);
                     }
                     ILazyOperator o1 = operators.get(token.surface);
-                    if (o1 == null)
-                    {
+                    if (o1 == null) {
                         throw new ExpressionException(c, this, token, "Unknown unary operator '" + token.surface.substring(0, token.surface.length() - 1) + "'");
                     }
 
                     shuntOperators(outputQueue, stack, o1);
                     stack.push(token);
-                    break;
                 }
-                case OPEN_PAREN:
+                case OPEN_PAREN -> {
                     // removed implicit multiplication in this missing code block
-                    if (previousToken != null && previousToken.type == Token.TokenType.FUNCTION)
-                    {
+                    if (previousToken != null && previousToken.type == Token.TokenType.FUNCTION) {
                         outputQueue.add(token);
                     }
                     stack.push(token);
-                    break;
-                case CLOSE_PAREN:
-                    if (previousToken != null && previousToken.type == Token.TokenType.OPERATOR)
-                    {
+                }
+                case CLOSE_PAREN -> {
+                    if (previousToken != null && previousToken.type == Token.TokenType.OPERATOR) {
                         throw new ExpressionException(c, this, previousToken, "Missing parameter(s) for operator " + previousToken);
                     }
-                    while (!stack.isEmpty() && stack.top().type != Token.TokenType.OPEN_PAREN)
-                    {
+                    while (!stack.isEmpty() && stack.top().type != Token.TokenType.OPEN_PAREN) {
                         outputQueue.add(stack.pop());
                     }
-                    if (stack.isEmpty())
-                    {
+                    if (stack.isEmpty()) {
                         throw new ExpressionException(c, this, "Mismatched parentheses");
                     }
                     stack.pop();
-                    if (!stack.isEmpty() && stack.top().type == Token.TokenType.FUNCTION)
-                    {
+                    if (!stack.isEmpty() && stack.top().type == Token.TokenType.FUNCTION) {
                         outputQueue.add(stack.pop());
                     }
-                    break;
-                case MARKER:
-                    if ("$".equals(token.surface))
-                    {
+                }
+                case MARKER -> {
+                    if ("$".equals(token.surface)) {
                         StringBuilder sb = new StringBuilder(expression);
                         sb.setCharAt(token.pos, '\n');
                         expression = sb.toString();
                     }
-                    break;
+                }
             }
             if (token.type != Token.TokenType.MARKER)
             {
@@ -1437,7 +1410,7 @@ public class Expression
                     }
                     else
                     {
-                        ExpressionNode newNode = new ExpressionNode(((c, t) -> getOrSetAnyVariable(c, token.surface).evalValue(c, t)), Collections.emptyList(), token);
+                        ExpressionNode newNode = new ExpressionNode((c, t) -> getOrSetAnyVariable(c, token.surface).evalValue(c, t), Collections.emptyList(), token);
                         token.node = newNode;
                         nodeStack.push(newNode);
                     }
@@ -1767,7 +1740,7 @@ public class Expression
                 boolean leftOptimizable = operators.get(operator).isLeftAssoc();
                 ExpressionNode optimizedChild = node.args.get(leftOptimizable ? 0 : (node.args.size() - 1));
                 String type = optimizedChild.token.surface;
-                if ((type.equals(operator) || type.equals(function)) && (!(optimizedChild.op instanceof LazyValue.ContextFreeLazyValue)))
+                if ((type.equals(operator) || type.equals(function)) && !(optimizedChild.op instanceof LazyValue.ContextFreeLazyValue))
                 {
                     List<ExpressionNode> newargs = new ArrayList<>();
                     if (leftOptimizable)
@@ -1883,9 +1856,9 @@ public class Expression
         // applying argument unpacking
         args = AbstractLazyFunction.lazify(AbstractLazyFunction.unpackLazy(args, ctx, requestedType));
         Value result;
-        if (operation instanceof ILazyFunction)
+        if (operation instanceof final ILazyFunction iLazyFunction)
         {
-            result = ((ILazyFunction) operation).lazyEval(ctx, expectedType, this, node.token, args).evalValue(null, expectedType);
+            result = iLazyFunction.lazyEval(ctx, expectedType, this, node.token, args).evalValue(null, expectedType);
         }
         else if (args.size() == 1)
         {
@@ -1922,38 +1895,31 @@ public class Expression
             return (c, t) -> ret;
         }
         Token token = node.token;
-        switch (token.type)
-        {
-            case UNARY_OPERATOR:
-            {
+        return switch (token.type) {
+            case UNARY_OPERATOR -> {
                 ILazyOperator op = operators.get(token.surface);
                 Context.Type requestedType = op.staticType(expectedType);
                 LazyValue arg = extractOp(ctx, node.args.get(0), requestedType);
-                return (c, t) -> op.lazyEval(c, t, this, token, arg, null).evalValue(c, t);
+                yield (c, t) -> op.lazyEval(c, t, this, token, arg, null).evalValue(c, t);
             }
-            case OPERATOR:
-            {
+            case OPERATOR -> {
                 ILazyOperator op = operators.get(token.surface);
                 Context.Type requestedType = op.staticType(expectedType);
                 LazyValue arg = extractOp(ctx, node.args.get(0), requestedType);
                 LazyValue arh = extractOp(ctx, node.args.get(1), requestedType);
-                return (c, t) -> op.lazyEval(c, t, this, token, arg, arh).evalValue(c, t);
+                yield (c, t) -> op.lazyEval(c, t, this, token, arg, arh).evalValue(c, t);
             }
-            case VARIABLE:
-                return (c, t) -> getOrSetAnyVariable(c, token.surface).evalValue(c, t);
-            case FUNCTION:
-            {
+            case VARIABLE -> (c, t) -> getOrSetAnyVariable(c, token.surface).evalValue(c, t);
+            case FUNCTION -> {
                 ILazyFunction f = functions.get(token.surface);
                 Context.Type requestedType = f.staticType(expectedType);
                 List<LazyValue> params = node.args.stream().map(n -> extractOp(ctx, n, requestedType)).collect(Collectors.toList());
-                return (c, t) -> f.lazyEval(c, t, this, token, params).evalValue(c, t);
+                yield (c, t) -> f.lazyEval(c, t, this, token, params).evalValue(c, t);
             }
-            case CONSTANT:
-                return node.op;
-            default:
-                throw new ExpressionException(ctx, this, node.token, "Unexpected token '" + node.token.type + " " + node.token.surface + "'");
-
-        }
+            case CONSTANT -> node.op;
+            default ->
+                    throw new ExpressionException(ctx, this, node.token, "Unexpected token '" + node.token.type + " " + node.token.surface + "'");
+        };
     }
 
     private void validate(Context c, List<Token> rpn)
@@ -1973,27 +1939,23 @@ public class Expression
 
         for (Token token : rpn)
         {
-            switch (token.type)
-            {
-                case UNARY_OPERATOR:
-                    if (stack.topInt() < 1)
-                    {
+            switch (token.type) {
+                case UNARY_OPERATOR -> {
+                    if (stack.topInt() < 1) {
                         throw new ExpressionException(c, this, token, "Missing parameter(s) for operator " + token);
                     }
-                    break;
-                case OPERATOR:
-                    if (stack.topInt() < 2)
-                    {
-                        if (token.surface.equals(";"))
-                        {
+                }
+                case OPERATOR -> {
+                    if (stack.topInt() < 2) {
+                        if (token.surface.equals(";")) {
                             throw new ExpressionException(c, this, token, "Empty expression found for ';'");
                         }
                         throw new ExpressionException(c, this, token, "Missing parameter(s) for operator " + token);
                     }
                     // pop the operator's 2 parameters and add the result
                     stack.set(stack.size() - 1, stack.topInt() - 2 + 1);
-                    break;
-                case FUNCTION:
+                }
+                case FUNCTION -> {
                     //ILazyFunction f = functions.get(token.surface);// don't validate global - userdef functions
                     //int numParams = stack.pop();
                     //if (f != null && !f.numParamsVaries() && numParams != f.getNumParams())
@@ -2004,18 +1966,14 @@ public class Expression
                     // due to unpacking, all functions can have variable number of arguments
                     // we will be checking that at runtime.
                     // TODO try analyze arguments and assess if its possible that they are static
-                    if (stack.size() <= 0)
-                    {
+                    if (stack.size() <= 0) {
                         throw new ExpressionException(c, this, token, "Too many function calls, maximum scope exceeded");
                     }
                     // push the result of the function
                     stack.set(stack.size() - 1, stack.topInt() + 1);
-                    break;
-                case OPEN_PAREN:
-                    stack.push(0);
-                    break;
-                default:
-                    stack.set(stack.size() - 1, stack.topInt() + 1);
+                }
+                case OPEN_PAREN -> stack.push(0);
+                default -> stack.set(stack.size() - 1, stack.topInt() + 1);
             }
         }
 

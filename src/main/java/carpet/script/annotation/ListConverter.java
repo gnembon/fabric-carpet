@@ -34,15 +34,13 @@ final class ListConverter<T> implements ValueConverter<List<T>>
         return (allowSingletonCreation ? itemConverter.getTypeName() + " or " : "") + "list of " + itemConverter.getTypeName() + "s";
     }
 
-    @Nullable
     @Override
-    public List<T> convert(Value value, @Nullable Context context)
+    public @Nullable List<T> convert(Value value, @Nullable Context context)
     {
-        return value instanceof ListValue ? convertListValue((ListValue) value, context) : allowSingletonCreation ? convertSingleton(value, context) : null;
+        return value instanceof final ListValue listValue ? convertListValue(listValue, context) : allowSingletonCreation ? convertSingleton(value, context) : null;
     }
 
-    @Nullable
-    private List<T> convertListValue(ListValue values, @Nullable Context context)
+    private @Nullable List<T> convertListValue(ListValue values, @Nullable Context context)
     {
         List<T> list = new ArrayList<>(values.getItems().size());
         for (Value value : values)
@@ -57,8 +55,7 @@ final class ListConverter<T> implements ValueConverter<List<T>>
         return list;
     }
 
-    @Nullable
-    private List<T> convertSingleton(Value val, @Nullable Context context)
+    private @Nullable List<T> convertSingleton(Value val, @Nullable Context context)
     {
         T converted = itemConverter.convert(val, context);
         if (converted == null)

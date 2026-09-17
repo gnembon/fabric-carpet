@@ -257,10 +257,10 @@ public class Messenger
         MutableComponent previousComponent = null;
         for (Object o: fields)
         {
-            if (o instanceof MutableComponent)
+            if (o instanceof final MutableComponent mutableComponent)
             {
-                message.append((MutableComponent)o);
-                previousComponent = (MutableComponent)o;
+                message.append(mutableComponent);
+                previousComponent = mutableComponent;
                 continue;
             }
             String txt = o.toString();
@@ -300,7 +300,7 @@ public class Messenger
     public static void print_server_message(MinecraftServer server, String message)
     {
         if (server == null)
-            LOG.error("Message not delivered: "+message);
+            LOG.error("Message not delivered: {}", message);
         server.sendSystemMessage(Component.literal(message));
         Component txt = c("gi "+message);
         for (ServerPlayer entityplayer : server.getPlayerList().getPlayers())
@@ -311,7 +311,7 @@ public class Messenger
     public static void print_server_message(MinecraftServer server, Component message)
     {
         if (server == null)
-            LOG.error("Message not delivered: "+message.getString());
+            LOG.error("Message not delivered: {}", message.getString());
         server.sendSystemMessage(message);
         for (ServerPlayer entityplayer : server.getPlayerList().getPlayers())
         {

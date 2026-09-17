@@ -14,6 +14,7 @@ import carpet.script.value.ListValue;
 import carpet.script.value.MapValue;
 import carpet.script.value.NumericValue;
 import carpet.script.value.Value;
+import com.google.common.collect.ImmutableMap;
 
 import java.util.Comparator;
 import java.util.HashMap;
@@ -23,21 +24,19 @@ import java.util.Map;
 
 public class Operators
 {
-    public static final Map<String, Integer> precedence = new HashMap<>()
-    {{
-        put("attribute~:", 80);
-        put("unary+-!...", 60);
-        put("exponent^", 40);
-        put("multiplication*/%", 30);
-        put("addition+-", 20);
-        put("compare>=><=<", 10);
-        put("equal==!=", 7);
-        put("and&&", 5);
-        put("or||", 4);
-        put("assign=<>", 3);
-        put("def->", 2);
-        put("nextop;", 1);
-    }};
+    public static final Map<String, Integer> precedence = ImmutableMap.<String, Integer>builder()
+            .put("attribute~:", 80)
+            .put("unary+-!...", 60)
+            .put("exponent^", 40)
+            .put("multiplication*/%", 30)
+            .put("addition+-", 20)
+            .put("compare>=><=<", 10)
+            .put("equal==!=", 7)
+            .put("and&&", 5)
+            .put("or||", 4)
+            .put("assign=<>", 3)
+            .put("def->", 2)
+            .put("nextop;", 1).build();
 
     public static void apply(Expression expression)
     {
@@ -149,7 +148,7 @@ public class Operators
         expression.addLazyBinaryOperator("&&", "and", precedence.get("and&&"), false, true, t -> Context.Type.BOOLEAN, (c, t, lv1, lv2) ->
         { // todo check how is optimizations going
             Value v1 = lv1.evalValue(c, Context.BOOLEAN);
-            return v1.getBoolean() ? lv2 : ((cc, tt) -> v1);
+            return v1.getBoolean() ? lv2 : (cc, tt) -> v1;
         }, (c, t, lv) -> {
             int last = lv.size() - 1;
             if (last == -1)
@@ -184,7 +183,7 @@ public class Operators
         expression.addLazyBinaryOperator("||", "or", precedence.get("or||"), false, true, t -> Context.Type.BOOLEAN, (c, t, lv1, lv2) ->
         {
             Value v1 = lv1.evalValue(c, Context.BOOLEAN);
-            return v1.getBoolean() ? ((cc, tt) -> v1) : lv2;
+            return v1.getBoolean() ? (cc, tt) -> v1 : lv2;
         }, (c, t, lv) -> {
             int last = lv.size() - 1;
             if (last == -1)
@@ -379,7 +378,7 @@ public class Operators
                     return (cc, tt) -> Value.NULL;
                 }
                 Value address = lcv.address();
-                if (!(container.put(address, v2)))
+                if (!container.put(address, v2))
                 {
                     return (cc, tt) -> Value.NULL;
                 }

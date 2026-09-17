@@ -80,10 +80,9 @@ public final class ValueCaster<R> implements ValueConverter<R> // R always exten
         return (ValueCaster<R>) byResult.get(outputType);
     }
 
-    @Nullable
     @Override
     @SuppressWarnings("unchecked") // more than checked, see SimpleTypeConverter#converter for reasoning
-    public R convert(Value value, @Nullable Context context)
+    public @Nullable R convert(Value value, @Nullable Context context)
     {
         if (!outputType.isInstance(value))
         {

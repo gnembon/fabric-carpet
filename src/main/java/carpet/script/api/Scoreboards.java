@@ -170,7 +170,7 @@ public class Scoreboards
                 }
                 Vanilla.Scoreboard_getObjectivesByCriterion(scoreboard).get(objective.getCriteria()).remove(objective);
                 Vanilla.Objective_setCriterion(objective, criterion);
-                (Vanilla.Scoreboard_getObjectivesByCriterion(scoreboard).computeIfAbsent(criterion, cr -> Lists.newArrayList())).add(objective);
+                Vanilla.Scoreboard_getObjectivesByCriterion(scoreboard).computeIfAbsent(criterion, cr -> Lists.newArrayList()).add(objective);
                 scoreboard.onObjectiveAdded(objective);
                 return Value.FALSE;
             }
@@ -215,7 +215,7 @@ public class Scoreboards
                         }
                         Vanilla.Scoreboard_getObjectivesByCriterion(scoreboard).get(objective.getCriteria()).remove(objective);
                         Vanilla.Objective_setCriterion(objective, criterion);
-                        (Vanilla.Scoreboard_getObjectivesByCriterion(scoreboard).computeIfAbsent(criterion, cr -> Lists.newArrayList())).add(objective);
+                        Vanilla.Scoreboard_getObjectivesByCriterion(scoreboard).computeIfAbsent(criterion, cr -> Lists.newArrayList()).add(objective);
                         scoreboard.onObjectiveAdded(objective);
                         return Value.TRUE;
                     }
@@ -585,7 +585,7 @@ public class Scoreboards
                 case "color" -> {
                     if (propertyValue == null)
                     {
-                        BossEvent.BossBarColor color = (bossBar).getColor();
+                        BossEvent.BossBarColor color = bossBar.getColor();
                         return color == null ? Value.NULL : StringValue.of(color.getName());
                     }
                     BossEvent.BossBarColor color = ((StringRepresentable.EnumCodec<BossEvent.BossBarColor>)BossEvent.BossBarColor.CODEC).byName(propertyValue.getString());

@@ -202,8 +202,7 @@ public class FileArgument
         return host.resolveScriptFile(suffix);
     }
 
-    @Nullable
-    private Path toPath(@Nullable Module module)
+    private @Nullable Path toPath(@Nullable Module module)
     {
         if (!isShared && module == null)
         {
@@ -245,8 +244,7 @@ public class FileArgument
         }
     }
 
-    @Nullable
-    private Path moduleRootPath(@Nullable Module module)
+    private @Nullable Path moduleRootPath(@Nullable Module module)
     {
         return !isShared && module == null
                 ? null
@@ -294,8 +292,7 @@ public class FileArgument
         return true;
     }
 
-    @Nullable
-    public Stream<Path> listFiles(Module module)
+    public @Nullable Stream<Path> listFiles(Module module)
     {
         Path dir = toPath(module);
         if (dir == null || !Files.exists(dir))
@@ -316,8 +313,7 @@ public class FileArgument
         }
     }
 
-    @Nullable
-    public Stream<String> listFolder(Module module)
+    public @Nullable Stream<String> listFolder(Module module)
     {
         Stream<String> strings;
         try (Stream<Path> result = listFiles(module))
@@ -407,8 +403,7 @@ public class FileArgument
         return true;
     }
 
-    @Nullable
-    public Tag getNbtData(Module module) // aka getData
+    public @Nullable Tag getNbtData(Module module) // aka getData
     {
         try
         {
@@ -430,8 +425,7 @@ public class FileArgument
 
     //copied private method from net.minecraft.nbt.NbtIo.read()
     // to read non-compound tags - these won't be compressed
-    @Nullable
-    public static Tag readTag(Path path)
+    public static @Nullable Tag readTag(Path path)
     {
         try
         {
@@ -567,8 +561,7 @@ public class FileArgument
         }
     }
 
-    @Nullable
-    public List<String> listFile(Module module)
+    public @Nullable List<String> listFile(Module module)
     {
         try
         {
@@ -615,8 +608,7 @@ public class FileArgument
         }
     }
 
-    @Nullable
-    public JsonElement readJsonFile(Module module)
+    public @Nullable JsonElement readJsonFile(Module module)
     {
         try
         {

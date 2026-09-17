@@ -69,10 +69,10 @@ public abstract class ServerLevel_scarpetMixin extends Level
     }
 
     @Inject(method = "explode", at = @At("HEAD"), cancellable = true)
-    private void handleExplosion(Entity entity, DamageSource damageSource, ExplosionDamageCalculator explosionDamageCalculator, double x, double y, double z, float g, boolean bl, ExplosionInteraction explosionInteraction, ParticleOptions particleOptions, ParticleOptions particleOptions2, WeightedList<ExplosionParticleInfo> weightedList, Holder<SoundEvent> holder, CallbackInfo ci)
+    private void handleExplosion(Entity source, DamageSource damageSource, ExplosionDamageCalculator damageCalculator, double x, double y, double z, float r, boolean fire, ExplosionInteraction interactionType, ParticleOptions smallExplosionParticles, ParticleOptions largeExplosionParticles, WeightedList<ExplosionParticleInfo> blockParticles, Holder<SoundEvent> explosionSound, CallbackInfo ci)
     {
         if (EXPLOSION.isNeeded()) {
-            Explosion.BlockInteraction var10000 = switch (explosionInteraction) {
+            Explosion.BlockInteraction var10000 = switch (interactionType) {
                 case NONE -> Explosion.BlockInteraction.KEEP;
                 case BLOCK -> this.getCMDestroyType(GameRules.BLOCK_EXPLOSION_DROP_DECAY);
                 case MOB -> this.getGameRules().get(GameRules.MOB_GRIEFING) ? this.getCMDestroyType(GameRules.MOB_EXPLOSION_DROP_DECAY) : Explosion.BlockInteraction.KEEP;
@@ -80,7 +80,7 @@ public abstract class ServerLevel_scarpetMixin extends Level
                 case TRIGGER -> Explosion.BlockInteraction.TRIGGER_BLOCK;
             };
 
-            boolean cancelled = EXPLOSION.onExplosion((ServerLevel) (Object) this, entity, null, new Vec3(x, y, z), g, bl, null, null, var10000);
+            boolean cancelled = EXPLOSION.onExplosion((ServerLevel) (Object) this, source, null, new Vec3(x, y, z), r, fire, null, null, var10000);
             if (cancelled) ci.cancel();
         }
     }

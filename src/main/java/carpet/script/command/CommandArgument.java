@@ -321,8 +321,7 @@ public abstract class CommandArgument
     }
 
     protected String suffix;
-    @Nullable
-    protected Collection<String> examples;
+    protected @Nullable Collection<String> examples;
     protected boolean needsMatching;
     protected boolean caseSensitive = true;
     protected Function<String, SuggestionProvider<CommandSourceStack>> suggestionProvider;
@@ -385,11 +384,11 @@ public abstract class CommandArgument
                 throw error("Attempted to provide 'suggest' list while 'suggester' is present" + " for custom type " + suffix);
             }
             Value suggestionValue = config.get("suggest");
-            if (!(suggestionValue instanceof ListValue))
+            if (!(suggestionValue instanceof final ListValue listValue))
             {
                 throw error("Argument suggestions needs to be a list" + " for custom type " + suffix);
             }
-            examples = ((ListValue) suggestionValue).getItems().stream()
+            examples = listValue.getItems().stream()
                     .map(Value::getString)
                     .collect(Collectors.toSet());
             if (!examples.isEmpty())
@@ -437,11 +436,11 @@ public abstract class CommandArgument
             args.add(MapValue.wrap(params));
             args.addAll(customSuggester.args);
             Value response = host.handleCommand(context.getSource(), customSuggester.function, args);
-            if (!(response instanceof ListValue))
+            if (!(response instanceof final ListValue listValue))
             {
                 throw error("Custom suggester should return a list of options" + " for custom type " + suffix);
             }
-            Collection<String> res = ((ListValue) response).getItems().stream().map(Value::getString).collect(Collectors.toList());
+            Collection<String> res = listValue.getItems().stream().map(Value::getString).collect(Collectors.toList());
             currentSection.run();
             return res;
         }
@@ -504,12 +503,12 @@ public abstract class CommandArgument
             if (config.containsKey("options"))
             {
                 Value optionsValue = config.get("options");
-                if (!(optionsValue instanceof ListValue))
+                if (!(optionsValue instanceof final ListValue listValue))
                 {
                     throw error("Custom string type requires options passed as a list" + " for custom type " + suffix);
                 }
-                validOptions = ((ListValue) optionsValue).getItems().stream()
-                        .map(v -> caseSensitive ? v.getString() : (v.getString().toLowerCase(Locale.ROOT)))
+                validOptions = listValue.getItems().stream()
+                        .map(v -> caseSensitive ? v.getString() : v.getString().toLowerCase(Locale.ROOT))
                         .collect(Collectors.toSet());
             }
         }
@@ -879,11 +878,11 @@ public abstract class CommandArgument
             if (config.containsKey("options"))
             {
                 Value optionsValue = config.get("options");
-                if (!(optionsValue instanceof ListValue))
+                if (!(optionsValue instanceof final ListValue listValue))
                 {
                     throw error("Custom sting type requires options passed as a list" + " for custom type " + suffix);
                 }
-                validOptions = ((ListValue) optionsValue).getItems().stream().map(v -> Identifier.parse(v.getString())).collect(Collectors.toSet());
+                validOptions = listValue.getItems().stream().map(v -> Identifier.parse(v.getString())).collect(Collectors.toSet());
             }
         }
     }
@@ -1005,6 +1004,7 @@ public abstract class CommandArgument
         }
 
         private String restrict;
+        @SuppressWarnings("DoubleBraceInitialization")
         private static final Map<String, ContainerIds> RESTRICTED_CONTAINERS = new HashMap<>()
         {{
             int i;
@@ -1293,8 +1293,8 @@ public abstract class CommandArgument
         protected Supplier<CommandArgument> factory(MinecraftServer server)
         {
             return argumentTypeSupplier != null
-                    ? (() -> new VanillaUnconfigurableArgument(getTypeSuffix(), argumentTypeSupplier, valueExtractor, providesExamples))
-                    : (() -> new VanillaUnconfigurableArgument(getTypeSuffix(), argumentTypeSupplierEx, valueExtractor, providesExamples, server));
+                    ? () -> new VanillaUnconfigurableArgument(getTypeSuffix(), argumentTypeSupplier, valueExtractor, providesExamples)
+                    : () -> new VanillaUnconfigurableArgument(getTypeSuffix(), argumentTypeSupplierEx, valueExtractor, providesExamples, server);
         }
     }
 }

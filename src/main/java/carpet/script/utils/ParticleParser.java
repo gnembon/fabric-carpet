@@ -26,8 +26,7 @@ public class ParticleParser
         }
     }
 
-    @Nullable
-    public static ParticleOptions getEffect(@Nullable String name, RegistryAccess lookup)
+    public static @Nullable ParticleOptions getEffect(@Nullable String name, RegistryAccess lookup)
     {
         if (name == null)
         {

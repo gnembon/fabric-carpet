@@ -21,6 +21,7 @@ import carpet.script.value.StringValue;
 import carpet.script.value.Value;
 import carpet.script.value.ValueConversions;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Sets;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -236,8 +237,7 @@ public class ShapeDispatcher
     }
 
     // client
-    @Nullable
-    public static ExpiringShape fromTag(CompoundTag tag, Level level)
+    public static @Nullable ExpiringShape fromTag(CompoundTag tag, Level level)
     {
         Map<String, Value> options = new HashMap<>();
         for (String key : tag.keySet())
@@ -245,7 +245,7 @@ public class ShapeDispatcher
             Param decoder = Param.of.get(key);
             if (decoder == null)
             {
-                CarpetScriptServer.LOG.info("Unknown parameter for shape: " + key);
+                CarpetScriptServer.LOG.info("Unknown parameter for shape: {}", key);
                 return null;
             }
             Value decodedValue = decoder.decode(tag.get(key), level);
@@ -254,13 +254,13 @@ public class ShapeDispatcher
         Value shapeValue = options.get("shape");
         if (shapeValue == null)
         {
-            CarpetScriptServer.LOG.info("Shape id missing in " + String.join(", ", tag.keySet()));
+            CarpetScriptServer.LOG.info("Shape id missing in {}", String.join(", ", tag.keySet()));
             return null;
         }
         BiFunction<Map<String, Value>, RegistryAccess, ExpiringShape> factory = ExpiringShape.shapeProviders.get(shapeValue.getString());
         if (factory == null)
         {
-            CarpetScriptServer.LOG.info("Unknown shape: " + shapeValue.getString());
+            CarpetScriptServer.LOG.info("Unknown shape: {}", shapeValue.getString());
             return null;
         }
         try
@@ -269,24 +269,23 @@ public class ShapeDispatcher
         }
         catch (InternalExpressionException exc)
         {
-            CarpetScriptServer.LOG.info(exc.getMessage());
+            CarpetScriptServer.LOG.info("", exc);
         }
         return null;
     }
 
     public abstract static class ExpiringShape
     {
-        public static final Map<String, BiFunction<Map<String, Value>, RegistryAccess, ExpiringShape>> shapeProviders = new HashMap<>()
-        {{
-            put("line", creator(Line::new));
-            put("box", creator(Box::new));
-            put("sphere", creator(Sphere::new));
-            put("cylinder", creator(Cylinder::new));
-            put("label", creator(DisplayedText::new));
-            put("polygon", creator(Polyface::new));
-            put("block", creator(() -> new DisplayedSprite(false)));
-            put("item", creator(() -> new DisplayedSprite(true)));
-        }};
+        public static final ImmutableMap<String, BiFunction<Map<String, Value>, RegistryAccess, ExpiringShape>> shapeProviders = ImmutableMap.<String, BiFunction<Map<String, Value>, RegistryAccess, ExpiringShape>>builder().
+                put("line", creator(Line::new)).
+                put("box", creator(Box::new)).
+                put("sphere", creator(Sphere::new)).
+                put("cylinder", creator(Cylinder::new)).
+                put("label", creator(DisplayedText::new)).
+                put("polygon", creator(Polyface::new)).
+                put("block", creator(() -> new DisplayedSprite(false))).
+                put("item", creator(() -> new DisplayedSprite(true))).
+                build();
 
         private static BiFunction<Map<String, Value>, RegistryAccess, ExpiringShape> creator(Supplier<ExpiringShape> shapeFactory)
         {
@@ -978,78 +977,65 @@ public class ShapeDispatcher
                 return alterPoint;
             }
             alterPoint = new ArrayList<>();
-            switch (mode)
-            {
-                case 4:
-                    for (int i = 0; i < vertexList.size(); i++)
-                    {
+            switch (mode) {
+                case 4 -> {
+                    for (int i = 0; i < vertexList.size(); i++) {
                         Vec3 vecA = vertexList.get(i);
-                        if (relative.get(i))
-                        {
+                        if (relative.get(i)) {
                             vecA = relativiseRender(p.level(), vecA, 0);
                         }
                         i++;
                         Vec3 vecB = vertexList.get(i);
-                        if (relative.get(i))
-                        {
+                        if (relative.get(i)) {
                             vecB = relativiseRender(p.level(), vecB, 0);
                         }
                         i++;
                         Vec3 vecC = vertexList.get(i);
-                        if (relative.get(i))
-                        {
+                        if (relative.get(i)) {
                             vecC = relativiseRender(p.level(), vecC, 0);
                         }
                         alterDrawTriangles(vecA, vecB, vecC);
                     }
-                    break;
-                case 6:
+                }
+                case 6 -> {
                     Vec3 vec0 = vertexList.get(0);
-                    if (relative.get(0))
-                    {
+                    if (relative.get(0)) {
                         vec0 = relativiseRender(p.level(), vec0, 0);
                     }
                     Vec3 vec1 = vertexList.get(1);
-                    if (relative.get(1))
-                    {
+                    if (relative.get(1)) {
                         vec1 = relativiseRender(p.level(), vec1, 0);
                     }
-                    for (int i = 2; i < vertexList.size(); i++)
-                    {
+                    for (int i = 2; i < vertexList.size(); i++) {
                         Vec3 vec = vertexList.get(i);
-                        if (relative.get(i))
-                        {
+                        if (relative.get(i)) {
                             vec = relativiseRender(p.level(), vec, 0);
                         }
                         alterDrawTriangles(vec0, vec1, vec);
                         vec1 = vec;
                     }
-                    break;
-                case 5:
+                }
+                case 5 -> {
                     Vec3 vecA = vertexList.get(0);
-                    if (relative.get(0))
-                    {
+                    if (relative.get(0)) {
                         vecA = relativiseRender(p.level(), vecA, 0);
                     }
                     Vec3 vecB = vertexList.get(1);
-                    if (relative.get(1))
-                    {
+                    if (relative.get(1)) {
                         vecB = relativiseRender(p.level(), vecB, 0);
                     }
-                    for (int i = 2; i < vertexList.size(); i++)
-                    {
+                    for (int i = 2; i < vertexList.size(); i++) {
                         Vec3 vec = vertexList.get(i);
-                        if (relative.get(i))
-                        {
+                        if (relative.get(i)) {
                             vec = relativiseRender(p.level(), vec, 0);
                         }
                         alterDrawTriangles(vecA, vecB, vec);
                         vecA = vecB;
                         vecB = vec;
                     }
-                    break;
-                default:
-                    break;
+                }
+                default -> {
+                }
             }
 
             return alterPoint;
@@ -1466,85 +1452,81 @@ public class ShapeDispatcher
 
     public abstract static class Param
     {
-        public static final Map<String, Param> of = new HashMap<>()
-        {{
-            put("mode", new StringChoiceParam("mode", "polygon", "strip", "triangles"));
-            put("relative", new OptionalBoolListParam("relative"));
-            put("inner", new BoolParam("inner"));
-            put("shape", new ShapeParam());
-            put("dim", new DimensionParam());
-            put("duration", new NonNegativeIntParam("duration"));
-            put("color", new ColorParam("color"));
-            put("follow", new EntityParam("follow"));
-            put("variant", new StringChoiceParam("variant",
-                    "NONE",
-                    "THIRD_PERSON_LEFT_HAND",
-                    "THIRD_PERSON_RIGHT_HAND",
-                    "FIRST_PERSON_LEFT_HAND",
-                    "FIRST_PERSON_RIGHT_HAND",
-                    "HEAD",
-                    "GUI",
-                    "GROUND",
-                    "FIXED",
-                    "ON_SHELF")
-            {
-                @Override
-                public Value validate(Map<String, Value> o, MinecraftServer s, Value v)
+        public static final ImmutableMap<String, Param> of = ImmutableMap.<String, Param>builder()
+                .put("mode", new StringChoiceParam("mode", "polygon", "strip", "triangles"))
+                .put("relative", new OptionalBoolListParam("relative"))
+                .put("inner", new BoolParam("inner"))
+                .put("shape", new ShapeParam())
+                .put("dim", new DimensionParam())
+                .put("duration", new NonNegativeIntParam("duration"))
+                .put("color", new ColorParam("color"))
+                .put("follow", new EntityParam("follow"))
+                .put("variant", new StringChoiceParam("variant",
+                        "NONE",
+                        "THIRD_PERSON_LEFT_HAND",
+                        "THIRD_PERSON_RIGHT_HAND",
+                        "FIRST_PERSON_LEFT_HAND",
+                        "FIRST_PERSON_RIGHT_HAND",
+                        "HEAD",
+                        "GUI",
+                        "GROUND",
+                        "FIXED",
+                        "ON_SHELF")
                 {
-                    return super.validate(o, s, new StringValue(v.getString().toUpperCase(Locale.ROOT)));
-                }
-            });
-            put("snap", new StringChoiceParam("snap",
-                    "xyz", "xz", "yz", "xy", "x", "y", "z",
-                    "dxdydz", "dxdz", "dydz", "dxdy", "dx", "dy", "dz",
-                    "xdz", "dxz", "ydz", "dyz", "xdy", "dxy",
-                    "xydz", "xdyz", "xdydz", "dxyz", "dxydz", "dxdyz"
-            ));
-            put("line", new PositiveFloatParam("line"));
-            put("fill", new ColorParam("fill"));
-
-            put("from", new Vec3Param("from", false));
-            put("to", new Vec3Param("to", true));
-            put("center", new Vec3Param("center", false));
-            put("pos", new Vec3Param("pos", false));
-            put("radius", new PositiveFloatParam("radius"));
-            put("level", new PositiveIntParam("level"));
-            put("height", new FloatParam("height"));
-            put("width", new FloatParam("width"));
-            put("scale", new Vec3Param("scale", false)
-            {
-                @Override
-                public Value validate(java.util.Map<String, Value> options, MinecraftServer server, Value value)
-                {
-                    if (value instanceof final NumericValue vn)
+                    @Override
+                    public Value validate(Map<String, Value> o, MinecraftServer s, Value v)
                     {
-                        value = ListValue.of(vn, vn, vn);
+                        return super.validate(o, s, new StringValue(v.getString().toUpperCase(Locale.ROOT)));
                     }
-                    return super.validate(options, server, value);
-                }
+                })
+                .put("snap", new StringChoiceParam("snap",
+                        "xyz", "xz", "yz", "xy", "x", "y", "z",
+                        "dxdydz", "dxdz", "dydz", "dxdy", "dx", "dy", "dz",
+                        "xdz", "dxz", "ydz", "dyz", "xdy", "dxy",
+                        "xydz", "xdyz", "xdydz", "dxyz", "dxydz", "dxdyz"
+                ))
+                .put("line", new PositiveFloatParam("line"))
+                .put("fill", new ColorParam("fill"))
+                .put("from", new Vec3Param("from", false))
+                .put("to", new Vec3Param("to", true))
+                .put("center", new Vec3Param("center", false))
+                .put("pos", new Vec3Param("pos", false))
+                .put("radius", new PositiveFloatParam("radius"))
+                .put("level", new PositiveIntParam("level"))
+                .put("height", new FloatParam("height"))
+                .put("width", new FloatParam("width"))
+                .put("scale", new Vec3Param("scale", false)
+                {
+                    @Override
+                    public Value validate(java.util.Map<String, Value> options, MinecraftServer server, Value value)
+                    {
+                        if (value instanceof final NumericValue vn)
+                        {
+                            value = ListValue.of(vn, vn, vn);
+                        }
+                        return super.validate(options, server, value);
+                    }
+                })
+                .put("axis", new StringChoiceParam("axis", "x", "y", "z"))
+                .put("points", new PointsParam("points"))
+                .put("text", new FormattedTextParam("text"))
+                .put("value", new FormattedTextParam("value"))
+                .put("size", new PositiveIntParam("size"))
+                .put("align", new StringChoiceParam("align", "center", "left", "right"))
+                .put("block", new BlockParam("block"))
+                .put("item", new ItemParam("item"))
+                .put("blocklight", new NonNegativeIntParam("blocklight"))
+                .put("skylight", new NonNegativeIntParam("skylight"))
+                .put("indent", new FloatParam("indent"))
+                .put("raise", new FloatParam("raise"))
+                .put("tilt", new FloatParam("tilt"))
+                .put("lean", new FloatParam("lean"))
+                .put("turn", new FloatParam("turn"))
+                .put("facing", new StringChoiceParam("facing", "player", "camera", "north", "south", "east", "west", "up", "down"))
+                .put("doublesided", new BoolParam("doublesided"))
+                .put("debug", new BoolParam("debug"))
+                .build();
 
-            });
-            put("axis", new StringChoiceParam("axis", "x", "y", "z"));
-            put("points", new PointsParam("points"));
-            put("text", new FormattedTextParam("text"));
-            put("value", new FormattedTextParam("value"));
-            put("size", new PositiveIntParam("size"));
-            put("align", new StringChoiceParam("align", "center", "left", "right"));
-
-            put("block", new BlockParam("block"));
-            put("item", new ItemParam("item"));
-            put("blocklight", new NonNegativeIntParam("blocklight"));
-            put("skylight", new NonNegativeIntParam("skylight"));
-            put("indent", new FloatParam("indent"));
-            put("raise", new FloatParam("raise"));
-            put("tilt", new FloatParam("tilt"));
-            put("lean", new FloatParam("lean"));
-            put("turn", new FloatParam("turn"));
-            put("facing", new StringChoiceParam("facing", "player", "camera", "north", "south", "east", "west", "up", "down"));
-            put("doublesided", new BoolParam("doublesided"));
-            put("debug", new BoolParam("debug"));
-
-        }};
         protected String id;
 
         protected Param(String id)
@@ -1552,8 +1534,7 @@ public class ShapeDispatcher
             this.id = id;
         }
 
-        @Nullable
-        public abstract Tag toTag(Value value, final RegistryAccess regs); //validates value, returning null if not necessary to keep it and serialize
+        public abstract @Nullable Tag toTag(Value value, final RegistryAccess regs); //validates value, returning null if not necessary to keep it and serialize
 
         public abstract Value validate(Map<String, Value> options, MinecraftServer server, Value value); // makes sure the value is proper
 
@@ -1640,9 +1621,8 @@ public class ShapeDispatcher
             return BlockValue.fromString(value.getString(), server.overworld());
         }
 
-        @Nullable
         @Override
-        public Tag toTag(Value value, final RegistryAccess regs)
+        public @Nullable Tag toTag(Value value, final RegistryAccess regs)
         {
             if (value instanceof final BlockValue blv)
             {
@@ -1758,9 +1738,8 @@ public class ShapeDispatcher
             this.options = Sets.newHashSet(options);
         }
 
-        @Nullable
         @Override
-        public Value validate(Map<String, Value> options, MinecraftServer server, Value value)
+        public @Nullable Value validate(Map<String, Value> options, MinecraftServer server, Value value)
         {
             if (this.options.contains(value.getString()))
             {
@@ -2046,7 +2025,7 @@ public class ShapeDispatcher
                         new NumericValue(e.getZ())
                 );
             }
-            CarpetScriptServer.LOG.error("Value: " + value.getString());
+            CarpetScriptServer.LOG.error("Value: {}", value.getString());
             throw new InternalExpressionException("'" + p.id + "' requires a triple, block or entity to indicate position");
         }
 
@@ -2206,7 +2185,7 @@ public class ShapeDispatcher
         {
             ServerLevel world = player.level();
             world.sendParticles(player, particle, true, true,
-                    (towards.x) / 2 + from.x, (towards.y) / 2 + from.y, (towards.z) / 2 + from.z, particles / 3,
+                    towards.x / 2 + from.x, towards.y / 2 + from.y, towards.z / 2 + from.z, particles / 3,
                     towards.x / 6, towards.y / 6, towards.z / 6, 0.0);
             world.sendParticles(player, particle, true, true,
                     from.x, from.y, from.z, 1, 0.0, 0.0, 0.0, 0.0);
@@ -2223,10 +2202,10 @@ public class ShapeDispatcher
             {
                 ServerLevel world = player.level();
                 world.sendParticles(player, particle, true, true,
-                        (towards.x) / center + from.x, (towards.y) / center + from.y, (towards.z) / center + from.z, particles / divider,
+                        towards.x / center + from.x, towards.y / center + from.y, towards.z / center + from.z, particles / divider,
                         towards.x / dev, towards.y / dev, towards.z / dev, 0.0);
                 world.sendParticles(player, particle, true, true,
-                        (towards.x) * (1.0 - 1.0 / center) + from.x, (towards.y) * (1.0 - 1.0 / center) + from.y, (towards.z) * (1.0 - 1.0 / center) + from.z, particles / divider,
+                        towards.x * (1.0 - 1.0 / center) + from.x, towards.y * (1.0 - 1.0 / center) + from.y, towards.z * (1.0 - 1.0 / center) + from.z, particles / divider,
                         towards.x / dev, towards.y / dev, towards.z / dev, 0.0);
             }
             parts += 2 * particles / divider;

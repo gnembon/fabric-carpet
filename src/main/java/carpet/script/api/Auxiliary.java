@@ -207,7 +207,7 @@ public class Auxiliary
             Vec3 vec = locator.vec;
             if (player == null)
             {
-                for (ServerPlayer p : (world.players()))
+                for (ServerPlayer p : world.players())
                 {
                     world.sendParticles(p, particle, true, true, vec.x, vec.y, vec.z, count,
                             spread, spread, spread, speed);
@@ -346,7 +346,7 @@ public class Auxiliary
             }
 
             ShapeDispatcher.sendShape(
-                    (playerTargets.isEmpty()) ? cc.level().players() : playerTargets,
+                    playerTargets.isEmpty() ? cc.level().players() : playerTargets,
                     shapes, cc.registryAccess()
             );
             return Value.TRUE;
@@ -469,8 +469,8 @@ public class Auxiliary
             {
                 return Value.FALSE;
             }
-            Tag source = ((NBTSerializableValue) (NBTSerializableValue.fromValue(lv.get(0)))).getTag();
-            Tag match = ((NBTSerializableValue) (NBTSerializableValue.fromValue(lv.get(1)))).getTag();
+            Tag source = ((NBTSerializableValue) NBTSerializableValue.fromValue(lv.get(0))).getTag();
+            Tag match = ((NBTSerializableValue) NBTSerializableValue.fromValue(lv.get(1))).getTag();
             return BooleanValue.of(NbtUtils.compareNbt(match, source, numParam == 2 || lv.get(2).getBoolean()));
         });
 
@@ -560,39 +560,30 @@ public class Auxiliary
             });
             Function<Component, Packet<?>> packetGetter = null;
             String actionString = lv.get(1).getString().toLowerCase(Locale.ROOT);
-            switch (actionString)
-            {
-                case "title":
+            switch (actionString) {
+                case "title" -> {
                     packetGetter = ClientboundSetTitleTextPacket::new;
-                    if (lv.size() < 3)
-                    {
+                    if (lv.size() < 3) {
                         throw new InternalExpressionException("Third argument of 'display_title' must be present except for 'clear' type");
                     }
-
-                    break;
-                case "subtitle":
+                }
+                case "subtitle" -> {
                     packetGetter = ClientboundSetSubtitleTextPacket::new;
-                    if (lv.size() < 3)
-                    {
+                    if (lv.size() < 3) {
                         throw new InternalExpressionException("Third argument of 'display_title' must be present except for 'clear' type");
                     }
-
-                    break;
-                case "actionbar":
+                }
+                case "actionbar" -> {
                     packetGetter = ClientboundSetActionBarTextPacket::new;
-                    if (lv.size() < 3)
-                    {
+                    if (lv.size() < 3) {
                         throw new InternalExpressionException("Third argument of 'display_title' must be present except for 'clear' type");
                     }
-
-                    break;
-                case "clear":
-                    packetGetter = x -> new ClientboundClearTitlesPacket(true); // resetting default fade
-                    break;
-                case "player_list_header", "player_list_footer":
-                    break;
-                default:
-                    throw new InternalExpressionException("'display_title' requires 'title', 'subtitle', 'actionbar', 'player_list_header', 'player_list_footer' or 'clear' as second argument");
+                }
+                case "clear" -> packetGetter = x -> new ClientboundClearTitlesPacket(true); // resetting default fade
+                case "player_list_header", "player_list_footer" -> {
+                }
+                default ->
+                        throw new InternalExpressionException("'display_title' requires 'title', 'subtitle', 'actionbar', 'player_list_header', 'player_list_footer' or 'clear' as second argument");
             }
             Component title;
             boolean soundsTrue = false;
@@ -915,7 +906,7 @@ public class Auxiliary
             if (lv.size() == 1)
             {
                 res = lv.get(0);
-                CarpetScriptServer.LOG.info(res.getString());
+                CarpetScriptServer.LOG.info("{}", res.getString());
             }
             else if (lv.size() == 2)
             {
@@ -923,11 +914,11 @@ public class Auxiliary
                 res = lv.get(1);
                 switch (level)
                 {
-                    case "debug" -> CarpetScriptServer.LOG.debug(res.getString());
-                    case "warn" -> CarpetScriptServer.LOG.warn(res.getString());
-                    case "info" -> CarpetScriptServer.LOG.info(res.getString());
+                    case "debug" -> CarpetScriptServer.LOG.debug("{}", res.getString());
+                    case "warn" -> CarpetScriptServer.LOG.warn("{}", res.getString());
+                    case "info" -> CarpetScriptServer.LOG.info("{}", res.getString());
                     // Somehow issue deprecation
-                    case "fatal", "error" -> CarpetScriptServer.LOG.error(res.getString());
+                    case "fatal", "error" -> CarpetScriptServer.LOG.error("{}", res.getString());
                     default -> throw new InternalExpressionException("Unknown log level for 'logger': " + level);
                 }
             }
@@ -1386,8 +1377,7 @@ public class Auxiliary
         }
     }
 
-    @Nullable
-    private static <T> Stat<T> getStat(StatType<T> type, Identifier id)
+    private static <T> @Nullable Stat<T> getStat(StatType<T> type, Identifier id)
     {
         T key = type.getRegistry().getValue(id);
         if (key == null || !type.contains(key))

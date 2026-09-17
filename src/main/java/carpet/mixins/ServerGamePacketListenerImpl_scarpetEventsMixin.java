@@ -152,28 +152,29 @@ public class ServerGamePacketListenerImpl_scarpetEventsMixin
     {
         if (PLAYER_RELEASED_ITEM.isNeeded())
         {
-            InteractionHand hand = serverPlayerEntity.getUsedItemHand();
-            ItemStack stack = serverPlayerEntity.getUseItem().copy();
-            serverPlayerEntity.releaseUsingItem();
+            InteractionHand hand = player.getUsedItemHand();
+            ItemStack stack = player.getUseItem().copy();
+            player.releaseUsingItem();
             PLAYER_RELEASED_ITEM.onItemAction(player, hand, stack);
         }
         else
         {
-            serverPlayerEntity.releaseUsingItem();
+            player.releaseUsingItem();
         }
     }
 
     @Inject(method = "handleUseItemOn", cancellable = true, at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/server/level/ServerPlayerGameMode;useItemOn(Lnet/minecraft/server/level/ServerPlayer;Lnet/minecraft/world/level/Level;Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/InteractionHand;Lnet/minecraft/world/phys/BlockHitResult;)Lnet/minecraft/world/InteractionResult;"
+            target = "Lnet/minecraft/server/level/ServerPlayerGameMode;useItemOn(Lnet/minecraft/server/level/ServerPlayer;Lnet/minecraft/world/level/Level;Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/InteractionHand;Lnet/minecraft/world/phys/BlockHitResult;)Lnet/minecraft/world/InteractionResult;",
+            shift = At.Shift.BEFORE
     ))
-    private void onBlockInteracted(ServerboundUseItemOnPacket playerInteractBlockC2SPacket_1, CallbackInfo ci)
+    private void onBlockInteracted(ServerboundUseItemOnPacket packet, CallbackInfo ci)
     {
         if (PLAYER_RIGHT_CLICKS_BLOCK.isNeeded())
         {
-            InteractionHand hand = playerInteractBlockC2SPacket_1.hand();
-            BlockHitResult hitRes = playerInteractBlockC2SPacket_1.hitResult();
-            if(PLAYER_RIGHT_CLICKS_BLOCK.onBlockHit(player, hand, hitRes)) {
+            InteractionHand handd = packet.hand();
+            BlockHitResult hitRes = packet.hitResult();
+            if(PLAYER_RIGHT_CLICKS_BLOCK.onBlockHit(player, handd, hitRes)) {
                 ci.cancel();
             }
         }
@@ -183,11 +184,11 @@ public class ServerGamePacketListenerImpl_scarpetEventsMixin
             value = "INVOKE",
             target = "Lnet/minecraft/server/level/ServerPlayer;resetLastActionTime()V"
     ))
-    private void onItemClicked(ServerboundUseItemPacket playerInteractItemC2SPacket_1, CallbackInfo ci)
+    private void onItemClicked(ServerboundUseItemPacket packet, CallbackInfo ci)
     {
         if (PLAYER_USES_ITEM.isNeeded())
         {
-            InteractionHand hand = playerInteractItemC2SPacket_1.hand();
+            InteractionHand hand = packet.hand();
             if(PLAYER_USES_ITEM.onItemAction(player, hand, player.getItemInHand(hand).copy())) {
                 ci.cancel();
             }
@@ -283,10 +284,10 @@ public class ServerGamePacketListenerImpl_scarpetEventsMixin
     @Inject(method = "lambda$handleChatCommand$0", // lambda of handleChatCommand(ServerboundChatCommandPacket)
             at = @At(value = "HEAD")
     )
-    private void onChatCommandMessage(ServerboundChatCommandPacket serverboundChatCommandPacket, CallbackInfo ci) {
+    private void onChatCommandMessage(ServerboundChatCommandPacket packet, CallbackInfo ci) {
         if (PLAYER_COMMAND.isNeeded())
         {
-            PLAYER_COMMAND.onPlayerMessage(player, serverboundChatCommandPacket.command());
+            PLAYER_COMMAND.onPlayerMessage(player, packet.command());
         }
     }
 }

@@ -49,11 +49,11 @@ public abstract class Explosion_scarpetEventMixin
     }
 
     @Inject(method = "explode", locals = LocalCapture.CAPTURE_FAILHARD, at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/ServerExplosion;hurtEntities()V", shift = At.Shift.AFTER))
-    private void onExplosionDone(CallbackInfoReturnable<Integer> cir, List list)
+    private void onExplosionDone(CallbackInfoReturnable<Integer> cir, List toBlow)
     {
         if (EXPLOSION_OUTCOME.isNeeded() && !level.isClientSide())
         {
-            EXPLOSION_OUTCOME.onExplosion((ServerLevel) level, source, this::getIndirectSourceEntity, center, radius, fire, list, affectedEntities, blockInteraction);
+            EXPLOSION_OUTCOME.onExplosion((ServerLevel) level, source, this::getIndirectSourceEntity, center, radius, fire, toBlow, affectedEntities, blockInteraction);
         }
     }
 }

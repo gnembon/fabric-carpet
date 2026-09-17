@@ -71,8 +71,7 @@ public class AppStoreManager
     public static class StoreNode
     {
         public String name;
-        @Nullable
-        public StoreNode parent;
+        public @Nullable StoreNode parent;
         public Map<String, StoreNode> children;
         public boolean sealed;
         public String value;
@@ -406,7 +405,7 @@ public class AppStoreManager
         {
             throw new InternalExpressionException("Unable to write resource " + target);
         }
-        CarpetScriptServer.LOG.info("Downloaded resource " + target + " from " + contentUrl);
+        CarpetScriptServer.LOG.info("Downloaded resource {} from {}", target, contentUrl);
     }
 
     /**
@@ -417,8 +416,7 @@ public class AppStoreManager
      * @param contentUrl     The full content URL, from {@link #getFullContentUrl(String, StoreNode, CommandSourceStack)}
      * @return A {@link StoreNode} that can be used in an app that came from the provided source
      */
-    @Nullable
-    private static StoreNode getNewStoreNode(CommandSourceStack commandSource, StoreNode originalSource, String sourceString, String contentUrl)
+    private static @Nullable StoreNode getNewStoreNode(CommandSourceStack commandSource, StoreNode originalSource, String sourceString, String contentUrl)
     {
         StoreNode next = originalSource;
         if (sourceString == contentUrl) // External URL (check getFullUrlContent)
@@ -471,7 +469,7 @@ public class AppStoreManager
         {
             throw new InternalExpressionException("Error when installing app dependencies: " + e);
         }
-        CarpetScriptServer.LOG.info("Downloaded app " + target + " from " + contentUrl);
+        CarpetScriptServer.LOG.info("Downloaded app {} from {}", target, contentUrl);
     }
 
     public static class CommandRuntimeException extends RuntimeException {

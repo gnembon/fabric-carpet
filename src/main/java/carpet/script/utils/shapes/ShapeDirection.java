@@ -14,8 +14,7 @@ public enum ShapeDirection
     CAMERA,
     PLAYER;
 
-    @Nullable
-    public static ShapeDirection fromString(String direction)
+    public static @Nullable ShapeDirection fromString(String direction)
     {
         return switch (direction.toLowerCase(Locale.ROOT))
         {

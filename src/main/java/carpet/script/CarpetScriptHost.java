@@ -772,62 +772,50 @@ public class CarpetScriptHost extends ScriptHost
         String sign = "";
         for (Token tok : Tokenizer.simple(arg).parseTokens())
         {
-            switch (tok.type)
-            {
-                case VARIABLE:
+            switch (tok.type) {
+                case VARIABLE -> {
                     LazyValue variable = getGlobalVariable(tok.surface);
-                    if (variable != null)
-                    {
+                    if (variable != null) {
                         argv.add(variable);
                     }
-                    break;
-                case STRINGPARAM:
+                }
+                case STRINGPARAM -> {
                     argv.add((c, t) -> new StringValue(tok.surface));
                     sign = "";
-                    break;
-
-                case LITERAL:
-                    try
-                    {
+                }
+                case LITERAL -> {
+                    try {
                         String finalSign = sign;
                         argv.add((c, t) -> new NumericValue(finalSign + tok.surface));
                         sign = "";
-                    }
-                    catch (NumberFormatException exception)
-                    {
+                    } catch (NumberFormatException exception) {
                         throw new CarpetExpressionException("Fail: " + sign + tok.surface + " seems like a number but it is" +
                                 " not a number. Use quotes to ensure its a string", null);
                     }
-                    break;
-                case HEX_LITERAL:
-                    try
-                    {
+                }
+                case HEX_LITERAL -> {
+                    try {
                         String finalSign = sign;
                         argv.add((c, t) -> new NumericValue(new BigInteger(finalSign + tok.surface.substring(2), 16).doubleValue()));
                         sign = "";
-                    }
-                    catch (NumberFormatException exception)
-                    {
+                    } catch (NumberFormatException exception) {
                         throw new CarpetExpressionException("Fail: " + sign + tok.surface + " seems like a number but it is" +
                                 " not a number. Use quotes to ensure its a string", null);
                     }
-                    break;
-                case OPERATOR, UNARY_OPERATOR:
-                    if ((tok.surface.equals("-") || tok.surface.equals("-u")) && sign.isEmpty())
-                    {
+                }
+                case OPERATOR, UNARY_OPERATOR -> {
+                    if ((tok.surface.equals("-") || tok.surface.equals("-u")) && sign.isEmpty()) {
                         sign = "-";
-                    }
-                    else
-                    {
+                    } else {
                         throw new CarpetExpressionException("Fail: operators, like " + tok.surface + " are not " +
                                 "allowed in invoke", null);
                     }
-                    break;
-                case FUNCTION:
-                    throw new CarpetExpressionException("Fail: passing functions like " + tok.surface + "() to invoke is " +
-                            "not allowed", null);
-                case OPEN_PAREN, COMMA, CLOSE_PAREN, MARKER:
-                    throw new CarpetExpressionException("Fail: " + tok.surface + " is not allowed in invoke", null);
+                }
+                case FUNCTION ->
+                        throw new CarpetExpressionException("Fail: passing functions like " + tok.surface + "() to invoke is " +
+                                "not allowed", null);
+                case OPEN_PAREN, COMMA, CLOSE_PAREN, MARKER ->
+                        throw new CarpetExpressionException("Fail: " + tok.surface + " is not allowed in invoke", null);
             }
         }
         List<String> args = function.getArguments();
@@ -1109,7 +1097,7 @@ public class CarpetScriptHost extends ScriptHost
     }
 
     /**
-     * <p>Creates a {@link Component} using {@link carper.utils.Messenger} that has the locals in the {@code line} snippet with a hover over
+     * <p>Creates a {@link Component} using carpet.utils.Messenger that has the locals in the {@code line} snippet with a hover over
      * tooltip with the value of the local at that location</p>
      *
      * @param line    The line to find references to locals on
@@ -1189,7 +1177,7 @@ public class CarpetScriptHost extends ScriptHost
         }
         else
         {
-            CarpetScriptServer.LOG.error(intro + ": " + exception.getMessage());
+            CarpetScriptServer.LOG.error("{}", intro, exception);
         }
     }
 

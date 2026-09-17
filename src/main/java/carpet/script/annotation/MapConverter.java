@@ -42,9 +42,9 @@ class MapConverter<K, V> implements ValueConverter<Map<K, V>>
     public Map<K, V> convert(Value value, @Nullable Context context)
     {
         Map<K, V> result = new HashMap<>();
-        if (value instanceof MapValue)
+        if (value instanceof MapValue mapValue)
         {
-            for (Entry<Value, Value> entry : ((MapValue) value).getMap().entrySet())
+            for (Entry<Value, Value> entry : mapValue.getMap().entrySet())
             {
                 K key = keyConverter.convert(entry.getKey(), context);
                 V val = valueConverter.convert(entry.getValue(), context);
@@ -106,17 +106,14 @@ class MapConverter<K, V> implements ValueConverter<Map<K, V>>
             return acceptMultiParam;
         }
 
-        @Nullable
         @Override
-        public Map<K, V> convert(Value value, @Nullable Context context) {
+        public @Nullable Map<K, V> convert(Value value, @Nullable Context context) {
             return value instanceof MapValue ? super.convert(value, context)
-                    : value instanceof ListValue ? convertList(((ListValue)value).getItems(), context)
+                    : value instanceof final ListValue listValue ? convertList(listValue.getItems(), context)
                             : null; // Multiparam mode can only be used in evalAndConvert 
         }
 
-
-        @Nullable
-        private Map<K, V> convertList(List<Value> valueList, @Nullable Context context)
+        private @Nullable Map<K, V> convertList(List<Value> valueList, @Nullable Context context)
         {
             if (valueList.size() % 2 == 1)
             {
@@ -137,9 +134,8 @@ class MapConverter<K, V> implements ValueConverter<Map<K, V>>
             return map;
         }
 
-        @Nullable
         @Override
-        public Map<K, V> checkAndConvert(Iterator<Value> valueIterator, Context context, Context.Type theLazyT)
+        public @Nullable Map<K, V> checkAndConvert(Iterator<Value> valueIterator, Context context, Context.Type theLazyT)
         {
             if (!valueIterator.hasNext())
             {

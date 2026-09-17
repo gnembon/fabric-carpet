@@ -348,7 +348,7 @@ public class WorldAccess
                     {
                         status = PoiManager.Occupancy.HAS_SPACE;
                     }
-                    else if (!("any".equals(statusString)))
+                    else if (!"any".equals(statusString))
                     {
                         throw new InternalExpressionException(
                                 "Incorrect POI occupation status " + status + " use `any`, " + "`occupied` or `available`"
@@ -600,7 +600,7 @@ public class WorldAccess
         });
 
         expression.addContextFunction("loaded", -1, (c, t, lv) ->
-                BooleanValue.of((((CarpetContext) c).level().hasChunkAt(BlockArgument.findIn((CarpetContext) c, lv, 0).block.getPos()))));
+                BooleanValue.of(((CarpetContext) c).level().hasChunkAt(BlockArgument.findIn((CarpetContext) c, lv, 0).block.getPos())));
 
         // Deprecated, use loaded_status as more indicative
         expression.addContextFunction("loaded_ep", -1, (c, t, lv) ->
@@ -1085,9 +1085,7 @@ public class WorldAccess
             ServerExplosion serverExplosion = new ServerExplosion(cc.level(), source, null, null, pos, powah, createFire, mode)
             {
                 @Override
-                @Nullable
-                public
-                LivingEntity getIndirectSourceEntity()
+                public @Nullable LivingEntity getIndirectSourceEntity()
                 {
                     return theAttacker;
                 }
@@ -1481,7 +1479,7 @@ public class WorldAccess
                 }
                 catch (NullPointerException npe)
                 {
-                    CarpetScriptServer.LOG.error("Failed to detect structure: " + reg.getKey(str));
+                    CarpetScriptServer.LOG.error("Failed to detect structure: {}", reg.getKey(str));
                     start = null;
                 }
 
@@ -1491,7 +1489,7 @@ public class WorldAccess
                 }
 
                 Value key = NBTSerializableValue.nameFromRegistryId(reg.getKey(str));
-                ret.put(key, (!needSize) ? Value.NULL : ValueConversions.of(start, cc.registryAccess()));
+                ret.put(key, !needSize ? Value.NULL : ValueConversions.of(start, cc.registryAccess()));
             }
             return MapValue.wrap(ret);
         });
@@ -1735,8 +1733,8 @@ public class WorldAccess
     }
 
 
-    @Nullable static DensitySamplerSet samplersCache = null;
-    @Nullable static ServerLevel samplerLevel = null;
+    private static @Nullable DensitySamplerSet samplersCache = null;
+    private static @Nullable ServerLevel samplerLevel = null;
 
     public static double sampleNoise(ServerLevel level, String what, BlockPos pos)
     {

@@ -22,8 +22,7 @@ public class CommandToken implements Comparable<CommandToken>
 {
     public final String surface;
     public final boolean isArgument;
-    @Nullable
-    public final CommandArgument type;
+    public final @Nullable CommandArgument type;
 
     private CommandToken(String surface, @Nullable CommandArgument type)
     {
@@ -32,8 +31,7 @@ public class CommandToken implements Comparable<CommandToken>
         isArgument = type != null;
     }
 
-    @Nullable
-    public static CommandToken getToken(String source, CarpetScriptHost host)
+    public static @Nullable CommandToken getToken(String source, CarpetScriptHost host)
     {
         // todo add more type checking and return null
         if (!source.startsWith("<"))

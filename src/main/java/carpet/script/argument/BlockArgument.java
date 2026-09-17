@@ -19,7 +19,7 @@ import org.jspecify.annotations.Nullable;
 public class BlockArgument extends Argument
 {
     public final BlockValue block;
-    @Nullable public final String replacement;
+    public final @Nullable String replacement;
 
     private BlockArgument(BlockValue b, int o)
     {
@@ -68,14 +68,14 @@ public class BlockArgument extends Argument
             {
                 return new BlockArgument(BlockValue.fromString(v1.getString(), c.level()), 1 + offset);
             }
-            if (v1 instanceof BlockValue)
+            if (v1 instanceof final BlockValue blockValue)
             {
-                return new BlockArgument(((BlockValue) v1), 1 + offset);
+                return new BlockArgument(blockValue, 1 + offset);
             }
             BlockPos pos = c.origin();
-            if (v1 instanceof ListValue)
+            if (v1 instanceof final ListValue listValue)
             {
-                List<Value> args = ((ListValue) v1).getItems();
+                List<Value> args = listValue.getItems();
                 int xpos = (int) NumericValue.asNumber(args.get(0)).getLong();
                 int ypos = (int) NumericValue.asNumber(args.get(1)).getLong();
                 int zpos = (int) NumericValue.asNumber(args.get(2)).getLong();

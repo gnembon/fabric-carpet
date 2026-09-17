@@ -77,9 +77,8 @@ public interface ValueConverter<R>
      * @return A converted value
      * @deprecated Calling this method instead of {@link #convert(Value, Context)} may not return values for some converters
      */
-    @Nullable
     @Deprecated(forRemoval = true)
-    default R convert(Value value)
+    default @Nullable R convert(Value value)
     {
         try
         {
@@ -211,8 +210,7 @@ public interface ValueConverter<R>
      * @implNote This method's default implementation runs the {@link #convert(Value, Context)} function in the next {@link Value} ignoring {@link Context} and
      *           {@code theLazyT}.
      */
-    @Nullable
-    default R checkAndConvert(Iterator<Value> valueIterator, Context context, Context.Type contextType)
+    default @Nullable R checkAndConvert(Iterator<Value> valueIterator, Context context, Context.Type contextType)
     {
         return !valueIterator.hasNext() ? null : convert(valueIterator.next(), context);
     }

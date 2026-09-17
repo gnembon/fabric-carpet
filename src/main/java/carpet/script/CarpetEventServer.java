@@ -88,8 +88,7 @@ public class CarpetEventServer
     public static class Callback
     {
         public final String host;
-        @Nullable
-        public final String optionalTarget;
+        public final @Nullable String optionalTarget;
         public final FunctionValue function;
         public final List<Value> parametrizedArgs;
         public final CarpetScriptServer scriptServer;
@@ -382,15 +381,15 @@ public class CarpetEventServer
         public void removeEventCall(String hostName, String target, String funName)
         {
             removeCallsIf((c) -> c.function.getString().equals(funName)
-                    && (Objects.equals(c.host, hostName))
-                    && (Objects.equals(c.optionalTarget, target))
+                    && Objects.equals(c.host, hostName)
+                    && Objects.equals(c.optionalTarget, target)
             );
         }
 
         public void removeAllCalls(CarpetScriptHost host)
         {
-            removeCallsIf((c) -> (Objects.equals(c.host, host.getName()))
-                    && (Objects.equals(c.optionalTarget, host.user)));
+            removeCallsIf((c) -> Objects.equals(c.host, host.getName())
+                    && Objects.equals(c.optionalTarget, host.user));
         }
 
         public void createChildEvents(CarpetScriptHost host)
@@ -398,7 +397,7 @@ public class CarpetEventServer
             List<Callback> copyCalls = new ArrayList<>();
             callList.forEach((c) ->
             {
-                if ((Objects.equals(c.host, host.getName())) // TODO fix me
+                if (Objects.equals(c.host, host.getName()) // TODO fix me
                         && c.optionalTarget == null)
                 {
                     copyCalls.add(new Callback(c.host, host.user, c.function, c.parametrizedArgs, host.scriptServer()));

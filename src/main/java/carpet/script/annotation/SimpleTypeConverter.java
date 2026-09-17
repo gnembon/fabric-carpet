@@ -106,10 +106,9 @@ public final class SimpleTypeConverter<T extends Value, R> implements ValueConve
         return (SimpleTypeConverter<Value, R>) byResult.get(outputType);
     }
 
-    @Nullable
     @Override
     @SuppressWarnings("unchecked") // more than checked. not using class.cast because then "method is too big" for inlining, because javac is useless
-    public R convert(Value value, @Nullable Context context)                                                          // and adds millions of casts. This one is even removed
+    public @Nullable R convert(Value value, @Nullable Context context)                                                          // and adds millions of casts. This one is even removed
     {
         return valueClass.isInstance(value) ? converter.apply((T)value, context) : null;
     }

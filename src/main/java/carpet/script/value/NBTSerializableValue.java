@@ -118,14 +118,12 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
         return StringValue.of(nameFromResource(id));
     }
 
-    @Nullable
-    public static String nameFromResource(@Nullable Identifier id)
+    public static @Nullable String nameFromResource(@Nullable Identifier id)
     {
         return id == null ? null : id.getNamespace().equals("minecraft") ? id.getPath() : id.toString();
     }
 
-    @Nullable
-    public static NBTSerializableValue parseString(String nbtString)
+    public static @Nullable NBTSerializableValue parseString(String nbtString)
     {
         try
         {
@@ -356,7 +354,7 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
             {
                 return res.createItemStack(1);
             }
-            ItemInput parser = (new ItemParser(regs)).parse(new StringReader(itemString));
+            ItemInput parser = new ItemParser(regs).parse(new StringReader(itemString));
             res = new ItemInput(parser.item(), parser.components());
 
             itemCache.put(itemString, res);
@@ -477,11 +475,11 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
         Tag tag = getTag();
         if (tag instanceof final CompoundTag ctag)
         {
-            return !(ctag).isEmpty();
+            return !ctag.isEmpty();
         }
         if (tag instanceof final CollectionTag ltag)
         {
-            return !(ltag).isEmpty();
+            return !ltag.isEmpty();
         }
         if (tag instanceof final NumericTag number)
         {

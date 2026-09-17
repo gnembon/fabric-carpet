@@ -298,6 +298,7 @@ public class EntityValue extends Value
             return ListValue.wrap(types.stream().map(et -> nameFromRegistryId(entityRegs.getKey(et))));
         }
 
+        @SuppressWarnings("DoubleBraceInitialization")
         public static final Map<String, EntityClassDescriptor> byName = new HashMap<>()
         {{
             List<EntityType<?>> allTypes = BuiltInRegistries.ENTITY_TYPE.stream().toList();
@@ -409,7 +410,7 @@ public class EntityValue extends Value
 
     public Value get(String what, @Nullable Value arg)
     {
-        if (!(featureAccessors.containsKey(what)))
+        if (!featureAccessors.containsKey(what))
         {
             throw new InternalExpressionException("Unknown entity feature: " + what);
         }
@@ -432,6 +433,7 @@ public class EntityValue extends Value
             "feet", EquipmentSlot.FEET
     );
 
+    @SuppressWarnings("DoubleBraceInitialization")
     private static final Map<String, BiFunction<Entity, Value, Value>> featureAccessors = new HashMap<String, BiFunction<Entity, Value, Value>>()
     {{
         //put("test", (e, a) -> a == null ? Value.NULL : new StringValue(a.getString()));
@@ -834,16 +836,11 @@ public class EntityValue extends Value
             {
                 return ValueConversions.of(hitres.getLocation());
             }
-            switch (hitres.getType())
-            {
-                case MISS:
-                    return Value.NULL;
-                case BLOCK:
-                    return new BlockValue((ServerLevel) e.level(), ((BlockHitResult) hitres).getBlockPos());
-                case ENTITY:
-                    return new EntityValue(((EntityHitResult) hitres).getEntity());
-            }
-            return Value.NULL;
+            return switch (hitres.getType()) {
+                case MISS -> Value.NULL;
+                case BLOCK -> new BlockValue((ServerLevel) e.level(), ((BlockHitResult) hitres).getBlockPos());
+                case ENTITY -> new EntityValue(((EntityHitResult) hitres).getEntity());
+            };
         });
 
         put("attribute", (e, a) -> {
@@ -888,7 +885,7 @@ public class EntityValue extends Value
 
     public void set(String what, @Nullable Value toWhat)
     {
-        if (!(featureModifiers.containsKey(what)))
+        if (!featureModifiers.containsKey(what))
         {
             throw new InternalExpressionException("Unknown entity action: " + what);
         }
@@ -947,10 +944,11 @@ public class EntityValue extends Value
         e.syncVelocity = true;
         if (Math.abs(scale) > 10000)
         {
-            CarpetScriptServer.LOG.warn("Moved entity " + e.getScoreboardName() + " " + e.getName() + " at " + e.position() + " extremely fast: " + e.getDeltaMovement());
+            CarpetScriptServer.LOG.warn("Moved entity {} {} at {} extremely fast: {}", e.getScoreboardName(), e.getName(), e.position(), e.getDeltaMovement());
         }
     }
 
+    @SuppressWarnings("DoubleBraceInitialization")
     private static final Map<String, BiConsumer<Entity, Value>> featureModifiers = new HashMap<String, BiConsumer<Entity, Value>>()
     {{
         put("remove", (entity, value) -> entity.discard()); // using discard here - will see other options if valid
@@ -1547,8 +1545,8 @@ public class EntityValue extends Value
             {
                 return;
             }
-            GameType toSet = v instanceof NumericValue ?
-                    GameType.byId(((NumericValue) v).getInt()) :
+            GameType toSet = v instanceof final NumericValue numericValue ?
+                    GameType.byId(numericValue.getInt()) :
                     GameType.byName(v.getString().toLowerCase(Locale.ROOT), null);
             if (toSet != null)
             {

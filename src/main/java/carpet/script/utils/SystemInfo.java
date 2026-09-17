@@ -35,6 +35,7 @@ import java.util.function.Function;
 
 public class SystemInfo
 {
+    @SuppressWarnings("DoubleBraceInitialization")
     private static final Map<String, Function<CarpetContext, Value>> options = new HashMap<>()
     {{
         put("app_name", c ->
@@ -43,7 +44,7 @@ public class SystemInfo
             return name == null ? Value.NULL : new StringValue(name);
         });
         put("app_list", c -> ListValue.wrap(((CarpetScriptHost) c.host).scriptServer().modules.keySet().stream().filter(Objects::nonNull).map(StringValue::new)));
-        put("app_scope", c -> StringValue.of((c.host).isPerUser() ? "player" : "global"));
+        put("app_scope", c -> StringValue.of(c.host.isPerUser() ? "player" : "global"));
         put("app_players", c -> ListValue.wrap(c.host.getUserList().stream().map(StringValue::new)));
 
         put("world_name", c -> new StringValue(c.server().getWorldData().getLevelName()));
@@ -133,7 +134,7 @@ public class SystemInfo
             long[] tickArray = c.server().getTickTimesNanos();
             for (int i = currentReportedTick + 100; i > currentReportedTick; i--)
             {
-                ticks.add(new NumericValue((tickArray[i % 100]) / 1000000.0));
+                ticks.add(new NumericValue(tickArray[i % 100] / 1000000.0));
             }
             return ListValue.wrap(ticks);
         });

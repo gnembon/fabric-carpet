@@ -48,7 +48,7 @@ public abstract class ScriptHost
         {
             randomizers.clear();
         }
-        return randomizers.computeIfAbsent(aLong, Random::new);
+        return randomizers.computeIfAbsent(aLong, seed -> new Random(seed));
     }
 
     public boolean resetRandom(long aLong)
@@ -134,8 +134,7 @@ public abstract class ScriptHost
         return main == null;
     }
 
-    @Nullable
-    public final Module main;
+    public final @Nullable Module main;
 
     @FunctionalInterface
     public interface ErrorSnooper
@@ -234,8 +233,7 @@ public abstract class ScriptHost
 
     protected abstract void runModuleCode(Context c, Module module); // this should be shell out in the executor
 
-    @Nullable
-    public FunctionValue getFunction(String name)
+    public @Nullable FunctionValue getFunction(String name)
     {
         return getFunction(main, name);
     }
@@ -257,8 +255,7 @@ public abstract class ScriptHost
         return ret;
     }
 
-    @Nullable
-    private FunctionValue getFunction(Module module, String name)
+    private @Nullable FunctionValue getFunction(Module module, String name)
     {
         ModuleData local = getModuleData(module);
         FunctionValue ret = local.globalFunctions.get(name); // most uses would be from local scope anyways
@@ -291,8 +288,7 @@ public abstract class ScriptHost
         return target.globalFunctions.get(name);
     }
 
-    @Nullable
-    private ModuleData findModuleDataFromFunctionImports(String name, ModuleData source, int ttl)
+    private @Nullable ModuleData findModuleDataFromFunctionImports(String name, ModuleData source, int ttl)
     {
         if (ttl > 64)
         {
@@ -570,7 +566,7 @@ public abstract class ScriptHost
             return false;
         }
         deprecations.add(feature);
-        DEPRECATION_LOG.warn("App '" + getVisualName() + "' uses '" + feature + "', which is deprecated for removal. Check the docs for a replacement");
+        DEPRECATION_LOG.warn("App '{}' uses '{}', which is deprecated for removal. Check the docs for a replacement", getVisualName(), feature);
         return true;
     }
 

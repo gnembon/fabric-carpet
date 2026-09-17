@@ -61,7 +61,7 @@ public class ScriptCommand
 
     static
     {
-        Set<String> allFunctions = (new CarpetExpression(null, "null", null, null)).getExpr().getFunctionNames();
+        Set<String> allFunctions = new CarpetExpression(null, "null", null, null).getExpr().getFunctionNames();
         scarpetFunctions = new TreeSet<>(Expression.none.getFunctionNames());
         APIFunctions = allFunctions.stream().filter(s -> !scarpetFunctions.contains(s)).collect(Collectors.toCollection(TreeSet::new));
     }
@@ -123,7 +123,7 @@ public class ScriptCommand
     }
 
     /**
-     * A method to suggest the available scarpet scripts based off of the current player input and {@link AppStoreManager#APP_STORE_ROOT}
+     * A method to suggest the available scarpet scripts based off of the current player input and AppStoreManager#APP_STORE_ROOT
      * variable.
      */
     private static CompletableFuture<Suggestions> suggestDownloadableApps(

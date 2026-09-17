@@ -493,7 +493,7 @@ public class Sys
                 c.host.scriptServer().systemGlobals.computeIfAbsent(key, k -> lv.get(1).evalValue(c));
             }
             Value res = c.host.scriptServer().systemGlobals.get(key);
-            return res == null ? LazyValue.NULL : ((cc, tt) -> res);
+            return res == null ? LazyValue.NULL : (cc, tt) -> res;
         });
 
         expression.addContextFunction("system_variable_set", 2, (c, t, lv) ->

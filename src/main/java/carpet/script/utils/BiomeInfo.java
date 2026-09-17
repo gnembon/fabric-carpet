@@ -24,6 +24,7 @@ import org.joml.Vector3fc;
 
 public class BiomeInfo
 {
+    @SuppressWarnings("DoubleBraceInitialization")
     public static final Map<String, BiFunction<ServerLevel, Biome, Value>> biomeFeatures = new HashMap<>()
     {{
         put("tags", (w, b) -> ListValue.wrap(w.registryAccess().lookupOrThrow(Registries.BIOME).getTags().filter(p -> p.stream().anyMatch(h -> h.value() == b)).map(ValueConversions::of)));

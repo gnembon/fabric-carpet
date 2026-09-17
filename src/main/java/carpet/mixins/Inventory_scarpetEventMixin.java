@@ -18,21 +18,28 @@ public abstract class Inventory_scarpetEventMixin
 {
     @Shadow @Final public Player player;
 
+    @Shadow
+    @Final
+    public static int NOT_FOUND_INDEX;
+
+    @Shadow
+    public abstract boolean add(int slot, ItemStack itemStack);
+
     @Redirect(method = "add(Lnet/minecraft/world/item/ItemStack;)Z", at = @At(
             value = "INVOKE",
             target = "Lnet/minecraft/world/entity/player/Inventory;add(ILnet/minecraft/world/item/ItemStack;)Z"
     ))
-    private boolean onItemAcquired(Inventory playerInventory, int slot, ItemStack stack)
+    private boolean onItemAcquired(Inventory playerInventory, int slot, ItemStack itemStack)
     {
-        if (!PLAYER_PICKS_UP_ITEM.isNeeded() || !(player instanceof ServerPlayer))
-            return playerInventory.add(-1, stack);
-        int count = stack.getCount();
-        ItemStack previous = stack.copy();
-        boolean res = playerInventory.add(-1, stack);
-        if (count != stack.getCount()) // res returns false for larger item adding to a almost full ineventory
+        if (!PLAYER_PICKS_UP_ITEM.isNeeded() || !(player instanceof final ServerPlayer serverPlayer))
+            return  add(NOT_FOUND_INDEX, itemStack);
+        int count = itemStack.getCount();
+        ItemStack prevStack = itemStack.copy();
+        boolean res = add(NOT_FOUND_INDEX, itemStack);
+        if (count != itemStack.getCount()) // res returns false for larger item adding to a almost full ineventory
         {
-            ItemStack diffStack = previous.copyWithCount(count - stack.getCount());
-            PLAYER_PICKS_UP_ITEM.onItemAction((ServerPlayer) player, null, diffStack);
+            ItemStack diffStack = prevStack.copyWithCount(count - itemStack.getCount());
+            PLAYER_PICKS_UP_ITEM.onItemAction(serverPlayer, null, diffStack);
         }
         return res;
     }

@@ -96,9 +96,9 @@ public class FunctionArgument extends Argument
             throw CommandArgument.error("Function has empty spec");
         }
         Value first = params.get(0);
-        if (first instanceof FunctionValue)
+        if (first instanceof final FunctionValue functionValue)
         {
-            function = (FunctionValue) first;
+            function = functionValue;
         }
         else
         {

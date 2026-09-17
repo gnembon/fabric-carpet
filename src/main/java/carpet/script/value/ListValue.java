@@ -434,9 +434,9 @@ public class ListValue extends AbstractListValue implements ContainerValueInterf
     {
         if (ind.isNull())
         {
-            if (extend && value instanceof AbstractListValue)
+            if (extend && value instanceof final AbstractListValue abstractListValue)
             {
-                ((AbstractListValue) value).iterator().forEachRemaining(items::add);
+                abstractListValue.iterator().forEachRemaining(items::add);
             }
             else
             {
@@ -446,11 +446,11 @@ public class ListValue extends AbstractListValue implements ContainerValueInterf
         else
         {
             int numitems = items.size();
-            if (!(ind instanceof NumericValue))
+            if (!(ind instanceof final NumericValue numericValue))
             {
                 return false;
             }
-            int index = (int) ((NumericValue) ind).getLong();
+            int index = (int) numericValue.getLong();
             if (index < 0)
             {// only for values < 0
                 index = normalizeIndex(index, numitems);
@@ -469,9 +469,9 @@ public class ListValue extends AbstractListValue implements ContainerValueInterf
                 items.add(Value.NULL);
             }
 
-            if (extend && value instanceof AbstractListValue)
+            if (extend && value instanceof final AbstractListValue abstractListValue)
             {
-                Iterable<Value> iterable = ((AbstractListValue) value)::iterator;
+                Iterable<Value> iterable = abstractListValue::iterator;
                 List<Value> appendix = StreamSupport.stream(iterable.spliterator(), false).collect(Collectors.toList());
                 items.addAll(index, appendix);
                 return true;
@@ -498,11 +498,11 @@ public class ListValue extends AbstractListValue implements ContainerValueInterf
     @Override
     public boolean delete(Value where)
     {
-        if (!(where instanceof NumericValue) || items.isEmpty())
+        if (!(where instanceof final NumericValue numericValue) || items.isEmpty())
         {
             return false;
         }
-        long index = ((NumericValue) where).getLong();
+        long index = numericValue.getLong();
         items.remove(normalizeIndex(index, items.size()));
         return true;
     }
@@ -592,8 +592,8 @@ public class ListValue extends AbstractListValue implements ContainerValueInterf
         }
         // only numbers / mixed types
         tags.forEach(cases.contains(TagTypeCompat.DBL)
-                ? (t -> tag.add(DoubleTag.valueOf(((NumericTag) t).doubleValue())))
-                : (t -> tag.add(LongTag.valueOf(((NumericTag) t).longValue()))));
+                ? t -> tag.add(DoubleTag.valueOf(((NumericTag) t).doubleValue()))
+                : t -> tag.add(LongTag.valueOf(((NumericTag) t).longValue())));
         return tag;
     }
 

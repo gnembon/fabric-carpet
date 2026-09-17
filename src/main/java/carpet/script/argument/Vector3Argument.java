@@ -22,8 +22,7 @@ public class Vector3Argument extends Argument
     public final double yaw;
     public final double pitch;
     public boolean fromBlock = false;
-    @Nullable
-    public Entity entity = null;
+    public @Nullable Entity entity = null;
 
     private Vector3Argument(Vec3 v, int o)
     {
@@ -68,18 +67,18 @@ public class Vector3Argument extends Argument
         try
         {
             Value v1 = params.next();
-            if (v1 instanceof BlockValue)
+            if (v1 instanceof final BlockValue blockValue)
             {
-                return (new Vector3Argument(Vec3.atCenterOf(((BlockValue) v1).getPos()), 1 + offset)).fromBlock();
+                return new Vector3Argument(Vec3.atCenterOf(blockValue.getPos()), 1 + offset).fromBlock();
             }
-            if (optionalEntity && v1 instanceof EntityValue)
+            if (optionalEntity && v1 instanceof final EntityValue entityValue)
             {
-                Entity e = ((EntityValue) v1).getEntity();
+                Entity e = entityValue.getEntity();
                 return new Vector3Argument(e.position(), 1 + offset).withEntity(e);
             }
-            if (v1 instanceof ListValue)
+            if (v1 instanceof final ListValue listValue)
             {
-                List<Value> args = ((ListValue) v1).getItems();
+                List<Value> args = listValue.getItems();
                 Vec3 pos = new Vec3(
                         NumericValue.asNumber(args.get(0)).getDouble(),
                         NumericValue.asNumber(args.get(1)).getDouble(),

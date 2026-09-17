@@ -4,6 +4,7 @@ import carpet.script.CarpetScriptServer;
 import carpet.script.external.Carpet;
 import carpet.script.utils.shapes.ShapeDirection;
 
+import com.google.common.collect.ImmutableMap;
 import com.mojang.blaze3d.pipeline.RenderTarget;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -63,18 +64,16 @@ public class ShapesRenderer
     private final Map<ResourceKey<Level>, Long2ObjectOpenHashMap<RenderedShape<? extends ShapeDispatcher.ExpiringShape>>> labels;
     private final Minecraft client;
 
-    private final Map<String, BiFunction<Minecraft, ShapeDispatcher.ExpiringShape, RenderedShape<? extends ShapeDispatcher.ExpiringShape>>> renderedShapes
-            = new HashMap<>()
-    {{
-        put("line", RenderedLine::new);
-        put("box", RenderedBox::new);
-        put("sphere", RenderedSphere::new);
-        put("cylinder", RenderedCylinder::new);
-        put("label", RenderedText::new);
-        put("polygon", RenderedPolyface::new);
-        put("block", (c, s) -> new RenderedSprite(c, s, false));
-        put("item", (c, s) -> new RenderedSprite(c, s, true));
-    }};
+    private final Map<String, BiFunction<Minecraft, ShapeDispatcher.ExpiringShape, RenderedShape<? extends ShapeDispatcher.ExpiringShape>>> renderedShapes = ImmutableMap.<String, BiFunction<Minecraft, ShapeDispatcher.ExpiringShape, RenderedShape<? extends ShapeDispatcher.ExpiringShape>>>builder()
+            .put("line", RenderedLine::new)
+            .put("box", RenderedBox::new)
+            .put("sphere", RenderedSphere::new)
+            .put("cylinder", RenderedCylinder::new)
+            .put("label", RenderedText::new)
+            .put("polygon", RenderedPolyface::new)
+            .put("block", (c, s) -> new RenderedSprite(c, s, false))
+            .put("item", (c, s) -> new RenderedSprite(c, s, true))
+            .build();
 
     public static void rotatePoseStackByShapeDirection(PoseStack poseStack, ShapeDirection shapeDirection, Camera camera, Vec3 objectPos)
     {
@@ -93,8 +92,8 @@ public class ShapesRenderer
                 double y = vector.y;
                 double z = vector.z;
                 double d = Math.sqrt(x * x + z * z);
-                float rotX = (float) (Math.atan2(x, z));
-                float rotY = (float) (Math.atan2(y, d));
+                float rotX = (float) Math.atan2(x, z);
+                float rotY = (float) Math.atan2(y, d);
 
                 // that should work somehow but it doesn't for some reason
                 //matrices.mulPose(new Quaternion( -rotY, rotX, 0, false));
@@ -239,7 +238,7 @@ public class ShapesRenderer
         shapeFactory = renderedShapes.get(tag.getString("shape").orElseThrow());
         if (shapeFactory == null)
         {
-            CarpetScriptServer.LOG.info("Unrecognized shape: " + tag.getString("shape"));
+            CarpetScriptServer.LOG.info("Unrecognized shape: {}", tag.getString("shape"));
         }
         else
         {
@@ -564,11 +563,11 @@ public class ShapesRenderer
             float text_x = 0;
             if (shape.align == 0)
             {
-                text_x = (float) (-textRenderer.width(shape.value.getString())) / 2.0F;
+                text_x = (float) -textRenderer.width(shape.value.getString()) / 2.0F;
             }
             else if (shape.align == 1)
             {
-                text_x = (float) (-textRenderer.width(shape.value.getString()));
+                text_x = (float) -textRenderer.width(shape.value.getString());
             }
             //try (ByteBufferBuilder bbb = new ByteBufferBuilder(RenderType.TRANSIENT_BUFFER_SIZE))
             //{
@@ -620,7 +619,7 @@ public class ShapesRenderer
             }
             catch (ClassCastException ignored)
             {
-                CarpetScriptServer.LOG.error("shape " + rshape.shape.getClass() + " cannot cast to a Label");
+                CarpetScriptServer.LOG.error("shape {} cannot cast to a Label", rshape.shape.getClass());
             }
         }
     }
@@ -893,7 +892,7 @@ public class ShapesRenderer
             }
             Vec3 vc = shape.relativiseRender(client.level, shape.center, partialTick);
             drawSphereWireframe(primitives,
-                    (float) (vc.x), (float) (vc.y), (float) (vc.z),
+                    (float) vc.x, (float) vc.y, (float) vc.z,
                     (float) (shape.radius + renderEpsilon), shape.subdivisions,
                     shape.argb, shape.lineWidth);
         }
@@ -907,7 +906,7 @@ public class ShapesRenderer
             }
             Vec3 vc = shape.relativiseRender(client.level, shape.center, partialTick);
             drawSphereFaces(primitives,
-                    (float) (vc.x ), (float) (vc.y ), (float) (vc.z ),
+                    (float) vc.x, (float) vc.y, (float) vc.z,
                     (float) (shape.radius + renderEpsilon), shape.subdivisions,
                     shape.fargb);
         }
@@ -1358,8 +1357,8 @@ public class ShapesRenderer
 
     private static int shuffleColor(int argb) {
         int a = 0xff000000 & argb;
-        argb = (new Random(argb)).nextInt();
-        argb = (a) | (0x00ffffff & argb);
+        argb = new Random(argb).nextInt();
+        argb = a | (0x00ffffff & argb);
         return argb;
     }
 
