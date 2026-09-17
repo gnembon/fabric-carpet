@@ -159,7 +159,7 @@ public class CarpetScriptServer extends ScriptServer
                 }
             }
 
-            Module globalModule = Carpet.fetchGlobalModule(name, allowLibraries);
+            Module globalModule = fetchGlobalModule(server, name, allowLibraries);
             if (globalModule != null)
             {
                 return globalModule;
@@ -177,6 +177,53 @@ public class CarpetScriptServer extends ScriptServer
             }
         }
         return null;
+    }
+
+    public static @Nullable Module fetchGlobalModule(MinecraftServer server, String name, boolean allowLibraries) throws IOException
+    {
+        Path globalFolder = Carpet.fetchGlobalPath(server);
+        if (globalFolder == null)
+        {
+            return null;
+        }
+        if (!Files.exists(globalFolder))
+        {
+            Files.createDirectories(globalFolder);
+        }
+        try (Stream<Path> folderWalker = Files.walk(globalFolder))
+        {
+            Optional<Path> scriptPath = folderWalker
+                    .filter(script -> script.getFileName().toString().equalsIgnoreCase(name + ".sc") ||
+                            (allowLibraries && script.getFileName().toString().equalsIgnoreCase(name + ".scl")))
+                    .findFirst();
+            if (scriptPath.isPresent())
+            {
+                return Module.fromPath(scriptPath.get());
+            }
+        }
+        return null;
+    }
+
+    public static void addGlobalModules(final MinecraftServer server, final List<String> moduleNames, boolean includeBuiltIns) throws IOException
+    {
+        if (!includeBuiltIns)
+        {
+            return;
+        }
+        final Path globalScripts = Carpet.fetchGlobalPath(server);
+        if (globalScripts == null) {
+            return;
+        }
+        if (!Files.exists(globalScripts))
+        {
+            Files.createDirectories(globalScripts);
+        }
+        try (Stream<Path> folderWalker = Files.walk(globalScripts, FileVisitOption.FOLLOW_LINKS))
+        {
+            folderWalker
+                    .filter(f -> f.toString().endsWith(".sc"))
+                    .forEach(f -> moduleNames.add(f.getFileName().toString().replaceFirst("\\.sc$", "").toLowerCase(Locale.ROOT)));
+        }
     }
 
     public Module getRuleModule(String name)
@@ -218,7 +265,7 @@ public class CarpetScriptServer extends ScriptServer
                         .forEach(f -> moduleNames.add(f.getFileName().toString().replaceFirst("\\.sc$", "").toLowerCase(Locale.ROOT)));
             }
 
-            Carpet.addGlobalModules(moduleNames, includeBuiltIns);
+            addGlobalModules(server, moduleNames, includeBuiltIns);
 
         }
         catch (IOException e)

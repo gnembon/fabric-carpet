@@ -147,47 +147,12 @@ public class Carpet
         return CarpetSettings.superSecretSetting;
     }
 
-    @Nullable
-    public static Module fetchGlobalModule(String name, boolean allowLibraries) throws IOException
-    {
-        if (FabricLoader.getInstance().getEnvironmentType() == EnvType.CLIENT)
-        {
+    public static @Nullable Path fetchGlobalPath(MinecraftServer server) {
+        if (FabricLoader.getInstance().getEnvironmentType() == EnvType.CLIENT) {
             Path globalFolder = FabricLoader.getInstance().getConfigDir().resolve("carpet/scripts");
-            if (!Files.exists(globalFolder))
-            {
-                Files.createDirectories(globalFolder);
-            }
-            try (Stream<Path> folderWalker = Files.walk(globalFolder))
-            {
-                Optional<Path> scriptPath = folderWalker
-                        .filter(script -> script.getFileName().toString().equalsIgnoreCase(name + ".sc") ||
-                                (allowLibraries && script.getFileName().toString().equalsIgnoreCase(name + ".scl")))
-                        .findFirst();
-                if (scriptPath.isPresent())
-                {
-                    return Module.fromPath(scriptPath.get());
-                }
-            }
+            return globalFolder;
         }
         return null;
-    }
-
-    public static void addGlobalModules(final List<String> moduleNames, boolean includeBuiltIns) throws IOException
-    {
-        if (includeBuiltIns && (FabricLoader.getInstance().getEnvironmentType() == EnvType.CLIENT))
-        {
-            Path globalScripts = FabricLoader.getInstance().getConfigDir().resolve("carpet/scripts");
-            if (!Files.exists(globalScripts))
-            {
-                Files.createDirectories(globalScripts);
-            }
-            try (Stream<Path> folderWalker = Files.walk(globalScripts, FileVisitOption.FOLLOW_LINKS))
-            {
-                folderWalker
-                        .filter(f -> f.toString().endsWith(".sc"))
-                        .forEach(f -> moduleNames.add(f.getFileName().toString().replaceFirst("\\.sc$", "").toLowerCase(Locale.ROOT)));
-            }
-        }
     }
 
     public static void assertRequirementMet(CarpetScriptHost host, String requiredModId, String stringPredicate)
