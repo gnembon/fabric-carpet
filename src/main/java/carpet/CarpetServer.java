@@ -18,6 +18,7 @@ import carpet.commands.ProfileCommand;
 import carpet.script.ScriptCommand;
 import carpet.commands.SpawnCommand;
 import carpet.commands.TestCommand;
+import carpet.network.CarpetClient;
 import carpet.network.ServerNetworkHandler;
 import carpet.helpers.HopperCounter;
 import carpet.logging.LoggerRegistry;
@@ -75,6 +76,7 @@ public class CarpetServer // static for now - easier to handle all around the co
     {
         settingsManager = new carpet.settings.SettingsManager(CarpetSettings.carpetVersion, "carpet", "Carpet Mod");
         settingsManager.parseSettingsClass(CarpetSettings.class);
+        CarpetClient.registerPayloads();
         extensions.forEach(CarpetExtension::onGameStarted);
         //FabricAPIHooks.initialize();
         CarpetScriptServer.parseFunctionClasses();
@@ -227,4 +229,3 @@ public class CarpetServer // static for now - easier to handle all around the co
         extensions.forEach(e -> e.onReload(server));
     }
 }
-
