@@ -4,6 +4,7 @@ import carpet.CarpetSettings;
 import com.mojang.authlib.GameProfile;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.UUIDUtil;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.DisconnectionDetails;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.contents.TranslatableContents;
@@ -35,6 +36,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.portal.TeleportTransition;
 import net.minecraft.world.level.storage.TagValueInput;
+import net.minecraft.world.level.storage.TagValueOutput;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.phys.Vec3;
 import carpet.fakes.ServerPlayerInterface;
@@ -135,15 +137,47 @@ public class EntityPlayerMPFake extends ServerPlayer
         }
     }
 
+    /**
+     * Loads player data from a CompoundTag.
+     * Useful if persisted playerdata is not up-to-date.
+     * @author TeRacksito
+     */
+    private static void loadPlayerData(EntityPlayerMPFake player, CompoundTag nbt)
+    {
+        try (ProblemReporter.ScopedCollector scopedCollector = new ProblemReporter.ScopedCollector(player.problemPath(), CarpetSettings.LOG))
+        {
+            ValueInput input = TagValueInput.create(scopedCollector, player.registryAccess(), nbt);
+
+            player.load(input);
+            player.loadAndSpawnEnderPearls(input);
+            player.loadAndSpawnParentVehicle(input);
+        }
+    }
+
+    /**
+     * Saves the current in-memory player to a CompoundTag.
+     * Useful if this data won't be accesible in the near future. (e.g. for creating a shadow player)
+     * @author TeRacksito
+     */
+    private static CompoundTag savePlayerToNbt(ServerPlayer player) {
+        try (ProblemReporter.ScopedCollector scopedCollector = new ProblemReporter.ScopedCollector(player.problemPath(), carpet.CarpetSettings.LOG)) {
+            TagValueOutput output = TagValueOutput.createWithContext(scopedCollector, player.registryAccess());
+            player.saveWithoutId(output);
+            return output.buildResult();
+        }
+    }
+
     public static EntityPlayerMPFake createShadow(MinecraftServer server, ServerPlayer player)
     {
+        CompoundTag nbtData = savePlayerToNbt(player);
+
         player.connection.disconnect(Component.translatable("multiplayer.disconnect.duplicate_login"));
         ServerLevel worldIn = player.level();//.getWorld(player.dimension);
         GameProfile gameprofile = player.getGameProfile();
         EntityPlayerMPFake playerShadow = new EntityPlayerMPFake(server, worldIn, gameprofile, player.clientInformation(), true);
         playerShadow.setChatSession(player.getChatSession());
         server.getPlayerList().placeNewPlayer(new FakeClientConnection(PacketFlow.SERVERBOUND), playerShadow, new CommonListenerCookie(gameprofile, 0, player.clientInformation(), true));
-        loadPlayerData(playerShadow);
+        loadPlayerData(playerShadow, nbtData);
 
         playerShadow.setHealth(player.getHealth());
         playerShadow.connection.teleport(player.getX(), player.getY(), player.getZ(), player.getYRot(), player.getXRot());
