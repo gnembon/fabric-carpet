@@ -178,6 +178,47 @@ public class CarpetSettings
     @Rule( desc = "Players absorb XP instantly, without delay", category = CREATIVE )
     public static boolean xpNoCooldown = false;
 
+    public static class StackableBannerPatternValidator extends Validator<String>
+    {
+        @Override
+        public String validate(CommandSourceStack source, CarpetRule<String> currentRule, String newValue, String string)
+        {
+            if (newValue.matches("^[0-9]+$")) {
+                int value = Integer.parseInt(newValue);
+                if (value <= 64 && value >= 2) {
+                    bannerPatternStackSize = value;
+                    return newValue;
+                }
+            }
+            if (newValue.equalsIgnoreCase("false")) {
+                bannerPatternStackSize = 1;
+                return newValue;
+            }
+            if (newValue.equalsIgnoreCase("true")) {
+                bannerPatternStackSize = 64;
+                return newValue;
+            }
+            return null;
+        }
+
+        @Override
+        public String description()
+        {
+            return "Value must either be true, false, or a number between 2-64";
+        }
+    }
+
+    @Rule(
+            desc = "Banner patterns can stack when thrown on the ground",
+            extra = ".. or manipulated in inventories",
+            validate = StackableBannerPatternValidator.class,
+            options = {"false", "true", "16"},
+            strict = false,
+            category = {SURVIVAL, FEATURE}
+    )
+    public static String stackableBannerPatterns = "false";
+    public static int bannerPatternStackSize = 1;
+
     public static class StackableShulkerBoxValidator extends Validator<String> 
     {
         @Override
