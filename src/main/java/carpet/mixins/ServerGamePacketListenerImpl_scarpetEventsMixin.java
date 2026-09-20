@@ -78,7 +78,7 @@ public class ServerGamePacketListenerImpl_scarpetEventsMixin
         }
 
         // ride event, which should check for mount?
-        if (PLAYER_RIDES.isNeeded() && (input.jump() || input.shift() || input.forward() || input.backward() || input.left() || input.right()))
+        if (PLAYER_RIDES.isNeeded() && player.getVehicle() != null && (input.jump() || input.shift() || input.forward() || input.backward() || input.left() || input.right()))
         {
             PLAYER_RIDES.onMountControls(player, input.left() == input.right() ? 0 : (input.left() ? -1 : 1 ), input.forward() == input.backward() ? 0 : (input.forward() ? 1 : -1), input.jump(), input.shift());
         }

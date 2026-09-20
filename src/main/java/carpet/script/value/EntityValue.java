@@ -570,6 +570,7 @@ public class EntityValue extends Value
         put("xp_progress", (e, a) -> e instanceof Player player ? new NumericValue(player.experienceProgress) : Value.NULL);
         put("score", (e, a) -> e instanceof Player player ? new NumericValue(player.getScore()) : Value.NULL);
         put("jumping", (e, a) -> e instanceof LivingEntity le ? Vanilla.LivingEntity_isJumping(le) ? Value.TRUE : Value.FALSE : Value.NULL);
+        put("input", (e, a) -> e instanceof ServerPlayer sp ? ValueConversions.of(sp.getLastClientInput()) : Value.NULL);
         put("gamemode", (e, a) -> e instanceof ServerPlayer sp ? new StringValue(sp.gameMode.getGameModeForPlayer().getName()) : Value.NULL);
         put("path", (e, a) -> {
             if (e instanceof Mob mob)

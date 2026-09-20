@@ -365,6 +365,10 @@ Boolean, true if the entity is sneaking.
 
 Boolean, true if the entity is sprinting.
 
+### `query(e, 'input')`
+
+A list of 7 booleans indicating if the entity is pressing the following keys: forward, backward, left, right, jump, sneak, sprint, or `null` if its not a player.
+
 ### `query(e, 'swimming')`
 
 Boolean, true if the entity is swimming.

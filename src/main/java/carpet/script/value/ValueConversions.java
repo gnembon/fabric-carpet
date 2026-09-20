@@ -32,6 +32,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.ai.behavior.PositionTracker;
 import net.minecraft.world.entity.ai.memory.NearestVisibleLivingEntities;
 import net.minecraft.world.entity.ai.memory.WalkTarget;
+import net.minecraft.world.entity.player.Input;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
@@ -409,6 +410,18 @@ public class ValueConversions
             return StringValue.of(stringRepresentable.getSerializedName());
         }
         throw new InternalExpressionException("Unknown property type: " + p.getName());
+    }
+
+    public static Value of(final Input input) {
+        return ListValue.of(
+                BooleanValue.of(input.forward()),
+                BooleanValue.of(input.backward()),
+                BooleanValue.of(input.left()),
+                BooleanValue.of(input.right()),
+                BooleanValue.of(input.jump()),
+                BooleanValue.of(input.shift()),
+                BooleanValue.of(input.sprint()
+                ));
     }
 
     record SlotParam(/* Nullable */ String type, int id)
