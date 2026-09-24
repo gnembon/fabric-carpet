@@ -3,12 +3,15 @@ package carpet.utils;
 import carpet.network.CarpetClient;
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents;
+*/
 import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.loader.api.SemanticVersion;
 import net.fabricmc.loader.api.Version;
 import net.fabricmc.loader.api.VersionParsingException;
-*/
+import net.minecraft.commands.CommandSourceStack;
+
 public class FabricAPIHooks {
+    public static final boolean PERMISSIONS_API = hasMod("fabric-permissions-api-v0", "0.2");
 /*
     public static final boolean WORLD_RENDER_EVENTS = hasMod("fabric-rendering-v1", "1.5.0");
 
@@ -24,6 +27,11 @@ public class FabricAPIHooks {
             });
         }
     }
+*/
+    public static boolean checkPermission(CommandSourceStack source, String perm) {
+        if (!PERMISSIONS_API) throw new IllegalStateException();
+        throw null; // Assume this works for now, just have to get the dep and call a method
+    }
 
     private static boolean hasMod(String id, String minimumVersion) {
         return FabricLoader.getInstance().getModContainer(id).map(m -> {
@@ -31,7 +39,7 @@ public class FabricAPIHooks {
 
             if (version instanceof SemanticVersion) {
                 try {
-                    return ((SemanticVersion) version).compareTo(SemanticVersion.parse(minimumVersion)) >= 0;
+                    return version.compareTo(SemanticVersion.parse(minimumVersion)) >= 0;
                 } catch (VersionParsingException ignored) {
                 }
             }
@@ -39,6 +47,4 @@ public class FabricAPIHooks {
             return false;
         }).orElse(false);
     }
-
- */
 }
