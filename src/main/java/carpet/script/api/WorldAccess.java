@@ -154,7 +154,6 @@ public class WorldAccess
             "unknown", TicketType.UNKNOWN
     );
     // dummy entity for dummy requirements in the loot tables (see snowball)
-    private static FallingBlockEntity DUMMY_ENTITY = null;
 
     private static Value booleanStateTest(
             Context c,
@@ -943,11 +942,7 @@ public class WorldAccess
                     {
                         tool.enchant(world.registryAccess().lookupOrThrow(Registries.ENCHANTMENT).getOrThrow(Enchantments.FORTUNE), (int) how);
                     }
-                    if (DUMMY_ENTITY == null)
-                    {
-                        DUMMY_ENTITY = new FallingBlockEntity(EntityTypes.FALLING_BLOCK, null);
-                    }
-                    Block.dropResources(state, world, where, be, DUMMY_ENTITY, tool);
+                    Block.dropResources(state, world, where, be, null, tool);
                 }
             }
             if (!playerBreak) // no tool info - block brokwn
