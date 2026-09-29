@@ -267,8 +267,8 @@ public class BlockIterators
                 if (diffLocator.fromBlock)
                 {
                     sminx = Mth.floor(abs(diffLocator.vec.x - cx));
-                    sminy = Mth.floor(abs(diffLocator.vec.y - cx));
-                    sminz = Mth.floor(abs(diffLocator.vec.z - cx));
+                    sminy = Mth.floor(abs(diffLocator.vec.y - cy));
+                    sminz = Mth.floor(abs(diffLocator.vec.z - cz));
                 }
                 else
                 {
@@ -282,8 +282,8 @@ public class BlockIterators
                     if (posDiff.fromBlock)
                     {
                         smaxx = Mth.floor(abs(posDiff.vec.x - cx));
-                        smaxy = Mth.floor(abs(posDiff.vec.y - cx));
-                        smaxz = Mth.floor(abs(posDiff.vec.z - cx));
+                        smaxy = Mth.floor(abs(posDiff.vec.y - cy));
+                        smaxz = Mth.floor(abs(posDiff.vec.z - cz));
                     }
                     else
                     {
