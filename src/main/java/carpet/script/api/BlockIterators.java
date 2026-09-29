@@ -64,7 +64,7 @@ public class BlockIterators
                 );
             }
             Vec3i upperRange = range;
-            if (lv.size() > rangeLocator.offset + 1) // +1 cause we still need the expression
+            if (lv.size() > rangeLocator.offset) // +1 cause we still need the expression but -1 since we already removed it from lv
             {
                 rangeLocator = Vector3Argument.findIn(lv, rangeLocator.offset);
                 if (rangeLocator.fromBlock)
