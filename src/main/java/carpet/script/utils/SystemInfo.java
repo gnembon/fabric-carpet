@@ -44,8 +44,13 @@ public class SystemInfo
             return name == null ? Value.NULL : new StringValue(name);
         });
         put("app_list", c -> ListValue.wrap(((CarpetScriptHost) c.host).scriptServer().modules.keySet().stream().filter(Objects::nonNull).map(StringValue::new)));
-        put("app_scope", c -> StringValue.of(c.host.isPerUser() ? "player" : "global"));
-        put("app_players", c -> ListValue.wrap(c.host.getUserList().stream().map(StringValue::new)));
+        // seems we set the parent only on the global copy of the player app, but player apps have defined parent host, so that should suffice.
+        put("app_scope", c -> StringValue.of(c.host.isPerUser() || c.host.parent != null ? "player" : "global"));
+        // same for app players
+        put("app_players", c -> c.host.parent == null
+                ? ListValue.wrap(c.host.getUserList().stream().map(StringValue::new))
+                : ListValue.wrap(c.host.parent.getUserList().stream().map(StringValue::new))
+        );
 
         put("world_name", c -> new StringValue(c.server().getWorldData().getLevelName()));
         put("world_seed", c -> new NumericValue(c.level().getSeed()));

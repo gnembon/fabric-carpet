@@ -115,7 +115,7 @@ public abstract class ScriptHost
     private final Map<Module, ModuleData> moduleData = new HashMap<>(); // marking imports
     private final Map<String, Module> modules = new HashMap<>();
 
-    protected ScriptHost parent;
+    public ScriptHost parent;
     protected boolean perUser;
     public String user;
 
