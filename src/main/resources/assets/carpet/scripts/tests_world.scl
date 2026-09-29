@@ -1,0 +1,847 @@
+_wt_pos(origin, slot) -> [
+    origin:0 + 6 * (slot % 10),
+    origin:1,
+    origin:2 + 6 * floor(slot / 10)
+];
+
+_wt_move(p, dx, dy, dz) -> [p:0 + dx, p:1 + dy, p:2 + dz];
+
+_wt_fixture(origin, slot) -> (
+    p = _wt_pos(origin, slot);
+    set(p, 'stone');
+    p
+);
+
+_wt_has(values, wanted) -> first(values, _ == wanted) == wanted;
+
+world_tests(origin) -> [
+    ['block from coordinate triple and list', _(outer(origin)) -> (
+        p = _wt_fixture(origin, 1);
+        b = block(p:0, p:1, p:2);
+        type(b) == 'block' && pos(b) == p && str(block(p)) == 'stone'
+    )],
+    ['block from parsed state', _(outer(origin)) -> (
+        p = _wt_fixture(origin, 2);
+        b = block('oak_log[axis=x]');
+        type(b) == 'block' && str(b) == 'oak_log' &&
+            block_state(b, 'axis') == 'x' && str(block(p)) == 'stone'
+    )],
+    ['block snapshots the state at lookup time', _(outer(origin)) -> (
+        p = _wt_fixture(origin, 3);
+        before = block(p);
+        set(p, 'dirt');
+        str(before) == 'stone' && str(block(p)) == 'dirt'
+    )],
+    ['block rejects an unknown name', _(outer(origin)) -> (
+        p = _wt_fixture(origin, 4);
+        try((block('scarpet_tests:missing_block'); false), 'unknown_block', true) &&
+            str(block(p)) == 'stone'
+    )],
+    ['block rejects an invalid state', _(outer(origin)) -> (
+        p = _wt_fixture(origin, 5);
+        try((block('oak_log[axis=invalid]'); false), 'unknown_block', true) &&
+            str(block(p)) == 'stone'
+    )],
+
+    ['set with coordinate triple', _(outer(origin)) -> (
+        p = _wt_fixture(origin, 6);
+        set(p, 'air');
+        type(set(p:0, p:1, p:2, 'stone')) == 'block' && str(block(p)) == 'stone'
+    )],
+    ['set with coordinate list', _(outer(origin)) -> (
+        p = _wt_fixture(origin, 7);
+        set(p, 'air');
+        type(set(p, 'dirt')) == 'block' && str(block(p)) == 'dirt'
+    )],
+    ['set with localized block target', _(outer(origin)) -> (
+        p = _wt_fixture(origin, 8);
+        set(p, 'air');
+        type(set(block(p), 'granite')) == 'block' && str(block(p)) == 'granite'
+    )],
+    ['set with parsed block state', _(outer(origin)) -> (
+        p = _wt_fixture(origin, 9);
+        type(set(p, 'oak_log[axis=x]')) == 'block' &&
+            block_state(p, 'axis') == 'x'
+    )],
+    ['set with property and value pair', _(outer(origin)) -> (
+        p = _wt_fixture(origin, 10);
+        set(p, 'oak_log', 'axis', 'z');
+        block_state(p, 'axis') == 'z'
+    )],
+    ['set with property list', _(outer(origin)) -> (
+        p = _wt_fixture(origin, 11);
+        set(p, 'oak_log', ['axis', 'x']);
+        block_state(p, 'axis') == 'x'
+    )],
+    ['set with property map', _(outer(origin)) -> (
+        p = _wt_fixture(origin, 12);
+        set(p, 'oak_log', {'axis' -> 'z'});
+        block_state(p, 'axis') == 'z'
+    )],
+    ['set copies a positioned block state', _(outer(origin)) -> (
+        p = _wt_fixture(origin, 13);
+        source = _wt_move(p, 1, 0, 0);
+        set(source, 'oak_log[axis=x]');
+        set(p, block(source));
+        str(block(p)) == 'oak_log' && block_state(p, 'axis') == 'x'
+    )],
+    ['set skips an identical state', _(outer(origin)) -> (
+        p = _wt_fixture(origin, 14);
+        set(p, 'stone') == false && str(block(p)) == 'stone'
+    )],
+    ['set accepts block entity data', _(outer(origin)) -> (
+        p = _wt_fixture(origin, 15);
+        placed = set(p, 'barrel', nbt('{Items:[]}'));
+        type(placed) == 'block' && type(block_data(p)) == 'nbt' &&
+            type(parse_nbt(block_data(p))) == 'map'
+    )],
+    ['set copies a block entity block', _(outer(origin)) -> (
+        p = _wt_fixture(origin, 16);
+        set(p, 'barrel');
+        source = block(p);
+        target = _wt_move(p, 1, 0, 0);
+        set(target, 'air');
+        set(target, source);
+        str(block(target)) == 'barrel' && type(block_data(target)) == 'nbt'
+    )],
+    ['set rejects an unknown block', _(outer(origin)) -> (
+        p = _wt_fixture(origin, 17);
+        try((set(p, 'scarpet_tests:missing_block'); false), 'unknown_block', true) &&
+            str(block(p)) == 'stone'
+    )],
+    ['without_updates returns the set result', _(outer(origin)) -> (
+        p = _wt_fixture(origin, 18);
+        set(p, 'air');
+        type(without_updates(set(p, 'stone'))) == 'block' && str(block(p)) == 'stone'
+    )],
+    ['nested without_updates preserves the result', _(outer(origin)) -> (
+        p = _wt_fixture(origin, 19);
+        set(p, 'air');
+        type(without_updates(without_updates(set(p, 'dirt')))) == 'block' &&
+            str(block(p)) == 'dirt'
+    )],
+
+    ['place_item places a block on air', _(outer(origin)) -> (
+        p = _wt_fixture(origin, 20);
+        set(p, 'air');
+        place_item('stone', p) && str(block(p)) == 'stone'
+    )],
+    ['place_item accepts facing and sneak', _(outer(origin)) -> (
+        p = _wt_fixture(origin, 21);
+        set(p, 'air');
+        place_item('oak_log', p, 'north', true) && str(block(p)) == 'oak_log'
+    )],
+    ['place_item rejects an unknown item', _(outer(origin)) -> (
+        p = _wt_fixture(origin, 22);
+        try((place_item('scarpet_tests:missing_item', p); false), 'unknown_item', true) &&
+            str(block(p)) == 'stone'
+    )],
+
+    ['set_poi single-position query and removal', _(outer(origin)) -> (
+        p = _wt_fixture(origin, 23);
+        set_poi(p, 'meeting');
+        found = poi(p);
+        removed = set_poi(p, null);
+        found == ['meeting', 0] && removed && poi(p) == null
+    )],
+    ['poi radius, type, and occupancy filters', _(outer(origin)) -> (
+        p = _wt_fixture(origin, 24);
+        set_poi(p, 'meeting', 2);
+        single = poi(p);
+        occupied = poi(p, 2, 'meeting', 'occupied');
+        available = poi(p, 2, 'meeting', 'available');
+        set_poi(p, null);
+        single == ['meeting', 2] &&
+            _wt_has(occupied, ['meeting', 2, p]) &&
+            _wt_has(available, ['meeting', 2, p])
+    )],
+    ['poi column search includes the fixture', _(outer(origin)) -> (
+        p = _wt_fixture(origin, 25);
+        set_poi(p, 'meeting');
+        found = poi(p, 1, 'meeting', 'any', true);
+        set_poi(p, null);
+        _wt_has(found, ['meeting', 0, p])
+    )],
+    ['poi absent and negative-radius queries', _(outer(origin)) -> (
+        p = _wt_fixture(origin, 26);
+        set_poi(p, null);
+        poi(p) == null && poi(p, -1) == []
+    )],
+    ['set_poi rejects an unknown type', _(outer(origin)) -> (
+        p = _wt_fixture(origin, 27);
+        try((set_poi(p, 'scarpet_tests:missing_poi'); false), 'unknown_poi', true)
+    )],
+    ['poi filter rejects an unknown type', _(outer(origin)) -> (
+        p = _wt_fixture(origin, 28);
+        try((poi(p, 2, 'scarpet_tests:missing_poi'); false), 'unknown_poi', true)
+    )],
+
+    ['weather query and duration types', _(outer(origin)) -> (
+        p = _wt_fixture(origin, 29);
+        mode = weather();
+        _wt_has(['clear', 'rain', 'thunder'], mode) &&
+            type(weather('clear')) == 'number' &&
+            type(weather('rain')) == 'number' &&
+            type(weather('thunder')) == 'number'
+    )],
+    ['weather setters return their duration', _(outer(origin)) -> (
+        p = _wt_fixture(origin, 30);
+        previous = weather();
+        remaining = weather(previous);
+        clear = weather('clear', 120);
+        rain = weather('rain', 120);
+        thunder = weather('thunder', 120);
+        duration = weather('thunder');
+        weather(previous, max(1, remaining));
+        clear == 120 && rain == 120 && thunder == 120 && type(duration) == 'number'
+    )],
+
+    ['update an inert block', _(outer(origin)) -> (
+        p = _wt_fixture(origin, 31);
+        update(p) && str(block(p)) == 'stone'
+    )],
+    ['block_tick an inert block', _(outer(origin)) -> (
+        p = _wt_fixture(origin, 32);
+        block_tick(p) && str(block(p)) == 'stone'
+    )],
+    ['random_tick an inert block', _(outer(origin)) -> (
+        p = _wt_fixture(origin, 33);
+        random_tick(p) && str(block(p)) == 'stone'
+    )],
+    ['destroy without a tool', _(outer(origin)) -> (
+        p = _wt_fixture(origin, 34);
+        destroy(p) && air(p) && !destroy(p)
+    )],
+    ['destroy with silk touch option', _(outer(origin)) -> (
+        p = _wt_fixture(origin, 35);
+        destroy(p, -1) && air(p)
+    )],
+    ['destroy with fortune option', _(outer(origin)) -> (
+        p = _wt_fixture(origin, 36);
+        destroy(p, 2) && air(p)
+    )],
+    ['destroy with a tool returns tool data', _(outer(origin)) -> (
+        p = _wt_fixture(origin, 37);
+        result = destroy(p, 'diamond_pickaxe');
+        type(result) == 'nbt' && air(p)
+    )],
+    ['destroy with a tool cannot mine bedrock', _(outer(origin)) -> (
+        p = _wt_fixture(origin, 38);
+        set(p, 'bedrock');
+        destroy(p, 'diamond_pickaxe') == false && str(block(p)) == 'bedrock'
+    )],
+    ['destroy rejects an unknown tool', _(outer(origin)) -> (
+        p = _wt_fixture(origin, 39);
+        try((destroy(p, 'scarpet_tests:missing_item'); false), 'unknown_item', true) &&
+            str(block(p)) == 'stone'
+    )],
+    ['harvest rejects a non-player', _(outer(origin)) -> (
+        p = _wt_fixture(origin, 40);
+        harvest(null, p) == false && str(block(p)) == 'stone'
+    )],
+    ['zero-power explosion keeps blocks', _(outer(origin)) -> (
+        p = _wt_fixture(origin, 41);
+        create_explosion(p, 0, 'keep', false, null, null) &&
+            str(block(p)) == 'stone'
+    )],
+
+    ['pos of a localized block', _(outer(origin)) -> (
+        p = _wt_fixture(origin, 42);
+        pos(block(p)) == p
+    )],
+    ['pos of the invoking player', _(outer(origin)) -> (
+        p = _wt_fixture(origin, 43);
+        where = pos(player());
+        type(where) == 'list' && length(where) == 3 &&
+            all(where, type(_) == 'number')
+    )],
+    ['pos_offset from a list, default amount', _(outer(origin)) -> (
+        p = _wt_fixture(origin, 44);
+        pos_offset(p, 'up') == _wt_move(p, 0, 1, 0) &&
+            pos_offset(p, 'west') == _wt_move(p, -1, 0, 0)
+    )],
+    ['pos_offset from a block with signed amount', _(outer(origin)) -> (
+        p = _wt_fixture(origin, 45);
+        pos_offset(block(p), 'north', -2) == _wt_move(p, 0, 0, 2) &&
+            pos_offset(p, 'y', 2) == _wt_move(p, 0, 2, 0)
+    )],
+
+    ['block_state map contains string properties', _(outer(origin)) -> (
+        p = _wt_fixture(origin, 46);
+        set(p, 'oak_log[axis=x]');
+        properties = block_state(p);
+        type(properties) == 'map' && properties:'axis' == 'x' &&
+            type(properties:'axis') == 'string'
+    )],
+    ['block_state on names and parsed blocks', _(outer(origin)) -> (
+        p = _wt_fixture(origin, 47);
+        block_state('oak_log', 'axis') == 'y' &&
+            block_state(block('oak_log[axis=z]'), 'axis') == 'z' &&
+            block_state(block(p)) == {}
+    )],
+    ['block_state missing property is null', _(outer(origin)) -> (
+        p = _wt_fixture(origin, 48);
+        block_state(p, 'axis') == null
+    )],
+    ['deprecated property queries match block_state', _(outer(origin)) -> (
+        p = _wt_fixture(origin, 49);
+        set(p, 'oak_log[axis=x]');
+        property(p, 'axis') == block_state(p, 'axis') &&
+            _wt_has(block_properties(p), 'axis')
+    )],
+    ['block_list contains the fixture block', _(outer(origin)) -> (
+        p = _wt_fixture(origin, 50);
+        blocks = block_list();
+        type(blocks) == 'list' && _wt_has(blocks, str(block(p)))
+    )],
+    ['block_list accepts a tag from the registry', _(outer(origin)) -> (
+        p = _wt_fixture(origin, 51);
+        tags = block_tags(p);
+        if(length(tags) == 0, type(tags) == 'list',
+            members = block_list(tags:0);
+            type(members) == 'list' && _wt_has(members, 'stone')
+        )
+    )],
+    ['block_list returns null for missing tag', _(outer(origin)) -> (
+        p = _wt_fixture(origin, 52);
+        block_list('scarpet_tests:missing_tag') == null
+    )],
+    ['block_tags lists tags and membership', _(outer(origin)) -> (
+        p = _wt_fixture(origin, 53);
+        tags = block_tags(p);
+        type(block_tags()) == 'list' && type(tags) == 'list' &&
+            if(length(tags) == 0, true,
+                _wt_has(block_tags(), tags:0) && block_tags('stone', tags:0)
+            )
+    )],
+    ['block_tags missing tag and block errors', _(outer(origin)) -> (
+        p = _wt_fixture(origin, 54);
+        block_tags(p, 'scarpet_tests:missing_tag') == null &&
+            try((block_tags('scarpet_tests:missing_block'); false),
+                'unknown_block', true)
+    )],
+    ['block_data is null for plain stone', _(outer(origin)) -> (
+        p = _wt_fixture(origin, 55);
+        block_data(p) == null
+    )],
+
+    ['biome registry includes the local biome', _(outer(origin)) -> (
+        p = _wt_fixture(origin, 56);
+        _wt_has(biome(), biome(p))
+    )],
+    ['biome accepts a biome name', _(outer(origin)) -> (
+        p = _wt_fixture(origin, 57);
+        current = biome(p);
+        biome(current) == current
+    )],
+    ['biome tags and generation features', _(outer(origin)) -> (
+        p = _wt_fixture(origin, 58);
+        tags = biome(p, 'tags');
+        features = biome(p, 'features');
+        type(tags) == 'list' && type(features) == 'list' &&
+            all(features, type(_) == 'list')
+    )],
+    ['biome temperature and humidity', _(outer(origin)) -> (
+        p = _wt_fixture(origin, 59);
+        type(biome(p, 'temperature')) == 'number' &&
+            type(biome(p, 'humidity')) == 'number'
+    )],
+    ['biome color features return numbers', _(outer(origin)) -> (
+        p = _wt_fixture(origin, 60);
+        all(['fog_color', 'foliage_color', 'sky_color', 'water_color',
+                'water_fog_color'], type(biome(p, _)) == 'number')
+    )],
+    ['biome precipitation is an enum name', _(outer(origin)) -> (
+        p = _wt_fixture(origin, 61);
+        _wt_has(['rain', 'snow', 'none'], biome(p, 'precipitation'))
+    )],
+    ['set_biome without client refresh', _(outer(origin)) -> (
+        p = _wt_fixture(origin, 62);
+        previous = biome(p);
+        alternatives = filter(biome(), _ != previous);
+        target_biome = if(length(alternatives) == 0, previous, alternatives:0);
+        // need to set a larger area to be sure we set a biome in the target position
+        scan(p, [-5, -5, -5], [5, 5, 5], set_biome(_, target_biome, false));
+        biome(p) == target_biome
+    )],
+    ['set_biome with default client refresh', _(outer(origin)) -> (
+        p = _wt_fixture(origin, 63);
+        current = biome(p);
+        set_biome(p, current) && biome(p) == current
+    )],
+    ['biome rejects an unknown name', _(outer(origin)) -> (
+        p = _wt_fixture(origin, 64);
+        try((biome('scarpet_tests:missing_biome'); false), 'unknown_biome', true)
+    )],
+    ['set_biome rejects an unknown name', _(outer(origin)) -> (
+        p = _wt_fixture(origin, 65);
+        try((set_biome(p, 'scarpet_tests:missing_biome'); false),
+            'unknown_biome', true)
+    )],
+
+    ['stone solidity, suffocation, and movement', _(outer(origin)) -> (
+        p = _wt_fixture(origin, 66);
+        solid(p) && suffocates(p) && blocks_movement(p) &&
+            !air(p) && !liquid(p)
+    )],
+    ['air transparency and lack of collision', _(outer(origin)) -> (
+        p = _wt_fixture(origin, 67);
+        set(p, 'air');
+        air(p) && transparent(p) && !solid(p) &&
+            !suffocates(p) && !blocks_movement(p) &&
+            emitted_light(p) == 0
+    )],
+    ['water is liquid but not air', _(outer(origin)) -> (
+        p = _wt_fixture(origin, 68);
+        set(p, 'water');
+        result = liquid(p) && !air(p);
+        set(p, 'air');
+        result
+    )],
+    ['wood is flammable', _(outer(origin)) -> (
+        p = _wt_fixture(origin, 69);
+        set(p, 'oak_planks');
+        flammable(p)
+    )],
+    ['random-tick flag distinguishes grass from stone', _(outer(origin)) -> (
+        p = _wt_fixture(origin, 70);
+        stone_ticks = ticks_randomly(p);
+        set(p, 'grass_block');
+        !stone_ticks && ticks_randomly(p)
+    )],
+    ['glowstone emits maximum block light', _(outer(origin)) -> (
+        p = _wt_fixture(origin, 71);
+        set(p, 'glowstone');
+        emitted_light(p) == 15
+    )],
+    ['light channels obey level bounds', _(outer(origin)) -> (
+        p = _wt_fixture(origin, 72);
+        sky = sky_light(p);
+        artificial = block_light(p);
+        combined = light(p);
+        effective = effective_light(p);
+        combined == max(sky, artificial) &&
+            all([sky, artificial, combined, effective],
+                type(_) == 'number' && _ >= 0 && _ <= 15)
+    )],
+    ['sky visibility and slime chunk are booleans', _(outer(origin)) -> (
+        p = _wt_fixture(origin, 73);
+        type(see_sky(p)) == 'bool' && type(in_slime_chunk(p)) == 'bool'
+    )],
+    ['hardness and blast resistance reflect block state', _(outer(origin)) -> (
+        p = _wt_fixture(origin, 74);
+        stone_hardness = hardness(p);
+        resistance = blast_resistance(p);
+        set(p, 'bedrock');
+        stone_hardness > 0 && resistance > 0 && hardness(p) < 0
+    )],
+    ['stone sound and map colour', _(outer(origin)) -> (
+        p = _wt_fixture(origin, 75);
+        block_sound(p) == 'stone' && map_colour(p) == 'stone'
+    )],
+    ['power reads a fixture redstone neighbor', _(outer(origin)) -> (
+        p = _wt_fixture(origin, 76);
+        set(_wt_move(p, 1, 0, 0), 'redstone_block');
+        power(p) == 15
+    )],
+    ['heightmap queries include a placed solid block', _(outer(origin)) -> (
+        p = _wt_fixture(origin, 77);
+        all(['motion', 'terrain', 'ocean_floor', 'surface'],
+            type(top(_, p)) == 'number' && top(_, p) >= p:1)
+    )],
+
+    ['loaded and loaded_status at a placed block', _(outer(origin)) -> (
+        p = _wt_fixture(origin, 78);
+        status = loaded_status(p);
+        loaded(p) && type(status) == 'number' && status >= 0 && status <= 3
+    )],
+    ['is_chunk_generated with both force modes', _(outer(origin)) -> (
+        p = _wt_fixture(origin, 79);
+        is_chunk_generated(p) && is_chunk_generated(p, true)
+    )],
+    ['generation_status with both load modes', _(outer(origin)) -> (
+        p = _wt_fixture(origin, 80);
+        status = generation_status(p);
+        type(status) == 'string' && length(status) > 0 &&
+            generation_status(p, true) == status
+    )],
+    ['inhabited_time is nonnegative', _(outer(origin)) -> (
+        p = _wt_fixture(origin, 81);
+        type(inhabited_time(p)) == 'number' && inhabited_time(p) >= 0
+    )],
+    ['spawn_potential is numeric or unavailable', _(outer(origin)) -> (
+        p = _wt_fixture(origin, 82);
+        base = spawn_potential(p);
+        charged = spawn_potential(p, 1);
+        (base == null || type(base) == 'number') &&
+            (charged == null || type(charged) == 'number')
+    )],
+    ['reload_chunk preserves a placed block', _(outer(origin)) -> (
+        p = _wt_fixture(origin, 83);
+        reload_chunk(p) && str(block(p)) == 'stone'
+    )],
+    ['add_chunk_ticket and local ticket query', _(outer(origin)) -> (
+        p = _wt_fixture(origin, 84);
+        duration = add_chunk_ticket(p, 'unknown', 1);
+        tickets = chunk_tickets(p);
+        type(duration) == 'number' && duration > 0 &&
+            type(tickets) == 'list' &&
+            all(tickets, type(_) == 'list' && length(_) == 2)
+    )],
+    ['chunk_tickets global result shape', _(outer(origin)) -> (
+        p = _wt_fixture(origin, 85);
+        tickets = chunk_tickets();
+        type(tickets) == 'list' &&
+            all(tickets, type(_) == 'list' && length(_) == 4)
+    )],
+    ['sample_noise lists registered functions', _(outer(origin)) -> (
+        p = _wt_fixture(origin, 86);
+        names = sample_noise();
+        type(names) == 'list' && all(names, type(_) == 'string')
+    )],
+    ['sample_noise returns one scalar', _(outer(origin)) -> (
+        p = _wt_fixture(origin, 87);
+        type(sample_noise(p, 'temperature')) == 'number'
+    )],
+    ['sample_noise returns multiple scalars', _(outer(origin)) -> (
+        p = _wt_fixture(origin, 88);
+        samples = sample_noise(p, 'temperature', 'continents');
+        type(samples) == 'list' && length(samples) == 2 &&
+            all(samples, type(_) == 'number')
+    )],
+
+    ['plop catalogs available features and structures', _(outer(origin)) -> (
+        p = _wt_fixture(origin, 89);
+        catalog = plop();
+        type(catalog) == 'map' &&
+            all(['features', 'feature_types', 'structures', 'structure_types'],
+                type(catalog:_) == 'list')
+    )],
+    ['plop a registered vanilla no-op feature if available', _(outer(origin)) -> (
+        p = _wt_fixture(origin, 90);
+        features = plop():'features';
+        if(_wt_has(features, 'no_op'),
+            type(plop(p, 'minecraft:no_op')) == 'bool' && str(block(p)) == 'stone',
+            type(features) == 'list' && all(features, type(_) == 'string')
+        )
+    )],
+    ['plop an unknown feature returns null', _(outer(origin)) -> (
+        p = _wt_fixture(origin, 91);
+        plop(p, 'scarpet_tests:missing_feature') == null
+    )],
+    ['structures returns a map of bounding boxes', _(outer(origin)) -> (
+        p = _wt_fixture(origin, 92);
+        starts = structures(p);
+        type(starts) == 'map' &&
+            all(values(starts), type(_) == 'list' && length(_) == 2)
+    )],
+    ['structures detail is nullable or shaped metadata', _(outer(origin)) -> (
+        p = _wt_fixture(origin, 93);
+        names = plop():'structures';
+        if(length(names) == 0, true,
+            detail = structures(p, names:0);
+            detail == null ||
+                (type(detail) == 'map' && type(detail:'box') == 'list' &&
+                    type(detail:'pieces') == 'list')
+        )
+    )],
+    ['structures returns null for missing name', _(outer(origin)) -> (
+        p = _wt_fixture(origin, 94);
+        structures(p, 'scarpet_tests:missing_structure') == null
+    )],
+    ['structure_references returns names', _(outer(origin)) -> (
+        p = _wt_fixture(origin, 95);
+        names = structure_references(p);
+        type(names) == 'list' && all(names, type(_) == 'string')
+    )],
+    ['structure_references by registered name', _(outer(origin)) -> (
+        p = _wt_fixture(origin, 96);
+        names = plop():'structures';
+        if(length(names) == 0, true,
+            references = structure_references(p, names:0);
+            type(references) == 'list' &&
+                all(references, type(_) == 'list' && length(_) == 3 && _:1 == 0)
+        )
+    )],
+    ['structure_references returns null for missing name', _(outer(origin)) -> (
+        p = _wt_fixture(origin, 97);
+        structure_references(p, 'scarpet_tests:missing_structure') == null
+    )],
+    ['structure_eligibility returns a name map', _(outer(origin)) -> (
+        p = _wt_fixture(origin, 98);
+        eligibility = structure_eligibility(p);
+        type(eligibility) == 'map' &&
+            all(keys(eligibility), type(_) == 'string') &&
+            all(values(eligibility), _ == null)
+    )],
+    ['structure_eligibility for one registered structure', _(outer(origin)) -> (
+        p = _wt_fixture(origin, 99);
+        names = plop():'structures';
+        if(length(names) == 0, true,
+            eligible = structure_eligibility(p, names:0);
+            eligible == null || type(eligible) == 'bool'
+        )
+    )],
+    ['structure_eligibility with bounding box', _(outer(origin)) -> (
+        p = _wt_fixture(origin, 100);
+        names = plop():'structures';
+        if(length(names) == 0, true,
+            sized = structure_eligibility(p, names:0, true);
+            sized == null ||
+                (type(sized) == 'map' && type(sized:'box') == 'list' &&
+                    length(sized:'box') == 2 && type(sized:'pieces') == 'list')
+        )
+    )],
+    ['structure_eligibility rejects an unknown name', _(outer(origin)) -> (
+        p = _wt_fixture(origin, 101);
+        try((structure_eligibility(p, 'scarpet_tests:missing_structure'); false),
+            'unknown_structure', true)
+    )],
+    ['set_structure rejects an unknown name', _(outer(origin)) -> (
+        p = _wt_fixture(origin, 102);
+        try((set_structure(p, 'scarpet_tests:missing_structure'); false),
+            'unknown_structure', true)
+    )],
+
+    ['scan one block binds coordinates and block', _(outer(origin)) -> (
+        p = _wt_fixture(origin, 103);
+        scan(p, [0, 0, 0],
+            pos(_) == p && str(_) == 'stone' &&
+                _x == p:0 && _y == p:1 && _z == p:2) == 1
+    )],
+    ['scan symmetric coordinate-triple range', _(outer(origin)) -> (
+        p = _wt_fixture(origin, 104);
+        scan(p:0, p:1, p:2, 1, 0, 0, true) == 3
+    )],
+    ['scan asymmetric list ranges', _(outer(origin)) -> (
+        p = _wt_fixture(origin, 105);
+        scan(p, [1, 0, 0], [0, 1, 0], true) == 4
+    )],
+    ['scan block-valued range means distance', _(outer(origin)) -> (
+        p = _wt_fixture(origin, 106);
+        edge = _wt_move(p, 1, 0, 0);
+        set(edge, 'stone');
+        scan(p, block(edge), true) == 3
+    )],
+    ['scan block-valued upper range', _(outer(origin)) -> (
+        p = _wt_fixture(origin, 107);
+        edge = _wt_move(p, 2, 0, 0);
+        set(edge, 'stone');
+        scan(p, [0, 0, 0], block(edge), true) == 3
+    )],
+    ['scan counts continue result', _(outer(origin)) -> (
+        p = _wt_fixture(origin, 108);
+        scan(p, [1, 0, 0], if(_x == p:0, continue(true), false)) == 1
+    )],
+    ['scan stops at break', _(outer(origin)) -> (
+        p = _wt_fixture(origin, 109);
+        scan(p, [1, 0, 0], if(_x == p:0, break(), true)) == 1
+    )],
+    ['scan restores iteration bindings', _(outer(origin)) -> (
+        p = _wt_fixture(origin, 110);
+        test = false;
+        set(pos_offset(p, 'up'), 'air');
+        scan(p, [0, 0, 0],
+            x = _x;
+            y = _y;
+            z = _z;
+            result = scan(pos_offset(p, 'up'), [0, 0, 0], true);
+            test = result == 1 && _x == x && _y == y &&
+                _z == z && _ == 'stone'
+        );
+        test
+    )],
+    ['volume includes both corners in either order', _(outer(origin)) -> (
+        p = _wt_fixture(origin, 111);
+        other = _wt_move(p, 1, 1, 0);
+        set(other, 'stone');
+        volume(p, other, true) == 4 && volume(other, p, true) == 4
+    )],
+    ['volume accepts positioned block corners', _(outer(origin)) -> (
+        p = _wt_fixture(origin, 112);
+        other = _wt_move(p, 1, 0, 0);
+        set(other, 'stone');
+        volume(block(p), block(other), str(_) == 'stone') == 2
+    )],
+    ['volume exposes block and coordinates', _(outer(origin)) -> (
+        p = _wt_fixture(origin, 113);
+        volume(p, p, str(_) == 'stone' && pos(_) == p &&
+            _x == p:0 && _y == p:1 && _z == p:2) == 1
+    )],
+    ['volume counts continue and stops at break', _(outer(origin)) -> (
+        p = _wt_fixture(origin, 114);
+        other = _wt_move(p, 2, 0, 0);
+        volume(p, other, if(_x == p:0, continue(true),
+            if(_x == p:0 + 1, break(), false))) == 1
+    )],
+    ['neighbours lists six adjacent positions', _(outer(origin)) -> (
+        p = _wt_fixture(origin, 115);
+        map(neighbours(p), pos(_)) == [
+            _wt_move(p, 0, 1, 0), _wt_move(p, 0, -1, 0),
+            _wt_move(p, 0, 0, -1), _wt_move(p, 0, 0, 1),
+            _wt_move(p, 1, 0, 0), _wt_move(p, -1, 0, 0)
+        ]
+    )],
+    ['neighbours can be filtered by fixture state', _(outer(origin)) -> (
+        p = _wt_fixture(origin, 116);
+        for(neighbours(p), set(_, 'air'));
+        set(_wt_move(p, 1, 0, 0), 'diamond_block');
+        for(neighbours(p), str(_) == 'diamond_block') == 1
+    )],
+    ['rect default spans 27 blocks', _(outer(origin)) -> (
+        p = _wt_fixture(origin, 117);
+        for(rect(p), true) == 27
+    )],
+    ['rect explicit range yields known membership', _(outer(origin)) -> (
+        p = _wt_fixture(origin, 118);
+        positions = map(rect(p, [1, 0, 1]), pos(_));
+        length(positions) == 9 && _wt_has(positions, p) &&
+            _wt_has(positions, _wt_move(p, -1, 0, 1))
+    )],
+    ['rect asymmetric range counts both extents', _(outer(origin)) -> (
+        p = _wt_fixture(origin, 119);
+        for(rect(p, [1, 0, 0], [0, 1, 0]), true) == 4
+    )],
+    ['rect block-valued range means distance', _(outer(origin)) -> (
+        p = _wt_fixture(origin, 120);
+        edge = _wt_move(p, 1, 1, 0);
+        set(edge, 'stone');
+        for(rect(p, block(edge)), true) == 9
+    )],
+    ['diamond default includes center and neighbors', _(outer(origin)) -> (
+        p = _wt_fixture(origin, 121);
+        positions = map(diamond(p), pos(_));
+        length(positions) == 7 && _wt_has(positions, p) &&
+            _wt_has(positions, _wt_move(p, 0, -1, 0)) &&
+            _wt_has(positions, _wt_move(p, 0, 1, 0))
+    )],
+    ['diamond zero and unit radius', _(outer(origin)) -> (
+        p = _wt_fixture(origin, 122);
+        for(diamond(p, 0), true) == 1 &&
+            for(diamond(p, 1), true) == 5 &&
+            for(diamond(p, 1, 0), true) == 5
+    )],
+    ['diamond radius two is a Manhattan disk', _(outer(origin)) -> (
+        p = _wt_fixture(origin, 123);
+        positions = map(diamond(p, 2), pos(_));
+        length(positions) == 13 && _wt_has(positions, _wt_move(p, 2, 0, 0)) &&
+            !_wt_has(positions, _wt_move(p, 2, 0, 2))
+    )],
+    ['diamond height makes a 3D Manhattan ball', _(outer(origin)) -> (
+        p = _wt_fixture(origin, 124);
+        for(diamond(p, 1, 1), true) == 7 &&
+            for(diamond(p, 2, 2), true) == 25
+    )],
+    ['place_item fails on an occupied target', _(outer(origin)) -> (
+        p = _wt_fixture(origin, 125);
+        place_item('stone', p) == false && str(block(p)) == 'stone'
+    )],
+    ['set map properties and block entity data together', _(outer(origin)) -> (
+        p = _wt_fixture(origin, 126);
+        placed = set(p, 'barrel', {'facing' -> 'east'}, nbt('{Items:[]}'));
+        type(placed) == 'block' && block_state(p, 'facing') == 'east' &&
+            type(block_data(p)) == 'nbt'
+    )],
+    ['set list properties and block entity data together', _(outer(origin)) -> (
+        p = _wt_fixture(origin, 127);
+        placed = set(p, 'barrel', ['facing', 'south'], nbt('{Items:[]}'));
+        type(placed) == 'block' && block_state(p, 'facing') == 'south' &&
+            type(block_data(p)) == 'nbt'
+    )],
+    ['set property pairs and block entity data together', _(outer(origin)) -> (
+        p = _wt_fixture(origin, 128);
+        placed = set(p, 'barrel', 'facing', 'north', nbt('{Items:[]}'));
+        type(placed) == 'block' && block_state(p, 'facing') == 'north' &&
+            type(block_data(p)) == 'nbt'
+    )],
+    ['block_data accepts coordinate triples', _(outer(origin)) -> (
+        p = _wt_fixture(origin, 129);
+        set(p, 'barrel');
+        type(block_data(p:0, p:1, p:2)) == 'nbt'
+    )],
+    ['block_tags can report nonmembership', _(outer(origin)) -> (
+        p = _wt_fixture(origin, 130);
+        not_stone = first(block_tags(), block_tags(p, _) == false);
+        not_stone == null || block_tags(p, not_stone) == false
+    )],
+    ['biome feature lookup by dynamic name', _(outer(origin)) -> (
+        p = _wt_fixture(origin, 131);
+        biome(biome(p), 'temperature') == biome(p, 'temperature')
+    )],
+    ['loaded_ep returns a boolean without assuming tickets', _(outer(origin)) -> (
+        p = _wt_fixture(origin, 132);
+        type(loaded_ep(p)) == 'bool'
+    )],
+    ['rect accepts a block-valued upper range', _(outer(origin)) -> (
+        p = _wt_fixture(origin, 133);
+        edge = _wt_move(p, 2, 0, 0);
+        set(edge, 'stone');
+        for(rect(p, [0, 0, 0], block(edge)), true) == 3
+    )],
+    ['volume accepts coordinate-triple corners', _(outer(origin)) -> (
+        p = _wt_fixture(origin, 134);
+        volume(p:0, p:1, p:2, p:0 + 1, p:1, p:2, true) == 2
+    )],
+    ['neighbours accepts triples and localized blocks', _(outer(origin)) -> (
+        p = _wt_fixture(origin, 135);
+        map(neighbours(p:0, p:1, p:2), pos(_)) ==
+            map(neighbours(block(p)), pos(_))
+    )],
+    ['scan runs side effects in void context', _(outer(origin)) -> (
+        p = _wt_fixture(origin, 136);
+        scan(p, [0, 0, 0], set(_, 'dirt'));
+        str(block(p)) == 'dirt'
+    )],
+    ['volume runs side effects in void context', _(outer(origin)) -> (
+        p = _wt_fixture(origin, 137);
+        volume(p, p, set(_, 'dirt'));
+        str(block(p)) == 'dirt'
+    )],
+    ['block parses block entity data without placing', _(outer(origin)) -> (
+        p = _wt_fixture(origin, 138);
+        b = block('barrel{Items:[]}');
+        type(b) == 'block' && str(b) == 'barrel' &&
+            type(block_data(b)) == 'nbt'
+    )],
+    ['brightness accepts coordinates and positioned blocks', _(outer(origin)) -> (
+        p = _wt_fixture(origin, 139);
+        observed = brightness(p);
+        type(observed) == 'number' && brightness(block(p)) == observed
+    )],
+    ['volume restores its coordinate and block bindings', _(outer(origin)) -> (
+        p = _wt_fixture(origin, 140);
+        test = false;
+        set(pos_offset(p, 'up'), 'air');
+        scan(p, [0, 0, 0],
+            x = _x;
+            y = _y;
+            z = _z;
+            result = volume(pos_offset(p, 'up'), pos_offset(p, 'up'), true);
+            test = result == 1 && _x == x && _y == y &&
+                _z == z && _ == 'stone'
+        );
+        test
+    )],
+    ['rect iterator reads world lazily and resets', _(outer(origin)) -> (
+        p = _wt_fixture(origin, 141);
+        cells = rect(p, [1, 0, 0]);
+        set(p, 'dirt');
+        type(cells) == 'iterator' &&
+            for(cells, pos(_) == p && str(_) == 'dirt') == 1 &&
+            for(cells, true) == 3
+    )],
+    ['diamond iterator reads world lazily and resets', _(outer(origin)) -> (
+        p = _wt_fixture(origin, 142);
+        cells = diamond(p, 1, 1);
+        set(p, 'dirt');
+        type(cells) == 'iterator' &&
+            for(cells, pos(_) == p && str(_) == 'dirt') == 1 &&
+            for(cells, true) == 7
+    )],
+    ['scan rect and diamond accept block centers', _(outer(origin)) -> (
+        p = _wt_fixture(origin, 143);
+        scan(block(p), [0, 0, 0], str(_) == 'stone') == 1 &&
+            for(rect(block(p), [0, 0, 0]), pos(_) == p) == 1 &&
+            for(diamond(block(p), 0), pos(_) == p) == 1
+    )]
+];

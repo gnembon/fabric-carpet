@@ -1,0 +1,524 @@
+// Scarpet try catches ThrowStatement types, not InternalExpressionException; fixture calls must use valid API arguments.
+_it_empty_block_inventory(origin) -> (
+    slots = inventory_get(origin);
+    if(slots != null,
+        for(slots, if(_ != null, inventory_set(origin, _i, 0)))
+    )
+);
+
+_it_fixture(origin, block_type, check) -> (
+    _it_empty_block_inventory(origin);
+    set(origin, 'air');
+    set(origin, block_type);
+    result = try([true, call(check, origin)], 'exception', [false, str(_) + ' ' + str(_trace)]);
+    _it_empty_block_inventory(origin);
+    set(origin, 'air');
+    if(!result:0, throw(result:1));
+    result:1
+);
+
+_it_screen(p, screen_type, title, check) -> (
+    screen = create_screen(p, screen_type, title);
+    result = try([true, call(check, screen)], 'exception', [false, str(_) + ' ' + str(_trace)]);
+    closed = close_screen(screen);
+    if(!result:0, throw(result:1));
+    result:1 && closed && !screen_property(screen, 'open') &&
+        close_screen(screen) == false && inventory_size(screen) == null
+);
+
+_it_event_check(name, register, check) -> (
+    handle_event(name, null);
+    registered = call(register, name);
+    result = try([true, call(check, name, registered)], 'exception', [false, str(_) + ' ' + str(_trace)]);
+    removed = handle_event(name, null);
+    if(!result:0, throw(result:1));
+    result:1 && removed && signal_event(name, null, 'after') == 0
+);
+
+_it_event_capture(data, note) -> (
+    global_it_event_calls += 1;
+    global_it_event_payload = [data, note]
+);
+
+inventory_tests(p, origin) -> [
+    ['barrel inventory by position, coordinates and block', _(outer(origin)) ->
+        _it_fixture(origin, 'barrel', _(loc) ->
+            inventory_size(loc) == 27 &&
+                inventory_size(loc:0, loc:1, loc:2) == 27 &&
+                inventory_size(block(loc)) == 27 &&
+                inventory_size(null, block(loc)) == 27
+        )
+    ],
+    ['hopper has five slots', _(outer(origin)) ->
+        _it_fixture(origin, 'hopper', _(loc) -> inventory_size(loc) == 5)
+    ],
+    ['furnace has three slots', _(outer(origin)) ->
+        _it_fixture(origin, 'furnace', _(loc) -> inventory_size(loc) == 3)
+    ],
+    ['non-inventory block returns null for inventory operations', _(outer(origin)) ->
+        _it_fixture(origin, 'stone', _(loc) ->
+            inventory_size(loc) == null &&
+                inventory_has_items(loc) == null &&
+                inventory_get(loc, 0) == null &&
+                inventory_set(loc, 0, 1, 'stone') == null &&
+                inventory_find(loc, 'stone') == null &&
+                inventory_remove(loc, 'stone') == null &&
+                drop_item(loc, 0) == null
+        )
+    ],
+    ['player inventory and explicit default locator agree', _(outer(p)) ->
+        inventory_size(p) == 43 &&
+            inventory_size(null, p) == inventory_size(p) &&
+            inventory_has_items(null, p) == inventory_has_items(p) &&
+            length(inventory_get(p)) == inventory_size(p)
+    ],
+    ['player inventory lookup by name', _(outer(p)) ->
+        inventory_size(query(p, 'name')) == inventory_size(p)
+    ],
+    ['player ender chest locator is read-only here', _(outer(p)) ->
+        inventory_size('enderchest', p) == 27 &&
+            length(inventory_get('enderchest', p)) == 27
+    ],
+    ['player equipment locator is read-only here', _(outer(p)) ->
+        inventory_size('equipment', p) == 6 &&
+            length(inventory_get('equipment', p)) == 6
+    ],
+
+    ['empty inventory get, find and has_items', _(outer(origin)) ->
+        _it_fixture(origin, 'barrel', _(loc) ->
+            inventory_has_items(loc) == false &&
+                inventory_get(loc, 0) == null &&
+                all(inventory_get(loc), _ == null) &&
+                inventory_find(loc, null) == 0 &&
+                inventory_find(loc, 'stone') == null
+        )
+    ],
+    ['inventory_set creates an item triple', _(outer(origin)) ->
+        _it_fixture(origin, 'barrel', _(loc) -> (
+            previous = inventory_set(loc, 0, 3, 'stone');
+            stack = inventory_get(loc, 0);
+            previous == null && stack:0 == 'stone' && stack:1 == 3 &&
+                type(stack:2) == 'nbt' &&
+                parse_nbt(stack:2):'id' == 'minecraft:stone' &&
+                inventory_has_items(loc)
+        ))
+    ],
+    ['inventory_get without slot returns all slots', _(outer(origin)) ->
+        _it_fixture(origin, 'barrel', _(loc) -> (
+            inventory_set(loc, 4, 2, 'apple');
+            slots = inventory_get(loc);
+            length(slots) == 27 && slots:0 == null &&
+                slots:4 == inventory_get(loc, 4) &&
+                slots:4:0 == 'apple' && slots:4:1 == 2
+        ))
+    ],
+    ['inventory_set returns previous stack and clears with zero', _(outer(origin)) ->
+        _it_fixture(origin, 'barrel', _(loc) -> (
+            inventory_set(loc, 1, 4, 'dirt');
+            previous = inventory_set(loc, 1, 0);
+            previous:0 == 'dirt' && previous:1 == 4 &&
+                inventory_get(loc, 1) == null && !inventory_has_items(loc)
+        ))
+    ],
+    ['inventory_set count-only update preserves item', _(outer(origin)) ->
+        _it_fixture(origin, 'barrel', _(loc) -> (
+            inventory_set(loc, 2, 4, 'stone');
+            previous = inventory_set(loc, 2, 6);
+            previous:0 == 'stone' && previous:1 == 4 &&
+                inventory_get(loc, 2):0 == 'stone' &&
+                inventory_get(loc, 2):1 == 6
+        ))
+    ],
+    ['negative slot indexes from the end', _(outer(origin)) ->
+        _it_fixture(origin, 'barrel', _(loc) -> (
+            inventory_set(loc, -1, 2, 'glass');
+            inventory_get(loc, -1):0 == 'glass' &&
+                inventory_get(loc, 26):1 == 2 &&
+                inventory_find(loc, 'glass', -1) == 26
+        ))
+    ],
+    ['out-of-range slots return null without changing inventory', _(outer(origin)) ->
+        _it_fixture(origin, 'barrel', _(loc) ->
+            inventory_get(loc, 27) == null &&
+                inventory_get(loc, -28) == null &&
+                inventory_set(loc, 27, 1, 'stone') == null &&
+                inventory_set(loc, -28, 1, 'stone') == null &&
+                inventory_find(loc, null, 27) == null &&
+                !inventory_has_items(loc)
+        )
+    ],
+    ['inventory_find item honors start slot', _(outer(origin)) ->
+        _it_fixture(origin, 'barrel', _(loc) -> (
+            inventory_set(loc, 0, 1, 'stone');
+            inventory_set(loc, 3, 2, 'stone');
+            inventory_find(loc, 'stone') == 0 &&
+                inventory_find(loc, 'stone', 1) == 3 &&
+                inventory_find(loc, 'stone', 4) == null
+        ))
+    ],
+    ['inventory_find null searches empty slots', _(outer(origin)) ->
+        _it_fixture(origin, 'hopper', _(loc) -> (
+            inventory_set(loc, 0, 1, 'stone');
+            inventory_set(loc, 1, 1, 'dirt');
+            inventory_find(loc, null) == 2 &&
+                inventory_find(loc, null, 3) == 3 &&
+                inventory_find(loc, null, -1) == 4
+        ))
+    ],
+    ['inventory_remove defaults to one', _(outer(origin)) ->
+        _it_fixture(origin, 'barrel', _(loc) -> (
+            inventory_set(loc, 0, 3, 'stone');
+            inventory_remove(loc, 'stone') &&
+                inventory_get(loc, 0):1 == 2
+        ))
+    ],
+    ['inventory_remove spans multiple stacks', _(outer(origin)) ->
+        _it_fixture(origin, 'barrel', _(loc) -> (
+            inventory_set(loc, 0, 3, 'stone');
+            inventory_set(loc, 1, 4, 'stone');
+            inventory_set(loc, 2, 2, 'dirt');
+            inventory_remove(loc, 'stone', 5) &&
+                inventory_get(loc, 0) == null &&
+                inventory_get(loc, 1):1 == 2 &&
+                inventory_get(loc, 2):1 == 2
+        ))
+    ],
+    ['inventory_remove insufficient amount is atomic', _(outer(origin)) ->
+        _it_fixture(origin, 'barrel', _(loc) -> (
+            inventory_set(loc, 0, 3, 'stone');
+            inventory_set(loc, 1, 2, 'stone');
+            inventory_remove(loc, 'stone', 6) == false &&
+                inventory_get(loc, 0):1 == 3 &&
+                inventory_get(loc, 1):1 == 2
+        ))
+    ],
+    ['inventory_remove exact amount empties inventory', _(outer(origin)) ->
+        _it_fixture(origin, 'barrel', _(loc) -> (
+            inventory_set(loc, 0, 2, 'stone');
+            inventory_remove(loc, 'stone', 2) &&
+                inventory_find(loc, 'stone') == null &&
+                inventory_find(loc, null) == 0 &&
+                inventory_has_items(loc) == false
+        ))
+    ],
+    ['inventory_remove missing item returns false', _(outer(origin)) ->
+        _it_fixture(origin, 'barrel', _(loc) ->
+            inventory_remove(loc, 'stone') == false && !inventory_has_items(loc)
+        )
+    ],
+    ['drop_item removes a partial stack and spawns an item', _(outer(origin)) ->
+        _it_fixture(origin, 'barrel', _(loc) -> (
+            before = entity_area('item', loc, [2, 2, 2]);
+            inventory_set(loc, 0, 3, 'quartz');
+            dropped = drop_item(loc, 0, 2);
+            spawned = filter(entity_area('item', loc, [2, 2, 2]), (before ~ _) == null);
+            found = length(spawned) == 1 &&
+                query(spawned:0, 'item'):0 == 'quartz' &&
+                query(spawned:0, 'item'):1 == 2;
+            for(spawned, modify(_, 'remove'));
+            dropped == 2 && found && inventory_get(loc, 0):1 == 1
+        ))
+    ],
+    ['drop_item defaults to the full stack; empty slot drops zero', _(outer(origin)) ->
+        _it_fixture(origin, 'barrel', _(loc) -> (
+            before = entity_area('item', loc, [2, 2, 2]);
+            inventory_set(loc, 0, 2, 'redstone');
+            dropped = drop_item(loc, 0);
+            empty_drop = drop_item(loc, 0);
+            spawned = filter(entity_area('item', loc, [2, 2, 2]), (before ~ _) == null);
+            found = length(spawned) == 1 && query(spawned:0, 'item'):1 == 2;
+            for(spawned, modify(_, 'remove'));
+            dropped == 2 && empty_drop == 0 && found && inventory_get(loc, 0) == null
+        ))
+    ],
+    ['drop_item ignores invalid slot', _(outer(origin)) ->
+        _it_fixture(origin, 'barrel', _(loc) ->
+            drop_item(loc, 27) == null && drop_item(loc, 0) == 0
+        )
+    ],
+
+    ['item NBT overrides item id and explicit count', _(outer(origin)) ->
+        _it_fixture(origin, 'barrel', _(loc) -> (
+            inventory_set(loc, 0, 4, 'stone', '{id:"minecraft:diamond",count:2}');
+            item = inventory_get(loc, 0);
+            item:0 == 'diamond' && item:1 == 4
+        ))
+    ],
+    ['item can be created from NBT and its own count', _(outer(origin)) ->
+        _it_fixture(origin, 'barrel', _(loc) -> (
+            inventory_set(loc, 0, null, null, nbt('{id:"minecraft:apple",count:3}'));
+            item = inventory_get(loc, 0);
+            item:0 == 'apple' && item:1 == 3
+        ))
+    ],
+    ['item custom data survives an NBT round trip', _(outer(origin)) ->
+        _it_fixture(origin, 'barrel', _(loc) -> (
+            tag = nbt('{id:"minecraft:paper",components:{"minecraft:custom_data":{scarpet_probe:17}}}');
+            inventory_set(loc, 0, 2, 'stone', tag);
+            item = inventory_get(loc, 0);
+            item:0 == 'paper' && item:1 == 2 &&
+                parse_nbt(item:2):'components':'minecraft:custom_data':'scarpet_probe' == 17
+        ))
+    ],
+    ['item custom name is visible through item_display_name', _(outer(origin)) ->
+        _it_fixture(origin, 'barrel', _(loc) -> (
+            inventory_set(loc, 0, 1, 'paper',
+                nbt('{id:"minecraft:paper",components:{"minecraft:custom_name":{text:"Scarpet test paper"}}}'));
+            name = item_display_name(inventory_get(loc, 0));
+            type(name) == 'text' && str(name) == 'Scarpet test paper'
+        ))
+    ],
+    ['item lore lines survive the item stack codec', _(outer(origin)) ->
+        _it_fixture(origin, 'barrel', _(loc) -> (
+            inventory_set(loc, 0, 1, 'paper',
+                nbt('{id:"minecraft:paper",components:{"minecraft:lore":[{text:"Scarpet lore one"},{text:"Scarpet lore two"}]}}'));
+            lore = parse_nbt(inventory_get(loc, 0):2):'components':'minecraft:lore';
+            type(lore) == 'list' && length(lore) == 2 &&
+                (str(lore:0) ~ 'Scarpet lore one') != null &&
+                (str(lore:1) ~ 'Scarpet lore two') != null
+        ))
+    ],
+    // In Minecraft 26.3, the enchantments component codec maps enchantment ids directly to levels.
+    ['item enchantment level survives the item stack codec', _(outer(origin)) ->
+        _it_fixture(origin, 'barrel', _(loc) -> (
+            inventory_set(loc, 0, 1, 'diamond_sword',
+                nbt('{id:"minecraft:diamond_sword",components:{"minecraft:enchantments":{"minecraft:sharpness":3}}}'));
+            item = inventory_get(loc, 0);
+            item:0 == 'diamond_sword' &&
+                parse_nbt(item:2):'components':'minecraft:enchantments':'minecraft:sharpness' == 3
+        ))
+    ],
+    ['inventory_set unknown item throws unknown_item', _(outer(origin)) ->
+        _it_fixture(origin, 'barrel', _(loc) ->
+            try((inventory_set(loc, 0, 1, 'scarpet_tests:no_such_item'); false),
+                'unknown_item', true) && !inventory_has_items(loc)
+        )
+    ],
+    ['inventory_find unknown item throws unknown_item', _(outer(origin)) ->
+        _it_fixture(origin, 'barrel', _(loc) ->
+            try((inventory_find(loc, 'scarpet_tests:no_such_item'); false),
+                'unknown_item', true)
+        )
+    ],
+    ['inventory_remove unknown item throws unknown_item', _(outer(origin)) ->
+        _it_fixture(origin, 'barrel', _(loc) ->
+            try((inventory_remove(loc, 'scarpet_tests:no_such_item'); false),
+                'unknown_item', true)
+        )
+    ],
+
+    ['item_list includes vanilla items', _() ->
+        length(item_list()) > 100 &&
+            first(item_list(), _ == 'stone') == 'stone'
+    ],
+    ['item_list filters by a known tag', _() ->
+        first(item_list('planks'), _ == 'oak_planks') == 'oak_planks' &&
+            first(item_list('planks'), _ == 'birch_planks') == 'birch_planks'
+    ],
+    ['item_tags lists known tags', _() ->
+        first(item_tags(), _ == 'planks') == 'planks' &&
+            first(item_tags('oak_planks'), _ == 'planks') == 'planks'
+    ],
+    ['item_tags distinguishes tag members and nonmembers', _() ->
+        item_tags('oak_planks', 'planks') == true &&
+            item_tags('stone', 'planks') == false
+    ],
+    ['unknown item tag returns null', _() ->
+        item_list('scarpet_tests:no_such_tag') == null &&
+            item_tags('stone', 'scarpet_tests:no_such_tag') == null
+    ],
+    ['item_tags unknown item throws unknown_item', _() ->
+        try((item_tags('scarpet_tests:no_such_item'); false), 'unknown_item', true)
+    ],
+    ['stack_limit covers single, sixteen and full stacks', _() ->
+        stack_limit('diamond_sword') == 1 &&
+            stack_limit('ender_pearl') == 16 &&
+            stack_limit('stone') == 64
+    ],
+    ['stack_limit unknown item throws unknown_item', _() ->
+        try((stack_limit('scarpet_tests:no_such_item'); false), 'unknown_item', true)
+    ],
+    ['deprecated item_category returns null', _() -> item_category('stone') == null],
+
+    ['recipe_data describes a shaped chest with an empty center', _() -> (
+        recipes = recipe_data('chest');
+        recipe = if(recipes != null, first(recipes, _:2 == ['shaped', 3, 3]));
+        recipe != null && recipe:0:0:0 == 'chest' &&
+            length(recipe:1) == 9 && recipe:1:4 == null
+    )],
+    ['recipe_data explicit crafting type has shaped results', _() -> (
+        recipes = recipe_data('crafting_table', 'crafting');
+        recipe = if(recipes != null, first(recipes, _:2 == ['shaped', 2, 2]));
+        recipe != null && recipe:0:0:0 == 'crafting_table' &&
+            length(recipe:1) == 4
+    )],
+    ['recipe_data describes shapeless crafting', _() -> (
+        recipes = recipe_data('blaze_powder');
+        recipe = if(recipes != null, first(recipes, _:2 == ['shapeless']));
+        recipe != null && recipe:0:0:0 == 'blaze_powder' &&
+            recipe:0:0:1 == 2 && length(recipe:1) == 1
+    )],
+    ['recipe_data describes smelting time and experience', _() -> (
+        recipes = recipe_data('glass', 'smelting');
+        recipe = if(recipes != null, first(recipes, _:2:0 == 'smelting'));
+        recipe != null && recipe:0:0:0 == 'glass' &&
+            recipe:2:1 > 0 && recipe:2:2 >= 0
+    )],
+    ['recipe_data describes stonecutting', _() -> (
+        recipes = recipe_data('stone_bricks', 'stonecutting');
+        recipe = if(recipes != null, first(recipes, _:2 == ['cutting']));
+        recipe != null && recipe:0:0:0 == 'stone_bricks'
+    )],
+    ['recipe_data returns null for missing output', _() ->
+        recipe_data('scarpet_tests:no_such_recipe') == null &&
+            recipe_data('scarpet_tests:no_such_recipe', 'smelting') == null
+    ],
+    ['crafting_remaining_item returns an empty bucket', _() ->
+        crafting_remaining_item('water_bucket'):0 == 'bucket' &&
+            crafting_remaining_item('water_bucket'):1 == 1
+    ],
+    ['crafting_remaining_item returns null for ordinary ingredients', _() ->
+        crafting_remaining_item('stone') == null
+    ],
+    ['crafting_remaining_item unknown item throws unknown_item', _() ->
+        try((crafting_remaining_item('scarpet_tests:no_such_item'); false),
+            'unknown_item', true)
+    ],
+
+    ['screen opens, exposes name and closes idempotently', _(outer(p)) ->
+        _it_screen(p, 'generic_9x1', 'Scarpet test screen', _(screen) ->
+            type(screen) == 'screen' &&
+                screen_property(screen, 'open') &&
+                type(screen_property(screen, 'name')) == 'text' &&
+                str(screen_property(screen, 'name')) == 'Scarpet test screen'
+        )
+    ],
+    ['screen inventory exposes empty container and player slots', _(outer(p)) ->
+        _it_screen(p, 'generic_9x1', 'Scarpet test slots', _(screen) -> (
+            size = inventory_size(screen);
+            size == 46 &&
+                length(inventory_get(screen)) == size &&
+                inventory_get(screen, 0) == null
+        ))
+    ],
+    ['screen negative slot reads the cursor without changing it', _(outer(p)) ->
+        _it_screen(p, 'generic_9x1', 'Scarpet test cursor', _(screen) ->
+            inventory_get(screen, -1) == inventory_get(screen, inventory_size(screen) - 1)
+        )
+    ],
+    ['furnace screen properties round trip without clicks', _(outer(p)) ->
+        _it_screen(p, 'furnace', 'Scarpet test furnace', _(screen) ->
+            screen_property(screen, 'cook_progress', 7) &&
+                screen_property(screen, 'fuel_progress', 9) &&
+                screen_property(screen, 'cook_progress') == 7 &&
+                screen_property(screen, 'fuel_progress') == 9
+        )
+    ],
+    ['create_screen unknown type throws unknown_screen', _(outer(p)) ->
+        try((create_screen(p, 'scarpet_tests:no_such_screen', 'Invalid'); false),
+            'unknown_screen', true)
+    ],
+
+    ['unknown event cannot be signaled or unregistered', _(outer(p)) ->
+        signal_event('scarpet_tests:inventory_never_registered', p, 1) == null &&
+            handle_event('scarpet_tests:inventory_never_registered', null) == false
+    ],
+    ['event handler is a callable function value', _() -> (
+        handler = ( _(message) -> message + 1 );
+        type(handler) == 'function' && str(handler) == '_' &&
+            call(handler, 3) == 4
+    )],
+    ['custom event signals a targeted player-scoped handler', _(outer(p)) ->
+        _it_event_check('scarpet_tests:inventory_target',
+            _(name) -> (
+                global_it_event_calls = 0;
+                global_it_event_payload = null;
+                handle_event(name, _(message) -> (
+                    global_it_event_calls += 1;
+                    global_it_event_payload = message
+                ))
+            ),
+            _(name, added, outer(p)) -> (
+                notified = signal_event(name, p, ['stone', 3]);
+                added && notified == 1 && global_it_event_calls == 1 &&
+                    global_it_event_payload == ['stone', 3]
+            )
+        )
+    ],
+    ['custom event with null target broadcasts its data', _() ->
+        _it_event_check('scarpet_tests:inventory_broadcast',
+            _(name) -> (
+                global_it_event_calls = 0;
+                global_it_event_payload = null;
+                handle_event(name, _(message) -> (
+                    global_it_event_calls += 1;
+                    global_it_event_payload = message
+                ))
+            ),
+            _(name, added) -> (
+                data = {'item' -> 'apple', 'count' -> 2};
+                notified = signal_event(name, null, data);
+                added && type(notified) == 'number' && notified == 1 &&
+                    global_it_event_calls == 1 && global_it_event_payload == data
+            )
+        )
+    ],
+    ['custom event binds extra arguments to a named function', _(outer(p)) ->
+        _it_event_check('scarpet_tests:inventory_bound',
+            _(name) -> (
+                global_it_event_calls = 0;
+                global_it_event_payload = null;
+                handle_event(name, '_it_event_capture', 'bound')
+            ),
+            _(name, added, outer(p)) ->
+                added && signal_event(name, p, 42) == 1 &&
+                    global_it_event_calls == 1 &&
+                    global_it_event_payload == [42, 'bound']
+        )
+    ],
+    ['registering a named handler again replaces its binding', _(outer(p)) ->
+        _it_event_check('scarpet_tests:inventory_replace',
+            _(name) -> (
+                global_it_event_calls = 0;
+                first_added = handle_event(name, '_it_event_capture', 'first');
+                first_added && handle_event(name, '_it_event_capture', 'second')
+            ),
+            _(name, added, outer(p)) ->
+                added && signal_event(name, p, 'probe') == 1 &&
+                    global_it_event_calls == 1 &&
+                    global_it_event_payload == ['probe', 'second']
+        )
+    ],
+    ['custom event stops signaling after unregistering', _(outer(p)) ->
+        _it_event_check('scarpet_tests:inventory_remove',
+            _(name) -> (
+                global_it_event_calls = 0;
+                handle_event(name, _(message) -> global_it_event_calls += 1)
+            ),
+            _(name, added, outer(p)) -> (
+                first_signal = signal_event(name, p, 'before');
+                removed = handle_event(name, null);
+                second_signal = signal_event(name, p, 'after');
+                added && first_signal == 1 && global_it_event_calls == 1 &&
+                    removed && second_signal == 0
+            )
+        )
+    ],
+    // Event registration reports a signature mismatch as false rather than throwing.
+    ['custom event rejects a callback with the wrong arity', _() ->
+        _it_event_check('scarpet_tests:inventory_bad_arity',
+            _(name) -> handle_event(name, _() -> true),
+            _(name, added) -> !added && signal_event(name, null, 1) == 0
+        )
+    ],
+    ['built-in tick event registers and unregisters without firing', _() -> (
+        registered = handle_event('tick', _() -> true);
+        removed = handle_event('tick', null);
+        registered && removed
+    )],
+    ['built-in tick event rejects wrong callback arity', _() -> (
+        registered = handle_event('tick', _(unexpected) -> true);
+        removed = handle_event('tick', null);
+        registered == false && removed
+    )]
+];

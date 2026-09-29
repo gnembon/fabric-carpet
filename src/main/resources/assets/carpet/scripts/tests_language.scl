@@ -1,0 +1,697 @@
+_lt_close(actual, expected, tolerance) -> abs(actual - expected) < tolerance;
+_lt_increment(value) -> value + 1;
+_lt_sum3(a, b, c) -> a + b + c;
+_lt_return_unpacked() -> ... [1, 2, 3];
+_lt_variadic(head, ... tail) -> [head, tail];
+_lt_apply_twice(fn, value) -> call(fn, call(fn, value));
+_lt_early_return(value) -> (
+    if(value < 0, return('negative'));
+    value * 2
+);
+_lt_empty_return() -> (return(); 99);
+_lt_local_scope(value) -> (lt_inside = value + 1; lt_inside);
+_lt_global_scope() -> global_lt_language_scope;
+_lt_edit_scalar(value) -> (value += 1; value);
+_lt_edit_argument(items) -> (items += 9; items);
+
+language_tests() -> [
+    ['integer, decimal, exponent and hexadecimal literals', _() ->
+        12 + 0.5 == 12.5 && 2e3 == 2000 && 0xff == 255 && 0X10 == 16],
+    ['integer precision across arithmetic', _() ->
+        9007199254740993 + 1 == 9007199254740994 &&
+            9007199254740994 - 1 == 9007199254740993],
+    ['boolean and null literals and types', _() ->
+        type(true) == 'bool' && type(false) == 'bool' && type(null) == 'null' &&
+            type(3.5) == 'number' && true == 1 && false == 0 && null != false],
+    ['string literals and escapes', _() ->
+        type('hello') == 'string' && length('can\'t') == 5 &&
+            length('a\nb') == 3 && length('a\tb') == 3 && length('a\\b') == 3],
+    ['list, map and iterator literals', _() ->
+        type([]) == 'list' && type({}) == 'map' && type(range(2)) == 'iterator' &&
+            [1, 'a', null] == l(1, 'a', null) && {'a' -> 1} == m(['a', 1])],
+    ['mathematical constants', _() ->
+        _lt_close(pi, 3.141592653589793, 1e-12) &&
+            _lt_close(euler, 2.718281828459045, 1e-12)],
+
+    ['operator precedence and parentheses', _() ->
+        2 + 3 * 4 == 14 && (2 + 3) * 4 == 20 &&
+            2 * 3 ^ 2 == 18 && 2 ^ 3 ^ 2 == 512],
+    ['left association and unary arithmetic', _() ->
+        12 - 4 - 3 == 5 && 24 / 3 / 2 == 4 &&
+            -3 ^ 2 == 9 && +5 == 5 && -(-4) == 4],
+    ['arithmetic, division and floor modulus', _() ->
+        7 / 2 == 3.5 && 9 % 4 == 1 && -9 % 4 == 3 &&
+            9 % -4 == -3 && 2 ^ 5 == 32],
+    ['functional arithmetic operators', _() ->
+        sum(2, 3, 4) == 9 && difference(10, 3, 2) == 5 &&
+            product(2, 3, 4) == 24 && quotient(24, 3, 2) == 4],
+    ['string arithmetic and concatenation order', _() ->
+        'foo' + 3 + 2 == 'foo32' && 'foo' + (3 + 2) == 'foo5' &&
+            'banana' - 'an' == 'ba' && 3 * 'xo' == 'xoxoxo' &&
+            'abcabc' / 2 == 'abc'],
+    ['elementwise list arithmetic', _() ->
+        [1, 2, 3] + 2 == [3, 4, 5] &&
+            [1, 2] + [3, 4] == [4, 6] &&
+            [4, 6] - [1, 2] == [3, 4] &&
+            [2, 3] * [4, 5] == [8, 15] &&
+            [4, 6] / 2 == [2, 3]],
+    ['map addition and original map', _() -> (
+        base = {'a' -> 1};
+        merged = base + {'b' -> 2};
+        base == {'a' -> 1} && merged == {'a' -> 1, 'b' -> 2} &&
+            has(merged + 'c', 'c')
+    )],
+    ['numeric, string, null and list comparisons', _() ->
+        3 == 3.0 && 2 != 3 && null < -100 &&
+            'bar' < 'foo' && [1] < [1, 2] && [1, 2] < [1, 3]],
+    ['functional comparisons and chains', _() ->
+        equal(2, 2, 2) && !equal(2, 3) &&
+            unique(1, 2, 3) && !unique(1, 2, 1) &&
+            increasing(1, 2, 3) && nondecreasing(1, 1, 2) &&
+            decreasing(3, 2, 1) && nonincreasing(3, 3, 2)],
+    ['binary comparisons', _() ->
+        3 > 2 && 3 >= 3 && 2 < 3 && 2 <= 2 &&
+            5 >= 4 && 5 > 1],
+    ['lazy logical operators', _() ->
+        (false && throw('not evaluated')) == false &&
+            (true || throw('not evaluated')) == true &&
+            (null || 'fallback') == 'fallback' &&
+            (7 && 'last') == 'last'],
+    ['functional logical operators and empty identities', _() ->
+        and(1, 2, 'last') == 'last' &&
+            or(false, null, 'found') == 'found' &&
+            and() == true && or() == false],
+    ['boolean negation and unary function aliases', _() ->
+        !null && ![] && !false && !(!5) &&
+            identity(4) == 4 && opposite(4) == -4],
+    ['list matching returns an index or null', _() ->
+        [8, 3, 8] ~ 3 == 1 && [8, 3] ~ 4 == null &&
+            match([4, 5], 4) == 0],
+    ['string matching and regular expression groups', _() ->
+        'abc123' ~ '\\d+' == '123' &&
+            'foobar' ~ '(f)(oo)' == ['f', 'oo'] &&
+            'foobar' ~ 'z' == null &&
+            match('abc123', '(\\d+)') == '123'],
+    ['map matching returns an existing key', _() ->
+        {'x' -> 1} ~ 'x' == 'x' && {'x' -> 1} ~ 'y' == null],
+
+    ['ordinary and chained assignment', _() -> (
+        a = b = 5;
+        a == 5 && b == 5 && (a += 2) == 7 && a == 7
+    )],
+    ['destructuring assignment', _() -> (
+        [a, b, c] = [3, 4, 5];
+        [a, b, c] == [3, 4, 5]
+    )],
+    ['destructuring addition assignment', _() -> (
+        a = 1; b = 2;
+        [a, b] += [4, 5];
+        [a, b] == [5, 7]
+    )],
+    ['variable swapping', _() -> (
+        a = 1; b = 2;
+        swapped = (a <> b);
+        swapped == 2 && a == 2 && b == 1
+    )],
+    ['destructured swapping', _() -> (
+        [a, b] = [1, 2];
+        [c, d] = [3, 4];
+        [a, b] <> [c, d];
+        [a, b, c, d] == [3, 4, 1, 2]
+    )],
+    ['string and list append assignment', _() -> (
+        text = 'a'; text += 'b';
+        items = [1]; appended = (items += 2);
+        text == 'ab' && items == [1, 2] && appended == items
+    )],
+    ['unpack list arguments into a function', _() ->
+        _lt_sum3(... [1, 2, 3]) == 6 &&
+            call('_lt_sum3', ... [2, 3, 4]) == 9],
+    ['unpacked arguments survive a variable and function return', _() -> (
+        arguments = ... [1, 2, 3];
+        _lt_sum3(arguments) == 6 && _lt_sum3(_lt_return_unpacked()) == 6
+    )],
+    ['variadic function parameter', _() ->
+        _lt_variadic('head') == ['head', []] &&
+            _lt_variadic('head', 2, 3) == ['head', [2, 3]]],
+    ['unpack into list and map constructors', _() ->
+        [... range(3), 3, ... [4, 5]] == [0, 1, 2, 3, 4, 5] &&
+            {... {'a' -> 1}, ... {'b' -> 2}} == {'a' -> 1, 'b' -> 2}],
+    ['bitwise and xor or', _() ->
+        bitwise_and(15, 7, 3) == 3 &&
+            bitwise_xor(1, 2, 3) == 0 &&
+            bitwise_or(1, 2, 4) == 7],
+    ['bitwise shift and rotate', _() ->
+        bitwise_shift_left(3, 2) == 12 &&
+            bitwise_shift_right(-1, 63) == 1 &&
+            bitwise_arithmetic_shift_right(-8, 2) == -2 &&
+            bitwise_roll_left(1, 1) == 2 &&
+            bitwise_roll_right(2, 1) == 1],
+    ['bitwise complement and population count', _() ->
+        bitwise_not(0) == -1 &&
+            bitwise_not(5) == -6 &&
+            bitwise_popcount(15) == 4 &&
+            bitwise_and() == null && bitwise_or() == null],
+    ['double bit conversion round trip', _() ->
+        double_to_long_bits(1) == 4607182418800017408 &&
+            long_to_double_bits(double_to_long_bits(1.5)) == 1.5],
+
+    ['factorial and square root', _() ->
+        fact(0) == 1 && fact(1) == 1 &&
+            fact(5) == 120 && sqrt(81) == 9 && sqrt(0) == 0],
+    ['absolute value, rounding, floor and ceiling', _() ->
+        abs(-7) == 7 && abs(0) == 0 &&
+            round(2.6) == 3 && round(-1.5) == -1 &&
+            floor(-1.2) == -2 && ceil(-1.2) == -1],
+    ['natural, decimal and binary logarithms', _() ->
+        ln(1) == 0 && _lt_close(ln(euler), 1, 1e-10) &&
+            _lt_close(log10(100), 2, 1e-10) &&
+            _lt_close(log(8), 3, 1e-10)],
+    ['logarithm of one plus input', _() ->
+        ln1p(0) == 0 && log1p(0) == 0 &&
+            _lt_close(ln1p(euler - 1), 1, 1e-10) &&
+            _lt_close(log1p(1), 1, 1e-10)],
+    ['minimum, maximum and rectifier', _() ->
+        min(5, 2, 4) == 2 && max([5, 2, 4]) == 5 &&
+            min(['b', 'a']) == 'a' &&
+            relu(-3) == 0 && relu(0) == 0 && relu(3) == 3],
+    ['minimum selects a bound assignment target', _() -> (
+        a = 1; b = 2;
+        min(a, b) = 3;
+        a == 3 && b == 2
+    )],
+    ['mandelbrot finite iteration limit', _() ->
+        mandelbrot(0, 0, 7) == 7 &&
+            mandelbrot(2, 2, 7) == 1 &&
+            mandelbrot(2, 2, 0) == 0],
+    ['sine cosine and tangent use degrees', _() ->
+        sin(0) == 0 && cos(0) == 1 &&
+            _lt_close(sin(30), 0.5, 1e-10) &&
+            _lt_close(cos(60), 0.5, 1e-10) &&
+            _lt_close(tan(45), 1, 1e-10)],
+    ['inverse trigonometry returns degrees', _() ->
+        _lt_close(asin(0.5), 30, 1e-10) &&
+            _lt_close(acos(0.5), 60, 1e-10) &&
+            _lt_close(atan(1), 45, 1e-10) &&
+            _lt_close(atan2(1, 0), 90, 1e-10)],
+    ['hyperbolic and inverse hyperbolic functions', _() ->
+        sinh(0) == 0 && cosh(0) == 1 && tanh(0) == 0 &&
+            asinh(0) == 0 && acosh(1) == 0 && atanh(0) == 0 &&
+            _lt_close(tanh(atanh(0.25)), 0.25, 1e-10)],
+    ['reciprocal trigonometric functions', _() ->
+        _lt_close(sec(60), 2, 1e-10) &&
+            _lt_close(csc(30), 2, 1e-10) &&
+            _lt_close(cot(45), 1, 1e-10) &&
+            _lt_close(acot(1), 45, 1e-10)],
+    ['reciprocal hyperbolic functions', _() ->
+        sech(0) == 1 &&
+            _lt_close(csch(asinh(1)), 1, 1e-10) &&
+            _lt_close(coth(atanh(0.5)), 2, 1e-10)],
+    ['radian and degree conversion', _() ->
+        _lt_close(rad(180), pi, 1e-10) &&
+            _lt_close(deg(pi), 180, 1e-10) &&
+            rad(0) == 0],
+
+    ['type identifies collections, functions and iterators', _() ->
+        type([1]) == 'list' && type({'a' -> 1}) == 'map' &&
+            type(range(3)) == 'iterator' && type(_(n) -> n) == 'function'],
+    ['explicit bool conversion versus conditional strings', _() ->
+        !bool('') && !bool('false') && !bool('NuLl') &&
+            bool('0') && bool([null]) && !bool([]) &&
+            if('false', 1, 0) == 1],
+    ['number conversion from strings and containers', _() ->
+        number('3.5') == 3.5 && number('bad') == null &&
+            number('') == null && number([1, 2]) == 2 &&
+            number({'a' -> 1}) == 1 && number(true) == 1],
+    ['plain string conversion and lengths', _() ->
+        str(null) == 'null' && str(false) == 'false' &&
+            str([1, 2]) == '[1, 2]' &&
+            length(null) == 0 && length('abc') == 3 &&
+            length(-12) == 3 && length({'a' -> 1}) == 1],
+    ['string formatting with integer and float arguments', _() ->
+        str('n=%d x=%x', 10, 255) == 'n=10 x=ff' &&
+            str('pi=%.2f', pi) == 'pi=3.14' &&
+            str('100%% %d', 3) == '100% 3'],
+    ['string formatting with argument list', _() ->
+        str('%s:%04d', ['x', 7]) == 'x:0007' &&
+            str('%b %b', true, false) == 'true false'],
+    ['lower, upper and title case', _() ->
+        lower('AbC') == 'abc' && upper('AbC') == 'ABC' &&
+            title('hELLO wORLD') == 'Hello World'],
+    ['regular expression replace all and removal', _() ->
+        replace('abbaabba', 'b+', 'X') == 'aXaaXa' &&
+            replace('a1b2', '\\d') == 'ab'],
+    ['regular expression replace first', _() ->
+        replace_first('abbaabba', 'b+', 'X') == 'aXaabba' &&
+            replace_first('a1b2', '\\d') == 'ab2'],
+    ['stable hash code for the same value', _() ->
+        hash_code('abc') == hash_code('abc') &&
+            hash_code([1, 2]) == hash_code([1, 2])],
+    ['print passes through the printed value', _() ->
+        print('scarpet language test') == 'scarpet language test'],
+    ['base64 encoding and UTF-8 round trip', _() ->
+        encode_b64('Hi') == 'SGk=' &&
+            decode_b64('SGk=') == 'Hi' &&
+            decode_b64(encode_b64('é')) == 'é'],
+    ['invalid base64 is a catchable IO error', _() -> (
+        bad = 'not@base64';
+        try((decode_b64(bad); false), 'b64_error', true) &&
+            try((decode_b64(bad); false), 'io_exception', true)
+    )],
+    ['JSON encoding of scalars and lists', _() ->
+        encode_json([1, true, 'x', null]) == '[1,true,"x",null]' &&
+            decode_json('[1,true,"x",null]') == [1, true, 'x', null]],
+    ['JSON map round trip and null decoding', _() ->
+        decode_json(encode_json({'a' -> 2, 'b' -> [false, null]})) ==
+            {'a' -> 2, 'b' -> [false, null]} &&
+            decode_json('true') == true],
+    ['invalid JSON is a catchable IO error', _() -> (
+        bad = '{broken';
+        try((decode_json(bad); false), 'json_error', true) &&
+            try((decode_json(bad); false), 'io_exception', true)
+    )],
+    ['monotonic and Unix clocks', _() -> (
+        before = time();
+        after = time();
+        type(before) == 'number' && after >= before &&
+            type(unix_time()) == 'number' && unix_time() > 0
+    )],
+    ['date conversion round trip with time fields', _() -> (
+        date = convert_date(convert_date(2024, 2, 29, 12, 34, 56));
+        slice(date, 0, 6) == [2024, 2, 29, 12, 34, 56] &&
+            length(date) == 9 && date:6 >= 1 && date:6 <= 7
+    )],
+    ['date conversion from a three-element list', _() ->
+        slice(convert_date(convert_date([2024, 2, 29])), 0, 3) == [2024, 2, 29]],
+    ['one, two and three dimensional Perlin noise', _() -> (
+        a = perlin(0.125);
+        b = perlin(0.125, 0.25);
+        c = perlin(0.125, 0.25, 0.5);
+        type(a) == 'number' && type(b) == 'number' && type(c) == 'number' &&
+            a == perlin(0.125) && b == perlin(0.125, 0.25) &&
+            c == perlin(0.125, 0.25, 0.5)
+    )],
+    ['seeded Perlin noise and omitted dimensions', _() ->
+        perlin(0.125, null, null, 137) == perlin(0.125, null, null, 137) &&
+            perlin(0.125, 0.25, null, 137) == perlin(0.125, 0.25, null, 137)],
+    ['two and three dimensional Simplex noise', _() -> (
+        a = simplex(0.125, 0.25);
+        b = simplex(0.125, 0.25, 0.5);
+        type(a) == 'number' && type(b) == 'number' &&
+            a == simplex(0.125, 0.25) &&
+            b == simplex(0.125, 0.25, 0.5)
+    )],
+    ['seeded Simplex noise with omitted third dimension', _() ->
+        simplex(0.125, 0.25, null, 137) == simplex(0.125, 0.25, null, 137) &&
+            simplex(0.125, 0.25, 0.5, 137) == simplex(0.125, 0.25, 0.5, 137)],
+    ['random number bounds without assuming the result', _() -> (
+        value = rand(7);
+        value >= 0 && value < 7 && rand(0) == 0 && !bool(rand(0))
+    )],
+    ['random choice from a list', _() -> (
+        choice = rand(['red', 'green', 'blue']);
+        ['red', 'green', 'blue'] ~ choice != null
+    )],
+    ['seeded random sequence can be reset', _() -> (
+        seed = 987654321098;
+        reset_seed(seed);
+        first_value = rand(10, seed);
+        rand(10, seed);
+        had_seed = reset_seed(seed);
+        restarted = rand(10, seed);
+        reset_seed(seed);
+        had_seed && first_value == restarted
+    )],
+    ['pure expression profiler produces a count', _() ->
+        type(profile_expr(1 + 1)) == 'number'],
+
+    ['list constructors and range materialization', _() ->
+        [] == l() && [1, 2] == l(1, 2) &&
+            [range(4)] == [0, 1, 2, 3] &&
+            [range(5, 8)] == [5, 6, 7]],
+    ['descending and stepped ranges', _() ->
+        [range(6, 0, -2)] == [6, 4, 2] &&
+            [range(0, 7, 3)] == [0, 3, 6] &&
+            [range(4, 4)] == []],
+    ['fractional ranges with exact binary steps', _() ->
+        map(range(0, 1, 0.25), _ * 4) == [0, 1, 2, 3]],
+    ['list access wraps around and handles empty lists', _() ->
+        get([10, 20, 30], 1) == 20 &&
+            get([10, 20, 30], -1) == 30 &&
+            [10, 20, 30]:5 == 30 &&
+            get([], 0) == null],
+    ['map access distinguishes missing and null entries', _() -> (
+        entries = {'present' -> null, 'value' -> 3};
+        entries:'value' == 3 && entries:'missing' == null &&
+            get(entries, 'present') == null && has(entries, 'present') &&
+            !has(entries, 'missing')
+    )],
+    ['get and has traverse nested containers', _() -> (
+        entries = {'rows' -> [[1, 2], [3, 4]]};
+        get(entries, 'rows', 1, 0) == 3 &&
+            entries:'rows':0:1 == 2 &&
+            has(entries, 'rows', 0, 1) &&
+            !has(entries, 'missing', 0)
+    )],
+    ['get and has accept lvalue accessors', _() -> (
+        entries = {'row' -> [4, 5]};
+        get(entries:'row':1) == 5 &&
+            has(entries:'row':0) && !has(entries:'row':8)
+    )],
+    ['list put replace, append and insert', _() -> (
+        items = [1, 2, 3];
+        replaced = put(items, -1, 9);
+        appended = put(items, null, 4);
+        inserted = put(items, 1, 8, 'insert');
+        replaced && appended && inserted && items == [1, 8, 2, 9, 4]
+    )],
+    ['list put extend and fill gaps', _() -> (
+        items = [1];
+        put(items, null, [2, 3], 'extend');
+        put(items, 5, 6);
+        items == [1, 2, 3, null, null, 6]
+    )],
+    ['lvalue put, assignment and append', _() -> (
+        items = [[0, 0], [0, 0]];
+        put(items:1:0, 4);
+        items:0:1 = 3;
+        items:1:0 += 2;
+        items == [[0, 3], [6, 0]]
+    )],
+    ['map insertion and replacement mutate the map', _() -> (
+        entries = {'a' -> 1};
+        put(entries, 'b', 2);
+        replaced = put(entries, 'a', 3);
+        entries:'c' = 4;
+        replaced && entries == {'a' -> 3, 'b' -> 2, 'c' -> 4}
+    )],
+    ['delete elements and keys with both forms', _() -> (
+        items = [1, 2, 3];
+        entries = {'a' -> 1, 'b' -> 2};
+        removed_list = delete(items, -1);
+        removed_key = delete(entries:'a');
+        removed_list && removed_key &&
+            items == [1, 2] && entries == {'b' -> 2} &&
+            !delete(entries, 'missing') && !delete([], 0)
+    )],
+    ['delete traverses nested containers', _() -> (
+        entries = {'items' -> [1, 2, 3]};
+        delete(entries, 'items', 1) &&
+            entries:'items' == [1, 3]
+    )],
+    ['appending a key to a map', _() -> (
+        entries = {'a' -> 1};
+        entries += 'b';
+        has(entries, 'b') && entries:'b' == null && entries:'a' == 1
+    )],
+    ['deep copy isolates nested containers', _() -> (
+        original = [{'a' -> [1, 2]}];
+        duplicate = copy(original);
+        duplicate:0:'a':0 = 9;
+        original:0:'a' == [1, 2] && duplicate:0:'a' == [9, 2]
+    )],
+    ['join lists, ranges and positional values', _() ->
+        join('-', [1, 2, 3]) == '1-2-3' &&
+            join(':', range(3)) == '0:1:2' &&
+            join('/', 'a', 'b') == 'a/b'],
+    ['split strings by characters and regex delimiter', _() ->
+        split('abc') == ['a', 'b', 'c'] &&
+            split(',', 'a,b,,c') == ['a', 'b', '', 'c'] &&
+            split('\\.', 'a.b') == ['a', 'b'] &&
+            split(null) == []],
+    ['split lists at matching elements', _() ->
+        split(0, [1, 0, 2, 3, 0, 4]) == [[1], [2, 3], [4]] &&
+            split([1, 2]) == [[1], [2]]],
+    ['slice strings and lists without mutating them', _() -> (
+        items = [0, 1, 2, 3, 4];
+        slice(items, 1, 3) == [1, 2] &&
+            slice(items, -2) == [3, 4] &&
+            slice('abcdef', 1, 4) == 'bcd' &&
+            slice('abcdef', -2) == 'ef' &&
+            items == [0, 1, 2, 3, 4]
+    )],
+    ['slice an iterator over a bounded interval', _() ->
+        slice(range(8), 2, 5) == [2, 3, 4]],
+    ['sort arguments and a copy of a list', _() -> (
+        original = [3, 1, 2];
+        sort(original) == [1, 2, 3] &&
+            sort(4, 2, 3) == [2, 3, 4] &&
+            original == [3, 1, 2]
+    )],
+    ['sort_key evaluates a key for each element', _() ->
+        sort_key([1, 3, 2], -_) == [3, 2, 1] &&
+            sort_key(['xx', 'z', 'bbb'], length(_)) == ['z', 'xx', 'bbb']],
+    ['random-key sort preserves the multiset of values', _() ->
+        sort(sort_key([3, 1, 2])) == [1, 2, 3]],
+    ['map constructors and set-style entries', _() ->
+        m() == {} && m(['a', 1], ['b', 2]) == {'a' -> 1, 'b' -> 2} &&
+            has({'x', 'y'}, 'x') && {'x', 'y'}:'x' == null &&
+            length({range(3)}) == 3],
+    ['keys values and pairs are order independent', _() -> (
+        entries = {'a' -> 1, 'b' -> 2};
+        sort(keys(entries)) == ['a', 'b'] &&
+            sort(values(entries)) == [1, 2] &&
+            length(pairs(entries)) == 2 &&
+            pairs(entries) ~ ['a', 1] != null &&
+            pairs(entries) ~ ['b', 2] != null
+    )],
+    ['map iteration yields its keys', _() ->
+        for({'a' -> 1, 'b' -> 2}, _ == 'a') == 1],
+
+    ['loop supplies the iteration index and last result', _() -> (
+        seen = [];
+        last = loop(4, seen += _; _ * 2);
+        seen == [0, 1, 2, 3] && last == 6 &&
+            loop(0, throw('not evaluated')) == null
+    )],
+    ['while supplies an index and obeys its limit', _() ->
+        while(_ < 3, 4, _) == 2 &&
+            while(_ < 5, 3, _) == 2 &&
+            while(false, throw('not evaluated')) == null],
+    ['C-style for loop counts iterations', _() -> (
+        total = 0;
+        count = c_for(i = 0, i < 4, i += 1, total += i);
+        count == 4 && total == 6
+    )],
+    ['C-style break and continue', _() -> (
+        seen = [];
+        count = c_for(i = 0, i < 4, i += 1,
+            if(i == 1, continue(), seen += i)
+        );
+        stopped = c_for(j = 0, j < 5, j += 1, if(j == 2, break()));
+        count == 4 && seen == [0, 2, 3] && stopped == 2
+    )],
+    ['for counts successful predicates', _() ->
+        for(range(6), _ % 2 == 0) == 3 &&
+            for(['a', 'b', 'c'], _i == 1 && _ == 'b') == 1],
+    ['for counts continue and stops on break', _() ->
+        for([0, 1, 2, 3],
+            if(_ == 1, continue(true), _ == 3, break(), _ % 2 == 0)
+        ) == 3],
+    ['map transforms values and exposes indices', _() ->
+        map(range(4), _ * _) == [0, 1, 4, 9] &&
+            map(['a', 'b'], _ + _i) == ['a0', 'b1'] &&
+            map([], throw('not evaluated')) == []],
+    ['map continue and break without return values', _() ->
+        map([1, 2, 3, 4],
+            if(_ == 2, continue(), _ == 4, break(), _)
+        ) == [1, 3]],
+    ['map continue and break with replacement values', _() ->
+        map([1, 2, 3, 4],
+            if(_ == 2, continue(20), _ == 3, break(30), _)
+        ) == [1, 20, 30]],
+    ['filter by value and index', _() ->
+        filter(range(6), _ % 2 == 0) == [0, 2, 4] &&
+            filter(['a', 'b', 'c'], _i != 1) == ['a', 'c']],
+    ['filter continue and break with booleans', _() ->
+        filter([1, 2, 3, 4],
+            if(_ == 2, continue(true), _ == 4, break(false), _ % 2 == 1)
+        ) == [1, 2, 3]],
+    ['first match, no match and early break', _() ->
+        first(range(5), _ > 2) == 3 &&
+            first([1, 2], _ == 3) == null &&
+            first([1, 2, 3], if(_ == 2, break(99), false)) == 99],
+    ['all stops on failure and accepts empty lists', _() ->
+        all([1, 2, 3], _ > 0) &&
+            !all([1, 2, 3], _ > 1) &&
+            all([], throw('not evaluated')) &&
+            !all([1, 2], if(_ == 1, false, throw('not evaluated')))],
+    ['higher-order functions treat null as an empty source', _() ->
+        map(null, throw('not evaluated')) == [] &&
+            filter(null, throw('not evaluated')) == [] &&
+            first(null, throw('not evaluated')) == null &&
+            all(null, throw('not evaluated')) &&
+            for(null, throw('not evaluated')) == 0],
+    ['reduce accumulates using value and index', _() ->
+        reduce([1, 2, 3, 4], _a + _, 0) == 10 &&
+            reduce([2, 3, 4], _a * _, 1) == 24 &&
+            reduce([1, 2, 3], _a + _i, 0) == 3 &&
+            reduce([], throw('not evaluated'), 42) == 42],
+    ['reduce continue and break replace the accumulator', _() ->
+        reduce([1, 2, 3],
+            if(_ == 2, continue(10), _a + _), 0
+        ) == 13 &&
+            reduce([1, 2, 3],
+                if(_ == 2, break(7), _a + _), 0
+            ) == 7],
+    ['nested iteration restores the outer loop variable', _() ->
+        map([1, 2], (
+            n = _;
+            [map([10, 20], n + _), _]
+        )) == [[[11, 21], 1], [[12, 22], 2]]],
+
+    ['function call by name and by function value', _() -> (
+        fn = (_(n) -> n * 3);
+        _lt_increment(4) == 5 &&
+            call('_lt_increment', 4) == 5 &&
+            call(fn, 4) == 12 &&
+            _lt_apply_twice(fn, 2) == 18
+    )],
+    ['anonymous function captures a snapshot of a scalar', _() -> (
+        value = 4;
+        fn = (_(outer(value), n) -> value + n);
+        value = 10;
+        call(fn, 3) == 7 && value == 10
+    )],
+    ['mutable captured list persists across calls', _() -> (
+        state = [0];
+        advance = (_(outer(state)) -> (state:0 += 1; state:0));
+        call(advance) == 1 && call(advance) == 2 && state:0 == 2
+    )],
+    ['function locals, scalar arguments and shared mutable lists', _() -> (
+        lt_inside = 100;
+        scalar = 5;
+        items = [1, 2];
+        modified = _lt_edit_argument(items);
+        _lt_local_scope(4) == 5 && lt_inside == 100 &&
+            _lt_edit_scalar(scalar) == 6 && scalar == 5 &&
+            modified == [1, 2, 9] && items == [1, 2, 9]
+    )],
+    ['global variable is visible to another function and restored', _() -> (
+        had_value = (vars('global_lt_language_scope') ~ 'global_lt_language_scope') != null;
+        previous = if(had_value, global_lt_language_scope, null);
+        global_lt_language_scope = 41;
+        observed = _lt_global_scope() == 41;
+        if(had_value,
+            global_lt_language_scope = previous,
+            undef('global_lt_language_scope*')
+        );
+        observed && if(had_value,
+            global_lt_language_scope == previous,
+            vars('global_lt_language_scope') == []
+        )
+    )],
+    ['dynamic function definition, invocation and undef', _() -> (
+        fn = (_lt_ephemeral(n) -> n + 4);
+        observed = call(fn, 3) == 7 && call('_lt_ephemeral', 3) == 7;
+        undef(fn);
+        observed && call(fn, 5) == 9
+    )],
+    ['import lists available symbols from this library', _() ->
+        first(import('tests_language'), _ == 'language_tests') == 'language_tests' &&
+            first(import('tests_language'), _ == '_lt_increment') == '_lt_increment'],
+    ['var accesses a dynamically named local variable', _() -> (
+        var('lt_dynamic_value') = 8;
+        found = (vars('lt_dynamic_') ~ 'lt_dynamic_value') != null;
+        found && var('lt_dynamic_value') == 8 &&
+            (var('lt_dynamic_value') += 2) == 10
+    )],
+    ['undef removes local variable bindings by name and prefix', _() -> (
+        lt_probe_a = 1;
+        lt_probe_b = 2;
+        undef('lt_probe_a');
+        first_removed = vars('lt_probe_a') == [];
+        undef('lt_probe_*');
+        first_removed && vars('lt_probe_') == []
+    )],
+    ['early return and empty return', _() ->
+        _lt_early_return(-1) == 'negative' &&
+            _lt_early_return(4) == 8 &&
+            _lt_empty_return() == null],
+    ['semicolon and then evaluate in sequence', _() -> (
+        n = 1;
+        value = then(n += 2, n = n * 3, n);
+        n == 9 && value == 9 && (1; 2; 3) == 3
+    )],
+    ['if selects a branch lazily and has a null default', _() ->
+        if(false, throw('not evaluated'), true, 7, throw('not evaluated')) == 7 &&
+            if(false, throw('not evaluated')) == null &&
+            if(false, 1, false, 2, 3) == 3],
+    ['try preserves a successful result', _() ->
+        try(7, 'user_exception', false) == 7],
+    ['throw and try pass a user exception value', _() ->
+        try(throw('payload'), _ == 'payload') &&
+            try(throw(), 'user_exception', _ == null) &&
+            try(throw('ignored')) == null],
+    ['typed exceptions match their ancestor', _() ->
+        try(throw('json_error', 'bad'), 'io_exception', _ == 'bad') &&
+            try(throw('user_exception', 42),
+                'json_error', false,
+                'exception', _ == 42
+            )],
+    ['custom exception subtype matches itself and parent', _() ->
+        try(throw('lt_child', 'user_exception', 6), 'lt_child', _ == 6) &&
+            try(throw('lt_child', 'user_exception', 7),
+                'user_exception', _ == 7
+            )],
+    ['uncaught filter propagates to an outer try', _() ->
+        try(
+            try(throw('value'), 'json_error', false),
+            'user_exception', _ == 'value'
+        )],
+    ['catch provides trace, stack and locals', _() ->
+        try(throw('trace'), 'user_exception',
+            _ == 'trace' && type(_trace) == 'map' &&
+                type(_trace:'stack') == 'list' &&
+                type(_trace:'locals') == 'map' &&
+                type(_trace:'token') == 'list'
+        )],
+    ['system shared variable defaults, overwrites and restores', _() -> (
+        key = 'scarpet_tests:language:' + str(unix_time()) + ':' + str(time());
+        previous = system_variable_get(key);
+        missing = previous == null;
+        defaulted = system_variable_get(key, 12) == 12;
+        lazy_default = system_variable_get(key, throw('not evaluated')) == 12;
+        overwritten = system_variable_set(key, 17) == 12 &&
+            system_variable_get(key) == 17;
+        system_variable_set(key, previous);
+        missing && defaulted && lazy_default && overwritten
+    )],
+
+    ['synchronize returns its protected expression', _() ->
+        synchronize('scarpet_tests_language_lock', 2 + 3) == 5 &&
+            synchronize(9 * 9) == 81],
+    ['task_dock is transparent on the main thread', _() ->
+        task_dock(6 * 7) == 42],
+    ['zero-duration sleep and nonnegative task counts', _() ->
+        sleep(0) == 0 && sleep() == 0 &&
+            task_count() >= 0 && task_count(null) >= 0 &&
+            task_count('scarpet_tests_language_unused_executor') == 0],
+    ['task handle, completion and nonblocking value', _() -> (
+        handle = task(_() -> 7);
+        snapshot = task_value(handle);
+        type(handle) == 'task' && type(task_completed(handle)) == 'bool' &&
+            type(task_ready(handle)) == 'bool' &&
+            (snapshot == null || snapshot == 7)
+    )],
+    ['task by function name with arguments', _() -> (
+        handle = task('_lt_increment', 8);
+        snapshot = task_value(handle);
+        type(handle) == 'task' && (snapshot == null || snapshot == 9)
+    )],
+    ['task_thread on the default executor', _() -> (
+        handle = task_thread(null, _() -> 11);
+        snapshot = task_value(handle);
+        type(handle) == 'task' && (snapshot == null || snapshot == 11)
+    )],
+    ['task_thread with named executor and arguments', _() -> (
+        handle = task_thread('scarpet_tests_language_executor', _(n) -> n * 2, 6);
+        snapshot = task_value(handle);
+        type(handle) == 'task' && task_count('scarpet_tests_language_executor') >= 0 &&
+            (snapshot == null || snapshot == 12)
+    )],
+    ['reading an already completed task without joining', _() -> (
+        handle = task(_() -> 5);
+        if(task_completed(handle), task_value(handle) == 5, true)
+    )]
+];

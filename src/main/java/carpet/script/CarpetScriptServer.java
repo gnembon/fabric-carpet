@@ -106,6 +106,12 @@ public class CarpetScriptServer extends ScriptServer
         registerBuiltInApp(Module.carpetNative("shapes", true));
         //registerBuiltInApp(Module.carpetNative("sctest", false));
         registerBuiltInApp(Module.carpetNative("distance_beta", false));
+        registerBuiltInApp(Module.carpetNative("tests", false));
+        registerBuiltInApp(Module.carpetNative("tests_language", true));
+        registerBuiltInApp(Module.carpetNative("tests_world", true));
+        registerBuiltInApp(Module.carpetNative("tests_entities", true));
+        registerBuiltInApp(Module.carpetNative("tests_inventory", true));
+        registerBuiltInApp(Module.carpetNative("tests_auxiliary", true));
     }
 
     public CarpetScriptServer(MinecraftServer server)

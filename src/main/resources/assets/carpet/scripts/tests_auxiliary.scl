@@ -1,0 +1,374 @@
+_aux_objective(name, check) -> (
+    if(scoreboard(name) != null, scoreboard_remove(name));
+    if(scoreboard_add(name) != true, return(false));
+    result = call(check);
+    removed = scoreboard_remove(name);
+    result && removed && scoreboard(name) == null
+);
+
+_aux_team(name, check) -> (
+    if(team_list(name) != null, team_remove(name));
+    if(team_add(name) != name, return(false));
+    result = call(check);
+    removed = team_remove(name);
+    result && removed && team_list(name) == null
+);
+
+_aux_bossbar(name, check) -> (
+    if(bossbar(name, 'visible') != null, bossbar(name, 'remove'));
+    if(bossbar(name) != name, return(false));
+    result = call(check);
+    removed = bossbar(name, 'remove');
+    result && removed && bossbar(name, 'visible') == null
+);
+
+_aux_scheduled() -> global_aux_scheduled = true;
+
+auxiliary_tests(p, origin) -> (
+    cases = [
+        ['scoreboard missing objective', _() -> scoreboard('sctest_missing') == null],
+        ['scoreboard objective creation and listing', _() -> _aux_objective('sctest_a', _() ->
+            first(scoreboard(), _ == 'sctest_a') == 'sctest_a' && scoreboard('sctest_a') == []
+        )],
+        ['scoreboard set, read and reset', _() -> _aux_objective('sctest_b', _() -> (
+            old = scoreboard('sctest_b', 'SCTestDummy', 17);
+            ok = old == 0 && scoreboard('sctest_b', 'SCTestDummy') == 17 &&
+                first(scoreboard('sctest_b'), _ == 'SCTestDummy') == 'SCTestDummy' &&
+                scoreboard('sctest_b', 'SCTestDummy', null) == 17;
+            ok && scoreboard('sctest_b', 'SCTestDummy') == null
+        ))],
+        ['scoreboard_remove entry', _() -> _aux_objective('sctest_c', _() -> (
+            scoreboard('sctest_c', 'SCTestDummy', 8);
+            scoreboard_remove('sctest_c', 'SCTestDummy') == 8 &&
+                scoreboard_remove('sctest_c', 'SCTestDummy') == null
+        ))],
+        ['scoreboard_add explicit criterion', _() -> (
+            if(scoreboard('sctest_d') != null, scoreboard_remove('sctest_d'));
+            created = scoreboard_add('sctest_d', 'dummy');
+            ok = created == true && scoreboard_property('sctest_d', 'criterion') == 'dummy';
+            scoreboard_remove('sctest_d');
+            ok
+        )],
+        ['scoreboard_add unknown criterion', _() ->
+            try((scoreboard_add('sctest_bad', 'scarpet_tests:unknown'); false),
+                'unknown_criterion', true)
+        ],
+        ['scoreboard display_name', _() -> _aux_objective('sctest_e', _() ->
+            scoreboard_property('sctest_e', 'display_name', 'Test score') &&
+                str(scoreboard_property('sctest_e', 'display_name')) == 'Test score'
+        )],
+        ['scoreboard render_type', _() -> _aux_objective('sctest_f', _() ->
+            scoreboard_property('sctest_f', 'render_type', 'hearts') &&
+                scoreboard_property('sctest_f', 'render_type') == 'hearts'
+        )],
+        ['scoreboard display and display_slot', _() -> _aux_objective('sctest_g', _() -> (
+            ok = scoreboard_display('sidebar', 'sctest_g') == 'sidebar' &&
+                first(scoreboard_property('sctest_g', 'display_slot'), _ == 'sidebar') == 'sidebar';
+            scoreboard_display('sidebar', null);
+            ok && scoreboard_property('sctest_g', 'display_slot') == []
+        ))],
+
+        ['team list missing team', _() -> team_list('sctest_missing') == null],
+        ['team creation, membership and leave', _() -> _aux_team('scteam_a', _() -> (
+            joined = team_add('scteam_a', 'SCTestDummy');
+            ok = joined && first(team_list(), _ == 'scteam_a') == 'scteam_a' &&
+                first(team_list('scteam_a'), _ == 'SCTestDummy') == 'SCTestDummy' &&
+                team_add('scteam_a', 'SCTestDummy') == false;
+            ok && team_leave('SCTestDummy') && team_list('scteam_a') == []
+        ))],
+        ['team collision rule', _() -> _aux_team('scteam_b', _() ->
+            team_property('scteam_b', 'collisionRule', 'never') &&
+                team_property('scteam_b', 'collisionRule') == 'never'
+        )],
+        ['team color', _() -> _aux_team('scteam_c', _() ->
+            team_property('scteam_c', 'color', 'red') &&
+                team_property('scteam_c', 'color') == 'red'
+        )],
+        ['team formatted prefix, suffix and display name', _() -> _aux_team('scteam_d', _() ->
+            team_property('scteam_d', 'prefix', format('r Test:')) &&
+                team_property('scteam_d', 'suffix', ' end') &&
+                team_property('scteam_d', 'displayName', 'Test team') &&
+                str(team_property('scteam_d', 'prefix')) == 'Test:' &&
+                str(team_property('scteam_d', 'suffix')) == ' end' &&
+                str(team_property('scteam_d', 'displayName')) == 'Test team'
+        )],
+        ['team friendly fire and invisibility', _() -> _aux_team('scteam_e', _() ->
+            team_property('scteam_e', 'friendlyFire', false) &&
+                !team_property('scteam_e', 'friendlyFire') &&
+                team_property('scteam_e', 'seeFriendlyInvisibles', false) &&
+                !team_property('scteam_e', 'seeFriendlyInvisibles')
+        )],
+        ['team name tag visibility', _() -> _aux_team('scteam_f', _() ->
+            team_property('scteam_f', 'nametagVisibility', 'never') &&
+                team_property('scteam_f', 'nametagVisibility') == 'never'
+        )],
+        ['team death message visibility', _() -> _aux_team('scteam_g', _() ->
+            team_property('scteam_g', 'deathMessageVisibility', 'never') &&
+                team_property('scteam_g', 'deathMessageVisibility') == 'never'
+        )],
+
+        ['bossbar creation, listing and duplicate', _() -> _aux_bossbar('scarpet_tests:one', _() ->
+            first(bossbar(), _ == 'scarpet_tests:one') == 'scarpet_tests:one' &&
+                bossbar('scarpet_tests:one') == false
+        )],
+        ['bossbar value and maximum', _() -> _aux_bossbar('scarpet_tests:two', _() ->
+            bossbar('scarpet_tests:two', 'max', 200) &&
+                bossbar('scarpet_tests:two', 'value', 75) &&
+                bossbar('scarpet_tests:two', 'max') == 200 &&
+                bossbar('scarpet_tests:two', 'value') == 75
+        )],
+        ['bossbar color, style, name and visibility', _() -> _aux_bossbar('scarpet_tests:three', _() ->
+            bossbar('scarpet_tests:three', 'color', 'blue') &&
+                bossbar('scarpet_tests:three', 'style', 'notched_6') &&
+                bossbar('scarpet_tests:three', 'name', 'Test bossbar') &&
+                bossbar('scarpet_tests:three', 'visible', false) &&
+                bossbar('scarpet_tests:three', 'color') == 'blue' &&
+                bossbar('scarpet_tests:three', 'style') == 'notched_6' &&
+                str(bossbar('scarpet_tests:three', 'name')) == 'Test bossbar' &&
+                !bossbar('scarpet_tests:three', 'visible')
+        )],
+        ['bossbar player targeting', _(outer(p)) -> _aux_bossbar('scarpet_tests:four', _() -> (
+            bossbar('scarpet_tests:four', 'add_player', p);
+            added = first(bossbar('scarpet_tests:four', 'players'), _ == p) == p;
+            bossbar('scarpet_tests:four', 'players', []);
+            added && bossbar('scarpet_tests:four', 'players') == []
+        ))],
+
+        ['nbt compound parsing', _() -> type(nbt('{key:12}')) == 'nbt' &&
+            parse_nbt(nbt('{key:12}')):'key' == 12],
+        ['parse_nbt invalid input returns null', _() -> parse_nbt('{broken:') == null],
+        ['escape_nbt round trip', _() -> (
+            text = 'one"two';
+            parse_nbt(nbt('{message:' + escape_nbt(text) + '}')):'message' == text
+        )],
+        ['tag_matches compound subset', _() ->
+            tag_matches(nbt('{a:1,b:2}'), nbt('{a:1}')) &&
+                !tag_matches(nbt('{a:1}'), nbt('{a:1,b:2}'))
+        ],
+        ['tag_matches null cases', _() ->
+            tag_matches(nbt('{a:1}'), null) && !tag_matches(null, nbt('{a:1}'))
+        ],
+        ['encode_nbt map and parse_nbt', _() ->
+            type(encode_nbt({'a' -> 2, 'b' -> 'yes'})) == 'nbt' &&
+                parse_nbt(encode_nbt({'a' -> 2, 'b' -> 'yes'})) == {'a' -> 2, 'b' -> 'yes'}
+        ],
+        ['encode_nbt list', _() -> parse_nbt(encode_nbt([1, 2, 3])) == [1, 2, 3]],
+        ['nbt_storage write, read and restore', _() -> (
+            key = 'scarpet_tests:probe';
+            previous = nbt_storage(key);
+            nbt_storage(key, nbt('{value:42}'));
+            ok = parse_nbt(nbt_storage(key)):'value' == 42 &&
+                first(nbt_storage(), _ == key) == key;
+            nbt_storage(key, if(previous == null, nbt('{}'), previous));
+            ok
+        )],
+
+        ['format text and list components', _() ->
+            type(format('r Hello')) == 'text' &&
+                str(format(['r Hello', 'g World'])) == 'HelloWorld'
+        ],
+        ['item_display_name', _() -> type(item_display_name('stone')) == 'text' &&
+            length(str(item_display_name('stone'))) > 0],
+        ['print to the invoking player', _(outer(p)) ->
+            print(p, '[tests] print() delivered') == '[tests] print() delivered'],
+        ['logger passthrough', _() -> logger('debug', 'scarpet auxiliary tests') == 'scarpet auxiliary tests'],
+        ['display_title actionbar and clear', _(outer(p)) -> (
+            result = display_title(p, 'actionbar', 'Scarpet tests');
+            display_title(p, 'clear');
+            result == 1
+        )],
+        ['display_title with timing', _(outer(p)) -> (
+            result = display_title(p, 'title', 'Scarpet tests', 0, 2, 0);
+            display_title(p, 'clear');
+            result == 1
+        )],
+        ['display_title player-list header and footer', _(outer(p)) -> (
+            header = display_title([p], 'player_list_header', 'Scarpet tests');
+            footer = display_title([p], 'player_list_footer', 'Scarpet tests');
+            display_title(p, 'player_list_header', '');
+            display_title(p, 'player_list_footer', '');
+            header == 1 && footer == 1
+        )],
+        ['sound registry and playback', _(outer(p)) ->
+            length(sound()) > 0 && sound('block.note_block.pling', pos(p), 0.1, 1, 'master') >= 1
+        ],
+        ['particle registry and playback', _(outer(p)) ->
+            length(particle()) > 0 && particle('flame', pos(p), 1, 0, 0, p)
+        ],
+        ['particle_line', _(outer(p), outer(origin)) ->
+            particle_line('flame', origin, [origin:0 + 1, origin:1, origin:2], 0.5, p) > 0
+        ],
+        ['particle_box', _(outer(p), outer(origin)) ->
+            particle_box('flame', origin, [origin:0 + 1, origin:1 + 1, origin:2 + 1], 1, p) > 0
+        ],
+        ['unknown particle exception', _(outer(origin)) ->
+            try((particle('scarpet_tests:missing', origin); false), 'unknown_particle', true)
+        ],
+        ['draw_shape line with named attributes', _(outer(origin)) ->
+            draw_shape('line', 2, 'from', origin, 'to',
+                [origin:0 + 1, origin:1 + 1, origin:2])
+        ],
+        ['draw_shape batch of lines and boxes', _(outer(origin)) ->
+            draw_shape([
+                ['line', 2, 'from', origin, 'to', [origin:0 + 1, origin:1, origin:2]],
+                ['box', 2, 'from', origin, 'to', [origin:0 + 1, origin:1 + 1, origin:2 + 1]]
+            ])
+        ],
+        ['draw_shape map attributes', _(outer(origin)) ->
+            draw_shape('box', 2, {
+                'from' -> origin,
+                'to' -> [origin:0 + 1, origin:1 + 1, origin:2 + 1]
+            })
+        ],
+        ['create_marker and remove_all_markers', _(outer(origin)) -> (
+            marker = create_marker('Scarpet test', origin);
+            result = query(marker, 'type') == 'armor_stand' && remove_all_markers() >= 1;
+            result && query(marker, 'removed')
+        )],
+        ['create_marker with block and noninteractive option', _(outer(origin)) -> (
+            marker = create_marker(null, origin, 'stone', false);
+            result = query(marker, 'type') == 'armor_stand';
+            remove_all_markers();
+            result && query(marker, 'removed')
+        )],
+
+        ['file text write, append, read and delete', _() -> (
+            delete_file('scarpet_suite_text', 'text');
+            written = write_file('scarpet_suite_text', 'text', ['first', 'second']) &&
+                write_file('scarpet_suite_text', 'text', 'third');
+            lines = read_file('scarpet_suite_text', 'text');
+            listed = first(list_files('', 'text'), _ == 'scarpet_suite_text') == 'scarpet_suite_text';
+            deleted = delete_file('scarpet_suite_text', 'text');
+            written && lines == ['first', 'second', 'third'] && listed && deleted &&
+                read_file('scarpet_suite_text', 'text') == null
+        )],
+        ['file raw write and read', _() -> (
+            delete_file('scarpet_suite_raw', 'raw');
+            written = write_file('scarpet_suite_raw', 'raw', 'first\nsecond\n');
+            lines = read_file('scarpet_suite_raw', 'raw');
+            deleted = delete_file('scarpet_suite_raw', 'raw');
+            written && lines == ['first', 'second'] && deleted
+        )],
+        ['file JSON round trip', _() -> (
+            delete_file('scarpet_suite_json', 'json');
+            written = write_file('scarpet_suite_json', 'json', {'k' -> [1, 2], 'v' -> true});
+            content = read_file('scarpet_suite_json', 'json');
+            deleted = delete_file('scarpet_suite_json', 'json');
+            written && content == {'k' -> [1, 2], 'v' -> true} && deleted
+        )],
+        ['file NBT round trip', _() -> (
+            delete_file('scarpet_suite_nbt', 'nbt');
+            written = write_file('scarpet_suite_nbt', 'nbt', nbt('{x:12}'));
+            content = read_file('scarpet_suite_nbt', 'nbt');
+            deleted = delete_file('scarpet_suite_nbt', 'nbt');
+            written && parse_nbt(content):'x' == 12 && deleted
+        )],
+        ['file ZIP resource round trip', _() -> (
+            written = write_file('scarpet_suite.zip/entry', 'text', 'inside zip');
+            content = read_file('scarpet_suite.zip/entry', 'text');
+            deleted = delete_file('scarpet_suite.zip/entry', 'text');
+            written && content == ['inside zip'] && deleted
+        )],
+        ['file shared resource round trip', _() -> (
+            delete_file('scarpet_suite_shared', 'shared_text');
+            written = write_file('scarpet_suite_shared', 'shared_text', 'shared entry');
+            content = read_file('scarpet_suite_shared', 'shared_text');
+            deleted = delete_file('scarpet_suite_shared', 'shared_text');
+            written && content == ['shared entry'] && deleted
+        )],
+        ['list_files folder', _() -> (
+            write_file('scarpet_suite_folder/entry', 'text', 'entry');
+            folders = list_files('', 'folder');
+            deleted = delete_file('scarpet_suite_folder/entry', 'text');
+            first(folders, _ == 'scarpet_suite_folder') == 'scarpet_suite_folder' && deleted
+        )],
+        ['load_app_data and store_app_data', _() -> (
+            before = load_app_data();
+            stored = store_app_data(nbt('{scarpet_test:1}'));
+            roundtrip = parse_nbt(load_app_data()):'scarpet_test' == 1;
+            if(before != null, store_app_data(before));
+            stored && roundtrip
+        )],
+
+        ['tick_time', _() -> type(tick_time()) == 'number' && tick_time() >= 0],
+        ['world_time agrees with system_info', _() -> world_time() == system_info('world_time')],
+        ['day_time set and restore', _() -> (
+            before = day_time();
+            previous = day_time(before + 20);
+            updated = day_time();
+            day_time(before);
+            previous == before && updated == before + 20
+        )],
+        ['last_tick_times and view_distance', _() ->
+            length(last_tick_times()) == 100 &&
+                view_distance() == system_info('game_view_distance')
+        ],
+        ['current_dimension and in_dimension', _() ->
+            current_dimension() == 'overworld' &&
+                in_dimension('the_nether', current_dimension()) == 'the_nether' &&
+                in_dimension('overworld', current_dimension()) == 'overworld'
+        ],
+        ['in_dimension of entity and block', _(outer(p), outer(origin)) ->
+            in_dimension(p, current_dimension()) == 'overworld' &&
+                in_dimension(block(origin), current_dimension()) == 'overworld'
+        ],
+        ['unknown_dimension exception', _() ->
+            try((in_dimension('scarpet_tests:missing', 1); false), 'unknown_dimension', true)
+        ],
+        ['seed and world_seed', _() -> seed() == system_info('world_seed')],
+        ['game mob counts', _() -> (
+            counts = get_mob_counts();
+            one = get_mob_counts('monster');
+            (counts == null || type(counts) == 'map') &&
+                (one == null || (type(one) == 'list' && length(one) == 2))
+        )],
+        ['statistic of the invoking player', _(outer(p)) -> (
+            value = statistic(p, 'custom', 'jump');
+            value == null || (type(value) == 'number' && value >= 0)
+        )],
+        ['statistic unknown category', _(outer(p)) ->
+            statistic(p, 'scarpet_suite:missing', 'stone') == null
+        ],
+        ['system_info app and server metadata', _() ->
+            system_info('app_name') == 'tests' &&
+                system_info('app_scope') == 'player' &&
+                system_info('world_top') > system_info('world_bottom') &&
+                type(system_info('server_mods')) == 'map'
+        ],
+        ['system_info app players include the caller', _(outer(p)) ->
+            first(system_info('app_players'), _ == query(p, 'name')) == query(p, 'name')
+        ],
+        ['system_info tick timing and source', _(outer(p)) ->
+            length(system_info('server_last_tick_times')) == 100 &&
+                system_info('source_entity') == p &&
+                length(system_info('source_position')) == 3
+        ],
+        ['run a harmless vanilla command', _() -> (
+            result = run('list');
+            result == null || (type(result) == 'list' && length(result) == 3)
+        )],
+        ['schedule and game_tick', _() -> (
+            global_aux_scheduled = false;
+            before = tick_time();
+            scheduled = schedule(1, '_aux_scheduled');
+            ticked = game_tick();
+            scheduled && ticked && global_aux_scheduled && tick_time() > before
+        )],
+        ['create_datapack on disposable world', _() -> (
+            created = create_datapack('scarpet_suite', {
+                'data' -> {'scarpet_suite' -> {'function' -> {
+                    'probe.mcfunction' -> 'say scarpet_suite'
+                }}}
+            });
+            created == true || created == null
+        )],
+        ['save the disposable world', _() -> save() == true]
+    ];
+
+    for(filter(system_info(), _ != 'world_carpet_rules'),
+        key = _;
+        put(cases, null, ['system_info ' + key,
+            _(outer(key)) -> type(system_info(key)) != 'undef'])
+    );
+    cases
+);

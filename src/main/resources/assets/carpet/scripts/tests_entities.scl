@@ -1,0 +1,753 @@
+_et_has(values, target) -> first(values, _ == target) != null;
+
+_et_vector(value, size) -> type(value) == 'list' && length(value) == size &&
+    all(value, type(_) == 'number');
+
+_et_fixture(kind, origin, check) -> (
+    data = if(kind == 'armor_stand',
+        '{Marker:1b,Invisible:1b,Invulnerable:1b,NoGravity:1b,Silent:1b}',
+        kind == 'pig',
+        '{NoAI:1b,NoGravity:1b,Silent:1b}',
+        '{Item:{id:"minecraft:stone",count:1},PickupDelay:32767s,NoGravity:1b}'
+    );
+    entity = spawn(kind, origin, data);
+    if(entity == null, return(false));
+    result = call(check, entity);
+    if(!query(entity, 'removed'), modify(entity, 'remove'));
+    bool(result)
+);
+
+_et_record_removed(entity, seen, label) -> put(seen, null, [entity ~ 'id', label]);
+
+entity_tests(p, origin) -> [
+    ['player() is the invoking player', _(outer(p)) ->
+        player() == p && type(p) == 'entity' && p ~ 'type' == 'player' &&
+            !p ~ 'removed'
+    ],
+    ['player lookup by actual name', _(outer(p)) -> (
+        name = p ~ 'name';
+        found = player(name);
+        if(_et_has(['all', '*', 'survival', 'creative', 'spectating', '!spectating'], name),
+            type(found) == 'list',
+            found == p
+        )
+    )],
+    ['missing player returns null', _() ->
+        player('scarpet_tests:missing_player') == null
+    ],
+    ['player all and current-dimension lists', _(outer(p)) ->
+        _et_has(player('all'), p) && _et_has(player('*'), p) &&
+            all(player('*'), type(_) == 'entity')
+    ],
+    ['player gamemode selectors match the current mode', _(outer(p)) -> (
+        mode = p ~ 'gamemode';
+        (_et_has(player('survival'), p) == (mode == 'survival' || mode == 'adventure')) &&
+            (_et_has(player('creative'), p) == bool(mode == 'creative')) &&
+            (_et_has(player('spectating'), p) == bool(mode == 'spectator')) &&
+            (_et_has(player('!spectating'), p) == (mode != 'spectator'))
+    )],
+    ['vanilla player selector includes the invoker', _(outer(p)) ->
+        _et_has(entity_selector('@a'), p)
+    ],
+
+    ['entity_types defaults to all types', _() -> (
+        types = entity_types();
+        types == entity_types('*') && type(types) == 'list' &&
+            _et_has(types, 'pig') && _et_has(types, 'armor_stand') &&
+            _et_has(types, 'item') && all(types, type(_) == 'string')
+    )],
+    ['entity_types exact type and negative type', _() ->
+        entity_types('pig') == ['pig'] &&
+            !_et_has(entity_types('!pig'), 'pig') &&
+            _et_has(entity_types('!pig'), 'item')
+    ],
+    ['entity_types living and nonliving', _() ->
+        _et_has(entity_types('living'), 'pig') &&
+            !_et_has(entity_types('!living'), 'pig') &&
+            _et_has(entity_types('!living'), 'item')
+    ],
+    ['entity_types projectile and minecart descriptors', _() ->
+        _et_has(entity_types('projectile'), 'snowball') &&
+            _et_has(entity_types('minecarts'), 'minecart') &&
+            _et_has(entity_types('!projectile'), 'item') &&
+            _et_has(entity_types('!minecarts'), 'item')
+    ],
+    ['entity_types undead and negative undead', _() ->
+        _et_has(entity_types('undead'), 'skeleton') &&
+            !_et_has(entity_types('undead'), 'pig') &&
+            _et_has(entity_types('!undead'), 'pig') &&
+            !_et_has(entity_types('!undead'), 'skeleton')
+    ],
+    ['entity_types other combat groups', _() ->
+        _et_has(entity_types('arthropod'), 'spider') &&
+            _et_has(entity_types('aquatic'), 'cod') &&
+            _et_has(entity_types('illager'), 'pillager') &&
+            _et_has(entity_types('regular'), 'pig') &&
+            _et_has(entity_types('!regular'), 'skeleton')
+    ],
+    ['entity_types spawn categories and complements', _() ->
+        _et_has(entity_types('creature'), 'pig') &&
+            _et_has(entity_types('monster'), 'skeleton') &&
+            _et_has(entity_types('misc'), 'item') &&
+            !_et_has(entity_types('!creature'), 'pig') &&
+            _et_has(entity_types('!creature'), 'item')
+    ],
+
+    ['spawn returns a typed entity with supplied NBT', _(outer(origin)) ->
+        _et_fixture('armor_stand', origin, _(entity, outer(origin)) ->
+            type(entity) == 'entity' && entity ~ 'type' == 'armor_stand' &&
+                entity ~ 'pos' == origin && entity ~ 'silent' &&
+                !entity ~ 'gravity'
+        )
+    ],
+    ['spawn returns null for an unknown type', _(outer(origin)) ->
+        spawn('scarpet_tests:missing_entity_type', origin) == null
+    ],
+    ['entity_id resolves a fixture by number and UUID', _(outer(origin)) ->
+        _et_fixture('armor_stand', origin, _(entity) ->
+            type(entity ~ 'id') == 'number' &&
+                type(entity ~ 'uuid') == 'string' &&
+                length(entity ~ 'uuid') == 36 &&
+                entity_id(entity ~ 'id') == entity &&
+                entity_id(entity ~ 'uuid') == entity
+        )
+    ],
+    ['entity_id loses a removed fixture', _(outer(origin)) ->
+        _et_fixture('armor_stand', origin, _(entity) -> (
+            id = entity ~ 'id';
+            uuid = entity ~ 'uuid';
+            modify(entity, 'remove');
+            entity ~ 'removed' && entity_id(id) == null && entity_id(uuid) == null
+        ))
+    ],
+    ['entity_list exact and excluded type', _(outer(origin)) ->
+        _et_fixture('pig', origin, _(entity) ->
+            _et_has(entity_list('pig'), entity) &&
+                !_et_has(entity_list('!pig'), entity)
+        )
+    ],
+    ['entity_list living, valid and spawn category', _(outer(origin)) ->
+        _et_fixture('pig', origin, _(entity) ->
+            _et_has(entity_list('living'), entity) &&
+                _et_has(entity_list('valid'), entity) &&
+                _et_has(entity_list('creature'), entity) &&
+                !_et_has(entity_list('undead'), entity) &&
+                !_et_has(entity_list('!valid'), entity)
+        )
+    ],
+    ['entity_list includes the invoking player', _(outer(p)) ->
+        _et_has(entity_list('player'), p) &&
+            _et_has(entity_list('*'), p) &&
+            !_et_has(entity_list('!player'), p)
+    ],
+    ['entity_area coordinate-list center and range', _(outer(origin)) ->
+        _et_fixture('pig', origin, _(entity, outer(origin)) ->
+            _et_has(entity_area('pig', origin, [2, 2, 2]), entity) &&
+                !_et_has(entity_area('pig',
+                    [origin:0 + 100, origin:1, origin:2], [1, 1, 1]), entity)
+        )
+    ],
+    ['entity_area scalar coordinates and distances', _(outer(origin)) ->
+        _et_fixture('pig', origin, _(entity, outer(origin)) ->
+            _et_has(entity_area('pig',
+                origin:0, origin:1, origin:2, 2, 2, 2), entity)
+        )
+    ],
+    ['entity_area entity and block centers', _(outer(origin)) ->
+        _et_fixture('pig', origin, _(entity, outer(origin)) ->
+            _et_has(entity_area('pig', entity, [0, 0, 0]), entity) &&
+                _et_has(entity_area('pig', block(origin), [2, 2, 2]), entity)
+        )
+    ],
+    ['entity_selector includes and excludes a tagged fixture', _(outer(origin)) ->
+        _et_fixture('pig', origin, _(entity) -> (
+            modify(entity, 'tag', 'scarpet_et_selector');
+            _et_has(entity_selector('@e[type=minecraft:pig,tag=scarpet_et_selector]'),
+                entity) &&
+                !_et_has(entity_selector('@e[type=minecraft:pig,tag=!scarpet_et_selector]'),
+                    entity)
+        ))
+    ],
+    ['entity_area negative type excludes its fixture', _(outer(origin)) ->
+        _et_fixture('pig', origin, _(entity, outer(origin)) ->
+            !_et_has(entity_area('!pig', origin, [2, 2, 2]), entity)
+        )
+    ],
+
+    ['player identity, names and display text', _(outer(p)) ->
+        type(p ~ 'name') == 'string' && type(p ~ 'uuid') == 'string' &&
+            length(p ~ 'uuid') == 36 &&
+            p ~ 'command_name' == p ~ 'name' &&
+            type(p ~ 'display_name') == 'text'
+    ],
+    ['player location and orientation shapes', _(outer(p)) -> (
+        position = p ~ 'pos';
+        location = p ~ 'location';
+        _et_vector(position, 3) && _et_vector(location, 5) &&
+            position == [p ~ 'x', p ~ 'y', p ~ 'z'] &&
+            position == [location:0, location:1, location:2] &&
+            location:3 == p ~ 'yaw' && location:4 == p ~ 'pitch' &&
+            _et_vector(p ~ 'look', 3) && p ~ 'dimension' == 'overworld'
+    )],
+    ['player mode and numeric gamemode_id agree', _(outer(p)) -> (
+        ids = {'survival' -> 0, 'creative' -> 1, 'adventure' -> 2,
+            'spectator' -> 3};
+        mode = p ~ 'gamemode';
+        _et_has(['survival', 'creative', 'adventure', 'spectator'], mode) &&
+            p ~ 'gamemode_id' == ids:mode
+    )],
+    ['player permissions and ping are typed', _(outer(p)) -> (
+        level = p ~ 'permission_level';
+        type(level) == 'number' && level >= 0 && level <= 4 &&
+            type(p ~ 'ping') == 'number'
+    )],
+    ['player abilities and speeds are typed', _(outer(p)) ->
+        all(['may_fly', 'flying', 'may_build', 'insta_build'],
+            type(query(p, _)) == 'bool') &&
+            all(['fly_speed', 'walk_speed'], type(query(p, _)) == 'number')
+    ],
+    ['player food and experience queries are typed', _(outer(p)) ->
+        all(['hunger', 'saturation', 'exhaustion', 'absorption',
+            'xp', 'xp_level', 'xp_progress', 'score'],
+            type(query(p, _)) == 'number')
+    ],
+    ['player movement state and pose are typed', _(outer(p)) ->
+        all(['on_ground', 'sneaking', 'sprinting', 'swimming',
+            'is_burning', 'is_freezing'], type(query(p, _)) == 'bool') &&
+            type(p ~ 'pose') == 'string' && type(p ~ 'health') == 'number'
+    ],
+    ['player respawn, language and team may vary', _(outer(p)) -> (
+        respawn = p ~ 'spawn_point';
+        language = p ~ 'language';
+        team = p ~ 'team';
+        (respawn == false || (type(respawn) == 'list' && length(respawn) == 4)) &&
+            (language == null || type(language) == 'string') &&
+            (team == null || type(team) == 'string')
+    )],
+    ['player attribute map agrees with named lookup', _(outer(p)) -> (
+        attributes = p ~ 'attribute';
+        type(attributes) == 'map' &&
+            length(keys(attributes)) > 0 &&
+            all(keys(attributes),
+                type(query(p, 'attribute', _)) == 'number' &&
+                    attributes:_ == query(p, 'attribute', _))
+    )],
+    ['player block trace has a location or no hit', _(outer(p)) -> (
+        hit = query(p, 'trace', 0, 'blocks', 'exact');
+        hit == null || _et_vector(hit, 3)
+    )],
+    ['player entity NBT is readable without mutation', _(outer(p)) ->
+        type(p ~ 'nbt') == 'nbt'
+    ],
+    ['player facing wraps negative indices', _(outer(p)) ->
+        type(query(p, 'facing')) == 'string' &&
+            query(p, 'facing', -1) == query(p, 'facing', 5)
+    ],
+
+    ['query fixture identity and nullable name', _(outer(origin)) ->
+        _et_fixture('armor_stand', origin, _(entity) ->
+            entity ~ 'type' == 'armor_stand' &&
+                entity ~ 'command_name' == entity ~ 'uuid' &&
+                type(entity ~ 'name') == 'string' &&
+                type(entity ~ 'display_name') == 'text' &&
+                entity ~ 'custom_name' == null &&
+                type(entity ~ 'category') == 'string'
+        )
+    ],
+    ['query fixture coordinates, angles and look', _(outer(origin)) ->
+        _et_fixture('armor_stand', origin, _(entity, outer(origin)) -> (
+            location = entity ~ 'location';
+            look = entity ~ 'look';
+            _et_vector(location, 5) && _et_vector(look, 3) &&
+                entity ~ 'pos' == origin &&
+                origin == [entity ~ 'x', entity ~ 'y', entity ~ 'z'] &&
+                location:3 == entity ~ 'yaw' &&
+                location:4 == entity ~ 'pitch' &&
+                type(entity ~ 'head_yaw') == 'number' &&
+                type(entity ~ 'body_yaw') == 'number' &&
+                abs(look:0 * look:0 + look:1 * look:1 +
+                    look:2 * look:2 - 1) < 0.001
+        ))
+    ],
+    ['query fixture movement and physical flags', _(outer(origin)) ->
+        _et_fixture('armor_stand', origin, _(entity) -> (
+            motion = entity ~ 'motion';
+            _et_vector(motion, 3) &&
+                motion == [entity ~ 'motion_x', entity ~ 'motion_y',
+                    entity ~ 'motion_z'] &&
+                type(entity ~ 'on_ground') == 'bool' &&
+                entity ~ 'silent' && !entity ~ 'gravity' &&
+                entity ~ 'invulnerable' &&
+                all(['is_burning', 'is_freezing', 'immune_to_fire',
+                    'immune_to_frost'], type(query(entity, _)) == 'bool') &&
+                type(entity ~ 'fire') == 'number' &&
+                type(entity ~ 'frost') == 'number'
+        ))
+    ],
+    ['query fixture dimensions, age and cooldown', _(outer(origin)) ->
+        _et_fixture('pig', origin, _(entity) ->
+            entity ~ 'width' > 0 && entity ~ 'height' > 0 &&
+                type(entity ~ 'eye_height') == 'number' &&
+                type(entity ~ 'age') == 'number' &&
+                type(entity ~ 'portal_cooldown') == 'number' &&
+                type(entity ~ 'air') == 'number' &&
+                entity ~ 'dimension' == 'overworld'
+        )
+    ],
+    ['query fresh fixture mount and scoreboard state', _(outer(origin)) ->
+        _et_fixture('armor_stand', origin, _(entity) ->
+            !entity ~ 'is_riding' && !entity ~ 'is_ridden' &&
+                entity ~ 'mount' == null && entity ~ 'passengers' == [] &&
+                !entity ~ 'unmountable' &&
+                entity ~ 'scoreboard_tags' == [] &&
+                !query(entity, 'has_scoreboard_tag', 'scarpet_et_missing')
+        )
+    ],
+    ['entity type tags match descriptor and membership queries', _(outer(origin)) ->
+        _et_fixture('pig', origin, _(entity) -> (
+            tags = entity ~ 'entity_tags';
+            type(tags) == 'list' && all(tags,
+                type(_) == 'string' &&
+                    query(entity, 'has_entity_tag', _) == true &&
+                    _et_has(entity_types(_), 'pig')
+            )
+        ))
+    ],
+    ['query missing entity tag returns null', _(outer(origin)) ->
+        _et_fixture('pig', origin, _(entity) ->
+            query(entity, 'has_entity_tag',
+                'scarpet_tests:missing_entity_tag') == null
+        )
+    ],
+    ['query mob health, age, target and AI path', _(outer(origin)) ->
+        _et_fixture('pig', origin, _(entity) ->
+            type(entity ~ 'health') == 'number' && entity ~ 'health' > 0 &&
+                type(entity ~ 'is_baby') == 'bool' &&
+                type(entity ~ 'breeding_age') == 'number' &&
+                type(entity ~ 'despawn_timer') == 'number' &&
+                type(entity ~ 'persistence') == 'bool' &&
+                entity ~ 'target' == null && entity ~ 'path' == null
+        )
+    ],
+    ['query fresh item stack, count and pickup delay', _(outer(origin)) ->
+        _et_fixture('item', origin, _(entity) -> (
+            stack = entity ~ 'item';
+            type(stack) == 'list' && length(stack) == 3 &&
+                stack:0 == 'stone' && stack:1 == 1 &&
+                entity ~ 'count' == 1 &&
+                entity ~ 'pickup_delay' == 32767
+        ))
+    ],
+    ['query nonliving entity returns null for living fields', _(outer(origin)) ->
+        _et_fixture('item', origin, _(entity) ->
+            all(['health', 'effect', 'is_baby', 'breeding_age',
+                'swinging', 'attribute'], query(entity, _) == null)
+        )
+    ],
+    ['query mob returns null for player-only properties', _(outer(origin)) ->
+        _et_fixture('pig', origin, _(entity) ->
+            all(['gamemode', 'gamemode_id', 'permission_level',
+                'ping', 'language', 'spawn_point', 'hunger', 'xp'],
+                query(entity, _) == null)
+        )
+    ],
+    ['query NBT root, path and absent field', _(outer(origin)) ->
+        _et_fixture('armor_stand', origin, _(entity) ->
+            type(entity ~ 'nbt') == 'nbt' &&
+                entity ~ ['nbt', 'NoGravity'] == 1 &&
+                query(entity, 'nbt', 'ScarpetTestsMissingField') == null
+        )
+    ],
+    ['query absent mob effect', _(outer(origin)) ->
+        _et_fixture('pig', origin, _(entity) ->
+            type(entity ~ 'effect') == 'list' &&
+                query(entity, 'effect', 'speed') == null
+        )
+    ],
+
+    ['modify position with a vector', _(outer(origin)) ->
+        _et_fixture('armor_stand', origin, _(entity, outer(origin)) -> (
+            destination = [origin:0 + 1, origin:1 + 1, origin:2 - 1];
+            modify(entity, 'pos', destination) == entity &&
+                entity ~ 'pos' == destination
+        ))
+    ],
+    ['modify position with scalar coordinates', _(outer(origin)) ->
+        _et_fixture('armor_stand', origin, _(entity, outer(origin)) ->
+            modify(entity, 'pos',
+                origin:0 + 2, origin:1, origin:2 + 2) == entity &&
+                entity ~ 'pos' == [origin:0 + 2, origin:1, origin:2 + 2]
+        )
+    ],
+    ['modify full location as vector and scalars', _(outer(origin)) ->
+        _et_fixture('armor_stand', origin, _(entity, outer(origin)) -> (
+            first_location = [origin:0 + 1, origin:1, origin:2, 90, 30];
+            modify(entity, 'location', first_location);
+            first_ok = entity ~ 'location' == first_location;
+            modify(entity, 'location',
+                origin:0, origin:1 + 1, origin:2, -45, -30);
+            first_ok && entity ~ 'location' ==
+                [origin:0, origin:1 + 1, origin:2, -45, -30]
+        ))
+    ],
+    ['modify move by a relative vector', _(outer(origin)) ->
+        _et_fixture('armor_stand', origin, _(entity, outer(origin)) ->
+            modify(entity, 'move', [1, 2, -1]) == entity &&
+                entity ~ 'pos' ==
+                    [origin:0 + 1, origin:1 + 2, origin:2 - 1]
+        )
+    ],
+    ['modify coordinate components individually', _(outer(origin)) ->
+        _et_fixture('armor_stand', origin, _(entity, outer(origin)) -> (
+            modify(entity, 'x', origin:0 + 0.25);
+            modify(entity, 'y', origin:1 + 0.5);
+            modify(entity, 'z', origin:2 - 0.25);
+            entity ~ 'pos' ==
+                [origin:0 + 0.25, origin:1 + 0.5, origin:2 - 0.25]
+        ))
+    ],
+    ['modify yaw wraps and pitch clamps', _(outer(origin)) ->
+        _et_fixture('armor_stand', origin, _(entity) -> (
+            modify(entity, 'yaw', 450);
+            modify(entity, 'pitch', -120);
+            entity ~ 'yaw' == 90 && entity ~ 'pitch' == -90
+        ))
+    ],
+    ['modify look accepts vector and scalar forms', _(outer(origin)) ->
+        _et_fixture('armor_stand', origin, _(entity) -> (
+            modify(entity, 'look', [0, 0, 1]);
+            first_look = entity ~ 'look';
+            modify(entity, 'look', 0, 0, -1);
+            second_look = entity ~ 'look';
+            first_look:2 > 0.99 && second_look:2 < -0.99
+        ))
+    ],
+    ['modify living head and body rotation', _(outer(origin)) ->
+        _et_fixture('pig', origin, _(entity) -> (
+            modify(entity, 'head_yaw', 35);
+            modify(entity, 'body_yaw', 50);
+            entity ~ 'head_yaw' == 35 && entity ~ 'yaw' == 50 &&
+                type(entity ~ 'body_yaw') == 'number'
+        ))
+    ],
+    ['modify motion vector and component queries', _(outer(origin)) ->
+        _et_fixture('armor_stand', origin, _(entity) ->
+            modify(entity, 'motion', [0.125, -0.25, 0.375]) == entity &&
+                entity ~ 'motion' == [0.125, -0.25, 0.375] &&
+                entity ~ 'motion_x' == 0.125 &&
+                entity ~ 'motion_y' == -0.25 &&
+                entity ~ 'motion_z' == 0.375
+        )
+    ],
+    ['modify each motion component', _(outer(origin)) ->
+        _et_fixture('armor_stand', origin, _(entity) -> (
+            modify(entity, 'motion_x', 0.25);
+            modify(entity, 'motion_y', 0.125);
+            modify(entity, 'motion_z', -0.25);
+            entity ~ 'motion' == [0.25, 0.125, -0.25]
+        ))
+    ],
+    ['modify acceleration adds to motion', _(outer(origin)) ->
+        _et_fixture('pig', origin, _(entity) -> (
+            modify(entity, 'motion', [0, 0, 0]);
+            modify(entity, 'accelerate', [0.25, 0.125, 0]);
+            entity ~ 'motion' == [0.25, 0.125, 0]
+        ))
+    ],
+    ['modify custom name then clear it', _(outer(origin)) ->
+        _et_fixture('armor_stand', origin, _(entity) -> (
+            modify(entity, 'custom_name', 'Scarpet fixture', true);
+            named = entity ~ 'custom_name' == 'Scarpet fixture' &&
+                entity ~ 'name' == 'Scarpet fixture';
+            modify(entity, 'custom_name', null);
+            named && entity ~ 'custom_name' == null
+        ))
+    ],
+    ['modify gravity, silence and invulnerability', _(outer(origin)) ->
+        _et_fixture('armor_stand', origin, _(entity) -> (
+            modify(entity, 'gravity', true);
+            modify(entity, 'silent', false);
+            modify(entity, 'invulnerable', false);
+            changed = entity ~ 'gravity' && !entity ~ 'silent' &&
+                !entity ~ 'invulnerable';
+            modify(entity, 'gravity', false);
+            modify(entity, 'silent', true);
+            modify(entity, 'invulnerable', true);
+            changed && !entity ~ 'gravity' && entity ~ 'silent' &&
+                entity ~ 'invulnerable'
+        ))
+    ],
+    ['modify fire, frost and air on a mob', _(outer(origin)) ->
+        _et_fixture('pig', origin, _(entity) -> (
+            modify(entity, 'fire', 40);
+            modify(entity, 'frost', 12);
+            modify(entity, 'air', 123);
+            changed = entity ~ 'fire' == 40 && entity ~ 'frost' == 12 &&
+                entity ~ 'air' == 123;
+            modify(entity, 'fire', 0);
+            modify(entity, 'frost', 0);
+            changed && entity ~ 'fire' == 0 && entity ~ 'frost' == 0
+        ))
+    ],
+    ['modify age and portal cooldown', _(outer(origin)) ->
+        _et_fixture('armor_stand', origin, _(entity) -> (
+            modify(entity, 'age', -37);
+            modify(entity, 'portal_cooldown', 42);
+            entity ~ 'age' == 37 && entity ~ 'portal_cooldown' == 42
+        ))
+    ],
+    ['modify scoreboard tags with scalars', _(outer(origin)) ->
+        _et_fixture('armor_stand', origin, _(entity) -> (
+            modify(entity, 'tag', 'scarpet_et_one', 'scarpet_et_two');
+            tagged = _et_has(entity ~ 'scoreboard_tags', 'scarpet_et_one') &&
+                query(entity, 'has_scoreboard_tag', 'scarpet_et_two');
+            modify(entity, 'clear_tag',
+                ['scarpet_et_one', 'scarpet_et_two']);
+            tagged && entity ~ 'scoreboard_tags' == []
+        ))
+    ],
+    ['modify scoreboard tags with a list', _(outer(origin)) ->
+        _et_fixture('armor_stand', origin, _(entity) -> (
+            modify(entity, 'tag', ['scarpet_et_a', 'scarpet_et_b']);
+            tagged = query(entity, 'has_scoreboard_tag', 'scarpet_et_a') &&
+                query(entity, 'has_scoreboard_tag', 'scarpet_et_b');
+            modify(entity, 'clear_tag', 'scarpet_et_a', 'scarpet_et_b');
+            tagged && !query(entity, 'has_scoreboard_tag', 'scarpet_et_a') &&
+                entity ~ 'scoreboard_tags' == []
+        ))
+    ],
+    ['modify item name and item triple count', _(outer(origin)) ->
+        _et_fixture('item', origin, _(entity) -> (
+            modify(entity, 'item', 'dirt');
+            first_ok = (entity ~ 'item'):0 == 'dirt' && entity ~ 'count' == 1;
+            modify(entity, 'item', ['cobblestone', 4, null]);
+            first_ok && (entity ~ 'item'):0 == 'cobblestone' &&
+                (entity ~ 'item'):1 == 4 && entity ~ 'count' == 4
+        ))
+    ],
+    ['modify item pickup delay', _(outer(origin)) ->
+        _et_fixture('item', origin, _(entity) ->
+            modify(entity, 'pickup_delay', 150) == entity &&
+                entity ~ 'pickup_delay' == 150
+        )
+    ],
+    ['modify unknown item reports unknown_item without changing fixture',
+        _(outer(origin)) -> _et_fixture('item', origin, _(entity) -> (
+            original = entity ~ 'item';
+            caught = try((
+                modify(entity, 'item', 'scarpet_entity_api_tests:missing_item');
+                false
+            ), 'unknown_item', true);
+            caught && entity ~ 'item' == original
+        ))
+    ],
+    ['modify mob health and attributes stay available', _(outer(origin)) ->
+        _et_fixture('pig', origin, _(entity) -> (
+            attributes = entity ~ 'attribute';
+            modify(entity, 'health', 1);
+            entity ~ 'health' == 1 && type(attributes) == 'map' &&
+                length(keys(attributes)) > 0 &&
+                all(keys(attributes),
+                    attributes:_ == query(entity, 'attribute', _))
+        ))
+    ],
+    ['modify mob effect and remove it by name', _(outer(origin)) ->
+        _et_fixture('pig', origin, _(entity) -> (
+            modify(entity, 'effect', 'speed', 200, 1, false, false);
+            applied = query(entity, 'effect', 'speed') == [1, 200] &&
+                first(entity ~ 'effect',
+                    _:0 == 'speed' && _:1 == 1) != null;
+            modify(entity, 'effect', 'speed');
+            applied && query(entity, 'effect', 'speed') == null
+        ))
+    ],
+    ['modify mob effect clears all effects', _(outer(origin)) ->
+        _et_fixture('pig', origin, _(entity) -> (
+            modify(entity, 'effect', 'speed', 100);
+            modify(entity, 'effect', 'night_vision', 100);
+            modify(entity, 'effect');
+            entity ~ 'effect' == []
+        ))
+    ],
+    ['modify breeding age toggles baby state', _(outer(origin)) ->
+        _et_fixture('pig', origin, _(entity) -> (
+            modify(entity, 'breeding_age', -200);
+            young = entity ~ 'breeding_age' == -200 && entity ~ 'is_baby';
+            modify(entity, 'breeding_age', 0);
+            young && entity ~ 'breeding_age' == 0 && !entity ~ 'is_baby'
+        ))
+    ],
+    ['modify mob persistence default and false', _(outer(origin)) ->
+        _et_fixture('pig', origin, _(entity) -> (
+            modify(entity, 'persistence');
+            kept = entity ~ 'persistence';
+            modify(entity, 'persistence', false);
+            kept && !entity ~ 'persistence'
+        ))
+    ],
+    ['modify mob home and remove its restriction', _(outer(origin)) ->
+        _et_fixture('pig', origin, _(entity, outer(origin)) -> (
+            modify(entity, 'home', block(origin), 8);
+            home = entity ~ 'home';
+            set_home = type(home) == 'block' && pos(home) == origin;
+            modify(entity, 'home', null);
+            set_home && entity ~ 'home' == false
+        ))
+    ],
+    ['modify mob despawn timer', _(outer(origin)) ->
+        _et_fixture('pig', origin, _(entity) ->
+            modify(entity, 'despawn_timer', 137) == entity &&
+                entity ~ 'despawn_timer' == 137
+        )
+    ],
+    ['modify mob AI persists in its NBT', _(outer(origin)) ->
+        _et_fixture('pig', origin, _(entity) -> (
+            modify(entity, 'ai', true);
+            enabled = !query(entity, 'nbt', 'NoAI');
+            modify(entity, 'ai', false);
+            enabled && query(entity, 'nbt', 'NoAI') == 1
+        ))
+    ],
+    ['modify jumping and swing on a living entity', _(outer(origin)) ->
+        _et_fixture('pig', origin, _(entity) -> (
+            modify(entity, 'jumping', true);
+            jumping = entity ~ 'jumping';
+            modify(entity, 'swing');
+            swung = type(entity ~ 'swinging') == 'bool';
+            modify(entity, 'jumping', false);
+            jumping && swung && !entity ~ 'jumping'
+        ))
+    ],
+    ['modify mount and dismount two fixtures', _(outer(origin)) ->
+        _et_fixture('pig', origin, _(vehicle, outer(origin)) ->
+            _et_fixture('pig', origin, _(rider, outer(vehicle)) -> (
+                modify(rider, 'mount', vehicle);
+                riding = rider ~ 'is_riding' && vehicle ~ 'is_ridden' &&
+                    rider ~ 'mount' == vehicle &&
+                    _et_has(vehicle ~ 'passengers', rider);
+                modify(rider, 'dismount');
+                riding && !rider ~ 'is_riding' && rider ~ 'mount' == null &&
+                    vehicle ~ 'passengers' == []
+            ))
+        )
+    ],
+    ['modify mount_passengers and drop_passengers', _(outer(origin)) ->
+        _et_fixture('pig', origin, _(vehicle, outer(origin)) ->
+            _et_fixture('pig', origin, _(rider, outer(vehicle)) -> (
+                modify(vehicle, 'mount_passengers', [rider]);
+                listed = _et_has(vehicle ~ 'passengers', rider);
+                modify(vehicle, 'drop_passengers');
+                dropped = vehicle ~ 'passengers' == [] &&
+                    rider ~ 'mount' == null;
+                modify(vehicle, 'mount_passengers', rider);
+                listed && dropped && rider ~ 'mount' == vehicle
+            ))
+        )
+    ],
+    ['modify unmountable flag round trip', _(outer(origin)) ->
+        _et_fixture('armor_stand', origin, _(entity) -> (
+            modify(entity, 'unmountable', true);
+            locked = entity ~ 'unmountable';
+            modify(entity, 'unmountable', false);
+            locked && !entity ~ 'unmountable'
+        ))
+    ],
+    ['modify NBT merge preserves identity', _(outer(origin)) ->
+        _et_fixture('armor_stand', origin, _(entity) -> (
+            uuid = entity ~ 'uuid';
+            modify(entity, 'nbt_merge', '{Silent:0b,Invulnerable:0b}');
+            !entity ~ 'silent' && !entity ~ 'invulnerable' &&
+                !entity ~ 'gravity' && entity ~ 'uuid' == uuid
+        ))
+    ],
+    ['modify full NBT reload restores fixture state', _(outer(origin)) ->
+        _et_fixture('armor_stand', origin, _(entity) -> (
+            saved = entity ~ 'nbt';
+            uuid = entity ~ 'uuid';
+            modify(entity, 'silent', false);
+            modify(entity, 'gravity', true);
+            modify(entity, 'nbt', saved);
+            entity ~ 'silent' && !entity ~ 'gravity' &&
+                entity ~ 'uuid' == uuid
+        ))
+    ],
+    ['modify kill removes an item fixture', _(outer(origin)) ->
+        _et_fixture('item', origin, _(entity) -> (
+            modify(entity, 'kill');
+            entity ~ 'removed'
+        ))
+    ],
+
+    ['entity_event on_move receives fixture and vectors', _(outer(origin)) ->
+        _et_fixture('armor_stand', origin, _(entity) -> (
+            moved = [];
+            entity_event(entity, 'on_move',
+                _(moving, velocity, before, after, outer(moved)) ->
+                    put(moved, null, [moving ~ 'id', velocity, before, after])
+            );
+            before = entity ~ 'pos';
+            modify(entity, 'move', [1, 0, 0]);
+            entity_event(entity, 'on_move', null);
+            after = entity ~ 'pos';
+            first(moved, _:0 == entity ~ 'id' &&
+                _et_vector(_:1, 3) && _:2 == before && _:3 == after) != null
+        ))
+    ],
+    ['entity_event on_removed fires once for remove', _(outer(origin)) ->
+        _et_fixture('armor_stand', origin, _(entity) -> (
+            seen = [];
+            entity_event(entity, 'on_removed',
+                _(removed, outer(seen)) -> put(seen, null, removed ~ 'id')
+            );
+            id = entity ~ 'id';
+            modify(entity, 'remove');
+            seen == [id] && entity ~ 'removed'
+        ))
+    ],
+    ['entity_event removal handler can be unregistered', _(outer(origin)) ->
+        _et_fixture('armor_stand', origin, _(entity) -> (
+            seen = [];
+            entity_event(entity, 'on_removed',
+                _(removed, outer(seen)) -> put(seen, null, removed ~ 'id')
+            );
+            entity_event(entity, 'on_removed', null);
+            modify(entity, 'remove');
+            seen == []
+        ))
+    ],
+    ['entity_event named handler receives extra arguments', _(outer(origin)) ->
+        _et_fixture('armor_stand', origin, _(entity) -> (
+            seen = [];
+            id = entity ~ 'id';
+            entity_event(entity, 'on_removed', '_et_record_removed',
+                seen, 'extra');
+            modify(entity, 'remove');
+            seen == [[id, 'extra']]
+        ))
+    ],
+    ['entity_event on_tick observes a fixture in the invoking chunk',
+        _(outer(p), outer(origin)) ->
+        _et_fixture('armor_stand',
+            [16 * floor((p ~ 'x') / 16) + 8, origin:1,
+                16 * floor((p ~ 'z') / 16) + 8], _(entity) -> (
+                seen = [];
+                entity_event(entity, 'on_tick',
+                    _(ticked, outer(seen)) -> put(seen, null, ticked ~ 'id')
+                );
+                game_tick();
+                entity_event(entity, 'on_tick', null);
+                _et_has(seen, entity ~ 'id')
+            )
+        )
+    ],
+    ['entity_event damage and death handlers accept their signatures',
+        _(outer(origin)) -> _et_fixture('pig', origin, _(entity) -> (
+            entity_event(entity, 'on_damaged',
+                _(victim, amount, source, attacker) -> true);
+            entity_event(entity, 'on_death', _(victim, reason) -> true);
+            entity_event(entity, 'on_damaged', null);
+            entity_event(entity, 'on_death', null);
+            !entity ~ 'removed'
+        ))
+    ]
+];
