@@ -101,10 +101,10 @@ Returns the size of the inventory for the entity or block in question. Returns n
 have an inventory.
 
 <pre>
-inventory_size(player()) => 41
+inventory_size(player()) => 43
 inventory_size('enderchest', player()) => 27 // enderchest
 inventory_size('equipment', player()) => 6 // equipment
-inventory_size(null, player()) => 41  // default inventory for players
+inventory_size(null, player()) => 43  // default inventory for players
 
 inventory_size(x,y,z) => 27 // chest
 inventory_size(block(pos)) => 5 // hopper
