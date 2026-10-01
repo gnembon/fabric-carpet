@@ -2488,9 +2488,8 @@ Throws `unknown_poi` if the provided point of interest doesn't exist
 Changes the biome at that block position. if update is specified and false, then chunk will not be refreshed
 on the clients. Biome changes can only be sent to clients with the entire data from the chunk.
 
-Be aware that depending on the MC version and dimension settings biome can be set either in a 1x1x256
-column or 4x4x4 hyperblock, so for some versions Y will be ignored and for some precision of biome
-setting is less than 1x1x1 block.
+In Minecraft 26.4, biomes can be set at single-block (1x1x1) resolution. In older versions, biome changes
+may affect a 1x1x256 column or a 4x4x4 region instead, depending on the version and dimension settings.
 
 Throws `unknown_biome` if the `biome_name` doesn't exist.
 
@@ -3594,6 +3593,10 @@ Boolean, true if the entity is sneaking.
 
 Boolean, true if the entity is sprinting.
 
+### `query(e, 'input')`
+
+A list of 7 booleans indicating if the entity is pressing the following keys: forward, backward, left, right, jump, sneak, sprint, or `null` if its not a player.
+
 ### `query(e, 'swimming')`
 
 Boolean, true if the entity is swimming.
@@ -4332,10 +4335,10 @@ Returns the size of the inventory for the entity or block in question. Returns n
 have an inventory.
 
 <pre>
-inventory_size(player()) => 41
+inventory_size(player()) => 43
 inventory_size('enderchest', player()) => 27 // enderchest
 inventory_size('equipment', player()) => 6 // equipment
-inventory_size(null, player()) => 41  // default inventory for players
+inventory_size(null, player()) => 43  // default inventory for players
 
 inventory_size(x,y,z) => 27 // chest
 inventory_size(block(pos)) => 5 // hopper
