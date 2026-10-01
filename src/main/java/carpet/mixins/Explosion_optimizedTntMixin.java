@@ -29,6 +29,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -45,9 +46,18 @@ public abstract class Explosion_optimizedTntMixin
             cancellable = true)
     private void calculateExplodedPositionsCM(final CallbackInfoReturnable<List<BlockPos>> cir)
     {
-        if (CarpetSettings.optimizedTNT && !level.isClientSide() && !(getIndirectSourceEntity() instanceof Breeze))
+        if (!level.isClientSide())
         {
-            cir.setReturnValue(OptimizedExplosion.doExplosionA((Explosion) (Object) this, eLogger));
+            // Move explosionNoBlockDamage out so non carpet optimizedTNT code also takes the fast path when block damage is off.
+            if (CarpetSettings.explosionNoBlockDamage)
+            {
+                cir.setReturnValue(Collections.emptyList());
+            }
+
+            if (CarpetSettings.optimizedTNT && !(getIndirectSourceEntity() instanceof Breeze))
+            {
+                cir.setReturnValue(OptimizedExplosion.doExplosionA((Explosion) (Object) this, eLogger));
+            }
         }
     }
 

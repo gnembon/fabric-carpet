@@ -35,7 +35,7 @@ public class OptimizedExplosion
 
         List<BlockPos> toBlow;
 
-        if (!CarpetSettings.explosionNoBlockDamage && eAccess.getDamageSource() != null) {
+        if (eAccess.getDamageSource() != null) {
             rayCalcDone = false;
             firstRay = true;
             getAffectedPositionsOnPlaneY(e,  0,  0, 15,  0, 15); // bottom
