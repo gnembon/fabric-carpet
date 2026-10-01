@@ -67,10 +67,8 @@ target = "Lnet/minecraft/client/renderer/LevelRenderer;addMainPass(Lcom/mojang/b
             //target = "Lnet/minecraft/client/renderer/LevelRenderer;addLateDebugPass(Lcom/mojang/blaze3d/framegraph/FrameGraphBuilder;Lnet/minecraft/client/renderer/state/level/CameraRenderState;Lcom/mojang/blaze3d/buffers/GpuBufferSlice;Lorg/joml/Matrix4fc;)V",
             shift = At.Shift.AFTER
     ))
-            private void renderStanperThingsLate  (GraphicsResourceAllocator resourceAllocator, boolean renderOutline, CameraRenderState cameraState, GpuBufferSlice terrainFog, Vector4f fogColor, boolean shouldRenderSky, boolean consistentDepthRequired, CallbackInfo ci, @Local(name = "frame") FrameGraphBuilder frameGraphBuilder)
-            //private void renderScarpetThingsLate(GraphicsResourceAllocator resourceAllocator, DeltaTracker deltaTracker, boolean renderOutline, CameraRenderState cameraState, Matrix4fc modelViewMatrix, GpuBufferSlice terrainFog, Vector4f fogColor, boolean shouldRenderSky, boolean consistentDepthRequired, CallbackInfo ci, @Local FrameGraphBuilder frameGraphBuilder)
-    //private void renderScarpetThinsLate(GraphicsResourceAllocator resourceAllocator, DeltaTracker deltaTracker, boolean renderOutline, CameraRenderState cameraState, Matrix4fc modelViewMatrix, GpuBufferSlice terrainFog, Vector4f fogColor, boolean shouldRenderSky, CallbackInfo ci, @Local FrameGraphBuilder frameGraphBuilder)
-    {
+            private void renderScarpetThings(GraphicsResourceAllocator resourceAllocator, boolean renderOutline, CameraRenderState cameraState, GpuBufferSlice fogBuffer, boolean consistentDepthRequired, CallbackInfo ci, @Local(name = "frame") FrameGraphBuilder frameGraphBuilder)
+            {
         // in normal circumstances we want to render shapes at the very end so it appears correctly behind stuff.
         // we might actually not need to play with render hooks here.
         //if (!FabricAPIHooks.WORLD_RENDER_EVENTS && CarpetClient.shapes != null )

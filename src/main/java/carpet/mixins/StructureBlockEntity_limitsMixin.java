@@ -35,9 +35,9 @@ public abstract class StructureBlockEntity_limitsMixin
             method = "saveStructure(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/resources/Identifier;Lnet/minecraft/core/BlockPos;Lnet/minecraft/core/Vec3i;ZLjava/lang/String;ZLjava/util/List;)Z",
             at = @At(
                     value = "INVOKE",
-                    target = "Lnet/minecraft/world/level/levelgen/structure/templatesystem/StructureTemplate;fillFromWorld(Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/core/Vec3i;ZLjava/util/List;)V"
+                    target = "Lnet/minecraft/world/level/levelgen/structure/templatesystem/StructureTemplate;createFromWorld(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/core/BlockPos;Lnet/minecraft/core/Vec3i;Ljava/lang/String;ZLjava/util/List;)Lnet/minecraft/world/level/levelgen/structure/templatesystem/StructureTemplate;"
             ),
-            index = 4
+            index = 5
     )
     private static List<Block> ignoredBlock(List<Block> original) {
         if (original.contains(CarpetSettings.structureBlockIgnoredBlock))

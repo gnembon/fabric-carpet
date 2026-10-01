@@ -36,9 +36,9 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Holder;
 import net.minecraft.core.HolderSet;
-import net.minecraft.core.QuartPos;
 import net.minecraft.core.Registry;
 import net.minecraft.core.RegistryAccess;
+import net.minecraft.core.SectionPos;
 import net.minecraft.core.particles.ExplosionParticleInfo;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
@@ -1344,17 +1344,18 @@ public class WorldAccess
             ServerLevel world = cc.level();
             BlockPos pos = locator.block.getPos();
             ChunkAccess chunk = world.getChunk(pos); // getting level chunk instead of protochunk with biomes
-            int biomeX = QuartPos.fromBlock(pos.getX());
-            int biomeY = QuartPos.fromBlock(pos.getY());
-            int biomeZ = QuartPos.fromBlock(pos.getZ());
+            int biomeX = pos.getX();
+            int biomeY = pos.getY();
+            int biomeZ = pos.getZ();
             try
             {
-                int i = QuartPos.fromBlock(chunk.getMinY());
-                int j = i + QuartPos.fromBlock(chunk.getHeight()) - 1;
+                int i = chunk.getMinY();
+                int j = i + chunk.getHeight() - 1;
                 int k = Mth.clamp(biomeY, i, j);
-                int l = chunk.getSectionIndex(QuartPos.toBlock(k));
+                int l = chunk.getSectionIndex(k);
                 // accessing outside of the interface - might be dangerous in the future.
-                ((PalettedContainer<Holder<Biome>>) chunk.getSection(l).getBiomes()).set(biomeX & 3, k & 3, biomeZ & 3, biome);
+                ((PalettedContainer<Holder<Biome>>) chunk.getSection(l).getBiomes()).set(
+                        SectionPos.sectionRelative(biomeX), SectionPos.sectionRelative(k), SectionPos.sectionRelative(biomeZ), biome);
             }
             catch (Throwable var8)
             {
@@ -1362,7 +1363,7 @@ public class WorldAccess
             }
             if (doImmediateUpdate)
             {
-                WorldTools.forceChunkUpdate(pos, world);
+                world.getChunkSource().chunkMap.resendBiomesForChunks(List.of(chunk));
             }
             chunk.markUnsaved();
             return Value.TRUE;

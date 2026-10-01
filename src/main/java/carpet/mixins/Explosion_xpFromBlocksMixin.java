@@ -3,6 +3,7 @@ package carpet.mixins;
 import carpet.CarpetSettings;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
@@ -15,10 +16,10 @@ public class Explosion_xpFromBlocksMixin {
 
     @Redirect(method = "onExplosionHit", at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/world/level/block/state/BlockState;spawnAfterBreak(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/item/ItemStack;Z)V"
+            target = "Lnet/minecraft/world/level/block/state/BlockState;spawnAfterBreak(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/item/ItemStack;ZLnet/minecraft/world/entity/Entity;)V"
     ))
-    private void spawnXPAfterBreak(BlockState instance, ServerLevel serverLevel, BlockPos blockPos, ItemStack itemStack, boolean b)
+    private void spawnXPAfterBreak(BlockState instance, ServerLevel serverLevel, BlockPos blockPos, ItemStack itemStack, boolean b, Entity e)
     {
-        instance.spawnAfterBreak(serverLevel, blockPos, itemStack, b || CarpetSettings.xpFromExplosions);
+        instance.spawnAfterBreak(serverLevel, blockPos, itemStack, b || CarpetSettings.xpFromExplosions, e);
     }
 }

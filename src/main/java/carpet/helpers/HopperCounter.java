@@ -101,7 +101,7 @@ public class HopperCounter
     {
         startTick = -1;
         this.color = color;
-        String hexColor = Integer.toHexString(color.getTextColor() & 0xFFFFFF); // don't get alpha
+        String hexColor = Integer.toHexString(Blocks.CONCRETE.pick(color).defaultMapColor().col & 0xFFFFFF); // don't get alpha
         if (hexColor.length() < 6)
         {
             hexColor = "0".repeat(6 - hexColor.length()) + hexColor;
@@ -240,6 +240,11 @@ public class HopperCounter
      * Converts a colour to have a low brightness and uniform colour, so when it prints the items in different colours
      * it's not too flashy and bright, but enough that it's not dull to look at.
      */
+    public static int appropriateColor(DyeColor dye)
+    {
+        return appropriateColor(Blocks.CONCRETE.pick(dye).defaultMapColor().col);
+    }
+
     public static int appropriateColor(int color)
     {
         if (color == 0)
@@ -366,7 +371,7 @@ public class HopperCounter
         }
         if (item instanceof DyeItem dye)
         {
-            return TextColor.fromRgb(appropriateColor(Optional.ofNullable(dye.getDefaultInstance().get(DataComponents.DYE)).orElse(DyeColor.WHITE).getMapColor().col));
+            return TextColor.fromRgb(appropriateColor(Optional.ofNullable(dye.getDefaultInstance().get(DataComponents.DYE)).orElse(DyeColor.WHITE)));
         }
         Block block = null;
         final Registry<Item> itemRegistry = registryAccess.lookupOrThrow(Registries.ITEM);
@@ -384,11 +389,11 @@ public class HopperCounter
         {
             if (block instanceof AbstractBannerBlock)
             {
-                return TextColor.fromRgb(appropriateColor(((AbstractBannerBlock) block).getColor().getMapColor().col));
+                return TextColor.fromRgb(appropriateColor(((AbstractBannerBlock) block).getColor()));
             }
             if (block instanceof BeaconBeamBlock)
             {
-                return TextColor.fromRgb(appropriateColor(((BeaconBeamBlock) block).getColor().getMapColor().col));
+                return TextColor.fromRgb(appropriateColor(((BeaconBeamBlock) block).getColor()));
             }
             return TextColor.fromRgb(appropriateColor(block.defaultMapColor().col));
         }

@@ -159,9 +159,8 @@ Throws `unknown_poi` if the provided point of interest doesn't exist
 Changes the biome at that block position. if update is specified and false, then chunk will not be refreshed
 on the clients. Biome changes can only be sent to clients with the entire data from the chunk.
 
-Be aware that depending on the MC version and dimension settings biome can be set either in a 1x1x256
-column or 4x4x4 hyperblock, so for some versions Y will be ignored and for some precision of biome
-setting is less than 1x1x1 block.
+In Minecraft 26.4, biomes can be set at single-block (1x1x1) resolution. In older versions, biome changes
+may affect a 1x1x256 column or a 4x4x4 region instead, depending on the version and dimension settings.
 
 Throws `unknown_biome` if the `biome_name` doesn't exist.
 

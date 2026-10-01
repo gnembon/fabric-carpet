@@ -360,8 +360,7 @@ world_tests(origin) -> [
         previous = biome(p);
         alternatives = filter(biome(), _ != previous);
         target_biome = if(length(alternatives) == 0, previous, alternatives:0);
-        // need to set a larger area to be sure we set a biome in the target position
-        scan(p, [-5, -5, -5], [5, 5, 5], set_biome(_, target_biome, false));
+        set_biome(p, target_biome, false);
         biome(p) == target_biome
     )],
     ['set_biome with default client refresh', _(outer(origin)) -> (

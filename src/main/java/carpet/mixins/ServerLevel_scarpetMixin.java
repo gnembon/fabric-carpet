@@ -46,9 +46,9 @@ public abstract class ServerLevel_scarpetMixin extends Level
 
     @Shadow public abstract GameRules getGameRules();
 
-    protected ServerLevel_scarpetMixin(WritableLevelData writableLevelData, ResourceKey<Level> resourceKey, RegistryAccess registryAccess, Holder<DimensionType> holder, boolean bl, boolean bl2, long l, int i)
+    protected ServerLevel_scarpetMixin(WritableLevelData writableLevelData, ResourceKey<Level> resourceKey, RegistryAccess registryAccess, Holder<DimensionType> holder, boolean bl, boolean bl2, int i)
     {
-        super(writableLevelData, resourceKey, registryAccess, holder, bl, bl2, l, i);
+        super(writableLevelData, resourceKey, registryAccess, holder, bl, bl2, i);
     }
 
     @Inject(method = "tickThunder", locals = LocalCapture.CAPTURE_FAILHARD, at = @At(
