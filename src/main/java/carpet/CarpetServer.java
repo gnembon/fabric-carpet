@@ -38,6 +38,7 @@ import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.commands.PerfCommand;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 
 import org.jspecify.annotations.Nullable;
@@ -75,6 +76,13 @@ public class CarpetServer // static for now - easier to handle all around the co
     {
         settingsManager = new carpet.settings.SettingsManager(CarpetSettings.carpetVersion, "carpet", "Carpet Mod");
         settingsManager.parseSettingsClass(CarpetSettings.class);
+        settingsManager.registerRuleObserver((source, rule, userInput) -> {
+            if (rule.name().equals("fakePlayerSleepIgnore"))
+            {
+                // SleepStatus caches counts; refresh after the new rule value is set.
+                source.getServer().getAllLevels().forEach(ServerLevel::updateSleepingPlayerList);
+            }
+        });
         extensions.forEach(CarpetExtension::onGameStarted);
         //FabricAPIHooks.initialize();
         CarpetScriptServer.parseFunctionClasses();
