@@ -2,6 +2,7 @@ package carpet.commands;
 
 import carpet.CarpetSettings;
 import carpet.helpers.HopperCounter;
+import carpet.utils.CommandHelper;
 import carpet.utils.Messenger;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
@@ -23,7 +24,7 @@ public class CounterCommand
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher, CommandBuildContext commandBuildContext)
     {
         LiteralArgumentBuilder<CommandSourceStack> commandBuilder = literal("counter")
-                .requires(c -> CarpetSettings.hopperCounters)
+                .requires(c -> CarpetSettings.hopperCounters && CommandHelper.hasPermission(c, "carpet.commands.counter", true))
                 .executes(c -> listAllCounters(c.getSource(), false))
                 .then(literal("reset")
                         .executes(c -> resetCounters(c.getSource())));

@@ -19,7 +19,7 @@ public class ProfileCommand
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher, CommandBuildContext commandBuildContext)
     {
         LiteralArgumentBuilder<CommandSourceStack> literalargumentbuilder = literal("profile").
-                requires((player) -> CommandHelper.canUseCommand(player, CarpetSettings.commandProfile)).
+                requires((player) -> CommandHelper.hasPermission(player, "carpet.commands.profile", CarpetSettings.commandProfile)).
                 executes( (c) -> healthReport(c.getSource(), 100)).
                 then(literal("health").
                         executes( (c) -> healthReport(c.getSource(), 100)).

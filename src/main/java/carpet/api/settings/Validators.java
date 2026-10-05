@@ -3,6 +3,8 @@ package carpet.api.settings;
 import java.util.List;
 
 import carpet.utils.CommandHelper;
+import carpet.utils.FabricAPIHooks;
+import carpet.utils.Messenger;
 import net.minecraft.commands.CommandSourceStack;
 
 /**
@@ -20,7 +22,7 @@ public final class Validators {
      * so either a number from 0 to 4, or one of the keywords {@code true}, {@code false} or {@code ops} </p>
      * 
      * <p>While there is no public API method for checking whether a source can execute a command,
-     * {@link CommandHelper#canUseCommand(CommandSourceStack, Object)} is not expected to change anytime soon.</p>
+     * {@link CommandHelper#hasPermission(CommandSourceStack, String, Object)} is not expected to change anytime soon.</p>
      *
      */
     public static class CommandLevel extends Validator<String> {
@@ -31,6 +33,9 @@ public final class Validators {
             if (!OPTIONS.contains(newValue))
             {
                 return null;
+            }
+            if (FabricAPIHooks.PERMISSIONS_API) {
+                Messenger.m(source, "g Note that you can use your permission manager mod to control access to commands");
             }
             return newValue;
         }
