@@ -63,13 +63,13 @@ public class SpawnOverrides {
         if (spawnData == null || !spawnData.getKey().getAsBoolean()) return null;
         StructureSpawnOverride override = spawnData.getRight();
         if (override.boundingBox() == StructureSpawnOverride.BoundingBoxType.STRUCTURE) {
-            if (structureFeatureManager.getStructureAt(where, confExisting).isValid())
+            if (structureFeatureManager.getStructureAt(where, confExisting) != null)
                 return override.spawns();
         } else {
             List<StructureStart> starts = new ArrayList<>(1);
             structureFeatureManager.fillStartsForStructure(confExisting, foo, starts::add);
             for (StructureStart start : starts) {
-                if (start != null && start.isValid() && structureFeatureManager.structureHasPieceAt(where, start)) {
+                if (start != null && structureFeatureManager.structureHasPieceAt(where, start)) {
                     return override.spawns();
                 }
             }
@@ -83,7 +83,7 @@ public class SpawnOverrides {
         if (fortressFeature == null) {
             return false;
         }
-        return level.structureManager().getStructureAt(pos, fortressFeature).isValid();
+        return level.structureManager().getStructureAt(pos, fortressFeature) != null;
     }
 
     public static List<StructureStart> startsForFeature(ServerLevel level, SectionPos sectionPos, StructureType<?> structure) {

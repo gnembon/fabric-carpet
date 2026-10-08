@@ -270,15 +270,15 @@ public class FeatureGenerator
                     seed, world.getStructureTemplateManager(), world.getSeed(), chunkPos, world, structureBiomes::contains
             )).isPresent())
             {
-                return StructureStart.INVALID_START;
+                return null;
             }
         }
         else
         {
             StructureStart filledStructure = structure.generate(Holder.direct(structure), world.dimension(),
                     world.registryAccess(), generator, generator.getBiomeSource(), seed.createClimateSampler(SamplerContext.EMPTY_UNCACHED), seed, world.getStructureTemplateManager(),
-                    world.getSeed(), chunkPos, 0, world, structureBiomes::contains);
-            if (filledStructure != null && filledStructure.isValid())
+                    world.getSeed(), chunkPos, world, structureBiomes::contains);
+            if (filledStructure != null)
             {
                 return filledStructure;
             }
@@ -504,8 +504,8 @@ public class FeatureGenerator
         checks.set(true);
         try
         {
-            StructureStart start = structure.generate(Holder.direct(structure), world.dimension(), world.registryAccess(), generator, generator.getBiomeSource(), world.getChunkSource().randomState().createClimateSampler(SamplerContext.EMPTY_UNCACHED), world.getChunkSource().randomState(), world.getStructureTemplateManager(), world.getSeed(), ChunkPos.containing(pos), 0, world, b -> true);
-            if (start == StructureStart.INVALID_START)
+            StructureStart start = structure.generate(Holder.direct(structure), world.dimension(), world.registryAccess(), generator, generator.getBiomeSource(), world.getChunkSource().randomState().createClimateSampler(SamplerContext.EMPTY_UNCACHED), world.getChunkSource().randomState(), world.getStructureTemplateManager(), world.getSeed(), ChunkPos.containing(pos), world, b -> true);
+            if (start == null)
             {
                 return false;
             }

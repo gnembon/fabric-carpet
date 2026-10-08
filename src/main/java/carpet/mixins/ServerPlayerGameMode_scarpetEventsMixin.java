@@ -79,7 +79,7 @@ public class ServerPlayerGameMode_scarpetEventsMixin implements ServerPlayerInte
     @Override
     public void setBlockBreakingProgress(int progress)
     {
-        lastSentState = Mth.clamp(progress, -1, 10);
+        lastSentState = Math.clamp(progress, -1, 10);
         level.destroyBlockProgress(-1*this.player.getId(), destroyPos, lastSentState);
     }
 }

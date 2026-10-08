@@ -133,8 +133,8 @@ public class EntityPlayerActionPack
     public EntityPlayerActionPack look(float yaw, float pitch)
     {
         player.setYRot(yaw % 360); //setYaw
-        player.setXRot(Mth.clamp(pitch, -90, 90)); // setPitch
-        // maybe player.moveTo(player.getX(), player.getY(), player.getZ(), yaw, Mth.clamp(pitch,-90.0F, 90.0F));
+        player.setXRot(Math.clamp(pitch, -90, 90)); // setPitch
+        // maybe player.moveTo(player.getX(), player.getY(), player.getZ(), yaw, Math.clamp(pitch,-90.0F, 90.0F));
         return this;
     }
 

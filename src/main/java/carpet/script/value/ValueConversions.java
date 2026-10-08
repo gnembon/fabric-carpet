@@ -57,6 +57,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.Predicate;
@@ -364,7 +365,7 @@ public class ValueConversions
 
     public static Value of(StructureStart structure, RegistryAccess regs)
     {
-        if (structure == null || structure == StructureStart.INVALID_START)
+        if (structure == null)
         {
             return Value.NULL;
         }
@@ -422,6 +423,11 @@ public class ValueConversions
                 BooleanValue.of(input.shift()),
                 BooleanValue.of(input.sprint()
                 ));
+    }
+
+    public static Value of(Optional<Identifier> apply) {
+
+        return apply.map(ValueConversions::of).orElse(Value.NULL);
     }
 
     record SlotParam(/* Nullable */ String type, int id)

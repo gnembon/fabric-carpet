@@ -58,6 +58,7 @@ import net.minecraft.util.ProblemReporter;
 import net.minecraft.util.random.WeightedList;
 import net.minecraft.world.entity.EntityTypes;
 import net.minecraft.world.level.ServerExplosion;
+import net.minecraft.world.level.block.sounds.BlockSoundSet;
 import net.minecraft.world.level.chunk.PalettedContainer;
 import net.minecraft.world.level.chunk.status.ChunkStatus;
 import net.minecraft.world.level.levelgen.Aquifer;
@@ -119,7 +120,6 @@ import net.minecraft.world.level.biome.Climate;
 import net.minecraft.world.level.biome.MultiNoiseBiomeSource;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
@@ -193,6 +193,26 @@ public class WorldAccess
         }
         BlockValue block = BlockArgument.findIn(cc, params, 0).block;
         return StringValue.of(test.apply(block.getBlockState(), block.getPos()));
+    }
+
+    private static Value stateIdentifierQuery(
+            Context c,
+            String name,
+            List<Value> params,
+            BiFunction<BlockState, BlockPos, Optional<Identifier>> test
+    )
+    {
+        CarpetContext cc = (CarpetContext) c;
+        if (params.isEmpty())
+        {
+            throw new InternalExpressionException("'" + name + "' requires at least one parameter");
+        }
+        if (params.get(0) instanceof final BlockValue bv)
+        {
+            return ValueConversions.of(test.apply(bv.getBlockState(), bv.getPos()));
+        }
+        BlockValue block = BlockArgument.findIn(cc, params, 0).block;
+        return ValueConversions.of(test.apply(block.getBlockState(), block.getPos()));
     }
 
     private static Value genericStateTest(
@@ -1142,8 +1162,8 @@ public class WorldAccess
                     if (placementState.canSurvive(level, where))
                     {
                         level.setBlock(where, placementState, 2);
-                        SoundType blockSoundGroup = placementState.getSoundType();
-                        level.playSound(null, where, blockSoundGroup.getPlaceSound(), SoundSource.BLOCKS, (blockSoundGroup.getVolume() + 1.0F) / 2.0F, blockSoundGroup.getPitch() * 0.8F);
+                        BlockSoundSet sounds = placementState.getSounds(level);
+                        level.playSound(null, where, sounds.placeSound().get(), SoundSource.BLOCKS, (sounds.volume() + 1.0F) / 2.0F, sounds.pitch() * 0.8F);
                         return Value.TRUE;
                     }
                 }
@@ -1156,8 +1176,8 @@ public class WorldAccess
                         !s.isPathfindable(PathComputationType.LAND)));
 
         expression.addContextFunction("block_sound", -1, (c, t, lv) ->
-                stateStringQuery(c, "block_sound", lv, (s, p) ->
-                        Colors.soundName.get(s.getSoundType())));
+                stateIdentifierQuery(c, "block_sound", lv, (s, p) ->
+                        s.getSounds().map(ResourceKey::identifier)));
 
         expression.addContextFunction("material", -1, (c, t, lv) -> {
             c.host.issueDeprecation("material(...)"); // deprecated for block_state()
@@ -1351,7 +1371,7 @@ public class WorldAccess
             {
                 int i = chunk.getMinY();
                 int j = i + chunk.getHeight() - 1;
-                int k = Mth.clamp(biomeY, i, j);
+                int k = Math.clamp(biomeY, i, j);
                 int l = chunk.getSectionIndex(k);
                 // accessing outside of the interface - might be dangerous in the future.
                 ((PalettedContainer<Holder<Biome>>) chunk.getSection(l).getBiomes()).set(
@@ -1504,10 +1524,10 @@ public class WorldAccess
                 for (Map.Entry<Structure, StructureStart> entry : structures.entrySet())
                 {
                     StructureStart start = entry.getValue();
-                    if (start == StructureStart.INVALID_START)
-                    {
-                        continue;
-                    }
+                    //if (start == StructureStart.INVALID_START)
+                    //{
+                    //    continue;
+                    //}
                     BoundingBox box = start.getBoundingBox();
                     structureList.put(
                             NBTSerializableValue.nameFromRegistryId(reg.getKey(entry.getKey())),

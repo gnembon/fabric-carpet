@@ -1105,7 +1105,7 @@ public class EntityValue extends Value
             }
         });
 
-        put("pitch", (e, v) -> updatePosition(e, e.getX(), e.getY(), e.getZ(), e.getYRot(), Mth.clamp((float) NumericValue.asNumber(v).getDouble(), -90, 90)));
+        put("pitch", (e, v) -> updatePosition(e, e.getX(), e.getY(), e.getZ(), e.getYRot(), Math.clamp((float) NumericValue.asNumber(v).getDouble(), -90, 90)));
 
         put("look", (e, v) -> {
             if (!(v instanceof ListValue lv))
