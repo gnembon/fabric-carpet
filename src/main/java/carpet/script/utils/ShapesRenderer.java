@@ -901,7 +901,7 @@ public class ShapesRenderer
             drawCylinderFaces(primitives,
                     (float) (vc.x - dir * renderEpsilon), (float) (vc.y - dir * renderEpsilon), (float) (vc.z - dir * renderEpsilon),
                     (float) (shape.radius + renderEpsilon), (float) (shape.height + 2 * dir * renderEpsilon), shape.axis,
-                    shape.subdivisions, shape.radius == 0,
+                    shape.subdivisions, shape.height == 0,
                     shape.fargb);
         }
     }
@@ -994,9 +994,10 @@ public class ShapesRenderer
                                              float r, float h, Direction.Axis axis, int subd, boolean isFlat,
                                              int argb, float width)
     {
-        float step = (float) Math.PI / (subd / 2);
-        int num_steps180 = (int) (Math.PI / step) + 1;
-        int num_steps360 = (int) (2 * Math.PI / step);
+        // Preserve the even subdivision grid without truncating a rounded angular step.
+        int num_steps180 = Math.max(2, subd / 2);
+        int num_steps360 = 2 * num_steps180;
+        float step = (float) Math.PI / num_steps180;
         int hsteps = 1;
         float hstep = 1.0f;
         if (!isFlat)
@@ -1011,9 +1012,9 @@ public class ShapesRenderer
             {
                 float hh = dh * hstep;
                 Vec3 from = null;
-                for (int i = 0; i <= num_steps360 + 1; i++)
+                for (int i = 0; i <= num_steps360; i++)
                 {
-                    float theta = step * i;
+                    float theta = i == num_steps360 ? 0.0f : step * i;
                     float x = r * Mth.cos(theta);
                     float y = hh;
                     float z = r * Mth.sin(theta);
@@ -1064,10 +1065,10 @@ public class ShapesRenderer
                 Vec3 from = null;
                 for (int i = 0; i <= num_steps360; i++)
                 {
-                    float theta = step * i;
-                    float z = r * Mth.cos(theta);
+                    float theta = i == num_steps360 ? 0.0f : step * i;
+                    float y = r * Mth.cos(theta);
                     float x = hh;
-                    float y = r * Mth.sin(theta);
+                    float z = r * Mth.sin(theta);
                     Vec3 to = new Vec3(x + cx, y + cy, z + cz);
                     if (from != null) {
                         primitives.addLine(from, to, argb, width);
@@ -1114,10 +1115,10 @@ public class ShapesRenderer
                 Vec3 from = null;
                 for (int i = 0; i <= num_steps360; i++)
                 {
-                    float theta = step * i;
-                    float y = r * Mth.cos(theta);
+                    float theta = i == num_steps360 ? 0.0f : step * i;
+                    float x = r * Mth.cos(theta);
                     float z = hh;
-                    float x = r * Mth.sin(theta);
+                    float y = r * Mth.sin(theta);
                     Vec3 to = new Vec3(x + cx, y + cy, z + cz);
                     if (from != null) {
                         primitives.addLine(from, to, argb, width);
@@ -1161,9 +1162,9 @@ public class ShapesRenderer
                                          float r, float h, Direction.Axis axis, int subd, boolean isFlat,
                                          int argb)
     {
-        float step = (float) Math.PI / (subd / 2);
-        //final int num_steps180 = (int) (Math.PI / step) + 1;
-        int num_steps360 = (int) (2 * Math.PI / step) + 1;
+        int num_steps180 = Math.max(2, subd / 2);
+        int num_steps360 = 2 * num_steps180;
+        float step = (float) Math.PI / num_steps180;
 
         if (axis == Direction.Axis.Y)
         {
@@ -1171,7 +1172,7 @@ public class ShapesRenderer
                 final Vec3[] points = new Vec3[num_steps360 + 2];
                 points[0] = new Vec3(cx, cy, cz);
                 for (int i = 0; i <= num_steps360; i++) {
-                    float theta = step * i;
+                    float theta = i == num_steps360 ? 0.0f : step * i;
                     float x = r * Mth.cos(theta);
                     float z = r * Mth.sin(theta);
                     points[i + 1] = new Vec3(x + cx, cy, z + cz);
@@ -1186,7 +1187,7 @@ public class ShapesRenderer
                 points[0] = new Vec3(cx, cy + h, cz);
                 for (int i = 0; i <= num_steps360; i++)
                 {
-                    float theta = step * i;
+                    float theta = i == num_steps360 ? 0.0f : step * i;
                     float x = r * Mth.cos(theta);
                     float z = r * Mth.sin(theta);
                     points[i + 1] = new Vec3(x + cx, cy + h, z + cz);
@@ -1200,7 +1201,7 @@ public class ShapesRenderer
                 Vec3 previousTop = new Vec3(cx + xp, cy + h, cz + zp);
                 for (int i = 1; i <= num_steps360; i++)
                 {
-                    float theta = step * i;
+                    float theta = i == num_steps360 ? 0.0f : step * i;
                     float x = r * Mth.cos(theta);
                     float z = r * Mth.sin(theta);
 
@@ -1220,7 +1221,7 @@ public class ShapesRenderer
                 Vec3[] points = new Vec3[num_steps360 + 2];
                 points[0] = new Vec3(cx, cy, cz);
                 for (int i = 0; i <= num_steps360; i++) {
-                    float theta = step * i;
+                    float theta = i == num_steps360 ? 0.0f : step * i;
                     float y = r * Mth.cos(theta);
                     float z = r * Mth.sin(theta);
                     points[i + 1] = new Vec3(cx, cy + y, cz + z);
@@ -1235,10 +1236,10 @@ public class ShapesRenderer
                 points[0] = new Vec3(cx + h, cy, cz);
                 for (int i = 0; i <= num_steps360; i++)
                 {
-                    float theta = step * i;
+                    float theta = i == num_steps360 ? 0.0f : step * i;
                     float y = r * Mth.cos(theta);
                     float z = r * Mth.sin(theta);
-                    points[i + 1] = new Vec3(cx, cy + y, cz + z);
+                    points[i + 1] = new Vec3(cx + h, cy + y, cz + z);
                 }
                 primitives.addTriangleFan(points, argb);
 
@@ -1248,7 +1249,7 @@ public class ShapesRenderer
                 Vec3 previousTop = new Vec3(cx + h, cy + yp, cz + zp);
                 for (int i = 1; i <= num_steps360; i++)
                 {
-                    float theta = step * i;
+                    float theta = i == num_steps360 ? 0.0f : step * i;
                     float y = r * Mth.cos(theta);
                     float z = r * Mth.sin(theta);
 
@@ -1267,7 +1268,7 @@ public class ShapesRenderer
                 Vec3[] points = new Vec3[num_steps360 + 2];
                 points[0] = new Vec3(cx, cy, cz);
                 for (int i = 0; i <= num_steps360; i++) {
-                    float theta = step * i;
+                    float theta = i == num_steps360 ? 0.0f : step * i;
                     float x = r * Mth.cos(theta);
                     float y = r * Mth.sin(theta);
                     points[i + 1] = new Vec3(x + cx, cy + y, cz);
@@ -1280,7 +1281,7 @@ public class ShapesRenderer
                 points[0] = new Vec3(cx, cy, cz + h);
                 for (int i = 0; i <= num_steps360; i++)
                 {
-                    float theta = step * i;
+                    float theta = i == num_steps360 ? 0.0f : step * i;
                     float x = r * Mth.cos(theta);
                     float y = r * Mth.sin(theta);
                     points[i + 1] = new Vec3(x + cx, cy + y, cz + h);
@@ -1293,7 +1294,7 @@ public class ShapesRenderer
                 Vec3 previousTop = new Vec3(cx + xp, cy + yp, cz + h);
                 for (int i = 1; i <= num_steps360; i++)
                 {
-                    float theta = step * i;
+                    float theta = i == num_steps360 ? 0.0f : step * i;
                     float x = r * Mth.cos(theta);
                     float y = r * Mth.sin(theta);
 
