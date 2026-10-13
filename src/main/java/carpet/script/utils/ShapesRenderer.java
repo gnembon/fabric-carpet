@@ -22,7 +22,6 @@ import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.components.debug.DebugScreenEntries;
-import net.minecraft.client.gui.font.TextRenderable;
 import net.minecraft.client.multiplayer.ClientLevel;
 //import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.SubmitNodeStorage;
@@ -54,6 +53,8 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.storage.TagValueInput;
 import net.minecraft.world.phys.Vec3;
+import org.joml.Matrix4f;
+import org.joml.Vector3f;
 
 public class ShapesRenderer
 {
@@ -502,21 +503,12 @@ public class ShapesRenderer
             Vec3 v1 = shape.relativiseRender(client.level, shape.pos, partialTick);
             Camera camera1 = client.gameRenderer.mainCamera();
             Font textRenderer = client.font;
-            if (shape.doublesided)
-            {
-                //// RenderSystem.disableCull(); TODO culling
-            }
-            else
-            {
-                //// RenderSystem.enableCull();
-            }
             matrices.pushPose();
             matrices.translate(v1.x - cx, v1.y - cy, v1.z - cz);
 
             rotatePoseStackByShapeDirection(matrices, shape.facing, camera1, v1);
 
             matrices.scale(shape.size * 0.0025f, -shape.size * 0.0025f, shape.size * 0.0025f);
-            //RenderSystem.scalef(shape.size* 0.0025f, -shape.size*0.0025f, shape.size*0.0025f);
             if (shape.tilt != 0.0f)
             {
                 matrices.rotate(Axis.ZP.rotationDegrees(shape.tilt));
@@ -530,51 +522,38 @@ public class ShapesRenderer
                 matrices.rotate(Axis.YP.rotationDegrees(shape.turn));
             }
             matrices.translate(-10 * shape.indent, -10 * shape.height - 9, (-10 * renderEpsilon) - 10 * shape.raise);
-            //if (visibleThroughWalls) RenderSystem.disableDepthTest();
-            matrices.scale(-1, 1, 1);
-            //RenderSystem.applyModelViewMatrix(); // passed matrix directly to textRenderer.draw, not AffineTransformation.identity().getMatrix(),
+            // The camera quaternion already supplies the vanilla text orientation.
+            if (shape.facing != ShapeDirection.CAMERA)
+            {
+                matrices.scale(-1, 1, -1);
+            }
 
             float text_x = 0;
             if (shape.align == 0)
             {
-                text_x = (float) -textRenderer.width(shape.value.getString()) / 2.0F;
+                text_x = (float) -textRenderer.width(shape.value) / 2.0F;
             }
             else if (shape.align == 1)
             {
-                text_x = (float) -textRenderer.width(shape.value.getString());
+                text_x = (float) -textRenderer.width(shape.value);
             }
-            //try (ByteBufferBuilder bbb = new ByteBufferBuilder(RenderType.TRANSIENT_BUFFER_SIZE))
-            //{
-	            //MultiBufferSource.BufferSource immediate = Minecraft.getInstance().gameRenderer.renderBuffers().bufferSource();
-
-	            // text doesn't appear if backgroud is set
-	            ///script run draw_shape('label', 100, 'pos', [200, 100, 200], 'text', 'Hewwo World!', 'color', 0xffffffff, 'fill', 0x33333333)
-	            //textRenderer.drawInBatch(shape.value, text_x, 0.0F, shape.textcolor, false, matrices.last().pose(), immediate, Font.DisplayMode.SEE_THROUGH, shape.textbck, 15728880);
-
-            final Font.PreparedText preparedText = textRenderer.prepareText(shape.value.getVisualOrderText(), text_x, 0.0F, shape.textcolor, false, false,0);
-
-            /*preparedText.visit(new Font.GlyphVisitor() {
-                @Override
-                public void acceptRenderable(final TextRenderable renderable) {
-                    final VertexConsumer buffer = getVertexBuilder(renderable.renderType(Font.DisplayMode.NORMAL));
-                    renderable.render(matrices.last().pose(), buffer, LightCoordsUtil.FULL_BRIGHT, false);
+            Matrix4f pose = matrices.last().pose();
+            // Respect sidedness after applying the label's facing and local transforms.
+            Vector3f normal = new Vector3f(pose.m00(), pose.m01(), pose.m02())
+                    .cross(pose.m10(), pose.m11(), pose.m12());
+            boolean frontFacing = normal.dot(pose.m30(), pose.m31(), pose.m32()) > 0.0f;
+            if (shape.doublesided || frontFacing)
+            {
+                // Reverse both the glyph winding and background depth for the rear view.
+                if (!frontFacing)
+                {
+                    matrices.scale(-1, 1, -1);
                 }
-            });
-
-                preparedText.visit(new Font.GlyphVisitor() {
-                @Override
-                public void acceptRenderable(final TextRenderable renderable) {
-                    //final VertexConsumer buffer = immediate.getBuffer(renderable.renderType(Font.DisplayMode.NORMAL));
-                    renderable.render(matrices.last().pose(), buffer, LightCoordsUtil.FULL_BRIGHT, false);
-                }
-            });
-
-             */
-
-                //immediate.uploadAndDraw();
-            //}
+                submitNodeStorage.submitText(matrices, text_x, 0.0F, shape.value.getVisualOrderText(), false,
+                        shape.seethrough ? Font.DisplayMode.SEE_THROUGH : Font.DisplayMode.NORMAL,
+                        LightCoordsUtil.FULL_BRIGHT, shape.textcolor, shape.textbck, EntityRenderState.NO_OUTLINE);
+            }
             matrices.popPose();
-            ////RenderSystem.enableCull();
         }
 
         @Override
