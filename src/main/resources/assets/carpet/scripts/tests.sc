@@ -1,5 +1,11 @@
 // Scarpet tests are destructive: load this app in a disposable overworld.
 // Use /tests runall or /tests run <name>; single-test names are suggested without spaces.
+// Visual draw_shape cases use nearby player-relative positions, separate from the destructive fixtures.
+// A single selected case is centered 6 blocks ahead; runall keeps every case in a compact gallery.
+// Face an open area: gallery specimens are spaced 8 blocks apart and expire after 6000 ticks.
+// Labels above each specimen describe its expected appearance; transformation pairs put the reference on the left.
+// Walk around to inspect them with a Carpet client; passes confirm API calls, not rendering.
+// The gallery does not modify terrain or follow the player. Vanilla particles are not equivalent.
 
 __config() -> {
     'scope' -> 'player',
@@ -18,6 +24,7 @@ import('tests_world', 'world_tests');
 import('tests_entities', 'entity_tests');
 import('tests_inventory', 'inventory_tests');
 import('tests_auxiliary', 'auxiliary_tests');
+import('tests_shapes', 'shape_tests');
 
 _test_name(name) -> replace(replace(name, '[^A-Za-z0-9_]+', '_'), '^_|_$', '');
 
@@ -31,7 +38,8 @@ _suites(p, origin) -> (
         ['world', _(outer(origin)) -> world_tests(origin)],
         ['entities', _(outer(p), outer(entity_origin)) -> entity_tests(p, entity_origin)],
         ['inventory', _(outer(p), outer(inventory_origin)) -> inventory_tests(p, inventory_origin)],
-        ['auxiliary', _(outer(p), outer(auxiliary_origin)) -> auxiliary_tests(p, auxiliary_origin)]
+        ['auxiliary', _(outer(p), outer(auxiliary_origin)) -> auxiliary_tests(p, auxiliary_origin)],
+        ['shapes', _(outer(p)) -> shape_tests(p)]
     ]
 );
 

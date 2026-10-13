@@ -1,0 +1,336 @@
+_st_center(origin, yaw, slot, columns) -> (
+    forward = [-sin(yaw), 0, cos(yaw)];
+    right = [-cos(yaw), 0, -sin(yaw)];
+    column = slot % columns;
+    side = if(column % 2 == 0, column / 2, -(column + 1) / 2);
+    origin + forward * (6 + 8 * floor(slot / columns)) +
+        right * (8 * side) + [0, 2, 0]
+);
+
+_st_cylinder(p, duration, center, axis) -> (
+    offsets = {'x' -> [1.5, 0, 0], 'y' -> [0, 1.5, 0], 'z' -> [0, 0, 1.5]};
+    draw_shape('cylinder', duration, {
+        'center' -> center - offsets:axis, 'axis' -> axis,
+        'radius' -> 1, 'height' -> 3, 'level' -> 24,
+        'color' -> 0xff00ffff, 'fill' -> 0xff00ff40, 'player' -> p
+    })
+);
+
+_st_polygon(p, duration, center, right, mode, points, inner) ->
+    draw_shape('polygon', duration, {
+        'points' -> map(points, center + right * (_:0) + [0, _:1, 0]),
+        'mode' -> mode, 'inner' -> inner, 'doublesided' -> true,
+        'color' -> 0x4080ffff, 'fill' -> 0x4080ff66, 'player' -> p
+    });
+
+_st_lines(text) -> (
+    lines = [];
+    line = '';
+    for(split(' ', text),
+        if(length(line) > 0 && length(line) + length(_) + 1 > 42,
+            lines += line;
+            line = _
+        ,
+            line += if(length(line) > 0, ' ', '') + _
+        )
+    );
+    if(length(line) > 0, lines += line);
+    lines
+);
+
+_st_annotate(p, duration, center, caption, description) -> (
+    lines = _st_lines(caption);
+    headings = length(lines);
+    for(_st_lines(description), lines += _);
+    // At size 8, 42 ordinary characters fit within a cell; keep the panel above the model.
+    draw_shape(map(lines, ['label', duration, {
+        'pos' -> center + [0, 2 + 0.3 * (length(lines) - _i - 1), 0],
+        'text' -> _, 'size' -> 8, 'align' -> 'center', 'facing' -> 'player',
+        'color' -> if(_i < headings, 0xffffffff, 0xddddddff),
+        'fill' -> 0x000000a0, 'player' -> p
+    }]))
+);
+
+_st_label(p, duration, center, attributes) ->
+    draw_shape('label', duration, {
+        'pos' -> center, 'size' -> 20, 'align' -> 'center', 'facing' -> 'player',
+        'color' -> 0xffffffff, 'fill' -> 0x000000a0, 'player' -> p
+    } + attributes);
+
+_st_sprite(p, duration, center, shape, attributes) ->
+    draw_shape(shape, duration, {
+        'pos' -> if(shape == 'block', center - [0.5, 0.5, 0.5], center),
+        'scale' -> 1, 'facing' -> if(shape == 'block', 'north', 'player'),
+        'skylight' -> 15, 'blocklight' -> 15, 'player' -> p
+    } + attributes);
+
+_st_sprite_pair(p, duration, center, right, shape, attributes) -> (
+    model = if(shape == 'block',
+        {'block' -> 'oak_stairs[facing=north,half=bottom,shape=straight]'},
+        {'item' -> 'diamond_sword', 'variant' -> 'fixed'}
+    );
+    reference = _st_sprite(p, duration, center - right, shape, model);
+    transformed = _st_sprite(p, duration, center + right, shape, model + attributes);
+    reference_label = _st_label(p, duration, center - right - [0, 1.2, 0], {
+        'text' -> 'REFERENCE', 'size' -> 6
+    });
+    transformed_label = _st_label(p, duration, center + right - [0, 1.2, 0], {
+        'text' -> 'TRANSFORMED', 'size' -> 6
+    });
+    reference == true && transformed == true && reference_label == true && transformed_label == true
+);
+
+_st_show(p, frame, case_index, columns, specimen) -> (
+    // Case collection also runs for command suggestions with a null player.
+    if(length(frame) == 0,
+        put(frame, null, [pos(p), query(p, 'yaw')]);
+        put(frame, null, 0);
+        print(p, '[tests] draw_shape: the visual display starts 6 blocks ahead. Inspect it with a Carpet client in an open area.');
+        print(p, '[tests] Shapes last 6000 ticks. Read the expected appearance above each specimen; passes confirm API calls only.')
+    );
+    [origin, yaw] = frame:0;
+    // Only executed cases consume nearby display slots, regardless of their test numbers.
+    center = _st_center(origin, yaw, frame:1, columns);
+    frame:1 += 1;
+    right = [-cos(yaw), 0, -sin(yaw)];
+    duration = 6000;
+    caption = str(case_index + 1) + '. ' + replace(specimen:0, '^draw_shape ', '');
+    print(p, '[tests] Visual ' + caption + ': ' + specimen:1);
+    annotated = _st_annotate(p, duration, center, caption, specimen:1);
+    drawn = call(specimen:2, p, duration, center, right);
+    drawn == true && annotated == true
+);
+
+shape_tests(p) -> (
+    frame = [];
+    specimens = [
+        ['draw_shape line with named attributes',
+            'Red rising diagonal, 2 blocks across and 2 blocks high.',
+            _(p, duration, c, r) -> draw_shape('line', duration,
+                'from', c - r - [0, 1, 0], 'to', c + r + [0, 1, 0],
+                'color', 0xff0000ff, 'player', p)
+        ],
+        ['draw_shape box outline',
+            'Yellow 2-by-2-by-2 box edges, with no filled faces.',
+            _(p, duration, c, r) -> draw_shape('box', duration, {
+                'from' -> c - [1, 1, 1], 'to' -> c + [1, 1, 1],
+                'color' -> 0xffff00ff, 'player' -> p
+            })
+        ],
+        ['draw_shape map attributes',
+            'Green 2-by-2-by-2 box with translucent green faces.',
+            _(p, duration, c, r) -> draw_shape('box', duration, {
+                'from' -> c - [1, 1, 1], 'to' -> c + [1, 1, 1],
+                'color' -> 0x00ff00ff, 'fill' -> 0x00ff0040, 'player' -> p
+            })
+        ],
+        ['draw_shape sphere with list attributes',
+            'Cyan wireframe sphere, radius 1.5, detail level 12, with no fill.',
+            _(p, duration, c, r) -> draw_shape('sphere', duration, [
+                'center', c, 'radius', 1.5, 'level', 12,
+                'color', 0x00ffffff, 'player', p
+            ])
+        ],
+        ['draw_shape sphere filled',
+            'Orange sphere, radius 1.5, detail level 24, with translucent faces.',
+            _(p, duration, c, r) -> draw_shape('sphere', duration, {
+                'center' -> c, 'radius' -> 1.5, 'level' -> 24,
+                'color' -> 0xff8000ff, 'fill' -> 0xff800040, 'player' -> p
+            })
+        ],
+        ['draw_shape cylinder Y axis',
+            'Magenta upright cylinder along world Y, radius 1 and height 3, with translucent faces.',
+            _(p, duration, c, r) -> _st_cylinder(p, duration, c, 'y')
+        ],
+        ['draw_shape cylinder X axis',
+            'Magenta horizontal cylinder along world X, radius 1 and length 3, with translucent faces.',
+            _(p, duration, c, r) -> _st_cylinder(p, duration, c, 'x')
+        ],
+        ['draw_shape cylinder Z axis',
+            'Magenta horizontal cylinder along world Z, radius 1 and length 3, with translucent faces.',
+            _(p, duration, c, r) -> _st_cylinder(p, duration, c, 'z')
+        ],
+        ['draw_shape cylinder disk',
+            'Flat yellow horizontal disk, radius 1.5 and zero height; inspect from above.',
+            _(p, duration, c, r) -> draw_shape('cylinder', duration, {
+                'center' -> c - [0, 1, 0], 'radius' -> 1.5,
+                'axis' -> 'y', 'height' -> 0, 'level' -> 24,
+                'color' -> 0xffff00ff, 'fill' -> 0xffff0080, 'player' -> p
+            })
+        ],
+        ['draw_shape polygon fan',
+            'Blue translucent 3-by-2 rectangle with an outline but no inner diagonal; visible from both sides.',
+            _(p, duration, c, r) -> _st_polygon(p, duration, c, r, 'polygon',
+                [[-1.5, -1], [1.5, -1], [1.5, 1], [-1.5, 1]], false)
+        ],
+        ['draw_shape polygon strip',
+            'Blue translucent 3-by-2 rectangle split by an inner diagonal; visible from both sides.',
+            _(p, duration, c, r) -> _st_polygon(p, duration, c, r, 'strip',
+                [[-1.5, -1], [-1.5, 1], [1.5, -1], [1.5, 1]], true)
+        ],
+        ['draw_shape polygon triangles',
+            'Two separate upright blue translucent triangles, with a gap and no connecting edges.',
+            _(p, duration, c, r) -> _st_polygon(p, duration, c, r, 'triangles',
+                [[-1.5, -1], [-0.5, -1], [-1, 1],
+                    [0.5, -1], [1.5, -1], [1, 1]], true)
+        ],
+        ['draw_shape label formatted text',
+            'Centered RED in red, GREEN in green, and a white ! on a dark background, facing the viewer.',
+            _(p, duration, c, r) -> _st_label(p, duration, c, {
+                'text' -> format('r RED ', 'l GREEN', 'w !')
+            })
+        ],
+        ['draw_shape block model',
+            'Bright oak log with axis=x, scaled to a 2-by-2-by-2 model; no actual block is placed.',
+            _(p, duration, c, r) -> _st_sprite(p, duration, c, 'block', {
+                'block' -> 'oak_log[axis=x]', 'scale' -> 2
+            })
+        ],
+        ['draw_shape item model',
+            'Bright diamond item at double scale, using the fixed display variant and facing the viewer.',
+            _(p, duration, c, r) -> _st_sprite(p, duration, c, 'item', {
+                'item' -> 'diamond', 'variant' -> 'fixed', 'scale' -> 2
+            })
+        ],
+        ['draw_shape batch of lines and boxes',
+            'Red vertical line on the left and a separate blue unit box on the right.',
+            _(p, duration, c, r) -> draw_shape([
+                ['line', duration, {
+                    'from' -> c - r - [0, 1, 0], 'to' -> c - r + [0, 1, 0],
+                    'color' -> 0xff0000ff, 'player' -> p
+                }],
+                ['box', duration, {
+                    'from' -> c + r - [0.5, 0.5, 0.5],
+                    'to' -> c + r + [0.5, 0.5, 0.5],
+                    'color' -> 0x4080ffff, 'fill' -> 0x4080ff40, 'player' -> p
+                }]
+            ])
+        ],
+        ['draw_shape label alignment',
+            'Top LEFT starts at its red mark; middle CENTER is centered; bottom RIGHT ends at its mark. No text backgrounds.',
+            _(p, duration, c, r) -> (
+                results = [];
+                for(['left', 'center', 'right'],
+                    alignment = _;
+                    anchor = c + [0, 1 - _i, 0];
+                    marker = draw_shape('line', duration, {
+                        'from' -> anchor - [0, 0.4, 0], 'to' -> anchor - [0, 0.05, 0],
+                        'color' -> 0xff0000ff, 'player' -> p
+                    });
+                    text = _st_label(p, duration, anchor, {
+                        'text' -> upper(alignment), 'align' -> alignment,
+                        'size' -> 16, 'fill' -> 0x00000000
+                    });
+                    results += marker == true && text == true
+                );
+                all(results, _ == true)
+            )
+        ],
+        ['draw_shape label sizes',
+            'The same ABC text grows from size 10 at the top, through 20, to 30 at the bottom.',
+            _(p, duration, c, r) -> (
+                results = [];
+                for([10, 20, 30],
+                    results += _st_label(p, duration, c + [0, 1 - _i, 0], {
+                        'text' -> 'ABC', 'size' -> _
+                    }) == true
+                );
+                all(results, _ == true)
+            )
+        ],
+        ['draw_shape label camera facing',
+            'CAMERA stays parallel to the camera plane. Turn your view and compare with the player-facing description.',
+            _(p, duration, c, r) -> _st_label(p, duration, c, {
+                'text' -> 'CAMERA', 'facing' -> 'camera'
+            })
+        ],
+        ['draw_shape label single sided',
+            'FRONT is fixed facing north, not following the camera. It should be visible from the front only; walk around.',
+            _(p, duration, c, r) -> _st_label(p, duration, c, {
+                'text' -> 'FRONT', 'facing' -> 'north', 'doublesided' -> false
+            })
+        ],
+        ['draw_shape label double sided',
+            'BOTH SIDES is fixed facing north and visible from both sides. Walk behind it to check the back face.',
+            _(p, duration, c, r) -> _st_label(p, duration, c, {
+                'text' -> 'BOTH SIDES', 'facing' -> 'north', 'doublesided' -> true
+            })
+        ],
+        ['draw_shape label offsets',
+            'White ORIGIN stays put. Cyan OFFSET moves sideways, up and in depth: indent=2, height=1.5, raise=1 at size 14.',
+            _(p, duration, c, r) -> (
+                reference = _st_label(p, duration, c, {
+                    'text' -> 'ORIGIN', 'size' -> 14
+                });
+                offset = _st_label(p, duration, c, {
+                    'text' -> 'OFFSET', 'size' -> 14, 'color' -> 0x00ffffff,
+                    'indent' -> 2, 'height' -> 1.5, 'raise' -> 1
+                });
+                reference == true && offset == true
+            )
+        ],
+        ['draw_shape label value replacement',
+            'Only green NEW should remain after updating value. Red OLD and the identity text IDENTITY must not be visible.',
+            _(p, duration, c, r) -> (
+                before = _st_label(p, duration, c, {
+                    'text' -> 'IDENTITY', 'value' -> format('r OLD')
+                });
+                after = _st_label(p, duration, c, {
+                    'text' -> 'IDENTITY', 'value' -> format('l NEW')
+                });
+                before == true && after == true
+            )
+        ]
+    ];
+    for([
+        ['tilt', 'TILT is rotated diagonally in its plane by tilt=30.', {'tilt' -> 30}],
+        ['lean', 'LEAN tips out of its plane around its horizontal axis by lean=45.', {'lean' -> 45}],
+        ['turn', 'TURN turns out of its plane around its vertical axis by turn=45.', {'turn' -> 45}]
+    ],
+        rotation = _;
+        attributes = rotation:2 + {'text' -> upper(rotation:0)};
+        specimens += ['draw_shape label ' + rotation:0, rotation:1,
+            _(p, duration, c, r, outer(attributes)) -> _st_label(p, duration, c, attributes)]
+    );
+    for(['block', 'item'],
+        shape = _;
+        model_name = if(shape == 'block', 'Oak stairs', 'Diamond swords');
+        reference_facing = if(shape == 'block', 'north', 'player');
+        facing = if(shape == 'block', 'player', 'north');
+        transformations = [
+            ['tilt', 'tilt=45, rotating within the display plane.', {'tilt' -> 45}],
+            ['lean', 'lean=45, tipping around the horizontal model axis.', {'lean' -> 45}],
+            ['turn', 'turn=45, rotating around the vertical model axis.', {'turn' -> 45}],
+            ['combined rotations', 'tilt=25, lean=30 and turn=40 together.',
+                {'tilt' -> 25, 'lean' -> 30, 'turn' -> 40}],
+            ['nonuniform scale', 'scale=[1.5, 0.75, 0.5] along model X/Y/Z: wider, shorter and thinner.',
+                {'scale' -> [1.5, 0.75, 0.5]}],
+            ['camera facing', 'facing=camera, staying parallel to the camera plane as you look around.',
+                {'facing' -> 'camera'}],
+            [facing + ' facing', 'facing=' + facing + '. Walk around to compare fixed and player-facing orientations.',
+                {'facing' -> facing}]
+        ];
+        if(shape == 'item',
+            transformations += ['gui variant', 'variant=gui instead of fixed: compare the inventory-display orientation.',
+                {'variant' -> 'gui'}];
+            transformations += ['ground variant', 'variant=ground instead of fixed: compare the dropped-item size and orientation.',
+                {'variant' -> 'ground'}]
+        );
+        for(transformations,
+            transformation = _;
+            attributes = transformation:2;
+            description = model_name + ': reference left (scale=1, facing=' + reference_facing +
+                '); right uses ' + transformation:1;
+            specimens += ['draw_shape ' + shape + ' ' + transformation:0, description,
+                _(p, duration, c, r, outer(shape), outer(attributes)) ->
+                    _st_sprite_pair(p, duration, c, r, shape, attributes)]
+        )
+    );
+    columns = ceil(sqrt(length(specimens)));
+    map(specimens,
+        case_index = _i;
+        specimen = _;
+        [specimen:0, _(outer(p), outer(frame), outer(case_index), outer(columns), outer(specimen)) ->
+            _st_show(p, frame, case_index, columns, specimen)]
+    )
+);

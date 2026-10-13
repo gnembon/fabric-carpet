@@ -204,22 +204,6 @@ auxiliary_tests(p, origin) -> (
         ['unknown particle exception', _(outer(origin)) ->
             try((particle('scarpet_tests:missing', origin); false), 'unknown_particle', true)
         ],
-        ['draw_shape line with named attributes', _(outer(origin)) ->
-            draw_shape('line', 2, 'from', origin, 'to',
-                [origin:0 + 1, origin:1 + 1, origin:2])
-        ],
-        ['draw_shape batch of lines and boxes', _(outer(origin)) ->
-            draw_shape([
-                ['line', 2, 'from', origin, 'to', [origin:0 + 1, origin:1, origin:2]],
-                ['box', 2, 'from', origin, 'to', [origin:0 + 1, origin:1 + 1, origin:2 + 1]]
-            ])
-        ],
-        ['draw_shape map attributes', _(outer(origin)) ->
-            draw_shape('box', 2, {
-                'from' -> origin,
-                'to' -> [origin:0 + 1, origin:1 + 1, origin:2 + 1]
-            })
-        ],
         ['create_marker and remove_all_markers', _(outer(origin)) -> (
             marker = create_marker('Scarpet test', origin);
             result = query(marker, 'type') == 'armor_stand' && remove_all_markers() >= 1;
