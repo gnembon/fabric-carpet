@@ -29,7 +29,7 @@ public abstract class ClientPacketListener_explosionMixin extends ClientCommonPa
 
     @Inject(method = "handleExplosion", at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/client/multiplayer/ClientLevel;playLocalSound(DDDLnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundSource;FFZ)V"
+            target = "Lnet/minecraft/network/protocol/game/ClientboundExplodePacket;center()Lnet/minecraft/world/phys/Vec3;"
     ), cancellable = true)
     private void onHandleExplosion(final ClientboundExplodePacket clientboundExplodePacket, final CallbackInfo ci)
     {

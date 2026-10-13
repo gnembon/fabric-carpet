@@ -10,6 +10,7 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.LiquidBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.FlowingFluid;
+import net.minecraft.world.level.material.Fluids;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -29,7 +30,7 @@ public abstract class LiquidBlock_renewableBlackstoneMixin
     {
         if (CarpetSettings.renewableBlackstone)
         {
-            if (fluid.is(FluidTags.LAVA)) {
+            if (fluid == Fluids.LAVA) {
                 for(Direction direction : Direction.values())
                 {
                     if (direction != Direction.DOWN) {
