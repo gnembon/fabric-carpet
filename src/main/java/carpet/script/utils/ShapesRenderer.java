@@ -54,9 +54,6 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.storage.TagValueInput;
 import net.minecraft.world.phys.Vec3;
-import org.joml.Matrix4fStack;
-import org.joml.Matrix4fc;
-import org.joml.Quaternionf;
 
 public class ShapesRenderer
 {
@@ -111,13 +108,12 @@ public class ShapesRenderer
         labels = new HashMap<>();
     }
 
-    public void render(SubmitNodeStorage submitNodeStorage, LevelRenderState cameraa, Matrix4fc matrix4f, float partialTick)
+    public void render(SubmitNodeStorage submitNodeStorage, LevelRenderState levelRenderState, float partialTick)
     {
         Runnable token = Carpet.startProfilerSection("Scarpet client");
-        // posestack is not needed anymore - left as TODO to cleanup later
+        // The feature pipeline applies the view rotation to these camera-relative poses.
         PoseStack matrices = new PoseStack();
 
-        Camera camera = this.client.gameRenderer.mainCamera();
         ClientLevel iWorld = this.client.level;
         ResourceKey<Level> dimensionType = iWorld.dimension();
         if ((shapes.get(dimensionType) == null || shapes.get(dimensionType).isEmpty()) &&
@@ -142,9 +138,10 @@ public class ShapesRenderer
         //RenderSystem.enablePolygonOffset();
 
         // render
-        double cameraX = camera.position().x;
-        double cameraY = camera.position().y;
-        double cameraZ = camera.position().z;
+        Vec3 cameraPos = levelRenderState.cameraRenderState.pos;
+        double cameraX = cameraPos.x;
+        double cameraY = cameraPos.y;
+        double cameraZ = cameraPos.z;
         boolean entityBoxes = client.debugEntries.isCurrentlyEnabled(DebugScreenEntries.ENTITY_HITBOXES);
 
         final DrawableGizmoPrimitives normal = new DrawableGizmoPrimitives();
@@ -155,17 +152,12 @@ public class ShapesRenderer
             shapes.get(dimensionType).long2ObjectEntrySet().removeIf(
                     entry -> entry.getValue().isExpired(currentTime)
             );
-            Matrix4fStack matrixStack = RenderSystem.getModelViewStack();
-            matrixStack.pushMatrix();
-            //matrixStack.mul(matrices.last().pose());
-            matrixStack.mul(matrix4f);
-
             // lines
             //RenderSystem.lineWidth(0.5F);
             shapes.get(dimensionType).values().forEach(s -> {
                 if ((!s.shape.debug || entityBoxes) && s.shouldRender(dimensionType))
                 {
-                    s.renderLines(matrices, cameraX, cameraY, cameraZ, partialTick, cameraa, s.shape.seethrough ? onTop : normal, submitNodeStorage );
+                    s.renderLines(matrices, cameraX, cameraY, cameraZ, partialTick, levelRenderState, s.shape.seethrough ? onTop : normal, submitNodeStorage );
                 }
             });
             // faces
@@ -176,8 +168,6 @@ public class ShapesRenderer
                 }
             });
             //RenderSystem.lineWidth(1.0F);
-            matrixStack.popMatrix();
-
         }
         if (!labels.isEmpty())
         {
@@ -187,7 +177,7 @@ public class ShapesRenderer
             labels.get(dimensionType).values().forEach(s -> {
                 if ((!s.shape.debug || entityBoxes) && s.shouldRender(dimensionType))
                 {
-                    s.renderLines(matrices, cameraX, cameraY, cameraZ, partialTick, cameraa, s.shape.seethrough ? onTop : normal, submitNodeStorage );
+                    s.renderLines(matrices, cameraX, cameraY, cameraZ, partialTick, levelRenderState, s.shape.seethrough ? onTop : normal, submitNodeStorage );
                 }
             });
         }
@@ -196,13 +186,13 @@ public class ShapesRenderer
 
 
 
-        normal.submit(submitNodeStorage, cameraa.cameraRenderState, false);
+        normal.submit(submitNodeStorage, levelRenderState.cameraRenderState, false);
         //bufferSource.uploadAndDraw();
 
         if (false) {
             final RenderTarget mainRenderTarget = Minecraft.getInstance().gameRenderer.mainRenderTarget();
             RenderSystem.getDevice().createCommandEncoder().clearDepthTexture(mainRenderTarget.getDepthTexture(), 1.0);
-            onTop.submit(submitNodeStorage, cameraa.cameraRenderState, true);
+            onTop.submit(submitNodeStorage, levelRenderState.cameraRenderState, true);
             //bufferSource.uploadAndDraw();
 
             RenderSystem.getDevice().createCommandEncoder().clearDepthTexture(Minecraft.getInstance().gameRenderer.mainRenderTarget().getDepthTexture(), 1.0);
@@ -367,14 +357,12 @@ public class ShapesRenderer
             Camera camera1 = client.gameRenderer.mainCamera();
 
             matrices.pushPose();
+            matrices.translate(v1.x - cx, v1.y - cy, v1.z - cz);
             if (!isitem)// blocks should use its center as the origin
             {
                 matrices.translate(0.5, 0.5, 0.5);
             }
 
-            matrices.rotate(camera1.rotation().conjugate(new Quaternionf()));
-
-            matrices.translate(v1.x - cx, v1.y - cy, v1.z - cz);
             rotatePoseStackByShapeDirection(matrices, shape.facing, camera1, isitem ? v1 : v1.add(0.5, 0.5, 0.5));
             if (shape.tilt != 0.0f)
             {
@@ -419,7 +407,6 @@ public class ShapesRenderer
                 // draw the block itself
                 if (blockState.getRenderShape() == RenderShape.MODEL)
                 {
-                    // this is equally wrong position wise as the BE type - need to investigate
                     //var blockRenderDispatcher = client.getBlockRenderer();
 
 
@@ -459,19 +446,8 @@ public class ShapesRenderer
                         BlockEntityRenderState state = client.getBlockEntityRenderDispatcher().tryExtractRenderState(BlockEntity, partialTick, null, true);
 
 
-                        // levelRenderer;;submitBlockEntities does a weird transpose
-
                         if (blockEntityRenderer != null && state != null)
                         {
-                            // testme partial positions
-                            //final Vec3 cameraPos = levelRenderState.cameraRenderState.pos;
-                            //final double camX = cameraPos.x();
-                            //final double camY = cameraPos.y();
-                            //final double camZ = cameraPos.z();
-                            //matrices.translate(blockPos.getX() - camX, blockPos.getY() - camY, blockPos.getZ() - camZ);
-                            //matrices.mulPose(levelRenderState.cameraRenderState.);
-
-
                             blockEntityRenderer.submit(state, matrices,submitNodeStorage, levelRenderState.cameraRenderState);
                             //blockEntityRenderer.submit(BlockEntity, partialTick,
                             //        matrices, light, OverlayTexture.NO_OVERLAY, camera1.getPosition(), null, client.gameRenderer.getFeatureRenderDispatcher().getSubmitNodeStorage());
@@ -484,8 +460,6 @@ public class ShapesRenderer
                 if (shape.item != null)
                 {
                     // draw the item
-                    // this seems to not work now
-
                     final ItemStackRenderState itemState = new ItemStackRenderState();
                     client.getItemModelResolver().updateForTopItem(itemState, shape.item, ItemDisplayContext.FIXED, client.level, null, 0);
                     itemState.submit(matrices, submitNodeStorage, light, OverlayTexture.NO_OVERLAY, EntityRenderState.NO_OUTLINE);
