@@ -49,6 +49,7 @@
     "MobMixin",
     "Villager_aiMixin",
     "Player_fakePlayersMixin",
+    "SleepStatus_fakePlayerSleepIgnoreMixin",
 	"ServerPlayer_fakeLastMovementMixin",
     "TickRateManager_fakePlayersMixin",
     "ServerGamePacketListenerImpl_coreMixin",
