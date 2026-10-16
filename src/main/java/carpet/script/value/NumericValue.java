@@ -119,7 +119,7 @@ public class NumericValue extends Value
     private static long floor(double v)
     {
         long invValue = (long) v;
-        return v < invValue ? invValue - 1 : invValue;
+        return v < invValue && invValue != Long.MIN_VALUE ? invValue - 1 : invValue;
     }
 
     public long getLong()

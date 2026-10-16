@@ -193,6 +193,15 @@ language_tests() -> [
             bitwise_not(5) == -6 &&
             bitwise_popcount(15) == 4 &&
             bitwise_and() == null && bitwise_or() == null],
+    ['bitwise complement and population count preserve integer precision', _() ->
+        bitwise_not(9007199254740993) == -9007199254740994 &&
+            bitwise_popcount(9007199254740993) == 2 &&
+            bitwise_not(9223372036854775806) == -9223372036854775807 &&
+            bitwise_popcount(9223372036854775806) == 62 &&
+            bitwise_not(-1) == 0 && bitwise_popcount(-1) == 64],
+    ['unary bitwise operations retain fractional truncation', _() ->
+        bitwise_not(1.5) == -2 && bitwise_popcount(1.5) == 1 &&
+            bitwise_not(-1.5) == 0 && bitwise_popcount(-1.5) == 64],
     ['double bit conversion round trip', _() ->
         double_to_long_bits(1) == 4607182418800017408 &&
             long_to_double_bits(double_to_long_bits(1.5)) == 1.5],
@@ -216,6 +225,10 @@ language_tests() -> [
         min(5, 2, 4) == 2 && max([5, 2, 4]) == 5 &&
             min(['b', 'a']) == 'a' &&
             relu(-3) == 0 && relu(0) == 0 && relu(3) == 3],
+    ['minimum and maximum of empty lists return null', _() ->
+        min([]) == null && max([]) == null &&
+            type(min([])) == 'null' && type(max([])) == 'null' &&
+            min([null]) == null && max([null]) == null],
     ['minimum selects a bound assignment target', _() -> (
         a = 1; b = 2;
         min(a, b) = 3;
@@ -276,6 +289,11 @@ language_tests() -> [
     ['string formatting with argument list', _() ->
         str('%s:%04d', ['x', 7]) == 'x:0007' &&
             str('%b %b', true, false) == 'true false'],
+    ['integer conversion saturates without changing sign', _() ->
+        str('%d', -1e100) == '-9223372036854775808' &&
+            str('%d', 1e100) == '9223372036854775807' &&
+            str('%d', -9223372036854775807 - 1) == '-9223372036854775808' &&
+            str('%d', -1.5) == '-2' && str('%d', 1.5) == '1'],
     ['lower, upper and title case', _() ->
         lower('AbC') == 'abc' && upper('AbC') == 'ABC' &&
             title('hELLO wORLD') == 'Hello World'],

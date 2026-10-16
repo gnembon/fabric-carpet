@@ -293,11 +293,16 @@ public class Operators
         expression.addMathematicalBinaryIntFunction("bitwise_arithmetic_shift_right", (num, amount) -> num >> amount);
         expression.addMathematicalBinaryIntFunction("bitwise_roll_left", (num, amount) -> Long.rotateLeft(num, (int)amount));
         expression.addMathematicalBinaryIntFunction("bitwise_roll_right", (num, amount) -> Long.rotateRight(num, (int)amount));
-        expression.addMathematicalUnaryIntFunction("bitwise_not", d -> {
-            long num = (long) d;
-            return ~num;
+        expression.addUnaryFunction("bitwise_not", v -> {
+            NumericValue number = NumericValue.asNumber(v);
+            long num = number.isInteger() ? number.getLong() : (long) number.getDouble();
+            return new NumericValue(~num);
         });
-        expression.addMathematicalUnaryIntFunction("bitwise_popcount", d -> (long) Long.bitCount((long)d));
+        expression.addUnaryFunction("bitwise_popcount", v -> {
+            NumericValue number = NumericValue.asNumber(v);
+            long num = number.isInteger() ? number.getLong() : (long) number.getDouble();
+            return new NumericValue(Long.bitCount(num));
+        });
         expression.addMathematicalUnaryIntFunction("double_to_long_bits", Double::doubleToLongBits);
         expression.addUnaryFunction("long_to_double_bits", v ->
                 new NumericValue(Double.longBitsToDouble(NumericValue.asNumber(v).getLong())));

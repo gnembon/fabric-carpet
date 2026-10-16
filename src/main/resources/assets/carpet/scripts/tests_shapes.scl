@@ -84,9 +84,7 @@ _st_show(p, frame, case_index, columns, specimen) -> (
     // Case collection also runs for command suggestions with a null player.
     if(length(frame) == 0,
         put(frame, null, [pos(p), query(p, 'yaw')]);
-        put(frame, null, 0);
-        print(p, '[tests] draw_shape: the visual display starts 6 blocks ahead. Inspect it with a Carpet client in an open area.');
-        print(p, '[tests] Shapes last 6000 ticks. Read the expected appearance above each specimen; passes confirm API calls only.')
+        put(frame, null, 0)
     );
     [origin, yaw] = frame:0;
     // Only executed cases consume nearby display slots, regardless of their test numbers.
@@ -95,7 +93,6 @@ _st_show(p, frame, case_index, columns, specimen) -> (
     right = [-cos(yaw), 0, -sin(yaw)];
     duration = 6000;
     caption = str(case_index + 1) + '. ' + replace(specimen:0, '^draw_shape ', '');
-    print(p, '[tests] Visual ' + caption + ': ' + specimen:1);
     annotated = _st_annotate(p, duration, center, caption, specimen:1);
     drawn = call(specimen:2, p, duration, center, right);
     drawn == true && annotated == true

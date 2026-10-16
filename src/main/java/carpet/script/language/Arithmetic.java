@@ -116,7 +116,7 @@ public class Arithmetic
                     max = parameter;
                 }
             }
-            return max;
+            return max == null ? Value.NULL : max;
         });
 
         expression.addFunction("min", lv ->
@@ -137,7 +137,7 @@ public class Arithmetic
                     min = parameter;
                 }
             }
-            return min;
+            return min == null ? Value.NULL : min;
         });
 
         expression.addUnaryFunction("relu", v -> v.compareTo(Value.ZERO) < 0 ? Value.ZERO : v);
