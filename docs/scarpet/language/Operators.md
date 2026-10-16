@@ -244,9 +244,9 @@ Require a number, flips the sign. One way to assert it's a number is by crashing
 +'4'  // Error message
 </pre>
 
-### `Negation Operator !`
+### `Negation Operator !`, `not(expr)`
 
-flips boolean condition of the expression. Equivalent of `bool(expr)==false`
+Flips the boolean condition of the expression. `not(expr)` is equivalent to `!expr`.
 
 <pre>
 !true  => false

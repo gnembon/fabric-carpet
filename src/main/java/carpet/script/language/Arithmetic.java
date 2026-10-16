@@ -15,7 +15,6 @@ public class Arithmetic
 
     public static void apply(Expression expression)
     {
-        expression.addTypedContextFunction("not", 1, Context.Type.BOOLEAN, (c, t, lv) -> BooleanValue.of(lv.get(0).getBoolean()));
         expression.addUnaryFunction("fact", v ->
         {
             long number = NumericValue.asNumber(v).getLong();

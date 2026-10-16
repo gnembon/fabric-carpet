@@ -85,7 +85,9 @@ public abstract class LazyListValue extends AbstractListValue implements Iterato
             public Value next()
             {
                 Value val = new NumericValue(current);
-                current += stepp;
+                long next = current + stepp;
+                boolean overflow = stepp > 0 ? next < current : next > current;
+                current = overflow ? limit : next;
                 return val;
             }
 

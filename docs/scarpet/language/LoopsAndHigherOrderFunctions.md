@@ -5,6 +5,10 @@ internalize most of the operations that need to be applied on multiple values at
 a `list` argument which can be any iterable structure in scarpet, including generators, like `rect`, or `range`, 
 and maps, where the iterator returns all the map keys
 
+Loop-provided `_`, `_i`, and `_a` bindings are temporary. Their previous bindings, and the original bindings of
+input values, are restored when the loop exits, including when an exception or `return` interrupts it.
+Iterators are finalized on exit, so reusable ranges are reset even if a loop throws.
+
 ## Loops
 
 ### `break(), break(expr), continue(), continue(expr)`
@@ -41,6 +45,8 @@ Evaluates expression over list of items from the `list`. Supplies `_`(value) and
 
 Returns the number of times `expr` was successful. Uses `continue` and `break` argument in place of the returned 
 value from the `expr`(if supplied), to determine if the iteration was successful.
+
+For example, `for([1, 2, 3], if(_ == 2, break(true), true))` returns `2`, counting the final successful iteration.
 
 <pre>
 check_prime(n) -> !first( range(2, sqrt(n)+1), !(n % _) );

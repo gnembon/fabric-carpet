@@ -17,6 +17,10 @@ _lt_edit_argument(items) -> (items += 9; items);
 language_tests() -> [
     ['integer, decimal, exponent and hexadecimal literals', _() ->
         12 + 0.5 == 12.5 && 2e3 == 2000 && 0xff == 255 && 0X10 == 16],
+    ['hexadecimal arithmetic without whitespace preserves exponent digits', _() ->
+        0xfe+2 == 256 && 0xfe-2 == 252 &&
+            0X1E+2 == 32 && 0X1E-2 == 28 &&
+            2e+2 == 200 && 2e-2 == 0.02],
     ['integer precision across arithmetic', _() ->
         9007199254740993 + 1 == 9007199254740994 &&
             9007199254740994 - 1 == 9007199254740993],
@@ -69,6 +73,29 @@ language_tests() -> [
             unique(1, 2, 3) && !unique(1, 2, 1) &&
             increasing(1, 2, 3) && nondecreasing(1, 1, 2) &&
             decreasing(3, 2, 1) && nonincreasing(3, 3, 2)],
+    ['unique distinguishes values with colliding hashes', _() ->
+        hash_code('Aa') == hash_code('BB') &&
+            unique('Aa', 'BB') && !unique('Aa', 'BB', 'Aa') &&
+            !unique('BB', 'Aa', 'BB') && unique() && unique('Aa')],
+    ['unique scans entire hash collision groups', _() ->
+        hash_code('AaAa') == hash_code('BBBB') &&
+            hash_code('AaBB') == hash_code('BBAa') &&
+            hash_code('AaAa') == hash_code('AaBB') &&
+            unique('AaAa', 'BBBB', 'AaBB', 'BBAa') &&
+            !unique('AaAa', 'BBBB', 'AaBB', 'BBAa', 'AaAa') &&
+            !unique('AaAa', 'BBBB', 'AaBB', 'BBAa', 'BBBB')],
+    ['unique supports colliding maps and nested lists', _() -> (
+        first = {'Aa' -> 1};
+        second = {'BB' -> 1};
+        duplicate = {'Aa' -> 1};
+        hash_code(first) == hash_code(second) &&
+            unique(first, second) && !unique(first, second, duplicate) &&
+            unique([first], [second]) && !unique([first], [second], [duplicate])
+    )],
+    ['unique preserves adjacent cross-type and approximate equality', _() ->
+        !unique(true, 1) && !unique(false, 0) &&
+            !unique(1, '1') &&
+            !unique(0.5, 0.50000000000001) && unique(null, false)],
     ['binary comparisons', _() ->
         3 > 2 && 3 >= 3 && 2 < 3 && 2 <= 2 &&
             5 >= 4 && 5 > 1],
@@ -84,6 +111,10 @@ language_tests() -> [
     ['boolean negation and unary function aliases', _() ->
         !null && ![] && !false && !(!5) &&
             identity(4) == 4 && opposite(4) == -4],
+    ['functional negation agrees with unary negation', _() ->
+        not(true) == false && not(false) == true &&
+            not(null) == true && not([]) == true &&
+            not([0]) == false && not('false') == false],
     ['list matching returns an index or null', _() ->
         [8, 3, 8] ~ 3 == 1 && [8, 3] ~ 4 == null &&
             match([4, 5], 4) == 0],
@@ -118,6 +149,16 @@ language_tests() -> [
         [c, d] = [3, 4];
         [a, b] <> [c, d];
         [a, b, c, d] == [3, 4, 1, 2]
+    )],
+    ['destructured swapping preserves assignment targets', _() -> (
+        [a, b] = [1, 2];
+        [c, d] = [3, 4];
+        [a, b] <> [c, d];
+        a += 10;
+        b = 40;
+        c += 100;
+        d = 20;
+        [a, b, c, d] == [13, 40, 101, 20]
     )],
     ['string and list append assignment', _() -> (
         text = 'a'; text += 'b';
@@ -333,6 +374,13 @@ language_tests() -> [
         [range(6, 0, -2)] == [6, 4, 2] &&
             [range(0, 7, 3)] == [0, 3, 6] &&
             [range(4, 4)] == []],
+    ['integer ranges stop before stepping overflows', _() -> (
+        lowest = -9223372036854775807 - 1;
+        highest = 9223372036854775807;
+        slice(range(highest - 1, highest, 2), 0, 3) == [highest - 1] &&
+            slice(range(lowest + 1, lowest, -2), 0, 3) == [lowest + 1] &&
+            slice(range(highest, lowest, lowest), 0, 3) == [highest, -1]
+    )],
     ['fractional ranges with exact binary steps', _() ->
         map(range(0, 1, 0.25), _ * 4) == [0, 1, 2, 3]],
     ['list access wraps around and handles empty lists', _() ->
@@ -340,6 +388,15 @@ language_tests() -> [
             get([10, 20, 30], -1) == 30 &&
             [10, 20, 30]:5 == 30 &&
             get([], 0) == null],
+    ['full-width integer indices wrap without overflow', _() -> (
+        lowest = -9223372036854775807 - 1;
+        highest = 9223372036854775807;
+        items = [10, 20, 30];
+        get(items, highest) == 20 && get(items, lowest) == 20 &&
+            slice('abc', highest) == 'bc' &&
+            slice(items, lowest) == [20, 30] &&
+            delete(items, highest) && items == [10, 30]
+    )],
     ['map access distinguishes missing and null entries', _() -> (
         entries = {'present' -> null, 'value' -> 3};
         entries:'value' == 3 && entries:'missing' == null &&
@@ -430,6 +487,11 @@ language_tests() -> [
             slice('abcdef', -2) == 'ef' &&
             items == [0, 1, 2, 3, 4]
     )],
+    ['empty strings and lists can be sliced', _() ->
+        slice([], 0) == [] && slice([], 0, 0) == [] &&
+            slice([], -1, 4) == [] &&
+            slice('', 0) == '' && slice('', 0, 0) == '' &&
+            slice('', -1, 4) == ''],
     ['slice an iterator over a bounded interval', _() ->
         slice(range(8), 2, 5) == [2, 3, 4]],
     ['sort arguments and a copy of a list', _() -> (
@@ -441,6 +503,13 @@ language_tests() -> [
     ['sort_key evaluates a key for each element', _() ->
         sort_key([1, 3, 2], -_) == [3, 2, 1] &&
             sort_key(['xx', 'z', 'bbb'], length(_)) == ['z', 'xx', 'bbb']],
+    ['sort_key restores scope when its key throws', _() ->
+        map([41, 42], (
+            expected = _;
+            original = [2, 1];
+            try(sort_key(original, throw('stop')));
+            _ == expected && original == [2, 1]
+        )) == [true, true]],
     ['random-key sort preserves the multiset of values', _() ->
         sort(sort_key([3, 1, 2])) == [1, 2, 3]],
     ['map constructors and set-style entries', _() ->
@@ -488,6 +557,11 @@ language_tests() -> [
         for([0, 1, 2, 3],
             if(_ == 1, continue(true), _ == 3, break(), _ % 2 == 0)
         ) == 3],
+    ['for counts successful break values', _() ->
+        for([1], break(true)) == 1 &&
+            for([1], break(false)) == 0 &&
+            for([1], break()) == 0 &&
+            for([1, 2, 3], if(_ == 2, break(true), true)) == 2],
     ['map transforms values and exposes indices', _() ->
         map(range(4), _ * _) == [0, 1, 4, 9] &&
             map(['a', 'b'], _ + _i) == ['a0', 'b1'] &&
@@ -534,11 +608,85 @@ language_tests() -> [
             reduce([1, 2, 3],
                 if(_ == 2, break(7), _a + _), 0
             ) == 7],
+    ['reduce restores accumulator bindings on normal and exceptional exits', _() -> (
+        seed = 7;
+        answer = reduce([1, 2], _a + _, seed);
+        seed = 9;
+        normal_ok = answer == 10 && seed == 9;
+        seed = 7;
+        try(reduce([1], throw(_a), seed));
+        seed = 9;
+        throw_ok = seed == 9;
+        seed = 7;
+        answer = reduce([1], break(_a), seed);
+        seed = 9;
+        break_ok = answer == 7 && seed == 9;
+        seed = 7;
+        answer = reduce([1, 2], continue(_a), seed);
+        seed = 9;
+        normal_ok && throw_ok && break_ok && answer == 7 && seed == 9
+    )],
+    ['reduce preserves explicit accumulator container mutations', _() -> (
+        seed = [];
+        answer = reduce([1, 2], put(_a, null, _); _a, seed);
+        seed == [1, 2] && answer == seed
+    )],
     ['nested iteration restores the outer loop variable', _() ->
         map([1, 2], (
             n = _;
             [map([10, 20], n + _), _]
         )) == [[[11, 21], 1], [[12, 22], 2]]],
+    ['loop and while restore scope after body and condition exceptions', _() ->
+        map([41, 42], (
+            expected = _;
+            try(loop(1, throw('stop')));
+            loop_ok = _ == expected;
+            try(while(true, throw('stop')));
+            while_body_ok = _ == expected;
+            try(while(throw('stop'), null));
+            while_condition_ok = _ == expected;
+            try(while(true, 1, throw('stop')));
+            bounded_body_ok = _ == expected;
+            try(while(throw('stop'), 1, null));
+            loop_ok && while_body_ok && while_condition_ok &&
+                bounded_body_ok && _ == expected
+        )) == [true, true]],
+    ['collection loops restore implicit variables after exceptions', _() ->
+        map([41, 42], (
+            expected = [_, _i, _a];
+            try(map([7], throw('stop')));
+            map_ok = [_, _i, _a] == expected;
+            try(filter([7], throw('stop')));
+            filter_ok = [_, _i, _a] == expected;
+            try(first([7], throw('stop')));
+            first_ok = [_, _i, _a] == expected;
+            try(all([7], throw('stop')));
+            all_ok = [_, _i, _a] == expected;
+            try(for([7], throw('stop')));
+            for_ok = [_, _i, _a] == expected;
+            try(reduce([7], throw(_a), 99));
+            map_ok && filter_ok && first_ok && all_ok && for_ok &&
+                [_, _i, _a] == expected
+        )) == [true, true]],
+    ['aborted iteration restores input variable bindings', _() -> (
+        value = 7;
+        try(map([value], throw('stop')));
+        value = 9;
+        value == 9
+    )],
+    ['return from iteration restores shared input bindings', _() -> (
+        value = 7;
+        items = [value];
+        leave = (_(outer(items)) -> map(items, return(1)));
+        call(leave);
+        value = 9;
+        value == 9
+    )],
+    ['aborted iteration resets its reusable iterator', _() -> (
+        values = range(3);
+        try(map(values, throw('stop')));
+        [values] == [0, 1, 2]
+    )],
 
     ['function call by name and by function value', _() -> (
         fn = (_(n) -> n * 3);
@@ -646,6 +794,26 @@ language_tests() -> [
                 type(_trace:'locals') == 'map' &&
                 type(_trace:'token') == 'list'
         )],
+    ['try restores scope when handlers and filters throw', _() ->
+        map([41, 42], (
+            expected = _;
+            try(try(throw('inner'), throw('outer')));
+            handler_ok = _ == expected && vars('_') ~ '_trace' == null;
+            try(try(throw('inner'), throw('filter'), null));
+            handler_ok && _ == expected && vars('_') ~ '_trace' == null
+        )) == [true, true]],
+    ['try removes temporary trace bindings on break and continue', _() -> (
+        loop(1, try(throw('stop'), break()));
+        break_ok = vars('_') ~ '_trace' == null;
+        loop(2, try(throw('stop'), continue()));
+        break_ok && vars('_') ~ '_trace' == null
+    )],
+    ['nested rethrow restores the enclosing catch context', _() ->
+        try(throw('outer'), (
+            token = _trace:'token';
+            try(try(throw('inner'), throw('again')));
+            _ == 'outer' && _trace:'token' == token
+        ))],
     ['system shared variable defaults, overwrites and restores', _() -> (
         key = 'scarpet_tests:language:' + str(unix_time()) + ':' + str(time());
         previous = system_variable_get(key);

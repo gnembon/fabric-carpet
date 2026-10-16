@@ -180,6 +180,8 @@ extracts a substring, or sublist (based on the type of the result of the express
 starting index of `from`, and ending at `to` if provided, or the end, if omitted. Can use negative indices to 
 indicate counting form the back of the list, so `-1 <=> length(_)`.
 
+Slicing an empty list or string returns `[]` or `''`, respectively.
+
 Special case is made for iterators (`range`, `rect` etc), which does require non-negative indices (negative `from` is treated as
 `0`, and negative `to` as `inf`), but allows retrieving parts of the sequence and ignore
 other parts. In that case consecutive calls to `slice` will refer to index `0` the current iteration position since iterators
@@ -217,7 +219,7 @@ sort_key([range(20)],str(_))  => [0, 1, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 
 
 ### `range(to), range(from, to), range(from, to, step)`
 
-Creates a range of numbers from `from`, no greater/larger than `to`. The `step` parameter dictates not only the 
+Creates a range of numbers from `from`, up to but excluding `to`. The `step` parameter dictates not only the
 increment size, but also direction (can be negative). The returned value is not a proper list, just the iterator 
 but if for whatever reason you need a proper list with all items evaluated, use `[range(to)]`. 
 Primarily to be used in higher order functions

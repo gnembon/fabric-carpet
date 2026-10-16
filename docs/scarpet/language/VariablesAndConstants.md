@@ -22,6 +22,9 @@ subtraction, negation and multiplication, however any other operation that is no
 (like division) on a number even if it can be properly
 represented as long, will make them convert to doubles.
 
+Hexadecimal literals accept `0x` or `0X` prefixes. The digits `e` and `E` are hexadecimal digits, not exponent
+markers: `0xfe+2` evaluates to `256`, and `0xfe-2` evaluates to `252`, without requiring spaces.
+
 Strings use single quoting, for multiple reasons, but primarily to allow for 
 easier use of strings inside doubly quoted command arguments (when passing a script as a parameter of `/script fill` 
 for example), or when typing in jsons inside scarpet (to feed back into a `/data merge` command for example). 

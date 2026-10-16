@@ -26,8 +26,6 @@ import net.minecraft.nbt.NumericTag;
 import net.minecraft.nbt.StringTag;
 import net.minecraft.nbt.Tag;
 
-import static java.lang.Math.abs;
-
 public class ListValue extends AbstractListValue implements ContainerValueInterface
 {
     protected final List<Value> items;
@@ -323,10 +321,7 @@ public class ListValue extends AbstractListValue implements ContainerValueInterf
         {
             return (int) idx;
         }
-        long range = abs(idx) / len;
-        idx += (range + 2) * len;
-        idx = idx % len;
-        return (int) idx;
+        return Math.floorMod(idx, len);
     }
 
     public static class ListConstructorValue extends ListValue
@@ -362,6 +357,10 @@ public class ListValue extends AbstractListValue implements ContainerValueInterf
     {
         List<Value> items = getItems();
         int size = items.size();
+        if (size == 0)
+        {
+            return ListValue.of();
+        }
         int from = normalizeIndex(fromDesc, size);
         if (toDesc == null)
         {

@@ -1518,9 +1518,6 @@ public class Expression
         // flipping to full functional representation makes it little underperforming, might be related
         // to the fact that operators are running from a bigger pool or function execution is slower
         optimizeTree(root, optimizeOnlyContext, logger, optimize, functional);
-        if (!optimize) {
-            return Pair.of(root, root.op);
-        }
         return Pair.of(root, extractOp(optimizeOnlyContext, root, Context.Type.NONE));
     }
 

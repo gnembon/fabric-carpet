@@ -319,25 +319,46 @@ public class Operators
             return Value.TRUE;
         });
 
-        expression.addBinaryOperator("!=", "unique", precedence.get("equal==!="), false, (v1, v2) -> v1.equals(v2) ? Value.FALSE : Value.TRUE, lv -> {
-            int size = lv.size();
-            if (size < 2)
-            {
-                return Value.TRUE;
-            }
-            // need to order them so same obejects will be next to each other.
-            lv.sort(Comparator.comparingInt(Value::hashCode));
-            Value prev = lv.get(0);
-            for (Value next : lv.subList(1, size))
-            {
-                if (prev.equals(next))
-                {
-                    return Value.FALSE;
-                }
-                prev = next;
-            }
-            return Value.TRUE;
-        });
+        expression.addBinaryOperator("!=", "unique", precedence.get("equal==!="), false,
+                (v1, v2) -> v1.equals(v2) ? Value.FALSE : Value.TRUE,
+                lv -> {
+                    int size = lv.size();
+                    if (size < 2)
+                    {
+                        return Value.TRUE;
+                    }
+                    lv.sort(Comparator.comparingInt(Value::hashCode));
+                    Value previous = lv.get(0);
+                    int previousHash = previous.hashCode();
+                    int collisionStart = 0;
+                    for (int i = 1; i < size; i++)
+                    {
+                        Value next = lv.get(i);
+                        // Preserve adjacent checks even when Scarpet-equal values have different hashes.
+                        if (previous.equals(next))
+                        {
+                            return Value.FALSE;
+                        }
+                        int hash = next.hashCode();
+                        if (hash == previousHash)
+                        {
+                            for (int j = collisionStart; j < i - 1; j++)
+                            {
+                                if (lv.get(j).equals(next))
+                                {
+                                    return Value.FALSE;
+                                }
+                            }
+                        }
+                        else
+                        {
+                            collisionStart = i;
+                            previousHash = hash;
+                        }
+                        previous = next;
+                    }
+                    return Value.TRUE;
+                });
 
         // lazy cause of assignment which is non-trivial
         expression.addLazyBinaryOperator("=", "assign", precedence.get("assign=<>"), false, false, t -> Context.Type.LVALUE, (c, t, lv1, lv2) ->
@@ -492,10 +513,10 @@ public class Operators
                     Value rval = ri.next();
                     String lname = lval.getVariable();
                     String rname = rval.getVariable();
-                    lval.reboundedTo(rname);
-                    rval.reboundedTo(lname);
-                    expression.setAnyVariable(c, lname, (cc, tt) -> rval);
-                    expression.setAnyVariable(c, rname, (cc, tt) -> lval);
+                    Value newLeft = rval.reboundedTo(lname);
+                    Value newRight = lval.reboundedTo(rname);
+                    expression.setAnyVariable(c, lname, (cc, tt) -> newLeft);
+                    expression.setAnyVariable(c, rname, (cc, tt) -> newRight);
                 }
                 return Value.TRUE;
             }
