@@ -33,6 +33,12 @@ some stored procedures to be used for later. To reload the module, just type `/s
 all the current global state (globals and functions) that were added later by the module. To reload all apps along with 
 all game resources, use vanilla `/reload` command.
 
+You can select a compilation mode with `/script load <app> <mode>` or
+`/script load <app> global <mode>`, where `<mode>` is `canonical`, `optimized`, `functional`, or
+`functional_optimized`. `canonical` disables optimizations and functional conversion; `optimized` enables
+optimizations; `functional` converts operators to function calls without optimizations; and `functional_optimized`
+does both. Without an explicit mode, loading follows the `scriptsOptimization` carpet setting.
+See `/script explain` below for ways to inspect these representations without reloading or executing the source.
 
 
 Loaded apps have the ability to store and load external files, especially their persistent tag state. For that 
@@ -49,6 +55,104 @@ To remove the commands fully, use `/reload`.
 ### `/script in <app> ...`
 
 Allows to run normal /script commands in a specific app, like `run, invoke,..., globals` etc...
+
+# `/script explain` command
+
+`explain` shows how Scarpet parses and compiles code, rather than running it and returning its result.
+Use it to inspect operator precedence, the function calls corresponding to operators, and compile-time
+optimizations. It is not an execution trace or a profiler: it does not call the inspected user-defined functions
+or perform runtime actions such as `print` or changing blocks. Optimized styles do evaluate constant expressions
+and eligible pure built-in functions during compilation.
+
+The output is syntax-highlighted code with source line numbers. Underlined tokens can have hover text with
+additional information, such as `=> 14` for a value computed at compile time. An optimized expression may still
+appear in the output with its computed value in hover text, rather than being replaced by a literal.
+Access requires the `commandScript` and `commandScriptACE` permissions, as for `/script run`.
+
+### `/script explain expression <style> <expr>`
+
+Explains the supplied expression using the required `<style>`. Enter code directly after the style, without
+wrapping the whole expression in quotes, just as with `/script run`. To use an app's context, use
+`/script in <app> explain expression <style> <expr>`.
+
+The following styles are available for both `expression` and `source`:
+
+| Style | What it shows                                                                                                                                                  |
+| --- |----------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `raw` | Tokens before parser cleanup, including comments and syntactic sugar such as `[]` and `{}`.                                                                    |
+| `clean` | Tokens after cleanup: comments and redundant semicolons are removed, and list/map shorthand is expanded to `l(...)`/`m(...)`.                                  |
+| `canonical` | Code reconstructed from the parsed expression tree, with operator precedence reflected in its structure, without optimization or conversion to function calls. |
+| `functional` | The parsed code with operators converted to equivalent function calls, such as `+` to `sum(...)` and `*` to `product(...)`, without optimizations.             |
+| `optimized` | The parsed code after compile-time optimizations, including constant evaluation and compaction of eligible operator chains into function calls.                |
+| `functional_optimized` | Functional conversion and compile-time optimizations together.                                                                                                 |
+
+`raw` and `clean` show tokenization stages only, so they do not provide the full syntax validation performed by
+the other styles. Use the lowercase style names shown above.
+
+For example, compare the structure of the same expression:
+
+<pre>
+/script explain expression canonical a + b * c
+/script explain expression functional a + b * c
+</pre>
+
+The functional form is `sum(a, product(b, c))`, making it clear that multiplication happens before addition.
+The variables do not need values to inspect this structure.
+
+<pre>
+/script explain expression clean [1, 2, 3];
+/script explain expression optimized 2 + 3 * 4
+/script explain expression functional_optimized a + b + c
+</pre>
+
+The first example expands the list shorthand to `l(1, 2, 3)` and removes the trailing semicolon.
+In the second, hovering over the underlined `+` shows `=> 14`, the compile-time result.
+The third compacts the addition chain to `sum(a, b, c)`.
+
+<pre>
+/script explain expression optimized print(2 + 3 * 4)
+</pre>
+
+This shows the constant calculation inside `print`, but does not execute `print` or print `14` as a runtime result.
+
+### `/script in <app> explain source <style>`
+
+Parses the loaded app's stored source using the requested style. This lets you compare representations
+independently of the mode used to load the app, without executing its top-level code again or changing its
+loaded compilation mode. It uses the source already held by the loaded app, not a fresh read of the file on disk.
+
+### `/script in <app> explain`
+
+With no subcommand, shows the app's already-compiled top-level code, reflecting the compilation mode used when
+it was loaded. Unlike `source <style>`, this inspects the existing expression tree instead of compiling the source
+in another style. Use an app context for this form: bare `/script explain` in the global context has no app code
+to inspect and reports `No code to explain`.
+
+### `/script explain invoke <function>`
+
+Shows an existing user-defined function's compiled code without calling it. Supply only its name, not parentheses
+or arguments. Use `/script in <app> explain invoke <function>` for a function in a loaded app.
+This form does not accept a style; it inspects the function as compiled. An unknown function or one without a
+compiled expression tree produces an error.
+
+For example, a function defined in the global context can be inspected with:
+
+<pre>
+/script run example_function(a, b, c) -> a + b * c
+/script explain invoke example_function
+</pre>
+
+For an app named `demo` containing `example_function`, compare the loaded code with alternative source representations:
+
+<pre>
+/script load demo optimized
+/script in demo explain
+/script in demo explain invoke example_function
+/script in demo explain source canonical
+/script in demo explain source functional_optimized
+</pre>
+
+Only `load` executes the app here. The `explain` commands inspect its compiled code or reparse its stored source.
 
 # `/script invoke / invokepoint / invokearea`, `/script globals` commands
 
