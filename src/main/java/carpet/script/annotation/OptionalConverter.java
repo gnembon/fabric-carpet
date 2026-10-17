@@ -30,7 +30,7 @@ import org.jspecify.annotations.Nullable;
  *
  * @param <R> The type of the internal {@link ValueConverter}, basically the generic type of the {@link Optional}
  */
-final class OptionalConverter<R> implements ValueConverter<Optional<R>>
+public final class OptionalConverter<R> implements ValueConverter<Optional<R>>
 {
     private final ValueConverter<R> typeConverter;
 
@@ -108,7 +108,7 @@ final class OptionalConverter<R> implements ValueConverter<Optional<R>>
      * @param annotatedType The type to get generics information from
      * @return A new {@link OptionalConverter} for the data specified in the {@link AnnotatedType}
      */
-    static OptionalConverter<?> fromAnnotatedType(AnnotatedType annotatedType)
+    public static OptionalConverter<?> fromAnnotatedType(AnnotatedType annotatedType)
     {
         AnnotatedParameterizedType paramType = (AnnotatedParameterizedType) annotatedType;
         AnnotatedType wrappedType = paramType.getAnnotatedActualTypeArguments()[0];

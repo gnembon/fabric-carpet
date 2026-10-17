@@ -4,14 +4,14 @@ import org.jspecify.annotations.Nullable;
 
 public class Token implements Comparable<Token> {
 
-    enum TokenType {
+    public enum TokenType {
         FUNCTION(true, false), OPERATOR(true, false), UNARY_OPERATOR(true, false),
         VARIABLE(false, false), CONSTANT(false, true),
         LITERAL(false, true), HEX_LITERAL(false, true), STRINGPARAM(false, true),
         OPEN_PAREN(false, true), COMMA(false, true), CLOSE_PAREN(false, true), MARKER(false, true);
 
-        final boolean functional;
-        final boolean constant;
+        private final boolean functional;
+        private final boolean constant;
 
         TokenType(boolean functional, boolean constant) {
             this.functional = functional;

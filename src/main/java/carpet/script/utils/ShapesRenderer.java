@@ -5,8 +5,6 @@ import carpet.script.external.Carpet;
 import carpet.script.utils.shapes.ShapeDirection;
 
 import com.google.common.collect.ImmutableMap;
-import com.mojang.blaze3d.pipeline.RenderTarget;
-import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
@@ -27,13 +25,11 @@ import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.SubmitNodeStorage;
 import net.minecraft.client.renderer.block.BlockModelRenderState;
 import net.minecraft.client.renderer.entity.DisplayRenderer;
-import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.state.BlockEntityRenderState;
 import net.minecraft.client.renderer.entity.state.EntityRenderState;
 import net.minecraft.client.renderer.gizmos.DrawableGizmoPrimitives;
 import net.minecraft.client.renderer.item.ItemStackRenderState;
-import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.client.renderer.state.level.LevelRenderState;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.core.BlockPos;
@@ -61,6 +57,7 @@ public class ShapesRenderer
     private final Map<ResourceKey<Level>, Long2ObjectOpenHashMap<RenderedShape<? extends ShapeDispatcher.ExpiringShape>>> shapes;
     private final Map<ResourceKey<Level>, Long2ObjectOpenHashMap<RenderedShape<? extends ShapeDispatcher.ExpiringShape>>> labels;
     private final Minecraft client;
+    private boolean hasAlwaysOnTopShapes;
 
     private final Map<String, BiFunction<Minecraft, ShapeDispatcher.ExpiringShape, RenderedShape<? extends ShapeDispatcher.ExpiringShape>>> renderedShapes = ImmutableMap.<String, BiFunction<Minecraft, ShapeDispatcher.ExpiringShape, RenderedShape<? extends ShapeDispatcher.ExpiringShape>>>builder()
             .put("line", RenderedLine::new)
@@ -111,6 +108,7 @@ public class ShapesRenderer
 
     public void render(SubmitNodeStorage submitNodeStorage, LevelRenderState levelRenderState, float partialTick)
     {
+        hasAlwaysOnTopShapes = false;
         Runnable token = Carpet.startProfilerSection("Scarpet client");
         // The feature pipeline applies the view rotation to these camera-relative poses.
         PoseStack matrices = new PoseStack();
@@ -120,6 +118,7 @@ public class ShapesRenderer
         if ((shapes.get(dimensionType) == null || shapes.get(dimensionType).isEmpty()) &&
                 (labels.get(dimensionType) == null || labels.get(dimensionType).isEmpty()))
         {
+            token.run();
             return;
         }
         long currentTime = client.level.getGameTime();
@@ -148,7 +147,7 @@ public class ShapesRenderer
         final DrawableGizmoPrimitives normal = new DrawableGizmoPrimitives();
         final DrawableGizmoPrimitives onTop = new DrawableGizmoPrimitives();
 
-        if (!shapes.isEmpty())
+        if (shapes.containsKey(dimensionType))
         {
             shapes.get(dimensionType).long2ObjectEntrySet().removeIf(
                     entry -> entry.getValue().isExpired(currentTime)
@@ -170,7 +169,7 @@ public class ShapesRenderer
             });
             //RenderSystem.lineWidth(1.0F);
         }
-        if (!labels.isEmpty())
+        if (labels.containsKey(dimensionType))
         {
             labels.get(dimensionType).long2ObjectEntrySet().removeIf(
                     entry -> entry.getValue().isExpired(currentTime)
@@ -188,17 +187,9 @@ public class ShapesRenderer
 
 
         normal.submit(submitNodeStorage, levelRenderState.cameraRenderState, false);
+        onTop.submit(submitNodeStorage, levelRenderState.cameraRenderState, true);
+        hasAlwaysOnTopShapes = !onTop.isEmpty();
         //bufferSource.uploadAndDraw();
-
-        if (false) {
-            final RenderTarget mainRenderTarget = Minecraft.getInstance().gameRenderer.mainRenderTarget();
-            RenderSystem.getDevice().createCommandEncoder().clearDepthTexture(mainRenderTarget.getDepthTexture(), 1.0);
-            onTop.submit(submitNodeStorage, levelRenderState.cameraRenderState, true);
-            //bufferSource.uploadAndDraw();
-
-            RenderSystem.getDevice().createCommandEncoder().clearDepthTexture(Minecraft.getInstance().gameRenderer.mainRenderTarget().getDepthTexture(), 1.0);
-
-        }
 
 
         ////RenderSystem.enableCull();
@@ -206,6 +197,11 @@ public class ShapesRenderer
         ////RenderSystem.enableBlend();
         ////RenderSystem.defaultBlendFunc();
         token.run();
+    }
+
+    public boolean hasAlwaysOnTopShapes()
+    {
+        return hasAlwaysOnTopShapes;
     }
 
     public void addShapes(ListTag tag)
@@ -253,6 +249,7 @@ public class ShapesRenderer
 
     public void reset()
     {
+        hasAlwaysOnTopShapes = false;
         shapes.values().forEach(Long2ObjectOpenHashMap::clear);
         labels.values().forEach(Long2ObjectOpenHashMap::clear);
     }
@@ -270,7 +267,7 @@ public class ShapesRenderer
     {
         protected T shape;
         protected Minecraft client;
-        long expiryTick;
+        protected long expiryTick;
         double renderEpsilon;
 
         public abstract void renderLines(PoseStack matrices, double cx, double cy, double cz, float partialTick, LevelRenderState levelRenderState, DrawableGizmoPrimitives primitives, SubmitNodeStorage submitNodeStorage);
@@ -644,24 +641,22 @@ public class ShapesRenderer
 
     public static class RenderedPolyface extends RenderedShape<ShapeDispatcher.Polyface>
     {
-        // mode now can only be 4, 5, or 6
-        //private static final VertexFormat.Mode[] faceIndices = new VertexFormat.Mode[]{
-        //        Mode.LINES, Mode.LINES, Mode.DEBUG_LINES, Mode.DEBUG_LINE_STRIP, Mode.TRIANGLES, Mode.TRIANGLE_STRIP, Mode.TRIANGLE_FAN, Mode.QUADS};
-
-        private static final RenderType [] renderTypes = new RenderType[] {
-                RenderTypes.lines(),
-                RenderTypes.lines(),
-                RenderTypes.lines(),
-                RenderTypes.lines(),
-                RenderTypes.debugTriangleFan(), // TODO wrong
-                RenderTypes.debugTriangleFan(), // TODO wrong
-                RenderTypes.debugTriangleFan(),
-                RenderTypes.debugQuads()
-        };
-
         public RenderedPolyface(Minecraft client, ShapeDispatcher.ExpiringShape shape)
         {
             super(client, (ShapeDispatcher.Polyface) shape);
+        }
+
+        private Vec3[] vertices(float partialTick)
+        {
+            Vec3[] vertices = new Vec3[shape.vertexList.size()];
+            for (int i = 0; i < vertices.length; i++)
+            {
+                Vec3 vertex = shape.vertexList.get(i);
+                vertices[i] = shape.relative.get(i)
+                        ? shape.relativiseRender(client.level, vertex, partialTick)
+                        : vertex;
+            }
+            return vertices;
         }
 
         @Override
@@ -671,33 +666,7 @@ public class ShapesRenderer
             {
                 return;
             }
-
-            if (shape.doublesided)
-            {
-                ////RenderSystem.disableCull(); // todo culling
-            }
-            else
-            {
-                ////RenderSystem.enableCull();
-            }
-
-            //BufferBuilder builder = tesselator.begin(faceIndices[shape.mode], DefaultVertexFormat.POSITION_COLOR);
-            for (int i = 0; i < shape.vertexList.size(); i++)
-            {
-                Vec3 vec = shape.vertexList.get(i);
-                if (shape.relative.get(i))
-                {
-                    vec = shape.relativiseRender(client.level, vec, partialTick);
-                }
-                //builder.addVertex((float) (vec.x() - cx), (float) (vec.y() - cy), (float) (vec.z() - cz)).setColor(shape.fr, shape.fg, shape.fb, shape.fa);
-            }
-            //drawWithShader(builder.buildOrThrow(), renderTypes[shape.mode]);
-
-            ////RenderSystem.disableCull();
-            ////RenderSystem.depthMask(false);
-            //RenderSystem.enableDepthTest();
-
-
+            drawPolygonFaces(primitives, vertices(partialTick), shape.mode, shape.doublesided, shape.fargb);
         }
 
         @Override
@@ -708,124 +677,7 @@ public class ShapesRenderer
             {
                 return;
             }
-
-            if (shape.mode == 6)
-            {
-                //BufferBuilder builder = tesselator.begin(VertexFormat.Mode.DEBUG_LINE_STRIP, DefaultVertexFormat.POSITION_COLOR);
-                Vec3 vec0 = null;
-                for (int i = 0; i < shape.vertexList.size(); i++)
-                {
-                    Vec3 vec = shape.vertexList.get(i);
-                    if (shape.relative.get(i))
-                    {
-                        vec = shape.relativiseRender(client.level, vec, partialTick);
-                    }
-                    if (i == 0)
-                    {
-                        vec0 = vec;
-                    }
-                    //builder.addVertex((float) (vec.x() - cx), (float) (vec.y() - cy), (float) (vec.z() - cz)).setColor(shape.r, shape.g, shape.b, shape.a);
-                }
-                //builder.addVertex((float) (vec0.x() - cx), (float) (vec0.y() - cy), (float) (vec0.z() - cz)).setColor(shape.r, shape.g, shape.b, shape.a);
-                //drawWithShader(builder.buildOrThrow(), RenderType.debugLineStrip(1));
-                if (shape.inneredges)
-                {
-                    //BufferBuilder builderr = tesselator.begin(Mode.DEBUG_LINE_STRIP, DefaultVertexFormat.POSITION_COLOR);
-                    for (int i = 1; i < shape.vertexList.size() - 1; i++)
-                    {
-                        Vec3 vec = shape.vertexList.get(i);
-                        if (shape.relative.get(i))
-                        {
-                            vec = shape.relativiseRender(client.level, vec, partialTick);
-                        }
-                        //builderr.addVertex((float) (vec0.x() - cx), (float) (vec0.y() - cy), (float) (vec0.z() - cz)).setColor(shape.r, shape.g, shape.b, shape.a);
-                        //builderr.addVertex((float) (vec.x() - cx), (float) (vec.y() - cy), (float) (vec.z() - cz)).setColor(shape.r, shape.g, shape.b, shape.a);
-                        //builderr.addVertex((float) (vec0.x() - cx), (float) (vec0.y() - cy), (float) (vec0.z() - cz)).setColor(shape.r, shape.g, shape.b, shape.a);
-                    }
-                    //drawWithShader(builderr.buildOrThrow(), RenderType.debugLineStrip(1));
-                }
-                return;
-            }
-            if (shape.mode == 5)
-            {
-                //BufferBuilder builder = tesselator.begin(VertexFormat.Mode.DEBUG_LINE_STRIP, DefaultVertexFormat.POSITION_COLOR);
-                Vec3 vec = shape.vertexList.get(1);
-                if (shape.relative.get(1))
-                {
-                    vec = shape.relativiseRender(client.level, vec, partialTick);
-                }
-                //builder.addVertex((float) (vec.x() - cx), (float) (vec.y() - cy), (float) (vec.z() - cz)).setColor(shape.r, shape.g, shape.b, shape.a);
-                int i;
-                for (i = 0; i < shape.vertexList.size(); i += 2)
-                {
-                    vec = shape.vertexList.get(i);
-                    if (shape.relative.get(i))
-                    {
-                        vec = shape.relativiseRender(client.level, vec, partialTick);
-                    }
-                    //builder.addVertex((float) (vec.x() - cx), (float) (vec.y() - cy), (float) (vec.z() - cz)).setColor(shape.r, shape.g, shape.b, shape.a);
-                }
-                i = shape.vertexList.size() - 1;
-                for (i -= 1 - i % 2; i > 0; i -= 2)
-                {
-                    vec = shape.vertexList.get(i);
-                    if (shape.relative.get(i))
-                    {
-                        vec = shape.relativiseRender(client.level, vec, partialTick);
-                    }
-                    //builder.addVertex((float) (vec.x() - cx), (float) (vec.y() - cy), (float) (vec.z() - cz)).setColor(shape.r, shape.g, shape.b, shape.a);
-                }
-                if (shape.inneredges)
-                {
-                    for (i = 2; i < shape.vertexList.size() - 1; i++)
-                    {
-                        vec = shape.vertexList.get(i);
-                        if (shape.relative.get(i))
-                        {
-                            vec = shape.relativiseRender(client.level, vec, partialTick);
-                        }
-                        //builder.addVertex((float) (vec.x() - cx), (float) (vec.y() - cy), (float) (vec.z() - cz)).setColor(shape.r, shape.g, shape.b, shape.a);
-                    }
-                }
-                //drawWithShader(builder.buildOrThrow(), RenderType.debugLineStrip(1));
-                return;
-            }
-            if (shape.mode == 4)
-            {
-                //
-                for (int i = 0; i < shape.vertexList.size(); i++)
-                {
-                    //BufferBuilder builder = tesselator.begin(Mode.DEBUG_LINE_STRIP, DefaultVertexFormat.POSITION_COLOR);
-                    Vec3 vecA = shape.vertexList.get(i);
-                    if (shape.relative.get(i))
-                    {
-                        vecA = shape.relativiseRender(client.level, vecA, partialTick);
-                    }
-                    i++;
-                    Vec3 vecB = shape.vertexList.get(i);
-                    if (shape.relative.get(i))
-                    {
-                        vecB = shape.relativiseRender(client.level, vecB, partialTick);
-                    }
-                    i++;
-                    Vec3 vecC = shape.vertexList.get(i);
-                    if (shape.relative.get(i))
-                    {
-                        vecC = shape.relativiseRender(client.level, vecC, partialTick);
-                    }
-                    //builder.addVertex((float) (vecA.x() - cx), (float) (vecA.y() - cy), (float) (vecA.z() - cz)).setColor(shape.r, shape.g, shape.b, shape.a);
-                    //builder.addVertex((float) (vecB.x() - cx), (float) (vecB.y() - cy), (float) (vecB.z() - cz)).setColor(shape.r, shape.g, shape.b, shape.a);
-
-                    //builder.addVertex((float) (vecB.x() - cx), (float) (vecB.y() - cy), (float) (vecB.z() - cz)).setColor(shape.r, shape.g, shape.b, shape.a);
-                    //builder.addVertex((float) (vecC.x() - cx), (float) (vecC.y() - cy), (float) (vecC.z() - cz)).setColor(shape.r, shape.g, shape.b, shape.a);
-
-                    //builder.addVertex((float) (vecC.x() - cx), (float) (vecC.y() - cy), (float) (vecC.z() - cz)).setColor(shape.r, shape.g, shape.b, shape.a);
-                    //builder.addVertex((float) (vecA.x() - cx), (float) (vecA.y() - cy), (float) (vecA.z() - cz)).setColor(shape.r, shape.g, shape.b, shape.a);
-
-                    //drawWithShader(builder.buildOrThrow(), RenderType.debugLineStrip(1));
-                }
-                //drawWithShader(builder.buildOrThrow(), RenderType.debugLineStrip(1));
-            }
+            drawPolygonWireframe(primitives, vertices(partialTick), shape.mode, shape.inneredges, shape.argb, shape.lineWidth);
         }
     }
 
@@ -986,6 +838,80 @@ public class ShapesRenderer
                 primitives.addQuad(v121, v122, v222, v221, argb);
                 primitives.addQuad(v121, v221, v222, v122, argb);
             }
+        }
+    }
+
+    public static void drawPolygonFaces(DrawableGizmoPrimitives primitives, Vec3[] vertices,
+                                        int mode, boolean doublesided, int argb)
+    {
+        if (mode < 4 || mode > 6)
+        {
+            throw new IllegalArgumentException("Unexpected polygon mode: " + mode);
+        }
+        int step = mode == 4 ? 3 : 1;
+        for (int i = 2; i < vertices.length; i += step)
+        {
+            int first = mode == 6 ? 0 : i - 2;
+            int second = i - 1;
+            // Triangle strips alternate vertex order to keep every face winding consistent.
+            if (mode == 5 && i % 2 != 0)
+            {
+                first = i - 1;
+                second = i - 2;
+            }
+            primitives.addTriangleFan(new Vec3[]{vertices[first], vertices[second], vertices[i]}, argb);
+            if (doublesided)
+            {
+                primitives.addTriangleFan(new Vec3[]{vertices[first], vertices[i], vertices[second]}, argb);
+            }
+        }
+    }
+
+    public static void drawPolygonWireframe(DrawableGizmoPrimitives primitives, Vec3[] vertices,
+                                            int mode, boolean inneredges, int argb, float width)
+    {
+        switch (mode)
+        {
+            case 4 ->
+            {
+                for (int i = 0; i < vertices.length; i += 3)
+                {
+                    primitives.addLine(vertices[i], vertices[i + 1], argb, width);
+                    primitives.addLine(vertices[i + 1], vertices[i + 2], argb, width);
+                    primitives.addLine(vertices[i + 2], vertices[i], argb, width);
+                }
+            }
+            case 5 ->
+            {
+                primitives.addLine(vertices[0], vertices[1], argb, width);
+                primitives.addLine(vertices[vertices.length - 2], vertices[vertices.length - 1], argb, width);
+                for (int i = 2; i < vertices.length; i++)
+                {
+                    primitives.addLine(vertices[i - 2], vertices[i], argb, width);
+                }
+                if (inneredges)
+                {
+                    for (int i = 1; i < vertices.length - 2; i++)
+                    {
+                        primitives.addLine(vertices[i], vertices[i + 1], argb, width);
+                    }
+                }
+            }
+            case 6 ->
+            {
+                for (int i = 0; i < vertices.length; i++)
+                {
+                    primitives.addLine(vertices[i], vertices[(i + 1) % vertices.length], argb, width);
+                }
+                if (inneredges)
+                {
+                    for (int i = 2; i < vertices.length - 1; i++)
+                    {
+                        primitives.addLine(vertices[0], vertices[i], argb, width);
+                    }
+                }
+            }
+            default -> throw new IllegalArgumentException("Unexpected polygon mode: " + mode);
         }
     }
 

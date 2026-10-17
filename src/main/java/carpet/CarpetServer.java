@@ -60,7 +60,7 @@ public class CarpetServer // static for now - easier to handle all around the co
         extensions.add(extension);
         // Stop the stupid practice of extensions mixing into Carpet just to register themselves
         if (StackWalker.getInstance().walk(stream -> stream.skip(1)
-                .anyMatch(el -> el.getClassName() == CarpetServer.class.getName())))
+                .anyMatch(el -> el.getClassName().equals(CarpetServer.class.getName()))))
         {
             CarpetSettings.LOG.warn("""
                     Extension '%s' is registering itself using a mixin into Carpet instead of a regular ModInitializer!

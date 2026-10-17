@@ -68,7 +68,7 @@ public abstract class ScriptHost
 
     public static class ModuleData
     {
-        Module parent;
+        private Module parent;
         public final Map<String, FunctionValue> globalFunctions = new Object2ObjectOpenHashMap<>();
         public final Map<String, LazyValue> globalVariables = new Object2ObjectOpenHashMap<>();
         public final Map<String, ModuleData> functionImports = new Object2ObjectOpenHashMap<>(); // imported functions string to module
@@ -160,7 +160,7 @@ public abstract class ScriptHost
         mainThread = Thread.currentThread();
     }
 
-    void initializeModuleGlobals(ModuleData md)
+    private void initializeModuleGlobals(ModuleData md)
     {
     }
 
@@ -392,8 +392,8 @@ public abstract class ScriptHost
     public void delGlobalVariable(Module module, String varName)
     {
         ModuleData data = getModuleData(module);
-        data.globalFunctions.remove(varName);
-        data.functionImports.remove(varName);
+        data.globalVariables.remove(varName);
+        data.globalsImports.remove(varName);
     }
 
     private ModuleData getModuleData(Module module)

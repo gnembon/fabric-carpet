@@ -101,7 +101,7 @@ public final class SimpleTypeConverter<T extends Value, R> implements ValueConve
      * @return The {@link SimpleTypeConverter} for the specified outputType
      */
     @SuppressWarnings("unchecked") // T always extends Value, R is always the same as map's key, since map is private.
-    static <R> SimpleTypeConverter<Value, R> get(Class<R> outputType)
+    public static <R> SimpleTypeConverter<Value, R> get(Class<R> outputType)
     {
         return (SimpleTypeConverter<Value, R>) byResult.get(outputType);
     }

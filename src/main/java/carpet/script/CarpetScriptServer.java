@@ -78,6 +78,10 @@ public class CarpetScriptServer extends ScriptServer
      */
     public static void registerBuiltInApp(Module app)
     {
+        if (app == null)
+        {
+            return;
+        }
         bundledModuleData.add(app);
     }
 

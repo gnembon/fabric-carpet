@@ -16,7 +16,7 @@ public class EquipmentInventory implements Container
             EquipmentSlot.OFFHAND
     );
 
-    LivingEntity mob;
+    private final LivingEntity mob;
 
     public EquipmentInventory(LivingEntity mob)
     {

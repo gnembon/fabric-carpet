@@ -40,7 +40,7 @@ public class Tokenizer
     private final Expression expression;
     private final Context context;
 
-    Tokenizer(Context c, Expression expr, String input, boolean allowComments, boolean allowNewLineMakers)
+    public Tokenizer(Context c, Expression expr, String input, boolean allowComments, boolean allowNewLineMakers)
     {
         this.input = input;
         this.expression = expr;

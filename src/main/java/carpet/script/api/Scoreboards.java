@@ -41,7 +41,7 @@ import net.minecraft.world.scores.Scoreboard;
 import net.minecraft.world.scores.Team;
 import net.minecraft.world.scores.TeamColor;
 import net.minecraft.world.scores.criteria.ObjectiveCriteria;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 
 public class Scoreboards
 {
@@ -708,8 +708,7 @@ public class Scoreboards
         });
     }
 
-    @Nullable
-    private static Team.CollisionRule getCollisionRule(Value settingVal)
+    private static Team.@Nullable CollisionRule getCollisionRule(Value settingVal)
     {
 
         final String string = settingVal.getString();
@@ -723,8 +722,7 @@ public class Scoreboards
         return null;
     }
 
-    @Nullable
-    private static Team.Visibility getVisibility(Value settingVal)
+    private static Team.@Nullable Visibility getVisibility(Value settingVal)
     {
 
         final String string = settingVal.getString();

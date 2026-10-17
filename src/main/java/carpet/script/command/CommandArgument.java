@@ -468,7 +468,7 @@ public abstract class CommandArgument
 
     private static class StringArgument extends CommandArgument
     {
-        Set<String> validOptions = Collections.emptySet();
+        private Set<String> validOptions = Collections.emptySet();
 
         private StringArgument()
         {
@@ -610,7 +610,7 @@ public abstract class CommandArgument
 
     private static class LocationArgument extends CommandArgument
     {
-        boolean blockCentered;
+        private boolean blockCentered;
 
         private LocationArgument()
         {
@@ -646,8 +646,8 @@ public abstract class CommandArgument
 
     private static class EntityArgument extends CommandArgument
     {
-        boolean onlyFans;
-        boolean single;
+        private boolean onlyFans;
+        private boolean single;
 
         private EntityArgument()
         {
@@ -702,7 +702,7 @@ public abstract class CommandArgument
 
     private static class PlayerProfileArgument extends CommandArgument
     {
-        boolean single;
+        private boolean single;
 
         private PlayerProfileArgument()
         {
@@ -752,7 +752,7 @@ public abstract class CommandArgument
 
     private static class ScoreholderArgument extends CommandArgument
     {
-        boolean single;
+        private boolean single;
 
         private ScoreholderArgument()
         {
@@ -803,7 +803,7 @@ public abstract class CommandArgument
 
     private static class TagArgument extends CommandArgument
     {
-        boolean mapRequired;
+        private boolean mapRequired;
 
         private TagArgument()
         {
@@ -841,7 +841,7 @@ public abstract class CommandArgument
 
     private static class CustomIdentifierArgument extends CommandArgument
     {
-        Set<Identifier> validOptions = Collections.emptySet();
+        private Set<Identifier> validOptions = Collections.emptySet();
 
         protected CustomIdentifierArgument()
         {

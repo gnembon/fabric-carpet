@@ -280,14 +280,14 @@ public class EntityValue extends Value
         public final Predicate<? super Entity> filteringPredicate;
         public final List<EntityType<? extends Entity>> types;
 
-        EntityClassDescriptor(EntityTypeTest<Entity, ?> type, Predicate<? super Entity> predicate, List<EntityType<?>> types)
+        private EntityClassDescriptor(EntityTypeTest<Entity, ?> type, Predicate<? super Entity> predicate, List<EntityType<?>> types)
         {
             this.directType = type;
             this.filteringPredicate = predicate;
             this.types = types;
         }
 
-        EntityClassDescriptor(EntityTypeTest<Entity, ?> type, Predicate<? super Entity> predicate, Stream<EntityType<?>> types)
+        private EntityClassDescriptor(EntityTypeTest<Entity, ?> type, Predicate<? super Entity> predicate, Stream<EntityType<?>> types)
         {
             this(type, predicate, types.toList());
         }

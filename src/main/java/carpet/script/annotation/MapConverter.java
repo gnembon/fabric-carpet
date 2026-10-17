@@ -27,7 +27,7 @@ import org.jspecify.annotations.Nullable;
  * @param <K> The type of the map's keys
  * @param <V> The type of the map's values
  */
-class MapConverter<K, V> implements ValueConverter<Map<K, V>>
+public class MapConverter<K, V> implements ValueConverter<Map<K, V>>
 {
     protected final ValueConverter<K> keyConverter;
     protected final ValueConverter<V> valueConverter;
@@ -82,7 +82,7 @@ class MapConverter<K, V> implements ValueConverter<Map<K, V>>
      * @param annotatedType The type to get generics information from
      * @return A new {@link MapConverter} for the data specified in the {@link AnnotatedType}
      */
-    static MapConverter<?, ?> fromAnnotatedType(AnnotatedType annotatedType)
+    public static MapConverter<?, ?> fromAnnotatedType(AnnotatedType annotatedType)
     {
         AnnotatedType[] annotatedGenerics = ((AnnotatedParameterizedType) annotatedType).getAnnotatedActualTypeArguments();
         return annotatedType.isAnnotationPresent(Param.KeyValuePairs.class)

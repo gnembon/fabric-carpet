@@ -104,7 +104,7 @@ public abstract class Fluff
     public abstract static class AbstractLazyFunction implements ILazyFunction
     {
         protected String name;
-        int numParams;
+        public int numParams;
 
         public AbstractLazyFunction(int numParams, String name)
         {
@@ -169,7 +169,7 @@ public abstract class Fluff
 
     public abstract static class AbstractFunction extends AbstractLazyFunction implements IFunction
     {
-        AbstractFunction(int numParams, String name)
+        public AbstractFunction(int numParams, String name)
         {
             super(numParams, name);
         }
@@ -227,11 +227,11 @@ public abstract class Fluff
 
     public abstract static class AbstractLazyOperator implements ILazyOperator
     {
-        int precedence;
+        private int precedence;
 
-        boolean leftAssoc;
+        private boolean leftAssoc;
 
-        AbstractLazyOperator(int precedence, boolean leftAssoc)
+        public AbstractLazyOperator(int precedence, boolean leftAssoc)
         {
             super();
             this.precedence = precedence;
@@ -255,7 +255,7 @@ public abstract class Fluff
     public abstract static class AbstractOperator extends AbstractLazyOperator implements IOperator
     {
 
-        AbstractOperator(int precedence, boolean leftAssoc)
+        public AbstractOperator(int precedence, boolean leftAssoc)
         {
             super(precedence, leftAssoc);
         }
@@ -290,7 +290,7 @@ public abstract class Fluff
 
     public abstract static class AbstractUnaryOperator extends AbstractOperator
     {
-        AbstractUnaryOperator(int precedence, boolean leftAssoc)
+        public AbstractUnaryOperator(int precedence, boolean leftAssoc)
         {
             super(precedence, leftAssoc);
         }

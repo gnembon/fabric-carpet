@@ -23,7 +23,7 @@ import org.jspecify.annotations.Nullable;
  *
  * @param <T> The type of the element that will be inside the list
  */
-final class ListConverter<T> implements ValueConverter<List<T>>
+public final class ListConverter<T> implements ValueConverter<List<T>>
 {
     private final ValueConverter<T> itemConverter;
     private final boolean allowSingletonCreation;
@@ -86,7 +86,7 @@ final class ListConverter<T> implements ValueConverter<List<T>>
      * @param annotatedType The type to get generics information from
      * @return A new {@link ListConverter} for the data specified in the {@link AnnotatedType}
      */
-    static ListConverter<?> fromAnnotatedType(AnnotatedType annotatedType)
+    public static ListConverter<?> fromAnnotatedType(AnnotatedType annotatedType)
     {
         AnnotatedParameterizedType paramType = (AnnotatedParameterizedType) annotatedType;
         AnnotatedType itemType = paramType.getAnnotatedActualTypeArguments()[0];

@@ -41,7 +41,7 @@ public interface LazyValue
 
     class Constant implements ContextFreeLazyValue
     {
-        Value result;
+        private Value result;
 
         public Constant(Value value)
         {

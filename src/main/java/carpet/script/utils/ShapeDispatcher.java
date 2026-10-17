@@ -296,7 +296,7 @@ public class ShapeDispatcher
             };
         }
 
-        float lineWidth;
+        public float lineWidth;
         protected float r, g, b, a;
         protected int color;
         protected int argb;
@@ -380,17 +380,8 @@ public class ShapeDispatcher
             this.b = (color >> 8 & 0xFF) / 255.0F;
             this.a = (color & 0xFF) / 255.0F;
 
-            debug = false;
-            if (options.containsKey("debug"))
-            {
-                debug = options.get("debug").getBoolean();
-            }
-
-            seethrough = false;
-            if (options.containsKey("debug"))
-            {
-                seethrough = options.get("seethrough").getBoolean();
-            }
+            debug = options.getOrDefault("debug", optional.get("debug")).getBoolean();
+            seethrough = options.getOrDefault("seethrough", optional.get("seethrough")).getBoolean();
 
             key = 0;
             followEntity = -1;
@@ -453,7 +444,7 @@ public class ShapeDispatcher
         protected ParticleOptions replacementParticle(RegistryAccess regs)
         {
             boolean bg = fa == 0;
-            return new DustParticleOptions(ARGB.colorFromFloat(1.0f, (bg ?r:fr), (bg ?r:fr), (bg ?r:fr)), 1);
+            return new DustParticleOptions(ARGB.colorFromFloat(1.0f, bg ? r : fr, bg ? g : fg, bg ? b : fb), 1);
         }
 
 
@@ -479,6 +470,7 @@ public class ShapeDispatcher
             hash ^= followEntity;
             hash *= 1099511628211L;
             hash ^= Boolean.hashCode(debug);
+            hash *= 1099511628211L;
             hash ^= Boolean.hashCode(seethrough);
             hash *= 1099511628211L;
             if (followEntity >= 0)
@@ -500,7 +492,7 @@ public class ShapeDispatcher
         private static final double ydif = new Random('y').nextDouble();
         private static final double zdif = new Random('z').nextDouble();
 
-        int vec3dhash(Vec3 vec)
+        protected int vec3dhash(Vec3 vec)
         {
             return vec.add(xdif, ydif, zdif).hashCode();
         }
@@ -566,22 +558,22 @@ public class ShapeDispatcher
         {
         }
 
-        Vec3 pos;
-        String text;
-        int textcolor;
-        int textbck;
+        public Vec3 pos;
+        public String text;
+        public int textcolor;
+        public int textbck;
 
-        ShapeDirection facing;
-        float raise;
-        float tilt;
-        float lean;
-        float turn;
-        float size;
-        float indent;
-        int align;
-        float height;
-        Component value;
-        boolean doublesided;
+        public ShapeDirection facing;
+        public float raise;
+        public float tilt;
+        public float lean;
+        public float turn;
+        public float size;
+        public float indent;
+        public int align;
+        public float height;
+        public Component value;
+        public boolean doublesided;
 
         @Override
         protected void init(Map<String, Value> options, RegistryAccess regs)
@@ -711,24 +703,24 @@ public class ShapeDispatcher
             isitem = i;
         }
 
-        Vec3 pos;
+        public Vec3 pos;
 
-        ShapeDirection facing;
+        public ShapeDirection facing;
 
-        float tilt;
-        float lean;
-        float turn;
+        public float tilt;
+        public float lean;
+        public float turn;
 
-        int blockLight;
-        int skyLight;
+        public int blockLight;
+        public int skyLight;
 
-        float scaleX = 1.0f;
-        float scaleY = 1.0f;
-        float scaleZ = 1.0f;
-        CompoundTag blockEntity;
-        BlockState blockState;
-        ItemStack item = null;
-        String itemTransformType;
+        public float scaleX = 1.0f;
+        public float scaleY = 1.0f;
+        public float scaleZ = 1.0f;
+        public CompoundTag blockEntity;
+        public BlockState blockState;
+        public ItemStack item = null;
+        public String itemTransformType;
 
         @Override
         protected void init(Map<String, Value> options, RegistryAccess regs)
@@ -870,8 +862,8 @@ public class ShapeDispatcher
         {
         }
 
-        Vec3 from;
-        Vec3 to;
+        public Vec3 from;
+        public Vec3 to;
 
         @Override
         protected void init(Map<String, Value> options, RegistryAccess regs)
@@ -966,11 +958,11 @@ public class ShapeDispatcher
             return hash;
         }
 
-        ArrayList<Vec3> alterPoint = null;
-        final Random random = new Random();
-        boolean doublesided;
+        public ArrayList<Vec3> alterPoint = null;
+        private final Random random = new Random();
+        public boolean doublesided;
 
-        ArrayList<Vec3> getAlterPoint(ServerPlayer p)
+        private ArrayList<Vec3> getAlterPoint(ServerPlayer p)
         {
             if (alterPoint != null)
             {
@@ -1041,7 +1033,7 @@ public class ShapeDispatcher
             return alterPoint;
         }
 
-        void alterDrawTriangles(Vec3 a, Vec3 b, Vec3 c)
+        private void alterDrawTriangles(Vec3 a, Vec3 b, Vec3 c)
         {
             Vec3 bb = b.subtract(a);
             Vec3 cc = c.subtract(a);
@@ -1104,10 +1096,10 @@ public class ShapeDispatcher
             return Sets.union(super.optionalParams(), optional.keySet());
         }
 
-        ArrayList<Vec3> vertexList = new ArrayList<>();
-        int mode;
-        ArrayList<Boolean> relative = new ArrayList<>();
-        boolean inneredges;
+        public ArrayList<Vec3> vertexList = new ArrayList<>();
+        public int mode;
+        public ArrayList<Boolean> relative = new ArrayList<>();
+        public boolean inneredges;
 
         @Override
         protected void init(Map<String, Value> options, RegistryAccess regs)
@@ -1194,8 +1186,8 @@ public class ShapeDispatcher
             super();
         }
 
-        Vec3 from;
-        Vec3 to;
+        public Vec3 from;
+        public Vec3 to;
 
         @Override
         protected void init(Map<String, Value> options, RegistryAccess regs)
@@ -1260,10 +1252,10 @@ public class ShapeDispatcher
             super();
         }
 
-        Vec3 center;
-        float radius;
-        int level;
-        int subdivisions;
+        public Vec3 center;
+        public float radius;
+        public int level;
+        public int subdivisions;
 
         @Override
         protected void init(Map<String, Value> options, RegistryAccess regs)
@@ -1347,12 +1339,12 @@ public class ShapeDispatcher
             return Sets.union(super.optionalParams(), optional.keySet());
         }
 
-        Vec3 center;
-        float height;
-        float radius;
-        int level;
-        int subdivisions;
-        Direction.Axis axis;
+        public Vec3 center;
+        public float height;
+        public float radius;
+        public int level;
+        public int subdivisions;
+        public Direction.Axis axis;
 
         private Cylinder()
         {
@@ -1525,6 +1517,7 @@ public class ShapeDispatcher
                 .put("facing", new StringChoiceParam("facing", "player", "camera", "north", "south", "east", "west", "up", "down"))
                 .put("doublesided", new BoolParam("doublesided"))
                 .put("debug", new BoolParam("debug"))
+                .put("seethrough", new BoolParam("seethrough"))
                 .build();
 
         protected String id;

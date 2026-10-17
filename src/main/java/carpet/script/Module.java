@@ -44,7 +44,13 @@ public record Module(String name, String code, boolean library)
      */
     public static Module carpetNative(String scriptName, boolean isLibrary)
     {
-        return fromJarPath("assets/carpet/scripts/", scriptName, isLibrary);
+        try {
+            return fromJarPath("assets/carpet/scripts/", scriptName, isLibrary);
+        }
+        catch (IllegalArgumentException e)
+        {
+            return null;
+        }
     }
 
     /**
@@ -81,7 +87,7 @@ public record Module(String name, String code, boolean library)
             );
             return new Module(name, code, isLibrary);
         }
-        catch (IOException e)
+        catch (IOException | NullPointerException e)
         {
             throw new IllegalArgumentException("Failed to load bundled module", e);
         }

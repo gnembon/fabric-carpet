@@ -430,7 +430,7 @@ public class ValueConversions
         return apply.map(ValueConversions::of).orElse(Value.NULL);
     }
 
-    record SlotParam(/* Nullable */ String type, int id)
+    private record SlotParam(/* Nullable */ String type, int id)
     {
         public ListValue build()
         {

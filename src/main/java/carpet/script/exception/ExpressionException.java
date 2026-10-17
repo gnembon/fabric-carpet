@@ -76,7 +76,7 @@ public class ExpressionException extends StacklessRuntimeException implements Re
         return errMsg;
     }
 
-    static synchronized String makeMessage(Context c, Expression e, Token t, String message) throws ExpressionException
+    private static synchronized String makeMessage(Context c, Expression e, Token t, String message) throws ExpressionException
     {
         if (c.getErrorSnooper() != null)
         {

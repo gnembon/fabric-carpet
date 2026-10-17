@@ -63,7 +63,7 @@ public class Expression
      */
     private String expression;
 
-    String getCodeString()
+    public String getCodeString()
     {
         return expression;
     }

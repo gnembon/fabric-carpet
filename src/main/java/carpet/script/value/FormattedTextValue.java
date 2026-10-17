@@ -12,7 +12,7 @@ import net.minecraft.network.chat.MutableComponent;
 
 public class FormattedTextValue extends StringValue
 {
-    Component text;
+    private Component text;
 
     public FormattedTextValue(Component text)
     {

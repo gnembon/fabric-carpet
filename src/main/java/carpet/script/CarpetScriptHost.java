@@ -74,10 +74,10 @@ public class CarpetScriptHost extends ScriptHost
     public Map<Value, Value> appConfig;
     public Map<String, CommandArgument> appArgTypes;
 
-    Predicate<CommandSourceStack> commandValidator;
-    boolean isRuleApp;
+    public Predicate<CommandSourceStack> commandValidator;
+    public boolean isRuleApp;
     public AppStoreManager.StoreNode storeSource;
-    boolean hasCommand;
+    public boolean hasCommand;
 
     private CarpetScriptHost(CarpetScriptServer server, @Nullable Module code, boolean perUser, ScriptHost parent, Map<Value, Value> config, Map<String, CommandArgument> argTypes, Predicate<CommandSourceStack> commandValidator, boolean isRuleApp, Expression.LoadOverride override)
     {
@@ -385,7 +385,7 @@ public class CarpetScriptHost extends ScriptHost
         return true;
     }
 
-    static class ListComparator<T extends Comparable<T>> implements Comparator<Pair<List<T>, ?>>
+    private static class ListComparator<T extends Comparable<T>> implements Comparator<Pair<List<T>, ?>>
     {
         @Override
         public int compare(Pair<List<T>, ?> p1, Pair<List<T>, ?> p2)

@@ -78,8 +78,8 @@ import carpet.script.value.Value;
  */
 public final class AnnotationParser
 {
-    static final int UNDEFINED_PARAMS = -2;
-    static final String USE_METHOD_NAME = "$METHOD_NAME_MARKER$";
+    public static final int UNDEFINED_PARAMS = -2;
+    public static final String USE_METHOD_NAME = "$METHOD_NAME_MARKER$";
     private static final List<ParsedFunction> functionList = new ArrayList<>();
 
     /**

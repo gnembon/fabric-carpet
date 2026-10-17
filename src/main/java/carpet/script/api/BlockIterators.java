@@ -311,16 +311,16 @@ public class BlockIterators
 
             return new LazyListValue()
             {
-                final int minx = cx - sminx;
-                final int miny = cy - sminy;
-                final int minz = cz - sminz;
-                final int maxx = cx + smaxx;
-                final int maxy = cy + smaxy;
-                final int maxz = cz + smaxz;
+                private final int minx = cx - sminx;
+                private final int miny = cy - sminy;
+                private final int minz = cz - sminz;
+                private final int maxx = cx + smaxx;
+                private final int maxy = cy + smaxy;
+                private final int maxz = cz + smaxz;
 
-                int x;
-                int y;
-                int z;
+                private int x;
+                private int y;
+                private int z;
 
                 {
                     reset();
@@ -429,8 +429,8 @@ public class BlockIterators
             {
                 return new LazyListValue()
                 {
-                    int curradius;
-                    int curpos;
+                    private int curradius;
+                    private int curpos;
 
                     {
                         reset();
@@ -481,9 +481,9 @@ public class BlockIterators
             {
                 return new LazyListValue()
                 {
-                    int curradius;
-                    int curpos;
-                    int curheight;
+                    private int curradius;
+                    private int curpos;
+                    private int curheight;
 
                     {
                         reset();

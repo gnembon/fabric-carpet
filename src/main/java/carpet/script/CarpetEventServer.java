@@ -191,8 +191,8 @@ public class CarpetEventServer
         private boolean inCall;
         private boolean inSignal;
         public final int reqArgs;
-        final boolean isSystem;
-        final boolean perPlayerDistribution;
+        private final boolean isSystem;
+        private final boolean perPlayerDistribution;
 
         public CallbackList(int reqArgs, boolean isSystem, boolean isGlobalOnly)
         {

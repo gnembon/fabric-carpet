@@ -124,7 +124,7 @@ public interface Locator
             super();
         }
 
-        static <R> ValueConverter<R> fromAnnotatedType(AnnotatedType annoType, Class<R> type)
+        public static <R> ValueConverter<R> fromAnnotatedType(AnnotatedType annoType, Class<R> type)
         {
             if (annoType.isAnnotationPresent(Block.class))
             {
@@ -243,7 +243,7 @@ public interface Locator
             private final boolean allowNone;
             private final boolean checkArgs;
 
-            FunctionLocator(Function annotation, Class<R> type)
+            private FunctionLocator(Function annotation, Class<R> type)
             {
                 super();
                 this.returnFunctionValue = type == FunctionValue.class;

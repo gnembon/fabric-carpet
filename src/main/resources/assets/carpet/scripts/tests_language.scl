@@ -770,6 +770,14 @@ language_tests() -> [
         undef('lt_probe_*');
         first_removed && vars('lt_probe_') == []
     )],
+    ['undef removes global variable bindings by name and prefix', _() -> (
+        global_lt_undef_probe_a = 1;
+        global_lt_undef_probe_b = 2;
+        undef('global_lt_undef_probe_a');
+        first_removed = vars('global_lt_undef_probe_') == ['global_lt_undef_probe_b'];
+        undef('global_lt_undef_probe_*');
+        first_removed && vars('global_lt_undef_probe_') == []
+    )],
     ['early return and empty return', _() ->
         _lt_early_return(-1) == 'negative' &&
             _lt_early_return(4) == 8 &&

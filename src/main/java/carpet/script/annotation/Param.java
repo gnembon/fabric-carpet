@@ -144,7 +144,7 @@ public interface Param
          * <p>A {@link ValueConverter} that outputs the {@link Context} in which the function has been called, and throws {@link UnsupportedOperationException} when trying to convert a {@link Value}
          * directly.</p>
          */
-        static final ValueConverter<Context> CONTEXT_PROVIDER = new ValueConverter<>()
+        public static final ValueConverter<Context> CONTEXT_PROVIDER = new ValueConverter<>()
         {
             @Override
             public @Nullable String getTypeName()
@@ -175,7 +175,7 @@ public interface Param
          * <p>A {@link ValueConverter} that outputs the {@link Context.Type} which the function has been called, or throws {@link UnsupportedOperationException} when trying to convert a {@link Value}
          * directly.</p>
          */
-        static final ValueConverter<Context.Type> CONTEXT_TYPE_PROVIDER = new ValueConverter<>()
+        public static final ValueConverter<Context.Type> CONTEXT_TYPE_PROVIDER = new ValueConverter<>()
         {
             @Override
             public @Nullable String getTypeName()
@@ -202,7 +202,7 @@ public interface Param
             }
         };
 
-        record StrictConverterInfo(Class<?> type, boolean shallow) {}
+        private record StrictConverterInfo(Class<?> type, boolean shallow) {}
         private static final Map<StrictConverterInfo, ValueConverter<?>> strictParamsByClassAndShallowness = new HashMap<>();
         static
         { // TODO Specify strictness in name?
@@ -223,7 +223,7 @@ public interface Param
          * @throws IllegalArgumentException If the type doesn't accept the {@link Strict} annotation or if it has been used incorrectly (shallow in
          *                                  unsupported places)
          */
-        static ValueConverter<?> getStrictConverter(AnnotatedType type)
+        public static ValueConverter<?> getStrictConverter(AnnotatedType type)
         {
             boolean shallow = type.getAnnotation(Strict.class).shallow();
             Class<?> clazz = (Class<?>) type.getType();
@@ -286,7 +286,7 @@ public interface Param
         }
 
         @SuppressWarnings("unchecked") // Stored correctly
-        static <R> ValueConverter<R> getCustomConverter(AnnotatedType annoType, Class<R> type)
+        public static <R> ValueConverter<R> getCustomConverter(AnnotatedType annoType, Class<R> type)
         {
             ValueConverter<R> result;
             for (BiFunction<AnnotatedType, Class<?>, ValueConverter<?>> factory : customFactories)

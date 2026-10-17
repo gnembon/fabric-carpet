@@ -724,7 +724,7 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
     public record InventoryLocator(Object owner, BlockPos position, Container inventory, int offset,
                                    boolean isEnder)
     {
-        InventoryLocator(Object owner, BlockPos pos, Container i, int o)
+        private InventoryLocator(Object owner, BlockPos pos, Container i, int o)
         {
             this(owner, pos, i, o, false);
         }

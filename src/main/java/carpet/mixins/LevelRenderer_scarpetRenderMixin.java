@@ -19,6 +19,7 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(LevelRenderer.class)
 public class LevelRenderer_scarpetRenderMixin
@@ -54,6 +55,16 @@ public class LevelRenderer_scarpetRenderMixin
         if (CarpetClient.shapes != null)
         {
             CarpetClient.shapes.render(submitNodeStorage, levelRenderState, levelRenderState.worldPartialTicks);
+        }
+    }
+
+    @Inject(method = "frameHasAlwaysOnTopGizmos", at = @At("RETURN"), cancellable = true)
+    private void includeScarpetAlwaysOnTopShapes(CallbackInfoReturnable<Boolean> cir)
+    {
+        // Vanilla only checks its own finalized gizmos when scheduling this pass.
+        if (!cir.getReturnValueZ() && CarpetClient.shapes != null && CarpetClient.shapes.hasAlwaysOnTopShapes())
+        {
+            cir.setReturnValue(true);
         }
     }
 }

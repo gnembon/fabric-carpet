@@ -11,7 +11,7 @@ public class BooleanValue extends NumericValue
     public static final BooleanValue FALSE = new BooleanValue(false);
     public static final BooleanValue TRUE = new BooleanValue(true);
 
-    boolean boolValue;
+    private boolean boolValue;
 
     private BooleanValue(boolean boolval)
     {

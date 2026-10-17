@@ -91,6 +91,8 @@ Optional shared shape attributes:
    instance makes so that the shape follows the entity, but stays at the same, absolute Y coordinate. Preceeding an axis
    with `d`, like `dxdydz` would make so that entity position is treated discretely (rounded down).
  * `debug` - if True, it will only be visible when F3+B entity bounding boxes is enabled.
+ * `seethrough` - if True, geometric shapes and labels are visible through blocks. Defaults to False,
+   independently of `debug`. Does not affect block or item models.
  * `facing` - applicable only to `'text'`, `'block'` or '`item'` shapes, where its facing. Possible options are:
    * `player`: Default. Element always rotates to face the player eye position, 
    * `camera`: Element is placed on the plane orthogonal to player look vector, 

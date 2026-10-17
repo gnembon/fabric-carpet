@@ -171,6 +171,37 @@ shape_tests(p) -> (
                 [[-1.5, -1], [-0.5, -1], [-1, 1],
                     [0.5, -1], [1.5, -1], [1, 1]], true)
         ],
+        ['draw_shape polygon fan inner edges',
+            'Blue translucent rectangle with one inner diagonal and no doubled perimeter edges.',
+            _(p, duration, c, r) -> _st_polygon(p, duration, c, r, 'polygon',
+                [[-1.5, -1], [1.5, -1], [1.5, 1], [-1.5, 1]], true)
+        ],
+        ['draw_shape polygon strip outer edges',
+            'Blue translucent rectangle with four outer edges and no inner diagonal.',
+            _(p, duration, c, r) -> _st_polygon(p, duration, c, r, 'strip',
+                [[-1.5, -1], [-1.5, 1], [1.5, -1], [1.5, 1]], false)
+        ],
+        ['draw_shape debug false without seethrough',
+            'Yellow box stays visible with F3+B either on or off. No seethrough option is supplied.',
+            _(p, duration, c, r) -> draw_shape('box', duration, {
+                'from' -> c - [1, 1, 1], 'to' -> c + [1, 1, 1],
+                'color' -> 0xffff00ff, 'debug' -> false, 'player' -> p
+            })
+        ],
+        ['draw_shape debug true without seethrough',
+            'Green box is visible only with F3+B enabled. The caption remains visible.',
+            _(p, duration, c, r) -> draw_shape('box', duration, {
+                'from' -> c - [1, 1, 1], 'to' -> c + [1, 1, 1],
+                'color' -> 0x00ff00ff, 'debug' -> true, 'player' -> p
+            })
+        ],
+        ['draw_shape seethrough without debug',
+            'With vanilla debug overlays off, the cyan box must remain visible through terrain, even as the only see-through geometry.',
+            _(p, duration, c, r) -> draw_shape('box', duration, {
+                'from' -> c - [1, 1, 1], 'to' -> c + [1, 1, 1],
+                'color' -> 0x00ffffff, 'seethrough' -> true, 'player' -> p
+            })
+        ],
         ['draw_shape label formatted text',
             'Centered RED in red, GREEN in green, and a white ! on a dark background, facing the viewer.',
             _(p, duration, c, r) -> _st_label(p, duration, c, {
