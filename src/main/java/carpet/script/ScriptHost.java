@@ -5,6 +5,7 @@ import carpet.script.exception.IntegrityException;
 import carpet.script.exception.InternalExpressionException;
 import carpet.script.value.FunctionValue;
 import carpet.script.value.Value;
+import com.mojang.logging.LogUtils;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import org.slf4j.Logger;
@@ -133,6 +134,7 @@ public abstract class ScriptHost
     {
         return main == null;
     }
+
 
     public final @Nullable Module main;
 
@@ -465,9 +467,11 @@ public abstract class ScriptHost
         host.root = this.root;
     }
 
+    public static final Logger LOGGER = LogUtils.getLogger();
+
     public synchronized void handleExpressionException(String msg, ExpressionException exc)
     {
-        System.out.println(msg + ": " + exc);
+        LOGGER.error("{}", msg, exc);
     }
 
     protected abstract ScriptHost duplicate();

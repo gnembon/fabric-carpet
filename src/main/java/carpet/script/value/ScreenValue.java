@@ -13,6 +13,7 @@ import carpet.script.external.Vanilla;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.OptionalInt;
 
@@ -115,7 +116,7 @@ public class ScreenValue extends Value
     public ScreenValue(ServerPlayer player, String type, Component name, @Nullable FunctionValue callback, Context c)
     {
         this.name = name;
-        this.typestring = type.toLowerCase();
+        this.typestring = type.toLowerCase(Locale.ROOT);
         if (callback != null)
         {
             callback.checkArgs(4);

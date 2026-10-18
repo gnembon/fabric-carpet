@@ -21,6 +21,7 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Locale;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.regex.Matcher;
@@ -176,7 +177,7 @@ public class Messenger
     /// to be continued
     public static Component dbl(String style, double double_value)
     {
-        return c(String.format("%s %.1f",style,double_value),String.format("^w %f",double_value));
+        return c(String.format(Locale.ROOT, "%s %.1f",style,double_value),String.format(Locale.ROOT, "^w %f",double_value));
     }
     public static Component dbls(String style, double ... doubles)
     {
@@ -184,7 +185,7 @@ public class Messenger
         String prefix = "";
         for (double dbl : doubles)
         {
-            str.append(String.format("%s%.1f", prefix, dbl));
+            str.append(String.format(Locale.ROOT, "%s%.1f", prefix, dbl));
             prefix = ", ";
         }
         str.append(" ]");
@@ -196,7 +197,7 @@ public class Messenger
         String prefix = "";
         for (double dbl : doubles)
         {
-            str.append(String.format("%s%f", prefix, dbl));
+            str.append(String.format(Locale.ROOT, "%s%f", prefix, dbl));
             prefix = ", ";
         }
         str.append(" ]");
@@ -210,7 +211,7 @@ public class Messenger
         for (double dbl:doubles)
         {
 
-            components.add(String.format("%s %s%.1f",style, prefix, dbl));
+            components.add(String.format(Locale.ROOT, "%s %s%.1f",style, prefix, dbl));
             components.add("?"+dbl);
             components.add("^w "+dbl);
             prefix = ", ";
@@ -226,13 +227,13 @@ public class Messenger
         String command;
         if (isInt)
         {
-            text = String.format("%s [ %d, %d, %d ]",style, (int)x,(int)y, (int)z );
-            command = String.format("!/tp %d %d %d",(int)x,(int)y, (int)z);
+            text = String.format(Locale.ROOT, "%s [ %d, %d, %d ]",style, (int)x,(int)y, (int)z );
+            command = String.format(Locale.ROOT, "!/tp %d %d %d",(int)x,(int)y, (int)z);
         }
         else
         {
-            text = String.format("%s [ %.1f, %.1f, %.1f]",style, x, y, z);
-            command = String.format("!/tp %.3f %.3f %.3f",x, y, z);
+            text = String.format(Locale.ROOT, "%s [ %.1f, %.1f, %.1f]",style, x, y, z);
+            command = String.format(Locale.ROOT, "!/tp %.3f %.3f %.3f",x, y, z);
         }
         return c(text, command);
     }

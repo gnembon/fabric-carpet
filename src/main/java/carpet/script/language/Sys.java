@@ -3,6 +3,7 @@ package carpet.script.language;
 import carpet.script.Context;
 import carpet.script.Expression;
 import carpet.script.LazyValue;
+import carpet.script.ScriptHost;
 import carpet.script.exception.InternalExpressionException;
 import carpet.script.utils.PerlinNoiseSampler;
 import carpet.script.utils.SimplexNoiseSampler;
@@ -21,6 +22,7 @@ import java.util.IllegalFormatException;
 import java.util.List;
 import java.util.Locale;
 import java.util.Random;
+import java.util.TimeZone;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
@@ -99,7 +101,7 @@ public class Sys
                     // of the format specifier is either fixed text or contains
                     // an invalid format string.
                     // [[scarpet]] but we skip it and let the String.format fail
-                    char fmt = m.group(6).toLowerCase().charAt(0);
+                    char fmt = m.group(6).toLowerCase(Locale.ROOT).charAt(0);
                     if (fmt == 's')
                     {
                         if (argIndex >= lv.size())
@@ -331,9 +333,10 @@ public class Sys
             return new NumericValue(result);
         });
 
+        // placeholder since we override that in implementations
         expression.addUnaryFunction("print", v ->
         {
-            System.out.println(v.getString());
+            ScriptHost.LOGGER.info("{}", v.getString());
             return v; // pass through for variables
         });
 
@@ -353,7 +356,7 @@ public class Sys
             Value value = lv.get(0);
             if (argsize == 1 && !(value instanceof ListValue))
             {
-                Calendar cal = new GregorianCalendar(Locale.ROOT);
+                Calendar cal = new GregorianCalendar(TimeZone.getTimeZone("UTC"), Locale.ROOT);
                 cal.setTimeInMillis(NumericValue.asNumber(value, "timestamp").getLong());
                 int weekday = cal.get(Calendar.DAY_OF_WEEK) - 1;
                 if (weekday == 0)
@@ -377,8 +380,8 @@ public class Sys
                 lv = list.getItems();
                 argsize = lv.size();
             }
-            Calendar cal = new GregorianCalendar(0, Calendar.JANUARY, 1, 0, 0, 0);
-
+            Calendar cal = new GregorianCalendar(TimeZone.getTimeZone("UTC"), Locale.ROOT);
+            cal.set(0, Calendar.JANUARY, 1, 0, 0, 0);
             if (argsize == 3)
             {
                 cal.set(
@@ -507,7 +510,7 @@ public class Sys
         if (str.isEmpty()) {
             return str;
         }
-        str = str.toLowerCase();
+        str = str.toLowerCase(Locale.ROOT);
         char[] buffer = str.toCharArray();
         boolean capitalizeNext = true;
         for (int i = 0; i < buffer.length; i++) {

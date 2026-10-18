@@ -268,7 +268,7 @@ public class ShapesRenderer
         protected T shape;
         protected Minecraft client;
         protected long expiryTick;
-        double renderEpsilon;
+        protected double renderEpsilon;
 
         public abstract void renderLines(PoseStack matrices, double cx, double cy, double cz, float partialTick, LevelRenderState levelRenderState, DrawableGizmoPrimitives primitives, SubmitNodeStorage submitNodeStorage);
 

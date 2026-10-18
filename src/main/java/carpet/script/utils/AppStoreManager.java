@@ -29,6 +29,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -334,13 +335,13 @@ public class AppStoreManager
                     while (Files.exists(trashPath))
                     {
                         String[] nameAndExtension = appFileName.split("\\.");
-                        String newFileName = String.format(nameAndExtension[0] + "%02d." + nameAndExtension[1], i);
+                        String newFileName = String.format(Locale.ROOT, nameAndExtension[0] + "%02d." + nameAndExtension[1], i);
                         trashPath = trashPath.getParent().resolve(newFileName);
                         i++;
                     }
                     Files.move(scriptLocation, trashPath);
                 }
-                Carpet.Messenger_message(source, String.format("gi Note: replaced existing app '%s'" + (useTrash ? " (old moved to /trash folder)" : ""), appFileName));
+                Carpet.Messenger_message(source, String.format(Locale.ROOT, "gi Note: replaced existing app '%s'" + (useTrash ? " (old moved to /trash folder)" : ""), appFileName));
             }
             BufferedWriter writer = Files.newBufferedWriter(scriptLocation);
             writer.write(code);

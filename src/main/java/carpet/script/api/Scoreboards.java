@@ -18,6 +18,7 @@ import com.google.common.collect.Lists;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 
 import com.mojang.serialization.DataResult;
@@ -258,7 +259,7 @@ public class Scoreboards
                 case "render_type" -> {
                     if (modify)
                     {
-                        ObjectiveCriteria.RenderType renderType = ObjectiveCriteria.RenderType.byId(setValue.getString().toLowerCase());
+                        ObjectiveCriteria.RenderType renderType = ObjectiveCriteria.RenderType.byId(setValue.getString().toLowerCase(Locale.ROOT));
                         if (objective.getRenderType().equals(renderType))
                         {
                             return Value.FALSE;
@@ -443,7 +444,7 @@ public class Scoreboards
                     {
                         throw new InternalExpressionException("'team_property' requires a string as the third argument for the property " + propertyVal.getString());
                     }
-                    TeamColor teamColor = TeamColor.byName(settingVal.getString().toLowerCase());
+                    TeamColor teamColor = TeamColor.byName(settingVal.getString().toLowerCase(Locale.ROOT));
                     //DataResult<TextColor> color = TextColor.parseColor(settingVal.getString().toUpperCase());
                     //ChatFormatting color = ChatFormatting.valueOf(settingVal.getString().toUpperCase());;
                     if (teamColor == null)
