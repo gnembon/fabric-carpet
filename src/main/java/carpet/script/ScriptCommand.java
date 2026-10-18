@@ -798,7 +798,7 @@ public class ScriptCommand
                         if (replacement == null || replacement.test(
                                 new BlockInWorld(world, mbpos, true)))
                         {
-                            if (block.place(world, mbpos, 2 & Block.UPDATE_SKIP_BLOCK_ENTITY_SIDEEFFECTS))
+                            if (block.place(world, mbpos, Block.UPDATE_CLIENTS | Block.UPDATE_SKIP_BLOCK_ENTITY_SIDEEFFECTS))
                             {
                                 ++affected;
                             }
