@@ -186,7 +186,6 @@
   "client": [
     "Minecraft_tickMixin",
     "MinecraftMixin",
-    "Gui_tablistMixin",
     "PlayerTabOverlayMixin",
     "PistonHeadRenderer_movableBEMixin",
     "PistonHeadRenderState_movableBEMixin",
