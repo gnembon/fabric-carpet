@@ -45,6 +45,12 @@ public class Context
 
     public void setVariable(String name, LazyValue lv)
     {
+        // happens in loops in outermost context when unrolling previous values, sets them to null. We don't need those.
+        if (lv == null)
+        {
+            delVariable(name);
+            return;
+        }
         variables.put(name, lv);
     }
 

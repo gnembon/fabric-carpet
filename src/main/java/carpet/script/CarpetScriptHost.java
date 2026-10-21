@@ -1146,7 +1146,7 @@ public class CarpetScriptHost extends ScriptHost
             {
                 value = "Exception while rendering variable, there seems to be a recursive reference in there";
             }
-            stringsToFormat.add("^ Value of '" + foundLocal.getValue() + "' at position (" + type + "): \n"
+            stringsToFormat.add("^ Value of '" + foundLocal.getValue() + "' of type " + type + ":\n"
                     + value);
             lastPos = foundLocal.getKey() + foundLocal.getValue().length();
         }

@@ -287,7 +287,7 @@ No further optimizations are currently applied to your code.
 
 ## Mentions
 
-LR1 parser, tokenizer, and several built-in functions are built based on the EvalEx project.
+LR1 parser, tokenizer, and several built-in functions were built with the inspiration of the EvalEx project.
 EvalEx is a handy expression evaluator for Java, that allows to evaluate 
-simple mathematical and boolean expressions. EvalEx is distributed under MIT licence.
+simple mathematical and boolean expressions. EvalEx was then distributed under MIT licence.
 For more information, see: [EvalEx GitHub repository](https://github.com/uklimaschewski/EvalEx)
