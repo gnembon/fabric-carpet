@@ -287,9 +287,9 @@ No further optimizations are currently applied to your code.
 
 ## Mentions
 
-LR1 parser, tokenizer, and several built-in functions are built based on the EvalEx project.
+LR1 parser, tokenizer, and several built-in functions were built with the inspiration of the EvalEx project.
 EvalEx is a handy expression evaluator for Java, that allows to evaluate 
-simple mathematical and boolean expressions. EvalEx is distributed under MIT licence.
+simple mathematical and boolean expressions. EvalEx was then distributed under MIT licence.
 For more information, see: [EvalEx GitHub repository](https://github.com/uklimaschewski/EvalEx)
 # Variables and Constants
 
@@ -314,6 +314,9 @@ need to use them as integers or even longs - you can. Long values will also not 
 subtraction, negation and multiplication, however any other operation that is not guaranteed to return a long value
 (like division) on a number even if it can be properly
 represented as long, will make them convert to doubles.
+
+Hexadecimal literals accept `0x` or `0X` prefixes. The digits `e` and `E` are hexadecimal digits, not exponent
+markers: `0xfe+2` evaluates to `256`, and `0xfe-2` evaluates to `252`, without requiring spaces.
 
 Strings use single quoting, for multiple reasons, but primarily to allow for 
 easier use of strings inside doubly quoted command arguments (when passing a script as a parameter of `/script fill` 
@@ -571,9 +574,9 @@ Require a number, flips the sign. One way to assert it's a number is by crashing
 +'4'  // Error message
 </pre>
 
-### `Negation Operator !`
+### `Negation Operator !`, `not(expr)`
 
-flips boolean condition of the expression. Equivalent of `bool(expr)==false`
+Flips the boolean condition of the expression. `not(expr)` is equivalent to `!expr`.
 
 <pre>
 !true  => false
@@ -1162,6 +1165,7 @@ It can affect global variable pool, and local variable set for a particular func
 inc(i) -> i+1; foo = 5; inc(foo) => 6
 inc(i) -> i+1; foo = 5; undef('foo'); inc(foo) => 1
 inc(i) -> i+1; foo = 5; undef('inc'); undef('foo'); inc(foo) => Error: Function inc is not defined yet at pos 53
+global_example = 1; undef('global_example'); vars('global_example') => []
 </pre>
 
 ### `vars(prefix)`
@@ -1209,6 +1213,10 @@ internalize most of the operations that need to be applied on multiple values at
 a `list` argument which can be any iterable structure in scarpet, including generators, like `rect`, or `range`, 
 and maps, where the iterator returns all the map keys
 
+Loop-provided `_`, `_i`, and `_a` bindings are temporary. Their previous bindings, and the original bindings of
+input values, are restored when the loop exits, including when an exception or `return` interrupts it.
+Iterators are finalized on exit, so reusable ranges are reset even if a loop throws.
+
 ## Loops
 
 ### `break(), break(expr), continue(), continue(expr)`
@@ -1245,6 +1253,8 @@ Evaluates expression over list of items from the `list`. Supplies `_`(value) and
 
 Returns the number of times `expr` was successful. Uses `continue` and `break` argument in place of the returned 
 value from the `expr`(if supplied), to determine if the iteration was successful.
+
+For example, `for([1, 2, 3], if(_ == 2, break(true), true))` returns `2`, counting the final successful iteration.
 
 <pre>
 check_prime(n) -> !first( range(2, sqrt(n)+1), !(n % _) );
@@ -1852,6 +1862,8 @@ extracts a substring, or sublist (based on the type of the result of the express
 starting index of `from`, and ending at `to` if provided, or the end, if omitted. Can use negative indices to 
 indicate counting form the back of the list, so `-1 <=> length(_)`.
 
+Slicing an empty list or string returns `[]` or `''`, respectively.
+
 Special case is made for iterators (`range`, `rect` etc), which does require non-negative indices (negative `from` is treated as
 `0`, and negative `to` as `inf`), but allows retrieving parts of the sequence and ignore
 other parts. In that case consecutive calls to `slice` will refer to index `0` the current iteration position since iterators
@@ -1889,7 +1901,7 @@ sort_key([range(20)],str(_))  => [0, 1, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 
 
 ### `range(to), range(from, to), range(from, to, step)`
 
-Creates a range of numbers from `from`, no greater/larger than `to`. The `step` parameter dictates not only the 
+Creates a range of numbers from `from`, up to but excluding `to`. The `step` parameter dictates not only the
 increment size, but also direction (can be negative). The returned value is not a proper list, just the iterator 
 but if for whatever reason you need a proper list with all items evaluated, use `[range(to)]`. 
 Primarily to be used in higher order functions
@@ -5405,6 +5417,8 @@ Optional shared shape attributes:
    instance makes so that the shape follows the entity, but stays at the same, absolute Y coordinate. Preceeding an axis
    with `d`, like `dxdydz` would make so that entity position is treated discretely (rounded down).
  * `debug` - if True, it will only be visible when F3+B entity bounding boxes is enabled.
+ * `seethrough` - if True, geometric shapes and labels are visible through blocks. Defaults to False,
+   independently of `debug`. Does not affect block or item models.
  * `facing` - applicable only to `'text'`, `'block'` or '`item'` shapes, where its facing. Possible options are:
    * `player`: Default. Element always rotates to face the player eye position, 
    * `camera`: Element is placed on the plane orthogonal to player look vector, 
@@ -6179,6 +6193,12 @@ some stored procedures to be used for later. To reload the module, just type `/s
 all the current global state (globals and functions) that were added later by the module. To reload all apps along with 
 all game resources, use vanilla `/reload` command.
 
+You can select a compilation mode with `/script load <app> <mode>` or
+`/script load <app> global <mode>`, where `<mode>` is `canonical`, `optimized`, `functional`, or
+`functional_optimized`. `canonical` disables optimizations and functional conversion; `optimized` enables
+optimizations; `functional` converts operators to function calls without optimizations; and `functional_optimized`
+does both. Without an explicit mode, loading follows the `scriptsOptimization` carpet setting.
+See `/script explain` below for ways to inspect these representations without reloading or executing the source.
 
 
 Loaded apps have the ability to store and load external files, especially their persistent tag state. For that 
@@ -6195,6 +6215,104 @@ To remove the commands fully, use `/reload`.
 ### `/script in <app> ...`
 
 Allows to run normal /script commands in a specific app, like `run, invoke,..., globals` etc...
+
+# `/script explain` command
+
+`explain` shows how Scarpet parses and compiles code, rather than running it and returning its result.
+Use it to inspect operator precedence, the function calls corresponding to operators, and compile-time
+optimizations. It is not an execution trace or a profiler: it does not call the inspected user-defined functions
+or perform runtime actions such as `print` or changing blocks. Optimized styles do evaluate constant expressions
+and eligible pure built-in functions during compilation.
+
+The output is syntax-highlighted code with source line numbers. Underlined tokens can have hover text with
+additional information, such as `=> 14` for a value computed at compile time. An optimized expression may still
+appear in the output with its computed value in hover text, rather than being replaced by a literal.
+Access requires the `commandScript` and `commandScriptACE` permissions, as for `/script run`.
+
+### `/script explain expression <style> <expr>`
+
+Explains the supplied expression using the required `<style>`. Enter code directly after the style, without
+wrapping the whole expression in quotes, just as with `/script run`. To use an app's context, use
+`/script in <app> explain expression <style> <expr>`.
+
+The following styles are available for both `expression` and `source`:
+
+| Style | What it shows                                                                                                                                                  |
+| --- |----------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `raw` | Tokens before parser cleanup, including comments and syntactic sugar such as `[]` and `{}`.                                                                    |
+| `clean` | Tokens after cleanup: comments and redundant semicolons are removed, and list/map shorthand is expanded to `l(...)`/`m(...)`.                                  |
+| `canonical` | Code reconstructed from the parsed expression tree, with operator precedence reflected in its structure, without optimization or conversion to function calls. |
+| `functional` | The parsed code with operators converted to equivalent function calls, such as `+` to `sum(...)` and `*` to `product(...)`, without optimizations.             |
+| `optimized` | The parsed code after compile-time optimizations, including constant evaluation and compaction of eligible operator chains into function calls.                |
+| `functional_optimized` | Functional conversion and compile-time optimizations together.                                                                                                 |
+
+`raw` and `clean` show tokenization stages only, so they do not provide the full syntax validation performed by
+the other styles. Use the lowercase style names shown above.
+
+For example, compare the structure of the same expression:
+
+<pre>
+/script explain expression canonical a + b * c
+/script explain expression functional a + b * c
+</pre>
+
+The functional form is `sum(a, product(b, c))`, making it clear that multiplication happens before addition.
+The variables do not need values to inspect this structure.
+
+<pre>
+/script explain expression clean [1, 2, 3];
+/script explain expression optimized 2 + 3 * 4
+/script explain expression functional_optimized a + b + c
+</pre>
+
+The first example expands the list shorthand to `l(1, 2, 3)` and removes the trailing semicolon.
+In the second, hovering over the underlined `+` shows `=> 14`, the compile-time result.
+The third compacts the addition chain to `sum(a, b, c)`.
+
+<pre>
+/script explain expression optimized print(2 + 3 * 4)
+</pre>
+
+This shows the constant calculation inside `print`, but does not execute `print` or print `14` as a runtime result.
+
+### `/script in <app> explain source <style>`
+
+Parses the loaded app's stored source using the requested style. This lets you compare representations
+independently of the mode used to load the app, without executing its top-level code again or changing its
+loaded compilation mode. It uses the source already held by the loaded app, not a fresh read of the file on disk.
+
+### `/script in <app> explain`
+
+With no subcommand, shows the app's already-compiled top-level code, reflecting the compilation mode used when
+it was loaded. Unlike `source <style>`, this inspects the existing expression tree instead of compiling the source
+in another style. Use an app context for this form: bare `/script explain` in the global context has no app code
+to inspect and reports `No code to explain`.
+
+### `/script explain invoke <function>`
+
+Shows an existing user-defined function's compiled code without calling it. Supply only its name, not parentheses
+or arguments. Use `/script in <app> explain invoke <function>` for a function in a loaded app.
+This form does not accept a style; it inspects the function as compiled. An unknown function or one without a
+compiled expression tree produces an error.
+
+For example, a function defined in the global context can be inspected with:
+
+<pre>
+/script run example_function(a, b, c) -> a + b * c
+/script explain invoke example_function
+</pre>
+
+For an app named `demo` containing `example_function`, compare the loaded code with alternative source representations:
+
+<pre>
+/script load demo optimized
+/script in demo explain
+/script in demo explain invoke example_function
+/script in demo explain source canonical
+/script in demo explain source functional_optimized
+</pre>
+
+Only `load` executes the app here. The `explain` commands inspect its compiled code or reparse its stored source.
 
 # `/script invoke / invokepoint / invokearea`, `/script globals` commands
 
