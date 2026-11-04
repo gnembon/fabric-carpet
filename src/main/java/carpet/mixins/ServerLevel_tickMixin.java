@@ -21,9 +21,9 @@ import net.minecraft.world.level.storage.WritableLevelData;
 @Mixin(ServerLevel.class)
 public abstract class ServerLevel_tickMixin extends Level implements LevelInterface
 {
-    protected ServerLevel_tickMixin(final WritableLevelData writableLevelData, final ResourceKey<Level> resourceKey, final RegistryAccess registryAccess, final Holder<DimensionType> holder, final boolean bl, final boolean bl2, final int i)
+    protected ServerLevel_tickMixin(final WritableLevelData writableLevelData, final ResourceKey<Level> resourceKey, final RegistryAccess registryAccess, final Holder<DimensionType> holder, final boolean bl, final int i)
     {
-        super(writableLevelData, resourceKey, registryAccess, holder, bl, bl2, i);
+        super(writableLevelData, resourceKey, registryAccess, holder, bl, i);
     }
 
     private CarpetProfiler.ProfilerToken currentSection;

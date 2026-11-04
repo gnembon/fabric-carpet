@@ -36,8 +36,6 @@ public abstract class Level_movableBEMixin implements LevelInterface, LevelAcces
 
     @Shadow public abstract void updateNeighbourForOutputSignal(BlockPos pos, Block block);
 
-    @Shadow public abstract boolean isDebug();
-
     @Shadow public abstract void updatePOIOnBlockStateChange(final BlockPos blockPos, final BlockState blockState, final BlockState blockState2);
 
     /**
@@ -46,7 +44,7 @@ public abstract class Level_movableBEMixin implements LevelInterface, LevelAcces
     @Override
     public boolean setBlockStateWithBlockEntity(BlockPos blockPos_1, BlockState blockState_1, BlockEntity newBlockEntity, int int_1)
     {
-        if (isOutsideBuildHeight(blockPos_1) || !this.isClientSide && isDebug()) return false;
+        if (isOutsideBuildHeight(blockPos_1)) return false;
         LevelChunk worldChunk_1 = this.getChunkAt(blockPos_1);
         Block block_1 = blockState_1.getBlock();
 
