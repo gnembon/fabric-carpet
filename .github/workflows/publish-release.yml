@@ -71,7 +71,7 @@ jobs:
         run: |
           if ${{ matrix.branch == 'Snapshots'}}; then
             echo "branchname=${{ needs.Get-Properties.outputs.extra-branch-name }}" >> $GITHUB_OUTPUT
-            echo "version=${{ needs.Get-Properties.outputs.extra-branch-curse-version }}" >> $GITHUB_OUTPUT
+            echo "version=${{ needs.Get-Properties.outputs.extra-branch-curse-version }}" >> $GITHUB_OUTPUT # TODO wrong for Modrinth
             echo "curse-versions=${{ needs.Get-Properties.outputs.extra-branch-curse-version }}" >> $GITHUB_OUTPUT
           else
             echo "version=${{ needs.Get-Properties.outputs.minecraft-version }}" >> $GITHUB_OUTPUT
@@ -129,6 +129,22 @@ jobs:
         with:
           name: Maven publishing artifacts for ${{ matrix.branch }}
           path: publish/carpet/fabric-carpet/
+      - name: Upload to Modrinth
+        uses: RubixDev/modrinth-upload@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          file_path: build/libs/${{ steps.findjar.outputs.jarname }}
+          name: Carpet ${{ needs.Get-Properties.outputs.carpet-version }} for Minecraft ${{ steps.getbranchinfo.outputs.version }}
+          # ternary: https://docs.github.com/en/actions/writing-workflows/choosing-what-your-workflow-does/evaluate-expressions-in-workflows-and-actions#example
+          # works because javascript
+          # version = (branch != Snapshots) ? tag_name : (tag_name + '-' + version)
+          version: ${{ matrix.branch != 'Snapshots' && github.event.release.tag_name || join([github.event.release.tag_name, steps.getbranchinfo.outputs.version], '-') }}
+          changelog: ${{ github.event.release.body }}
+          game_versions: ${{ steps.getbranchinfo.outputs.version }} # modrinth uses normal minecraft versions
+          release_type: ${{ needs.Get-Properties.outputs.release-type }}
+          loaders: fabric
+          featured: true # is this a thing still?
+          project_id: TQTTVgYE
   Publish-To-Discord:
     runs-on: ubuntu-latest
     needs: [Build-And-Publish]
