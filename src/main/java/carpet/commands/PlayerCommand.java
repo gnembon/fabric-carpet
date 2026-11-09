@@ -303,7 +303,7 @@ public class PlayerCommand
             flying = false;
         }
         String playerName = StringArgumentType.getString(context, "player");
-        if (playerName.length() > maxNameLength(source.getServer()))
+        if (playerName.length() > SharedConstants.MAX_PLAYER_NAME_LENGTH)
         {
             Messenger.m(source, "rb Player name: " + playerName + " is too long");
             return 0;
@@ -321,11 +321,6 @@ public class PlayerCommand
             return 0;
         };
         return 1;
-    }
-
-    private static int maxNameLength(MinecraftServer server)
-    {
-        return server.getPort() >= 0 ? SharedConstants.MAX_PLAYER_NAME_LENGTH : 40;
     }
 
     private static int manipulate(CommandContext<CommandSourceStack> context, Consumer<EntityPlayerActionPack> action)
