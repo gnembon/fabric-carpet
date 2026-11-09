@@ -20,7 +20,7 @@ Carpet Mod is a mod for vanilla Minecraft that allows you to take full control o
 * ...and then see a detailed breakdown of the items they produce using [`hopperCounters`](https://github.com/gnembon/fabric-carpet/wiki/Current-Available-Settings#hoppercounters)
 * See the server mobcap, TPS, etc. update live with [`/log`](https://github.com/gnembon/fabric-carpet/wiki/Commands#log)
 * Let pistons push block entities (ie. chests) with [`movableBlockEntities`](https://github.com/gnembon/fabric-carpet/wiki/Current-Available-Settings#movableblockentities)
-* [Fix](https://github.com/gnembon/fabric-carpet/wiki/Current-Available-Settings#leadfix) [many](https://github.com/gnembon/fabric-carpet/wiki/Current-Available-Settings#portalsuffocationfix) [things](https://github.com/gnembon/fabric-carpet/wiki/Current-Available-Settings#unloadedentityfix)
+* [Fix](https://github.com/gnembon/fabric-carpet/wiki/Current-Available-Settings#ctrlqcraftingfix) [many](https://github.com/gnembon/fabric-carpet/wiki/Current-Available-Settings#lightningkillsdropsfix) [things](https://github.com/gnembon/fabric-carpet/wiki/Current-Available-Settings#placementrotationfix)
 
 # Carpet mod ecosystem
 
