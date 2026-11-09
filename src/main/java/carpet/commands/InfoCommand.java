@@ -27,7 +27,7 @@ public class InfoCommand
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher, CommandBuildContext commandBuildContext)
     {
         LiteralArgumentBuilder<CommandSourceStack> command = literal("info").
-                requires((player) -> CommandHelper.canUseCommand(player, CarpetSettings.commandInfo)).
+                requires((player) -> CommandHelper.hasPermission(player, "carpet.commands.info", CarpetSettings.commandInfo)).
                 then(literal("block").
                         then(argument("block position", BlockPosArgument.blockPos()).
                                 executes( (c) -> infoBlock(

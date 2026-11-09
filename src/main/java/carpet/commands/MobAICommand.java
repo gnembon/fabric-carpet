@@ -21,7 +21,7 @@ public class MobAICommand
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher, final CommandBuildContext commandBuildContext)
     {
         LiteralArgumentBuilder<CommandSourceStack> command = literal("track").
-                requires((player) -> CommandHelper.canUseCommand(player, CarpetSettings.commandTrackAI)).
+                requires((player) -> CommandHelper.hasPermission(player, "carpet.commands.track", CarpetSettings.commandTrackAI)).
                 then(argument("entity type", resource(commandBuildContext, Registries.ENTITY_TYPE)).
 
                         suggests( (c, b) -> suggest(MobAI.availbleTypes(c.getSource()), b)).
